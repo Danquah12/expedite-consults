@@ -7,7 +7,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Tile Setter, Flooring & Hardwood Installer",
     "enclaveId": "trades_construction",
     "categoryName": "Flooring, Tile & Finishing Trades",
-    "defaultHeadline": "Tile Setter · Tile Layout & Thin-Set, Hardwood & Laminate Install, Subfloor Leveling",
+    "defaultHeadline": "Tile Setter Â· Tile Layout & Thin-Set, Hardwood & Laminate Install, Subfloor Leveling",
     "typicalSkills": [
       "Tile Layout & Thin-Set",
       "Hardwood & Laminate Install",
@@ -17,7 +17,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Tile Layout & Grout Estimator",
-        "icon": "🧱",
+        "icon": "ðŸ§±",
         "description": "Working tool for Tile Layout & Thin-Set and Hardwood & Laminate Install in day-to-day Tile Setter work",
         "badge": "Verified Practical"
       }
@@ -28,7 +28,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Glazier, Window & Glass Installer",
     "enclaveId": "trades_construction",
     "categoryName": "Glazing & Building Envelope",
-    "defaultHeadline": "Glazier · Glass Cutting & Setting, Storefront & Curtain Wall, Window Installation",
+    "defaultHeadline": "Glazier Â· Glass Cutting & Setting, Storefront & Curtain Wall, Window Installation",
     "typicalSkills": [
       "Glass Cutting & Setting",
       "Storefront & Curtain Wall",
@@ -38,7 +38,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Glass Takeoff & Glazing Planner",
-        "icon": "🧱",
+        "icon": "ðŸ§±",
         "description": "Working tool for Glass Cutting & Setting and Storefront & Curtain Wall in day-to-day Glazier work",
         "badge": "Verified Practical"
       }
@@ -49,7 +49,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Insulation & Weatherization Installer",
     "enclaveId": "trades_construction",
     "categoryName": "Energy-Efficiency & Building Envelope",
-    "defaultHeadline": "Insulation & Weatherization Installer · Spray Foam & Batt Install, Air Sealing, Blower-Door Basics",
+    "defaultHeadline": "Insulation & Weatherization Installer Â· Spray Foam & Batt Install, Air Sealing, Blower-Door Basics",
     "typicalSkills": [
       "Spray Foam & Batt Install",
       "Air Sealing",
@@ -59,7 +59,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Insulation R-Value & Coverage Calculator",
-        "icon": "🧱",
+        "icon": "ðŸ§±",
         "description": "Working tool for Spray Foam & Batt Install and Air Sealing in day-to-day Insulation & Weatherization Installer work",
         "badge": "Verified Practical"
       }
@@ -70,7 +70,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Concrete Finisher, Formwork & Masonry Laborer",
     "enclaveId": "trades_construction",
     "categoryName": "Concrete & Masonry",
-    "defaultHeadline": "Concrete Finisher · Concrete Pouring & Finishing, Formwork & Rebar Tying, Screeding & Troweling",
+    "defaultHeadline": "Concrete Finisher Â· Concrete Pouring & Finishing, Formwork & Rebar Tying, Screeding & Troweling",
     "typicalSkills": [
       "Concrete Pouring & Finishing",
       "Formwork & Rebar Tying",
@@ -80,7 +80,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Concrete Yield & Slab Cure Calculator",
-        "icon": "🧱",
+        "icon": "ðŸ§±",
         "description": "Working tool for Concrete Pouring & Finishing and Formwork & Rebar Tying in day-to-day Concrete Finisher work",
         "badge": "Verified Practical"
       }
@@ -91,7 +91,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Ironworker, Rebar Setter & Structural Steel Erector",
     "enclaveId": "trades_construction",
     "categoryName": "Structural Steel & Ironwork",
-    "defaultHeadline": "Ironworker · Structural Steel Erection, Rebar Placement, Rigging & Signalling",
+    "defaultHeadline": "Ironworker Â· Structural Steel Erection, Rebar Placement, Rigging & Signalling",
     "typicalSkills": [
       "Structural Steel Erection",
       "Rebar Placement",
@@ -101,7 +101,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Rebar Schedule & Steel Erection Planner",
-        "icon": "🧱",
+        "icon": "ðŸ§±",
         "description": "Working tool for Structural Steel Erection and Rebar Placement in day-to-day Ironworker work",
         "badge": "Verified Practical"
       }
@@ -112,7 +112,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Sheet Metal Worker, Ductwork & Metal Roofing Fabricator",
     "enclaveId": "trades_construction",
     "categoryName": "Sheet Metal & Ductwork",
-    "defaultHeadline": "Sheet Metal Worker · Duct Fabrication, Metal Roofing & Flashing, Blueprint Layout",
+    "defaultHeadline": "Sheet Metal Worker Â· Duct Fabrication, Metal Roofing & Flashing, Blueprint Layout",
     "typicalSkills": [
       "Duct Fabrication",
       "Metal Roofing & Flashing",
@@ -122,7 +122,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Duct Sizing & Sheet Layout Calculator",
-        "icon": "🧱",
+        "icon": "ðŸ§±",
         "description": "Working tool for Duct Fabrication and Metal Roofing & Flashing in day-to-day Sheet Metal Worker work",
         "badge": "Verified Practical"
       }
@@ -133,7 +133,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Fence, Gutter & Siding Installer",
     "enclaveId": "trades_construction",
     "categoryName": "Exterior Home Improvement",
-    "defaultHeadline": "Fence · Fence Layout & Post Setting, Seamless Gutter Install, Vinyl & Fibre-Cement Siding",
+    "defaultHeadline": "Fence Â· Fence Layout & Post Setting, Seamless Gutter Install, Vinyl & Fibre-Cement Siding",
     "typicalSkills": [
       "Fence Layout & Post Setting",
       "Seamless Gutter Install",
@@ -143,7 +143,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Linear-Foot Estimator & Quote Builder",
-        "icon": "🧱",
+        "icon": "ðŸ§±",
         "description": "Working tool for Fence Layout & Post Setting and Seamless Gutter Install in day-to-day Fence work",
         "badge": "Verified Practical"
       }
@@ -154,7 +154,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Demolition & Deconstruction Worker",
     "enclaveId": "trades_construction",
     "categoryName": "Demolition & Site Clearing",
-    "defaultHeadline": "Demolition & Deconstruction Worker · Selective Demolition, Hazmat Awareness (Asbestos/Lead), Equipment Safety",
+    "defaultHeadline": "Demolition & Deconstruction Worker Â· Selective Demolition, Hazmat Awareness (Asbestos/Lead), Equipment Safety",
     "typicalSkills": [
       "Selective Demolition",
       "Hazmat Awareness (Asbestos/Lead)",
@@ -164,7 +164,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Demolition Sequencing & Waste Log",
-        "icon": "🧱",
+        "icon": "ðŸ§±",
         "description": "Working tool for Selective Demolition and Hazmat Awareness (Asbestos/Lead) in day-to-day Demolition & Deconstruction Worker work",
         "badge": "Verified Practical"
       }
@@ -175,7 +175,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Road Construction & Paving Crew Member",
     "enclaveId": "trades_construction",
     "categoryName": "Civil & Highway Construction",
-    "defaultHeadline": "Road Construction & Paving Crew Member · Asphalt Paving & Rolling, Traffic Control & Flagging, Grading",
+    "defaultHeadline": "Road Construction & Paving Crew Member Â· Asphalt Paving & Rolling, Traffic Control & Flagging, Grading",
     "typicalSkills": [
       "Asphalt Paving & Rolling",
       "Traffic Control & Flagging",
@@ -185,7 +185,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Paving Tonnage & Traffic-Control Plan",
-        "icon": "🧱",
+        "icon": "ðŸ§±",
         "description": "Working tool for Asphalt Paving & Rolling and Traffic Control & Flagging in day-to-day Road Construction & Paving Crew Member work",
         "badge": "Verified Practical"
       }
@@ -196,7 +196,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Handyman & Home Repair Technician",
     "enclaveId": "trades_construction",
     "categoryName": "Home Repair & Property Maintenance",
-    "defaultHeadline": "Handyman & Home Repair Technician · General Repairs, Basic Plumbing & Electrical Fixes, Drywall Patching & Painting",
+    "defaultHeadline": "Handyman & Home Repair Technician Â· General Repairs, Basic Plumbing & Electrical Fixes, Drywall Patching & Painting",
     "typicalSkills": [
       "General Repairs",
       "Basic Plumbing & Electrical Fixes",
@@ -206,7 +206,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Job Quote & Parts Tracker",
-        "icon": "🧱",
+        "icon": "ðŸ§±",
         "description": "Working tool for General Repairs and Basic Plumbing & Electrical Fixes in day-to-day Handyman & Home Repair Technician work",
         "badge": "Verified Practical"
       }
@@ -217,7 +217,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Appliance Repair Technician",
     "enclaveId": "trades_construction",
     "categoryName": "Appliance & Equipment Repair",
-    "defaultHeadline": "Appliance Repair Technician · Fault Diagnosis, Refrigeration Basics, Washer/Dryer/Oven Repair",
+    "defaultHeadline": "Appliance Repair Technician Â· Fault Diagnosis, Refrigeration Basics, Washer/Dryer/Oven Repair",
     "typicalSkills": [
       "Fault Diagnosis",
       "Refrigeration Basics",
@@ -227,7 +227,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Appliance Model & Fault-Code Lookup",
-        "icon": "🧱",
+        "icon": "ðŸ§±",
         "description": "Working tool for Fault Diagnosis and Refrigeration Basics in day-to-day Appliance Repair Technician work",
         "badge": "Verified Practical"
       }
@@ -238,7 +238,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Phone, Laptop & Electronics Repair Technician",
     "enclaveId": "telecom_digital_infrastructure",
     "categoryName": "Consumer Electronics Repair",
-    "defaultHeadline": "Phone · Screen & Battery Replacement, Board-Level Diagnostics, Data Recovery",
+    "defaultHeadline": "Phone Â· Screen & Battery Replacement, Board-Level Diagnostics, Data Recovery",
     "typicalSkills": [
       "Screen & Battery Replacement",
       "Board-Level Diagnostics",
@@ -248,7 +248,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Repair Ticket & Parts Inventory Log",
-        "icon": "📡",
+        "icon": "ðŸ“¡",
         "description": "Working tool for Screen & Battery Replacement and Board-Level Diagnostics in day-to-day Phone work",
         "badge": "Verified Practical"
       }
@@ -259,7 +259,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Blacksmith, Farrier & Metal Artisan",
     "enclaveId": "trades_construction",
     "categoryName": "Traditional Metalworking",
-    "defaultHeadline": "Blacksmith · Forge Work, Hot & Cold Forming, Hoof Care & Shoeing",
+    "defaultHeadline": "Blacksmith Â· Forge Work, Hot & Cold Forming, Hoof Care & Shoeing",
     "typicalSkills": [
       "Forge Work",
       "Hot & Cold Forming",
@@ -269,7 +269,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Forge Project & Material Log",
-        "icon": "🧱",
+        "icon": "ðŸ§±",
         "description": "Working tool for Forge Work and Hot & Cold Forming in day-to-day Blacksmith work",
         "badge": "Verified Practical"
       }
@@ -280,7 +280,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Chimney Sweep & Fireplace Technician",
     "enclaveId": "trades_construction",
     "categoryName": "Heating & Venting Services",
-    "defaultHeadline": "Chimney Sweep & Fireplace Technician · Chimney Cleaning, Flue Inspection, Liner Repair",
+    "defaultHeadline": "Chimney Sweep & Fireplace Technician Â· Chimney Cleaning, Flue Inspection, Liner Repair",
     "typicalSkills": [
       "Chimney Cleaning",
       "Flue Inspection",
@@ -290,7 +290,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Chimney Inspection Report Builder",
-        "icon": "🧱",
+        "icon": "ðŸ§±",
         "description": "Working tool for Chimney Cleaning and Flue Inspection in day-to-day Chimney Sweep & Fireplace Technician work",
         "badge": "Verified Practical"
       }
@@ -301,7 +301,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Septic, Drain & Sewer Cleaning Technician",
     "enclaveId": "energy_utilities_environment",
     "categoryName": "Sanitation & Wastewater Services",
-    "defaultHeadline": "Septic · Septic Pumping, Drain Jetting, Camera Inspection",
+    "defaultHeadline": "Septic Â· Septic Pumping, Drain Jetting, Camera Inspection",
     "typicalSkills": [
       "Septic Pumping",
       "Drain Jetting",
@@ -311,7 +311,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Service Route & Inspection Log",
-        "icon": "⚡",
+        "icon": "âš¡",
         "description": "Working tool for Septic Pumping and Drain Jetting in day-to-day Septic work",
         "badge": "Verified Practical"
       }
@@ -322,7 +322,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Boat Builder & Marine Technician",
     "enclaveId": "aviation_aerospace_maritime",
     "categoryName": "Boatbuilding & Marine Repair",
-    "defaultHeadline": "Boat Builder & Marine Technician · Fibreglass & Wood Hull Work, Outboard/Inboard Engine Service, Marine Electrical",
+    "defaultHeadline": "Boat Builder & Marine Technician Â· Fibreglass & Wood Hull Work, Outboard/Inboard Engine Service, Marine Electrical",
     "typicalSkills": [
       "Fibreglass & Wood Hull Work",
       "Outboard/Inboard Engine Service",
@@ -332,7 +332,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Marine Service & Hull Repair Log",
-        "icon": "✈️",
+        "icon": "âœˆï¸",
         "description": "Working tool for Fibreglass & Wood Hull Work and Outboard/Inboard Engine Service in day-to-day Boat Builder & Marine Technician work",
         "badge": "Verified Practical"
       }
@@ -343,7 +343,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Window Cleaner & Pressure-Washing Specialist",
     "enclaveId": "culinary_hospitality_events",
     "categoryName": "Exterior Cleaning Services",
-    "defaultHeadline": "Window Cleaner & Pressure-Washing Specialist · Window & Facade Cleaning, Pressure Washing, Working at Heights",
+    "defaultHeadline": "Window Cleaner & Pressure-Washing Specialist Â· Window & Facade Cleaning, Pressure Washing, Working at Heights",
     "typicalSkills": [
       "Window & Facade Cleaning",
       "Pressure Washing",
@@ -353,7 +353,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Cleaning Quote & Route Planner",
-        "icon": "🍽️",
+        "icon": "ðŸ½ï¸",
         "description": "Working tool for Window & Facade Cleaning and Pressure Washing in day-to-day Window Cleaner & Pressure-Washing Specialist work",
         "badge": "Verified Practical"
       }
@@ -364,7 +364,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Stone Carver & Monument Mason",
     "enclaveId": "trades_construction",
     "categoryName": "Stonework & Monuments",
-    "defaultHeadline": "Stone Carver & Monument Mason · Stone Carving & Lettering, Masonry Restoration, Sandblasting",
+    "defaultHeadline": "Stone Carver & Monument Mason Â· Stone Carving & Lettering, Masonry Restoration, Sandblasting",
     "typicalSkills": [
       "Stone Carving & Lettering",
       "Masonry Restoration",
@@ -374,7 +374,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Stone Layout & Inscription Planner",
-        "icon": "🧱",
+        "icon": "ðŸ§±",
         "description": "Working tool for Stone Carving & Lettering and Masonry Restoration in day-to-day Stone Carver & Monument Mason work",
         "badge": "Verified Practical"
       }
@@ -385,7 +385,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "General Laborer & Construction Helper",
     "enclaveId": "trades_construction",
     "categoryName": "Entry-Level Site & Labor Work",
-    "defaultHeadline": "General Laborer & Construction Helper · Site Cleanup, Material Handling, Tool Use & Safety",
+    "defaultHeadline": "General Laborer & Construction Helper Â· Site Cleanup, Material Handling, Tool Use & Safety",
     "typicalSkills": [
       "Site Cleanup",
       "Material Handling",
@@ -395,7 +395,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Daily Task & Safety Checklist",
-        "icon": "🧱",
+        "icon": "ðŸ§±",
         "description": "Working tool for Site Cleanup and Material Handling in day-to-day General Laborer & Construction Helper work",
         "badge": "Verified Practical"
       }
@@ -406,7 +406,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Motorcycle & Small-Engine Mechanic",
     "enclaveId": "automotive_mechanics",
     "categoryName": "Powersports & Small Engines",
-    "defaultHeadline": "Motorcycle & Small-Engine Mechanic · Engine Diagnostics, Chain, Brake & Suspension Service, Carburetor & EFI Tuning",
+    "defaultHeadline": "Motorcycle & Small-Engine Mechanic Â· Engine Diagnostics, Chain, Brake & Suspension Service, Carburetor & EFI Tuning",
     "typicalSkills": [
       "Engine Diagnostics",
       "Chain, Brake & Suspension Service",
@@ -416,7 +416,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Motorcycle Service Checklist & Torque Spec Book",
-        "icon": "🚚",
+        "icon": "ðŸšš",
         "description": "Working tool for Engine Diagnostics and Chain, Brake & Suspension Service in day-to-day Motorcycle & Small-Engine Mechanic work",
         "badge": "Verified Practical"
       }
@@ -427,7 +427,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Tire Technician & Wheel Alignment Specialist",
     "enclaveId": "automotive_mechanics",
     "categoryName": "Tire & Wheel Service",
-    "defaultHeadline": "Tire Technician & Wheel Alignment Specialist · Tire Mounting & Balancing, Wheel Alignment, TPMS Service",
+    "defaultHeadline": "Tire Technician & Wheel Alignment Specialist Â· Tire Mounting & Balancing, Wheel Alignment, TPMS Service",
     "typicalSkills": [
       "Tire Mounting & Balancing",
       "Wheel Alignment",
@@ -437,7 +437,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Tire Size & Alignment Spec Lookup",
-        "icon": "🚚",
+        "icon": "ðŸšš",
         "description": "Working tool for Tire Mounting & Balancing and Wheel Alignment in day-to-day Tire Technician & Wheel Alignment Specialist work",
         "badge": "Verified Practical"
       }
@@ -448,7 +448,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Auto Glass Installer",
     "enclaveId": "automotive_mechanics",
     "categoryName": "Windshield & Glass Replacement",
-    "defaultHeadline": "Auto Glass Installer · Windshield Replacement, Chip Repair, ADAS Recalibration Basics",
+    "defaultHeadline": "Auto Glass Installer Â· Windshield Replacement, Chip Repair, ADAS Recalibration Basics",
     "typicalSkills": [
       "Windshield Replacement",
       "Chip Repair",
@@ -458,7 +458,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Windshield Adhesive Cure & Calibration Log",
-        "icon": "🚚",
+        "icon": "ðŸšš",
         "description": "Working tool for Windshield Replacement and Chip Repair in day-to-day Auto Glass Installer work",
         "badge": "Verified Practical"
       }
@@ -469,7 +469,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Car Detailer & Car-Wash Attendant",
     "enclaveId": "automotive_mechanics",
     "categoryName": "Vehicle Appearance Services",
-    "defaultHeadline": "Car Detailer & Car-Wash Attendant · Interior & Exterior Detailing, Paint Correction, Ceramic Coating",
+    "defaultHeadline": "Car Detailer & Car-Wash Attendant Â· Interior & Exterior Detailing, Paint Correction, Ceramic Coating",
     "typicalSkills": [
       "Interior & Exterior Detailing",
       "Paint Correction",
@@ -479,7 +479,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Detail Package Pricing & Checklist",
-        "icon": "🚚",
+        "icon": "ðŸšš",
         "description": "Working tool for Interior & Exterior Detailing and Paint Correction in day-to-day Car Detailer & Car-Wash Attendant work",
         "badge": "Verified Practical"
       }
@@ -490,7 +490,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Tow-Truck & Roadside Assistance Operator",
     "enclaveId": "automotive_mechanics",
     "categoryName": "Towing & Recovery",
-    "defaultHeadline": "Tow-Truck & Roadside Assistance Operator · Vehicle Recovery & Loading, Roadside Repairs, Safe Towing",
+    "defaultHeadline": "Tow-Truck & Roadside Assistance Operator Â· Vehicle Recovery & Loading, Roadside Repairs, Safe Towing",
     "typicalSkills": [
       "Vehicle Recovery & Loading",
       "Roadside Repairs",
@@ -500,7 +500,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Tow Dispatch & Incident Photo Log",
-        "icon": "🚚",
+        "icon": "ðŸšš",
         "description": "Working tool for Vehicle Recovery & Loading and Roadside Repairs in day-to-day Tow-Truck & Roadside Assistance Operator work",
         "badge": "Verified Practical"
       }
@@ -511,7 +511,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Bus & Coach Driver",
     "enclaveId": "automotive_mechanics",
     "categoryName": "Public Transport & Passenger Driving",
-    "defaultHeadline": "Bus & Coach Driver · Passenger Safety, Route Navigation, Fare Handling",
+    "defaultHeadline": "Bus & Coach Driver Â· Passenger Safety, Route Navigation, Fare Handling",
     "typicalSkills": [
       "Passenger Safety",
       "Route Navigation",
@@ -521,7 +521,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Route Schedule & Pre-Trip Inspection Log",
-        "icon": "🚚",
+        "icon": "ðŸšš",
         "description": "Working tool for Passenger Safety and Route Navigation in day-to-day Bus & Coach Driver work",
         "badge": "Verified Practical"
       }
@@ -532,7 +532,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "School Bus Driver",
     "enclaveId": "automotive_mechanics",
     "categoryName": "Student Transport",
-    "defaultHeadline": "School Bus Driver · Student Safety, Pre-Trip Inspection, Route Management",
+    "defaultHeadline": "School Bus Driver Â· Student Safety, Pre-Trip Inspection, Route Management",
     "typicalSkills": [
       "Student Safety",
       "Pre-Trip Inspection",
@@ -542,7 +542,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "School Bus Route & Safety Checklist",
-        "icon": "🚚",
+        "icon": "ðŸšš",
         "description": "Working tool for Student Safety and Pre-Trip Inspection in day-to-day School Bus Driver work",
         "badge": "Verified Practical"
       }
@@ -553,7 +553,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Motorcycle-Taxi (Boda-Boda), Tuk-Tuk & Rickshaw Operator",
     "enclaveId": "automotive_mechanics",
     "categoryName": "Local Passenger Transport",
-    "defaultHeadline": "Motorcycle-Taxi (Boda-Boda) · Safe Riding, Passenger Service, Vehicle Upkeep",
+    "defaultHeadline": "Motorcycle-Taxi (Boda-Boda) Â· Safe Riding, Passenger Service, Vehicle Upkeep",
     "typicalSkills": [
       "Safe Riding",
       "Passenger Service",
@@ -563,7 +563,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Trip Earnings & Maintenance Ledger",
-        "icon": "🚚",
+        "icon": "ðŸšš",
         "description": "Working tool for Safe Riding and Passenger Service in day-to-day Motorcycle-Taxi (Boda-Boda) work",
         "badge": "Verified Practical"
       }
@@ -574,7 +574,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Forklift & Material-Handling Equipment Operator",
     "enclaveId": "automotive_mechanics",
     "categoryName": "Warehouse & Material Handling",
-    "defaultHeadline": "Forklift & Material-Handling Equipment Operator · Forklift Operation, Pallet Racking, Load Safety",
+    "defaultHeadline": "Forklift & Material-Handling Equipment Operator Â· Forklift Operation, Pallet Racking, Load Safety",
     "typicalSkills": [
       "Forklift Operation",
       "Pallet Racking",
@@ -584,7 +584,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Forklift Pre-Use Inspection & Load Chart",
-        "icon": "🚚",
+        "icon": "ðŸšš",
         "description": "Working tool for Forklift Operation and Pallet Racking in day-to-day Forklift & Material-Handling Equipment Operator work",
         "badge": "Verified Practical"
       }
@@ -595,7 +595,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Train Conductor & Rail Operator",
     "enclaveId": "automotive_mechanics",
     "categoryName": "Rail Operations",
-    "defaultHeadline": "Train Conductor & Rail Operator · Signalling Rules, Train Handling, Passenger or Freight Safety",
+    "defaultHeadline": "Train Conductor & Rail Operator Â· Signalling Rules, Train Handling, Passenger or Freight Safety",
     "typicalSkills": [
       "Signalling Rules",
       "Train Handling",
@@ -605,7 +605,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Rail Operating Rules & Trip Log",
-        "icon": "🚚",
+        "icon": "ðŸšš",
         "description": "Working tool for Signalling Rules and Train Handling in day-to-day Train Conductor & Rail Operator work",
         "badge": "Verified Practical"
       }
@@ -616,7 +616,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Mover, Removals & Furniture Delivery Crew",
     "enclaveId": "automotive_mechanics",
     "categoryName": "Moving & Relocation",
-    "defaultHeadline": "Mover · Safe Lifting, Packing & Wrapping, Furniture Assembly",
+    "defaultHeadline": "Mover Â· Safe Lifting, Packing & Wrapping, Furniture Assembly",
     "typicalSkills": [
       "Safe Lifting",
       "Packing & Wrapping",
@@ -626,7 +626,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Move Inventory & Quote Sheet",
-        "icon": "🚚",
+        "icon": "ðŸšš",
         "description": "Working tool for Safe Lifting and Packing & Wrapping in day-to-day Mover work",
         "badge": "Verified Practical"
       }
@@ -637,7 +637,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Parking Attendant & Valet",
     "enclaveId": "automotive_mechanics",
     "categoryName": "Parking & Vehicle Services",
-    "defaultHeadline": "Parking Attendant & Valet · Customer Service, Safe Vehicle Handling, Payment Handling",
+    "defaultHeadline": "Parking Attendant & Valet Â· Customer Service, Safe Vehicle Handling, Payment Handling",
     "typicalSkills": [
       "Customer Service",
       "Safe Vehicle Handling",
@@ -647,7 +647,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Valet Ticket & Cash Log",
-        "icon": "🚚",
+        "icon": "ðŸšš",
         "description": "Working tool for Customer Service and Safe Vehicle Handling in day-to-day Parking Attendant & Valet work",
         "badge": "Verified Practical"
       }
@@ -658,7 +658,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Mobile Mechanic & Roadside Repair Technician",
     "enclaveId": "automotive_mechanics",
     "categoryName": "Mobile Auto Services",
-    "defaultHeadline": "Mobile Mechanic & Roadside Repair Technician · On-Site Diagnostics, Battery & Starter Replacement, Brake & Fluid Service",
+    "defaultHeadline": "Mobile Mechanic & Roadside Repair Technician Â· On-Site Diagnostics, Battery & Starter Replacement, Brake & Fluid Service",
     "typicalSkills": [
       "On-Site Diagnostics",
       "Battery & Starter Replacement",
@@ -668,7 +668,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Mobile Job Ticket & Parts Van Inventory",
-        "icon": "🚚",
+        "icon": "ðŸšš",
         "description": "Working tool for On-Site Diagnostics and Battery & Starter Replacement in day-to-day Mobile Mechanic & Roadside Repair Technician work",
         "badge": "Verified Practical"
       }
@@ -679,7 +679,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Chauffeur & Executive Driver",
     "enclaveId": "automotive_mechanics",
     "categoryName": "Premium Passenger Transport",
-    "defaultHeadline": "Chauffeur & Executive Driver · Defensive & Executive Driving, Route Planning, Client Discretion",
+    "defaultHeadline": "Chauffeur & Executive Driver Â· Defensive & Executive Driving, Route Planning, Client Discretion",
     "typicalSkills": [
       "Defensive & Executive Driving",
       "Route Planning",
@@ -689,7 +689,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Booking & Mileage Log",
-        "icon": "🚚",
+        "icon": "ðŸšš",
         "description": "Working tool for Defensive & Executive Driving and Route Planning in day-to-day Chauffeur & Executive Driver work",
         "badge": "Verified Practical"
       }
@@ -700,7 +700,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Car Rental Agent & Auto Sales Consultant",
     "enclaveId": "commerce_small_business",
     "categoryName": "Automotive Retail & Rental",
-    "defaultHeadline": "Car Rental Agent & Auto Sales Consultant · Customer Needs Assessment, Vehicle Knowledge, Contracts & Financing Basics",
+    "defaultHeadline": "Car Rental Agent & Auto Sales Consultant Â· Customer Needs Assessment, Vehicle Knowledge, Contracts & Financing Basics",
     "typicalSkills": [
       "Customer Needs Assessment",
       "Vehicle Knowledge",
@@ -710,7 +710,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Vehicle Inventory & Deal Desk",
-        "icon": "🛍️",
+        "icon": "ðŸ›ï¸",
         "description": "Working tool for Customer Needs Assessment and Vehicle Knowledge in day-to-day Car Rental Agent & Auto Sales Consultant work",
         "badge": "Verified Practical"
       }
@@ -721,7 +721,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Poultry & Egg Farmer",
     "enclaveId": "agriculture_natural_resources",
     "categoryName": "Poultry & Small Livestock",
-    "defaultHeadline": "Poultry & Egg Farmer · Flock Management, Feed & Biosecurity, Egg Handling",
+    "defaultHeadline": "Poultry & Egg Farmer Â· Flock Management, Feed & Biosecurity, Egg Handling",
     "typicalSkills": [
       "Flock Management",
       "Feed & Biosecurity",
@@ -731,7 +731,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Flock Health & Egg Production Log",
-        "icon": "🌾",
+        "icon": "ðŸŒ¾",
         "description": "Working tool for Flock Management and Feed & Biosecurity in day-to-day Poultry & Egg Farmer work",
         "badge": "Verified Practical"
       }
@@ -742,7 +742,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Coffee, Cocoa, Tea & Cash-Crop Farmer",
     "enclaveId": "agriculture_natural_resources",
     "categoryName": "Plantation & Cash Crops",
-    "defaultHeadline": "Coffee · Crop Husbandry, Pruning & Pest Control, Harvest & Post-Harvest Handling",
+    "defaultHeadline": "Coffee Â· Crop Husbandry, Pruning & Pest Control, Harvest & Post-Harvest Handling",
     "typicalSkills": [
       "Crop Husbandry",
       "Pruning & Pest Control",
@@ -752,7 +752,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Plantation Yield & Harvest Calendar",
-        "icon": "🌾",
+        "icon": "ðŸŒ¾",
         "description": "Working tool for Crop Husbandry and Pruning & Pest Control in day-to-day Coffee work",
         "badge": "Verified Practical"
       }
@@ -763,7 +763,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Shepherd, Goat & Sheep Herder",
     "enclaveId": "agriculture_natural_resources",
     "categoryName": "Grazing Livestock",
-    "defaultHeadline": "Shepherd · Flock Handling, Pasture Management, Lambing/Kidding",
+    "defaultHeadline": "Shepherd Â· Flock Handling, Pasture Management, Lambing/Kidding",
     "typicalSkills": [
       "Flock Handling",
       "Pasture Management",
@@ -773,7 +773,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Herd Count & Pasture Rotation Log",
-        "icon": "🌾",
+        "icon": "ðŸŒ¾",
         "description": "Working tool for Flock Handling and Pasture Management in day-to-day Shepherd work",
         "badge": "Verified Practical"
       }
@@ -784,7 +784,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Horticulturist & Plant Nursery Grower",
     "enclaveId": "agriculture_natural_resources",
     "categoryName": "Horticulture & Nurseries",
-    "defaultHeadline": "Horticulturist & Plant Nursery Grower · Plant Propagation, Greenhouse Management, Integrated Pest Management",
+    "defaultHeadline": "Horticulturist & Plant Nursery Grower Â· Plant Propagation, Greenhouse Management, Integrated Pest Management",
     "typicalSkills": [
       "Plant Propagation",
       "Greenhouse Management",
@@ -794,7 +794,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Greenhouse Climate & Crop Planner",
-        "icon": "🌾",
+        "icon": "ðŸŒ¾",
         "description": "Working tool for Plant Propagation and Greenhouse Management in day-to-day Horticulturist & Plant Nursery Grower work",
         "badge": "Verified Practical"
       }
@@ -805,7 +805,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Vineyard & Orchard Worker",
     "enclaveId": "agriculture_natural_resources",
     "categoryName": "Vineyards & Orchards",
-    "defaultHeadline": "Vineyard & Orchard Worker · Pruning & Training, Harvest, Spray Application Safety",
+    "defaultHeadline": "Vineyard & Orchard Worker Â· Pruning & Training, Harvest, Spray Application Safety",
     "typicalSkills": [
       "Pruning & Training",
       "Harvest",
@@ -815,7 +815,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Orchard Block & Harvest Log",
-        "icon": "🌾",
+        "icon": "ðŸŒ¾",
         "description": "Working tool for Pruning & Training and Harvest in day-to-day Vineyard & Orchard Worker work",
         "badge": "Verified Practical"
       }
@@ -826,7 +826,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Sawmill & Timber Processing Operator",
     "enclaveId": "agriculture_natural_resources",
     "categoryName": "Wood Processing",
-    "defaultHeadline": "Sawmill & Timber Processing Operator · Log Scaling & Cutting, Saw Maintenance, Lumber Grading",
+    "defaultHeadline": "Sawmill & Timber Processing Operator Â· Log Scaling & Cutting, Saw Maintenance, Lumber Grading",
     "typicalSkills": [
       "Log Scaling & Cutting",
       "Saw Maintenance",
@@ -836,7 +836,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Log Yield & Lumber Grade Tally",
-        "icon": "🌾",
+        "icon": "ðŸŒ¾",
         "description": "Working tool for Log Scaling & Cutting and Saw Maintenance in day-to-day Sawmill & Timber Processing Operator work",
         "badge": "Verified Practical"
       }
@@ -847,7 +847,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Charcoal & Firewood Producer",
     "enclaveId": "agriculture_natural_resources",
     "categoryName": "Forest Products",
-    "defaultHeadline": "Charcoal & Firewood Producer · Wood Harvesting, Kiln Operation, Sustainable Sourcing",
+    "defaultHeadline": "Charcoal & Firewood Producer Â· Wood Harvesting, Kiln Operation, Sustainable Sourcing",
     "typicalSkills": [
       "Wood Harvesting",
       "Kiln Operation",
@@ -857,7 +857,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Production Batch & Sales Ledger",
-        "icon": "🌾",
+        "icon": "ðŸŒ¾",
         "description": "Working tool for Wood Harvesting and Kiln Operation in day-to-day Charcoal & Firewood Producer work",
         "badge": "Verified Practical"
       }
@@ -868,7 +868,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Irrigation Installer & Water-Management Technician",
     "enclaveId": "agriculture_natural_resources",
     "categoryName": "Irrigation & Water Management",
-    "defaultHeadline": "Irrigation Installer & Water-Management Technician · System Design, Drip & Sprinkler Install, Pump Maintenance",
+    "defaultHeadline": "Irrigation Installer & Water-Management Technician Â· System Design, Drip & Sprinkler Install, Pump Maintenance",
     "typicalSkills": [
       "System Design",
       "Drip & Sprinkler Install",
@@ -878,7 +878,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Irrigation Zone & Flow Calculator",
-        "icon": "🌾",
+        "icon": "ðŸŒ¾",
         "description": "Working tool for System Design and Drip & Sprinkler Install in day-to-day Irrigation Installer & Water-Management Technician work",
         "badge": "Verified Practical"
       }
@@ -889,7 +889,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Gardener & Groundskeeper",
     "enclaveId": "agriculture_natural_resources",
     "categoryName": "Grounds & Garden Care",
-    "defaultHeadline": "Gardener & Groundskeeper · Lawn & Plant Care, Pruning, Equipment Use",
+    "defaultHeadline": "Gardener & Groundskeeper Â· Lawn & Plant Care, Pruning, Equipment Use",
     "typicalSkills": [
       "Lawn & Plant Care",
       "Pruning",
@@ -899,7 +899,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Grounds Maintenance Schedule",
-        "icon": "🌾",
+        "icon": "ðŸŒ¾",
         "description": "Working tool for Lawn & Plant Care and Pruning in day-to-day Gardener & Groundskeeper work",
         "badge": "Verified Practical"
       }
@@ -910,7 +910,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Golf Greenkeeper & Turf Manager",
     "enclaveId": "agriculture_natural_resources",
     "categoryName": "Turf & Sports-Field Management",
-    "defaultHeadline": "Golf Greenkeeper & Turf Manager · Turf Science, Mowing & Aeration, Irrigation Scheduling",
+    "defaultHeadline": "Golf Greenkeeper & Turf Manager Â· Turf Science, Mowing & Aeration, Irrigation Scheduling",
     "typicalSkills": [
       "Turf Science",
       "Mowing & Aeration",
@@ -920,7 +920,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Turf Condition & Inputs Log",
-        "icon": "🌾",
+        "icon": "ðŸŒ¾",
         "description": "Working tool for Turf Science and Mowing & Aeration in day-to-day Golf Greenkeeper & Turf Manager work",
         "badge": "Verified Practical"
       }
@@ -931,7 +931,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Pig & Pork Farmer",
     "enclaveId": "agriculture_natural_resources",
     "categoryName": "Swine Production",
-    "defaultHeadline": "Pig & Pork Farmer · Herd Management, Feed Conversion, Biosecurity",
+    "defaultHeadline": "Pig & Pork Farmer Â· Herd Management, Feed Conversion, Biosecurity",
     "typicalSkills": [
       "Herd Management",
       "Feed Conversion",
@@ -941,7 +941,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Herd Performance & Biosecurity Log",
-        "icon": "🌾",
+        "icon": "ðŸŒ¾",
         "description": "Working tool for Herd Management and Feed Conversion in day-to-day Pig & Pork Farmer work",
         "badge": "Verified Practical"
       }
@@ -952,7 +952,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Fish Processor & Seafood Worker",
     "enclaveId": "agriculture_natural_resources",
     "categoryName": "Seafood Processing",
-    "defaultHeadline": "Fish Processor & Seafood Worker · Filleting & Cutting, Cold Chain, Food Safety (HACCP)",
+    "defaultHeadline": "Fish Processor & Seafood Worker Â· Filleting & Cutting, Cold Chain, Food Safety (HACCP)",
     "typicalSkills": [
       "Filleting & Cutting",
       "Cold Chain",
@@ -962,7 +962,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Catch Intake & HACCP Log",
-        "icon": "🌾",
+        "icon": "ðŸŒ¾",
         "description": "Working tool for Filleting & Cutting and Cold Chain in day-to-day Fish Processor & Seafood Worker work",
         "badge": "Verified Practical"
       }
@@ -973,7 +973,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Wildland Firefighter, Hunter & Trapper",
     "enclaveId": "agriculture_natural_resources",
     "categoryName": "Wildland & Wildlife Work",
-    "defaultHeadline": "Wildland Firefighter · Wildfire Suppression, Land Navigation, Wildlife Management",
+    "defaultHeadline": "Wildland Firefighter Â· Wildfire Suppression, Land Navigation, Wildlife Management",
     "typicalSkills": [
       "Wildfire Suppression",
       "Land Navigation",
@@ -983,7 +983,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Fire Line & Field Safety Log",
-        "icon": "🌾",
+        "icon": "ðŸŒ¾",
         "description": "Working tool for Wildfire Suppression and Land Navigation in day-to-day Wildland Firefighter work",
         "badge": "Verified Practical"
       }
@@ -994,7 +994,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Makeup Artist & Beauty Consultant",
     "enclaveId": "personal_services_wellness",
     "categoryName": "Makeup & Beauty",
-    "defaultHeadline": "Makeup Artist & Beauty Consultant · Skin Prep & Colour Theory, Bridal & Editorial Makeup, Hygiene & Sanitation",
+    "defaultHeadline": "Makeup Artist & Beauty Consultant Â· Skin Prep & Colour Theory, Bridal & Editorial Makeup, Hygiene & Sanitation",
     "typicalSkills": [
       "Skin Prep & Colour Theory",
       "Bridal & Editorial Makeup",
@@ -1004,7 +1004,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Client Look Book & Kit Hygiene Log",
-        "icon": "💈",
+        "icon": "ðŸ’ˆ",
         "description": "Working tool for Skin Prep & Colour Theory and Bridal & Editorial Makeup in day-to-day Makeup Artist & Beauty Consultant work",
         "badge": "Verified Practical"
       }
@@ -1015,7 +1015,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Hair Braider & Weave Specialist",
     "enclaveId": "personal_services_wellness",
     "categoryName": "Natural & Protective Hair Styling",
-    "defaultHeadline": "Hair Braider & Weave Specialist · Braiding & Twisting, Weave & Extension Install, Scalp Care",
+    "defaultHeadline": "Hair Braider & Weave Specialist Â· Braiding & Twisting, Weave & Extension Install, Scalp Care",
     "typicalSkills": [
       "Braiding & Twisting",
       "Weave & Extension Install",
@@ -1025,7 +1025,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Braid Style Pricing & Booking Calendar",
-        "icon": "💈",
+        "icon": "ðŸ’ˆ",
         "description": "Working tool for Braiding & Twisting and Weave & Extension Install in day-to-day Hair Braider & Weave Specialist work",
         "badge": "Verified Practical"
       }
@@ -1036,7 +1036,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Loctician & Natural-Hair Specialist",
     "enclaveId": "personal_services_wellness",
     "categoryName": "Natural Hair Care",
-    "defaultHeadline": "Loctician & Natural-Hair Specialist · Loc Installation & Maintenance, Scalp Treatment, Natural Hair Styling",
+    "defaultHeadline": "Loctician & Natural-Hair Specialist Â· Loc Installation & Maintenance, Scalp Treatment, Natural Hair Styling",
     "typicalSkills": [
       "Loc Installation & Maintenance",
       "Scalp Treatment",
@@ -1046,7 +1046,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Loc Maintenance Schedule & Client Notes",
-        "icon": "💈",
+        "icon": "ðŸ’ˆ",
         "description": "Working tool for Loc Installation & Maintenance and Scalp Treatment in day-to-day Loctician & Natural-Hair Specialist work",
         "badge": "Verified Practical"
       }
@@ -1057,7 +1057,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Wig Maker & Hair Replacement Specialist",
     "enclaveId": "personal_services_wellness",
     "categoryName": "Hairpieces & Wig Making",
-    "defaultHeadline": "Wig Maker & Hair Replacement Specialist · Wig Construction, Ventilating, Colour Matching",
+    "defaultHeadline": "Wig Maker & Hair Replacement Specialist Â· Wig Construction, Ventilating, Colour Matching",
     "typicalSkills": [
       "Wig Construction",
       "Ventilating",
@@ -1067,7 +1067,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Wig Pattern & Fit Record",
-        "icon": "💈",
+        "icon": "ðŸ’ˆ",
         "description": "Working tool for Wig Construction and Ventilating in day-to-day Wig Maker & Hair Replacement Specialist work",
         "badge": "Verified Practical"
       }
@@ -1078,7 +1078,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Henna & Body-Art Artist",
     "enclaveId": "personal_services_wellness",
     "categoryName": "Henna & Body Art",
-    "defaultHeadline": "Henna & Body-Art Artist · Henna Design, Skin Safety, Event Booking",
+    "defaultHeadline": "Henna & Body-Art Artist Â· Henna Design, Skin Safety, Event Booking",
     "typicalSkills": [
       "Henna Design",
       "Skin Safety",
@@ -1088,7 +1088,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Design Portfolio & Booking Sheet",
-        "icon": "💈",
+        "icon": "ðŸ’ˆ",
         "description": "Working tool for Henna Design and Skin Safety in day-to-day Henna & Body-Art Artist work",
         "badge": "Verified Practical"
       }
@@ -1099,7 +1099,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Eyelash & Eyebrow Technician",
     "enclaveId": "personal_services_wellness",
     "categoryName": "Lash & Brow Services",
-    "defaultHeadline": "Eyelash & Eyebrow Technician · Lash Extensions, Brow Lamination & Shaping, Allergy Patch Testing",
+    "defaultHeadline": "Eyelash & Eyebrow Technician Â· Lash Extensions, Brow Lamination & Shaping, Allergy Patch Testing",
     "typicalSkills": [
       "Lash Extensions",
       "Brow Lamination & Shaping",
@@ -1109,7 +1109,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Client Patch-Test & Appointment Log",
-        "icon": "💈",
+        "icon": "ðŸ’ˆ",
         "description": "Working tool for Lash Extensions and Brow Lamination & Shaping in day-to-day Eyelash & Eyebrow Technician work",
         "badge": "Verified Practical"
       }
@@ -1120,7 +1120,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Cobbler & Shoe Repair Specialist",
     "enclaveId": "manufacturing_industrial",
     "categoryName": "Footwear & Leather Repair",
-    "defaultHeadline": "Cobbler & Shoe Repair Specialist · Sole & Heel Replacement, Leather Stitching, Dyeing & Finishing",
+    "defaultHeadline": "Cobbler & Shoe Repair Specialist Â· Sole & Heel Replacement, Leather Stitching, Dyeing & Finishing",
     "typicalSkills": [
       "Sole & Heel Replacement",
       "Leather Stitching",
@@ -1130,7 +1130,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Repair Ticket & Materials Log",
-        "icon": "🏭",
+        "icon": "ðŸ­",
         "description": "Working tool for Sole & Heel Replacement and Leather Stitching in day-to-day Cobbler & Shoe Repair Specialist work",
         "badge": "Verified Practical"
       }
@@ -1141,7 +1141,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Life, Career & Wellness Coach",
     "enclaveId": "personal_services_wellness",
     "categoryName": "Coaching & Personal Development",
-    "defaultHeadline": "Life · Active Listening, Goal Setting, Accountability Frameworks",
+    "defaultHeadline": "Life Â· Active Listening, Goal Setting, Accountability Frameworks",
     "typicalSkills": [
       "Active Listening",
       "Goal Setting",
@@ -1151,7 +1151,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Client Session & Goal Tracker",
-        "icon": "💈",
+        "icon": "ðŸ’ˆ",
         "description": "Working tool for Active Listening and Goal Setting in day-to-day Life work",
         "badge": "Verified Practical"
       }
@@ -1162,7 +1162,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Dog Walker & Pet Sitter",
     "enclaveId": "personal_services_wellness",
     "categoryName": "Pet Care Services",
-    "defaultHeadline": "Dog Walker & Pet Sitter · Animal Handling, Pet First Aid, Scheduling",
+    "defaultHeadline": "Dog Walker & Pet Sitter Â· Animal Handling, Pet First Aid, Scheduling",
     "typicalSkills": [
       "Animal Handling",
       "Pet First Aid",
@@ -1172,7 +1172,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Pet Visit Log & Client Notes",
-        "icon": "💈",
+        "icon": "ðŸ’ˆ",
         "description": "Working tool for Animal Handling and Pet First Aid in day-to-day Dog Walker & Pet Sitter work",
         "badge": "Verified Practical"
       }
@@ -1183,7 +1183,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "House Sitter & Property Caretaker",
     "enclaveId": "personal_services_wellness",
     "categoryName": "Home & Property Care",
-    "defaultHeadline": "House Sitter & Property Caretaker · Security Awareness, Plant & Pet Care, Property Checks",
+    "defaultHeadline": "House Sitter & Property Caretaker Â· Security Awareness, Plant & Pet Care, Property Checks",
     "typicalSkills": [
       "Security Awareness",
       "Plant & Pet Care",
@@ -1193,7 +1193,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Home-Sitting Checklist & Key Log",
-        "icon": "💈",
+        "icon": "ðŸ’ˆ",
         "description": "Working tool for Security Awareness and Plant & Pet Care in day-to-day House Sitter & Property Caretaker work",
         "badge": "Verified Practical"
       }
@@ -1204,7 +1204,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Wedding Officiant & Celebrant",
     "enclaveId": "personal_services_wellness",
     "categoryName": "Ceremonies & Celebrations",
-    "defaultHeadline": "Wedding Officiant & Celebrant · Ceremony Writing, Public Speaking, Legal Paperwork",
+    "defaultHeadline": "Wedding Officiant & Celebrant Â· Ceremony Writing, Public Speaking, Legal Paperwork",
     "typicalSkills": [
       "Ceremony Writing",
       "Public Speaking",
@@ -1214,7 +1214,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Ceremony Script & Licence Tracker",
-        "icon": "💈",
+        "icon": "ðŸ’ˆ",
         "description": "Working tool for Ceremony Writing and Public Speaking in day-to-day Wedding Officiant & Celebrant work",
         "badge": "Verified Practical"
       }
@@ -1225,7 +1225,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Personal Stylist & Image Consultant",
     "enclaveId": "personal_services_wellness",
     "categoryName": "Style & Image Consulting",
-    "defaultHeadline": "Personal Stylist & Image Consultant · Wardrobe Audits, Colour & Body Analysis, Shopping Consultations",
+    "defaultHeadline": "Personal Stylist & Image Consultant Â· Wardrobe Audits, Colour & Body Analysis, Shopping Consultations",
     "typicalSkills": [
       "Wardrobe Audits",
       "Colour & Body Analysis",
@@ -1235,7 +1235,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Client Wardrobe & Lookbook Planner",
-        "icon": "💈",
+        "icon": "ðŸ’ˆ",
         "description": "Working tool for Wardrobe Audits and Colour & Body Analysis in day-to-day Personal Stylist & Image Consultant work",
         "badge": "Verified Practical"
       }
@@ -1246,7 +1246,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Chef, Line Cook & Kitchen Professional",
     "enclaveId": "culinary_hospitality_events",
     "categoryName": "Professional Kitchens",
-    "defaultHeadline": "Chef · Knife Skills, Station Cooking, Menu Costing",
+    "defaultHeadline": "Chef Â· Knife Skills, Station Cooking, Menu Costing",
     "typicalSkills": [
       "Knife Skills",
       "Station Cooking",
@@ -1256,7 +1256,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Recipe Costing & Prep List",
-        "icon": "🍽️",
+        "icon": "ðŸ½ï¸",
         "description": "Working tool for Knife Skills and Station Cooking in day-to-day Chef work",
         "badge": "Verified Practical"
       }
@@ -1267,7 +1267,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Bartender & Mixologist",
     "enclaveId": "culinary_hospitality_events",
     "categoryName": "Bars & Beverage Service",
-    "defaultHeadline": "Bartender & Mixologist · Cocktail Preparation, Responsible Alcohol Service, Cash Handling",
+    "defaultHeadline": "Bartender & Mixologist Â· Cocktail Preparation, Responsible Alcohol Service, Cash Handling",
     "typicalSkills": [
       "Cocktail Preparation",
       "Responsible Alcohol Service",
@@ -1277,7 +1277,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Cocktail Spec & Inventory Sheet",
-        "icon": "🍽️",
+        "icon": "ðŸ½ï¸",
         "description": "Working tool for Cocktail Preparation and Responsible Alcohol Service in day-to-day Bartender & Mixologist work",
         "badge": "Verified Practical"
       }
@@ -1288,7 +1288,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Barista & Coffee-Shop Professional",
     "enclaveId": "culinary_hospitality_events",
     "categoryName": "Coffee & Cafe Service",
-    "defaultHeadline": "Barista & Coffee-Shop Professional · Espresso Extraction, Milk Texturing, Customer Service",
+    "defaultHeadline": "Barista & Coffee-Shop Professional Â· Espresso Extraction, Milk Texturing, Customer Service",
     "typicalSkills": [
       "Espresso Extraction",
       "Milk Texturing",
@@ -1298,7 +1298,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Espresso Dial-In & Daily Cafe Log",
-        "icon": "🍽️",
+        "icon": "ðŸ½ï¸",
         "description": "Working tool for Espresso Extraction and Milk Texturing in day-to-day Barista & Coffee-Shop Professional work",
         "badge": "Verified Practical"
       }
@@ -1309,7 +1309,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Food-Truck & Mobile Kitchen Operator",
     "enclaveId": "culinary_hospitality_events",
     "categoryName": "Mobile Food Business",
-    "defaultHeadline": "Food-Truck & Mobile Kitchen Operator · Menu Development, Food Safety, Permits & Locations",
+    "defaultHeadline": "Food-Truck & Mobile Kitchen Operator Â· Menu Development, Food Safety, Permits & Locations",
     "typicalSkills": [
       "Menu Development",
       "Food Safety",
@@ -1319,7 +1319,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Truck Route, Permit & Daily Sales Log",
-        "icon": "🍽️",
+        "icon": "ðŸ½ï¸",
         "description": "Working tool for Menu Development and Food Safety in day-to-day Food-Truck & Mobile Kitchen Operator work",
         "badge": "Verified Practical"
       }
@@ -1330,7 +1330,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Hotel Front-Desk Agent & Concierge",
     "enclaveId": "culinary_hospitality_events",
     "categoryName": "Hotels & Guest Services",
-    "defaultHeadline": "Hotel Front-Desk Agent & Concierge · Guest Check-In, Reservations Systems (PMS), Problem Solving",
+    "defaultHeadline": "Hotel Front-Desk Agent & Concierge Â· Guest Check-In, Reservations Systems (PMS), Problem Solving",
     "typicalSkills": [
       "Guest Check-In",
       "Reservations Systems (PMS)",
@@ -1340,7 +1340,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Reservation & Guest-Request Board",
-        "icon": "🍽️",
+        "icon": "ðŸ½ï¸",
         "description": "Working tool for Guest Check-In and Reservations Systems (PMS) in day-to-day Hotel Front-Desk Agent & Concierge work",
         "badge": "Verified Practical"
       }
@@ -1351,7 +1351,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Hotel Housekeeper & Room Attendant",
     "enclaveId": "culinary_hospitality_events",
     "categoryName": "Hotel Housekeeping",
-    "defaultHeadline": "Hotel Housekeeper & Room Attendant · Room Turnover, Linen Handling, Sanitation",
+    "defaultHeadline": "Hotel Housekeeper & Room Attendant Â· Room Turnover, Linen Handling, Sanitation",
     "typicalSkills": [
       "Room Turnover",
       "Linen Handling",
@@ -1361,7 +1361,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Room Status & Supply Checklist",
-        "icon": "🍽️",
+        "icon": "ðŸ½ï¸",
         "description": "Working tool for Room Turnover and Linen Handling in day-to-day Hotel Housekeeper & Room Attendant work",
         "badge": "Verified Practical"
       }
@@ -1372,7 +1372,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Kitchen Porter, Dishwasher & Prep Assistant",
     "enclaveId": "culinary_hospitality_events",
     "categoryName": "Kitchen Support",
-    "defaultHeadline": "Kitchen Porter · Dish Machine Operation, Prep Support, Sanitation",
+    "defaultHeadline": "Kitchen Porter Â· Dish Machine Operation, Prep Support, Sanitation",
     "typicalSkills": [
       "Dish Machine Operation",
       "Prep Support",
@@ -1382,7 +1382,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Cleaning & Prep Checklist",
-        "icon": "🍽️",
+        "icon": "ðŸ½ï¸",
         "description": "Working tool for Dish Machine Operation and Prep Support in day-to-day Kitchen Porter work",
         "badge": "Verified Practical"
       }
@@ -1393,7 +1393,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "DJ, MC & Event Entertainer",
     "enclaveId": "culinary_hospitality_events",
     "categoryName": "Events & Entertainment",
-    "defaultHeadline": "DJ · Mixing & Beatmatching, Crowd Reading, Sound Equipment Setup",
+    "defaultHeadline": "DJ Â· Mixing & Beatmatching, Crowd Reading, Sound Equipment Setup",
     "typicalSkills": [
       "Mixing & Beatmatching",
       "Crowd Reading",
@@ -1403,7 +1403,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Set List & Event Rider Planner",
-        "icon": "🍽️",
+        "icon": "ðŸ½ï¸",
         "description": "Working tool for Mixing & Beatmatching and Crowd Reading in day-to-day DJ work",
         "badge": "Verified Practical"
       }
@@ -1414,7 +1414,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Event Decorator & Floral Designer",
     "enclaveId": "culinary_hospitality_events",
     "categoryName": "Event Styling & Floristry",
-    "defaultHeadline": "Event Decorator & Floral Designer · Floral Design, Venue Styling, Budgeting",
+    "defaultHeadline": "Event Decorator & Floral Designer Â· Floral Design, Venue Styling, Budgeting",
     "typicalSkills": [
       "Floral Design",
       "Venue Styling",
@@ -1424,7 +1424,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Event Mood Board & Supply Planner",
-        "icon": "🍽️",
+        "icon": "ðŸ½ï¸",
         "description": "Working tool for Floral Design and Venue Styling in day-to-day Event Decorator & Floral Designer work",
         "badge": "Verified Practical"
       }
@@ -1435,7 +1435,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Hotel & Restaurant Manager",
     "enclaveId": "culinary_hospitality_events",
     "categoryName": "Hospitality Management",
-    "defaultHeadline": "Hotel & Restaurant Manager · Operations Management, Staff Scheduling, Cost Control",
+    "defaultHeadline": "Hotel & Restaurant Manager Â· Operations Management, Staff Scheduling, Cost Control",
     "typicalSkills": [
       "Operations Management",
       "Staff Scheduling",
@@ -1445,7 +1445,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Daily Ops & Labour-Cost Dashboard",
-        "icon": "🍽️",
+        "icon": "ðŸ½ï¸",
         "description": "Working tool for Operations Management and Staff Scheduling in day-to-day Hotel & Restaurant Manager work",
         "badge": "Verified Practical"
       }
@@ -1456,7 +1456,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Cashier & Retail Sales Associate",
     "enclaveId": "commerce_small_business",
     "categoryName": "Retail & Point of Sale",
-    "defaultHeadline": "Cashier & Retail Sales Associate · POS Operation, Customer Service, Stock Replenishment",
+    "defaultHeadline": "Cashier & Retail Sales Associate Â· POS Operation, Customer Service, Stock Replenishment",
     "typicalSkills": [
       "POS Operation",
       "Customer Service",
@@ -1466,7 +1466,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "POS Cash-Up & Stock Count Sheet",
-        "icon": "🛍️",
+        "icon": "ðŸ›ï¸",
         "description": "Working tool for POS Operation and Customer Service in day-to-day Cashier & Retail Sales Associate work",
         "badge": "Verified Practical"
       }
@@ -1477,7 +1477,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Sales Representative & Business Development Rep",
     "enclaveId": "commerce_small_business",
     "categoryName": "Sales & Business Development",
-    "defaultHeadline": "Sales Representative & Business Development Rep · Prospecting, Product Demos, Negotiation",
+    "defaultHeadline": "Sales Representative & Business Development Rep Â· Prospecting, Product Demos, Negotiation",
     "typicalSkills": [
       "Prospecting",
       "Product Demos",
@@ -1487,7 +1487,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Pipeline & CRM Activity Tracker",
-        "icon": "🛍️",
+        "icon": "ðŸ›ï¸",
         "description": "Working tool for Prospecting and Product Demos in day-to-day Sales Representative & Business Development Rep work",
         "badge": "Verified Practical"
       }
@@ -1498,7 +1498,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Import/Export Trader & Customs-Savvy Merchant",
     "enclaveId": "commerce_small_business",
     "categoryName": "Trade & Distribution",
-    "defaultHeadline": "Import/Export Trader & Customs-Savvy Merchant · Sourcing & Negotiation, Customs & Tariffs, Shipping & Incoterms",
+    "defaultHeadline": "Import/Export Trader & Customs-Savvy Merchant Â· Sourcing & Negotiation, Customs & Tariffs, Shipping & Incoterms",
     "typicalSkills": [
       "Sourcing & Negotiation",
       "Customs & Tariffs",
@@ -1508,7 +1508,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Landed-Cost & Shipment Tracker",
-        "icon": "🛍️",
+        "icon": "ðŸ›ï¸",
         "description": "Working tool for Sourcing & Negotiation and Customs & Tariffs in day-to-day Import/Export Trader & Customs-Savvy Merchant work",
         "badge": "Verified Practical"
       }
@@ -1519,7 +1519,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Mobile-Money & Payment Agent",
     "enclaveId": "commerce_small_business",
     "categoryName": "Informal Finance & Payments",
-    "defaultHeadline": "Mobile-Money & Payment Agent · Cash-In/Cash-Out, KYC & Fraud Awareness, Float Management",
+    "defaultHeadline": "Mobile-Money & Payment Agent Â· Cash-In/Cash-Out, KYC & Fraud Awareness, Float Management",
     "typicalSkills": [
       "Cash-In/Cash-Out",
       "KYC & Fraud Awareness",
@@ -1529,7 +1529,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Float & Daily Transaction Ledger",
-        "icon": "🛍️",
+        "icon": "ðŸ›ï¸",
         "description": "Working tool for Cash-In/Cash-Out and KYC & Fraud Awareness in day-to-day Mobile-Money & Payment Agent work",
         "badge": "Verified Practical"
       }
@@ -1540,7 +1540,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Wholesaler & Distribution Business Owner",
     "enclaveId": "commerce_small_business",
     "categoryName": "Wholesale & Distribution",
-    "defaultHeadline": "Wholesaler & Distribution Business Owner · Supplier Negotiation, Inventory Management, Route Sales",
+    "defaultHeadline": "Wholesaler & Distribution Business Owner Â· Supplier Negotiation, Inventory Management, Route Sales",
     "typicalSkills": [
       "Supplier Negotiation",
       "Inventory Management",
@@ -1550,7 +1550,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Inventory, Orders & Credit Ledger",
-        "icon": "🛍️",
+        "icon": "ðŸ›ï¸",
         "description": "Working tool for Supplier Negotiation and Inventory Management in day-to-day Wholesaler & Distribution Business Owner work",
         "badge": "Verified Practical"
       }
@@ -1561,7 +1561,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Insurance Agent & Broker",
     "enclaveId": "finance_accounting",
     "categoryName": "Insurance Sales",
-    "defaultHeadline": "Insurance Agent & Broker · Needs Analysis, Policy Knowledge, Compliance & Disclosures",
+    "defaultHeadline": "Insurance Agent & Broker Â· Needs Analysis, Policy Knowledge, Compliance & Disclosures",
     "typicalSkills": [
       "Needs Analysis",
       "Policy Knowledge",
@@ -1571,7 +1571,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Quote & Policy Renewal Tracker",
-        "icon": "💰",
+        "icon": "ðŸ’°",
         "description": "Working tool for Needs Analysis and Policy Knowledge in day-to-day Insurance Agent & Broker work",
         "badge": "Verified Practical"
       }
@@ -1582,7 +1582,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Travel Agent & Tour Consultant",
     "enclaveId": "commerce_small_business",
     "categoryName": "Travel & Tourism Sales",
-    "defaultHeadline": "Travel Agent & Tour Consultant · Itinerary Planning, Booking Systems (GDS), Supplier Relations",
+    "defaultHeadline": "Travel Agent & Tour Consultant Â· Itinerary Planning, Booking Systems (GDS), Supplier Relations",
     "typicalSkills": [
       "Itinerary Planning",
       "Booking Systems (GDS)",
@@ -1592,7 +1592,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Itinerary & Booking Tracker",
-        "icon": "🛍️",
+        "icon": "ðŸ›ï¸",
         "description": "Working tool for Itinerary Planning and Booking Systems (GDS) in day-to-day Travel Agent & Tour Consultant work",
         "badge": "Verified Practical"
       }
@@ -1603,7 +1603,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Direct-Sales Consultant & Network Marketer",
     "enclaveId": "commerce_small_business",
     "categoryName": "Direct Selling",
-    "defaultHeadline": "Direct-Sales Consultant & Network Marketer · Product Knowledge, Social Selling, Customer Follow-Up",
+    "defaultHeadline": "Direct-Sales Consultant & Network Marketer Â· Product Knowledge, Social Selling, Customer Follow-Up",
     "typicalSkills": [
       "Product Knowledge",
       "Social Selling",
@@ -1613,7 +1613,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Customer List & Order Tracker",
-        "icon": "🛍️",
+        "icon": "ðŸ›ï¸",
         "description": "Working tool for Product Knowledge and Social Selling in day-to-day Direct-Sales Consultant & Network Marketer work",
         "badge": "Verified Practical"
       }
@@ -1624,7 +1624,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Virtual Assistant & Remote Administrator",
     "enclaveId": "commerce_small_business",
     "categoryName": "Remote Administrative Services",
-    "defaultHeadline": "Virtual Assistant & Remote Administrator · Email & Calendar Management, Document Preparation, CRM & Tools",
+    "defaultHeadline": "Virtual Assistant & Remote Administrator Â· Email & Calendar Management, Document Preparation, CRM & Tools",
     "typicalSkills": [
       "Email & Calendar Management",
       "Document Preparation",
@@ -1634,7 +1634,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Client Task & Invoice Tracker",
-        "icon": "🛍️",
+        "icon": "ðŸ›ï¸",
         "description": "Working tool for Email & Calendar Management and Document Preparation in day-to-day Virtual Assistant & Remote Administrator work",
         "badge": "Verified Practical"
       }
@@ -1645,7 +1645,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Call-Center & Customer-Support Agent",
     "enclaveId": "commerce_small_business",
     "categoryName": "Customer Support",
-    "defaultHeadline": "Call-Center & Customer-Support Agent · Active Listening, Ticketing Systems, De-escalation",
+    "defaultHeadline": "Call-Center & Customer-Support Agent Â· Active Listening, Ticketing Systems, De-escalation",
     "typicalSkills": [
       "Active Listening",
       "Ticketing Systems",
@@ -1655,7 +1655,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Support Ticket & CSAT Dashboard",
-        "icon": "🛍️",
+        "icon": "ðŸ›ï¸",
         "description": "Working tool for Active Listening and Ticketing Systems in day-to-day Call-Center & Customer-Support Agent work",
         "badge": "Verified Practical"
       }
@@ -1666,7 +1666,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Property Manager & Leasing Agent",
     "enclaveId": "commerce_small_business",
     "categoryName": "Property Management",
-    "defaultHeadline": "Property Manager & Leasing Agent · Tenant Screening, Lease Administration, Maintenance Coordination",
+    "defaultHeadline": "Property Manager & Leasing Agent Â· Tenant Screening, Lease Administration, Maintenance Coordination",
     "typicalSkills": [
       "Tenant Screening",
       "Lease Administration",
@@ -1676,7 +1676,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Rent Roll & Maintenance Request Tracker",
-        "icon": "🛍️",
+        "icon": "ðŸ›ï¸",
         "description": "Working tool for Tenant Screening and Lease Administration in day-to-day Property Manager & Leasing Agent work",
         "badge": "Verified Practical"
       }
@@ -1687,7 +1687,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Short-Term Rental & Guesthouse Host",
     "enclaveId": "commerce_small_business",
     "categoryName": "Vacation Rentals & Guesthouses",
-    "defaultHeadline": "Short-Term Rental & Guesthouse Host · Listing Optimisation, Guest Communication, Cleaning Turnover",
+    "defaultHeadline": "Short-Term Rental & Guesthouse Host Â· Listing Optimisation, Guest Communication, Cleaning Turnover",
     "typicalSkills": [
       "Listing Optimisation",
       "Guest Communication",
@@ -1697,7 +1697,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Booking Calendar & Cleaning Schedule",
-        "icon": "🛍️",
+        "icon": "ðŸ›ï¸",
         "description": "Working tool for Listing Optimisation and Guest Communication in day-to-day Short-Term Rental & Guesthouse Host work",
         "badge": "Verified Practical"
       }
@@ -1708,7 +1708,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Receptionist & Front-Office Coordinator",
     "enclaveId": "commerce_small_business",
     "categoryName": "Office & Administration",
-    "defaultHeadline": "Receptionist & Front-Office Coordinator · Greeting & Phones, Scheduling, Records",
+    "defaultHeadline": "Receptionist & Front-Office Coordinator Â· Greeting & Phones, Scheduling, Records",
     "typicalSkills": [
       "Greeting & Phones",
       "Scheduling",
@@ -1718,7 +1718,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Visitor Log & Call Routing Sheet",
-        "icon": "🛍️",
+        "icon": "ðŸ›ï¸",
         "description": "Working tool for Greeting & Phones and Scheduling in day-to-day Receptionist & Front-Office Coordinator work",
         "badge": "Verified Practical"
       }
@@ -1729,7 +1729,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Administrative Assistant & Office Manager",
     "enclaveId": "commerce_small_business",
     "categoryName": "Office & Administration",
-    "defaultHeadline": "Administrative Assistant & Office Manager · Calendar & Travel, Document Preparation, Records Management",
+    "defaultHeadline": "Administrative Assistant & Office Manager Â· Calendar & Travel, Document Preparation, Records Management",
     "typicalSkills": [
       "Calendar & Travel",
       "Document Preparation",
@@ -1739,7 +1739,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Task, Calendar & Filing Tracker",
-        "icon": "🛍️",
+        "icon": "ðŸ›ï¸",
         "description": "Working tool for Calendar & Travel and Document Preparation in day-to-day Administrative Assistant & Office Manager work",
         "badge": "Verified Practical"
       }
@@ -1750,7 +1750,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Store & Retail Manager",
     "enclaveId": "commerce_small_business",
     "categoryName": "Retail Management",
-    "defaultHeadline": "Store & Retail Manager · Team Scheduling, Inventory & Merchandising, Sales Targets",
+    "defaultHeadline": "Store & Retail Manager Â· Team Scheduling, Inventory & Merchandising, Sales Targets",
     "typicalSkills": [
       "Team Scheduling",
       "Inventory & Merchandising",
@@ -1760,7 +1760,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Store KPI & Rota Dashboard",
-        "icon": "🛍️",
+        "icon": "ðŸ›ï¸",
         "description": "Working tool for Team Scheduling and Inventory & Merchandising in day-to-day Store & Retail Manager work",
         "badge": "Verified Practical"
       }
@@ -1771,7 +1771,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Boutique & Specialty Shop Owner",
     "enclaveId": "commerce_small_business",
     "categoryName": "Small Retail Ownership",
-    "defaultHeadline": "Boutique & Specialty Shop Owner · Buying & Merchandising, Pricing, Social Media Selling",
+    "defaultHeadline": "Boutique & Specialty Shop Owner Â· Buying & Merchandising, Pricing, Social Media Selling",
     "typicalSkills": [
       "Buying & Merchandising",
       "Pricing",
@@ -1781,7 +1781,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Buying Plan & Margin Tracker",
-        "icon": "🛍️",
+        "icon": "ðŸ›ï¸",
         "description": "Working tool for Buying & Merchandising and Pricing in day-to-day Boutique & Specialty Shop Owner work",
         "badge": "Verified Practical"
       }
@@ -1792,7 +1792,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Auctioneer, Appraiser & Pawnbroker",
     "enclaveId": "commerce_small_business",
     "categoryName": "Auctions, Appraisal & Pawn",
-    "defaultHeadline": "Auctioneer · Valuation, Bidding Procedure, Authentication",
+    "defaultHeadline": "Auctioneer Â· Valuation, Bidding Procedure, Authentication",
     "typicalSkills": [
       "Valuation",
       "Bidding Procedure",
@@ -1802,7 +1802,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Lot Catalogue & Appraisal Log",
-        "icon": "🛍️",
+        "icon": "ðŸ›ï¸",
         "description": "Working tool for Valuation and Bidding Procedure in day-to-day Auctioneer work",
         "badge": "Verified Practical"
       }
@@ -1813,7 +1813,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Project Manager & Programme Coordinator",
     "enclaveId": "commerce_small_business",
     "categoryName": "Management & Operations",
-    "defaultHeadline": "Project Manager & Programme Coordinator · Scoping & Scheduling, Risk Management, Stakeholder Communication",
+    "defaultHeadline": "Project Manager & Programme Coordinator Â· Scoping & Scheduling, Risk Management, Stakeholder Communication",
     "typicalSkills": [
       "Scoping & Scheduling",
       "Risk Management",
@@ -1823,7 +1823,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Gantt Plan & Risk Register",
-        "icon": "🛍️",
+        "icon": "ðŸ›ï¸",
         "description": "Working tool for Scoping & Scheduling and Risk Management in day-to-day Project Manager & Programme Coordinator work",
         "badge": "Verified Practical"
       }
@@ -1834,7 +1834,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Human Resources Specialist & Recruiter",
     "enclaveId": "commerce_small_business",
     "categoryName": "People Operations",
-    "defaultHeadline": "Human Resources Specialist & Recruiter · Recruiting & Interviewing, Employment Law Basics, Onboarding",
+    "defaultHeadline": "Human Resources Specialist & Recruiter Â· Recruiting & Interviewing, Employment Law Basics, Onboarding",
     "typicalSkills": [
       "Recruiting & Interviewing",
       "Employment Law Basics",
@@ -1844,7 +1844,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Applicant Pipeline & Onboarding Tracker",
-        "icon": "🛍️",
+        "icon": "ðŸ›ï¸",
         "description": "Working tool for Recruiting & Interviewing and Employment Law Basics in day-to-day Human Resources Specialist & Recruiter work",
         "badge": "Verified Practical"
       }
@@ -1855,7 +1855,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Marketing, Brand & Communications Manager",
     "enclaveId": "commerce_small_business",
     "categoryName": "Marketing",
-    "defaultHeadline": "Marketing · Campaign Planning, Analytics, Content Strategy",
+    "defaultHeadline": "Marketing Â· Campaign Planning, Analytics, Content Strategy",
     "typicalSkills": [
       "Campaign Planning",
       "Analytics",
@@ -1865,7 +1865,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Campaign Calendar & Metrics Dashboard",
-        "icon": "🛍️",
+        "icon": "ðŸ›ï¸",
         "description": "Working tool for Campaign Planning and Analytics in day-to-day Marketing work",
         "badge": "Verified Practical"
       }
@@ -1876,7 +1876,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Operations & Supply-Chain Manager",
     "enclaveId": "commerce_small_business",
     "categoryName": "Operations & Supply Chain",
-    "defaultHeadline": "Operations & Supply-Chain Manager · Demand Planning, Procurement, Logistics Coordination",
+    "defaultHeadline": "Operations & Supply-Chain Manager Â· Demand Planning, Procurement, Logistics Coordination",
     "typicalSkills": [
       "Demand Planning",
       "Procurement",
@@ -1886,7 +1886,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "S&OP Plan & KPI Dashboard",
-        "icon": "🛍️",
+        "icon": "ðŸ›ï¸",
         "description": "Working tool for Demand Planning and Procurement in day-to-day Operations & Supply-Chain Manager work",
         "badge": "Verified Practical"
       }
@@ -1897,7 +1897,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Entrepreneur, Founder & Startup Operator",
     "enclaveId": "commerce_small_business",
     "categoryName": "Entrepreneurship",
-    "defaultHeadline": "Entrepreneur · Opportunity Validation, Fundraising & Budgeting, Sales & Marketing",
+    "defaultHeadline": "Entrepreneur Â· Opportunity Validation, Fundraising & Budgeting, Sales & Marketing",
     "typicalSkills": [
       "Opportunity Validation",
       "Fundraising & Budgeting",
@@ -1907,7 +1907,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Business Model Canvas & Cash-Flow Forecast",
-        "icon": "🛍️",
+        "icon": "ðŸ›ï¸",
         "description": "Working tool for Opportunity Validation and Fundraising & Budgeting in day-to-day Entrepreneur work",
         "badge": "Verified Practical"
       }
@@ -1918,7 +1918,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Business Analyst & Product Manager",
     "enclaveId": "commerce_small_business",
     "categoryName": "Product & Analysis",
-    "defaultHeadline": "Business Analyst & Product Manager · Requirements Gathering, Data Analysis, Roadmapping",
+    "defaultHeadline": "Business Analyst & Product Manager Â· Requirements Gathering, Data Analysis, Roadmapping",
     "typicalSkills": [
       "Requirements Gathering",
       "Data Analysis",
@@ -1928,7 +1928,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Backlog & Requirements Board",
-        "icon": "🛍️",
+        "icon": "ðŸ›ï¸",
         "description": "Working tool for Requirements Gathering and Data Analysis in day-to-day Business Analyst & Product Manager work",
         "badge": "Verified Practical"
       }
@@ -1939,7 +1939,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Management Consultant & Independent Advisor",
     "enclaveId": "commerce_small_business",
     "categoryName": "Consulting",
-    "defaultHeadline": "Management Consultant & Independent Advisor · Problem Structuring, Analysis & Modelling, Client Presentations",
+    "defaultHeadline": "Management Consultant & Independent Advisor Â· Problem Structuring, Analysis & Modelling, Client Presentations",
     "typicalSkills": [
       "Problem Structuring",
       "Analysis & Modelling",
@@ -1949,7 +1949,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Engagement Plan & Deliverable Tracker",
-        "icon": "🛍️",
+        "icon": "ðŸ›ï¸",
         "description": "Working tool for Problem Structuring and Analysis & Modelling in day-to-day Management Consultant & Independent Advisor work",
         "badge": "Verified Practical"
       }
@@ -1960,7 +1960,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Fashion Designer & Garment Brand Founder",
     "enclaveId": "creative_media_arts",
     "categoryName": "Fashion & Apparel Design",
-    "defaultHeadline": "Fashion Designer & Garment Brand Founder · Sketching & Pattern Making, Fabric Sourcing, Fit & Production",
+    "defaultHeadline": "Fashion Designer & Garment Brand Founder Â· Sketching & Pattern Making, Fabric Sourcing, Fit & Production",
     "typicalSkills": [
       "Sketching & Pattern Making",
       "Fabric Sourcing",
@@ -1970,7 +1970,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Collection Planner & Tech-Pack Builder",
-        "icon": "🎨",
+        "icon": "ðŸŽ¨",
         "description": "Working tool for Sketching & Pattern Making and Fabric Sourcing in day-to-day Fashion Designer & Garment Brand Founder work",
         "badge": "Verified Practical"
       }
@@ -1981,7 +1981,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Animator, Illustrator & Cartoonist",
     "enclaveId": "creative_media_arts",
     "categoryName": "Animation & Illustration",
-    "defaultHeadline": "Animator · Character Design, 2D/3D Animation, Storyboarding",
+    "defaultHeadline": "Animator Â· Character Design, 2D/3D Animation, Storyboarding",
     "typicalSkills": [
       "Character Design",
       "2D/3D Animation",
@@ -1991,7 +1991,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Storyboard & Animation Timeline",
-        "icon": "🎨",
+        "icon": "ðŸŽ¨",
         "description": "Working tool for Character Design and 2D/3D Animation in day-to-day Animator work",
         "badge": "Verified Practical"
       }
@@ -2002,7 +2002,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Podcaster & Audio Producer",
     "enclaveId": "creative_media_arts",
     "categoryName": "Podcasting & Audio",
-    "defaultHeadline": "Podcaster & Audio Producer · Interviewing, Audio Editing & Mixing, Show Planning",
+    "defaultHeadline": "Podcaster & Audio Producer Â· Interviewing, Audio Editing & Mixing, Show Planning",
     "typicalSkills": [
       "Interviewing",
       "Audio Editing & Mixing",
@@ -2012,7 +2012,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Episode Plan & Audio Edit Checklist",
-        "icon": "🎨",
+        "icon": "ðŸŽ¨",
         "description": "Working tool for Interviewing and Audio Editing & Mixing in day-to-day Podcaster & Audio Producer work",
         "badge": "Verified Practical"
       }
@@ -2023,7 +2023,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Voice Actor & Audiobook Narrator",
     "enclaveId": "creative_media_arts",
     "categoryName": "Voice Acting",
-    "defaultHeadline": "Voice Actor & Audiobook Narrator · Vocal Control, Script Interpretation, Home Studio Recording",
+    "defaultHeadline": "Voice Actor & Audiobook Narrator Â· Vocal Control, Script Interpretation, Home Studio Recording",
     "typicalSkills": [
       "Vocal Control",
       "Script Interpretation",
@@ -2033,7 +2033,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Audition Tracker & Home-Studio Checklist",
-        "icon": "🎨",
+        "icon": "ðŸŽ¨",
         "description": "Working tool for Vocal Control and Script Interpretation in day-to-day Voice Actor & Audiobook Narrator work",
         "badge": "Verified Practical"
       }
@@ -2044,7 +2044,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Potter, Ceramicist & Glass Artist",
     "enclaveId": "creative_media_arts",
     "categoryName": "Ceramics & Craft",
-    "defaultHeadline": "Potter · Wheel Throwing & Handbuilding, Glazing & Firing, Kiln Safety",
+    "defaultHeadline": "Potter Â· Wheel Throwing & Handbuilding, Glazing & Firing, Kiln Safety",
     "typicalSkills": [
       "Wheel Throwing & Handbuilding",
       "Glazing & Firing",
@@ -2054,7 +2054,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Kiln Firing & Glaze Log",
-        "icon": "🎨",
+        "icon": "ðŸŽ¨",
         "description": "Working tool for Wheel Throwing & Handbuilding and Glazing & Firing in day-to-day Potter work",
         "badge": "Verified Practical"
       }
@@ -2065,7 +2065,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Weaver, Dyer & Textile Artisan",
     "enclaveId": "manufacturing_industrial",
     "categoryName": "Textiles & Craft",
-    "defaultHeadline": "Weaver · Loom Weaving, Natural Dyeing, Pattern Design",
+    "defaultHeadline": "Weaver Â· Loom Weaving, Natural Dyeing, Pattern Design",
     "typicalSkills": [
       "Loom Weaving",
       "Natural Dyeing",
@@ -2075,7 +2075,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Pattern Draft & Dye Recipe Log",
-        "icon": "🏭",
+        "icon": "ðŸ­",
         "description": "Working tool for Loom Weaving and Natural Dyeing in day-to-day Weaver work",
         "badge": "Verified Practical"
       }
@@ -2086,7 +2086,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Wood Carver & Sculptor",
     "enclaveId": "creative_media_arts",
     "categoryName": "Carving & Sculpture",
-    "defaultHeadline": "Wood Carver & Sculptor · Carving & Relief, Finishing, Design",
+    "defaultHeadline": "Wood Carver & Sculptor Â· Carving & Relief, Finishing, Design",
     "typicalSkills": [
       "Carving & Relief",
       "Finishing",
@@ -2096,7 +2096,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Commission & Material Planner",
-        "icon": "🎨",
+        "icon": "ðŸŽ¨",
         "description": "Working tool for Carving & Relief and Finishing in day-to-day Wood Carver & Sculptor work",
         "badge": "Verified Practical"
       }
@@ -2107,7 +2107,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Jeweler, Goldsmith & Gem Setter",
     "enclaveId": "creative_media_arts",
     "categoryName": "Jewelry & Metalsmithing",
-    "defaultHeadline": "Jeweler · Soldering & Casting, Stone Setting, CAD Jewelry Design",
+    "defaultHeadline": "Jeweler Â· Soldering & Casting, Stone Setting, CAD Jewelry Design",
     "typicalSkills": [
       "Soldering & Casting",
       "Stone Setting",
@@ -2117,7 +2117,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Bench Job Ticket & Metal Weight Log",
-        "icon": "🎨",
+        "icon": "ðŸŽ¨",
         "description": "Working tool for Soldering & Casting and Stone Setting in day-to-day Jeweler work",
         "badge": "Verified Practical"
       }
@@ -2128,7 +2128,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Calligrapher, Sign Painter & Lettering Artist",
     "enclaveId": "creative_media_arts",
     "categoryName": "Lettering & Visual Craft",
-    "defaultHeadline": "Calligrapher · Calligraphy, Layout & Spacing, Brush & Pen Techniques",
+    "defaultHeadline": "Calligrapher Â· Calligraphy, Layout & Spacing, Brush & Pen Techniques",
     "typicalSkills": [
       "Calligraphy",
       "Layout & Spacing",
@@ -2138,7 +2138,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Lettering Layout & Commission Sheet",
-        "icon": "🎨",
+        "icon": "ðŸŽ¨",
         "description": "Working tool for Calligraphy and Layout & Spacing in day-to-day Calligrapher work",
         "badge": "Verified Practical"
       }
@@ -2149,7 +2149,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Stand-Up Comedian & Humorist",
     "enclaveId": "creative_media_arts",
     "categoryName": "Comedy & Performance",
-    "defaultHeadline": "Stand-Up Comedian & Humorist · Joke Writing, Stage Presence, Audience Management",
+    "defaultHeadline": "Stand-Up Comedian & Humorist Â· Joke Writing, Stage Presence, Audience Management",
     "typicalSkills": [
       "Joke Writing",
       "Stage Presence",
@@ -2159,7 +2159,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Set-List & Open-Mic Tracker",
-        "icon": "🎨",
+        "icon": "ðŸŽ¨",
         "description": "Working tool for Joke Writing and Stage Presence in day-to-day Stand-Up Comedian & Humorist work",
         "badge": "Verified Practical"
       }
@@ -2170,7 +2170,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Poet, Spoken-Word Artist & Lyricist",
     "enclaveId": "creative_media_arts",
     "categoryName": "Poetry & Lyrics",
-    "defaultHeadline": "Poet · Writing & Editing, Performance, Publishing & Submissions",
+    "defaultHeadline": "Poet Â· Writing & Editing, Performance, Publishing & Submissions",
     "typicalSkills": [
       "Writing & Editing",
       "Performance",
@@ -2180,7 +2180,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Poem Drafts & Submission Tracker",
-        "icon": "🎨",
+        "icon": "ðŸŽ¨",
         "description": "Working tool for Writing & Editing and Performance in day-to-day Poet work",
         "badge": "Verified Practical"
       }
@@ -2191,7 +2191,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Architect & Interior Designer",
     "enclaveId": "trades_construction",
     "categoryName": "Architecture & Interior Design",
-    "defaultHeadline": "Architect & Interior Designer · Space Planning, CAD/BIM, Building Codes",
+    "defaultHeadline": "Architect & Interior Designer Â· Space Planning, CAD/BIM, Building Codes",
     "typicalSkills": [
       "Space Planning",
       "CAD/BIM",
@@ -2201,7 +2201,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Floor Plan & Material Schedule",
-        "icon": "🧱",
+        "icon": "ðŸ§±",
         "description": "Working tool for Space Planning and CAD/BIM in day-to-day Architect & Interior Designer work",
         "badge": "Verified Practical"
       }
@@ -2212,7 +2212,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Stage Manager, Sound & Lighting Engineer",
     "enclaveId": "culinary_hospitality_events",
     "categoryName": "Live Production",
-    "defaultHeadline": "Stage Manager · Cue Calling, Sound Mixing, Lighting Design",
+    "defaultHeadline": "Stage Manager Â· Cue Calling, Sound Mixing, Lighting Design",
     "typicalSkills": [
       "Cue Calling",
       "Sound Mixing",
@@ -2222,7 +2222,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Show Cue Sheet & Input List",
-        "icon": "🍽️",
+        "icon": "ðŸ½ï¸",
         "description": "Working tool for Cue Calling and Sound Mixing in day-to-day Stage Manager work",
         "badge": "Verified Practical"
       }
@@ -2233,7 +2233,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Video Editor & Motion Designer",
     "enclaveId": "creative_media_arts",
     "categoryName": "Video Post-Production",
-    "defaultHeadline": "Video Editor & Motion Designer · Editing & Colour, Motion Graphics, Storytelling",
+    "defaultHeadline": "Video Editor & Motion Designer Â· Editing & Colour, Motion Graphics, Storytelling",
     "typicalSkills": [
       "Editing & Colour",
       "Motion Graphics",
@@ -2243,7 +2243,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Edit Timeline & Export Checklist",
-        "icon": "🎨",
+        "icon": "ðŸŽ¨",
         "description": "Working tool for Editing & Colour and Motion Graphics in day-to-day Video Editor & Motion Designer work",
         "badge": "Verified Practical"
       }
@@ -2254,7 +2254,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Fashion & Commercial Model",
     "enclaveId": "creative_media_arts",
     "categoryName": "Modelling",
-    "defaultHeadline": "Fashion & Commercial Model · Posing & Camera Presence, Portfolio Building, Agency Relations",
+    "defaultHeadline": "Fashion & Commercial Model Â· Posing & Camera Presence, Portfolio Building, Agency Relations",
     "typicalSkills": [
       "Posing & Camera Presence",
       "Portfolio Building",
@@ -2264,7 +2264,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Booking Calendar & Portfolio Tracker",
-        "icon": "🎨",
+        "icon": "ðŸŽ¨",
         "description": "Working tool for Posing & Camera Presence and Portfolio Building in day-to-day Fashion & Commercial Model work",
         "badge": "Verified Practical"
       }
@@ -2275,7 +2275,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Professional Athlete & Sports Performer",
     "enclaveId": "personal_services_wellness",
     "categoryName": "Professional Sports",
-    "defaultHeadline": "Professional Athlete & Sports Performer · Training & Conditioning, Skill Mastery, Recovery",
+    "defaultHeadline": "Professional Athlete & Sports Performer Â· Training & Conditioning, Skill Mastery, Recovery",
     "typicalSkills": [
       "Training & Conditioning",
       "Skill Mastery",
@@ -2285,7 +2285,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Training Load & Recovery Log",
-        "icon": "💈",
+        "icon": "ðŸ’ˆ",
         "description": "Working tool for Training & Conditioning and Skill Mastery in day-to-day Professional Athlete & Sports Performer work",
         "badge": "Verified Practical"
       }
@@ -2296,7 +2296,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Optometrist & Dispensing Optician",
     "enclaveId": "healthcare_medicine",
     "categoryName": "Eye Care & Optical",
-    "defaultHeadline": "Optometrist & Dispensing Optician · Eye Exams & Refraction, Contact Lens Fitting, Frame & Lens Dispensing",
+    "defaultHeadline": "Optometrist & Dispensing Optician Â· Eye Exams & Refraction, Contact Lens Fitting, Frame & Lens Dispensing",
     "typicalSkills": [
       "Eye Exams & Refraction",
       "Contact Lens Fitting",
@@ -2306,7 +2306,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Refraction Chart & Prescription Log",
-        "icon": "🩺",
+        "icon": "ðŸ©º",
         "description": "Working tool for Eye Exams & Refraction and Contact Lens Fitting in day-to-day Optometrist & Dispensing Optician work",
         "badge": "Verified Practical"
       }
@@ -2317,7 +2317,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Audiologist & Hearing-Aid Specialist",
     "enclaveId": "healthcare_medicine",
     "categoryName": "Audiology",
-    "defaultHeadline": "Audiologist & Hearing-Aid Specialist · Hearing Tests, Hearing-Aid Fitting, Tinnitus & Balance Care",
+    "defaultHeadline": "Audiologist & Hearing-Aid Specialist Â· Hearing Tests, Hearing-Aid Fitting, Tinnitus & Balance Care",
     "typicalSkills": [
       "Hearing Tests",
       "Hearing-Aid Fitting",
@@ -2327,7 +2327,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Audiogram & Hearing-Aid Fitting Log",
-        "icon": "🩺",
+        "icon": "ðŸ©º",
         "description": "Working tool for Hearing Tests and Hearing-Aid Fitting in day-to-day Audiologist & Hearing-Aid Specialist work",
         "badge": "Verified Practical"
       }
@@ -2338,7 +2338,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Speech-Language Pathologist & Therapist",
     "enclaveId": "healthcare_medicine",
     "categoryName": "Speech & Language Therapy",
-    "defaultHeadline": "Speech-Language Pathologist & Therapist · Speech & Language Assessment, Swallowing Therapy, Therapy Planning",
+    "defaultHeadline": "Speech-Language Pathologist & Therapist Â· Speech & Language Assessment, Swallowing Therapy, Therapy Planning",
     "typicalSkills": [
       "Speech & Language Assessment",
       "Swallowing Therapy",
@@ -2348,7 +2348,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Therapy Goal & Progress Tracker",
-        "icon": "🩺",
+        "icon": "ðŸ©º",
         "description": "Working tool for Speech & Language Assessment and Swallowing Therapy in day-to-day Speech-Language Pathologist & Therapist work",
         "badge": "Verified Practical"
       }
@@ -2359,7 +2359,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Psychologist, Counselor & Therapist",
     "enclaveId": "healthcare_medicine",
     "categoryName": "Mental Health",
-    "defaultHeadline": "Psychologist · Clinical Interviewing, Evidence-Based Therapy, Assessment",
+    "defaultHeadline": "Psychologist Â· Clinical Interviewing, Evidence-Based Therapy, Assessment",
     "typicalSkills": [
       "Clinical Interviewing",
       "Evidence-Based Therapy",
@@ -2369,7 +2369,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Session Notes & Treatment Plan Tracker",
-        "icon": "🩺",
+        "icon": "ðŸ©º",
         "description": "Working tool for Clinical Interviewing and Evidence-Based Therapy in day-to-day Psychologist work",
         "badge": "Verified Practical"
       }
@@ -2380,7 +2380,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Social Worker & Case Manager",
     "enclaveId": "healthcare_medicine",
     "categoryName": "Social Work & Case Management",
-    "defaultHeadline": "Social Worker & Case Manager · Case Assessment, Crisis Intervention, Resource Navigation",
+    "defaultHeadline": "Social Worker & Case Manager Â· Case Assessment, Crisis Intervention, Resource Navigation",
     "typicalSkills": [
       "Case Assessment",
       "Crisis Intervention",
@@ -2390,7 +2390,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Case Notes & Resource Directory",
-        "icon": "🩺",
+        "icon": "ðŸ©º",
         "description": "Working tool for Case Assessment and Crisis Intervention in day-to-day Social Worker & Case Manager work",
         "badge": "Verified Practical"
       }
@@ -2401,7 +2401,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Chiropractor",
     "enclaveId": "healthcare_medicine",
     "categoryName": "Chiropractic Care",
-    "defaultHeadline": "Chiropractor · Spinal Assessment, Manipulation Techniques, Rehab Exercises",
+    "defaultHeadline": "Chiropractor Â· Spinal Assessment, Manipulation Techniques, Rehab Exercises",
     "typicalSkills": [
       "Spinal Assessment",
       "Manipulation Techniques",
@@ -2411,7 +2411,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Treatment Plan & Outcome Tracker",
-        "icon": "🩺",
+        "icon": "ðŸ©º",
         "description": "Working tool for Spinal Assessment and Manipulation Techniques in day-to-day Chiropractor work",
         "badge": "Verified Practical"
       }
@@ -2422,7 +2422,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Podiatrist & Foot-Care Specialist",
     "enclaveId": "healthcare_medicine",
     "categoryName": "Podiatry",
-    "defaultHeadline": "Podiatrist & Foot-Care Specialist · Foot & Ankle Examination, Wound Care, Orthotics",
+    "defaultHeadline": "Podiatrist & Foot-Care Specialist Â· Foot & Ankle Examination, Wound Care, Orthotics",
     "typicalSkills": [
       "Foot & Ankle Examination",
       "Wound Care",
@@ -2432,7 +2432,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Foot Exam & Orthotic Prescription Log",
-        "icon": "🩺",
+        "icon": "ðŸ©º",
         "description": "Working tool for Foot & Ankle Examination and Wound Care in day-to-day Podiatrist & Foot-Care Specialist work",
         "badge": "Verified Practical"
       }
@@ -2443,7 +2443,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Acupuncturist & Traditional-Medicine Practitioner",
     "enclaveId": "healthcare_medicine",
     "categoryName": "Integrative & Traditional Medicine",
-    "defaultHeadline": "Acupuncturist & Traditional-Medicine Practitioner · Acupuncture Technique, Diagnosis & Point Selection, Needle Safety",
+    "defaultHeadline": "Acupuncturist & Traditional-Medicine Practitioner Â· Acupuncture Technique, Diagnosis & Point Selection, Needle Safety",
     "typicalSkills": [
       "Acupuncture Technique",
       "Diagnosis & Point Selection",
@@ -2453,7 +2453,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Treatment Point & Herb Record",
-        "icon": "🩺",
+        "icon": "ðŸ©º",
         "description": "Working tool for Acupuncture Technique and Diagnosis & Point Selection in day-to-day Acupuncturist & Traditional-Medicine Practitioner work",
         "badge": "Verified Practical"
       }
@@ -2464,7 +2464,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Dietitian & Nutritionist",
     "enclaveId": "healthcare_medicine",
     "categoryName": "Nutrition & Dietetics",
-    "defaultHeadline": "Dietitian & Nutritionist · Nutrition Assessment, Meal Planning, Medical Nutrition Therapy",
+    "defaultHeadline": "Dietitian & Nutritionist Â· Nutrition Assessment, Meal Planning, Medical Nutrition Therapy",
     "typicalSkills": [
       "Nutrition Assessment",
       "Meal Planning",
@@ -2474,7 +2474,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Meal Plan & Nutrient Calculator",
-        "icon": "🩺",
+        "icon": "ðŸ©º",
         "description": "Working tool for Nutrition Assessment and Meal Planning in day-to-day Dietitian & Nutritionist work",
         "badge": "Verified Practical"
       }
@@ -2485,7 +2485,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Diagnostic Medical Sonographer",
     "enclaveId": "healthcare_medicine",
     "categoryName": "Ultrasound & Imaging",
-    "defaultHeadline": "Diagnostic Medical Sonographer · Ultrasound Scanning, Image Optimisation, Patient Care",
+    "defaultHeadline": "Diagnostic Medical Sonographer Â· Ultrasound Scanning, Image Optimisation, Patient Care",
     "typicalSkills": [
       "Ultrasound Scanning",
       "Image Optimisation",
@@ -2495,7 +2495,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Scan Protocol & Image Quality Checklist",
-        "icon": "🩺",
+        "icon": "ðŸ©º",
         "description": "Working tool for Ultrasound Scanning and Image Optimisation in day-to-day Diagnostic Medical Sonographer work",
         "badge": "Verified Practical"
       }
@@ -2506,7 +2506,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Hospital Porter, Orderly & Patient Transporter",
     "enclaveId": "healthcare_medicine",
     "categoryName": "Hospital Support Services",
-    "defaultHeadline": "Hospital Porter · Safe Patient Transport, Infection Control, Teamwork",
+    "defaultHeadline": "Hospital Porter Â· Safe Patient Transport, Infection Control, Teamwork",
     "typicalSkills": [
       "Safe Patient Transport",
       "Infection Control",
@@ -2516,7 +2516,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Transport Request & Safety Log",
-        "icon": "🩺",
+        "icon": "ðŸ©º",
         "description": "Working tool for Safe Patient Transport and Infection Control in day-to-day Hospital Porter work",
         "badge": "Verified Practical"
       }
@@ -2527,7 +2527,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Dialysis Technician",
     "enclaveId": "healthcare_medicine",
     "categoryName": "Renal Care Technology",
-    "defaultHeadline": "Dialysis Technician · Hemodialysis Setup, Patient Monitoring, Sterile Technique",
+    "defaultHeadline": "Dialysis Technician Â· Hemodialysis Setup, Patient Monitoring, Sterile Technique",
     "typicalSkills": [
       "Hemodialysis Setup",
       "Patient Monitoring",
@@ -2537,7 +2537,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Dialysis Session & Water-Quality Log",
-        "icon": "🩺",
+        "icon": "ðŸ©º",
         "description": "Working tool for Hemodialysis Setup and Patient Monitoring in day-to-day Dialysis Technician work",
         "badge": "Verified Practical"
       }
@@ -2548,7 +2548,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Midwife & Birth Doula",
     "enclaveId": "healthcare_medicine",
     "categoryName": "Maternal & Newborn Care",
-    "defaultHeadline": "Midwife & Birth Doula · Antenatal Care, Labour Support, Newborn Care",
+    "defaultHeadline": "Midwife & Birth Doula Â· Antenatal Care, Labour Support, Newborn Care",
     "typicalSkills": [
       "Antenatal Care",
       "Labour Support",
@@ -2558,7 +2558,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Birth Plan & Antenatal Record",
-        "icon": "🩺",
+        "icon": "ðŸ©º",
         "description": "Working tool for Antenatal Care and Labour Support in day-to-day Midwife & Birth Doula work",
         "badge": "Verified Practical"
       }
@@ -2569,7 +2569,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Traditional Birth Attendant & Community Health Volunteer",
     "enclaveId": "healthcare_medicine",
     "categoryName": "Community Maternal & Public Health",
-    "defaultHeadline": "Traditional Birth Attendant & Community Health Volunteer · Safe Delivery Practices, Referral Pathways, Health Education",
+    "defaultHeadline": "Traditional Birth Attendant & Community Health Volunteer Â· Safe Delivery Practices, Referral Pathways, Health Education",
     "typicalSkills": [
       "Safe Delivery Practices",
       "Referral Pathways",
@@ -2579,7 +2579,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Referral & Visit Log",
-        "icon": "🩺",
+        "icon": "ðŸ©º",
         "description": "Working tool for Safe Delivery Practices and Referral Pathways in day-to-day Traditional Birth Attendant & Community Health Volunteer work",
         "badge": "Verified Practical"
       }
@@ -2590,7 +2590,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Public-Health & Environmental Health Inspector",
     "enclaveId": "healthcare_medicine",
     "categoryName": "Public Health & Safety",
-    "defaultHeadline": "Public-Health & Environmental Health Inspector · Food & Premises Inspection, Outbreak Investigation, Regulations & Enforcement",
+    "defaultHeadline": "Public-Health & Environmental Health Inspector Â· Food & Premises Inspection, Outbreak Investigation, Regulations & Enforcement",
     "typicalSkills": [
       "Food & Premises Inspection",
       "Outbreak Investigation",
@@ -2600,7 +2600,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Inspection Checklist & Violation Log",
-        "icon": "🩺",
+        "icon": "ðŸ©º",
         "description": "Working tool for Food & Premises Inspection and Outbreak Investigation in day-to-day Public-Health & Environmental Health Inspector work",
         "badge": "Verified Practical"
       }
@@ -2611,7 +2611,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Health & Safety (HSE) Officer",
     "enclaveId": "healthcare_medicine",
     "categoryName": "Occupational Safety",
-    "defaultHeadline": "Health & Safety (HSE) Officer · Risk Assessment, Incident Investigation, Safety Training",
+    "defaultHeadline": "Health & Safety (HSE) Officer Â· Risk Assessment, Incident Investigation, Safety Training",
     "typicalSkills": [
       "Risk Assessment",
       "Incident Investigation",
@@ -2621,7 +2621,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Hazard Register & Inspection Log",
-        "icon": "🩺",
+        "icon": "ðŸ©º",
         "description": "Working tool for Risk Assessment and Incident Investigation in day-to-day Health & Safety (HSE) Officer work",
         "badge": "Verified Practical"
       }
@@ -2632,7 +2632,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Dental Laboratory Technician",
     "enclaveId": "healthcare_medicine",
     "categoryName": "Dental Prosthetics",
-    "defaultHeadline": "Dental Laboratory Technician · Crown & Bridge Fabrication, Digital CAD/CAM, Dentures",
+    "defaultHeadline": "Dental Laboratory Technician Â· Crown & Bridge Fabrication, Digital CAD/CAM, Dentures",
     "typicalSkills": [
       "Crown & Bridge Fabrication",
       "Digital CAD/CAM",
@@ -2642,7 +2642,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Dental Case Ticket & Shade Guide",
-        "icon": "🩺",
+        "icon": "ðŸ©º",
         "description": "Working tool for Crown & Bridge Fabrication and Digital CAD/CAM in day-to-day Dental Laboratory Technician work",
         "badge": "Verified Practical"
       }
@@ -2653,7 +2653,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "School Teacher (Primary & Secondary)",
     "enclaveId": "education_workforce",
     "categoryName": "K-12 Education",
-    "defaultHeadline": "School Teacher (Primary & Secondary) · Lesson Planning, Classroom Management, Assessment",
+    "defaultHeadline": "School Teacher (Primary & Secondary) Â· Lesson Planning, Classroom Management, Assessment",
     "typicalSkills": [
       "Lesson Planning",
       "Classroom Management",
@@ -2663,7 +2663,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Lesson Plan & Gradebook",
-        "icon": "🎓",
+        "icon": "ðŸŽ“",
         "description": "Working tool for Lesson Planning and Classroom Management in day-to-day School Teacher (Primary & Secondary) work",
         "badge": "Verified Practical"
       }
@@ -2674,7 +2674,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Early-Childhood Educator & Preschool Teacher",
     "enclaveId": "education_workforce",
     "categoryName": "Early Childhood Education",
-    "defaultHeadline": "Early-Childhood Educator & Preschool Teacher · Play-Based Learning, Child Development, Safeguarding",
+    "defaultHeadline": "Early-Childhood Educator & Preschool Teacher Â· Play-Based Learning, Child Development, Safeguarding",
     "typicalSkills": [
       "Play-Based Learning",
       "Child Development",
@@ -2684,7 +2684,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Developmental Milestone Tracker",
-        "icon": "🎓",
+        "icon": "ðŸŽ“",
         "description": "Working tool for Play-Based Learning and Child Development in day-to-day Early-Childhood Educator & Preschool Teacher work",
         "badge": "Verified Practical"
       }
@@ -2695,7 +2695,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Teaching Assistant & Paraeducator",
     "enclaveId": "education_workforce",
     "categoryName": "Classroom Support",
-    "defaultHeadline": "Teaching Assistant & Paraeducator · Student Support, Behaviour Management, Literacy & Numeracy Support",
+    "defaultHeadline": "Teaching Assistant & Paraeducator Â· Student Support, Behaviour Management, Literacy & Numeracy Support",
     "typicalSkills": [
       "Student Support",
       "Behaviour Management",
@@ -2705,7 +2705,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Student Support Log",
-        "icon": "🎓",
+        "icon": "ðŸŽ“",
         "description": "Working tool for Student Support and Behaviour Management in day-to-day Teaching Assistant & Paraeducator work",
         "badge": "Verified Practical"
       }
@@ -2716,7 +2716,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Special-Education Teacher & Learning-Support Specialist",
     "enclaveId": "education_workforce",
     "categoryName": "Special Education",
-    "defaultHeadline": "Special-Education Teacher & Learning-Support Specialist · IEP Development, Differentiated Instruction, Assistive Technology",
+    "defaultHeadline": "Special-Education Teacher & Learning-Support Specialist Â· IEP Development, Differentiated Instruction, Assistive Technology",
     "typicalSkills": [
       "IEP Development",
       "Differentiated Instruction",
@@ -2726,7 +2726,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "IEP Goal & Accommodation Tracker",
-        "icon": "🎓",
+        "icon": "ðŸŽ“",
         "description": "Working tool for IEP Development and Differentiated Instruction in day-to-day Special-Education Teacher & Learning-Support Specialist work",
         "badge": "Verified Practical"
       }
@@ -2737,7 +2737,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "University Lecturer & Professor",
     "enclaveId": "education_workforce",
     "categoryName": "Higher Education",
-    "defaultHeadline": "University Lecturer & Professor · Subject Expertise, Curriculum Design, Research & Publishing",
+    "defaultHeadline": "University Lecturer & Professor Â· Subject Expertise, Curriculum Design, Research & Publishing",
     "typicalSkills": [
       "Subject Expertise",
       "Curriculum Design",
@@ -2747,7 +2747,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Syllabus & Research Tracker",
-        "icon": "🎓",
+        "icon": "ðŸŽ“",
         "description": "Working tool for Subject Expertise and Curriculum Design in day-to-day University Lecturer & Professor work",
         "badge": "Verified Practical"
       }
@@ -2758,7 +2758,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Librarian & Information Specialist",
     "enclaveId": "education_workforce",
     "categoryName": "Libraries & Information",
-    "defaultHeadline": "Librarian & Information Specialist · Cataloguing, Research Assistance, Digital Resources",
+    "defaultHeadline": "Librarian & Information Specialist Â· Cataloguing, Research Assistance, Digital Resources",
     "typicalSkills": [
       "Cataloguing",
       "Research Assistance",
@@ -2768,7 +2768,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Catalogue & Circulation System",
-        "icon": "🎓",
+        "icon": "ðŸŽ“",
         "description": "Working tool for Cataloguing and Research Assistance in day-to-day Librarian & Information Specialist work",
         "badge": "Verified Practical"
       }
@@ -2779,7 +2779,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Music Teacher & Instrument Instructor",
     "enclaveId": "education_workforce",
     "categoryName": "Music Education",
-    "defaultHeadline": "Music Teacher & Instrument Instructor · Instrument Technique, Music Theory, Lesson Planning",
+    "defaultHeadline": "Music Teacher & Instrument Instructor Â· Instrument Technique, Music Theory, Lesson Planning",
     "typicalSkills": [
       "Instrument Technique",
       "Music Theory",
@@ -2789,7 +2789,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Lesson Plan & Student Progress Log",
-        "icon": "🎓",
+        "icon": "ðŸŽ“",
         "description": "Working tool for Instrument Technique and Music Theory in day-to-day Music Teacher & Instrument Instructor work",
         "badge": "Verified Practical"
       }
@@ -2800,7 +2800,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Language Teacher & ESL/TEFL Instructor",
     "enclaveId": "education_workforce",
     "categoryName": "Language Teaching",
-    "defaultHeadline": "Language Teacher & ESL/TEFL Instructor · Grammar & Pronunciation, Lesson Design, Assessment",
+    "defaultHeadline": "Language Teacher & ESL/TEFL Instructor Â· Grammar & Pronunciation, Lesson Design, Assessment",
     "typicalSkills": [
       "Grammar & Pronunciation",
       "Lesson Design",
@@ -2810,7 +2810,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Lesson Plan & Learner Progress Chart",
-        "icon": "🎓",
+        "icon": "ðŸŽ“",
         "description": "Working tool for Grammar & Pronunciation and Lesson Design in day-to-day Language Teacher & ESL/TEFL Instructor work",
         "badge": "Verified Practical"
       }
@@ -2821,7 +2821,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "School Counselor & Career Advisor",
     "enclaveId": "education_workforce",
     "categoryName": "Guidance & Counselling",
-    "defaultHeadline": "School Counselor & Career Advisor · Student Counselling, Career Assessment, Crisis Response",
+    "defaultHeadline": "School Counselor & Career Advisor Â· Student Counselling, Career Assessment, Crisis Response",
     "typicalSkills": [
       "Student Counselling",
       "Career Assessment",
@@ -2831,7 +2831,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Student Plan & Referral Tracker",
-        "icon": "🎓",
+        "icon": "ðŸŽ“",
         "description": "Working tool for Student Counselling and Career Assessment in day-to-day School Counselor & Career Advisor work",
         "badge": "Verified Practical"
       }
@@ -2842,7 +2842,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Physical-Education Teacher & Sports Coach",
     "enclaveId": "education_workforce",
     "categoryName": "Sports Education",
-    "defaultHeadline": "Physical-Education Teacher & Sports Coach · Lesson Planning, Fitness Assessment, Team Sports Coaching",
+    "defaultHeadline": "Physical-Education Teacher & Sports Coach Â· Lesson Planning, Fitness Assessment, Team Sports Coaching",
     "typicalSkills": [
       "Lesson Planning",
       "Fitness Assessment",
@@ -2852,7 +2852,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "PE Lesson & Fitness Test Tracker",
-        "icon": "🎓",
+        "icon": "ðŸŽ“",
         "description": "Working tool for Lesson Planning and Fitness Assessment in day-to-day Physical-Education Teacher & Sports Coach work",
         "badge": "Verified Practical"
       }
@@ -2863,7 +2863,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Police Officer & Law-Enforcement Officer",
     "enclaveId": "community_civic_security",
     "categoryName": "Law Enforcement",
-    "defaultHeadline": "Police Officer & Law-Enforcement Officer · Patrol & Response, De-escalation, Report Writing",
+    "defaultHeadline": "Police Officer & Law-Enforcement Officer Â· Patrol & Response, De-escalation, Report Writing",
     "typicalSkills": [
       "Patrol & Response",
       "De-escalation",
@@ -2873,7 +2873,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Incident Report & Case Notes",
-        "icon": "🛡️",
+        "icon": "ðŸ›¡ï¸",
         "description": "Working tool for Patrol & Response and De-escalation in day-to-day Police Officer & Law-Enforcement Officer work",
         "badge": "Verified Practical"
       }
@@ -2884,7 +2884,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Correctional Officer & Detention Officer",
     "enclaveId": "community_civic_security",
     "categoryName": "Corrections",
-    "defaultHeadline": "Correctional Officer & Detention Officer · Supervision & Security, De-escalation, Report Writing",
+    "defaultHeadline": "Correctional Officer & Detention Officer Â· Supervision & Security, De-escalation, Report Writing",
     "typicalSkills": [
       "Supervision & Security",
       "De-escalation",
@@ -2894,7 +2894,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Post Log & Incident Report",
-        "icon": "🛡️",
+        "icon": "ðŸ›¡ï¸",
         "description": "Working tool for Supervision & Security and De-escalation in day-to-day Correctional Officer & Detention Officer work",
         "badge": "Verified Practical"
       }
@@ -2905,7 +2905,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Customs, Border & Immigration Officer",
     "enclaveId": "community_civic_security",
     "categoryName": "Border & Customs Enforcement",
-    "defaultHeadline": "Customs · Document Verification, Inspection, Regulations",
+    "defaultHeadline": "Customs Â· Document Verification, Inspection, Regulations",
     "typicalSkills": [
       "Document Verification",
       "Inspection",
@@ -2915,7 +2915,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Inspection & Declaration Log",
-        "icon": "🛡️",
+        "icon": "ðŸ›¡ï¸",
         "description": "Working tool for Document Verification and Inspection in day-to-day Customs work",
         "badge": "Verified Practical"
       }
@@ -2926,7 +2926,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Probation & Parole Officer",
     "enclaveId": "community_civic_security",
     "categoryName": "Community Corrections",
-    "defaultHeadline": "Probation & Parole Officer · Case Management, Risk Assessment, Motivational Interviewing",
+    "defaultHeadline": "Probation & Parole Officer Â· Case Management, Risk Assessment, Motivational Interviewing",
     "typicalSkills": [
       "Case Management",
       "Risk Assessment",
@@ -2936,7 +2936,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Caseload & Compliance Tracker",
-        "icon": "🛡️",
+        "icon": "ðŸ›¡ï¸",
         "description": "Working tool for Case Management and Risk Assessment in day-to-day Probation & Parole Officer work",
         "badge": "Verified Practical"
       }
@@ -2947,7 +2947,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Lifeguard & Pool Attendant",
     "enclaveId": "community_civic_security",
     "categoryName": "Aquatic Safety",
-    "defaultHeadline": "Lifeguard & Pool Attendant · Water Rescue, First Aid/CPR, Surveillance",
+    "defaultHeadline": "Lifeguard & Pool Attendant Â· Water Rescue, First Aid/CPR, Surveillance",
     "typicalSkills": [
       "Water Rescue",
       "First Aid/CPR",
@@ -2957,7 +2957,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Pool Safety & Incident Log",
-        "icon": "🛡️",
+        "icon": "ðŸ›¡ï¸",
         "description": "Working tool for Water Rescue and First Aid/CPR in day-to-day Lifeguard & Pool Attendant work",
         "badge": "Verified Practical"
       }
@@ -2968,7 +2968,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Soldier, Sailor, Airman & Armed-Forces Member",
     "enclaveId": "community_civic_security",
     "categoryName": "Armed Forces",
-    "defaultHeadline": "Soldier · Discipline & Teamwork, Technical Specialty (MOS), Physical Fitness",
+    "defaultHeadline": "Soldier Â· Discipline & Teamwork, Technical Specialty (MOS), Physical Fitness",
     "typicalSkills": [
       "Discipline & Teamwork",
       "Technical Specialty (MOS)",
@@ -2978,7 +2978,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Training Qualification & Readiness Log",
-        "icon": "🛡️",
+        "icon": "ðŸ›¡ï¸",
         "description": "Working tool for Discipline & Teamwork and Technical Specialty (MOS) in day-to-day Soldier work",
         "badge": "Verified Practical"
       }
@@ -2989,7 +2989,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Traffic Warden & School Crossing Guard",
     "enclaveId": "community_civic_security",
     "categoryName": "Traffic & Community Safety",
-    "defaultHeadline": "Traffic Warden & School Crossing Guard · Traffic Control, Public Interaction, Safety Procedures",
+    "defaultHeadline": "Traffic Warden & School Crossing Guard Â· Traffic Control, Public Interaction, Safety Procedures",
     "typicalSkills": [
       "Traffic Control",
       "Public Interaction",
@@ -2999,7 +2999,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Shift & Incident Log",
-        "icon": "🛡️",
+        "icon": "ðŸ›¡ï¸",
         "description": "Working tool for Traffic Control and Public Interaction in day-to-day Traffic Warden & School Crossing Guard work",
         "badge": "Verified Practical"
       }
@@ -3010,7 +3010,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Janitor, Building Caretaker & Facilities Attendant",
     "enclaveId": "community_civic_security",
     "categoryName": "Facilities & Building Care",
-    "defaultHeadline": "Janitor · Cleaning Chemicals Safety, Minor Repairs, Waste Handling",
+    "defaultHeadline": "Janitor Â· Cleaning Chemicals Safety, Minor Repairs, Waste Handling",
     "typicalSkills": [
       "Cleaning Chemicals Safety",
       "Minor Repairs",
@@ -3020,7 +3020,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Facility Task & Supply Checklist",
-        "icon": "🛡️",
+        "icon": "ðŸ›¡ï¸",
         "description": "Working tool for Cleaning Chemicals Safety and Minor Repairs in day-to-day Janitor work",
         "badge": "Verified Practical"
       }
@@ -3031,7 +3031,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Fire Inspector & Fire-Safety Officer",
     "enclaveId": "community_civic_security",
     "categoryName": "Fire Prevention",
-    "defaultHeadline": "Fire Inspector & Fire-Safety Officer · Code Inspection, Fire-Safety Training, Plan Review",
+    "defaultHeadline": "Fire Inspector & Fire-Safety Officer Â· Code Inspection, Fire-Safety Training, Plan Review",
     "typicalSkills": [
       "Code Inspection",
       "Fire-Safety Training",
@@ -3041,7 +3041,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Inspection & Code-Violation Log",
-        "icon": "🛡️",
+        "icon": "ðŸ›¡ï¸",
         "description": "Working tool for Code Inspection and Fire-Safety Training in day-to-day Fire Inspector & Fire-Safety Officer work",
         "badge": "Verified Practical"
       }
@@ -3052,7 +3052,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Civil Servant & Government Administrator",
     "enclaveId": "law_gov_defense",
     "categoryName": "Public Administration",
-    "defaultHeadline": "Civil Servant & Government Administrator · Policy Implementation, Records & Compliance, Citizen Service",
+    "defaultHeadline": "Civil Servant & Government Administrator Â· Policy Implementation, Records & Compliance, Citizen Service",
     "typicalSkills": [
       "Policy Implementation",
       "Records & Compliance",
@@ -3062,7 +3062,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Case File & Public-Service Tracker",
-        "icon": "⚖️",
+        "icon": "âš–ï¸",
         "description": "Working tool for Policy Implementation and Records & Compliance in day-to-day Civil Servant & Government Administrator work",
         "badge": "Verified Practical"
       }
@@ -3073,7 +3073,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Postal Worker & Mail Carrier",
     "enclaveId": "law_gov_defense",
     "categoryName": "Postal & Mail Services",
-    "defaultHeadline": "Postal Worker & Mail Carrier · Sorting & Routing, Delivery Safety, Customer Service",
+    "defaultHeadline": "Postal Worker & Mail Carrier Â· Sorting & Routing, Delivery Safety, Customer Service",
     "typicalSkills": [
       "Sorting & Routing",
       "Delivery Safety",
@@ -3083,7 +3083,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Route Sheet & Delivery Scan Log",
-        "icon": "⚖️",
+        "icon": "âš–ï¸",
         "description": "Working tool for Sorting & Routing and Delivery Safety in day-to-day Postal Worker & Mail Carrier work",
         "badge": "Verified Practical"
       }
@@ -3094,7 +3094,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Policy Analyst & Urban/City Planner",
     "enclaveId": "law_gov_defense",
     "categoryName": "Policy & Planning",
-    "defaultHeadline": "Policy Analyst & Urban/City Planner · Policy Research, Data Analysis, Stakeholder Engagement",
+    "defaultHeadline": "Policy Analyst & Urban/City Planner Â· Policy Research, Data Analysis, Stakeholder Engagement",
     "typicalSkills": [
       "Policy Research",
       "Data Analysis",
@@ -3104,7 +3104,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Policy Brief & Land-Use Map",
-        "icon": "⚖️",
+        "icon": "âš–ï¸",
         "description": "Working tool for Policy Research and Data Analysis in day-to-day Policy Analyst & Urban/City Planner work",
         "badge": "Verified Practical"
       }
@@ -3115,7 +3115,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Diplomat & Foreign-Service Officer",
     "enclaveId": "law_gov_defense",
     "categoryName": "Diplomacy",
-    "defaultHeadline": "Diplomat & Foreign-Service Officer · Negotiation, Languages, Reporting",
+    "defaultHeadline": "Diplomat & Foreign-Service Officer Â· Negotiation, Languages, Reporting",
     "typicalSkills": [
       "Negotiation",
       "Languages",
@@ -3125,7 +3125,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Cable & Briefing Tracker",
-        "icon": "⚖️",
+        "icon": "âš–ï¸",
         "description": "Working tool for Negotiation and Languages in day-to-day Diplomat & Foreign-Service Officer work",
         "badge": "Verified Practical"
       }
@@ -3136,7 +3136,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Bank Teller & Customer Banker",
     "enclaveId": "finance_accounting",
     "categoryName": "Retail Banking",
-    "defaultHeadline": "Bank Teller & Customer Banker · Transaction Processing, Cash Handling, KYC/AML Basics",
+    "defaultHeadline": "Bank Teller & Customer Banker Â· Transaction Processing, Cash Handling, KYC/AML Basics",
     "typicalSkills": [
       "Transaction Processing",
       "Cash Handling",
@@ -3146,7 +3146,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Teller Balance & KYC Checklist",
-        "icon": "💰",
+        "icon": "ðŸ’°",
         "description": "Working tool for Transaction Processing and Cash Handling in day-to-day Bank Teller & Customer Banker work",
         "badge": "Verified Practical"
       }
@@ -3157,7 +3157,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Loan Officer, Mortgage Originator & Credit Analyst",
     "enclaveId": "finance_accounting",
     "categoryName": "Lending & Credit",
-    "defaultHeadline": "Loan Officer · Credit Analysis, Underwriting Basics, Compliance",
+    "defaultHeadline": "Loan Officer Â· Credit Analysis, Underwriting Basics, Compliance",
     "typicalSkills": [
       "Credit Analysis",
       "Underwriting Basics",
@@ -3167,7 +3167,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Loan Application & Ratio Calculator",
-        "icon": "💰",
+        "icon": "ðŸ’°",
         "description": "Working tool for Credit Analysis and Underwriting Basics in day-to-day Loan Officer work",
         "badge": "Verified Practical"
       }
@@ -3178,7 +3178,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Financial Advisor & Wealth Planner",
     "enclaveId": "finance_accounting",
     "categoryName": "Financial Planning",
-    "defaultHeadline": "Financial Advisor & Wealth Planner · Needs Analysis, Investment Planning, Retirement & Tax Basics",
+    "defaultHeadline": "Financial Advisor & Wealth Planner Â· Needs Analysis, Investment Planning, Retirement & Tax Basics",
     "typicalSkills": [
       "Needs Analysis",
       "Investment Planning",
@@ -3188,7 +3188,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Client Plan & Portfolio Projection",
-        "icon": "💰",
+        "icon": "ðŸ’°",
         "description": "Working tool for Needs Analysis and Investment Planning in day-to-day Financial Advisor & Wealth Planner work",
         "badge": "Verified Practical"
       }
@@ -3199,7 +3199,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Stockbroker, Securities Trader & Market Analyst",
     "enclaveId": "finance_accounting",
     "categoryName": "Markets & Trading",
-    "defaultHeadline": "Stockbroker · Market Analysis, Order Execution, Risk Management",
+    "defaultHeadline": "Stockbroker Â· Market Analysis, Order Execution, Risk Management",
     "typicalSkills": [
       "Market Analysis",
       "Order Execution",
@@ -3209,7 +3209,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Trade Journal & Risk Dashboard",
-        "icon": "💰",
+        "icon": "ðŸ’°",
         "description": "Working tool for Market Analysis and Order Execution in day-to-day Stockbroker work",
         "badge": "Verified Practical"
       }
@@ -3220,7 +3220,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Internal & External Auditor, Compliance Specialist",
     "enclaveId": "finance_accounting",
     "categoryName": "Audit & Compliance",
-    "defaultHeadline": "Internal & External Auditor · Audit Planning, Controls Testing, Regulatory Standards",
+    "defaultHeadline": "Internal & External Auditor Â· Audit Planning, Controls Testing, Regulatory Standards",
     "typicalSkills": [
       "Audit Planning",
       "Controls Testing",
@@ -3230,7 +3230,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Audit Workpaper & Findings Tracker",
-        "icon": "💰",
+        "icon": "ðŸ’°",
         "description": "Working tool for Audit Planning and Controls Testing in day-to-day Internal & External Auditor work",
         "badge": "Verified Practical"
       }
@@ -3241,7 +3241,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Tax Officer & Revenue Authority Agent",
     "enclaveId": "finance_accounting",
     "categoryName": "Tax Administration",
-    "defaultHeadline": "Tax Officer & Revenue Authority Agent · Tax Law, Assessments, Taxpayer Service",
+    "defaultHeadline": "Tax Officer & Revenue Authority Agent Â· Tax Law, Assessments, Taxpayer Service",
     "typicalSkills": [
       "Tax Law",
       "Assessments",
@@ -3251,7 +3251,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Taxpayer Case & Assessment Log",
-        "icon": "💰",
+        "icon": "ðŸ’°",
         "description": "Working tool for Tax Law and Assessments in day-to-day Tax Officer & Revenue Authority Agent work",
         "badge": "Verified Practical"
       }
@@ -3262,7 +3262,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Susu, Chit-Fund & Community Savings Collector",
     "enclaveId": "finance_accounting",
     "categoryName": "Community Savings & Microfinance",
-    "defaultHeadline": "Susu · Savings Group Management, Record Keeping, Trust & Ethics",
+    "defaultHeadline": "Susu Â· Savings Group Management, Record Keeping, Trust & Ethics",
     "typicalSkills": [
       "Savings Group Management",
       "Record Keeping",
@@ -3272,7 +3272,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Group Contribution & Payout Ledger",
-        "icon": "💰",
+        "icon": "ðŸ’°",
         "description": "Working tool for Savings Group Management and Record Keeping in day-to-day Susu work",
         "badge": "Verified Practical"
       }
@@ -3283,7 +3283,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "IT Support Specialist & Help-Desk Technician",
     "enclaveId": "tech_software",
     "categoryName": "IT Support",
-    "defaultHeadline": "IT Support Specialist & Help-Desk Technician · Troubleshooting, Operating Systems, Ticketing Tools",
+    "defaultHeadline": "IT Support Specialist & Help-Desk Technician Â· Troubleshooting, Operating Systems, Ticketing Tools",
     "typicalSkills": [
       "Troubleshooting",
       "Operating Systems",
@@ -3293,7 +3293,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Support Ticket & Asset Inventory",
-        "icon": "💻",
+        "icon": "ðŸ’»",
         "description": "Working tool for Troubleshooting and Operating Systems in day-to-day IT Support Specialist & Help-Desk Technician work",
         "badge": "Verified Practical"
       }
@@ -3304,7 +3304,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Network & Systems Administrator",
     "enclaveId": "tech_software",
     "categoryName": "Networks & Systems",
-    "defaultHeadline": "Network & Systems Administrator · Routing & Switching, Windows/Linux Administration, Monitoring",
+    "defaultHeadline": "Network & Systems Administrator Â· Routing & Switching, Windows/Linux Administration, Monitoring",
     "typicalSkills": [
       "Routing & Switching",
       "Windows/Linux Administration",
@@ -3314,7 +3314,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Network Diagram & Monitoring Dashboard",
-        "icon": "💻",
+        "icon": "ðŸ’»",
         "description": "Working tool for Routing & Switching and Windows/Linux Administration in day-to-day Network & Systems Administrator work",
         "badge": "Verified Practical"
       }
@@ -3325,7 +3325,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Data Analyst & Business Intelligence Specialist",
     "enclaveId": "tech_software",
     "categoryName": "Data & Analytics",
-    "defaultHeadline": "Data Analyst & Business Intelligence Specialist · SQL, Spreadsheets & BI Tools, Statistics",
+    "defaultHeadline": "Data Analyst & Business Intelligence Specialist Â· SQL, Spreadsheets & BI Tools, Statistics",
     "typicalSkills": [
       "SQL",
       "Spreadsheets & BI Tools",
@@ -3335,7 +3335,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Dashboard & Query Library",
-        "icon": "💻",
+        "icon": "ðŸ’»",
         "description": "Working tool for SQL and Spreadsheets & BI Tools in day-to-day Data Analyst & Business Intelligence Specialist work",
         "badge": "Verified Practical"
       }
@@ -3346,7 +3346,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Web Designer & UX/UI Designer",
     "enclaveId": "tech_software",
     "categoryName": "Web & UX Design",
-    "defaultHeadline": "Web Designer & UX/UI Designer · Wireframing & Prototyping, Visual Design, User Research",
+    "defaultHeadline": "Web Designer & UX/UI Designer Â· Wireframing & Prototyping, Visual Design, User Research",
     "typicalSkills": [
       "Wireframing & Prototyping",
       "Visual Design",
@@ -3356,7 +3356,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Design System & Prototype Board",
-        "icon": "💻",
+        "icon": "ðŸ’»",
         "description": "Working tool for Wireframing & Prototyping and Visual Design in day-to-day Web Designer & UX/UI Designer work",
         "badge": "Verified Practical"
       }
@@ -3367,7 +3367,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "QA Engineer & Software Tester",
     "enclaveId": "tech_software",
     "categoryName": "Quality Assurance",
-    "defaultHeadline": "QA Engineer & Software Tester · Test Case Design, Automation, Bug Reporting",
+    "defaultHeadline": "QA Engineer & Software Tester Â· Test Case Design, Automation, Bug Reporting",
     "typicalSkills": [
       "Test Case Design",
       "Automation",
@@ -3377,7 +3377,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Test Plan & Defect Tracker",
-        "icon": "💻",
+        "icon": "ðŸ’»",
         "description": "Working tool for Test Case Design and Automation in day-to-day QA Engineer & Software Tester work",
         "badge": "Verified Practical"
       }
@@ -3388,7 +3388,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Game Developer & Game Designer",
     "enclaveId": "tech_software",
     "categoryName": "Game Development",
-    "defaultHeadline": "Game Developer & Game Designer · Game Engines (Unity/Unreal), Programming, Level & Systems Design",
+    "defaultHeadline": "Game Developer & Game Designer Â· Game Engines (Unity/Unreal), Programming, Level & Systems Design",
     "typicalSkills": [
       "Game Engines (Unity/Unreal)",
       "Programming",
@@ -3398,7 +3398,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Game Design Doc & Build Tracker",
-        "icon": "💻",
+        "icon": "ðŸ’»",
         "description": "Working tool for Game Engines (Unity/Unreal) and Programming in day-to-day Game Developer & Game Designer work",
         "badge": "Verified Practical"
       }
@@ -3409,7 +3409,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Digital Marketer, SEO & Social-Media Manager",
     "enclaveId": "tech_software",
     "categoryName": "Digital Marketing",
-    "defaultHeadline": "Digital Marketer · SEO & Content, Paid Ads, Analytics",
+    "defaultHeadline": "Digital Marketer Â· SEO & Content, Paid Ads, Analytics",
     "typicalSkills": [
       "SEO & Content",
       "Paid Ads",
@@ -3419,7 +3419,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Campaign & Analytics Dashboard",
-        "icon": "💻",
+        "icon": "ðŸ’»",
         "description": "Working tool for SEO & Content and Paid Ads in day-to-day Digital Marketer work",
         "badge": "Verified Practical"
       }
@@ -3430,7 +3430,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "SOC Analyst & Cybersecurity Analyst",
     "enclaveId": "tech_cybersecurity",
     "categoryName": "Security Operations",
-    "defaultHeadline": "SOC Analyst & Cybersecurity Analyst · Log Analysis & SIEM, Incident Triage, Threat Intelligence",
+    "defaultHeadline": "SOC Analyst & Cybersecurity Analyst Â· Log Analysis & SIEM, Incident Triage, Threat Intelligence",
     "typicalSkills": [
       "Log Analysis & SIEM",
       "Incident Triage",
@@ -3440,7 +3440,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "SIEM Alert Triage & Incident Log",
-        "icon": "🔐",
+        "icon": "ðŸ”",
         "description": "Working tool for Log Analysis & SIEM and Incident Triage in day-to-day SOC Analyst & Cybersecurity Analyst work",
         "badge": "Verified Practical"
       }
@@ -3451,7 +3451,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "DevOps & Cloud Engineer",
     "enclaveId": "tech_software",
     "categoryName": "Cloud & DevOps",
-    "defaultHeadline": "DevOps & Cloud Engineer · Cloud Platforms (AWS/Azure/GCP), CI/CD, Infrastructure as Code",
+    "defaultHeadline": "DevOps & Cloud Engineer Â· Cloud Platforms (AWS/Azure/GCP), CI/CD, Infrastructure as Code",
     "typicalSkills": [
       "Cloud Platforms (AWS/Azure/GCP)",
       "CI/CD",
@@ -3461,7 +3461,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Pipeline & Infrastructure Dashboard",
-        "icon": "💻",
+        "icon": "ðŸ’»",
         "description": "Working tool for Cloud Platforms (AWS/Azure/GCP) and CI/CD in day-to-day DevOps & Cloud Engineer work",
         "badge": "Verified Practical"
       }
@@ -3472,7 +3472,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Machine-Learning Engineer & Data Scientist",
     "enclaveId": "tech_software",
     "categoryName": "Machine Learning & AI",
-    "defaultHeadline": "Machine-Learning Engineer & Data Scientist · Python & Statistics, Model Training & Evaluation, Data Pipelines",
+    "defaultHeadline": "Machine-Learning Engineer & Data Scientist Â· Python & Statistics, Model Training & Evaluation, Data Pipelines",
     "typicalSkills": [
       "Python & Statistics",
       "Model Training & Evaluation",
@@ -3482,7 +3482,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Experiment & Model Evaluation Log",
-        "icon": "💻",
+        "icon": "ðŸ’»",
         "description": "Working tool for Python & Statistics and Model Training & Evaluation in day-to-day Machine-Learning Engineer & Data Scientist work",
         "badge": "Verified Practical"
       }
@@ -3493,7 +3493,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Mobile App Developer",
     "enclaveId": "tech_software",
     "categoryName": "Mobile Development",
-    "defaultHeadline": "Mobile App Developer · Swift/Kotlin or Cross-Platform, API Integration, UI Development",
+    "defaultHeadline": "Mobile App Developer Â· Swift/Kotlin or Cross-Platform, API Integration, UI Development",
     "typicalSkills": [
       "Swift/Kotlin or Cross-Platform",
       "API Integration",
@@ -3503,7 +3503,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "App Release & Crash Dashboard",
-        "icon": "💻",
+        "icon": "ðŸ’»",
         "description": "Working tool for Swift/Kotlin or Cross-Platform and API Integration in day-to-day Mobile App Developer work",
         "badge": "Verified Practical"
       }
@@ -3514,7 +3514,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Sewing-Machine Operator & Garment Production Worker",
     "enclaveId": "manufacturing_industrial",
     "categoryName": "Garment Manufacturing",
-    "defaultHeadline": "Sewing-Machine Operator & Garment Production Worker · Industrial Sewing, Pattern Reading, Quality Checks",
+    "defaultHeadline": "Sewing-Machine Operator & Garment Production Worker Â· Industrial Sewing, Pattern Reading, Quality Checks",
     "typicalSkills": [
       "Industrial Sewing",
       "Pattern Reading",
@@ -3524,7 +3524,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Production Bundle & Piece-Rate Tally",
-        "icon": "🏭",
+        "icon": "ðŸ­",
         "description": "Working tool for Industrial Sewing and Pattern Reading in day-to-day Sewing-Machine Operator & Garment Production Worker work",
         "badge": "Verified Practical"
       }
@@ -3535,7 +3535,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Block, Brick & Paving-Stone Maker",
     "enclaveId": "manufacturing_industrial",
     "categoryName": "Building Materials Production",
-    "defaultHeadline": "Block · Mixing & Moulding, Curing, Quality Testing",
+    "defaultHeadline": "Block Â· Mixing & Moulding, Curing, Quality Testing",
     "typicalSkills": [
       "Mixing & Moulding",
       "Curing",
@@ -3545,7 +3545,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Batch Mix & Curing Log",
-        "icon": "🏭",
+        "icon": "ðŸ­",
         "description": "Working tool for Mixing & Moulding and Curing in day-to-day Block work",
         "badge": "Verified Practical"
       }
@@ -3556,7 +3556,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Print-Shop Operator & Screen Printer",
     "enclaveId": "manufacturing_industrial",
     "categoryName": "Printing & Production",
-    "defaultHeadline": "Print-Shop Operator & Screen Printer · Digital & Screen Printing, Colour Management, Finishing & Binding",
+    "defaultHeadline": "Print-Shop Operator & Screen Printer Â· Digital & Screen Printing, Colour Management, Finishing & Binding",
     "typicalSkills": [
       "Digital & Screen Printing",
       "Colour Management",
@@ -3566,7 +3566,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Print Job Ticket & Colour Profile Log",
-        "icon": "🏭",
+        "icon": "ðŸ­",
         "description": "Working tool for Digital & Screen Printing and Colour Management in day-to-day Print-Shop Operator & Screen Printer work",
         "badge": "Verified Practical"
       }
@@ -3577,7 +3577,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Quality Inspector & QC Technician",
     "enclaveId": "manufacturing_industrial",
     "categoryName": "Quality Control",
-    "defaultHeadline": "Quality Inspector & QC Technician · Measurement & Gauging, Inspection Standards, Documentation",
+    "defaultHeadline": "Quality Inspector & QC Technician Â· Measurement & Gauging, Inspection Standards, Documentation",
     "typicalSkills": [
       "Measurement & Gauging",
       "Inspection Standards",
@@ -3587,7 +3587,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Inspection Checklist & Defect Log",
-        "icon": "🏭",
+        "icon": "ðŸ­",
         "description": "Working tool for Measurement & Gauging and Inspection Standards in day-to-day Quality Inspector & QC Technician work",
         "badge": "Verified Practical"
       }
@@ -3598,7 +3598,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Production, Packing & Assembly Line Worker",
     "enclaveId": "manufacturing_industrial",
     "categoryName": "Production & Packaging",
-    "defaultHeadline": "Production · Assembly Tasks, Quality Checks, Safe Lifting",
+    "defaultHeadline": "Production Â· Assembly Tasks, Quality Checks, Safe Lifting",
     "typicalSkills": [
       "Assembly Tasks",
       "Quality Checks",
@@ -3608,7 +3608,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Line Output & Shift Handover Sheet",
-        "icon": "🏭",
+        "icon": "ðŸ­",
         "description": "Working tool for Assembly Tasks and Quality Checks in day-to-day Production work",
         "badge": "Verified Practical"
       }
@@ -3619,7 +3619,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Foundry & Steel-Mill Worker",
     "enclaveId": "manufacturing_industrial",
     "categoryName": "Metal Production",
-    "defaultHeadline": "Foundry & Steel-Mill Worker · Molding & Casting, Furnace Safety, Material Handling",
+    "defaultHeadline": "Foundry & Steel-Mill Worker Â· Molding & Casting, Furnace Safety, Material Handling",
     "typicalSkills": [
       "Molding & Casting",
       "Furnace Safety",
@@ -3629,7 +3629,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Pour Log & Furnace Safety Checklist",
-        "icon": "🏭",
+        "icon": "ðŸ­",
         "description": "Working tool for Molding & Casting and Furnace Safety in day-to-day Foundry & Steel-Mill Worker work",
         "badge": "Verified Practical"
       }
@@ -3640,7 +3640,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Food-Processing & Bottling Plant Operator",
     "enclaveId": "manufacturing_industrial",
     "categoryName": "Food & Beverage Manufacturing",
-    "defaultHeadline": "Food-Processing & Bottling Plant Operator · Line Operation, Food Safety (HACCP/GMP), Sanitation",
+    "defaultHeadline": "Food-Processing & Bottling Plant Operator Â· Line Operation, Food Safety (HACCP/GMP), Sanitation",
     "typicalSkills": [
       "Line Operation",
       "Food Safety (HACCP/GMP)",
@@ -3650,7 +3650,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Batch Record & Sanitation Log",
-        "icon": "🏭",
+        "icon": "ðŸ­",
         "description": "Working tool for Line Operation and Food Safety (HACCP/GMP) in day-to-day Food-Processing & Bottling Plant Operator work",
         "badge": "Verified Practical"
       }
@@ -3661,7 +3661,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Civil & Structural Engineer",
     "enclaveId": "manufacturing_industrial",
     "categoryName": "Civil Engineering",
-    "defaultHeadline": "Civil & Structural Engineer · Structural Analysis, CAD/Civil Software, Codes & Standards",
+    "defaultHeadline": "Civil & Structural Engineer Â· Structural Analysis, CAD/Civil Software, Codes & Standards",
     "typicalSkills": [
       "Structural Analysis",
       "CAD/Civil Software",
@@ -3671,7 +3671,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Load Calc & Drawing Set",
-        "icon": "🏭",
+        "icon": "ðŸ­",
         "description": "Working tool for Structural Analysis and CAD/Civil Software in day-to-day Civil & Structural Engineer work",
         "badge": "Verified Practical"
       }
@@ -3682,7 +3682,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Mechanical Engineer",
     "enclaveId": "manufacturing_industrial",
     "categoryName": "Mechanical Engineering",
-    "defaultHeadline": "Mechanical Engineer · CAD & Simulation, Thermodynamics & Mechanics, Prototyping",
+    "defaultHeadline": "Mechanical Engineer Â· CAD & Simulation, Thermodynamics & Mechanics, Prototyping",
     "typicalSkills": [
       "CAD & Simulation",
       "Thermodynamics & Mechanics",
@@ -3692,7 +3692,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "CAD Model & Tolerance Stack-Up",
-        "icon": "🏭",
+        "icon": "ðŸ­",
         "description": "Working tool for CAD & Simulation and Thermodynamics & Mechanics in day-to-day Mechanical Engineer work",
         "badge": "Verified Practical"
       }
@@ -3703,7 +3703,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Electrical & Electronics Engineer",
     "enclaveId": "manufacturing_industrial",
     "categoryName": "Electrical Engineering",
-    "defaultHeadline": "Electrical & Electronics Engineer · Circuit Design, Power Systems, Embedded Systems",
+    "defaultHeadline": "Electrical & Electronics Engineer Â· Circuit Design, Power Systems, Embedded Systems",
     "typicalSkills": [
       "Circuit Design",
       "Power Systems",
@@ -3713,7 +3713,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Schematic & Test Bench Log",
-        "icon": "🏭",
+        "icon": "ðŸ­",
         "description": "Working tool for Circuit Design and Power Systems in day-to-day Electrical & Electronics Engineer work",
         "badge": "Verified Practical"
       }
@@ -3724,7 +3724,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Industrial, Process & Chemical Engineer",
     "enclaveId": "manufacturing_industrial",
     "categoryName": "Industrial & Process Engineering",
-    "defaultHeadline": "Industrial · Process Optimisation, Lean & Six Sigma, Safety & Controls",
+    "defaultHeadline": "Industrial Â· Process Optimisation, Lean & Six Sigma, Safety & Controls",
     "typicalSkills": [
       "Process Optimisation",
       "Lean & Six Sigma",
@@ -3734,7 +3734,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Process Flow & Yield Dashboard",
-        "icon": "🏭",
+        "icon": "ðŸ­",
         "description": "Working tool for Process Optimisation and Lean & Six Sigma in day-to-day Industrial work",
         "badge": "Verified Practical"
       }
@@ -3745,7 +3745,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Power Lineman & Line Technician",
     "enclaveId": "energy_utilities_environment",
     "categoryName": "Electric Utility Lines",
-    "defaultHeadline": "Power Lineman & Line Technician · Pole Climbing, Energised-Line Work, Rigging",
+    "defaultHeadline": "Power Lineman & Line Technician Â· Pole Climbing, Energised-Line Work, Rigging",
     "typicalSkills": [
       "Pole Climbing",
       "Energised-Line Work",
@@ -3755,7 +3755,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Line Work Order & Safety Log",
-        "icon": "⚡",
+        "icon": "âš¡",
         "description": "Working tool for Pole Climbing and Energised-Line Work in day-to-day Power Lineman & Line Technician work",
         "badge": "Verified Practical"
       }
@@ -3766,7 +3766,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Meter Reader & Utility Field Representative",
     "enclaveId": "energy_utilities_environment",
     "categoryName": "Utility Services",
-    "defaultHeadline": "Meter Reader & Utility Field Representative · Meter Reading, Customer Service, Safety & Access",
+    "defaultHeadline": "Meter Reader & Utility Field Representative Â· Meter Reading, Customer Service, Safety & Access",
     "typicalSkills": [
       "Meter Reading",
       "Customer Service",
@@ -3776,7 +3776,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Route & Meter-Read Log",
-        "icon": "⚡",
+        "icon": "âš¡",
         "description": "Working tool for Meter Reading and Customer Service in day-to-day Meter Reader & Utility Field Representative work",
         "badge": "Verified Practical"
       }
@@ -3787,7 +3787,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Fuel-Station Attendant & Forecourt Worker",
     "enclaveId": "energy_utilities_environment",
     "categoryName": "Fuel Retail",
-    "defaultHeadline": "Fuel-Station Attendant & Forecourt Worker · Fuel Dispensing Safety, Cash Handling, Customer Service",
+    "defaultHeadline": "Fuel-Station Attendant & Forecourt Worker Â· Fuel Dispensing Safety, Cash Handling, Customer Service",
     "typicalSkills": [
       "Fuel Dispensing Safety",
       "Cash Handling",
@@ -3797,7 +3797,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Forecourt Shift & Fuel-Stock Log",
-        "icon": "⚡",
+        "icon": "âš¡",
         "description": "Working tool for Fuel Dispensing Safety and Cash Handling in day-to-day Fuel-Station Attendant & Forecourt Worker work",
         "badge": "Verified Practical"
       }
@@ -3808,7 +3808,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Generator & Backup-Power Technician",
     "enclaveId": "energy_utilities_environment",
     "categoryName": "Backup Power Systems",
-    "defaultHeadline": "Generator & Backup-Power Technician · Generator Servicing, Transfer Switches, Diesel Engine Basics",
+    "defaultHeadline": "Generator & Backup-Power Technician Â· Generator Servicing, Transfer Switches, Diesel Engine Basics",
     "typicalSkills": [
       "Generator Servicing",
       "Transfer Switches",
@@ -3818,7 +3818,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Generator Service & Load-Test Log",
-        "icon": "⚡",
+        "icon": "âš¡",
         "description": "Working tool for Generator Servicing and Transfer Switches in day-to-day Generator & Backup-Power Technician work",
         "badge": "Verified Practical"
       }
@@ -3829,7 +3829,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Oil-Rig Roughneck & Drilling Crew Member",
     "enclaveId": "energy_utilities_environment",
     "categoryName": "Oil & Gas Field Operations",
-    "defaultHeadline": "Oil-Rig Roughneck & Drilling Crew Member · Drill-Floor Operations, Pipe Handling, Well Control Awareness",
+    "defaultHeadline": "Oil-Rig Roughneck & Drilling Crew Member Â· Drill-Floor Operations, Pipe Handling, Well Control Awareness",
     "typicalSkills": [
       "Drill-Floor Operations",
       "Pipe Handling",
@@ -3839,7 +3839,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Drill-Floor Crew & Safety Log",
-        "icon": "⚡",
+        "icon": "âš¡",
         "description": "Working tool for Drill-Floor Operations and Pipe Handling in day-to-day Oil-Rig Roughneck & Drilling Crew Member work",
         "badge": "Verified Practical"
       }
@@ -3850,7 +3850,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Pipeline Operator & Gas-Distribution Technician",
     "enclaveId": "energy_utilities_environment",
     "categoryName": "Pipelines & Gas Distribution",
-    "defaultHeadline": "Pipeline Operator & Gas-Distribution Technician · Pipeline Monitoring (SCADA), Leak Detection, Valve Operation",
+    "defaultHeadline": "Pipeline Operator & Gas-Distribution Technician Â· Pipeline Monitoring (SCADA), Leak Detection, Valve Operation",
     "typicalSkills": [
       "Pipeline Monitoring (SCADA)",
       "Leak Detection",
@@ -3860,7 +3860,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Pipeline Patrol & Leak-Survey Log",
-        "icon": "⚡",
+        "icon": "âš¡",
         "description": "Working tool for Pipeline Monitoring (SCADA) and Leak Detection in day-to-day Pipeline Operator & Gas-Distribution Technician work",
         "badge": "Verified Practical"
       }
@@ -3871,7 +3871,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Recycler, Scrap Collector & Waste-Pickers' Cooperative Member",
     "enclaveId": "energy_utilities_environment",
     "categoryName": "Recycling & Circular Economy",
-    "defaultHeadline": "Recycler · Material Sorting, Scrap Pricing, Safety & Handling",
+    "defaultHeadline": "Recycler Â· Material Sorting, Scrap Pricing, Safety & Handling",
     "typicalSkills": [
       "Material Sorting",
       "Scrap Pricing",
@@ -3881,7 +3881,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Scrap Weight & Price Ledger",
-        "icon": "⚡",
+        "icon": "âš¡",
         "description": "Working tool for Material Sorting and Scrap Pricing in day-to-day Recycler work",
         "badge": "Verified Practical"
       }
@@ -3892,7 +3892,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Commercial Pilot & Flight Crew",
     "enclaveId": "aviation_aerospace_maritime",
     "categoryName": "Aviation Flight",
-    "defaultHeadline": "Commercial Pilot & Flight Crew · Flight Planning, Instrument Flying, Crew Resource Management",
+    "defaultHeadline": "Commercial Pilot & Flight Crew Â· Flight Planning, Instrument Flying, Crew Resource Management",
     "typicalSkills": [
       "Flight Planning",
       "Instrument Flying",
@@ -3902,7 +3902,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Flight Log & Weather Briefing",
-        "icon": "✈️",
+        "icon": "âœˆï¸",
         "description": "Working tool for Flight Planning and Instrument Flying in day-to-day Commercial Pilot & Flight Crew work",
         "badge": "Verified Practical"
       }
@@ -3913,7 +3913,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Flight Attendant & Cabin Crew",
     "enclaveId": "aviation_aerospace_maritime",
     "categoryName": "Airline Cabin Service",
-    "defaultHeadline": "Flight Attendant & Cabin Crew · Passenger Safety, First Aid & Emergency Procedures, Customer Service",
+    "defaultHeadline": "Flight Attendant & Cabin Crew Â· Passenger Safety, First Aid & Emergency Procedures, Customer Service",
     "typicalSkills": [
       "Passenger Safety",
       "First Aid & Emergency Procedures",
@@ -3923,7 +3923,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Cabin Safety Checklist & Service Log",
-        "icon": "✈️",
+        "icon": "âœˆï¸",
         "description": "Working tool for Passenger Safety and First Aid & Emergency Procedures in day-to-day Flight Attendant & Cabin Crew work",
         "badge": "Verified Practical"
       }
@@ -3934,7 +3934,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Airport Ground Crew & Baggage Handler",
     "enclaveId": "aviation_aerospace_maritime",
     "categoryName": "Airport Ground Operations",
-    "defaultHeadline": "Airport Ground Crew & Baggage Handler · Baggage Handling, Aircraft Marshalling, Ground Safety",
+    "defaultHeadline": "Airport Ground Crew & Baggage Handler Â· Baggage Handling, Aircraft Marshalling, Ground Safety",
     "typicalSkills": [
       "Baggage Handling",
       "Aircraft Marshalling",
@@ -3944,7 +3944,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Ramp Safety & Load Sheet",
-        "icon": "✈️",
+        "icon": "âœˆï¸",
         "description": "Working tool for Baggage Handling and Aircraft Marshalling in day-to-day Airport Ground Crew & Baggage Handler work",
         "badge": "Verified Practical"
       }
@@ -3955,7 +3955,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Port Stevedore, Dockworker & Crane Operator",
     "enclaveId": "aviation_aerospace_maritime",
     "categoryName": "Port & Cargo Handling",
-    "defaultHeadline": "Port Stevedore · Cargo Securing, Crane/Forklift Operation, Container Handling",
+    "defaultHeadline": "Port Stevedore Â· Cargo Securing, Crane/Forklift Operation, Container Handling",
     "typicalSkills": [
       "Cargo Securing",
       "Crane/Forklift Operation",
@@ -3965,7 +3965,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Container Tally & Lift Plan",
-        "icon": "✈️",
+        "icon": "âœˆï¸",
         "description": "Working tool for Cargo Securing and Crane/Forklift Operation in day-to-day Port Stevedore work",
         "badge": "Verified Practical"
       }
@@ -3976,7 +3976,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Ferry, Canoe & Small-Boat Operator",
     "enclaveId": "aviation_aerospace_maritime",
     "categoryName": "Inland & Coastal Water Transport",
-    "defaultHeadline": "Ferry · Navigation Rules, Passenger Safety, Vessel Maintenance",
+    "defaultHeadline": "Ferry Â· Navigation Rules, Passenger Safety, Vessel Maintenance",
     "typicalSkills": [
       "Navigation Rules",
       "Passenger Safety",
@@ -3986,7 +3986,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Trip Manifest & Vessel Safety Log",
-        "icon": "✈️",
+        "icon": "âœˆï¸",
         "description": "Working tool for Navigation Rules and Passenger Safety in day-to-day Ferry work",
         "badge": "Verified Practical"
       }
@@ -3997,7 +3997,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Environmental Scientist & Conservation Specialist",
     "enclaveId": "science_laboratory_research",
     "categoryName": "Environmental Science",
-    "defaultHeadline": "Environmental Scientist & Conservation Specialist · Field Sampling, Data Analysis, Environmental Regulations",
+    "defaultHeadline": "Environmental Scientist & Conservation Specialist Â· Field Sampling, Data Analysis, Environmental Regulations",
     "typicalSkills": [
       "Field Sampling",
       "Data Analysis",
@@ -4007,7 +4007,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Sample Chain-of-Custody & Data Log",
-        "icon": "🔬",
+        "icon": "ðŸ”¬",
         "description": "Working tool for Field Sampling and Data Analysis in day-to-day Environmental Scientist & Conservation Specialist work",
         "badge": "Verified Practical"
       }
@@ -4018,7 +4018,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Meteorologist & Weather Forecaster",
     "enclaveId": "science_laboratory_research",
     "categoryName": "Meteorology",
-    "defaultHeadline": "Meteorologist & Weather Forecaster · Atmospheric Science, Forecast Models, Data Visualisation",
+    "defaultHeadline": "Meteorologist & Weather Forecaster Â· Atmospheric Science, Forecast Models, Data Visualisation",
     "typicalSkills": [
       "Atmospheric Science",
       "Forecast Models",
@@ -4028,7 +4028,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Forecast Model & Observation Log",
-        "icon": "🔬",
+        "icon": "ðŸ”¬",
         "description": "Working tool for Atmospheric Science and Forecast Models in day-to-day Meteorologist & Weather Forecaster work",
         "badge": "Verified Practical"
       }
@@ -4039,7 +4039,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "ISP Network Installer & Wireless Internet Technician",
     "enclaveId": "telecom_digital_infrastructure",
     "categoryName": "Internet Service & Wireless",
-    "defaultHeadline": "ISP Network Installer & Wireless Internet Technician · Wireless Link Alignment, Cabling & Termination, Router Configuration",
+    "defaultHeadline": "ISP Network Installer & Wireless Internet Technician Â· Wireless Link Alignment, Cabling & Termination, Router Configuration",
     "typicalSkills": [
       "Wireless Link Alignment",
       "Cabling & Termination",
@@ -4049,7 +4049,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Install Ticket & Signal Log",
-        "icon": "📡",
+        "icon": "ðŸ“¡",
         "description": "Working tool for Wireless Link Alignment and Cabling & Termination in day-to-day ISP Network Installer & Wireless Internet Technician work",
         "badge": "Verified Practical"
       }
@@ -4060,7 +4060,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Cyber-Café, Telecom Shop & Airtime Reseller",
     "enclaveId": "commerce_small_business",
     "categoryName": "Digital Services Retail",
-    "defaultHeadline": "Cyber-Café · Customer Service, Device & Airtime Sales, Basic Troubleshooting",
+    "defaultHeadline": "Cyber-Café Â· Customer Service, Device & Airtime Sales, Basic Troubleshooting",
     "typicalSkills": [
       "Customer Service",
       "Device & Airtime Sales",
@@ -4070,7 +4070,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Daily Sales & Airtime Float Ledger",
-        "icon": "🛍️",
+        "icon": "ðŸ›ï¸",
         "description": "Working tool for Customer Service and Device & Airtime Sales in day-to-day Cyber-Café work",
         "badge": "Verified Practical"
       }
@@ -4081,7 +4081,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Market Porter & Load Carrier",
     "enclaveId": "automotive_mechanics",
     "categoryName": "Informal Logistics",
-    "defaultHeadline": "Market Porter & Load Carrier · Safe Lifting, Route Knowledge, Customer Trust",
+    "defaultHeadline": "Market Porter & Load Carrier Â· Safe Lifting, Route Knowledge, Customer Trust",
     "typicalSkills": [
       "Safe Lifting",
       "Route Knowledge",
@@ -4091,7 +4091,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Daily Jobs & Earnings Ledger",
-        "icon": "🚚",
+        "icon": "ðŸšš",
         "description": "Working tool for Safe Lifting and Route Knowledge in day-to-day Market Porter & Load Carrier work",
         "badge": "Verified Practical"
       }
@@ -4102,7 +4102,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Errand Runner & Personal Shopper",
     "enclaveId": "commerce_small_business",
     "categoryName": "Informal & Gig Services",
-    "defaultHeadline": "Errand Runner & Personal Shopper · Time Management, Shopping & Delivery, Customer Communication",
+    "defaultHeadline": "Errand Runner & Personal Shopper Â· Time Management, Shopping & Delivery, Customer Communication",
     "typicalSkills": [
       "Time Management",
       "Shopping & Delivery",
@@ -4112,7 +4112,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Errand Log & Receipt Tracker",
-        "icon": "🛍️",
+        "icon": "ðŸ›ï¸",
         "description": "Working tool for Time Management and Shopping & Delivery in day-to-day Errand Runner & Personal Shopper work",
         "badge": "Verified Practical"
       }
@@ -4123,7 +4123,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Water Vendor & Bulk-Delivery Operator",
     "enclaveId": "automotive_mechanics",
     "categoryName": "Water Supply & Delivery",
-    "defaultHeadline": "Water Vendor & Bulk-Delivery Operator · Water Quality Handling, Delivery Routing, Customer Billing",
+    "defaultHeadline": "Water Vendor & Bulk-Delivery Operator Â· Water Quality Handling, Delivery Routing, Customer Billing",
     "typicalSkills": [
       "Water Quality Handling",
       "Delivery Routing",
@@ -4133,7 +4133,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Delivery Route & Water-Quality Log",
-        "icon": "🚚",
+        "icon": "ðŸšš",
         "description": "Working tool for Water Quality Handling and Delivery Routing in day-to-day Water Vendor & Bulk-Delivery Operator work",
         "badge": "Verified Practical"
       }
@@ -4144,7 +4144,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Bicycle Courier & Delivery-App Rider",
     "enclaveId": "automotive_mechanics",
     "categoryName": "Gig Delivery",
-    "defaultHeadline": "Bicycle Courier & Delivery-App Rider · Navigation, Time Management, Customer Service",
+    "defaultHeadline": "Bicycle Courier & Delivery-App Rider Â· Navigation, Time Management, Customer Service",
     "typicalSkills": [
       "Navigation",
       "Time Management",
@@ -4154,7 +4154,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Delivery Earnings & Bike Maintenance Log",
-        "icon": "🚚",
+        "icon": "ðŸšš",
         "description": "Working tool for Navigation and Time Management in day-to-day Bicycle Courier & Delivery-App Rider work",
         "badge": "Verified Practical"
       }
@@ -4165,7 +4165,7 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "title": "Day Laborer & Casual Worker",
     "enclaveId": "trades_construction",
     "categoryName": "Casual & Day Labor",
-    "defaultHeadline": "Day Laborer & Casual Worker · Manual Tasks, Reliability, Tool Use",
+    "defaultHeadline": "Day Laborer & Casual Worker Â· Manual Tasks, Reliability, Tool Use",
     "typicalSkills": [
       "Manual Tasks",
       "Reliability",
@@ -4175,8 +4175,1604 @@ export const EXPANSION_PROFESSIONS: ProfessionDefinition[] = [
     "tools": [
       {
         "name": "Daily Work & Pay Log",
-        "icon": "🧱",
+        "icon": "ðŸ§±",
         "description": "Working tool for Manual Tasks and Reliability in day-to-day Day Laborer & Casual Worker work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "elevator_mechanic",
+    "title": "Elevator & Escalator Mechanic",
+    "enclaveId": "trades_construction",
+    "categoryName": "Vertical Transport Trades",
+    "defaultHeadline": "Elevator & Escalator Mechanic Â· Hoistway Installation, Controls & Traction Systems, Safety Code Inspection",
+    "typicalSkills": [
+      "Hoistway Installation",
+      "Controls & Traction Systems",
+      "Safety Code Inspection",
+      "Troubleshooting"
+    ],
+    "tools": [
+      {
+        "name": "Elevator Controller Diagnostic Tool",
+        "icon": "ðŸ§±",
+        "description": "Working tool for Hoistway Installation and Controls & Traction Systems in day-to-day Elevator & Escalator Mechanic work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "wind_turbine_technician",
+    "title": "Wind Turbine Technician",
+    "enclaveId": "energy_utilities_environment",
+    "categoryName": "Renewable Energy Operations",
+    "defaultHeadline": "Wind Turbine Technician Â· Turbine Mechanics, Hydraulics & Electrical Faults, Climbing & Rescue",
+    "typicalSkills": [
+      "Turbine Mechanics",
+      "Hydraulics & Electrical Faults",
+      "Climbing & Rescue",
+      "Preventive Maintenance"
+    ],
+    "tools": [
+      {
+        "name": "Turbine Maintenance Checklist",
+        "icon": "âš¡",
+        "description": "Working tool for Turbine Mechanics and Hydraulics & Electrical Faults in day-to-day Wind Turbine Technician work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "boilermaker_welder",
+    "title": "Boilermaker & Pressure-Vessel Fabricator",
+    "enclaveId": "manufacturing_industrial",
+    "categoryName": "Heavy Fabrication",
+    "defaultHeadline": "Boilermaker & Pressure-Vessel Fabricator Â· Pressure Vessel Fabrication, Welding & Rigging, Blueprint Reading",
+    "typicalSkills": [
+      "Pressure Vessel Fabrication",
+      "Welding & Rigging",
+      "Blueprint Reading",
+      "Boiler Repair"
+    ],
+    "tools": [
+      {
+        "name": "Pressure Vessel Layout Calculator",
+        "icon": "ðŸ­",
+        "description": "Working tool for Pressure Vessel Fabrication and Welding & Rigging in day-to-day Boilermaker & Pressure-Vessel Fabricator work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "millwright_technician",
+    "title": "Millwright & Industrial Machinery Mechanic",
+    "enclaveId": "manufacturing_industrial",
+    "categoryName": "Industrial Maintenance",
+    "defaultHeadline": "Millwright & Industrial Machinery Mechanic Â· Machine Alignment, Rigging & Installation, Bearings & Drives",
+    "typicalSkills": [
+      "Machine Alignment",
+      "Rigging & Installation",
+      "Bearings & Drives",
+      "Preventive Maintenance"
+    ],
+    "tools": [
+      {
+        "name": "Shaft Alignment Tool",
+        "icon": "ðŸ­",
+        "description": "Working tool for Machine Alignment and Rigging & Installation in day-to-day Millwright & Industrial Machinery Mechanic work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "scaffolder_rigger",
+    "title": "Scaffolder & Construction Rigger",
+    "enclaveId": "trades_construction",
+    "categoryName": "Access & Rigging",
+    "defaultHeadline": "Scaffolder & Construction Rigger Â· Scaffold Erection, Load Calculation, Rigging Signals",
+    "typicalSkills": [
+      "Scaffold Erection",
+      "Load Calculation",
+      "Rigging Signals",
+      "Fall Protection"
+    ],
+    "tools": [
+      {
+        "name": "Scaffold Load & Tag Inspection Log",
+        "icon": "ðŸ§±",
+        "description": "Working tool for Scaffold Erection and Load Calculation in day-to-day Scaffolder & Construction Rigger work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "pest_control_technician",
+    "title": "Pest Control Technician",
+    "enclaveId": "energy_utilities_environment",
+    "categoryName": "Pest & Vector Management",
+    "defaultHeadline": "Pest Control Technician Â· Pest Identification, Integrated Pest Management, Safe Chemical Handling",
+    "typicalSkills": [
+      "Pest Identification",
+      "Integrated Pest Management",
+      "Safe Chemical Handling",
+      "Inspection Reports"
+    ],
+    "tools": [
+      {
+        "name": "Pest Inspection & Treatment Log",
+        "icon": "âš¡",
+        "description": "Working tool for Pest Identification and Integrated Pest Management in day-to-day Pest Control Technician work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "respiratory_therapist",
+    "title": "Respiratory Therapist",
+    "enclaveId": "healthcare_medicine",
+    "categoryName": "Cardiopulmonary Care",
+    "defaultHeadline": "Respiratory Therapist Â· Ventilator Management, Airway Care, Oxygen Therapy",
+    "typicalSkills": [
+      "Ventilator Management",
+      "Airway Care",
+      "Oxygen Therapy",
+      "Pulmonary Function Testing"
+    ],
+    "tools": [
+      {
+        "name": "Ventilator Settings Reference",
+        "icon": "ðŸ©º",
+        "description": "Working tool for Ventilator Management and Airway Care in day-to-day Respiratory Therapist work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "prosthetist_orthotist",
+    "title": "Prosthetist & Orthotist",
+    "enclaveId": "healthcare_medicine",
+    "categoryName": "Rehabilitation Devices",
+    "defaultHeadline": "Prosthetist & Orthotist Â· Limb & Brace Design, Casting & Fabrication, Gait Analysis",
+    "typicalSkills": [
+      "Limb & Brace Design",
+      "Casting & Fabrication",
+      "Gait Analysis",
+      "Patient Fitting"
+    ],
+    "tools": [
+      {
+        "name": "Prosthetic Socket Fit Checklist",
+        "icon": "ðŸ©º",
+        "description": "Working tool for Limb & Brace Design and Casting & Fabrication in day-to-day Prosthetist & Orthotist work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "community_health_worker",
+    "title": "Community Health Worker",
+    "enclaveId": "healthcare_medicine",
+    "categoryName": "Public & Primary Care",
+    "defaultHeadline": "Community Health Worker Â· Health Education, Home Visits, Basic Screening",
+    "typicalSkills": [
+      "Health Education",
+      "Home Visits",
+      "Basic Screening",
+      "Referral Navigation"
+    ],
+    "tools": [
+      {
+        "name": "Household Visit Register",
+        "icon": "ðŸ©º",
+        "description": "Working tool for Health Education and Home Visits in day-to-day Community Health Worker work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "phlebotomist_blood",
+    "title": "Phlebotomist & Blood Collection Technician",
+    "enclaveId": "healthcare_medicine",
+    "categoryName": "Laboratory Support",
+    "defaultHeadline": "Phlebotomist & Blood Collection Technician Â· Venipuncture, Specimen Handling, Infection Control",
+    "typicalSkills": [
+      "Venipuncture",
+      "Specimen Handling",
+      "Infection Control",
+      "Patient Identification"
+    ],
+    "tools": [
+      {
+        "name": "Specimen Labelling Checklist",
+        "icon": "ðŸ©º",
+        "description": "Working tool for Venipuncture and Specimen Handling in day-to-day Phlebotomist & Blood Collection Technician work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "sterile_processing_tech",
+    "title": "Sterile Processing Technician",
+    "enclaveId": "healthcare_medicine",
+    "categoryName": "Hospital Support",
+    "defaultHeadline": "Sterile Processing Technician Â· Instrument Decontamination, Sterilisation Cycles, Surgical Tray Assembly",
+    "typicalSkills": [
+      "Instrument Decontamination",
+      "Sterilisation Cycles",
+      "Surgical Tray Assembly",
+      "Quality Records"
+    ],
+    "tools": [
+      {
+        "name": "Sterilisation Cycle Log",
+        "icon": "ðŸ©º",
+        "description": "Working tool for Instrument Decontamination and Sterilisation Cycles in day-to-day Sterile Processing Technician work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "art_music_therapist",
+    "title": "Art & Music Therapist",
+    "enclaveId": "healthcare_medicine",
+    "categoryName": "Creative Therapies",
+    "defaultHeadline": "Art & Music Therapist Â· Therapeutic Relationship, Session Design, Assessment",
+    "typicalSkills": [
+      "Therapeutic Relationship",
+      "Session Design",
+      "Assessment",
+      "Ethics & Confidentiality"
+    ],
+    "tools": [
+      {
+        "name": "Therapy Session Plan Template",
+        "icon": "ðŸ©º",
+        "description": "Working tool for Therapeutic Relationship and Session Design in day-to-day Art & Music Therapist work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "veterinary_technician",
+    "title": "Veterinary Technician & Animal Health Assistant",
+    "enclaveId": "agriculture_natural_resources",
+    "categoryName": "Animal Health",
+    "defaultHeadline": "Veterinary Technician & Animal Health Assistant Â· Animal Handling, Basic Nursing Care, Laboratory Tests",
+    "typicalSkills": [
+      "Animal Handling",
+      "Basic Nursing Care",
+      "Laboratory Tests",
+      "Vaccination Support"
+    ],
+    "tools": [
+      {
+        "name": "Animal Treatment Record",
+        "icon": "ðŸŒ¾",
+        "description": "Working tool for Animal Handling and Basic Nursing Care in day-to-day Veterinary Technician & Animal Health Assistant work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "animal_trainer_handler",
+    "title": "Animal Trainer & Handler",
+    "enclaveId": "agriculture_natural_resources",
+    "categoryName": "Animal Care",
+    "defaultHeadline": "Animal Trainer & Handler Â· Behaviour Training, Handling Safety, Welfare Standards",
+    "typicalSkills": [
+      "Behaviour Training",
+      "Handling Safety",
+      "Welfare Standards",
+      "Client Coaching"
+    ],
+    "tools": [
+      {
+        "name": "Training Session Log",
+        "icon": "ðŸŒ¾",
+        "description": "Working tool for Behaviour Training and Handling Safety in day-to-day Animal Trainer & Handler work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "aquaculture_farmer",
+    "title": "Aquaculture & Fish Farmer",
+    "enclaveId": "agriculture_natural_resources",
+    "categoryName": "Fisheries & Aquaculture",
+    "defaultHeadline": "Aquaculture & Fish Farmer Â· Pond & Tank Management, Water Quality Testing, Feeding & Health",
+    "typicalSkills": [
+      "Pond & Tank Management",
+      "Water Quality Testing",
+      "Feeding & Health",
+      "Harvest & Marketing"
+    ],
+    "tools": [
+      {
+        "name": "Water Quality Log",
+        "icon": "ðŸŒ¾",
+        "description": "Working tool for Pond & Tank Management and Water Quality Testing in day-to-day Aquaculture & Fish Farmer work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "forest_ranger_conservation",
+    "title": "Forest Ranger & Conservation Officer",
+    "enclaveId": "agriculture_natural_resources",
+    "categoryName": "Forestry & Conservation",
+    "defaultHeadline": "Forest Ranger & Conservation Officer Â· Patrol & Surveillance, Wildlife Monitoring, Fire Prevention",
+    "typicalSkills": [
+      "Patrol & Surveillance",
+      "Wildlife Monitoring",
+      "Fire Prevention",
+      "Community Engagement"
+    ],
+    "tools": [
+      {
+        "name": "Patrol & Incident Log",
+        "icon": "ðŸŒ¾",
+        "description": "Working tool for Patrol & Surveillance and Wildlife Monitoring in day-to-day Forest Ranger & Conservation Officer work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "wildlife_guide_safari",
+    "title": "Wildlife & Safari Guide",
+    "enclaveId": "culinary_hospitality_events",
+    "categoryName": "Tourism & Guiding",
+    "defaultHeadline": "Wildlife & Safari Guide Â· Species Identification, Guest Safety, Navigation & Tracking",
+    "typicalSkills": [
+      "Species Identification",
+      "Guest Safety",
+      "Navigation & Tracking",
+      "Storytelling"
+    ],
+    "tools": [
+      {
+        "name": "Field Species Checklist",
+        "icon": "ðŸ½ï¸",
+        "description": "Working tool for Species Identification and Guest Safety in day-to-day Wildlife & Safari Guide work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "soil_scientist_agronomist",
+    "title": "Soil Scientist & Agronomist",
+    "enclaveId": "science_laboratory_research",
+    "categoryName": "Agricultural Science",
+    "defaultHeadline": "Soil Scientist & Agronomist Â· Soil Sampling, Nutrient Analysis, Crop Advisory",
+    "typicalSkills": [
+      "Soil Sampling",
+      "Nutrient Analysis",
+      "Crop Advisory",
+      "Sustainable Land Use"
+    ],
+    "tools": [
+      {
+        "name": "Soil Test Interpretation Sheet",
+        "icon": "ðŸ”¬",
+        "description": "Working tool for Soil Sampling and Nutrient Analysis in day-to-day Soil Scientist & Agronomist work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "carbon_credit_auditor",
+    "title": "Carbon Credit & Sustainability Auditor",
+    "enclaveId": "energy_utilities_environment",
+    "categoryName": "Climate & Sustainability",
+    "defaultHeadline": "Carbon Credit & Sustainability Auditor Â· Emissions Accounting, Project Verification, Standards & Methodologies",
+    "typicalSkills": [
+      "Emissions Accounting",
+      "Project Verification",
+      "Standards & Methodologies",
+      "Report Writing"
+    ],
+    "tools": [
+      {
+        "name": "Emissions Inventory Template",
+        "icon": "âš¡",
+        "description": "Working tool for Emissions Accounting and Project Verification in day-to-day Carbon Credit & Sustainability Auditor work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "ai_trainer_data_annotator",
+    "title": "AI Trainer & Data Annotator",
+    "enclaveId": "tech_software",
+    "categoryName": "Data Services",
+    "defaultHeadline": "AI Trainer & Data Annotator Â· Data Labelling, Quality Review, Guideline Interpretation",
+    "typicalSkills": [
+      "Data Labelling",
+      "Quality Review",
+      "Guideline Interpretation",
+      "Tool Proficiency"
+    ],
+    "tools": [
+      {
+        "name": "Annotation Guidelines Checklist",
+        "icon": "ðŸ’»",
+        "description": "Working tool for Data Labelling and Quality Review in day-to-day AI Trainer & Data Annotator work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "drone_pilot_mapper",
+    "title": "Drone Pilot & Aerial Mapping Specialist",
+    "enclaveId": "aviation_aerospace_maritime",
+    "categoryName": "Unmanned Aviation",
+    "defaultHeadline": "Drone Pilot & Aerial Mapping Specialist Â· Flight Planning, Photogrammetry, Airspace Rules",
+    "typicalSkills": [
+      "Flight Planning",
+      "Photogrammetry",
+      "Airspace Rules",
+      "Equipment Maintenance"
+    ],
+    "tools": [
+      {
+        "name": "Flight Planning Checklist",
+        "icon": "âœˆï¸",
+        "description": "Working tool for Flight Planning and Photogrammetry in day-to-day Drone Pilot & Aerial Mapping Specialist work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "battery_storage_technician",
+    "title": "Battery Storage Technician",
+    "enclaveId": "energy_utilities_environment",
+    "categoryName": "Energy Storage",
+    "defaultHeadline": "Battery Storage Technician Â· Battery Installation, Safety & Thermal Management, Monitoring Systems",
+    "typicalSkills": [
+      "Battery Installation",
+      "Safety & Thermal Management",
+      "Monitoring Systems",
+      "Fault Finding"
+    ],
+    "tools": [
+      {
+        "name": "Battery Health Log",
+        "icon": "âš¡",
+        "description": "Working tool for Battery Installation and Safety & Thermal Management in day-to-day Battery Storage Technician work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "robotics_technician",
+    "title": "Robotics & Automation Technician",
+    "enclaveId": "manufacturing_industrial",
+    "categoryName": "Industrial Automation",
+    "defaultHeadline": "Robotics & Automation Technician Â· Robot Programming, Sensors & Actuators, PLC Basics",
+    "typicalSkills": [
+      "Robot Programming",
+      "Sensors & Actuators",
+      "PLC Basics",
+      "Preventive Maintenance"
+    ],
+    "tools": [
+      {
+        "name": "Robot Cell Maintenance Log",
+        "icon": "ðŸ­",
+        "description": "Working tool for Robot Programming and Sensors & Actuators in day-to-day Robotics & Automation Technician work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "additive_manufacturing_tech",
+    "title": "3D-Printing & Additive Manufacturing Technician",
+    "enclaveId": "manufacturing_industrial",
+    "categoryName": "Advanced Manufacturing",
+    "defaultHeadline": "3D-Printing & Additive Manufacturing Technician Â· Printer Operation, CAD Basics, Materials & Post-Processing",
+    "typicalSkills": [
+      "Printer Operation",
+      "CAD Basics",
+      "Materials & Post-Processing",
+      "Quality Inspection"
+    ],
+    "tools": [
+      {
+        "name": "Print Job Parameters Log",
+        "icon": "ðŸ­",
+        "description": "Working tool for Printer Operation and CAD Basics in day-to-day 3D-Printing & Additive Manufacturing Technician work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "quantum_lab_technician",
+    "title": "Laboratory Technician in Advanced Physics",
+    "enclaveId": "science_laboratory_research",
+    "categoryName": "Advanced Laboratory Support",
+    "defaultHeadline": "Laboratory Technician in Advanced Physics Â· Cryogenics Basics, Instrument Calibration, Lab Safety",
+    "typicalSkills": [
+      "Cryogenics Basics",
+      "Instrument Calibration",
+      "Lab Safety",
+      "Data Logging"
+    ],
+    "tools": [
+      {
+        "name": "Instrument Calibration Log",
+        "icon": "ðŸ”¬",
+        "description": "Working tool for Cryogenics Basics and Instrument Calibration in day-to-day Laboratory Technician in Advanced Physics work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "market_trader_stallholder",
+    "title": "Market Trader & Stallholder",
+    "enclaveId": "commerce_small_business",
+    "categoryName": "Informal Trade",
+    "defaultHeadline": "Market Trader & Stallholder Â· Sourcing Goods, Pricing & Negotiation, Stock Control",
+    "typicalSkills": [
+      "Sourcing Goods",
+      "Pricing & Negotiation",
+      "Stock Control",
+      "Customer Relations"
+    ],
+    "tools": [
+      {
+        "name": "Stock & Cash Book",
+        "icon": "ðŸ›ï¸",
+        "description": "Working tool for Sourcing Goods and Pricing & Negotiation in day-to-day Market Trader & Stallholder work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "borehole_driller",
+    "title": "Borehole Driller & Water Systems Technician",
+    "enclaveId": "energy_utilities_environment",
+    "categoryName": "Water Supply",
+    "defaultHeadline": "Borehole Driller & Water Systems Technician Â· Drilling Operations, Pump Installation, Water Testing",
+    "typicalSkills": [
+      "Drilling Operations",
+      "Pump Installation",
+      "Water Testing",
+      "Site Safety"
+    ],
+    "tools": [
+      {
+        "name": "Borehole Log Sheet",
+        "icon": "âš¡",
+        "description": "Working tool for Drilling Operations and Pump Installation in day-to-day Borehole Driller & Water Systems Technician work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "translator_interpreter",
+    "title": "Translator & Interpreter",
+    "enclaveId": "creative_media_arts",
+    "categoryName": "Language Services",
+    "defaultHeadline": "Translator & Interpreter Â· Bilingual Fluency, Terminology Management, Interpreting Techniques",
+    "typicalSkills": [
+      "Bilingual Fluency",
+      "Terminology Management",
+      "Interpreting Techniques",
+      "Confidentiality"
+    ],
+    "tools": [
+      {
+        "name": "Terminology Glossary",
+        "icon": "ðŸŽ¨",
+        "description": "Working tool for Bilingual Fluency and Terminology Management in day-to-day Translator & Interpreter work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "sign_language_interpreter",
+    "title": "Sign Language Interpreter",
+    "enclaveId": "creative_media_arts",
+    "categoryName": "Accessibility Services",
+    "defaultHeadline": "Sign Language Interpreter Â· Sign Language Fluency, Deaf Culture, Interpreting Ethics",
+    "typicalSkills": [
+      "Sign Language Fluency",
+      "Deaf Culture",
+      "Interpreting Ethics",
+      "Setting Preparation"
+    ],
+    "tools": [
+      {
+        "name": "Interpreting Assignment Prep Sheet",
+        "icon": "ðŸŽ¨",
+        "description": "Working tool for Sign Language Fluency and Deaf Culture in day-to-day Sign Language Interpreter work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "subtitler_captioner",
+    "title": "Subtitler & Closed Captioner",
+    "enclaveId": "creative_media_arts",
+    "categoryName": "Accessibility & Media",
+    "defaultHeadline": "Subtitler & Closed Captioner Â· Timing & Synchronisation, Style Guides, Speech Recognition Correction",
+    "typicalSkills": [
+      "Timing & Synchronisation",
+      "Style Guides",
+      "Speech Recognition Correction",
+      "Quality Checking"
+    ],
+    "tools": [
+      {
+        "name": "Subtitle Style Guide",
+        "icon": "ðŸŽ¨",
+        "description": "Working tool for Timing & Synchronisation and Style Guides in day-to-day Subtitler & Closed Captioner work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "esports_coach_analyst",
+    "title": "Esports Coach & Analyst",
+    "enclaveId": "creative_media_arts",
+    "categoryName": "Competitive Gaming",
+    "defaultHeadline": "Esports Coach & Analyst Â· Game Analysis, Team Communication, Scrim Planning",
+    "typicalSkills": [
+      "Game Analysis",
+      "Team Communication",
+      "Scrim Planning",
+      "Performance Review"
+    ],
+    "tools": [
+      {
+        "name": "Scrim Review Template",
+        "icon": "ðŸŽ¨",
+        "description": "Working tool for Game Analysis and Team Communication in day-to-day Esports Coach & Analyst work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "stunt_performer",
+    "title": "Stunt Performer & Coordinator",
+    "enclaveId": "creative_media_arts",
+    "categoryName": "Film & Live Performance",
+    "defaultHeadline": "Stunt Performer & Coordinator Â· Fight Choreography, Falls & Fire Safety, Driving Skills",
+    "typicalSkills": [
+      "Fight Choreography",
+      "Falls & Fire Safety",
+      "Driving Skills",
+      "Risk Assessment"
+    ],
+    "tools": [
+      {
+        "name": "Stunt Safety Plan",
+        "icon": "ðŸŽ¨",
+        "description": "Working tool for Fight Choreography and Falls & Fire Safety in day-to-day Stunt Performer & Coordinator work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "elder_care_companion",
+    "title": "Elder-Care Companion & Home Support Worker",
+    "enclaveId": "personal_services_wellness",
+    "categoryName": "Care Services",
+    "defaultHeadline": "Elder-Care Companion & Home Support Worker Â· Personal Care Support, Companionship, Medication Reminders",
+    "typicalSkills": [
+      "Personal Care Support",
+      "Companionship",
+      "Medication Reminders",
+      "Safety & Mobility"
+    ],
+    "tools": [
+      {
+        "name": "Daily Care Notes",
+        "icon": "ðŸ’ˆ",
+        "description": "Working tool for Personal Care Support and Companionship in day-to-day Elder-Care Companion & Home Support Worker work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "special_needs_aide",
+    "title": "Special Education Teaching Assistant",
+    "enclaveId": "education_workforce",
+    "categoryName": "Inclusive Education",
+    "defaultHeadline": "Special Education Teaching Assistant Â· Individual Support Plans, Behaviour Support, Assistive Technology",
+    "typicalSkills": [
+      "Individual Support Plans",
+      "Behaviour Support",
+      "Assistive Technology",
+      "Teacher Collaboration"
+    ],
+    "tools": [
+      {
+        "name": "Support Plan Tracker",
+        "icon": "ðŸŽ“",
+        "description": "Working tool for Individual Support Plans and Behaviour Support in day-to-day Special Education Teaching Assistant work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "funeral_director",
+    "title": "Funeral Director & Mortuary Assistant",
+    "enclaveId": "personal_services_wellness",
+    "categoryName": "Funeral Services",
+    "defaultHeadline": "Funeral Director & Mortuary Assistant Â· Funeral Arrangements, Family Support, Legal Paperwork",
+    "typicalSkills": [
+      "Funeral Arrangements",
+      "Family Support",
+      "Legal Paperwork",
+      "Embalming Basics"
+    ],
+    "tools": [
+      {
+        "name": "Funeral Arrangement Checklist",
+        "icon": "ðŸ’ˆ",
+        "description": "Working tool for Funeral Arrangements and Family Support in day-to-day Funeral Director & Mortuary Assistant work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "chaplain_pastoral_care",
+    "title": "Chaplain & Pastoral Care Worker",
+    "enclaveId": "education_workforce",
+    "categoryName": "Community & Spiritual Care",
+    "defaultHeadline": "Chaplain & Pastoral Care Worker Â· Pastoral Counselling, Crisis Support, Interfaith Awareness",
+    "typicalSkills": [
+      "Pastoral Counselling",
+      "Crisis Support",
+      "Interfaith Awareness",
+      "Confidentiality"
+    ],
+    "tools": [
+      {
+        "name": "Pastoral Visit Log",
+        "icon": "ðŸŽ“",
+        "description": "Working tool for Pastoral Counselling and Crisis Support in day-to-day Chaplain & Pastoral Care Worker work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "refugee_support_worker",
+    "title": "Refugee & Migrant Support Worker",
+    "enclaveId": "community_civic_security",
+    "categoryName": "Humanitarian Services",
+    "defaultHeadline": "Refugee & Migrant Support Worker Â· Case Management, Cultural Mediation, Resettlement Support",
+    "typicalSkills": [
+      "Case Management",
+      "Cultural Mediation",
+      "Resettlement Support",
+      "Trauma Awareness"
+    ],
+    "tools": [
+      {
+        "name": "Case Notes Template",
+        "icon": "ðŸ›¡ï¸",
+        "description": "Working tool for Case Management and Cultural Mediation in day-to-day Refugee & Migrant Support Worker work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "disaster_relief_coordinator",
+    "title": "Disaster Relief & Emergency Response Coordinator",
+    "enclaveId": "community_civic_security",
+    "categoryName": "Humanitarian Response",
+    "defaultHeadline": "Disaster Relief & Emergency Response Coordinator Â· Needs Assessment, Logistics & Supply, Shelter & Sanitation",
+    "typicalSkills": [
+      "Needs Assessment",
+      "Logistics & Supply",
+      "Shelter & Sanitation",
+      "Incident Coordination"
+    ],
+    "tools": [
+      {
+        "name": "Relief Distribution Tracker",
+        "icon": "ðŸ›¡ï¸",
+        "description": "Working tool for Needs Assessment and Logistics & Supply in day-to-day Disaster Relief & Emergency Response Coordinator work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "ship_pilot_harbour",
+    "title": "Harbour Pilot & Ship Pilot",
+    "enclaveId": "aviation_aerospace_maritime",
+    "categoryName": "Maritime Navigation",
+    "defaultHeadline": "Harbour Pilot & Ship Pilot Â· Ship Handling, Local Harbour Knowledge, Navigation Rules",
+    "typicalSkills": [
+      "Ship Handling",
+      "Local Harbour Knowledge",
+      "Navigation Rules",
+      "Bridge Communication"
+    ],
+    "tools": [
+      {
+        "name": "Pilotage Passage Plan",
+        "icon": "âœˆï¸",
+        "description": "Working tool for Ship Handling and Local Harbour Knowledge in day-to-day Harbour Pilot & Ship Pilot work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "marine_engineer",
+    "title": "Marine Engineer",
+    "enclaveId": "aviation_aerospace_maritime",
+    "categoryName": "Maritime Engineering",
+    "defaultHeadline": "Marine Engineer Â· Engine Room Operations, Propulsion & Auxiliary Systems, Maintenance Planning",
+    "typicalSkills": [
+      "Engine Room Operations",
+      "Propulsion & Auxiliary Systems",
+      "Maintenance Planning",
+      "Safety Systems"
+    ],
+    "tools": [
+      {
+        "name": "Engine Room Watch Log",
+        "icon": "âœˆï¸",
+        "description": "Working tool for Engine Room Operations and Propulsion & Auxiliary Systems in day-to-day Marine Engineer work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "customs_broker_clearing",
+    "title": "Customs Broker & Clearing Agent",
+    "enclaveId": "commerce_small_business",
+    "categoryName": "Trade & Logistics",
+    "defaultHeadline": "Customs Broker & Clearing Agent Â· Tariff Classification, Customs Documentation, Duties & Valuation",
+    "typicalSkills": [
+      "Tariff Classification",
+      "Customs Documentation",
+      "Duties & Valuation",
+      "Compliance"
+    ],
+    "tools": [
+      {
+        "name": "Tariff Classification Reference",
+        "icon": "ðŸ›ï¸",
+        "description": "Working tool for Tariff Classification and Customs Documentation in day-to-day Customs Broker & Clearing Agent work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "warehouse_automation_operator",
+    "title": "Warehouse Automation & Robotics Operator",
+    "enclaveId": "commerce_small_business",
+    "categoryName": "Smart Logistics",
+    "defaultHeadline": "Warehouse Automation & Robotics Operator Â· Automated System Monitoring, Inventory Accuracy, Safety Procedures",
+    "typicalSkills": [
+      "Automated System Monitoring",
+      "Inventory Accuracy",
+      "Safety Procedures",
+      "Basic Troubleshooting"
+    ],
+    "tools": [
+      {
+        "name": "Warehouse Exception Log",
+        "icon": "ðŸ›ï¸",
+        "description": "Working tool for Automated System Monitoring and Inventory Accuracy in day-to-day Warehouse Automation & Robotics Operator work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "biogas_technician",
+    "title": "Biogas & Clean Cooking Technician",
+    "enclaveId": "energy_utilities_environment",
+    "categoryName": "Rural Energy",
+    "defaultHeadline": "Biogas & Clean Cooking Technician Â· Digester Construction, Gas Safety, Appliance Installation",
+    "typicalSkills": [
+      "Digester Construction",
+      "Gas Safety",
+      "Appliance Installation",
+      "Maintenance Training"
+    ],
+    "tools": [
+      {
+        "name": "Digester Maintenance Log",
+        "icon": "âš¡",
+        "description": "Working tool for Digester Construction and Gas Safety in day-to-day Biogas & Clean Cooking Technician work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "rainwater_harvesting_installer",
+    "title": "Rainwater Harvesting & Water Treatment Installer",
+    "enclaveId": "energy_utilities_environment",
+    "categoryName": "Water & Sanitation",
+    "defaultHeadline": "Rainwater Harvesting & Water Treatment Installer Â· System Sizing, Filtration & Disinfection, Plumbing Connections",
+    "typicalSkills": [
+      "System Sizing",
+      "Filtration & Disinfection",
+      "Plumbing Connections",
+      "Water Quality Testing"
+    ],
+    "tools": [
+      {
+        "name": "Water Quality Test Log",
+        "icon": "âš¡",
+        "description": "Working tool for System Sizing and Filtration & Disinfection in day-to-day Rainwater Harvesting & Water Treatment Installer work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "sanitation_engineer_wash",
+    "title": "Water, Sanitation & Hygiene (WASH) Officer",
+    "enclaveId": "energy_utilities_environment",
+    "categoryName": "Public Health Engineering",
+    "defaultHeadline": "Water Â· Sanitation Design, Community Mobilisation, Water Testing",
+    "typicalSkills": [
+      "Sanitation Design",
+      "Community Mobilisation",
+      "Water Testing",
+      "Monitoring & Evaluation"
+    ],
+    "tools": [
+      {
+        "name": "WASH Survey Form",
+        "icon": "âš¡",
+        "description": "Working tool for Sanitation Design and Community Mobilisation in day-to-day Water work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "building_inspector_codes",
+    "title": "Building Inspector & Code Enforcement Officer",
+    "enclaveId": "law_gov_defense",
+    "categoryName": "Construction Regulation",
+    "defaultHeadline": "Building Inspector & Code Enforcement Officer Â· Code Interpretation, Site Inspection, Report Writing",
+    "typicalSkills": [
+      "Code Interpretation",
+      "Site Inspection",
+      "Report Writing",
+      "Enforcement Procedures"
+    ],
+    "tools": [
+      {
+        "name": "Inspection Report Template",
+        "icon": "âš–ï¸",
+        "description": "Working tool for Code Interpretation and Site Inspection in day-to-day Building Inspector & Code Enforcement Officer work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "quantity_surveyor_estimator",
+    "title": "Quantity Surveyor & Construction Estimator",
+    "enclaveId": "finance_accounting",
+    "categoryName": "Construction Cost Management",
+    "defaultHeadline": "Quantity Surveyor & Construction Estimator Â· Quantity Takeoff, Cost Estimating, Contracts",
+    "typicalSkills": [
+      "Quantity Takeoff",
+      "Cost Estimating",
+      "Contracts",
+      "Valuation"
+    ],
+    "tools": [
+      {
+        "name": "Bill of Quantities Template",
+        "icon": "ðŸ’°",
+        "description": "Working tool for Quantity Takeoff and Cost Estimating in day-to-day Quantity Surveyor & Construction Estimator work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "land_surveyor_geomatics",
+    "title": "Land Surveyor & Geomatics Technician",
+    "enclaveId": "science_laboratory_research",
+    "categoryName": "Surveying & Mapping",
+    "defaultHeadline": "Land Surveyor & Geomatics Technician Â· Total Station & GNSS, Boundary Surveys, CAD & GIS",
+    "typicalSkills": [
+      "Total Station & GNSS",
+      "Boundary Surveys",
+      "CAD & GIS",
+      "Legal Descriptions"
+    ],
+    "tools": [
+      {
+        "name": "Survey Field Book",
+        "icon": "ðŸ”¬",
+        "description": "Working tool for Total Station & GNSS and Boundary Surveys in day-to-day Land Surveyor & Geomatics Technician work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "arborist_tree_surgeon",
+    "title": "Arborist & Tree Surgeon",
+    "enclaveId": "agriculture_natural_resources",
+    "categoryName": "Tree Care",
+    "defaultHeadline": "Arborist & Tree Surgeon Â· Tree Climbing & Pruning, Chainsaw Safety, Risk Assessment",
+    "typicalSkills": [
+      "Tree Climbing & Pruning",
+      "Chainsaw Safety",
+      "Risk Assessment",
+      "Rigging"
+    ],
+    "tools": [
+      {
+        "name": "Tree Risk Assessment Form",
+        "icon": "ðŸŒ¾",
+        "description": "Working tool for Tree Climbing & Pruning and Chainsaw Safety in day-to-day Arborist & Tree Surgeon work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "yoga_pilates_instructor",
+    "title": "Yoga & Pilates Instructor",
+    "enclaveId": "personal_services_wellness",
+    "categoryName": "Wellness",
+    "defaultHeadline": "Yoga & Pilates Instructor Â· Class Sequencing, Anatomy Basics, Safe Cueing",
+    "typicalSkills": [
+      "Class Sequencing",
+      "Anatomy Basics",
+      "Safe Cueing",
+      "Studio Business"
+    ],
+    "tools": [
+      {
+        "name": "Class Sequence Planner",
+        "icon": "ðŸ’ˆ",
+        "description": "Working tool for Class Sequencing and Anatomy Basics in day-to-day Yoga & Pilates Instructor work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "massage_therapist",
+    "title": "Massage Therapist",
+    "enclaveId": "personal_services_wellness",
+    "categoryName": "Bodywork",
+    "defaultHeadline": "Massage Therapist Â· Soft-Tissue Techniques, Client Assessment, Contraindications",
+    "typicalSkills": [
+      "Soft-Tissue Techniques",
+      "Client Assessment",
+      "Contraindications",
+      "Hygiene"
+    ],
+    "tools": [
+      {
+        "name": "Client Intake & Treatment Notes",
+        "icon": "ðŸ’ˆ",
+        "description": "Working tool for Soft-Tissue Techniques and Client Assessment in day-to-day Massage Therapist work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "pharmacy_technician",
+    "title": "Pharmacy Technician",
+    "enclaveId": "healthcare_medicine",
+    "categoryName": "Pharmacy Support",
+    "defaultHeadline": "Pharmacy Technician Â· Dispensing Support, Inventory Control, Medication Safety",
+    "typicalSkills": [
+      "Dispensing Support",
+      "Inventory Control",
+      "Medication Safety",
+      "Customer Service"
+    ],
+    "tools": [
+      {
+        "name": "Dispensing Check Log",
+        "icon": "ðŸ©º",
+        "description": "Working tool for Dispensing Support and Inventory Control in day-to-day Pharmacy Technician work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "medical_coder_biller",
+    "title": "Medical Coder & Health Information Technician",
+    "enclaveId": "healthcare_medicine",
+    "categoryName": "Health Information",
+    "defaultHeadline": "Medical Coder & Health Information Technician Â· Diagnosis & Procedure Coding, Privacy Rules, Billing Workflows",
+    "typicalSkills": [
+      "Diagnosis & Procedure Coding",
+      "Privacy Rules",
+      "Billing Workflows",
+      "Audit Support"
+    ],
+    "tools": [
+      {
+        "name": "Code Lookup Reference",
+        "icon": "ðŸ©º",
+        "description": "Working tool for Diagnosis & Procedure Coding and Privacy Rules in day-to-day Medical Coder & Health Information Technician work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "medical_interpreter_health",
+    "title": "Healthcare Interpreter",
+    "enclaveId": "healthcare_medicine",
+    "categoryName": "Language Access",
+    "defaultHeadline": "Healthcare Interpreter Â· Medical Terminology, Interpreting Ethics, Cultural Mediation",
+    "typicalSkills": [
+      "Medical Terminology",
+      "Interpreting Ethics",
+      "Cultural Mediation",
+      "Confidentiality"
+    ],
+    "tools": [
+      {
+        "name": "Medical Terminology Glossary",
+        "icon": "ðŸ©º",
+        "description": "Working tool for Medical Terminology and Interpreting Ethics in day-to-day Healthcare Interpreter work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "notary_commissioner",
+    "title": "Notary & Commissioner for Oaths",
+    "enclaveId": "law_gov_defense",
+    "categoryName": "Public Legal Services",
+    "defaultHeadline": "Notary & Commissioner for Oaths Â· Document Verification, Witnessing Signatures, Record Keeping",
+    "typicalSkills": [
+      "Document Verification",
+      "Witnessing Signatures",
+      "Record Keeping",
+      "Fraud Awareness"
+    ],
+    "tools": [
+      {
+        "name": "Notarial Register",
+        "icon": "âš–ï¸",
+        "description": "Working tool for Document Verification and Witnessing Signatures in day-to-day Notary & Commissioner for Oaths work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "immigration_consultant",
+    "title": "Immigration Consultant & Visa Adviser",
+    "enclaveId": "law_gov_defense",
+    "categoryName": "Migration Advisory",
+    "defaultHeadline": "Immigration Consultant & Visa Adviser Â· Visa Categories, Application Preparation, Client Counselling",
+    "typicalSkills": [
+      "Visa Categories",
+      "Application Preparation",
+      "Client Counselling",
+      "Compliance"
+    ],
+    "tools": [
+      {
+        "name": "Application Checklist",
+        "icon": "âš–ï¸",
+        "description": "Working tool for Visa Categories and Application Preparation in day-to-day Immigration Consultant & Visa Adviser work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "insurance_claims_adjuster",
+    "title": "Insurance Claims Adjuster & Loss Assessor",
+    "enclaveId": "finance_accounting",
+    "categoryName": "Insurance",
+    "defaultHeadline": "Insurance Claims Adjuster & Loss Assessor Â· Claims Investigation, Damage Estimation, Policy Interpretation",
+    "typicalSkills": [
+      "Claims Investigation",
+      "Damage Estimation",
+      "Policy Interpretation",
+      "Settlement Negotiation"
+    ],
+    "tools": [
+      {
+        "name": "Claim Assessment Template",
+        "icon": "ðŸ’°",
+        "description": "Working tool for Claims Investigation and Damage Estimation in day-to-day Insurance Claims Adjuster & Loss Assessor work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "museum_curator_guide",
+    "title": "Museum Curator & Heritage Guide",
+    "enclaveId": "education_workforce",
+    "categoryName": "Heritage",
+    "defaultHeadline": "Museum Curator & Heritage Guide Â· Collections Care, Exhibition Design, Research",
+    "typicalSkills": [
+      "Collections Care",
+      "Exhibition Design",
+      "Research",
+      "Visitor Engagement"
+    ],
+    "tools": [
+      {
+        "name": "Collection Condition Report",
+        "icon": "ðŸŽ“",
+        "description": "Working tool for Collections Care and Exhibition Design in day-to-day Museum Curator & Heritage Guide work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "adult_literacy_instructor",
+    "title": "Adult Literacy & Vocational Instructor",
+    "enclaveId": "education_workforce",
+    "categoryName": "Adult Education",
+    "defaultHeadline": "Adult Literacy & Vocational Instructor Â· Curriculum Design, Literacy Methods, Assessment",
+    "typicalSkills": [
+      "Curriculum Design",
+      "Literacy Methods",
+      "Assessment",
+      "Learner Support"
+    ],
+    "tools": [
+      {
+        "name": "Learner Progress Tracker",
+        "icon": "ðŸŽ“",
+        "description": "Working tool for Curriculum Design and Literacy Methods in day-to-day Adult Literacy & Vocational Instructor work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "career_counsellor_coach",
+    "title": "Career Counsellor & Employment Adviser",
+    "enclaveId": "education_workforce",
+    "categoryName": "Career Services",
+    "defaultHeadline": "Career Counsellor & Employment Adviser Â· Career Assessment, Job Search Coaching, Labour Market Information",
+    "typicalSkills": [
+      "Career Assessment",
+      "Job Search Coaching",
+      "Labour Market Information",
+      "Counselling Ethics"
+    ],
+    "tools": [
+      {
+        "name": "Career Action Plan Template",
+        "icon": "ðŸŽ“",
+        "description": "Working tool for Career Assessment and Job Search Coaching in day-to-day Career Counsellor & Employment Adviser work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "youth_worker_mentor",
+    "title": "Youth Worker & Mentor",
+    "enclaveId": "community_civic_security",
+    "categoryName": "Youth Services",
+    "defaultHeadline": "Youth Worker & Mentor Â· Youth Engagement, Group Facilitation, Safeguarding",
+    "typicalSkills": [
+      "Youth Engagement",
+      "Group Facilitation",
+      "Safeguarding",
+      "Referral Pathways"
+    ],
+    "tools": [
+      {
+        "name": "Youth Programme Plan",
+        "icon": "ðŸ›¡ï¸",
+        "description": "Working tool for Youth Engagement and Group Facilitation in day-to-day Youth Worker & Mentor work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "addiction_recovery_counsellor",
+    "title": "Addiction & Recovery Counsellor",
+    "enclaveId": "healthcare_medicine",
+    "categoryName": "Behavioural Health",
+    "defaultHeadline": "Addiction & Recovery Counsellor Â· Motivational Interviewing, Relapse Prevention, Group Counselling",
+    "typicalSkills": [
+      "Motivational Interviewing",
+      "Relapse Prevention",
+      "Group Counselling",
+      "Ethics"
+    ],
+    "tools": [
+      {
+        "name": "Recovery Plan Template",
+        "icon": "ðŸ©º",
+        "description": "Working tool for Motivational Interviewing and Relapse Prevention in day-to-day Addiction & Recovery Counsellor work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "cctv_alarm_installer",
+    "title": "CCTV & Alarm Systems Installer",
+    "enclaveId": "telecom_digital_infrastructure",
+    "categoryName": "Security Systems",
+    "defaultHeadline": "CCTV & Alarm Systems Installer Â· Camera Installation, Alarm Wiring, Network Basics",
+    "typicalSkills": [
+      "Camera Installation",
+      "Alarm Wiring",
+      "Network Basics",
+      "Client Training"
+    ],
+    "tools": [
+      {
+        "name": "Camera Placement Plan",
+        "icon": "ðŸ“¡",
+        "description": "Working tool for Camera Installation and Alarm Wiring in day-to-day CCTV & Alarm Systems Installer work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "gis_remote_sensing_analyst",
+    "title": "GIS & Remote Sensing Analyst",
+    "enclaveId": "science_laboratory_research",
+    "categoryName": "Geospatial Analysis",
+    "defaultHeadline": "GIS & Remote Sensing Analyst Â· Spatial Analysis, Satellite Imagery, Cartography",
+    "typicalSkills": [
+      "Spatial Analysis",
+      "Satellite Imagery",
+      "Cartography",
+      "Data Management"
+    ],
+    "tools": [
+      {
+        "name": "GIS Layer Catalogue",
+        "icon": "ðŸ”¬",
+        "description": "Working tool for Spatial Analysis and Satellite Imagery in day-to-day GIS & Remote Sensing Analyst work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "laboratory_quality_technician",
+    "title": "Food & Quality Control Laboratory Technician",
+    "enclaveId": "science_laboratory_research",
+    "categoryName": "Quality Assurance",
+    "defaultHeadline": "Food & Quality Control Laboratory Technician Â· Sampling, Microbiology Basics, Instrument Use",
+    "typicalSkills": [
+      "Sampling",
+      "Microbiology Basics",
+      "Instrument Use",
+      "Quality Records"
+    ],
+    "tools": [
+      {
+        "name": "Lab Test Record",
+        "icon": "ðŸ”¬",
+        "description": "Working tool for Sampling and Microbiology Basics in day-to-day Food & Quality Control Laboratory Technician work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "cybersecurity_awareness_trainer",
+    "title": "Cybersecurity Awareness Trainer",
+    "enclaveId": "tech_cybersecurity",
+    "categoryName": "Security Education",
+    "defaultHeadline": "Cybersecurity Awareness Trainer Â· Phishing Simulation, Training Design, Policy Basics",
+    "typicalSkills": [
+      "Phishing Simulation",
+      "Training Design",
+      "Policy Basics",
+      "Metrics"
+    ],
+    "tools": [
+      {
+        "name": "Awareness Campaign Plan",
+        "icon": "ðŸ”",
+        "description": "Working tool for Phishing Simulation and Training Design in day-to-day Cybersecurity Awareness Trainer work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "mobile_phone_repair",
+    "title": "Mobile Phone & Electronics Repair Technician",
+    "enclaveId": "telecom_digital_infrastructure",
+    "categoryName": "Consumer Electronics",
+    "defaultHeadline": "Mobile Phone & Electronics Repair Technician Â· Screen & Battery Replacement, Board Diagnostics, Data Safety",
+    "typicalSkills": [
+      "Screen & Battery Replacement",
+      "Board Diagnostics",
+      "Data Safety",
+      "Customer Service"
+    ],
+    "tools": [
+      {
+        "name": "Repair Ticket Log",
+        "icon": "ðŸ“¡",
+        "description": "Working tool for Screen & Battery Replacement and Board Diagnostics in day-to-day Mobile Phone & Electronics Repair Technician work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "ecommerce_seller_dropship",
+    "title": "E-commerce Seller & Online Shop Owner",
+    "enclaveId": "commerce_small_business",
+    "categoryName": "Online Retail",
+    "defaultHeadline": "E-commerce Seller & Online Shop Owner Â· Product Sourcing, Listing & Photography, Order Fulfilment",
+    "typicalSkills": [
+      "Product Sourcing",
+      "Listing & Photography",
+      "Order Fulfilment",
+      "Customer Service"
+    ],
+    "tools": [
+      {
+        "name": "Inventory & Order Tracker",
+        "icon": "ðŸ›ï¸",
+        "description": "Working tool for Product Sourcing and Listing & Photography in day-to-day E-commerce Seller & Online Shop Owner work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "customer_service_call_centre",
+    "title": "Customer Service & Call Centre Agent",
+    "enclaveId": "commerce_small_business",
+    "categoryName": "Contact Centre",
+    "defaultHeadline": "Customer Service & Call Centre Agent Â· Active Listening, Problem Solving, CRM Tools",
+    "typicalSkills": [
+      "Active Listening",
+      "Problem Solving",
+      "CRM Tools",
+      "De-escalation"
+    ],
+    "tools": [
+      {
+        "name": "Call Handling Script",
+        "icon": "ðŸ›ï¸",
+        "description": "Working tool for Active Listening and Problem Solving in day-to-day Customer Service & Call Centre Agent work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "laundry_drycleaning_operator",
+    "title": "Laundry & Dry-Cleaning Operator",
+    "enclaveId": "personal_services_wellness",
+    "categoryName": "Garment Care",
+    "defaultHeadline": "Laundry & Dry-Cleaning Operator Â· Fabric Care, Stain Removal, Machine Operation",
+    "typicalSkills": [
+      "Fabric Care",
+      "Stain Removal",
+      "Machine Operation",
+      "Customer Service"
+    ],
+    "tools": [
+      {
+        "name": "Garment Care Label Guide",
+        "icon": "ðŸ’ˆ",
+        "description": "Working tool for Fabric Care and Stain Removal in day-to-day Laundry & Dry-Cleaning Operator work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "baker_pastry_chef",
+    "title": "Baker & Pastry Chef",
+    "enclaveId": "culinary_hospitality_events",
+    "categoryName": "Baking & Pastry",
+    "defaultHeadline": "Baker & Pastry Chef Â· Dough & Fermentation, Pastry Techniques, Food Safety",
+    "typicalSkills": [
+      "Dough & Fermentation",
+      "Pastry Techniques",
+      "Food Safety",
+      "Costing"
+    ],
+    "tools": [
+      {
+        "name": "Baker's Percentage Sheet",
+        "icon": "ðŸ½ï¸",
+        "description": "Working tool for Dough & Fermentation and Pastry Techniques in day-to-day Baker & Pastry Chef work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "butcher_meat_cutter",
+    "title": "Butcher & Meat Cutter",
+    "enclaveId": "culinary_hospitality_events",
+    "categoryName": "Meat Processing",
+    "defaultHeadline": "Butcher & Meat Cutter Â· Cutting & Trimming, Food Safety, Knife Skills",
+    "typicalSkills": [
+      "Cutting & Trimming",
+      "Food Safety",
+      "Knife Skills",
+      "Customer Service"
+    ],
+    "tools": [
+      {
+        "name": "Cut Yield Calculator",
+        "icon": "ðŸ½ï¸",
+        "description": "Working tool for Cutting & Trimming and Food Safety in day-to-day Butcher & Meat Cutter work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "farm_mechanic_tractor",
+    "title": "Agricultural Machinery Mechanic",
+    "enclaveId": "automotive_mechanics",
+    "categoryName": "Farm Equipment",
+    "defaultHeadline": "Agricultural Machinery Mechanic Â· Tractor Maintenance, Hydraulics, Implements",
+    "typicalSkills": [
+      "Tractor Maintenance",
+      "Hydraulics",
+      "Implements",
+      "Diagnostics"
+    ],
+    "tools": [
+      {
+        "name": "Machine Service Record",
+        "icon": "ðŸšš",
+        "description": "Working tool for Tractor Maintenance and Hydraulics in day-to-day Agricultural Machinery Mechanic work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "heavy_equipment_operator",
+    "title": "Heavy Equipment & Crane Operator",
+    "enclaveId": "automotive_mechanics",
+    "categoryName": "Construction Equipment",
+    "defaultHeadline": "Heavy Equipment & Crane Operator Â· Excavator & Loader Operation, Crane Signals, Load Charts",
+    "typicalSkills": [
+      "Excavator & Loader Operation",
+      "Crane Signals",
+      "Load Charts",
+      "Site Safety"
+    ],
+    "tools": [
+      {
+        "name": "Crane Load Chart Reference",
+        "icon": "ðŸšš",
+        "description": "Working tool for Excavator & Loader Operation and Crane Signals in day-to-day Heavy Equipment & Crane Operator work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "mining_technician_geologist",
+    "title": "Mining Technician & Mine Geologist",
+    "enclaveId": "agriculture_natural_resources",
+    "categoryName": "Mining & Minerals",
+    "defaultHeadline": "Mining Technician & Mine Geologist Â· Rock & Mineral Identification, Surveying, Safety Management",
+    "typicalSkills": [
+      "Rock & Mineral Identification",
+      "Surveying",
+      "Safety Management",
+      "Sampling"
+    ],
+    "tools": [
+      {
+        "name": "Mine Safety Inspection Log",
+        "icon": "ðŸŒ¾",
+        "description": "Working tool for Rock & Mineral Identification and Surveying in day-to-day Mining Technician & Mine Geologist work",
+        "badge": "Verified Practical"
+      }
+    ]
+  },
+  {
+    "id": "printer_signmaker",
+    "title": "Print Operator & Sign Maker",
+    "enclaveId": "creative_media_arts",
+    "categoryName": "Printing & Signage",
+    "defaultHeadline": "Print Operator & Sign Maker Â· Print Setup, Colour Management, Finishing",
+    "typicalSkills": [
+      "Print Setup",
+      "Colour Management",
+      "Finishing",
+      "Installation"
+    ],
+    "tools": [
+      {
+        "name": "Print Job Ticket",
+        "icon": "ðŸŽ¨",
+        "description": "Working tool for Print Setup and Colour Management in day-to-day Print Operator & Sign Maker work",
         "badge": "Verified Practical"
       }
     ]
