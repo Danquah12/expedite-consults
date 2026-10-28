@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Shield, Cpu, CheckCircle2, Play, BarChart3, Layers, GitGraph, Bot, Box, Printer } from "lucide-react";
+import { Shield, Cpu, CheckCircle2, Play, BarChart3, Layers, GitGraph, Bot, Box, Printer, Sparkles } from "lucide-react";
+import { openAskNoctisPopup } from "@/components/DeveloperAssistAgent";
 
 const NAV_LINKS = [
   { label: "Front Desk", href: "/", badge: "P05", icon: Shield },
@@ -136,6 +137,30 @@ export default function Navbar() {
               </Link>
             );
           })}
+
+          <button
+            type="button"
+            onClick={() => openAskNoctisPopup()}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer"
+            style={{
+              background: "linear-gradient(135deg, #b86b35, #8b4528)",
+              color: "#fbf8f3",
+              border: "1px solid #72361d",
+              boxShadow: "0 2px 6px rgba(139, 69, 40, 0.25)",
+            }}
+          >
+            <Sparkles className="w-3.5 h-3.5 shrink-0" style={{ color: "#fbf8f3" }} />
+            <span>Ask Noctis</span>
+            <span
+              className="px-1.5 py-0.5 rounded-full text-[10px] font-bold"
+              style={{
+                background: "#fbf8f3",
+                color: "var(--accent)",
+              }}
+            >
+              Pop-up
+            </span>
+          </button>
         </nav>
       </div>
     </header>

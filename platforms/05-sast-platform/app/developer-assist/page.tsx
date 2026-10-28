@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Bot, Sparkles, Code2, GitPullRequest, CheckCircle2, Copy, Play, ArrowRight, ShieldCheck, FileText } from "lucide-react";
+import { openAskNoctisPopup } from "@/components/DeveloperAssistAgent";
 
 export default function DeveloperAssistPage() {
   const [selectedFinding, setSelectedFinding] = useState("sqli");
@@ -51,15 +52,37 @@ export default function DeveloperAssistPage() {
 
   return (
     <div style={{ maxWidth: 1300, margin: "0 auto", padding: "40px 20px" }}>
-      <div style={{ marginBottom: 26 }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 4, background: "#f4e5dc", border: "1px solid var(--border)", color: "#8b4528", fontSize: 11, fontWeight: 800, marginBottom: 8 }}>
-          <Bot size={13} />
-          <span>DEVELOPER ASSIST &amp; TRIAGE AGENT</span>
+      <div style={{ marginBottom: 26, display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 14 }}>
+        <div>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 4, background: "#f4e5dc", border: "1px solid var(--border)", color: "#8b4528", fontSize: 11, fontWeight: 800, marginBottom: 8 }}>
+            <Bot size={13} />
+            <span>ASK NOCTIS · SAST REMEDIATION &amp; TRIAGE AGENT</span>
+          </div>
+          <h1 style={{ fontSize: 28, fontWeight: 900, color: "#1f1b18" }}>1-Click Automated Remediation &amp; PR Generator (Powered by Noctis)</h1>
+          <p style={{ fontSize: 14, color: "#5c5349" }}>
+            Noctis AI AST-validated secure code patches and unit tests ready to merge directly into GitHub/GitLab.
+          </p>
         </div>
-        <h1 style={{ fontSize: 28, fontWeight: 900, color: "#1f1b18" }}>1-Click Automated Remediation &amp; PR Generator</h1>
-        <p style={{ fontSize: 14, color: "#5c5349" }}>
-          AI-generated, AST-validated secure code patches and unit tests ready to merge directly into GitHub/GitLab.
-        </p>
+        <button
+          type="button"
+          onClick={() => openAskNoctisPopup(`Analyze ${current.title} in ${current.file} (${current.cwe}) and explain the AST remediation diff`)}
+          style={{
+            background: "linear-gradient(135deg, #b86b35, #8b4528)",
+            color: "#fbf8f3",
+            border: "1px solid #72361d",
+            borderRadius: 999,
+            padding: "10px 18px",
+            fontSize: 12.5,
+            fontWeight: 900,
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <Sparkles size={15} />
+          <span>Ask Noctis in Pop-up</span>
+        </button>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 20 }}>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 import type { SASTFinding } from "@/types/sast";
+import { openAskNoctisPopup } from "@/components/DeveloperAssistAgent";
 
 type Props = { finding: SASTFinding };
 
@@ -88,8 +89,8 @@ export default function AIExplanation({ finding: f }: Props) {
             <Sparkles className="w-4 h-4" style={{ color: "#8b4528" }} />
           </div>
           <div className="text-left">
-            <div className="text-sm font-semibold text-[#1f1b18]">AI Explanation</div>
-            <div className="text-xs" style={{ color: "var(--muted)" }}>Plain English · Analogy · Dev Tip</div>
+            <div className="text-sm font-semibold text-[#1f1b18]">Ask Noctis · AI Explanation</div>
+            <div className="text-xs" style={{ color: "var(--muted)" }}>Plain English · Analogy · Dev Tip · Powered by dstrike.app/noctis</div>
           </div>
         </div>
         {open
@@ -126,9 +127,27 @@ export default function AIExplanation({ finding: f }: Props) {
             {tab === "devTip"  && <><span className="text-[#1f1b18] font-semibold">How to fix it: </span>{expl.devTip}</>}
           </div>
 
-          <div className="mt-3 flex items-center gap-2 text-xs" style={{ color: "var(--muted)" }}>
-            <Sparkles className="w-3 h-3" style={{ color: "#8b4528" }} />
-            AI-generated explanation for {f.cwe} · Always verify with your security team
+          <div className="mt-3 flex items-center justify-between gap-2 text-xs flex-wrap" style={{ color: "var(--muted)" }}>
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-3 h-3" style={{ color: "#8b4528" }} />
+              <span>AI-generated explanation for {f.cwe} · Always verify with your security team</span>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                openAskNoctisPopup(
+                  `Inspect finding ${f.id} (${f.cwe}: ${f.title} in ${f.file}:${f.line}) and provide taint trace and verified fix`
+                )
+              }
+              className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer"
+              style={{
+                background: "#8b4528",
+                color: "#fbf8f3",
+                border: "none",
+              }}
+            >
+              Ask Noctis in Pop-up
+            </button>
           </div>
         </div>
       )}
