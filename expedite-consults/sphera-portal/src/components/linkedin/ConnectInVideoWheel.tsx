@@ -235,7 +235,7 @@ export function ConnectInVideoWheel({
   // Social Share Payload Generator — uses ConnectLn OpenGraph Card URL so WhatsApp, LinkedIn, Facebook, and X render the Profile Picture + ConnectLn Logo Card
   const getVideoSharePayload = (video: WheelVideoTalk) => {
     const connectInUrl = `https://www.connectln.app/connectin?video=${encodeURIComponent(video.youtubeId)}&plate=${encodeURIComponent(video.serialPlate)}&v=connectln8`
-    const ytUrl = `https://www.youtube.com/watch?v=${video.youtubeId}`
+    const ytUrl = video.searchUrl || `https://www.youtube.com/watch?v=${video.youtubeId}`
     const takeaways = video.takeaways.map(t => `• ${t}`).join('\n')
     const hashtags = (video.tags || []).join(' ')
     const sharerName = user?.name || "Kwesi Asiedu"
@@ -620,7 +620,7 @@ export function ConnectInVideoWheel({
               className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold shadow-xs hover:opacity-95 transition-opacity cursor-pointer"
             >
               <Play className="h-3 w-3 fill-current" />
-              <span>Watch My Profession Video</span>
+              <span>{assignedUserVideo.searchUrl ? "Find Videos for My Profession" : "Watch My Profession Video"}</span>
             </button>
           </div>
         </div>
@@ -713,20 +713,29 @@ export function ConnectInVideoWheel({
                       <Share2 className="h-2.5 w-2.5" />
                       <span>Share</span>
                     </button>
-                    <span className="text-[10px] font-bold text-[#EFE8DC]/75 px-1.5 py-0.5 rounded bg-white/5">
-                      ⏱ {talk.duration}
-                    </span>
+                    {talk.duration ? (
+                      <span className="text-[10px] font-bold text-[#EFE8DC]/75 px-1.5 py-0.5 rounded bg-white/5">
+                        ⏱ {talk.duration}
+                      </span>
+                    ) : null}
                   </div>
                 </div>
 
                 {/* Video Thumbnail with Play Button Overlay + Circular Blue-Ringed Profile Picture */}
                 <div className="relative flex-1 overflow-hidden bg-black/40">
-                  <img
-                    src={talk.thumbnailUrl}
-                    alt={talk.title}
-                    className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
-                    loading="lazy"
-                  />
+                  {talk.thumbnailUrl ? (
+                    <img
+                      src={talk.thumbnailUrl}
+                      alt={talk.title}
+                      className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="h-full w-full flex flex-col items-center justify-center gap-1 bg-linear-to-br from-[#2a2420] to-[#3a1f19]">
+                      <span className="text-4xl">{talkEnclave?.icon || "🎓"}</span>
+                      <span className="text-[10px] text-[#EFE8DC]/70">No verified video yet</span>
+                    </div>
+                  )}
                   <div className="absolute inset-0 bg-linear-to-t from-[#1C1916] via-[#1C1916]/40 to-transparent" />
 
                   {/* Signature Left Circular Profile Picture with ConnectLn Logo Pill */}
@@ -752,7 +761,7 @@ export function ConnectInVideoWheel({
                   {/* Centered Play Button */}
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="h-11 w-11 rounded-full bg-amber-500/90 text-zinc-950 flex items-center justify-center shadow-lg group-hover:scale-115 transition-transform group-hover:bg-amber-400">
-                      <Play className="h-5 w-5 fill-current ml-0.5" />
+                      {talk.searchUrl ? <span className="text-base">🔎</span> : <Play className="h-5 w-5 fill-current ml-0.5" />}
                     </div>
                   </div>
 
@@ -785,7 +794,7 @@ export function ConnectInVideoWheel({
         <p className="text-[11px] flex items-center gap-1.5">
           <span>🎓</span>
           <span>
-            Curated across all 20 professional enclaves ({allTalks.length}+ educational masterclasses). Every shared video inserts your Profile Picture into the ConnectLn Logo Card.
+            Covers all 20 professional enclaves: {allTalks.filter((t) => !t.searchUrl).length} with a verified video, and a YouTube career search for the other {allTalks.filter((t) => t.searchUrl).length}. Every shared video inserts your Profile Picture into the ConnectLn Logo Card.
           </span>
         </p>
         <button
@@ -908,6 +917,7 @@ export function ConnectInVideoWheel({
                   style={{ backgroundColor: '#FFFFFF', color: '#0F172A' }}
                 >
                   {/* Signature Profile Picture + ConnectLn Video Share Card (Middle duplicate share bar hidden) */}
+                  {!activeVideo.searchUrl && (
                   <VideoShareBanner
                     compact
                     hideShareBar
@@ -924,6 +934,7 @@ export function ConnectInVideoWheel({
                     serialPlate={activeVideo.serialPlate}
                     takeaways={activeVideo.takeaways}
                   />
+                  )}
 
                 <div>
                   <h3
@@ -987,7 +998,7 @@ export function ConnectInVideoWheel({
                       </button>
                       <button
                         type="button"
-                        onClick={() => window.open(`https://www.youtube.com/watch?v=${activeVideo.youtubeId}`, '_blank', 'noopener,noreferrer')}
+                        onClick={() => window.open(activeVideo.searchUrl || `https://www.youtube.com/watch?v=${activeVideo.youtubeId}`, '_blank', 'noopener,noreferrer')}
                         style={{ backgroundColor: '#DC2626', color: '#FFFFFF' }}
                         className="px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 hover:opacity-90 transition-opacity cursor-pointer shadow-xs"
                       >

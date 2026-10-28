@@ -1779,7 +1779,8 @@ function buildComprehensiveProfessionWheelTalks(): WheelVideoTalk[] {
 
     const verified = PROFESSION_VERIFIED_VIDEOS[prof.id] || EXTRA_VERIFIED_VIDEOS[prof.id]
     const youtubeId = verified ? verified.id : "Rw8gAGYZ6qs"
-    const duration = DURATION_OPTIONS[i % DURATION_OPTIONS.length]
+    // The real video length is unknown here, so none is shown (it used to be a made-up value).
+    const duration = ""
 
     const primaryTool = prof.tools?.[0]
     const secondaryTool = prof.tools?.[1]
@@ -1802,7 +1803,7 @@ function buildComprehensiveProfessionWheelTalks(): WheelVideoTalk[] {
       categoryLabel: enclave.shortName,
       enclaveId: enclave.id,
       professionId: prof.id,
-      thumbnailUrl: `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`,
+      thumbnailUrl: verified ? `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg` : "",
       searchUrl: verified ? undefined : `https://www.youtube.com/results?search_query=${encodeURIComponent(`how to become a ${prof.title.split(/[,(&]/)[0].trim()} career`)}`,
       summary: `${verified ? "Official " : "Career briefing: "}${prof.title}${verified ? ` briefing (${verified.ytTitle})` : ""}. Covers core field responsibilities, ${(prof.typicalSkills || []).slice(0, 4).join(", ")}${primaryTool ? `, and operational execution with ${primaryTool.name}` : ""}.${verified ? "" : " No verified video has been curated for this career yet — use the button to find career videos on YouTube."}`,
       takeaways: [
