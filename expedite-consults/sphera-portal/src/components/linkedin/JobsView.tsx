@@ -371,7 +371,14 @@ export function JobsView({
   const [selectedPillar, setSelectedPillar] = useState<string>("all")
   const [selectedProfessionId, setSelectedProfessionId] = useState<string>("all")
   const [isDirectoryOpen, setIsDirectoryOpen] = useState<boolean>(false)
-  const [searchQuery, setSearchQuery] = useState("")
+  const [searchQuery, setSearchQuery] = useState(() => {
+    if (typeof window === "undefined") return ""
+    try {
+      const pre = window.sessionStorage.getItem("connectln_jobs_prefill")
+      if (pre) { window.sessionStorage.removeItem("connectln_jobs_prefill"); return pre }
+    } catch {}
+    return ""
+  })
   const [jobs, setJobs] = useState<GlobalJobItem[]>([])
   const [liveSyncCount, setLiveSyncCount] = useState<number>(0)
   const [lastSyncedAt, setLastSyncedAt] = useState<string>("Just now")

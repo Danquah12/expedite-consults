@@ -39,6 +39,7 @@ import { LanguageSwitcher } from "@/components/language/LanguageSwitcher"
 import { getLocalizedInitialMessage, getLocalizedAIAnswer } from "@/lib/translations/ai-responses"
 import { findConnectLnTopic, connectLnOverview } from "@/lib/connectln-knowledge"
 import { PROFESSION_ENCLAVES } from "@/lib/connectin-professions"
+import { MiniMarkdown } from "./MiniMarkdown"
 
 interface ConnectInAIAssistantProps {
   isOpen: boolean
@@ -47,6 +48,22 @@ interface ConnectInAIAssistantProps {
   onNavigateTab: (tab: string) => void
   initialMode?: 'vibe' | 'chat'
   initialQuery?: string
+}
+
+/** Builds action buttons for a Noctis "How to become…" reply (Jobs, Resume Prep, Mentor, Learning, Network). */
+function careerCards(text: string): ChatMessage['suggestedCards'] | undefined {
+  const t = /^#\s*🧭\s*How to become:\s*(.+)$/m.exec(text || '')
+  if (!t) return undefined
+  const title = t[1].replace(/\s*\(.*?\)\s*/g, ' ').trim()
+  const jobsSection = /Related jobs[^\n]*\n([^\n]+)/.exec(text)
+  const kw = jobsSection ? /`([^`]+)`/.exec(jobsSection[1])?.[1] : undefined
+  return [
+    { title: `Browse ${title} jobs`, category: 'Related Jobs', actionText: 'Open Jobs', targetTab: 'jobs', matchPercent: 'Career Path', prefill: kw || title },
+    { title: 'Prepare your resume for this role', category: 'Resume Prep', actionText: 'Open Resume Prep', targetTab: 'careersuite', matchPercent: 'Career Path' },
+    { title: 'Find a mentor in this field', category: 'Mentorship', actionText: 'Find a Mentor', targetTab: 'mentorship' },
+    { title: 'Take courses to get qualified', category: 'Learning', actionText: 'Open Learning', targetTab: 'learning' },
+    { title: 'Connect with professionals', category: 'Network', actionText: 'Open Network', targetTab: 'network' }
+  ]
 }
 
 interface ChatMessage {
@@ -59,6 +76,7 @@ interface ChatMessage {
     actionText: string
     targetTab: string
     matchPercent?: string
+    prefill?: string
   }[]
   comparisonTable?: {
     headers: string[]
@@ -1232,9 +1250,9 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
           id: `ai_${Date.now()}`,
           sender: 'assistant',
           text: data.text,
-          suggestedCards: kbForCard?.tab
+          suggestedCards: careerCards(data.text) ?? (kbForCard?.tab
             ? [{ title: kbForCard.title, category: 'ConnectLn Guide', actionText: kbForCard.tabLabel || 'Open', targetTab: kbForCard.tab, matchPercent: 'Platform Help' }]
-            : undefined
+            : undefined)
         }
         setMessages(prev => [...prev, noctisReply])
         setIsTyping(false)
@@ -1453,7 +1471,9 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
                         : "bg-zinc-50 text-zinc-800 dark:bg-zinc-800/80 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700/80"
                     }`}
                   >
-                    <div className="whitespace-pre-line">{msg.text}</div>
+                    {msg.sender === 'assistant'
+                      ? <MiniMarkdown text={msg.text} />
+                      : <div className="whitespace-pre-line">{msg.text}</div>}
 
                     {/* Comparison Table View */}
                     {msg.comparisonTable && (
@@ -1501,6 +1521,7 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
                             </div>
                             <button
                               onClick={() => {
+                                if (c.prefill) { try { window.sessionStorage.setItem('connectln_jobs_prefill', c.prefill) } catch {} }
                                 onClose()
                                 onNavigateTab(c.targetTab)
                               }}

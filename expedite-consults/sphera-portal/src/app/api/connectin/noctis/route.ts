@@ -27,11 +27,14 @@ export async function POST(req: Request) {
   const facts = connectLnGrounding(question)
   const who = [body?.profile?.name, body?.profile?.profession].filter(Boolean).join(', ')
   // Noctis weights the user turn, so the facts travel inside it.
-  const grounded =
-    `You are Noctis, answering inside ConnectLn (https://www.connectln.app), a professional network.\n` +
-    `If the question is about ConnectLn, answer ONLY from these facts and do not invent features:\n${facts}\n\n` +
-    (who ? `The member asking: ${who}.\n` : '') +
-    `If the question is not about ConnectLn, answer it normally.\n\nQuestion: ${question}`
+  const isCareerAsk = /\b(become|becoming|career\s+(path|pathway|as|in)|path(way)?\s+to|what\s+does\s+it\s+take\s+to\s+be|steps?\s+to\s+(be|become)|how\s+to\s+start\s+(as|a\s+career))\b/i.test(question)
+  // Career-pathway questions are answered from Noctis's repository, so send them unwrapped.
+  const grounded = isCareerAsk
+    ? question
+    : `You are Noctis, answering inside ConnectLn (https://www.connectln.app), a professional network.\n` +
+      `If the question is about ConnectLn, answer ONLY from these facts and do not invent features:\n${facts}\n\n` +
+      (who ? `The member asking: ${who}.\n` : '') +
+      `If the question is not about ConnectLn, answer it normally.\n\nQuestion: ${question}`
 
   const history = (Array.isArray(body?.history) ? body!.history! : [])
     .filter((t) => (t?.role === 'user' || t?.role === 'assistant') && typeof t.content === 'string')
