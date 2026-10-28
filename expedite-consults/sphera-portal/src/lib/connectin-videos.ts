@@ -1,3 +1,4 @@
+import { EXTRA_VERIFIED_VIDEOS } from './connectin-videos-extra'
 export interface WheelVideoTalk {
   id: string
   serialPlate: string
@@ -1776,7 +1777,7 @@ function buildComprehensiveProfessionWheelTalks(): WheelVideoTalk[] {
     enclaveCounters[enclave.id] = (enclaveCounters[enclave.id] || 10) + 1
     const serialNum = enclaveCounters[enclave.id]
 
-    const verified = PROFESSION_VERIFIED_VIDEOS[prof.id]
+    const verified = PROFESSION_VERIFIED_VIDEOS[prof.id] || EXTRA_VERIFIED_VIDEOS[prof.id]
     const youtubeId = verified ? verified.id : "Rw8gAGYZ6qs"
     const duration = DURATION_OPTIONS[i % DURATION_OPTIONS.length]
 

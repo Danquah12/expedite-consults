@@ -40,6 +40,8 @@ import { getLocalizedInitialMessage, getLocalizedAIAnswer } from "@/lib/translat
 import { findConnectLnTopic, connectLnOverview } from "@/lib/connectln-knowledge"
 import { PROFESSION_ENCLAVES } from "@/lib/connectin-professions"
 import { MiniMarkdown } from "./MiniMarkdown"
+import { CareerPlanner } from "./CareerPlanner"
+import { parsePlanFromReply, savePlan } from "@/lib/career-plan"
 
 interface ConnectInAIAssistantProps {
   isOpen: boolean
@@ -316,11 +318,12 @@ export function ConnectInAIAssistant({
 }: ConnectInAIAssistantProps) {
   const { language, t } = useLanguage()
   const iframeRef = useRef<HTMLIFrameElement>(null)
-  const [mode, setMode] = useState<'vibe' | 'chat'>('chat')
+  const [mode, setMode] = useState<'vibe' | 'chat' | 'career'>('chat')
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [iframeKey, setIframeKey] = useState(0)
   const [isIframeLoading, setIsIframeLoading] = useState(false)
   const [copiedPrompt, setCopiedPrompt] = useState<string | null>(null)
+  const [savedPlanIds, setSavedPlanIds] = useState<string[]>([])
   const [query, setQuery] = useState(initialQuery || "")
   const [messages, setMessages] = useState<ChatMessage[]>(() => [getLocalizedInitialMessage(currentUser, language) as ChatMessage])
   const [isTyping, setIsTyping] = useState(false)
@@ -1323,6 +1326,12 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
               <Sparkles className="h-3.5 w-3.5 text-amber-300" />
               Noctis Live (dstrike.app/noctis)
             </button>
+            <button
+              onClick={() => setMode('career')}
+              className={cn("px-3 py-1 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer", mode === 'career' ? "bg-[#0A66C2] text-white shadow-xs" : "text-zinc-400 hover:text-white")}
+            >
+              🧭 My Career
+            </button>
           </div>
 
           {/* Action Toolbar */}
@@ -1391,7 +1400,9 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
         </div>
 
         {/* Modal Body */}
-        {mode === 'vibe' ? (
+        {mode === 'career' ? (
+          <CareerPlanner language={language} onClose={onClose} onNavigateTab={onNavigateTab} onAsk={(question) => { setMode('chat'); handleSendPrompt(question) }} />
+        ) : mode === 'vibe' ? (
           <div className="relative flex-1 w-full h-full bg-white dark:bg-zinc-950 flex flex-col min-h-0">
             {/* Mobile Tab switcher */}
             <div className="sm:hidden flex items-center justify-around bg-zinc-100 dark:bg-zinc-900 p-1 border-b border-zinc-200 dark:border-zinc-800 shrink-0">
@@ -1500,6 +1511,7 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
                       </div>
                     )}
 
+                    {msg.sender === 'assistant' && (() => { const plan = parsePlanFromReply(msg.text); if (!plan) return null; const saved = savedPlanIds.includes(plan.id); return (<button disabled={saved} onClick={() => { savePlan(plan); setSavedPlanIds(ids => [...ids, plan.id]) }} className="mt-3 rounded-md border border-emerald-500/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 px-2.5 py-1 text-[10px] font-semibold cursor-pointer">{saved ? '✓ Saved to My Career Plan' : '📋 Save to My Career Plan'}</button>) })()}
                     {/* Suggested Action Cards */}
                     {msg.suggestedCards && (
                       <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-zinc-200 dark:border-zinc-700">
