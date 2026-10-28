@@ -140,7 +140,7 @@ export function ConnectInVideoWheel({
 
   // Filter talks based on selected enclave, profession, and search query — always placing the user's assigned profession video first
   const filteredTalks = useMemo(() => {
-    let list = allTalks
+    let list = allTalks.filter(t => !!t.thumbnailUrl) // hide cards with no verified, playable video
     if (selectedFilter === "my_enclave") {
       list = list.filter(t => t.enclaveId === effectiveEnclaveId)
     } else if (selectedFilter !== "all") {
@@ -377,12 +377,12 @@ export function ConnectInVideoWheel({
     { id: "all", label: `All Briefings (${allTalks.length})`, icon: "🎡" },
     {
       id: "my_enclave",
-      label: `My Enclave: ${activeEnclave?.shortName || 'Current'} (${allTalks.filter(t => t.enclaveId === effectiveEnclaveId).length})`,
+      label: `My Enclave: ${activeEnclave?.shortName || 'Current'} (${allTalks.filter(t => !!t.thumbnailUrl && t.enclaveId === effectiveEnclaveId).length})`,
       icon: activeEnclave?.icon || "🔨"
     },
     ...PROFESSION_ENCLAVES.map(enc => ({
       id: enc.id,
-      label: `${enc.shortName} (${allTalks.filter(t => t.enclaveId === enc.id).length})`,
+      label: `${enc.shortName} (${allTalks.filter(t => !!t.thumbnailUrl && t.enclaveId === enc.id).length})`,
       icon: enc.icon
     }))
   ]
