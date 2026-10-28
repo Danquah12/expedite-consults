@@ -144,6 +144,7 @@ export function AdminIAMConsoleView({
   const [selectedUser, setSelectedUser] = useState<AdminUserRecord | null>(null)
   const [selectedCase, setSelectedCase] = useState<ModerationCase | null>(null)
   const [selectedVerification, setSelectedVerification] = useState<VerificationRequestItem | null>(null)
+  const [verifFilter, setVerifFilter] = useState<'Pending Review' | 'More Info Requested' | 'Approved' | 'Rejected' | 'All'>('Pending Review')
   const [impersonatedUser, setImpersonatedUser] = useState<AdminUserRecord | null>(null)
   const [isImpersonateModalOpen, setIsImpersonateModalOpen] = useState(false)
   const [impersonateReason, setImpersonateReason] = useState("")
@@ -378,15 +379,15 @@ export function AdminIAMConsoleView({
   }
 
   // 5. Verification Actions
-  const handleVerificationDecision = (verifId: string, status: 'Approved' | 'Rejected') => {
+  const handleVerificationDecision = (verifId: string, status: 'Approved' | 'Rejected' | 'More Info Requested') => {
     setVerifications(prev => prev.map(v => v.id === verifId ? { ...v, status } : v))
     const item = verifications.find(v => v.id === verifId)
     if (item && status === 'Approved') {
       setUsers(prev => prev.map(u => u.email === item.userEmail ? { ...u, verificationLevel: 'Enterprise Fellow' } : u))
     }
-    appendAudit('VERIFICATION_APPROVED', `Verification ${verifId} (${item?.userName})`, `Status: ${status}`)
+    appendAudit(status === 'Rejected' ? 'VERIFICATION_REJECTED' : 'VERIFICATION_APPROVED', `Verification ${verifId} (${item?.userName})`, `Status: ${status}`)
     setSelectedVerification(null)
-    showNotice(`✓ Verification request ${verifId} has been ${status}.`)
+    showNotice(`✓ Verification request ${verifId}: ${status}.`)
   }
 
   // 6. Job Actions
@@ -1603,8 +1604,23 @@ export function AdminIAMConsoleView({
                 <span className="text-xs text-zinc-400 font-mono">{verifications.length} submissions</span>
               </div>
 
+              <div className="flex flex-wrap gap-2">
+                {(['Pending Review', 'More Info Requested', 'Approved', 'Rejected', 'All'] as const).map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setVerifFilter(f)}
+                    className={`rounded-full px-3 py-1 text-xs font-bold border ${verifFilter === f ? 'bg-[#0A66C2] text-white border-[#0A66C2]' : 'border-zinc-300 text-zinc-600 dark:border-zinc-700 dark:text-zinc-300'}`}
+                  >
+                    {f} ({f === 'All' ? verifications.length : verifications.filter(v => v.status === f).length})
+                  </button>
+                ))}
+              </div>
+
               <div className="space-y-3">
-                {verifications.map((v) => (
+                {verifications.filter(v => verifFilter === 'All' || v.status === verifFilter).length === 0 && (
+                  <div className="rounded-2xl border border-dashed border-zinc-300 p-6 text-center text-xs text-zinc-500">No requests in this view.</div>
+                )}
+                {verifications.filter(v => verifFilter === 'All' || v.status === verifFilter).map((v) => (
                   <div key={v.id} className="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 space-y-3">
                     <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-2">
                       <div className="flex items-center gap-3">
@@ -1614,9 +1630,14 @@ export function AdminIAMConsoleView({
                           <p className="text-xs text-zinc-500 font-mono">{v.userEmail}</p>
                         </div>
                       </div>
-                      <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-[#0A66C2] dark:bg-blue-950 dark:text-sky-300">
-                        {v.verificationType}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${v.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' : v.status === 'Rejected' ? 'bg-red-100 text-red-700' : v.status === 'More Info Requested' ? 'bg-amber-100 text-amber-700' : 'bg-zinc-100 text-zinc-600'}`}>
+                          {v.status}
+                        </span>
+                        <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-[#0A66C2] dark:bg-blue-950 dark:text-sky-300">
+                          {v.verificationType}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="text-xs text-zinc-700 dark:text-zinc-300 space-y-1">
@@ -1635,18 +1656,37 @@ export function AdminIAMConsoleView({
                     <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800">
                       <span className="text-[11px] text-zinc-400">Submitted {v.submittedAt}</span>
                       <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleVerificationDecision(v.id, 'Rejected')}
-                          className="rounded-full border border-zinc-300 px-4 py-1.5 text-xs font-bold text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300"
-                        >
-                          Reject
-                        </button>
-                        <button
-                          onClick={() => handleVerificationDecision(v.id, 'Approved')}
-                          className="rounded-full bg-[#0A66C2] px-5 py-1.5 text-xs font-bold text-white hover:bg-[#004182] shadow-sm"
-                        >
-                          Approve Badge ✓
-                        </button>
+                        {(v.status === 'Pending Review' || v.status === 'More Info Requested') ? (
+                          <>
+                            <button
+                              onClick={() => handleVerificationDecision(v.id, 'Rejected')}
+                              className="rounded-full border border-zinc-300 px-4 py-1.5 text-xs font-bold text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300"
+                            >
+                              Reject
+                            </button>
+                            {v.status === 'Pending Review' && (
+                              <button
+                                onClick={() => handleVerificationDecision(v.id, 'More Info Requested')}
+                                className="rounded-full border border-amber-400 px-4 py-1.5 text-xs font-bold text-amber-700 hover:bg-amber-50"
+                              >
+                                Request Info
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleVerificationDecision(v.id, 'Approved')}
+                              className="rounded-full bg-[#0A66C2] px-5 py-1.5 text-xs font-bold text-white hover:bg-[#004182] shadow-sm"
+                            >
+                              Approve Badge ✓
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => setVerifications(prev => prev.map(x => x.id === v.id ? { ...x, status: 'Pending Review' } : x))}
+                            className="rounded-full border border-zinc-300 px-4 py-1.5 text-xs font-bold text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300"
+                          >
+                            Reopen
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
