@@ -868,16 +868,6 @@ export function ConnectInVideoWheel({
                         <span>Post to ConnectLn Feed</span>
                       </button>
                     )}
-
-                    <button
-                      type="button"
-                      onClick={() => setActiveVideo(null)}
-                      style={{ backgroundColor: '#1E293B', color: '#FFFFFF' }}
-                      className="p-1.5 rounded-full hover:opacity-90 transition-opacity cursor-pointer shrink-0 shadow-xs"
-                      title="Close"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
                   </div>
                 </div>
               </div>
