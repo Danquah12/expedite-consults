@@ -82,20 +82,18 @@ interface ScannerItem {
   status: "STANDBY" | "RUNNING" | "COMPLETED";
 }
 
-const INITIAL_TARGETS: TargetItem[] = [
-  { id: "ext-init-1", url: "https://11-dast-security-platform.vercel.app", status: "idle", progress: 0, phase: "Public External Scope", findings: 0 },
+const VIRTUAL_LAB_PRESET_TARGETS: TargetItem[] = [
+  { id: "t1", url: "http://192.168.195.140", status: "idle", progress: 0, phase: "OWASP Broken Web Apps VM v1.2 (VMnet8 · Online)", findings: 0 },
+  { id: "t2", url: "http://192.168.195.139", status: "idle", progress: 0, phase: "Metasploitable2-Linux VM (VMnet8 · Online)", findings: 0 },
+  { id: "t3", url: "http://192.168.195.130", status: "idle", progress: 0, phase: "Windows Server 2012/2019 VM (VMnet8 · Online)", findings: 0 },
+  { id: "t4", url: "http://192.168.195.129", status: "idle", progress: 0, phase: "Windows 10 x64 VM (VMnet8 · Online)", findings: 0 },
+  { id: "t5", url: "http://192.168.195.132", status: "idle", progress: 0, phase: "Clone of Windows 10 VM (VMnet8 · Lease Active)", findings: 0 },
+  { id: "t6", url: "http://192.168.195.131", status: "idle", progress: 0, phase: "pfSense / FreeBSD 10 64-bit VM (VMnet8 · Lease Active)", findings: 0 },
+  { id: "t7", url: "http://earth.local", status: "idle", progress: 0, phase: "Earth — Fedora 34 Server VM (VMnet1 / 192.168.195.141)", findings: 0 },
+  { id: "t8", url: "http://localhost:8001/index.html", status: "idle", progress: 0, phase: "TrePath Local Lab Server (Port 8001)", findings: 0 },
 ];
 
-const VIRTUAL_LAB_PRESET_TARGETS: TargetItem[] = [
-  { id: "t1", url: "http://192.168.195.140", status: "idle", progress: 0, phase: "Standby", findings: 0 },
-  { id: "t2", url: "http://192.168.195.139/dvwa", status: "idle", progress: 0, phase: "Standby", findings: 0 },
-  { id: "t3", url: "http://192.168.195.140/WebGoat/attack", status: "idle", progress: 0, phase: "Standby", findings: 0 },
-  { id: "t4", url: "http://192.168.195.140/mutillidae", status: "idle", progress: 0, phase: "Standby", findings: 0 },
-  { id: "t5", url: "https://testphp.vulnweb.com", status: "idle", progress: 0, phase: "Standby", findings: 0 },
-  { id: "t6", url: "https://demo.testfire.net", status: "idle", progress: 0, phase: "Standby", findings: 0 },
-  { id: "t7", url: "http://192.168.195.140/bodgeit", status: "idle", progress: 0, phase: "Standby", findings: 0 },
-  { id: "t8", url: "http://192.168.195.140/peruggia", status: "idle", progress: 0, phase: "Standby", findings: 0 },
-];
+const INITIAL_TARGETS: TargetItem[] = VIRTUAL_LAB_PRESET_TARGETS;
 
 interface OwaspBenchmarkTarget {
   id: string;
@@ -107,6 +105,54 @@ interface OwaspBenchmarkTarget {
 }
 
 const OWASP_GITHUB_TEST_TARGETS: OwaspBenchmarkTarget[] = [
+  {
+    id: "vmware-owasp-bwa-140",
+    name: "VMware Workstation: OWASP Broken Web Apps VM v1.2 (192.168.195.140)",
+    url: "http://192.168.195.140",
+    category: "DAST_SAST_COMBINED",
+    stack: "Apache/2.2.14 (Ubuntu) · PHP/5.3.2 · OpenSSL/0.9.8k · Tomcat/Jetty (VMnet8 NAT)",
+    benchmarkFocus: "Live VMware VM Audit: WebGoat, DVWA, Mutillidae II, BodgeIt, Peruggia & Legacy Stack Posture"
+  },
+  {
+    id: "vmware-metasploitable2-139",
+    name: "VMware Workstation: Metasploitable2-Linux VM (192.168.195.139)",
+    url: "http://192.168.195.139",
+    category: "DAST_SAST_COMBINED",
+    stack: "Ubuntu 8.04 LTS · Apache 2.2.8 · PHP 5.2.4 · MySQL · vsftpd · Samba (VMnet8 Custom)",
+    benchmarkFocus: "Live VMware VM Audit: DVWA, Mutillidae, TWiki, phpMyAdmin, TikiWiki & Legacy Daemon Posture"
+  },
+  {
+    id: "vmware-winserver-130",
+    name: "VMware Workstation: Windows Server 2012/2019 VM (192.168.195.130)",
+    url: "http://192.168.195.130",
+    category: "DAST_SAST_COMBINED",
+    stack: "Windows Server (WIN-O65BDCO0ED1) · SMB/NetBIOS/WinRM/RDP (VMnet8 NAT)",
+    benchmarkFocus: "Live VMware VM Audit: SMB Signing, RDP NLA, WinRM Transport & Server Hardening"
+  },
+  {
+    id: "vmware-win10-129",
+    name: "VMware Workstation: Windows 10 x64 & Clone VMs (192.168.195.129 / .132)",
+    url: "http://192.168.195.129",
+    category: "DAST_SAST_COMBINED",
+    stack: "Windows 10 x64 Workstation (win-10 / consult) · VMnet8 NAT",
+    benchmarkFocus: "Live VMware VM Audit: Workstation Network Profile, LLMNR/NetBIOS & SMB Hardening"
+  },
+  {
+    id: "vmware-pfsense-131",
+    name: "VMware Workstation: pfSense / FreeBSD 10 64-bit Appliance (192.168.195.131)",
+    url: "http://192.168.195.131",
+    category: "DAST_SAST_COMBINED",
+    stack: "FreeBSD 10 64-bit / pfSense Firewall Appliance · VMnet8 Custom",
+    benchmarkFocus: "Live VMware VM Audit: Firewall WebConfigurator TLS, Management ACL & SSH Hardening"
+  },
+  {
+    id: "vmware-earth-fedora34",
+    name: "VMware Workstation: Earth CTF VM — Fedora 34 Server (earth.local / VMnet1)",
+    url: "http://earth.local",
+    category: "DAST_SAST_COMBINED",
+    stack: "Fedora 34 Server Edition (Kernel 5.14.9-200.fc34.x86_64) · Apache · Django (Host-Only VMnet1)",
+    benchmarkFocus: "VMware VM Audit: VirtualHost Routing (earth.local / terratest.earth.local), EOL Fedora 34 & Adapter Remediation"
+  },
   {
     id: "owasp-juice-shop-live",
     name: "OWASP Juice Shop (Live Deployed Application Instance)",
@@ -1581,9 +1627,9 @@ export default function EnginePage() {
   const [currentBrainStage, setCurrentBrainStage] = useState<number>(0);
   const [selectedBrainStage, setSelectedBrainStage] = useState<number>(1);
 
-  // Live External / Public-Facing Website Scanner State
+  // Live External / VMware Workstation Website Scanner State
   const [scanExecutionMode, setScanExecutionMode] = useState<"HYBRID_LIVE_AND_LAB" | "LIVE_EXTERNAL_ONLY">("HYBRID_LIVE_AND_LAB");
-  const [customExternalUrlInput, setCustomExternalUrlInput] = useState<string>("https://11-dast-security-platform.vercel.app");
+  const [customExternalUrlInput, setCustomExternalUrlInput] = useState<string>("http://192.168.195.140");
   const [liveExternalProbing, setLiveExternalProbing] = useState<boolean>(false);
 
   // Authenticated Scanning & Custom Auth Header / Session Cookie Injector (Upgrade #4)
@@ -1657,7 +1703,7 @@ export default function EnginePage() {
       if (savedResults) {
         const parsedRes = JSON.parse(savedResults);
         if (Array.isArray(parsedRes) && parsedRes.length > 0) {
-          const validFreshResults = parsedRes.filter((r: any) => r?.schemaVersion === "6.6.0-trepath-audit2-verified");
+          const validFreshResults = parsedRes.filter((r: any) => r?.schemaVersion === "6.7.0-trepath-vmware-verified");
           if (validFreshResults.length > 0) {
             setEngineResults(validFreshResults);
           } else {
@@ -1786,13 +1832,14 @@ export default function EnginePage() {
     }
   };
 
-  // ── Customer-URL Contextualization Engine (Ensures all reports, findings, walkthroughs & appendices reflect scanned customer URLs instead of lab preset IPs) ──
+  // ── Customer-URL & VMware Lab Contextualization Engine ──
   const normalizeTargetIdentity = (rawUrl?: string) => {
     if (!rawUrl || typeof rawUrl !== "string") return "";
     const trimmed = rawUrl.trim();
     if (!trimmed) return "";
     try {
-      const u = new URL(trimmed.startsWith("http") ? trimmed : `https://${trimmed}`);
+      const isPrivateOrLocal = /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.|127\.|localhost|earth\.local)/i.test(trimmed);
+      const u = new URL(trimmed.startsWith("http") ? trimmed : `${isPrivateOrLocal ? "http" : "https"}://${trimmed}`);
       return `${u.protocol}//${u.host.toLowerCase()}${u.pathname.replace(/\/+$/, "").toLowerCase()}`;
     } catch {
       return trimmed.replace(/\/+$/, "").toLowerCase();
@@ -1806,11 +1853,13 @@ export default function EnginePage() {
       )
     : [];
   const activeTargetUrls = safeTargetsArray.map(t => (t?.url || "").trim()).filter(Boolean);
-  const nonLabUrls = activeTargetUrls.filter(u => !u.includes("192.168.195."));
-  const isExternalCustomerScope = nonLabUrls.length > 0 || !activeTargetUrls.some(u => u.includes("192.168.195."));
+  const nonLabUrls = activeTargetUrls;
+  const isExternalCustomerScope = true;
   const primaryTargetUrl = (
     (customExternalUrlInput?.trim()
-      ? (customExternalUrlInput.trim().startsWith("http") ? customExternalUrlInput.trim() : `https://${customExternalUrlInput.trim()}`)
+      ? (customExternalUrlInput.trim().startsWith("http")
+          ? customExternalUrlInput.trim()
+          : `${/^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.|127\.|localhost|earth\.local)/i.test(customExternalUrlInput.trim()) ? "http" : "https"}://${customExternalUrlInput.trim()}`)
       : "") ||
     nonLabUrls[0] ||
     activeTargetUrls[0] ||
@@ -1853,7 +1902,7 @@ export default function EnginePage() {
     const alreadyProbed = engineResults.some(
       r =>
         !r?.isPrivateLab &&
-        r?.schemaVersion === "6.6.0-trepath-audit2-verified" &&
+        r?.schemaVersion === "6.7.0-trepath-vmware-verified" &&
         (normalizeTargetIdentity(r?.targetUrl) === primaryTargetIdentity ||
           normalizeTargetIdentity(r?.finalUrl) === primaryTargetIdentity) &&
         Array.isArray(r?.liveFindings) &&
@@ -2925,13 +2974,14 @@ ${f.remediation}
     })));
   };
 
-  // Restore Original 8 Virtual Lab Targets Preset
+  // Restore Original 8 Virtual Lab Targets Preset (VMware Workstation VMs)
   const loadVirtualLabTargets = () => {
     if (running) return;
     setIsPortalClearedForNewEngagement(false);
     setVerifiedFindings([]);
     setFindingsCount(0);
-    setTargets(VIRTUAL_LAB_PRESET_TARGETS.map(t => ({ ...t, status: "idle", progress: 0, phase: "Standby", findings: 0 })));
+    setCustomExternalUrlInput("http://192.168.195.140");
+    setTargets(VIRTUAL_LAB_PRESET_TARGETS.map(t => ({ ...t, status: "idle", progress: 0, phase: t.phase || "Standby", findings: 0 })));
   };
 
   // Helper to map commercial plugin engineModule names to the 6 console filter tags
@@ -2965,7 +3015,7 @@ ${f.remediation}
     return fullDurationSec;
   };
 
-  // Run a 100% Live External Website Scan against the customer's URL(s) through all 5 Security Engines & 8 Autonomous Brain Stages
+  // Run a 100% Live External or VMware Lab Scan against the target URL(s) through all 5 Security Engines & 8 Autonomous Brain Stages
   const runLiveExternalWebsiteScan = async (
     overrideUrl?: string,
     onlyEngine?: "NMAP" | "OPENVAS" | "ZAP" | "BURP" | "POST_EXPLOIT"
@@ -2973,7 +3023,9 @@ ${f.remediation}
     const normalizeCustomerUrl = (u: string) => {
       const trimmed = u.trim();
       if (!trimmed) return "";
-      return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+      if (/^https?:\/\//i.test(trimmed)) return trimmed;
+      const isPrivateOrLocal = /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.|127\.|localhost|earth\.local)/i.test(trimmed);
+      return `${isPrivateOrLocal ? "http" : "https"}://${trimmed}`;
     };
 
     const rawUrls = overrideUrl && overrideUrl.trim()
@@ -2982,7 +3034,7 @@ ${f.remediation}
       ? customExternalUrlInput.split(/[\n,]+/).map(normalizeCustomerUrl).filter(Boolean)
       : selectedOwaspTargetUrls.length > 0
       ? selectedOwaspTargetUrls.map(normalizeCustomerUrl).filter(Boolean)
-      : safeTargetsArray.map(t => normalizeCustomerUrl(t.url)).filter(u => Boolean(u) && !u.includes("192.168.195."));
+      : safeTargetsArray.map(t => normalizeCustomerUrl(t.url)).filter(Boolean);
 
     const urlsToProbe = rawUrls.length > 0
       ? rawUrls
@@ -7180,7 +7232,11 @@ ${f.remediation}
                       .split(/[\n,]+/)
                       .map(u => u.trim())
                       .filter(Boolean)
-                      .map(u => (/^https?:\/\//i.test(u) ? u : `https://${u}`));
+                      .map(u => {
+                        if (/^https?:\/\//i.test(u)) return u;
+                        const isPriv = /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.|127\.|localhost|earth\.local)/i.test(u);
+                        return `${isPriv ? "http" : "https"}://${u}`;
+                      });
                     if (parsedUrls.length > 0) {
                       setTargets(
                         parsedUrls.map((u, idx) => ({
@@ -7201,7 +7257,7 @@ ${f.remediation}
                     runLiveExternalWebsiteScan(customExternalUrlInput);
                   }
                 }}
-                placeholder="Enter any public-facing website or VMware sandbox URL (e.g. https://customer-domain.com)"
+                placeholder="Enter any public-facing website or VMware Workstation IP (e.g. http://192.168.195.140, http://192.168.195.139)"
                 style={{
                   flex: "1 1 200px",
                   minWidth: 0,
@@ -7236,7 +7292,7 @@ ${f.remediation}
                 }}
               >
                 <Zap size={12} />
-                <span>{liveExternalProbing ? "Probing Live..." : "⚡ Scan Website Live"}</span>
+                <span>{liveExternalProbing ? "Probing Live..." : "⚡ Scan Website / VM Live"}</span>
               </button>
 
               <button
@@ -7305,6 +7361,277 @@ ${f.remediation}
               >
                 {showScopeManager ? `▲ Hide Staged URLs (${safeTargetsArray.length})` : `▼ Staged URLs & Scope Settings (${safeTargetsArray.length})`}
               </button>
+            </div>
+          </div>
+
+          {/* ── Dedicated VMware Workstation VMs (192.168.195.0/24 NAT VMnet8 & VMnet1) 1-Click Direct Scan Bar ── */}
+          <div style={{
+            padding: "9px 12px",
+            borderRadius: 8,
+            background: "var(--surface-2)",
+            border: "1.5px solid rgba(16,185,129,0.45)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 8
+          }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <span style={{
+                  fontSize: 10,
+                  fontWeight: 900,
+                  padding: "2px 8px",
+                  borderRadius: 4,
+                  background: "#059669",
+                  color: "#ffffff",
+                  fontFamily: "monospace"
+                }}>
+                  🖥️ VMWARE WORKSTATION VMs (VMnet8 192.168.195.0/24 &amp; VMnet1)
+                </span>
+                <span style={{ fontSize: 10.5, color: "var(--fg-2)" }}>
+                  Click any VMware Workstation IP or web app route below to load or scan it directly in the DAST UI:
+                </span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  disabled={running}
+                  onClick={() => {
+                    loadVirtualLabTargets();
+                  }}
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 800,
+                    padding: "4px 9px",
+                    borderRadius: 5,
+                    background: "var(--surface)",
+                    border: "1px solid rgba(56,189,248,0.45)",
+                    color: "#38bdf8",
+                    cursor: running ? "not-allowed" : "pointer"
+                  }}
+                >
+                  📥 Stage All 7 VMware VMs
+                </button>
+                <button
+                  type="button"
+                  disabled={running}
+                  onClick={() => {
+                    const allVmUrls = VIRTUAL_LAB_PRESET_TARGETS.map(t => t.url);
+                    setCustomExternalUrlInput(allVmUrls.join(", "));
+                    setTargets(VIRTUAL_LAB_PRESET_TARGETS.map(t => ({ ...t, status: "idle" as const, progress: 0, findings: 0 })));
+                    runLiveExternalWebsiteScan(allVmUrls.join(", "));
+                  }}
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 900,
+                    padding: "4px 10px",
+                    borderRadius: 5,
+                    background: "rgba(16,185,129,0.2)",
+                    border: "1px solid #10b981",
+                    color: "#10b981",
+                    cursor: running ? "not-allowed" : "pointer"
+                  }}
+                >
+                  ⚡ Scan All VMware Workstation VMs
+                </button>
+              </div>
+            </div>
+
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(235px, 1fr))",
+              gap: 6
+            }}>
+              {[
+                {
+                  ip: "192.168.195.140",
+                  url: "http://192.168.195.140",
+                  name: "OWASP Broken Web Apps v1.2",
+                  badge: "ONLINE · HTTP 200",
+                  badgeColor: "#10b981",
+                  stack: "Apache/2.2.14 · PHP/5.3.2 · OpenSSL/0.9.8k",
+                  subRoutes: [
+                    { label: "Root /", url: "http://192.168.195.140" },
+                    { label: "/dvwa", url: "http://192.168.195.140/dvwa/" },
+                    { label: "/mutillidae", url: "http://192.168.195.140/mutillidae/" },
+                    { label: "/WebGoat", url: "http://192.168.195.140/WebGoat/attack" },
+                    { label: "/bodgeit", url: "http://192.168.195.140/bodgeit/" },
+                    { label: "/peruggia", url: "http://192.168.195.140/peruggia/" }
+                  ]
+                },
+                {
+                  ip: "192.168.195.139",
+                  url: "http://192.168.195.139",
+                  name: "Metasploitable2-Linux VM",
+                  badge: "ONLINE · VMnet8",
+                  badgeColor: "#10b981",
+                  stack: "Ubuntu 8.04 · Apache/2.2.8 · PHP/5.2.4 · MySQL",
+                  subRoutes: [
+                    { label: "Root /", url: "http://192.168.195.139" },
+                    { label: "/dvwa", url: "http://192.168.195.139/dvwa/" },
+                    { label: "/mutillidae", url: "http://192.168.195.139/mutillidae/" },
+                    { label: "/twiki", url: "http://192.168.195.139/twiki/" },
+                    { label: "/phpMyAdmin", url: "http://192.168.195.139/phpMyAdmin/" }
+                  ]
+                },
+                {
+                  ip: "192.168.195.130",
+                  url: "http://192.168.195.130",
+                  name: "Windows Server 2012/2019",
+                  badge: "ONLINE · ICMP",
+                  badgeColor: "#38bdf8",
+                  stack: "WIN-O65BDCO0ED1 · SMB/NetBIOS/WinRM/RDP",
+                  subRoutes: [
+                    { label: "192.168.195.130", url: "http://192.168.195.130" }
+                  ]
+                },
+                {
+                  ip: "192.168.195.129 / .132",
+                  url: "http://192.168.195.129",
+                  name: "Windows 10 x64 & Clone VMs",
+                  badge: "ONLINE · VMnet8",
+                  badgeColor: "#38bdf8",
+                  stack: "win-10 (.129) & consult (.132) · Workstation",
+                  subRoutes: [
+                    { label: ".129 (win-10)", url: "http://192.168.195.129" },
+                    { label: ".132 (Clone)", url: "http://192.168.195.132" }
+                  ]
+                },
+                {
+                  ip: "192.168.195.131",
+                  url: "http://192.168.195.131",
+                  name: "pfSense / FreeBSD 10 64-bit",
+                  badge: "DHCP LEASE · VMnet8",
+                  badgeColor: "#f59e0b",
+                  stack: "FreeBSD 10 · pfSense WebConfigurator",
+                  subRoutes: [
+                    { label: "192.168.195.131", url: "http://192.168.195.131" }
+                  ]
+                },
+                {
+                  ip: "earth.local / .141",
+                  url: "http://earth.local",
+                  name: "Earth CTF VM (Fedora 34)",
+                  badge: "VMnet1 / VMnet8",
+                  badgeColor: "#a855f7",
+                  stack: "Fedora 34 Server · Kernel 5.14.9 · Apache/Django",
+                  subRoutes: [
+                    { label: "earth.local", url: "http://earth.local" },
+                    { label: "192.168.195.141", url: "http://192.168.195.141" },
+                    { label: "terratest.earth.local", url: "http://terratest.earth.local" }
+                  ]
+                }
+              ].map((vm) => {
+                const isSelected = customExternalUrlInput.includes(vm.url);
+                return (
+                  <div
+                    key={vm.ip}
+                    style={{
+                      background: isSelected ? "rgba(16,185,129,0.1)" : "var(--surface)",
+                      border: isSelected ? "1.5px solid #10b981" : "1px solid var(--border)",
+                      borderRadius: 6,
+                      padding: "7px 9px",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between",
+                      gap: 5
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4 }}>
+                        <span style={{ fontSize: 10.5, fontWeight: 900, fontFamily: "monospace", color: "#38bdf8" }}>
+                          {vm.ip}
+                        </span>
+                        <span style={{
+                          fontSize: 8.5,
+                          fontWeight: 800,
+                          padding: "1px 5px",
+                          borderRadius: 3,
+                          background: "rgba(16,185,129,0.12)",
+                          color: vm.badgeColor,
+                          fontFamily: "monospace"
+                        }}>
+                          ● {vm.badge}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 10.5, fontWeight: 800, marginTop: 2 }}>{vm.name}</div>
+                      <div style={{ fontSize: 9, color: "var(--fg-2)", fontFamily: "monospace", marginTop: 1 }}>
+                        {vm.stack}
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 4, marginTop: 2 }}>
+                      {vm.subRoutes.map(sr => (
+                        <button
+                          key={sr.url}
+                          type="button"
+                          disabled={running}
+                          onClick={() => {
+                            setCustomExternalUrlInput(sr.url);
+                            setTargets([
+                              {
+                                id: `vmware-${Date.now()}`,
+                                url: sr.url,
+                                status: "idle" as const,
+                                progress: 0,
+                                phase: `${vm.name} (${sr.label})`,
+                                findings: 0
+                              }
+                            ]);
+                          }}
+                          style={{
+                            fontSize: 8.5,
+                            fontWeight: 700,
+                            fontFamily: "monospace",
+                            padding: "2px 6px",
+                            borderRadius: 3,
+                            background: customExternalUrlInput === sr.url ? "#0284c7" : "var(--surface-2)",
+                            color: customExternalUrlInput === sr.url ? "#ffffff" : "var(--fg)",
+                            border: "1px solid var(--border)",
+                            cursor: running ? "not-allowed" : "pointer"
+                          }}
+                          title={`Stage ${sr.url} in DAST Scanner`}
+                        >
+                          {sr.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 2 }}>
+                      <button
+                        type="button"
+                        disabled={running}
+                        onClick={() => {
+                          setCustomExternalUrlInput(vm.url);
+                          setTargets([
+                            {
+                              id: `vmware-scan-${Date.now()}`,
+                              url: vm.url,
+                              status: "idle" as const,
+                              progress: 0,
+                              phase: vm.name,
+                              findings: 0
+                            }
+                          ]);
+                          runLiveExternalWebsiteScan(vm.url);
+                        }}
+                        style={{
+                          flex: 1,
+                          fontSize: 9.5,
+                          fontWeight: 900,
+                          padding: "3px 8px",
+                          borderRadius: 4,
+                          background: "rgba(16,185,129,0.18)",
+                          border: "1px solid #10b981",
+                          color: "#10b981",
+                          cursor: running ? "not-allowed" : "pointer"
+                        }}
+                      >
+                        ⚡ Scan {vm.ip.split(" ")[0]} Now
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 

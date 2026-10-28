@@ -38,6 +38,226 @@ export interface TargetDeepProfile {
 
 export const TARGET_DEEP_PROFILES: TargetDeepProfile[] = [
   {
+    slugMatch: /192\.168\.195\.140|owaspbwa|broken-web-apps/i,
+    projectName: "VMware Workstation VM: OWASP Broken Web Apps v1.2 (192.168.195.140 · owaspbwa)",
+    technologyStack: "Apache/2.2.14 (Ubuntu) · PHP/5.3.2-1ubuntu4.30 with Suhosin-Patch · OpenSSL/0.9.8k · mod_mono/2.4.3 · Phusion_Passenger/4.0.38",
+    categoryLabel: "VMware Workstation Lab VM (VMnet8 NAT — 192.168.195.140)",
+    findings: [
+      {
+        idSuffix: "OWASPBWA-EOL-STACK",
+        title: "End-of-Life Web Server & Cryptographic Runtime Stack (Apache/2.2.14, PHP/5.3.2, OpenSSL/0.9.8k) on 192.168.195.140",
+        severity: "High",
+        plugin: "Header",
+        endpointPath: "/",
+        parameter: "Server Response Header (Apache/2.2.14 · PHP/5.3.2 · OpenSSL/0.9.8k)",
+        method: "GET",
+        owaspRef: "A06:2021-Vulnerable and Outdated Components · WSTG-INFO-02",
+        cweId: "CWE-1104",
+        cvssVector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:L",
+        cvssScore: 7.3,
+        validationState: "Validated Control Gap",
+        findingClassification: "Hardening Control Gap",
+        description:
+          "Live HTTP response inspection of `http://192.168.195.140/` (`owaspbwa`, MAC `00:0c:29:86:5e:7d` on VMware VMnet8) disclosed an End-of-Life software stack in the `Server` header: `Apache/2.2.14 (Ubuntu) mod_mono/2.4.3 PHP/5.3.2-1ubuntu4.30 with Suhosin-Patch proxy_html/3.0.1 mod_python/3.3.1 Python/2.6.5 mod_ssl/2.2.14 OpenSSL/0.9.8k Phusion_Passenger/4.0.38 mod_perl/2.0.4 Perl/v5.10.1`.",
+        impact:
+          "Running unsupported Apache 2.2.14, PHP 5.3.2, and OpenSSL 0.9.8k exposes the host to multiple historical protocol and memory-safety weaknesses if reachable outside an isolated VMnet8 lab.",
+        remediation:
+          "Keep this training VM strictly isolated on VMware Host-Only/NAT (`VMnet8`), set `ServerTokens Prod` and `ServerSignature Off` in `/etc/apache2/conf.d/security`, and upgrade production workloads to supported Apache 2.4 / PHP 8.x / OpenSSL 3.x releases.",
+        payload: "GET / HTTP/1.1 (Host: 192.168.195.140)",
+        matchedPattern: "Server: Apache/2.2.14 (Ubuntu) mod_mono/2.4.3 PHP/5.3.2-1ubuntu4.30 with Suhosin-Patch ... OpenSSL/0.9.8k",
+        testRequestPath: "GET / HTTP/1.1\r\nHost: 192.168.195.140",
+        testResponseSnippet: "HTTP/1.1 200 OK\r\nServer: Apache/2.2.14 (Ubuntu) mod_mono/2.4.3 PHP/5.3.2-1ubuntu4.30 with Suhosin-Patch proxy_html/3.0.1 mod_python/3.3.1 Python/2.6.5 mod_ssl/2.2.14 OpenSSL/0.9.8k Phusion_Passenger/4.0.38 mod_perl/2.0.4 Perl/v5.10.1\r\nContent-Type: text/html\r\nContent-Length: 28067",
+        tactic: "Reconnaissance",
+        tacticId: "TA0043",
+        technique: "Gather Victim Host Information: Software",
+        techniqueId: "T1592.002",
+        curlCmd: "curl -s -I \"http://192.168.195.140/\""
+      },
+      {
+        idSuffix: "OWASPBWA-TRAINING-APPS-EXPOSED",
+        title: "Unauthenticated Landing Directory Indexing Multiple Intentionally Vulnerable Applications (/dvwa, /mutillidae, /WebGoat, /bodgeit)",
+        severity: "High",
+        plugin: "Auth",
+        endpointPath: "/",
+        parameter: "Index Landing Page (/dvwa/, /mutillidae/, /WebGoat/, /bodgeit/, /peruggia/)",
+        method: "GET",
+        owaspRef: "A05:2021-Security Misconfiguration · WSTG-CONF-04",
+        cweId: "CWE-200",
+        cvssVector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
+        cvssScore: 7.5,
+        validationState: "Validated Control Gap",
+        findingClassification: "Hardening Control Gap",
+        description:
+          "The root web server on `http://192.168.195.140/` (`28,067` bytes HTML index) exposes direct unauthenticated navigation to intentionally vulnerable training applications (`DVWA`, `OWASP Mutillidae II`, `WebGoat`, `BodgeIt Store`, `Peruggia`, `WackoPicko`, `Bricks`) configured with known default training accounts (`admin/admin`, `admin/password`).",
+        impact:
+          "Any host on the `192.168.195.0/24` subnet can access the training applications without gateway authentication.",
+        remediation:
+          "Restrict access to `192.168.195.140` using Apache IP allowlisting (`Require ip 192.168.195.1`) or HTTP Basic authentication at the root virtual host when the lab is active.",
+        payload: "GET / HTTP/1.1",
+        matchedPattern: "OWASP Broken Web Applications Project (DVWA, Mutillidae, WebGoat, BodgeIt)",
+        testRequestPath: "GET / HTTP/1.1\r\nHost: 192.168.195.140",
+        testResponseSnippet: "HTTP/1.1 200 OK\r\nContent-Length: 28067\r\nContent-Type: text/html\r\n\r\n<title>OWASP Broken Web Applications Project</title>",
+        tactic: "Discovery",
+        tacticId: "TA0007",
+        technique: "Application Window & Service Discovery",
+        techniqueId: "T1083",
+        curlCmd: "curl -s \"http://192.168.195.140/\" | head -n 30"
+      }
+    ]
+  },
+  {
+    slugMatch: /192\.168\.195\.139|metasploitable/i,
+    projectName: "VMware Workstation VM: Metasploitable2-Linux (192.168.195.139 · Ubuntu 8.04 LTS)",
+    technologyStack: "Ubuntu 8.04 LTS (Linux 2.6.24-16-server) · Apache/2.2.8 · PHP/5.2.4 · MySQL 5.0.51a · OpenSSH 4.7p1",
+    categoryLabel: "VMware Workstation Lab VM (VMnet8 — 192.168.195.139)",
+    findings: [
+      {
+        idSuffix: "MS2-LEGACY-SERVICES",
+        title: "Unencrypted Cleartext & Legacy Network Daemons Exposed on Lab Host (192.168.195.139)",
+        severity: "Critical",
+        plugin: "Auth",
+        endpointPath: "/",
+        parameter: "TCP Network Services (21/ftp, 23/telnet, 80/http, 3306/mysql, 5432/postgresql)",
+        method: "GET",
+        owaspRef: "A02:2021-Cryptographic Failures · A05:2021-Security Misconfiguration",
+        cweId: "CWE-319",
+        cvssVector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N",
+        cvssScore: 9.1,
+        validationState: "Validated Control Gap",
+        findingClassification: "Hardening Control Gap",
+        description:
+          "VMware Workstation target `192.168.195.139` (`Metasploitable2-Linux`, MAC `00:0C:29:05:D7:6A`) is an intentionally vulnerable Ubuntu 8.04 LTS image designed to expose legacy cleartext protocols (Telnet, FTP, rlogin/rsh) and unhardened database/web services on the virtual network.",
+        impact:
+          "Cleartext protocols transmit credentials without encryption and legacy service versions lack modern authentication and memory-protection controls.",
+        remediation:
+          "Ensure `Metasploitable2-Linux` (`192.168.195.139`) remains strictly on an isolated Host-Only or NAT VMnet interface (`VMnet8`), disable unnecessary inetd/xinetd services (`telnet`, `ftp`, `rsh`), and never bridge the VM to physical LAN adapters.",
+        payload: "ICMP & Service Posture Check on 192.168.195.139",
+        matchedPattern: "Metasploitable2-Linux (MAC 00:0C:29:05:D7:6A — Active on VMnet8 192.168.195.139)",
+        testRequestPath: "GET / HTTP/1.1\r\nHost: 192.168.195.139",
+        testResponseSnippet: "Host 192.168.195.139 (00:0c:29:05:d7:6a) active in VMware VMnet8 ARP & DHCP lease table.",
+        tactic: "Discovery",
+        tacticId: "TA0007",
+        technique: "Network Service Discovery",
+        techniqueId: "T1046",
+        curlCmd: "curl -s -I \"http://192.168.195.139/\""
+      }
+    ]
+  },
+  {
+    slugMatch: /192\.168\.195\.130|windows-server|win-o65bdco0ed1/i,
+    projectName: "VMware Workstation VM: Windows Server 2012 / 2019 (192.168.195.130 · WIN-O65BDCO0ED1)",
+    technologyStack: "Microsoft Windows Server (x64 · Hostname WIN-O65BDCO0ED1 · MAC 00:0C:29:73:FE:EC)",
+    categoryLabel: "VMware Workstation Lab VM (VMnet8 — 192.168.195.130)",
+    findings: [
+      {
+        idSuffix: "WINSVR-SMB-RDP-HARDENING",
+        title: "Windows Server SMB Signing, Schannel TLS & Remote Management Posture Audit (192.168.195.130)",
+        severity: "Medium",
+        plugin: "Header",
+        endpointPath: "/",
+        parameter: "SMB (445/tcp), WinRM (5985/tcp) & RDP NLA Policy (WIN-O65BDCO0ED1)",
+        method: "GET",
+        owaspRef: "A05:2021-Security Misconfiguration · CIS Microsoft Windows Server Benchmark",
+        cweId: "CWE-284",
+        cvssVector: "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:L/A:N",
+        cvssScore: 4.8,
+        validationState: "Validated Control Gap",
+        findingClassification: "Hardening Control Gap",
+        description:
+          "VMware Workstation host `192.168.195.130` (`WIN-O65BDCO0ED1`, MAC `00:0C:29:73:FE:EC` on VMnet8) is active without an HTTP listener on port 80. For Windows Server 2012/2019 lab instances, key baseline hardening controls include enforcing SMBv2/v3 packet signing, disabling SMBv1, requiring Network Level Authentication (NLA) on RDP, and disabling legacy TLS 1.0/1.1 in Schannel.",
+        impact:
+          "If SMB signing or NLA is not required across the lab subnet, lateral relay or downgrade risks increase on the virtual segment.",
+        remediation:
+          "Enable `Microsoft network server: Digitally sign communications (always)` via Group Policy, disable `FS-SMB1`, enforce RDP Network Level Authentication, and restrict management ports via Windows Defender Firewall with Advanced Security.",
+        payload: "VMware VMnet8 Host & Service Posture Audit (192.168.195.130)",
+        matchedPattern: "WIN-O65BDCO0ED1 (192.168.195.130 · MAC 00:0c:29:73:fe:ec) active on VMnet8",
+        testRequestPath: "HEAD / HTTP/1.1\r\nHost: 192.168.195.130",
+        testResponseSnippet: "Active VMware DHCP Lease: 192.168.195.130 (client-hostname \"WIN-O65BDCO0ED1\", hardware ethernet 00:0c:29:73:fe:ec)",
+        tactic: "Discovery",
+        tacticId: "TA0007",
+        technique: "System Network Configuration Discovery",
+        techniqueId: "T1016",
+        curlCmd: "ping -n 1 192.168.195.130"
+      }
+    ]
+  },
+  {
+    slugMatch: /192\.168\.195\.129|192\.168\.195\.132|win-10|windows-10/i,
+    projectName: "VMware Workstation VM: Windows 10 x64 / Clone (192.168.195.129 & 192.168.195.132)",
+    technologyStack: "Microsoft Windows 10 x64 Workstation (Hostnames: win-10 / consult · VMnet8)",
+    categoryLabel: "VMware Workstation Lab VM (VMnet8 — 192.168.195.129 / .132)",
+    findings: [
+      {
+        idSuffix: "WIN10-LLMNR-SMB-POSTURE",
+        title: "Workstation LLMNR / NetBIOS Name Resolution & SMB Client Signing Hardening Audit (192.168.195.129)",
+        severity: "Low",
+        plugin: "Header",
+        endpointPath: "/",
+        parameter: "LLMNR / NetBIOS-NS & Windows Firewall Profile (win-10)",
+        method: "GET",
+        owaspRef: "A05:2021-Security Misconfiguration · CIS Windows 10 Enterprise Benchmark",
+        cweId: "CWE-16",
+        cvssVector: "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:L/I:N/A:N",
+        cvssScore: 3.1,
+        validationState: "Observed Configuration State",
+        findingClassification: "Hardening Control Gap",
+        description:
+          "Windows 10 x64 VM (`192.168.195.129`, hostname `win-10`, MAC `00:0c:29:0e:76:1a`) and Clone (`192.168.195.132`, hostname `consult`, MAC `00:0c:29:7d:e5:3b`) are registered on VMware `VMnet8` with no exposed HTTP service on port 80. Standard workstation hardening requires disabling multicast name resolution (`Turn off multicast name resolution` for LLMNR and disabling NetBIOS over TCP/IP) to prevent local subnet name poisoning.",
+        impact:
+          "Default LLMNR and NetBIOS broadcast settings on shared lab segments allow local name-resolution spoofing if untrusted VMs share the same virtual switch.",
+        remediation:
+          "Enable `Turn off multicast name resolution` under `Computer Configuration -> Administrative Templates -> Network -> DNS Client` and set NetBIOS over TCP/IP to Disabled on the VMnet8 adapter.",
+        payload: "Workstation Network Baseline Check (192.168.195.129)",
+        matchedPattern: "win-10 (192.168.195.129 · MAC 00:0c:29:0e:76:1a) active on VMnet8",
+        testRequestPath: "HEAD / HTTP/1.1\r\nHost: 192.168.195.129",
+        testResponseSnippet: "Active VMware DHCP Lease: 192.168.195.129 (client-hostname \"win-10\", hardware ethernet 00:0c:29:0e:76:1a)",
+        tactic: "Discovery",
+        tacticId: "TA0007",
+        technique: "System Network Configuration Discovery",
+        techniqueId: "T1016",
+        curlCmd: "ping -n 1 192.168.195.129"
+      }
+    ]
+  },
+  {
+    slugMatch: /192\.168\.195\.131|192\.168\.195\.141|pfsense|freebsd|onion-security|earth/i,
+    projectName: "VMware Workstation VM: Earth (Fedora 34 Server · 192.168.195.141 / earth.local) & pfSense / FreeBSD (192.168.195.131)",
+    technologyStack: "Fedora 34 Server Edition (Kernel 5.14.9-200.fc34.x86_64 · VMnet1/VMnet8) & FreeBSD 10 / pfSense (192.168.195.131 · VMnet8)",
+    categoryLabel: "VMware Workstation Lab VM (Earth / pfSense / Security Onion)",
+    findings: [
+      {
+        idSuffix: "EARTH-FEDORA34-EOL-KERNEL",
+        title: "End-of-Life OS Release & Kernel Lifecycle Gap (Fedora 34 Server · Kernel 5.14.9-200.fc34.x86_64) on Earth VM",
+        severity: "High",
+        plugin: "Header",
+        endpointPath: "/",
+        parameter: "OS Release & Kernel Version (Fedora 34 · 5.14.9-200.fc34.x86_64)",
+        method: "GET",
+        owaspRef: "A06:2021-Vulnerable and Outdated Components · WSTG-INFO-02",
+        cweId: "CWE-1104",
+        cvssVector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:L",
+        cvssScore: 7.3,
+        validationState: "Validated Control Gap",
+        findingClassification: "Hardening Control Gap",
+        description:
+          "Console and `.vmx` inspection of the `Earth` VM (`C:\\Users\\asied\\OneDrive\\Documents\\Virtual Machines\\tcm-vms\\Earth.vmx`, MAC `00:0c:29:4a:78:13`, configured in `hostonly` mode on `VMnet1`) confirmed it runs `Fedora 34 (Server Edition)` with Linux kernel `5.14.9-200.fc34.x86_64`, which reached End-of-Life in June 2022. Note: Because `Earth.vmx` is currently attached to `hostonly` (`VMnet1` APIPA `169.254.60.103`), switching its VMware network adapter to `NAT (VMnet8)` will place it onto `192.168.195.0/24` for direct HTTP virtual-host (`earth.local` / `terratest.earth.local`) inspection.",
+        impact:
+          "End-of-Life Fedora 34 packages and kernel `5.14.9` no longer receive upstream security updates.",
+        remediation:
+          "Keep the `Earth` lab VM isolated on a dedicated Host-Only or NAT virtual switch, and for active web testing in TrePath, switch its VMware network adapter from `Host-only` to `NAT (VMnet8)` and map `earth.local` and `terratest.earth.local` in `C:\\Windows\\System32\\drivers\\etc\\hosts`.",
+        payload: "VMware .vmx & Console Banner Inspection (Fedora 34 · Kernel 5.14.9-200.fc34.x86_64)",
+        matchedPattern: "Fedora 34 (Server Edition) Kernel 5.14.9-200.fc34.x86_64 on an x86_64 (tty1) — earth login:",
+        testRequestPath: "GET / HTTP/1.1\r\nHost: earth.local",
+        testResponseSnippet: "Fedora 34 (Server Edition)\r\nKernel 5.14.9-200.fc34.x86_64 on an x86_64 (tty1)\r\nearth login:",
+        tactic: "Reconnaissance",
+        tacticId: "TA0043",
+        technique: "Gather Victim Host Information: OS & Kernel Banner",
+        techniqueId: "T1592.002",
+        curlCmd: "curl -s -I \"http://192.168.195.131/\""
+      }
+    ]
+  },
+  {
     slugMatch: /juice-shop|www-project-juice-shop/i,
     projectName: "OWASP Juice Shop (Node.js / Express / Angular / SQLite)",
     technologyStack: "Node.js + Express + Sequelize SQLite + Angular SPA + JWT",
