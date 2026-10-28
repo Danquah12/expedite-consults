@@ -24,6 +24,9 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // No usable photo (e.g. generated avatar): show the member's initials, the same avatar they see in the app.
+  const initials = name.trim().split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]!.toUpperCase()).join("")
+
   const logoUrl = `${origin}/brand/connectln-icon-256.png`
 
   return new ImageResponse(
@@ -55,6 +58,8 @@ export async function GET(req: NextRequest) {
             {pic ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={pic} width={244} height={244} style={{ objectFit: "cover" }} alt="" />
+            ) : initials ? (
+              <div style={{ width: 244, height: 244, display: "flex", alignItems: "center", justifyContent: "center", background: "#8a3f1f", color: "#ffffff", fontSize: 96, fontWeight: 800 }}>{initials}</div>
             ) : null}
           </div>
           {name ? (
