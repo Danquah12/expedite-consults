@@ -10,7 +10,7 @@ const NAV_LINKS = [
   { label: "Scan Workspace", href: "/scan", badge: "1360px", icon: Play },
   { label: "Proof Engine", href: "/validation-engine", badge: "6 Stages", icon: Cpu },
   { label: "Triage Desk", href: "/dashboard", badge: "Split", icon: BarChart3 },
-  { label: "Cyber Monitor", href: "/cyber-monitoring", badge: "KPI/OMD", icon: Activity },
+  { label: "Cyber Monitor", href: "/cyber-monitoring", badge: "Posture", icon: Activity },
   { label: "Report Engine", href: "/reports", badge: "Print/PDF", icon: Printer },
   { label: "XTRIKE Fusion", href: "/fusion-engine", icon: Layers },
   { label: "Taint Graph", href: "/taint-graph", icon: GitGraph },

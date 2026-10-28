@@ -1,648 +1,629 @@
-export interface RiskInstanceSlice {
-  severity: "Critical" | "High" | "Medium" | "Low" | "Info";
-  count: number;
-  displayCount: string;
-  color: string;
-  percentage: number;
+/**
+ * XTRIKE SAST Desk — Native AppSec Posture KPIs, Code-to-Runtime Sensor Telemetry,
+ * Repository & Service Mesh Health, and XTRIKE SAST CLI (v4.2.0) Distribution Catalog.
+ *
+ * Designed natively for Platform 05 (XTRIKE SAST Desk).
+ */
+
+export interface CyberVulnKpiCard {
+  id: string;
+  label: string;
+  value: string;
+  numericValue: number;
+  delta: string;
+  deltaDirection: "up" | "down";
+  deltaContext: string;
+  accentColor: string;
+  subLabel: string;
 }
 
-export interface DeploymentEnvironmentBar {
-  environment: string;
-  shortLabel: string;
-  critical: number;
-  high: number;
-  medium: number;
-  low: number;
-  info: number;
-  total: number;
-  clusterOwner: string;
-  linkedCwes: string[];
+export interface RiskInstanceSlice {
+  severity: "Critical" | "High" | "Medium" | "Low" | "Guarded";
+  proofState: string;
+  countLabel: string;
+  count: number;
+  percentage: number;
+  color: string;
+}
+
+export interface DeploymentInstanceItem {
+  name: string;
+  repoSlug: string;
+  count: number;
+  countLabel: string;
+  color: string;
+  primaryCwe: string;
+}
+
+export interface VulnTrendPoint {
+  date: string;
+  openVulnerabilities: number;
+  openCves: number;
+  verifiedRemediations: number;
 }
 
 export interface AntivirusKpiCard {
   id: string;
-  label: string;
-  subLabel?: string;
+  title: string;
   value: string;
-  numericValue: number;
-  accentColor: string;
-  description: string;
+  delta: string;
+  isPositiveTrend: boolean;
+  sparkline: number[];
+  color: string;
+  ruleRef: string;
 }
 
-export interface HostOsSlice {
+export interface OsHostDistribution {
   os: string;
-  count: number;
-  percentage: number;
+  hosts: number;
   color: string;
 }
 
-export interface DetectionTimelinePoint {
-  year: number;
-  linux: number;
-  windows: number;
-  mac: number;
+export interface ActivityDetectionPoint {
+  period: string;
+  astDataflow: number;
+  runtimeGuard: number;
+  ciReleaseGate: number;
 }
 
-export interface RecentDetectionRecord {
+export interface RecentDetectionItem {
   id: string;
+  signature: string;
+  host: string;
+  os: "Java / Spring" | "Python / FastAPI" | "Node / TypeScript" | "Go / gRPC";
   severity: "Critical" | "High" | "Medium";
-  tactic: string;
-  mitreId: string;
-  techniqueName: string;
+  action: "Blocked at Gate" | "Runtime Guarded" | "Patch PR Opened";
   timestamp: string;
-  hostId: string;
-  fullHostName: string;
-  processOrPath: string;
-  linkedSastFindingId: string;
-  status: "Active" | "Contained" | "Remediated";
+  cwe: string;
+  pluginId: string;
 }
 
-export interface XtrikeTopAlerter {
-  problems: number;
+export interface FleetProblemRow {
   host: string;
   service: string;
-  state: "CRIT" | "WARN" | "OK";
-  lastCheck: string;
-  outputSummary: string;
-  correlatedCwe?: string;
+  state: "CRIT" | "WARN" | "UNKNOWN" | "OK";
+  pluginOutput: string;
+  since: string;
+  cwe: string;
+  proofState: string;
 }
 
-export interface XtrikeHexHostCell {
+export interface TopAlerterBar {
+  host: string;
+  critCount: number;
+  warnCount: number;
+  unknownCount: number;
+  totalAlerts: number;
+  primaryCwe: string;
+}
+
+export interface HoneycombHostCell {
   id: string;
   hostname: string;
   cluster: string;
-  state: "UP" | "DOWN" | "WARN";
-  servicesOk: number;
-  servicesWarn: number;
-  servicesCrit: number;
-  cpuLoad: string;
-  memoryUsed: string;
+  state: "OK" | "WARN" | "CRIT" | "UNKNOWN";
+  servicesCount: number;
+  openFindings: number;
+  latencyMs: number;
+  language: string;
 }
 
-export interface XtrikeDistroReleaseRow {
-  releaseVersion: string;
+export interface XtrikeDistroPackage {
+  id: string;
+  distroFamily: "Ubuntu / Debian APT" | "RHEL / Rocky / Amazon Linux" | "macOS Homebrew & Apple Silicon" | "Docker / Helm & GitHub Actions";
+  distroVersion: string;
   codename: string;
-  edition: "community" | "ultimate";
-  filename: string;
+  architecture: string;
+  edition: "CLI Standard" | "Enterprise Runner";
+  packageFilename: string;
+  downloadUrl: string;
   wgetCommand: string;
-  aptInstallCommand: string;
+  installCommand: string;
   sha256: string;
 }
 
 export interface XtrikeDistroAccordionGroup {
-  id: string;
-  distroName: string;
-  releases: XtrikeDistroReleaseRow[];
+  family: "Ubuntu / Debian APT" | "RHEL / Rocky / Amazon Linux" | "macOS Homebrew & Apple Silicon" | "Docker / Helm & GitHub Actions";
+  badge: string;
+  description: string;
+  defaultOpen?: boolean;
+  packages: XtrikeDistroPackage[];
 }
 
-export const CYBER_VULN_KPI_SUMMARY = {
-  openVulnerabilityCount: 16800,
-  openVulnerabilityDisplay: "16.8K",
-  openCveCount: 6400,
-  openCveDisplay: "6.4K",
-  openRemediationCount: 1300,
-  openRemediationDisplay: "1.3K",
-  totalRiskInstances: 16065,
-};
+// ============================================================================
+// 1. SAST & CVE POSTURE KPI TELEMETRY
+// ============================================================================
+
+export const CYBER_VULN_KPI_SUMMARY: CyberVulnKpiCard[] = [
+  {
+    id: "open-vulns",
+    label: "Open SAST Findings",
+    value: "16.8K",
+    numericValue: 16840,
+    delta: "+12.3%",
+    deltaDirection: "up",
+    deltaContext: "across 82 repos & 4 AST engines",
+    accentColor: "#9e2a2b",
+    subLabel: "XQL · DeepFlow · StructSCA · AST-Query",
+  },
+  {
+    id: "open-cves",
+    label: "Reachable SCA CVEs",
+    value: "6.4K",
+    numericValue: 6412,
+    delta: "-6.2%",
+    deltaDirection: "down",
+    deltaContext: "verified call-graph reachability",
+    accentColor: "#8b4528",
+    subLabel: "Filtered by active sink invocation",
+  },
+  {
+    id: "open-remediations",
+    label: "Verified AST Fixes",
+    value: "1.3K",
+    numericValue: 1318,
+    delta: "+18.4%",
+    deltaDirection: "up",
+    deltaContext: "passed post-fix retest suite",
+    accentColor: "#2d6a4f",
+    subLabel: "Language-matched diff + unit test",
+  },
+];
 
 export const OPEN_RISK_INSTANCES: RiskInstanceSlice[] = [
-  { severity: "Critical", count: 1400, displayCount: "1.4K", color: "#0b6e4f", percentage: 8.7 },
-  { severity: "High",     count: 6000, displayCount: "6.0K", color: "#149c68", percentage: 37.3 },
-  { severity: "Medium",   count: 7100, displayCount: "7.1K", color: "#5ce1b8", percentage: 44.2 },
-  { severity: "Low",      count: 1300, displayCount: "1.3K", color: "#9bf0d5", percentage: 8.1 },
-  { severity: "Info",     count: 265,  displayCount: "265",  color: "#d7fbf0", percentage: 1.7 },
+  {
+    severity: "Critical",
+    proofState: "PROVEN_EXPLOITABLE / DATAFLOW_CONFIRMED",
+    countLabel: "1.4K",
+    count: 1420,
+    percentage: 8.8,
+    color: "#9e2a2b",
+  },
+  {
+    severity: "High",
+    proofState: "DATAFLOW_CONFIRMED (0 Sanitizers)",
+    countLabel: "6.0K",
+    count: 6010,
+    percentage: 37.3,
+    color: "#8b4528",
+  },
+  {
+    severity: "Medium",
+    proofState: "DETECTED_STATIC (Context-Dependent)",
+    countLabel: "7.1K",
+    count: 7120,
+    percentage: 44.2,
+    color: "#996b1f",
+  },
+  {
+    severity: "Low",
+    proofState: "NEEDS_MANUAL_VALIDATION",
+    countLabel: "1.3K",
+    count: 1310,
+    percentage: 8.1,
+    color: "#6b705c",
+  },
+  {
+    severity: "Guarded",
+    proofState: "MITIGATED_BY_GUARD",
+    countLabel: "265",
+    count: 265,
+    percentage: 1.6,
+    color: "#2d6a4f",
+  },
 ];
 
-export const OPEN_DEPLOYMENT_INSTANCES: DeploymentEnvironmentBar[] = [
-  {
-    environment: "AWS Production",
-    shortLabel: "AWS Production",
-    critical: 40,
-    high: 11,
-    medium: 5,
-    low: 0,
-    info: 0,
-    total: 56,
-    clusterOwner: "Cloud Platform SecOps",
-    linkedCwes: ["CWE-89", "CWE-918", "CWE-798"],
-  },
-  {
-    environment: "Fargate Demo",
-    shortLabel: "Fargate Demo",
-    critical: 0,
-    high: 35,
-    medium: 9,
-    low: 0,
-    info: 0,
-    total: 44,
-    clusterOwner: "Container Runtime Team",
-    linkedCwes: ["CWE-250", "CWE-94"],
-  },
-  {
-    environment: "Ozone Demo Dev",
-    shortLabel: "Ozone Demo De",
-    critical: 20,
-    high: 14,
-    medium: 5,
-    low: 0,
-    info: 0,
-    total: 39,
-    clusterOwner: "AppSec Sandbox Team",
-    linkedCwes: ["CWE-502", "CWE-611"],
-  },
-  {
-    environment: "Development",
-    shortLabel: "Development",
-    critical: 24,
-    high: 8,
-    medium: 4,
-    low: 0,
-    info: 0,
-    total: 36,
-    clusterOwner: "Core Engineering",
-    linkedCwes: ["CWE-79", "CWE-89", "CWE-22"],
-  },
-  {
-    environment: "Product Manage",
-    shortLabel: "Product Manage",
-    critical: 20,
-    high: 10,
-    medium: 3,
-    low: 0,
-    info: 0,
-    total: 33,
-    clusterOwner: "Product Portal Squad",
-    linkedCwes: ["CWE-639", "CWE-347"],
-  },
-  {
-    environment: "CIS Benchmark",
-    shortLabel: "CIS Benchmark fo",
-    critical: 0,
-    high: 22,
-    medium: 15,
-    low: 0,
-    info: 0,
-    total: 37,
-    clusterOwner: "Compliance & Hardening",
-    linkedCwes: ["CWE-16", "CWE-284"],
-  },
-  {
-    environment: "ExposureNotifica",
-    shortLabel: "ExposureNotifica",
-    critical: 0,
-    high: 29,
-    medium: 4,
-    low: 0,
-    info: 0,
-    total: 33,
-    clusterOwner: "Notification Gateway",
-    linkedCwes: ["CWE-918", "CWE-400"],
-  },
-  {
-    environment: "Production Data",
-    shortLabel: "Production Data",
-    critical: 0,
-    high: 0,
-    medium: 15,
-    low: 5,
-    info: 0,
-    total: 20,
-    clusterOwner: "Data Lake & Analytics",
-    linkedCwes: ["CWE-312", "CWE-532"],
-  },
+export const OPEN_DEPLOYMENT_INSTANCES: DeploymentInstanceItem[] = [
+  { name: "Payment & Ledger Core", repoSlug: "xtrike/payment-settlement-core", count: 3420, countLabel: "3.4K", color: "#9e2a2b", primaryCwe: "CWE-89" },
+  { name: "Identity & OAuth Gateway", repoSlug: "xtrike/identity-oauth-gateway", count: 3290, countLabel: "3.3K", color: "#8b4528", primaryCwe: "CWE-347" },
+  { name: "GraphQL & Mobile BFF", repoSlug: "xtrike/graphql-mobile-bff", count: 2810, countLabel: "2.8K", color: "#996b1f", primaryCwe: "CWE-918" },
+  { name: "Order Fulfillment API", repoSlug: "xtrike/order-fulfillment-api", count: 2640, countLabel: "2.6K", color: "#b56547", primaryCwe: "CWE-502" },
+  { name: "Dynamic Rule Compiler", repoSlug: "xtrike/dynamic-rule-compiler", count: 2490, countLabel: "2.5K", color: "#7f5539", primaryCwe: "CWE-94" },
+  { name: "Terraform & EKS IaC", repoSlug: "xtrike/terraform-eks-infra", count: 1210, countLabel: "1.2K", color: "#6b705c", primaryCwe: "CWE-798" },
+  { name: "Webhook & Event Broker", repoSlug: "xtrike/webhook-event-broker", count: 843, countLabel: "843", color: "#3a5a40", primaryCwe: "CWE-78" },
+  { name: "AI-BOM & RAG Pipeline", repoSlug: "xtrike/ai-bom-rag-pipeline", count: 314, countLabel: "314", color: "#2d6a4f", primaryCwe: "CWE-22" },
 ];
+
+export const VULNERABILITY_TRENDS_TIMELINE: VulnTrendPoint[] = [
+  { date: "W1", openVulnerabilities: 11200, openCves: 7400, verifiedRemediations: 620 },
+  { date: "W2", openVulnerabilities: 12400, openCves: 7150, verifiedRemediations: 740 },
+  { date: "W3", openVulnerabilities: 11900, openCves: 6980, verifiedRemediations: 810 },
+  { date: "W4", openVulnerabilities: 13600, openCves: 6890, verifiedRemediations: 890 },
+  { date: "W5", openVulnerabilities: 14100, openCves: 6720, verifiedRemediations: 960 },
+  { date: "W6", openVulnerabilities: 15300, openCves: 6610, verifiedRemediations: 1080 },
+  { date: "W7", openVulnerabilities: 14900, openCves: 6550, verifiedRemediations: 1150 },
+  { date: "W8", openVulnerabilities: 16100, openCves: 6490, verifiedRemediations: 1240 },
+  { date: "W9", openVulnerabilities: 16840, openCves: 6412, verifiedRemediations: 1318 },
+];
+
+// ============================================================================
+// 2. CODE-TO-RUNTIME SENSOR & EXPLOIT PREVENTION TELEMETRY
+// ============================================================================
 
 export const ANTIVIRUS_PERFORMANCE_KPIS: AntivirusKpiCard[] = [
   {
-    id: "detections",
-    label: "Detections",
+    id: "sink-triggers",
+    title: "Active Sink Triggers",
     value: "213",
-    numericValue: 213,
-    accentColor: "#0ea5e9",
-    description: "Total endpoint, container, and runtime behavioral detections across monitored hosts.",
+    delta: "+18% vs 30d",
+    isPositiveTrend: false,
+    sparkline: [95, 112, 130, 128, 155, 174, 190, 213],
+    color: "#9e2a2b",
+    ruleRef: "PLG-001..PLG-401",
   },
   {
-    id: "attacks-prevented",
-    label: "Attacks prevented",
-    subLabel: "Last day",
+    id: "exploits-blocked",
+    title: "Exploit Probes Halted",
     value: "32",
-    numericValue: 32,
-    accentColor: "#10b981",
-    description: "Exploit payloads and shellcode executions blocked in the last 24 hours.",
+    delta: "+14% vs 30d",
+    isPositiveTrend: true,
+    sparkline: [14, 18, 16, 22, 24, 27, 29, 32],
+    color: "#2d6a4f",
+    ruleRef: "PTES Stage-4 Guard",
   },
   {
-    id: "leads-on-hunting",
-    label: "Leads on hunting",
+    id: "taint-entrypoints",
+    title: "Unauth Taint Routes",
     value: "26",
-    numericValue: 26,
-    accentColor: "#f97316",
-    description: "Active threat-hunting hypotheses correlated with static SAST taint sinks.",
+    delta: "-11% vs 30d",
+    isPositiveTrend: true,
+    sparkline: [38, 35, 34, 31, 30, 29, 27, 26],
+    color: "#8b4528",
+    ruleRef: "DeepFlow SSA Trace",
   },
   {
-    id: "hunting-leads-stock",
-    label: "Hunting leads stock",
+    id: "manual-proof-queue",
+    title: "Manual Proof Queue",
     value: "26",
-    numericValue: 26,
-    accentColor: "#0284c7",
-    description: "Queued behavioral and AST indicator leads awaiting analyst verification.",
+    delta: "Needs Triage",
+    isPositiveTrend: true,
+    sparkline: [34, 33, 31, 29, 28, 27, 26, 26],
+    color: "#996b1f",
+    ruleRef: "NEEDS_VALIDATION",
   },
   {
-    id: "remedied-detections",
-    label: "Remedied detections",
-    subLabel: "Last 30 days",
+    id: "auto-patched",
+    title: "AST Diffs Verified",
     value: "73",
-    numericValue: 73,
-    accentColor: "#14b8a6",
-    description: "Detections closed via verified code patches, container rebuilds, or host isolation.",
+    delta: "+29% vs 30d",
+    isPositiveTrend: true,
+    sparkline: [32, 38, 44, 49, 55, 61, 68, 73],
+    color: "#2d6a4f",
+    ruleRef: "TC-SQLI / TC-CODEI",
   },
   {
-    id: "current-score",
-    label: "Current score",
-    value: "53/100",
-    numericValue: 53,
-    accentColor: "#f97316",
-    description: "Composite cyber defense & endpoint resilience score across 1,765 monitored hosts.",
+    id: "posture-score",
+    title: "Release Gate Score",
+    value: "84/100",
+    delta: "+6 pts",
+    isPositiveTrend: true,
+    sparkline: [68, 70, 73, 75, 78, 80, 82, 84],
+    color: "#8b4528",
+    ruleRef: "NIST 800-115 Gate",
   },
 ];
 
-export const MONITORED_HOSTS_BY_OS: { totalHosts: number; breakdown: HostOsSlice[] } = {
-  totalHosts: 1765,
-  breakdown: [
-    { os: "Windows",    count: 890, percentage: 50.4, color: "#0ea5e9" },
-    { os: "Linux x86",  count: 340, percentage: 19.3, color: "#0369a1" },
-    { os: "Lumos X64",  count: 215, percentage: 12.2, color: "#0284c7" },
-    { os: "MacOS",      count: 160, percentage: 9.1,  color: "#38bdf8" },
-    { os: "Chrome OS",  count: 85,  percentage: 4.8,  color: "#7dd3fc" },
-    { os: "iOS",        count: 45,  percentage: 2.5,  color: "#bae6fd" },
-    { os: "Android",    count: 30,  percentage: 1.7,  color: "#e0f2fe" },
-  ],
-};
-
-export const ACTIVITY_DETECTION_TIMELINE: DetectionTimelinePoint[] = [
-  { year: 2008, linux: 42,   windows: 15, mac: 5 },
-  { year: 2009, linux: 38,   windows: 18, mac: 6 },
-  { year: 2010, linux: 35,   windows: 20, mac: 7 },
-  { year: 2011, linux: 112,  windows: 24, mac: 8 },
-  { year: 2012, linux: 58,   windows: 19, mac: 6 },
-  { year: 2013, linux: 40,   windows: 16, mac: 5 },
-  { year: 2014, linux: 12,   windows: 12, mac: 4 },
-  { year: 2015, linux: 14,   windows: 14, mac: 5 },
-  { year: 2016, linux: 15,   windows: 15, mac: 5 },
-  { year: 2017, linux: 18,   windows: 16, mac: 6 },
-  { year: 2018, linux: 22,   windows: 18, mac: 7 },
-  { year: 2019, linux: 34,   windows: 24, mac: 8 },
-  { year: 2020, linux: 45,   windows: 32, mac: 10 },
-  { year: 2021, linux: 1120, windows: 44, mac: 14 },
-  { year: 2022, linux: 48,   windows: 39, mac: 12 },
-  { year: 2023, linux: 315,  windows: 46, mac: 15 },
-  { year: 2024, linux: 54,   windows: 38, mac: 14 },
+export const MONITORED_HOSTS_BY_OS: OsHostDistribution[] = [
+  { os: "Linux x86_64 Build & Runtime Nodes", hosts: 468, color: "#8b4528" },
+  { os: "Kubernetes / EKS Microservice Pods", hosts: 406, color: "#2d6a4f" },
+  { os: "GitHub Actions / GitLab CI Runners", hosts: 320, color: "#996b1f" },
+  { os: "macOS IDE & MCP Agent Workstations", hosts: 249, color: "#6b705c" },
+  { os: "Windows Server / .NET Core Workers", hosts: 122, color: "#9e2a2b" },
+  { os: "ARM64 Graviton Container Nodes", hosts: 100, color: "#7f5539" },
+  { os: "Serverless & Edge Runtime Functions", hosts: 100, color: "#3a5a40" },
 ];
 
-export const MOST_RECENT_DETECTIONS: RecentDetectionRecord[] = [
+export const ACTIVITY_DETECTION_TIMELINE: ActivityDetectionPoint[] = [
+  { period: "Q1", astDataflow: 180, runtimeGuard: 90, ciReleaseGate: 140 },
+  { period: "Q2", astDataflow: 230, runtimeGuard: 115, ciReleaseGate: 175 },
+  { period: "Q3", astDataflow: 210, runtimeGuard: 130, ciReleaseGate: 195 },
+  { period: "Q4", astDataflow: 290, runtimeGuard: 160, ciReleaseGate: 240 },
+  { period: "Q5", astDataflow: 340, runtimeGuard: 195, ciReleaseGate: 280 },
+  { period: "Q6", astDataflow: 310, runtimeGuard: 210, ciReleaseGate: 305 },
+  { period: "Q7", astDataflow: 380, runtimeGuard: 245, ciReleaseGate: 350 },
+  { period: "Q8", astDataflow: 425, runtimeGuard: 280, ciReleaseGate: 395 },
+];
+
+export const MOST_RECENT_DETECTIONS: RecentDetectionItem[] = [
   {
-    id: "DET-2026-01",
+    id: "DET-9041",
+    signature: "Unparameterized SQL Concatenation in Statement.executeQuery()",
+    host: "SqlInjectionLesson5a.java:12",
+    os: "Java / Spring",
     severity: "Critical",
-    tactic: "Impact",
-    mitreId: "T1486",
-    techniqueName: "Data Encrypted for Impact / Runtime Tampering",
-    timestamp: "Mar. 20, 2024 15:57:20",
-    hostId: "Rely-Ra...",
-    fullHostName: "rely-raptor-prod-eu-01.internal",
-    processOrPath: "/opt/app/SqlInjectionLesson5a.java -> Statement.executeQuery",
-    linkedSastFindingId: "F-001",
-    status: "Active",
+    action: "Blocked at Gate",
+    timestamp: "2 mins ago",
+    cwe: "CWE-89",
+    pluginId: "PLG-001",
   },
   {
-    id: "DET-2026-02",
+    id: "DET-9040",
+    signature: "JavaCompiler.getTask() Without Proven Input / Execution Guard",
+    host: "BlindScript.java:42",
+    os: "Java / Spring",
+    severity: "Medium",
+    action: "Runtime Guarded",
+    timestamp: "9 mins ago",
+    cwe: "CWE-94",
+    pluginId: "PLG-054",
+  },
+  {
+    id: "DET-9039",
+    signature: "Python Dynamic exec(compile(...)) on Untrusted Rule Expression",
+    host: "rule_runner.py:88",
+    os: "Python / FastAPI",
     severity: "Critical",
-    tactic: "Impact",
-    mitreId: "T1059.006",
-    techniqueName: "Command and Scripting Interpreter: Python exec()",
-    timestamp: "Mar. 20, 2024 15:55:19",
-    hostId: "Rely-Ra...",
-    fullHostName: "rely-raptor-prod-eu-02.internal",
-    processOrPath: "src/scripting/rule_runner.py -> exec(compile(user_code))",
-    linkedSastFindingId: "F-002",
-    status: "Active",
+    action: "Blocked at Gate",
+    timestamp: "17 mins ago",
+    cwe: "CWE-94",
+    pluginId: "PLG-046",
   },
   {
-    id: "DET-2026-03",
+    id: "DET-9038",
+    signature: "SSRF Outbound URL Fetch Reaching Cloud Metadata 169.254.169.254",
+    host: "WebhookDispatcher.ts:64",
+    os: "Node / TypeScript",
     severity: "High",
-    tactic: "Initial Access",
-    mitreId: "T1190",
-    techniqueName: "Exploit Public-Facing Application (SSRF Metadata Probe)",
-    timestamp: "Mar. 20, 2024 15:42:08",
-    hostId: "eks-node-09",
-    fullHostName: "node-eks-i-0d7cb370c8eea26c9.eu-central-1.compute.internal",
-    processOrPath: "src/services/webhookService.ts -> fetch(169.254.169.254)",
-    linkedSastFindingId: "F-003",
-    status: "Contained",
+    action: "Patch PR Opened",
+    timestamp: "28 mins ago",
+    cwe: "CWE-918",
+    pluginId: "PLG-168",
   },
   {
-    id: "DET-2026-04",
-    severity: "High",
-    tactic: "Execution",
-    mitreId: "T1059",
-    techniqueName: "Dynamic JavaCompiler Task Creation (BlindScript.java)",
-    timestamp: "Mar. 20, 2024 15:31:44",
-    hostId: "jvm-app-04",
-    fullHostName: "jvm-app-04.prod.xtrike.internal",
-    processOrPath: "BlindScript.java -> javax.tools.JavaCompiler.getTask(...)",
-    linkedSastFindingId: "F-006",
-    status: "Contained",
+    id: "DET-9037",
+    signature: "Unsafe ObjectInputStream.readObject() Without JEP 290 Filter",
+    host: "SessionSerializer.java:105",
+    os: "Java / Spring",
+    severity: "Critical",
+    action: "Blocked at Gate",
+    timestamp: "41 mins ago",
+    cwe: "CWE-502",
+    pluginId: "PLG-061",
   },
 ];
+
+// ============================================================================
+// 3. XTRIKE REPOSITORY, RUNNER & SERVICE MESH TELEMETRY
+// ============================================================================
 
 export const XTRIKE_FLEET_OVERVIEW = {
-  hosts: {
-    up: 708,
-    down: 2,
-    unreachable: 0,
-    inDowntime: 0,
-    total: 710,
-    unhandledProblems: 1,
-  },
-  services: {
-    ok: 15688,
-    inDowntime: 2,
-    onDownHost: 4,
-    warning: 37,
-    unknown: 0,
-    critical: 77,
-    total: 15808,
-    unhandledProblems: 112,
-  },
-  events: {
-    total: 1001,
-    unhandledProblems: 4,
-  },
+  totalHosts: 710,
+  hostsUp: 709,
+  hostsDown: 0,
+  hostsUnreachable: 1,
+  totalServices: 15808,
+  servicesOk: 14839,
+  servicesWarn: 691,
+  servicesUnknown: 67,
+  servicesCrit: 210,
+  totalEvents: 1001,
 };
 
-export const XTRIKE_TOP_ALERTERS: XtrikeTopAlerter[] = [
+export const XTRIKE_HOST_PROBLEMS: FleetProblemRow[] = [
   {
-    problems: 484,
-    host: "xtrike.app",
-    service: "HTTPS xtrike.app",
+    host: "payment-settlement-core",
+    service: "XQL Gate · CWE-89 SQL Injection",
     state: "CRIT",
-    lastCheck: "12s ago",
-    outputSummary: "HTTP CRITICAL - TLS certificate expiry & upstream WAF anomaly on port 443",
-    correlatedCwe: "CWE-295",
+    pluginOutput: "CRIT - DATAFLOW_CONFIRMED: Unbound @RequestParam account reaches Statement.executeQuery() at line 12 (0 sanitizers)",
+    since: "14m ago",
+    cwe: "CWE-89",
+    proofState: "DATAFLOW_CONFIRMED",
   },
   {
-    problems: 292,
-    host: "node eks i-0d7cb370c8eea26c9.eu-central-1.compute.internal",
-    service: "Memory",
+    host: "dynamic-rule-compiler",
+    service: "AST-Query · PLG-054 JavaCompiler",
     state: "WARN",
-    lastCheck: "18s ago",
-    outputSummary: "RAM usage at 91.4% (29.2 GB / 32.0 GB) — unthrottled query allocation in pod",
-    correlatedCwe: "CWE-400",
+    pluginOutput: "WARN - NEEDS_MANUAL_VALIDATION: javax.tools.JavaCompiler.getTask() detected in BlindScript.java; verify fileObjects source & -proc:none",
+    since: "32m ago",
+    cwe: "CWE-94",
+    proofState: "NEEDS_MANUAL_VALIDATION",
   },
   {
-    problems: 373,
-    host: "play.xtrike.app",
-    service: "HTTPS play.xtrike.app",
+    host: "webhook-event-broker",
+    service: "DeepFlow · CWE-918 SSRF Egress",
     state: "CRIT",
-    lastCheck: "24s ago",
-    outputSummary: "Response time > 2,400ms on /sast/validation-engine endpoint",
-    correlatedCwe: "CWE-89",
+    pluginOutput: "CRIT - PROVEN_EXPLOITABLE: User callbackUrl reaches HttpClient.send() without scheme pinning or RFC1918/IMDSv2 block",
+    since: "1h 08m ago",
+    cwe: "CWE-918",
+    proofState: "PROVEN_EXPLOITABLE",
   },
   {
-    problems: 436,
-    host: "ideas.xtrike.app",
-    service: "HTTPS ideas.xtrike.app",
+    host: "identity-oauth-gateway",
+    service: "StructSCA · CWE-347 JWT Signature",
     state: "CRIT",
-    lastCheck: "31s ago",
-    outputSummary: "502 Bad Gateway burst detected during unauthenticated payload fuzzing",
-    correlatedCwe: "CWE-502",
+    pluginOutput: "CRIT - DATAFLOW_CONFIRMED: jwt.decode() invoked without signature verification on Authorization Bearer token",
+    since: "2h 15m ago",
+    cwe: "CWE-347",
+    proofState: "DATAFLOW_CONFIRMED",
   },
   {
-    problems: 9,
-    host: "docs.xtrike.app",
-    service: "HTTPS docs.xtrike.app",
+    host: "order-fulfillment-api",
+    service: "XQL Gate · CWE-502 Deserialization",
     state: "WARN",
-    lastCheck: "42s ago",
-    outputSummary: "Content-Security-Policy header missing frame-ancestors directive",
-    correlatedCwe: "CWE-1021",
-  },
-  {
-    problems: 6,
-    host: "forum.xtrike.app",
-    service: "HTTPS forum.xtrike.app",
-    state: "WARN",
-    lastCheck: "55s ago",
-    outputSummary: "Elevated rate-limit triggers on /session/sso callback",
-    correlatedCwe: "CWE-307",
-  },
-  {
-    problems: 2,
-    host: "ideas.xtrike.app",
-    service: "XTRIKE_Agent",
-    state: "CRIT",
-    lastCheck: "1m ago",
-    outputSummary: "Agent systemd unit socket timeout (exit status 2)",
-    correlatedCwe: "CWE-755",
+    pluginOutput: "WARN - DATAFLOW_CONFIRMED: ObjectInputStream.readObject() lacks JEP 290 ObjectInputFilter allowlist",
+    since: "3h 40m ago",
+    cwe: "CWE-502",
+    proofState: "DATAFLOW_CONFIRMED",
   },
 ];
 
-export const XTRIKE_HONEYCOMB_HOSTS: XtrikeHexHostCell[] = Array.from({ length: 72 }, (_, idx) => {
-  const isDown = idx === 11 || idx === 46;
-  const isWarn = idx % 9 === 3 || idx % 13 === 5;
-  const state: "UP" | "DOWN" | "WARN" = isDown ? "DOWN" : isWarn ? "WARN" : "UP";
-  const clusters = [
-    "eu-central-1.eks",
-    "us-east-1.prod",
-    "xtrike-core",
-    "sast-workers",
-    "db-replica-set",
-    "api-gateway",
-  ];
-  const cluster = clusters[idx % clusters.length];
+export const XTRIKE_TOP_ALERTERS: TopAlerterBar[] = [
+  { host: "payment-settlement-core", critCount: 48, warnCount: 64, unknownCount: 4, totalAlerts: 116, primaryCwe: "CWE-89 SQLi" },
+  { host: "identity-oauth-gateway", critCount: 39, warnCount: 52, unknownCount: 6, totalAlerts: 97, primaryCwe: "CWE-347 JWT" },
+  { host: "graphql-mobile-bff", critCount: 31, warnCount: 49, unknownCount: 5, totalAlerts: 85, primaryCwe: "CWE-918 SSRF" },
+  { host: "order-fulfillment-api", critCount: 24, warnCount: 41, unknownCount: 3, totalAlerts: 68, primaryCwe: "CWE-502 Deser" },
+  { host: "dynamic-rule-compiler", critCount: 12, warnCount: 38, unknownCount: 8, totalAlerts: 58, primaryCwe: "CWE-94 CodeGen" },
+  { host: "webhook-event-broker", critCount: 19, warnCount: 27, unknownCount: 2, totalAlerts: 48, primaryCwe: "CWE-78 CmdInj" },
+];
+
+const REPO_CLUSTERS = [
+  { prefix: "payment-ledger-svc", cluster: "Core Banking & Ledger", lang: "Java 21" },
+  { prefix: "oauth-token-gateway", cluster: "Identity & Access", lang: "Go 1.22" },
+  { prefix: "graphql-edge-bff", cluster: "API Gateway Mesh", lang: "TypeScript" },
+  { prefix: "order-worker-node", cluster: "Fulfillment Engine", lang: "Python 3.12" },
+  { prefix: "compiler-sandbox-vm", cluster: "Rule Execution Tier", lang: "Java 17" },
+  { prefix: "terraform-eks-mod", cluster: "Cloud IaC & Helm", lang: "HCL / YAML" },
+];
+
+export const XTRIKE_HONEYCOMB_HOSTS: HoneycombHostCell[] = Array.from({ length: 72 }, (_, idx) => {
+  const group = REPO_CLUSTERS[idx % REPO_CLUSTERS.length];
+  let state: "OK" | "WARN" | "CRIT" | "UNKNOWN" = "OK";
+  if (idx === 3 || idx === 14 || idx === 27 || idx === 41 || idx === 58) {
+    state = "CRIT";
+  } else if (idx === 7 || idx === 19 || idx === 33 || idx === 46 || idx === 52 || idx === 64) {
+    state = "WARN";
+  } else if (idx === 61) {
+    state = "UNKNOWN";
+  }
   return {
-    id: `HOST-${String(idx + 1).padStart(3, "0")}`,
-    hostname:
-      idx === 0
-        ? "xtrike.app"
-        : idx === 1
-        ? "node-eks-i-0d7cb370c8eea26c9.eu-central-1.compute.internal"
-        : idx === 2
-        ? "play.xtrike.app"
-        : idx === 3
-        ? "ideas.xtrike.app"
-        : `${cluster}-node-${String((idx % 24) + 1).padStart(2, "0")}.internal`,
-    cluster,
+    id: `NODE-${String(idx + 1).padStart(3, "0")}`,
+    hostname: `${group.prefix}-${String((idx % 12) + 1).padStart(2, "0")}`,
+    cluster: group.cluster,
     state,
-    servicesOk: isDown ? 4 : isWarn ? 19 : 24,
-    servicesWarn: isWarn ? 3 : 0,
-    servicesCrit: isDown ? 6 : isWarn ? 1 : 0,
-    cpuLoad: isDown ? "98.4%" : isWarn ? "78.2%" : `${18 + ((idx * 7) % 42)}%`,
-    memoryUsed: isDown ? "96.1%" : isWarn ? "88.7%" : `${32 + ((idx * 5) % 45)}%`,
+    servicesCount: 18 + (idx % 14),
+    openFindings: state === "CRIT" ? 4 + (idx % 5) : state === "WARN" ? 1 + (idx % 3) : 0,
+    latencyMs: 11 + ((idx * 7) % 42),
+    language: group.lang,
   };
 });
 
-export const XTRIKE_OMD_RUNTIME_SPEC = {
-  version: "2.5.0p17",
-  omdVersionOutput: "OMD - Open Monitoring Distribution Version 2.5.0p17.xtrike",
-  daemons: [
-    "mkeventd",
-    "liveproxyd",
-    "mknotifyd",
-    "rrdcached",
-    "cmc",
-    "apache",
-    "dcd",
-    "redis",
-    "Crontab",
-  ],
-};
+// ============================================================================
+// 4. XTRIKE SAST CLI & PROOF SANDBOX RUNNER PACKAGES (v4.2.0)
+// ============================================================================
 
 export const XTRIKE_DISTRO_ACCORDION_GROUPS: XtrikeDistroAccordionGroup[] = [
   {
-    id: "ubuntu",
-    distroName: "Ubuntu",
-    releases: [
+    family: "Ubuntu / Debian APT",
+    badge: "DEB · x86_64 / ARM64",
+    description: "Native Debian/Ubuntu package containing the 4 XTRIKE SAST AST engines (XQL, DeepFlow, StructSCA, AST-Query), 401 CWE plugins, and local PTES proof sandbox.",
+    defaultOpen: true,
+    packages: [
       {
-        releaseVersion: "Ubuntu 26.04",
-        codename: "resolute",
-        edition: "community",
-        filename: "xtrike-monitor-community-2.5.0p17_0.resolute_amd64.deb",
-        wgetCommand: "wget https://05-sast-platform.vercel.app/api/xtrike-package?distro=ubuntu&release=resolute&edition=community -O xtrike-monitor-community-2.5.0p17_0.resolute_amd64.deb",
-        aptInstallCommand: "sudo apt install ./xtrike-monitor-community-2.5.0p17_0.resolute_amd64.deb",
-        sha256: "e20ad3518f4a442af83a642ba15a354f923233bae31f6bdd78828a80b9cec833",
+        id: "ubuntu-2404-cli",
+        distroFamily: "Ubuntu / Debian APT",
+        distroVersion: "Ubuntu 24.04 LTS / 26.04",
+        codename: "noble / resolute",
+        architecture: "amd64",
+        edition: "CLI Standard",
+        packageFilename: "xtrike-sast-cli_4.2.0_amd64.deb",
+        downloadUrl: "/api/xtrike-package?pkg=xtrike-sast-cli_4.2.0_amd64.deb",
+        wgetCommand: "curl -fsSL https://05-sast-platform.vercel.app/api/xtrike-package?pkg=xtrike-sast-cli_4.2.0_amd64.deb -o xtrike-sast-cli_4.2.0_amd64.deb",
+        installCommand: "sudo apt install ./xtrike-sast-cli_4.2.0_amd64.deb",
+        sha256: "3da7fe4b86a9e606b6a55bfba08a3b42fc4ac4e72df742989e89f9ef7c0e3282",
       },
       {
-        releaseVersion: "Ubuntu 24.04",
-        codename: "noble",
-        edition: "community",
-        filename: "xtrike-monitor-community-2.5.0p17_0.noble_amd64.deb",
-        wgetCommand: "wget https://05-sast-platform.vercel.app/api/xtrike-package?distro=ubuntu&release=noble&edition=community -O xtrike-monitor-community-2.5.0p17_0.noble_amd64.deb",
-        aptInstallCommand: "sudo apt install ./xtrike-monitor-community-2.5.0p17_0.noble_amd64.deb",
-        sha256: "d3799444e1685971d63333e9a3dde865e0c9a36ca8a2c15f2a2617b180b3ff57",
-      },
-      {
-        releaseVersion: "Ubuntu 22.04",
-        codename: "jammy",
-        edition: "community",
-        filename: "xtrike-monitor-community-2.5.0p17_0.jammy_amd64.deb",
-        wgetCommand: "wget https://05-sast-platform.vercel.app/api/xtrike-package?distro=ubuntu&release=jammy&edition=community -O xtrike-monitor-community-2.5.0p17_0.jammy_amd64.deb",
-        aptInstallCommand: "sudo apt install ./xtrike-monitor-community-2.5.0p17_0.jammy_amd64.deb",
-        sha256: "39b432d4884872c2b5b802058348d4bb019363c98e3af3fbf60eaba1acc3cf4c",
-      },
-      {
-        releaseVersion: "Ubuntu 26.04 (Ultimate)",
-        codename: "resolute-ultimate",
-        edition: "ultimate",
-        filename: "xtrike-monitor-ultimate-2.5.0p17_0.resolute_amd64.deb",
-        wgetCommand: "wget https://05-sast-platform.vercel.app/api/xtrike-package?distro=ubuntu&release=resolute&edition=ultimate -O xtrike-monitor-ultimate-2.5.0p17_0.resolute_amd64.deb",
-        aptInstallCommand: "sudo apt install ./xtrike-monitor-ultimate-2.5.0p17_0.resolute_amd64.deb",
+        id: "ubuntu-2404-runner",
+        distroFamily: "Ubuntu / Debian APT",
+        distroVersion: "Ubuntu 24.04 LTS / Debian 13",
+        codename: "noble / trixie",
+        architecture: "amd64",
+        edition: "Enterprise Runner",
+        packageFilename: "xtrike-sast-runner-enterprise_4.2.0_amd64.deb",
+        downloadUrl: "/api/xtrike-package?pkg=xtrike-sast-runner-enterprise_4.2.0_amd64.deb",
+        wgetCommand: "curl -fsSL https://05-sast-platform.vercel.app/api/xtrike-package?pkg=xtrike-sast-runner-enterprise_4.2.0_amd64.deb -o xtrike-sast-runner-enterprise_4.2.0_amd64.deb",
+        installCommand: "sudo apt install ./xtrike-sast-runner-enterprise_4.2.0_amd64.deb",
         sha256: "26e50d4d55a4a11c06688dca78e3a8e29610fdd4f0da6a72596309cbad126adb",
       },
     ],
   },
   {
-    id: "debian",
-    distroName: "Debian",
-    releases: [
+    family: "RHEL / Rocky / Amazon Linux",
+    badge: "RPM · x86_64",
+    description: "Signed RPM bundles for Enterprise Linux 9/10 and AWS Graviton/EC2 build runners with FIPS-validated crypto checks.",
+    packages: [
       {
-        releaseVersion: "Debian 13.0",
-        codename: "trixie",
-        edition: "community",
-        filename: "xtrike-monitor-community-2.5.0p17_0.trixie_amd64.deb",
-        wgetCommand: "wget https://05-sast-platform.vercel.app/api/xtrike-package?distro=debian&release=trixie&edition=community -O xtrike-monitor-community-2.5.0p17_0.trixie_amd64.deb",
-        aptInstallCommand: "sudo apt install ./xtrike-monitor-community-2.5.0p17_0.trixie_amd64.deb",
-        sha256: "eddd6d50039dd4ed417ab8b3c69a627f4545008e5abfb05d5c8ad1ad4de54fcf",
-      },
-      {
-        releaseVersion: "Debian 12.0",
-        codename: "bookworm",
-        edition: "community",
-        filename: "xtrike-monitor-community-2.5.0p17_0.bookworm_amd64.deb",
-        wgetCommand: "wget https://05-sast-platform.vercel.app/api/xtrike-package?distro=debian&release=bookworm&edition=community -O xtrike-monitor-community-2.5.0p17_0.bookworm_amd64.deb",
-        aptInstallCommand: "sudo apt install ./xtrike-monitor-community-2.5.0p17_0.bookworm_amd64.deb",
-        sha256: "19e4f827d2833e5e582907386919aaff04a5db4394736da71e77f34a1460ca91",
+        id: "rhel-9-cli",
+        distroFamily: "RHEL / Rocky / Amazon Linux",
+        distroVersion: "RHEL 9.x / 10.x & Amazon Linux 2023",
+        codename: "el9 / al2023",
+        architecture: "x86_64",
+        edition: "Enterprise Runner",
+        packageFilename: "xtrike-sast-runner-4.2.0-1.el9.x86_64.rpm",
+        downloadUrl: "/api/xtrike-package?pkg=xtrike-sast-runner-4.2.0-1.el9.x86_64.rpm",
+        wgetCommand: "curl -fsSL https://05-sast-platform.vercel.app/api/xtrike-package?pkg=xtrike-sast-runner-4.2.0-1.el9.x86_64.rpm -o xtrike-sast-runner-4.2.0-1.el9.x86_64.rpm",
+        installCommand: "sudo dnf install ./xtrike-sast-runner-4.2.0-1.el9.x86_64.rpm",
+        sha256: "9b41a28c7710f4e91c52d8e4410a77c92a110f8b6632d1c98310ab42e7719c01",
       },
     ],
   },
   {
-    id: "sles",
-    distroName: "SLES",
-    releases: [
+    family: "macOS Homebrew & Apple Silicon",
+    badge: "macOS · arm64 / x64",
+    description: "Developer workstation CLI & MCP server bridge for real-time IDE AST scanning and 1-click remediation diffs.",
+    packages: [
       {
-        releaseVersion: "SLES 16.0",
-        codename: "sles16.0",
-        edition: "community",
-        filename: "xtrike-monitor-community-2.5.0p17-sles16.0-38.x86_64.rpm",
-        wgetCommand: "wget https://05-sast-platform.vercel.app/api/xtrike-package?distro=sles&release=sles16.0&edition=community -O xtrike-monitor-community-2.5.0p17-sles16.0-38.x86_64.rpm",
-        aptInstallCommand: "sudo zypper install ./xtrike-monitor-community-2.5.0p17-sles16.0-38.x86_64.rpm",
-        sha256: "fbb97df875006854621e979c6d1dd145d8f961bbd183e0183e01a6b9f98cb4bd",
-      },
-      {
-        releaseVersion: "SLES 15 SP7",
-        codename: "sles15sp7",
-        edition: "community",
-        filename: "xtrike-monitor-community-2.5.0p17-sles15sp7-38.x86_64.rpm",
-        wgetCommand: "wget https://05-sast-platform.vercel.app/api/xtrike-package?distro=sles&release=sles15sp7&edition=community -O xtrike-monitor-community-2.5.0p17-sles15sp7-38.x86_64.rpm",
-        aptInstallCommand: "sudo zypper install ./xtrike-monitor-community-2.5.0p17-sles15sp7-38.x86_64.rpm",
-        sha256: "af4686865700b9163f043742f45ca774a39fd3be0bfb2c605022d7acee2b8d53",
+        id: "macos-arm64-cli",
+        distroFamily: "macOS Homebrew & Apple Silicon",
+        distroVersion: "macOS 14 Sonoma / 15 Sequoia",
+        codename: "darwin-arm64",
+        architecture: "arm64",
+        edition: "CLI Standard",
+        packageFilename: "xtrike-sast-cli_4.2.0_darwin_arm64.tar.gz",
+        downloadUrl: "/api/xtrike-package?pkg=xtrike-sast-cli_4.2.0_darwin_arm64.tar.gz",
+        wgetCommand: "curl -fsSL https://05-sast-platform.vercel.app/api/xtrike-package?pkg=xtrike-sast-cli_4.2.0_darwin_arm64.tar.gz -o xtrike-sast-cli_4.2.0_darwin_arm64.tar.gz",
+        installCommand: "tar -xzf xtrike-sast-cli_4.2.0_darwin_arm64.tar.gz && sudo mv xtrike-sast /usr/local/bin/",
+        sha256: "7c82d19e4401b5a82f61c9e3301b88d03b221e9c7743e2d09421bc53f8820d14",
       },
     ],
   },
   {
-    id: "redhat",
-    distroName: "Red Hat / Enterprise Linux",
-    releases: [
+    family: "Docker / Helm & GitHub Actions",
+    badge: "Container · SARIF v2.1.0",
+    description: "Zero-config container runner for GitHub Actions, GitLab CI, and Kubernetes Admission Webhooks with automatic SARIF v2.1.0 & Noctis AI sync.",
+    packages: [
       {
-        releaseVersion: "RHEL 10.x",
-        codename: "el10",
-        edition: "community",
-        filename: "xtrike-monitor-community-2.5.0p17-el10-38.x86_64.rpm",
-        wgetCommand: "wget https://05-sast-platform.vercel.app/api/xtrike-package?distro=redhat&release=el10&edition=community -O xtrike-monitor-community-2.5.0p17-el10-38.x86_64.rpm",
-        aptInstallCommand: "sudo dnf install ./xtrike-monitor-community-2.5.0p17-el10-38.x86_64.rpm",
-        sha256: "448c49538f0f71c531cd85f578ad86d61987af1406afa761390360315e27bc38",
-      },
-      {
-        releaseVersion: "RHEL 9.x",
-        codename: "el9",
-        edition: "community",
-        filename: "xtrike-monitor-community-2.5.0p17-el9-38.x86_64.rpm",
-        wgetCommand: "wget https://05-sast-platform.vercel.app/api/xtrike-package?distro=redhat&release=el9&edition=community -O xtrike-monitor-community-2.5.0p17-el9-38.x86_64.rpm",
-        aptInstallCommand: "sudo dnf install ./xtrike-monitor-community-2.5.0p17-el9-38.x86_64.rpm",
-        sha256: "cc9705e0b1c6676abece66e1af2010d188e6b195ae57b3ce1e05cd987ee0ef69",
+        id: "docker-ci-runner",
+        distroFamily: "Docker / Helm & GitHub Actions",
+        distroVersion: "OCI Container / Helm Chart v4.2.0",
+        codename: "alpine-3.20",
+        architecture: "multi-arch",
+        edition: "Enterprise Runner",
+        packageFilename: "xtrike-sast-ci-workflow.yml",
+        downloadUrl: "/api/xtrike-package?pkg=xtrike-sast-ci-workflow.yml",
+        wgetCommand: "curl -fsSL https://05-sast-platform.vercel.app/api/xtrike-package?pkg=xtrike-sast-ci-workflow.yml -o .github/workflows/xtrike-sast.yml",
+        installCommand: "xtrike-sast scan --repo . --engines xql,deepflow,structsca,ast-query --sarif xtrike-results.sarif",
+        sha256: "5e91f04a8832c7d10e43a6b2219f44e12c330d8a5512b7e08134ac92d1104f89",
       },
     ],
   },
 ];
 
+export const XTRIKE_CLI_RUNTIME_SPEC = {
+  version: "4.2.0-enterprise",
+  profileName: "ptes-nist-800-115",
+  webUiUrl: "https://05-sast-platform.vercel.app/scan",
+  noctisBridgeUrl: "https://05-sast-platform.vercel.app/api/noctis",
+  daemons: [
+    { name: "xtrike-xql-parser", role: "Multi-Language AST & Best-Fix-Location (BFL) Dominance Engine", status: "OK" },
+    { name: "xtrike-deepflow-ssa", role: "Intra/Inter-Procedural SSA Taint & Sanitizer Gate Analyzer", status: "OK" },
+    { name: "xtrike-structsca-7k", role: "7-Kingdom Structural & Reachable CVE Dependency Correlator", status: "OK" },
+    { name: "xtrike-ast-dispatcher", role: "401-Plugin Language-Strict Token Dispatcher (PLG-001..PLG-401)", status: "OK" },
+    { name: "xtrike-proof-sandbox", role: "6-Stage PTES / NIST 800-115 Deterministic Validation Runner", status: "OK" },
+    { name: "xtrike-mcp-bridge", role: "IDE Model Context Protocol (MCP) & SARIF v2.1.0 Exporter", status: "OK" },
+    { name: "xtrike-noctis-sync", role: "Live In-App Noctis AI Pop-up Telemetry Synchronizer", status: "OK" },
+  ],
+};
+
 export function buildCyberMonitoringNoctisSummary(): string {
-  const envSummary = OPEN_DEPLOYMENT_INSTANCES.map(
-    (e) =>
-      `- **${e.environment}:** ${e.total} open vulnerabilities (Critical: ${e.critical}, High: ${e.high}, Medium: ${e.medium}, Low: ${e.low}) · Linked CWEs: \`${e.linkedCwes.join(", ")}\``
-  ).join("\n");
-
-  const alerterSummary = XTRIKE_TOP_ALERTERS.map(
-    (a) =>
-      `- **\`${a.host}\` (${a.service}):** **${a.problems} problems** [${a.state}] — ${a.outputSummary} (Correlated: \`${a.correlatedCwe}\`)`
-  ).join("\n");
-
   return [
-    `### Noctis Cyber KPI & XTRIKE Live Fleet Monitoring Intelligence`,
-    `#### 1. Cyber Vulnerability & Deployment KPI Dashboard`,
-    `- **Open Vulnerability Count:** **${CYBER_VULN_KPI_SUMMARY.openVulnerabilityDisplay}** (${CYBER_VULN_KPI_SUMMARY.openVulnerabilityCount.toLocaleString()})`,
-    `- **Open CVE Count:** **${CYBER_VULN_KPI_SUMMARY.openCveDisplay}** (${CYBER_VULN_KPI_SUMMARY.openCveCount.toLocaleString()})`,
-    `- **Open Remediation Count:** **${CYBER_VULN_KPI_SUMMARY.openRemediationDisplay}** (${CYBER_VULN_KPI_SUMMARY.openRemediationCount.toLocaleString()})`,
-    `- **Open Risk Instances Breakdown:** Critical **1.4K**, High **6.0K**, Medium **7.1K**, Low **1.3K**, Info **265**`,
-    `\n#### 2. Open Deployment Instances by Environment\n${envSummary}`,
-    `\n#### 3. Antivirus / EDR & Threat Hunting Performance KPIs`,
-    `- **Detections:** **213** · **Attacks Prevented (Last Day):** **32** · **Leads on Hunting:** **26** · **Hunting Leads Stock:** **26** · **Remedied Detections (Last 30d):** **73** · **Current Security Score:** **53/100**`,
-    `- **Monitored Fleet by OS (1,765 Total Hosts):** Windows (890), Linux x86 (340), Lumos X64 (215), MacOS (160), Chrome OS (85), iOS (45), Android (30)`,
-    `\n#### 4. XTRIKE Host & Service Live Telemetry (v2.5.0p17)`,
-    `- **Host Statistics:** **710 Total Hosts** (708 Up, 2 Down, 1 Unhandled Host Problem)`,
-    `- **Service Statistics:** **15,808 Total Services** (15,688 OK, 77 Critical, 37 Warning, 4 On Down Host, 2 In Downtime, 112 Unhandled Service Problems)`,
-    `- **Events (Syslog, SNMP Traps & Log Files):** **1,001 Total Events** (4 Unhandled)`,
-    `\n#### 5. XTRIKE Monitoring Package Installation & OMD Site Provisioning`,
-    `- **3.1 Download (Ubuntu 26.04 Resolute):** \`wget ... -O xtrike-monitor-community-2.5.0p17_0.resolute_amd64.deb\` (SHA-256: \`e20ad3518f4a442af83a642ba15a354f923233bae31f6bdd78828a80b9cec833\`)`,
-    `- **3.2 GnuPG Verification:** Verify package signature before installation`,
-    `- **3.3 Install & Verify Version:** \`sudo apt install ./xtrike-monitor-community-2.5.0p17_0.resolute_amd64.deb\` → \`omd version\` (\`${XTRIKE_OMD_RUNTIME_SPEC.omdVersionOutput}\`)`,
-    `- **3.4 Create & Start Site:** \`sudo omd create monitoring\` → \`sudo omd start monitoring\` (starts \`mkeventd\`, \`liveproxyd\`, \`mknotifyd\`, \`rrdcached\`, \`cmc\`, \`apache\`, \`dcd\`, \`redis\`, \`Crontab\`)`,
-    `\n#### 6. Top Alerters (Last 7 Days)\n${alerterSummary}`,
+    `### Noctis — XTRIKE SAST Posture KPIs, Runtime Sensor Mesh & CLI (\`/cyber-monitoring\`)`,
+    `- **SAST & CVE Posture Summary:**`,
+    `  - **Open SAST Findings:** \`16.8K\` (\`+12.3%\` across 82 repositories & 4 AST engines)`,
+    `  - **Reachable SCA CVEs:** \`6.4K\` (\`-6.2%\` filtered by active call-graph reachability)`,
+    `  - **Verified AST Remediations:** \`1.3K\` (\`+18.4%\` passed post-fix unit retest suite)`,
+    `  - **Canonical Proof State Breakdown:** Critical \`1.4K\` (\`PROVEN_EXPLOITABLE / DATAFLOW_CONFIRMED\`), High \`6.0K\` (\`DATAFLOW_CONFIRMED\`), Medium \`7.1K\` (\`DETECTED_STATIC\`), Low \`1.3K\` (\`NEEDS_MANUAL_VALIDATION\`), Guarded \`265\` (\`MITIGATED_BY_GUARD\`)`,
+    `- **Code-to-Runtime Sensor Telemetry:**`,
+    `  - **Active Sink Triggers:** \`213\` · **Exploit Probes Halted:** \`32\` · **Unauthenticated Taint Routes:** \`26\` · **Manual Proof Queue:** \`26\` · **AST Diffs Verified:** \`73\` · **Release Gate Posture Score:** \`84/100\``,
+    `  - **Protected Build & Runtime Fleet (\`1,765\` Nodes):** Linux x86_64 (\`468\`), Kubernetes/EKS Pods (\`406\`), CI Runners (\`320\`), macOS Workstations (\`249\`), Windows/.NET (\`122\`), ARM64 Graviton (\`100\`), Serverless (\`100\`)`,
+    `- **XTRIKE Repository & Service Mesh (\`710\` Repos/Runners · \`15,808\` Policy Gates):**`,
+    `  - **Top Release-Gate Violators:** \`payment-settlement-core\` (\`CWE-89\`), \`identity-oauth-gateway\` (\`CWE-347\`), \`graphql-mobile-bff\` (\`CWE-918\`), \`order-fulfillment-api\` (\`CWE-502\`), \`dynamic-rule-compiler\` (\`CWE-94 / PLG-054\`)`,
+    `- **XTRIKE SAST CLI & Runner Installation (\`v4.2.0\`):**`,
+    `  \`\`\`bash`,
+    `  curl -fsSL https://05-sast-platform.vercel.app/api/xtrike-package?pkg=xtrike-sast-cli_4.2.0_amd64.deb -o xtrike-sast-cli_4.2.0_amd64.deb`,
+    `  sudo apt install ./xtrike-sast-cli_4.2.0_amd64.deb`,
+    `  xtrike-sast --version`,
+    `  xtrike-sast init --profile ptes-nist-800-115`,
+    `  xtrike-sast daemon start --engines xql,deepflow,structsca,ast-query`,
+    `  \`\`\``,
   ].join("\n");
 }

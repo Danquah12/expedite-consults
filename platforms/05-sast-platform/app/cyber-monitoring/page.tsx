@@ -1,2403 +1,1310 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Shield,
-  Sparkles,
-  CheckCircle2,
-  Filter,
-  Play,
+  Activity,
+  Cpu,
+  Terminal,
+  Copy,
+  Check,
   Download,
-  Code2,
+  Hash,
+  Sparkles,
   ChevronDown,
-  ChevronUp,
-  X,
+  ChevronRight,
+  Play,
+  RefreshCw,
+  AlertTriangle,
+  CheckCircle2,
+  GitBranch,
+  Layers,
+  Code2,
+  Lock,
+  ArrowUpRight,
+  ArrowDownRight,
+  FileCode2,
 } from "lucide-react";
-import { openAskNoctisPopup } from "@/components/DeveloperAssistAgent";
-import { loadActiveScanSession } from "@/lib/live-sast-scanner";
 import {
   CYBER_VULN_KPI_SUMMARY,
   OPEN_RISK_INSTANCES,
   OPEN_DEPLOYMENT_INSTANCES,
+  VULNERABILITY_TRENDS_TIMELINE,
   ANTIVIRUS_PERFORMANCE_KPIS,
   MONITORED_HOSTS_BY_OS,
   ACTIVITY_DETECTION_TIMELINE,
   MOST_RECENT_DETECTIONS,
   XTRIKE_FLEET_OVERVIEW,
+  XTRIKE_HOST_PROBLEMS,
   XTRIKE_TOP_ALERTERS,
   XTRIKE_HONEYCOMB_HOSTS,
   XTRIKE_DISTRO_ACCORDION_GROUPS,
-  XTRIKE_OMD_RUNTIME_SPEC,
-  type DeploymentEnvironmentBar,
-  type RecentDetectionRecord,
-  type XtrikeHexHostCell,
-  type XtrikeDistroReleaseRow,
+  XTRIKE_CLI_RUNTIME_SPEC,
+  type HoneycombHostCell,
 } from "@/lib/cyber-monitoring-data";
-
-type ActiveTab = "all" | "vuln-kpi" | "antivirus-kpi" | "fleet-live" | "omd-install";
+import { openAskNoctisPopup } from "@/components/DeveloperAssistAgent";
+import { loadActiveScanSession } from "@/lib/live-sast-scanner";
 
 export default function CyberMonitoringPage() {
-  const [activeTab, setActiveTab] = useState<ActiveTab>("all");
-  const [selectedEnv, setSelectedEnv] = useState<DeploymentEnvironmentBar | null>(
-    OPEN_DEPLOYMENT_INSTANCES[0]
-  );
-  const [selectedDetection, setSelectedDetection] = useState<RecentDetectionRecord | null>(
-    MOST_RECENT_DETECTIONS[0]
-  );
-  const [selectedHexHost, setSelectedHexHost] = useState<XtrikeHexHostCell | null>(
-    XTRIKE_HONEYCOMB_HOSTS[1]
-  );
-  const [showMonitorTip, setShowMonitorTip] = useState(true);
-  const [monitorTipStep, setMonitorTipStep] = useState(0);
-  const [showOverviewTooltip, setShowOverviewTooltip] = useState(true);
-  const [showNextActionModal, setShowNextActionModal] = useState(false);
-  const [selectedNextOption, setSelectedNextOption] = useState("Ask a question");
-  const [checklistState, setChecklistState] = useState<boolean[]>([false, false, false]);
-  const [liveScanCount, setLiveScanCount] = useState<number | null>(null);
-  const [liveScanRepo, setLiveScanRepo] = useState<string | null>(null);
-
-  // Accordion & OMD Installer state
+  const [activeTab, setActiveTab] = useState<"all" | "posture" | "sensors" | "mesh" | "cli">("all");
+  const [selectedNode, setSelectedNode] = useState<HoneycombHostCell>(XTRIKE_HONEYCOMB_HOSTS[3]);
+  const [meshFilter, setMeshFilter] = useState<"ALL" | "CRIT" | "WARN" | "OK">("ALL");
   const [openDistros, setOpenDistros] = useState<Record<string, boolean>>({
-    ubuntu: true,
-    debian: false,
-    sles: false,
-    redhat: false,
+    "Ubuntu / Debian APT": true,
+    "RHEL / Rocky / Amazon Linux": false,
+    "macOS Homebrew & Apple Silicon": false,
+    "Docker / Helm & GitHub Actions": false,
   });
-  const [selectedReleaseRow, setSelectedReleaseRow] = useState<XtrikeDistroReleaseRow>(
-    XTRIKE_DISTRO_ACCORDION_GROUPS[0].releases[0]
-  );
-  const [visibleHashKey, setVisibleHashKey] = useState<string | null>(null);
-  const [siteName, setSiteName] = useState("monitoring");
-  const [omdSiteRunning, setOmdSiteRunning] = useState(true);
-  const [copiedCmdKey, setCopiedCmdKey] = useState<string | null>(null);
-
-  const handleCopyText = (key: string, text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedCmdKey(key);
-    setTimeout(() => setCopiedCmdKey(null), 2000);
-  };
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [visibleHashId, setVisibleHashId] = useState<string | null>(null);
+  const [cliStep, setCliStep] = useState<number>(3);
+  const [cliRunning, setCliRunning] = useState<boolean>(false);
+  const [activeScanRepo, setActiveScanRepo] = useState<string | null>(null);
+  const [activeScanCount, setActiveScanCount] = useState<number | null>(null);
 
   useEffect(() => {
-    const syncLiveScan = () => {
-      const session = loadActiveScanSession();
-      if (session && Array.isArray(session.sastFindings)) {
-        setLiveScanCount(session.sastFindings.length);
-        setLiveScanRepo(session.repoUrl || "Active Scan Repository");
-      } else {
-        setLiveScanCount(null);
-        setLiveScanRepo(null);
-      }
-    };
-    syncLiveScan();
-    window.addEventListener("xtrike-scan-updated", syncLiveScan);
-    window.addEventListener("xtrike-scan-cleared", syncLiveScan);
-    return () => {
-      window.removeEventListener("xtrike-scan-updated", syncLiveScan);
-      window.removeEventListener("xtrike-scan-cleared", syncLiveScan);
-    };
+    const session = loadActiveScanSession();
+    if (session && session.repoUrl) {
+      setActiveScanRepo(session.repoUrl);
+      setActiveScanCount(Array.isArray(session.sastFindings) ? session.sastFindings.length : null);
+    }
   }, []);
 
-  const completedSteps = checklistState.filter(Boolean).length;
-  const checklistPct = Math.round((completedSteps / checklistState.length) * 100);
+  const handleCopy = (id: string, text: string) => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 1800);
+    }
+  };
 
-  const monitorTips = [
-    {
-      title: "1, 2, Monitor!",
-      body: "Jump directly into the action with the navigation bar. Every KPI card, deployment bar, detection row, and honeycomb host is wired to Ask Noctis.",
-    },
-    {
-      title: "Overview Status & Event Console",
-      body: "The Overview shows the status of all monitored objects (710 Hosts, 15,808 Services) and 1,001 Events from syslog, SNMP traps, and log files.",
-    },
-    {
-      title: "OMD Site Provisioning & SAST Testing",
-      body: "Download the Ubuntu / Debian / SLES / RHEL monitoring package below and run sudo omd create monitoring & sudo omd start monitoring.",
-    },
-  ];
+  const runCliProvisionSimulation = () => {
+    setCliRunning(true);
+    setCliStep(1);
+    setTimeout(() => setCliStep(2), 550);
+    setTimeout(() => {
+      setCliStep(3);
+      setCliRunning(false);
+    }, 1200);
+  };
+
+  const filteredMeshNodes = XTRIKE_HONEYCOMB_HOSTS.filter((h) => {
+    if (meshFilter === "ALL") return true;
+    return h.state === meshFilter;
+  });
+
+  const totalMonitoredNodes = MONITORED_HOSTS_BY_OS.reduce((acc, item) => acc + item.hosts, 0);
 
   return (
-    <div style={{ maxWidth: 1380, margin: "0 auto", padding: "28px 20px 80px" }}>
-      {/* SECTION 0: Actionable Insights Hero Banner */}
-      <div
-        style={{
-          background: "linear-gradient(135deg, #1d2630 0%, #263240 60%, #1a242f 100%)",
-          borderRadius: 18,
-          border: "1px solid #334155",
-          padding: "28px 30px",
-          color: "#f8fafc",
-          marginBottom: 24,
-          boxShadow: "0 18px 42px rgba(15, 23, 42, 0.22)",
-        }}
-      >
-        <div
+    <div className="min-h-screen" style={{ background: "var(--background)", color: "var(--foreground)" }}>
+      <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {/* =====================================================================
+            EDITORIAL MASTHEAD — WARM PARCHMENT & TERRACOTTA XTRIKE SAST DESK
+           ===================================================================== */}
+        <section
+          className="rounded-2xl p-6 sm:p-8"
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-            gap: 28,
-            alignItems: "center",
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
+            boxShadow: "0 6px 24px rgba(31, 27, 24, 0.04)",
           }}
         >
-          <div>
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "4px 12px",
-                borderRadius: 999,
-                background: "rgba(16, 185, 129, 0.14)",
-                border: "1px solid rgba(16, 185, 129, 0.4)",
-                color: "#34d399",
-                fontSize: 11.5,
-                fontWeight: 800,
-                marginBottom: 12,
-              }}
-            >
-              <span>★ XTRIKE Cyber KPI, Live Fleet Monitor &amp; Hybrid SAST Observability</span>
-            </div>
-
-            <h1
-              style={{
-                fontSize: 30,
-                fontWeight: 900,
-                lineHeight: 1.18,
-                color: "#ffffff",
-                marginBottom: 8,
-              }}
-            >
-              Actionable insights from day one. Every feature included.
-            </h1>
-            <div
-              style={{
-                fontSize: 16.5,
-                fontWeight: 700,
-                color: "#94a3b8",
-                marginBottom: 14,
-              }}
-            >
-              Cyber Vulnerability KPIs · Antivirus Performance · Live Host/Service Monitor &amp; OMD 2.5.0p17 Setup
-            </div>
-            <p
-              style={{
-                fontSize: 13.5,
-                lineHeight: 1.6,
-                color: "#cbd5e1",
-                marginBottom: 18,
-              }}
-            >
-              Pre-configured SAST, CVE, EDR, and infrastructure thresholds apply the moment you deploy — correlating static AST taint paths across your repositories with live AWS Production, Fargate, Kubernetes nodes, and endpoint detections.
-            </p>
-
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginBottom: 20, fontSize: 12.5, color: "#e2e8f0", fontWeight: 700 }}>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                <CheckCircle2 size={15} color="#10b981" /> Zero-wait baselines
-              </span>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                <CheckCircle2 size={15} color="#10b981" /> 710 Monitored Hosts &amp; 15,808 Services
-              </span>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                <CheckCircle2 size={15} color="#10b981" /> Synced with Ask Noctis Pop-up
-              </span>
-            </div>
-
-            {/* Recognition Badges */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-              {[
-                { title: "Leader", ribbon: "SPRING 2026", accent: "#f97316" },
-                { title: "High Performer", ribbon: "SPRING 2026", accent: "#ef4444" },
-                { title: "Best Relationship", ribbon: "SPRING 2026", accent: "#10b981" },
-              ].map((b) => (
-                <div
-                  key={b.title}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <div className="lg:col-span-7 space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="desk-kicker">
+                  XTRIKE SAST DESK &middot; PLATFORM 05 POSTURE &amp; RUNTIME TELEMETRY
+                </span>
+                <span
+                  className="px-2.5 py-0.5 rounded-full text-[11px] font-bold"
                   style={{
-                    background: "#ffffff",
-                    color: "#0f172a",
-                    borderRadius: "8px 8px 16px 16px",
-                    padding: "8px 14px 10px",
-                    minWidth: 112,
-                    textAlign: "center",
-                    borderBottom: `4px solid ${b.accent}`,
-                    boxShadow: "0 6px 16px rgba(0,0,0,0.25)",
+                    background: "var(--accent-soft)",
+                    color: "var(--accent)",
+                    border: "1px solid var(--border)",
                   }}
                 >
-                  <div style={{ fontSize: 8.5, fontWeight: 900, color: "#64748b", letterSpacing: 0.6 }}>
-                    {b.ribbon} · ENTERPRISE
+                  4 AST Engines &middot; 401 CWE Rules &middot; 5 Canonical Proof States
+                </span>
+              </div>
+
+              <h1 className="text-2xl sm:text-4xl font-bold font-editorial leading-tight">
+                XTRIKE SAST Posture Ledger, Code-to-Runtime Sensor Mesh &amp; CLI Runner
+              </h1>
+
+              <p className="text-sm leading-relaxed" style={{ color: "var(--muted)" }}>
+                Unified static-to-runtime security posture across your repositories, CI/CD release gates, and execution
+                sandboxes. Every metric distinguishes{" "}
+                <strong style={{ color: "var(--foreground)" }}>Static AST/Dataflow Detection</strong> from{" "}
+                <strong style={{ color: "var(--foreground)" }}>Verified Runtime Proof</strong> under the PTES &amp; NIST
+                SP 800-115 6-stage validation contract.
+              </p>
+
+              {activeScanRepo && (
+                <div
+                  className="inline-flex flex-wrap items-center gap-2 px-3.5 py-2 rounded-xl text-xs"
+                  style={{
+                    background: "var(--surface-2)",
+                    border: "1px solid var(--border)",
+                    color: "var(--foreground)",
+                  }}
+                >
+                  <CheckCircle2 className="w-4 h-4" style={{ color: "var(--emerald)" }} />
+                  <span>
+                    Synced with Active Workspace Scan: <strong>{activeScanRepo}</strong>
+                    {activeScanCount !== null ? ` (${activeScanCount} findings indexed)` : ""}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Right Editorial Command Card */}
+            <div
+              className="lg:col-span-5 rounded-xl p-5 space-y-3.5"
+              style={{
+                background: "var(--surface-2)",
+                border: "1px solid var(--border)",
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <span className="desk-kicker">NOCTIS AI &amp; SAST DESK DISPATCH</span>
+                <span
+                  className="inline-flex items-center gap-1.5 text-[11px] font-bold"
+                  style={{ color: "var(--emerald)" }}
+                >
+                  <span
+                    className="w-2 h-2 rounded-full inline-block"
+                    style={{ background: "var(--emerald)" }}
+                  />
+                  LIVE SYNC ACTIVE
+                </span>
+              </div>
+
+              <p className="text-xs leading-relaxed" style={{ color: "var(--foreground-muted)" }}>
+                Query <strong>Ask Noctis</strong> right inside this workspace to audit open SAST findings (`16.8K`),
+                reachable SCA CVEs (`6.4K`), active sink triggers (`213`), or generate `xtrike-sast-cli` runner configs.
+              </p>
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() =>
+                    openAskNoctisPopup(
+                      "Audit XTRIKE SAST Posture KPIs (16.8K findings, 6.4K reachable CVEs, 213 sink triggers) and xtrike-sast-cli v4.2.0 setup"
+                    )
+                  }
+                  className="flex-1 min-w-[200px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold cursor-pointer transition-opacity hover:opacity-90"
+                  style={{
+                    background: "var(--accent)",
+                    color: "#fbf8f3",
+                    border: "1px solid var(--accent)",
+                  }}
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Ask Noctis: Audit SAST Posture</span>
+                </button>
+
+                <Link
+                  href="/scan"
+                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-lg text-xs font-semibold"
+                  style={{
+                    background: "var(--surface)",
+                    color: "var(--foreground)",
+                    border: "1px solid var(--border)",
+                    textDecoration: "none",
+                  }}
+                >
+                  <Code2 className="w-3.5 h-3.5" style={{ color: "var(--accent)" }} />
+                  <span>Scan Workspace</span>
+                </Link>
+
+                <Link
+                  href="/validation-engine"
+                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-lg text-xs font-semibold"
+                  style={{
+                    background: "var(--surface)",
+                    color: "var(--foreground)",
+                    border: "1px solid var(--border)",
+                    textDecoration: "none",
+                  }}
+                >
+                  <Cpu className="w-3.5 h-3.5" style={{ color: "var(--accent)" }} />
+                  <span>6-Stage Proof Engine</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Section Filter Bar */}
+          <div
+            className="mt-6 pt-5 flex flex-wrap items-center gap-2"
+            style={{ borderTop: "1px solid var(--border)" }}
+          >
+            {[
+              { id: "all", label: "Complete SAST Posture Desk (All 4 Ledgers)" },
+              { id: "posture", label: "1. SAST & Reachable CVE Ledger" },
+              { id: "sensors", label: "2. Code-to-Runtime Sink Sensors" },
+              { id: "mesh", label: "3. Repository & Service Mesh (710 Nodes)" },
+              { id: "cli", label: "4. XTRIKE SAST CLI & Runner (v4.2.0)" },
+            ].map((tab) => {
+              const active = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all"
+                  style={{
+                    background: active ? "var(--accent)" : "var(--surface-2)",
+                    color: active ? "#fbf8f3" : "var(--foreground-muted)",
+                    border: active ? "1px solid var(--accent)" : "1px solid var(--border)",
+                  }}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* =====================================================================
+            LEDGER 1 — SAST & REACHABLE CVE POSTURE LEDGER
+           ===================================================================== */}
+        {(activeTab === "all" || activeTab === "posture") && (
+          <section
+            className="rounded-2xl p-6 sm:p-8 space-y-6"
+            style={{
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+            }}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <div className="desk-kicker">LEDGER 01 &middot; STATIC &amp; SCA POSTURE</div>
+                <h2 className="text-xl sm:text-2xl font-bold font-editorial">
+                  SAST Finding Inventory, Canonical Proof Distribution &amp; Reachable CVEs
+                </h2>
+                <p className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>
+                  Aggregated across 4 XTRIKE AST engines (`XQL`, `DeepFlow`, `StructSCA`, `AST-Query`) with strict
+                  separation between static candidates and verified dataflow/runtime proof.
+                </p>
+              </div>
+              <button
+                onClick={() =>
+                  openAskNoctisPopup(
+                    "Explain the XTRIKE SAST Posture breakdown: 16.8K Open SAST Findings, 6.4K Reachable SCA CVEs, and 1.3K Verified AST Fixes"
+                  )
+                }
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold cursor-pointer"
+                style={{
+                  background: "var(--accent-soft)",
+                  color: "var(--accent)",
+                  border: "1px solid var(--border)",
+                }}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Ask Noctis: Inspect Posture Ledger</span>
+              </button>
+            </div>
+
+            {/* Top 3 KPI Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {CYBER_VULN_KPI_SUMMARY.map((kpi) => (
+                <div
+                  key={kpi.id}
+                  className="rounded-xl p-5 flex flex-col justify-between"
+                  style={{
+                    background: "var(--background)",
+                    border: "1px solid var(--border)",
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--muted)" }}>
+                      {kpi.label}
+                    </span>
+                    <span
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold"
+                      style={{
+                        background: "var(--surface)",
+                        color: kpi.accentColor,
+                        border: "1px solid var(--border)",
+                      }}
+                    >
+                      {kpi.deltaDirection === "up" ? (
+                        <ArrowUpRight className="w-3 h-3" />
+                      ) : (
+                        <ArrowDownRight className="w-3 h-3" />
+                      )}
+                      {kpi.delta}
+                    </span>
                   </div>
-                  <div style={{ fontSize: 12, fontWeight: 900, marginTop: 3 }}>{b.title}</div>
+
+                  <div className="my-3 flex items-baseline gap-3">
+                    <span className="text-3xl sm:text-4xl font-bold font-editorial" style={{ color: kpi.accentColor }}>
+                      {kpi.value}
+                    </span>
+                    <span className="text-xs" style={{ color: "var(--muted)" }}>
+                      {kpi.deltaContext}
+                    </span>
+                  </div>
+
+                  <div
+                    className="pt-2.5 text-[11px] font-mono flex items-center justify-between"
+                    style={{ borderTop: "1px solid var(--border-subtle)", color: "var(--foreground-muted)" }}
+                  >
+                    <span>{kpi.subLabel}</span>
+                    <span>VERIFIED</span>
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
 
-          {/* Right Action Card */}
-          <div
-            style={{
-              background: "#f8fafc",
-              color: "#0f172a",
-              borderRadius: 14,
-              padding: "22px 24px",
-              border: "1px solid #e2e8f0",
-              boxShadow: "0 12px 30px rgba(0,0,0,0.2)",
-            }}
-          >
-            <div style={{ fontSize: 15, fontWeight: 900, marginBottom: 6 }}>
-              XTRIKE Live Telemetry &amp; Noctis AI Command Bridge
-            </div>
-            <p style={{ fontSize: 12.5, color: "#475569", marginBottom: 14, lineHeight: 1.5 }}>
-              Inspect open vulnerabilities (<code>16.8K</code>), endpoint detections (<code>213</code>), live host/service alerts (<code>710 hosts</code>), or provision an OMD monitoring site (<code>v2.5.0p17</code>).
-            </p>
-
-            {liveScanCount !== null && (
+            {/* 3-Column Breakdown: Proof State Donut | Monitored Repositories | 9-Week Velocity */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+              {/* Column 1: Canonical Proof State & Severity Distribution */}
               <div
-                style={{
-                  background: "#ecfdf5",
-                  border: "1px solid #6ee7b7",
-                  borderRadius: 8,
-                  padding: "8px 12px",
-                  marginBottom: 12,
-                  fontSize: 12,
-                  color: "#065f46",
-                  fontWeight: 700,
-                }}
+                className="lg:col-span-4 rounded-xl p-5 space-y-4"
+                style={{ background: "var(--background)", border: "1px solid var(--border)" }}
               >
-                ● Active SAST Scan Connected: <strong>{liveScanCount} findings</strong> from <code>{liveScanRepo}</code>
-              </div>
-            )}
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
-              <button
-                type="button"
-                onClick={() =>
-                  openAskNoctisPopup(
-                    "Summarize the XTRIKE Cyber Monitoring KPIs, Antivirus Performance score (53/100), Top Alerters, and OMD 2.5.0p17 site installation steps"
-                  )
-                }
-                style={{
-                  width: "100%",
-                  padding: "11px 16px",
-                  borderRadius: 8,
-                  background: "#10b981",
-                  color: "#052e16",
-                  border: "none",
-                  fontWeight: 900,
-                  fontSize: 12.5,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 8,
-                }}
-              >
-                <Sparkles size={15} />
-                <span>Ask Noctis in Pop-up: Full Cyber KPI &amp; Fleet Audit</span>
-              </button>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                <Link
-                  href="/scan"
-                  style={{
-                    padding: "9px 12px",
-                    borderRadius: 8,
-                    background: "#0f172a",
-                    color: "#f8fafc",
-                    textDecoration: "none",
-                    fontWeight: 800,
-                    fontSize: 11.5,
-                    textAlign: "center",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 6,
-                  }}
-                >
-                  <Code2 size={14} />
-                  <span>Open SAST Scanner</span>
-                </Link>
-
-                <button
-                  type="button"
-                  onClick={() => setShowNextActionModal(true)}
-                  style={{
-                    padding: "9px 12px",
-                    borderRadius: 8,
-                    background: "transparent",
-                    color: "#0f766e",
-                    border: "1.5px solid #10b981",
-                    fontWeight: 800,
-                    fontSize: 11.5,
-                    cursor: "pointer",
-                  }}
-                >
-                  What to Do Next? Modal
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Dashboard View Switcher Pills */}
-        <div
-          style={{
-            marginTop: 22,
-            paddingTop: 18,
-            borderTop: "1px solid rgba(148, 163, 184, 0.2)",
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 10,
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {[
-              { id: "all", label: "All 4 Modules (Unified View)" },
-              { id: "vuln-kpi", label: "1. Cyber Vulnerability & Deployment KPI" },
-              { id: "antivirus-kpi", label: "2. Antivirus & Threat Hunting KPI" },
-              { id: "fleet-live", label: "3. Live Host & Service Monitor" },
-              { id: "omd-install", label: "4. Package Download & OMD Site Setup (v2.5.0p17)" },
-            ].map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setActiveTab(t.id as ActiveTab)}
-                style={{
-                  padding: "8px 13px",
-                  borderRadius: 8,
-                  fontSize: 12,
-                  fontWeight: 800,
-                  cursor: "pointer",
-                  border: activeTab === t.id ? "1px solid #10b981" : "1px solid #475569",
-                  background: activeTab === t.id ? "#10b981" : "rgba(30, 41, 59, 0.8)",
-                  color: activeTab === t.id ? "#052e16" : "#e2e8f0",
-                }}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* =====================================================================
-          DASHBOARD 1: KPI DASHBOARD FOR CYBER MONITORING AND MANAGEMENT
-         ===================================================================== */}
-      {(activeTab === "all" || activeTab === "vuln-kpi") && (
-        <section
-          style={{
-            background: "#283342",
-            borderRadius: 18,
-            border: "1px solid #3b495e",
-            padding: "26px 28px",
-            color: "#f8fafc",
-            marginBottom: 28,
-            boxShadow: "0 16px 38px rgba(15, 23, 42, 0.2)",
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
-            <div>
-              <h2 style={{ fontSize: 24, fontWeight: 900, color: "#ffffff", letterSpacing: -0.3 }}>
-                KPI dashboard for cyber monitoring and management
-              </h2>
-              <p style={{ fontSize: 12, color: "#cbd5e1", marginTop: 4 }}>
-                Security evaluation for cyber monitoring to threat intelligence covering open vulnerability count, open CVE count, open remediation, open risk instances, and open deployment instances.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() =>
-                openAskNoctisPopup(
-                  "Analyze the Cyber Vulnerability KPI Dashboard (16.8K open vulnerabilities, 6.4K CVEs, 1.3K remediations) and prioritize AWS Production vs Fargate Demo"
-                )
-              }
-              style={{
-                padding: "8px 14px",
-                borderRadius: 999,
-                background: "#0ea5e9",
-                color: "#ffffff",
-                border: "none",
-                fontSize: 12,
-                fontWeight: 800,
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-              }}
-            >
-              <Sparkles size={14} />
-              <span>Ask Noctis About Vulnerability KPIs</span>
-            </button>
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-              gap: 20,
-              marginBottom: 26,
-            }}
-          >
-            {[
-              {
-                label: "Open vulnerability count",
-                value: CYBER_VULN_KPI_SUMMARY.openVulnerabilityDisplay,
-                sub: liveScanCount ? `+ ${liveScanCount} in active SAST scan` : "Across 8 monitored deployment environments",
-                query: "Explain the 16.8K open vulnerability count and how XTRIKE SAST reduces critical/high exposure",
-              },
-              {
-                label: "Open CVE count",
-                value: CYBER_VULN_KPI_SUMMARY.openCveDisplay,
-                sub: "Correlated NVD, GHSA & OSV advisories",
-                query: "Explain the 6.4K open CVE count and how CWE-to-CVE correlation integrity is enforced",
-              },
-              {
-                label: "Open remediation",
-                value: CYBER_VULN_KPI_SUMMARY.openRemediationDisplay,
-                sub: "AST-verified pull requests & patch queues",
-                query: "Show how the 1.3K open remediations are validated using AST diffs and regression tests",
-              },
-            ].map((card) => (
-              <div
-                key={card.label}
-                onClick={() => openAskNoctisPopup(card.query)}
-                style={{
-                  background: "#384454",
-                  borderRadius: 12,
-                  padding: "24px 20px",
-                  textAlign: "center",
-                  border: "1px solid #4a596d",
-                  cursor: "pointer",
-                }}
-              >
-                <div style={{ fontSize: 15, fontWeight: 800, color: "#f1f5f9", marginBottom: 10 }}>
-                  {card.label}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--muted)" }}>
+                      Findings by Severity &amp; Proof State
+                    </div>
+                    <div className="text-[11px]" style={{ color: "var(--subtle)" }}>
+                      5 Canonical XTRIKE Validation States
+                    </div>
+                  </div>
+                  <span className="text-sm font-bold font-editorial">16.1K Active</span>
                 </div>
-                <div style={{ fontSize: 42, fontWeight: 900, color: "#00a8e8", lineHeight: 1.05 }}>
-                  {card.value}
+
+                {/* Editorial Segmented Bar + Legend */}
+                <div className="h-3.5 w-full rounded-full overflow-hidden flex" style={{ background: "var(--surface-3)" }}>
+                  {OPEN_RISK_INSTANCES.map((slice) => (
+                    <div
+                      key={slice.severity}
+                      style={{
+                        width: `${slice.percentage}%`,
+                        background: slice.color,
+                      }}
+                      title={`${slice.severity}: ${slice.countLabel} (${slice.proofState})`}
+                    />
+                  ))}
                 </div>
-                <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 8 }}>{card.sub}</div>
+
+                <div className="space-y-2.5 pt-1">
+                  {OPEN_RISK_INSTANCES.map((slice) => (
+                    <div
+                      key={slice.severity}
+                      className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-lg"
+                      style={{ background: "var(--surface)", border: "1px solid var(--border-subtle)" }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="w-2.5 h-2.5 rounded-sm shrink-0"
+                          style={{ background: slice.color }}
+                        />
+                        <div>
+                          <div className="font-bold" style={{ color: "var(--foreground)" }}>
+                            {slice.severity}
+                          </div>
+                          <div className="text-[10px] font-mono" style={{ color: "var(--muted)" }}>
+                            {slice.proofState}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold font-mono" style={{ color: slice.color }}>
+                          {slice.countLabel}
+                        </div>
+                        <div className="text-[10px]" style={{ color: "var(--subtle)" }}>
+                          {slice.percentage}%
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
-          </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))",
-              gap: 22,
-            }}
-          >
-            <div
-              style={{
-                background: "#232d3b",
-                border: "1px dashed #64748b",
-                borderRadius: 12,
-                padding: "20px 22px",
-              }}
-            >
+              {/* Column 2: Findings by Application Tier & Repository */}
               <div
-                style={{
-                  width: 180,
-                  height: 5,
-                  background: "#10b981",
-                  margin: "-20px auto 14px",
-                  borderRadius: 999,
-                }}
-              />
-              <h3 style={{ textAlign: "center", fontSize: 16, fontWeight: 800, color: "#ffffff", marginBottom: 14 }}>
-                Open risk instances
-              </h3>
+                className="lg:col-span-4 rounded-xl p-5 space-y-3.5"
+                style={{ background: "var(--background)", border: "1px solid var(--border)" }}
+              >
+                <div>
+                  <div className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--muted)" }}>
+                    Findings by Repository &amp; Service Tier
+                  </div>
+                  <div className="text-[11px]" style={{ color: "var(--subtle)" }}>
+                    Dominant CWE &amp; AST sink concentration per codebase
+                  </div>
+                </div>
 
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-around", flexWrap: "wrap", gap: 16 }}>
-                <svg width="260" height="230" viewBox="0 0 260 230">
-                  <g transform="translate(130, 115)">
-                    {(() => {
-                      let cumulativePct = 0;
-                      const radius = 68;
-                      const circumference = 2 * Math.PI * radius;
-                      return OPEN_RISK_INSTANCES.map((slice) => {
-                        const strokeDasharray = `${(slice.percentage / 100) * circumference} ${circumference}`;
-                        const strokeDashoffset = -((cumulativePct / 100) * circumference);
-                        cumulativePct += slice.percentage;
-                        return (
-                          <circle
-                            key={slice.severity}
-                            r={radius}
-                            cx={0}
-                            cy={0}
-                            fill="transparent"
-                            stroke={slice.color}
-                            strokeWidth={28}
-                            strokeDasharray={strokeDasharray}
-                            strokeDashoffset={strokeDashoffset}
-                            transform="rotate(-90)"
+                <div className="space-y-2.5">
+                  {OPEN_DEPLOYMENT_INSTANCES.map((dep) => {
+                    const widthPct = Math.max(10, Math.round((dep.count / 3500) * 100));
+                    return (
+                      <div key={dep.name} className="space-y-1">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-semibold" style={{ color: "var(--foreground)" }}>
+                            {dep.name}
+                          </span>
+                          <span className="font-mono text-[11px]" style={{ color: "var(--muted)" }}>
+                            <strong style={{ color: dep.color }}>{dep.countLabel}</strong> &middot; {dep.primaryCwe}
+                          </span>
+                        </div>
+                        <div
+                          className="h-2 w-full rounded-full overflow-hidden"
+                          style={{ background: "var(--surface-3)" }}
+                        >
+                          <div
+                            className="h-full rounded-full"
+                            style={{ width: `${widthPct}%`, background: dep.color }}
                           />
-                        );
-                      });
-                    })()}
-                    <circle r={52} cx={0} cy={0} fill="#232d3b" />
-                    <text x="0" y="-4" textAnchor="middle" fill="#f8fafc" fontSize="18" fontWeight="900">
-                      16.1K
-                    </text>
-                    <text x="0" y="14" textAnchor="middle" fill="#94a3b8" fontSize="10" fontWeight="700">
-                      Risk Instances
-                    </text>
-                  </g>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Column 3: 9-Week Discovery vs. Verified AST Fix Trend */}
+              <div
+                className="lg:col-span-4 rounded-xl p-5 flex flex-col justify-between space-y-4"
+                style={{ background: "var(--background)", border: "1px solid var(--border)" }}
+              >
+                <div>
+                  <div className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--muted)" }}>
+                    SAST Discovery vs. Verified AST Fix Velocity
+                  </div>
+                  <div className="text-[11px]" style={{ color: "var(--subtle)" }}>
+                    9-Week trajectory across Open SAST, Reachable CVEs &amp; Retested Diffs
+                  </div>
+                </div>
+
+                <svg viewBox="0 0 320 170" className="w-full h-44 overflow-visible">
+                  {[0, 40, 80, 120, 150].map((y) => (
+                    <line
+                      key={y}
+                      x1={24}
+                      y1={y + 10}
+                      x2={308}
+                      y2={y + 10}
+                      stroke="#ded5c5"
+                      strokeDasharray="3 3"
+                    />
+                  ))}
+                  {/* Open SAST Findings line (#9e2a2b) */}
+                  <polyline
+                    fill="none"
+                    stroke="#9e2a2b"
+                    strokeWidth="2.5"
+                    points={VULNERABILITY_TRENDS_TIMELINE.map((pt, i) => {
+                      const x = 28 + i * 34;
+                      const y = 150 - (pt.openVulnerabilities / 18000) * 130;
+                      return `${x},${y}`;
+                    }).join(" ")}
+                  />
+                  {/* Reachable CVEs line (#8b4528) */}
+                  <polyline
+                    fill="none"
+                    stroke="#8b4528"
+                    strokeWidth="2.2"
+                    points={VULNERABILITY_TRENDS_TIMELINE.map((pt, i) => {
+                      const x = 28 + i * 34;
+                      const y = 150 - (pt.openCves / 18000) * 130;
+                      return `${x},${y}`;
+                    }).join(" ")}
+                  />
+                  {/* Verified Remediations line (#2d6a4f) */}
+                  <polyline
+                    fill="none"
+                    stroke="#2d6a4f"
+                    strokeWidth="2.5"
+                    points={VULNERABILITY_TRENDS_TIMELINE.map((pt, i) => {
+                      const x = 28 + i * 34;
+                      const y = 150 - (pt.verifiedRemediations / 3000) * 90;
+                      return `${x},${y}`;
+                    }).join(" ")}
+                  />
+                  {VULNERABILITY_TRENDS_TIMELINE.map((pt, i) => {
+                    const x = 28 + i * 34;
+                    return (
+                      <text key={pt.date} x={x} y={166} textAnchor="middle" fontSize="9" fill="#5c5349">
+                        {pt.date}
+                      </text>
+                    );
+                  })}
                 </svg>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 170 }}>
-                  {OPEN_RISK_INSTANCES.map((item) => (
-                    <div
-                      key={item.severity}
-                      onClick={() =>
-                        openAskNoctisPopup(
-                          `Show remediation priorities for ${item.severity} risk instances (${item.displayCount})`
-                        )
-                      }
+                <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] pt-2" style={{ borderTop: "1px solid var(--border-subtle)" }}>
+                  <span className="inline-flex items-center gap-1.5 font-semibold" style={{ color: "#9e2a2b" }}>
+                    <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: "#9e2a2b" }} />
+                    SAST Findings (16.8K)
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 font-semibold" style={{ color: "#8b4528" }}>
+                    <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: "#8b4528" }} />
+                    Reachable CVEs (6.4K)
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 font-semibold" style={{ color: "#2d6a4f" }}>
+                    <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: "#2d6a4f" }} />
+                    Verified Fixes (1.3K)
+                  </span>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* =====================================================================
+            LEDGER 2 — CODE-TO-RUNTIME SINK SENSORS & EXPLOIT PREVENTION
+           ===================================================================== */}
+        {(activeTab === "all" || activeTab === "sensors") && (
+          <section
+            className="rounded-2xl p-6 sm:p-8 space-y-6"
+            style={{
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+            }}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <div className="desk-kicker">LEDGER 02 &middot; CODE-TO-RUNTIME SINK SENSORS</div>
+                <h2 className="text-xl sm:text-2xl font-bold font-editorial">
+                  Runtime Sink Triggers, Sanitizer Gate Blocks &amp; Build Runner Coverage
+                </h2>
+                <p className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>
+                  Correlates static AST taint paths (`PLG-001`–`PLG-401`) with live sandbox probes and runtime guard
+                  interceptions across `1,765` build runners and microservice nodes.
+                </p>
+              </div>
+              <button
+                onClick={() =>
+                  openAskNoctisPopup(
+                    "Analyze our Code-to-Runtime Sink Sensor KPIs: 213 Active Sink Triggers, 32 Exploit Probes Halted, 73 AST Diffs Verified, and 84/100 Release Gate Score"
+                  )
+                }
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold cursor-pointer"
+                style={{
+                  background: "var(--accent-soft)",
+                  color: "var(--accent)",
+                  border: "1px solid var(--border)",
+                }}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Ask Noctis: Audit Sink Sensors</span>
+              </button>
+            </div>
+
+            {/* 6 Compact XTRIKE Sensor KPI Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
+              {ANTIVIRUS_PERFORMANCE_KPIS.map((card) => (
+                <div
+                  key={card.id}
+                  className="rounded-xl p-4 flex flex-col justify-between"
+                  style={{ background: "var(--background)", border: "1px solid var(--border)" }}
+                >
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-[11px] font-bold" style={{ color: "var(--muted)" }}>
+                      {card.title}
+                    </span>
+                  </div>
+
+                  <div className="my-2 flex items-baseline justify-between">
+                    <span className="text-2xl font-bold font-editorial" style={{ color: card.color }}>
+                      {card.value}
+                    </span>
+                    <span
+                      className="text-[10px] font-bold px-1.5 py-0.5 rounded"
                       style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: 12,
-                        padding: "6px 10px",
-                        borderRadius: 8,
-                        background: "#2c3849",
-                        borderLeft: `4px solid ${item.color}`,
-                        cursor: "pointer",
+                        background: "var(--surface)",
+                        color: card.color,
+                        border: "1px solid var(--border-subtle)",
                       }}
                     >
-                      <span style={{ fontSize: 12.5, fontWeight: 800, color: "#e2e8f0" }}>
-                        {item.severity}
-                      </span>
-                      <span style={{ fontSize: 13, fontWeight: 900, color: "#ffffff" }}>
-                        {item.displayCount}
-                      </span>
+                      {card.delta}
+                    </span>
+                  </div>
+
+                  <div
+                    className="pt-2 text-[10px] font-mono"
+                    style={{ borderTop: "1px solid var(--border-subtle)", color: "var(--subtle)" }}
+                  >
+                    {card.ruleRef}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Runner Environment Distribution + Live Code-to-Runtime Interception Feed */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+              {/* Protected Runners & Runtime Nodes */}
+              <div
+                className="lg:col-span-5 rounded-xl p-5 space-y-3.5"
+                style={{ background: "var(--background)", border: "1px solid var(--border)" }}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--muted)" }}>
+                      Instrumented Build &amp; Runtime Nodes
+                    </div>
+                    <div className="text-[11px]" style={{ color: "var(--subtle)" }}>
+                      Active XTRIKE AST &amp; DFG sensor coverage by platform
+                    </div>
+                  </div>
+                  <span className="text-base font-bold font-editorial">{totalMonitoredNodes.toLocaleString()} Nodes</span>
+                </div>
+
+                <div className="space-y-2.5">
+                  {MONITORED_HOSTS_BY_OS.map((item) => {
+                    const pct = Math.round((item.hosts / 500) * 100);
+                    return (
+                      <div key={item.os} className="space-y-1">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-medium" style={{ color: "var(--foreground)" }}>
+                            {item.os}
+                          </span>
+                          <span className="font-mono font-bold" style={{ color: item.color }}>
+                            {item.hosts}
+                          </span>
+                        </div>
+                        <div className="h-2 w-full rounded-full overflow-hidden" style={{ background: "var(--surface-3)" }}>
+                          <div className="h-full rounded-full" style={{ width: `${pct}%`, background: item.color }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Recent Code-to-Runtime Sink Interceptions */}
+              <div
+                className="lg:col-span-7 rounded-xl p-5 space-y-3.5"
+                style={{ background: "var(--background)", border: "1px solid var(--border)" }}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--muted)" }}>
+                      Recent SAST Sink &amp; Release-Gate Interceptions
+                    </div>
+                    <div className="text-[11px]" style={{ color: "var(--subtle)" }}>
+                      Click any finding event to inspect its AST rule and remediation diff in Ask Noctis
+                    </div>
+                  </div>
+                  <span className="text-xs font-mono" style={{ color: "var(--accent)" }}>
+                    401 PLUGINS ACTIVE
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  {MOST_RECENT_DETECTIONS.map((det) => (
+                    <div
+                      key={det.id}
+                      onClick={() =>
+                        openAskNoctisPopup(
+                          `Inspect ${det.pluginId} (${det.cwe}) triggered at ${det.host}: "${det.signature}" and show language-verified remediation`
+                        )
+                      }
+                      className="p-3 rounded-xl flex flex-wrap items-center justify-between gap-3 cursor-pointer transition-all hover:opacity-95"
+                      style={{
+                        background: "var(--surface)",
+                        border: "1px solid var(--border)",
+                      }}
+                    >
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="px-2 py-0.5 rounded text-[10px] font-mono font-bold"
+                            style={{
+                              background:
+                                det.severity === "Critical"
+                                  ? "rgba(158, 42, 43, 0.12)"
+                                  : det.severity === "High"
+                                  ? "rgba(139, 69, 40, 0.12)"
+                                  : "rgba(153, 107, 31, 0.12)",
+                              color:
+                                det.severity === "Critical"
+                                  ? "var(--critical)"
+                                  : det.severity === "High"
+                                  ? "var(--accent)"
+                                  : "var(--amber)",
+                            }}
+                          >
+                            {det.pluginId} &middot; {det.cwe}
+                          </span>
+                          <span className="text-xs font-bold" style={{ color: "var(--foreground)" }}>
+                            {det.signature}
+                          </span>
+                        </div>
+                        <div className="text-[11px] font-mono" style={{ color: "var(--muted)" }}>
+                          Target: <strong>{det.host}</strong> ({det.os}) &middot; {det.timestamp}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="px-2.5 py-1 rounded-lg text-[11px] font-bold"
+                          style={{
+                            background: "var(--surface-2)",
+                            color: "var(--foreground)",
+                            border: "1px solid var(--border)",
+                          }}
+                        >
+                          {det.action}
+                        </span>
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
+          </section>
+        )}
 
-            <div
-              style={{
-                background: "#232d3b",
-                border: "1px dashed #64748b",
-                borderRadius: 12,
-                padding: "20px 22px",
-              }}
-            >
-              <div
-                style={{
-                  width: 180,
-                  height: 5,
-                  background: "#f97316",
-                  margin: "-20px auto 14px",
-                  borderRadius: 999,
-                }}
-              />
-              <h3 style={{ textAlign: "center", fontSize: 16, fontWeight: 800, color: "#ffffff", marginBottom: 14 }}>
-                Open deployment instances
-              </h3>
+        {/* =====================================================================
+            LEDGER 3 — XTRIKE REPOSITORY & SERVICE MESH TOPOLOGY (710 NODES)
+           ===================================================================== */}
+        {(activeTab === "all" || activeTab === "mesh") && (
+          <section
+            className="rounded-2xl p-6 sm:p-8 space-y-6"
+            style={{
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+            }}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <div className="desk-kicker">LEDGER 03 &middot; REPOSITORY &amp; SERVICE MESH</div>
+                <h2 className="text-xl sm:text-2xl font-bold font-editorial">
+                  Monitored Repository Mesh ({XTRIKE_FLEET_OVERVIEW.totalHosts} Nodes) &amp; Policy Gate Telemetry (
+                  {XTRIKE_FLEET_OVERVIEW.totalServices.toLocaleString()} Gates)
+                </h2>
+                <p className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>
+                  Interactive repository &amp; microservice topology mapped to XTRIKE SAST release gates and canonical
+                  proof states.
+                </p>
+              </div>
 
+              <div className="flex flex-wrap items-center gap-2">
+                {(["ALL", "CRIT", "WARN", "OK"] as const).map((st) => (
+                  <button
+                    key={st}
+                    onClick={() => setMeshFilter(st)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer"
+                    style={{
+                      background: meshFilter === st ? "var(--accent)" : "var(--background)",
+                      color: meshFilter === st ? "#fbf8f3" : "var(--foreground-muted)",
+                      border: "1px solid var(--border)",
+                    }}
+                  >
+                    {st === "ALL" ? "All Nodes (72)" : st}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Mesh Summary Strip */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
               <div
-                style={{
-                  height: 195,
-                  display: "flex",
-                  alignItems: "flex-end",
-                  justifyContent: "space-between",
-                  gap: 10,
-                  padding: "10px 8px 0 28px",
-                  borderBottom: "1px solid #475569",
-                  position: "relative",
-                }}
+                className="rounded-xl p-4"
+                style={{ background: "var(--background)", border: "1px solid var(--border)" }}
               >
-                <div
-                  style={{
-                    position: "absolute",
-                    left: 0,
-                    top: 6,
-                    bottom: 0,
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "space-between",
-                    fontSize: 10,
-                    color: "#94a3b8",
-                  }}
-                >
-                  <span>90</span>
-                  <span>60</span>
-                  <span>30</span>
-                  <span>0</span>
+                <div className="text-[11px] font-bold uppercase" style={{ color: "var(--muted)" }}>
+                  Monitored Repositories &amp; Runners
+                </div>
+                <div className="text-2xl font-bold font-editorial mt-1" style={{ color: "var(--foreground)" }}>
+                  {XTRIKE_FLEET_OVERVIEW.totalHosts}{" "}
+                  <span className="text-xs font-normal" style={{ color: "var(--emerald)" }}>
+                    ({XTRIKE_FLEET_OVERVIEW.hostsUp} Online)
+                  </span>
+                </div>
+              </div>
+
+              <div
+                className="rounded-xl p-4"
+                style={{ background: "var(--background)", border: "1px solid var(--border)" }}
+              >
+                <div className="text-[11px] font-bold uppercase" style={{ color: "var(--muted)" }}>
+                  Passing AST &amp; CWE Policy Gates
+                </div>
+                <div className="text-2xl font-bold font-editorial mt-1" style={{ color: "var(--emerald)" }}>
+                  {XTRIKE_FLEET_OVERVIEW.servicesOk.toLocaleString()}
+                </div>
+              </div>
+
+              <div
+                className="rounded-xl p-4"
+                style={{ background: "var(--background)", border: "1px solid var(--border)" }}
+              >
+                <div className="text-[11px] font-bold uppercase" style={{ color: "var(--muted)" }}>
+                  Release-Blocking SAST Gates
+                </div>
+                <div className="text-2xl font-bold font-editorial mt-1" style={{ color: "var(--critical)" }}>
+                  {XTRIKE_FLEET_OVERVIEW.servicesCrit}{" "}
+                  <span className="text-xs font-normal" style={{ color: "var(--amber)" }}>
+                    (+{XTRIKE_FLEET_OVERVIEW.servicesWarn} Warn)
+                  </span>
+                </div>
+              </div>
+
+              <div
+                className="rounded-xl p-4"
+                style={{ background: "var(--background)", border: "1px solid var(--border)" }}
+              >
+                <div className="text-[11px] font-bold uppercase" style={{ color: "var(--muted)" }}>
+                  Live Taint Trace Events (24h)
+                </div>
+                <div className="text-2xl font-bold font-editorial mt-1" style={{ color: "var(--accent)" }}>
+                  {XTRIKE_FLEET_OVERVIEW.totalEvents.toLocaleString()}
+                </div>
+              </div>
+            </div>
+
+            {/* Interactive Repository Node Grid + Selected Node Inspector */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+              <div
+                className="lg:col-span-7 rounded-xl p-5 space-y-4"
+                style={{ background: "var(--background)", border: "1px solid var(--border)" }}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--muted)" }}>
+                    Interactive Repository &amp; Microservice Node Matrix
+                  </span>
+                  <span className="text-[11px]" style={{ color: "var(--subtle)" }}>
+                    Select any cell to inspect SAST gates
+                  </span>
                 </div>
 
-                {OPEN_DEPLOYMENT_INSTANCES.map((env) => {
-                  const scale = 2.4;
-                  const isSelected = selectedEnv?.environment === env.environment;
-                  return (
-                    <div
-                      key={env.environment}
-                      onClick={() => setSelectedEnv(env)}
-                      title={`${env.environment}: ${env.total} vulnerabilities`}
-                      style={{
-                        flex: 1,
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <div
+                <div className="grid grid-cols-6 sm:grid-cols-9 md:grid-cols-12 gap-2">
+                  {filteredMeshNodes.map((cell) => {
+                    const isSelected = selectedNode.id === cell.id;
+                    const cellBg =
+                      cell.state === "CRIT"
+                        ? "#9e2a2b"
+                        : cell.state === "WARN"
+                        ? "#996b1f"
+                        : cell.state === "UNKNOWN"
+                        ? "#8b4528"
+                        : "#2d6a4f";
+                    return (
+                      <button
+                        key={cell.id}
+                        onClick={() => setSelectedNode(cell)}
+                        title={`${cell.hostname} (${cell.state})`}
+                        className="h-9 rounded-lg flex flex-col items-center justify-center text-[10px] font-mono font-bold cursor-pointer transition-transform hover:scale-105"
                         style={{
-                          width: 24,
-                          display: "flex",
-                          flexDirection: "column-reverse",
-                          borderRadius: "4px 4px 0 0",
-                          overflow: "hidden",
-                          outline: isSelected ? "2px solid #38bdf8" : "none",
+                          background: cellBg,
+                          color: "#fbf8f3",
+                          outline: isSelected ? "2px solid #1f1b18" : "none",
+                          outlineOffset: "2px",
                         }}
                       >
-                        {env.critical > 0 && (
-                          <div style={{ height: env.critical * scale, background: "#b43c12" }} />
-                        )}
-                        {env.high > 0 && (
-                          <div style={{ height: env.high * scale, background: "#ed7d31" }} />
-                        )}
-                        {env.medium > 0 && (
-                          <div style={{ height: env.medium * scale, background: "#f4a582" }} />
-                        )}
-                        {env.low > 0 && (
-                          <div style={{ height: env.low * scale, background: "#f9cfb6" }} />
-                        )}
+                        <span>{cell.id.replace("NODE-", "#")}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Selected Node Dossier Bar */}
+                <div
+                  className="p-4 rounded-xl flex flex-wrap items-center justify-between gap-4"
+                  style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono font-bold" style={{ color: "var(--accent)" }}>
+                        {selectedNode.id}
+                      </span>
+                      <span className="text-sm font-bold">{selectedNode.hostname}</span>
+                      <span
+                        className="px-2 py-0.5 rounded text-[10px] font-bold"
+                        style={{
+                          background: "var(--surface-2)",
+                          color: "var(--foreground)",
+                          border: "1px solid var(--border)",
+                        }}
+                      >
+                        {selectedNode.language} &middot; {selectedNode.cluster}
+                      </span>
+                    </div>
+                    <div className="text-xs" style={{ color: "var(--muted)" }}>
+                      Policy Gates: <strong>{selectedNode.servicesCount}</strong> &middot; Open SAST Findings:{" "}
+                      <strong style={{ color: selectedNode.openFindings > 0 ? "var(--critical)" : "var(--emerald)" }}>
+                        {selectedNode.openFindings}
+                      </strong>{" "}
+                      &middot; AST Scan Time: <strong>{selectedNode.latencyMs}ms</strong>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() =>
+                      openAskNoctisPopup(
+                        `Audit repository node ${selectedNode.hostname} (${selectedNode.language}, ${selectedNode.cluster}) with ${selectedNode.openFindings} open SAST findings`
+                      )
+                    }
+                    className="px-3.5 py-2 rounded-lg text-xs font-bold cursor-pointer"
+                    style={{
+                      background: "var(--accent)",
+                      color: "#fbf8f3",
+                    }}
+                  >
+                    Inspect Node in Noctis
+                  </button>
+                </div>
+              </div>
+
+              {/* Right Column: Top Release-Gate Violators */}
+              <div
+                className="lg:col-span-5 rounded-xl p-5 space-y-3.5"
+                style={{ background: "var(--background)", border: "1px solid var(--border)" }}
+              >
+                <div>
+                  <div className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--muted)" }}>
+                    Priority Release-Gate Violators (7-Day SAST Volume)
+                  </div>
+                  <div className="text-[11px]" style={{ color: "var(--subtle)" }}>
+                    Services with unparameterized sinks or unverified dynamic compilation
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  {XTRIKE_TOP_ALERTERS.map((bar) => {
+                    const critW = Math.round((bar.critCount / 120) * 100);
+                    const warnW = Math.round((bar.warnCount / 120) * 100);
+                    return (
+                      <div key={bar.host} className="space-y-1">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-mono font-bold">{bar.host}</span>
+                          <span className="text-[11px]" style={{ color: "var(--muted)" }}>
+                            {bar.primaryCwe} &middot; <strong>{bar.totalAlerts}</strong> gates
+                          </span>
+                        </div>
+                        <div
+                          className="h-2.5 w-full rounded-full overflow-hidden flex"
+                          style={{ background: "var(--surface-3)" }}
+                        >
+                          <div style={{ width: `${critW}%`, background: "#9e2a2b" }} title={`Critical: ${bar.critCount}`} />
+                          <div style={{ width: `${warnW}%`, background: "#996b1f" }} title={`Warning: ${bar.warnCount}`} />
+                        </div>
                       </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Active Release-Gate Violations Table */}
+            <div
+              className="rounded-xl overflow-hidden"
+              style={{ background: "var(--background)", border: "1px solid var(--border)" }}
+            >
+              <div
+                className="px-4 py-3 flex items-center justify-between"
+                style={{ background: "var(--surface-2)", borderBottom: "1px solid var(--border)" }}
+              >
+                <span className="text-xs font-bold uppercase tracking-wider">
+                  Active SAST Release-Gate Findings Requiring Remediation or Proof Review
+                </span>
+                <span className="text-[11px] font-mono" style={{ color: "var(--muted)" }}>
+                  PTES / NIST 800-115 GATED
+                </span>
+              </div>
+              <div className="divide-y" style={{ borderColor: "var(--border-subtle)" }}>
+                {XTRIKE_HOST_PROBLEMS.map((row) => (
+                  <div
+                    key={`${row.host}-${row.service}`}
+                    className="p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs"
+                  >
+                    <div className="space-y-0.5 max-w-3xl">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="px-2 py-0.5 rounded text-[10px] font-mono font-bold"
+                          style={{
+                            background: row.state === "CRIT" ? "#9e2a2b" : "#996b1f",
+                            color: "#fbf8f3",
+                          }}
+                        >
+                          {row.state} &middot; {row.proofState}
+                        </span>
+                        <span className="font-mono font-bold">{row.host}</span>
+                        <span style={{ color: "var(--muted)" }}>&mdash; {row.service}</span>
+                      </div>
+                      <div className="font-mono text-[11px]" style={{ color: "var(--foreground-muted)" }}>
+                        {row.pluginOutput}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() =>
+                        openAskNoctisPopup(
+                          `Inspect ${row.host} (${row.service}, ${row.cwe}, Proof State: ${row.proofState}) and generate the language-verified remediation diff`
+                        )
+                      }
+                      className="px-3 py-1.5 rounded-lg text-[11px] font-bold cursor-pointer"
+                      style={{
+                        background: "var(--surface)",
+                        color: "var(--accent)",
+                        border: "1px solid var(--accent)",
+                      }}
+                    >
+                      Generate Fix in Noctis
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* =====================================================================
+            LEDGER 4 — XTRIKE SAST CLI & PROOF SANDBOX RUNNER (v4.2.0)
+           ===================================================================== */}
+        {(activeTab === "all" || activeTab === "cli") && (
+          <section
+            className="rounded-2xl p-6 sm:p-8 space-y-6"
+            style={{
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+            }}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <div className="desk-kicker">LEDGER 04 &middot; XTRIKE SAST CLI &amp; CI/CD RUNNER</div>
+                <h2 className="text-xl sm:text-2xl font-bold font-editorial">
+                  Deploy XTRIKE SAST CLI (`v{XTRIKE_CLI_RUNTIME_SPEC.version}`) &amp; Local PTES Proof Sandbox
+                </h2>
+                <p className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>
+                  Install the standalone XTRIKE SAST binary on Linux, macOS, or CI/CD containers to execute all 4 AST
+                  engines (`XQL`, `DeepFlow`, `StructSCA`, `AST-Query`) and stream SARIF v2.1.0 directly into Noctis.
+                </p>
+              </div>
+              <button
+                onClick={runCliProvisionSimulation}
+                disabled={cliRunning}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold cursor-pointer"
+                style={{
+                  background: "var(--accent)",
+                  color: "#fbf8f3",
+                }}
+              >
+                <Play className="w-3.5 h-3.5" />
+                <span>{cliRunning ? "Initializing 4 AST Engines..." : "Run CLI Sandbox Verification"}</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              {/* Left Column: Collapsible OS & CI/CD Package Accordion */}
+              <div className="lg:col-span-7 space-y-3">
+                {XTRIKE_DISTRO_ACCORDION_GROUPS.map((group) => {
+                  const isOpen = !!openDistros[group.family];
+                  return (
+                    <div
+                      key={group.family}
+                      className="rounded-xl overflow-hidden"
+                      style={{ background: "var(--background)", border: "1px solid var(--border)" }}
+                    >
+                      <button
+                        onClick={() =>
+                          setOpenDistros((prev) => ({
+                            ...prev,
+                            [group.family]: !prev[group.family],
+                          }))
+                        }
+                        className="w-full px-4 py-3.5 flex items-center justify-between text-left cursor-pointer"
+                        style={{ background: "var(--surface-2)" }}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          {isOpen ? (
+                            <ChevronDown className="w-4 h-4" style={{ color: "var(--accent)" }} />
+                          ) : (
+                            <ChevronRight className="w-4 h-4" style={{ color: "var(--muted)" }} />
+                          )}
+                          <span className="text-sm font-bold">{group.family}</span>
+                          <span
+                            className="px-2 py-0.5 rounded text-[10px] font-mono font-bold"
+                            style={{
+                              background: "var(--surface)",
+                              color: "var(--accent)",
+                              border: "1px solid var(--border)",
+                            }}
+                          >
+                            {group.badge}
+                          </span>
+                        </div>
+                        <span className="text-[11px]" style={{ color: "var(--muted)" }}>
+                          {group.packages.length} {group.packages.length === 1 ? "bundle" : "bundles"}
+                        </span>
+                      </button>
+
+                      {isOpen && (
+                        <div className="p-4 space-y-3">
+                          <p className="text-xs" style={{ color: "var(--muted)" }}>
+                            {group.description}
+                          </p>
+                          {group.packages.map((pkg) => (
+                            <div
+                              key={pkg.id}
+                              className="p-3.5 rounded-xl space-y-2.5"
+                              style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+                            >
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div>
+                                  <span className="text-xs font-bold">{pkg.distroVersion}</span>
+                                  <span className="text-[11px] font-mono ml-2" style={{ color: "var(--muted)" }}>
+                                    ({pkg.edition} &middot; {pkg.architecture})
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-1.5">
+                                  <button
+                                    onClick={() => handleCopy(pkg.id, `${pkg.wgetCommand} && ${pkg.installCommand}`)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-semibold cursor-pointer"
+                                    style={{
+                                      background: "var(--surface-2)",
+                                      border: "1px solid var(--border)",
+                                    }}
+                                  >
+                                    {copiedId === pkg.id ? (
+                                      <Check className="w-3 h-3" style={{ color: "var(--emerald)" }} />
+                                    ) : (
+                                      <Copy className="w-3 h-3" />
+                                    )}
+                                    <span>{copiedId === pkg.id ? "Copied" : "Copy CLI"}</span>
+                                  </button>
+
+                                  <button
+                                    onClick={() =>
+                                      setVisibleHashId((prev) => (prev === pkg.id ? null : pkg.id))
+                                    }
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-semibold cursor-pointer"
+                                    style={{
+                                      background: "var(--surface-2)",
+                                      border: "1px solid var(--border)",
+                                    }}
+                                  >
+                                    <Hash className="w-3 h-3" />
+                                    <span>SHA-256</span>
+                                  </button>
+
+                                  <a
+                                    href={pkg.downloadUrl}
+                                    download={pkg.packageFilename}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-bold"
+                                    style={{
+                                      background: "var(--accent)",
+                                      color: "#fbf8f3",
+                                      textDecoration: "none",
+                                    }}
+                                  >
+                                    <Download className="w-3 h-3" />
+                                    <span>Download</span>
+                                  </a>
+                                </div>
+                              </div>
+
+                              <div
+                                className="p-2.5 rounded-lg font-mono text-[11px] overflow-x-auto space-y-1"
+                                style={{
+                                  background: "#1c1815",
+                                  color: "#f3eee4",
+                                }}
+                              >
+                                <div>$ {pkg.wgetCommand}</div>
+                                <div style={{ color: "#e6b89c" }}>$ {pkg.installCommand}</div>
+                              </div>
+
+                              {visibleHashId === pkg.id && (
+                                <div
+                                  className="px-3 py-2 rounded-lg text-[11px] font-mono break-all"
+                                  style={{
+                                    background: "var(--surface-2)",
+                                    border: "1px solid var(--border)",
+                                  }}
+                                >
+                                  <strong>SHA-256 Checksum:</strong> {pkg.sha256}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
               </div>
 
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  paddingLeft: 28,
-                  marginTop: 8,
-                  gap: 4,
-                }}
-              >
-                {OPEN_DEPLOYMENT_INSTANCES.map((env) => (
-                  <div
-                    key={env.environment}
-                    onClick={() => setSelectedEnv(env)}
-                    style={{
-                      flex: 1,
-                      fontSize: 9.5,
-                      color: selectedEnv?.environment === env.environment ? "#38bdf8" : "#cbd5e1",
-                      fontWeight: selectedEnv?.environment === env.environment ? 800 : 600,
-                      textAlign: "center",
-                      cursor: "pointer",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    }}
-                  >
-                    {env.shortLabel}
-                  </div>
-                ))}
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  gap: 14,
-                  marginTop: 12,
-                  fontSize: 11,
-                  fontWeight: 700,
-                }}
-              >
-                {[
-                  { label: "Critical", color: "#b43c12" },
-                  { label: "High", color: "#ed7d31" },
-                  { label: "Medium", color: "#f4a582" },
-                  { label: "Low", color: "#f9cfb6" },
-                  { label: "Info", color: "#e2e8f0" },
-                ].map((l) => (
-                  <span key={l.label} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-                    <span style={{ width: 9, height: 9, background: l.color, display: "inline-block" }} />
-                    {l.label}
-                  </span>
-                ))}
-              </div>
-
-              {selectedEnv && (
+              {/* Right Column: XTRIKE SAST CLI & Engine Daemon Terminal */}
+              <div className="lg:col-span-5">
                 <div
+                  className="rounded-xl overflow-hidden h-full flex flex-col justify-between"
                   style={{
-                    marginTop: 12,
-                    padding: "10px 12px",
-                    borderRadius: 8,
-                    background: "#313e50",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    flexWrap: "wrap",
-                    gap: 8,
-                    fontSize: 11.5,
+                    background: "#191512",
+                    color: "#f3eee4",
+                    border: "1px solid var(--border)",
                   }}
                 >
                   <div>
-                    <strong>{selectedEnv.environment}</strong> ({selectedEnv.clusterOwner}) —{" "}
-                    <span style={{ color: "#fca5a5" }}>Crit: {selectedEnv.critical}</span> ·{" "}
-                    <span style={{ color: "#fdba74" }}>High: {selectedEnv.high}</span> ·{" "}
-                    <span>Med: {selectedEnv.medium}</span> · CWEs:{" "}
-                    <code>{selectedEnv.linkedCwes.join(", ")}</code>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      openAskNoctisPopup(
-                        `Inspect deployment environment ${selectedEnv.environment} (${selectedEnv.total} open vulnerabilities, linked CWEs: ${selectedEnv.linkedCwes.join(", ")}) and provide remediation steps`
-                      )
-                    }
-                    style={{
-                      background: "#f97316",
-                      color: "#ffffff",
-                      border: "none",
-                      borderRadius: 6,
-                      padding: "4px 10px",
-                      fontSize: 11,
-                      fontWeight: 800,
-                      cursor: "pointer",
-                    }}
-                  >
-                    Ask Noctis
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* =====================================================================
-          DASHBOARD 2: KPI DASHBOARD FOR CYBER MONITORING ANTIVIRUS PERFORMANCE
-         ===================================================================== */}
-      {(activeTab === "all" || activeTab === "antivirus-kpi") && (
-        <section
-          style={{
-            background: "#283342",
-            borderRadius: 18,
-            border: "1px solid #3b495e",
-            padding: "26px 28px",
-            color: "#f8fafc",
-            marginBottom: 28,
-            boxShadow: "0 16px 38px rgba(15, 23, 42, 0.2)",
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
-            <div>
-              <h2 style={{ fontSize: 24, fontWeight: 900, color: "#ffffff", letterSpacing: -0.3 }}>
-                KPI dashboard for cyber monitoring antivirus performance
-              </h2>
-              <p style={{ fontSize: 12, color: "#cbd5e1", marginTop: 4 }}>
-                Cyber monitoring KPI dashboard for data security &amp; endpoint performance covering detections, attacks prevented, leads on hunting, hunting leads stock, remedied detections, and current score.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() =>
-                openAskNoctisPopup(
-                  "Analyze the Antivirus & Endpoint Performance KPIs (213 detections, 32 attacks prevented, 26 hunting leads, score 53/100) and explain how to raise the score above 85/100"
-                )
-              }
-              style={{
-                padding: "8px 14px",
-                borderRadius: 999,
-                background: "#10b981",
-                color: "#052e16",
-                border: "none",
-                fontSize: 12,
-                fontWeight: 900,
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-              }}
-            >
-              <Sparkles size={14} />
-              <span>Ask Noctis About Endpoint &amp; Hunting KPIs</span>
-            </button>
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))",
-              gap: 14,
-              marginBottom: 26,
-            }}
-          >
-            {ANTIVIRUS_PERFORMANCE_KPIS.map((kpi) => (
-              <div
-                key={kpi.id}
-                onClick={() =>
-                  openAskNoctisPopup(`Analyze KPI "${kpi.label}" (${kpi.value}): ${kpi.description}`)
-                }
-                style={{
-                  background: "#384454",
-                  borderRadius: 12,
-                  overflow: "hidden",
-                  border: "1px solid #4a596d",
-                  cursor: "pointer",
-                  textAlign: "center",
-                }}
-              >
-                <div
-                  style={{
-                    background: kpi.accentColor,
-                    padding: "10px 8px",
-                    fontSize: 12.5,
-                    fontWeight: 900,
-                    color: "#ffffff",
-                  }}
-                >
-                  {kpi.label}
-                </div>
-                <div style={{ padding: "18px 12px" }}>
-                  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 6 }}>
-                    {kpi.subLabel && (
-                      <span style={{ fontSize: 11.5, color: "#cbd5e1", fontWeight: 600 }}>
-                        {kpi.subLabel}
-                      </span>
-                    )}
-                    <span style={{ fontSize: 28, fontWeight: 900, color: "#ffffff" }}>
-                      {kpi.value}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
-              gap: 18,
-            }}
-          >
-            <div
-              style={{
-                background: "#232d3b",
-                border: "1px dashed #64748b",
-                borderRadius: 12,
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  background: "#0284c7",
-                  padding: "10px 14px",
-                  textAlign: "center",
-                  fontSize: 14,
-                  fontWeight: 900,
-                  color: "#ffffff",
-                }}
-              >
-                Hosts - Hosts
-              </div>
-              <div style={{ padding: "18px 16px", display: "flex", flexDirection: "column", alignItems: "center" }}>
-                <svg width="210" height="190" viewBox="0 0 210 190">
-                  <g transform="translate(105, 95)">
-                    {(() => {
-                      let cumPct = 0;
-                      const r = 58;
-                      const circ = 2 * Math.PI * r;
-                      return MONITORED_HOSTS_BY_OS.breakdown.map((os) => {
-                        const dash = `${(os.percentage / 100) * circ} ${circ}`;
-                        const offset = -((cumPct / 100) * circ);
-                        cumPct += os.percentage;
-                        return (
-                          <circle
-                            key={os.os}
-                            r={r}
-                            cx={0}
-                            cy={0}
-                            fill="transparent"
-                            stroke={os.color}
-                            strokeWidth={22}
-                            strokeDasharray={dash}
-                            strokeDashoffset={offset}
-                            transform="rotate(-90)"
-                          />
-                        );
-                      });
-                    })()}
-                    <circle r={44} cx={0} cy={0} fill="#232d3b" />
-                    <text x="0" y="6" textAnchor="middle" fill="#ffffff" fontSize="19" fontWeight="900">
-                      {MONITORED_HOSTS_BY_OS.totalHosts.toLocaleString()}
-                    </text>
-                  </g>
-                </svg>
-
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginTop: 6 }}>
-                  {MONITORED_HOSTS_BY_OS.breakdown.map((item) => (
-                    <span
-                      key={item.os}
-                      style={{
-                        fontSize: 11,
-                        padding: "3px 8px",
-                        borderRadius: 6,
-                        background: "#2e3b4e",
-                        color: "#e2e8f0",
-                        fontWeight: 700,
-                        borderLeft: `3px solid ${item.color}`,
-                      }}
-                    >
-                      {item.os}: <strong>{item.count}</strong>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div
-              style={{
-                background: "#232d3b",
-                border: "1px dashed #64748b",
-                borderRadius: 12,
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  background: "#10b981",
-                  padding: "10px 14px",
-                  textAlign: "center",
-                  fontSize: 14,
-                  fontWeight: 900,
-                  color: "#ffffff",
-                }}
-              >
-                Activity - Detection
-              </div>
-              <div style={{ padding: "18px 16px" }}>
-                <svg width="100%" height="190" viewBox="0 0 360 190">
-                  {[
-                    { y: 25, label: "900" },
-                    { y: 70, label: "600" },
-                    { y: 115, label: "300" },
-                    { y: 155, label: "0" },
-                  ].map((g) => (
-                    <g key={g.label}>
-                      <text x="24" y={g.y + 3} textAnchor="end" fill="#94a3b8" fontSize="9.5">
-                        {g.label}
-                      </text>
-                      <line x1="32" y1={g.y} x2="348" y2={g.y} stroke="#334155" strokeDasharray="3 3" />
-                    </g>
-                  ))}
-
-                  <polyline
-                    fill="none"
-                    stroke="#0ea5e9"
-                    strokeWidth="2.5"
-                    points={ACTIVITY_DETECTION_TIMELINE.map((pt, i) => {
-                      const x = 36 + i * 19;
-                      const y = 155 - Math.min(140, (pt.linux / 1120) * 138);
-                      return `${x},${y}`;
-                    }).join(" ")}
-                  />
-                  <polyline
-                    fill="none"
-                    stroke="#10b981"
-                    strokeWidth="2"
-                    points={ACTIVITY_DETECTION_TIMELINE.map((pt, i) => {
-                      const x = 36 + i * 19;
-                      const y = 155 - (pt.windows / 1120) * 138;
-                      return `${x},${y}`;
-                    }).join(" ")}
-                  />
-                  <polyline
-                    fill="none"
-                    stroke="#f97316"
-                    strokeWidth="2"
-                    points={ACTIVITY_DETECTION_TIMELINE.map((pt, i) => {
-                      const x = 36 + i * 19;
-                      const y = 155 - (pt.mac / 1120) * 138;
-                      return `${x},${y}`;
-                    }).join(" ")}
-                  />
-
-                  {ACTIVITY_DETECTION_TIMELINE.filter((_, idx) => idx % 2 === 0).map((pt, idx) => (
-                    <text
-                      key={pt.year}
-                      x={36 + idx * 38}
-                      y={174}
-                      textAnchor="middle"
-                      fill="#cbd5e1"
-                      fontSize="8.5"
-                    >
-                      {pt.year}
-                    </text>
-                  ))}
-                </svg>
-
-                <div style={{ display: "flex", justifyContent: "center", gap: 16, fontSize: 11.5, fontWeight: 800 }}>
-                  <span style={{ color: "#0ea5e9" }}>● Linux (Peak: 1,120)</span>
-                  <span style={{ color: "#10b981" }}>● Windows</span>
-                  <span style={{ color: "#f97316" }}>● Mac</span>
-                </div>
-              </div>
-            </div>
-
-            <div
-              style={{
-                background: "#232d3b",
-                border: "1px dashed #64748b",
-                borderRadius: 12,
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  background: "#f97316",
-                  padding: "10px 14px",
-                  textAlign: "center",
-                  fontSize: 14,
-                  fontWeight: 900,
-                  color: "#ffffff",
-                }}
-              >
-                Most recent detections
-              </div>
-              <div style={{ padding: "12px 12px" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
-                  <thead>
-                    <tr style={{ borderBottom: "1px solid #475569", color: "#cbd5e1" }}>
-                      <th style={{ padding: "6px 4px", textAlign: "center" }}>Severity</th>
-                      <th style={{ padding: "6px 4px", textAlign: "left" }}>Tactic &amp; tec...</th>
-                      <th style={{ padding: "6px 4px", textAlign: "left" }}>Time</th>
-                      <th style={{ padding: "6px 4px", textAlign: "left" }}>Host ID</th>
-                      <th style={{ padding: "6px 4px", textAlign: "left" }}>Link</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {MOST_RECENT_DETECTIONS.map((det) => (
-                      <tr
-                        key={det.id}
-                        onClick={() => setSelectedDetection(det)}
-                        style={{
-                          borderBottom: "1px solid #334155",
-                          background: selectedDetection?.id === det.id ? "rgba(14, 165, 233, 0.14)" : "transparent",
-                          cursor: "pointer",
-                        }}
-                      >
-                        <td style={{ padding: "10px 4px", textAlign: "center" }}>
-                          <span
-                            style={{
-                              display: "inline-block",
-                              width: 18,
-                              height: 16,
-                              background: det.severity === "Critical" ? "#ef4444" : "#f97316",
-                              clipPath: "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)",
-                            }}
-                          />
-                        </td>
-                        <td style={{ padding: "10px 4px" }}>
-                          <div style={{ fontWeight: 800, color: "#fb923c" }}>! {det.tactic}</div>
-                          <div style={{ fontSize: 10, color: "#94a3b8" }}>{det.mitreId}</div>
-                        </td>
-                        <td style={{ padding: "10px 4px", color: "#e2e8f0", fontSize: 10.5 }}>
-                          {det.timestamp}
-                        </td>
-                        <td style={{ padding: "10px 4px", color: "#cbd5e1", fontFamily: "monospace" }}>
-                          {det.hostId}
-                        </td>
-                        <td style={{ padding: "10px 4px" }}>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openAskNoctisPopup(
-                                `Investigate detection ${det.id} (${det.tactic} ${det.mitreId}: ${det.techniqueName}) on host ${det.fullHostName} (${det.processOrPath}) linked to SAST finding ${det.linkedSastFindingId}`
-                              );
-                            }}
-                            style={{
-                              background: "none",
-                              border: "none",
-                              color: "#38bdf8",
-                              textDecoration: "underline",
-                              fontSize: 10.5,
-                              fontWeight: 700,
-                              cursor: "pointer",
-                              padding: 0,
-                              textAlign: "left",
-                            }}
-                          >
-                            See detections
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
-                {selectedDetection && (
-                  <div
-                    style={{
-                      marginTop: 10,
-                      padding: "8px 10px",
-                      borderRadius: 8,
-                      background: "#2e3b4e",
-                      fontSize: 11,
-                      color: "#e2e8f0",
-                    }}
-                  >
-                    <div>
-                      <strong>{selectedDetection.id}</strong> · Host: <code>{selectedDetection.fullHostName}</code>
-                    </div>
-                    <div style={{ color: "#93c5fd", marginTop: 2 }}>
-                      Sink: <code>{selectedDetection.processOrPath}</code> (SAST: <strong>{selectedDetection.linkedSastFindingId}</strong>)
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* =====================================================================
-          DASHBOARD 3: XTRIKE LIVE HOST & SERVICE MONITOR
-         ===================================================================== */}
-      {(activeTab === "all" || activeTab === "fleet-live") && (
-        <section
-          style={{
-            background: "#12161b",
-            borderRadius: 18,
-            border: "1px solid #2b3440",
-            padding: "22px 24px",
-            color: "#e2e8f0",
-            marginBottom: 28,
-            boxShadow: "0 20px 50px rgba(0, 0, 0, 0.38)",
-            position: "relative",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-              gap: 12,
-              paddingBottom: 16,
-              borderBottom: "1px solid #262f3a",
-              marginBottom: 18,
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 8,
-                  background: "#10b981",
-                  color: "#052e16",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: 900,
-                }}
-              >
-                ↑
-              </div>
-              <div>
-                <div style={{ fontSize: 10.5, color: "#94a3b8" }}>
-                  Monitor &gt; Overview &gt; <span style={{ textDecoration: "underline", color: "#e2e8f0" }}>Main dashboard</span>
-                </div>
-                <div style={{ fontSize: 15, fontWeight: 900, color: "#ffffff" }}>
-                  XTRIKE Live Fleet Monitor · Main Dashboard
-                </div>
-              </div>
-            </div>
-
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              <button
-                type="button"
-                onClick={() => setShowMonitorTip(true)}
-                style={{
-                  background: "#1e2630",
-                  border: "1px solid #10b981",
-                  color: "#10b981",
-                  padding: "6px 12px",
-                  borderRadius: 6,
-                  fontSize: 11.5,
-                  fontWeight: 800,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-              >
-                <Filter size={13} />
-                <span>Filter / 1,2, Monitor!</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowOverviewTooltip((prev) => !prev)}
-                style={{
-                  background: "#1e2630",
-                  border: "1px solid #475569",
-                  color: "#e2e8f0",
-                  padding: "6px 12px",
-                  borderRadius: 6,
-                  fontSize: 11.5,
-                  fontWeight: 800,
-                  cursor: "pointer",
-                }}
-              >
-                {showOverviewTooltip ? "Hide Overview Popover" : "Show Overview Popover"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowNextActionModal(true)}
-                style={{
-                  background: "#1e2630",
-                  border: "1px solid #38bdf8",
-                  color: "#38bdf8",
-                  padding: "6px 12px",
-                  borderRadius: 6,
-                  fontSize: 11.5,
-                  fontWeight: 800,
-                  cursor: "pointer",
-                }}
-              >
-                What Next? Dialog
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  openAskNoctisPopup(
-                    "Audit the XTRIKE Live Fleet Monitor (710 hosts, 2 down, 15,808 services, 77 critical, 37 warning) and diagnose the Top Alerters"
-                  )
-                }
-                style={{
-                  background: "#10b981",
-                  border: "none",
-                  color: "#052e16",
-                  padding: "6px 14px",
-                  borderRadius: 6,
-                  fontSize: 11.5,
-                  fontWeight: 900,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-              >
-                <Sparkles size={13} />
-                <span>Ask Noctis</span>
-              </button>
-            </div>
-          </div>
-
-          {showMonitorTip && (
-            <div
-              style={{
-                background: "#ffffff",
-                color: "#0f172a",
-                borderRadius: 10,
-                padding: "14px 18px",
-                marginBottom: 18,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                flexWrap: "wrap",
-                gap: 12,
-                boxShadow: "0 10px 25px rgba(0,0,0,0.35)",
-              }}
-            >
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 900, marginBottom: 3 }}>
-                  {monitorTips[monitorTipStep].title}
-                </div>
-                <div style={{ fontSize: 12.5, color: "#475569" }}>
-                  {monitorTips[monitorTipStep].body}
-                </div>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <button
-                  type="button"
-                  onClick={() => setShowMonitorTip(false)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "#64748b",
-                    fontSize: 11.5,
-                    cursor: "pointer",
-                  }}
-                >
-                  Hide these tips
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMonitorTipStep((prev) => (prev + 1) % monitorTips.length)}
-                  style={{
-                    background: "#10b981",
-                    color: "#ffffff",
-                    border: "none",
-                    borderRadius: 6,
-                    padding: "6px 14px",
-                    fontSize: 12,
-                    fontWeight: 800,
-                    cursor: "pointer",
-                  }}
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 270px", gap: 18 }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              {/* Row 1: Host statistics + Total host problems */}
-              <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 16 }}>
-                <div style={{ background: "#1b2129", border: "1px solid #2b3440", borderRadius: 10, padding: 14 }}>
-                  <div style={{ fontSize: 12, fontWeight: 800, color: "#cbd5e1", textAlign: "center", marginBottom: 10 }}>
-                    Host statistics
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-                    <svg width="96" height="96" viewBox="0 0 100 100">
-                      <polygon
-                        points="50,6 90,28 90,72 50,94 10,72 10,28"
-                        fill="rgba(16, 185, 129, 0.14)"
-                        stroke="#10b981"
-                        strokeWidth="2.5"
-                      />
-                      <polygon
-                        points="50,36 62,43 62,57 50,64 38,57 38,43"
-                        fill="rgba(239, 68, 68, 0.45)"
-                        stroke="#ef4444"
-                        strokeWidth="1.5"
-                      />
-                    </svg>
-                    <div style={{ fontSize: 11.5, lineHeight: 1.7, textAlign: "right", flex: 1 }}>
-                      <div><strong>{XTRIKE_FLEET_OVERVIEW.hosts.up}</strong> <span style={{ color: "#10b981" }}>| Up</span></div>
-                      <div><strong>{XTRIKE_FLEET_OVERVIEW.hosts.inDowntime}</strong> <span style={{ color: "#38bdf8" }}>| In downtime</span></div>
-                      <div><strong>{XTRIKE_FLEET_OVERVIEW.hosts.unreachable}</strong> <span style={{ color: "#f97316" }}>| Unreachable</span></div>
-                      <div><strong>{XTRIKE_FLEET_OVERVIEW.hosts.down}</strong> <span style={{ color: "#ef4444" }}>| Down</span></div>
-                      <div style={{ borderTop: "1px solid #334155", marginTop: 4, paddingTop: 2 }}>
-                        <strong>{XTRIKE_FLEET_OVERVIEW.hosts.total}</strong> | Total
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ background: "#1b2129", border: "1px solid #2b3440", borderRadius: 10, padding: 14 }}>
-                  <div style={{ fontSize: 12, fontWeight: 800, color: "#cbd5e1", textAlign: "center", marginBottom: 8 }}>
-                    Total host problems
-                  </div>
-                  <svg width="100%" height="105" viewBox="0 0 560 105" preserveAspectRatio="none">
-                    <rect x="28" y="10" width="520" height="72" fill="rgba(185, 28, 28, 0.28)" stroke="#ef4444" strokeWidth="1.5" />
-                    <line x1="28" y1="46" x2="548" y2="46" stroke="#334155" strokeDasharray="3 3" />
-                    <text x="20" y="16" textAnchor="end" fill="#94a3b8" fontSize="9.5">2</text>
-                    <text x="20" y="49" textAnchor="end" fill="#94a3b8" fontSize="9.5">1</text>
-                    <text x="20" y="82" textAnchor="end" fill="#94a3b8" fontSize="9.5">0</text>
-                    {["Tue 20:00", "Wed 00:00", "Wed 04:00", "Wed 08:00", "Wed 12:00", "Wed 16:00"].map((t, i) => (
-                      <text key={t} x={60 + i * 90} y="98" textAnchor="middle" fill="#94a3b8" fontSize="9">
-                        {t}
-                      </text>
-                    ))}
-                  </svg>
-                </div>
-              </div>
-
-              {/* Row 2: Service statistics + Total service problems */}
-              <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 16 }}>
-                <div style={{ background: "#1b2129", border: "1px solid #2b3440", borderRadius: 10, padding: 14 }}>
-                  <div style={{ fontSize: 12, fontWeight: 800, color: "#cbd5e1", textAlign: "center", marginBottom: 10 }}>
-                    Service statistics
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-                    <svg width="96" height="96" viewBox="0 0 100 100">
-                      <polygon
-                        points="50,6 90,28 90,72 50,94 10,72 10,28"
-                        fill="rgba(16, 185, 129, 0.14)"
-                        stroke="#10b981"
-                        strokeWidth="2.5"
-                      />
-                      <polygon
-                        points="50,32 66,41 66,59 50,68 34,59 34,41"
-                        fill="rgba(245, 158, 11, 0.45)"
-                        stroke="#ef4444"
-                        strokeWidth="1.5"
-                      />
-                    </svg>
-                    <div style={{ fontSize: 11, lineHeight: 1.55, textAlign: "right", flex: 1 }}>
-                      <div><strong>{XTRIKE_FLEET_OVERVIEW.services.ok}</strong> <span style={{ color: "#10b981" }}>| OK</span></div>
-                      <div><strong>{XTRIKE_FLEET_OVERVIEW.services.inDowntime}</strong> <span style={{ color: "#38bdf8" }}>| In downtime</span></div>
-                      <div><strong>{XTRIKE_FLEET_OVERVIEW.services.onDownHost}</strong> <span style={{ color: "#0ea5e9" }}>| On down host</span></div>
-                      <div><strong>{XTRIKE_FLEET_OVERVIEW.services.warning}</strong> <span style={{ color: "#f59e0b" }}>| Warning</span></div>
-                      <div><strong>{XTRIKE_FLEET_OVERVIEW.services.unknown}</strong> <span style={{ color: "#f97316" }}>| Unknown</span></div>
-                      <div><strong>{XTRIKE_FLEET_OVERVIEW.services.critical}</strong> <span style={{ color: "#ef4444" }}>| Critical</span></div>
-                      <div style={{ borderTop: "1px solid #334155", marginTop: 3, paddingTop: 2 }}>
-                        <strong>{XTRIKE_FLEET_OVERVIEW.services.total}</strong> | Total
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ background: "#1b2129", border: "1px solid #2b3440", borderRadius: 10, padding: 14 }}>
-                  <div style={{ fontSize: 12, fontWeight: 800, color: "#cbd5e1", textAlign: "center", marginBottom: 8 }}>
-                    Total service problems
-                  </div>
-                  <svg width="100%" height="110" viewBox="0 0 560 110" preserveAspectRatio="none">
-                    <rect x="28" y="14" width="520" height="44" fill="rgba(185, 28, 28, 0.32)" stroke="#ef4444" strokeWidth="1.5" />
-                    <rect x="28" y="58" width="520" height="28" fill="rgba(217, 119, 6, 0.34)" stroke="#f59e0b" strokeWidth="1.2" />
-                    <text x="22" y="18" textAnchor="end" fill="#94a3b8" fontSize="9">120</text>
-                    <text x="22" y="46" textAnchor="end" fill="#94a3b8" fontSize="9">80</text>
-                    <text x="22" y="66" textAnchor="end" fill="#94a3b8" fontSize="9">40</text>
-                    <text x="22" y="86" textAnchor="end" fill="#94a3b8" fontSize="9">0</text>
-                    {["Tue 20:00", "Wed 00:00", "Wed 04:00", "Wed 08:00", "Wed 12:00", "Wed 16:00"].map((t, i) => (
-                      <text key={t} x={60 + i * 90} y="102" textAnchor="middle" fill="#94a3b8" fontSize="9">
-                        {t}
-                      </text>
-                    ))}
-                  </svg>
-                </div>
-              </div>
-
-              {/* Row 3: Problem notifications + Percentage of total service problems */}
-              <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 16 }}>
-                <div style={{ background: "#1b2129", border: "1px solid #2b3440", borderRadius: 10, padding: 14 }}>
-                  <div style={{ fontSize: 12, fontWeight: 800, color: "#cbd5e1", textAlign: "center", marginBottom: 8 }}>
-                    Problem notifications
-                  </div>
-                  <svg width="100%" height="95" viewBox="0 0 230 95">
-                    <line x1="28" y1="20" x2="218" y2="20" stroke="#334155" />
-                    <line x1="28" y1="48" x2="218" y2="48" stroke="#334155" />
-                    <line x1="28" y1="74" x2="218" y2="74" stroke="#0ea5e9" strokeWidth="2" strokeDasharray="3 3" />
-                    <text x="22" y="23" textAnchor="end" fill="#94a3b8" fontSize="9">1</text>
-                    <text x="22" y="51" textAnchor="end" fill="#94a3b8" fontSize="9">0.50</text>
-                    <text x="22" y="77" textAnchor="end" fill="#94a3b8" fontSize="9">0</text>
-                  </svg>
-                </div>
-
-                <div style={{ background: "#1b2129", border: "1px solid #2b3440", borderRadius: 10, padding: 14 }}>
-                  <div style={{ fontSize: 12, fontWeight: 800, color: "#cbd5e1", textAlign: "center", marginBottom: 8 }}>
-                    Percentage of total service problems
-                  </div>
-                  <svg width="100%" height="95" viewBox="0 0 560 95" preserveAspectRatio="none">
-                    <polyline
-                      fill="rgba(14, 165, 233, 0.16)"
-                      stroke="#0ea5e9"
-                      strokeWidth="2"
-                      points="28,74 48,74 52,12 56,12 60,56 120,58 185,52 190,62 260,62 264,50 268,62 420,62 424,52 428,62 548,62 548,78 28,78"
-                    />
-                    <text x="24" y="20" textAnchor="end" fill="#94a3b8" fontSize="8.5">2.5%</text>
-                    <text x="24" y="46" textAnchor="end" fill="#94a3b8" fontSize="8.5">1.5%</text>
-                    <text x="24" y="72" textAnchor="end" fill="#94a3b8" fontSize="8.5">0.5%</text>
-                  </svg>
-                </div>
-              </div>
-
-              {/* Row 4: Host overview Honeycomb Hex-Grid + Top alerters */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1.15fr", gap: 16 }}>
-                <div style={{ background: "#1b2129", border: "1px solid #2b3440", borderRadius: 10, padding: 14 }}>
-                  <div style={{ fontSize: 12, fontWeight: 800, color: "#cbd5e1", textAlign: "center", marginBottom: 10 }}>
-                    Host overview (Click any honeycomb cell to inspect host)
-                  </div>
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(12, 1fr)",
-                      gap: 5,
-                      padding: "6px 4px",
-                    }}
-                  >
-                    {XTRIKE_HONEYCOMB_HOSTS.map((h) => {
-                      const borderColor =
-                        h.state === "DOWN" ? "#ef4444" : h.state === "WARN" ? "#f59e0b" : "#1f4f3f";
-                      const bgColor =
-                        h.state === "DOWN"
-                          ? "rgba(239, 68, 68, 0.35)"
-                          : h.state === "WARN"
-                          ? "rgba(245, 158, 11, 0.25)"
-                          : "rgba(16, 185, 129, 0.08)";
-                      return (
-                        <button
-                          key={h.id}
-                          type="button"
-                          onClick={() => setSelectedHexHost(h)}
-                          title={`${h.hostname} [${h.state}]`}
-                          style={{
-                            width: 20,
-                            height: 20,
-                            borderRadius: 5,
-                            border: `1.5px solid ${borderColor}`,
-                            background: bgColor,
-                            cursor: "pointer",
-                            outline: selectedHexHost?.id === h.id ? "2px solid #38bdf8" : "none",
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
-
-                  {selectedHexHost && (
                     <div
-                      style={{
-                        marginTop: 10,
-                        padding: "9px 12px",
-                        borderRadius: 8,
-                        background: "#252e3a",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: 8,
-                        fontSize: 11,
-                      }}
+                      className="px-4 py-3 flex items-center justify-between text-xs font-mono"
+                      style={{ background: "#231e1a", borderBottom: "1px solid #332b25" }}
                     >
-                      <div>
-                        <strong>{selectedHexHost.hostname}</strong> [{selectedHexHost.state}] · CPU:{" "}
-                        {selectedHexHost.cpuLoad} · Mem: {selectedHexHost.memoryUsed} · Crit Services:{" "}
-                        <span style={{ color: "#f87171" }}>{selectedHexHost.servicesCrit}</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          openAskNoctisPopup(
-                            `Diagnose host ${selectedHexHost.hostname} (State: ${selectedHexHost.state}, CPU: ${selectedHexHost.cpuLoad}, Memory: ${selectedHexHost.memoryUsed}, Critical services: ${selectedHexHost.servicesCrit})`
-                          )
-                        }
-                        style={{
-                          background: "#10b981",
-                          color: "#052e16",
-                          border: "none",
-                          borderRadius: 5,
-                          padding: "4px 9px",
-                          fontWeight: 900,
-                          fontSize: 10.5,
-                          cursor: "pointer",
-                        }}
-                      >
-                        Ask Noctis
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                <div style={{ background: "#1b2129", border: "1px solid #2b3440", borderRadius: 10, padding: 14 }}>
-                  <div style={{ fontSize: 12, fontWeight: 800, color: "#cbd5e1", textAlign: "center", marginBottom: 10 }}>
-                    Top alerters (last 7 days)
-                  </div>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
-                    <thead>
-                      <tr style={{ borderBottom: "1px solid #334155", color: "#94a3b8" }}>
-                        <th style={{ padding: "5px 6px", textAlign: "right" }}>Problems</th>
-                        <th style={{ padding: "5px 6px", textAlign: "left" }}>Host</th>
-                        <th style={{ padding: "5px 6px", textAlign: "left" }}>Service</th>
-                        <th style={{ padding: "5px 6px", textAlign: "right" }}>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {XTRIKE_TOP_ALERTERS.map((row, idx) => (
-                        <tr key={`${row.host}-${idx}`} style={{ borderBottom: "1px solid #262f3a" }}>
-                          <td style={{ padding: "7px 6px", textAlign: "right", fontWeight: 900, color: "#f8fafc" }}>
-                            {row.problems}
-                          </td>
-                          <td
-                            style={{
-                              padding: "7px 6px",
-                              color: "#cbd5e1",
-                              maxWidth: 190,
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                            }}
-                            title={row.host}
-                          >
-                            {row.host}
-                          </td>
-                          <td style={{ padding: "7px 6px", color: row.state === "CRIT" ? "#f87171" : "#fbbf24" }}>
-                            {row.service}
-                          </td>
-                          <td style={{ padding: "7px 6px", textAlign: "right" }}>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                openAskNoctisPopup(
-                                  `Analyze Top Alerter on host "${row.host}" service "${row.service}" (${row.problems} problems, state ${row.state}: ${row.outputSummary}, correlated ${row.correlatedCwe}) and provide remediation`
-                                )
-                              }
-                              style={{
-                                background: "#263240",
-                                border: "1px solid #3b495e",
-                                color: "#38bdf8",
-                                borderRadius: 5,
-                                padding: "2px 8px",
-                                fontSize: 10,
-                                fontWeight: 800,
-                                cursor: "pointer",
-                              }}
-                            >
-                              Ask Noctis
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Sidebar */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 14, position: "relative" }}>
-              <div
-                style={{
-                  background: "#0d3b2e",
-                  border: "1px solid #10b981",
-                  borderRadius: 10,
-                  padding: 14,
-                }}
-              >
-                <div style={{ fontSize: 13, fontWeight: 900, color: "#ffffff", marginBottom: 4 }}>
-                  Deploy XTRIKE Monitor
-                </div>
-                <div style={{ fontSize: 11, color: "#a7f3d0", marginBottom: 10 }}>
-                  All features included. Synced with XTRIKE SAST.
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("omd-install")}
-                  style={{
-                    width: "100%",
-                    padding: "7px 10px",
-                    borderRadius: 6,
-                    background: "#a7f3d0",
-                    color: "#052e16",
-                    border: "none",
-                    fontWeight: 900,
-                    fontSize: 11.5,
-                    cursor: "pointer",
-                  }}
-                >
-                  Install OMD Site v2.5.0p17 →
-                </button>
-              </div>
-
-              {/* Overview Counters + Floating Popover */}
-              <div style={{ background: "#1b2129", border: "1px solid #2b3440", borderRadius: 10, padding: 14, position: "relative" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                  <span style={{ fontSize: 12, fontWeight: 800, color: "#e2e8f0" }}>▾ Overview</span>
-                  <button
-                    type="button"
-                    onClick={() => setShowOverviewTooltip((prev) => !prev)}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      color: "#94a3b8",
-                      fontSize: 11,
-                      cursor: "pointer",
-                    }}
-                  >
-                    ⋯
-                  </button>
-                </div>
-
-                {showOverviewTooltip && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      right: "104%",
-                      top: 0,
-                      width: 265,
-                      background: "#ffffff",
-                      color: "#0f172a",
-                      borderRadius: 10,
-                      padding: "14px 16px",
-                      boxShadow: "0 16px 38px rgba(0,0,0,0.45)",
-                      zIndex: 25,
-                      fontSize: 11.5,
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    <div style={{ fontSize: 15, fontWeight: 900, marginBottom: 6 }}>Overview</div>
-                    <p style={{ marginBottom: 8, color: "#334155" }}>
-                      The overview shows the status of all monitored objects.
-                    </p>
-                    <p style={{ marginBottom: 8, color: "#334155" }}>
-                      You can see the total number of hosts and services you are monitoring in the left column.
-                    </p>
-                    <p style={{ marginBottom: 12, color: "#334155" }}>
-                      The third row shows Events, which only are relevant for you, if you are monitoring of messages for example syslog, SNMP traps and log files.
-                    </p>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <button
-                        type="button"
-                        onClick={() => setShowOverviewTooltip(false)}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          color: "#94a3b8",
-                          fontSize: 11,
-                          cursor: "pointer",
-                        }}
-                      >
-                        ⊗ Hide these tips
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowOverviewTooltip(false);
-                          setShowNextActionModal(true);
-                        }}
-                        style={{
-                          background: "#10b981",
-                          color: "#ffffff",
-                          border: "none",
-                          borderRadius: 5,
-                          padding: "5px 12px",
-                          fontSize: 11.5,
-                          fontWeight: 800,
-                          cursor: "pointer",
-                        }}
-                      >
-                        Next
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: 11 }}>
-                  <div style={{ background: "#252e3a", padding: 8, borderRadius: 6 }}>
-                    <div style={{ color: "#94a3b8" }}>Hosts</div>
-                    <div style={{ fontSize: 15, fontWeight: 900, color: "#ffffff" }}>710</div>
-                  </div>
-                  <div style={{ background: "#252e3a", padding: 8, borderRadius: 6 }}>
-                    <div style={{ color: "#94a3b8" }}>Unhandled p.</div>
-                    <div style={{ fontSize: 15, fontWeight: 900, color: "#f59e0b" }}>1</div>
-                  </div>
-                  <div style={{ background: "#252e3a", padding: 8, borderRadius: 6 }}>
-                    <div style={{ color: "#94a3b8" }}>Services</div>
-                    <div style={{ fontSize: 15, fontWeight: 900, color: "#ffffff" }}>15808</div>
-                  </div>
-                  <div style={{ background: "#252e3a", padding: 8, borderRadius: 6 }}>
-                    <div style={{ color: "#94a3b8" }}>Unhandled p.</div>
-                    <div style={{ fontSize: 15, fontWeight: 900, color: "#f59e0b" }}>112</div>
-                  </div>
-                  <div style={{ background: "#252e3a", padding: 8, borderRadius: 6 }}>
-                    <div style={{ color: "#94a3b8" }}>Events</div>
-                    <div style={{ fontSize: 15, fontWeight: 900, color: "#ffffff" }}>1001</div>
-                  </div>
-                  <div style={{ background: "#252e3a", padding: 8, borderRadius: 6 }}>
-                    <div style={{ color: "#94a3b8" }}>Unhandled p.</div>
-                    <div style={{ fontSize: 15, fontWeight: 900, color: "#f59e0b" }}>4</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Getting Started Checklist */}
-              <div
-                style={{
-                  background: "#ffffff",
-                  color: "#0f172a",
-                  borderRadius: 12,
-                  padding: 16,
-                  boxShadow: "0 12px 28px rgba(0,0,0,0.35)",
-                }}
-              >
-                <div style={{ fontSize: 14, fontWeight: 900, marginBottom: 4 }}>Getting Started</div>
-                <div style={{ fontSize: 11.5, color: "#475569", marginBottom: 10 }}>
-                  Here are a few things to do first.
-                </div>
-
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                  <span style={{ fontSize: 11, fontWeight: 800 }}>{checklistPct}%</span>
-                  <div style={{ flex: 1, height: 7, background: "#e2e8f0", borderRadius: 999, overflow: "hidden" }}>
-                    <div style={{ width: `${checklistPct}%`, height: "100%", background: "#10b981" }} />
-                  </div>
-                </div>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {[
-                    {
-                      label: "Introduction to the user interface",
-                      query: "Give me an interactive walkthrough of the XTRIKE Cyber KPI & Live Fleet Monitoring interface",
-                    },
-                    {
-                      label: "Identifying Issues in Kubernetes",
-                      query: "Diagnose the EKS Kubernetes node memory alert on node eks i-0d7cb370c8eea26c9.eu-central-1.compute.internal (292 problems)",
-                    },
-                    {
-                      label: "Correlating SAST with Host Alerts",
-                      query: "Show how SAST findings F-001 (SQLi), F-002 (Python exec), and F-003 (SSRF) map to live endpoint detections",
-                    },
-                  ].map((item, idx) => (
-                    <label
-                      key={item.label}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        fontSize: 11.5,
-                        fontWeight: 700,
-                        cursor: "pointer",
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={checklistState[idx]}
-                        onChange={() => {
-                          const next = [...checklistState];
-                          next[idx] = !next[idx];
-                          setChecklistState(next);
-                          if (next[idx]) {
-                            openAskNoctisPopup(item.query);
-                          }
-                        }}
-                      />
-                      <span>{item.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Centered Modal: "What would you like to do next?" */}
-          {showNextActionModal && (
-            <div
-              style={{
-                position: "fixed",
-                inset: 0,
-                background: "rgba(15, 23, 42, 0.65)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                zIndex: 85,
-                padding: 16,
-              }}
-            >
-              <div
-                style={{
-                  background: "#ffffff",
-                  color: "#0f172a",
-                  borderRadius: 14,
-                  width: 420,
-                  maxWidth: "100%",
-                  padding: "24px 26px",
-                  boxShadow: "0 24px 60px rgba(0,0,0,0.45)",
-                  position: "relative",
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={() => setShowNextActionModal(false)}
-                  style={{
-                    position: "absolute",
-                    top: 16,
-                    right: 16,
-                    background: "none",
-                    border: "none",
-                    color: "#64748b",
-                    cursor: "pointer",
-                  }}
-                >
-                  <X size={18} />
-                </button>
-
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-                  <span
-                    style={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: 6,
-                      background: "#10b981",
-                      color: "#052e16",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontWeight: 900,
-                      fontSize: 13,
-                    }}
-                  >
-                    ↑
-                  </span>
-                  <span style={{ fontWeight: 900, fontSize: 15, color: "#10b981" }}>XTRIKE MONITOR</span>
-                </div>
-
-                <div style={{ fontSize: 12.5, color: "#475569", marginBottom: 4 }}>
-                  Thank you for exploring the XTRIKE live monitoring environment!
-                </div>
-                <div style={{ fontSize: 14.5, fontWeight: 900, marginBottom: 12 }}>
-                  What would you like to do next?
-                </div>
-                <div style={{ fontSize: 11, color: "#64748b", marginBottom: 10 }}>
-                  Answer required
-                </div>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {[
-                    "Ask a question (Open Ask Noctis Pop-up)",
-                    "Install OMD Monitoring Package (v2.5.0p17)",
-                    "Run a Hybrid SAST Repository Scan",
-                    "Inspect 6-Stage Proof Validation Engine",
-                    "Nothing, I am just looking around",
-                  ].map((option) => (
-                    <label
-                      key={option}
-                      onClick={() => {
-                        setSelectedNextOption(option);
-                        if (option.startsWith("Ask a question")) {
-                          setShowNextActionModal(false);
-                          openAskNoctisPopup(
-                            "I am exploring the XTRIKE monitoring environment. What can you tell me about the 710 monitored hosts, 15,808 services, and how to provision an OMD 2.5.0p17 site?"
-                          );
-                        } else if (option.startsWith("Install OMD")) {
-                          setShowNextActionModal(false);
-                          setActiveTab("omd-install");
-                        } else if (option.startsWith("Nothing")) {
-                          setShowNextActionModal(false);
-                        }
-                      }}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 10,
-                        padding: "10px 14px",
-                        borderRadius: 8,
-                        background: selectedNextOption === option ? "#ecfdf5" : "#f1f5f9",
-                        border: selectedNextOption === option ? "1px solid #10b981" : "1px solid #e2e8f0",
-                        fontSize: 12.5,
-                        fontWeight: 700,
-                        cursor: "pointer",
-                      }}
-                    >
-                      <input
-                        type="radio"
-                        name="xtrike-next"
-                        checked={selectedNextOption === option}
-                        onChange={() => setSelectedNextOption(option)}
-                      />
-                      <span>{option}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* =====================================================================
-          DASHBOARD 4: UBUNTU / DEBIAN / SLES / RHEL ACCORDION + OMD SITE SETUP
-          (Exact match to Screenshot media_1793214219744_7148c1d8.png + Steps 3.1-3.4)
-         ===================================================================== */}
-      {(activeTab === "all" || activeTab === "omd-install") && (
-        <section
-          style={{
-            background: "#fbf8f3",
-            borderRadius: 18,
-            border: "1px solid var(--border)",
-            padding: "28px 30px",
-            color: "#1f1b18",
-            boxShadow: "0 12px 32px rgba(31, 27, 24, 0.08)",
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 14, marginBottom: 20 }}>
-            <div>
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "3px 10px",
-                  borderRadius: 4,
-                  background: "#f4e5dc",
-                  border: "1px solid var(--border)",
-                  color: "#8b4528",
-                  fontSize: 11,
-                  fontWeight: 800,
-                  marginBottom: 8,
-                }}
-              >
-                <Download size={13} />
-                <span>XTRIKE OMD DISTRIBUTION v2.5.0p17 &middot; PACKAGE DOWNLOAD &amp; SITE INSTALLER</span>
-              </div>
-              <h2 style={{ fontSize: 26, fontWeight: 900, color: "#1f1b18" }}>
-                Download, Install &amp; Provision OMD Monitoring Site ({XTRIKE_OMD_RUNTIME_SPEC.version})
-              </h2>
-              <p style={{ fontSize: 13.5, color: "#5c5349", marginTop: 4 }}>
-                Select your Linux distribution below to copy the <code>wget</code> command, inspect the SHA-256 hash, download the signed package bundle, and provision your monitoring site.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() =>
-                openAskNoctisPopup(
-                  `Explain the installation steps for ${selectedReleaseRow.filename} (SHA-256: ${selectedReleaseRow.sha256}), sudo apt install ./${selectedReleaseRow.filename}, and sudo omd create ${siteName}`
-                )
-              }
-              style={{
-                padding: "10px 16px",
-                borderRadius: 8,
-                background: "#10b981",
-                color: "#052e16",
-                border: "none",
-                fontSize: 12.5,
-                fontWeight: 900,
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 7,
-              }}
-            >
-              <Sparkles size={14} />
-              <span>Ask Noctis About OMD Site Setup</span>
-            </button>
-          </div>
-
-          {/* Collapsible Distribution Accordion (Ubuntu / Debian / SLES / Red Hat) matching Screenshot media_1793214219744_7148c1d8.png */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 26 }}>
-            {XTRIKE_DISTRO_ACCORDION_GROUPS.map((group) => {
-              const isOpen = Boolean(openDistros[group.id]);
-              return (
-                <div
-                  key={group.id}
-                  style={{
-                    borderRadius: 8,
-                    overflow: "hidden",
-                    border: "1px solid #cbd5e1",
-                    background: "#ffffff",
-                  }}
-                >
-                  {/* Dark Slate Accordion Header Bar */}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setOpenDistros((prev) => ({ ...prev, [group.id]: !prev[group.id] }))
-                    }
-                    style={{
-                      width: "100%",
-                      background: "#2c3843",
-                      color: "#ffffff",
-                      padding: "11px 18px",
-                      border: "none",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      fontSize: 15,
-                      fontWeight: 700,
-                      cursor: "pointer",
-                    }}
-                  >
-                    <span>{group.distroName}</span>
-                    {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                  </button>
-
-                  {/* Release Rows */}
-                  {isOpen && (
-                    <div style={{ padding: "12px 18px", display: "flex", flexDirection: "column", gap: 10 }}>
-                      {group.releases.map((rel) => {
-                        const rowKey = `${group.id}-${rel.codename}`;
-                        const isHashShown = visibleHashKey === rowKey;
-                        const isSelected = selectedReleaseRow.filename === rel.filename;
-                        return (
-                          <div key={rowKey} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                            <div
-                              onClick={() => setSelectedReleaseRow(rel)}
-                              style={{
-                                display: "grid",
-                                gridTemplateColumns: "150px 1fr auto",
-                                alignItems: "center",
-                                gap: 12,
-                                cursor: "pointer",
-                              }}
-                            >
-                              <div
-                                style={{
-                                  fontSize: 14,
-                                  color: isSelected ? "#8b4528" : "#334155",
-                                  fontWeight: isSelected ? 900 : 600,
-                                }}
-                              >
-                                {rel.releaseVersion}
-                              </div>
-
-                              {/* Dark Command Bar with [copy] and [hash] buttons */}
-                              <div
-                                style={{
-                                  background: "#1c2228",
-                                  color: "#e2e8f0",
-                                  borderRadius: 4,
-                                  padding: "8px 12px",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "space-between",
-                                  gap: 10,
-                                  fontFamily: "monospace",
-                                  fontSize: 12,
-                                  overflowX: "auto",
-                                }}
-                              >
-                                <div style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                  <span style={{ color: "#a855f7", marginRight: 6 }}>$</span>
-                                  <span style={{ color: "#84cc16" }}>wget</span>{" "}
-                                  <span>{rel.wgetCommand.replace(/^wget\s+/, "")}</span>
-                                </div>
-
-                                <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleCopyText(rowKey, rel.wgetCommand);
-                                    }}
-                                    style={{
-                                      background: "#ffffff",
-                                      color: "#0f172a",
-                                      border: "none",
-                                      borderRadius: 3,
-                                      padding: "3px 9px",
-                                      fontSize: 11.5,
-                                      fontWeight: 700,
-                                      cursor: "pointer",
-                                    }}
-                                  >
-                                    {copiedCmdKey === rowKey ? "copied" : "copy"}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setVisibleHashKey(isHashShown ? null : rowKey);
-                                    }}
-                                    style={{
-                                      background: "#0080ff",
-                                      color: "#ffffff",
-                                      border: "none",
-                                      borderRadius: 3,
-                                      padding: "3px 9px",
-                                      fontSize: 11.5,
-                                      fontWeight: 700,
-                                      cursor: "pointer",
-                                    }}
-                                  >
-                                    hash
-                                  </button>
-                                </div>
-                              </div>
-
-                              {/* Download Icon Button */}
-                              <a
-                                href={`/api/xtrike-package?distro=${group.id}&release=${rel.codename}`}
-                                download
-                                onClick={() => setSelectedReleaseRow(rel)}
-                                title={`Download ${rel.filename}`}
-                                style={{
-                                  width: 38,
-                                  height: 36,
-                                  borderRadius: 4,
-                                  background: "#2c3843",
-                                  color: "#ffffff",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  textDecoration: "none",
-                                }}
-                              >
-                                <Download size={16} />
-                              </a>
-                            </div>
-
-                            {isHashShown && (
-                              <div
-                                style={{
-                                  marginLeft: 162,
-                                  background: "#0f172a",
-                                  color: "#34d399",
-                                  padding: "7px 12px",
-                                  borderRadius: 4,
-                                  fontFamily: "monospace",
-                                  fontSize: 11.5,
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "space-between",
-                                }}
-                              >
-                                <span>SHA-256: {rel.sha256}</span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleCopyText(`${rowKey}-sha`, rel.sha256)}
-                                  style={{
-                                    background: "#334155",
-                                    color: "#ffffff",
-                                    border: "none",
-                                    borderRadius: 3,
-                                    padding: "2px 8px",
-                                    fontSize: 10.5,
-                                    cursor: "pointer",
-                                  }}
-                                >
-                                  {copiedCmdKey === `${rowKey}-sha` ? "Copied" : "Copy SHA-256"}
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Step 3.1 to 3.4 Interactive Installation & OMD Site Provisioning Cards */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(440px, 1fr))", gap: 20 }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <div style={{ background: "#f3eee4", border: "1px solid var(--border)", borderRadius: 12, padding: 18 }}>
-                <div style={{ fontSize: 14, fontWeight: 900, marginBottom: 6 }}>
-                  3.1 Pull Package ({selectedReleaseRow.releaseVersion}) &amp; 3.2 GnuPG Signature Verification
-                </div>
-                <p style={{ fontSize: 12, color: "#5c5349", marginBottom: 8 }}>
-                  Selected package: <code>{selectedReleaseRow.filename}</code>
-                </p>
-                <div
-                  style={{
-                    background: "#1c2228",
-                    color: "#e2e8f0",
-                    borderRadius: 8,
-                    padding: "10px 12px",
-                    fontFamily: "monospace",
-                    fontSize: 11.5,
-                    marginBottom: 10,
-                    overflowX: "auto",
-                  }}
-                >
-                  <div>$ {selectedReleaseRow.wgetCommand}</div>
-                  <div style={{ color: "#34d399", marginTop: 4 }}>
-                    SHA-256: {selectedReleaseRow.sha256}
-                  </div>
-                </div>
-
-                <div style={{ fontSize: 14, fontWeight: 900, marginBottom: 6 }}>
-                  3.3 Install Package &amp; Verify OMD Distribution Version
-                </div>
-                <div
-                  style={{
-                    background: "#1c2228",
-                    color: "#e2e8f0",
-                    borderRadius: 8,
-                    padding: "10px 12px",
-                    fontFamily: "monospace",
-                    fontSize: 11.5,
-                    lineHeight: 1.6,
-                  }}
-                >
-                  <div>$ {selectedReleaseRow.aptInstallCommand}</div>
-                  <div style={{ color: "#38bdf8", marginTop: 6 }}>$ omd version</div>
-                  <div style={{ color: "#34d399" }}>{XTRIKE_OMD_RUNTIME_SPEC.omdVersionOutput}</div>
-                </div>
-              </div>
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <div style={{ background: "#f3eee4", border: "1px solid var(--border)", borderRadius: 12, padding: 18 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                  <div style={{ fontSize: 14, fontWeight: 900 }}>
-                    3.4 Create &amp; Start Monitoring Site (<code>sudo omd create {siteName}</code>)
-                  </div>
-                  <input
-                    type="text"
-                    value={siteName}
-                    onChange={(e) => setSiteName(e.target.value || "monitoring")}
-                    style={{
-                      width: 120,
-                      padding: "4px 8px",
-                      borderRadius: 6,
-                      border: "1px solid var(--border)",
-                      fontSize: 11.5,
-                      fontFamily: "monospace",
-                    }}
-                    aria-label="OMD site name"
-                  />
-                </div>
-
-                <div
-                  style={{
-                    background: "#1c2228",
-                    color: "#e2e8f0",
-                    borderRadius: 8,
-                    padding: "10px 12px",
-                    fontFamily: "monospace",
-                    fontSize: 11.2,
-                    lineHeight: 1.55,
-                    marginBottom: 10,
-                  }}
-                >
-                  <div style={{ color: "#38bdf8" }}>$ sudo omd create {siteName}</div>
-                  <div>Adding /opt/omd/sites/{siteName}/tmp to /etc/fstab.</div>
-                  <div>Creating temporary filesystem /omd/sites/{siteName}/tmp...OK</div>
-                  <div>Restarting Apache...OK</div>
-                  <div style={{ color: "#34d399" }}>
-                    Created new site {siteName} with version {XTRIKE_OMD_RUNTIME_SPEC.version}.xtrike.
-                  </div>
-                  <div style={{ marginTop: 4 }}>
-                    Default Web UI: <strong>http://your_server/{siteName}/</strong> (admin user: <code>cmkadmin</code>)
-                  </div>
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                  <span style={{ fontSize: 12, fontWeight: 800 }}>
-                    Start site daemons (<code>sudo omd start {siteName}</code>):
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setOmdSiteRunning((prev) => !prev)}
-                    style={{
-                      background: omdSiteRunning ? "#10b981" : "#8b4528",
-                      color: "#ffffff",
-                      border: "none",
-                      borderRadius: 6,
-                      padding: "4px 10px",
-                      fontSize: 11,
-                      fontWeight: 800,
-                      cursor: "pointer",
-                    }}
-                  >
-                    {omdSiteRunning ? "All 9 OMD Daemons Running" : "Start OMD Daemons"}
-                  </button>
-                </div>
-
-                <div
-                  style={{
-                    background: "#1c2228",
-                    color: "#e2e8f0",
-                    borderRadius: 8,
-                    padding: "10px 12px",
-                    fontFamily: "monospace",
-                    fontSize: 11.2,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  <div style={{ color: "#38bdf8", marginBottom: 4 }}>$ sudo omd start {siteName}</div>
-                  {XTRIKE_OMD_RUNTIME_SPEC.daemons.map((d) => (
-                    <div key={d}>
-                      {d === "Crontab" ? "Initializing Crontab" : `Starting ${d}`}...
-                      <span style={{ color: omdSiteRunning ? "#34d399" : "#f59e0b", fontWeight: 800 }}>
-                        {omdSiteRunning ? "OK" : "STOPPED"}
+                      <span className="font-bold" style={{ color: "#e6b89c" }}>
+                        xtrike-sast-cli v{XTRIKE_CLI_RUNTIME_SPEC.version} &middot; Engine Console
                       </span>
+                      <span style={{ color: "#68b684" }}>PROFILE: {XTRIKE_CLI_RUNTIME_SPEC.profileName}</span>
                     </div>
-                  ))}
+
+                    <div className="p-4 font-mono text-xs space-y-3 leading-relaxed">
+                      <div>
+                        <div style={{ color: "#a89f91" }}># 1. Verify XTRIKE SAST Hybrid AST/DFG Binary</div>
+                        <div>$ xtrike-sast --version</div>
+                        <div style={{ color: "#68b684" }}>
+                          XTRIKE SAST Hybrid Engine v{XTRIKE_CLI_RUNTIME_SPEC.version} (401 CWE Plugins · SARIF v2.1.0)
+                        </div>
+                      </div>
+
+                      {cliStep >= 2 && (
+                        <div>
+                          <div style={{ color: "#a89f91" }}>
+                            # 2. Initialize PTES / NIST SP 800-115 Validation Profile
+                          </div>
+                          <div>$ xtrike-sast init --profile {XTRIKE_CLI_RUNTIME_SPEC.profileName}</div>
+                          <div style={{ color: "#e6b89c" }}>
+                            [OK] Locked 5 Canonical Proof States &amp; language-strict rule dispatch
+                          </div>
+                        </div>
+                      )}
+
+                      {cliStep >= 3 && (
+                        <div className="space-y-1">
+                          <div style={{ color: "#a89f91" }}>
+                            # 3. Start XTRIKE SAST Daemons &amp; Noctis AI Telemetry Sync
+                          </div>
+                          <div>$ xtrike-sast daemon start --engines xql,deepflow,structsca,ast-query</div>
+                          <div className="pt-1 space-y-1">
+                            {XTRIKE_CLI_RUNTIME_SPEC.daemons.map((d) => (
+                              <div key={d.name} className="flex items-center justify-between text-[11px]">
+                                <span>Starting {d.name}...</span>
+                                <span style={{ color: "#68b684" }}>[{d.status}]</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div
+                    className="p-4 text-[11px] font-mono flex items-center justify-between"
+                    style={{ background: "#231e1a", borderTop: "1px solid #332b25", color: "#cbbca6" }}
+                  >
+                    <span>Noctis Bridge: /api/noctis</span>
+                    <span>4 Engines · 401 Rules Ready</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
-      )}
+          </section>
+        )}
+      </div>
     </div>
   );
 }

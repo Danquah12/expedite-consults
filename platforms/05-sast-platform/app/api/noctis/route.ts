@@ -34,9 +34,9 @@ const SAST_PLATFORM_APPS_AND_MODULES = [
   },
   {
     id: "cyber-monitoring",
-    name: "Cyber KPI, Live Fleet Monitor & OMD 2.5.0p17 Runtime",
+    name: "XTRIKE SAST Posture Ledger, Sink Sensors & CLI Runner (v4.2.0)",
     route: "/cyber-monitoring",
-    purpose: "Cyber Security Vulnerability KPI Dashboard (16.8K Open Vulns, 6.4K CVEs, 1.3K Remediations), Antivirus & Endpoint Detection KPIs (213 Detections, 32 Prevented, 1,765 OS Hosts), Live Fleet Monitor (710 Hosts, 15,808 Services, Honeycomb Host Grid, Top Alerters), and OMD 2.5.0p17 Package Installer (Ubuntu/Debian/SLES/RHEL wget, apt install, omd create/start monitoring).",
+    purpose: "SAST & Reachable CVE Posture Ledger (16.8K Open SAST Findings, 6.4K Reachable SCA CVEs, 1.3K Verified AST Fixes), Code-to-Runtime Sink Sensors (213 Active Sink Triggers, 32 Exploit Probes Halted, 84/100 Release Gate Score), 710-Repository Mesh Topology, and xtrike-sast-cli v4.2.0 installer.",
   },
   {
     id: "report-engine",
@@ -78,7 +78,7 @@ const SAST_PLATFORM_APPS_AND_MODULES = [
     id: "ask-noctis",
     name: "Ask Noctis (In-App AI SAST & AppSec Pop-up)",
     route: "/api/noctis",
-    purpose: "In-app pop-up assistant connected via API to Noctis with complete access to all XTRIKE SAST findings, 401 plugins, benchmark repositories, taint graphs, Cyber KPIs, 710 monitored hosts, and OMD 2.5.0p17 installer packages.",
+    purpose: "In-app pop-up assistant connected via API to Noctis with complete access to all XTRIKE SAST findings, 401 plugins, benchmark repositories, taint graphs, SAST Posture KPIs, 710 repository mesh nodes, and xtrike-sast-cli v4.2.0 bundles.",
   },
 ];
 
@@ -87,12 +87,12 @@ const SAST_REPO_FILES = [
   { path: "lib/sast-400-plugins.ts", role: "401 enterprise SAST detection plugins (PLG-001 to PLG-401) with language-strict rules (e.g., PLG-046 Python vs PLG-054 Java)" },
   { path: "lib/deep-enumeration-engine.ts", role: "Evidence-bound finding dossier generator (CVSS v3.1 vectors, blast-radius breakdown, curl/Python probes, multi-step chains)" },
   { path: "lib/live-sast-scanner.ts", role: "Live scan session manager, 9 Python security standard plugins, and automatic state cleanup on new scan" },
-  { path: "lib/cyber-monitoring-data.ts", role: "Cyber Vulnerability KPIs (16.8K/6.4K/1.3K), Antivirus Telemetry (213 Detections, 1,765 OS Hosts), 710-Host Fleet Honeycomb & Top Alerters, and OMD 2.5.0p17 Debian/Ubuntu/SLES/RHEL package catalog" },
-  { path: "app/cyber-monitoring/page.tsx", role: "Interactive Cyber KPI, Antivirus Telemetry, Live Fleet Honeycomb Monitor & OMD 2.5.0p17 Site Provisioning Console" },
+  { path: "lib/cyber-monitoring-data.ts", role: "XTRIKE SAST Posture KPIs (16.8K/6.4K/1.3K), Code-to-Runtime Sink Sensors (213 Triggers, 1,765 Nodes), 710-Repo Mesh, and xtrike-sast-cli v4.2.0 catalog" },
+  { path: "app/cyber-monitoring/page.tsx", role: "Editorial XTRIKE SAST Posture Ledger, Sink Sensor Telemetry, 710-Repo Mesh & CLI v4.2.0 Provisioning Desk" },
   { path: "lib/validation-engine.ts", role: "6-stage PTES / NIST 800-115 proof validation pipeline" },
   { path: "lib/pdf-report-generator.ts", role: "Executive & technical PDF audit report generator with release-gate reconciliation" },
   { path: "data/findings.ts", role: "Canonical catalog of 27 deep SAST findings (F-001 to F-027) with code snippets, taint paths, and multi-language fixes" },
-  { path: "data/benchmark-repos.ts", role: "Integrated SAST & DAST vulnerable benchmark repositories (OWASP Benchmark, Juice Shop, WebGoat, DVWA, crAPI, Semgrep, Gosec, XTRIKE OMD Monitoring, etc.)" },
+  { path: "data/benchmark-repos.ts", role: "Integrated SAST & DAST vulnerable benchmark repositories (OWASP Benchmark, Juice Shop, WebGoat, DVWA, crAPI, Semgrep, Gosec, etc.)" },
   { path: "types/sast.ts", role: "Canonical TypeScript schema for SASTFinding, ProofState, AttackNode, EngineResult, and Remediation" },
   { path: "components/finding/DeepExploitabilityPanel.tsx", role: "Proof Engine & Taint Graph UI distinguishing statically detected paths from verified runtime proof" },
   { path: "components/finding/DiffRemediation.tsx", role: "Language-verified AST remediation diff & regression test generator" },
@@ -290,9 +290,9 @@ function buildLocalSastAnswer(
     ].join("\n");
   }
 
-  // 7.5. Check if asking about Cyber KPIs, Antivirus KPIs, Fleet Monitoring (710 hosts, 15,808 services), or OMD 2.5.0p17 installation
+  // 7.5. Check if asking about SAST Posture KPIs, Sink Sensors, Repository Mesh (710 nodes, 15,808 gates), or xtrike-sast-cli v4.2.0 installation
   if (
-    /\b(cyber\s*kpi|open\s*vulnerabilit|16\.8k|6\.4k|antivirus|hunting\s*leads|710\s*hosts|15,?808|top\s*alerters|honeycomb|omd|2\.5\.0p17|resolute_amd64|wget\s+https|apt\s+install|create\s+monitoring|start\s+monitoring|mkeventd|liveproxyd|cmc|cmkadmin|xtrikeadmin)\b/i.test(
+    /\b(posture\s*kpi|cyber\s*kpi|open\s*sast|16\.8k|6\.4k|sink\s*trigger|213\s*sink|710\s*repo|710\s*node|710\s*host|15,?808|release-gate\s*violator|xtrike-sast-cli|4\.2\.0|daemon\s+start|apt\s+install|dnf\s+install)\b/i.test(
       q
     )
   ) {
