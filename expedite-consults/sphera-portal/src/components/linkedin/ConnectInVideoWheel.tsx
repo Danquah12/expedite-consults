@@ -36,7 +36,7 @@ import {
 import { PROFESSION_ENCLAVES, ALL_PROFESSIONS, findEnclaveById } from "@/lib/connectin-professions"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { UserProfile } from "@/lib/linkedin-data"
-import { resolveUserProfilePicture } from "@/lib/connectin-storage"
+import { resolveUserProfilePicture, isKwesiAccount } from "@/lib/connectin-storage"
 import { VideoShareBanner } from "./VideoShareBanner"
 
 interface ConnectInVideoWheelProps {
@@ -232,13 +232,55 @@ export function ConnectInVideoWheel({
     return () => clearInterval(interval)
   }, [isPlayingAuto])
 
+  // Sharer's own photo for the link-preview card. Compressed to a tiny JPEG so it can ride in the link.
+  // No picture (or only a placeholder) => empty string => the card shows a blank circle, never someone else's face.
+  const [sharePic, setSharePic] = useState("")
+  useEffect(() => {
+    let cancelled = false
+    const src = userProfilePic || ""
+    const usable =
+      !!src &&
+      !src.includes("dicebear") &&
+      !src.startsWith("data:image/svg") &&
+      (isKwesiAccount(user) || !src.includes("kwesi-avatar"))
+    if (!usable) { setSharePic(""); return }
+    if (/^https:\/\//i.test(src)) { setSharePic(src.length < 400 ? src : ""); return }
+    const img = new Image()
+    img.onload = () => {
+      try {
+        const size = 72
+        const c = document.createElement("canvas")
+        c.width = size; c.height = size
+        const ctx = c.getContext("2d")
+        if (!ctx) throw new Error("no ctx")
+        const side = Math.min(img.width, img.height)
+        ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, size, size)
+        const b64 = c.toDataURL("image/jpeg", 0.55).split(",")[1] || ""
+        if (!cancelled) setSharePic(b64.replace(/\+/g, "-").replace(/\//g, "_"))
+      } catch { if (!cancelled) setSharePic("") }
+    }
+    img.onerror = () => { if (!cancelled) setSharePic("") }
+    img.src = src
+    return () => { cancelled = true }
+  }, [userProfilePic, user])
+
+  const buildShareUrl = (video: WheelVideoTalk) => {
+    const q = new URLSearchParams({
+      video: video.youtubeId,
+      plate: video.serialPlate,
+      n: user?.name || "",
+      t: video.title,
+      p: sharePic,
+    })
+    return `https://www.connectln.app/connectin/share?${q.toString()}`
+  }
   // Social Share Payload Generator — uses ConnectLn OpenGraph Card URL so WhatsApp, LinkedIn, Facebook, and X render the Profile Picture + ConnectLn Logo Card
   const getVideoSharePayload = (video: WheelVideoTalk) => {
-    const connectInUrl = `https://www.connectln.app/connectin?video=${encodeURIComponent(video.youtubeId)}&plate=${encodeURIComponent(video.serialPlate)}&v=connectln8`
+    const connectInUrl = buildShareUrl(video)
     const ytUrl = video.searchUrl || `https://www.youtube.com/watch?v=${video.youtubeId}`
     const takeaways = video.takeaways.map(t => `• ${t}`).join('\n')
     const hashtags = (video.tags || []).join(' ')
-    const sharerName = user?.name || "Kwesi Asiedu"
+    const sharerName = user?.name || "A ConnectLn member"
     const shareText = `🎬 ConnectLn Masterclass: "${video.title}" (${video.serialPlate})\n👤 Shared by: ${sharerName} · Speaker: ${video.speaker} (${video.speakerTitle})\n🔨 Discipline: ${video.categoryLabel} · ⏱ ${video.duration}\n\n💡 Key Takeaways:\n${takeaways}\n\n🔗 Watch Masterclass on ConnectLn:\n${connectInUrl}\n\n${hashtags}`
 
     return { connectInUrl, ytUrl, shareText }
@@ -269,7 +311,7 @@ export function ConnectInVideoWheel({
 
   const handleShareToTwitter = (video: WheelVideoTalk) => {
     const { connectInUrl } = getVideoSharePayload(video)
-    const tweetText = `🎬 ConnectLn Masterclass on The Wheel: "${video.title}" (${video.serialPlate}) — Shared by ${user?.name || "Kwesi Asiedu"}`
+    const tweetText = `🎬 ConnectLn Masterclass on The Wheel: "${video.title}" (${video.serialPlate}) — Shared by ${user?.name || "a ConnectLn member"}`
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(connectInUrl)}`
     window.open(twitterUrl, "_blank", "width=600,height=500")
   }
@@ -1292,7 +1334,7 @@ export function ConnectInVideoWheel({
                   <input
                     type="text"
                     readOnly
-                    value={`https://www.connectln.app/connectin?video=${videoToShare.youtubeId}&plate=${videoToShare.serialPlate}&v=connectln5`}
+                    value={buildShareUrl(videoToShare)}
                     style={{ backgroundColor: '#F8FAFC', color: '#0F172A', borderColor: '#CBD5E1' }}
                     className="flex-1 rounded-xl border px-3 py-2 text-xs font-mono font-semibold focus:outline-none"
                   />
