@@ -1,0 +1,64 @@
+import { NextResponse } from 'next/server'
+import { connectLnGrounding } from '@/lib/connectln-knowledge'
+
+export const runtime = 'nodejs'
+export const maxDuration = 30
+
+const NOCTIS_API_URL = process.env.NOCTIS_API_URL || 'https://dstrike.app/api/noctis'
+
+type Turn = { role: 'user' | 'assistant'; content: string }
+
+/**
+ * POST /api/connectin/noctis
+ * body: { question: string, history?: Turn[], profile?: { name?, profession? }, language?: string }
+ * Asks Noctis (server-to-server) and returns { text } for display inside ConnectLn.
+ */
+export async function POST(req: Request) {
+  const body = (await req.json().catch(() => null)) as {
+    question?: string
+    history?: Turn[]
+    profile?: { name?: string; profession?: string }
+    language?: string
+  } | null
+
+  const question = (body?.question || '').trim().slice(0, 2000)
+  if (!question) return NextResponse.json({ error: 'Write a question first.' }, { status: 400 })
+
+  const facts = connectLnGrounding(question)
+  const who = [body?.profile?.name, body?.profile?.profession].filter(Boolean).join(', ')
+  // Noctis weights the user turn, so the facts travel inside it.
+  const grounded =
+    `You are Noctis, answering inside ConnectLn (https://www.connectln.app), a professional network.\n` +
+    `If the question is about ConnectLn, answer ONLY from these facts and do not invent features:\n${facts}\n\n` +
+    (who ? `The member asking: ${who}.\n` : '') +
+    `If the question is not about ConnectLn, answer it normally.\n\nQuestion: ${question}`
+
+  const history = (Array.isArray(body?.history) ? body!.history! : [])
+    .filter((t) => (t?.role === 'user' || t?.role === 'assistant') && typeof t.content === 'string')
+    .slice(-6)
+    .map((t) => ({ role: t.role, content: t.content.slice(0, 1500) }))
+
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), 25000)
+  try {
+    const res = await fetch(NOCTIS_API_URL, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        turns: [...history, { role: 'user', content: grounded }],
+        language: body?.language || 'English',
+        context: 'ConnectLn'
+      }),
+      signal: ctrl.signal,
+      cache: 'no-store'
+    })
+    if (!res.ok) return NextResponse.json({ error: `Noctis returned ${res.status}` }, { status: 502 })
+    const data = (await res.json()) as { text?: string; error?: string }
+    if (!data?.text) return NextResponse.json({ error: data?.error || 'Noctis gave no answer.' }, { status: 502 })
+    return NextResponse.json({ text: data.text, source: 'noctis' }, { headers: { 'cache-control': 'no-store' } })
+  } catch {
+    return NextResponse.json({ error: 'Noctis is unreachable right now.' }, { status: 504 })
+  } finally {
+    clearTimeout(timer)
+  }
+}

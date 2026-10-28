@@ -348,7 +348,8 @@ export function ConnectInAIAssistant({
     setQuery("")
     setIsTyping(true)
 
-    setTimeout(() => {
+    // Local scripted answers: used for localized replies and as the fallback if Noctis is unreachable
+    const runLocal = () => {
       // Check for localized responses first
       const localized = getLocalizedAIAnswer(promptText, language, currentUser)
       if (localized) {
@@ -1197,7 +1198,49 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
 
       setMessages(prev => [...prev, reply])
       setIsTyping(false)
-    }, 450)
+    }
+
+    // Localized (non-English canned) answers stay local
+    if (getLocalizedAIAnswer(promptText, language, currentUser)) {
+      setTimeout(runLocal, 450)
+      return
+    }
+
+    // Ask Noctis via the ConnectLn server bridge so the user never leaves ConnectLn
+    const history = messages
+      .filter(m => (m.sender === 'user' || m.sender === 'assistant') && typeof m.text === 'string' && m.text)
+      .slice(-6)
+      .map(m => ({ role: m.sender as 'user' | 'assistant', content: m.text }))
+    const kbForCard = findConnectLnTopic(promptText)
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), 28000)
+    fetch('/api/connectin/noctis', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        question: promptText,
+        history,
+        language,
+        profile: { name: currentUser.name, profession: currentUser.professionEnclave }
+      }),
+      signal: ctrl.signal
+    })
+      .then(async res => {
+        const data = await res.json().catch(() => null)
+        if (!res.ok || !data?.text) throw new Error(data?.error || 'no answer')
+        const noctisReply: ChatMessage = {
+          id: `ai_${Date.now()}`,
+          sender: 'assistant',
+          text: data.text,
+          suggestedCards: kbForCard?.tab
+            ? [{ title: kbForCard.title, category: 'ConnectLn Guide', actionText: kbForCard.tabLabel || 'Open', targetTab: kbForCard.tab, matchPercent: 'Platform Help' }]
+            : undefined
+        }
+        setMessages(prev => [...prev, noctisReply])
+        setIsTyping(false)
+      })
+      .catch(() => runLocal())
+      .finally(() => clearTimeout(timer))
   }
 
   return (

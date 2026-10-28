@@ -233,3 +233,29 @@ export function connectLnOverview(): string {
     .map((t) => `### ${t.title}\n${t.answer()}`)
     .join('\n\n')
 }
+
+/** Top-N relevant topics for grounding an external Noctis call. */
+export function findConnectLnTopics(question: string, n = 3): KnowledgeTopic[] {
+  const q = question.toLowerCase()
+  const words = q.split(/[^a-z0-9&]+/).filter((w) => w && !STOP.has(w))
+  return CONNECTLN_TOPICS.map((topic) => {
+    let score = 0
+    for (const kw of topic.keywords) {
+      if (kw.includes(' ')) { if (q.includes(kw)) score += 3 } else if (words.includes(kw)) score += 2
+    }
+    return { topic, score }
+  })
+    .filter((x) => x.score >= 2)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, n)
+    .map((x) => x.topic)
+}
+
+/** Plain-text ConnectLn facts to ground Noctis so answers match the real product. */
+export function connectLnGrounding(question: string): string {
+  const topics = findConnectLnTopics(question, 3)
+  const base = CONNECTLN_TOPICS.find((t) => t.id === 'about')!
+  const nav = CONNECTLN_TOPICS.find((t) => t.id === 'navigation')!
+  const picked = [base, ...(topics.some((t) => t.id === 'navigation') ? [] : [nav]), ...topics.filter((t) => t.id !== 'about')]
+  return picked.map((t) => `${t.title}: ${t.answer().replace(/\*\*/g, '')}`).join('\n\n')
+}
