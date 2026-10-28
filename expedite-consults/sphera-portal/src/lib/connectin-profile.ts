@@ -1,5 +1,5 @@
 import { UserProfile } from "./linkedin-data"
-import { findProfessionById, findEnclaveById, getEnclaveForProfession } from "./connectin-professions"
+import { findProfessionById, findEnclaveById, getEnclaveForProfession, ALL_PROFESSIONS } from "./connectin-professions"
 import { KWESI_ASIEDU_PARSED_DATA } from "./resume-parser"
 
 export interface UserInitParams {
@@ -393,7 +393,13 @@ export function createUniqueUserProfile(params: UserInitParams): UserProfile {
     } else if (role === "developer" || searchTarget.includes("developer") || searchTarget.includes("software") || searchTarget.includes("code")) {
       professionId = "software_engineer"
     } else {
-      professionId = isAdmin ? "corporate_attorney" : "carpenter"
+      // Generic fallback: match any ConnectLn profession by its id or primary title words before defaulting
+      const hit = ALL_PROFESSIONS.find((p) => {
+        const idPhrase = p.id.replace(/_/g, " ")
+        const lead = p.title.split(/[,(&]/)[0].trim().toLowerCase()
+        return (lead.length > 4 && searchTarget.includes(lead)) || (idPhrase.length > 4 && searchTarget.includes(idPhrase))
+      })
+      professionId = hit ? hit.id : (isAdmin ? "corporate_attorney" : "carpenter")
     }
   }
 
