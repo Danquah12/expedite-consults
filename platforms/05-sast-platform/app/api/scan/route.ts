@@ -323,6 +323,16 @@ export async function POST(req: NextRequest) {
             : [];
           totalRepoTreeFiles = allBlobs.length;
 
+          const scoreRepoFilePriority = (rawPath: string): number => {
+            const p = rawPath.toLowerCase();
+            if (p === "package.json" || p === "server.ts" || p === "app.ts") return 0;
+            if (/(^|\/)(routes|controllers|api|auth|security|middleware|services|models)\//.test(p)) return 1;
+            if (/(^|\/)(lib|src|server|backend|core)\//.test(p)) return 2;
+            if (/(^|\/)(frontend|client|views|components)\//.test(p)) return 3;
+            if (/(datacreator|seed|fixture|mock|sample|demo|cypress|test|spec|e2e)/i.test(p)) return 5;
+            return 4;
+          };
+
           // Pick source files matching language or any of the 10 supported languages (up to 24 files for deep enumeration)
           const candidateFiles = allBlobs
             .filter((b) => {
@@ -331,6 +341,7 @@ export async function POST(req: NextRequest) {
               if (p.endsWith("package.json")) return true;
               return SOURCE_EXTENSIONS.some((ext) => p.endsWith(ext));
             })
+            .sort((a, b) => scoreRepoFilePriority(a.path) - scoreRepoFilePriority(b.path))
             .slice(0, 24);
 
           if (candidateFiles.length > 0) {

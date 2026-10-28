@@ -1436,7 +1436,7 @@ const CVSS_VECTORS_BY_CWE: Record<string, { vector: string; rationale: string }>
   },
   "CWE-330": {
     vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N",
-    rationale: "Non-cryptographic PRNG (java.util.Random / Math.random) used where unpredictable CSPRNG output is required.",
+    rationale: "Non-cryptographic PRNG (java.util.Random / Math.random) used in a verified security-sensitive token, OTP, session, or secret generation context.",
   },
   "CWE-347": {
     vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N",
@@ -1454,7 +1454,123 @@ const CVSS_VECTORS_BY_CWE: Record<string, { vector: string; rationale: string }>
     vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:N",
     rationale: "Missing Content-Security-Policy (CSP), HSTS, or X-Frame-Options security response headers on HTTP endpoint.",
   },
+  "CWE-1022": {
+    vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:N",
+    rationale: "External target='_blank' anchor link rendered without rel='noopener noreferrer', exposing window.opener to reverse tabnabbing.",
+  },
+  "CWE-1021": {
+    vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:N",
+    rationale: "External iframe rendered without a restrictive sandbox attribute, permitting untrusted frame script/navigation actions.",
+  },
+  "CWE-346": {
+    vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:N",
+    rationale: "Cross-origin window.postMessage() invoked with wildcard '*' targetOrigin instead of an explicit trusted origin.",
+  },
+  "CWE-922": {
+    vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:N/A:N",
+    rationale: "Sensitive authentication/session token persisted in browser localStorage/sessionStorage where it is accessible to DOM XSS.",
+  },
+  "CWE-532": {
+    vector: "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N",
+    rationale: "Sensitive PII or credential attribute written in cleartext to application log streams without redaction.",
+  },
+  "CWE-598": {
+    vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:N/A:N",
+    rationale: "Sensitive API key, secret, or credential transmitted in URL query string parameters exposed to proxy/access logs.",
+  },
+  "CWE-209": {
+    vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N",
+    rationale: "Raw exception stack trace or internal diagnostic detail serialized directly into client HTTP response.",
+  },
+  "CWE-200": {
+    vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N",
+    rationale: "Application exposes server/framework fingerprinting metadata (e.g. X-Powered-By header or internal debug route).",
+  },
+  "CWE-494": {
+    vector: "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:H/A:N",
+    rationale: "Third-party script or remote artifact loaded without cryptographic Subresource Integrity (SRI) or SHA-256 verification.",
+  },
+  "CWE-312": {
+    vector: "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N",
+    rationale: "Cleartext storage of sensitive payment card (CVV/PAN) or credential data without field-level encryption or tokenization.",
+  },
+  "CWE-1395": {
+    vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:L/A:N",
+    rationale: "Dependency on vulnerable third-party component or unpinned mutable CI/CD supply-chain reference.",
+  },
 };
+
+/**
+ * Separates primitive PRNG detection (Math.random / java.util.Random / random.*) from
+ * security-context validation. Prevents ordinary sample/commerce data generation (e.g.,
+ * product prices, quantities, and seed fixtures in data/datacreator.ts) from being
+ * misclassified as CWE-330 authentication token / OTP weaknesses.
+ */
+export function evaluatePrngSecurityContext(params: {
+  lineText: string;
+  surroundingText: string;
+  filePath: string;
+  fnName: string;
+}): {
+  isSecuritySensitive: boolean;
+  shouldSuppressAsNonSecurityData: boolean;
+  suppressionReason: string;
+} {
+  const { lineText, surroundingText, filePath, fnName } = params;
+  const combinedLineAndFn = `${fnName} ${lineText}`;
+  const isDataCreatorOrSeedFile = /(?:datacreator|seed|seeder|mock|sample-data|fixture|faker|demo-data)/i.test(filePath);
+
+  // Explicit non-security commerce / sample / UI data generation on the line or in surrounding property assignments
+  const isCommerceOrUiSampleLine =
+    /\b(?:price|quantity|limit|rating|review|likesCount|stars|delay|jitter|backoff|color|avatar|offset|page|product|order|delivery|memory|complaint|shuffle|barrista|bodgeit)\b/i.test(
+      combinedLineAndFn
+    );
+
+  // Security-sensitive token / OTP / session / credential / cryptographic nonce context
+  const hasLineLevelSecuritySink =
+    /\b(?:token|otp|totp|secret|password|passwd|passcode|reset|session|sessionid|csrf|xsrf|nonce|salt|key|apikey|api_key|jwt|bearer|auth|cookie|rememberme|challenge|verification|verify|pin|coupon|voucher|captcha|2fa|mfa|signature|hmac|recovery|invite|benchmarktest)\b/i.test(
+      combinedLineAndFn
+    );
+
+  const hasWindowLevelSecuritySink =
+    !isDataCreatorOrSeedFile &&
+    /\b(?:token|otp|totp|secret|password|resetToken|sessionId|csrfToken|nonce|apiKey|jwt|authToken|rememberMe|verificationCode|couponCode|captcha|challenge|BenchmarkTest)\b/i.test(
+      surroundingText
+    );
+
+  if (isCommerceOrUiSampleLine && !hasLineLevelSecuritySink) {
+    return {
+      isSecuritySensitive: false,
+      shouldSuppressAsNonSecurityData: true,
+      suppressionReason:
+        "Ordinary sample/commerce data generation (product price, quantity, rating, or UI value); output does not protect a token, OTP, session ID, or secret.",
+    };
+  }
+
+  if (isDataCreatorOrSeedFile && !hasLineLevelSecuritySink) {
+    return {
+      isSecuritySensitive: false,
+      shouldSuppressAsNonSecurityData: true,
+      suppressionReason: `Seed/fixture data generator (${filePath}) uses non-cryptographic PRNG without an established authentication token, OTP, session, or cryptographic secret sink.`,
+    };
+  }
+
+  if (hasLineLevelSecuritySink || hasWindowLevelSecuritySink) {
+    return {
+      isSecuritySensitive: true,
+      shouldSuppressAsNonSecurityData: false,
+      suppressionReason: "",
+    };
+  }
+
+  // Generic PRNG call with no established security token/OTP/session/secret usage in scope
+  return {
+    isSecuritySensitive: false,
+    shouldSuppressAsNonSecurityData: true,
+    suppressionReason:
+      "Primitive PRNG call detected without an established security-sensitive sink (token, OTP, password reset, session ID, or cryptographic nonce) in local AST scope.",
+  };
+}
 
 export function pluginSupportsLanguage(pluginLangs: string[], fileLang: string): boolean {
   if (!pluginLangs || pluginLangs.length === 0) return true;
@@ -1649,7 +1765,12 @@ export function deriveFindingAuditMetadata(params: {
     cwe === "CWE-915" ||
     cwe === "CWE-611" ||
     cwe === "CWE-693" ||
-    cwe === "CWE-942"
+    cwe === "CWE-942" ||
+    cwe === "CWE-1022" ||
+    cwe === "CWE-1021" ||
+    cwe === "CWE-346" ||
+    cwe === "CWE-200" ||
+    cwe === "CWE-494"
   ) {
     return {
       proofState: "GUARD_ANALYZED",
@@ -1665,13 +1786,13 @@ export function deriveFindingAuditMetadata(params: {
     };
   }
 
-  // Cryptographic / PRNG weaknesses: confirmed static weakness, runtime impact depends on security usage context
+  // Cryptographic / PRNG weaknesses: confirmed static weakness in verified security-sensitive context
   if (cwe === "CWE-328" || cwe === "CWE-327" || cwe === "CWE-330") {
     return {
       proofState: "DETECTED_STATIC",
       valStatus: "inconclusive",
       gtCat: "actually_vulnerable",
-      auditDisposition: `Confirmed Static ${cwe} Cryptographic/PRNG Weakness — Remediate According to Security Usage Context`,
+      auditDisposition: `Confirmed Static ${cwe} Cryptographic/PRNG Weakness in Verified Security Context — Replace with CSPRNG / Approved FIPS Primitive`,
       cvssVector: cvssMeta.vector,
       cvssRationale: cvssMeta.rationale,
       isBenchmarkFixture,
@@ -1858,6 +1979,22 @@ export function scanFilesWithEnterpriseEngines(params: {
         const windowEnd = Math.min(rawLines.length, idx + 6);
         const surroundingLines = rawLines.slice(windowStart, windowEnd);
         const surroundingText = surroundingLines.join("\n");
+
+        // Finding A Fix: Separate primitive PRNG detection from security-context validation
+        if (rule.cwe === "CWE-330") {
+          const prngCtx = evaluatePrngSecurityContext({
+            lineText: trimmed,
+            surroundingText,
+            filePath: fileObj.path,
+            fnName,
+          });
+          if (prngCtx.shouldSuppressAsNonSecurityData) {
+            logs.push(
+              `[CONTEXT-GUARD] Suppressed non-security PRNG usage at ${fileObj.path}:${lineNumber} (${prngCtx.suppressionReason})`
+            );
+            break;
+          }
+        }
 
         const sanitizerDetected = rule.sanitizerPattern.test(surroundingText);
         let detectedSourceLine = trimmed;
@@ -2265,6 +2402,27 @@ export function scanFilesWithEnterpriseEngines(params: {
       if (!matchedOnLine && matchedPlugin) {
         const lineNumber = idx + 1;
         const fnName = extractSurroundingFunction(rawLines, idx);
+        const windowStart = Math.max(0, idx - 5);
+        const windowEnd = Math.min(rawLines.length, idx + 5);
+        const surroundingLines = rawLines.slice(windowStart, windowEnd);
+        const surroundingText = surroundingLines.join("\n");
+
+        // Finding A Fix in Pass 3: Also guard CWE-330 plugins against non-security PRNG usage
+        if (matchedPlugin.cwe === "CWE-330") {
+          const prngCtx = evaluatePrngSecurityContext({
+            lineText: trimmed,
+            surroundingText,
+            filePath: fileObj.path,
+            fnName,
+          });
+          if (prngCtx.shouldSuppressAsNonSecurityData) {
+            logs.push(
+              `[CONTEXT-GUARD] Suppressed non-security PRNG plugin ${matchedPlugin.pluginId} at ${fileObj.path}:${lineNumber} (${prngCtx.suppressionReason})`
+            );
+            continue;
+          }
+        }
+
         const dedupKey = `${fileObj.path}::${fnName}::${matchedPlugin.cwe}`;
         const existingInFn = seenFunctionCwe.get(dedupKey);
         if (existingInFn) {
@@ -2275,10 +2433,6 @@ export function scanFilesWithEnterpriseEngines(params: {
           continue;
         }
 
-        const windowStart = Math.max(0, idx - 5);
-        const windowEnd = Math.min(rawLines.length, idx + 5);
-        const surroundingLines = rawLines.slice(windowStart, windowEnd);
-        const surroundingText = surroundingLines.join("\n");
         const findingId = `SAST-${String(findingCounter).padStart(3, "0")}`;
         findingCounter++;
         const today = new Date().toISOString().slice(0, 10);
@@ -2289,18 +2443,35 @@ export function scanFilesWithEnterpriseEngines(params: {
           surroundingText,
           repoUrl,
           filePath: fileObj.path,
+          lineText: trimmed,
         });
 
         const matchingCoreRule = ENTERPRISE_SAST_RULES.find((r) => r.cwe === matchedPlugin.cwe);
-        const pluginRemediation: Remediation[] = matchingCoreRule
-          ? getLanguageMatchedRemediation(matchingCoreRule.remediation, fileLang)
-          : [
+        const normalizedPlatform = (
+          ["Java", "Python", "Node.js", "Go", "C#", "PHP"].includes(fileLang)
+            ? fileLang
+            : fileLang === "TypeScript" || fileLang === "JavaScript"
+              ? "Node.js"
+              : "Java"
+        ) as Remediation["platform"];
+
+        const pluginRemediation: Remediation[] = matchedPlugin.remediationCode
+          ? [
               {
-                platform: (["Java", "Python", "Node.js", "Go", "C#", "PHP"].includes(fileLang) ? fileLang : "Java") as any,
+                platform: normalizedPlatform,
                 explanation: matchedPlugin.remediationSummary,
-                code: `// ❌ FLAGGED BY ${matchedPlugin.pluginId} (${matchedPlugin.code})\n${trimmed}\n\n// ✅ ILLUSTRATIVE REMEDIATION PATTERN (${fileLang})\n// ${matchedPlugin.sanitizerHint}`,
+                code: matchedPlugin.remediationCode,
               },
-            ];
+            ]
+          : matchingCoreRule
+            ? getLanguageMatchedRemediation(matchingCoreRule.remediation, fileLang)
+            : [
+                {
+                  platform: normalizedPlatform,
+                  explanation: matchedPlugin.remediationSummary,
+                  code: `// ❌ FLAGGED BY ${matchedPlugin.pluginId} (${matchedPlugin.code})\n${trimmed}\n\n// ✅ ILLUSTRATIVE REMEDIATION PATTERN (${fileLang})\n// ${matchedPlugin.sanitizerHint}`,
+                },
+              ];
 
         const engineResults: EngineResult[] = [
           {
@@ -2337,18 +2508,20 @@ export function scanFilesWithEnterpriseEngines(params: {
         const shortFile = fileObj.path.split("/").pop()?.replace(/[^a-zA-Z0-9]/g, "") || "File";
         const shortFn = fnName.replace(/[^a-zA-Z0-9]/g, "") || "fn";
         const sinkId = `SINK-${shortFile}-${shortFn}-${matchedPlugin.cwe}`;
+        const effectivePluginSeverity = auditMeta.overrideSeverity || matchedPlugin.severity;
+        const effectivePluginCvss = auditMeta.overrideCvss ?? matchedPlugin.cvss;
 
         const canonicalPluginFinding: SASTFinding = {
           id: findingId,
           title: `${matchedPlugin.name} [${matchedPlugin.pluginId}]`,
-          severity: matchedPlugin.severity,
+          severity: effectivePluginSeverity,
           status:
             auditMeta.proofState === "NEEDS_MANUAL_VALIDATION" || auditMeta.proofState === "DETECTED_STATIC"
               ? "In Review"
               : "Open",
           cwe: matchedPlugin.cwe,
           cweName: matchedPlugin.cweName,
-          cvss: matchedPlugin.cvss,
+          cvss: effectivePluginCvss,
           cvssVector: auditMeta.cvssVector,
           cvssRationale: auditMeta.cvssRationale,
           epss: matchedPlugin.epss,

@@ -42,6 +42,7 @@ export type SASTPluginDefinition = {
   pattern: string;
   sanitizerHint: string;
   remediationSummary: string;
+  remediationCode?: string;
 };
 
 type DomainSeed = {
@@ -498,8 +499,8 @@ const DOMAIN_SEEDS: DomainSeed[] = [
     severity: "High",
     cvss: 8.5,
     epss: 0.148,
-    sanitizerHint: "jwt.verify(token, key, { algorithms: ['RS256'] }) + tenant/owner row filter",
-    remediationSummary: "Enforce cryptographic JWT signature verification with explicit algorithms and verify object ownership on every API route.",
+    sanitizerHint: "Enforce compound ownership predicate (findByIdAndTenantId / findByIdAndUserId / verifyOwnership / WHERE id = :id AND tenant_id = :tenantId)",
+    remediationSummary: "Enforce server-side object ownership predicates (findByIdAndTenantId / findByIdAndUserId) and verify cross-user isolation (User A vs User B returns HTTP 403/404).",
     variants: [
       { code: "AUTH-JWT-DECODE-NOVERIFY", name: "JWT jwt.decode() Used Without Signature Verification (CWE-347)", languages: ["Node.js", "TypeScript", "Python"], fastTokens: ["jwt.decode("], pattern: "jwt\\.decode\\s*\\([^)]*(?:verify_signature[\"']?\\s*:\\s*False|\\))", cxQuery: "Auth_JWT/Unverified_JWT_Decode", ibmRule: "IBM-AUTH-JWT-201" },
       { code: "AUTH-JWT-ALG-NONE", name: "JWT Algorithm 'none' Explicitly Allowed in Verification", languages: ["Node.js", "TypeScript", "Python", "Java"], fastTokens: ["algorithms", "none"], pattern: "algorithms\\s*[:=].*[\"']none[\"']", cxQuery: "Auth_JWT/Algorithm_None_Allowed", ibmRule: "IBM-AUTH-JWT-202" },
@@ -820,6 +821,239 @@ const DOMAIN_SEEDS: DomainSeed[] = [
   },
 ];
 
+const VARIANT_SPECIFIC_OVERRIDES: Record<string, Partial<SASTPluginDefinition>> = {
+  "GOV-TARGET-BLANK-NOOPENER": {
+    cwe: "CWE-1022",
+    cweName: "Use of Web Link to Untrusted Target with window.opener Access ('Tabnabbing')",
+    severity: "Medium",
+    cvss: 5.4,
+    epss: 0.012,
+    owasp: "A05:2021 · Security Misconfiguration",
+    asvs: "ASVS V14.4.6 · Browser Origin & Opener Isolation",
+    nist80053: "SC-18 · Mobile Code & Browser Context Isolation",
+    nistSsdf: "PW.8.1 · Secure Web Client Coding",
+    pciDss: "PCI-DSS v4.0 Req 6.2.4",
+    iso27001: "ISO 27001 A.8.28",
+    mitreAttack: "T1189 (Reverse Tabnabbing via window.opener)",
+    fortifyKingdom: "Encapsulation",
+    fortifyAnalyzer: "Structural",
+    sanitizerHint: "Add rel=\"noopener noreferrer\" to all external target=\"_blank\" links or clear newWindow.opener = null",
+    remediationSummary:
+      "Include rel=\"noopener noreferrer\" on external anchor tags using target=\"_blank\" so the opened document cannot access or redirect the parent window via window.opener.",
+    remediationCode: `// ❌ VULNERABLE: External target="_blank" link without rel="noopener noreferrer" exposes window.opener\n<a href="https://external-site.example.com" target="_blank">External Resource</a>\n\n// ✅ REMEDIATED (HTML / JSX / Angular Template): Isolate browsing context with rel="noopener noreferrer"\n<a\n  href="https://external-site.example.com"\n  target="_blank"\n  rel="noopener noreferrer"\n>\n  External Resource\n</a>\n\n// ✅ REMEDIATED (Programmatic window.open in TypeScript / JavaScript):\nconst newWin = window.open(externalUrl, "_blank", "noopener,noreferrer");\nif (newWin) { newWin.opener = null; }`,
+  },
+  "PRIV-LOCALSTORAGE-TOKEN": {
+    cwe: "CWE-922",
+    cweName: "Insecure Storage of Sensitive Information (JWT/Auth Token in Browser Web Storage)",
+    severity: "Medium",
+    cvss: 6.5,
+    owasp: "A04:2021 · Insecure Design",
+    sanitizerHint: "Issue session/refresh tokens in HttpOnly, Secure, SameSite=Strict cookies instead of localStorage",
+    remediationSummary:
+      "Store session and refresh tokens in HttpOnly, Secure, SameSite=Strict cookies rather than localStorage/sessionStorage so DOM XSS cannot exfiltrate credentials.",
+    remediationCode: `// ❌ VULNERABLE: Storing bearer/JWT token in XSS-accessible localStorage\nlocalStorage.setItem("token", authResponse.jwt);\n\n// ✅ REMEDIATED: Issue token via server-set HttpOnly, Secure, SameSite=Strict cookie\nres.cookie("session_token", signedJwt, {\n  httpOnly: true,\n  secure: true,\n  sameSite: "strict",\n  path: "/api",\n  maxAge: 900_000,\n});`,
+  },
+  "PRIV-SSN-CLEARTEXT": {
+    cwe: "CWE-532",
+    cweName: "Insertion of Sensitive Information into Log File (Unmasked PII / SSN)",
+    severity: "High",
+    cvss: 7.5,
+    owasp: "A09:2021 · Security Logging and Monitoring Failures",
+    sanitizerHint: "Redact PII fields (SSN, taxId) via structured log redaction middleware before emission",
+    remediationSummary: "Redact or mask SSN/taxId attributes in structured logger serializers and never write raw PII to application logs.",
+  },
+  "PRIV-URL-QUERY-SECRET": {
+    cwe: "CWE-598",
+    cweName: "Use of GET Request Method With Sensitive Query Strings",
+    severity: "Medium",
+    cvss: 6.5,
+    owasp: "A04:2021 · Insecure Design",
+    sanitizerHint: "Transmit API keys, tokens, and passwords in Authorization headers or POST request bodies over TLS",
+    remediationSummary: "Never pass API keys, tokens, or passwords in URL query parameters where they are recorded in proxy, CDN, and browser history logs.",
+  },
+  "PRIV-STACKTRACE-RESPONSE": {
+    cwe: "CWE-209",
+    cweName: "Generation of Error Message Containing Sensitive Information (Stack Trace Exposure)",
+    severity: "Medium",
+    cvss: 5.3,
+    owasp: "A05:2021 · Security Misconfiguration",
+    sanitizerHint: "Return a generic error envelope with a correlation ID and log stack traces server-side only",
+    remediationSummary: "Do not serialize err.stack or raw exception tracebacks in HTTP responses; log full diagnostics internally with a correlation ID.",
+    remediationCode: `// ❌ VULNERABLE: Returning raw exception stack trace to HTTP client\nres.status(500).json({ error: err.message, stack: err.stack });\n\n// ✅ REMEDIATED: Log stack trace internally and return opaque correlation ID\nlogger.error({ correlationId: req.id, err }, "Unhandled request exception");\nres.status(500).json({ error: "Internal Server Error", correlationId: req.id });`,
+  },
+  "PRIV-AUTOCOMPLETE-PASSWORD": {
+    cwe: "CWE-525",
+    cweName: "Use of Web Browser Cache Containing Sensitive Information",
+    severity: "Low",
+    cvss: 3.7,
+    owasp: "A05:2021 · Security Misconfiguration",
+    sanitizerHint: "Set autoComplete=\"new-password\" or autoComplete=\"off\" on sensitive credential inputs",
+    remediationSummary: "Configure sensitive password and payment inputs with explicit autocomplete controls appropriate for the authentication flow.",
+  },
+  "GOV-POSTMESSAGE-STAR": {
+    cwe: "CWE-346",
+    cweName: "Origin Validation Error (window.postMessage Wildcard Target Origin)",
+    severity: "Medium",
+    cvss: 6.1,
+    owasp: "A05:2021 · Security Misconfiguration",
+    sanitizerHint: "Specify an explicit trusted targetOrigin (e.g. 'https://app.example.com') in postMessage() and verify event.origin",
+    remediationSummary: "Replace wildcard '*' targetOrigin in window.postMessage() with an explicit trusted origin URI and validate event.origin in message listeners.",
+  },
+  "GOV-IFRAME-NO-SANDBOX": {
+    cwe: "CWE-1021",
+    cweName: "Improper Restriction of Rendered UI Layers or Frames (Missing iframe sandbox)",
+    severity: "Medium",
+    cvss: 5.4,
+    owasp: "A05:2021 · Security Misconfiguration",
+    sanitizerHint: "Add a restrictive sandbox=\"allow-scripts\" attribute to external <iframe> elements",
+    remediationSummary: "Apply a least-privilege sandbox attribute to external <iframe> tags and disallow top-navigation or same-origin escalation.",
+  },
+  "GOV-HEADER-X-POWERED-BY": {
+    cwe: "CWE-200",
+    cweName: "Exposure of Sensitive Information to an Unauthorized Actor (X-Powered-By Server Banner)",
+    severity: "Low",
+    cvss: 3.7,
+    owasp: "A05:2021 · Security Misconfiguration",
+    sanitizerHint: "Call app.disable('x-powered-by') or enable helmet() middleware on Express applications",
+    remediationSummary: "Disable the Express X-Powered-By response header via app.disable('x-powered-by') or Helmet middleware to prevent framework fingerprinting.",
+    remediationCode: `// ❌ VULNERABLE: Default Express instance exposes X-Powered-By: Express\nconst app = express();\n\n// ✅ REMEDIATED: Disable X-Powered-By header or register Helmet middleware\nconst app = express();\napp.disable("x-powered-by");\napp.use(helmet());`,
+  },
+  "GOV-CHMOD-777": {
+    cwe: "CWE-732",
+    cweName: "Incorrect Permission Assignment for Critical Resource (World-Writable 0777 Mode)",
+    severity: "High",
+    cvss: 7.3,
+    owasp: "A05:2021 · Security Misconfiguration",
+    sanitizerHint: "Restrict file permissions to owner-only (0o600 for files, 0o700 for directories)",
+    remediationSummary: "Enforce least-privilege POSIX permissions (0600 or 0640 for files, 0700 or 0750 for directories) instead of world-writable 0777.",
+  },
+  "GOV-SMTP-HEADER-INJECTION": {
+    cwe: "CWE-93",
+    cweName: "Improper Neutralization of CRLF Sequences ('CRLF / SMTP Header Injection')",
+    severity: "High",
+    cvss: 7.5,
+    owasp: "A03:2021 · Injection",
+    sanitizerHint: "Strip CR/LF characters (\\r, \\n) from all user-supplied email headers before passing to mail transport",
+    remediationSummary: "Reject or strip carriage-return and line-feed (\\r\\n) sequences from user-controlled Subject, To, and Reply-To email headers.",
+  },
+  "GOV-HOST-HEADER-RESET-LINK": {
+    cwe: "CWE-640",
+    cweName: "Weak Password Recovery Mechanism for Forgotten Password (Host Header Poisoning)",
+    severity: "High",
+    cvss: 8.1,
+    owasp: "A07:2021 · Identification and Authentication Failures",
+    sanitizerHint: "Construct password-reset URLs from an immutable server-side CANONICAL_BASE_URL environment variable",
+    remediationSummary: "Never build password reset links using req.headers.host or X-Forwarded-Host; use an immutable server-configured base URL.",
+  },
+  "SCA-CDN-MISSING-SRI": {
+    cwe: "CWE-494",
+    cweName: "Download of Code Without Integrity Check (Missing Subresource Integrity on External Script)",
+    severity: "Medium",
+    cvss: 5.9,
+    owasp: "A08:2021 · Software and Data Integrity Failures",
+    sanitizerHint: "Add integrity=\"sha384-...\" and crossorigin=\"anonymous\" attributes to third-party CDN <script> tags",
+    remediationSummary: "Include cryptographic Subresource Integrity (integrity=\"sha384-...\") and crossorigin=\"anonymous\" on all external CDN scripts.",
+  },
+  "CRYP-JAVA-UTIL-RANDOM": {
+    cwe: "CWE-330",
+    cweName: "Use of Insufficiently Random Values (java.util.Random in Security Context)",
+    severity: "Medium",
+    cvss: 5.3,
+  },
+  "CRYP-PY-RANDOM-MODULE": {
+    cwe: "CWE-330",
+    cweName: "Use of Insufficiently Random Values (Python random Module in Security Context)",
+    severity: "Medium",
+    cvss: 5.3,
+  },
+  "CRYP-JS-MATH-RANDOM": {
+    cwe: "CWE-330",
+    cweName: "Use of Insufficiently Random Values (Math.random() in Verified Security Context)",
+    severity: "Medium",
+    cvss: 5.3,
+    sanitizerHint: "Replace Math.random() with crypto.randomBytes(32).toString('hex') or crypto.randomUUID() when generating tokens, OTPs, or secrets",
+    remediationSummary:
+      "Replace Math.random() with OS-backed CSPRNG (crypto.randomBytes / crypto.randomInt) whenever the output protects a token, OTP, password reset link, session ID, or secret.",
+    remediationCode: `// ❌ VULNERABLE: Non-cryptographic Math.random() used for security token / OTP\nconst resetToken = Math.random().toString(36).substring(2);\n\n// ✅ REMEDIATED (Node.js / TypeScript): OS-backed CSPRNG with 256-bit entropy\nimport * as crypto from "crypto";\nconst resetToken = crypto.randomBytes(32).toString("hex");`,
+  },
+  "CRYP-PHP-RAND-MTRAND": {
+    cwe: "CWE-330",
+    cweName: "Use of Insufficiently Random Values (PHP rand / mt_rand in Security Context)",
+    severity: "Medium",
+    cvss: 5.3,
+  },
+  "CRYP-GO-MATH-RAND": {
+    cwe: "CWE-330",
+    cweName: "Use of Insufficiently Random Values (Go math/rand in Security Context)",
+    severity: "Medium",
+    cvss: 5.3,
+  },
+  "AUTH-BOLA-DIRECT-ID": {
+    cwe: "CWE-639",
+    cweName: "Authorization Bypass Through User-Controlled Key (BOLA / IDOR)",
+    severity: "High",
+    cvss: 8.1,
+    sanitizerHint: "Enforce compound ownership query predicate (findByIdAndUserId / findByIdAndTenantId / WHERE id = :id AND user_id = :authenticatedUserId)",
+    remediationSummary:
+      "Scope every object lookup by both the requested resource ID and the authenticated principal's userId/tenantId (findByIdAndUserId / findByIdAndTenantId), returning 403/404 when User A requests User B's resource.",
+    remediationCode: `// ❌ VULNERABLE: Unscoped primary-key lookup allows User A to read/modify User B's record\nconst record = await repo.findById(req.params.id);\n\n// ✅ REMEDIATED (Compound Ownership Predicate — Verified with User A vs User B 403/404 Test):\nconst record = await repo.findByIdAndUserId(req.params.id, req.user.id);\n// SQL equivalent: SELECT * FROM records WHERE id = :id AND user_id = :authenticatedUserId AND tenant_id = :tenantId\nif (!record) {\n  return res.status(404).json({ error: "Resource not found in caller ownership scope" });\n}`,
+  },
+  "AUTH-JWT-DECODE-NOVERIFY": {
+    cwe: "CWE-347",
+    cweName: "Improper Verification of Cryptographic Signature (Unverified JWT Decode)",
+    severity: "Critical",
+    cvss: 9.1,
+  },
+  "AUTH-JWT-ALG-NONE": {
+    cwe: "CWE-347",
+    cweName: "Improper Verification of Cryptographic Signature (JWT Algorithm 'none' Allowed)",
+    severity: "Critical",
+    cvss: 9.1,
+  },
+  "AUTH-JAVA-JJWT-PARSE": {
+    cwe: "CWE-347",
+    cweName: "Improper Verification of Cryptographic Signature (JJWT Unsigned Token Parse)",
+    severity: "Critical",
+    cvss: 9.1,
+  },
+  "AUTH-MASS-ASSIGNMENT-NODE": {
+    cwe: "CWE-915",
+    cweName: "Improperly Controlled Modification of Dynamically-Determined Object Attributes (Mass Assignment)",
+    severity: "High",
+    cvss: 7.1,
+  },
+  "AUTH-CORS-WILDCARD": {
+    cwe: "CWE-942",
+    cweName: "Permissive Cross-domain Policy with Untrusted Domains (CORS Wildcard)",
+    severity: "Medium",
+    cvss: 5.4,
+  },
+  "AUTH-SPRING-CROSSORIGIN": {
+    cwe: "CWE-942",
+    cweName: "Permissive Cross-domain Policy with Untrusted Domains (@CrossOrigin Wildcard)",
+    severity: "Medium",
+    cvss: 5.4,
+  },
+  "AUTH-SPRING-CSRF-DISABLE": {
+    cwe: "CWE-352",
+    cweName: "Cross-Site Request Forgery (CSRF Protection Disabled)",
+    severity: "Medium",
+    cvss: 6.5,
+  },
+  "AUTH-DJANGO-CSRF-EXEMPT": {
+    cwe: "CWE-352",
+    cweName: "Cross-Site Request Forgery (@csrf_exempt on State-Changing Endpoint)",
+    severity: "Medium",
+    cvss: 6.5,
+  },
+  "AUTH-PAM-PASSWORD-LOG": {
+    cwe: "CWE-532",
+    cweName: "Insertion of Sensitive Information into Log File (Plaintext Password Logged)",
+    severity: "High",
+    cvss: 7.5,
+  },
+};
+
 // Materialize the complete 400-Plugin Catalog deterministically
 export const SAST_400_PLUGINS: SASTPluginDefinition[] = (() => {
   const list: SASTPluginDefinition[] = [];
@@ -827,10 +1061,11 @@ export const SAST_400_PLUGINS: SASTPluginDefinition[] = (() => {
   for (const seed of DOMAIN_SEEDS) {
     for (const v of seed.variants) {
       const pluginId = `PLG-${String(counter).padStart(3, "0")}`;
-      let mitreAttack = seed.mitreAttack;
-      let sanitizerHint = seed.sanitizerHint;
-      let severity = seed.severity;
-      let cvss = seed.cvss;
+      const override = VARIANT_SPECIFIC_OVERRIDES[v.code];
+      let mitreAttack = override?.mitreAttack || seed.mitreAttack;
+      let sanitizerHint = override?.sanitizerHint || seed.sanitizerHint;
+      let severity = override?.severity || seed.severity;
+      let cvss = override?.cvss ?? seed.cvss;
 
       if (seed.cwe === "CWE-94") {
         if (v.languages.includes("Python")) {
@@ -857,28 +1092,29 @@ export const SAST_400_PLUGINS: SASTPluginDefinition[] = (() => {
         pluginId,
         code: v.code,
         name: v.name,
-        category: seed.category,
+        category: override?.category || seed.category,
         severity,
         cvss,
-        epss: seed.epss,
-        cwe: seed.cwe,
-        cweName: seed.cweName,
-        owasp: seed.owasp,
-        asvs: seed.asvs,
-        nist80053: seed.nist80053,
-        nistSsdf: seed.nistSsdf,
-        pciDss: seed.pciDss,
-        iso27001: seed.iso27001,
+        epss: override?.epss ?? seed.epss,
+        cwe: override?.cwe || seed.cwe,
+        cweName: override?.cweName || seed.cweName,
+        owasp: override?.owasp || seed.owasp,
+        asvs: override?.asvs || seed.asvs,
+        nist80053: override?.nist80053 || seed.nist80053,
+        nistSsdf: override?.nistSsdf || seed.nistSsdf,
+        pciDss: override?.pciDss || seed.pciDss,
+        iso27001: override?.iso27001 || seed.iso27001,
         mitreAttack,
         checkmarxQuery: v.cxQuery,
         ibmRuleId: v.ibmRule,
-        fortifyKingdom: seed.fortifyKingdom,
-        fortifyAnalyzer: seed.fortifyAnalyzer,
+        fortifyKingdom: override?.fortifyKingdom || seed.fortifyKingdom,
+        fortifyAnalyzer: override?.fortifyAnalyzer || seed.fortifyAnalyzer,
         languages: v.languages,
         fastTokens: v.fastTokens.map((t) => t.toLowerCase()),
         pattern: v.pattern,
         sanitizerHint,
-        remediationSummary: seed.remediationSummary,
+        remediationSummary: override?.remediationSummary || seed.remediationSummary,
+        remediationCode: override?.remediationCode,
       });
       counter++;
     }

@@ -1093,14 +1093,14 @@ export default function ReportEnginePage() {
                   }}
                 >
                   <div style={{ fontSize: 10, fontWeight: 800, color: "#5c5349", textTransform: "uppercase" }}>
-                    Composite Risk Index
+                    Primary Code Risk Index
                   </div>
                   <div style={{ fontSize: 26, fontWeight: 900, color: "#9e2a2b", marginTop: 4 }}>
                     {riskScore}
                     <span style={{ fontSize: 13, fontWeight: 600, color: "#5c5349" }}>/100</span>
                   </div>
-                  <div style={{ fontSize: 10.5, color: "#5c5349", marginTop: 2 }}>
-                    Weighted CVSS Exposure
+                  <div style={{ fontSize: 10, color: "#5c5349", marginTop: 2 }}>
+                    Primary ({riskWorksheet.primaryFindingsCount} SAST-*): {riskWorksheet.primaryCodeWeightedSum} pts &middot; Combined w/ RE-ENUM: {riskWorksheet.combinedPostureRiskScore}/100
                   </div>
                 </div>
 
@@ -1198,22 +1198,22 @@ export default function ReportEnginePage() {
                 <code style={{ fontFamily: "monospace", fontWeight: 700 }}>{targetName}</code> (commit{" "}
                 <code style={{ fontFamily: "monospace" }}>{fullCommitSha.slice(0, 12)}</code>, scope:{" "}
                 <strong>{scopeQualificationLabel}</strong>). Out of{" "}
-                <strong>{canonicalStats.total} deduplicated findings</strong> (comprising{" "}
-                <strong>{riskWorksheet.primaryFindingsCount} Pass-1 Primary Code Findings</strong> and{" "}
-                <strong>{riskWorksheet.architecturalCandidateCount} Pass-2/3 Architectural Candidate Hypotheses</strong>, with{" "}
+                <strong>{canonicalStats.total} deduplicated findings</strong> (strictly separated into{" "}
+                <strong>{riskWorksheet.primaryFindingsCount} Pass-1 Primary Scanned Code Findings [SAST-*]</strong> and{" "}
+                <strong>{riskWorksheet.architecturalCandidateCount} Pass-2/3 Architectural Candidate Hypotheses [RE-ENUM-*]</strong>, with{" "}
                 <strong>{riskWorksheet.benchmarkCalibration.duplicateConsolidationCount} co-located sink(s) consolidated by shared root cause</strong>):{" "}
                 <strong>{canonicalStats.dataflowConfirmed} findings</strong> reached{" "}
                 <code style={{ fontFamily: "monospace", fontWeight: 700 }}>DATAFLOW_CONFIRMED</code>{" "}
                 (Pass-1 source-to-sink taint flow verified),{" "}
                 <strong>{canonicalStats.guardAnalyzed} findings</strong> reached{" "}
                 <code style={{ fontFamily: "monospace", fontWeight: 700 }}>GUARD_ANALYZED</code>{" "}
-                (authorization ownership, JWT signature verification, mass assignment, XML parser flags, headers, cookies, CORS, and IAM controls),{" "}
+                (authorization ownership, JWT signature verification, mass assignment, XML parser flags, Tabnabbing rel=&quot;noopener noreferrer&quot;, headers, cookies, CORS, and IAM controls),{" "}
                 <strong>{canonicalStats.pathFeasible} findings</strong> reached{" "}
                 <code style={{ fontFamily: "monospace", fontWeight: 700 }}>PATH_FEASIBLE</code>{" "}
                 (Pass-2/3 architectural candidate hypotheses &amp; concurrency TOCTOU state windows),{" "}
                 <strong>{canonicalStats.detectedStatic} findings</strong> reached{" "}
                 <code style={{ fontFamily: "monospace", fontWeight: 700 }}>DETECTED_STATIC</code>{" "}
-                (cryptographic digest &amp; weak PRNG primitives),{" "}
+                (cryptographic digest &amp; security-context-validated PRNG primitives),{" "}
                 <strong>{canonicalStats.needsManualValidation} findings</strong> are{" "}
                 <code style={{ fontFamily: "monospace", fontWeight: 700 }}>NEEDS_MANUAL_VALIDATION</code>{" "}
                 (secret provenance, dependency reachability &amp; DOM HTML provenance), and{" "}
@@ -1221,18 +1221,14 @@ export default function ReportEnginePage() {
                 <code style={{ fontFamily: "monospace", fontWeight: 700 }}>RUNTIME_REPRODUCED</code>{" "}
                 (isolated runtime sandbox verification was <strong>NOT_RUN</strong> during this static scan).
                 <div style={{ marginTop: 6, fontSize: 11, color: "#5c5349" }}>
-                  <strong>Risk vs. Heuristic Concordance Separation &amp; Benchmark Calibration Disclosure:</strong>{" "}
-                  <strong>Composite Risk ({riskScore}/100)</strong> measures severity-weighted and reachability-adjusted potential exposure across evaluated findings (scaled dynamically to scope ceiling <code>{riskWorksheet.normalizationCeiling}</code>; Primary Scanned Code = <code>{riskWorksheet.primaryCodeWeightedSum} pts</code>, Architectural Candidates = <code>{riskWorksheet.architecturalCandidateWeightedSum} pts</code>).{" "}
+                  <strong>Primary Scanned Code vs. Architectural Hypothesis Risk Separation:</strong>{" "}
+                  <strong>Primary Code Risk Index ({riskScore}/100)</strong> is computed exclusively from <strong>Pass-1 Primary Scanned Code Findings (<code>SAST-*</code> = <code>{riskWorksheet.primaryCodeWeightedSum} pts</code>)</strong> scaled to scope ceiling <code>{riskWorksheet.normalizationCeiling}</code> so Pass-2/3 architectural candidate hypotheses never inflate the scanned repository&apos;s primary risk score.{" "}
+                  <strong>Pass-2/3 Architectural Hypotheses (<code>RE-ENUM-*</code> = <code>{riskWorksheet.architecturalCandidateWeightedSum} pts</code> across {riskWorksheet.architecturalCandidateCount} items)</strong> are tracked separately (Combined Posture Index: <code>{riskWorksheet.combinedPostureRiskScore}/100</code>).{" "}
                   <strong>Multi-Engine Heuristic Concordance ({avgConf.toFixed(1)}%)</strong> is an engine-reported rule-agreement index across the 4 static analyzers (
                   <code>XTRIKE XQL={riskWorksheet.engineConcordance.xql}%</code>,{" "}
                   <code>DeepFlow={riskWorksheet.engineConcordance.deepFlow}%</code>,{" "}
                   <code>StructSCA={riskWorksheet.engineConcordance.structSca}%</code>,{" "}
-                  <code>AST-Query={riskWorksheet.engineConcordance.astQuery}%</code>) and should not be interpreted as an empirical 93.3% probability of live exploitability. Empirical ground-truth validation against labeled OWASP Benchmark fixtures measured{" "}
-                  <code>TP={riskWorksheet.benchmarkCalibration.truePositivesDetected}/{riskWorksheet.benchmarkCalibration.labeledVulnerableFixturesTested}</code> vulnerable fixtures and{" "}
-                  <code>TN={riskWorksheet.benchmarkCalibration.falsePositivesSuppressed}/{riskWorksheet.benchmarkCalibration.safeControlFixturesTested}</code> safe control fixtures suppressed (Precision:{" "}
-                  <strong>{riskWorksheet.benchmarkCalibration.measuredPrecisionPercent}%</strong>, Recall:{" "}
-                  <strong>{riskWorksheet.benchmarkCalibration.measuredRecallPercent}%</strong>, False Confirmation Rate:{" "}
-                  <strong>{riskWorksheet.benchmarkCalibration.falseConfirmationRatePercent}%</strong>).
+                  <code>AST-Query={riskWorksheet.engineConcordance.astQuery}%</code>) and is not a probability of live exploitability.
                 </div>
 
               </div>
@@ -1244,6 +1240,7 @@ export default function ReportEnginePage() {
                   borderRadius: 10,
                   background: "#ffffff",
                   padding: "12px 14px",
+                  marginBottom: 14,
                 }}
               >
                 <div
@@ -1257,10 +1254,10 @@ export default function ReportEnginePage() {
                   }}
                 >
                   <strong style={{ fontSize: 12, color: "#1f1b18" }}>
-                    Reproducible Composite Risk, Scope Separation &amp; 4-Engine Concordance Worksheet (AT-CVSS-01 / AT-16)
+                    Reproducible Composite Risk, Primary vs. Architectural Scope Separation &amp; 4-Engine Concordance Worksheet (AT-CVSS-01 / AT-16)
                   </strong>
                   <span style={{ fontFamily: "monospace", fontSize: 11, color: "#8b4528", fontWeight: 700 }}>
-                    Primary: {riskWorksheet.primaryCodeWeightedSum} pts + Arch Candidates: {riskWorksheet.architecturalCandidateWeightedSum} pts = {riskWorksheet.rawWeightedSum} / Ceiling: {riskWorksheet.normalizationCeiling} &rarr; Risk = {riskScore}/100
+                    Primary Code ({riskWorksheet.primaryFindingsCount} SAST-*): {riskWorksheet.primaryCodeWeightedSum} pts / Ceiling {riskWorksheet.normalizationCeiling} &rarr; Primary Risk = {riskScore}/100 (Arch RE-ENUM: +{riskWorksheet.architecturalCandidateWeightedSum} pts &rarr; Combined = {riskWorksheet.combinedPostureRiskScore}/100)
                   </span>
                 </div>
 
@@ -1312,6 +1309,98 @@ export default function ReportEnginePage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Per-Category Ground-Truth Benchmark Confusion Matrix & Scope Caveat */}
+              <div
+                style={{
+                  border: "1px solid #ddd3c2",
+                  borderRadius: 10,
+                  background: "#ffffff",
+                  padding: "12px 14px",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: 8,
+                    marginBottom: 8,
+                  }}
+                >
+                  <strong style={{ fontSize: 12, color: "#1f1b18" }}>
+                    Per-Category Ground-Truth Benchmark Confusion Matrix (TP / FP / TN / FN &amp; PRNG Context Disambiguation)
+                  </strong>
+                  <span style={{ fontFamily: "monospace", fontSize: 11, color: "#2d6a4f", fontWeight: 700 }}>
+                    Total Tested: {riskWorksheet.benchmarkCalibration.labeledVulnerableFixturesTested} Vulnerable + {riskWorksheet.benchmarkCalibration.safeControlFixturesTested} Safe Controls &middot; Precision: {riskWorksheet.benchmarkCalibration.measuredPrecisionPercent}% &middot; Recall: {riskWorksheet.benchmarkCalibration.measuredRecallPercent}%
+                  </span>
+                </div>
+
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10.8 }}>
+                  <thead>
+                    <tr style={{ background: "#f3eee4", color: "#1f1b18" }}>
+                      <th style={{ border: "1px solid #ddd3c2", padding: "5px 8px", textAlign: "left" }}>
+                        Vulnerability Category
+                      </th>
+                      <th style={{ border: "1px solid #ddd3c2", padding: "5px 8px", textAlign: "left" }}>
+                        CWE Scope
+                      </th>
+                      <th style={{ border: "1px solid #ddd3c2", padding: "5px 8px", textAlign: "center" }}>
+                        TP
+                      </th>
+                      <th style={{ border: "1px solid #ddd3c2", padding: "5px 8px", textAlign: "center" }}>
+                        FP
+                      </th>
+                      <th style={{ border: "1px solid #ddd3c2", padding: "5px 8px", textAlign: "center" }}>
+                        TN (Safe Suppressed)
+                      </th>
+                      <th style={{ border: "1px solid #ddd3c2", padding: "5px 8px", textAlign: "center" }}>
+                        FN
+                      </th>
+                      <th style={{ border: "1px solid #ddd3c2", padding: "5px 8px", textAlign: "center" }}>
+                        Precision / Recall
+                      </th>
+                      <th style={{ border: "1px solid #ddd3c2", padding: "5px 8px", textAlign: "left" }}>
+                        Semantic Guard &amp; Context Validation Rule
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {riskWorksheet.benchmarkCalibration.perCategoryConfusionMatrix.map((row) => (
+                      <tr key={row.category}>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px", fontWeight: 800 }}>
+                          {row.category}
+                        </td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px", fontFamily: "monospace", fontSize: 10 }}>
+                          {row.cweScope}
+                        </td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px", textAlign: "center", fontWeight: 700, color: "#2d6a4f" }}>
+                          {row.tp}
+                        </td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px", textAlign: "center", fontFamily: "monospace" }}>
+                          {row.fp}
+                        </td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px", textAlign: "center", fontWeight: 700, color: "#2d6a4f" }}>
+                          {row.tn}
+                        </td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px", textAlign: "center", fontFamily: "monospace" }}>
+                          {row.fn}
+                        </td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px", textAlign: "center", fontFamily: "monospace", fontWeight: 700 }}>
+                          {row.precisionPercent}% / {row.recallPercent}%
+                        </td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px", color: "#4a4239" }}>
+                          {row.validationNote}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div style={{ marginTop: 8, fontSize: 10.5, color: "#5c5349", lineHeight: 1.5 }}>
+                  <strong>Calibration Scope &amp; Generalization Caveat:</strong> {riskWorksheet.benchmarkCalibration.scopeCaveat}
+                </div>
               </div>
             </section>
           )}

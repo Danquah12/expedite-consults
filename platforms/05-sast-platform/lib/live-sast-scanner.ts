@@ -5,6 +5,7 @@ import {
   generateDeepReEnumeratedFindings,
 } from "@/lib/deep-enumeration-engine";
 import { normalizeFindingCvssAndProof } from "@/lib/cvss31";
+import { evaluatePrngSecurityContext } from "@/lib/enterprise-sast-engine";
 
 
 export type StandardPluginId =
@@ -2150,6 +2151,13 @@ export async function runDynamicRepoOrCodeScan(params: {
       );
       if (treeRes.ok) {
         const treeData = await treeRes.json();
+        const scoreBlobPriority = (p: string): number => {
+          const lower = p.toLowerCase();
+          if (/(^|\/)(routes|controllers|api|auth|security|middleware|services|models)\//.test(lower)) return 0;
+          if (/(^|\/)(src|lib|server|app)\//.test(lower)) return 1;
+          if (/(datacreator|seed|fixture|mock|sample|demo|test|spec)/i.test(lower)) return 3;
+          return 2;
+        };
         const codeBlobs = (treeData.tree || [])
           .filter(
             (n: { type?: string; path?: string }) =>
@@ -2159,6 +2167,7 @@ export async function runDynamicRepoOrCodeScan(params: {
               !n.path.includes("node_modules") &&
               !n.path.includes("vendor")
           )
+          .sort((a: { path: string }, b: { path: string }) => scoreBlobPriority(a.path) - scoreBlobPriority(b.path))
           .slice(0, 12);
 
         const fetchedFiles: Array<{ filePath: string; language: string; code: string }> = [];
@@ -2228,6 +2237,21 @@ function consolidateAdjacentRootCauseFindings(
 
   for (const f of rawFindings) {
     const isReEnum = f.id.startsWith("RE-ENUM-");
+    // Suppress ordinary non-security PRNG sample/commerce data generation (Finding A fix)
+    if (
+      f.cwe === "CWE-330" ||
+      /Math\.random|java\.util\.Random|random\.(random|randint)/i.test(`${f.sink || ""} ${f.title || ""}`)
+    ) {
+      const prngCheck = evaluatePrngSecurityContext({
+        lineText: f.sink || f.title || "",
+        surroundingText: `${f.codeSnippet || ""}\n${(f.taintPath || []).join("\n")}`,
+        filePath: f.file || "",
+        fnName: "",
+      });
+      if (prngCheck.shouldSuppressAsNonSecurityData) {
+        continue;
+      }
+    }
     if (!isReEnum) {
       const existing = consolidated.find(
         (prev) =>
