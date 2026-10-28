@@ -82,15 +82,20 @@ export default function ReportEnginePage() {
     const sync = () => {
       const session = loadActiveScanSession();
       setActiveSession(session);
+      setSeverityFilter("all");
+    };
+    const handleCleared = () => {
+      setActiveSession(null);
+      setSeverityFilter("all");
     };
     sync();
     window.addEventListener("storage", sync);
     window.addEventListener("xtrike-scan-updated", sync);
-    window.addEventListener("xtrike-scan-cleared", sync);
+    window.addEventListener("xtrike-scan-cleared", handleCleared);
     return () => {
       window.removeEventListener("storage", sync);
       window.removeEventListener("xtrike-scan-updated", sync);
-      window.removeEventListener("xtrike-scan-cleared", sync);
+      window.removeEventListener("xtrike-scan-cleared", handleCleared);
     };
   }, []);
 

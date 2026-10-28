@@ -2236,7 +2236,7 @@ export function loadActiveScanSession(): ActiveScanSession | null {
           matches,
         });
         return {
-          sessionId: `SCAN-DEEP-${(t.commitSha || "live").slice(0, 6).toUpperCase()}`,
+          sessionId: t.sessionId || `SCAN-DEEP-${(t.commitSha || "live").slice(0, 6).toUpperCase()}`,
           repoUrl: t.repoUrl || "attached-codebase",
           branch: t.branch || "main",
           commitSha: t.commitSha || "a4f92c81",
@@ -2290,6 +2290,19 @@ export function clearActiveScanSession(): void {
     for (const k of keysToRemove) {
       window.sessionStorage.removeItem(k);
       window.localStorage.removeItem(k);
+    }
+    // Also sweep any dynamically suffixed scan cache keys
+    for (const storage of [window.sessionStorage, window.localStorage]) {
+      const dynamicKeys: string[] = [];
+      for (let i = 0; i < storage.length; i++) {
+        const key = storage.key(i);
+        if (key && /^(xtrike_.*scan|sast_.*scan)/i.test(key)) {
+          dynamicKeys.push(key);
+        }
+      }
+      for (const dk of dynamicKeys) {
+        storage.removeItem(dk);
+      }
     }
     window.dispatchEvent(new Event("xtrike-scan-cleared"));
     window.dispatchEvent(new Event("xtrike-scan-updated"));

@@ -42,6 +42,7 @@ import {
   PYTHON_STANDARD_PLUGINS,
   CWE_MULTI_STANDARD_KNOWLEDGE,
   loadActiveScanSession,
+  clearActiveScanSession,
   type ActiveScanSession,
   type StandardPluginId,
 } from "@/lib/live-sast-scanner";
@@ -109,20 +110,28 @@ export default function ValidationEnginePage() {
     const syncSession = () => {
       const loaded = loadActiveScanSession();
       setActiveSession(loaded);
+      setLangFilter("All");
+      setStatusFilter("all");
       if (loaded && loaded.validationFindings.length > 0) {
         setSelectedFindingId(loaded.validationFindings[0].findingId);
       } else {
         setSelectedFindingId("VAL-101");
       }
     };
+    const handleCleared = () => {
+      setActiveSession(null);
+      setLangFilter("All");
+      setStatusFilter("all");
+      setSelectedFindingId("VAL-101");
+    };
     syncSession();
     window.addEventListener("storage", syncSession);
     window.addEventListener("xtrike-scan-updated", syncSession);
-    window.addEventListener("xtrike-scan-cleared", syncSession);
+    window.addEventListener("xtrike-scan-cleared", handleCleared);
     return () => {
       window.removeEventListener("storage", syncSession);
       window.removeEventListener("xtrike-scan-updated", syncSession);
-      window.removeEventListener("xtrike-scan-cleared", syncSession);
+      window.removeEventListener("xtrike-scan-cleared", handleCleared);
     };
   }, []);
 
@@ -486,6 +495,7 @@ export default function ValidationEnginePage() {
 
             <a
               href="/scan"
+              onClick={() => clearActiveScanSession()}
               style={{
                 display: "inline-flex",
                 alignItems: "center",

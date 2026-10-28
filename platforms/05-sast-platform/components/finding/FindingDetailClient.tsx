@@ -44,6 +44,9 @@ function deriveInitialProofStatus(f: SASTFinding): AuthoritativeProofStatus {
 
 export default function FindingDetailClient({ id }: { id: string }) {
   const [finding, setFinding] = useState<SASTFinding | null>(() => {
+    const session = loadActiveScanSession();
+    const liveMatch = session?.sastFindings?.find((f) => f.id === id);
+    if (liveMatch) return liveMatch;
     return FINDINGS.find((f) => f.id === id) || null;
   });
   const [proofStatus, setProofStatus] = useState<AuthoritativeProofStatus>("Dataflow Confirmed");
@@ -51,31 +54,43 @@ export default function FindingDetailClient({ id }: { id: string }) {
   const [mitigationVerified, setMitigationVerified] = useState<boolean>(false);
 
   useEffect(() => {
-    let resolvedFinding: SASTFinding | null = null;
-    const staticMatch = FINDINGS.find((f) => f.id === id);
-    if (staticMatch) {
-      resolvedFinding = staticMatch;
-    } else {
+    const syncFinding = () => {
+      let resolvedFinding: SASTFinding | null = null;
       const session = loadActiveScanSession();
       const liveMatch = session?.sastFindings?.find((f) => f.id === id);
       if (liveMatch) {
         resolvedFinding = liveMatch;
-      } else if (session?.sastFindings && session.sastFindings.length > 0) {
-        resolvedFinding = session.sastFindings[0];
       } else {
-        resolvedFinding = FINDINGS[0];
+        const staticMatch = FINDINGS.find((f) => f.id === id);
+        if (staticMatch) {
+          resolvedFinding = staticMatch;
+        } else if (session?.sastFindings && session.sastFindings.length > 0) {
+          resolvedFinding = session.sastFindings[0];
+        } else {
+          resolvedFinding = FINDINGS[0];
+        }
       }
-    }
 
-    if (resolvedFinding) {
-      setFinding(resolvedFinding);
-      const initialStatus = deriveInitialProofStatus(resolvedFinding);
-      setProofStatus(initialStatus);
-      setRuntimeReproduced(
-        initialStatus === "Runtime Reproduced" || initialStatus === "Impact Confirmed"
-      );
-      setMitigationVerified(initialStatus === "False Positive");
-    }
+      if (resolvedFinding) {
+        setFinding(resolvedFinding);
+        const initialStatus = deriveInitialProofStatus(resolvedFinding);
+        setProofStatus(initialStatus);
+        setRuntimeReproduced(
+          initialStatus === "Runtime Reproduced" || initialStatus === "Impact Confirmed"
+        );
+        setMitigationVerified(initialStatus === "False Positive");
+      }
+    };
+
+    syncFinding();
+    window.addEventListener("storage", syncFinding);
+    window.addEventListener("xtrike-scan-updated", syncFinding);
+    window.addEventListener("xtrike-scan-cleared", syncFinding);
+    return () => {
+      window.removeEventListener("storage", syncFinding);
+      window.removeEventListener("xtrike-scan-updated", syncFinding);
+      window.removeEventListener("xtrike-scan-cleared", syncFinding);
+    };
   }, [id]);
 
   const handleProofStatusChange = (nextStatus: AuthoritativeProofStatus) => {

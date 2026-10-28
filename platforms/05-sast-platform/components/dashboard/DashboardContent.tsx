@@ -11,6 +11,7 @@ import FINDINGS from "@/data/findings";
 import { calculateRiskScore, severityCounts, averageConfidence } from "@/lib/risk";
 import {
   loadActiveScanSession,
+  clearActiveScanSession,
   ACTIVE_SCAN_STORAGE_KEY,
   type ActiveScanSession,
 } from "@/lib/live-sast-scanner";
@@ -234,16 +235,22 @@ export default function DashboardContent() {
     const syncSession = () => {
       const loaded = loadActiveScanSession();
       setActiveSession(loaded);
-      if (loaded) setUseBenchmarkDataset(false);
+      setUseBenchmarkDataset(false);
+      setSelectedDetail(null);
+    };
+    const handleCleared = () => {
+      setActiveSession(null);
+      setUseBenchmarkDataset(false);
+      setSelectedDetail(null);
     };
     syncSession();
     window.addEventListener("storage", syncSession);
     window.addEventListener("xtrike-scan-updated", syncSession);
-    window.addEventListener("xtrike-scan-cleared", syncSession);
+    window.addEventListener("xtrike-scan-cleared", handleCleared);
     return () => {
       window.removeEventListener("storage", syncSession);
       window.removeEventListener("xtrike-scan-updated", syncSession);
-      window.removeEventListener("xtrike-scan-cleared", syncSession);
+      window.removeEventListener("xtrike-scan-cleared", handleCleared);
     };
   }, []);
 
@@ -403,6 +410,7 @@ export default function DashboardContent() {
           )}
           <Link
             href="/scan"
+            onClick={() => clearActiveScanSession()}
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -770,7 +778,7 @@ export default function DashboardContent() {
 
         <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 12, color: "var(--muted)" }}>
           <span>
-            Showing <strong style={{ color: "var(--foreground)" }}>{results.length}</strong> of {FINDINGS.length} findings
+            Showing <strong style={{ color: "var(--foreground)" }}>{results.length}</strong> of {activeFindingsSource.length} findings
           </span>
           {hasFilter && (
             <button

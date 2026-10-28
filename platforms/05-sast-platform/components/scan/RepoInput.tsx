@@ -98,7 +98,6 @@ export default function RepoInput({ onStart }: Props) {
   const [scanMode, setScanMode] = useState<"repo_and_adapter" | "attached_code">("repo_and_adapter");
   const [attachedFiles, setAttachedFiles] = useState<AttachedSourceFile[]>(() => [
     ...BENCHMARK_32_REPOS[0].seedFiles,
-    ...(LANGUAGE_STARTER_CODEBASES["Java"] || []),
   ]);
   const [activeFileIdx, setActiveFileIdx] = useState(0);
   const [showPluginCatalog, setShowPluginCatalog] = useState(false);
@@ -107,6 +106,7 @@ export default function RepoInput({ onStart }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleLanguageSelect = (lang: string) => {
+    clearActiveScanSession();
     setLanguage(lang);
     const starter = LANGUAGE_STARTER_CODEBASES[lang];
     if (starter && starter.length > 0) {
@@ -122,17 +122,25 @@ export default function RepoInput({ onStart }: Props) {
     setBranch(repo.defaultBranch);
     setCommitSha(repo.defaultCommitSha);
     setScanMode("repo_and_adapter");
-    const starter = (LANGUAGE_STARTER_CODEBASES[repo.language] || []).map((f) => ({
-      ...f,
-      path: `${repo.ownerRepo}/${f.path}`,
-    }));
-    setAttachedFiles([...repo.seedFiles, ...starter]);
+    const repoFiles =
+      repo.seedFiles && repo.seedFiles.length > 0
+        ? repo.seedFiles.map((f) => ({ ...f }))
+        : (LANGUAGE_STARTER_CODEBASES[repo.language] || []).map((f) => ({
+            ...f,
+            path: `${repo.ownerRepo}/${f.path}`,
+          }));
+    setAttachedFiles(repoFiles);
     setActiveFileIdx(0);
   };
 
   const handleQuickLaunchRepo = (repo: BenchmarkRepoTarget, e: React.MouseEvent) => {
     e.stopPropagation();
     clearActiveScanSession();
+    setRepoUrl(repo.url);
+    setLanguage(repo.language);
+    setBranch(repo.defaultBranch);
+    setCommitSha(repo.defaultCommitSha);
+    setScanMode("repo_and_adapter");
     onStart({
       repoUrl: repo.url,
       branch: repo.defaultBranch,
@@ -141,6 +149,22 @@ export default function RepoInput({ onStart }: Props) {
       engines: selectedEngines,
       attachedFiles: [],
     });
+  };
+
+  const handleRepoUrlChange = (nextUrl: string) => {
+    clearActiveScanSession();
+    setRepoUrl(nextUrl);
+    setScanMode("repo_and_adapter");
+    const matched = BENCHMARK_32_REPOS.find(
+      (r) => r.url.toLowerCase() === nextUrl.trim().toLowerCase()
+    );
+    if (matched) {
+      setLanguage(matched.language);
+      setBranch(matched.defaultBranch);
+      setCommitSha(matched.defaultCommitSha);
+      setAttachedFiles(matched.seedFiles.map((f) => ({ ...f })));
+      setActiveFileIdx(0);
+    }
   };
 
   const filteredBenchmarkRepos = BENCHMARK_32_REPOS.filter((r) => {
@@ -178,15 +202,20 @@ export default function RepoInput({ onStart }: Props) {
     }
 
     if (uploaded.length > 0) {
-      setAttachedFiles((prev) => [...uploaded, ...prev]);
+      clearActiveScanSession();
+      // Replace the file buffer completely so no files from the previous scan remain
+      setAttachedFiles(uploaded);
       setActiveFileIdx(0);
       setScanMode("attached_code");
+      const firstRoot = (uploaded[0].path || "uploaded-codebase").split("/")[0];
+      setRepoUrl(`local-workspace/${firstRoot}`);
     }
     e.target.value = "";
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    clearActiveScanSession();
     const url = repoUrl || SAMPLE_REPOS[0].url;
     onStart({
       repoUrl: url,
@@ -513,7 +542,7 @@ export default function RepoInput({ onStart }: Props) {
                 <input
                   type="text"
                   value={repoUrl}
-                  onChange={(e) => setRepoUrl(e.target.value)}
+                  onChange={(e) => handleRepoUrlChange(e.target.value)}
                   placeholder="https://github.com/your-org/your-repo"
                   style={{
                     width: "100%",
@@ -713,6 +742,7 @@ export default function RepoInput({ onStart }: Props) {
                 <textarea
                   value={activeFile.content}
                   onChange={(e) => {
+                    clearActiveScanSession();
                     const updated = [...attachedFiles];
                     updated[activeFileIdx] = {
                       ...activeFile,

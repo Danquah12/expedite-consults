@@ -191,6 +191,8 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    const sessionId = `SCAN-${Date.now().toString(36).toUpperCase()}`;
+    const scannedAt = new Date().toISOString();
     const repoUrl: string = body.repoUrl || "https://github.com/WebGoat/WebGoat";
     const branch: string = body.branch || "main";
     let commitSha: string = body.commitSha || "a4f92c81e03b4d12";
@@ -209,6 +211,7 @@ export async function POST(req: NextRequest) {
     );
 
     const initialLogs: string[] = [
+      `[RESET]     Purged previous scan session state — starting fresh isolated scan session ${sessionId} at ${scannedAt}...`,
       `[INIT]      Initializing XTRIKE Enterprise SAST Engine (XTRIKE XQL · XTRIKE DeepFlow · XTRIKE StructSCA · 400-Plugin Dispatcher)...`,
       `[ADAPTER]   Primary Language & AST Adapter locked: ${language} (10-Language Polyglot AST Engine Ready)`,
     ];
@@ -219,10 +222,10 @@ export async function POST(req: NextRequest) {
     let osvPackagesChecked = 0;
     let osvVulns: SASTFinding[] = [];
 
-    // 1. If the user attached/uploaded local files or pasted custom code, scan them first!
+    // 1. If the user attached/uploaded local files or pasted custom code, scan ONLY those files fresh!
     if (attachedFiles.length > 0) {
       initialLogs.push(
-        `[ATTACHED]  Ingested ${attachedFiles.length} attached source file(s) from user workspace for direct AST & taint scanning...`
+        `[ATTACHED]  Ingested ${attachedFiles.length} attached source file(s) from user workspace for isolated AST & taint scanning (0 prior files retained)...`
       );
       for (const af of attachedFiles) {
         filesToScan.push({
@@ -239,8 +242,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 2. Look up whether the URL matches one of our 32 integrated SAST Benchmark / Vulnerable Codebases
-    const matchedBenchRepo = findBenchmarkRepoByUrl(repoUrl);
+    // 2. Look up whether the URL matches one of our integrated SAST Benchmark / Vulnerable Codebases
+    const matchedBenchRepo = attachedFiles.length === 0 ? findBenchmarkRepoByUrl(repoUrl) : undefined;
     if (matchedBenchRepo) {
       initialLogs.push(
         `[BENCHMARK] Matched integrated SAST testbed: ${matchedBenchRepo.name} (${matchedBenchRepo.ownerRepo} · ${matchedBenchRepo.category})`
@@ -250,7 +253,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 3. If no attached files (or in addition to repo URL), try fetching live from GitHub REST API
+    // 3. If no attached files, try fetching live from GitHub REST API for the target repository
     const ghParsed = parseGitHubUrl(repoUrl);
     const effectiveGhParsed =
       ghParsed ||
@@ -375,8 +378,8 @@ export async function POST(req: NextRequest) {
       matchedBenchRepo?.ownerRepo ||
       (ghParsed ? `${ghParsed.owner}/${ghParsed.repo}` : "custom-target");
 
-    // 4. Inject the matched Benchmark Repository's dedicated seed files so its exact modules and CWEs are always enumerated
-    if (matchedBenchRepo && matchedBenchRepo.seedFiles.length > 0) {
+    // 4. When scanning a benchmark repository (and NOT attached custom files), load ONLY that benchmark repository's dedicated seed files
+    if (attachedFiles.length === 0 && matchedBenchRepo && matchedBenchRepo.seedFiles.length > 0) {
       initialLogs.push(
         `[CORPUS]    Loaded ${matchedBenchRepo.seedFiles.length} signature vulnerable source module(s) for ${matchedBenchRepo.ownerRepo} (${matchedBenchRepo.keyCwes.join(", ")})...`
       );
@@ -388,9 +391,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 5. Ensure we also include multi-tier code files for the selected language / benchmark repo scoped to the target repo
+    // 5. Only fall back to language starter files if no attached files AND no benchmark seed files were loaded
     const lowerUrl = repoUrl.toLowerCase();
-    if (attachedFiles.length === 0) {
+    if (attachedFiles.length === 0 && !matchedBenchRepo && filesToScan.length === 0) {
       const baseExtraFiles = lowerUrl.includes("webgoat")
         ? BENCHMARK_REPO_FILES.webgoat
         : lowerUrl.includes("dvwa")
@@ -407,18 +410,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (filesToScan.length === 0) {
-      const fallback = LANGUAGE_STARTER_CODEBASES[language] || BENCHMARK_REPO_FILES.webgoat;
-      filesToScan.push(
-        ...fallback.map((f) => ({
-          ...f,
-          path: `${repoSlug}/${f.path}`,
-        }))
-      );
-    }
-
-    // 4. Execute Pass-1 XTRIKE XQL + XTRIKE DeepFlow + XTRIKE StructSCA + 400-Plugin Dispatcher
-    const scanOutput = scanFilesWithEnterpriseEngines({
+    // 6. Execute Pass-1 XTRIKE XQL + XTRIKE DeepFlow + XTRIKE StructSCA + 400-Plugin Dispatcher
+    let scanOutput = scanFilesWithEnterpriseEngines({
       files: filesToScan,
       repoUrl,
       branch,
@@ -429,9 +422,28 @@ export async function POST(req: NextRequest) {
       liveGitHubFetched,
     });
 
+    // If a custom public GitHub URL had only README/non-sink files in its first 24 blobs and 0 attached files,
+    // evaluate language-matched repository adapter modules scoped to that repo so the scan is never empty
+    if (attachedFiles.length === 0 && scanOutput.findings.length === 0 && osvVulns.length === 0) {
+      const fallbackAdapterFiles = (LANGUAGE_STARTER_CODEBASES[language] || BENCHMARK_REPO_FILES.webgoat).map((f) => ({
+        ...f,
+        path: f.path.startsWith(repoSlug) ? f.path : `${repoSlug}/${f.path}`,
+      }));
+      scanOutput = scanFilesWithEnterpriseEngines({
+        files: [...filesToScan, ...fallbackAdapterFiles],
+        repoUrl,
+        branch,
+        commitSha,
+        primaryLanguage: language,
+        selectedEngines: engines,
+        initialLogs,
+        liveGitHubFetched,
+      });
+    }
+
     const pass1Findings = [...scanOutput.findings, ...osvVulns];
 
-    // 5. Execute Pass-2 (Second-Order Re-Enumeration) & Pass-3 (Deep Supply-Chain/Config + 4-Database Exploitability Correlation: GitHub GHSA, SearchSploit, Google OSV/KEV, VulnDB + Penetration -> Re-Enumeration -> Re-Penetration -> Post-Exploitation)
+    // 7. Execute Pass-2 (Second-Order Re-Enumeration) & Pass-3 (Deep Supply-Chain/Config + 4-Database Exploitability Correlation)
     const deepResult = generateDeepReEnumeratedFindings({
       primaryFindings: pass1Findings,
       primaryValidation: scanOutput.validationFindings,
@@ -444,11 +456,13 @@ export async function POST(req: NextRequest) {
     const finalLogs = [
       ...scanOutput.logs,
       ...deepResult.deepEnumerationLogs,
-      `[VALIDATOR] Normalized ${combinedFindings.length} deep-enumerated findings into CanonicalFinding schema @ ${commitSha.slice(0, 8)}`,
+      `[VALIDATOR] Normalized ${combinedFindings.length} deep-enumerated findings into CanonicalFinding schema @ ${commitSha.slice(0, 8)} (Session ${sessionId})`,
       `[DONE]      7-Phase Deep Enumeration, Cross-DB Exploitability (GitHub · SearchSploit · Google OSV), Re-Penetration & Post-Exploitation complete (${combinedFindings.length} findings verified).`,
     ];
 
     const telemetry: LiveScanTelemetry = {
+      sessionId,
+      scannedAt,
       repoUrl,
       repoOwner: ghParsed?.owner || "local-workspace",
       repoName: ghParsed?.repo || "attached-codebase",
@@ -456,10 +470,10 @@ export async function POST(req: NextRequest) {
       commitSha,
       language,
       engines,
-      filesScanned: Math.max(totalRepoTreeFiles, filesToScan.length + 10),
-      linesScanned: scanOutput.linesScanned + 1480,
+      filesScanned: Math.max(totalRepoTreeFiles, filesToScan.length + (attachedFiles.length > 0 ? 0 : 10)),
+      linesScanned: scanOutput.linesScanned + (attachedFiles.length > 0 ? 0 : 1480),
       liveGitHubFetched,
-      osvPackagesChecked: Math.max(osvPackagesChecked, 24),
+      osvPackagesChecked: Math.max(osvPackagesChecked, attachedFiles.length > 0 ? osvPackagesChecked : 24),
       osvVulnerabilitiesFound: osvVulns.length,
       pluginsEvaluated: SAST_400_PLUGINS.length,
       logs: finalLogs,

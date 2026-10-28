@@ -1282,6 +1282,8 @@ const COMPILED_400_PLUGINS: {
 });
 
 export type LiveScanTelemetry = {
+  sessionId?: string;
+  scannedAt?: string;
   repoUrl: string;
   repoOwner: string;
   repoName: string;
