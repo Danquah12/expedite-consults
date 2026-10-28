@@ -604,26 +604,89 @@ export const XTRIKE_CLI_RUNTIME_SPEC = {
   ],
 };
 
-export function buildCyberMonitoringNoctisSummary(): string {
+export function buildCyberMonitoringNoctisSummary(question = ""): string {
+  const q = question.toLowerCase();
+
+  // Check if the user clicked a specific Repository Mesh Node (e.g., payment-ledger-svc-04)
+  const matchedNode = XTRIKE_HONEYCOMB_HOSTS.find((n) =>
+    q.includes(n.hostname.toLowerCase()) || q.includes(n.id.toLowerCase())
+  );
+
+  // Check if the user clicked a specific Release-Gate Violation row
+  const matchedViolation = XTRIKE_HOST_PROBLEMS.find((v) =>
+    q.includes(v.host.toLowerCase())
+  );
+
+  const nodeSection = matchedNode
+    ? [
+        `#### Selected Repository Node Inspection — \`${matchedNode.hostname}\` (\`${matchedNode.id}\`)`,
+        `- **Cluster / Stack:** ${matchedNode.cluster} · Language: \`${matchedNode.language}\``,
+        `- **Gate Status:** \`${matchedNode.state}\` · **Policy Gates Checked:** \`${matchedNode.servicesCount}\` · **Open SAST Findings:** \`${matchedNode.openFindings}\` · **AST Scan Latency:** \`${matchedNode.latencyMs}ms\``,
+        `- **Recommended Action:** ${
+          matchedNode.openFindings > 0
+            ? "Run 6-Stage Proof Validation on open sinks and apply language-matched AST remediation diff before release promotion."
+            : "All AST & CWE policy gates passing (`MITIGATED_BY_GUARD`)."
+        }`,
+      ].join("\n")
+    : "";
+
+  const violationSection = matchedViolation
+    ? [
+        `#### Active Release-Gate Violation Dossier — \`${matchedViolation.host}\``,
+        `- **Gate / Rule:** ${matchedViolation.service} (\`${matchedViolation.cwe}\`)`,
+        `- **Canonical Proof State:** \`${matchedViolation.proofState}\` (\`${matchedViolation.state}\` · detected ${matchedViolation.since})`,
+        `- **Analyzer Trace:** \`${matchedViolation.pluginOutput}\``,
+      ].join("\n")
+    : "";
+
+  const pkgLines = XTRIKE_DISTRO_ACCORDION_GROUPS.flatMap((g) =>
+    g.packages.map(
+      (p) =>
+        `  - **${p.distroFamily} (${p.distroVersion} · ${p.edition}):** \`${p.packageFilename}\` (SHA-256: \`${p.sha256.slice(0, 16)}...\`)\n    - Install: \`${p.wgetCommand} && ${p.installCommand}\``
+    )
+  ).join("\n");
+
   return [
-    `### Noctis — XTRIKE SAST Posture KPIs, Runtime Sensor Mesh & CLI (\`/cyber-monitoring\`)`,
-    `- **SAST & CVE Posture Summary:**`,
-    `  - **Open SAST Findings:** \`16.8K\` (\`+12.3%\` across 82 repositories & 4 AST engines)`,
-    `  - **Reachable SCA CVEs:** \`6.4K\` (\`-6.2%\` filtered by active call-graph reachability)`,
-    `  - **Verified AST Remediations:** \`1.3K\` (\`+18.4%\` passed post-fix unit retest suite)`,
-    `  - **Canonical Proof State Breakdown:** Critical \`1.4K\` (\`PROVEN_EXPLOITABLE / DATAFLOW_CONFIRMED\`), High \`6.0K\` (\`DATAFLOW_CONFIRMED\`), Medium \`7.1K\` (\`DETECTED_STATIC\`), Low \`1.3K\` (\`NEEDS_MANUAL_VALIDATION\`), Guarded \`265\` (\`MITIGATED_BY_GUARD\`)`,
-    `- **Code-to-Runtime Sensor Telemetry:**`,
-    `  - **Active Sink Triggers:** \`213\` · **Exploit Probes Halted:** \`32\` · **Unauthenticated Taint Routes:** \`26\` · **Manual Proof Queue:** \`26\` · **AST Diffs Verified:** \`73\` · **Release Gate Posture Score:** \`84/100\``,
-    `  - **Protected Build & Runtime Fleet (\`1,765\` Nodes):** Linux x86_64 (\`468\`), Kubernetes/EKS Pods (\`406\`), CI Runners (\`320\`), macOS Workstations (\`249\`), Windows/.NET (\`122\`), ARM64 Graviton (\`100\`), Serverless (\`100\`)`,
-    `- **XTRIKE Repository & Service Mesh (\`710\` Repos/Runners · \`15,808\` Policy Gates):**`,
-    `  - **Top Release-Gate Violators:** \`payment-settlement-core\` (\`CWE-89\`), \`identity-oauth-gateway\` (\`CWE-347\`), \`graphql-mobile-bff\` (\`CWE-918\`), \`order-fulfillment-api\` (\`CWE-502\`), \`dynamic-rule-compiler\` (\`CWE-94 / PLG-054\`)`,
-    `- **XTRIKE SAST CLI & Runner Installation (\`v4.2.0\`):**`,
+    `### Noctis — XTRIKE SAST Posture Ledger, Sink Sensors, 710-Repo Mesh & CLI (\`/cyber-monitoring\`)`,
+    nodeSection,
+    violationSection,
+    `#### 1. Ledger 01 — SAST & Reachable CVE Posture Summary`,
+    `- **Open SAST Findings:** \`16.8K\` (\`+12.3%\` across 82 repositories & 4 AST engines: \`XQL\`, \`DeepFlow\`, \`StructSCA\`, \`AST-Query\`)`,
+    `- **Reachable SCA CVEs:** \`6.4K\` (\`-6.2%\` filtered by active call-graph reachability)`,
+    `- **Verified AST Fixes:** \`1.3K\` (\`+18.4%\` passed post-fix unit retest suite)`,
+    `- **5 Canonical Proof States Breakdown:**`,
+    ...OPEN_RISK_INSTANCES.map(
+      (s) => `  - **${s.severity} (\`${s.countLabel}\` · ${s.percentage}%):** \`${s.proofState}\``
+    ),
+    `- **Findings by Application Tier & Primary CWE:**`,
+    ...OPEN_DEPLOYMENT_INSTANCES.map(
+      (d) => `  - **${d.name}** (\`${d.repoSlug}\`): **${d.countLabel}** findings · Primary CWE: \`${d.primaryCwe}\``
+    ),
+    `\n#### 2. Ledger 02 — Code-to-Runtime Sink Sensors & Runner Coverage`,
+    `- **Sensor KPIs:** Active Sink Triggers \`213\` (\`+18%\`) · Exploit Probes Halted \`32\` (\`+14%\`) · Unauth Taint Routes \`26\` (\`-11%\`) · Manual Proof Queue \`26\` · AST Diffs Verified \`73\` (\`+29%\`) · Release Gate Score \`84/100\` (\`+6 pts\`)`,
+    `- **Instrumented Build & Runtime Fleet (\`1,765\` Nodes):**`,
+    ...MONITORED_HOSTS_BY_OS.map((o) => `  - ${o.os}: \`${o.hosts}\` nodes`),
+    `- **Recent SAST Sink Interceptions:**`,
+    ...MOST_RECENT_DETECTIONS.map(
+      (det) =>
+        `  - \`${det.id}\` (\`${det.pluginId}\` · \`${det.cwe}\`): **${det.signature}** at \`${det.host}\` (${det.os}) — **${det.action}**`
+    ),
+    `\n#### 3. Ledger 03 — Repository & Microservice Mesh (\`710\` Nodes · \`15,808\` Policy Gates)`,
+    `- **Mesh Health:** \`709 Online\`, \`0 Offline\`, \`1 Quarantined\` · **Policy Gates:** \`14,839 Passing\`, \`691 Warning\`, \`67 Needs Triage\`, \`210 Release-Blocking\` · **24h Taint Events:** \`1,001\``,
+    `- **Priority Release-Gate Violators:**`,
+    ...XTRIKE_TOP_ALERTERS.map(
+      (a) =>
+        `  - \`${a.host}\` (${a.primaryCwe}): **${a.totalAlerts} gates** (\`${a.critCount} CRIT\`, \`${a.warnCount} WARN\`)`
+    ),
+    `\n#### 4. Ledger 04 — XTRIKE SAST CLI & Runner Installation (\`v${XTRIKE_CLI_RUNTIME_SPEC.version}\`)`,
+    pkgLines,
+    `- **Initialize & Start All 4 XTRIKE SAST Engines:**`,
     `  \`\`\`bash`,
-    `  curl -fsSL https://05-sast-platform.vercel.app/api/xtrike-package?pkg=xtrike-sast-cli_4.2.0_amd64.deb -o xtrike-sast-cli_4.2.0_amd64.deb`,
-    `  sudo apt install ./xtrike-sast-cli_4.2.0_amd64.deb`,
     `  xtrike-sast --version`,
-    `  xtrike-sast init --profile ptes-nist-800-115`,
+    `  xtrike-sast init --profile ${XTRIKE_CLI_RUNTIME_SPEC.profileName}`,
     `  xtrike-sast daemon start --engines xql,deepflow,structsca,ast-query`,
     `  \`\`\``,
-  ].join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 }

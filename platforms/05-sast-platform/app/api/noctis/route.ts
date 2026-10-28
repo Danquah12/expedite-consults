@@ -292,11 +292,11 @@ function buildLocalSastAnswer(
 
   // 7.5. Check if asking about SAST Posture KPIs, Sink Sensors, Repository Mesh (710 nodes, 15,808 gates), or xtrike-sast-cli v4.2.0 installation
   if (
-    /\b(posture\s*kpi|cyber\s*kpi|open\s*sast|16\.8k|6\.4k|sink\s*trigger|213\s*sink|710\s*repo|710\s*node|710\s*host|15,?808|release-gate\s*violator|xtrike-sast-cli|4\.2\.0|daemon\s+start|apt\s+install|dnf\s+install)\b/i.test(
+    /\b(posture|cyber\s*kpi|cyber\s*monitor|open\s*sast|16\.8k|6\.4k|1\.3k|sink\s*sensor|sink\s*trigger|213\s*active|exploit\s*probes|84\/100|1,?765\s*nodes|710\s*repo|710\s*node|15,?808|release-gate|payment-settlement-core|identity-oauth-gateway|graphql-mobile-bff|order-fulfillment-api|dynamic-rule-compiler|webhook-event-broker|payment-ledger-svc|oauth-token-gateway|graphql-edge-bff|order-worker-node|compiler-sandbox-vm|terraform-eks-mod|xtrike-sast-cli|4\.2\.0|ptes-nist-800-115|daemon\s+start|apt\s+install|dnf\s+install)\b/i.test(
       q
     )
   ) {
-    return buildCyberMonitoringNoctisSummary();
+    return buildCyberMonitoringNoctisSummary(question);
   }
 
   // 8. Check if asking about Benchmark repositories
@@ -435,7 +435,7 @@ export async function POST(request: Request) {
         if (remoteData?.answer && remoteData.answer.trim().length > 20) {
           // Always ensure specific SAST repository/finding/plugin/module queries include the exact SAST asset dossier
           const isSpecificSastAssetQuery =
-            /\b(f-0\d{2}|plg-\d{3}|cwe-\d+|current\s+scan|active\s+finding|apps|modules|benchmark|blindscript|lesson5a|sast)\b/i.test(
+            /\b(f-0\d{2}|plg-\d{3}|cwe-\d+|current\s+scan|active\s+finding|apps|modules|benchmark|blindscript|lesson5a|sast|posture|16\.8k|6\.4k|sink|710|15,?808|xtrike-sast-cli|4\.2\.0|payment-settlement|identity-oauth|graphql-mobile|order-fulfillment|dynamic-rule|webhook-event)\b/i.test(
               question
             );
           const finalAnswer = isSpecificSastAssetQuery
