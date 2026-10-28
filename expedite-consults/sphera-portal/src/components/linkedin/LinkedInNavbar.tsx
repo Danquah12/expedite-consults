@@ -214,7 +214,11 @@ export function LinkedInNavbar({
   }
 
   // Streamlined Clean Primary Navigation with Responsive Priority Levels
-  const primaryNavItems = [
+  const [visitedBadgeTabs, setVisitedBadgeTabs] = React.useState<Record<string, boolean>>({})
+  React.useEffect(() => {
+    if (activeTab) setVisitedBadgeTabs((p) => (p[activeTab] ? p : { ...p, [activeTab]: true }))
+  }, [activeTab])
+  const primaryNavItemsRaw = [
     { id: "home", label: t("nav_home", "Home"), shortLabel: t("nav_home_short", "Home"), icon: House, badge: 2, priority: "always" },
     { id: "network", label: t("nav_network", "Network"), shortLabel: t("nav_network_short", "Network"), icon: Users, badge: 0, priority: "always" },
     { id: "jobs", label: t("nav_jobs", "Jobs"), shortLabel: t("nav_jobs_short", "Jobs"), icon: Briefcase, badge: 0, priority: "always" },
@@ -225,6 +229,7 @@ export function LinkedInNavbar({
     { id: "media", label: t("nav_media", "Media"), shortLabel: t("nav_media_short", "Media"), icon: Tv, badge: 1, priority: "always" },
     { id: "pulserooms", label: t("nav_pulse", "Pulse"), shortLabel: t("nav_pulse_short", "Pulse"), icon: Radio, badge: 0, priority: "always" },
   ]
+  const primaryNavItems = primaryNavItemsRaw.map((i) => ({ ...i, badge: visitedBadgeTabs[i.id] ? 0 : i.badge }))
 
   const isAdminUser = isSuperAdminUser(user)
 
