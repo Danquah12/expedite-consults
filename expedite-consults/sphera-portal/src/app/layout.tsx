@@ -51,10 +51,10 @@ export const metadata: Metadata = {
     description: "ConnectLn: The zero-trust professional network. Verified tickets, vouches, and real work across cloud, cybersecurity, trades, and enterprise teams.",
     images: [
       {
-        url: "https://www.connectln.app/brand/connectln-og.png?v=connectln8",
+        url: "https://www.connectln.app/api/connectin/share-card?t=ConnectLn+%E2%80%94+Tickets%2C+vouches%2C+and+real+work",
         width: 1200,
         height: 630,
-        alt: "ConnectLn — Kwesi Asiedu Profile & Telemetry Card",
+        alt: "ConnectLn — Tickets, vouches, and real work",
       }
     ],
   },
@@ -62,7 +62,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "ConnectLn — Tickets, vouches, and real work",
     description: "ConnectLn: The zero-trust professional network. Verified tickets, vouches, and real work.",
-    images: ["https://www.connectln.app/brand/connectln-og.png?v=connectln8"],
+    images: ["https://www.connectln.app/api/connectin/share-card?t=ConnectLn+%E2%80%94+Tickets%2C+vouches%2C+and+real+work"],
   },
   manifest: "/manifest.json",
 };

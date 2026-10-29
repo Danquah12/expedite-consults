@@ -10,13 +10,7 @@ export const metadata: Metadata = {
     siteName: "ConnectLn",
     images: [
       {
-        url: "https://connectln.vercel.app/brand/connectln-square-og.png",
-        width: 600,
-        height: 600,
-        alt: "ConnectLn Emblem — Tickets, vouches, and real work",
-      },
-      {
-        url: "https://connectln.vercel.app/brand/connectln-og.png",
+        url: "https://www.connectln.app/api/connectin/share-card?t=ConnectLn+%E2%80%94+Tickets%2C+vouches%2C+and+real+work",
         width: 1200,
         height: 630,
         alt: "ConnectLn — Tickets, vouches, and real work",
@@ -27,7 +21,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "ConnectLn — Tickets, vouches, and real work",
     description: "Tickets, vouches, and real work on ConnectLn.",
-    images: ["https://connectln.vercel.app/brand/connectln-og.png"],
+    images: ["https://www.connectln.app/api/connectin/share-card?t=ConnectLn+%E2%80%94+Tickets%2C+vouches%2C+and+real+work"],
   },
 }
 

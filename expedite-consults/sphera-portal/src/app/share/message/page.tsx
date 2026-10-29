@@ -17,7 +17,8 @@ export async function generateMetadata({
     const author = pickStr(sp.author, 'ConnectLn Member');
     const role = pickStr(sp.role, 'Verified ConnectLn Professional');
     const text = pickStr(sp.text, 'Shared message from ConnectLn');
-    const avatar = pickStr(sp.avatar, '/brand/kwesi-avatar.png');
+    const avatar = pickStr(sp.avatar, '');
+    const p = pickStr(sp.p, '');
     const sharedBy = pickStr(sp.sharedBy, '');
 
     const qs = new URLSearchParams({
@@ -25,6 +26,7 @@ export async function generateMetadata({
         role,
         text,
         avatar,
+        p,
         sharedBy,
     }).toString();
 
@@ -71,10 +73,13 @@ export default async function SharedMessagePage({
     const rawAvatar = pickStr(sp.avatar, '');
     const sharedBy = pickStr(sp.sharedBy, '');
 
+    const isKwesi = author.toLowerCase().includes('kwesi asiedu');
     const avatarSrc =
-        rawAvatar && (/^https?:\/\//i.test(rawAvatar) || rawAvatar.startsWith('/'))
+        rawAvatar && (/^https?:\/\//i.test(rawAvatar) || rawAvatar.startsWith('/')) && (isKwesi || !rawAvatar.includes('kwesi-avatar'))
             ? rawAvatar
-            : '/brand/kwesi-avatar.png';
+            : isKwesi
+            ? '/brand/kwesi-avatar.png'
+            : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(author)}&backgroundColor=0a66c2`;
 
     return (
         <main className="min-h-screen bg-[#EDE8E0] flex flex-col items-center justify-center p-4 sm:p-8">

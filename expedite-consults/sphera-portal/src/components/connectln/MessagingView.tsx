@@ -54,6 +54,7 @@ export function MessagingView({
     const [selectedThreadId, setSelectedThreadId] = useState<string>(
         () => getEnclaveB2BThreads(activeEnclave)[0]?.id || ''
     );
+    const [mobileShowChat, setMobileShowChat] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [messageInput, setMessageInput] = useState('');
     const [pendingAttachment, setPendingAttachment] = useState<string | null>(null);
@@ -769,6 +770,7 @@ export function MessagingView({
 
     const handleSelectThread = (thread: B2BConversationThread) => {
         setSelectedThreadId(thread.id);
+        setMobileShowChat(true);
         if (currentUser?.name) {
             markLocalBilateralConversationRead(thread.title, currentUser.name);
         }
@@ -1134,6 +1136,7 @@ export function MessagingView({
         setThreads((prev) => [optimisticThread, ...prev]);
         setActiveChannel('All');
         setSelectedThreadId(optimisticThread.id);
+        setMobileShowChat(true);
         setShowNewMessageModal(false);
         setNewRecipientName('');
         setNewRecipientRole('');
@@ -1286,7 +1289,11 @@ export function MessagingView({
             {/* Main Two-Column Inbox Layout */}
             <div className="flex flex-col md:flex-row h-[calc(100vh-210px)] min-h-[640px]">
                 {/* Left Sidebar: Channels & Conversation List */}
-                <div className="w-full md:w-[390px] border-r border-slate-200 flex flex-col bg-slate-50/60 shrink-0">
+                <div
+                    className={`w-full md:w-[390px] border-r border-slate-200 flex-col bg-slate-50/60 shrink-0 h-full ${
+                        mobileShowChat ? 'hidden md:flex' : 'flex'
+                    }`}
+                >
                     {/* Sidebar Header */}
                     <div className="p-3.5 bg-white border-b border-slate-200">
                         <div className="flex justify-between items-center mb-2.5">
@@ -1509,10 +1516,23 @@ export function MessagingView({
 
                 {/* Right Pane: Active Conversation */}
                 {activeThread ? (
-                    <div className="flex-1 flex flex-col bg-white overflow-hidden">
+                    <div
+                        className={`flex-1 flex-col bg-white overflow-hidden h-full ${
+                            mobileShowChat ? 'flex' : 'hidden md:flex'
+                        }`}
+                    >
                         {/* Conversation Header */}
-                        <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-white shadow-sm z-10">
-                            <div className="flex items-center gap-3.5 min-w-0">
+                        <div className="p-3 sm:p-4 border-b border-slate-200 flex justify-between items-center bg-white shadow-sm z-10 gap-2">
+                            <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+                                <button
+                                    type="button"
+                                    onClick={() => setMobileShowChat(false)}
+                                    className="md:hidden shrink-0 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-extrabold border border-slate-200 flex items-center gap-1 cursor-pointer"
+                                    aria-label="Back to messages list"
+                                >
+                                    <span>←</span>
+                                    <span>Inbox</span>
+                                </button>
                                 <div className="relative shrink-0">
                                     <img
                                         src={activeThread.avatar}
@@ -1667,7 +1687,7 @@ export function MessagingView({
                                             src={isMe ? myResolvedPic : msg.sender.avatar}
                                             alt={msg.sender.name}
                                             onError={(e) => {
-                                                if (isMe) e.currentTarget.src = '/brand/kwesi-avatar.png';
+                                                e.currentTarget.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(isMe ? currentUser?.name || 'Member' : msg.sender.name)}&backgroundColor=0a66c2`;
                                             }}
                                             className="w-9 h-9 rounded-full object-cover shrink-0 mt-1 border border-slate-200 shadow-sm ring-2 ring-[#0066FF]"
                                         />
@@ -1721,7 +1741,7 @@ export function MessagingView({
                                                                 src={isMe ? myResolvedPic : msg.sender.avatar}
                                                                 alt={isMe ? currentUser?.name || 'You' : msg.sender.name}
                                                                 onError={(e) => {
-                                                                    e.currentTarget.src = '/brand/kwesi-avatar.png';
+                                                                    e.currentTarget.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(isMe ? currentUser?.name || 'Member' : msg.sender.name)}&backgroundColor=0a66c2`;
                                                                 }}
                                                                 className="h-7 w-7 rounded-full object-cover ring-2 ring-[#0066FF] shrink-0"
                                                             />
@@ -1729,7 +1749,7 @@ export function MessagingView({
                                                                 className="text-[11px] font-extrabold truncate"
                                                                 style={{ color: '#F5F0EB' }}
                                                             >
-                                                                {isMe ? currentUser?.name || 'Kwesi Asiedu' : msg.sender.name}
+                                                                {isMe ? currentUser?.name || 'You' : msg.sender.name}
                                                             </span>
                                                         </div>
                                                         <div className="flex items-center gap-1.5 shrink-0">

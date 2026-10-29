@@ -156,8 +156,12 @@ export function MessageActionBar({
 
     const resolvedAuthor = authorName || (isMe ? myName : msg.sender.name) || 'ConnectLn Member';
     const resolvedRole = authorRole || msg.sender.role || 'Verified ConnectLn Professional';
-    const rawAvatar = authorAvatar || msg.sender.avatar || '/brand/kwesi-avatar.png';
-    const publicAvatar = rawAvatar.startsWith('data:') ? '/brand/kwesi-avatar.png' : rawAvatar;
+    const isKwesi = resolvedAuthor.toLowerCase().includes('kwesi asiedu');
+    const rawAvatar = authorAvatar || msg.sender.avatar || '';
+    const publicAvatar =
+        rawAvatar.startsWith('data:') || (!isKwesi && rawAvatar.includes('kwesi-avatar'))
+            ? ''
+            : rawAvatar;
 
     const cardParams = new URLSearchParams({
         author: resolvedAuthor,
@@ -323,10 +327,10 @@ export function MessageActionBar({
                             <div className="flex items-center gap-2 min-w-0">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
-                                    src={authorAvatar || msg.sender.avatar || '/brand/kwesi-avatar.png'}
+                                    src={authorAvatar || msg.sender.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(resolvedAuthor)}&backgroundColor=0a66c2`}
                                     alt={resolvedAuthor}
                                     onError={(e) => {
-                                        e.currentTarget.src = '/brand/kwesi-avatar.png';
+                                        e.currentTarget.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(resolvedAuthor)}&backgroundColor=0a66c2`;
                                     }}
                                     className="h-7 w-7 rounded-full object-cover ring-2 ring-[#0A66C2] shrink-0"
                                 />

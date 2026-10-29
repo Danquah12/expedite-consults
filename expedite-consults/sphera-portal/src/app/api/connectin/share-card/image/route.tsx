@@ -2,22 +2,50 @@ import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
 
+function getInitials(name: string): string {
+    const clean = (name || '').trim();
+    if (!clean) return 'CL';
+    const parts = clean.split(/[\s-]+/).filter(Boolean);
+    if (parts.length >= 2) {
+        return `${parts[0][0] || ''}${parts[parts.length - 1][0] || ''}`.toUpperCase();
+    }
+    return clean.slice(0, 2).toUpperCase();
+}
+
 export async function GET(req: Request) {
-    const { searchParams } = new URL(req.url);
+    const { searchParams, origin: rawOrigin } = new URL(req.url);
+    const origin = rawOrigin || 'https://www.connectln.app';
     const author = (searchParams.get('author') || 'ConnectLn Member').slice(0, 80);
     const role = (searchParams.get('role') || 'Verified ConnectLn Professional').slice(0, 110);
     const text = (searchParams.get('text') || '').slice(0, 420);
     const sharedBy = (searchParams.get('sharedBy') || '').slice(0, 80);
     const rawAvatar = searchParams.get('avatar') || '';
+    const rawPic = searchParams.get('p') || '';
 
-    const origin = new URL(req.url).origin || 'https://www.connectln.app';
-    let avatarUrl = `${origin}/brand/kwesi-avatar.png`;
-    if (rawAvatar && /^https?:\/\//i.test(rawAvatar)) {
+    const isKwesi = author.toLowerCase().includes('kwesi asiedu');
+    let avatarUrl = '';
+    if (rawPic) {
+        if (/^https:\/\//i.test(rawPic)) {
+            avatarUrl = rawPic;
+        } else {
+            try {
+                const b64 = rawPic.replace(/-/g, '+').replace(/_/g, '/');
+                if (/^[A-Za-z0-9+/=]+$/.test(b64) && b64.length < 20000) {
+                    avatarUrl = `data:image/jpeg;base64,${b64}`;
+                }
+            } catch {
+                avatarUrl = '';
+            }
+        }
+    } else if (rawAvatar && /^https?:\/\//i.test(rawAvatar) && !rawAvatar.includes('dicebear')) {
         avatarUrl = rawAvatar;
-    } else if (rawAvatar && rawAvatar.startsWith('/')) {
+    } else if (rawAvatar && rawAvatar.startsWith('/') && (isKwesi || !rawAvatar.includes('kwesi-avatar'))) {
         avatarUrl = `${origin}${rawAvatar}`;
+    } else if (isKwesi) {
+        avatarUrl = `${origin}/brand/kwesi-avatar.png`;
     }
 
+    const initials = getInitials(author);
     const logoUrl = `${origin}/brand/connectln-icon-256.png`;
 
     return new ImageResponse(
@@ -36,7 +64,7 @@ export async function GET(req: Request) {
                     fontFamily: 'sans-serif',
                 }}
             >
-                {/* Top Header: Author Profile Picture + ConnectLn Logo */}
+                {/* Top Header: Author Profile Picture / Initials Badge + ConnectLn Logo */}
                 <div
                     style={{
                         display: 'flex',
@@ -48,19 +76,40 @@ export async function GET(req: Request) {
                     }}
                 >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                        <img
-                            src={avatarUrl}
-                            alt={author}
-                            width={88}
-                            height={88}
-                            style={{
-                                width: '88px',
-                                height: '88px',
-                                borderRadius: '44px',
-                                objectFit: 'cover',
-                                border: '4px solid #0A66C2',
-                            }}
-                        />
+                        {avatarUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                                src={avatarUrl}
+                                alt={author}
+                                width={88}
+                                height={88}
+                                style={{
+                                    width: '88px',
+                                    height: '88px',
+                                    borderRadius: '44px',
+                                    objectFit: 'cover',
+                                    border: '4px solid #0088ff',
+                                }}
+                            />
+                        ) : (
+                            <div
+                                style={{
+                                    width: '88px',
+                                    height: '88px',
+                                    borderRadius: '44px',
+                                    border: '4px solid #0088ff',
+                                    background: 'linear-gradient(145deg, #0d2b45 0%, #071829 100%)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '34px',
+                                    fontWeight: 900,
+                                    color: '#F5F0EB',
+                                }}
+                            >
+                                {initials}
+                            </div>
+                        )}
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 <span style={{ fontSize: '32px', fontWeight: 900, color: '#FFFFFF' }}>
@@ -97,6 +146,7 @@ export async function GET(req: Request) {
                             border: '1px solid rgba(255, 255, 255, 0.16)',
                         }}
                     >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                             src={logoUrl}
                             alt="ConnectLn"
