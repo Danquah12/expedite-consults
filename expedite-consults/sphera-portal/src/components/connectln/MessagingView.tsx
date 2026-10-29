@@ -9,7 +9,7 @@ import {
 } from '@/lib/b2b-messaging-data';
 import { PROFESSION_ENCLAVES } from '@/lib/connectin-professions';
 import { ScheduleMeetingModal, MeetingInvitee } from './ScheduleMeetingModal';
-import { MessageActionBar, ReactionBadges } from './MessageActionBar';
+import { MessageActionBar, ReactionBadges, loadMembers, ShareTarget } from './MessageActionBar';
 import { resolveUserProfilePicture } from '@/lib/connectin-storage';
 import {
     getLocalBilateralThreadsForViewer,
@@ -67,10 +67,19 @@ export function MessagingView({
     const [showNewMessageModal, setShowNewMessageModal] = useState(false);
     const [newRecipientName, setNewRecipientName] = useState('');
     const [newRecipientRole, setNewRecipientRole] = useState('');
+    const [newRecipientAvatar, setNewRecipientAvatar] = useState('');
+    const [showRecipientSuggestions, setShowRecipientSuggestions] = useState(false);
+    const [allPlatformMembers, setAllPlatformMembers] = useState<ShareTarget[]>([]);
     const [newRecipientChannel, setNewRecipientChannel] = useState<
         'People' | 'Companies' | 'Products' | 'Communities'
     >('People');
     const [newInitialMessage, setNewInitialMessage] = useState('');
+
+    useEffect(() => {
+        if (showNewMessageModal) {
+            loadMembers().then(setAllPlatformMembers);
+        }
+    }, [showNewMessageModal]);
 
     const [activeCallMode, setActiveCallMode] = useState<'audio' | 'video' | null>(null);
     const [callSeconds, setCallSeconds] = useState(0);
@@ -1027,6 +1036,7 @@ export function MessagingView({
         if (!newRecipientName.trim() || !newInitialMessage.trim()) return;
 
         const senderName = currentUser?.name || 'You';
+        const senderEmail = currentUser?.email || '';
         const senderAvatar =
             currentUser?.avatar ||
             'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150';
@@ -1035,8 +1045,24 @@ export function MessagingView({
         const recipientSub =
             newRecipientRole.trim() ||
             `Verified ${newRecipientChannel} Partner • ConnectIn Direct`;
+        const recipientAvatarUrl =
+            newRecipientAvatar ||
+            `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(recipientTitle)}&backgroundColor=0a66c2`;
         const initialText = newInitialMessage.trim();
         const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        if (newRecipientChannel === 'People') {
+            recordLocalBilateralDirectMessage({
+                senderName,
+                senderEmail,
+                senderAvatar,
+                senderRole,
+                recipientName: recipientTitle,
+                recipientAvatar: recipientAvatarUrl,
+                recipientSubtitle: recipientSub,
+                text: initialText,
+            });
+        }
 
         const optimisticThread: B2BConversationThread = {
             id: `thread-custom-${Date.now()}`,
@@ -1051,7 +1077,7 @@ export function MessagingView({
                     : 'DM',
             title: recipientTitle,
             subtitle: recipientSub,
-            avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150',
+            avatar: recipientAvatarUrl,
             onlineStatus: 'online',
             isVerified: true,
             badgeIcon:
@@ -1087,6 +1113,8 @@ export function MessagingView({
         setShowNewMessageModal(false);
         setNewRecipientName('');
         setNewRecipientRole('');
+        setNewRecipientAvatar('');
+        setShowRecipientSuggestions(false);
         setNewInitialMessage('');
         triggerToast(`New conversation started with ${recipientTitle}!`);
 
@@ -1095,13 +1123,18 @@ export function MessagingView({
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    action: 'create_thread',
+                    action: newRecipientChannel === 'People' ? 'send_message' : 'create_thread',
                     enclave: selectedEnclave === 'all' ? activeEnclave : selectedEnclave,
                     title: recipientTitle,
+                    recipientName: recipientTitle,
                     subtitle: recipientSub,
+                    recipientSubtitle: recipientSub,
+                    avatar: recipientAvatarUrl,
+                    recipientAvatar: recipientAvatarUrl,
                     channelType: newRecipientChannel,
                     text: initialText,
                     senderName,
+                    senderEmail,
                     senderAvatar,
                     senderRole,
                 }),
@@ -1110,7 +1143,9 @@ export function MessagingView({
             const data = await res.json();
             if (data?.ok && data.thread) {
                 setThreads((prev) =>
-                    prev.map((t) => (t.id === optimisticThread.id ? data.thread : t))
+                    prev
+                        .filter((t) => t.id === optimisticThread.id || t.id !== data.thread.id)
+                        .map((t) => (t.id === optimisticThread.id ? data.thread : t))
                 );
                 setSelectedThreadId(data.thread.id);
             }
@@ -1981,18 +2016,93 @@ export function MessagingView({
                                 </div>
                             </div>
 
-                            <div>
+                            <div className="relative">
                                 <label className="block text-xs font-extrabold text-slate-700 mb-1">
                                     Recipient Name / Organization *
                                 </label>
                                 <input
                                     type="text"
                                     required
+                                    autoComplete="off"
                                     value={newRecipientName}
-                                    onChange={(e) => setNewRecipientName(e.target.value)}
-                                    placeholder="e.g., Elena Vance or DeWalt Commercial Desk"
+                                    onFocus={() => setShowRecipientSuggestions(true)}
+                                    onChange={(e) => {
+                                        setNewRecipientName(e.target.value);
+                                        setNewRecipientAvatar('');
+                                        setShowRecipientSuggestions(true);
+                                    }}
+                                    placeholder="Type any letter (e.g., J, V, Y, K) to search members..."
                                     className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:outline-none focus:border-[#0A66C2]"
                                 />
+                                {showRecipientSuggestions && newRecipientName.trim().length > 0 && (() => {
+                                    const q = newRecipientName.trim().toLowerCase();
+                                    const qc = q.replace(/[^a-z0-9]/g, '');
+                                    const myCompact = (currentUser?.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                                    const seen = new Set<string>(myCompact ? [myCompact] : []);
+                                    const candidates: ShareTarget[] = [];
+                                    const combined: ShareTarget[] = [
+                                        ...allPlatformMembers,
+                                        ...threads.map((t) => ({
+                                            id: t.id,
+                                            name: t.title,
+                                            avatar: t.avatar,
+                                            subtitle: t.subtitle,
+                                        })),
+                                        { id: 'preset_elena', name: 'Elena Vance, PE', subtitle: 'Senior Commercial Superintendent • Turner Builds' },
+                                        { id: 'preset_ta', name: 'Talent Acquisition Desk', subtitle: 'Verified Hiring Team • Direct Interview Track' },
+                                        { id: 'preset_fleet', name: 'Commercial Tooling & Fleet Desk', subtitle: 'Enterprise Equipment & Spec Quotes' },
+                                        { id: 'preset_guild', name: 'Master Practitioners Guild', subtitle: 'Regional Licensing & Project Exchange' },
+                                    ];
+                                    for (const item of combined) {
+                                        const key = item.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                                        if (!key || seen.has(key)) continue;
+                                        seen.add(key);
+                                        const lower = item.name.toLowerCase();
+                                        if (lower.includes(q) || (qc && key.includes(qc))) {
+                                            candidates.push(item);
+                                        }
+                                    }
+                                    if (candidates.length === 0) return null;
+                                    return (
+                                        <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-52 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
+                                            {candidates.slice(0, 8).map((c) => {
+                                                const avatarSrc =
+                                                    c.avatar ||
+                                                    `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(c.name)}&backgroundColor=0a66c2`;
+                                                return (
+                                                    <button
+                                                        key={c.id}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setNewRecipientName(c.name);
+                                                            if (c.subtitle) setNewRecipientRole(c.subtitle);
+                                                            setNewRecipientAvatar(avatarSrc);
+                                                            setShowRecipientSuggestions(false);
+                                                        }}
+                                                        className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left hover:bg-blue-50 transition-colors cursor-pointer"
+                                                    >
+                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                        <img
+                                                            src={avatarSrc}
+                                                            alt={c.name}
+                                                            className="h-8 w-8 shrink-0 rounded-full object-cover border border-slate-200"
+                                                        />
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="truncate text-xs font-extrabold text-slate-900">
+                                                                {c.name}
+                                                            </p>
+                                                            {c.subtitle && (
+                                                                <p className="truncate text-[11px] text-slate-500">
+                                                                    {c.subtitle}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    );
+                                })()}
                             </div>
 
                             <div>

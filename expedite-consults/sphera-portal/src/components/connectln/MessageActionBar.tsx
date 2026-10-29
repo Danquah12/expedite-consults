@@ -21,7 +21,7 @@ const compact = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
 // Registered members are loaded once and reused by every message.
 let membersCache: ShareTarget[] | null = null;
 let membersPromise: Promise<ShareTarget[]> | null = null;
-function loadMembers(): Promise<ShareTarget[]> {
+export function loadMembers(): Promise<ShareTarget[]> {
     if (membersCache) return Promise.resolve(membersCache);
     if (!membersPromise) {
         membersPromise = fetch('/api/connectin/users', { cache: 'no-store' })
