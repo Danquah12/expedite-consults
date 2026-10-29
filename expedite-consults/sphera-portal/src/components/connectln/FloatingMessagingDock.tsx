@@ -73,6 +73,9 @@ export function FloatingMessagingDock({
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const autoOpenedMsgIdsRef = useRef<Set<string>>(new Set())
+  // Always points at the conversation currently open, so background syncs never hijack it
+  const activeChatThreadRef = useRef<B2BConversationThread | null>(null)
+  activeChatThreadRef.current = activeChatThread
 
   const syncMailbox = useCallback(async () => {
     const localBilateral = getLocalBilateralThreadsForViewer(viewerName, viewerEmail, enclaveId)
@@ -119,7 +122,10 @@ export function FloatingMessagingDock({
               autoOpenedMsgIdsRef.current.add(triggerKey)
               // The full Messaging page already shows this message, so don't open the popup a second time
               if (suppressAutoOpenRef.current) return
-              setActiveChatThread(unreadDirectThread)
+              // If the member is already writing in another conversation, don't switch it: just announce the new message
+              if (!activeChatThreadRef.current) {
+                setActiveChatThread(unreadDirectThread)
+              }
               setIncomingAlertBanner(
                 `📩 New message received from ${unreadDirectThread.title}`
               )

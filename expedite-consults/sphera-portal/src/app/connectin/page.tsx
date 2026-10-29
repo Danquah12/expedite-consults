@@ -2274,7 +2274,7 @@ export default function ConnectLnPage() {
         onOpenFullMessaging={() => setActiveTab('messaging')}
         composeRecipient={composeRecipient}
         onCloseComposeRecipient={() => setComposeRecipient(null)}
-        suppressAutoOpen={activeTab === 'messaging'}
+        suppressAutoOpen={activeTab === 'messaging' || !!inspectedMember}
       />
 
       {/* ConnectIn AI Global Platform Assistant Modal */}
