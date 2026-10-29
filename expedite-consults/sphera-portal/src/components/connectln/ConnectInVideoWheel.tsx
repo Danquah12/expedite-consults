@@ -99,6 +99,8 @@ export function ConnectInVideoWheel({
   const [isPlayingAuto, setIsPlayingAuto] = useState<boolean>(true)
   const [copyFeedback, setCopyFeedback] = useState<boolean>(false)
   const trackRef = useRef<HTMLDivElement>(null)
+  const modalScrollRef = useRef<HTMLDivElement>(null)
+  const modalPlayerRef = useRef<HTMLDivElement>(null)
   const disciplinesRef = useRef<HTMLDivElement>(null)
   const disciplinesPausedRef = useRef<boolean>(false)
   const disciplinesResumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -354,6 +356,16 @@ export function ConnectInVideoWheel({
     const currentIndex = filteredTalks.findIndex(t => t.id === activeVideo.id)
     const nextIndex = (currentIndex + 1) % filteredTalks.length
     setActiveVideo(filteredTalks[nextIndex])
+    if (modalScrollRef.current) {
+      modalScrollRef.current.scrollTo({ top: 0, behavior: "smooth" })
+      modalScrollRef.current.scrollTop = 0
+    }
+    setTimeout(() => {
+      if (modalScrollRef.current) {
+        modalScrollRef.current.scrollTo({ top: 0, behavior: "smooth" })
+      }
+      modalPlayerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+    }, 40)
   }
 
   const handleAddVideoSubmit = (e: React.FormEvent) => {
@@ -916,11 +928,12 @@ export function ConnectInVideoWheel({
 
               {/* Scrollable Modal Body */}
               <div
+                ref={modalScrollRef}
                 className="flex-1 overflow-y-auto"
                 style={{ backgroundColor: '#FFFFFF', color: '#0F172A' }}
               >
                 {/* Balanced YouTube Video Player */}
-                <div className="relative h-[220px] sm:h-[260px] w-full bg-black">
+                <div ref={modalPlayerRef} className="relative h-[220px] sm:h-[260px] w-full bg-black">
                   {activeVideo.searchUrl ? (
                     <div className="h-full w-full flex flex-col items-center justify-center gap-3 p-4 text-center bg-linear-to-br from-[#1C1916] to-[#3a1f19]">
                       <p className="text-sm font-bold text-[#EFE8DC]">No verified video for this career yet</p>
