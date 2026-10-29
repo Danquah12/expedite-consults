@@ -69,9 +69,20 @@ export function ConnectLnStudioPlayer({
             setDuration(data.info.duration)
           }
           if (typeof data.info.playerState === "number") {
-            // 1 = playing, 2 = paused, 0 = ended
-            if (data.info.playerState === 1) setIsPlaying(true)
-            else if (data.info.playerState === 2 || data.info.playerState === 0) setIsPlaying(false)
+            // 1 = playing, 2 = paused, 0 = ended (auto-replay continuously until user clicks Next Talk)
+            if (data.info.playerState === 1) {
+              setIsPlaying(true)
+            } else if (data.info.playerState === 0) {
+              setCurrentTime(0)
+              setIsPlaying(true)
+              const win = iframeRef.current?.contentWindow
+              if (win) {
+                win.postMessage(JSON.stringify({ event: "command", func: "seekTo", args: [0, true] }), "*")
+                win.postMessage(JSON.stringify({ event: "command", func: "playVideo", args: [] }), "*")
+              }
+            } else if (data.info.playerState === 2) {
+              setIsPlaying(false)
+            }
           }
         }
       } catch {
@@ -93,14 +104,14 @@ export function ConnectLnStudioPlayer({
     }
   }, [youtubeId, autoPlay])
 
-  // Fallback timer so scrubber progresses smoothly even before postMessage handshake completes
+  // Fallback timer so scrubber progresses smoothly and loops when reaching duration
   useEffect(() => {
     if (!isPlaying) return
     const timer = setInterval(() => {
-      setCurrentTime((prev) => (prev < duration ? prev + 0.5 : prev))
+      setCurrentTime((prev) => (prev + 0.5 >= duration ? 0 : prev + 0.5))
     }, 500)
     return () => clearInterval(timer)
-  }, [isPlaying, duration])
+  }, [isPlaying, duration, sendPlayerCommand])
 
   const triggerControlsVisibility = () => {
     setShowControls(true)
@@ -181,7 +192,7 @@ export function ConnectLnStudioPlayer({
         <iframe
           ref={iframeRef}
           key={youtubeId}
-          src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=${autoPlay ? 1 : 0}&controls=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&playsinline=1&enablejsapi=1`}
+          src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=${autoPlay ? 1 : 0}&loop=1&playlist=${youtubeId}&controls=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&playsinline=1&enablejsapi=1`}
           title={title}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           className="h-full w-full border-0 pointer-events-none"
