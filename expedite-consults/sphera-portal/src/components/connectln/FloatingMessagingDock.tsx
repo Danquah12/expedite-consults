@@ -38,6 +38,8 @@ interface FloatingMessagingDockProps {
   onOpenFullMessaging?: () => void
   composeRecipient?: DirectMessageRecipient | null
   onCloseComposeRecipient?: () => void
+  /** When true (e.g. the full Messaging page is open) incoming messages do not auto-open this popup. */
+  suppressAutoOpen?: boolean
 }
 
 export function FloatingMessagingDock({
@@ -45,7 +47,10 @@ export function FloatingMessagingDock({
   onOpenFullMessaging,
   composeRecipient,
   onCloseComposeRecipient,
+  suppressAutoOpen = false,
 }: FloatingMessagingDockProps) {
+  const suppressAutoOpenRef = useRef(suppressAutoOpen)
+  suppressAutoOpenRef.current = suppressAutoOpen
   const enclaveId = currentUser?.professionEnclave || "trades_construction"
   const viewerName = currentUser?.name || ""
   const viewerEmail = (currentUser as any)?.email || ""
@@ -112,6 +117,8 @@ export function FloatingMessagingDock({
             const triggerKey = `${viewerName}__${unreadDirectThread.id}__${latestMsg?.id || "init"}`
             if (!autoOpenedMsgIdsRef.current.has(triggerKey)) {
               autoOpenedMsgIdsRef.current.add(triggerKey)
+              // The full Messaging page already shows this message, so don't open the popup a second time
+              if (suppressAutoOpenRef.current) return
               setActiveChatThread(unreadDirectThread)
               setIncomingAlertBanner(
                 `📩 New message received from ${unreadDirectThread.title}`

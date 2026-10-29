@@ -12,6 +12,7 @@ interface ReminderToast {
     startIso: string;
     mode: 'video' | 'audio';
     names: string;
+    joinUrl?: string;
 }
 
 function loadFired(): string[] {
@@ -57,6 +58,7 @@ export function MeetingReminders({ onOpenMessaging }: { onOpenMessaging?: () => 
                             startIso: m.startIso,
                             mode: m.mode,
                             names: m.invitees.map((i) => i.name).join(', '),
+                            joinUrl: m.joinUrl,
                         });
                     }
                 }
@@ -104,6 +106,15 @@ export function MeetingReminders({ onOpenMessaging }: { onOpenMessaging?: () => 
                         {new Date(t.startIso).toLocaleString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' })} ·{' '}
                         {t.mode === 'video' ? '🎥 Video Huddle' : '📞 Voice Call'} · {t.names}
                     </p>
+                    {t.joinUrl && (
+                        <a
+                            href={t.joinUrl}
+                            className="mt-2 mr-2 inline-block rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-extrabold"
+                            style={{ color: '#FFFFFF' }}
+                        >
+                            ▶ Join meeting
+                        </a>
+                    )}
                     {onOpenMessaging && (
                         <button
                             type="button"

@@ -21,6 +21,8 @@ export interface ScheduledMeeting {
     createdAtIso: string;
     /** Minutes before the start time at which the host is reminded (e.g. [15, 30]). */
     reminders?: number[];
+    /** Link every invitee (and the host) uses to join the meeting room. */
+    joinUrl?: string;
 }
 
 const STORAGE_KEY = 'connectln_scheduled_meetings_v1';
@@ -61,7 +63,8 @@ function buildIcs(m: ScheduledMeeting, host: string): string {
         `DTSTART:${icsStamp(start)}`,
         `DTEND:${icsStamp(end)}`,
         `SUMMARY:${m.reason.replace(/\n/g, ' ')}`,
-        `DESCRIPTION:${(m.notes || '').replace(/\n/g, '\\n')} (Organizer: ${host})`,
+        ...(m.joinUrl ? [`LOCATION:${m.joinUrl}`, `URL:${m.joinUrl}`] : []),
+        `DESCRIPTION:${(m.notes || '').replace(/\n/g, '\\n')}${m.joinUrl ? `\\nJoin: ${m.joinUrl}` : ''} (Organizer: ${host})`,
         ...(m.reminders || []).flatMap((min) => [
             'BEGIN:VALARM',
             'ACTION:DISPLAY',
@@ -142,8 +145,12 @@ export function ScheduleMeetingModal({
         const start = new Date(y, mo - 1, d, h, mi, 0, 0);
         if (start.getTime() < Date.now()) return setError('Please choose a date and time in the future.');
 
+        const meetingId = `mtg_${Date.now()}`;
+        const roomId = `call-${Math.random().toString(36).slice(2, 8)}${Date.now().toString(36).slice(-4)}-live`;
+        const joinUrl = `https://www.connectln.app/connectin?tab=vibecomms&joinCall=${encodeURIComponent(roomId)}`;
         const meeting: ScheduledMeeting = {
-            id: `mtg_${Date.now()}`,
+            id: meetingId,
+            joinUrl,
             reason: reason.trim(),
             notes: notes.trim(),
             startIso: start.toISOString(),
@@ -166,7 +173,8 @@ export function ScheduleMeetingModal({
             `Invited: ${others}` +
             (meeting.notes ? `\nNotes: ${meeting.notes}` : '') +
             (meeting.reminders && meeting.reminders.length ? `\nReminders: ${meeting.reminders.join(' & ')} min before` : '') +
-            `\nOpen Messaging at the scheduled time to join.`;
+            `\n🔗 Join the meeting: ${joinUrl}` +
+            `\nOpen the link at the scheduled time to join.`;
 
         setSending(true);
         try {
@@ -209,7 +217,20 @@ export function ScheduleMeetingModal({
                                 {done.invitees.map((i) => i.name).join(', ')}
                             </p>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
+                            {done.joinUrl && (
+                                <>
+                                    <a href={done.joinUrl} className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-extrabold" style={{ color: '#FFFFFF' }}>
+                                        ▶ Join meeting link
+                                    </a>
+                                    <button
+                                        onClick={() => navigator.clipboard?.writeText(done.joinUrl || '').catch(() => {})}
+                                        className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-extrabold border border-slate-200"
+                                    >
+                                        📋 Copy link
+                                    </button>
+                                </>
+                            )}
                             <button onClick={downloadIcs} className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-extrabold border border-slate-200">
                                 ⬇ Add to my calendar (.ics)
                             </button>
