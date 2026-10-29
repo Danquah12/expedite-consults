@@ -15,7 +15,19 @@ export interface B2BMessageItem {
   timestamp: string
   /** Full ISO time the message was sent; used to keep conversations in time order. */
   createdAtIso?: string
+  /** Reactions on this message: reaction kind (like | up | down) -> normalized names of the members who reacted. */
+  reactions?: Record<string, string[]>
+  /** Comments members left under this message. */
+  comments?: MessageComment[]
   attachments?: { name: string; type: string; url?: string }[]
+}
+
+export interface MessageComment {
+  id: string
+  author: string
+  avatar: string
+  text: string
+  createdAtIso: string
 }
 
 export interface B2BConversationThread {

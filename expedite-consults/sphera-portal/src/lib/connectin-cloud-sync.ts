@@ -410,6 +410,9 @@ export interface CloudDirectMessage {
   timestamp: string
   createdAtIso: string
   readBy: string[]
+  /** reaction kind (like | up | down) -> normalized names of members who reacted */
+  reactions?: Record<string, string[]>
+  comments?: { id: string; author: string; avatar: string; text: string; createdAtIso: string }[]
 }
 
 export interface CloudDirectConversation {

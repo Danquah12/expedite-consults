@@ -75,7 +75,13 @@ function doesParticipantMatch(candidateName: string, viewerName: string, candida
     if (candidateEmail && viewerEmail) {
         const cEmail = normalizeParticipantKey(candidateEmail);
         const vEmail = normalizeParticipantKey(viewerEmail);
-        if (cEmail && vEmail && cEmail === vEmail) return true;
+        if (cEmail && vEmail && cEmail === vEmail) {
+            // A shared email only counts when the names are also related, so different people
+            // who happen to use the same address are never merged into one inbox.
+            const cTok = cName.split(' ').filter((t) => t.length >= 3);
+            const vTok = vName.split(' ').filter((t) => t.length >= 3);
+            if (!cName || !vName || cCompact === vCompact || cTok.some((t) => vTok.includes(t))) return true;
+        }
     }
 
     // Match if first + last token match
@@ -186,6 +192,8 @@ function buildViewerBilateralThreads(
                 text: m.text,
                 timestamp: m.timestamp || 'Just now',
                 createdAtIso: m.createdAtIso,
+                reactions: m.reactions,
+                comments: m.comments,
                 attachments: m.attachment
                     ? [{ name: m.attachment, type: 'Document' }]
                     : undefined,
@@ -438,6 +446,81 @@ export async function POST(request: Request) {
                 mergeCloudConversationsIntoMemory(cloudConvos);
             }
         } catch {}
+
+        // Reactions (like / thumbs up / thumbs down) and comments on a direct message, visible to both people
+        if (action === 'react_message' || action === 'comment_message') {
+            const { messageId, reaction, commentText, senderAvatar: actorAvatar } = body as {
+                messageId?: string;
+                reaction?: string;
+                commentText?: string;
+                senderAvatar?: string;
+            };
+            const actorName = (viewerName || senderName || '').trim();
+            if (!messageId || !actorName) {
+                return NextResponse.json({ ok: false, error: 'messageId and the signed-in member are required' }, { status: 400 });
+            }
+            let foundConvo: CloudDirectConversation | null = null;
+            let foundMsg: CloudDirectMessage | null = null;
+            for (const c of Object.values(bilateralConversationsByPairKey)) {
+                const m = (c.messages || []).find((x) => x.id === messageId);
+                if (m) {
+                    foundConvo = c;
+                    foundMsg = m;
+                    break;
+                }
+            }
+            if (!foundConvo || !foundMsg) {
+                // Not a stored member-to-member message (e.g. a demo thread): nothing to save on the server
+                return NextResponse.json({ ok: false, error: 'message_not_stored' });
+            }
+            const isParticipant =
+                doesParticipantMatch(foundConvo.participantA.name, actorName, foundConvo.participantA.email, senderEmail) ||
+                doesParticipantMatch(foundConvo.participantB.name, actorName, foundConvo.participantB.email, senderEmail);
+            if (!isParticipant) {
+                return NextResponse.json({ ok: false, error: 'not_a_participant' }, { status: 403 });
+            }
+
+            if (action === 'react_message') {
+                if (!['like', 'up', 'down'].includes(String(reaction))) {
+                    return NextResponse.json({ ok: false, error: 'unknown reaction' }, { status: 400 });
+                }
+                const actorKey = normalizeParticipantKey(actorName);
+                const reactions: Record<string, string[]> = { ...(foundMsg.reactions || {}) };
+                const current = new Set(reactions[reaction as string] || []);
+                if (current.has(actorKey)) {
+                    current.delete(actorKey);
+                } else {
+                    current.add(actorKey);
+                    // Thumbs up and thumbs down are mutually exclusive
+                    const opposite = reaction === 'up' ? 'down' : reaction === 'down' ? 'up' : null;
+                    if (opposite && reactions[opposite]) {
+                        reactions[opposite] = reactions[opposite].filter((k) => k !== actorKey);
+                    }
+                }
+                reactions[reaction as string] = Array.from(current);
+                foundMsg.reactions = reactions;
+            } else {
+                const textClean = String(commentText || '').trim().slice(0, 200);
+                if (!textClean) return NextResponse.json({ ok: false, error: 'empty comment' }, { status: 400 });
+                const comments = [...(foundMsg.comments || [])];
+                comments.push({
+                    id: `cmt_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+                    author: actorName,
+                    avatar: actorAvatar && !actorAvatar.startsWith('data:') ? actorAvatar : '',
+                    text: textClean,
+                    createdAtIso: new Date().toISOString(),
+                });
+                foundMsg.comments = comments.slice(-10);
+            }
+            foundConvo.updatedAtIso = new Date().toISOString();
+            await upsertCloudDirectConversation(foundConvo).catch(() => {});
+            return NextResponse.json({
+                ok: true,
+                messageId,
+                reactions: foundMsg.reactions || {},
+                comments: foundMsg.comments || [],
+            });
+        }
 
         if (action === 'mark_read' && threadId) {
             readThreadIds.add(threadId);

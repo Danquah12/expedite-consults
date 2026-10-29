@@ -2229,6 +2229,20 @@ export default function ConnectLnPage() {
         {activeTab === 'messaging' && (
           <MessagingView
             currentUser={userData}
+            onPostToFeed={(content, repostOf) =>
+              handleAddPost({
+                author: {
+                  id: userData.id,
+                  name: userData.name,
+                  headline: userData.headline,
+                  avatar: userData.avatar,
+                  connectionDegree: 'You',
+                },
+                visibility: 'Connections',
+                content: repostOf ? `🔁 Reposted from ${repostOf}:\n\n"${content}"` : content,
+                postType: 'standard',
+              } as Omit<Post, 'id' | 'timestamp' | 'stats' | 'comments'>)
+            }
             onNavigateMarketplace={() => setActiveTab('marketplace')}
             onNavigateJobs={() => setActiveTab('jobs')}
             onNavigateVibeComms={() => setActiveTab('vibecomms')}

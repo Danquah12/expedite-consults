@@ -9,6 +9,7 @@ import {
 } from '@/lib/b2b-messaging-data';
 import { PROFESSION_ENCLAVES } from '@/lib/connectin-professions';
 import { ScheduleMeetingModal, MeetingInvitee } from './ScheduleMeetingModal';
+import { MessageActionBar } from './MessageActionBar';
 import { resolveUserProfilePicture } from '@/lib/connectin-storage';
 import {
     getLocalBilateralThreadsForViewer,
@@ -34,11 +35,14 @@ export function MessagingView({
     onNavigateMarketplace,
     onNavigateJobs,
     currentUser,
+    onPostToFeed,
 }: {
     onNavigateVibeComms?: () => void;
     onNavigateMarketplace?: () => void;
     onNavigateJobs?: () => void;
     currentUser?: any;
+    /** Publishes a chat message to the member's Feed; repostOf is the original sender when reposting. */
+    onPostToFeed?: (content: string, repostOf?: string) => void;
 }) {
     const activeEnclave = currentUser?.professionEnclave || 'trades_construction';
     const [selectedEnclave, setSelectedEnclave] = useState<string>(activeEnclave);
@@ -903,6 +907,116 @@ export function MessagingView({
         }
     };
 
+    // ---- Message actions: reactions, comments, share/forward, post/repost to Feed ----
+    const updateMessage = (msgId: string, patch: (m: B2BMessageItem) => B2BMessageItem) => {
+        setThreads((prev) =>
+            prev.map((t) => ({ ...t, messages: t.messages.map((m) => (m.id === msgId ? patch(m) : m)) }))
+        );
+    };
+
+    const messageActionBody = () => ({
+        enclave: selectedEnclave === 'all' ? activeEnclave : selectedEnclave,
+        threadId: activeThread?.id,
+        viewerName: currentUser?.name || '',
+        senderName: currentUser?.name || '',
+        senderEmail: currentUser?.email || '',
+        senderAvatar: currentUser?.avatar || '',
+    });
+
+    const handleReactToMessage = async (msg: B2BMessageItem, kind: 'like' | 'up' | 'down') => {
+        const me = (currentUser?.name || '').toLowerCase().trim().replace(/\s+/g, ' ');
+        if (!me) return;
+        // Optimistic update so the tap feels instant
+        updateMessage(msg.id, (m) => {
+            const reactions: Record<string, string[]> = { ...(m.reactions || {}) };
+            const set = new Set(reactions[kind] || []);
+            if (set.has(me)) set.delete(me);
+            else {
+                set.add(me);
+                const opp = kind === 'up' ? 'down' : kind === 'down' ? 'up' : null;
+                if (opp && reactions[opp]) reactions[opp] = reactions[opp].filter((k) => k !== me);
+            }
+            reactions[kind] = Array.from(set);
+            return { ...m, reactions };
+        });
+        try {
+            const res = await fetch('/api/connectin/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'react_message', messageId: msg.id, reaction: kind, ...messageActionBody() }),
+            });
+            const data = await res.json();
+            if (data?.ok) updateMessage(msg.id, (m) => ({ ...m, reactions: data.reactions || {} }));
+        } catch {
+            // keep the optimistic reaction on this screen
+        }
+    };
+
+    const handleCommentOnMessage = async (msg: B2BMessageItem, text: string) => {
+        const author = currentUser?.name || 'You';
+        const local = {
+            id: `cmt_local_${Date.now()}`,
+            author,
+            avatar: currentUser?.avatar && !String(currentUser.avatar).startsWith('data:') ? currentUser.avatar : '',
+            text: text.slice(0, 200),
+            createdAtIso: new Date().toISOString(),
+        };
+        updateMessage(msg.id, (m) => ({ ...m, comments: [...(m.comments || []), local].slice(-10) }));
+        try {
+            const res = await fetch('/api/connectin/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'comment_message', messageId: msg.id, commentText: text, ...messageActionBody() }),
+            });
+            const data = await res.json();
+            if (data?.ok) updateMessage(msg.id, (m) => ({ ...m, comments: data.comments || [] }));
+        } catch {
+            // keep the optimistic comment on this screen
+        }
+    };
+
+    const handleForwardMessage = async (msg: B2BMessageItem, originalSender: string, target: MeetingInvitee) => {
+        const senderName = currentUser?.name || 'You';
+        const senderEmail = currentUser?.email || '';
+        const senderAvatar = currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150';
+        const senderRole = currentUser?.headline || 'Verified ConnectIn Professional';
+        const text = `↪ Shared by ${senderName} (originally from ${originalSender}):\n"${msg.text}"`;
+        recordLocalBilateralDirectMessage({
+            senderName,
+            senderEmail,
+            senderAvatar,
+            senderRole,
+            recipientName: target.name,
+            recipientAvatar: target.avatar,
+            recipientSubtitle: target.subtitle,
+            text,
+        });
+        const res = await fetch('/api/connectin/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'send_message',
+                enclave: selectedEnclave === 'all' ? activeEnclave : selectedEnclave,
+                threadId: target.id,
+                text,
+                senderName,
+                senderEmail,
+                senderAvatar,
+                senderRole,
+                recipientName: target.name,
+                recipientSubtitle: target.subtitle,
+                recipientAvatar: target.avatar,
+                channelType: 'People',
+            }),
+        });
+        if (!res.ok) throw new Error('send failed');
+    };
+
+    const handlePostMessageToFeed = (msg: B2BMessageItem, isMine: boolean) => {
+        if (!onPostToFeed) return;
+        onPostToFeed(msg.text, isMine ? undefined : msg.sender.name);
+    };
+
     const handleSendMessage = (e: React.FormEvent) => {
         e.preventDefault();
         sendChatText(messageInput);
@@ -1602,6 +1716,18 @@ export function MessagingView({
                                                     )}
                                                 </div>
                                             </div>
+                                            <MessageActionBar
+                                                msg={msg}
+                                                isMe={isMe}
+                                                myKey={(currentUser?.name || '').toLowerCase().trim().replace(/\s+/g, ' ')}
+                                                shareTargets={threads
+                                                    .filter((t) => t.channelType === 'People' && t.id !== activeThread.id)
+                                                    .map((t) => ({ id: t.id, name: t.title, avatar: t.avatar, subtitle: t.subtitle }))}
+                                                onReact={(kind) => handleReactToMessage(msg, kind)}
+                                                onComment={(text) => handleCommentOnMessage(msg, text)}
+                                                onForward={(target) => handleForwardMessage(msg, isMe ? currentUser?.name || 'You' : msg.sender.name, target)}
+                                                onPostToFeed={() => handlePostMessageToFeed(msg, isMe)}
+                                            />
                                         </div>
                                     </div>
                                 );

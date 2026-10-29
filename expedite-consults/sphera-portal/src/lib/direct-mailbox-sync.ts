@@ -70,7 +70,13 @@ export function doesDmParticipantMatch(
   if (candidateEmail && viewerEmail) {
     const cEmail = normalizeDmName(candidateEmail)
     const vEmail = normalizeDmName(viewerEmail)
-    if (cEmail && vEmail && cEmail === vEmail) return true
+    if (cEmail && vEmail && cEmail === vEmail) {
+      // A shared email only counts when the names are also related, so different people
+      // who happen to use the same address are never merged into one inbox.
+      const cTok = cName.split(" ").filter(t => t.length >= 3)
+      const vTok = vName.split(" ").filter(t => t.length >= 3)
+      if (!cName || !vName || cCompact === vCompact || cTok.some(t => vTok.includes(t))) return true
+    }
   }
 
   const cTokens = cName.split(" ").filter(Boolean)
