@@ -46,13 +46,14 @@ async function sendEmail(to: string, senderName: string, text: string): Promise<
   return !error
 }
 
-async function sendSms(toPhone: string, senderName: string, text: string): Promise<boolean> {
+async function sendSms(toPhone: string, senderName: string, text: string): Promise<{ ok: boolean; note: string }> {
   const accountSid = process.env.TWILIO_ACCOUNT_SID || ""
   const authToken = process.env.TWILIO_AUTH_TOKEN || ""
   const fromPhone = process.env.TWILIO_PHONE_NUMBER || ""
-  if (!accountSid || !authToken || !fromPhone || !toPhone) return false
+  if (!accountSid || !authToken || !fromPhone) return { ok: false, note: "Twilio is not configured (missing account SID, auth token or sender number)" }
+  if (!toPhone) return { ok: false, note: "no phone number on file for this member" }
   const to = formatE164Phone(toPhone)
-  if (to === formatE164Phone(fromPhone)) return false
+  if (to === formatE164Phone(fromPhone)) return { ok: false, note: "recipient number equals the sender number" }
   const body = `ConnectLn: new message from ${senderName}: "${clip(text, 110)}" Reply: ${OPEN_MESSAGING_URL}`
   const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
     method: "POST",
@@ -62,8 +63,19 @@ async function sendSms(toPhone: string, senderName: string, text: string): Promi
     },
     body: new URLSearchParams({ To: to, From: fromPhone, Body: body }).toString(),
   })
-  if (!res.ok) console.warn("[dm-notify] sms failed:", res.status, (await res.text().catch(() => "")).slice(0, 200))
-  return res.ok
+  const raw = await res.text().catch(() => "")
+  let info: any = {}
+  try {
+    info = JSON.parse(raw)
+  } catch {
+    // non-JSON error body
+  }
+  const masked = to.length > 6 ? `${to.slice(0, 3)}****${to.slice(-3)}` : "****"
+  if (!res.ok) {
+    console.warn("[dm-notify] sms failed:", res.status, raw.slice(0, 200))
+    return { ok: false, note: `Twilio ${res.status} (code ${info.code ?? "?"}): ${info.message || raw.slice(0, 120)} [to ${masked}]` }
+  }
+  return { ok: true, note: `queued with Twilio (sid ${info.sid || "?"}, status ${info.status || "?"}) to ${masked}` }
 }
 
 export async function notifyDmRecipient(params: {
@@ -72,7 +84,7 @@ export async function notifyDmRecipient(params: {
   recipientPhone?: string
   senderName: string
   text: string
-}): Promise<{ email: boolean; sms: boolean; skipped?: string }> {
+}): Promise<{ email: boolean; sms: boolean; skipped?: string; smsNote?: string }> {
   const { recipientName, recipientEmail, recipientPhone, senderName, text } = params
   const key = `${senderName.toLowerCase()}>${recipientName.toLowerCase()}`
   const now = Date.now()
@@ -86,7 +98,9 @@ export async function notifyDmRecipient(params: {
 
   const [email, sms] = await Promise.all([
     wantEmail && recipientEmail ? withTimeout(sendEmail(recipientEmail, senderName, text), false) : Promise.resolve(false),
-    wantSms && recipientPhone ? withTimeout(sendSms(recipientPhone, senderName, text), false) : Promise.resolve(false),
+    wantSms
+      ? withTimeout(sendSms(recipientPhone || "", senderName, text), { ok: false, note: "timed out calling Twilio" })
+      : Promise.resolve({ ok: false, note: "SMS notifications are switched off (DM_NOTIFY_SMS=0)" }),
   ])
-  return { email, sms }
+  return { email, sms: sms.ok, smsNote: sms.note }
 }

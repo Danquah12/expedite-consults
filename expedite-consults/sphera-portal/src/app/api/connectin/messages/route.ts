@@ -627,7 +627,7 @@ export async function POST(request: Request) {
                 await upsertCloudDirectConversation(updatedConvo).catch(() => {});
 
                 // Also tell the recipient outside the app: email + text to the contact details they registered with
-                let notified: { email: boolean; sms: boolean; skipped?: string } | null = null;
+                let notified: { email: boolean; sms: boolean; skipped?: string; smsNote?: string } | null = null;
                 if (recipientIsRegisteredHuman && !doesParticipantMatch(canonSenderName, canonRecipientName, senderEmail, effectiveRecipientEmail)) {
                     try {
                         const rec = connectinDb
