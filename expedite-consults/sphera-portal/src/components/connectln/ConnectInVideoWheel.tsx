@@ -260,7 +260,7 @@ export function ConnectInVideoWheel({
         const side = Math.min(img.width, img.height)
         ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, size, size)
         const b64 = c.toDataURL("image/jpeg", 0.55).split(",")[1] || ""
-        if (!cancelled) setSharePic(b64.replace(/\+/g, "-").replace(/\//g, "_"))
+        if (!cancelled) setSharePic("")
       } catch { if (!cancelled) setSharePic("") }
     }
     img.onerror = () => { if (!cancelled) setSharePic("") }

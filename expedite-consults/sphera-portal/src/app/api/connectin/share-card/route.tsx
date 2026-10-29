@@ -14,17 +14,17 @@ function getInitials(name: string): string {
 }
 
 // Link-preview card for a shared Wheel video or post.
-// Uses strictly Satori-safe <div style={{ display: "flex" }}> elements and centers all content inside the middle 580px
-// of the 1200x630 canvas so WhatsApp's 1:1 center-crop and LinkedIn's 1200x630 banner both show the full ConnectLn Logo + Sharer Badge.
+// Uses strictly Satori-safe <div style={{ display: "flex" }}> elements and centers all content inside the middle 600x600
+// of the 1200x630 canvas so WhatsApp's 1:1 center-crop and LinkedIn's 1200x630 banner both show the giant ConnectLn Logo + Sharer Badge.
 export async function GET(req: NextRequest) {
   const { searchParams, origin } = new URL(req.url)
   const name = (searchParams.get("n") || "").slice(0, 50)
   const rawTitle = (searchParams.get("t") || "Tickets, vouches, and real work").replace(/ — Career Masterclass.*$/i, "")
-  const title = rawTitle.slice(0, 72)
+  const title = rawTitle.slice(0, 58)
   const plate = (searchParams.get("plate") || searchParams.get("d") || "").slice(0, 24)
   const rawPic = searchParams.get("p") || ""
 
-  const isKwesi = name.toLowerCase().includes("kwesi asiedu")
+  const isKwesi = name.toLowerCase().includes("kwesi")
   let pic = ""
   if (/^https:\/\//i.test(rawPic)) {
     pic = rawPic
@@ -58,65 +58,65 @@ export async function GET(req: NextRequest) {
           fontFamily: "sans-serif",
         }}
       >
-        {/* Centered 580x580 Safe-Zone Box so WhatsApp's 1:1 center crop captures 100% of the ConnectLn Logo + Sharer Avatar */}
+        {/* Centered 600x600 Safe-Zone Box so WhatsApp's 1:1 center crop is 100% filled with bold ConnectLn + Avatar */}
         <div
           style={{
-            width: 580,
-            height: 570,
+            width: 604,
+            height: 604,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "space-between",
-            background: "#211E1B",
-            border: "4px solid #A64532",
-            borderRadius: 36,
-            padding: 32,
+            background: "#1E1B18",
+            border: "5px solid #C2593F",
+            borderRadius: 32,
+            padding: 26,
           }}
         >
-          {/* 1. DOMINANT CONNECTLN LOGO & WORDMARK AT TOP */}
+          {/* 1. DOMINANT GIANT CONNECTLN LOGO & WORDMARK AT TOP */}
           <div
             style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               width: "100%",
-              paddingBottom: 18,
+              paddingBottom: 14,
               borderBottom: "3px solid #35302B",
             }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={logoUrl} width={96} height={96} style={{ borderRadius: 22 }} alt="" />
+            <img src={logoUrl} width={112} height={112} style={{ borderRadius: 24 }} alt="" />
             <div style={{ display: "flex", flexDirection: "column", marginLeft: 20 }}>
-              <div style={{ display: "flex", fontSize: 68, fontWeight: 900, color: "#FFFFFF" }}>
+              <div style={{ display: "flex", fontSize: 78, fontWeight: 900, color: "#FFFFFF" }}>
                 ConnectLn
               </div>
-              <div style={{ display: "flex", fontSize: 22, fontWeight: 800, color: "#E07A5F", marginTop: 2 }}>
+              <div style={{ display: "flex", fontSize: 24, fontWeight: 800, color: "#E07A5F" }}>
                 Tickets, vouches &amp; real work
               </div>
             </div>
           </div>
 
-          {/* 2. SHARER AVATAR + NAME IN CENTER */}
+          {/* 2. EXTRA-LARGE SHARER AVATAR + NAME IN CENTER */}
           <div
             style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              background: "#171513",
-              border: "3px solid #0088ff",
+              background: "#12100E",
+              border: "4px solid #0088ff",
               borderRadius: 999,
               paddingTop: 12,
               paddingBottom: 12,
               paddingLeft: 16,
-              paddingRight: 32,
+              paddingRight: 34,
             }}
           >
             <div
               style={{
-                width: 116,
-                height: 116,
-                borderRadius: 58,
-                border: "5px solid #0088ff",
+                width: 142,
+                height: 142,
+                borderRadius: 71,
+                border: "6px solid #0088ff",
                 background: "#0B253C",
                 display: "flex",
                 alignItems: "center",
@@ -126,20 +126,20 @@ export async function GET(req: NextRequest) {
             >
               {pic ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={pic} width={106} height={106} style={{ objectFit: "cover" }} alt="" />
+                <img src={pic} width={130} height={130} style={{ objectFit: "cover" }} alt="" />
               ) : (
-                <div style={{ display: "flex", fontSize: 48, fontWeight: 900, color: "#FFFFFF" }}>
+                <div style={{ display: "flex", fontSize: 58, fontWeight: 900, color: "#FFFFFF" }}>
                   {initials}
                 </div>
               )}
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", marginLeft: 20 }}>
-              <div style={{ display: "flex", fontSize: 38, fontWeight: 900, color: "#FFFFFF" }}>
-                {name || "ConnectLn Member"}
+              <div style={{ display: "flex", fontSize: 44, fontWeight: 900, color: "#FFFFFF" }}>
+                {name || "ConnectLn"}
               </div>
-              <div style={{ display: "flex", fontSize: 20, fontWeight: 700, color: "#7CC4FF", marginTop: 4 }}>
-                Verified ConnectLn Member
+              <div style={{ display: "flex", fontSize: 22, fontWeight: 800, color: "#60A5FA", marginTop: 4 }}>
+                ✓ Verified Member
               </div>
             </div>
           </div>
@@ -152,25 +152,25 @@ export async function GET(req: NextRequest) {
               alignItems: "center",
               justifyContent: "center",
               width: "100%",
-              background: "#171513",
-              borderRadius: 24,
-              padding: 20,
+              background: "#12100E",
+              borderRadius: 20,
+              padding: 16,
             }}
           >
             {plate ? (
               <div
                 style={{
                   display: "flex",
-                  background: "#A64532",
+                  background: "#C2593F",
                   color: "#FFFFFF",
                   paddingTop: 4,
                   paddingBottom: 4,
-                  paddingLeft: 16,
-                  paddingRight: 16,
+                  paddingLeft: 18,
+                  paddingRight: 18,
                   borderRadius: 8,
-                  fontSize: 20,
+                  fontSize: 22,
                   fontWeight: 900,
-                  marginBottom: 10,
+                  marginBottom: 8,
                 }}
               >
                 {plate}
@@ -181,7 +181,7 @@ export async function GET(req: NextRequest) {
                 display: "flex",
                 fontSize: 28,
                 fontWeight: 800,
-                color: "#F5F0EB",
+                color: "#FFFFFF",
                 textAlign: "center",
               }}
             >
