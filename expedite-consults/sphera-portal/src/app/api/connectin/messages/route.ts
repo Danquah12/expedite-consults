@@ -162,7 +162,9 @@ function buildViewerBilateralThreads(
         // The counterparty shown in the viewer's inbox is the OTHER participant!
         const partner = isA ? convo.participantB : convo.participantA;
 
-        const mappedMessages: B2BMessageItem[] = (convo.messages || []).map((m) => {
+        const mappedMessages: B2BMessageItem[] = [...(convo.messages || [])]
+            .sort((a, b) => (a.createdAtIso || '').localeCompare(b.createdAtIso || ''))
+            .map((m) => {
             const sentByViewer = doesParticipantMatch(
                 m.senderName,
                 viewerName,
@@ -182,6 +184,7 @@ function buildViewerBilateralThreads(
                 },
                 text: m.text,
                 timestamp: m.timestamp || 'Just now',
+                createdAtIso: m.createdAtIso,
                 attachments: m.attachment
                     ? [{ name: m.attachment, type: 'Document' }]
                     : undefined,

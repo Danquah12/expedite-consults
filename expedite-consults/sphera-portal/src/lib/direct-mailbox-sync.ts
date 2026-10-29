@@ -292,9 +292,11 @@ export function getLocalBilateralThreadsForViewer(
         },
         text: m.text,
         timestamp: m.timestamp || "Just now",
+        createdAtIso: m.createdAtIso,
         attachments: m.attachment ? [{ name: m.attachment, type: "Document" }] : undefined
       }
     })
+    const orderedMessages = sortMessagesChronologically(mappedMessages)
 
     const unreadCount = (convo.messages || []).filter(m => {
       const sentByViewer = doesDmParticipantMatch(
@@ -307,7 +309,7 @@ export function getLocalBilateralThreadsForViewer(
       return !(m.readBy || []).map(r => normalizeDmName(r)).includes(viewerNorm)
     }).length
 
-    const lastMsg = mappedMessages[mappedMessages.length - 1]
+    const lastMsg = orderedMessages[orderedMessages.length - 1]
 
     results.push({
       id: convo.pairKey,
@@ -325,11 +327,27 @@ export function getLocalBilateralThreadsForViewer(
       unreadCount,
       lastMessage: lastMsg ? lastMsg.text.replace(/\n/g, " · ") : "New conversation",
       lastMessageTime: lastMsg ? lastMsg.timestamp : "Just now",
-      messages: mappedMessages
+      messages: orderedMessages
     })
   }
 
   return results
+}
+
+/**
+ * Orders messages oldest -> newest (newest at the bottom). Messages without a full timestamp keep their
+ * position relative to the dated message that precedes them.
+ */
+export function sortMessagesChronologically<T extends { createdAtIso?: string }>(msgs: T[]): T[] {
+  let last = 0
+  const keyed = msgs.map((m, i) => {
+    const t = m.createdAtIso ? Date.parse(m.createdAtIso) : NaN
+    const k = Number.isFinite(t) ? t : last
+    last = k
+    return { m, k, i }
+  })
+  keyed.sort((a, b) => a.k - b.k || a.i - b.i)
+  return keyed.map(x => x.m)
 }
 
 export function mergeBilateralAndServerThreads(
@@ -366,6 +384,7 @@ export function mergeBilateralAndServerThreads(
         combinedMsgs.push(lm)
       }
     }
+    combinedMsgs.splice(0, combinedMsgs.length, ...sortMessagesChronologically(combinedMsgs))
     const lastMsg = combinedMsgs[combinedMsgs.length - 1]
     mergedByPartner.set(normTitle, {
       ...existing,

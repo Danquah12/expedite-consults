@@ -13,6 +13,8 @@ export interface B2BMessageItem {
   }
   text: string
   timestamp: string
+  /** Full ISO time the message was sent; used to keep conversations in time order. */
+  createdAtIso?: string
   attachments?: { name: string; type: string; url?: string }[]
 }
 

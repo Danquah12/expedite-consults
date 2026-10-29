@@ -803,6 +803,7 @@ export function MessagingView({
             },
             text: finalText,
             timestamp: nowStr,
+            createdAtIso: new Date().toISOString(),
             attachments: pendingAttachment
                 ? [{ name: pendingAttachment, type: 'Document' }]
                 : undefined,
