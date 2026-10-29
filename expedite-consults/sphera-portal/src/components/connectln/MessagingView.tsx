@@ -9,7 +9,7 @@ import {
 } from '@/lib/b2b-messaging-data';
 import { PROFESSION_ENCLAVES } from '@/lib/connectin-professions';
 import { ScheduleMeetingModal, MeetingInvitee } from './ScheduleMeetingModal';
-import { MessageActionBar } from './MessageActionBar';
+import { MessageActionBar, ReactionBadges } from './MessageActionBar';
 import { resolveUserProfilePicture } from '@/lib/connectin-storage';
 import {
     getLocalBilateralThreadsForViewer,
@@ -1629,22 +1629,24 @@ export function MessagingView({
                                             </div>
 
                                             {/* High-Contrast Message Bubble (Outgoing messages include Profile Picture inserted into ConnectLn Logo Card) */}
-                                            <div
-                                                className={`overflow-hidden rounded-2xl text-sm leading-relaxed shadow-sm whitespace-pre-line ${
-                                                    isMe
-                                                        ? 'rounded-tr-none font-semibold'
-                                                        : 'p-3.5 bg-white text-slate-800 border border-slate-200 rounded-tl-none font-medium'
-                                                }`}
-                                                style={
-                                                    isMe
-                                                        ? {
-                                                              backgroundColor: '#171513',
-                                                              color: '#F5F0EB',
-                                                              border: '1px solid #2C2825',
-                                                          }
-                                                        : undefined
-                                                }
-                                            >
+                                            <div className="relative">
+                                                <ReactionBadges msg={msg} />
+                                                <div
+                                                    className={`overflow-hidden rounded-2xl text-sm leading-relaxed shadow-sm whitespace-pre-line ${
+                                                        isMe
+                                                            ? 'rounded-tr-none font-semibold'
+                                                            : 'p-3.5 bg-white text-slate-800 border border-slate-200 rounded-tl-none font-medium'
+                                                    }`}
+                                                    style={
+                                                        isMe
+                                                            ? {
+                                                                  backgroundColor: '#171513',
+                                                                  color: '#F5F0EB',
+                                                                  border: '1px solid #2C2825',
+                                                              }
+                                                            : undefined
+                                                    }
+                                                >
                                                 {isMe && (
                                                     <div
                                                         className="flex items-center justify-between gap-4 px-3.5 py-2 border-b"
@@ -1715,14 +1717,18 @@ export function MessagingView({
                                                         </div>
                                                     )}
                                                 </div>
+                                                </div>
                                             </div>
                                             <MessageActionBar
                                                 msg={msg}
                                                 isMe={isMe}
                                                 myKey={(currentUser?.name || '').toLowerCase().trim().replace(/\s+/g, ' ')}
+                                                myName={currentUser?.name || ''}
                                                 shareTargets={threads
                                                     .filter((t) => t.channelType === 'People' && t.id !== activeThread.id)
                                                     .map((t) => ({ id: t.id, name: t.title, avatar: t.avatar, subtitle: t.subtitle }))}
+                                                shareText={msg.text}
+                                                shareLink="https://www.connectln.app/connectin"
                                                 onReact={(kind) => handleReactToMessage(msg, kind)}
                                                 onComment={(text) => handleCommentOnMessage(msg, text)}
                                                 onForward={(target) => handleForwardMessage(msg, isMe ? currentUser?.name || 'You' : msg.sender.name, target)}
