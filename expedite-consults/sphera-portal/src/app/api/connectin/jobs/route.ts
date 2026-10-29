@@ -187,137 +187,333 @@ async function fetchLiveExternalFeeds(): Promise<GlobalJobItem[]> {
 
   const liveItems: GlobalJobItem[] = []
 
-  // 1. Fetch from Remotive Public Live Jobs API
-  try {
-    const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), 3200)
-    const res = await fetch("https://remotive.com/api/remote-jobs?limit=35", {
-      signal: controller.signal,
-      headers: { Accept: "application/json" },
-      next: { revalidate: 600 }
-    })
-    clearTimeout(timer)
-
-    if (res.ok) {
-      const data = await res.json()
-      const remotiveJobs = Array.isArray(data?.jobs) ? data.jobs.slice(0, 35) : []
-
-      for (const rj of remotiveJobs) {
-        const cleanDesc = stripHtml(rj.description || "").slice(0, 360) + "..."
-        const enclave = classifyProfessionEnclave(
-          rj.title || "",
-          rj.category || "",
-          Array.isArray(rj.tags) ? rj.tags : []
-        )
-        const rawLoc = (rj.candidate_required_location || "Remote").trim()
-        const detected = detectCountryFromLocation(rawLoc)
-
-        liveItems.push({
-          id: `remotive_${rj.id}`,
-          countryCode: detected.code,
-          countryName: detected.name,
-          professionEnclave: enclave,
-          domainCategory: "Remote",
-          title: rj.title || "Remote Specialist",
-          company: rj.company_name || "Global Employer",
-          companyLogo:
-            rj.company_logo ||
-            "https://images.unsplash.com/photo-1549923746-c502d488b3ea?w=100&auto=format&fit=crop&q=80",
-          location: `${rawLoc} (Live Remote Feed)`,
-          hub: detected.hub,
-          workplaceType: "Remote",
-          employmentType: rj.job_type === "contract" ? "Contract" : "Full-time",
-          postedTime: "Live · Just synced",
-          applicantsCount: Math.floor(Math.random() * 18) + 4,
-          salaryRange: rj.salary && rj.salary.trim().length > 0 ? rj.salary : "$115,000 - $165,000 / yr (Est.)",
-          easyApply: true,
-          description: cleanDesc || `Live opening for ${rj.title} at ${rj.company_name}. Apply directly on the employer's live portal.`,
-          requirements: [
-            `Proven professional experience in ${rj.category || "this domain"}`,
-            ...(Array.isArray(rj.tags) && rj.tags.length > 0
-              ? [`Core competencies: ${rj.tags.slice(0, 4).join(", ")}`]
-              : []),
-            "Strong remote collaboration & execution track record"
-          ],
-          languageRequirement: "English",
-          applyUrl: rj.url || "https://remotive.com",
-          source: "Remotive Live Job Feed",
-          tags: [
-            ...(Array.isArray(rj.tags) ? rj.tags.slice(0, 4) : []),
-            "Remote",
-            "Live Feed"
-          ],
-          isLiveFeed: true
+  await Promise.allSettled([
+    // 1. Fetch from The Muse Public Jobs API (Multi-Industry Fortune 500, Healthcare, Engineering, Finance, Legal, Operations)
+    (async () => {
+      try {
+        const controller = new AbortController()
+        const timer = setTimeout(() => controller.abort(), 3200)
+        const res = await fetch("https://www.themuse.com/api/public/jobs?page=1", {
+          signal: controller.signal,
+          headers: { Accept: "application/json" },
+          next: { revalidate: 600 }
         })
+        clearTimeout(timer)
+        if (res.ok) {
+          const data = await res.json()
+          const museJobs = Array.isArray(data?.results) ? data.results.slice(0, 30) : []
+          for (const mj of museJobs) {
+            const catNames = Array.isArray(mj.categories) ? mj.categories.map((c: any) => c.name || "").join(" ") : ""
+            const levelNames = Array.isArray(mj.levels) ? mj.levels.map((l: any) => l.name || "") : []
+            const locName = Array.isArray(mj.locations) && mj.locations[0]?.name ? mj.locations[0].name : "United States"
+            const detected = detectCountryFromLocation(locName)
+            const enclave = classifyProfessionEnclave(mj.name || "", catNames, levelNames)
+            const cleanDesc = stripHtml(mj.contents || "").slice(0, 360) + "..."
+            const isRemote = /remote|flexible/i.test(locName)
+
+            liveItems.push({
+              id: `muse_${mj.id}`,
+              countryCode: detected.code,
+              countryName: detected.name,
+              professionEnclave: enclave,
+              domainCategory: isRemote ? "Remote" : "Full-time",
+              title: mj.name || "Verified Industry Role",
+              company: mj.company?.name || "Fortune 500 Employer",
+              companyLogo: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=100&auto=format&fit=crop&q=80",
+              location: locName,
+              hub: detected.hub,
+              workplaceType: isRemote ? "Remote" : "On-site",
+              employmentType: "Full-time",
+              postedTime: "Live · Just synced",
+              applicantsCount: Math.floor(Math.random() * 19) + 3,
+              salaryRange: "$105,000 - $162,000 / yr (Est.)",
+              easyApply: true,
+              description: cleanDesc || `Live opening for ${mj.name} at ${mj.company?.name} in ${locName}.`,
+              requirements: [
+                `Verified experience in ${catNames || "this profession"}`,
+                ...(levelNames.length > 0 ? [`Role Level: ${levelNames.join(", ")}`] : []),
+                "Direct employer application via official portal"
+              ],
+              languageRequirement: "English",
+              applyUrl: mj.refs?.landing_page || "https://www.themuse.com/search",
+              source: "The Muse Official ATS Feed",
+              tags: [
+                ...(catNames ? catNames.split(" ").slice(0, 2) : []),
+                ...(levelNames.slice(0, 1)),
+                "Direct Hire",
+                "Live Feed"
+              ],
+              isLiveFeed: true
+            })
+          }
+        }
+      } catch {
+        // Non-blocking fallback
       }
-    }
-  } catch {
-    // Non-blocking fallback
-  }
+    })(),
 
-  // 2. Fetch from Arbeitnow Public Job Board API
-  try {
-    const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), 3000)
-    const res = await fetch("https://www.arbeitnow.com/api/job-board-api", {
-      signal: controller.signal,
-      headers: { Accept: "application/json" },
-      next: { revalidate: 600 }
-    })
-    clearTimeout(timer)
-
-    if (res.ok) {
-      const data = await res.json()
-      const arbeitJobs = Array.isArray(data?.data) ? data.data.slice(0, 20) : []
-
-      for (const aj of arbeitJobs) {
-        const cleanDesc = stripHtml(aj.description || "").slice(0, 360) + "..."
-        const enclave = classifyProfessionEnclave(
-          aj.title || "",
-          "",
-          Array.isArray(aj.tags) ? aj.tags : []
-        )
-        const loc = aj.location || "Berlin / Remote"
-        const detected = detectCountryFromLocation(loc)
-
-        liveItems.push({
-          id: `arbeitnow_${aj.slug || Math.random().toString(36).slice(2, 9)}`,
-          countryCode: detected.code,
-          countryName: detected.name,
-          professionEnclave: enclave,
-          domainCategory: aj.remote ? "Remote" : "Full-time",
-          title: aj.title || "Professional Opening",
-          company: aj.company_name || "Verified Employer",
-          companyLogo:
-            "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=100&auto=format&fit=crop&q=80",
-          location: `${loc}${aj.remote ? " (Remote)" : ""}`,
-          hub: detected.hub,
-          workplaceType: aj.remote ? "Remote" : "Hybrid",
-          employmentType: "Full-time",
-          postedTime: "Live · Just synced",
-          applicantsCount: Math.floor(Math.random() * 15) + 3,
-          salaryRange: detected.code === "DE" || detected.code === "FR" || detected.code === "NL"
-            ? "€85,000 - €120,000 / yr (Est.)"
-            : "$110,000 - $155,000 / yr (Est.)",
-          easyApply: true,
-          description: cleanDesc,
-          requirements: [
-            "Verified domain experience and industry credentials",
-            ...(Array.isArray(aj.tags) && aj.tags.length > 0
-              ? [`Skills: ${aj.tags.slice(0, 4).join(", ")}`]
-              : [])
-          ],
-          languageRequirement: detected.code === "DE" ? "English / Deutsch" : detected.code === "FR" ? "Français / English" : "English",
-          applyUrl: aj.url || "https://www.arbeitnow.com",
-          source: "Arbeitnow Live API",
-          tags: [...(Array.isArray(aj.tags) ? aj.tags.slice(0, 4) : []), "Live Feed"],
-          isLiveFeed: true
+    // 2. Fetch from Jobicy Public Live Jobs API
+    (async () => {
+      try {
+        const controller = new AbortController()
+        const timer = setTimeout(() => controller.abort(), 3200)
+        const res = await fetch("https://jobicy.com/api/v2/remote-jobs?count=30", {
+          signal: controller.signal,
+          headers: { Accept: "application/json" },
+          next: { revalidate: 600 }
         })
+        clearTimeout(timer)
+        if (res.ok) {
+          const data = await res.json()
+          const jobicyList = Array.isArray(data?.jobs) ? data.jobs.slice(0, 30) : []
+          for (const jj of jobicyList) {
+            const ind = Array.isArray(jj.jobIndustry) ? jj.jobIndustry.join(" ") : String(jj.jobIndustry || "")
+            const enclave = classifyProfessionEnclave(jj.jobTitle || "", ind, [jj.jobType || ""])
+            const rawLoc = String(jj.jobGeo || "United States")
+            const detected = detectCountryFromLocation(rawLoc)
+            const cleanDesc = stripHtml(jj.jobExcerpt || jj.jobDescription || "").slice(0, 360) + "..."
+            const sal =
+              jj.annualSalaryMin && jj.annualSalaryMax
+                ? `${jj.salaryCurrency || "$"}${Number(jj.annualSalaryMin).toLocaleString()} - ${jj.salaryCurrency || "$"}${Number(jj.annualSalaryMax).toLocaleString()} / yr`
+                : "$112,000 - $158,000 / yr (Est.)"
+
+            liveItems.push({
+              id: `jobicy_${jj.id}`,
+              countryCode: detected.code,
+              countryName: detected.name,
+              professionEnclave: enclave,
+              domainCategory: "Remote",
+              title: stripHtml(jj.jobTitle || "Verified Specialist"),
+              company: jj.companyName || "Verified Global Employer",
+              companyLogo: jj.companyLogo || "https://images.unsplash.com/photo-1549923746-c502d488b3ea?w=100&auto=format&fit=crop&q=80",
+              location: `${rawLoc} (Live Feed)`,
+              hub: detected.hub,
+              workplaceType: "Remote",
+              employmentType: /contract/i.test(String(jj.jobType)) ? "Contract" : "Full-time",
+              postedTime: "Live · Just synced",
+              applicantsCount: Math.floor(Math.random() * 16) + 4,
+              salaryRange: sal,
+              easyApply: true,
+              description: cleanDesc,
+              requirements: [
+                `Domain competency in ${ind || "core specialization"}`,
+                `Level: ${jj.jobLevel || "Mid-Senior"}`
+              ],
+              languageRequirement: "English",
+              applyUrl: jj.url || "https://jobicy.com",
+              source: "Jobicy Live Employer Feed",
+              tags: [ind || "Specialist", jj.jobLevel || "Verified", "Live Feed"].filter(Boolean),
+              isLiveFeed: true
+            })
+          }
+        }
+      } catch {
+        // Non-blocking fallback
       }
-    }
-  } catch {
-    // Non-blocking fallback
-  }
+    })(),
+
+    // 3. Fetch from Greenhouse Live Public ATS Boards (SpaceX Aerospace/Manufacturing, Procore Construction, Samsara Fleet/IoT, Cloudflare Cyber/Infra)
+    (async () => {
+      const boards = [
+        { token: "spacex", company: "SpaceX", defaultEnclave: "aviation_aerospace_maritime", logo: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=100&auto=format&fit=crop&q=80" },
+        { token: "samsara", company: "Samsara Fleet & Industrial IoT", defaultEnclave: "automotive_mechanics", logo: "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=100&auto=format&fit=crop&q=80" },
+        { token: "cloudflare", company: "Cloudflare Cyber & Edge Network", defaultEnclave: "tech_cybersecurity", logo: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=100&auto=format&fit=crop&q=80" },
+        { token: "stripe", company: "Stripe Global Financial Infrastructure", defaultEnclave: "finance_accounting", logo: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=100&auto=format&fit=crop&q=80" }
+      ]
+      await Promise.allSettled(
+        boards.map(async (b) => {
+          try {
+            const controller = new AbortController()
+            const timer = setTimeout(() => controller.abort(), 2800)
+            const res = await fetch(`https://boards-api.greenhouse.io/v1/boards/${b.token}/jobs`, {
+              signal: controller.signal,
+              headers: { Accept: "application/json" },
+              next: { revalidate: 600 }
+            })
+            clearTimeout(timer)
+            if (res.ok) {
+              const data = await res.json()
+              const ghJobs = Array.isArray(data?.jobs) ? data.jobs.slice(0, 12) : []
+              for (const gj of ghJobs) {
+                const rawLoc = gj.location?.name || "United States"
+                const detected = detectCountryFromLocation(rawLoc)
+                const classified = classifyProfessionEnclave(gj.title || "", b.company, [])
+                const enclave = classified === "tech_software" && b.defaultEnclave !== "tech_software" ? b.defaultEnclave : classified
+                const isRemote = /remote|distributed/i.test(rawLoc)
+
+                liveItems.push({
+                  id: `gh_${b.token}_${gj.id}`,
+                  countryCode: detected.code,
+                  countryName: detected.name,
+                  professionEnclave: enclave,
+                  domainCategory: isRemote ? "Remote" : "Full-time",
+                  title: gj.title || "Specialist Opening",
+                  company: b.company,
+                  companyLogo: b.logo,
+                  location: rawLoc,
+                  hub: detected.hub,
+                  workplaceType: isRemote ? "Remote" : "On-site",
+                  employmentType: "Full-time",
+                  postedTime: "Live · Greenhouse ATS",
+                  applicantsCount: Math.floor(Math.random() * 20) + 4,
+                  salaryRange: "$128,000 - $185,000 / yr",
+                  easyApply: true,
+                  description: `Live verified opening for ${gj.title} at ${b.company} in ${rawLoc}. Synced directly from ${b.company}'s live Greenhouse ATS board.`,
+                  requirements: [
+                    `Hands-on field, technical, or operational experience for ${gj.title}`,
+                    `Direct ATS submission to ${b.company}`
+                  ],
+                  languageRequirement: "English",
+                  applyUrl: gj.absolute_url || "https://www.greenhouse.io",
+                  source: `${b.company} Live Greenhouse ATS`,
+                  tags: [b.company.split(" ")[0], rawLoc.split(",")[0], "Greenhouse ATS", "Live Feed"],
+                  isLiveFeed: true
+                })
+              }
+            }
+          } catch {
+            // Non-blocking
+          }
+        })
+      )
+    })(),
+
+    // 4. Fetch from Remotive Public Live Jobs API
+    (async () => {
+      try {
+        const controller = new AbortController()
+        const timer = setTimeout(() => controller.abort(), 3200)
+        const res = await fetch("https://remotive.com/api/remote-jobs?limit=35", {
+          signal: controller.signal,
+          headers: { Accept: "application/json" },
+          next: { revalidate: 600 }
+        })
+        clearTimeout(timer)
+
+        if (res.ok) {
+          const data = await res.json()
+          const remotiveJobs = Array.isArray(data?.jobs) ? data.jobs.slice(0, 35) : []
+
+          for (const rj of remotiveJobs) {
+            const cleanDesc = stripHtml(rj.description || "").slice(0, 360) + "..."
+            const enclave = classifyProfessionEnclave(
+              rj.title || "",
+              rj.category || "",
+              Array.isArray(rj.tags) ? rj.tags : []
+            )
+            const rawLoc = (rj.candidate_required_location || "Remote").trim()
+            const detected = detectCountryFromLocation(rawLoc)
+
+            liveItems.push({
+              id: `remotive_${rj.id}`,
+              countryCode: detected.code,
+              countryName: detected.name,
+              professionEnclave: enclave,
+              domainCategory: "Remote",
+              title: rj.title || "Remote Specialist",
+              company: rj.company_name || "Global Employer",
+              companyLogo:
+                rj.company_logo ||
+                "https://images.unsplash.com/photo-1549923746-c502d488b3ea?w=100&auto=format&fit=crop&q=80",
+              location: `${rawLoc} (Live Remote Feed)`,
+              hub: detected.hub,
+              workplaceType: "Remote",
+              employmentType: rj.job_type === "contract" ? "Contract" : "Full-time",
+              postedTime: "Live · Just synced",
+              applicantsCount: Math.floor(Math.random() * 18) + 4,
+              salaryRange: rj.salary && rj.salary.trim().length > 0 ? rj.salary : "$115,000 - $165,000 / yr (Est.)",
+              easyApply: true,
+              description: cleanDesc || `Live opening for ${rj.title} at ${rj.company_name}. Apply directly on the employer's live portal.`,
+              requirements: [
+                `Proven professional experience in ${rj.category || "this domain"}`,
+                ...(Array.isArray(rj.tags) && rj.tags.length > 0
+                  ? [`Core competencies: ${rj.tags.slice(0, 4).join(", ")}`]
+                  : []),
+                "Strong remote collaboration & execution track record"
+              ],
+              languageRequirement: "English",
+              applyUrl: rj.url || "https://remotive.com",
+              source: "Remotive Live Job Feed",
+              tags: [
+                ...(Array.isArray(rj.tags) ? rj.tags.slice(0, 4) : []),
+                "Remote",
+                "Live Feed"
+              ],
+              isLiveFeed: true
+            })
+          }
+        }
+      } catch {
+        // Non-blocking fallback
+      }
+    })(),
+
+    // 5. Fetch from Arbeitnow Public Job Board API
+    (async () => {
+      try {
+        const controller = new AbortController()
+        const timer = setTimeout(() => controller.abort(), 3000)
+        const res = await fetch("https://www.arbeitnow.com/api/job-board-api", {
+          signal: controller.signal,
+          headers: { Accept: "application/json" },
+          next: { revalidate: 600 }
+        })
+        clearTimeout(timer)
+
+        if (res.ok) {
+          const data = await res.json()
+          const arbeitJobs = Array.isArray(data?.data) ? data.data.slice(0, 20) : []
+
+          for (const aj of arbeitJobs) {
+            const cleanDesc = stripHtml(aj.description || "").slice(0, 360) + "..."
+            const enclave = classifyProfessionEnclave(
+              aj.title || "",
+              "",
+              Array.isArray(aj.tags) ? aj.tags : []
+            )
+            const loc = aj.location || "Berlin / Remote"
+            const detected = detectCountryFromLocation(loc)
+
+            liveItems.push({
+              id: `arbeitnow_${aj.slug || Math.random().toString(36).slice(2, 9)}`,
+              countryCode: detected.code,
+              countryName: detected.name,
+              professionEnclave: enclave,
+              domainCategory: aj.remote ? "Remote" : "Full-time",
+              title: aj.title || "Professional Opening",
+              company: aj.company_name || "Verified Employer",
+              companyLogo:
+                "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=100&auto=format&fit=crop&q=80",
+              location: `${loc}${aj.remote ? " (Remote)" : ""}`,
+              hub: detected.hub,
+              workplaceType: aj.remote ? "Remote" : "Hybrid",
+              employmentType: "Full-time",
+              postedTime: "Live · Just synced",
+              applicantsCount: Math.floor(Math.random() * 15) + 3,
+              salaryRange: detected.code === "DE" || detected.code === "FR" || detected.code === "NL"
+                ? "€85,000 - €120,000 / yr (Est.)"
+                : "$110,000 - $155,000 / yr (Est.)",
+              easyApply: true,
+              description: cleanDesc,
+              requirements: [
+                "Verified domain experience and industry credentials",
+                ...(Array.isArray(aj.tags) && aj.tags.length > 0
+                  ? [`Skills: ${aj.tags.slice(0, 4).join(", ")}`]
+                  : [])
+              ],
+              languageRequirement: detected.code === "DE" ? "English / Deutsch" : detected.code === "FR" ? "Français / English" : "English",
+              applyUrl: aj.url || "https://www.arbeitnow.com",
+              source: "Arbeitnow Live API",
+              tags: [...(Array.isArray(aj.tags) ? aj.tags.slice(0, 4) : []), "Live Feed"],
+              isLiveFeed: true
+            })
+          }
+        }
+      } catch {
+        // Non-blocking fallback
+      }
+    })()
+  ])
 
   if (liveItems.length > 0) {
     cachedExternalJobs = liveItems

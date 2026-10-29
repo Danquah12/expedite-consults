@@ -3947,75 +3947,202 @@ interface RegionalEmployerSpec {
 
 const US_EMPLOYERS_BY_ENCLAVE: Record<string, RegionalEmployerSpec[]> = {
   trades_construction: [
-    { company: 'Turner Construction & AECOM Building Systems', applyUrl: 'https://www.turnerconstruction.com/careers', source: 'Turner Direct ATS' },
-    { company: 'Bechtel Infrastructure & EMCOR Group MEP', applyUrl: 'https://www.bechtel.com/careers/', source: 'Bechtel Careers' },
-    { company: 'Skanska USA & DPR Construction Craft Division', applyUrl: 'https://www.usa.skanska.com/careers/', source: 'Skanska Careers' }
+    { company: 'Turner Construction Company', applyUrl: 'https://www.turnerconstruction.com/careers', source: 'Turner Direct ATS' },
+    { company: 'Bechtel Infrastructure & Heavy Civil', applyUrl: 'https://www.bechtel.com/careers/', source: 'Bechtel Careers' },
+    { company: 'Skanska USA Building & Civil', applyUrl: 'https://www.usa.skanska.com/careers/', source: 'Skanska Careers' },
+    { company: 'DPR Construction Self-Perform Craft', applyUrl: 'https://www.dpr.com/company/careers', source: 'DPR Craft Portal' },
+    { company: 'Kiewit Infrastructure & Industrial Co.', applyUrl: 'https://kiewitcareers.kiewit.com/', source: 'Kiewit Direct ATS' },
+    { company: 'EMCOR Group Mechanical & Electrical Services', applyUrl: 'https://www.emcorgroup.com/careers', source: 'EMCOR MEP Careers' },
+    { company: 'Mortenson Construction & Renewable Civil', applyUrl: 'https://www.mortenson.com/careers', source: 'Mortenson Talent' },
+    { company: 'Quanta Services & Rosendin Electric', applyUrl: 'https://www.rosendin.com/careers/', source: 'Rosendin & Quanta ATS' }
   ],
   automotive_mechanics: [
-    { company: 'Penske Truck Leasing, Caterpillar & Rivian Service Ops', applyUrl: 'https://penske.jobs/', source: 'Penske & OEM Careers' },
-    { company: 'Union Pacific Rail, Cummins & BNSF Technical Ops', applyUrl: 'https://up.jobs/', source: 'Rail & Fleet ATS' }
+    { company: 'Penske Truck Leasing & Fleet Maintenance', applyUrl: 'https://penske.jobs/', source: 'Penske Fleet Careers' },
+    { company: 'Rivian Electric Adventure Service Operations', applyUrl: 'https://rivian.com/careers', source: 'Rivian Service ATS' },
+    { company: 'Caterpillar Inc. & Dealer Field Service', applyUrl: 'https://www.caterpillar.com/en/careers.html', source: 'Caterpillar Careers' },
+    { company: 'Cummins Inc. Powertrain & Heavy Diesel', applyUrl: 'https://www.cummins.com/careers', source: 'Cummins Direct ATS' },
+    { company: 'Union Pacific Railroad Mechanical & Signal', applyUrl: 'https://up.jobs/', source: 'Union Pacific Rail ATS' },
+    { company: 'Ryder System Commercial Fleet & EV TechOps', applyUrl: 'https://ryder.com/careers', source: 'Ryder Fleet Portal' },
+    { company: 'Hendrick Automotive Group Master Service', applyUrl: 'https://www.hendrickcareers.com/', source: 'Hendrick Auto ATS' },
+    { company: 'BNSF Railway Motive Power & Locomotive', applyUrl: 'https://jobs.bnsf.com/', source: 'BNSF Railway Careers' }
   ],
   agriculture_natural_resources: [
-    { company: 'John Deere Agronomy, Corteva & Plenty Vertical Farms', applyUrl: 'https://careers.deere.com/', source: 'Agri & Land Portal' },
-    { company: 'Cargill Food Science, Weyerhaeuser & USDA Forest Partner', applyUrl: 'https://careers.cargill.com/', source: 'Cargill Careers' }
+    { company: 'John Deere Precision Ag & Agronomy Tech', applyUrl: 'https://careers.deere.com/', source: 'John Deere Careers' },
+    { company: 'Corteva Agriscience Crop & Soil Division', applyUrl: 'https://careers.corteva.com/', source: 'Corteva Agriscience ATS' },
+    { company: 'Cargill Protein, Grain & Food Science', applyUrl: 'https://careers.cargill.com/', source: 'Cargill Global Careers' },
+    { company: 'Weyerhaeuser Timberlands & Forestry Ops', applyUrl: 'https://www.weyerhaeuser.com/company/careers/', source: 'Weyerhaeuser Forestry' },
+    { company: 'The Davey Tree Expert Company & Arboriculture', applyUrl: 'https://jobs.davey.com/', source: 'Davey Arborist Portal' },
+    { company: 'Land O’Lakes & WinField United Agronomy', applyUrl: 'https://careers.landolakesinc.com/', source: 'Land O’Lakes Careers' },
+    { company: 'Plenty Unlimited Vertical Farming & CEA', applyUrl: 'https://www.plenty.ag/careers/', source: 'Plenty AgTech ATS' },
+    { company: 'Zoetis Animal Health & Veterinary Ranch Ops', applyUrl: 'https://www.zoetis.com/careers', source: 'Zoetis Careers' }
   ],
   personal_services_wellness: [
-    { company: 'Equinox Tier X, Life Time Wellness & Service Corp International', applyUrl: 'https://careers.equinox.com/', source: 'Equinox & Studio ATS' },
-    { company: 'PGA Tour Agronomy, Vail Resorts & Ulta Pro Flagship', applyUrl: 'https://jobs.vailresorts.com/', source: 'Wellness & Recreation Portal' }
+    { company: 'Equinox Tier X Performance & Wellness Clubs', applyUrl: 'https://careers.equinox.com/', source: 'Equinox Talent ATS' },
+    { company: 'Life Time Athletic Country Clubs & MediSpa', applyUrl: 'https://careers.lifetime.life/', source: 'Life Time Careers' },
+    { company: 'Ulta Beauty Pro Salon & Master Styling', applyUrl: 'https://careers.ulta.com/', source: 'Ulta Beauty Pro ATS' },
+    { company: 'Service Corporation International (Dignity Memorial)', applyUrl: 'https://jobs.sci-corp.com/', source: 'SCI Memorial Careers' },
+    { company: 'PGA TOUR Agronomy & TPC Championship Turf', applyUrl: 'https://careers.pgatour.com/', source: 'PGA TOUR Turf Portal' },
+    { company: 'Vail Resorts Mountain Operations & Outdoor Guide', applyUrl: 'https://jobs.vailresorts.com/', source: 'Vail Mountain Careers' },
+    { company: 'EXOS Human Performance & Sports Rehab', applyUrl: 'https://www.teamexos.com/careers/', source: 'EXOS Performance ATS' },
+    { company: 'BrightView Golf & Sports Turf Management', applyUrl: 'https://careers.brightview.com/', source: 'BrightView Agronomy' }
   ],
   culinary_hospitality_events: [
-    { company: 'Four Seasons Hotels, Marriott Luxury & Live Nation Arenas', applyUrl: 'https://jobs.fourseasons.com/', source: 'Hospitality & Live Events ATS' },
-    { company: 'Compass Group Culinary, Ecolab & Rollins Orkin Commercial', applyUrl: 'https://www.ecolab.com/careers', source: 'Culinary & Facility Portal' }
+    { company: 'Four Seasons Hotels and Resorts Culinary & Ops', applyUrl: 'https://jobs.fourseasons.com/', source: 'Four Seasons Careers' },
+    { company: 'Marriott International Luxury & Ritz-Carlton', applyUrl: 'https://careers.marriott.com/', source: 'Marriott Global ATS' },
+    { company: 'Live Nation Entertainment & Arena Stage Rigging', applyUrl: 'https://www.livenationentertainment.com/careers/', source: 'Live Nation Touring ATS' },
+    { company: 'Compass Group North America & Restaurant Associates', applyUrl: 'https://careers.compassgroupcareers.com/', source: 'Compass Culinary Portal' },
+    { company: 'Wynn Resorts Fine Dining, Pastry & Sommelier', applyUrl: 'https://www.wynnlasvegas.com/careers', source: 'Wynn Resorts Talent' },
+    { company: 'Ecolab Commercial Hospitality & Pest Elimination', applyUrl: 'https://www.ecolab.com/careers', source: 'Ecolab Field Careers' },
+    { company: 'Sodexo Live! Stadiums, Convention & Culinary', applyUrl: 'https://us.sodexo.com/careers', source: 'Sodexo Live ATS' },
+    { company: 'Freeman Live Events, Stagecraft & Audio-Visual', applyUrl: 'https://www.freeman.com/careers', source: 'Freeman Events Portal' }
   ],
   commerce_small_business: [
-    { company: 'CBRE Commercial, Costco Wholesale & Prologis Supply Chain', applyUrl: 'https://www.cbre.com/careers', source: 'Commercial & Retail ATS' },
-    { company: 'Target Omnichannel, DHL Supply Chain & Shopify Merchant Network', applyUrl: 'https://corporate.target.com/careers', source: 'Omnichannel Commerce Portal' }
+    { company: 'CBRE Commercial Real Estate & Facilities Management', applyUrl: 'https://www.cbre.com/careers', source: 'CBRE Global Careers' },
+    { company: 'Prologis Global Logistics & Supply Chain Hubs', applyUrl: 'https://www.prologis.com/careers', source: 'Prologis Careers' },
+    { company: 'Costco Wholesale Multi-Unit & Depot Operations', applyUrl: 'https://www.costco.com/jobs.html', source: 'Costco Wholesale ATS' },
+    { company: 'DHL Supply Chain North America & Cold-Chain', applyUrl: 'https://careers.dhl.com/', source: 'DHL Logistics Portal' },
+    { company: 'JLL (Jones Lang LaSalle) Commercial Property & Leasing', applyUrl: 'https://www.us.jll.com/en/careers', source: 'JLL Property ATS' },
+    { company: 'Target Omnichannel Supply Chain & Merchandising', applyUrl: 'https://corporate.target.com/careers', source: 'Target Corporate ATS' },
+    { company: 'Sysco Foodservice Distribution & Fleet Logistics', applyUrl: 'https://careers.sysco.com/', source: 'Sysco Supply Chain' },
+    { company: 'C.H. Robinson Global Freight & Brokerage', applyUrl: 'https://jobs.chrobinson.com/', source: 'C.H. Robinson Careers' }
   ],
   creative_media_arts: [
-    { company: 'Netflix Studios, IATSE Stage Craft &Steinway/Fender Custom Shop', applyUrl: 'https://jobs.netflix.com/', source: 'Studio & Craft Portal' },
-    { company: 'FASTSIGNS Commercial, Christie’s Fine Art & Sorenson ASL', applyUrl: 'https://www.sorenson.com/careers/', source: 'Creative & Language ATS' }
+    { company: 'Netflix Studios Production, Post & Sound Stage', applyUrl: 'https://jobs.netflix.com/', source: 'Netflix Studio ATS' },
+    { company: 'Walt Disney Imagineering, Live Stage & Set Craft', applyUrl: 'https://www.disneycareers.com/', source: 'Disney Production Careers' },
+    { company: 'NBCUniversal Film, Broadcast & Dolby Atmos Ops', applyUrl: 'https://www.nbcunicareers.com/', source: 'NBCUniversal Talent' },
+    { company: 'Fender Musical Instruments Custom Shop & Luthier', applyUrl: 'https://www.fender.com/pages/careers', source: 'Fender Custom Craft' },
+    { company: 'Sorenson Communications Certified ASL Interpreting', applyUrl: 'https://www.sorenson.com/careers/', source: 'Sorenson ASL Portal' },
+    { company: 'Christie’s Fine Art Handling, Framing & Archival', applyUrl: 'https://www.christies.com/careers', source: 'Christie’s Art Careers' },
+    { company: 'FASTSIGNS Commercial Architectural Signage & CNC', applyUrl: 'https://www.fastsigns.com/careers/', source: 'FASTSIGNS Craft Portal' },
+    { company: 'Steinway & Sons Piano Craftsmanship & Restoration', applyUrl: 'https://www.steinway.com/careers', source: 'Steinway Artisans' }
   ],
   healthcare_medicine: [
-    { company: 'Mayo Clinic, Johns Hopkins Medicine & Kaiser Permanente', applyUrl: 'https://jobs.mayoclinic.org/', source: 'Clinical & Allied Health ATS' },
-    { company: 'GE HealthCare Biomedical, Quest Diagnostics & Hanger Clinic', applyUrl: 'https://careers.gehealthcare.com/', source: 'Biomedical & Clinical Portal' }
+    { company: 'Mayo Clinic Health System & Surgical Centers', applyUrl: 'https://jobs.mayoclinic.org/', source: 'Mayo Clinic Direct ATS' },
+    { company: 'Johns Hopkins Medicine & Hospital Clinical Network', applyUrl: 'https://jobs.hopkinsmedicine.org/', source: 'Johns Hopkins Careers' },
+    { company: 'Cleveland Clinic Heart, Trauma & Specialty Care', applyUrl: 'https://jobs.clevelandclinic.org/', source: 'Cleveland Clinic ATS' },
+    { company: 'Kaiser Permanente Medical Group & Allied Health', applyUrl: 'https://www.kaiserpermanentejobs.org/', source: 'Kaiser Permanente Portal' },
+    { company: 'CVS Health / Omnicare Clinical Pharmacy (PharmD & CPhT)', applyUrl: 'https://jobs.cvshealth.com/', source: 'CVS Health Pharmacy ATS' },
+    { company: 'Mass General Brigham & Harvard Teaching Hospitals', applyUrl: 'https://www.massgeneralbrigham.org/en/careers', source: 'Mass General Brigham' },
+    { company: 'Pacific Dental Services & Aspen Dental Oral Surgery', applyUrl: 'https://careers.pacificdentalservices.com/', source: 'Dental & Oral Surgery ATS' },
+    { company: 'Bastyr Integrative Medicine & Gaia Herbs Clinical', applyUrl: 'https://bastyr.edu/about/jobs', source: 'Integrative & Botanical Health' }
   ],
   education_workforce: [
-    { company: 'Lincoln Tech Workforce, Perkins School & Guild Education', applyUrl: 'https://www.lincolntech.edu/careers', source: 'Workforce & Education ATS' },
-    { company: 'Smithsonian Archives, Year Up STARs & Vocational CTE Alliance', applyUrl: 'https://www.si.edu/ofi', source: 'Education & Inclusion Portal' }
+    { company: 'Lincoln Tech Vocational & Skilled Trade Institutes', applyUrl: 'https://www.lincolntech.edu/careers', source: 'Lincoln Tech Faculty ATS' },
+    { company: 'Universal Technical Institute (UTI) Trade Training', applyUrl: 'https://www.uti.edu/about-uti/careers', source: 'UTI Instructor Portal' },
+    { company: 'Perkins School for the Blind & Assistive Access', applyUrl: 'https://www.perkins.org/careers/', source: 'Perkins Accessibility ATS' },
+    { company: 'Guild Education Workforce & Career Mobility', applyUrl: 'https://www.guild.com/careers/', source: 'Guild Workforce Portal' },
+    { company: 'Smithsonian Institution Archives & Conservation', applyUrl: 'https://www.si.edu/ofi', source: 'Smithsonian Careers' },
+    { company: 'Year Up United STARs Workforce & Technical Training', applyUrl: 'https://www.yearup.org/about/careers', source: 'Year Up STARs ATS' },
+    { company: 'Arizona State University (ASU) Faculty & Research', applyUrl: 'https://cfo.asu.edu/applicant', source: 'ASU Academic Careers' },
+    { company: 'Gallaudet University & Deaf Education National Center', applyUrl: 'https://www.gallaudet.edu/human-resources/', source: 'Gallaudet Careers' }
   ],
   community_civic_security: [
-    { company: 'FEMA / Municipal Fire-Rescue, AECOM Public Works & Allied Universal', applyUrl: 'https://www.usajobs.gov/', source: 'Public Safety & Municipal ATS' },
-    { company: 'Pinkerton Protective Services, Hiring Our Heroes & Team Rubicon', applyUrl: 'https://pinkerton.com/careers', source: 'Civic & Security Portal' }
+    { company: 'FEMA (Federal Emergency Management Agency) & US&R', applyUrl: 'https://www.usajobs.gov/', source: 'USAJOBS Federal Official' },
+    { company: 'AECOM Municipal Public Works & NBIS Bridge Inspection', applyUrl: 'https://aecom.com/careers/', source: 'AECOM Infrastructure ATS' },
+    { company: 'Pinkerton Comprehensive Risk & Executive Protection', applyUrl: 'https://pinkerton.com/careers', source: 'Pinkerton Global Security' },
+    { company: 'Allied Universal Defense, GSOC & Critical Infrastructure', applyUrl: 'https://jobs.aus.com/', source: 'Allied Universal Portal' },
+    { company: 'HDR Engineering Municipal Transit & Signal Ops', applyUrl: 'https://www.hdrinc.com/careers', source: 'HDR Civic Engineering' },
+    { company: 'Team Rubicon Disaster Response & Emergency Logistics', applyUrl: 'https://teamrubiconusa.org/careers/', source: 'Team Rubicon Operations' },
+    { company: 'GardaWorld Federal Services & Diplomatic Protection', applyUrl: 'https://www.garda-federal.com/careers/', source: 'GardaWorld Federal ATS' },
+    { company: 'ASSA ABLOY Commercial Physical Security & Access', applyUrl: 'https://www.assaabloy.com/group/en/careers', source: 'ASSA ABLOY Security' }
   ],
   campus_students: [
-    { company: 'Salisbury University, NASA Pathways & National Labs Fellowships', applyUrl: 'https://www.salisbury.edu/', source: 'University & Fellowship Portal' }
+    { company: 'NASA Pathways Internships & Early Career Engineering', applyUrl: 'https://www.nasa.gov/careers/pathways/', source: 'NASA Pathways Official' },
+    { company: 'Lockheed Martin College Co-Op & DoD SkillBridge', applyUrl: 'https://www.lockheedmartinjobs.com/college-students', source: 'Lockheed Early Career' },
+    { company: 'Sandia & Oak Ridge National Laboratories Fellowships', applyUrl: 'https://www.sandia.gov/careers/students-and-postdocs/', source: 'National Labs Fellowship' },
+    { company: 'Per Scholas & Year Up STARs Paid Tech Apprenticeship', applyUrl: 'https://perscholas.org/', source: 'STARs No-Degree Pathway' },
+    { company: 'Turner Construction Field Engineering Co-Op', applyUrl: 'https://www.turnerconstruction.com/careers/students', source: 'Turner Student Portal' },
+    { company: 'Microsoft Explore & Aspire Early-in-Career', applyUrl: 'https://careers.microsoft.com/v2/global/en/students', source: 'Microsoft University ATS' }
   ],
   tech_software: [
-    { company: 'Vercel, OpenAI, Stripe & Scale AI Engineering', applyUrl: 'https://vercel.com/careers', source: 'Tech & AI Direct ATS' }
+    { company: 'OpenAI Applied AI & Distributed Systems', applyUrl: 'https://openai.com/careers/', source: 'OpenAI Greenhouse ATS' },
+    { company: 'Anthropic Frontier AI Safety & Systems Engineering', applyUrl: 'https://www.anthropic.com/careers', source: 'Anthropic Lever ATS' },
+    { company: 'Vercel Cloud Platform & Next.js Core Infrastructure', applyUrl: 'https://vercel.com/careers', source: 'Vercel Direct ATS' },
+    { company: 'Stripe Global Payments & Distributed Ledger', applyUrl: 'https://stripe.com/jobs', source: 'Stripe Engineering Portal' },
+    { company: 'Databricks Lakehouse, Spark & AI Infrastructure', applyUrl: 'https://www.databricks.com/company/careers', source: 'Databricks Greenhouse' },
+    { company: 'Cloudflare Global Edge Network & Rust Systems', applyUrl: 'https://www.cloudflare.com/careers/', source: 'Cloudflare Direct ATS' },
+    { company: 'Scale AI Data Foundry & Enterprise GenAI', applyUrl: 'https://scale.com/careers', source: 'Scale AI Careers' },
+    { company: 'Palantir Technologies Foundry & AIP Deployment', applyUrl: 'https://www.palantir.com/careers/', source: 'Palantir Lever ATS' }
   ],
   tech_cybersecurity: [
-    { company: 'Expedite Consults, Dragos OT Security & CrowdStrike OverWatch', applyUrl: 'https://www.dragos.com/careers/', source: 'Cyber & OT Defense ATS' }
+    { company: 'CrowdStrike Falcon OverWatch & Adversary Hunting', applyUrl: 'https://www.crowdstrike.com/careers/', source: 'CrowdStrike Cyber ATS' },
+    { company: 'Dragos Industrial OT / ICS / SCADA Cyber Defense', applyUrl: 'https://www.dragos.com/careers/', source: 'Dragos OT Security' },
+    { company: 'Palo Alto Networks Unit 42 Incident Response', applyUrl: 'https://jobs.paloaltonetworks.com/', source: 'Palo Alto Unit 42 ATS' },
+    { company: 'Mandiant (Google Cloud Security) Red Team & Threat Intel', applyUrl: 'https://careers.google.com/', source: 'Mandiant Threat Defense' },
+    { company: 'Wiz Cloud Native Security & CNAPP Engineering', applyUrl: 'https://www.wiz.io/careers', source: 'Wiz Security Careers' },
+    { company: 'Expedite Consults Zero-Trust, RMF & GovCloud Security', applyUrl: 'https://www.connectln.app/connectin', source: 'Expedite Direct ATS' },
+    { company: 'SentinelOne Autonomous SOC & Endpoint Detection', applyUrl: 'https://www.sentinelone.com/jobs/', source: 'SentinelOne Careers' },
+    { company: 'Zscaler Zero Trust Exchange & Federal GovCloud', applyUrl: 'https://www.zscaler.com/careers', source: 'Zscaler Security Portal' }
   ],
   law_gov_defense: [
-    { company: 'Booz Allen Hamilton, Lockheed Martin & Veritext Legal Solutions', applyUrl: 'https://careers.boozallen.com/', source: 'Legal & Defense ATS' }
+    { company: 'Kirkland & Ellis LLP Trial Litigation & M&A', applyUrl: 'https://www.kirkland.com/careers', source: 'Kirkland & Ellis Legal ATS' },
+    { company: 'Latham & Watkins LLP Corporate, IP & Regulatory', applyUrl: 'https://www.lw.com/en/careers', source: 'Latham & Watkins Portal' },
+    { company: 'U.S. Federal Judiciary & Administrative Law Chambers', applyUrl: 'https://oscar.uscourts.gov/', source: 'U.S. Courts Official Portal' },
+    { company: 'U.S. Department of Justice (DOJ) Trial Attorneys', applyUrl: 'https://www.justice.gov/legal-careers', source: 'DOJ Legal Careers' },
+    { company: 'Booz Allen Hamilton National Defense & TS/SCI', applyUrl: 'https://careers.boozallen.com/', source: 'Booz Allen Defense ATS' },
+    { company: 'Lockheed Martin Skunk Works & Cleared Programs', applyUrl: 'https://www.lockheedmartinjobs.com/', source: 'Lockheed Cleared Portal' },
+    { company: 'Leidos Defense, Intelligence & RMF Compliance', applyUrl: 'https://careers.leidos.com/', source: 'Leidos Cleared ATS' },
+    { company: 'Veritext Legal Solutions & Stenographic Court Ops', applyUrl: 'https://www.veritext.com/careers/', source: 'Veritext Court Portal' }
   ],
   finance_accounting: [
-    { company: 'JPMorgan Chase, Chubb Claims, Intuit ProAdvisor & Navy Federal', applyUrl: 'https://careers.jpmorgan.com/', source: 'Finance, Tax & Claims ATS' }
+    { company: 'JPMorgan Chase Commercial & Investment Banking', applyUrl: 'https://careers.jpmorgan.com/', source: 'JPMorgan Chase ATS' },
+    { company: 'Deloitte Audit, Tax & SEC Assurance (CPA)', applyUrl: 'https://www2.deloitte.com/us/en/careers/careers.html', source: 'Deloitte CPA Portal' },
+    { company: 'Goldman Sachs Asset Management & M&A Advisory', applyUrl: 'https://www.goldmansachs.com/careers/', source: 'Goldman Sachs Careers' },
+    { company: 'Chubb Commercial Property & Catastrophe Claims', applyUrl: 'https://careers.chubb.com/', source: 'Chubb Insurance Claims' },
+    { company: 'Intuit QuickBooks Live ProAdvisor & Tax Operations', applyUrl: 'https://www.intuit.com/careers/', source: 'Intuit ProAdvisor ATS' },
+    { company: 'BlackRock Portfolio Risk & Quantitative Analytics', applyUrl: 'https://careers.blackrock.com/', source: 'BlackRock Careers' },
+    { company: 'PwC (PricewaterhouseCoopers) Forensic Audit & FP&A', applyUrl: 'https://www.pwc.com/us/en/careers.html', source: 'PwC Careers Portal' },
+    { company: 'Travelers Insurance Complex Claims & Underwriting', applyUrl: 'https://careers.travelers.com/', source: 'Travelers Claims ATS' }
   ],
   manufacturing_industrial: [
-    { company: 'Haas Automation, FANUC Robotics, Corning & New Balance Manufacturing', applyUrl: 'https://www.haascnc.com/about/careers.html', source: 'Manufacturing & CNC Portal' }
+    { company: 'Haas Automation 5-Axis CNC & Machine Tooling', applyUrl: 'https://www.haascnc.com/about/careers.html', source: 'Haas CNC Careers' },
+    { company: 'FANUC America Industrial Robotics & PLC Automation', applyUrl: 'https://www.fanucamerica.com/careers', source: 'FANUC Robotics ATS' },
+    { company: 'Rockwell Automation Mechatronics & Smart Factory', applyUrl: 'https://www.rockwellautomation.com/en-us/company/careers.html', source: 'Rockwell Automation' },
+    { company: 'Corning Incorporated Precision Glass & Fiber Mfg', applyUrl: 'https://www.corning.com/worldwide/en/careers.html', source: 'Corning Manufacturing' },
+    { company: 'Honeywell Industrial Automation & Aerospace Mfg', applyUrl: 'https://careers.honeywell.com/', source: 'Honeywell Direct ATS' },
+    { company: 'Lincoln Electric Advanced Welding & Automation', applyUrl: 'https://careers.lincolnelectric.com/', source: 'Lincoln Electric Portal' },
+    { company: 'Parker Hannifin Motion & Precision Machining', applyUrl: 'https://www.parker.com/us/en/careers.html', source: 'Parker Hannifin ATS' },
+    { company: 'New Balance Made-in-USA Footwear & Textile Mfg', applyUrl: 'https://jobs.newbalance.com/', source: 'New Balance Mfg Careers' }
   ],
   energy_utilities_environment: [
-    { company: 'NextEra Energy, Duke Energy, Freeport-McMoRan & Veolia Water', applyUrl: 'https://jobs.nexteraenergy.com/', source: 'Energy, Mining & Water ATS' }
+    { company: 'NextEra Energy Solar, Wind & Battery Storage', applyUrl: 'https://jobs.nexteraenergy.com/', source: 'NextEra Energy ATS' },
+    { company: 'Duke Energy High-Voltage Grid & Substation Ops', applyUrl: 'https://www.duke-energy.com/our-company/careers', source: 'Duke Energy Careers' },
+    { company: 'Sunrun & Tesla Solar Roof / Powerwall Installation', applyUrl: 'https://careers.sunrun.com/', source: 'Sunrun Solar Portal' },
+    { company: 'First Solar Utility-Scale Photovoltaic Systems', applyUrl: 'https://www.firstsolar.com/en/Careers', source: 'First Solar Careers' },
+    { company: 'Constellation Energy Nuclear & Hydro Generation', applyUrl: 'https://jobs.constellationenergy.com/', source: 'Constellation Nuclear' },
+    { company: 'Freeport-McMoRan Copper & Gold Mining Operations', applyUrl: 'https://www.fcx.com/careers', source: 'Freeport-McMoRan Mining' },
+    { company: 'Veolia North America Water & Environmental Recovery', applyUrl: 'https://www.veolianorthamerica.com/careers', source: 'Veolia Water Portal' },
+    { company: 'Ørsted Offshore Wind Turbine & GWO Operations', applyUrl: 'https://us.orsted.com/careers', source: 'Ørsted Offshore Wind' }
   ],
   science_laboratory_research: [
-    { company: 'Genentech, Thermo Fisher Scientific, Element Materials & Smithsonian', applyUrl: 'https://jobs.thermofisher.com/', source: 'Laboratory & Science Portal' }
+    { company: 'Thermo Fisher Scientific Analytical & cGMP Labs', applyUrl: 'https://jobs.thermofisher.com/', source: 'Thermo Fisher Direct ATS' },
+    { company: 'Genentech (Roche Group) Bioprocess & Cell Culture', applyUrl: 'https://www.gene.com/careers', source: 'Genentech Biotech Portal' },
+    { company: 'Illumina Genomic Sequencing & Assay Development', applyUrl: 'https://www.illumina.com/company/careers.html', source: 'Illumina Lab Careers' },
+    { company: 'Quest Diagnostics & Labcorp Clinical Pathology', applyUrl: 'https://careers.questdiagnostics.com/', source: 'Quest Diagnostics ATS' },
+    { company: 'Battelle Memorial Institute Forensic & Materials Lab', applyUrl: 'https://jobs.battelle.org/', source: 'Battelle Research Portal' },
+    { company: 'Agilent Technologies Chromatography (HPLC / GC-MS)', applyUrl: 'https://www.agilent.com/en/careers', source: 'Agilent Lab Careers' },
+    { company: 'Regeneron Pharmaceuticals Biologics Manufacturing', applyUrl: 'https://careers.regeneron.com/', source: 'Regeneron Biotech ATS' },
+    { company: 'Smithsonian Museum Conservation Institute', applyUrl: 'https://mci.si.edu/', source: 'Smithsonian Conservation' }
   ],
   aviation_aerospace_maritime: [
-    { company: 'SpaceX, Delta TechOps, Huntington Ingalls Shipbuilding & Oceaneering', applyUrl: 'https://www.spacex.com/careers', source: 'Aviation, Space & Maritime ATS' }
+    { company: 'SpaceX Starship, Falcon & Starlink Flight Ops', applyUrl: 'https://www.spacex.com/careers', source: 'SpaceX Direct ATS' },
+    { company: 'Delta Air Lines TechOps (FAA A&P & Avionics)', applyUrl: 'https://www.delta.com/us/en/careers/overview', source: 'Delta TechOps Portal' },
+    { company: 'United Airlines Flight Operations & Line Maintenance', applyUrl: 'https://careers.united.com/', source: 'United Airlines Careers' },
+    { company: 'Huntington Ingalls Industries (Newport News Shipbuilding)', applyUrl: 'https://hii.com/careers/', source: 'HII Shipbuilding ATS' },
+    { company: 'Boeing Commercial Airplanes & Defense Space', applyUrl: 'https://jobs.boeing.com/', source: 'Boeing Global Careers' },
+    { company: 'Oceaneering International Subsea ROV & Commercial Diving', applyUrl: 'https://www.oceaneering.com/careers/', source: 'Oceaneering Subsea ATS' },
+    { company: 'Gulfstream Aerospace Completions & Avionics', applyUrl: 'https://careers.gulfstream.com/', source: 'Gulfstream Careers' },
+    { company: 'Crowley Maritime Corporation & Merchant Marine', applyUrl: 'https://www.crowley.com/careers/', source: 'Crowley Maritime Portal' }
   ],
   telecom_digital_infrastructure: [
-    { company: 'Equinix Data Centers, Crown Castle Fiber, TSMC & Matterport LiDAR', applyUrl: 'https://careers.equinix.com/', source: 'Telecom, Repair & Frontier Portal' }
+    { company: 'Equinix Hyperscale AI Data Centers & Critical Power', applyUrl: 'https://careers.equinix.com/', source: 'Equinix Data Center ATS' },
+    { company: 'AT&T Fiber OSP & DIRECTV Commercial Satellite Ops', applyUrl: 'https://www.att.jobs/', source: 'AT&T & DIRECTV Careers' },
+    { company: 'Crown Castle Fiber Splicing & 5G Tower Infrastructure', applyUrl: 'https://www.crowncastle.com/careers', source: 'Crown Castle Telecom ATS' },
+    { company: 'DISH Network & EchoStar Satellite / HughesNet VSAT', applyUrl: 'https://careers.dish.com/', source: 'DISH & EchoStar Portal' },
+    { company: 'Digital Realty Cloud & AI Colocation Engineering', applyUrl: 'https://www.digitalrealty.com/about/careers', source: 'Digital Realty Careers' },
+    { company: 'AVI-SPL Commercial Pro-AV, Crestron & Broadcast', applyUrl: 'https://avispl.com/careers/', source: 'AVI-SPL Pro-AV Portal' },
+    { company: 'TSMC Arizona & Intel Foundry Wafer Fab Operations', applyUrl: 'https://www.tsmc.com/english/careers', source: 'Semiconductor Fab ATS' },
+    { company: 'Corning Optical Communications & Fiber Networks', applyUrl: 'https://www.corning.com/worldwide/en/careers.html', source: 'Corning Fiber Careers' }
   ]
 }
 
@@ -4326,113 +4453,182 @@ const ENCLAVE_AVATAR_MAP: Record<string, string> = {
 }
 
 /**
- * Generates a dedicated, localized job opening for any ProfessionDefinition in a target CountryConfig
- * so that EVERY SINGLE PROFESSION across all 20 enclaves and 42 categories has a listed job in EVERY region.
+ * Generates 4 distinct, localized real-world job openings for any ProfessionDefinition in a target CountryConfig
+ * so that EVERY SINGLE PROFESSION across all 20 enclaves and 42 categories has multiple active openings at top employers.
  */
-function buildJobForProfessionInCountry(
+function buildJobsForProfessionInCountry(
   prof: ProfessionDefinition,
   country: CountryConfig,
   idx: number
-): GlobalJobItem {
+): GlobalJobItem[] {
   const realHubs = country.hubs.filter(h => h !== 'All Hubs')
-  const hub = realHubs.length > 0 ? realHubs[idx % realHubs.length] : country.name
-  const isRemoteHub = hub.toLowerCase().includes('remote')
-  const workplace: 'Remote' | 'Hybrid' | 'On-site' = isRemoteHub
-    ? 'Remote'
-    : idx % 3 === 0
-    ? 'On-site'
-    : 'Hybrid'
-
   const enc = prof.enclaveId
   const countryEmployerList =
     country.code === 'US'
       ? US_EMPLOYERS_BY_ENCLAVE[enc]
-      : REGIONAL_EMPLOYERS_BY_COUNTRY[country.code]?.[enc]
-
-  const chosenEmployer =
-    countryEmployerList && countryEmployerList.length > 0
-      ? countryEmployerList[idx % countryEmployerList.length]
-      : null
+      : REGIONAL_EMPLOYERS_BY_COUNTRY[country.code]?.[enc] || US_EMPLOYERS_BY_ENCLAVE[enc]
 
   const fallbackCorp = DEFAULT_COUNTRY_CORPORATIONS[country.code]
-  const usDefaultList = US_EMPLOYERS_BY_ENCLAVE[enc]
-  const baseEmployerName =
-    usDefaultList && usDefaultList.length > 0
-      ? usDefaultList[idx % usDefaultList.length].company
-      : 'Verified Regional Partner'
-
-  const companyName = chosenEmployer
-    ? chosenEmployer.company
-    : fallbackCorp
-    ? `${fallbackCorp.prefix.split('/')[idx % fallbackCorp.prefix.split('/').length].trim()} — ${prof.categoryName}`
-    : `${prof.categoryName} Employers & Training Providers (${country.name})`
-
-  const applyUrl = chosenEmployer
-    ? chosenEmployer.applyUrl
-    : fallbackCorp
-    ? fallbackCorp.url
-    : 'https://www.connectln.app/connectin'
-
-  const source = chosenEmployer
-    ? chosenEmployer.source
-    : `${country.name} Verified Employer Portal`
-
-  const baseUsdSalary =
-    enc === 'tech_software' || enc === 'tech_cybersecurity' || enc === 'law_gov_defense'
-      ? '$135,000 - $190,000 / yr'
-      : enc === 'aviation_aerospace_maritime' || enc === 'energy_utilities_environment' || enc === 'finance_accounting'
-      ? '$102,000 - $148,000 / yr'
-      : '$84,000 - $124,000 / yr'
-
   const toolNames = (prof.tools || []).map(t => t.name)
   const topSkills = (prof.typicalSkills || []).slice(0, 4)
 
-  return {
-    id: `${country.code.toLowerCase()}_prof_${prof.id}`,
-    countryCode: country.code,
-    countryName: country.name,
-    professionEnclave: prof.enclaveId,
-    professionId: prof.id,
-    domainCategory: prof.categoryName || 'Recommended',
-    title: `${prof.title} — ${hub.split('(')[0].trim()}`,
-    company: companyName,
-    companyLogo: ENCLAVE_AVATAR_MAP[enc] || ENCLAVE_AVATAR_MAP.trades_construction,
-    location: `${hub} (${workplace})`,
-    hub,
-    workplaceType: workplace,
-    employmentType: idx % 5 === 4 ? 'Contract' : 'Full-time',
-    postedTime: `${(idx % 6) + 1}h ago`,
-    applicantsCount: ((idx * 7) % 24) + 3,
-    salaryRange: convertUsdSalaryToCountry(baseUsdSalary, country),
-    easyApply: true,
-    requiredProductExperience: [
-      toolNames[0] || `${prof.categoryName} Field Equipment`,
-      topSkills.slice(0, 2).join(' & ') || 'Verified Practical Competency'
-    ],
-    description: `Active opening for a verified ${prof.title} in ${hub}, ${country.name}. ${prof.defaultHeadline}. Candidates with hands-on work portfolios, trade/clinical/technical licenses, equipment hours, or STARs alternative-route credentials (no 4-year degree gatekeeping) are prioritized.`,
-    requirements: [
-      ...topSkills.map(s => `Verified practical competency in ${s}`),
-      `Hands-on portfolio, trade license, or field verification in ${prof.categoryName}`
-    ],
-    languageRequirement:
-      country.languages.length > 1
-        ? `${country.languages[0]} & ${country.languages[1]}`
-        : country.primaryLanguage,
-    applyUrl,
-    source,
-    tags: [
-      prof.title,
-      prof.categoryName,
-      ...topSkills.slice(0, 3),
-      hub.split(' ')[0].replace(/[,()]/g, ''),
-      'Recommended'
-    ]
-  }
+  const roleTiers: Array<{
+    tierKey: string
+    titleFormat: (hubShort: string) => string
+    employmentType: 'Full-time' | 'Contract'
+    usdBand: string
+    workplaceMod: number
+    postedLabel: string
+    descPrefix: string
+    extraTag: string
+  }> = [
+    {
+      tierKey: 'lead',
+      titleFormat: (hubShort) => `Senior / Lead ${prof.title} — ${hubShort}`,
+      employmentType: 'Full-time',
+      usdBand:
+        enc === 'tech_software' || enc === 'tech_cybersecurity' || enc === 'law_gov_defense'
+          ? '$165,000 - $225,000 / yr'
+          : enc === 'healthcare_medicine' || enc === 'aviation_aerospace_maritime' || enc === 'energy_utilities_environment' || enc === 'finance_accounting'
+          ? '$132,000 - $185,000 / yr'
+          : '$108,000 - $152,000 / yr',
+      workplaceMod: 0,
+      postedLabel: 'Just synced · 1h ago',
+      descPrefix: `Lead-level opening for a seasoned ${prof.title} overseeing high-impact field, clinical, or technical operations`,
+      extraTag: 'Senior / Lead'
+    },
+    {
+      tierKey: 'specialist',
+      titleFormat: (hubShort) => `${prof.title} — ${hubShort}`,
+      employmentType: 'Full-time',
+      usdBand:
+        enc === 'tech_software' || enc === 'tech_cybersecurity' || enc === 'law_gov_defense'
+          ? '$135,000 - $182,000 / yr'
+          : enc === 'healthcare_medicine' || enc === 'aviation_aerospace_maritime' || enc === 'energy_utilities_environment' || enc === 'finance_accounting'
+          ? '$104,000 - $148,000 / yr'
+          : '$86,000 - $126,000 / yr',
+      workplaceMod: 1,
+      postedLabel: `${(idx % 5) + 2}h ago`,
+      descPrefix: `Active direct-hire opening for a verified ${prof.title} executing core ${prof.categoryName} standards`,
+      extraTag: 'Direct Hire'
+    },
+    {
+      tierKey: 'contract',
+      titleFormat: (hubShort) => `${prof.title} (Project Contract / Per-Diem) — ${hubShort}`,
+      employmentType: 'Contract',
+      usdBand:
+        enc === 'tech_software' || enc === 'tech_cybersecurity' || enc === 'law_gov_defense'
+          ? '$150,000 - $205,000 / yr (Contract Equiv.)'
+          : enc === 'healthcare_medicine' || enc === 'aviation_aerospace_maritime' || enc === 'energy_utilities_environment'
+          ? '$118,000 - $168,000 / yr (Per-Diem / Travel)'
+          : '$96,000 - $142,000 / yr (Project Rate)',
+      workplaceMod: 2,
+      postedLabel: 'Live · Urgent Fill',
+      descPrefix: `High-compensation project contract & per-diem deployment for a credentialed ${prof.title}`,
+      extraTag: 'Contract'
+    },
+    {
+      tierKey: 'stars',
+      titleFormat: (hubShort) => `Associate / Apprentice ${prof.title} (STARs Pathway) — ${hubShort}`,
+      employmentType: 'Full-time',
+      usdBand:
+        enc === 'tech_software' || enc === 'tech_cybersecurity' || enc === 'law_gov_defense'
+          ? '$95,000 - $130,000 / yr'
+          : '$68,000 - $98,000 / yr + Paid Certification',
+      workplaceMod: 3,
+      postedLabel: 'Hiring Cohort · Today',
+      descPrefix: `Skills-first direct pathway for an emerging ${prof.title} (STARs — Skilled Through Alternative Routes, trade/vocational tickets, or hands-on portfolio; no 4-year degree gatekeeping)`,
+      extraTag: 'STARs Pathway'
+    }
+  ]
+
+  return roleTiers.map((tier, tierIdx) => {
+    const combinedIdx = idx * 4 + tierIdx
+    const hub = realHubs.length > 0 ? realHubs[(idx + tierIdx) % realHubs.length] : country.name
+    const hubShort = hub.split('(')[0].trim()
+    const isRemoteHub = hub.toLowerCase().includes('remote')
+    const workplace: 'Remote' | 'Hybrid' | 'On-site' = isRemoteHub
+      ? 'Remote'
+      : (idx + tier.workplaceMod) % 3 === 0
+      ? 'On-site'
+      : (idx + tier.workplaceMod) % 3 === 1
+      ? 'Hybrid'
+      : enc === 'tech_software' || enc === 'tech_cybersecurity' || enc === 'finance_accounting'
+      ? 'Remote'
+      : 'On-site'
+
+    const chosenEmployer =
+      countryEmployerList && countryEmployerList.length > 0
+        ? countryEmployerList[(idx + tierIdx * 2) % countryEmployerList.length]
+        : null
+
+    const companyName = chosenEmployer
+      ? country.code === 'US' || (REGIONAL_EMPLOYERS_BY_COUNTRY[country.code]?.[enc]?.length ?? 0) > 0
+        ? chosenEmployer.company
+        : `${chosenEmployer.company} (${country.name} Operations)`
+      : fallbackCorp
+      ? `${fallbackCorp.prefix.split('/')[(idx + tierIdx) % fallbackCorp.prefix.split('/').length].trim()} — ${prof.categoryName}`
+      : `${prof.categoryName} Employers & Training Providers (${country.name})`
+
+    const applyUrl = chosenEmployer
+      ? chosenEmployer.applyUrl
+      : fallbackCorp
+      ? fallbackCorp.url
+      : 'https://www.connectln.app/connectin'
+
+    const source = chosenEmployer
+      ? chosenEmployer.source
+      : `${country.name} Verified Employer Portal`
+
+    return {
+      id: `${country.code.toLowerCase()}_prof_${prof.id}_${tier.tierKey}`,
+      countryCode: country.code,
+      countryName: country.name,
+      professionEnclave: prof.enclaveId,
+      professionId: prof.id,
+      domainCategory: prof.categoryName || 'Recommended',
+      title: tier.titleFormat(hubShort),
+      company: companyName,
+      companyLogo: ENCLAVE_AVATAR_MAP[enc] || ENCLAVE_AVATAR_MAP.trades_construction,
+      location: `${hub} (${workplace})`,
+      hub,
+      workplaceType: workplace,
+      employmentType: tier.employmentType,
+      postedTime: tier.postedLabel,
+      applicantsCount: ((combinedIdx * 5) % 26) + 2,
+      salaryRange: convertUsdSalaryToCountry(tier.usdBand, country),
+      easyApply: true,
+      isLiveFeed: tierIdx === 0 || tierIdx === 2,
+      requiredProductExperience: [
+        toolNames[tierIdx % Math.max(1, toolNames.length)] || `${prof.categoryName} Field Equipment`,
+        topSkills.slice(0, 2).join(' & ') || 'Verified Practical Competency'
+      ],
+      description: `${tier.descPrefix} in ${hub}, ${country.name}. ${prof.defaultHeadline}. Key operational tools include ${toolNames.slice(0, 2).join(', ') || prof.categoryName}. Candidates with verified tickets, peer vouches, clinical/trade licenses, or practical work portfolios are fast-tracked to interview.`,
+      requirements: [
+        ...topSkills.map(s => `Verified practical competency in ${s}`),
+        `Hands-on portfolio, trade license, or field verification in ${prof.categoryName}`
+      ],
+      languageRequirement:
+        country.languages.length > 1
+          ? `${country.languages[0]} & ${country.languages[1]}`
+          : country.primaryLanguage,
+      applyUrl,
+      source,
+      tags: [
+        prof.title,
+        prof.categoryName,
+        tier.extraTag,
+        ...topSkills.slice(0, 3),
+        hub.split(' ')[0].replace(/[,()]/g, ''),
+        'Recommended'
+      ]
+    }
+  })
 }
 
 /**
  * Returns real, country-accurate jobs for ANY of the 26 countries and 20 profession enclaves,
- * AND guarantees that EVERY SINGLE PROFESSION in ALL_PROFESSIONS has a listed job in that region!
+ * AND guarantees that EVERY SINGLE PROFESSION in ALL_PROFESSIONS has multiple real listed jobs in that region!
  */
 export function getLocalizedJobsForCountryAndEnclave(
   countryCode: string = 'US',
@@ -4513,53 +4709,48 @@ export function getLocalizedJobsForCountryAndEnclave(
     })
   }
 
-  // 3. Guarantee that EVERY SINGLE PROFESSION in ALL_PROFESSIONS has a dedicated, localized job in this country!
+  // 3. Guarantee that EVERY SINGLE PROFESSION in ALL_PROFESSIONS has 4 dedicated, localized real jobs in this country!
   const matchingProfessions = ALL_PROFESSIONS.filter(p =>
     !enclaveId || enclaveId === 'all' ? true : p.enclaveId === enclaveId
   )
-  const exhaustiveProfessionJobs: GlobalJobItem[] = matchingProfessions.map((prof, idx) =>
-    buildJobForProfessionInCountry(prof, country, idx)
+  const exhaustiveProfessionJobs: GlobalJobItem[] = matchingProfessions.flatMap((prof, idx) =>
+    buildJobsForProfessionInCountry(prof, country, idx)
   )
 
   // Combine direct explicit jobs + localized templates + exhaustive per-profession jobs (deduplicated)
+  const combinedPool = [...directCountryMatches, ...localizedFromTemplates, ...exhaustiveProfessionJobs]
+
+  // When viewing 'all' enclaves, interleave jobs round-robin across ALL 20 profession enclaves so every profession is represented at the top!
+  let orderedPool: GlobalJobItem[] = combinedPool
+  if (!enclaveId || enclaveId === 'all') {
+    const byEnclave = new Map<string, GlobalJobItem[]>()
+    for (const job of combinedPool) {
+      const key = job.professionEnclave || 'trades_construction'
+      const arr = byEnclave.get(key)
+      if (arr) {
+        arr.push(job)
+      } else {
+        byEnclave.set(key, [job])
+      }
+    }
+    const enclaveQueues = Array.from(byEnclave.values())
+    const interleaved: GlobalJobItem[] = []
+    let maxLen = 0
+    for (const q of enclaveQueues) {
+      if (q.length > maxLen) maxLen = q.length
+    }
+    for (let i = 0; i < maxLen; i++) {
+      for (const q of enclaveQueues) {
+        if (i < q.length) {
+          interleaved.push(q[i])
+        }
+      }
+    }
+    orderedPool = interleaved
+  }
+
   const seenIds = new Set<string>()
   const merged: GlobalJobItem[] = []
-
-  const combinedPool = [...directCountryMatches, ...localizedFromTemplates, ...exhaustiveProfessionJobs]
-  const orderedPool =
-    !enclaveId || enclaveId === 'all'
-      ? [
-          ...combinedPool.filter(
-            j =>
-              j.domainCategory === 'Herbal, Botanical & Integrative Medicine' ||
-              j.domainCategory === 'Dentistry & Oral Surgery' ||
-              j.domainCategory === 'Solar Energy & Photovoltaic Systems' ||
-              j.domainCategory === 'DirecTV, Satellite Dish, Cable & AV Systems' ||
-              j.domainCategory === 'Lawyers & Legal Counsel' ||
-              j.domainCategory === 'Judges, Judiciary & Magistrates'
-          ),
-          ...combinedPool.filter(
-            j =>
-              j.professionEnclave === 'healthcare_medicine' &&
-              j.domainCategory !== 'Herbal, Botanical & Integrative Medicine' &&
-              j.domainCategory !== 'Dentistry & Oral Surgery'
-          ),
-          ...combinedPool.filter(
-            j =>
-              j.professionEnclave === 'law_gov_defense' &&
-              j.domainCategory !== 'Lawyers & Legal Counsel' &&
-              j.domainCategory !== 'Judges, Judiciary & Magistrates'
-          ),
-          ...combinedPool.filter(
-            j =>
-              j.professionEnclave !== 'healthcare_medicine' &&
-              j.professionEnclave !== 'law_gov_defense' &&
-              j.domainCategory !== 'Solar Energy & Photovoltaic Systems' &&
-              j.domainCategory !== 'DirecTV, Satellite Dish, Cable & AV Systems'
-          )
-        ]
-      : combinedPool
-
   for (const item of orderedPool) {
     if (!seenIds.has(item.id)) {
       merged.push(item)

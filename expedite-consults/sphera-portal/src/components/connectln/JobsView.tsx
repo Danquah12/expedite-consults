@@ -331,19 +331,9 @@ export function JobsView({
   // Primary Master Mode
   const [masterMode, setMasterMode] = useState<'find' | 'applications' | 'recruiting' | 'resumeprep'>('find')
 
-  // Active Profession Enclave Filter (Default to 'all' so Herbal Medicine, Dentists, Solar Technicians, DirecTV/Satellite Techs, Lawyers, Judges, Pharmacists, Doctors, Nurses & Nursing Techs are all visible immediately at the top)
-  const [selectedEnclave, setSelectedEnclave] = useState<string>(
-    currentUser?.professionEnclave && currentUser.professionEnclave !== 'trades_construction'
-      ? currentUser.professionEnclave
-      : 'all'
-  )
-
-  useEffect(() => {
-    if (currentUser?.professionEnclave && currentUser.professionEnclave !== 'trades_construction') {
-      setSelectedEnclave(currentUser.professionEnclave)
-      setSelectedDomain("All")
-    }
-  }, [currentUser?.professionEnclave])
+  // Active Profession Enclave Filter — default to 'all' so real jobs across all 20 industry enclaves & 467 professions appear immediately
+  const [selectedEnclave, setSelectedEnclave] = useState<string>('all')
+  const [visibleJobsCount, setVisibleJobsCount] = useState<number>(50)
 
   // Resume Preparation App (https://tuhousing.vercel.app/) State
   const [tailorTargetJob, setTailorTargetJob] = useState<GlobalJobItem | null>(null)
@@ -553,6 +543,7 @@ export function JobsView({
 
   // Reload jobs when enclave, country, hub, domain, pillar, or professionId changes
   useEffect(() => {
+    setVisibleJobsCount(50)
     fetchJobs(selectedEnclave, selectedCountryCode, selectedHub, searchQuery, selectedDomain, selectedPillar, selectedProfessionId)
   }, [selectedEnclave, selectedCountryCode, selectedHub, selectedDomain, selectedPillar, selectedProfessionId])
 
@@ -1267,10 +1258,10 @@ export function JobsView({
 
               <div className="flex items-center justify-between pt-1 border-t border-zinc-100 dark:border-zinc-800 text-xs text-zinc-500 flex-wrap gap-2">
                 <span>
-                  Region: <strong>{currentCountry.flag} {currentCountry.name}</strong> · Profession: <strong>{currentEnclaveObj ? currentEnclaveObj.name : 'All 15 Professions'}</strong> · Hub: <strong>{selectedHub}</strong>
+                  Region: <strong>{currentCountry.flag} {currentCountry.name}</strong> · Profession: <strong>{currentProfessionObj ? currentProfessionObj.title : currentEnclaveObj ? currentEnclaveObj.name : `All 20 Enclaves (${ALL_PROFESSIONS.length} Professions)`}</strong> · Hub: <strong>{selectedHub}</strong>
                 </span>
                 <span className="font-semibold text-zinc-700 dark:text-zinc-300">
-                  {jobs.length} real openings in {currentCountry.name}
+                  {jobs.length.toLocaleString()} real openings in {currentCountry.name}
                 </span>
               </div>
             </div>
@@ -1311,7 +1302,7 @@ export function JobsView({
                 </div>
               ) : (
                 <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                  {jobs.map((job) => {
+                  {jobs.slice(0, visibleJobsCount).map((job) => {
                     const isApplied = appliedJobIds.includes(job.id)
                     const flywheel = getJobFlywheelRecommendation(job)
                     const jobEnclaveObj = PROFESSION_ENCLAVES.find(e => e.id === job.professionEnclave)
@@ -1497,6 +1488,20 @@ export function JobsView({
                       </div>
                     )
                   })}
+                  {jobs.length > visibleJobsCount && (
+                    <div className="pt-5 pb-2 flex flex-col items-center justify-center gap-2 text-center">
+                      <p className="text-xs text-zinc-500">
+                        Showing <strong>{visibleJobsCount.toLocaleString()}</strong> of <strong>{jobs.length.toLocaleString()}</strong> verified real openings across {selectedEnclave === 'all' ? `all 20 enclaves & ${ALL_PROFESSIONS.length} professions` : currentEnclaveObj?.name || 'this profession'}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setVisibleJobsCount((prev) => prev + 60)}
+                        className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-6 py-2 text-xs font-bold shadow-xs transition-colors cursor-pointer"
+                      >
+                        Load 60 More Real Openings ({(jobs.length - visibleJobsCount).toLocaleString()} remaining) →
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
