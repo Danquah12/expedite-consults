@@ -77,6 +77,11 @@ export function ConnectInVideoWheel({
         const sharedVideoId = params.get("video")
         const sharedPlate = params.get("plate")
         if (sharedVideoId || sharedPlate) {
+          params.delete("video")
+          params.delete("plate")
+          const cleanSearch = params.toString()
+          const cleanUrl = window.location.pathname + (cleanSearch ? `?${cleanSearch}` : "") + window.location.hash
+          window.history.replaceState({}, "", cleanUrl)
           const found = combined.find(
             t => (sharedVideoId && t.youtubeId === sharedVideoId) || (sharedPlate && t.serialPlate === sharedPlate)
           )
@@ -865,7 +870,18 @@ export function ConnectInVideoWheel({
       {/* ────────────────────────────────────────────────────────── */}
       {/* 1. VIDEO MODAL PLAYER DIALOG                                */}
       {/* ────────────────────────────────────────────────────────── */}
-      <Dialog open={!!activeVideo} onOpenChange={(open) => { if (!open) setActiveVideo(null) }}>
+      <Dialog open={!!activeVideo} onOpenChange={(open) => {
+        if (!open) {
+          setActiveVideo(null)
+          if (typeof window !== "undefined" && (window.location.search.includes("video=") || window.location.search.includes("plate="))) {
+            const p = new URLSearchParams(window.location.search)
+            p.delete("video")
+            p.delete("plate")
+            const s = p.toString()
+            window.history.replaceState({}, "", window.location.pathname + (s ? `?${s}` : "") + window.location.hash)
+          }
+        }
+      }}>
         <DialogContent
           className="max-w-3xl max-h-[92vh] flex flex-col p-0 border rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl"
           style={{ backgroundColor: '#FFFFFF', color: '#0F172A', borderColor: '#CBD5E1' }}
