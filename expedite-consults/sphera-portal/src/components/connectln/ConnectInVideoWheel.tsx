@@ -464,10 +464,10 @@ export function ConnectInVideoWheel({
   return (
     <section className={`overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-[#1C1916] text-[#EFE8DC] p-4 sm:p-5 shadow-lg relative ${className}`}>
       {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#35302B] pb-3.5">
+      <div className="flex flex-col gap-3 border-b border-[#35302B] pb-3.5">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center justify-center h-6 w-6 rounded-lg bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/30">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-[#12100E] text-amber-300 text-[11px] font-black border border-amber-500/40">C · CONNECTLN STUDIO · 
               🎡
             </span>
             <h2 className="font-bold text-sm sm:text-base text-white tracking-wide flex items-center gap-2 flex-wrap">
@@ -477,13 +477,13 @@ export function ConnectInVideoWheel({
               </span>
             </h2>
           </div>
-          <p className="text-xs text-[#EFE8DC]/70 mt-1 max-w-2xl leading-relaxed">
+          <p className="text-xs text-[#EFE8DC]/80 mt-1 w-full leading-relaxed">
             {subtitle}
           </p>
         </div>
 
         {/* Carousel & Action Controls */}
-        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0 flex-wrap">
+        <div className="flex items-center justify-between gap-2 w-full pt-1 flex-wrap">
           {/* Submit New Video to Wheel Button */}
           <button
             type="button"
@@ -732,7 +732,7 @@ export function ConnectInVideoWheel({
               <div
                 key={talk.id}
                 onClick={() => setActiveVideo(talk)}
-                className={`group relative h-[19.5rem] w-[14.5rem] sm:w-[16rem] shrink-0 snap-center rounded-2xl overflow-hidden border bg-[#25211D] hover:border-[#0066FF] transition-all duration-300 hover:scale-[1.02] cursor-pointer flex flex-col justify-between shadow-md ${
+                className={`group relative h-[20.5rem] w-[16.5rem] sm:w-[18.5rem] shrink-0 snap-center rounded-2xl overflow-hidden border bg-[#25211D] hover:border-[#0066FF] transition-all duration-300 hover:scale-[1.02] cursor-pointer flex flex-col justify-between shadow-md ${
                   isAssignedToUser ? "border-amber-400 ring-1 ring-amber-400/50" : "border-[#3E3832]"
                 }`}
               >
