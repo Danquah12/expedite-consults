@@ -24,23 +24,55 @@ function clip(s: string, max: number): string {
   return flat.length > max ? flat.slice(0, max - 1) + "…" : flat
 }
 
-async function sendEmail(to: string, senderName: string, text: string): Promise<boolean> {
+async function sendEmail(to: string, senderName: string, recipientName: string, text: string, messageId?: string): Promise<boolean> {
   const apiKey = (process.env.RESEND_API_KEY || "").trim()
   if (!apiKey || !to) return false
   const envFrom = (process.env.RESEND_FROM_EMAIL || process.env.RESEND_FROM || DEFAULT_FROM_EMAIL).trim()
   const from = envFrom.includes("<") ? envFrom : `ConnectLn Messages <${envFrom}>`
   const body = text.length > 1500 ? text.slice(0, 1500) + "…" : text
+  const isMeetingInvite = text.includes("Meeting invitation from")
+  const isRsvpResponse = text.includes("Meeting RSVP Response")
+  const reasonMatch = text.match(/Reason:\s*([^\n]+)/i)
+  const reason = reasonMatch ? reasonMatch[1].trim() : "Scheduled Meeting"
+
+  const rsvpBase = `https://www.connectln.app/api/connectin/meeting-rsvp?host=${encodeURIComponent(senderName)}&invitee=${encodeURIComponent(recipientName)}&msgId=${encodeURIComponent(messageId || "")}&reason=${encodeURIComponent(reason)}`
+  const rsvpButtonsHtml = isMeetingInvite
+    ? `<div style="margin-top:16px;padding:14px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:12px">
+        <p style="margin:0 0 10px 0;font-size:13px;font-weight:800;color:#0f172a">📋 Confirm your attendance (sends your response back to ${esc(senderName)}):</p>
+        <div>
+          <a href="${rsvpBase}&choice=yes" style="display:inline-block;background:#059669;color:#ffffff;text-decoration:none;padding:9px 18px;border-radius:8px;font-weight:800;font-size:13px;margin-right:8px">✅ Yes</a>
+          <a href="${rsvpBase}&choice=no" style="display:inline-block;background:#dc2626;color:#ffffff;text-decoration:none;padding:9px 18px;border-radius:8px;font-weight:800;font-size:13px;margin-right:8px">❌ No</a>
+          <a href="${rsvpBase}&choice=maybe" style="display:inline-block;background:#d97706;color:#ffffff;text-decoration:none;padding:9px 18px;border-radius:8px;font-weight:800;font-size:13px">🤔 Maybe</a>
+        </div>
+      </div>`
+    : ""
+
+  const subject = isMeetingInvite
+    ? `📅 ConnectLn Meeting Invitation from ${senderName}: ${reason}`
+    : isRsvpResponse
+    ? `📅 Meeting RSVP Response from ${senderName}`
+    : `New ConnectLn message from ${senderName}`
+
   const resend = new Resend(apiKey)
   const { error } = await resend.emails.send({
     from,
     to: [to.toLowerCase().trim()],
-    subject: `New ConnectLn message from ${senderName}`,
-    text: `${senderName} sent you a message on ConnectLn:\n\n${body}\n\nOpen your inbox to reply: ${OPEN_MESSAGING_URL}\n\n-- ConnectLn · Tickets, vouches, and real work`,
+    subject,
+    text: `${senderName} sent you a message on ConnectLn:\n\n${body}\n\n${isMeetingInvite ? `Confirm Yes: ${rsvpBase}&choice=yes\nConfirm No: ${rsvpBase}&choice=no\nConfirm Maybe: ${rsvpBase}&choice=maybe\n\n` : ""}Open your inbox to reply: ${OPEN_MESSAGING_URL}\n\n-- ConnectLn · Tickets, vouches, and real work`,
     html: `<div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;max-width:560px;margin:0 auto;padding:16px;color:#18181b">
-      <p style="font-size:15px"><strong>${esc(senderName)}</strong> sent you a message on ConnectLn:</p>
-      <div style="white-space:pre-wrap;background:#f6f3ee;border:1px solid #e4ddd0;border-radius:10px;padding:12px;font-size:14px">${esc(body)}</div>
-      <p style="margin-top:16px"><a href="${OPEN_MESSAGING_URL}" style="background:#0A66C2;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:bold;font-size:14px">Open your inbox &amp; reply</a></p>
-      <p style="color:#71717a;font-size:12px">ConnectLn · Tickets, vouches, and real work</p></div>`,
+      <div style="display:flex;align-items:center;gap:10px;background:#171513;color:#F5F0EB;padding:12px 16px;border-radius:12px 12px 0 0">
+        <img src="https://www.connectln.app/brand/connectln-icon-256.png" alt="ConnectLn" width="28" height="28" style="border-radius:6px;vertical-align:middle;margin-right:8px" />
+        <span style="font-size:16px;font-weight:900;letter-spacing:-0.02em;color:#F5F0EB">ConnectLn</span>
+        <span style="margin-left:auto;font-size:11px;font-weight:700;color:#d6d3d1">${isMeetingInvite ? "📅 Official Meeting Invitation" : isRsvpResponse ? "📅 Meeting RSVP Response" : "Direct Message"}</span>
+      </div>
+      <div style="border:1px solid #e4ddd0;border-top:none;border-radius:0 0 12px 12px;padding:16px;background:#ffffff">
+        <p style="font-size:15px;margin-top:0"><strong>${esc(senderName)}</strong> ${isMeetingInvite ? "invited you to a meeting on ConnectLn:" : isRsvpResponse ? "responded to your meeting invitation:" : "sent you a message on ConnectLn:"}</p>
+        <div style="white-space:pre-wrap;background:#f6f3ee;border:1px solid #e4ddd0;border-radius:10px;padding:12px;font-size:14px">${esc(body)}</div>
+        ${rsvpButtonsHtml}
+        <p style="margin-top:16px"><a href="${OPEN_MESSAGING_URL}" style="background:#0A66C2;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:bold;font-size:14px;display:inline-block">Open your inbox &amp; reply</a></p>
+        <p style="color:#71717a;font-size:12px;margin-bottom:0">ConnectLn · Tickets, vouches, and real work</p>
+      </div>
+    </div>`,
   })
   if (error) console.warn("[dm-notify] email failed:", error)
   return !error
@@ -84,11 +116,15 @@ export async function notifyDmRecipient(params: {
   recipientPhone?: string
   senderName: string
   text: string
+  messageId?: string
 }): Promise<{ email: boolean; sms: boolean; skipped?: string; smsNote?: string }> {
-  const { recipientName, recipientEmail, recipientPhone, senderName, text } = params
+  const { recipientName, recipientEmail, recipientPhone, senderName, text, messageId } = params
+  const isMeetingOrRsvp = text.includes("Meeting invitation from") || text.includes("Meeting RSVP Response")
   const key = `${senderName.toLowerCase()}>${recipientName.toLowerCase()}`
   const now = Date.now()
-  if (now - (lastNotifiedAt.get(key) || 0) < COOLDOWN_MS) return { email: false, sms: false, skipped: "cooldown" }
+  if (!isMeetingOrRsvp && now - (lastNotifiedAt.get(key) || 0) < COOLDOWN_MS) {
+    return { email: false, sms: false, skipped: "cooldown" }
+  }
   lastNotifiedAt.set(key, now)
 
   const wantEmail = process.env.DM_NOTIFY_EMAIL !== "0"
@@ -97,7 +133,7 @@ export async function notifyDmRecipient(params: {
     Promise.race([p, new Promise<T>((r) => setTimeout(() => r(fallback), 8000))]).catch(() => fallback)
 
   const [email, sms] = await Promise.all([
-    wantEmail && recipientEmail ? withTimeout(sendEmail(recipientEmail, senderName, text), false) : Promise.resolve(false),
+    wantEmail && recipientEmail ? withTimeout(sendEmail(recipientEmail, senderName, recipientName, text, messageId), false) : Promise.resolve(false),
     wantSms
       ? withTimeout(sendSms(recipientPhone || "", senderName, text), { ok: false, note: "timed out calling Twilio" })
       : Promise.resolve({ ok: false, note: "SMS notifications are switched off (DM_NOTIFY_SMS=0)" }),

@@ -10,10 +10,18 @@ export interface ShareTarget {
     subtitle?: string;
 }
 
+export type MessageReactionKind = 'like' | 'up' | 'down' | 'rsvp_yes' | 'rsvp_no' | 'rsvp_maybe';
+
 const REACTIONS: { kind: 'like' | 'up' | 'down'; emoji: string; label: string }[] = [
     { kind: 'like', emoji: '❤️', label: 'Like' },
     { kind: 'up', emoji: '👍', label: 'Thumbs up' },
     { kind: 'down', emoji: '👎', label: 'Thumbs down' },
+];
+
+const RSVP_OPTIONS: { kind: 'rsvp_yes' | 'rsvp_no' | 'rsvp_maybe'; choice: 'yes' | 'no' | 'maybe'; emoji: string; label: string; activeClass: string }[] = [
+    { kind: 'rsvp_yes', choice: 'yes', emoji: '✅', label: 'Yes', activeClass: '!border-emerald-600 !bg-emerald-600 !text-white' },
+    { kind: 'rsvp_no', choice: 'no', emoji: '❌', label: 'No', activeClass: '!border-rose-600 !bg-rose-600 !text-white' },
+    { kind: 'rsvp_maybe', choice: 'maybe', emoji: '🤔', label: 'Maybe', activeClass: '!border-amber-600 !bg-amber-600 !text-white' },
 ];
 
 const compact = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -46,14 +54,18 @@ export function loadMembers(): Promise<ShareTarget[]> {
 
 /** Small reaction chips shown on the top-right corner of a message bubble. */
 export function ReactionBadges({ msg }: { msg: B2BMessageItem }) {
-    const active = REACTIONS.filter((r) => (msg.reactions?.[r.kind] || []).length > 0);
-    if (active.length === 0) return null;
+    const badges = [
+        ...REACTIONS.map((r) => ({ kind: r.kind, emoji: r.emoji, label: r.label })),
+        ...RSVP_OPTIONS.map((r) => ({ kind: r.kind, emoji: r.emoji, label: `RSVP ${r.label}` })),
+    ].filter((r) => (msg.reactions?.[r.kind] || []).length > 0);
+
+    if (badges.length === 0) return null;
     return (
         <div className="absolute -top-3 right-2 z-10 flex items-center gap-1">
-            {active.map((r) => (
+            {badges.map((r) => (
                 <span
                     key={r.kind}
-                    title={r.label}
+                    title={`${r.label}: ${(msg.reactions?.[r.kind] || []).join(', ')}`}
                     className="inline-flex items-center gap-0.5 rounded-full border border-slate-200 bg-white px-1.5 py-0.5 text-xs font-bold text-slate-800 shadow-md"
                 >
                     <span>{r.emoji}</span>
@@ -65,18 +77,25 @@ export function ReactionBadges({ msg }: { msg: B2BMessageItem }) {
 }
 
 /**
- * Actions under a chat message: like / thumbs up / thumbs down, comment, share (members on ConnectLn, WhatsApp,
- * LinkedIn, Facebook, email), and post (own message) or repost (someone else's message, with credit) to the Feed.
+ * Actions under a chat message:
+ * - Meeting Invitation RSVP confirmation (Yes / No / Maybe) with ConnectLn logo that sends the response back to the host
+ * - Like / Thumbs up / Thumbs down (shown at top-right of bubble)
+ * - Comment
+ * - Share (with branded profile picture + ConnectLn logo template for LinkedIn, WhatsApp, Facebook, Email, or ConnectLn members)
+ * - Post / Repost to Feed
  */
 export function MessageActionBar({
     msg,
     isMe,
     myKey,
     myName,
+    authorName,
+    authorRole,
+    authorAvatar,
     shareTargets,
     shareText,
-    shareLink,
     onReact,
+    onRsvp,
     onComment,
     onForward,
     onPostToFeed,
@@ -86,11 +105,15 @@ export function MessageActionBar({
     /** Normalized name of the signed-in member (matches what the server stores in reactions). */
     myKey: string;
     myName: string;
+    authorName?: string;
+    authorRole?: string;
+    authorAvatar?: string;
     /** The member's own connections (open conversations). */
     shareTargets: ShareTarget[];
     shareText: string;
-    shareLink: string;
-    onReact: (kind: 'like' | 'up' | 'down') => void;
+    shareLink?: string;
+    onReact: (kind: MessageReactionKind) => void;
+    onRsvp?: (choice: 'yes' | 'no' | 'maybe') => Promise<void> | void;
     onComment: (text: string) => void;
     onForward: (target: ShareTarget) => Promise<void> | void;
     onPostToFeed: () => void;
@@ -109,7 +132,7 @@ export function MessageActionBar({
 
     const flash = (t: string) => {
         setNote(t);
-        setTimeout(() => setNote(null), 2500);
+        setTimeout(() => setNote(null), 2800);
     };
 
     const btn =
@@ -131,27 +154,122 @@ export function MessageActionBar({
         : pool
     ).slice(0, 8);
 
-    const open = (url: string) => window.open(url, '_blank', 'noopener,noreferrer,width=640,height=560');
-    const fullText = `${shareText}\n${shareLink}`;
+    const resolvedAuthor = authorName || (isMe ? myName : msg.sender.name) || 'ConnectLn Member';
+    const resolvedRole = authorRole || msg.sender.role || 'Verified ConnectLn Professional';
+    const rawAvatar = authorAvatar || msg.sender.avatar || '/brand/kwesi-avatar.png';
+    const publicAvatar = rawAvatar.startsWith('data:') ? '/brand/kwesi-avatar.png' : rawAvatar;
+
+    const cardParams = new URLSearchParams({
+        author: resolvedAuthor,
+        role: resolvedRole,
+        avatar: publicAvatar,
+        text: shareText.slice(0, 420),
+        sharedBy: myName || resolvedAuthor,
+    });
+    const brandedShareUrl = `https://www.connectln.app/share/message?${cardParams.toString()}`;
+    const formattedDispatch = `📢 ${resolvedAuthor} (${resolvedRole}) on ConnectLn:\n\n"${shareText}"\n\n🔗 View verified ConnectLn card: ${brandedShareUrl}`;
+
+    const open = (url: string) => window.open(url, '_blank', 'noopener,noreferrer,width=680,height=620');
     const external = [
-        { label: 'WhatsApp', icon: '🟢', go: () => open(`https://api.whatsapp.com/send?text=${encodeURIComponent(fullText)}`) },
-        { label: 'LinkedIn', icon: '🔵', go: () => open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareLink)}`) },
+        {
+            label: 'LinkedIn',
+            icon: '🔵',
+            go: () => open(`https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(formattedDispatch)}`),
+        },
+        {
+            label: 'WhatsApp',
+            icon: '🟢',
+            go: () => open(`https://api.whatsapp.com/send?text=${encodeURIComponent(formattedDispatch)}`),
+        },
         {
             label: 'Facebook',
             icon: '🟦',
-            go: () => open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareLink)}&quote=${encodeURIComponent(shareText)}`),
+            go: () => open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(brandedShareUrl)}&quote=${encodeURIComponent(formattedDispatch)}`),
         },
         {
             label: 'Email',
             icon: '✉️',
             go: () => {
-                window.location.href = `mailto:?subject=${encodeURIComponent('A message shared from ConnectLn')}&body=${encodeURIComponent(fullText)}`;
+                window.location.href = `mailto:?subject=${encodeURIComponent(`${resolvedAuthor} shared a message via ConnectLn`)}&body=${encodeURIComponent(formattedDispatch)}`;
             },
         },
     ];
 
+    const isMeetingInvite = msg.text.includes('Meeting invitation from');
+    const yesList = msg.reactions?.rsvp_yes || [];
+    const noList = msg.reactions?.rsvp_no || [];
+    const maybeList = msg.reactions?.rsvp_maybe || [];
+
     return (
-        <div className={`mt-1 flex flex-col gap-1 ${isMe ? 'items-end' : 'items-start'}`}>
+        <div className={`mt-1.5 flex flex-col gap-1.5 ${isMe ? 'items-end' : 'items-start'}`}>
+            {/* Meeting Invitation RSVP Bar (Yes / No / Maybe) with ConnectLn Logo */}
+            {isMeetingInvite && (
+                <div className="w-full max-w-md rounded-xl border border-slate-300 bg-white p-2.5 shadow-sm text-slate-900">
+                    <div className="flex items-center justify-between gap-2 pb-1.5 mb-2 border-b border-slate-100">
+                        <div className="flex items-center gap-1.5">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                                src="/brand/connectln-icon-256.png"
+                                alt="ConnectLn"
+                                className="h-4 w-4 rounded-xs object-contain"
+                            />
+                            <span className="text-[11px] font-black text-slate-800">
+                                ConnectLn Meeting RSVP — Confirm Attendance:
+                            </span>
+                        </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                        {RSVP_OPTIONS.map((opt) => {
+                            const list = msg.reactions?.[opt.kind] || [];
+                            const mine = list.includes(myKey);
+                            return (
+                                <button
+                                    key={opt.kind}
+                                    type="button"
+                                    onClick={async () => {
+                                        onReact(opt.kind);
+                                        if (onRsvp) {
+                                            await onRsvp(opt.choice);
+                                        }
+                                        flash(`RSVP "${opt.label}" sent to ${isMe ? 'invitees' : msg.sender.name}`);
+                                    }}
+                                    className={`inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-slate-50 px-3 py-1 text-xs font-extrabold text-slate-800 hover:bg-slate-100 cursor-pointer transition-all ${
+                                        mine ? opt.activeClass : ''
+                                    }`}
+                                >
+                                    <span>{opt.emoji}</span>
+                                    <span>{opt.label}</span>
+                                    {list.length > 0 && (
+                                        <span className="ml-0.5 rounded-full bg-black/15 px-1.5 py-0.2 text-[10px]">
+                                            {list.length}
+                                        </span>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+                    {(yesList.length > 0 || noList.length > 0 || maybeList.length > 0) && (
+                        <div className="mt-2 pt-1.5 border-t border-slate-100 space-y-0.5 text-[11px]">
+                            {yesList.length > 0 && (
+                                <p className="text-emerald-800 font-bold">
+                                    ✅ Yes ({yesList.length}): <span className="font-normal capitalize">{yesList.join(', ')}</span>
+                                </p>
+                            )}
+                            {noList.length > 0 && (
+                                <p className="text-rose-800 font-bold">
+                                    ❌ No ({noList.length}): <span className="font-normal capitalize">{noList.join(', ')}</span>
+                                </p>
+                            )}
+                            {maybeList.length > 0 && (
+                                <p className="text-amber-800 font-bold">
+                                    🤔 Maybe ({maybeList.length}): <span className="font-normal capitalize">{maybeList.join(', ')}</span>
+                                </p>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
+
             <div className="flex flex-wrap items-center gap-1">
                 {REACTIONS.map((r) => {
                     const mine = (msg.reactions?.[r.kind] || []).includes(myKey);
@@ -189,8 +307,54 @@ export function MessageActionBar({
             </div>
 
             {showShare && (
-                <div className="w-72 max-w-full rounded-xl border border-slate-200 bg-white p-2 shadow-lg text-slate-900">
-                    <p className="px-1 pb-1 text-[11px] font-extrabold text-slate-500">Share on</p>
+                <div className="w-80 max-w-full rounded-xl border border-slate-200 bg-white p-2.5 shadow-xl text-slate-900">
+                    {/* Branded ConnectLn Social Card Template Preview */}
+                    <p className="px-1 pb-1 text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                        ConnectLn Share Card Preview
+                    </p>
+                    <div
+                        className="mb-2.5 rounded-xl overflow-hidden border border-[#2C2825] shadow-md"
+                        style={{ backgroundColor: '#171513', color: '#F5F0EB' }}
+                    >
+                        <div
+                            className="flex items-center justify-between gap-2 px-3 py-2 border-b"
+                            style={{ backgroundColor: '#1F1C1A', borderColor: 'rgba(255,255,255,0.12)' }}
+                        >
+                            <div className="flex items-center gap-2 min-w-0">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                    src={authorAvatar || msg.sender.avatar || '/brand/kwesi-avatar.png'}
+                                    alt={resolvedAuthor}
+                                    onError={(e) => {
+                                        e.currentTarget.src = '/brand/kwesi-avatar.png';
+                                    }}
+                                    className="h-7 w-7 rounded-full object-cover ring-2 ring-[#0A66C2] shrink-0"
+                                />
+                                <div className="min-w-0">
+                                    <p className="text-[11px] font-extrabold truncate" style={{ color: '#F5F0EB' }}>
+                                        {resolvedAuthor}
+                                    </p>
+                                    <p className="text-[9px] truncate text-slate-300">{resolvedRole}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                    src="/brand/connectln-icon-256.png"
+                                    alt="ConnectLn"
+                                    className="h-4 w-4 rounded-xs object-contain"
+                                />
+                                <span className="text-[11px] font-black" style={{ color: '#F5F0EB' }}>
+                                    ConnectLn
+                                </span>
+                            </div>
+                        </div>
+                        <div className="p-2.5 text-[11px] leading-snug line-clamp-3 font-medium" style={{ color: '#F5F0EB' }}>
+                            “{shareText}”
+                        </div>
+                    </div>
+
+                    <p className="px-1 pb-1 text-[11px] font-extrabold text-slate-500">Share card on</p>
                     <div className="mb-2 grid grid-cols-4 gap-1">
                         {external.map((e) => (
                             <button
@@ -200,7 +364,7 @@ export function MessageActionBar({
                                     e.go();
                                     setShowShare(false);
                                 }}
-                                className="flex flex-col items-center gap-0.5 rounded-lg border border-slate-200 p-1.5 text-[10px] font-bold hover:bg-slate-100"
+                                className="flex flex-col items-center gap-0.5 rounded-lg border border-slate-200 p-1.5 text-[10px] font-bold hover:bg-slate-100 cursor-pointer"
                             >
                                 <span className="text-base">{e.icon}</span>
                                 {e.label}
@@ -212,7 +376,7 @@ export function MessageActionBar({
                         autoFocus
                         value={shareQuery}
                         onChange={(e) => setShareQuery(e.target.value)}
-                        placeholder="Type a name…"
+                        placeholder="Type 1st letter of name (e.g. V, J, Y)…"
                         className="mb-1 w-full rounded-lg border border-slate-300 p-1.5 text-xs"
                     />
                     <div className="max-h-44 overflow-y-auto">
@@ -223,7 +387,7 @@ export function MessageActionBar({
                             <button
                                 key={t.id}
                                 type="button"
-                                className="flex w-full items-center gap-2 rounded-lg p-1.5 text-left hover:bg-slate-100"
+                                className="flex w-full items-center gap-2 rounded-lg p-1.5 text-left hover:bg-slate-100 cursor-pointer"
                                 onClick={async () => {
                                     try {
                                         await onForward(t);

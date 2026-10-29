@@ -174,7 +174,8 @@ export function ScheduleMeetingModal({
             (meeting.notes ? `\nNotes: ${meeting.notes}` : '') +
             (meeting.reminders && meeting.reminders.length ? `\nReminders: ${meeting.reminders.join(' & ')} min before` : '') +
             `\n🔗 Join the meeting: ${joinUrl}` +
-            `\nOpen the link at the scheduled time to join.`;
+            `\nOpen the link at the scheduled time to join.` +
+            `\n📋 Please confirm your attendance: Yes · No · Maybe`;
 
         setSending(true);
         try {

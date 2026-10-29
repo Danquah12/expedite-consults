@@ -481,23 +481,32 @@ export async function POST(request: Request) {
             }
 
             if (action === 'react_message') {
-                if (!['like', 'up', 'down'].includes(String(reaction))) {
+                const rKind = String(reaction);
+                if (!['like', 'up', 'down', 'rsvp_yes', 'rsvp_no', 'rsvp_maybe'].includes(rKind)) {
                     return NextResponse.json({ ok: false, error: 'unknown reaction' }, { status: 400 });
                 }
                 const actorKey = normalizeParticipantKey(actorName);
                 const reactions: Record<string, string[]> = { ...(foundMsg.reactions || {}) };
-                const current = new Set(reactions[reaction as string] || []);
+                const current = new Set(reactions[rKind] || []);
                 if (current.has(actorKey)) {
                     current.delete(actorKey);
                 } else {
                     current.add(actorKey);
                     // Thumbs up and thumbs down are mutually exclusive
-                    const opposite = reaction === 'up' ? 'down' : reaction === 'down' ? 'up' : null;
+                    const opposite = rKind === 'up' ? 'down' : rKind === 'down' ? 'up' : null;
                     if (opposite && reactions[opposite]) {
                         reactions[opposite] = reactions[opposite].filter((k) => k !== actorKey);
                     }
+                    // Meeting RSVP choices (Yes / No / Maybe) are mutually exclusive
+                    if (rKind.startsWith('rsvp_')) {
+                        for (const other of ['rsvp_yes', 'rsvp_no', 'rsvp_maybe']) {
+                            if (other !== rKind && reactions[other]) {
+                                reactions[other] = reactions[other].filter((k) => k !== actorKey);
+                            }
+                        }
+                    }
                 }
-                reactions[reaction as string] = Array.from(current);
+                reactions[rKind] = Array.from(current);
                 foundMsg.reactions = reactions;
             } else {
                 const textClean = String(commentText || '').trim().slice(0, 200);
@@ -723,6 +732,7 @@ export async function POST(request: Request) {
                                 recipientPhone: rec.phone,
                                 senderName: canonSenderName,
                                 text,
+                                messageId: newMsgId,
                             });
                         }
                     } catch (e) {

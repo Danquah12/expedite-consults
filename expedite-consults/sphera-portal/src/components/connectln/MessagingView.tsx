@@ -9,7 +9,7 @@ import {
 } from '@/lib/b2b-messaging-data';
 import { PROFESSION_ENCLAVES } from '@/lib/connectin-professions';
 import { ScheduleMeetingModal, MeetingInvitee } from './ScheduleMeetingModal';
-import { MessageActionBar, ReactionBadges, loadMembers, ShareTarget } from './MessageActionBar';
+import { MessageActionBar, ReactionBadges, loadMembers, ShareTarget, MessageReactionKind } from './MessageActionBar';
 import { resolveUserProfilePicture } from '@/lib/connectin-storage';
 import {
     getLocalBilateralThreadsForViewer,
@@ -76,10 +76,10 @@ export function MessagingView({
     const [newInitialMessage, setNewInitialMessage] = useState('');
 
     useEffect(() => {
-        if (showNewMessageModal) {
+        if (showNewMessageModal || showScheduler) {
             loadMembers().then(setAllPlatformMembers);
         }
-    }, [showNewMessageModal]);
+    }, [showNewMessageModal, showScheduler]);
 
     const [activeCallMode, setActiveCallMode] = useState<'audio' | 'video' | null>(null);
     const [callSeconds, setCallSeconds] = useState(0);
@@ -932,7 +932,7 @@ export function MessagingView({
         senderAvatar: currentUser?.avatar || '',
     });
 
-    const handleReactToMessage = async (msg: B2BMessageItem, kind: 'like' | 'up' | 'down') => {
+    const handleReactToMessage = async (msg: B2BMessageItem, kind: MessageReactionKind) => {
         const me = (currentUser?.name || '').toLowerCase().trim().replace(/\s+/g, ' ');
         if (!me) return;
         // Optimistic update so the tap feels instant
@@ -944,6 +944,13 @@ export function MessagingView({
                 set.add(me);
                 const opp = kind === 'up' ? 'down' : kind === 'down' ? 'up' : null;
                 if (opp && reactions[opp]) reactions[opp] = reactions[opp].filter((k) => k !== me);
+                if (kind.startsWith('rsvp_')) {
+                    for (const other of ['rsvp_yes', 'rsvp_no', 'rsvp_maybe']) {
+                        if (other !== kind && reactions[other]) {
+                            reactions[other] = reactions[other].filter((k) => k !== me);
+                        }
+                    }
+                }
             }
             reactions[kind] = Array.from(set);
             return { ...m, reactions };
@@ -959,6 +966,23 @@ export function MessagingView({
         } catch {
             // keep the optimistic reaction on this screen
         }
+    };
+
+    const handleRsvpToMeetingInvite = async (msg: B2BMessageItem, choice: 'yes' | 'no' | 'maybe') => {
+        const responder = currentUser?.name || 'You';
+        const reasonMatch = msg.text.match(/Reason:\s*([^\n]+)/i);
+        const reason = reasonMatch ? reasonMatch[1].trim() : 'Scheduled Meeting';
+        const labelMap = {
+            yes: '✅ Yes — I will attend',
+            no: '❌ No — Unable to attend',
+            maybe: '🤔 Maybe — Tentative',
+        };
+        const replyText =
+            `📅 Meeting RSVP Response from ${responder}\n` +
+            `Response: ${labelMap[choice]}\n` +
+            `Meeting: ${reason}\n` +
+            `(In response to the meeting invitation sent by ${msg.sender.name})`;
+        await sendChatText(replyText);
     };
 
     const handleCommentOnMessage = async (msg: B2BMessageItem, text: string) => {
@@ -1663,13 +1687,15 @@ export function MessagingView({
                                                 </span>
                                             </div>
 
-                                            {/* High-Contrast Message Bubble (Outgoing messages include Profile Picture inserted into ConnectLn Logo Card) */}
+                                            {/* High-Contrast Message Bubble (Outgoing messages & Meeting Invitations/RSVPs include Profile Picture + ConnectLn Logo Card) */}
                                             <div className="relative">
                                                 <ReactionBadges msg={msg} />
                                                 <div
                                                     className={`overflow-hidden rounded-2xl text-sm leading-relaxed shadow-sm whitespace-pre-line ${
                                                         isMe
                                                             ? 'rounded-tr-none font-semibold'
+                                                            : msg.text.includes('Meeting invitation from') || msg.text.includes('Meeting RSVP Response')
+                                                            ? 'bg-white text-slate-800 border border-slate-300 rounded-tl-none font-medium'
                                                             : 'p-3.5 bg-white text-slate-800 border border-slate-200 rounded-tl-none font-medium'
                                                     }`}
                                                     style={
@@ -1682,7 +1708,7 @@ export function MessagingView({
                                                             : undefined
                                                     }
                                                 >
-                                                {isMe && (
+                                                {(isMe || msg.text.includes('Meeting invitation from') || msg.text.includes('Meeting RSVP Response')) && (
                                                     <div
                                                         className="flex items-center justify-between gap-4 px-3.5 py-2 border-b"
                                                         style={{
@@ -1692,8 +1718,8 @@ export function MessagingView({
                                                     >
                                                         <div className="flex items-center gap-2 min-w-0">
                                                             <img
-                                                                src={myResolvedPic}
-                                                                alt={currentUser?.name || 'You'}
+                                                                src={isMe ? myResolvedPic : msg.sender.avatar}
+                                                                alt={isMe ? currentUser?.name || 'You' : msg.sender.name}
                                                                 onError={(e) => {
                                                                     e.currentTarget.src = '/brand/kwesi-avatar.png';
                                                                 }}
@@ -1703,7 +1729,7 @@ export function MessagingView({
                                                                 className="text-[11px] font-extrabold truncate"
                                                                 style={{ color: '#F5F0EB' }}
                                                             >
-                                                                {currentUser?.name || 'Kwesi Asiedu'}
+                                                                {isMe ? currentUser?.name || 'Kwesi Asiedu' : msg.sender.name}
                                                             </span>
                                                         </div>
                                                         <div className="flex items-center gap-1.5 shrink-0">
@@ -1728,7 +1754,7 @@ export function MessagingView({
                                                     </div>
                                                 )}
 
-                                                <div className={isMe ? 'p-3.5' : ''}>
+                                                <div className={isMe || msg.text.includes('Meeting invitation from') || msg.text.includes('Meeting RSVP Response') ? 'p-3.5' : ''}>
                                                     <p style={isMe ? { color: '#F5F0EB' } : undefined}>
                                                         {msg.text}
                                                     </p>
@@ -1759,12 +1785,16 @@ export function MessagingView({
                                                 isMe={isMe}
                                                 myKey={(currentUser?.name || '').toLowerCase().trim().replace(/\s+/g, ' ')}
                                                 myName={currentUser?.name || ''}
+                                                authorName={isMe ? currentUser?.name || 'You' : msg.sender.name}
+                                                authorRole={isMe ? currentUser?.headline || 'Verified ConnectLn Professional' : msg.sender.role}
+                                                authorAvatar={isMe ? myResolvedPic : msg.sender.avatar}
                                                 shareTargets={threads
                                                     .filter((t) => t.channelType === 'People' && t.id !== activeThread.id)
                                                     .map((t) => ({ id: t.id, name: t.title, avatar: t.avatar, subtitle: t.subtitle }))}
                                                 shareText={msg.text}
                                                 shareLink="https://www.connectln.app/connectin"
                                                 onReact={(kind) => handleReactToMessage(msg, kind)}
+                                                onRsvp={(choice) => handleRsvpToMeetingInvite(msg, choice)}
                                                 onComment={(text) => handleCommentOnMessage(msg, text)}
                                                 onForward={(target) => handleForwardMessage(msg, isMe ? currentUser?.name || 'You' : msg.sender.name, target)}
                                                 onPostToFeed={() => handlePostMessageToFeed(msg, isMe)}
@@ -2159,9 +2189,24 @@ export function MessagingView({
                 onClose={() => setShowScheduler(false)}
                 hostName={currentUser?.name || 'You'}
                 defaultInviteeId={activeThread?.channelType === 'People' ? activeThread.id : undefined}
-                invitees={threads
-                    .filter((t) => t.channelType === 'People')
-                    .map<MeetingInvitee>((t) => ({ id: t.id, name: t.title, avatar: t.avatar, subtitle: t.subtitle }))}
+                invitees={(() => {
+                    const myCompact = (currentUser?.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                    const seen = new Set<string>(myCompact ? [myCompact] : []);
+                    const list: MeetingInvitee[] = [];
+                    const raw: MeetingInvitee[] = [
+                        ...threads
+                            .filter((t) => t.channelType === 'People')
+                            .map<MeetingInvitee>((t) => ({ id: t.id, name: t.title, avatar: t.avatar, subtitle: t.subtitle })),
+                        ...allPlatformMembers,
+                    ];
+                    for (const item of raw) {
+                        const key = item.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                        if (!key || seen.has(key)) continue;
+                        seen.add(key);
+                        list.push(item);
+                    }
+                    return list;
+                })()}
                 onSendInvite={async (invitee, text) => {
                     const senderName = currentUser?.name || 'You';
                     const senderEmail = currentUser?.email || '';
