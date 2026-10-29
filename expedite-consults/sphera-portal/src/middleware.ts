@@ -50,8 +50,8 @@ export async function middleware(request: NextRequest) {
       const title = (searchParams.get("t") || "ConnectLn Masterclass").replace(/ — Career Masterclass.*$/i, "");
       const plate = searchParams.get("d") || searchParams.get("plate") || "";
       const p = searchParams.get("p") || "";
-      pageTitle = name ? `ConnectLn — Shared by ${name}` : `ConnectLn — Official Masterclass`;
-      pageDesc = `${title}${plate ? ` (${plate})` : ""} · Tickets, vouches, and real work.`;
+      pageTitle = "ConnectLn — Tickets, vouches, and real work";
+      pageDesc = "ConnectLn: The zero-trust professional network. Verified tickets, vouches, and real work across cloud, cybersecurity, trades, and enterprise teams.";
       const imgParams = new URLSearchParams({ n: name, t: title, plate, p });
       ogImageUrl = `https://www.connectln.app/api/connectin/share-card?${imgParams.toString()}`;
     } else if (pathname.startsWith("/share/message")) {

@@ -12,8 +12,8 @@ export async function generateMetadata({ searchParams }: { searchParams: Params 
   const plate = one(sp.d) || one(sp.plate)
   const img = new URLSearchParams({ n: name, t: title, plate, p: one(sp.p) })
   const image = `https://www.connectln.app/api/connectin/share-card?${img.toString()}`
-  const fullTitle = `ConnectLn — ${name ? `Shared by ${name} · ` : ""}${title}`
-  const desc = `🏛️ ConnectLn Official Masterclass${plate ? ` (${plate})` : ""} — Tickets, vouches, and real work.`
+  const fullTitle = "ConnectLn — Tickets, vouches, and real work"
+  const desc = "ConnectLn: The zero-trust professional network. Verified tickets, vouches, and real work across cloud, cybersecurity, trades, and enterprise teams."
   return {
     title: fullTitle,
     description: desc,

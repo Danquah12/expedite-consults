@@ -13,15 +13,12 @@ function getInitials(name: string): string {
   return clean.slice(0, 2).toUpperCase()
 }
 
-// Link-preview card for a shared Wheel video or post.
-// Uses strictly Satori-safe <div style={{ display: "flex" }}> elements and centers all content inside the middle 600x600
-// of the 1200x630 canvas so WhatsApp's 1:1 center-crop and LinkedIn's 1200x630 banner both show the giant ConnectLn Logo + Sharer Badge.
+// Renders the exact `connectln-og.png` signature layout from the user's reference screenshot:
+// Left: Blue-ringed circular photo (or personal initials badge) + Sharer Name + "Verified Professional · ConnectLn"
+// Right: Large ConnectLn "C" squircle emblem on top + Giant "ConnectLn" wordmark + Terracotta underline bar + "Tickets, vouches, and real work"
 export async function GET(req: NextRequest) {
   const { searchParams, origin } = new URL(req.url)
-  const name = (searchParams.get("n") || "").slice(0, 50)
-  const rawTitle = (searchParams.get("t") || "Tickets, vouches, and real work").replace(/ — Career Masterclass.*$/i, "")
-  const title = rawTitle.slice(0, 58)
-  const plate = (searchParams.get("plate") || searchParams.get("d") || "").slice(0, 24)
+  const name = (searchParams.get("n") || "ConnectLn Member").slice(0, 44)
   const rawPic = searchParams.get("p") || ""
 
   const isKwesi = name.toLowerCase().includes("kwesi")
@@ -53,70 +50,44 @@ export async function GET(req: NextRequest) {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#171513",
+          background: "#141210",
           color: "#F5F0EB",
           fontFamily: "sans-serif",
+          padding: 42,
         }}
       >
-        {/* Centered 600x600 Safe-Zone Box so WhatsApp's 1:1 center crop is 100% filled with bold ConnectLn + Avatar */}
+        {/* Outer Rounded Dark Card Frame matching connectln-og.png */}
         <div
           style={{
-            width: 604,
-            height: 604,
+            width: "100%",
+            height: "100%",
             display: "flex",
-            flexDirection: "column",
+            flexDirection: "row",
             alignItems: "center",
-            justifyContent: "space-between",
-            background: "#1E1B18",
-            border: "5px solid #C2593F",
-            borderRadius: 32,
-            padding: 26,
+            justifyContent: "center",
+            background: "#1B1816",
+            border: "2px solid #2E2A27",
+            borderRadius: 36,
+            paddingLeft: 64,
+            paddingRight: 64,
           }}
         >
-          {/* 1. DOMINANT GIANT CONNECTLN LOGO & WORDMARK AT TOP */}
+          {/* LEFT COLUMN: Blue-Ringed Circular Avatar + Sharer Name + Verified Subtitle */}
           <div
             style={{
               display: "flex",
+              flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              width: "100%",
-              paddingBottom: 14,
-              borderBottom: "3px solid #35302B",
-            }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={logoUrl} width={112} height={112} style={{ borderRadius: 24 }} alt="" />
-            <div style={{ display: "flex", flexDirection: "column", marginLeft: 20 }}>
-              <div style={{ display: "flex", fontSize: 78, fontWeight: 900, color: "#FFFFFF" }}>
-                ConnectLn
-              </div>
-              <div style={{ display: "flex", fontSize: 24, fontWeight: 800, color: "#E07A5F" }}>
-                Tickets, vouches &amp; real work
-              </div>
-            </div>
-          </div>
-
-          {/* 2. EXTRA-LARGE SHARER AVATAR + NAME IN CENTER */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "#12100E",
-              border: "4px solid #0088ff",
-              borderRadius: 999,
-              paddingTop: 12,
-              paddingBottom: 12,
-              paddingLeft: 16,
-              paddingRight: 34,
+              width: 360,
             }}
           >
             <div
               style={{
-                width: 142,
-                height: 142,
-                borderRadius: 71,
-                border: "6px solid #0088ff",
+                width: 276,
+                height: 276,
+                borderRadius: 138,
+                border: "9px solid #0088ff",
                 background: "#0B253C",
                 display: "flex",
                 alignItems: "center",
@@ -126,66 +97,112 @@ export async function GET(req: NextRequest) {
             >
               {pic ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={pic} width={130} height={130} style={{ objectFit: "cover" }} alt="" />
+                <img src={pic} width={258} height={258} style={{ objectFit: "cover" }} alt="" />
               ) : (
-                <div style={{ display: "flex", fontSize: 58, fontWeight: 900, color: "#FFFFFF" }}>
-                  {initials}
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <div style={{ display: "flex", fontSize: 96, fontWeight: 900, color: "#FFFFFF" }}>
+                    {initials}
+                  </div>
                 </div>
               )}
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", marginLeft: 20 }}>
-              <div style={{ display: "flex", fontSize: 44, fontWeight: 900, color: "#FFFFFF" }}>
-                {name || "ConnectLn"}
-              </div>
-              <div style={{ display: "flex", fontSize: 22, fontWeight: 800, color: "#60A5FA", marginTop: 4 }}>
-                ✓ Verified Member
-              </div>
-            </div>
-          </div>
-
-          {/* 3. MASTERCLASS PLATE & CLEAN TITLE AT BOTTOM */}
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "100%",
-              background: "#12100E",
-              borderRadius: 20,
-              padding: 16,
-            }}
-          >
-            {plate ? (
-              <div
-                style={{
-                  display: "flex",
-                  background: "#C2593F",
-                  color: "#FFFFFF",
-                  paddingTop: 4,
-                  paddingBottom: 4,
-                  paddingLeft: 18,
-                  paddingRight: 18,
-                  borderRadius: 8,
-                  fontSize: 22,
-                  fontWeight: 900,
-                  marginBottom: 8,
-                }}
-              >
-                {plate}
-              </div>
-            ) : null}
             <div
               style={{
                 display: "flex",
-                fontSize: 28,
+                marginTop: 24,
+                fontSize: 34,
                 fontWeight: 800,
                 color: "#FFFFFF",
                 textAlign: "center",
               }}
             >
-              {title}
+              {name}
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                marginTop: 8,
+                fontSize: 20,
+                fontWeight: 700,
+                color: "#8E877F",
+                textAlign: "center",
+              }}
+            >
+              Verified Professional · ConnectLn
+            </div>
+          </div>
+
+          {/* RIGHT COLUMN: Large "C" Squircle Icon + Giant "ConnectLn" + Terracotta Underline + Tagline */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-start",
+              justifyContent: "center",
+              marginLeft: 64,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                marginLeft: 110,
+                marginBottom: 16,
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={logoUrl}
+                width={168}
+                height={168}
+                style={{ borderRadius: 36 }}
+                alt=""
+              />
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                fontSize: 108,
+                fontWeight: 900,
+                color: "#F5F0EB",
+                lineHeight: 1,
+                letterSpacing: -2,
+              }}
+            >
+              ConnectLn
+            </div>
+
+            {/* Signature Terracotta Red-Orange Bar */}
+            <div
+              style={{
+                display: "flex",
+                width: 400,
+                height: 12,
+                borderRadius: 6,
+                background: "#B84A32",
+                marginTop: 16,
+                marginBottom: 18,
+              }}
+            />
+
+            <div
+              style={{
+                display: "flex",
+                fontSize: 35,
+                fontWeight: 700,
+                color: "#8E877F",
+              }}
+            >
+              Tickets, vouches, and real work
             </div>
           </div>
         </div>
