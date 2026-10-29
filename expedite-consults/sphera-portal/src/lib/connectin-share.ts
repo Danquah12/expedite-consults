@@ -53,5 +53,6 @@ export function buildSharePreviewUrl(opts: { to: string; title: string; sharerNa
   if (opts.pic && /^https:\/\//i.test(opts.pic) && opts.pic.length < 160) {
     q.set("p", opts.pic)
   }
+  q.set("cb", "2")
   return `https://www.connectln.app/connectin/share?${q.toString()}`
 }

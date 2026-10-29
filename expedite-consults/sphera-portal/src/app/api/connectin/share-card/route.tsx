@@ -13,12 +13,12 @@ function getInitials(name: string): string {
   return clean.slice(0, 2).toUpperCase()
 }
 
-// Renders the exact `connectln-og.png` signature layout from the user's reference screenshot:
-// Left: Blue-ringed circular photo (or personal initials badge) + Sharer Name + "Verified Professional · ConnectLn"
-// Right: Large ConnectLn "C" squircle emblem on top + Giant "ConnectLn" wordmark + Terracotta underline bar + "Tickets, vouches, and real work"
+// Side-by-side signature ConnectLn card (Left: Circular Avatar + Name; Right: C Emblem + ConnectLn + Terracotta Bar + Tagline)
+// Sized to 560px total width centered inside the 1200x630 canvas so that WhatsApp Desktop's 630x630 center square crop
+// and WhatsApp Mobile/LinkedIn's 1200x630 banner both show 100% of the face on the left and 100% of "ConnectLn" on the right.
 export async function GET(req: NextRequest) {
   const { searchParams, origin } = new URL(req.url)
-  const name = (searchParams.get("n") || "ConnectLn Member").slice(0, 44)
+  const name = (searchParams.get("n") || "ConnectLn Member").slice(0, 32)
   const rawPic = searchParams.get("p") || ""
 
   const isKwesi = name.toLowerCase().includes("kwesi")
@@ -50,44 +50,43 @@ export async function GET(req: NextRequest) {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#141210",
+          background: "#171513",
           color: "#F5F0EB",
           fontFamily: "sans-serif",
-          padding: 42,
         }}
       >
-        {/* Outer Rounded Dark Card Frame matching connectln-og.png */}
+        {/* 576x560 Center Safe-Zone Frame: fits 100% inside WhatsApp's 630x630 center crop with zero left/right clipping */}
         <div
           style={{
-            width: "100%",
-            height: "100%",
+            width: 576,
+            height: 560,
             display: "flex",
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "center",
-            background: "#1B1816",
-            border: "2px solid #2E2A27",
+            background: "#1C1917",
+            border: "3px solid #2E2A27",
             borderRadius: 36,
-            paddingLeft: 64,
-            paddingRight: 64,
+            paddingLeft: 24,
+            paddingRight: 24,
           }}
         >
-          {/* LEFT COLUMN: Blue-Ringed Circular Avatar + Sharer Name + Verified Subtitle */}
+          {/* LEFT COLUMN (210px): Circular Avatar + Name + Verified Subtitle */}
           <div
             style={{
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              width: 360,
+              width: 210,
             }}
           >
             <div
               style={{
-                width: 276,
-                height: 276,
-                borderRadius: 138,
-                border: "9px solid #0088ff",
+                width: 176,
+                height: 176,
+                borderRadius: 88,
+                border: "6px solid #0088ff",
                 background: "#0B253C",
                 display: "flex",
                 alignItems: "center",
@@ -97,19 +96,10 @@ export async function GET(req: NextRequest) {
             >
               {pic ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={pic} width={258} height={258} style={{ objectFit: "cover" }} alt="" />
+                <img src={pic} width={164} height={164} style={{ objectFit: "cover" }} alt="" />
               ) : (
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <div style={{ display: "flex", fontSize: 96, fontWeight: 900, color: "#FFFFFF" }}>
-                    {initials}
-                  </div>
+                <div style={{ display: "flex", fontSize: 68, fontWeight: 900, color: "#FFFFFF" }}>
+                  {initials}
                 </div>
               )}
             </div>
@@ -117,9 +107,9 @@ export async function GET(req: NextRequest) {
             <div
               style={{
                 display: "flex",
-                marginTop: 24,
-                fontSize: 34,
-                fontWeight: 800,
+                marginTop: 18,
+                fontSize: 25,
+                fontWeight: 900,
                 color: "#FFFFFF",
                 textAlign: "center",
               }}
@@ -130,10 +120,10 @@ export async function GET(req: NextRequest) {
             <div
               style={{
                 display: "flex",
-                marginTop: 8,
-                fontSize: 20,
+                marginTop: 6,
+                fontSize: 14,
                 fontWeight: 700,
-                color: "#8E877F",
+                color: "#9A948C",
                 textAlign: "center",
               }}
             >
@@ -141,29 +131,30 @@ export async function GET(req: NextRequest) {
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Large "C" Squircle Icon + Giant "ConnectLn" + Terracotta Underline + Tagline */}
+          {/* RIGHT COLUMN (296px): "C" Squircle Icon + "ConnectLn" + Terracotta Underline + Tagline */}
           <div
             style={{
               display: "flex",
               flexDirection: "column",
               alignItems: "flex-start",
               justifyContent: "center",
-              marginLeft: 64,
+              width: 296,
+              marginLeft: 22,
             }}
           >
             <div
               style={{
                 display: "flex",
-                marginLeft: 110,
-                marginBottom: 16,
+                marginLeft: 68,
+                marginBottom: 14,
               }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={logoUrl}
-                width={168}
-                height={168}
-                style={{ borderRadius: 36 }}
+                width={116}
+                height={116}
+                style={{ borderRadius: 26 }}
                 alt=""
               />
             </div>
@@ -171,11 +162,11 @@ export async function GET(req: NextRequest) {
             <div
               style={{
                 display: "flex",
-                fontSize: 108,
+                fontSize: 56,
                 fontWeight: 900,
-                color: "#F5F0EB",
+                color: "#FFFFFF",
                 lineHeight: 1,
-                letterSpacing: -2,
+                letterSpacing: -1,
               }}
             >
               ConnectLn
@@ -185,21 +176,21 @@ export async function GET(req: NextRequest) {
             <div
               style={{
                 display: "flex",
-                width: 400,
-                height: 12,
-                borderRadius: 6,
+                width: 240,
+                height: 8,
+                borderRadius: 4,
                 background: "#B84A32",
-                marginTop: 16,
-                marginBottom: 18,
+                marginTop: 12,
+                marginBottom: 12,
               }}
             />
 
             <div
               style={{
                 display: "flex",
-                fontSize: 35,
+                fontSize: 20,
                 fontWeight: 700,
-                color: "#8E877F",
+                color: "#9A948C",
               }}
             >
               Tickets, vouches, and real work

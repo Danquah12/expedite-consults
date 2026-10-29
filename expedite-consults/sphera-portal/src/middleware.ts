@@ -52,7 +52,7 @@ export async function middleware(request: NextRequest) {
       const p = searchParams.get("p") || "";
       pageTitle = "ConnectLn — Tickets, vouches, and real work";
       pageDesc = "ConnectLn: The zero-trust professional network. Verified tickets, vouches, and real work across cloud, cybersecurity, trades, and enterprise teams.";
-      const imgParams = new URLSearchParams({ n: name, t: title, plate, p });
+      const imgParams = new URLSearchParams({ n: name, t: title, plate, p, cb: "2" });
       ogImageUrl = `https://www.connectln.app/api/connectin/share-card?${imgParams.toString()}`;
     } else if (pathname.startsWith("/share/message")) {
       // Dynamic preview card for shared chat messages (/share/message)
