@@ -355,16 +355,34 @@ export function mergeBilateralAndServerThreads(
   serverThreads: B2BConversationThread[]
 ): B2BConversationThread[] {
   const mergedByPartner = new Map<string, B2BConversationThread>()
+  // Same person under slightly different names ("Busy Vito" / "Busyvito") must be ONE thread
+  const keyOf = (title: string) => normalizeDmName(title).replace(/[^a-z0-9]/g, "")
 
-  // 1. Add all server threads first
+  // 1. Add all server threads first (combining duplicates for the same partner instead of overwriting)
   for (const st of serverThreads) {
-    const normTitle = normalizeDmName(st.title)
-    mergedByPartner.set(normTitle || st.id, st)
+    const normTitle = keyOf(st.title)
+    const prev = mergedByPartner.get(normTitle || st.id)
+    if (!prev) {
+      mergedByPartner.set(normTitle || st.id, st)
+      continue
+    }
+    const seen = new Set<string>()
+    const msgs = sortMessagesChronologically(
+      [...prev.messages, ...st.messages].filter(m => (seen.has(m.id) ? false : (seen.add(m.id), true)))
+    )
+    const last = msgs[msgs.length - 1]
+    mergedByPartner.set(normTitle || st.id, {
+      ...prev,
+      messages: msgs,
+      unreadCount: (prev.unreadCount || 0) + (st.unreadCount || 0),
+      lastMessage: last ? last.text.replace(/\n/g, " · ") : prev.lastMessage,
+      lastMessageTime: last ? last.timestamp : prev.lastMessageTime
+    })
   }
 
   // 2. Merge local bilateral threads by partner name so both local + cloud messages appear seamlessly
   for (const lt of localBilateral) {
-    const normTitle = normalizeDmName(lt.title)
+    const normTitle = keyOf(lt.title)
     const existing = mergedByPartner.get(normTitle)
     if (!existing) {
       mergedByPartner.set(normTitle, lt)
@@ -398,7 +416,7 @@ export function mergeBilateralAndServerThreads(
   }
 
   // Put bilateral threads at the very top
-  const localPartnerNames = new Set(localBilateral.map(t => normalizeDmName(t.title)))
+  const localPartnerNames = new Set(localBilateral.map(t => keyOf(t.title)))
   const topThreads: B2BConversationThread[] = []
   const restThreads: B2BConversationThread[] = []
 

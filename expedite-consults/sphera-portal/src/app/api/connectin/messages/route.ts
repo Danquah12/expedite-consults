@@ -227,7 +227,32 @@ function buildViewerBilateralThreads(
         });
     }
 
-    return results;
+    // The same person can exist under slightly different names ("Busy Vito" / "Busyvito"),
+    // which creates several conversations. Show them as ONE thread with every message.
+    const compact = (s: string) => normalizeParticipantKey(s).replace(/[^a-z0-9]/g, '');
+    const byPartner = new Map<string, B2BConversationThread>();
+    for (const t of results) {
+        const key = compact(t.title) || t.id;
+        const prev = byPartner.get(key);
+        if (!prev) {
+            byPartner.set(key, t);
+            continue;
+        }
+        const seen = new Set<string>();
+        const msgs = [...prev.messages, ...t.messages]
+            .filter((m) => (seen.has(m.id) ? false : (seen.add(m.id), true)))
+            .sort((a, b) => (a.createdAtIso || '').localeCompare(b.createdAtIso || ''));
+        const last = msgs[msgs.length - 1];
+        byPartner.set(key, {
+            ...prev,
+            messages: msgs,
+            unreadCount: (prev.unreadCount || 0) + (t.unreadCount || 0),
+            lastMessage: last ? last.text.replace(/\n/g, ' · ') : prev.lastMessage,
+            lastMessageTime: last ? last.timestamp : prev.lastMessageTime,
+        });
+    }
+
+    return Array.from(byPartner.values());
 }
 
 function getThreadsForEnclaveMerged(
@@ -421,6 +446,23 @@ export async function POST(request: Request) {
             }
 
             const existingBilateral = bilateralConversationsByPairKey[threadId];
+            if (existingBilateral && readerKey) {
+                // Duplicate conversations with the same two people are shown as one thread, so mark them all read
+                const compact = (s: string) => normalizeParticipantKey(s).replace(/[^a-z0-9]/g, '');
+                const partnerOf = (c: CloudDirectConversation) =>
+                    doesParticipantMatch(c.participantA.name, viewerName || senderName, c.participantA.email, '')
+                        ? c.participantB.name
+                        : c.participantA.name;
+                const partnerKey = compact(partnerOf(existingBilateral));
+                for (const c of Object.values(bilateralConversationsByPairKey)) {
+                    if (c === existingBilateral || compact(partnerOf(c)) !== partnerKey) continue;
+                    c.messages = c.messages.map((m) => ({
+                        ...m,
+                        readBy: Array.from(new Set([...(m.readBy || []), readerKey])),
+                    }));
+                    await upsertCloudDirectConversation(c).catch(() => {});
+                }
+            }
             if (existingBilateral && readerKey) {
                 existingBilateral.messages = existingBilateral.messages.map((m) => ({
                     ...m,
