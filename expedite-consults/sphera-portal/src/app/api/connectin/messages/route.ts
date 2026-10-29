@@ -15,6 +15,7 @@ import {
     pullCloudUsersIntoDb,
 } from '@/lib/connectin-cloud-sync';
 import { connectinDb } from '@/lib/connectin-db';
+import { notifyDmRecipient } from '@/lib/connectin-dm-notify';
 
 // Server-side in-memory store for dynamic replies and custom conversations
 const customThreadsByEnclave: Record<string, B2BConversationThread[]> = {};
@@ -625,6 +626,27 @@ export async function POST(request: Request) {
 
                 await upsertCloudDirectConversation(updatedConvo).catch(() => {});
 
+                // Also tell the recipient outside the app: email + text to the contact details they registered with
+                let notified: { email: boolean; sms: boolean; skipped?: string } | null = null;
+                if (recipientIsRegisteredHuman && !doesParticipantMatch(canonSenderName, canonRecipientName, senderEmail, effectiveRecipientEmail)) {
+                    try {
+                        const rec = connectinDb
+                            .getAllUsersWithProfiles()
+                            .find((u) => doesParticipantMatch(u.name, canonRecipientName, u.email, effectiveRecipientEmail));
+                        if (rec) {
+                            notified = await notifyDmRecipient({
+                                recipientName: rec.name,
+                                recipientEmail: rec.email,
+                                recipientPhone: rec.phone,
+                                senderName: canonSenderName,
+                                text,
+                            });
+                        }
+                    } catch (e) {
+                        console.warn('[messages] recipient notification failed', e);
+                    }
+                }
+
                 const viewerThreads = buildViewerBilateralThreads(senderName, senderEmail, enclave);
                 const updatedThreadForSender = viewerThreads.find((t) => t.id === pairKey);
 
@@ -633,6 +655,7 @@ export async function POST(request: Request) {
                     threadId: pairKey,
                     deliveredToRecipient: resolvedRecipientName,
                     recipientIsRegisteredHuman,
+                    notified,
                     thread: updatedThreadForSender,
                     userMessage: {
                         id: newMsgId,

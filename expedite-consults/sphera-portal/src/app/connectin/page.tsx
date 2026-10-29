@@ -244,6 +244,8 @@ export default function ConnectLnPage() {
           ? "careersuite"
           : tabParam === "jobs"
           ? "jobs"
+          : tabParam === "messaging"
+          ? "messaging"
           : null
       if (resolvedUrlTab) {
         setActiveTab(resolvedUrlTab as any)
@@ -2272,6 +2274,7 @@ export default function ConnectLnPage() {
         onOpenFullMessaging={() => setActiveTab('messaging')}
         composeRecipient={composeRecipient}
         onCloseComposeRecipient={() => setComposeRecipient(null)}
+        suppressAutoOpen={activeTab === 'messaging'}
       />
 
       {/* ConnectIn AI Global Platform Assistant Modal */}
