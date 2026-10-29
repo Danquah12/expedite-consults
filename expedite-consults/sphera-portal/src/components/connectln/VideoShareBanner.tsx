@@ -121,22 +121,17 @@ export function VideoShareBanner({
     thumbnailUrl ||
     (resolvedYtId ? `https://i.ytimg.com/vi/${resolvedYtId}/hqdefault.jpg` : null)
 
-  const takeawaysList = takeaways.length > 0
-    ? `\n\n📌 *KEY FIELD TAKEAWAYS:*\n${takeaways.map(t => `✅ ${t}`).join("\n")}`
-    : ""
+  const cleanTitle = videoTitle.replace(/ — Career Masterclass.*$/i, "")
+  const leadTakeaway = takeaways[0] ? `\n• ${takeaways[0]}` : ""
   const shareText = [
-    `🏛️ *CONNECTLN — TICKETS, VOUCHES & REAL WORK*`,
-    `━━━━━━━━━━━━━━━━━━━━━━`,
-    `🎬 *CONNECTLN MASTERCLASS BRIEFING*`,
-    `*${videoTitle}*${serialPlate ? ` (${serialPlate})` : ""}`,
+    `*CONNECTLN — Tickets, Vouches & Real Work*`,
     ``,
-    `👤 *Shared by:* ${resolvedAuthor} (Verified ConnectLn Member)`,
-    videoSubtitle ? `⚡ *Briefing:* ${videoSubtitle}` : "",
-    takeawaysList,
+    `*${cleanTitle}*${serialPlate ? ` (${serialPlate})` : ""}`,
+    `Shared by *${resolvedAuthor}*${videoSubtitle ? ` · ${videoSubtitle}` : ""}${leadTakeaway}`,
     ``,
-    `▶️ *Watch Official Briefing on ConnectLn:*`,
+    `Watch Masterclass on ConnectLn:`,
     resolvedShareUrl
-  ].filter(Boolean).join("\n")
+  ].join("\n")
 
   const handleWhatsAppShare = (e: React.MouseEvent) => {
     e.stopPropagation()
