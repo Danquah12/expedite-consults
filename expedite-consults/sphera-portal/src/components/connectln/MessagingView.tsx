@@ -8,6 +8,7 @@ import {
     B2BMessageItem,
 } from '@/lib/b2b-messaging-data';
 import { PROFESSION_ENCLAVES } from '@/lib/connectin-professions';
+import { ScheduleMeetingModal, MeetingInvitee } from './ScheduleMeetingModal';
 import { resolveUserProfilePicture } from '@/lib/connectin-storage';
 import {
     getLocalBilateralThreadsForViewer,
@@ -41,6 +42,7 @@ export function MessagingView({
 }) {
     const activeEnclave = currentUser?.professionEnclave || 'trades_construction';
     const [selectedEnclave, setSelectedEnclave] = useState<string>(activeEnclave);
+    const [showScheduler, setShowScheduler] = useState(false);
     const [threads, setThreads] = useState<B2BConversationThread[]>(() =>
         getEnclaveB2BThreads(activeEnclave)
     );
@@ -1439,6 +1441,14 @@ export function MessagingView({
                                     <span>🎥</span>
                                     <span className="hidden sm:inline">Video Huddle</span>
                                 </button>
+                                <button
+                                    onClick={() => setShowScheduler(true)}
+                                    className="px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 text-xs font-extrabold flex items-center gap-1.5 transition-all border border-emerald-300"
+                                    title="Schedule a meeting with your connections"
+                                >
+                                    <span>📅</span>
+                                    <span className="hidden sm:inline">Schedule</span>
+                                </button>
                             </div>
                         </div>
 
@@ -1891,6 +1901,52 @@ export function MessagingView({
                     </div>
                 </div>
             )}
+
+            {/* Schedule a meeting with connections (calendar + invitees + reason) */}
+            <ScheduleMeetingModal
+                open={showScheduler}
+                onClose={() => setShowScheduler(false)}
+                hostName={currentUser?.name || 'You'}
+                defaultInviteeId={activeThread?.channelType === 'People' ? activeThread.id : undefined}
+                invitees={threads
+                    .filter((t) => t.channelType === 'People')
+                    .map<MeetingInvitee>((t) => ({ id: t.id, name: t.title, avatar: t.avatar, subtitle: t.subtitle }))}
+                onSendInvite={async (invitee, text) => {
+                    const senderName = currentUser?.name || 'You';
+                    const senderEmail = currentUser?.email || '';
+                    const senderAvatar = currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150';
+                    const senderRole = currentUser?.headline || 'Verified ConnectIn Professional';
+                    recordLocalBilateralDirectMessage({
+                        senderName,
+                        senderEmail,
+                        senderAvatar,
+                        senderRole,
+                        recipientName: invitee.name,
+                        recipientAvatar: invitee.avatar,
+                        recipientSubtitle: invitee.subtitle,
+                        text,
+                    });
+                    const res = await fetch('/api/connectin/messages', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'send_message',
+                            enclave: selectedEnclave === 'all' ? activeEnclave : selectedEnclave,
+                            threadId: invitee.id,
+                            text,
+                            senderName,
+                            senderEmail,
+                            senderAvatar,
+                            senderRole,
+                            recipientName: invitee.name,
+                            recipientSubtitle: invitee.subtitle,
+                            recipientAvatar: invitee.avatar,
+                            channelType: 'People',
+                        }),
+                    });
+                    if (!res.ok) throw new Error('send failed');
+                }}
+            />
 
             {/* Live WebRTC Audio / Video Huddle Studio Modal */}
             {activeCallMode && activeThread && (
