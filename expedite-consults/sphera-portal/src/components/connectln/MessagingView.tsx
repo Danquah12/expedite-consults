@@ -516,12 +516,20 @@ export function MessagingView({
         const handleSyncEvent = () => fetchLiveThreads(false);
         window.addEventListener('connectin_dm_updated', handleSyncEvent);
         window.addEventListener('storage', handleSyncEvent);
+        // Background tabs throttle timers, so also refresh as soon as the tab/window becomes active again
+        const handleVisible = () => {
+            if (document.visibilityState === 'visible') fetchLiveThreads(false);
+        };
+        document.addEventListener('visibilitychange', handleVisible);
+        window.addEventListener('focus', handleSyncEvent);
 
         return () => {
             cancelled = true;
             clearInterval(pollId);
             window.removeEventListener('connectin_dm_updated', handleSyncEvent);
             window.removeEventListener('storage', handleSyncEvent);
+            document.removeEventListener('visibilitychange', handleVisible);
+            window.removeEventListener('focus', handleSyncEvent);
         };
     }, [selectedEnclave, currentUser?.name, currentUser?.email]);
 
