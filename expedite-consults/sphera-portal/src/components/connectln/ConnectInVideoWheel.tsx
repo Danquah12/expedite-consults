@@ -965,6 +965,46 @@ export function ConnectInVideoWheel({
                   )}
                 </div>
 
+                {/* Immediate Action Bar Right Below Video Player (Always Visible Without Scrolling) */}
+                <div
+                  className="px-4 py-2.5 border-b flex flex-wrap items-center justify-between gap-2"
+                  style={{ backgroundColor: '#F8FAFC', borderColor: '#E2E8F0' }}
+                >
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {activeVideo.tags.slice(0, 3).map(tag => (
+                      <span
+                        key={tag}
+                        style={{ backgroundColor: '#DBEAFE', color: '#1E3A8A', border: '1px solid #93C5FD' }}
+                        className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0 ml-auto">
+                    <button
+                      type="button"
+                      onClick={() => handleCopyLink(activeVideo)}
+                      style={{ backgroundColor: '#1E293B', color: '#FFFFFF' }}
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 hover:opacity-90 transition-opacity cursor-pointer shadow-2xs"
+                    >
+                      {copyFeedback ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                      <span style={{ color: '#FFFFFF' }}>{copyFeedback ? "Copied!" : "Copy Link"}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handlePlayNext}
+                      style={{ backgroundColor: '#0066FF', color: '#FFFFFF' }}
+                      className="px-4 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 hover:opacity-90 transition-opacity cursor-pointer shadow-sm"
+                    >
+                      <span style={{ color: '#FFFFFF' }}>Next Talk in Wheel</span>
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
                 {/* Video Notes, Signature Profile Picture + ConnectLn Card, Takeaways & Single Bottom Share Bar */}
                 <div
                   className="p-3.5 sm:p-5 space-y-4"
