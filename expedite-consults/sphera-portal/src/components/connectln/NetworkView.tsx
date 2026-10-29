@@ -1267,200 +1267,376 @@ export function NetworkView({
                 </div>
               )}
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-bold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                    <span>People You May Know in</span>
-                    <span className="text-[#0A66C2] font-extrabold">{selectedCapability}</span>
-                  </h3>
-                  <p className="text-xs text-zinc-500">
-                    Matches based on shared technical competencies, mutual circles, and security domains. Click any member to open their workspace.
-                  </p>
+              {/* ═══════════════════════════════════════════════════════════════════════ */}
+              {/* SECTION 1: ACTIVE TICKET ISSUERS & CONTRACTING LEADS                   */}
+              {/* ═══════════════════════════════════════════════════════════════════════ */}
+              <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-[#FAF8F5] dark:bg-zinc-900/90 p-4 sm:p-5 space-y-4 shadow-xs">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-200/80 dark:border-zinc-800 pb-3">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#1C1916] px-2.5 py-0.5 text-[10px] font-black text-amber-300 border border-[#A64532]">
+                        <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded bg-[#A64532] text-[9px] font-black text-white">C</span>
+                        <span>LIVE TICKET DESK</span>
+                      </span>
+                      <h3 className="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-zinc-100">
+                        Active Ticket Issuers &amp; Project Leads Seeking Your Specialty
+                      </h3>
+                    </div>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      Verified directors, contracting leads, and guild principals issuing live work tickets in <strong className="text-[#A64532] dark:text-amber-400">{selectedCapability}</strong>.
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-[#A64532]/10 border border-[#A64532]/30 px-3 py-1 text-[11px] font-extrabold text-[#A64532] dark:text-amber-300">
+                    ⚡ {Math.min(4, filteredPeople.length)} Issuing Tickets Now
+                  </span>
                 </div>
-                <span className="text-xs text-zinc-500 font-medium">
-                  {filteredPeople.length} specialists
-                </span>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredPeople.map((person) => (
-                  <div
-                    key={person.id}
-                    className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xs hover:border-[#0A66C2] hover:shadow-md transition-all dark:border-zinc-800 dark:bg-zinc-900 flex flex-col justify-between group"
-                  >
-                    <div>
-                      {/* Cover & Avatar */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                  {filteredPeople.slice(0, 4).map((person, idx) => {
+                    const ticketCount = 14 + ((idx * 7) % 19)
+                    const vouchCount = person.mutualConnections || (9 + idx * 3)
+                    const serialCode = `CLN-ISS-${String(idx + 1).padStart(2, '0')}`
+                    const primaryCap = typeof person.capabilities?.[0] === 'string'
+                      ? person.capabilities[0]
+                      : (person.capabilities?.[0] as any)?.name || selectedCapability
+                    const orgName = person.headline?.split('@')[1]?.trim() || person.headline?.split('·')[1]?.trim() || 'Verified Enterprise Partner'
+
+                    return (
                       <div
-                        onClick={() => onSelectMember?.(person)}
-                        className="relative h-20 w-full overflow-hidden bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 cursor-pointer"
-                        title={`Open ${person.name}'s Workspace`}
+                        key={`issuer_${person.id}`}
+                        className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-950 overflow-hidden shadow-xs hover:border-[#A64532] hover:shadow-md transition-all flex flex-col justify-between group"
                       >
-                        {person.coverImage && (
-                          <img
-                            src={person.coverImage}
-                            alt=""
-                            className="h-full w-full object-cover opacity-50 group-hover:scale-105 transition-transform duration-300"
-                          />
-                        )}
-                      </div>
-
-                      <div className="relative z-10 px-4 pb-3 pt-0">
-                        <div className="-mt-10 mb-2 flex justify-between items-end">
-                          <div
-                            onClick={() => onSelectMember?.(person)}
-                            className="relative h-16 w-16 rounded-full border-2 border-white bg-white shadow-md dark:border-zinc-900 dark:bg-zinc-800 overflow-hidden shrink-0 ring-2 ring-black/5 dark:ring-white/10 cursor-pointer hover:ring-[#0A66C2] transition-all"
-                            title={`Open ${person.name}'s Workspace`}
-                          >
-                            <img
-                              src={person.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(person.name)}&backgroundColor=0a66c2`}
-                              alt={person.name}
-                              className="h-full w-full object-cover"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement
-                                target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(person.name)}&backgroundColor=0a66c2`
-                              }}
-                            />
+                        {/* Top Dark ConnectLn Dossier Header Strip */}
+                        <div className="bg-[#1C1916] px-3.5 py-2 flex items-center justify-between gap-2 text-white border-b border-zinc-800">
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex h-4 w-4 items-center justify-center rounded bg-[#A64532] text-[9px] font-black text-white">
+                              C
+                            </span>
+                            <span className="font-mono text-[10px] font-bold text-amber-300">{serialCode}</span>
+                            <span className="rounded-full bg-[#A64532] px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white">
+                              ⚡ Issuing Tickets
+                            </span>
                           </div>
                           {person.matchScore && (
-                            <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 shadow-2xs">
-                              🎯 {person.matchScore}% Match
+                            <span className="text-[10px] font-mono font-bold text-emerald-400">
+                              🎯 {person.matchScore}% Scope Match
                             </span>
                           )}
                         </div>
 
-                        <h4
-                          onClick={() => onSelectMember?.(person)}
-                          className="font-bold text-sm text-zinc-900 dark:text-zinc-100 hover:text-[#0A66C2] hover:underline cursor-pointer"
-                          title={`Open ${person.name}'s Workspace`}
-                        >
-                          {person.name}
-                        </h4>
-                        <p
-                          onClick={() => onSelectMember?.(person)}
-                          className="text-xs text-zinc-500 line-clamp-2 mt-0.5 dark:text-zinc-400 min-h-[32px] cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-300"
-                        >
-                          {person.headline}
-                        </p>
-
-                        {/* Verified Badges */}
-                        {person.verifiedBadges && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {person.verifiedBadges.map((b, i) => (
-                              <span
-                                key={i}
-                                className={`rounded px-1.5 py-0.5 text-[9px] font-bold font-mono ${
-                                  b.includes('Trades')
-                                    ? "bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950 dark:text-amber-300"
-                                    : b.includes('Tech') || b.includes('DevSecOps')
-                                    ? "bg-sky-50 text-[#0A66C2] border border-sky-200 dark:bg-sky-950 dark:text-sky-300"
-                                    : b.includes('Healthcare') || b.includes('Medical')
-                                    ? "bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950 dark:text-rose-300"
-                                    : b.includes('Gov') || b.includes('Legal')
-                                    ? "bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-950 dark:text-purple-300"
-                                    : b.includes('Finance')
-                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300"
-                                    : "bg-sky-50 text-[#0A66C2] dark:bg-sky-950 dark:text-sky-300"
-                                }`}
-                              >
-                                {b}
+                        {/* Horizontal Dossier Body (Squircle Avatar on Left + Details on Right) */}
+                        <div className="p-3.5 space-y-3">
+                          <div className="flex items-start gap-3.5">
+                            <div
+                              onClick={() => onSelectMember?.(person)}
+                              className="relative h-16 w-16 rounded-2xl overflow-hidden border-2 border-[#A64532] bg-zinc-900 shrink-0 cursor-pointer shadow-sm group-hover:scale-103 transition-transform"
+                              title={`Inspect ${person.name}'s Dossier`}
+                            >
+                              <img
+                                src={person.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(person.name)}&backgroundColor=a64532`}
+                                alt={person.name}
+                                className="h-full w-full object-cover"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement
+                                  target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(person.name)}&backgroundColor=a64532`
+                                }}
+                              />
+                              <span className="absolute bottom-0 right-0 rounded-tl-md bg-[#1C1916] px-1 py-0.2 text-[8px] font-black text-amber-300 border-t border-l border-amber-500/40">
+                                L4
                               </span>
-                            ))}
-                          </div>
-                        )}
+                            </div>
 
-                        {/* Capabilities Tags */}
-                        {person.capabilities && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {person.capabilities.map((rawCap: any, capIdx: number) => {
-                              const cap = typeof rawCap === "string" ? rawCap : String(rawCap?.name || rawCap || "")
-                              if (!cap) return null
-                              return (
-                                <span
-                                  key={`${cap}_${capIdx}`}
-                                  onClick={() => setSelectedCapability(cap)}
-                                  className={`rounded-full px-2 py-0.5 text-[10px] font-medium cursor-pointer transition-colors ${
-                                    selectedCapability === cap
-                                      ? "bg-[#0A66C2] text-white font-bold"
-                                      : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300"
-                                  }`}
+                            <div className="min-w-0 flex-1 space-y-1">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <h4
+                                  onClick={() => onSelectMember?.(person)}
+                                  className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100 hover:text-[#A64532] cursor-pointer truncate"
                                 >
-                                  {cap}
-                                </span>
-                              )
-                            })}
+                                  {person.name}
+                                </h4>
+                                <ShieldCheck className="h-4 w-4 text-[#0A66C2] shrink-0" />
+                              </div>
+                              <p
+                                onClick={() => onSelectMember?.(person)}
+                                className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-snug cursor-pointer"
+                              >
+                                {person.headline}
+                              </p>
+                            </div>
                           </div>
-                        )}
 
-                        {/* Mutual Connection */}
-                        <p className="text-[11px] text-zinc-400 mt-2 truncate">
-                          {person.mutualName ? `${person.mutualName} & ${person.mutualConnections} other mutuals` : `${person.mutualConnections} mutual connections`}
-                        </p>
+                          {/* Active Contract / Ticket Scope Box (Replaces LinkedIn's "Hiring at...") */}
+                          <div className="rounded-xl bg-[#FAF6F0] dark:bg-zinc-900 border border-[#E6DEC8] dark:border-zinc-800 px-3 py-2 flex items-center justify-between gap-2 text-[11px]">
+                            <div className="min-w-0">
+                              <span className="font-extrabold text-[#A64532] dark:text-amber-400 uppercase text-[9px] tracking-wider block">
+                                Active Ticket Scope · {orgName}
+                              </span>
+                              <p className="font-semibold text-zinc-800 dark:text-zinc-200 truncate">
+                                Commissioning verified {primaryCap} deliverables
+                              </p>
+                            </div>
+                            <span className="rounded-md bg-[#1C1916] text-amber-300 font-mono text-[10px] font-bold px-2 py-0.5 shrink-0">
+                              {ticketCount} Tickets
+                            </span>
+                          </div>
+
+                          {/* 3-Column ConnectLn Ticket & Vouch Ledger Strip */}
+                          <div className="grid grid-cols-3 gap-1.5 text-center rounded-xl bg-zinc-50 dark:bg-zinc-900/70 p-2 border border-zinc-200/60 dark:border-zinc-800 text-[10px]">
+                            <div>
+                              <span className="text-zinc-400 block">Issued Tickets</span>
+                              <span className="font-black text-zinc-900 dark:text-white">🎫 {ticketCount} Verified</span>
+                            </div>
+                            <div className="border-x border-zinc-200 dark:border-zinc-800">
+                              <span className="text-zinc-400 block">Peer Vouches</span>
+                              <span className="font-black text-[#0A66C2] dark:text-sky-400">🤝 {vouchCount} Vouches</span>
+                            </div>
+                            <div>
+                              <span className="text-zinc-400 block">Clearance</span>
+                              <span className="font-black text-emerald-600 dark:text-emerald-400">✓ Guild Verified</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Dossier Action Footer */}
+                        <div className="px-3.5 py-2.5 bg-zinc-50/80 dark:bg-zinc-900/50 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-2">
+                          <button
+                            onClick={() => onSelectMember?.(person)}
+                            className="rounded-xl border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-[11px] font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                          >
+                            Inspect Dossier
+                          </button>
+                          <button
+                            onClick={() => onNavigateMessaging && onNavigateMessaging(person)}
+                            className="rounded-xl border border-[#0A66C2] px-3 py-1.5 text-[11px] font-bold text-[#0A66C2] hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors flex items-center gap-1 cursor-pointer"
+                          >
+                            <span>➤ Dispatch DM</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (person.isConnected) {
+                                setActiveTab('connections')
+                                return
+                              }
+                              handleSendConnectionWithNote(person.id)
+                            }}
+                            className={`ml-auto rounded-xl px-3.5 py-1.5 text-[11px] font-extrabold transition-all flex items-center gap-1 cursor-pointer ${
+                              person.isConnected
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                : person.isPending
+                                ? "border border-zinc-300 text-zinc-500"
+                                : "bg-[#A64532] hover:bg-[#8E3929] text-white shadow-2xs"
+                            }`}
+                          >
+                            {person.isConnected ? (
+                              <>
+                                <Check className="h-3 w-3" />
+                                <span>Vouched</span>
+                              </>
+                            ) : person.isPending ? (
+                              <span>Pending</span>
+                            ) : (
+                              <>
+                                <UserPlus className="h-3 w-3" />
+                                <span>Vouch &amp; Connect</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* ═══════════════════════════════════════════════════════════════════════ */}
+              {/* SECTION 2: VERIFIED GUILD PEERS & VOUCH-READY SPECIALISTS              */}
+              {/* ═══════════════════════════════════════════════════════════════════════ */}
+              <div className="flex items-center justify-between pt-2">
+                <div>
+                  <h3 className="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-[#0A66C2] text-[10px] font-black text-white">C</span>
+                    <span>Verified Guild Peers &amp; Vouch-Ready Specialists in</span>
+                    <span className="text-[#0A66C2] font-black">{selectedCapability}</span>
+                  </h3>
+                  <p className="text-xs text-zinc-500">
+                    Practitioners matched by verified ticket history, trade licenses, and mutual guild vouches.
+                  </p>
+                </div>
+                <span className="text-xs text-zinc-500 font-bold font-mono">
+                  {filteredPeople.length} Verified Dossiers
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredPeople.map((person, idx) => {
+                  const completedTickets = 8 + ((idx * 5) % 22)
+                  const peerVouches = person.mutualConnections || (6 + idx * 2)
+                  const dossierId = `CLN-${String(104 + idx)}`
+
+                  return (
+                    <div
+                      key={person.id}
+                      className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xs hover:border-[#0A66C2] hover:shadow-md transition-all dark:border-zinc-800 dark:bg-zinc-900 flex flex-col justify-between group"
+                    >
+                      <div>
+                        {/* ConnectLn Dossier Top Status Strip (No LinkedIn Cover Photo + Overlapping Circle) */}
+                        <div className="bg-[#171513] px-3.5 py-2 flex items-center justify-between text-white border-b border-zinc-800">
+                          <div className="flex items-center gap-1.5">
+                            <span className="inline-flex h-4 w-4 items-center justify-center rounded bg-[#0A66C2] text-[9px] font-black text-white">
+                              C
+                            </span>
+                            <span className="font-mono text-[10px] font-bold text-zinc-300">{dossierId}</span>
+                            <span className="rounded-full bg-emerald-500/20 border border-emerald-500/40 px-2 py-0.2 text-[9px] font-extrabold text-emerald-300">
+                              🛡️ Ready for Dispatch
+                            </span>
+                          </div>
+                          {person.matchScore && (
+                            <span className="text-[10px] font-mono font-bold text-amber-300">
+                              {person.matchScore}% Match
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="p-4 space-y-3">
+                          {/* Side-by-Side Squircle Avatar + Identity */}
+                          <div className="flex items-start gap-3">
+                            <div
+                              onClick={() => onSelectMember?.(person)}
+                              className="relative h-14 w-14 rounded-2xl border-2 border-[#0A66C2] bg-zinc-900 overflow-hidden shrink-0 cursor-pointer shadow-xs group-hover:scale-103 transition-transform"
+                              title={`Open ${person.name}'s Dossier`}
+                            >
+                              <img
+                                src={person.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(person.name)}&backgroundColor=0a66c2`}
+                                alt={person.name}
+                                className="h-full w-full object-cover"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement
+                                  target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(person.name)}&backgroundColor=0a66c2`
+                                }}
+                              />
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1">
+                                <h4
+                                  onClick={() => onSelectMember?.(person)}
+                                  className="font-extrabold text-sm text-zinc-900 dark:text-zinc-100 hover:text-[#0A66C2] cursor-pointer truncate"
+                                  title={`Open ${person.name}'s Dossier`}
+                                >
+                                  {person.name}
+                                </h4>
+                                <ShieldCheck className="h-3.5 w-3.5 text-[#0A66C2] shrink-0" />
+                              </div>
+                              <p
+                                onClick={() => onSelectMember?.(person)}
+                                className="text-xs text-zinc-500 line-clamp-2 mt-0.5 dark:text-zinc-400 leading-snug cursor-pointer"
+                              >
+                                {person.headline}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Ticket & Vouch Mini Ledger */}
+                          <div className="grid grid-cols-2 gap-1.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 p-2 border border-zinc-200/70 dark:border-zinc-800 text-[10px]">
+                            <div className="flex items-center gap-1.5 font-bold text-zinc-800 dark:text-zinc-200">
+                              <span>🎫</span>
+                              <span>{completedTickets} Verified Tickets</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 font-bold text-[#0A66C2] dark:text-sky-400">
+                              <span>🤝</span>
+                              <span>{peerVouches} Peer Vouches</span>
+                            </div>
+                          </div>
+
+                          {/* Verified Badges & Capabilities */}
+                          {person.capabilities && (
+                            <div className="flex flex-wrap gap-1">
+                              {person.capabilities.slice(0, 3).map((rawCap: any, capIdx: number) => {
+                                const cap = typeof rawCap === "string" ? rawCap : String(rawCap?.name || rawCap || "")
+                                if (!cap) return null
+                                return (
+                                  <span
+                                    key={`${cap}_${capIdx}`}
+                                    onClick={() => setSelectedCapability(cap)}
+                                    className={`rounded-lg px-2 py-0.5 text-[10px] font-semibold cursor-pointer transition-colors ${
+                                      selectedCapability === cap
+                                        ? "bg-[#0A66C2] text-white font-bold"
+                                        : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300"
+                                    }`}
+                                  >
+                                    {cap}
+                                  </span>
+                                )
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Bottom ConnectLn Dossier Actions */}
+                      <div className="p-3 pt-2 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center gap-1.5">
+                        <button
+                          onClick={() => onSelectMember?.(person)}
+                          className="flex-1 rounded-xl border border-zinc-300 dark:border-zinc-700 py-1.5 text-[11px] font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-1 cursor-pointer"
+                          title={`Inspect ${person.name}'s Dossier`}
+                        >
+                          <span>Dossier</span>
+                        </button>
+
+                        <button
+                          onClick={() => onNavigateMessaging && onNavigateMessaging(person)}
+                          className="flex-1 rounded-xl border border-[#0A66C2] py-1.5 text-[11px] font-bold text-[#0A66C2] hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-all flex items-center justify-center gap-1 cursor-pointer"
+                          title={`Message ${person.name}`}
+                        >
+                          <MessageSquare className="h-3 w-3" />
+                          <span>DM</span>
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            if (person.isConnected) {
+                              setActiveTab('connections')
+                              return
+                            }
+                            handleSendConnectionWithNote(person.id)
+                          }}
+                          className={`flex-1 rounded-xl py-1.5 text-[11px] font-extrabold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                            person.isConnected
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-300"
+                              : person.isPending
+                              ? "border border-zinc-300 text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400"
+                              : "bg-[#0A66C2] text-white hover:bg-[#004182] shadow-2xs"
+                          }`}
+                        >
+                          {person.isConnected ? (
+                            <>
+                              <Check className="h-3 w-3 text-emerald-600" />
+                              <span>Vouched</span>
+                            </>
+                          ) : person.isPending ? (
+                            <span>Pending</span>
+                          ) : (
+                            <>
+                              <UserPlus className="h-3 w-3" />
+                              <span>Vouch</span>
+                            </>
+                          )}
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setWarmIntroTarget(person)
+                            setIsWarmIntroOpen(true)
+                          }}
+                          className="rounded-xl bg-amber-50 p-1.5 text-amber-700 hover:bg-amber-100 border border-amber-200 dark:bg-amber-950 dark:text-amber-300 shrink-0 cursor-pointer"
+                          title="AI Warm Intro Request"
+                        >
+                          <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                        </button>
                       </div>
                     </div>
-
-                    {/* Bottom Actions */}
-                    <div className="p-3 pt-2 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center gap-1.5 mt-2">
-                      <button
-                        onClick={() => onSelectMember?.(person)}
-                        className="flex-1 rounded-full border border-zinc-300 dark:border-zinc-700 py-1.5 text-[11px] font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-1 cursor-pointer"
-                        title={`Open ${person.name}'s Workspace`}
-                      >
-                        <span>Workspace</span>
-                      </button>
-
-                      <button
-                        onClick={() => onNavigateMessaging && onNavigateMessaging(person)}
-                        className="flex-1 rounded-full border border-[#0A66C2] py-1.5 text-[11px] font-bold text-[#0A66C2] hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-all flex items-center justify-center gap-1 cursor-pointer"
-                        title={`Message ${person.name}`}
-                      >
-                        <MessageSquare className="h-3 w-3" />
-                        <span>Message</span>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          if (person.isConnected) {
-                            setActiveTab('connections')
-                            return
-                          }
-                          handleSendConnectionWithNote(person.id)
-                        }}
-                        className={`flex-1 rounded-full py-1.5 text-[11px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                          person.isConnected
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-300"
-                            : person.isPending
-                            ? "border border-zinc-300 text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400"
-                            : "bg-[#0A66C2] text-white hover:bg-[#004182] shadow-2xs"
-                        }`}
-                      >
-                        {person.isConnected ? (
-                          <>
-                            <Check className="h-3 w-3 text-emerald-600" />
-                            <span>Connected</span>
-                          </>
-                        ) : person.isPending ? (
-                          <span>Pending</span>
-                        ) : (
-                          <>
-                            <UserPlus className="h-3 w-3" />
-                            <span>Connect</span>
-                          </>
-                        )}
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setWarmIntroTarget(person)
-                          setIsWarmIntroOpen(true)
-                        }}
-                        className="rounded-full bg-purple-50 p-2 text-purple-700 hover:bg-purple-100 border border-purple-200 dark:bg-purple-950 dark:text-purple-300 shrink-0 cursor-pointer"
-                        title="AI Warm Intro Request"
-                      >
-                        <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           )}
