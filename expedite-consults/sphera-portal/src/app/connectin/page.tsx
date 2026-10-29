@@ -75,6 +75,7 @@ import { ConnectInAuthModal } from "@/components/connectln/ConnectInAuthModal"
 import { ConnectInAnalyticsModal } from "@/components/connectln/ConnectInAnalyticsModal"
 import { ConnectInVideoWheel } from "@/components/connectln/ConnectInVideoWheel"
 import { ConnectInVideoGuideModal } from "@/components/connectln/ConnectInVideoGuideModal"
+import { VeteransAndFranchiseNetworksView } from "@/components/connectln/VeteransAndFranchiseNetworksView"
 import {
   currentUser as initialCurrentUser,
   initialPosts,
@@ -115,6 +116,8 @@ export default function ConnectLnPage() {
     | 'home'
     | 'network'
     | 'jobs'
+    | 'veterans'
+    | 'franchises'
     | 'learning'
     | 'pulserooms'
     | 'peerreview'
@@ -244,6 +247,10 @@ export default function ConnectLnPage() {
           ? "careersuite"
           : tabParam === "jobs"
           ? "jobs"
+          : tabParam === "veterans"
+          ? "veterans"
+          : tabParam === "franchises"
+          ? "franchises"
           : tabParam === "messaging"
           ? "messaging"
           : null
@@ -1990,6 +1997,16 @@ export default function ConnectLnPage() {
                 return updated
               })
             }}
+          />
+        )}
+
+        {/* VIEW 4.5: CONNECTLN VETERANS NETWORK & FRANCHISE NETWORK */}
+        {(activeTab === 'veterans' || activeTab === 'franchises') && (
+          <VeteransAndFranchiseNetworksView
+            currentUser={userData}
+            initialSection={activeTab === 'franchises' ? 'franchises' : 'veterans'}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+            onOpenDirectMessage={handleOpenDirectMessage}
           />
         )}
 

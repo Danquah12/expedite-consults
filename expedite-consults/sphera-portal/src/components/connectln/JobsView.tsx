@@ -59,6 +59,8 @@ function getEnclaveJobCategories(enclaveId?: string) {
     case 'all':
       return [
         { id: 'All', label: 'All Live Openings', icon: '🌐' },
+        { id: 'Veterans & Military Transition', label: 'Veterans, DoD SkillBridge & SDVOSB', icon: '🎖️' },
+        { id: 'Multi-Unit Franchise Ownership', label: 'Franchise Networks & VetFran Owners', icon: '🏪' },
         { id: 'Herbal, Botanical & Integrative Medicine', label: 'Herbal & Botanical Medicine (RH-AHG/ND)', icon: '🌿' },
         { id: 'Dentistry & Oral Surgery', label: 'Dentists & Oral Surgery (DDS/DMD/RDH)', icon: '🦷' },
         { id: 'Solar Energy & Photovoltaic Systems', label: 'Solar PV Technicians & Microgrids', icon: '☀️' },
@@ -263,6 +265,26 @@ function getEnclaveJobCategories(enclaveId?: string) {
         { id: 'Bookkeeping, Payroll & Claims', label: 'Bookkeeper, Payroll & Claims Adjuster', icon: '💼' },
         { id: 'Investment Banking & PE', label: 'Private Equity & M&A (CFA)', icon: '📈' },
         { id: 'FP&A & Risk Audit', label: 'Strategic FP&A & SOX Audit', icon: '🏦' }
+      ]
+    case 'veterans_military':
+      return [
+        { id: 'All', label: 'All Veterans, SkillBridge & SDVOSB Roles', icon: '🎖️' },
+        { id: 'Veterans & Military Transition', label: 'MOS / AFSC / NEC Civilian Transition', icon: '🎖️' },
+        { id: 'DoD SkillBridge & Fellowships', label: '180-Day DoD SkillBridge Fellowships', icon: '📋' },
+        { id: 'Cleared Veteran Defense & Cyber', label: 'Cleared Defense & Cyber (Secret / TS-SCI)', icon: '🛡️' },
+        { id: 'SDVOSB & Veteran Entrepreneurship', label: 'SDVOSB GovCon & VetFran Ownership', icon: '🦅' },
+        { id: 'Recommended', label: 'Recommended for You', icon: '⭐' }
+      ]
+    case 'franchise_networks':
+      return [
+        { id: 'All', label: 'All Franchise Network & Operator Roles', icon: '🏪' },
+        { id: 'Multi-Unit Franchise Ownership', label: 'Multi-Unit Franchisee & Area Developer', icon: '🏪' },
+        { id: 'Home-Service & Trade Franchises', label: 'HVAC, Plumbing, Electrical & Restoration', icon: '🚐' },
+        { id: 'QSR, Restaurant & Hospitality Franchises', label: 'QSR, Fast-Casual, Coffee & Hotel Ops', icon: '🍔' },
+        { id: 'Automotive & Fleet Franchises', label: 'Automotive, Tire, EV & Collision Centers', icon: '🔧' },
+        { id: 'Fitness, Wellness & MedSpa Franchises', label: 'Fitness Studios, Gyms & Senior Care', icon: '🏋️' },
+        { id: 'Franchise Development, Brokerage & FDD Law', label: 'Franchise Dev (CFE), Brokers & FBCs', icon: '📜' },
+        { id: 'Recommended', label: 'Recommended for You', icon: '⭐' }
       ]
     default:
       return [

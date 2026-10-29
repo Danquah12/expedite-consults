@@ -2249,6 +2249,220 @@ export const PROFESSION_ENCLAVES: ProfessionEnclave[] = [
         ]
       }
     ]
+  },
+
+  // ─── 21. VETERANS, MILITARY TRANSITION, DOD SKILLBRIDGE & SDVOSB NETWORK ───
+  {
+    id: "veterans_military",
+    name: "Veterans, Military Transition, DoD SkillBridge & SDVOSB Network",
+    shortName: "Veterans & SkillBridge",
+    icon: "🎖️",
+    tagline: "MOS/AFSC/NEC civilian translation, DoD SkillBridge fellowships, Cleared (Secret/TS-SCI) roles & SDVOSB Veteran-Owned contracting",
+    description: "Dedicated command workspace for U.S. & Allied Military Veterans, Active-Duty Transitioning Service Members (DoD SkillBridge), Guard/Reserve personnel, Military Spouses, Cleared Defense Specialists, and Service-Disabled Veteran-Owned Small Business (SDVOSB / VOSB) founders.",
+    themeColor: "from-emerald-800 via-slate-800 to-amber-900",
+    accentBorder: "border-amber-500",
+    badgeBg: "bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-700",
+    badgeText: "text-amber-900 dark:text-amber-300",
+    securityClearanceTier: "DD-214 Honorable / DoD SkillBridge / Secret & TS-SCI Cleared (Level 4)",
+    feedTags: ["#VeteransNetwork", "#DoDSkillBridge", "#MilitaryTransition", "#SDVOSB", "#ClearedJobs", "#VetFran", "#MOSCrosswalk", "#HiringOurHeroes"],
+    professions: [
+      {
+        id: "veteran_mos_civilian_operations_leader",
+        title: "Military-to-Civilian Operations Director & MOS/AFSC/NEC Transition Leader",
+        enclaveId: "veterans_military",
+        categoryName: "Veterans & Military Transition",
+        defaultHeadline: "U.S. Military Veteran (O-4 / E-8 Ret.) · Director of Operations, Logistics Readiness, PMP Program Management & Cross-Functional Mission Command",
+        typicalSkills: ["MOS / AFSC / NEC Civilian Translation", "PMP Program & Mission Operations", "Lean Six Sigma Black Belt", "Global Supply Chain & Readiness", "Crisis Command & Risk Mitigation", "DoD Security Clearance (Secret / TS-SCI)"],
+        tools: [
+          { name: "MOS / AFSC / NEC-to-Civilian Executive Translator", icon: "🎖️", description: "Maps Army/Navy/Air Force/Marines/Coast Guard MOS codes & NCOER/OER bullets to Fortune 500 compensation bands", badge: "DD-214 Verified" },
+          { name: "VA GI Bill, VR&E (Ch. 31) & Credential Funding Tracker", icon: "🏛️", description: "Tracks Post-9/11 GI Bill BAH stipends, COOL certification vouchers & DoD SkillBridge command packets", badge: "VA / DoD COOL" }
+        ]
+      },
+      {
+        id: "dod_skillbridge_fellow_transitioning_service",
+        title: "DoD SkillBridge Fellow & Active-Duty Transitioning Specialist (180-Day Fellowship)",
+        enclaveId: "veterans_military",
+        categoryName: "DoD SkillBridge & Fellowships",
+        defaultHeadline: "Active-Duty DoD SkillBridge Fellow · 180-Day Command-Approved Industry Fellowship in Cyber, Aviation, Skilled Trades & Operations",
+        typicalSkills: ["DoD SkillBridge Command Approval", "Hiring Our Heroes Corporate Fellowship", "Active Secret / TS-SCI Clearance", "Rapid Technical Onboarding", "OSHA 30 / CompTIA Security+"],
+        tools: [
+          { name: "DoD SkillBridge Command MOU & 180-Day Timeline Desk", icon: "📋", description: "Automated commander sign-off packet, ethics clearance checklist & host-employer conversion tracker", badge: "DoD SkillBridge" }
+        ]
+      },
+      {
+        id: "cleared_veteran_cyber_c4isr_specialist",
+        title: "Cleared Veteran C4ISR, Cyber Warfare, SIGINT & Zero-Trust Architect (TS/SCI)",
+        enclaveId: "veterans_military",
+        categoryName: "Cleared Veteran Defense & Cyber",
+        defaultHeadline: "U.S. Cyber Command / C4ISR Veteran (17C / 1B4 / CTN / 25B) · TS/SCI w/ Polygraph, NIST RMF Continuous ATO, Tactical SATCOM & Red/Blue Team Ops",
+        typicalSkills: ["TS/SCI w/ CI or Full-Scope Polygraph", "17C / 1B4 / CTN Cyber Operations", "NIST SP 800-53 RMF & eMASS", "Tactical SATCOM & Link-16 C4ISR", "Zero-Trust Architecture (DISA STIGs)"],
+        tools: [
+          { name: "Cleared DISS / eMASS & C4ISR Mission Console", icon: "🛡️", description: "Clearance reciprocity status, DISA STIG hardening checklists & tactical C4ISR link budgets", badge: "TS/SCI Cleared" }
+        ]
+      },
+      {
+        id: "sdvosb_veteran_government_contractor",
+        title: "SDVOSB / VOSB Veteran-Owned Business Founder & Federal Prime/Sub Contractor",
+        enclaveId: "veterans_military",
+        categoryName: "SDVOSB & Veteran Entrepreneurship",
+        defaultHeadline: "SBA VetCert Verified SDVOSB Founder & Federal GovCon Principal · FAR 19.14 Sole-Source Awards, VA Vets First Contracting, GSA MAS & Teaming Agreements",
+        typicalSkills: ["SBA VetCert SDVOSB / VOSB Certification", "FAR Part 19.14 Sole-Source & Set-Asides", "SAM.gov & GSA Schedule Proposals", "VA Vets First Verification", "Prime/Sub Joint Venture Teaming", "DCAA Compliant Pricing"],
+        tools: [
+          { name: "SDVOSB Set-Aside RFP Radar & Teaming Matrix", icon: "🦅", description: "Live SAM.gov SDVOSB/VOSB sole-source tracker, NAICS size standards & prime-sub capability statements", badge: "SBA VetCert" }
+        ]
+      },
+      {
+        id: "veteran_aviation_maritime_nuclear_tech",
+        title: "Navy Nuclear (Naval Reactors), Military Aviation (A&P) & Tactical Fleet Maintenance Veteran",
+        enclaveId: "veterans_military",
+        categoryName: "Veterans & Military Transition",
+        defaultHeadline: "U.S. Navy Nuclear Operator (ETN/EMN/MMN) & Military Aviation Crew Chief · NERC Grid Operations, FAA A&P Airframe Equivalency & Hyperscale Data Center Critical Power",
+        typicalSkills: ["Navy Nuclear Power School (NNPTC)", "Military Airframe to FAA Part 65 A&P", "Substation & Data Center Critical Power", "PMS 3M Preventive Maintenance", "High-Voltage LOTO & Watchstanding"],
+        tools: [
+          { name: "Military-to-FAA A&P (FSDO 8610-2) & Nuke Watch Ledger", icon: "⚓", description: "Maps military aviation maintenance codes to FAA Form 8610-2 sign-offs and Navy Nuke watch logs", badge: "Navy Nuke / A&P" }
+        ]
+      },
+      {
+        id: "veteran_combat_medic_corpsman_healthcare",
+        title: "Military Combat Medic (68W), Navy Hospital Corpsman (HM) & Pararescue Healthcare Specialist",
+        enclaveId: "veterans_military",
+        categoryName: "Veterans & Military Transition",
+        defaultHeadline: "U.S. Army 68W Combat Medic / Navy FMF Corpsman · Tactical Combat Casualty Care (TCCC), NREMT Paramedic, VA Clinical Operations & RN/PA Bridge",
+        typicalSkills: ["Tactical Combat Casualty Care (TCCC)", "NREMT Paramedic / Emergency Trauma", "Military Medic-to-BSN/PA Bridge", "VA Hospital Clinical Navigation", "Field Surgical & Austere Triage"],
+        tools: [
+          { name: "68W / Corpsman Clinical Credit & Trauma Bridge Log", icon: "🩺", description: "JST military medical transcript evaluator for RN, PA-C, Surgical Tech and Flight Paramedic licensing", badge: "68W / HM Verified" }
+        ]
+      },
+      {
+        id: "veteran_federal_law_enforcement_protective_ops",
+        title: "Military Police / Special Operations Veteran, Federal Agent (1811) & Diplomatic Security",
+        enclaveId: "veterans_military",
+        categoryName: "Cleared Veteran Defense & Cyber",
+        defaultHeadline: "Special Operations / Military Police Veteran · GS-1811 Federal Criminal Investigator, High-Threat Diplomatic Security (WPPS) & Corporate GSOC Director",
+        typicalSkills: ["Federal GS-1811 / Veterans Preference (5 & 10 Pt)", "WPPS High-Threat Executive Protection", "ASIS CPP Physical Security", "FEMA Incident Command (ICS-300/400)", "Counter-Threat Intelligence"],
+        tools: [
+          { name: "USAJOBS Veterans Preference (CPS/10-Pt) & GS-Grade Matrix", icon: "🎖️", description: "Calculates 5-point/10-point VEOA/VRA federal preference eligibility and GS-11 to GS-15 KSA alignment", badge: "10-Pt Vet Pref" }
+        ]
+      },
+      {
+        id: "vetfran_veteran_franchise_owner",
+        title: "VetFran Veteran Franchise Owner & Multi-Unit Trade/Service Operator",
+        enclaveId: "veterans_military",
+        categoryName: "SDVOSB & Veteran Entrepreneurship",
+        defaultHeadline: "IFA VetFran Certified Veteran Franchise Owner · Multi-Unit Home Service, Restoration, Logistics & Commercial Franchise Operator",
+        typicalSkills: ["IFA VetFran Franchise Fee Incentives", "SBA 7(a) Veteran Advantage Financing", "Standard Operating Procedure (SOP) Execution", "Territory P&L & Veteran Crew Recruiting", "Multi-Unit Territory Scaling"],
+        tools: [
+          { name: "VetFran Franchise Fee Waiver & SBA Veteran Loan Calc", icon: "🏪", description: "Tracks 10%–50% Veteran franchise fee discounts across 650+ IFA VetFran brands and SBA Express capital", badge: "IFA VetFran" }
+        ]
+      }
+    ]
+  },
+
+  // ─── 22. FRANCHISE NETWORKS, MULTI-UNIT OPERATORS & BRAND SYSTEMS ───────────
+  {
+    id: "franchise_networks",
+    name: "Franchise Networks, Multi-Unit Operators, Home-Service & Brand Systems",
+    shortName: "Franchise Networks",
+    icon: "🏪",
+    tagline: "Multi-unit franchisees, trade/home-service franchises (HVAC/Plumbing/Restoration), QSR/Hospitality, FDD Item 19 & VetFran",
+    description: "Dedicated network for Multi-Unit Franchise Owners, Area Developers, Home-Service & Trade Franchise Operators (HVAC, Plumbing, Electrical, Restoration, Solar), QSR & Fast-Casual Restaurant Franchisees, Automotive & Fitness Studio Franchisees, Franchise Development Executives (CFE), and VetFran Veteran Franchise Owners.",
+    themeColor: "from-blue-700 via-indigo-800 to-emerald-900",
+    accentBorder: "border-blue-500",
+    badgeBg: "bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800",
+    badgeText: "text-blue-800 dark:text-blue-300",
+    securityClearanceTier: "Certified Franchise Executive (CFE) & Multi-Unit FDD Verified (Level 3)",
+    feedTags: ["#FranchiseNetwork", "#MultiUnitFranchisee", "#HomeServiceFranchise", "#FDDItem19", "#AreaDeveloper", "#VetFran", "#IFAFranchise", "#ServiceTitanOps"],
+    professions: [
+      {
+        id: "multi_unit_franchise_owner_operator",
+        title: "Multi-Unit Franchisee, Area Developer & Regional Master Franchise Partner",
+        enclaveId: "franchise_networks",
+        categoryName: "Multi-Unit Franchise Ownership",
+        defaultHeadline: "Multi-Unit Franchise Owner & Area Developer (12+ Locations) · FDD Item 19 Unit Economics, SBA 7(a) / ROBS Capitalization, Real Estate Site Selection & Multi-State EBITDA Scaling",
+        typicalSkills: ["Multi-Unit Franchise Operations", "FDD Item 19 Financial Performance Analysis", "Area Development Agreement (ADA) Scaling", "SBA 7(a) Franchise Directory Financing", "Commercial Lease & LOI Negotiation", "Above-Store Leadership"],
+        tools: [
+          { name: "FDD Item 19 Unit Economics & Royalty EBITDA Modeler", icon: "🏪", description: "Analyzes initial franchise investment (Item 7), AUV revenue quartiles (Item 19), 5–8% royalty/ad-fund impact & cash-on-cash payback", badge: "FDD Item 19" },
+          { name: "Multi-Unit Territory Map & New Store Opening (NSO) Tracker", icon: "🗺️", description: "Protected zip-code radius demographics, build-out capex drawdowns and 90-day NSO launch checklist", badge: "Area Developer" }
+        ]
+      },
+      {
+        id: "home_service_trade_franchise_operator",
+        title: "Trade & Home-Service Franchise Owner / GM (HVAC, Plumbing, Electrical & Restoration)",
+        enclaveId: "franchise_networks",
+        categoryName: "Home-Service & Trade Franchises",
+        defaultHeadline: "Home-Service Franchise Owner & General Manager (Neighborly / Servpro / Authority Brands) · ServiceTitan Dispatch, Residential/Commercial MEP Service Agreements & Fleet Scaling",
+        typicalSkills: ["HVAC / Plumbing / Electrical Franchise Ops", "Water/Fire Property Restoration (IICRC)", "ServiceTitan Dispatch & KPI Dashboards", "Average Ticket & Membership Club Conversion", "Licensed Master Technician Recruiting"],
+        tools: [
+          { name: "ServiceTitan Franchise Dispatch & Truck-Roll Revenue Board", icon: "🚐", description: "Tracks technician close rates, average ticket size, recurring maintenance memberships & fleet GPS utilization", badge: "Home Service Pro" }
+        ]
+      },
+      {
+        id: "qsr_fast_casual_hospitality_franchise_director",
+        title: "QSR, Fast-Casual Restaurant & Hotel Franchise Director of Operations (Multi-Unit)",
+        enclaveId: "franchise_networks",
+        categoryName: "QSR, Restaurant & Hospitality Franchises",
+        defaultHeadline: "Multi-Unit QSR & Hotel Franchise Director of Operations · Prime Cost (COGS + Labor) Optimization, Drive-Thru Speed-of-Service, ServSafe QA & Marriott/Hilton PIP Conversions",
+        typicalSkills: ["Multi-Unit QSR / Fast-Casual P&L", "Prime Cost (Food + Labor < 58%) Control", "Drive-Thru Throughput & Kitchen Display Systems", "Hotel Franchise PIP & RevPAR Management", "GM Leadership Development"],
+        tools: [
+          { name: "Multi-Unit QSR Prime Cost, Drive-Thru & RevPAR Console", icon: "🍔", description: "Real-time store food-cost variance, hourly labor SPLH scheduling and franchisor brand audit scores", badge: "Multi-Unit QSR" }
+        ]
+      },
+      {
+        id: "automotive_fleet_collision_franchise_owner",
+        title: "Automotive Repair, Tire, Quick-Lube, EV & Collision Center Franchise Operator",
+        enclaveId: "franchise_networks",
+        categoryName: "Automotive & Fleet Franchises",
+        defaultHeadline: "Multi-Shop Automotive & Collision Franchise Operator (Driven Brands / Caliber / Midas / Meineke) · DRP Insurance Partnerships, Bay Car-Count & ASE Master Tech Retention",
+        typicalSkills: ["Automotive Aftermarket Franchise Ops", "Direct Repair Program (DRP) Insurance Relations", "Shop Bay Utilization & ARO (Average Repair Order)", "ASE Technician Flat-Rate Incentive Plans", "Commercial Fleet Maintenance Accounts"],
+        tools: [
+          { name: "Shop Bay Utilization, ARO & DRP Cycle-Time Tracker", icon: "🔧", description: "Monitors lift turns per day, parts gross margin matrix and insurance DRP cycle-time SLAs", badge: "Auto Franchise" }
+        ]
+      },
+      {
+        id: "fitness_wellness_medspa_franchise_operator",
+        title: "Fitness Studio, Gym, Physical Therapy & MedSpa Franchise Owner / Area Manager",
+        enclaveId: "franchise_networks",
+        categoryName: "Fitness, Wellness & MedSpa Franchises",
+        defaultHeadline: "Multi-Studio Fitness & MedSpa Franchise Owner · Presale Founding Member Launches, Recurring EFT Membership Retention, ClubReady/Mindbody CRM & Clinical Medical Director Compliance",
+        typicalSkills: ["Boutique Fitness & Gym Franchise Presales", "Recurring EFT Draft & Churn Reduction", "MedSpa / IV Hydration / Stretch Studio Ops", "Mindbody / ClubReady CRM Automation", "Coach & Esthetician Recruiting"],
+        tools: [
+          { name: "Studio Presale Funnel, EFT Draft & Member LTV Analytics", icon: "🏋️", description: "Tracks pre-opening 300+ member presale milestones, monthly EFT attrition and cost-per-lead (CPL)", badge: "Club / MedSpa" }
+        ]
+      },
+      {
+        id: "commercial_cleaning_property_seniorcare_franchise",
+        title: "Commercial Janitorial, Property Management & Senior Home-Care Franchise Operator",
+        enclaveId: "franchise_networks",
+        categoryName: "Commercial B2B & Senior Care Franchises",
+        defaultHeadline: "Senior Home-Care & Commercial Facility Franchise Owner · State Home-Care Licensure, Caregiver Retention, B2B Janitorial Recurring Contracts & Property Management",
+        typicalSkills: ["Senior In-Home Care Franchise Operations", "CNA / HHA Caregiver Scheduling & Retention", "VA Aid & Attendance / Long-Term Care Billing", "B2B Commercial Janitorial Contract Bidding", "Multi-Family Property Management"],
+        tools: [
+          { name: "Caregiver Shift Fill-Rate & B2B Recurring Contract Ledger", icon: "🤝", description: "Matches verified CNAs/caregivers to client care hours and calculates commercial square-foot cleaning bids", badge: "Senior Care / B2B" }
+        ]
+      },
+      {
+        id: "franchise_development_fdd_legal_broker",
+        title: "Certified Franchise Executive (CFE), Franchise Development VP, Broker & FDD Legal Advisor",
+        enclaveId: "franchise_networks",
+        categoryName: "Franchise Development, Brokerage & FDD Law",
+        defaultHeadline: "IFA Certified Franchise Executive (CFE) & VP of Franchise Development · FTC Franchise Rule Compliance, FDD Registration, Candidate Discovery Day Qualification & FranChoice/IFPG Brokerage",
+        typicalSkills: ["IFA Certified Franchise Executive (CFE)", "FTC Franchise Rule & State FDD Registration", "Franchise Candidate Qualification & Discovery Days", "IFPG / FranServe Franchise Consulting", "Franchisee Validation & Territory Mapping"],
+        tools: [
+          { name: "FDD State Registration & Discovery Day Pipeline CRM", icon: "📜", description: "Tracks state FDD filing renewals (CA, NY, IL, MD, VA, WA), candidate net-worth/liquidity qualification and 14-day FDD disclosure receipts", badge: "IFA CFE Verified" }
+        ]
+      },
+      {
+        id: "franchise_field_operations_coach_supply_chain",
+        title: "Franchise Field Operations Consultant (FBC), Brand Opening Trainer & Supply Chain Lead",
+        enclaveId: "franchise_networks",
+        categoryName: "Franchise Brand Operations & Supply Chain",
+        defaultHeadline: "Franchise Business Consultant (FBC) & National New-Store Opening (NSO) Director · Franchisee P&L Coaching, Brand Standards QA Audits, POS Rollouts & Co-Op Supply Chain",
+        typicalSkills: ["Franchise Business Consulting (FBC)", "New Store Opening (NSO) Field Training", "Franchisee Unit-Level P&L Benchmarking", "Brand QA & Mystery Shop Audits", "National Purchasing Co-Op & Vendor Rebates"],
+        tools: [
+          { name: "Franchisee P&L Benchmark & Brand QA Scorecard", icon: "📊", description: "Compares unit COGS, labor, marketing ROI and brand compliance across 100+ franchise locations", badge: "FBC Field Coach" }
+        ]
+      }
+    ]
   }
 ]
 
@@ -2269,27 +2483,27 @@ export const CONNECTIN_WORKER_PILLARS: WorkerPillar[] = [
     title: 'Hands-On & Practical Professionals',
     icon: '🛠️',
     subtitle: 'Demonstrate mastery through physical projects, blueprints, diagnostics, lab runs & field evidence rather than corporate slide decks.',
-    exampleEnclaves: ['trades_construction', 'automotive_mechanics', 'manufacturing_industrial', 'energy_utilities_environment', 'aviation_aerospace_maritime', 'healthcare_medicine'],
-    enclaveIds: ['trades_construction', 'automotive_mechanics', 'manufacturing_industrial', 'energy_utilities_environment', 'aviation_aerospace_maritime', 'healthcare_medicine'],
+    exampleEnclaves: ['trades_construction', 'automotive_mechanics', 'manufacturing_industrial', 'energy_utilities_environment', 'aviation_aerospace_maritime', 'healthcare_medicine', 'veterans_military'],
+    enclaveIds: ['trades_construction', 'automotive_mechanics', 'manufacturing_industrial', 'energy_utilities_environment', 'aviation_aerospace_maritime', 'healthcare_medicine', 'veterans_military'],
     keyCapabilities: ['Verified Trade Licenses', 'Before/After Project Portfolios', 'Equipment & Machinery Hours', 'Safety & Code Certifications']
   },
   {
     id: 'independent',
-    title: 'Independent Earners & Service Businesses',
+    title: 'Independent Earners, Franchises & Service Businesses',
     icon: '🏪',
-    subtitle: 'Win direct client bookings, local RFPs, service area discovery, commercial contracts & verified customer reviews.',
-    exampleEnclaves: ['personal_services_wellness', 'culinary_hospitality_events', 'commerce_small_business', 'creative_media_arts', 'agriculture_natural_resources', 'finance_accounting', 'law_gov_defense'],
-    enclaveIds: ['personal_services_wellness', 'culinary_hospitality_events', 'commerce_small_business', 'creative_media_arts', 'agriculture_natural_resources', 'finance_accounting', 'law_gov_defense'],
-    keyCapabilities: ['Instant Client Quote Requests', 'Service Radius & Availability', 'Verified Customer Reviews', 'Escrow & Milestone Draws']
+    subtitle: 'Scale multi-unit franchises, home-service brands, SDVOSB contracts, direct client bookings, local RFPs & verified customer reviews.',
+    exampleEnclaves: ['franchise_networks', 'veterans_military', 'personal_services_wellness', 'culinary_hospitality_events', 'commerce_small_business', 'creative_media_arts', 'agriculture_natural_resources', 'finance_accounting', 'law_gov_defense'],
+    enclaveIds: ['franchise_networks', 'veterans_military', 'personal_services_wellness', 'culinary_hospitality_events', 'commerce_small_business', 'creative_media_arts', 'agriculture_natural_resources', 'finance_accounting', 'law_gov_defense'],
+    keyCapabilities: ['Multi-Unit Franchise & VetFran Ops', 'SDVOSB & Commercial RFPs', 'Service Radius & Availability', 'Escrow & Milestone Draws']
   },
   {
     id: 'emerging_stars',
-    title: 'Emerging Specialists & STARs (Alternative Routes)',
-    icon: '🚀',
-    subtitle: 'Skilled Through Alternative Routes (Apprenticeships, Military Transition, Bootcamps, Lab Techs & Frontier Industries — No 4-Year Degree Gatekeeping).',
-    exampleEnclaves: ['education_workforce', 'telecom_digital_infrastructure', 'science_laboratory_research', 'community_civic_security', 'tech_cybersecurity', 'tech_software', 'campus_students'],
-    enclaveIds: ['education_workforce', 'telecom_digital_infrastructure', 'science_laboratory_research', 'community_civic_security', 'tech_cybersecurity', 'tech_software', 'campus_students'],
-    keyCapabilities: ['Skills-First Job Matching', 'Registered Apprenticeships (OJT)', 'Military MOS Skill Translation', 'Frontier Tech Micro-Credentials']
+    title: 'Veterans, DoD SkillBridge & STARs (Alternative Routes)',
+    icon: '🎖️',
+    subtitle: 'Skilled Through Alternative Routes (Military MOS Transition, DoD SkillBridge, Apprenticeships, Bootcamps & Frontier Industries — No 4-Year Degree Gatekeeping).',
+    exampleEnclaves: ['veterans_military', 'franchise_networks', 'education_workforce', 'telecom_digital_infrastructure', 'science_laboratory_research', 'community_civic_security', 'tech_cybersecurity', 'tech_software', 'campus_students'],
+    enclaveIds: ['veterans_military', 'franchise_networks', 'education_workforce', 'telecom_digital_infrastructure', 'science_laboratory_research', 'community_civic_security', 'tech_cybersecurity', 'tech_software', 'campus_students'],
+    keyCapabilities: ['Military MOS / DD-214 Skill Translation', 'DoD SkillBridge 180-Day Fellowships', 'Registered Apprenticeships (OJT)', 'VetFran Franchise Ownership']
   }
 ]
 

@@ -4143,6 +4143,26 @@ const US_EMPLOYERS_BY_ENCLAVE: Record<string, RegionalEmployerSpec[]> = {
     { company: 'AVI-SPL Commercial Pro-AV, Crestron & Broadcast', applyUrl: 'https://avispl.com/careers/', source: 'AVI-SPL Pro-AV Portal' },
     { company: 'TSMC Arizona & Intel Foundry Wafer Fab Operations', applyUrl: 'https://www.tsmc.com/english/careers', source: 'Semiconductor Fab ATS' },
     { company: 'Corning Optical Communications & Fiber Networks', applyUrl: 'https://www.corning.com/worldwide/en/careers.html', source: 'Corning Fiber Careers' }
+  ],
+  veterans_military: [
+    { company: 'Hiring Our Heroes (U.S. Chamber) & DoD SkillBridge Network', applyUrl: 'https://www.hiringourheroes.org/', source: 'Hiring Our Heroes ATS' },
+    { company: 'Booz Allen Hamilton Military & Cleared Veterans Division', applyUrl: 'https://careers.boozallen.com/careers/Military', source: 'Booz Allen Veterans Portal' },
+    { company: 'Lockheed Martin Military Connect & SkillBridge Fellowships', applyUrl: 'https://www.lockheedmartinjobs.com/military', source: 'Lockheed Military ATS' },
+    { company: 'USAA Military Transition & Veteran Executive Careers', applyUrl: 'https://www.usaajobs.com/military', source: 'USAA Veteran Careers' },
+    { company: 'Amazon Military Pathways & Global Operations Leadership', applyUrl: 'https://www.amazon.jobs/en/military', source: 'Amazon Military Pathways' },
+    { company: 'CACI International TS/SCI Cleared Veteran Operations', applyUrl: 'https://careers.caci.com/global/en/military-veterans', source: 'CACI Veteran ATS' },
+    { company: 'U.S. Department of Veterans Affairs (VA Vets First & SDVOSB)', applyUrl: 'https://www.vacareers.va.gov/', source: 'VA Official Careers' },
+    { company: 'VetFran & International Franchise Association (IFA) Veteran Network', applyUrl: 'https://www.franchise.org/franchising-for-veterans/', source: 'VetFran Official Portal' }
+  ],
+  franchise_networks: [
+    { company: 'Neighborly Home Service Franchise Brands (Mr. Electric / Mr. Rooter / Aire Serv)', applyUrl: 'https://franchise.neighborly.com/', source: 'Neighborly Franchise Portal' },
+    { company: 'Servpro Disaster Restoration & Commercial Franchise System', applyUrl: 'https://www.servpro.com/franchise-opportunities', source: 'Servpro Franchise ATS' },
+    { company: 'International Franchise Association (IFA) & VetFran Directory', applyUrl: 'https://www.franchise.org/', source: 'IFA Franchise Network' },
+    { company: 'Driven Brands Automotive Franchise (Meineke / Maaco / Take 5)', applyUrl: 'https://www.drivenbrands.com/', source: 'Driven Brands Franchise' },
+    { company: 'Inspire Brands & Multi-Unit QSR Restaurant Franchise Group', applyUrl: 'https://inspirebrands.com/franchising/', source: 'Multi-Unit QSR Portal' },
+    { company: 'Marriott International & Hilton Franchise Development', applyUrl: 'https://hotel-development.marriott.com/', source: 'Hospitality Franchise ATS' },
+    { company: 'Self Esteem Brands (Anytime Fitness / Waxing the City / Basecamp)', applyUrl: 'https://sebrands.com/', source: 'Fitness & Wellness Franchise' },
+    { company: 'Home Instead & Honor Senior Care Franchise Network', applyUrl: 'https://www.homeinstead.com/franchise-opportunity/', source: 'Senior Care Franchise ATS' }
   ]
 }
 
@@ -4449,7 +4469,9 @@ const ENCLAVE_AVATAR_MAP: Record<string, string> = {
   energy_utilities_environment: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=100&auto=format&fit=crop&q=80',
   science_laboratory_research: 'https://images.unsplash.com/photo-1579154204601-01588f351e67?w=100&auto=format&fit=crop&q=80',
   aviation_aerospace_maritime: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=100&auto=format&fit=crop&q=80',
-  telecom_digital_infrastructure: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=100&auto=format&fit=crop&q=80'
+  telecom_digital_infrastructure: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=100&auto=format&fit=crop&q=80',
+  veterans_military: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+  franchise_networks: 'https://images.unsplash.com/photo-1556740738-b6a63e27c4df?w=100&auto=format&fit=crop&q=80'
 }
 
 /**
