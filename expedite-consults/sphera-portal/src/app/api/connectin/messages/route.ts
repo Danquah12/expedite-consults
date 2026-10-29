@@ -66,6 +66,11 @@ function doesParticipantMatch(candidateName: string, viewerName: string, candida
     const vName = normalizeParticipantKey(viewerName);
     if (cName && vName && cName === vName) return true;
 
+    // Same name ignoring spaces/punctuation, e.g. "Busy Vito" vs "Busyvito"
+    const cCompact = cName.replace(/[^a-z0-9]/g, '');
+    const vCompact = vName.replace(/[^a-z0-9]/g, '');
+    if (cCompact.length >= 4 && cCompact === vCompact) return true;
+
     if (candidateEmail && viewerEmail) {
         const cEmail = normalizeParticipantKey(candidateEmail);
         const vEmail = normalizeParticipantKey(viewerEmail);
@@ -321,6 +326,14 @@ function generateAutoReply(thread: B2BConversationThread, userText: string): str
     return `Sounds great! Appreciate the message — let's stay synced on this and connect soon.`;
 }
 
+/** Finds the registered member for a name/email so conversations always use their real account name and email. */
+function findRegisteredUser(name: string, email?: string): { name: string; email: string } | null {
+    if (!name && !email) return null;
+    const allUsers = connectinDb.getAllUsersWithProfiles();
+    const hit = allUsers.find((u) => doesParticipantMatch(u.name, name, u.email, email));
+    return hit ? { name: hit.name, email: hit.email || '' } : null;
+}
+
 function isRealRegisteredMember(recipientName: string): boolean {
     if (!recipientName) return false;
     const norm = normalizeParticipantKey(recipientName);
@@ -457,7 +470,13 @@ export async function POST(request: Request) {
             }
 
             if (resolvedRecipientName) {
-                const pairKey = makeDmPairKey(senderName, resolvedRecipientName);
+                // Use each member's registered account name/email so both sides share one conversation
+                const senderReg = findRegisteredUser(senderName, senderEmail);
+                const recipientReg = findRegisteredUser(resolvedRecipientName, recipientEmail);
+                const canonSenderName = senderReg?.name || senderName;
+                const canonRecipientName = recipientReg?.name || resolvedRecipientName;
+                const effectiveRecipientEmail = recipientEmail || recipientReg?.email || '';
+                const pairKey = makeDmPairKey(canonSenderName, canonRecipientName);
                 const nowLabel = new Date().toLocaleTimeString([], {
                     hour: '2-digit',
                     minute: '2-digit',
@@ -475,7 +494,7 @@ export async function POST(request: Request) {
                     senderAvatar,
                     senderRole,
                     recipientName: resolvedRecipientName,
-                    recipientEmail,
+                    recipientEmail: effectiveRecipientEmail,
                     subject: subject || undefined,
                     text,
                     attachment: attachment || undefined,
@@ -499,8 +518,8 @@ export async function POST(request: Request) {
                               headline: senderRole,
                           },
                           participantB: {
-                              name: resolvedRecipientName,
-                              email: recipientEmail,
+                              name: canonRecipientName,
+                              email: effectiveRecipientEmail,
                               avatar: effectiveRecipientAvatar,
                               headline: effectiveRecipientSubtitle,
                           },

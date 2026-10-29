@@ -62,6 +62,11 @@ export function doesDmParticipantMatch(
   const vName = normalizeDmName(viewerName)
   if (cName && vName && cName === vName) return true
 
+  // Same name ignoring spaces/punctuation, e.g. "Busy Vito" vs "Busyvito"
+  const cCompact = cName.replace(/[^a-z0-9]/g, "")
+  const vCompact = vName.replace(/[^a-z0-9]/g, "")
+  if (cCompact.length >= 4 && cCompact === vCompact) return true
+
   if (candidateEmail && viewerEmail) {
     const cEmail = normalizeDmName(candidateEmail)
     const vEmail = normalizeDmName(viewerEmail)
