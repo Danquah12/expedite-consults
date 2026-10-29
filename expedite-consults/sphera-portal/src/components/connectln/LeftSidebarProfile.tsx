@@ -760,9 +760,9 @@ export function LeftSidebarProfile({
               <div
                 onClick={() => onOpenAnalytics ? onOpenAnalytics('viewers') : onViewProfile()}
                 className="flex cursor-pointer items-center justify-between py-0.5 hover:text-[#0A66C2] group"
-                title="Inspect active member profile viewers"
+                title="Who's checked your credentials — Ticket Scoutings, Hiring Lookups & Peer Audits"
               >
-                <span className="text-zinc-500 dark:text-zinc-400 group-hover:text-[#0A66C2]">{t("profile_viewers", "Profile viewers")}</span>
+                <span className="text-zinc-500 dark:text-zinc-400 group-hover:text-[#0A66C2]">{t("profile_viewers", "Credential checks")}</span>
                 <span className="font-semibold text-[#0A66C2]">{sidebarAnalytics.effectiveProfileViews.toLocaleString()}</span>
               </div>
               <div

@@ -4,6 +4,7 @@ import React, { useState } from "react"
 import { Play, ShieldCheck, Share2, Copy, Check, Mail } from "lucide-react"
 import { resolveUserProfilePicture, isDefaultPlaceholderAvatar, generatePersonalSignatureAvatar, isForeignPersonaAvatar } from "@/lib/connectin-storage"
 import { buildSharePreviewUrl, useSharePic } from "@/lib/connectin-share"
+import { ConnectLnStudioPlayer } from "./ConnectLnStudioPlayer"
 
 export interface VideoShareBannerProps {
   /** Sharer's profile picture (circular on the left inside the ConnectLn Logo Card) */
@@ -366,12 +367,13 @@ export function VideoShareBanner({
         <div className="px-4 pb-3">
           <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-black border border-white/15 shadow-inner">
             {resolvedYtId ? (
-              <iframe
-                src={`https://www.youtube-nocookie.com/embed/${resolvedYtId}?autoplay=1&rel=0&modestbranding=1`}
+              <ConnectLnStudioPlayer
+                youtubeId={resolvedYtId}
                 title={videoTitle}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="h-full w-full border-0"
+                serialPlate={serialPlate || "CLN-VID"}
+                speaker={resolvedAuthor}
+                durationLabel={duration}
+                className="h-full w-full"
               />
             ) : (
               <video

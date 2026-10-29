@@ -876,6 +876,24 @@ export default function ConnectLnPage() {
       if (typeof window !== "undefined") {
         window.scrollTo({ top: 0, behavior: "smooth" })
       }
+      // Record cross-user Credential & Dossier Check in Cloud Sync so the target member sees who checked their credentials
+      if (memberProfile.name && userData.name && memberProfile.name.toLowerCase() !== userData.name.toLowerCase()) {
+        fetch('/api/connectin/profile-views', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            targetName: memberProfile.name,
+            viewerName: userData.name,
+            viewerHeadline: userData.headline || `${userData.profession || 'Verified ConnectLn Professional'} · ConnectLn Member`,
+            viewerAvatar: userData.avatar || '',
+            viewerCompany: userData.profession || 'ConnectLn Network',
+            viewerLocation: userData.location || 'United States',
+            viewerClearance: 'Verified Member · 1st',
+            viewerCategory: 'peer',
+            viewVector: 'Ticket Scouting & Dossier Lookup'
+          })
+        }).catch(() => {})
+      }
     } catch (err) {
       console.error("[ConnectIn] Failed to inspect member workspace:", err)
     }

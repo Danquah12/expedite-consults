@@ -39,6 +39,7 @@ import { UserProfile } from "@/lib/connectln-data"
 import { resolveUserProfilePicture, isKwesiAccount } from "@/lib/connectin-storage"
 import { buildSharePreviewUrl } from "@/lib/connectin-share"
 import { VideoShareBanner } from "./VideoShareBanner"
+import { ConnectLnStudioPlayer } from "./ConnectLnStudioPlayer"
 
 interface ConnectInVideoWheelProps {
   className?: string
@@ -942,17 +943,26 @@ export function ConnectInVideoWheel({
                         onClick={() => window.open(activeVideo.searchUrl, '_blank', 'noopener,noreferrer')}
                         className="rounded-full bg-[#A64532] hover:bg-[#8c3a2a] text-white px-4 py-2 text-xs font-bold cursor-pointer"
                       >
-                        ▶ Find career videos on YouTube
+                        ▶ Watch Career Masterclass Video
                       </button>
                     </div>
                   ) : (
+                    <ConnectLnStudioPlayer
+                      youtubeId={activeVideo.youtubeId}
+                      title={activeVideo.title}
+                      serialPlate={activeVideo.serialPlate}
+                      speaker={activeVideo.speaker}
+                      durationLabel={activeVideo.duration}
+                      className="h-full w-full"
+                    />
+                  {/* Replaced native iframe with ConnectLnStudioPlayer : (
                     <iframe
                       src={`https://www.youtube-nocookie.com/embed/${activeVideo.youtubeId}?autoplay=1&rel=0&modestbranding=1`}
                       title={activeVideo.title}
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                       className="h-full w-full border-0"
-                    />
+                    /> */}
                   )}
                 </div>
 
@@ -1044,7 +1054,7 @@ export function ConnectInVideoWheel({
                       <button
                         type="button"
                         onClick={() => window.open(activeVideo.searchUrl || `https://www.youtube.com/watch?v=${activeVideo.youtubeId}`, '_blank', 'noopener,noreferrer')}
-                        style={{ backgroundColor: '#DC2626', color: '#FFFFFF' }}
+                        style={{ display: 'none' }}
                         className="px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 hover:opacity-90 transition-opacity cursor-pointer shadow-xs"
                       >
                         <ExternalLink className="h-3.5 w-3.5" />
