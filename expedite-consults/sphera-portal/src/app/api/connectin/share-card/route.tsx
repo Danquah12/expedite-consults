@@ -13,28 +13,39 @@ function getInitials(name: string): string {
   return clean.slice(0, 2).toUpperCase()
 }
 
-// Link-preview card for a shared Wheel video or post. Shows the SHARER's own photo or their personal initials badge (e.g. "BU" for Busyvito).
+// Link-preview card for a shared Wheel video or post.
+// Centered safe-zone design so both 1200x630 banners (LinkedIn/X) and 1:1 center-cropped thumbnails (WhatsApp)
+// display the full ConnectLn dominant header, sharer's circular profile badge, and masterclass title without clipping.
 export async function GET(req: NextRequest) {
   const { searchParams, origin } = new URL(req.url)
   const name = (searchParams.get("n") || "").slice(0, 60)
-  const title = (searchParams.get("t") || "ConnectLn — Tickets, vouches, and real work").slice(0, 110)
+  const title = (searchParams.get("t") || "Tickets, vouches, and real work").slice(0, 100)
   const plate = (searchParams.get("plate") || searchParams.get("d") || "").slice(0, 30)
   const rawPic = searchParams.get("p") || ""
+  const isSquare = searchParams.get("sq") === "1"
 
+  const isKwesi = name.toLowerCase().includes("kwesi asiedu")
   let pic = ""
-  if (/^https:\/\//i.test(rawPic)) pic = rawPic
-  else if (rawPic) {
-    // compact form: base64url JPEG produced by the sharer's browser
+  if (/^https:\/\//i.test(rawPic)) {
+    pic = rawPic
+  } else if (rawPic) {
     try {
       const b64 = rawPic.replace(/-/g, "+").replace(/_/g, "/")
-      if (/^[A-Za-z0-9+/=]+$/.test(b64) && b64.length < 20000) pic = `data:image/jpeg;base64,${b64}`
+      if (/^[A-Za-z0-9+/=]+$/.test(b64) && b64.length < 20000) {
+        pic = `data:image/jpeg;base64,${b64}`
+      }
     } catch {
       pic = ""
     }
+  } else if (isKwesi) {
+    pic = `${origin}/brand/kwesi-avatar.png`
   }
 
   const initials = getInitials(name)
   const logoUrl = `${origin}/brand/connectln-icon-256.png`
+
+  const width = isSquare ? 630 : 1200
+  const height = 630
 
   return new ImageResponse(
     (
@@ -43,106 +54,199 @@ export async function GET(req: NextRequest) {
           width: "100%",
           height: "100%",
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
-          background: "#1b1816",
-          color: "#EFE8DC",
-          padding: 56,
+          justifyContent: "center",
+          background: "linear-gradient(145deg, #12100E 0%, #1F1B18 55%, #2D1E18 100%)",
+          color: "#F5F0EB",
           fontFamily: "sans-serif",
+          padding: isSquare ? "28px" : "32px 60px",
         }}
       >
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 380 }}>
+        {/* Center Safe-Zone Card (570px wide so even a 1:1 square crop preserves 100% of the card) */}
+        <div
+          style={{
+            width: isSquare ? "574px" : "600px",
+            height: "566px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "space-between",
+            backgroundColor: "rgba(255, 255, 255, 0.04)",
+            border: "2px solid rgba(224, 122, 95, 0.45)",
+            borderRadius: "32px",
+            padding: "28px 32px",
+          }}
+        >
+          {/* 1. DOMINANT CONNECTLN BRAND HEADER */}
           <div
             style={{
-              width: 240,
-              height: 240,
-              borderRadius: 120,
-              border: "8px solid #0088ff",
-              background: "linear-gradient(145deg, #0d2b45 0%, #071829 100%)",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              justifyContent: "center",
-              overflow: "hidden",
+              width: "100%",
+              borderBottom: "2px solid rgba(245, 240, 235, 0.14)",
+              paddingBottom: "18px",
             }}
           >
-            {pic ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={pic} width={224} height={224} style={{ objectFit: "cover" }} alt="" />
-            ) : (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <div style={{ fontSize: 82, fontWeight: 900, color: "#F5F0EB", letterSpacing: 2 }}>
-                  {initials}
+            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={logoUrl}
+                width={74}
+                height={74}
+                style={{ borderRadius: "18px", border: "2px solid rgba(255,255,255,0.2)" }}
+                alt=""
+              />
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <div
+                  style={{
+                    fontSize: "58px",
+                    fontWeight: 900,
+                    color: "#FFFFFF",
+                    letterSpacing: "-1px",
+                    lineHeight: 1,
+                  }}
+                >
+                  ConnectLn
                 </div>
-                {name ? (
-                  <div
-                    style={{
-                      marginTop: 6,
-                      fontSize: 18,
-                      fontWeight: 700,
-                      color: "#7cc4ff",
-                    }}
-                  >
-                    {name.slice(0, 18)}
-                  </div>
-                ) : null}
-              </div>
-            )}
-          </div>
-          {name ? (
-            <div style={{ marginTop: 22, fontSize: 38, fontWeight: 800, textAlign: "center", color: "#FFFFFF" }}>
-              {name}
-            </div>
-          ) : null}
-          <div style={{ marginTop: 6, fontSize: 22, color: "#a39a8e" }}>
-            {name ? "Verified ConnectLn Member" : "ConnectLn Network"}
-          </div>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", flex: 1, paddingLeft: 40 }}>
-          <div style={{ display: "flex", alignItems: "center" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={logoUrl} width={84} height={84} style={{ borderRadius: 16 }} alt="" />
-            <div style={{ display: "flex", flexDirection: "column", marginLeft: 20 }}>
-              <div style={{ fontSize: 60, fontWeight: 900, color: "#FFFFFF" }}>ConnectLn</div>
-              <div style={{ fontSize: 22, fontWeight: 600, color: "#c2593f" }}>
-                Tickets, vouches, and real work
+                <div
+                  style={{
+                    fontSize: "17px",
+                    fontWeight: 800,
+                    color: "#E07A5F",
+                    letterSpacing: "1.5px",
+                    textTransform: "uppercase",
+                    marginTop: "6px",
+                  }}
+                >
+                  Tickets, Vouches &amp; Real Work
+                </div>
               </div>
             </div>
           </div>
-          {plate ? (
+
+          {/* 2. SHARER PROFILE PICTURE / INITIALS BADGE + NAME */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "20px",
+              backgroundColor: "rgba(10, 102, 194, 0.14)",
+              border: "2px solid rgba(56, 189, 248, 0.45)",
+              borderRadius: "999px",
+              padding: "10px 26px 10px 12px",
+            }}
+          >
             <div
               style={{
-                marginTop: 32,
+                width: "96px",
+                height: "96px",
+                borderRadius: "48px",
+                border: "4px solid #0088ff",
+                background: "linear-gradient(145deg, #0d2b45 0%, #071829 100%)",
                 display: "flex",
                 alignItems: "center",
+                justifyContent: "center",
+                overflow: "hidden",
               }}
             >
+              {pic ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={pic} width={88} height={88} style={{ objectFit: "cover" }} alt="" />
+              ) : (
+                <div
+                  style={{
+                    fontSize: "40px",
+                    fontWeight: 900,
+                    color: "#FFFFFF",
+                    letterSpacing: "1px",
+                  }}
+                >
+                  {initials}
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <span style={{ fontSize: "30px", fontWeight: 900, color: "#FFFFFF" }}>
+                  {name || "ConnectLn Member"}
+                </span>
+                <span
+                  style={{
+                    backgroundColor: "#0066FF",
+                    color: "#FFFFFF",
+                    fontSize: "14px",
+                    fontWeight: 800,
+                    padding: "3px 10px",
+                    borderRadius: "999px",
+                  }}
+                >
+                  ✓ Verified
+                </span>
+              </div>
+              <span style={{ fontSize: "18px", fontWeight: 700, color: "#93C5FD", marginTop: "4px" }}>
+                Shared an Official ConnectLn Masterclass
+              </span>
+            </div>
+          </div>
+
+          {/* 3. MASTERCLASS TITLE & PLATE FOOTER */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              textAlign: "center",
+              width: "100%",
+              backgroundColor: "rgba(0, 0, 0, 0.38)",
+              borderRadius: "22px",
+              padding: "18px 22px",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+            }}
+          >
+            {plate ? (
               <div
                 style={{
-                  background: "#a64532",
-                  color: "#ffffff",
-                  padding: "6px 18px",
-                  borderRadius: 10,
-                  fontSize: 24,
-                  fontWeight: 800,
+                  backgroundColor: "#A64532",
+                  color: "#FFFFFF",
+                  padding: "4px 16px",
+                  borderRadius: "8px",
+                  fontSize: "17px",
+                  fontWeight: 900,
+                  letterSpacing: "1px",
+                  marginBottom: "10px",
                 }}
               >
-                {plate}
+                {plate} · MASTERCLASS BRIEFING
               </div>
+            ) : null}
+            <div
+              style={{
+                fontSize: title.length > 65 ? "24px" : "28px",
+                fontWeight: 800,
+                lineHeight: 1.25,
+                color: "#FFFFFF",
+              }}
+            >
+              {title}
             </div>
-          ) : null}
-          <div style={{ marginTop: 16, fontSize: 38, fontWeight: 800, lineHeight: 1.25, color: "#F5F0EB" }}>
-            {title}
+            <div
+              style={{
+                marginTop: "10px",
+                fontSize: "15px",
+                fontWeight: 800,
+                color: "#FBBF24",
+                letterSpacing: "0.5px",
+              }}
+            >
+              www.connectln.app
+            </div>
           </div>
         </div>
       </div>
     ),
-    { width: 1200, height: 630 }
+    { width, height }
   )
 }

@@ -121,9 +121,22 @@ export function VideoShareBanner({
     thumbnailUrl ||
     (resolvedYtId ? `https://i.ytimg.com/vi/${resolvedYtId}/hqdefault.jpg` : null)
 
-  const shareText = `🎥 ${videoTitle}${
-    serialPlate ? ` (${serialPlate})` : ""
-  } — Shared by ${resolvedAuthor} on ConnectLn:\n${resolvedShareUrl}`
+  const takeawaysList = takeaways.length > 0
+    ? `\n\n📌 *KEY FIELD TAKEAWAYS:*\n${takeaways.map(t => `✅ ${t}`).join("\n")}`
+    : ""
+  const shareText = [
+    `🏛️ *CONNECTLN — TICKETS, VOUCHES & REAL WORK*`,
+    `━━━━━━━━━━━━━━━━━━━━━━`,
+    `🎬 *CONNECTLN MASTERCLASS BRIEFING*`,
+    `*${videoTitle}*${serialPlate ? ` (${serialPlate})` : ""}`,
+    ``,
+    `👤 *Shared by:* ${resolvedAuthor} (Verified ConnectLn Member)`,
+    videoSubtitle ? `⚡ *Briefing:* ${videoSubtitle}` : "",
+    takeawaysList,
+    ``,
+    `▶️ *Watch Official Briefing on ConnectLn:*`,
+    resolvedShareUrl
+  ].filter(Boolean).join("\n")
 
   const handleWhatsAppShare = (e: React.MouseEvent) => {
     e.stopPropagation()

@@ -60,12 +60,17 @@ export function useSharePic(src?: string | null, allowBrandAvatar = false): stri
 
 /** Builds the shareable link. `to` is a same-site path such as /connectin?video=... */
 export function buildSharePreviewUrl(opts: { to: string; title: string; sharerName?: string; pic?: string; subtitle?: string }): string {
-  const q = new URLSearchParams({
-    to: opts.to,
-    t: opts.title,
-    n: opts.sharerName || "",
-    p: opts.pic || "",
-    d: opts.subtitle || "",
-  })
+  const q = new URLSearchParams()
+  // If `to` is a standard video share path (`/connectin?video=ID&plate=PLATE`), use compact `v` & `d` params for a clean URL
+  const vidMatch = opts.to.match(/[?&]video=([^&]+)/)
+  if (vidMatch) {
+    q.set("v", decodeURIComponent(vidMatch[1]))
+  } else if (opts.to) {
+    q.set("to", opts.to)
+  }
+  if (opts.subtitle) q.set("d", opts.subtitle)
+  if (opts.sharerName) q.set("n", opts.sharerName)
+  if (opts.title) q.set("t", opts.title)
+  if (opts.pic) q.set("p", opts.pic)
   return `https://www.connectln.app/connectin/share?${q.toString()}`
 }

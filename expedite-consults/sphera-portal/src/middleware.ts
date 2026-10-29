@@ -43,6 +43,9 @@ export async function middleware(request: NextRequest) {
       ? "ConnectLn: The zero-trust professional network. Verified tickets, vouches, and real work across cloud, cybersecurity, trades, and enterprise teams."
       : "The zero-trust professional network. Tickets, vouches, and real work.";
     let ogImageUrl = `https://www.connectln.app/api/connectin/share-card?t=${encodeURIComponent(pageTitle)}`;
+    let ogWidth = "1200";
+    let ogHeight = "630";
+    const isWhatsAppBot = userAgent.toLowerCase().includes("whatsapp");
 
     // Dynamic preview card for shared Wheel videos / posts (/connectin/share)
     if (pathname.startsWith("/connectin/share")) {
@@ -50,12 +53,14 @@ export async function middleware(request: NextRequest) {
       const title = searchParams.get("t") || "ConnectLn Masterclass";
       const plate = searchParams.get("d") || searchParams.get("plate") || "";
       const p = searchParams.get("p") || "";
-      pageTitle = `${title} — ConnectLn`;
-      pageDesc = name
-        ? `Shared by ${name} on ConnectLn — Tickets, vouches, and real work.`
-        : "Shared on ConnectLn — Tickets, vouches, and real work.";
-      const imgParams = new URLSearchParams({ n: name, t: title, plate, p });
+      pageTitle = `ConnectLn — ${name ? `Shared by ${name} · ` : ""}${title}`;
+      pageDesc = `🏛️ ConnectLn Official Masterclass${plate ? ` (${plate})` : ""} — Tickets, vouches, and real work. Watch full briefing on www.connectln.app`;
+      const imgParams = new URLSearchParams({ n: name, t: title, plate, p, ...(isWhatsAppBot ? { sq: "1" } : {}) });
       ogImageUrl = `https://www.connectln.app/api/connectin/share-card?${imgParams.toString()}`;
+      if (isWhatsAppBot) {
+        ogWidth = "630";
+        ogHeight = "630";
+      }
     } else if (pathname.startsWith("/share/message")) {
       // Dynamic preview card for shared chat messages (/share/message)
       const author = searchParams.get("author") || "ConnectLn Member";
@@ -64,7 +69,7 @@ export async function middleware(request: NextRequest) {
       const avatar = searchParams.get("avatar") || "";
       const sharedBy = searchParams.get("sharedBy") || "";
       const p = searchParams.get("p") || "";
-      pageTitle = `${author} on ConnectLn — "${text.slice(0, 70)}${text.length > 70 ? "…" : ""}"`;
+      pageTitle = `ConnectLn — ${author}: "${text.slice(0, 70)}${text.length > 70 ? "…" : ""}"`;
       pageDesc = `${role} · ${text.slice(0, 180)}`;
       const imgParams = new URLSearchParams({ author, role, text, avatar, sharedBy, p });
       ogImageUrl = `https://www.connectln.app/api/connectin/share-card/image?${imgParams.toString()}`;
@@ -89,8 +94,8 @@ export async function middleware(request: NextRequest) {
   <meta property="og:image" content="${esc(ogImageUrl)}" />
   <meta property="og:image:secure_url" content="${esc(ogImageUrl)}" />
   <meta property="og:image:type" content="image/png" />
-  <meta property="og:image:width" content="1200" />
-  <meta property="og:image:height" content="630" />
+  <meta property="og:image:width" content="${ogWidth}" />
+  <meta property="og:image:height" content="${ogHeight}" />
   <meta property="og:image:alt" content="${esc(pageTitle)}" />
 
   <!-- Twitter Cards -->

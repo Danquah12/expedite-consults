@@ -281,10 +281,29 @@ export function ConnectInVideoWheel({
   const getVideoSharePayload = (video: WheelVideoTalk) => {
     const connectInUrl = buildShareUrl(video)
     const ytUrl = video.searchUrl || `https://www.youtube.com/watch?v=${video.youtubeId}`
-    const takeaways = video.takeaways.map(t => `• ${t}`).join('\n')
+    const takeaways = video.takeaways.map(t => `✅ ${t}`).join('\n')
     const hashtags = (video.tags || []).join(' ')
     const sharerName = user?.name || "A ConnectLn member"
-    const shareText = `🎬 ConnectLn Masterclass: "${video.title}" (${video.serialPlate})\n👤 Shared by: ${sharerName} · Speaker: ${video.speaker} (${video.speakerTitle})\n🔨 Discipline: ${video.categoryLabel} · ⏱ ${video.duration}\n\n💡 Key Takeaways:\n${takeaways}\n\n🔗 Watch Masterclass on ConnectLn:\n${connectInUrl}\n\n${hashtags}`
+    const shareText = [
+      `🏛️ *CONNECTLN — TICKETS, VOUCHES & REAL WORK*`,
+      `━━━━━━━━━━━━━━━━━━━━━━`,
+      `🎬 *CONNECTLN MASTERCLASS BRIEFING*`,
+      `*${video.title}*`,
+      `🔖 *Code:* ${video.serialPlate}  |  ⏱ *Duration:* ${video.duration}`,
+      ``,
+      `👤 *Shared by:* ${sharerName} (Verified ConnectLn Member)`,
+      `🎙️ *Presenter:* ${video.speaker}`,
+      `🏅 *Credential:* ${video.speakerTitle}`,
+      `⚡ *Discipline:* ${video.categoryLabel}`,
+      ``,
+      `📌 *KEY FIELD TAKEAWAYS:*`,
+      takeaways,
+      ``,
+      `▶️ *Watch Official Briefing on ConnectLn:*`,
+      connectInUrl,
+      ``,
+      `#ConnectLn ${hashtags}`
+    ].join('\n')
 
     return { connectInUrl, ytUrl, shareText }
   }

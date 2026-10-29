@@ -9,24 +9,28 @@ export async function generateMetadata({ searchParams }: { searchParams: Params 
   const sp = await searchParams
   const name = one(sp.n)
   const title = one(sp.t) || "ConnectLn Masterclass"
-  const img = new URLSearchParams({ n: name, t: title, plate: one(sp.d) || one(sp.plate), p: one(sp.p) })
+  const plate = one(sp.d) || one(sp.plate)
+  const img = new URLSearchParams({ n: name, t: title, plate, p: one(sp.p) })
   const image = `https://www.connectln.app/api/connectin/share-card?${img.toString()}`
-  const desc = name ? `Shared by ${name} on ConnectLn — Tickets, vouches, and real work.` : "Shared on ConnectLn — Tickets, vouches, and real work."
+  const fullTitle = `ConnectLn — ${name ? `Shared by ${name} · ` : ""}${title}`
+  const desc = `🏛️ ConnectLn Official Masterclass${plate ? ` (${plate})` : ""} — Tickets, vouches, and real work.`
   return {
-    title: `${title} — ConnectLn`,
+    title: fullTitle,
     description: desc,
-    openGraph: { title, description: desc, siteName: "ConnectLn", images: [{ url: image, width: 1200, height: 630 }] },
-    twitter: { card: "summary_large_image", title, description: desc, images: [image] },
+    openGraph: { title: fullTitle, description: desc, siteName: "ConnectLn", images: [{ url: image, width: 1200, height: 630 }] },
+    twitter: { card: "summary_large_image", title: fullTitle, description: desc, images: [image] },
   }
 }
 
 export default async function SharePage({ searchParams }: { searchParams: Params }) {
   const sp = await searchParams
   const to = one(sp.to)
+  const vid = one(sp.v) || one(sp.video)
+  const plate = one(sp.d) || one(sp.plate)
   // same-site paths only (no open redirect)
   const target =
     to.startsWith("/") && !to.startsWith("//")
       ? to
-      : `/connectin?video=${encodeURIComponent(one(sp.video))}&plate=${encodeURIComponent(one(sp.plate))}`
+      : `/connectin?video=${encodeURIComponent(vid)}&plate=${encodeURIComponent(plate)}`
   return <ShareRedirect target={target} />
 }
