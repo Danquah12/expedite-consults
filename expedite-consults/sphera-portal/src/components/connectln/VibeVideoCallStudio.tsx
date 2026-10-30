@@ -509,7 +509,7 @@ const VIRTUAL_BACKGROUND_OPTIONS: VirtualBackgroundOption[] = [
     subtitle: "Calm turquoise coast & palm terrace",
     category: "Nature",
     mode: "scene",
-    imageUrl: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=960&q=80",
+    imageUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=960&q=80",
     previewGradient: "from-cyan-600/80 via-teal-800 to-slate-900",
     sceneColors: ["#083344", "#115E59", "#0F172A"],
     accentColor: "#22D3EE",
@@ -1678,13 +1678,7 @@ export function VibeVideoCallStudio({
 
   const presetBgImagesRef = useRef<Map<string, HTMLImageElement>>(new Map())
   const warmupMaskCanvasRef = useRef<HTMLCanvasElement | null>(null)
-  const maskWorkCanvasRef = useRef<HTMLCanvasElement | null>(null)
-  const maskErodedCanvasRef = useRef<HTMLCanvasElement | null>(null)
-  const stabilizedMaskCanvasRef = useRef<HTMLCanvasElement | null>(null)
-  const temporalMaskFloatRef = useRef<Float32Array | null>(null)
-  const hasStabilizedMaskRef = useRef<boolean>(false)
-  const cachedBackdropCanvasRef = useRef<HTMLCanvasElement | null>(null)
-  const cachedBackdropKeyRef = useRef<string>("")
+  const smoothMaskCanvasRef = useRef<HTMLCanvasElement | null>(null)
 
   // Preload photorealistic virtual background images with crossOrigin="anonymous" so canvas captureStream/toDataURL works cleanly
   useEffect(() => {
@@ -1695,10 +1689,6 @@ export function VibeVideoCallStudio({
         img.crossOrigin = "anonymous"
         img.onload = () => {
           presetBgImagesRef.current.set(opt.id, img)
-          // Invalidate cached backdrop if it was waiting for this image
-          if (cachedBackdropKeyRef.current.startsWith(`${opt.id}:`)) {
-            cachedBackdropKeyRef.current = ""
-          }
         }
         img.src = opt.imageUrl
       }
@@ -1714,107 +1704,149 @@ export function VibeVideoCallStudio({
 
     let animId: number | null = null
     let isRunning = true
+    let switchedWebRtcTrack = false
 
-    // Double-buffered Temporal Mask Stabilizer + Halo Erosion:
-    // Processes MediaPipe's raw segmentation mask inside `onResults` onto a dedicated offscreen canvas
-    // so `renderLoop` NEVER reads MediaPipe's internal WebGL canvas mid-shader pass (which causes shaking)
-    // and applies temporal EMA + hysteresis deadband + 1px halo erosion (eliminating wrinkling & bookshelf bleed).
-    const updateStabilizedMaskFromMediaPipe = (rawMask: CanvasImageSource) => {
-      const mw = 160
-      const mh = 100
-      let workCanvas = maskWorkCanvasRef.current
-      if (!workCanvas) {
-        workCanvas = document.createElement("canvas")
-        workCanvas.width = mw
-        workCanvas.height = mh
-        maskWorkCanvasRef.current = workCanvas
+    const drawSceneBackdrop = (
+      ctx: CanvasRenderingContext2D,
+      w: number,
+      h: number,
+      opt: VirtualBackgroundOption
+    ) => {
+      const presetImg = presetBgImagesRef.current.get(opt.id)
+      if (presetImg && presetImg.complete && presetImg.naturalWidth > 0) {
+        ctx.save()
+        ctx.drawImage(presetImg, 0, 0, w, h)
+        const vig = ctx.createRadialGradient(w * 0.5, h * 0.5, w * 0.28, w * 0.5, h * 0.5, w * 0.78)
+        vig.addColorStop(0, "rgba(0,0,0,0.03)")
+        vig.addColorStop(1, "rgba(0,0,0,0.32)")
+        ctx.fillStyle = vig
+        ctx.fillRect(0, 0, w, h)
+        ctx.restore()
+        return
       }
-      const wCtx = workCanvas.getContext("2d", { willReadFrequently: true })
-      if (!wCtx) return
 
-      wCtx.clearRect(0, 0, mw, mh)
-      wCtx.drawImage(rawMask, 0, 0, mw, mh)
-      const frameData = wCtx.getImageData(0, 0, mw, mh)
-      const data = frameData.data
-      const totalPixels = mw * mh
+      const grad = ctx.createLinearGradient(0, 0, w, h)
+      grad.addColorStop(0, opt.sceneColors[0])
+      grad.addColorStop(0.55, opt.sceneColors[1])
+      grad.addColorStop(1, opt.sceneColors[2])
+      ctx.fillStyle = grad
+      ctx.fillRect(0, 0, w, h)
 
-      // Step A: Tight confidence threshold (clamps < 72% confidence to 0 to strip room/bookshelf halo around head)
-      const thresholded = new Uint8Array(totalPixels)
-      for (let i = 0; i < totalPixels; i++) {
-        const rawA = data[i * 4 + 3]
-        if (rawA < 184) {
-          thresholded[i] = 0
-        } else if (rawA > 226) {
-          thresholded[i] = 255
-        } else {
-          thresholded[i] = Math.round(((rawA - 184) / 42) * 255)
+      const radial = ctx.createRadialGradient(w * 0.5, h * 0.25, 10, w * 0.5, h * 0.4, w * 0.7)
+      radial.addColorStop(0, `${opt.accentColor}44`)
+      radial.addColorStop(1, "transparent")
+      ctx.fillStyle = radial
+      ctx.fillRect(0, 0, w, h)
+    }
+
+    // Composite person + virtual background atomically using the exact frame (`results.image`)
+    // and mask (`results.segmentationMask`) produced by MediaPipe so video and mask are 100% synced.
+    const renderSynchronizedComposite = (
+      personImage: CanvasImageSource,
+      rawMask: CanvasImageSource | null,
+      isAlreadyMirrored: boolean
+    ) => {
+      const canvas = virtualBgCanvasRef.current
+      if (!canvas) return
+      const w = 480
+      const h = 300
+      if (canvas.width !== w) canvas.width = w
+      if (canvas.height !== h) canvas.height = h
+
+      const ctx = canvas.getContext("2d")
+      if (!ctx) return
+
+      // 1. Update GPU-smoothed full-res mask canvas (temporal 28% previous + dual-pass solid foreground boost)
+      let maskCanvas = smoothMaskCanvasRef.current
+      if (!maskCanvas) {
+        maskCanvas = document.createElement("canvas")
+        maskCanvas.width = w
+        maskCanvas.height = h
+        smoothMaskCanvasRef.current = maskCanvas
+      }
+      const mCtx = maskCanvas.getContext("2d")
+      if (mCtx && rawMask) {
+        mCtx.save()
+        // Keep 28% of previous frame's mask on GPU to smooth 1-frame edge jitter without any motion lag
+        mCtx.globalCompositeOperation = "destination-in"
+        mCtx.fillStyle = "rgba(0, 0, 0, 0.28)"
+        mCtx.fillRect(0, 0, w, h)
+
+        // Pass 1: Soft-feathered contour
+        mCtx.globalCompositeOperation = "source-over"
+        mCtx.globalAlpha = 0.88
+        mCtx.filter = "blur(2.5px)"
+        mCtx.drawImage(rawMask, 0, 0, w, h)
+
+        // Pass 2: Reinforce person interior opacity so head/forehead/scalp is 100% solid (never translucent)
+        mCtx.globalAlpha = 0.85
+        mCtx.filter = "blur(1px)"
+        mCtx.drawImage(rawMask, 0, 0, w, h)
+        mCtx.restore()
+      }
+
+      ctx.save()
+      ctx.clearRect(0, 0, w, h)
+
+      if (rawMask && maskCanvas) {
+        // Step 1: Draw the GPU-stabilized segmentation mask (draw twice so person alpha is 100% solid)
+        ctx.drawImage(maskCanvas, 0, 0, w, h)
+        ctx.drawImage(maskCanvas, 0, 0, w, h)
+
+        // Step 2: Keep ONLY the person pixels (`source-in`) from the synchronized camera frame
+        ctx.globalCompositeOperation = "source-in"
+        ctx.save()
+        if (!isAlreadyMirrored) {
+          ctx.translate(w, 0)
+          ctx.scale(-1, 1)
         }
-      }
+        ctx.drawImage(personImage, 0, 0, w, h)
+        ctx.restore()
 
-      // Step B: 1-pixel 4-neighbor minimum erosion + Temporal EMA with Hysteresis Deadband
-      if (!temporalMaskFloatRef.current || temporalMaskFloatRef.current.length !== totalPixels) {
-        temporalMaskFloatRef.current = new Float32Array(totalPixels)
-        for (let i = 0; i < totalPixels; i++) {
-          temporalMaskFloatRef.current[i] = thresholded[i]
-        }
-      }
-      const prevFloat = temporalMaskFloatRef.current
-
-      for (let y = 0; y < mh; y++) {
-        const rowOffset = y * mw
-        for (let x = 0; x < mw; x++) {
-          const i = rowOffset + x
-          let erodedA = thresholded[i]
-          if (x > 0 && x < mw - 1 && y > 0 && y < mh - 1) {
-            const left = thresholded[i - 1]
-            const right = thresholded[i + 1]
-            const up = thresholded[i - mw]
-            const down = thresholded[i + mw]
-            erodedA = Math.min(erodedA, left, right, up, down)
+        // Step 3: Draw the crisp Virtual Background strictly BEHIND the person (`destination-over`)
+        ctx.globalCompositeOperation = "destination-over"
+        if (activeVirtualBgOption.mode === "blur") {
+          ctx.save()
+          ctx.filter = `blur(${activeVirtualBgOption.blurPx || 14}px) brightness(0.94)`
+          if (!isAlreadyMirrored) {
+            ctx.translate(w, 0)
+            ctx.scale(-1, 1)
           }
+          ctx.drawImage(personImage, -16, -16, w + 32, h + 32)
+          ctx.restore()
+        } else if (activeVirtualBgOption.mode === "custom" && customBgImgRef.current) {
+          ctx.drawImage(customBgImgRef.current, 0, 0, w, h)
+        } else {
+          drawSceneBackdrop(ctx, w, h, activeVirtualBgOption)
+        }
+      } else {
+        // While MediaPipe WASM initializes on the first moment, show natural mirrored camera feed (never a circle cutout!)
+        ctx.save()
+        if (!isAlreadyMirrored) {
+          ctx.translate(w, 0)
+          ctx.scale(-1, 1)
+        }
+        ctx.drawImage(personImage, 0, 0, w, h)
+        ctx.restore()
+      }
 
-          const prevA = prevFloat[i]
-          const diff = Math.abs(erodedA - prevA)
-          // Deadband hysteresis: lock stationary edges (92% history) so contour never wrinkles/boils;
-          // adapt smoothly (55% new) when the speaker actually moves their head
-          const blended = diff < 48 ? prevA * 0.92 + erodedA * 0.08 : prevA * 0.45 + erodedA * 0.55
-          prevFloat[i] = blended
+      ctx.restore()
 
-          const outIdx = i * 4
-          data[outIdx] = 255
-          data[outIdx + 1] = 255
-          data[outIdx + 2] = 255
-          data[outIdx + 3] = Math.round(blended)
+      if (!switchedWebRtcTrack) {
+        switchedWebRtcTrack = true
+        syncWebRtcOutgoingVideoTrack(true)
+      }
+    }
+
+    const handleSegmentationResults = (results: any) => {
+      if (!isRunning) return
+      if (results?.segmentationMask) {
+        latestSegMaskRef.current = results.segmentationMask
+        const syncedImage = results.image || tileLocalVideoRef.current || heroLocalVideoRef.current
+        if (syncedImage) {
+          renderSynchronizedComposite(syncedImage, results.segmentationMask, Boolean(results.image))
         }
       }
-
-      let erodedCanvas = maskErodedCanvasRef.current
-      if (!erodedCanvas) {
-        erodedCanvas = document.createElement("canvas")
-        erodedCanvas.width = mw
-        erodedCanvas.height = mh
-        maskErodedCanvasRef.current = erodedCanvas
-      }
-      const eCtx = erodedCanvas.getContext("2d")
-      if (!eCtx) return
-      eCtx.putImageData(frameData, 0, 0)
-
-      // Step C: Upscale to 480x300 double-buffered mask canvas with silky 4.5px optical feathering
-      let stabCanvas = stabilizedMaskCanvasRef.current
-      if (!stabCanvas) {
-        stabCanvas = document.createElement("canvas")
-        stabCanvas.width = 480
-        stabCanvas.height = 300
-        stabilizedMaskCanvasRef.current = stabCanvas
-      }
-      const sCtx = stabCanvas.getContext("2d")
-      if (!sCtx) return
-      sCtx.save()
-      sCtx.clearRect(0, 0, 480, 300)
-      sCtx.filter = "blur(4.5px)"
-      sCtx.drawImage(erodedCanvas, 0, 0, 480, 300)
-      sCtx.restore()
-      hasStabilizedMaskRef.current = true
     }
 
     // Load MediaPipe SelfieSegmentation via <script> tag on window so UMD global `this.SelfieSegmentation` never fails in Turbopack ESM
@@ -1845,7 +1877,11 @@ export function VibeVideoCallStudio({
     }
 
     const ensureSegmenter = async () => {
-      if (selfieSegmenterRef.current) return
+      if (selfieSegmenterRef.current) {
+        // Always rebind `onResults` so switching Virtual Background presets uses the latest activeVirtualBgOption!
+        selfieSegmenterRef.current.onResults(handleSegmentationResults)
+        return
+      }
       try {
         let SegClass = (window as any).SelfieSegmentation
         if (!SegClass) {
@@ -1856,183 +1892,38 @@ export function VibeVideoCallStudio({
           locateFile: (file: string) => `/mediapipe/selfie_segmentation/${file}`,
         })
         segmenter.setOptions({
-          modelSelection: 0, // 0 = Higher-precision 256x256 General Portrait segmentation model
-          selfieMode: true,  // Mirrors input to match webcam selfie orientation
+          modelSelection: 1, // 1 = Real-time video conferencing landscape segmentation model
+          selfieMode: true,  // Mirrors both results.image and results.segmentationMask in lockstep
         })
-        segmenter.onResults((results: any) => {
-          if (results?.segmentationMask) {
-            latestSegMaskRef.current = results.segmentationMask
-            updateStabilizedMaskFromMediaPipe(results.segmentationMask)
-          }
-        })
+        segmenter.onResults(handleSegmentationResults)
         if (typeof segmenter.initialize === "function") {
           await segmenter.initialize()
         }
         selfieSegmenterRef.current = segmenter
       } catch {
-        // Fallback soft-feathered portrait mask if WASM unavailable
+        // Fallback handled in renderSynchronizedComposite
       }
     }
 
     ensureSegmenter()
 
-    // Pre-render and cache the studio scene backdrop onto an offscreen canvas with subtle f/1.8 studio depth-of-field
-    // so it is 100% static, smooth, and zero-flicker behind the speaker
-    const drawSceneBackdrop = (
-      ctx: CanvasRenderingContext2D,
-      w: number,
-      h: number,
-      opt: VirtualBackgroundOption
-    ) => {
-      const presetImg = presetBgImagesRef.current.get(opt.id)
-      const imgReady = Boolean(presetImg && presetImg.complete && presetImg.naturalWidth > 0)
-      const cacheKey = `${opt.id}:${imgReady ? "img" : "grad"}:${w}x${h}`
-
-      if (cachedBackdropKeyRef.current !== cacheKey || !cachedBackdropCanvasRef.current) {
-        let bgCanvas = cachedBackdropCanvasRef.current
-        if (!bgCanvas) {
-          bgCanvas = document.createElement("canvas")
-          cachedBackdropCanvasRef.current = bgCanvas
-        }
-        bgCanvas.width = w
-        bgCanvas.height = h
-        const bCtx = bgCanvas.getContext("2d")
-        if (bCtx) {
-          bCtx.save()
-          bCtx.clearRect(0, 0, w, h)
-          if (imgReady && presetImg) {
-            // Subtle f/1.8 studio optical softening so background textures never look harsh or jagged behind the head
-            bCtx.save()
-            bCtx.filter = "blur(2.2px)"
-            bCtx.drawImage(presetImg, -6, -6, w + 12, h + 12)
-            bCtx.restore()
-            const vig = bCtx.createRadialGradient(w * 0.5, h * 0.5, w * 0.25, w * 0.5, h * 0.5, w * 0.78)
-            vig.addColorStop(0, "rgba(0,0,0,0.04)")
-            vig.addColorStop(1, "rgba(0,0,0,0.34)")
-            bCtx.fillStyle = vig
-            bCtx.fillRect(0, 0, w, h)
-          } else {
-            const grad = bCtx.createLinearGradient(0, 0, w, h)
-            grad.addColorStop(0, opt.sceneColors[0])
-            grad.addColorStop(0.55, opt.sceneColors[1])
-            grad.addColorStop(1, opt.sceneColors[2])
-            bCtx.fillStyle = grad
-            bCtx.fillRect(0, 0, w, h)
-
-            const radial = bCtx.createRadialGradient(w * 0.5, h * 0.25, 10, w * 0.5, h * 0.4, w * 0.7)
-            radial.addColorStop(0, `${opt.accentColor}44`)
-            radial.addColorStop(1, "transparent")
-            bCtx.fillStyle = radial
-            bCtx.fillRect(0, 0, w, h)
-          }
-          bCtx.restore()
-          cachedBackdropKeyRef.current = cacheKey
-        }
-      }
-
-      if (cachedBackdropCanvasRef.current) {
-        ctx.drawImage(cachedBackdropCanvasRef.current, 0, 0, w, h)
-      }
-    }
-
-    // Build a smooth, soft-feathered alpha mask canvas so even before MediaPipe WASM finishes its first frame,
-    // there is NEVER a hard circle/oval cutting into the user's forehead!
-    const getSoftWarmupMaskCanvas = (w: number, h: number): HTMLCanvasElement => {
-      let maskCanvas = warmupMaskCanvasRef.current
-      if (!maskCanvas) {
-        maskCanvas = document.createElement("canvas")
-        warmupMaskCanvasRef.current = maskCanvas
-      }
-      if (maskCanvas.width !== w || maskCanvas.height !== h) {
-        maskCanvas.width = w
-        maskCanvas.height = h
-        const mCtx = maskCanvas.getContext("2d")
-        if (mCtx) {
-          mCtx.clearRect(0, 0, w, h)
-          const g1 = mCtx.createRadialGradient(w * 0.5, h * 0.58, w * 0.18, w * 0.5, h * 0.55, w * 0.48)
-          g1.addColorStop(0, "rgba(255,255,255,1)")
-          g1.addColorStop(0.62, "rgba(255,255,255,0.96)")
-          g1.addColorStop(0.84, "rgba(255,255,255,0.45)")
-          g1.addColorStop(1, "rgba(255,255,255,0)")
-          mCtx.fillStyle = g1
-          mCtx.fillRect(0, 0, w, h)
-        }
-      }
-      return maskCanvas
-    }
-
-    let switchedWebRtcTrack = false
-    let lastSegmentTimestamp = 0
-
-    const renderLoop = (now: number) => {
+    const renderLoop = () => {
       if (!isRunning) return
       const videoEl = tileLocalVideoRef.current || heroLocalVideoRef.current
-      const canvas = virtualBgCanvasRef.current
-      if (videoEl && canvas && videoEl.readyState >= 2) {
-        const w = 480
-        const h = 300
-        if (canvas.width !== w) canvas.width = w
-        if (canvas.height !== h) canvas.height = h
-
-        // Feed current video frame to MediaPipe SelfieSegmentation at a steady ~24fps cadence
-        // while reading only from the double-buffered `stabilizedMaskCanvasRef`
-        if (
-          selfieSegmenterRef.current &&
-          !isSegmentingFrameRef.current &&
-          now - lastSegmentTimestamp >= 40
-        ) {
-          lastSegmentTimestamp = now
-          isSegmentingFrameRef.current = true
-          selfieSegmenterRef.current
-            .send({ image: videoEl })
-            .catch(() => {})
-            .finally(() => {
-              isSegmentingFrameRef.current = false
-            })
-        }
-
-        const ctx = canvas.getContext("2d")
-        if (ctx) {
-          ctx.save()
-          ctx.clearRect(0, 0, w, h)
-
-          const maskSource =
-            hasStabilizedMaskRef.current && stabilizedMaskCanvasRef.current
-              ? stabilizedMaskCanvasRef.current
-              : getSoftWarmupMaskCanvas(w, h)
-
-          // Step 1: Draw the double-buffered, temporally stabilized person mask
-          ctx.drawImage(maskSource, 0, 0, w, h)
-
-          // Step 2: Keep ONLY the person pixels (`source-in`) from the live webcam feed (person is 100% sharp in FRONT!)
-          ctx.globalCompositeOperation = "source-in"
-          ctx.save()
-          ctx.translate(w, 0)
-          ctx.scale(-1, 1)
-          ctx.drawImage(videoEl, 0, 0, w, h)
-          ctx.restore()
-
-          // Step 3: Draw the Virtual Background strictly BEHIND the person (`destination-over`)!
-          ctx.globalCompositeOperation = "destination-over"
-          if (activeVirtualBgOption.mode === "blur") {
-            ctx.save()
-            ctx.filter = `blur(${activeVirtualBgOption.blurPx || 14}px) brightness(0.94)`
-            ctx.translate(w, 0)
-            ctx.scale(-1, 1)
-            ctx.drawImage(videoEl, -16, -16, w + 32, h + 32)
-            ctx.restore()
-          } else if (activeVirtualBgOption.mode === "custom" && customBgImgRef.current) {
-            ctx.drawImage(customBgImgRef.current, 0, 0, w, h)
-          } else {
-            drawSceneBackdrop(ctx, w, h, activeVirtualBgOption)
+      if (videoEl && videoEl.readyState >= 2 && videoEl.videoWidth > 0) {
+        if (selfieSegmenterRef.current) {
+          if (!isSegmentingFrameRef.current) {
+            isSegmentingFrameRef.current = true
+            selfieSegmenterRef.current
+              .send({ image: videoEl })
+              .catch(() => {})
+              .finally(() => {
+                isSegmentingFrameRef.current = false
+              })
           }
-
-          ctx.restore()
-
-          if (!switchedWebRtcTrack) {
-            switchedWebRtcTrack = true
-            syncWebRtcOutgoingVideoTrack(true)
-          }
+        } else {
+          // Before MediaPipe finishes loading, draw using latestSegMaskRef if available or clean camera feed
+          renderSynchronizedComposite(videoEl, latestSegMaskRef.current, false)
         }
       }
       animId = requestAnimationFrame(renderLoop)
