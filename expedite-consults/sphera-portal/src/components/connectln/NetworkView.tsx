@@ -380,7 +380,7 @@ export function NetworkView({
             recipientName: cleanInvName,
             senderName: currentUser.name,
             senderHeadline: currentUser.headline,
-            inviteLink: `${baseUrl}/connectin?${q.toString()}`
+            inviteLink: `${baseUrl}/connectin-login?${q.toString()}`
           })
         })
         const data = await res.json()
@@ -410,7 +410,7 @@ export function NetworkView({
             recipientName: cleanInvName,
             senderName: currentUser.name,
             senderHeadline: currentUser.headline,
-            inviteLink: `${baseUrl}/connectin?${q.toString()}`
+            inviteLink: `${baseUrl}/connectin-login?${q.toString()}`
           })
         })
         const data = await res.json()

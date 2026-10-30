@@ -128,9 +128,9 @@ export function InviteMembersModal({
   if (effectiveRecipientName) inviteQuery.set("invitedName", effectiveRecipientName)
   if (firstParsedEmail) inviteQuery.set("invitedEmail", firstParsedEmail)
 
-  const inviteLink = `${origin}/connectin?${inviteQuery.toString()}`
-  const loginLink = `${origin}/connectin?${inviteQuery.toString()}`
-  const referralLink = `${origin}/connectin?${inviteQuery.toString()}`
+  const inviteLink = `${origin}/connectin-login?${inviteQuery.toString()}`
+  const loginLink = `${origin}/connectin-login?${inviteQuery.toString()}`
+  const referralLink = `${origin}/connectin-login?${inviteQuery.toString()}`
 
   const [emailMessage, setEmailMessage] = useState(
     `Hi ${effectiveRecipientName || "there"},\n\nI'd like to invite you to join my trusted network on ConnectLn — Tickets, vouches, and real work.\n\nAccept invitation & create your profile here: ${inviteLink}`

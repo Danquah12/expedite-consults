@@ -28,9 +28,6 @@ export function resolveDisplayName(rawName?: string, email?: string): string {
     return rawName.trim()
   }
   const cleanEmail = (email || "").toLowerCase().trim()
-  if (cleanEmail === "asiedudanquah@gmail.com") {
-    return "Kwesi Asiedu"
-  }
   if (cleanEmail === "kasiedu@expedite-consults.com" || cleanEmail === "kasiedu@expediteconsults.com") {
     return "Kwesi Asiedu"
   }
@@ -73,13 +70,76 @@ export function isExactKwesiUser(user?: { name?: string; email?: string } | null
     cleanName === "emmanuel asiedu" ||
     cleanName.startsWith("kwesi asiedu ") ||
     cleanName.startsWith("emmanuel asiedu ")
-  if (cleanName && !isKwesiName) {
+  // Require the user's name to actually be Kwesi/Emmanuel Asiedu so another user testing with the same email never gets Kwesi's face or profile
+  if (!isKwesiName) {
     return false
   }
   if (cleanEmail && !isKwesiEmail && !cleanEmail.startsWith("kwesi.asiedu@")) {
     return false
   }
-  return isKwesiEmail || isKwesiName
+  return true
+}
+
+export function createFreshInvitedUserProfile(params: UserInitParams & { inviterName?: string }): UserProfile {
+  const cleanEmail = (params.email || "member@connectln.app").toLowerCase().trim()
+  const cleanName = (params.name || "").trim() || resolveDisplayName(params.name, cleanEmail)
+  const profDef = params.professionId ? findProfessionById(params.professionId) : undefined
+  const enclaveId = params.professionEnclave || profDef?.enclaveId || "trades_construction"
+  const enclaveInfo = findEnclaveById(enclaveId)
+  const professionTitle = params.profession || profDef?.title || "Verified ConnectLn Professional"
+  const professionCategory = params.professionCategory || profDef?.categoryName || enclaveInfo?.name || "Professional Network"
+  const userId = params.id || `usr_fresh_${Date.now().toString(36)}_${cleanName.toLowerCase().replace(/[^a-z0-9]/g, "_")}`
+
+  const freshAvatar = generatePersonalSignatureAvatar({
+    name: cleanName,
+    email: cleanEmail,
+    professionEnclave: enclaveId
+  })
+
+  const headline =
+    params.headline ||
+    profDef?.defaultHeadline ||
+    `${professionTitle}${params.inviterName ? ` · Connected with ${params.inviterName}` : " · Verified ConnectLn Member"}`
+
+  return {
+    id: userId,
+    name: cleanName,
+    email: cleanEmail,
+    phone: params.phone || "",
+    role: "personal",
+    roles: ["NORMAL_USER"],
+    profession: professionTitle,
+    professionId: profDef?.id || params.professionId || "carpenter",
+    professionCategory,
+    professionEnclave: enclaveId,
+    headline,
+    avatar: freshAvatar,
+    coverImage: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80",
+    location: params.location || "United States · Verified ConnectLn Member",
+    connectionsCount: 1,
+    followersCount: 1,
+    profileViews: 1,
+    postImpressions: 0,
+    searchAppearances: 1,
+    profileStrength: 65,
+    about: params.about || `${cleanName} is a verified ${professionTitle} on ConnectLn.`,
+    openToWork: {
+      isOpen: true,
+      roles: [professionTitle],
+      jobTypes: ["Full-time", "Contract"],
+      locations: ["United States", "Remote"]
+    },
+    featured: [],
+    experience: [],
+    education: [],
+    certifications: [],
+    skills: (profDef?.typicalSkills || ["Professional Networking", "Verified Specialist"]).map((s: string) => ({
+      name: s,
+      endorsements: 1,
+      endorsers: params.inviterName ? [params.inviterName] : []
+    })),
+    recommendations: []
+  } as unknown as UserProfile
 }
 
 export function getKnownDemoPersonaAvatar(user?: { name?: string; email?: string } | null): string | null {

@@ -41,16 +41,18 @@ function getAccountKeysForUser(user?: Partial<UserProfile> & { email?: string; u
 
   if (email && name) {
     keys.push(`acct:${email}::${name}`)
+    keys.push(`name:${name}`)
+    return keys
   }
-  if (email) {
-    keys.push(`email:${email}`)
+  if (name) {
+    keys.push(`name:${name}`)
     return keys
   }
   if (id && id !== 'user_alex_taylor') {
     keys.push(`id:${id}`)
   }
-  if (name) {
-    keys.push(`name:${name}`)
+  if (email && isExactKwesiUser(user as any)) {
+    keys.push(`email:${email}`)
   }
   return keys
 }
@@ -89,7 +91,7 @@ export function getDefaultPortraitForUser(user?: Partial<UserProfile> | null): s
     if (stored) {
       return getKnownDemoPersonaAvatar(stored) || generatePersonalSignatureAvatar(stored)
     }
-    return '/brand/kwesi-avatar.png'
+    return generatePersonalSignatureAvatar({ name: 'ConnectLn Member', email: '' })
   }
   return getKnownDemoPersonaAvatar(user as any) || generatePersonalSignatureAvatar(user as any)
 }
@@ -122,6 +124,30 @@ export function savePersistentAvatar(avatarUrl: string, user?: Partial<UserProfi
   }
 }
 
+export function isKwesiStoredPhoto(url?: string | null): boolean {
+  if (!url || typeof window === 'undefined') return false
+  if (url.includes('/brand/kwesi-avatar.png')) return true
+  try {
+    const directKwesi = localStorage.getItem(STORAGE_KEYS.AVATAR)
+    if (directKwesi && url === directKwesi) return true
+    const avatarMap = readJsonMap<string>(STORAGE_KEYS.AVATAR_MAP)
+    const kwesiKeys = [
+      'email:asiedudanquah@gmail.com',
+      'email:kasiedu@expedite-consults.com',
+      'email:kasiedu@expediteconsults.com',
+      'name:kwesi asiedu',
+      'acct:asiedudanquah@gmail.com::kwesi asiedu',
+      'acct:kasiedu@expedite-consults.com::kwesi asiedu'
+    ]
+    for (const kk of kwesiKeys) {
+      if (avatarMap[kk] && url === avatarMap[kk]) return true
+    }
+  } catch {
+    // ignore
+  }
+  return false
+}
+
 export function loadPersistentAvatar(user?: Partial<UserProfile> | null): string | null {
   if (typeof window === 'undefined') return null
   try {
@@ -132,7 +158,12 @@ export function loadPersistentAvatar(user?: Partial<UserProfile> | null): string
       const avatarMap = readJsonMap<string>(STORAGE_KEYS.AVATAR_MAP)
       for (const k of keys) {
         const candidate = avatarMap[k]
-        if (candidate && !isDefaultPlaceholderAvatar(candidate) && !isForeignPersonaAvatar(candidate, targetUser as any)) {
+        if (
+          candidate &&
+          !isDefaultPlaceholderAvatar(candidate) &&
+          !isForeignPersonaAvatar(candidate, targetUser as any) &&
+          (isKwesi || !isKwesiStoredPhoto(candidate))
+        ) {
           return candidate
         }
       }
@@ -151,26 +182,43 @@ export function loadPersistentAvatar(user?: Partial<UserProfile> | null): string
 
 export function resolveUserProfilePicture(user?: Partial<UserProfile> | null, fallbackUrl?: string | null): string {
   const targetUser = user || getRawCurrentStoredUser()
+  const isKwesi = isKwesiAccount(targetUser)
 
-  // 1. If user has a custom uploaded raster photo (jpeg/png/webp/gif) directly on the object, use it immediately
+  // 1. If user has a custom uploaded raster photo (jpeg/png/webp/gif) directly on the object (and not Kwesi's photo on a non-Kwesi account), use it immediately
   if (
     targetUser?.avatar &&
     targetUser.avatar.startsWith('data:image/') &&
-    !targetUser.avatar.startsWith('data:image/svg+xml')
+    !targetUser.avatar.startsWith('data:image/svg+xml') &&
+    (isKwesi || !isKwesiStoredPhoto(targetUser.avatar))
   ) {
     return targetUser.avatar
   }
   // 2. Check persistent avatar storage strictly for this user
   const persistent = loadPersistentAvatar(targetUser)
-  if (persistent && !isDefaultPlaceholderAvatar(persistent) && !isForeignPersonaAvatar(persistent, targetUser as any)) {
+  if (
+    persistent &&
+    !isDefaultPlaceholderAvatar(persistent) &&
+    !isForeignPersonaAvatar(persistent, targetUser as any) &&
+    (isKwesi || !isKwesiStoredPhoto(persistent))
+  ) {
     return persistent
   }
   // 3. Check user.avatar if not a generic placeholder and not belonging to another persona
-  if (targetUser?.avatar && !isDefaultPlaceholderAvatar(targetUser.avatar) && !isForeignPersonaAvatar(targetUser.avatar, targetUser as any)) {
+  if (
+    targetUser?.avatar &&
+    !isDefaultPlaceholderAvatar(targetUser.avatar) &&
+    !isForeignPersonaAvatar(targetUser.avatar, targetUser as any) &&
+    (isKwesi || !isKwesiStoredPhoto(targetUser.avatar))
+  ) {
     return targetUser.avatar
   }
   // 4. Check fallbackUrl if not a generic placeholder and not belonging to another persona
-  if (fallbackUrl && !isDefaultPlaceholderAvatar(fallbackUrl) && !isForeignPersonaAvatar(fallbackUrl, targetUser as any)) {
+  if (
+    fallbackUrl &&
+    !isDefaultPlaceholderAvatar(fallbackUrl) &&
+    !isForeignPersonaAvatar(fallbackUrl, targetUser as any) &&
+    (isKwesi || !isKwesiStoredPhoto(fallbackUrl))
+  ) {
     return fallbackUrl
   }
   // 5. Return the user's appropriate default portrait / personal signature avatar based strictly on who is logged in
@@ -334,15 +382,24 @@ export function getExplicitStoredUser(): UserProfile | null {
       const persistentCover = loadPersistentCover({ ...merged, email })
 
       // Prioritize custom uploaded avatar strictly for this user account, rejecting any foreign persona portrait
-      const validMergedAvatar = !isDefaultPlaceholderAvatar(merged.avatar) && !isForeignPersonaAvatar(merged.avatar, { name: merged.name, email })
-        ? merged.avatar
-        : null
-      const validVaultAvatar = !isDefaultPlaceholderAvatar(vaultEntry?.avatar) && !isForeignPersonaAvatar(vaultEntry?.avatar, { name: merged.name, email })
-        ? vaultEntry!.avatar!
-        : null
+      const validMergedAvatar =
+        !isDefaultPlaceholderAvatar(merged.avatar) &&
+        !isForeignPersonaAvatar(merged.avatar, { name: merged.name, email }) &&
+        (isKwesi || !isKwesiStoredPhoto(merged.avatar))
+          ? merged.avatar
+          : null
+      const validVaultAvatar =
+        !isDefaultPlaceholderAvatar(vaultEntry?.avatar) &&
+        !isForeignPersonaAvatar(vaultEntry?.avatar, { name: merged.name, email }) &&
+        (isKwesi || !isKwesiStoredPhoto(vaultEntry?.avatar))
+          ? vaultEntry!.avatar!
+          : null
 
       const resolvedAvatar =
-        (merged.avatar && merged.avatar.startsWith('data:image/') && !isForeignPersonaAvatar(merged.avatar, { name: merged.name, email }))
+        (merged.avatar &&
+          merged.avatar.startsWith('data:image/') &&
+          !isForeignPersonaAvatar(merged.avatar, { name: merged.name, email }) &&
+          (isKwesi || !isKwesiStoredPhoto(merged.avatar)))
           ? merged.avatar
           : persistentAvatar
           ? persistentAvatar
@@ -407,8 +464,13 @@ export function saveStoredUser(user: UserProfile) {
     const userEmail = (user as any).email || (vaultEntry as any)?.email || ''
     const isAdmin = isSuperAdminUser({ name: user.name, email: userEmail })
 
+    const isKwesi = isExactKwesiUser({ name: user.name, email: userEmail })
     // Preserve custom avatar & cover photo strictly for this specific user account, never storing foreign persona portraits
-    if (!isDefaultPlaceholderAvatar(user.avatar) && !isForeignPersonaAvatar(user.avatar, { name: user.name, email: userEmail })) {
+    if (
+      !isDefaultPlaceholderAvatar(user.avatar) &&
+      !isForeignPersonaAvatar(user.avatar, { name: user.name, email: userEmail }) &&
+      (isKwesi || !isKwesiStoredPhoto(user.avatar))
+    ) {
       savePersistentAvatar(user.avatar, user)
     }
     if (!isDefaultPlaceholderCover(user.coverImage)) {
@@ -418,13 +480,20 @@ export function saveStoredUser(user: UserProfile) {
     const existingAvatar = loadPersistentAvatar(user)
     const existingCover = loadPersistentCover(user)
 
-    const safeAvatar = !isDefaultPlaceholderAvatar(user.avatar) && !isForeignPersonaAvatar(user.avatar, { name: user.name, email: userEmail })
-      ? user.avatar
-      : !isDefaultPlaceholderAvatar(vaultEntry?.avatar) && !isForeignPersonaAvatar(vaultEntry?.avatar, { name: user.name, email: userEmail })
-      ? vaultEntry!.avatar!
-      : (existingAvatar && !isForeignPersonaAvatar(existingAvatar, { name: user.name, email: userEmail })
-          ? existingAvatar
-          : getDefaultPortraitForUser({ ...user, email: userEmail } as any))
+    const safeAvatar =
+      !isDefaultPlaceholderAvatar(user.avatar) &&
+      !isForeignPersonaAvatar(user.avatar, { name: user.name, email: userEmail }) &&
+      (isKwesi || !isKwesiStoredPhoto(user.avatar))
+        ? user.avatar
+        : !isDefaultPlaceholderAvatar(vaultEntry?.avatar) &&
+          !isForeignPersonaAvatar(vaultEntry?.avatar, { name: user.name, email: userEmail }) &&
+          (isKwesi || !isKwesiStoredPhoto(vaultEntry?.avatar))
+        ? vaultEntry!.avatar!
+        : existingAvatar &&
+          !isForeignPersonaAvatar(existingAvatar, { name: user.name, email: userEmail }) &&
+          (isKwesi || !isKwesiStoredPhoto(existingAvatar))
+        ? existingAvatar
+        : getDefaultPortraitForUser({ ...user, email: userEmail } as any)
 
     const safeCover = !isDefaultPlaceholderCover(user.coverImage)
       ? user.coverImage

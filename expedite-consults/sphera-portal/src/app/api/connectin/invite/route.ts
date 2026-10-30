@@ -94,6 +94,7 @@ function buildRecipientInviteUrl(
         ? baseInviteLink
         : `https://www.connectln.app${baseInviteLink.startsWith("/") ? "" : "/"}${baseInviteLink}`
     )
+    url.pathname = "/connectin-login"
     url.searchParams.set("invite", "accept")
     if (params.cid) {
       url.searchParams.set("cid", params.cid)
@@ -122,7 +123,7 @@ function buildRecipientInviteUrl(
     if (params.senderName) q.set("inviter", params.senderName)
     if (params.recipientName) q.set("invitedName", params.recipientName)
     if (params.recipientEmail) q.set("invitedEmail", params.recipientEmail)
-    return `https://www.connectln.app/connectin?${q.toString()}`
+    return `https://www.connectln.app/connectin-login?${q.toString()}`
   }
 }
 
@@ -136,7 +137,8 @@ export async function GET(req: NextRequest) {
   const store = getInviteStore()
 
   if (cid && store.has(cid)) {
-    return NextResponse.json({ success: true, invite: store.get(cid) })
+    const rec = store.get(cid)
+    return NextResponse.json({ success: true, invite: rec, record: rec })
   }
 
   // Search most recent matching invite by email, phone, or inviter
@@ -148,7 +150,8 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     success: Boolean(matched),
-    invite: matched || null
+    invite: matched || null,
+    record: matched || null
   })
 }
 

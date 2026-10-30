@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
@@ -23,7 +23,7 @@ import {
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 import { DEMO_AUTH_PERSONAS, AuthPersona } from "@/components/connectln/ConnectInAuthModal"
 import { saveStoredUser, saveStoredSessionRoute, getVaultProfileForUser, getDefaultPortraitForUser } from "@/lib/connectin-storage"
-import { createUniqueUserProfile, resolveDisplayName, isSuperAdminUser, isDedicatedAdminAccount, isExactKwesiUser, isForeignPersonaAvatar } from "@/lib/connectin-profile"
+import { createUniqueUserProfile, createFreshInvitedUserProfile, generatePersonalSignatureAvatar, resolveDisplayName, isSuperAdminUser, isDedicatedAdminAccount, isExactKwesiUser, isForeignPersonaAvatar } from "@/lib/connectin-profile"
 import { PROFESSION_ENCLAVES, findProfessionById, findEnclaveById, getProfessionsByEnclave } from "@/lib/connectin-professions"
 import { ProfessionSearchPopout } from "@/components/connectln/ProfessionSearchPopout"
 import { ThemeColorSwitcher } from "@/components/theme/ThemeColorSwitcher"
@@ -86,6 +86,181 @@ export default function ConnectInLoginPage() {
 
   const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false)
   const [isMicrosoftModalOpen, setIsMicrosoftModalOpen] = useState(false)
+
+  // Invitation Context (when an invited recipient clicks an invitation link)
+  const [inviteContext, setInviteContext] = useState<{
+    inviterName: string
+    inviterHeadline: string
+    invitedName: string
+    invitedEmail: string
+    invitedPhone: string
+  } | null>(null)
+
+  const connectWithInviterInStorage = (inviterName: string, inviterHeadline?: string) => {
+    if (typeof window === "undefined" || !inviterName) return
+    try {
+      const raw = localStorage.getItem("connectin_my_custom_connections_v2")
+      const existing = raw ? JSON.parse(raw) : []
+      const normInviter = inviterName.toLowerCase().trim()
+      const isKwesiInviter = normInviter.includes("kwesi")
+      const inviterConn = {
+        id: `conn_inviter_${Date.now()}`,
+        name: inviterName,
+        headline:
+          inviterHeadline ||
+          (isKwesiInviter
+            ? "Founder & Chief Security Officer @ Expedite Consults · Zero Trust & AI Architecture"
+            : "Verified ConnectLn Member · 1st-Degree Inviter"),
+        avatar: generatePersonalSignatureAvatar({ name: inviterName, email: "" }),
+        connectedSince: "Connected via direct invitation",
+        capabilities: isKwesiInviter
+          ? ["Zero Trust Architecture", "GovCloud Security", "Enterprise Leadership"]
+          : ["Verified Peer", "Direct Connection"],
+        verifiedBadges: ["✓ Verified Inviter", "1st Degree"],
+        mutualCount: 1,
+        isOnline: true
+      }
+      const updated = [
+        inviterConn,
+        ...(Array.isArray(existing) ? existing.filter((c: any) => String(c?.name || "").toLowerCase().trim() !== normInviter) : [])
+      ]
+      localStorage.setItem("connectin_my_custom_connections_v2", JSON.stringify(updated))
+    } catch {
+      // ignore storage errors
+    }
+  }
+
+  // Detect invitation links on mount, immediately clear any existing inviter session, and force fresh authentication
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const urlParams = new URLSearchParams(window.location.search)
+    const inviteParam = urlParams.get("invite")
+    const invitedEmailParam = (urlParams.get("invitedEmail") || "").trim()
+    const invitedNameParam = (urlParams.get("invitedName") || "").trim()
+    const invitedPhoneParam = (urlParams.get("invitedPhone") || "").trim()
+    const inviterParam = (urlParams.get("inviter") || "").trim()
+    const inviterHeadlineParam = (urlParams.get("inviterHeadline") || "").trim()
+    const refParam = (urlParams.get("ref") || "").trim()
+    const cidParam = (urlParams.get("cid") || "").trim()
+
+    const isInvite = Boolean(
+      inviteParam === "accept" ||
+      invitedEmailParam ||
+      invitedNameParam ||
+      invitedPhoneParam ||
+      inviterParam ||
+      refParam ||
+      cidParam
+    )
+
+    if (!isInvite) return
+
+    // 1. Strictly clear any existing inviter session/cookies/avatar so the inviter's credentials or face are NEVER used
+    try {
+      localStorage.removeItem("connectin_user_profile")
+      localStorage.removeItem("connectin_user_v1")
+      localStorage.removeItem("connectin_verified")
+      localStorage.removeItem("connectin_persistent_avatar_v1")
+      localStorage.setItem("connectin_is_signed_out", "true")
+      sessionStorage.removeItem("connectin_authenticated")
+    } catch {}
+    fetch("/api/connectin/auth/logout", { method: "POST" }).catch(() => {})
+
+    const formattedRefName = refParam
+      ? refParam
+          .split(/[-_]+/)
+          .filter(Boolean)
+          .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+          .join(" ")
+      : ""
+    const resolvedInviterName = inviterParam || formattedRefName || "A ConnectLn Member"
+
+    const isPlaceholderName = (n?: string) => {
+      const s = (n || "").trim().toLowerCase()
+      return !s || s.startsWith("invited ") || s === "connectin member" || s === "new connectln member"
+    }
+
+    let resolvedRecipientName = !isPlaceholderName(invitedNameParam) ? invitedNameParam : ""
+    let resolvedRecipientEmail = invitedEmailParam
+
+    // Check local outbound invite log if name wasn't in URL
+    if (!resolvedRecipientName) {
+      try {
+        const rawOutbound = localStorage.getItem("connectin_my_outbound_invites_v2")
+        const parsedOutbound = rawOutbound ? JSON.parse(rawOutbound) : []
+        if (Array.isArray(parsedOutbound)) {
+          for (const item of parsedOutbound) {
+            if (!item) continue
+            const matchCid = cidParam && cidParam !== "live" && item.cid === cidParam
+            const matchEmail = resolvedRecipientEmail && String(item.email || "").toLowerCase().trim() === resolvedRecipientEmail.toLowerCase()
+            const matchPhone = invitedPhoneParam && String(item.phone || "").replace(/[^\d+]/g, "") === invitedPhoneParam.replace(/[^\d+]/g, "")
+            if (matchCid || matchEmail || matchPhone) {
+              const cleaned = String(item.name || "").replace(/^Invited Colleague\s*\(.*\)$/i, "").trim()
+              if (cleaned && !isPlaceholderName(cleaned) && cleaned.toLowerCase() !== resolvedInviterName.toLowerCase()) {
+                resolvedRecipientName = cleaned
+                if (!resolvedRecipientEmail && item.email) resolvedRecipientEmail = String(item.email).trim()
+                break
+              }
+            }
+          }
+        }
+      } catch {}
+    }
+
+    const applyPreFills = (nameVal: string, emailVal: string, phoneVal: string) => {
+      const cleanName = !isPlaceholderName(nameVal) ? nameVal.trim() : ""
+      const cleanEmail = emailVal.trim()
+      const isFounderDefaultEmail =
+        cleanEmail.toLowerCase() === "asiedudanquah@gmail.com" ||
+        cleanEmail.toLowerCase() === "kasiedu@expedite-consults.com" ||
+        cleanEmail.toLowerCase() === "kasiedu@expediteconsults.com"
+
+      if (cleanName && cleanName.toLowerCase() !== "kwesi asiedu") {
+        const parts = cleanName.split(/\s+/)
+        setJoinFirstName(parts[0] || "")
+        setJoinLastName(parts.slice(1).join(" ") || "")
+        setSignInName(cleanName)
+      }
+      if (cleanEmail && !isFounderDefaultEmail) {
+        setJoinEmail(cleanEmail)
+        setSignInEmail(cleanEmail)
+      }
+      if (phoneVal) {
+        setJoinPhone(phoneVal)
+        setSignInPhone(phoneVal)
+      }
+    }
+
+    setActiveView("join")
+    setInviteContext({
+      inviterName: resolvedInviterName,
+      inviterHeadline: inviterHeadlineParam || "Verified ConnectLn Professional",
+      invitedName: resolvedRecipientName,
+      invitedEmail: resolvedRecipientEmail,
+      invitedPhone: invitedPhoneParam
+    })
+    applyPreFills(resolvedRecipientName, resolvedRecipientEmail, invitedPhoneParam)
+
+    // Also query server-side invite record if recipient name wasn't in URL
+    if (!resolvedRecipientName) {
+      const q = new URLSearchParams()
+      if (cidParam) q.set("cid", cidParam)
+      if (resolvedRecipientEmail) q.set("email", resolvedRecipientEmail)
+      if (invitedPhoneParam) q.set("phone", invitedPhoneParam)
+      if (resolvedInviterName) q.set("inviter", resolvedInviterName)
+      fetch(`/api/connectin/invite?${q.toString()}`, { cache: "no-store" })
+        .then(r => (r.ok ? r.json() : null))
+        .then(data => {
+          const srvName = (data?.record?.recipientName || "").trim()
+          const srvEmail = (data?.record?.recipients?.[0] || "").trim()
+          if (srvName && !isPlaceholderName(srvName)) {
+            setInviteContext(prev => prev ? { ...prev, invitedName: srvName, invitedEmail: prev.invitedEmail || srvEmail } : prev)
+            applyPreFills(srvName, resolvedRecipientEmail || (srvEmail.includes("@") ? srvEmail : ""), invitedPhoneParam)
+          }
+        })
+        .catch(() => {})
+    }
+  }, [])
 
   // Direct Google Identity Services Authentication (accounts.google.com)
   const handleGoogleSignIn = () => {
@@ -226,17 +401,26 @@ export default function ConnectInLoginPage() {
       const effectiveProfessionId = selectedProf?.id || vaultProfile?.professionId || data.profile?.professionId
       const effectiveEnclave = selectedProf?.enclaveId || vaultProfile?.professionEnclave || data.profile?.professionEnclave
 
-      const freshProfile = createUniqueUserProfile({
-        name: finalName,
-        email: signInEmail,
-        role: "personal",
-        professionId: effectiveProfessionId,
-        professionEnclave: effectiveEnclave
-      })
+      const freshProfile = inviteContext
+        ? createFreshInvitedUserProfile({
+            name: finalName,
+            email: signInEmail,
+            phone: signInPhone,
+            professionId: effectiveProfessionId,
+            professionEnclave: effectiveEnclave,
+            inviterName: inviteContext.inviterName
+          })
+        : createUniqueUserProfile({
+            name: finalName,
+            email: signInEmail,
+            role: "personal",
+            professionId: effectiveProfessionId,
+            professionEnclave: effectiveEnclave
+          })
 
-      const baseProfile = data.profile || freshProfile
+      const baseProfile = inviteContext ? freshProfile : (data.profile || freshProfile)
 
-      const generatedDomainProfile = selectedProf ? createUniqueUserProfile({
+      const generatedDomainProfile = selectedProf && !inviteContext ? createUniqueUserProfile({
         name: finalName,
         email: signInEmail,
         professionId: selectedProf.id,
@@ -244,48 +428,65 @@ export default function ConnectInLoginPage() {
         role: "personal"
       }) : null
 
-      const candidateAvatar = vaultProfile?.avatar || data.profile?.avatar || baseProfile.avatar
+      const candidateAvatar = inviteContext
+        ? freshProfile.avatar
+        : (vaultProfile?.avatar || data.profile?.avatar || baseProfile.avatar)
       const safeAvatar = (candidateAvatar && !isForeignPersonaAvatar(candidateAvatar, { name: finalName, email: signInEmail }))
         ? candidateAvatar
         : getDefaultPortraitForUser({ name: finalName, email: signInEmail, professionEnclave: effectiveEnclave } as any)
 
-      const isAdminUser = isSuperAdminUser({ name: finalName, email: signInEmail })
-      const shouldOpenAdminPortal = isDedicatedAdminAccount({
+      const isAdminUser = !inviteContext && isSuperAdminUser({ name: finalName, email: signInEmail })
+      const shouldOpenAdminPortal = !inviteContext && isDedicatedAdminAccount({
         name: finalName,
         email: signInEmail,
         professionId: signInProfessionId
       })
 
-      const profileToSave = {
-        ...baseProfile,
-        ...(vaultProfile || {}),
-        name: finalName,
-        email: signInEmail,
-        avatar: safeAvatar,
-        role: isAdminUser ? "admin" : "personal",
-        roles: isAdminUser ? ["SUPER_ADMIN"] : ["NORMAL_USER"],
-        id: data.profile?.userId || data.user?.id || data.profile?.id || vaultProfile?.id || baseProfile.id,
-        ...(selectedProf && generatedDomainProfile ? {
-          profession: selectedProf.title,
-          professionId: selectedProf.id,
-          professionCategory: selectedProf.categoryName,
-          professionEnclave: selectedProf.enclaveId,
-          headline: explicitProf ? selectedProf.defaultHeadline : (vaultProfile?.headline || selectedProf.defaultHeadline),
-          experience: (vaultProfile?.experience && vaultProfile.experience.length > 0 && !explicitProf) ? vaultProfile.experience : generatedDomainProfile.experience,
-          certifications: (vaultProfile?.certifications && vaultProfile.certifications.length > 0 && !explicitProf) ? vaultProfile.certifications : generatedDomainProfile.certifications,
-          skills: (vaultProfile?.skills && vaultProfile.skills.length > 0 && !explicitProf) ? vaultProfile.skills : generatedDomainProfile.skills,
-          coverImage: vaultProfile?.coverImage || generatedDomainProfile.coverImage,
-          about: (vaultProfile?.about && !explicitProf) ? vaultProfile.about : generatedDomainProfile.about
-        } : {})
+      const profileToSave = inviteContext
+        ? {
+            ...freshProfile,
+            name: finalName,
+            email: signInEmail,
+            avatar: safeAvatar,
+            role: "personal" as const,
+            roles: ["NORMAL_USER"],
+            id: data.profile?.userId || data.user?.id || data.profile?.id || freshProfile.id
+          }
+        : {
+            ...baseProfile,
+            ...(vaultProfile || {}),
+            name: finalName,
+            email: signInEmail,
+            avatar: safeAvatar,
+            role: isAdminUser ? "admin" : "personal",
+            roles: isAdminUser ? ["SUPER_ADMIN"] : ["NORMAL_USER"],
+            id: data.profile?.userId || data.user?.id || data.profile?.id || vaultProfile?.id || baseProfile.id,
+            ...(selectedProf && generatedDomainProfile ? {
+              profession: selectedProf.title,
+              professionId: selectedProf.id,
+              professionCategory: selectedProf.categoryName,
+              professionEnclave: selectedProf.enclaveId,
+              headline: explicitProf ? selectedProf.defaultHeadline : (vaultProfile?.headline || selectedProf.defaultHeadline),
+              experience: (vaultProfile?.experience && vaultProfile.experience.length > 0 && !explicitProf) ? vaultProfile.experience : generatedDomainProfile.experience,
+              certifications: (vaultProfile?.certifications && vaultProfile.certifications.length > 0 && !explicitProf) ? vaultProfile.certifications : generatedDomainProfile.certifications,
+              skills: (vaultProfile?.skills && vaultProfile.skills.length > 0 && !explicitProf) ? vaultProfile.skills : generatedDomainProfile.skills,
+              coverImage: vaultProfile?.coverImage || generatedDomainProfile.coverImage,
+              about: (vaultProfile?.about && !explicitProf) ? vaultProfile.about : generatedDomainProfile.about
+            } : {})
+          }
+
+      if (inviteContext?.inviterName) {
+        connectWithInviterInStorage(inviteContext.inviterName, inviteContext.inviterHeadline)
       }
 
-      const targetTab = shouldOpenAdminPortal ? 'adminiam' : 'home'
-      const targetUrl = shouldOpenAdminPortal ? '/connectin-admin' : '/connectin'
+      const targetTab = shouldOpenAdminPortal ? 'adminiam' : (inviteContext ? 'network' : 'home')
+      const targetUrl = shouldOpenAdminPortal ? '/connectin-admin' : (inviteContext ? '/connectin?tab=network' : '/connectin')
 
       saveStoredUser(profileToSave)
       saveStoredSessionRoute(targetTab, 'personal')
       if (typeof window !== "undefined") {
         localStorage.removeItem("connectin_is_signed_out")
+        localStorage.setItem("connectin_verified", "true")
         sessionStorage.setItem("connectin_authenticated", "true")
       }
 
@@ -411,47 +612,54 @@ export default function ConnectInLoginPage() {
       }
 
       const effectiveEnclave = data.profile?.professionEnclave || selectedProf?.enclaveId || joinEnclaveId
-      const targetTab = 'home'
+      const targetTab = inviteContext ? 'network' : 'home'
       const targetWorkspace = 'personal'
 
-      const freshJoinProfile = createUniqueUserProfile({
+      // Always create a 100% fresh profile for newly joining / invited users so they never inherit Kwesi's experience or face
+      const freshJoinProfile = createFreshInvitedUserProfile({
         name: resolvedName,
         email: joinEmail,
         phone: joinPhone,
-        role: joinRole,
         professionId: joinProfessionId,
+        professionEnclave: effectiveEnclave,
+        inviterName: inviteContext?.inviterName
+      })
+
+      const safeJoinAvatar = generatePersonalSignatureAvatar({
+        name: resolvedName,
+        email: joinEmail,
         professionEnclave: effectiveEnclave
       })
 
-      const joinCandidateAvatar = data.profile?.avatar || freshJoinProfile.avatar
-      const safeJoinAvatar = (joinCandidateAvatar && !isForeignPersonaAvatar(joinCandidateAvatar, { name: resolvedName, email: joinEmail }))
-        ? joinCandidateAvatar
-        : getDefaultPortraitForUser({ name: resolvedName, email: joinEmail, professionEnclave: effectiveEnclave } as any)
-
       const profileToSave = {
-        ...(data.profile || freshJoinProfile),
+        ...freshJoinProfile,
         name: resolvedName,
         email: joinEmail,
         avatar: safeJoinAvatar,
         role: "personal" as const,
         roles: ["NORMAL_USER"],
         id: data.profile?.userId || data.user?.id || data.profile?.id || freshJoinProfile.id,
-        profession: data.profile?.profession || selectedProf?.title || 'Master Carpenter (Framing & Finish Joinery)',
-        professionId: data.profile?.professionId || selectedProf?.id || 'carpenter',
-        professionCategory: data.profile?.professionCategory || selectedProf?.categoryName || 'Skilled Trades & Construction',
+        profession: selectedProf?.title || freshJoinProfile.profession || 'Master Carpenter (Framing & Finish Joinery)',
+        professionId: selectedProf?.id || freshJoinProfile.professionId || 'carpenter',
+        professionCategory: selectedProf?.categoryName || freshJoinProfile.professionCategory || 'Skilled Trades & Construction',
         professionEnclave: effectiveEnclave
+      }
+
+      if (inviteContext?.inviterName) {
+        connectWithInviterInStorage(inviteContext.inviterName, inviteContext.inviterHeadline)
       }
 
       saveStoredUser(profileToSave)
       saveStoredSessionRoute(targetTab, targetWorkspace)
       if (typeof window !== "undefined") {
         localStorage.removeItem("connectin_is_signed_out")
+        localStorage.setItem("connectin_verified", "true")
         sessionStorage.setItem("connectin_authenticated", "true")
       }
 
-      setSuccessMessage(`✓ Welcome to the ${selectedProf?.categoryName || 'ConnectIn'} Enclave, ${profileToSave.name}! Launching your segregated workspace...`)
+      setSuccessMessage(`✓ Welcome to ConnectLn, ${profileToSave.name}! Launching your fresh profile...`)
       setTimeout(() => {
-        window.location.href = "/connectin"
+        window.location.href = inviteContext ? "/connectin?tab=network" : "/connectin"
       }, 150)
     } catch (err: any) {
       setSuccessMessage(null)
@@ -570,6 +778,23 @@ export default function ConnectInLoginPage() {
       {/* ─── 2. MAIN CENTER CONTENT CARD ─── */}
       <main className="flex-1 flex flex-col items-center justify-center p-3 sm:p-6 my-2 sm:my-4 w-full">
         <div className="w-full max-w-[420px] bg-white dark:bg-zinc-900 rounded-2xl sm:rounded-3xl border border-zinc-200 dark:border-zinc-800 p-5 sm:p-8 shadow-xl space-y-5 sm:space-y-6">
+
+          {/* Invitation Banner when opened from an email/SMS invitation link */}
+          {inviteContext && (
+            <div className="rounded-2xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/80 p-3.5 text-left space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-extrabold text-[#0A66C2] dark:text-sky-300 flex items-center gap-1.5">
+                  <span>🤝 Personal Invitation from {inviteContext.inviterName}</span>
+                </span>
+                <span className="text-[10px] font-mono bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full font-bold">
+                  Fresh Profile
+                </span>
+              </div>
+              <p className="text-[11px] text-zinc-600 dark:text-zinc-300 leading-snug">
+                Please authenticate with your own credentials below to create your fresh ConnectLn profile and connect with <strong>{inviteContext.inviterName}</strong>.
+              </p>
+            </div>
+          )}
 
           {/* Feedback Messages */}
           {errorMessage && (
@@ -1032,7 +1257,7 @@ export default function ConnectInLoginPage() {
                           required
                           value={joinFirstName}
                           onChange={(e) => setJoinFirstName(e.target.value)}
-                          placeholder="Kwesi"
+                          placeholder="First name"
                           className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2.5 text-base sm:text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                         />
                       </div>
@@ -1043,7 +1268,7 @@ export default function ConnectInLoginPage() {
                           required
                           value={joinLastName}
                           onChange={(e) => setJoinLastName(e.target.value)}
-                          placeholder="Asiedu"
+                          placeholder="Last name"
                           className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2.5 text-base sm:text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                         />
                       </div>
@@ -1057,7 +1282,7 @@ export default function ConnectInLoginPage() {
                         required
                         value={joinEmail}
                         onChange={(e) => setJoinEmail(e.target.value)}
-                        placeholder="asiedudanquah@gmail.com"
+                        placeholder="name@company.com"
                         className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2.5 text-base sm:text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                       />
                     </div>
@@ -1467,6 +1692,20 @@ export default function ConnectInLoginPage() {
         initialEmail={signInEmail || joinEmail}
         initialName={signInName || `${joinFirstName} ${joinLastName}`.trim()}
         professionId={signInProfessionId !== "auto_detect" ? signInProfessionId : joinProfessionId}
+        onSuccess={(ssoUser) => {
+          if (inviteContext) {
+            const fresh = createFreshInvitedUserProfile({
+              name: ssoUser?.name || signInName || `${joinFirstName} ${joinLastName}`.trim(),
+              email: ssoUser?.email || signInEmail || joinEmail,
+              professionId: joinProfessionId,
+              professionEnclave: joinEnclaveId,
+              inviterName: inviteContext.inviterName
+            })
+            saveStoredUser(fresh)
+            saveStoredSessionRoute("network", "personal")
+            connectWithInviterInStorage(inviteContext.inviterName, inviteContext.inviterHeadline)
+          }
+        }}
       />
 
       <MicrosoftAuthModal
@@ -1475,6 +1714,20 @@ export default function ConnectInLoginPage() {
         initialEmail={signInEmail || joinEmail}
         initialName={signInName || `${joinFirstName} ${joinLastName}`.trim()}
         professionId={signInProfessionId !== "auto_detect" ? signInProfessionId : joinProfessionId}
+        onSuccess={(ssoUser) => {
+          if (inviteContext) {
+            const fresh = createFreshInvitedUserProfile({
+              name: ssoUser?.name || signInName || `${joinFirstName} ${joinLastName}`.trim(),
+              email: ssoUser?.email || signInEmail || joinEmail,
+              professionId: joinProfessionId,
+              professionEnclave: joinEnclaveId,
+              inviterName: inviteContext.inviterName
+            })
+            saveStoredUser(fresh)
+            saveStoredSessionRoute("network", "personal")
+            connectWithInviterInStorage(inviteContext.inviterName, inviteContext.inviterHeadline)
+          }
+        }}
       />
     </div>
   )

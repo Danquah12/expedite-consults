@@ -80,8 +80,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 3. If user doesn't exist yet, stage or create in DB
-    const existingUser = connectinDb.findUserByEmail(cleanEmail)
+    // 3. If user with this email AND name doesn't exist yet, create a fresh user & profile in DB
+    const matchingEmailUsers = connectinDb.getUsers().filter(u => u.email.toLowerCase().trim() === cleanEmail)
+    const existingUser = matchingEmailUsers.find(u => {
+      const p = connectinDb.findProfileByUserId(u.id)
+      return p && p.name.toLowerCase().trim() === fullName.toLowerCase().trim()
+    })
     if (!existingUser) {
       const created = connectinDb.createUser(
         {

@@ -1176,7 +1176,7 @@ export function ConnectInAuthModal({
                         required
                         value={joinFirstName}
                         onChange={(e) => setJoinFirstName(e.target.value)}
-                        placeholder="Kwesi"
+                        placeholder="First name"
                         className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-base sm:text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                       />
                     </div>
@@ -1187,7 +1187,7 @@ export function ConnectInAuthModal({
                         required
                         value={joinLastName}
                         onChange={(e) => setJoinLastName(e.target.value)}
-                        placeholder="Asiedu"
+                        placeholder="Last name"
                         className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-base sm:text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                       />
                     </div>
@@ -1200,7 +1200,7 @@ export function ConnectInAuthModal({
                       required
                       value={joinEmail}
                       onChange={(e) => setJoinEmail(e.target.value)}
-                      placeholder="asiedudanquah@gmail.com"
+                      placeholder="name@company.com"
                       className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-base sm:text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                     />
                   </div>
