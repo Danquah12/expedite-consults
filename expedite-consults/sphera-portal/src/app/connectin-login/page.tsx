@@ -479,8 +479,8 @@ export default function ConnectInLoginPage() {
         connectWithInviterInStorage(inviteContext.inviterName, inviteContext.inviterHeadline)
       }
 
-      const targetTab = shouldOpenAdminPortal ? 'adminiam' : (inviteContext ? 'network' : 'home')
-      const targetUrl = shouldOpenAdminPortal ? '/connectin-admin' : (inviteContext ? '/connectin?tab=network' : '/connectin')
+      const targetTab = shouldOpenAdminPortal ? 'adminiam' : 'home'
+      const targetUrl = shouldOpenAdminPortal ? '/connectin-admin' : '/connectin'
 
       saveStoredUser(profileToSave)
       saveStoredSessionRoute(targetTab, 'personal')
@@ -612,7 +612,7 @@ export default function ConnectInLoginPage() {
       }
 
       const effectiveEnclave = data.profile?.professionEnclave || selectedProf?.enclaveId || joinEnclaveId
-      const targetTab = inviteContext ? 'network' : 'home'
+      const targetTab = 'home'
       const targetWorkspace = 'personal'
 
       // Always create a 100% fresh profile for newly joining / invited users so they never inherit Kwesi's experience or face
@@ -657,9 +657,9 @@ export default function ConnectInLoginPage() {
         sessionStorage.setItem("connectin_authenticated", "true")
       }
 
-      setSuccessMessage(`✓ Welcome to ConnectLn, ${profileToSave.name}! Launching your fresh profile...`)
+      setSuccessMessage(`✓ Welcome to ConnectLn, ${profileToSave.name}! Launching your Home page...`)
       setTimeout(() => {
-        window.location.href = inviteContext ? "/connectin?tab=network" : "/connectin"
+        window.location.href = "/connectin"
       }, 150)
     } catch (err: any) {
       setSuccessMessage(null)
@@ -1702,7 +1702,7 @@ export default function ConnectInLoginPage() {
               inviterName: inviteContext.inviterName
             })
             saveStoredUser(fresh)
-            saveStoredSessionRoute("network", "personal")
+            saveStoredSessionRoute("home", "personal")
             connectWithInviterInStorage(inviteContext.inviterName, inviteContext.inviterHeadline)
           }
         }}
@@ -1724,7 +1724,7 @@ export default function ConnectInLoginPage() {
               inviterName: inviteContext.inviterName
             })
             saveStoredUser(fresh)
-            saveStoredSessionRoute("network", "personal")
+            saveStoredSessionRoute("home", "personal")
             connectWithInviterInStorage(inviteContext.inviterName, inviteContext.inviterHeadline)
           }
         }}
