@@ -1389,6 +1389,30 @@ export function getLanguageMatchedRemediation(
   return sorted;
 }
 
+const JAVA_ONLY_TEXT =
+  /JEP 290|ObjectInputFilter|ObjectInputStream|DocumentBuilderFactory|SAXParserFactory|PreparedStatement|setFeature\(|ClassLoader|\.readObject\(|JavaCompiler|Files\.copy|toRealPath|InetAddress/;
+const PYTHON_ONLY_TEXT = /\bpickle\b|defusedxml|lxml|cursor\.execute|subprocess\./;
+
+/**
+ * Removes implementation guidance that belongs to a different language family than the scanned
+ * source (e.g. Java JEP 290 text on a Python pickle finding) and substitutes a language-specific step.
+ */
+export function languageAwareValidationSteps(
+  steps: string[],
+  fileLang: string,
+  fallbackStep: string
+): string[] {
+  const lang = fileLang.toLowerCase();
+  const isJavaFamily = lang === "java" || lang === "kotlin" || lang === "c#";
+  const isPython = lang === "python";
+  const kept = steps.filter((s) => {
+    if (!isJavaFamily && JAVA_ONLY_TEXT.test(s)) return false;
+    if (!isPython && PYTHON_ONLY_TEXT.test(s)) return false;
+    return true;
+  });
+  return kept.length > 0 ? kept : [fallbackStep];
+}
+
 const CVSS_VECTORS_BY_CWE: Record<string, { vector: string; rationale: string }> = {
   "CWE-89": {
     vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
@@ -2225,7 +2249,11 @@ export function scanFilesWithEnterpriseEngines(params: {
             auditMeta.overrideFpLikelihood || (sanitizerDetected ? "High" : "Very Low"),
           compliance: rule.compliance,
           remediation: languageMatchedRemediation,
-          validationSteps: rule.validationSteps,
+          validationSteps: languageAwareValidationSteps(
+            rule.validationSteps,
+            fileLang,
+            `Add a ${fileLang} regression test proving the ${rule.cwe} sink rejects hostile input, then re-run the ${cxQuery} rule on this commit.`
+          ),
           slaDeadline: today,
           owner: "AppSec & Core Engineering",
           application: repoUrl.replace(/^https?:\/\/github\.com\//i, "") || "Live Scanned Codebase",
@@ -2384,7 +2412,11 @@ export function scanFilesWithEnterpriseEngines(params: {
           requestsSent: 0,
           rootCause: rule.rootCause,
           suggestedFix: languageMatchedRemediation[0]?.explanation || "Apply parameterization / input sanitization.",
-          regressionTest: rule.validationSteps[0] || "Verify sink rejects untrusted input.",
+          regressionTest: languageAwareValidationSteps(
+            rule.validationSteps,
+            fileLang,
+            `Add a ${fileLang} regression test proving the ${rule.cwe} sink rejects hostile input.`
+          )[0],
           rawSarifRecord: {
             schemaVersion: "2.1.0",
             toolDriver: "XTRIKE XQL + XTRIKE AST-Query",

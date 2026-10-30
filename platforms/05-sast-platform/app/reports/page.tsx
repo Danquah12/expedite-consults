@@ -1033,7 +1033,7 @@ export default function ReportEnginePage() {
                 {reportTitle}
               </h1>
               <p style={{ fontSize: 13, color: "#4a4239", lineHeight: 1.55 }}>
-                Comprehensive static application security testing (SAST), inter-procedural AST taint analysis, XTRIKE-Solver path feasibility verification, and 9-plugin compliance mapping across OWASP Top 10, CWE Top 25, MITRE ATT&amp;CK, CVSS v3.1/v4.0, NIST SP 800-53, and PTES.
+                Static application security testing (SAST) with single-function (intra-procedural) AST taint tracing, guard analysis, and 9-plugin taxonomy mapping across OWASP Top 10, CWE Top 25, MITRE ATT&amp;CK, CVSS v3.1/v4.0, NIST SP 800-53, and PTES. Cross-module (inter-procedural) call-graph analysis and runtime verification are not yet implemented; findings that depend on them are labelled candidates.
               </p>
             </div>
 
@@ -2207,7 +2207,7 @@ export default function ReportEnginePage() {
               {/* Live 10-Gate Measurable Acceptance Test Suite (Review Section 7) */}
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontSize: 12, fontWeight: 800, color: "#1f1b18", marginBottom: 6 }}>
-                  Measurable 10-Gate Release Acceptance Suite Execution Log (AT-CVSS-01 through AT-GATE-10)
+                  Measurable Release Acceptance Suite — Execution Environment per Gate (AT-CVSS-01 through AT-BENCHMARK-15; gates marked NOT_RUN have no execution record)
                 </div>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11.2 }}>
                   <thead>
@@ -2229,8 +2229,9 @@ export default function ReportEnginePage() {
                           <div style={{ fontWeight: 700, color: "#1f1b18" }}>{gate.testName}</div>
                           <div style={{ fontSize: 10.5, color: "#5c5349" }}>{gate.criterion}</div>
                         </td>
-                        <td style={{ border: "1px solid #ddd3c2", padding: "6px 8px", textAlign: "center", fontWeight: 800, color: gate.status === "PASS" ? "#2d6a4f" : "#9e2a2b", fontFamily: "monospace" }}>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "6px 8px", textAlign: "center", fontWeight: 800, color: gate.status === "PASS" ? "#2d6a4f" : gate.status === "NOT_RUN" ? "#996b1f" : "#9e2a2b", fontFamily: "monospace" }}>
                           {gate.status}
+                          <div style={{ fontSize: 9, fontWeight: 600, color: "#5c5349" }}>{gate.executionEnvironment}</div>
                         </td>
                         <td style={{ border: "1px solid #ddd3c2", padding: "6px 8px", fontFamily: "monospace", fontSize: 10.5 }}>
                           {gate.measuredMetric}

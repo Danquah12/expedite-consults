@@ -146,6 +146,50 @@ export function inferCvss31VectorForFinding(f: Partial<SASTFinding>): string {
   }
 }
 
+const PROVENANCE_STOPWORDS = new Set([
+  "request", "args", "get", "form", "json", "data", "req", "query", "body", "params", "param", "const", "let", "var",
+  "string", "int", "str", "self", "this", "new", "return", "await", "async", "def", "public", "private", "static",
+  "final", "true", "false", "null", "none", "requestparam", "pathvariable", "requestbody", "headers", "cookies",
+  "getparameter", "getheader", "input", "from", "import", "export", "function", "select", "where", "and", "or",
+]);
+
+function identifiersOf(text: string): string[] {
+  return (text.match(/[A-Za-z_][A-Za-z0-9_]*/g) || []).filter(
+    (t) => t.length > 2 && !PROVENANCE_STOPWORDS.has(t.toLowerCase())
+  );
+}
+
+/**
+ * Variable-provenance check: when the source expression names a variable (e.g. `user_id = request.args.get(..)`),
+ * that variable (or an alias assigned from it) must be visible in the sink, or a displayed assignment line must
+ * connect it to a sink identifier. Returns a description of the gap, or null when provenance is established
+ * (or cannot be assessed because the source names no variable).
+ */
+export function detectProvenanceGap(f: SASTFinding): string | null {
+  const src = f.source || "";
+  const lhs =
+    src.match(/^\s*(?:const|let|var|final)?\s*(?:[A-Za-z_<>\[\]]+\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*/)?.[1] ||
+    src.match(/@(?:RequestParam|PathVariable|RequestBody)\b[^)]*\)?\s*(?:[A-Za-z_<>\[\]]+\s+)?([A-Za-z_][A-Za-z0-9_]*)/)?.[1];
+  if (!lhs || PROVENANCE_STOPWORDS.has(lhs.toLowerCase())) return null;
+
+  const sinkIds = identifiersOf(f.sink || "");
+  if (sinkIds.includes(lhs)) return null;
+
+  const lines = [...(f.taintPath || []), ...(f.codeSnippet || "").split(/\r?\n/)];
+  const aliases = new Set<string>([lhs]);
+  for (let pass = 0; pass < 3; pass++) {
+    for (const ln of lines) {
+      const m = ln.match(/([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+)$/);
+      if (!m) continue;
+      const rhsIds = identifiersOf(m[2]);
+      if (rhsIds.some((id) => aliases.has(id))) aliases.add(m[1]);
+    }
+  }
+  if (sinkIds.some((id) => aliases.has(id))) return null;
+  if (sinkIds.length === 0) return null;
+  return `Source variable '${lhs}' is not shown reaching the sink identifiers (${sinkIds.slice(0, 4).join(", ")}); no connecting assignment in the displayed trace.`;
+}
+
 export interface TypedProofClassification {
   proofState: CanonicalProofState;
   evidenceType: EvidenceCategory;
@@ -382,6 +426,18 @@ export function resolveTypedProofClassification(
   }
 
   // 9. Genuine Pass-1 Source-to-Dangerous-Sink Taint Flows in Scanned Repository Code
+  const provenanceGap = detectProvenanceGap(f);
+  if (provenanceGap) {
+    return {
+      proofState: "NEEDS_MANUAL_VALIDATION",
+      evidenceType: "TAINT_DATAFLOW",
+      evidenceHeading: "Source-to-Sink Candidate — Variable Provenance Not Established",
+      modeledAssumptions: `Downgraded from DATAFLOW_CONFIRMED to candidate: ${provenanceGap}`,
+      controlDominanceSummary:
+        f.controlDominanceSummary ||
+        `Control Inspected: Variable assignment chain from source to sink at ${f.file}:${f.line} | Dominance: NOT_ESTABLISHED | Effectiveness: REQUIRES_PROVENANCE_TRACE`,
+    };
+  }
   return {
     proofState:
       f.proofState && f.proofState !== "DATAFLOW_CONFIRMED"
@@ -938,9 +994,11 @@ export interface AcceptanceTestExecutionResult {
   testId: string;
   testName: string;
   criterion: string;
-  status: "PASS" | "FAIL";
+  status: "PASS" | "FAIL" | "NOT_RUN";
   measuredMetric: string;
   evidenceArtifactRef: string;
+  /** What actually produced this result. Static checks never claim runtime behavior. */
+  executionEnvironment?: "STATIC_REPORT_CHECK" | "STATIC_PATTERN_CHECK" | "NOT_EXECUTED";
 }
 
 export interface ReportIntegrityIssue {
@@ -1162,7 +1220,7 @@ export function runTenGateReportAcceptanceSuite(
   const firstId = findings[0]?.id || "F-001";
   const lastId = findings[findings.length - 1]?.id || "F-027";
 
-  return [
+  const gates: AcceptanceTestExecutionResult[] = [
     {
       testId: "AT-CVSS-01",
       testName: "CVSS v3.1 Mathematical & Severity Consistency",
@@ -1197,7 +1255,7 @@ export function runTenGateReportAcceptanceSuite(
       criterion: "Classified under AUTHORIZATION_ENFORCEMENT (GUARD_ANALYZED) with compound principal ownership predicate & 2-user test (User A vs User B -> 403/404).",
       status: idorPass ? "PASS" : "FAIL",
       measuredMetric: fIdor
-        ? `${idorFindings.length}/${idorFindings.length} IDOR/BOLA findings (${fIdor.id}: ${fIdor.cwe}) classified GUARD_ANALYZED; compound id + userId/tenantId predicate & User A vs User B 403/404 test verified`
+        ? `${idorFindings.length}/${idorFindings.length} IDOR/BOLA findings (${fIdor.id}: ${fIdor.cwe}) classified GUARD_ANALYZED; remediation contains a compound id + userId/tenantId predicate. STATIC pattern check only — no two-user HTTP test was executed (403/404 behavior unverified).`
         : "No CWE-639/862 finding in scope",
       evidenceArtifactRef: fIdor
         ? `TC-IDOR-639 (${fIdor.file.split("/").pop()}:${fIdor.line})`
@@ -1209,7 +1267,7 @@ export function runTenGateReportAcceptanceSuite(
       criterion: "Validates HTTPS scheme, hostname allowlist, resolved DNS IP against RFC1918/169.254.169.254, and Redirect.NEVER / maxRedirects: 0.",
       status: ssrfPass ? "PASS" : "FAIL",
       measuredMetric: fSsrf
-        ? `${fSsrf.id} (CWE-918) enforces DNS IP validation (InetAddress/dns.lookup) + Redirect.NEVER / maxRedirects: 0`
+        ? `${fSsrf.id} (CWE-918): remediation text includes DNS IP validation + redirect disabling. STATIC pattern check only — no DNS/redirect behavior executed; DNS rebinding, IPv6 and connect-time validation are not covered.`
         : "No CWE-918 finding in scope",
       evidenceArtifactRef: fSsrf
         ? `TC-SSRF-918 (${fSsrf.file.split("/").pop()}:${fSsrf.line})`
@@ -1255,6 +1313,34 @@ export function runTenGateReportAcceptanceSuite(
       measuredMetric: `BLOCKED (${openBlockingCount} unmitigated Critical/High findings require remediation & sandbox verification)`,
       evidenceArtifactRef: "Section 1 & Section 5 Release Gate Policy",
     },
+  ];
+
+  const notRun = (testId: string, testName: string, criterion: string): AcceptanceTestExecutionResult => ({
+    testId,
+    testName,
+    criterion,
+    status: "NOT_RUN",
+    measuredMetric: "Not executed: no execution record exists for this gate. Release remains blocked.",
+    evidenceArtifactRef: "none",
+    executionEnvironment: "NOT_EXECUTED",
+  });
+
+  const labelled = gates.map((g) => ({
+    ...g,
+    executionEnvironment:
+      g.executionEnvironment ??
+      (["AT-PROOF-06", "AT-TRACE-02", "AT-CVSS-01", "AT-REM-08", "AT-SARIF-09", "AT-RUNTIME-07", "AT-GATE-10"].includes(g.testId)
+        ? ("STATIC_REPORT_CHECK" as const)
+        : ("STATIC_PATTERN_CHECK" as const)),
+  }));
+
+  return [
+    ...labelled,
+    notRun("AT-PATCH-11", "Generated Patch Compilation & Execution", "Each generated patch compiles / type-checks and its unit tests pass in the matching language environment."),
+    notRun("AT-REGRESSION-12", "Vulnerability Regression & Functionality", "Original exploit condition no longer reproduces and legitimate behavior is preserved."),
+    notRun("AT-CROSSMODULE-13", "Inter-Procedural Source-to-Sink Verification", "Cross-function / cross-module / async taint chains are proven with a call graph (current engine is intra-procedural)."),
+    notRun("AT-EVIDENCE-14", "Evidence Provenance & Execution-Record Integrity", "Every claimed test result references a stored execution record with timestamp and artifact digest."),
+    notRun("AT-BENCHMARK-15", "Independent Benchmark Evaluation", "Held-out vulnerable and safe fixtures, with raw expected-vs-actual results and reproducible command."),
   ];
 }
 

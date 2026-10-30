@@ -979,6 +979,49 @@ export function generateDeepReEnumeratedFindings(params: {
     return tpl.variants.Node;
   };
 
+  // Language-specific remediation prose: template summaries are written against Java APIs, so
+  // Python / Node findings must use their own library-accurate guidance (never Java API names).
+  const NON_JAVA_SUMMARIES: Record<string, { python: string; node: string }> = {
+    "CWE-89": {
+      python: "Never build SQL with f-strings or concatenation from stored values. Allowlist the column identifier and bind the scalar value with the driver's parameter style (%s for psycopg2/MySQLdb, ? for sqlite3).",
+      node: "Never interpolate stored values into SQL. Allowlist the column identifier and bind the scalar value with positional parameters ($1 for pg, ? for mysql2).",
+    },
+    "CWE-502": {
+      python: "Never call pickle.loads() on queue or network data. Parse JSON and validate it against a strict schema (e.g., Pydantic) instead of a native deserializer.",
+      node: "Never pass queue payloads to a native unserialize. Parse JSON and validate it against a strict schema (e.g., Zod).",
+    },
+    "CWE-611": {
+      python: "Use defusedxml, or construct lxml.etree.XMLParser(resolve_entities=False, no_network=True, load_dtd=False) and reject DOCTYPE declarations.",
+      node: "Disable entity substitution and DTD loading (libxmljs noent:false, dtdload:false, nonet:true) or use a non-expanding parser such as fast-xml-parser with processEntities:false.",
+    },
+    "CWE-22": {
+      python: "Resolve each archive member with os.path.realpath and verify os.path.commonpath([base, dest]) == base before extracting; reject absolute paths and '..' segments.",
+      node: "Resolve each archive entry with path.resolve(baseDir, entry.entryName) and verify it starts with baseDir + path.sep before writing.",
+    },
+    "CWE-327": {
+      python: "Replace modes.ECB() with AESGCM and a unique 12-byte os.urandom nonce per encryption; verify the authentication tag on decrypt.",
+      node: "Replace aes-256-ecb with aes-256-gcm using a unique 12-byte crypto.randomBytes IV and verify the auth tag on decrypt.",
+    },
+    "CWE-347": {
+      python: "Verify the JWT with jwt.decode(token, key, algorithms=['RS256'], issuer=..., audience=...) instead of verify_signature=False.",
+      node: "Verify with jwt.verify(token, key, { algorithms: ['RS256'], issuer, audience }) instead of jwt.decode().",
+    },
+    "CWE-915": {
+      python: "Validate the request body against an explicit schema of editable fields before updating; never unpack request.json into the ORM update.",
+      node: "Parse the body with an explicit DTO schema and update only allowlisted fields; never spread req.body into the ORM call.",
+    },
+    "CWE-639": {
+      python: "Scope every lookup by both the object id and the authenticated principal's tenant_id (get_object_or_404(..., tenant_id=request.user.tenant_id)).",
+      node: "Scope every lookup by both the object id and req.user.tenantId and return 404 on mismatch.",
+    },
+  };
+  const summaryFor = (tpl: DeepReEnumTemplate): string => {
+    if (language === "Java" || language === "Kotlin" || language === "C#") return tpl.remediationSummary;
+    const alt = NON_JAVA_SUMMARIES[tpl.cwe];
+    if (!alt) return tpl.remediationSummary;
+    return language === "Python" || language === "Ruby" ? alt.python : alt.node;
+  };
+
   const deepTemplates: DeepReEnumTemplate[] = [
     {
       cwe: "CWE-89",
@@ -1425,7 +1468,7 @@ export function generateDeepReEnumeratedFindings(params: {
       ],
       executiveSummary: `${tpl.passType} identified ${tpl.title} at ${resolvedFilePath}:${tpl.line} (${language}). Classified as an architectural candidate hypothesis (Isolated runtime sandbox reproduction: NOT_RUN).`,
       businessImpact: "Represents a second-order or architectural weakness candidate that should be evaluated and remediated alongside primary Pass-1 findings.",
-      rootCause: tpl.remediationSummary,
+      rootCause: summaryFor(tpl),
       falsePositiveLikelihood: "Very Low",
       compliance: [
         { framework: "OWASP Top 10", reference: tpl.owasp, description: tpl.owaspCategory },
@@ -1438,12 +1481,12 @@ export function generateDeepReEnumeratedFindings(params: {
           platform: (["Java", "Python", "Node.js", "TypeScript", "JavaScript", "Go", "C#", "PHP", "Ruby", "Kotlin", "Swift"].includes(language)
             ? language
             : "Node.js") as Remediation["platform"],
-          explanation: tpl.remediationSummary,
+          explanation: summaryFor(tpl),
           code: `${variant.codeSnippet}\n\n${variant.remediationCode}`,
         },
       ],
       validationSteps: [
-        tpl.remediationSummary,
+        summaryFor(tpl),
         `Verify remediation in ${resolvedFilePath}:${tpl.line} with unit/integration regression tests.`,
       ],
       slaDeadline: today,
@@ -1569,7 +1612,7 @@ export function generateDeepReEnumeratedFindings(params: {
       reproducible: true,
       runtimeCostMs: 180,
       requestsSent: 0,
-      rootCause: tpl.remediationSummary,
+      rootCause: summaryFor(tpl),
       suggestedFix: variant.remediationCode,
       regressionTest: `Verify ${sinkId} is remediated at ${resolvedFilePath}:${tpl.line}`,
       rawSarifRecord: {
