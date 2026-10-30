@@ -20,7 +20,7 @@ export interface BenchmarkFixture {
   vulnerable: boolean;
   /** true when a correct detection requires following data across functions or files */
   interprocedural?: boolean;
-  language: "Python" | "JavaScript" | "Java";
+  language: "Python" | "JavaScript" | "Java" | "C#";
   description: string;
   files: { path: string; content: string }[];
 }
@@ -560,5 +560,128 @@ app.get('/invoice', (req, res) => {
     }
 }
 ` }],
+  },
+  {
+    id: "HO-CS-SQLI-01",
+    split: "held_out",
+    category: "SQL injection",
+    cwe: "CWE-89",
+    vulnerable: true,
+    language: "C#",
+    description: "ASP.NET Core [FromQuery] parameter concatenated into SqlCommand",
+    files: [{ path: "Controllers/SqlInjectionController.cs", content: `using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
+public class SqlInjectionController : ControllerBase {
+    public IActionResult Search([FromQuery] string userFilter, SqlConnection conn) {
+        var cmd = new SqlCommand("SELECT * FROM Invoices WHERE Customer = '" + userFilter + "'", conn);
+        return Ok(cmd.ExecuteReader());
+    }
+}
+` }],
+  },
+  {
+    id: "HO-CS-SQLI-02",
+    split: "held_out",
+    category: "SQL injection",
+    cwe: "CWE-89",
+    vulnerable: false,
+    language: "C#",
+    description: "ASP.NET Core SqlCommand with parameterized @customer placeholder and SqlParameter",
+    files: [{ path: "Controllers/SafeSqlController.cs", content: `using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
+public class SafeSqlController : ControllerBase {
+    public IActionResult Search([FromQuery] string userFilter, SqlConnection conn) {
+        using var cmd = new SqlCommand("SELECT * FROM Invoices WHERE Customer = @customer", conn);
+        cmd.Parameters.AddWithValue("@customer", userFilter);
+        return Ok(cmd.ExecuteReader());
+    }
+}
+` }],
+  },
+  {
+    id: "HO-CS-CMD-01",
+    split: "held_out",
+    category: "OS command injection",
+    cwe: "CWE-78",
+    vulnerable: true,
+    language: "C#",
+    description: "C# Process.Start with concatenated diagnostic argument",
+    files: [{ path: "Services/CommandDiagnosticsService.cs", content: `using System.Diagnostics;
+using Microsoft.AspNetCore.Mvc;
+public class CommandDiagnosticsService {
+    public Process? RunPing([FromQuery] string diagArg) {
+        return Process.Start("cmd.exe", "/c ping -n 1 " + diagArg);
+    }
+}
+` }],
+  },
+  {
+    id: "HO-CS-XMOD-01",
+    split: "held_out",
+    category: "Inter-procedural",
+    cwe: "CWE-89",
+    vulnerable: true,
+    interprocedural: true,
+    language: "C#",
+    description: "C# controller delegates [FromQuery] input to a repository method that interpolates SqlCommand",
+    files: [{ path: "Controllers/InvoiceRepoController.cs", content: `using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
+public class InvoiceRepoController : ControllerBase {
+    private SqlDataReader QueryByCustomer(SqlConnection conn, string customer) {
+        var cmd = new SqlCommand($"SELECT * FROM Invoices WHERE Customer = '{customer}'", conn);
+        return cmd.ExecuteReader();
+    }
+    public IActionResult Get([FromQuery] string customer, SqlConnection conn) {
+        return Ok(QueryByCustomer(conn, customer));
+    }
+}
+` }],
+  },
+  {
+    id: "HO-JAVA-XMOD-3HOP",
+    split: "held_out",
+    category: "Inter-procedural",
+    cwe: "CWE-89",
+    vulnerable: true,
+    interprocedural: true,
+    language: "Java",
+    description: "3-file Java Controller.java -> Service.java -> Repository.java cross-module SQLi chain",
+    files: [
+      {
+        path: "src/main/java/app/Controller.java",
+        content: `package app;
+import javax.servlet.http.HttpServletRequest;
+public class Controller {
+    public void controller(HttpServletRequest request, Service service) throws Exception {
+        String input = request.getParameter("query");
+        service.process(input);
+    }
+}
+`,
+      },
+      {
+        path: "src/main/java/app/Service.java",
+        content: `package app;
+public class Service {
+    public void process(String input) throws Exception {
+        Repository repository = new Repository();
+        repository.execute(input);
+    }
+}
+`,
+      },
+      {
+        path: "src/main/java/app/Repository.java",
+        content: `package app;
+import java.sql.Statement;
+public class Repository {
+    public void execute(String input) throws Exception {
+        Statement statement = null;
+        statement.executeQuery("SELECT * FROM users WHERE name = '" + input + "'");
+    }
+}
+`,
+      },
+    ],
   },
 ];

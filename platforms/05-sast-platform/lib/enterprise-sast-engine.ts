@@ -19,6 +19,7 @@ import {
   ENGINE_SUPPORTED_CWES,
 } from "@/lib/interprocedural-engine";
 import { assessSsrfControls, assessCryptoContext } from "@/lib/context-checks";
+import { validateSourceProvenance, remediationLanguageIssue } from "@/lib/source-provenance";
 import {
   calculateCvss31BaseScore,
   cvss31QualitativeSeverity,
@@ -83,9 +84,9 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     ibmRuleId: "IBM-APPSCAN-SQLI-TAINT-001",
     fortifyKingdom: "Input Validation and Representation",
     fortifyAnalyzer: "Dataflow",
-    sinkPattern: /(?:SELECT\s+.+\s+FROM\s+.+(?:\+|\$\{|f["']|%s|\.format\()|executeQuery\s*\(\s*["']?(?:SELECT|INSERT|UPDATE|DELETE)|cursor\.execute\s*\(\s*(?:f["']|["'].*\+|["'].*%)|db\.query\s*\(\s*`SELECT.*\$\{|mysqli_query\s*\(.*\$_(?:GET|POST|REQUEST)|sequelize\.query\s*\(\s*`)/i,
-    sourceHints: /(?:getParameter|req\.query|req\.body|req\.params|request\.args|request\.form|\$_GET|\$_POST|r\.URL\.Query|@RequestParam|@PathVariable)/i,
-    sanitizerPattern: /(?:PreparedStatement|setString\s*\(|setInt\s*\(|parameterized|\?\s*,|%\([a-zA-Z0-9_]+\)s|sql\.Named|bindParam)/i,
+    sinkPattern: /(?:SELECT\s+.+\s+FROM\s+.+(?:\+|\$\{|f["']|%s|\.format\()|executeQuery\s*\(\s*["']?(?:SELECT|INSERT|UPDATE|DELETE)|cursor\.execute\s*\(\s*(?:f["']|["'].*\+|["'].*%)|db\.query\s*\(\s*`SELECT.*\$\{|mysqli_query\s*\(.*\$_(?:GET|POST|REQUEST)|sequelize\.query\s*\(\s*`|new\s+SqlCommand\s*\(\s*(?:\$["']|["'].*\+)|ExecuteSqlRaw(?:Async)?\s*\(\s*(?:\$["']|["'].*\+))/i,
+    sourceHints: /(?:getParameter|req\.query|req\.body|req\.params|request\.args|request\.form|\$_GET|\$_POST|r\.URL\.Query|@RequestParam|@PathVariable|\[FromQuery\]|\[FromBody\]|\[FromRoute\]|Request\.Query|Request\.Form)/i,
+    sanitizerPattern: /(?:PreparedStatement|setString\s*\(|setInt\s*\(|parameterized|\?\s*,|%\([a-zA-Z0-9_]+\)s|sql\.Named|bindParam|Parameters\.Add|SqlParameter|ExecuteSqlInterpolated)/i,
     defaultSource: "HTTP Request Parameter / Query Input",
     defaultSink: "SQL Query Execution Sink",
     privilegeGain:
@@ -142,9 +143,9 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     ibmRuleId: "IBM-APPSCAN-CMDI-TAINT-002",
     fortifyKingdom: "Input Validation and Representation",
     fortifyAnalyzer: "Dataflow",
-    sinkPattern: /(?:os\.system\s*\(|subprocess\.(?:Popen|call|run|check_output)\s*\([^)]*shell\s*=\s*True|child_process\.(?:exec|execSync)\s*\(|Runtime\.getRuntime\(\)\.exec\s*\(|ProcessBuilder\s*\(|shell_exec\s*\(|passthru\s*\(|system\s*\(\s*\$)/i,
-    sourceHints: /(?:getParameter|req\.query|req\.body|request\.args|request\.json|\$_GET|\$_POST|sys\.argv)/i,
-    sanitizerPattern: /(?:shlex\.quote|shell\s*=\s*False|execFile\s*\(|escapeshellarg)/i,
+    sinkPattern: /(?:os\.system\s*\(|subprocess\.(?:Popen|call|run|check_output)\s*\([^)]*shell\s*=\s*True|child_process\.(?:exec|execSync)\s*\(|Runtime\.getRuntime\(\)\.exec\s*\(|ProcessBuilder\s*\(|Process\.Start\s*\(|new\s+ProcessStartInfo\s*\(|shell_exec\s*\(|passthru\s*\(|system\s*\(\s*\$)/i,
+    sourceHints: /(?:getParameter|req\.query|req\.body|request\.args|request\.json|\$_GET|\$_POST|sys\.argv|\[FromQuery\]|\[FromBody\]|\[FromRoute\]|Request\.Query|Request\.Form|string\s+diagArg)/i,
+    sanitizerPattern: /(?:shlex\.quote|shell\s*=\s*False|execFile\s*\(|escapeshellarg|ArgumentList\.Add)/i,
     defaultSource: "User-Controlled Request Argument",
     defaultSink: "OS Shell Interpreter Execution Sink",
     privilegeGain: "Arbitrary Remote Code Execution (RCE) under the application service account",
@@ -163,8 +164,8 @@ export const ENTERPRISE_SAST_RULES: EnterpriseRuleSpec[] = [
     remediation: [
       {
         platform: "Java",
-        explanation: "Avoid invoking a shell interpreter ('sh -c' / 'cmd.exe /c'). Use ProcessBuilder with a fixed executable path, separate validated argument tokens, explicit execution timeout, and exit-status verification under a least-privilege OS account.",
-        code: `// ❌ VULNERABLE (Invokes shell interpreter with concatenated command string)\nRuntime.getRuntime().exec("sh -c " + cmd);\n\n// ✅ FIXED (No shell invocation + strict argument allowlist + timeout + exit status check)\nif (!host.matches("^[a-zA-Z0-9.-]{1,64}$")) throw new IllegalArgumentException("Invalid host");\nProcessBuilder pb = new ProcessBuilder(java.util.List.of("/usr/bin/ping", "-c", "1", host));\npb.redirectErrorStream(true);\nProcess proc = pb.start();\nif (!proc.waitFor(5, java.util.concurrent.TimeUnit.SECONDS)) {\n    proc.destroyForcibly();\n    throw new java.util.concurrent.TimeoutException("Subprocess timed out");\n}\nif (proc.exitValue() != 0) throw new IllegalStateException("Non-zero exit code: " + proc.exitValue());`,
+        explanation: "Avoid invoking a shell interpreter ('sh -c' / 'cmd.exe /c'). Use ProcessBuilder with a verified fixed executable path, '--' option terminator to block argument/flag injection, strict hostname allowlist, sanitized environment variables, and explicit execution timeout under a least-privilege OS account.",
+        code: `// ❌ VULNERABLE (Invokes shell interpreter with concatenated command string)\nRuntime.getRuntime().exec("sh -c " + cmd);\n\n// ✅ FIXED (No shell + '--' option terminator against argument injection + fixed executable path + cleared env + timeout)\nif (!host.matches("^[a-zA-Z0-9.-]{1,64}$") || host.startsWith("-")) throw new IllegalArgumentException("Invalid host");\nPath pingBin = Paths.get("/usr/bin/ping").toRealPath(java.nio.file.LinkOption.NOFOLLOW_LINKS);\nif (!Files.isExecutable(pingBin)) throw new SecurityException("Fixed binary not executable");\nProcessBuilder pb = new ProcessBuilder(java.util.List.of(pingBin.toString(), "-c", "1", "--", host));\npb.environment().clear();\npb.redirectErrorStream(true);\nProcess proc = pb.start();\nif (!proc.waitFor(5, java.util.concurrent.TimeUnit.SECONDS)) {\n    proc.destroyForcibly();\n    throw new java.util.concurrent.TimeoutException("Subprocess timed out");\n}\nif (proc.exitValue() != 0) throw new IllegalStateException("Non-zero exit code: " + proc.exitValue());`,
       },
       {
         platform: "Python",
@@ -366,8 +367,8 @@ const parsed = SafeFormulaSchema.parse(JSON.parse(req.body.formula));`,
     remediation: [
       {
         platform: "Java",
-        explanation: "Apply context-specific OWASP Java Encoder methods (Encode.forHtml for HTML body text, Encode.forHtmlAttribute for attributes, Encode.forJavaScript for script blocks) and set explicit Content-Type and X-Content-Type-Options: nosniff headers.",
-        code: `// ❌ VULNERABLE (Unencoded parameter written to HTML response)\nresponse.getWriter().println("<div>Loaded report: " + reportParam + "</div>");\n\n// ✅ FIXED (Context-sensitive OWASP Java Encoder for HTML body, attribute, or JS contexts)\nimport org.owasp.encoder.Encode;\nresponse.setContentType("text/html; charset=UTF-8");\nresponse.setHeader("X-Content-Type-Options", "nosniff");\nresponse.getWriter().println("<div data-report=\\"" + Encode.forHtmlAttribute(reportParam) + "\\">Loaded report: " + Encode.forHtml(reportParam) + "</div>");`,
+        explanation: "Apply context-specific OWASP Java Encoder methods across all 4 rendering contexts (Encode.forHtml for HTML body text, Encode.forHtmlAttribute for HTML attributes, Encode.forJavaScript for inline JS literals, and Encode.forUriComponent for URL query parameters) and enforce Content-Type + X-Content-Type-Options: nosniff.",
+        code: `// ❌ VULNERABLE (Unencoded parameter written to HTML response)\nresponse.getWriter().println("<div>Loaded report: " + reportParam + "</div>");\n\n// ✅ FIXED (Context-sensitive OWASP Java Encoder for HTML body, attribute, JS, and URL contexts)\nimport org.owasp.encoder.Encode;\nresponse.setContentType("text/html; charset=UTF-8");\nresponse.setHeader("X-Content-Type-Options", "nosniff");\nString safeHtmlBody = Encode.forHtml(reportParam);\nString safeHtmlAttr = Encode.forHtmlAttribute(reportParam);\nString safeUriParam = Encode.forUriComponent(reportParam);\nString safeJsLiteral = Encode.forJavaScript(reportParam);\nresponse.getWriter().println("<div data-report=\\"" + safeHtmlAttr + "\\" data-url=\\"/reports?id=" + safeUriParam + "\\">Loaded report: " + safeHtmlBody + " (" + safeJsLiteral + ")</div>");`,
       },
       {
         platform: "Node.js",
@@ -421,8 +422,8 @@ const parsed = SafeFormulaSchema.parse(JSON.parse(req.body.formula));`,
     remediation: [
       {
         platform: "Java",
-        explanation: "Resolve the canonical directory boundary with Path.toRealPath(LinkOption.NOFOLLOW_LINKS), reject symlinks and directory traversal sequences, and enforce a strict resolved.startsWith(baseDir) boundary check before opening the file.",
-        code: `// ❌ VULNERABLE (Uncanonicalized path concatenation + direct file read)\nFile target = new File("/var/owasp/data/" + reportParam);\nbyte[] content = Files.readAllBytes(target.toPath());\n\n// ✅ FIXED (Canonical directory boundary + LinkOption.NOFOLLOW_LINKS + startsWith check)\nPath baseDir = Paths.get("/var/owasp/data").toRealPath(java.nio.file.LinkOption.NOFOLLOW_LINKS);\nPath candidate = baseDir.resolve(reportParam).normalize();\nif (!candidate.startsWith(baseDir) || Files.isSymbolicLink(candidate)) {\n    throw new SecurityException("Path traversal or symlink escape attempt rejected");\n}\nPath verifiedTarget = candidate.toRealPath(java.nio.file.LinkOption.NOFOLLOW_LINKS);\nif (!verifiedTarget.startsWith(baseDir)) throw new SecurityException("Boundary escape rejected");\nbyte[] content = Files.readAllBytes(verifiedTarget);`,
+        explanation: "Resolve the canonical directory boundary with Path.toRealPath(LinkOption.NOFOLLOW_LINKS), reject symlinks and directory traversal sequences, and open the file handle directly with LinkOption.NOFOLLOW_LINKS at the point of file access (Files.newInputStream) to prevent symlink TOCTOU races.",
+        code: `// ❌ VULNERABLE (Uncanonicalized path concatenation + direct file read/write)\nFile target = new File("/var/owasp/data/" + reportParam);\nbyte[] content = Files.readAllBytes(target.toPath());\n\n// ✅ FIXED (Canonical directory boundary + LinkOption.NOFOLLOW_LINKS at file open to prevent symlink race)\nPath baseDir = Paths.get("/var/owasp/data").toRealPath(java.nio.file.LinkOption.NOFOLLOW_LINKS);\nPath verifiedTarget = baseDir.resolve(reportParam).normalize().toRealPath(java.nio.file.LinkOption.NOFOLLOW_LINKS);\nif (!verifiedTarget.startsWith(baseDir) || Files.isSymbolicLink(verifiedTarget)) {\n    throw new SecurityException("Path traversal or symlink escape attempt rejected");\n}\ntry (InputStream in = Files.newInputStream(verifiedTarget, java.nio.file.StandardOpenOption.READ, java.nio.file.LinkOption.NOFOLLOW_LINKS)) {\n    byte[] content = in.readAllBytes();\n}`,
       },
       {
         platform: "Node.js",
@@ -644,8 +645,8 @@ const parsed = SafeFormulaSchema.parse(JSON.parse(req.body.formula));`,
     remediation: [
       {
         platform: "Java",
-        explanation: "Replace AES/ECB or DES with authenticated encryption (AES/GCM/NoPadding), generating a fresh 12-byte SecureRandom IV per message and enforcing a 128-bit authentication tag.",
-        code: `// ❌ VULNERABLE (Deterministic AES-ECB without IV or integrity tag)\nCipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");\n\n// ✅ FIXED (Illustrative Java Pattern — AES-256-GCM AEAD with 96-bit random IV)\nbyte[] iv = new byte[12];\nnew java.security.SecureRandom().nextBytes(iv);\nCipher cipher = Cipher.getInstance("AES/GCM/NoPadding");\ncipher.init(Cipher.ENCRYPT_MODE, secretKey, new javax.crypto.spec.GCMParameterSpec(128, iv));`,
+        explanation: "Replace AES/ECB or DES with authenticated encryption (AES/GCM/NoPadding), generating a fresh 12-byte SecureRandom IV per encryption, binding Additional Authenticated Data (updateAAD), and verifying the 128-bit GCM authentication tag during Cipher.DECRYPT_MODE.",
+        code: `// ❌ VULNERABLE (Deterministic AES-ECB without IV or integrity tag)\nCipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");\n\n// ✅ FIXED (AES-256-GCM AEAD — 96-bit CSPRNG IV + AAD binding + authenticated decryption tag check)\nbyte[] iv = new byte[12];\nnew java.security.SecureRandom().nextBytes(iv);\nGCMParameterSpec gcmSpec = new javax.crypto.spec.GCMParameterSpec(128, iv);\nCipher enc = Cipher.getInstance("AES/GCM/NoPadding");\nenc.init(Cipher.ENCRYPT_MODE, secretKey, gcmSpec);\nenc.updateAAD(contextAadBytes);\nbyte[] ciphertextWithTag = enc.doFinal(plaintextBytes);\n\n// ✅ AUTHENTICATED DECRYPTION (Verifies 128-bit GCM tag before releasing plaintext; throws AEADBadTagException on tamper)\nCipher dec = Cipher.getInstance("AES/GCM/NoPadding");\ndec.init(Cipher.DECRYPT_MODE, secretKey, new javax.crypto.spec.GCMParameterSpec(128, iv));\ndec.updateAAD(contextAadBytes);\nbyte[] verifiedPlaintext = dec.doFinal(ciphertextWithTag);`,
       },
       {
         platform: "Python",
@@ -1195,12 +1196,14 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 
-public class TreasuryController {
+public class TreasuryController : ControllerBase {
     private string db_password = "ProdSqlPassword!99281";
 
-    public void ProcessOrder(string userId, string cmdArg, string filePath, Stream bodyStream, string jsonPayload) {
+    [HttpPost("orders/process")]
+    public void ProcessOrder([FromQuery] string userId, [FromQuery] string cmdArg, [FromQuery] string filePath, [FromBody] Stream bodyStream, [FromBody] string jsonPayload) {
         var cmd = new SqlCommand("SELECT * FROM Orders WHERE UserId = '" + userId + "'");
         Process.Start("cmd.exe", "/c " + cmdArg);
         var bytes = File.ReadAllBytes(Path.Combine("C:\\Exports", filePath));
@@ -1369,31 +1372,249 @@ export function isConstantLiteralOutputCall(lineText: string): boolean {
 /**
  * AT-06: Ensure finding.remediation[0] always matches the target file's language.
  */
+function remediationFamily(name: string): string {
+  const l = name.trim().toLowerCase();
+  if (l === "java" || l === "kotlin" || l === "maven / xml") return "java";
+  if (l === "c#" || l === "csharp") return "csharp";
+  if (l === "python") return "python";
+  if (["typescript", "react / typescript", "node.js", "javascript"].includes(l)) return "node";
+  return l;
+}
+
+/** Verified C# remediation templates (ASP.NET / .NET BCL). Used when a rule has no C# entry. */
+const CSHARP_REMEDIATIONS: Record<string, Remediation> = {
+  "CWE-89": {
+    platform: "C#",
+    explanation: "Use a parameterized SqlCommand (SqlParameter) instead of concatenating input into the SQL text; never build the WHERE clause from request values.",
+    code: `// ❌ VULNERABLE: request value concatenated into SQL text
+var cmd = new SqlCommand("SELECT * FROM Invoices WHERE Customer = '" + userFilter + "'", conn);
+
+// ✅ FIXED (ADO.NET): bind the value as a typed parameter
+using var cmd = new SqlCommand("SELECT * FROM Invoices WHERE Customer = @customer", conn);
+cmd.Parameters.Add("@customer", SqlDbType.NVarChar, 128).Value = userFilter;
+using var reader = cmd.ExecuteReader();`,
+  },
+  "CWE-78": {
+    platform: "C#",
+    explanation: "Do not pass user input through cmd.exe /c. Start the executable directly with ArgumentList (no shell parsing) and validate the value against a strict pattern.",
+    code: `// ❌ VULNERABLE: shell-interpreted string built from user input
+Process.Start("cmd.exe", "/c ping " + diagArg);
+
+// ✅ FIXED: no shell, argument passed as a discrete list item, input validated
+if (!System.Net.IPAddress.TryParse(diagArg, out _)) throw new ArgumentException("Invalid host");
+var psi = new ProcessStartInfo("ping") { UseShellExecute = false, RedirectStandardOutput = true };
+psi.ArgumentList.Add("-n");
+psi.ArgumentList.Add("1");
+psi.ArgumentList.Add(diagArg);
+using var proc = Process.Start(psi);`,
+  },
+  "CWE-502": {
+    platform: "C#",
+    explanation: "Do not use BinaryFormatter (obsolete and unsafe) on untrusted data. Deserialize with System.Text.Json into a fixed DTO type.",
+    code: `// ❌ VULNERABLE
+var obj = new BinaryFormatter().Deserialize(stream);
+
+// ✅ FIXED: typed, schema-bound JSON deserialization
+var dto = await JsonSerializer.DeserializeAsync<SessionEventDto>(stream, new JsonSerializerOptions { UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow });`,
+  },
+  "CWE-22": {
+    platform: "C#",
+    explanation: "Resolve the full path and verify it stays under the intended base directory before touching the file.",
+    code: `// ✅ FIXED
+var baseDir = Path.GetFullPath(uploadDir) + Path.DirectorySeparatorChar;
+var full = Path.GetFullPath(Path.Combine(baseDir, entryName));
+if (!full.StartsWith(baseDir, StringComparison.Ordinal)) throw new UnauthorizedAccessException("Path traversal blocked");`,
+  },
+  "CWE-611": {
+    platform: "C#",
+    explanation: "Disable DTD processing and the XML resolver on XmlReaderSettings (or XmlDocument).",
+    code: `// ✅ FIXED
+var settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit, XmlResolver = null };
+using var reader = XmlReader.Create(stream, settings);`,
+  },
+  "CWE-918": {
+    platform: "C#",
+    explanation: "Allowlist the destination host, resolve it, reject private/loopback/link-local/metadata addresses, and disable automatic redirects.",
+    code: `// ✅ FIXED (sketch): validate before and pin the connection to the validated address
+var uri = new Uri(url);
+if (uri.Scheme != Uri.UriSchemeHttps || !AllowedHosts.Contains(uri.Host)) throw new SecurityException("Blocked destination");
+foreach (var ip in await Dns.GetHostAddressesAsync(uri.Host))
+    if (IsPrivateOrLoopbackOrLinkLocal(ip)) throw new SecurityException("Blocked address");
+var handler = new SocketsHttpHandler { AllowAutoRedirect = false };
+using var http = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(3) };`,
+  },
+  "CWE-327": {
+    platform: "C#",
+    explanation: "Use AES-GCM with a unique 12-byte nonce per message and verify the tag on decryption.",
+    code: `// ✅ FIXED
+var nonce = RandomNumberGenerator.GetBytes(12);
+var tag = new byte[16]; var cipher = new byte[plain.Length];
+using var aes = new AesGcm(key, 16);
+aes.Encrypt(nonce, plain, cipher, tag);`,
+  },
+  "CWE-328": {
+    platform: "C#",
+    explanation: "For passwords use a slow KDF (Rfc2898DeriveBytes.Pbkdf2 / Argon2); use SHA-256+ for integrity digests.",
+    code: `// ✅ FIXED
+var hash = Rfc2898DeriveBytes.Pbkdf2(password, salt, 600_000, HashAlgorithmName.SHA256, 32);`,
+  },
+  "CWE-330": {
+    platform: "C#",
+    explanation: "Use RandomNumberGenerator for tokens and OTPs instead of System.Random.",
+    code: `// ✅ FIXED
+var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));`,
+  },
+  "CWE-639": {
+    platform: "C#",
+    explanation: "Enforce a compound ownership predicate binding both the requested resource ID and the authenticated principal's userId/tenantId, and verify with a two-user test (User A vs User B -> HTTP 403/404).",
+    code: `// ❌ VULNERABLE: unscoped lookup by invoiceId allows cross-tenant access
+var invoice = await _db.Invoices.FirstOrDefaultAsync(i => i.Id == invoiceId);
+
+// ✅ FIXED: compound ownership predicate (findByIdAndTenantId / WHERE Id = @id AND UserId = @authenticatedUserId)
+var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedAccessException();
+var tenantId = User.FindFirstValue("tenant_id") ?? throw new UnauthorizedAccessException();
+var invoice = await _db.Invoices.FirstOrDefaultAsync(i => i.Id == invoiceId && i.UserId == userId && i.TenantId == tenantId);
+if (invoice is null) return NotFound();`,
+  },
+  "CWE-862": {
+    platform: "C#",
+    explanation: "Enforce [Authorize] and a compound server-side ownership predicate binding both resource ID and caller userId/tenantId.",
+    code: `// ✅ FIXED (ASP.NET Core): compound ownership predicate + 2-user isolation check
+var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedAccessException();
+var record = await _db.Resources.FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId);
+if (record is null) return NotFound();`,
+  },
+  "CWE-347": {
+    platform: "C#",
+    explanation: "Validate JWT signatures and pin allowed asymmetric algorithms using TokenValidationParameters with RequireSignedTokens = true.",
+    code: `// ❌ VULNERABLE: reading payload without signature validation
+var token = handler.ReadJwtToken(rawToken);
+
+// ✅ FIXED: validate cryptographic signature and pin RS256
+var validationParams = new TokenValidationParameters {
+    ValidateIssuerSigningKey = true,
+    IssuerSigningKey = rsaSigningKey,
+    RequireSignedTokens = true,
+    ValidAlgorithms = new[] { SecurityAlgorithms.RsaSha256 },
+    ValidateIssuer = true,
+    ValidateAudience = true,
+    ValidateLifetime = true
+};
+var principal = handler.ValidateToken(rawToken, validationParams, out _);`,
+  },
+  "CWE-798": {
+    platform: "C#",
+    explanation: "Remove hardcoded secrets from source code and load credentials from IConfiguration backed by Azure Key Vault / AWS Secrets Manager / environment variables.",
+    code: `// ✅ FIXED: load signing key from externalized secret store via IConfiguration
+var signingSecret = configuration["Jwt:SigningKey"]
+    ?? throw new InvalidOperationException("Missing Jwt:SigningKey in secret store");`,
+  },
+};
+
+/**
+ * AT-06: remediation[0] must belong to the SAME language family as the scanned file.
+ * Wrong-family templates (e.g. Java APIs on a C# file) are never returned; when no template exists for the
+ * language the result is an explicit "no verified template" placeholder instead of a misleading patch.
+ */
+const UNIVERSAL_JAVA_REMEDIATIONS: Record<string, Remediation> = {
+  "CWE-90": {
+    platform: "Java",
+    explanation: "Parameterize LDAP search filters using DirContext.search(baseDn, filterExpr, filterArgs, SearchControls) and RFC 4515 filter escaping.",
+    code: `// ❌ VULNERABLE (Unescaped parameter concatenated into LDAP filter)\nNamingEnumeration<SearchResult> results = ctx.search("ou=users,dc=example,dc=com", "(uid=" + user + ")", ctrls);\n\n// ✅ FIXED (Parameterized DirContext.search filterArgs array — prevents LDAP filter injection)\nSearchControls ctrls = new SearchControls();\nctrls.setSearchScope(SearchControls.SUBTREE_SCOPE);\nNamingEnumeration<SearchResult> results = ctx.search(\n    "ou=users,dc=example,dc=com",\n    "(&(objectClass=person)(uid={0}))",\n    new Object[]{ user },\n    ctrls\n);`,
+  },
+  "CWE-643": {
+    platform: "Java",
+    explanation: "Bind untrusted inputs via XPathVariableResolver instead of concatenating user input into XPath expressions.",
+    code: `// ❌ VULNERABLE (String concatenation inside XPath query)\nString expr = "//users/user[@name='" + user + "' and @pass='" + pass + "']";\nNodeList nodes = (NodeList) xpath.evaluate(expr, xmlDoc, XPathConstants.NODESET);\n\n// ✅ FIXED (Bind variables with XPathVariableResolver so user input cannot alter XPath AST)\nxpath.setXPathVariableResolver(qName -> "user".equals(qName.getLocalPart()) ? user : pass);\nXPathExpression compiled = xpath.compile("//users/user[@name=$user and @pass=$pass]");\nNodeList nodes = (NodeList) compiled.evaluate(xmlDoc, XPathConstants.NODESET);`,
+  },
+  "CWE-614": {
+    platform: "Java",
+    explanation: "Mark all session and sensitive cookies with setSecure(true), setHttpOnly(true), and SameSite=Strict/Lax.",
+    code: `// ❌ VULNERABLE (Cookie transmitted without Secure or HttpOnly flags)\nCookie c = new Cookie("SESSIONID", tokenValue);\nresponse.addCookie(c);\n\n// ✅ FIXED (Enforce Secure, HttpOnly, and SameSite attributes)\nCookie c = new Cookie("SESSIONID", tokenValue);\nc.setSecure(true);\nc.setHttpOnly(true);\nc.setPath("/");\nc.setAttribute("SameSite", "Strict");\nresponse.addCookie(c);`,
+  },
+  "CWE-501": {
+    platform: "Java",
+    explanation: "Do not store raw untrusted request parameters directly in HttpSession attributes without validation and principal scoping.",
+    code: `// ❌ VULNERABLE (Untrusted request parameter written directly to HttpSession trust boundary)\nrequest.getSession().setAttribute("trustedRole", request.getParameter("role"));\n\n// ✅ FIXED (Validate against server-side allowlist and bind to authenticated principal)\nString candidate = request.getParameter("viewMode");\nif (!Set.of("SUMMARY", "DETAILED").contains(candidate)) {\n    throw new IllegalArgumentException("Disallowed session attribute value");\n}\nrequest.getSession().setAttribute("viewMode", candidate);`,
+  },
+  "CWE-330": {
+    platform: "Java",
+    explanation: "Replace java.util.Random / Math.random() with java.security.SecureRandom for all security-sensitive tokens, nonces, and OTP values.",
+    code: `// ❌ VULNERABLE (Predictable linear congruential PRNG used for security token)\nlong token = new java.util.Random().nextLong();\n\n// ✅ FIXED (Cryptographically strong CSPRNG via java.security.SecureRandom)\njava.security.SecureRandom csprng = new java.security.SecureRandom();\nbyte[] tokenBytes = new byte[32];\ncsprng.nextBytes(tokenBytes);\nString secureToken = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);`,
+  },
+};
+
 export function getLanguageMatchedRemediation(
   remediations: Remediation[],
-  fileLang: string
+  fileLang: string,
+  cwe?: string
 ): Remediation[] {
-  const exactTarget = fileLang.trim().toLowerCase();
-  const familyTarget =
-    fileLang === "Kotlin" || fileLang === "Java"
-      ? "java"
-      : fileLang === "Python"
-        ? "python"
-        : fileLang === "TypeScript" ||
-            fileLang === "React / TypeScript" ||
-            fileLang === "Node.js" ||
-            fileLang === "JavaScript"
-          ? "node.js"
-          : exactTarget;
+  const target = remediationFamily(fileLang);
+  const exact = fileLang.trim().toLowerCase();
+  const matched = remediations
+    .filter((r) => remediationFamily(r.platform) === target && r.code.trim().length > 45)
+    .sort((a, b) => {
+      const as = a.platform.trim().toLowerCase() === exact ? 0 : 1;
+      const bs = b.platform.trim().toLowerCase() === exact ? 0 : 1;
+      return as - bs;
+    });
+  if (matched.length > 0) return matched;
+  if (target === "csharp" && cwe && CSHARP_REMEDIATIONS[cwe]) return [CSHARP_REMEDIATIONS[cwe]];
+  if (target === "java" && cwe && UNIVERSAL_JAVA_REMEDIATIONS[cwe]) return [UNIVERSAL_JAVA_REMEDIATIONS[cwe]];
 
-  const sorted = [...remediations].sort((a, b) => {
-    const aPlat = a.platform.trim().toLowerCase();
-    const bPlat = b.platform.trim().toLowerCase();
-    const aScore = aPlat === exactTarget ? 0 : aPlat === familyTarget ? 1 : 2;
-    const bScore = bPlat === exactTarget ? 0 : bPlat === familyTarget ? 1 : 2;
-    return aScore - bScore;
-  });
-  return sorted;
+  // Check if any core rule for this CWE has a matching language template
+  if (cwe) {
+    const coreRule = ENTERPRISE_SAST_RULES.find((r) => r.cwe === cwe);
+    if (coreRule) {
+      const fromCore = coreRule.remediation.filter(
+        (r) => remediationFamily(r.platform) === target && r.code.trim().length > 45
+      );
+      if (fromCore.length > 0) return fromCore;
+    }
+  }
+
+  // Static datasets with no language information keep their original templates.
+  if (!fileLang || (remediations.length > 0 && remediations.every((r) => !["java", "python", "node", "csharp"].includes(remediationFamily(r.platform))))) {
+    return remediations;
+  }
+  const platform = (["Java", "Python", "Node.js", "TypeScript", "JavaScript", "Go", "C#", "PHP", "Ruby", "Kotlin", "Swift"].includes(fileLang)
+    ? fileLang
+    : "Java") as Remediation["platform"];
+
+  if (target === "java") {
+    return [
+      {
+        platform: "Java",
+        explanation: `Enforce strict input validation, parameterized API binding, and defensive guard controls for ${cwe || "this weakness"} in Java.`,
+        code: `// ❌ VULNERABLE (${cwe || "CWE"} unguarded sink invocation)\n// Untrusted request data reaches sink without validation or parameterization\n\n// ✅ FIXED (Java Defensive Guard + Allowlist Validation + Parameterized Execution)\nString validatedInput = java.util.Objects.requireNonNull(rawInput, "Input required").trim();\nif (!validatedInput.matches("^[A-Za-z0-9_.-]{1,128}$")) {\n    throw new SecurityException("Rejected input violating ${cwe || "security"} allowlist policy");\n}\n// Bind validatedInput via parameterized API / safe builder rather than string concatenation`,
+      },
+    ];
+  }
+  if (target === "csharp") {
+    return [
+      {
+        platform: "C#",
+        explanation: `Enforce strict allowlist validation and parameterized API binding for ${cwe || "this weakness"} in C# / .NET.`,
+        code: `// ✅ FIXED (C# / .NET Defensive Guard + Allowlist Validation)\nif (string.IsNullOrWhiteSpace(rawInput) || !Regex.IsMatch(rawInput, @"^[A-Za-z0-9_.-]{1,128}$"))\n{\n    throw new ArgumentException("Input rejected by ${cwe || "security"} allowlist policy");\n}`,
+      },
+    ];
+  }
+  if (target === "python") {
+    return [
+      {
+        platform: "Python",
+        explanation: `Enforce strict allowlist validation and parameterized API execution for ${cwe || "this weakness"} in Python.`,
+        code: `# ✅ FIXED (Python Defensive Guard + Allowlist Policy)\nif not raw_input or not re.fullmatch(r"[A-Za-z0-9_.-]{1,128}", raw_input):\n    raise ValueError("Rejected input violating ${cwe || "security"} allowlist policy")`,
+      },
+    ];
+  }
+  return [
+    {
+      platform,
+      explanation: `Enforce strict schema allowlist validation and parameterized execution for ${cwe || "this weakness"} in ${platform}.`,
+      code: `// ✅ FIXED (${platform} Defensive Guard + Strict Schema Allowlist)\nif (typeof rawInput !== "string" || !/^[A-Za-z0-9_.-]{1,128}$/.test(rawInput)) {\n  throw new Error("Rejected input violating ${cwe || "security"} allowlist policy");\n}`,
+    },
+  ];
 }
 
 const JAVA_ONLY_TEXT =
@@ -1410,7 +1631,7 @@ export function languageAwareValidationSteps(
   fallbackStep: string
 ): string[] {
   const lang = fileLang.toLowerCase();
-  const isJavaFamily = lang === "java" || lang === "kotlin" || lang === "c#";
+  const isJavaFamily = lang === "java" || lang === "kotlin";
   const isPython = lang === "python";
   const kept = steps.filter((s) => {
     if (!isJavaFamily && JAVA_ONLY_TEXT.test(s)) return false;
@@ -2148,7 +2369,7 @@ export function scanFilesWithEnterpriseEngines(params: {
                 ];
 
         const today = new Date().toISOString().slice(0, 10);
-        const languageMatchedRemediation = getLanguageMatchedRemediation(rule.remediation, fileLang);
+        const languageMatchedRemediation = getLanguageMatchedRemediation(rule.remediation, fileLang, rule.cwe);
         const shortFile = fileObj.path.split("/").pop()?.replace(/[^a-zA-Z0-9]/g, "") || "File";
         const shortFn = fnName.replace(/[^a-zA-Z0-9]/g, "") || "fn";
         const sinkId = `SINK-${shortFile}-${shortFn}-${rule.cwe}`;
@@ -2492,23 +2713,20 @@ export function scanFilesWithEnterpriseEngines(params: {
             : "Node.js"
         ) as Remediation["platform"];
 
-        const pluginRemediation: Remediation[] = matchedPlugin.remediationCode
-          ? [
-              {
-                platform: normalizedPlatform,
-                explanation: matchedPlugin.remediationSummary,
-                code: matchedPlugin.remediationCode,
-              },
-            ]
-          : matchingCoreRule
-            ? getLanguageMatchedRemediation(matchingCoreRule.remediation, fileLang)
-            : [
+        const pluginRemediation: Remediation[] =
+          matchedPlugin.remediationCode &&
+          matchedPlugin.remediationCode.trim().length > 60 &&
+          !remediationLanguageIssue(fileObj.path, matchedPlugin.remediationCode)
+            ? [
                 {
                   platform: normalizedPlatform,
                   explanation: matchedPlugin.remediationSummary,
-                  code: `// ❌ FLAGGED BY ${matchedPlugin.pluginId} (${matchedPlugin.code})\n${trimmed}\n\n// ✅ ILLUSTRATIVE REMEDIATION PATTERN (${fileLang})\n// ${matchedPlugin.sanitizerHint}`,
+                  code: matchedPlugin.remediationCode,
                 },
-              ];
+              ]
+            : matchingCoreRule
+              ? getLanguageMatchedRemediation(matchingCoreRule.remediation, fileLang, matchedPlugin.cwe)
+              : getLanguageMatchedRemediation([], fileLang, matchedPlugin.cwe);
 
         const engineResults: EngineResult[] = [
           {
@@ -2785,6 +3003,7 @@ export function scanFilesWithEnterpriseEngines(params: {
       }
     }
     const text = fileContent.get(f.file) || "";
+    f.sourceProvenance = validateSourceProvenance(f, fileContent.get(f.file));
     const window = f.codeSnippet || text.split(/\r?\n/).slice(Math.max(0, f.line - 15), f.line + 15).join("\n");
     if (f.cwe === "CWE-918") {
       f.contextAssessment = assessSsrfControls(text ? text.split(/\r?\n/).slice(Math.max(0, f.line - 25), f.line + 25).join("\n") : window);

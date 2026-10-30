@@ -202,6 +202,15 @@ export type SASTFinding = {
     | "FIRST_PARTY_CODE_WEAKNESS_NO_CVE";
   consolidatedSinkLines?: number[];
 
+  /**
+   * Whether the reported file/line/snippet was checked against the scanned repository content.
+   * SYNTHETIC_TEMPLATE = an illustrative hypothesis pattern that was NOT located in the repository.
+   */
+  sourceProvenance?: {
+    status: "VERIFIED" | "LINE_MISMATCH" | "FILE_NOT_FOUND" | "LANGUAGE_MISMATCH" | "SYNTHETIC_TEMPLATE";
+    detail: string;
+  };
+
   /** Result of the inter-procedural taint engine + path-feasibility solver for this finding. */
   interprocedural?: {
     status: "ESTABLISHED" | "NOT_ESTABLISHED" | "UNSUPPORTED_LANGUAGE";
@@ -303,6 +312,9 @@ export type SASTFinding = {
 
   // Deep Enumeration, Multi-DB Correlation (GitHub/SearchSploit/Google) & PTES Re-Penetration / Post-Exploitation
   deepExploitability?: DeepExploitabilityDossier;
+
+  // Authoritative Immutable Finding Evidence & Patch Verification Ledger (V5)
+  evidenceRecord?: import("@/lib/finding-evidence-ledger").FindingEvidenceRecord;
 };
 
 export type ScanResult = {

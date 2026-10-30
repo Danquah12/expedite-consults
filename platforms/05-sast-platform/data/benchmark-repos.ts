@@ -74,16 +74,20 @@ import javax.servlet.http.HttpServletResponse;
 
 public class BenchmarkTest00001 extends HttpServlet {
     @Override
-    public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public void doPost(HttpServletRequest request, HttpServletResponse response) throws Exception {
         String param = request.getParameter("BenchmarkTest00001");
-        String sql = "SELECT * from USERS where USERNAME='foo' and PASSWORD='" + param + "'";
-        try {
-            Connection conn = org.owasp.benchmark.helpers.DatabaseHelper.getSqlConnection();
-            Statement statement = conn.createStatement();
-            statement.execute(sql);
-        } catch (Exception e) {
-            response.getWriter().println("Error processing SQL");
-        }
+        process(param);
+    }
+
+    public void process(String input) throws Exception {
+        execute(input);
+    }
+
+    public void execute(String input) throws Exception {
+        String sql = "SELECT * from USERS where USERNAME='foo' and PASSWORD='" + input + "'";
+        Connection conn = org.owasp.benchmark.helpers.DatabaseHelper.getSqlConnection();
+        Statement statement = conn.createStatement();
+        statement.executeQuery(sql);
     }
 }`,
       },
@@ -170,11 +174,36 @@ import javax.servlet.http.HttpServletResponse;
 import java.sql.Statement;
 
 public class CpgDataflowBenchmark01 {
-    public void traceInterproceduralTaint(HttpServletRequest req, HttpServletResponse resp, Statement stmt) throws Exception {
+    public void controller(HttpServletRequest req, HttpServletResponse resp, Statement stmt, LedgerQueryService service) throws Exception {
         String source = req.getParameter("userQuery");
-        String propagated = source.trim();
-        stmt.executeQuery("SELECT * FROM ledger WHERE memo = '" + propagated + "'");
+        service.process(source, stmt);
         resp.getWriter().println("<div>Search result for: " + source + "</div>");
+    }
+}`,
+      },
+      {
+        path: "src/main/java/org/owasp/benchmark/testcode/LedgerQueryService.java",
+        language: "Java",
+        content: `package org.owasp.benchmark.testcode;
+import java.sql.Statement;
+
+public class LedgerQueryService {
+    public void process(String input, Statement stmt) throws Exception {
+        String propagated = input.trim();
+        LedgerJdbcRepository repository = new LedgerJdbcRepository();
+        repository.execute(propagated, stmt);
+    }
+}`,
+      },
+      {
+        path: "src/main/java/org/owasp/benchmark/testcode/LedgerJdbcRepository.java",
+        language: "Java",
+        content: `package org.owasp.benchmark.testcode;
+import java.sql.Statement;
+
+public class LedgerJdbcRepository {
+    public void execute(String propagated, Statement stmt) throws Exception {
+        stmt.executeQuery("SELECT * FROM ledger WHERE memo = '" + propagated + "'");
     }
 }`,
       },

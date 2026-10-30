@@ -34,11 +34,25 @@ import {
   computeAuditableRiskWorksheet,
   runTenGateReportAcceptanceSuite,
   validateReportIntegrity,
+  proofStateBuckets,
 } from "@/lib/cvss31";
 import type { SASTFinding, CanonicalProofState } from "@/types/sast";
-import { computeProofLifecycle } from "@/lib/proof-lifecycle";
+import { computeProofLifecycle, runEvidenceValidatorSelfTestSuite } from "@/lib/proof-lifecycle";
 import { computeRiskIntelligence } from "@/lib/risk-intelligence";
 import { runBenchmark } from "@/lib/benchmark-runner";
+import {
+  buildStrikeHandoffEnvelope,
+  LANGUAGE_CAPABILITY_MATRIX,
+  qualifyFindingTaxonomyMappings,
+} from "@/lib/strike-handoff-contract";
+import { synchronizeFindingWithEvidenceLedger } from "@/lib/finding-evidence-ledger";
+import { summarizePatchVerificationPortfolio } from "@/lib/patch-verification-engine";
+import {
+  buildApplicationExecutionGraph,
+  buildThreatIntelligenceSnapshot,
+  classifyPluginIntelligenceProvenance,
+  XTRIKE_V5_EIGHT_ENGINES,
+} from "@/lib/application-execution-graph";
 
 /** "k/n = 85% [lo–hi]" using a 95% Wilson score interval; "n/a" when n = 0. */
 function formatRate(k: number, n: number): string {
@@ -84,7 +98,7 @@ export default function ReportEnginePage() {
   const [organization, setOrganization] = useState("XTRIKE Enterprise Security Operations");
   const [auditorName, setAuditorName] = useState("XTRIKE Automated Proof & Triage Desk");
   const [classification, setClassification] = useState(
-    "CONFIDENTIAL â€” INTERNAL SECURITY & COMPLIANCE AUDIT"
+    "CONFIDENTIAL — INTERNAL SECURITY & COMPLIANCE AUDIT"
   );
 
   // Section Toggles
@@ -156,10 +170,28 @@ export default function ReportEnginePage() {
     return map;
   }, [rawValidationFindings]);
 
+  const targetName = activeSession?.repoUrl || "xtrike-core/enterprise-banking-api";
+  const commitSha = activeSession?.commitSha || "9f4c2a1b8e7d0312a4f5c6d7";
+  const fullCommitSha = commitSha.padEnd(40, "a1b2c3d4e5f60718293a").slice(0, 40);
+  const scanTimestamp = formatValidIsoUtcTimestamp(activeSession?.scannedAt);
+
   const rawFindings: SASTFinding[] = useMemo(() => {
     const base = activeSession?.sastFindings?.length ? activeSession.sastFindings : FINDINGS;
-    return base.map((f) => normalizeFindingCvssAndProof(f, validationById.get(f.id)));
-  }, [activeSession, validationById]);
+    return base.map((f, idx) => {
+      const lang = f.language || activeSession?.language || "Java";
+      const languageMatched: SASTFinding = {
+        ...f,
+        language: lang,
+        remediation: getLanguageMatchedRemediation(f.remediation || [], lang, f.cwe),
+      };
+      const normalized = normalizeFindingCvssAndProof(languageMatched, validationById.get(f.id));
+      const withDossier: SASTFinding = {
+        ...normalized,
+        deepExploitability: buildDeepExploitabilityDossier(normalized, idx),
+      };
+      return synchronizeFindingWithEvidenceLedger(withDossier, fullCommitSha, targetName);
+    });
+  }, [activeSession, validationById, fullCommitSha, targetName]);
 
   const pluginEvalById = useMemo(() => {
     const map = new Map<string, MultiStandardPluginEvaluation>();
@@ -191,6 +223,11 @@ export default function ReportEnginePage() {
   );
   const [assetCriticality, setAssetCriticality] = useState(3);
   const benchmarkRun = useMemo(() => runBenchmark(), []);
+  const validatorSelfTest = useMemo(() => runEvidenceValidatorSelfTestSuite(), []);
+  const aegSummary = useMemo(
+    () => buildApplicationExecutionGraph(filteredFindings),
+    [filteredFindings]
+  );
   const riskIntel = useMemo(
     () => computeRiskIntelligence(filteredFindings, { assetCriticality }),
     [filteredFindings, assetCriticality]
@@ -205,12 +242,12 @@ export default function ReportEnginePage() {
     ).length;
     const records = filteredFindings.reduce((n, f) => n + (f.verificationRecords?.length || 0), 0);
     return acceptanceSuite.map((g) => {
-      if (g.testId === "AT-BENCHMARK-15") {
+      if (g.testId === "AT-INTERNAL-BENCHMARK-15") {
         const ok = held.tp + held.fn > 0 && heldPrecision >= 0.8 && heldRecall >= 0.8;
         return {
           ...g,
-          status: ok ? ("PASS" as const) : ("FAIL" as const),
-          measuredMetric: `held-out (n=${benchmarkRun.cases.filter((c) => c.split === "held_out").length}, confirmed): precision ${formatRate(held.tp, held.tp + held.fp)}, recall ${formatRate(held.tp, held.tp + held.fn)}. Fixtures authored by the engine team — not independent; small sample.`,
+          status: ok ? ("STATIC_PASS_RUNTIME_NOT_RUN" as const) : ("FAIL" as const),
+          measuredMetric: `held-out (n=${benchmarkRun.cases.filter((c) => c.split === "held_out").length}, confirmed): precision ${formatRate(held.tp, held.tp + held.fp)}, recall ${formatRate(held.tp, held.tp + held.fn)}. Internal team-authored suite — external OWASP Benchmark / NIST Juliet / NIST SARD suites pending.`,
           evidenceArtifactRef: `data/benchmark-fixtures.ts · ${benchmarkRun.command}`,
           executionEnvironment: "STATIC_PATTERN_CHECK" as const,
         };
@@ -220,57 +257,44 @@ export default function ReportEnginePage() {
         const ok = x.total > 0 && x.confirmed === x.total;
         return {
           ...g,
-          status: ok ? ("PASS" as const) : ("FAIL" as const),
-          measuredMetric: `${x.confirmed}/${x.total} vulnerable cross-function/cross-file fixtures traced by the call-graph engine (Python/JS/Java; no dynamic dispatch, queues or persisted data).`,
+          status: ok ? ("STATIC_PASS_RUNTIME_NOT_RUN" as const) : ("FAIL" as const),
+          measuredMetric: `${x.confirmed}/${x.total} vulnerable multi-hop fixtures (including 3-file Java Controller → Service → Repository chain) traced by call-graph engine (${aegSummary.interProceduralCrossFunctionChainsCount} cross-function + ${aegSummary.intraProceduralChainsCount} intra-function in current scan; dynamic dispatch, reflection & message queues out of static scope).`,
           evidenceArtifactRef: "lib/interprocedural-engine.ts · scripts/test-interprocedural.ts",
           executionEnvironment: "STATIC_PATTERN_CHECK" as const,
         };
       }
       if (g.testId === "AT-EVIDENCE-14") {
-        const ok = runtimeClaims === 0 || records > 0;
+        const ok = (runtimeClaims === 0 || records > 0) && validatorSelfTest.allPassed;
+        const status = !ok
+          ? ("FAIL" as const)
+          : records === 0
+            ? ("NOT_APPLICABLE_NO_EXECUTION_RECORDS" as const)
+            : ("PASS" as const);
         return {
           ...g,
-          status: ok ? ("PASS" as const) : ("FAIL" as const),
-          measuredMetric: `${runtimeClaims} runtime/impact claims, ${records} stored execution records. Claims without a record are demoted automatically. Satisfied vacuously while no sandbox exists.`,
-          evidenceArtifactRef: "lib/proof-lifecycle.ts :: isValidVerificationRecord()",
+          status,
+          measuredMetric: `${runtimeClaims} live runtime claims, ${records} live execution records (NOT_APPLICABLE_NO_EXECUTION_RECORDS in static mode). Fail-closed validator self-test: ${validatorSelfTest.passedCount}/${validatorSelfTest.totalCount} adversarial tamper cases (valid, missing, modified, expired, wrong-hash, mismatched-ID, tampered-timestamp) verified.`,
+          evidenceArtifactRef: "lib/proof-lifecycle.ts :: validateExecutionRecordStrict() & runEvidenceValidatorSelfTestSuite()",
           executionEnvironment: "STATIC_REPORT_CHECK" as const,
         };
       }
       return g;
     });
-  }, [acceptanceSuite, benchmarkRun, filteredFindings]);
+  }, [acceptanceSuite, benchmarkRun, filteredFindings, validatorSelfTest, aegSummary]);
   const riskScore = riskWorksheet.compositeRiskScore;
   const avgConf = riskWorksheet.calibratedConfidencePercent;
 
-  // AT-01 & AT-PROOF-06: Derive all Executive Summary & Scorecard counts + IDs from the 7-state Typed Proof Model
+  // AT-01 & AT-PROOF-06: Derive all Executive Summary & Scorecard counts + IDs from proofStateBuckets() so Page 2, Page 4 & AT-PROOF-06 cannot disagree
   const canonicalStats = useMemo(() => {
     const total = filteredFindings.length;
-    const dataflowIds: string[] = [];
-    const guardIds: string[] = [];
-    const pathFeasibleIds: string[] = [];
-    const detectedStaticIds: string[] = [];
-    const manualIds: string[] = [];
-    const mitigatedIds: string[] = [];
-    const runtimeIds: string[] = [];
-
-    filteredFindings.forEach((f) => {
-      const state = resolveCanonicalProofState(f, validationById.get(f.id));
-      if (state === "RUNTIME_REPRODUCED" || state === "IMPACT_CONFIRMED") {
-        runtimeIds.push(f.id);
-      } else if (state === "DATAFLOW_CONFIRMED") {
-        dataflowIds.push(f.id);
-      } else if (state === "GUARD_ANALYZED") {
-        guardIds.push(f.id);
-      } else if (state === "PATH_FEASIBLE") {
-        pathFeasibleIds.push(f.id);
-      } else if (state === "DETECTED_STATIC") {
-        detectedStaticIds.push(f.id);
-      } else if (state === "NEEDS_MANUAL_VALIDATION" || state === "INCONCLUSIVE") {
-        manualIds.push(f.id);
-      } else if (state === "MITIGATED_BY_GUARD") {
-        mitigatedIds.push(f.id);
-      }
-    });
+    const buckets = proofStateBuckets(filteredFindings, validationById);
+    const dataflowIds = buckets.DATAFLOW_CONFIRMED;
+    const guardIds = buckets.GUARD_ANALYZED;
+    const pathFeasibleIds = buckets.PATH_FEASIBLE;
+    const detectedStaticIds = buckets.DETECTED_STATIC;
+    const manualIds = [...buckets.NEEDS_MANUAL_VALIDATION, ...buckets.INCONCLUSIVE];
+    const mitigatedIds = buckets.MITIGATED_BY_GUARD;
+    const runtimeIds = [...buckets.RUNTIME_REPRODUCED, ...buckets.IMPACT_CONFIRMED];
 
     return {
       total,
@@ -291,11 +315,18 @@ export default function ReportEnginePage() {
     };
   }, [filteredFindings, validationById]);
 
-  const targetName = activeSession?.repoUrl || "xtrike-core/enterprise-banking-api";
-  const commitSha = activeSession?.commitSha || "9f4c2a1b8e7d0312a4f5c6d7";
-  const fullCommitSha = commitSha.padEnd(40, "a1b2c3d4e5f60718293a").slice(0, 40);
-  const scanTimestamp = formatValidIsoUtcTimestamp(activeSession?.scannedAt);
   const scanDurationSeconds = "22.4s";
+  const patchPortfolio = useMemo(
+    () =>
+      summarizePatchVerificationPortfolio(
+        filteredFindings.map((f) => f.evidenceRecord?.patchVerification)
+      ),
+    [filteredFindings]
+  );
+  const tiSnapshot = useMemo(
+    () => buildThreatIntelligenceSnapshot(scanTimestamp, riskIntel.kevFeed !== "NOT_LOADED"),
+    [scanTimestamp, riskIntel.kevFeed]
+  );
   const isBenchmarkScope =
     /(?:benchmark|webgoat|dvwa|juice-shop|nodegoat|pygoat|railsgoat|mutillidae|shepherd|vulnerable|damnvulnerable|crapi|vampi|wrongsecrets)/i.test(
       targetName
@@ -331,7 +362,7 @@ export default function ReportEnginePage() {
       }),
     [reportId, targetName, fullCommitSha, filteredFindings]
   );
-  const [ledgerDigest, setLedgerDigest] = useState("computingâ€¦");
+  const [ledgerDigest, setLedgerDigest] = useState("computing…");
   useEffect(() => {
     let cancelled = false;
     const bytes = new TextEncoder().encode(canonicalLedgerJson);
@@ -366,7 +397,7 @@ export default function ReportEnginePage() {
       `- **Target Scope Classification:** ${scopeQualificationLabel}`,
       `- **Full Commit SHA (40-char):** \`${fullCommitSha}\``,
       `- **Scan Timestamp (UTC):** \`${scanTimestamp}\` (Duration: \`${scanDurationSeconds}\`)`,
-      `- **Engine & Ruleset Version:** \`XTRIKE-Engine v4.2.0 Â· 400-Plugin Multi-Standard Pack v2026.10\``,
+      `- **Engine & Ruleset Version:** \`XTRIKE-Engine v4.2.0 · 400-Plugin Multi-Standard Pack v2026.10\``,
       `- **Runtime Sandbox Verification:** \`NOT_RUN (Static AST & Dataflow Mode)\``,
       `- **Lead Security Auditor:** ${auditorName}`,
       `- **Classification:** ${classification}`,
@@ -387,7 +418,7 @@ export default function ReportEnginePage() {
       `| **NEEDS_MANUAL_VALIDATION (Secret Provenance / Dependency Reachability)** | ${canonicalStats.needsManualValidation} / ${canonicalStats.total} |`,
       `| **MITIGATED_BY_GUARD (Upstream Sanitizer / Parameterization)** | ${canonicalStats.mitigatedByGuard} / ${canonicalStats.total} |`,
       `| **RUNTIME_REPRODUCED (Isolated Sandbox Exploit Executed)** | ${canonicalStats.runtimeReproduced} / ${canonicalStats.total} |`,
-      `| **Multi-Engine Heuristic Concordance Index** | **${avgConf.toFixed(1)}%** (Inter-engine rule agreement across XQL: ${riskWorksheet.engineConcordance.xql}%, DeepFlow: ${riskWorksheet.engineConcordance.deepFlow}%, StructSCA: ${riskWorksheet.engineConcordance.structSca}%, AST-Query: ${riskWorksheet.engineConcordance.astQuery}% â€” not empirical exploitability probability) |`,
+      `| **Multi-Engine Heuristic Concordance Index** | **${avgConf.toFixed(1)}%** (Inter-engine rule agreement across XQL: ${riskWorksheet.engineConcordance.xql}%, DeepFlow: ${riskWorksheet.engineConcordance.deepFlow}%, StructSCA: ${riskWorksheet.engineConcordance.structSca}%, AST-Query: ${riskWorksheet.engineConcordance.astQuery}% — not empirical exploitability probability) |`,
       `| **Measured Benchmark (labeled fixtures, executed live)** | Held-out confirmed: ${formatRate(benchmarkRun.bySplit.held_out.confirmed.tp, benchmarkRun.bySplit.held_out.confirmed.tp + benchmarkRun.bySplit.held_out.confirmed.fp)} precision, ${formatRate(benchmarkRun.bySplit.held_out.confirmed.tp, benchmarkRun.bySplit.held_out.confirmed.tp + benchmarkRun.bySplit.held_out.confirmed.fn)} recall. Fixtures authored by the engine team; small sample; not predictive of real repositories. Reproduce: \`${benchmarkRun.command}\` |`,
 
 
@@ -408,22 +439,22 @@ export default function ReportEnginePage() {
         const typedProof = resolveTypedProofClassification(f, vf);
         const vector = inferCvss31VectorForFinding(f);
         const computedScore = calculateCvss31BaseScore(vector);
-        const matchedRemediations = getLanguageMatchedRemediation(f.remediation, f.language);
+        const matchedRemediations = getLanguageMatchedRemediation(f.remediation, f.language, f.cwe);
         const rem = matchedRemediations[0];
         const dossier = f.deepExploitability || buildDeepExploitabilityDossier(f);
         const { enumerationPhase, databaseCorrelations, penetrationTestLifecycle } = dossier;
         return [
-          `### 3.${idx + 1} [${f.severity.toUpperCase()}] ${f.id} â€” ${f.title}`,
-          `- **Location:** \`${f.file}:${f.line}\` (${f.language}) Â· **Sink ID:** \`${f.sinkId || `${f.id}-L${f.line}`}\` Â· **Pass:** ${enumerationPhase.discoveryPass}`,
-          `- **Typed Proof State:** \`${typedProof.proofState}\` Â· **Evidence Category:** \`${typedProof.evidenceType}\` Â· **Runtime Sandbox Verification:** \`NOT_RUN\``,
+          `### 3.${idx + 1} [${f.severity.toUpperCase()}] ${f.id} — ${f.title}`,
+          `- **Location:** \`${f.file}:${f.line}\` (${f.language}) · **Sink ID:** \`${f.sinkId || `${f.id}-L${f.line}`}\` · **Pass:** ${enumerationPhase.discoveryPass}`,
+          `- **Typed Proof State:** \`${typedProof.proofState}\` · **Evidence Category:** \`${typedProof.evidenceType}\` · **Runtime Sandbox Verification:** \`NOT_RUN\``,
           `- **Modeled Assumptions & Scope:** ${typedProof.modeledAssumptions}`,
           `- **Audit Disposition:** ${f.auditDisposition || penetrationTestLifecycle.rePenetrationTest.verificationVerdict}`,
-          `- **CWE / OWASP:** ${f.cwe} (${f.cweName}) Â· ${f.owasp} (${f.owaspCategory})`,
-          `- **CVSS v3.1 Base Score & Vector (AT-CVSS-01 Verified):** **${f.cvss}** (Calculated: \`${computedScore}\` from \`${vector}\`) â€” ${f.cvssRationale || "FIRST.org CVSS v3.1 mathematical base score."}`,
+          `- **CWE / OWASP:** ${f.cwe} (${f.cweName}) · ${f.owasp} (${f.owaspCategory})`,
+          `- **CVSS v3.1 Base Score & Vector (AT-CVSS-01 Verified):** **${f.cvss}** (Calculated: \`${computedScore}\` from \`${vector}\`) — ${f.cvssRationale || "FIRST.org CVSS v3.1 mathematical base score."}`,
           `- **Taxonomy & Advisory Correlation:**`,
           `  - **OWASP ASVS / CWE:** \`${databaseCorrelations.githubGhsa.advisoryId}\` (${databaseCorrelations.githubGhsa.cveId})`,
-          `  - **MITRE CAPEC Attack Pattern:** \`${databaseCorrelations.searchsploit.edbId}\` â€” ${databaseCorrelations.searchsploit.exploitTitle}`,
-          `  - **OWASP WSTG & NIST SP 800-53:** \`${databaseCorrelations.googleIntel.osvId}\` Â· ${databaseCorrelations.googleIntel.projectZeroRef}`,
+          `  - **MITRE CAPEC Attack Pattern:** \`${databaseCorrelations.searchsploit.edbId}\` — ${databaseCorrelations.searchsploit.exploitTitle}`,
+          `  - **OWASP WSTG & NIST SP 800-53:** \`${databaseCorrelations.googleIntel.osvId}\` · ${databaseCorrelations.googleIntel.projectZeroRef}`,
           `- **${typedProof.evidenceHeading}:** \`${f.source}\` -> ${f.taintPath.join(" -> ")} -> \`${f.sink}\``,
           `- **Executive Summary:** ${f.executiveSummary}`,
           `- **Root Cause:** ${f.rootCause}`,
@@ -437,7 +468,7 @@ export default function ReportEnginePage() {
         ];
       }),
       `---`,
-      `*Signed and attested by XTRIKE SAST Desk Printable Report Engine Â· SHA-256 of canonical findings ledger (JSON): ${ledgerDigest} Â· Integrity validator: ${integrityIssues.length === 0 ? "0 issues" : `${integrityIssues.length} ISSUES â€” REPORT INVALID`}*`,
+      `*Signed and attested by XTRIKE SAST Desk Printable Report Engine · SHA-256 of canonical findings ledger (JSON): ${ledgerDigest} · Integrity validator: ${integrityIssues.length === 0 ? "0 issues" : `${integrityIssues.length} ISSUES — REPORT INVALID`}*`,
     ];
 
     const blob = new Blob([lines.join("\n")], { type: "text/markdown;charset=utf-8" });
@@ -456,7 +487,7 @@ export default function ReportEnginePage() {
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>${reportTitle} â€” ${reportId}</title>
+  <title>${reportTitle} — ${reportId}</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Georgia, serif;
@@ -925,13 +956,13 @@ export default function ReportEnginePage() {
                       color: "#1f1b18",
                     }}
                   >
-                    <option value="CONFIDENTIAL â€” INTERNAL SECURITY & COMPLIANCE AUDIT">
-                      CONFIDENTIAL â€” INTERNAL AUDIT
+                    <option value="CONFIDENTIAL — INTERNAL SECURITY & COMPLIANCE AUDIT">
+                      CONFIDENTIAL — INTERNAL AUDIT
                     </option>
-                    <option value="RESTRICTED â€” EXECUTIVE & BOARD BRIEFING">
-                      RESTRICTED â€” BOARD BRIEFING
+                    <option value="RESTRICTED — EXECUTIVE & BOARD BRIEFING">
+                      RESTRICTED — BOARD BRIEFING
                     </option>
-                    <option value="EXTERNAL ATTESTATION â€” CUSTOMER / AUDITOR COPY">
+                    <option value="EXTERNAL ATTESTATION — CUSTOMER / AUDITOR COPY">
                       EXTERNAL ATTESTATION COPY
                     </option>
                   </select>
@@ -1098,7 +1129,7 @@ export default function ReportEnginePage() {
                 {reportTitle}
               </h1>
               <p style={{ fontSize: 13, color: "#4a4239", lineHeight: 1.55 }}>
-                Static application security testing (SAST) with single-function (intra-procedural) AST taint tracing, guard analysis, and 9-plugin taxonomy mapping across OWASP Top 10, CWE Top 25, MITRE ATT&amp;CK, CVSS v3.1/v4.0, NIST SP 800-53, and PTES. Cross-module (inter-procedural) call-graph analysis and runtime verification are not yet implemented; findings that depend on them are labelled candidates.
+                Static application security testing (SAST) with intra- and inter-procedural call-graph &amp; function-summary taint tracing (Python, JavaScript/TypeScript, Java, and C#), path-feasibility constraint solving, SSRF &amp; cryptographic context checks, and 9-plugin taxonomy mapping across OWASP Top 10, CWE Top 25, MITRE ATT&amp;CK, CVSS v3.1/v4.0, NIST SP 800-53, and PTES. Dynamic dispatch, reflection, persisted/queue flows, and isolated runtime sandbox reproduction are not executed in static mode; findings that depend on them are explicitly marked as candidates.
               </p>
             </div>
 
@@ -1251,7 +1282,7 @@ export default function ReportEnginePage() {
                     {counts.high}
                   </div>
                   <div style={{ fontSize: 10.5, color: "#6b331c", marginTop: 2 }}>
-                    CVSS 7.0 â€“ 8.9 (7-Day SLA)
+                    CVSS 7.0 – 8.9 (7-Day SLA)
                   </div>
                 </div>
 
@@ -1335,7 +1366,7 @@ export default function ReportEnginePage() {
                 (isolated runtime sandbox verification was <strong>NOT_RUN</strong> during this static scan).
                 <div style={{ marginTop: 6, fontSize: 11, color: "#5c5349" }}>
                   <strong>Primary Scanned Code vs. Architectural Hypothesis Risk Separation:</strong>{" "}
-                  <strong>Primary Code Risk Index ({riskScore}/100)</strong> is computed exclusively from <strong>Pass-1 Primary Scanned Code Findings (<code>SAST-*</code> = <code>{riskWorksheet.primaryCodeWeightedSum} pts</code>)</strong> scaled to scope ceiling <code>{riskWorksheet.primaryNormalizationCeiling}</code> (<code>{riskWorksheet.reconciliation.primarySubtotalSum} / {riskWorksheet.primaryNormalizationCeiling} Ã— 100 = {riskWorksheet.reconciliation.primaryScoreRecomputed}</code>) so Pass-2/3 architectural candidate hypotheses never inflate the scanned repository&apos;s primary risk score.{" "}
+                  <strong>Primary Code Risk Index ({riskScore}/100)</strong> is computed exclusively from <strong>Pass-1 Primary Scanned Code Findings (<code>SAST-*</code> = <code>{riskWorksheet.primaryCodeWeightedSum} pts</code>)</strong> scaled to scope ceiling <code>{riskWorksheet.primaryNormalizationCeiling}</code> (<code>{riskWorksheet.reconciliation.primarySubtotalSum} / {riskWorksheet.primaryNormalizationCeiling} × 100 = {riskWorksheet.reconciliation.primaryScoreRecomputed}</code>) so Pass-2/3 architectural candidate hypotheses never inflate the scanned repository&apos;s primary risk score.{" "}
                   <strong>Pass-2/3 Architectural Hypotheses (<code>RE-ENUM-*</code> = <code>{riskWorksheet.architecturalCandidateWeightedSum} pts</code> across {riskWorksheet.architecturalCandidateCount} items)</strong> are tracked separately (Combined Posture Index: <code>{riskWorksheet.combinedPostureRiskScore}/100</code>).{" "}
                   <strong>Multi-Engine Heuristic Concordance ({avgConf.toFixed(1)}%)</strong> is an engine-reported rule-agreement index across the 4 static analyzers (
                   <code>XTRIKE XQL={riskWorksheet.engineConcordance.xql}%</code>,{" "}
@@ -1343,6 +1374,44 @@ export default function ReportEnginePage() {
                   <code>StructSCA={riskWorksheet.engineConcordance.structSca}%</code>,{" "}
                   <code>AST-Query={riskWorksheet.engineConcordance.astQuery}%</code>) and is not a probability of live exploitability.
                 </div>
+
+                {/* Two Independent Executive Risk Panels: Repository-Observed Risk vs. Architectural Threat Hypotheses */}
+                {(() => {
+                  const pCrit = riskWorksheet.severityBreakdown.find((r) => r.severity === "Critical")?.primaryCount ?? 0;
+                  const pHigh = riskWorksheet.severityBreakdown.find((r) => r.severity === "High")?.primaryCount ?? 0;
+                  const pMed = riskWorksheet.severityBreakdown.find((r) => r.severity === "Medium")?.primaryCount ?? 0;
+                  const pLow = riskWorksheet.severityBreakdown.find((r) => r.severity === "Low")?.primaryCount ?? 0;
+                  const aCrit = riskWorksheet.severityBreakdown.find((r) => r.severity === "Critical")?.archCount ?? 0;
+                  const aHigh = riskWorksheet.severityBreakdown.find((r) => r.severity === "High")?.archCount ?? 0;
+                  const aMed = riskWorksheet.severityBreakdown.find((r) => r.severity === "Medium")?.archCount ?? 0;
+                  const aLow = riskWorksheet.severityBreakdown.find((r) => r.severity === "Low")?.archCount ?? 0;
+                  return (
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginTop: 10 }}>
+                      <div style={{ padding: "10px 12px", borderRadius: 8, background: "#eef6f1", border: "1.5px solid #2d6a4f" }}>
+                        <div style={{ fontSize: 11, fontWeight: 900, color: "#1b4332", textTransform: "uppercase", marginBottom: 4 }}>
+                          Panel 1 — Repository-Observed Risk (Authoritative Release-Gate Scope)
+                        </div>
+                        <div style={{ fontSize: 11.5, color: "#1f1b18", fontFamily: "monospace", fontWeight: 700 }}>
+                          {riskWorksheet.primaryFindingsCount} Primary Scanned-Code Findings · Critical: {pCrit} · High: {pHigh} · Medium: {pMed} · Low: {pLow}
+                        </div>
+                        <div style={{ fontSize: 11, color: "#2d6a4f", marginTop: 3 }}>
+                          <strong>Authoritative Primary Code Risk Index: {riskScore}/100</strong> (Derived strictly from verified repository source files; sole metric governing release gate).
+                        </div>
+                      </div>
+                      <div style={{ padding: "10px 12px", borderRadius: 8, background: "#fbf3e4", border: "1.5px dashed #996b1f" }}>
+                        <div style={{ fontSize: 11, fontWeight: 900, color: "#6e4b11", textTransform: "uppercase", marginBottom: 4 }}>
+                          Panel 2 — Architectural Threat Hypotheses (Pass-2/3 Threat Catalogue)
+                        </div>
+                        <div style={{ fontSize: 11.5, color: "#1f1b18", fontFamily: "monospace", fontWeight: 700 }}>
+                          {riskWorksheet.architecturalCandidateCount} Synthetic Candidates · Critical: {aCrit} · High: {aHigh} · Medium: {aMed} · Low: {aLow}
+                        </div>
+                        <div style={{ fontSize: 10.8, color: "#6e4b11", marginTop: 3 }}>
+                          <strong>Excluded from Repository-Observed Risk Index.</strong> Combined Posture ({riskWorksheet.combinedPostureRiskScore}/100) is numerically lower only because its normalization ceiling expands across all {canonicalStats.total} items ({riskWorksheet.combinedNormalizationCeiling} pts), not because actual risk is lower.
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
               </div>
 
@@ -1370,7 +1439,7 @@ export default function ReportEnginePage() {
                     Reproducible Composite Risk, Primary vs. Architectural Scope Separation &amp; 4-Engine Concordance Worksheet (AT-CVSS-01 / AT-16)
                   </strong>
                   <span style={{ fontFamily: "monospace", fontSize: 11, color: "#8b4528", fontWeight: 700 }}>
-                    Primary Code ({riskWorksheet.primaryFindingsCount} SAST-*): {riskWorksheet.primaryCodeWeightedSum} pts / Ceiling {riskWorksheet.primaryNormalizationCeiling} &rarr; Primary Risk = {riskScore}/100 (Combined {riskWorksheet.rawWeightedSum} pts / Ceiling {riskWorksheet.combinedNormalizationCeiling} &rarr; {riskWorksheet.combinedPostureRiskScore}/100) Â· Reconciliation: {riskWorksheet.reconciliation.reconciles ? "VERIFIED" : "FAILED"}
+                    Primary Code ({riskWorksheet.primaryFindingsCount} SAST-*): {riskWorksheet.primaryCodeWeightedSum} pts / Ceiling {riskWorksheet.primaryNormalizationCeiling} &rarr; Primary Risk = {riskScore}/100 (Combined {riskWorksheet.rawWeightedSum} pts / Ceiling {riskWorksheet.combinedNormalizationCeiling} &rarr; {riskWorksheet.combinedPostureRiskScore}/100) · Reconciliation: {riskWorksheet.reconciliation.reconciles ? "VERIFIED" : "FAILED"}
                   </span>
                 </div>
 
@@ -1416,20 +1485,56 @@ export default function ReportEnginePage() {
                           {row.avgReachabilityFactor.toFixed(2)}
                         </td>
                         <td style={{ border: "1px solid #ddd3c2", padding: "6px 10px", textAlign: "right", fontFamily: "monospace", fontWeight: 800 }}>
-                          {row.primaryCount} primary â†’ {row.primarySubtotalPoints.toFixed(2)} pts Â· {row.archCount} arch â†’ {row.archSubtotalPoints.toFixed(2)} pts = {row.subtotalPoints.toFixed(2)} pts
+                          {row.primaryCount} primary → {row.primarySubtotalPoints.toFixed(2)} pts · {row.archCount} arch → {row.archSubtotalPoints.toFixed(2)} pts = {row.subtotalPoints.toFixed(2)} pts
                         </td>
                       </tr>
                     ))}
                     <tr style={{ background: "#f3eee4", fontWeight: 800 }}>
                       <td colSpan={5} style={{ border: "1px solid #ddd3c2", padding: "6px 10px" }}>
-                        Reconciliation: Primary {riskWorksheet.reconciliation.primarySubtotalSum} / {riskWorksheet.primaryNormalizationCeiling} = {riskWorksheet.reconciliation.primaryScoreRecomputed}/100 Â· Combined {riskWorksheet.reconciliation.combinedSubtotalSum} / {riskWorksheet.combinedNormalizationCeiling} = {riskWorksheet.reconciliation.combinedScoreRecomputed}/100 Â· {riskWorksheet.reconciliation.reconciles ? "VERIFIED" : "FAILED"}
+                        Reconciliation: Primary {riskWorksheet.reconciliation.primarySubtotalSum} / {riskWorksheet.primaryNormalizationCeiling} = {riskWorksheet.reconciliation.primaryScoreRecomputed}/100 · Combined {riskWorksheet.reconciliation.combinedSubtotalSum} / {riskWorksheet.combinedNormalizationCeiling} = {riskWorksheet.reconciliation.combinedScoreRecomputed}/100 · {riskWorksheet.reconciliation.reconciles ? "VERIFIED" : "FAILED"}
                       </td>
                       <td style={{ border: "1px solid #ddd3c2", padding: "6px 10px", textAlign: "right", fontFamily: "monospace" }}>
-                        Î£ {riskWorksheet.reconciliation.primarySubtotalSum} + {riskWorksheet.reconciliation.archSubtotalSum} = {riskWorksheet.reconciliation.combinedSubtotalSum} pts
+                        Σ {riskWorksheet.reconciliation.primarySubtotalSum} + {riskWorksheet.reconciliation.archSubtotalSum} = {riskWorksheet.reconciliation.combinedSubtotalSum} pts
                       </td>
                     </tr>
                   </tbody>
                 </table>
+              </div>
+
+              {/* 6-Metric Remediation & Patch Validation Portfolio Summary */}
+              <div
+                style={{
+                  border: "1px solid #ddd3c2",
+                  borderRadius: 10,
+                  background: "#f9f6ef",
+                  padding: "10px 14px",
+                  marginBottom: 14,
+                  fontSize: 11,
+                }}
+              >
+                <div style={{ fontWeight: 800, color: "#1f1b18", marginBottom: 6 }}>
+                  Executive Remediation &amp; Patch Validation Portfolio Summary (6-Stage Lifecycle Accounting)
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8, fontFamily: "monospace", fontSize: 10.5 }}>
+                  <div style={{ padding: "5px 8px", borderRadius: 6, background: "#ffffff", border: "1px solid #ddd3c2" }}>
+                    <strong>1. Patches Generated:</strong> {patchPortfolio.patchesGeneratedCount}/{patchPortfolio.totalFindings}
+                  </div>
+                  <div style={{ padding: "5px 8px", borderRadius: 6, background: "#eef6f1", border: "1px solid #2d6a4f", color: "#1b4332" }}>
+                    <strong>2. Static Validation Passed:</strong> {patchPortfolio.staticValidationPassedCount}/{patchPortfolio.totalFindings}
+                  </div>
+                  <div style={{ padding: "5px 8px", borderRadius: 6, background: patchPortfolio.staticValidationFailedCount > 0 ? "#f9e6e6" : "#ffffff", border: "1px solid #ddd3c2", color: patchPortfolio.staticValidationFailedCount > 0 ? "#9e2a2b" : "#36302a" }}>
+                    <strong>3. Static Validation Failed:</strong> {patchPortfolio.staticValidationFailedCount}
+                  </div>
+                  <div style={{ padding: "5px 8px", borderRadius: 6, background: "#ffffff", border: "1px solid #ddd3c2", color: "#7a4b19" }}>
+                    <strong>4. Compiled Successfully:</strong> {patchPortfolio.compiledSuccessfullyCount} (NOT_RUN)
+                  </div>
+                  <div style={{ padding: "5px 8px", borderRadius: 6, background: "#ffffff", border: "1px solid #ddd3c2", color: "#7a4b19" }}>
+                    <strong>5. Security Regression:</strong> {patchPortfolio.securityRegressionPassedCount} (NOT_RUN)
+                  </div>
+                  <div style={{ padding: "5px 8px", borderRadius: 6, background: "#ffffff", border: "1px solid #ddd3c2", color: "#7a4b19" }}>
+                    <strong>6. Functional Regression:</strong> {patchPortfolio.functionalRegressionPassedCount} (NOT_RUN)
+                  </div>
+                </div>
               </div>
 
               {/* Measured benchmark: executed from labeled fixtures, never hardcoded */}
@@ -1444,7 +1549,7 @@ export default function ReportEnginePage() {
               >
                 <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
                   <strong style={{ fontSize: 12, color: "#1f1b18" }}>
-                    Measured Benchmark â€” computed live from {benchmarkRun.fixtureCount} labeled fixtures (not a stored claim)
+                    Measured Benchmark — computed live from {benchmarkRun.fixtureCount} labeled fixtures (not a stored claim)
                   </strong>
                   <span style={{ fontFamily: "monospace", fontSize: 10.5, color: "#5c5349" }}>
                     reproduce: <code>{benchmarkRun.command}</code>
@@ -1494,7 +1599,80 @@ export default function ReportEnginePage() {
                 </table>
                 <div style={{ marginTop: 8, fontSize: 10.5, color: "#5c5349", lineHeight: 1.5 }}>
                   <strong>Cross-function fixtures:</strong> {benchmarkRun.interprocedural.confirmed}/{benchmarkRun.interprocedural.total} vulnerable inter-procedural fixtures confirmed.{" "}
+                  <strong>Per-CWE Confirmed Recall:</strong>{" "}
+                  {benchmarkRun.byCwe.map((cw) => `${cw.cwe}: TP=${cw.confirmed.tp} FP=${cw.confirmed.fp} TN=${cw.confirmed.tn} FN=${cw.confirmed.fn}`).join(" · ")}.{" "}
+                  <strong>Per-Language Confirmed Recall:</strong>{" "}
+                  {benchmarkRun.byLanguage.map((lg) => `${lg.language}: TP=${lg.confirmed.tp} FP=${lg.confirmed.fp} TN=${lg.confirmed.tn} FN=${lg.confirmed.fn}`).join(" · ")}.{" "}
+                  <strong>3-Tier Benchmark Architecture:</strong>{" "}
+                  {benchmarkRun.threeTierSuites.map((t) => `${t.tierName} (n=${t.sampleCount}: ${t.statusNote})`).join(" | ")}.{" "}
                   <strong>Caveat:</strong> {benchmarkRun.disclosure} Sample sizes are small, so the intervals above are wide; a perfect point estimate is not evidence of 100% accuracy.
+                </div>
+              </div>
+
+              {/* 5-Dimension Inter-Procedural & Language Coverage Matrix */}
+              <div
+                style={{
+                  border: "1px solid #ddd3c2",
+                  borderRadius: 10,
+                  background: "#ffffff",
+                  padding: "12px 14px",
+                  marginBottom: 14,
+                }}
+              >
+                <div style={{ fontSize: 12, fontWeight: 800, color: "#1f1b18", marginBottom: 6 }}>
+                  Language-Specific Intra-Procedural vs. Inter-Procedural Capability Matrix (Section 4 — Coverage Disambiguation)
+                </div>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10.5 }}>
+                  <thead>
+                    <tr style={{ background: "#f3eee4" }}>
+                      {["Language / Ecosystem", "Intra-Procedural AST/Taint", "Inter-Procedural Call-Graph", "Framework Input Bindings", "Async / Queue Flows", "Dynamic Dispatch / Reflection"].map((h) => (
+                        <th key={h} style={{ border: "1px solid #ddd3c2", padding: "4px 6px", textAlign: "left" }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {LANGUAGE_CAPABILITY_MATRIX.map((row) => (
+                      <tr key={row.language}>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "4px 6px", fontWeight: 700 }}>{row.language}</td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "4px 6px", fontFamily: "monospace", color: "#2d6a4f", fontWeight: 700 }}>{row.intraProceduralAst}</td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "4px 6px", fontFamily: "monospace", color: row.interProceduralCallGraph.startsWith("SUPPORTED") ? "#2d6a4f" : "#996b1f", fontWeight: 700 }}>{row.interProceduralCallGraph}</td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "4px 6px", fontFamily: "monospace", fontSize: 9.8 }}>{row.frameworkBindings}</td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "4px 6px", fontSize: 9.8 }}>{row.asyncAndQueues}</td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "4px 6px", fontFamily: "monospace", color: "#8a8176" }}>{row.dynamicDispatchAndReflection}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {/* Application Execution Graph (AEG) & XTRIKE V5 8-Engine Architecture Summary */}
+                <div style={{ marginTop: 10, padding: "8px 10px", borderRadius: 8, background: "#ffffff", border: "1px solid #ddd3c2" }}>
+                  <div style={{ fontSize: 11, fontWeight: 800, color: "#1f1b18", marginBottom: 4 }}>
+                    Application Execution Graph (AEG) Topology &amp; Enterprise Blind-Spot Boundaries — {aegSummary.nodes.length} Nodes · {aegSummary.edges.length} Edges ({aegSummary.interProceduralCrossFunctionChainsCount} Inter-Procedural Cross-Function · {aegSummary.intraProceduralChainsCount} Intra-Procedural Single-Function · {aegSummary.asyncOrSyntheticChainsCount} Async/Queue Threat Hypotheses)
+                  </div>
+                  <div style={{ fontSize: 10, color: "#4a4239", marginBottom: 6 }}>
+                    <strong>XTRIKE V5 8-Engine Architecture Registry:</strong>{" "}
+                    {XTRIKE_V5_EIGHT_ENGINES.map((eng) => `${eng.engineNumber}. ${eng.engineName} [${eng.operationalStatus}]`).join(" · ")}
+                  </div>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10 }}>
+                    <thead>
+                      <tr style={{ background: "#f3eee4" }}>
+                        <th style={{ border: "1px solid #ddd3c2", padding: "3px 6px", textAlign: "left" }}>Enterprise Analysis Capability</th>
+                        <th style={{ border: "1px solid #ddd3c2", padding: "3px 6px", textAlign: "left" }}>Engine State</th>
+                        <th style={{ border: "1px solid #ddd3c2", padding: "3px 6px", textAlign: "left" }}>What Is Proven Today</th>
+                        <th style={{ border: "1px solid #ddd3c2", padding: "3px 6px", textAlign: "left" }}>Remaining Static Blind Spot &amp; V5 Scope</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {aegSummary.capabilityBoundaries.map((cb) => (
+                        <tr key={cb.capability}>
+                          <td style={{ border: "1px solid #ddd3c2", padding: "3px 6px", fontWeight: 700 }}>{cb.capability}</td>
+                          <td style={{ border: "1px solid #ddd3c2", padding: "3px 6px", fontFamily: "monospace", fontWeight: 700, color: cb.currentEngineState === "ESTABLISHED_STATIC" ? "#2d6a4f" : "#996b1f" }}>{cb.currentEngineState}</td>
+                          <td style={{ border: "1px solid #ddd3c2", padding: "3px 6px" }}>{cb.whatIsProvenToday}</td>
+                          <td style={{ border: "1px solid #ddd3c2", padding: "3px 6px", color: "#5c5349" }}>{cb.remainingBlindSpotAndV5Scope}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
@@ -1509,7 +1687,7 @@ export default function ReportEnginePage() {
               >
                 <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 8 }}>
                   <strong style={{ fontSize: 12, color: "#1f1b18" }}>
-                    Risk Intelligence Model v2 â€” factor-explained, correlation-aware (supplements the legacy index above)
+                    Unified Risk Decision Engine &amp; 7 Supporting Risk Dimensions (Authoritative Release-Gate Score = Primary Code Risk Index {riskScore}/100)
                   </strong>
                   <label style={{ fontSize: 11, fontWeight: 700 }}>
                     Asset criticality{" "}
@@ -1528,15 +1706,25 @@ export default function ReportEnginePage() {
                   </label>
                 </div>
                 <div style={{ fontFamily: "monospace", fontSize: 11, fontWeight: 800, color: "#8b4528", marginBottom: 6 }}>
-                  Primary {riskIntel.primaryScore}/100 Â· Combined {riskIntel.combinedScore}/100 Â· correlated-finding adjustment âˆ’{riskIntel.dedupAdjustment} pts Â· KEV feed: {riskIntel.kevFeed === "NOT_LOADED" ? "not loaded (0 matches checked)" : `${riskIntel.kevMatches.length} match(es)`}
+                  Sole Authoritative Release-Gate Score: {riskScore}/100 (Primary Scanned-Code Risk Index) · Peak Single Primary Finding: {riskIntel.peakPrimaryFindingScore}/100 · Correlated Root-Cause De-duplication Adjustment: −{riskIntel.dedupAdjustment} pts · Architectural Threat Hypotheses ({riskWorksheet.architecturalCandidateCount} items): Excluded from Release-Gate Index · KEV feed: {riskIntel.kevFeed === "NOT_LOADED" ? "NOT_LOADED (offline mode — 0 CVE/KEV matches checked)" : `${riskIntel.kevMatches.length} match(es)`}
+                </div>
+                <div style={{ fontSize: 10.5, color: "#4a4239", marginBottom: 8, padding: "6px 8px", background: "#fbf8f3", borderRadius: 6, border: "1px solid #ece5d8" }}>
+                  <strong>7 Supporting Risk Dimensions:</strong>{" "}
+                  1. Inherent Technical Severity: <code>{riskIntel.sevenDimensions.inherentTechnicalSeverity}/100</code> &middot;{" "}
+                  2. Evidence Confidence: <code>{riskIntel.sevenDimensions.evidenceConfidence}/100</code> &middot;{" "}
+                  3. Exploitability: <code>{riskIntel.sevenDimensions.exploitability}/100</code> &middot;{" "}
+                  4. Business Impact: <code>{riskIntel.sevenDimensions.businessImpact}/100</code> &middot;{" "}
+                  5. Environmental Exposure: <code>{riskIntel.sevenDimensions.environmentalExposure}/100</code> &middot;{" "}
+                  6. Remediation Status: <code>{riskIntel.sevenDimensions.remediationStatus}</code> &middot;{" "}
+                  7. Residual Risk: <code>{riskIntel.sevenDimensions.residualRisk}/100</code>
                 </div>
                 <div style={{ fontSize: 10.5, color: "#5c5349", marginBottom: 8 }}>
-                  <code>{riskIntel.formula}</code> EPSS values come from the finding records, not a live feed.
+                  <strong>Model Reconciliation &amp; 3-Tier CVSS Qualification:</strong> The <strong>Primary Code Risk Index ({riskScore}/100)</strong> is the single authoritative release-gating metric. Each finding below reports <strong>Provisional CVSS</strong> (base technical severity assuming worst-case reachability), <strong>Context-Adjusted CVSS</strong> (discounted by static evidence state, reachability, and auth), and <strong>Validated Environmental CVSS</strong> (populated only when runtime reproduction evidence exists; <code>AWAITING_SANDBOX</code> in static mode).
                 </div>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10.5 }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10.2 }}>
                   <thead>
                     <tr style={{ background: "#f3eee4" }}>
-                      {["Finding", "Group", "CVSS", "EPSS", "Evidence", "Reach", "Auth", "Crit", "Score"].map((h) => (
+                      {["Finding", "Group", "Provisional CVSS", "Context-Adj CVSS", "Validated Env CVSS", "Evidence State", "EPSS", "Evidence", "Reach", "Score"].map((h) => (
                         <th key={h} style={{ border: "1px solid #ddd3c2", padding: "4px 6px", textAlign: "left" }}>{h}</th>
                       ))}
                     </tr>
@@ -1546,12 +1734,15 @@ export default function ReportEnginePage() {
                       <tr key={r.id} title={r.formula}>
                         <td style={{ border: "1px solid #ddd3c2", padding: "4px 6px", fontFamily: "monospace", fontWeight: 700 }}>{r.id}</td>
                         <td style={{ border: "1px solid #ddd3c2", padding: "4px 6px", fontFamily: "monospace", fontSize: 9.5 }}>{r.groupId}</td>
-                        <td style={{ border: "1px solid #ddd3c2", padding: "4px 6px" }}>{r.cvss}</td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "4px 6px", fontFamily: "monospace" }}>{r.cvss.toFixed(1)}</td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "4px 6px", fontFamily: "monospace", fontWeight: 700, color: "#8b4528" }}>{r.contextAdjustedCvss.toFixed(2)}</td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "4px 6px", fontFamily: "monospace", fontSize: 9.5, color: "#5c5349" }}>
+                          {r.validatedEnvironmentalCvss !== null ? r.validatedEnvironmentalCvss.toFixed(2) : "AWAITING_SANDBOX"}
+                        </td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "4px 6px", fontFamily: "monospace", fontSize: 9.5 }}>{r.exploitabilityEvidenceState}</td>
                         <td style={{ border: "1px solid #ddd3c2", padding: "4px 6px" }}>{r.epss}</td>
                         <td style={{ border: "1px solid #ddd3c2", padding: "4px 6px" }}>{r.evidenceFactor}</td>
                         <td style={{ border: "1px solid #ddd3c2", padding: "4px 6px" }}>{r.reachabilityFactor}</td>
-                        <td style={{ border: "1px solid #ddd3c2", padding: "4px 6px" }}>{r.authFactor}</td>
-                        <td style={{ border: "1px solid #ddd3c2", padding: "4px 6px" }}>{r.criticalityFactor}</td>
                         <td style={{ border: "1px solid #ddd3c2", padding: "4px 6px", fontWeight: 800 }}>{r.score}</td>
                       </tr>
                     ))}
@@ -1736,8 +1927,28 @@ export default function ReportEnginePage() {
                 }}
               >
                 <h2 className="font-editorial" style={{ fontSize: 19, fontWeight: 700, color: "#1f1b18" }}>
-                  3. XTRIKE 9-Plugin Multi-Standard Compliance &amp; Taxonomy Matrix
+                  3. XTRIKE 9-Plugin Multi-Standard Compliance &amp; Threat Intelligence Provenance Matrix
                 </h2>
+              </div>
+
+              <div
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: 8,
+                  background: "#fbf8f3",
+                  border: "1px solid #ddd3c2",
+                  fontSize: 10.5,
+                  color: "#36302a",
+                  marginBottom: 10,
+                }}
+              >
+                <div>
+                  <strong>Timestamped Threat Intelligence Snapshot ({tiSnapshot.snapshotId} @ {tiSnapshot.snapshotTimestampUtc}):</strong>{" "}
+                  Taxonomy=<code>{tiSnapshot.localTaxonomyVersion}</code> &middot; First-Party Code Rule Mapping=<code>{tiSnapshot.cveAdvisoryState}</code> &middot; Live CISA KEV=<code>{tiSnapshot.cisaKevFeedState}</code> &middot; Live EPSS=<code>{tiSnapshot.epssModelState}</code> &middot; Runtime Exploitability=<code>{tiSnapshot.exploitabilityValidationState}</code>
+                </div>
+                <div style={{ marginTop: 3, color: "#5c5349" }}>
+                  {tiSnapshot.auditorNote}
+                </div>
               </div>
 
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11.5 }}>
@@ -1758,33 +1969,48 @@ export default function ReportEnginePage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {PYTHON_STANDARD_PLUGINS.map((plugin) => (
-                    <tr key={plugin.pluginId}>
-                      <td style={{ border: "1px solid #ddd3c2", padding: "7px 10px" }}>
-                        <div style={{ fontWeight: 800, color: "#1f1b18" }}>{plugin.name}</div>
-                        <div style={{ fontFamily: "monospace", fontSize: 10.5, color: "#8b4528" }}>
-                          {plugin.modulePath}
-                        </div>
-                      </td>
-                      <td style={{ border: "1px solid #ddd3c2", padding: "7px 10px", fontWeight: 700 }}>
-                        {plugin.shortBadge} ({plugin.standardVersion})
-                      </td>
-                      <td style={{ border: "1px solid #ddd3c2", padding: "7px 10px", color: "#4a4239" }}>
-                        {plugin.description}
-                      </td>
-                      <td
-                        style={{
-                          border: "1px solid #ddd3c2",
-                          padding: "7px 10px",
-                          textAlign: "center",
-                          fontWeight: 800,
-                          color: "#2d6a4f",
-                        }}
-                      >
-                        EVALUATED ({filteredFindings.length} items)
-                      </td>
-                    </tr>
-                  ))}
+                  {PYTHON_STANDARD_PLUGINS.map((plugin) => {
+                    const prov = classifyPluginIntelligenceProvenance(
+                      plugin.pluginId,
+                      filteredFindings.length,
+                      riskIntel.kevFeed !== "NOT_LOADED"
+                    );
+                    return (
+                      <tr key={plugin.pluginId}>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "7px 10px" }}>
+                          <div style={{ fontWeight: 800, color: "#1f1b18" }}>{plugin.name}</div>
+                          <div style={{ fontFamily: "monospace", fontSize: 10.5, color: "#8b4528" }}>
+                            {plugin.modulePath}
+                          </div>
+                        </td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "7px 10px", fontWeight: 700 }}>
+                          {plugin.shortBadge} ({plugin.standardVersion})
+                        </td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "7px 10px", color: "#4a4239" }}>
+                          <div>{plugin.description}</div>
+                          <div style={{ fontSize: 10, color: "#5c5349", marginTop: 2 }}>{prov.auditSummary}</div>
+                        </td>
+                        <td
+                          style={{
+                            border: "1px solid #ddd3c2",
+                            padding: "7px 10px",
+                            textAlign: "center",
+                            fontFamily: "monospace",
+                            fontSize: 10,
+                            fontWeight: 800,
+                            color:
+                              prov.matchOutcome === "MATCH_FOUND"
+                                ? "#2d6a4f"
+                                : prov.matchOutcome === "NO_MATCH_FOUND"
+                                  ? "#7a4b19"
+                                  : "#996b1f",
+                          }}
+                        >
+                          {prov.statusPills.join(" · ")}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </section>
@@ -1803,7 +2029,7 @@ export default function ReportEnginePage() {
                 }}
               >
                 <h2 className="font-editorial" style={{ fontSize: 19, fontWeight: 700, color: "#1f1b18" }}>
-                  4. Detailed Finding Dossiers â€” Static Evidence, Runtime Status &amp; Language-Matched Remediation ({filteredFindings.length} Findings)
+                  4. Detailed Technical Dossiers — Repository Findings &amp; Architectural Threat Hypotheses ({riskWorksheet.primaryFindingsCount} Repository Findings + {riskWorksheet.architecturalCandidateCount} Architectural Threat Hypotheses)
                 </h2>
               </div>
 
@@ -1817,7 +2043,8 @@ export default function ReportEnginePage() {
                   const computedCvss = calculateCvss31BaseScore(validatedVector);
                   const matchedRemediations = getLanguageMatchedRemediation(
                     finding.remediation,
-                    finding.language
+                    finding.language,
+                    finding.cwe
                   );
                   const rem = matchedRemediations[0];
                   const dossier =
@@ -1841,15 +2068,59 @@ export default function ReportEnginePage() {
                           ? "#fbf3e4"
                           : "#e3f0e9";
 
+                  const isSyntheticHypothesis =
+                    finding.findingOrigin === "ARCHITECTURAL_CANDIDATE_HYPOTHESIS" ||
+                    finding.sourceProvenance?.status === "SYNTHETIC_TEMPLATE" ||
+                    finding.id.startsWith("RE-ENUM-");
+                  const prevFinding = index > 0 ? filteredFindings[index - 1] : null;
+                  const prevWasSynthetic = prevFinding
+                    ? prevFinding.findingOrigin === "ARCHITECTURAL_CANDIDATE_HYPOTHESIS" ||
+                      prevFinding.sourceProvenance?.status === "SYNTHETIC_TEMPLATE" ||
+                      prevFinding.id.startsWith("RE-ENUM-")
+                    : false;
+                  const showSection4ABanner = index === 0 && !isSyntheticHypothesis;
+                  const showSection4BBanner = isSyntheticHypothesis && (!prevFinding || !prevWasSynthetic);
+                  const evRecord = finding.evidenceRecord;
+
                   return (
+                    <div key={finding.id} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                      {showSection4ABanner && (
+                        <div
+                          style={{
+                            padding: "10px 14px",
+                            borderRadius: 10,
+                            background: "#eef6f1",
+                            border: "1.5px solid #2d6a4f",
+                            color: "#1b4332",
+                            fontSize: 12,
+                            fontWeight: 800,
+                          }}
+                        >
+                          Section 4A — Verified Repository Findings (REPOSITORY_OBSERVED_EVIDENCE · Included in Authoritative Primary Code Risk Index)
+                        </div>
+                      )}
+                      {showSection4BBanner && (
+                        <div
+                          style={{
+                            padding: "10px 14px",
+                            borderRadius: 10,
+                            background: "#fbf3e4",
+                            border: "1.5px dashed #996b1f",
+                            color: "#6e4b11",
+                            fontSize: 12,
+                            fontWeight: 800,
+                          }}
+                        >
+                          Section 4B — Synthetic Architectural Threat Hypotheses (SYNTHETIC_ARCHITECTURAL_SCENARIO · Pass-2/3 Threat Catalogue — Excluded from Primary Code Risk Index)
+                        </div>
+                      )}
                     <div
-                      key={finding.id}
                       className="print-avoid-break"
                       style={{
-                        border: "1px solid #ddd3c2",
+                        border: isSyntheticHypothesis ? "1.5px dashed #c8b698" : "1px solid #ddd3c2",
                         borderRadius: 12,
                         padding: 18,
-                        background: "#ffffff",
+                        background: isSyntheticHypothesis ? "#fdfbf7" : "#ffffff",
                       }}
                     >
                       {/* Finding Header Row */}
@@ -1918,11 +2189,42 @@ export default function ReportEnginePage() {
                             }}
                           >
                             {finding.findingOrigin === "ARCHITECTURAL_CANDIDATE_HYPOTHESIS"
-                              ? "Pass-2/3 Architectural Candidate"
+                              ? "Pass-2/3 Architectural Threat Hypothesis"
                               : finding.findingOrigin === "MULTI_SINK_SHARED_ROOT_CAUSE"
-                                ? `Primary Code (Consolidated x${finding.deduplicatedCount || 2} Sinks)`
-                                : "Pass-1 Primary Scanned Code"}
+                                ? `Primary Repository Finding (Consolidated x${finding.deduplicatedCount || 2} Sinks)`
+                                : "Pass-1 Primary Repository Finding"}
                           </span>
+                          {finding.sourceProvenance && (
+                            <span
+                              title={finding.sourceProvenance.detail}
+                              style={{
+                                padding: "2px 8px",
+                                borderRadius: 6,
+                                background:
+                                  finding.sourceProvenance.status === "VERIFIED"
+                                    ? "#e3f0e9"
+                                    : finding.sourceProvenance.status === "SYNTHETIC_TEMPLATE"
+                                      ? "#fbf3e4"
+                                      : "#f9e6e6",
+                                border: "1px solid #ddd3c2",
+                                fontSize: 10,
+                                fontWeight: 800,
+                                fontFamily: "monospace",
+                                color:
+                                  finding.sourceProvenance.status === "VERIFIED"
+                                    ? "#2d6a4f"
+                                    : finding.sourceProvenance.status === "SYNTHETIC_TEMPLATE"
+                                      ? "#996b1f"
+                                      : "#9e2a2b",
+                              }}
+                            >
+                              {finding.sourceProvenance.status === "VERIFIED"
+                                ? "Provenance: VERIFIED IN REPO"
+                                : finding.sourceProvenance.status === "SYNTHETIC_TEMPLATE"
+                                  ? "SYNTHETIC TEMPLATE (Not in Repo · Excluded from Risk Score)"
+                                  : `Provenance: ${finding.sourceProvenance.status}`}
+                            </span>
+                          )}
                           <span
                             style={{
                               padding: "2px 8px",
@@ -2039,7 +2341,7 @@ export default function ReportEnginePage() {
                         <div style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>
                           <span style={{ color: "#5c5349", fontWeight: 600 }}>Compliance Controls: </span>
                           <span style={{ fontWeight: 600 }}>
-                            {finding.compliance.map((c) => `${c.framework} ${c.reference}`).join(" Â· ")}
+                            {finding.compliance.map((c) => `${c.framework} ${c.reference}`).join(" · ")}
                           </span>
                         </div>
                         <div style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>
@@ -2121,7 +2423,7 @@ export default function ReportEnginePage() {
 
                         <div style={{ borderTop: "1px solid #e4dccb", paddingTop: 6, color: "#36302a" }}>
                           <div>
-                            <strong>Layer 1 â€” Observed Static Evidence ({typedProof.evidenceType}): </strong>
+                            <strong>Layer 1 — Observed Static Evidence ({typedProof.evidenceType}): </strong>
                             <code style={{ fontFamily: "monospace", fontSize: 10.5, wordBreak: "break-word", overflowWrap: "anywhere" }}>
                               {penetrationTestLifecycle.initialPentest.evidenceLog}
                             </code>
@@ -2135,14 +2437,14 @@ export default function ReportEnginePage() {
                             <span>{typedProof.modeledAssumptions}</span>
                           </div>
                           <div style={{ marginTop: 3 }}>
-                            <strong>Layer 2 â€” Controlled Verification &amp; Follow-Up Checks: </strong>
+                            <strong>Layer 2 — Controlled Verification &amp; Follow-Up Checks: </strong>
                             <span style={{ fontFamily: "monospace", fontWeight: 700, color: "#8b4528" }}>
                               Runtime Sandbox: NOT_RUN
                             </span>{" "}
-                            &middot; {finding.validationSteps.join(" Â· ")}
+                            &middot; {finding.validationSteps.join(" · ")}
                           </div>
                           <div style={{ marginTop: 3 }}>
-                            <strong>Layer 3 â€” Hypothesized Blast Radius (If Unmitigated in Production): </strong>
+                            <strong>Layer 3 — Hypothesized Blast Radius (If Unmitigated in Production): </strong>
                             {finding.privilegeGain}
                           </div>
                         </div>
@@ -2154,31 +2456,64 @@ export default function ReportEnginePage() {
                         const lc = computeProofLifecycle(finding);
                         const ip = finding.interprocedural;
                         const ctx = finding.contextAssessment;
-                        const stageColor = (s: string) =>
-                          s === "ACHIEVED" ? "#2d6a4f" : s === "NOT_APPLICABLE" ? "#8a8176" : s === "NOT_RUN" ? "#996b1f" : "#9e2a2b";
+                        const strikeEnv = buildStrikeHandoffEnvelope(finding);
+                        const qMappings = qualifyFindingTaxonomyMappings(finding);
+                        const verdictColor = (v: string) =>
+                          v === "PASSED"
+                            ? "#2d6a4f"
+                            : v === "NOT_APPLICABLE"
+                              ? "#8a8176"
+                              : v === "BLOCKED"
+                                ? "#7a4b19"
+                                : v === "NOT_RUN"
+                                  ? "#996b1f"
+                                  : "#9e2a2b";
                         return (
                           <div style={{ padding: "10px 12px", borderRadius: 8, background: "#f9f6ef", border: "1px solid #ddd3c2", fontSize: 11, marginBottom: 12 }}>
                             <div style={{ fontWeight: 800, color: "#8b4528", textTransform: "uppercase", fontSize: 10.5, marginBottom: 6 }}>
-                              Proof lifecycle — maturity reached: {lc.maturity}
-                              {lc.nextRequiredStage ? ` · next required: ${lc.nextRequiredStage}` : ""}
+                              7 Independent Proof Milestones — Contiguous Maturity: {lc.maturity} · Achieved: [{lc.achievedMilestones.join(", ") || "DISCOVERED"}]
+                              {lc.nextRequiredStage ? ` · Next Prerequisite Target: ${lc.nextRequiredStage}` : ""}
                             </div>
                             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 6 }}>
                               {lc.stages.map((s) => (
                                 <span
                                   key={s.stage}
-                                  title={s.evidence}
-                                  style={{ padding: "2px 7px", borderRadius: 6, border: `1px solid ${stageColor(s.status)}`, color: stageColor(s.status), fontFamily: "monospace", fontSize: 10, fontWeight: 700 }}
+                                  title={`Prerequisites: [${s.prerequisites.join(", ") || "None"}] — ${s.evidence}`}
+                                  style={{ padding: "2px 7px", borderRadius: 6, border: `1px solid ${verdictColor(s.verdict)}`, color: verdictColor(s.verdict), fontFamily: "monospace", fontSize: 10, fontWeight: 700 }}
                                 >
-                                  {s.stage} · {s.status}
+                                  {s.stage} · {s.verdict}
+                                  {s.prerequisites.length > 0 ? ` (req: ${s.prerequisites.join("+")})` : ""}
                                 </span>
                               ))}
                             </div>
+                            <div style={{ fontSize: 10, color: "#4a4239", marginBottom: 6 }}>
+                              <strong>Qualified Taxonomy Evidence Tags: </strong>
+                              {qMappings.map((qm) => (
+                                <span
+                                  key={qm.standard}
+                                  title={qm.rationale}
+                                  style={{ display: "inline-block", marginRight: 6, marginBottom: 3, padding: "1px 6px", borderRadius: 4, border: "1px solid #ddd3c2", background: "#ffffff", fontFamily: "monospace", fontSize: 9.5 }}
+                                >
+                                  {qm.standard.split(" ")[0]}: <strong>{qm.qualification}</strong>
+                                </span>
+                              ))}
+                            </div>
+                            <div style={{ fontSize: 10, color: "#36302a", marginBottom: 6, padding: "5px 8px", borderRadius: 6, background: "#ffffff", border: "1px solid #e4dccb" }}>
+                              <strong>XTRIKE SAST Desk &harr; Expedite Strike Handoff Contract ({strikeEnv.envelopeId} &middot; {strikeEnv.handoffEligibility}): </strong>
+                              {strikeEnv.steps.map((st) => `${st.stepNumber}.${st.owner === "EXPEDITE_STRIKE" ? "Strike" : "XTRIKE"}[${st.status}]`).join(" → ")}
+                            </div>
                             {ip && (
                               <div style={{ color: "#36302a", marginBottom: 4, wordBreak: "break-word", overflowWrap: "anywhere" }}>
-                                <strong>Inter-procedural engine: </strong>
-                                {ip.status}
+                                <strong>Call-Graph &amp; Taint Scope: </strong>
+                                <code style={{ fontFamily: "monospace", fontWeight: 800, color: ip.crossesFunctions ? "#2d6a4f" : "#7a4b19" }}>
+                                  {ip.status === "ESTABLISHED"
+                                    ? ip.crossesFunctions
+                                      ? `INTER_PROCEDURAL_CROSS_FUNCTION (${ip.functionChain.join(" → ")})`
+                                      : `INTRA_PROCEDURAL_SINGLE_FUNCTION (within ${ip.functionChain[0] || "enclosing method"} · 0 cross-function hops)`
+                                    : ip.status}
+                                </code>
                                 {ip.status === "ESTABLISHED"
-                                  ? ` · ${ip.crossesFunctions ? `crosses ${ip.functionChain.join(" → ")}` : "single function"} · path ${ip.pathFeasibility?.status} (${ip.pathFeasibility?.reason})`
+                                  ? ` · path ${ip.pathFeasibility?.status} (${ip.pathFeasibility?.reason})`
                                   : ip.note
                                     ? ` — ${ip.note}`
                                     : ""}
@@ -2223,13 +2558,13 @@ export default function ReportEnginePage() {
                       <div style={{ fontSize: 11.5, color: "#4a4239", lineHeight: 1.55, marginBottom: 8, wordBreak: "break-word", overflowWrap: "anywhere" }}>
                         <strong>{typedProof.evidenceHeading}: </strong>
                         Origin <code style={{ fontFamily: "monospace", background: "#f3eee4", padding: "1px 5px", wordBreak: "break-all" }}>{finding.source}</code>{" "}
-                        &rarr; {finding.taintPath.join(" â†’ ")} &rarr; Target{" "}
+                        &rarr; {finding.taintPath.join(" → ")} &rarr; Target{" "}
                         <code style={{ fontFamily: "monospace", background: "#f3eee4", padding: "1px 5px", wordBreak: "break-all" }}>{finding.sink}</code>
                       </div>
 
                       {rem && (
                         <div style={{ fontSize: 12, color: "#21573e", lineHeight: 1.55, marginBottom: 6 }}>
-                          <strong>Language-Matched Remediation Guidance ({rem.platform} â€” AT-REM-08): </strong>
+                          <strong>Language-Matched Remediation Guidance ({rem.platform} — AT-REM-08): </strong>
                           {rem.explanation}
                         </div>
                       )}
@@ -2265,7 +2600,7 @@ export default function ReportEnginePage() {
                                   wordBreak: "break-all",
                                 }}
                               >
-                                Observed Source Context ({finding.file}:{finding.line} Â· {finding.language})
+                                Observed Source Context ({finding.file}:{finding.line} · {finding.language})
                               </div>
                               <pre
                                 style={{
@@ -2321,6 +2656,65 @@ export default function ReportEnginePage() {
                           )}
                         </div>
                       )}
+
+                      {evRecord && (
+                        <div
+                          style={{
+                            marginTop: 10,
+                            padding: "8px 10px",
+                            borderRadius: 6,
+                            background: "#f5f1e8",
+                            border: "1px solid #ddd3c2",
+                            fontSize: 10.2,
+                            color: "#36302a",
+                          }}
+                        >
+                          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 6, marginBottom: 4 }}>
+                            <strong>
+                              Append-Only Cryptographic Evidence Ledger ({evRecord.ledgerDigest} · v{evRecord.events.length}) — Origin:{" "}
+                              <code style={{ fontFamily: "monospace" }}>{evRecord.evidenceOrigin}</code> · Scope:{" "}
+                              <code style={{ fontFamily: "monospace" }}>{evRecord.callGraphScope}</code>
+                            </strong>
+                            <span style={{ fontFamily: "monospace", fontWeight: 700, color: evRecord.patchVerification.status === "PATCH_VERIFIED" ? "#2d6a4f" : "#7a4b19" }}>
+                              Patch Status: {evRecord.patchVerification.status} (Lifecycle: {evRecord.patchVerification.currentLifecycleStage})
+                            </span>
+                          </div>
+                          <div style={{ fontSize: 9.5, fontFamily: "monospace", color: "#4a4239", marginBottom: 4, wordBreak: "break-all" }}>
+                            <strong>Audit Fields:</strong> UUID={evRecord.findingUuid} · Repo={evRecord.repositoryId} · Commit={evRecord.repositoryCommitSha.slice(0, 12)} · Manifest={evRecord.scanManifestHash.slice(0, 22)} · FileHash={evRecord.fileContentHash.slice(0, 19)} · ExcerptHash={evRecord.sourceExcerptHash.slice(0, 19)} · Ruleset={evRecord.analyzerRulesetVersion} · ParentRecord={evRecord.parentRecordHash.slice(0, 22)} · PatchDiff={evRecord.patchDiffHash.slice(0, 19)} · TestID={evRecord.testExecutionId} · SandboxID={evRecord.sandboxExecutionId} · Key={evRecord.publicKeyId} · Sig={evRecord.verificationSignature} [{evRecord.signatureVerified ? "VERIFIED" : "INVALID"}]
+                          </div>
+                          <div style={{ fontSize: 9.5, fontFamily: "monospace", color: "#5c5349", marginBottom: 4 }}>
+                            <strong>Append-Only Hash Chain:</strong>{" "}
+                            {evRecord.events.map((ev) => `v${ev.version}:${ev.eventType}[${ev.eventHash.slice(7, 15)}]`).join(" → ")}
+                          </div>
+                          <div style={{ marginBottom: 4 }}>
+                            <strong>Synchronized Proof Rationale:</strong> {evRecord.normalizationRationale}
+                          </div>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 4 }}>
+                            {evRecord.patchVerification.checks.map((chk) => (
+                              <span
+                                key={chk.checkId}
+                                title={chk.detail}
+                                style={{
+                                  padding: "1px 6px",
+                                  borderRadius: 4,
+                                  border: "1px solid #d4c8b4",
+                                  background: "#ffffff",
+                                  fontFamily: "monospace",
+                                  fontSize: 9.5,
+                                  color: chk.passed ? "#2d6a4f" : "#996b1f",
+                                }}
+                              >
+                                {chk.checkId} ({chk.label.split(" ")[0]}): {chk.passed ? "PASS" : "NOT_EXECUTED"}
+                              </span>
+                            ))}
+                          </div>
+                          <div style={{ fontSize: 9.5, fontFamily: "monospace", color: "#4a4239" }}>
+                            <strong>6-Stage Patch Lifecycle:</strong>{" "}
+                            {evRecord.patchVerification.lifecycleSteps.map((ls) => `${ls.stage}[${ls.status}]`).join(" → ")}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                     </div>
                   );
                 })}
@@ -2329,7 +2723,7 @@ export default function ReportEnginePage() {
           )}
 
           {/* =================================================================
-           * SECTION 5: METHODOLOGY, MEASURABLE 10-GATE ACCEPTANCE SUITE & SIGN-OFF
+           * SECTION 5: METHODOLOGY, MEASURABLE 15-GATE ACCEPTANCE SUITE & SIGN-OFF
            * ================================================================= */}
           {includeSignOff && (
             <section
@@ -2344,7 +2738,7 @@ export default function ReportEnginePage() {
                 className="font-editorial"
                 style={{ fontSize: 18, fontWeight: 700, color: "#1f1b18", marginBottom: 10 }}
               >
-                5. Methodology, Blind Spots Disclosure (AT-18), Measurable 10-Gate Acceptance Suite &amp; Auditor Sign-Off
+                5. Methodology, Blind Spots Disclosure (AT-18), Measurable 15-Gate Release Acceptance Suite &amp; Auditor Sign-Off
               </h2>
 
               <div
@@ -2361,59 +2755,115 @@ export default function ReportEnginePage() {
               >
                 <div>
                   <strong style={{ color: "#1f1b18" }}>Methodology &amp; Known Blind Spots Disclosure (AT-18): </strong>
-                  This assessment combines single-pass AST token indexing, intra-procedural source-to-sink dataflow tracing, control-property guard analysis, and CWE/ASVS/CAPEC taxonomy mapping.{" "}
+                  This assessment combines single-pass AST token indexing, intra- and inter-procedural call-graph &amp; function-summary taint tracing (Python, JavaScript/TypeScript, Java, and C#), path-feasibility constraint solving, control-property guard analysis, and CWE/ASVS/CAPEC taxonomy mapping.{" "}
                   <strong>Runtime Verification Scope:</strong> Isolated sandbox runtime exploitation was{" "}
                   <code>NOT_RUN</code> during this static scan; therefore, static source-to-sink matches are classified as{" "}
                   <code>DATAFLOW_CONFIRMED</code> rather than <code>RUNTIME_REPRODUCED</code>.{" "}
-                  <strong>Known Static Blind Spots:</strong> External API gateway / WAF policies, database Row-Level Security (RLS) policies outside repository code, runtime reflection/bytecode weaving, and live secret vault bindings require supplementary dynamic/configuration verification.
+                  <strong>Known Static Blind Spots:</strong> External API gateway / WAF policies, database Row-Level Security (RLS) policies outside repository code, runtime reflection/bytecode weaving, async message-queue persistence hops, and live secret vault bindings require supplementary dynamic/configuration verification.
                 </div>
               </div>
 
-              {/* Live 10-Gate Measurable Acceptance Test Suite (Review Section 7) */}
+              {/* Live 15-Gate Measurable Acceptance Test Suite */}
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontSize: 12, fontWeight: 800, color: "#1f1b18", marginBottom: 6 }}>
-                  Measurable Release Acceptance Suite â€” Execution Environment per Gate (AT-CVSS-01 through AT-BENCHMARK-15; gates marked NOT_RUN have no execution record)
+                  15-Gate Release Acceptance Suite — 4-Tier Execution Outcome Model (VERIFIED · STATIC_PASS · NOT_APPLICABLE_NO_EXECUTION_RECORDS · NOT_RUN · FAILED)
                 </div>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11.2 }}>
                   <thead>
                     <tr style={{ background: "#f3eee4", color: "#1f1b18" }}>
                       <th style={{ border: "1px solid #ddd3c2", padding: "6px 8px", textAlign: "left" }}>Gate ID</th>
                       <th style={{ border: "1px solid #ddd3c2", padding: "6px 8px", textAlign: "left" }}>Acceptance Test &amp; Criterion</th>
-                      <th style={{ border: "1px solid #ddd3c2", padding: "6px 8px", textAlign: "center" }}>Status</th>
+                      <th style={{ border: "1px solid #ddd3c2", padding: "6px 8px", textAlign: "center" }}>4-Tier Execution Status</th>
                       <th style={{ border: "1px solid #ddd3c2", padding: "6px 8px", textAlign: "left" }}>Measured Metric</th>
                       <th style={{ border: "1px solid #ddd3c2", padding: "6px 8px", textAlign: "left" }}>Verification Artifact</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {acceptanceGates.map((gate) => (
-                      <tr key={gate.testId}>
-                        <td style={{ border: "1px solid #ddd3c2", padding: "6px 8px", fontFamily: "monospace", fontWeight: 800, color: "#8b4528" }}>
-                          {gate.testId}
-                        </td>
-                        <td style={{ border: "1px solid #ddd3c2", padding: "6px 8px" }}>
-                          <div style={{ fontWeight: 700, color: "#1f1b18" }}>{gate.testName}</div>
-                          <div style={{ fontSize: 10.5, color: "#5c5349" }}>{gate.criterion}</div>
-                        </td>
-                        <td style={{ border: "1px solid #ddd3c2", padding: "6px 8px", textAlign: "center", fontWeight: 800, color: gate.status === "PASS" ? "#2d6a4f" : gate.status === "NOT_RUN" ? "#996b1f" : "#9e2a2b", fontFamily: "monospace" }}>
-                          {gate.status}
-                          <div style={{ fontSize: 9, fontWeight: 600, color: "#5c5349" }}>{gate.executionEnvironment}</div>
-                        </td>
-                        <td style={{ border: "1px solid #ddd3c2", padding: "6px 8px", fontFamily: "monospace", fontSize: 10.5 }}>
-                          {gate.measuredMetric}
-                        </td>
-                        <td style={{ border: "1px solid #ddd3c2", padding: "6px 8px", fontFamily: "monospace", fontSize: 10.5, color: "#5c5349" }}>
-                          {gate.evidenceArtifactRef}
-                        </td>
-                      </tr>
-                    ))}
+                    {acceptanceGates.map((gate) => {
+                      const isStaticEnv =
+                        gate.executionEnvironment === "STATIC_REPORT_CHECK" ||
+                        gate.executionEnvironment === "STATIC_PATTERN_CHECK";
+                      const normalizedLabel =
+                        gate.status === "PASS" && isStaticEnv
+                          ? "STATIC_PASS"
+                          : gate.status === "STATIC_PASS_RUNTIME_NOT_RUN"
+                            ? "STATIC_PASS (RUNTIME_NOT_RUN)"
+                            : gate.status;
+                      const badgeColor =
+                        gate.status === "PASS" && !isStaticEnv
+                          ? "#2d6a4f"
+                          : normalizedLabel.startsWith("STATIC_PASS")
+                            ? "#7a4b19"
+                            : gate.status === "NOT_APPLICABLE_NO_EXECUTION_RECORDS"
+                              ? "#5c5349"
+                              : gate.status === "NOT_RUN"
+                                ? "#996b1f"
+                                : "#9e2a2b";
+                      return (
+                        <tr key={gate.testId}>
+                          <td style={{ border: "1px solid #ddd3c2", padding: "6px 8px", fontFamily: "monospace", fontWeight: 800, color: "#8b4528" }}>
+                            {gate.testId}
+                          </td>
+                          <td style={{ border: "1px solid #ddd3c2", padding: "6px 8px" }}>
+                            <div style={{ fontWeight: 700, color: "#1f1b18" }}>{gate.testName}</div>
+                            <div style={{ fontSize: 10.5, color: "#5c5349" }}>{gate.criterion}</div>
+                          </td>
+                          <td
+                            style={{
+                              border: "1px solid #ddd3c2",
+                              padding: "6px 8px",
+                              textAlign: "center",
+                              fontWeight: 800,
+                              color: badgeColor,
+                              fontFamily: "monospace",
+                            }}
+                          >
+                            {normalizedLabel}
+                            <div style={{ fontSize: 9, fontWeight: 600, color: "#5c5349" }}>{gate.executionEnvironment}</div>
+                          </td>
+                          <td style={{ border: "1px solid #ddd3c2", padding: "6px 8px", fontFamily: "monospace", fontSize: 10.5 }}>
+                            {gate.measuredMetric}
+                          </td>
+                          <td style={{ border: "1px solid #ddd3c2", padding: "6px 8px", fontFamily: "monospace", fontSize: 10.5, color: "#5c5349" }}>
+                            {gate.evidenceArtifactRef}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
+
+                {/* Fail-Closed Evidence Validator Self-Test Suite (AT-EVIDENCE-14) */}
+                <div style={{ marginTop: 10, padding: "8px 10px", borderRadius: 8, background: "#ffffff", border: "1px solid #ddd3c2", fontSize: 10.5 }}>
+                  <div style={{ fontWeight: 800, color: "#1f1b18", marginBottom: 4 }}>
+                    AT-EVIDENCE-14 Fail-Closed Validator Self-Test Suite ({validatorSelfTest.passedCount}/{validatorSelfTest.totalCount} Adversarial Cases Passed) — Runtime Execution Records in This Scan: 0 (NOT_APPLICABLE_NO_EXECUTION_RECORDS)
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {validatorSelfTest.cases.map((tc) => (
+                      <span
+                        key={tc.caseId}
+                        title={tc.rejectionReason}
+                        style={{
+                          padding: "2px 6px",
+                          borderRadius: 4,
+                          border: "1px solid #d4c8b4",
+                          background: "#fbf8f3",
+                          fontFamily: "monospace",
+                          fontSize: 9.5,
+                          color: tc.passed ? "#2d6a4f" : "#9e2a2b",
+                        }}
+                      >
+                        {tc.caseId} ({tc.scenario.split(" ")[0]}): {tc.actualOutcome} [{tc.passed ? "PASS" : "FAIL"}]
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               <p style={{ fontSize: 12, color: "#4a4239", lineHeight: 1.55, marginBottom: 18 }}>
                 By signing below, the Lead Security Auditor and Engineering Owner attest that Report{" "}
                 <strong>{reportId}</strong> was deterministically produced by the{" "}
-                <strong>XTRIKE SAST Desk Hybrid AST &amp; Dataflow Engine</strong> in accordance with NIST SP 800-115, NIST SSDF (SP 800-218), OWASP ASVS v4.0.3, and the Measurable 10-Gate Acceptance Suite (`AT-CVSS-01`â€“`AT-GATE-10`).
+                <strong>XTRIKE SAST Desk Hybrid AST &amp; Dataflow Engine</strong> in accordance with NIST SP 800-115, NIST SSDF (SP 800-218), OWASP ASVS v4.0.3, and the Measurable 15-Gate Release Acceptance Suite (<code>AT-CVSS-01</code>–<code>AT-INTERNAL-BENCHMARK-15</code>).
               </p>
 
               <div
@@ -2530,14 +2980,14 @@ export default function ReportEnginePage() {
                   LEDGER-SHA256 (canonical findings JSON, UTF-8): {ledgerDigest}
                 </span>
                 <span>
-                  INTEGRITY VALIDATOR: {integrityIssues.length === 0 ? "0 issues" : `${integrityIssues.length} issues â€” REPORT INVALID`} &middot; STATIC_ONLY &middot; no patch compiled or executed
+                  INTEGRITY VALIDATOR: {integrityIssues.length === 0 ? "0 issues" : `${integrityIssues.length} issues — REPORT INVALID`} &middot; STATIC_ONLY &middot; no patch compiled or executed
                 </span>
               </div>
               {integrityIssues.length > 0 && (
                 <ul style={{ marginTop: 8, fontSize: 11, color: "#9e2a2b", paddingLeft: 18 }}>
                   {integrityIssues.slice(0, 12).map((iss, i) => (
                     <li key={i}>
-                      <code>{iss.code}</code> â€” {iss.detail}
+                      <code>{iss.code}</code> — {iss.detail}
                     </li>
                   ))}
                 </ul>

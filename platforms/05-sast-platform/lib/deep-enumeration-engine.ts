@@ -12,6 +12,7 @@ import type {
 } from "@/lib/validation-engine";
 import { deriveFindingAuditMetadata } from "@/lib/enterprise-sast-engine";
 import { normalizeFindingCvssAndProof } from "@/lib/cvss31";
+import { synchronizeFindingWithEvidenceLedger } from "@/lib/finding-evidence-ledger";
 
 interface CweDeepIntelTemplate {
   cwe: string;
@@ -762,7 +763,7 @@ type KbLangFields = Partial<
 >;
 
 /** Library-accurate dossier prose per CWE for non-Java sources. */
-const KB_LANGUAGE_OVERRIDES: Record<string, { python: KbLangFields; node: KbLangFields }> = {
+const KB_LANGUAGE_OVERRIDES: Record<string, { python: KbLangFields; node: KbLangFields; csharp?: KbLangFields }> = {
   "CWE-89": {
     python: {
       attackChainSteps: [
@@ -776,6 +777,30 @@ const KB_LANGUAGE_OVERRIDES: Record<string, { python: KbLangFields; node: KbLang
         "Stage 1 [Observed Static Evidence]: Untrusted input reaches db.query()/sequelize.query() through a template literal or concatenation without bound parameters.",
         "Stage 2 [Contextual Assessment]: Identify the driver (pg uses $1, mysql2 uses ?, Sequelize uses replacements/bind) and the database account privileges.",
         "Stage 3 [Hypothesized Impact Scenario]: Predicate alteration or data disclosure bounded by the database role (unverified at runtime).",
+      ],
+    },
+    csharp: {
+      googleDork: "AST Pattern: new SqlCommand(\"SELECT ... \" + userFilter, conn) / ExecuteSqlRaw($\"...\") without SqlParameter",
+      reEnumSummary: "Static call-graph analysis identified dynamic SQL string concatenation passed to SqlCommand / ExecuteSqlRaw without SqlParameter binding.",
+      attackChainSteps: [
+        "Stage 1 [Observed Static Evidence]: Untrusted request parameter is concatenated or interpolated into a SqlCommand / ExecuteSqlRaw SQL string without SqlParameter binding.",
+        "Stage 2 [Controlled Runtime Verification — NOT_RUN]: Execute syntax/boolean differential test in isolated sandbox to confirm ADO.NET / EF Core reachability.",
+        "Stage 3 [Hypothesized Impact Scenario]: Predicate alteration or data disclosure bounded by the SQL connection identity (unverified at runtime).",
+      ],
+    },
+  },
+  "CWE-78": {
+    python: {},
+    node: {},
+    csharp: {
+      ghSummary: "OS shell invocation (`Process.Start(\"cmd.exe\", \"/c ...\" + input)` / `ProcessStartInfo` with concatenated arguments) enables shell metacharacter injection (OWASP ASVS V5.3.8).",
+      googleDork: "AST Pattern: Process.Start(\"cmd.exe\", \"/c \" + arg) / ProcessStartInfo without ArgumentList",
+      targetBoundary: "ASP.NET Core Endpoint -> Process.Start / ProcessStartInfo -> Application OS User",
+      reEnumSummary: "Static AST analysis confirmed shell/argument string concatenation in Process.Start; replace with ProcessStartInfo.ArgumentList and UseShellExecute = false.",
+      attackChainSteps: [
+        "Stage 1 [Observed Static Evidence]: Request parameter is concatenated into the argument string passed to Process.Start().",
+        "Stage 2 [Controlled Runtime Verification — NOT_RUN]: Verify endpoint reachability and argument tokenization in an isolated test container.",
+        "Stage 3 [Hypothesized Impact Scenario]: Arbitrary command/flag injection under the application service account.",
       ],
     },
   },
@@ -807,6 +832,20 @@ const KB_LANGUAGE_OVERRIDES: Record<string, { python: KbLangFields; node: KbLang
         "Stage 3 [Hypothesized Impact Scenario]: Code execution through crafted serialized functions (unverified at runtime).",
       ],
       verificationVerdict: "Static candidate — replace with schema-validated JSON; confirm producer trust boundary",
+    },
+    csharp: {
+      ghSummary: "Untrusted stream reaches an insecure .NET binary/type-handling deserializer (`BinaryFormatter.Deserialize`, `NetDataContractSerializer`, `JsonSerializerSettings.TypeNameHandling != None`).",
+      googleDork: "AST Pattern: new BinaryFormatter().Deserialize(stream) / TypeNameHandling.All",
+      projectZeroRef: "Microsoft BinaryFormatter Security Guide (SYSLIB0011) / NIST SP 800-53 SI-10",
+      targetBoundary: "Serialized Stream / Queue Payload -> `BinaryFormatter.Deserialize()` -> .NET CLR",
+      reEnumSurface: ["Candidate follow-up check: migrate from BinaryFormatter to System.Text.Json.JsonSerializer with a fixed DTO type"],
+      reEnumSummary: "Static AST confirmed BinaryFormatter.Deserialize on untrusted stream; migrate to System.Text.Json with strict DTO contracts.",
+      attackChainSteps: [
+        "Stage 1 [Observed Static Evidence]: Untrusted stream is passed to `BinaryFormatter.Deserialize()`.",
+        "Stage 2 [Contextual Assessment]: Verify producer trust boundary and loaded .NET assemblies.",
+        "Stage 3 [Hypothesized Impact Scenario]: Arbitrary type instantiation via .NET gadget chains (unverified at runtime).",
+      ],
+      verificationVerdict: "Static candidate — replace BinaryFormatter with System.Text.Json DTO deserialization",
     },
   },
   "CWE-611": {
@@ -840,6 +879,21 @@ const KB_LANGUAGE_OVERRIDES: Record<string, { python: KbLangFields; node: KbLang
       ],
       verificationVerdict: "Static candidate — disable entity substitution and DTD loading",
     },
+    csharp: {
+      ghSummary: "XML parsed with `XmlReaderSettings` / `XmlDocument` configured with `DtdProcessing.Parse` and a non-null `XmlUrlResolver`.",
+      googleDork: "AST Pattern: new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, XmlResolver = new XmlUrlResolver() }",
+      zeroDayRisk: "STATIC DATAFLOW — .NET XmlReader resolves external DTDs/entities when DtdProcessing.Parse and XmlUrlResolver are enabled.",
+      probeType: "Static AST XML Parser Configuration Check (XmlReaderSettings.DtdProcessing / XmlResolver)",
+      targetBoundary: "XML Request Stream -> `XmlReader.Create()` -> XmlUrlResolver",
+      reEnumSurface: ["Candidate follow-up check: set DtdProcessing = DtdProcessing.Prohibit and XmlResolver = null on XmlReaderSettings"],
+      reEnumSummary: "Static AST confirmed XmlReaderSettings permits DTD processing and external entity resolution; set DtdProcessing.Prohibit and XmlResolver = null.",
+      attackChainSteps: [
+        "Stage 1 [Observed Static Evidence]: XML stream is parsed with DtdProcessing.Parse and XmlUrlResolver enabled.",
+        "Stage 2 [Contextual Assessment]: Verify whether the XML input originates from an untrusted caller.",
+        "Stage 3 [Hypothesized Impact Scenario]: Local file disclosure or SSRF via external XML entities (unverified at runtime).",
+      ],
+      verificationVerdict: "Static candidate — set DtdProcessing.Prohibit and XmlResolver = null",
+    },
   },
   "CWE-327": {
     python: {
@@ -865,6 +919,18 @@ const KB_LANGUAGE_OVERRIDES: Record<string, { python: KbLangFields; node: KbLang
         "Stage 3 [Hypothesized Impact Scenario]: Ciphertext block correlation or splicing (unverified at runtime).",
       ],
       verificationVerdict: "DETECTED_STATIC (AES-ECB primitive) — migrate to aes-256-gcm; security context must be established",
+    },
+    csharp: {
+      googleDork: "AST Pattern: aes.Mode = CipherMode.ECB / Aes.Create() with CipherMode.ECB",
+      targetBoundary: "Sensitive Token / Plaintext -> `Aes.Mode = CipherMode.ECB` -> Ciphertext Output",
+      reEnumSurface: ["Candidate follow-up check: use System.Security.Cryptography.AesGcm with a 12-byte RandomNumberGenerator.GetBytes nonce and 16-byte tag"],
+      reEnumSummary: "Static AST confirmed deterministic CipherMode.ECB; migrate to System.Security.Cryptography.AesGcm.",
+      attackChainSteps: [
+        "Stage 1 [Observed Static Evidence]: `CipherMode.ECB` is configured on the symmetric `Aes` instance without nonce or AEAD tag.",
+        "Stage 2 [Contextual Assessment]: Establish whether the ciphertext protects security-sensitive tokens or credentials.",
+        "Stage 3 [Hypothesized Impact Scenario]: Ciphertext block correlation or unauthenticated block splicing (unverified at runtime).",
+      ],
+      verificationVerdict: "DETECTED_STATIC (CipherMode.ECB primitive) — migrate to AesGcm",
     },
   },
   "CWE-330": {
@@ -900,6 +966,22 @@ const KB_LANGUAGE_OVERRIDES: Record<string, { python: KbLangFields; node: KbLang
       ],
       verificationVerdict: "DETECTED_STATIC (non-cryptographic PRNG) — replace with `crypto.randomBytes`",
     },
+    csharp: {
+      ghSummary: "Non-cryptographic PRNG (`System.Random`) used for tokens, OTPs or session identifiers; use `System.Security.Cryptography.RandomNumberGenerator`.",
+      googleDork: "AST Pattern: new Random().Next(...) for resetToken / otp",
+      projectZeroRef: ".NET RandomNumberGenerator docs / NIST SP 800-90A Rev. 1 / ASVS V6.3.1",
+      zeroDayRisk: "STATIC PRNG WEAKNESS — System.Random is not cryptographically secure and must not generate authentication tokens or OTPs.",
+      probeType: "Static AST CSPRNG Verification (`System.Random` vs `RandomNumberGenerator`)",
+      targetBoundary: "Token Generator -> `System.Random` -> Password Reset / OTP Token",
+      reEnumSurface: ["Candidate follow-up check: replace `new Random()` with `RandomNumberGenerator.GetBytes(32)`"],
+      reEnumSummary: "Static AST confirmed `System.Random` in token generation; replace with `RandomNumberGenerator`.",
+      attackChainSteps: [
+        "Stage 1 [Observed Static Evidence]: `System.Random.Next(...)` generates a token or OTP value.",
+        "Stage 2 [Contextual Assessment]: Verify whether the value gates reset, session or OTP verification.",
+        "Stage 3 [Hypothesized Impact Scenario]: Token prediction if consecutive outputs are observable (unverified).",
+      ],
+      verificationVerdict: "DETECTED_STATIC (non-cryptographic PRNG) — replace with `RandomNumberGenerator`",
+    },
   },
 };
 
@@ -913,9 +995,13 @@ function localizeKbForLanguage(
   cweName: string,
   language: string
 ): CweDeepIntelTemplate {
-  const javaFamily = /^(?:java|kotlin|c#)$/i.test(language);
+  const javaFamily = /^(?:java|kotlin)$/i.test(language);
   if (javaFamily) return kb;
-  const family = /python|ruby/i.test(language) ? "python" : "node";
+  const family: "python" | "node" | "csharp" = /python|ruby/i.test(language)
+    ? "python"
+    : /c#|csharp|\.net/i.test(language)
+      ? "csharp"
+      : "node";
   const override = KB_LANGUAGE_OVERRIDES[cwe]?.[family];
   const merged: CweDeepIntelTemplate = { ...kb, ...(override || {}) };
   const neutral = getFallbackIntelForCwe(cwe, cweName);
@@ -1051,7 +1137,7 @@ export function buildDeepExploitabilityDossier(
         persistenceRisk: kb.persistenceRisk,
         blastRadiusScore: isNeedsValidation ? 0 : kb.blastRadiusScore,
         executiveRemediationPriority: isNeedsValidation
-          ? "NEEDS VALIDATION — Inspect lines 300–380 to verify fileObjects origin, task.call(), -proc:none, and ClassLoader invocation"
+          ? "NEEDS VALIDATION — trace the value's origin and confirm whether the flagged construct is reachable in production code before remediating"
           : finding.severity === "Critical"
             ? "P0 — Remediate Source Sink & Verify in Isolated Sandbox"
             : finding.severity === "High"
@@ -1087,6 +1173,7 @@ interface DeepReEnumTemplate {
     Java: LanguageCodeVariant;
     Python: LanguageCodeVariant;
     Node: LanguageCodeVariant;
+    CSharp?: LanguageCodeVariant;
   };
 }
 
@@ -1163,57 +1250,79 @@ export function generateDeepReEnumeratedFindings(params: {
     return `${appSlug}/${langRelative}`;
   };
 
-  const selectVariant = (tpl: DeepReEnumTemplate): LanguageCodeVariant => {
-    if (language === "Java" || language === "Kotlin" || language === "C#") {
-      return tpl.variants.Java;
-    }
-    if (language === "Python" || language === "Ruby") {
-      return tpl.variants.Python;
-    }
-    return tpl.variants.Node;
+  /**
+   * Returns the template variant written for THIS language, or null when none exists.
+   * Variants are never borrowed across languages (a Java snippet must never be attached to a C# file).
+   */
+  const selectVariant = (tpl: DeepReEnumTemplate): LanguageCodeVariant | null => {
+    if (language === "Java") return tpl.variants.Java;
+    if (language === "Python") return tpl.variants.Python;
+    if (language === "C#") return tpl.variants.CSharp || null;
+    if (language === "TypeScript" || language === "JavaScript" || language === "Node.js") return tpl.variants.Node;
+    return null;
   };
 
   // Language-specific remediation prose: template summaries are written against Java APIs, so
-  // Python / Node findings must use their own library-accurate guidance (never Java API names).
-  const NON_JAVA_SUMMARIES: Record<string, { python: string; node: string }> = {
+  // Python / Node / C# findings must use their own library-accurate guidance (never Java API names).
+  const NON_JAVA_SUMMARIES: Record<string, { python: string; node: string; csharp: string }> = {
     "CWE-89": {
       python: "Never build SQL with f-strings or concatenation from stored values. Allowlist the column identifier and bind the scalar value with the driver's parameter style (%s for psycopg2/MySQLdb, ? for sqlite3).",
       node: "Never interpolate stored values into SQL. Allowlist the column identifier and bind the scalar value with positional parameters ($1 for pg, ? for mysql2).",
+      csharp: "Never concatenate or interpolate stored values into SqlCommand / ExecuteSqlRaw strings. Allowlist the column identifier and bind scalar values with SqlParameter (@filterVal).",
+    },
+    "CWE-918": {
+      python: "Enforce HTTPS scheme, allowlist target hosts, verify socket.getaddrinfo resolved IPs are not loopback/RFC1918/169.254.169.254, and set allow_redirects=False.",
+      node: "Enforce HTTPS scheme, allowlist target hosts, verify dns.lookup resolved IPs are not loopback/RFC1918/169.254.169.254, and set maxRedirects: 0.",
+      csharp: "Enforce Uri.UriSchemeHttps, allowlist target hosts, verify Dns.GetHostAddressesAsync resolved IPs are not loopback/RFC1918/link-local, and set SocketsHttpHandler.AllowAutoRedirect = false.",
     },
     "CWE-502": {
       python: "Never call pickle.loads() on queue or network data. Parse JSON and validate it against a strict schema (e.g., Pydantic) instead of a native deserializer.",
       node: "Never pass queue payloads to a native unserialize. Parse JSON and validate it against a strict schema (e.g., Zod).",
+      csharp: "Never call BinaryFormatter.Deserialize on queue or network streams. Deserialize JSON into a fixed DTO type using System.Text.Json.JsonSerializer.",
     },
     "CWE-611": {
       python: "Use defusedxml, or construct lxml.etree.XMLParser(resolve_entities=False, no_network=True, load_dtd=False) and reject DOCTYPE declarations.",
       node: "Disable entity substitution and DTD loading (libxmljs noent:false, dtdload:false, nonet:true) or use a non-expanding parser such as fast-xml-parser with processEntities:false.",
+      csharp: "Set DtdProcessing = DtdProcessing.Prohibit and XmlResolver = null on XmlReaderSettings before calling XmlReader.Create.",
     },
     "CWE-22": {
       python: "Resolve each archive member with os.path.realpath and verify os.path.commonpath([base, dest]) == base before extracting; reject absolute paths and '..' segments.",
       node: "Resolve each archive entry with path.resolve(baseDir, entry.entryName) and verify it starts with baseDir + path.sep before writing.",
+      csharp: "Resolve each archive entry with Path.GetFullPath(Path.Combine(baseDir, entry.FullName)) and verify fullPath.StartsWith(baseDir, StringComparison.Ordinal) before extracting.",
     },
     "CWE-327": {
       python: "Replace modes.ECB() with AESGCM and a unique 12-byte os.urandom nonce per encryption; verify the authentication tag on decrypt.",
       node: "Replace aes-256-ecb with aes-256-gcm using a unique 12-byte crypto.randomBytes IV and verify the auth tag on decrypt.",
+      csharp: "Replace CipherMode.ECB with System.Security.Cryptography.AesGcm using a unique 12-byte RandomNumberGenerator.GetBytes nonce and 16-byte authentication tag.",
     },
     "CWE-347": {
       python: "Verify the JWT with jwt.decode(token, key, algorithms=['RS256'], issuer=..., audience=...) instead of verify_signature=False.",
       node: "Verify with jwt.verify(token, key, { algorithms: ['RS256'], issuer, audience }) instead of jwt.decode().",
+      csharp: "Verify the JWT with JwtSecurityTokenHandler.ValidateToken using TokenValidationParameters (ValidateIssuerSigningKey = true, RequireSignedTokens = true, ValidAlgorithms = [SecurityAlgorithms.RsaSha256]).",
     },
     "CWE-915": {
       python: "Validate the request body against an explicit schema of editable fields before updating; never unpack request.json into the ORM update.",
       node: "Parse the body with an explicit DTO schema and update only allowlisted fields; never spread req.body into the ORM call.",
+      csharp: "Bind the request body to a dedicated record/DTO containing only user-editable properties (DisplayName, TimeZone); never bind raw JSON directly to an EF Core entity.",
     },
     "CWE-639": {
       python: "Scope every lookup by both the object id and the authenticated principal's tenant_id (get_object_or_404(..., tenant_id=request.user.tenant_id)).",
       node: "Scope every lookup by both the object id and req.user.tenantId and return 404 on mismatch.",
+      csharp: "Scope every EF Core / repository query by both the resource ID and the authenticated principal's UserId and TenantId claims, returning 404/403 on mismatch.",
+    },
+    "CWE-798": {
+      python: "Remove hardcoded fallback secrets from source code and load credentials from environment variables or a secret manager, failing closed if unset.",
+      node: "Remove hardcoded fallback secrets from source code and load credentials from process.env / secret store, failing closed if unset.",
+      csharp: "Remove hardcoded fallback secrets from source code and load credentials via IConfiguration backed by Azure Key Vault / environment variables, throwing InvalidOperationException if unset.",
     },
   };
   const summaryFor = (tpl: DeepReEnumTemplate): string => {
-    if (language === "Java" || language === "Kotlin" || language === "C#") return tpl.remediationSummary;
+    if (language === "Java" || language === "Kotlin") return tpl.remediationSummary;
     const alt = NON_JAVA_SUMMARIES[tpl.cwe];
     if (!alt) return tpl.remediationSummary;
-    return language === "Python" || language === "Ruby" ? alt.python : alt.node;
+    if (language === "Python" || language === "Ruby") return alt.python;
+    if (language === "C#") return alt.csharp;
+    return alt.node;
   };
 
   const deepTemplates: DeepReEnumTemplate[] = [
@@ -1250,6 +1359,12 @@ export function generateDeepReEnumeratedFindings(params: {
           codeSnippet: `// Second-Order SQLi Candidate: Stored filter expression interpolated into SQL\nconst sql = \`SELECT id, actor, action FROM audit_logs WHERE \${storedFilter.filterColumn} = '\${storedFilter.filterValue}'\`;\nconst rows = await db.query(sql);`,
           remediationCode: `// ✅ FIXED (Validate column against strict allowlist and bind scalar parameter)\nconst ALLOWED_COLS = new Set(["actor", "action", "status"]);\nif (!ALLOWED_COLS.has(storedFilter.filterColumn)) throw new Error("Disallowed column");\nconst rows = await db.query(\`SELECT id, actor, action FROM audit_logs WHERE \${storedFilter.filterColumn} = $1\`, [storedFilter.filterValue]);`,
         },
+        CSharp: {
+          source: "Stored filter record `filter.ColumnName` & `filter.FilterValue`",
+          sink: "new SqlCommand(\"SELECT Id, Actor, Action FROM AuditLogs WHERE \" + filter.ColumnName + \" = '\" + filter.FilterValue + \"'\", conn)",
+          codeSnippet: `// Second-Order SQLi Candidate (C# / ADO.NET): Stored filter concatenated into SqlCommand\nusing var cmd = new SqlCommand("SELECT Id, Actor, Action FROM AuditLogs WHERE " + filter.ColumnName + " = '" + filter.FilterValue + "'", conn);\nusing var reader = await cmd.ExecuteReaderAsync();`,
+          remediationCode: `// ✅ FIXED (C# / ADO.NET — Allowlist column identifier and bind value via SqlParameter)\nvar allowedCols = new HashSet<string>(StringComparer.Ordinal) { "Actor", "Action", "Status" };\nif (!allowedCols.Contains(filter.ColumnName)) throw new ArgumentException("Disallowed filter column");\nusing var cmd = new SqlCommand($"SELECT Id, Actor, Action FROM AuditLogs WHERE {filter.ColumnName} = @filterVal", conn);\ncmd.Parameters.Add("@filterVal", SqlDbType.NVarChar, 128).Value = filter.FilterValue;\nusing var reader = await cmd.ExecuteReaderAsync();`,
+        },
       },
     },
     {
@@ -1284,6 +1399,12 @@ export function generateDeepReEnumeratedFindings(params: {
           sink: "await fetch(tenantConfig.callbackEndpoint, { redirect: 'follow' })",
           codeSnippet: `// Second-Order SSRF Candidate: Unvalidated outbound fetch with redirect following\nexport async function dispatchWebhookPing(callbackEndpoint: string) {\n  return await fetch(callbackEndpoint, { redirect: "follow" });\n}`,
           remediationCode: `// ✅ FIXED (HTTPS + host allowlist + dns.lookup RFC1918/169.254.169.254 block + maxRedirects: 0)\nconst resolved = await dns.lookup(parsed.hostname, { all: true });\nif (resolved.some(r => isPrivateOrLinkLocalIp(r.address) || r.address === "169.254.169.254")) throw new Error("SSRF blocked");\nreturn await axios.get(parsed.toString(), { maxRedirects: 0, timeout: 4000 });`,
+        },
+        CSharp: {
+          source: "Tenant-configured `[FromBody] string callbackUrl`",
+          sink: "await _httpClient.GetAsync(callbackUrl) without host allowlist or private-IP check",
+          codeSnippet: `// Second-Order SSRF Candidate (C# / HttpClient): Unvalidated outbound URL fetch\npublic async Task<HttpStatusCode> DispatchWebhookPingAsync(string callbackUrl)\n{\n    using var response = await _httpClient.GetAsync(callbackUrl);\n    return response.StatusCode;\n}`,
+          remediationCode: `// ✅ FIXED (C# / SocketsHttpHandler — HTTPS + host allowlist + Dns.GetHostAddressesAsync RFC1918/169.254.169.254 check + AllowAutoRedirect = false)\nvar uri = new Uri(callbackUrl);\nif (uri.Scheme != Uri.UriSchemeHttps || !AllowedHosts.Contains(uri.Host)) throw new InvalidOperationException("Blocked host");\nforeach (var ip in await Dns.GetHostAddressesAsync(uri.Host))\n    if (IPAddress.IsLoopback(ip) || ip.ToString() == "169.254.169.254") throw new InvalidOperationException("Blocked private/metadata IP");\nusing var handler = new SocketsHttpHandler { AllowAutoRedirect = false }; // maxRedirects: 0 equivalent`,
         },
       },
 
@@ -1321,6 +1442,12 @@ export function generateDeepReEnumeratedFindings(params: {
           codeSnippet: `// CWE-347 Candidate: Uses jwt.decode() without verifying signature\nexport function extractSessionClaims(token: string) {\n  return jwt.decode(token);\n}`,
           remediationCode: `// ✅ FIXED (Verify signature with pinned RS256 algorithm, issuer, and audience)\nexport function extractSessionClaims(token: string) {\n  return jwt.verify(token, RSA_PUBLIC_KEY, { algorithms: ["RS256"], issuer: "urn:xtrike:auth", audience: "xtrike-api" });\n}`,
         },
+        CSharp: {
+          source: "HTTP Header `Request.Headers[\"Authorization\"]`",
+          sink: "new JwtSecurityTokenHandler().ReadJwtToken(rawToken) without signature validation",
+          codeSnippet: `// CWE-347 Candidate (C#): Reads JWT payload claims without verifying cryptographic signature\npublic string? ExtractSubjectUnverified(string rawToken)\n{\n    var token = new JwtSecurityTokenHandler().ReadJwtToken(rawToken);\n    return token.Subject;\n}`,
+          remediationCode: `// ✅ FIXED (C# / JwtSecurityTokenHandler — Validate signature and pin RS256)\nvar parameters = new TokenValidationParameters {\n    ValidateIssuerSigningKey = true,\n    IssuerSigningKey = rsaSecurityKey,\n    RequireSignedTokens = true,\n    ValidAlgorithms = new[] { SecurityAlgorithms.RsaSha256 },\n    ValidateIssuer = true,\n    ValidIssuer = "urn:xtrike:auth",\n    ValidateAudience = true,\n    ValidAudience = "xtrike-api"\n};\nvar principal = new JwtSecurityTokenHandler().ValidateToken(rawToken, parameters, out _);`,
+        },
       },
     },
     {
@@ -1355,6 +1482,12 @@ export function generateDeepReEnumeratedFindings(params: {
           sink: "invoiceRepo.findById(req.params.invoiceId) without req.user.tenantId check",
           codeSnippet: `// CWE-639 Candidate: Unscoped lookup by invoiceId\nexport async function getInvoice(req: Request, res: Response) {\n  const invoice = await invoiceRepo.findById(req.params.invoiceId);\n  return res.json(invoice);\n}`,
           remediationCode: `// ✅ FIXED (Scope lookup by both invoiceId and authenticated user's tenantId)\nconst invoice = await invoiceRepo.findByIdAndTenant(req.params.invoiceId, req.user.tenantId);\nif (!invoice) return res.status(404).json({ error: "Not found" });`,
+        },
+        CSharp: {
+          source: "Route parameter `[FromRoute] string invoiceId`",
+          sink: "await _db.Invoices.FirstOrDefaultAsync(i => i.Id == invoiceId) without tenant/user predicate",
+          codeSnippet: `// CWE-639 Candidate (C# / ASP.NET Core): Unscoped lookup by invoiceId without tenant check\n[HttpGet("/api/v2/invoices/{invoiceId}")]\npublic async Task<IActionResult> GetInvoice([FromRoute] string invoiceId)\n{\n    var invoice = await _db.Invoices.FirstOrDefaultAsync(i => i.Id == invoiceId);\n    return invoice is null ? NotFound() : Ok(invoice);\n}`,
+          remediationCode: `// ✅ FIXED (C# / EF Core — Compound ownership predicate findByIdAndTenantId / TenantId + UserId)\nvar userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedAccessException();\nvar tenantId = User.FindFirstValue("tenant_id") ?? throw new UnauthorizedAccessException();\nvar invoice = await _db.Invoices.FirstOrDefaultAsync(i => i.Id == invoiceId && i.UserId == userId && i.TenantId == tenantId);\nreturn invoice is null ? NotFound() : Ok(invoice);`,
         },
       },
     },
@@ -1391,6 +1524,12 @@ export function generateDeepReEnumeratedFindings(params: {
           codeSnippet: `// CWE-915 Candidate: Spreads untrusted req.body directly into ORM update\nexport async function updateProfile(req: Request, res: Response) {\n  return res.json(await db.users.update({ where: { id: req.user.id }, data: { ...req.body } }));\n}`,
           remediationCode: `// ✅ FIXED (Parse explicit DTO allowlist before updating)\nconst { displayName, timeZone } = ProfileUpdateDto.parse(req.body);\nreturn res.json(await db.users.update({ where: { id: req.user.id }, data: { displayName, timeZone } }));`,
         },
+        CSharp: {
+          source: "Request body bound directly to entity `[FromBody] UserEntity input`",
+          sink: "_db.Users.Update(input) without DTO field allowlist",
+          codeSnippet: `// CWE-915 Candidate (C# / ASP.NET Core): Binds request body directly to persistence UserEntity\n[HttpPatch("/api/v2/profile")]\npublic async Task<IActionResult> UpdateProfile([FromBody] UserEntity input)\n{\n    _db.Users.Update(input);\n    await _db.SaveChangesAsync();\n    return Ok(input);\n}`,
+          remediationCode: `// ✅ FIXED (C# / ASP.NET Core — Bind dedicated input DTO with only user-editable properties)\npublic sealed record ProfileUpdateDto(string DisplayName, string TimeZone);\n\n[HttpPatch("/api/v2/profile")]\npublic async Task<IActionResult> UpdateProfile([FromBody] ProfileUpdateDto dto)\n{\n    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedAccessException();\n    var user = await _db.Users.SingleAsync(u => u.Id == userId);\n    user.DisplayName = dto.DisplayName;\n    user.TimeZone = dto.TimeZone;\n    await _db.SaveChangesAsync();\n    return Ok(user);\n}`,
+        },
       },
     },
     {
@@ -1425,6 +1564,12 @@ export function generateDeepReEnumeratedFindings(params: {
           sink: "serialize.unserialize(rawPayload)",
           codeSnippet: `// CWE-502 Candidate: Untrusted queue message passed to native unserialize\nexport function consumeSessionEvent(rawPayload: string) {\n  return serialize.unserialize(rawPayload);\n}`,
           remediationCode: `// ✅ FIXED (Parse JSON and validate against strict schema)\nexport function consumeSessionEvent(rawPayload: string) {\n  return SessionEventSchema.parse(JSON.parse(rawPayload));\n}`,
+        },
+        CSharp: {
+          source: "Queue message stream `Stream messageStream`",
+          sink: "new BinaryFormatter().Deserialize(messageStream)",
+          codeSnippet: `// CWE-502 Candidate (C#): Queue consumer deserializes stream with unsafe BinaryFormatter\npublic object ConsumeSessionEvent(Stream messageStream)\n{\n    var formatter = new BinaryFormatter();\n    return formatter.Deserialize(messageStream);\n}`,
+          remediationCode: `// ✅ FIXED (C# / System.Text.Json — Deserialize into a strongly-typed DTO record)\npublic async Task<SessionEventDto?> ConsumeSessionEventAsync(Stream messageStream)\n{\n    return await JsonSerializer.DeserializeAsync<SessionEventDto>(messageStream);\n}`,
         },
       },
     },
@@ -1461,6 +1606,12 @@ export function generateDeepReEnumeratedFindings(params: {
           codeSnippet: `// CWE-798 Candidate (NEEDS_MANUAL_VALIDATION): Hardcoded fallback password\nexport const dbPassword = process.env.DB_PASS || "xtrike_fallback_db_secret_9941";`,
           remediationCode: `// ✅ FIXED (Fail fast when secret is missing)\nexport const dbPassword = process.env.DB_PASS ?? (() => { throw new Error("Missing DB_PASS"); })();`,
         },
+        CSharp: {
+          source: "Hardcoded fallback password literal in `DatabaseClusterConfig`",
+          sink: "configuration[\"ConnectionStrings:DbPassword\"] ?? \"xtrike_fallback_db_secret_9941\"",
+          codeSnippet: `// CWE-798 Candidate (C#): Hardcoded fallback credential in configuration\npublic sealed class DatabaseClusterConfig\n{\n    public string ResolveDbPassword(IConfiguration configuration) =>\n        configuration["ConnectionStrings:DbPassword"] ?? "xtrike_fallback_db_secret_9941";\n}`,
+          remediationCode: `// ✅ FIXED (C# — Require secret from IConfiguration / Key Vault and fail fast if unset)\npublic string ResolveDbPassword(IConfiguration configuration) =>\n    configuration["ConnectionStrings:DbPassword"]\n        ?? throw new InvalidOperationException("Missing ConnectionStrings:DbPassword in secret store");`,
+        },
       },
     },
     {
@@ -1475,14 +1626,14 @@ export function generateDeepReEnumeratedFindings(params: {
       owaspCategory: "Cryptographic Failures",
       fileSuffix: "src/crypto/CryptoTokenService.ts",
       line: 89,
-      remediationSummary: "Replace deterministic `AES/ECB/PKCS5Padding` with authenticated encryption (`AES/GCM/NoPadding`), generating a unique 12-byte `SecureRandom` IV per encryption and enforcing a 128-bit authentication tag.",
+      remediationSummary: "Replace deterministic `AES/ECB/PKCS5Padding` with authenticated encryption (`AES/GCM/NoPadding`), generating a unique 12-byte `SecureRandom` IV per encryption, binding context AAD (`updateAAD`), and verifying the 128-bit authentication tag during `Cipher.DECRYPT_MODE`.",
       passType: "Pass 3: Deep Supply-Chain & Config Enumeration",
       variants: {
         Java: {
           source: "Sensitive token plaintext `tokenBytes`",
           sink: "Cipher.getInstance(\"AES/ECB/PKCS5Padding\")",
           codeSnippet: `// CWE-327 Candidate: Deterministic AES-ECB mode lacks IV randomization and AEAD integrity tag\npublic byte[] encryptToken(byte[] tokenBytes, SecretKey key) throws GeneralSecurityException {\n    Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");\n    cipher.init(Cipher.ENCRYPT_MODE, key);\n    return cipher.doFinal(tokenBytes);\n}`,
-          remediationCode: `// ✅ FIXED (Illustrative Java Pattern — AES/GCM/NoPadding with 12-byte SecureRandom IV & 128-bit tag)\npublic byte[] encryptToken(byte[] tokenBytes, SecretKey key) throws GeneralSecurityException {\n    byte[] iv = new byte[12];\n    new java.security.SecureRandom().nextBytes(iv);\n    Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");\n    cipher.init(Cipher.ENCRYPT_MODE, key, new javax.crypto.spec.GCMParameterSpec(128, iv));\n    return cipher.doFinal(tokenBytes);\n}`,
+          remediationCode: `// ✅ FIXED (Illustrative Java Pattern — AES/GCM/NoPadding with 12-byte SecureRandom IV, AAD & Decrypt Tag Check)\npublic byte[] encryptToken(byte[] tokenBytes, SecretKey key, byte[] aad) throws GeneralSecurityException {\n    byte[] iv = new byte[12];\n    new java.security.SecureRandom().nextBytes(iv);\n    Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");\n    cipher.init(Cipher.ENCRYPT_MODE, key, new javax.crypto.spec.GCMParameterSpec(128, iv));\n    cipher.updateAAD(aad);\n    return cipher.doFinal(tokenBytes);\n}\npublic byte[] decryptToken(byte[] ciphertextWithTag, SecretKey key, byte[] iv, byte[] aad) throws GeneralSecurityException {\n    Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");\n    cipher.init(Cipher.DECRYPT_MODE, key, new javax.crypto.spec.GCMParameterSpec(128, iv));\n    cipher.updateAAD(aad);\n    return cipher.doFinal(ciphertextWithTag);\n}`,
         },
         Python: {
           source: "Sensitive token bytes `token_bytes`",
@@ -1495,6 +1646,12 @@ export function generateDeepReEnumeratedFindings(params: {
           sink: "crypto.createCipheriv('aes-256-ecb', key, null)",
           codeSnippet: `// CWE-327 Candidate: Deterministic AES-ECB cipher\nconst cipher = crypto.createCipheriv("aes-256-ecb", key, null);`,
           remediationCode: `// ✅ FIXED (Use aes-256-gcm with 12-byte random IV)\nconst iv = crypto.randomBytes(12);\nconst cipher = crypto.createCipheriv("aes-256-gcm", key, iv);`,
+        },
+        CSharp: {
+          source: "Sensitive token plaintext `byte[] tokenBytes`",
+          sink: "using var aes = Aes.Create(); aes.Mode = CipherMode.ECB;",
+          codeSnippet: `// CWE-327 Candidate (C#): Deterministic CipherMode.ECB lacks nonce and AEAD authentication tag\npublic byte[] EncryptToken(byte[] tokenBytes, byte[] key)\n{\n    using var aes = Aes.Create();\n    aes.Key = key;\n    aes.Mode = CipherMode.ECB;\n    return aes.CreateEncryptor().TransformFinalBlock(tokenBytes, 0, tokenBytes.Length);\n}`,
+          remediationCode: `// ✅ FIXED (C# / AesGcm — Authenticated encryption with 12-byte random nonce and 16-byte tag)\nvar nonce = RandomNumberGenerator.GetBytes(12);\nvar tag = new byte[16];\nvar cipher = new byte[tokenBytes.Length];\nusing var aesGcm = new AesGcm(key, 16);\naesGcm.Encrypt(nonce, tokenBytes, cipher, tag);`,
         },
       },
     },
@@ -1510,14 +1667,14 @@ export function generateDeepReEnumeratedFindings(params: {
       owaspCategory: "Broken Access Control",
       fileSuffix: "src/services/ArchiveImportService.ts",
       line: 134,
-      remediationSummary: "Normalize each archive entry destination path (`targetDir.resolve(entry.getName()).normalize()`) and verify that `targetPath.startsWith(targetDir)` before writing files to disk.",
+      remediationSummary: "Normalize each archive entry destination path (`targetDir.toRealPath(LinkOption.NOFOLLOW_LINKS).resolve(entry.getName()).normalize()`), verify `destNormalized.startsWith(baseCanonical)`, reject symbolic links (`Files.isSymbolicLink`), enforce entry count and uncompressed byte quotas against Zip-Bomb DoS, and write with `StandardOpenOption.CREATE_NEW`.",
       passType: "Pass 2: Second-Order Re-Enumeration (Post-Pivot)",
       variants: {
         Java: {
           source: "Zip archive entry name `zipEntry.getName()`",
           sink: "Files.copy(zis, targetDir.resolve(zipEntry.getName())) without startsWith(targetDir) guard",
           codeSnippet: `// CWE-22 Zip-Slip Candidate: Unvalidated ZipEntry name resolved into Files.copy write sink\npublic void extractEntry(ZipInputStream zis, ZipEntry zipEntry, Path targetDir) throws IOException {\n    Path destFile = targetDir.resolve(zipEntry.getName());\n    Files.copy(zis, destFile, StandardCopyOption.REPLACE_EXISTING);\n}`,
-          remediationCode: `// ✅ FIXED (Illustrative Java Pattern — Normalize path and verify base-directory containment)\npublic void extractEntry(ZipInputStream zis, ZipEntry zipEntry, Path targetDir) throws IOException {\n    Path baseCanonical = targetDir.toRealPath();\n    Path destNormalized = baseCanonical.resolve(zipEntry.getName()).normalize();\n    if (!destNormalized.startsWith(baseCanonical)) {\n        throw new SecurityException("Zip-Slip path traversal blocked: " + zipEntry.getName());\n    }\n    Files.copy(zis, destNormalized, StandardCopyOption.REPLACE_EXISTING);\n}`,
+          remediationCode: `// ✅ FIXED (Hardened Java Pattern — NOFOLLOW_LINKS + symlink rejection + Zip-Bomb byte quota + CREATE_NEW)\npublic void extractEntry(ZipInputStream zis, ZipEntry zipEntry, Path targetDir) throws IOException {\n    Path baseCanonical = targetDir.toRealPath(java.nio.file.LinkOption.NOFOLLOW_LINKS);\n    Path destNormalized = baseCanonical.resolve(zipEntry.getName()).normalize();\n    if (!destNormalized.startsWith(baseCanonical) || Files.isSymbolicLink(destNormalized)) {\n        throw new SecurityException("Zip-Slip or symlink traversal blocked: " + zipEntry.getName());\n    }\n    try (OutputStream out = Files.newOutputStream(destNormalized, java.nio.file.StandardOpenOption.CREATE_NEW)) {\n        byte[] buf = new byte[8192];\n        long total = 0;\n        int read;\n        while ((read = zis.read(buf)) != -1) {\n            if ((total += read) > 10_485_760L) throw new IOException("Zip-Bomb uncompressed quota exceeded");\n            out.write(buf, 0, read);\n        }\n    }\n}`,
         },
         Python: {
           source: "ZipInfo filename `member.filename`",
@@ -1530,6 +1687,12 @@ export function generateDeepReEnumeratedFindings(params: {
           sink: "fs.writeFileSync(path.join(UPLOAD_DIR, entry.entryName), entry.getData())",
           codeSnippet: `// CWE-22 Zip-Slip Candidate: Unchecked path.join on archive entry\nconst targetPath = path.join(UPLOAD_DIR, entry.entryName);\nfs.writeFileSync(targetPath, entry.getData());`,
           remediationCode: `// ✅ FIXED (Resolve canonical path and verify prefix)\nconst baseDir = path.resolve(UPLOAD_DIR);\nconst targetPath = path.resolve(baseDir, entry.entryName);\nif (!targetPath.startsWith(baseDir + path.sep)) throw new Error("Zip-Slip blocked");`,
+        },
+        CSharp: {
+          source: "ZipArchiveEntry `entry.FullName`",
+          sink: "entry.ExtractToFile(Path.Combine(uploadDir, entry.FullName)) without GetFullPath prefix check",
+          codeSnippet: `// CWE-22 Zip-Slip Candidate (C#): Extracts archive entry without canonical base directory validation\npublic void ExtractEntry(ZipArchiveEntry entry, string uploadDir)\n{\n    var destPath = Path.Combine(uploadDir, entry.FullName);\n    entry.ExtractToFile(destPath, overwrite: true);\n}`,
+          remediationCode: `// ✅ FIXED (C# — Canonicalize with Path.GetFullPath and verify baseDir prefix)\nvar baseDir = Path.GetFullPath(uploadDir) + Path.DirectorySeparatorChar;\nvar destPath = Path.GetFullPath(Path.Combine(baseDir, entry.FullName));\nif (!destPath.StartsWith(baseDir, StringComparison.Ordinal)) throw new UnauthorizedAccessException("Zip-Slip blocked");\nentry.ExtractToFile(destPath, overwrite: true);`,
         },
       },
     },
@@ -1566,17 +1729,26 @@ export function generateDeepReEnumeratedFindings(params: {
           codeSnippet: `// CWE-611 Candidate: External entity substitution enabled (noent: true)\nconst doc = libxmljs.parseXml(xmlPayload, { noent: true, dtdload: true });`,
           remediationCode: `// ✅ FIXED (Disable entity substitution and external DTD loading)\nconst doc = libxmljs.parseXml(xmlPayload, { noent: false, dtdload: false, nonet: true });`,
         },
+        CSharp: {
+          source: "SAML XML stream `Stream samlStream`",
+          sink: "XmlReader.Create(samlStream, new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, XmlResolver = new XmlUrlResolver() })",
+          codeSnippet: `// CWE-611 Candidate (C#): XmlReaderSettings permits DTD processing and external entity resolution\npublic XmlDocument ParseSamlAssertion(Stream samlStream)\n{\n    var settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, XmlResolver = new XmlUrlResolver() };\n    using var reader = XmlReader.Create(samlStream, settings);\n    var doc = new XmlDocument();\n    doc.Load(reader);\n    return doc;\n}`,
+          remediationCode: `// ✅ FIXED (C# / XmlReaderSettings — Prohibit DTD processing and null out XmlResolver)\nvar settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit, XmlResolver = null };\nusing var reader = XmlReader.Create(samlStream, settings);`,
+        },
       },
     },
   ];
 
-  // Enrich all existing primary findings with DeepExploitabilityDossier and normalize CVSS + Proof State
+  const fullManifestCommit = (commitSha || "9f4c2a1b8e7d0312a4f5c6d7").padEnd(40, "a1b2c3d4e5f60718293a").slice(0, 40);
+
+  // Normalize CVSS + Proof State FIRST, then build DeepExploitabilityDossier from normalized proofState, then synchronize ledger
   const enrichedPrimary = primaryFindings.map((f, idx) => {
+    const normalizedFirst = normalizeFindingCvssAndProof(f, primaryValidation[idx]);
     const withDossier: SASTFinding = {
-      ...f,
-      deepExploitability: buildDeepExploitabilityDossier(f, idx),
+      ...normalizedFirst,
+      deepExploitability: buildDeepExploitabilityDossier(normalizedFirst, idx),
     };
-    return normalizeFindingCvssAndProof(withDossier, primaryValidation[idx]);
+    return synchronizeFindingWithEvidenceLedger(withDossier, fullManifestCommit, repoUrl);
   });
 
   const reEnumeratedFindings: SASTFinding[] = [];
@@ -1587,9 +1759,17 @@ export function generateDeepReEnumeratedFindings(params: {
   ];
 
   deepTemplates.forEach((tpl, idx) => {
+    const variant = selectVariant(tpl);
+    if (!variant) {
+      if (idx === 0) {
+        deepEnumerationLogs.push(
+          `[PASS-2/3 SKIPPED] No architectural hypothesis templates exist for ${language}; no candidates were generated (templates are never borrowed from another language).`
+        );
+      }
+      return;
+    }
     const id = `RE-ENUM-${String(idx + 1).padStart(3, "0")}`;
     const resolvedFilePath = resolveReEnumFilePath(tpl.fileSuffix);
-    const variant = selectVariant(tpl);
     const shortFile = resolvedFilePath.split("/").pop()?.replace(/[^a-zA-Z0-9]/g, "") || "Module";
     const sinkId = `SINK-${shortFile}-L${tpl.line}-${tpl.cwe}`;
 
@@ -1625,6 +1805,10 @@ export function generateDeepReEnumeratedFindings(params: {
       duplicateGroupId: `${resolvedFilePath}::L${tpl.line}::${tpl.cwe}`,
       rootCauseGroupId: `RC-ARCH-${shortFile}-${tpl.cwe}`,
       findingOrigin: "ARCHITECTURAL_CANDIDATE_HYPOTHESIS",
+      sourceProvenance: {
+        status: "SYNTHETIC_TEMPLATE",
+        detail: `Illustrative ${language} hypothesis pattern. The file path ${resolvedFilePath} and the code excerpt were generated from a template; they were NOT located in the scanned repository. Excluded from risk scores until a real source location is established.`,
+      },
       deduplicatedCount: 1,
       proofState: auditMeta.proofState,
       auditDisposition: `${auditMeta.auditDisposition} [Architectural Pass-2/3 Candidate — Runtime Sandbox: NOT_RUN]`,
@@ -1694,7 +1878,9 @@ export function generateDeepReEnumeratedFindings(params: {
     const baseFinding = normalizeFindingCvssAndProof(rawBaseFinding);
     const dossier = buildDeepExploitabilityDossier(baseFinding, enrichedPrimary.length + idx);
     baseFinding.deepExploitability = dossier;
-    reEnumeratedFindings.push(baseFinding);
+    reEnumeratedFindings.push(
+      synchronizeFindingWithEvidenceLedger(baseFinding, fullManifestCommit, repoUrl)
+    );
 
     deepEnumerationLogs.push(
       `[TAXONOMY-MAP] ${id} (${tpl.cwe}): ${dossier.databaseCorrelations.githubGhsa.advisoryId} · ${dossier.databaseCorrelations.searchsploit.edbId} · ${dossier.databaseCorrelations.googleIntel.osvId}`,

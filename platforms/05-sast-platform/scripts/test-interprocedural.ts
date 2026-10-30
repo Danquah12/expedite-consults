@@ -163,8 +163,145 @@ app.post('/calc', (req, res) => {
 ` }],
     expect: [],
   },
+  {
+    name: "java multiline BenchmarkJava servlet doPost SQLi + XSS",
+    files: [{ path: "BenchmarkTest00001.java", content: `public class BenchmarkTest00001 extends HttpServlet {
+    @Override
+    public void doPost(
+            HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        String param = request.getParameter("BenchmarkTest00001");
+        String sql = "SELECT * from USERS where USERNAME='foo' and PASSWORD='" + param + "'";
+        Statement statement = DatabaseHelper.getSqlStatement();
+        statement.execute(sql);
+        response.getWriter().println("Result: " + param);
+    }
+}
+` }],
+    expect: [
+      { cwe: "CWE-89", cross: false, feas: "FEASIBLE" },
+      { cwe: "CWE-79", cross: false, feas: "FEASIBLE" },
+    ],
+  },
+  {
+    name: "java 3-file Controller -> Service -> Repository cross-module SQLi chain",
+    files: [
+      {
+        path: "Controller.java",
+        content: `public class Controller {
+    public void controller(HttpServletRequest request, Service service) throws Exception {
+        String input = request.getParameter("query");
+        service.process(input);
+    }
+}
+`,
+      },
+      {
+        path: "Service.java",
+        content: `public class Service {
+    public void process(String input) throws Exception {
+        repository.execute(input);
+    }
+}
+`,
+      },
+      {
+        path: "Repository.java",
+        content: `public class Repository {
+    public void execute(String input) throws Exception {
+        statement.executeQuery("SELECT * FROM users WHERE name = '" + input + "'");
+    }
+}
+`,
+      },
+    ],
+    expect: [{ cwe: "CWE-89", cross: true, feas: "FEASIBLE" }],
+  },
 ];
 
+// ---- C# ----
+cases.push(
+  {
+    name: "cs SqlCommand concatenation from Request.Query",
+    files: [{ path: "Tests/Test00104.cs", content: `public class Test00104 : ControllerBase {
+    public IActionResult Get() {
+        var userFilter = Request.Query["filter"];
+        var conn = new SqlConnection(cs);
+        var cmd = new SqlCommand("SELECT * FROM Invoices WHERE Customer = '" + userFilter + "'", conn);
+        return Ok(cmd.ExecuteReader());
+    }
+}
+` }],
+    expect: [{ cwe: "CWE-89", cross: false, feas: "FEASIBLE" }],
+  },
+  {
+    name: "cs SqlCommand parameterized is safe",
+    files: [{ path: "Tests/Test00105.cs", content: `public class Test00105 : ControllerBase {
+    public IActionResult Get() {
+        var userFilter = Request.Query["filter"];
+        using var cmd = new SqlCommand("SELECT * FROM Invoices WHERE Customer = @c", conn);
+        cmd.Parameters.AddWithValue("@c", userFilter);
+        return Ok(cmd.ExecuteReader());
+    }
+}
+` }],
+    expect: [],
+  },
+  {
+    name: "cs Process.Start with cmd.exe /c concatenation",
+    files: [{ path: "Tests/Test00104.cs", content: `public class Test00104 : ControllerBase {
+    public IActionResult Diag() {
+        var diagArg = Request.Query["host"];
+        Process.Start("cmd.exe", "/c ping " + diagArg);
+        return Ok();
+    }
+}
+` }],
+    expect: [{ cwe: "CWE-78", cross: false }],
+  },
+  {
+    name: "cs ProcessStartInfo.ArgumentList is safe",
+    files: [{ path: "Tests/Test00106.cs", content: `public class Test00106 : ControllerBase {
+    public IActionResult Diag([FromQuery] string host) {
+        var psi = new ProcessStartInfo("ping") { UseShellExecute = false };
+        psi.ArgumentList.Add("-n");
+        psi.ArgumentList.Add(host);
+        using var proc = Process.Start(psi);
+        return Ok();
+    }
+}
+` }],
+    expect: [],
+  },
+  {
+    name: "cs ProcessStartInfo.Arguments concatenation",
+    files: [{ path: "Tests/Test00107.cs", content: `public class Test00107 : ControllerBase {
+    public IActionResult Diag([FromQuery] string host) {
+        var psi = new ProcessStartInfo("ping");
+        psi.Arguments = "-n 1 " + host;
+        Process.Start(psi);
+        return Ok();
+    }
+}
+` }],
+    expect: [{ cwe: "CWE-78", cross: false }],
+  },
+  {
+    name: "cs cross-method SQLi with async/await",
+    files: [{ path: "Tests/Repo.cs", content: `public class Repo {
+    private async Task<object> Find(string name) {
+        var cmd = new SqlCommand($"SELECT * FROM Users WHERE Name = '{name}'", conn);
+        return await cmd.ExecuteReaderAsync();
+    }
+    public async Task<IActionResult> Handle([FromQuery] string user) {
+        var r = await Find(user);
+        return Ok(r);
+    }
+}
+` }],
+    expect: [{ cwe: "CWE-89", cross: true }],
+  }
+);
 let failed = 0;
 for (const c of cases) {
   const res = analyzeInterprocedural(c.files);
