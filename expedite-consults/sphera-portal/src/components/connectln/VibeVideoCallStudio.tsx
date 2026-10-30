@@ -1739,6 +1739,36 @@ export function VibeVideoCallStudio({
       ctx.fillRect(0, 0, w, h)
     }
 
+    // Ensure the GPU-accelerated SVG alpha S-curve + halo-trim filter exists in the DOM
+    const ensureTightMaskSvgFilter = () => {
+      if (typeof document === "undefined") return
+      if (document.getElementById("vibe-tight-person-mask-svg")) return
+      const svgNS = "http://www.w3.org/2000/svg"
+      const svg = document.createElementNS(svgNS, "svg")
+      svg.setAttribute("id", "vibe-tight-person-mask-svg")
+      svg.setAttribute("width", "0")
+      svg.setAttribute("height", "0")
+      svg.setAttribute("aria-hidden", "true")
+      svg.style.position = "fixed"
+      svg.style.pointerEvents = "none"
+      svg.style.opacity = "0"
+      svg.innerHTML = `
+        <defs>
+          <filter id="vibe-tight-person-mask" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="2.0" result="smoothed" />
+            <feComponentTransfer in="smoothed" result="thresholded">
+              <feFuncA type="linear" slope="7.8" intercept="-3.55" />
+            </feComponentTransfer>
+            <feMorphology in="thresholded" operator="erode" radius="1.5" result="trimmed" />
+            <feGaussianBlur in="trimmed" stdDeviation="1.2" />
+          </filter>
+        </defs>
+      `
+      document.body.appendChild(svg)
+    }
+
+    ensureTightMaskSvgFilter()
+
     // Composite person + virtual background atomically using the exact frame (`results.image`)
     // and mask (`results.segmentationMask`) produced by MediaPipe so video and mask are 100% synced.
     const renderSynchronizedComposite = (
@@ -1756,7 +1786,7 @@ export function VibeVideoCallStudio({
       const ctx = canvas.getContext("2d")
       if (!ctx) return
 
-      // 1. Update GPU-smoothed full-res mask canvas (temporal 28% previous + dual-pass solid foreground boost)
+      // 1. Update GPU temporal accumulator canvas (linearly blends 32% previous raw mask + 68% current raw mask)
       let maskCanvas = smoothMaskCanvasRef.current
       if (!maskCanvas) {
         maskCanvas = document.createElement("canvas")
@@ -1767,20 +1797,12 @@ export function VibeVideoCallStudio({
       const mCtx = maskCanvas.getContext("2d")
       if (mCtx && rawMask) {
         mCtx.save()
-        // Keep 28% of previous frame's mask on GPU to smooth 1-frame edge jitter without any motion lag
         mCtx.globalCompositeOperation = "destination-in"
-        mCtx.fillStyle = "rgba(0, 0, 0, 0.28)"
+        mCtx.fillStyle = "rgba(0, 0, 0, 0.32)"
         mCtx.fillRect(0, 0, w, h)
 
-        // Pass 1: Soft-feathered contour
         mCtx.globalCompositeOperation = "source-over"
-        mCtx.globalAlpha = 0.88
-        mCtx.filter = "blur(2.5px)"
-        mCtx.drawImage(rawMask, 0, 0, w, h)
-
-        // Pass 2: Reinforce person interior opacity so head/forehead/scalp is 100% solid (never translucent)
-        mCtx.globalAlpha = 0.85
-        mCtx.filter = "blur(1px)"
+        mCtx.globalAlpha = 0.68
         mCtx.drawImage(rawMask, 0, 0, w, h)
         mCtx.restore()
       }
@@ -1789,9 +1811,14 @@ export function VibeVideoCallStudio({
       ctx.clearRect(0, 0, w, h)
 
       if (rawMask && maskCanvas) {
-        // Step 1: Draw the GPU-stabilized segmentation mask (draw twice so person alpha is 100% solid)
+        // Step 1: Draw the temporally accumulated mask through the GPU S-curve + 1.5px halo-trim filter:
+        // - Strips < 52% confidence halo (bookshelf strip & white wall fringe around head) to 0.0
+        // - Locks >= 68% confidence person interior to 1.0 (100% solid opaque)
+        // - Erodes contour inward by 1.5px and feathers by 1.2px
+        ctx.save()
+        ctx.filter = "url(#vibe-tight-person-mask)"
         ctx.drawImage(maskCanvas, 0, 0, w, h)
-        ctx.drawImage(maskCanvas, 0, 0, w, h)
+        ctx.restore()
 
         // Step 2: Keep ONLY the person pixels (`source-in`) from the synchronized camera frame
         ctx.globalCompositeOperation = "source-in"
