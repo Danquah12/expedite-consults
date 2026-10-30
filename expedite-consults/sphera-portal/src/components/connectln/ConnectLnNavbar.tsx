@@ -222,8 +222,6 @@ export function ConnectLnNavbar({
     { id: "home", label: t("nav_home", "Home"), shortLabel: t("nav_home_short", "Home"), icon: House, badge: 2, priority: "always" },
     { id: "network", label: t("nav_network", "Network"), shortLabel: t("nav_network_short", "Network"), icon: Users, badge: 0, priority: "always" },
     { id: "jobs", label: t("nav_jobs", "Jobs"), shortLabel: t("nav_jobs_short", "Jobs"), icon: Briefcase, badge: 0, priority: "always" },
-    { id: "veterans", label: t("nav_veterans", "Veterans"), shortLabel: t("nav_veterans_short", "Veterans"), icon: Award, badge: 1, priority: "always" },
-    { id: "franchises", label: t("nav_franchises", "Franchises"), shortLabel: t("nav_franchises_short", "Franchise"), icon: Store, badge: 1, priority: "always" },
     { id: "messaging", label: t("nav_messages", "Messaging"), shortLabel: t("nav_messages_short", "Msgs"), icon: MessageSquare, badge: unreadMessagesCount || 1, priority: "always" },
     { id: "notifications", label: t("nav_alerts", "Notifications"), shortLabel: t("nav_alerts_short", "Alerts"), icon: Bell, badge: unreadNotificationsCount || 3, priority: "always" },
     { id: "marketplace", label: t("nav_marketplace", "Marketplace"), shortLabel: t("nav_marketplace_short", "Market"), icon: ShoppingBag, badge: 0, isMarketplace: true, priority: "always" },
@@ -384,6 +382,8 @@ export function ConnectLnNavbar({
     { id: "home", label: "Home Feed & Command Stream", icon: "🏠", badge: "Core", desc: "Primary professional feed, announcements, and enclave updates", url: undefined as string | undefined },
     { id: "network", label: "My Network & Member Directory", icon: "👥", badge: "Core", desc: "Discover and connect with verified professionals across all enclaves", url: undefined },
     { id: "jobs", label: "Jobs & Talent Board", icon: "💼", badge: "Careers", desc: "Cleared roles, enterprise positions, and AI-matched opportunities", url: undefined },
+    { id: "veterans", label: "ConnectLn Veterans Network", icon: "🎖️", badge: "Veterans", desc: "Military Skills Translator, career transition jobs, VetFran & veteran mentorship", url: undefined },
+    { id: "franchises", label: "ConnectLn Franchise Network", icon: "🏪", badge: "Franchises", desc: "Franchise directory, FDD opportunities, investors, suppliers & resale marketplace", url: undefined },
     { id: "careersuite", label: "Resume Prep & CareerSuite AI", icon: "📄", badge: "AI", desc: "Upload resume, ATS optimizer, salary intelligence, and interview simulator", url: undefined },
     { id: "messaging", label: "Encrypted Messaging", icon: "💬", badge: "Comms", desc: "Direct messages and end-to-end encrypted professional threads", url: undefined },
     { id: "vibecomms", label: "VibeChat & Video Conferencing", icon: "📹", badge: "Live", desc: "HD video meetings, screen sharing, and team war rooms", url: undefined },
@@ -1288,6 +1288,8 @@ export function ConnectLnNavbar({
           {[0, 1].map((copy) =>
             [
               ...primaryNavItems.map((i) => ({ id: i.id, label: i.shortLabel || i.label, icon: i.icon, badge: i.badge, kind: i.isMarketplace ? 'purple' : i.id === 'learning' ? 'blue' : i.id === 'media' ? 'rose' : i.id === 'pulserooms' ? 'emerald' : 'default' })),
+              { id: 'veterans', label: 'Veterans', icon: Award, badge: 0, kind: 'emerald' },
+              { id: 'franchises', label: 'Franchise', icon: Store, badge: 0, kind: 'amber' },
               { id: 'wallet', label: 'Wallet', icon: DollarSign, badge: 0, kind: 'emerald' },
               { id: 'vibecomms', label: 'VibeChat', icon: MessageSquare, badge: 0, kind: 'emerald' },
               { id: 'company', label: 'Companies', icon: Building2, badge: 0, kind: 'blue' },
@@ -1598,6 +1600,97 @@ export function ConnectLnNavbar({
 
             {/* Scrollable Categories List */}
             <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pt-2.5 pr-1">
+              {/* Dedicated Community Networks — Veterans & Franchise Cards */}
+              <div className="rounded-xl bg-gradient-to-r from-emerald-50/80 via-teal-50/50 to-amber-50/70 dark:from-emerald-950/30 dark:via-teal-950/20 dark:to-amber-950/20 p-2.5 border border-emerald-200/80 dark:border-emerald-900/50">
+                <div className="flex items-center justify-between mb-2 px-0.5">
+                  <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                    Dedicated Community Networks
+                  </p>
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300">
+                    AI Matched
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {/* Card 1: ConnectLn Veterans Network */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('veterans')
+                      setIsMoreOpen(false)
+                    }}
+                    className={`p-3 rounded-xl flex flex-col items-start justify-between text-left transition-all cursor-pointer border ${
+                      activeTab === 'veterans'
+                        ? "bg-emerald-700 text-white border-emerald-600 shadow-md"
+                        : "bg-white dark:bg-zinc-800/90 text-zinc-900 dark:text-zinc-100 border-emerald-200 dark:border-emerald-800/70 hover:border-emerald-500 hover:shadow-xs"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full mb-1.5">
+                      <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${
+                        activeTab === 'veterans'
+                          ? "bg-white/20 text-white"
+                          : "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300"
+                      }`}>
+                        <Award className="h-4.5 w-4.5" />
+                      </div>
+                      <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                        activeTab === 'veterans'
+                          ? "bg-white/20 text-white"
+                          : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800"
+                      }`}>
+                        🎖️ VETERANS
+                      </span>
+                    </div>
+                    <p className="text-xs font-extrabold leading-tight">
+                      Veterans Network
+                    </p>
+                    <p className={`text-[10px] mt-1 line-clamp-2 leading-snug ${
+                      activeTab === 'veterans' ? "text-emerald-50" : "text-zinc-500 dark:text-zinc-400"
+                    }`}>
+                      AI Military Skills Translator, transition jobs, VetFran &amp; veteran mentorship
+                    </p>
+                  </button>
+
+                  {/* Card 2: ConnectLn Franchise Network */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('franchises')
+                      setIsMoreOpen(false)
+                    }}
+                    className={`p-3 rounded-xl flex flex-col items-start justify-between text-left transition-all cursor-pointer border ${
+                      activeTab === 'franchises'
+                        ? "bg-amber-600 text-white border-amber-500 shadow-md"
+                        : "bg-white dark:bg-zinc-800/90 text-zinc-900 dark:text-zinc-100 border-amber-200 dark:border-amber-800/70 hover:border-amber-500 hover:shadow-xs"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full mb-1.5">
+                      <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${
+                        activeTab === 'franchises'
+                          ? "bg-white/20 text-white"
+                          : "bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300"
+                      }`}>
+                        <Store className="h-4.5 w-4.5" />
+                      </div>
+                      <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                        activeTab === 'franchises'
+                          ? "bg-white/20 text-white"
+                          : "bg-amber-50 text-amber-700 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800"
+                      }`}>
+                        🏪 FRANCHISE
+                      </span>
+                    </div>
+                    <p className="text-xs font-extrabold leading-tight">
+                      Franchise Network
+                    </p>
+                    <p className={`text-[10px] mt-1 line-clamp-2 leading-snug ${
+                      activeTab === 'franchises' ? "text-amber-50" : "text-zinc-500 dark:text-zinc-400"
+                    }`}>
+                      Franchise directory, FDD opportunities, investors, suppliers &amp; resales
+                    </p>
+                  </button>
+                </div>
+              </div>
+
               {/* Enterprise & Platform Hubs 9-Card Grid */}
               <div className="rounded-xl bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-purple-50/70 dark:from-blue-950/30 dark:via-indigo-950/20 dark:to-purple-950/20 p-2.5 border border-blue-100 dark:border-blue-900/50">
                 <div className="flex items-center justify-between mb-2 px-0.5">
@@ -2236,6 +2329,46 @@ export function ConnectLnNavbar({
                     <div className="min-w-0">
                       <p className="text-xs font-bold truncate">CareerSuite AI</p>
                       <p className="text-[10px] text-zinc-400 truncate">Interview &amp; Resumes</p>
+                    </div>
+                  </button>
+
+                  {/* Veterans Network */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('veterans')
+                      setIsMobileDrawerOpen(false)
+                    }}
+                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      activeTab === 'veterans'
+                        ? "bg-emerald-50 border-emerald-600 text-emerald-700 font-bold dark:bg-emerald-950/40"
+                        : "bg-white dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50"
+                    }`}
+                  >
+                    <Award className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold truncate">Veterans Network</p>
+                      <p className="text-[10px] text-zinc-400 truncate">Skills &amp; Transition</p>
+                    </div>
+                  </button>
+
+                  {/* Franchise Network */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('franchises')
+                      setIsMobileDrawerOpen(false)
+                    }}
+                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      activeTab === 'franchises'
+                        ? "bg-amber-50 border-amber-600 text-amber-700 font-bold dark:bg-amber-950/40"
+                        : "bg-white dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50"
+                    }`}
+                  >
+                    <Store className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold truncate">Franchise Network</p>
+                      <p className="text-[10px] text-zinc-400 truncate">FDD &amp; Opportunities</p>
                     </div>
                   </button>
                 </div>
