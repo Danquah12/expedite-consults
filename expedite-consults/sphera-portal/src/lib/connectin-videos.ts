@@ -1961,13 +1961,13 @@ export const ONBOARDING_GUIDE_CHAPTERS: OnboardingGuideChapter[] = [
   {
     id: "ch-vibe",
     stepNumber: 4,
-    title: "Vibe AI Global Assistant & Campus Intelligence",
+    title: "Noctis Global Assistant & Campus Intelligence",
     subtitle: "Instant interactive Q&A, trade specs, and policy answers",
-    description: "Ask Vibe AI anything across all 12 disciplines. Get instant code snippets, OSHA compliance regulations, electrical load calculations, or university campus policies without searching through thousands of pages.",
+    description: "Ask Noctis anything across all 12 disciplines. Get instant code snippets, OSHA compliance regulations, electrical load calculations, or university campus policies without searching through thousands of pages.",
     youtubeId: "3zmzQgWs-YI",
     duration: "1:15",
     targetTab: "vibe",
-    featureActionLabel: "Launch Vibe AI Assistant",
+    featureActionLabel: "Launch Noctis Assistant",
     highlights: [
       "Voice & text interactive intelligence tuned for trades and enterprise IAM",
       "Context-aware answers referencing your active enclave and workspace",

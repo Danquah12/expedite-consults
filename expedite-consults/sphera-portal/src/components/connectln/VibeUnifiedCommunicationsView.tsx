@@ -711,10 +711,10 @@ export function VibeUnifiedCommunicationsView({
     "Web Client"
   )
 
-  // Vibe AI Brain state
+  // Noctis Brain state
   const [aiConsentMode, setAiConsentMode] = useState<"on_device" | "explicit_share">("on_device")
   const [aiOutputTitle, setAiOutputTitle] = useState<string>(
-    "Vibe AI Brain — Respecting the E2EE Boundary (Section 6.5)"
+    "Noctis Brain — Respecting the E2EE Boundary (Section 6.5)"
   )
   const [aiOutputContent, setAiOutputContent] = useState<string>(
     "Server-side AI never reads private E2EE conversations. Choose an action below to run On-Device inference or explicitly share selected decrypted messages."
@@ -959,7 +959,7 @@ export function VibeUnifiedCommunicationsView({
                 className="rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 px-3.5 py-2 text-xs font-bold text-white flex items-center gap-1.5 transition-all cursor-pointer"
               >
                 <Sparkles className="h-3.5 w-3.5 text-amber-300" />
-                <span>Vibe AI Q&amp;A Campus</span>
+                <span>Noctis Q&amp;A Campus</span>
               </button>
             )}
             <a
@@ -1423,7 +1423,7 @@ export function VibeUnifiedCommunicationsView({
               </div>
             </div>
 
-            {/* RIGHT: Vibe AI Brain (Section 6.5) + Workflow Pipeline */}
+            {/* RIGHT: Noctis Brain (Section 6.5) + Workflow Pipeline */}
             <div className="lg:col-span-4 space-y-4">
               <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-4 shadow-xs space-y-3">
                 <div className="flex items-center justify-between gap-2">
@@ -1433,7 +1433,7 @@ export function VibeUnifiedCommunicationsView({
                     </div>
                     <div>
                       <h3 className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100">
-                        Vibe AI Brain (Section 6.5 Boundary)
+                        Noctis Brain (Section 6.5 Boundary)
                       </h3>
                       <p className="text-[10px] text-zinc-500">
                         Never claims server-side AI over private E2EE plaintext

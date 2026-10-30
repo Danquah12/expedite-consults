@@ -92,7 +92,7 @@ export function ConnectInVideoGuideModal({
                   </span>
                 </DialogTitle>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Step-by-step video walkthrough of Enclaves, AI Resume Auto-Build, Workspaces, and Vibe AI.
+                  Step-by-step video walkthrough of Enclaves, AI Resume Auto-Build, Workspaces, and Noctis.
                 </p>
               </div>
             </div>

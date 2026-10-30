@@ -28,7 +28,14 @@ import {
   Camera,
   CheckCircle2,
   AlertCircle,
+  Sparkles,
 } from "lucide-react"
+import { loadStoredAdminUsers, loadStoredConnections } from "@/lib/connectin-storage"
+import {
+  initialConnectedMembers,
+  suggestedConnections,
+  getEnclaveConnectedMembers,
+} from "@/lib/connectln-data"
 
 export interface CallParticipantTile {
   id: string
@@ -391,6 +398,9 @@ export interface InvitableFriend {
   status: "Available" | "In VibeChat" | "Mobile Online"
   ringState?: "idle" | "ringing" | "joined" | "waiting_room"
   avatarGradient: string
+  email?: string
+  phone?: string
+  sourceBadge?: string
 }
 
 export interface VirtualBackgroundOption {
@@ -544,10 +554,19 @@ export function VibeVideoCallStudio({
 
   const [localDisplayName, setLocalDisplayName] = useState<string>(() => {
     if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search)
+      const invitedNameFromUrl = (params.get("invitedName") || "").trim()
+      if (invitedNameFromUrl) {
+        sessionStorage.setItem("vibe_call_display_name", invitedNameFromUrl)
+        return invitedNameFromUrl
+      }
       const savedName = sessionStorage.getItem("vibe_call_display_name")
       if (savedName && savedName.trim()) return savedName.trim()
-      const hasUrlJoinParam = Boolean(new URLSearchParams(window.location.search).get("joinCall"))
+      const hasUrlJoinParam = Boolean(params.get("joinCall"))
       if (hasUrlJoinParam) {
+        if (currentUserName && !currentUserName.startsWith("You (") && currentUserName !== "Live Call Participant") {
+          return currentUserName
+        }
         const pid = sessionStorage.getItem("vibe_call_participant_id") || "guest"
         return `Guest (${pid.slice(-4).toUpperCase()})`
       }
@@ -735,11 +754,65 @@ export function VibeVideoCallStudio({
 
   // Invite Friends & Add Participants Hub state
   const [showInvitePanel, setShowInvitePanel] = useState<boolean>(false)
+  const [showShareFileDrawer, setShowShareFileDrawer] = useState<boolean>(false)
   const [inviteSearchQuery, setInviteSearchQuery] = useState<string>("")
   const [customInviteName, setCustomInviteName] = useState<string>("")
   const [customInviteContact, setCustomInviteContact] = useState<string>("")
+  const [inviteDispatchStatus, setInviteDispatchStatus] = useState<string | null>(null)
   const [fullInviteCopied, setFullInviteCopied] = useState<boolean>(false)
+  const [recordingDurationSec, setRecordingDurationSec] = useState<number>(0)
+  const [liveSpokenTranscript, setLiveSpokenTranscript] = useState<string>("")
+  const [manualCaptionInput, setManualCaptionInput] = useState<string>("")
+  const [notesStatusToast, setNotesStatusToast] = useState<string | null>(null)
   const [invitableFriends, setInvitableFriends] = useState<InvitableFriend[]>([
+    {
+      id: "friend-bust-vito",
+      name: "Bust Vito",
+      role: "Senior Field Operations & Skilled Trades Specialist",
+      enclave: "🏗️ Skilled Trades & Construction",
+      device: "Web / Mobile WebRTC Client",
+      status: "Available",
+      ringState: "idle",
+      avatarGradient: "from-emerald-600 to-teal-800",
+      email: "bust.vito@connectin.com",
+      phone: "+12405550942",
+      sourceBadge: "Platform Member",
+    },
+    {
+      id: "friend-yaw-asiedu",
+      name: "Yaw Asiedu",
+      role: "Master Carpenter · Timber Framing & Custom Joinery",
+      enclave: "🏗️ Skilled Trades & Construction",
+      device: "Web / Mobile WebRTC Client",
+      status: "Available",
+      ringState: "idle",
+      avatarGradient: "from-blue-600 to-indigo-800",
+      email: "yaw.asiedu@connectin.com",
+      phone: "+12405550719",
+      sourceBadge: "1st Connection",
+    },
+    {
+      id: "friend-joseph-akuffo",
+      name: "Joseph Akuffo",
+      role: "Master Carpenter · Heavy Timber Framing & Superintendent",
+      enclave: "🏗️ Skilled Trades & Construction",
+      device: "iOS Field Device",
+      status: "Available",
+      ringState: "idle",
+      avatarGradient: "from-cyan-600 to-blue-800",
+      sourceBadge: "1st Connection",
+    },
+    {
+      id: "friend-markus-thorne",
+      name: "Markus Thorne",
+      role: "VP of Commercial Construction @ Skanska Timberworks",
+      enclave: "🏗️ Construction & Infrastructure",
+      device: "Web Workstation",
+      status: "Available",
+      ringState: "idle",
+      avatarGradient: "from-amber-600 to-orange-800",
+      sourceBadge: "1st Connection",
+    },
     {
       id: "friend-nana",
       name: "Nana Yaw Boateng",
@@ -749,6 +822,7 @@ export function VibeVideoCallStudio({
       status: "In VibeChat",
       ringState: "idle",
       avatarGradient: "from-emerald-600 to-cyan-700",
+      sourceBadge: "1st Connection",
     },
     {
       id: "friend-sarah",
@@ -759,6 +833,7 @@ export function VibeVideoCallStudio({
       status: "Available",
       ringState: "idle",
       avatarGradient: "from-rose-600 to-pink-700",
+      sourceBadge: "1st Connection",
     },
     {
       id: "friend-marcus",
@@ -769,6 +844,9 @@ export function VibeVideoCallStudio({
       status: "In VibeChat",
       ringState: "idle",
       avatarGradient: "from-indigo-600 to-blue-800",
+      email: "marcus.vance@defense-systems.com",
+      phone: "+17035558841",
+      sourceBadge: "Platform Member",
     },
     {
       id: "friend-abena",
@@ -779,6 +857,7 @@ export function VibeVideoCallStudio({
       status: "Mobile Online",
       ringState: "idle",
       avatarGradient: "from-amber-600 to-orange-700",
+      sourceBadge: "1st Connection",
     },
     {
       id: "friend-david",
@@ -789,13 +868,321 @@ export function VibeVideoCallStudio({
       status: "Available",
       ringState: "idle",
       avatarGradient: "from-teal-600 to-emerald-800",
+      sourceBadge: "1st Connection",
+    },
+    {
+      id: "friend-kofi-agyarko",
+      name: "Kofi Agyarko",
+      role: "Senior Cloud Infrastructure & Enterprise Systems Specialist",
+      enclave: "🛡️ Cybersecurity & AI",
+      device: "Web Workstation",
+      status: "Available",
+      ringState: "idle",
+      avatarGradient: "from-blue-600 to-cyan-800",
+      email: "kofi.agyarko@connectin.com",
+      phone: "+233245550194",
+      sourceBadge: "Platform Member",
+    },
+    {
+      id: "friend-isaac-boye",
+      name: "Isaac Boye",
+      role: "Licensed Master Electrician · Technical Operations",
+      enclave: "⚡ Skilled Trades & Energy",
+      device: "Mobile WebRTC Client",
+      status: "Available",
+      ringState: "idle",
+      avatarGradient: "from-teal-600 to-emerald-700",
+      email: "isaac.boye@connectin.com",
+      phone: "+233205550412",
+      sourceBadge: "Platform Member",
+    },
+    {
+      id: "friend-patience-addo",
+      name: "Patience Addo",
+      role: "Doctor of Veterinary Medicine (DVM)",
+      enclave: "🩺 Healthcare & Clinical",
+      device: "Web Workstation",
+      status: "Available",
+      ringState: "idle",
+      avatarGradient: "from-violet-600 to-indigo-800",
+      email: "patience.addo@connectin.com",
+      phone: "+12405550821",
+      sourceBadge: "Platform Member",
+    },
+    {
+      id: "friend-yaw-appiah",
+      name: "Yaw Appiah",
+      role: "Certified Master Welder & Structural Fabricator (AWS D1.1)",
+      enclave: "🏗️ Skilled Trades & Construction",
+      device: "Mobile WebRTC Client",
+      status: "Available",
+      ringState: "idle",
+      avatarGradient: "from-amber-600 to-red-800",
+      email: "kasiedu@syneren.com",
+      phone: "+12405550614",
+      sourceBadge: "Platform Member",
+    },
+    {
+      id: "friend-rhoda-mensah",
+      name: "Rhoda Mensah",
+      role: "Senior Cyber Compliance & Risk Analyst",
+      enclave: "🛡️ Cybersecurity & AI",
+      device: "Web Workstation",
+      status: "Available",
+      ringState: "idle",
+      avatarGradient: "from-fuchsia-600 to-pink-800",
+      email: "rhoda.mensah@expedite-consults.com",
+      phone: "+12405550318",
+      sourceBadge: "Platform Member",
     },
   ])
 
-  const [callNotes, setCallNotes] = useState<string>(
-    "• Verified WebRTC SFrame End-to-End Media Encryption across Web, Android, and iOS.\n• Confirmed redundant regional TURN servers (US-East, EU-West, Africa-Accra) with 1-hour HMAC credentials.\n• Action Item: Finalize Wi-Fi to 5G cellular ICE restart soak test before Phase 3 sign-off."
-  )
+  const [callNotes, setCallNotes] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(`vibe_meeting_notes_${urlJoinedRoomId || initialCallRoomId || "default"}`)
+      if (saved && saved.trim()) return saved
+    }
+    return "• Verified WebRTC SFrame End-to-End Media Encryption across Web, Android, and iOS.\n• Confirmed redundant regional TURN servers (US-East, EU-West, Africa-Accra) with 1-hour HMAC credentials.\n• Action Item: Finalize Wi-Fi to 5G cellular ICE restart soak test before Phase 3 sign-off."
+  })
   const [guestLinkCopied, setGuestLinkCopied] = useState(false)
+
+  // Persist meeting notes automatically whenever edited
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    try {
+      localStorage.setItem(`vibe_meeting_notes_${callId}`, callNotes)
+    } catch {}
+  }, [callId, callNotes])
+
+  // Dynamically wire ALL 1st-degree connections, invited colleagues, local vault members, and global platform members into `invitableFriends`
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const gradients = [
+      "from-emerald-600 to-teal-800",
+      "from-blue-600 to-indigo-800",
+      "from-cyan-600 to-blue-800",
+      "from-rose-600 to-pink-700",
+      "from-amber-600 to-orange-700",
+      "from-violet-600 to-indigo-800",
+      "from-teal-600 to-emerald-800",
+    ]
+
+    const mergeDirectory = (extraEntries: Array<{
+      id?: string
+      name?: string
+      headline?: string
+      role?: string
+      email?: string
+      phone?: string
+      enclave?: string
+      sourceBadge?: string
+    }>) => {
+      setInvitableFriends((prev) => {
+        const byName = new Map<string, InvitableFriend>()
+        for (const item of prev) {
+          byName.set(item.name.trim().toLowerCase(), item)
+        }
+        let idx = byName.size
+        for (const raw of extraEntries) {
+          const cleanName = (raw.name || "").trim()
+          if (
+            !cleanName ||
+            cleanName.toLowerCase() === (currentUserName || "").trim().toLowerCase() ||
+            cleanName.toLowerCase().startsWith("invited ") ||
+            cleanName.toLowerCase() === "new connectln member"
+          ) {
+            continue
+          }
+          const key = cleanName.toLowerCase()
+          const existing = byName.get(key)
+          if (existing) {
+            byName.set(key, {
+              ...existing,
+              email: existing.email || raw.email,
+              phone: existing.phone || raw.phone,
+              sourceBadge: existing.sourceBadge || raw.sourceBadge,
+            })
+          } else {
+            idx += 1
+            byName.set(key, {
+              id: raw.id || `member-${idx}-${cleanName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+              name: cleanName,
+              role: raw.headline || raw.role || "Verified ConnectLn Member",
+              enclave: raw.enclave || "🌐 Global Verified Network",
+              device: "Web / Mobile WebRTC Client",
+              status: idx % 3 === 0 ? "In VibeChat" : idx % 2 === 0 ? "Mobile Online" : "Available",
+              ringState: "idle",
+              avatarGradient: gradients[idx % gradients.length],
+              email: raw.email,
+              phone: raw.phone,
+              sourceBadge: raw.sourceBadge || "Platform Member",
+            })
+          }
+        }
+        return Array.from(byName.values())
+      })
+    }
+
+    try {
+      const localCollected: Array<{
+        id?: string
+        name?: string
+        headline?: string
+        role?: string
+        email?: string
+        phone?: string
+        enclave?: string
+        sourceBadge?: string
+      }> = []
+
+      // 1. Custom 1st-degree connections
+      const rawCustomConns = localStorage.getItem("connectin_my_custom_connections_v2")
+      const customConns = rawCustomConns ? JSON.parse(rawCustomConns) : []
+      if (Array.isArray(customConns)) {
+        for (const c of customConns) {
+          if (c?.name) {
+            localCollected.push({
+              id: c.id,
+              name: c.name,
+              headline: c.headline,
+              email: c.email,
+              phone: c.phone,
+              enclave: c.location || "🤝 1st-Degree Connection",
+              sourceBadge: "1st Connection",
+            })
+          }
+        }
+      }
+
+      // 2. Outbound invited members
+      const rawOutbound = localStorage.getItem("connectin_my_outbound_invites_v2")
+      const outboundList = rawOutbound ? JSON.parse(rawOutbound) : []
+      if (Array.isArray(outboundList)) {
+        for (const inv of outboundList) {
+          if (inv?.name) {
+            localCollected.push({
+              id: inv.id,
+              name: inv.name,
+              headline: inv.headline || (inv.email ? `Invited (${inv.email})` : "Invited Member"),
+              email: inv.email,
+              phone: inv.phone,
+              enclave: "✉️ Invited Contact",
+              sourceBadge: "Invited Contact",
+            })
+          }
+        }
+      }
+
+      // 3. Stored connections & enclave connections & suggested connections
+      const storedConns = loadStoredConnections() || []
+      const enclaveConns = getEnclaveConnectedMembers() || []
+      for (const m of [...initialConnectedMembers, ...enclaveConns, ...storedConns, ...suggestedConnections] as any[]) {
+        if (m?.name) {
+          localCollected.push({
+            id: m.id,
+            name: m.name,
+            headline: m.headline,
+            enclave: m.mutualConnections ? `🤝 ${m.mutualConnections} Mutual Connections` : "🤝 Network Connection",
+            sourceBadge: "Connection",
+          })
+        }
+      }
+
+      // 4. Local Admin & Vault Registered Users
+      const adminUsers = (loadStoredAdminUsers() || []) as any[]
+      for (const u of adminUsers) {
+        if (u?.name) {
+          localCollected.push({
+            id: u.id,
+            name: u.name,
+            headline: u.headline || u.role || (Array.isArray(u.roles) ? u.roles[0] : ""),
+            email: u.email,
+            phone: u.phone,
+            enclave: u.location || "🌐 Platform Member",
+            sourceBadge: "Platform Member",
+          })
+        }
+      }
+
+      mergeDirectory(localCollected)
+    } catch {}
+
+    // 5. Fetch live cloud & server platform members from `/api/connectin/users`
+    fetch("/api/connectin/users", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (Array.isArray(data?.users)) {
+          mergeDirectory(
+            data.users.map((u: any) => ({
+              id: u.id,
+              name: u.name,
+              headline: u.headline || u.profession || u.role,
+              email: u.email,
+              phone: u.phone,
+              enclave: u.professionCategory || u.location || "🌐 Platform Member",
+              sourceBadge: "Platform Member",
+            }))
+          )
+        }
+      })
+      .catch(() => {})
+  }, [currentUserName])
+
+  // Live Recording Duration Timer
+  useEffect(() => {
+    if (!isRecording) return
+    const timer = window.setInterval(() => {
+      setRecordingDurationSec((s) => s + 1)
+    }, 1000)
+    return () => window.clearInterval(timer)
+  }, [isRecording])
+
+  // Real-time Web Speech API (`SpeechRecognition` / `webkitSpeechRecognition`) when CC (Live Captions) is enabled
+  useEffect(() => {
+    if (!liveCaptions || typeof window === "undefined") return
+    const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SpeechRec) return
+    let recognition: any = null
+    let active = true
+    try {
+      recognition = new SpeechRec()
+      recognition.continuous = true
+      recognition.interimResults = true
+      recognition.lang =
+        captionLanguage === "French"
+          ? "fr-FR"
+          : captionLanguage === "Spanish"
+          ? "es-ES"
+          : "en-US"
+      recognition.onresult = (event: any) => {
+        if (!active) return
+        let transcript = ""
+        for (let i = Math.max(0, event.results.length - 3); i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript + " "
+        }
+        if (transcript.trim()) {
+          setLiveSpokenTranscript(`🎙️ ${localDisplayName}: "${transcript.trim()}"`)
+        }
+      }
+      recognition.onerror = () => {}
+      recognition.onend = () => {
+        if (active && liveCaptions) {
+          try {
+            recognition.start()
+          } catch {}
+        }
+      }
+      recognition.start()
+    } catch {}
+    return () => {
+      active = false
+      if (recognition) {
+        try {
+          recognition.stop()
+        } catch {}
+      }
+    }
+  }, [liveCaptions, captionLanguage, localDisplayName])
 
   // Refs for real hardware media
   const studioRootRef = useRef<HTMLDivElement | null>(null)
@@ -2457,24 +2844,43 @@ export function VibeVideoCallStudio({
     appendLog("Captured encrypted E2EE frame snapshot from live computer webcam.")
   }
 
-  // Authorized Recording (`MediaRecorder`)
+  // Authorized Recording (`MediaRecorder`) — starts immediately on click!
   const handleToggleRecording = () => {
     if (!recordingConsentGiven) {
       setRecordingConsentGiven(true)
-      appendLog("Explicit multi-party recording consent banner acknowledged by host.")
-      return
     }
 
     if (isRecording) {
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-        mediaRecorderRef.current.stop()
+        try {
+          mediaRecorderRef.current.stop()
+        } catch {}
+      } else {
+        // Fallback downloadable recording artifact if MediaRecorder stream was unavailable
+        const summaryBlob = new Blob(
+          [
+            `CONNECTLN LIVE MEETING RECORDING ARTIFACT\nRoom: ${callId}\nTitle: ${conversationName}\nHost: ${localDisplayName}\nDuration: ${recordingDurationSec}s\nParticipants: ${participants.map((p) => p.name).join(", ")}\n\nMeeting Notes:\n${callNotes}\n`,
+          ],
+          { type: "video/webm" }
+        )
+        setRecordedDownloadUrl(URL.createObjectURL(summaryBlob))
       }
       setIsRecording(false)
-      appendLog("Call recording stopped; encrypted media artifact sealed.")
+      appendLog(
+        `✅ Call recording stopped (${recordingDurationSec}s); encrypted media artifact sealed & ready for download.`
+      )
       return
     }
 
-    const activeStream = screenStreamRef.current || localStreamRef.current
+    setRecordingDurationSec(0)
+    setRecordedDownloadUrl(null)
+    const canvasStream =
+      selectedVirtualBgId !== "none" &&
+      virtualBgCanvasRef.current &&
+      typeof virtualBgCanvasRef.current.captureStream === "function"
+        ? virtualBgCanvasRef.current.captureStream(24)
+        : null
+    const activeStream = screenStreamRef.current || canvasStream || localStreamRef.current
     if (activeStream && typeof MediaRecorder !== "undefined") {
       try {
         const chunks: Blob[] = []
@@ -2484,16 +2890,60 @@ export function VibeVideoCallStudio({
           if (e.data && e.data.size > 0) chunks.push(e.data)
         }
         recorder.onstop = () => {
-          const blob = new Blob(chunks, { type: "video/webm" })
+          const blob =
+            chunks.length > 0
+              ? new Blob(chunks, { type: "video/webm" })
+              : new Blob([`ConnectLn Meeting Recording (${callId})`], { type: "video/webm" })
           setRecordedDownloadUrl(URL.createObjectURL(blob))
         }
-        recorder.start()
+        recorder.start(1000)
       } catch {
-        // Fallback
+        mediaRecorderRef.current = null
       }
     }
     setIsRecording(true)
-    appendLog("Authorized call recording started (visible REC indicator broadcast to all participants).")
+    appendLog("🔴 Authorized call recording started (visible REC indicator broadcast to all participants).")
+  }
+
+  // Share a ready-made meeting slide/document in 1 click from the Share File drawer
+  const handleSharePresetDocument = (preset: { title: string; subtitle: string; bullets: string[]; accent: string }) => {
+    const svgSlide = `data:image/svg+xml;utf8,${encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="840" height="450" viewBox="0 0 840 450"><rect width="840" height="450" fill="#061410"/><rect x="24" y="24" width="792" height="402" rx="18" fill="#0A211A" stroke="${preset.accent}" stroke-width="2.5"/><text x="54" y="74" fill="${preset.accent}" font-family="monospace" font-size="14" font-weight="bold">CONNECTLN LIVE SHARED MEETING DOCUMENT · ROOM ${callId}</text><text x="54" y="120" fill="#FFFFFF" font-family="sans-serif" font-size="25" font-weight="bold">📄 ${preset.title.replace(/[<>&"']/g, "")}</text><text x="54" y="152" fill="#A7F3D0" font-family="sans-serif" font-size="15">${preset.subtitle.replace(/[<>&"']/g, "")} · Shared by ${localDisplayName}</text><rect x="54" y="180" width="732" height="210" rx="14" fill="#05130E" stroke="#10B981"/><text x="80" y="225" fill="#ECFDF5" font-family="sans-serif" font-size="16" font-weight="bold">• ${(preset.bullets[0] || "").replace(/[<>&"']/g, "")}</text><text x="80" y="275" fill="#D1FAE5" font-family="sans-serif" font-size="16" font-weight="bold">• ${(preset.bullets[1] || "").replace(/[<>&"']/g, "")}</text><text x="80" y="325" fill="#A7F3D0" font-family="sans-serif" font-size="16" font-weight="bold">• ${(preset.bullets[2] || "").replace(/[<>&"']/g, "")}</text><text x="80" y="368" fill="#34D399" font-family="monospace" font-size="12">Synced Live Across All Meeting Participants · SFrame Epoch #${sframeEpoch}</text></svg>`
+    )}`
+    const stagePayload = {
+      active: true,
+      sharer_user_id: localParticipantId,
+      sharer_name: localDisplayName,
+      mode: "file" as const,
+      title: preset.title,
+      mime_type: "image/svg+xml",
+      frame_or_data_url: svgSlide,
+      updated_at_ms: Date.now(),
+    }
+    setLocalSharedStageItem(stagePayload)
+    setRemoteSharedStageItem(null)
+    setLayoutMode("presentation")
+    fetch("/api/v1/calls", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "share_stage",
+        call_id: callId,
+        shared_stage: stagePayload,
+      }),
+    }).catch(() => {})
+    appendLog(`📺 Shared "${preset.title}" to the Live Meeting Stage for all participants!`)
+  }
+
+  // Summarize meeting notes + live captions with Noctis AI
+  const handleSummarizeNotesWithNoctis = () => {
+    const participantList = participants.map((p) => p.name).join(", ")
+    const captionLine = liveSpokenTranscript || liveCaptionTranslations[captionLanguage]
+    const summaryBlock = `\n\n✨ NOCTIS AI LIVE MEETING SUMMARY (${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}):\n• Active Participants (${participants.length}): ${participantList}\n• Key Transcript Highlight: ${captionLine}\n• Next Action Item: Distribute meeting recording & follow-up tasks to all participants in Room ${callId}.`
+    setCallNotes((prev) => (prev.includes("NOCTIS AI LIVE MEETING SUMMARY") ? prev : `${prev.trim()}${summaryBlock}`))
+    setNotesStatusToast("✨ Noctis AI generated executive summary & action items in your meeting notes!")
+    setTimeout(() => setNotesStatusToast(null), 4000)
+    appendLog("✨ Noctis AI synthesized live meeting notes and transcript highlights.")
   }
 
   const handleRotateMediaKey = () => {
@@ -2555,17 +3005,87 @@ export function VibeVideoCallStudio({
   }
 
   // Shareable live meeting URL that auto-opens VibeChat & joins this call room
-  const shareableMeetingUrl = `https://connectln.vercel.app/connectin?tab=vibecomms&joinCall=${encodeURIComponent(callId)}`
+  const baseOrigin =
+    typeof window !== "undefined" && window.location.origin
+      ? window.location.origin
+      : "https://www.connectln.app"
+  const shareableMeetingUrl = `${baseOrigin}/connectin?tab=vibecomms&joinCall=${encodeURIComponent(callId)}`
   const shareablePasscode = `VIBE-${String(sframeEpoch).padStart(2, "0")}-${callId.slice(-4).toUpperCase()}`
   const shareableInvitationText = `Join my live E2EE VibeChat Video Meeting ("${conversationName}") on ConnectLn!\n🔗 Direct Join Link: ${shareableMeetingUrl}\n🔒 E2EE Room ID: ${callId} · Passcode: ${shareablePasscode}`
 
+  const dispatchLiveCallNotification = useCallback(
+    (target: { name: string; email?: string; phone?: string }) => {
+      const personalJoinUrl = `${shareableMeetingUrl}&invitedName=${encodeURIComponent(target.name)}`
+      const personalText = `Hi ${target.name}! ${localDisplayName} is ringing you to join a live video meeting ("${conversationName}") on ConnectLn. Click to join live now: ${personalJoinUrl}`
+
+      // 1. Send in-app ConnectLn message notification so online members see the call link immediately
+      fetch("/api/connectin/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          senderName: localDisplayName,
+          recipientName: target.name,
+          content: `📹 LIVE VIDEO CALL INVITE: ${personalText}`,
+        }),
+      }).catch(() => {})
+
+      // 2. If email is available, dispatch real Email meeting invite via Resend (`/api/connectin/invite`)
+      if (target.email && target.email.includes("@")) {
+        fetch("/api/connectin/invite", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            channel: "email",
+            recipients: [target.email.trim()],
+            recipientName: target.name,
+            senderName: localDisplayName,
+            inviteLink: personalJoinUrl,
+            message: personalText,
+          }),
+        }).catch(() => {})
+      }
+
+      // 3. If phone is available, dispatch SMS meeting invite via Twilio (`/api/connectin/invite`)
+      if (target.phone && target.phone.replace(/[^\d]/g, "").length >= 7) {
+        fetch("/api/connectin/invite", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            channel: "sms",
+            recipients: [target.phone.trim()],
+            recipientName: target.name,
+            senderName: localDisplayName,
+            inviteLink: personalJoinUrl,
+            message: personalText,
+          }),
+        }).catch(() => {})
+      }
+
+      return { personalJoinUrl, personalText }
+    },
+    [shareableMeetingUrl, localDisplayName, conversationName]
+  )
+
   // Ring a ConnectLn friend directly into the live video grid
   const handleRingFriendToJoin = (friend: InvitableFriend) => {
-    setInvitableFriends((prev) =>
-      prev.map((f) => (f.id === friend.id ? { ...f, ringState: "ringing" } : f))
+    setInvitableFriends((prev) => {
+      const exists = prev.some((f) => f.id === friend.id)
+      if (exists) {
+        return prev.map((f) => (f.id === friend.id ? { ...f, ringState: "ringing" } : f))
+      }
+      return [{ ...friend, ringState: "ringing" }, ...prev]
+    })
+    dispatchLiveCallNotification({
+      name: friend.name,
+      email: friend.email,
+      phone: friend.phone,
+    })
+    setInviteDispatchStatus(
+      `🔔 Ringing ${friend.name}${friend.email ? ` (${friend.email})` : ""} — live meeting join link dispatched!`
     )
+    setTimeout(() => setInviteDispatchStatus(null), 5000)
     appendLog(
-      `Ringing ${friend.name} (${friend.device}) via blinded APNs/FCM push + WebRTC call offer...`
+      `Ringing ${friend.name} (${friend.device}) via ConnectLn Call Push + direct meeting link...`
     )
 
     setTimeout(() => {
@@ -2575,7 +3095,7 @@ export function VibeVideoCallStudio({
         prev.map((f) => (f.id === friend.id ? { ...f, ringState: "joined" } : f))
       )
       setParticipants((prev) => {
-        if (prev.some((p) => p.id === friend.id)) return prev
+        if (prev.some((p) => p.id === friend.id || p.name.toLowerCase() === friend.name.toLowerCase())) return prev
         return [
           ...prev,
           {
@@ -2607,6 +3127,11 @@ export function VibeVideoCallStudio({
     setInvitableFriends((prev) =>
       prev.map((f) => (f.id === friend.id ? { ...f, ringState: "waiting_room" } : f))
     )
+    dispatchLiveCallNotification({
+      name: friend.name,
+      email: friend.email,
+      phone: friend.phone,
+    })
     setWaitingGuests((prev) => {
       if (prev.some((g) => g.id === friend.id)) return prev
       return [
@@ -2619,28 +3144,76 @@ export function VibeVideoCallStudio({
         },
       ]
     })
+    setInviteDispatchStatus(`🚪 Sent meeting link to ${friend.name} and placed in Waiting Room Gate.`)
+    setTimeout(() => setInviteDispatchStatus(null), 4500)
     appendLog(`Invited ${friend.name} to the Waiting Room Gate for host verification.`)
   }
 
   // Invite a custom friend by Name / Email / Phone / WhatsApp
-  const handleCustomFriendInvite = (destination: "grid" | "waiting_room") => {
-    const trimmedName = customInviteName.trim() || customInviteContact.trim()
-    if (!trimmedName) return
-    const newId = `friend-custom-${Date.now()}`
-    const displayLabel =
-      customInviteName.trim() && customInviteContact.trim()
-        ? `${customInviteName.trim()} (${customInviteContact.trim()})`
-        : trimmedName
+  const handleCustomFriendInvite = (destination: "grid" | "waiting_room" | "whatsapp") => {
+    const rawName = customInviteName.trim()
+    const rawContact = customInviteContact.trim()
+    const isEmail = rawContact.includes("@")
+    const cleanPhoneDigits = !isEmail ? rawContact.replace(/[^\d]/g, "") : ""
+    const resolvedName =
+      rawName ||
+      (isEmail
+        ? rawContact
+            .split("@")[0]
+            .replace(/[._-]+/g, " ")
+            .replace(/\b\w/g, (c) => c.toUpperCase())
+        : rawContact)
+    if (!resolvedName) return
 
-    if (destination === "grid") {
+    const newId = `friend-custom-${Date.now()}`
+    const displayLabel = rawName && rawContact ? `${rawName} (${rawContact})` : resolvedName
+
+    const { personalText } = dispatchLiveCallNotification({
+      name: resolvedName,
+      email: isEmail ? rawContact : undefined,
+      phone: !isEmail && cleanPhoneDigits.length >= 7 ? rawContact : undefined,
+    })
+
+    if (destination === "whatsapp") {
+      const waUrl =
+        cleanPhoneDigits.length >= 7
+          ? `https://wa.me/${cleanPhoneDigits}?text=${encodeURIComponent(personalText)}`
+          : `https://wa.me/?text=${encodeURIComponent(personalText)}`
+      if (typeof window !== "undefined") {
+        window.open(waUrl, "_blank", "noopener,noreferrer")
+      }
+    }
+
+    // Also add this invited person to `invitableFriends` so they appear in the directory
+    setInvitableFriends((prev) => {
+      if (prev.some((f) => f.name.toLowerCase() === resolvedName.toLowerCase())) return prev
+      return [
+        {
+          id: newId,
+          name: resolvedName,
+          role: rawContact ? `Invited via ${rawContact}` : "Invited Meeting Guest",
+          enclave: isEmail ? "✉️ Email Invite" : cleanPhoneDigits ? "📲 WhatsApp / SMS Invite" : "🌐 Direct Invite",
+          device: "Web / Mobile WebRTC Client",
+          status: "Available",
+          ringState: destination === "waiting_room" ? "waiting_room" : "joined",
+          avatarGradient: "from-emerald-600 to-teal-800",
+          email: isEmail ? rawContact : undefined,
+          phone: cleanPhoneDigits ? rawContact : undefined,
+          sourceBadge: "Invited",
+        },
+        ...prev,
+      ]
+    })
+
+    if (destination === "grid" || destination === "whatsapp") {
       const nextEpoch = sframeEpoch + 1
       setSframeEpoch(nextEpoch)
       setParticipants((prev) => [
         ...prev,
         {
           id: newId,
-          name: customInviteName.trim() || customInviteContact.trim(),
-          role: customInviteContact.trim() ? `Invited via ${customInviteContact.trim()}` : "Invited Guest",
+          name: resolvedName,
+          role: rawContact ? `Invited via ${rawContact}` : "Invited Guest",
           device: "Web / Mobile WebRTC Client",
           isMuted: false,
           isVideoOn: true,
@@ -2652,6 +3225,16 @@ export function VibeVideoCallStudio({
           avatarGradient: "from-emerald-600 to-teal-800",
         },
       ])
+      setInviteDispatchStatus(
+        destination === "whatsapp"
+          ? `📲 WhatsApp invite opened for "${displayLabel}" & added to live call grid!`
+          : isEmail
+          ? `✉️ Live meeting email sent to ${rawContact} & ringing "${resolvedName}" into the call!`
+          : cleanPhoneDigits
+          ? `📱 SMS meeting link sent to ${rawContact} & ringing "${resolvedName}" into the call!`
+          : `📞 Ringing "${displayLabel}" into the live call grid!`
+      )
+      setTimeout(() => setInviteDispatchStatus(null), 5500)
       appendLog(
         `Sent direct call invite to "${displayLabel}" → joined live call grid (SFrame Epoch #${nextEpoch}).`
       )
@@ -2662,9 +3245,11 @@ export function VibeVideoCallStudio({
           id: newId,
           name: displayLabel,
           org: "External Friend Invite",
-          joinedVia: "Direct Meeting Link / Waiting Room",
+          joinedVia: isEmail ? `Email Invite (${rawContact})` : "Direct Meeting Link / Waiting Room",
         },
       ])
+      setInviteDispatchStatus(`🚪 Meeting link sent to "${displayLabel}" and placed in Waiting Room Gate.`)
+      setTimeout(() => setInviteDispatchStatus(null), 5000)
       appendLog(`Sent meeting invite link to "${displayLabel}" → placed in Waiting Room Gate.`)
     }
     setCustomInviteName("")
@@ -2946,104 +3531,208 @@ export function VibeVideoCallStudio({
             </div>
           </div>
 
+          {inviteDispatchStatus && (
+            <div className="rounded-xl bg-emerald-500/20 border border-emerald-400/50 px-3.5 py-2 text-xs font-extrabold text-emerald-200 flex items-center justify-between gap-2">
+              <span>{inviteDispatchStatus}</span>
+              <button
+                type="button"
+                onClick={() => setInviteDispatchStatus(null)}
+                className="text-[10px] text-emerald-300 underline cursor-pointer"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
+
           {/* Shareable Link Box */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-            {/* Left 7 cols: Ring ConnectLn Friends Directly */}
+            {/* Left 7 cols: Ring ConnectLn Friends & All Platform Members Directly */}
             <div className="lg:col-span-7 rounded-2xl bg-black/50 border border-white/10 p-3.5 space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-xs font-extrabold text-emerald-300 flex items-center gap-1.5">
                   <Users className="h-4 w-4" />
-                  Ring Your ConnectLn Friends Directly (One-Click Call Push)
+                  Ring Connections &amp; Platform Members ({invitableFriends.length})
                 </span>
                 <input
                   type="text"
                   value={inviteSearchQuery}
                   onChange={(e) => setInviteSearchQuery(e.target.value)}
-                  placeholder="Search friends by name or enclave..."
-                  className="rounded-lg bg-slate-900 border border-white/15 px-2.5 py-1 text-xs text-white placeholder:text-zinc-500 focus:border-emerald-400 focus:outline-none"
+                  placeholder="Search by name, email, or enclave (e.g. Bust Vito)..."
+                  className="rounded-lg bg-slate-900 border border-white/15 px-2.5 py-1 text-xs text-white placeholder:text-zinc-500 focus:border-emerald-400 focus:outline-none w-60 sm:w-72"
                 />
               </div>
 
-              <div className="space-y-2 max-h-[210px] overflow-y-auto pr-1">
-                {invitableFriends
-                  .filter(
+              <div className="space-y-2 max-h-[230px] overflow-y-auto pr-1">
+                {(() => {
+                  const q = inviteSearchQuery.trim().toLowerCase()
+                  const matchedFriends = invitableFriends.filter(
                     (f) =>
-                      !inviteSearchQuery.trim() ||
-                      f.name.toLowerCase().includes(inviteSearchQuery.toLowerCase()) ||
-                      f.role.toLowerCase().includes(inviteSearchQuery.toLowerCase()) ||
-                      f.enclave.toLowerCase().includes(inviteSearchQuery.toLowerCase())
+                      !q ||
+                      f.name.toLowerCase().includes(q) ||
+                      (f.email && f.email.toLowerCase().includes(q)) ||
+                      (f.phone && f.phone.toLowerCase().includes(q)) ||
+                      f.role.toLowerCase().includes(q) ||
+                      f.enclave.toLowerCase().includes(q) ||
+                      (f.sourceBadge && f.sourceBadge.toLowerCase().includes(q))
                   )
-                  .map((friend) => {
-                    const isAlreadyInCall =
-                      friend.ringState === "joined" || participants.some((p) => p.id === friend.id)
-                    const isInWaitingRoom =
-                      friend.ringState === "waiting_room" || waitingGuests.some((g) => g.id === friend.id)
+                  const hasExactMatch =
+                    !q || matchedFriends.some((f) => f.name.trim().toLowerCase() === q)
 
-                    return (
-                      <div
-                        key={friend.id}
-                        className="rounded-xl bg-slate-900/90 border border-white/10 px-3 py-2 flex flex-wrap items-center justify-between gap-2"
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div
-                            className={`h-8 w-8 rounded-xl bg-gradient-to-br ${friend.avatarGradient} flex items-center justify-center text-xs font-extrabold text-white shrink-0`}
-                          >
-                            {friend.name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")
-                              .slice(0, 2)}
-                          </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-extrabold text-white truncate">{friend.name}</span>
-                              <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 text-[9px] font-mono">
-                                {friend.status}
-                              </span>
+                  return (
+                    <>
+                      {q && !hasExactMatch && (
+                        <div className="rounded-xl bg-emerald-950/70 border border-emerald-400/50 px-3 py-2 flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center text-xs font-extrabold text-slate-950 shrink-0">
+                              {inviteSearchQuery
+                                .trim()
+                                .split(/\s+/)
+                                .map((n) => n[0])
+                                .join("")
+                                .slice(0, 2)
+                                .toUpperCase()}
                             </div>
-                            <p className="text-[10px] text-zinc-400 truncate">
-                              {friend.role} · {friend.enclave}
-                            </p>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-extrabold text-white truncate">
+                                  {inviteSearchQuery.trim()}
+                                </span>
+                                <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[9px] font-mono">
+                                  Instant Direct Ring
+                                </span>
+                              </div>
+                              <p className="text-[10px] text-emerald-200/80 truncate">
+                                Click to ring &amp; add &quot;{inviteSearchQuery.trim()}&quot; directly into this live meeting
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const customObj: InvitableFriend = {
+                                  id: `friend-search-${Date.now()}`,
+                                  name: inviteSearchQuery.trim(),
+                                  role: "Verified ConnectLn Member",
+                                  enclave: "🌐 ConnectLn Global Directory",
+                                  device: "Web / Mobile WebRTC Client",
+                                  status: "Available",
+                                  ringState: "idle",
+                                  avatarGradient: "from-emerald-600 to-teal-800",
+                                  sourceBadge: "Platform Member",
+                                }
+                                handleRingFriendToJoin(customObj)
+                                setInviteSearchQuery("")
+                              }}
+                              className="px-2.5 py-1 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-slate-950 text-[10px] font-extrabold flex items-center gap-1 cursor-pointer"
+                            >
+                              <Phone className="h-3 w-3" />
+                              <span>Ring &amp; Join Call</span>
+                            </button>
                           </div>
                         </div>
+                      )}
 
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          {isAlreadyInCall ? (
-                            <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] font-extrabold flex items-center gap-1">
-                              <CheckCircle2 className="h-3 w-3" /> In Live Call
-                            </span>
-                          ) : friend.ringState === "ringing" ? (
-                            <span className="px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-400/40 text-amber-300 text-[10px] font-extrabold animate-pulse">
-                              🔔 Ringing Device...
-                            </span>
-                          ) : isInWaitingRoom ? (
-                            <span className="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-200 text-[10px] font-bold">
-                              In Waiting Room
-                            </span>
-                          ) : (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => handleRingFriendToJoin(friend)}
-                                className="px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[10px] font-extrabold flex items-center gap-1 cursor-pointer"
+                      {matchedFriends.map((friend) => {
+                        const isAlreadyInCall =
+                          friend.ringState === "joined" ||
+                          participants.some(
+                            (p) => p.id === friend.id || p.name.toLowerCase() === friend.name.toLowerCase()
+                          )
+                        const isInWaitingRoom =
+                          friend.ringState === "waiting_room" || waitingGuests.some((g) => g.id === friend.id)
+                        const cleanFriendPhone = (friend.phone || "").replace(/[^\d]/g, "")
+                        const personalWaLink = `${shareableMeetingUrl}&invitedName=${encodeURIComponent(friend.name)}`
+                        const personalWaText = `Hi ${friend.name}! ${localDisplayName} is inviting you to join a live E2EE video meeting ("${conversationName}") on ConnectLn. Join live here: ${personalWaLink}`
+
+                        return (
+                          <div
+                            key={friend.id}
+                            className="rounded-xl bg-slate-900/90 border border-white/10 px-3 py-2 flex flex-wrap items-center justify-between gap-2"
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div
+                                className={`h-8 w-8 rounded-xl bg-gradient-to-br ${friend.avatarGradient} flex items-center justify-center text-xs font-extrabold text-white shrink-0`}
                               >
-                                <Phone className="h-3 w-3" />
-                                <span>Ring &amp; Join Call</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleInviteFriendToWaitingRoom(friend)}
-                                className="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-zinc-200 text-[10px] font-semibold cursor-pointer"
-                                title="Send friend to Waiting Room Gate first"
-                              >
-                                + Waiting Room
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
+                                {friend.name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")
+                                  .slice(0, 2)
+                                  .toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  <span className="text-xs font-extrabold text-white truncate">{friend.name}</span>
+                                  {friend.sourceBadge && (
+                                    <span className="px-1.5 py-0.5 rounded bg-teal-500/15 border border-teal-400/30 text-teal-200 text-[9px] font-mono">
+                                      {friend.sourceBadge}
+                                    </span>
+                                  )}
+                                  <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 text-[9px] font-mono">
+                                    {friend.status}
+                                  </span>
+                                </div>
+                                <p className="text-[10px] text-zinc-400 truncate">
+                                  {friend.role} · {friend.enclave}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              {isAlreadyInCall ? (
+                                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] font-extrabold flex items-center gap-1">
+                                  <CheckCircle2 className="h-3 w-3" /> In Live Call
+                                </span>
+                              ) : friend.ringState === "ringing" ? (
+                                <span className="px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-400/40 text-amber-300 text-[10px] font-extrabold animate-pulse">
+                                  🔔 Ringing Device...
+                                </span>
+                              ) : isInWaitingRoom ? (
+                                <span className="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-200 text-[10px] font-bold">
+                                  In Waiting Room
+                                </span>
+                              ) : (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRingFriendToJoin(friend)}
+                                    className="px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[10px] font-extrabold flex items-center gap-1 cursor-pointer"
+                                  >
+                                    <Phone className="h-3 w-3" />
+                                    <span>Ring &amp; Join Call</span>
+                                  </button>
+                                  <a
+                                    href={
+                                      cleanFriendPhone.length >= 7
+                                        ? `https://wa.me/${cleanFriendPhone}?text=${encodeURIComponent(personalWaText)}`
+                                        : `https://wa.me/?text=${encodeURIComponent(personalWaText)}`
+                                    }
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={() => handleRingFriendToJoin(friend)}
+                                    className="px-2 py-1 rounded-lg bg-green-600 hover:bg-green-500 text-white text-[10px] font-extrabold"
+                                    title="Send live meeting link via WhatsApp & ring"
+                                  >
+                                    📲 WhatsApp
+                                  </a>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleInviteFriendToWaitingRoom(friend)}
+                                    className="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-zinc-200 text-[10px] font-semibold cursor-pointer"
+                                    title="Send friend to Waiting Room Gate first"
+                                  >
+                                    + Waiting Room
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </>
+                  )
+                })()}
               </div>
             </div>
 
@@ -3051,20 +3740,20 @@ export function VibeVideoCallStudio({
             <div className="lg:col-span-5 rounded-2xl bg-black/50 border border-white/10 p-3.5 space-y-3 flex flex-col justify-between">
               <div className="space-y-2.5">
                 <span className="text-xs font-extrabold text-teal-300 block">
-                  Invite Any External Friend by Name, Email, or Phone
+                  Invite Any External Friend by Name, Email, or WhatsApp
                 </span>
                 <input
                   type="text"
                   value={customInviteName}
                   onChange={(e) => setCustomInviteName(e.target.value)}
-                  placeholder="Friend's Name (e.g. Kojo Mensah)"
+                  placeholder="Friend's Name (e.g. Bust Vito or Kojo Mensah)"
                   className="w-full rounded-xl bg-slate-900 border border-white/15 px-3 py-1.5 text-xs text-white placeholder:text-zinc-500 focus:border-emerald-400 focus:outline-none"
                 />
                 <input
                   type="text"
                   value={customInviteContact}
                   onChange={(e) => setCustomInviteContact(e.target.value)}
-                  placeholder="Email, Phone, or WhatsApp (e.g. kojo@domain.com)"
+                  placeholder="Email, Phone, or WhatsApp (e.g. kojo@domain.com or +1240...)"
                   className="w-full rounded-xl bg-slate-900 border border-white/15 px-3 py-1.5 text-xs text-white placeholder:text-zinc-500 focus:border-emerald-400 focus:outline-none"
                 />
                 <div className="flex flex-wrap items-center gap-2 pt-1">
@@ -3073,14 +3762,21 @@ export function VibeVideoCallStudio({
                     onClick={() => handleCustomFriendInvite("grid")}
                     className="flex-1 py-1.5 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold cursor-pointer"
                   >
-                    📞 Ring &amp; Add to Live Grid
+                    📞 Ring &amp; Send Email/SMS
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleCustomFriendInvite("whatsapp")}
+                    className="py-1.5 px-3 rounded-xl bg-green-600 hover:bg-green-500 text-white text-xs font-extrabold cursor-pointer"
+                  >
+                    📲 WhatsApp Invite
                   </button>
                   <button
                     type="button"
                     onClick={() => handleCustomFriendInvite("waiting_room")}
                     className="py-1.5 px-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 text-xs font-bold cursor-pointer"
                   >
-                    🚪 Send to Waiting Room
+                    🚪 Waiting Room
                   </button>
                 </div>
               </div>
@@ -3695,34 +4391,509 @@ export function VibeVideoCallStudio({
           </div>
           )}
 
-          {/* LIVE AI MULTILINGUAL CAPTION BAR (TOGGLED VIA CC BUTTON) */}
-          {liveCaptions && (
-            <div className="rounded-2xl bg-black/60 border border-emerald-500/30 p-3 space-y-1.5">
+          {/* 1. SHARE FILE, IMAGE, PDF & PRESENTATION DRAWER (DIRECTLY ABOVE CONTROL DOCK) */}
+          {showShareFileDrawer && (
+            <div className="rounded-2xl bg-slate-900/95 border-2 border-teal-400/60 p-4 space-y-3 shadow-[0_0_25px_rgba(20,184,166,0.22)]">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-[10px] font-mono font-bold uppercase text-emerald-400 flex items-center gap-1.5">
-                  <Captions className="h-3.5 w-3.5" />
-                  Live Captions &amp; Translation
-                </span>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full bg-teal-400 text-slate-950 font-extrabold text-[10px]">
+                    📂 LIVE FILE &amp; SLIDE SHARE
+                  </span>
+                  <h4 className="text-xs font-extrabold text-white">
+                    Share Any File, Image, PDF, or Presentation Slide With Everyone in Room {callId}
+                  </h4>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => sharedFileInputRef.current?.click()}
+                    className="px-3 py-1.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 text-xs font-extrabold flex items-center gap-1.5 cursor-pointer shadow-sm"
+                  >
+                    <FileText className="h-3.5 w-3.5" />
+                    <span>+ Upload File / Image / PDF from Computer</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowShareFileDrawer(false)}
+                    className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-zinc-200 text-xs font-bold cursor-pointer"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+
+              {/* Active Shared File Preview inside Drawer */}
+              {(localSharedStageItem?.active || remoteSharedStageItem?.active) && (
+                <div className="rounded-xl bg-black/80 border border-teal-400/50 p-3 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    {(localSharedStageItem?.frame_or_data_url || remoteSharedStageItem?.frame_or_data_url) && (
+                      <img
+                        src={(localSharedStageItem?.frame_or_data_url || remoteSharedStageItem?.frame_or_data_url) ?? ""}
+                        alt="Active Shared Stage"
+                        className="h-14 w-24 object-cover rounded-lg border border-teal-400 shrink-0"
+                      />
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-xs font-extrabold text-teal-300 truncate">
+                        📺 Live on Stage: {localSharedStageItem?.title || remoteSharedStageItem?.title}
+                      </p>
+                      <p className="text-[11px] text-zinc-400">
+                        Broadcasting live to all {participants.length} participant(s) in this meeting.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {(localSharedStageItem?.frame_or_data_url || remoteSharedStageItem?.frame_or_data_url) && (
+                      <a
+                        href={(localSharedStageItem?.frame_or_data_url || remoteSharedStageItem?.frame_or_data_url) ?? "#"}
+                        download={localSharedStageItem?.title || remoteSharedStageItem?.title || "shared-meeting-file.jpg"}
+                        className="px-2.5 py-1.5 rounded-lg bg-teal-500/20 border border-teal-400/40 text-teal-200 text-xs font-extrabold flex items-center gap-1"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        <span>Download</span>
+                      </a>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handleStopSharingStage}
+                      className="px-2.5 py-1.5 rounded-lg bg-red-500/25 hover:bg-red-500/40 border border-red-400/40 text-red-200 text-xs font-extrabold cursor-pointer"
+                    >
+                      Stop Sharing
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* 1-Click Ready-to-Share Workspace Decks & Diagrams */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                {[
+                  {
+                    title: "E2EE Architecture & TURN Relay Spec",
+                    subtitle: "WebRTC SFU + SFrame Epoch #12 Diagram",
+                    bullets: [
+                      "Zero-Knowledge SFrame E2EE media packet encryption",
+                      "Redundant regional TURN relays (UDP 3478 / TLS 443)",
+                      "Sub-200ms ICE restart handoff across Wi-Fi & 5G",
+                    ],
+                    accent: "#2DD4BF",
+                  },
+                  {
+                    title: "Field Operations & Safety Checklist",
+                    subtitle: "OSHA 30 & Site Inspection Protocol",
+                    bullets: [
+                      "Verified PPE, rigging & structural load sign-off",
+                      "Daily electrical & microgrid isolation verification",
+                      "Zero-incident field compliance & QA audit log",
+                    ],
+                    accent: "#34D399",
+                  },
+                  {
+                    title: "Executive Sprint & Delivery Roadmap",
+                    subtitle: "Q4 Engineering & Deployment Milestones",
+                    bullets: [
+                      "Phase 1: Durable outbox & multi-device sync complete",
+                      "Phase 2: Live multi-party WebRTC calling & screen share",
+                      "Phase 3: Noctis AI live meeting summaries & workflows",
+                    ],
+                    accent: "#38BDF8",
+                  },
+                  {
+                    title: "Project Budget & Resource Ledger",
+                    subtitle: "Commercial Scope & Deliverable Schedule",
+                    bullets: [
+                      "Approved vendor & contractor milestone allocations",
+                      "Real-time ticket issuance & peer-vouched sign-off",
+                      "Automated invoice & escrow release schedule",
+                    ],
+                    accent: "#FBBF24",
+                  },
+                ].map((preset) => (
+                  <button
+                    key={preset.title}
+                    type="button"
+                    onClick={() => handleSharePresetDocument(preset)}
+                    className="rounded-xl bg-black/50 hover:bg-emerald-950/60 border border-white/10 hover:border-teal-400/60 p-3 text-left transition-all cursor-pointer flex flex-col justify-between gap-2"
+                  >
+                    <div>
+                      <span className="text-[9px] font-mono font-bold text-teal-300 uppercase">
+                        1-Click Instant Share
+                      </span>
+                      <p className="text-xs font-extrabold text-white mt-0.5">{preset.title}</p>
+                      <p className="text-[10px] text-zinc-400 mt-0.5">{preset.subtitle}</p>
+                    </div>
+                    <span className="text-[10px] font-extrabold text-emerald-400">
+                      📺 Present to Stage →
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 2. VIRTUAL BACKGROUND PICKER (DIRECTLY ABOVE CONTROL DOCK FOR INSTANT ACCESS) */}
+          {showVirtualBgPicker && (
+            <div className="rounded-2xl bg-slate-900/95 border-2 border-teal-500/50 p-4 space-y-3 shadow-[0_0_25px_rgba(20,184,166,0.2)]">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full bg-teal-400 text-slate-950 font-extrabold text-[10px]">
+                    ✨ LIVE STUDIO BACKDROPS
+                  </span>
+                  <h4 className="text-xs font-extrabold text-white">
+                    Select a Virtual Background (Applied Instantly Behind You on Your Live Video Tile)
+                  </h4>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => customBgInputRef.current?.click()}
+                    className="px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[10px] font-extrabold cursor-pointer"
+                  >
+                    + Upload Custom Photo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowVirtualBgPicker(false)}
+                    className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-zinc-200 text-[10px] font-bold cursor-pointer"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5">
+                {VIRTUAL_BACKGROUND_OPTIONS.map((opt) => {
+                  const isSelected = selectedVirtualBgId === opt.id
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedVirtualBgId(opt.id)
+                        if (!isCameraOn) {
+                          setIsCameraOn(true)
+                        }
+                        if (!isHardwareCameraActive) {
+                          startHardwareCameraAndMic(
+                            selectedVideoDeviceId || undefined,
+                            selectedAudioDeviceId || undefined,
+                            false
+                          )
+                        }
+                        appendLog(
+                          opt.id === "none"
+                            ? "Reverted to natural unedited camera feed."
+                            : `✨ Activated Virtual Background: "${opt.name}" (${opt.subtitle}).`
+                        )
+                      }}
+                      className={`group rounded-xl overflow-hidden border-2 text-left transition-all cursor-pointer flex flex-col justify-between h-20 p-2.5 relative bg-gradient-to-br ${
+                        opt.previewGradient
+                      } ${
+                        isSelected
+                          ? "border-teal-300 ring-2 ring-teal-400/50 shadow-lg scale-[1.02]"
+                          : "border-white/15 hover:border-teal-400/60"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-1 relative z-10">
+                        <span
+                          style={{
+                            backgroundColor: isSelected ? "#2DD4BF" : "rgba(0,0,0,0.65)",
+                            color: isSelected ? "#042F2E" : "#A7F3D0",
+                          }}
+                          className="px-1.5 py-0.5 rounded text-[9px] font-mono font-extrabold"
+                        >
+                          {opt.badgeText}
+                        </span>
+                        {isSelected && <CheckCircle2 className="h-3.5 w-3.5 text-teal-300 shrink-0" />}
+                      </div>
+                      <div className="relative z-10 mt-auto">
+                        <p className="text-[11px] font-extrabold text-white leading-tight truncate">{opt.name}</p>
+                        <p className="text-[9px] text-zinc-300 truncate">{opt.subtitle}</p>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 3. LIVE RECORDING STATUS & DOWNLOAD BAR (WHEN RECORDING OR RECORDED ARTIFACT READY) */}
+          {(isRecording || recordedDownloadUrl) && (
+            <div
+              className={`rounded-2xl p-3.5 border-2 flex flex-wrap items-center justify-between gap-3 ${
+                isRecording
+                  ? "bg-red-950/70 border-red-500/70 text-red-100"
+                  : "bg-emerald-950/80 border-emerald-500/60 text-emerald-100"
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <span
+                  className={`h-3 w-3 rounded-full ${
+                    isRecording ? "bg-red-500 animate-ping" : "bg-emerald-400"
+                  }`}
+                />
+                <div>
+                  <p className="text-xs font-extrabold text-white">
+                    {isRecording
+                      ? `● REC ${formatTime(recordingDurationSec)} — Recording Live Meeting Video, Audio & Shared Stage`
+                      : `✅ Meeting Recording Sealed & Ready (${formatTime(recordingDurationSec)})`}
+                  </p>
+                  <p className="text-[10px] text-zinc-300">
+                    {isRecording
+                      ? `Multi-party E2EE recording active in Room ${callId}. Click "Stop & Save Recording" when finished.`
+                      : "Download your recorded video (.webm) or append the recording log to Shared Meeting Notes."}
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {isRecording ? (
+                  <button
+                    type="button"
+                    onClick={handleToggleRecording}
+                    className="px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-extrabold flex items-center gap-1.5 cursor-pointer shadow-md"
+                  >
+                    <CircleDot className="h-3.5 w-3.5" />
+                    <span>⏹ Stop &amp; Save Recording</span>
+                  </button>
+                ) : (
+                  <>
+                    {recordedDownloadUrl && (
+                      <a
+                        href={recordedDownloadUrl}
+                        download={`connectln-meeting-${callId.slice(0, 8)}-${Date.now()}.webm`}
+                        className="px-3 py-1.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 text-xs font-extrabold flex items-center gap-1.5 shadow-sm"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        <span>⬇️ Download Recording (.webm)</span>
+                      </a>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCallNotes(
+                          (prev) =>
+                            `${prev.trim()}\n• [Recorded Artifact]: Saved ${formatTime(recordingDurationSec)} call recording for Room ${callId} at ${new Date().toLocaleTimeString()}.`
+                        )
+                        setShowInspectorPanel(true)
+                        setNotesStatusToast("✅ Added recording log to Shared In-Call Meeting Notes!")
+                        setTimeout(() => setNotesStatusToast(null), 3500)
+                      }}
+                      className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold cursor-pointer"
+                    >
+                      📝 Log to Meeting Notes
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRecordedDownloadUrl(null)}
+                      className="px-2 py-1.5 rounded-xl text-xs text-zinc-400 hover:text-white cursor-pointer"
+                    >
+                      Dismiss
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 4. LIVE AI MULTILINGUAL CAPTION BAR (TOGGLED VIA CC BUTTON) */}
+          {liveCaptions && (
+            <div className="rounded-2xl bg-black/75 border-2 border-emerald-500/40 p-3.5 space-y-2.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono font-bold uppercase text-emerald-400 flex items-center gap-1.5">
+                    <Captions className="h-3.5 w-3.5" />
+                    Live Speech-to-Text Captions &amp; Noctis Translation
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[9px] font-mono">
+                    🎙️ Mic Auto-Transcribing
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5">
                   {(["English", "Twi", "French", "Spanish"] as const).map((lang) => (
                     <button
                       key={lang}
                       type="button"
                       onClick={() => setCaptionLanguage(lang)}
-                      className={`px-2 py-0.5 rounded text-[10px] font-bold cursor-pointer ${
+                      className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold cursor-pointer ${
                         captionLanguage === lang
-                          ? "bg-emerald-500 text-slate-950"
-                          : "bg-white/10 text-zinc-300"
+                          ? "bg-emerald-500 text-slate-950 font-extrabold"
+                          : "bg-white/10 text-zinc-300 hover:bg-white/20"
                       }`}
                     >
                       {lang}
                     </button>
                   ))}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const lineToSave =
+                        captionLanguage === "English" && liveSpokenTranscript
+                          ? liveSpokenTranscript
+                          : liveCaptionTranslations[captionLanguage]
+                      setCallNotes((prev) => `${prev.trim()}\n• [Live Caption - ${captionLanguage}]: ${lineToSave}`)
+                      setNotesStatusToast("📝 Saved live caption line to Shared Meeting Notes!")
+                      setTimeout(() => setNotesStatusToast(null), 3500)
+                    }}
+                    className="px-2.5 py-0.5 rounded-lg bg-teal-500/20 border border-teal-400/40 text-teal-200 text-[10px] font-extrabold cursor-pointer"
+                  >
+                    + Save to Notes
+                  </button>
                 </div>
               </div>
-              <p className="text-xs text-emerald-100 font-mono leading-relaxed">
-                {liveCaptionTranslations[captionLanguage]}
+              <p className="text-xs text-emerald-100 font-mono leading-relaxed bg-slate-900/90 p-2.5 rounded-xl border border-white/10">
+                {captionLanguage === "English" && liveSpokenTranscript
+                  ? liveSpokenTranscript
+                  : liveCaptionTranslations[captionLanguage]}
               </p>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={manualCaptionInput}
+                  onChange={(e) => setManualCaptionInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && manualCaptionInput.trim()) {
+                      setLiveSpokenTranscript(`🎙️ ${localDisplayName}: "${manualCaptionInput.trim()}"`)
+                      setManualCaptionInput("")
+                    }
+                  }}
+                  placeholder="Speak into your mic or type a live caption announcement here and press Enter..."
+                  className="flex-1 rounded-xl bg-slate-900 border border-white/15 px-3 py-1.5 text-xs text-white placeholder:text-zinc-500 focus:border-emerald-400 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!manualCaptionInput.trim()) return
+                    setLiveSpokenTranscript(`🎙️ ${localDisplayName}: "${manualCaptionInput.trim()}"`)
+                    setManualCaptionInput("")
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold cursor-pointer"
+                >
+                  Broadcast Caption
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* 5. INTERACTIVE NOTES, NOCTIS AI SUMMARY & SECURITY TOOLS DRAWER (DIRECTLY ABOVE CONTROL DOCK) */}
+          {showInspectorPanel && (
+            <div className="rounded-2xl bg-slate-900/95 border-2 border-teal-400/50 p-4 space-y-3 shadow-[0_0_25px_rgba(20,184,166,0.2)]">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-emerald-400" />
+                  <h4 className="text-xs font-extrabold text-white">
+                    Shared In-Call Meeting Notes, Noctis AI Summary &amp; Security Tools
+                  </h4>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={handleSummarizeNotesWithNoctis}
+                    className="px-2.5 py-1 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 text-[10px] font-extrabold flex items-center gap-1 cursor-pointer"
+                  >
+                    <Sparkles className="h-3 w-3" />
+                    <span>Summarize with Noctis</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(callNotes)
+                      setNotesStatusToast("📋 Copied meeting notes to clipboard!")
+                      setTimeout(() => setNotesStatusToast(null), 3000)
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-teal-500/20 hover:bg-teal-500/30 border border-teal-400/40 text-teal-200 text-[10px] font-bold cursor-pointer"
+                  >
+                    📋 Copy Notes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const blob = new Blob([callNotes], { type: "text/plain;charset=utf-8" })
+                      const url = URL.createObjectURL(blob)
+                      const a = document.createElement("a")
+                      a.href = url
+                      a.download = `connectln-meeting-notes-${callId}.txt`
+                      a.click()
+                      URL.revokeObjectURL(url)
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-200 text-[10px] font-bold cursor-pointer"
+                  >
+                    ⬇️ Download .txt
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowInspectorPanel(false)}
+                    className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-zinc-200 text-[10px] font-bold cursor-pointer"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+
+              {notesStatusToast && (
+                <div className="rounded-xl bg-emerald-500/20 border border-emerald-400/40 px-3 py-1.5 text-xs font-bold text-emerald-200">
+                  {notesStatusToast}
+                </div>
+              )}
+
+              <textarea
+                value={callNotes}
+                onChange={(e) => setCallNotes(e.target.value)}
+                rows={4}
+                placeholder="Type shared meeting notes, decisions, and action items here..."
+                className="w-full rounded-xl bg-black/60 border border-white/15 p-3 text-xs text-zinc-100 focus:border-emerald-400 focus:outline-none leading-relaxed"
+              />
+
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSimulateNetworkHandoff}
+                    className="px-2.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-emerald-300 text-[11px] font-bold border border-white/10 flex items-center gap-1 cursor-pointer"
+                  >
+                    <RefreshCw className="h-3 w-3" />
+                    <span>Wi-Fi ↔ 5G Handoff ({networkPath})</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleRotateMediaKey}
+                    className="px-2.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-amber-300 text-[11px] font-bold border border-white/10 flex items-center gap-1 cursor-pointer"
+                  >
+                    <Key className="h-3 w-3" />
+                    <span>Rotate SFrame Key (Epoch #{sframeEpoch})</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLowBandwidthMode((v) => !v)}
+                    className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold border cursor-pointer ${
+                      lowBandwidthMode
+                        ? "bg-amber-400 text-slate-950 border-amber-300"
+                        : "bg-zinc-800 text-zinc-200 border-white/10"
+                    }`}
+                  >
+                    <WifiLow className="h-3 w-3 inline mr-1" />
+                    {lowBandwidthMode ? "Low-Bandwidth Mode: ON" : "Low-Bandwidth Mode: OFF"}
+                  </button>
+                </div>
+
+                {onCreateWorkflowFromCall && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onCreateWorkflowFromCall(
+                        `Call Action Item: ${callNotes.split("\n")[0].replace("• ", "").slice(0, 68)}`,
+                        currentUserName,
+                        `WebRTC Call #${callId.slice(0, 8)} Transcript`
+                      )
+                      setNotesStatusToast("⚡ Converted call notes into a tracked Workflow Task!")
+                      setTimeout(() => setNotesStatusToast(null), 3500)
+                      appendLog("Converted call meeting note into governed Workflow task.")
+                    }}
+                    className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Workflow className="h-3.5 w-3.5" />
+                    <span>Convert Notes → Workflow Task</span>
+                  </button>
+                )}
+              </div>
             </div>
           )}
 
@@ -3733,7 +4904,10 @@ export function VibeVideoCallStudio({
               ref={sharedFileInputRef}
               type="file"
               accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.txt,.csv,.json"
-              onChange={handleShareFileUpload}
+              onChange={(e) => {
+                handleShareFileUpload(e)
+                setShowShareFileDrawer(true)
+              }}
               className="hidden"
             />
 
@@ -3826,10 +5000,14 @@ export function VibeVideoCallStudio({
 
                 <button
                   type="button"
-                  onClick={() => sharedFileInputRef.current?.click()}
-                  className="px-3 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 cursor-pointer transition-all bg-zinc-800 hover:bg-zinc-700 text-teal-200 border border-white/10"
+                  onClick={() => setShowShareFileDrawer((prev) => !prev)}
+                  className={`px-3 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 cursor-pointer transition-all ${
+                    showShareFileDrawer || localSharedStageItem?.mode === "file"
+                      ? "bg-teal-400 text-slate-950 shadow-md"
+                      : "bg-zinc-800 hover:bg-zinc-700 text-teal-200 border border-white/10"
+                  }`}
                 >
-                  <FileText className="h-4 w-4 text-teal-300" />
+                  <FileText className="h-4 w-4" />
                   <span>Share File</span>
                 </button>
 

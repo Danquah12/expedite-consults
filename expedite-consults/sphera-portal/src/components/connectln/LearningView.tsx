@@ -119,7 +119,7 @@ const ConnectLnChangeProfessionInfrastructure = dynamic(
     ssr: false,
     loading: () => (
       <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8 text-center text-xs font-bold text-zinc-500">
-        Loading Vibe AI Career Mobility &amp; Decision Engine...
+        Loading Noctis Career Mobility &amp; Decision Engine...
       </div>
     )
   }
@@ -548,7 +548,7 @@ export function LearningView({
               >
                 <GitBranch className="h-3.5 w-3.5" />
                 <span>Change or Upgrade Profession</span>
-                <span className="rounded-full bg-white/20 px-2 py-0.2 text-[10px] font-mono">Vibe AI Decision Engine</span>
+                <span className="rounded-full bg-white/20 px-2 py-0.2 text-[10px] font-mono">Noctis Decision Engine</span>
                 <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
               </button>
               <button
@@ -883,7 +883,7 @@ export function LearningView({
               }`}
             >
               <GitBranch className="h-3.5 w-3.5" />
-              <span>🔄 Change or Upgrade Profession (Vibe AI)</span>
+              <span>🔄 Change or Upgrade Profession (Noctis)</span>
             </button>
 
             <button
@@ -991,7 +991,7 @@ export function LearningView({
           >
             <div className="flex items-center justify-between mb-1">
               <span className="rounded bg-emerald-600 text-white px-1.5 py-0.2 text-[9px] font-mono font-black">
-                VIBE AI MOBILITY
+                NOCTIS MOBILITY
               </span>
               <GitBranch className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
             </div>
@@ -1378,7 +1378,7 @@ export function LearningView({
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="rounded-full bg-emerald-400/20 border border-emerald-400/40 px-2.5 py-0.5 text-[10px] font-mono font-black text-emerald-300">
-                    VIBE AI MOBILITY ENGINE
+                    NOCTIS MOBILITY ENGINE
                   </span>
                   <GitBranch className="h-5 w-5 text-emerald-400" />
                 </div>
@@ -1386,7 +1386,7 @@ export function LearningView({
                   Change or Upgrade Your Profession
                 </h3>
                 <p className="text-xs text-emerald-100/90 leading-relaxed">
-                  Specify your current profession, level, or grade and let Vibe AI calculate your transferable skill overlap, fast-track milestones, and 5-year income gain for a vertical promotion or complete career pivot.
+                  Specify your current profession, level, or grade and let Noctis calculate your transferable skill overlap, fast-track milestones, and 5-year income gain for a vertical promotion or complete career pivot.
                 </p>
               </div>
               <button
@@ -1450,7 +1450,7 @@ export function LearningView({
       )}
 
       {/* ========================================================================= */}
-      {/* MODE 0: CHANGE OR UPGRADE PROFESSION — VIBE AI DECISION INFRASTRUCTURE    */}
+      {/* MODE 0: CHANGE OR UPGRADE PROFESSION — NOCTIS DECISION INFRASTRUCTURE    */}
       {/* ========================================================================= */}
       {learningMode === 'change_profession' && (
         <ConnectLnChangeProfessionInfrastructure

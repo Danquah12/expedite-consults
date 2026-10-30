@@ -281,7 +281,7 @@ export function ConnectLnChangeProfessionInfrastructure({
     comp_1: true
   })
 
-  // Vibe AI Interactive Co-Pilot State
+  // Noctis Interactive Co-Pilot State
   const [vibeCustomQuestion, setVibeCustomQuestion] = useState<string>("")
   const [activeVibePromptKey, setActiveVibePromptKey] = useState<string>("optimal_decision")
   const [vibeConversationLog, setVibeConversationLog] = useState<
@@ -421,7 +421,7 @@ export function ConnectLnChangeProfessionInfrastructure({
     checkedCompetencies
   ])
 
-  // Top 3 Vibe AI Recommended Careers for Current Background
+  // Top 3 Noctis Recommended Careers for Current Background
   const vibeTop3CareerRecommendations = useMemo(() => {
     const nums = currentPreset.naturalTargetCareerNumbers.slice(0, 3)
     return nums
@@ -482,7 +482,7 @@ export function ConnectLnChangeProfessionInfrastructure({
     targetGrade
   ])
 
-  // Vibe AI Co-Pilot Generated Analysis
+  // Noctis Co-Pilot Generated Analysis
   const activeVibeAnalysis = useMemo(() => {
     const startRole =
       customCurrentProfession.trim() ||
@@ -496,7 +496,7 @@ export function ConnectLnChangeProfessionInfrastructure({
 
     if (activeVibePromptKey === "grade_justification") {
       return {
-        headline: `Vibe AI Promotion & Grade-Step Justification Memorandum (${currentGrade.gradeEquivalent} → ${targetGrade.gradeEquivalent})`,
+        headline: `Noctis Promotion & Grade-Step Justification Memorandum (${currentGrade.gradeEquivalent} → ${targetGrade.gradeEquivalent})`,
         summary: `To move from ${currentGrade.shortLabel} to ${targetGrade.shortLabel} in ${targetCareerSpec.title}, promotion boards and hiring managers evaluate whether you have crossed from "following SOPs" to "owning fault isolation, QA disposition, and shift/system accountability."`,
         bulletPoints: [
           `1. Credit Your Existing Milestones (${decisionMetrics.creditedMilestones.map((m) => `M${m}`).join(", ")}): Your ${yearsExperience} yrs of experience already satisfy ${decisionMetrics.skillOverlapPct}% of foundational safety and baseline operating requirements.`,
@@ -508,12 +508,12 @@ export function ConnectLnChangeProfessionInfrastructure({
 
     if (activeVibePromptKey === "compare_upgrade_vs_pivot") {
       return {
-        headline: `Vibe AI Strategic Tradeoff: Vertical Upgrade vs. Cross-Industry Profession Change`,
+        headline: `Noctis Strategic Tradeoff: Vertical Upgrade vs. Cross-Industry Profession Change`,
         summary: `Comparing a vertical promotion inside your current track against a complete profession pivot into Career #${targetCareerSpec.careerNumber} (${targetCareerSpec.title}):`,
         bulletPoints: [
           `• Vertical Upgrade Path (${currentGrade.shortLabel.split("—")[0]} → ${targetGrade.shortLabel.split("—")[0]}): Fastest time-to-promotion (${Math.max(4, targetTimelineWeeks - 4)} weeks), retains 100% of domain seniority, and yields ~$${decisionMetrics.targetUpgradeAnnualPay.toLocaleString()}/yr (+$${(decisionMetrics.targetUpgradeAnnualPay - currentAnnualPay).toLocaleString()}/yr lift).`,
           `• Complete Profession Change to #${targetCareerSpec.careerNumber} ${targetCareerSpec.title}: Transfers ${decisionMetrics.skillOverlapPct}% of your prior skills, credits Milestones ${decisionMetrics.creditedMilestones.map((m) => `M${m}`).join(", ")}, and positions you in ${targetCareerSpec.domainTitle} (${targetCareerSpec.careerGuidance.targetRoles}) at ~$${decisionMetrics.targetPivotAnnualPay.toLocaleString()}/yr.`,
-          `• Vibe AI Verdict: ${
+          `• Noctis Verdict: ${
             decisionMetrics.isRecommendedMatch
               ? `Because Career #${targetCareerSpec.careerNumber} (${targetCareerSpec.title}) is a high-affinity match for your ${currentPreset.sector} background, you can execute either path or combine them into a Dual-Skill Specialist Stack for top-decile pay!`
               : `If you need immediate cashflow within 60 days, execute the Vertical Grade Upgrade first; if you want higher long-term ceiling and industry resilience, start the 12-week Bridge Curriculum for #${targetCareerSpec.careerNumber} ${targetCareerSpec.title} while employed.`
@@ -524,7 +524,7 @@ export function ConnectLnChangeProfessionInfrastructure({
 
     if (activeVibePromptKey === "fastest_100k_path") {
       return {
-        headline: `Vibe AI Fastest Route to $100,000+ / Year from ${startRole}`,
+        headline: `Noctis Fastest Route to $100,000+ / Year from ${startRole}`,
         summary: `In technical, trade, aviation, maritime, semiconductor, and infrastructure fields, crossing $100K/yr is achieved fastest by combining Level 4/5 Sign-Off Authority with a high-scarcity technical specialization:`,
         bulletPoints: [
           `• Step 1 (Weeks 1–4): Claim Credit-for-Prior-Learning (CPL) on Milestones ${decisionMetrics.creditedMilestones.map((m) => `M${m}`).join(", ")} so you do not repeat entry-level material.`,
@@ -535,8 +535,8 @@ export function ConnectLnChangeProfessionInfrastructure({
     }
 
     return {
-      headline: `Vibe AI Personalized Mobility Blueprint: ${startRole} → ${destRole}`,
-      summary: `Vibe AI analyzed your starting profile (${yearsExperience} yrs experience, $${currentAnnualPay.toLocaleString()}/yr current pay) against Career #${targetCareerSpec.careerNumber} (${targetCareerSpec.title}) at ${targetGrade.shortLabel}:`,
+      headline: `Noctis Personalized Mobility Blueprint: ${startRole} → ${destRole}`,
+      summary: `Noctis analyzed your starting profile (${yearsExperience} yrs experience, $${currentAnnualPay.toLocaleString()}/yr current pay) against Career #${targetCareerSpec.careerNumber} (${targetCareerSpec.title}) at ${targetGrade.shortLabel}:`,
       bulletPoints: [
         `• Transferable Skill Overlap: ${decisionMetrics.skillOverlapPct}% match — You automatically fast-track Milestones ${decisionMetrics.creditedMilestones.map((m) => `M${m}`).join(", ")} and focus your ${targetTimelineWeeks}-week bridge plan on Milestones ${decisionMetrics.bridgeMilestones.map((m) => `M${m}`).join(", ")}.`,
         `• Compensation & 5-Year ROI Lift: Projected move from $${currentAnnualPay.toLocaleString()}/yr ($${decisionMetrics.hourlyCurrent}/hr) to $${decisionMetrics.chosenTargetAnnualPay.toLocaleString()}/yr ($${decisionMetrics.hourlyTarget}/hr) — a +$${decisionMetrics.annualPayDelta.toLocaleString()}/yr annual increase and +$${decisionMetrics.fiveYearNetGain.toLocaleString()} cumulative 5-year gain.`,
@@ -576,7 +576,7 @@ export function ConnectLnChangeProfessionInfrastructure({
     setVibeConversationLog((prev) => [
       {
         role: "vibe",
-        title: `Vibe AI Response to: "${q}"`,
+        title: `Noctis Response to: "${q}"`,
         body: reply,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
       },
@@ -595,7 +595,7 @@ export function ConnectLnChangeProfessionInfrastructure({
       customTargetPositionTitle.trim() ||
       `${targetCareerSpec.title} (${targetGrade.shortLabel})`
 
-    const md = `# CONNECTLN & VIBE AI — CAREER UPGRADE & PROFESSION TRANSITION DOSSIER
+    const md = `# CONNECTLN & NOCTIS — CAREER UPGRADE & PROFESSION TRANSITION DOSSIER
 Generated: ${new Date().toISOString().slice(0, 10)}
 Mobility Mode: ${mobilityMode === "upgrade_level" ? "Vertical Level / Grade / Position Upgrade" : "Complete Cross-Industry Profession Change"}
 
@@ -627,7 +627,7 @@ ${targetCareerSpec.coreCurriculumBullets.map((t) => `  - ${t}`).join("\n")}
 - **Mandatory Capstone Portfolio Proof**: ${targetCareerSpec.capstoneProject} (${targetCareerSpec.tangibleEvidenceType})
 - **Mandatory Grade Promotion Deliverable**: ${targetGrade.requiredProofDeliverable}
 
-## 4. VIBE AI STRATEGIC DECISION BRIEFING
+## 4. NOCTIS STRATEGIC DECISION BRIEFING
 **${activeVibeAnalysis.headline}**
 ${activeVibeAnalysis.summary}
 
@@ -655,7 +655,7 @@ ${activeVibeAnalysis.bulletPoints.join("\n\n")}
             <div className="flex items-center gap-2 flex-wrap">
               <span className="rounded-full bg-amber-400/20 border border-amber-400/40 px-3 py-0.5 text-xs font-black text-amber-300 flex items-center gap-1.5">
                 <Sparkles className="h-3.5 w-3.5" />
-                VIBE AI CAREER MOBILITY &amp; DECISION INFRASTRUCTURE
+                NOCTIS CAREER MOBILITY &amp; DECISION INFRASTRUCTURE
               </span>
               <span className="rounded-full bg-emerald-500/20 border border-emerald-500/40 px-2.5 py-0.5 text-[11px] font-mono font-bold text-emerald-300">
                 8 Grade Tiers · 60 Specialist Professions · Credit-for-Prior-Learning
@@ -667,7 +667,7 @@ ${activeVibeAnalysis.bulletPoints.join("\n\n")}
             <p className="text-xs sm:text-sm text-indigo-100/90 leading-relaxed">
               Specify your current profession, level, grade, or position and choose whether you want to{" "}
               <strong className="text-amber-300">upgrade vertically to a higher grade/position</strong> (e.g., Apprentice → Journeyworker → Senior Lead / GS-13 → Superintendent → Business Owner) or{" "}
-              <strong className="text-emerald-300">completely pivot into a new specialist profession</strong>. Vibe AI calculates your transferable skill overlap, fast-tracked milestones, 5-year income delta, and generates your bridge pathway.
+              <strong className="text-emerald-300">completely pivot into a new specialist profession</strong>. Noctis calculates your transferable skill overlap, fast-tracked milestones, 5-year income delta, and generates your bridge pathway.
             </p>
           </div>
 
@@ -781,7 +781,7 @@ ${activeVibeAnalysis.bulletPoints.join("\n\n")}
                   Your Current Profession, Level, Grade &amp; Baseline
                 </h3>
                 <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                  Specify where you are starting today so Vibe AI can audit your transferable skills.
+                  Specify where you are starting today so Noctis can audit your transferable skills.
                 </p>
               </div>
             </div>
@@ -947,7 +947,7 @@ ${activeVibeAnalysis.bulletPoints.join("\n\n")}
                 <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
                   {mobilityMode === "upgrade_level"
                     ? "Choose the specialist track and higher grade/position you want to reach."
-                    : "Select any of the 60 Specialist Careers or pick a Vibe AI Top-3 Match."}
+                    : "Select any of the 60 Specialist Careers or pick a Noctis Top-3 Match."}
                 </p>
               </div>
             </div>
@@ -956,12 +956,12 @@ ${activeVibeAnalysis.bulletPoints.join("\n\n")}
             </span>
           </div>
 
-          {/* Vibe AI Top 3 Recommended Professions Ribbon */}
+          {/* Noctis Top 3 Recommended Professions Ribbon */}
           <div className="rounded-xl border border-amber-300/80 dark:border-amber-800/70 bg-amber-50/60 dark:bg-amber-950/20 p-3 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-black uppercase tracking-wider text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
                 <Sparkles className="h-3.5 w-3.5 text-amber-600" />
-                Vibe AI Top-3 Highest-Transfer Professions for Your Background:
+                Noctis Top-3 Highest-Transfer Professions for Your Background:
               </span>
               <span className="text-[10px] font-mono text-amber-800 dark:text-amber-300">
                 1-Click Select
@@ -1136,7 +1136,7 @@ ${activeVibeAnalysis.bulletPoints.join("\n\n")}
       </div>
 
       {/* ===================================================================== */}
-      {/* 3. VIBE AI DECISION MATRIX: STAY vs. UPGRADE LEVEL vs. CHANGE CAREER  */}
+      {/* 3. NOCTIS DECISION MATRIX: STAY vs. UPGRADE LEVEL vs. CHANGE CAREER  */}
       {/* ===================================================================== */}
       <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
@@ -1267,7 +1267,7 @@ ${activeVibeAnalysis.bulletPoints.join("\n\n")}
       </div>
 
       {/* ===================================================================== */}
-      {/* 4. INTERACTIVE GRADE / PROFESSION COMPETENCY CHECKLIST & VIBE AI      */}
+      {/* 4. INTERACTIVE GRADE / PROFESSION COMPETENCY CHECKLIST & NOCTIS      */}
       {/* ===================================================================== */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* LEFT (6 COLS): INTERACTIVE PROMOTION & TRANSITION READINESS CHECKLIST */}
@@ -1336,7 +1336,7 @@ ${activeVibeAnalysis.bulletPoints.join("\n\n")}
           </div>
         </div>
 
-        {/* RIGHT (6 COLS): VIBE AI CAREER MOBILITY CO-PILOT & DECISION ADVISOR */}
+        {/* RIGHT (6 COLS): NOCTIS CAREER MOBILITY CO-PILOT & DECISION ADVISOR */}
         <div className="lg:col-span-6 rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-5 text-white shadow-xl flex flex-col justify-between space-y-4">
           <div className="space-y-4">
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
@@ -1346,7 +1346,7 @@ ${activeVibeAnalysis.bulletPoints.join("\n\n")}
                 </div>
                 <div>
                   <h3 className="text-sm font-black text-white">
-                    Vibe AI Career Decision Co-Pilot
+                    Noctis Career Decision Co-Pilot
                   </h3>
                   <p className="text-[11px] text-indigo-200/80">
                     Real-time decision synthesis for your grade upgrade or profession pivot
@@ -1354,7 +1354,7 @@ ${activeVibeAnalysis.bulletPoints.join("\n\n")}
                 </div>
               </div>
               <span className="rounded-full bg-emerald-500/20 border border-emerald-400/30 px-2.5 py-0.5 text-[10px] font-mono font-bold text-emerald-300">
-                ● VIBE AI ONLINE
+                ● NOCTIS ONLINE
               </span>
             </div>
 
@@ -1381,7 +1381,7 @@ ${activeVibeAnalysis.bulletPoints.join("\n\n")}
               ))}
             </div>
 
-            {/* Active Vibe AI Decision Briefing Box */}
+            {/* Active Noctis Decision Briefing Box */}
             <div className="rounded-xl bg-black/35 border border-white/15 p-4 space-y-2.5">
               <h4 className="text-xs sm:text-sm font-black text-amber-300">
                 {activeVibeAnalysis.headline}
@@ -1401,10 +1401,10 @@ ${activeVibeAnalysis.bulletPoints.join("\n\n")}
               </div>
             </div>
 
-            {/* Custom Question Input to Vibe AI */}
+            {/* Custom Question Input to Noctis */}
             <form onSubmit={handleAskCustomVibeQuestion} className="space-y-2">
               <label className="text-[11px] font-bold text-indigo-200 block">
-                Ask Vibe AI a Specific Career Upgrade or Transition Question:
+                Ask Noctis a Specific Career Upgrade or Transition Question:
               </label>
               <div className="flex gap-2">
                 <input

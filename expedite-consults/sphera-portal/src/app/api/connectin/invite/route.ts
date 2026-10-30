@@ -94,8 +94,16 @@ function buildRecipientInviteUrl(
         ? baseInviteLink
         : `https://www.connectln.app${baseInviteLink.startsWith("/") ? "" : "/"}${baseInviteLink}`
     )
-    url.pathname = "/connectin-login"
-    url.searchParams.set("invite", "accept")
+    const isLiveCallInvite = Boolean(url.searchParams.get("joinCall"))
+    if (isLiveCallInvite) {
+      url.pathname = "/connectin"
+      if (!url.searchParams.get("tab")) {
+        url.searchParams.set("tab", "vibecomms")
+      }
+    } else {
+      url.pathname = "/connectin-login"
+      url.searchParams.set("invite", "accept")
+    }
     if (params.cid) {
       url.searchParams.set("cid", params.cid)
     }

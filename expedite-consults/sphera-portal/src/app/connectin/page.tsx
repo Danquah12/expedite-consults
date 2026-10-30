@@ -508,9 +508,9 @@ export default function ConnectLnPage() {
       // Check if user has previously verified (persistent across sessions)
       const hasVerified = localStorage.getItem("connectin_verified") === "true"
 
-      // If an invited friend clicks a live meeting link (?joinCall=...) and has no stored account yet,
+      // If an invited friend clicks a live meeting link (?joinCall=...) and has no stored account yet (or was signed out),
       // admit them directly into the meeting room without blocking with a login modal!
-      if (joinCallParam && !explicitUser) {
+      if (joinCallParam && (!explicitUser || isSignedOut)) {
         if (isMounted) {
           const guestName = invitedNameParam || deriveHumanNameFromEmailClient(invitedEmailParam) || "Live Call Participant"
           const guestUser = {
@@ -2343,7 +2343,7 @@ export default function ConnectLnPage() {
           <VibeUnifiedCommunicationsView
             currentUser={userData}
             onNavigateTab={(tab) => setActiveTab(tab as any)}
-            onOpenVibeCampus={() => setActiveTab('careersuite')}
+            onOpenVibeCampus={() => setIsAIAssistantOpen(true)}
           />
         )}
 
@@ -2552,7 +2552,7 @@ export default function ConnectLnPage() {
           <NotificationsView onNavigateTab={(tab) => setActiveTab(tab as any)} />
         )}
 
-        {/* VIEW 17: VIBE AI UNIFIED AUDIO/VIDEO STUDIO & CAREER HUB */}
+        {/* VIEW 17: NOCTIS UNIFIED AUDIO/VIDEO STUDIO & CAREER HUB */}
         {activeTab === 'vibe' && (
           <VibeUnifiedCommunicationsView
             currentUser={userData}

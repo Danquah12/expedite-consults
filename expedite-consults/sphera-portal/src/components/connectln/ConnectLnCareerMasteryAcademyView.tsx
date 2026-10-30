@@ -804,7 +804,7 @@ export function ConnectLnCareerMasteryAcademyView({
             {
               id: "change_profession",
               step: "Mobility",
-              label: "🔄 Change or Upgrade Profession (Vibe AI)",
+              label: "🔄 Change or Upgrade Profession (Noctis)",
               badge: "Grade & Pivot",
               icon: GitBranch
             },
@@ -1011,7 +1011,7 @@ export function ConnectLnCareerMasteryAcademyView({
       </div>
 
       {/* ===================================================================== */}
-      {/* VIEW 0A: CHANGE OR UPGRADE PROFESSION — VIBE AI DECISION ENGINE       */}
+      {/* VIEW 0A: CHANGE OR UPGRADE PROFESSION — NOCTIS DECISION ENGINE       */}
       {/* ===================================================================== */}
       {(activeSubView === "change_profession" || activeSubView === "all_combined") && (
         <ConnectLnChangeProfessionInfrastructure

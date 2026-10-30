@@ -251,7 +251,33 @@ const INITIAL_USERS: UserRecord[] = [
     mfaChannel: "email",
     createdAt: "2026-09-13T20:45:00Z",
     updatedAt: "2026-09-13T20:45:00Z"
-  }
+  },
+  {
+    id: "USR-89460",
+    email: "bust.vito@connectin.com",
+    phone: "+1 (240) 555-0942",
+    role: "personal",
+    status: "Active",
+    mfaEnabled: true,
+    mfaChannel: "email",
+    createdAt: "2026-10-28T14:20:00Z",
+    updatedAt: "2026-10-30T10:00:00Z",
+    lastLoginAt: "2026-10-30T10:00:00Z",
+    authProvider: "Email 2FA"
+  } as any,
+  {
+    id: "USR-89461",
+    email: "yaw.asiedu@connectin.com",
+    phone: "+1 (240) 555-0719",
+    role: "personal",
+    status: "Active",
+    mfaEnabled: true,
+    mfaChannel: "email",
+    createdAt: "2026-10-28T16:10:00Z",
+    updatedAt: "2026-10-30T09:45:00Z",
+    lastLoginAt: "2026-10-30T09:45:00Z",
+    authProvider: "Email 2FA"
+  } as any
 ]
 
 const INITIAL_PROFILES: UserProfileRecord[] = [
@@ -522,6 +548,50 @@ const INITIAL_PROFILES: UserProfileRecord[] = [
     followersCount: 45,
     profileViews: 28,
     postImpressions: 450
+  },
+  {
+    userId: "USR-89460",
+    name: "Bust Vito",
+    headline: "Verified ConnectLn Member · Senior Field Operations & Skilled Trades Specialist",
+    avatar: "https://api.dicebear.com/7.x/initials/svg?seed=Bust+Vito&backgroundColor=047857",
+    coverImage: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1200&auto=format&fit=crop&q=80",
+    location: "Washington DC-Baltimore Area · Verified Enclave",
+    about: "Verified professional and platform member on ConnectLn Global Network.",
+    skills: ["Field Operations", "Project Coordination", "Skilled Trades", "Safety & Compliance"],
+    clearanceLevel: "Standard Verified Identity (Level 2)",
+    fido2MfaVerified: true,
+    cryptoVerificationBadge: "0xED25519_BUST_VITO",
+    skillMatrixScore: 92.8,
+    connectionsCount: 245,
+    followersCount: 610,
+    profileViews: 174,
+    postImpressions: 2950,
+    profession: "Master Carpenter & Construction Specialist",
+    professionId: "carpenter",
+    professionCategory: "Skilled Trades & Construction",
+    professionEnclave: "trades_construction"
+  },
+  {
+    userId: "USR-89461",
+    name: "Yaw Asiedu",
+    headline: "Verified Professional · Timber Framing & Custom Joinery Lead",
+    avatar: "https://api.dicebear.com/7.x/initials/svg?seed=Yaw+Asiedu&backgroundColor=0a66c2",
+    coverImage: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1200&auto=format&fit=crop&q=80",
+    location: "Washington DC-Baltimore Area · Verified Enclave",
+    about: "Verified ConnectLn member specializing in timber framing, structural joinery, and commercial buildouts.",
+    skills: ["Timber Framing", "Architectural Joinery", "OSHA 30 Safety", "Commercial Buildouts"],
+    clearanceLevel: "Standard Verified Identity (Level 2)",
+    fido2MfaVerified: true,
+    cryptoVerificationBadge: "0xED25519_YAW_ASIEDU",
+    skillMatrixScore: 94.0,
+    connectionsCount: 310,
+    followersCount: 780,
+    profileViews: 195,
+    postImpressions: 3400,
+    profession: "Master Carpenter & Joiner",
+    professionId: "carpenter",
+    professionCategory: "Skilled Trades & Construction",
+    professionEnclave: "trades_construction"
   }
 ]
 
