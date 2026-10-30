@@ -13,6 +13,13 @@ import type {
 } from "@/lib/validation-engine";
 import { SAST_400_PLUGINS, type SASTPluginDefinition } from "@/lib/sast-400-plugins";
 import {
+  analyzeInterprocedural,
+  matchFlowForFinding,
+  engineLanguageForPath,
+  ENGINE_SUPPORTED_CWES,
+} from "@/lib/interprocedural-engine";
+import { assessSsrfControls, assessCryptoContext } from "@/lib/context-checks";
+import {
   calculateCvss31BaseScore,
   cvss31QualitativeSeverity,
   normalizeFindingCvssAndProof,
@@ -2733,6 +2740,56 @@ export function scanFilesWithEnterpriseEngines(params: {
           },
         });
       }
+    }
+  }
+
+  // Inter-procedural taint + path-feasibility pass over the whole file set, then attach the result
+  // (or the honest absence of one) to each engine-supported finding.
+  const interResult = analyzeInterprocedural(files.map((f) => ({ path: f.path, content: f.content })));
+  const fileContent = new Map(files.map((f) => [f.path, f.content]));
+  for (const f of findings) {
+    if (ENGINE_SUPPORTED_CWES.has(f.cwe)) {
+      if (!engineLanguageForPath(f.file)) {
+        f.interprocedural = {
+          status: "UNSUPPORTED_LANGUAGE",
+          crossesFunctions: false,
+          functionChain: [],
+          steps: [],
+          note: `Inter-procedural engine does not support ${f.language} source files.`,
+        };
+      } else {
+        const flow = matchFlowForFinding(interResult, f);
+        if (flow) {
+          f.interprocedural = {
+            status: "ESTABLISHED",
+            crossesFunctions: flow.crossesFunctions,
+            functionChain: flow.functionChain,
+            steps: flow.steps,
+            pathFeasibility: flow.pathFeasibility,
+          };
+          // Replace the scanner's single-line guess with the engine's real trace.
+          const traced = flow.steps.map((s) => `${s.file.split("/").pop()}:${s.line} [${s.kind}] ${s.text}`);
+          if (traced.length >= 2) {
+            f.taintPath = traced;
+            f.source = flow.steps.find((s) => s.kind === "source")?.text || f.source;
+          }
+        } else {
+          f.interprocedural = {
+            status: "NOT_ESTABLISHED",
+            crossesFunctions: false,
+            functionChain: [],
+            steps: [],
+            note: "The inter-procedural engine found no tainted path from an untrusted source to this sink (pattern match only).",
+          };
+        }
+      }
+    }
+    const text = fileContent.get(f.file) || "";
+    const window = f.codeSnippet || text.split(/\r?\n/).slice(Math.max(0, f.line - 15), f.line + 15).join("\n");
+    if (f.cwe === "CWE-918") {
+      f.contextAssessment = assessSsrfControls(text ? text.split(/\r?\n/).slice(Math.max(0, f.line - 25), f.line + 25).join("\n") : window);
+    } else if (["CWE-327", "CWE-328", "CWE-330", "CWE-338"].includes(f.cwe)) {
+      f.contextAssessment = assessCryptoContext(window, f.file);
     }
   }
 

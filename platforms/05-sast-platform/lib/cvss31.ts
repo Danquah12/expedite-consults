@@ -5,6 +5,7 @@ import type {
   EvidenceCategory,
 } from "@/types/sast";
 import type { CanonicalValidationFinding } from "@/lib/validation-engine";
+import { isValidVerificationRecord } from "@/lib/proof-lifecycle";
 
 /**
  * Official FIRST.org CVSS v3.1 Roundup Function:
@@ -224,6 +225,25 @@ export function resolveTypedProofClassification(
     };
   }
 
+  // Runtime / impact proof is never granted without a stored, well-formed execution record.
+  if (f.proofState === "RUNTIME_REPRODUCED" || f.proofState === "IMPACT_CONFIRMED") {
+    const hasRecord = (f.verificationRecords || []).some(
+      (r) =>
+        isValidVerificationRecord(r) &&
+        r.result === "PASS" &&
+        (f.proofState === "RUNTIME_REPRODUCED" ? r.kind === "RUNTIME_REPRODUCTION" : r.kind === "IMPACT_VERIFICATION")
+    );
+    if (!hasRecord) {
+      return {
+        proofState: "NEEDS_MANUAL_VALIDATION",
+        evidenceType: f.evidenceType || "TAINT_DATAFLOW",
+        evidenceHeading: "Runtime Claim Rejected â€” No Execution Record",
+        modeledAssumptions: `Claimed ${f.proofState} without a stored execution record (environment, timestamp, artifact digest); demoted.`,
+        controlDominanceSummary: f.controlDominanceSummary || "Control Inspected: sandbox execution record | Dominance: NOT_ESTABLISHED | Effectiveness: UNVERIFIED",
+      };
+    }
+  }
+
   // 1. Secret Provenance & Log/Comment Credential Checks -> NEEDS_MANUAL_VALIDATION
   if (cwe === "CWE-798" || cwe === "CWE-532" || cwe === "CWE-615") {
     return {
@@ -327,7 +347,7 @@ export function resolveTypedProofClassification(
       return {
         proofState: "NEEDS_MANUAL_VALIDATION",
         evidenceType: "TAINT_DATAFLOW",
-        evidenceHeading: "Path Construction Candidate — Downstream File I/O Sink Trace Pending",
+        evidenceHeading: "Path Construction Candidate â€” Downstream File I/O Sink Trace Pending",
         modeledAssumptions:
           f.modeledAssumptions ||
           "Tainted path construction (path.join / path.resolve) was observed, but no filesystem read/write/send sink is present in the excerpt; exploitability is not established until the downstream file operation is traced.",
@@ -426,12 +446,48 @@ export function resolveTypedProofClassification(
   }
 
   // 9. Genuine Pass-1 Source-to-Dangerous-Sink Taint Flows in Scanned Repository Code
-  const provenanceGap = detectProvenanceGap(f);
+  const ip = f.interprocedural;
+  if (ip) {
+    const candidate = (heading: string, assumption: string, dominance: string): TypedProofClassification => ({
+      proofState: "NEEDS_MANUAL_VALIDATION",
+      evidenceType: "TAINT_DATAFLOW",
+      evidenceHeading: heading,
+      modeledAssumptions: assumption,
+      controlDominanceSummary: f.controlDominanceSummary || dominance,
+    });
+    if (ip.status === "NOT_ESTABLISHED") {
+      return candidate(
+        "Pattern Match â€” Inter-Procedural Taint Path Not Established",
+        `Downgraded from DATAFLOW_CONFIRMED: ${ip.note || "the engine could not connect an untrusted source to this sink."}`,
+        `Control Inspected: source-to-sink call-graph path at ${f.file}:${f.line} | Dominance: NOT_ESTABLISHED | Effectiveness: REQUIRES_TRACE`
+      );
+    }
+    if (ip.status === "ESTABLISHED" && ip.pathFeasibility && ip.pathFeasibility.status !== "FEASIBLE") {
+      return candidate(
+        `Tainted Flow Established but Path ${ip.pathFeasibility.status} (Static Solver)`,
+        `Source-to-sink flow was traced, but the path solver reports ${ip.pathFeasibility.status}: ${ip.pathFeasibility.reason}. Verify manually before treating as exploitable.`,
+        `Control Inspected: ${ip.pathFeasibility.reason} | Dominance: ${ip.pathFeasibility.status} | Effectiveness: ${ip.pathFeasibility.status === "GUARDED" ? "GUARD_PRESENT_UNVERIFIED" : "SINK_UNREACHABLE_BY_CONSTRAINTS"}`
+      );
+    }
+    if (ip.status === "ESTABLISHED") {
+      const hops = ip.crossesFunctions ? `across ${ip.functionChain.join(" â†’ ")}` : "within a single function";
+      return {
+        proofState: "DATAFLOW_CONFIRMED",
+        evidenceType: "TAINT_DATAFLOW",
+        evidenceHeading: ip.crossesFunctions ? "Inter-Procedural Source-to-Sink Taint Trace" : "Intra-Procedural Source-to-Sink Taint Trace",
+        modeledAssumptions: `${ip.steps.length}-step trace ${hops}; path constraints jointly satisfiable (${ip.pathFeasibility?.constraints.length ?? 0} enclosing condition(s)). Dynamic dispatch, reflection and persisted/queued data flows are not modelled. Runtime exploitability requires sandbox verification.`,
+        controlDominanceSummary:
+          f.controlDominanceSummary ||
+          `Control Inspected: sanitizers/guards along the traced path | Dominance: ABSENT_ON_TRACED_PATH | Effectiveness: UNGUARDED_STATIC_DATAFLOW`,
+      };
+    }
+  }
+  const provenanceGap = ip ? null : detectProvenanceGap(f);
   if (provenanceGap) {
     return {
       proofState: "NEEDS_MANUAL_VALIDATION",
       evidenceType: "TAINT_DATAFLOW",
-      evidenceHeading: "Source-to-Sink Candidate — Variable Provenance Not Established",
+      evidenceHeading: "Source-to-Sink Candidate â€” Variable Provenance Not Established",
       modeledAssumptions: `Downgraded from DATAFLOW_CONFIRMED to candidate: ${provenanceGap}`,
       controlDominanceSummary:
         f.controlDominanceSummary ||
@@ -491,7 +547,7 @@ export function normalizeFindingCvssAndProof(
           platform: "Node.js",
           explanation:
             "Include rel=\"noopener noreferrer\" on all external anchor tags using target=\"_blank\" so the opened document cannot access or redirect the parent window via window.opener.",
-          code: `// ❌ VULNERABLE: External target="_blank" link without rel="noopener noreferrer" exposes window.opener\n${f.sink || '<a href="https://external-site.example.com" target="_blank">External Resource</a>'}\n\n// ✅ REMEDIATED (HTML / JSX / Angular Template): Isolate browsing context with rel="noopener noreferrer"\n<a\n  href="https://external-site.example.com"\n  target="_blank"\n  rel="noopener noreferrer"\n>\n  External Resource\n</a>\n\n// ✅ REMEDIATED (Programmatic window.open in TypeScript / JavaScript):\nconst newWin = window.open(externalUrl, "_blank", "noopener,noreferrer");\nif (newWin) { newWin.opener = null; }`,
+          code: `// âŒ VULNERABLE: External target="_blank" link without rel="noopener noreferrer" exposes window.opener\n${f.sink || '<a href="https://external-site.example.com" target="_blank">External Resource</a>'}\n\n// âœ… REMEDIATED (HTML / JSX / Angular Template): Isolate browsing context with rel="noopener noreferrer"\n<a\n  href="https://external-site.example.com"\n  target="_blank"\n  rel="noopener noreferrer"\n>\n  External Resource\n</a>\n\n// âœ… REMEDIATED (Programmatic window.open in TypeScript / JavaScript):\nconst newWin = window.open(externalUrl, "_blank", "noopener,noreferrer");\nif (newWin) { newWin.opener = null; }`,
         },
       ],
     };
@@ -518,10 +574,10 @@ export function normalizeFindingCvssAndProof(
               "Enforce a compound server-side ownership predicate binding both the requested resource ID and the authenticated principal's userId/tenantId (findByIdAndUserId / findByIdAndTenantId / WHERE id = :id AND user_id = :authenticatedUserId), and verify with a two-user test (User A requesting User B's resource ID must receive HTTP 403/404).",
             code:
               platform === "Java"
-                ? `// ❌ VULNERABLE: Unscoped lookup by resource ID without principal ownership check\n${f.sink}\n\n// ✅ REMEDIATED (Compound Ownership Predicate + 2-User Isolation Check):\nreturn repository.findByIdAndTenantId(resourceId, principal.getTenantId())\n    .orElseThrow(() -> new AccessDeniedException("Resource not found in caller ownership scope"));\n// SQL Equivalent: SELECT * FROM resources WHERE id = :id AND user_id = :authenticatedUserId AND tenant_id = :tenantId`
+                ? `// âŒ VULNERABLE: Unscoped lookup by resource ID without principal ownership check\n${f.sink}\n\n// âœ… REMEDIATED (Compound Ownership Predicate + 2-User Isolation Check):\nreturn repository.findByIdAndTenantId(resourceId, principal.getTenantId())\n    .orElseThrow(() -> new AccessDeniedException("Resource not found in caller ownership scope"));\n// SQL Equivalent: SELECT * FROM resources WHERE id = :id AND user_id = :authenticatedUserId AND tenant_id = :tenantId`
                 : platform === "Python"
-                  ? `# ❌ VULNERABLE: Unscoped lookup by resource ID\n${f.sink}\n\n# ✅ REMEDIATED (Compound Ownership Predicate + 2-User Isolation Check):\nrecord = get_object_or_404(ResourceModel, id=resource_id, tenant_id=request.user.tenant_id, user_id=request.user.id)\n# SQL Equivalent: SELECT * FROM resources WHERE id = :id AND user_id = :authenticatedUserId`
-                  : `// ❌ VULNERABLE: Unscoped lookup by resource ID allows User A to access User B's record\n${f.sink}\n\n// ✅ REMEDIATED (Compound Ownership Predicate — Verified by User A vs User B 403/404 Test):\nconst record = await repo.findByIdAndUserId(req.params.id, req.user.id);\n// SQL Equivalent: SELECT * FROM resources WHERE id = :id AND user_id = :authenticatedUserId AND tenant_id = :tenantId\nif (!record) {\n  return res.status(404).json({ error: "Resource not found in caller ownership scope" });\n}`,
+                  ? `# âŒ VULNERABLE: Unscoped lookup by resource ID\n${f.sink}\n\n# âœ… REMEDIATED (Compound Ownership Predicate + 2-User Isolation Check):\nrecord = get_object_or_404(ResourceModel, id=resource_id, tenant_id=request.user.tenant_id, user_id=request.user.id)\n# SQL Equivalent: SELECT * FROM resources WHERE id = :id AND user_id = :authenticatedUserId`
+                  : `// âŒ VULNERABLE: Unscoped lookup by resource ID allows User A to access User B's record\n${f.sink}\n\n// âœ… REMEDIATED (Compound Ownership Predicate â€” Verified by User A vs User B 403/404 Test):\nconst record = await repo.findByIdAndUserId(req.params.id, req.user.id);\n// SQL Equivalent: SELECT * FROM resources WHERE id = :id AND user_id = :authenticatedUserId AND tenant_id = :tenantId\nif (!record) {\n  return res.status(404).json({ error: "Resource not found in caller ownership scope" });\n}`,
           },
         ],
       };
@@ -540,7 +596,7 @@ export function normalizeFindingCvssAndProof(
       cvssRationale:
         "Candidate pending downstream file I/O sink trace: path construction observed without a verified filesystem read/write/send operation.",
       auditDisposition:
-        "Candidate Pending Downstream File I/O Sink Trace (CWE-22) — not exploitable until a file operation consuming the path is traced",
+        "Candidate Pending Downstream File I/O Sink Trace (CWE-22) â€” not exploitable until a file operation consuming the path is traced",
     };
   }
 
@@ -645,17 +701,9 @@ export interface AuditableRiskWorksheet {
     structSca: number;
     astQuery: number;
   };
+  /** Benchmark accuracy is NOT stored here: it is measured by lib/benchmark-runner.ts from labeled fixtures. */
   benchmarkCalibration: {
-    labeledVulnerableFixturesTested: number;
-    truePositivesDetected: number;
-    safeControlFixturesTested: number;
-    falsePositivesSuppressed: number;
-    measuredPrecisionPercent: number;
-    measuredRecallPercent: number;
-    falseConfirmationRatePercent: number;
     duplicateConsolidationCount: number;
-    scopeCaveat: string;
-    perCategoryConfusionMatrix: BenchmarkCategoryConfusionRow[];
   };
   severityBreakdown: {
     severity: Severity;
@@ -872,86 +920,6 @@ export function computeAuditableRiskWorksheet(
     0
   );
 
-  const perCategoryConfusionMatrix: BenchmarkCategoryConfusionRow[] = [
-    {
-      category: "SQL Injection & Second-Order Query Construction",
-      cweScope: "CWE-89",
-      vulnerableFixtures: 8,
-      safeControlFixtures: 4,
-      tp: 8,
-      fp: 0,
-      tn: 4,
-      fn: 0,
-      precisionPercent: 100.0,
-      recallPercent: 100.0,
-      validationNote: "Distinguishes string-concatenated SQL from PreparedStatement / parameterized ($1, ?) queries.",
-    },
-    {
-      category: "OS Command & Dynamic Code Execution",
-      cweScope: "CWE-78 / CWE-94 / CWE-502",
-      vulnerableFixtures: 6,
-      safeControlFixtures: 3,
-      tp: 6,
-      fp: 0,
-      tn: 3,
-      fn: 0,
-      precisionPercent: 100.0,
-      recallPercent: 100.0,
-      validationNote: "Separates tainted shell/eval sinks from constant test-harness compilation (AT-PLG046-01).",
-    },
-    {
-      category: "SSRF Egress & Path Traversal Boundary",
-      cweScope: "CWE-918 / CWE-22",
-      vulnerableFixtures: 6,
-      safeControlFixtures: 3,
-      tp: 6,
-      fp: 0,
-      tn: 3,
-      fn: 0,
-      precisionPercent: 100.0,
-      recallPercent: 100.0,
-      validationNote: "Verifies Path.toRealPath/startsWith boundary guards and DNS-resolved IP + Redirect.NEVER controls.",
-    },
-    {
-      category: "Access Control, BOLA / IDOR & JWT Verification",
-      cweScope: "CWE-639 / CWE-862 / CWE-347 / CWE-915",
-      vulnerableFixtures: 5,
-      safeControlFixtures: 2,
-      tp: 5,
-      fp: 0,
-      tn: 2,
-      fn: 0,
-      precisionPercent: 100.0,
-      recallPercent: 100.0,
-      validationNote: "Evaluates compound principal ownership predicates (findByIdAndUserId / tenant_id) and RS256 pinning.",
-    },
-    {
-      category: "Cryptographic & PRNG Security-Context Validation",
-      cweScope: "CWE-327 / CWE-328 / CWE-330",
-      vulnerableFixtures: 4,
-      safeControlFixtures: 2,
-      tp: 4,
-      fp: 0,
-      tn: 2,
-      fn: 0,
-      precisionPercent: 100.0,
-      recallPercent: 100.0,
-      validationNote: "Suppresses non-security Math.random() sample/price/quantity data while flagging token/OTP PRNG misuse.",
-    },
-    {
-      category: "Client DOM, Tabnabbing & Security Misconfiguration",
-      cweScope: "CWE-79 / CWE-1022 / CWE-611 / CWE-693",
-      vulnerableFixtures: 3,
-      safeControlFixtures: 2,
-      tp: 3,
-      fp: 0,
-      tn: 2,
-      fn: 0,
-      precisionPercent: 100.0,
-      recallPercent: 100.0,
-      validationNote: "Verifies rel='noopener noreferrer' on target='_blank', contextual HTML encoding, and XXE parser flags.",
-    },
-  ];
 
   return {
     compositeRiskScore,
@@ -973,17 +941,7 @@ export function computeAuditableRiskWorksheet(
       astQuery,
     },
     benchmarkCalibration: {
-      labeledVulnerableFixturesTested: 32,
-      truePositivesDetected: 32,
-      safeControlFixturesTested: 16,
-      falsePositivesSuppressed: 16,
-      measuredPrecisionPercent: 100.0,
-      measuredRecallPercent: 100.0,
-      falseConfirmationRatePercent: 0.0,
       duplicateConsolidationCount,
-      scopeCaveat:
-        "Benchmark calibration metrics (32 TP, 0 FP, 16 TN, 0 FN) are measured on the controlled 48-fixture OWASP Benchmark v1.2 / SecBench regression harness. Fixture suite metrics validate rule and guard-detection logic but do not guarantee 100% precision or recall on arbitrary production applications without manual triage and isolated runtime verification.",
-      perCategoryConfusionMatrix,
     },
     severityBreakdown,
     findingRows,
@@ -1255,7 +1213,7 @@ export function runTenGateReportAcceptanceSuite(
       criterion: "Classified under AUTHORIZATION_ENFORCEMENT (GUARD_ANALYZED) with compound principal ownership predicate & 2-user test (User A vs User B -> 403/404).",
       status: idorPass ? "PASS" : "FAIL",
       measuredMetric: fIdor
-        ? `${idorFindings.length}/${idorFindings.length} IDOR/BOLA findings (${fIdor.id}: ${fIdor.cwe}) classified GUARD_ANALYZED; remediation contains a compound id + userId/tenantId predicate. STATIC pattern check only — no two-user HTTP test was executed (403/404 behavior unverified).`
+        ? `${idorFindings.length}/${idorFindings.length} IDOR/BOLA findings (${fIdor.id}: ${fIdor.cwe}) classified GUARD_ANALYZED; remediation contains a compound id + userId/tenantId predicate. STATIC pattern check only â€” no two-user HTTP test was executed (403/404 behavior unverified).`
         : "No CWE-639/862 finding in scope",
       evidenceArtifactRef: fIdor
         ? `TC-IDOR-639 (${fIdor.file.split("/").pop()}:${fIdor.line})`
@@ -1267,7 +1225,7 @@ export function runTenGateReportAcceptanceSuite(
       criterion: "Validates HTTPS scheme, hostname allowlist, resolved DNS IP against RFC1918/169.254.169.254, and Redirect.NEVER / maxRedirects: 0.",
       status: ssrfPass ? "PASS" : "FAIL",
       measuredMetric: fSsrf
-        ? `${fSsrf.id} (CWE-918): remediation text includes DNS IP validation + redirect disabling. STATIC pattern check only — no DNS/redirect behavior executed; DNS rebinding, IPv6 and connect-time validation are not covered.`
+        ? `${fSsrf.id} (CWE-918): remediation text includes DNS IP validation + redirect disabling. STATIC pattern check only â€” no DNS/redirect behavior executed; DNS rebinding, IPv6 and connect-time validation are not covered.`
         : "No CWE-918 finding in scope",
       evidenceArtifactRef: fSsrf
         ? `TC-SSRF-918 (${fSsrf.file.split("/").pop()}:${fSsrf.line})`
@@ -1278,7 +1236,7 @@ export function runTenGateReportAcceptanceSuite(
       testName: "Typed Proof Model & Scorecard Alignment",
       criterion: "Executive Summary, Scorecard, and Dossiers report identical 7-state proof counts and guard dominance traces.",
       status: typedSeparationPass ? "PASS" : "FAIL",
-      measuredMetric: `${dataflowCount} DATAFLOW_CONFIRMED · ${guardAnalyzedCount} GUARD_ANALYZED · ${pathFeasibleCount} PATH_FEASIBLE · ${detectedStaticCount} DETECTED_STATIC · ${manualValCount} NEEDS_MANUAL_VALIDATION · ${mitigatedCount} MITIGATED · ${proofIssues.length} cross-section contradictions${proofIssues.length ? ` (${proofIssues.slice(0, 2).map((i) => i.detail).join(" | ")})` : ""}`,
+      measuredMetric: `${dataflowCount} DATAFLOW_CONFIRMED Â· ${guardAnalyzedCount} GUARD_ANALYZED Â· ${pathFeasibleCount} PATH_FEASIBLE Â· ${detectedStaticCount} DETECTED_STATIC Â· ${manualValCount} NEEDS_MANUAL_VALIDATION Â· ${mitigatedCount} MITIGATED Â· ${proofIssues.length} cross-section contradictions${proofIssues.length ? ` (${proofIssues.slice(0, 2).map((i) => i.detail).join(" | ")})` : ""}`,
       evidenceArtifactRef: "lib/cvss31.ts :: resolveTypedProofClassification()",
     },
     {
@@ -1294,7 +1252,7 @@ export function runTenGateReportAcceptanceSuite(
       testName: "Implementation-Ready, CWE-Coherent Remediation",
       criterion: "Every finding has a language/framework-accurate patch matching its exact CWE (e.g. CWE-1022 -> rel='noopener noreferrer') with 0 generic stubs.",
       status: concreteRemCount === findings.length && remLangIssues.length === 0 ? "PASS" : "FAIL",
-      measuredMetric: `${concreteRemCount}/${findings.length} concrete diffs · ${remLangIssues.length} language-label mismatches${remLangIssues.length ? ` (${remLangIssues.slice(0, 2).map((i) => i.detail).join(" | ")})` : ""} · static check only: patches are not compiled or executed`,
+      measuredMetric: `${concreteRemCount}/${findings.length} concrete diffs Â· ${remLangIssues.length} language-label mismatches${remLangIssues.length ? ` (${remLangIssues.slice(0, 2).map((i) => i.detail).join(" | ")})` : ""} Â· static check only: patches are not compiled or executed`,
       evidenceArtifactRef: `${firstId}..${lastId} Remediation Ledger`,
     },
     {

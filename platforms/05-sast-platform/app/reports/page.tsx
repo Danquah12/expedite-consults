@@ -36,6 +36,21 @@ import {
   validateReportIntegrity,
 } from "@/lib/cvss31";
 import type { SASTFinding, CanonicalProofState } from "@/types/sast";
+import { computeProofLifecycle } from "@/lib/proof-lifecycle";
+import { computeRiskIntelligence } from "@/lib/risk-intelligence";
+import { runBenchmark } from "@/lib/benchmark-runner";
+
+/** "k/n = 85% [lo–hi]" using a 95% Wilson score interval; "n/a" when n = 0. */
+function formatRate(k: number, n: number): string {
+  if (n === 0) return "n/a";
+  const z = 1.96;
+  const p = k / n;
+  const denom = 1 + (z * z) / n;
+  const center = (p + (z * z) / (2 * n)) / denom;
+  const half = (z * Math.sqrt((p * (1 - p)) / n + (z * z) / (4 * n * n))) / denom;
+  const pct = (x: number) => `${Math.round(Math.max(0, Math.min(1, x)) * 100)}%`;
+  return `${pct(p)} [${pct(center - half)}–${pct(center + half)}] (n=${n})`;
+}
 
 type ReportTemplate = "full_technical" | "executive_brief" | "compliance_attestation";
 type SeverityFilter = "all" | "critical_only" | "critical_high" | "confirmed_only";
@@ -69,7 +84,7 @@ export default function ReportEnginePage() {
   const [organization, setOrganization] = useState("XTRIKE Enterprise Security Operations");
   const [auditorName, setAuditorName] = useState("XTRIKE Automated Proof & Triage Desk");
   const [classification, setClassification] = useState(
-    "CONFIDENTIAL — INTERNAL SECURITY & COMPLIANCE AUDIT"
+    "CONFIDENTIAL â€” INTERNAL SECURITY & COMPLIANCE AUDIT"
   );
 
   // Section Toggles
@@ -174,6 +189,56 @@ export default function ReportEnginePage() {
     () => runTenGateReportAcceptanceSuite(filteredFindings, validationById),
     [filteredFindings, validationById]
   );
+  const [assetCriticality, setAssetCriticality] = useState(3);
+  const benchmarkRun = useMemo(() => runBenchmark(), []);
+  const riskIntel = useMemo(
+    () => computeRiskIntelligence(filteredFindings, { assetCriticality }),
+    [filteredFindings, assetCriticality]
+  );
+  // Gates that can now be backed by real execution are computed from it; the rest stay NOT_RUN.
+  const acceptanceGates = useMemo(() => {
+    const held = benchmarkRun.bySplit.held_out.confirmed;
+    const heldPrecision = held.precision ?? 0;
+    const heldRecall = held.recall ?? 0;
+    const runtimeClaims = filteredFindings.filter(
+      (f) => f.proofState === "RUNTIME_REPRODUCED" || f.proofState === "IMPACT_CONFIRMED"
+    ).length;
+    const records = filteredFindings.reduce((n, f) => n + (f.verificationRecords?.length || 0), 0);
+    return acceptanceSuite.map((g) => {
+      if (g.testId === "AT-BENCHMARK-15") {
+        const ok = held.tp + held.fn > 0 && heldPrecision >= 0.8 && heldRecall >= 0.8;
+        return {
+          ...g,
+          status: ok ? ("PASS" as const) : ("FAIL" as const),
+          measuredMetric: `held-out (n=${benchmarkRun.cases.filter((c) => c.split === "held_out").length}, confirmed): precision ${formatRate(held.tp, held.tp + held.fp)}, recall ${formatRate(held.tp, held.tp + held.fn)}. Fixtures authored by the engine team — not independent; small sample.`,
+          evidenceArtifactRef: `data/benchmark-fixtures.ts · ${benchmarkRun.command}`,
+          executionEnvironment: "STATIC_PATTERN_CHECK" as const,
+        };
+      }
+      if (g.testId === "AT-CROSSMODULE-13") {
+        const x = benchmarkRun.interprocedural;
+        const ok = x.total > 0 && x.confirmed === x.total;
+        return {
+          ...g,
+          status: ok ? ("PASS" as const) : ("FAIL" as const),
+          measuredMetric: `${x.confirmed}/${x.total} vulnerable cross-function/cross-file fixtures traced by the call-graph engine (Python/JS/Java; no dynamic dispatch, queues or persisted data).`,
+          evidenceArtifactRef: "lib/interprocedural-engine.ts · scripts/test-interprocedural.ts",
+          executionEnvironment: "STATIC_PATTERN_CHECK" as const,
+        };
+      }
+      if (g.testId === "AT-EVIDENCE-14") {
+        const ok = runtimeClaims === 0 || records > 0;
+        return {
+          ...g,
+          status: ok ? ("PASS" as const) : ("FAIL" as const),
+          measuredMetric: `${runtimeClaims} runtime/impact claims, ${records} stored execution records. Claims without a record are demoted automatically. Satisfied vacuously while no sandbox exists.`,
+          evidenceArtifactRef: "lib/proof-lifecycle.ts :: isValidVerificationRecord()",
+          executionEnvironment: "STATIC_REPORT_CHECK" as const,
+        };
+      }
+      return g;
+    });
+  }, [acceptanceSuite, benchmarkRun, filteredFindings]);
   const riskScore = riskWorksheet.compositeRiskScore;
   const avgConf = riskWorksheet.calibratedConfidencePercent;
 
@@ -266,7 +331,7 @@ export default function ReportEnginePage() {
       }),
     [reportId, targetName, fullCommitSha, filteredFindings]
   );
-  const [ledgerDigest, setLedgerDigest] = useState("computing…");
+  const [ledgerDigest, setLedgerDigest] = useState("computingâ€¦");
   useEffect(() => {
     let cancelled = false;
     const bytes = new TextEncoder().encode(canonicalLedgerJson);
@@ -301,7 +366,7 @@ export default function ReportEnginePage() {
       `- **Target Scope Classification:** ${scopeQualificationLabel}`,
       `- **Full Commit SHA (40-char):** \`${fullCommitSha}\``,
       `- **Scan Timestamp (UTC):** \`${scanTimestamp}\` (Duration: \`${scanDurationSeconds}\`)`,
-      `- **Engine & Ruleset Version:** \`XTRIKE-Engine v4.2.0 · 400-Plugin Multi-Standard Pack v2026.10\``,
+      `- **Engine & Ruleset Version:** \`XTRIKE-Engine v4.2.0 Â· 400-Plugin Multi-Standard Pack v2026.10\``,
       `- **Runtime Sandbox Verification:** \`NOT_RUN (Static AST & Dataflow Mode)\``,
       `- **Lead Security Auditor:** ${auditorName}`,
       `- **Classification:** ${classification}`,
@@ -322,8 +387,8 @@ export default function ReportEnginePage() {
       `| **NEEDS_MANUAL_VALIDATION (Secret Provenance / Dependency Reachability)** | ${canonicalStats.needsManualValidation} / ${canonicalStats.total} |`,
       `| **MITIGATED_BY_GUARD (Upstream Sanitizer / Parameterization)** | ${canonicalStats.mitigatedByGuard} / ${canonicalStats.total} |`,
       `| **RUNTIME_REPRODUCED (Isolated Sandbox Exploit Executed)** | ${canonicalStats.runtimeReproduced} / ${canonicalStats.total} |`,
-      `| **Multi-Engine Heuristic Concordance Index** | **${avgConf.toFixed(1)}%** (Inter-engine rule agreement across XQL: ${riskWorksheet.engineConcordance.xql}%, DeepFlow: ${riskWorksheet.engineConcordance.deepFlow}%, StructSCA: ${riskWorksheet.engineConcordance.structSca}%, AST-Query: ${riskWorksheet.engineConcordance.astQuery}% — not empirical exploitability probability) |`,
-      `| **Benchmark Ground-Truth Calibration (OWASP Benchmark Suite)** | Precision: **${riskWorksheet.benchmarkCalibration.measuredPrecisionPercent}%** · Recall: **${riskWorksheet.benchmarkCalibration.measuredRecallPercent}%** · False Confirmation Rate: **${riskWorksheet.benchmarkCalibration.falseConfirmationRatePercent}%** |`,
+      `| **Multi-Engine Heuristic Concordance Index** | **${avgConf.toFixed(1)}%** (Inter-engine rule agreement across XQL: ${riskWorksheet.engineConcordance.xql}%, DeepFlow: ${riskWorksheet.engineConcordance.deepFlow}%, StructSCA: ${riskWorksheet.engineConcordance.structSca}%, AST-Query: ${riskWorksheet.engineConcordance.astQuery}% â€” not empirical exploitability probability) |`,
+      `| **Measured Benchmark (labeled fixtures, executed live)** | Held-out confirmed: ${formatRate(benchmarkRun.bySplit.held_out.confirmed.tp, benchmarkRun.bySplit.held_out.confirmed.tp + benchmarkRun.bySplit.held_out.confirmed.fp)} precision, ${formatRate(benchmarkRun.bySplit.held_out.confirmed.tp, benchmarkRun.bySplit.held_out.confirmed.tp + benchmarkRun.bySplit.held_out.confirmed.fn)} recall. Fixtures authored by the engine team; small sample; not predictive of real repositories. Reproduce: \`${benchmarkRun.command}\` |`,
 
 
       ``,
@@ -348,17 +413,17 @@ export default function ReportEnginePage() {
         const dossier = f.deepExploitability || buildDeepExploitabilityDossier(f);
         const { enumerationPhase, databaseCorrelations, penetrationTestLifecycle } = dossier;
         return [
-          `### 3.${idx + 1} [${f.severity.toUpperCase()}] ${f.id} — ${f.title}`,
-          `- **Location:** \`${f.file}:${f.line}\` (${f.language}) · **Sink ID:** \`${f.sinkId || `${f.id}-L${f.line}`}\` · **Pass:** ${enumerationPhase.discoveryPass}`,
-          `- **Typed Proof State:** \`${typedProof.proofState}\` · **Evidence Category:** \`${typedProof.evidenceType}\` · **Runtime Sandbox Verification:** \`NOT_RUN\``,
+          `### 3.${idx + 1} [${f.severity.toUpperCase()}] ${f.id} â€” ${f.title}`,
+          `- **Location:** \`${f.file}:${f.line}\` (${f.language}) Â· **Sink ID:** \`${f.sinkId || `${f.id}-L${f.line}`}\` Â· **Pass:** ${enumerationPhase.discoveryPass}`,
+          `- **Typed Proof State:** \`${typedProof.proofState}\` Â· **Evidence Category:** \`${typedProof.evidenceType}\` Â· **Runtime Sandbox Verification:** \`NOT_RUN\``,
           `- **Modeled Assumptions & Scope:** ${typedProof.modeledAssumptions}`,
           `- **Audit Disposition:** ${f.auditDisposition || penetrationTestLifecycle.rePenetrationTest.verificationVerdict}`,
-          `- **CWE / OWASP:** ${f.cwe} (${f.cweName}) · ${f.owasp} (${f.owaspCategory})`,
-          `- **CVSS v3.1 Base Score & Vector (AT-CVSS-01 Verified):** **${f.cvss}** (Calculated: \`${computedScore}\` from \`${vector}\`) — ${f.cvssRationale || "FIRST.org CVSS v3.1 mathematical base score."}`,
+          `- **CWE / OWASP:** ${f.cwe} (${f.cweName}) Â· ${f.owasp} (${f.owaspCategory})`,
+          `- **CVSS v3.1 Base Score & Vector (AT-CVSS-01 Verified):** **${f.cvss}** (Calculated: \`${computedScore}\` from \`${vector}\`) â€” ${f.cvssRationale || "FIRST.org CVSS v3.1 mathematical base score."}`,
           `- **Taxonomy & Advisory Correlation:**`,
           `  - **OWASP ASVS / CWE:** \`${databaseCorrelations.githubGhsa.advisoryId}\` (${databaseCorrelations.githubGhsa.cveId})`,
-          `  - **MITRE CAPEC Attack Pattern:** \`${databaseCorrelations.searchsploit.edbId}\` — ${databaseCorrelations.searchsploit.exploitTitle}`,
-          `  - **OWASP WSTG & NIST SP 800-53:** \`${databaseCorrelations.googleIntel.osvId}\` · ${databaseCorrelations.googleIntel.projectZeroRef}`,
+          `  - **MITRE CAPEC Attack Pattern:** \`${databaseCorrelations.searchsploit.edbId}\` â€” ${databaseCorrelations.searchsploit.exploitTitle}`,
+          `  - **OWASP WSTG & NIST SP 800-53:** \`${databaseCorrelations.googleIntel.osvId}\` Â· ${databaseCorrelations.googleIntel.projectZeroRef}`,
           `- **${typedProof.evidenceHeading}:** \`${f.source}\` -> ${f.taintPath.join(" -> ")} -> \`${f.sink}\``,
           `- **Executive Summary:** ${f.executiveSummary}`,
           `- **Root Cause:** ${f.rootCause}`,
@@ -372,7 +437,7 @@ export default function ReportEnginePage() {
         ];
       }),
       `---`,
-      `*Signed and attested by XTRIKE SAST Desk Printable Report Engine · SHA-256 of canonical findings ledger (JSON): ${ledgerDigest} · Integrity validator: ${integrityIssues.length === 0 ? "0 issues" : `${integrityIssues.length} ISSUES — REPORT INVALID`}*`,
+      `*Signed and attested by XTRIKE SAST Desk Printable Report Engine Â· SHA-256 of canonical findings ledger (JSON): ${ledgerDigest} Â· Integrity validator: ${integrityIssues.length === 0 ? "0 issues" : `${integrityIssues.length} ISSUES â€” REPORT INVALID`}*`,
     ];
 
     const blob = new Blob([lines.join("\n")], { type: "text/markdown;charset=utf-8" });
@@ -391,7 +456,7 @@ export default function ReportEnginePage() {
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>${reportTitle} — ${reportId}</title>
+  <title>${reportTitle} â€” ${reportId}</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Georgia, serif;
@@ -860,13 +925,13 @@ export default function ReportEnginePage() {
                       color: "#1f1b18",
                     }}
                   >
-                    <option value="CONFIDENTIAL — INTERNAL SECURITY & COMPLIANCE AUDIT">
-                      CONFIDENTIAL — INTERNAL AUDIT
+                    <option value="CONFIDENTIAL â€” INTERNAL SECURITY & COMPLIANCE AUDIT">
+                      CONFIDENTIAL â€” INTERNAL AUDIT
                     </option>
-                    <option value="RESTRICTED — EXECUTIVE & BOARD BRIEFING">
-                      RESTRICTED — BOARD BRIEFING
+                    <option value="RESTRICTED â€” EXECUTIVE & BOARD BRIEFING">
+                      RESTRICTED â€” BOARD BRIEFING
                     </option>
-                    <option value="EXTERNAL ATTESTATION — CUSTOMER / AUDITOR COPY">
+                    <option value="EXTERNAL ATTESTATION â€” CUSTOMER / AUDITOR COPY">
                       EXTERNAL ATTESTATION COPY
                     </option>
                   </select>
@@ -1186,7 +1251,7 @@ export default function ReportEnginePage() {
                     {counts.high}
                   </div>
                   <div style={{ fontSize: 10.5, color: "#6b331c", marginTop: 2 }}>
-                    CVSS 7.0 – 8.9 (7-Day SLA)
+                    CVSS 7.0 â€“ 8.9 (7-Day SLA)
                   </div>
                 </div>
 
@@ -1270,7 +1335,7 @@ export default function ReportEnginePage() {
                 (isolated runtime sandbox verification was <strong>NOT_RUN</strong> during this static scan).
                 <div style={{ marginTop: 6, fontSize: 11, color: "#5c5349" }}>
                   <strong>Primary Scanned Code vs. Architectural Hypothesis Risk Separation:</strong>{" "}
-                  <strong>Primary Code Risk Index ({riskScore}/100)</strong> is computed exclusively from <strong>Pass-1 Primary Scanned Code Findings (<code>SAST-*</code> = <code>{riskWorksheet.primaryCodeWeightedSum} pts</code>)</strong> scaled to scope ceiling <code>{riskWorksheet.primaryNormalizationCeiling}</code> (<code>{riskWorksheet.reconciliation.primarySubtotalSum} / {riskWorksheet.primaryNormalizationCeiling} × 100 = {riskWorksheet.reconciliation.primaryScoreRecomputed}</code>) so Pass-2/3 architectural candidate hypotheses never inflate the scanned repository&apos;s primary risk score.{" "}
+                  <strong>Primary Code Risk Index ({riskScore}/100)</strong> is computed exclusively from <strong>Pass-1 Primary Scanned Code Findings (<code>SAST-*</code> = <code>{riskWorksheet.primaryCodeWeightedSum} pts</code>)</strong> scaled to scope ceiling <code>{riskWorksheet.primaryNormalizationCeiling}</code> (<code>{riskWorksheet.reconciliation.primarySubtotalSum} / {riskWorksheet.primaryNormalizationCeiling} Ã— 100 = {riskWorksheet.reconciliation.primaryScoreRecomputed}</code>) so Pass-2/3 architectural candidate hypotheses never inflate the scanned repository&apos;s primary risk score.{" "}
                   <strong>Pass-2/3 Architectural Hypotheses (<code>RE-ENUM-*</code> = <code>{riskWorksheet.architecturalCandidateWeightedSum} pts</code> across {riskWorksheet.architecturalCandidateCount} items)</strong> are tracked separately (Combined Posture Index: <code>{riskWorksheet.combinedPostureRiskScore}/100</code>).{" "}
                   <strong>Multi-Engine Heuristic Concordance ({avgConf.toFixed(1)}%)</strong> is an engine-reported rule-agreement index across the 4 static analyzers (
                   <code>XTRIKE XQL={riskWorksheet.engineConcordance.xql}%</code>,{" "}
@@ -1305,7 +1370,7 @@ export default function ReportEnginePage() {
                     Reproducible Composite Risk, Primary vs. Architectural Scope Separation &amp; 4-Engine Concordance Worksheet (AT-CVSS-01 / AT-16)
                   </strong>
                   <span style={{ fontFamily: "monospace", fontSize: 11, color: "#8b4528", fontWeight: 700 }}>
-                    Primary Code ({riskWorksheet.primaryFindingsCount} SAST-*): {riskWorksheet.primaryCodeWeightedSum} pts / Ceiling {riskWorksheet.primaryNormalizationCeiling} &rarr; Primary Risk = {riskScore}/100 (Combined {riskWorksheet.rawWeightedSum} pts / Ceiling {riskWorksheet.combinedNormalizationCeiling} &rarr; {riskWorksheet.combinedPostureRiskScore}/100) · Reconciliation: {riskWorksheet.reconciliation.reconciles ? "VERIFIED" : "FAILED"}
+                    Primary Code ({riskWorksheet.primaryFindingsCount} SAST-*): {riskWorksheet.primaryCodeWeightedSum} pts / Ceiling {riskWorksheet.primaryNormalizationCeiling} &rarr; Primary Risk = {riskScore}/100 (Combined {riskWorksheet.rawWeightedSum} pts / Ceiling {riskWorksheet.combinedNormalizationCeiling} &rarr; {riskWorksheet.combinedPostureRiskScore}/100) Â· Reconciliation: {riskWorksheet.reconciliation.reconciles ? "VERIFIED" : "FAILED"}
                   </span>
                 </div>
 
@@ -1351,23 +1416,89 @@ export default function ReportEnginePage() {
                           {row.avgReachabilityFactor.toFixed(2)}
                         </td>
                         <td style={{ border: "1px solid #ddd3c2", padding: "6px 10px", textAlign: "right", fontFamily: "monospace", fontWeight: 800 }}>
-                          {row.primaryCount} primary → {row.primarySubtotalPoints.toFixed(2)} pts · {row.archCount} arch → {row.archSubtotalPoints.toFixed(2)} pts = {row.subtotalPoints.toFixed(2)} pts
+                          {row.primaryCount} primary â†’ {row.primarySubtotalPoints.toFixed(2)} pts Â· {row.archCount} arch â†’ {row.archSubtotalPoints.toFixed(2)} pts = {row.subtotalPoints.toFixed(2)} pts
                         </td>
                       </tr>
                     ))}
                     <tr style={{ background: "#f3eee4", fontWeight: 800 }}>
                       <td colSpan={5} style={{ border: "1px solid #ddd3c2", padding: "6px 10px" }}>
-                        Reconciliation: Primary {riskWorksheet.reconciliation.primarySubtotalSum} / {riskWorksheet.primaryNormalizationCeiling} = {riskWorksheet.reconciliation.primaryScoreRecomputed}/100 · Combined {riskWorksheet.reconciliation.combinedSubtotalSum} / {riskWorksheet.combinedNormalizationCeiling} = {riskWorksheet.reconciliation.combinedScoreRecomputed}/100 · {riskWorksheet.reconciliation.reconciles ? "VERIFIED" : "FAILED"}
+                        Reconciliation: Primary {riskWorksheet.reconciliation.primarySubtotalSum} / {riskWorksheet.primaryNormalizationCeiling} = {riskWorksheet.reconciliation.primaryScoreRecomputed}/100 Â· Combined {riskWorksheet.reconciliation.combinedSubtotalSum} / {riskWorksheet.combinedNormalizationCeiling} = {riskWorksheet.reconciliation.combinedScoreRecomputed}/100 Â· {riskWorksheet.reconciliation.reconciles ? "VERIFIED" : "FAILED"}
                       </td>
                       <td style={{ border: "1px solid #ddd3c2", padding: "6px 10px", textAlign: "right", fontFamily: "monospace" }}>
-                        Σ {riskWorksheet.reconciliation.primarySubtotalSum} + {riskWorksheet.reconciliation.archSubtotalSum} = {riskWorksheet.reconciliation.combinedSubtotalSum} pts
+                        Î£ {riskWorksheet.reconciliation.primarySubtotalSum} + {riskWorksheet.reconciliation.archSubtotalSum} = {riskWorksheet.reconciliation.combinedSubtotalSum} pts
                       </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
 
-              {/* Per-Category Ground-Truth Benchmark Confusion Matrix & Scope Caveat */}
+              {/* Measured benchmark: executed from labeled fixtures, never hardcoded */}
+              <div
+                style={{
+                  border: "1px solid #ddd3c2",
+                  borderRadius: 10,
+                  background: "#ffffff",
+                  padding: "12px 14px",
+                  marginBottom: 14,
+                }}
+              >
+                <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+                  <strong style={{ fontSize: 12, color: "#1f1b18" }}>
+                    Measured Benchmark â€” computed live from {benchmarkRun.fixtureCount} labeled fixtures (not a stored claim)
+                  </strong>
+                  <span style={{ fontFamily: "monospace", fontSize: 10.5, color: "#5c5349" }}>
+                    reproduce: <code>{benchmarkRun.command}</code>
+                  </span>
+                </div>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10.8 }}>
+                  <thead>
+                    <tr style={{ background: "#f3eee4", color: "#1f1b18" }}>
+                      {["Split", "Operating point", "TP", "FP", "TN", "FN", "Precision (95% CI)", "Recall (95% CI)"].map((h) => (
+                        <th key={h} style={{ border: "1px solid #ddd3c2", padding: "5px 8px", textAlign: "left" }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(["development", "held_out"] as const).flatMap((split) =>
+                      (["alert", "confirmed"] as const).map((kind) => {
+                        const r = benchmarkRun.bySplit[split][kind];
+                        return (
+                          <tr key={`${split}-${kind}`}>
+                            <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px", fontWeight: 800 }}>{split}</td>
+                            <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px" }}>
+                              {kind === "alert" ? "any finding (incl. candidates)" : "confirmed only (excludes NEEDS_MANUAL_VALIDATION)"}
+                            </td>
+                            <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px", fontFamily: "monospace" }}>{r.tp}</td>
+                            <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px", fontFamily: "monospace" }}>{r.fp}</td>
+                            <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px", fontFamily: "monospace" }}>{r.tn}</td>
+                            <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px", fontFamily: "monospace" }}>{r.fn}</td>
+                            <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px", fontFamily: "monospace" }}>{formatRate(r.tp, r.tp + r.fp)}</td>
+                            <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px", fontFamily: "monospace" }}>{formatRate(r.tp, r.tp + r.fn)}</td>
+                          </tr>
+                        );
+                      })
+                    )}
+                    {benchmarkRun.byCategoryHeldOut.map((c) => (
+                      <tr key={c.category} style={{ background: "#fbf8f3" }}>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px" }}>held_out</td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px" }}>{c.category} (confirmed)</td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px", fontFamily: "monospace" }}>{c.confirmed.tp}</td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px", fontFamily: "monospace" }}>{c.confirmed.fp}</td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px", fontFamily: "monospace" }}>{c.confirmed.tn}</td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px", fontFamily: "monospace" }}>{c.confirmed.fn}</td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px", fontFamily: "monospace" }}>{formatRate(c.confirmed.tp, c.confirmed.tp + c.confirmed.fp)}</td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px", fontFamily: "monospace" }}>{formatRate(c.confirmed.tp, c.confirmed.tp + c.confirmed.fn)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div style={{ marginTop: 8, fontSize: 10.5, color: "#5c5349", lineHeight: 1.5 }}>
+                  <strong>Cross-function fixtures:</strong> {benchmarkRun.interprocedural.confirmed}/{benchmarkRun.interprocedural.total} vulnerable inter-procedural fixtures confirmed.{" "}
+                  <strong>Caveat:</strong> {benchmarkRun.disclosure} Sample sizes are small, so the intervals above are wide; a perfect point estimate is not evidence of 100% accuracy.
+                </div>
+              </div>
+
+              {/* Risk Intelligence Model v2 */}
               <div
                 style={{
                   border: "1px solid #ddd3c2",
@@ -1376,87 +1507,56 @@ export default function ReportEnginePage() {
                   padding: "12px 14px",
                 }}
               >
-                <div
-                  style={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    gap: 8,
-                    marginBottom: 8,
-                  }}
-                >
+                <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 8 }}>
                   <strong style={{ fontSize: 12, color: "#1f1b18" }}>
-                    Per-Category Ground-Truth Benchmark Confusion Matrix (TP / FP / TN / FN &amp; PRNG Context Disambiguation)
+                    Risk Intelligence Model v2 â€” factor-explained, correlation-aware (supplements the legacy index above)
                   </strong>
-                  <span style={{ fontFamily: "monospace", fontSize: 11, color: "#2d6a4f", fontWeight: 700 }}>
-                    Total Tested: {riskWorksheet.benchmarkCalibration.labeledVulnerableFixturesTested} Vulnerable + {riskWorksheet.benchmarkCalibration.safeControlFixturesTested} Safe Controls &middot; Precision: {riskWorksheet.benchmarkCalibration.measuredPrecisionPercent}% &middot; Recall: {riskWorksheet.benchmarkCalibration.measuredRecallPercent}%
-                  </span>
+                  <label style={{ fontSize: 11, fontWeight: 700 }}>
+                    Asset criticality{" "}
+                    <select
+                      value={assetCriticality}
+                      onChange={(e) => setAssetCriticality(Number(e.target.value))}
+                      style={{ padding: "2px 6px", borderRadius: 6, border: "1px solid #ddd3c2" }}
+                    >
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <option key={n} value={n}>
+                          {n}
+                          {n === 3 ? " (neutral)" : n === 5 ? " (crown jewel)" : n === 1 ? " (low)" : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                 </div>
-
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10.8 }}>
+                <div style={{ fontFamily: "monospace", fontSize: 11, fontWeight: 800, color: "#8b4528", marginBottom: 6 }}>
+                  Primary {riskIntel.primaryScore}/100 Â· Combined {riskIntel.combinedScore}/100 Â· correlated-finding adjustment âˆ’{riskIntel.dedupAdjustment} pts Â· KEV feed: {riskIntel.kevFeed === "NOT_LOADED" ? "not loaded (0 matches checked)" : `${riskIntel.kevMatches.length} match(es)`}
+                </div>
+                <div style={{ fontSize: 10.5, color: "#5c5349", marginBottom: 8 }}>
+                  <code>{riskIntel.formula}</code> EPSS values come from the finding records, not a live feed.
+                </div>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10.5 }}>
                   <thead>
-                    <tr style={{ background: "#f3eee4", color: "#1f1b18" }}>
-                      <th style={{ border: "1px solid #ddd3c2", padding: "5px 8px", textAlign: "left" }}>
-                        Vulnerability Category
-                      </th>
-                      <th style={{ border: "1px solid #ddd3c2", padding: "5px 8px", textAlign: "left" }}>
-                        CWE Scope
-                      </th>
-                      <th style={{ border: "1px solid #ddd3c2", padding: "5px 8px", textAlign: "center" }}>
-                        TP
-                      </th>
-                      <th style={{ border: "1px solid #ddd3c2", padding: "5px 8px", textAlign: "center" }}>
-                        FP
-                      </th>
-                      <th style={{ border: "1px solid #ddd3c2", padding: "5px 8px", textAlign: "center" }}>
-                        TN (Safe Suppressed)
-                      </th>
-                      <th style={{ border: "1px solid #ddd3c2", padding: "5px 8px", textAlign: "center" }}>
-                        FN
-                      </th>
-                      <th style={{ border: "1px solid #ddd3c2", padding: "5px 8px", textAlign: "center" }}>
-                        Precision / Recall
-                      </th>
-                      <th style={{ border: "1px solid #ddd3c2", padding: "5px 8px", textAlign: "left" }}>
-                        Semantic Guard &amp; Context Validation Rule
-                      </th>
+                    <tr style={{ background: "#f3eee4" }}>
+                      {["Finding", "Group", "CVSS", "EPSS", "Evidence", "Reach", "Auth", "Crit", "Score"].map((h) => (
+                        <th key={h} style={{ border: "1px solid #ddd3c2", padding: "4px 6px", textAlign: "left" }}>{h}</th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {riskWorksheet.benchmarkCalibration.perCategoryConfusionMatrix.map((row) => (
-                      <tr key={row.category}>
-                        <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px", fontWeight: 800 }}>
-                          {row.category}
-                        </td>
-                        <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px", fontFamily: "monospace", fontSize: 10 }}>
-                          {row.cweScope}
-                        </td>
-                        <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px", textAlign: "center", fontWeight: 700, color: "#2d6a4f" }}>
-                          {row.tp}
-                        </td>
-                        <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px", textAlign: "center", fontFamily: "monospace" }}>
-                          {row.fp}
-                        </td>
-                        <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px", textAlign: "center", fontWeight: 700, color: "#2d6a4f" }}>
-                          {row.tn}
-                        </td>
-                        <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px", textAlign: "center", fontFamily: "monospace" }}>
-                          {row.fn}
-                        </td>
-                        <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px", textAlign: "center", fontFamily: "monospace", fontWeight: 700 }}>
-                          {row.precisionPercent}% / {row.recallPercent}%
-                        </td>
-                        <td style={{ border: "1px solid #ddd3c2", padding: "5px 8px", color: "#4a4239" }}>
-                          {row.validationNote}
-                        </td>
+                    {riskIntel.rows.map((r) => (
+                      <tr key={r.id} title={r.formula}>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "4px 6px", fontFamily: "monospace", fontWeight: 700 }}>{r.id}</td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "4px 6px", fontFamily: "monospace", fontSize: 9.5 }}>{r.groupId}</td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "4px 6px" }}>{r.cvss}</td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "4px 6px" }}>{r.epss}</td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "4px 6px" }}>{r.evidenceFactor}</td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "4px 6px" }}>{r.reachabilityFactor}</td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "4px 6px" }}>{r.authFactor}</td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "4px 6px" }}>{r.criticalityFactor}</td>
+                        <td style={{ border: "1px solid #ddd3c2", padding: "4px 6px", fontWeight: 800 }}>{r.score}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-                <div style={{ marginTop: 8, fontSize: 10.5, color: "#5c5349", lineHeight: 1.5 }}>
-                  <strong>Calibration Scope &amp; Generalization Caveat:</strong> {riskWorksheet.benchmarkCalibration.scopeCaveat}
-                </div>
               </div>
             </section>
           )}
@@ -1703,7 +1803,7 @@ export default function ReportEnginePage() {
                 }}
               >
                 <h2 className="font-editorial" style={{ fontSize: 19, fontWeight: 700, color: "#1f1b18" }}>
-                  4. Detailed Finding Dossiers — Static Evidence, Runtime Status &amp; Language-Matched Remediation ({filteredFindings.length} Findings)
+                  4. Detailed Finding Dossiers â€” Static Evidence, Runtime Status &amp; Language-Matched Remediation ({filteredFindings.length} Findings)
                 </h2>
               </div>
 
@@ -1939,7 +2039,7 @@ export default function ReportEnginePage() {
                         <div style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>
                           <span style={{ color: "#5c5349", fontWeight: 600 }}>Compliance Controls: </span>
                           <span style={{ fontWeight: 600 }}>
-                            {finding.compliance.map((c) => `${c.framework} ${c.reference}`).join(" · ")}
+                            {finding.compliance.map((c) => `${c.framework} ${c.reference}`).join(" Â· ")}
                           </span>
                         </div>
                         <div style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>
@@ -2021,7 +2121,7 @@ export default function ReportEnginePage() {
 
                         <div style={{ borderTop: "1px solid #e4dccb", paddingTop: 6, color: "#36302a" }}>
                           <div>
-                            <strong>Layer 1 — Observed Static Evidence ({typedProof.evidenceType}): </strong>
+                            <strong>Layer 1 â€” Observed Static Evidence ({typedProof.evidenceType}): </strong>
                             <code style={{ fontFamily: "monospace", fontSize: 10.5, wordBreak: "break-word", overflowWrap: "anywhere" }}>
                               {penetrationTestLifecycle.initialPentest.evidenceLog}
                             </code>
@@ -2035,19 +2135,84 @@ export default function ReportEnginePage() {
                             <span>{typedProof.modeledAssumptions}</span>
                           </div>
                           <div style={{ marginTop: 3 }}>
-                            <strong>Layer 2 — Controlled Verification &amp; Follow-Up Checks: </strong>
+                            <strong>Layer 2 â€” Controlled Verification &amp; Follow-Up Checks: </strong>
                             <span style={{ fontFamily: "monospace", fontWeight: 700, color: "#8b4528" }}>
                               Runtime Sandbox: NOT_RUN
                             </span>{" "}
-                            &middot; {finding.validationSteps.join(" · ")}
+                            &middot; {finding.validationSteps.join(" Â· ")}
                           </div>
                           <div style={{ marginTop: 3 }}>
-                            <strong>Layer 3 — Hypothesized Blast Radius (If Unmitigated in Production): </strong>
+                            <strong>Layer 3 â€” Hypothesized Blast Radius (If Unmitigated in Production): </strong>
                             {finding.privilegeGain}
                           </div>
                         </div>
                       </div>
 
+
+                      {/* Proof lifecycle, inter-procedural trace and context assessment */}
+                      {(() => {
+                        const lc = computeProofLifecycle(finding);
+                        const ip = finding.interprocedural;
+                        const ctx = finding.contextAssessment;
+                        const stageColor = (s: string) =>
+                          s === "ACHIEVED" ? "#2d6a4f" : s === "NOT_APPLICABLE" ? "#8a8176" : s === "NOT_RUN" ? "#996b1f" : "#9e2a2b";
+                        return (
+                          <div style={{ padding: "10px 12px", borderRadius: 8, background: "#f9f6ef", border: "1px solid #ddd3c2", fontSize: 11, marginBottom: 12 }}>
+                            <div style={{ fontWeight: 800, color: "#8b4528", textTransform: "uppercase", fontSize: 10.5, marginBottom: 6 }}>
+                              Proof lifecycle — maturity reached: {lc.maturity}
+                              {lc.nextRequiredStage ? ` · next required: ${lc.nextRequiredStage}` : ""}
+                            </div>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 6 }}>
+                              {lc.stages.map((s) => (
+                                <span
+                                  key={s.stage}
+                                  title={s.evidence}
+                                  style={{ padding: "2px 7px", borderRadius: 6, border: `1px solid ${stageColor(s.status)}`, color: stageColor(s.status), fontFamily: "monospace", fontSize: 10, fontWeight: 700 }}
+                                >
+                                  {s.stage} · {s.status}
+                                </span>
+                              ))}
+                            </div>
+                            {ip && (
+                              <div style={{ color: "#36302a", marginBottom: 4, wordBreak: "break-word", overflowWrap: "anywhere" }}>
+                                <strong>Inter-procedural engine: </strong>
+                                {ip.status}
+                                {ip.status === "ESTABLISHED"
+                                  ? ` · ${ip.crossesFunctions ? `crosses ${ip.functionChain.join(" → ")}` : "single function"} · path ${ip.pathFeasibility?.status} (${ip.pathFeasibility?.reason})`
+                                  : ip.note
+                                    ? ` — ${ip.note}`
+                                    : ""}
+                                {ip.status === "ESTABLISHED" && ip.steps.length > 0 && (
+                                  <ol style={{ margin: "4px 0 0 18px", fontFamily: "monospace", fontSize: 10 }}>
+                                    {ip.steps.map((st, i) => (
+                                      <li key={i}>
+                                        {st.file.split("/").pop()}:{st.line} [{st.kind}] {st.text}
+                                      </li>
+                                    ))}
+                                  </ol>
+                                )}
+                              </div>
+                            )}
+                            {ctx && (
+                              <div style={{ color: "#36302a", wordBreak: "break-word", overflowWrap: "anywhere" }}>
+                                <strong>{ctx.kind === "SSRF" ? "SSRF control assessment" : "Cryptographic context"} ({ctx.riskContext}): </strong>
+                                {ctx.summary}
+                                <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 4 }}>
+                                  {ctx.checks.map((c) => (
+                                    <span
+                                      key={c.id}
+                                      title={`${c.label} — ${c.evidence}`}
+                                      style={{ padding: "1px 6px", borderRadius: 5, border: "1px solid #ddd3c2", fontFamily: "monospace", fontSize: 9.5, color: c.status === "PRESENT" ? "#2d6a4f" : c.status === "ABSENT" ? "#9e2a2b" : "#8a8176" }}
+                                    >
+                                      {c.id}: {c.status}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
 
                       {/* Technical Root Cause & Remediation */}
                       <div style={{ fontSize: 12, color: "#36302a", lineHeight: 1.55, marginBottom: 8, wordBreak: "break-word", overflowWrap: "anywhere" }}>
@@ -2058,13 +2223,13 @@ export default function ReportEnginePage() {
                       <div style={{ fontSize: 11.5, color: "#4a4239", lineHeight: 1.55, marginBottom: 8, wordBreak: "break-word", overflowWrap: "anywhere" }}>
                         <strong>{typedProof.evidenceHeading}: </strong>
                         Origin <code style={{ fontFamily: "monospace", background: "#f3eee4", padding: "1px 5px", wordBreak: "break-all" }}>{finding.source}</code>{" "}
-                        &rarr; {finding.taintPath.join(" → ")} &rarr; Target{" "}
+                        &rarr; {finding.taintPath.join(" â†’ ")} &rarr; Target{" "}
                         <code style={{ fontFamily: "monospace", background: "#f3eee4", padding: "1px 5px", wordBreak: "break-all" }}>{finding.sink}</code>
                       </div>
 
                       {rem && (
                         <div style={{ fontSize: 12, color: "#21573e", lineHeight: 1.55, marginBottom: 6 }}>
-                          <strong>Language-Matched Remediation Guidance ({rem.platform} — AT-REM-08): </strong>
+                          <strong>Language-Matched Remediation Guidance ({rem.platform} â€” AT-REM-08): </strong>
                           {rem.explanation}
                         </div>
                       )}
@@ -2100,7 +2265,7 @@ export default function ReportEnginePage() {
                                   wordBreak: "break-all",
                                 }}
                               >
-                                Observed Source Context ({finding.file}:{finding.line} · {finding.language})
+                                Observed Source Context ({finding.file}:{finding.line} Â· {finding.language})
                               </div>
                               <pre
                                 style={{
@@ -2207,7 +2372,7 @@ export default function ReportEnginePage() {
               {/* Live 10-Gate Measurable Acceptance Test Suite (Review Section 7) */}
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontSize: 12, fontWeight: 800, color: "#1f1b18", marginBottom: 6 }}>
-                  Measurable Release Acceptance Suite — Execution Environment per Gate (AT-CVSS-01 through AT-BENCHMARK-15; gates marked NOT_RUN have no execution record)
+                  Measurable Release Acceptance Suite â€” Execution Environment per Gate (AT-CVSS-01 through AT-BENCHMARK-15; gates marked NOT_RUN have no execution record)
                 </div>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11.2 }}>
                   <thead>
@@ -2220,7 +2385,7 @@ export default function ReportEnginePage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {acceptanceSuite.map((gate) => (
+                    {acceptanceGates.map((gate) => (
                       <tr key={gate.testId}>
                         <td style={{ border: "1px solid #ddd3c2", padding: "6px 8px", fontFamily: "monospace", fontWeight: 800, color: "#8b4528" }}>
                           {gate.testId}
@@ -2248,7 +2413,7 @@ export default function ReportEnginePage() {
               <p style={{ fontSize: 12, color: "#4a4239", lineHeight: 1.55, marginBottom: 18 }}>
                 By signing below, the Lead Security Auditor and Engineering Owner attest that Report{" "}
                 <strong>{reportId}</strong> was deterministically produced by the{" "}
-                <strong>XTRIKE SAST Desk Hybrid AST &amp; Dataflow Engine</strong> in accordance with NIST SP 800-115, NIST SSDF (SP 800-218), OWASP ASVS v4.0.3, and the Measurable 10-Gate Acceptance Suite (`AT-CVSS-01`–`AT-GATE-10`).
+                <strong>XTRIKE SAST Desk Hybrid AST &amp; Dataflow Engine</strong> in accordance with NIST SP 800-115, NIST SSDF (SP 800-218), OWASP ASVS v4.0.3, and the Measurable 10-Gate Acceptance Suite (`AT-CVSS-01`â€“`AT-GATE-10`).
               </p>
 
               <div
@@ -2365,14 +2530,14 @@ export default function ReportEnginePage() {
                   LEDGER-SHA256 (canonical findings JSON, UTF-8): {ledgerDigest}
                 </span>
                 <span>
-                  INTEGRITY VALIDATOR: {integrityIssues.length === 0 ? "0 issues" : `${integrityIssues.length} issues — REPORT INVALID`} &middot; STATIC_ONLY &middot; no patch compiled or executed
+                  INTEGRITY VALIDATOR: {integrityIssues.length === 0 ? "0 issues" : `${integrityIssues.length} issues â€” REPORT INVALID`} &middot; STATIC_ONLY &middot; no patch compiled or executed
                 </span>
               </div>
               {integrityIssues.length > 0 && (
                 <ul style={{ marginTop: 8, fontSize: 11, color: "#9e2a2b", paddingLeft: 18 }}>
                   {integrityIssues.slice(0, 12).map((iss, i) => (
                     <li key={i}>
-                      <code>{iss.code}</code> — {iss.detail}
+                      <code>{iss.code}</code> â€” {iss.detail}
                     </li>
                   ))}
                 </ul>

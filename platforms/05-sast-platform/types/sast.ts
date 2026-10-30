@@ -201,6 +201,37 @@ export type SASTFinding = {
     | "DEPENDENCY_MANIFEST_ADVISORY"
     | "FIRST_PARTY_CODE_WEAKNESS_NO_CVE";
   consolidatedSinkLines?: number[];
+
+  /** Result of the inter-procedural taint engine + path-feasibility solver for this finding. */
+  interprocedural?: {
+    status: "ESTABLISHED" | "NOT_ESTABLISHED" | "UNSUPPORTED_LANGUAGE";
+    crossesFunctions: boolean;
+    functionChain: string[];
+    steps: { file: string; line: number; text: string; kind: "source" | "propagation" | "call" | "return" | "sink" }[];
+    pathFeasibility?: {
+      status: "FEASIBLE" | "INFEASIBLE" | "GUARDED";
+      constraints: string[];
+      reason: string;
+    };
+    note?: string;
+  };
+
+  /** Structured context checks (SSRF controls, cryptographic context). */
+  contextAssessment?: {
+    kind: "SSRF" | "CRYPTO";
+    summary: string;
+    riskContext: "HIGH" | "MEDIUM" | "LOW" | "UNESTABLISHED";
+    checks: { id: string; label: string; status: "PRESENT" | "ABSENT" | "UNKNOWN"; evidence: string }[];
+  };
+
+  /** Stored execution records. A finding may only claim runtime/impact/remediation proof with one of these. */
+  verificationRecords?: {
+    kind: "RUNTIME_REPRODUCTION" | "IMPACT_VERIFICATION" | "PATCH_EXECUTION" | "REGRESSION_TEST";
+    executedAt: string;
+    environment: string;
+    artifactSha256: string;
+    result: "PASS" | "FAIL";
+  }[];
   dependencyEvidence?: {
     packageName: string;
     declaredVersionSpec: string;

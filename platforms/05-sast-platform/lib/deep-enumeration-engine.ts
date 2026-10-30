@@ -740,13 +740,207 @@ function getFallbackIntelForCwe(cwe: string, cweName: string): CweDeepIntelTempl
   };
 }
 
+const KB_JAVA_ONLY =
+  /\bJava\b|JEP 290|ObjectInputFilter|ObjectInputStream|DocumentBuilder(?:Factory)?|SAXParserFactory|XMLInputFactory|PreparedStatement|Cipher\.getInstance|SecureRandom|java\.(?:util|security)|GCMParameterSpec|JavaCompiler|compiler\.getTask|SimpleJavaFileObject|ClassLoader|\.readObject\(|InetAddress|Files\.copy|toRealPath/;
+
+type KbLangFields = Partial<
+  Pick<
+    CweDeepIntelTemplate,
+    | "ghSummary"
+    | "googleDork"
+    | "projectZeroRef"
+    | "zeroDayRisk"
+    | "probeType"
+    | "targetBoundary"
+    | "reEnumSurface"
+    | "reEnumSummary"
+    | "attackChainSteps"
+    | "verificationVerdict"
+    | "exploitabilityExtent"
+    | "privilegeAttained"
+  >
+>;
+
+/** Library-accurate dossier prose per CWE for non-Java sources. */
+const KB_LANGUAGE_OVERRIDES: Record<string, { python: KbLangFields; node: KbLangFields }> = {
+  "CWE-89": {
+    python: {
+      attackChainSteps: [
+        "Stage 1 [Observed Static Evidence]: Untrusted input reaches cursor.execute() through an f-string / concatenated SQL string without driver parameter binding.",
+        "Stage 2 [Contextual Assessment]: Identify the DB-API driver (psycopg2/MySQLdb use %s, sqlite3 uses ?) and the database account privileges.",
+        "Stage 3 [Hypothesized Impact Scenario]: Predicate alteration or data disclosure bounded by the database role (unverified at runtime).",
+      ],
+    },
+    node: {
+      attackChainSteps: [
+        "Stage 1 [Observed Static Evidence]: Untrusted input reaches db.query()/sequelize.query() through a template literal or concatenation without bound parameters.",
+        "Stage 2 [Contextual Assessment]: Identify the driver (pg uses $1, mysql2 uses ?, Sequelize uses replacements/bind) and the database account privileges.",
+        "Stage 3 [Hypothesized Impact Scenario]: Predicate alteration or data disclosure bounded by the database role (unverified at runtime).",
+      ],
+    },
+  },
+  "CWE-502": {
+    python: {
+      ghSummary: "Untrusted data reaches a native Python deserializer (`pickle.loads`, `yaml.load`, `marshal.loads`) that can instantiate arbitrary objects.",
+      googleDork: "AST Pattern: pickle.loads(request.data) / yaml.load(stream) without SafeLoader",
+      projectZeroRef: "OWASP Deserialization Cheat Sheet / Python docs: pickle security warning / NIST SP 800-53 SI-10",
+      targetBoundary: "Serialized Bytes / Queue Payload -> `pickle.loads()` -> Python Interpreter",
+      reEnumSurface: ["Candidate follow-up check: replace pickle with JSON validated against a strict schema (e.g., Pydantic); restrict who can reach the endpoint"],
+      reEnumSummary: "Static AST confirmed a native Python deserializer on untrusted bytes; replace with schema-validated JSON.",
+      attackChainSteps: [
+        "Stage 1 [Observed Static Evidence]: Untrusted bytes are passed to `pickle.loads()`.",
+        "Stage 2 [Contextual Assessment]: Verify the trust boundary of the producer (public endpoint vs authenticated internal queue).",
+        "Stage 3 [Hypothesized Impact Scenario]: Arbitrary object construction via `__reduce__` payloads (unverified at runtime).",
+      ],
+      verificationVerdict: "Static candidate — replace pickle with validated JSON; confirm producer trust boundary",
+    },
+    node: {
+      ghSummary: "Untrusted data reaches a native Node.js unserializer (`node-serialize`, `serialize.unserialize`, `eval`-based revivers) that can execute embedded code.",
+      googleDork: "AST Pattern: serialize.unserialize(req.body.x)",
+      projectZeroRef: "OWASP Deserialization Cheat Sheet / NIST SP 800-53 SI-10",
+      targetBoundary: "Request/Queue Payload -> `unserialize()` -> Node.js Runtime",
+      reEnumSurface: ["Candidate follow-up check: parse JSON and validate with a strict schema (e.g., Zod)"],
+      reEnumSummary: "Static AST confirmed native unserialize on untrusted data; replace with schema-validated JSON.",
+      attackChainSteps: [
+        "Stage 1 [Observed Static Evidence]: Untrusted payload is passed to a native unserializer.",
+        "Stage 2 [Contextual Assessment]: Verify producer trust boundary.",
+        "Stage 3 [Hypothesized Impact Scenario]: Code execution through crafted serialized functions (unverified at runtime).",
+      ],
+      verificationVerdict: "Static candidate — replace with schema-validated JSON; confirm producer trust boundary",
+    },
+  },
+  "CWE-611": {
+    python: {
+      ghSummary: "XML parsed with lxml/ElementTree-compatible parsers that resolve entities or load DTDs (`resolve_entities=True`, default `lxml.etree.fromstring`).",
+      googleDork: "AST Pattern: lxml.etree.XMLParser(resolve_entities=True) / etree.fromstring(untrusted)",
+      zeroDayRisk: "STATIC DATAFLOW — lxml parsers permit entity resolution unless resolve_entities=False, no_network=True and load_dtd=False are set.",
+      probeType: "Static AST XML Parser Configuration Check (lxml.etree.XMLParser flags)",
+      targetBoundary: "XML Request Body -> `lxml.etree.fromstring()` -> Entity Resolver",
+      reEnumSurface: ["Candidate follow-up check: use defusedxml or set resolve_entities=False, no_network=True, load_dtd=False"],
+      reEnumSummary: "Static AST confirmed an lxml parser with entity resolution enabled; harden or use defusedxml.",
+      attackChainSteps: [
+        "Stage 1 [Observed Static Evidence]: XML input is parsed by an lxml parser without disabling entity resolution / network access.",
+        "Stage 2 [Contextual Assessment]: Verify the parser instance flags and whether the XML is attacker-supplied.",
+        "Stage 3 [Hypothesized Impact Scenario]: Local file disclosure or SSRF via external entities (unverified at runtime).",
+      ],
+      verificationVerdict: "Static candidate — harden lxml parser flags or use defusedxml",
+    },
+    node: {
+      ghSummary: "XML parsed with a library configured to expand entities or load DTDs (`libxmljs.parseXml` with `noent: true`, `dtdload: true`).",
+      googleDork: "AST Pattern: libxmljs.parseXml(xml, { noent: true })",
+      zeroDayRisk: "STATIC DATAFLOW — libxmljs expands external entities when noent/dtdload are enabled.",
+      probeType: "Static AST XML Parser Configuration Check (libxmljs options)",
+      targetBoundary: "XML Request Body -> `libxmljs.parseXml()` -> Entity Resolver",
+      reEnumSurface: ["Candidate follow-up check: set noent:false, dtdload:false, nonet:true or use fast-xml-parser with processEntities:false"],
+      reEnumSummary: "Static AST confirmed entity expansion enabled; disable it.",
+      attackChainSteps: [
+        "Stage 1 [Observed Static Evidence]: XML input is parsed with entity substitution / DTD loading enabled.",
+        "Stage 2 [Contextual Assessment]: Verify the XML is attacker-supplied.",
+        "Stage 3 [Hypothesized Impact Scenario]: Local file disclosure or SSRF via external entities (unverified at runtime).",
+      ],
+      verificationVerdict: "Static candidate — disable entity substitution and DTD loading",
+    },
+  },
+  "CWE-327": {
+    python: {
+      googleDork: "AST Pattern: Cipher(algorithms.AES(key), modes.ECB())",
+      targetBoundary: "Sensitive Token / Plaintext -> `modes.ECB()` -> Ciphertext Output",
+      reEnumSurface: ["Candidate follow-up check: use AESGCM with a unique 12-byte os.urandom nonce and verify the tag on decrypt"],
+      reEnumSummary: "Static AST confirmed deterministic AES-ECB; replace with AEAD (AES-GCM).",
+      attackChainSteps: [
+        "Stage 1 [Observed Static Evidence]: `modes.ECB()` is used for symmetric encryption (no IV, no integrity tag).",
+        "Stage 2 [Contextual Assessment]: Establish whether the ciphertext protects security-sensitive data and how the key is stored.",
+        "Stage 3 [Hypothesized Impact Scenario]: Ciphertext block correlation or splicing (unverified at runtime).",
+      ],
+      verificationVerdict: "DETECTED_STATIC (AES-ECB primitive) — migrate to AES-GCM; security context must be established",
+    },
+    node: {
+      googleDork: "AST Pattern: crypto.createCipheriv('aes-256-ecb', key, null)",
+      targetBoundary: "Sensitive Token / Plaintext -> `createCipheriv('aes-256-ecb')` -> Ciphertext Output",
+      reEnumSurface: ["Candidate follow-up check: use aes-256-gcm with a unique 12-byte crypto.randomBytes IV and verify getAuthTag()"],
+      reEnumSummary: "Static AST confirmed deterministic AES-ECB; replace with AEAD (aes-256-gcm).",
+      attackChainSteps: [
+        "Stage 1 [Observed Static Evidence]: `aes-256-ecb` cipher is created (no IV, no integrity tag).",
+        "Stage 2 [Contextual Assessment]: Establish whether the ciphertext protects security-sensitive data and how the key is stored.",
+        "Stage 3 [Hypothesized Impact Scenario]: Ciphertext block correlation or splicing (unverified at runtime).",
+      ],
+      verificationVerdict: "DETECTED_STATIC (AES-ECB primitive) — migrate to aes-256-gcm; security context must be established",
+    },
+  },
+  "CWE-330": {
+    python: {
+      ghSummary: "Non-cryptographic PRNG (`random.random`, `random.randint`) used for tokens, OTPs or session identifiers; use the `secrets` module.",
+      googleDork: "AST Pattern: random.randint(...) for reset_token / otp",
+      projectZeroRef: "Python `secrets` module docs / NIST SP 800-90A Rev. 1 / ASVS V6.3.1",
+      zeroDayRisk: "STATIC PRNG WEAKNESS — Python's Mersenne Twister state can be reconstructed from 624 consecutive outputs.",
+      probeType: "Static AST CSPRNG Verification (`random` vs `secrets`)",
+      targetBoundary: "Token Generator -> `random.*` -> Password Reset / OTP Token",
+      reEnumSurface: ["Candidate follow-up check: replace `random` with `secrets.token_urlsafe(32)`; enforce TTL, single use and rate limiting"],
+      reEnumSummary: "Static AST confirmed `random` in token generation; replace with `secrets`.",
+      attackChainSteps: [
+        "Stage 1 [Observed Static Evidence]: `random.*` generates a token string.",
+        "Stage 2 [Contextual Assessment]: Verify the token gates reset, session or OTP verification.",
+        "Stage 3 [Hypothesized Impact Scenario]: Token prediction if consecutive outputs are observable (unverified).",
+      ],
+      verificationVerdict: "DETECTED_STATIC (non-cryptographic PRNG) — replace with `secrets`",
+    },
+    node: {
+      ghSummary: "Non-cryptographic PRNG (`Math.random()`) used for tokens, OTPs or session identifiers; use `crypto.randomBytes` / `crypto.randomUUID`.",
+      googleDork: "AST Pattern: Math.random() for resetToken / otp",
+      projectZeroRef: "Node.js crypto docs / NIST SP 800-90A Rev. 1 / ASVS V6.3.1",
+      zeroDayRisk: "STATIC PRNG WEAKNESS — V8's xorshift128+ state can be recovered from a few observed outputs.",
+      probeType: "Static AST CSPRNG Verification (`Math.random` vs `crypto.randomBytes`)",
+      targetBoundary: "Token Generator -> `Math.random()` -> Password Reset / OTP Token",
+      reEnumSurface: ["Candidate follow-up check: replace `Math.random()` with `crypto.randomBytes(32)`; enforce TTL, single use and rate limiting"],
+      reEnumSummary: "Static AST confirmed `Math.random()` in token generation; replace with `crypto.randomBytes`.",
+      attackChainSteps: [
+        "Stage 1 [Observed Static Evidence]: `Math.random()` generates a token string.",
+        "Stage 2 [Contextual Assessment]: Verify the token gates reset, session or OTP verification.",
+        "Stage 3 [Hypothesized Impact Scenario]: Token prediction if consecutive outputs are observable (unverified).",
+      ],
+      verificationVerdict: "DETECTED_STATIC (non-cryptographic PRNG) — replace with `crypto.randomBytes`",
+    },
+  },
+};
+
+/**
+ * Language-aware dossier prose: for non-Java sources, replaces Java-API wording with library-accurate text.
+ * Any remaining Java-only field falls back to the neutral, language-agnostic wording.
+ */
+function localizeKbForLanguage(
+  kb: CweDeepIntelTemplate,
+  cwe: string,
+  cweName: string,
+  language: string
+): CweDeepIntelTemplate {
+  const javaFamily = /^(?:java|kotlin|c#)$/i.test(language);
+  if (javaFamily) return kb;
+  const family = /python|ruby/i.test(language) ? "python" : "node";
+  const override = KB_LANGUAGE_OVERRIDES[cwe]?.[family];
+  const merged: CweDeepIntelTemplate = { ...kb, ...(override || {}) };
+  const neutral = getFallbackIntelForCwe(cwe, cweName);
+  const out = { ...merged } as Record<string, unknown>;
+  for (const [k, v] of Object.entries(merged)) {
+    if (typeof v === "string" && KB_JAVA_ONLY.test(v)) out[k] = (neutral as unknown as Record<string, unknown>)[k];
+    else if (Array.isArray(v) && v.some((x) => typeof x === "string" && KB_JAVA_ONLY.test(x))) {
+      out[k] = (neutral as unknown as Record<string, unknown>)[k];
+    }
+  }
+  return out as unknown as CweDeepIntelTemplate;
+}
+
 export function buildDeepExploitabilityDossier(
   finding: SASTFinding,
   index = 0
 ): DeepExploitabilityDossier {
   if (finding.deepExploitability) return finding.deepExploitability;
 
-  const kb = CWE_DEEP_INTEL_KB[finding.cwe] || getFallbackIntelForCwe(finding.cwe, finding.cweName);
+  const kb = localizeKbForLanguage(
+    CWE_DEEP_INTEL_KB[finding.cwe] || getFallbackIntelForCwe(finding.cwe, finding.cweName),
+    finding.cwe,
+    finding.cweName,
+    finding.language
+  );
   const discoveryPass =
     finding.id.startsWith("RE-ENUM-")
       ? "Pass 2: Second-Order Re-Enumeration (Post-Pivot)"
