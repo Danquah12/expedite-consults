@@ -2,15 +2,71 @@ import { NextRequest, NextResponse } from "next/server"
 import { sendConnectInInviteSMS, sendConnectInInviteVoiceCall, formatE164Phone } from "@/lib/connectin-sms"
 import { sendConnectInInviteEmail } from "@/lib/connectin-email"
 
+function deriveHumanNameFromEmail(email: string): string {
+  const local = (email.split("@")[0] || "").trim()
+  if (!local) return ""
+  return local
+    .replace(/[._-]+/g, " ")
+    .replace(/\d+/g, "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ")
+}
+
+function buildRecipientInviteUrl(
+  baseInviteLink: string,
+  params: {
+    senderName: string
+    senderHeadline?: string
+    recipientName?: string
+    recipientEmail?: string
+    recipientPhone?: string
+  }
+): string {
+  try {
+    const url = new URL(baseInviteLink.startsWith("http") ? baseInviteLink : `https://www.connectln.app${baseInviteLink.startsWith("/") ? "" : "/"}${baseInviteLink}`)
+    url.searchParams.set("invite", "accept")
+    if (params.senderName) {
+      url.searchParams.set("inviter", params.senderName)
+      url.searchParams.set("ref", params.senderName.toLowerCase().replace(/\s+/g, "-"))
+    }
+    if (params.senderHeadline) {
+      url.searchParams.set("inviterHeadline", params.senderHeadline)
+    }
+    if (params.recipientName) {
+      url.searchParams.set("invitedName", params.recipientName)
+    }
+    if (params.recipientEmail) {
+      url.searchParams.set("invitedEmail", params.recipientEmail)
+    }
+    if (params.recipientPhone) {
+      url.searchParams.set("invitedPhone", params.recipientPhone)
+    }
+    return url.toString()
+  } catch {
+    const q = new URLSearchParams()
+    q.set("invite", "accept")
+    if (params.senderName) q.set("inviter", params.senderName)
+    if (params.recipientName) q.set("invitedName", params.recipientName)
+    if (params.recipientEmail) q.set("invitedEmail", params.recipientEmail)
+    return `https://www.connectln.app/connectin?${q.toString()}`
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const {
       channel,
       recipients,
+      recipientName = "",
+      recipientNames = {},
       message,
       senderName = "Member",
-      inviteLink = "https://connectln.vercel.app/connectin"
+      senderHeadline = "",
+      inviteLink = "https://www.connectln.app/connectin"
     } = body
 
     if (!channel || !Array.isArray(recipients) || recipients.length === 0) {
@@ -31,11 +87,21 @@ export async function POST(req: NextRequest) {
           continue
         }
 
-        const smsContent = message?.trim() || `ConnectIn: Hi! ${senderName} has invited you to connect on ConnectIn Zero-Trust Network. Join here: ${inviteLink}`
+        const resolvedRecipientName = (recipientNames?.[rawPhone] || recipientNames?.[cleanPhone] || recipientName || "").trim()
+        const personalizedLink = buildRecipientInviteUrl(inviteLink, {
+          senderName,
+          senderHeadline,
+          recipientName: resolvedRecipientName,
+          recipientPhone: cleanPhone
+        })
+
+        const rawMessage = message?.trim()
+          ? message.trim().replace(/https?:\/\/[^\s]+/g, personalizedLink)
+          : `ConnectLn: Hi${resolvedRecipientName ? ` ${resolvedRecipientName}` : ""}! ${senderName} has invited you to connect on ConnectLn. Join here: ${personalizedLink}`
 
         const res = await sendConnectInInviteSMS({
           toPhone: cleanPhone,
-          message: smsContent,
+          message: rawMessage,
           senderName
         })
 
@@ -67,10 +133,18 @@ export async function POST(req: NextRequest) {
           continue
         }
 
+        const resolvedRecipientName = (recipientNames?.[rawPhone] || recipientNames?.[cleanPhone] || recipientName || "").trim()
+        const personalizedLink = buildRecipientInviteUrl(inviteLink, {
+          senderName,
+          senderHeadline,
+          recipientName: resolvedRecipientName,
+          recipientPhone: cleanPhone
+        })
+
         const res = await sendConnectInInviteVoiceCall({
           toPhone: cleanPhone,
           senderName,
-          inviteLink
+          inviteLink: personalizedLink
         })
 
         if (res.success) {
@@ -101,11 +175,30 @@ export async function POST(req: NextRequest) {
           continue
         }
 
+        const resolvedRecipientName = (
+          recipientNames?.[rawEmail] ||
+          recipientNames?.[cleanEmail] ||
+          (recipients.length === 1 ? recipientName : "") ||
+          deriveHumanNameFromEmail(cleanEmail)
+        ).trim()
+
+        const personalizedLink = buildRecipientInviteUrl(inviteLink, {
+          senderName,
+          senderHeadline,
+          recipientName: resolvedRecipientName,
+          recipientEmail: cleanEmail
+        })
+
+        const personalizedMessage = message?.trim()
+          ? message.trim().replace(/https?:\/\/[^\s]+/g, personalizedLink)
+          : undefined
+
         const res = await sendConnectInInviteEmail({
           toEmail: cleanEmail,
+          recipientName: resolvedRecipientName,
           senderName,
-          personalMessage: message,
-          inviteLink
+          personalMessage: personalizedMessage,
+          inviteLink: personalizedLink
         })
 
         if (res.success) {

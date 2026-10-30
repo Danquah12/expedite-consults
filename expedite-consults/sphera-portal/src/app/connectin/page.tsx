@@ -229,6 +229,51 @@ export default function ConnectLnPage() {
   const [showMobileCommunityDrawer, setShowMobileCommunityDrawer] = useState(false)
   const [showMobileSubFilters, setShowMobileSubFilters] = useState(false)
   const [hasHydrated, setHasHydrated] = useState(false)
+  const [inviteClaimModal, setInviteClaimModal] = useState<{
+    isOpen: boolean
+    inviterName: string
+    inviterHeadline: string
+    recipientName: string
+    recipientEmail: string
+    recipientPhone: string
+    professionId: string
+  } | null>(null)
+
+  const connectWithInviterInStorage = (inviterName: string, inviterHeadline?: string) => {
+    if (typeof window === "undefined" || !inviterName) return
+    try {
+      const raw = localStorage.getItem("connectin_my_custom_connections_v2")
+      const existing = raw ? JSON.parse(raw) : []
+      const normInviter = inviterName.toLowerCase().trim()
+      const isKwesiInviter = normInviter.includes("kwesi")
+      const inviterConn = {
+        id: `conn_inviter_${Date.now()}`,
+        name: inviterName,
+        headline:
+          inviterHeadline ||
+          (isKwesiInviter
+            ? "Founder & Chief Security Officer @ Expedite Consults · Zero Trust & AI Architecture"
+            : "Verified ConnectLn Member · 1st-Degree Inviter"),
+        avatar: isKwesiInviter
+          ? initialCurrentUser.avatar
+          : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(inviterName)}&backgroundColor=0a66c2`,
+        connectedSince: "Connected via direct invitation",
+        capabilities: isKwesiInviter
+          ? ["Zero Trust Architecture", "GovCloud Security", "Enterprise Leadership"]
+          : ["Verified Peer", "Direct Connection"],
+        verifiedBadges: ["✓ Verified Inviter", "1st Degree"],
+        mutualCount: 24,
+        isOnline: true
+      }
+      const updated = [
+        inviterConn,
+        ...(Array.isArray(existing) ? existing.filter((c: any) => String(c?.name || "").toLowerCase().trim() !== normInviter) : [])
+      ]
+      localStorage.setItem("connectin_my_custom_connections_v2", JSON.stringify(updated))
+    } catch {
+      // ignore storage errors
+    }
+  }
 
   // Authentication Lifecycle — optimistic-first, never redirects, shows modal only if truly needed
   useEffect(() => {
@@ -240,6 +285,122 @@ export default function ConnectLnPage() {
       const urlParams = new URLSearchParams(window.location.search)
       const tabParam = urlParams.get("tab")
       const joinCallParam = urlParams.get("joinCall")
+      const inviteParam = urlParams.get("invite")
+      const invitedEmailParam = (urlParams.get("invitedEmail") || "").trim()
+      const invitedNameParam = (urlParams.get("invitedName") || "").trim()
+      const invitedPhoneParam = (urlParams.get("invitedPhone") || "").trim()
+      const inviterParam = (urlParams.get("inviter") || "").trim()
+      const inviterHeadlineParam = (urlParams.get("inviterHeadline") || "").trim()
+      const refParam = (urlParams.get("ref") || "").trim()
+      const cidParam = (urlParams.get("cid") || "").trim()
+
+      const isInvitationLink = Boolean(
+        inviteParam === "accept" ||
+        invitedEmailParam ||
+        invitedNameParam ||
+        invitedPhoneParam ||
+        inviterParam ||
+        refParam ||
+        cidParam
+      )
+
+      // When a user clicks an invitation link from an email/SMS, NEVER log them in as the person who sent the invite (e.g. Kwesi Asiedu)!
+      if (isInvitationLink) {
+        const formattedRefName = refParam
+          ? refParam
+              .split(/[-_]+/)
+              .filter(Boolean)
+              .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+              .join(" ")
+          : ""
+        const resolvedInviterName = inviterParam || formattedRefName || "Kwesi Asiedu"
+
+        // Derive recipient name/email from URL or recent outbound invite record if testing on same browser
+        let fallbackOutboundName = ""
+        let fallbackOutboundEmail = ""
+        if (!invitedNameParam && !invitedEmailParam) {
+          try {
+            const rawOutbound = localStorage.getItem("connectin_my_outbound_invites_v2")
+            if (rawOutbound) {
+              const parsedOutbound = JSON.parse(rawOutbound)
+              if (Array.isArray(parsedOutbound) && parsedOutbound.length > 0) {
+                const latestInvite = parsedOutbound[0]
+                if (latestInvite?.name && !String(latestInvite.name).toLowerCase().includes(resolvedInviterName.toLowerCase())) {
+                  fallbackOutboundName = String(latestInvite.name).replace(/^Invited Colleague\s*\(.*\)$/i, "").trim()
+                }
+                if (latestInvite?.email) {
+                  fallbackOutboundEmail = String(latestInvite.email).trim()
+                }
+              }
+            }
+          } catch {
+            // ignore
+          }
+        }
+
+        const effectiveInviteeEmail = invitedEmailParam || fallbackOutboundEmail
+        const emailDerivedName = effectiveInviteeEmail
+          ? (effectiveInviteeEmail.split("@")[0] || "")
+              .replace(/[._-]+/g, " ")
+              .replace(/\d+/g, "")
+              .trim()
+              .split(/\s+/)
+              .filter(Boolean)
+              .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+              .join(" ")
+          : ""
+
+        const effectiveInviteeName = invitedNameParam || fallbackOutboundName || emailDerivedName
+        const displayInviteeName = effectiveInviteeName || "Invited Member"
+        const displayInviteeEmail = effectiveInviteeEmail || `invited.${Date.now().toString(36)}@connectln.app`
+
+        const inviteeProfile = createUniqueUserProfile({
+          name: displayInviteeName,
+          email: displayInviteeEmail,
+          role: "personal",
+          professionId: "cybersecurity_architect",
+          professionEnclave: "tech_cybersecurity"
+        })
+
+        const hydratedInvitee: UserProfile = {
+          ...inviteeProfile,
+          id: `user_inv_${Date.now().toString(36)}`,
+          name: displayInviteeName,
+          email: displayInviteeEmail,
+          headline: `Connected with ${resolvedInviterName} · Verified ConnectLn Professional`,
+          avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayInviteeName)}&backgroundColor=0a66c2`,
+          role: "personal",
+          roles: ["NORMAL_USER"],
+          connectionsCount: 1
+        } as UserProfile
+
+        localStorage.removeItem("connectin_is_signed_out")
+        saveStoredUser(hydratedInvitee)
+        connectWithInviterInStorage(resolvedInviterName, inviterHeadlineParam)
+
+        if (isMounted) {
+          setUserData(hydratedInvitee)
+          setIsAuthenticated(true)
+          setIsAuthModalOpen(false)
+          setActiveTab("network")
+          setInviteClaimModal({
+            isOpen: true,
+            inviterName: resolvedInviterName,
+            inviterHeadline:
+              inviterHeadlineParam ||
+              (resolvedInviterName.toLowerCase().includes("kwesi")
+                ? "Founder & Chief Security Officer @ Expedite Consults"
+                : "Verified ConnectLn Member"),
+            recipientName: effectiveInviteeName,
+            recipientEmail: effectiveInviteeEmail,
+            recipientPhone: invitedPhoneParam,
+            professionId: "cybersecurity_architect"
+          })
+          setHasHydrated(true)
+        }
+        return
+      }
+
       const resolvedUrlTab =
         joinCallParam || tabParam === "vibecomms"
           ? "vibecomms"
@@ -2410,6 +2571,155 @@ export default function ConnectLnPage() {
           setIsVideoGuideOpen(false)
         }}
       />
+
+      {/* Invitation Acceptance & Personal Profile Claim Modal (Ensures Invitee Joins as Their Own Identity, Never the Inviter) */}
+      {inviteClaimModal?.isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 backdrop-blur-xs p-4">
+          <div className="w-full max-w-md rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-[#121110] p-6 text-white border-b border-zinc-800">
+              <div className="flex items-center justify-between">
+                <ConnectInLogo size="sm" showSubtitle={true} className="text-white" />
+                <span className="rounded-full bg-emerald-500/20 border border-emerald-500/40 px-3 py-1 text-[11px] font-bold text-emerald-300">
+                  🤝 Personal Network Invite
+                </span>
+              </div>
+              <h2 className="mt-4 text-xl font-black text-[#f2ede4]">
+                {inviteClaimModal.inviterName} invited you to connect
+              </h2>
+              <p className="mt-1 text-xs text-zinc-400">
+                Confirm your name and profession below so you join ConnectLn under your own profile and connect directly with <strong>{inviteClaimModal.inviterName}</strong>.
+              </p>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                const finalRecipientName = (inviteClaimModal.recipientName || "").trim() || "Invited Colleague"
+                const finalRecipientEmail =
+                  (inviteClaimModal.recipientEmail || "").trim() ||
+                  `${finalRecipientName.toLowerCase().replace(/\s+/g, ".")}@connectln.app`
+                const selectedProf = findProfessionById(inviteClaimModal.professionId)
+
+                const customProfile = createUniqueUserProfile({
+                  name: finalRecipientName,
+                  email: finalRecipientEmail,
+                  role: "personal",
+                  professionId: selectedProf?.id || "cybersecurity_architect",
+                  professionEnclave: selectedProf?.enclaveId || "tech_cybersecurity"
+                })
+
+                const claimedUser: UserProfile = {
+                  ...customProfile,
+                  id: `user_${Date.now().toString(36)}`,
+                  name: finalRecipientName,
+                  email: finalRecipientEmail,
+                  profession: selectedProf?.title || customProfile.profession,
+                  professionId: selectedProf?.id || customProfile.professionId,
+                  professionCategory: selectedProf?.categoryName || customProfile.professionCategory,
+                  professionEnclave: selectedProf?.enclaveId || customProfile.professionEnclave,
+                  headline:
+                    selectedProf?.defaultHeadline ||
+                    `Verified ConnectLn Professional · Connected with ${inviteClaimModal.inviterName}`,
+                  avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(finalRecipientName)}&backgroundColor=0a66c2`,
+                  role: "personal",
+                  roles: ["NORMAL_USER"],
+                  connectionsCount: 1
+                } as UserProfile
+
+                saveStoredUser(claimedUser)
+                connectWithInviterInStorage(inviteClaimModal.inviterName, inviteClaimModal.inviterHeadline)
+                setUserData(claimedUser)
+                setInviteClaimModal(null)
+                setActiveTab("network")
+
+                if (typeof window !== "undefined") {
+                  localStorage.setItem("connectin_verified", "true")
+                  window.history.replaceState({}, "", window.location.pathname)
+                }
+              }}
+              className="p-6 space-y-4 text-xs"
+            >
+              <div className="space-y-1.5">
+                <label className="font-bold text-zinc-700 dark:text-zinc-300">
+                  Your Full Name (Your ConnectLn Profile Name)
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Yaw Asiedu"
+                  value={inviteClaimModal.recipientName}
+                  onChange={(e) =>
+                    setInviteClaimModal((prev) => (prev ? { ...prev, recipientName: e.target.value } : prev))
+                  }
+                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-transparent px-3.5 py-2.5 text-sm font-semibold text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="font-bold text-zinc-700 dark:text-zinc-300">
+                  Your Email Address
+                </label>
+                <input
+                  type="email"
+                  required
+                  placeholder="e.g. yaw.asiedu@gmail.com"
+                  value={inviteClaimModal.recipientEmail}
+                  onChange={(e) =>
+                    setInviteClaimModal((prev) => (prev ? { ...prev, recipientEmail: e.target.value } : prev))
+                  }
+                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-transparent px-3.5 py-2.5 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="font-bold text-zinc-700 dark:text-zinc-300">
+                  Your Primary Profession / Discipline
+                </label>
+                <select
+                  value={inviteClaimModal.professionId}
+                  onChange={(e) =>
+                    setInviteClaimModal((prev) => (prev ? { ...prev, professionId: e.target.value } : prev))
+                  }
+                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3.5 py-2.5 text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                >
+                  {PROFESSION_ENCLAVES.flatMap((enc) =>
+                    enc.categories.flatMap((cat) =>
+                      cat.professions.map((prof) => (
+                        <option key={prof.id} value={prof.id}>
+                          {enc.badge} · {prof.title}
+                        </option>
+                      ))
+                    )
+                  )}
+                </select>
+              </div>
+
+              <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 p-3 flex items-center gap-3">
+                <div className="h-9 w-9 rounded-full bg-[#0A66C2] text-white font-black flex items-center justify-center shrink-0 text-xs">
+                  {(inviteClaimModal.inviterName || "K").charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-bold text-emerald-900 dark:text-emerald-200 text-xs truncate">
+                    1st-Degree Connection: {inviteClaimModal.inviterName}
+                  </p>
+                  <p className="text-[11px] text-emerald-700 dark:text-emerald-400 truncate">
+                    {inviteClaimModal.inviterHeadline}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full rounded-full bg-[#0A66C2] hover:bg-[#004182] py-3 px-5 text-sm font-black text-white shadow-lg transition-all cursor-pointer"
+              >
+                {inviteClaimModal.recipientName.trim()
+                  ? `Join as ${inviteClaimModal.recipientName.trim()} & Connect →`
+                  : `Accept Invitation & Join ConnectLn →`}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

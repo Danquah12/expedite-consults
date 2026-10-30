@@ -124,11 +124,13 @@ export async function sendConnectInOTPEmail({
  */
 export async function sendConnectInInviteEmail({
   toEmail,
+  recipientName,
   senderName,
   personalMessage,
   inviteLink
 }: {
   toEmail: string
+  recipientName?: string
   senderName: string
   personalMessage?: string
   inviteLink: string
@@ -146,9 +148,12 @@ export async function sendConnectInInviteEmail({
       ? envFrom
       : `ConnectLn Network <${envFrom}>`
 
-    const subject = `${senderName} invited you to connect on ConnectLn`
+    const cleanRecipientName = (recipientName || "").trim()
+    const subject = cleanRecipientName
+      ? `${cleanRecipientName}, ${senderName} invited you to connect on ConnectLn`
+      : `${senderName} invited you to connect on ConnectLn`
 
-    const plainText = `Hi there,\n\n${senderName} has invited you to join their trusted network on ConnectLn — Tickets, vouches, and real work.\n\n${personalMessage ? `Personal note from ${senderName}:\n"${personalMessage}"\n\n` : ""}Accept invitation & connect: ${inviteLink}\n\n--\nConnectLn Network · Tickets, vouches, and real work\nExpedite Consults LLC · Zero-Trust Identity Infrastructure`
+    const plainText = `Hi ${cleanRecipientName || "there"},\n\n${senderName} has invited you to join their trusted network on ConnectLn — Tickets, vouches, and real work.\n\n${personalMessage ? `Personal note from ${senderName}:\n"${personalMessage}"\n\n` : ""}Accept invitation & create your ConnectLn profile: ${inviteLink}\n\n--\nConnectLn Network · Tickets, vouches, and real work\nExpedite Consults LLC · Zero-Trust Identity Infrastructure`
 
     const htmlContent = `
       <!DOCTYPE html>
@@ -181,17 +186,17 @@ export async function sendConnectInInviteEmail({
             <p style="color: #9c9589; font-size: 11px; margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; letter-spacing: 0.5px;">Tickets, vouches, and real work</p>
           </div>
           <div class="content">
-            <span class="badge">🌐 Professional Network Invitation</span>
-            <h2 class="greeting">${senderName} invited you to connect</h2>
+            <span class="badge">🌐 Personal Network Invitation</span>
+            <h2 class="greeting">${cleanRecipientName ? `Hi ${cleanRecipientName}, ${senderName} invited you to connect` : `${senderName} invited you to connect`}</h2>
             <p class="text">
-              Expand your cryptographic 1st-degree professional network across enterprise teams, alumni, cloud engineers, trades &amp; defense specialists.
+              Join ConnectLn under your own profile and connect directly with <strong>${senderName}</strong> across enterprise teams, alumni, cloud engineers, trades &amp; defense specialists.
             </p>
             ${personalMessage ? `<div class="quote-box">"${personalMessage}"</div>` : ""}
             <div>
-              <a href="${inviteLink}" class="btn" target="_blank">Accept Invitation &amp; Join Network →</a>
+              <a href="${inviteLink}" class="btn" target="_blank">${cleanRecipientName ? `Join as ${cleanRecipientName} &amp; Connect →` : `Accept Invitation &amp; Join Network →`}</a>
             </div>
             <p class="text" style="font-size: 11px; margin-bottom: 0;">
-              Or copy and paste this link in your browser:<br/>
+              Or copy and paste this personal invitation link in your browser:<br/>
               <a href="${inviteLink}" style="color:#e06c58; word-break: break-all;">${inviteLink}</a>
             </p>
           </div>

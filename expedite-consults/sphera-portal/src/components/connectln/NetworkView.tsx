@@ -174,7 +174,36 @@ export function NetworkView({
     }
   })
 
-  const [outboundInvites, setOutboundInvites] = useState<OutboundInvitation[]>(initialOutboundInvitations)
+  const [outboundInvites, setOutboundInvites] = useState<OutboundInvitation[]>(() => {
+    if (typeof window === 'undefined') return initialOutboundInvitations
+    try {
+      const raw = localStorage.getItem('connectin_my_outbound_invites_v2')
+      return raw ? JSON.parse(raw) : initialOutboundInvitations
+    } catch {
+      return initialOutboundInvitations
+    }
+  })
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const raw = localStorage.getItem('connectin_my_custom_connections_v2')
+      if (raw) {
+        setCustomConnections(JSON.parse(raw))
+      }
+    } catch {
+      // ignore
+    }
+  }, [currentUser?.name])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      localStorage.setItem('connectin_my_outbound_invites_v2', JSON.stringify(outboundInvites))
+    } catch {
+      // ignore
+    }
+  }, [outboundInvites])
   const [catchUpEvents, setCatchUpEvents] = useState<CatchUpEvent[]>(initialCatchUpEvents)
   const [companies, setCompanies] = useState<CompanyNetworkItem[]>(() => getEnclaveCompanies(enclaveId))
   const [organizations, setOrganizations] = useState<OrganizationNetworkItem[]>(() => getEnclaveOrganizations(enclaveId))
@@ -330,19 +359,28 @@ export function NetworkView({
     const inv = outboundInvites.find(i => i.id === id)
     if (!inv) return
 
-    const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://connectln.vercel.app"
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://www.connectln.app"
+    const cleanInvName = (inv.name || "").replace(/^Invited Colleague\s*\(.*\)$/i, "").trim()
 
     if (inv.phone) {
       showToast(`Resending SMS invite to ${inv.phone}...`)
       try {
+        const q = new URLSearchParams({
+          invite: "accept",
+          inviter: currentUser.name,
+          invitedPhone: inv.phone,
+          ...(cleanInvName ? { invitedName: cleanInvName } : {})
+        })
         const res = await fetch("/api/connectin/invite", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             channel: "sms",
             recipients: [inv.phone],
+            recipientName: cleanInvName,
             senderName: currentUser.name,
-            inviteLink: `${baseUrl}/connectin-login`
+            senderHeadline: currentUser.headline,
+            inviteLink: `${baseUrl}/connectin?${q.toString()}`
           })
         })
         const data = await res.json()
@@ -357,14 +395,22 @@ export function NetworkView({
     } else if (inv.email) {
       showToast(`Resending email invite to ${inv.email}...`)
       try {
+        const q = new URLSearchParams({
+          invite: "accept",
+          inviter: currentUser.name,
+          invitedEmail: inv.email,
+          ...(cleanInvName ? { invitedName: cleanInvName } : {})
+        })
         const res = await fetch("/api/connectin/invite", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             channel: "email",
             recipients: [inv.email],
+            recipientName: cleanInvName,
             senderName: currentUser.name,
-            inviteLink: `${baseUrl}/connectin`
+            senderHeadline: currentUser.headline,
+            inviteLink: `${baseUrl}/connectin?${q.toString()}`
           })
         })
         const data = await res.json()

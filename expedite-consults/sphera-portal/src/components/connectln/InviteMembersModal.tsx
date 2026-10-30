@@ -63,31 +63,60 @@ export function InviteMembersModal({
     setInviteCid(`cin_${Date.now().toString(36)}`)
   }, [])
 
-  const inviteLink = `${origin}/connectin?ref=${encodeURIComponent(currentUser.name.toLowerCase().replace(/\s+/g, '-'))}&cid=${inviteCid || 'live'}`
-  const loginLink = `${origin}/connectin-login?ref=${encodeURIComponent(currentUser.name.toLowerCase().replace(/\s+/g, '-'))}&cid=${inviteCid || 'live'}`
-  const referralLink = loginLink
+  // Optional Recipient Full Name (e.g., "Yaw Asiedu")
+  const [recipientName, setRecipientName] = useState("")
 
   // Email form state
   const [emailsText, setEmailsText] = useState("")
-  const [emailMessage, setEmailMessage] = useState(
-    `Hi there,\n\nI'd like to invite you to join my trusted network on ConnectLn — Tickets, vouches, and real work.\n\nConnect with me here: ${inviteLink}`
-  )
-
   // Phone form state
   const [phoneNumbersText, setPhoneNumbersText] = useState("")
-  const [phoneMessage, setPhoneMessage] = useState(
-    `ConnectLn: Hi! ${currentUser.name} invited you to connect on ConnectLn (Tickets, vouches, and real work). Join here: ${loginLink}`
+
+  const deriveNameFromEmailAddress = (email: string) => {
+    const local = (email.split("@")[0] || "").trim()
+    if (!local) return ""
+    return local
+      .replace(/[._-]+/g, " ")
+      .replace(/\d+/g, "")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+      .join(" ")
+  }
+
+  const firstParsedEmail = emailsText.split(/[\n,;]+/).map(e => e.trim().toLowerCase()).find(e => e.includes("@")) || ""
+  const effectiveRecipientName = (recipientName.trim() || (firstParsedEmail ? deriveNameFromEmailAddress(firstParsedEmail) : "")).trim()
+
+  const inviteQuery = new URLSearchParams()
+  inviteQuery.set("invite", "accept")
+  inviteQuery.set("inviter", currentUser.name)
+  if (currentUser.headline) inviteQuery.set("inviterHeadline", currentUser.headline)
+  inviteQuery.set("ref", currentUser.name.toLowerCase().replace(/\s+/g, "-"))
+  inviteQuery.set("cid", inviteCid || "live")
+  if (effectiveRecipientName) inviteQuery.set("invitedName", effectiveRecipientName)
+  if (firstParsedEmail) inviteQuery.set("invitedEmail", firstParsedEmail)
+
+  const inviteLink = `${origin}/connectin?${inviteQuery.toString()}`
+  const loginLink = `${origin}/connectin?${inviteQuery.toString()}`
+  const referralLink = `${origin}/connectin?invite=accept&inviter=${encodeURIComponent(currentUser.name)}&ref=${encodeURIComponent(currentUser.name.toLowerCase().replace(/\s+/g, '-'))}&cid=${inviteCid || 'live'}`
+
+  const [emailMessage, setEmailMessage] = useState(
+    `Hi ${effectiveRecipientName || "there"},\n\nI'd like to invite you to join my trusted network on ConnectLn — Tickets, vouches, and real work.\n\nAccept invitation & create your profile here: ${inviteLink}`
   )
 
-  // Keep messages in sync when origin changes
+  const [phoneMessage, setPhoneMessage] = useState(
+    `ConnectLn: Hi${effectiveRecipientName ? ` ${effectiveRecipientName}` : ""}! ${currentUser.name} invited you to connect on ConnectLn (Tickets, vouches, and real work). Join here: ${loginLink}`
+  )
+
+  // Keep messages in sync when origin, recipientName, or email changes
   useEffect(() => {
     setEmailMessage(
-      `Hi there,\n\nI'd like to invite you to join my trusted network on ConnectLn — Tickets, vouches, and real work.\n\nConnect with me here: ${inviteLink}`
+      `Hi ${effectiveRecipientName || "there"},\n\nI'd like to invite you to join my trusted network on ConnectLn — Tickets, vouches, and real work.\n\nAccept invitation & create your profile here: ${inviteLink}`
     )
     setPhoneMessage(
-      `ConnectLn: Hi! ${currentUser.name} invited you to connect on ConnectLn (Tickets, vouches, and real work). Join here: ${loginLink}`
+      `ConnectLn: Hi${effectiveRecipientName ? ` ${effectiveRecipientName}` : ""}! ${currentUser.name} invited you to connect on ConnectLn (Tickets, vouches, and real work). Join here: ${loginLink}`
     )
-  }, [origin, currentUser.name, inviteLink, loginLink])
+  }, [origin, currentUser.name, effectiveRecipientName, inviteLink, loginLink])
 
   // Feedback states
   const [isLoading, setIsLoading] = useState(false)
@@ -162,8 +191,10 @@ export function InviteMembersModal({
         body: JSON.stringify({
           channel: "email",
           recipients: parsedEmails,
+          recipientName: effectiveRecipientName,
           message: emailMessage,
           senderName: currentUser.name,
+          senderHeadline: currentUser.headline,
           inviteLink
         })
       })
@@ -174,15 +205,20 @@ export function InviteMembersModal({
         throw new Error(data.error || "Email dispatch request failed")
       }
 
-      const newOutbound = parsedEmails.map(email => ({
-        id: 'out_' + Date.now() + Math.random().toString(36).slice(2, 6),
-        name: email.split("@")[0].charAt(0).toUpperCase() + email.split("@")[0].slice(1),
-        headline: `Invited via Email · ${email}`,
-        avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(email)}&backgroundColor=0a66c2`,
-        email,
-        sentAt: 'Just now',
-        status: 'pending' as const
-      }))
+      const newOutbound = parsedEmails.map(email => {
+        const personName = (parsedEmails.length === 1 && recipientName.trim())
+          ? recipientName.trim()
+          : (deriveNameFromEmailAddress(email) || (email.split("@")[0].charAt(0).toUpperCase() + email.split("@")[0].slice(1)))
+        return {
+          id: 'out_' + Date.now() + Math.random().toString(36).slice(2, 6),
+          name: personName,
+          headline: `Invited via Email · ${email}`,
+          avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(personName)}&backgroundColor=0a66c2`,
+          email,
+          sentAt: 'Just now',
+          status: 'pending' as const
+        }
+      })
 
       if (onInviteSent) {
         onInviteSent(newOutbound)
@@ -195,6 +231,7 @@ export function InviteMembersModal({
           message: `Branded email dispatched via Resend to ${parsedEmails.join(", ")}. Note: If the recipient does not see it within 60 seconds, remind them to check their Spam/Junk folder (sent from auth@expediteconsults.com).`
         })
         setEmailsText("")
+        setRecipientName("")
       } else if (data.dispatched > 0) {
         setSuccessToast(`✓ Sent to ${data.dispatched} of ${parsedEmails.length} recipient(s).`)
       } else {
@@ -241,8 +278,10 @@ export function InviteMembersModal({
         body: JSON.stringify({
           channel: "sms",
           recipients: parsedPhones,
+          recipientName: recipientName.trim(),
           message: phoneMessage,
           senderName: currentUser.name,
+          senderHeadline: currentUser.headline,
           inviteLink: loginLink
         })
       })
@@ -253,15 +292,20 @@ export function InviteMembersModal({
         throw new Error(data.error || "SMS dispatch request failed")
       }
 
-      const newOutbound = parsedPhones.map(phone => ({
-        id: 'out_sms_' + Date.now() + Math.random().toString(36).slice(2, 6),
-        name: `Invited Colleague (${phone})`,
-        headline: `Invited via SMS · ${phone}`,
-        avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(phone)}&backgroundColor=4338ca`,
-        phone,
-        sentAt: 'Just now',
-        status: 'pending' as const
-      }))
+      const newOutbound = parsedPhones.map(phone => {
+        const personName = (parsedPhones.length === 1 && recipientName.trim())
+          ? recipientName.trim()
+          : `Invited Colleague (${phone})`
+        return {
+          id: 'out_sms_' + Date.now() + Math.random().toString(36).slice(2, 6),
+          name: personName,
+          headline: `Invited via SMS · ${phone}`,
+          avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(personName)}&backgroundColor=4338ca`,
+          phone,
+          sentAt: 'Just now',
+          status: 'pending' as const
+        }
+      })
 
       if (onInviteSent) {
         onInviteSent(newOutbound)
@@ -483,6 +527,22 @@ export function InviteMembersModal({
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="font-bold text-zinc-700 dark:text-zinc-300">
+                    Colleague Full Name (Recipient Identity)
+                  </label>
+                  <span className="text-[11px] font-mono text-zinc-400">Joins under their own profile</span>
+                </div>
+                <input
+                  type="text"
+                  placeholder="e.g. Yaw Asiedu"
+                  value={recipientName}
+                  onChange={(e) => setRecipientName(e.target.value)}
+                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2.5 text-base sm:text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 touch-manipulation"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-zinc-700 dark:text-zinc-300">
                     Colleague Mobile Phone Number(s)
                   </label>
                   <span className="text-[11px] font-mono text-zinc-400">e.g. +1 (240) 555-0192</span>
@@ -614,6 +674,22 @@ export function InviteMembersModal({
           {/* ======================================================== */}
           {activeInviteTab === 'email' && (
             <form onSubmit={handleSendEmailInvites} className="space-y-4 text-xs">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-zinc-700 dark:text-zinc-300">
+                    Colleague Full Name (Recipient Identity)
+                  </label>
+                  <span className="text-[11px] font-mono text-zinc-400">Joins ConnectLn as this user</span>
+                </div>
+                <input
+                  type="text"
+                  placeholder="e.g. Yaw Asiedu (or leave blank to auto-detect from email)"
+                  value={recipientName}
+                  onChange={(e) => setRecipientName(e.target.value)}
+                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2.5 text-base sm:text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
+                />
+              </div>
+
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="font-bold text-zinc-700 dark:text-zinc-300">
