@@ -58,7 +58,7 @@ export interface CallParticipantTile {
   avatarGradient: string
 }
 
-function RemotePeerVideoElement({ stream }: { stream: MediaStream }) {
+function RemotePeerVideoElement({ stream, isVideoOn = true }: { stream: MediaStream; isVideoOn?: boolean }) {
   const ref = useRef<HTMLVideoElement | null>(null)
   const [hasLiveVideoFrames, setHasLiveVideoFrames] = useState(false)
 
@@ -104,6 +104,8 @@ function RemotePeerVideoElement({ stream }: { stream: MediaStream }) {
     }
   }, [stream])
 
+  const showVideo = hasLiveVideoFrames && isVideoOn
+
   return (
     <video
       ref={ref}
@@ -130,8 +132,8 @@ function RemotePeerVideoElement({ stream }: { stream: MediaStream }) {
         height: "100%",
         objectFit: "cover",
         backgroundColor: "transparent",
-        opacity: hasLiveVideoFrames ? 1 : 0,
-        pointerEvents: hasLiveVideoFrames ? "auto" : "none",
+        opacity: showVideo ? 1 : 0,
+        pointerEvents: showVideo ? "auto" : "none",
         zIndex: 6,
       }}
     />
@@ -2024,7 +2026,9 @@ export function VibeVideoCallStudio({
     return null
   }, [isScreenSharing, localSharedStageItem, localParticipantId, localDisplayName])
 
-  // Upsert a real connected friend right at position #2 (next to the local host tile!)
+  const knownRemotePeerIdsRef = useRef<Set<string>>(new Set())
+
+  // Upsert a real connected participant into the multi-party call grid (supports 12+ simultaneous real participants!)
   const upsertRemoteFriendTile = useCallback(
     (info: {
       participantId: string
@@ -2039,29 +2043,64 @@ export function VibeVideoCallStudio({
       liveFrame?: string | null
     }) => {
       if (!info.participantId || info.participantId === localParticipantId) return
+      if (info.peerId) {
+        knownRemotePeerIdsRef.current.add(info.peerId)
+      }
 
       setParticipants((prev) => {
         const normName = (info.name || "").trim().toLowerCase()
-        const existingIdx = prev.findIndex(
+        // 1. First, match an existing tile by exact unique participantId or remotePeerId
+        let existingIdx = prev.findIndex(
           (p) =>
             !p.isLocal &&
-            (p.id === info.participantId ||
-              (info.peerId && p.remotePeerId === info.peerId) ||
-              (normName.length > 0 &&
-                normName !== "connected friend" &&
-                normName !== "connected friend (live video)" &&
-                p.name.trim().toLowerCase() === normName))
+            (p.id === info.participantId || Boolean(info.peerId && p.remotePeerId === info.peerId))
         )
 
+        // 2. If not found by unique ID, check if there is a non-real rung/placeholder tile (!p.isRealRemotePeer)
+        // waiting for this person to join — upgrade that placeholder tile into this real participant!
+        if (existingIdx < 0) {
+          existingIdx = prev.findIndex(
+            (p) =>
+              !p.isLocal &&
+              !p.isRealRemotePeer &&
+              normName.length > 0 &&
+              normName !== "connected friend" &&
+              normName !== "connected friend (live video)" &&
+              p.name.trim().toLowerCase() === normName
+          )
+        }
+        // Also if there is any single non-real rung placeholder tile waiting in the grid and a new real person joins, upgrade it!
+        if (existingIdx < 0) {
+          existingIdx = prev.findIndex((p) => !p.isLocal && !p.isRealRemotePeer)
+        }
+
         const existingTile = existingIdx >= 0 ? prev[existingIdx] : undefined
+        const resolvedBaseName =
+          info.name && info.name !== "Connected Friend (Live Video)"
+            ? info.name.trim()
+            : existingTile?.name || "Connected Participant"
+
+        // If another distinct real participant in the call already has the exact same display name (e.g. forwarded link),
+        // keep both participants in the call by appending a short device tag to disambiguate
+        const hasDuplicateRealName = prev.some(
+          (p, idx) =>
+            !p.isLocal &&
+            p.isRealRemotePeer &&
+            idx !== existingIdx &&
+            p.id !== info.participantId &&
+            p.name.trim().toLowerCase() === resolvedBaseName.toLowerCase()
+        )
+        const finalDisplayName = hasDuplicateRealName
+          ? `${resolvedBaseName} (${info.participantId.slice(-3).toUpperCase()})`
+          : resolvedBaseName
 
         const updatedTile: CallParticipantTile = {
-          id: existingTile ? existingTile.id : info.participantId,
-          name:
-            info.name && info.name !== "Connected Friend (Live Video)"
-              ? info.name
-              : existingTile?.name || "Connected Participant",
-          role: info.role || existingTile?.role || "Connected Participant · Live Video",
+          // Always use the authoritative info.participantId so heartbeats and WebRTC streams stay bound to this device
+          id: info.participantId,
+          name: finalDisplayName,
+          role:
+            info.role ||
+            (existingTile?.isRealRemotePeer ? existingTile.role : "Connected Participant · Live Video"),
           device: info.device || existingTile?.device || "Remote WebRTC Camera",
           isLocal: false,
           isRealRemotePeer: true,
@@ -2087,38 +2126,47 @@ export function VibeVideoCallStudio({
           connectionType: "P2P host/srflx",
           rttMs: 19,
           packetLossPct: "0.0%",
-          avatarGradient: "from-emerald-500 to-teal-700",
+          avatarGradient: existingTile?.avatarGradient || "from-emerald-500 to-teal-700",
         }
 
         let rawList: CallParticipantTile[]
         if (existingIdx >= 0) {
           rawList = [...prev]
           rawList[existingIdx] = updatedTile
+          if (!existingTile?.isRealRemotePeer) {
+            setLastJoinedFriendName(updatedTile.name)
+            appendLog(`🟢 "${updatedTile.name}" answered & connected live to meeting room (${callId})!`)
+          }
         } else {
           const localTile = prev.find((p) => p.isLocal)
           const others = prev.filter((p) => !p.isLocal)
-          rawList = localTile ? [localTile, updatedTile, ...others] : [updatedTile, ...others]
+          rawList = localTile ? [localTile, ...others, updatedTile] : [...others, updatedTile]
           setLastJoinedFriendName(updatedTile.name)
           appendLog(`🟢 "${updatedTile.name}" connected live to meeting room (${callId})!`)
         }
 
-        // Strict deduplication across remote tiles so the same participant or peerId never appears twice
+        // Strict deduplication by unique participantId & remotePeerId so 3, 4, 5, up to 12+ real participants all stay in the grid
         const seenIds = new Set<string>()
         const seenPeerIds = new Set<string>()
-        const seenNames = new Set<string>()
+        const realNames = new Set<string>(
+          rawList
+            .filter((item) => !item.isLocal && item.isRealRemotePeer)
+            .map((item) => item.name.trim().toLowerCase())
+        )
         const nextList: CallParticipantTile[] = []
         for (const item of rawList) {
           if (item.isLocal) {
             nextList.push(item)
             continue
           }
-          const itemNormName = item.name.trim().toLowerCase()
+          // Skip non-real placeholder if a real peer with that name is now in the call
+          if (!item.isRealRemotePeer && realNames.has(item.name.trim().toLowerCase())) {
+            continue
+          }
           if (seenIds.has(item.id)) continue
           if (item.remotePeerId && seenPeerIds.has(item.remotePeerId)) continue
-          if (itemNormName && seenNames.has(itemNormName)) continue
           seenIds.add(item.id)
           if (item.remotePeerId) seenPeerIds.add(item.remotePeerId)
-          if (itemNormName) seenNames.add(itemNormName)
           nextList.push(item)
         }
 
@@ -2200,7 +2248,7 @@ export function VibeVideoCallStudio({
     })
   }, [localStreamState])
 
-  // LAYER 1: Real WebRTC Multi-Device Video/Audio & Data Mesh via PeerJS (`slot-0` .. `slot-3`)
+  // LAYER 1: Real WebRTC Multi-Device Video/Audio & Data Mesh via PeerJS (`slot-0` .. `slot-11` + dynamic peer IDs)
   useEffect(() => {
     if (typeof window === "undefined") return
     let isCancelled = false
@@ -2208,13 +2256,28 @@ export function VibeVideoCallStudio({
     let syncTimer: ReturnType<typeof setInterval> | null = null
     const activeMediaCalls = activeMediaCallsRef.current
     const activeDataConns = new Map<string, any>()
+    const liveStreamPeers = new Set<string>()
+    const lastCallAttemptMs = new Map<string, number>()
 
     const cleanRoomKey =
       callId.replace(/[^a-zA-Z0-9]/g, "").toLowerCase().slice(0, 20) || "viberoom9b0bbf68"
-    const allSlots = [0, 1, 2, 3].map((idx) => `vibe-connectln-${cleanRoomKey}-slot-${idx}`)
+    const allSlots = Array.from({ length: 12 }, (_, idx) => `vibe-connectln-${cleanRoomKey}-slot-${idx}`)
+    const uniqueFallbackPeerId = `vibe-connectln-${cleanRoomKey}-${localParticipantId.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()}`
+
+    // Distribute guests across slots 1..11 based on participantId hash so 2nd, 3rd, 4th, 5th guests never collide on slot-1
+    const pidHash = localParticipantId
+      .split("")
+      .reduce((acc, ch) => (acc * 31 + ch.charCodeAt(0)) >>> 0, 7)
+    const guestSlots = allSlots.slice(1) // slot-1 .. slot-11
+    const startOffset = pidHash % guestSlots.length
+    const rotatedGuestSlots = [
+      ...guestSlots.slice(startOffset),
+      ...guestSlots.slice(0, startOffset),
+    ]
+
     const slotOrder = isInvitedGuestLink
-      ? [allSlots[1], allSlots[2], allSlots[3], allSlots[0]]
-      : [allSlots[0], allSlots[1], allSlots[2], allSlots[3]]
+      ? [...rotatedGuestSlots, allSlots[0], uniqueFallbackPeerId]
+      : [allSlots[0], ...rotatedGuestSlots, uniqueFallbackPeerId]
 
     // Helper: builds outgoing MediaStream using Virtual Background canvas video track (when active) + microphone audio track
     const getOutgoingCallMediaStream = (): MediaStream | null => {
@@ -2243,12 +2306,15 @@ export function VibeVideoCallStudio({
 
     const bindMediaCall = (mediaCall: any) => {
       if (!mediaCall || !mediaCall.peer) return
+      knownRemotePeerIdsRef.current.add(mediaCall.peer)
       activeMediaCalls.set(mediaCall.peer, mediaCall)
       mediaCall.on("stream", (remoteStream: MediaStream) => {
         if (isCancelled) return
+        liveStreamPeers.add(mediaCall.peer)
         setRemoteStreams((prev) => ({ ...prev, [mediaCall.peer]: remoteStream }))
       })
       mediaCall.on("close", () => {
+        liveStreamPeers.delete(mediaCall.peer)
         activeMediaCalls.delete(mediaCall.peer)
         setRemoteStreams((prev) => {
           const next = { ...prev }
@@ -2257,12 +2323,14 @@ export function VibeVideoCallStudio({
         })
       })
       mediaCall.on("error", () => {
+        liveStreamPeers.delete(mediaCall.peer)
         activeMediaCalls.delete(mediaCall.peer)
       })
     }
 
     const bindDataConn = (conn: any) => {
       if (!conn || !conn.peer) return
+      knownRemotePeerIdsRef.current.add(conn.peer)
       conn.on("open", () => {
         activeDataConns.set(conn.peer, conn)
         const st = peerSyncStateRef.current
@@ -2271,6 +2339,7 @@ export function VibeVideoCallStudio({
             type: "VIBE_PEER_SYNC",
             participantId: localParticipantId,
             peerId: peerInstance?.id,
+            knownPeerIds: Array.from(knownRemotePeerIdsRef.current),
             name: st.localDisplayName,
             role: isInvitedGuestLink ? "Invited Friend · Live Video" : "Host · Local Camera & Mic",
             device: st.activeCameraLabel,
@@ -2287,6 +2356,16 @@ export function VibeVideoCallStudio({
       })
       conn.on("data", (data: any) => {
         if (isCancelled || !data || data.type !== "VIBE_PEER_SYNC") return
+        if (data.peerId && data.peerId !== peerInstance?.id) {
+          knownRemotePeerIdsRef.current.add(data.peerId)
+        }
+        if (Array.isArray(data.knownPeerIds)) {
+          for (const kp of data.knownPeerIds) {
+            if (typeof kp === "string" && kp && kp !== peerInstance?.id) {
+              knownRemotePeerIdsRef.current.add(kp)
+            }
+          }
+        }
         peerSyncStateRef.current.upsertRemoteFriendTile({
           participantId: data.participantId || conn.peer,
           peerId: data.peerId || conn.peer,
@@ -2331,6 +2410,7 @@ export function VibeVideoCallStudio({
             iceServers: [
               { urls: "stun:stun.l.google.com:19302" },
               { urls: "stun:stun1.l.google.com:19302" },
+              { urls: "stun:stun2.l.google.com:19302" },
               { urls: "stun:stun.cloudflare.com:3478" },
             ],
           },
@@ -2343,18 +2423,23 @@ export function VibeVideoCallStudio({
           }
           peerInstance = peer
           setMyPeerId(openedId)
-          peerSyncStateRef.current.appendLog(`WebRTC Room Mesh ready on channel [${openedId}] — listening for friends...`)
+          peerSyncStateRef.current.appendLog(`WebRTC Room Mesh ready on channel [${openedId}] — listening for all participants...`)
 
-          // Periodically sync with all other slots in this room
+          // Periodically sync with all slots AND all discovered dynamic peer IDs in this room
           syncTimer = setInterval(() => {
             if (isCancelled || !peerInstance || peerInstance.destroyed) return
             const st = peerSyncStateRef.current
             const frame = st.captureCompactLiveFrame()
             const activeStage = st.captureActiveSharedStagePayload()
+            const targetPeerIds = Array.from(
+              new Set([...allSlots, ...Array.from(knownRemotePeerIdsRef.current)])
+            ).filter((id) => id && id !== openedId)
+
             const syncPayload = {
               type: "VIBE_PEER_SYNC",
               participantId: localParticipantId,
               peerId: openedId,
+              knownPeerIds: [openedId, ...Array.from(knownRemotePeerIdsRef.current)],
               name: st.localDisplayName,
               role: isInvitedGuestLink ? "Invited Friend · Live Video" : "Host · Local Camera & Mic",
               device: st.activeCameraLabel,
@@ -2366,8 +2451,8 @@ export function VibeVideoCallStudio({
               sharedStage: activeStage,
             }
 
-            for (const targetSlot of allSlots) {
-              if (targetSlot === openedId) continue
+            const nowMs = Date.now()
+            for (const targetSlot of targetPeerIds) {
               const existingConn = activeDataConns.get(targetSlot)
               if (existingConn && existingConn.open) {
                 try {
@@ -2376,9 +2461,16 @@ export function VibeVideoCallStudio({
                   // ignore
                 }
 
-                // Initiate live WebRTC media call ONLY when targetSlot has an open peer connection!
+                // Initiate or retry live WebRTC media call when targetSlot has an open peer connection and we haven't received a live stream yet
                 const outStream = getOutgoingCallMediaStream()
-                if (outStream && outStream.getVideoTracks().length > 0 && !activeMediaCalls.has(targetSlot)) {
+                const lastTry = lastCallAttemptMs.get(targetSlot) || 0
+                if (
+                  outStream &&
+                  (outStream.getVideoTracks().length > 0 || outStream.getAudioTracks().length > 0) &&
+                  !liveStreamPeers.has(targetSlot) &&
+                  nowMs - lastTry > 4200
+                ) {
+                  lastCallAttemptMs.set(targetSlot, nowMs)
                   try {
                     const outCall = peerInstance.call(targetSlot, outStream, {
                       metadata: {
@@ -2470,7 +2562,7 @@ export function VibeVideoCallStudio({
       isFirstStudioHeartbeatRef.current = false
       inFlightHeartbeatRef.current = true
       const controller = new AbortController()
-      const abortTimer = setTimeout(() => controller.abort(), 3500)
+      const abortTimer = setTimeout(() => controller.abort(), 4500)
 
       fetch("/api/v1/calls", {
         method: "POST",
@@ -2534,6 +2626,7 @@ export function VibeVideoCallStudio({
                 if (p.peer_id) {
                   activeRemoteUserIds.add(p.peer_id)
                   activeRemotePeerIds.add(p.peer_id)
+                  knownRemotePeerIdsRef.current.add(p.peer_id)
                 }
                 if (typeof p.display_name === "string" && p.display_name.trim()) {
                   activeRemoteNames.add(p.display_name.trim().toLowerCase())
@@ -2554,9 +2647,10 @@ export function VibeVideoCallStudio({
             }
             // Prune any real remote peer tile whose participant has left or timed out
             setParticipants((prev) => {
-              const isStillActive = (p: CallParticipant) =>
+              const isStillActive = (p: CallParticipantTile) =>
                 activeRemoteUserIds.has(p.id) ||
                 Boolean(p.remotePeerId && activeRemotePeerIds.has(p.remotePeerId)) ||
+                Boolean(p.remotePeerId && activeMediaCallsRef.current.has(p.remotePeerId)) ||
                 activeRemoteNames.has(p.name.trim().toLowerCase())
 
               const hasStalePeer = prev.some((p) => p.isRealRemotePeer && !isStillActive(p))
@@ -4181,7 +4275,7 @@ export function VibeVideoCallStudio({
             </div>
           )}
 
-          {/* PARTICIPANT VIDEO GRID (CLEAN, UNCLUTTERED, REAL PARTICIPANTS ONLY) */}
+          {/* PARTICIPANT VIDEO GRID (CLEAN, UNCLUTTERED, REAL MULTI-PARTY PARTICIPANTS) */}
           {callState !== "ENDED" && (
           <div
             className={`grid gap-4 ${
@@ -4189,7 +4283,9 @@ export function VibeVideoCallStudio({
                 ? "grid-cols-1 max-w-4xl mx-auto"
                 : participants.length === 2
                 ? "grid-cols-1 md:grid-cols-2"
-                : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                : participants.length <= 6
+                ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                : "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
             }`}
           >
             {participants.map((part) => {
@@ -4209,6 +4305,8 @@ export function VibeVideoCallStudio({
                         ? "420px"
                         : isLocalTile && layoutMode === "speaker"
                         ? "380px"
+                        : participants.length > 6
+                        ? "220px"
                         : "280px",
                   }}
                   className={`rounded-2xl border-2 overflow-hidden relative flex flex-col justify-between transition-all ${
@@ -4296,9 +4394,9 @@ export function VibeVideoCallStudio({
                     />
                   )}
 
-                  {/* LAYER 3 (zIndex 6): LIVE REMOTE WEBRTC MEDIASTREAM (Transparent until videoWidth > 0) */}
-                  {!isLocalTile && remoteStream && part.isVideoOn && (
-                    <RemotePeerVideoElement stream={remoteStream} />
+                  {/* LAYER 3 (zIndex 6): LIVE REMOTE WEBRTC MEDIASTREAM (Always mounted when stream exists so audio always plays) */}
+                  {!isLocalTile && remoteStream && (
+                    <RemotePeerVideoElement stream={remoteStream} isVideoOn={part.isVideoOn} />
                   )}
 
                   {/* Minimal Top-Left Status Pill (Does not cover participant faces) */}

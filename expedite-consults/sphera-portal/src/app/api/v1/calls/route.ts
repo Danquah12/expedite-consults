@@ -80,12 +80,141 @@ const ACTIVE_CALLS_STORE: Map<string, CommCallRecord> =
 globalForCalls.__vibeActiveCallsMap = ACTIVE_CALLS_STORE
 
 const TMP_CALLS_FILE = path.join(os.tmpdir(), "vibe_active_calls_v4.json")
+const PARTICIPANT_TTL_MS = 25000
+const CALLS_SYNC_MAP_NAME = "vibe_active_calls_map_v1"
 let lastDiskLoadMs = 0
 let lastDiskSaveMs = 0
+let lastCloudPullMs = 0
+const lastCloudParticipantPushMap = new Map<string, number>()
+
+function getTwilioCallsAuthHeader(): string | null {
+  const sid = process.env.TWILIO_ACCOUNT_SID || ""
+  const token = process.env.TWILIO_AUTH_TOKEN || ""
+  if (!sid || !token) return null
+  return `Basic ${Buffer.from(`${sid}:${token}`).toString("base64")}`
+}
+
+function makeCloudParticipantKey(callId: string, userId: string): string {
+  const cleanCall = String(callId || "room").replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 36)
+  const cleanUser = String(userId || "peer").replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 36)
+  return `p__${cleanCall}__${cleanUser}`
+}
+
+async function pushCloudCallParticipant(callId: string, participant: CommCallParticipant, force = false): Promise<void> {
+  const auth = getTwilioCallsAuthHeader()
+  if (!auth) return
+  const key = makeCloudParticipantKey(callId, participant.user_id)
+  const nowMs = Date.now()
+  const lastPush = lastCloudParticipantPushMap.get(key) || 0
+  if (!force && nowMs - lastPush < 2200) return
+  lastCloudParticipantPushMap.set(key, nowMs)
+
+  try {
+    const compactParticipant = {
+      ...participant,
+      call_id: callId,
+      // Keep item well under Twilio Sync 16KB limit
+      live_frame:
+        participant.live_frame && participant.live_frame.length < 11500
+          ? participant.live_frame
+          : null,
+    }
+    const baseUrl = `https://sync.twilio.com/v1/Services/default/Maps/${CALLS_SYNC_MAP_NAME}`
+    const serialized = JSON.stringify(compactParticipant)
+
+    const updateRes = await fetch(`${baseUrl}/Items/${encodeURIComponent(key)}`, {
+      method: "POST",
+      headers: {
+        Authorization: auth,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({ Data: serialized, Ttl: "60" }).toString(),
+    })
+    if (updateRes.ok) return
+
+    if (updateRes.status === 404) {
+      await fetch("https://sync.twilio.com/v1/Services/default/Maps", {
+        method: "POST",
+        headers: {
+          Authorization: auth,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({ UniqueName: CALLS_SYNC_MAP_NAME }).toString(),
+      }).catch(() => {})
+
+      await fetch(`${baseUrl}/Items`, {
+        method: "POST",
+        headers: {
+          Authorization: auth,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          Key: key,
+          Data: serialized,
+          Ttl: "60",
+        }).toString(),
+      }).catch(() => {})
+    }
+  } catch {
+    // non-fatal
+  }
+}
+
+async function pullCloudCallParticipants(): Promise<void> {
+  const auth = getTwilioCallsAuthHeader()
+  if (!auth) return
+  const nowMs = Date.now()
+  if (nowMs - lastCloudPullMs < 2000) return
+  lastCloudPullMs = nowMs
+
+  try {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 1400)
+    const res = await fetch(
+      `https://sync.twilio.com/v1/Services/default/Maps/${CALLS_SYNC_MAP_NAME}/Items?PageSize=80`,
+      {
+        method: "GET",
+        headers: { Authorization: auth },
+        cache: "no-store",
+        signal: controller.signal,
+      }
+    )
+    clearTimeout(timer)
+    if (!res.ok) return
+    const json = await res.json()
+    const items = Array.isArray(json.items) ? json.items : []
+    for (const item of items) {
+      const data = item?.data
+      if (!data || !data.call_id || !data.user_id) continue
+      if (data.participant_state === "LEFT" || !data.last_seen_ms || nowMs - data.last_seen_ms >= PARTICIPANT_TTL_MS) {
+        continue
+      }
+      const record = ACTIVE_CALLS_STORE.get(data.call_id)
+      if (!record || record.state === "ENDED") continue
+      const existingIdx = record.participants.findIndex((p) => p.user_id === data.user_id)
+      if (existingIdx < 0) {
+        record.participants.push(data as CommCallParticipant)
+      } else {
+        const localP = record.participants[existingIdx]
+        if ((data.last_seen_ms || 0) > (localP.last_seen_ms || 0)) {
+          record.participants[existingIdx] = {
+            ...localP,
+            ...data,
+            live_frame: data.live_frame || localP.live_frame || null,
+          }
+        } else if (!localP.peer_id && data.peer_id) {
+          record.participants[existingIdx].peer_id = data.peer_id
+        }
+      }
+    }
+  } catch {
+    // non-fatal
+  }
+}
 
 function loadPersistedCalls(): Map<string, CommCallRecord> {
   const nowMs = Date.now()
-  if (ACTIVE_CALLS_STORE.size > 0 && nowMs - lastDiskLoadMs < 2500) {
+  if (ACTIVE_CALLS_STORE.size > 0 && nowMs - lastDiskLoadMs < 2000) {
     return ACTIVE_CALLS_STORE
   }
   lastDiskLoadMs = nowMs
@@ -107,12 +236,12 @@ function loadPersistedCalls(): Map<string, CommCallRecord> {
           } else if (mem.state !== "ENDED") {
             const mergedMap = new Map<string, CommCallParticipant>()
             for (const p of mem.participants) {
-              if (p.last_seen_ms && nowMs - p.last_seen_ms < 7500) {
+              if (p.last_seen_ms && nowMs - p.last_seen_ms < PARTICIPANT_TTL_MS) {
                 mergedMap.set(p.user_id, p)
               }
             }
             for (const p of v.participants || []) {
-              if (!p.last_seen_ms || nowMs - p.last_seen_ms >= 7500) continue
+              if (!p.last_seen_ms || nowMs - p.last_seen_ms >= PARTICIPANT_TTL_MS) continue
               const existing = mergedMap.get(p.user_id)
               if (!existing || (p.last_seen_ms || 0) >= (existing.last_seen_ms || 0)) {
                 mergedMap.set(p.user_id, p)
@@ -148,7 +277,7 @@ function loadPersistedCalls(): Map<string, CommCallRecord> {
 
 function savePersistedCalls(force = false) {
   const nowMs = Date.now()
-  if (!force && nowMs - lastDiskSaveMs < 2500) return
+  if (!force && nowMs - lastDiskSaveMs < 2000) return
   lastDiskSaveMs = nowMs
   try {
     const obj: Record<string, CommCallRecord> = {}
@@ -163,7 +292,7 @@ function savePersistedCalls(force = false) {
         continue
       }
       const activeParts = (v.participants || []).filter(
-        (p) => p.last_seen_ms && nowMs - p.last_seen_ms < 7500
+        (p) => p.last_seen_ms && nowMs - p.last_seen_ms < PARTICIPANT_TTL_MS
       )
       if (activeParts.length > 0) {
         obj[k] = { ...v, participants: activeParts }
@@ -260,6 +389,27 @@ export async function POST(req: NextRequest) {
       if (existing) {
         if (body.user_id) {
           existing.participants = (existing.participants || []).filter((p) => p.user_id !== body.user_id)
+          pushCloudCallParticipant(
+            body.call_id,
+            {
+              call_id: body.call_id,
+              user_id: body.user_id,
+              device_id: "left",
+              display_name: "Left",
+              role: "Left",
+              device_label: "Left",
+              joined_at: now,
+              last_seen_ms: 0,
+              left_at: now,
+              is_muted: true,
+              is_video_on: false,
+              is_speaking: false,
+              is_screen_sharing: false,
+              participant_state: "LEFT",
+              e2ee_media_fingerprint: "",
+            },
+            true
+          ).catch(() => {})
         }
         if (existing.shared_stage && existing.shared_stage.sharer_user_id === body.user_id) {
           existing.shared_stage = null
@@ -279,6 +429,13 @@ export async function POST(req: NextRequest) {
     if (action === "end" && body.call_id) {
       const existing = ACTIVE_CALLS_STORE.get(body.call_id)
       if (existing) {
+        for (const p of existing.participants || []) {
+          pushCloudCallParticipant(
+            body.call_id,
+            { ...p, last_seen_ms: 0, left_at: now, participant_state: "LEFT" },
+            true
+          ).catch(() => {})
+        }
         existing.state = "ENDED"
         existing.ended_at = now
         existing.participants = []
@@ -303,6 +460,7 @@ export async function POST(req: NextRequest) {
       const conversationId = body.conversation_id || "9b0bbf68-20c8-4416-b82c-0f0e81b8df80"
 
       const record = ensureCallRoom(callId, userId, displayName, conversationId)
+      await pullCloudCallParticipants()
 
       // If this call room was recently ended (< 15s ago) and a client is only sending a periodic heartbeat (not explicitly creating/joining a new call),
       // return the ENDED state immediately so all remaining screens close/clear frozen participants!
@@ -423,9 +581,12 @@ export async function POST(req: NextRequest) {
         record.state_version += 1
       }
 
-      // Prune stale participants who haven't sent a heartbeat in > 7.5 seconds so disconnected/ended users never stay frozen
+      // Sync participant to global cloud map so all Vercel serverless instances see all participants in real time
+      pushCloudCallParticipant(callId, updatedParticipant, existingIdx < 0).catch(() => {})
+
+      // Prune stale participants who haven't sent a heartbeat in > 25 seconds so disconnected/ended users never stay frozen
       record.participants = record.participants.filter(
-        (p) => !p.last_seen_ms || nowMs - p.last_seen_ms < 7500
+        (p) => !p.last_seen_ms || nowMs - p.last_seen_ms < PARTICIPANT_TTL_MS
       )
 
       ACTIVE_CALLS_STORE.set(callId, record)
