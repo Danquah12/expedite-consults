@@ -258,7 +258,43 @@ export function resolveTypedProofClassification(
     };
   }
 
-  // 5. Dependency Version Check -> NEEDS_MANUAL_VALIDATION
+  // 4b. Resource limits / configuration guards (CWE-400 / CWE-770 / CWE-382 / CWE-1333) -> GUARD_ANALYZED (never DETECTED_STATIC)
+  if (cwe === "CWE-400" || cwe === "CWE-770" || cwe === "CWE-382" || cwe === "CWE-1333") {
+    return {
+      proofState: "GUARD_ANALYZED",
+      evidenceType: "CONFIGURATION_CONTROL",
+      evidenceHeading: "Resource-Limit & Runtime Configuration Guard Analysis Trace",
+      modeledAssumptions:
+        f.modeledAssumptions ||
+        "Static inspection of middleware/runtime configuration (upload size limits, regex input bounds, graceful shutdown); reverse-proxy or gateway limits outside the repository are not assumed.",
+      controlDominanceSummary:
+        f.controlDominanceSummary ||
+        `Control Inspected: Explicit resource limit / bounded input / graceful shutdown guard | Dominance: ABSENT_IN_LOCAL_CONFIG (${f.file}:${f.line}) | Effectiveness: UNBOUNDED_DEFAULT_ACTIVE`,
+    };
+  }
+
+  // 4c. Path traversal without a verified downstream file I/O sink -> NEEDS_MANUAL_VALIDATION (candidate)
+  if (cwe === "CWE-22") {
+    const hasFileIoSink =
+      /(?:readAllBytes|readAllLines|new\s+FileInputStream|new\s+FileReader|new\s+FileOutputStream|Files\.(?:read|write|newInputStream|copy|delete)|fs\.(?:readFile|readFileSync|createReadStream|writeFile|writeFileSync|unlink)|res\.sendFile|open\s*\()/i.test(
+        `${f.codeSnippet || ""}\n${f.sink || ""}`
+      );
+    if (!hasFileIoSink) {
+      return {
+        proofState: "NEEDS_MANUAL_VALIDATION",
+        evidenceType: "TAINT_DATAFLOW",
+        evidenceHeading: "Path Construction Candidate — Downstream File I/O Sink Trace Pending",
+        modeledAssumptions:
+          f.modeledAssumptions ||
+          "Tainted path construction (path.join / path.resolve) was observed, but no filesystem read/write/send sink is present in the excerpt; exploitability is not established until the downstream file operation is traced.",
+        controlDominanceSummary:
+          f.controlDominanceSummary ||
+          `Control Inspected: Canonical base-directory containment check | Dominance: NOT_ESTABLISHED (no file I/O sink in excerpt at ${f.file}:${f.line}) | Effectiveness: REQUIRES_SINK_TRACE`,
+      };
+    }
+  }
+
+  // 5. Dependency Version Check -> NEEDS_MANUAL_VALIDATION (version evidence only, never a taint path)
   if (cwe === "CWE-1395") {
     return {
       proofState: "NEEDS_MANUAL_VALIDATION",
@@ -266,7 +302,7 @@ export function resolveTypedProofClassification(
       evidenceHeading: "Dependency Manifest & Vulnerable API Reachability Trace",
       modeledAssumptions:
         f.modeledAssumptions ||
-        "Vulnerable library version declared in manifest (pom.xml / package.json); exploitability requires verifying whether dangerous interpolation APIs (StringSubstitutor.createInterpolator) are reachable from untrusted input.",
+        "Dependency version evidence only (declared manifest version vs advisory affected range). No source-to-sink taint path is established; exploitability requires lockfile-resolved version confirmation and call-graph reachability of the advisory's vulnerable API.",
       controlDominanceSummary:
         f.controlDominanceSummary ||
         "Control Inspected: Patched dependency version constraint & vulnerable API call-graph reachability | Dominance: MANIFEST_VERSION_AFFECTED | Effectiveness: REQUIRES_CALLGRAPH_REACHABILITY_CHECK",
@@ -436,6 +472,38 @@ export function normalizeFindingCvssAndProof(
     }
   }
 
+  const pathCandidateWithoutSink =
+    f.cwe === "CWE-22" &&
+    !/(?:readAllBytes|readAllLines|new\s+FileInputStream|new\s+FileReader|new\s+FileOutputStream|Files\.(?:read|write|newInputStream|copy|delete)|fs\.(?:readFile|readFileSync|createReadStream|writeFile|writeFileSync|unlink)|res\.sendFile|open\s*\()/i.test(
+      `${f.codeSnippet || ""}\n${f.sink || ""}`
+    );
+  if (pathCandidateWithoutSink) {
+    f = {
+      ...f,
+      cvssVector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N",
+      cvssRationale:
+        "Candidate pending downstream file I/O sink trace: path construction observed without a verified filesystem read/write/send operation.",
+      auditDisposition:
+        "Candidate Pending Downstream File I/O Sink Trace (CWE-22) — not exploitable until a file operation consuming the path is traced",
+    };
+  }
+
+  // Language-matched remediation label: never show a platform that differs from the source language family
+  const lang = f.language || "";
+  const isNodeFamily = /^(typescript|javascript|node\.?js|react \/ typescript)$/i.test(lang);
+  if (isNodeFamily && f.remediation?.length) {
+    const nodeRem = f.remediation.filter((r) => /node|typescript|javascript/i.test(r.platform));
+    if (nodeRem.length > 0) {
+      f = {
+        ...f,
+        remediation: nodeRem.map((r) => ({
+          ...r,
+          platform: (lang === "TypeScript" || lang === "JavaScript" ? lang : "Node.js") as typeof r.platform,
+        })),
+      };
+    }
+  }
+
   const vector = inferCvss31VectorForFinding(f);
   const exactCvss = calculateCvss31BaseScore(vector);
   const exactSeverity = cvss31QualitativeSeverity(exactCvss);
@@ -504,6 +572,16 @@ export interface AuditableRiskWorksheet {
   primaryFindingsCount: number;
   architecturalCandidateCount: number;
   normalizationCeiling: number;
+  primaryNormalizationCeiling: number;
+  combinedNormalizationCeiling: number;
+  reconciliation: {
+    primarySubtotalSum: number;
+    archSubtotalSum: number;
+    combinedSubtotalSum: number;
+    primaryScoreRecomputed: number;
+    combinedScoreRecomputed: number;
+    reconciles: boolean;
+  };
   calibratedConfidencePercent: number;
   engineConcordance: {
     xql: number;
@@ -530,6 +608,10 @@ export interface AuditableRiskWorksheet {
     avgCvss: number;
     avgReachabilityFactor: number;
     subtotalPoints: number;
+    primaryCount: number;
+    primarySubtotalPoints: number;
+    archCount: number;
+    archSubtotalPoints: number;
   }[];
   findingRows: {
     id: string;
@@ -626,21 +708,24 @@ export function computeAuditableRiskWorksheet(
     (primaryCodeWeightedSum + architecturalCandidateWeightedSum).toFixed(2)
   );
 
-  // Primary composite risk is computed strictly from Primary Scanned Code Findings (Pass-1)
-  const primaryCeiling = Math.max(120, Math.round(Math.max(1, primaryRows.length) * 14.0));
-  const normalizationCeiling = Math.max(160, Math.round(findings.length * 12.5));
+  // Explicit, displayed normalization ceilings (primary and combined are separate, self-verifying)
+  const primaryNormalizationCeiling = 140;
+  const combinedNormalizationCeiling = 250;
+  const normalizationCeiling = primaryNormalizationCeiling;
   const compositeRiskScore =
     primaryRows.length > 0
-      ? Math.min(100, Math.round((primaryCodeWeightedSum / primaryCeiling) * 100))
-      : Math.min(100, Math.round((rawWeightedSum / normalizationCeiling) * 100));
+      ? Math.min(100, Math.round((primaryCodeWeightedSum / primaryNormalizationCeiling) * 100))
+      : Math.min(100, Math.round((rawWeightedSum / combinedNormalizationCeiling) * 100));
   const combinedPostureRiskScore = Math.min(
     100,
-    Math.round((rawWeightedSum / normalizationCeiling) * 100)
+    Math.round((rawWeightedSum / combinedNormalizationCeiling) * 100)
   );
 
   const severities: Severity[] = ["Critical", "High", "Medium", "Low"];
   const severityBreakdown = severities.map((sev) => {
     const rows = findingRows.filter((r) => r.severity === sev);
+    const pRows = rows.filter((r) => r.findingOrigin !== "ARCHITECTURAL_CANDIDATE_HYPOTHESIS");
+    const aRows = rows.filter((r) => r.findingOrigin === "ARCHITECTURAL_CANDIDATE_HYPOTHESIS");
     const count = rows.length;
     const avgCvss =
       count > 0
@@ -650,9 +735,13 @@ export function computeAuditableRiskWorksheet(
       count > 0
         ? Number((rows.reduce((s, r) => s + r.reachabilityFactor, 0) / count).toFixed(2))
         : 0;
-    const subtotalPoints = Number(
-      rows.reduce((s, r) => s + r.findingRiskContribution, 0).toFixed(2)
+    const primarySubtotalPoints = Number(
+      pRows.reduce((s, r) => s + r.findingRiskContribution, 0).toFixed(2)
     );
+    const archSubtotalPoints = Number(
+      aRows.reduce((s, r) => s + r.findingRiskContribution, 0).toFixed(2)
+    );
+    const subtotalPoints = Number((primarySubtotalPoints + archSubtotalPoints).toFixed(2));
     return {
       severity: sev,
       count,
@@ -660,8 +749,41 @@ export function computeAuditableRiskWorksheet(
       avgCvss,
       avgReachabilityFactor,
       subtotalPoints,
+      primaryCount: pRows.length,
+      primarySubtotalPoints,
+      archCount: aRows.length,
+      archSubtotalPoints,
     };
   });
+
+  const primarySubtotalSum = Number(
+    severityBreakdown.reduce((s, r) => s + r.primarySubtotalPoints, 0).toFixed(2)
+  );
+  const archSubtotalSum = Number(
+    severityBreakdown.reduce((s, r) => s + r.archSubtotalPoints, 0).toFixed(2)
+  );
+  const combinedSubtotalSum = Number((primarySubtotalSum + archSubtotalSum).toFixed(2));
+  const primaryScoreRecomputed = Math.min(
+    100,
+    Math.round((primarySubtotalSum / primaryNormalizationCeiling) * 100)
+  );
+  const combinedScoreRecomputed = Math.min(
+    100,
+    Math.round((combinedSubtotalSum / combinedNormalizationCeiling) * 100)
+  );
+  const reconciliation = {
+    primarySubtotalSum,
+    archSubtotalSum,
+    combinedSubtotalSum,
+    primaryScoreRecomputed,
+    combinedScoreRecomputed,
+    reconciles:
+      Math.abs(primarySubtotalSum - primaryCodeWeightedSum) < 0.011 &&
+      Math.abs(archSubtotalSum - architecturalCandidateWeightedSum) < 0.011 &&
+      Math.abs(combinedSubtotalSum - rawWeightedSum) < 0.011 &&
+      combinedScoreRecomputed === combinedPostureRiskScore &&
+      (primaryRows.length === 0 || primaryScoreRecomputed === compositeRiskScore),
+  };
 
   // Compute the 4 underlying engine heuristic concordance values across findings
   let xqlSum = 0;
@@ -784,6 +906,9 @@ export function computeAuditableRiskWorksheet(
     primaryFindingsCount: primaryRows.length,
     architecturalCandidateCount: archRows.length,
     normalizationCeiling,
+    primaryNormalizationCeiling,
+    combinedNormalizationCeiling,
+    reconciliation,
     calibratedConfidencePercent,
     engineConcordance: {
       xql,
@@ -816,6 +941,91 @@ export interface AcceptanceTestExecutionResult {
   status: "PASS" | "FAIL";
   measuredMetric: string;
   evidenceArtifactRef: string;
+}
+
+export interface ReportIntegrityIssue {
+  code:
+    | "PROOF_CWE_CONTRADICTION"
+    | "REMEDIATION_LANGUAGE_MISMATCH"
+    | "WORKSHEET_NOT_RECONCILED"
+    | "PROOF_TOTAL_MISMATCH"
+    | "DEPENDENCY_MARKED_TAINT";
+  findingId?: string;
+  detail: string;
+}
+
+/**
+ * Report Integrity Validator: independently re-reads normalized findings and the worksheet and
+ * reports every contradiction. A non-empty result means the report must be treated as INVALID.
+ */
+export function validateReportIntegrity(
+  rawFindings: SASTFinding[],
+  validationById?: Map<string, CanonicalValidationFinding>
+): ReportIntegrityIssue[] {
+  const issues: ReportIntegrityIssue[] = [];
+  const findings = rawFindings.map((f) => normalizeFindingCvssAndProof(f, validationById?.get(f.id)));
+  const worksheet = computeAuditableRiskWorksheet(rawFindings, validationById);
+
+  const familyOf = (s: string): string => {
+    const l = s.toLowerCase();
+    if (/typescript|javascript|node/.test(l)) return "node";
+    if (/java|kotlin|maven/.test(l)) return "java";
+    if (/python/.test(l)) return "python";
+    return l;
+  };
+
+  const seenIds = new Set<string>();
+  findings.forEach((f) => {
+    seenIds.add(f.id);
+    const cwe = (f.cwe || "").toUpperCase();
+    const state = f.proofState;
+    const ev = f.evidenceType;
+    if (state === "DETECTED_STATIC" && !["CWE-327", "CWE-328", "CWE-330", "CWE-338"].includes(cwe)) {
+      issues.push({
+        code: "PROOF_CWE_CONTRADICTION",
+        findingId: f.id,
+        detail: `${f.id} (${cwe}) is DETECTED_STATIC but that state is reserved for cryptographic/PRNG primitives.`,
+      });
+    }
+    if (ev === "CRYPTOGRAPHIC_PRIMITIVE" && !["CWE-327", "CWE-328", "CWE-330", "CWE-338"].includes(cwe)) {
+      issues.push({
+        code: "PROOF_CWE_CONTRADICTION",
+        findingId: f.id,
+        detail: `${f.id} (${cwe}) carries CRYPTOGRAPHIC_PRIMITIVE evidence for a non-cryptographic CWE.`,
+      });
+    }
+    if (cwe === "CWE-1395" && (state === "DATAFLOW_CONFIRMED" || ev === "TAINT_DATAFLOW")) {
+      issues.push({
+        code: "DEPENDENCY_MARKED_TAINT",
+        findingId: f.id,
+        detail: `${f.id} is a dependency-version finding but is classified as a source-to-sink taint path.`,
+      });
+    }
+    const rem = f.remediation?.[0];
+    if (rem && f.language && familyOf(rem.platform) !== familyOf(f.language) &&
+        !/terraform|manifest|maven/i.test(rem.platform)) {
+      issues.push({
+        code: "REMEDIATION_LANGUAGE_MISMATCH",
+        findingId: f.id,
+        detail: `${f.id} is ${f.language} but remediation is labelled ${rem.platform}.`,
+      });
+    }
+  });
+
+  const proofTotal = worksheet.findingRows.length;
+  if (proofTotal !== seenIds.size) {
+    issues.push({
+      code: "PROOF_TOTAL_MISMATCH",
+      detail: `Proof-state rows (${proofTotal}) differ from unique findings (${seenIds.size}).`,
+    });
+  }
+  if (!worksheet.reconciliation.reconciles) {
+    issues.push({
+      code: "WORKSHEET_NOT_RECONCILED",
+      detail: `Severity subtotals (${worksheet.reconciliation.primarySubtotalSum} primary + ${worksheet.reconciliation.archSubtotalSum} architectural) do not reproduce the displayed risk indices.`,
+    });
+  }
+  return issues;
 }
 
 /**
@@ -905,7 +1115,16 @@ export function runTenGateReportAcceptanceSuite(
   const mitigatedCount = worksheet.findingRows.filter(
     (r) => r.proofState === "MITIGATED_BY_GUARD"
   ).length;
-  const typedSeparationPass = dataflowCount > 0 && dataflowCount < findings.length;
+  const integrityIssues = validateReportIntegrity(rawFindings, validationById);
+  const proofIssues = integrityIssues.filter(
+    (i) =>
+      i.code === "PROOF_CWE_CONTRADICTION" ||
+      i.code === "PROOF_TOTAL_MISMATCH" ||
+      i.code === "DEPENDENCY_MARKED_TAINT" ||
+      i.code === "WORKSHEET_NOT_RECONCILED"
+  );
+  const remLangIssues = integrityIssues.filter((i) => i.code === "REMEDIATION_LANGUAGE_MISMATCH");
+  const typedSeparationPass = proofIssues.length === 0 && dataflowCount < findings.length;
 
   // 7. Runtime proof honesty (0 RUNTIME_REPRODUCED in STATIC_ONLY mode)
   const runtimeCount = worksheet.findingRows.filter(
@@ -1001,7 +1220,7 @@ export function runTenGateReportAcceptanceSuite(
       testName: "Typed Proof Model & Scorecard Alignment",
       criterion: "Executive Summary, Scorecard, and Dossiers report identical 7-state proof counts and guard dominance traces.",
       status: typedSeparationPass ? "PASS" : "FAIL",
-      measuredMetric: `${dataflowCount} DATAFLOW_CONFIRMED · ${guardAnalyzedCount} GUARD_ANALYZED · ${pathFeasibleCount} PATH_FEASIBLE · ${detectedStaticCount} DETECTED_STATIC · ${manualValCount} NEEDS_MANUAL_VALIDATION · ${mitigatedCount} MITIGATED`,
+      measuredMetric: `${dataflowCount} DATAFLOW_CONFIRMED · ${guardAnalyzedCount} GUARD_ANALYZED · ${pathFeasibleCount} PATH_FEASIBLE · ${detectedStaticCount} DETECTED_STATIC · ${manualValCount} NEEDS_MANUAL_VALIDATION · ${mitigatedCount} MITIGATED · ${proofIssues.length} cross-section contradictions${proofIssues.length ? ` (${proofIssues.slice(0, 2).map((i) => i.detail).join(" | ")})` : ""}`,
       evidenceArtifactRef: "lib/cvss31.ts :: resolveTypedProofClassification()",
     },
     {
@@ -1016,8 +1235,8 @@ export function runTenGateReportAcceptanceSuite(
       testId: "AT-REM-08",
       testName: "Implementation-Ready, CWE-Coherent Remediation",
       criterion: "Every finding has a language/framework-accurate patch matching its exact CWE (e.g. CWE-1022 -> rel='noopener noreferrer') with 0 generic stubs.",
-      status: concreteRemCount === findings.length ? "PASS" : "FAIL",
-      measuredMetric: `${concreteRemCount}/${findings.length} CWE-coherent language-matched diffs + regression tests (0 generic/mismatched stubs)`,
+      status: concreteRemCount === findings.length && remLangIssues.length === 0 ? "PASS" : "FAIL",
+      measuredMetric: `${concreteRemCount}/${findings.length} concrete diffs · ${remLangIssues.length} language-label mismatches${remLangIssues.length ? ` (${remLangIssues.slice(0, 2).map((i) => i.detail).join(" | ")})` : ""} · static check only: patches are not compiled or executed`,
       evidenceArtifactRef: `${firstId}..${lastId} Remediation Ledger`,
     },
     {

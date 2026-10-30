@@ -33,6 +33,7 @@ import {
   normalizeFindingCvssAndProof,
   computeAuditableRiskWorksheet,
   runTenGateReportAcceptanceSuite,
+  validateReportIntegrity,
 } from "@/lib/cvss31";
 import type { SASTFinding, CanonicalProofState } from "@/types/sast";
 
@@ -239,6 +240,53 @@ export default function ReportEnginePage() {
     : "First-Party Application Repository (Static AST & Dataflow Scope)";
   const reportId = `XTRIKE-RPT-${commitSha.slice(0, 6).toUpperCase()}-2026`;
 
+  // Canonical findings ledger: the exact bytes hashed for the attestation digest (reproducible offline).
+  const canonicalLedgerJson = useMemo(
+    () =>
+      JSON.stringify({
+        reportId,
+        repository: targetName,
+        commit: fullCommitSha,
+        engine: "XTRIKE v4.2.0",
+        runtime: "STATIC_ONLY/NOT_RUN",
+        findings: filteredFindings.map((f) => ({
+          id: f.id,
+          cwe: f.cwe,
+          severity: f.severity,
+          cvss: f.cvss,
+          vector: f.cvssVector,
+          file: f.file,
+          line: f.line,
+          language: f.language,
+          proofState: f.proofState,
+          evidenceType: f.evidenceType,
+          origin: f.findingOrigin,
+          remediationPlatform: f.remediation?.[0]?.platform,
+        })),
+      }),
+    [reportId, targetName, fullCommitSha, filteredFindings]
+  );
+  const [ledgerDigest, setLedgerDigest] = useState("computing…");
+  useEffect(() => {
+    let cancelled = false;
+    const bytes = new TextEncoder().encode(canonicalLedgerJson);
+    crypto.subtle.digest("SHA-256", bytes).then((buf) => {
+      if (cancelled) return;
+      setLedgerDigest(
+        Array.from(new Uint8Array(buf))
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("")
+      );
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [canonicalLedgerJson]);
+  const integrityIssues = useMemo(
+    () => validateReportIntegrity(filteredFindings, validationById),
+    [filteredFindings, validationById]
+  );
+
   const handlePrint = () => {
     window.print();
   };
@@ -264,7 +312,7 @@ export default function ReportEnginePage() {
       ``,
       `| Metric | Value |`,
       `| :--- | :--- |`,
-      `| **Composite Risk Score** | **${riskScore}/100** (Raw Weighted Sum: \`${riskWorksheet.rawWeightedSum}\` / \`${riskWorksheet.normalizationCeiling}\` — Primary Code: \`${riskWorksheet.primaryCodeWeightedSum}\` pts, Architectural Candidates: \`${riskWorksheet.architecturalCandidateWeightedSum}\` pts) |`,
+      `| **Composite Risk Score** | **${riskScore}/100** (Raw Weighted Sum: \`${riskWorksheet.rawWeightedSum}\` / \`${riskWorksheet.combinedNormalizationCeiling}\` = ${riskWorksheet.combinedPostureRiskScore}/100 combined; Primary Code: \`${riskWorksheet.primaryCodeWeightedSum}\` / \`${riskWorksheet.primaryNormalizationCeiling}\` = ${riskWorksheet.compositeRiskScore}/100; Architectural Candidates: \`${riskWorksheet.architecturalCandidateWeightedSum}\` pts; Reconciliation: ${riskWorksheet.reconciliation.reconciles ? "VERIFIED" : "FAILED"}) |`,
       `| **Total Evaluated Findings** | ${canonicalStats.total} (${riskWorksheet.primaryFindingsCount} Primary Scanned Code + ${riskWorksheet.architecturalCandidateCount} Pass-2/3 Architectural Candidates) |`,
       `| **Critical / High / Medium / Low** | ${counts.critical} / ${counts.high} / ${counts.medium} / ${counts.low} |`,
       `| **DATAFLOW_CONFIRMED (Pass-1 Source-to-Sink Taint Flow Verified)** | ${canonicalStats.dataflowConfirmed} / ${canonicalStats.total} |`,
@@ -324,7 +372,7 @@ export default function ReportEnginePage() {
         ];
       }),
       `---`,
-      `*Signed and attested by XTRIKE SAST Desk Printable Report Engine · SHA-256 Digest: 8f9d2c4e7b1a6f305e8c2d9a4b7f1e6c3a9d0b2f4e8c1a7d6b3f9e2c4a1d8b5f*`,
+      `*Signed and attested by XTRIKE SAST Desk Printable Report Engine · SHA-256 of canonical findings ledger (JSON): ${ledgerDigest} · Integrity validator: ${integrityIssues.length === 0 ? "0 issues" : `${integrityIssues.length} ISSUES — REPORT INVALID`}*`,
     ];
 
     const blob = new Blob([lines.join("\n")], { type: "text/markdown;charset=utf-8" });
@@ -1222,7 +1270,7 @@ export default function ReportEnginePage() {
                 (isolated runtime sandbox verification was <strong>NOT_RUN</strong> during this static scan).
                 <div style={{ marginTop: 6, fontSize: 11, color: "#5c5349" }}>
                   <strong>Primary Scanned Code vs. Architectural Hypothesis Risk Separation:</strong>{" "}
-                  <strong>Primary Code Risk Index ({riskScore}/100)</strong> is computed exclusively from <strong>Pass-1 Primary Scanned Code Findings (<code>SAST-*</code> = <code>{riskWorksheet.primaryCodeWeightedSum} pts</code>)</strong> scaled to scope ceiling <code>{riskWorksheet.normalizationCeiling}</code> so Pass-2/3 architectural candidate hypotheses never inflate the scanned repository&apos;s primary risk score.{" "}
+                  <strong>Primary Code Risk Index ({riskScore}/100)</strong> is computed exclusively from <strong>Pass-1 Primary Scanned Code Findings (<code>SAST-*</code> = <code>{riskWorksheet.primaryCodeWeightedSum} pts</code>)</strong> scaled to scope ceiling <code>{riskWorksheet.primaryNormalizationCeiling}</code> (<code>{riskWorksheet.reconciliation.primarySubtotalSum} / {riskWorksheet.primaryNormalizationCeiling} × 100 = {riskWorksheet.reconciliation.primaryScoreRecomputed}</code>) so Pass-2/3 architectural candidate hypotheses never inflate the scanned repository&apos;s primary risk score.{" "}
                   <strong>Pass-2/3 Architectural Hypotheses (<code>RE-ENUM-*</code> = <code>{riskWorksheet.architecturalCandidateWeightedSum} pts</code> across {riskWorksheet.architecturalCandidateCount} items)</strong> are tracked separately (Combined Posture Index: <code>{riskWorksheet.combinedPostureRiskScore}/100</code>).{" "}
                   <strong>Multi-Engine Heuristic Concordance ({avgConf.toFixed(1)}%)</strong> is an engine-reported rule-agreement index across the 4 static analyzers (
                   <code>XTRIKE XQL={riskWorksheet.engineConcordance.xql}%</code>,{" "}
@@ -1257,7 +1305,7 @@ export default function ReportEnginePage() {
                     Reproducible Composite Risk, Primary vs. Architectural Scope Separation &amp; 4-Engine Concordance Worksheet (AT-CVSS-01 / AT-16)
                   </strong>
                   <span style={{ fontFamily: "monospace", fontSize: 11, color: "#8b4528", fontWeight: 700 }}>
-                    Primary Code ({riskWorksheet.primaryFindingsCount} SAST-*): {riskWorksheet.primaryCodeWeightedSum} pts / Ceiling {riskWorksheet.normalizationCeiling} &rarr; Primary Risk = {riskScore}/100 (Arch RE-ENUM: +{riskWorksheet.architecturalCandidateWeightedSum} pts &rarr; Combined = {riskWorksheet.combinedPostureRiskScore}/100)
+                    Primary Code ({riskWorksheet.primaryFindingsCount} SAST-*): {riskWorksheet.primaryCodeWeightedSum} pts / Ceiling {riskWorksheet.primaryNormalizationCeiling} &rarr; Primary Risk = {riskScore}/100 (Combined {riskWorksheet.rawWeightedSum} pts / Ceiling {riskWorksheet.combinedNormalizationCeiling} &rarr; {riskWorksheet.combinedPostureRiskScore}/100) · Reconciliation: {riskWorksheet.reconciliation.reconciles ? "VERIFIED" : "FAILED"}
                   </span>
                 </div>
 
@@ -1280,7 +1328,7 @@ export default function ReportEnginePage() {
                         Mean Reachability Factor
                       </th>
                       <th style={{ border: "1px solid #ddd3c2", padding: "6px 10px", textAlign: "right" }}>
-                        Subtotal Weighted Points (&Sigma; CVSS &times; w_sev &times; R)
+                        Subtotal Weighted Points (Primary + Architectural)
                       </th>
                     </tr>
                   </thead>
@@ -1303,10 +1351,18 @@ export default function ReportEnginePage() {
                           {row.avgReachabilityFactor.toFixed(2)}
                         </td>
                         <td style={{ border: "1px solid #ddd3c2", padding: "6px 10px", textAlign: "right", fontFamily: "monospace", fontWeight: 800 }}>
-                          {row.subtotalPoints.toFixed(2)} pts
+                          {row.primaryCount} primary → {row.primarySubtotalPoints.toFixed(2)} pts · {row.archCount} arch → {row.archSubtotalPoints.toFixed(2)} pts = {row.subtotalPoints.toFixed(2)} pts
                         </td>
                       </tr>
                     ))}
+                    <tr style={{ background: "#f3eee4", fontWeight: 800 }}>
+                      <td colSpan={5} style={{ border: "1px solid #ddd3c2", padding: "6px 10px" }}>
+                        Reconciliation: Primary {riskWorksheet.reconciliation.primarySubtotalSum} / {riskWorksheet.primaryNormalizationCeiling} = {riskWorksheet.reconciliation.primaryScoreRecomputed}/100 · Combined {riskWorksheet.reconciliation.combinedSubtotalSum} / {riskWorksheet.combinedNormalizationCeiling} = {riskWorksheet.reconciliation.combinedScoreRecomputed}/100 · {riskWorksheet.reconciliation.reconciles ? "VERIFIED" : "FAILED"}
+                      </td>
+                      <td style={{ border: "1px solid #ddd3c2", padding: "6px 10px", textAlign: "right", fontFamily: "monospace" }}>
+                        Σ {riskWorksheet.reconciliation.primarySubtotalSum} + {riskWorksheet.reconciliation.archSubtotalSum} = {riskWorksheet.reconciliation.combinedSubtotalSum} pts
+                      </td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
@@ -2304,11 +2360,22 @@ export default function ReportEnginePage() {
                   gap: 8,
                 }}
               >
-                <span>
-                  XTRIKE-AUDIT-SHA256: 8f9d2c4e7b1a6f305e8c2d9a4b7f1e6c3a9d0b2f4e8c1a7d6b3f9e2c4a1d8b5f
+                <span style={{ wordBreak: "break-all" }}>
+                  LEDGER-SHA256 (canonical findings JSON, UTF-8): {ledgerDigest}
                 </span>
-                <span>ENGINE: XTRIKE SAST DESK v4.2.0 &middot; AT-01..AT-18 VERIFIED &middot; SARIF 2.1.0</span>
+                <span>
+                  INTEGRITY VALIDATOR: {integrityIssues.length === 0 ? "0 issues" : `${integrityIssues.length} issues — REPORT INVALID`} &middot; STATIC_ONLY &middot; no patch compiled or executed
+                </span>
               </div>
+              {integrityIssues.length > 0 && (
+                <ul style={{ marginTop: 8, fontSize: 11, color: "#9e2a2b", paddingLeft: 18 }}>
+                  {integrityIssues.slice(0, 12).map((iss, i) => (
+                    <li key={i}>
+                      <code>{iss.code}</code> — {iss.detail}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </section>
           )}
         </div>

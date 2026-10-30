@@ -1,5 +1,6 @@
 import type {
   SASTFinding,
+  Remediation,
   DeepExploitabilityDossier,
   Severity,
   CanonicalProofState,
@@ -1434,7 +1435,9 @@ export function generateDeepReEnumeratedFindings(params: {
       ],
       remediation: [
         {
-          platform: (["Java", "Python", "Node.js", "Go", "C#", "PHP"].includes(language) ? language : "Java") as any,
+          platform: (["Java", "Python", "Node.js", "TypeScript", "JavaScript", "Go", "C#", "PHP", "Ruby", "Kotlin", "Swift"].includes(language)
+            ? language
+            : "Node.js") as Remediation["platform"],
           explanation: tpl.remediationSummary,
           code: `${variant.codeSnippet}\n\n${variant.remediationCode}`,
         },

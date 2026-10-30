@@ -2448,11 +2448,9 @@ export function scanFilesWithEnterpriseEngines(params: {
 
         const matchingCoreRule = ENTERPRISE_SAST_RULES.find((r) => r.cwe === matchedPlugin.cwe);
         const normalizedPlatform = (
-          ["Java", "Python", "Node.js", "Go", "C#", "PHP"].includes(fileLang)
+          ["Java", "Python", "Node.js", "TypeScript", "JavaScript", "Go", "C#", "PHP", "Ruby", "Kotlin", "Swift"].includes(fileLang)
             ? fileLang
-            : fileLang === "TypeScript" || fileLang === "JavaScript"
-              ? "Node.js"
-              : "Java"
+            : "Node.js"
         ) as Remediation["platform"];
 
         const pluginRemediation: Remediation[] = matchedPlugin.remediationCode

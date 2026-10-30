@@ -37,12 +37,17 @@ export type Remediation = {
     | "Python"
     | "Node.js"
     | "TypeScript"
+    | "JavaScript"
     | "React / TypeScript"
     | "Terraform HCL"
     | "Maven / XML"
+    | "Package Manifest (JSON/XML)"
     | "Go"
     | "C#"
-    | "PHP";
+    | "PHP"
+    | "Ruby"
+    | "Kotlin"
+    | "Swift";
   code: string;
   explanation: string;
 };
@@ -195,6 +200,20 @@ export type SASTFinding = {
     | "DEPENDENCY_VERSION_MATCHED"
     | "DEPENDENCY_MANIFEST_ADVISORY"
     | "FIRST_PARTY_CODE_WEAKNESS_NO_CVE";
+  consolidatedSinkLines?: number[];
+  dependencyEvidence?: {
+    packageName: string;
+    declaredVersionSpec: string;
+    lockfileResolvedVersion: string;
+    advisoryId: string;
+    affectedVersionRange: string;
+    patchedVersion: string;
+    dependencyPath: string;
+    vulnerableApiReachability:
+      | "UNVERIFIED_REQUIRES_CALLGRAPH_TRACE"
+      | "REACHABLE_IN_SOURCE"
+      | "NOT_INVOKED";
+  };
 
   // Location
   file: string;

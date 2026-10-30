@@ -1052,6 +1052,52 @@ const VARIANT_SPECIFIC_OVERRIDES: Record<string, Partial<SASTPluginDefinition>> 
     severity: "High",
     cvss: 7.5,
   },
+  "SCA-JSONWEBTOKEN-CVE": {
+    cwe: "CWE-1395",
+    cweName: "Dependency on Vulnerable Third-Party Component (CVE-2022-23529: jsonwebtoken < 9.0.0)",
+    severity: "High",
+    cvss: 7.6,
+    owasp: "A06:2021 · API8:2023 Vulnerable & Outdated Components",
+    asvs: "ASVS V14.2.1 (Dependency Version & Reachability)",
+    sanitizerHint: "Upgrade jsonwebtoken to >= 9.0.2 in package.json/lockfile and pass only verified string/Buffer/KeyObject secrets with explicit algorithms allowlist to jwt.verify()",
+    remediationSummary:
+      "CVE-2022-23529 affects jsonwebtoken < 9.0.0 ONLY if an untrusted object with a malicious toString() method is passed as secretOrPublicKey to jwt.verify(). Upgrade jsonwebtoken to >= 9.0.2 in package.json and lockfile, and verify call-graph reachability of jwt.verify() secretOrPublicKey arguments.",
+    remediationCode: `// ❌ VULNERABLE MANIFEST ENTRY (package.json — Declared version < 9.0.0)\n"dependencies": {\n  "jsonwebtoken": "0.4.0"\n}\n\n// ✅ REMEDIATED (1. Upgrade package.json + lockfile to jsonwebtoken >= 9.0.2)\n"dependencies": {\n  "jsonwebtoken": "^9.0.2"\n}\n\n// ✅ REMEDIATED (2. Pin RS256/HS256 algorithm and pass a verified KeyObject/string secret to jwt.verify):\nimport jwt from "jsonwebtoken";\nexport function verifyAccessToken(token: string, rsaPublicKeyPem: string) {\n  return jwt.verify(token, rsaPublicKeyPem, {\n    algorithms: ["RS256"],\n    issuer: "urn:xtrike:auth",\n  });\n}`,
+  },
+  "CERT-MULTER-NO-LIMITS": {
+    cwe: "CWE-770",
+    cweName: "Allocation of Resources Without Limits or Throttling (Multer Upload Missing limits.fileSize)",
+    severity: "Medium",
+    cvss: 5.3,
+    owasp: "A04:2021 · API4:2023 Unrestricted Resource Consumption",
+    asvs: "ASVS V12.1.1 (File Upload Size & Count Quotas)",
+    sanitizerHint: "Configure multer({ storage, limits: { fileSize: 5 * 1024 * 1024, files: 1, fields: 10 }, fileFilter })",
+    remediationSummary:
+      "Enforce explicit limits.fileSize, limits.files, limits.fields, and strict MIME/extension allowlist in Express Multer middleware to prevent memory and disk exhaustion on multipart uploads.",
+    remediationCode: `// ❌ VULNERABLE: Express Multer initialized without limits.fileSize or file count quota\nconst upload = multer({ storage });\n\n// ✅ REMEDIATED (TypeScript / Express): Enforce explicit 5 MB fileSize limit, single-file cap, and MIME allowlist\nconst ALLOWED_MIME_TYPES = new Set(["image/png", "image/jpeg", "application/pdf"]);\nexport const uploadBounded = multer({\n  storage: multer.memoryStorage(),\n  limits: {\n    fileSize: 5 * 1024 * 1024, // 5 MB hard ceiling\n    files: 1,\n    fields: 10,\n  },\n  fileFilter: (_req, file, cb) => {\n    if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {\n      return cb(new Error("Unsupported upload MIME type"));\n    }\n    cb(null, true);\n  },\n});\n\n// ✅ REGRESSION TEST (Jest / Supertest — TC-UPLOAD-770-001):\n// Expects HTTP 413 Payload Too Large (LIMIT_FILE_SIZE) when uploading a >5 MB buffer.`,
+  },
+  "CERT-UNCAUGHT-EXIT": {
+    cwe: "CWE-382",
+    cweName: "J2EE / Server Bad Practices: Direct Use of System Exit (process.exit in Server Handler)",
+    severity: "Medium",
+    cvss: 5.3,
+    owasp: "A05:2021 Security Misconfiguration",
+    asvs: "ASVS V7.4.1 (Structured Error Handling & Graceful Shutdown)",
+    sanitizerHint: "Replace direct process.exit() inside request/event handlers with structured error propagation (next(err)) and graceful server.close() drain on fatal bootstrap errors",
+    remediationSummary:
+      "Avoid calling process.exit() directly inside HTTP route callbacks or recoverable event handlers, which terminates all in-flight requests abruptly. Propagate request errors via next(err) and use graceful server.close() with a drain timeout on fatal startup failures.",
+    remediationCode: `// ❌ VULNERABLE: Abrupt process.exit(1) inside server runtime callback terminates all active requests\nprocess.exit(1);\n\n// ✅ REMEDIATED (TypeScript / Node.js): Graceful HTTP server drain + structured error middleware\nexport function initiateGracefulShutdown(server: import("http").Server, reason: Error): void {\n  console.error("[FATAL] Initiating graceful server drain:", reason.message);\n  server.close(() => {\n    process.exitCode = 1;\n  });\n  setTimeout(() => process.exit(1), 10_000).unref();\n}`,
+  },
+  "CERT-REDOS-DYNAMIC-REGEX": {
+    cwe: "CWE-1333",
+    cweName: "Inefficient Regular Expression Complexity (Dynamic RegExp from Request Input)",
+    severity: "Medium",
+    cvss: 5.3,
+    sanitizerHint: "Escape regex metacharacters (str.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')) or use literal string methods (.includes / .startsWith)",
+    remediationSummary:
+      "Never construct new RegExp(untrustedInput) directly from user-supplied strings, which enables Regular Expression Denial of Service (ReDoS). Use literal string comparison or escape all regex metacharacters and bound input length.",
+    remediationCode: `// ❌ VULNERABLE: User input passed directly into new RegExp() enables catastrophic backtracking\nconst pattern = new RegExp(req.query.filter);\n\n// ✅ REMEDIATED (TypeScript): Bound input length and escape all regular expression metacharacters\nfunction escapeRegExpLiteral(raw: string): string {\n  return raw.slice(0, 128).replace(/[.*+?^$\${}()|[\\]\\\\]/g, "\\\\$&");\n}\nconst safePattern = new RegExp(escapeRegExpLiteral(String(req.query.filter ?? "")), "i");`,
+  },
 };
 
 // Materialize the complete 400-Plugin Catalog deterministically

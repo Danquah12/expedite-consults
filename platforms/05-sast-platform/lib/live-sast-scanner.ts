@@ -1,4 +1,4 @@
-import type { SASTFinding, Severity } from "@/types/sast";
+import type { SASTFinding, Severity, Remediation } from "@/types/sast";
 import type { CanonicalValidationFinding, ValidationStatus } from "@/lib/validation-engine";
 import {
   buildDeepExploitabilityDossier,
@@ -1731,9 +1731,9 @@ function buildFindingRecordsFromMatches(params: {
       ],
       remediation: [
         {
-          platform: (["Java", "Python", "Node.js", "Go", "C#", "PHP"].includes(evalRecord.language)
+          platform: (["Java", "Python", "Node.js", "TypeScript", "JavaScript", "Go", "C#", "PHP", "Ruby", "Kotlin", "Swift"].includes(evalRecord.language)
             ? evalRecord.language
-            : "Java") as "Java" | "Python" | "Node.js" | "Go" | "C#" | "PHP",
+            : "Node.js") as Remediation["platform"],
           explanation: kb.remediationExplanation,
           code: `// ❌ VULNERABLE (${evalRecord.filePath}:${evalRecord.lineNumber})\n${evalRecord.codeLine}\n\n${kb.remediationCode}`,
         },

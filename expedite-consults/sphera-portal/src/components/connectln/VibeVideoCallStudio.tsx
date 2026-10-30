@@ -412,6 +412,7 @@ export interface VirtualBackgroundOption {
   category: "None" | "Blur" | "Office" | "Studio" | "Nature" | "Custom"
   mode: "none" | "blur" | "scene" | "custom"
   blurPx?: number
+  imageUrl?: string
   previewGradient: string
   sceneColors: [string, string, string]
   accentColor: string
@@ -460,6 +461,7 @@ const VIRTUAL_BACKGROUND_OPTIONS: VirtualBackgroundOption[] = [
     subtitle: "Warm walnut & skyline glass office",
     category: "Office",
     mode: "scene",
+    imageUrl: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=960&q=80",
     previewGradient: "from-amber-900/80 via-slate-900 to-stone-950",
     sceneColors: ["#1C1917", "#292524", "#0C0A09"],
     accentColor: "#F59E0B",
@@ -471,8 +473,9 @@ const VIRTUAL_BACKGROUND_OPTIONS: VirtualBackgroundOption[] = [
     subtitle: "Golden hour African innovation lounge",
     category: "Office",
     mode: "scene",
+    imageUrl: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=960&q=80",
     previewGradient: "from-orange-700/80 via-amber-900 to-emerald-950",
-    sceneColors: ["#431407", "#78350F", "#064E3B"],
+    sceneColors: ["#1E293B", "#334155", "#0F172A"],
     accentColor: "#FBBF24",
     badgeText: "ACCRA HUB",
   },
@@ -482,6 +485,7 @@ const VIRTUAL_BACKGROUND_OPTIONS: VirtualBackgroundOption[] = [
     subtitle: "Emerald E2EE command center",
     category: "Studio",
     mode: "scene",
+    imageUrl: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=960&q=80",
     previewGradient: "from-emerald-600/80 via-teal-950 to-slate-950",
     sceneColors: ["#022C22", "#064E3B", "#042F2E"],
     accentColor: "#10B981",
@@ -493,6 +497,7 @@ const VIRTUAL_BACKGROUND_OPTIONS: VirtualBackgroundOption[] = [
     subtitle: "Bookcase, plants & warm studio lamp",
     category: "Studio",
     mode: "scene",
+    imageUrl: "https://images.unsplash.com/photo-1507842229356-51c61504d3ab?auto=format&fit=crop&w=960&q=80",
     previewGradient: "from-amber-800/70 via-emerald-950 to-stone-900",
     sceneColors: ["#271C19", "#14281D", "#1C1917"],
     accentColor: "#A7F3D0",
@@ -504,6 +509,7 @@ const VIRTUAL_BACKGROUND_OPTIONS: VirtualBackgroundOption[] = [
     subtitle: "Calm turquoise coast & palm terrace",
     category: "Nature",
     mode: "scene",
+    imageUrl: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=960&q=80",
     previewGradient: "from-cyan-600/80 via-teal-800 to-slate-900",
     sceneColors: ["#083344", "#115E59", "#0F172A"],
     accentColor: "#22D3EE",
@@ -515,6 +521,7 @@ const VIRTUAL_BACKGROUND_OPTIONS: VirtualBackgroundOption[] = [
     subtitle: "Starlight glass igloo & emerald aurora",
     category: "Nature",
     mode: "scene",
+    imageUrl: "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=960&q=80",
     previewGradient: "from-indigo-900 via-emerald-800/80 to-slate-950",
     sceneColors: ["#1E1B4B", "#065F46", "#090D16"],
     accentColor: "#6EE7B7",
@@ -1669,6 +1676,24 @@ export function VibeVideoCallStudio({
     }
   }, [])
 
+  const presetBgImagesRef = useRef<Map<string, HTMLImageElement>>(new Map())
+  const warmupMaskCanvasRef = useRef<HTMLCanvasElement | null>(null)
+
+  // Preload photorealistic virtual background images with crossOrigin="anonymous" so canvas captureStream/toDataURL works cleanly
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    VIRTUAL_BACKGROUND_OPTIONS.forEach((opt) => {
+      if (opt.imageUrl && !presetBgImagesRef.current.has(opt.id)) {
+        const img = new Image()
+        img.crossOrigin = "anonymous"
+        img.onload = () => {
+          presetBgImagesRef.current.set(opt.id, img)
+        }
+        img.src = opt.imageUrl
+      }
+    })
+  }, [])
+
   useEffect(() => {
     if (selectedVirtualBgId === "none") {
       syncWebRtcOutgoingVideoTrack(false)
@@ -1679,15 +1704,40 @@ export function VibeVideoCallStudio({
     let animId: number | null = null
     let isRunning = true
 
-    // Initialize MediaPipe SelfieSegmentation once
+    // Load MediaPipe SelfieSegmentation via <script> tag on window so UMD global `this.SelfieSegmentation` never fails in Turbopack ESM
+    const loadSelfieSegmentationScript = (): Promise<any> => {
+      if (typeof window === "undefined") return Promise.resolve(null)
+      if ((window as any).SelfieSegmentation) {
+        return Promise.resolve((window as any).SelfieSegmentation)
+      }
+      return new Promise((resolve) => {
+        const existingScript = document.querySelector(
+          'script[data-mediapipe-selfie="true"]'
+        ) as HTMLScriptElement | null
+        if (existingScript) {
+          existingScript.addEventListener("load", () => resolve((window as any).SelfieSegmentation), {
+            once: true,
+          })
+          existingScript.addEventListener("error", () => resolve(null), { once: true })
+          return
+        }
+        const script = document.createElement("script")
+        script.src = "/mediapipe/selfie_segmentation/selfie_segmentation.js"
+        script.async = true
+        script.setAttribute("data-mediapipe-selfie", "true")
+        script.onload = () => resolve((window as any).SelfieSegmentation || null)
+        script.onerror = () => resolve(null)
+        document.head.appendChild(script)
+      })
+    }
+
     const ensureSegmenter = async () => {
       if (selfieSegmenterRef.current) return
       try {
-        const mp = await import("@mediapipe/selfie_segmentation")
-        const SegClass =
-          (mp as any).SelfieSegmentation ||
-          (mp as any).default?.SelfieSegmentation ||
-          (window as any).SelfieSegmentation
+        let SegClass = (window as any).SelfieSegmentation
+        if (!SegClass) {
+          SegClass = await loadSelfieSegmentationScript()
+        }
         if (!SegClass) return
         const segmenter = new SegClass({
           locateFile: (file: string) => `/mediapipe/selfie_segmentation/${file}`,
@@ -1706,7 +1756,7 @@ export function VibeVideoCallStudio({
         }
         selfieSegmenterRef.current = segmenter
       } catch {
-        // Fallback feathered silhouette if WASM blocked
+        // Fallback soft-feathered portrait mask if WASM unavailable
       }
     }
 
@@ -1718,6 +1768,22 @@ export function VibeVideoCallStudio({
       h: number,
       opt: VirtualBackgroundOption
     ) => {
+      // 1. If a preloaded photorealistic studio/office/nature image is available, draw it with a subtle studio depth-of-field
+      const presetImg = presetBgImagesRef.current.get(opt.id)
+      if (presetImg && presetImg.complete && presetImg.naturalWidth > 0) {
+        ctx.save()
+        ctx.drawImage(presetImg, 0, 0, w, h)
+        // Subtle vignette so the foreground person pops naturally
+        const vig = ctx.createRadialGradient(w * 0.5, h * 0.5, w * 0.25, w * 0.5, h * 0.5, w * 0.75)
+        vig.addColorStop(0, "rgba(0,0,0,0.05)")
+        vig.addColorStop(1, "rgba(0,0,0,0.38)")
+        ctx.fillStyle = vig
+        ctx.fillRect(0, 0, w, h)
+        ctx.restore()
+        return
+      }
+
+      // 2. Rich architectural studio scene fallback while HD image loads
       const grad = ctx.createLinearGradient(0, 0, w, h)
       grad.addColorStop(0, opt.sceneColors[0])
       grad.addColorStop(0.55, opt.sceneColors[1])
@@ -1730,69 +1796,33 @@ export function VibeVideoCallStudio({
       radial.addColorStop(1, "transparent")
       ctx.fillStyle = radial
       ctx.fillRect(0, 0, w, h)
+    }
 
-      ctx.save()
-      if (opt.id === "exec-boardroom" || opt.id === "accra-skyline") {
-        ctx.strokeStyle = `${opt.accentColor}35`
-        ctx.lineWidth = 2
-        for (let x = 28; x < w; x += 68) {
-          ctx.beginPath()
-          ctx.moveTo(x, 0)
-          ctx.lineTo(x, h * 0.78)
-          ctx.stroke()
-        }
-        ctx.fillStyle = `${opt.accentColor}28`
-        const skylineHeights = [48, 72, 38, 88, 64, 96, 52, 78, 60, 84, 44, 68]
-        skylineHeights.forEach((bh, idx) => {
-          const bx = idx * (w / skylineHeights.length)
-          ctx.fillRect(bx + 4, h * 0.72 - bh, w / skylineHeights.length - 8, bh)
-        })
-        ctx.fillStyle = "#141210"
-        ctx.fillRect(0, h * 0.72, w, h * 0.28)
-      } else if (opt.id === "cyber-soc") {
-        ctx.strokeStyle = "#10B98133"
-        ctx.lineWidth = 1
-        for (let x = 0; x < w; x += 36) {
-          ctx.beginPath()
-          ctx.moveTo(x, 0)
-          ctx.lineTo(x, h)
-          ctx.stroke()
-        }
-        for (let y = 0; y < h; y += 36) {
-          ctx.beginPath()
-          ctx.moveTo(0, y)
-          ctx.lineTo(w, y)
-          ctx.stroke()
-        }
-        ctx.strokeStyle = "#34D39966"
-        ctx.lineWidth = 2
-        ctx.strokeRect(24, 24, w * 0.3, h * 0.34)
-        ctx.strokeRect(w * 0.68, 24, w * 0.26, h * 0.34)
-      } else if (opt.id === "architect-library") {
-        ctx.fillStyle = "#1C1411"
-        ctx.fillRect(16, 18, w * 0.26, h * 0.75)
-        ctx.fillRect(w * 0.72, 18, w * 0.24, h * 0.75)
-        ctx.strokeStyle = "#F59E0B44"
-        ctx.lineWidth = 3
-        for (let sy = 50; sy < h * 0.72; sy += 42) {
-          ctx.beginPath()
-          ctx.moveTo(20, sy)
-          ctx.lineTo(16 + w * 0.25, sy)
-          ctx.moveTo(w * 0.73, sy)
-          ctx.lineTo(w * 0.95, sy)
-          ctx.stroke()
-        }
-      } else if (opt.id === "tropical-sanctuary" || opt.id === "aurora-studio") {
-        const ribbon = ctx.createLinearGradient(0, h * 0.15, w, h * 0.65)
-        ribbon.addColorStop(0, `${opt.accentColor}55`)
-        ribbon.addColorStop(0.5, "#14B8A633")
-        ribbon.addColorStop(1, `${opt.accentColor}44`)
-        ctx.fillStyle = ribbon
-        ctx.beginPath()
-        ctx.ellipse(w * 0.5, h * 0.32, w * 0.55, h * 0.22, -0.08, 0, Math.PI * 2)
-        ctx.fill()
+    // Build a smooth, soft-feathered alpha mask canvas so even before MediaPipe WASM finishes its first frame,
+    // there is NEVER a hard circle/oval cutting into the user's forehead!
+    const getSoftWarmupMaskCanvas = (w: number, h: number): HTMLCanvasElement => {
+      let maskCanvas = warmupMaskCanvasRef.current
+      if (!maskCanvas) {
+        maskCanvas = document.createElement("canvas")
+        warmupMaskCanvasRef.current = maskCanvas
       }
-      ctx.restore()
+      if (maskCanvas.width !== w || maskCanvas.height !== h) {
+        maskCanvas.width = w
+        maskCanvas.height = h
+        const mCtx = maskCanvas.getContext("2d")
+        if (mCtx) {
+          mCtx.clearRect(0, 0, w, h)
+          // Wide feathered radial gradient covering upper, center, and lower portrait zones smoothly
+          const g1 = mCtx.createRadialGradient(w * 0.5, h * 0.58, w * 0.18, w * 0.5, h * 0.55, w * 0.48)
+          g1.addColorStop(0, "rgba(255,255,255,1)")
+          g1.addColorStop(0.62, "rgba(255,255,255,0.96)")
+          g1.addColorStop(0.84, "rgba(255,255,255,0.45)")
+          g1.addColorStop(1, "rgba(255,255,255,0)")
+          mCtx.fillStyle = g1
+          mCtx.fillRect(0, 0, w, h)
+        }
+      }
+      return maskCanvas
     }
 
     let switchedWebRtcTrack = false
@@ -1823,60 +1853,37 @@ export function VibeVideoCallStudio({
           ctx.save()
           ctx.clearRect(0, 0, w, h)
 
+          const maskSource = latestSegMaskRef.current || getSoftWarmupMaskCanvas(w, h)
+
+          // Step 1: Draw the person segmentation mask with subtle edge feathering
+          ctx.save()
           if (latestSegMaskRef.current) {
-            // TRUE AI PERSON SEGMENTATION:
-            // Step 1: Draw the AI person mask first
-            ctx.drawImage(latestSegMaskRef.current, 0, 0, w, h)
+            ctx.filter = "blur(2px)"
+          }
+          ctx.drawImage(maskSource, 0, 0, w, h)
+          ctx.restore()
 
-            // Step 2: Keep ONLY the person pixels (`source-in`) from the live webcam feed (person is 100% in FRONT!)
-            ctx.globalCompositeOperation = "source-in"
+          // Step 2: Keep ONLY the person pixels (`source-in`) from the live webcam feed (person is 100% sharp in FRONT!)
+          ctx.globalCompositeOperation = "source-in"
+          ctx.save()
+          ctx.translate(w, 0)
+          ctx.scale(-1, 1)
+          ctx.drawImage(videoEl, 0, 0, w, h)
+          ctx.restore()
+
+          // Step 3: Draw the Virtual Background strictly BEHIND the person (`destination-over`)!
+          ctx.globalCompositeOperation = "destination-over"
+          if (activeVirtualBgOption.mode === "blur") {
             ctx.save()
+            ctx.filter = `blur(${activeVirtualBgOption.blurPx || 14}px) brightness(0.94)`
             ctx.translate(w, 0)
             ctx.scale(-1, 1)
-            ctx.drawImage(videoEl, 0, 0, w, h)
+            ctx.drawImage(videoEl, -16, -16, w + 32, h + 32)
             ctx.restore()
-
-            // Step 3: Draw the Virtual Background strictly BEHIND the person (`destination-over`)!
-            ctx.globalCompositeOperation = "destination-over"
-            if (activeVirtualBgOption.mode === "blur") {
-              ctx.save()
-              ctx.filter = `blur(${activeVirtualBgOption.blurPx || 14}px) brightness(0.94)`
-              ctx.translate(w, 0)
-              ctx.scale(-1, 1)
-              ctx.drawImage(videoEl, -16, -16, w + 32, h + 32)
-              ctx.restore()
-            } else if (activeVirtualBgOption.mode === "custom" && customBgImgRef.current) {
-              ctx.drawImage(customBgImgRef.current, 0, 0, w, h)
-            } else {
-              drawSceneBackdrop(ctx, w, h, activeVirtualBgOption)
-            }
+          } else if (activeVirtualBgOption.mode === "custom" && customBgImgRef.current) {
+            ctx.drawImage(customBgImgRef.current, 0, 0, w, h)
           } else {
-            // Instant feathered fallback while AI segmentation model warms up (~300ms):
-            // Draw person in front first using wide natural portrait mask, then draw backdrop BEHIND (`destination-over`)
-            ctx.save()
-            ctx.beginPath()
-            ctx.ellipse(w * 0.5, h * 0.44, w * 0.28, h * 0.36, 0, 0, Math.PI * 2)
-            ctx.ellipse(w * 0.5, h * 0.94, w * 0.44, h * 0.34, 0, Math.PI, Math.PI * 2)
-            ctx.closePath()
-            ctx.clip()
-            ctx.translate(w, 0)
-            ctx.scale(-1, 1)
-            ctx.drawImage(videoEl, 0, 0, w, h)
-            ctx.restore()
-
-            ctx.globalCompositeOperation = "destination-over"
-            if (activeVirtualBgOption.mode === "blur") {
-              ctx.save()
-              ctx.filter = `blur(${activeVirtualBgOption.blurPx || 14}px) brightness(0.94)`
-              ctx.translate(w, 0)
-              ctx.scale(-1, 1)
-              ctx.drawImage(videoEl, -16, -16, w + 32, h + 32)
-              ctx.restore()
-            } else if (activeVirtualBgOption.mode === "custom" && customBgImgRef.current) {
-              ctx.drawImage(customBgImgRef.current, 0, 0, w, h)
-            } else {
-              drawSceneBackdrop(ctx, w, h, activeVirtualBgOption)
-            }
+            drawSceneBackdrop(ctx, w, h, activeVirtualBgOption)
           }
 
           ctx.restore()
@@ -3950,17 +3957,23 @@ export function VibeVideoCallStudio({
 
           {/* VIRTUAL BACKGROUND STUDIO GALLERY DRAWER */}
           {showVirtualBgPicker && (
-            <div className="rounded-2xl bg-slate-900/95 border-2 border-teal-500/50 p-4 space-y-3 shadow-[0_0_25px_rgba(20,184,166,0.2)]">
+            <div
+              style={{ backgroundColor: "#061510", color: "#FFFFFF" }}
+              className="rounded-2xl border-2 border-teal-400/70 p-4 space-y-3 shadow-[0_0_28px_rgba(20,184,166,0.28)]"
+            >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full bg-teal-400 text-slate-950 font-extrabold text-[10px]">
+                  <span
+                    style={{ backgroundColor: "#2DD4BF", color: "#042F2E" }}
+                    className="px-2.5 py-0.5 rounded-full font-extrabold text-[10px]"
+                  >
                     ✨ LIVE STUDIO BACKDROPS
                   </span>
-                  <h4 className="text-xs font-extrabold text-white">
+                  <h4 style={{ color: "#FFFFFF" }} className="text-xs font-extrabold">
                     Choose a Virtual Background (Synced Live to Your Meeting Tile &amp; Connected Friends)
                   </h4>
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                   <input
                     ref={customBgInputRef}
                     type="file"
@@ -3971,45 +3984,55 @@ export function VibeVideoCallStudio({
                   <button
                     type="button"
                     onClick={() => customBgInputRef.current?.click()}
-                    className="px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[10px] font-extrabold cursor-pointer"
+                    style={{ backgroundColor: "#10B981", color: "#022C22" }}
+                    className="px-3 py-1.5 rounded-lg hover:opacity-90 text-[11px] font-extrabold cursor-pointer shadow-sm"
                   >
                     + Upload Custom Backdrop Photo
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowVirtualBgPicker(false)}
-                    className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-zinc-200 text-[10px] font-bold cursor-pointer"
+                    style={{
+                      backgroundColor: "#132A22",
+                      color: "#ECFDF5",
+                      border: "1px solid rgba(45, 212, 191, 0.45)",
+                    }}
+                    className="px-3 py-1.5 rounded-lg hover:opacity-90 text-[11px] font-extrabold cursor-pointer"
                   >
-                    Done
+                    ✕ Done
                   </button>
                 </div>
               </div>
 
               {/* Category Filter Pills */}
               <div className="flex flex-wrap items-center gap-1.5">
-                {(["All", "Blur", "Office", "Studio", "Nature"] as const).map((cat) => (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => setVirtualBgFilterCategory(cat)}
-                    className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer transition-all ${
-                      virtualBgFilterCategory === cat
-                        ? "bg-teal-400 text-slate-950"
-                        : "bg-slate-800 text-zinc-300 hover:bg-slate-700"
-                    }`}
-                  >
-                    {cat === "All" ? "All Backdrops (9)" : cat}
-                  </button>
-                ))}
+                {(["All", "Blur", "Office", "Studio", "Nature"] as const).map((cat) => {
+                  const activeCat = virtualBgFilterCategory === cat
+                  return (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setVirtualBgFilterCategory(cat)}
+                      style={{
+                        backgroundColor: activeCat ? "#2DD4BF" : "#0F2921",
+                        color: activeCat ? "#042F2E" : "#D1FAE5",
+                        border: activeCat ? "1px solid #5EEAD4" : "1px solid rgba(255,255,255,0.14)",
+                      }}
+                      className="px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer transition-all"
+                    >
+                      {cat === "All" ? "All Backdrops (9)" : cat}
+                    </button>
+                  )
+                })}
                 {customBgDataUrl && (
                   <button
                     type="button"
                     onClick={() => setSelectedVirtualBgId("custom")}
-                    className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer ${
-                      selectedVirtualBgId === "custom"
-                        ? "bg-emerald-400 text-slate-950"
-                        : "bg-emerald-950 text-emerald-300 border border-emerald-500/40"
-                    }`}
+                    style={{
+                      backgroundColor: selectedVirtualBgId === "custom" ? "#34D399" : "#064E3B",
+                      color: selectedVirtualBgId === "custom" ? "#022C22" : "#A7F3D0",
+                    }}
+                    className="px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer border border-emerald-400/50"
                   >
                     ★ Your Custom Photo
                   </button>
@@ -4031,42 +4054,70 @@ export function VibeVideoCallStudio({
                       type="button"
                       onClick={() => {
                         setSelectedVirtualBgId(opt.id)
+                        if (!isCameraOn) {
+                          setIsCameraOn(true)
+                        }
+                        if (!isHardwareCameraActive) {
+                          startHardwareCameraAndMic(
+                            selectedVideoDeviceId || undefined,
+                            selectedAudioDeviceId || undefined,
+                            false
+                          )
+                        }
                         appendLog(
                           opt.id === "none"
                             ? "Reverted to natural unedited camera feed."
                             : `✨ Activated Virtual Background: "${opt.name}" (${opt.subtitle}).`
                         )
                       }}
-                      className={`group rounded-xl overflow-hidden border-2 text-left transition-all cursor-pointer flex flex-col justify-between h-24 p-2.5 relative bg-gradient-to-br ${
-                        opt.previewGradient
-                      } ${
-                        isSelected
-                          ? "border-teal-300 ring-2 ring-teal-400/50 shadow-lg scale-[1.02]"
-                          : "border-white/15 hover:border-teal-400/60"
+                      style={{
+                        backgroundImage: opt.imageUrl
+                          ? `linear-gradient(to top, rgba(2, 12, 9, 0.92) 0%, rgba(2, 12, 9, 0.45) 55%, rgba(2, 12, 9, 0.25) 100%), url(${opt.imageUrl})`
+                          : `linear-gradient(135deg, ${opt.sceneColors[0]} 0%, ${opt.sceneColors[1]} 55%, ${opt.sceneColors[2]} 100%)`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        borderColor: isSelected ? "#2DD4BF" : "rgba(255,255,255,0.2)",
+                      }}
+                      className={`group rounded-xl overflow-hidden border-2 text-left transition-all cursor-pointer flex flex-col justify-between h-24 p-2.5 relative ${
+                        isSelected ? "ring-2 ring-teal-400/60 shadow-lg scale-[1.02]" : "hover:border-teal-400/70"
                       }`}
                     >
-                      {/* Decorative visual preview elements inside each card */}
+                      {/* Top Badge & Checkmark */}
                       <div className="flex items-center justify-between gap-1 relative z-10">
                         <span
                           style={{
-                            backgroundColor: isSelected ? "#2DD4BF" : "rgba(0,0,0,0.65)",
-                            color: isSelected ? "#042F2E" : "#A7F3D0",
+                            backgroundColor: isSelected ? "#2DD4BF" : "rgba(4, 18, 13, 0.82)",
+                            color: isSelected ? "#042F2E" : "#5EEAD4",
+                            border: "1px solid rgba(45, 212, 191, 0.35)",
                           }}
                           className="px-1.5 py-0.5 rounded text-[9px] font-mono font-extrabold"
                         >
                           {opt.badgeText}
                         </span>
                         {isSelected && (
-                          <CheckCircle2 className="h-3.5 w-3.5 text-teal-300 shrink-0" />
+                          <CheckCircle2 className="h-4 w-4 text-teal-300 shrink-0 drop-shadow" />
                         )}
                       </div>
 
-                      {/* Mini silhouette preview icon */}
-                      <div className="relative z-10 mt-auto">
-                        <p className="text-[11px] font-extrabold text-white leading-tight truncate">
+                      {/* High-Contrast Card Title & Subtitle */}
+                      <div
+                        style={{
+                          background: "linear-gradient(to top, rgba(2,10,8,0.92), rgba(2,10,8,0.55), transparent)",
+                        }}
+                        className="relative z-10 mt-auto -mx-2.5 -mb-2.5 px-2.5 pb-2 pt-3"
+                      >
+                        <p
+                          style={{ color: "#FFFFFF", textShadow: "0 1px 3px rgba(0,0,0,0.9)" }}
+                          className="text-[11px] font-extrabold leading-tight truncate"
+                        >
                           {opt.name}
                         </p>
-                        <p className="text-[9px] text-zinc-300 truncate">{opt.subtitle}</p>
+                        <p
+                          style={{ color: "#D1FAE5", textShadow: "0 1px 2px rgba(0,0,0,0.9)" }}
+                          className="text-[9px] font-medium truncate mt-0.5"
+                        >
+                          {opt.subtitle}
+                        </p>
                       </div>
                     </button>
                   )
@@ -4628,93 +4679,7 @@ export function VibeVideoCallStudio({
             </div>
           )}
 
-          {/* 2. VIRTUAL BACKGROUND PICKER (DIRECTLY ABOVE CONTROL DOCK FOR INSTANT ACCESS) */}
-          {showVirtualBgPicker && (
-            <div className="rounded-2xl bg-slate-900/95 border-2 border-teal-500/50 p-4 space-y-3 shadow-[0_0_25px_rgba(20,184,166,0.2)]">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full bg-teal-400 text-slate-950 font-extrabold text-[10px]">
-                    ✨ LIVE STUDIO BACKDROPS
-                  </span>
-                  <h4 className="text-xs font-extrabold text-white">
-                    Select a Virtual Background (Applied Instantly Behind You on Your Live Video Tile)
-                  </h4>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => customBgInputRef.current?.click()}
-                    className="px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[10px] font-extrabold cursor-pointer"
-                  >
-                    + Upload Custom Photo
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowVirtualBgPicker(false)}
-                    className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-zinc-200 text-[10px] font-bold cursor-pointer"
-                  >
-                    Done
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5">
-                {VIRTUAL_BACKGROUND_OPTIONS.map((opt) => {
-                  const isSelected = selectedVirtualBgId === opt.id
-                  return (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedVirtualBgId(opt.id)
-                        if (!isCameraOn) {
-                          setIsCameraOn(true)
-                        }
-                        if (!isHardwareCameraActive) {
-                          startHardwareCameraAndMic(
-                            selectedVideoDeviceId || undefined,
-                            selectedAudioDeviceId || undefined,
-                            false
-                          )
-                        }
-                        appendLog(
-                          opt.id === "none"
-                            ? "Reverted to natural unedited camera feed."
-                            : `✨ Activated Virtual Background: "${opt.name}" (${opt.subtitle}).`
-                        )
-                      }}
-                      className={`group rounded-xl overflow-hidden border-2 text-left transition-all cursor-pointer flex flex-col justify-between h-20 p-2.5 relative bg-gradient-to-br ${
-                        opt.previewGradient
-                      } ${
-                        isSelected
-                          ? "border-teal-300 ring-2 ring-teal-400/50 shadow-lg scale-[1.02]"
-                          : "border-white/15 hover:border-teal-400/60"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-1 relative z-10">
-                        <span
-                          style={{
-                            backgroundColor: isSelected ? "#2DD4BF" : "rgba(0,0,0,0.65)",
-                            color: isSelected ? "#042F2E" : "#A7F3D0",
-                          }}
-                          className="px-1.5 py-0.5 rounded text-[9px] font-mono font-extrabold"
-                        >
-                          {opt.badgeText}
-                        </span>
-                        {isSelected && <CheckCircle2 className="h-3.5 w-3.5 text-teal-300 shrink-0" />}
-                      </div>
-                      <div className="relative z-10 mt-auto">
-                        <p className="text-[11px] font-extrabold text-white leading-tight truncate">{opt.name}</p>
-                        <p className="text-[9px] text-zinc-300 truncate">{opt.subtitle}</p>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* 3. LIVE RECORDING STATUS & DOWNLOAD BAR (WHEN RECORDING OR RECORDED ARTIFACT READY) */}
+          {/* 2. LIVE RECORDING STATUS & DOWNLOAD BAR (WHEN RECORDING OR RECORDED ARTIFACT READY) */}
           {(isRecording || recordedDownloadUrl) && (
             <div
               className={`rounded-2xl p-3.5 border-2 flex flex-wrap items-center justify-between gap-3 ${
