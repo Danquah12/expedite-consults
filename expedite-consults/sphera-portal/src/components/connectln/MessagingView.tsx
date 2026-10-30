@@ -261,10 +261,10 @@ export function MessagingView({
                     video: preferredCamId
                         ? { deviceId: { exact: preferredCamId }, width: { ideal: 1280 }, height: { ideal: 720 } }
                         : { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
-                    audio: { echoCancellation: true, noiseSuppression: true },
+                    audio: true,
                 });
             } catch {
-                // Attempt 2: Video-only (then attach microphone separately below)
+                // Attempt 2: Video-only (in case microphone is missing or locked)
                 try {
                     stream = await navigator.mediaDevices.getUserMedia({
                         video: preferredCamId ? { deviceId: { exact: preferredCamId } } : true,
@@ -288,27 +288,7 @@ export function MessagingView({
                 }
             }
 
-            // Ensure microphone audio track is ALWAYS captured even if webcam fell back to Attempt 2, 3, or Self-Preview
-            let micAudioTrack: MediaStreamTrack | undefined;
-            if (!stream || stream.getAudioTracks().length === 0) {
-                try {
-                    const micStream = await navigator.mediaDevices.getUserMedia({
-                        audio: { echoCancellation: true, noiseSuppression: true },
-                        video: false,
-                    });
-                    micAudioTrack = micStream.getAudioTracks()[0];
-                } catch {
-                    try {
-                        const basicMic = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-                        micAudioTrack = basicMic.getAudioTracks()[0];
-                    } catch {}
-                }
-            }
-
             if (stream && stream.getVideoTracks().length > 0) {
-                if (micAudioTrack && stream.getAudioTracks().length === 0) {
-                    stream.addTrack(micAudioTrack);
-                }
                 localStreamRef.current = stream;
                 setLocalStreamState(stream);
                 setHasLocalStream(true);
@@ -330,12 +310,9 @@ export function MessagingView({
                 return;
             }
 
-            // Fallback if physical webcam is locked by another app or blocked: show live self-preview stream + live mic track
+            // Fallback if physical webcam is locked by another app or blocked: show live self-preview stream so user ALWAYS sees themselves
             const fallbackStream = createLiveSelfPreviewStream();
             if (fallbackStream) {
-                if (micAudioTrack && fallbackStream.getAudioTracks().length === 0) {
-                    fallbackStream.addTrack(micAudioTrack);
-                }
                 localStreamRef.current = fallbackStream;
                 setLocalStreamState(fallbackStream);
                 setHasLocalStream(true);
@@ -346,24 +323,13 @@ export function MessagingView({
         } else {
             // Audio call mode
             try {
-                stream = await navigator.mediaDevices.getUserMedia({
-                    audio: { echoCancellation: true, noiseSuppression: true },
-                    video: false,
-                });
+                stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
                 localStreamRef.current = stream;
                 setLocalStreamState(stream);
                 setHasLocalStream(true);
                 setIsUsingFallbackCam(false);
             } catch {
-                try {
-                    stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-                    localStreamRef.current = stream;
-                    setLocalStreamState(stream);
-                    setHasLocalStream(true);
-                    setIsUsingFallbackCam(false);
-                } catch {
-                    setHasLocalStream(false);
-                }
+                setHasLocalStream(false);
             }
         }
     };
@@ -792,250 +758,6 @@ export function MessagingView({
             mounted = false;
             clearInterval(hb);
             window.removeEventListener('beforeunload', handleUnloadLeave);
-        };
-    }, [isCallModalOpen, activeThread?.id, activeCallMode, isCameraOn, isMicMuted, currentUser?.name, huddleLocalPeerId]);
-
-    // Bidirectional PeerJS WebRTC Audio/Video Mesh for Messaging Voice Calls & Video Huddles
-    const [huddleRemoteStreams, setHuddleRemoteStreams] = useState<Record<string, MediaStream>>({});
-    const huddleActiveMediaCallsRef = useRef<Map<string, any>>(new Map());
-    const huddleCallsWithLocalAudioRef = useRef<Set<string>>(new Set());
-
-    useEffect(() => {
-        if (!localStreamState) return;
-        const vTrack = localStreamState.getVideoTracks()[0];
-        const aTrack = localStreamState.getAudioTracks()[0];
-        huddleActiveMediaCallsRef.current.forEach((mediaCall, peerKey) => {
-            const pc: RTCPeerConnection | undefined = mediaCall?.peerConnection;
-            if (!pc || typeof pc.getSenders !== 'function') return;
-            const senders = pc.getSenders();
-            if (vTrack) {
-                const vSender = senders.find((s) => s.track && s.track.kind === 'video');
-                if (vSender && typeof vSender.replaceTrack === 'function') {
-                    vSender.replaceTrack(vTrack).catch(() => {});
-                }
-            }
-            if (aTrack) {
-                const aSender = senders.find((s) => s.track && s.track.kind === 'audio');
-                if (aSender && typeof aSender.replaceTrack === 'function') {
-                    aSender.replaceTrack(aTrack).catch(() => {});
-                    huddleCallsWithLocalAudioRef.current.add(peerKey);
-                } else {
-                    huddleCallsWithLocalAudioRef.current.delete(peerKey);
-                }
-            }
-        });
-    }, [localStreamState]);
-
-    useEffect(() => {
-        if (!isCallModalOpen || !activeThread || typeof window === 'undefined') {
-            setHuddleRemoteStreams({});
-            return;
-        }
-        let isCancelled = false;
-        let peerInstance: any = null;
-        let syncTimer: ReturnType<typeof setInterval> | null = null;
-        const activeMediaCalls = huddleActiveMediaCallsRef.current;
-        const callsWithLocalAudio = huddleCallsWithLocalAudioRef.current;
-        const activeDataConns = new Map<string, any>();
-
-        const cleanRoomKey =
-            activeThread.id.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().slice(0, 20) || 'viberoom9b0bbf68';
-        const allSlots = [0, 1, 2, 3].map((idx) => `vibe-connectln-${cleanRoomKey}-slot-${idx}`);
-
-        const bindMediaCall = (mediaCall: any, hadLocalAudio: boolean) => {
-            if (!mediaCall || !mediaCall.peer) return;
-            activeMediaCalls.set(mediaCall.peer, mediaCall);
-            if (hadLocalAudio) {
-                callsWithLocalAudio.add(mediaCall.peer);
-            }
-            mediaCall.on('stream', (remoteStream: MediaStream) => {
-                if (isCancelled || !remoteStream) return;
-                setHuddleRemoteStreams((prev) => {
-                    const existing = prev[mediaCall.peer];
-                    if (!existing || existing === remoteStream) {
-                        return { ...prev, [mediaCall.peer]: remoteStream };
-                    }
-                    const vTracks =
-                        remoteStream.getVideoTracks().length > 0
-                            ? remoteStream.getVideoTracks()
-                            : existing.getVideoTracks();
-                    const aTracks =
-                        remoteStream.getAudioTracks().length > 0
-                            ? remoteStream.getAudioTracks()
-                            : existing.getAudioTracks();
-                    return { ...prev, [mediaCall.peer]: new MediaStream([...vTracks, ...aTracks]) };
-                });
-            });
-            mediaCall.on('close', () => {
-                if (activeMediaCalls.get(mediaCall.peer) === mediaCall) {
-                    activeMediaCalls.delete(mediaCall.peer);
-                    callsWithLocalAudio.delete(mediaCall.peer);
-                    setHuddleRemoteStreams((prev) => {
-                        const next = { ...prev };
-                        delete next[mediaCall.peer];
-                        return next;
-                    });
-                }
-            });
-            mediaCall.on('error', () => {
-                if (activeMediaCalls.get(mediaCall.peer) === mediaCall) {
-                    activeMediaCalls.delete(mediaCall.peer);
-                    callsWithLocalAudio.delete(mediaCall.peer);
-                }
-            });
-        };
-
-        const bindDataConn = (conn: any) => {
-            if (!conn || !conn.peer) return;
-            conn.on('open', () => {
-                activeDataConns.set(conn.peer, conn);
-            });
-            conn.on('data', (data: any) => {
-                if (isCancelled || !data || data.type !== 'VIBE_PEER_SYNC') return;
-                const peerUid = data.participantId || conn.peer;
-                if (peerUid === huddleLocalPeerId) return;
-                if (data.liveFrame && typeof data.liveFrame === 'string' && data.liveFrame.length > 3200) {
-                    verifiedRemoteFramesRef.current.set(peerUid, data.liveFrame);
-                }
-                setRemoteHuddleParticipants((prev) => {
-                    const existingIdx = prev.findIndex((p) => p.user_id === peerUid);
-                    const updated = {
-                        user_id: peerUid,
-                        display_name: data.name || 'Connected Peer',
-                        role: data.role || 'Live Audio/Video',
-                        device_label: data.device || 'Remote Camera & Mic',
-                        is_muted: Boolean(data.isMuted),
-                        is_video_on: data.isVideoOn !== false,
-                        live_frame: verifiedRemoteFramesRef.current.get(peerUid) || data.liveFrame || null,
-                    };
-                    if (existingIdx >= 0) {
-                        const copy = [...prev];
-                        copy[existingIdx] = updated;
-                        return copy;
-                    }
-                    return [...prev, updated];
-                });
-            });
-            conn.on('close', () => activeDataConns.delete(conn.peer));
-            conn.on('error', () => activeDataConns.delete(conn.peer));
-        };
-
-        const initPeerAtSlot = async (tryIndex: number) => {
-            if (isCancelled || tryIndex >= allSlots.length) return;
-            try {
-                const PeerModule = await import('peerjs');
-                const PeerClass = PeerModule.Peer || PeerModule.default;
-                if (!PeerClass || isCancelled) return;
-
-                const candidatePeerId = allSlots[tryIndex];
-                const peer = new PeerClass(candidatePeerId, {
-                    debug: 0,
-                    config: {
-                        iceServers: [
-                            { urls: 'stun:stun.l.google.com:19302' },
-                            { urls: 'stun:stun1.l.google.com:19302' },
-                            { urls: 'stun:stun.cloudflare.com:3478' },
-                        ],
-                    },
-                });
-
-                peer.on('open', (openedId: string) => {
-                    if (isCancelled) {
-                        peer.destroy();
-                        return;
-                    }
-                    peerInstance = peer;
-                    syncTimer = setInterval(() => {
-                        if (isCancelled || !peerInstance || peerInstance.destroyed) return;
-                        const syncPayload = {
-                            type: 'VIBE_PEER_SYNC',
-                            participantId: huddleLocalPeerId,
-                            peerId: openedId,
-                            name: currentUser?.name || 'Host',
-                            role: 'Host · Local Camera & Mic',
-                            device: 'HD Webcam & Mic',
-                            isMuted: isMicMuted,
-                            isVideoOn: activeCallMode === 'video' && isCameraOn,
-                            liveFrame: lastValidLocalHuddleFrameRef.current,
-                        };
-                        for (const targetSlot of allSlots) {
-                            if (targetSlot === openedId) continue;
-                            const existingConn = activeDataConns.get(targetSlot);
-                            if (existingConn && existingConn.open) {
-                                try {
-                                    existingConn.send(syncPayload);
-                                } catch {}
-                                const outStream = localStreamRef.current;
-                                const hasLocalAudio = Boolean(outStream && outStream.getAudioTracks().length > 0);
-                                const needsAudioUpgrade = hasLocalAudio && !callsWithLocalAudio.has(targetSlot);
-                                if (
-                                    outStream &&
-                                    outStream.getTracks().length > 0 &&
-                                    (!activeMediaCalls.has(targetSlot) || needsAudioUpgrade)
-                                ) {
-                                    try {
-                                        const outCall = peerInstance.call(targetSlot, outStream, {
-                                            metadata: {
-                                                participantId: huddleLocalPeerId,
-                                                name: currentUser?.name || 'Host',
-                                            },
-                                        });
-                                        if (outCall) bindMediaCall(outCall, hasLocalAudio);
-                                    } catch {}
-                                }
-                            } else {
-                                try {
-                                    const newConn = peerInstance.connect(targetSlot, { reliable: true });
-                                    bindDataConn(newConn);
-                                } catch {}
-                            }
-                        }
-                    }, 1400);
-                });
-
-                peer.on('connection', (incomingConn: any) => bindDataConn(incomingConn));
-                peer.on('call', (incomingCall: any) => {
-                    const answerStream = localStreamRef.current;
-                    const hasLocalAudio = Boolean(answerStream && answerStream.getAudioTracks().length > 0);
-                    try {
-                        incomingCall.answer(answerStream || undefined);
-                    } catch {}
-                    bindMediaCall(incomingCall, hasLocalAudio);
-                });
-                peer.on('error', (err: any) => {
-                    if (err?.type === 'unavailable-id') {
-                        try {
-                            peer.destroy();
-                        } catch {}
-                        initPeerAtSlot(tryIndex + 1);
-                    }
-                });
-            } catch {}
-        };
-
-        initPeerAtSlot(0);
-
-        return () => {
-            isCancelled = true;
-            if (syncTimer) clearInterval(syncTimer);
-            activeMediaCalls.forEach((c) => {
-                try {
-                    c.close();
-                } catch {}
-            });
-            activeMediaCalls.clear();
-            callsWithLocalAudio.clear();
-            activeDataConns.forEach((c) => {
-                try {
-                    c.close();
-                } catch {}
-            });
-            activeDataConns.clear();
-            if (peerInstance) {
-                try {
-                    peerInstance.destroy();
-                } catch {}
-            }
         };
     }, [isCallModalOpen, activeThread?.id, activeCallMode, isCameraOn, isMicMuted, currentUser?.name, huddleLocalPeerId]);
 
@@ -2616,29 +2338,6 @@ export function MessagingView({
                                 </button>
                             </div>
                         </div>
-
-                        {/* Dedicated Always-On Remote Audio Players for Bidirectional Voice Calls & Video Huddles */}
-                        {Object.entries(huddleRemoteStreams).map(([peerKey, rStream]) =>
-                            rStream ? (
-                                <audio
-                                    key={`huddle-audio-${peerKey}`}
-                                    autoPlay
-                                    playsInline
-                                    ref={(el) => {
-                                        if (el && el.srcObject !== rStream) {
-                                            el.srcObject = rStream;
-                                            el.volume = 1.0;
-                                            el.play().catch(() => {});
-                                        }
-                                    }}
-                                    onLoadedMetadata={(e) => {
-                                        e.currentTarget.volume = 1.0;
-                                        e.currentTarget.play().catch(() => {});
-                                    }}
-                                    style={{ display: 'none' }}
-                                />
-                            ) : null
-                        )}
 
                         {/* Multi-Participant Stage (Local Self-View + All Connected Remote Peers) */}
                         <div

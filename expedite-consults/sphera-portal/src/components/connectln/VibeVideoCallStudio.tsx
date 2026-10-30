@@ -51,56 +51,6 @@ export interface CallParticipantTile {
   avatarGradient: string
 }
 
-function RemotePeerAudioPlayer({ stream, muted }: { stream: MediaStream; muted?: boolean }) {
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-
-  useEffect(() => {
-    const el = audioRef.current
-    if (!el || !stream) return
-    if (el.srcObject !== stream) {
-      el.srcObject = stream
-    }
-    el.muted = Boolean(muted)
-    el.volume = 1.0
-
-    const tryPlay = () => {
-      if (!el) return
-      el.muted = Boolean(muted)
-      el.play().catch(() => {
-        const unlock = () => {
-          if (audioRef.current) {
-            audioRef.current.muted = Boolean(muted)
-            audioRef.current.play().catch(() => {})
-          }
-          window.removeEventListener("pointerdown", unlock)
-          window.removeEventListener("keydown", unlock)
-        }
-        window.addEventListener("pointerdown", unlock, { once: true })
-        window.addEventListener("keydown", unlock, { once: true })
-      })
-    }
-
-    tryPlay()
-    stream.addEventListener("addtrack", tryPlay)
-    return () => {
-      stream.removeEventListener("addtrack", tryPlay)
-    }
-  }, [stream, muted])
-
-  return (
-    <audio
-      ref={audioRef}
-      autoPlay
-      playsInline
-      muted={Boolean(muted)}
-      onLoadedMetadata={(e) => {
-        e.currentTarget.play().catch(() => {})
-      }}
-      style={{ display: "none" }}
-    />
-  )
-}
-
 function RemotePeerVideoElement({ stream }: { stream: MediaStream }) {
   const ref = useRef<HTMLVideoElement | null>(null)
   const [hasLiveVideoFrames, setHasLiveVideoFrames] = useState(false)
@@ -123,9 +73,22 @@ function RemotePeerVideoElement({ stream }: { stream: MediaStream }) {
     el.addEventListener("playing", checkFrames)
     el.addEventListener("timeupdate", checkFrames)
 
-    // Video element is muted because <RemotePeerAudioPlayer> handles all remote audio playback reliably
-    el.muted = true
-    el.play().then(checkFrames).catch(() => {})
+    // Attempt unmuted playback first; if browser blocks unmuted autoplay, fallback to muted immediately so video plays
+    el.play()
+      .then(checkFrames)
+      .catch(() => {
+        el.muted = true
+        el.play().then(checkFrames).catch(() => {})
+        const unlockAudio = () => {
+          if (ref.current) {
+            ref.current.muted = false
+          }
+          window.removeEventListener("pointerdown", unlockAudio)
+          window.removeEventListener("keydown", unlockAudio)
+        }
+        window.addEventListener("pointerdown", unlockAudio, { once: true })
+        window.addEventListener("keydown", unlockAudio, { once: true })
+      })
 
     return () => {
       el.removeEventListener("loadeddata", checkFrames)
@@ -139,15 +102,16 @@ function RemotePeerVideoElement({ stream }: { stream: MediaStream }) {
       ref={ref}
       autoPlay
       playsInline
-      muted
       onLoadedMetadata={(e) => {
         const el = e.currentTarget
-        el.muted = true
         el.play()
           .then(() => {
             if (el.videoWidth > 0) setHasLiveVideoFrames(true)
           })
-          .catch(() => {})
+          .catch(() => {
+            el.muted = true
+            el.play().catch(() => {})
+          })
       }}
       style={{
         position: "absolute",
@@ -1049,13 +1013,13 @@ export function VibeVideoCallStudio({
           })
         } catch (firstErr: any) {
           if (!audioOnly) {
-            // Attempt 2: Fallback to Video-Only if combined video+audio failed, then attach microphone separately
+            // Attempt 2: Fallback to Video-Only if the computer has a webcam but no microphone plugged in
             try {
               stream = await navigator.mediaDevices.getUserMedia({
                 video: preferredVideoDeviceId ? { deviceId: { exact: preferredVideoDeviceId } } : true,
                 audio: false,
               })
-              appendLog("Opened computer webcam; attaching microphone input...")
+              appendLog("Opened computer webcam (Video-only mode; no microphone input detected).")
             } catch {
               // Attempt 3: Enumerate all videoinput devices and try each camera one by one
               try {
@@ -1074,47 +1038,24 @@ export function VibeVideoCallStudio({
                   } catch {}
                 }
               } catch {}
-            }
 
-            // Ensure microphone audio track is ALWAYS captured even if webcam fell back to Attempt 2, 3, or 4
-            let standaloneAudioTrack: MediaStreamTrack | undefined
-            if (!stream || stream.getAudioTracks().length === 0) {
-              try {
-                const audioOnlyStream = await navigator.mediaDevices.getUserMedia({
-                  video: false,
-                  audio: preferredAudioDeviceId
-                    ? { deviceId: { exact: preferredAudioDeviceId }, echoCancellation: true, noiseSuppression: true }
-                    : { echoCancellation: true, noiseSuppression: true },
-                })
-                standaloneAudioTrack = audioOnlyStream.getAudioTracks()[0]
-              } catch {
+              // Attempt 4: Grab audio if available, and attach Live Self-View Studio video stream so user ALWAYS sees themselves
+              if (!stream || stream.getVideoTracks().length === 0) {
+                let audioTrack: MediaStreamTrack | undefined
                 try {
-                  const basicAudioStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true })
-                  standaloneAudioTrack = basicAudioStream.getAudioTracks()[0]
+                  const audioOnlyStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true })
+                  audioTrack = audioOnlyStream.getAudioTracks()[0]
                 } catch {}
+                const fallbackStream = createFallbackSelfViewStream(localDisplayName, audioTrack)
+                if (fallbackStream) {
+                  stream = fallbackStream
+                  usedFallbackCam = true
+                  setCameraError(
+                    `Physical webcam was busy or blocked (${firstErr?.name || "CameraUnavailable"}). Showing your Live Studio Self-View — close any other app using your camera or allow permission, then click "Retry Computer Camera & Mic".`
+                  )
+                }
               }
             }
-
-            if (stream && stream.getVideoTracks().length > 0) {
-              if (standaloneAudioTrack && stream.getAudioTracks().length === 0) {
-                stream.addTrack(standaloneAudioTrack)
-              }
-            } else {
-              // Attempt 4: Attach Live Self-View Studio video stream + microphone audio track so user ALWAYS sees & hears
-              const fallbackStream = createFallbackSelfViewStream(localDisplayName, standaloneAudioTrack)
-              if (fallbackStream) {
-                stream = fallbackStream
-                usedFallbackCam = true
-                setCameraError(
-                  `Physical webcam was busy or blocked (${firstErr?.name || "CameraUnavailable"}). Showing your Live Studio Self-View — your microphone is active.`
-                )
-              }
-            }
-          } else {
-            // Audio-only fallback without device constraint
-            try {
-              stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true })
-            } catch {}
           }
         }
       } else if (!audioOnly) {
@@ -1848,15 +1789,12 @@ export function VibeVideoCallStudio({
     appendLog,
   ])
 
-  // Track which remote peer slots have already received our live local audio track
-  const callsWithLocalAudioRef = useRef<Set<string>>(new Set())
-
   // Whenever localStreamState updates (e.g., after getUserMedia finishes), push tracks to any existing WebRTC calls
   useEffect(() => {
     if (!localStreamState) return
     const vTrack = localStreamState.getVideoTracks()[0]
     const aTrack = localStreamState.getAudioTracks()[0]
-    activeMediaCallsRef.current.forEach((mediaCall, peerKey) => {
+    activeMediaCallsRef.current.forEach((mediaCall) => {
       const pc: RTCPeerConnection | undefined = mediaCall?.peerConnection
       if (!pc || typeof pc.getSenders !== "function") return
       const senders = pc.getSenders()
@@ -1870,10 +1808,6 @@ export function VibeVideoCallStudio({
         const aSender = senders.find((s) => s.track && s.track.kind === "audio")
         if (aSender && typeof aSender.replaceTrack === "function") {
           aSender.replaceTrack(aTrack).catch(() => {})
-          callsWithLocalAudioRef.current.add(peerKey)
-        } else {
-          // Existing call was answered before microphone was ready (no audio sender in SDP) -> trigger redial with audio
-          callsWithLocalAudioRef.current.delete(peerKey)
         }
       }
     })
@@ -1887,7 +1821,6 @@ export function VibeVideoCallStudio({
     let syncTimer: ReturnType<typeof setInterval> | null = null
     const activeMediaCalls = activeMediaCallsRef.current
     const activeDataConns = new Map<string, any>()
-    const callsWithLocalAudio = callsWithLocalAudioRef.current
 
     const cleanRoomKey =
       callId.replace(/[^a-zA-Z0-9]/g, "").toLowerCase().slice(0, 20) || "viberoom9b0bbf68"
@@ -1921,48 +1854,23 @@ export function VibeVideoCallStudio({
       return localStreamRef.current
     }
 
-    const bindMediaCall = (mediaCall: any, hadLocalAudio: boolean) => {
+    const bindMediaCall = (mediaCall: any) => {
       if (!mediaCall || !mediaCall.peer) return
       activeMediaCalls.set(mediaCall.peer, mediaCall)
-      if (hadLocalAudio) {
-        callsWithLocalAudio.add(mediaCall.peer)
-      }
       mediaCall.on("stream", (remoteStream: MediaStream) => {
-        if (isCancelled || !remoteStream) return
-        setRemoteStreams((prev) => {
-          const existing = prev[mediaCall.peer]
-          if (!existing || existing === remoteStream) {
-            return { ...prev, [mediaCall.peer]: remoteStream }
-          }
-          // Merge active audio and video tracks so upgrading a half-duplex call never drops existing tracks
-          const vTracks =
-            remoteStream.getVideoTracks().length > 0
-              ? remoteStream.getVideoTracks()
-              : existing.getVideoTracks()
-          const aTracks =
-            remoteStream.getAudioTracks().length > 0
-              ? remoteStream.getAudioTracks()
-              : existing.getAudioTracks()
-          const merged = new MediaStream([...vTracks, ...aTracks])
-          return { ...prev, [mediaCall.peer]: merged }
-        })
+        if (isCancelled) return
+        setRemoteStreams((prev) => ({ ...prev, [mediaCall.peer]: remoteStream }))
       })
       mediaCall.on("close", () => {
-        if (activeMediaCalls.get(mediaCall.peer) === mediaCall) {
-          activeMediaCalls.delete(mediaCall.peer)
-          callsWithLocalAudio.delete(mediaCall.peer)
-          setRemoteStreams((prev) => {
-            const next = { ...prev }
-            delete next[mediaCall.peer]
-            return next
-          })
-        }
+        activeMediaCalls.delete(mediaCall.peer)
+        setRemoteStreams((prev) => {
+          const next = { ...prev }
+          delete next[mediaCall.peer]
+          return next
+        })
       })
       mediaCall.on("error", () => {
-        if (activeMediaCalls.get(mediaCall.peer) === mediaCall) {
-          activeMediaCalls.delete(mediaCall.peer)
-          callsWithLocalAudio.delete(mediaCall.peer)
-        }
+        activeMediaCalls.delete(mediaCall.peer)
       })
     }
 
@@ -2081,15 +1989,9 @@ export function VibeVideoCallStudio({
                   // ignore
                 }
 
-                // Initiate live WebRTC media call when targetSlot is connected, OR upgrade call as soon as our local microphone audio track becomes ready
+                // Initiate live WebRTC media call ONLY when targetSlot has an open peer connection!
                 const outStream = getOutgoingCallMediaStream()
-                const hasLocalAudio = Boolean(outStream && outStream.getAudioTracks().length > 0)
-                const needsAudioUpgrade = hasLocalAudio && !callsWithLocalAudio.has(targetSlot)
-                if (
-                  outStream &&
-                  outStream.getTracks().length > 0 &&
-                  (!activeMediaCalls.has(targetSlot) || needsAudioUpgrade)
-                ) {
+                if (outStream && outStream.getVideoTracks().length > 0 && !activeMediaCalls.has(targetSlot)) {
                   try {
                     const outCall = peerInstance.call(targetSlot, outStream, {
                       metadata: {
@@ -2099,7 +2001,7 @@ export function VibeVideoCallStudio({
                         device: st.activeCameraLabel,
                       },
                     })
-                    if (outCall) bindMediaCall(outCall, hasLocalAudio)
+                    if (outCall) bindMediaCall(outCall)
                   } catch {
                     // ignore
                   }
@@ -2121,14 +2023,13 @@ export function VibeVideoCallStudio({
         })
 
         peer.on("call", (incomingCall: any) => {
-          const answerStream = getOutgoingCallMediaStream()
-          const hasLocalAudio = Boolean(answerStream && answerStream.getAudioTracks().length > 0)
           try {
+            const answerStream = getOutgoingCallMediaStream()
             incomingCall.answer(answerStream || undefined)
           } catch {
             // ignore
           }
-          bindMediaCall(incomingCall, hasLocalAudio)
+          bindMediaCall(incomingCall)
         })
 
         peer.on("error", (err: any) => {
@@ -3583,14 +3484,6 @@ export function VibeVideoCallStudio({
               </button>
             </div>
           )}
-
-          {/* DEDICATED ALWAYS-ON REMOTE AUDIO PLAYERS FOR BIDIRECTIONAL VOICE & VIDEO CALLS */}
-          {callState !== "ENDED" &&
-            Object.entries(remoteStreams).map(([peerKey, rStream]) =>
-              rStream ? (
-                <RemotePeerAudioPlayer key={`audio-${peerKey}`} stream={rStream} muted={isSpeakerMuted} />
-              ) : null
-            )}
 
           {/* PARTICIPANT VIDEO GRID (CLEAN, UNCLUTTERED, REAL PARTICIPANTS ONLY) */}
           {callState !== "ENDED" && (
