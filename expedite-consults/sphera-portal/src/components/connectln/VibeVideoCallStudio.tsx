@@ -1706,34 +1706,6 @@ export function VibeVideoCallStudio({
     let isRunning = true
     let switchedWebRtcTrack = false
 
-    const drawImageCover = (
-      ctx: CanvasRenderingContext2D,
-      img: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement | ImageBitmap,
-      w: number,
-      h: number
-    ) => {
-      const srcW =
-        (img as HTMLImageElement).naturalWidth ||
-        (img as HTMLVideoElement).videoWidth ||
-        (img as HTMLCanvasElement).width ||
-        w
-      const srcH =
-        (img as HTMLImageElement).naturalHeight ||
-        (img as HTMLVideoElement).videoHeight ||
-        (img as HTMLCanvasElement).height ||
-        h
-      if (!srcW || !srcH) {
-        ctx.drawImage(img, 0, 0, w, h)
-        return
-      }
-      const scale = Math.max(w / srcW, h / srcH)
-      const drawW = srcW * scale
-      const drawH = srcH * scale
-      const offsetX = (w - drawW) * 0.5
-      const offsetY = (h - drawH) * 0.5
-      ctx.drawImage(img, offsetX, offsetY, drawW, drawH)
-    }
-
     const drawSceneBackdrop = (
       ctx: CanvasRenderingContext2D,
       w: number,
@@ -1743,7 +1715,7 @@ export function VibeVideoCallStudio({
       const presetImg = presetBgImagesRef.current.get(opt.id)
       if (presetImg && presetImg.complete && presetImg.naturalWidth > 0) {
         ctx.save()
-        drawImageCover(ctx, presetImg, w, h)
+        ctx.drawImage(presetImg, 0, 0, w, h)
         const vig = ctx.createRadialGradient(w * 0.5, h * 0.5, w * 0.28, w * 0.5, h * 0.5, w * 0.78)
         vig.addColorStop(0, "rgba(0,0,0,0.03)")
         vig.addColorStop(1, "rgba(0,0,0,0.32)")
@@ -1767,70 +1739,70 @@ export function VibeVideoCallStudio({
       ctx.fillRect(0, 0, w, h)
     }
 
-    // Ensure the GPU-accelerated isotropic Gaussian + Alpha S-curve filter exists in the DOM (no square feMorphology steps!)
+    // Ensure the GPU-accelerated SVG alpha S-curve + halo-trim filter exists in the DOM
     const ensureTightMaskSvgFilter = () => {
       if (typeof document === "undefined") return
-      let svg = document.getElementById("vibe-tight-person-mask-svg") as SVGSVGElement | null
-      if (!svg) {
-        const svgNS = "http://www.w3.org/2000/svg"
-        svg = document.createElementNS(svgNS, "svg")
-        svg.setAttribute("id", "vibe-tight-person-mask-svg")
-        svg.setAttribute("width", "0")
-        svg.setAttribute("height", "0")
-        svg.setAttribute("aria-hidden", "true")
-        svg.style.position = "fixed"
-        svg.style.pointerEvents = "none"
-        svg.style.opacity = "0"
-        document.body.appendChild(svg)
-      }
+      if (document.getElementById("vibe-tight-person-mask-svg")) return
+      const svgNS = "http://www.w3.org/2000/svg"
+      const svg = document.createElementNS(svgNS, "svg")
+      svg.setAttribute("id", "vibe-tight-person-mask-svg")
+      svg.setAttribute("width", "0")
+      svg.setAttribute("height", "0")
+      svg.setAttribute("aria-hidden", "true")
+      svg.style.position = "fixed"
+      svg.style.pointerEvents = "none"
+      svg.style.opacity = "0"
       svg.innerHTML = `
         <defs>
           <filter id="vibe-tight-person-mask" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="3.2" result="smoothed" />
-            <feComponentTransfer in="smoothed">
-              <feFuncA type="linear" slope="3.6" intercept="-1.65" />
+            <feGaussianBlur in="SourceGraphic" stdDeviation="2.0" result="smoothed" />
+            <feComponentTransfer in="smoothed" result="thresholded">
+              <feFuncA type="linear" slope="7.8" intercept="-3.55" />
             </feComponentTransfer>
+            <feMorphology in="thresholded" operator="erode" radius="1.5" result="trimmed" />
+            <feGaussianBlur in="trimmed" stdDeviation="1.2" />
           </filter>
         </defs>
       `
+      document.body.appendChild(svg)
     }
 
     ensureTightMaskSvgFilter()
 
-    // Composite person + virtual background atomically at full camera HD resolution
+    // Composite person + virtual background atomically using the exact frame (`results.image`)
+    // and mask (`results.segmentationMask`) produced by MediaPipe so video and mask are 100% synced.
     const renderSynchronizedComposite = (
-      videoEl: HTMLVideoElement,
-      rawMask: CanvasImageSource | null
+      personImage: CanvasImageSource,
+      rawMask: CanvasImageSource | null,
+      isAlreadyMirrored: boolean
     ) => {
       const canvas = virtualBgCanvasRef.current
       if (!canvas) return
-      const w = videoEl.videoWidth > 0 ? Math.min(960, videoEl.videoWidth) : 640
-      const h = videoEl.videoHeight > 0 ? Math.min(720, videoEl.videoHeight) : 480
+      const w = 480
+      const h = 300
       if (canvas.width !== w) canvas.width = w
       if (canvas.height !== h) canvas.height = h
 
       const ctx = canvas.getContext("2d")
       if (!ctx) return
 
-      // 1. True linear additive temporal blend on GPU (`destination-in` 0.20 + `lighter` 0.80 = 1.00 exact sum!)
-      // Using `lighter` instead of `source-over` prevents losing `A*B` opacity and ensures moving edges stay 100% solid.
+      // 1. Update GPU temporal accumulator canvas (linearly blends 32% previous raw mask + 68% current raw mask)
       let maskCanvas = smoothMaskCanvasRef.current
       if (!maskCanvas) {
         maskCanvas = document.createElement("canvas")
+        maskCanvas.width = w
+        maskCanvas.height = h
         smoothMaskCanvasRef.current = maskCanvas
       }
-      if (maskCanvas.width !== w) maskCanvas.width = w
-      if (maskCanvas.height !== h) maskCanvas.height = h
-
       const mCtx = maskCanvas.getContext("2d")
       if (mCtx && rawMask) {
         mCtx.save()
         mCtx.globalCompositeOperation = "destination-in"
-        mCtx.fillStyle = "rgba(0, 0, 0, 0.20)"
+        mCtx.fillStyle = "rgba(0, 0, 0, 0.32)"
         mCtx.fillRect(0, 0, w, h)
 
-        mCtx.globalCompositeOperation = "lighter"
-        mCtx.globalAlpha = 0.80
+        mCtx.globalCompositeOperation = "source-over"
+        mCtx.globalAlpha = 0.68
         mCtx.drawImage(rawMask, 0, 0, w, h)
         mCtx.restore()
       }
@@ -1839,18 +1811,23 @@ export function VibeVideoCallStudio({
       ctx.clearRect(0, 0, w, h)
 
       if (rawMask && maskCanvas) {
-        // Step 1: Draw the temporally accumulated mask through the isotropic Gaussian + S-curve filter
+        // Step 1: Draw the temporally accumulated mask through the GPU S-curve + 1.5px halo-trim filter:
+        // - Strips < 52% confidence halo (bookshelf strip & white wall fringe around head) to 0.0
+        // - Locks >= 68% confidence person interior to 1.0 (100% solid opaque)
+        // - Erodes contour inward by 1.5px and feathers by 1.2px
         ctx.save()
         ctx.filter = "url(#vibe-tight-person-mask)"
         ctx.drawImage(maskCanvas, 0, 0, w, h)
         ctx.restore()
 
-        // Step 2: Keep ONLY the person pixels (`source-in`) from the native HD webcam feed (sharp, unstretched!)
+        // Step 2: Keep ONLY the person pixels (`source-in`) from the synchronized camera frame
         ctx.globalCompositeOperation = "source-in"
         ctx.save()
-        ctx.translate(w, 0)
-        ctx.scale(-1, 1)
-        ctx.drawImage(videoEl, 0, 0, w, h)
+        if (!isAlreadyMirrored) {
+          ctx.translate(w, 0)
+          ctx.scale(-1, 1)
+        }
+        ctx.drawImage(personImage, 0, 0, w, h)
         ctx.restore()
 
         // Step 3: Draw the crisp Virtual Background strictly BEHIND the person (`destination-over`)
@@ -1858,21 +1835,25 @@ export function VibeVideoCallStudio({
         if (activeVirtualBgOption.mode === "blur") {
           ctx.save()
           ctx.filter = `blur(${activeVirtualBgOption.blurPx || 14}px) brightness(0.94)`
-          ctx.translate(w, 0)
-          ctx.scale(-1, 1)
-          ctx.drawImage(videoEl, -16, -16, w + 32, h + 32)
+          if (!isAlreadyMirrored) {
+            ctx.translate(w, 0)
+            ctx.scale(-1, 1)
+          }
+          ctx.drawImage(personImage, -16, -16, w + 32, h + 32)
           ctx.restore()
         } else if (activeVirtualBgOption.mode === "custom" && customBgImgRef.current) {
-          drawImageCover(ctx, customBgImgRef.current, w, h)
+          ctx.drawImage(customBgImgRef.current, 0, 0, w, h)
         } else {
           drawSceneBackdrop(ctx, w, h, activeVirtualBgOption)
         }
       } else {
-        // While MediaPipe WASM initializes on the first moment, show natural mirrored camera feed
+        // While MediaPipe WASM initializes on the first moment, show natural mirrored camera feed (never a circle cutout!)
         ctx.save()
-        ctx.translate(w, 0)
-        ctx.scale(-1, 1)
-        ctx.drawImage(videoEl, 0, 0, w, h)
+        if (!isAlreadyMirrored) {
+          ctx.translate(w, 0)
+          ctx.scale(-1, 1)
+        }
+        ctx.drawImage(personImage, 0, 0, w, h)
         ctx.restore()
       }
 
@@ -1888,9 +1869,9 @@ export function VibeVideoCallStudio({
       if (!isRunning) return
       if (results?.segmentationMask) {
         latestSegMaskRef.current = results.segmentationMask
-        const videoEl = tileLocalVideoRef.current || heroLocalVideoRef.current
-        if (videoEl && videoEl.readyState >= 2) {
-          renderSynchronizedComposite(videoEl, results.segmentationMask)
+        const syncedImage = results.image || tileLocalVideoRef.current || heroLocalVideoRef.current
+        if (syncedImage) {
+          renderSynchronizedComposite(syncedImage, results.segmentationMask, Boolean(results.image))
         }
       }
     }
@@ -1926,10 +1907,6 @@ export function VibeVideoCallStudio({
       if (selfieSegmenterRef.current) {
         // Always rebind `onResults` so switching Virtual Background presets uses the latest activeVirtualBgOption!
         selfieSegmenterRef.current.onResults(handleSegmentationResults)
-        const vEl = tileLocalVideoRef.current || heroLocalVideoRef.current
-        if (vEl && vEl.readyState >= 2 && latestSegMaskRef.current) {
-          renderSynchronizedComposite(vEl, latestSegMaskRef.current)
-        }
         return
       }
       try {
@@ -1973,7 +1950,7 @@ export function VibeVideoCallStudio({
           }
         } else {
           // Before MediaPipe finishes loading, draw using latestSegMaskRef if available or clean camera feed
-          renderSynchronizedComposite(videoEl, latestSegMaskRef.current)
+          renderSynchronizedComposite(videoEl, latestSegMaskRef.current, false)
         }
       }
       animId = requestAnimationFrame(renderLoop)
