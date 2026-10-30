@@ -471,7 +471,23 @@ export function NetworkView({
       type: 'person'
     }
 
-    setOutboundInvites(prev => [newOutbound, ...prev])
+    setOutboundInvites(prev => {
+      const next = [newOutbound, ...prev]
+      try {
+        localStorage.setItem('connectin_my_outbound_invites_v2', JSON.stringify(next))
+      } catch {}
+      return next
+    })
+    fetch("/api/connectin/invite", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        channel: "register_link",
+        recipientName: person.name,
+        senderName: currentUser.name,
+        senderHeadline: currentUser.headline
+      })
+    }).catch(() => {})
     showToast(`✓ Connected with ${person.name}${note ? ' (Note delivered)' : ''}! Added to My Connections.`)
   }
 

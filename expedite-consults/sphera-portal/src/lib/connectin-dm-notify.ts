@@ -53,12 +53,13 @@ async function sendEmail(to: string, senderName: string, recipientName: string, 
     ? `📅 Meeting RSVP Response from ${senderName}`
     : `New ConnectLn message from ${senderName}`
 
+  const openInboxUrl = `${OPEN_MESSAGING_URL}&invitedName=${encodeURIComponent(recipientName)}&invitedEmail=${encodeURIComponent(to)}&inviter=${encodeURIComponent(senderName)}`
   const resend = new Resend(apiKey)
   const { error } = await resend.emails.send({
     from,
     to: [to.toLowerCase().trim()],
     subject,
-    text: `${senderName} sent you a message on ConnectLn:\n\n${body}\n\n${isMeetingInvite ? `Confirm Yes: ${rsvpBase}&choice=yes\nConfirm No: ${rsvpBase}&choice=no\nConfirm Maybe: ${rsvpBase}&choice=maybe\n\n` : ""}Open your inbox to reply: ${OPEN_MESSAGING_URL}\n\n-- ConnectLn · Tickets, vouches, and real work`,
+    text: `${senderName} sent you a message on ConnectLn:\n\n${body}\n\n${isMeetingInvite ? `Confirm Yes: ${rsvpBase}&choice=yes\nConfirm No: ${rsvpBase}&choice=no\nConfirm Maybe: ${rsvpBase}&choice=maybe\n\n` : ""}Open your inbox to reply: ${openInboxUrl}\n\n-- ConnectLn · Tickets, vouches, and real work`,
     html: `<div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;max-width:560px;margin:0 auto;padding:16px;color:#18181b">
       <div style="display:flex;align-items:center;gap:10px;background:#171513;color:#F5F0EB;padding:12px 16px;border-radius:12px 12px 0 0">
         <img src="https://www.connectln.app/brand/connectln-icon-256.png" alt="ConnectLn" width="28" height="28" style="border-radius:6px;vertical-align:middle;margin-right:8px" />
@@ -69,7 +70,7 @@ async function sendEmail(to: string, senderName: string, recipientName: string, 
         <p style="font-size:15px;margin-top:0"><strong>${esc(senderName)}</strong> ${isMeetingInvite ? "invited you to a meeting on ConnectLn:" : isRsvpResponse ? "responded to your meeting invitation:" : "sent you a message on ConnectLn:"}</p>
         <div style="white-space:pre-wrap;background:#f6f3ee;border:1px solid #e4ddd0;border-radius:10px;padding:12px;font-size:14px">${esc(body)}</div>
         ${rsvpButtonsHtml}
-        <p style="margin-top:16px"><a href="${OPEN_MESSAGING_URL}" style="background:#0A66C2;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:bold;font-size:14px;display:inline-block">Open your inbox &amp; reply</a></p>
+        <p style="margin-top:16px"><a href="${openInboxUrl}" style="background:#0A66C2;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:bold;font-size:14px;display:inline-block">Open your inbox &amp; reply</a></p>
         <p style="color:#71717a;font-size:12px;margin-bottom:0">ConnectLn · Tickets, vouches, and real work</p>
       </div>
     </div>`,
@@ -78,7 +79,7 @@ async function sendEmail(to: string, senderName: string, recipientName: string, 
   return !error
 }
 
-async function sendSms(toPhone: string, senderName: string, text: string): Promise<{ ok: boolean; note: string }> {
+async function sendSms(toPhone: string, senderName: string, text: string, recipientName?: string): Promise<{ ok: boolean; note: string }> {
   const accountSid = process.env.TWILIO_ACCOUNT_SID || ""
   const authToken = process.env.TWILIO_AUTH_TOKEN || ""
   const fromPhone = process.env.TWILIO_PHONE_NUMBER || ""
@@ -86,7 +87,10 @@ async function sendSms(toPhone: string, senderName: string, text: string): Promi
   if (!toPhone) return { ok: false, note: "no phone number on file for this member" }
   const to = formatE164Phone(toPhone)
   if (to === formatE164Phone(fromPhone)) return { ok: false, note: "recipient number equals the sender number" }
-  const body = `ConnectLn: new message from ${senderName}: "${clip(text, 110)}" Reply: ${OPEN_MESSAGING_URL}`
+  const smsInboxUrl = recipientName
+    ? `${OPEN_MESSAGING_URL}&invitedName=${encodeURIComponent(recipientName)}&inviter=${encodeURIComponent(senderName)}`
+    : OPEN_MESSAGING_URL
+  const body = `ConnectLn: new message from ${senderName}: "${clip(text, 110)}" Reply: ${smsInboxUrl}`
   const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
     method: "POST",
     headers: {
@@ -135,7 +139,7 @@ export async function notifyDmRecipient(params: {
   const [email, sms] = await Promise.all([
     wantEmail && recipientEmail ? withTimeout(sendEmail(recipientEmail, senderName, recipientName, text, messageId), false) : Promise.resolve(false),
     wantSms
-      ? withTimeout(sendSms(recipientPhone || "", senderName, text), { ok: false, note: "timed out calling Twilio" })
+      ? withTimeout(sendSms(recipientPhone || "", senderName, text, recipientName), { ok: false, note: "timed out calling Twilio" })
       : Promise.resolve({ ok: false, note: "SMS notifications are switched off (DM_NOTIFY_SMS=0)" }),
   ])
   return { email, sms: sms.ok, smsNote: sms.note }

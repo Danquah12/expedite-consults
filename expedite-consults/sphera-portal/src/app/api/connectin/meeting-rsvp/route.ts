@@ -123,7 +123,7 @@ export async function GET(req: Request) {
     <div style="padding:22px">
       <h2 style="margin:0 0 8px 0;font-size:18px;color:#0f172a">Your response has been sent to ${host || 'the organizer'}!</h2>
       <p style="margin:0 0 14px 0;font-size:14px;color:#334155"><strong>${labelMap[choice]}</strong> for <em>"${reason}"</em>.</p>
-      <a href="https://www.connectln.app/connectin?tab=messaging" style="display:inline-block;background:#0A66C2;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:10px;font-weight:800;font-size:13px">Open ConnectLn Messaging →</a>
+      <a href="https://www.connectln.app/connectin?tab=messaging${invitee ? `&invitedName=${encodeURIComponent(invitee)}` : ''}${host ? `&inviter=${encodeURIComponent(host)}` : ''}" style="display:inline-block;background:#0A66C2;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:10px;font-weight:800;font-size:13px">Open ConnectLn Messaging →</a>
     </div>
   </div>
 </body>

@@ -164,7 +164,212 @@ export default function ConnectLnPage() {
   const [analyticsModalTab, setAnalyticsModalTab] = useState<'viewers' | 'reach' | 'discoveries'>('viewers')
   const [activeWorkspace, setActiveWorkspace] = useState<'personal' | 'enterprise' | 'creator' | 'seller'>('personal')
 
-  const [userData, setUserData] = useState<UserProfile>(initialCurrentUser)
+  const COMMON_SURNAMES_LIST = [
+    "asiedu", "mensah", "appiah", "owusu", "boateng", "osei", "amoah", "agyemang", "acheampong", "opoku",
+    "koomson", "addo", "tetteh", "quaye", "baah", "nyarko", "frimpong", "ansah", "gyamfi", "baffour",
+    "smith", "johnson", "williams", "brown", "jones", "miller", "davis", "wilson", "taylor", "anderson",
+    "thomas", "jackson", "white", "harris", "martin", "thompson", "garcia", "martinez", "robinson", "clark"
+  ]
+
+  const deriveHumanNameFromEmailClient = (rawInput?: string): string => {
+    const trimmed = (rawInput || "").trim()
+    if (!trimmed) return ""
+    const angleMatch = trimmed.match(/^([^<@]+)<([^>]+)>$/)
+    if (angleMatch && angleMatch[1].trim()) {
+      return angleMatch[1]
+        .trim()
+        .replace(/["']/g, "")
+        .split(/\s+/)
+        .filter(Boolean)
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+        .join(" ")
+    }
+    const local = (trimmed.split("@")[0] || "").trim()
+    if (!local) return ""
+    const cleaned = local.replace(/[._-]+/g, " ").replace(/\d+/g, "").trim()
+    if (!cleaned) return ""
+    if (!cleaned.includes(" ")) {
+      const lower = cleaned.toLowerCase()
+      for (const surname of COMMON_SURNAMES_LIST) {
+        if (lower.length > surname.length + 1 && lower.endsWith(surname)) {
+          const first = lower.slice(0, lower.length - surname.length)
+          return `${first.charAt(0).toUpperCase() + first.slice(1)} ${surname.charAt(0).toUpperCase() + surname.slice(1)}`
+        }
+        if (lower.length > surname.length + 1 && lower.startsWith(surname)) {
+          const rest = lower.slice(surname.length)
+          return `${rest.charAt(0).toUpperCase() + rest.slice(1)} ${surname.charAt(0).toUpperCase() + surname.slice(1)}`
+        }
+      }
+    }
+    return cleaned
+      .split(/\s+/)
+      .filter(Boolean)
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+      .join(" ")
+  }
+
+  const isGenericInvitedPlaceholder = (nameStr?: string): boolean => {
+    const n = (nameStr || "").trim().toLowerCase()
+    if (!n) return true
+    return (
+      n === "invited member" ||
+      n === "invited colleague" ||
+      n === "invited friend" ||
+      n === "invited guest" ||
+      n.startsWith("invited colleague") ||
+      n.startsWith("invited member") ||
+      n.startsWith("invited friend")
+    )
+  }
+
+  const resolveOutboundInviteRecord = (
+    cidParam: string,
+    emailParam: string,
+    phoneParam: string,
+    inviterName: string
+  ): { name: string; email: string } => {
+    if (typeof window === "undefined") return { name: "", email: "" }
+    try {
+      const rawOutbound = localStorage.getItem("connectin_my_outbound_invites_v2")
+      if (!rawOutbound) return { name: "", email: "" }
+      const parsedOutbound = JSON.parse(rawOutbound)
+      if (!Array.isArray(parsedOutbound) || parsedOutbound.length === 0) return { name: "", email: "" }
+
+      const normInviter = (inviterName || "").toLowerCase().trim()
+      const normEmail = (emailParam || "").toLowerCase().trim()
+      const normPhone = (phoneParam || "").replace(/[^\d+]/g, "")
+
+      const cleanCandidateName = (rawName?: string) => {
+        const cleaned = String(rawName || "")
+          .replace(/^Invited Colleague\s*\(.*\)$/i, "")
+          .trim()
+        if (!cleaned || isGenericInvitedPlaceholder(cleaned)) return ""
+        if (normInviter && cleaned.toLowerCase().trim() === normInviter) return ""
+        if (/^[\d+\-\s()]+$/.test(cleaned)) return ""
+        return cleaned
+      }
+
+      // 1. Match by cid, email, or phone
+      for (const item of parsedOutbound) {
+        if (!item) continue
+        const matchCid = cidParam && cidParam !== "live" && item.cid === cidParam
+        const matchEmail = normEmail && String(item.email || "").toLowerCase().trim() === normEmail
+        const matchPhone = normPhone && normPhone.length >= 7 && String(item.phone || "").replace(/[^\d+]/g, "") === normPhone
+        if (matchCid || matchEmail || matchPhone) {
+          const candidate = cleanCandidateName(item.name) || deriveHumanNameFromEmailClient(item.email)
+          if (candidate) {
+            return { name: candidate, email: String(item.email || emailParam || "").trim() }
+          }
+        }
+      }
+
+      // 2. Match most recent user-sent outbound invite (excluding static seed items out_init_*)
+      for (const item of parsedOutbound) {
+        if (!item || String(item.id || "").startsWith("out_init_")) continue
+        const candidate = cleanCandidateName(item.name) || deriveHumanNameFromEmailClient(item.email)
+        if (candidate) {
+          return { name: candidate, email: String(item.email || emailParam || "").trim() }
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return { name: "", email: "" }
+  }
+
+  const [userData, setUserData] = useState<UserProfile>(() => {
+    if (typeof window === "undefined") return initialCurrentUser
+    try {
+      const urlParams = new URLSearchParams(window.location.search)
+      const inviteParam = urlParams.get("invite")
+      const invitedEmailParam = (urlParams.get("invitedEmail") || "").trim()
+      const invitedNameParam = (urlParams.get("invitedName") || "").trim()
+      const invitedPhoneParam = (urlParams.get("invitedPhone") || "").trim()
+      const inviterParam = (urlParams.get("inviter") || "").trim()
+      const refParam = (urlParams.get("ref") || "").trim()
+      const cidParam = (urlParams.get("cid") || "").trim()
+      const joinCallParam = urlParams.get("joinCall")
+
+      const isInviteUrl = Boolean(
+        inviteParam === "accept" ||
+        invitedEmailParam ||
+        invitedNameParam ||
+        invitedPhoneParam ||
+        inviterParam ||
+        refParam ||
+        cidParam
+      )
+
+      if (isInviteUrl) {
+        const formattedRefName = refParam
+          ? refParam
+              .split(/[-_]+/)
+              .filter(Boolean)
+              .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+              .join(" ")
+          : ""
+        const resolvedInviterName = inviterParam || formattedRefName || "Kwesi Asiedu"
+        const outboundMatch = resolveOutboundInviteRecord(cidParam, invitedEmailParam, invitedPhoneParam, resolvedInviterName)
+        const effectiveEmail = invitedEmailParam || outboundMatch.email
+        const emailName = deriveHumanNameFromEmailClient(effectiveEmail)
+
+        const storedUser = getExplicitStoredUser()
+        const storedNonInviterName =
+          storedUser?.name &&
+          storedUser.name.toLowerCase().trim() !== resolvedInviterName.toLowerCase().trim() &&
+          storedUser.name.toLowerCase().trim() !== "kwesi asiedu" &&
+          !isGenericInvitedPlaceholder(storedUser.name)
+            ? storedUser.name.trim()
+            : ""
+
+        const resolvedName =
+          (!isGenericInvitedPlaceholder(invitedNameParam) ? invitedNameParam : "") ||
+          outboundMatch.name ||
+          emailName ||
+          storedNonInviterName ||
+          "New ConnectLn Member"
+
+        const baseProfile = createUniqueUserProfile({
+          name: resolvedName,
+          email: effectiveEmail || `${resolvedName.toLowerCase().replace(/\s+/g, ".")}@connectln.app`,
+          role: "personal",
+          professionId: "cybersecurity_architect",
+          professionEnclave: "tech_cybersecurity"
+        })
+
+        return {
+          ...baseProfile,
+          id: `user_inv_${Date.now().toString(36)}`,
+          name: resolvedName,
+          email: effectiveEmail || baseProfile.email,
+          headline: `Connected with ${resolvedInviterName} · Verified ConnectLn Professional`,
+          avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(resolvedName)}&backgroundColor=0a66c2`,
+          role: "personal",
+          roles: ["NORMAL_USER"],
+          connectionsCount: 1
+        } as UserProfile
+      }
+
+      const explicitStored = getExplicitStoredUser()
+      if (explicitStored && !isGenericInvitedPlaceholder(explicitStored.name)) {
+        return explicitStored
+      }
+
+      if (joinCallParam) {
+        const guestName = invitedNameParam || deriveHumanNameFromEmailClient(invitedEmailParam) || "Live Call Participant"
+        return {
+          ...initialCurrentUser,
+          id: `guest-${Date.now().toString().slice(-5)}`,
+          name: guestName,
+          avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(guestName)}&backgroundColor=0a66c2`,
+          headline: "Live Meeting Participant · VibeChat E2EE"
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return initialCurrentUser
+  })
   const [inspectedMember, setInspectedMember] = useState<UserProfile | null>(null)
   const [composeRecipient, setComposeRecipient] = useState<DirectMessageRecipient | null>(null)
 
@@ -294,6 +499,21 @@ export default function ConnectLnPage() {
       const refParam = (urlParams.get("ref") || "").trim()
       const cidParam = (urlParams.get("cid") || "").trim()
 
+      const resolvedUrlTab =
+        joinCallParam || tabParam === "vibecomms"
+          ? "vibecomms"
+          : tabParam === "careersuite" || tabParam === "resume"
+          ? "careersuite"
+          : tabParam === "jobs"
+          ? "jobs"
+          : tabParam === "veterans"
+          ? "veterans"
+          : tabParam === "franchises"
+          ? "franchises"
+          : tabParam === "messaging"
+          ? "messaging"
+          : null
+
       const isInvitationLink = Boolean(
         inviteParam === "accept" ||
         invitedEmailParam ||
@@ -315,106 +535,118 @@ export default function ConnectLnPage() {
           : ""
         const resolvedInviterName = inviterParam || formattedRefName || "Kwesi Asiedu"
 
-        // Derive recipient name/email from URL or recent outbound invite record if testing on same browser
-        let fallbackOutboundName = ""
-        let fallbackOutboundEmail = ""
-        if (!invitedNameParam && !invitedEmailParam) {
+        // 1. Check local outbound invites & admin directory
+        const outboundMatch = resolveOutboundInviteRecord(cidParam, invitedEmailParam, invitedPhoneParam, resolvedInviterName)
+        let effectiveInviteeEmail = invitedEmailParam || outboundMatch.email
+        const dirMatch = effectiveInviteeEmail
+          ? loadStoredAdminUsers().find(u => String(u.email || "").toLowerCase().trim() === effectiveInviteeEmail.toLowerCase())
+          : undefined
+        const storedUser = getExplicitStoredUser()
+        const storedNonInviterName =
+          storedUser?.name &&
+          storedUser.name.toLowerCase().trim() !== resolvedInviterName.toLowerCase().trim() &&
+          storedUser.name.toLowerCase().trim() !== "kwesi asiedu" &&
+          !isGenericInvitedPlaceholder(storedUser.name)
+            ? storedUser.name.trim()
+            : ""
+
+        let effectiveInviteeName =
+          (!isGenericInvitedPlaceholder(invitedNameParam) ? invitedNameParam : "") ||
+          outboundMatch.name ||
+          (dirMatch?.name && !isGenericInvitedPlaceholder(dirMatch.name) ? dirMatch.name : "") ||
+          deriveHumanNameFromEmailClient(effectiveInviteeEmail) ||
+          storedNonInviterName
+
+        const buildAndPersistInvitee = (personName: string, personEmail: string) => {
+          const cleanName = (!isGenericInvitedPlaceholder(personName) ? personName.trim() : "") || "New ConnectLn Member"
+          const cleanEmail = personEmail || `${cleanName.toLowerCase().replace(/\s+/g, ".")}@connectln.app`
+          const inviteeProfile = createUniqueUserProfile({
+            name: cleanName,
+            email: cleanEmail,
+            role: "personal",
+            professionId: "cybersecurity_architect",
+            professionEnclave: "tech_cybersecurity"
+          })
+          const hydrated: UserProfile = {
+            ...inviteeProfile,
+            id: `user_inv_${cleanName.toLowerCase().replace(/[^a-z0-9]/g, "_")}`,
+            name: cleanName,
+            email: cleanEmail,
+            headline: `Connected with ${resolvedInviterName} · Verified ConnectLn Professional`,
+            avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(cleanName)}&backgroundColor=0a66c2`,
+            role: "personal",
+            roles: ["NORMAL_USER"],
+            connectionsCount: 1
+          } as UserProfile
+          localStorage.removeItem("connectin_is_signed_out")
+          localStorage.setItem("connectin_verified", "true")
+          saveStoredUser(hydrated)
+          connectWithInviterInStorage(resolvedInviterName, inviterHeadlineParam)
+          return hydrated
+        }
+
+        const initialHydrated = buildAndPersistInvitee(effectiveInviteeName, effectiveInviteeEmail)
+
+        if (isMounted) {
+          setUserData(initialHydrated)
+          setIsAuthenticated(true)
+          setIsAuthModalOpen(false)
+          setActiveTab((resolvedUrlTab as any) || "network")
+          // Only show the claim modal if we still don't have the person's name yet
+          if (!effectiveInviteeName) {
+            setInviteClaimModal({
+              isOpen: true,
+              inviterName: resolvedInviterName,
+              inviterHeadline:
+                inviterHeadlineParam ||
+                (resolvedInviterName.toLowerCase().includes("kwesi")
+                  ? "Founder & Chief Security Officer @ Expedite Consults"
+                  : "Verified ConnectLn Member"),
+              recipientName: "",
+              recipientEmail: effectiveInviteeEmail,
+              recipientPhone: invitedPhoneParam,
+              professionId: "cybersecurity_architect"
+            })
+          } else {
+            setInviteClaimModal(null)
+            window.history.replaceState({}, "", window.location.pathname)
+          }
+          setHasHydrated(true)
+        }
+
+        // 2. Also query the server-side invite store (/api/connectin/invite) in case the invite was sent from another device/browser!
+        if (!effectiveInviteeName || isGenericInvitedPlaceholder(effectiveInviteeName)) {
           try {
-            const rawOutbound = localStorage.getItem("connectin_my_outbound_invites_v2")
-            if (rawOutbound) {
-              const parsedOutbound = JSON.parse(rawOutbound)
-              if (Array.isArray(parsedOutbound) && parsedOutbound.length > 0) {
-                const latestInvite = parsedOutbound[0]
-                if (latestInvite?.name && !String(latestInvite.name).toLowerCase().includes(resolvedInviterName.toLowerCase())) {
-                  fallbackOutboundName = String(latestInvite.name).replace(/^Invited Colleague\s*\(.*\)$/i, "").trim()
-                }
-                if (latestInvite?.email) {
-                  fallbackOutboundEmail = String(latestInvite.email).trim()
-                }
+            const lookupQuery = new URLSearchParams()
+            if (cidParam) lookupQuery.set("cid", cidParam)
+            if (effectiveInviteeEmail) lookupQuery.set("email", effectiveInviteeEmail)
+            if (invitedPhoneParam) lookupQuery.set("phone", invitedPhoneParam)
+            if (resolvedInviterName) lookupQuery.set("inviter", resolvedInviterName)
+            const lookupRes = await fetch(`/api/connectin/invite?${lookupQuery.toString()}`, { cache: "no-store" })
+            if (lookupRes.ok && isMounted) {
+              const lookupData = await lookupRes.json()
+              const serverRecipientName = (lookupData?.record?.recipientName || "").trim()
+              const serverRecipientEmail = (lookupData?.record?.recipients?.[0] || "").trim()
+              const resolvedFromServer =
+                (!isGenericInvitedPlaceholder(serverRecipientName) ? serverRecipientName : "") ||
+                deriveHumanNameFromEmailClient(serverRecipientEmail)
+              if (resolvedFromServer) {
+                const updatedHydrated = buildAndPersistInvitee(
+                  resolvedFromServer,
+                  effectiveInviteeEmail || (serverRecipientEmail.includes("@") ? serverRecipientEmail : "")
+                )
+                setUserData(updatedHydrated)
+                setInviteClaimModal(null)
+                window.history.replaceState({}, "", window.location.pathname)
               }
             }
           } catch {
-            // ignore
+            // ignore network error
           }
-        }
-
-        const effectiveInviteeEmail = invitedEmailParam || fallbackOutboundEmail
-        const emailDerivedName = effectiveInviteeEmail
-          ? (effectiveInviteeEmail.split("@")[0] || "")
-              .replace(/[._-]+/g, " ")
-              .replace(/\d+/g, "")
-              .trim()
-              .split(/\s+/)
-              .filter(Boolean)
-              .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
-              .join(" ")
-          : ""
-
-        const effectiveInviteeName = invitedNameParam || fallbackOutboundName || emailDerivedName
-        const displayInviteeName = effectiveInviteeName || "Invited Member"
-        const displayInviteeEmail = effectiveInviteeEmail || `invited.${Date.now().toString(36)}@connectln.app`
-
-        const inviteeProfile = createUniqueUserProfile({
-          name: displayInviteeName,
-          email: displayInviteeEmail,
-          role: "personal",
-          professionId: "cybersecurity_architect",
-          professionEnclave: "tech_cybersecurity"
-        })
-
-        const hydratedInvitee: UserProfile = {
-          ...inviteeProfile,
-          id: `user_inv_${Date.now().toString(36)}`,
-          name: displayInviteeName,
-          email: displayInviteeEmail,
-          headline: `Connected with ${resolvedInviterName} · Verified ConnectLn Professional`,
-          avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayInviteeName)}&backgroundColor=0a66c2`,
-          role: "personal",
-          roles: ["NORMAL_USER"],
-          connectionsCount: 1
-        } as UserProfile
-
-        localStorage.removeItem("connectin_is_signed_out")
-        saveStoredUser(hydratedInvitee)
-        connectWithInviterInStorage(resolvedInviterName, inviterHeadlineParam)
-
-        if (isMounted) {
-          setUserData(hydratedInvitee)
-          setIsAuthenticated(true)
-          setIsAuthModalOpen(false)
-          setActiveTab("network")
-          setInviteClaimModal({
-            isOpen: true,
-            inviterName: resolvedInviterName,
-            inviterHeadline:
-              inviterHeadlineParam ||
-              (resolvedInviterName.toLowerCase().includes("kwesi")
-                ? "Founder & Chief Security Officer @ Expedite Consults"
-                : "Verified ConnectLn Member"),
-            recipientName: effectiveInviteeName,
-            recipientEmail: effectiveInviteeEmail,
-            recipientPhone: invitedPhoneParam,
-            professionId: "cybersecurity_architect"
-          })
-          setHasHydrated(true)
         }
         return
       }
 
-      const resolvedUrlTab =
-        joinCallParam || tabParam === "vibecomms"
-          ? "vibecomms"
-          : tabParam === "careersuite" || tabParam === "resume"
-          ? "careersuite"
-          : tabParam === "jobs"
-          ? "jobs"
-          : tabParam === "veterans"
-          ? "veterans"
-          : tabParam === "franchises"
-          ? "franchises"
-          : tabParam === "messaging"
-          ? "messaging"
-          : null
       if (resolvedUrlTab) {
         setActiveTab(resolvedUrlTab as any)
       }
@@ -427,14 +659,16 @@ export default function ConnectLnPage() {
       const hasVerified = localStorage.getItem("connectin_verified") === "true"
 
       // If an invited friend clicks a live meeting link (?joinCall=...) and has no stored account yet,
-      // admit them directly into the meeting room as an Invited Friend Guest without blocking with a login modal!
+      // admit them directly into the meeting room without blocking with a login modal!
       if (joinCallParam && !explicitUser) {
         if (isMounted) {
+          const guestName = invitedNameParam || deriveHumanNameFromEmailClient(invitedEmailParam) || "Live Call Participant"
           const guestUser = {
             ...initialCurrentUser,
             id: `guest-${Date.now().toString().slice(-5)}`,
-            name: "Invited Friend (Live Guest)",
-            headline: "Invited Meeting Participant · VibeChat E2EE",
+            name: guestName,
+            avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(guestName)}&backgroundColor=0a66c2`,
+            headline: "Live Meeting Participant · VibeChat E2EE",
           }
           setUserData(guestUser)
           setIsAuthenticated(true)
@@ -1423,6 +1657,22 @@ export default function ConnectLnPage() {
       ))
     )
   })
+
+  if (!hasHydrated) {
+    return (
+      <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[var(--bg-core,#f3f2f0)] text-[var(--text-pure,#18181b)] antialiased">
+        <header className="sticky top-0 z-50 w-full border-b border-[#2a2723] bg-[#171513] text-[#F5F0EB]">
+          <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6">
+            <ConnectInLogo size="sm" showSubtitle={true} className="text-[#F5F0EB]" />
+            <div className="flex items-center gap-2 text-xs font-semibold text-stone-300">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Connecting to your ConnectLn profile...</span>
+            </div>
+          </div>
+        </header>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[var(--bg-core,#f3f2f0)] text-[var(--text-pure,#18181b)] antialiased transition-colors duration-300 selection:bg-[#0A66C2] selection:text-white">
@@ -2594,7 +2844,10 @@ export default function ConnectLnPage() {
             <form
               onSubmit={(e) => {
                 e.preventDefault()
-                const finalRecipientName = (inviteClaimModal.recipientName || "").trim() || "Invited Colleague"
+                const finalRecipientName =
+                  (inviteClaimModal.recipientName || "").trim() ||
+                  deriveHumanNameFromEmailClient(inviteClaimModal.recipientEmail) ||
+                  userData.name
                 const finalRecipientEmail =
                   (inviteClaimModal.recipientEmail || "").trim() ||
                   `${finalRecipientName.toLowerCase().replace(/\s+/g, ".")}@connectln.app`
