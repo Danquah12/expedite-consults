@@ -1,0 +1,18 @@
+# Binaries & scanner caches
+bin/
+nuclei-templates/
+
+# Python backend virtualenv & local DB/evidence
+backend/.venv/
+backend/__pycache__/
+**/__pycache__/
+*.pyc
+*.db
+*.sqlite3
+backend/data/
+
+# Node / Vite frontend
+frontend/node_modules/
+frontend/dist/
+.vercel/
+.env

@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: trepath
+      POSTGRES_USER: trepath
+      POSTGRES_PASSWORD: trepath_dev_password
+    volumes:
+      - trepath_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trepath -d trepath"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./backend
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://trepath:trepath_dev_password@db:5432/trepath
+      EVIDENCE_DIR: /app/data/evidence
+    ports:
+      - "8000:8000"
+    volumes:
+      - trepath_evidence:/app/data/evidence
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    environment:
+      VITE_API_BASE: http://localhost:8000/api/v1
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+
+volumes:
+  trepath_db:
+  trepath_evidence:
