@@ -22,6 +22,11 @@ export interface CommCallParticipant {
   virtual_bg_id?: string
   virtual_bg_badge?: string
   live_frame?: string | null
+  live_audio_chunk?: {
+    seq: number
+    data_url: string
+    ts: number
+  } | null
   participant_state: "RINGING" | "NEGOTIATING" | "CONNECTED" | "RECONNECTING" | "LEFT"
   e2ee_media_fingerprint: string
 }
@@ -110,14 +115,20 @@ async function pushCloudCallParticipant(callId: string, participant: CommCallPar
   lastCloudParticipantPushMap.set(key, nowMs)
 
   try {
+    const hasSmallAudio =
+      participant.live_audio_chunk &&
+      typeof participant.live_audio_chunk.data_url === "string" &&
+      participant.live_audio_chunk.data_url.length < 7500
+    const maxFrameLen = hasSmallAudio ? 7500 : 11500
     const compactParticipant = {
       ...participant,
       call_id: callId,
-      // Keep item well under Twilio Sync 16KB limit
+      // Keep item well under Twilio Sync 16KB limit while syncing both voice audio and video frames
       live_frame:
-        participant.live_frame && participant.live_frame.length < 11500
+        participant.live_frame && participant.live_frame.length < maxFrameLen
           ? participant.live_frame
           : null,
+      live_audio_chunk: hasSmallAudio ? participant.live_audio_chunk : null,
     }
     const baseUrl = `https://sync.twilio.com/v1/Services/default/Maps/${CALLS_SYNC_MAP_NAME}`
     const serialized = JSON.stringify(compactParticipant)
@@ -201,6 +212,7 @@ async function pullCloudCallParticipants(): Promise<void> {
             ...localP,
             ...data,
             live_frame: data.live_frame || localP.live_frame || null,
+            live_audio_chunk: data.live_audio_chunk || localP.live_audio_chunk || null,
           }
         } else if (!localP.peer_id && data.peer_id) {
           record.participants[existingIdx].peer_id = data.peer_id
@@ -565,6 +577,20 @@ export async function POST(req: NextRequest) {
             ? body.live_frame
             : existingIdx >= 0
             ? record.participants[existingIdx].live_frame
+            : null,
+        live_audio_chunk:
+          body.is_muted === true
+            ? null
+            : body.live_audio_chunk &&
+              typeof body.live_audio_chunk.data_url === "string" &&
+              body.live_audio_chunk.data_url.startsWith("data:audio/")
+            ? {
+                seq: Number(body.live_audio_chunk.seq) || nowMs,
+                data_url: body.live_audio_chunk.data_url,
+                ts: Number(body.live_audio_chunk.ts) || nowMs,
+              }
+            : existingIdx >= 0
+            ? record.participants[existingIdx].live_audio_chunk
             : null,
         participant_state: "CONNECTED",
         e2ee_media_fingerprint:

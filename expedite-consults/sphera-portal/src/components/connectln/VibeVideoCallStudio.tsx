@@ -58,6 +58,88 @@ export interface CallParticipantTile {
   avatarGradient: string
 }
 
+function RemotePeerAudioTrackPlayer({ stream }: { stream: MediaStream }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  useEffect(() => {
+    const el = audioRef.current
+    if (!el || !stream) return
+    if (el.srcObject !== stream) {
+      el.srcObject = stream
+    }
+    el.muted = false
+    el.volume = 1.0
+
+    let audioCtx: AudioContext | null = null
+    let sourceNode: MediaStreamAudioSourceNode | null = null
+    let gainNode: GainNode | null = null
+
+    const ensureWebAudioBoost = () => {
+      try {
+        if (stream.getAudioTracks().length === 0) return
+        if (!audioCtx) {
+          const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+          if (Ctx) {
+            audioCtx = new Ctx()
+            sourceNode = audioCtx.createMediaStreamSource(stream)
+            gainNode = audioCtx.createGain()
+            gainNode.gain.value = 1.35
+            sourceNode.connect(gainNode)
+            gainNode.connect(audioCtx.destination)
+          }
+        }
+        if (audioCtx && audioCtx.state === "suspended") {
+          audioCtx.resume().catch(() => {})
+        }
+      } catch {
+        // fallback to HTMLAudioElement playback
+      }
+    }
+
+    const tryPlayAudio = () => {
+      if (!audioRef.current) return
+      audioRef.current.muted = false
+      audioRef.current.volume = 1.0
+      audioRef.current.play().catch(() => {})
+      ensureWebAudioBoost()
+    }
+
+    tryPlayAudio()
+    window.addEventListener("pointerdown", tryPlayAudio)
+    window.addEventListener("touchstart", tryPlayAudio)
+    window.addEventListener("keydown", tryPlayAudio)
+
+    return () => {
+      window.removeEventListener("pointerdown", tryPlayAudio)
+      window.removeEventListener("touchstart", tryPlayAudio)
+      window.removeEventListener("keydown", tryPlayAudio)
+      try {
+        sourceNode?.disconnect()
+        gainNode?.disconnect()
+        if (audioCtx && audioCtx.state !== "closed") {
+          audioCtx.close().catch(() => {})
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }, [stream])
+
+  return (
+    <audio
+      ref={audioRef}
+      autoPlay
+      playsInline
+      onLoadedMetadata={(e) => {
+        e.currentTarget.muted = false
+        e.currentTarget.volume = 1.0
+        e.currentTarget.play().catch(() => {})
+      }}
+      style={{ position: "fixed", width: 1, height: 1, opacity: 0, pointerEvents: "none", left: -9999 }}
+    />
+  )
+}
+
 function RemotePeerVideoElement({ stream, isVideoOn = true }: { stream: MediaStream; isVideoOn?: boolean }) {
   const ref = useRef<HTMLVideoElement | null>(null)
   const [hasLiveVideoFrames, setHasLiveVideoFrames] = useState(false)
@@ -69,6 +151,7 @@ function RemotePeerVideoElement({ stream, isVideoOn = true }: { stream: MediaStr
     if (el.srcObject !== stream) {
       el.srcObject = stream
     }
+    el.muted = true
 
     const checkFrames = () => {
       if (el.videoWidth > 0 && el.readyState >= 2 && !el.paused) {
@@ -80,22 +163,9 @@ function RemotePeerVideoElement({ stream, isVideoOn = true }: { stream: MediaStr
     el.addEventListener("playing", checkFrames)
     el.addEventListener("timeupdate", checkFrames)
 
-    // Attempt unmuted playback first; if browser blocks unmuted autoplay, fallback to muted immediately so video plays
     el.play()
       .then(checkFrames)
-      .catch(() => {
-        el.muted = true
-        el.play().then(checkFrames).catch(() => {})
-        const unlockAudio = () => {
-          if (ref.current) {
-            ref.current.muted = false
-          }
-          window.removeEventListener("pointerdown", unlockAudio)
-          window.removeEventListener("keydown", unlockAudio)
-        }
-        window.addEventListener("pointerdown", unlockAudio, { once: true })
-        window.addEventListener("keydown", unlockAudio, { once: true })
-      })
+      .catch(() => {})
 
     return () => {
       el.removeEventListener("loadeddata", checkFrames)
@@ -111,16 +181,15 @@ function RemotePeerVideoElement({ stream, isVideoOn = true }: { stream: MediaStr
       ref={ref}
       autoPlay
       playsInline
+      muted
       onLoadedMetadata={(e) => {
         const el = e.currentTarget
+        el.muted = true
         el.play()
           .then(() => {
             if (el.videoWidth > 0) setHasLiveVideoFrames(true)
           })
-          .catch(() => {
-            el.muted = true
-            el.play().catch(() => {})
-          })
+          .catch(() => {})
       }}
       style={{
         position: "absolute",
@@ -2251,6 +2320,216 @@ export function VibeVideoCallStudio({
     )
   }, [localDisplayName])
 
+  // Keep latest remoteStreams in a ref for non-React callbacks
+  const remoteStreamsRef = useRef<Record<string, MediaStream>>({})
+  useEffect(() => {
+    remoteStreamsRef.current = remoteStreams
+  }, [remoteStreams])
+
+  // Rolling live voice chunk state for cross-network / mobile NAT fallback audio relay
+  const latestLocalAudioChunkRef = useRef<{ seq: number; data_url: string; ts: string } | undefined>(undefined)
+  const localAudioSeqRef = useRef<number>(0)
+  const playedRemoteAudioSeqRef = useRef<Map<string, number>>(new Map())
+  const sharedPlaybackAudioCtxRef = useRef<AudioContext | null>(null)
+
+  const playRemoteAudioChunk = useCallback(
+    (
+      participantKey: string,
+      peerId: string | undefined,
+      chunk: { seq: number; data_url: string; ts?: string } | undefined,
+      isRemoteMuted?: boolean
+    ) => {
+      if (!chunk || typeof chunk.seq !== "number" || !chunk.data_url || isRemoteMuted) return
+      const key = participantKey || peerId || "unknown"
+      const lastSeq = playedRemoteAudioSeqRef.current.get(key) ?? -1
+      if (chunk.seq <= lastSeq) return
+
+      // Skip fallback chunk playback ONLY if this peer already has a live, unmuted WebRTC audio track playing
+      if (peerId && remoteStreamsRef.current[peerId]) {
+        const liveAudioTracks = remoteStreamsRef.current[peerId]
+          .getAudioTracks()
+          .filter((t) => t.readyState === "live" && t.enabled)
+        if (liveAudioTracks.length > 0) {
+          playedRemoteAudioSeqRef.current.set(key, chunk.seq)
+          return
+        }
+      }
+
+      playedRemoteAudioSeqRef.current.set(key, chunk.seq)
+
+      try {
+        const Ctx =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+        if (Ctx) {
+          if (!sharedPlaybackAudioCtxRef.current || sharedPlaybackAudioCtxRef.current.state === "closed") {
+            sharedPlaybackAudioCtxRef.current = new Ctx()
+          }
+          const ctx = sharedPlaybackAudioCtxRef.current
+          if (ctx.state === "suspended") {
+            ctx.resume().catch(() => {})
+          }
+          const commaIdx = chunk.data_url.indexOf(",")
+          if (commaIdx !== -1) {
+            const b64 = chunk.data_url.slice(commaIdx + 1)
+            const binary = window.atob(b64)
+            const bytes = new Uint8Array(binary.length)
+            for (let i = 0; i < binary.length; i++) {
+              bytes[i] = binary.charCodeAt(i)
+            }
+            ctx
+              .decodeAudioData(bytes.buffer.slice(0))
+              .then((audioBuffer) => {
+                const src = ctx.createBufferSource()
+                src.buffer = audioBuffer
+                const gain = ctx.createGain()
+                gain.gain.value = 1.4
+                src.connect(gain)
+                gain.connect(ctx.destination)
+                src.start(0)
+              })
+              .catch(() => {
+                const fallbackAudio = new Audio(chunk.data_url)
+                fallbackAudio.volume = 1.0
+                fallbackAudio.play().catch(() => {})
+              })
+            return
+          }
+        }
+      } catch {
+        // fallback below
+      }
+
+      try {
+        const audio = new Audio(chunk.data_url)
+        audio.volume = 1.0
+        audio.play().catch(() => {})
+      } catch {
+        // ignore
+      }
+    },
+    []
+  )
+
+  // Unlock shared Web Audio context on any user interaction so mobile/desktop browsers never silence remote voices
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const unlockCtx = () => {
+      try {
+        const Ctx =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+        if (Ctx && (!sharedPlaybackAudioCtxRef.current || sharedPlaybackAudioCtxRef.current.state === "closed")) {
+          sharedPlaybackAudioCtxRef.current = new Ctx()
+        }
+        if (sharedPlaybackAudioCtxRef.current && sharedPlaybackAudioCtxRef.current.state === "suspended") {
+          sharedPlaybackAudioCtxRef.current.resume().catch(() => {})
+        }
+      } catch {
+        // ignore
+      }
+    }
+    window.addEventListener("pointerdown", unlockCtx)
+    window.addEventListener("touchstart", unlockCtx)
+    window.addEventListener("keydown", unlockCtx)
+    return () => {
+      window.removeEventListener("pointerdown", unlockCtx)
+      window.removeEventListener("touchstart", unlockCtx)
+      window.removeEventListener("keydown", unlockCtx)
+    }
+  }, [])
+
+  // Rolling 1200ms voice recorder from local microphone so participants behind symmetric mobile NAT still transmit crystal-clear audio
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof MediaRecorder === "undefined") return
+    if (!localStreamState || isMicMuted || callState === "ENDED") {
+      latestLocalAudioChunkRef.current = undefined
+      return
+    }
+    const audioTracks = localStreamState.getAudioTracks().filter((t) => t.readyState === "live" && t.enabled)
+    if (audioTracks.length === 0) return
+
+    let cancelled = false
+    const audioOnlyStream = new MediaStream([audioTracks[0]])
+    const mimeCandidates = [
+      "audio/webm;codecs=opus",
+      "audio/webm",
+      "audio/mp4",
+      "audio/ogg;codecs=opus",
+    ]
+    const supportedMime =
+      mimeCandidates.find((m) => {
+        try {
+          return typeof MediaRecorder.isTypeSupported === "function" && MediaRecorder.isTypeSupported(m)
+        } catch {
+          return false
+        }
+      }) || ""
+
+    let activeRecorder: MediaRecorder | null = null
+
+    const recordSlice = () => {
+      if (cancelled || isMicMuted) return
+      try {
+        const options: MediaRecorderOptions = supportedMime
+          ? { mimeType: supportedMime, audioBitsPerSecond: 16000 }
+          : { audioBitsPerSecond: 16000 }
+        const rec = new MediaRecorder(audioOnlyStream, options)
+        activeRecorder = rec
+        const parts: BlobPart[] = []
+        rec.ondataavailable = (ev) => {
+          if (ev.data && ev.data.size > 0) parts.push(ev.data)
+        }
+        rec.onstop = () => {
+          if (cancelled || parts.length === 0) return
+          const blob = new Blob(parts, { type: rec.mimeType || supportedMime || "audio/webm" })
+          if (blob.size < 80 || blob.size > 48000) return
+          const reader = new FileReader()
+          reader.onloadend = () => {
+            if (cancelled) return
+            const dataUrl = typeof reader.result === "string" ? reader.result : ""
+            if (dataUrl.startsWith("data:audio/")) {
+              localAudioSeqRef.current += 1
+              latestLocalAudioChunkRef.current = {
+                seq: localAudioSeqRef.current,
+                data_url: dataUrl,
+                ts: new Date().toISOString(),
+              }
+            }
+          }
+          reader.readAsDataURL(blob)
+        }
+        rec.start()
+        setTimeout(() => {
+          if (rec.state === "recording") {
+            try {
+              rec.stop()
+            } catch {
+              // ignore
+            }
+          }
+        }, 1150)
+      } catch {
+        // ignore
+      }
+    }
+
+    recordSlice()
+    const intervalId = setInterval(recordSlice, 1200)
+
+    return () => {
+      cancelled = true
+      clearInterval(intervalId)
+      if (activeRecorder && activeRecorder.state === "recording") {
+        try {
+          activeRecorder.stop()
+        } catch {
+          // ignore
+        }
+      }
+    }
+  }, [localStreamState, isMicMuted, callState])
+
   // Keep latest sync getters in a ref so the PeerJS connection is NEVER torn down when camera/mic/background state updates
   const peerSyncStateRef = useRef({
     localDisplayName,
@@ -2262,6 +2541,7 @@ export function VibeVideoCallStudio({
     captureCompactLiveFrame,
     captureActiveSharedStagePayload,
     upsertRemoteFriendTile,
+    playRemoteAudioChunk,
     appendLog,
   })
   useEffect(() => {
@@ -2275,6 +2555,7 @@ export function VibeVideoCallStudio({
       captureCompactLiveFrame,
       captureActiveSharedStagePayload,
       upsertRemoteFriendTile,
+      playRemoteAudioChunk,
       appendLog,
     }
   }, [
@@ -2287,6 +2568,7 @@ export function VibeVideoCallStudio({
     captureCompactLiveFrame,
     captureActiveSharedStagePayload,
     upsertRemoteFriendTile,
+    playRemoteAudioChunk,
     appendLog,
   ])
 
@@ -2303,12 +2585,24 @@ export function VibeVideoCallStudio({
         const vSender = senders.find((s) => s.track && s.track.kind === "video")
         if (vSender && typeof vSender.replaceTrack === "function") {
           vSender.replaceTrack(vTrack).catch(() => {})
+        } else if (typeof pc.addTrack === "function") {
+          try {
+            pc.addTrack(vTrack, localStreamState)
+          } catch {
+            // ignore
+          }
         }
       }
       if (aTrack) {
         const aSender = senders.find((s) => s.track && s.track.kind === "audio")
         if (aSender && typeof aSender.replaceTrack === "function") {
           aSender.replaceTrack(aTrack).catch(() => {})
+        } else if (typeof pc.addTrack === "function") {
+          try {
+            pc.addTrack(aTrack, localStreamState)
+          } catch {
+            // ignore
+          }
         }
       }
     })
@@ -2414,6 +2708,7 @@ export function VibeVideoCallStudio({
             virtualBgId: st.selectedVirtualBgId,
             virtualBgBadge: st.selectedVirtualBgId !== "none" ? st.activeVirtualBgOption.badgeText : undefined,
             liveFrame: st.captureCompactLiveFrame(),
+            liveAudioChunk: !st.isMicMuted ? latestLocalAudioChunkRef.current : undefined,
             sharedStage: st.captureActiveSharedStagePayload(),
           })
         } catch {
@@ -2444,6 +2739,14 @@ export function VibeVideoCallStudio({
           virtualBgBadge: data.virtualBgBadge,
           liveFrame: data.liveFrame,
         })
+        if (data.liveAudioChunk) {
+          peerSyncStateRef.current.playRemoteAudioChunk(
+            data.participantId || conn.peer,
+            data.peerId || conn.peer,
+            data.liveAudioChunk,
+            data.isMuted
+          )
+        }
         if (data.sharedStage && data.sharedStage.sharer_user_id !== localParticipantId) {
           if (data.sharedStage.active && data.sharedStage.frame_or_data_url) {
             setRemoteSharedStageItem(data.sharedStage)
@@ -2478,6 +2781,21 @@ export function VibeVideoCallStudio({
               { urls: "stun:stun1.l.google.com:19302" },
               { urls: "stun:stun2.l.google.com:19302" },
               { urls: "stun:stun.cloudflare.com:3478" },
+              {
+                urls: "turn:openrelay.metered.ca:80",
+                username: "openrelayproject",
+                credential: "openrelayproject",
+              },
+              {
+                urls: "turn:openrelay.metered.ca:443",
+                username: "openrelayproject",
+                credential: "openrelayproject",
+              },
+              {
+                urls: "turn:openrelay.metered.ca:443?transport=tcp",
+                username: "openrelayproject",
+                credential: "openrelayproject",
+              },
             ],
           },
         })
@@ -2514,6 +2832,7 @@ export function VibeVideoCallStudio({
               virtualBgId: st.selectedVirtualBgId,
               virtualBgBadge: st.selectedVirtualBgId !== "none" ? st.activeVirtualBgOption.badgeText : undefined,
               liveFrame: frame,
+              liveAudioChunk: !st.isMicMuted ? latestLocalAudioChunkRef.current : undefined,
               sharedStage: activeStage,
             }
 
@@ -2526,15 +2845,37 @@ export function VibeVideoCallStudio({
                 } catch {
                   // ignore
                 }
+              } else {
+                try {
+                  const newConn = peerInstance.connect(targetSlot, { reliable: true })
+                  bindDataConn(newConn)
+                } catch {
+                  // ignore
+                }
+              }
 
-                // Initiate or retry live WebRTC media call when targetSlot has an open peer connection and we haven't received a live stream yet
+              // Initiate or retry live WebRTC media call whenever targetSlot is a known active remote peer OR has an open DataConn
+              const isConfirmedRemotePeer =
+                knownRemotePeerIdsRef.current.has(targetSlot) || Boolean(existingConn && existingConn.open)
+              if (isConfirmedRemotePeer) {
                 const outStream = getOutgoingCallMediaStream()
                 const lastTry = lastCallAttemptMs.get(targetSlot) || 0
+                const existingCall = activeMediaCalls.get(targetSlot)
+                const existingPc: RTCPeerConnection | undefined = existingCall?.peerConnection
+                const hasOutgoingAudioSender =
+                  existingPc &&
+                  typeof existingPc.getSenders === "function" &&
+                  existingPc.getSenders().some((s) => s.track && s.track.kind === "audio")
+
+                const needsMediaCall =
+                  !liveStreamPeers.has(targetSlot) ||
+                  (outStream && outStream.getAudioTracks().length > 0 && !hasOutgoingAudioSender)
+
                 if (
                   outStream &&
                   (outStream.getVideoTracks().length > 0 || outStream.getAudioTracks().length > 0) &&
-                  !liveStreamPeers.has(targetSlot) &&
-                  nowMs - lastTry > 4200
+                  needsMediaCall &&
+                  nowMs - lastTry > 3800
                 ) {
                   lastCallAttemptMs.set(targetSlot, nowMs)
                   try {
@@ -2550,13 +2891,6 @@ export function VibeVideoCallStudio({
                   } catch {
                     // ignore
                   }
-                }
-              } else {
-                try {
-                  const newConn = peerInstance.connect(targetSlot, { reliable: true })
-                  bindDataConn(newConn)
-                } catch {
-                  // ignore
                 }
               }
             }
@@ -2650,6 +2984,7 @@ export function VibeVideoCallStudio({
           virtual_bg_id: st.selectedVirtualBgId,
           virtual_bg_badge: st.selectedVirtualBgId !== "none" ? st.activeVirtualBgOption.badgeText : undefined,
           live_frame: liveFrame,
+          live_audio_chunk: !st.isMicMuted ? latestLocalAudioChunkRef.current : undefined,
           shared_stage: activeStage || undefined,
         }),
       })
@@ -2709,6 +3044,9 @@ export function VibeVideoCallStudio({
                   virtualBgBadge: p.virtual_bg_badge,
                   liveFrame: p.live_frame,
                 })
+                if (p.live_audio_chunk) {
+                  st.playRemoteAudioChunk(p.user_id, p.peer_id, p.live_audio_chunk, p.is_muted)
+                }
               }
             }
             // Prune any real remote peer tile whose participant has left or timed out
@@ -4382,6 +4720,15 @@ export function VibeVideoCallStudio({
                 <Video className="h-4 w-4" />
                 <span>Start / Rejoin Live Meeting</span>
               </button>
+            </div>
+          )}
+
+          {/* GLOBAL REMOTE WEBRTC AUDIO MIXER (Plays every incoming WebRTC audio track at full volume regardless of tile binding) */}
+          {callState !== "ENDED" && (
+            <div style={{ position: "fixed", width: 0, height: 0, overflow: "hidden", pointerEvents: "none" }}>
+              {Object.entries(remoteStreams).map(([peerKey, stream]) => (
+                <RemotePeerAudioTrackPlayer key={peerKey} stream={stream} />
+              ))}
             </div>
           )}
 
