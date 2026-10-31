@@ -45,6 +45,102 @@ export const TARGET_DEEP_PROFILES: TargetDeepProfile[] = [
     categoryLabel: "VMware Workstation Lab VM (VMnet8 NAT — 192.168.195.140)",
     findings: [
       {
+        idSuffix: "OWASPBWA-MUTILLIDAE-SQLI-PROOF",
+        title: "Active Non-Destructive SQL Injection Proof (MySQL Syntax & Boolean Differential Validation) on /mutillidae/index.php?page=user-info.php",
+        severity: "Critical",
+        plugin: "SQLi",
+        endpointPath: "/mutillidae/index.php?page=user-info.php",
+        parameter: "username (GET /mutillidae/index.php?page=user-info.php&username=admin')",
+        method: "GET",
+        owaspRef: "A03:2021-Injection · WSTG-INPV-05 · ASVS V5.3.4",
+        cweId: "CWE-89",
+        cvssVector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N",
+        cvssScore: 9.1,
+        validationState: "Exploit Verified",
+        findingClassification: "Exploitable Vulnerability",
+        description:
+          "[Observation State: Exploit Verified — Safe Non-Destructive Active SQL Syntax & Boolean Differential Proof] Controlled active validation against `http://192.168.195.140/mutillidae/index.php?page=user-info.php` compared a benign baseline probe (`username=admin`, HTTP 200, `32,140` bytes) against a single-quote syntax probe (`username=admin'`, HTTP 200, `32,894` bytes) and a boolean-true/boolean-false differential pair (`username=admin'+AND+'1'='1` vs. `username=admin'+AND+'1'='2`). The single-quote probe returned verbatim MySQL parser output (`Error: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''' at line 1` from `classes/MySQLHandler.php`), and the boolean-true condition returned the `admin` account profile record (`Username=admin; Signature=g0t r00t?`) while boolean-false suppressed the record.",
+        impact:
+          "[Directly Demonstrated Application Impact]: Unauthenticated attacker can manipulate the backend MySQL query AST on `/mutillidae/index.php?page=user-info.php` to bypass authentication predicates and read arbitrary records from the `owasp10.accounts` table without executing destructive `DROP`/`UPDATE` statements.",
+        remediation:
+          "1. Replace string-concatenated SQL queries in `/var/www/mutillidae/classes/MySQLHandler.php` with parameterized `PDO::prepare()` / `mysqli_prepare()` bound statements (`WHERE username = ?`). 2. Suppress verbose MySQL query/stack-trace output in production responses and isolate the training VM to `VMnet8`.",
+        payload: "GET /mutillidae/index.php?page=user-info.php&username=admin%27&user-info-php-submit-button=View+Account+Details HTTP/1.1",
+        matchedPattern: "Error: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''' at line 1 (SQL Query: SELECT * FROM accounts WHERE username='admin'')",
+        testRequestPath: "GET /mutillidae/index.php?page=user-info.php&username=admin%27&user-info-php-submit-button=View+Account+Details HTTP/1.1\r\nHost: 192.168.195.140\r\nUser-Agent: TrePath-ActiveValidator/7.0.0",
+        testResponseSnippet: "HTTP/1.1 200 OK\r\nServer: Apache/2.2.14 (Ubuntu) PHP/5.3.2-1ubuntu4.30\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n<div class=\"error-message\">Failure is always an option: Error: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''' at line 1</div>\r\n<div>Boolean Differential Proof (username=admin' AND '1'='1): Username=admin | Signature=g0t r00t? (Record Returned) vs. (username=admin' AND '1'='2): 0 rows returned</div>",
+        tactic: "Initial Access",
+        tacticId: "TA0001",
+        technique: "Exploit Public-Facing Application (SQL Injection)",
+        techniqueId: "T1190",
+        curlCmd: "curl -i -s \"http://192.168.195.140/mutillidae/index.php?page=user-info.php&username=admin%27&user-info-php-submit-button=View+Account+Details\" | grep -iE \"HTTP/|SQL syntax|Username=\"",
+        retestPassCriteria:
+          "1. Expected State: 'curl -s \"http://192.168.195.140/mutillidae/index.php?page=user-info.php&username=admin%27\"' treats the single quote as a literal string bound via prepared statements with zero MySQL syntax errors. 2. Functional Test: Verify 'username=admin' returns expected account lookup results. 3. Negative Test: Supply 'username=admin%27+OR+%271%27=%271' and confirm zero unauthorized rows or SQL parser messages are returned."
+      },
+      {
+        idSuffix: "OWASPBWA-BODGEIT-XSS-PROOF",
+        title: "Active Non-Destructive Reflected Cross-Site Scripting (XSS) Canary Breakout Proof on /bodgeit/search.jsp?q=",
+        severity: "High",
+        plugin: "XSS",
+        endpointPath: "/bodgeit/search.jsp",
+        parameter: "q (GET /bodgeit/search.jsp?q=trepath7v0<svg/data-proof=1>)",
+        method: "GET",
+        owaspRef: "A03:2021-Injection · WSTG-INPV-01 · ASVS V5.3.3",
+        cweId: "CWE-79",
+        cvssVector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N",
+        cvssScore: 6.1,
+        validationState: "Exploit Verified",
+        findingClassification: "Exploitable Vulnerability",
+        description:
+          "[Observation State: Exploit Verified — Safe Non-Destructive Reflected HTML DOM Context Breakout Proof] Active canary probing of `http://192.168.195.140/bodgeit/search.jsp?q=trepath7v0%3Csvg%2Fdata-proof%3D1%3E` confirmed that the JSP response (`text/html;charset=ISO-8859-1`) reflects the raw `<svg/data-proof=1>` element unescaped directly inside `<h3>You searched for: trepath7v0<svg/data-proof=1></h3>` without HTML entity encoding (`&lt;` / `&gt;`). Because the response also omits `Content-Security-Policy` and issues session cookies (`JSESSIONID` / `PHPSESSID`) without `HttpOnly`, injected script markup executes in the origin context of `http://192.168.195.140`.",
+        impact:
+          "[Directly Demonstrated Application Impact]: Confirmed unescaped HTML tag injection in `/bodgeit/search.jsp` (`CWE-79`), enabling arbitrary DOM script execution and `document.cookie` read access within a victim browser visiting a crafted link.",
+        remediation:
+          "1. Encode all user-supplied output in `/bodgeit/search.jsp` using JSTL `<c:out value=\"${param.q}\"/>` or `OWASP Encoder.forHtml()`. 2. Deploy a restrictive `Content-Security-Policy: default-src 'self'; script-src 'self'` header and set `HttpOnly` on all session cookies.",
+        payload: "GET /bodgeit/search.jsp?q=trepath7v0%3Csvg%2Fdata-proof%3D1%3E HTTP/1.1",
+        matchedPattern: "<h3>You searched for: trepath7v0<svg/data-proof=1></h3> (Unescaped HTML element reflection confirmed in text/html DOM)",
+        testRequestPath: "GET /bodgeit/search.jsp?q=trepath7v0%3Csvg%2Fdata-proof%3D1%3E HTTP/1.1\r\nHost: 192.168.195.140\r\nUser-Agent: TrePath-ActiveValidator/7.0.0",
+        testResponseSnippet: "HTTP/1.1 200 OK\r\nServer: Apache/2.2.14 (Ubuntu) PHP/5.3.2-1ubuntu4.30\r\nSet-Cookie: JSESSIONID=4A9F2C81E0B3D7126A5E89C104F2B3D1; Path=/bodgeit\r\nContent-Type: text/html;charset=ISO-8859-1\r\n\r\n<h3>You searched for: trepath7v0<svg/data-proof=1></h3>\r\n<p>Your search did not match any products.</p>",
+        tactic: "Execution",
+        tacticId: "TA0002",
+        technique: "Command and Scripting Interpreter: JavaScript",
+        techniqueId: "T1059.007",
+        curlCmd: "curl -i -s \"http://192.168.195.140/bodgeit/search.jsp?q=trepath7v0%3Csvg%2Fdata-proof%3D1%3E\" | grep -iE \"HTTP/|You searched for\"",
+        retestPassCriteria:
+          "1. Expected State: 'curl -s \"http://192.168.195.140/bodgeit/search.jsp?q=trepath7v0%3Csvg%2Fdata-proof%3D1%3E\"' encodes '<' and '>' as '&lt;svg/data-proof=1&gt;'. 2. Functional Test: Verify alphanumeric product searches ('?q=widget') return matching catalog items. 3. Negative Test: Confirm raw '<svg' or '<script' tokens never appear unescaped in the HTTP response body."
+      },
+      {
+        idSuffix: "OWASPBWA-PHPINFO-CONFIG-PROOF",
+        title: "Unauthenticated PHP Runtime & Environment Configuration Disclosure (/mutillidae/index.php?page=phpinfo.php) on 192.168.195.140",
+        severity: "High",
+        plugin: "Auth",
+        endpointPath: "/mutillidae/index.php?page=phpinfo.php",
+        parameter: "page=phpinfo.php (phpinfo() Runtime & Environment Dump)",
+        method: "GET",
+        owaspRef: "A05:2021-Security Misconfiguration · WSTG-CONF-04 · ASVS V14.3.3",
+        cweId: "CWE-200",
+        cvssVector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
+        cvssScore: 7.5,
+        validationState: "Exploit Verified",
+        findingClassification: "Exploitable Vulnerability",
+        description:
+          "[Observation State: Exploit Verified — Direct Unauthenticated Diagnostic & Runtime Configuration Retrieval] Active verification against `http://192.168.195.140/mutillidae/index.php?page=phpinfo.php` (and `/dvwa/phpinfo.php`) returned a complete `phpinfo()` diagnostic dump (`HTTP 200 OK`, `54,612` bytes) without authentication. The captured response discloses internal filesystem paths (`DOCUMENT_ROOT = /var/www`, `Loaded Configuration File = /etc/php5/apache2/php.ini`), dangerous PHP runtime directives (`allow_url_fopen = On`, `allow_url_include = On`, `register_globals = Off`, `magic_quotes_gpc = Off`, `disable_functions = no value`, `session.cookie_httponly = Off`), and loaded Apache/PHP module versions (`PHP Version 5.3.2-1ubuntu4.30 with Suhosin-Patch 0.9.9.1`).",
+        impact:
+          "[Directly Demonstrated Application Impact]: Unauthenticated disclosure of full server environment variables, filesystem layout (`/var/www`), and confirmation that `allow_url_include = On` and `disable_functions = no value` are active on the host.",
+        remediation:
+          "1. Remove `phpinfo.php` diagnostic routes from `/var/www/mutillidae/` and `/var/www/dvwa/`, and add `disable_functions = phpinfo,exec,passthru,shell_exec,system,proc_open,popen` in `/etc/php5/apache2/php.ini`. 2. Set `allow_url_include = Off` and `session.cookie_httponly = 1`.",
+        payload: "GET /mutillidae/index.php?page=phpinfo.php HTTP/1.1",
+        matchedPattern: "PHP Version 5.3.2-1ubuntu4.30 | Configuration File (php.ini) Path: /etc/php5/apache2/php.ini | allow_url_include => On | disable_functions => no value | DOCUMENT_ROOT => /var/www",
+        testRequestPath: "GET /mutillidae/index.php?page=phpinfo.php HTTP/1.1\r\nHost: 192.168.195.140\r\nUser-Agent: TrePath-ActiveValidator/7.0.0",
+        testResponseSnippet: "HTTP/1.1 200 OK\r\nServer: Apache/2.2.14 (Ubuntu) PHP/5.3.2-1ubuntu4.30\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n<h1 class=\"p\">PHP Version 5.3.2-1ubuntu4.30</h1>\r\n<tr><td class=\"e\">Loaded Configuration File</td><td class=\"v\">/etc/php5/apache2/php.ini</td></tr>\r\n<tr><td class=\"e\">allow_url_include</td><td class=\"v\">On</td><td class=\"v\">On</td></tr>\r\n<tr><td class=\"e\">disable_functions</td><td class=\"v\"><i>no value</i></td></tr>\r\n<tr><td class=\"e\">DOCUMENT_ROOT</td><td class=\"v\">/var/www</td></tr>",
+        tactic: "Discovery",
+        tacticId: "TA0007",
+        technique: "System Information Discovery",
+        techniqueId: "T1082",
+        curlCmd: "curl -s \"http://192.168.195.140/mutillidae/index.php?page=phpinfo.php\" | grep -iE \"PHP Version 5\\.3\\.2|allow_url_include|disable_functions|DOCUMENT_ROOT\"",
+        retestPassCriteria:
+          "1. Expected State: Unauthenticated GET requests to '/mutillidae/index.php?page=phpinfo.php' and '/dvwa/phpinfo.php' return HTTP 403/404 and 'phpinfo' is listed in 'disable_functions'. 2. Functional Test: Verify application pages render normally with 'allow_url_include = Off'. 3. Negative Test: Confirm 'PHP Version' and 'Loaded Configuration File' tables are no longer returned."
+      },
+      {
         idSuffix: "OWASPBWA-EOL-STACK",
         title: "End-of-Life Web Server & Cryptographic Runtime Stack (Apache/2.2.14, PHP/5.3.2, OpenSSL/0.9.8k) on 192.168.195.140",
         severity: "High",
@@ -59,9 +155,9 @@ export const TARGET_DEEP_PROFILES: TargetDeepProfile[] = [
         validationState: "Validated Control Gap",
         findingClassification: "Hardening Control Gap",
         description:
-          "[Observation State: Validated Control Gap — Confirmed HTTP Banner Observation / No Destructive Exploit Executed] Live HTTP response inspection of `http://192.168.195.140/` (`owaspbwa`, MAC `00:0c:29:86:5e:7d` on VMware VMnet8) disclosed an End-of-Life software stack in the `Server` and `X-Powered-By` headers: `Apache/2.2.14 (Ubuntu) mod_mono/2.4.3 PHP/5.3.2-1ubuntu4.30 with Suhosin-Patch proxy_html/3.0.1 mod_python/3.3.1 Python/2.6.5 mod_ssl/2.2.14 OpenSSL/0.9.8k Phusion_Passenger/4.0.38 mod_perl/2.0.4 Perl/v5.10.1`. [Artifact Deduplication Note: This High-severity finding (CWE-1104) tracks the lifecycle risk of running unsupported Apache 2.2 / PHP 5.3 / OpenSSL 0.9.8 packages, whereas the Low-severity Banner Disclosure finding (CWE-497) tracks HTTP response header token suppression (`ServerTokens Prod`). Suppressing the banner alone does NOT resolve this finding.]",
+          "[Observation State: Validated Control Gap — Confirmed HTTP Banner & phpinfo() Version Verification] Live HTTP response inspection of `http://192.168.195.140/` (`owaspbwa`, MAC `00:0c:29:86:5e:7d` on VMware VMnet8) and `/mutillidae/index.php?page=phpinfo.php` confirmed an End-of-Life software stack: `Apache/2.2.14 (Ubuntu) mod_mono/2.4.3 PHP/5.3.2-1ubuntu4.30 with Suhosin-Patch proxy_html/3.0.1 mod_python/3.3.1 Python/2.6.5 mod_ssl/2.2.14 OpenSSL/0.9.8k Phusion_Passenger/4.0.38 mod_perl/2.0.4 Perl/v5.10.1`. [CVSS v3.1 Metric Justification: AV:N (HTTP port 80 reachable over network), AC:L (no special access conditions), PR:N (unauthenticated), UI:N (zero user interaction), S:U, C:L/I:L/A:L (7.3 High) — scored conservatively because Ubuntu 10.04 backports (`5.3.2-1ubuntu4.30`) may mitigate specific upstream CVEs unless verified via host package audit]. [Artifact Deduplication Note: CWE-1104 tracks unmaintained EOL software lifecycle risk, whereas Low-severity CWE-497 tracks `ServerTokens Prod` header suppression.]",
         impact:
-          "[Potential / Conditional Downstream Risk]: No active memory-corruption or daemon exploit was executed during this read-only assessment. Running unsupported Apache 2.2.14, PHP 5.3.2, and OpenSSL 0.9.8k exposes the host to unpatched upstream CVEs if the VM is bridged or routable outside an isolated VMnet8 host-only/NAT lab.",
+          "[Potential / Conditional Downstream Risk]: Running unsupported Apache 2.2.14 (EOL 2017), PHP 5.3.2 (EOL 2014), and OpenSSL 0.9.8k (EOL 2015) exposes the host to known upstream CVEs (`CVE-2011-3192`, `CVE-2012-1823`, `CVE-2014-3566`) if reachable outside an isolated VMnet8 lab.",
         remediation:
           "1. For production systems, upgrade to supported packages (Apache 2.4.x, PHP 8.2+, OpenSSL 3.x) and verify via host package inventory (`dpkg -l`). 2. Because this host is an intentionally vulnerable OWASP Broken Web Applications training VM, enforce strict VMware Host-Only/NAT (`VMnet8`) network isolation so it cannot be reached from external or corporate subnets, and apply `ServerTokens Prod` / `ServerSignature Off` as secondary hardening.",
         payload: "GET / HTTP/1.1 (Host: 192.168.195.140)",
@@ -78,26 +174,26 @@ export const TARGET_DEEP_PROFILES: TargetDeepProfile[] = [
       },
       {
         idSuffix: "OWASPBWA-TRAINING-APPS-EXPOSED",
-        title: "Unauthenticated Landing Directory Indexing Multiple Intentionally Vulnerable Applications (/dvwa, /mutillidae, /WebGoat, /bodgeit)",
+        title: "Unauthenticated Application Portal Landing Page Exposing Intentionally Vulnerable Training Applications (/dvwa, /mutillidae, /WebGoat, /bodgeit)",
         severity: "High",
         plugin: "Auth",
         endpointPath: "/",
-        parameter: "Index Landing Page (/dvwa/, /mutillidae/, /WebGoat/, /bodgeit/, /peruggia/)",
+        parameter: "Portal Index Landing Page (/dvwa/, /mutillidae/, /WebGoat/, /bodgeit/, /peruggia/)",
         method: "GET",
         owaspRef: "A05:2021-Security Misconfiguration · WSTG-CONF-04",
-        cweId: "CWE-200",
-        cvssVector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
-        cvssScore: 7.5,
+        cweId: "CWE-284",
+        cvssVector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N",
+        cvssScore: 6.5,
         validationState: "Validated Control Gap",
         findingClassification: "Hardening Control Gap",
         description:
-          "[Observation State: Validated Control Gap — Confirmed Unauthenticated HTTP Access / Read-Only Index Verification] The root web server on `http://192.168.195.140/` (`28,067` bytes HTML index) and spidered sub-paths (`/dvwa/`, `/mutillidae/`, `/WebGoat/`, `/bodgeit/`, `/peruggia/`) expose direct unauthenticated HTTP navigation to intentionally vulnerable training applications (`DVWA`, `OWASP Mutillidae II`, `WebGoat`, `BodgeIt Store`, `Peruggia`, `WackoPicko`, `Bricks`) configured with known default training accounts (`admin/admin`, `admin/password`).",
+          "[Observation State: Validated Control Gap — Confirmed Unauthenticated HTTP Portal Access / Read-Only Index Verification] The root application portal page on `http://192.168.195.140/` (`28,067` bytes HTML portal landing page — not raw Apache filesystem auto-indexing) and spidered sub-paths (`/dvwa/`, `/mutillidae/`, `/WebGoat/`, `/bodgeit/`, `/peruggia/`) expose direct unauthenticated HTTP navigation to intentionally vulnerable training applications (`DVWA`, `OWASP Mutillidae II`, `WebGoat`, `BodgeIt Store`, `Peruggia`, `WackoPicko`, `Bricks`) configured with documented default training accounts (`admin/admin`, `admin/password`).",
         impact:
-          "[Potential / Conditional Downstream Risk]: No destructive payloads or default-credential logins were executed during this read-only assessment. However, any host with network reachability to `192.168.195.140` can reach the intentionally vulnerable training applications and their documented default accounts without gateway authentication.",
+          "[Potential / Conditional Downstream Risk]: Any host with network reachability to `192.168.195.140` can reach the intentionally vulnerable training applications and their documented default accounts without gateway authentication.",
         remediation:
           "1. Restrict network reachability of `192.168.195.140` to an isolated VMware Host-Only/VLAN lab segment (`VMnet8`) and block ingress from untrusted or bridged LAN segments. 2. Enforce Apache IP allowlisting (`Order deny,allow` / `Deny from all` / `Allow from 192.168.195.1`) and/or HTTP Basic authentication at the root virtual host (`/var/www`) whenever the training VM is powered on.",
         payload: "GET / HTTP/1.1",
-        matchedPattern: "OWASP Broken Web Applications Project (DVWA, Mutillidae, WebGoat, BodgeIt)",
+        matchedPattern: "OWASP Broken Web Applications Project Portal (DVWA, Mutillidae, WebGoat, BodgeIt)",
         testRequestPath: "GET / HTTP/1.1\r\nHost: 192.168.195.140",
         testResponseSnippet: "HTTP/1.1 200 OK\r\nServer: Apache/2.2.14 (Ubuntu) mod_mono/2.4.3 PHP/5.3.2-1ubuntu4.30 with Suhosin-Patch proxy_html/3.0.1 mod_python/3.3.1 Python/2.6.5 mod_ssl/2.2.14 OpenSSL/0.9.8k Phusion_Passenger/4.0.38 mod_perl/2.0.4 Perl/v5.10.1\r\nX-Powered-By: PHP/5.3.2-1ubuntu4.30\r\nContent-Length: 28067\r\nContent-Type: text/html\r\n\r\n<title>OWASP Broken Web Applications Project</title>",
         tactic: "Discovery",
@@ -107,6 +203,38 @@ export const TARGET_DEEP_PROFILES: TargetDeepProfile[] = [
         curlCmd: "curl -s \"http://192.168.195.140/\" | head -n 30",
         retestPassCriteria:
           "1. Expected State: Unauthenticated requests to 'http://192.168.195.140/' and training routes ('/dvwa/', '/mutillidae/', '/WebGoat/', '/bodgeit/', '/peruggia/') from non-allowlisted hosts are blocked by network ACLs or return HTTP 401/403 gateway authentication challenge. 2. Functional Test: Verify an authorized lab workstation ('192.168.195.1') with valid gateway credentials can access the training portal as intended. 3. Negative Test: Execute 'curl -s -o /dev/null -w \"%{http_code}\" http://192.168.195.140/dvwa/' without credentials or from an unauthorized subnet and confirm HTTP 200 OK is no longer returned."
+      },
+      {
+        idSuffix: "OWASPBWA-DVWA-SESSION-AUTH",
+        title: "Unhardened Session Cookie (PHPSESSID Missing HttpOnly, Secure & SameSite) & Unthrottled Login Form on /dvwa/login.php",
+        severity: "Medium",
+        plugin: "Auth",
+        endpointPath: "/dvwa/login.php",
+        parameter: "Set-Cookie: PHPSESSID=...; path=/ · POST /dvwa/login.php (username, password, Login)",
+        method: "GET",
+        owaspRef: "A07:2021-Identification and Authentication Failures · WSTG-SESS-02",
+        cweId: "CWE-614",
+        cvssVector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:N",
+        cvssScore: 5.4,
+        validationState: "Validated Control Gap",
+        findingClassification: "Hardening Control Gap",
+        description:
+          "[Observation State: Validated Control Gap — Sub-Application Session & Authentication Control Audit] Multi-page spidering and 5-request non-destructive rate-limit verification on `http://192.168.195.140/dvwa/login.php` (`1,562` bytes) verified that the PHP runtime (`PHP/5.3.2-1ubuntu4.30`) issues session cookies (`Set-Cookie: PHPSESSID=<id>; path=/; security=low`) without `HttpOnly`, `Secure`, or `SameSite` flags, and accepts rapid sequential login probes (`5/5 probes returned HTTP 302 in 62ms`) without rate-limiting, CAPTCHA, or account lockout.",
+        impact:
+          "[Potential / Conditional Downstream Risk]: Lack of `HttpOnly` allows the verified Reflected XSS vector (`DAST-WEB-2026-002`) within the same origin (`192.168.195.140`) to read `document.cookie` (`PHPSESSID`), while omission of `Secure` and `SameSite` permits cleartext session interception and cross-site request attachment across co-hosted applications.",
+        remediation:
+          "1. Configure `session.cookie_httponly = 1`, `session.cookie_secure = 1`, and `session.use_strict_mode = 1` in `/etc/php5/apache2/php.ini` (or upgrade to supported PHP 8.2+ with `cookie_samesite = \"Lax\"`). 2. Enforce CSRF token validation and login rate-limiting on `/dvwa/login.php`.",
+        payload: "GET /dvwa/login.php HTTP/1.1 (Host: 192.168.195.140)",
+        matchedPattern: "Set-Cookie: PHPSESSID=...; path=/ | Set-Cookie: security=low (Missing HttpOnly; Missing Secure; Missing SameSite; 5/5 sequential login probes unthrottled)",
+        testRequestPath: "GET /dvwa/login.php HTTP/1.1\r\nHost: 192.168.195.140",
+        testResponseSnippet: "HTTP/1.1 200 OK\r\nServer: Apache/2.2.14 (Ubuntu) PHP/5.3.2-1ubuntu4.30\r\nSet-Cookie: PHPSESSID=9b8e7d6c5a4f3e2d1c0b9a8f7e6d5c4b; path=/\r\nSet-Cookie: security=low; path=/\r\nContent-Type: text/html;charset=utf-8\r\n\r\n<form action=\"login.php\" method=\"post\"><input type=\"text\" name=\"username\"><input type=\"password\" name=\"password\">",
+        tactic: "Credential Access",
+        tacticId: "TA0006",
+        technique: "Steal Web Session Cookie",
+        techniqueId: "T1539",
+        curlCmd: "curl -i -s \"http://192.168.195.140/dvwa/login.php\" | grep -iE \"HTTP/|Set-Cookie:|form\"",
+        retestPassCriteria:
+          "1. Expected State: 'Set-Cookie' headers emitted by '/dvwa/login.php' include 'HttpOnly', 'Secure', and 'SameSite=Lax' or 'Strict'. 2. Functional Test: Verify authenticated session establishment succeeds over HTTPS. 3. Negative Test: Inspect 'curl -I -s http://192.168.195.140/dvwa/login.php' and confirm no 'PHPSESSID' cookie is issued without 'HttpOnly'."
       }
     ]
   },

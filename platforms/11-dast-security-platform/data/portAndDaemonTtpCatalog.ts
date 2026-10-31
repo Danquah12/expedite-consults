@@ -1,4 +1,9 @@
 import type { Finding } from "@/types/dast";
+import {
+  sanitizeForensicArtifactText,
+  type CanonicalAssessmentDatabase
+} from "@/lib/canonicalAssessmentTypes";
+import { buildCanonicalAssessmentDatabase } from "@/lib/canonicalAssessmentDb";
 
 export interface PortAssessmentScriptMapping {
   scriptId: string;
@@ -3040,10 +3045,11 @@ function buildPostExploitTerminalSvgDataUri(opts: {
 }
 
 /**
- * Redacts any raw passwords, JWT secrets, or private keys so reports never leak sensitive credentials.
+ * Redacts any raw passwords, Bearer JWTs, JWT secrets, bcrypt hashes, or private keys
+ * prior to evidence preservation and FIPS 180-4 SHA-256 hashing (TrePath v6.9 §9).
  */
 function redactSensitiveTokens(text: string): string {
-  return String(text || "")
+  return sanitizeForensicArtifactText(String(text || ""))
     .replace(/(prod_secret_991|P@ssw0rd_ProdDb_9941!|r3d1s_m4st3r_k3y_2026)/g, "[REDACTED_CREDENTIAL_SHA256:8a4f9c2e]")
     .replace(/(super_secret_jwt_signing_key_2026|xtrike_prod_hs256_master_signing_key_2026|super_secret_prod_key_2026)/g, "[REDACTED_JWT_KEY_SHA256:4d19b7a0]")
     .replace(/(wJalrXUtnFEMI\/K7MDENG\/bPxRfiCYEXAMPLEKEY)/g, "[REDACTED_AWS_SECRET_SHA256:e3b0c442]");
@@ -3210,10 +3216,11 @@ export function buildFormalFindingReport(
 
   const cvssVector = finding.cvssVector || fallbackVector;
   const computedNumericScore = calculateCvss31ScoreFromVector(cvssVector);
-  const cvssScore =
-    finding.cvssScore !== undefined
-      ? Number(finding.cvssScore).toFixed(1)
-      : computedNumericScore;
+  const cvssScore = cvssVector.startsWith("CVSS:3.1/")
+    ? computedNumericScore
+    : finding.cvssScore !== undefined
+    ? Number(finding.cvssScore).toFixed(1)
+    : computedNumericScore;
 
   // Separate Technical CVSS from Contextual Business Risk
   const businessRiskLevel: "Critical" | "High" | "Medium" | "Low" | "Informational" =
@@ -3392,7 +3399,7 @@ export function buildFormalFindingReport(
 
   const stepsToReproduce: string[] =
     finding.evidence?.reproductionSteps && finding.evidence.reproductionSteps.length > 0
-      ? finding.evidence.reproductionSteps
+      ? finding.evidence.reproductionSteps.map((step) => redactSensitiveTokens(step))
       : isPrivEsc
       ? [
           `Verify scope authorization for virtual lab target ${originUrl}.`,
@@ -3531,27 +3538,24 @@ export function buildFormalFindingReport(
         `${d.triggeredWindowsPostExploitScripts.map(s => s.scriptId).join(", ")}`
       ].filter(Boolean);
 
-  // Normalize any legacy cached 192.168.195.140 banner string so all transcripts for 192.168.195.140 are 100% consistent
+  // TrePath v6.9 Forensic Integrity Rule: NEVER rewrite or mutate observed HTTP Server / X-Powered-By banners.
   const normalizeTargetBanner = (rawText: string): string => {
-    if (!rawText) return rawText;
-    if (hostName.includes("192.168.195.140")) {
-      return rawText
-        .replace(
-          /Apache\/2\.4\.38\s*\(Debian\)\s*PHP\/7\.3\.14\s*MySQL\/5\.7\.29/gi,
-          "Apache/2.2.14 (Ubuntu) mod_mono/2.4.3 PHP/5.3.2-1ubuntu4.30 with Suhosin-Patch proxy_html/3.0.1 mod_python/3.3.1 Python/2.6.5 mod_ssl/2.2.14 OpenSSL/0.9.8k Phusion_Passenger/4.0.38 mod_perl/2.0.4 Perl/v5.10.1"
-        )
-        .replace(/X-Powered-By:\s*PHP\/7\.3\.14/gi, "X-Powered-By: PHP/5.3.2-1ubuntu4.30");
-    }
     return rawText;
   };
 
   const liveEv0 = finding.collectedEvidence?.[0];
   const liveEv1 = finding.collectedEvidence?.[1];
 
+  const capturedTimestampIso =
+    finding.detectedAt && String(finding.detectedAt).includes("T")
+      ? String(finding.detectedAt)
+      : new Date().toISOString();
+  const provenanceScanId = `EXP-SCAN-${discoveryDate.replace(/-/g, "")}-${hostName.replace(/[^a-zA-Z0-9]/g, "").slice(0, 10).toUpperCase()}-${capturedTimestampIso.slice(11, 19).replace(/:/g, "")}`;
+
   const baselineReqText = normalizeTargetBanner(
     redactSensitiveTokens(
       finding.evidence?.originalRequest ||
-      `${finding.method || "GET"} ${pathOnly} HTTP/1.1\nHost: ${hostName}\nUser-Agent: Mozilla/5.0 (ExpediteStrike-Baseline/6.8)\nAccept: text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8`
+      `${finding.method || "GET"} ${pathOnly} HTTP/1.1\nHost: ${hostName}\nUser-Agent: Mozilla/5.0 (ExpediteStrike-Baseline/6.9.0)\nAccept: text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8`
     )
   );
   const baselineRespText = normalizeTargetBanner(
@@ -3564,7 +3568,7 @@ export function buildFormalFindingReport(
     redactSensitiveTokens(
       finding.evidence?.testRequest ||
       finding.evidence?.originalRequest ||
-      `${finding.method || "GET"} ${pathOnly} HTTP/1.1\nHost: ${hostName}\nUser-Agent: TrePath-WebPulse/6.8 (Non-Destructive Validator)`
+      `${finding.method || "GET"} ${pathOnly} HTTP/1.1\nHost: ${hostName}\nUser-Agent: TrePath-WebPulse/6.9.0 (Non-Destructive Validator)`
     )
   );
   const testRespText = normalizeTargetBanner(
@@ -3582,7 +3586,7 @@ export function buildFormalFindingReport(
       `Request: ${baselineReqText.split("\n")[0]} (Host: ${hostName})\n` +
       `Baseline Response Excerpt: ${baselineRespText.split("\n").slice(0, 5).join(" | ")}\n\n` +
       `[2. TEST ACTION PERFORMED (COLLECTION PROVENANCE)]\n` +
-      `Collection Method: Automated Live Read-Only HTTP/DNS Capture (${d.daemonLabel} v6.8) · Date: ${discoveryDate}\n` +
+      `Collection Method: Automated Live Read-Only HTTP/DNS Capture (${d.daemonLabel} v6.9.0) · Timestamp: ${capturedTimestampIso} · Scan ID: ${provenanceScanId}\n` +
       `Audited Endpoint & Control: ${finding.method || "GET"} ${url} · Control/Param: '${finding.parameter || "HTTP Response Header"}'\n` +
       `Probe Vector Sent: ${finding.evidence?.payload || "Standard HTTP GET/HEAD Inspection Probe"}\n\n` +
       `[3. EXPECTED SECURITY CONTROL REQUIREMENT]\n` +
@@ -3661,8 +3665,8 @@ export function buildFormalFindingReport(
           capturedOutputOrLoot: normalizeTargetBanner(
             redactSensitiveTokens(
               liveEv0?.content
-                ? `${liveEv0.content}\n\n[Matched Indicator]: ${liveEv0.highlight || matchedIndicator}\n[Forensic Verification Note]: ${liveEv0.annotation || finding.description}`
-                : `${testRespText}\n\n[Matched Indicator]: ${matchedIndicator}\n[Audited Security Control]: ${finding.parameter || cwe} on ${url}`
+                ? `${liveEv0.content}\n\n[Matched Indicator]: ${liveEv0.highlight || matchedIndicator}\n[Capture Timestamp]: ${capturedTimestampIso} (${provenanceScanId})\n[Forensic Verification Note]: ${liveEv0.annotation || finding.description}`
+                : `${testRespText}\n\n[Matched Indicator]: ${matchedIndicator}\n[Capture Timestamp]: ${capturedTimestampIso} (${provenanceScanId})\n[Audited Security Control]: ${finding.parameter || cwe} on ${url}`
             )
           ),
           customerCiSummary:
@@ -3679,8 +3683,8 @@ export function buildFormalFindingReport(
           capturedOutputOrLoot: normalizeTargetBanner(
             redactSensitiveTokens(
               liveEv1?.content
-                ? `${liveEv1.content}\n\n[Matched Highlight]: ${liveEv1.highlight || matchedIndicator}\n[Forensic Note]: ${liveEv1.annotation || finding.impact}\n\n[ENUMERATION & EXPLOITABILITY ASSESSMENT]\n${enumerationAndExploitabilityVerdict}`
-                : `[BASELINE HTTP RESPONSE FROM ${url}]\n${baselineRespText}\n\n[ENUMERATION & EXPLOITABILITY ASSESSMENT]\n${enumerationAndExploitabilityVerdict}\n\n[PROVENANCE & SCOPE VERIFICATION]\nTarget Asset: ${hostName} (${url})\nObservation Confidence: ${validationBreakdown.observationConfidence}\nControl-Gap Verification: ${validationBreakdown.controlGapVerification}\nExploitability Status: ${validationBreakdown.exploitabilityStatus}\nConfirmed Impact Status: ${validationBreakdown.confirmedImpactStatus}\nObserved Fact: ${matchedIndicator}\nConditional Downstream Risk: ${finding.impact || "Client/transport policy exposure"}\nRequired Retest Pass Criterion: ${concreteSecurityRequirement}`
+                ? `${liveEv1.content}\n\n[Matched Highlight]: ${liveEv1.highlight || matchedIndicator}\n[Capture Timestamp]: ${capturedTimestampIso} (${provenanceScanId})\n[Forensic Note]: ${liveEv1.annotation || finding.impact}\n\n[ENUMERATION & EXPLOITABILITY ASSESSMENT]\n${enumerationAndExploitabilityVerdict}`
+                : `[BASELINE HTTP RESPONSE FROM ${url}]\n${baselineRespText}\n\n[ENUMERATION & EXPLOITABILITY ASSESSMENT]\n${enumerationAndExploitabilityVerdict}\n\n[PROVENANCE & SCOPE VERIFICATION]\nTarget Asset: ${hostName} (${url})\nCapture Timestamp: ${capturedTimestampIso} (${provenanceScanId})\nObservation Confidence: ${validationBreakdown.observationConfidence}\nControl-Gap Verification: ${validationBreakdown.controlGapVerification}\nExploitability Status: ${validationBreakdown.exploitabilityStatus}\nConfirmed Impact Status: ${validationBreakdown.confirmedImpactStatus}\nObserved Fact: ${matchedIndicator}\nConditional Downstream Risk: ${finding.impact || "Client/transport policy exposure"}\nRequired Retest Pass Criterion: ${concreteSecurityRequirement}`
             )
           ),
           customerCiSummary:
@@ -3688,12 +3692,6 @@ export function buildFormalFindingReport(
             `Preserves the baseline HTTP exchange from ${hostName} alongside the 4-field validation breakdown, provenance metadata, and pass/fail retest criteria.`
         }
       ];
-
-  const capturedTimestampIso =
-    finding.detectedAt && String(finding.detectedAt).includes("T")
-      ? String(finding.detectedAt)
-      : `${discoveryDate}T19:42:11.084Z`;
-  const provenanceScanId = `EXP-SCAN-${discoveryDate.replace(/-/g, "")}-${hostName.replace(/[^a-zA-Z0-9]/g, "").slice(0, 10).toUpperCase()}`;
 
   // Compute genuine FIPS 180-4 SHA-256 digests over the exact artifact content (`${cmd}\n---\n${out}`) with full provenance metadata
   const collectedExploitationSamples: CollectedExploitationSample[] = rawSamples.map(s => ({
@@ -3733,7 +3731,9 @@ export function buildFormalFindingReport(
   const pic2Svg = buildPostExploitTerminalSvgDataUri({
     findingId,
     hostName,
-    cliCmd1: finding.poc?.curlCommand?.split("\n").find(l => !l.trim().startsWith("#") && l.trim().length > 0) || `curl -i -s -k "${url}"`,
+    cliCmd1: redactSensitiveTokens(
+      finding.poc?.curlCommand?.split("\n").find(l => !l.trim().startsWith("#") && l.trim().length > 0) || `curl -i -s -k "${url}"`
+    ),
     cliOut1: `[+] Observed on ${hostName}: ${matchedIndicator.slice(0, 80)}`,
     cliCmd2: `sha256sum ${findingId.toLowerCase()}_evd_01.txt`,
     cliOut2: `${digest1.slice(0, 32)}...  ${findingId.toLowerCase()}_evd_01.txt (FIPS 180-4 Verified)`,
@@ -3967,11 +3967,12 @@ export interface ExecutiveSummaryVisualChart {
 export interface ReportQualityGateCheck {
   checkId: string;
   checkName: string;
-  status: "PASSED" | "WARNING";
+  status: "PASSED" | "WARNING" | "FAILED";
   verificationDetail: string;
 }
 
 export interface ExecutiveSummaryDossier {
+  canonicalDb?: CanonicalAssessmentDatabase;
   canonicalScanRecord: {
     scanId: string;
     scannerVersion: string;
@@ -4079,218 +4080,101 @@ export function buildExecutiveSummaryDossier(params: {
   startDateIso?: string;
   endDateIso?: string;
   liveTelemetry?: any;
+  engineResults?: any[];
+  retestMap?: Record<string, any>;
+  canonicalDb?: CanonicalAssessmentDatabase;
 }): ExecutiveSummaryDossier {
-  const scopedTargets =
-    params.targetUrls && params.targetUrls.length > 0
-      ? params.targetUrls
-      : ["https://demo.testfire.net"];
-  const primaryTarget = scopedTargets[0];
-  const primaryHost = primaryTarget.replace(/^https?:\/\//, "").split("/")[0] || "demo.testfire.net";
+  const canonicalDb =
+    params.canonicalDb ||
+    buildCanonicalAssessmentDatabase({
+      targetUrls: params.targetUrls,
+      findings: params.findings,
+      engineResults: params.engineResults,
+      retestMap: params.retestMap,
+      clientOrgName: params.clientOrgName,
+      engagementId: params.engagementId,
+      startDateIso: params.startDateIso,
+      endDateIso: params.endDateIso,
+      liveTelemetry: params.liveTelemetry
+    });
 
-  const todayIso = new Date().toISOString().slice(0, 10);
-  const startDate = params.startDateIso || todayIso;
-  const endDate = params.endDateIso || todayIso;
+  const scopedTargets = canonicalDb.targetScope.scopedTargets.map(t => t.url);
+  const primaryTarget = canonicalDb.targetScope.primaryTargetUrl;
+  const primaryHost = canonicalDb.targetScope.primaryHost;
+  const todayIso = canonicalDb.generatedAtIso.slice(0, 10);
+  const startDate = canonicalDb.startDateIso;
+  const endDate = canonicalDb.endDateIso;
 
   const list = Array.isArray(params.findings) ? params.findings : [];
-  const critical = list.filter(f => f.severity === "Critical").length;
-  const high = list.filter(f => f.severity === "High").length;
-  const medium = list.filter(f => f.severity === "Medium").length;
-  const low = list.filter(f => f.severity === "Low").length;
-  const informationalFindingsCount = list.filter(f => f.severity === "Informational").length;
-  const informational = informationalFindingsCount;
-  const scoredFindingsCount = critical + high + medium + low;
-  const confirmedVulnerabilitiesCount = list.filter(
-    f => f.validationState === "Exploit Verified" || f.findingClassification === "Exploitable Vulnerability"
-  ).length;
-  const validatedWeaknessesCount = list.filter(
-    f =>
-      f.severity !== "Informational" &&
-      f.validationState !== "Exploit Verified" &&
-      f.findingClassification !== "Exploitable Vulnerability"
-  ).length;
-  const falsePositivesCount = 0;
-  const totalFindings = list.length;
+  const rc = canonicalDb.primaryRiskCalculation;
+  const critical = rc.rawCounts.critical;
+  const high = rc.rawCounts.high;
+  const medium = rc.rawCounts.medium;
+  const low = rc.rawCounts.low;
+  const informational = rc.rawCounts.informational;
+  const scoredFindingsCount = rc.scoredFindingCount;
+  const confirmedVulnerabilitiesCount = canonicalDb.taxonomyCounts.confirmedVulnerabilities;
+  const validatedWeaknessesCount = canonicalDb.taxonomyCounts.confirmedConfigurationWeaknesses;
+  const falsePositivesCount = canonicalDb.taxonomyCounts.unverifiedHypotheses;
+  const totalFindings = rc.rawFindingCount;
   const confirmedCount = scoredFindingsCount;
   const potentialCount = 0;
 
-  // Also parse telemetry directly from `list` (the findings array) so even if `liveTelemetry` is omitted by an API caller,
-  // Page 1 (`Engagement Overview`) and Findings 001..011 ALWAYS share 100% identical spidered page, link, script, form, title, and server stack figures!
-  const allFindingsText = list.map(f => `${f.title || ""} ${f.description || ""}`).join(" \n ");
-  const parsedPagesMatch = allFindingsText.match(/(\d+)\s+Page\(s\)\s*·\s*(\d+)\s+Link\(s\)/i) || allFindingsText.match(/mapped\s+(\d+)\s+live\s+page\(s\)/i) || allFindingsText.match(/across\s+(\d+)\s+spidered\s+page\(s\)/i) || allFindingsText.match(/across\s+(\d+)\s+page\(s\)/i);
-  const parsedLinksMatch = allFindingsText.match(/(\d+)\s+Link\(s\)/i) || allFindingsText.match(/(\d+)\s+hyperlink\(s\)/i);
-  const parsedScriptsMatch = allFindingsText.match(/(\d+)\s+External\s+JavaScript\s+Resource\(s\)/i) || allFindingsText.match(/(\d+)\s+external\s+third-party\s+<script>/i) || allFindingsText.match(/loads\s+(\d+)\s+script\s+resource\(s\)/i);
-  const parsedFormsMatch = allFindingsText.match(/(\d+)\s+Form\(s\)/i) || allFindingsText.match(/(\d+)\s+HTML\s+<form>/i) || allFindingsText.match(/(\d+)\s+HTML\s+form\(s\)/i);
-  const parsedTitleMatch = allFindingsText.match(/Page Title:\s*"([^"]+)"/i);
-  const parsedBannerMatch = list.find(f => /Technology Stack & (?:Backend|Software Version) Header Disclosure/i.test(f.title || ""))?.title?.match(/\(([^)]+)\)/);
-
-  // Extract unified coverage metrics from either nested TargetScanResult (`deepSpider`, `domDiscovery`, `dnsSecurity`), flat fields, or parsed finding telemetry
   const lt = params.liveTelemetry || {};
-  const rawSpideredPagesCount: number =
-    lt.spideredPagesCount ??
-    lt.deepSpider?.spideredPages?.length ??
-    lt.spiderStats?.pagesCrawled ??
-    (parsedPagesMatch ? Number(parsedPagesMatch[1]) : list.length > 0 ? Math.max(1, new Set(list.map(f => f.url)).size) : 1);
-  const spideredPagesCount: number =
-    primaryHost.includes("192.168.195.140") && rawSpideredPagesCount <= 1
-      ? 6
-      : Math.max(1, rawSpideredPagesCount);
-  const linksCount: number =
-    lt.linksCount ??
-    lt.domDiscovery?.linksFound?.length ??
-    lt.spiderStats?.linksCount ??
-    (parsedLinksMatch ? Number(parsedLinksMatch[1]) : Math.max(spideredPagesCount * 4, list.length * 2));
-  const scriptsCount: number =
-    lt.scriptsCount ??
-    lt.domDiscovery?.scriptsFound?.length ??
-    lt.spiderStats?.scriptsCount ??
-    (parsedScriptsMatch ? Number(parsedScriptsMatch[1]) : Math.max(2, spideredPagesCount));
-  const formsCount: number =
-    lt.formsCount ??
-    lt.domDiscovery?.formsFound?.length ??
-    lt.spiderStats?.formsCount ??
-    (parsedFormsMatch ? Number(parsedFormsMatch[1]) : 0);
-
-  const rawProbesCount =
-    lt.wellKnownProbes?.length ??
-    lt.domDiscovery?.wellKnownProbes?.length ??
-    lt.endpointsProbedCount ??
-    10;
-  // Reconcile standardized 10-endpoint probe suite (10 planned, 10 attempted, 10 completed)
-  const plannedProbesCount = 10;
-  const endpointsProbedCount: number = rawProbesCount > 0 ? rawProbesCount : plannedProbesCount;
-  const attemptedProbesCount = endpointsProbedCount;
-  const completedProbesCount = endpointsProbedCount;
-  const hasExploitVerifiedInList = confirmedVulnerabilitiesCount > 0;
+  const cov = canonicalDb.reconciledCoverage;
+  const spideredPagesCount = cov.spideredPagesCount;
+  const linksCount = cov.linksCount;
+  const scriptsCount = cov.scriptsCount;
+  const formsCount = cov.formsCount;
+  const plannedProbesCount = cov.plannedProbesCount;
+  const endpointsProbedCount = cov.endpointsProbedCount;
+  const attemptedProbesCount = cov.attemptedProbesCount;
+  const completedProbesCount = cov.completedProbesCount;
+  const hasExploitVerifiedInList = canonicalDb.assessmentMode === "ACTIVE_EXPLOITATION_VERIFIED";
   const exploitVerifiedCountInList = confirmedVulnerabilitiesCount;
-  const skippedDestructiveProbesCount = hasExploitVerifiedInList ? 0 : 12;
-  const requestsAttempted = spideredPagesCount + endpointsProbedCount + (hasExploitVerifiedInList ? 12 : 4);
-  const responsesReceived = requestsAttempted;
+  const skippedDestructiveProbesCount = cov.skippedDestructiveProbesCount;
+  const requestsAttempted = cov.httpRequestsSent;
+  const responsesReceived = cov.httpResponsesReceived;
 
-  const pageTitleLabel: string =
-    lt.pageTitle || lt.domDiscovery?.pageTitle || (parsedTitleMatch ? parsedTitleMatch[1] : primaryHost);
-  const rawServerStackLabel: string =
-    (lt.serverHeader && lt.serverHeader !== "Undisclosed Web Server (Banner Hardened)" ? lt.serverHeader : null) ||
-    (parsedBannerMatch ? parsedBannerMatch[1] : null) ||
-    lt.serverHeader ||
-    `Web Edge (${primaryHost})`;
-  const serverStackLabel: string = primaryHost.includes("192.168.195.140")
-    ? "Apache/2.2.14 (Ubuntu) mod_mono/2.4.3 PHP/5.3.2-1ubuntu4.30 with Suhosin-Patch proxy_html/3.0.1 mod_python/3.3.1 Python/2.6.5 mod_ssl/2.2.14 OpenSSL/0.9.8k Phusion_Passenger/4.0.38 mod_perl/2.0.4 Perl/v5.10.1"
-    : rawServerStackLabel;
+  const pageTitleLabel = canonicalDb.primaryPageTitleLabel;
+  const serverStackLabel = canonicalDb.primaryServerStackLabel;
   const spfPresent: boolean = Boolean(lt.spfPresent ?? lt.dnsSecurity?.spfPresent);
   const spfRecord: string | null = lt.spfRecord ?? lt.dnsSecurity?.spfRecord ?? null;
   const dmarcPresent: boolean = Boolean(lt.dmarcPresent ?? lt.dnsSecurity?.dmarcPresent);
   const dmarcRecord: string | null = lt.dmarcRecord ?? lt.dnsSecurity?.dmarcRecord ?? null;
 
-  // Deduplicate scored findings (Critical/High/Medium/Low) by underlying root-cause CWE + control category per host for reproducible scoring
-  const dedupedClusters = new Map<string, string>();
-  const clusterMembersMap = new Map<string, string[]>();
-  const uniqueFindingHosts = new Set<string>();
-  for (let idx = 0; idx < list.length; idx++) {
-    const f = list[idx];
-    let fHost = primaryHost;
-    try {
-      if (f.url) fHost = new URL(f.url.startsWith("http") ? f.url : `https://${f.url}`).host || primaryHost;
-    } catch { /* ignore */ }
-    uniqueFindingHosts.add(fHost);
-    if (f.severity === "Informational") continue;
-    const cweKey = f.cweId || f.cwe || `FINDING-${idx + 1}`;
-    const key = `${fHost}:${cweKey}`;
-    const existingSev = dedupedClusters.get(key);
-    const rank = (s: string) => (s === "Critical" ? 4 : s === "High" ? 3 : s === "Medium" ? 2 : s === "Low" ? 1 : 0);
-    if (!existingSev || rank(f.severity) > rank(existingSev)) {
-      dedupedClusters.set(key, f.severity);
-    }
-    const members = clusterMembersMap.get(key) || [];
-    members.push(`#${idx + 1} (${f.severity}: ${(f.title || "").replace(/^\[[^\]]+\]\s*/, "").slice(0, 48)})`);
-    clusterMembersMap.set(key, members);
-  }
-  const hostCountDivisor = Math.max(1, uniqueFindingHosts.size);
+  const dedupedClusters = { size: rc.deduplicatedClusterCount };
   const scopeHostsLabel =
     scopedTargets.length > 1
       ? `${primaryHost} (+${scopedTargets.length - 1} additional scoped target${scopedTargets.length > 2 ? "s" : ""})`
       : primaryHost;
-  const dedupedValues = Array.from(dedupedClusters.values());
-  const dedupCrit = Math.round(dedupedValues.filter(s => s === "Critical").length / hostCountDivisor);
-  const dedupHigh = Math.round(dedupedValues.filter(s => s === "High").length / hostCountDivisor);
-  const dedupMed = Math.round(dedupedValues.filter(s => s === "Medium").length / hostCountDivisor);
-  const dedupLow = Math.round(dedupedValues.filter(s => s === "Low").length / hostCountDivisor);
+  const dedupCrit = rc.dedupCounts.critical;
+  const dedupHigh = rc.dedupCounts.high;
+  const dedupMed = rc.dedupCounts.medium;
+  const dedupLow = rc.dedupCounts.low;
+  const clusterLedgerText = rc.clusterLedgerText;
 
-  const clusterLedgerEntries: string[] = [];
-  Array.from(dedupedClusters.entries()).forEach(([key, sev]) => {
-    const cweLabel = key.split(":").slice(1).join(":");
-    const penaltyPts = sev === "Critical" ? 18 : sev === "High" ? 10 : sev === "Medium" ? 4 : 1.5;
-    const members = clusterMembersMap.get(key) || [];
-    clusterLedgerEntries.push(`[${cweLabel} · ${sev} (-${penaltyPts} pts): ${members.join(", ")}]`);
-  });
-  const clusterLedgerText =
-    clusterLedgerEntries.length > 0
-      ? `Scored Root-Cause CWE Cluster Ledger: ${clusterLedgerEntries.join("; ")}. Informational Observations (${informational}) carry 0-point deduction.`
-      : `Zero scored root-cause clusters detected; ${informational} Informational Observation(s) carry 0-point deduction.`;
-
-  // Published Deterministic Posture Score Formula (0–100) from deduplicated findings:
-  // Score = max(18, 100 - (18 * Crit_dedup + 10 * High_dedup + 4 * Med_dedup + 1.5 * Low_dedup))
-  const formulaComputedScore = Math.round(
-    Math.max(
-      18,
-      Math.min(
-        98,
-        100 - (dedupCrit * 18 + dedupHigh * 10 + dedupMed * 4 + dedupLow * 1.5)
-      )
-    )
-  );
-
-  // Single authoritative Measured Score: always use formulaComputedScore so the published formula and displayed score match 100%
-  const computedScore = formulaComputedScore;
-  const computedGrade =
-    computedScore >= 95
-      ? "A+"
-      : computedScore >= 85
-      ? "A"
-      : computedScore >= 75
-      ? "B"
-      : computedScore >= 62
-      ? "C"
-      : computedScore >= 50
-      ? "D"
-      : "F";
-
-  const findingScores = list.map((f: any) =>
-    f.cvssScore !== undefined
-      ? Number(f.cvssScore)
-      : f.cvssVector
-      ? Number(calculateCvss31ScoreFromVector(f.cvssVector))
-      : f.severity === "Critical"
-      ? 9.8
-      : f.severity === "High"
-      ? 7.5
-      : f.severity === "Medium"
-      ? 4.7
-      : f.severity === "Low"
-      ? 3.1
-      : 0.0
-  );
-  const maxMathematicalCvss = findingScores.length > 0 ? Math.max(...findingScores) : 0.0;
-  const peakCvss = maxMathematicalCvss.toFixed(1);
-
-  const overallRating: "Critical" | "High" | "Medium" | "Low" =
-    critical > 0 ? "Critical" : high > 0 ? "High" : medium > 0 ? "Medium" : "Low";
-
-  const formulaText =
-    `TrePath Custom Posture Index = max(18, round(100 - (18 × Crit_dedup[${dedupCrit}] + 10 × High_dedup[${dedupHigh}] + 4 × Med_dedup[${dedupMed}] + 1.5 × Low_dedup[${dedupLow}]))) = ${computedScore}/100 (Grade ${computedGrade})`;
+  // Authoritative Measured Score from Canonical Risk Engine (NO artificial 98/100 ceiling; 0 findings = 100/100)
+  const computedScore = rc.measuredPostureScore;
+  const computedGrade = rc.measuredPostureGrade;
+  const peakCvss = rc.maxCvssText;
+  const overallRating = rc.contextualBusinessRisk;
+  const formulaText = `${rc.formulaTextWithValues} (${rc.postureContextLabel})`;
 
   const customWeightsRationale =
-    `Methodology Note (Custom Weighting vs. Release Gate): The formula above is a custom TrePath Security Posture Index (weights: Critical = -18, High = -10, Medium = -4, Low = -1.5, Informational = 0), not a standard FIRST.org CVSS or OWASP formula. These bounded weights are calibrated so multi-finding remediation sprints show measurable step-by-step progress rather than collapsing to 0/100. Because a numeric score such as ${computedScore}/100 (Grade ${computedGrade}) can still coexist with High-severity exposures, TrePath enforces an independent Critical/High-Risk Release Gate alongside the numeric index.`;
+    `Methodology Note (Custom Weighting vs. Release Gate): The formula above is the TrePath v6.9 Authoritative Security Posture Index (weights: Critical = -18, High = -10, Medium = -4, Low = -1.5, Informational = 0; range 18–100 with zero artificial cap, so 0 scored findings equals 100/100). When no live scan has executed yet, 100/100 represents an UNSCANNED BASELINE rather than a certified target posture. TrePath enforces an independent Critical/High-Risk Release Gate alongside the numeric index.`;
 
-  const criticalHighRiskGateStatus =
-    critical + high > 0
-      ? `BLOCKED / ACTION REQUIRED — ${critical} Critical & ${high} High-Severity Finding(s) Open on ${scopeHostsLabel}. Regardless of the ${computedScore}/100 (Grade ${computedGrade}) posture index, any host with open Critical or High findings fails the Production Release Gate and requires immediate network isolation or remediation.`
-      : `PASSED — 0 Critical and 0 High-Severity Findings Open on ${scopeHostsLabel}.`;
+  const criticalHighRiskGateStatus = rc.criticalHighReleaseGateDetail;
 
   const overlappingFindingsLedger =
-    `Shared HTTP Artifact vs. Distinct Remediation Mapping: Several findings derive from the same baseline HTTP response capture on ${scopeHostsLabel} but are tracked under distinct CWEs because each requires a separate engineering action: (1) Missing/Permissive CSP (CWE-693, Medium) requires script/resource policy design and Report-Only testing; (2) Missing Anti-Framing Protection (CWE-1021, Medium) can be remediated immediately via X-Frame-Options: SAMEORIGIN / frame-ancestors 'self'; (3) Missing Browser Hardening Headers (CWE-16, Low) consolidates X-Content-Type-Options: nosniff, Referrer-Policy, and Permissions-Policy into a single Low cluster; and (4) End-of-Life Software Stack (CWE-1104, High) addresses upgrading or isolating unsupported runtime packages (Apache/PHP/OpenSSL), whereas Software Version Header Disclosure (CWE-497, Low) addresses suppressing verbose Server/X-Powered-By tokens ('ServerTokens Prod').`;
+    totalFindings > 0
+      ? `Shared HTTP Artifact vs. Distinct Remediation Mapping: Findings derived from captured HTTP responses on ${scopeHostsLabel} are deduplicated by root-cause CWE cluster (${rc.deduplicatedClusterCount} cluster(s)) prior to scoring while preserving distinct remediation work-items in the canonical finding registry.`
+      : `Canonical Finding Registry Reconciliation: 0 findings are recorded in the canonical registry (${canonicalDb.assessmentMode}); zero synthetic findings or attack chains are emitted.`;
 
   const coverageLimitationsStatement =
-    `Explicit Coverage & Scope Limitations: This report documents an unauthenticated, read-only HTTP configuration and surface assessment of ${scopedTargets.join(", ")} (${spideredPagesCount} spidered page(s) and ${endpointsProbedCount} standardized endpoint probes). In accordance with non-destructive Rules of Engagement, ${skippedDestructiveProbesCount > 0 ? `${skippedDestructiveProbesCount} destructive exploit modules were intentionally skipped, and ` : ""}no brute-force credential attacks, authenticated post-login workflow audits, source-code SAST reviews, or host-level OS/package inspections were performed. Consequently, findings represent confirmed HTTP observations and control gaps on the reached endpoints and do not establish application-wide or post-authentication security.`;
+    canonicalDb.assessmentMode === "NOT_EXECUTED_PRE_SCAN"
+      ? `PRE-SCAN STAGED SCOPE NOTICE: Zero HTTP/TCP probes have been executed against ${scopedTargets.join(", ")} in the current session. Execute a live scan to populate verified HTTP wire evidence and obtain a certified security posture assessment.`
+      : `Explicit Coverage & Scope Limitations: This report documents an authorized ${hasExploitVerifiedInList ? "active verification" : "unauthenticated, read-only HTTP configuration and surface"} assessment of ${scopedTargets.join(", ")} (${spideredPagesCount} spidered page(s), ${endpointsProbedCount} endpoint probe(s), ${requestsAttempted} HTTP request(s) sent). In accordance with Rules of Engagement (${canonicalDb.rulesOfEngagement.roeId}), ${skippedDestructiveProbesCount} destructive exploit module(s) were skipped, and no OS/host intrusion or credential brute-forcing was performed.`;
 
   const ratingJustification =
     `The target environment (${scopeHostsLabel} — "${pageTitleLabel}", served via ${serverStackLabel}) is rated at ${overallRating} Overall Technical Risk with a Measured Custom Posture Score of ${computedScore}/100 (Grade ${computedGrade}) and Critical/High Release Gate status: ${critical + high > 0 ? "ACTION REQUIRED" : "PASSED"}. ` +
@@ -4359,57 +4243,61 @@ export function buildExecutiveSummaryDossier(params: {
     }
   ];
 
-  // Strictly Monotonic Posture Score Progression based ONLY on Measured Current Scan + Projected Remediation Phases
-  // Never clamp below computedScore + 1 so high-scoring targets (e.g., 93/100) never regress in Phase 1!
-  const remainingScoreGap = Math.max(3, 99 - computedScore);
-  const phase1ProjectedScore = Math.min(97, Math.max(computedScore + 1, Math.round(computedScore + remainingScoreGap * 0.45)));
-  const phase2ProjectedScore = Math.min(98, Math.max(phase1ProjectedScore + 1, Math.round(computedScore + remainingScoreGap * 0.75)));
-  const phase3ProjectedScore = Math.min(99, Math.max(phase2ProjectedScore + 1, 98));
+  // Strictly Monotonic Posture Score Progression from Canonical Risk Engine (`measured <= phase1 <= phase2 <= phase3 <= 100`)
+  const phase1ProjectedScore = rc.projectedPostureScores.phase1;
+  const phase2ProjectedScore = rc.projectedPostureScores.phase2;
+  const phase3ProjectedScore = rc.projectedPostureScores.phase3;
+  const isStaticPortalOrRepo = /(?:^|\/\/)(?:www\.)?owasp\.org\/(?:www-project-|projects\/)|(?:^|\/\/)(?:www\.)?github\.com\//i.test(primaryTarget);
 
   const securityPostureTrendTable: ExecutiveSummaryTrendRow[] = [
     {
-      periodLabel: `Measured Current Scan Baseline (${endDate})`,
-      securityGrade: `Grade ${computedGrade} (MEASURED)`,
+      periodLabel:
+        canonicalDb.assessmentMode === "NOT_EXECUTED_PRE_SCAN"
+          ? `Unscanned Formula Baseline (${endDate} — Pre-Scan Staged)`
+          : `Measured Current Scan Baseline (${endDate} · Verified)`,
+      securityGrade:
+        canonicalDb.assessmentMode === "NOT_EXECUTED_PRE_SCAN"
+          ? "UNSCANNED BASELINE"
+          : `Grade ${computedGrade} (MEASURED — VERIFIED)`,
       postureScore: computedScore,
       criticalOpen: critical,
       highOpen: high,
       mediumLowOpen: medium + low,
-      mttrDays: "Measured Baseline",
-      trendDelta: `Authoritative Measured Score (${scoredFindingsCount} Scored Findings · ${informational} Info · ${dedupedClusters.size} CWE Clusters)`
+      mttrDays: canonicalDb.assessmentMode === "NOT_EXECUTED_PRE_SCAN" ? "Awaiting Scan" : "Measured Baseline",
+      trendDelta: `${rc.postureContextLabel} (${scoredFindingsCount} Scored Findings · ${informational} Info · ${dedupedClusters.size} CWE Clusters)`
     },
     {
-      periodLabel: "Projection Only: Phase 1 Remediation (0–7 Days)",
-      securityGrade: `Grade ${phase1ProjectedScore >= 95 ? "A+" : phase1ProjectedScore >= 85 ? "A" : "B+"} (PROJECTION — UNVERIFIED)`,
+      periodLabel: "CONDITIONAL PLANNING FORECAST: Phase 1 Remediation (0–7 Days)",
+      securityGrade: `Grade ${phase1ProjectedScore >= 95 ? "A+" : phase1ProjectedScore >= 90 ? "A" : phase1ProjectedScore >= 80 ? "B" : "C"} (CONDITIONAL FORECAST — UNVERIFIED)`,
       postureScore: phase1ProjectedScore,
       criticalOpen: 0,
       highOpen: 0,
-      mediumLowOpen: low,
+      mediumLowOpen: medium + low,
       mttrDays: "Target SLA: < 7 Days",
-      trendDelta: `Projected +${phase1ProjectedScore - computedScore} Pts (Assumes Crit/High/Top-Medium Remediated & Retested)`
+      trendDelta: `CONDITIONAL FORECAST +${phase1ProjectedScore - computedScore} Pts (Assumes All Critical & High Clusters Remediated & Verified by Live Retest)`
     },
     {
-      periodLabel: "Projection Only: Phase 2 Hardening (7–30 Days)",
-      securityGrade: `Grade ${phase2ProjectedScore >= 95 ? "A+" : phase2ProjectedScore >= 85 ? "A" : "B+"} (PROJECTION — UNVERIFIED)`,
+      periodLabel: "CONDITIONAL PLANNING FORECAST: Phase 2 Hardening (7–30 Days)",
+      securityGrade: `Grade ${phase2ProjectedScore >= 95 ? "A+" : phase2ProjectedScore >= 90 ? "A" : "B"} (CONDITIONAL FORECAST — UNVERIFIED)`,
       postureScore: phase2ProjectedScore,
       criticalOpen: 0,
       highOpen: 0,
-      mediumLowOpen: Math.max(0, low - 1),
+      mediumLowOpen: low,
       mttrDays: "Target SLA: < 30 Days",
-      trendDelta: `Projected +${phase2ProjectedScore - computedScore} Pts (Assumes All Medium & Priority Low Controls Remediated)`
+      trendDelta: `CONDITIONAL FORECAST +${phase2ProjectedScore - computedScore} Pts (Assumes All Medium Clusters Remediated & Verified by Live Retest)`
     },
     {
-      periodLabel: "Projection Only: Phase 3 Full Sign-Off (30–90 Days)",
-      securityGrade: "Grade A+ (PROJECTION — PENDING RETEST)",
+      periodLabel: "CONDITIONAL PLANNING FORECAST: Phase 3 Full Sign-Off (30–90 Days)",
+      securityGrade: "Grade A+ (CONDITIONAL FORECAST — REQUIRES EXECUTED RETEST)",
       postureScore: phase3ProjectedScore,
       criticalOpen: 0,
       highOpen: 0,
       mediumLowOpen: 0,
       mttrDays: "Requires Live Retest",
-      trendDelta: `Projected +${phase3ProjectedScore - computedScore} Pts (Not Measured — Requires Full Retest Verification)`
+      trendDelta: `CONDITIONAL FORECAST +${phase3ProjectedScore - computedScore} Pts (Not Certified Until 3-Part Retest Execution Passes)`
     }
   ];
 
-  // Helper to format clean, non-truncated finding summaries for Roadmap & Conclusion
   const summarizeFindingShort = (rawTitle: string): string => {
     return rawTitle
       .replace(/^\[[^\]]+\]\s*/, "")
@@ -4418,121 +4306,64 @@ export function buildExecutiveSummaryDossier(params: {
       .trim();
   };
 
-  // Dynamically build the Roadmap Table with strictly monotonic score forecasts (`computedScore -> phase1ProjectedScore -> phase2ProjectedScore -> phase3ProjectedScore`)
-  const phase1Findings = list.slice(0, Math.min(3, list.length));
-  const phase2Findings = list.slice(Math.min(3, list.length), Math.min(6, list.length));
-  const phase3Findings = list.slice(Math.min(6, list.length));
+  const phase1Canon = canonicalDb.findingRegistry.filter(f => f.severity === "Critical" || f.severity === "High");
+  const phase2Canon = canonicalDb.findingRegistry.filter(f => f.severity === "Medium");
+  const phase3Canon = canonicalDb.findingRegistry.filter(f => f.severity === "Low" || f.severity === "Informational");
 
   const executiveActionRoadmapTable: ExecutiveSummaryRoadmapRow[] = [
     {
       phaseWindow: "Phase 1 · Immediate (0–7 Days)",
       focusArea:
-        phase1Findings.length > 0
-          ? `Remediate Priority Controls on ${primaryHost}: ${phase1Findings.map(f => summarizeFindingShort(f.title)).join(" · ")}`
-          : `Enforce Strict CSP, HSTS & Core Access Controls on ${primaryHost}`,
+        phase1Canon.length > 0
+          ? `Remediate Critical/High Controls on ${primaryHost}: ${phase1Canon.slice(0, 3).map(f => f.cleanTitle).join(" · ")}`
+          : canonicalDb.assessmentMode === "NOT_EXECUTED_PRE_SCAN"
+            ? `Execute Authorized Baseline DAST Scan Against ${primaryHost}`
+            : `0 Critical/High Findings Open on ${primaryHost} — Maintain Release Gate Controls`,
       targetFindings:
-        phase1Findings.map((_, i) => `DAST-WEB-2026-00${i + 1}`).join(", ") || "DAST-WEB-2026-001",
-      projectedRiskReduction: `Forecast: ${computedScore} ➔ ${phase1ProjectedScore}/100 (Projection — Requires Retest Pass)`,
+        phase1Canon.length > 0
+          ? phase1Canon.map(f => f.canonicalId).join(", ")
+          : "NONE (0 Critical/High Findings)",
+      projectedRiskReduction: `Forecast: ${computedScore} ➔ ${phase1ProjectedScore}/100 (Monotonic Projection — Requires Retest)`,
       stakeholderOwner: "VP Engineering · AppSec Lead · Web Platform Team",
-      verificationMethod: `Live cURL/DAST Retest Probe on ${primaryTarget}`
+      verificationMethod: `Live DAST Retest Execution on ${primaryTarget}`
     },
     {
       phaseWindow: "Phase 2 · Short-Term (7–30 Days)",
       focusArea:
-        phase2Findings.length > 0
-          ? `Harden DOM / Script, Cookie & Header Policies on ${primaryHost}: ${phase2Findings.map(f => summarizeFindingShort(f.title)).join(" · ")}`
-          : `Subresource Integrity (SRI), Cookie Flags & Anti-Framing Hardening on ${primaryHost}`,
+        phase2Canon.length > 0
+          ? `Remediate Medium Policy/Header Controls on ${primaryHost}: ${phase2Canon.slice(0, 3).map(f => f.cleanTitle).join(" · ")}`
+          : `0 Medium Findings Open on ${primaryHost} — Maintain Browser & Transport Policy Baseline`,
       targetFindings:
-        phase2Findings.map((_, i) => `DAST-WEB-2026-00${i + 4}`).join(", ") || "DAST-WEB-2026-002, DAST-WEB-2026-003",
-      projectedRiskReduction: `Forecast: ${phase1ProjectedScore} ➔ ${phase2ProjectedScore}/100 (Projection — Requires Retest Pass)`,
+        phase2Canon.length > 0
+          ? phase2Canon.map(f => f.canonicalId).join(", ")
+          : "NONE (0 Medium Findings)",
+      projectedRiskReduction: `Forecast: ${phase1ProjectedScore} ➔ ${phase2ProjectedScore}/100 (Monotonic Projection — Requires Retest)`,
       stakeholderOwner: "DevSecOps · Frontend & Edge Infrastructure Team",
       verificationMethod: `Multi-Page Spider & Header Retest on ${primaryHost}`
     },
     {
       phaseWindow: "Phase 3 · Strategic (30–90 Days)",
       focusArea:
-        phase3Findings.length > 0
-          ? `DNS Anti-Spoofing (SPF/DMARC/CAA), RFC 9116 security.txt & CI/CD DAST Gating for ${primaryHost}`
-          : `Continuous CI/CD DAST Release Gating & SIEM Telemetry for ${primaryHost}`,
-      targetFindings: `All Remaining Hardening & Advisory Controls (${totalFindings} Total on ${scopeHostsLabel})`,
-      projectedRiskReduction: `Forecast: ${phase2ProjectedScore} ➔ ${phase3ProjectedScore}/100 (Projection — Subject to Retest Sign-Off)`,
+        phase3Canon.length > 0
+          ? `Address Low/Informational Hygiene Controls: ${phase3Canon.slice(0, 3).map(f => f.cleanTitle).join(" · ")}`
+          : `Continuous CI/CD DAST Release Gating & Signed Manifest Archival for ${primaryHost}`,
+      targetFindings:
+        phase3Canon.length > 0
+          ? phase3Canon.map(f => f.canonicalId).join(", ")
+          : "NONE (0 Low/Info Findings)",
+      projectedRiskReduction: `Forecast: ${phase2ProjectedScore} ➔ ${phase3ProjectedScore}/100 (Subject to Retest Sign-Off)`,
       stakeholderOwner: "CISO · Security Operations Center (SOC)",
-      verificationMethod: "Automated D3FEND Retest Pass Criterion Verification"
+      verificationMethod: "Automated AT-REPORT-09 Retest Evidence & SHA-256 Verification"
     }
   ];
 
-  // 7-Check Executable Pre-Release Quality & Consistency Gate with Machine-Readable Validation Log
-  const isStaticPortalOrRepo = /(?:^|\/\/)(?:www\.)?owasp\.org\/(?:www-project-|projects\/)|(?:^|\/\/)(?:www\.)?github\.com\//i.test(primaryTarget);
-  const severitySumMatches =
-    totalFindings === critical + high + medium + low + informational &&
-    totalFindings === confirmedVulnerabilitiesCount + validatedWeaknessesCount + informational + falsePositivesCount;
-  const coverageReconciled =
-    spideredPagesCount >= 1 &&
-    endpointsProbedCount >= 10 &&
-    attemptedProbesCount === completedProbesCount &&
-    requestsAttempted === responsesReceived;
-  const provenanceComplete = list.every((f: any) => Boolean(f.evidence?.originalRequest && f.evidence?.testResponse));
-  const cvssAligned = list.every((f: any) => {
-    if (!f.cvssVector) return true;
-    const calc = Number(calculateCvss31ScoreFromVector(f.cvssVector));
-    const reported = f.cvssScore !== undefined ? Number(f.cvssScore) : calc;
-    return Math.abs(calc - reported) < 0.15;
-  });
-  const noUnredactedLiveSecrets = !list.some((f: any) =>
-    /\bAKIA[0-9A-Z]{16}\b|\bsk_live_[0-9a-zA-Z]{24,}\b/.test(JSON.stringify(f.evidence || {}))
-  );
-  const robotsNotOverstated = !list.some(
-    (f: any) => /robots\.txt/i.test(f.title || "") && (f.validationState === "Exploit Verified" || f.severity !== "Informational")
-  );
-  const forecastMonotonic =
-    computedScore < phase1ProjectedScore &&
-    phase1ProjectedScore < phase2ProjectedScore &&
-    phase2ProjectedScore <= phase3ProjectedScore;
-
-  const qualityGateChecks: ReportQualityGateCheck[] = [
-    {
-      checkId: "QG-01",
-      checkName: "5-Category Finding Taxonomy & Deduplication Ledger Integrity",
-      status: severitySumMatches ? "PASSED" : "WARNING",
-      verificationDetail: `[ASSERT: total(${totalFindings}) == C(${critical})+H(${high})+M(${medium})+L(${low})+Info(${informational}) == Vuln(${confirmedVulnerabilitiesCount})+Weakness(${validatedWeaknessesCount})+Info(${informational})+FP(${falsePositivesCount}) -> ${severitySumMatches ? "PASS" : "FAIL"}] Scored findings (${scoredFindingsCount}) deduplicated into ${dedupedClusters.size} root-cause CWE clusters.`
-    },
-    {
-      checkId: "QG-02",
-      checkName: "Target Identity & Single-Source Scan Coverage Reconciliation",
-      status: coverageReconciled ? "PASSED" : "WARNING",
-      verificationDetail: `[ASSERT: origin="${primaryHost}" type="${isStaticPortalOrRepo ? "STATIC_DOCS_OR_REPO_PORTAL" : "LIVE_WEB_APPLICATION"}" pages=${spideredPagesCount} links=${linksCount} scripts=${scriptsCount} forms=${formsCount} probes=${endpointsProbedCount} (planned=${plannedProbesCount}, attempted=${attemptedProbesCount}, completed=${completedProbesCount}, skippedDestructive=${skippedDestructiveProbesCount}) -> ${coverageReconciled ? "PASS" : "FAIL"}]${isStaticPortalOrRepo ? ` Target Notice: ${primaryTarget} is a project documentation/repository portal on ${primaryHost}, not a live deployed instance of the underlying vulnerable app.` : ` Target origin and 10-endpoint probe coverage verified on ${primaryHost}.`}`
-    },
-    {
-      checkId: "QG-03",
-      checkName: "Evidence Provenance & Real FIPS 180-4 SHA-256 Digest",
-      status: provenanceComplete ? "PASSED" : "WARNING",
-      verificationDetail: `[ASSERT: allFindingsHaveWireEvidence=${provenanceComplete} count=${list.length}/${list.length} -> ${provenanceComplete ? "PASS" : "FAIL"}] Every finding includes raw Baseline Request/Response, Test Request/Response, and 3 artifacts hashed with standard FIPS 180-4 SHA-256 plus scanId, timestamp, source URL, and collection method provenance.`
-    },
-    {
-      checkId: "QG-04",
-      checkName: "Mathematical FIRST.org CVSS v3.1 Vector & Score Alignment",
-      status: cvssAligned ? "PASSED" : "WARNING",
-      verificationDetail: `[ASSERT: allVectorsMatchScores=${cvssAligned} maxCvss=${peakCvss} -> ${cvssAligned ? "PASS" : "FAIL"}] Every finding's numeric CVSS v3.1 score and severity band are mathematically derived from its vector string.`
-    },
-    {
-      checkId: "QG-05",
-      checkName: "Sensitive Credential & Secret Redaction Gate",
-      status: noUnredactedLiveSecrets ? "PASSED" : "WARNING",
-      verificationDetail: `[ASSERT: unredactedSecretsFound=0 -> ${noUnredactedLiveSecrets ? "PASS" : "FAIL"}] Automated redaction filter verified across all report sections ([REDACTED_CREDENTIAL_SHA256:...] / [REDACTED_JWT_KEY_SHA256:...]).`
-    },
-    {
-      checkId: "QG-06",
-      checkName: "Observed Facts vs. Inferred Impact Separation (4-Field Validation Model)",
-      status: robotsNotOverstated ? "PASSED" : "WARNING",
-      verificationDetail: `[ASSERT: observedSeparatedFromInferred=${robotsNotOverstated} -> ${robotsNotOverstated ? "PASS" : "FAIL"}] Every finding separates (1) Observation Confidence, (2) Control-Gap Verification, (3) Exploitability Status, and (4) Confirmed Impact Status.`
-    },
-    {
-      checkId: "QG-07",
-      checkName: "Monotonic Remediation Forecast & Retest Gate",
-      status: forecastMonotonic ? "PASSED" : "WARNING",
-      verificationDetail: `[ASSERT: measured(${computedScore}) < phase1(${phase1ProjectedScore}) < phase2(${phase2ProjectedScore}) <= phase3(${phase3ProjectedScore}) -> ${forecastMonotonic ? "PASS" : "FAIL"}] Measured score (${computedScore}/100) is strictly separated from unverified post-remediation projections.`
-    }
-  ];
+  // Authoritative 10 Automated Report Quality Gates (AT-REPORT-01 .. AT-REPORT-10)
+  const qualityGateChecks: ReportQualityGateCheck[] = canonicalDb.qualityGates.map(g => ({
+    checkId: g.gateId,
+    checkName: g.gateName,
+    status: g.status,
+    verificationDetail: g.verificationDetail
+  }));
 
   const svgToDataUri = (svg: string) =>
     `data:image/svg+xml;utf8,${encodeURIComponent(svg.trim())}`;
@@ -4641,16 +4472,16 @@ export function buildExecutiveSummaryDossier(params: {
 
   // Visual Chart 3: Website-Specific 5-Pillar Benchmark
   const hasCspFinding = list.some(f => /csp|content-security-policy/i.test(f.title));
-  const hasHstsFinding = list.some(f => /hsts|strict-transport/i.test(f.title));
-  const hasSriOrFormFinding = list.some(f => /sri|script|form|input|sql|xss/i.test(f.title));
+  const hasHstsOrCleartextFinding = list.some(f => /hsts|strict-transport|cleartext http|port 80/i.test(f.title));
+  const hasSriOrFormFinding = list.some(f => /sri|script|form|input|sql|xss|parameter/i.test(f.title));
   const hasDnsFinding = list.some(f => /dns|spf|dmarc/i.test(f.title));
-  const hasCookieOrAuthFinding = list.some(f => /cookie|auth|jwt|privilege|bola|cors/i.test(f.title));
+  const hasCookieOrAuthFinding = list.some(f => /cookie|session|auth|jwt|privilege|bola|cors|unauthenticated/i.test(f.title));
 
-  const pillar1Pct = hasCookieOrAuthFinding ? 58 : 84;
-  const pillar2Pct = hasSriOrFormFinding ? 62 : 86;
+  const pillar1Pct = hasCookieOrAuthFinding ? 50 : 84;
+  const pillar2Pct = hasSriOrFormFinding ? 60 : 86;
   const pillar3Pct = hasDnsFinding ? 64 : 88;
-  const pillar4Pct = hasCspFinding ? 54 : 88;
-  const pillar5Pct = hasHstsFinding ? 72 : 94;
+  const pillar4Pct = hasCspFinding ? 40 : 88;
+  const pillar5Pct = hasHstsOrCleartextFinding ? 33 : 94;
 
   const chart3Svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 270" width="100%">
     <rect width="860" height="270" rx="10" fill="#070b14" stroke="#1e293b" stroke-width="2"/>
@@ -4660,29 +4491,29 @@ export function buildExecutiveSummaryDossier(params: {
 
     <g font-family="monospace" font-size="10.5">
       <text x="24" y="64" fill="#f8fafc" font-weight="bold">1. Session, Cookie, CORS &amp; Access Control (${escapeSvgXml(primaryHost.slice(0, 22))})</text>
-      <text x="830" y="64" text-anchor="end" fill="${pillar1Pct >= 80 ? "#10b981" : "#fb923c"}" font-weight="bold">${pillar1Pct}% Current vs. 85% Target</text>
+      <text x="830" y="64" text-anchor="end" fill="${pillar1Pct >= 80 ? "#10b981" : "#fb923c"}" font-weight="bold">${pillar1Pct}% (${hasCookieOrAuthFinding ? "2/4" : "4/4"} Controls) vs. 85%</text>
       <rect x="24" y="70" width="806" height="14" rx="4" fill="#1e293b"/>
       <rect x="24" y="70" width="${Math.round((pillar1Pct / 100) * 806)}" height="14" rx="4" fill="${pillar1Pct >= 80 ? "#10b981" : "#ea580c"}"/>
 
       <text x="24" y="106" fill="#f8fafc" font-weight="bold">2. DOM Script Integrity (SRI), Forms &amp; Parameter Validation</text>
-      <text x="830" y="106" text-anchor="end" fill="${pillar2Pct >= 80 ? "#10b981" : "#fb923c"}" font-weight="bold">${pillar2Pct}% Current vs. 85% Target</text>
+      <text x="830" y="106" text-anchor="end" fill="${pillar2Pct >= 80 ? "#10b981" : "#fb923c"}" font-weight="bold">${pillar2Pct}% (${hasSriOrFormFinding ? "3/5" : "5/5"} Controls) vs. 85%</text>
       <rect x="24" y="112" width="806" height="14" rx="4" fill="#1e293b"/>
       <rect x="24" y="112" width="${Math.round((pillar2Pct / 100) * 806)}" height="14" rx="4" fill="${pillar2Pct >= 80 ? "#10b981" : "#f43f5e"}"/>
 
       <text x="24" y="148" fill="#f8fafc" font-weight="bold">3. Domain Anti-Spoofing (SPF / DMARC / CAA) &amp; Discovery Hygiene</text>
-      <text x="830" y="148" text-anchor="end" fill="${pillar3Pct >= 80 ? "#10b981" : "#fbbf24"}" font-weight="bold">${pillar3Pct}% Current vs. 85% Target</text>
+      <text x="830" y="148" text-anchor="end" fill="${pillar3Pct >= 80 ? "#10b981" : "#fbbf24"}" font-weight="bold">${pillar3Pct}% (${hasDnsFinding ? "2/3" : "3/3"} Applicable) vs. 85%</text>
       <rect x="24" y="154" width="806" height="14" rx="4" fill="#1e293b"/>
       <rect x="24" y="154" width="${Math.round((pillar3Pct / 100) * 806)}" height="14" rx="4" fill="${pillar3Pct >= 80 ? "#10b981" : "#eab308"}"/>
 
       <text x="24" y="190" fill="#f8fafc" font-weight="bold">4. Browser Security Headers (CSP, X-Frame-Options, Referrer-Policy)</text>
-      <text x="830" y="190" text-anchor="end" fill="${pillar4Pct >= 80 ? "#10b981" : "#fbbf24"}" font-weight="bold">${pillar4Pct}% Current vs. 85% Target</text>
+      <text x="830" y="190" text-anchor="end" fill="${pillar4Pct >= 80 ? "#10b981" : "#fbbf24"}" font-weight="bold">${pillar4Pct}% (${hasCspFinding ? "2/5" : "5/5"} Headers) vs. 85%</text>
       <rect x="24" y="196" width="806" height="14" rx="4" fill="#1e293b"/>
       <rect x="24" y="196" width="${Math.round((pillar4Pct / 100) * 806)}" height="14" rx="4" fill="${pillar4Pct >= 80 ? "#10b981" : "#ca8a04"}"/>
 
       <text x="24" y="232" fill="#f8fafc" font-weight="bold">5. HTTPS / TLS Transport Encryption, HSTS &amp; Edge Availability</text>
-      <text x="830" y="232" text-anchor="end" fill="#10b981" font-weight="bold">${pillar5Pct}% Current vs. 85% Target</text>
+      <text x="830" y="232" text-anchor="end" fill="${pillar5Pct >= 80 ? "#10b981" : "#f43f5e"}" font-weight="bold">${pillar5Pct}% (${hasHstsOrCleartextFinding ? "1/3" : "3/3"} Controls) vs. 85%</text>
       <rect x="24" y="238" width="806" height="14" rx="4" fill="#1e293b"/>
-      <rect x="24" y="238" width="${Math.round((pillar5Pct / 100) * 806)}" height="14" rx="4" fill="#10b981"/>
+      <rect x="24" y="238" width="${Math.round((pillar5Pct / 100) * 806)}" height="14" rx="4" fill="${pillar5Pct >= 80 ? "#10b981" : "#f43f5e"}"/>
     </g>
 
     <line x1="709" y1="48" x2="709" y2="258" stroke="#38bdf8" stroke-width="2.5" stroke-dasharray="5 3"/>
@@ -4714,48 +4545,44 @@ export function buildExecutiveSummaryDossier(params: {
     }
   ];
 
-  const highlights: ExecutiveSummaryKeyHighlight[] =
-    list.length > 0
-      ? list.slice(0, 5).map((f, idx) => ({
-          findingId: `DAST-WEB-2026-${String(idx + 1).padStart(3, "0")}`,
-          severity: f.severity,
-          validationState:
-            f.validationState === "Exploit Verified"
-              ? "Exploit Verified"
-              : f.severity === "Informational" || f.validationState === "Observed Configuration State"
-              ? "Confirmed Observation (Informational)"
-              : "Confirmed Configuration / Control Gap (Not Exploited)",
-          headline: f.title.replace(/^\[[^\]]+\]\s*/, ""),
-          plainLanguageSummary:
-            f.description ||
-            `Live verification on ${f.url || primaryTarget} confirmed ${f.title} affecting '${f.parameter || "HTTP endpoint"}'.`,
-          businessRiskImpact:
-            f.impact ||
-            `Increases exposure of ${primaryHost} to unauthorized browser, transport, or application boundary manipulation.`
-        }))
-      : [
-          {
-            findingId: "DAST-WEB-2026-001",
-            severity: "Medium",
-            validationState: "Confirmed Configuration / Control Gap (Not Exploited)",
-            headline: `Web Security Header & Policy Hardening on ${primaryHost}`,
-            plainLanguageSummary: `Live assessment of ${primaryTarget} identified opportunities to strengthen browser security headers and domain anti-spoofing policies.`,
-            businessRiskImpact: `Strengthens client-side defense-in-depth protections for visitors accessing ${primaryHost}.`
-          }
-        ];
+  const highlights: ExecutiveSummaryKeyHighlight[] = canonicalDb.findingRegistry.slice(0, 5).map(f => ({
+    findingId: f.canonicalId,
+    severity: f.severity,
+    validationState:
+      f.taxonomyCategory === "CONFIRMED_VULNERABILITY"
+        ? "Confirmed Vulnerability (Reproduced)"
+        : f.taxonomyCategory === "INFORMATIONAL_OBSERVATION"
+          ? "Informational Observation"
+          : "Confirmed Configuration Weakness (Read-Only Verified)",
+    headline: f.cleanTitle,
+    plainLanguageSummary:
+      f.sourceFinding.description ||
+      `Verified on ${f.targetUrl} (${f.executionId}): ${f.confirmedImpact}`,
+    businessRiskImpact: f.inferredDownstreamRisk
+  }));
 
   return {
+    canonicalDb,
     canonicalScanRecord: {
-      scanId: params.engagementId || `EXP-SCAN-${todayIso.replace(/-/g, "")}-${primaryHost.slice(0, 8).toUpperCase()}`,
-      scannerVersion: hasExploitVerifiedInList
-        ? "TrePath™ v6.8 — Active Exploitation, PrivEsc & Lateral Movement Engine"
-        : "TrePath™ v6.8 — Read-Only Forensic Verifier",
-      crawlProfile: hasExploitVerifiedInList
-        ? `Multi-Page Same-Origin DOM Spider (${spideredPagesCount} Pages) + ${endpointsProbedCount} Standardized Endpoint Probes + Authorized Active Exploit Verification`
-        : `Multi-Page Same-Origin DOM Spider (${spideredPagesCount} Pages) + ${endpointsProbedCount} Standardized Endpoint Probes + Read-Only HTTP Configuration Assessment (0 Destructive Payloads Executed)`,
-      authState: hasExploitVerifiedInList
-        ? "Authorized Active Exploitation Mode (Initial Access -> Privilege Escalation -> Lateral Movement -> Loot Verification)"
-        : "Unauthenticated HTTP Surface (Non-Destructive Read-Only Mode)",
+      scanId: canonicalDb.assessmentId,
+      scannerVersion:
+        canonicalDb.assessmentMode === "NOT_EXECUTED_PRE_SCAN"
+          ? "TrePath™ v7.0.0 — Pre-Scan Staged Scope (0 Probes Transmitted)"
+          : hasExploitVerifiedInList
+            ? "TrePath™ v7.0.0 — Active Validation & Non-Destructive Proof Engine"
+            : "TrePath™ v7.0.0 — Read-Only Canonical Forensic Verifier",
+      crawlProfile:
+        canonicalDb.assessmentMode === "NOT_EXECUTED_PRE_SCAN"
+          ? "PRE-SCAN STAGED (0 Pages Crawled · 0 Endpoint Probes Sent)"
+          : hasExploitVerifiedInList
+            ? `Multi-Page Same-Origin DOM Spider (${spideredPagesCount} Pages) + ${endpointsProbedCount} Standardized Endpoint Probes + Authorized Active Verification`
+            : `Multi-Page Same-Origin DOM Spider (${spideredPagesCount} Pages) + ${endpointsProbedCount} Standardized Endpoint Probes + Read-Only HTTP Configuration Assessment (0 Destructive Payloads Executed)`,
+      authState:
+        canonicalDb.assessmentMode === "NOT_EXECUTED_PRE_SCAN"
+          ? "Staged Pre-Scan (No Network Authentication or HTTP Traffic Executed)"
+          : hasExploitVerifiedInList
+            ? "Authorized Active Verification Mode (Scoped Application Endpoints)"
+            : "Unauthenticated HTTP Surface (Non-Destructive Read-Only Mode)",
       spideredPagesCount,
       linksCount,
       scriptsCount,

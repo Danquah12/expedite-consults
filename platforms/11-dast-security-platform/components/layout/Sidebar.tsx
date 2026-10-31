@@ -150,7 +150,7 @@ const SECTIONS = [
 ];
 
 export default function Sidebar() {
-  const path = usePathname();
+  const path = usePathname() || "";
   const [filter, setFilter] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [uiTheme, setUiTheme] = useState<UiThemeId>("parchment");

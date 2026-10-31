@@ -125,13 +125,21 @@ function generateMultiPageAssessmentPdfBuffer(params: {
     execSummary.findingsSummary.medium +
     execSummary.findingsSummary.low;
 
+  const cdb = execSummary.canonicalDb;
   const docLines: PdfLineItem[] = [
-    { text: "TrePath - DAST & WEB INTERFACE SECURITY ASSESSMENT REPORT", bold: true, size: 12, colorRgb: [0.02, 0.35, 0.65] },
+    { text: "TrePath v6.9.0 - DAST & WEB INTERFACE SECURITY ASSESSMENT REPORT", bold: true, size: 12, colorRgb: [0.02, 0.35, 0.65] },
     { text: "Dynamic Application Security Testing (DAST) | OWASP WSTG v4.2 | OWASP Top 10 | MITRE ATT&CK v15 | NIST SP 800-115", bold: true, size: 8, colorRgb: [0.25, 0.32, 0.45] },
     { text: "==============================================================================================", bold: true, size: 9 },
     { text: `Target Scope: ${targetUrls.join(", ")}`, bold: true, size: 9 },
     { text: `Generated At: ${timestampIso}   |   Message-ID: ${messageId}`, size: 8.5 },
     { text: `Chain-of-Custody SHA-256: ${reportSha256}`, size: 8.5 },
+    ...(cdb
+      ? [
+          { text: `Certification Status: ${cdb.reportCertification.badgeLabel} (${cdb.reportCertification.passedGatesCount}/${cdb.reportCertification.totalGatesCount} Quality Gates)`, bold: true, size: 8.5, colorRgb: [0.02, 0.45, 0.35] as [number, number, number] },
+          { text: `Signed Manifest (${cdb.evidenceManifest.manifestId}): Root SHA-256=${cdb.evidenceManifest.manifestRootSha256}`, size: 8 },
+          { text: `HMAC-SHA256 Signature: ${cdb.evidenceManifest.signatureHmacSha256}`, size: 8 },
+        ]
+      : []),
     { text: `Recipients: ${recipients.join(", ")}`, size: 8.5 },
     { text: `Canonical Scan Record: ${execSummary.canonicalScanRecord.spideredPagesCount} Spidered Page(s) | ${execSummary.canonicalScanRecord.linksCount} Link(s) | ${execSummary.canonicalScanRecord.scriptsCount} Script(s) | ${execSummary.canonicalScanRecord.formsCount} Form(s) | ${execSummary.canonicalScanRecord.endpointsProbedCount} Endpoint Probes`, bold: true, size: 8.5, colorRgb: [0.02, 0.45, 0.35] },
     { text: "" },
@@ -767,7 +775,7 @@ export async function POST(req: NextRequest) {
   <div class="report-shell" style="max-width:920px;margin:0 auto;background:#ffffff;border:1px solid #cbd5e1;border-radius:10px;overflow:hidden;">
     <div class="report-pad" style="background:#0f172a;color:#f8fafc;padding:20px 24px;border-bottom:4px solid #06b6d4;">
       <div style="font-size:11px;font-family:monospace;color:#38bdf8;font-weight:700;letter-spacing:0.06em;">
-        🌐 TrePath™ v3.0 · DAST (DYNAMIC APPLICATION SECURITY TESTING) &amp; WEB INTERFACE SECURITY REPORT
+        🌐 TrePath™ v6.9.0 · DAST (DYNAMIC APPLICATION SECURITY TESTING) &amp; WEB INTERFACE SECURITY REPORT
       </div>
       <h1 style="margin:6px 0 4px 0;font-size:20px;color:#ffffff;">
         DAST &amp; Web Interface Security Assessment Report (OWASP WSTG v4.2 · OWASP Top 10 · MITRE ATT&amp;CK® v15)
@@ -798,22 +806,12 @@ export async function POST(req: NextRequest) {
             <div style="font-size:22px;font-weight:900;color:#d97706;">${medCount + lowCount}</div>
           </td>
           <td style="padding:10px;border:1px solid #bae6fd;background:#f0f9ff;text-align:center;border-radius:6px;">
-            <div style="font-size:10px;font-weight:800;color:#0369a1;">WEB + PORT SURFACE AUDITED</div>
-            <div style="font-size:16px;font-weight:900;color:#0284c7;">DAST HTTP/API + 131,070 Ports</div>
-            <div style="font-size:10px;color:#475569;">65,535 TCP + 65,535 UDP</div>
+            <div style="font-size:10px;font-weight:800;color:#0369a1;">ASSESSMENT SCOPE &amp; ENGINE</div>
+            <div style="font-size:15px;font-weight:900;color:#0284c7;">Read-Only HTTP/API DAST</div>
+            <div style="font-size:10px;color:#475569;">TrePath v6.9 Canonical Verifier</div>
           </td>
         </tr>
       </table>
-
-      <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:10px 14px;margin-bottom:18px;font-size:12px;font-family:monospace;word-break:break-word;">
-        <div><strong>Assessment Type:</strong> Dynamic Application Security Testing (DAST) &amp; Web Interface Exploitation Dossier</div>
-        <div><strong>Message-ID:</strong> ${escapeHtml(messageId)}</div>
-        <div><strong>Chain-of-Custody SHA-256:</strong> ${escapeHtml(reportSha256)}</div>
-        <div><strong>Recipients:</strong> ${escapeHtml(recipients.join(", "))}${
-      ccRecipients.length > 0 ? ` (CC: ${escapeHtml(ccRecipients.join(", "))})` : ""
-    }</div>
-        <div><strong>TrePath™ DAST Engines:</strong> TrePath-WebPulse™ (OWASP ZAP DAST) · TrePath-StrikeFuzzer™ (Burp DAST) · TrePath-VulnCore™ (OpenVAS) · TrePath-NetRecon™ (Nmap) · TrePath-Apex™</div>
-      </div>
 
       ${(() => {
         const execSum = buildExecutiveSummaryDossier({
@@ -821,13 +819,28 @@ export async function POST(req: NextRequest) {
           findings,
           liveTelemetry: body.liveTelemetry
         });
+        const cdbEmail = execSum.canonicalDb;
         const ratingColor =
           execSum.overallRiskRating.rating === "Critical"
             ? "#e11d48"
             : execSum.overallRiskRating.rating === "High"
             ? "#ea580c"
+            : execSum.overallRiskRating.rating === "Low"
+            ? "#059669"
             : "#d97706";
         return `
+      <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:10px 14px;margin-bottom:18px;font-size:12px;font-family:monospace;word-break:break-word;">
+        <div><strong>Assessment Type:</strong> ${escapeHtml(execSum.engagementOverview.assessmentType)}</div>
+        <div><strong>Certification Status:</strong> <strong>${escapeHtml(cdbEmail?.reportCertification.badgeLabel || "VERIFIED")}</strong> (${cdbEmail?.reportCertification.passedGatesCount ?? 10}/${cdbEmail?.reportCertification.totalGatesCount ?? 10} Integrity Gates)</div>
+        <div><strong>Message-ID:</strong> ${escapeHtml(messageId)}</div>
+        <div><strong>Chain-of-Custody SHA-256:</strong> ${escapeHtml(reportSha256)}</div>
+        ${cdbEmail ? `<div><strong>Signed Manifest Root SHA-256:</strong> ${escapeHtml(cdbEmail.evidenceManifest.manifestRootSha256)}</div>
+        <div><strong>HMAC-SHA256 Signature:</strong> ${escapeHtml(cdbEmail.evidenceManifest.signatureHmacSha256)}</div>` : ""}
+        <div><strong>Recipients:</strong> ${escapeHtml(recipients.join(", "))}${
+      ccRecipients.length > 0 ? ` (CC: ${escapeHtml(ccRecipients.join(", "))})` : ""
+    }</div>
+        <div><strong>TrePath™ Engine:</strong> ${escapeHtml(execSum.canonicalScanRecord.scannerVersion)}</div>
+      </div>
       <!-- EXECUTIVE SUMMARY (1–2 PAGE BOARD & RISK OWNER BRIEFING) -->
       <div style="border:2px solid #0284c7;border-radius:10px;padding:18px 20px;margin-bottom:24px;background:#f8fafc;">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;border-bottom:2px solid #cbd5e1;padding-bottom:10px;margin-bottom:14px;">
