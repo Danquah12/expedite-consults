@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { normalizeParticipantKey } from '@/lib/connectin-cloud-sync';
+import { normalizeParticipantKey, recordGlobalUserActivity } from '@/lib/connectin-cloud-sync';
 
 export interface CloudCredentialCheckItem {
     id: string;
@@ -180,6 +180,17 @@ export async function POST(req: Request) {
         const merged = mergeChecks([newItem, ...(memoryChecksByTargetKey[key] || [])], cloud);
         memoryChecksByTargetKey[key] = merged;
         await pushCloudChecksForTarget(key, merged);
+        recordGlobalUserActivity({
+            id: `act_${newItem.id}`,
+            userName: viewerName,
+            userAvatar: safeAvatar,
+            actionType: 'PROFILE_VIEWED',
+            actionLabel: `Viewed Member Profile (${targetName})`,
+            category: 'profile',
+            targetTitle: `${targetName}'s Profile`,
+            details: `${viewerName} (${headline}) inspected ${targetName}'s credentials via ${viewVector}`,
+            timestampIso: newItem.createdAtIso,
+        }).catch(() => {});
 
         return NextResponse.json({ ok: true, recorded: newItem });
     } catch {

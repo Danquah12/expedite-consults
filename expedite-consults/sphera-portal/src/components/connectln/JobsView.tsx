@@ -45,6 +45,7 @@ import {
 import { CareerTwinModal } from "./CareerTwinModal"
 
 import { UserProfile } from "@/lib/connectln-data"
+import { trackUserActivity } from "@/lib/connectin-storage"
 
 interface JobsViewProps {
   currentUser?: UserProfile
@@ -593,6 +594,17 @@ export function JobsView({
   }
 
   const toggleSaveJob = (jobId: string) => {
+    const target = jobs.find(j => j.id === jobId)
+    if (target) {
+      trackUserActivity({
+        actionType: 'JOB_SAVED',
+        actionLabel: target.isSaved ? 'Removed Saved Job' : 'Saved Job Opportunity',
+        category: 'content',
+        targetId: jobId,
+        targetTitle: `${target.title} @ ${target.company}`,
+        details: `${target.location} · ${target.salaryRange || 'Competitive'}`
+      })
+    }
     setJobs(prev =>
       prev.map(j => (j.id === jobId ? { ...j, isSaved: !j.isSaved } : j))
     )
@@ -628,6 +640,14 @@ export function JobsView({
       }
       setApplications(prev => [newApp, ...prev])
       setApplyStep('success')
+      trackUserActivity({
+        actionType: 'JOB_APPLIED',
+        actionLabel: `Applied to Job: ${selectedJob.title}`,
+        category: 'content',
+        targetId: selectedJob.id,
+        targetTitle: `${selectedJob.title} @ ${selectedJob.company}`,
+        details: `Submitted Easy Apply application (${selectedJob.location} · ${selectedJob.salaryRange})`
+      })
     }
   }
 
@@ -685,6 +705,14 @@ export function JobsView({
 
     // 3. Immediately sync to ConnectLn Home Feed
     onJobPublished?.(optimisticJob)
+    trackUserActivity({
+      actionType: 'JOB_PUBLISHED',
+      actionLabel: `Published Job Opening: ${optimisticJob.title}`,
+      category: 'content',
+      targetId: optimisticJob.id,
+      targetTitle: `${optimisticJob.title} @ ${optimisticJob.company}`,
+      details: `${optimisticJob.location} · ${optimisticJob.salaryRange} (${optimisticJob.employmentType})`
+    })
 
     // 4. Sync with backend /api/connectin/jobs
     try {

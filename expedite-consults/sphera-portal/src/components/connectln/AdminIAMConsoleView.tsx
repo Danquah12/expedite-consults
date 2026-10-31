@@ -121,7 +121,8 @@ export function AdminIAMConsoleView({
   // Live state
   const [users, setUsers] = useState<AdminUserRecord[]>(() => loadStoredAdminUsers())
   const [userActivityLogs, setUserActivityLogs] = useState<UserActivityEvent[]>(() => loadStoredUserActivityLogs())
-  const [activityFilter, setActivityFilter] = useState<'all' | 'likes' | 'comments' | 'reposts_shares' | 'content_profile' | 'auth'>('all')
+  const [activityFilter, setActivityFilter] = useState<'all' | 'likes' | 'comments' | 'reposts_shares' | 'messages_calls' | 'content_profile' | 'auth'>('all')
+  const [activityUserFilter, setActivityUserFilter] = useState<string>('all')
   const [activitySearch, setActivitySearch] = useState("")
   const [isLoadingUsers, setIsLoadingUsers] = useState(false)
   const [userFilter, setUserFilter] = useState<'all' | 'new_and_logged_in' | 'admins'>('all')
@@ -209,14 +210,31 @@ export function AdminIAMConsoleView({
     const localUsers = loadStoredAdminUsers()
     const localActivity = loadStoredUserActivityLogs()
     try {
+      if (localActivity.length > 0) {
+        fetch("/api/connectin/activity", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ batchActivities: localActivity.slice(0, 25) })
+        }).catch(() => {})
+      }
       const res = await fetch("/api/connectin/admin", { cache: "no-store" })
       if (res.ok) {
         const data = await res.json()
         if (data.activityLogs && Array.isArray(data.activityLogs)) {
           const actMap = new Map<string, UserActivityEvent>()
+          const loginCountsByUser = new Map<string, number>()
           ;[...(data.activityLogs as UserActivityEvent[]), ...localActivity].forEach(ev => {
             if (ev && ev.id && !actMap.has(ev.id)) {
-              actMap.set(ev.id, ev)
+              if (ev.actionType === "USER_LOGIN") {
+                const uKey = String(ev.userEmail || ev.userName || ev.userId || "").toLowerCase().trim()
+                const count = loginCountsByUser.get(uKey) || 0
+                if (count >= 3) return
+                loginCountsByUser.set(uKey, count + 1)
+              }
+              actMap.set(ev.id, {
+                ...ev,
+                timestampDisplay: ev.timestampDisplay || (ev as any).timestamp || "Just Now"
+              })
             }
           })
           setUserActivityLogs(Array.from(actMap.values()))
@@ -845,7 +863,7 @@ export function AdminIAMConsoleView({
                 </div>
 
                 {/* Activity Mini Summary Pills */}
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                <div className="grid grid-cols-2 sm:grid-cols-6 gap-2.5">
                   <div
                     onClick={() => {
                       setActivityFilter('likes')
@@ -891,7 +909,19 @@ export function AdminIAMConsoleView({
                   >
                     <p className="text-[10px] font-bold uppercase text-purple-700 dark:text-purple-400">📝 Posts &amp; Resumes</p>
                     <p className="text-lg font-black text-zinc-900 dark:text-zinc-100 mt-0.5">
-                      {userActivityLogs.filter(e => ['POST_CREATED', 'POST_SAVED', 'POLL_VOTED', 'RESUME_UPLOADED', 'PROFILE_UPDATED', 'USER_CONNECTED'].includes(e.actionType)).length}
+                      {userActivityLogs.filter(e => ['POST_CREATED', 'POST_SAVED', 'POLL_VOTED', 'RESUME_UPLOADED', 'PROFILE_UPDATED', 'PROFILE_VIEWED', 'USER_CONNECTED', 'USER_FOLLOWED', 'JOB_APPLIED', 'JOB_PUBLISHED', 'JOB_SAVED', 'NOCTIS_ASKED'].includes(e.actionType)).length}
+                    </p>
+                  </div>
+                  <div
+                    onClick={() => {
+                      setActivityFilter('messages_calls')
+                      setActiveAdminTab('user_activity')
+                    }}
+                    className="rounded-xl border border-teal-200 dark:border-teal-900/50 bg-teal-50/40 dark:bg-teal-950/20 p-2.5 cursor-pointer hover:border-teal-500 transition-all"
+                  >
+                    <p className="text-[10px] font-bold uppercase text-teal-700 dark:text-teal-400">📨 DMs &amp; Live Calls</p>
+                    <p className="text-lg font-black text-zinc-900 dark:text-zinc-100 mt-0.5">
+                      {userActivityLogs.filter(e => ['MESSAGE_SENT', 'CALL_JOINED', 'CALL_ENDED', 'MEETING_RSVP', 'USER_INVITED'].includes(e.actionType)).length}
                     </p>
                   </div>
                   <div
@@ -951,7 +981,7 @@ export function AdminIAMConsoleView({
                         </div>
                       </div>
                       <div className="text-right shrink-0 pl-10 sm:pl-0">
-                        <span className="text-[10px] font-mono text-zinc-400">{ev.timestampDisplay}</span>
+                        <span className="text-[10px] font-mono text-zinc-400">{ev.timestampDisplay || (ev as any).timestamp || "Just Now"}</span>
                       </div>
                     </div>
                   ))}
@@ -1079,14 +1109,40 @@ export function AdminIAMConsoleView({
                 </div>
 
                 {/* Search & Category Filter Pills */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 p-2.5 border border-zinc-200/80 dark:border-zinc-700/80">
+                  <div className="flex items-center gap-2 text-xs font-bold text-zinc-700 dark:text-zinc-200">
+                    <span>👤 Filter Activity by Member:</span>
+                    <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                      {Array.from(new Set(userActivityLogs.map(e => e.userName))).filter(Boolean).length} Active Members Logged
+                    </span>
+                  </div>
+                  <select
+                    value={activityUserFilter}
+                    onChange={(e) => setActivityUserFilter(e.target.value)}
+                    className="rounded-xl bg-white dark:bg-zinc-900 px-3.5 py-1.5 text-xs font-bold text-zinc-800 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                  >
+                    <option value="all">
+                      All Platform Users ({userActivityLogs.length} Total Events)
+                    </option>
+                    {Array.from(new Set(userActivityLogs.map(e => e.userName)))
+                      .filter(Boolean)
+                      .sort((a, b) => a.localeCompare(b))
+                      .map((uName) => (
+                        <option key={uName} value={uName}>
+                          {uName} ({userActivityLogs.filter(e => e.userName === uName).length} events)
+                        </option>
+                      ))}
+                  </select>
+                </div>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <div className="relative flex-1">
                     <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-zinc-400" />
                     <input
                       type="text"
-                      placeholder="Search by user name, email, action (like, comment, repost, share), or content..."
+                      placeholder="Search by user name, email, action (like, comment, repost, share, call, message, job), or content..."
                       value={activitySearch}
                       onChange={(e) => setActivitySearch(e.target.value)}
+                      aria-label="Search user activity"
                       className="w-full rounded-xl bg-zinc-50 pl-10 pr-4 py-2 text-xs sm:text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
                     />
                   </div>
@@ -1109,7 +1165,11 @@ export function AdminIAMConsoleView({
                     },
                     {
                       id: 'content_profile',
-                      label: `📝 Posts, Resumes & Network (${userActivityLogs.filter(e => ['POST_CREATED', 'POST_SAVED', 'POLL_VOTED', 'RESUME_UPLOADED', 'PROFILE_UPDATED', 'USER_CONNECTED'].includes(e.actionType)).length})`
+                      label: `📝 Posts, Jobs, Resumes & Network (${userActivityLogs.filter(e => ['POST_CREATED', 'POST_SAVED', 'POLL_VOTED', 'RESUME_UPLOADED', 'PROFILE_UPDATED', 'PROFILE_VIEWED', 'USER_CONNECTED', 'USER_FOLLOWED', 'JOB_APPLIED', 'JOB_PUBLISHED', 'JOB_SAVED', 'NOCTIS_ASKED'].includes(e.actionType)).length})`
+                    },
+                    {
+                      id: 'messages_calls',
+                      label: `📨 DMs & Live Calls (${userActivityLogs.filter(e => ['MESSAGE_SENT', 'CALL_JOINED', 'CALL_ENDED', 'MEETING_RSVP', 'USER_INVITED'].includes(e.actionType)).length})`
                     },
                     {
                       id: 'auth',
@@ -1145,10 +1205,12 @@ export function AdminIAMConsoleView({
                     <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                       {userActivityLogs
                         .filter((ev) => {
+                          if (activityUserFilter !== 'all' && ev.userName !== activityUserFilter) return false
                           if (activityFilter === 'likes') return ev.actionType === 'POST_LIKED' || ev.actionType === 'POST_UNLIKED'
                           if (activityFilter === 'comments') return ev.actionType === 'POST_COMMENTED' || ev.actionType === 'COMMENT_REPLIED'
                           if (activityFilter === 'reposts_shares') return ev.actionType === 'POST_REPOSTED' || ev.actionType === 'POST_SHARED'
-                          if (activityFilter === 'content_profile') return ['POST_CREATED', 'POST_SAVED', 'POLL_VOTED', 'RESUME_UPLOADED', 'PROFILE_UPDATED', 'USER_CONNECTED'].includes(ev.actionType)
+                          if (activityFilter === 'messages_calls') return ['MESSAGE_SENT', 'CALL_JOINED', 'CALL_ENDED', 'MEETING_RSVP', 'USER_INVITED'].includes(ev.actionType)
+                          if (activityFilter === 'content_profile') return ['POST_CREATED', 'POST_SAVED', 'POLL_VOTED', 'RESUME_UPLOADED', 'PROFILE_UPDATED', 'PROFILE_VIEWED', 'USER_CONNECTED', 'USER_FOLLOWED', 'JOB_APPLIED', 'JOB_PUBLISHED', 'JOB_SAVED', 'NOCTIS_ASKED'].includes(ev.actionType)
                           if (activityFilter === 'auth') return ev.category === 'auth'
                           return true
                         })
@@ -1208,7 +1270,7 @@ export function AdminIAMConsoleView({
                               )}
                             </td>
                             <td className="py-3 px-4 text-right font-mono text-[11px] text-zinc-400 whitespace-nowrap">
-                              {ev.timestampDisplay}
+                              {ev.timestampDisplay || (ev as any).timestamp || "Just Now"}
                             </td>
                           </tr>
                         ))}

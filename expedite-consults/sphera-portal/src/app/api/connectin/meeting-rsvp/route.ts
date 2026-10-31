@@ -5,6 +5,7 @@ import {
     pullCloudDirectConversations,
     upsertCloudDirectConversation,
     pullCloudUsersIntoDb,
+    recordGlobalUserActivity,
 } from '@/lib/connectin-cloud-sync';
 import { connectinDb } from '@/lib/connectin-db';
 import { notifyDmRecipient } from '@/lib/connectin-dm-notify';
@@ -101,6 +102,17 @@ export async function GET(req: Request) {
                     messageId: replyMsg.id,
                 }).catch(() => {});
             }
+            recordGlobalUserActivity({
+                id: `act_${replyMsg.id}`,
+                userName: invitee,
+                userAvatar: replyMsg.senderAvatar,
+                actionType: 'MEETING_RSVP',
+                actionLabel: `RSVPed "${choice.toUpperCase()}" to Meeting with ${host}`,
+                category: 'network',
+                targetTitle: `Meeting: ${reason}`,
+                details: `${invitee} responded "${labelMap[choice]}" to meeting organized by ${host}`,
+                timestampIso: nowIso,
+            }).catch(() => {});
         } catch {
             // Best-effort sync
         }

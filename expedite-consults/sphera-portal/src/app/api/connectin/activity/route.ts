@@ -1,20 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
-import { connectinDb } from "@/lib/connectin-db"
-import { appendCloudTelemetry, fetchCloudTelemetry } from "@/lib/connectin-cloud-sync"
+import {
+  pullCloudActivityLogs,
+  recordGlobalUserActivity,
+  upsertCloudActivityItem
+} from "@/lib/connectin-cloud-sync"
 
 export async function GET() {
   try {
-    const [cloud, localLogs] = await Promise.all([
-      fetchCloudTelemetry(),
-      Promise.resolve(connectinDb.getActivityLogs())
-    ])
-    const actMap = new Map<string, any>()
-    ;[...(cloud.activityLogs || []), ...localLogs].forEach(ev => {
-      if (ev && ev.id && !actMap.has(ev.id)) actMap.set(ev.id, ev)
-    })
+    const activityLogs = await pullCloudActivityLogs()
     return NextResponse.json({
       success: true,
-      activityLogs: Array.from(actMap.values())
+      total: activityLogs.length,
+      activityLogs
     })
   } catch (error: any) {
     return NextResponse.json(
@@ -27,6 +24,17 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
+
+    // Support batch sync of local user activity logs from any client browser
+    if (body && Array.isArray(body.batchActivities)) {
+      const batch = body.batchActivities.filter((b: any) => b && b.actionType).slice(0, 25)
+      await Promise.allSettled(batch.map((ev: any) => upsertCloudActivityItem(ev)))
+      return NextResponse.json({
+        success: true,
+        syncedCount: batch.length
+      })
+    }
+
     if (!body || !body.actionType) {
       return NextResponse.json(
         { success: false, error: "actionType is required" },
@@ -34,13 +42,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const saved = connectinDb.recordActivity({
-      ...body,
-      id: body.id || `ACT-${Date.now()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
-      timestampIso: body.timestampIso || new Date().toISOString()
-    })
-
-    await appendCloudTelemetry({ activityLog: saved })
+    const saved = await recordGlobalUserActivity(body)
 
     return NextResponse.json({
       success: true,

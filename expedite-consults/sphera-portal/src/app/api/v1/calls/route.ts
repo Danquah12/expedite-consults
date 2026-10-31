@@ -3,6 +3,7 @@ import crypto from "crypto"
 import fs from "fs"
 import path from "path"
 import os from "os"
+import { recordGlobalUserActivity } from "@/lib/connectin-cloud-sync"
 
 export interface CommCallParticipant {
   call_id: string
@@ -605,6 +606,18 @@ export async function POST(req: NextRequest) {
         record.participants.push(updatedParticipant)
         record.sframe_key_epoch += 1
         record.state_version += 1
+        recordGlobalUserActivity({
+          id: `act_call_join_${callId}_${userId}_${now.slice(0, 13)}`,
+          userId,
+          userName: displayName,
+          actionType: "CALL_JOINED",
+          actionLabel: `Joined Live Video Call (${callId})`,
+          category: "network",
+          targetId: callId,
+          targetTitle: `VibeChat Studio Room (${callId})`,
+          details: `${displayName} joined live multi-party E2EE video & audio call (${updatedParticipant.role})`,
+          timestampIso: now
+        }).catch(() => {})
       }
 
       // Sync participant to global cloud map so all Vercel serverless instances see all participants in real time

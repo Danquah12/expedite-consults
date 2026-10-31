@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { sendConnectInInviteSMS, sendConnectInInviteVoiceCall, formatE164Phone } from "@/lib/connectin-sms"
 import { sendConnectInInviteEmail } from "@/lib/connectin-email"
+import { recordGlobalUserActivity } from "@/lib/connectin-cloud-sync"
 
 interface StoredInviteRecord {
   cid: string
@@ -252,6 +253,16 @@ export async function POST(req: NextRequest) {
       }
 
       const allSucceeded = successCount === recipients.length
+      recordGlobalUserActivity({
+        id: `act_inv_sms_${Date.now().toString().slice(-6)}`,
+        userName: senderName,
+        actionType: "USER_INVITED",
+        actionLabel: `Sent ${recipients.length} SMS Invitation(s)`,
+        category: "network",
+        targetTitle: recipientName || recipients.join(", "),
+        details: `${senderName} dispatched ${successCount}/${recipients.length} SMS invite(s) to ${recipientName || recipients.join(", ")}`,
+        timestampIso: new Date().toISOString()
+      }).catch(() => {})
       return NextResponse.json({
         success: successCount > 0,
         allSucceeded,
@@ -305,6 +316,16 @@ export async function POST(req: NextRequest) {
       }
 
       const allSucceeded = successCount === recipients.length
+      recordGlobalUserActivity({
+        id: `act_inv_call_${Date.now().toString().slice(-6)}`,
+        userName: senderName,
+        actionType: "USER_INVITED",
+        actionLabel: `Initiated ${recipients.length} Voice Call Invitation(s)`,
+        category: "network",
+        targetTitle: recipientName || recipients.join(", "),
+        details: `${senderName} rang ${recipientName || recipients.join(", ")} via automated ConnectLn voice call`,
+        timestampIso: new Date().toISOString()
+      }).catch(() => {})
       return NextResponse.json({
         success: successCount > 0,
         allSucceeded,
@@ -375,6 +396,16 @@ export async function POST(req: NextRequest) {
       }
 
       const allSucceeded = successCount === recipients.length
+      recordGlobalUserActivity({
+        id: `act_inv_email_${Date.now().toString().slice(-6)}`,
+        userName: senderName,
+        actionType: "USER_INVITED",
+        actionLabel: `Sent ${recipients.length} Email Invitation(s)`,
+        category: "network",
+        targetTitle: recipientName || recipients.join(", "),
+        details: `${senderName} sent ${successCount}/${recipients.length} email invite(s) to ${recipientName || recipients.join(", ")}`,
+        timestampIso: new Date().toISOString()
+      }).catch(() => {})
       return NextResponse.json({
         success: successCount > 0,
         allSucceeded,

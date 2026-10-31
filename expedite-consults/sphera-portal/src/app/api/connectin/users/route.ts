@@ -4,6 +4,7 @@ import {
   pullCloudUsersIntoDb,
   upsertCloudUser,
   appendCloudTelemetry,
+  upsertCloudActivityItem,
   resolveRequestGeoLocation
 } from "@/lib/connectin-cloud-sync"
 
@@ -136,9 +137,10 @@ export async function PUT(req: NextRequest) {
 
       if (authProvider && authProvider !== "Active Session") {
         const timeStr = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+        const dayKey = nowIso.slice(0, 10)
         await appendCloudTelemetry({
           activityLog: {
-            id: `act_login_${updatedProfile.userId}_${Date.now().toString().slice(-5)}`,
+            id: `act_login_${updatedProfile.userId}_${dayKey}`,
             userId: updatedProfile.userId,
             userName: updatedProfile.name,
             userEmail: userObj?.email || email || "",
@@ -150,10 +152,11 @@ export async function PUT(req: NextRequest) {
             targetTitle: `${authProvider} · ${geo.locationLabel}`,
             details: `Authenticated session from ${geo.locationLabel} (IP: ${geo.ipAddress})`,
             timestamp: `${timeStr} · ${geo.countryName}`,
+            timestampIso: nowIso,
             createdAtIso: nowIso
           },
           auditLog: {
-            id: `LOG-${Date.now().toString().slice(-6)}`,
+            id: `LOG-${updatedProfile.userId}-${dayKey}`,
             adminEmail: userObj?.email || email || "member@connectin.app",
             action: "USER_ACTIVATED",
             targetEntity: `${updatedProfile.name} (${userObj?.email || email})`,
@@ -163,7 +166,7 @@ export async function PUT(req: NextRequest) {
             status: "Success"
           },
           socEvent: {
-            id: `SOC-LIVE-${Date.now().toString().slice(-5)}`,
+            id: `SOC-LIVE-${updatedProfile.userId}-${dayKey}`,
             severity: "Low",
             eventType: `Global Member Login (${geo.countryName})`,
             sourceIp: `${geo.ipAddress} (${geo.locationLabel})`,
@@ -215,6 +218,12 @@ export async function PUT(req: NextRequest) {
           })
         )
       )
+    }
+
+    // Optional parallel batch sync of locally stored user activities from the client browser (max 15)
+    if (Array.isArray(body.batchActivities) && body.batchActivities.length > 0) {
+      const validActs = body.batchActivities.filter((a: any) => a && a.actionType).slice(0, 15)
+      await Promise.allSettled(validActs.map((act: any) => upsertCloudActivityItem(act)))
     }
 
     return NextResponse.json({

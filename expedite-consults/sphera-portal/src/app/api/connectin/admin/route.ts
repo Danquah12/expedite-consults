@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { connectinDb } from "@/lib/connectin-db"
-import { pullCloudUsersIntoDb, fetchCloudTelemetry } from "@/lib/connectin-cloud-sync"
+import {
+  pullCloudUsersIntoDb,
+  fetchCloudTelemetry,
+  pullCloudActivityLogs
+} from "@/lib/connectin-cloud-sync"
 import {
   EXECUTIVE_ANALYTICS_DATA,
   ADMIN_USERS_DIRECTORY,
@@ -106,11 +110,8 @@ export async function GET(req: NextRequest) {
 
     const combinedUsers = Array.from(deduped.values())
 
-    // Merge local activity logs with global cloud activity logs
-    const actMap = new Map<string, any>()
-    ;[...(cloudTelemetry.activityLogs || []), ...connectinDb.getActivityLogs()].forEach(ev => {
-      if (ev && ev.id && !actMap.has(ev.id)) actMap.set(ev.id, ev)
-    })
+    // Merge local activity logs with global cloud activity logs, DM threads, call rooms, and all user accounts
+    const allActivityLogs = await pullCloudActivityLogs(cloudTelemetry)
 
     const mergedVerifications = [
       ...(cloudTelemetry.verifications || []),
@@ -138,7 +139,7 @@ export async function GET(req: NextRequest) {
       config: INITIAL_PLATFORM_CONFIG,
       roles: PLATFORM_RBAC_ROLES,
       auditLogs: mergedAuditLogs,
-      activityLogs: Array.from(actMap.values()),
+      activityLogs: allActivityLogs,
       socEvents: mergedSocEvents,
       broadcasts: BROADCAST_NOTIFICATIONS_DATA,
       approvals: FOUR_EYES_APPROVALS_DATA

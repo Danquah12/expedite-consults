@@ -10,7 +10,7 @@ import {
 import { PROFESSION_ENCLAVES } from '@/lib/connectin-professions';
 import { ScheduleMeetingModal, MeetingInvitee } from './ScheduleMeetingModal';
 import { MessageActionBar, ReactionBadges, loadMembers, ShareTarget, MessageReactionKind } from './MessageActionBar';
-import { resolveUserProfilePicture } from '@/lib/connectin-storage';
+import { resolveUserProfilePicture, trackUserActivity } from '@/lib/connectin-storage';
 import {
     getLocalBilateralThreadsForViewer,
     mergeBilateralAndServerThreads,
@@ -864,6 +864,15 @@ export function MessagingView({
         setIsSending(true);
         setTypingEntity(targetEntityName);
 
+        trackUserActivity({
+            actionType: 'MESSAGE_SENT',
+            actionLabel: `Sent Message to ${activeThread.title}`,
+            category: 'network',
+            targetId: targetThreadId,
+            targetTitle: `${activeThread.channelType} · ${activeThread.title}`,
+            details: `${finalText.slice(0, 140)}${sentAttachment ? ` (📎 ${sentAttachment})` : ''}`,
+        });
+
         try {
             const res = await fetch('/api/connectin/messages', {
                 method: 'POST',
@@ -1144,6 +1153,14 @@ export function MessagingView({
         setShowRecipientSuggestions(false);
         setNewInitialMessage('');
         triggerToast(`New conversation started with ${recipientTitle}!`);
+        trackUserActivity({
+            actionType: 'MESSAGE_SENT',
+            actionLabel: `Started New Message Thread with ${recipientTitle}`,
+            category: 'network',
+            targetId: optimisticThread.id,
+            targetTitle: `${newRecipientChannel} · ${recipientTitle}`,
+            details: initialText.slice(0, 140),
+        });
 
         try {
             const res = await fetch('/api/connectin/messages', {

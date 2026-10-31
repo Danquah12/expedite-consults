@@ -13,6 +13,7 @@ import {
     pullCloudDirectConversations,
     upsertCloudDirectConversation,
     pullCloudUsersIntoDb,
+    recordGlobalUserActivity,
 } from '@/lib/connectin-cloud-sync';
 import { connectinDb } from '@/lib/connectin-db';
 import { notifyDmRecipient } from '@/lib/connectin-dm-notify';
@@ -523,6 +524,23 @@ export async function POST(request: Request) {
             }
             foundConvo.updatedAtIso = new Date().toISOString();
             await upsertCloudDirectConversation(foundConvo).catch(() => {});
+            recordGlobalUserActivity({
+                id: `act_msg_${action}_${messageId}_${Date.now().toString().slice(-5)}`,
+                userName: actorName,
+                userEmail: senderEmail || `${actorName.toLowerCase().replace(/\s+/g, '.')}@connectin.app`,
+                userAvatar: actorAvatar || '',
+                actionType: action === 'react_message' ? (String(reaction).startsWith('rsvp_') ? 'MEETING_RSVP' : 'POST_LIKED') : 'COMMENT_REPLIED',
+                actionLabel:
+                    action === 'react_message'
+                        ? String(reaction).startsWith('rsvp_')
+                            ? `RSVPed "${String(reaction).replace('rsvp_', '').toUpperCase()}" to Meeting`
+                            : `Reacted (${String(reaction).toUpperCase()}) to Direct Message`
+                        : 'Replied on Direct Message Thread',
+                category: 'engagement',
+                targetTitle: `Message Thread (${foundConvo.participantA.name} & ${foundConvo.participantB.name})`,
+                details: action === 'react_message' ? `Reaction: ${reaction}` : `Reply: "${String(commentText || '').slice(0, 120)}"`,
+                timestampIso: foundConvo.updatedAtIso,
+            }).catch(() => {});
             return NextResponse.json({
                 ok: true,
                 messageId,
@@ -717,6 +735,19 @@ export async function POST(request: Request) {
                 }
 
                 await upsertCloudDirectConversation(updatedConvo).catch(() => {});
+                recordGlobalUserActivity({
+                    id: `act_dm_${newMsgId}`,
+                    userName: canonSenderName,
+                    userEmail: senderEmail || senderReg?.email || `${canonSenderName.toLowerCase().replace(/\s+/g, '.')}@connectin.app`,
+                    userAvatar: senderAvatar,
+                    actionType: 'MESSAGE_SENT',
+                    actionLabel: `Sent Direct Message to ${canonRecipientName}`,
+                    category: 'network',
+                    targetId: pairKey,
+                    targetTitle: `Direct Message → ${canonRecipientName}`,
+                    details: `${String(text).replace(/\n+/g, ' ').slice(0, 140)}${attachment ? ` (📎 ${attachment})` : ''}`,
+                    timestampIso: nowIso,
+                }).catch(() => {});
 
                 // Also tell the recipient outside the app: email + text to the contact details they registered with
                 let notified: { email: boolean; sms: boolean; skipped?: string; smsNote?: string } | null = null;

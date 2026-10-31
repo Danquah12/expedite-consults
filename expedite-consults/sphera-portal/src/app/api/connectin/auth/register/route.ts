@@ -4,7 +4,7 @@ import { sendConnectInOTPEmail } from "@/lib/connectin-email"
 import { sendConnectInSMS, formatE164Phone } from "@/lib/connectin-sms"
 import { createDynamicOTP } from "@/lib/connectin-otp"
 import { findProfessionById, findEnclaveById } from "@/lib/connectin-professions"
-import { resolveRequestGeoLocation, upsertCloudUser } from "@/lib/connectin-cloud-sync"
+import { resolveRequestGeoLocation, upsertCloudUser, recordGlobalUserActivity } from "@/lib/connectin-cloud-sync"
 import crypto from "crypto"
 
 export async function POST(req: NextRequest) {
@@ -146,6 +146,20 @@ export async function POST(req: NextRequest) {
         lastLoginAt: new Date().toISOString(),
         createdAt: created.user.createdAt,
         updatedAt: created.user.updatedAt
+      })
+      await recordGlobalUserActivity({
+        id: `act_reg_${created.user.id}_${Date.now().toString().slice(-5)}`,
+        userId: created.user.id,
+        userName: created.profile.name,
+        userEmail: created.user.email,
+        userAvatar: created.profile.avatar,
+        userRole: String(created.user.role || "personal").toUpperCase(),
+        actionType: "USER_REGISTERED",
+        actionLabel: `Registered Account (${twoFactorChannel.toUpperCase()} 2FA · ${geo.locationLabel})`,
+        category: "auth",
+        targetTitle: `${finalProfessionTitle} · ${geo.locationLabel}`,
+        details: `New member registration by ${created.profile.name} (${created.user.email}) from ${geo.locationLabel}`,
+        timestampIso: created.user.createdAt
       })
     } else {
       const existingProfile = connectinDb.findProfileByUserId(existingUser.id)

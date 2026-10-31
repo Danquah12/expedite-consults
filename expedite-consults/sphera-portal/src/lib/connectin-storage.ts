@@ -592,6 +592,18 @@ export function saveStoredUser(user: UserProfile) {
       safeUser.avatar && !safeUser.avatar.startsWith('data:')
         ? safeUser.avatar
         : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(safeUser.name)}&backgroundColor=0a66c2`
+    const rawLocalActs = localStorage.getItem(STORAGE_KEYS.USER_ACTIVITY_LOGS)
+    const parsedLocalActs: any[] = rawLocalActs ? JSON.parse(rawLocalActs) : []
+    const compactBatchActs = Array.isArray(parsedLocalActs)
+      ? parsedLocalActs.slice(0, 10).map((a: any) => ({
+          ...a,
+          userAvatar:
+            a?.userAvatar && typeof a.userAvatar === 'string' && !a.userAvatar.startsWith('data:')
+              ? a.userAvatar
+              : cloudAvatar
+        }))
+      : []
+
     fetch('/api/connectin/users', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -614,7 +626,8 @@ export function saveStoredUser(user: UserProfile) {
         professionCategory: safeUser.professionCategory,
         professionEnclave: safeUser.professionEnclave,
         authProvider,
-        clientTimezone
+        clientTimezone,
+        batchActivities: compactBatchActs
       })
     }).catch(() => {})
   } catch (e) {
@@ -894,10 +907,18 @@ export type UserActivityActionType =
   | 'POLL_VOTED'
   | 'USER_CONNECTED'
   | 'USER_FOLLOWED'
+  | 'USER_INVITED'
   | 'RESUME_UPLOADED'
   | 'PROFILE_UPDATED'
+  | 'PROFILE_VIEWED'
   | 'JOB_APPLIED'
+  | 'JOB_PUBLISHED'
+  | 'JOB_SAVED'
   | 'MESSAGE_SENT'
+  | 'MEETING_RSVP'
+  | 'CALL_JOINED'
+  | 'CALL_ENDED'
+  | 'NOCTIS_ASKED'
   | 'TAB_VIEWED'
 
 export interface UserActivityEvent {
@@ -1042,11 +1063,21 @@ export function trackUserActivity(params: {
     const updated = [newEvent, ...existing].slice(0, 500)
     localStorage.setItem(STORAGE_KEYS.USER_ACTIVITY_LOGS, JSON.stringify(updated))
 
+    const cloudSafeAvatar =
+      userAvatar && !userAvatar.startsWith('data:')
+        ? userAvatar
+        : isKwesiAccount({ name: userName, email: userEmail } as any)
+        ? '/brand/kwesi-avatar.png'
+        : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(userName)}&backgroundColor=0a66c2`
+
     // Sync asynchronously to server activity telemetry endpoint
     fetch('/api/connectin/activity', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newEvent)
+      body: JSON.stringify({
+        ...newEvent,
+        userAvatar: cloudSafeAvatar
+      })
     }).catch(() => {})
   } catch (e) {
     console.warn('Failed to track user activity:', e)
@@ -1094,9 +1125,23 @@ export function loadStoredUserActivityLogs(): UserActivityEvent[] {
 
     const combined = [...saved, ...vaultEvents, ...INITIAL_SEEDED_ACTIVITY_LOGS]
     const deduped = new Map<string, UserActivityEvent>()
-    combined.forEach(ev => {
+    combined.forEach((ev: any) => {
       if (ev && ev.id && !deduped.has(ev.id)) {
-        deduped.set(ev.id, ev)
+        const iso = ev.timestampIso || ev.createdAtIso || new Date().toISOString()
+        const display =
+          ev.timestampDisplay ||
+          ev.timestamp ||
+          new Date(iso).toLocaleString([], {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        deduped.set(ev.id, {
+          ...ev,
+          timestampIso: iso,
+          timestampDisplay: display
+        })
       }
     })
     return Array.from(deduped.values())

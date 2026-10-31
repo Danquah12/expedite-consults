@@ -98,7 +98,8 @@ import {
   loadStoredSessionRoute,
   resolveUserProfilePicture,
   trackUserActivity,
-  loadStoredAdminUsers
+  loadStoredAdminUsers,
+  loadStoredUserActivityLogs
 } from "@/lib/connectin-storage"
 import { isSuperAdminUser, createUniqueUserProfile, createFreshInvitedUserProfile, generatePersonalSignatureAvatar, isForeignPersonaAvatar } from "@/lib/connectin-profile"
 import {
@@ -689,6 +690,13 @@ export default function ConnectLnPage() {
 
   // Sign out handler: Completely signs out and redirects to login without background
   const handleSignOut = async () => {
+    trackUserActivity({
+      actionType: 'USER_LOGOUT',
+      actionLabel: 'Signed Out of Session',
+      category: 'auth',
+      targetTitle: 'ConnectLn Session',
+      details: `Signed out from ${userData?.name || 'ConnectLn'}`
+    })
     try {
       await fetch("/api/connectin/auth/logout", { method: "POST" })
     } catch (e) {
@@ -833,6 +841,16 @@ export default function ConnectLnPage() {
               ? userData.avatar
               : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(userData.name)}&backgroundColor=0a66c2`
 
+          const localActs = loadStoredUserActivityLogs()
+            .slice(0, 12)
+            .map(act => ({
+              ...act,
+              userAvatar:
+                act.userAvatar && !act.userAvatar.startsWith("data:")
+                  ? act.userAvatar
+                  : safeAvatar
+            }))
+
           fetch("/api/connectin/users", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -856,7 +874,8 @@ export default function ConnectLnPage() {
               professionEnclave: userData.professionEnclave,
               authProvider: (userData as any).authProvider || "Active Session",
               clientTimezone,
-              batchUsers: localDir
+              batchUsers: localDir,
+              batchActivities: localActs
             })
           }).catch(() => {})
         }
