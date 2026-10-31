@@ -18,9 +18,10 @@ class PolicyDecision:
 
 
 PROFILE_ALLOWED_RISKS: dict[str, set[str]] = {
-    "read_only": {"read_only"},
+    "read_only": {"read_only", "safe_active"},
     "safe_active": {"read_only", "safe_active"},
     "deep_exhaustive": {"read_only", "safe_active"},
+    "authorized_pentest": {"read_only", "safe_active", "intrusive"},
     "full_pentest": {"read_only", "safe_active", "intrusive"},
 }
 

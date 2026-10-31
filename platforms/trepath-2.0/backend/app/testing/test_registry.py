@@ -170,6 +170,40 @@ BUILTIN_TEST_CATALOG: list[RegisteredTest] = [
         requires_auth=True,
         description="Requires an in-cluster eBPF kernel sensor not supported by remote network orchestrator.",
     ),
+    # 4. Safe Lab PoC Exploitation & Post-Exploitation Verification Adapters
+    RegisteredTest(
+        test_id="SMB-LIST-001",
+        name="Anonymous SMB Share Enumeration & Null-Session Verification",
+        family="Safe Lab PoC Exploitation & Post-Exploitation",
+        target_feature="network_host",
+        risk_classification="safe_active",
+        adapter_name="smb_share_probe",
+        supported=True,
+        requires_auth=False,
+        description="Enumerates publicly readable SMB shares (IPC$, ADMIN$, C$) over ports 139/445 without modifying state.",
+    ),
+    RegisteredTest(
+        test_id="PHPINFO-001",
+        name="Exposed phpinfo.php Environment & Runtime Directive Extraction",
+        family="Safe Lab PoC Exploitation & Post-Exploitation",
+        target_feature="web_root",
+        risk_classification="safe_active",
+        adapter_name="phpinfo_probe",
+        supported=True,
+        requires_auth=False,
+        description="Retrieves /phpinfo.php and verifies post-exploitation extraction of PHP directives and DOCUMENT_ROOT.",
+    ),
+    RegisteredTest(
+        test_id="TOMCAT-MGR-001",
+        name="Apache Tomcat Manager Console & Default Credential Verification",
+        family="Safe Lab PoC Exploitation & Post-Exploitation",
+        target_feature="admin_interface",
+        risk_classification="safe_active",
+        adapter_name="tomcat_manager_probe",
+        supported=True,
+        requires_auth=False,
+        description="Probes /manager/html on port 8080 and verifies read-only administrative access.",
+    ),
 ]
 
 

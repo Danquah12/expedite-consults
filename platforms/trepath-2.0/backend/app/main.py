@@ -39,10 +39,11 @@ from .remediation import execute_finding_retest
 from .reporting import (
     build_orchestrator_report,
     generate_markdown_assessment_report,
+    generate_pdf_assessment_report,
     build_finding_investigation_workspace,
     sanitize_forensic_text,
 )
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import PlainTextResponse, Response
 
 Base.metadata.create_all(bind=engine)
 Path(settings.evidence_dir).mkdir(parents=True, exist_ok=True)
@@ -105,8 +106,8 @@ def configure_roe(engagement_id: int, data: schemas.RoeIn, db: Session = Depends
         approved_by=user.id if data.approved else None, allowed_origins=data.allowed_origins,
         allow_private_networks=data.allow_private_networks, max_requests=data.max_requests,
         max_concurrency=data.max_concurrency, profile=data.profile)
-    if data.profile != "read_only":
-        raise HTTPException(400, "This release supports read_only profile only")
+    if data.profile not in ("read_only", "authorized_pentest"):
+        raise HTTPException(400, "This release supports read_only and authorized_pentest profiles only")
     db.add(roe); db.commit(); db.refresh(roe)
     engagement.status = "authorized" if roe.approved else "draft"; db.commit()
     audit(db,user,"roe.configured","engagement",engagement_id,{"approved":roe.approved,"profile":roe.profile})
@@ -334,11 +335,11 @@ async def create_scan(data: schemas.ScanIn, async_mode: bool = False, db: Sessio
     if not engagement: raise HTTPException(404, "Engagement not found")
     roe = db.query(models.RulesOfEngagement).filter_by(engagement_id=engagement.id).first()
     if not roe or not roe.approved: raise HTTPException(403, "Approved ROE is required")
-    if data.profile != "read_only" or roe.profile != "read_only":
-        raise HTTPException(403, "Only read_only scans are implemented in this release")
+    if data.profile not in ("read_only", "authorized_pentest") or roe.profile not in ("read_only", "authorized_pentest"):
+        raise HTTPException(403, "Only read_only and authorized_pentest scans are implemented in this release")
     validate_target(str(data.target_url), roe.allowed_origins, roe.allow_private_networks)
     scan = models.Scan(engagement_id=engagement.id,target_url=str(data.target_url),
-        profile="read_only",status=models.ScanStatus.RUNNING,started_at=datetime.now(timezone.utc),created_by=user.id)
+        profile=data.profile,status=models.ScanStatus.RUNNING,started_at=datetime.now(timezone.utc),created_by=user.id)
     db.add(scan); db.commit(); db.refresh(scan)
     emit_event(scan.id, 2, "INIT", "ORCHESTRATOR", f"Initializing TrePath 2.0 multi-engine assessment (#{scan.id}) for target {scan.target_url}...")
 
@@ -469,6 +470,16 @@ def export_scan_markdown_report(scan_id: int, db: Session = Depends(get_db), use
     return PlainTextResponse(
         content=md_content,
         headers={"Content-Disposition": f'attachment; filename="trepath-assessment-scan-{scan_id}.md"'},
+    )
+
+@app.get("/api/v1/scans/{scan_id}/report/pdf")
+def export_scan_pdf_report(scan_id: int, db: Session = Depends(get_db), user=Depends(current_user)):
+    if not db.get(models.Scan, scan_id): raise HTTPException(404, "Scan not found")
+    pdf_bytes = generate_pdf_assessment_report(db, scan_id)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="trepath-post-exploitation-report-scan-{scan_id}.pdf"'},
     )
 
 @app.get("/api/v1/evidence/{artifact_id}/verify")

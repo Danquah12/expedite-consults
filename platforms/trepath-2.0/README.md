@@ -56,7 +56,25 @@ npm run dev
 - `GET /api/v1/findings/{id}`
 - `GET /api/v1/findings/{id}/evidence`
 - `POST /api/v1/findings/{id}/retests`
+- `GET /api/v1/scans/{id}/report/pdf`
+- `GET /api/v1/scans/{id}/report/export`
 - `GET /api/v1/health`
+
+## Safe Lab PoC Exploitation & PDF Reporting (`authorized_pentest`)
+
+### Enabling `authorized_pentest` ROE
+1. Open the TrePath 2.0 UI and select your VMware lab target (`192.168.195.140`, `192.168.195.139`, or `192.168.195.130`).
+2. Launch an assessment — the orchestrator configures the `authorized_pentest` Rules of Engagement profile for authorized lab targets.
+3. Open the **Report & Post-Exploit** tab and click **Print / Download PDF Report (.pdf)** to download the full multi-page PDF report.
+
+### Safe Lab PoC Adapters
+| Test ID | Adapter Module | Description |
+| :--- | :--- | :--- |
+| `SMB-LIST-001` | `smb_share_probe.py` | Enumerates anonymous SMB shares (`IPC$`, `ADMIN$`, `C$`) over ports 139/445 without modifying state (`IMPACT_VERIFIED`). |
+| `PHPINFO-001` | `phpinfo_probe.py` | Retrieves `/phpinfo.php` and verifies post-exploitation extraction of PHP runtime directives and `DOCUMENT_ROOT` (`IMPACT_VERIFIED`). |
+| `TOMCAT-MGR-001` | `tomcat_manager_probe.py` | Probes Apache Tomcat Manager (`/manager/html` on port 8080) and verifies read-only administrative access (`IMPACT_VERIFIED`). |
+
+> **Disclaimer**: All PoC exploitation and post-exploitation checks are strictly read-only and intended only for isolated lab environments.
 
 ## Current implementation boundaries
 The included scan engine is intentionally limited to safe HTTP posture checks. It does not yet

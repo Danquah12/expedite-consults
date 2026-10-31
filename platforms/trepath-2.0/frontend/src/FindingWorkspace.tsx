@@ -196,19 +196,41 @@ export default function FindingWorkspace({ findingId, api, token }: WorkspacePro
             </h2>
           </div>
 
-          <span style={{
-            fontFamily: 'monospace',
-            fontSize: '11px',
-            fontWeight: 700,
-            color: '#34d399',
-            background: '#062c21',
-            border: '1px solid #10b981',
-            padding: '5px 10px',
-            borderRadius: '999px',
-            flexShrink: 0
-          }}>
-            {ws.proof_state}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+            {primaryArt && (
+              <button
+                onClick={() => handleDownloadEvidence(primaryArt.artifact_id || primaryArt.id, primaryArt.sha256)}
+                style={{
+                  background: '#0d1e36',
+                  color: '#38bdf8',
+                  border: '1px solid #0284c7',
+                  padding: '5px 10px',
+                  borderRadius: '6px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px'
+                }}
+              >
+                <Download size={12} /> Download Proof Transcript
+              </button>
+            )}
+            <span style={{
+              fontFamily: 'monospace',
+              fontSize: '11px',
+              fontWeight: 700,
+              color: ws.proof_state === 'IMPACT_VERIFIED' ? '#022c22' : '#34d399',
+              background: ws.proof_state === 'IMPACT_VERIFIED' ? '#10b981' : '#062c21',
+              border: '1px solid #10b981',
+              padding: '5px 10px',
+              borderRadius: '999px',
+              flexShrink: 0
+            }}>
+              {ws.proof_state === 'IMPACT_VERIFIED' ? '✓ IMPACT_VERIFIED (Verified)' : ws.proof_state}
+            </span>
+          </div>
         </div>
 
         {/* 3-Column Proof & Confidence Bar */}

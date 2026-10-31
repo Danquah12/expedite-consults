@@ -298,10 +298,11 @@ def execute_finding_retest(
             })
 
     # 4. Seal Retest EvidenceArtifact in EvidenceCore Vault
-    sha256_digest, storage_path = store_evidence(
+    storage_path, sha256_digest, _ = store_evidence(
         evidence_dir,
-        f"retest-{finding.scan_id}-{finding.finding_key}-{retest_key}",
-        json.dumps(transcript_payload, indent=2),
+        finding.scan_id,
+        "RETEST_VERIFICATION_TRANSCRIPT",
+        json.dumps(transcript_payload, indent=2).encode("utf-8"),
     )
     artifact = models.EvidenceArtifact(
         scan_id=finding.scan_id,

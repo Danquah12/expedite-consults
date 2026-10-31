@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from .. import models
 from ..risk import compute_asset_risk_profile
 from .finding_workspace import build_finding_investigation_workspace, sanitize_forensic_text
+from .pdf_generator import generate_pdf_assessment_report
 
 
 def build_orchestrator_report(db: Session, scan_id: int) -> dict[str, object]:
@@ -215,6 +216,7 @@ def generate_markdown_assessment_report(db: Session, scan_id: int) -> str:
 __all__ = [
     "build_orchestrator_report",
     "generate_markdown_assessment_report",
+    "generate_pdf_assessment_report",
     "build_finding_investigation_workspace",
     "sanitize_forensic_text",
 ]

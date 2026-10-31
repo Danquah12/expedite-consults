@@ -7,6 +7,9 @@ from typing import Any
 
 from ... import models
 from .targeted_dast import run_targeted_dast_adapters
+from .smb_share_probe import run_smb_share_probe
+from .phpinfo_probe import run_phpinfo_probe
+from .tomcat_manager_probe import run_tomcat_manager_probe
 
 
 @dataclass
@@ -31,6 +34,9 @@ ADAPTER_FINDING_PREFIX_MAP: dict[str, tuple[str, ...]] = {
     "TLS-CERT-001": ("TLS-",),
     "VER-INTEL-001": ("DAST-VER-INTEL-", "NUCLEI-", "NMAP-SERVICE-", "NMAP-PORT-"),
     "INFRA-NVT-001": ("NMAP-", "OPENVAS-", "ENUM-PROTO-"),
+    "SMB-LIST-001": ("SMB-LIST-",),
+    "PHPINFO-001": ("PHPINFO-", "WEB-EXPOSED-PHPINFO"),
+    "TOMCAT-MGR-001": ("TOMCAT-MGR-", "NUCLEI-APACHE-TOMCAT"),
 }
 
 

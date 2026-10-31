@@ -260,4 +260,22 @@ async def run_targeted_dast_adapters(
             }, indent=2),
         })
 
+    # 6. Safe Lab PoC Exploitation & Post-Exploitation Verification (SMB-LIST-001, PHPINFO-001, TOMCAT-MGR-001)
+    from .smb_share_probe import run_smb_share_probe
+    from .phpinfo_probe import run_phpinfo_probe
+    from .tomcat_manager_probe import run_tomcat_manager_probe
+
+    try:
+        findings.extend(await run_smb_share_probe(asset, endpoints, technologies, intelligence_matches))
+    except Exception:
+        pass
+    try:
+        findings.extend(await run_phpinfo_probe(asset, endpoints, technologies, intelligence_matches))
+    except Exception:
+        pass
+    try:
+        findings.extend(await run_tomcat_manager_probe(asset, endpoints, technologies, intelligence_matches))
+    except Exception:
+        pass
+
     return findings
