@@ -6,7 +6,9 @@ import {
 import FindingWorkspace from './FindingWorkspace'
 import realScanSnapshot from './realScanSnapshot.json'
 
-const API = import.meta.env.VITE_API_BASE || 'http://localhost:8008/api/v1'
+const REMOTE_TUNNEL_API = 'https://waiver-institutes-article-carpet.trycloudflare.com/api/v1'
+const IS_LOCAL_BROWSER = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+const API = import.meta.env.VITE_API_BASE || (IS_LOCAL_BROWSER ? 'http://localhost:8008/api/v1' : REMOTE_TUNNEL_API)
 
 type Health = { status: string; service: string; version: string }
 
@@ -203,7 +205,7 @@ export default function App() {
   const [health, setHealth] = useState<Health | null>(null)
   const [error, setError] = useState('')
   const [token, setToken] = useState<string | null>(localStorage.getItem('trepath_token'))
-  const [api] = useState(API)
+  const [api, setApi] = useState(localStorage.getItem('trepath_api_base') || API)
 
   // Data states
   const [engagements, setEngagements] = useState<Engagement[]>([])
@@ -458,10 +460,10 @@ export default function App() {
       level: 'info'
     }])
     setScanMessage(`Initializing engagement & configuring ROE for ${targetUrl}...`)
-    const t = token || await ensureAuth()
+    const t = (token && token !== 'cloud-snapshot-token') ? token : await ensureAuth()
     if (!t) {
       setScanning(false)
-      setScanMessage('Authentication failed.')
+      setScanMessage('Remote Sensor Tunnel unreachable — verify cloudflared tunnel middleware URL in top status bar.')
       return
     }
 
@@ -624,11 +626,24 @@ export default function App() {
           </button>
         </header>
 
-        <section className="statusbar">
-          <div className={`dot ${health ? 'ok' : 'bad'}`}></div>
-          <div>
-            <b>{health ? 'TrePath Assessment Orchestrator v1 Connected' : 'API Unavailable'}</b>
-            <small>{health ? `${health.service} v${health.version} · Ready for Direct VMware & Enterprise Probes` : error}</small>
+        <section className="statusbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div className={`dot ${health ? 'ok' : 'bad'}`}></div>
+            <div>
+              <b>{health ? 'TrePath Assessment Orchestrator v1 Connected' : 'API Unavailable'}</b>
+              <small style={{ display: 'block' }}>{health ? `${health.service} v${health.version} · Ready for Direct VMware & Enterprise Probes` : error}</small>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '11px', color: '#94a3b8', fontFamily: 'monospace' }}>Sensor Gateway Middleware:</span>
+            <input
+              value={api}
+              onChange={e => {
+                setApi(e.target.value)
+                localStorage.setItem('trepath_api_base', e.target.value)
+              }}
+              style={{ width: '360px', padding: '5px 8px', fontSize: '11.5px', fontFamily: 'monospace', background: '#060c18', border: '1px solid #1e2f48', color: '#38bdf8', borderRadius: '5px' }}
+            />
           </div>
         </section>
 

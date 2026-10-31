@@ -49,9 +49,8 @@ Path(settings.evidence_dir).mkdir(parents=True, exist_ok=True)
 app = FastAPI(title="TrePath API", version="0.2.0", description="Evidence-driven, ROE-enforced security assessment platform with Assessment Orchestrator v1")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[x.strip() for x in settings.cors_origins.split(",") if x.strip() and x.strip() != "*"],
-    allow_origin_regex=r"https://.*\.vercel\.app|http://localhost.*|http://127\.0\.0\.1.*",
-    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
+    allow_origins=["*"],
+    allow_origin_regex=r"https://.*\.vercel\.app|https://.*\.trycloudflare\.com|https?://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+)(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
