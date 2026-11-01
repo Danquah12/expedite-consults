@@ -59,6 +59,7 @@ import {
 import { UserProfile } from "@/lib/connectln-data"
 import { ConnectInVideoWheel } from "@/components/connectln/ConnectInVideoWheel"
 import { VideoShareBanner } from "@/components/connectln/VideoShareBanner"
+import { ConnectLnStudioPlayer } from "@/components/connectln/ConnectLnStudioPlayer"
 
 interface MediaViewProps {
   currentUser: UserProfile
@@ -368,12 +369,17 @@ export function MediaView({
                 {/* Video Player Display Container */}
                 <div className="relative aspect-video w-full bg-slate-950 overflow-hidden group">
                   {isPlaying && selectedVideo.youtubeId ? (
-                    <iframe
-                      src={`https://www.youtube.com/embed/${selectedVideo.youtubeId}?autoplay=1&rel=0`}
+                    <ConnectLnStudioPlayer
+                      youtubeId={selectedVideo.youtubeId}
                       title={selectedVideo.title}
-                      className="h-full w-full border-0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                      allowFullScreen
+                      serialPlate={`MEDIA-${selectedVideo.id.toUpperCase()}`}
+                      speaker={selectedVideo.channelName}
+                      durationLabel={selectedVideo.duration}
+                      thumbnailUrl={selectedVideo.thumbnail}
+                      summary={selectedVideo.description}
+                      takeaways={selectedVideo.chapters?.map((c) => `${c.timestamp} · ${c.title}`)}
+                      categoryLabel={selectedVideo.visibility || "Professional Media"}
+                      className="h-full w-full"
                     />
                   ) : (
                     <>

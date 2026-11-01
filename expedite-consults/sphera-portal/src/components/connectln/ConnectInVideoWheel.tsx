@@ -1346,6 +1346,10 @@ export function ConnectInVideoWheel({
                       serialPlate={activeVideo.serialPlate}
                       speaker={activeVideo.speaker}
                       durationLabel={activeVideo.duration}
+                      thumbnailUrl={activeVideo.thumbnailUrl}
+                      summary={activeVideo.summary}
+                      takeaways={activeVideo.takeaways}
+                      categoryLabel={activeVideo.categoryLabel}
                       className="h-full w-full"
                     />
 

@@ -22,6 +22,7 @@ import {
   X
 } from "lucide-react"
 import { ONBOARDING_GUIDE_CHAPTERS, OnboardingGuideChapter } from "@/lib/connectin-videos"
+import { ConnectLnStudioPlayer } from "./ConnectLnStudioPlayer"
 
 interface ConnectInVideoGuideModalProps {
   isOpen: boolean
@@ -171,12 +172,16 @@ export function ConnectInVideoGuideModal({
           <div className="md:col-span-8 p-4 sm:p-6 space-y-4 overflow-y-auto">
             {/* 16:9 Video Embed */}
             <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-black shadow-md border border-zinc-200 dark:border-zinc-800">
-              <iframe
-                src={`https://www.youtube-nocookie.com/embed/${currentChapter.youtubeId}?rel=0&modestbranding=1`}
+              <ConnectLnStudioPlayer
+                youtubeId={currentChapter.youtubeId}
                 title={currentChapter.title}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="h-full w-full border-0"
+                serialPlate={`GUIDE-0${currentChapter.stepNumber}`}
+                speaker="ConnectLn Platform Tour"
+                durationLabel={currentChapter.duration}
+                summary={currentChapter.description}
+                takeaways={currentChapter.highlights}
+                categoryLabel={currentChapter.subtitle}
+                className="h-full w-full"
               />
             </div>
 
