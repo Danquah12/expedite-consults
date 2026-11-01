@@ -381,9 +381,6 @@ export function VideoShareBanner({
                 serialPlate={serialPlate || "CLN-VID"}
                 speaker={resolvedAuthor}
                 durationLabel={duration}
-                thumbnailUrl={resolvedThumb || undefined}
-                takeaways={takeaways}
-                categoryLabel={videoSubtitle}
                 className="h-full w-full"
               />
             ) : (
