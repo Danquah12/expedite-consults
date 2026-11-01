@@ -2581,8 +2581,8 @@ export default function ConnectLnPage() {
         )}
       </main>
 
-      {/* Floating "Ask Noctis" Quick Launcher Pill: opens the in-app Noctis chat */}
-      <div className="fixed bottom-4 left-4 z-40">
+      {/* Floating "Ask Noctis" Quick Launcher Pill: shown on mobile/tablet; hidden on lg+ desktop where Ask Noctis is in the top bar & right rail */}
+      <div className="fixed bottom-4 left-4 z-40 lg:hidden">
         <button
           type="button"
           onClick={() => setIsAIAssistantOpen(true)}

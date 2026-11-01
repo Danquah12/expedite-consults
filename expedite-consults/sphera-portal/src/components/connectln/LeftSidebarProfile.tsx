@@ -434,8 +434,8 @@ export function LeftSidebarProfile({
       }
     }
 
-    // Default focused view: Admin (if admin) + Role-Specific Tools + Top 3 Enclave Essentials (max 6 items total)
-    const defaultCount = isAdminUser ? 6 : 5
+    // Default focused view: Top 3 high-signal tools by default so the sidebar stays calm and uncluttered
+    const defaultCount = 3
     return {
       primaryShortcuts: combined.slice(0, defaultCount),
       extraShortcuts: combined.slice(defaultCount),
@@ -682,132 +682,120 @@ export function LeftSidebarProfile({
             </p>
           </button>
 
-          {/* Portable Professional ID Button */}
-          {onOpenIDModal && (
-            <div className="pt-2">
-              <button
-                onClick={onOpenIDModal}
-                className="w-full rounded-lg bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 px-2.5 py-1 text-[11px] font-bold text-[#0A66C2] dark:text-sky-300 hover:bg-sky-100 transition-colors flex items-center justify-center gap-1.5"
-              >
-                <span>🪪 {t("connectin_id", "ConnectIn ID")} (#{user.name ? user.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') : 'member'})</span>
-                <span className="text-[9px] font-mono bg-sky-200/60 dark:bg-sky-900 px-1 rounded">{t("verified", "Verified")}</span>
-              </button>
-            </div>
-          )}
-
-          {/* Verified Specialty Community Badge */}
-          <div className="pt-2 text-left">
-            <div className={`rounded-xl border p-2.5 space-y-1 ${enclaveInfo?.badgeBg || 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800'}`}>
-              <div className="flex items-center justify-between">
-                <span className="font-bold flex items-center gap-1.5 text-xs text-zinc-900 dark:text-zinc-100">
-                  <span>{enclaveInfo?.icon || '🔨'}</span>
-                  <span className="truncate">{enclaveInfo?.shortName || 'Trades'} Community</span>
+          {/* Unified Specialty & Availability Pill (Clean, Single-Card Identity) */}
+          <div className="pt-2.5 text-left">
+            <div className="rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-800/40 px-3 py-2 space-y-1">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5 min-w-0 truncate">
+                  <span className="shrink-0">{enclaveInfo?.icon || '🔨'}</span>
+                  <span className="truncate">{displayProfessionTitle}</span>
                 </span>
-                <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-white/90 dark:bg-zinc-800 text-[#0A66C2] dark:text-sky-300 border border-zinc-200/50 dark:border-zinc-700/50 flex items-center gap-1">
-                  <ShieldCheck className="h-3 w-3" /> Verified
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 px-2 py-0.5 text-[9px] font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 shrink-0">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  Open
                 </span>
               </div>
-              <p className="text-[11px] font-semibold text-zinc-800 dark:text-zinc-200 truncate">
-                {displayProfessionTitle}
-              </p>
-              <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium truncate">
-                {matchedProfession?.categoryName || 'Verified Specialist'}
-              </p>
-            </div>
-
-            {/* Reconciled Trade Dispatch Status & Rate Badge (When Trades Enclave Active) */}
-            {effectiveEnclaveId === 'trades_construction' && (
-              <div className="pt-2 text-left">
-                <TradeEnclaveWidgets user={user} onNavigateTab={onNavigateTab} variant="badge_only" />
+              <div className="flex items-center justify-between gap-2 text-[10px] text-zinc-500 dark:text-zinc-400">
+                <span className="truncate">{enclaveInfo?.shortName || 'Verified'} Community</span>
+                {onOpenIDModal && (
+                  <button
+                    type="button"
+                    onClick={onOpenIDModal}
+                    className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline shrink-0 cursor-pointer"
+                  >
+                    🪪 ID Verified
+                  </button>
+                )}
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* Profile Strength & Career Mission Gauge */}
-        <div className="border-t border-zinc-100 px-4 py-2.5 dark:border-zinc-800/80 space-y-2">
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-[11px]">
-              <span className="font-semibold text-zinc-700 dark:text-zinc-300">{t("profile_strength", "Profile Strength")}</span>
-              <span className="font-black text-[#0A66C2]">{user.profileStrength ?? 50}%</span>
-            </div>
-            <div className="h-1.5 w-full rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-[#0A66C2] to-emerald-500 transition-all duration-500"
-                style={{ width: `${Math.min(100, Math.max(10, user.profileStrength ?? 50))}%` }}
-              />
-            </div>
-          </div>
-
-          <div
-            onClick={() => onNavigateTab && onNavigateTab('missions')}
-            className="rounded-lg bg-amber-500/10 p-2 border border-amber-400/30 cursor-pointer hover:bg-amber-500/20 transition-colors space-y-1"
-          >
-            <div className="flex items-center justify-between text-[10px] font-bold">
-              <span className="text-amber-800 dark:text-amber-300 flex items-center gap-1">
-                <Flame className="h-3 w-3 text-amber-500" /> {t("career_mission", "Career Mission")}
-              </span>
-              <span className="text-amber-700 dark:text-amber-300 font-mono">{t("active_status", "Active")}</span>
             </div>
           </div>
         </div>
 
-        {/* Metrics & Analytics */}
+        {/* Compact 3-Column Analytics Strip + Slim Profile Strength Bar */}
         {(() => {
           const sidebarAnalytics = getProfileTailoredAnalytics(user)
+          const strength = Math.min(100, Math.max(10, user.profileStrength ?? 92))
           return (
-            <div className="border-t border-zinc-100 px-4 py-2 text-xs dark:border-zinc-800/80 space-y-1">
-              <div
-                onClick={() => onOpenAnalytics ? onOpenAnalytics('viewers') : onViewProfile()}
-                className="flex cursor-pointer items-center justify-between py-0.5 hover:text-[#0A66C2] group"
-                title="Who's checked your credentials — Ticket Scoutings, Hiring Lookups & Peer Audits"
-              >
-                <span className="text-zinc-500 dark:text-zinc-400 group-hover:text-[#0A66C2]">{t("profile_viewers", "Credential checks")}</span>
-                <span className="font-semibold text-[#0A66C2]">{sidebarAnalytics.effectiveProfileViews.toLocaleString()}</span>
+            <div className="border-t border-zinc-100 dark:border-zinc-800/80 px-3.5 py-2.5 space-y-2">
+              <div className="grid grid-cols-3 divide-x divide-zinc-100 dark:divide-zinc-800 text-center">
+                <button
+                  type="button"
+                  onClick={() => onOpenAnalytics ? onOpenAnalytics('viewers') : onViewProfile()}
+                  className="px-1 py-0.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-l-lg transition-colors cursor-pointer group"
+                  title="Who viewed your profile and credentials"
+                >
+                  <p className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2]">
+                    {sidebarAnalytics.effectiveProfileViews.toLocaleString()}
+                  </p>
+                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
+                    {t("profile_viewers", "Viewers")}
+                  </p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onOpenAnalytics ? onOpenAnalytics('reach') : onViewProfile()}
+                  className="px-1 py-0.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer group"
+                  title="Inspect multi-channel post broadcast reach"
+                >
+                  <p className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2]">
+                    {sidebarAnalytics.effectiveTotalReach.toLocaleString()}
+                  </p>
+                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
+                    {t("content_reach", "Reach")}
+                  </p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onOpenAnalytics ? onOpenAnalytics('discoveries') : onViewProfile()}
+                  className="px-1 py-0.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-r-lg transition-colors cursor-pointer group"
+                  title="Inspect talent directory search appearances"
+                >
+                  <p className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2]">
+                    {sidebarAnalytics.effectiveDiscoveries.toLocaleString()}
+                  </p>
+                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
+                    {t("directory_discoveries", "Searches")}
+                  </p>
+                </button>
               </div>
+
               <div
-                onClick={() => onOpenAnalytics ? onOpenAnalytics('reach') : onViewProfile()}
-                className="flex cursor-pointer items-center justify-between py-0.5 hover:text-[#0A66C2] group"
-                title="Inspect multi-channel post broadcast reach"
+                onClick={() => onNavigateTab && onNavigateTab('missions')}
+                className="flex items-center justify-between gap-2 pt-0.5 cursor-pointer group"
+                title="View Career Progression & Profile Strength"
               >
-                <span className="text-zinc-500 dark:text-zinc-400 group-hover:text-purple-600">{t("content_reach", "Content reach")}</span>
-                <span className="font-semibold text-purple-600 dark:text-purple-400">{sidebarAnalytics.effectiveTotalReach.toLocaleString()}</span>
-              </div>
-              <div
-                onClick={() => onOpenAnalytics ? onOpenAnalytics('discoveries') : onViewProfile()}
-                className="flex cursor-pointer items-center justify-between py-0.5 hover:text-[#0A66C2] group"
-                title="Inspect talent directory search queries and index matches"
-              >
-                <span className="text-zinc-500 dark:text-zinc-400 group-hover:text-emerald-600">{t("directory_discoveries", "Directory discoveries")}</span>
-                <span className="font-semibold text-emerald-600 dark:text-emerald-400">{sidebarAnalytics.effectiveDiscoveries.toLocaleString()}</span>
+                <div className="flex-1 h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-[#0A66C2] to-emerald-500 transition-all duration-500"
+                    style={{ width: `${strength}%` }}
+                  />
+                </div>
+                <span className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 group-hover:text-[#0A66C2] shrink-0">
+                  {strength}% {t("profile_strength", "Strength")}
+                </span>
               </div>
             </div>
           )
         })()}
 
-        {/* Profession-Tailored Personal Command Center */}
-        <div className="border-t border-zinc-100 p-2.5 text-xs dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-900/50 space-y-1.5">
-          <div className="flex items-center justify-between px-2">
-            <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 truncate">
-                {t("personal_command_center", "Personal Command Center")}
-              </p>
-              <p className="text-[10px] text-[#0A66C2] dark:text-sky-400 font-semibold truncate" title={displayProfessionTitle}>
-                🎯 {displayProfessionTitle}
-              </p>
-            </div>
+        {/* Streamlined Workspace Shortcuts (Top 3 + Expandable Drawer) */}
+        <div className="border-t border-zinc-100 p-2.5 text-xs dark:border-zinc-800/80 bg-zinc-50/40 dark:bg-zinc-900/40 space-y-1.5">
+          <div className="flex items-center justify-between px-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 truncate">
+              {t("personal_command_center", "Quick Shortcuts")}
+            </span>
             <button
               type="button"
               onClick={() => setIsCustomizingCenter(!isCustomizingCenter)}
-              className={`rounded-lg px-2 py-1 text-[10px] font-bold flex items-center gap-1 transition-colors cursor-pointer shrink-0 ${
+              className={`rounded-md px-1.5 py-0.5 text-[10px] font-semibold flex items-center gap-1 transition-colors cursor-pointer shrink-0 ${
                 isCustomizingCenter
                   ? "bg-[#0A66C2] text-white"
-                  : "bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:border-[#0A66C2]"
+                  : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
               }`}
-              title="Customize Command Center for your specific profession"
+              title="Customize shortcuts for your profession"
             >
               <SlidersHorizontal className="h-3 w-3" />
-              <span>{isCustomizingCenter ? "Done" : "Customize"}</span>
+              <span>{isCustomizingCenter ? "Done" : "Edit"}</span>
             </button>
           </div>
 
@@ -910,19 +898,14 @@ export function LeftSidebarProfile({
                 title={ws.description || ws.label}
                 className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left text-zinc-700 hover:bg-white hover:shadow-xs dark:text-zinc-300 dark:hover:bg-zinc-800 transition-all group cursor-pointer"
               >
-                <div className="flex items-center gap-1.5 min-w-0 flex-1 mr-2">
+                <div className="flex items-center gap-1.5 min-w-0 flex-1">
                   <span className="font-medium truncate group-hover:text-[#0A66C2]">{ws.label}</span>
-                  {ws.url && (
-                    <ExternalLink className="h-3 w-3 text-zinc-400 group-hover:text-[#0A66C2] shrink-0" />
-                  )}
                 </div>
-                <span className={`rounded-md px-1.5 py-0.2 text-[9px] font-bold shrink-0 ${
-                  ws.isRoleSpecific
-                    ? "bg-blue-50 text-[#0A66C2] border border-blue-200/60 dark:bg-blue-950/50 dark:text-sky-300 dark:border-blue-800/60"
-                    : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
-                }`}>
-                  {ws.badge}
-                </span>
+                {ws.url ? (
+                  <ExternalLink className="h-3 w-3 text-zinc-400 group-hover:text-[#0A66C2] shrink-0" />
+                ) : (
+                  <span className="text-[10px] text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">→</span>
+                )}
               </button>
             ))}
           </div>
@@ -932,16 +915,16 @@ export function LeftSidebarProfile({
             <button
               type="button"
               onClick={() => setIsAllToolsExpanded(!isAllToolsExpanded)}
-              className="mt-1 flex w-full items-center justify-center gap-1 rounded-lg border border-zinc-200/80 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 py-1.5 text-[11px] font-semibold text-zinc-600 dark:text-zinc-300 hover:text-[#0A66C2] hover:border-[#0A66C2]/40 transition-colors cursor-pointer"
+              className="mt-1 flex w-full items-center justify-center gap-1 rounded-lg py-1 text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 hover:text-[#0A66C2] transition-colors cursor-pointer"
             >
               {isAllToolsExpanded ? (
                 <>
-                  <span>Show Focused Role View</span>
+                  <span>Show Less</span>
                   <ChevronUp className="h-3.5 w-3.5" />
                 </>
               ) : (
                 <>
-                  <span>+ {extraShortcuts.length} More {enclaveInfo?.shortName || 'Enclave'} Tools</span>
+                  <span>View all tools ({extraShortcuts.length + primaryShortcuts.length})</span>
                   <ChevronDown className="h-3.5 w-3.5" />
                 </>
               )}
@@ -950,28 +933,23 @@ export function LeftSidebarProfile({
         </div>
       </div>
 
-      {/* Reconciled Trade Enclave Modules (Tickets Desk, Hall Invites, Bench Shops) */}
-      {effectiveEnclaveId === 'trades_construction' && (
-        <TradeEnclaveWidgets user={user} onNavigateTab={onNavigateTab} variant="sidebar" />
-      )}
-
       {/* Discover & Recent Groups */}
       <div className="hidden md:block sticky top-18 rounded-xl border border-zinc-200 bg-white p-3 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex items-center justify-between pb-2">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-            {t("recent_followed", "Recent & Followed")}
+        <div className="flex items-center justify-between pb-1.5">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+            {t("recent_followed", "Communities & Topics")}
           </p>
           <button
             onClick={() => setIsRecentExpanded(!isRecentExpanded)}
-            className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+            className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-pointer"
           >
-            {isRecentExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            {isRecentExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
           </button>
         </div>
 
         {isRecentExpanded && (
-          <div className="space-y-1 text-xs">
-            {recentItems.map((item, idx) => {
+          <div className="space-y-0.5 text-xs">
+            {recentItems.slice(0, 4).map((item, idx) => {
               const Icon = item.icon
               return (
                 <button
