@@ -12,11 +12,10 @@ export async function GET(
     const resolvedParams = await context.params;
     const filename = resolvedParams.filename;
 
+    const baseDir = process.env.TMPDIR || "/tmp";
     const candidatePaths = [
-      path.join(process.cwd(), "data", "videos", filename),
-      path.join(process.cwd(), "app", "linkedin", "data", "videos", filename),
-      path.join(process.cwd(), "public", "uploads", "videos", filename),
-      path.join(process.cwd(), "..", "data", "videos", filename),
+      path.join(/*turbopackIgnore: true*/ baseDir, "uploads", "videos", filename),
+      path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads", "videos", filename),
     ];
 
     let foundPath: string | null = null;

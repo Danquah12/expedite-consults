@@ -201,6 +201,13 @@ export type SASTFinding = {
     | "DEPENDENCY_MANIFEST_ADVISORY"
     | "FIRST_PARTY_CODE_WEAKNESS_NO_CVE";
   consolidatedSinkLines?: number[];
+  consolidatedSinks?: {
+    originalFindingId: string;
+    file: string;
+    line: number;
+    sink: string;
+  }[];
+  retiredFindingIds?: string[];
 
   /**
    * Whether the reported file/line/snippet was checked against the scanned repository content.

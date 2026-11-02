@@ -17,6 +17,27 @@ const nextConfig: NextConfig = {
 			},
 		],
 	},
+	outputFileTracingExcludes: {
+		"*": [
+			"**/*.zip",
+			"**/*.docx",
+			"**/*.pdf",
+			"**/*.db",
+			"**/backups/**",
+			"**/BACKUPS/**",
+			"**/desk-note-midterms/**",
+			"**/desk-note-src/**",
+			"**/evidence_vault/**",
+			"**/noctis-ai/**",
+			"**/noctis-ai-engine/**",
+			"**/accra-helsinki-platform/**",
+			"**/sphera-portal/**",
+			"**/tuhousing-careersuite/**",
+			"**/careerorbit/**",
+			"**/orea-prezi/**",
+			"**/staged_*/**",
+		],
+	},
 };
 
 export default nextConfig;

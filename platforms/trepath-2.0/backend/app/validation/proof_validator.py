@@ -11,6 +11,7 @@ from .. import models
 EXPLOITABLE_PROOF_STATES: set[models.ProofState] = {
     models.ProofState.ATTACK_PATH_VALIDATED,
     models.ProofState.RUNTIME_REPRODUCED,
+    models.ProofState.CONFIRMED_ADMIN_AUTH,
     models.ProofState.IMPACT_VERIFIED,
 }
 

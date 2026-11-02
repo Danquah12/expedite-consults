@@ -22,7 +22,18 @@ async def probe_single_path(client: httpx.AsyncClient, origin: str, path: str, l
     try:
         res = await client.get(test_url)
         if res.status_code == 200:
+            body_text_low = res.text[:2500].lower()
             body_snippet = res.text[:300].strip()
+            # Filter out SPA catch-all HTML 200 responses that do not match the diagnostic signature
+            if path == "/phpinfo.php" and not any(sig in body_text_low for sig in ("php version", "phpinfo()", "zend engine", "allow_url_include")):
+                return None
+            if path == "/server-status" and not any(sig in body_text_low for sig in ("apache server status", "server uptime", "total accesses", "scoreboards")):
+                return None
+            if path == "/swagger.json" and not any(sig in body_text_low for sig in ('"swagger"', '"openapi"', '"paths"')):
+                return None
+            if path in ("/.git/HEAD", "/.env") and "<html" in body_text_low[:300]:
+                return None
+
             is_exposed_secret = path in ("/.git/HEAD", "/.env") and ("ref: refs/" in body_snippet or "=" in body_snippet)
             proof = ProofState.CONTROL_GAP_CONFIRMED if is_exposed_secret or severity in ("critical", "high") else ProofState.OBSERVATION_CONFIRMED
             return {

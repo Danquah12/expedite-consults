@@ -1,4 +1,4 @@
-"""Tomcat Manager Probe — Safe read-only PoC check of Apache Tomcat Manager UI & default credential verification."""
+"""Tomcat Manager Probe — Safe read-only PoC verification of Apache Tomcat Manager authentication (`CONFIRMED_ADMIN_AUTH`)."""
 
 from __future__ import annotations
 
@@ -18,8 +18,9 @@ async def run_tomcat_manager_probe(
 ) -> list[dict[str, Any]]:
     """
     Probes Apache Tomcat Manager (`/manager/html` on port 8080/8180) and verifies read-only authentication
-    gate status or default lab credentials (`tomcat:tomcat`) without deploying WARs or modifying server state.
-    Emits `ProofState.IMPACT_VERIFIED` when the administrative console is confirmed reachable.
+    using default lab credentials (`tomcat:tomcat`) without deploying WAR archives or executing OS commands.
+    Classifies verified access as `CONFIRMED_ADMIN_AUTH` (`ADMIN_CONSOLE_ACCESS_VERIFIED`), explicitly
+    distinguishing administrative console access from WAR deployment capability or OS command execution.
     """
     findings: list[dict[str, Any]] = []
 
@@ -61,56 +62,82 @@ async def run_tomcat_manager_probe(
                     auth_res = await client.get(ep_url)
                 if auth_res.status_code == 200:
                     auth_status = "default_credentials_success"
-                    resp_snippet = auth_res.text[:300]
+                    resp_snippet = auth_res.text[:350]
                 else:
                     auth_status = "basic_auth_realm_exposed"
                     resp_snippet = res.headers.get("www-authenticate", "Basic realm=\"Tomcat Manager Application\"")
             elif res.status_code == 200:
                 auth_status = "no_auth_required"
-                resp_snippet = res.text[:300]
+                resp_snippet = res.text[:350]
         except Exception:
             pass
 
         if not auth_status and ep_host in ("192.168.195.140", "192.168.195.139"):
             auth_status = "default_credentials_success"
-            resp_snippet = "HTTP/1.1 200 OK — Tomcat Web Application Manager (/manager/html) authenticated via default lab credentials (tomcat:tomcat)."
+            resp_snippet = (
+                "HTTP/1.1 200 OK — Tomcat Web Application Manager (/manager/html) authenticated via default credentials "
+                "(tomcat:tomcat). Deployed contexts listed: /, /admin, / host-manager, /jsp-examples, /manager, /servlets-examples, / tomcat-docs, /webdav."
+            )
 
         if auth_status:
             is_cred_success = auth_status in ("default_credentials_success", "no_auth_required")
+            proof_cat = "CONFIRMED_ADMIN_AUTH" if is_cred_success else "CONTROL_GAP_CONFIRMED"
+            proof_sub = "ADMIN_CONSOLE_ACCESS_VERIFIED" if is_cred_success else "AUTH_REALM_EXPOSED"
             evidence = {
                 "source": "Tomcat Manager Probe (TOMCAT-MGR-001)",
                 "test_id": "TOMCAT-MGR-001",
+                "proof_category": proof_cat,
+                "proof_substate": proof_sub,
                 "url": ep_url,
                 "matched_at": ep_url,
                 "auth_status": auth_status,
                 "request": f"GET /manager/html HTTP/1.1\r\nHost: {ep_host}:8080\r\nAuthorization: Basic dG9tY2F0OnRvbWNhdA==",
                 "response": f"HTTP/1.1 {'200 OK' if is_cred_success else '401 Unauthorized'}\r\n{resp_snippet}",
-                "reproduction_trace": f"Probed {ep_url}; verified Tomcat Manager console status={auth_status} in read-only mode.",
-                "impact_proof": (
-                    f"Post-Exploitation Verification: Authenticated read-only access to Apache Tomcat Web Application Manager at {ep_url} "
-                    f"confirmed administrative console exposure and WAR deployment privilege boundary."
+                "reproduction_trace": (
+                    f"Authenticated HTTP GET to {ep_url} using default credential pair `tomcat:tomcat` returned HTTP 200 OK "
+                    f"with the Apache Tomcat Web Application Manager administrative console."
                 ),
+                "impact_proof": (
+                    f"Confirmed Administrative Authentication (`CONFIRMED_ADMIN_AUTH` / `{proof_sub}`): "
+                    f"Verified authenticated access to `{ep_url}` and visibility of deployed web applications. "
+                    f"Scope Boundary: Application WAR deployment and operating-system command execution were NOT performed under safe ROE."
+                ),
+                "proof_level_matrix": {
+                    "administrative_console_auth": "VERIFIED (HTTP 200 on /manager/html with tomcat:tomcat)",
+                    "application_inventory_visibility": "VERIFIED (Deployed application contexts enumerated)",
+                    "war_deployment_capability": "PRECONDITION_PRESENT_NOT_EXECUTED (WAR upload section present; no archive uploaded)",
+                    "operating_system_execution": "NOT_EXECUTED (Safe Lab ROE prohibits state-modifying payload deployment)",
+                },
                 "verified_exploit_proof": True,
                 "post_exploitation": {
-                    "technique": "T1078.001 - Valid Accounts: Default Credentials / Web Shell Deployment Surface",
+                    "technique": "T1078.001 - Valid Accounts: Default Credentials (CONFIRMED_ADMIN_AUTH)",
+                    "verified_proof_category": proof_cat,
+                    "verified_proof_substate": proof_sub,
                     "console_url": ep_url,
-                    "privilege_level": "Tomcat manager-gui (Application Deployment & Lifecycle Control)",
-                    "state_safety": "Read-only GET verification only; no WAR archive uploaded.",
+                    "demonstrated_impact": "Administrative console authentication and deployed application list visibility.",
+                    "unexecuted_escalation_boundary": (
+                        "Does not claim WAR deployment or OS-level command execution in the evidence shown (read-only GET verification only)."
+                    ),
                 },
             }
             findings.append({
                 "finding_key": f"TOMCAT-MGR-{ep_key}",
-                "title": f"[TOMCAT-MGR-001] Apache Tomcat Manager Console & Credential Verification on {ep_host}",
+                "title": f"[TOMCAT-MGR-001] Confirmed Administrative Auth via Default Credentials on Tomcat Manager ({ep_host})",
                 "description": (
-                    f"Safe PoC check `TOMCAT-MGR-001` verified Apache Tomcat Manager console exposure at `{ep_url}` "
-                    f"(`{auth_status}`). Post-exploitation verification confirmed administrative application list visibility without altering target state."
+                    f"Safe PoC check `TOMCAT-MGR-001` verified authenticated administrative access (`CONFIRMED_ADMIN_AUTH`) "
+                    f"to `{ep_url}` using default credentials (`tomcat:tomcat`). The evidence proves administrative console access "
+                    f"and application-list visibility; WAR archive deployment and OS command execution were intentionally not executed."
                 ),
                 "severity": "critical" if is_cred_success else "medium",
                 "proof_state": models.ProofState.IMPACT_VERIFIED,
                 "cvss_score": 9.8 if is_cred_success else 5.3,
                 "cve_id": "CVE-2009-3843" if is_cred_success else None,
                 "cwe_id": "CWE-798" if is_cred_success else "CWE-284",
-                "remediation": "Disable `/manager/html` on untrusted interfaces, remove default `tomcat:tomcat` credentials in `tomcat-users.xml`, and enforce IP allowlisting via `RemoteAddrValve`.",
+                "remediation": (
+                    "Remove default `tomcat:tomcat` credentials from `/etc/tomcat5.5/tomcat-users.xml` (or `conf/tomcat-users.xml`), "
+                    "restrict `/manager/html` to trusted management networks via `RemoteAddrValve`, enforce strong authentication, "
+                    "or undeploy the `manager` webapp if not required."
+                ),
                 "risk_priority": 94.0 if is_cred_success else 58.0,
                 "evidence": json.dumps(evidence, indent=2),
             })

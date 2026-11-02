@@ -26,27 +26,34 @@ class FingerprintedTech:
 
 
 OUTDATED_VERSION_PATTERNS = [
-    (r"apache[/\s]+2\.[024]\.([0-9]|[1-4][0-9])\b", True),
-    (r"openssh[_\s/]+([1-7]\.|8\.[0-4])", True),
-    (r"tomcat[/\s]+([1-8]\.|9\.0\.[0-6][0-9])", True),
-    (r"coyote[/\s]+1\.1", True),
-    (r"php[/\s]+([457]\.|8\.0)", True),
-    (r"nginx[/\s]+(0\.|1\.(1[0-9]|20)\.)", True),
-    (r"proftpd[/\s]+1\.3\.[0-5]", True),
-    (r"vsftpd[/\s]+2\.3\.4", True),
-    (r"samba[/\s]+[34]\.[0-9]", True),
-    (r"mysql[/\s]+([345]\.)", True),
-    (r"postgresql[/\s]+([789]\.|1[0-2]\.)", True),
+    (r"nginx.*1\.(2[4-9]|3[0-9])\.", False),
+    (r"nginx.*(0\.|1\.([0-9]|1[0-9]|2[0-3])\.)", True),
+    (r"apache.*2\.4\.(5[89]|[6-9][0-9])\b", False),
+    (r"apache.*2\.[024]\.([0-9]|[1-4][0-9])\b", True),
+    (r"openssh.*(8\.[5-9]|9\.|10\.)", False),
+    (r"openssh.*([1-7]\.|8\.[0-4])", True),
+    (r"tomcat.*([1-8]\.|9\.0\.[0-6][0-9])", True),
+    (r"coyote.*1\.1", True),
+    (r"php.*8\.[2-9]", False),
+    (r"php.*([457]\.|8\.[01]\b)", True),
+    (r"proftpd.*1\.3\.[0-5]", True),
+    (r"vsftpd.*2\.3\.4", True),
+    (r"samba.*[23]\.[0-9xX]", True),
+    (r"mysql.*([345]\.[015]\b)", True),
+    (r"postgres.*([789]\.|1[0-3]\.)", True),
+    (r"bind.*9\.([0-9]|1[0-6])\b", True),
+    (r"\b(telnetd|rexecd|rlogind|rshd|unrealircd|distccd)\b", True),
+    (r"\b(telnet|rexec|rlogin|rsh/syslog)\b", True),
     (r"postfix", False),
 ]
 
 
-def _check_outdated(name: str, version: str | None, banner: str) -> bool:
+def _check_outdated(name: str, version: str | None = None, banner: str = "") -> bool:
     combined = f"{name} {version or ''} {banner}".lower()
     for pat, flag in OUTDATED_VERSION_PATTERNS:
         if re.search(pat, combined):
             return flag
-    if version and any(version.startswith(old) for old in ("1.", "2.0", "2.2", "4.", "5.", "0.")):
+    if version and any(version.strip().startswith(old) for old in ("0.", "2.0.", "2.2.", "3.0.", "4.7", "5.0.", "5.2.", "8.3.")):
         return True
     return False
 

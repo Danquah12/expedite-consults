@@ -54,14 +54,16 @@ WELL_KNOWN_PORTS: dict[int, tuple[str, str, str, str]] = {
 }
 
 # High-profile database/application services above port 1000 included in the 1-1000 sweep
+# Note: Reachable database listeners where authentication is enforced are rated "medium" (Service Exposure);
+# they only escalate to "high"/"critical" when unauthenticated access or exploitability is verified.
 ADDITIONAL_TARGET_PORTS: dict[int, tuple[str, str, str, str]] = {
-    1433: ("MSSQL", "high", "CWE-200", "Microsoft SQL Server database listener."),
-    1521: ("Oracle-TNS", "high", "CWE-200", "Oracle Database listener."),
-    2049: ("NFS", "high", "CWE-284", "Network File System daemon."),
+    1433: ("MSSQL", "medium", "CWE-200", "Microsoft SQL Server database listener exposed on network; verify authentication and restrict to app tier."),
+    1521: ("Oracle-TNS", "medium", "CWE-200", "Oracle Database listener exposed on network; restrict to internal application tier."),
+    2049: ("NFS", "medium", "CWE-284", "Network File System daemon; verify export ACLs (/etc/exports)."),
     2375: ("Docker-API", "critical", "CWE-284", "Unauthenticated Docker daemon API. Enforce TLS mutual auth."),
-    3306: ("MySQL", "high", "CWE-200", "MySQL database listener. Restrict to localhost or private app tier."),
+    3306: ("MySQL", "medium", "CWE-200", "MySQL database listener reachable over TCP; bind to 127.0.0.1 or restrict via host firewall."),
     3389: ("RDP", "medium", "CWE-284", "Remote Desktop Protocol. Enforce NLA and MFA."),
-    5432: ("PostgreSQL", "high", "CWE-200", "PostgreSQL database listener. Restrict from direct client subnets."),
+    5432: ("PostgreSQL", "medium", "CWE-200", "PostgreSQL database listener reachable over TCP; enforce pg_hba.conf host ACLs and TLS."),
     6379: ("Redis", "high", "CWE-284", "Redis In-Memory Data Store. Require authentication and bind to localhost."),
     8000: ("HTTP-Alt", "info", "CWE-200", "Alternative HTTP service / Dev server."),
     8080: ("Tomcat/HTTP-Proxy", "info", "CWE-200", "Apache Tomcat or proxy web service."),

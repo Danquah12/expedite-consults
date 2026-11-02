@@ -165,26 +165,10 @@ export default function Footer({ services }: FooterProps) {
 							<ul className="space-y-2 text-xs lg:text-sm">
 								<li>
 									<Link
-										href="/legal/terms-of-use"
-										className="text-slate-300 hover:text-white transition-colors"
-									>
-										Terms of Use
-									</Link>
-								</li>
-								<li>
-									<Link
-										href="/legal/privacy-policy"
-										className="text-slate-300 hover:text-white transition-colors"
-									>
-										Privacy Policy
-									</Link>
-								</li>
-								<li>
-									<Link
 										href="https://expediteconsults.com"
 										target="_blank"
 										rel="noopener noreferrer"
-										className="text-[#00c2cb] hover:underline font-medium inline-block pt-1"
+										className="text-[#00c2cb] hover:underline font-medium inline-block"
 									>
 										Expediteconsults.com
 									</Link>

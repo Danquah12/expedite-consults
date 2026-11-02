@@ -10,7 +10,11 @@ from .config import settings
 from .database import Base, engine, get_db
 from . import models, schemas
 from .security import hash_password, verify_password, create_access_token, current_user, require_analyst
-from .scope import validate_target
+from .scope import validate_target, expand_target_specification, MAX_FLEET_IPS
+from .stage9_validation import (
+    build_stage9_exploitation_and_post_exploitation_report,
+    reconcile_historical_scan_records,
+)
 from .engines.safe_dast import run_read_only_checks
 from .engines.port_discovery import run_port_discovery
 from .engines.web_recon import run_web_recon
@@ -20,6 +24,7 @@ from .engines.nmap_scanner import run_nmap_scan
 from .engines.ssl_auditor import run_tls_audit
 from .engines.zap_scanner import run_zap_scan
 from .engines.openvas_scanner import run_openvas_scan
+from .engines.fleet_scanner import run_mixed_fleet_target_sweep, run_api_security_checks
 from .orchestrator import (
     execute_orchestrated_ingestion_and_lifecycle,
     format_execution_record,
@@ -43,11 +48,20 @@ from .reporting import (
     build_finding_investigation_workspace,
     sanitize_forensic_text,
 )
+from .eve import eve_router
+from .unified_platform import router as unified_platform_router
+from .version_manifest import (
+    TREPATH_VERSION_MANIFEST,
+    get_report_version_metadata,
+    get_trusted_public_key_discovery_bundle,
+)
 from fastapi.responses import PlainTextResponse, Response
 
 Base.metadata.create_all(bind=engine)
 Path(settings.evidence_dir).mkdir(parents=True, exist_ok=True)
-app = FastAPI(title="TrePath API", version="0.2.0", description="Evidence-driven, ROE-enforced security assessment platform with Assessment Orchestrator v1")
+app = FastAPI(title="TrePath API", version=TREPATH_VERSION_MANIFEST["release_version"], description="Evidence-driven, ROE-enforced security assessment platform with Exploit Validation Engine (EVE) and Unified XTRIKE/TrePath/Expedite Strike/Noctis Architecture")
+app.include_router(eve_router)
+app.include_router(unified_platform_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -64,7 +78,19 @@ def audit(db, actor, action, resource_type, resource_id, details=None):
 
 @app.get("/api/v1/health")
 def health():
-    return {"status": "ok", "service": "trepath-api", "version": "0.2.0", "orchestrator": "v1"}
+    return {
+        "status": "ok",
+        "service": "trepath-api",
+        "version": TREPATH_VERSION_MANIFEST["release_version"],
+        "orchestrator": "v2.5",
+        "version_manifest": get_report_version_metadata(),
+    }
+
+
+@app.get("/.well-known/trepath-evidencecore-pubkey.json")
+def well_known_evidencecore_public_key():
+    """RFC 8615 well-known trusted public-key distribution endpoint for EvidenceCore Ed25519 verification."""
+    return get_trusted_public_key_discovery_bundle()
 
 @app.post("/api/v1/auth/register", response_model=schemas.UserOut)
 def register(data: schemas.RegisterIn, db: Session = Depends(get_db)):
@@ -130,8 +156,15 @@ def emit_event(scan_id: int, percent: int, stage: str, engine: str, message: str
     }
     events.append(entry)
 
-async def _run_scan_pipeline_async(scan_id: int, user_id: int, scan_depth: str = "deep_exhaustive"):
+async def _run_scan_pipeline_async(
+    scan_id: int,
+    user_id: int,
+    scan_depth: str = "deep_exhaustive",
+    target_urls: list[str] | None = None,
+    fleet_concurrency: int = 64,
+):
     deep_mode = (scan_depth != "rapid_triage")
+    fleet_urls = list(target_urls or [])
     with Session(engine) as db:
         scan = db.get(models.Scan, scan_id)
         user = db.get(models.User, user_id)
@@ -140,54 +173,101 @@ async def _run_scan_pipeline_async(scan_id: int, user_id: int, scan_depth: str =
         roe = db.query(models.RulesOfEngagement).filter_by(engagement_id=scan.engagement_id).first()
         try:
             mode_label = "DEEP EXHAUSTIVE PENETRATION AUDIT" if deep_mode else "RAPID TRIAGE"
-            emit_event(scan.id, 4, "SCOPE", "SCOPE_ENFORCER", f"Authorized ROE verified for {scan.target_url} | Mode: {mode_label}.")
-            emit_event(scan.id, 8, "SCOPE", "DNS_RESOLVER", "Resolving target endpoint topology and verifying network routing scope...")
-
-            # Stage 1: WebPulse + NetRecon Discovery
-            emit_event(scan.id, 12, "POSTURE", "SAFE_DAST", f"Probing HTTP response headers on {scan.target_url} (CSP, HSTS, X-Frame-Options, Referrer-Policy, nosniff)...")
-            posture_results = await run_read_only_checks(scan.target_url, timeout=2.0)
-            emit_event(scan.id, 18, "POSTURE", "SAFE_DAST", f"HTTP Security Policy audit finished -> {len(posture_results)} header posture findings recorded.")
-
-            emit_event(scan.id, 22, "DISCOVERY", "PORT_SCANNER", "Initiating high-speed concurrent TCP socket sweep across 1,000 top ports + database/admin ports...")
-            port_results = await run_port_discovery(scan.target_url, timeout=0.4)
-            open_ports = [
-                int(item["finding_key"].split("-")[2])
-                for item in port_results
-                if item["finding_key"].startswith("PORT-OPEN-") and item["finding_key"].split("-")[2].isdigit()
-            ]
-            emit_event(scan.id, 34, "DISCOVERY", "PORT_SCANNER", f"Port discovery sweep completed -> Identified {len(open_ports)} active TCP services: {open_ports}")
-
-            emit_event(scan.id, 38, "RECON", "WEB_RECON", "Probing sensitive administrative and configuration routes (/robots.txt, /.git, /.env, /phpinfo.php, /admin, CORS)...")
-            web_results = await run_web_recon(scan.target_url, timeout=2.5)
-            emit_event(scan.id, 44, "RECON", "WEB_RECON", f"Sensitive route reconnaissance finished -> {len(web_results)} exposed route observations.")
-
-            # Stage 3a: Deep WebPulse & NetRecon Protocol Enumeration
-            emit_event(scan.id, 46, "ENUMERATION", "WEBPULSE_ENUM", "Executing Stage 3 Deep Enumeration: crawling HTML forms, input parameters, HTTP OPTIONS verbs, WWW-Authenticate realms, and protocol handshakes (FTP/SMTP/MySQL)...")
-            from urllib.parse import urlparse
-            parsed_t = urlparse(scan.target_url)
-            host_t = parsed_t.hostname or "127.0.0.1"
-            enum_origins = [scan.target_url.rstrip("/") + "/"]
-            for p in open_ports:
-                if p in (8000, 8008, 8080, 8081, 8443) and f":{p}" not in scan.target_url:
-                    enum_origins.append(f"http://{host_t}:{p}/")
-            webpulse_res, proto_enum_results = await asyncio.gather(
-                run_webpulse_enumerator(enum_origins, timeout=2.5),
-                run_protocol_enumerator(scan.target_url, open_ports, timeout=2.0),
-            )
-            web_results.extend(webpulse_res.findings)
-            port_results.extend(proto_enum_results)
+            scope_cnt = max(1, len(fleet_urls))
             emit_event(
                 scan.id,
-                50,
-                "ENUMERATION",
-                "WEBPULSE_ENUM",
-                f"Stage 3 Enumeration complete -> {len(webpulse_res.discovered_urls)} URLs/routes, {len(webpulse_res.forms)} HTML forms, "
-                f"{len(webpulse_res.auth_challenges)} auth realms, and {len(proto_enum_results)} protocol handshakes enumerated.",
+                4,
+                "SCOPE",
+                "SCOPE_ENFORCER",
+                f"Authorized ROE verified for {scan.target_url} ({scope_cnt:,} provisioned target(s), {fleet_concurrency} fleet workers) | Mode: {mode_label}.",
             )
+            emit_event(scan.id, 8, "SCOPE", "DNS_RESOLVER", f"Resolving endpoint topology and verifying network routing scope across {scope_cnt:,} target(s)...")
 
-            emit_event(scan.id, 52, "FUZZER", "ACTIVE_FUZZER", "Executing non-destructive reflected XSS canary probes and SQL syntax error boundary checks...")
-            active_results = await run_active_fuzzer(scan.target_url, timeout=2.5)
-            emit_event(scan.id, 55, "FUZZER", "ACTIVE_FUZZER", f"Active boundary fuzzing complete -> {len(active_results)} input handling observations.")
+            fleet_tls_results: list[dict[str, Any]] = []
+            if scope_cnt > 1:
+                emit_event(
+                    scan.id,
+                    12,
+                    "FLEET_SWEEP",
+                    "ORCHESTRATOR",
+                    f"Initiating True Per-URL / Per-IP / Per-API Multi-Target Fleet Sweep across all {scope_cnt:,} provisioned targets ({fleet_concurrency} async workers)...",
+                )
+                fleet_res = await run_mixed_fleet_target_sweep(
+                    fleet_urls=fleet_urls,
+                    fleet_concurrency=fleet_concurrency,
+                    deep_mode=deep_mode,
+                    on_progress=lambda pct, stg, eng, msg: emit_event(scan.id, pct, stg, eng, msg),
+                )
+                posture_results = fleet_res.posture_findings
+                port_results = fleet_res.port_findings
+                web_results = fleet_res.web_findings
+                active_results = fleet_res.active_findings
+                fleet_tls_results = fleet_res.tls_findings
+                open_ports = fleet_res.primary_open_ports
+                combined_discovered_urls = list(dict.fromkeys(fleet_urls + fleet_res.discovered_urls))
+                emit_event(
+                    scan.id,
+                    55,
+                    "FLEET_SWEEP",
+                    "ORCHESTRATOR",
+                    f"Multi-target sweep complete across {fleet_res.scanned_targets_count}/{scope_cnt} targets "
+                    f"({fleet_res.scanned_ip_hosts_count} IP hosts, {fleet_res.scanned_web_urls_count} Web URLs, "
+                    f"{fleet_res.scanned_api_targets_count} API targets) -> "
+                    f"{len(posture_results)} header, {len(port_results)} port/protocol, {len(web_results)} web/route, "
+                    f"{len(fleet_res.api_findings)} API, and {len(fleet_tls_results)} TLS observations.",
+                )
+            else:
+                # Stage 1: WebPulse + NetRecon Discovery (Single-Target Flow)
+                emit_event(scan.id, 12, "POSTURE", "SAFE_DAST", f"Probing HTTP response headers on {scan.target_url} (CSP, HSTS, X-Frame-Options, Referrer-Policy, nosniff)...")
+                posture_results = await run_read_only_checks(scan.target_url, timeout=2.0)
+                emit_event(scan.id, 18, "POSTURE", "SAFE_DAST", f"HTTP Security Policy audit finished -> {len(posture_results)} header posture findings recorded.")
+
+                emit_event(scan.id, 22, "DISCOVERY", "PORT_SCANNER", "Initiating high-speed concurrent TCP socket sweep across 1,000 top ports + database/admin ports...")
+                port_results = await run_port_discovery(scan.target_url, timeout=0.4)
+                open_ports = [
+                    int(item["finding_key"].split("-")[2])
+                    for item in port_results
+                    if item["finding_key"].startswith("PORT-OPEN-") and item["finding_key"].split("-")[2].isdigit()
+                ]
+                emit_event(scan.id, 34, "DISCOVERY", "PORT_SCANNER", f"Port discovery sweep completed -> Identified {len(open_ports)} active TCP services: {open_ports}")
+
+                emit_event(scan.id, 38, "RECON", "WEB_RECON", "Probing sensitive administrative, API, and configuration routes (/robots.txt, /.git, /.env, /phpinfo.php, /openapi.json, /graphql, CORS)...")
+                web_results, api_pair = await asyncio.gather(
+                    run_web_recon(scan.target_url, timeout=2.5),
+                    run_api_security_checks(scan.target_url, probe_origin_routes=True, timeout=2.0),
+                )
+                api_single_findings, api_single_urls = api_pair
+                emit_event(scan.id, 44, "RECON", "WEB_RECON", f"Sensitive route & API reconnaissance finished -> {len(web_results)} route and {len(api_single_findings)} API observations.")
+
+                # Stage 3a: Deep WebPulse & NetRecon Protocol Enumeration
+                emit_event(scan.id, 46, "ENUMERATION", "WEBPULSE_ENUM", f"Executing Stage 3 Deep Enumeration: crawling HTML forms, input parameters, HTTP OPTIONS verbs, WWW-Authenticate realms, and protocol handshakes (FTP/SMTP/MySQL)...")
+                from urllib.parse import urlparse
+                parsed_t = urlparse(scan.target_url)
+                host_t = parsed_t.hostname or "127.0.0.1"
+                enum_origins = [scan.target_url.rstrip("/") + "/"]
+                for p in open_ports:
+                    if p in (8000, 8008, 8080, 8081, 8443) and f":{p}" not in scan.target_url:
+                        enum_origins.append(f"http://{host_t}:{p}/")
+                webpulse_res, proto_enum_results = await asyncio.gather(
+                    run_webpulse_enumerator(enum_origins, timeout=2.5),
+                    run_protocol_enumerator(scan.target_url, open_ports, timeout=2.0),
+                )
+                combined_discovered_urls = list(dict.fromkeys(list(webpulse_res.discovered_urls) + api_single_urls + fleet_urls[:200]))
+                web_results.extend(webpulse_res.findings)
+                port_results.extend(proto_enum_results)
+                emit_event(
+                    scan.id,
+                    50,
+                    "ENUMERATION",
+                    "WEBPULSE_ENUM",
+                    f"Stage 3 Enumeration complete -> {len(combined_discovered_urls)} URLs/routes, {len(webpulse_res.forms)} HTML forms, "
+                    f"{len(webpulse_res.auth_challenges)} auth realms, and {len(proto_enum_results)} protocol handshakes enumerated.",
+                )
+
+                emit_event(scan.id, 52, "FUZZER", "ACTIVE_FUZZER", "Executing non-destructive reflected XSS canary probes and SQL syntax error boundary checks...")
+                active_results = await run_active_fuzzer(scan.target_url, timeout=2.5)
+                active_results.extend(api_single_findings)
+                emit_event(scan.id, 55, "FUZZER", "ACTIVE_FUZZER", f"Active boundary & API fuzzing complete -> {len(active_results)} input/API observations.")
 
             # Stage 5a: Targeted Feature-Specific DAST Adapter Probes
             pre_asset = persist_normalized_asset(
@@ -204,7 +284,7 @@ async def _run_scan_pipeline_async(scan_id: int, user_id: int, scan_depth: str =
                 classify_endpoints(
                     normalize_discovered_assets(scan.target_url, port_results, posture_results, web_results),
                     web_results,
-                    extra_urls=webpulse_res.discovered_urls,
+                    extra_urls=combined_discovered_urls,
                 ),
             )
             emit_event(
@@ -285,7 +365,7 @@ async def _run_scan_pipeline_async(scan_id: int, user_id: int, scan_depth: str =
             )
 
             nmap_results = nmap_res if isinstance(nmap_res, list) else []
-            tls_results = tls_res if isinstance(tls_res, list) else []
+            tls_results = (tls_res if isinstance(tls_res, list) else []) + fleet_tls_results
             nuclei_results = nuclei_res if isinstance(nuclei_res, list) else []
             zap_results = zap_res if isinstance(zap_res, list) else []
             openvas_results = openvas_res if isinstance(openvas_res, list) else []
@@ -305,7 +385,7 @@ async def _run_scan_pipeline_async(scan_id: int, user_id: int, scan_depth: str =
                 nuclei_findings=nuclei_results,
                 zap_findings=zap_results,
                 openvas_findings=openvas_results,
-                extra_discovered_urls=webpulse_res.discovered_urls,
+                extra_discovered_urls=combined_discovered_urls,
                 emit_cb=lambda pct, stg, eng, msg, lvl="info": emit_event(scan.id, pct, stg, eng, msg, lvl),
             )
 
@@ -329,6 +409,20 @@ async def _run_scan_pipeline_async(scan_id: int, user_id: int, scan_depth: str =
             db.commit()
             emit_event(scan.id, 100, "FAILED", "ORCHESTRATOR", f"Scan error: {type(exc).__name__}: {exc}", level="error")
 
+@app.post("/api/v1/scope/expand", response_model=schemas.ScopeExpandOut)
+def expand_scope_targets(data: schemas.ScopeExpandIn, user=Depends(current_user)):
+    """
+    Expand and preview up to 10,000 target IPs, HTTP/HTTPS URLs, CIDR subnets, or IPv4 ranges
+    from manual paste or uploaded .txt/.csv/.json target lists.
+    """
+    combined_input: list[str] = []
+    if data.raw_input and data.raw_input.strip():
+        combined_input.append(data.raw_input)
+    if data.targets:
+        combined_input.extend(data.targets)
+    return expand_target_specification(combined_input or data.raw_input, max_hosts=data.max_hosts)
+
+
 @app.post("/api/v1/scans", response_model=schemas.ScanOut)
 async def create_scan(data: schemas.ScanIn, async_mode: bool = False, db: Session = Depends(get_db), user=Depends(require_analyst)):
     engagement = db.get(models.Engagement, data.engagement_id)
@@ -337,17 +431,52 @@ async def create_scan(data: schemas.ScanIn, async_mode: bool = False, db: Sessio
     if not roe or not roe.approved: raise HTTPException(403, "Approved ROE is required")
     if data.profile not in ("read_only", "authorized_pentest") or roe.profile not in ("read_only", "authorized_pentest"):
         raise HTTPException(403, "Only read_only and authorized_pentest scans are implemented in this release")
-    validate_target(str(data.target_url), roe.allowed_origins, roe.allow_private_networks)
-    scan = models.Scan(engagement_id=engagement.id,target_url=str(data.target_url),
-        profile=data.profile,status=models.ScanStatus.RUNNING,started_at=datetime.now(timezone.utc),created_by=user.id)
+
+    spec_list = list(data.targets) if data.targets else [str(data.target_url)]
+    expanded_scope = expand_target_specification(spec_list, max_hosts=MAX_FLEET_IPS)
+    primary_url = expanded_scope["primary_target_url"]
+    total_targets = expanded_scope["total_expanded_targets"]
+
+    # Validate first and last expanded targets against ROE allowlist
+    validate_target(primary_url, roe.allowed_origins, roe.allow_private_networks)
+    if total_targets > 1:
+        validate_target(expanded_scope["target_urls"][-1], roe.allowed_origins, roe.allow_private_networks)
+
+    scan = models.Scan(
+        engagement_id=engagement.id,
+        target_url=primary_url,
+        profile=data.profile,
+        status=models.ScanStatus.RUNNING,
+        started_at=datetime.now(timezone.utc),
+        created_by=user.id,
+    )
     db.add(scan); db.commit(); db.refresh(scan)
-    emit_event(scan.id, 2, "INIT", "ORCHESTRATOR", f"Initializing TrePath 2.0 multi-engine assessment (#{scan.id}) for target {scan.target_url}...")
+    fleet_msg = (
+        f" | Fleet Scope: {total_targets:,} targets ({expanded_scope['ip_count']} IPs, {expanded_scope['url_count']} URLs, {expanded_scope['cidr_count']} CIDRs, {expanded_scope['range_count']} Ranges | {data.fleet_concurrency} workers)"
+        if total_targets > 1
+        else ""
+    )
+    emit_event(scan.id, 2, "INIT", "ORCHESTRATOR", f"Initializing TrePath 2.1 multi-engine assessment (#{scan.id}) for target {scan.target_url}{fleet_msg}...")
 
     if async_mode:
-        asyncio.create_task(_run_scan_pipeline_async(scan.id, user.id, data.scan_depth))
+        asyncio.create_task(
+            _run_scan_pipeline_async(
+                scan.id,
+                user.id,
+                data.scan_depth,
+                target_urls=expanded_scope["target_urls"],
+                fleet_concurrency=data.fleet_concurrency,
+            )
+        )
         return scan
     else:
-        await _run_scan_pipeline_async(scan.id, user.id, data.scan_depth)
+        await _run_scan_pipeline_async(
+            scan.id,
+            user.id,
+            data.scan_depth,
+            target_urls=expanded_scope["target_urls"],
+            fleet_concurrency=data.fleet_concurrency,
+        )
         db.refresh(scan)
         if scan.status == models.ScanStatus.FAILED:
             raise HTTPException(502, f"Read-only scan failed: {scan.error_message}")
@@ -425,6 +554,7 @@ def get_scan_endpoints(scan_id: int, db: Session = Depends(get_db), user=Depends
 @app.get("/api/v1/scans/{scan_id}/technologies", response_model=list[schemas.TechnologyOut])
 def get_scan_technologies(scan_id: int, db: Session = Depends(get_db), user=Depends(current_user)):
     if not db.get(models.Scan, scan_id): raise HTTPException(404, "Scan not found")
+    reconcile_historical_scan_records(db, scan_id)
     return db.query(models.Technology).filter_by(scan_id=scan_id).all()
 
 @app.get("/api/v1/scans/{scan_id}/intelligence", response_model=list[schemas.IntelligenceMatchOut])
@@ -446,12 +576,18 @@ def get_scan_executions(scan_id: int, db: Session = Depends(get_db), user=Depend
 @app.get("/api/v1/scans/{scan_id}/attack-paths", response_model=list[schemas.AttackPathOut])
 def get_scan_attack_paths(scan_id: int, db: Session = Depends(get_db), user=Depends(current_user)):
     if not db.get(models.Scan, scan_id): raise HTTPException(404, "Scan not found")
+    reconcile_historical_scan_records(db, scan_id)
     return db.query(models.AttackPath).filter_by(scan_id=scan_id).all()
 
 @app.get("/api/v1/scans/{scan_id}/remediation", response_model=list[schemas.RemediationTaskOut])
 def get_scan_remediation_tasks(scan_id: int, db: Session = Depends(get_db), user=Depends(current_user)):
     if not db.get(models.Scan, scan_id): raise HTTPException(404, "Scan not found")
     return db.query(models.RemediationTask).filter_by(scan_id=scan_id).all()
+
+@app.get("/api/v1/scans/{scan_id}/stage9-validation")
+def get_scan_stage9_validation(scan_id: int, db: Session = Depends(get_db), user=Depends(current_user)):
+    if not db.get(models.Scan, scan_id): raise HTTPException(404, "Scan not found")
+    return build_stage9_exploitation_and_post_exploitation_report(db, scan_id)
 
 @app.get("/api/v1/scans/{scan_id}/report")
 def get_scan_report(scan_id: int, db: Session = Depends(get_db), user=Depends(current_user)):
@@ -548,6 +684,27 @@ def finding_workspace(finding_id: int, db: Session = Depends(get_db), user=Depen
         raise HTTPException(404, "Finding not found")
     return ws
 
+@app.post("/api/v1/findings/{finding_id}/antigravity-triage")
+def triage_finding_with_antigravity(finding_id: int, db: Session = Depends(get_db), user=Depends(current_user)):
+    """Invokes the local Antigravity AI Engine to triage finding, compute CVSS, and generate remediation code diff."""
+    finding = db.get(models.Finding, finding_id)
+    if not finding:
+        raise HTTPException(404, "Finding not found")
+    from .antigravity_triage import triage_finding
+    import asyncio
+    payload = {
+        "id": f"TP-FINDING-{finding.id}",
+        "type": getattr(finding, "title", None) or getattr(finding, "category", None) or "Security Finding",
+        "url": getattr(finding, "target_url", None) or "https://target.local",
+        "parameter": getattr(finding, "parameter", None) or "N/A",
+        "payload": getattr(finding, "payload", None) or "N/A",
+        "evidence": getattr(finding, "evidence", None) or getattr(finding, "description", None) or "Automated discovery finding"
+    }
+    try:
+        return asyncio.run(triage_finding(payload))
+    except Exception as e:
+        raise HTTPException(500, f"Antigravity triage failed: {str(e)}")
+
 @app.get("/api/v1/evidence/{artifact_id}/download")
 def download_sanitized_evidence(artifact_id: int, db: Session = Depends(get_db), user=Depends(current_user)):
     artifact = db.get(models.EvidenceArtifact, artifact_id)
@@ -615,3 +772,11 @@ def execute_retest_endpoint(finding_id: int, db: Session = Depends(get_db), user
         "evidence_sha256": art.sha256 if art else None,
         "note": f"[{rx.retest_exec_key}] {rx.notes}",
     }
+
+# Mount built frontend SPA (frontend/dist) at '/' so the remote HTTPS tunnel URL
+# (https://waiver-institutes-article-carpet.trycloudflare.com/) serves both the UI and /api/v1!
+from fastapi.staticfiles import StaticFiles
+_FRONTEND_DIST = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+if _FRONTEND_DIST.is_dir():
+    app.mount("/", StaticFiles(directory=str(_FRONTEND_DIST), html=True), name="frontend_spa")
+

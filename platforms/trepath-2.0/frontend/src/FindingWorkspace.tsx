@@ -59,7 +59,7 @@ export default function FindingWorkspace({ findingId, api, token }: WorkspacePro
           const d = await r.json()
           setVerifyBanner(
             d.verified
-              ? `VERIFIED: Artifact #${d.artifact_id} SHA-256 (${d.computed_sha256.slice(0, 16)}...) matches stored binary (${d.bytes} bytes).`
+              ? `VERIFIED: Artifact #${d.artifact_id} Full SHA-256 (${d.computed_sha256}) matches stored binary (${d.bytes} bytes).`
               : `MISMATCH: ${d.reason}`
           )
           return
@@ -71,7 +71,7 @@ export default function FindingWorkspace({ findingId, api, token }: WorkspacePro
     const art = ws?.evidence_management?.artifacts?.[0]
     if (art?.integrity) {
       setVerifyBanner(
-        `VERIFIED (Sealed Snapshot): Artifact #${art.artifact_id} SHA-256 (${art.sha256.slice(0, 16)}...) matches stored binary (${art.bytes} bytes).`
+        `VERIFIED (Sealed Snapshot): Artifact #${art.artifact_id} Full SHA-256 (${art.sha256}) matches stored binary (${art.bytes} bytes).`
       )
     }
   }

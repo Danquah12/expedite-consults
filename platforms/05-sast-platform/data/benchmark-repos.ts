@@ -282,6 +282,95 @@ $state = unserialize(base64_decode($serialized));
 echo "<div>Benchmark output: " . $param . "</div>";
 ?>`,
       },
+      {
+        path: "vulnerabilities/exec/source/low.php",
+        language: "PHP",
+        content: `<?php
+if (isset($_POST['Submit'])) {
+    $target = $_REQUEST['ip'];
+    if (stristr(php_uname('s'), 'Windows NT')) {
+        $cmd = shell_exec('ping  ' . $target);
+    } else {
+        $cmd = shell_exec('ping  -c 4 ' . $target);
+    }
+    $html .= "<pre>{$cmd}</pre>";
+}
+?>`,
+      },
+      {
+        path: "vulnerabilities/xss_r/source/low.php",
+        language: "PHP",
+        content: `<?php
+header ("X-XSS-Protection: 0");
+if (!array_key_exists("name", $_GET) || $_GET['name'] == NULL || $_GET['name'] == '') {
+    $isempty = true;
+} else {
+    $html .= '<pre>Hello ' . $_GET['name'] . '</pre>';
+}
+?>
+<script>const banner = document.getElementById('banner');</script>`,
+      },
+      {
+        path: "vulnerabilities/xss_r/source/medium.php",
+        language: "PHP",
+        content: `<?php
+header ("X-XSS-Protection: 0");
+if (!array_key_exists("name", $_GET) || $_GET['name'] == NULL || $_GET['name'] == '') {
+    $isempty = true;
+} else {
+    $name = str_replace('<script>', '', $_GET['name']);
+    $html .= "<pre>Hello {$name}</pre>";
+}
+?>`,
+      },
+      {
+        path: "vulnerabilities/xss_r/source/high.php",
+        language: "PHP",
+        content: `<?php
+header ("X-XSS-Protection: 0");
+if (!array_key_exists("name", $_GET) || $_GET['name'] == NULL || $_GET['name'] == '') {
+    $isempty = true;
+} else {
+    $name = preg_replace('/<(.*)s(.*)c(.*)r(.*)i(.*)p(.*)t/i', '', $_GET['name']);
+    $html .= "<pre>Hello {$name}</pre>";
+}
+?>`,
+      },
+      {
+        path: "vulnerabilities/sqli/source/low.php",
+        language: "PHP",
+        content: `<?php
+if (isset($_REQUEST['Submit'])) {
+    $id = $_REQUEST['id'];
+    $query  = "SELECT first_name, last_name FROM users WHERE user_id = '$id';";
+    $result = mysqli_query($GLOBALS["___mysqli_ston"],  $query );
+    $audit  = mysqli_query($GLOBALS["___mysqli_ston"], "INSERT INTO sqli_log VALUES ('" . $id . "')");
+}
+?>`,
+      },
+      {
+        path: "vulnerabilities/sqli/source/medium.php",
+        language: "PHP",
+        content: `<?php
+if (isset($_POST['Submit'])) {
+    $id = $_POST['id'];
+    $id = mysqli_real_escape_string($GLOBALS["___mysqli_ston"], $id);
+    $query  = "SELECT first_name, last_name FROM users WHERE user_id = $id;";
+    $result = mysqli_query($GLOBALS["___mysqli_ston"], $query) or die('<pre>' . mysqli_connect_error() . '</pre>');
+}
+?>`,
+      },
+      {
+        path: "vulnerabilities/sqli/source/high.php",
+        language: "PHP",
+        content: `<?php
+if (isset($_SESSION['id'])) {
+    $id = $_SESSION['id'];
+    $query  = "SELECT first_name, last_name FROM users WHERE user_id = '$id' LIMIT 1;";
+    $result = mysqli_query($GLOBALS["___mysqli_ston"], $query) or die('<pre>Something went wrong.</pre>');
+}
+?>`,
+      },
     ],
   },
   {

@@ -13,6 +13,15 @@ from app.testing.adapters.tomcat_manager_probe import run_tomcat_manager_probe
 from app.validation.proof_validator import validate_finding_proof
 
 
+def _run_async(coro):
+    """Drive a coroutine to completion without instantiating Windows IocpProactor socketpairs in sandbox."""
+    try:
+        coro.send(None)
+    except StopIteration as exc:
+        return exc.value
+    raise RuntimeError("Coroutine yielded unexpected future")
+
+
 def test_smb_share_probe_success():
     mock_result = MagicMock()
     mock_result.stdout = """
@@ -29,7 +38,7 @@ def test_smb_share_probe_success():
         endpoint.endpoint_key = "ep1"
         endpoint.url = "smb://10.0.0.5"
 
-        findings = asyncio.run(
+        findings = _run_async(
             run_smb_share_probe(
                 asset=MagicMock(),
                 endpoints=[endpoint],
@@ -59,10 +68,11 @@ def test_phpinfo_and_tomcat_probes_fallback():
     asset.target_url = "http://192.168.195.139/"
     asset.open_ports = [80, 445, 8080]
 
-    php_findings = asyncio.run(run_phpinfo_probe(asset, [], [], []))
-    assert len(php_findings) == 1
-    assert php_findings[0]["proof_state"] == models.ProofState.IMPACT_VERIFIED
+    with patch("httpx.AsyncClient", side_effect=RuntimeError("mock offline lab")):
+        php_findings = _run_async(run_phpinfo_probe(asset, [], [], []))
+        assert len(php_findings) == 1
+        assert php_findings[0]["proof_state"] == models.ProofState.IMPACT_VERIFIED
 
-    tomcat_findings = asyncio.run(run_tomcat_manager_probe(asset, [], [], []))
-    assert len(tomcat_findings) == 1
-    assert tomcat_findings[0]["proof_state"] == models.ProofState.IMPACT_VERIFIED
+        tomcat_findings = _run_async(run_tomcat_manager_probe(asset, [], [], []))
+        assert len(tomcat_findings) == 1
+        assert tomcat_findings[0]["proof_state"] == models.ProofState.IMPACT_VERIFIED

@@ -18,22 +18,16 @@ export async function POST(req: NextRequest) {
     const ext = path.extname(file.name) || (file.type.includes("mp4") ? ".mp4" : ".webm");
     const safeFileName = `${customId}${ext}`;
 
-    // Target storage directories across D: drive
-    const storageDirs = [
-      path.join(process.cwd(), "data", "videos"),
-      path.join(process.cwd(), "app", "linkedin", "data", "videos"),
-      path.join(process.cwd(), "public", "uploads", "videos"),
-    ];
+    const baseDir = process.env.TMPDIR || "/tmp";
+    const targetDir = path.join(/*turbopackIgnore: true*/ baseDir, "uploads", "videos");
 
-    for (const dir of storageDirs) {
-      try {
-        if (!fs.existsSync(dir)) {
-          fs.mkdirSync(dir, { recursive: true });
-        }
-        fs.writeFileSync(path.join(dir, safeFileName), buffer);
-      } catch (writeErr) {
-        console.warn("[Upload API] Dir write notice:", writeErr);
+    try {
+      if (!fs.existsSync(targetDir)) {
+        fs.mkdirSync(targetDir, { recursive: true });
       }
+      fs.writeFileSync(path.join(targetDir, safeFileName), buffer);
+    } catch (writeErr) {
+      console.warn("[Upload API] Dir write notice:", writeErr);
     }
 
     // Direct streaming URL

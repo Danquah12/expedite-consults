@@ -18,8 +18,8 @@ class UserOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class EngagementIn(BaseModel):
-    name: str = Field(min_length=2, max_length=200)
-    client_name: str = Field(min_length=2, max_length=200)
+    name: str = Field(min_length=2, max_length=500)
+    client_name: str = Field(min_length=2, max_length=300)
 
 class EngagementOut(BaseModel):
     id: int
@@ -30,17 +30,39 @@ class EngagementOut(BaseModel):
 
 class RoeIn(BaseModel):
     approved: bool = False
-    allowed_origins: list[str] = Field(min_length=1, max_length=25)
+    allowed_origins: list[str] = Field(min_length=1, max_length=10000)
     allow_private_networks: bool = False
-    max_requests: int = Field(default=30, ge=1, le=100)
-    max_concurrency: int = Field(default=1, ge=1, le=3)
+    max_requests: int = Field(default=30, ge=1, le=1000000)
+    max_concurrency: int = Field(default=1, ge=1, le=500)
     profile: str = "read_only"
 
 class ScanIn(BaseModel):
     engagement_id: int
-    target_url: HttpUrl
+    target_url: str = Field(min_length=1, max_length=2048)
+    targets: list[str] = Field(default_factory=list, max_length=10000)
+    fleet_concurrency: int = Field(default=64, ge=1, le=256)
     profile: str = "read_only"
     scan_depth: str = "deep_exhaustive"
+
+class ScopeExpandIn(BaseModel):
+    raw_input: str = ""
+    targets: list[str] = Field(default_factory=list)
+    max_hosts: int = Field(default=10000, ge=1, le=10000)
+
+class ScopeExpandOut(BaseModel):
+    max_provisioned_ips: int
+    total_expanded_ips: int
+    total_expanded_targets: int
+    ip_count: int
+    url_count: int
+    cidr_count: int
+    range_count: int
+    primary_target_url: str
+    target_urls: list[str]
+    hosts: list[str]
+    allowed_origins: list[str]
+    sample_targets: list[str]
+    segments: list[dict[str, Any]]
 
 class ScanOut(BaseModel):
     id: int

@@ -524,7 +524,7 @@ const DOMAIN_SEEDS: DomainSeed[] = [
       { code: "AUTH-XPATH-INJECTION", name: "XPath Query String Concatenation Injection (CWE-643)", languages: ["Java", "Python", "C#"], fastTokens: ["xpath.compile", "xpath.evaluate"], pattern: "xpath\\.(?:compile|evaluate)\\s*\\([^)]*\\+", cxQuery: "High_Risk/XPath_Injection", ibmRule: "IBM-AUTH-XPATH-220" },
       { code: "AUTH-HELMET-DISABLED", name: "Express X-Frame-Options / Content-Security-Policy Disabled", languages: ["Node.js", "TypeScript"], fastTokens: ["contentsecuritypolicy: false", "frameguard: false"], pattern: "(?:contentSecurityPolicy|frameguard)\\s*:\\s*false", cxQuery: "Web_Headers/Helmet_Protection_Disabled", ibmRule: "IBM-WEB-HELM-221" },
       { code: "AUTH-JAVA-TRUSTMANAGER-ALL", name: "Java X509TrustManager checkServerTrusted Empty Override (CWE-295)", languages: ["Java"], fastTokens: ["checkservertrusted"], pattern: "void\\s+checkServerTrusted\\s*\\([^)]*\\)\\s*\\{\\s*\\}", cxQuery: "Java_TLS/TrustAll_X509TrustManager", ibmRule: "IBM-TLS-TRUST-222" },
-      { code: "AUTH-JAVA-HOSTNAMEVERIFIER-ALL", name: "Java HostnameVerifier Always Returning true (ALLOW_ALL)", languages: ["Java"], fastTokens: ["allow_all_hostname_verifier", "noopHostnameVerifier"], pattern: "(?:ALLOW_ALL_HOSTNAME_VERIFIER|NoopHostnameVerifier\\.INSTANCE)", cxQuery: "Java_TLS/AllowAll_HostnameVerifier", ibmRule: "IBM-TLS-HOST-223" },
+      { code: "AUTH-JAVA-HOSTNAMEVERIFIER-ALL", name: "Permissive TLS Hostname Verification & Certificate Trust Bypass (CWE-297)", languages: ["Java"], fastTokens: ["allow_all_hostname_verifier", "noophostnameverifier", "trustselfsignedstrategy"], pattern: "(?:ALLOW_ALL_HOSTNAME_VERIFIER|NoopHostnameVerifier(?:\\.INSTANCE)?|TrustSelfSignedStrategy)", cxQuery: "Java_TLS/AllowAll_HostnameVerifier", ibmRule: "IBM-TLS-HOST-223" },
       { code: "AUTH-BOLA-DIRECT-ID", name: "API1:2023 BOLA — Direct Database Lookup by req.params.id Without Tenant Scope", languages: ["Node.js", "TypeScript", "Python"], fastTokens: ["findbyid(req.params", "get(id=request"], pattern: "(?:findById|findByPk)\\s*\\(\\s*req\\.params\\.id\\s*\\)", cxQuery: "API_Security/BOLA_IDOR_Direct_Lookup", ibmRule: "IBM-API-BOLA-224" },
       { code: "AUTH-ADMIN-HARDCODED-ROLE", name: "Client-Controlled isAdmin / role Field Read from Request Body", languages: ["Node.js", "TypeScript", "Python", "Java"], fastTokens: ["req.body.isadmin", "req.body.role"], pattern: "req\\.body\\.(?:isAdmin|is_admin|role)\\b", cxQuery: "API_Security/Broken_Function_Level_Auth", ibmRule: "IBM-API-BFLA-225" },
       { code: "AUTH-BASIC-HTTP-CLEARTEXT", name: "HTTP Basic Auth Transmitted Over Unencrypted http:// Endpoint", languages: ["Python", "Node.js", "Java"], fastTokens: ["http://", "basic "], pattern: "http://[^/\"']+.*Authorization.*Basic", cxQuery: "Transport_Security/Cleartext_Basic_Auth", ibmRule: "IBM-AUTH-BASIC-226" },
@@ -1097,6 +1097,212 @@ const VARIANT_SPECIFIC_OVERRIDES: Record<string, Partial<SASTPluginDefinition>> 
     remediationSummary:
       "Never construct new RegExp(untrustedInput) directly from user-supplied strings, which enables Regular Expression Denial of Service (ReDoS). Use literal string comparison or escape all regex metacharacters and bound input length.",
     remediationCode: `// ❌ VULNERABLE: User input passed directly into new RegExp() enables catastrophic backtracking\nconst pattern = new RegExp(req.query.filter);\n\n// ✅ REMEDIATED (TypeScript): Bound input length and escape all regular expression metacharacters\nfunction escapeRegExpLiteral(raw: string): string {\n  return raw.slice(0, 128).replace(/[.*+?^$\${}()|[\\]\\\\]/g, "\\\\$&");\n}\nconst safePattern = new RegExp(escapeRegExpLiteral(String(req.query.filter ?? "")), "i");`,
+  },
+  "AUTH-JAVA-HOSTNAMEVERIFIER-ALL": {
+    cwe: "CWE-297",
+    cweName: "Improper Validation of Certificate with Host Mismatch (NoopHostnameVerifier / TrustSelfSignedStrategy)",
+    severity: "High",
+    cvss: 7.4,
+    epss: 0.089,
+    owasp: "A02:2021 · Cryptographic Failures",
+    asvs: "ASVS V9.2.1 (TLS Certificate-Chain & RFC 6125 Hostname Verification)",
+    nist80053: "SC-8 (Transmission Confidentiality and Integrity) & SC-23",
+    nistSsdf: "PW.7.2, PW.8.2, RV.1.2",
+    pciDss: "PCI-DSS v4.0 Req 4.2.1",
+    iso27001: "ISO/IEC 27001:2022 A.8.24",
+    mitreAttack: "T1557 (Adversary-in-the-Middle TLS Interception)",
+    fortifyKingdom: "Security Features",
+    fortifyAnalyzer: "Configuration",
+    sanitizerHint:
+      "Remove NoopHostnameVerifier.INSTANCE / ALLOW_ALL_HOSTNAME_VERIFIER and TrustSelfSignedStrategy; enforce SSLContexts.createSystemDefault() + DefaultHostnameVerifier + TLSv1.3",
+    remediationSummary:
+      "Remove permissive hostname verification (NoopHostnameVerifier.INSTANCE / ALLOW_ALL_HOSTNAME_VERIFIER) and insecure certificate-trust strategies (TrustSelfSignedStrategy); enforce strict X.509 certificate-chain validation against the system CA trust store and RFC 6125 SAN/CN hostname verification via DefaultHostnameVerifier over TLSv1.3.",
+    remediationCode: `// ❌ VULNERABLE (Permissive TLS hostname verification & self-signed trust bypass — CWE-297 / CWE-295)
+// SSLContext sslContext = SSLContexts.custom().loadTrustMaterial(null, new TrustSelfSignedStrategy()).build();
+// CloseableHttpClient client = HttpClients.custom()
+//     .setSSLContext(sslContext)
+//     .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
+//     .build();
+
+// ✅ REMEDIATED (Java — System CA Certificate-Chain Validation + DefaultHostnameVerifier + TLSv1.3)
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLPeerUnverifiedException;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.client5.http.ssl.DefaultHostnameVerifier;
+import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactoryBuilder;
+import org.apache.hc.core5.http.ssl.TLS;
+import org.apache.hc.core5.ssl.SSLContexts;
+
+public final class HardenedTlsClientFactory {
+    public static CloseableHttpClient createVerifiedTlsClient() {
+        SSLContext sslContext = SSLContexts.createSystemDefault();
+        var sslSocketFactory = SSLConnectionSocketFactoryBuilder.create()
+            .setSslContext(sslContext)
+            .setHostnameVerifier(new DefaultHostnameVerifier())
+            .setTlsVersions(TLS.V_1_3, TLS.V_1_2)
+            .build();
+        var connManager = PoolingHttpClientConnectionManagerBuilder.create()
+            .setSSLSocketFactory(sslSocketFactory)
+            .build();
+        return HttpClients.custom()
+            .setConnectionManager(connManager)
+            .evictExpiredConnections()
+            .build();
+    }
+
+    // ✅ JUnit 5 Regression Test: Proves certificate with mismatched SAN/CN hostname is rejected
+    public static void verifyHostnameMismatchRejected(java.security.cert.X509Certificate certWithWrongHost)
+            throws SSLPeerUnverifiedException {
+        DefaultHostnameVerifier verifier = new DefaultHostnameVerifier();
+        verifier.verify("api.expected-bank.internal", certWithWrongHost); // Throws SSLPeerUnverifiedException on mismatch
+    }
+}`,
+  },
+  "AUTH-JAVA-TRUSTMANAGER-ALL": {
+    cwe: "CWE-295",
+    cweName: "Improper Certificate Validation (Empty X509TrustManager / TrustSelfSignedStrategy)",
+    severity: "High",
+    cvss: 7.4,
+    epss: 0.094,
+    owasp: "A02:2021 · Cryptographic Failures",
+    asvs: "ASVS V9.2.1 (X.509 Certificate-Chain Trust Validation)",
+    nist80053: "SC-8 (Transmission Confidentiality and Integrity) & SC-17",
+    pciDss: "PCI-DSS v4.0 Req 4.2.1",
+    mitreAttack: "T1557 (Adversary-in-the-Middle TLS Interception)",
+    fortifyKingdom: "Security Features",
+    fortifyAnalyzer: "Configuration",
+    sanitizerHint:
+      "Remove custom no-op X509TrustManager / TrustSelfSignedStrategy and enforce PKIX TrustManagerFactory initialized with a pinned KeyStore or SSLContexts.createSystemDefault() + DefaultHostnameVerifier",
+    remediationSummary:
+      "Remove empty checkServerTrusted() X509TrustManager implementations and TrustSelfSignedStrategy; enforce full PKIX X.509 certificate-chain validation against a trusted CA KeyStore and strict RFC 6125 hostname verification via DefaultHostnameVerifier.",
+    remediationCode: `// ❌ VULNERABLE (No-op X509TrustManager accepts arbitrary self-signed or forged certificates — CWE-295)
+// public void checkServerTrusted(X509Certificate[] chain, String authType) { }
+
+// ✅ REMEDIATED (Java — PKIX TrustManagerFactory + System CA Store + DefaultHostnameVerifier over TLSv1.3)
+import java.security.KeyStore;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
+import org.apache.hc.client5.http.ssl.DefaultHostnameVerifier;
+import org.apache.hc.core5.ssl.SSLContexts;
+
+TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+tmf.init((KeyStore) null); // Enforces default system CA trust store validation
+SSLContext sslContext = SSLContexts.createSystemDefault();
+DefaultHostnameVerifier hostnameVerifier = new DefaultHostnameVerifier();`,
+  },
+  "CRYP-TLS-REJECT-UNAUTH": {
+    cwe: "CWE-295",
+    cweName: "Improper Certificate Validation (TLS rejectUnauthorized: false)",
+    severity: "High",
+    cvss: 7.4,
+    mitreAttack: "T1557 (Adversary-in-the-Middle TLS Interception)",
+    sanitizerHint: "Enforce rejectUnauthorized: true and minVersion: 'TLSv1.3' with pinned CA bundle",
+    remediationSummary:
+      "Remove rejectUnauthorized: false in Node.js TLS/HTTPS agents; enforce rejectUnauthorized: true, hostname verification, and TLSv1.3.",
+  },
+  "CRYP-NODE-TLS-ENV": {
+    cwe: "CWE-295",
+    cweName: "Improper Certificate Validation (NODE_TLS_REJECT_UNAUTHORIZED = '0')",
+    severity: "High",
+    cvss: 7.4,
+    mitreAttack: "T1557 (Adversary-in-the-Middle TLS Interception)",
+    sanitizerHint: "Remove NODE_TLS_REJECT_UNAUTHORIZED='0' and configure NODE_EXTRA_CA_CERTS with trusted CA certificates",
+    remediationSummary:
+      "Never disable process-wide TLS certificate validation via NODE_TLS_REJECT_UNAUTHORIZED='0'; configure trusted root CAs via NODE_EXTRA_CA_CERTS or tls.connect({ rejectUnauthorized: true }).",
+  },
+  "CRYP-PY-VERIFY-FALSE": {
+    cwe: "CWE-295",
+    cweName: "Improper Certificate Validation (Python requests verify=False)",
+    severity: "High",
+    cvss: 7.4,
+    mitreAttack: "T1557 (Adversary-in-the-Middle TLS Interception)",
+    sanitizerHint: "Enforce verify=True (or verify='/etc/ssl/certs/ca-certificates.crt') in requests/httpx calls",
+    remediationSummary:
+      "Remove verify=False from Python requests/httpx calls and enforce X.509 certificate chain and hostname verification against certifi or a trusted CA bundle.",
+  },
+  "CRYP-GO-INSECURESKIPVERIFY": {
+    cwe: "CWE-295",
+    cweName: "Improper Certificate Validation (Go tls.Config InsecureSkipVerify: true)",
+    severity: "High",
+    cvss: 7.4,
+    mitreAttack: "T1557 (Adversary-in-the-Middle TLS Interception)",
+    sanitizerHint: "Enforce InsecureSkipVerify: false, MinVersion: tls.VersionTLS13, and ServerName verification in tls.Config",
+    remediationSummary:
+      "Remove InsecureSkipVerify: true from Go tls.Config; enforce InsecureSkipVerify: false, explicit ServerName hostname verification, and MinVersion: tls.VersionTLS13.",
+  },
+  "AUTH-LDAP-INJECTION": {
+    cwe: "CWE-90",
+    cweName: "Improper Neutralization of Special Elements used in an LDAP Query ('LDAP Injection')",
+    severity: "High",
+    cvss: 8.6,
+    sanitizerHint: "Use parameterized LDAP filter arguments (DirContext.search(name, filterExpr, filterArgs, cons)) and RFC 4515 escaping",
+    remediationSummary:
+      "Replace concatenated LDAP search filters with parameterized DirContext.search(baseDn, '(&(uid={0}))', new Object[]{userInput}, controls) or RFC 4515 filter escaping.",
+  },
+  "AUTH-NOSQL-MONGO-OP": {
+    cwe: "CWE-943",
+    cweName: "Improper Neutralization of Special Elements in Data Query Logic ('NoSQL Operator Injection')",
+    severity: "Critical",
+    cvss: 9.1,
+    sanitizerHint: "Coerce query inputs to primitive strings (String(input)) and reject $-prefixed MongoDB operator objects",
+    remediationSummary:
+      "Reject non-primitive object inputs and $-prefixed MongoDB query operators ($ne, $gt, $where, $regex) before passing user input to collection.find() or findOne().",
+  },
+  "AUTH-XPATH-INJECTION": {
+    cwe: "CWE-643",
+    cweName: "Improper Neutralization of Data within XPath Expressions ('XPath Injection')",
+    severity: "High",
+    cvss: 8.2,
+    sanitizerHint: "Use parameterized XPathVariableResolver instead of concatenating user input into XPath expressions",
+    remediationSummary:
+      "Bind untrusted variables via XPathVariableResolver ($var) rather than concatenating user input into XPath.compile() or evaluate() strings.",
+  },
+  "AUTH-COOKIE-NO-HTTPONLY": {
+    cwe: "CWE-1004",
+    cweName: "Sensitive Cookie Without 'HttpOnly' Flag",
+    severity: "Medium",
+    cvss: 5.3,
+    sanitizerHint: "Set HttpOnly=true, Secure=true, and SameSite=Strict/Lax on all session and authentication cookies",
+    remediationSummary:
+      "Enforce cookie.setHttpOnly(true) and cookie.setSecure(true) on all session and authentication cookies to prevent client-side script access.",
+  },
+  "AUTH-COOKIE-NO-SECURE": {
+    cwe: "CWE-614",
+    cweName: "Sensitive Cookie in HTTPS Session Without 'Secure' Attribute",
+    severity: "Medium",
+    cvss: 5.3,
+    sanitizerHint: "Enforce cookie.setSecure(true) and cookie.setHttpOnly(true) on all sensitive cookies",
+    remediationSummary:
+      "Enforce cookie.setSecure(true) and cookie.setHttpOnly(true) so sensitive cookies are never transmitted over unencrypted HTTP connections.",
+  },
+  "AUTH-COOKIE-SAMESITE-NONE": {
+    cwe: "CWE-1275",
+    cweName: "Sensitive Cookie with Improper SameSite Attribute",
+    severity: "Medium",
+    cvss: 5.3,
+    sanitizerHint: "Set SameSite=Strict or SameSite=Lax with Secure=true and HttpOnly=true on session cookies",
+    remediationSummary:
+      "Configure SameSite=Strict or SameSite=Lax (and Secure; HttpOnly) on session cookies to mitigate cross-site request forgery.",
+  },
+  "AUTH-SESSION-FIXATION": {
+    cwe: "CWE-384",
+    cweName: "Session Fixation (Missing Session Identifier Regeneration on Authentication)",
+    severity: "High",
+    cvss: 7.5,
+    sanitizerHint: "Call request.changeSessionId() or session.regenerate() immediately upon authentication state change",
+    remediationSummary:
+      "Regenerate the session identifier (request.changeSessionId() / req.session.regenerate()) upon user login or privilege elevation.",
+  },
+  "AUTH-LOG-FORGING": {
+    cwe: "CWE-117",
+    cweName: "Improper Output Neutralization for Logs ('CRLF Log Injection')",
+    severity: "Medium",
+    cvss: 5.3,
+    sanitizerHint: "Strip CR/LF characters (input.replaceAll('[\\\\r\\\\n]', '_')) and use structured JSON parameterized logging",
+    remediationSummary:
+      "Neutralize CR/LF control characters (\\r, \\n) before logging user-controlled values and use structured parameterized logger bindings.",
   },
 };
 

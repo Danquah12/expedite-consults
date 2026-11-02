@@ -23,8 +23,10 @@ class ProofState(str, enum.Enum):
     DISCOVERED = "DISCOVERED"
     OBSERVATION_CONFIRMED = "OBSERVATION_CONFIRMED"
     CONTROL_GAP_CONFIRMED = "CONTROL_GAP_CONFIRMED"
+    ATTACK_PATH_CORRELATED = "ATTACK_PATH_CORRELATED"
     ATTACK_PATH_VALIDATED = "ATTACK_PATH_VALIDATED"
     RUNTIME_REPRODUCED = "RUNTIME_REPRODUCED"
+    CONFIRMED_ADMIN_AUTH = "CONFIRMED_ADMIN_AUTH"
     IMPACT_VERIFIED = "IMPACT_VERIFIED"
     REMEDIATION_VERIFIED = "REMEDIATION_VERIFIED"
     INCONCLUSIVE = "INCONCLUSIVE"
@@ -332,3 +334,321 @@ class RetestExecution(Base):
     notes: Mapped[str] = mapped_column(Text, default="")
     executed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+# ==============================================================================
+# TrePath 2.3 — Exploit Validation Engine (EVE) Canonical Database Entities
+# Shared service architecture for TrePath 2.3 and Expedite Strike
+# ==============================================================================
+
+class EVEProofOutcome(str, enum.Enum):
+    DISCOVERED = "DISCOVERED"
+    OBSERVATION_CONFIRMED = "OBSERVATION_CONFIRMED"
+    PRECONDITION_VALIDATED = "PRECONDITION_VALIDATED"
+    EXPLOIT_ATTEMPTED = "EXPLOIT_ATTEMPTED"
+    RUNTIME_REPRODUCED = "RUNTIME_REPRODUCED"
+    CONFIRMED_UNAUTHORIZED_ACCESS = "CONFIRMED_UNAUTHORIZED_ACCESS"
+    CONFIRMED_PRIVILEGE_ESCALATION = "CONFIRMED_PRIVILEGE_ESCALATION"
+    IMPACT_VERIFIED = "IMPACT_VERIFIED"
+    EXPLOITATION_FAILED = "EXPLOITATION_FAILED"
+    INCONCLUSIVE = "INCONCLUSIVE"
+    NOT_APPLICABLE = "NOT_APPLICABLE"
+    OUT_OF_SCOPE_BLOCKED = "OUT_OF_SCOPE_BLOCKED"
+
+
+class EVEJobStatus(str, enum.Enum):
+    INGESTED = "INGESTED"
+    ANALYZED = "ANALYZED"
+    PLANNED_AWAITING_APPROVAL = "PLANNED_AWAITING_APPROVAL"
+    APPROVED = "APPROVED"
+    RUNNING = "RUNNING"
+    COMPLETED = "COMPLETED"
+    STOPPED = "STOPPED"
+    BLOCKED_OUT_OF_SCOPE = "BLOCKED_OUT_OF_SCOPE"
+    REJECTED = "REJECTED"
+    FAILED = "FAILED"
+
+
+class EVEPlatformTier(str, enum.Enum):
+    VULNERABILITY_DETECTED = "VULNERABILITY_DETECTED"
+    EXPLOITABILITY_VALIDATED = "EXPLOITABILITY_VALIDATED"
+    IMPACT_VERIFIED = "IMPACT_VERIFIED"
+    REMEDIATION_VERIFIED = "REMEDIATION_VERIFIED"
+
+
+class ExploitAdapterRecord(Base):
+    __tablename__ = "exploit_adapter_registry"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    adapter_id: Mapped[str] = mapped_column(String(60), unique=True, index=True)  # e.g. EVE-AUTH-001
+    name: Mapped[str] = mapped_column(String(200))
+    category: Mapped[str] = mapped_column(String(80), index=True)
+    priority_wave: Mapped[int] = mapped_column(Integer, default=1)  # 1 = First 5 core adapters, 2 = Extended 10 categories
+    version: Mapped[str] = mapped_column(String(40), default="eve-adapter/2.3.0")
+    safety_profile: Mapped[str] = mapped_column(String(60), default="READ_ONLY_DETERMINISTIC")
+    requires_explicit_approval: Mapped[bool] = mapped_column(Boolean, default=True)
+    max_requests_limit: Mapped[int] = mapped_column(Integer, default=6)
+    max_timeout_seconds: Mapped[int] = mapped_column(Integer, default=12)
+    what_it_proves: Mapped[str] = mapped_column(Text, default="")
+    supported_cwe_ids: Mapped[list] = mapped_column(JSON, default=list)
+    supported_finding_prefixes: Mapped[list] = mapped_column(JSON, default=list)
+    is_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ExploitValidationJob(Base):
+    __tablename__ = "exploit_validation_jobs"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    job_key: Mapped[str] = mapped_column(String(60), unique=True, index=True)  # e.g. EVE-JOB-00001
+    engagement_id: Mapped[int] = mapped_column(ForeignKey("engagements.id"), index=True)
+    scan_id: Mapped[int] = mapped_column(ForeignKey("scans.id"), index=True)
+    finding_id: Mapped[int] = mapped_column(ForeignKey("findings.id"), index=True)
+    asset_id: Mapped[int | None] = mapped_column(ForeignKey("assets.id"), index=True, nullable=True)
+    asset_key: Mapped[str] = mapped_column(String(60), index=True, default="")
+    effective_origin: Mapped[str] = mapped_column(String(512), default="")
+    target_endpoint: Mapped[str] = mapped_column(String(2048), default="")
+    service_name: Mapped[str] = mapped_column(String(120), default="http")
+    service_port: Mapped[int] = mapped_column(Integer, default=80)
+    vulnerability_class: Mapped[str] = mapped_column(String(80), index=True, default="general")
+    adapter_id: Mapped[str] = mapped_column(String(60), index=True, default="EVE-AUTH-001")
+    caller_service: Mapped[str] = mapped_column(String(60), default="trepath-2.3")  # trepath-2.3 | expedite-strike
+    status: Mapped[str] = mapped_column(String(40), index=True, default=EVEJobStatus.INGESTED.value)
+    current_stage: Mapped[int] = mapped_column(Integer, default=1)  # 1..9
+    proof_outcome: Mapped[str] = mapped_column(String(60), index=True, default=EVEProofOutcome.DISCOVERED.value)
+    platform_tier: Mapped[str] = mapped_column(String(60), default=EVEPlatformTier.VULNERABILITY_DETECTED.value)
+    finding_decision: Mapped[str] = mapped_column(String(40), default="PENDING")  # CONFIRMED | REJECTED | DOWNGRADED | INCONCLUSIVE | BLOCKED
+    scope_decision: Mapped[str] = mapped_column(String(40), default="IN_SCOPE")
+    scope_evidence: Mapped[str] = mapped_column(Text, default="")
+    validation_objective: Mapped[str] = mapped_column(Text, default="")
+    permitted_actions_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    max_requests: Mapped[int] = mapped_column(Integer, default=5)
+    max_execution_seconds: Mapped[int] = mapped_column(Integer, default=10)
+    requires_approval: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_approved: Mapped[bool] = mapped_column(Boolean, default=False)
+    emergency_stopped: Mapped[bool] = mapped_column(Boolean, default=False)
+    emergency_stop_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    evidence_confidence: Mapped[float] = mapped_column(Float, default=0.5)
+    exploitability_confidence: Mapped[float] = mapped_column(Float, default=0.0)
+    impact_confidence: Mapped[float] = mapped_column(Float, default=0.0)
+    summary_decision: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ExploitPrecondition(Base):
+    __tablename__ = "exploit_preconditions"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    job_id: Mapped[int] = mapped_column(ForeignKey("exploit_validation_jobs.id"), index=True)
+    finding_id: Mapped[int] = mapped_column(ForeignKey("findings.id"), index=True)
+    vulnerability_class: Mapped[str] = mapped_column(String(80))
+    affected_technology: Mapped[str] = mapped_column(String(160), default="unknown")
+    detected_version: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    cve_id: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    cwe_id: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    cve_applicable: Mapped[bool] = mapped_column(Boolean, default=False)
+    in_cisa_kev: Mapped[bool] = mapped_column(Boolean, default=False)
+    public_exploit_available: Mapped[bool] = mapped_column(Boolean, default=False)
+    exploit_db_refs: Mapped[list] = mapped_column(JSON, default=list)
+    required_auth_level: Mapped[str] = mapped_column(String(60), default="unauthenticated")
+    required_privileges: Mapped[str] = mapped_column(String(60), default="none")
+    network_reachable: Mapped[bool] = mapped_column(Boolean, default=True)
+    mitigating_controls_detected: Mapped[list] = mapped_column(JSON, default=list)
+    preconditions_satisfied: Mapped[bool] = mapped_column(Boolean, default=False)
+    precondition_checks_json: Mapped[list] = mapped_column(JSON, default=list)
+    exploitability_confidence: Mapped[float] = mapped_column(Float, default=0.0)
+    evidence_confidence: Mapped[float] = mapped_column(Float, default=0.5)
+    rationale: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ExploitExecutionApproval(Base):
+    __tablename__ = "exploit_execution_approvals"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    job_id: Mapped[int] = mapped_column(ForeignKey("exploit_validation_jobs.id"), index=True)
+    finding_id: Mapped[int] = mapped_column(ForeignKey("findings.id"), index=True)
+    approved_by_operator: Mapped[str] = mapped_column(String(160), default="secops-lead@expedite-consults.io")
+    approval_status: Mapped[str] = mapped_column(String(40), default="APPROVED")  # APPROVED | REJECTED | REVOKED
+    roe_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    safety_mode: Mapped[str] = mapped_column(String(60), default="READ_ONLY_DETERMINISTIC")
+    max_requests_authorized: Mapped[int] = mapped_column(Integer, default=5)
+    approval_token_sha256: Mapped[str] = mapped_column(String(64), index=True)
+    approval_notes: Mapped[str] = mapped_column(Text, default="")
+    approved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ExploitExecutionAttempt(Base):
+    __tablename__ = "exploit_execution_attempts"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    attempt_key: Mapped[str] = mapped_column(String(60), unique=True, index=True)  # e.g. EVE-ATT-00001
+    job_id: Mapped[int] = mapped_column(ForeignKey("exploit_validation_jobs.id"), index=True)
+    finding_id: Mapped[int] = mapped_column(ForeignKey("findings.id"), index=True)
+    adapter_id: Mapped[str] = mapped_column(String(60), index=True)
+    adapter_version: Mapped[str] = mapped_column(String(40), default="eve-adapter/2.3.0")
+    approval_id: Mapped[int | None] = mapped_column(ForeignKey("exploit_execution_approvals.id"), nullable=True)
+    worker_id: Mapped[str] = mapped_column(String(80), default="eve-safe-worker-01")
+    execution_status: Mapped[str] = mapped_column(String(40), default="COMPLETED")
+    requests_sent: Mapped[int] = mapped_column(Integer, default=0)
+    duration_ms: Mapped[int] = mapped_column(Integer, default=0)
+    expected_outcome: Mapped[str] = mapped_column(Text, default="")
+    actual_outcome: Mapped[str] = mapped_column(Text, default="")
+    reproduced_behavior: Mapped[bool] = mapped_column(Boolean, default=False)
+    transcript_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    transcript_sha256: Mapped[str] = mapped_column(String(64), index=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    completed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ExploitProofResult(Base):
+    __tablename__ = "exploit_proof_results"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    job_id: Mapped[int] = mapped_column(ForeignKey("exploit_validation_jobs.id"), index=True)
+    attempt_id: Mapped[int] = mapped_column(ForeignKey("exploit_execution_attempts.id"), index=True)
+    finding_id: Mapped[int] = mapped_column(ForeignKey("findings.id"), index=True)
+    prior_proof_state: Mapped[str] = mapped_column(String(60))
+    validated_proof_outcome: Mapped[str] = mapped_column(String(60), index=True)
+    platform_tier: Mapped[str] = mapped_column(String(60))
+    finding_decision: Mapped[str] = mapped_column(String(40))  # CONFIRMED | REJECTED | DOWNGRADED | INCONCLUSIVE
+    prior_severity: Mapped[str] = mapped_column(String(20))
+    recommended_severity: Mapped[str] = mapped_column(String(20))
+    severity_changed: Mapped[bool] = mapped_column(Boolean, default=False)
+    evidence_confidence: Mapped[float] = mapped_column(Float, default=0.8)
+    exploitability_confidence: Mapped[float] = mapped_column(Float, default=0.0)
+    impact_confidence: Mapped[float] = mapped_column(Float, default=0.0)
+    proof_rationale: Mapped[str] = mapped_column(Text, default="")
+    not_proven_boundary: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ExploitImpactResult(Base):
+    __tablename__ = "exploit_impact_results"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    job_id: Mapped[int] = mapped_column(ForeignKey("exploit_validation_jobs.id"), index=True)
+    attempt_id: Mapped[int] = mapped_column(ForeignKey("exploit_execution_attempts.id"), index=True)
+    finding_id: Mapped[int] = mapped_column(ForeignKey("findings.id"), index=True)
+    impact_category: Mapped[str] = mapped_column(String(80), index=True)
+    impact_established: Mapped[bool] = mapped_column(Boolean, default=False)
+    security_boundary_crossed: Mapped[str] = mapped_column(String(160), default="NONE")
+    unauthorized_access_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    auth_control_failure_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    authorization_bypass_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    privilege_escalation_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    sensitive_data_exposure_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    isolated_rce_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    controlled_ssrf_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    deterministic_injection_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    analytical_dos_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    verification_criteria_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    impact_summary: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ExploitEvidenceRecord(Base):
+    __tablename__ = "exploit_evidence_records"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    evidence_key: Mapped[str] = mapped_column(String(60), unique=True, index=True)  # e.g. EVE-EVID-00001
+    job_id: Mapped[int] = mapped_column(ForeignKey("exploit_validation_jobs.id"), index=True)
+    attempt_id: Mapped[int] = mapped_column(ForeignKey("exploit_execution_attempts.id"), index=True)
+    original_finding_id: Mapped[int] = mapped_column(ForeignKey("findings.id"), index=True)
+    evidence_artifact_id: Mapped[int | None] = mapped_column(ForeignKey("evidence_artifacts.id"), nullable=True)
+    asset_and_origin_identity: Mapped[str] = mapped_column(String(512))
+    approved_scope_and_roe: Mapped[str] = mapped_column(Text)
+    validation_adapter_and_version: Mapped[str] = mapped_column(String(120))
+    test_timestamp: Mapped[str] = mapped_column(String(64))
+    preconditions_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    execution_transcript_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    request_response_evidence_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    expected_vs_actual_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    execution_outcome: Mapped[str] = mapped_column(String(60))
+    evidence_confidence: Mapped[float] = mapped_column(Float, default=0.8)
+    exploitability_confidence: Mapped[float] = mapped_column(Float, default=0.0)
+    impact_confidence: Mapped[float] = mapped_column(Float, default=0.0)
+    sha256_evidence_digest: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    operator_or_approving_identity: Mapped[str] = mapped_column(String(160))
+    sealed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ExploitStateTransition(Base):
+    __tablename__ = "exploit_state_transitions"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    job_id: Mapped[int] = mapped_column(ForeignKey("exploit_validation_jobs.id"), index=True)
+    finding_id: Mapped[int] = mapped_column(ForeignKey("findings.id"), index=True)
+    stage_number: Mapped[int] = mapped_column(Integer)
+    stage_name: Mapped[str] = mapped_column(String(80))
+    from_state: Mapped[str] = mapped_column(String(60))
+    to_state: Mapped[str] = mapped_column(String(60))
+    rule_id: Mapped[str] = mapped_column(String(60))
+    evidence_digest_ref: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    rationale: Mapped[str] = mapped_column(Text, default="")
+    transitioned_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ExploitCleanupRecord(Base):
+    __tablename__ = "exploit_cleanup_records"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    job_id: Mapped[int] = mapped_column(ForeignKey("exploit_validation_jobs.id"), index=True)
+    attempt_id: Mapped[int] = mapped_column(ForeignKey("exploit_execution_attempts.id"), index=True)
+    adapter_id: Mapped[str] = mapped_column(String(60))
+    artifacts_created_count: Mapped[int] = mapped_column(Integer, default=0)
+    artifacts_removed_count: Mapped[int] = mapped_column(Integer, default=0)
+    cleanup_status: Mapped[str] = mapped_column(String(40), default="CLEAN_VERIFIED_READ_ONLY")
+    residual_state_detected: Mapped[bool] = mapped_column(Boolean, default=False)
+    cleanup_notes: Mapped[str] = mapped_column(Text, default="")
+    verified_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ExploitAuditEvent(Base):
+    __tablename__ = "exploit_audit_events"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    job_id: Mapped[int | None] = mapped_column(ForeignKey("exploit_validation_jobs.id"), index=True, nullable=True)
+    finding_id: Mapped[int | None] = mapped_column(ForeignKey("findings.id"), index=True, nullable=True)
+    actor_identity: Mapped[str] = mapped_column(String(160), default="eve-orchestrator@trepath.local")
+    event_type: Mapped[str] = mapped_column(String(80), index=True)
+    stage: Mapped[str] = mapped_column(String(60))
+    severity: Mapped[str] = mapped_column(String(30), default="INFO")
+    details_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    event_sha256: Mapped[str] = mapped_column(String(64), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+# ==============================================================================
+# TrePath 2.4 — Unified Finding Registry (XTRIKE SAST + TrePath + Expedite Strike + Noctis)
+# ==============================================================================
+
+class UnifiedFindingRecord(Base):
+    __tablename__ = "unified_finding_registry"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    unified_key: Mapped[str] = mapped_column(String(60), unique=True, index=True)  # e.g. UFR-00001
+    scan_id: Mapped[int] = mapped_column(ForeignKey("scans.id"), index=True)
+    finding_id: Mapped[int] = mapped_column(ForeignKey("findings.id"), index=True)
+    asset_key: Mapped[str] = mapped_column(String(60), index=True)
+    effective_origin: Mapped[str] = mapped_column(String(512))
+    endpoint_url: Mapped[str] = mapped_column(String(2048))
+    # XTRIKE SAST Source-to-Sink Provenance
+    xtrike_sast_finding_id: Mapped[str | None] = mapped_column(String(80), index=True, nullable=True)
+    repository_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    commit_sha: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    vulnerable_file: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    vulnerable_line: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    source_to_sink_trace_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    proposed_sast_patch: Mapped[str] = mapped_column(Text, default="")
+    # Expedite Strike & EVE Runtime Verification
+    expedite_strike_job_key: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    admin_boundary_level: Mapped[str] = mapped_column(String(80), default="NOT_ADMIN_ROUTE")
+    runtime_verification_state: Mapped[str] = mapped_column(String(60), default="OBSERVATION_CONFIRMED")
+    platform_tier: Mapped[str] = mapped_column(String(60), default="VULNERABILITY_DETECTED")
+    # 4-Track Scoring
+    vulnerability_cvss: Mapped[float | None] = mapped_column(Float, nullable=True)
+    configuration_control_priority: Mapped[float] = mapped_column(Float, default=0.0)
+    reconnaissance_intelligence_priority: Mapped[float] = mapped_column(Float, default=0.0)
+    exploitability_confidence: Mapped[float] = mapped_column(Float, default=0.0)
+    # RTEX & Noctis Closure
+    remediation_task_key: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    retest_exec_key: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    remediation_applied: Mapped[bool] = mapped_column(Boolean, default=False)
+    security_closure_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    functional_regression_passed: Mapped[bool] = mapped_column(Boolean, default=False)
+    noctis_correlation_id: Mapped[str] = mapped_column(String(60), index=True)
+    noctis_posture_state: Mapped[str] = mapped_column(String(60), default="OPEN_DETECTED")
+    evidence_sha256: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+

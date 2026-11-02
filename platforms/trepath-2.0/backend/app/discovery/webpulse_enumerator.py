@@ -10,6 +10,7 @@ from urllib.parse import urljoin, urlparse, parse_qs
 import httpx
 
 from ..models import ProofState
+from ..scope import evaluate_url_scope_provenance, normalize_origin
 
 
 FORM_TAG_RE = re.compile(r"<form\b([^>]*)>(.*?)</form>", re.IGNORECASE | re.DOTALL)
@@ -46,6 +47,8 @@ class WebPulseEnumerationResult:
     auth_challenges: list[dict[str, str]] = field(default_factory=list)
     allowed_methods_by_origin: dict[str, list[str]] = field(default_factory=dict)
     findings: list[dict[str, Any]] = field(default_factory=list)
+    external_references: list[dict[str, Any]] = field(default_factory=list)
+    blocked_redirects: list[dict[str, Any]] = field(default_factory=list)
 
 
 COMMON_ENUM_ROUTES = [
@@ -65,16 +68,30 @@ COMMON_ENUM_ROUTES = [
 async def run_webpulse_enumerator(
     http_origins: list[str],
     timeout: float = 2.5,
+    allowed_origins: list[str] | None = None,
+    assessment_scope_id: str = "SCOPE-DEFAULT",
 ) -> WebPulseEnumerationResult:
     """
     Crawl and enumerate discovered HTTP origins (`:80`, `:8080`, etc.):
       1. Extract `<form>` elements, input parameters, password fields, file uploads, and CSRF tokens.
-      2. Extract same-origin `<a href>` links with query parameters.
-      3. Inspect `WWW-Authenticate` headers to distinguish Basic vs. Digest vs. Bearer authentication realms.
-      4. Probe `OPTIONS` to enumerate allowed HTTP methods (`PUT`, `DELETE`, `TRACE`, `PROPFIND`).
+      2. Extract same-origin `<a href>` links with query parameters; log external links as EXTERNAL_REFERENCE_NOT_SCANNED (AT-01).
+      3. Re-evaluate scope on every HTTP redirect hop; block out-of-scope redirects (AT-02).
+      4. Inspect `WWW-Authenticate` headers to distinguish Basic vs. Digest vs. Bearer authentication realms.
+      5. Probe `OPTIONS` to enumerate allowed HTTP methods (`PUT`, `DELETE`, `TRACE`, `PROPFIND`).
     """
     result = WebPulseEnumerationResult()
     seen_urls: set[str] = set()
+    seen_ext_refs: set[str] = set()
+
+    effective_allowlist = list(allowed_origins) if allowed_origins is not None else []
+    if not effective_allowlist:
+        for orig in http_origins:
+            try:
+                norm_o = normalize_origin(orig)
+                if norm_o not in effective_allowlist:
+                    effective_allowlist.append(norm_o)
+            except Exception:
+                pass
 
     timeout_cfg = httpx.Timeout(connect=1.5, read=2.0, write=1.5, pool=2.5)
     async with httpx.AsyncClient(
@@ -134,6 +151,20 @@ async def run_webpulse_enumerator(
                 try:
                     res = await client.get(probe_url)
                 except Exception:
+                    continue
+
+                # TP22-01 / AT-02: Validate every redirect hop against approved ROE allowlist
+                redirect_hops = [str(r.headers.get("location") or r.url) for r in res.history] if res.history else []
+                if str(res.url) != probe_url and str(res.url) not in redirect_hops:
+                    redirect_hops.append(str(res.url))
+                prov = evaluate_url_scope_provenance(
+                    requested_url=probe_url,
+                    allowed_origins=effective_allowlist,
+                    redirect_urls=[ str(urljoin(probe_url, h)) for h in redirect_hops ],
+                    assessment_scope_id=assessment_scope_id,
+                )
+                if prov["scope_decision"] != "IN_SCOPE":
+                    result.blocked_redirects.append(prov)
                     continue
 
                 # Check WWW-Authenticate challenge (even on 401/403)
@@ -264,15 +295,31 @@ async def run_webpulse_enumerator(
                             "evidence": json.dumps(asdict(enum_form), indent=2),
                         })
 
-                # Parse <a href="..."> links on the same host
+                # Parse <a href="..."> links: keep same-origin/in-scope links; record external links as EXTERNAL_REFERENCE_NOT_SCANNED (AT-01)
                 for am in ANCHOR_HREF_RE.finditer(html):
                     href = am.group(1).strip()
                     if href.startswith(("javascript:", "mailto:", "tel:")):
                         continue
                     full_link = urljoin(probe_url, href)
                     parsed_link = urlparse(full_link)
-                    if parsed_link.hostname == parsed_origin.hostname and len(result.discovered_urls) < 60:
-                        if full_link not in result.discovered_urls:
+                    link_prov = evaluate_url_scope_provenance(
+                        requested_url=full_link,
+                        allowed_origins=effective_allowlist,
+                        assessment_scope_id=assessment_scope_id,
+                    )
+                    if parsed_link.hostname == parsed_origin.hostname and link_prov["scope_decision"] == "IN_SCOPE":
+                        if len(result.discovered_urls) < 60 and full_link not in result.discovered_urls:
                             result.discovered_urls.append(full_link)
+                    else:
+                        if full_link not in seen_ext_refs:
+                            seen_ext_refs.add(full_link)
+                            result.external_references.append({
+                                "discovered_on": probe_url,
+                                "reference_url": full_link,
+                                "effective_origin": link_prov["effective_origin"],
+                                "scope_decision": "OUT_OF_SCOPE",
+                                "scope_evidence": link_prov["scope_evidence"],
+                                "classification": "EXTERNAL_REFERENCE_NOT_SCANNED",
+                            })
 
     return result

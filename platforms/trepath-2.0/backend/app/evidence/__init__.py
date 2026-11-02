@@ -30,6 +30,8 @@ def determine_artifact_type(finding_key: str) -> str:
         return "ORCHESTRATOR_TARGETED_DAST_RECORD"
     if finding_key.startswith("ENUM-"):
         return "WEBPULSE_NETRECON_ENUMERATION"
+    if finding_key.startswith("API-"):
+        return "API_SECURITY_PROBE"
     if finding_key.startswith("WEB-"):
         return "WEB_RECON"
     return "HTTP_HEADER_OBSERVATION"
@@ -69,11 +71,17 @@ def seal_finding_with_evidence(
     """Validate proof state via PentestValidator, store immutable evidence binary, and persist Finding + EvidenceArtifact."""
     item = dict(raw_item)
     raw_ev_str = str(item.pop("evidence", "{}"))
+    target_url_meta = item.pop("target_url", None)
     evidence_bytes = raw_ev_str.encode("utf-8", errors="replace")
-    finding_key = str(item.get("finding_key", "FINDING-001"))
+    finding_key = str(item.get("finding_key", "FINDING-001"))[:120]
+    item["finding_key"] = finding_key
+    if "title" in item and item["title"] is not None:
+        item["title"] = str(item["title"])[:300]
     artifact_type = determine_artifact_type(finding_key)
 
     path, digest, meta = store_evidence(evidence_dir, scan_id, artifact_type, evidence_bytes)
+    if target_url_meta:
+        meta["target_url"] = str(target_url_meta)
 
     # Enforce Rule #10: Findings cannot be marked exploitable without required proof
     requested_ps = item.get("proof_state", models.ProofState.OBSERVATION_CONFIRMED)
@@ -92,7 +100,24 @@ def seal_finding_with_evidence(
         "reason": validation.reason,
     }
 
-    finding = models.Finding(scan_id=scan_id, **item)
+    valid_finding_cols = {
+        "finding_key",
+        "title",
+        "description",
+        "severity",
+        "proof_state",
+        "cvss_score",
+        "cve_id",
+        "cwe_id",
+        "remediation",
+        "risk_priority",
+    }
+    clean_finding_kwargs = {k: v for k, v in item.items() if k in valid_finding_cols}
+    clean_finding_kwargs.setdefault("severity", "low")
+    clean_finding_kwargs.setdefault("description", "Security observation recorded.")
+    clean_finding_kwargs.setdefault("remediation", "Apply recommended security controls and re-verify.")
+
+    finding = models.Finding(scan_id=scan_id, **clean_finding_kwargs)
     db.add(finding)
     db.flush()
 

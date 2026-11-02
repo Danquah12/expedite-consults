@@ -97,6 +97,34 @@ def execute_orchestrated_ingestion_and_lifecycle(
         normalized=norm_asset,
     )
 
+    # Persist NormalizedAsset records for any additional distinct hostnames/IPs in multi-target scope
+    from urllib.parse import urlparse
+    seen_asset_hosts = {norm_asset.hostname.lower()}
+    extra_asset_count = 0
+    for ext_u in (extra_discovered_urls or []):
+        if extra_asset_count >= 250:
+            break
+        try:
+            pu = urlparse(ext_u if "://" in ext_u else f"http://{ext_u}")
+            ehost = (pu.hostname or "").lower()
+            if ehost and ehost not in seen_asset_hosts:
+                seen_asset_hosts.add(ehost)
+                ext_norm = normalize_discovered_assets(
+                    target_url=ext_u,
+                    port_findings=[pf for pf in port_findings if pf.get("target_url") == ext_u],
+                    posture_findings=[pf for pf in posture_findings if pf.get("target_url") == ext_u],
+                    web_findings=[wf for wf in web_findings if wf.get("target_url") == ext_u],
+                )
+                persist_normalized_asset(
+                    db=db,
+                    engagement_id=scan.engagement_id,
+                    scan_id=scan.id,
+                    normalized=ext_norm,
+                )
+                extra_asset_count += 1
+        except Exception:
+            pass
+
     classified_eps = classify_endpoints(
         asset=norm_asset,
         web_findings=web_findings,
@@ -111,11 +139,12 @@ def execute_orchestrated_ingestion_and_lifecycle(
         include_duplicates=False,
     )
     dup_count = sum(1 for ep in classified_eps if ep.is_duplicate)
+    total_assets_cnt = 1 + extra_asset_count
     _notify(
         90,
         "NORMALIZATION",
         "ASSET_NORMALIZER",
-        f"Normalized asset {asset_record.asset_key} ({asset_record.hostname}) -> "
+        f"Normalized {total_assets_cnt} asset(s) (Primary: {asset_record.asset_key} {asset_record.hostname}) -> "
         f"{len(endpoint_records)} unique endpoints ({dup_count} duplicates suppressed).",
     )
 
@@ -182,25 +211,26 @@ def execute_orchestrated_ingestion_and_lifecycle(
             continue
         matched_intel = next((m for m in intel_records if m.technology_id == tech.id), None)
         cve_str = matched_intel.cve_id if matched_intel else None
-        cvss_val = float(matched_intel.cvss_score) if matched_intel else 6.5
+        cvss_val = float(matched_intel.cvss_score) if matched_intel else 3.7
         ver_raw = {
             "finding_key": ver_key,
             "title": (
-                f"[VER-INTEL-001] Outdated Software Component Verified: {tech.name} {tech.version or ''} "
-                + (f"({cve_str})" if cve_str else "(Legacy Release)")
+                f"[VER-INTEL-001] Outdated Software Component Identified (Version Fingerprint): {tech.name} {tech.version or ''} "
+                + (f"[CVE_CORRELATED: {cve_str}]" if cve_str else "(Version Fingerprint)")
             )[:255],
             "description": (
-                f"Version intelligence check `VER-INTEL-001` verified fingerprinted component `{tech.name} {tech.version or ''}` "
+                f"Version intelligence check `VER-INTEL-001` identified fingerprinted component `{tech.name} {tech.version or ''}` "
                 f"(CPE: `{tech.cpe or 'N/A'}`, Banner: `{tech.banner}`). "
-                + (matched_intel.summary if matched_intel else "Outdated software release detected.")
+                "Note: This observation confirms version identification (`CVE_CORRELATED`), not verified vulnerability exploitation. "
+                + (matched_intel.summary if matched_intel else "Version banner observed without precondition-verified CVE.")
             ),
-            "severity": "high" if cvss_val >= 7.5 else "medium",
-            "proof_state": models.ProofState.CONTROL_GAP_CONFIRMED,
+            "severity": "high" if (cve_str and cvss_val >= 7.5) else ("medium" if cve_str else "low"),
+            "proof_state": models.ProofState.CONTROL_GAP_CONFIRMED if cve_str else models.ProofState.OBSERVATION_CONFIRMED,
             "cvss_score": cvss_val,
             "cve_id": cve_str,
             "cwe_id": matched_intel.cwe_id if matched_intel else "CWE-1104",
             "remediation": f"Upgrade {tech.name} ({tech.version or 'legacy'}) to a current vendor-supported release and apply security advisories.",
-            "risk_priority": 74.0 if cvss_val >= 7.5 else 52.0,
+            "risk_priority": 74.0 if (cve_str and cvss_val >= 7.5) else (52.0 if cve_str else 28.0),
             "evidence": json.dumps({
                 "source": "TrePath Version Intelligence Adapter (VER-INTEL-001)",
                 "test_id": "VER-INTEL-001",
@@ -276,12 +306,16 @@ def execute_orchestrated_ingestion_and_lifecycle(
         asset_id=asset_record.id,
         findings=persisted_findings,
     )
+
+    # Stage 8b / EVE: Exploit Validation Engine (Preconditions -> Approval -> Safe Execution -> Proof -> Impact)
+    from ..eve import ExploitOrchestrator
+    eve_summary = ExploitOrchestrator.validate_scan_findings(db, scan.id)
     _notify(
         98,
-        "RISK_GRAPH",
-        "ATTACK_GRAPH",
-        f"RiskEngine prioritized {len(persisted_findings)} findings, synthesized {len(attack_paths)} attack paths, "
-        f"and created {len(remediation_tasks)} remediation tasks.",
+        "EVE_VALIDATION",
+        "EVE_ORCHESTRATOR",
+        f"Exploit Validation Engine (EVE) completed {eve_summary['completed_jobs']} validation jobs "
+        f"(Outcomes: {eve_summary['outcome_distribution']}) and sealed {len(persisted_findings)} findings.",
     )
 
     db.flush()

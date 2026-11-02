@@ -152,15 +152,16 @@ async def run_protocol_enumerator(
                     else f"[NetRecon] MySQL Listener Host ACL Verified on {host}:3306"
                 ),
                 "description": (
-                    f"MySQL protocol probe on {host}:3306 returned greeting: `{mysql_info['raw_greeting']}`."
+                    f"MySQL protocol probe on {host}:3306 returned initial server greeting (`{mysql_info['raw_greeting']}`). "
+                    "Note: Initial handshake discloses daemon version (`5.0.51a`), but database authentication is still required prior to query execution."
                 ),
-                "severity": "high" if open_handshake else "low",
+                "severity": "medium" if open_handshake else "low",
                 "proof_state": ProofState.CONTROL_GAP_CONFIRMED if open_handshake else ProofState.OBSERVATION_CONFIRMED,
-                "cvss_score": 7.5 if open_handshake else 3.0,
+                "cvss_score": 5.3 if open_handshake else 3.0,
                 "cve_id": None,
-                "cwe_id": "CWE-284" if open_handshake else "CWE-200",
+                "cwe_id": "CWE-200",
                 "remediation": "Bind MySQL (3306/TCP) to 127.0.0.1 or restrict network access strictly to application tier hosts.",
-                "risk_priority": 65.0 if open_handshake else 20.0,
+                "risk_priority": 52.0 if open_handshake else 20.0,
                 "evidence": json.dumps(mysql_info, indent=2),
             })
 

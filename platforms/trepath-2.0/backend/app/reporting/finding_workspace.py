@@ -40,6 +40,11 @@ PROOF_STATE_DEFINITIONS: dict[str, dict[str, str]] = {
         "meaning": "The vulnerability was actively reproduced at runtime using a deterministic non-destructive canary or probe.",
         "exploitability_note": "Runtime behavior was reproduced and verified in the response transcript.",
     },
+    "CONFIRMED_ADMIN_AUTH": {
+        "validation_status": "Confirmed administrative authentication",
+        "meaning": "Authenticated administrative console access and application inventory visibility were verified using default or weak credentials.",
+        "exploitability_note": "Proves authenticated administrative console access; WAR deployment and OS command execution were not performed under safe ROE.",
+    },
     "IMPACT_VERIFIED": {
         "validation_status": "Security impact verified",
         "meaning": "The downstream security impact (such as unauthorized data access or execution) was directly demonstrated.",

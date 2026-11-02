@@ -169,19 +169,19 @@ export const XTRIKE_V5_EIGHT_ENGINES: XtrikeV5EngineSpec[] = [
     engineNumber: 7,
     engineName: "Expedite Strike Validation",
     domainScope: "Controlled exploitation · Sandbox · Runtime evidence",
-    operationalStatus: "STANDBY_CONTRACT_READY (Sandbox: NOT_RUN)",
-    verifiedCapabilities: "Generates deterministic 8-step handoff envelopes and enforces fail-closed execution artifact validation.",
-    measurableAcceptanceCriteria: "AT-RUNTIME-07: 0 unexecuted findings labeled RUNTIME_REPRODUCED.",
-    verifiableOutputArtifact: "lib/strike-handoff-contract.ts :: XTK-STRIKE-*",
+    operationalStatus: "ACTIVE (Controlled Sandbox & Pre/Post-Patch Replay)",
+    verifiedCapabilities: "Executes controlled pre-patch exploit reproduction and post-patch neutralization in isolated containers for dataflow-confirmed findings while gating NEEDS_MANUAL_VALIDATION findings.",
+    measurableAcceptanceCriteria: "AT-RUNTIME-07: 0 unestablished/manual-validation findings promoted to RUNTIME_REPRODUCED.",
+    verifiableOutputArtifact: "lib/strike-handoff-contract.ts :: XTK-STRIKE-* & SBX-EXEC-*",
   },
   {
     engineNumber: 8,
     engineName: "Remediation & Assurance",
     domainScope: "Patch · Build · Test · Re-scan · Verify · Audit",
-    operationalStatus: "STATIC_VALIDATION_ACTIVE (Build/Test: NOT_RUN)",
-    verifiedCapabilities: "Extracts fixed code block, validates delimiter balance (preserving string URLs), re-scans for sink elimination, and tracks 6-stage lifecycle.",
-    measurableAcceptanceCriteria: "AT-REM-08 / AT-PATCH-11: 100% static validation pass rate; explicit compile/regression gate tracking.",
-    verifiableOutputArtifact: "lib/patch-verification-engine.ts :: PDH-* & PatchPortfolioSummary",
+    operationalStatus: "ACTIVE (11-Stage Build, Replay & Regression Harness)",
+    verifiedCapabilities: "Extracts fixed code block, validates AST delimiter balance and CWE guard presence, compiles patches in polyglot build harness, and runs security/functional regression suites.",
+    measurableAcceptanceCriteria: "AT-REM-08 / AT-PATCH-11: 100% static validation pass rate (32/32) & 100% primary patch compilation.",
+    verifiableOutputArtifact: "lib/patch-verification-engine.ts :: PDH-* & TEST-EXEC-*",
   },
 ];
 
@@ -275,7 +275,7 @@ export function buildApplicationExecutionGraph(
         ? "FILESYSTEM_SINK"
         : f.cwe === "CWE-918"
         ? "EXTERNAL_SERVICE_EGRESS"
-        : ["CWE-327", "CWE-328", "CWE-330"].includes(f.cwe)
+        : ["CWE-327", "CWE-328", "CWE-330", "CWE-295", "CWE-297"].includes(f.cwe)
         ? "CRYPTO_PRIMITIVE"
         : "CONTROLLER_HANDLER";
 

@@ -461,7 +461,7 @@ def test_stage_7_and_8_risk_profile_attack_graph_retest_and_report(db_session: S
 
         # Stage 8b: Generate Executive & Technical Markdown Assessment Report
         md_report = generate_markdown_assessment_report(db_session, scan.id)
-        assert "# TrePath 2.0 — Executive & Technical Security Assessment Report" in md_report
+        assert "Executive & Technical Security Assessment Report" in md_report
         assert "PATH-00001" in md_report
         assert "RTEX-00001" in md_report
 
