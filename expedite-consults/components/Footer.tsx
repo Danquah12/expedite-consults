@@ -3,208 +3,207 @@ import { GetServicesQueryResult } from "@/sanity.types";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
-
 import { Svgs } from "./Svgs";
-import { getLegal } from "@/sanity/lib/others/getLegal";
-import getSiteSettings from "@/sanity/lib/others/getSiteSettings";
 
-async function Footer({ services }: { services: GetServicesQueryResult }) {
-	const legal = await getLegal();
-	const site = await getSiteSettings();
+interface FooterProps {
+	services?: GetServicesQueryResult;
+}
+
+export default function Footer({ services }: FooterProps) {
+	const currentYear = new Date().getFullYear();
+
+	const serviceLinks = [
+		{ name: "Cybersecurity Consultancy", href: "/services/cybersecurity-consultancy" },
+		{ name: "AI Security", href: "/services/ai-security" },
+		{ name: "Managed Security", href: "/services/managed-security" },
+		{ name: "Penetration Testing", href: "/services/penetration-testing" },
+		{ name: "Data Privacy", href: "/services/data-privacy" },
+	];
+
+	const ecosystemLinks = [
+		{
+			name: "🚀 Launchpad (All 34 Apps)",
+			href: routes.launchpad.url,
+			highlight: true,
+		},
+		{
+			name: "ConnectIn Professional OS",
+			href: routes.connectin.url,
+		},
+		{
+			name: "Digital Campus Platform",
+			href: routes.campus.url,
+		},
+		{
+			name: "About Expedite Consults",
+			href: routes.about.url,
+		},
+	];
+
 	return (
-		<footer className="bg-secondary/80 backdrop-blur-sm">
-			<div className="container text-white mx-auto px-4 py-12 lg:py-20 flex flex-col gap-20">
-				<div className="w-full flex flex-col lg:flex-row gap-12 lg:justify-between">
-					<div className="flex flex-col gap-8 lg:border-r border-r-primary lg:pr-10">
+		<footer className="bg-[#242d3c] border-t border-slate-700/50 text-white">
+			<div className="container mx-auto px-4 py-12 lg:py-16">
+				<div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start justify-between">
+					{/* Left Brand Block with Cyan Vertical Line Divider */}
+					<div className="flex flex-col gap-4 lg:pr-10 lg:border-r border-[#00c2cb] max-w-sm shrink-0">
 						<Link
 							href={routes.home}
 							prefetch={false}
-							className="flex items-center space-x-2 hover:opacity-90 transition-opacity"
+							className="flex items-center space-x-3 hover:opacity-95 transition-opacity"
 						>
 							<Image
 								src="/logo-icon.png"
-								className="w-[46px] h-[46px] lg:w-[54px] lg:h-[54px] rounded-sm object-contain flex-shrink-0"
+								className="w-[46px] h-[46px] lg:w-[52px] lg:h-[52px] rounded-sm object-contain flex-shrink-0"
 								width={100}
 								height={100}
 								alt="Expedite Consults LLC logo"
 							/>
-							<span className="text-base lg:text-lg font-semibold text-white">
+							<span className="text-base lg:text-lg font-bold text-white tracking-tight">
 								Expedite Consults LLC
 							</span>
 						</Link>
 
-						<p className="w-full md:w-[350px] text-[0.8rem] lg:text-sm">
-							Trusted Cybersecurity Solutions | Building Confidence, Enhancing
-							Resilience
+						<p className="text-xs lg:text-[13px] text-slate-300 leading-relaxed font-normal">
+							Trusted Cybersecurity Solutions | Building Confidence, Enhancing Resilience
 						</p>
-
-						{/* <div className="flex gap-3">
-							<a
-								href="https://www.facebook.com/riviaco?mibextid=ZbWKwL"
-								target="_blank"
-							>
-								<Facebook className="w-[20px]" />
-							</a>
-
-							<a
-								href="https://www.linkedin.com/company/riviacares/"
-								target="_blank"
-							>
-								<Linkedin className="w-[20px]" />
-							</a>
-						</div> */}
 					</div>
 
-					<div className="flex lg:ml-8 flex-1 gap-8 flex-col lg:flex-row justify-end">
-						<div className="basis-[25%] space-y-3 md:space-y-5">
-							<h2 className="text-base font-semibold text-primary">Services</h2>
-
-							<ul className="space-y-2">
-								{services.map((service, index) => {
-									return (
-										<li key={index}>
-											<Link
-												className="text-[0.8rem] lg:text-sm"
-												href={`${routes.services}/${service.slug?.current}`}
-											>
-												{service?.name}
-											</Link>
-										</li>
-									);
-								})}
-							</ul>
-						</div>
-						<div className="basis-[25%] space-y-3 md:space-y-5">
-							<h2 className="text-base font-semibold text-primary">
-								Digital Ecosystem
+					{/* 4 Navigation Columns */}
+					<div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-10 flex-1 w-full">
+						{/* Column 1: Services */}
+						<div className="space-y-3">
+							<h2 className="text-sm lg:text-base font-semibold text-[#00c2cb] tracking-wide">
+								Services
 							</h2>
-
-							<ul className="space-y-2">
-								<li>
-									<Link
-										className="text-[0.8rem] lg:text-sm text-cyan-400 font-semibold hover:underline flex items-center gap-1"
-										href={routes.launchpad.url}
-									>
-										<span>🚀</span> Launchpad (All 34 Apps)
-									</Link>
-								</li>
-								<li>
-									<Link
-										className="text-[0.8rem] lg:text-sm hover:text-white"
-										href={routes.connectin.url}
-									>
-										ConnectIn Professional OS
-									</Link>
-								</li>
-								<li>
-									<Link
-										className="text-[0.8rem] lg:text-sm hover:text-white"
-										href={routes.campus.url}
-									>
-										Digital Campus Platform
-									</Link>
-								</li>
-								<li>
-									<Link
-										className="text-[0.8rem] lg:text-sm hover:text-white"
-										href={routes.about.url}
-									>
-										About Expedite Consults
-									</Link>
-								</li>
-							</ul>
-						</div>
-						<div className="basis-[25%] space-y-3 md:space-y-5">
-							<h2 className="text-base font-semibold text-primary">Contact</h2>
-
-							<ul className="space-y-2">
-								<li className="text-[0.8rem] lg:text-sm">
-									<Link href={`tel:${site?.phone}`}>{site?.phone}</Link>
-								</li>
-								<li className="text-[0.8rem] lg:text-sm">
-									<Link href={`mailto:${site?.email}`}>{site?.email}</Link>
-								</li>
-								<li className="text-[0.8rem] lg:text-sm flex items-center pt-2 gap-2">
-									{site?.whatsapp && (
+							<ul className="space-y-2 text-xs lg:text-sm">
+								{serviceLinks.map((service, index) => (
+									<li key={index}>
 										<Link
-											target="_blank"
-											href={`https://wa.me/${site?.whatsapp}`}
-											className="p-2 self-start rounded-full bg-green-500"
+											href={service.href}
+											className="text-slate-300 hover:text-white transition-colors"
 										>
-											<Svgs.whatsapp className="size-4 fill-white" />
-										</Link>
-									)}
-
-									{site?.socialLinks?.map((item, i) => {
-										if (item.platform === "Linkedin") {
-											return (
-												<Link
-													key={i}
-													target="_blank"
-													href={item.url ?? ""}
-													className="p-2 self-start rounded-full bg-blue-400"
-												>
-													<Svgs.linkedin className="size-4 fill-white" />
-												</Link>
-											);
-										}
-
-										if (item.platform === "Twitter") {
-											return (
-												<Link
-													key={i}
-													target="_blank"
-													href={item.url ?? ""}
-													className="p-2 self-start rounded-full bg-black"
-												>
-													<Svgs.twitter className="size-4 fill-white" />
-												</Link>
-											);
-										}
-									})}
-									{/* <Link
-										target="_blank"
-										href="https://www.linkedin.com/company/expedite-consults-llc/posts/?feedView=articles&viewAsMember=true"
-										className="p-2 self-start rounded-full bg-blue-400"
-									>
-										<Svgs.linkedin className="size-4 fill-white" />
-									</Link> */}
-									{/* <Link
-										target="_blank"
-										href="#"
-										className="p-2 self-start rounded-full bg-black"
-									>
-										<Svgs.twitter className="size-4 fill-white" />
-									</Link> */}
-								</li>
-							</ul>
-						</div>
-						<div className="basis-[25%] space-y-3 md:space-y-5">
-							<h2 className="text-base font-semibold text-primary">Legal</h2>
-
-							<ul className="space-y-2">
-								{legal.map((item, i) => (
-									<li key={i}>
-										<Link
-											className="text-[0.8rem] lg:text-sm"
-											href={`${routes.legal}/${item.slug?.current}`}
-										>
-											{item.title}
+											{service.name}
 										</Link>
 									</li>
 								))}
 							</ul>
 						</div>
+
+						{/* Column 2: Digital Ecosystem */}
+						<div className="space-y-3">
+							<h2 className="text-sm lg:text-base font-semibold text-[#00c2cb] tracking-wide">
+								Digital Ecosystem
+							</h2>
+							<ul className="space-y-2 text-xs lg:text-sm">
+								{ecosystemLinks.map((item, index) => (
+									<li key={index}>
+										<Link
+											href={item.href}
+											className={
+												item.highlight
+													? "text-[#00c2cb] font-semibold hover:underline flex items-center gap-1.5 transition-colors"
+													: "text-slate-300 hover:text-white transition-colors"
+											}
+										>
+											{item.name}
+										</Link>
+									</li>
+								))}
+							</ul>
+						</div>
+
+						{/* Column 3: Contact */}
+						<div className="space-y-3">
+							<h2 className="text-sm lg:text-base font-semibold text-[#00c2cb] tracking-wide">
+								Contact
+							</h2>
+							<ul className="space-y-2 text-xs lg:text-sm">
+								<li>
+									<Link
+										href="tel:1-855-443-9733"
+										className="text-slate-300 hover:text-white transition-colors block"
+									>
+										1-855-443-9733
+									</Link>
+								</li>
+								<li>
+									<Link
+										href="mailto:kasiedu@expedite-consults.com"
+										className="text-slate-300 hover:text-white transition-colors block break-all"
+									>
+										kasiedu@expedite-consults.com
+									</Link>
+								</li>
+								<li className="pt-1 flex items-center gap-3">
+									<Link
+										target="_blank"
+										rel="noopener noreferrer"
+										href="https://wa.me/12402607898"
+										aria-label="WhatsApp"
+										className="size-8 rounded-full bg-[#25D366] hover:brightness-110 flex items-center justify-center transition-all shadow-md shrink-0"
+									>
+										<Svgs.whatsapp className="size-4 fill-white" />
+									</Link>
+									<Link
+										target="_blank"
+										rel="noopener noreferrer"
+										href="https://www.linkedin.com/company/expedite-consults-llc/"
+										aria-label="LinkedIn"
+										className="size-8 rounded-full bg-[#0A66C2] hover:brightness-110 flex items-center justify-center transition-all shadow-md shrink-0"
+									>
+										<Svgs.linkedin className="size-4 fill-white" />
+									</Link>
+								</li>
+							</ul>
+						</div>
+
+						{/* Column 4: Legal */}
+						<div className="space-y-3">
+							<h2 className="text-sm lg:text-base font-semibold text-[#00c2cb] tracking-wide">
+								Legal
+							</h2>
+							<ul className="space-y-2 text-xs lg:text-sm">
+								<li>
+									<Link
+										href="/legal/terms-of-use"
+										className="text-slate-300 hover:text-white transition-colors"
+									>
+										Terms of Use
+									</Link>
+								</li>
+								<li>
+									<Link
+										href="/legal/privacy-policy"
+										className="text-slate-300 hover:text-white transition-colors"
+									>
+										Privacy Policy
+									</Link>
+								</li>
+								<li>
+									<Link
+										href="https://expediteconsults.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										className="text-[#00c2cb] hover:underline font-medium inline-block pt-1"
+									>
+										Expediteconsults.com
+									</Link>
+								</li>
+							</ul>
+						</div>
 					</div>
 				</div>
 
-				<p className="text-[0.7rem] text-gray-100">
-					&copy; {new Date().getFullYear()} Expedite Consults LLC. All rights
-					reserved.
-				</p>
+				{/* Bottom Copyright */}
+				<div className="mt-12 pt-6 border-t border-slate-700/40 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-3">
+					<p>
+						&copy; {currentYear} Expedite Consults LLC. All rights reserved.
+					</p>
+					<p className="text-slate-500">
+						Building Confidence, Enhancing Resilience
+					</p>
+				</div>
 			</div>
 		</footer>
 	);
 }
-
-export default Footer;
