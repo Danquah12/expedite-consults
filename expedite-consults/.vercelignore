@@ -1,0 +1,22 @@
+# Vercel Ignore for Expedite Consults
+.git
+.github
+node_modules
+.next
+backups
+BACKUPS
+accra-helsinki-platform
+desk-note-midterms
+desk-note-src
+evidence_vault
+noctis-ai
+noctis-ai-engine
+sphera-portal
+staged_*
+tuhousing-careersuite
+careerorbit
+orea-prezi
+*.zip
+*.docx
+*.pdf
+*.db
