@@ -2568,7 +2568,11 @@ export default function ConnectLnPage() {
 
         {/* VIEW 16: CATEGORIZED NOTIFICATIONS HUB */}
         {activeTab === 'notifications' && (
-          <NotificationsView onNavigateTab={(tab) => setActiveTab(tab as any)} />
+          <NotificationsView
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+            currentUserName={userData.name}
+            currentUserProfession={userData.headline}
+          />
         )}
 
         {/* VIEW 17: NOCTIS UNIFIED AUDIO/VIDEO STUDIO & CAREER HUB */}
