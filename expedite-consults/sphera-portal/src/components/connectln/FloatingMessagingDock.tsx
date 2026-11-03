@@ -22,7 +22,8 @@ import {
   recordLocalBilateralDirectMessage,
   markLocalBilateralConversationRead,
   doesDmParticipantMatch,
-  normalizeDmName
+  normalizeDmName,
+  formatMessageSentDateTime
 } from "@/lib/direct-mailbox-sync"
 
 export interface DirectMessageRecipient {
@@ -269,6 +270,9 @@ export function FloatingMessagingDock({
       attachment: currentAttachment || undefined,
     })
 
+    const nowIso = new Date().toISOString()
+    const nowFormatted = formatMessageSentDateTime(nowIso)
+
     const newMsg: B2BMessageItem = {
       id: "mini_msg_" + Date.now(),
       sender: {
@@ -278,7 +282,8 @@ export function FloatingMessagingDock({
         role: currentUser?.headline || "Verified ConnectLn Member",
       },
       text: composedBody,
-      timestamp: "Just now",
+      timestamp: nowFormatted,
+      createdAtIso: nowIso,
       attachments: currentAttachment
         ? [{ name: currentAttachment, type: "Document" }]
         : undefined,
@@ -293,7 +298,7 @@ export function FloatingMessagingDock({
               ...t,
               unreadCount: 0,
               lastMessage: trimmed || `Attached ${currentAttachment}`,
-              lastMessageTime: "Just now",
+              lastMessageTime: nowFormatted,
               messages: [...t.messages, newMsg],
             }
           : t
@@ -304,7 +309,7 @@ export function FloatingMessagingDock({
         ? {
             ...prev,
             lastMessage: trimmed || `Attached ${currentAttachment}`,
-            lastMessageTime: "Just now",
+            lastMessageTime: nowFormatted,
             messages: [...prev.messages, newMsg],
           }
         : null
@@ -602,7 +607,7 @@ export function FloatingMessagingDock({
                         </div>
                         <p className="text-xs">{msg.text}</p>
                         <div className="mt-1 text-[9px] text-right flex items-center justify-end gap-1 opacity-75">
-                          <span>{msg.timestamp}</span>
+                          <span>{formatMessageSentDateTime(msg, msg.timestamp)}</span>
                           {isMe && <CheckCheck className="h-2.5 w-2.5" />}
                         </div>
                       </div>
@@ -834,7 +839,7 @@ export function FloatingMessagingDock({
                           </span>
                         )}
                         <span className="text-[10px] text-zinc-400">
-                          {t.lastMessageTime}
+                          {formatMessageSentDateTime(t.messages?.[t.messages.length - 1], t.lastMessageTime)}
                         </span>
                       </div>
                     </div>

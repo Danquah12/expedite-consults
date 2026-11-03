@@ -17,6 +17,11 @@ import {
 } from '@/lib/connectin-cloud-sync';
 import { connectinDb } from '@/lib/connectin-db';
 import { notifyDmRecipient } from '@/lib/connectin-dm-notify';
+import {
+    SEED_PATIENCE_CREATED_AT_ISO,
+    resolveMessageIsoDate,
+    formatMessageSentDateTime,
+} from '@/lib/direct-mailbox-sync';
 
 // Server-side in-memory store for dynamic replies and custom conversations
 const customThreadsByEnclave: Record<string, B2BConversationThread[]> = {};
@@ -53,12 +58,12 @@ bilateralConversationsByPairKey[INITIAL_PAIR_KEY] = {
             subject: 'neeed you for a job',
             text: 'Subject: neeed you for a job\nneed to connect with you for a job\n📎 Attached: noctis-report-2026-10-26.doc',
             attachment: 'noctis-report-2026-10-26.doc',
-            timestamp: 'Just now',
-            createdAtIso: new Date().toISOString(),
+            timestamp: 'Oct 26, 2026 · 10:30 AM',
+            createdAtIso: SEED_PATIENCE_CREATED_AT_ISO,
             readBy: ['kwesi asiedu'],
         },
     ],
-    updatedAtIso: new Date().toISOString(),
+    updatedAtIso: SEED_PATIENCE_CREATED_AT_ISO,
 };
 
 let hasPushedInitialSeedToCloud = false;
@@ -104,12 +109,23 @@ function mergeCloudConversationsIntoMemory(cloudConvos: CloudDirectConversation[
             bilateralConversationsByPairKey[cloud.pairKey] = cloud;
             continue;
         }
-        // Merge messages by ID preserving chronological order
+        // Merge messages by ID preserving chronological order and fixing seed message timestamp
         const msgMap = new Map<string, CloudDirectMessage>();
         for (const m of local.messages || []) {
             msgMap.set(m.id, m);
         }
-        for (const m of cloud.messages || []) {
+        for (const rawM of cloud.messages || []) {
+            const m =
+                rawM.id === 'dm_seed_kwesi_patience_1'
+                    ? {
+                          ...rawM,
+                          createdAtIso: SEED_PATIENCE_CREATED_AT_ISO,
+                          timestamp: 'Oct 26, 2026 · 10:30 AM',
+                      }
+                    : {
+                          ...rawM,
+                          createdAtIso: resolveMessageIsoDate(rawM) || rawM.createdAtIso,
+                      };
             const existing = msgMap.get(m.id);
             if (existing) {
                 const mergedReadBy = Array.from(new Set([...(existing.readBy || []), ...(m.readBy || [])]));
@@ -118,6 +134,12 @@ function mergeCloudConversationsIntoMemory(cloudConvos: CloudDirectConversation[
                 msgMap.set(m.id, m);
             }
         }
+        const mergedMessages = Array.from(msgMap.values()).sort((a, b) =>
+            (a.createdAtIso || '').localeCompare(b.createdAtIso || '')
+        );
+        const latestMsgIso =
+            mergedMessages[mergedMessages.length - 1]?.createdAtIso ||
+            SEED_PATIENCE_CREATED_AT_ISO;
         bilateralConversationsByPairKey[cloud.pairKey] = {
             ...local,
             ...cloud,
@@ -131,9 +153,8 @@ function mergeCloudConversationsIntoMemory(cloudConvos: CloudDirectConversation[
                 ...cloud.participantB,
                 avatar: cloud.participantB?.avatar || local.participantB?.avatar,
             },
-            messages: Array.from(msgMap.values()),
-            updatedAtIso:
-                cloud.updatedAtIso > local.updatedAtIso ? cloud.updatedAtIso : local.updatedAtIso,
+            messages: mergedMessages,
+            updatedAtIso: latestMsgIso,
         };
     }
 }
@@ -171,6 +192,10 @@ function buildViewerBilateralThreads(
         const partner = isA ? convo.participantB : convo.participantA;
 
         const mappedMessages: B2BMessageItem[] = [...(convo.messages || [])]
+            .map((m) => {
+                const resolvedIso = resolveMessageIsoDate(m) || m.createdAtIso;
+                return { ...m, createdAtIso: resolvedIso };
+            })
             .sort((a, b) => (a.createdAtIso || '').localeCompare(b.createdAtIso || ''))
             .map((m) => {
             const sentByViewer = doesParticipantMatch(
@@ -179,6 +204,7 @@ function buildViewerBilateralThreads(
                 m.senderEmail,
                 viewerEmail
             );
+            const formattedTimestamp = formatMessageSentDateTime(m, m.timestamp);
             return {
                 id: m.id,
                 sender: {
@@ -191,7 +217,7 @@ function buildViewerBilateralThreads(
                     isVerified: true,
                 },
                 text: m.text,
-                timestamp: m.timestamp || 'Just now',
+                timestamp: formattedTimestamp,
                 createdAtIso: m.createdAtIso,
                 reactions: m.reactions,
                 comments: m.comments,
@@ -633,11 +659,8 @@ export async function POST(request: Request) {
                 const canonRecipientName = recipientReg?.name || resolvedRecipientName;
                 const effectiveRecipientEmail = recipientEmail || recipientReg?.email || '';
                 const pairKey = makeDmPairKey(canonSenderName, canonRecipientName);
-                const nowLabel = new Date().toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                });
                 const nowIso = new Date().toISOString();
+                const nowLabel = formatMessageSentDateTime(nowIso);
                 const senderKey = normalizeParticipantKey(senderName);
 
                 const existingConvo = bilateralConversationsByPairKey[pairKey];

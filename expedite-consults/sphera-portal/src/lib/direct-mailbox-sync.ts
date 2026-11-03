@@ -3,6 +3,7 @@
 import { B2BConversationThread, B2BMessageItem } from "./b2b-messaging-data"
 
 const SHARED_DM_STORAGE_KEY = "connectin_shared_bilateral_dms_v1"
+export const SEED_PATIENCE_CREATED_AT_ISO = "2026-10-26T14:30:00.000Z"
 
 export interface LocalBilateralMessage {
   id: string
@@ -71,8 +72,6 @@ export function doesDmParticipantMatch(
     const cEmail = normalizeDmName(candidateEmail)
     const vEmail = normalizeDmName(viewerEmail)
     if (cEmail && vEmail && cEmail === vEmail) {
-      // A shared email only counts when the names are also related, so different people
-      // who happen to use the same address are never merged into one inbox.
       const cTok = cName.split(" ").filter(t => t.length >= 3)
       const vTok = vName.split(" ").filter(t => t.length >= 3)
       if (!cName || !vName || cCompact === vCompact || cTok.some(t => vTok.includes(t))) return true
@@ -87,6 +86,196 @@ export function doesDmParticipantMatch(
     }
   }
   return false
+}
+
+/**
+ * Resolves the accurate ISO timestamp for a message from its createdAtIso, embedded epoch ID,
+ * or date embedded in attachment filenames (such as noctis-report-2026-10-26.doc or Greenshot 2026-10-23).
+ */
+export function resolveMessageIsoDate(msg: {
+  id?: string
+  createdAtIso?: string
+  timestamp?: string
+  text?: string
+  attachment?: string
+  attachments?: { name: string }[]
+}): string | undefined {
+  if (!msg) return undefined
+
+  // 1. Canonical seed message to PATIENCE Addo with noctis-report-2026-10-26.doc
+  if (
+    msg.id === "dm_seed_kwesi_patience_1" ||
+    (msg.text && msg.text.includes("noctis-report-2026-10-26.doc") && msg.timestamp === "Just now")
+  ) {
+    return SEED_PATIENCE_CREATED_AT_ISO
+  }
+
+  // 2. Check if message ID has an embedded 13-digit Unix millisecond timestamp
+  if (msg.id) {
+    const idMatch = msg.id.match(/(?:dm_msg_|local_dm_|dm_reply_|msg-|custom-|mini_msg_|thread-custom-|msg-init-|local-)(\d{13})/)
+    if (idMatch) {
+      const epochMs = Number(idMatch[1])
+      if (Number.isFinite(epochMs) && epochMs > 1700000000000) {
+        return new Date(epochMs).toISOString()
+      }
+    }
+  }
+
+  // 3. Valid createdAtIso field
+  if (msg.createdAtIso) {
+    const parsed = Date.parse(msg.createdAtIso)
+    if (Number.isFinite(parsed) && parsed > 1700000000000) {
+      return new Date(parsed).toISOString()
+    }
+  }
+
+  // 4. Date embedded in attachment or text (e.g. "2026-10-23" or "2026-10-26")
+  const combinedSource = [
+    msg.attachment || "",
+    ...(msg.attachments?.map(a => a.name) || []),
+    msg.text || ""
+  ].join(" ")
+  const dateMatch = combinedSource.match(/\b(202\d-\d{2}-\d{2})\b/)
+  if (dateMatch) {
+    const fallbackIso = `${dateMatch[1]}T12:00:00.000Z`
+    const parsed = Date.parse(fallbackIso)
+    if (Number.isFinite(parsed)) {
+      return new Date(parsed).toISOString()
+    }
+  }
+
+  return undefined
+}
+
+/**
+ * Formats a message's date & time so both the calendar date (e.g. "Oct 26, 2026" or "Nov 2, 2026")
+ * and the clock time (e.g. "12:09 AM") are always clearly displayed.
+ */
+export function formatMessageSentDateTime(
+  msgOrIso?:
+    | string
+    | {
+        id?: string
+        createdAtIso?: string
+        timestamp?: string
+        text?: string
+        attachment?: string
+        attachments?: { name: string }[]
+      },
+  fallbackTimestamp?: string
+): string {
+  let resolvedIso: string | undefined
+  let rawLabel = fallbackTimestamp || ""
+
+  if (typeof msgOrIso === "string") {
+    const parsed = Date.parse(msgOrIso)
+    if (Number.isFinite(parsed) && parsed > 1700000000000) {
+      resolvedIso = new Date(parsed).toISOString()
+    } else {
+      rawLabel = msgOrIso
+    }
+  } else if (msgOrIso && typeof msgOrIso === "object") {
+    resolvedIso = resolveMessageIsoDate(msgOrIso)
+    if (!rawLabel && msgOrIso.timestamp) {
+      rawLabel = msgOrIso.timestamp
+    }
+  }
+
+  if (resolvedIso) {
+    const d = new Date(resolvedIso)
+    if (!isNaN(d.getTime())) {
+      const datePart = d.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+      })
+      // If rawLabel is already an explicit clock time like "12:09 AM" or "11:36 AM", preserve or format local time
+      const timePart = d.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit"
+      })
+      return `${datePart} · ${timePart}`
+    }
+  }
+
+  // If rawLabel already includes a month name (e.g. "Oct 26, 2026 · 10:30 AM"), return as-is
+  if (/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d+/i.test(rawLabel.trim())) {
+    return rawLabel.trim()
+  }
+
+  // Convert relative demo labels ("5m ago", "22m ago", "1h ago", "Yesterday", "2d ago") into real calendar dates
+  const now = new Date()
+  const trimmed = rawLabel.trim()
+  const minMatch = trimmed.match(/^(\d+)\s*m\s*ago$/i)
+  if (minMatch) {
+    const d = new Date(now.getTime() - Number(minMatch[1]) * 60 * 1000)
+    return `${d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} · ${d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
+  }
+  const hrMatch = trimmed.match(/^(\d+)\s*h\s*ago$/i)
+  if (hrMatch) {
+    const d = new Date(now.getTime() - Number(hrMatch[1]) * 3600 * 1000)
+    return `${d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} · ${d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
+  }
+  const dayMatch = trimmed.match(/^(\d+)\s*d\s*ago$/i)
+  if (dayMatch) {
+    const d = new Date(now.getTime() - Number(dayMatch[1]) * 86400 * 1000)
+    return `${d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
+  }
+  if (/^yesterday$/i.test(trimmed)) {
+    const d = new Date(now.getTime() - 86400 * 1000)
+    return `${d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
+  }
+  if (/^(just now|now)$/i.test(trimmed)) {
+    return `${now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} · ${now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
+  }
+
+  // If rawLabel is a bare time like "12:09 AM", prefix with today's date if no other date is known
+  if (/^\d{1,2}:\d{2}\s*(AM|PM)$/i.test(trimmed)) {
+    return `${now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} · ${trimmed}`
+  }
+
+  return trimmed || `${now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
+}
+
+/**
+ * Returns a calendar day header label (e.g., "October 26, 2026" or "Today — November 2, 2026")
+ * for grouping messages by date inside the conversation stream.
+ */
+export function formatMessageDateHeading(msg: {
+  id?: string
+  createdAtIso?: string
+  timestamp?: string
+  text?: string
+  attachment?: string
+  attachments?: { name: string }[]
+}): string {
+  const iso = resolveMessageIsoDate(msg)
+  const d = iso ? new Date(iso) : new Date()
+  const validDate = isNaN(d.getTime()) ? new Date() : d
+
+  const now = new Date()
+  const isToday =
+    validDate.getFullYear() === now.getFullYear() &&
+    validDate.getMonth() === now.getMonth() &&
+    validDate.getDate() === now.getDate()
+
+  const yesterday = new Date(now)
+  yesterday.setDate(now.getDate() - 1)
+  const isYesterday =
+    validDate.getFullYear() === yesterday.getFullYear() &&
+    validDate.getMonth() === yesterday.getMonth() &&
+    validDate.getDate() === yesterday.getDate()
+
+  const fullDate = validDate.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "long",
+    day: "numeric",
+    year: "numeric"
+  })
+
+  if (isToday) return `Today — ${fullDate}`
+  if (isYesterday) return `Yesterday — ${fullDate}`
+  return fullDate
 }
 
 function getDefaultSeedConversation(): LocalBilateralConversation {
@@ -116,12 +305,12 @@ function getDefaultSeedConversation(): LocalBilateralConversation {
         subject: "neeed you for a job",
         text: "Subject: neeed you for a job\nneed to connect with you for a job\n📎 Attached: noctis-report-2026-10-26.doc",
         attachment: "noctis-report-2026-10-26.doc",
-        timestamp: "Just now",
-        createdAtIso: new Date().toISOString(),
+        timestamp: "Oct 26, 2026 · 10:30 AM",
+        createdAtIso: SEED_PATIENCE_CREATED_AT_ISO,
         readBy: ["kwesi asiedu"]
       }
     ],
-    updatedAtIso: new Date().toISOString()
+    updatedAtIso: SEED_PATIENCE_CREATED_AT_ISO
   }
 }
 
@@ -131,8 +320,41 @@ export function loadLocalBilateralConversations(): Record<string, LocalBilateral
     const raw = localStorage.getItem(SHARED_DM_STORAGE_KEY)
     const parsed: Record<string, LocalBilateralConversation> = raw ? JSON.parse(raw) : {}
     const seed = getDefaultSeedConversation()
+    let mutated = false
+
     if (!parsed[seed.pairKey]) {
       parsed[seed.pairKey] = seed
+      mutated = true
+    } else {
+      // Normalize any legacy cached seed message that had "Just now" or today's date back to Oct 26, 2026
+      const existingConvo = parsed[seed.pairKey]
+      if (existingConvo && Array.isArray(existingConvo.messages)) {
+        existingConvo.messages = existingConvo.messages.map(m => {
+          if (m.id === "dm_seed_kwesi_patience_1") {
+            mutated = true
+            return {
+              ...m,
+              createdAtIso: SEED_PATIENCE_CREATED_AT_ISO,
+              timestamp: formatMessageSentDateTime({
+                ...m,
+                id: "dm_seed_kwesi_patience_1",
+                createdAtIso: SEED_PATIENCE_CREATED_AT_ISO
+              })
+            }
+          }
+          return m
+        })
+        const lastIso =
+          existingConvo.messages[existingConvo.messages.length - 1]?.createdAtIso ||
+          SEED_PATIENCE_CREATED_AT_ISO
+        if (existingConvo.updatedAtIso !== lastIso) {
+          existingConvo.updatedAtIso = lastIso
+          mutated = true
+        }
+      }
+    }
+
+    if (mutated) {
       localStorage.setItem(SHARED_DM_STORAGE_KEY, JSON.stringify(parsed))
     }
     return parsed
@@ -159,8 +381,8 @@ export function recordLocalBilateralDirectMessage(params: {
   try {
     const store = loadLocalBilateralConversations()
     const pairKey = computeClientPairKey(params.senderName, params.recipientName)
-    const nowLabel = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
     const nowIso = new Date().toISOString()
+    const nowLabel = formatMessageSentDateTime(nowIso)
     const senderNorm = normalizeDmName(params.senderName)
 
     const newMsg: LocalBilateralMessage = {
@@ -285,6 +507,11 @@ export function getLocalBilateralThreadsForViewer(
         m.senderEmail,
         viewerEmail
       )
+      const resolvedIso = resolveMessageIsoDate(m) || m.createdAtIso
+      const formattedTime = formatMessageSentDateTime(
+        { ...m, createdAtIso: resolvedIso },
+        m.timestamp
+      )
       return {
         id: m.id,
         sender: {
@@ -297,8 +524,8 @@ export function getLocalBilateralThreadsForViewer(
           isVerified: true
         },
         text: m.text,
-        timestamp: m.timestamp || "Just now",
-        createdAtIso: m.createdAtIso,
+        timestamp: formattedTime,
+        createdAtIso: resolvedIso,
         attachments: m.attachment ? [{ name: m.attachment, type: "Document" }] : undefined
       }
     })
@@ -332,7 +559,9 @@ export function getLocalBilateralThreadsForViewer(
       onlineStatus: "online",
       unreadCount,
       lastMessage: lastMsg ? lastMsg.text.replace(/\n/g, " · ") : "New conversation",
-      lastMessageTime: lastMsg ? lastMsg.timestamp : "Just now",
+      lastMessageTime: lastMsg
+        ? formatMessageSentDateTime(lastMsg, lastMsg.timestamp)
+        : formatMessageSentDateTime(convo.updatedAtIso),
       messages: orderedMessages
     })
   }
@@ -344,10 +573,20 @@ export function getLocalBilateralThreadsForViewer(
  * Orders messages oldest -> newest (newest at the bottom). Messages without a full timestamp keep their
  * position relative to the dated message that precedes them.
  */
-export function sortMessagesChronologically<T extends { createdAtIso?: string }>(msgs: T[]): T[] {
+export function sortMessagesChronologically<
+  T extends {
+    id?: string
+    createdAtIso?: string
+    timestamp?: string
+    text?: string
+    attachment?: string
+    attachments?: { name: string }[]
+  }
+>(msgs: T[]): T[] {
   let last = 0
   const keyed = msgs.map((m, i) => {
-    const t = m.createdAtIso ? Date.parse(m.createdAtIso) : NaN
+    const resolvedIso = resolveMessageIsoDate(m) || m.createdAtIso
+    const t = resolvedIso ? Date.parse(resolvedIso) : NaN
     const k = Number.isFinite(t) ? t : last
     last = k
     return { m, k, i }
@@ -356,16 +595,49 @@ export function sortMessagesChronologically<T extends { createdAtIso?: string }>
   return keyed.map(x => x.m)
 }
 
+function getThreadNewestTimestampMs(thread: B2BConversationThread): number {
+  const msgs = thread.messages || []
+  for (let i = msgs.length - 1; i >= 0; i--) {
+    const iso = resolveMessageIsoDate(msgs[i]) || msgs[i].createdAtIso
+    if (iso) {
+      const parsed = Date.parse(iso)
+      if (Number.isFinite(parsed)) return parsed
+    }
+  }
+  return 0
+}
+
 export function mergeBilateralAndServerThreads(
   localBilateral: B2BConversationThread[],
   serverThreads: B2BConversationThread[]
 ): B2BConversationThread[] {
   const mergedByPartner = new Map<string, B2BConversationThread>()
-  // Same person under slightly different names ("Busy Vito" / "Busyvito") must be ONE thread
   const keyOf = (title: string) => normalizeDmName(title).replace(/[^a-z0-9]/g, "")
 
-  // 1. Add all server threads first (combining duplicates for the same partner instead of overwriting)
-  for (const st of serverThreads) {
+  const normalizeThreadDates = (thread: B2BConversationThread): B2BConversationThread => {
+    const normalizedMsgs = sortMessagesChronologically(
+      (thread.messages || []).map(m => {
+        const resolvedIso = resolveMessageIsoDate(m) || m.createdAtIso
+        return {
+          ...m,
+          createdAtIso: resolvedIso,
+          timestamp: formatMessageSentDateTime({ ...m, createdAtIso: resolvedIso }, m.timestamp)
+        }
+      })
+    )
+    const last = normalizedMsgs[normalizedMsgs.length - 1]
+    return {
+      ...thread,
+      messages: normalizedMsgs,
+      lastMessageTime: last
+        ? formatMessageSentDateTime(last, last.timestamp)
+        : formatMessageSentDateTime(undefined, thread.lastMessageTime)
+    }
+  }
+
+  // 1. Add all server threads first (combining duplicates for the same partner)
+  for (const rawSt of serverThreads) {
+    const st = normalizeThreadDates(rawSt)
     const normTitle = keyOf(st.title)
     const prev = mergedByPartner.get(normTitle || st.id)
     if (!prev) {
@@ -382,12 +654,13 @@ export function mergeBilateralAndServerThreads(
       messages: msgs,
       unreadCount: (prev.unreadCount || 0) + (st.unreadCount || 0),
       lastMessage: last ? last.text.replace(/\n/g, " · ") : prev.lastMessage,
-      lastMessageTime: last ? last.timestamp : prev.lastMessageTime
+      lastMessageTime: last ? formatMessageSentDateTime(last, last.timestamp) : prev.lastMessageTime
     })
   }
 
   // 2. Merge local bilateral threads by partner name so both local + cloud messages appear seamlessly
-  for (const lt of localBilateral) {
+  for (const rawLt of localBilateral) {
+    const lt = normalizeThreadDates(rawLt)
     const normTitle = keyOf(lt.title)
     const existing = mergedByPartner.get(normTitle)
     if (!existing) {
@@ -395,7 +668,6 @@ export function mergeBilateralAndServerThreads(
       continue
     }
 
-    // Deduplicate messages by text + senderName so optimistic local + cloud synced messages don't duplicate
     const combinedMsgs: B2BMessageItem[] = [...existing.messages]
     for (const lm of lt.messages) {
       const alreadyExists = combinedMsgs.some(
@@ -408,20 +680,20 @@ export function mergeBilateralAndServerThreads(
         combinedMsgs.push(lm)
       }
     }
-    combinedMsgs.splice(0, combinedMsgs.length, ...sortMessagesChronologically(combinedMsgs))
-    const lastMsg = combinedMsgs[combinedMsgs.length - 1]
+    const sortedMsgs = sortMessagesChronologically(combinedMsgs)
+    const lastMsg = sortedMsgs[sortedMsgs.length - 1]
     mergedByPartner.set(normTitle, {
       ...existing,
       ...lt,
       id: existing.id.startsWith("dm_pair__") ? existing.id : lt.id,
-      messages: combinedMsgs,
+      messages: sortedMsgs,
       lastMessage: lastMsg ? lastMsg.text.replace(/\n/g, " · ") : existing.lastMessage,
-      lastMessageTime: lastMsg ? lastMsg.timestamp : existing.lastMessageTime,
+      lastMessageTime: lastMsg ? formatMessageSentDateTime(lastMsg, lastMsg.timestamp) : existing.lastMessageTime,
       unreadCount: Math.max(lt.unreadCount || 0, existing.unreadCount || 0)
     })
   }
 
-  // Put bilateral threads at the very top
+  // Sort bilateral member conversations newest-first by their actual message date
   const localPartnerNames = new Set(localBilateral.map(t => keyOf(t.title)))
   const topThreads: B2BConversationThread[] = []
   const restThreads: B2BConversationThread[] = []
@@ -433,6 +705,8 @@ export function mergeBilateralAndServerThreads(
       restThreads.push(thread)
     }
   }
+
+  topThreads.sort((a, b) => getThreadNewestTimestampMs(b) - getThreadNewestTimestampMs(a))
 
   return [...topThreads, ...restThreads]
 }

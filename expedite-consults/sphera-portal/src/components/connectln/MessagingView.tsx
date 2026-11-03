@@ -17,9 +17,26 @@ import {
     recordLocalBilateralDirectMessage,
     markLocalBilateralConversationRead,
     doesDmParticipantMatch,
+    formatMessageSentDateTime,
+    formatMessageDateHeading,
 } from '@/lib/direct-mailbox-sync';
 
 type ChannelFilterType = 'All' | 'People' | 'Companies' | 'Products' | 'Communities';
+type ConnectLnMailboxFolder =
+    | 'inbox'
+    | 'ai_inbox'
+    | 'starred'
+    | 'snoozed'
+    | 'important'
+    | 'sent'
+    | 'drafts'
+    | 'purchases'
+    | 'social'
+    | 'updates'
+    | 'forums'
+    | 'promotions'
+    | 'scheduled'
+    | 'all_mail';
 
 const PRESET_ATTACHMENTS = [
     { label: '📐 Site_Blueprint_Rev4.pdf', name: 'Site_Blueprint_Rev4.pdf (2.4 MB)' },
@@ -63,6 +80,93 @@ export function MessagingView({
     const [isSending, setIsSending] = useState(false);
     const [typingEntity, setTypingEntity] = useState<string | null>(null);
     const [isLoadingThreads, setIsLoadingThreads] = useState(false);
+
+    // ConnectLn Mailbox Navigation Rail States (Inbox, AI Inbox, Starred, Snoozed, Important, Sent, Drafts, Purchases, Social, Updates, Forums, Promotions, Labels)
+    const [activeMailboxFolder, setActiveMailboxFolder] = useState<ConnectLnMailboxFolder>('inbox');
+    const [showMoreFolders, setShowMoreFolders] = useState<boolean>(false);
+    const [activeCustomLabel, setActiveCustomLabel] = useState<string | null>(null);
+    const [starredIds, setStarredIds] = useState<string[]>(() => {
+        if (typeof window === 'undefined') return ['thread_trade_people_gus'];
+        try {
+            const raw = localStorage.getItem('connectln_starred_threads_v1');
+            return raw ? JSON.parse(raw) : ['thread_trade_people_gus'];
+        } catch {
+            return ['thread_trade_people_gus'];
+        }
+    });
+    const [snoozedIds, setSnoozedIds] = useState<string[]>(() => {
+        if (typeof window === 'undefined') return [];
+        try {
+            const raw = localStorage.getItem('connectln_snoozed_threads_v1');
+            return raw ? JSON.parse(raw) : [];
+        } catch {
+            return [];
+        }
+    });
+    const [importantIds, setImportantIds] = useState<string[]>(() => {
+        if (typeof window === 'undefined') return ['thread_comp_recruiter_builder'];
+        try {
+            const raw = localStorage.getItem('connectln_important_threads_v1');
+            return raw ? JSON.parse(raw) : ['thread_comp_recruiter_builder'];
+        } catch {
+            return ['thread_comp_recruiter_builder'];
+        }
+    });
+    const [savedDraftsByThread, setSavedDraftsByThread] = useState<Record<string, string>>(() => {
+        if (typeof window === 'undefined') return {};
+        try {
+            const raw = localStorage.getItem('connectln_message_drafts_v1');
+            return raw ? JSON.parse(raw) : {};
+        } catch {
+            return {};
+        }
+    });
+    const [customLabels, setCustomLabels] = useState<Array<{ id: string; name: string; color: string }>>([
+        { id: 'verified_dm', name: 'Verified DMs', color: '#0A66C2' },
+        { id: 'specs_files', name: 'Specs & Attachments', color: '#059669' },
+        { id: 'video_huddle', name: 'Video Huddles', color: '#7C3AED' },
+        { id: 'job_offers', name: 'Hiring & Offers', color: '#D97706' },
+    ]);
+    const [showNewLabelInput, setShowNewLabelInput] = useState(false);
+    const [newLabelName, setNewLabelName] = useState('');
+
+    const toggleStarThread = (threadId: string, e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        setStarredIds((prev) => {
+            const next = prev.includes(threadId) ? prev.filter((id) => id !== threadId) : [...prev, threadId];
+            try {
+                localStorage.setItem('connectln_starred_threads_v1', JSON.stringify(next));
+            } catch {}
+            return next;
+        });
+    };
+
+    const toggleImportantThread = (threadId: string, e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        setImportantIds((prev) => {
+            const next = prev.includes(threadId) ? prev.filter((id) => id !== threadId) : [...prev, threadId];
+            try {
+                localStorage.setItem('connectln_important_threads_v1', JSON.stringify(next));
+            } catch {}
+            return next;
+        });
+    };
+
+    const toggleSnoozeThread = (threadId: string, e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        setSnoozedIds((prev) => {
+            const next = prev.includes(threadId) ? prev.filter((id) => id !== threadId) : [...prev, threadId];
+            try {
+                localStorage.setItem('connectln_snoozed_threads_v1', JSON.stringify(next));
+            } catch {}
+            triggerToast(
+                next.includes(threadId)
+                    ? '🕒 Thread snoozed to your Snoozed folder.'
+                    : '✓ Thread restored to Inbox.'
+            );
+            return next;
+        });
+    };
 
     // Modals & Interactive States
     const [showNewMessageModal, setShowNewMessageModal] = useState(false);
@@ -547,8 +651,92 @@ export function MessagingView({
         };
     }, [selectedEnclave, currentUser?.name, currentUser?.email]);
 
-    // Filter threads based on activeChannel & searchQuery
+    // Helper to check if a thread has any message sent by the signed-in user
+    const hasMessageSentByViewer = (t: B2BConversationThread) =>
+        (t.messages || []).some(
+            (m) =>
+                m.sender.id === 'me' ||
+                m.sender.name === 'You' ||
+                doesDmParticipantMatch(m.sender.name, currentUser?.name || '')
+        );
+
+    const hasAttachmentInThread = (t: B2BConversationThread) =>
+        t.lastMessage.includes('📎') ||
+        t.lastMessage.toLowerCase().includes('attached:') ||
+        (t.messages || []).some(
+            (m) => (m.attachments && m.attachments.length > 0) || m.text.includes('📎')
+        );
+
+    const hasMeetingOrHuddleInThread = (t: B2BConversationThread) =>
+        t.lastMessage.toLowerCase().includes('huddle') ||
+        t.lastMessage.toLowerCase().includes('meeting') ||
+        (t.messages || []).some(
+            (m) =>
+                m.text.toLowerCase().includes('meeting invitation') ||
+                m.text.toLowerCase().includes('video huddle') ||
+                m.text.toLowerCase().includes('rsvp')
+        );
+
+    const matchesMailboxFolder = (t: B2BConversationThread, folder: ConnectLnMailboxFolder): boolean => {
+        if (folder === 'snoozed') return snoozedIds.includes(t.id);
+        if (folder === 'all_mail') return true;
+        // Hide snoozed threads from regular Inbox unless explicitly viewing Snoozed or All Mail
+        if (folder === 'inbox') return !snoozedIds.includes(t.id);
+        if (folder === 'ai_inbox') {
+            return (
+                (t.unreadCount || 0) > 0 ||
+                hasAttachmentInThread(t) ||
+                importantIds.includes(t.id) ||
+                t.channelType === 'Companies' ||
+                t.id.startsWith('dm_pair__')
+            );
+        }
+        if (folder === 'starred') return starredIds.includes(t.id);
+        if (folder === 'important') {
+            return (
+                importantIds.includes(t.id) ||
+                (t.unreadCount || 0) > 0 ||
+                t.channelType === 'Companies'
+            );
+        }
+        if (folder === 'sent') return hasMessageSentByViewer(t);
+        if (folder === 'drafts') {
+            return Boolean(
+                savedDraftsByThread[t.id]?.trim() ||
+                    (activeThread?.id === t.id && messageInput.trim())
+            );
+        }
+        if (folder === 'purchases') return t.channelType === 'Products';
+        if (folder === 'social') return t.channelType === 'People';
+        if (folder === 'updates') {
+            return (
+                hasMeetingOrHuddleInThread(t) ||
+                hasAttachmentInThread(t) ||
+                (t.unreadCount || 0) > 0
+            );
+        }
+        if (folder === 'forums') return t.channelType === 'Communities';
+        if (folder === 'promotions') return t.channelType === 'Companies';
+        if (folder === 'scheduled') return hasMeetingOrHuddleInThread(t);
+        return true;
+    };
+
+    const matchesCustomLabel = (t: B2BConversationThread, labelId: string | null): boolean => {
+        if (!labelId) return true;
+        if (labelId === 'verified_dm') return t.channelType === 'People' && Boolean(t.isVerified);
+        if (labelId === 'specs_files') return hasAttachmentInThread(t);
+        if (labelId === 'video_huddle') return hasMeetingOrHuddleInThread(t);
+        if (labelId === 'job_offers') return t.channelType === 'Companies' || t.lastMessage.toLowerCase().includes('job');
+        return true;
+    };
+
+    const countByMailboxFolder = (folder: ConnectLnMailboxFolder): number =>
+        threads.filter((t) => matchesMailboxFolder(t, folder)).length;
+
+    // Filter threads based on activeMailboxFolder, activeCustomLabel, activeChannel & searchQuery
     const filteredThreads = threads.filter((t) => {
+        const matchesFolder = matchesMailboxFolder(t, activeMailboxFolder);
+        const matchesLabel = matchesCustomLabel(t, activeCustomLabel);
         const matchesChannel = activeChannel === 'All' || t.channelType === activeChannel;
         const q = searchQuery.trim().toLowerCase();
         const matchesSearch =
@@ -558,7 +746,7 @@ export function MessagingView({
             t.subtitle.toLowerCase().includes(q) ||
             (t.companyMetadata?.industry || '').toLowerCase().includes(q) ||
             (t.productMetadata?.productName || '').toLowerCase().includes(q);
-        return matchesChannel && matchesSearch;
+        return matchesFolder && matchesLabel && matchesChannel && matchesSearch;
     });
 
     const activeThread =
@@ -801,10 +989,8 @@ export function MessagingView({
             currentUser?.avatar ||
             'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150';
         const senderRole = currentUser?.headline || 'Verified ConnectIn Professional';
-        const nowStr = new Date().toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit',
-        });
+        const nowIso = new Date().toISOString();
+        const nowStr = formatMessageSentDateTime(nowIso);
 
         const finalText = trimmed || `Attached ${pendingAttachment}`;
 
@@ -818,7 +1004,7 @@ export function MessagingView({
             },
             text: finalText,
             timestamp: nowStr,
-            createdAtIso: new Date().toISOString(),
+            createdAtIso: nowIso,
             attachments: pendingAttachment
                 ? [{ name: pendingAttachment, type: 'Document' }]
                 : undefined,
@@ -850,7 +1036,7 @@ export function MessagingView({
                     ...t,
                     unreadCount: 0,
                     lastMessage: finalText,
-                    lastMessageTime: 'Just now',
+                    lastMessageTime: nowStr,
                     messages: [...t.messages, optimisticMsg],
                 };
             })
@@ -858,6 +1044,15 @@ export function MessagingView({
 
         const sentAttachment = pendingAttachment;
         setMessageInput('');
+        setSavedDraftsByThread((prev) => {
+            if (!prev[targetThreadId]) return prev;
+            const next = { ...prev };
+            delete next[targetThreadId];
+            try {
+                localStorage.setItem('connectln_message_drafts_v1', JSON.stringify(next));
+            } catch {}
+            return next;
+        });
         setPendingAttachment(null);
         setShowAttachmentMenu(false);
         setShowEmojiBar(false);
@@ -1303,11 +1498,367 @@ export function MessagingView({
                 </div>
             </div>
 
-            {/* Main Two-Column Inbox Layout */}
+            {/* Main Three-Column ConnectLn Mailbox Layout: (1) ConnectLn Mailbox Menu Rail, (2) Thread List, (3) Active Conversation */}
             <div className="flex flex-col md:flex-row h-[calc(100vh-210px)] min-h-[640px]">
-                {/* Left Sidebar: Channels & Conversation List */}
+                {/* Column 1: Customized ConnectLn Mailbox Navigation Rail */}
                 <div
-                    className={`w-full md:w-[390px] border-r border-slate-200 flex-col bg-slate-50/60 shrink-0 h-full ${
+                    className={`w-full md:w-[218px] border-b md:border-b-0 md:border-r border-slate-200 bg-[#F6F8FC] flex-col shrink-0 py-3 px-2 overflow-y-auto select-none ${
+                        mobileShowChat ? 'hidden md:flex' : 'flex'
+                    }`}
+                >
+                    {/* ConnectLn Branded Mailbox Badge */}
+                    <div className="px-3 pb-2.5 mb-1.5 border-b border-slate-200/80 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <img
+                                src="/brand/connectln-icon-256.png"
+                                alt="ConnectLn"
+                                className="h-5 w-5 rounded-md object-contain shadow-2xs"
+                            />
+                            <span className="text-xs font-black tracking-tight text-slate-900">
+                                ConnectLn Mail
+                            </span>
+                        </div>
+                        <span className="text-[9px] font-mono font-extrabold uppercase px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
+                            E2EE
+                        </span>
+                    </div>
+
+                    {/* Primary 12 ConnectLn Mailbox Menu Items (Customized from attached menu design) */}
+                    <div className="space-y-0.5">
+                        {(
+                            [
+                                {
+                                    id: 'inbox' as ConnectLnMailboxFolder,
+                                    label: 'Inbox',
+                                    boldCount: true,
+                                    icon: (
+                                        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M19 3H4.99c-1.11 0-1.98.89-1.98 2L3 19c0 1.1.88 2 1.99 2H19c1.1 0 2-.9 2-2V5c0-1.11-.9-2-2-2zm0 12h-4c0 1.66-1.35 3-3 3s-3-1.34-3-3H4.99V5H19v10z" />
+                                        </svg>
+                                    ),
+                                },
+                                {
+                                    id: 'ai_inbox' as ConnectLnMailboxFolder,
+                                    label: 'AI Inbox',
+                                    subBadge: 'Noctis',
+                                    icon: (
+                                        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l1.5 3.5L17 8l-3.5 1.5L12 13l-1.5-3.5L7 8l3.5-1.5L12 3z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 15h4l2 3h4l2-3h4v5H4v-5z" />
+                                        </svg>
+                                    ),
+                                },
+                                {
+                                    id: 'starred' as ConnectLnMailboxFolder,
+                                    label: 'Starred',
+                                    icon: (
+                                        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                        </svg>
+                                    ),
+                                },
+                                {
+                                    id: 'snoozed' as ConnectLnMailboxFolder,
+                                    label: 'Snoozed',
+                                    icon: (
+                                        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                                            <circle cx="12" cy="12" r="9" />
+                                            <polyline points="12 7 12 12 15 15" />
+                                        </svg>
+                                    ),
+                                },
+                                {
+                                    id: 'important' as ConnectLnMailboxFolder,
+                                    label: 'Important',
+                                    icon: (
+                                        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h11l5 6-5 6H4l4-6-4-6z" />
+                                        </svg>
+                                    ),
+                                },
+                                {
+                                    id: 'sent' as ConnectLnMailboxFolder,
+                                    label: 'Sent',
+                                    icon: (
+                                        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                                            <polygon points="3 4 21 12 3 20 6 12 3 4" />
+                                            <line x1="6" y1="12" x2="14" y2="12" />
+                                        </svg>
+                                    ),
+                                },
+                                {
+                                    id: 'drafts' as ConnectLnMailboxFolder,
+                                    label: 'Drafts',
+                                    boldCount: true,
+                                    icon: (
+                                        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                            <polyline points="14 2 14 8 20 8" />
+                                        </svg>
+                                    ),
+                                },
+                                {
+                                    id: 'purchases' as ConnectLnMailboxFolder,
+                                    label: 'Purchases',
+                                    boldCount: true,
+                                    icon: (
+                                        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                                            <line x1="3" y1="6" x2="21" y2="6" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M16 10a4 4 0 0 1-8 0" />
+                                        </svg>
+                                    ),
+                                },
+                                {
+                                    id: 'social' as ConnectLnMailboxFolder,
+                                    label: 'Social',
+                                    boldCount: true,
+                                    icon: (
+                                        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                            <circle cx="9" cy="7" r="4" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                        </svg>
+                                    ),
+                                },
+                                {
+                                    id: 'updates' as ConnectLnMailboxFolder,
+                                    label: 'Updates',
+                                    boldCount: true,
+                                    icon: (
+                                        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                                            <circle cx="12" cy="12" r="9" />
+                                            <line x1="12" y1="16" x2="12" y2="12" />
+                                            <line x1="12" y1="8" x2="12.01" y2="8" />
+                                        </svg>
+                                    ),
+                                },
+                                {
+                                    id: 'forums' as ConnectLnMailboxFolder,
+                                    label: 'Forums',
+                                    boldCount: true,
+                                    icon: (
+                                        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                        </svg>
+                                    ),
+                                },
+                                {
+                                    id: 'promotions' as ConnectLnMailboxFolder,
+                                    label: 'Promotions',
+                                    boldCount: true,
+                                    icon: (
+                                        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                                            <line x1="7" y1="7" x2="7.01" y2="7" />
+                                        </svg>
+                                    ),
+                                },
+                            ]
+                        ).map((item) => {
+                            const isActive = activeMailboxFolder === item.id && !activeCustomLabel;
+                            const count = countByMailboxFolder(item.id);
+                            return (
+                                <button
+                                    key={item.id}
+                                    type="button"
+                                    onClick={() => {
+                                        setActiveMailboxFolder(item.id);
+                                        setActiveCustomLabel(null);
+                                        setActiveChannel('All');
+                                    }}
+                                    className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-full text-xs transition-all cursor-pointer ${
+                                        isActive
+                                            ? 'bg-[#D3E3FD] text-[#041E49] font-extrabold shadow-2xs'
+                                            : item.boldCount && count > 0
+                                            ? 'text-slate-900 font-bold hover:bg-slate-200/70'
+                                            : 'text-slate-700 font-medium hover:bg-slate-200/70'
+                                    }`}
+                                >
+                                    <span className="flex items-center gap-3 min-w-0 truncate">
+                                        {item.icon}
+                                        <span className="truncate">{item.label}</span>
+                                        {item.subBadge && (
+                                            <span className="rounded bg-indigo-100 text-indigo-800 px-1 py-0.2 text-[9px] font-extrabold border border-indigo-200">
+                                                {item.subBadge}
+                                            </span>
+                                        )}
+                                    </span>
+                                    {count > 0 && (
+                                        <span
+                                            className={`text-[11px] shrink-0 ${
+                                                isActive
+                                                    ? 'font-extrabold text-[#041E49]'
+                                                    : item.boldCount
+                                                    ? 'font-bold text-slate-700'
+                                                    : 'font-semibold text-slate-500'
+                                            }`}
+                                        >
+                                            {count}
+                                        </span>
+                                    )}
+                                </button>
+                            );
+                        })}
+
+                        {/* Expandable "More" Section */}
+                        <button
+                            type="button"
+                            onClick={() => setShowMoreFolders((prev) => !prev)}
+                            className="w-full flex items-center gap-3 px-3 py-1.5 rounded-full text-xs font-medium text-slate-700 hover:bg-slate-200/70 transition-all cursor-pointer"
+                        >
+                            <svg
+                                className={`w-4 h-4 shrink-0 transition-transform ${
+                                    showMoreFolders ? 'rotate-180' : ''
+                                }`}
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                            >
+                                <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                            <span>{showMoreFolders ? 'Less' : 'More'}</span>
+                        </button>
+
+                        {showMoreFolders && (
+                            <div className="space-y-0.5 pl-1 animate-in fade-in">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setActiveMailboxFolder('scheduled');
+                                        setActiveCustomLabel(null);
+                                        setActiveChannel('All');
+                                    }}
+                                    className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-full text-xs transition-all cursor-pointer ${
+                                        activeMailboxFolder === 'scheduled' && !activeCustomLabel
+                                            ? 'bg-[#D3E3FD] text-[#041E49] font-extrabold'
+                                            : 'text-slate-700 font-medium hover:bg-slate-200/70'
+                                    }`}
+                                >
+                                    <span className="flex items-center gap-3">
+                                        <span>📅</span>
+                                        <span>Scheduled</span>
+                                    </span>
+                                    <span className="text-[11px] text-slate-500">
+                                        {countByMailboxFolder('scheduled')}
+                                    </span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setActiveMailboxFolder('all_mail');
+                                        setActiveCustomLabel(null);
+                                        setActiveChannel('All');
+                                    }}
+                                    className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-full text-xs transition-all cursor-pointer ${
+                                        activeMailboxFolder === 'all_mail' && !activeCustomLabel
+                                            ? 'bg-[#D3E3FD] text-[#041E49] font-extrabold'
+                                            : 'text-slate-700 font-medium hover:bg-slate-200/70'
+                                    }`}
+                                >
+                                    <span className="flex items-center gap-3">
+                                        <span>📬</span>
+                                        <span>All Mail</span>
+                                    </span>
+                                    <span className="text-[11px] text-slate-500">
+                                        {threads.length}
+                                    </span>
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* ConnectLn Custom Labels Section ("Labels +") */}
+                    <div className="mt-4 pt-3 border-t border-slate-200/90">
+                        <div className="flex items-center justify-between px-3 mb-1.5">
+                            <span className="text-xs font-bold text-slate-800 tracking-tight">
+                                Labels
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => setShowNewLabelInput((prev) => !prev)}
+                                className="h-6 w-6 rounded-full hover:bg-slate-200 flex items-center justify-center text-slate-700 font-bold text-base leading-none cursor-pointer"
+                                title="Create new ConnectLn label"
+                            >
+                                +
+                            </button>
+                        </div>
+
+                        {showNewLabelInput && (
+                            <form
+                                onSubmit={(e) => {
+                                    e.preventDefault();
+                                    const clean = newLabelName.trim();
+                                    if (!clean) return;
+                                    const id = `lbl_${Date.now()}`;
+                                    setCustomLabels((prev) => [
+                                        ...prev,
+                                        { id, name: clean, color: '#0A66C2' },
+                                    ]);
+                                    setNewLabelName('');
+                                    setShowNewLabelInput(false);
+                                }}
+                                className="px-2 mb-2 flex items-center gap-1"
+                            >
+                                <input
+                                    type="text"
+                                    value={newLabelName}
+                                    onChange={(e) => setNewLabelName(e.target.value)}
+                                    placeholder="New label..."
+                                    className="w-full rounded-lg border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-900 focus:border-[#0A66C2] focus:outline-none"
+                                />
+                                <button
+                                    type="submit"
+                                    className="rounded-lg bg-[#0A66C2] text-white px-2 py-1 text-[10px] font-bold shrink-0"
+                                >
+                                    Add
+                                </button>
+                            </form>
+                        )}
+
+                        <div className="space-y-0.5">
+                            {customLabels.map((lbl) => {
+                                const isSelected = activeCustomLabel === lbl.id;
+                                const lblCount = threads.filter((t) =>
+                                    matchesCustomLabel(t, lbl.id)
+                                ).length;
+                                return (
+                                    <button
+                                        key={lbl.id}
+                                        type="button"
+                                        onClick={() => {
+                                            setActiveCustomLabel(isSelected ? null : lbl.id);
+                                        }}
+                                        className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-full text-xs transition-all cursor-pointer ${
+                                            isSelected
+                                                ? 'bg-[#D3E3FD] text-[#041E49] font-extrabold'
+                                                : 'text-slate-700 font-medium hover:bg-slate-200/70'
+                                        }`}
+                                    >
+                                        <span className="flex items-center gap-2.5 truncate">
+                                            <span
+                                                className="h-2.5 w-2.5 rounded-full shrink-0"
+                                                style={{ backgroundColor: lbl.color }}
+                                            />
+                                            <span className="truncate">{lbl.name}</span>
+                                        </span>
+                                        {lblCount > 0 && (
+                                            <span className="text-[10px] font-semibold text-slate-500">
+                                                {lblCount}
+                                            </span>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Column 2: Channels & Conversation Thread List */}
+                <div
+                    className={`w-full md:w-[360px] border-r border-slate-200 flex-col bg-slate-50/60 shrink-0 h-full ${
                         mobileShowChat ? 'hidden md:flex' : 'flex'
                     }`}
                 >
@@ -1429,11 +1980,19 @@ export function MessagingView({
                         ) : (
                             filteredThreads.map((thread) => {
                                 const isSelected = activeThread?.id === thread.id;
+                                const isStarred = starredIds.includes(thread.id);
+                                const isImportant = importantIds.includes(thread.id);
+                                const isSnoozed = snoozedIds.includes(thread.id);
+                                const lastMsg = thread.messages?.[thread.messages.length - 1];
+                                const formattedDateLabel = formatMessageSentDateTime(
+                                    lastMsg,
+                                    thread.lastMessageTime
+                                );
                                 return (
                                     <div
                                         key={thread.id}
                                         onClick={() => handleSelectThread(thread)}
-                                        className={`p-3.5 flex gap-3 cursor-pointer transition-all relative ${
+                                        className={`p-3.5 flex gap-3 cursor-pointer transition-all relative group ${
                                             isSelected
                                                 ? 'bg-blue-50/90 border-l-4 border-l-[#0A66C2]'
                                                 : 'bg-white hover:bg-slate-50'
@@ -1457,7 +2016,7 @@ export function MessagingView({
 
                                         {/* Content */}
                                         <div className="flex-1 min-w-0">
-                                            <div className="flex justify-between items-baseline mb-0.5 gap-2">
+                                            <div className="flex justify-between items-baseline mb-0.5 gap-1.5">
                                                 <h4 className="font-extrabold text-sm text-slate-900 truncate flex items-center gap-1">
                                                     {thread.badgeIcon && (
                                                         <span>{thread.badgeIcon}</span>
@@ -1473,8 +2032,11 @@ export function MessagingView({
                                                         </svg>
                                                     )}
                                                 </h4>
-                                                <span className="text-[10px] font-bold text-slate-500 shrink-0">
-                                                    {thread.lastMessageTime}
+                                                <span
+                                                    className="text-[10px] font-bold text-slate-500 shrink-0 whitespace-nowrap bg-slate-100/80 px-1.5 py-0.5 rounded border border-slate-200/70"
+                                                    title={`Last message date & time: ${formattedDateLabel}`}
+                                                >
+                                                    {formattedDateLabel}
                                                 </span>
                                             </div>
 
@@ -1512,16 +2074,63 @@ export function MessagingView({
                                                             : 'text-slate-600 font-medium'
                                                     }`}
                                                 >
-                                                    {thread.lastMessage}
+                                                    {savedDraftsByThread[thread.id] ? (
+                                                        <span className="text-rose-600 font-extrabold">
+                                                            [Draft] {savedDraftsByThread[thread.id]}
+                                                        </span>
+                                                    ) : (
+                                                        thread.lastMessage
+                                                    )}
                                                 </p>
-                                                {thread.unreadCount > 0 && (
-                                                    <span
-                                                        className="bg-[#0A66C2] text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center shrink-0 shadow-sm"
-                                                        style={{ color: '#FFFFFF' }}
+                                                <div className="flex items-center gap-1 shrink-0">
+                                                    {/* Star Toggle */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => toggleStarThread(thread.id, e)}
+                                                        title={isStarred ? 'Unstar conversation' : 'Star conversation'}
+                                                        className={`w-5 h-5 rounded flex items-center justify-center text-xs transition-all cursor-pointer ${
+                                                            isStarred
+                                                                ? 'text-amber-500 scale-110'
+                                                                : 'text-slate-300 opacity-0 group-hover:opacity-100 hover:text-amber-500'
+                                                        }`}
                                                     >
-                                                        {thread.unreadCount}
-                                                    </span>
-                                                )}
+                                                        {isStarred ? '★' : '☆'}
+                                                    </button>
+                                                    {/* Important Toggle */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => toggleImportantThread(thread.id, e)}
+                                                        title={isImportant ? 'Remove from Important' : 'Mark as Important'}
+                                                        className={`w-5 h-5 rounded flex items-center justify-center text-[11px] transition-all cursor-pointer ${
+                                                            isImportant
+                                                                ? 'text-amber-600 font-black'
+                                                                : 'text-slate-300 opacity-0 group-hover:opacity-100 hover:text-amber-600'
+                                                        }`}
+                                                    >
+                                                        🏷️
+                                                    </button>
+                                                    {/* Snooze Toggle */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => toggleSnoozeThread(thread.id, e)}
+                                                        title={isSnoozed ? 'Unsnooze conversation' : 'Snooze conversation'}
+                                                        className={`w-5 h-5 rounded flex items-center justify-center text-[11px] transition-all cursor-pointer ${
+                                                            isSnoozed
+                                                                ? 'text-blue-600 font-black'
+                                                                : 'text-slate-300 opacity-0 group-hover:opacity-100 hover:text-blue-600'
+                                                        }`}
+                                                    >
+                                                        🕒
+                                                    </button>
+                                                    {thread.unreadCount > 0 && (
+                                                        <span
+                                                            className="bg-[#0A66C2] text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center shrink-0 shadow-sm"
+                                                            style={{ color: '#FFFFFF' }}
+                                                        >
+                                                            {thread.unreadCount}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -1620,8 +2229,47 @@ export function MessagingView({
                                 </div>
                             </div>
 
-                            {/* Action Buttons (Audio Call, Video Huddle, Contextual Portal Links) */}
-                            <div className="flex items-center gap-2 shrink-0">
+                            {/* Action Buttons (Star, Important, Snooze, Audio Call, Video Huddle, Contextual Portal Links) */}
+                            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                                {/* Quick Mailbox Actions: Star, Important, Snooze */}
+                                <div className="hidden sm:flex items-center gap-1 pr-1.5 border-r border-slate-200">
+                                    <button
+                                        type="button"
+                                        onClick={() => toggleStarThread(activeThread.id)}
+                                        title={starredIds.includes(activeThread.id) ? 'Starred (click to unstar)' : 'Star conversation'}
+                                        className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold border transition-all cursor-pointer ${
+                                            starredIds.includes(activeThread.id)
+                                                ? 'bg-amber-50 text-amber-500 border-amber-300 shadow-sm'
+                                                : 'bg-slate-50 text-slate-400 border-slate-200 hover:text-amber-500 hover:bg-amber-50/50'
+                                        }`}
+                                    >
+                                        {starredIds.includes(activeThread.id) ? '★' : '☆'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => toggleImportantThread(activeThread.id)}
+                                        title={importantIds.includes(activeThread.id) ? 'Marked Important' : 'Mark as Important'}
+                                        className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold border transition-all cursor-pointer ${
+                                            importantIds.includes(activeThread.id)
+                                                ? 'bg-amber-50 text-amber-700 border-amber-300 shadow-sm'
+                                                : 'bg-slate-50 text-slate-400 border-slate-200 hover:text-amber-600 hover:bg-amber-50/50'
+                                        }`}
+                                    >
+                                        🏷️
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => toggleSnoozeThread(activeThread.id)}
+                                        title={snoozedIds.includes(activeThread.id) ? 'Snoozed (click to unsnooze)' : 'Snooze conversation'}
+                                        className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold border transition-all cursor-pointer ${
+                                            snoozedIds.includes(activeThread.id)
+                                                ? 'bg-blue-50 text-blue-700 border-blue-300 shadow-sm'
+                                                : 'bg-slate-50 text-slate-400 border-slate-200 hover:text-blue-600 hover:bg-blue-50/50'
+                                        }`}
+                                    >
+                                        🕒
+                                    </button>
+                                </div>
                                 {activeThread.channelType === 'Companies' && onNavigateJobs && (
                                     <button
                                         onClick={onNavigateJobs}
@@ -1681,7 +2329,7 @@ export function MessagingView({
                                 </span>
                             </div>
 
-                            {activeThread.messages.map((msg) => {
+                            {activeThread.messages.map((msg, idx) => {
                                 const isMe =
                                     msg.sender.id === 'me' ||
                                     msg.sender.name === 'You' ||
@@ -1693,36 +2341,66 @@ export function MessagingView({
                                     currentUser,
                                     msg.sender.avatar
                                 );
+                                const msgFullSentDateTime = formatMessageSentDateTime(
+                                    msg,
+                                    msg.timestamp
+                                );
+                                const msgDateHeading = formatMessageDateHeading(msg);
+                                const prevMsgDateHeading =
+                                    idx > 0
+                                        ? formatMessageDateHeading(activeThread.messages[idx - 1])
+                                        : null;
+                                const showDateSeparator =
+                                    Boolean(msgDateHeading) && msgDateHeading !== prevMsgDateHeading;
+
                                 return (
-                                    <div
-                                        key={msg.id}
-                                        className={`flex gap-3 ${
-                                            isMe ? 'flex-row-reverse' : 'flex-row'
-                                        }`}
-                                    >
-                                        <img
-                                            src={isMe ? myResolvedPic : msg.sender.avatar}
-                                            alt={msg.sender.name}
-                                            onError={(e) => {
-                                                e.currentTarget.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(isMe ? currentUser?.name || 'Member' : msg.sender.name)}&backgroundColor=0a66c2`;
-                                            }}
-                                            className="w-9 h-9 rounded-full object-cover shrink-0 mt-1 border border-slate-200 shadow-sm ring-2 ring-[#0066FF]"
-                                        />
+                                    <React.Fragment key={msg.id}>
+                                        {showDateSeparator && (
+                                            <div className="flex items-center justify-center my-3">
+                                                <div className="h-px bg-slate-200 flex-1 max-w-[100px]" />
+                                                <span className="mx-3 px-3 py-1 rounded-full bg-white border border-slate-200 text-[10px] font-extrabold text-slate-600 shadow-xs flex items-center gap-1.5">
+                                                    <span>📅</span>
+                                                    <span>{msgDateHeading}</span>
+                                                </span>
+                                                <div className="h-px bg-slate-200 flex-1 max-w-[100px]" />
+                                            </div>
+                                        )}
                                         <div
-                                            className={`max-w-[75%] flex flex-col ${
-                                                isMe ? 'items-end' : 'items-start'
+                                            className={`flex gap-3 ${
+                                                isMe ? 'flex-row-reverse' : 'flex-row'
                                             }`}
                                         >
-                                            <div className="flex items-baseline gap-2 mb-1 px-1">
-                                                <span className="text-xs font-extrabold text-slate-800">
-                                                    {isMe
-                                                        ? currentUser?.name || 'You'
-                                                        : msg.sender.name}
-                                                </span>
-                                                <span className="text-[10px] font-bold text-slate-400">
-                                                    {msg.timestamp}
-                                                </span>
-                                            </div>
+                                            <img
+                                                src={isMe ? myResolvedPic : msg.sender.avatar}
+                                                alt={msg.sender.name}
+                                                onError={(e) => {
+                                                    e.currentTarget.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(isMe ? currentUser?.name || 'Member' : msg.sender.name)}&backgroundColor=0a66c2`;
+                                                }}
+                                                className="w-9 h-9 rounded-full object-cover shrink-0 mt-1 border border-slate-200 shadow-sm ring-2 ring-[#0066FF]"
+                                            />
+                                            <div
+                                                className={`max-w-[75%] flex flex-col ${
+                                                    isMe ? 'items-end' : 'items-start'
+                                                }`}
+                                            >
+                                                <div className="flex items-baseline gap-2 mb-1 px-1 flex-wrap">
+                                                    <span className="text-xs font-extrabold text-slate-800">
+                                                        {isMe
+                                                            ? currentUser?.name || 'You'
+                                                            : msg.sender.name}
+                                                    </span>
+                                                    <span
+                                                        className="text-[10px] font-bold text-slate-500 bg-white/90 px-1.5 py-0.5 rounded border border-slate-200/80"
+                                                        title={
+                                                            isMe
+                                                                ? `Sent on ${msgFullSentDateTime}`
+                                                                : `Received on ${msgFullSentDateTime}`
+                                                        }
+                                                    >
+                                                        {isMe ? 'Sent · ' : 'Received · '}
+                                                        {msgFullSentDateTime}
+                                                    </span>
+                                                </div>
 
                                             {/* High-Contrast Message Bubble (Outgoing messages & Meeting Invitations/RSVPs include Profile Picture + ConnectLn Logo Card) */}
                                             <div className="relative">
@@ -1837,7 +2515,8 @@ export function MessagingView({
                                                 onPostToFeed={() => handlePostMessageToFeed(msg, isMe)}
                                             />
                                         </div>
-                                    </div>
+                                        </div>
+                                    </React.Fragment>
                                 );
                             })}
 
