@@ -94,6 +94,15 @@ export function MessagingView({
             return ['thread_trade_people_gus'];
         }
     });
+    const [unstarredIds, setUnstarredIds] = useState<string[]>(() => {
+        if (typeof window === 'undefined') return [];
+        try {
+            const raw = localStorage.getItem('connectln_unstarred_threads_v1');
+            return raw ? JSON.parse(raw) : [];
+        } catch {
+            return [];
+        }
+    });
     const [snoozedIds, setSnoozedIds] = useState<string[]>(() => {
         if (typeof window === 'undefined') return [];
         try {
@@ -121,6 +130,16 @@ export function MessagingView({
             return {};
         }
     });
+    const [dismissedDraftIds, setDismissedDraftIds] = useState<string[]>(() => {
+        if (typeof window === 'undefined') return [];
+        try {
+            const raw = localStorage.getItem('connectln_dismissed_drafts_v1');
+            return raw ? JSON.parse(raw) : [];
+        } catch {
+            return [];
+        }
+    });
+    const composerInputRef = useRef<HTMLInputElement | null>(null);
     const [customLabels, setCustomLabels] = useState<Array<{ id: string; name: string; color: string }>>([
         { id: 'verified_dm', name: 'Verified DMs', color: '#0A66C2' },
         { id: 'specs_files', name: 'Specs & Attachments', color: '#059669' },
@@ -130,15 +149,94 @@ export function MessagingView({
     const [showNewLabelInput, setShowNewLabelInput] = useState(false);
     const [newLabelName, setNewLabelName] = useState('');
 
-    const toggleStarThread = (threadId: string, e?: React.MouseEvent) => {
-        e?.stopPropagation();
-        setStarredIds((prev) => {
-            const next = prev.includes(threadId) ? prev.filter((id) => id !== threadId) : [...prev, threadId];
+    const saveDraftForThread = (threadId: string, draftText: string, showToast = false) => {
+        const clean = draftText;
+        setSavedDraftsByThread((prev) => {
+            const next = { ...prev };
+            if (clean.trim()) {
+                next[threadId] = clean;
+            } else {
+                delete next[threadId];
+            }
             try {
-                localStorage.setItem('connectln_starred_threads_v1', JSON.stringify(next));
+                localStorage.setItem('connectln_message_drafts_v1', JSON.stringify(next));
             } catch {}
             return next;
         });
+        if (clean.trim()) {
+            setDismissedDraftIds((prev) => {
+                if (!prev.includes(threadId)) return prev;
+                const next = prev.filter((id) => id !== threadId);
+                try {
+                    localStorage.setItem('connectln_dismissed_drafts_v1', JSON.stringify(next));
+                } catch {}
+                return next;
+            });
+            if (showToast) {
+                triggerToast('📝 Draft saved to your ConnectLn Drafts folder.');
+            }
+        }
+    };
+
+    const discardDraftForThread = (threadId: string, e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        setSavedDraftsByThread((prev) => {
+            if (!prev[threadId]) return prev;
+            const next = { ...prev };
+            delete next[threadId];
+            try {
+                localStorage.setItem('connectln_message_drafts_v1', JSON.stringify(next));
+            } catch {}
+            return next;
+        });
+        setDismissedDraftIds((prev) => {
+            if (prev.includes(threadId)) return prev;
+            const next = [...prev, threadId];
+            try {
+                localStorage.setItem('connectln_dismissed_drafts_v1', JSON.stringify(next));
+            } catch {}
+            return next;
+        });
+        if (activeThread?.id === threadId) {
+            setMessageInput('');
+        }
+        triggerToast('🗑️ Draft discarded.');
+    };
+
+    const toggleStarThread = (threadId: string, e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        const currentlyStarred = isThreadStarredById(threadId);
+        if (currentlyStarred) {
+            setStarredIds((prev) => {
+                const next = prev.filter((id) => id !== threadId);
+                try {
+                    localStorage.setItem('connectln_starred_threads_v1', JSON.stringify(next));
+                } catch {}
+                return next;
+            });
+            setUnstarredIds((prev) => {
+                const next = prev.includes(threadId) ? prev : [...prev, threadId];
+                try {
+                    localStorage.setItem('connectln_unstarred_threads_v1', JSON.stringify(next));
+                } catch {}
+                return next;
+            });
+        } else {
+            setUnstarredIds((prev) => {
+                const next = prev.filter((id) => id !== threadId);
+                try {
+                    localStorage.setItem('connectln_unstarred_threads_v1', JSON.stringify(next));
+                } catch {}
+                return next;
+            });
+            setStarredIds((prev) => {
+                const next = prev.includes(threadId) ? prev : [...prev, threadId];
+                try {
+                    localStorage.setItem('connectln_starred_threads_v1', JSON.stringify(next));
+                } catch {}
+                return next;
+            });
+        }
     };
 
     const toggleImportantThread = (threadId: string, e?: React.MouseEvent) => {
@@ -677,6 +775,37 @@ export function MessagingView({
                 m.text.toLowerCase().includes('rsvp')
         );
 
+    const isThreadStarredById = (threadId: string): boolean => {
+        if (unstarredIds.includes(threadId)) return false;
+        if (starredIds.includes(threadId)) return true;
+        const firstPeer = threads.find((x) => x.channelType === 'People');
+        const firstGuild = threads.find((x) => x.channelType === 'Communities');
+        return threadId === firstPeer?.id || threadId === firstGuild?.id;
+    };
+
+    const getEffectiveDraftForThread = (t: B2BConversationThread): string => {
+        const userSaved = savedDraftsByThread[t.id];
+        if (typeof userSaved === 'string' && userSaved.trim().length > 0) {
+            return userSaved;
+        }
+        if (dismissedDraftIds.includes(t.id)) {
+            return '';
+        }
+        const shortRecipient = t.title.split('(')[0].trim();
+        if (t.channelType === 'Companies') {
+            return `Hi ${shortRecipient}, I reviewed the position scope and compensation band — attaching my updated ConnectLn dossier and available for a briefing call this week.`;
+        }
+        if (t.channelType === 'Products') {
+            const prodName = t.productMetadata?.productName || 'the listed commercial package';
+            return `Hi ${shortRecipient}, please send the enterprise quote, lead time, and technical spec sheet for ${prodName} so we can finalize procurement.`;
+        }
+        const firstPeer = threads.find((x) => x.channelType === 'People');
+        if (firstPeer && t.id === firstPeer.id) {
+            return `Hi ${shortRecipient}, following up on our project specifications and schedule — let me know when you have 10 minutes for a quick ConnectLn Video Huddle.`;
+        }
+        return '';
+    };
+
     const matchesMailboxFolder = (t: B2BConversationThread, folder: ConnectLnMailboxFolder): boolean => {
         if (folder === 'snoozed') return snoozedIds.includes(t.id);
         if (folder === 'all_mail') return true;
@@ -691,7 +820,7 @@ export function MessagingView({
                 t.id.startsWith('dm_pair__')
             );
         }
-        if (folder === 'starred') return starredIds.includes(t.id);
+        if (folder === 'starred') return isThreadStarredById(t.id);
         if (folder === 'important') {
             return (
                 importantIds.includes(t.id) ||
@@ -701,10 +830,7 @@ export function MessagingView({
         }
         if (folder === 'sent') return hasMessageSentByViewer(t);
         if (folder === 'drafts') {
-            return Boolean(
-                savedDraftsByThread[t.id]?.trim() ||
-                    (activeThread?.id === t.id && messageInput.trim())
-            );
+            return Boolean(getEffectiveDraftForThread(t).trim());
         }
         if (folder === 'purchases') return t.channelType === 'Products';
         if (folder === 'social') return t.channelType === 'People';
@@ -739,20 +865,41 @@ export function MessagingView({
         const matchesLabel = matchesCustomLabel(t, activeCustomLabel);
         const matchesChannel = activeChannel === 'All' || t.channelType === activeChannel;
         const q = searchQuery.trim().toLowerCase();
+        const draftPreview = getEffectiveDraftForThread(t).toLowerCase();
         const matchesSearch =
             !q ||
             t.title.toLowerCase().includes(q) ||
             t.lastMessage.toLowerCase().includes(q) ||
             t.subtitle.toLowerCase().includes(q) ||
+            draftPreview.includes(q) ||
             (t.companyMetadata?.industry || '').toLowerCase().includes(q) ||
             (t.productMetadata?.productName || '').toLowerCase().includes(q);
         return matchesFolder && matchesLabel && matchesChannel && matchesSearch;
     });
 
     const activeThread =
-        threads.find((t) => t.id === selectedThreadId) ||
+        filteredThreads.find((t) => t.id === selectedThreadId) ||
         filteredThreads[0] ||
+        threads.find((t) => t.id === selectedThreadId) ||
         threads[0];
+
+    const handleSelectMailboxFolder = (folder: ConnectLnMailboxFolder) => {
+        setActiveMailboxFolder(folder);
+        setActiveCustomLabel(null);
+        setActiveChannel('All');
+        setSearchQuery('');
+        const matching = threads.filter((t) => matchesMailboxFolder(t, folder));
+        if (matching.length > 0) {
+            const target = matching.find((t) => t.id === selectedThreadId) || matching[0];
+            setSelectedThreadId(target.id);
+            const draftForTarget = getEffectiveDraftForThread(target);
+            if (folder === 'drafts' && draftForTarget) {
+                setMessageInput(draftForTarget);
+            } else if (savedDraftsByThread[target.id]) {
+                setMessageInput(savedDraftsByThread[target.id]);
+            }
+        }
+    };
 
     // Sync live video frames with /api/v1/calls when Messaging Video Huddle is active
     useEffect(() => {
@@ -959,6 +1106,14 @@ export function MessagingView({
     const handleSelectThread = (thread: B2BConversationThread) => {
         setSelectedThreadId(thread.id);
         setMobileShowChat(true);
+        const draftForSelected = getEffectiveDraftForThread(thread);
+        if (activeMailboxFolder === 'drafts' && draftForSelected) {
+            setMessageInput(draftForSelected);
+        } else if (savedDraftsByThread[thread.id]) {
+            setMessageInput(savedDraftsByThread[thread.id]);
+        } else {
+            setMessageInput('');
+        }
         if (currentUser?.name) {
             markLocalBilateralConversationRead(thread.title, currentUser.name);
         }
@@ -1050,6 +1205,14 @@ export function MessagingView({
             delete next[targetThreadId];
             try {
                 localStorage.setItem('connectln_message_drafts_v1', JSON.stringify(next));
+            } catch {}
+            return next;
+        });
+        setDismissedDraftIds((prev) => {
+            if (prev.includes(targetThreadId)) return prev;
+            const next = [...prev, targetThreadId];
+            try {
+                localStorage.setItem('connectln_dismissed_drafts_v1', JSON.stringify(next));
             } catch {}
             return next;
         });
@@ -1393,6 +1556,74 @@ export function MessagingView({
         }
     };
 
+    const handleSaveNewModalAsDraft = () => {
+        const recipientTitle = newRecipientName.trim() || 'New ConnectLn Contact';
+        const draftBody =
+            newInitialMessage.trim() ||
+            `Hi ${recipientTitle.split(',')[0]}, reaching out via ConnectLn regarding upcoming project specs and availability.`;
+        const existing = threads.find(
+            (t) => t.title.toLowerCase() === recipientTitle.toLowerCase()
+        );
+        if (existing) {
+            saveDraftForThread(existing.id, draftBody, true);
+            setSelectedThreadId(existing.id);
+            setMessageInput(draftBody);
+            setActiveMailboxFolder('drafts');
+            setActiveCustomLabel(null);
+            setActiveChannel('All');
+        } else {
+            const recipientSub =
+                newRecipientRole.trim() ||
+                `Verified ${newRecipientChannel} Partner • ConnectIn Direct`;
+            const recipientAvatarUrl =
+                newRecipientAvatar ||
+                `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(recipientTitle)}&backgroundColor=0a66c2`;
+            const draftThreadId = `thread-draft-${Date.now()}`;
+            const draftThread: B2BConversationThread = {
+                id: draftThreadId,
+                channelType: newRecipientChannel,
+                subType:
+                    newRecipientChannel === 'Companies'
+                        ? 'Recruiter'
+                        : newRecipientChannel === 'Products'
+                        ? 'Vendor'
+                        : newRecipientChannel === 'Communities'
+                        ? 'Community Chat'
+                        : 'DM',
+                title: recipientTitle,
+                subtitle: recipientSub,
+                avatar: recipientAvatarUrl,
+                onlineStatus: 'online',
+                isVerified: true,
+                badgeIcon:
+                    newRecipientChannel === 'Companies'
+                        ? '🏢'
+                        : newRecipientChannel === 'Products'
+                        ? '🛍️'
+                        : newRecipientChannel === 'Communities'
+                        ? '🌐'
+                        : '🤝',
+                unreadCount: 0,
+                lastMessage: `[Draft] ${draftBody}`,
+                lastMessageTime: formatMessageSentDateTime(new Date().toISOString()),
+                messages: [],
+            };
+            setThreads((prev) => [draftThread, ...prev]);
+            saveDraftForThread(draftThreadId, draftBody, true);
+            setSelectedThreadId(draftThreadId);
+            setMessageInput(draftBody);
+            setActiveMailboxFolder('drafts');
+            setActiveCustomLabel(null);
+            setActiveChannel('All');
+        }
+        setShowNewMessageModal(false);
+        setNewRecipientName('');
+        setNewRecipientRole('');
+        setNewRecipientAvatar('');
+        setShowRecipientSuggestions(false);
+        setNewInitialMessage('');
+    };
+
     const currentEnclaveObj = PROFESSION_ENCLAVES.find((e) => e.id === selectedEnclave);
 
     // Channel pill counts
@@ -1663,11 +1894,7 @@ export function MessagingView({
                                 <button
                                     key={item.id}
                                     type="button"
-                                    onClick={() => {
-                                        setActiveMailboxFolder(item.id);
-                                        setActiveCustomLabel(null);
-                                        setActiveChannel('All');
-                                    }}
+                                    onClick={() => handleSelectMailboxFolder(item.id)}
                                     className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-full text-xs transition-all cursor-pointer ${
                                         isActive
                                             ? 'bg-[#D3E3FD] text-[#041E49] font-extrabold shadow-2xs'
@@ -1726,11 +1953,7 @@ export function MessagingView({
                             <div className="space-y-0.5 pl-1 animate-in fade-in">
                                 <button
                                     type="button"
-                                    onClick={() => {
-                                        setActiveMailboxFolder('scheduled');
-                                        setActiveCustomLabel(null);
-                                        setActiveChannel('All');
-                                    }}
+                                    onClick={() => handleSelectMailboxFolder('scheduled')}
                                     className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-full text-xs transition-all cursor-pointer ${
                                         activeMailboxFolder === 'scheduled' && !activeCustomLabel
                                             ? 'bg-[#D3E3FD] text-[#041E49] font-extrabold'
@@ -1747,11 +1970,7 @@ export function MessagingView({
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => {
-                                        setActiveMailboxFolder('all_mail');
-                                        setActiveCustomLabel(null);
-                                        setActiveChannel('All');
-                                    }}
+                                    onClick={() => handleSelectMailboxFolder('all_mail')}
                                     className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-full text-xs transition-all cursor-pointer ${
                                         activeMailboxFolder === 'all_mail' && !activeCustomLabel
                                             ? 'bg-[#D3E3FD] text-[#041E49] font-extrabold'
@@ -1875,12 +2094,20 @@ export function MessagingView({
                                     )}
                                 </h2>
                                 <p className="text-[11px] text-slate-500 font-semibold">
-                                    Direct Peers • Hiring Teams • Commercial Vendors • Guilds
+                                    {activeMailboxFolder === 'drafts'
+                                        ? '📝 Unsent Drafts • Click any draft to edit or send'
+                                        : 'Direct Peers • Hiring Teams • Commercial Vendors • Guilds'}
                                 </p>
                             </div>
                             <span className="text-[11px] font-black text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md">
                                 {filteredThreads.length}{' '}
-                                {filteredThreads.length === 1 ? 'Thread' : 'Threads'}
+                                {activeMailboxFolder === 'drafts'
+                                    ? filteredThreads.length === 1
+                                        ? 'Draft'
+                                        : 'Drafts'
+                                    : filteredThreads.length === 1
+                                    ? 'Thread'
+                                    : 'Threads'}
                             </span>
                         </div>
 
@@ -1961,28 +2188,59 @@ export function MessagingView({
                         {filteredThreads.length === 0 ? (
                             <div className="p-8 text-center">
                                 <p className="text-sm font-bold text-slate-700 mb-1">
-                                    No conversations match this filter
+                                    {activeMailboxFolder === 'snoozed'
+                                        ? 'No snoozed conversations right now'
+                                        : activeMailboxFolder === 'drafts'
+                                        ? 'No unsent drafts in this view'
+                                        : 'No conversations match this filter'}
                                 </p>
                                 <p className="text-xs text-slate-500 mb-3">
-                                    Switch back to All Inboxes or start a new conversation.
+                                    {activeMailboxFolder === 'snoozed'
+                                        ? 'Click the 🕒 Snooze icon on any thread to snooze it here.'
+                                        : activeMailboxFolder === 'drafts'
+                                        ? 'Type in any conversation or click "+ New Draft" below to save a draft.'
+                                        : 'Switch back to Inbox or start a new conversation.'}
                                 </p>
-                                <button
-                                    onClick={() => {
-                                        setActiveChannel('All');
-                                        setSearchQuery('');
-                                    }}
-                                    className="px-3 py-1.5 rounded-lg bg-[#0A66C2] text-xs font-bold"
-                                    style={{ color: '#FFFFFF' }}
-                                >
-                                    Reset Filters
-                                </button>
+                                <div className="flex flex-wrap items-center justify-center gap-2">
+                                    {activeMailboxFolder === 'drafts' && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setDismissedDraftIds([]);
+                                                try {
+                                                    localStorage.removeItem('connectln_dismissed_drafts_v1');
+                                                } catch {}
+                                                setShowNewMessageModal(true);
+                                            }}
+                                            className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-xs font-bold cursor-pointer"
+                                            style={{ color: '#FFFFFF' }}
+                                        >
+                                            + Create New Draft
+                                        </button>
+                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            handleSelectMailboxFolder('inbox');
+                                        }}
+                                        className="px-3 py-1.5 rounded-lg bg-[#0A66C2] text-xs font-bold cursor-pointer"
+                                        style={{ color: '#FFFFFF' }}
+                                    >
+                                        Return to Inbox
+                                    </button>
+                                </div>
                             </div>
                         ) : (
                             filteredThreads.map((thread) => {
                                 const isSelected = activeThread?.id === thread.id;
-                                const isStarred = starredIds.includes(thread.id);
+                                const isStarred = isThreadStarredById(thread.id);
                                 const isImportant = importantIds.includes(thread.id);
                                 const isSnoozed = snoozedIds.includes(thread.id);
+                                const effectiveDraft = getEffectiveDraftForThread(thread);
+                                const showDraftPreview =
+                                    activeMailboxFolder === 'drafts'
+                                        ? Boolean(effectiveDraft)
+                                        : Boolean(savedDraftsByThread[thread.id]);
                                 const lastMsg = thread.messages?.[thread.messages.length - 1];
                                 const formattedDateLabel = formatMessageSentDateTime(
                                     lastMsg,
@@ -2074,9 +2332,9 @@ export function MessagingView({
                                                             : 'text-slate-600 font-medium'
                                                     }`}
                                                 >
-                                                    {savedDraftsByThread[thread.id] ? (
+                                                    {showDraftPreview ? (
                                                         <span className="text-rose-600 font-extrabold">
-                                                            [Draft] {savedDraftsByThread[thread.id]}
+                                                            📝 [Draft] {effectiveDraft}
                                                         </span>
                                                     ) : (
                                                         thread.lastMessage
@@ -2236,14 +2494,14 @@ export function MessagingView({
                                     <button
                                         type="button"
                                         onClick={() => toggleStarThread(activeThread.id)}
-                                        title={starredIds.includes(activeThread.id) ? 'Starred (click to unstar)' : 'Star conversation'}
+                                        title={isThreadStarredById(activeThread.id) ? 'Starred (click to unstar)' : 'Star conversation'}
                                         className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold border transition-all cursor-pointer ${
-                                            starredIds.includes(activeThread.id)
+                                            isThreadStarredById(activeThread.id)
                                                 ? 'bg-amber-50 text-amber-500 border-amber-300 shadow-sm'
                                                 : 'bg-slate-50 text-slate-400 border-slate-200 hover:text-amber-500 hover:bg-amber-50/50'
                                         }`}
                                     >
-                                        {starredIds.includes(activeThread.id) ? '★' : '☆'}
+                                        {isThreadStarredById(activeThread.id) ? '★' : '☆'}
                                     </button>
                                     <button
                                         type="button"
@@ -2520,6 +2778,78 @@ export function MessagingView({
                                 );
                             })}
 
+                            {/* Live Draft Message Card inside Conversation Stream (when viewing Drafts or when thread has a saved draft) */}
+                            {(() => {
+                                const activeDraftText = getEffectiveDraftForThread(activeThread);
+                                const shouldShowDraftCard =
+                                    Boolean(activeDraftText.trim()) &&
+                                    (activeMailboxFolder === 'drafts' ||
+                                        Boolean(savedDraftsByThread[activeThread.id]?.trim()));
+                                if (!shouldShowDraftCard) return null;
+                                return (
+                                    <div className="my-3 rounded-2xl border-2 border-dashed border-amber-400 bg-amber-50/90 p-4 shadow-xs">
+                                        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className="inline-flex items-center gap-1 rounded-md bg-amber-600 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-white">
+                                                    📝 Draft Message
+                                                </span>
+                                                <span className="text-xs font-extrabold text-amber-950">
+                                                    To: {activeThread.title}
+                                                </span>
+                                            </div>
+                                            <span className="text-[10px] font-bold text-amber-800 bg-white/80 px-2 py-0.5 rounded border border-amber-200">
+                                                Saved in Drafts • Not Yet Sent
+                                            </span>
+                                        </div>
+                                        <p className="text-sm font-semibold text-slate-900 bg-white rounded-xl p-3 border border-amber-200/90 whitespace-pre-line mb-3">
+                                            {messageInput.trim() || activeDraftText}
+                                        </p>
+                                        <div className="flex flex-wrap items-center justify-end gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const textToLoad =
+                                                        messageInput.trim() || activeDraftText;
+                                                    setMessageInput(textToLoad);
+                                                    saveDraftForThread(
+                                                        activeThread.id,
+                                                        textToLoad,
+                                                        false
+                                                    );
+                                                    setTimeout(() => {
+                                                        composerInputRef.current?.focus();
+                                                    }, 40);
+                                                }}
+                                                className="px-3 py-1.5 rounded-xl bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-extrabold transition-all cursor-pointer"
+                                            >
+                                                ✏️ Edit Draft Below
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={(e) =>
+                                                    discardDraftForThread(activeThread.id, e)
+                                                }
+                                                className="px-3 py-1.5 rounded-xl bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 text-xs font-extrabold transition-all cursor-pointer"
+                                            >
+                                                🗑️ Discard Draft
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    sendChatText(
+                                                        messageInput.trim() || activeDraftText
+                                                    )
+                                                }
+                                                className="px-4 py-1.5 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-xs font-black transition-all shadow-xs cursor-pointer"
+                                                style={{ color: '#FFFFFF' }}
+                                            >
+                                                Send Draft Now ➤
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+
                             {/* Live Typing Indicator */}
                             {typingEntity && (
                                 <div className="flex items-center gap-2.5 text-xs font-bold text-slate-500 pl-2 animate-pulse">
@@ -2597,12 +2927,58 @@ export function MessagingView({
                                     <button
                                         key={em}
                                         type="button"
-                                        onClick={() => setMessageInput((prev) => `${prev}${em} `)}
+                                        onClick={() => {
+                                            const nextVal = `${messageInput}${em} `;
+                                            setMessageInput(nextVal);
+                                            saveDraftForThread(activeThread.id, nextVal, false);
+                                        }}
                                         className="text-base hover:scale-125 transition-transform px-1"
                                     >
                                         {em}
                                     </button>
                                 ))}
+                            </div>
+                        )}
+
+                        {/* Active Draft Status Bar above Composer */}
+                        {(Boolean(messageInput.trim()) ||
+                            Boolean(savedDraftsByThread[activeThread.id]?.trim()) ||
+                            activeMailboxFolder === 'drafts') && (
+                            <div className="px-4 py-1.5 bg-amber-50/90 border-t border-amber-200 flex items-center justify-between gap-2">
+                                <span className="text-[11px] font-bold text-amber-900 flex items-center gap-1.5 truncate">
+                                    <span>📝</span>
+                                    <span>
+                                        Draft active for <strong>{activeThread.title}</strong>
+                                    </span>
+                                </span>
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const textToSave =
+                                                messageInput.trim() ||
+                                                getEffectiveDraftForThread(activeThread);
+                                            if (textToSave) {
+                                                setMessageInput(textToSave);
+                                                saveDraftForThread(
+                                                    activeThread.id,
+                                                    textToSave,
+                                                    true
+                                                );
+                                            }
+                                        }}
+                                        className="text-[11px] font-extrabold text-[#0A66C2] hover:underline cursor-pointer"
+                                    >
+                                        💾 Save Draft
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={(e) => discardDraftForThread(activeThread.id, e)}
+                                        className="text-[11px] font-extrabold text-rose-600 hover:underline cursor-pointer"
+                                    >
+                                        🗑️ Discard
+                                    </button>
+                                </div>
                             </div>
                         )}
 
@@ -2645,13 +3021,31 @@ export function MessagingView({
 
                             <div className="flex-1 relative">
                                 <input
+                                    ref={composerInputRef}
                                     type="text"
                                     value={messageInput}
-                                    onChange={(e) => setMessageInput(e.target.value)}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        setMessageInput(val);
+                                        saveDraftForThread(activeThread.id, val, false);
+                                    }}
                                     placeholder={`Message ${activeThread.title}...`}
                                     className="w-full bg-slate-100 focus:bg-white border border-slate-200 focus:border-[#0A66C2] rounded-xl py-3 px-4 text-sm font-medium text-slate-900 focus:outline-none transition-all"
                                 />
                             </div>
+
+                            {messageInput.trim() && (
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        saveDraftForThread(activeThread.id, messageInput, true)
+                                    }
+                                    className="px-3.5 py-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-extrabold text-xs transition-all shrink-0 cursor-pointer"
+                                    title="Save message to your Drafts folder"
+                                >
+                                    📝 Save Draft
+                                </button>
+                            )}
 
                             <button
                                 type="submit"
@@ -2878,13 +3272,20 @@ export function MessagingView({
                                 />
                             </div>
 
-                            <div className="flex justify-end gap-2 pt-2">
+                            <div className="flex flex-wrap justify-end gap-2 pt-2">
                                 <button
                                     type="button"
                                     onClick={() => setShowNewMessageModal(false)}
                                     className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-100 cursor-pointer"
                                 >
                                     Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleSaveNewModalAsDraft}
+                                    className="px-4 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-extrabold transition-all cursor-pointer"
+                                >
+                                    📝 Save as Draft
                                 </button>
                                 <button
                                     type="submit"
