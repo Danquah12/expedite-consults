@@ -54,5 +54,5 @@ export function buildSharePreviewUrl(opts: { to: string; title: string; sharerNa
     q.set("p", opts.pic)
   }
   q.set("cb", "2")
-  return `https://www.connectln.app/connectin/share?${q.toString()}`
+  return `https://www.conectln.com/connectin/share?${q.toString()}`
 }

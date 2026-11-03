@@ -196,7 +196,7 @@ export const CONNECTLN_TOPICS: KnowledgeTopic[] = [
     id: 'site',
     title: 'Where to use it',
     keywords: ['url', 'website', 'link', 'site', 'domain', 'address', 'app'],
-    answer: () => `ConnectLn lives at **https://www.connectln.app**.`
+    answer: () => `ConnectLn lives at **https://www.conectln.com** (and **https://www.connectln.app**).`
   }
 ]
 

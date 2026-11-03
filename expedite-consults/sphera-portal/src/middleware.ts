@@ -34,7 +34,16 @@ export async function middleware(request: NextRequest) {
   // 1. Social Crawler & Link Preview Handler (WhatsApp, iMessage, Twitter, Facebook, LinkedIn)
   if (isCrawler(userAgent)) {
     const rawUrl = request.url;
-    const isConnectInRoute = pathname.includes("connectin") || pathname.includes("connectln") || host.includes("connectln");
+    const isConnectInRoute =
+      pathname.includes("connectin") ||
+      pathname.includes("connectln") ||
+      pathname.includes("conectln") ||
+      host.includes("connectln") ||
+      host.includes("conectln");
+
+    const baseOrigin = host.includes("conectln")
+      ? "https://www.conectln.com"
+      : "https://www.conectln.com";
 
     let pageTitle = isConnectInRoute
       ? "ConnectLn — Tickets, vouches, and real work"
@@ -42,7 +51,7 @@ export async function middleware(request: NextRequest) {
     let pageDesc = isConnectInRoute
       ? "ConnectLn: The zero-trust professional network. Verified tickets, vouches, and real work across cloud, cybersecurity, trades, and enterprise teams."
       : "The zero-trust professional network. Tickets, vouches, and real work.";
-    let ogImageUrl = `https://www.connectln.app/api/connectin/share-card?t=${encodeURIComponent(pageTitle)}`;
+    let ogImageUrl = `${baseOrigin}/api/connectin/share-card?t=${encodeURIComponent(pageTitle)}`;
 
     // Dynamic preview card for shared Wheel videos / posts (/connectin/share)
     if (pathname.startsWith("/connectin/share")) {
@@ -53,7 +62,7 @@ export async function middleware(request: NextRequest) {
       pageTitle = "ConnectLn — Tickets, vouches, and real work";
       pageDesc = "ConnectLn: The zero-trust professional network. Verified tickets, vouches, and real work across cloud, cybersecurity, trades, and enterprise teams.";
       const imgParams = new URLSearchParams({ n: name, t: title, plate, p, cb: "2" });
-      ogImageUrl = `https://www.connectln.app/api/connectin/share-card?${imgParams.toString()}`;
+      ogImageUrl = `${baseOrigin}/api/connectin/share-card?${imgParams.toString()}`;
     } else if (pathname.startsWith("/share/message")) {
       // Dynamic preview card for shared chat messages (/share/message)
       const author = searchParams.get("author") || "ConnectLn Member";
@@ -65,7 +74,7 @@ export async function middleware(request: NextRequest) {
       pageTitle = `ConnectLn — ${author}: "${text.slice(0, 70)}${text.length > 70 ? "…" : ""}"`;
       pageDesc = `${role} · ${text.slice(0, 180)}`;
       const imgParams = new URLSearchParams({ author, role, text, avatar, sharedBy, p });
-      ogImageUrl = `https://www.connectln.app/api/connectin/share-card/image?${imgParams.toString()}`;
+      ogImageUrl = `${baseOrigin}/api/connectin/share-card/image?${imgParams.toString()}`;
     }
 
     const staticOgHtml = `<!DOCTYPE html>
@@ -130,10 +139,15 @@ export async function middleware(request: NextRequest) {
 
   if (pathname === "/") {
     const url = request.nextUrl.clone();
-    if (host.includes("connectln") || host.includes("connectin")) {
+    if (
+      host.includes("conectln") ||
+      host.includes("connectln") ||
+      host.includes("connectin") ||
+      host.includes("sphera-portal")
+    ) {
       url.pathname = "/connectin";
     } else {
-      url.pathname = "/feed";
+      url.pathname = "/connectin";
     }
     return NextResponse.redirect(url);
   }

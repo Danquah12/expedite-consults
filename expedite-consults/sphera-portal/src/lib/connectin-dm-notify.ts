@@ -8,7 +8,7 @@ import { formatE164Phone } from "./connectin-sms"
  */
 
 const DEFAULT_FROM_EMAIL = "auth@expediteconsults.com"
-const OPEN_MESSAGING_URL = "https://www.connectln.app/connectin?tab=messaging"
+const OPEN_MESSAGING_URL = "https://www.conectln.com/connectin?tab=messaging"
 
 // Best-effort burst limiter (per sender -> recipient). Serverless instances don't share memory,
 // so this only softens bursts; it is not a hard guarantee.
@@ -35,7 +35,7 @@ async function sendEmail(to: string, senderName: string, recipientName: string, 
   const reasonMatch = text.match(/Reason:\s*([^\n]+)/i)
   const reason = reasonMatch ? reasonMatch[1].trim() : "Scheduled Meeting"
 
-  const rsvpBase = `https://www.connectln.app/api/connectin/meeting-rsvp?host=${encodeURIComponent(senderName)}&invitee=${encodeURIComponent(recipientName)}&msgId=${encodeURIComponent(messageId || "")}&reason=${encodeURIComponent(reason)}`
+  const rsvpBase = `https://www.conectln.com/api/connectin/meeting-rsvp?host=${encodeURIComponent(senderName)}&invitee=${encodeURIComponent(recipientName)}&msgId=${encodeURIComponent(messageId || "")}&reason=${encodeURIComponent(reason)}`
   const rsvpButtonsHtml = isMeetingInvite
     ? `<div style="margin-top:16px;padding:14px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:12px">
         <p style="margin:0 0 10px 0;font-size:13px;font-weight:800;color:#0f172a">📋 Confirm your attendance (sends your response back to ${esc(senderName)}):</p>
@@ -62,7 +62,7 @@ async function sendEmail(to: string, senderName: string, recipientName: string, 
     text: `${senderName} sent you a message on ConnectLn:\n\n${body}\n\n${isMeetingInvite ? `Confirm Yes: ${rsvpBase}&choice=yes\nConfirm No: ${rsvpBase}&choice=no\nConfirm Maybe: ${rsvpBase}&choice=maybe\n\n` : ""}Open your inbox to reply: ${openInboxUrl}\n\n-- ConnectLn · Tickets, vouches, and real work`,
     html: `<div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;max-width:560px;margin:0 auto;padding:16px;color:#18181b">
       <div style="display:flex;align-items:center;gap:10px;background:#171513;color:#F5F0EB;padding:12px 16px;border-radius:12px 12px 0 0">
-        <img src="https://www.connectln.app/brand/connectln-icon-256.png" alt="ConnectLn" width="28" height="28" style="border-radius:6px;vertical-align:middle;margin-right:8px" />
+        <img src="https://www.conectln.com/brand/connectln-icon-256.png" alt="ConnectLn" width="28" height="28" style="border-radius:6px;vertical-align:middle;margin-right:8px" />
         <span style="font-size:16px;font-weight:900;letter-spacing:-0.02em;color:#F5F0EB">ConnectLn</span>
         <span style="margin-left:auto;font-size:11px;font-weight:700;color:#d6d3d1">${isMeetingInvite ? "📅 Official Meeting Invitation" : isRsvpResponse ? "📅 Meeting RSVP Response" : "Direct Message"}</span>
       </div>

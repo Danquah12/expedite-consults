@@ -45,13 +45,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://www.connectln.app",
+    url: "https://www.conectln.com",
     siteName: "ConnectLn",
     title: "ConnectLn — Tickets, vouches, and real work",
     description: "ConnectLn: The zero-trust professional network. Verified tickets, vouches, and real work across cloud, cybersecurity, trades, and enterprise teams.",
     images: [
       {
-        url: "https://www.connectln.app/api/connectin/share-card?t=ConnectLn+%E2%80%94+Tickets%2C+vouches%2C+and+real+work",
+        url: "https://www.conectln.com/api/connectin/share-card?t=ConnectLn+%E2%80%94+Tickets%2C+vouches%2C+and+real+work",
         width: 1200,
         height: 630,
         alt: "ConnectLn — Tickets, vouches, and real work",
@@ -62,7 +62,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "ConnectLn — Tickets, vouches, and real work",
     description: "ConnectLn: The zero-trust professional network. Verified tickets, vouches, and real work.",
-    images: ["https://www.connectln.app/api/connectin/share-card?t=ConnectLn+%E2%80%94+Tickets%2C+vouches%2C+and+real+work"],
+    images: ["https://www.conectln.com/api/connectin/share-card?t=ConnectLn+%E2%80%94+Tickets%2C+vouches%2C+and+real+work"],
   },
   manifest: "/manifest.json",
 };
@@ -75,9 +75,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.className} suppressHydrationWarning>
       <head>
-        <link rel="icon" type="image/png" sizes="256x256" href="https://www.connectln.app/brand/connectln-icon-256.png" />
-        <link rel="shortcut icon" href="https://www.connectln.app/brand/connectln-icon.png" />
-        <link rel="apple-touch-icon" href="https://www.connectln.app/brand/connectln-icon.png" />
+        <link rel="icon" type="image/png" sizes="256x256" href="https://www.conectln.com/brand/connectln-icon-256.png" />
+        <link rel="shortcut icon" href="https://www.conectln.com/brand/connectln-icon.png" />
+        <link rel="apple-touch-icon" href="https://www.conectln.com/brand/connectln-icon.png" />
       </head>
       <body className="antialiased min-h-screen" suppressHydrationWarning>
         <Providers>{children}</Providers>
