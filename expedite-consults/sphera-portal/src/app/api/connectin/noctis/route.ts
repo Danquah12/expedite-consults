@@ -74,6 +74,44 @@ export interface NoctisProductSalesPitch {
   liveNoctisSalesResponse?: string
 }
 
+function isNoctisResponseRelevantAndClean(rawText: string, requiredKeywords: string[] = []): string | null {
+  if (!rawText || !rawText.trim()) return null
+
+  // Reject unrelated canned templates from the remote Noctis router (e.g. 4-Bedroom house BIM / FreeCAD / Tax)
+  const cannedMismatchPatterns = [
+    /NOCTIS-ARCH-001/i,
+    /4-Bedroom,\s*3\.5-Bath/i,
+    /Transitional Colonial/i,
+    /IfcOpenShell/i,
+    /FreeCAD/i,
+    /GS\s*1207:2018/i,
+    /```noctis-dashboard/i,
+    /buildingSMART\s+IFC/i
+  ]
+  for (const pat of cannedMismatchPatterns) {
+    if (pat.test(rawText)) {
+      return null
+    }
+  }
+
+  const cleaned = rawText
+    .replace(/```noctis-dashboard[\s\S]*?```/gi, '')
+    .replace(/https?:\/\/(?:www\.)?dstrike\.app\/noctis/gi, 'ConnectLn In-App Noctis Concierge')
+    .replace(/\*\*/g, '')
+    .replace(/^#{1,4}\s+/gm, '')
+    .trim()
+
+  if (!cleaned) return null
+
+  if (requiredKeywords.length > 0) {
+    const lower = cleaned.toLowerCase()
+    const matched = requiredKeywords.some((kw) => kw && kw.length >= 3 && lower.includes(kw.toLowerCase()))
+    if (!matched) return null
+  }
+
+  return cleaned
+}
+
 function buildProductSalesPitch(product: MarketplaceProduct, customQuestion?: string): NoctisProductSalesPitch {
   const complianceList = product.security?.compliance || []
   const caseStudyBullets: string[] = []
@@ -109,24 +147,85 @@ function buildProductSalesPitch(product: MarketplaceProduct, customQuestion?: st
   const safeLiveUrl = product.liveUrl && !product.liveUrl.includes('/noctis') ? product.liveUrl : undefined
   const safeDemoUrl = product.demoUrl && !product.demoUrl.includes('/noctis') ? product.demoUrl : undefined
 
-  const defaultSalesNarrative =
-    `✨ **Noctis AI Sales & Product Specialist — Executive Deep-Dive on ${product.name}**\n\n` +
-    `**1. Why ${product.name} Stands Out:**\n` +
-    `${product.tagline} Built and verified by **${product.vendor.name}**, it gives your organization immediate operational capability in **${product.category} (${product.subCategory})**.\n\n` +
-    `**2. Deep-Dive: Everything ${product.name} Has & Does:**\n` +
-    `${product.overview}\n` +
-    (product.features || []).map((f) => `  • **${f.title}**: ${f.desc}`).join('\n') +
-    `\n\n**3. Architecture, Security & Compliance:**\n` +
-    `  • **Architecture**: ${product.architecture?.title} — ${product.architecture?.summary} (${product.architecture?.latency})\n` +
-    `  • **Compliance & Trust**: ${complianceList.join(' · ') || 'Enterprise Verified'} | ${product.security?.encryption}\n` +
-    (product.integrations?.length ? `  • **Integrations**: ${product.integrations.join(', ')}\n` : '') +
-    `\n**4. Proven ROI & Customer Outcomes:**\n` +
-    caseStudyBullets.map((b) => `  • ${b}`).join('\n') +
-    `\n\n**5. Commercial Pricing & How to Start Today:**\n` +
-    `  • **Starting Price**: **${product.pricing.displayPrice}** (${product.pricing.billingPeriod})${product.pricing.hasFreeTrial ? ` — includes a **${product.pricing.trialDays || 14}-Day Free Evaluation Trial**` : ''}.\n` +
-    (product.pricingTiers || []).map((t) => `  • **${t.name} (${t.price} ${t.period})**: ${t.description}`).join('\n') +
-    (safeLiveUrl ? `\n  • **Live Production Portal**: ${safeLiveUrl}` : '') +
-    (safeDemoUrl ? `\n  • **Interactive Companion / Engine**: ${safeDemoUrl}` : '')
+  const qLower = (customQuestion || '').toLowerCase()
+  let tailoredSalesNarrative = ''
+
+  if (qLower.includes('3-paragraph') || qLower.includes('purchase justification')) {
+    tailoredSalesNarrative =
+      `✨ Noctis Executive Purchase Justification Memo — ${product.name}\n\n` +
+      `1. Operational & Strategic Imperative:\n` +
+      `Our organization requires a proven, enterprise-ready solution in ${product.category} (${product.subCategory}) to eliminate manual bottlenecks and operational risk. ${product.name} by ${product.vendor.name} (${product.tagline}) directly addresses this requirement: ${product.overview} Its core capabilities — including ${(product.features || []).map((f) => `${f.title} (${f.desc})`).join('; ')} — deliver immediate operational readiness out of the box.\n\n` +
+      `2. Technical Architecture, Security & Compliance Readiness:\n` +
+      `${product.name} is engineered on ${product.architecture?.title || 'a resilient cloud-native architecture'} (${product.architecture?.summary || 'high-availability runtime'}) delivering ${product.architecture?.latency || 'sub-second'} performance with ${product.architecture?.dataPrivacy || 'strict tenant isolation'}. It meets rigorous security standards (${complianceList.join(', ') || 'Enterprise Security Verified'}) with ${product.security?.encryption || 'end-to-end encryption'} and ${product.security?.isolation || 'dedicated isolation'}, backed by a ${product.support?.sla || '99.9%'} SLA (${product.support?.responseHours || '< 1 hour'} response).\n\n` +
+      `3. Commercial ROI & Immediate Evaluation Path:\n` +
+      `Verified customers report measurable outcomes: ${caseStudyBullets.join(' ')} Priced transparently at ${product.pricing.displayPrice} (${product.pricing.billingPeriod})${product.pricing.hasFreeTrial ? ` with a zero-risk ${product.pricing.trialDays || 14}-Day Free Evaluation Trial` : ''}, our team can validate full production value immediately inside ConnectLn before committing to an annual agreement.`
+  } else if (qLower.includes('over competitors') || qLower.includes('why should our organization buy')) {
+    tailoredSalesNarrative =
+      `✨ Why Organizations Choose ${product.name} Over Legacy Competitors\n\n` +
+      `1. Purpose-Built for ${product.category} (${product.subCategory}):\n` +
+      `Unlike fragmented point tools, ${product.name} by ${product.vendor.name} unifies everything in one verified platform: ${product.overview}\n\n` +
+      `2. Differentiated Capabilities Competitors Lack:\n` +
+      (product.features || []).map((f) => `  • ${f.title}: ${f.desc}`).join('\n') +
+      `\n\n3. Superior Speed, Security & Ecosystem Integration:\n` +
+      `  • Architecture & Latency: ${product.architecture?.title} (${product.architecture?.latency}) vs. slow legacy batch tools.\n` +
+      `  • Verified Compliance: ${complianceList.join(' · ') || 'Enterprise Grade'} with ${product.security?.encryption}.\n` +
+      (product.integrations?.length ? `  • Plug-and-Play Integrations: ${product.integrations.join(', ')}.\n` : '') +
+      `\n4. Proven Customer ROI (${product.rating}/5.0 across ${product.reviewsCount} reviews):\n` +
+      caseStudyBullets.map((b) => `  • ${b}`).join('\n')
+  } else if (qLower.includes('pricing tiers') || qLower.includes('free trial')) {
+    tailoredSalesNarrative =
+      `✨ Commercial Pricing Tiers & Free Trial Breakdown — ${product.name}\n\n` +
+      `• Headline Pricing: ${product.pricing.displayPrice} (${product.pricing.billingPeriod})\n` +
+      `• Free Trial Availability: ${product.pricing.hasFreeTrial ? `Yes — Instant ${product.pricing.trialDays || 14}-Day Free Evaluation Trial Key available right inside ConnectLn` : 'Direct Enterprise Licensing'}\n\n` +
+      `Available Licensing Tiers:\n` +
+      (product.pricingTiers || [])
+        .map(
+          (t, i) =>
+            `${i + 1}. ${t.name} — ${t.price} (${t.period})\n` +
+            `   • Best For: ${t.description}\n` +
+            `   • Included Features: ${(t.features || []).join(' · ')}`
+        )
+        .join('\n\n') +
+      `\n\nSupport & SLA Included:\n` +
+      `• ${product.support?.sla || '99.9% Uptime SLA'} via ${product.support?.channel || '24/7 Priority Desk'} (Response Time: ${product.support?.responseHours || '< 1 hour'})`
+  } else if (qLower.includes('architecture') || qLower.includes('latency') || qLower.includes('compliance')) {
+    tailoredSalesNarrative =
+      `✨ Technical Architecture, Latency & Security Compliance — ${product.name}\n\n` +
+      `1. System Architecture & Runtime Performance:\n` +
+      `  • Architecture Model: ${product.architecture?.title}\n` +
+      `  • Technical Summary: ${product.architecture?.summary}\n` +
+      `  • Real-Time Latency: ${product.architecture?.latency}\n` +
+      `  • Data Residency & Privacy: ${product.architecture?.dataPrivacy}\n\n` +
+      `2. Security Controls & Compliance Certifications:\n` +
+      `  • Accredited Frameworks: ${complianceList.join(' · ') || 'Enterprise Security Verified'}\n` +
+      `  • Cryptographic Standard: ${product.security?.encryption}\n` +
+      `  • Tenant Isolation: ${product.security?.isolation}\n\n` +
+      `3. Native Integrations & Enterprise Support SLA:\n` +
+      (product.integrations?.length ? `  • Supported Integrations: ${product.integrations.join(', ')}\n` : '') +
+      `  • Guaranteed SLA: ${product.support?.sla} | Channel: ${product.support?.channel} | Response: ${product.support?.responseHours}`
+  } else {
+    tailoredSalesNarrative =
+      `✨ Noctis AI Sales & Product Specialist — Executive Deep-Dive on ${product.name}\n` +
+      (customQuestion && !qLower.includes('give a full marketing and sales deep-dive')
+        ? `Inquiry: "${customQuestion}"\n\n`
+        : `\n`) +
+      `1. Why ${product.name} Stands Out:\n` +
+      `${product.tagline} Built and verified by ${product.vendor.name}, it gives your organization immediate operational capability in ${product.category} (${product.subCategory}).\n\n` +
+      `2. Deep-Dive: Everything ${product.name} Has & Does:\n` +
+      `${product.overview}\n` +
+      (product.features || []).map((f) => `  • ${f.title}: ${f.desc}`).join('\n') +
+      `\n\n3. Architecture, Security & Compliance:\n` +
+      `  • Architecture: ${product.architecture?.title} — ${product.architecture?.summary} (${product.architecture?.latency})\n` +
+      `  • Compliance & Trust: ${complianceList.join(' · ') || 'Enterprise Verified'} | ${product.security?.encryption}\n` +
+      (product.integrations?.length ? `  • Integrations: ${product.integrations.join(', ')}\n` : '') +
+      `\n4. Proven ROI & Customer Outcomes:\n` +
+      caseStudyBullets.map((b) => `  • ${b}`).join('\n') +
+      `\n\n5. Commercial Pricing & How to Start Today:\n` +
+      `  • Starting Price: ${product.pricing.displayPrice} (${product.pricing.billingPeriod})${product.pricing.hasFreeTrial ? ` — includes a ${product.pricing.trialDays || 14}-Day Free Evaluation Trial` : ''}.\n` +
+      (product.pricingTiers || []).map((t) => `  • ${t.name} (${t.price} ${t.period}): ${t.description}`).join('\n') +
+      (safeLiveUrl ? `\n  • Live Production Portal: ${safeLiveUrl}` : '') +
+      (safeDemoUrl ? `\n  • Interactive Companion / Engine: ${safeDemoUrl}` : '')
+  }
 
   return {
     productId: product.id,
@@ -153,9 +252,7 @@ function buildProductSalesPitch(product: MarketplaceProduct, customQuestion?: st
       period: t.period,
       description: t.description
     })),
-    liveNoctisSalesResponse: customQuestion
-      ? `✨ **Noctis Sales & Product Specialist Answer regarding ${product.name}** ("${customQuestion}"):\n\n${defaultSalesNarrative}`
-      : defaultSalesNarrative
+    liveNoctisSalesResponse: tailoredSalesNarrative
   }
 }
 
@@ -565,32 +662,32 @@ export async function POST(req: Request) {
     const fallbackSalesText = explicitProduct
       ? primaryPitch.liveNoctisSalesResponse!
       : customQ
-      ? `✨ **Noctis AI Marketing & Sales Agent — Product Recommendation & Deep-Dive for ${memberName}**\n\n` +
-        `Based on your inquiry (*"${customQ}"*), here is a complete breakdown of the top ${matchedProducts.length} solutions in the ConnectLn Market and everything they do:\n\n` +
+      ? `✨ Noctis AI Marketing & Sales Agent — Product Recommendation & Deep-Dive for ${memberName}\n\n` +
+        `Based on your inquiry ("${customQ}"), here is a complete breakdown of the top ${matchedProducts.length} solutions in the ConnectLn Market and everything they do:\n\n` +
         allPitches
           .slice(0, 3)
           .map(
             (p, idx) =>
-              `### ${idx + 1}. ${p.headlinePitch}\n` +
-              `• **Vendor**: ${p.vendorName} | **Category**: ${p.category} (${p.subCategory})\n` +
-              `• **What It Has & Does**: ${p.whatItDoesAndHowItWorks.split('\n')[0]}\n` +
-              `• **Core Capabilities**: ${p.featureHighlights.map((f) => `${f.title} (${f.desc})`).join(' · ')}\n` +
-              `• **Compliance & Architecture**: ${p.complianceBadges.join(', ') || 'Enterprise Grade'} — ${p.architectureAndSecurity.split('\n')[0]}\n` +
-              `• **Pricing & Trial**: **${p.displayPrice}** (${p.billingPeriod})${p.hasFreeTrial ? ' · **14-Day Free Trial Available**' : ''}${p.liveUrl ? ` · **Live Portal**: ${p.liveUrl}` : ''}`
+              `${idx + 1}. ${p.headlinePitch}\n` +
+              `• Vendor: ${p.vendorName} | Category: ${p.category} (${p.subCategory})\n` +
+              `• What It Has & Does: ${p.whatItDoesAndHowItWorks.split('\n')[0]}\n` +
+              `• Core Capabilities: ${p.featureHighlights.map((f) => `${f.title} (${f.desc})`).join(' · ')}\n` +
+              `• Compliance & Architecture: ${p.complianceBadges.join(', ') || 'Enterprise Grade'} — ${p.architectureAndSecurity.split('\n')[0]}\n` +
+              `• Pricing & Trial: ${p.displayPrice} (${p.billingPeriod})${p.hasFreeTrial ? ' · 14-Day Free Trial Available' : ''}${p.liveUrl ? ` · Live Portal: ${p.liveUrl}` : ''}`
           )
           .join('\n\n')
-      : `✨ **Welcome to Noctis Market Intelligence & Sales Concierge**\n\n` +
-        `I have learned every specification, feature, architecture diagram, compliance standard, and pricing tier across all **${MASTER_MARKETPLACE_PRODUCTS.length} Marketplace Platforms**, **${ENTERPRISE_SOLUTIONS_DATA.length} Outcome Blueprints**, and **${spheraAppsData.length} Sphera Micro-Apps**.\n\n` +
-        `**Flagship Platforms Ready to Deploy Today:**\n` +
-        `• **🔮 DSTRIKE — Autonomous Cyber Defense & Threat Intelligence (https://www.dstrike.app)**: Autonomous cyber defense, attack surface telemetry, and AI-driven predictive security intelligence.\n` +
-        `• **🛡️ Aagiis — Federal Compliance & DoD RMF (https://aagiis.com)**: Full DoDI 8510.01, DCSA NISP, Continuous ATO (cATO), eMASS automation, and NIST 800-53 Rev 5 governance.\n` +
-        `• **🎯 EXPEDITE STRIKE™ — Live DAST Engine (https://11-dast-security-platform.vercel.app/engine)**: Real-time dynamic application security testing, OWASP Top 10 & API exploit validation with zero false positives.\n` +
-        `• **📓 DeskNote E2EE & PDFAdore (https://www.pdfadore.com)**: Zero-knowledge encrypted field notebook and 31+ browser-native PDF & document engineering tools.\n` +
-        `• **🏥 Clinical, Skilled Trades & Automotive Suites**: NIH DailyMed, MDCalc Clinical, Festool/Mafell joinery systems, and 800V EV diagnostic scopes.\n\n` +
-        `*Click **"✨ Ask Noctis"** on any product card below or type any question above to get a custom executive sales pitch, technical deep-dive, or side-by-side ROI comparison right here inside ConnectLn!*`
+      : `✨ Welcome to Noctis Market Intelligence & Sales Concierge\n\n` +
+        `I have learned every specification, feature, compliance standard, and pricing tier across all ${MASTER_MARKETPLACE_PRODUCTS.length} Marketplace Platforms, ${ENTERPRISE_SOLUTIONS_DATA.length} Outcome Blueprints, and ${spheraAppsData.length} Sphera Micro-Apps.\n\n` +
+        `Flagship Platforms Ready to Deploy Today:\n` +
+        `• 🔮 DSTRIKE — Autonomous Cyber Defense & Threat Intelligence (https://www.dstrike.app): Autonomous cyber defense, attack surface telemetry, and AI-driven predictive security intelligence.\n` +
+        `• 🛡️ Aagiis — Federal Compliance & DoD RMF (https://aagiis.com): Full DoDI 8510.01, DCSA NISP, Continuous ATO (cATO), eMASS automation, and NIST 800-53 Rev 5 governance.\n` +
+        `• 🎯 EXPEDITE STRIKE™ — Live DAST Engine (https://11-dast-security-platform.vercel.app/engine): Real-time dynamic application security testing, OWASP Top 10 & API exploit validation with zero false positives.\n` +
+        `• 📓 DeskNote E2EE & PDFAdore (https://www.pdfadore.com): Zero-knowledge encrypted field notebook and 31+ browser-native PDF & document engineering tools.\n` +
+        `• 🏥 Clinical, Skilled Trades & Automotive Suites: NIH DailyMed, MDCalc Clinical, Festool/Mafell joinery systems, and 800V EV diagnostic scopes.\n\n` +
+        `Click "✨ Ask Noctis" on any product card below or type any question above to get a custom executive sales pitch, technical deep-dive, or side-by-side ROI comparison right here inside ConnectLn!`
 
     const ctrl = new AbortController()
-    const timer = setTimeout(() => ctrl.abort(), 15000)
+    const timer = setTimeout(() => ctrl.abort(), 12000)
     try {
       const res = await fetch(NOCTIS_API_URL, {
         method: 'POST',
@@ -608,14 +705,15 @@ export async function POST(req: Request) {
       })
       if (res.ok) {
         const data = (await res.json()) as { text?: string }
-        if (data?.text && data.text.trim()) {
-          const cleanedSalesText = data.text
-            .trim()
-            .replace(/https?:\/\/(?:www\.)?dstrike\.app\/noctis/gi, 'ConnectLn In-App Noctis Concierge')
-          primaryPitch.liveNoctisSalesResponse = cleanedSalesText
+        const mustMatchWords = explicitProduct
+          ? [explicitProduct.name, explicitProduct.name.split(' ')[0], explicitProduct.vendor.name.split(' ')[0]]
+          : matchedProducts.slice(0, 3).map((p) => p.name.split(' ')[0])
+        const validatedSalesText = isNoctisResponseRelevantAndClean(data?.text || '', mustMatchWords)
+        if (validatedSalesText) {
+          primaryPitch.liveNoctisSalesResponse = validatedSalesText
           return NextResponse.json(
             {
-              text: cleanedSalesText,
+              text: validatedSalesText,
               fallbackSummary: fallbackSalesText,
               productPitch: primaryPitch,
               matchedPitches: allPitches,
@@ -681,11 +779,11 @@ export async function POST(req: Request) {
       .join('\n')
 
     const noctisAlertsPrompt = body?.selectedAlert
-      ? `You are Noctis, the AI Alert & Signal Intelligence engine inside ConnectLn (https://www.connectln.app).\n` +
+      ? `You are Noctis, the AI Alert & Signal Intelligence engine inside ConnectLn (https://www.conectln.com).\n` +
         `Explain in clear, authoritative detail what this specific alert represents, why it matters operationally/clinically/technically, and the exact steps ${memberName} should take:\n` +
         `${alertsDigestText}\n` +
         (customQ ? `\nMember's specific question about this alert: "${customQ}"` : '')
-      : `You are Noctis, the AI Alert & Signal Intelligence engine inside ConnectLn (https://www.connectln.app).\n` +
+      : `You are Noctis, the AI Alert & Signal Intelligence engine inside ConnectLn (https://www.conectln.com).\n` +
         `The signed-in member is ${memberName}${body?.profile?.profession ? ` (${body.profile.profession})` : ''}.\n` +
         `Below are the active alerts in ${memberName}'s ConnectLn Alerts feed:\n${alertsDigestText}\n\n` +
         (customQ
@@ -693,7 +791,7 @@ export async function POST(req: Request) {
           : `Provide a structured executive explanation of what these alerts represent across Security/Clinical Safety, Career Signals, Solutions/Marketplace, Learning, and Network, highlighting unread and critical advisories first and what actions to take.`)
 
     const ctrl = new AbortController()
-    const timer = setTimeout(() => ctrl.abort(), 14000)
+    const timer = setTimeout(() => ctrl.abort(), 12000)
     try {
       const res = await fetch(NOCTIS_API_URL, {
         method: 'POST',
@@ -711,13 +809,15 @@ export async function POST(req: Request) {
       })
       if (res.ok) {
         const data = (await res.json()) as { text?: string }
-        if (data?.text && data.text.trim()) {
+        const alertKeywords = targetAlerts.slice(0, 4).map((a) => a.title.split(' ').find((w) => w.length > 4) || a.category)
+        const validatedAlertText = isNoctisResponseRelevantAndClean(data?.text || '', alertKeywords)
+        if (validatedAlertText) {
           if (singleExp) {
-            singleExp.liveNoctisNote = data.text.trim()
+            singleExp.liveNoctisNote = validatedAlertText
           }
           return NextResponse.json(
             {
-              text: data.text.trim(),
+              text: validatedAlertText,
               fallbackSummary: fallbackAlertSummary,
               alertExplanations,
               singleExplanation: singleExp,
@@ -772,7 +872,7 @@ export async function POST(req: Request) {
     )
 
     const noctisPrompt =
-      `You are Noctis, the AI Unread Email & Inbox Intelligence assistant inside ConnectLn (https://www.connectln.app).\n` +
+      `You are Noctis, the AI Unread Email & Inbox Intelligence assistant inside ConnectLn (https://www.conectln.com).\n` +
       `The signed-in member is ${memberName}${body?.profile?.profession ? ` (${body.profile.profession})` : ''}.\n` +
       `Below are the unread/pending emails found in ${memberName}'s ConnectLn Inbox, along with the exact dates they arrived:\n${digestLines}\n\n` +
       (customQ
@@ -780,7 +880,7 @@ export async function POST(req: Request) {
         : `Search and summarize these unread emails grouped chronologically by the exact calendar dates they arrived (e.g., Nov 2, 2026, Oct 26, 2026, Oct 23, 2026). For each date, clearly state who sent the email/message, what they wrote or attached, and the recommended next step.`)
 
     const ctrl = new AbortController()
-    const timer = setTimeout(() => ctrl.abort(), 14000)
+    const timer = setTimeout(() => ctrl.abort(), 12000)
     try {
       const res = await fetch(NOCTIS_API_URL, {
         method: 'POST',
@@ -798,10 +898,12 @@ export async function POST(req: Request) {
       })
       if (res.ok) {
         const data = (await res.json()) as { text?: string }
-        if (data?.text && data.text.trim()) {
+        const senderKeywords = targetThreads.slice(0, 4).map((t) => t.title.split(' ')[0])
+        const validatedInboxText = isNoctisResponseRelevantAndClean(data?.text || '', senderKeywords)
+        if (validatedInboxText) {
           return NextResponse.json(
             {
-              text: data.text.trim(),
+              text: validatedInboxText,
               fallbackSummary,
               dateSummaries,
               source: 'noctis-live-api',

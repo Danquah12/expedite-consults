@@ -694,9 +694,12 @@ export function MarketplaceView({
             )}
 
             {/* Live Noctis Sales Narrative Box */}
-            <div className="rounded-xl bg-white border border-blue-100 p-4 text-xs sm:text-sm text-slate-800 leading-relaxed whitespace-pre-line font-medium max-h-64 overflow-y-auto">
-              {noctisSalesText ||
-                `✨ Hi ${currentUser?.name?.split(' ')[0] || 'there'}! I am Noctis, your AI Marketing & Enterprise Solutions Sales Agent inside the ConnectLn Market. I know every feature, architecture spec, compliance standard, and pricing tier across all ${MASTER_MARKETPLACE_PRODUCTS.length} products. Ask me to pitch any platform or click "✨ Ask Noctis" on any product card below!`}
+            <div className="rounded-xl bg-white border border-blue-100 p-4 text-xs sm:text-sm text-slate-800 leading-relaxed whitespace-pre-line break-words overflow-x-hidden font-medium max-h-64 overflow-y-auto">
+              {(noctisSalesText ||
+                `✨ Hi ${currentUser?.name?.split(' ')[0] || 'there'}! I am Noctis, your AI Marketing & Enterprise Solutions Sales Agent inside the ConnectLn Market. I know every feature, architecture spec, compliance standard, and pricing tier across all ${MASTER_MARKETPLACE_PRODUCTS.length} products. Ask me to pitch any platform or click "✨ Ask Noctis" on any product card below!`)
+                .replace(/```noctis-dashboard[\s\S]*?```/gi, '')
+                .replace(/\*\*/g, '')
+                .replace(/^#{1,4}\s+/gm, '')}
             </div>
 
             {/* Interactive Ask Noctis Marketing & Sales Input Bar */}
@@ -2202,15 +2205,15 @@ export function MarketplaceView({
           if (!open) setSelectedProduct(null)
         }}
       >
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
           {selectedProduct && (
-            <div className="space-y-5">
+            <div className="space-y-5 min-w-0">
               <DialogHeader>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-4xl">{selectedProduct.icon}</span>
-                    <div>
-                      <DialogTitle className="text-xl font-black text-zinc-900 dark:text-zinc-100">
+                <div className="flex items-start justify-between gap-4 min-w-0">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="text-4xl shrink-0">{selectedProduct.icon}</span>
+                    <div className="min-w-0">
+                      <DialogTitle className="text-xl font-black text-zinc-900 dark:text-zinc-100 break-words">
                         {selectedProduct.name}
                       </DialogTitle>
                       <p className="text-xs text-zinc-500">
@@ -2219,7 +2222,7 @@ export function MarketplaceView({
                     </div>
                   </div>
 
-                  <div className="text-right">
+                  <div className="text-right shrink-0">
                     <span className="text-base font-black text-emerald-600 block">
                       {selectedProduct.pricing.displayPrice}
                     </span>
@@ -2231,7 +2234,7 @@ export function MarketplaceView({
               </DialogHeader>
 
               {/* Product Modal Navigation Tabs */}
-              <div className="flex items-center gap-1.5 overflow-x-auto border-b border-zinc-200 pb-2 text-xs dark:border-zinc-800">
+              <div className="flex items-center gap-1.5 flex-wrap border-b border-zinc-200 pb-2 text-xs dark:border-zinc-800">
                 {[
                   { id: 'overview', label: 'overview' },
                   { id: 'noctis_sales', label: '✨ Ask Noctis Sales Agent' },
@@ -2252,7 +2255,7 @@ export function MarketplaceView({
                         })
                       }
                     }}
-                    className={`rounded-lg px-3 py-1 font-bold capitalize transition-colors cursor-pointer shrink-0 ${
+                    className={`rounded-lg px-3 py-1.5 font-bold capitalize transition-colors cursor-pointer ${
                       activeProductTab === tab.id
                         ? "bg-[#0A66C2] text-white"
                         : tab.id === 'noctis_sales'
@@ -2267,9 +2270,9 @@ export function MarketplaceView({
 
               {/* Noctis Sales Agent Tab inside Product Modal */}
               {activeProductTab === 'noctis_sales' && (
-                <div className="rounded-2xl border border-[#D3E3FD] bg-[#F8FAFD] p-4 space-y-3.5 text-slate-900">
+                <div className="rounded-2xl border border-[#D3E3FD] bg-[#F8FAFD] p-4 space-y-3.5 text-slate-900 min-w-0 overflow-x-hidden">
                   <div className="flex flex-wrap items-center justify-between gap-2 border-b border-blue-200/70 pb-2.5">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="rounded-md bg-[#1967D2] text-white px-2.5 py-0.5 text-[11px] font-extrabold">
                         ✨ Noctis AI Sales Specialist
                       </span>
@@ -2278,18 +2281,57 @@ export function MarketplaceView({
                       </span>
                     </div>
                     <span className="text-[11px] font-extrabold text-violet-700 bg-violet-50 border border-violet-200 px-2.5 py-0.5 rounded-full">
-                      🔮 Noctis API Connected
+                      🔮 Noctis In-App Sales Agent
                     </span>
                   </div>
 
-                  <div className="rounded-xl bg-white border border-blue-100 p-3.5 text-xs sm:text-sm text-slate-800 whitespace-pre-line leading-relaxed max-h-72 overflow-y-auto">
+                  {/* Quick 3-Card Executive Snapshot for this Product */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                    <div className="rounded-xl bg-white border border-blue-100 p-3 space-y-1">
+                      <div className="font-extrabold text-[#1967D2]">⚙️ What It Does</div>
+                      <p className="text-slate-700 leading-snug line-clamp-3">
+                        {selectedProduct.tagline} — {selectedProduct.overview}
+                      </p>
+                    </div>
+                    <div className="rounded-xl bg-white border border-blue-100 p-3 space-y-1">
+                      <div className="font-extrabold text-indigo-800">🔒 Architecture &amp; Trust</div>
+                      <p className="text-slate-700 leading-snug">
+                        {selectedProduct.architecture.title} ({selectedProduct.architecture.latency}) ·{' '}
+                        {(selectedProduct.security.compliance || []).join(', ') || 'Enterprise Verified'}
+                      </p>
+                    </div>
+                    <div className="rounded-xl bg-white border border-blue-100 p-3 space-y-1">
+                      <div className="font-extrabold text-emerald-800">💳 Commercial Offer</div>
+                      <p className="text-slate-700 leading-snug">
+                        <strong>{selectedProduct.pricing.displayPrice}</strong> ({selectedProduct.pricing.billingPeriod})
+                        {selectedProduct.pricing.hasFreeTrial
+                          ? ` · ${selectedProduct.pricing.trialDays || 14}-Day Free Trial Available`
+                          : ''}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Clean Formatted Noctis Sales Response Box (no horizontal scrollbar, no raw markdown clutter) */}
+                  <div className="rounded-xl bg-white border border-blue-100 p-4 text-xs sm:text-sm text-slate-800 whitespace-pre-line break-words overflow-x-hidden leading-relaxed max-h-72 overflow-y-auto">
                     {isNoctisSalesLoading
-                      ? `Noctis is preparing your customized executive sales & technical deep-dive for ${selectedProduct.name}...`
-                      : noctisActivePitch?.productId === selectedProduct.id &&
+                      ? `✨ Noctis is preparing your customized executive sales & technical deep-dive for ${selectedProduct.name}...`
+                      : (noctisActivePitch?.productId === selectedProduct.id &&
                         noctisActivePitch.liveNoctisSalesResponse
-                      ? noctisActivePitch.liveNoctisSalesResponse
-                      : `${selectedProduct.name} (${selectedProduct.pricing.displayPrice} ${selectedProduct.pricing.billingPeriod}): ${selectedProduct.overview}\n\nCore Features:\n` +
-                        selectedProduct.features.map((f) => `• ${f.title}: ${f.desc}`).join('\n')}
+                          ? noctisActivePitch.liveNoctisSalesResponse
+                          : `✨ Noctis AI Sales & Product Specialist — Executive Deep-Dive on ${selectedProduct.name}\n\n` +
+                            `1. Why ${selectedProduct.name} Stands Out:\n` +
+                            `${selectedProduct.tagline} Built by ${selectedProduct.vendor.name} for ${selectedProduct.category} (${selectedProduct.subCategory}).\n\n` +
+                            `2. Everything ${selectedProduct.name} Has & Does:\n` +
+                            `${selectedProduct.overview}\n` +
+                            selectedProduct.features.map((f) => `  • ${f.title}: ${f.desc}`).join('\n') +
+                            `\n\n3. Architecture, Security & Pricing:\n` +
+                            `  • Architecture: ${selectedProduct.architecture.title} (${selectedProduct.architecture.latency})\n` +
+                            `  • Compliance: ${(selectedProduct.security.compliance || []).join(' · ') || 'Enterprise Grade'}\n` +
+                            `  • Pricing: ${selectedProduct.pricing.displayPrice} (${selectedProduct.pricing.billingPeriod})`
+                        )
+                          .replace(/```noctis-dashboard[\s\S]*?```/gi, '')
+                          .replace(/\*\*/g, '')
+                          .replace(/^#{1,4}\s+/gm, '')}
                   </div>
 
                   {/* Interactive Question Input for THIS Product */}
@@ -2302,14 +2344,14 @@ export function MarketplaceView({
                         question: noctisProductFollowUpInput.trim()
                       })
                     }}
-                    className="flex flex-col sm:flex-row gap-2"
+                    className="flex flex-col sm:flex-row gap-2 min-w-0"
                   >
                     <input
                       type="text"
                       value={noctisProductFollowUpInput}
                       onChange={(e) => setNoctisProductFollowUpInput(e.target.value)}
-                      placeholder={`Ask Noctis Sales Agent anything about ${selectedProduct.name} (e.g. ROI, compliance, integration, or CISO justification)...`}
-                      className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 focus:border-[#0A66C2] focus:outline-none"
+                      placeholder={`Ask Noctis anything about ${selectedProduct.name} (ROI, compliance, integration, pricing)...`}
+                      className="flex-1 min-w-0 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs text-slate-900 focus:border-[#0A66C2] focus:outline-none"
                     />
                     <button
                       type="submit"
@@ -2320,7 +2362,8 @@ export function MarketplaceView({
                     </button>
                   </form>
 
-                  <div className="flex flex-wrap gap-1.5">
+                  {/* 2-Column Wrapped Prompt Grid so long product names never get cut off */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {[
                       `Why should our organization buy ${selectedProduct.name} over competitors?`,
                       `Write a 3-paragraph executive purchase justification for ${selectedProduct.name}`,
@@ -2337,7 +2380,7 @@ export function MarketplaceView({
                             question: qChip
                           })
                         }}
-                        className="rounded-full bg-white hover:bg-blue-50 text-[#0A66C2] border border-blue-200 px-2.5 py-1 text-[11px] font-bold cursor-pointer"
+                        className="rounded-xl bg-white hover:bg-blue-50 text-[#0A66C2] border border-blue-200 px-3 py-2 text-[11px] font-bold cursor-pointer text-left whitespace-normal break-words leading-snug transition-colors"
                       >
                         ✨ {qChip}
                       </button>
