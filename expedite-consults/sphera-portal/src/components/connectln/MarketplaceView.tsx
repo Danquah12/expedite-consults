@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import {
   ShoppingBag,
   Sparkles,
@@ -118,7 +118,37 @@ export function MarketplaceView({
 
   // Selected Product Detail Modal
   const [selectedProduct, setSelectedProduct] = useState<MarketplaceProduct | null>(null)
-  const [activeProductTab, setActiveProductTab] = useState<'overview' | 'features' | 'screenshots' | 'demo' | 'architecture' | 'integrations' | 'security' | 'pricing' | 'reviews' | 'docs' | 'casestudies' | 'support'>('overview')
+  const [activeProductTab, setActiveProductTab] = useState<'overview' | 'noctis_sales' | 'features' | 'screenshots' | 'demo' | 'architecture' | 'integrations' | 'security' | 'pricing' | 'reviews' | 'docs' | 'casestudies' | 'support'>('overview')
+
+  // Noctis AI Marketing & Sales Agent States (Connected to /api/connectin/noctis & https://www.dstrike.app/noctis)
+  const [showNoctisSalesHub, setShowNoctisSalesHub] = useState<boolean>(true)
+  const [isNoctisSalesLoading, setIsNoctisSalesLoading] = useState<boolean>(false)
+  const [noctisSalesText, setNoctisSalesText] = useState<string>("")
+  const [noctisSalesQuestion, setNoctisSalesQuestion] = useState<string>("")
+  const [noctisUpdatedAtLabel, setNoctisUpdatedAtLabel] = useState<string>("Synced with Noctis")
+  const [noctisActivePitch, setNoctisActivePitch] = useState<{
+    productId: string
+    productName: string
+    vendorName: string
+    category: string
+    subCategory: string
+    tagline: string
+    displayPrice: string
+    billingPeriod: string
+    hasFreeTrial: boolean
+    liveUrl?: string
+    demoUrl?: string
+    noctisAgentUrl: string
+    headlinePitch: string
+    whatItDoesAndHowItWorks: string
+    featureHighlights: Array<{ title: string; desc: string }>
+    architectureAndSecurity: string
+    complianceBadges: string[]
+    whyBuyNowAndROI: string[]
+    pricingSummary: Array<{ name: string; price: string; period: string; description: string }>
+    liveNoctisSalesResponse?: string
+  } | null>(null)
+  const [noctisProductFollowUpInput, setNoctisProductFollowUpInput] = useState<string>("")
 
   // License Modal State
   const [generatedLicenseKey, setGeneratedLicenseKey] = useState<string | null>(null)
@@ -134,6 +164,55 @@ export function MarketplaceView({
   const [newVendorDesc, setNewVendorDesc] = useState("")
 
   const userEnclave = currentUser?.professionEnclave || 'trades_construction'
+
+  const fetchNoctisMarketplaceSalesAgent = async (opts?: {
+    question?: string
+    productId?: string
+    scrollToHub?: boolean
+  }) => {
+    setIsNoctisSalesLoading(true)
+    if (opts?.scrollToHub) {
+      setShowNoctisSalesHub(true)
+      setTimeout(() => {
+        const el = document.getElementById('noctis-marketplace-sales-hub')
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      }, 60)
+    }
+    try {
+      const res = await fetch('/api/connectin/noctis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: opts?.productId ? 'pitch_single_product' : 'marketplace_sales_agent',
+          productId: opts?.productId || undefined,
+          question: opts?.question || undefined,
+          categoryFilter: selectedMainCategory,
+          profile: {
+            name: currentUser?.name || 'Kwesi Asiedu',
+            profession: currentUser?.headline || currentUser?.professionEnclave || ''
+          }
+        })
+      })
+      const data = await res.json().catch(() => null)
+      if (data?.text) {
+        setNoctisSalesText(data.text)
+        setNoctisUpdatedAtLabel(
+          `Synced ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
+        )
+      }
+      if (data?.productPitch) {
+        setNoctisActivePitch(data.productPitch)
+      }
+    } catch {
+      // Keep existing pitch
+    } finally {
+      setIsNoctisSalesLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchNoctisMarketplaceSalesAgent()
+  }, [])
 
   const activateSolutionsHub = (solutionId?: string) => {
     setSelectedMainCategory('Solutions')
@@ -441,6 +520,34 @@ export function MarketplaceView({
 
             <button
               type="button"
+              onClick={() => {
+                setShowNoctisSalesHub(prev => !prev)
+                if (!showNoctisSalesHub) {
+                  fetchNoctisMarketplaceSalesAgent({ scrollToHub: true })
+                }
+              }}
+              className={`rounded-xl px-3.5 py-2 text-xs font-extrabold flex items-center gap-1.5 cursor-pointer transition-all shadow-xs ${
+                showNoctisSalesHub
+                  ? "bg-[#1967D2] hover:bg-[#1557B0] text-white ring-2 ring-blue-300/60"
+                  : "bg-[#E8F0FE] hover:bg-[#D2E3FC] text-[#1967D2] border border-[#1967D2]/30"
+              }`}
+            >
+              <Bot className="h-3.5 w-3.5" />
+              <span>{showNoctisSalesHub ? "✨ Noctis Sales Agent: ON" : "✨ Ask Noctis Sales Agent"}</span>
+            </button>
+
+            <a
+              href="https://www.dstrike.app/noctis"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-xl bg-violet-700 hover:bg-violet-800 text-white px-3.5 py-2 text-xs font-extrabold flex items-center gap-1.5 shadow-xs transition-all"
+              title="Open Noctis Intelligence & Sales Portal at https://www.dstrike.app/noctis"
+            >
+              <span>🔮 dstrike.app/noctis ↗</span>
+            </a>
+
+            <button
+              type="button"
               onClick={() => setIsVendorModalOpen(true)}
               className="rounded-xl bg-purple-50 dark:bg-purple-950/50 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 px-3.5 py-2 text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
             >
@@ -449,6 +556,252 @@ export function MarketplaceView({
             </button>
           </div>
         </div>
+
+        {/* NOCTIS AI MARKETING & SALES CONCIERGE HUB (Connected to https://www.dstrike.app/noctis & /api/connectin/noctis) */}
+        {showNoctisSalesHub && (
+          <div
+            id="noctis-marketplace-sales-hub"
+            className="rounded-2xl border border-[#D3E3FD] bg-[#F8FAFD] p-4 sm:p-5 text-slate-900 shadow-xs space-y-4"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-md bg-[#E8F0FE] text-[#1967D2] px-2.5 py-0.5 text-xs font-extrabold">
+                  <span>✨</span>
+                  <span>Noctis Marketing &amp; Sales Agent</span>
+                </span>
+                <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  <span>Learned All {MASTER_MARKETPLACE_PRODUCTS.length} Market Products · {ENTERPRISE_SOLUTIONS_DATA.length} Blueprints · {spheraAppsData.length} Sphera Apps</span>
+                </span>
+                <a
+                  href="https://www.dstrike.app/noctis"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[11px] font-extrabold text-violet-700 hover:underline bg-violet-50 border border-violet-200 px-2.5 py-0.5 rounded-full"
+                >
+                  🔮 Connected to https://www.dstrike.app/noctis ↗
+                </a>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => fetchNoctisMarketplaceSalesAgent()}
+                disabled={isNoctisSalesLoading}
+                className="inline-flex items-center gap-1.5 rounded-full bg-slate-200/80 hover:bg-slate-300/80 text-slate-700 px-3 py-1 text-xs font-bold transition-all cursor-pointer disabled:opacity-60"
+              >
+                <span>{isNoctisSalesLoading ? "Noctis pitching..." : noctisUpdatedAtLabel}</span>
+                <span className={isNoctisSalesLoading ? "animate-spin" : ""}>↻</span>
+              </button>
+            </div>
+
+            {/* Active Product Sales Deep-Dive Card (When user clicks "✨ Ask Noctis" on a product or asks about a specific product) */}
+            {noctisActivePitch && (
+              <div className="rounded-2xl border border-blue-200 bg-white p-4 sm:p-5 shadow-xs space-y-3.5">
+                <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-3">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <span className="rounded-md bg-[#1967D2] text-white px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider">
+                        🎯 Noctis Product Sales Deep-Dive
+                      </span>
+                      <span className="text-xs font-bold text-slate-500">
+                        {noctisActivePitch.vendorName} · {noctisActivePitch.category} ({noctisActivePitch.subCategory})
+                      </span>
+                    </div>
+                    <h3 className="text-base sm:text-lg font-black text-slate-900">
+                      {noctisActivePitch.headlinePitch}
+                    </h3>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-black text-emerald-700">
+                      {noctisActivePitch.displayPrice} ({noctisActivePitch.billingPeriod})
+                    </span>
+                    {noctisActivePitch.liveUrl && (
+                      <a
+                        href={noctisActivePitch.liveUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-extrabold shadow-2xs"
+                      >
+                        Launch {noctisActivePitch.productName.split('—')[0].trim()} ↗
+                      </a>
+                    )}
+                    <a
+                      href="https://www.dstrike.app/noctis"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-lg bg-violet-700 hover:bg-violet-800 text-white px-3 py-1.5 text-xs font-extrabold shadow-2xs"
+                    >
+                      Open Noctis Agent ↗
+                    </a>
+                  </div>
+                </div>
+
+                {/* 4-Column Sales Pitch Breakdown */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                  <div className="rounded-xl bg-[#F8FAFD] border border-blue-100 p-3 space-y-1.5">
+                    <div className="font-extrabold text-[#1967D2]">
+                      ⚙️ What It Has &amp; Does
+                    </div>
+                    <p className="text-slate-700 leading-relaxed line-clamp-5">
+                      {noctisActivePitch.whatItDoesAndHowItWorks}
+                    </p>
+                    <ul className="space-y-1 pt-1 text-[11px] text-slate-700">
+                      {noctisActivePitch.featureHighlights.slice(0, 3).map((f, idx) => (
+                        <li key={idx}>
+                          • <strong>{f.title}:</strong> {f.desc}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="rounded-xl bg-[#F8FAFD] border border-blue-100 p-3 space-y-1.5">
+                    <div className="font-extrabold text-indigo-800">
+                      🔒 Architecture &amp; Compliance
+                    </div>
+                    <p className="text-slate-700 leading-relaxed whitespace-pre-line">
+                      {noctisActivePitch.architectureAndSecurity}
+                    </p>
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {noctisActivePitch.complianceBadges.map((b, idx) => (
+                        <span
+                          key={idx}
+                          className="rounded bg-white border border-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-700"
+                        >
+                          {b}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl bg-[#F8FAFD] border border-blue-100 p-3 space-y-1.5">
+                    <div className="font-extrabold text-emerald-800">
+                      📈 Proven ROI &amp; Why Buy Now
+                    </div>
+                    <ul className="space-y-1.5 text-slate-700 list-disc pl-4">
+                      {noctisActivePitch.whyBuyNowAndROI.map((roi, idx) => (
+                        <li key={idx} className="leading-snug">
+                          {roi}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="rounded-xl bg-[#F8FAFD] border border-blue-100 p-3 flex flex-col justify-between space-y-2">
+                    <div className="space-y-1.5">
+                      <div className="font-extrabold text-amber-800">
+                        💳 Pricing Tiers &amp; Trial Offer
+                      </div>
+                      {noctisActivePitch.pricingSummary.slice(0, 3).map((tier, idx) => (
+                        <div key={idx} className="rounded-lg bg-white border border-slate-200 p-2">
+                          <div className="flex items-center justify-between font-bold text-slate-900">
+                            <span>{tier.name}</span>
+                            <span className="text-emerald-700">{tier.price}</span>
+                          </div>
+                          <p className="text-[10px] text-slate-500 line-clamp-1">{tier.description}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleGenerateLicense({ name: noctisActivePitch.productName }, 'trial')
+                      }
+                      className="w-full rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-white py-1.5 text-xs font-extrabold cursor-pointer"
+                    >
+                      Claim 14-Day Free Trial Key ⚡
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Live Noctis Sales Narrative Box */}
+            <div className="rounded-xl bg-white border border-blue-100 p-4 text-xs sm:text-sm text-slate-800 leading-relaxed whitespace-pre-line font-medium max-h-64 overflow-y-auto">
+              {noctisSalesText ||
+                `✨ Hi ${currentUser?.name?.split(' ')[0] || 'there'}! I am Noctis (https://www.dstrike.app/noctis), your AI Marketing & Enterprise Solutions Sales Agent for the ConnectLn Market. I know every feature, architecture spec, compliance standard, and pricing tier across all ${MASTER_MARKETPLACE_PRODUCTS.length} products. Ask me to pitch any platform or click "✨ Ask Noctis" on any product card below!`}
+            </div>
+
+            {/* Interactive Ask Noctis Marketing & Sales Input Bar */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                if (!noctisSalesQuestion.trim()) return
+                fetchNoctisMarketplaceSalesAgent({
+                  question: noctisSalesQuestion.trim(),
+                  productId: noctisActivePitch?.productId
+                })
+              }}
+              className="flex flex-col sm:flex-row gap-2"
+            >
+              <input
+                type="text"
+                value={noctisSalesQuestion}
+                onChange={(e) => setNoctisSalesQuestion(e.target.value)}
+                placeholder="Ask Noctis Sales Agent about any Market product, pricing, ROI, compliance, or ask for a custom executive pitch..."
+                className="flex-1 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#0A66C2] focus:outline-none"
+              />
+              <button
+                type="submit"
+                disabled={isNoctisSalesLoading || !noctisSalesQuestion.trim()}
+                className="rounded-xl bg-[#0A66C2] hover:bg-[#004182] disabled:bg-slate-300 px-4 py-2 text-xs font-extrabold text-white transition-all cursor-pointer shrink-0"
+              >
+                {isNoctisSalesLoading ? "Asking Noctis..." : "Ask Noctis Sales Agent →"}
+              </button>
+            </form>
+
+            {/* 1-Click Product Pitch & Sales Prompt Chips */}
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                {
+                  label: "🔮 Pitch DSTRIKE & Noctis (dstrike.app/noctis)",
+                  productId: "prod_dstrike_noctis_platform",
+                  q: "Pitch DSTRIKE and Noctis Threat Prediction Desk (https://www.dstrike.app/noctis) — explain everything it does, features, compliance, and ROI."
+                },
+                {
+                  label: "🛡️ Pitch Aagiis DoD RMF & cATO (aagiis.com)",
+                  productId: "prod_aagiis_federal_rmf",
+                  q: "Give me a full executive sales pitch for Aagiis Federal Compliance & DoD RMF (https://aagiis.com) and why defense teams buy it."
+                },
+                {
+                  label: "🎯 Pitch EXPEDITE STRIKE™ DAST Engine (/engine)",
+                  productId: "prod_expedite_strike_dast_engine",
+                  q: "Deep-dive EXPEDITE STRIKE DAST Engine (/engine) — how it works, zero false positives, OWASP Top 10 coverage, and pricing."
+                },
+                {
+                  label: "📓 Pitch DeskNote E2EE & PDFAdore Suite",
+                  productId: "prod_desknote_lime_live",
+                  q: "Pitch DeskNote E2EE Notebook and PDFAdore (31+ PDF Tools) for field engineering and enterprise teams."
+                },
+                {
+                  label: "🚀 Pitch Master Launchpad (67+ Platforms)",
+                  productId: "prod_expedite_ecosystem_launchpad",
+                  q: "Explain everything included in the Expedite Consults Digital Ecosystem Launchpad (67+ Platforms) and how to get started."
+                },
+                {
+                  label: "💰 Compare Pricing Tiers & Free Trials",
+                  productId: "",
+                  q: "Compare pricing tiers, 14-day free trials, and enterprise ROI across our top Marketplace platforms."
+                }
+              ].map((chip) => (
+                <button
+                  key={chip.label}
+                  type="button"
+                  onClick={() => {
+                    setNoctisSalesQuestion(chip.q)
+                    fetchNoctisMarketplaceSalesAgent({
+                      question: chip.q,
+                      productId: chip.productId || undefined
+                    })
+                  }}
+                  className="rounded-full bg-white hover:bg-blue-50 text-[#0A66C2] border border-blue-200 px-2.5 py-1 text-[11px] font-bold transition-all cursor-pointer"
+                >
+                  {chip.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* FEATURED PLATFORMS IN CARDS (Automatically collapses when Solutions Hub is active so Solutions Blueprints appear immediately above the fold!) */}
         <div className="space-y-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
@@ -511,10 +864,16 @@ export function MarketplaceView({
               <div className="pt-2 border-t border-emerald-200/60 dark:border-emerald-800/50 flex items-center justify-between gap-2">
                 <button
                   type="button"
-                  onClick={() => setSelectedSubCategory('Compliance_RMF')}
-                  className="text-[11px] font-semibold text-emerald-800 dark:text-emerald-300 hover:underline cursor-pointer"
+                  onClick={() =>
+                    fetchNoctisMarketplaceSalesAgent({
+                      productId: 'prod_aagiis_federal_rmf',
+                      question: 'Pitch Aagiis Federal Compliance & DoD RMF (https://aagiis.com) — explain everything it has and does, cATO, and pricing.',
+                      scrollToHub: true
+                    })
+                  }
+                  className="text-[11px] font-extrabold text-[#1967D2] hover:underline cursor-pointer"
                 >
-                  Filter Category
+                  ✨ Ask Noctis
                 </button>
                 <a
                   href="https://aagiis.com/"
@@ -553,10 +912,16 @@ export function MarketplaceView({
               <div className="pt-2 border-t border-red-200/60 dark:border-red-800/50 flex items-center justify-between gap-2">
                 <button
                   type="button"
-                  onClick={() => setSelectedSubCategory('DAST_Offensive')}
-                  className="text-[11px] font-semibold text-red-800 dark:text-red-300 hover:underline cursor-pointer"
+                  onClick={() =>
+                    fetchNoctisMarketplaceSalesAgent({
+                      productId: 'prod_expedite_strike_dast_engine',
+                      question: 'Pitch EXPEDITE STRIKE DAST Engine (/engine) — explain everything it does, OWASP Top 10 & API scanning, and ROI.',
+                      scrollToHub: true
+                    })
+                  }
+                  className="text-[11px] font-extrabold text-[#1967D2] hover:underline cursor-pointer"
                 >
-                  Filter Category
+                  ✨ Ask Noctis
                 </button>
                 <a
                   href="https://11-dast-security-platform.vercel.app/engine"
@@ -593,14 +958,19 @@ export function MarketplaceView({
                 </div>
               </div>
               <div className="pt-2 border-t border-orange-200/60 dark:border-orange-800/50 flex items-center justify-between gap-2">
-                <a
-                  href="https://11-dast-security-platform.vercel.app/engine"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[11px] font-semibold text-orange-800 dark:text-orange-300 hover:underline"
+                <button
+                  type="button"
+                  onClick={() =>
+                    fetchNoctisMarketplaceSalesAgent({
+                      productId: 'prod_expedite_strike_dast_landing',
+                      question: 'Pitch EXPEDITE STRIKE Web Interface Security Platform — explain its features, compliance matrix, and pricing.',
+                      scrollToHub: true
+                    })
+                  }
+                  className="text-[11px] font-extrabold text-[#1967D2] hover:underline cursor-pointer"
                 >
-                  Engine ↗
-                </a>
+                  ✨ Ask Noctis
+                </button>
                 <a
                   href="https://11-dast-security-platform.vercel.app"
                   target="_blank"
@@ -636,14 +1006,19 @@ export function MarketplaceView({
                 </div>
               </div>
               <div className="pt-2 border-t border-indigo-200/60 dark:border-indigo-800/50 flex items-center justify-between gap-2">
-                <a
-                  href="https://dstrike.app/noctis"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[11px] font-semibold text-indigo-800 dark:text-indigo-300 hover:underline"
+                <button
+                  type="button"
+                  onClick={() =>
+                    fetchNoctisMarketplaceSalesAgent({
+                      productId: 'prod_dstrike_main_app',
+                      question: 'Pitch DSTRIKE Autonomous Cyber Defense (https://dstrike.app) — explain everything it does, telemetry, and ROI.',
+                      scrollToHub: true
+                    })
+                  }
+                  className="text-[11px] font-extrabold text-[#1967D2] hover:underline cursor-pointer"
                 >
-                  Noctis Desk ↗
-                </a>
+                  ✨ Ask Noctis
+                </button>
                 <a
                   href="https://dstrike.app"
                   target="_blank"
@@ -681,13 +1056,19 @@ export function MarketplaceView({
               <div className="pt-2 border-t border-violet-200/60 dark:border-violet-800/50 flex items-center justify-between gap-2">
                 <button
                   type="button"
-                  onClick={() => setSelectedSubCategory('Cyber_Prediction')}
-                  className="text-[11px] font-semibold text-violet-800 dark:text-violet-300 hover:underline cursor-pointer"
+                  onClick={() =>
+                    fetchNoctisMarketplaceSalesAgent({
+                      productId: 'prod_dstrike_noctis_platform',
+                      question: 'Pitch DSTRIKE Prediction Desk (Noctis at https://www.dstrike.app/noctis) — explain how it works and why CISOs buy it.',
+                      scrollToHub: true
+                    })
+                  }
+                  className="text-[11px] font-extrabold text-[#1967D2] hover:underline cursor-pointer"
                 >
-                  Filter Category
+                  ✨ Ask Noctis
                 </button>
                 <a
-                  href="https://dstrike.app/noctis"
+                  href="https://www.dstrike.app/noctis"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="rounded-lg bg-violet-700 hover:bg-violet-800 text-white px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
@@ -723,10 +1104,16 @@ export function MarketplaceView({
               <div className="pt-2 border-t border-lime-200/60 dark:border-lime-800/50 flex items-center justify-between gap-2">
                 <button
                   type="button"
-                  onClick={() => setSelectedSubCategory('Productivity_Notes')}
-                  className="text-[11px] font-semibold text-lime-800 dark:text-lime-300 hover:underline cursor-pointer"
+                  onClick={() =>
+                    fetchNoctisMarketplaceSalesAgent({
+                      productId: 'prod_desknote_lime_live',
+                      question: 'Pitch DeskNote E2EE Digital Notebook — explain all its features, voice logs, encryption, and pricing.',
+                      scrollToHub: true
+                    })
+                  }
+                  className="text-[11px] font-extrabold text-[#1967D2] hover:underline cursor-pointer"
                 >
-                  Filter Category
+                  ✨ Ask Noctis
                 </button>
                 <a
                   href="https://desk-note-lime.vercel.app/"
@@ -765,10 +1152,16 @@ export function MarketplaceView({
               <div className="pt-2 border-t border-sky-200/60 dark:border-sky-800/50 flex items-center justify-between gap-2">
                 <button
                   type="button"
-                  onClick={() => setSelectedSubCategory('Portals_Launchpads')}
-                  className="text-[11px] font-semibold text-[#0A66C2] dark:text-sky-300 hover:underline cursor-pointer"
+                  onClick={() =>
+                    fetchNoctisMarketplaceSalesAgent({
+                      productId: 'prod_expedite_consults_official_portal',
+                      question: 'Pitch Expedite Consults Official Enterprise Advisory Portal (https://www.expediteconsults.com) and executive retainers.',
+                      scrollToHub: true
+                    })
+                  }
+                  className="text-[11px] font-extrabold text-[#1967D2] hover:underline cursor-pointer"
                 >
-                  Filter Category
+                  ✨ Ask Noctis
                 </button>
                 <a
                   href="https://www.expediteconsults.com"
@@ -805,14 +1198,19 @@ export function MarketplaceView({
                 </div>
               </div>
               <div className="pt-2 border-t border-purple-200/60 dark:border-purple-800/50 flex items-center justify-between gap-2">
-                <a
-                  href="https://www.pdfadore.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[11px] font-semibold text-purple-800 dark:text-purple-300 hover:underline"
+                <button
+                  type="button"
+                  onClick={() =>
+                    fetchNoctisMarketplaceSalesAgent({
+                      productId: 'prod_sphera_production_launchpad',
+                      question: 'Pitch Sphera Portal Production Launchpad & PDFAdore Suite — explain everything included and how teams use it.',
+                      scrollToHub: true
+                    })
+                  }
+                  className="text-[11px] font-extrabold text-[#1967D2] hover:underline cursor-pointer"
                 >
-                  PDFAdore ↗
-                </a>
+                  ✨ Ask Noctis
+                </button>
                 <a
                   href="https://sphera-portal.vercel.app"
                   target="_blank"
@@ -1692,15 +2090,34 @@ export function MarketplaceView({
                 </div>
 
                 <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2 flex-wrap">
-                  <button
-                    onClick={() => {
-                      setSelectedProduct(product)
-                      setActiveProductTab('overview')
-                    }}
-                    className="text-xs font-bold text-[#0A66C2] hover:underline"
-                  >
-                    View Details →
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setSelectedProduct(product)
+                        setActiveProductTab('overview')
+                      }}
+                      className="text-xs font-bold text-[#0A66C2] hover:underline cursor-pointer"
+                    >
+                      View Details →
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedProduct(product)
+                        setActiveProductTab('noctis_sales')
+                        fetchNoctisMarketplaceSalesAgent({
+                          productId: product.id,
+                          question: `Give a full marketing and sales deep-dive on ${product.name}: everything it has, what it does, architecture, ROI, and pricing.`
+                        })
+                      }}
+                      className="rounded-full bg-[#E8F0FE] hover:bg-[#D2E3FC] text-[#1967D2] border border-[#1967D2]/30 px-2.5 py-1 text-[11px] font-extrabold flex items-center gap-1 cursor-pointer transition-all"
+                      title={`Ask Noctis AI Sales Agent to pitch and explain ${product.name}`}
+                    >
+                      <span>✨</span>
+                      <span>Ask Noctis</span>
+                    </button>
+                  </div>
 
                   <div className="flex items-center gap-1.5 flex-wrap">
                     {product.liveUrl && (
@@ -1833,20 +2250,124 @@ export function MarketplaceView({
 
               {/* Product Modal Navigation Tabs */}
               <div className="flex items-center gap-1.5 overflow-x-auto border-b border-zinc-200 pb-2 text-xs dark:border-zinc-800">
-                {['overview', 'features', 'architecture', 'pricing', 'reviews', 'support'].map((tab) => (
+                {[
+                  { id: 'overview', label: 'overview' },
+                  { id: 'noctis_sales', label: '✨ Ask Noctis Sales Agent' },
+                  { id: 'features', label: 'features' },
+                  { id: 'architecture', label: 'architecture' },
+                  { id: 'pricing', label: 'pricing' },
+                  { id: 'reviews', label: 'reviews' },
+                  { id: 'support', label: 'support' }
+                ].map((tab) => (
                   <button
-                    key={tab}
-                    onClick={() => setActiveProductTab(tab as any)}
-                    className={`rounded-lg px-3 py-1 font-bold capitalize transition-colors ${
-                      activeProductTab === tab
+                    key={tab.id}
+                    onClick={() => {
+                      setActiveProductTab(tab.id as any)
+                      if (tab.id === 'noctis_sales' && selectedProduct) {
+                        fetchNoctisMarketplaceSalesAgent({
+                          productId: selectedProduct.id,
+                          question: `Give a full marketing and sales deep-dive on ${selectedProduct.name}.`
+                        })
+                      }
+                    }}
+                    className={`rounded-lg px-3 py-1 font-bold capitalize transition-colors cursor-pointer shrink-0 ${
+                      activeProductTab === tab.id
                         ? "bg-[#0A66C2] text-white"
+                        : tab.id === 'noctis_sales'
+                        ? "bg-[#E8F0FE] text-[#1967D2] hover:bg-[#D2E3FC] border border-[#1967D2]/30"
                         : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300"
                     }`}
                   >
-                    {tab}
+                    {tab.label}
                   </button>
                 ))}
               </div>
+
+              {/* Noctis Sales Agent Tab inside Product Modal */}
+              {activeProductTab === 'noctis_sales' && (
+                <div className="rounded-2xl border border-[#D3E3FD] bg-[#F8FAFD] p-4 space-y-3.5 text-slate-900">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-blue-200/70 pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-md bg-[#1967D2] text-white px-2.5 py-0.5 text-[11px] font-extrabold">
+                        ✨ Noctis AI Sales Specialist
+                      </span>
+                      <span className="text-xs font-bold text-slate-600">
+                        Deep-Dive Product Pitch &amp; Technical Consultation
+                      </span>
+                    </div>
+                    <a
+                      href="https://www.dstrike.app/noctis"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] font-extrabold text-violet-700 hover:underline bg-violet-50 border border-violet-200 px-2.5 py-0.5 rounded-full"
+                    >
+                      🔮 Open https://www.dstrike.app/noctis ↗
+                    </a>
+                  </div>
+
+                  <div className="rounded-xl bg-white border border-blue-100 p-3.5 text-xs sm:text-sm text-slate-800 whitespace-pre-line leading-relaxed max-h-72 overflow-y-auto">
+                    {isNoctisSalesLoading
+                      ? `Noctis is preparing your customized executive sales & technical deep-dive for ${selectedProduct.name}...`
+                      : noctisActivePitch?.productId === selectedProduct.id &&
+                        noctisActivePitch.liveNoctisSalesResponse
+                      ? noctisActivePitch.liveNoctisSalesResponse
+                      : `${selectedProduct.name} (${selectedProduct.pricing.displayPrice} ${selectedProduct.pricing.billingPeriod}): ${selectedProduct.overview}\n\nCore Features:\n` +
+                        selectedProduct.features.map((f) => `• ${f.title}: ${f.desc}`).join('\n')}
+                  </div>
+
+                  {/* Interactive Question Input for THIS Product */}
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      if (!noctisProductFollowUpInput.trim()) return
+                      fetchNoctisMarketplaceSalesAgent({
+                        productId: selectedProduct.id,
+                        question: noctisProductFollowUpInput.trim()
+                      })
+                    }}
+                    className="flex flex-col sm:flex-row gap-2"
+                  >
+                    <input
+                      type="text"
+                      value={noctisProductFollowUpInput}
+                      onChange={(e) => setNoctisProductFollowUpInput(e.target.value)}
+                      placeholder={`Ask Noctis Sales Agent anything about ${selectedProduct.name} (e.g. ROI, compliance, integration, or CISO justification)...`}
+                      className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 focus:border-[#0A66C2] focus:outline-none"
+                    />
+                    <button
+                      type="submit"
+                      disabled={isNoctisSalesLoading || !noctisProductFollowUpInput.trim()}
+                      className="rounded-xl bg-[#1967D2] hover:bg-[#1557B0] disabled:bg-slate-300 px-4 py-2 text-xs font-extrabold text-white cursor-pointer shrink-0"
+                    >
+                      {isNoctisSalesLoading ? "Asking Noctis..." : "Ask Noctis →"}
+                    </button>
+                  </form>
+
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      `Why should our organization buy ${selectedProduct.name} over competitors?`,
+                      `Write a 3-paragraph executive purchase justification for ${selectedProduct.name}`,
+                      `Explain the architecture, latency, and security compliance of ${selectedProduct.name}`,
+                      `What is included in the pricing tiers and free trial for ${selectedProduct.name}?`
+                    ].map((qChip) => (
+                      <button
+                        key={qChip}
+                        type="button"
+                        onClick={() => {
+                          setNoctisProductFollowUpInput(qChip)
+                          fetchNoctisMarketplaceSalesAgent({
+                            productId: selectedProduct.id,
+                            question: qChip
+                          })
+                        }}
+                        className="rounded-full bg-white hover:bg-blue-50 text-[#0A66C2] border border-blue-200 px-2.5 py-1 text-[11px] font-bold cursor-pointer"
+                      >
+                        ✨ {qChip}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Product Tab Content */}
               {activeProductTab === 'overview' && (

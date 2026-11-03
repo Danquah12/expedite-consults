@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server'
 import { connectLnGrounding } from '@/lib/connectln-knowledge'
+import { MASTER_MARKETPLACE_PRODUCTS, MarketplaceProduct } from '@/lib/marketplace-engine-data'
+import { ENTERPRISE_SOLUTIONS_DATA } from '@/lib/solutions-layer-data'
+import { spheraAppsData } from '@/lib/nextgen-data'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
 
 const NOCTIS_API_URL = process.env.NOCTIS_API_URL || 'https://dstrike.app/api/noctis'
+const NOCTIS_WEB_URL = 'https://www.dstrike.app/noctis'
 
 type Turn = { role: 'user' | 'assistant'; content: string }
 
@@ -45,6 +49,175 @@ export interface NoctisDetailedAlertExplanation {
   whyItMatters: string
   recommendedActionPlan: string[]
   liveNoctisNote?: string
+}
+
+export interface NoctisProductSalesPitch {
+  productId: string
+  productName: string
+  vendorName: string
+  category: string
+  subCategory: string
+  tagline: string
+  displayPrice: string
+  billingPeriod: string
+  hasFreeTrial: boolean
+  liveUrl?: string
+  demoUrl?: string
+  noctisAgentUrl: string
+  headlinePitch: string
+  whatItDoesAndHowItWorks: string
+  featureHighlights: Array<{ title: string; desc: string }>
+  architectureAndSecurity: string
+  complianceBadges: string[]
+  whyBuyNowAndROI: string[]
+  pricingSummary: Array<{ name: string; price: string; period: string; description: string }>
+  liveNoctisSalesResponse?: string
+}
+
+function buildProductSalesPitch(product: MarketplaceProduct, customQuestion?: string): NoctisProductSalesPitch {
+  const complianceList = product.security?.compliance || []
+  const caseStudyBullets: string[] = []
+  for (const cs of product.caseStudies || []) {
+    caseStudyBullets.push(`${cs.customer}: ${cs.headline} (${(cs.results || []).join(', ')})`)
+  }
+  if (caseStudyBullets.length === 0) {
+    caseStudyBullets.push(
+      `Rated ${product.rating}/5.0 across ${product.reviewsCount} verified enterprise & field reviews${product.activeUsersCount ? ` (${product.activeUsersCount})` : ''}.`,
+      `Zero-friction deployment with ${product.architecture?.latency || 'sub-second'} latency and ${product.security?.encryption || 'end-to-end'} encryption.`
+    )
+  }
+
+  const featuresText = (product.features || [])
+    .map((f) => `• ${f.title}: ${f.desc}`)
+    .join('\n')
+
+  const headlinePitch = `${product.icon} ${product.name} — ${product.tagline}`
+
+  const whatItDoesAndHowItWorks =
+    `${product.overview}\n\n` +
+    `Key Capabilities & What It Does:\n${featuresText}\n\n` +
+    (product.integrations && product.integrations.length > 0
+      ? `Native Integrations & Ecosystem Compatibility: ${product.integrations.join(', ')}.`
+      : '')
+
+  const architectureAndSecurity =
+    `${product.architecture?.title || 'Enterprise Cloud Architecture'}: ${product.architecture?.summary || ''}\n` +
+    `• Performance & Latency: ${product.architecture?.latency || 'Real-time'} | Data Privacy: ${product.architecture?.dataPrivacy || 'Isolated'}\n` +
+    `• Encryption & Isolation: ${product.security?.encryption || 'AES-256 / TLS 1.3'} · ${product.security?.isolation || 'Dedicated Tenant'}\n` +
+    `• Support SLA: ${product.support?.sla || '99.9% Uptime SLA'} via ${product.support?.channel || '24/7 Priority Desk'} (Response: ${product.support?.responseHours || '< 1 hour'})`
+
+  const defaultSalesNarrative =
+    `✨ **Noctis AI Sales & Product Specialist (${NOCTIS_WEB_URL}) — Executive Deep-Dive on ${product.name}**\n\n` +
+    `**1. Why ${product.name} Stands Out:**\n` +
+    `${product.tagline} Built and verified by **${product.vendor.name}**, it gives your organization immediate operational capability in **${product.category} (${product.subCategory})**.\n\n` +
+    `**2. Deep-Dive: Everything ${product.name} Has & Does:**\n` +
+    `${product.overview}\n` +
+    (product.features || []).map((f) => `  • **${f.title}**: ${f.desc}`).join('\n') +
+    `\n\n**3. Architecture, Security & Compliance:**\n` +
+    `  • **Architecture**: ${product.architecture?.title} — ${product.architecture?.summary} (${product.architecture?.latency})\n` +
+    `  • **Compliance & Trust**: ${complianceList.join(' · ') || 'Enterprise Verified'} | ${product.security?.encryption}\n` +
+    (product.integrations?.length ? `  • **Integrations**: ${product.integrations.join(', ')}\n` : '') +
+    `\n**4. Proven ROI & Customer Outcomes:**\n` +
+    caseStudyBullets.map((b) => `  • ${b}`).join('\n') +
+    `\n\n**5. Commercial Pricing & How to Start Today:**\n` +
+    `  • **Starting Price**: **${product.pricing.displayPrice}** (${product.pricing.billingPeriod})${product.pricing.hasFreeTrial ? ` — includes a **${product.pricing.trialDays || 14}-Day Free Evaluation Trial**` : ''}.\n` +
+    (product.pricingTiers || []).map((t) => `  • **${t.name} (${t.price} ${t.period})**: ${t.description}`).join('\n') +
+    (product.liveUrl ? `\n  • **Live Production Portal**: ${product.liveUrl}` : '') +
+    (product.demoUrl ? `\n  • **Interactive Companion / Engine**: ${product.demoUrl}` : '') +
+    `\n  • **Noctis Intelligence Desk**: ${NOCTIS_WEB_URL}`
+
+  return {
+    productId: product.id,
+    productName: product.name,
+    vendorName: product.vendor.name,
+    category: product.category,
+    subCategory: product.subCategory,
+    tagline: product.tagline,
+    displayPrice: product.pricing.displayPrice,
+    billingPeriod: product.pricing.billingPeriod,
+    hasFreeTrial: product.pricing.hasFreeTrial,
+    liveUrl: product.liveUrl,
+    demoUrl: product.demoUrl,
+    noctisAgentUrl: NOCTIS_WEB_URL,
+    headlinePitch,
+    whatItDoesAndHowItWorks,
+    featureHighlights: product.features || [],
+    architectureAndSecurity,
+    complianceBadges: complianceList,
+    whyBuyNowAndROI: caseStudyBullets,
+    pricingSummary: (product.pricingTiers || []).map((t) => ({
+      name: t.name,
+      price: t.price,
+      period: t.period,
+      description: t.description
+    })),
+    liveNoctisSalesResponse: customQuestion
+      ? `✨ **Noctis Sales & Product Specialist Answer regarding ${product.name}** ("${customQuestion}"):\n\n${defaultSalesNarrative}`
+      : defaultSalesNarrative
+  }
+}
+
+function searchMarketplaceProductsForNoctis(query: string): MarketplaceProduct[] {
+  const q = (query || '').toLowerCase().trim()
+  if (!q) return MASTER_MARKETPLACE_PRODUCTS.slice(0, 8)
+
+  const words = q.split(/[^a-z0-9]+/).filter((w) => w.length >= 2)
+  const scored = MASTER_MARKETPLACE_PRODUCTS.map((p) => {
+    const haystack = [
+      p.id,
+      p.name,
+      p.tagline,
+      p.category,
+      p.subCategory,
+      p.overview,
+      p.vendor.name,
+      p.liveUrl || '',
+      p.demoUrl || '',
+      ...(p.features || []).map((f) => `${f.title} ${f.desc}`),
+      ...(p.security?.compliance || []),
+      ...(p.integrations || [])
+    ]
+      .join(' ')
+      .toLowerCase()
+
+    let score = 0
+    if (haystack.includes(q)) score += 25
+    for (const w of words) {
+      if (p.name.toLowerCase().includes(w)) score += 10
+      if (p.tagline.toLowerCase().includes(w)) score += 6
+      if (p.subCategory.toLowerCase().includes(w)) score += 5
+      if (haystack.includes(w)) score += 3
+    }
+    return { product: p, score }
+  })
+
+  const matches = scored
+    .filter((s) => s.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map((s) => s.product)
+
+  return matches.length > 0 ? matches.slice(0, 6) : MASTER_MARKETPLACE_PRODUCTS.slice(0, 6)
+}
+
+function buildMarketplaceCatalogPromptContext(products: MarketplaceProduct[]): string {
+  return products
+    .map((p, idx) => {
+      const feats = (p.features || []).map((f) => `${f.title} (${f.desc})`).join('; ')
+      const tiers = (p.pricingTiers || []).map((t) => `${t.name}: ${t.price} ${t.period}`).join(' | ')
+      const comp = (p.security?.compliance || []).join(', ')
+      return (
+        `${idx + 1}. PRODUCT: "${p.name}" (ID: ${p.id}) by ${p.vendor.name}\n` +
+        `   - Category: ${p.category} / ${p.subCategory} | Rating: ${p.rating}/5 (${p.reviewsCount} reviews)\n` +
+        `   - Tagline: ${p.tagline}\n` +
+        `   - Full Overview: ${p.overview}\n` +
+        `   - Core Features & What It Does: ${feats}\n` +
+        `   - Architecture & Latency: ${p.architecture?.title} — ${p.architecture?.summary} (${p.architecture?.latency})\n` +
+        `   - Security & Compliance: ${comp} | Encryption: ${p.security?.encryption}\n` +
+        `   - Pricing: ${p.pricing.displayPrice} (${p.pricing.billingPeriod}) | Tiers: ${tiers}\n` +
+        `   - Live URLs: ${p.liveUrl || 'In-App'} ${p.demoUrl ? `| Companion URL: ${p.demoUrl}` : ''}`
+      )
+    })
+    .join('\n\n')
 }
 
 function buildDetailedExplanationForAlert(alert: NoctisAlertDigest): NoctisDetailedAlertExplanation {
@@ -317,11 +490,18 @@ function buildDateGroupedUnreadSummary(
  */
 export async function POST(req: Request) {
   const body = (await req.json().catch(() => null)) as {
-    mode?: 'inbox_briefing' | 'alerts_briefing' | 'explain_single_alert' | 'qa'
+    mode?:
+      | 'inbox_briefing'
+      | 'alerts_briefing'
+      | 'explain_single_alert'
+      | 'marketplace_sales_agent'
+      | 'pitch_single_product'
+      | 'qa'
     question?: string
     inboxThreads?: NoctisInboxThreadDigest[]
     alerts?: NoctisAlertDigest[]
     selectedAlert?: NoctisAlertDigest
+    productId?: string
     categoryFilter?: string
     history?: Turn[]
     profile?: { name?: string; profession?: string }
@@ -329,6 +509,138 @@ export async function POST(req: Request) {
   } | null
 
   const memberName = body?.profile?.name || 'ConnectLn Member'
+  const isMarketplaceMode =
+    body?.mode === 'marketplace_sales_agent' ||
+    body?.mode === 'pitch_single_product' ||
+    Boolean(body?.productId)
+
+  if (isMarketplaceMode) {
+    const customQ = (body?.question || '').trim()
+    const explicitProduct = body?.productId
+      ? MASTER_MARKETPLACE_PRODUCTS.find((p) => p.id === body.productId) ||
+        MASTER_MARKETPLACE_PRODUCTS.find((p) => p.name.toLowerCase() === body.productId?.toLowerCase())
+      : undefined
+
+    const matchedProducts = explicitProduct
+      ? [explicitProduct]
+      : searchMarketplaceProductsForNoctis(customQ || body?.categoryFilter || '')
+
+    const primaryProduct = explicitProduct || matchedProducts[0] || MASTER_MARKETPLACE_PRODUCTS[0]
+    const primaryPitch = buildProductSalesPitch(primaryProduct, customQ)
+    const allPitches = matchedProducts.map((p) => buildProductSalesPitch(p, customQ))
+
+    const catalogContext = buildMarketplaceCatalogPromptContext(
+      explicitProduct ? [explicitProduct] : matchedProducts.slice(0, 8)
+    )
+
+    const solutionsContext = ENTERPRISE_SOLUTIONS_DATA.slice(0, 5)
+      .map(
+        (s) =>
+          `• Solution Blueprint "${s.title}" (${s.complianceFramework}, ${s.estimatedTime}): Solves "${s.problemStatement}" -> Outcome: "${s.targetOutcome}".`
+      )
+      .join('\n')
+
+    const noctisSalesPrompt =
+      `You are Noctis (${NOCTIS_WEB_URL}), the official AI Product Marketing & Enterprise Solutions Sales Agent inside ConnectLn (https://www.conectln.com).\n` +
+      `You have learned every detail, feature, architecture spec, compliance framework, pricing tier, and live URL of all ${MASTER_MARKETPLACE_PRODUCTS.length} Marketplace products, ${ENTERPRISE_SOLUTIONS_DATA.length} Outcome Solution Blueprints, and ${spheraAppsData.length} Sphera Micro-Apps.\n` +
+      `The prospective buyer/member is ${memberName}${body?.profile?.profession ? ` (${body.profile.profession})` : ''}.\n\n` +
+      `=== VERIFIED MARKETPLACE PRODUCT KNOWLEDGE BASE ===\n` +
+      `${catalogContext}\n\n` +
+      `=== VERIFIED ENTERPRISE OUTCOME BLUEPRINTS ===\n` +
+      `${solutionsContext}\n\n` +
+      (explicitProduct
+        ? `Act as an enthusiastic, deeply knowledgeable enterprise sales & technical marketing specialist for "${explicitProduct.name}". ` +
+          (customQ
+            ? `Answer the buyer's specific question about "${explicitProduct.name}" persuasively and accurately using the verified specs above: "${customQ}"`
+            : `Give a compelling executive deep-dive sales pitch for "${explicitProduct.name}", explaining everything it has and does, its technical architecture, compliance certifications, proven ROI, pricing tiers, and how to launch it or start a 14-day free trial right now.`)
+        : customQ
+        ? `Act as a consultative AI marketing and sales agent. Answer the buyer's request persuasively using the exact products, features, pricing, and live URLs from the ConnectLn Market catalog above: "${customQ}"`
+        : `Introduce yourself as Noctis (${NOCTIS_WEB_URL}), the ConnectLn Marketplace Sales & Product Intelligence Agent, and pitch our flagship platforms (DSTRIKE & Noctis Threat Prediction Desk at https://www.dstrike.app/noctis, Aagiis Federal DoD RMF at https://aagiis.com, EXPEDITE STRIKE™ DAST Engine at https://11-dast-security-platform.vercel.app/engine, DeskNote E2EE, and PDFAdore), highlighting what each does, why teams buy them, and their pricing/free trials.`)
+
+    const fallbackSalesText = explicitProduct
+      ? primaryPitch.liveNoctisSalesResponse!
+      : customQ
+      ? `✨ **Noctis AI Marketing & Sales Agent (${NOCTIS_WEB_URL}) — Product Recommendation & Deep-Dive for ${memberName}**\n\n` +
+        `Based on your inquiry (*"${customQ}"*), here is a complete breakdown of the top ${matchedProducts.length} solutions in the ConnectLn Market and everything they do:\n\n` +
+        allPitches
+          .slice(0, 3)
+          .map(
+            (p, idx) =>
+              `### ${idx + 1}. ${p.headlinePitch}\n` +
+              `• **Vendor**: ${p.vendorName} | **Category**: ${p.category} (${p.subCategory})\n` +
+              `• **What It Has & Does**: ${p.whatItDoesAndHowItWorks.split('\n')[0]}\n` +
+              `• **Core Capabilities**: ${p.featureHighlights.map((f) => `${f.title} (${f.desc})`).join(' · ')}\n` +
+              `• **Compliance & Architecture**: ${p.complianceBadges.join(', ') || 'Enterprise Grade'} — ${p.architectureAndSecurity.split('\n')[0]}\n` +
+              `• **Pricing & Trial**: **${p.displayPrice}** (${p.billingPeriod})${p.hasFreeTrial ? ' · **14-Day Free Trial Available**' : ''}${p.liveUrl ? ` · **Live Portal**: ${p.liveUrl}` : ''}`
+          )
+          .join('\n\n')
+      : `✨ **Welcome to Noctis Market Intelligence & Sales Concierge (${NOCTIS_WEB_URL})**\n\n` +
+        `I have learned every specification, feature, architecture diagram, compliance standard, and pricing tier across all **${MASTER_MARKETPLACE_PRODUCTS.length} Marketplace Platforms**, **${ENTERPRISE_SOLUTIONS_DATA.length} Outcome Blueprints**, and **${spheraAppsData.length} Sphera Micro-Apps**.\n\n` +
+        `**Flagship Platforms Ready to Deploy Today:**\n` +
+        `• **🔮 DSTRIKE & Noctis Threat Prediction Desk (${NOCTIS_WEB_URL})**: Autonomous cyber defense, attack surface telemetry, and AI-driven predictive security intelligence.\n` +
+        `• **🛡️ Aagiis — Federal Compliance & DoD RMF (https://aagiis.com)**: Full DoDI 8510.01, DCSA NISP, Continuous ATO (cATO), eMASS automation, and NIST 800-53 Rev 5 governance.\n` +
+        `• **🎯 EXPEDITE STRIKE™ — Live DAST Engine (https://11-dast-security-platform.vercel.app/engine)**: Real-time dynamic application security testing, OWASP Top 10 & API exploit validation with zero false positives.\n` +
+        `• **📓 DeskNote E2EE & PDFAdore (https://www.pdfadore.com)**: Zero-knowledge encrypted field notebook and 31+ browser-native PDF & document engineering tools.\n` +
+        `• **🏥 Clinical, Skilled Trades & Automotive Suites**: NIH DailyMed, MDCalc Clinical, Festool/Mafell joinery systems, and 800V EV diagnostic scopes.\n\n` +
+        `*Click **"✨ Ask Noctis"** on any product card below or type any question above to get a custom executive sales pitch, technical deep-dive, or side-by-side ROI comparison!*`
+
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), 15000)
+    try {
+      const res = await fetch(NOCTIS_API_URL, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          ...(process.env.NOCTIS_API_KEY ? { 'x-noctis-key': process.env.NOCTIS_API_KEY } : {})
+        },
+        body: JSON.stringify({
+          turns: [{ role: 'user', content: noctisSalesPrompt }],
+          language: body?.language || 'English',
+          context: 'ConnectLn-Marketplace-Sales-Agent'
+        }),
+        signal: ctrl.signal,
+        cache: 'no-store'
+      })
+      if (res.ok) {
+        const data = (await res.json()) as { text?: string }
+        if (data?.text && data.text.trim()) {
+          primaryPitch.liveNoctisSalesResponse = data.text.trim()
+          return NextResponse.json(
+            {
+              text: data.text.trim(),
+              fallbackSummary: fallbackSalesText,
+              productPitch: primaryPitch,
+              matchedPitches: allPitches,
+              noctisAgentUrl: NOCTIS_WEB_URL,
+              source: 'noctis-live-sales-api',
+              totalCatalogCount: MASTER_MARKETPLACE_PRODUCTS.length,
+              timestampIso: new Date().toISOString()
+            },
+            { headers: { 'cache-control': 'no-store' } }
+          )
+        }
+      }
+    } catch {
+      // Fall through to synthesized Noctis Market Sales Agent pitch
+    } finally {
+      clearTimeout(timer)
+    }
+
+    return NextResponse.json(
+      {
+        text: fallbackSalesText,
+        fallbackSummary: fallbackSalesText,
+        productPitch: primaryPitch,
+        matchedPitches: allPitches,
+        noctisAgentUrl: NOCTIS_WEB_URL,
+        source: 'noctis-market-sales-engine',
+        totalCatalogCount: MASTER_MARKETPLACE_PRODUCTS.length,
+        timestampIso: new Date().toISOString()
+      },
+      { headers: { 'cache-control': 'no-store' } }
+    )
+  }
+
   const alertsList = Array.isArray(body?.alerts) ? body!.alerts!.slice(0, 30) : []
   const isAlertsMode =
     body?.mode === 'alerts_briefing' ||
