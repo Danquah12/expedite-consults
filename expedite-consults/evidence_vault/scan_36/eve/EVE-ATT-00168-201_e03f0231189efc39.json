@@ -1,0 +1,73 @@
+{
+  "original_finding_id": 1570,
+  "asset_and_origin_identity": "ASSET-00008 | http://192.168.195.139:8080",
+  "approved_scope_and_roe": "Private lab host 192.168.195.139:8080 authorized by ROE allow_private_networks=True.",
+  "validation_adapter_and_version": "EVE-AUTH-001 (eve-adapter/2.3.0)",
+  "test_timestamp": "2026-11-02T17:58:01.612645+00:00",
+  "preconditions": {
+    "vulnerability_class": "authentication_validation",
+    "affected_technology": "Apache",
+    "detected_version": "2.2.8",
+    "cve_applicable": true,
+    "preconditions_satisfied": true
+  },
+  "execution_transcript": {
+    "adapter_id": "EVE-AUTH-001",
+    "probed_endpoint": "http://192.168.195.139:8080/manager/html",
+    "finding_key": "TOMCAT-MGR-001",
+    "probe_steps": [
+      {
+        "step": 1,
+        "method": "GET",
+        "url": "http://192.168.195.139:8080/manager/html",
+        "auth": "none",
+        "status_code": 401,
+        "note": "WWW-Authenticate Basic realm=Tomcat Manager Application"
+      },
+      {
+        "step": 2,
+        "method": "GET",
+        "url": "http://192.168.195.139:8080/manager/html",
+        "auth": "Basic tomcat:tomcat (Lab Profile)",
+        "status_code": 200,
+        "markers_verified": [
+          "Tomcat Web Application Manager",
+          "Deploy directory or WAR file"
+        ]
+      }
+    ]
+  },
+  "request_response_evidence": [
+    {
+      "step": 1,
+      "method": "GET",
+      "url": "http://192.168.195.139:8080/manager/html",
+      "auth": "none",
+      "status_code": 401,
+      "note": "WWW-Authenticate Basic realm=Tomcat Manager Application"
+    },
+    {
+      "step": 2,
+      "method": "GET",
+      "url": "http://192.168.195.139:8080/manager/html",
+      "auth": "Basic tomcat:tomcat (Lab Profile)",
+      "status_code": 200,
+      "markers_verified": [
+        "Tomcat Web Application Manager",
+        "Deploy directory or WAR file"
+      ]
+    }
+  ],
+  "expected_vs_actual": {
+    "expected": "Determine if Tomcat Manager /manager/html enforces strong authentication or permits default/weak administrative login.",
+    "actual": "Verified unauthenticated challenge (HTTP 401) followed by successful administrative login (HTTP 200 OK) to Apache Tomcat Manager (/manager/html) using lab credentials tomcat:tomcat, exposing WAR deployment and application control table.",
+    "reproduced_behavior": true
+  },
+  "execution_outcome": "CONFIRMED_PRIVILEGE_ESCALATION",
+  "evidence_confidence": 0.98,
+  "exploitability_confidence": 0.96,
+  "impact_confidence": 0.95,
+  "operator_or_approving_identity": "secops-lead@expedite-consults.io",
+  "sha256_evidence_digest": "bf6dffefbd3eba989e48b52edc9eef0cdd686c29c8bd3b0eafcfca3604e3b58d",
+  "attempt_key": "EVE-ATT-00168-201"
+}

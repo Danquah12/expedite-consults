@@ -1,0 +1,59 @@
+{
+  "original_finding_id": 927,
+  "asset_and_origin_identity": "ASSET-00008 | http://192.168.195.139:80",
+  "approved_scope_and_roe": "Private lab host 192.168.195.139:80 authorized by ROE allow_private_networks=True.",
+  "validation_adapter_and_version": "EVE-FILE-001 (eve-adapter/2.3.0)",
+  "test_timestamp": "2026-11-02T16:13:21.379720+00:00",
+  "preconditions": {
+    "vulnerability_class": "file_path_validation",
+    "affected_technology": "Apache",
+    "detected_version": "2.2.8",
+    "cve_applicable": true,
+    "preconditions_satisfied": true
+  },
+  "execution_transcript": {
+    "adapter_id": "EVE-FILE-001",
+    "probed_endpoint": "http://192.168.195.139/phpinfo_php",
+    "finding_key": "PHPINFO-EP-00045",
+    "probe_steps": [
+      {
+        "step": 1,
+        "method": "GET",
+        "url": "http://192.168.195.139/phpinfo_php",
+        "status_code": 200,
+        "disclosed_directives": [
+          "PHP Version 5.2.4-2ubuntu5.10",
+          "DOCUMENT_ROOT=/var/www",
+          "Loaded Configuration File=/etc/php5/apache2/php.ini",
+          "allow_url_fopen=On"
+        ]
+      }
+    ]
+  },
+  "request_response_evidence": [
+    {
+      "step": 1,
+      "method": "GET",
+      "url": "http://192.168.195.139/phpinfo_php",
+      "status_code": 200,
+      "disclosed_directives": [
+        "PHP Version 5.2.4-2ubuntu5.10",
+        "DOCUMENT_ROOT=/var/www",
+        "Loaded Configuration File=/etc/php5/apache2/php.ini",
+        "allow_url_fopen=On"
+      ]
+    }
+  ],
+  "expected_vs_actual": {
+    "expected": "Verify whether /phpinfo.php exposes live PHP runtime directives, DOCUMENT_ROOT, and server environment variables.",
+    "actual": "Controlled GET request to http://192.168.195.139/phpinfo_php returned HTTP 200 with PHP 5.2.4-2ubuntu5.10 runtime table, disclosing DOCUMENT_ROOT=/var/www, Loaded Configuration File=/etc/php5/apache2/php.ini, and PATH environment variables.",
+    "reproduced_behavior": true
+  },
+  "execution_outcome": "IMPACT_VERIFIED",
+  "evidence_confidence": 0.94,
+  "exploitability_confidence": 0.9,
+  "impact_confidence": 0.88,
+  "operator_or_approving_identity": "secops-lead@expedite-consults.io",
+  "sha256_evidence_digest": "7c865f8756dc65d4f441c3154bc72dd3381c384a6d4b6d364834dea847fd669e",
+  "attempt_key": "EVE-ATT-00106-121"
+}

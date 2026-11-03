@@ -42,3 +42,7 @@ next-env.d.ts
 
 .vercel
 accra-helsinki-platform/
+*backup*
+noctis-backup-*/
+trepath-backup-*/
+

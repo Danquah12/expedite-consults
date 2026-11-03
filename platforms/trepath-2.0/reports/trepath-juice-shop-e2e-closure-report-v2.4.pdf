@@ -1,0 +1,2549 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [6 0 R 8 0 R 10 0 R 12 0 R 14 0 R 16 0 R 18 0 R 20 0 R 22 0 R 24 0 R 26 0 R 28 0 R 30 0 R] /Count 13 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 7 0 R >>
+endobj
+7 0 obj
+<< /Length 6762 >>
+stream
+BT /F2 8.2 Tf 0.04 0.37 0.27 rg 36 762 Td (TREPATH 2.4 / EXPEDITE STRIKE / NOCTIS) Tj ET
+BT /F1 7.8 Tf 0.28 0.33 0.41 rg 218 762 Td (Unified SAST+DAST+EVE+RTEX & EvidenceCore Ed25519 Report) Tj ET
+BT /F2 8.5 Tf 0.72 0.11 0.11 rg 508 762 Td (CONFIDENTIAL) Tj ET
+0.04 0.47 0.36 rg 36 753 540 1.4 re f
+0.78 0.82 0.87 rg 36 42 540 0.6 re f
+BT /F1 6.8 Tf 0.35 0.41 0.49 rg 36 31 Td (Expedite Consults Ltd | TrePath 2.4 \(TP24-BUILD-20261102-UNIFIED\) | 2026-11-02 14:53 UTC | 26/26 Quality Gates & RFC 8032 Ed25519 Bundle Verified) Tj ET
+BT /F1 7.5 Tf 0.28 0.33 0.41 rg 540 31 Td (Page 1) Tj ET
+0.04 0.47 0.36 rg 36 732 540 4.5 re f
+BT /F2 17 Tf 0.04 0.37 0.27 rg 105 704 Td (TREPATH 2.4 - Penetration Testing & Unified Security Report) Tj ET
+BT /F1 9.0 Tf 0.28 0.33 0.41 rg 68 686 Td (Authorized Assessment Scope \(127.0.0.1\) | TrePath 2.4 + XTRIKE + Expedite Strike + EvidenceCore Ed25519) Tj ET
+0.97 0.98 0.99 rg 36 635 540 29 re f
+0.84 0.87 0.91 rg 36 635 540 0.5 re f
+BT /F2 8.0 Tf 0.08 0.12 0.20 rg 42 654 Td (Client / Scope) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 217 654 Td (Expedite Consults Security Lab \(Written Lab Owner ROE\) - OWASP Juice Shop) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 217 643 Td (Controlled Lab E2E \(TrePath 2.4\) \(127.0.0.1\)) Tj ET
+0.84 0.87 0.91 rg 36 606 540 0.5 re f
+BT /F2 8.0 Tf 0.08 0.12 0.20 rg 42 625 Td (Scan Execution Window) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 217 625 Td (Executed: 2026-11-02 14:53:34 UTC | Report Rendered: 2026-11-02 14:53 UTC) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 217 614 Td (\(Scan #43 | Profile: controlled_lab_active_validation\)) Tj ET
+0.97 0.98 0.99 rg 36 577 540 29 re f
+0.84 0.87 0.91 rg 36 577 540 0.5 re f
+BT /F2 8.0 Tf 0.08 0.12 0.20 rg 42 596 Td (Assessment Engine & Build) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 217 596 Td (TrePath 2.4 Autonomous Scope Provenance, EVE, EvidenceCore & RTEX Engine) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 217 585 Td (\(Build: TP24-BUILD-20261102-UNIFIED | Commit: e8f4a92c7d1b\)) Tj ET
+0.84 0.87 0.91 rg 36 559 540 0.5 re f
+BT /F2 8.0 Tf 0.08 0.12 0.20 rg 42 567 Td (Document Classification) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 217 567 Td (CONFIDENTIAL - Executive, Technical & Cryptographic Deliverable) Tj ET
+0.97 0.98 0.99 rg 36 530 540 29 re f
+0.84 0.87 0.91 rg 36 530 540 0.5 re f
+BT /F2 8.0 Tf 0.08 0.12 0.20 rg 42 549 Td (T0 Baseline Calibrated Risk) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 217 549 Td (HIGH \(7.5 / 10 | 75.3 / 100 Calibrated Index: Confirmed Compromise=53.0 pts,) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 217 538 Td (Control Gaps=0.7 pts, Surface/Baseline=21.6 pts\)) Tj ET
+0.84 0.87 0.91 rg 36 501 540 0.5 re f
+BT /F2 8.0 Tf 0.08 0.12 0.20 rg 42 520 Td (T1 Post-Retest Verified Risk) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 217 520 Td (1.2 / 10 \(5 Executed Retests Recorded in RTEX Ledger | Verified Risk) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 217 509 Td (Reduction: 6.3 / 10\)) Tj ET
+0.97 0.98 0.99 rg 36 472 540 29 re f
+0.84 0.87 0.91 rg 36 472 540 0.5 re f
+BT /F2 8.0 Tf 0.08 0.12 0.20 rg 42 491 Td (Hypothetical SLA Forecast) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 217 491 Td (VERIFIED_POST_RETEST_CLOSURE \(5 Retests Verified in RTEX\): Target 2.1 / 10) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 217 480 Td (\(LOW\) upon full RTEX closure) Tj ET
+0.84 0.87 0.91 rg 36 443 540 0.5 re f
+BT /F2 8.0 Tf 0.08 0.12 0.20 rg 42 462 Td (Verified Compromise / Admin Auth) Tj ET
+BT /F2 8.0 Tf 0.08 0.12 0.20 rg 42 451 Td (Status) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 217 462 Td (1 CONFIRMED_ADMIN_AUTH \(JS-AUTH-BYPASS-001\) + 2 IMPACT_VERIFIED Safe PoC\(s\)) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 217 451 Td (\(JS-SQLI-SEARCH-001, JS-BAC-ADMIN-USERS-001\)) Tj ET
+0.97 0.98 0.99 rg 36 414 540 29 re f
+0.84 0.87 0.91 rg 36 414 540 0.5 re f
+BT /F2 8.0 Tf 0.08 0.12 0.20 rg 42 433 Td (7-Stage Scope Reconciliation Funnel) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 217 433 Td (5 Requested Target\(s\) -> 5 ROE Authorized -> 1 Resolved Host\(s\) -> 1 In-Scope) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 217 422 Td (Origin Asset\(s\) -> 0 Out-of-Scope Probed -> 22 HTTP Endpoints) Tj ET
+0.84 0.87 0.91 rg 36 385 540 0.5 re f
+BT /F2 8.0 Tf 0.08 0.12 0.20 rg 42 404 Td (Port & Transport Discovery State) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 217 404 Td (Raw TCP Port Scan: 1 open ports \(EXECUTED_WITH_OPEN_PORTS\) | Application) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 217 393 Td (Transport: 22 HTTP\(S\) endpoints reachable across 1 origin\(s\)) Tj ET
+0.97 0.98 0.99 rg 36 356 540 29 re f
+0.84 0.87 0.91 rg 36 356 540 0.5 re f
+BT /F2 8.0 Tf 0.08 0.12 0.20 rg 42 375 Td (Finding Reconciliation \(6-Tier\)) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 217 375 Td (5 Raw Observations -> 5 Consolidated Security Findings + 0 Recon/Surface) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 217 364 Td (Items + 0 Sensor Health Event) Tj ET
+0.84 0.87 0.91 rg 36 327 540 0.5 re f
+BT /F2 8.0 Tf 0.08 0.12 0.20 rg 42 346 Td (Calibrated Threat Intelligence \(KEV\)) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 217 346 Td (0 Raw KEV Matches -> 0 Unique KEV CVEs | 0 CVE_APPLICABILITY_CONFIRMED | 0) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 217 335 Td (CVE_CORRELATED \(Banner Only\)) Tj ET
+0.97 0.98 0.99 rg 36 298 540 29 re f
+0.84 0.87 0.91 rg 36 298 540 0.5 re f
+BT /F2 8.0 Tf 0.08 0.12 0.20 rg 42 317 Td (4-Metric Sensor Coverage Model) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 217 317 Td (Installed: 100.0% \(6/6\) | Operational: 100.0% \(6/6\) | Execution: 100.0% \(6/6\)) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 217 306 Td (| Applicable: 100.0% \(6/6\)) Tj ET
+0.84 0.87 0.91 rg 36 269 540 0.5 re f
+BT /F2 8.0 Tf 0.08 0.12 0.20 rg 42 288 Td (EvidenceCore Ed25519 & Consistency) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 217 288 Td (Consistency: 100.0% \(5/5 Invariants\) | Ed25519 Signature: VERIFIED_AUTHENTIC) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 217 277 Td (\(Manifest SHA-256: 20229af9c150521bbae27919...\)) Tj ET
+0.97 0.98 0.99 rg 36 240 540 29 re f
+0.84 0.87 0.91 rg 36 240 540 0.5 re f
+BT /F2 8.0 Tf 0.08 0.12 0.20 rg 42 259 Td (Platform-Aware Remediation) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 217 259 Td (Multi-Origin Web & API Hardening Enforced across 1 In-Scope Asset\(s\) \(HTTP) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 217 248 Td (Security Headers, TLS & Endpoint Access Controls\)) Tj ET
+0.84 0.87 0.91 rg 36 211 540 0.5 re f
+BT /F2 8.0 Tf 0.08 0.12 0.20 rg 42 230 Td (Pre-Render Quality Gate) Tj ET
+BT /F2 8.0 Tf 0.12 0.16 0.22 rg 217 230 Td (PASSED \(26/26 Acceptance Rules + AT-01..AT-10 + NG-01..NG-06 + Ed25519 Tamper) Tj ET
+BT /F2 8.0 Tf 0.12 0.16 0.22 rg 217 219 Td (Self-Test PASSED | Score=75.3/100 \(7.5/10\)\)) Tj ET
+BT /F2 8.5 Tf 0.28 0.33 0.41 rg 82 193 Td (Prepared by Expedite Consults Ltd | Generated 2026-11-02 14:53 UTC | TREPATH 2.4 UNIFIED ASSESSMENT ORCHESTRATOR) Tj ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 9 0 R >>
+endobj
+9 0 obj
+<< /Length 14668 >>
+stream
+BT /F2 8.2 Tf 0.04 0.37 0.27 rg 36 762 Td (TREPATH 2.4 / EXPEDITE STRIKE / NOCTIS) Tj ET
+BT /F1 7.8 Tf 0.28 0.33 0.41 rg 218 762 Td (Unified SAST+DAST+EVE+RTEX & EvidenceCore Ed25519 Report) Tj ET
+BT /F2 8.5 Tf 0.72 0.11 0.11 rg 508 762 Td (CONFIDENTIAL) Tj ET
+0.04 0.47 0.36 rg 36 753 540 1.4 re f
+0.78 0.82 0.87 rg 36 42 540 0.6 re f
+BT /F1 6.8 Tf 0.35 0.41 0.49 rg 36 31 Td (Expedite Consults Ltd | TrePath 2.4 \(TP24-BUILD-20261102-UNIFIED\) | 2026-11-02 14:53 UTC | 26/26 Quality Gates & RFC 8032 Ed25519 Bundle Verified) Tj ET
+BT /F1 7.5 Tf 0.28 0.33 0.41 rg 540 31 Td (Page 2) Tj ET
+BT /F2 12.0 Tf 0.04 0.37 0.27 rg 36 730 Td (1. Executive Summary & Proof-Driven Assessment Overview) Tj ET
+0.04 0.47 0.36 rg 36 725 540 1.0 re f
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 36 714 Td (This assessment was executed by TrePath 2.4 against 5 submitted target\(s\) reconciled to 1 authorized in-scope) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 36 702.5 Td (origin asset\(s\) \(127.0.0.1\) under the 'controlled_lab_active_validation' Rules of Engagement. TrePath 2.4) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 36 691.0 Td (enforces immutable 9-field asset provenance, per-origin written authorization governance, effective HTTP) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 36 679.5 Td (header-policy evaluation, 4-track score separation, 4-metric sensor coverage, 4-state port/transport) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 36 668.0 Td (reconciliation, and verifiable RFC 8032 Ed25519 cryptographic signing.) Tj ET
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 650.5 Td (1.0A Executive Priority Risk & 3-Pillar Score Attribution \(Demonstrated Compromise vs. Control) Tj ET
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 637.5 Td (Hygiene\)) Tj ET
+0.06 0.09 0.16 rg 36 606.0 540 16.5 re f
+BT /F2 7.3 Tf 1 1 1 rg 40 613.0 Td (Posture Panel) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 165.0 613.0 Td (State Type) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 265.0 613.0 Td (Risk Score) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 355.0 613.0 Td (Key Drivers & Proof Scope) Tj ET
+1 1 1 rg 36 572.4 540 33.599999999999994 re f
+0.80 0.84 0.89 RG 0.4 w 36 572.4 125.0 33.599999999999994 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 597.0 Td (PANEL-1-MEASURED-BASELINE) Tj ET
+0.80 0.84 0.89 RG 0.4 w 161.0 572.4 100.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 165.0 597.0 Td (MEASURED_AT_T0) Tj ET
+0.80 0.84 0.89 RG 0.4 w 261.0 572.4 90.0 33.599999999999994 re S
+BT /F2 7.1 Tf 0.76 0.25 0.05 rg 265.0 597.0 Td (7.5 / 10 \(HIGH\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 351.0 572.4 225.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 355.0 597.0 Td (5 Consolidated Findings across 1 origin\(s\):) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 355.0 587.8 Td (Confirmed Compromise=53.0 pts | Control Gaps=0.7 pts) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 355.0 578.5999999999999 Td (| Surface/Baseline=21.6 pts.) Tj ET
+0.97 0.98 0.99 rg 36 548.0 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 548.0 125.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 563.4 Td (PANEL-2-MEASURED-POST-RETEST) Tj ET
+0.80 0.84 0.89 RG 0.4 w 161.0 548.0 100.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 165.0 563.4 Td (MEASURED_AT_T1) Tj ET
+0.80 0.84 0.89 RG 0.4 w 261.0 548.0 90.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 265.0 563.4 Td (1.2 / 10 \(5) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 265.0 554.1999999999999 Td (Retests\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 351.0 548.0 225.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 355.0 563.4 Td (RTEX Ledger active \(5 retests executed; Verified T1) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 355.0 554.1999999999999 Td (Risk Reduction: 6.3 / 10\).) Tj ET
+1 1 1 rg 36 514.4 540 33.599999999999994 re f
+0.80 0.84 0.89 RG 0.4 w 36 514.4 125.0 33.599999999999994 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 539.0 Td (PANEL-3-HYPOTHETICAL-FORECAS) Tj ET
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 529.8 Td (T) Tj ET
+0.80 0.84 0.89 RG 0.4 w 161.0 514.4 100.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 165.0 539.0 Td (HYPOTHETICAL_PROJECTI) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 165.0 529.8 Td (ON) Tj ET
+0.80 0.84 0.89 RG 0.4 w 261.0 514.4 90.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 265.0 539.0 Td (2.1 / 10 \(LOW\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 351.0 514.4 225.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 355.0 539.0 Td (Unverified theoretical forecast assuming all) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 355.0 529.8 Td (prioritized remediation tasks pass deterministic) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 355.0 520.5999999999999 Td (RTEX retesting.) Tj ET
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 502.4 Td (1.0B Four-Metric Sensor Coverage Model \(Installed vs. Operational vs. Execution vs.) Tj ET
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 489.4 Td (Applicable\)) Tj ET
+0.06 0.09 0.16 rg 36 457.9 540 16.5 re f
+BT /F2 7.3 Tf 1 1 1 rg 40 464.9 Td (Sensor Coverage Metric) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 175.0 464.9 Td (Measured Coverage) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 270.0 464.9 Td (Operational & Evidentiary Definition) Tj ET
+1 1 1 rg 36 433.5 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 433.5 135.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 448.9 Td (1. Installed Coverage) Tj ET
+0.80 0.84 0.89 RG 0.4 w 171.0 433.5 95.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 175.0 448.9 Td (100.0% \(6/6\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 266.0 433.5 310.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 448.9 Td (Sensors installed and registered in TrePath 2.4 \(WebPulse, Nuclei, OWASP) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 439.7 Td (ZAP, Nmap 7.95, Safe PoC/EVE Adapters, OpenVAS GVM\).) Tj ET
+0.97 0.98 0.99 rg 36 409.1 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 409.1 135.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 424.5 Td (2. Operational Coverage) Tj ET
+0.80 0.84 0.89 RG 0.4 w 171.0 409.1 95.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 175.0 424.5 Td (100.0% \(6/6\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 266.0 409.1 310.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 424.5 Td (Sensors online and healthy during execution window \(OpenVAS GVM recorded) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 415.3 Td (as STANDBY_OFFLINE when daemon is not attached\).) Tj ET
+1 1 1 rg 36 384.70000000000005 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 384.70000000000005 135.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 400.1 Td (3. Execution Coverage) Tj ET
+0.80 0.84 0.89 RG 0.4 w 171.0 384.70000000000005 95.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 175.0 400.1 Td (100.0% \(6/6\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 266.0 384.70000000000005 310.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 400.1 Td (Sensors that actively executed probes against in-scope targets \(Safe PoC) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 390.90000000000003 Td (adapters execute only when applicable preconditions exist\).) Tj ET
+0.97 0.98 0.99 rg 36 360.30000000000007 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 360.30000000000007 135.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 375.70000000000005 Td (4. Applicable Coverage) Tj ET
+0.80 0.84 0.89 RG 0.4 w 171.0 360.30000000000007 95.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 175.0 375.70000000000005 Td (100.0% \(6/6\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 266.0 360.30000000000007 310.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 375.70000000000005 Td (Percentage of target-applicable sensors that executed and produced sealed) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 366.50000000000006 Td (EvidenceCore telemetry.) Tj ET
+0.06 0.09 0.16 rg 36 326.30000000000007 540 26.0 re f
+BT /F2 7.3 Tf 1 1 1 rg 40 342.80000000000007 Td (ID & Finding Key) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 135.0 342.80000000000007 Td (Host : Port & Consolidated Title) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 300.0 342.80000000000007 Td (Verified Proof Category &) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 300.0 333.30000000000007 Td (Substate) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 430.0 342.80000000000007 Td (Priority & Remediation Action) Tj ET
+1 1 1 rg 36 283.50000000000006 540 42.8 re f
+0.80 0.84 0.89 RG 0.4 w 36 283.50000000000006 95.0 42.8 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 317.30000000000007 Td (F-01) Tj ET
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 308.1000000000001 Td (\(JS-SQLI-SEARCH-001\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 131.0 283.50000000000006 165.0 42.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 135.0 317.30000000000007 Td (127.0.0.1:80 \(ASSET-JS-3000\) | SQL) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 135.0 308.1000000000001 Td (Injection in Product Search API) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 135.0 298.9000000000001 Td (\(/rest/products/) Tj ET
+0.80 0.84 0.89 RG 0.4 w 296.0 283.50000000000006 130.0 42.8 re S
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 300.0 317.30000000000007 Td (IMPACT_VERIFIED ::) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 300.0 308.1000000000001 Td (OBSERVATION_CAPTURED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 426.0 283.50000000000006 150.0 42.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 430.0 317.30000000000007 Td (Priority 98.0/100 | Replace raw) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 430.0 308.1000000000001 Td (template literal interpolation in) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 430.0 298.9000000000001 Td (`routes/search.ts:23` with) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 430.0 289.7000000000001 Td (parameterized Sequeliz) Tj ET
+0.97 0.98 0.99 rg 36 240.70000000000005 540 42.8 re f
+0.80 0.84 0.89 RG 0.4 w 36 240.70000000000005 95.0 42.8 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 274.50000000000006 Td (F-02) Tj ET
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 265.30000000000007 Td (\(JS-AUTH-BYPASS-001\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 131.0 240.70000000000005 165.0 42.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 135.0 274.50000000000006 Td (127.0.0.1:80 \(ASSET-JS-3000\) |) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 135.0 265.30000000000007 Td (Authentication Bypass via SQL) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 135.0 256.1000000000001 Td (Injection on Administr) Tj ET
+0.80 0.84 0.89 RG 0.4 w 296.0 240.70000000000005 130.0 42.8 re S
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 300.0 274.50000000000006 Td (CONFIRMED_ADMIN_AUTH ::) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 300.0 265.30000000000007 Td (OBSERVATION_CAPTURED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 426.0 240.70000000000005 150.0 42.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 430.0 274.50000000000006 Td (Priority 97.0/100 | Refactor) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 430.0 265.30000000000007 Td (`routes/login.ts:34` to use) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 430.0 256.1000000000001 Td (parameterized ORM lookup) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 430.0 246.9000000000001 Td (`UsersModel.findOne\({ where: { em) Tj ET
+1 1 1 rg 36 197.90000000000003 540 42.8 re f
+0.80 0.84 0.89 RG 0.4 w 36 197.90000000000003 95.0 42.8 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 231.70000000000005 Td (F-03 \(JS-BAC-ADMIN-U) Tj ET
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 222.50000000000006 Td (SERS-001\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 131.0 197.90000000000003 165.0 42.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 135.0 231.70000000000005 Td (127.0.0.1:80 \(ASSET-JS-3000\) |) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 135.0 222.50000000000006 Td (Privileged Administrative User) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 135.0 213.30000000000007 Td (Directory Exposure \(/) Tj ET
+0.80 0.84 0.89 RG 0.4 w 296.0 197.90000000000003 130.0 42.8 re S
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 300.0 231.70000000000005 Td (IMPACT_VERIFIED ::) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 300.0 222.50000000000006 Td (OBSERVATION_CAPTURED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 426.0 197.90000000000003 150.0 42.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 430.0 231.70000000000005 Td (Priority 89.0/100 | Enforce) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 430.0 222.50000000000006 Td (dedicated RBAC role guard) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 430.0 213.30000000000007 Td (`security.requireRole\('admin'\)`) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 430.0 204.10000000000008 Td (and step-up session verificat) Tj ET
+0.97 0.98 0.99 rg 36 155.10000000000002 540 42.8 re f
+0.80 0.84 0.89 RG 0.4 w 36 155.10000000000002 95.0 42.8 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 188.90000000000003 Td (F-04 \(JS-FILE-EXPOSU) Tj ET
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 179.70000000000005 Td (RE-001\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 131.0 155.10000000000002 165.0 42.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 135.0 188.90000000000003 Td (127.0.0.1:80 \(ASSET-JS-3000\) |) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 135.0 179.70000000000005 Td (Unauthenticated Sensitive File &) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 135.0 170.50000000000006 Td (Backup Exposure \(/f) Tj ET
+0.80 0.84 0.89 RG 0.4 w 296.0 155.10000000000002 130.0 42.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 300.0 188.90000000000003 Td (RUNTIME_REPRODUCED ::) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 300.0 179.70000000000005 Td (OBSERVATION_CAPTURED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 426.0 155.10000000000002 150.0 42.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 430.0 188.90000000000003 Td (Priority 78.0/100 | Disable) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 430.0 179.70000000000005 Td (`serveIndexMiddleware` on `/ftp`) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 430.0 170.50000000000006 Td (in `server.ts:265`, remove `.bak`) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 430.0 161.30000000000007 Td (and internal markdow) Tj ET
+1 1 1 rg 36 112.30000000000003 540 42.8 re f
+0.80 0.84 0.89 RG 0.4 w 36 112.30000000000003 95.0 42.8 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 146.10000000000002 Td (F-05) Tj ET
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 136.90000000000003 Td (\(DAST-HDR-JS-3000\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 131.0 112.30000000000003 165.0 42.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 135.0 146.10000000000002 Td (127.0.0.1:80 \(ASSET-JS-3000\) |) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 135.0 136.90000000000003 Td (Missing HTTP Hardening Headers) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 135.0 127.70000000000003 Td (\(Content-Security-Pol) Tj ET
+0.80 0.84 0.89 RG 0.4 w 296.0 112.30000000000003 130.0 42.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 300.0 146.10000000000002 Td (CONTROL_GAP_CONFIRMED :: CONT) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 300.0 136.90000000000003 Td (ROL_MISCONFIGURATION_CONFIRME) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 300.0 127.70000000000003 Td (D) Tj ET
+0.80 0.84 0.89 RG 0.4 w 426.0 112.30000000000003 150.0 42.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 430.0 146.10000000000002 Td (Priority 54.0/100 | Configure only) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 430.0 136.90000000000003 Td (the missing response headers on) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 430.0 127.70000000000003 Td (`http://127.0.0.1:3000`:) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 430.0 118.50000000000003 Td (`Content-Security-Polic) Tj ET
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 100.30000000000003 Td (1.1 Six-Tier Finding & Observation Reconciliation \(Root-Cause Deduplication\)) Tj ET
+endstream
+endobj
+10 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 11 0 R >>
+endobj
+11 0 obj
+<< /Length 15352 >>
+stream
+BT /F2 8.2 Tf 0.04 0.37 0.27 rg 36 762 Td (TREPATH 2.4 / EXPEDITE STRIKE / NOCTIS) Tj ET
+BT /F1 7.8 Tf 0.28 0.33 0.41 rg 218 762 Td (Unified SAST+DAST+EVE+RTEX & EvidenceCore Ed25519 Report) Tj ET
+BT /F2 8.5 Tf 0.72 0.11 0.11 rg 508 762 Td (CONFIDENTIAL) Tj ET
+0.04 0.47 0.36 rg 36 753 540 1.4 re f
+0.78 0.82 0.87 rg 36 42 540 0.6 re f
+BT /F1 6.8 Tf 0.35 0.41 0.49 rg 36 31 Td (Expedite Consults Ltd | TrePath 2.4 \(TP24-BUILD-20261102-UNIFIED\) | 2026-11-02 14:53 UTC | 26/26 Quality Gates & RFC 8032 Ed25519 Bundle Verified) Tj ET
+BT /F1 7.5 Tf 0.28 0.33 0.41 rg 540 31 Td (Page 3) Tj ET
+0.06 0.09 0.16 rg 36 719.5 540 16.5 re f
+BT /F2 7.3 Tf 1 1 1 rg 40 726.5 Td (Reconciliation Tier) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 215.0 726.5 Td (Count) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 270.0 726.5 Td (Scope & Deduplication Rule) Tj ET
+1 1 1 rg 36 695.1 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 695.1 175.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 710.5 Td (Tier 1 - Raw Scanner Observations) Tj ET
+0.80 0.84 0.89 RG 0.4 w 211.0 695.1 55.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 215.0 710.5 Td (5) Tj ET
+0.80 0.84 0.89 RG 0.4 w 266.0 695.1 310.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 710.5 Td (All raw Nmap, Nuclei, httpx, ZAP, and PoC probe records prior to) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 701.3 Td (origin-scoped root-cause grouping.) Tj ET
+0.97 0.98 0.99 rg 36 661.5 540 33.599999999999994 re f
+0.80 0.84 0.89 RG 0.4 w 36 661.5 175.0 33.599999999999994 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 686.1 Td (Tier 2 - Unique Assets & Open Services) Tj ET
+0.80 0.84 0.89 RG 0.4 w 211.0 661.5 55.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 215.0 686.1 Td (1 Asset\(s\)) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 215.0 676.9 Td (/ 1 TCP) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 215.0 667.6999999999999 Td (Ports) Tj ET
+0.80 0.84 0.89 RG 0.4 w 266.0 661.5 310.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 686.1 Td (1 authorized in-scope asset\(s\) \(127.0.0.1\) with 1 open TCP ports and 22) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 676.9 Td (HTTP endpoints.) Tj ET
+1 1 1 rg 36 637.1 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 637.1 175.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 652.5 Td (Tier 3 - Consolidated Security Findings) Tj ET
+0.80 0.84 0.89 RG 0.4 w 211.0 637.1 55.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 215.0 652.5 Td (5) Tj ET
+0.80 0.84 0.89 RG 0.4 w 266.0 637.1 310.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 652.5 Td (Deduplicated by \(effective_origin, port, service_family,) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 643.3 Td (root_cause_slug\); consolidates repeated missing headers per origin.) Tj ET
+0.97 0.98 0.99 rg 36 612.7 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 612.7 175.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 628.1 Td (Tier 4 - Confirmed Exploitable / Admin) Tj ET
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 618.9 Td (Auth) Tj ET
+0.80 0.84 0.89 RG 0.4 w 211.0 612.7 55.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 215.0 628.1 Td (4) Tj ET
+0.80 0.84 0.89 RG 0.4 w 266.0 612.7 310.0 24.4 re S
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 270.0 628.1 Td (1 CONFIRMED_ADMIN_AUTH + 2 IMPACT_VERIFIED + 1 RUNTIME_REPRODUCED.) Tj ET
+1 1 1 rg 36 588.3000000000001 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 588.3000000000001 175.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 603.7 Td (Tier 5 - Impact-Verified Safe PoCs) Tj ET
+0.80 0.84 0.89 RG 0.4 w 211.0 588.3000000000001 55.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 215.0 603.7 Td (2) Tj ET
+0.80 0.84 0.89 RG 0.4 w 266.0 588.3000000000001 310.0 24.4 re S
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 270.0 603.7 Td (2 IMPACT_VERIFIED Safe PoC\(s\) \(JS-SQLI-SEARCH-001,) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 270.0 594.5 Td (JS-BAC-ADMIN-USERS-001\)) Tj ET
+0.97 0.98 0.99 rg 36 563.9000000000001 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 563.9000000000001 175.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 579.3000000000001 Td (Tier 6 - Recon & Scanner Health) Tj ET
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 570.1 Td (Telemetry) Tj ET
+0.80 0.84 0.89 RG 0.4 w 211.0 563.9000000000001 55.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 215.0 579.3000000000001 Td (0 Recon /) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 215.0 570.1 Td (0 Sensor) Tj ET
+0.80 0.84 0.89 RG 0.4 w 266.0 563.9000000000001 310.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 579.3000000000001 Td (Port discovery telemetry and OPENVAS-SENSOR-STANDBY separated from target) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 570.1 Td (vulnerabilities.) Tj ET
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 551.9000000000001 Td (1.2 Seven-State Evidence Proof Classification & Granular PoC Substates) Tj ET
+0.06 0.09 0.16 rg 36 520.4000000000001 540 16.5 re f
+BT /F2 7.3 Tf 1 1 1 rg 40 527.4000000000001 Td (Proof State) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 180.0 527.4000000000001 Td (Count) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 230.0 527.4000000000001 Td (Granular Substate & Evidentiary Meaning) Tj ET
+1 1 1 rg 36 496.0000000000001 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 496.0000000000001 140.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 511.4000000000001 Td (DISCOVERED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 176.0 496.0000000000001 50.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 180.0 511.4000000000001 Td (0) Tj ET
+0.80 0.84 0.89 RG 0.4 w 226.0 496.0000000000001 350.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 230.0 511.4000000000001 Td (Port/surface reachability observation only \(CVSS 0.0; excluded from vulnerability) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 230.0 502.2000000000001 Td (count\).) Tj ET
+0.97 0.98 0.99 rg 36 480.8000000000001 540 15.2 re f
+0.80 0.84 0.89 RG 0.4 w 36 480.8000000000001 140.0 15.2 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 487.0000000000001 Td (OBSERVATION_CONFIRMED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 176.0 480.8000000000001 50.0 15.2 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 180.0 487.0000000000001 Td (0) Tj ET
+0.80 0.84 0.89 RG 0.4 w 226.0 480.8000000000001 350.0 15.2 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 230.0 487.0000000000001 Td (Service banner, protocol handshake, or cryptographic key observation confirmed.) Tj ET
+1 1 1 rg 36 456.40000000000015 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 456.40000000000015 140.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 471.8000000000001 Td (CONTROL_GAP_CONFIRMED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 176.0 456.40000000000015 50.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 180.0 471.8000000000001 Td (1) Tj ET
+0.80 0.84 0.89 RG 0.4 w 226.0 456.40000000000015 350.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 230.0 471.8000000000001 Td (Missing security header, legacy EOL version, or cleartext protocol exposure) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 230.0 462.60000000000014 Td (confirmed.) Tj ET
+0.97 0.98 0.99 rg 36 441.20000000000016 540 15.2 re f
+0.80 0.84 0.89 RG 0.4 w 36 441.20000000000016 140.0 15.2 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 447.40000000000015 Td (RUNTIME_REPRODUCED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 176.0 441.20000000000016 50.0 15.2 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 180.0 447.40000000000015 Td (1) Tj ET
+0.80 0.84 0.89 RG 0.4 w 226.0 441.20000000000016 350.0 15.2 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 230.0 447.40000000000015 Td (Active behavioral probe reproduced deterministic service response.) Tj ET
+1 1 1 rg 36 416.8000000000002 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 416.8000000000002 140.0 24.4 re S
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 40 432.20000000000016 Td (CONFIRMED_ADMIN_AUTH) Tj ET
+0.80 0.84 0.89 RG 0.4 w 176.0 416.8000000000002 50.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 180.0 432.20000000000016 Td (1) Tj ET
+0.80 0.84 0.89 RG 0.4 w 226.0 416.8000000000002 350.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 230.0 432.20000000000016 Td (ADMIN_CONSOLE_ACCESS_VERIFIED: Authenticated admin access confirmed) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 230.0 423.00000000000017 Td (\(JS-AUTH-BYPASS-001; no destructive payload uploaded\).) Tj ET
+0.97 0.98 0.99 rg 36 392.4000000000002 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 392.4000000000002 140.0 24.4 re S
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 40 407.8000000000002 Td (IMPACT_VERIFIED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 176.0 392.4000000000002 50.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 180.0 407.8000000000002 Td (2) Tj ET
+0.80 0.84 0.89 RG 0.4 w 226.0 392.4000000000002 350.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 230.0 407.8000000000002 Td (Non-destructive impact verified: JS-SQLI-SEARCH-001 \(OBSERVATION_CAPTURED\),) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 230.0 398.6000000000002 Td (JS-BAC-ADMIN-USERS-001 \(OBSERVATION_CAPTURED\).) Tj ET
+1 1 1 rg 36 377.2000000000002 540 15.2 re f
+0.80 0.84 0.89 RG 0.4 w 36 377.2000000000002 140.0 15.2 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 383.4000000000002 Td (REMEDIATION_VERIFIED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 176.0 377.2000000000002 50.0 15.2 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 180.0 383.4000000000002 Td (5) Tj ET
+0.80 0.84 0.89 RG 0.4 w 226.0 377.2000000000002 350.0 15.2 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 230.0 383.4000000000002 Td (Post-fix retest execution verified vulnerability closure in RTEX ledger.) Tj ET
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 365.2000000000002 Td (1.3 Consolidated Security Vulnerability Severity Distribution & Visual Telemetry) Tj ET
+0.06 0.09 0.16 rg 36 333.7000000000002 540 16.5 re f
+BT /F2 7.3 Tf 1 1 1 rg 40 340.7000000000002 Td (Severity Level) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 175.0 340.7000000000002 Td (Consolidated Count) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 270.0 340.7000000000002 Td (CVSS v3.1 Band) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 400.0 340.7000000000002 Td (Operational SLA Target) Tj ET
+1 1 1 rg 36 318.5000000000002 540 15.2 re f
+0.80 0.84 0.89 RG 0.4 w 36 318.5000000000002 135.0 15.2 re S
+BT /F2 7.1 Tf 0.72 0.11 0.11 rg 40 324.7000000000002 Td (CRITICAL) Tj ET
+0.80 0.84 0.89 RG 0.4 w 171.0 318.5000000000002 95.0 15.2 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 175.0 324.7000000000002 Td (2) Tj ET
+0.80 0.84 0.89 RG 0.4 w 266.0 318.5000000000002 130.0 15.2 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 324.7000000000002 Td (9.0 - 10.0) Tj ET
+0.80 0.84 0.89 RG 0.4 w 396.0 318.5000000000002 180.0 15.2 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 400.0 324.7000000000002 Td (Immediate containment \(< 24 - 48 hours\)) Tj ET
+0.97 0.98 0.99 rg 36 303.30000000000024 540 15.2 re f
+0.80 0.84 0.89 RG 0.4 w 36 303.30000000000024 135.0 15.2 re S
+BT /F2 7.1 Tf 0.76 0.25 0.05 rg 40 309.5000000000002 Td (HIGH) Tj ET
+0.80 0.84 0.89 RG 0.4 w 171.0 303.30000000000024 95.0 15.2 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 175.0 309.5000000000002 Td (2) Tj ET
+0.80 0.84 0.89 RG 0.4 w 266.0 303.30000000000024 130.0 15.2 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 309.5000000000002 Td (7.0 - 8.9) Tj ET
+0.80 0.84 0.89 RG 0.4 w 396.0 303.30000000000024 180.0 15.2 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 400.0 309.5000000000002 Td (Priority hardening \(< 7 days\)) Tj ET
+1 1 1 rg 36 288.10000000000025 540 15.2 re f
+0.80 0.84 0.89 RG 0.4 w 36 288.10000000000025 135.0 15.2 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 294.30000000000024 Td (MEDIUM) Tj ET
+0.80 0.84 0.89 RG 0.4 w 171.0 288.10000000000025 95.0 15.2 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 175.0 294.30000000000024 Td (1) Tj ET
+0.80 0.84 0.89 RG 0.4 w 266.0 288.10000000000025 130.0 15.2 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 294.30000000000024 Td (4.0 - 6.9) Tj ET
+0.80 0.84 0.89 RG 0.4 w 396.0 288.10000000000025 180.0 15.2 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 400.0 294.30000000000024 Td (Scheduled remediation \(< 30 days\)) Tj ET
+0.97 0.98 0.99 rg 36 272.90000000000026 540 15.2 re f
+0.80 0.84 0.89 RG 0.4 w 36 272.90000000000026 135.0 15.2 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 279.10000000000025 Td (LOW) Tj ET
+0.80 0.84 0.89 RG 0.4 w 171.0 272.90000000000026 95.0 15.2 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 175.0 279.10000000000025 Td (0) Tj ET
+0.80 0.84 0.89 RG 0.4 w 266.0 272.90000000000026 130.0 15.2 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 279.10000000000025 Td (0.1 - 3.9) Tj ET
+0.80 0.84 0.89 RG 0.4 w 396.0 272.90000000000026 180.0 15.2 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 400.0 279.10000000000025 Td (Defense-in-depth maintenance \(< 90 days\)) Tj ET
+0.98 0.99 1.00 rg 36 116.90000000000026 262 148 re f
+0.80 0.84 0.89 RG 0.5 w 36 116.90000000000026 262 148 re S
+BT /F2 8.5 Tf 0.06 0.12 0.22 rg 78 249.90000000000026 Td (Consolidated Security Findings by Severity) Tj ET
+0.78 0.12 0.12 rg 52 217.90000000000026 10 10 re f
+BT /F2 7.8 Tf 0.12 0.16 0.22 rg 68 219.90000000000026 Td (Critical: 2) Tj ET
+0.90 0.92 0.95 rg 134 218.90000000000026 130 8 re f
+0.78 0.12 0.12 rg 134 218.90000000000026 50.0 8 re f
+BT /F1 7.2 Tf 0.28 0.33 0.41 rg 268 219.90000000000026 Td (40%) Tj ET
+0.85 0.35 0.05 rg 52 193.90000000000026 10 10 re f
+BT /F2 7.8 Tf 0.12 0.16 0.22 rg 68 195.90000000000026 Td (High: 2) Tj ET
+0.90 0.92 0.95 rg 134 194.90000000000026 130 8 re f
+0.85 0.35 0.05 rg 134 194.90000000000026 50.0 8 re f
+BT /F1 7.2 Tf 0.28 0.33 0.41 rg 268 195.90000000000026 Td (40%) Tj ET
+0.82 0.58 0.04 rg 52 169.90000000000026 10 10 re f
+BT /F2 7.8 Tf 0.12 0.16 0.22 rg 68 171.90000000000026 Td (Medium: 1) Tj ET
+0.90 0.92 0.95 rg 134 170.90000000000026 130 8 re f
+0.82 0.58 0.04 rg 134 170.90000000000026 25.0 8 re f
+BT /F1 7.2 Tf 0.28 0.33 0.41 rg 268 171.90000000000026 Td (20%) Tj ET
+0.15 0.45 0.78 rg 52 145.90000000000026 10 10 re f
+BT /F2 7.8 Tf 0.12 0.16 0.22 rg 68 147.90000000000026 Td (Low: 0) Tj ET
+0.90 0.92 0.95 rg 134 146.90000000000026 130 8 re f
+0.15 0.45 0.78 rg 134 146.90000000000026 4.0 8 re f
+BT /F1 7.2 Tf 0.28 0.33 0.41 rg 268 147.90000000000026 Td (0%) Tj ET
+BT /F2 7.5 Tf 0.04 0.37 0.27 rg 52 126.90000000000026 Td (Total Unique Consolidated Security Findings: 5) Tj ET
+0.98 0.99 1.00 rg 314 116.90000000000026 262 148 re f
+0.80 0.84 0.89 RG 0.5 w 314 116.90000000000026 262 148 re S
+BT /F2 8.5 Tf 0.06 0.12 0.22 rg 360 249.90000000000026 Td (7-State Evidence Proof Classification) Tj ET
+0.55 0.62 0.70 RG 0.6 w 338 140.90000000000026 226 0.6 re S
+0.42 0.48 0.56 rg 344 140.90000000000026 20 1.5 re f
+BT /F2 7.2 Tf 0.12 0.16 0.22 rg 348 145.40000000000026 Td (0) Tj ET
+BT /F1 6.5 Tf 0.25 0.30 0.38 rg 344 130.90000000000026 Td (DISC) Tj ET
+0.20 0.48 0.78 rg 376 140.90000000000026 20 1.5 re f
+BT /F2 7.2 Tf 0.12 0.16 0.22 rg 380 145.40000000000026 Td (0) Tj ET
+BT /F1 6.5 Tf 0.25 0.30 0.38 rg 376 130.90000000000026 Td (OBS) Tj ET
+0.82 0.54 0.05 rg 408 140.90000000000026 20 17.6 re f
+BT /F2 7.2 Tf 0.12 0.16 0.22 rg 412 161.50000000000026 Td (1) Tj ET
+BT /F1 6.5 Tf 0.25 0.30 0.38 rg 408 130.90000000000026 Td (CTRL) Tj ET
+0.78 0.32 0.08 rg 440 140.90000000000026 20 17.6 re f
+BT /F2 7.2 Tf 0.12 0.16 0.22 rg 444 161.50000000000026 Td (1) Tj ET
+BT /F1 6.5 Tf 0.25 0.30 0.38 rg 440 130.90000000000026 Td (REPRO) Tj ET
+0.52 0.18 0.75 rg 472 140.90000000000026 20 17.6 re f
+BT /F2 7.2 Tf 0.12 0.16 0.22 rg 476 161.50000000000026 Td (1) Tj ET
+BT /F1 6.5 Tf 0.25 0.30 0.38 rg 472 130.90000000000026 Td (ADMIN) Tj ET
+0.78 0.12 0.12 rg 504 140.90000000000026 20 35.2 re f
+BT /F2 7.2 Tf 0.12 0.16 0.22 rg 508 179.10000000000025 Td (2) Tj ET
+BT /F1 6.5 Tf 0.25 0.30 0.38 rg 504 130.90000000000026 Td (IMPACT) Tj ET
+0.05 0.58 0.38 rg 536 140.90000000000026 20 88.0 re f
+BT /F2 7.2 Tf 0.12 0.16 0.22 rg 540 231.90000000000026 Td (5) Tj ET
+BT /F1 6.5 Tf 0.25 0.30 0.38 rg 536 130.90000000000026 Td (REM) Tj ET
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 100.90000000000026 Td (1.4 Explainable 7-Dimension Risk Score Decomposition \(RiskEngine 2.4\)) Tj ET
+endstream
+endobj
+12 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 13 0 R >>
+endobj
+13 0 obj
+<< /Length 16424 >>
+stream
+BT /F2 8.2 Tf 0.04 0.37 0.27 rg 36 762 Td (TREPATH 2.4 / EXPEDITE STRIKE / NOCTIS) Tj ET
+BT /F1 7.8 Tf 0.28 0.33 0.41 rg 218 762 Td (Unified SAST+DAST+EVE+RTEX & EvidenceCore Ed25519 Report) Tj ET
+BT /F2 8.5 Tf 0.72 0.11 0.11 rg 508 762 Td (CONFIDENTIAL) Tj ET
+0.04 0.47 0.36 rg 36 753 540 1.4 re f
+0.78 0.82 0.87 rg 36 42 540 0.6 re f
+BT /F1 6.8 Tf 0.35 0.41 0.49 rg 36 31 Td (Expedite Consults Ltd | TrePath 2.4 \(TP24-BUILD-20261102-UNIFIED\) | 2026-11-02 14:53 UTC | 26/26 Quality Gates & RFC 8032 Ed25519 Bundle Verified) Tj ET
+BT /F1 7.5 Tf 0.28 0.33 0.41 rg 540 31 Td (Page 4) Tj ET
+0.06 0.09 0.16 rg 36 719.5 540 16.5 re f
+BT /F2 7.3 Tf 1 1 1 rg 40 726.5 Td (Risk Dimension) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 185.0 726.5 Td (Calibrated Score) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 280.0 726.5 Td (Mathematical & Evidentiary Rationale) Tj ET
+1 1 1 rg 36 695.1 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 695.1 145.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 710.5 Td (Confirmed Exploitability) Tj ET
+0.80 0.84 0.89 RG 0.4 w 181.0 695.1 95.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 185.0 710.5 Td (25.0 / 25.0 pts) Tj ET
+0.80 0.84 0.89 RG 0.4 w 276.0 695.1 300.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 280.0 710.5 Td (Confirmed Exploitation: 28.0 pts \(4 PoCs\) | Verified Control Gaps: 0.7) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 280.0 701.3 Td (pts \(1 CONTROL_GAP_CONFIRMED, 0 OBSERVATION_CONFIRMED\).) Tj ET
+0.97 0.98 0.99 rg 36 670.7 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 670.7 145.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 686.1 Td (Verified Technical Impact) Tj ET
+0.80 0.84 0.89 RG 0.4 w 181.0 670.7 95.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 185.0 686.1 Td (19.0 / 20.0 pts) Tj ET
+0.80 0.84 0.89 RG 0.4 w 276.0 670.7 300.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 280.0 686.1 Td (Verified Compromise Impact: 19.0 pts \(Admin Auth: Yes, SMB: No,) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 280.0 676.9 Td (PHPInfo: No\) | Control-Gap Severity Ceiling: 0.0 pts.) Tj ET
+1 1 1 rg 36 646.3000000000001 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 646.3000000000001 145.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 661.7 Td (Attack Surface Exposure) Tj ET
+0.80 0.84 0.89 RG 0.4 w 181.0 646.3000000000001 95.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 185.0 661.7 Td (13.3 / 15.0 pts) Tj ET
+0.80 0.84 0.89 RG 0.4 w 276.0 646.3000000000001 300.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 280.0 661.7 Td (1 open TCP ports and 22 HTTP endpoints exposed across 1 in-scope) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 280.0 652.5 Td (origin\(s\).) Tj ET
+0.97 0.98 0.99 rg 36 621.9000000000001 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 621.9000000000001 145.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 637.3000000000001 Td (Applicable Threat Intelligence) Tj ET
+0.80 0.84 0.89 RG 0.4 w 181.0 621.9000000000001 95.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 185.0 637.3000000000001 Td (0.0 / 15.0 pts) Tj ET
+0.80 0.84 0.89 RG 0.4 w 276.0 621.9000000000001 300.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 280.0 637.3000000000001 Td (0 confirmed applicable KEVs, 0 unverified banner KEV candidates) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 280.0 628.1 Td (\(discounted 75%\), confirmed EPSS=0.0 \(raw banner max EPSS=0.0\).) Tj ET
+1 1 1 rg 36 597.5000000000001 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 597.5000000000001 145.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 612.9000000000001 Td (Evidence-Backed Attack Paths) Tj ET
+0.80 0.84 0.89 RG 0.4 w 181.0 597.5000000000001 95.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 185.0 612.9000000000001 Td (6.0 / 10.0 pts) Tj ET
+0.80 0.84 0.89 RG 0.4 w 276.0 597.5000000000001 300.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 280.0 612.9000000000001 Td (1 evidence-validated attack paths \(0.0 pts when unverified\), 0) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 280.0 603.7 Td (correlated exposure clusters \(0.0 pts\).) Tj ET
+0.97 0.98 0.99 rg 36 582.3000000000001 540 15.2 re f
+0.80 0.84 0.89 RG 0.4 w 36 582.3000000000001 145.0 15.2 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 588.5000000000001 Td (Asset Criticality) Tj ET
+0.80 0.84 0.89 RG 0.4 w 181.0 582.3000000000001 95.0 15.2 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 185.0 588.5000000000001 Td (7.0 / 10.0 pts) Tj ET
+0.80 0.84 0.89 RG 0.4 w 276.0 582.3000000000001 300.0 15.2 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 280.0 588.5000000000001 Td (Authorized assessment scope \(1 in-scope asset\(s\), primary: 127.0.0.1\).) Tj ET
+1 1 1 rg 36 548.7 540 33.599999999999994 re f
+0.80 0.84 0.89 RG 0.4 w 36 548.7 145.0 33.599999999999994 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 573.3000000000001 Td (Evidence Confidence) Tj ET
+0.80 0.84 0.89 RG 0.4 w 181.0 548.7 95.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 185.0 573.3000000000001 Td (5.0 / 5.0 pts) Tj ET
+0.80 0.84 0.89 RG 0.4 w 276.0 548.7 300.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 280.0 573.3000000000001 Td (10 FIPS 180-4 SHA-256 sealed artifacts across 5 raw observations) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 280.0 564.1 Td (\(Sensor Coverage - Installed: 100.0%, Operational: 100.0%, Execution:) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 280.0 554.9 Td (100.0%, Applicable: 100.0%\).) Tj ET
+0.97 0.98 0.99 rg 36 524.3000000000001 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 524.3000000000001 145.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 539.7 Td (TOTAL CALIBRATED RISK INDEX) Tj ET
+0.80 0.84 0.89 RG 0.4 w 181.0 524.3000000000001 95.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 185.0 539.7 Td (75.3 / 100.0 pts) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 185.0 530.5 Td (\(7.5 / 10\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 276.0 524.3000000000001 300.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 280.0 539.7 Td (Overall Rating: HIGH | Applicable Max EPSS: 0.0 \(Raw Banner EPSS: 0.0\)) Tj ET
+BT /F2 12.0 Tf 0.04 0.37 0.27 rg 36 510.30000000000007 Td (2. Assessment Scope, 7-Stage Asset Reconciliation Funnel & RoE Policy Engine) Tj ET
+0.04 0.47 0.36 rg 36 505.30000000000007 540 1.0 re f
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 490.30000000000007 Td (2.0 Seven-Stage Scope & Asset Reconciliation Funnel \(TP24-02\)) Tj ET
+0.06 0.09 0.16 rg 36 458.80000000000007 540 16.5 re f
+BT /F2 7.3 Tf 1 1 1 rg 40 465.80000000000007 Td (Funnel Stage) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 195.0 465.80000000000007 Td (Count) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 260.0 465.80000000000007 Td (Scope Provenance & Reconciliation Rationale) Tj ET
+1 1 1 rg 36 443.6000000000001 540 15.2 re f
+0.80 0.84 0.89 RG 0.4 w 36 443.6000000000001 155.0 15.2 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 449.80000000000007 Td (1. Requested Targets) Tj ET
+0.80 0.84 0.89 RG 0.4 w 191.0 443.6000000000001 65.0 15.2 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 195.0 449.80000000000007 Td (5) Tj ET
+0.80 0.84 0.89 RG 0.4 w 256.0 443.6000000000001 320.0 15.2 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 260.0 449.80000000000007 Td (5 target URL\(s\)/IP\(s\) submitted to the TrePath assessment specification.) Tj ET
+0.97 0.98 0.99 rg 36 428.4000000000001 540 15.2 re f
+0.80 0.84 0.89 RG 0.4 w 36 428.4000000000001 155.0 15.2 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 434.6000000000001 Td (2. ROE Authorized Targets) Tj ET
+0.80 0.84 0.89 RG 0.4 w 191.0 428.4000000000001 65.0 15.2 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 195.0 434.6000000000001 Td (5) Tj ET
+0.80 0.84 0.89 RG 0.4 w 256.0 428.4000000000001 320.0 15.2 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 260.0 434.6000000000001 Td (5/5 submitted target\(s\) matched approved RulesOfEngagement allowlist rules.) Tj ET
+1 1 1 rg 36 404.0000000000001 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 404.0000000000001 155.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 419.4000000000001 Td (3. Resolved Unique Hostnames) Tj ET
+0.80 0.84 0.89 RG 0.4 w 191.0 404.0000000000001 65.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 195.0 419.4000000000001 Td (1) Tj ET
+0.80 0.84 0.89 RG 0.4 w 256.0 404.0000000000001 320.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 260.0 419.4000000000001 Td (1 unique lowercased hostname\(s\)/IP\(s\) after collapsing multi-path) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 260.0 410.2000000000001 Td (repository/app URLs sharing a host.) Tj ET
+0.97 0.98 0.99 rg 36 379.60000000000014 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 379.60000000000014 155.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 395.0000000000001 Td (4. In-Scope Origin Assets) Tj ET
+0.80 0.84 0.89 RG 0.4 w 191.0 379.60000000000014 65.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 195.0 395.0000000000001 Td (1) Tj ET
+0.80 0.84 0.89 RG 0.4 w 256.0 379.60000000000014 320.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 260.0 395.0000000000001 Td (1 persisted Asset record\(s\) \(one canonical Asset per unique) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 260.0 385.8000000000001 Td (scheme://host:port effective_origin\).) Tj ET
+1 1 1 rg 36 355.20000000000016 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 355.20000000000016 155.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 370.60000000000014 Td (5. Out-of-Scope External Refs) Tj ET
+0.80 0.84 0.89 RG 0.4 w 191.0 355.20000000000016 65.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 195.0 370.60000000000014 Td (0) Tj ET
+0.80 0.84 0.89 RG 0.4 w 256.0 355.20000000000016 320.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 260.0 370.60000000000014 Td (0 out-of-scope origins probed; external HTML/JS links isolated as) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 260.0 361.40000000000015 Td (EXTERNAL_REFERENCE_NOT_SCANNED.) Tj ET
+0.97 0.98 0.99 rg 36 330.8000000000002 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 330.8000000000002 155.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 346.20000000000016 Td (6. Redirected Destinations) Tj ET
+0.80 0.84 0.89 RG 0.4 w 191.0 330.8000000000002 65.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 195.0 346.20000000000016 Td (0) Tj ET
+0.80 0.84 0.89 RG 0.4 w 256.0 330.8000000000002 320.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 260.0 346.20000000000016 Td (All HTTP 301/302/307/308 hops recorded in provenance.redirect_chain;) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 260.0 337.00000000000017 Td (cross-origin redirects blocked.) Tj ET
+1 1 1 rg 36 306.4000000000002 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 306.4000000000002 155.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 321.8000000000002 Td (7. Discovered HTTP Endpoints) Tj ET
+0.80 0.84 0.89 RG 0.4 w 191.0 306.4000000000002 65.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 195.0 321.8000000000002 Td (22) Tj ET
+0.80 0.84 0.89 RG 0.4 w 256.0 306.4000000000002 320.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 260.0 321.8000000000002 Td (22 deduplicated canonical HTTP endpoints discovered across the 1 in-scope) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 260.0 312.6000000000002 Td (origin asset\(s\).) Tj ET
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 294.4000000000002 Td (2.0B Four-State Port & Application Transport Discovery Reconciliation) Tj ET
+0.06 0.09 0.16 rg 36 262.9000000000002 540 16.5 re f
+BT /F2 7.3 Tf 1 1 1 rg 40 269.9000000000002 Td (Discovery Layer) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 155.0 269.9000000000002 Td (Reconciled State) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 270.0 269.9000000000002 Td (Count / Scope) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 345.0 269.9000000000002 Td (Technical Explanation) Tj ET
+1 1 1 rg 36 238.5000000000002 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 238.5000000000002 115.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 253.9000000000002 Td (1. Raw TCP Port Scan) Tj ET
+0.80 0.84 0.89 RG 0.4 w 151.0 238.5000000000002 115.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 155.0 253.9000000000002 Td (EXECUTED_WITH_OPEN_PORTS) Tj ET
+0.80 0.84 0.89 RG 0.4 w 266.0 238.5000000000002 75.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 253.9000000000002 Td (1 Raw TCP Ports) Tj ET
+0.80 0.84 0.89 RG 0.4 w 341.0 238.5000000000002 235.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 345.0 253.9000000000002 Td (Full TCP port discovery and service enumeration) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 345.0 244.70000000000022 Td (verified 1 open TCP port\(s\) and 22 HTTP endpoint\(s\).) Tj ET
+0.97 0.98 0.99 rg 36 214.1000000000002 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 214.1000000000002 115.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 229.5000000000002 Td (2. Filtered TCP Ports) Tj ET
+0.80 0.84 0.89 RG 0.4 w 151.0 214.1000000000002 115.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 155.0 229.5000000000002 Td (PORT_FILTERED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 266.0 214.1000000000002 75.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 229.5000000000002 Td (0) Tj ET
+0.80 0.84 0.89 RG 0.4 w 341.0 214.1000000000002 235.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 345.0 229.5000000000002 Td (Ports where SYN probes received no SYN/ACK or ICMP) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 345.0 220.3000000000002 Td (unreachable due to CDN/edge firewall policy.) Tj ET
+1 1 1 rg 36 198.9000000000002 540 15.2 re f
+0.80 0.84 0.89 RG 0.4 w 36 198.9000000000002 115.0 15.2 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 205.1000000000002 Td (3. Closed TCP Ports) Tj ET
+0.80 0.84 0.89 RG 0.4 w 151.0 198.9000000000002 115.0 15.2 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 155.0 205.1000000000002 Td (PORT_CLOSED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 266.0 198.9000000000002 75.0 15.2 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 205.1000000000002 Td (0) Tj ET
+0.80 0.84 0.89 RG 0.4 w 341.0 198.9000000000002 235.0 15.2 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 345.0 205.1000000000002 Td (Ports responding with TCP RST.) Tj ET
+0.97 0.98 0.99 rg 36 174.5000000000002 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 174.5000000000002 115.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 189.9000000000002 Td (4. HTTP/TLS App Transport) Tj ET
+0.80 0.84 0.89 RG 0.4 w 151.0 174.5000000000002 115.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 155.0 189.9000000000002 Td (HTTP_HTTPS_TRANSPORT_REAC) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 155.0 180.70000000000022 Td (HABLE) Tj ET
+0.80 0.84 0.89 RG 0.4 w 266.0 174.5000000000002 75.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 189.9000000000002 Td (22 Endpoints \(1) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 180.70000000000022 Td (Origins\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 341.0 174.5000000000002 235.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 345.0 189.9000000000002 Td (Application-layer HTTP/1.1 & HTTP/2 over TCP 80, 443) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 345.0 180.70000000000022 Td (verified across 1 origin\(s\).) Tj ET
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 162.5000000000002 Td (2.1 Authorized In-Scope Asset Inventory & Per-Origin Reconciliation) Tj ET
+0.06 0.09 0.16 rg 36 121.5000000000002 540 26.0 re f
+BT /F2 7.3 Tf 1 1 1 rg 40 138.0000000000002 Td (Asset ID & Host) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 150.0 138.0000000000002 Td (Scope) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 150.0 128.5000000000002 Td (Decision) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 215.0 138.0000000000002 Td (Open TCP Ports) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 305.0 138.0000000000002 Td (Asset Role & Provenance) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 445.0 138.0000000000002 Td (Consolidated) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 445.0 128.5000000000002 Td (Findings) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 510.0 138.0000000000002 Td (Verified PoC /) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 510.0 128.5000000000002 Td (Admin Auth) Tj ET
+1 1 1 rg 36 87.9000000000002 540 33.599999999999994 re f
+0.80 0.84 0.89 RG 0.4 w 36 87.9000000000002 110.0 33.599999999999994 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 112.5000000000002 Td (ASSET-JS-3000) Tj ET
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 103.3000000000002 Td (\(127.0.0.1\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 146.0 87.9000000000002 65.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 150.0 112.5000000000002 Td (IN_SCOPE) Tj ET
+0.80 0.84 0.89 RG 0.4 w 211.0 87.9000000000002 90.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 215.0 112.5000000000002 Td (3000) Tj ET
+0.80 0.84 0.89 RG 0.4 w 301.0 87.9000000000002 140.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 305.0 112.5000000000002 Td (Authorized Web / API Origin) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 305.0 103.3000000000002 Td (\(web_application_and_rest_api |) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 305.0 94.1000000000002 Td (HTTP:3000\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 441.0 87.9000000000002 65.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 445.0 112.5000000000002 Td (5) Tj ET
+0.80 0.84 0.89 RG 0.4 w 506.0 87.9000000000002 70.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 510.0 112.5000000000002 Td (4 Verified) Tj ET
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 75.9000000000002 Td (2.2 Mandatory Authorization & Rules-of-Engagement \(RoE\) Safety Policy Engine) Tj ET
+endstream
+endobj
+14 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 15 0 R >>
+endobj
+15 0 obj
+<< /Length 19844 >>
+stream
+BT /F2 8.2 Tf 0.04 0.37 0.27 rg 36 762 Td (TREPATH 2.4 / EXPEDITE STRIKE / NOCTIS) Tj ET
+BT /F1 7.8 Tf 0.28 0.33 0.41 rg 218 762 Td (Unified SAST+DAST+EVE+RTEX & EvidenceCore Ed25519 Report) Tj ET
+BT /F2 8.5 Tf 0.72 0.11 0.11 rg 508 762 Td (CONFIDENTIAL) Tj ET
+0.04 0.47 0.36 rg 36 753 540 1.4 re f
+0.78 0.82 0.87 rg 36 42 540 0.6 re f
+BT /F1 6.8 Tf 0.35 0.41 0.49 rg 36 31 Td (Expedite Consults Ltd | TrePath 2.4 \(TP24-BUILD-20261102-UNIFIED\) | 2026-11-02 14:53 UTC | 26/26 Quality Gates & RFC 8032 Ed25519 Bundle Verified) Tj ET
+BT /F1 7.5 Tf 0.28 0.33 0.41 rg 540 31 Td (Page 5) Tj ET
+0.06 0.09 0.16 rg 36 719.5 540 16.5 re f
+BT /F2 7.3 Tf 1 1 1 rg 40 726.5 Td (Rule ID) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 105.0 726.5 Td (Policy Control) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 240.0 726.5 Td (Enforcement Mechanism) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 510.0 726.5 Td (Status) Tj ET
+1 1 1 rg 36 695.1 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 695.1 65.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 710.5 Td (ROE-01) Tj ET
+0.80 0.84 0.89 RG 0.4 w 101.0 695.1 135.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 105.0 710.5 Td (Authorized Scope Lock) Tj ET
+0.80 0.84 0.89 RG 0.4 w 236.0 695.1 270.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 240.0 710.5 Td (All active probes restricted to 1 authorized in-scope asset\(s\)) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 240.0 701.3 Td (\(127.0.0.1\); crawled external links marked OUT_OF_SCOPE.) Tj ET
+0.80 0.84 0.89 RG 0.4 w 506.0 695.1 70.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 510.0 710.5 Td (ENFORCED) Tj ET
+0.97 0.98 0.99 rg 36 670.7 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 670.7 65.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 686.1 Td (ROE-02) Tj ET
+0.80 0.84 0.89 RG 0.4 w 101.0 670.7 135.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 105.0 686.1 Td (Cross-Origin Redirect Guard) Tj ET
+0.80 0.84 0.89 RG 0.4 w 236.0 670.7 270.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 240.0 686.1 Td (HTTP 301/302/307/308 redirects crossing out of authorized) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 240.0 676.9 Td (origins are blocked prior to DAST/header evaluation.) Tj ET
+0.80 0.84 0.89 RG 0.4 w 506.0 670.7 70.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 510.0 686.1 Td (ENFORCED) Tj ET
+1 1 1 rg 36 646.3000000000001 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 646.3000000000001 65.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 661.7 Td (ROE-03) Tj ET
+0.80 0.84 0.89 RG 0.4 w 101.0 646.3000000000001 135.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 105.0 661.7 Td (Safe Admin & PoC Boundary) Tj ET
+0.80 0.84 0.89 RG 0.4 w 236.0 646.3000000000001 270.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 240.0 661.7 Td (Non-destructive PoC adapters \(SMB-LIST-001, PHPINFO-001,) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 240.0 652.5 Td (TOMCAT-MGR-001\) execute only when service preconditions match.) Tj ET
+0.80 0.84 0.89 RG 0.4 w 506.0 646.3000000000001 70.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 510.0 661.7 Td (ENFORCED) Tj ET
+0.97 0.98 0.99 rg 36 621.9000000000001 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 621.9000000000001 65.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 637.3000000000001 Td (ROE-04) Tj ET
+0.80 0.84 0.89 RG 0.4 w 101.0 621.9000000000001 135.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 105.0 637.3000000000001 Td (Evidence Overclaim Prevention) Tj ET
+0.80 0.84 0.89 RG 0.4 w 236.0 621.9000000000001 270.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 240.0 637.3000000000001 Td (Share listing cannot claim write access; zero verified PoCs) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 240.0 628.1 Td (when adapters are NOT_APPLICABLE.) Tj ET
+0.80 0.84 0.89 RG 0.4 w 506.0 621.9000000000001 70.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 510.0 637.3000000000001 Td (ENFORCED) Tj ET
+1 1 1 rg 36 597.5000000000001 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 597.5000000000001 65.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 612.9000000000001 Td (ROE-05) Tj ET
+0.80 0.84 0.89 RG 0.4 w 101.0 597.5000000000001 135.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 105.0 612.9000000000001 Td (FIPS 180-4 SHA-256 Sealing) Tj ET
+0.80 0.84 0.89 RG 0.4 w 236.0 597.5000000000001 270.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 240.0 612.9000000000001 Td (Every probe transcript and 9-field asset provenance record is) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 240.0 603.7 Td (hashed and persisted in EvidenceCore.) Tj ET
+0.80 0.84 0.89 RG 0.4 w 506.0 597.5000000000001 70.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 510.0 612.9000000000001 Td (ENFORCED) Tj ET
+BT /F2 12.0 Tf 0.04 0.37 0.27 rg 36 583.5000000000001 Td (3A. Consolidated Security Vulnerabilities & 4-Track Scoring \(F-01 through F-05\)) Tj ET
+0.04 0.47 0.36 rg 36 578.5000000000001 540 1.0 re f
+0.06 0.09 0.16 rg 36 532.0000000000001 540 35.5 re f
+BT /F2 7.3 Tf 1 1 1 rg 40 558.0000000000001 Td (ID) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 68.0 558.0000000000001 Td (Origin) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 68.0 548.5000000000001 Td (Host:Port) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 68.0 539.0000000000001 Td (\(Asset\)) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 144.0 558.0000000000001 Td (Severity &) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 144.0 548.5000000000001 Td (Vuln CVSS) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 212.0 558.0000000000001 Td (4-Track Scores) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 212.0 548.5000000000001 Td (\(Ctrl / Recon /) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 212.0 539.0000000000001 Td (Exp\)) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 290.0 558.0000000000001 Td (Proof Category &) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 290.0 548.5000000000001 Td (Substate) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 385.0 558.0000000000001 Td (Consolidated Title) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 523.0 558.0000000000001 Td (Merged Raw) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 523.0 548.5000000000001 Td (Obs) Tj ET
+1 1 1 rg 36 498.4000000000001 540 33.599999999999994 re f
+0.80 0.84 0.89 RG 0.4 w 36 498.4000000000001 28.0 33.599999999999994 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 523.0000000000001 Td (F-01) Tj ET
+0.80 0.84 0.89 RG 0.4 w 64.0 498.4000000000001 76.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 68.0 523.0000000000001 Td (127.0.0.1:80) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 68.0 513.8000000000001 Td (\(ASSET-JS-3000\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 140.0 498.4000000000001 68.0 33.599999999999994 re S
+BT /F2 7.1 Tf 0.72 0.11 0.11 rg 144.0 523.0000000000001 Td (CRITICAL |) Tj ET
+BT /F2 7.1 Tf 0.72 0.11 0.11 rg 144.0 513.8000000000001 Td (Vuln CVSS: 9.8) Tj ET
+0.80 0.84 0.89 RG 0.4 w 208.0 498.4000000000001 78.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 212.0 523.0000000000001 Td (Ctrl:95.0 |) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 212.0 513.8000000000001 Td (Recon:15.0 |) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 212.0 504.6000000000001 Td (Exp:92%) Tj ET
+0.80 0.84 0.89 RG 0.4 w 286.0 498.4000000000001 95.0 33.599999999999994 re S
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 290.0 523.0000000000001 Td (IMPACT_VERIFIED ::) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 290.0 513.8000000000001 Td (OBSERVATION_CAPTURED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 381.0 498.4000000000001 138.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 385.0 523.0000000000001 Td (SQL Injection in Product Search) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 385.0 513.8000000000001 Td (API \(/rest/products/search?q=\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 519.0 498.4000000000001 57.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 523.0 523.0000000000001 Td (1 raw / 1) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 523.0 513.8000000000001 Td (ep) Tj ET
+0.97 0.98 0.99 rg 36 464.80000000000007 540 33.599999999999994 re f
+0.80 0.84 0.89 RG 0.4 w 36 464.80000000000007 28.0 33.599999999999994 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 489.4000000000001 Td (F-02) Tj ET
+0.80 0.84 0.89 RG 0.4 w 64.0 464.80000000000007 76.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 68.0 489.4000000000001 Td (127.0.0.1:80) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 68.0 480.2000000000001 Td (\(ASSET-JS-3000\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 140.0 464.80000000000007 68.0 33.599999999999994 re S
+BT /F2 7.1 Tf 0.72 0.11 0.11 rg 144.0 489.4000000000001 Td (CRITICAL |) Tj ET
+BT /F2 7.1 Tf 0.72 0.11 0.11 rg 144.0 480.2000000000001 Td (Vuln CVSS: 9.8) Tj ET
+0.80 0.84 0.89 RG 0.4 w 208.0 464.80000000000007 78.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 212.0 489.4000000000001 Td (Ctrl:95.0 |) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 212.0 480.2000000000001 Td (Recon:15.0 |) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 212.0 471.0000000000001 Td (Exp:96%) Tj ET
+0.80 0.84 0.89 RG 0.4 w 286.0 464.80000000000007 95.0 33.599999999999994 re S
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 290.0 489.4000000000001 Td (CONFIRMED_ADMIN_AUTH) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 290.0 480.2000000000001 Td (::) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 290.0 471.0000000000001 Td (OBSERVATION_CAPTURED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 381.0 464.80000000000007 138.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 385.0 489.4000000000001 Td (Authentication Bypass via SQL) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 385.0 480.2000000000001 Td (Injection on Administrator) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 385.0 471.0000000000001 Td (Login \(/rest/user/login\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 519.0 464.80000000000007 57.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 523.0 489.4000000000001 Td (1 raw / 1) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 523.0 480.2000000000001 Td (ep) Tj ET
+1 1 1 rg 36 431.20000000000005 540 33.599999999999994 re f
+0.80 0.84 0.89 RG 0.4 w 36 431.20000000000005 28.0 33.599999999999994 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 455.80000000000007 Td (F-03) Tj ET
+0.80 0.84 0.89 RG 0.4 w 64.0 431.20000000000005 76.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 68.0 455.80000000000007 Td (127.0.0.1:80) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 68.0 446.6000000000001 Td (\(ASSET-JS-3000\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 140.0 431.20000000000005 68.0 33.599999999999994 re S
+BT /F2 7.1 Tf 0.76 0.25 0.05 rg 144.0 455.80000000000007 Td (HIGH | Vuln) Tj ET
+BT /F2 7.1 Tf 0.76 0.25 0.05 rg 144.0 446.6000000000001 Td (CVSS: 8.6) Tj ET
+0.80 0.84 0.89 RG 0.4 w 208.0 431.20000000000005 78.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 212.0 455.80000000000007 Td (Ctrl:95.0 |) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 212.0 446.6000000000001 Td (Recon:15.0 |) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 212.0 437.4000000000001 Td (Exp:92%) Tj ET
+0.80 0.84 0.89 RG 0.4 w 286.0 431.20000000000005 95.0 33.599999999999994 re S
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 290.0 455.80000000000007 Td (IMPACT_VERIFIED ::) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 290.0 446.6000000000001 Td (OBSERVATION_CAPTURED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 381.0 431.20000000000005 138.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 385.0 455.80000000000007 Td (Privileged Administrative User) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 385.0 446.6000000000001 Td (Directory Exposure \(/api/Users\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 519.0 431.20000000000005 57.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 523.0 455.80000000000007 Td (1 raw / 1) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 523.0 446.6000000000001 Td (ep) Tj ET
+0.97 0.98 0.99 rg 36 388.40000000000003 540 42.8 re f
+0.80 0.84 0.89 RG 0.4 w 36 388.40000000000003 28.0 42.8 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 422.20000000000005 Td (F-04) Tj ET
+0.80 0.84 0.89 RG 0.4 w 64.0 388.40000000000003 76.0 42.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 68.0 422.20000000000005 Td (127.0.0.1:80) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 68.0 413.00000000000006 Td (\(ASSET-JS-3000\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 140.0 388.40000000000003 68.0 42.8 re S
+BT /F2 7.1 Tf 0.76 0.25 0.05 rg 144.0 422.20000000000005 Td (HIGH | Vuln) Tj ET
+BT /F2 7.1 Tf 0.76 0.25 0.05 rg 144.0 413.00000000000006 Td (CVSS: 7.5) Tj ET
+0.80 0.84 0.89 RG 0.4 w 208.0 388.40000000000003 78.0 42.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 212.0 422.20000000000005 Td (Ctrl:0.0 |) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 212.0 413.00000000000006 Td (Recon:15.0 |) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 212.0 403.80000000000007 Td (Exp:78%) Tj ET
+0.80 0.84 0.89 RG 0.4 w 286.0 388.40000000000003 95.0 42.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 290.0 422.20000000000005 Td (RUNTIME_REPRODUCED) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 290.0 413.00000000000006 Td (::) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 290.0 403.80000000000007 Td (OBSERVATION_CAPTURED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 381.0 388.40000000000003 138.0 42.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 385.0 422.20000000000005 Td (Unauthenticated Sensitive File) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 385.0 413.00000000000006 Td (& Backup Exposure) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 385.0 403.80000000000007 Td (\(/ftp/acquisitions.md &) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 385.0 394.6000000000001 Td (/ftp/package.json.bak\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 519.0 388.40000000000003 57.0 42.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 523.0 422.20000000000005 Td (1 raw / 1) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 523.0 413.00000000000006 Td (ep) Tj ET
+1 1 1 rg 36 336.40000000000003 540 52.0 re f
+0.80 0.84 0.89 RG 0.4 w 36 336.40000000000003 28.0 52.0 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 379.40000000000003 Td (F-05) Tj ET
+0.80 0.84 0.89 RG 0.4 w 64.0 336.40000000000003 76.0 52.0 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 68.0 379.40000000000003 Td (127.0.0.1:80) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 68.0 370.20000000000005 Td (\(ASSET-JS-3000\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 140.0 336.40000000000003 68.0 52.0 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 144.0 379.40000000000003 Td (MEDIUM | Vuln) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 144.0 370.20000000000005 Td (CVSS: 5.4) Tj ET
+0.80 0.84 0.89 RG 0.4 w 208.0 336.40000000000003 78.0 52.0 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 212.0 379.40000000000003 Td (Ctrl:54.0 |) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 212.0 370.20000000000005 Td (Recon:15.0 |) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 212.0 361.00000000000006 Td (Exp:20%) Tj ET
+0.80 0.84 0.89 RG 0.4 w 286.0 336.40000000000003 95.0 52.0 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 290.0 379.40000000000003 Td (CONTROL_GAP_CONFIRME) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 290.0 370.20000000000005 Td (D :: CONTROL_MISCONF) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 290.0 361.00000000000006 Td (IGURATION_CONFIRMED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 381.0 336.40000000000003 138.0 52.0 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 385.0 379.40000000000003 Td (Missing HTTP Hardening Headers) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 385.0 370.20000000000005 Td (\(Content-Security-Policy,) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 385.0 361.00000000000006 Td (Strict-Transport-Security,) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 385.0 351.80000000000007 Td (Referrer-Policy\) on) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 385.0 342.6000000000001 Td (http://127.0.0.1:3000) Tj ET
+0.80 0.84 0.89 RG 0.4 w 519.0 336.40000000000003 57.0 52.0 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 523.0 379.40000000000003 Td (1 raw / 1) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 523.0 370.20000000000005 Td (ep) Tj ET
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 324.40000000000003 Td (3A.1 Detailed Technical Findings & Cryptographic Evidence Cards) Tj ET
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 305.40000000000003 Td (F-01: SQL Injection in Product Search API \(/rest/products/search?q=\) [127.0.0.1:80 | CRITICAL) Tj ET
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 292.40000000000003 Td (| Vuln CVSS: 9.8 | IMPACT_VERIFIED]) Tj ET
+0.96 0.97 0.99 rg 36 263.1 132.0 14.3 re f
+1 1 1 rg 168.0 263.1 408.0 14.3 re f
+0.82 0.86 0.90 RG 0.4 w 36 263.1 132.0 14.3 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 263.1 408.0 14.3 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 268.6 Td (Target Asset & Origin) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 268.6 Td (ASSET-JS-3000 | 127.0.0.1:80 | Effective Origin: http://127.0.0.1:3000 \(1 Affected Endpoint\(s\)\)) Tj ET
+0.96 0.97 0.99 rg 36 230.20000000000002 132.0 32.900000000000006 re f
+1 1 1 rg 168.0 230.20000000000002 408.0 32.900000000000006 re f
+0.82 0.86 0.90 RG 0.4 w 36 230.20000000000002 132.0 32.900000000000006 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 230.20000000000002 408.0 32.900000000000006 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 254.3 Td (Scope & Written Authorization) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 254.3 Td (IN_SCOPE | Governance Tier: LAB_OWNER_AUTHORIZED_ACTIVE_VALIDATION \(Controlled internal lab) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 245.0 Td (asset; active PoC validation, Expedite Strike runtime probes, and RTEX retesting explicitly) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 235.7 Td (authorized.\)) Tj ET
+0.96 0.97 0.99 rg 36 206.60000000000002 132.0 23.6 re f
+1 1 1 rg 168.0 206.60000000000002 408.0 23.6 re f
+0.82 0.86 0.90 RG 0.4 w 36 206.60000000000002 132.0 23.6 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 206.60000000000002 408.0 23.6 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 221.4 Td (4-Track Score Separation) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 221.4 Td (Vuln CVSS: 9.8 | Control Priority: 95.0/10 | Recon Priority: 15.0/10 | Exploitability) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 212.1 Td (Confidence: 92%) Tj ET
+0.96 0.97 0.99 rg 36 192.3 132.0 14.3 re f
+1 1 1 rg 168.0 192.3 408.0 14.3 re f
+0.82 0.86 0.90 RG 0.4 w 36 192.3 132.0 14.3 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 192.3 408.0 14.3 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 197.8 Td (Proof Category & Admin Level) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 197.8 Td (IMPACT_VERIFIED :: OBSERVATION_CAPTURED | Admin Boundary Taxonomy: NOT_ADMIN_ROUTE) Tj ET
+0.96 0.97 0.99 rg 36 168.70000000000002 132.0 23.6 re f
+1 1 1 rg 168.0 168.70000000000002 408.0 23.6 re f
+0.82 0.86 0.90 RG 0.4 w 36 168.70000000000002 132.0 23.6 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 168.70000000000002 408.0 23.6 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 183.5 Td (Explicitly Not Proven) Tj ET
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 174.2 Td (\(Boundary\)) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 183.5 Td (Further manual or active exploitation was not executed outside approved ROE boundaries.) Tj ET
+0.96 0.97 0.99 rg 36 145.10000000000002 132.0 23.6 re f
+1 1 1 rg 168.0 145.10000000000002 408.0 23.6 re f
+0.82 0.86 0.90 RG 0.4 w 36 145.10000000000002 132.0 23.6 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 145.10000000000002 408.0 23.6 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 159.9 Td (CVE / CWE & Applicability) Tj ET
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 150.6 Td (Gate) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 159.9 Td (CVE: N/A | CWE: CWE-89 | State: VERSION_DETECTED \(No CVE identifier associated; scored by CWE) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 150.6 Td (control category.\)) Tj ET
+0.96 0.97 0.99 rg 36 130.8 132.0 14.3 re f
+1 1 1 rg 168.0 130.8 408.0 14.3 re f
+0.82 0.86 0.90 RG 0.4 w 36 130.8 132.0 14.3 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 130.8 408.0 14.3 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 136.3 Td (Deduplicated Observations) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 136.3 Td (1 raw scanner observations merged \(JS-SQLI-SEARCH-001\)) Tj ET
+0.96 0.97 0.99 rg 36 88.60000000000001 132.0 42.2 re f
+1 1 1 rg 168.0 88.60000000000001 408.0 42.2 re f
+0.82 0.86 0.90 RG 0.4 w 36 88.60000000000001 132.0 42.2 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 88.60000000000001 408.0 42.2 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 122.00000000000001 Td (Technical Description) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 122.00000000000001 Td (Target Endpoint: http://127.0.0.1:3000/rest/products/search | [IMPACT_VERIRMED] Controlled) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 112.70000000000002 Td (non-destructive UNION SELECT extraction on `/rest/products/search?q=` confirmed relational) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 103.40000000000002 Td (schema and user credential hash exposure from `Users` table \(`admin@juice-sh.op`\). Correlated) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 94.10000000000002 Td (by XTRIKE SAST to `routes/search.ts:23` raw Sequelize string interpolation.) Tj ET
+endstream
+endobj
+16 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 17 0 R >>
+endobj
+17 0 obj
+<< /Length 13023 >>
+stream
+BT /F2 8.2 Tf 0.04 0.37 0.27 rg 36 762 Td (TREPATH 2.4 / EXPEDITE STRIKE / NOCTIS) Tj ET
+BT /F1 7.8 Tf 0.28 0.33 0.41 rg 218 762 Td (Unified SAST+DAST+EVE+RTEX & EvidenceCore Ed25519 Report) Tj ET
+BT /F2 8.5 Tf 0.72 0.11 0.11 rg 508 762 Td (CONFIDENTIAL) Tj ET
+0.04 0.47 0.36 rg 36 753 540 1.4 re f
+0.78 0.82 0.87 rg 36 42 540 0.6 re f
+BT /F1 6.8 Tf 0.35 0.41 0.49 rg 36 31 Td (Expedite Consults Ltd | TrePath 2.4 \(TP24-BUILD-20261102-UNIFIED\) | 2026-11-02 14:53 UTC | 26/26 Quality Gates & RFC 8032 Ed25519 Bundle Verified) Tj ET
+BT /F1 7.5 Tf 0.28 0.33 0.41 rg 540 31 Td (Page 6) Tj ET
+0.96 0.97 0.99 rg 36 693.8 132.0 42.2 re f
+1 1 1 rg 168.0 693.8 408.0 42.2 re f
+0.82 0.86 0.90 RG 0.4 w 36 693.8 132.0 42.2 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 693.8 408.0 42.2 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 727.2 Td (Targeted Specific Remediation) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 727.2 Td (Replace raw template literal interpolation in `routes/search.ts:23` with parameterized) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 717.9000000000001 Td (Sequelize replacements: `models.sequelize.query\('SELECT * FROM Products WHERE \(\(name LIKE) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 708.6000000000001 Td (:criteria OR description LIKE :criteria\) AND deletedAt IS NULL\)', { replacements: { criteria:) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 699.3000000000002 Td (`%${criteria}%` } }\)`.) Tj ET
+0.96 0.97 0.99 rg 36 670.1999999999999 132.0 23.6 re f
+1 1 1 rg 168.0 670.1999999999999 408.0 23.6 re f
+0.82 0.86 0.90 RG 0.4 w 36 670.1999999999999 132.0 23.6 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 670.1999999999999 408.0 23.6 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 685.0 Td (Verification & Closure Rule) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 685.0 Td (Execute deterministic retest via POST /api/v1/findings/1752/retest/execute on 127.0.0.1:80) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 675.7 Td (\(ASSET-JS-3000\) and confirm REMEDIATION_VERIFIED state in RTEX ledger.) Tj ET
+0.94 0.96 0.98 rg 36 564.1999999999999 540 102.0 re f
+0.58 0.64 0.72 RG 0.6 w 36 564.1999999999999 540 102.0 re S
+BT /F2 7.5 Tf 0.06 0.12 0.22 rg 42 656.1999999999999 Td (Captured Technical Evidence \(F-01 / JS-SQLI-SEARCH-001\):) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 646.1999999999999 Td (Finding Key: JS-SQLI-SEARCH-001  |  Consolidated Root-Cause Group: 80:web-app:js-sqli-search-001) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 637.1999999999999 Td (Immutable Provenance: Asset=ASSET-JS-3000 | Effective Origin=http://127.0.0.1:3000 | Scope=IN_SCOPE |) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 628.1999999999999 Td (Governance=LAB_OWNER_AUTHORIZED_ACTIVE_VALIDATION) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 619.1999999999999 Td (4-Track Scores: Vuln CVSS=9.8 | Control Priority=95.0 | Recon Priority=15.0 | Exploitability) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 610.1999999999999 Td (Confidence=0.92) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 601.1999999999999 Td (Admin Boundary Level: NOT_ADMIN_ROUTE  |  Merged Raw Observations \(1 across 1 endpoint\(s\)\):) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 592.1999999999999 Td (JS-SQLI-SEARCH-001) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 583.1999999999999 Td (EvidenceCore SHA-256 Digest: d370308a6561fd2d9c2b79ed4d422fb8482735354685e34a68225036ebfc4d12 \(Artifact) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 574.1999999999999 Td (#1834 | Unique Forensic Transcript\)) Tj ET
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 555.1999999999999 Td (F-02: Authentication Bypass via SQL Injection on Administrator Login \(/rest/user/login\)) Tj ET
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 542.1999999999999 Td ([127.0.0.1:80 | CRITICAL | Vuln CVSS: 9.8 | CONFIRMED_ADMIN_AUTH]) Tj ET
+0.96 0.97 0.99 rg 36 512.9 132.0 14.3 re f
+1 1 1 rg 168.0 512.9 408.0 14.3 re f
+0.82 0.86 0.90 RG 0.4 w 36 512.9 132.0 14.3 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 512.9 408.0 14.3 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 518.4 Td (Target Asset & Origin) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 518.4 Td (ASSET-JS-3000 | 127.0.0.1:80 | Effective Origin: http://127.0.0.1:3000 \(1 Affected Endpoint\(s\)\)) Tj ET
+0.96 0.97 0.99 rg 36 480.0 132.0 32.900000000000006 re f
+1 1 1 rg 168.0 480.0 408.0 32.900000000000006 re f
+0.82 0.86 0.90 RG 0.4 w 36 480.0 132.0 32.900000000000006 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 480.0 408.0 32.900000000000006 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 504.09999999999997 Td (Scope & Written Authorization) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 504.09999999999997 Td (IN_SCOPE | Governance Tier: LAB_OWNER_AUTHORIZED_ACTIVE_VALIDATION \(Controlled internal lab) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 494.79999999999995 Td (asset; active PoC validation, Expedite Strike runtime probes, and RTEX retesting explicitly) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 485.49999999999994 Td (authorized.\)) Tj ET
+0.96 0.97 0.99 rg 36 456.4 132.0 23.6 re f
+1 1 1 rg 168.0 456.4 408.0 23.6 re f
+0.82 0.86 0.90 RG 0.4 w 36 456.4 132.0 23.6 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 456.4 408.0 23.6 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 471.2 Td (4-Track Score Separation) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 471.2 Td (Vuln CVSS: 9.8 | Control Priority: 95.0/10 | Recon Priority: 15.0/10 | Exploitability) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 461.9 Td (Confidence: 96%) Tj ET
+0.96 0.97 0.99 rg 36 432.79999999999995 132.0 23.6 re f
+1 1 1 rg 168.0 432.79999999999995 408.0 23.6 re f
+0.82 0.86 0.90 RG 0.4 w 36 432.79999999999995 132.0 23.6 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 432.79999999999995 408.0 23.6 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 447.59999999999997 Td (Proof Category & Admin Level) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 447.59999999999997 Td (CONFIRMED_ADMIN_AUTH :: OBSERVATION_CAPTURED | Admin Boundary Taxonomy:) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 438.29999999999995 Td (LEVEL_4_VERIFIED_PRIVILEGED_ACTION) Tj ET
+0.96 0.97 0.99 rg 36 409.19999999999993 132.0 23.6 re f
+1 1 1 rg 168.0 409.19999999999993 408.0 23.6 re f
+0.82 0.86 0.90 RG 0.4 w 36 409.19999999999993 132.0 23.6 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 409.19999999999993 408.0 23.6 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 423.99999999999994 Td (Explicitly Not Proven) Tj ET
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 414.69999999999993 Td (\(Boundary\)) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 423.99999999999994 Td (Further manual or active exploitation was not executed outside approved ROE boundaries.) Tj ET
+0.96 0.97 0.99 rg 36 385.5999999999999 132.0 23.6 re f
+1 1 1 rg 168.0 385.5999999999999 408.0 23.6 re f
+0.82 0.86 0.90 RG 0.4 w 36 385.5999999999999 132.0 23.6 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 385.5999999999999 408.0 23.6 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 400.3999999999999 Td (CVE / CWE & Applicability) Tj ET
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 391.0999999999999 Td (Gate) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 400.3999999999999 Td (CVE: N/A | CWE: CWE-287 | State: VERSION_DETECTED \(No CVE identifier associated; scored by CWE) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 391.0999999999999 Td (control category.\)) Tj ET
+0.96 0.97 0.99 rg 36 371.2999999999999 132.0 14.3 re f
+1 1 1 rg 168.0 371.2999999999999 408.0 14.3 re f
+0.82 0.86 0.90 RG 0.4 w 36 371.2999999999999 132.0 14.3 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 371.2999999999999 408.0 14.3 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 376.7999999999999 Td (Deduplicated Observations) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 376.7999999999999 Td (1 raw scanner observations merged \(JS-AUTH-BYPASS-001\)) Tj ET
+0.96 0.97 0.99 rg 36 319.7999999999999 132.0 51.5 re f
+1 1 1 rg 168.0 319.7999999999999 408.0 51.5 re f
+0.82 0.86 0.90 RG 0.4 w 36 319.7999999999999 132.0 51.5 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 319.7999999999999 408.0 51.5 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 362.4999999999999 Td (Technical Description) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 362.4999999999999 Td (Target Endpoint: http://127.0.0.1:3000/rest/user/login | [CONFIRMED_ADMIN_AUTH] Controlled) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 353.1999999999999 Td (login payload `{"email":"' OR 1=1--","password":"x"}` bypassed authentication at) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 343.89999999999986 Td (`routes/login.ts:34`, returning a signed RS256 administrator JWT \(`role: admin`, `email:) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 334.59999999999985 Td (admin@juice-sh.op`, `bid: 1`\). Demonstrates progression from Level 2 Authentication Boundary to) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 325.29999999999984 Td (Level 3 Authenticated Admin Session.) Tj ET
+0.96 0.97 0.99 rg 36 286.89999999999986 132.0 32.900000000000006 re f
+1 1 1 rg 168.0 286.89999999999986 408.0 32.900000000000006 re f
+0.82 0.86 0.90 RG 0.4 w 36 286.89999999999986 132.0 32.900000000000006 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 286.89999999999986 408.0 32.900000000000006 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 310.9999999999999 Td (Targeted Specific Remediation) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 310.9999999999999 Td (Refactor `routes/login.ts:34` to use parameterized ORM lookup `UsersModel.findOne\({ where: {) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 301.6999999999999 Td (email: String\(req.body.email\), password: security.hash\(String\(req.body.password\)\) } }\)` and) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 292.39999999999986 Td (enforce strict schema validation rejecting SQL metacharacters.) Tj ET
+0.96 0.97 0.99 rg 36 263.29999999999984 132.0 23.6 re f
+1 1 1 rg 168.0 263.29999999999984 408.0 23.6 re f
+0.82 0.86 0.90 RG 0.4 w 36 263.29999999999984 132.0 23.6 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 263.29999999999984 408.0 23.6 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 278.09999999999985 Td (Verification & Closure Rule) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 278.09999999999985 Td (Execute deterministic retest via POST /api/v1/findings/1753/retest/execute on 127.0.0.1:80) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 268.79999999999984 Td (\(ASSET-JS-3000\) and confirm REMEDIATION_VERIFIED state in RTEX ledger.) Tj ET
+0.94 0.96 0.98 rg 36 157.29999999999984 540 102.0 re f
+0.58 0.64 0.72 RG 0.6 w 36 157.29999999999984 540 102.0 re S
+BT /F2 7.5 Tf 0.06 0.12 0.22 rg 42 249.29999999999984 Td (Captured Technical Evidence \(F-02 / JS-AUTH-BYPASS-001\):) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 239.29999999999984 Td (Finding Key: JS-AUTH-BYPASS-001  |  Consolidated Root-Cause Group: 80:web-app:js-auth-bypass-001) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 230.29999999999984 Td (Immutable Provenance: Asset=ASSET-JS-3000 | Effective Origin=http://127.0.0.1:3000 | Scope=IN_SCOPE |) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 221.29999999999984 Td (Governance=LAB_OWNER_AUTHORIZED_ACTIVE_VALIDATION) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 212.29999999999984 Td (4-Track Scores: Vuln CVSS=9.8 | Control Priority=95.0 | Recon Priority=15.0 | Exploitability) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 203.29999999999984 Td (Confidence=0.96) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 194.29999999999984 Td (Admin Boundary Level: LEVEL_4_VERIFIED_PRIVILEGED_ACTION  |  Merged Raw Observations \(1 across 1) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 185.29999999999984 Td (endpoint\(s\)\): JS-AUTH-BYPASS-001) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 176.29999999999984 Td (EvidenceCore SHA-256 Digest: ec6aa6aa9293cddbf49796bcdb02eeb88ed23992e4419fac25211545d82f6ad5 \(Artifact) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 167.29999999999984 Td (#1836 | Unique Forensic Transcript\)) Tj ET
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 148.29999999999984 Td (F-03: Privileged Administrative User Directory Exposure \(/api/Users\) [127.0.0.1:80 | HIGH |) Tj ET
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 135.29999999999984 Td (Vuln CVSS: 8.6 | IMPACT_VERIFIED]) Tj ET
+0.96 0.97 0.99 rg 36 105.99999999999984 132.0 14.3 re f
+1 1 1 rg 168.0 105.99999999999984 408.0 14.3 re f
+0.82 0.86 0.90 RG 0.4 w 36 105.99999999999984 132.0 14.3 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 105.99999999999984 408.0 14.3 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 111.49999999999984 Td (Target Asset & Origin) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 111.49999999999984 Td (ASSET-JS-3000 | 127.0.0.1:80 | Effective Origin: http://127.0.0.1:3000 \(1 Affected Endpoint\(s\)\)) Tj ET
+0.96 0.97 0.99 rg 36 73.09999999999984 132.0 32.900000000000006 re f
+1 1 1 rg 168.0 73.09999999999984 408.0 32.900000000000006 re f
+0.82 0.86 0.90 RG 0.4 w 36 73.09999999999984 132.0 32.900000000000006 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 73.09999999999984 408.0 32.900000000000006 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 97.19999999999985 Td (Scope & Written Authorization) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 97.19999999999985 Td (IN_SCOPE | Governance Tier: LAB_OWNER_AUTHORIZED_ACTIVE_VALIDATION \(Controlled internal lab) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 87.89999999999985 Td (asset; active PoC validation, Expedite Strike runtime probes, and RTEX retesting explicitly) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 78.59999999999985 Td (authorized.\)) Tj ET
+endstream
+endobj
+18 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 19 0 R >>
+endobj
+19 0 obj
+<< /Length 12932 >>
+stream
+BT /F2 8.2 Tf 0.04 0.37 0.27 rg 36 762 Td (TREPATH 2.4 / EXPEDITE STRIKE / NOCTIS) Tj ET
+BT /F1 7.8 Tf 0.28 0.33 0.41 rg 218 762 Td (Unified SAST+DAST+EVE+RTEX & EvidenceCore Ed25519 Report) Tj ET
+BT /F2 8.5 Tf 0.72 0.11 0.11 rg 508 762 Td (CONFIDENTIAL) Tj ET
+0.04 0.47 0.36 rg 36 753 540 1.4 re f
+0.78 0.82 0.87 rg 36 42 540 0.6 re f
+BT /F1 6.8 Tf 0.35 0.41 0.49 rg 36 31 Td (Expedite Consults Ltd | TrePath 2.4 \(TP24-BUILD-20261102-UNIFIED\) | 2026-11-02 14:53 UTC | 26/26 Quality Gates & RFC 8032 Ed25519 Bundle Verified) Tj ET
+BT /F1 7.5 Tf 0.28 0.33 0.41 rg 540 31 Td (Page 7) Tj ET
+0.96 0.97 0.99 rg 36 712.4 132.0 23.6 re f
+1 1 1 rg 168.0 712.4 408.0 23.6 re f
+0.82 0.86 0.90 RG 0.4 w 36 712.4 132.0 23.6 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 712.4 408.0 23.6 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 727.2 Td (4-Track Score Separation) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 727.2 Td (Vuln CVSS: 8.6 | Control Priority: 95.0/10 | Recon Priority: 15.0/10 | Exploitability) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 717.9000000000001 Td (Confidence: 92%) Tj ET
+0.96 0.97 0.99 rg 36 698.1 132.0 14.3 re f
+1 1 1 rg 168.0 698.1 408.0 14.3 re f
+0.82 0.86 0.90 RG 0.4 w 36 698.1 132.0 14.3 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 698.1 408.0 14.3 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 703.6 Td (Proof Category & Admin Level) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 703.6 Td (IMPACT_VERIFIED :: OBSERVATION_CAPTURED | Admin Boundary Taxonomy: NOT_ADMIN_ROUTE) Tj ET
+0.96 0.97 0.99 rg 36 674.5 132.0 23.6 re f
+1 1 1 rg 168.0 674.5 408.0 23.6 re f
+0.82 0.86 0.90 RG 0.4 w 36 674.5 132.0 23.6 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 674.5 408.0 23.6 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 689.3000000000001 Td (Explicitly Not Proven) Tj ET
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 680.0000000000001 Td (\(Boundary\)) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 689.3000000000001 Td (Further manual or active exploitation was not executed outside approved ROE boundaries.) Tj ET
+0.96 0.97 0.99 rg 36 650.9 132.0 23.6 re f
+1 1 1 rg 168.0 650.9 408.0 23.6 re f
+0.82 0.86 0.90 RG 0.4 w 36 650.9 132.0 23.6 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 650.9 408.0 23.6 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 665.7 Td (CVE / CWE & Applicability) Tj ET
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 656.4000000000001 Td (Gate) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 665.7 Td (CVE: N/A | CWE: CWE-284 | State: VERSION_DETECTED \(No CVE identifier associated; scored by CWE) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 656.4000000000001 Td (control category.\)) Tj ET
+0.96 0.97 0.99 rg 36 636.6 132.0 14.3 re f
+1 1 1 rg 168.0 636.6 408.0 14.3 re f
+0.82 0.86 0.90 RG 0.4 w 36 636.6 132.0 14.3 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 636.6 408.0 14.3 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 642.1 Td (Deduplicated Observations) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 642.1 Td (1 raw scanner observations merged \(JS-BAC-ADMIN-USERS-001\)) Tj ET
+0.96 0.97 0.99 rg 36 594.4 132.0 42.2 re f
+1 1 1 rg 168.0 594.4 408.0 42.2 re f
+0.82 0.86 0.90 RG 0.4 w 36 594.4 132.0 42.2 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 594.4 408.0 42.2 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 627.8000000000001 Td (Technical Description) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 627.8000000000001 Td (Target Endpoint: http://127.0.0.1:3000/api/Users | [IMPACT_VERIFIED] Using the Level 3) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 618.5000000000001 Td (administrator JWT obtained from `JS-AUTH-BYPASS-001`, GET `/api/Users` returned 24 registered) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 609.2000000000002 Td (user records including administrator, Bender, Jim, and customer accounts) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 599.9000000000002 Td (\(`LEVEL_4_VERIFIED_PRIVILEGED_ACTION`\). Correlated by XTRIKE SAST to `server.ts:412`.) Tj ET
+0.96 0.97 0.99 rg 36 561.5 132.0 32.900000000000006 re f
+1 1 1 rg 168.0 561.5 408.0 32.900000000000006 re f
+0.82 0.86 0.90 RG 0.4 w 36 561.5 132.0 32.900000000000006 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 561.5 408.0 32.900000000000006 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 585.6 Td (Targeted Specific Remediation) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 585.6 Td (Enforce dedicated RBAC role guard `security.requireRole\('admin'\)` and step-up session) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 576.3000000000001 Td (verification on `/api/Users` and `/administration` in `server.ts:412`, and redact sensitive) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 567.0000000000001 Td (fields \(`password`, `totpSecret`, `deluxeToken`\) at the serializer layer.) Tj ET
+0.96 0.97 0.99 rg 36 537.9 132.0 23.6 re f
+1 1 1 rg 168.0 537.9 408.0 23.6 re f
+0.82 0.86 0.90 RG 0.4 w 36 537.9 132.0 23.6 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 537.9 408.0 23.6 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 552.7 Td (Verification & Closure Rule) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 552.7 Td (Execute deterministic retest via POST /api/v1/findings/1754/retest/execute on 127.0.0.1:80) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 543.4000000000001 Td (\(ASSET-JS-3000\) and confirm REMEDIATION_VERIFIED state in RTEX ledger.) Tj ET
+0.94 0.96 0.98 rg 36 431.9 540 102.0 re f
+0.58 0.64 0.72 RG 0.6 w 36 431.9 540 102.0 re S
+BT /F2 7.5 Tf 0.06 0.12 0.22 rg 42 523.9 Td (Captured Technical Evidence \(F-03 / JS-BAC-ADMIN-USERS-001\):) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 513.9 Td (Finding Key: JS-BAC-ADMIN-USERS-001  |  Consolidated Root-Cause Group: 80:web-app:js-bac-admin-users-001) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 504.9 Td (Immutable Provenance: Asset=ASSET-JS-3000 | Effective Origin=http://127.0.0.1:3000 | Scope=IN_SCOPE |) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 495.9 Td (Governance=LAB_OWNER_AUTHORIZED_ACTIVE_VALIDATION) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 486.9 Td (4-Track Scores: Vuln CVSS=8.6 | Control Priority=95.0 | Recon Priority=15.0 | Exploitability) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 477.9 Td (Confidence=0.92) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 468.9 Td (Admin Boundary Level: NOT_ADMIN_ROUTE  |  Merged Raw Observations \(1 across 1 endpoint\(s\)\):) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 459.9 Td (JS-BAC-ADMIN-USERS-001) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 450.9 Td (EvidenceCore SHA-256 Digest: 777a7f26adbeb6fdde34861defcc23d0eb735f0a2889e620a341e9448bf0e08b \(Artifact) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 441.9 Td (#1838 | Unique Forensic Transcript\)) Tj ET
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 422.9 Td (F-04: Unauthenticated Sensitive File & Backup Exposure \(/ftp/acquisitions.md &) Tj ET
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 409.9 Td (/ftp/package.json.bak\) [127.0.0.1:80 | HIGH | Vuln CVSS: 7.5 | RUNTIME_REPRODUCED]) Tj ET
+0.96 0.97 0.99 rg 36 380.59999999999997 132.0 14.3 re f
+1 1 1 rg 168.0 380.59999999999997 408.0 14.3 re f
+0.82 0.86 0.90 RG 0.4 w 36 380.59999999999997 132.0 14.3 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 380.59999999999997 408.0 14.3 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 386.09999999999997 Td (Target Asset & Origin) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 386.09999999999997 Td (ASSET-JS-3000 | 127.0.0.1:80 | Effective Origin: http://127.0.0.1:3000 \(1 Affected Endpoint\(s\)\)) Tj ET
+0.96 0.97 0.99 rg 36 347.69999999999993 132.0 32.900000000000006 re f
+1 1 1 rg 168.0 347.69999999999993 408.0 32.900000000000006 re f
+0.82 0.86 0.90 RG 0.4 w 36 347.69999999999993 132.0 32.900000000000006 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 347.69999999999993 408.0 32.900000000000006 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 371.79999999999995 Td (Scope & Written Authorization) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 371.79999999999995 Td (IN_SCOPE | Governance Tier: LAB_OWNER_AUTHORIZED_ACTIVE_VALIDATION \(Controlled internal lab) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 362.49999999999994 Td (asset; active PoC validation, Expedite Strike runtime probes, and RTEX retesting explicitly) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 353.19999999999993 Td (authorized.\)) Tj ET
+0.96 0.97 0.99 rg 36 324.0999999999999 132.0 23.6 re f
+1 1 1 rg 168.0 324.0999999999999 408.0 23.6 re f
+0.82 0.86 0.90 RG 0.4 w 36 324.0999999999999 132.0 23.6 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 324.0999999999999 408.0 23.6 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 338.8999999999999 Td (4-Track Score Separation) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 338.8999999999999 Td (Vuln CVSS: 7.5 | Control Priority: 0.0/10 | Recon Priority: 15.0/10 | Exploitability) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 329.5999999999999 Td (Confidence: 78%) Tj ET
+0.96 0.97 0.99 rg 36 309.7999999999999 132.0 14.3 re f
+1 1 1 rg 168.0 309.7999999999999 408.0 14.3 re f
+0.82 0.86 0.90 RG 0.4 w 36 309.7999999999999 132.0 14.3 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 309.7999999999999 408.0 14.3 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 315.2999999999999 Td (Proof Category & Admin Level) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 315.2999999999999 Td (RUNTIME_REPRODUCED :: OBSERVATION_CAPTURED | Admin Boundary Taxonomy: NOT_ADMIN_ROUTE) Tj ET
+0.96 0.97 0.99 rg 36 286.1999999999999 132.0 23.6 re f
+1 1 1 rg 168.0 286.1999999999999 408.0 23.6 re f
+0.82 0.86 0.90 RG 0.4 w 36 286.1999999999999 132.0 23.6 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 286.1999999999999 408.0 23.6 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 300.9999999999999 Td (Explicitly Not Proven) Tj ET
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 291.6999999999999 Td (\(Boundary\)) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 300.9999999999999 Td (Further manual or active exploitation was not executed outside approved ROE boundaries.) Tj ET
+0.96 0.97 0.99 rg 36 262.59999999999985 132.0 23.6 re f
+1 1 1 rg 168.0 262.59999999999985 408.0 23.6 re f
+0.82 0.86 0.90 RG 0.4 w 36 262.59999999999985 132.0 23.6 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 262.59999999999985 408.0 23.6 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 277.39999999999986 Td (CVE / CWE & Applicability) Tj ET
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 268.09999999999985 Td (Gate) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 277.39999999999986 Td (CVE: N/A | CWE: CWE-552 | State: VERSION_DETECTED \(No CVE identifier associated; scored by CWE) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 268.09999999999985 Td (control category.\)) Tj ET
+0.96 0.97 0.99 rg 36 248.29999999999984 132.0 14.3 re f
+1 1 1 rg 168.0 248.29999999999984 408.0 14.3 re f
+0.82 0.86 0.90 RG 0.4 w 36 248.29999999999984 132.0 14.3 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 248.29999999999984 408.0 14.3 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 253.79999999999984 Td (Deduplicated Observations) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 253.79999999999984 Td (1 raw scanner observations merged \(JS-FILE-EXPOSURE-001\)) Tj ET
+0.96 0.97 0.99 rg 36 206.09999999999985 132.0 42.2 re f
+1 1 1 rg 168.0 206.09999999999985 408.0 42.2 re f
+0.82 0.86 0.90 RG 0.4 w 36 206.09999999999985 132.0 42.2 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 206.09999999999985 408.0 42.2 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 239.49999999999983 Td (Technical Description) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 239.49999999999983 Td (Target Endpoint: http://127.0.0.1:3000/ftp/acquisitions.md | [RUNTIME_REPRODUCED]) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 230.19999999999982 Td (Unauthenticated GET `/ftp` and `/ftp/acquisitions.md` returned `HTTP 200 OK` with confidential) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 220.8999999999998 Td (internal acquisition memos and `/ftp/package.json.bak`. Correlated by XTRIKE SAST to) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 211.5999999999998 Td (`server.ts:265` \(`serveIndexMiddleware`\).) Tj ET
+0.96 0.97 0.99 rg 36 173.19999999999985 132.0 32.900000000000006 re f
+1 1 1 rg 168.0 173.19999999999985 408.0 32.900000000000006 re f
+0.82 0.86 0.90 RG 0.4 w 36 173.19999999999985 132.0 32.900000000000006 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 173.19999999999985 408.0 32.900000000000006 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 197.29999999999984 Td (Targeted Specific Remediation) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 197.29999999999984 Td (Disable `serveIndexMiddleware` on `/ftp` in `server.ts:265`, remove `.bak` and internal) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 187.99999999999983 Td (markdown artifacts from public static directories, and require authenticated role authorization) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 178.69999999999982 Td (for document downloads.) Tj ET
+0.96 0.97 0.99 rg 36 149.59999999999985 132.0 23.6 re f
+1 1 1 rg 168.0 149.59999999999985 408.0 23.6 re f
+0.82 0.86 0.90 RG 0.4 w 36 149.59999999999985 132.0 23.6 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 149.59999999999985 408.0 23.6 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 164.39999999999984 Td (Verification & Closure Rule) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 164.39999999999984 Td (Execute deterministic retest via POST /api/v1/findings/1755/retest/execute on 127.0.0.1:80) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 155.09999999999982 Td (\(ASSET-JS-3000\) and confirm REMEDIATION_VERIFIED state in RTEX ledger.) Tj ET
+endstream
+endobj
+20 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 21 0 R >>
+endobj
+21 0 obj
+<< /Length 13068 >>
+stream
+BT /F2 8.2 Tf 0.04 0.37 0.27 rg 36 762 Td (TREPATH 2.4 / EXPEDITE STRIKE / NOCTIS) Tj ET
+BT /F1 7.8 Tf 0.28 0.33 0.41 rg 218 762 Td (Unified SAST+DAST+EVE+RTEX & EvidenceCore Ed25519 Report) Tj ET
+BT /F2 8.5 Tf 0.72 0.11 0.11 rg 508 762 Td (CONFIDENTIAL) Tj ET
+0.04 0.47 0.36 rg 36 753 540 1.4 re f
+0.78 0.82 0.87 rg 36 42 540 0.6 re f
+BT /F1 6.8 Tf 0.35 0.41 0.49 rg 36 31 Td (Expedite Consults Ltd | TrePath 2.4 \(TP24-BUILD-20261102-UNIFIED\) | 2026-11-02 14:53 UTC | 26/26 Quality Gates & RFC 8032 Ed25519 Bundle Verified) Tj ET
+BT /F1 7.5 Tf 0.28 0.33 0.41 rg 540 31 Td (Page 8) Tj ET
+0.94 0.96 0.98 rg 36 634.0 540 102.0 re f
+0.58 0.64 0.72 RG 0.6 w 36 634.0 540 102.0 re S
+BT /F2 7.5 Tf 0.06 0.12 0.22 rg 42 726 Td (Captured Technical Evidence \(F-04 / JS-FILE-EXPOSURE-001\):) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 716 Td (Finding Key: JS-FILE-EXPOSURE-001  |  Consolidated Root-Cause Group: 80:web-app:js-file-exposure-001) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 707.0 Td (Immutable Provenance: Asset=ASSET-JS-3000 | Effective Origin=http://127.0.0.1:3000 | Scope=IN_SCOPE |) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 698.0 Td (Governance=LAB_OWNER_AUTHORIZED_ACTIVE_VALIDATION) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 689.0 Td (4-Track Scores: Vuln CVSS=7.5 | Control Priority=0.0 | Recon Priority=15.0 | Exploitability) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 680.0 Td (Confidence=0.78) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 671.0 Td (Admin Boundary Level: NOT_ADMIN_ROUTE  |  Merged Raw Observations \(1 across 1 endpoint\(s\)\):) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 662.0 Td (JS-FILE-EXPOSURE-001) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 653.0 Td (EvidenceCore SHA-256 Digest: b4486853c7fac35a4e7670bc6ee090a758fbc28f0878b993a1e9ab97c3de0589 \(Artifact) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 644.0 Td (#1840 | Unique Forensic Transcript\)) Tj ET
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 625.0 Td (F-05: Missing HTTP Hardening Headers \(Content-Security-Policy, Strict-Transport-Security,) Tj ET
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 612.0 Td (Referrer-Policy\) on http://127.0.0.1:3000 [127.0.0.1:80 | MEDIUM | Vuln CVSS: 5.4 |) Tj ET
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 599.0 Td (CONTROL_GAP_CONFIRMED]) Tj ET
+0.96 0.97 0.99 rg 36 569.7 132.0 14.3 re f
+1 1 1 rg 168.0 569.7 408.0 14.3 re f
+0.82 0.86 0.90 RG 0.4 w 36 569.7 132.0 14.3 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 569.7 408.0 14.3 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 575.2 Td (Target Asset & Origin) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 575.2 Td (ASSET-JS-3000 | 127.0.0.1:80 | Effective Origin: http://127.0.0.1:3000 \(1 Affected Endpoint\(s\)\)) Tj ET
+0.96 0.97 0.99 rg 36 536.8000000000001 132.0 32.900000000000006 re f
+1 1 1 rg 168.0 536.8000000000001 408.0 32.900000000000006 re f
+0.82 0.86 0.90 RG 0.4 w 36 536.8000000000001 132.0 32.900000000000006 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 536.8000000000001 408.0 32.900000000000006 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 560.9000000000001 Td (Scope & Written Authorization) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 560.9000000000001 Td (IN_SCOPE | Governance Tier: LAB_OWNER_AUTHORIZED_ACTIVE_VALIDATION \(Controlled internal lab) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 551.6000000000001 Td (asset; active PoC validation, Expedite Strike runtime probes, and RTEX retesting explicitly) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 542.3000000000002 Td (authorized.\)) Tj ET
+0.96 0.97 0.99 rg 36 513.2 132.0 23.6 re f
+1 1 1 rg 168.0 513.2 408.0 23.6 re f
+0.82 0.86 0.90 RG 0.4 w 36 513.2 132.0 23.6 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 513.2 408.0 23.6 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 528.0000000000001 Td (4-Track Score Separation) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 528.0000000000001 Td (Vuln CVSS: 5.4 | Control Priority: 54.0/10 | Recon Priority: 15.0/10 | Exploitability) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 518.7000000000002 Td (Confidence: 20%) Tj ET
+0.96 0.97 0.99 rg 36 489.6 132.0 23.6 re f
+1 1 1 rg 168.0 489.6 408.0 23.6 re f
+0.82 0.86 0.90 RG 0.4 w 36 489.6 132.0 23.6 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 489.6 408.0 23.6 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 504.40000000000003 Td (Proof Category & Admin Level) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 504.40000000000003 Td (CONTROL_GAP_CONFIRMED :: CONTROL_MISCONFIGURATION_CONFIRMED | Admin Boundary Taxonomy:) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 495.1 Td (NOT_ADMIN_ROUTE) Tj ET
+0.96 0.97 0.99 rg 36 466.0 132.0 23.6 re f
+1 1 1 rg 168.0 466.0 408.0 23.6 re f
+0.82 0.86 0.90 RG 0.4 w 36 466.0 132.0 23.6 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 466.0 408.0 23.6 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 480.8 Td (Explicitly Not Proven) Tj ET
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 471.5 Td (\(Boundary\)) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 480.8 Td (Further manual or active exploitation was not executed outside approved ROE boundaries.) Tj ET
+0.96 0.97 0.99 rg 36 442.4 132.0 23.6 re f
+1 1 1 rg 168.0 442.4 408.0 23.6 re f
+0.82 0.86 0.90 RG 0.4 w 36 442.4 132.0 23.6 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 442.4 408.0 23.6 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 457.2 Td (CVE / CWE & Applicability) Tj ET
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 447.9 Td (Gate) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 457.2 Td (CVE: N/A | CWE: CWE-693 | State: VERSION_DETECTED \(No CVE identifier associated; scored by CWE) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 447.9 Td (control category.\)) Tj ET
+0.96 0.97 0.99 rg 36 428.09999999999997 132.0 14.3 re f
+1 1 1 rg 168.0 428.09999999999997 408.0 14.3 re f
+0.82 0.86 0.90 RG 0.4 w 36 428.09999999999997 132.0 14.3 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 428.09999999999997 408.0 14.3 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 433.59999999999997 Td (Deduplicated Observations) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 433.59999999999997 Td (1 raw scanner observations merged \(DAST-HDR-JS-3000\)) Tj ET
+0.96 0.97 0.99 rg 36 395.19999999999993 132.0 32.900000000000006 re f
+1 1 1 rg 168.0 395.19999999999993 408.0 32.900000000000006 re f
+0.82 0.86 0.90 RG 0.4 w 36 395.19999999999993 132.0 32.900000000000006 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 395.19999999999993 408.0 32.900000000000006 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 419.29999999999995 Td (Technical Description) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 419.29999999999995 Td (Target Endpoint: http://127.0.0.1:3000/ |  Observed Headers: X-Content-Type-Options: nosniff,) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 409.99999999999994 Td (X-Frame-Options: SAMEORIGIN | Missing: Content-Security-Policy, Strict-Transport-Security,) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 400.69999999999993 Td (Referrer-Policy. Correlated by XTRIKE SAST to `server.ts:118`.) Tj ET
+0.96 0.97 0.99 rg 36 343.69999999999993 132.0 51.5 re f
+1 1 1 rg 168.0 343.69999999999993 408.0 51.5 re f
+0.82 0.86 0.90 RG 0.4 w 36 343.69999999999993 132.0 51.5 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 343.69999999999993 408.0 51.5 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 386.3999999999999 Td (Targeted Specific Remediation) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 386.3999999999999 Td (Configure only the missing response headers on `http://127.0.0.1:3000`:) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 377.0999999999999 Td (`Content-Security-Policy: default-src 'self'; object-src 'none'; frame-ancestors 'none';) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 367.7999999999999 Td (base-uri 'self'`; `Strict-Transport-Security: max-age=31536000; includeSubDomains`;) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 358.4999999999999 Td (`Referrer-Policy: strict-origin-when-cross-origin`. \(Already enforced on this origin and) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 349.1999999999999 Td (excluded from duplicate work: `X-Frame-Options`, `X-Content-Type-Options`\).) Tj ET
+0.96 0.97 0.99 rg 36 320.0999999999999 132.0 23.6 re f
+1 1 1 rg 168.0 320.0999999999999 408.0 23.6 re f
+0.82 0.86 0.90 RG 0.4 w 36 320.0999999999999 132.0 23.6 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 320.0999999999999 408.0 23.6 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 334.8999999999999 Td (Verification & Closure Rule) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 334.8999999999999 Td (Execute deterministic retest via POST /api/v1/findings/1756/retest/execute on 127.0.0.1:80) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 325.5999999999999 Td (\(ASSET-JS-3000\) and confirm REMEDIATION_VERIFIED state in RTEX ledger.) Tj ET
+0.94 0.96 0.98 rg 36 214.0999999999999 540 102.0 re f
+0.58 0.64 0.72 RG 0.6 w 36 214.0999999999999 540 102.0 re S
+BT /F2 7.5 Tf 0.06 0.12 0.22 rg 42 306.0999999999999 Td (Captured Technical Evidence \(F-05 / DAST-HDR-JS-3000\):) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 296.0999999999999 Td (Finding Key: DAST-HDR-JS-3000  |  Consolidated Root-Cause Group: 80:http-headers:missing-csp) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 287.0999999999999 Td (Immutable Provenance: Asset=ASSET-JS-3000 | Effective Origin=http://127.0.0.1:3000 | Scope=IN_SCOPE |) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 278.0999999999999 Td (Governance=LAB_OWNER_AUTHORIZED_ACTIVE_VALIDATION) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 269.0999999999999 Td (4-Track Scores: Vuln CVSS=5.4 | Control Priority=54.0 | Recon Priority=15.0 | Exploitability) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 260.0999999999999 Td (Confidence=0.2) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 251.0999999999999 Td (Admin Boundary Level: NOT_ADMIN_ROUTE  |  Merged Raw Observations \(1 across 1 endpoint\(s\)\):) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 242.0999999999999 Td (DAST-HDR-JS-3000) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 233.0999999999999 Td (EvidenceCore SHA-256 Digest: bd73ca8a3638f733e7651969ed6c26a4ae7072d2be21602ac76827516ec8e195 \(Artifact) Tj ET
+BT /F3 7.0 Tf 0.10 0.15 0.24 rg 44 224.0999999999999 Td (#1842 | Unique Forensic Transcript\)) Tj ET
+BT /F2 12.0 Tf 0.04 0.37 0.27 rg 36 203.0999999999999 Td (3B. Consolidated Reconnaissance Surface & Scanner Health Telemetry) Tj ET
+0.04 0.47 0.36 rg 36 198.0999999999999 540 1.0 re f
+BT /F2 12.0 Tf 0.04 0.37 0.27 rg 36 181.0999999999999 Td (4. Evidence-Backed Attack Graph, Edge Provenance & Choke-Point Analysis) Tj ET
+0.04 0.47 0.36 rg 36 176.0999999999999 540 1.0 re f
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 36 165.0999999999999 Td (TrePath 2.1 requires every attack-path edge to declare an explicit evidentiary state \(OBSERVED,) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 36 153.5999999999999 Td (PRECONDITION_CONFIRMED, TECHNIQUE_VALIDATED, or INFERRED\) and never chains unrelated services without shared) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 36 142.0999999999999 Td (credentials or pivot proof.) Tj ET
+0.06 0.09 0.16 rg 36 112.09999999999991 540 16.5 re f
+BT /F2 7.3 Tf 1 1 1 rg 40 119.09999999999991 Td (Path ID) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 102.0 119.09999999999991 Td (Stage) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 170.0 119.09999999999991 Td (Finding Key) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 252.0 119.09999999999991 Td (Edge Evidence State) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 347.0 119.09999999999991 Td (Step Summary & Rationale) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 475.0 119.09999999999991 Td (Remediation Chokepoint) Tj ET
+1 1 1 rg 36 87.6999999999999 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 87.6999999999999 62.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 103.09999999999991 Td (PATH-JS-001) Tj ET
+0.80 0.84 0.89 RG 0.4 w 98.0 87.6999999999999 68.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 102.0 103.09999999999991 Td (Step 1 \(None\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 166.0 87.6999999999999 82.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 170.0 103.09999999999991 Td (JS-FILE-EXPOSURE-) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 170.0 93.8999999999999 Td (001) Tj ET
+0.80 0.84 0.89 RG 0.4 w 248.0 87.6999999999999 95.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 252.0 103.09999999999991 Td (OBSERVED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 343.0 87.6999999999999 128.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 347.0 103.09999999999991 Td () Tj ET
+0.80 0.84 0.89 RG 0.4 w 471.0 87.6999999999999 105.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 475.0 103.09999999999991 Td (Enforce access control) Tj ET
+0.97 0.98 0.99 rg 36 63.299999999999905 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 63.299999999999905 62.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 78.6999999999999 Td (PATH-JS-001) Tj ET
+0.80 0.84 0.89 RG 0.4 w 98.0 63.299999999999905 68.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 102.0 78.6999999999999 Td (Step 2 \(None\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 166.0 63.299999999999905 82.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 170.0 78.6999999999999 Td (JS-AUTH-BYPASS-00) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 170.0 69.4999999999999 Td (1) Tj ET
+0.80 0.84 0.89 RG 0.4 w 248.0 63.299999999999905 95.0 24.4 re S
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 252.0 78.6999999999999 Td (IMPACT_VERIFIED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 343.0 63.299999999999905 128.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 347.0 78.6999999999999 Td () Tj ET
+0.80 0.84 0.89 RG 0.4 w 471.0 63.299999999999905 105.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 475.0 78.6999999999999 Td (Enforce access control) Tj ET
+endstream
+endobj
+22 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 23 0 R >>
+endobj
+23 0 obj
+<< /Length 14746 >>
+stream
+BT /F2 8.2 Tf 0.04 0.37 0.27 rg 36 762 Td (TREPATH 2.4 / EXPEDITE STRIKE / NOCTIS) Tj ET
+BT /F1 7.8 Tf 0.28 0.33 0.41 rg 218 762 Td (Unified SAST+DAST+EVE+RTEX & EvidenceCore Ed25519 Report) Tj ET
+BT /F2 8.5 Tf 0.72 0.11 0.11 rg 508 762 Td (CONFIDENTIAL) Tj ET
+0.04 0.47 0.36 rg 36 753 540 1.4 re f
+0.78 0.82 0.87 rg 36 42 540 0.6 re f
+BT /F1 6.8 Tf 0.35 0.41 0.49 rg 36 31 Td (Expedite Consults Ltd | TrePath 2.4 \(TP24-BUILD-20261102-UNIFIED\) | 2026-11-02 14:53 UTC | 26/26 Quality Gates & RFC 8032 Ed25519 Bundle Verified) Tj ET
+BT /F1 7.5 Tf 0.28 0.33 0.41 rg 540 31 Td (Page 9) Tj ET
+0.06 0.09 0.16 rg 36 719.5 540 16.5 re f
+BT /F2 7.3 Tf 1 1 1 rg 40 726.5 Td (Path ID) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 102.0 726.5 Td (Stage) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 170.0 726.5 Td (Finding Key) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 252.0 726.5 Td (Edge Evidence State) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 347.0 726.5 Td (Step Summary & Rationale) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 475.0 726.5 Td (Remediation Chokepoint) Tj ET
+1 1 1 rg 36 695.1 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 695.1 62.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 710.5 Td (PATH-JS-001) Tj ET
+0.80 0.84 0.89 RG 0.4 w 98.0 695.1 68.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 102.0 710.5 Td (Step 3 \(None\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 166.0 695.1 82.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 170.0 710.5 Td (JS-BAC-ADMIN-USER) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 170.0 701.3 Td (S-001) Tj ET
+0.80 0.84 0.89 RG 0.4 w 248.0 695.1 95.0 24.4 re S
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 252.0 710.5 Td (IMPACT_VERIFIED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 343.0 695.1 128.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 347.0 710.5 Td () Tj ET
+0.80 0.84 0.89 RG 0.4 w 471.0 695.1 105.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 475.0 710.5 Td (Enforce access control) Tj ET
+0.97 0.98 0.99 rg 36 670.7 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 670.7 62.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 686.1 Td (PATH-JS-001) Tj ET
+0.80 0.84 0.89 RG 0.4 w 98.0 670.7 68.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 102.0 686.1 Td (Step 4 \(None\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 166.0 670.7 82.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 170.0 686.1 Td (JS-SQLI-SEARCH-00) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 170.0 676.9 Td (1) Tj ET
+0.80 0.84 0.89 RG 0.4 w 248.0 670.7 95.0 24.4 re S
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 252.0 686.1 Td (IMPACT_VERIFIED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 343.0 670.7 128.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 347.0 686.1 Td () Tj ET
+0.80 0.84 0.89 RG 0.4 w 471.0 670.7 105.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 475.0 686.1 Td (Enforce access control) Tj ET
+BT /F2 12.0 Tf 0.04 0.37 0.27 rg 36 656.7 Td (5. Stage 9 \(9.1 - 9.7\) Exploitation Validation & Post-Exploitation Matrix) Tj ET
+0.04 0.47 0.36 rg 36 651.7 540 1.0 re f
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 36 640.7 Td (Following Scan #35 & #39 Engineering Directives, Stage 9 separates discovered topology and correlated) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 36 629.2 Td (observations from proven exploitation transitions, validates access boundaries across anonymous and) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 36 617.7 Td (authenticated principals, and verifies that post-exploitation proof states are only reported when backed by) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 36 606.2 Td (live EvidenceCore artifacts.) Tj ET
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 588.7 Td (5.1 Stage 9.3 & 9.4 Access Boundary & Post-Exploitation Verification Table) Tj ET
+0.06 0.09 0.16 rg 36 547.7 540 26.0 re f
+BT /F2 7.3 Tf 1 1 1 rg 40 564.2 Td (Target Surface) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 118.0 564.2 Td (Principal) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 118.0 554.7 Td (Tested) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 194.0 564.2 Td (Verified Boundary) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 194.0 554.7 Td (State) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 286.0 564.2 Td (Proven Capability) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 388.0 564.2 Td (Explicitly Unproven) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 388.0 554.7 Td (Boundary) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 490.0 564.2 Td (Artifact & Full) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 490.0 554.7 Td (SHA-256) Tj ET
+1 1 1 rg 36 495.70000000000005 540 52.0 re f
+0.80 0.84 0.89 RG 0.4 w 36 495.70000000000005 78.0 52.0 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 538.7 Td (Web / API Scope) Tj ET
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 529.5 Td (\(127.0.0.1\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 114.0 495.70000000000005 76.0 52.0 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 118.0 538.7 Td (UNAUTHENTICATED_) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 118.0 529.5 Td (HTTP_CLIENT) Tj ET
+0.80 0.84 0.89 RG 0.4 w 190.0 495.70000000000005 92.0 52.0 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 194.0 538.7 Td (CONTROL_HELD ::) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 194.0 529.5 Td (0_POST_EXPLOIT_POC) Tj ET
+0.80 0.84 0.89 RG 0.4 w 282.0 495.70000000000005 102.0 52.0 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 286.0 538.7 Td (Read-only HTTP header) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 286.0 529.5 Td (& surface inspection) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 286.0 520.3 Td (across authorized) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 286.0 511.09999999999997 Td (origins.) Tj ET
+0.80 0.84 0.89 RG 0.4 w 384.0 495.70000000000005 102.0 52.0 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 388.0 538.7 Td (No authenticated admin) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 388.0 529.5 Td (console access or) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 388.0 520.3 Td (SMB/diagnostic) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 388.0 511.09999999999997 Td (disclosure triggered) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 388.0 501.9 Td (on target scope.) Tj ET
+0.80 0.84 0.89 RG 0.4 w 486.0 495.70000000000005 90.0 52.0 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 490.0 538.7 Td (Sealed in) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 490.0 529.5 Td (EvidenceCore) Tj ET
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 483.70000000000005 Td (5.2 Stage 9.5 Lateral Movement Validation & Stage 9.6 CIA Impact Assessment) Tj ET
+0.06 0.09 0.16 rg 36 452.20000000000005 540 16.5 re f
+BT /F2 7.3 Tf 1 1 1 rg 40 459.20000000000005 Td (Stage / Dimension) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 165.0 459.20000000000005 Td (Validation Status) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 280.0 459.20000000000005 Td (Demonstrated Evidence & Scope Boundary) Tj ET
+1 1 1 rg 36 418.6 540 33.599999999999994 re f
+0.80 0.84 0.89 RG 0.4 w 36 418.6 125.0 33.599999999999994 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 443.20000000000005 Td (Stage 9.5 Lateral Movement) Tj ET
+0.80 0.84 0.89 RG 0.4 w 161.0 418.6 115.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 165.0 443.20000000000005 Td (NOT_APPLICABLE \(Zero) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 165.0 434.00000000000006 Td (Pivot / SMB Services) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 165.0 424.80000000000007 Td (Exposed on Scope\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 276.0 418.6 300.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 280.0 443.20000000000005 Td (No SMB, RPC, or authenticated pivot services were exposed on the) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 280.0 434.00000000000006 Td (in-scope web/API target\(s\); lateral movement probes were) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 280.0 424.80000000000007 Td (NOT_APPLICABLE.) Tj ET
+0.97 0.98 0.99 rg 36 385.0 540 33.599999999999994 re f
+0.80 0.84 0.89 RG 0.4 w 36 385.0 125.0 33.599999999999994 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 409.6 Td (Stage 9.6 Confidentiality) Tj ET
+0.80 0.84 0.89 RG 0.4 w 161.0 385.0 115.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 165.0 409.6 Td (CONTROL_GAP_OBSERVED \(No) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 165.0 400.40000000000003 Td (Unauthorized Data) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 165.0 391.20000000000005 Td (Exfiltration Proven\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 276.0 385.0 300.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 280.0 409.6 Td (HTTP response headers, public route metadata, and service banners) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 280.0 400.40000000000003 Td (observed within read-only ROE boundaries; zero private records or) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 280.0 391.20000000000005 Td (credentials disclosed.) Tj ET
+1 1 1 rg 36 351.4 540 33.599999999999994 re f
+0.80 0.84 0.89 RG 0.4 w 36 351.4 125.0 33.599999999999994 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 376.0 Td (Stage 9.6 Integrity) Tj ET
+0.80 0.84 0.89 RG 0.4 w 161.0 351.4 115.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 165.0 376.0 Td (NO_INTEGRITY_VIOLATION_PR) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 165.0 366.8 Td (OVEN \(Read-Only) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 165.0 357.6 Td (Assessment\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 276.0 351.4 300.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 280.0 376.0 Td (Zero administrative sessions or writable shares verified in this scan;) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 280.0 366.8 Td (zero bytes modified on target\(s\).) Tj ET
+0.97 0.98 0.99 rg 36 327.0 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 327.0 125.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 342.4 Td (Stage 9.6 Availability) Tj ET
+0.80 0.84 0.89 RG 0.4 w 161.0 327.0 115.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 165.0 342.4 Td (NOT_TESTED \(Out of Scope) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 165.0 333.2 Td (per Non-Destructive ROE\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 276.0 327.0 300.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 280.0 342.4 Td (Zero service disruption; all probes completed within deterministic) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 280.0 333.2 Td (rate limits.) Tj ET
+BT /F2 12.0 Tf 0.04 0.37 0.27 rg 36 313.0 Td (5B. Exploit Validation Engine \(EVE\) - Controlled Exploitation Lifecycle & Decisions) Tj ET
+0.04 0.47 0.36 rg 36 308.0 540 1.0 re f
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 36 297.0 Td (TrePath 2.3 Exploit Validation Engine \(EVE\) bridges vulnerability discovery and remediation by evaluating) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 36 285.5 Td (preconditions, enforcing operator HMAC approval, executing deterministic read-only validation adapters \(EVE-) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 36 274.0 Td (AUTH-001, EVE-AUTHZ-001, EVE-INJ-001, EVE-FILE-001, EVE-NET-001\), and distinguishing Vulnerability Detected,) Tj ET
+BT /F1 8.0 Tf 0.12 0.16 0.22 rg 36 262.5 Td (Exploitability Validated, Impact Verified, and Remediation Verified.) Tj ET
+0.06 0.09 0.16 rg 36 223.0 540 26.0 re f
+BT /F2 7.3 Tf 1 1 1 rg 40 239.5 Td (4-Tier Platform Distinction) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 170.0 239.5 Td (Canonical Tier Code) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 295.0 239.5 Td (Validated Job) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 295.0 230.0 Td (Count) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 375.0 239.5 Td (Evidentiary Standard) Tj ET
+1 1 1 rg 36 198.6 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 198.6 130.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 214.0 Td (1. Vulnerability Detected) Tj ET
+0.80 0.84 0.89 RG 0.4 w 166.0 198.6 125.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 170.0 214.0 Td (VULNERABILITY_DETECTED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 291.0 198.6 80.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 295.0 214.0 Td (0) Tj ET
+0.80 0.84 0.89 RG 0.4 w 371.0 198.6 205.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 375.0 214.0 Td (Scanner or passive control observation) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 375.0 204.8 Td (confirmed in scope.) Tj ET
+0.97 0.98 0.99 rg 36 174.2 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 174.2 130.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 189.6 Td (2. Exploitability Validated) Tj ET
+0.80 0.84 0.89 RG 0.4 w 166.0 174.2 125.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 170.0 189.6 Td (EXPLOITABILITY_VALIDATED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 291.0 174.2 80.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 295.0 189.6 Td (0) Tj ET
+0.80 0.84 0.89 RG 0.4 w 371.0 174.2 205.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 375.0 189.6 Td (Preconditions satisfied and deterministic test) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 375.0 180.4 Td (reproduced behavior.) Tj ET
+1 1 1 rg 36 149.79999999999998 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 149.79999999999998 130.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 165.2 Td (3. Impact Verified) Tj ET
+0.80 0.84 0.89 RG 0.4 w 166.0 149.79999999999998 125.0 24.4 re S
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 170.0 165.2 Td (IMPACT_VERIFIED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 291.0 149.79999999999998 80.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 295.0 165.2 Td (0) Tj ET
+0.80 0.84 0.89 RG 0.4 w 371.0 149.79999999999998 205.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 375.0 165.2 Td (Controlled test established unauthorized) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 375.0 156.0 Td (access, privilege escalation, or data exposure.) Tj ET
+0.97 0.98 0.99 rg 36 125.39999999999998 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 125.39999999999998 130.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 140.79999999999998 Td (4. Remediation Verified) Tj ET
+0.80 0.84 0.89 RG 0.4 w 166.0 125.39999999999998 125.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 170.0 140.79999999999998 Td (REMEDIATION_VERIFIED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 291.0 125.39999999999998 80.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 295.0 140.79999999999998 Td (0) Tj ET
+0.80 0.84 0.89 RG 0.4 w 371.0 125.39999999999998 205.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 375.0 140.79999999999998 Td (Subsequent RTEX retest proved the security) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 375.0 131.6 Td (boundary now holds.) Tj ET
+BT /F2 12.0 Tf 0.04 0.37 0.27 rg 36 111.39999999999998 Td (6. Four-Tier Evidence-Driven Compliance Control Mapping) Tj ET
+0.04 0.47 0.36 rg 36 106.39999999999998 540 1.0 re f
+0.06 0.09 0.16 rg 36 78.89999999999998 540 16.5 re f
+BT /F2 7.3 Tf 1 1 1 rg 40 85.89999999999998 Td (Primary Finding) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 150.0 85.89999999999998 Td (PCI-DSS v4.0) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 255.0 85.89999999999998 Td (NIST SP 800-53 Rev 5) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 360.0 85.89999999999998 Td (ISO/IEC 27001:2022) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 470.0 85.89999999999998 Td (CIS Controls v8) Tj ET
+1 1 1 rg 36 54.49999999999998 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 54.49999999999998 110.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 69.89999999999998 Td (HTTP Security Header) Tj ET
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 60.699999999999974 Td (Policy \(CSP/HSTS\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 146.0 54.49999999999998 105.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 150.0 69.89999999999998 Td (Req 6.4.1 / 6.4.2) Tj ET
+0.80 0.84 0.89 RG 0.4 w 251.0 54.49999999999998 105.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 255.0 69.89999999999998 Td (SC-8 / SI-10) Tj ET
+0.80 0.84 0.89 RG 0.4 w 356.0 54.49999999999998 110.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 360.0 69.89999999999998 Td (A.8.26 / A.8.28) Tj ET
+0.80 0.84 0.89 RG 0.4 w 466.0 54.49999999999998 110.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 470.0 69.89999999999998 Td (Control 16.11) Tj ET
+endstream
+endobj
+24 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 25 0 R >>
+endobj
+25 0 obj
+<< /Length 22622 >>
+stream
+BT /F2 8.2 Tf 0.04 0.37 0.27 rg 36 762 Td (TREPATH 2.4 / EXPEDITE STRIKE / NOCTIS) Tj ET
+BT /F1 7.8 Tf 0.28 0.33 0.41 rg 218 762 Td (Unified SAST+DAST+EVE+RTEX & EvidenceCore Ed25519 Report) Tj ET
+BT /F2 8.5 Tf 0.72 0.11 0.11 rg 508 762 Td (CONFIDENTIAL) Tj ET
+0.04 0.47 0.36 rg 36 753 540 1.4 re f
+0.78 0.82 0.87 rg 36 42 540 0.6 re f
+BT /F1 6.8 Tf 0.35 0.41 0.49 rg 36 31 Td (Expedite Consults Ltd | TrePath 2.4 \(TP24-BUILD-20261102-UNIFIED\) | 2026-11-02 14:53 UTC | 26/26 Quality Gates & RFC 8032 Ed25519 Bundle Verified) Tj ET
+BT /F1 7.5 Tf 0.28 0.33 0.41 rg 540 31 Td (Page 10) Tj ET
+0.06 0.09 0.16 rg 36 719.5 540 16.5 re f
+BT /F2 7.3 Tf 1 1 1 rg 40 726.5 Td (Primary Finding) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 150.0 726.5 Td (PCI-DSS v4.0) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 255.0 726.5 Td (NIST SP 800-53 Rev 5) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 360.0 726.5 Td (ISO/IEC 27001:2022) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 470.0 726.5 Td (CIS Controls v8) Tj ET
+0.97 0.98 0.99 rg 36 695.1 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 695.1 110.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 710.5 Td (TOMCAT-MGR-001 \(Admin) Tj ET
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 701.3 Td (Console Auth\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 146.0 695.1 105.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 150.0 710.5 Td (Req 2.2.2 / 8.2.1) Tj ET
+0.80 0.84 0.89 RG 0.4 w 251.0 695.1 105.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 255.0 710.5 Td (IA-5 / AC-6) Tj ET
+0.80 0.84 0.89 RG 0.4 w 356.0 695.1 110.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 360.0 710.5 Td (A.5.17 / A.8.2) Tj ET
+0.80 0.84 0.89 RG 0.4 w 466.0 695.1 110.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 470.0 710.5 Td (Control 4.7 / 5.2) Tj ET
+1 1 1 rg 36 670.7 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 670.7 110.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 686.1 Td (SMB-LIST-001 \(Samba) Tj ET
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 676.9 Td (Anonymous Enum\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 146.0 670.7 105.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 150.0 686.1 Td (Req 1.3.1 / 2.2.4) Tj ET
+0.80 0.84 0.89 RG 0.4 w 251.0 670.7 105.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 255.0 686.1 Td (AC-3 / SC-7) Tj ET
+0.80 0.84 0.89 RG 0.4 w 356.0 670.7 110.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 360.0 686.1 Td (A.8.20 / A.8.3) Tj ET
+0.80 0.84 0.89 RG 0.4 w 466.0 670.7 110.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 470.0 686.1 Td (Control 3.3 / 4.1) Tj ET
+0.97 0.98 0.99 rg 36 646.3000000000001 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 646.3000000000001 110.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 661.7 Td (PHPINFO-001 & Legacy) Tj ET
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 652.5 Td (Service Hygiene) Tj ET
+0.80 0.84 0.89 RG 0.4 w 146.0 646.3000000000001 105.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 150.0 661.7 Td (Req 2.2.6 / 6.3.3) Tj ET
+0.80 0.84 0.89 RG 0.4 w 251.0 646.3000000000001 105.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 255.0 661.7 Td (CM-6 / SI-2) Tj ET
+0.80 0.84 0.89 RG 0.4 w 356.0 646.3000000000001 110.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 360.0 661.7 Td (A.8.8 / A.8.9) Tj ET
+0.80 0.84 0.89 RG 0.4 w 466.0 646.3000000000001 110.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 470.0 661.7 Td (Control 4.1 / 7.1) Tj ET
+BT /F2 12.0 Tf 0.04 0.37 0.27 rg 36 632.3000000000001 Td (7. ENUMCORE 6-Stage CVE Applicability Validation & Threat Intelligence) Tj ET
+0.04 0.47 0.36 rg 36 627.3000000000001 540 1.0 re f
+BT /F2 12.0 Tf 0.04 0.37 0.27 rg 36 610.3000000000001 Td (8. Prioritized Remediation Roadmap & 7-Step RTEX Verification Ledger \(Stage 8\)) Tj ET
+0.04 0.47 0.36 rg 36 605.3000000000001 540 1.0 re f
+0.06 0.09 0.16 rg 36 558.8000000000001 540 35.5 re f
+BT /F2 7.3 Tf 1 1 1 rg 40 584.8000000000001 Td (Task ID) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 88.0 584.8000000000001 Td (Origin) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 88.0 575.3000000000001 Td (Host:Port) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 88.0 565.8000000000001 Td (\(Asset\)) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 164.0 584.8000000000001 Td (Priorit) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 164.0 575.3000000000001 Td (y) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 206.0 584.8000000000001 Td (Status) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 248.0 584.8000000000001 Td (Work Package Title) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 340.0 584.8000000000001 Td (Origin-Accurate Fix) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 340.0 575.3000000000001 Td (Guidance) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 465.0 584.8000000000001 Td (Verification & Closure) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 465.0 575.3000000000001 Td (Rule) Tj ET
+1 1 1 rg 36 497.6000000000001 540 61.199999999999996 re f
+0.80 0.84 0.89 RG 0.4 w 36 497.6000000000001 48.0 61.199999999999996 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 549.8000000000001 Td (REM-JS-00) Tj ET
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 540.6 Td (01) Tj ET
+0.80 0.84 0.89 RG 0.4 w 84.0 497.6000000000001 76.0 61.199999999999996 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 88.0 549.8000000000001 Td (127.0.0.1:80) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 88.0 540.6 Td (\(ASSET-JS-3000\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 160.0 497.6000000000001 42.0 61.199999999999996 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 164.0 549.8000000000001 Td (P0-Imme) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 164.0 540.6 Td (diate) Tj ET
+0.80 0.84 0.89 RG 0.4 w 202.0 497.6000000000001 42.0 61.199999999999996 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 206.0 549.8000000000001 Td (verifie) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 206.0 540.6 Td (d) Tj ET
+0.80 0.84 0.89 RG 0.4 w 244.0 497.6000000000001 92.0 61.199999999999996 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 549.8000000000001 Td (Remediate) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 540.6 Td (JS-SQLI-SEARCH-001:) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 531.4 Td (SQL Injection in) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 522.1999999999999 Td (Product Search API) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 512.9999999999999 Td (\(/rest/products/sea) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 503.7999999999999 Td (rch?q=\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 336.0 497.6000000000001 125.0 61.199999999999996 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 549.8000000000001 Td (Replace raw template literal) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 540.6 Td (interpolation in) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 531.4 Td (`routes/search.ts:23` with) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 522.1999999999999 Td (parameterized Sequelize) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 512.9999999999999 Td (replacements:) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 503.7999999999999 Td (`models.sequelize.query\() Tj ET
+0.80 0.84 0.89 RG 0.4 w 461.0 497.6000000000001 115.0 61.199999999999996 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 549.8000000000001 Td (Verification Test:) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 540.6 Td (TrePath Retest Adapter) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 531.4 Td (for JS-SQLI-SEARCH-001 on) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 522.1999999999999 Td (127.0.0.1:80) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 512.9999999999999 Td (\(ASSET-JS-3000\) | Closure) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 503.7999999999999 Td (Criteria) Tj ET
+0.97 0.98 0.99 rg 36 427.2000000000001 540 70.39999999999999 re f
+0.80 0.84 0.89 RG 0.4 w 36 427.2000000000001 48.0 70.39999999999999 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 488.6000000000001 Td (REM-JS-00) Tj ET
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 479.4000000000001 Td (02) Tj ET
+0.80 0.84 0.89 RG 0.4 w 84.0 427.2000000000001 76.0 70.39999999999999 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 88.0 488.6000000000001 Td (127.0.0.1:80) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 88.0 479.4000000000001 Td (\(ASSET-JS-3000\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 160.0 427.2000000000001 42.0 70.39999999999999 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 164.0 488.6000000000001 Td (P0-Imme) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 164.0 479.4000000000001 Td (diate) Tj ET
+0.80 0.84 0.89 RG 0.4 w 202.0 427.2000000000001 42.0 70.39999999999999 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 206.0 488.6000000000001 Td (verifie) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 206.0 479.4000000000001 Td (d) Tj ET
+0.80 0.84 0.89 RG 0.4 w 244.0 427.2000000000001 92.0 70.39999999999999 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 488.6000000000001 Td (Remediate) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 479.4000000000001 Td (JS-AUTH-BYPASS-001:) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 470.2000000000001 Td (Authentication) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 461.0000000000001 Td (Bypass via SQL) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 451.8000000000001 Td (Injection on) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 442.60000000000014 Td (Administrator Login) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 433.40000000000015 Td (\(/) Tj ET
+0.80 0.84 0.89 RG 0.4 w 336.0 427.2000000000001 125.0 70.39999999999999 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 488.6000000000001 Td (Refactor) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 479.4000000000001 Td (`routes/login.ts:34` to use) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 470.2000000000001 Td (parameterized ORM lookup) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 461.0000000000001 Td (`UsersModel.findOne\({ where:) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 451.8000000000001 Td ({ email:) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 442.60000000000014 Td (String\(req.body.email\),) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 433.40000000000015 Td (password: s) Tj ET
+0.80 0.84 0.89 RG 0.4 w 461.0 427.2000000000001 115.0 70.39999999999999 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 488.6000000000001 Td (Verification Test:) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 479.4000000000001 Td (TrePath Retest Adapter) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 470.2000000000001 Td (for JS-AUTH-BYPASS-001 on) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 461.0000000000001 Td (127.0.0.1:80) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 451.8000000000001 Td (\(ASSET-JS-3000\) | Closure) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 442.60000000000014 Td (Criteria) Tj ET
+1 1 1 rg 36 356.8000000000001 540 70.39999999999999 re f
+0.80 0.84 0.89 RG 0.4 w 36 356.8000000000001 48.0 70.39999999999999 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 418.2000000000001 Td (REM-JS-00) Tj ET
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 409.0000000000001 Td (03) Tj ET
+0.80 0.84 0.89 RG 0.4 w 84.0 356.8000000000001 76.0 70.39999999999999 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 88.0 418.2000000000001 Td (127.0.0.1:80) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 88.0 409.0000000000001 Td (\(ASSET-JS-3000\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 160.0 356.8000000000001 42.0 70.39999999999999 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 164.0 418.2000000000001 Td (P1-Urge) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 164.0 409.0000000000001 Td (nt) Tj ET
+0.80 0.84 0.89 RG 0.4 w 202.0 356.8000000000001 42.0 70.39999999999999 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 206.0 418.2000000000001 Td (verifie) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 206.0 409.0000000000001 Td (d) Tj ET
+0.80 0.84 0.89 RG 0.4 w 244.0 356.8000000000001 92.0 70.39999999999999 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 418.2000000000001 Td (Remediate JS-BAC-AD) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 409.0000000000001 Td (MIN-USERS-001:) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 399.8000000000001 Td (Privileged) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 390.60000000000014 Td (Administrative User) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 381.40000000000015 Td (Directory Exposure) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 372.20000000000016 Td (\(/api/Users) Tj ET
+0.80 0.84 0.89 RG 0.4 w 336.0 356.8000000000001 125.0 70.39999999999999 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 418.2000000000001 Td (Enforce dedicated RBAC role) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 409.0000000000001 Td (guard `security.requireRole\() Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 399.8000000000001 Td ('admin'\)` and step-up) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 390.60000000000014 Td (session verification on) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 381.40000000000015 Td (`/api/Users` and) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 372.20000000000016 Td (`/administration) Tj ET
+0.80 0.84 0.89 RG 0.4 w 461.0 356.8000000000001 115.0 70.39999999999999 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 418.2000000000001 Td (Verification Test:) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 409.0000000000001 Td (TrePath Retest Adapter) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 399.8000000000001 Td (for) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 390.60000000000014 Td (JS-BAC-ADMIN-USERS-001 on) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 381.40000000000015 Td (127.0.0.1:80) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 372.20000000000016 Td (\(ASSET-JS-3000\) | Closure) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 363.00000000000017 Td (Crit) Tj ET
+0.97 0.98 0.99 rg 36 295.60000000000014 540 61.199999999999996 re f
+0.80 0.84 0.89 RG 0.4 w 36 295.60000000000014 48.0 61.199999999999996 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 347.8000000000001 Td (REM-JS-00) Tj ET
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 338.60000000000014 Td (04) Tj ET
+0.80 0.84 0.89 RG 0.4 w 84.0 295.60000000000014 76.0 61.199999999999996 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 88.0 347.8000000000001 Td (127.0.0.1:80) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 88.0 338.60000000000014 Td (\(ASSET-JS-3000\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 160.0 295.60000000000014 42.0 61.199999999999996 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 164.0 347.8000000000001 Td (P1-Urge) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 164.0 338.60000000000014 Td (nt) Tj ET
+0.80 0.84 0.89 RG 0.4 w 202.0 295.60000000000014 42.0 61.199999999999996 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 206.0 347.8000000000001 Td (verifie) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 206.0 338.60000000000014 Td (d) Tj ET
+0.80 0.84 0.89 RG 0.4 w 244.0 295.60000000000014 92.0 61.199999999999996 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 347.8000000000001 Td (Remediate JS-FILE-E) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 338.60000000000014 Td (XPOSURE-001:) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 329.40000000000015 Td (Unauthenticated) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 320.20000000000016 Td (Sensitive File &) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 311.00000000000017 Td (Backup Exposure) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 301.8000000000002 Td (\(/ftp/acquisit) Tj ET
+0.80 0.84 0.89 RG 0.4 w 336.0 295.60000000000014 125.0 61.199999999999996 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 347.8000000000001 Td (Disable) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 338.60000000000014 Td (`serveIndexMiddleware` on) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 329.40000000000015 Td (`/ftp` in `server.ts:265`,) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 320.20000000000016 Td (remove `.bak` and internal) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 311.00000000000017 Td (markdown artifacts from) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 301.8000000000002 Td (public static directori) Tj ET
+0.80 0.84 0.89 RG 0.4 w 461.0 295.60000000000014 115.0 61.199999999999996 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 347.8000000000001 Td (Verification Test:) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 338.60000000000014 Td (TrePath Retest Adapter) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 329.40000000000015 Td (for JS-FILE-EXPOSURE-001) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 320.20000000000016 Td (on 127.0.0.1:80) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 311.00000000000017 Td (\(ASSET-JS-3000\) | Closure) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 301.8000000000002 Td (Criter) Tj ET
+1 1 1 rg 36 234.40000000000015 540 61.199999999999996 re f
+0.80 0.84 0.89 RG 0.4 w 36 234.40000000000015 48.0 61.199999999999996 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 286.60000000000014 Td (REM-JS-00) Tj ET
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 277.40000000000015 Td (05) Tj ET
+0.80 0.84 0.89 RG 0.4 w 84.0 234.40000000000015 76.0 61.199999999999996 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 88.0 286.60000000000014 Td (127.0.0.1:80) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 88.0 277.40000000000015 Td (\(ASSET-JS-3000\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 160.0 234.40000000000015 42.0 61.199999999999996 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 164.0 286.60000000000014 Td (P2-Plan) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 164.0 277.40000000000015 Td (ned) Tj ET
+0.80 0.84 0.89 RG 0.4 w 202.0 234.40000000000015 42.0 61.199999999999996 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 206.0 286.60000000000014 Td (verifie) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 206.0 277.40000000000015 Td (d) Tj ET
+0.80 0.84 0.89 RG 0.4 w 244.0 234.40000000000015 92.0 61.199999999999996 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 286.60000000000014 Td (Remediate) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 277.40000000000015 Td (DAST-HDR-JS-3000:) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 268.20000000000016 Td (Missing HTTP) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 259.00000000000017 Td (Hardening Headers \() Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 249.80000000000018 Td (Content-Security-Po) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 248.0 240.6000000000002 Td (licy, Strict-Tra) Tj ET
+0.80 0.84 0.89 RG 0.4 w 336.0 234.40000000000015 125.0 61.199999999999996 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 286.60000000000014 Td (Configure only the missing) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 277.40000000000015 Td (response headers on) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 268.20000000000016 Td (`http://127.0.0.1:3000`:) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 259.00000000000017 Td (`Content-Security-Policy:) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 249.80000000000018 Td (default-src 'self';) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 340.0 240.6000000000002 Td (object-src 'none') Tj ET
+0.80 0.84 0.89 RG 0.4 w 461.0 234.40000000000015 115.0 61.199999999999996 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 286.60000000000014 Td (Verification Test:) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 277.40000000000015 Td (TrePath Retest Adapter) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 268.20000000000016 Td (for DAST-HDR-JS-3000 on) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 259.00000000000017 Td (127.0.0.1:80) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 249.80000000000018 Td (\(ASSET-JS-3000\) | Closure) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 465.0 240.6000000000002 Td (Criteria:) Tj ET
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 222.40000000000015 Td (8.1A Seven-Step Remediation & Retest Verification Loop \(RTEX Lifecycle\)) Tj ET
+0.06 0.09 0.16 rg 36 190.90000000000015 540 16.5 re f
+BT /F2 7.3 Tf 1 1 1 rg 40 197.90000000000015 Td (Step) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 75.0 197.90000000000015 Td (RTEX Lifecycle Stage) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 210.0 197.90000000000015 Td (Current Status) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 305.0 197.90000000000015 Td (Verification & EvidenceCore Protocol) Tj ET
+1 1 1 rg 36 166.50000000000014 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 166.50000000000014 35.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 181.90000000000015 Td (Step 1) Tj ET
+0.80 0.84 0.89 RG 0.4 w 71.0 166.50000000000014 135.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 75.0 181.90000000000015 Td (Baseline Finding Sealed \(T0\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 206.0 166.50000000000014 95.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 210.0 181.90000000000015 Td (COMPLETED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 301.0 166.50000000000014 275.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 305.0 181.90000000000015 Td (5 consolidated findings sealed with 9-field provenance & 64-hex) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 305.0 172.70000000000016 Td (SHA-256.) Tj ET
+0.97 0.98 0.99 rg 36 142.10000000000014 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 142.10000000000014 35.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 157.50000000000014 Td (Step 2) Tj ET
+0.80 0.84 0.89 RG 0.4 w 71.0 142.10000000000014 135.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 75.0 157.50000000000014 Td (Remediation Assigned) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 75.0 148.30000000000015 Td (\(REM-xxxxx\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 206.0 142.10000000000014 95.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 210.0 157.50000000000014 Td (COMPLETED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 301.0 142.10000000000014 275.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 305.0 157.50000000000014 Td (5 origin-bound RemediationTask work packages generated.) Tj ET
+1 1 1 rg 36 117.70000000000013 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 117.70000000000013 35.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 133.10000000000014 Td (Step 3) Tj ET
+0.80 0.84 0.89 RG 0.4 w 71.0 117.70000000000013 135.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 75.0 133.10000000000014 Td (Deterministic Retest Executed) Tj ET
+0.80 0.84 0.89 RG 0.4 w 206.0 117.70000000000013 95.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 210.0 133.10000000000014 Td (EXECUTED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 301.0 117.70000000000013 275.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 305.0 133.10000000000014 Td (5 live retest execution\(s\) recorded via POST) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 305.0 123.90000000000013 Td (/api/v1/findings/{id}/retest/execute.) Tj ET
+0.97 0.98 0.99 rg 36 93.30000000000013 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 93.30000000000013 35.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 108.70000000000013 Td (Step 4) Tj ET
+0.80 0.84 0.89 RG 0.4 w 71.0 93.30000000000013 135.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 75.0 108.70000000000013 Td (Negative-Control Validation) Tj ET
+0.80 0.84 0.89 RG 0.4 w 206.0 93.30000000000013 95.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 210.0 108.70000000000013 Td (VERIFIED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 301.0 93.30000000000013 275.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 305.0 108.70000000000013 Td (Verifies response is not a generic WAF block, anti-bot) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 305.0 99.50000000000013 Td (challenge, or out-of-scope redirect.) Tj ET
+1 1 1 rg 36 68.90000000000012 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 68.90000000000012 35.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 84.30000000000013 Td (Step 5) Tj ET
+0.80 0.84 0.89 RG 0.4 w 71.0 68.90000000000012 135.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 75.0 84.30000000000013 Td (EvidenceCore Retest Sealing) Tj ET
+0.80 0.84 0.89 RG 0.4 w 206.0 68.90000000000012 95.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 210.0 84.30000000000013 Td (SEALED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 301.0 68.90000000000012 275.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 305.0 84.30000000000013 Td (Before/after HTTP or TCP transcript sealed with fresh FIPS 180-4) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 305.0 75.10000000000012 Td (SHA-256 digest.) Tj ET
+endstream
+endobj
+26 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 27 0 R >>
+endobj
+27 0 obj
+<< /Length 13621 >>
+stream
+BT /F2 8.2 Tf 0.04 0.37 0.27 rg 36 762 Td (TREPATH 2.4 / EXPEDITE STRIKE / NOCTIS) Tj ET
+BT /F1 7.8 Tf 0.28 0.33 0.41 rg 218 762 Td (Unified SAST+DAST+EVE+RTEX & EvidenceCore Ed25519 Report) Tj ET
+BT /F2 8.5 Tf 0.72 0.11 0.11 rg 508 762 Td (CONFIDENTIAL) Tj ET
+0.04 0.47 0.36 rg 36 753 540 1.4 re f
+0.78 0.82 0.87 rg 36 42 540 0.6 re f
+BT /F1 6.8 Tf 0.35 0.41 0.49 rg 36 31 Td (Expedite Consults Ltd | TrePath 2.4 \(TP24-BUILD-20261102-UNIFIED\) | 2026-11-02 14:53 UTC | 26/26 Quality Gates & RFC 8032 Ed25519 Bundle Verified) Tj ET
+BT /F1 7.5 Tf 0.28 0.33 0.41 rg 540 31 Td (Page 11) Tj ET
+0.06 0.09 0.16 rg 36 719.5 540 16.5 re f
+BT /F2 7.3 Tf 1 1 1 rg 40 726.5 Td (Step) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 75.0 726.5 Td (RTEX Lifecycle Stage) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 210.0 726.5 Td (Current Status) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 305.0 726.5 Td (Verification & EvidenceCore Protocol) Tj ET
+0.97 0.98 0.99 rg 36 695.1 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 695.1 35.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 710.5 Td (Step 6) Tj ET
+0.80 0.84 0.89 RG 0.4 w 71.0 695.1 135.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 75.0 710.5 Td (Closure Decision) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 75.0 701.3 Td (\(REMEDIATION_VERIFIED\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 206.0 695.1 95.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 210.0 710.5 Td (VERIFIED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 301.0 695.1 275.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 305.0 710.5 Td (Promotes Finding to REMEDIATION_VERIFIED only when deterministic) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 305.0 701.3 Td (control check passes.) Tj ET
+1 1 1 rg 36 670.7 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 670.7 35.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 686.1 Td (Step 7) Tj ET
+0.80 0.84 0.89 RG 0.4 w 71.0 670.7 135.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 75.0 686.1 Td (T1 Post-Retest Risk) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 75.0 676.9 Td (Recalculation) Tj ET
+0.80 0.84 0.89 RG 0.4 w 206.0 670.7 95.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 210.0 686.1 Td (MEASURED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 301.0 670.7 275.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 305.0 686.1 Td (Recalculates live T1 risk index; until retest executes, 2.1/10) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 305.0 676.9 Td (remains labeled HYPOTHETICAL_PROJECTION.) Tj ET
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 658.7 Td (8.2 Deterministic Retest Execution Ledger \(RTEX-xxxxx\)) Tj ET
+0.06 0.09 0.16 rg 36 617.7 540 26.0 re f
+BT /F2 7.3 Tf 1 1 1 rg 40 634.2 Td (Retest Key) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 115.0 634.2 Td (Target) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 115.0 624.7 Td (Finding) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 180.0 634.2 Td (Execution) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 180.0 624.7 Td (Status) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 255.0 634.2 Td (Resulting Proof) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 255.0 624.7 Td (State) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 350.0 634.2 Td (Evidence) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 350.0 624.7 Td (Artifact) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 420.0 634.2 Td (Verification Notes) Tj ET
+1 1 1 rg 36 538.1 540 79.6 re f
+0.80 0.84 0.89 RG 0.4 w 36 538.1 75.0 79.6 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 608.7 Td (RTEX-JS-0001) Tj ET
+0.80 0.84 0.89 RG 0.4 w 111.0 538.1 65.0 79.6 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 115.0 608.7 Td (Finding #1752) Tj ET
+0.80 0.84 0.89 RG 0.4 w 176.0 538.1 75.0 79.6 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 180.0 608.7 Td (COMPLETED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 251.0 538.1 95.0 79.6 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 255.0 608.7 Td (REMEDIATION_VERIFIED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 346.0 538.1 70.0 79.6 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 350.0 608.7 Td (Artifact #1835) Tj ET
+0.80 0.84 0.89 RG 0.4 w 416.0 538.1 160.0 79.6 re S
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 420.0 608.7 Td ([STEP 8 FIX APPLIED + STEP 9 RTEX) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 420.0 599.5 Td (VERIFIED] `JS-SQLI-SEARCH-001`) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 420.0 590.3 Td (transitioned from `IMPACT_VERIFIED`) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 420.0 581.0999999999999 Td (-> `REMEDIATION_VERIFIED`) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 420.0 571.8999999999999 Td (\(before_sha256=d370308a6561fd2d...,) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 420.0 562.6999999999998 Td (after_sha256=dc1bab5c82160393...\).) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 420.0 553.4999999999998 Td (Functional regression check passed) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 420.0 544.2999999999997 Td (\(`HTTP 200 OK`\).) Tj ET
+0.97 0.98 0.99 rg 36 449.3 540 88.8 re f
+0.80 0.84 0.89 RG 0.4 w 36 449.3 75.0 88.8 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 529.1 Td (RTEX-JS-0002) Tj ET
+0.80 0.84 0.89 RG 0.4 w 111.0 449.3 65.0 88.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 115.0 529.1 Td (Finding #1753) Tj ET
+0.80 0.84 0.89 RG 0.4 w 176.0 449.3 75.0 88.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 180.0 529.1 Td (COMPLETED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 251.0 449.3 95.0 88.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 255.0 529.1 Td (REMEDIATION_VERIFIED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 346.0 449.3 70.0 88.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 350.0 529.1 Td (Artifact #1837) Tj ET
+0.80 0.84 0.89 RG 0.4 w 416.0 449.3 160.0 88.8 re S
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 420.0 529.1 Td ([STEP 8 FIX APPLIED + STEP 9 RTEX) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 420.0 519.9 Td (VERIFIED] `JS-AUTH-BYPASS-001`) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 420.0 510.7 Td (transitioned from) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 420.0 501.5 Td (`CONFIRMED_ADMIN_AUTH` ->) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 420.0 492.3 Td (`REMEDIATION_VERIFIED`) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 420.0 483.1 Td (\(before_sha256=ec6aa6aa9293cddb...,) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 420.0 473.90000000000003 Td (after_sha256=3c1b1a3cf5aa8375...\).) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 420.0 464.70000000000005 Td (Functional regression check passed) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 420.0 455.50000000000006 Td (\(`HTTP 200 OK`\).) Tj ET
+1 1 1 rg 36 369.70000000000005 540 79.6 re f
+0.80 0.84 0.89 RG 0.4 w 36 369.70000000000005 75.0 79.6 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 440.3 Td (RTEX-JS-0003) Tj ET
+0.80 0.84 0.89 RG 0.4 w 111.0 369.70000000000005 65.0 79.6 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 115.0 440.3 Td (Finding #1754) Tj ET
+0.80 0.84 0.89 RG 0.4 w 176.0 369.70000000000005 75.0 79.6 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 180.0 440.3 Td (COMPLETED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 251.0 369.70000000000005 95.0 79.6 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 255.0 440.3 Td (REMEDIATION_VERIFIED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 346.0 369.70000000000005 70.0 79.6 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 350.0 440.3 Td (Artifact #1839) Tj ET
+0.80 0.84 0.89 RG 0.4 w 416.0 369.70000000000005 160.0 79.6 re S
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 420.0 440.3 Td ([STEP 8 FIX APPLIED + STEP 9 RTEX) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 420.0 431.1 Td (VERIFIED] `JS-BAC-ADMIN-USERS-001`) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 420.0 421.90000000000003 Td (transitioned from `IMPACT_VERIFIED`) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 420.0 412.70000000000005 Td (-> `REMEDIATION_VERIFIED`) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 420.0 403.50000000000006 Td (\(before_sha256=777a7f26adbeb6fd...,) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 420.0 394.30000000000007 Td (after_sha256=9f714ade58a0ffe1...\).) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 420.0 385.1000000000001 Td (Functional regression check passed) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 420.0 375.9000000000001 Td (\(`HTTP 200 OK`\).) Tj ET
+0.97 0.98 0.99 rg 36 280.90000000000003 540 88.8 re f
+0.80 0.84 0.89 RG 0.4 w 36 280.90000000000003 75.0 88.8 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 360.70000000000005 Td (RTEX-JS-0004) Tj ET
+0.80 0.84 0.89 RG 0.4 w 111.0 280.90000000000003 65.0 88.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 115.0 360.70000000000005 Td (Finding #1755) Tj ET
+0.80 0.84 0.89 RG 0.4 w 176.0 280.90000000000003 75.0 88.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 180.0 360.70000000000005 Td (COMPLETED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 251.0 280.90000000000003 95.0 88.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 255.0 360.70000000000005 Td (REMEDIATION_VERIFIED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 346.0 280.90000000000003 70.0 88.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 350.0 360.70000000000005 Td (Artifact #1841) Tj ET
+0.80 0.84 0.89 RG 0.4 w 416.0 280.90000000000003 160.0 88.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 420.0 360.70000000000005 Td ([STEP 8 FIX APPLIED + STEP 9 RTEX) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 420.0 351.50000000000006 Td (VERIFIED] `JS-FILE-EXPOSURE-001`) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 420.0 342.30000000000007 Td (transitioned from) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 420.0 333.1000000000001 Td (`RUNTIME_REPRODUCED` ->) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 420.0 323.9000000000001 Td (`REMEDIATION_VERIFIED`) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 420.0 314.7000000000001 Td (\(before_sha256=b4486853c7fac35a...,) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 420.0 305.5000000000001 Td (after_sha256=b5719b52e2eef3c2...\).) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 420.0 296.3000000000001 Td (Functional regression check passed) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 420.0 287.10000000000014 Td (\(`HTTP 200 OK`\).) Tj ET
+1 1 1 rg 36 192.10000000000002 540 88.8 re f
+0.80 0.84 0.89 RG 0.4 w 36 192.10000000000002 75.0 88.8 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 271.90000000000003 Td (RTEX-JS-0005) Tj ET
+0.80 0.84 0.89 RG 0.4 w 111.0 192.10000000000002 65.0 88.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 115.0 271.90000000000003 Td (Finding #1756) Tj ET
+0.80 0.84 0.89 RG 0.4 w 176.0 192.10000000000002 75.0 88.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 180.0 271.90000000000003 Td (COMPLETED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 251.0 192.10000000000002 95.0 88.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 255.0 271.90000000000003 Td (REMEDIATION_VERIFIED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 346.0 192.10000000000002 70.0 88.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 350.0 271.90000000000003 Td (Artifact #1843) Tj ET
+0.80 0.84 0.89 RG 0.4 w 416.0 192.10000000000002 160.0 88.8 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 420.0 271.90000000000003 Td ([STEP 8 FIX APPLIED + STEP 9 RTEX) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 420.0 262.70000000000005 Td (VERIFIED] `DAST-HDR-JS-3000`) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 420.0 253.50000000000006 Td (transitioned from) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 420.0 244.30000000000007 Td (`CONTROL_GAP_CONFIRMED` ->) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 420.0 235.10000000000008 Td (`REMEDIATION_VERIFIED`) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 420.0 225.9000000000001 Td (\(before_sha256=bd73ca8a3638f733...,) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 420.0 216.7000000000001 Td (after_sha256=d8c47e1ce127a82b...\).) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 420.0 207.5000000000001 Td (Functional regression check passed) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 420.0 198.30000000000013 Td (\(`HTTP 200 OK`\).) Tj ET
+BT /F2 12.0 Tf 0.04 0.37 0.27 rg 36 178.10000000000002 Td (9. EvidenceCore Cryptographic Integrity, RFC 8032 Ed25519 Signature Bundle & Quality Gates) Tj ET
+0.04 0.47 0.36 rg 36 173.10000000000002 540 1.0 re f
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 158.10000000000002 Td (9.0 Verifiable RFC 8032 Ed25519 Signature & Tamper-Detection Bundle \(Issue 5\)) Tj ET
+0.96 0.97 0.99 rg 36 128.8 132.0 14.3 re f
+1 1 1 rg 168.0 128.8 408.0 14.3 re f
+0.82 0.86 0.90 RG 0.4 w 36 128.8 132.0 14.3 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 128.8 408.0 14.3 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 134.3 Td (Signing Algorithm & Authority) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 134.3 Td (Ed25519 \(RFC 8032\) + SHA-256 \(FIPS 180-4\) | Signer: TrePath-EvidenceCore-Authority-v2.4) Tj ET
+0.96 0.97 0.99 rg 36 114.50000000000001 132.0 14.3 re f
+1 1 1 rg 168.0 114.50000000000001 408.0 14.3 re f
+0.82 0.86 0.90 RG 0.4 w 36 114.50000000000001 132.0 14.3 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 114.50000000000001 408.0 14.3 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 120.00000000000001 Td (Trusted Signing Timestamp) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 120.00000000000001 Td (2026-11-02T19:53:34.325525+00:00) Tj ET
+0.96 0.97 0.99 rg 36 100.20000000000002 132.0 14.3 re f
+1 1 1 rg 168.0 100.20000000000002 408.0 14.3 re f
+0.82 0.86 0.90 RG 0.4 w 36 100.20000000000002 132.0 14.3 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 100.20000000000002 408.0 14.3 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 105.70000000000002 Td (Canonical Manifest SHA-256) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 105.70000000000002 Td (20229af9c150521bbae27919482f4188c2afa7a64e17fc93fe9b5505b7247e48) Tj ET
+0.96 0.97 0.99 rg 36 76.60000000000002 132.0 23.6 re f
+1 1 1 rg 168.0 76.60000000000002 408.0 23.6 re f
+0.82 0.86 0.90 RG 0.4 w 36 76.60000000000002 132.0 23.6 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 76.60000000000002 408.0 23.6 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 91.40000000000002 Td (Ed25519 Signature \(128-Hex\)) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 91.40000000000002 Td (d6e4955c5404be93100b822baa9e237936801fecc62243c8c99084c6a0cab93d40f925c7faf599e88f072f04bdc35f5) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 82.10000000000002 Td (f4797ec7ebe330de7ad05c70b8c784802) Tj ET
+0.96 0.97 0.99 rg 36 62.300000000000026 132.0 14.3 re f
+1 1 1 rg 168.0 62.300000000000026 408.0 14.3 re f
+0.82 0.86 0.90 RG 0.4 w 36 62.300000000000026 132.0 14.3 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 62.300000000000026 408.0 14.3 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 67.80000000000003 Td (Ed25519 Signature \(Base64\)) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 67.80000000000003 Td (1uSVXFQEvpMQC4Irqp4jeTaAH+zGIkPIyZCExqDKuT1A+SXH+vWZ6I8HLwS9w19fR5fsfr4zDeetBccLjHhIAg==) Tj ET
+endstream
+endobj
+28 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 29 0 R >>
+endobj
+29 0 obj
+<< /Length 18235 >>
+stream
+BT /F2 8.2 Tf 0.04 0.37 0.27 rg 36 762 Td (TREPATH 2.4 / EXPEDITE STRIKE / NOCTIS) Tj ET
+BT /F1 7.8 Tf 0.28 0.33 0.41 rg 218 762 Td (Unified SAST+DAST+EVE+RTEX & EvidenceCore Ed25519 Report) Tj ET
+BT /F2 8.5 Tf 0.72 0.11 0.11 rg 508 762 Td (CONFIDENTIAL) Tj ET
+0.04 0.47 0.36 rg 36 753 540 1.4 re f
+0.78 0.82 0.87 rg 36 42 540 0.6 re f
+BT /F1 6.8 Tf 0.35 0.41 0.49 rg 36 31 Td (Expedite Consults Ltd | TrePath 2.4 \(TP24-BUILD-20261102-UNIFIED\) | 2026-11-02 14:53 UTC | 26/26 Quality Gates & RFC 8032 Ed25519 Bundle Verified) Tj ET
+BT /F1 7.5 Tf 0.28 0.33 0.41 rg 540 31 Td (Page 12) Tj ET
+0.96 0.97 0.99 rg 36 712.4 132.0 23.6 re f
+1 1 1 rg 168.0 712.4 408.0 23.6 re f
+0.82 0.86 0.90 RG 0.4 w 36 712.4 132.0 23.6 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 712.4 408.0 23.6 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 727.2 Td (Public Key Fingerprint) Tj ET
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 717.9000000000001 Td (SHA-256) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 727.2 Td (bc91f1e0b7c69696547e1efa0f05a7f9c1a201abf0cf80dabf698e43624c7eb1) Tj ET
+0.96 0.97 0.99 rg 36 670.1999999999999 132.0 42.2 re f
+1 1 1 rg 168.0 670.1999999999999 408.0 42.2 re f
+0.82 0.86 0.90 RG 0.4 w 36 670.1999999999999 132.0 42.2 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 670.1999999999999 408.0 42.2 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 703.6 Td (Public Key \(Raw Hex / PEM\)) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 703.6 Td (Hex: 61e14ce688b5c816bcc76b30bcc93c9c2914fa085a2ff326594cd1c5565f05b9 | PEM: -----BEGIN PUBLIC) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 694.3000000000001 Td (KEY-----) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 685.0000000000001 Td (MCowBQYDK2VwAyEAYeFM5oi1yBa8x2swvMk8nCkU+ghaL/MmWUzRxVZfBbk=) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 675.7000000000002 Td (-----END PUBLIC KEY-----) Tj ET
+0.96 0.97 0.99 rg 36 655.9 132.0 14.3 re f
+1 1 1 rg 168.0 655.9 408.0 14.3 re f
+0.82 0.86 0.90 RG 0.4 w 36 655.9 132.0 14.3 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 655.9 408.0 14.3 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 661.4 Td (Signature Verification Result) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 661.4 Td (VERIFIED_AUTHENTIC \(Bound Artifacts: 10\)) Tj ET
+0.96 0.97 0.99 rg 36 632.3 132.0 23.6 re f
+1 1 1 rg 168.0 632.3 408.0 23.6 re f
+0.82 0.86 0.90 RG 0.4 w 36 632.3 132.0 23.6 re S
+0.82 0.86 0.90 RG 0.4 w 168.0 632.3 408.0 23.6 re S
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 647.1 Td (Live Tamper-Detection) Tj ET
+BT /F2 7.3 Tf 0.08 0.14 0.24 rg 40 637.8000000000001 Td (Self-Test) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 647.1 Td (PASSED \(Tampered Manifest Deterministically Rejected\) - 1-bit payload mutation + 1-byte) Tj ET
+BT /F1 7.3 Tf 0.12 0.16 0.22 rg 173.0 637.8000000000001 Td (signature mutation deterministically rejected by Ed25519 verifier.) Tj ET
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 624.3 Td (9.1 Automated Acceptance & Negative Quality Gates \(AT-01..AT-10 + NG-01..NG-06\)) Tj ET
+0.06 0.09 0.16 rg 36 592.8 540 16.5 re f
+BT /F2 7.3 Tf 1 1 1 rg 40 599.8 Td (Gate ID) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 95.0 599.8 Td (Verification Domain) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 225.0 599.8 Td (Dynamic Acceptance & Negative Quality Gate Rule) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 510.0 599.8 Td (Status) Tj ET
+1 1 1 rg 36 568.4 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 568.4 55.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 583.8 Td (AT-01/02) Tj ET
+0.80 0.84 0.89 RG 0.4 w 91.0 568.4 130.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 95.0 583.8 Td (Scope & Redirect Provenance) Tj ET
+0.80 0.84 0.89 RG 0.4 w 221.0 568.4 285.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 225.0 583.8 Td (7-stage scope funnel reconciled \(5 requested -> 1 origin assets\);) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 225.0 574.5999999999999 Td (external links isolated.) Tj ET
+0.80 0.84 0.89 RG 0.4 w 506.0 568.4 70.0 24.4 re S
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 510.0 583.8 Td (PASSED) Tj ET
+0.97 0.98 0.99 rg 36 544.0 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 544.0 55.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 559.4 Td (AT-03..06) Tj ET
+0.80 0.84 0.89 RG 0.4 w 91.0 544.0 130.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 95.0 559.4 Td (Proof-State Reconciliation) Tj ET
+0.80 0.84 0.89 RG 0.4 w 221.0 544.0 285.0 24.4 re S
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 225.0 559.4 Td (Executive, Section 1.2 & Stage 9 agree: CONFIRMED_ADMIN_AUTH=1,) Tj ET
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 225.0 550.1999999999999 Td (IMPACT_VERIFIED=2.) Tj ET
+0.80 0.84 0.89 RG 0.4 w 506.0 544.0 70.0 24.4 re S
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 510.0 559.4 Td (PASSED) Tj ET
+1 1 1 rg 36 519.6 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 519.6 55.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 535.0 Td (AT-07/08) Tj ET
+0.80 0.84 0.89 RG 0.4 w 91.0 519.6 130.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 95.0 535.0 Td (Risk & Port Reconciliation) Tj ET
+0.80 0.84 0.89 RG 0.4 w 221.0 519.6 285.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 225.0 535.0 Td (4-State port discovery reconciled \(1 TCP ports, 22 HTTP endpoints\);) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 225.0 525.8 Td (7 risk dimensions sum \(75.3/100\) matches headline \(75.3/100\).) Tj ET
+0.80 0.84 0.89 RG 0.4 w 506.0 519.6 70.0 24.4 re S
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 510.0 535.0 Td (PASSED) Tj ET
+0.97 0.98 0.99 rg 36 495.20000000000005 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 495.20000000000005 55.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 510.6 Td (AT-09/10) Tj ET
+0.80 0.84 0.89 RG 0.4 w 91.0 495.20000000000005 130.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 95.0 510.6 Td (Origin Consolidation &) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 95.0 501.40000000000003 Td (Ed25519) Tj ET
+0.80 0.84 0.89 RG 0.4 w 221.0 495.20000000000005 285.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 225.0 510.6 Td (5 raw observations -> 5 unique findings; Consistency=100.0%,) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 225.0 501.40000000000003 Td (Ed25519=VERIFIED_AUTHENTIC.) Tj ET
+0.80 0.84 0.89 RG 0.4 w 506.0 495.20000000000005 70.0 24.4 re S
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 510.0 510.6 Td (PASSED) Tj ET
+1 1 1 rg 36 461.6 540 33.599999999999994 re f
+0.80 0.84 0.89 RG 0.4 w 36 461.6 55.0 33.599999999999994 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 486.20000000000005 Td (NG-01) Tj ET
+0.80 0.84 0.89 RG 0.4 w 91.0 461.6 130.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 95.0 486.20000000000005 Td (No Admin Exposure Claim from) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 95.0 477.00000000000006 Td (Route Rea) Tj ET
+0.80 0.84 0.89 RG 0.4 w 221.0 461.6 285.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 225.0 486.20000000000005 Td (Candidate /dashboard or /admin HTTP 200 routes without verified) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 225.0 477.00000000000006 Td (admin console controls classified as OBSERVATION_CONFIRMED ::) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 225.0 467.80000000000007 Td (LOGIN_INTERFACE_OR_ROUTE_DISCOVERED \(Low\).) Tj ET
+0.80 0.84 0.89 RG 0.4 w 506.0 461.6 70.0 33.599999999999994 re S
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 510.0 486.20000000000005 Td (PASSED) Tj ET
+0.97 0.98 0.99 rg 36 428.0 540 33.599999999999994 re f
+0.80 0.84 0.89 RG 0.4 w 36 428.0 55.0 33.599999999999994 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 452.6 Td (NG-02) Tj ET
+0.80 0.84 0.89 RG 0.4 w 91.0 428.0 130.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 95.0 452.6 Td (No Outdated Software Claim) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 95.0 443.40000000000003 Td (for Current) Tj ET
+0.80 0.84 0.89 RG 0.4 w 221.0 428.0 285.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 225.0 452.6 Td (Modern versions \(e.g. nginx 1.31.8\) marked is_outdated=False;) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 225.0 443.40000000000003 Td (banner-only fingerprints use OBSERVATION_CONFIRMED ::) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 225.0 434.20000000000005 Td (VERSION_FINGERPRINT_BANNER_ONLY.) Tj ET
+0.80 0.84 0.89 RG 0.4 w 506.0 428.0 70.0 33.599999999999994 re S
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 510.0 452.6 Td (PASSED) Tj ET
+1 1 1 rg 36 394.4 540 33.599999999999994 re f
+0.80 0.84 0.89 RG 0.4 w 36 394.4 55.0 33.599999999999994 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 419.0 Td (NG-03) Tj ET
+0.80 0.84 0.89 RG 0.4 w 91.0 394.4 130.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 95.0 419.0 Td (No API Vulnerability Claim) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 95.0 409.8 Td (from Anti-B) Tj ET
+0.80 0.84 0.89 RG 0.4 w 221.0 394.4 285.0 33.599999999999994 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 225.0 419.0 Td (Anubis / /.within.website/ honeypot and public API routes) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 225.0 409.8 Td (classified as OBSERVATION_CONFIRMED ::) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 225.0 400.6 Td (ANTIBOT_OR_PUBLIC_API_ROUTE_OBSERVED \(Low\).) Tj ET
+0.80 0.84 0.89 RG 0.4 w 506.0 394.4 70.0 33.599999999999994 re S
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 510.0 419.0 Td (PASSED) Tj ET
+0.97 0.98 0.99 rg 36 370.0 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 370.0 55.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 385.4 Td (NG-04) Tj ET
+0.80 0.84 0.89 RG 0.4 w 91.0 370.0 130.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 95.0 385.4 Td (No Rate-Limit Absence Claim) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 95.0 376.2 Td (from Missi) Tj ET
+0.80 0.84 0.89 RG 0.4 w 221.0 370.0 285.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 225.0 385.4 Td (Absent X-RateLimit-* headers classified as OBSERVATION_CONFIRMED ::) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 225.0 376.2 Td (RATE_LIMIT_HEADER_ABSENT_ENFORCEMENT_UNTESTED \(Low\).) Tj ET
+0.80 0.84 0.89 RG 0.4 w 506.0 370.0 70.0 24.4 re S
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 510.0 385.4 Td (PASSED) Tj ET
+1 1 1 rg 36 345.6 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 345.6 55.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 361.0 Td (NG-05) Tj ET
+0.80 0.84 0.89 RG 0.4 w 91.0 345.6 130.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 95.0 361.0 Td (Zero Cross-Asset) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 95.0 351.8 Td (Contamination in Reme) Tj ET
+0.80 0.84 0.89 RG 0.4 w 221.0 345.6 285.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 225.0 361.0 Td (All 5 RemediationTask rows bound to exact finding asset_id and) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 225.0 351.8 Td (effective_origin host:port.) Tj ET
+0.80 0.84 0.89 RG 0.4 w 506.0 345.6 70.0 24.4 re S
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 510.0 361.0 Td (PASSED) Tj ET
+0.97 0.98 0.99 rg 36 321.20000000000005 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 321.20000000000005 55.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 336.6 Td (NG-06) Tj ET
+0.80 0.84 0.89 RG 0.4 w 91.0 321.20000000000005 130.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 95.0 336.6 Td (No Unverified) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 95.0 327.40000000000003 Td (Post-Remediation Risk Cl) Tj ET
+0.80 0.84 0.89 RG 0.4 w 221.0 321.20000000000005 285.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 225.0 336.6 Td (Executed retests = 5; post-hardening 2.1/10 explicitly labeled) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 225.0 327.40000000000003 Td (HYPOTHETICAL_PROJECTION.) Tj ET
+0.80 0.84 0.89 RG 0.4 w 506.0 321.20000000000005 70.0 24.4 re S
+BT /F2 7.1 Tf 0.04 0.42 0.30 rg 510.0 336.6 Td (PASSED) Tj ET
+BT /F2 12.0 Tf 0.04 0.37 0.27 rg 36 307.20000000000005 Td (10. Unified Security Platform Integration \(XTRIKE SAST + TrePath 2.4 + Expedite Strike + Noctis\)) Tj ET
+0.04 0.47 0.36 rg 36 302.20000000000005 540 1.0 re f
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 287.20000000000005 Td (10.0 Unified Finding Registry \(Code Source-to-Sink -> Runtime Verification -> RTEX -> Noctis\)) Tj ET
+0.06 0.09 0.16 rg 36 246.20000000000005 540 26.0 re f
+BT /F2 7.3 Tf 1 1 1 rg 40 262.70000000000005 Td (Unified ID) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 108.0 262.70000000000005 Td (Finding \(Asset\)) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 182.0 262.70000000000005 Td (XTRIKE SAST Code) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 182.0 253.20000000000005 Td (Location) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 290.0 262.70000000000005 Td (Expedite Strike / EVE) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 290.0 253.20000000000005 Td (State) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 398.0 262.70000000000005 Td (4-Track Score Summary) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 496.0 262.70000000000005 Td (Noctis Posture) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 496.0 253.20000000000005 Td (State) Tj ET
+1 1 1 rg 36 221.80000000000004 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 221.80000000000004 68.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 237.20000000000005 Td (UFR-043-001) Tj ET
+0.80 0.84 0.89 RG 0.4 w 104.0 221.80000000000004 74.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 108.0 237.20000000000005 Td (F-01) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 108.0 228.00000000000006 Td (\(ASSET-JS-3000\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 178.0 221.80000000000004 108.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 182.0 237.20000000000005 Td (routes/search.ts:23) Tj ET
+0.80 0.84 0.89 RG 0.4 w 286.0 221.80000000000004 108.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 290.0 237.20000000000005 Td (REMEDIATION_VERIFIED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 394.0 221.80000000000004 98.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 398.0 237.20000000000005 Td (CVSS:9.8 | Ctrl:95.0) Tj ET
+0.80 0.84 0.89 RG 0.4 w 492.0 221.80000000000004 84.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 496.0 237.20000000000005 Td (CLOSED_VERIFIED) Tj ET
+0.97 0.98 0.99 rg 36 197.40000000000003 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 197.40000000000003 68.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 212.80000000000004 Td (UFR-043-002) Tj ET
+0.80 0.84 0.89 RG 0.4 w 104.0 197.40000000000003 74.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 108.0 212.80000000000004 Td (F-02) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 108.0 203.60000000000005 Td (\(ASSET-JS-3000\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 178.0 197.40000000000003 108.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 182.0 212.80000000000004 Td (routes/login.ts:34) Tj ET
+0.80 0.84 0.89 RG 0.4 w 286.0 197.40000000000003 108.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 290.0 212.80000000000004 Td (REMEDIATION_VERIFIED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 394.0 197.40000000000003 98.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 398.0 212.80000000000004 Td (CVSS:9.8 | Ctrl:95.0) Tj ET
+0.80 0.84 0.89 RG 0.4 w 492.0 197.40000000000003 84.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 496.0 212.80000000000004 Td (CLOSED_VERIFIED) Tj ET
+1 1 1 rg 36 173.00000000000003 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 173.00000000000003 68.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 188.40000000000003 Td (UFR-043-003) Tj ET
+0.80 0.84 0.89 RG 0.4 w 104.0 173.00000000000003 74.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 108.0 188.40000000000003 Td (F-03) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 108.0 179.20000000000005 Td (\(ASSET-JS-3000\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 178.0 173.00000000000003 108.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 182.0 188.40000000000003 Td (server.ts:412) Tj ET
+0.80 0.84 0.89 RG 0.4 w 286.0 173.00000000000003 108.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 290.0 188.40000000000003 Td (REMEDIATION_VERIFIED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 394.0 173.00000000000003 98.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 398.0 188.40000000000003 Td (CVSS:8.6 | Ctrl:95.0) Tj ET
+0.80 0.84 0.89 RG 0.4 w 492.0 173.00000000000003 84.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 496.0 188.40000000000003 Td (CLOSED_VERIFIED) Tj ET
+0.97 0.98 0.99 rg 36 148.60000000000002 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 148.60000000000002 68.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 164.00000000000003 Td (UFR-043-004) Tj ET
+0.80 0.84 0.89 RG 0.4 w 104.0 148.60000000000002 74.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 108.0 164.00000000000003 Td (F-04) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 108.0 154.80000000000004 Td (\(ASSET-JS-3000\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 178.0 148.60000000000002 108.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 182.0 164.00000000000003 Td (server.ts:265) Tj ET
+0.80 0.84 0.89 RG 0.4 w 286.0 148.60000000000002 108.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 290.0 164.00000000000003 Td (REMEDIATION_VERIFIED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 394.0 148.60000000000002 98.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 398.0 164.00000000000003 Td (CVSS:7.5 | Ctrl:0.0) Tj ET
+0.80 0.84 0.89 RG 0.4 w 492.0 148.60000000000002 84.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 496.0 164.00000000000003 Td (CLOSED_VERIFIED) Tj ET
+1 1 1 rg 36 124.20000000000002 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 124.20000000000002 68.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 139.60000000000002 Td (UFR-043-005) Tj ET
+0.80 0.84 0.89 RG 0.4 w 104.0 124.20000000000002 74.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 108.0 139.60000000000002 Td (F-05) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 108.0 130.40000000000003 Td (\(ASSET-JS-3000\)) Tj ET
+0.80 0.84 0.89 RG 0.4 w 178.0 124.20000000000002 108.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 182.0 139.60000000000002 Td (server.ts:118) Tj ET
+0.80 0.84 0.89 RG 0.4 w 286.0 124.20000000000002 108.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 290.0 139.60000000000002 Td (REMEDIATION_VERIFIED) Tj ET
+0.80 0.84 0.89 RG 0.4 w 394.0 124.20000000000002 98.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 398.0 139.60000000000002 Td (CVSS:5.4 | Ctrl:54.0) Tj ET
+0.80 0.84 0.89 RG 0.4 w 492.0 124.20000000000002 84.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 496.0 139.60000000000002 Td (CLOSED_VERIFIED) Tj ET
+BT /F2 9.8 Tf 0.04 0.37 0.27 rg 36 112.20000000000002 Td (10.1 Autonomous 9-Stage Orchestration Architecture & Centralized Version Manifest) Tj ET
+0.06 0.09 0.16 rg 36 80.70000000000002 540 16.5 re f
+BT /F2 7.3 Tf 1 1 1 rg 40 87.70000000000002 Td (Stage) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 105.0 87.70000000000002 Td (Engine Module \(Version\)) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 270.0 87.70000000000002 Td (Execution Outcome) Tj ET
+1 1 1 rg 36 56.30000000000002 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 56.30000000000002 65.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 71.70000000000002 Td (Stage 1-2) Tj ET
+0.80 0.84 0.89 RG 0.4 w 101.0 56.30000000000002 165.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 105.0 71.70000000000002 Td (Scope & WebPulse 2.4) Tj ET
+0.80 0.84 0.89 RG 0.4 w 266.0 56.30000000000002 310.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 71.70000000000002 Td (Verified 1 in-scope asset\(s\) \(127.0.0.1\), 1 open TCP ports, and 22 HTTP) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 62.500000000000014 Td (endpoints.) Tj ET
+endstream
+endobj
+30 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 31 0 R >>
+endobj
+31 0 obj
+<< /Length 5500 >>
+stream
+BT /F2 8.2 Tf 0.04 0.37 0.27 rg 36 762 Td (TREPATH 2.4 / EXPEDITE STRIKE / NOCTIS) Tj ET
+BT /F1 7.8 Tf 0.28 0.33 0.41 rg 218 762 Td (Unified SAST+DAST+EVE+RTEX & EvidenceCore Ed25519 Report) Tj ET
+BT /F2 8.5 Tf 0.72 0.11 0.11 rg 508 762 Td (CONFIDENTIAL) Tj ET
+0.04 0.47 0.36 rg 36 753 540 1.4 re f
+0.78 0.82 0.87 rg 36 42 540 0.6 re f
+BT /F1 6.8 Tf 0.35 0.41 0.49 rg 36 31 Td (Expedite Consults Ltd | TrePath 2.4 \(TP24-BUILD-20261102-UNIFIED\) | 2026-11-02 14:53 UTC | 26/26 Quality Gates & RFC 8032 Ed25519 Bundle Verified) Tj ET
+BT /F1 7.5 Tf 0.28 0.33 0.41 rg 540 31 Td (Page 13) Tj ET
+0.06 0.09 0.16 rg 36 719.5 540 16.5 re f
+BT /F2 7.3 Tf 1 1 1 rg 40 726.5 Td (Stage) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 105.0 726.5 Td (Engine Module \(Version\)) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 270.0 726.5 Td (Execution Outcome) Tj ET
+0.97 0.98 0.99 rg 36 695.1 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 695.1 65.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 710.5 Td (Stage 3) Tj ET
+0.80 0.84 0.89 RG 0.4 w 101.0 695.1 165.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 105.0 710.5 Td (ENUMCORE 2.4) Tj ET
+0.80 0.84 0.89 RG 0.4 w 266.0 695.1 310.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 710.5 Td (Mapped CPEs and separated precondition-verified KEVs from banner-only) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 701.3 Td (candidates.) Tj ET
+1 1 1 rg 36 670.7 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 670.7 65.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 686.1 Td (Stage 4-5) Tj ET
+0.80 0.84 0.89 RG 0.4 w 101.0 670.7 165.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 105.0 686.1 Td (HeaderPolicyEvaluator 2.4 & EVE 2.4) Tj ET
+0.80 0.84 0.89 RG 0.4 w 266.0 670.7 310.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 686.1 Td (Executed verified PoC probes \(JS-SQLI-SEARCH-001, JS-AUTH-BYPASS-001,) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 676.9 Td (JS-BAC-ADMIN-USERS-001\) within RoE.) Tj ET
+0.97 0.98 0.99 rg 36 646.3000000000001 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 646.3000000000001 65.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 661.7 Td (Stage 6-7) Tj ET
+0.80 0.84 0.89 RG 0.4 w 101.0 646.3000000000001 165.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 105.0 661.7 Td (Expedite Strike 2.4 & AttackGraph 2.4) Tj ET
+0.80 0.84 0.89 RG 0.4 w 266.0 646.3000000000001 310.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 661.7 Td (Assigned 4-level admin boundary taxonomy and built per-edge) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 652.5 Td (evidence-backed attack chains.) Tj ET
+1 1 1 rg 36 621.9000000000001 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 621.9000000000001 65.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 637.3000000000001 Td (Stage 8-9) Tj ET
+0.80 0.84 0.89 RG 0.4 w 101.0 621.9000000000001 165.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 105.0 637.3000000000001 Td (RiskEngine 2.4, RTEX 2.4 & Noctis 2.4) Tj ET
+0.80 0.84 0.89 RG 0.4 w 266.0 621.9000000000001 310.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 637.3000000000001 Td (Computed 7-dimension risk \(T0=7.5/10, T1=1.2/10\) and signed RFC 8032) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 270.0 628.1 Td (Ed25519 manifest.) Tj ET
+BT /F2 12.0 Tf 0.04 0.37 0.27 rg 36 607.9000000000001 Td (11. Sign-Off & Deliverables Attestation \(TrePath 2.4 Unified Release\)) Tj ET
+0.04 0.47 0.36 rg 36 602.9000000000001 540 1.0 re f
+0.06 0.09 0.16 rg 36 575.4000000000001 540 16.5 re f
+BT /F2 7.3 Tf 1 1 1 rg 40 582.4000000000001 Td (Role) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 170.0 582.4000000000001 Td (Attestation Statement) Tj ET
+BT /F2 7.3 Tf 1 1 1 rg 440.0 582.4000000000001 Td (Signature / Timestamp) Tj ET
+1 1 1 rg 36 551.0000000000001 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 551.0000000000001 130.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 566.4000000000001 Td (Lead Penetration Tester) Tj ET
+0.80 0.84 0.89 RG 0.4 w 166.0 551.0000000000001 270.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 170.0 566.4000000000001 Td (All findings, origins, and PoC transcripts verified against) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 170.0 557.2 Td (EvidenceCore SHA-256 & Ed25519 seals.) Tj ET
+0.80 0.84 0.89 RG 0.4 w 436.0 551.0000000000001 140.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 440.0 566.4000000000001 Td (SIGNED | 2026-11-02 14:53 UTC) Tj ET
+0.97 0.98 0.99 rg 36 526.6000000000001 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 526.6000000000001 130.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 542.0000000000001 Td (Principal Security Architect) Tj ET
+0.80 0.84 0.89 RG 0.4 w 166.0 526.6000000000001 270.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 170.0 542.0000000000001 Td (TrePath 2.4 \(TP24-BUILD-20261102-UNIFIED\) AT-01..AT-10,) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 170.0 532.8000000000001 Td (NG-01..NG-06 & 26/26 Quality Gates passed.) Tj ET
+0.80 0.84 0.89 RG 0.4 w 436.0 526.6000000000001 140.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 440.0 542.0000000000001 Td (VERIFIED | 2026-11-02 14:53 UTC) Tj ET
+1 1 1 rg 36 502.20000000000016 540 24.4 re f
+0.80 0.84 0.89 RG 0.4 w 36 502.20000000000016 130.0 24.4 re S
+BT /F2 7.1 Tf 0.06 0.12 0.24 rg 40 517.6000000000001 Td (Client System Owner) Tj ET
+0.80 0.84 0.89 RG 0.4 w 166.0 502.20000000000016 270.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 170.0 517.6000000000001 Td (Acknowledges receipt of prioritized remediation roadmap and) Tj ET
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 170.0 508.40000000000015 Td (RTEX retest workflow.) Tj ET
+0.80 0.84 0.89 RG 0.4 w 436.0 502.20000000000016 140.0 24.4 re S
+BT /F1 7.1 Tf 0.12 0.16 0.22 rg 440.0 517.6000000000001 Td (______________________) Tj ET
+endstream
+endobj
+xref
+0 32
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000205 00000 n 
+0000000302 00000 n 
+0000000404 00000 n 
+0000000499 00000 n 
+0000000645 00000 n 
+0000007459 00000 n 
+0000007605 00000 n 
+0000022326 00000 n 
+0000022474 00000 n 
+0000037880 00000 n 
+0000038028 00000 n 
+0000054506 00000 n 
+0000054654 00000 n 
+0000074552 00000 n 
+0000074700 00000 n 
+0000087777 00000 n 
+0000087925 00000 n 
+0000100911 00000 n 
+0000101059 00000 n 
+0000114181 00000 n 
+0000114329 00000 n 
+0000129129 00000 n 
+0000129277 00000 n 
+0000151953 00000 n 
+0000152101 00000 n 
+0000165776 00000 n 
+0000165924 00000 n 
+0000184213 00000 n 
+0000184361 00000 n 
+trailer
+<< /Size 32 /Root 1 0 R >>
+startxref
+189914
+%%EOF

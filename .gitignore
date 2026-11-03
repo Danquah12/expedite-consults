@@ -40,3 +40,12 @@ scratch/logs/
 .env*
 *.env
 expedite-consults/orea-prezi/
+*backup*
+*-backup-*/
+expedite-consults/noctis-ai/
+noctis-ai/
+expedite-consults/desk-note-src/
+desk-note-src/
+
+
+
