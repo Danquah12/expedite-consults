@@ -536,16 +536,6 @@ export function MarketplaceView({
               <span>{showNoctisSalesHub ? "✨ Noctis Sales Agent: ON" : "✨ Ask Noctis Sales Agent"}</span>
             </button>
 
-            <a
-              href="https://www.dstrike.app/noctis"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-xl bg-violet-700 hover:bg-violet-800 text-white px-3.5 py-2 text-xs font-extrabold flex items-center gap-1.5 shadow-xs transition-all"
-              title="Open Noctis Intelligence & Sales Portal at https://www.dstrike.app/noctis"
-            >
-              <span>🔮 dstrike.app/noctis ↗</span>
-            </a>
-
             <button
               type="button"
               onClick={() => setIsVendorModalOpen(true)}
@@ -557,7 +547,7 @@ export function MarketplaceView({
           </div>
         </div>
 
-        {/* NOCTIS AI MARKETING & SALES CONCIERGE HUB (Connected to https://www.dstrike.app/noctis & /api/connectin/noctis) */}
+        {/* NOCTIS AI MARKETING & SALES CONCIERGE HUB (In-App API Connection via /api/connectin/noctis) */}
         {showNoctisSalesHub && (
           <div
             id="noctis-marketplace-sales-hub"
@@ -573,14 +563,9 @@ export function MarketplaceView({
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                   <span>Learned All {MASTER_MARKETPLACE_PRODUCTS.length} Market Products · {ENTERPRISE_SOLUTIONS_DATA.length} Blueprints · {spheraAppsData.length} Sphera Apps</span>
                 </span>
-                <a
-                  href="https://www.dstrike.app/noctis"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[11px] font-extrabold text-violet-700 hover:underline bg-violet-50 border border-violet-200 px-2.5 py-0.5 rounded-full"
-                >
-                  🔮 Connected to https://www.dstrike.app/noctis ↗
-                </a>
+                <span className="text-[11px] font-extrabold text-violet-700 bg-violet-50 border border-violet-200 px-2.5 py-0.5 rounded-full">
+                  🔮 Noctis API Connected
+                </span>
               </div>
 
               <button
@@ -616,7 +601,7 @@ export function MarketplaceView({
                     <span className="rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-black text-emerald-700">
                       {noctisActivePitch.displayPrice} ({noctisActivePitch.billingPeriod})
                     </span>
-                    {noctisActivePitch.liveUrl && (
+                    {noctisActivePitch.liveUrl && !noctisActivePitch.liveUrl.includes('/noctis') && (
                       <a
                         href={noctisActivePitch.liveUrl}
                         target="_blank"
@@ -626,14 +611,6 @@ export function MarketplaceView({
                         Launch {noctisActivePitch.productName.split('—')[0].trim()} ↗
                       </a>
                     )}
-                    <a
-                      href="https://www.dstrike.app/noctis"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded-lg bg-violet-700 hover:bg-violet-800 text-white px-3 py-1.5 text-xs font-extrabold shadow-2xs"
-                    >
-                      Open Noctis Agent ↗
-                    </a>
                   </div>
                 </div>
 
@@ -719,7 +696,7 @@ export function MarketplaceView({
             {/* Live Noctis Sales Narrative Box */}
             <div className="rounded-xl bg-white border border-blue-100 p-4 text-xs sm:text-sm text-slate-800 leading-relaxed whitespace-pre-line font-medium max-h-64 overflow-y-auto">
               {noctisSalesText ||
-                `✨ Hi ${currentUser?.name?.split(' ')[0] || 'there'}! I am Noctis (https://www.dstrike.app/noctis), your AI Marketing & Enterprise Solutions Sales Agent for the ConnectLn Market. I know every feature, architecture spec, compliance standard, and pricing tier across all ${MASTER_MARKETPLACE_PRODUCTS.length} products. Ask me to pitch any platform or click "✨ Ask Noctis" on any product card below!`}
+                `✨ Hi ${currentUser?.name?.split(' ')[0] || 'there'}! I am Noctis, your AI Marketing & Enterprise Solutions Sales Agent inside the ConnectLn Market. I know every feature, architecture spec, compliance standard, and pricing tier across all ${MASTER_MARKETPLACE_PRODUCTS.length} products. Ask me to pitch any platform or click "✨ Ask Noctis" on any product card below!`}
             </div>
 
             {/* Interactive Ask Noctis Marketing & Sales Input Bar */}
@@ -754,9 +731,9 @@ export function MarketplaceView({
             <div className="flex flex-wrap gap-1.5">
               {[
                 {
-                  label: "🔮 Pitch DSTRIKE & Noctis (dstrike.app/noctis)",
+                  label: "🔮 Pitch DSTRIKE & Noctis Threat Prediction",
                   productId: "prod_dstrike_noctis_platform",
-                  q: "Pitch DSTRIKE and Noctis Threat Prediction Desk (https://www.dstrike.app/noctis) — explain everything it does, features, compliance, and ROI."
+                  q: "Pitch DSTRIKE and Noctis Threat Prediction — explain everything it does, features, compliance, and ROI."
                 },
                 {
                   label: "🛡️ Pitch Aagiis DoD RMF & cATO (aagiis.com)",
@@ -1035,17 +1012,17 @@ export function MarketplaceView({
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between gap-1.5">
                   <span className="rounded-md bg-violet-700 text-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
-                    3. Threat Prediction Desk
+                    3. Threat Prediction Intelligence
                   </span>
                   <span className="text-[10px] font-mono font-bold text-violet-700 dark:text-violet-300">
-                    /noctis
+                    Noctis AI
                   </span>
                 </div>
                 <div className="flex items-start gap-2 pt-0.5">
                   <span className="text-xl shrink-0">🔮</span>
                   <div>
                     <h3 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 leading-snug">
-                      DSTRIKE Prediction Desk (Noctis)
+                      DSTRIKE Threat Prediction (Noctis)
                     </h3>
                     <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-0.5">
                       Probabilistic cyber threat forecasting, zero-day exploit probability curves &amp; geopolitical risk modeling.
@@ -1056,25 +1033,24 @@ export function MarketplaceView({
               <div className="pt-2 border-t border-violet-200/60 dark:border-violet-800/50 flex items-center justify-between gap-2">
                 <button
                   type="button"
+                  onClick={() => setSelectedSubCategory('Cyber_Prediction')}
+                  className="text-[11px] font-semibold text-violet-800 dark:text-violet-300 hover:underline cursor-pointer"
+                >
+                  Filter Category
+                </button>
+                <button
+                  type="button"
                   onClick={() =>
                     fetchNoctisMarketplaceSalesAgent({
                       productId: 'prod_dstrike_noctis_platform',
-                      question: 'Pitch DSTRIKE Prediction Desk (Noctis at https://www.dstrike.app/noctis) — explain how it works and why CISOs buy it.',
+                      question: 'Pitch DSTRIKE Threat Prediction — explain how it works, its features, and why CISOs buy it.',
                       scrollToHub: true
                     })
                   }
-                  className="text-[11px] font-extrabold text-[#1967D2] hover:underline cursor-pointer"
+                  className="rounded-lg bg-violet-700 hover:bg-violet-800 text-white px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors cursor-pointer"
                 >
-                  ✨ Ask Noctis
+                  <span>✨ Ask Noctis</span>
                 </button>
-                <a
-                  href="https://www.dstrike.app/noctis"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-lg bg-violet-700 hover:bg-violet-800 text-white px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
-                >
-                  <span>Open /noctis ↗</span>
-                </a>
               </div>
             </div>
 
@@ -1906,16 +1882,21 @@ export function MarketplaceView({
                     <span>⚡ Main App</span>
                     <span>dstrike.app ↗</span>
                   </a>
-                  <a
-                    href="https://dstrike.app/noctis"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="text-[11px] font-semibold text-fuchsia-700 dark:text-fuchsia-400 hover:underline flex items-center justify-between"
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      fetchNoctisMarketplaceSalesAgent({
+                        productId: 'prod_dstrike_noctis_platform',
+                        question: 'Pitch DSTRIKE Threat Prediction — explain how it works and why CISOs buy it.',
+                        scrollToHub: true
+                      })
+                    }}
+                    className="text-[11px] font-semibold text-fuchsia-700 dark:text-fuchsia-400 hover:underline flex items-center justify-between cursor-pointer text-left"
                   >
-                    <span>🔮 Prediction Desk</span>
-                    <span>/noctis ↗</span>
-                  </a>
+                    <span>✨ Ask Noctis</span>
+                    <span>In-App Pitch →</span>
+                  </button>
                 </div>
               </div>
 
@@ -2120,7 +2101,7 @@ export function MarketplaceView({
                   </div>
 
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    {product.liveUrl && (
+                    {product.liveUrl && !product.liveUrl.includes('/noctis') && (
                       <button
                         onClick={() => {
                           if (product.liveUrl?.startsWith('/')) {
@@ -2140,7 +2121,10 @@ export function MarketplaceView({
                       </button>
                     )}
 
-                    {product.demoUrl && product.demoUrl !== product.liveUrl && product.demoUrl.startsWith('http') && (
+                    {product.demoUrl &&
+                      product.demoUrl !== product.liveUrl &&
+                      product.demoUrl.startsWith('http') &&
+                      !product.demoUrl.includes('/noctis') && (
                       <a
                         href={product.demoUrl}
                         target="_blank"
@@ -2150,9 +2134,7 @@ export function MarketplaceView({
                       >
                         <ExternalLink className="h-3 w-3" />
                         <span>
-                          {product.demoUrl.includes('/noctis')
-                            ? 'Noctis Desk ↗'
-                            : product.demoUrl.includes('/engine')
+                          {product.demoUrl.includes('/engine')
                             ? 'DAST Engine ↗'
                             : product.demoUrl.includes('sphera-portal')
                             ? 'Sphera Launchpad ↗'
@@ -2295,14 +2277,9 @@ export function MarketplaceView({
                         Deep-Dive Product Pitch &amp; Technical Consultation
                       </span>
                     </div>
-                    <a
-                      href="https://www.dstrike.app/noctis"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[11px] font-extrabold text-violet-700 hover:underline bg-violet-50 border border-violet-200 px-2.5 py-0.5 rounded-full"
-                    >
-                      🔮 Open https://www.dstrike.app/noctis ↗
-                    </a>
+                    <span className="text-[11px] font-extrabold text-violet-700 bg-violet-50 border border-violet-200 px-2.5 py-0.5 rounded-full">
+                      🔮 Noctis API Connected
+                    </span>
                   </div>
 
                   <div className="rounded-xl bg-white border border-blue-100 p-3.5 text-xs sm:text-sm text-slate-800 whitespace-pre-line leading-relaxed max-h-72 overflow-y-auto">
@@ -2471,7 +2448,7 @@ export function MarketplaceView({
                 </button>
 
                 <div className="flex items-center gap-2">
-                  {selectedProduct.liveUrl && (
+                  {selectedProduct.liveUrl && !selectedProduct.liveUrl.includes('/noctis') && (
                     <button
                       onClick={() => window.open(selectedProduct.liveUrl, '_blank', 'noopener,noreferrer')}
                       className="rounded-full bg-emerald-600 hover:bg-emerald-700 px-4 py-2 text-xs font-bold text-white shadow-md flex items-center gap-1.5 transition-all"

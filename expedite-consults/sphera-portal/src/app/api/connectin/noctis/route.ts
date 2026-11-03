@@ -106,8 +106,11 @@ function buildProductSalesPitch(product: MarketplaceProduct, customQuestion?: st
     `• Encryption & Isolation: ${product.security?.encryption || 'AES-256 / TLS 1.3'} · ${product.security?.isolation || 'Dedicated Tenant'}\n` +
     `• Support SLA: ${product.support?.sla || '99.9% Uptime SLA'} via ${product.support?.channel || '24/7 Priority Desk'} (Response: ${product.support?.responseHours || '< 1 hour'})`
 
+  const safeLiveUrl = product.liveUrl && !product.liveUrl.includes('/noctis') ? product.liveUrl : undefined
+  const safeDemoUrl = product.demoUrl && !product.demoUrl.includes('/noctis') ? product.demoUrl : undefined
+
   const defaultSalesNarrative =
-    `✨ **Noctis AI Sales & Product Specialist (${NOCTIS_WEB_URL}) — Executive Deep-Dive on ${product.name}**\n\n` +
+    `✨ **Noctis AI Sales & Product Specialist — Executive Deep-Dive on ${product.name}**\n\n` +
     `**1. Why ${product.name} Stands Out:**\n` +
     `${product.tagline} Built and verified by **${product.vendor.name}**, it gives your organization immediate operational capability in **${product.category} (${product.subCategory})**.\n\n` +
     `**2. Deep-Dive: Everything ${product.name} Has & Does:**\n` +
@@ -122,9 +125,8 @@ function buildProductSalesPitch(product: MarketplaceProduct, customQuestion?: st
     `\n\n**5. Commercial Pricing & How to Start Today:**\n` +
     `  • **Starting Price**: **${product.pricing.displayPrice}** (${product.pricing.billingPeriod})${product.pricing.hasFreeTrial ? ` — includes a **${product.pricing.trialDays || 14}-Day Free Evaluation Trial**` : ''}.\n` +
     (product.pricingTiers || []).map((t) => `  • **${t.name} (${t.price} ${t.period})**: ${t.description}`).join('\n') +
-    (product.liveUrl ? `\n  • **Live Production Portal**: ${product.liveUrl}` : '') +
-    (product.demoUrl ? `\n  • **Interactive Companion / Engine**: ${product.demoUrl}` : '') +
-    `\n  • **Noctis Intelligence Desk**: ${NOCTIS_WEB_URL}`
+    (safeLiveUrl ? `\n  • **Live Production Portal**: ${safeLiveUrl}` : '') +
+    (safeDemoUrl ? `\n  • **Interactive Companion / Engine**: ${safeDemoUrl}` : '')
 
   return {
     productId: product.id,
@@ -136,9 +138,9 @@ function buildProductSalesPitch(product: MarketplaceProduct, customQuestion?: st
     displayPrice: product.pricing.displayPrice,
     billingPeriod: product.pricing.billingPeriod,
     hasFreeTrial: product.pricing.hasFreeTrial,
-    liveUrl: product.liveUrl,
-    demoUrl: product.demoUrl,
-    noctisAgentUrl: NOCTIS_WEB_URL,
+    liveUrl: safeLiveUrl,
+    demoUrl: safeDemoUrl,
+    noctisAgentUrl: '',
     headlinePitch,
     whatItDoesAndHowItWorks,
     featureHighlights: product.features || [],
@@ -205,6 +207,8 @@ function buildMarketplaceCatalogPromptContext(products: MarketplaceProduct[]): s
       const feats = (p.features || []).map((f) => `${f.title} (${f.desc})`).join('; ')
       const tiers = (p.pricingTiers || []).map((t) => `${t.name}: ${t.price} ${t.period}`).join(' | ')
       const comp = (p.security?.compliance || []).join(', ')
+      const safeLive = p.liveUrl && !p.liveUrl.includes('/noctis') ? p.liveUrl : 'In-App'
+      const safeDemo = p.demoUrl && !p.demoUrl.includes('/noctis') ? p.demoUrl : ''
       return (
         `${idx + 1}. PRODUCT: "${p.name}" (ID: ${p.id}) by ${p.vendor.name}\n` +
         `   - Category: ${p.category} / ${p.subCategory} | Rating: ${p.rating}/5 (${p.reviewsCount} reviews)\n` +
@@ -214,7 +218,7 @@ function buildMarketplaceCatalogPromptContext(products: MarketplaceProduct[]): s
         `   - Architecture & Latency: ${p.architecture?.title} — ${p.architecture?.summary} (${p.architecture?.latency})\n` +
         `   - Security & Compliance: ${comp} | Encryption: ${p.security?.encryption}\n` +
         `   - Pricing: ${p.pricing.displayPrice} (${p.pricing.billingPeriod}) | Tiers: ${tiers}\n` +
-        `   - Live URLs: ${p.liveUrl || 'In-App'} ${p.demoUrl ? `| Companion URL: ${p.demoUrl}` : ''}`
+        `   - Live URLs: ${safeLive} ${safeDemo ? `| Companion URL: ${safeDemo}` : ''}`
       )
     })
     .join('\n\n')
@@ -541,7 +545,8 @@ export async function POST(req: Request) {
       .join('\n')
 
     const noctisSalesPrompt =
-      `You are Noctis (${NOCTIS_WEB_URL}), the official AI Product Marketing & Enterprise Solutions Sales Agent inside ConnectLn (https://www.conectln.com).\n` +
+      `You are Noctis, the official in-app AI Product Marketing & Enterprise Solutions Sales Agent inside ConnectLn (https://www.conectln.com).\n` +
+      `IMPORTANT RULE: Keep the buyer inside ConnectLn. Do NOT provide any external link to the Noctis Desk (/noctis or dstrike.app/noctis) — users ask you questions directly inside ConnectLn.\n` +
       `You have learned every detail, feature, architecture spec, compliance framework, pricing tier, and live URL of all ${MASTER_MARKETPLACE_PRODUCTS.length} Marketplace products, ${ENTERPRISE_SOLUTIONS_DATA.length} Outcome Solution Blueprints, and ${spheraAppsData.length} Sphera Micro-Apps.\n` +
       `The prospective buyer/member is ${memberName}${body?.profile?.profession ? ` (${body.profile.profession})` : ''}.\n\n` +
       `=== VERIFIED MARKETPLACE PRODUCT KNOWLEDGE BASE ===\n` +
@@ -552,15 +557,15 @@ export async function POST(req: Request) {
         ? `Act as an enthusiastic, deeply knowledgeable enterprise sales & technical marketing specialist for "${explicitProduct.name}". ` +
           (customQ
             ? `Answer the buyer's specific question about "${explicitProduct.name}" persuasively and accurately using the verified specs above: "${customQ}"`
-            : `Give a compelling executive deep-dive sales pitch for "${explicitProduct.name}", explaining everything it has and does, its technical architecture, compliance certifications, proven ROI, pricing tiers, and how to launch it or start a 14-day free trial right now.`)
+            : `Give a compelling executive deep-dive sales pitch for "${explicitProduct.name}", explaining everything it has and does, its technical architecture, compliance certifications, proven ROI, pricing tiers, and how to start a 14-day free trial right now inside ConnectLn.`)
         : customQ
-        ? `Act as a consultative AI marketing and sales agent. Answer the buyer's request persuasively using the exact products, features, pricing, and live URLs from the ConnectLn Market catalog above: "${customQ}"`
-        : `Introduce yourself as Noctis (${NOCTIS_WEB_URL}), the ConnectLn Marketplace Sales & Product Intelligence Agent, and pitch our flagship platforms (DSTRIKE & Noctis Threat Prediction Desk at https://www.dstrike.app/noctis, Aagiis Federal DoD RMF at https://aagiis.com, EXPEDITE STRIKE™ DAST Engine at https://11-dast-security-platform.vercel.app/engine, DeskNote E2EE, and PDFAdore), highlighting what each does, why teams buy them, and their pricing/free trials.`)
+        ? `Act as a consultative AI marketing and sales agent. Answer the buyer's request persuasively using the exact products, features, and pricing from the ConnectLn Market catalog above: "${customQ}"`
+        : `Introduce yourself as Noctis, the ConnectLn Marketplace Sales & Product Intelligence Agent, and pitch our flagship platforms (DSTRIKE Autonomous Cyber Defense at https://www.dstrike.app, Aagiis Federal DoD RMF at https://aagiis.com, EXPEDITE STRIKE™ DAST Engine at https://11-dast-security-platform.vercel.app/engine, DeskNote E2EE, and PDFAdore), highlighting what each does, why teams buy them, and their pricing/free trials.`)
 
     const fallbackSalesText = explicitProduct
       ? primaryPitch.liveNoctisSalesResponse!
       : customQ
-      ? `✨ **Noctis AI Marketing & Sales Agent (${NOCTIS_WEB_URL}) — Product Recommendation & Deep-Dive for ${memberName}**\n\n` +
+      ? `✨ **Noctis AI Marketing & Sales Agent — Product Recommendation & Deep-Dive for ${memberName}**\n\n` +
         `Based on your inquiry (*"${customQ}"*), here is a complete breakdown of the top ${matchedProducts.length} solutions in the ConnectLn Market and everything they do:\n\n` +
         allPitches
           .slice(0, 3)
@@ -574,15 +579,15 @@ export async function POST(req: Request) {
               `• **Pricing & Trial**: **${p.displayPrice}** (${p.billingPeriod})${p.hasFreeTrial ? ' · **14-Day Free Trial Available**' : ''}${p.liveUrl ? ` · **Live Portal**: ${p.liveUrl}` : ''}`
           )
           .join('\n\n')
-      : `✨ **Welcome to Noctis Market Intelligence & Sales Concierge (${NOCTIS_WEB_URL})**\n\n` +
+      : `✨ **Welcome to Noctis Market Intelligence & Sales Concierge**\n\n` +
         `I have learned every specification, feature, architecture diagram, compliance standard, and pricing tier across all **${MASTER_MARKETPLACE_PRODUCTS.length} Marketplace Platforms**, **${ENTERPRISE_SOLUTIONS_DATA.length} Outcome Blueprints**, and **${spheraAppsData.length} Sphera Micro-Apps**.\n\n` +
         `**Flagship Platforms Ready to Deploy Today:**\n` +
-        `• **🔮 DSTRIKE & Noctis Threat Prediction Desk (${NOCTIS_WEB_URL})**: Autonomous cyber defense, attack surface telemetry, and AI-driven predictive security intelligence.\n` +
+        `• **🔮 DSTRIKE — Autonomous Cyber Defense & Threat Intelligence (https://www.dstrike.app)**: Autonomous cyber defense, attack surface telemetry, and AI-driven predictive security intelligence.\n` +
         `• **🛡️ Aagiis — Federal Compliance & DoD RMF (https://aagiis.com)**: Full DoDI 8510.01, DCSA NISP, Continuous ATO (cATO), eMASS automation, and NIST 800-53 Rev 5 governance.\n` +
         `• **🎯 EXPEDITE STRIKE™ — Live DAST Engine (https://11-dast-security-platform.vercel.app/engine)**: Real-time dynamic application security testing, OWASP Top 10 & API exploit validation with zero false positives.\n` +
         `• **📓 DeskNote E2EE & PDFAdore (https://www.pdfadore.com)**: Zero-knowledge encrypted field notebook and 31+ browser-native PDF & document engineering tools.\n` +
         `• **🏥 Clinical, Skilled Trades & Automotive Suites**: NIH DailyMed, MDCalc Clinical, Festool/Mafell joinery systems, and 800V EV diagnostic scopes.\n\n` +
-        `*Click **"✨ Ask Noctis"** on any product card below or type any question above to get a custom executive sales pitch, technical deep-dive, or side-by-side ROI comparison!*`
+        `*Click **"✨ Ask Noctis"** on any product card below or type any question above to get a custom executive sales pitch, technical deep-dive, or side-by-side ROI comparison right here inside ConnectLn!*`
 
     const ctrl = new AbortController()
     const timer = setTimeout(() => ctrl.abort(), 15000)
@@ -604,14 +609,17 @@ export async function POST(req: Request) {
       if (res.ok) {
         const data = (await res.json()) as { text?: string }
         if (data?.text && data.text.trim()) {
-          primaryPitch.liveNoctisSalesResponse = data.text.trim()
+          const cleanedSalesText = data.text
+            .trim()
+            .replace(/https?:\/\/(?:www\.)?dstrike\.app\/noctis/gi, 'ConnectLn In-App Noctis Concierge')
+          primaryPitch.liveNoctisSalesResponse = cleanedSalesText
           return NextResponse.json(
             {
-              text: data.text.trim(),
+              text: cleanedSalesText,
               fallbackSummary: fallbackSalesText,
               productPitch: primaryPitch,
               matchedPitches: allPitches,
-              noctisAgentUrl: NOCTIS_WEB_URL,
+              noctisAgentUrl: '',
               source: 'noctis-live-sales-api',
               totalCatalogCount: MASTER_MARKETPLACE_PRODUCTS.length,
               timestampIso: new Date().toISOString()
@@ -632,7 +640,7 @@ export async function POST(req: Request) {
         fallbackSummary: fallbackSalesText,
         productPitch: primaryPitch,
         matchedPitches: allPitches,
-        noctisAgentUrl: NOCTIS_WEB_URL,
+        noctisAgentUrl: '',
         source: 'noctis-market-sales-engine',
         totalCatalogCount: MASTER_MARKETPLACE_PRODUCTS.length,
         timestampIso: new Date().toISOString()
