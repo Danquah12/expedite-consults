@@ -151,6 +151,10 @@ export function MessagingView({
 
     // Noctis Inbox API Briefing States
     const [noctisBriefingText, setNoctisBriefingText] = useState<string>('');
+    const [noctisDateSummaries, setNoctisDateSummaries] = useState<Record<string, string>>({});
+    const [noctisUnreadFilterMode, setNoctisUnreadFilterMode] = useState<
+        'unread_and_pending' | 'strict_unread' | 'all'
+    >('unread_and_pending');
     const [isNoctisLoading, setIsNoctisLoading] = useState<boolean>(false);
     const [noctisUpdatedAtLabel, setNoctisUpdatedAtLabel] = useState<string>('Updated just now');
     const [noctisQuestionInput, setNoctisQuestionInput] = useState<string>('');
@@ -911,11 +915,38 @@ export function MessagingView({
         threads.find((t) => t.id === selectedThreadId) ||
         threads[0];
 
+    const isThreadUnreadForNoctis = (
+        t: B2BConversationThread,
+        mode: 'unread_and_pending' | 'strict_unread' | 'all' = noctisUnreadFilterMode
+    ): boolean => {
+        if (completedNoctisTodoIds.includes(t.id) || snoozedIds.includes(t.id)) {
+            return false;
+        }
+        if (mode === 'all') return true;
+        if (mode === 'strict_unread') {
+            return (t.unreadCount || 0) > 0;
+        }
+        // Default ('unread_and_pending'): any thread with unread badge > 0 OR incoming bilateral peer/recruiter/vendor email not yet marked read/done in Noctis
+        const lastMsg = t.messages?.[t.messages.length - 1];
+        const isIncomingLastMsg = !lastMsg || !lastMsg.isMe;
+        return (
+            (t.unreadCount || 0) > 0 ||
+            t.id.startsWith('dm_pair__') ||
+            t.channelType === 'People' ||
+            isIncomingLastMsg
+        );
+    };
+
     const fetchNoctisInboxBriefing = async (customQuestion?: string) => {
         setIsNoctisLoading(true);
         try {
-            const digest = threads.slice(0, 20).map((t) => {
+            const digest = threads.slice(0, 25).map((t) => {
                 const lastMsg = t.messages?.[t.messages.length - 1];
+                const formattedDateTime = formatMessageSentDateTime(lastMsg, t.lastMessageTime);
+                const dateHeading =
+                    formattedDateTime.split(' · ')[0]?.trim() ||
+                    formatMessageDateHeading(lastMsg) ||
+                    formattedDateTime;
                 const atts: string[] = [];
                 for (const m of t.messages || []) {
                     for (const a of m.attachments || []) {
@@ -928,8 +959,10 @@ export function MessagingView({
                     subtitle: t.subtitle,
                     channelType: t.channelType,
                     unreadCount: t.unreadCount,
+                    isUnreadOrPending: isThreadUnreadForNoctis(t, 'unread_and_pending'),
                     lastMessage: t.lastMessage,
-                    lastMessageTime: formatMessageSentDateTime(lastMsg, t.lastMessageTime),
+                    lastMessageTime: formattedDateTime,
+                    dateHeading,
                     attachments: atts,
                     messagesCount: (t.messages || []).length,
                 };
@@ -949,6 +982,9 @@ export function MessagingView({
                 }),
             });
             const data = await res.json().catch(() => null);
+            if (data?.dateSummaries && typeof data.dateSummaries === 'object') {
+                setNoctisDateSummaries(data.dateSummaries);
+            }
             if (data?.text) {
                 if (customQuestion) {
                     setNoctisCustomAnswer(data.text);
@@ -2162,24 +2198,42 @@ export function MessagingView({
                     </div>
                 </div>
 
-                {/* When "Noctis" is selected in the left navigation rail: render the Noctis Inbox Intelligence & Briefing Dashboard */}
+                {/* When "Noctis" is selected in the left navigation rail: search unread emails & summarize them grouped by the dates they came in */}
                 {activeMailboxFolder === 'ai_inbox' && !activeCustomLabel ? (
                     (() => {
                         const firstName =
                             (currentUser?.name || 'Kwesi').trim().split(/\s+/)[0] || 'Kwesi';
 
+                        const strictUnreadThreadsCount = threads.filter(
+                            (t) =>
+                                (t.unreadCount || 0) > 0 &&
+                                !completedNoctisTodoIds.includes(t.id) &&
+                                !snoozedIds.includes(t.id)
+                        ).length;
+
+                        const unreadAndPendingCount = threads.filter((t) =>
+                            isThreadUnreadForNoctis(t, 'unread_and_pending')
+                        ).length;
+
                         const activeNoctisTodos = threads
-                            .filter(
-                                (t) =>
-                                    !completedNoctisTodoIds.includes(t.id) &&
-                                    !snoozedIds.includes(t.id)
-                            )
+                            .filter((t) => isThreadUnreadForNoctis(t, noctisUnreadFilterMode))
                             .map((t) => {
                                 const lastMsg = t.messages?.[t.messages.length - 1];
                                 const dateStr = formatMessageSentDateTime(
                                     lastMsg,
                                     t.lastMessageTime
                                 );
+                                const parts = dateStr.split(' · ');
+                                const dateKey =
+                                    parts[0]?.trim() ||
+                                    formatMessageDateHeading(lastMsg) ||
+                                    'Recent';
+                                const timeOnly = parts[1]?.trim() || dateStr;
+                                const parsedDateMs = Date.parse(dateKey);
+                                const sortTimestamp = Number.isNaN(parsedDateMs)
+                                    ? 0
+                                    : parsedDateMs;
+
                                 const atts: string[] = [];
                                 for (const m of t.messages || []) {
                                     for (const a of m.attachments || []) {
@@ -2191,8 +2245,8 @@ export function MessagingView({
                                     t.lastMessage.includes('📎') ||
                                     t.lastMessage.toLowerCase().includes('attached:');
 
-                                let todoTitle = `Follow up with ${t.title}`;
-                                let todoExplanation = `${t.title} (${t.subtitle}) sent a message on ${dateStr}: "${t.lastMessage}". You can open the thread to reply, schedule a meeting, or attach a verified ConnectLn document.`;
+                                let todoTitle = `Unread email from ${t.title}`;
+                                let todoExplanation = `Noctis Summary (${dateKey} at ${timeOnly}): ${t.title} (${t.subtitle}) sent "${t.lastMessage}". Open the conversation to reply, schedule a meeting, or attach a verified ConnectLn document.`;
                                 let actionLabel = 'View';
                                 let actionIcon = '✉️';
 
@@ -2203,31 +2257,31 @@ export function MessagingView({
                                             .replace(/^.*attached:\s*/i, '')
                                             .slice(0, 48) ||
                                         'attached file';
-                                    todoTitle = `Review attached file & respond to ${t.title} (${fileName})`;
-                                    todoExplanation = `${t.title} (${t.subtitle}) shared a message with attachment "${fileName}" on ${dateStr}. Review the attached document and confirm next steps or project requirements in the thread.`;
+                                    todoTitle = `Unread attachment from ${t.title} (${fileName})`;
+                                    todoExplanation = `Noctis Summary (${dateKey} at ${timeOnly}): ${t.title} (${t.subtitle}) sent "${t.lastMessage}" with attachment "${fileName}". Review the attached file and confirm next steps in the thread.`;
                                     actionLabel = 'Open';
                                     actionIcon = '🔗';
                                 } else if (t.channelType === 'Companies') {
-                                    todoTitle = `Respond to hiring & role briefing with ${t.title}`;
-                                    todoExplanation = `${t.title} (${t.subtitle}) reached out on ${dateStr} regarding an open position: "${t.lastMessage}". You can reply with your availability, attach your ConnectLn resume, or schedule an intro call.`;
+                                    todoTitle = `Unread hiring & role email from ${t.title}`;
+                                    todoExplanation = `Noctis Summary (${dateKey} at ${timeOnly}): ${t.title} (${t.subtitle}) reached out regarding an open role: "${t.lastMessage}". Reply with your availability or attach your ConnectLn resume.`;
                                     actionLabel = 'View';
                                     actionIcon = '';
                                 } else if (t.channelType === 'Products') {
-                                    todoTitle = `Review commercial spec & quote with ${t.title}`;
-                                    todoExplanation = `${t.title} (${t.subtitle}) updated your vendor desk thread on ${dateStr}: "${t.lastMessage}". Open the thread to confirm pricing, delivery lead time, or technical specifications.`;
+                                    todoTitle = `Unread vendor quote & spec from ${t.title}`;
+                                    todoExplanation = `Noctis Summary (${dateKey} at ${timeOnly}): ${t.title} (${t.subtitle}) updated your commercial quote thread: "${t.lastMessage}". Open to review pricing, lead time, or technical specifications.`;
                                     actionLabel = 'Open';
                                     actionIcon = '🔗';
                                 } else if (
                                     t.lastMessage.toLowerCase().includes('huddle') ||
                                     t.lastMessage.toLowerCase().includes('meeting')
                                 ) {
-                                    todoTitle = `Confirm Video Huddle & meeting follow-up with ${t.title}`;
-                                    todoExplanation = `Your E2EE Video Huddle or scheduled session with ${t.title} (${t.subtitle}) was logged on ${dateStr}: "${t.lastMessage}". Review session notes or schedule the next follow-up call.`;
+                                    todoTitle = `Unread Video Huddle & meeting log with ${t.title}`;
+                                    todoExplanation = `Noctis Summary (${dateKey} at ${timeOnly}): Your E2EE Video Huddle or scheduled session with ${t.title} (${t.subtitle}) was logged: "${t.lastMessage}". Review session notes or schedule the next follow-up.`;
                                     actionLabel = 'View';
                                     actionIcon = '';
                                 } else if (t.channelType === 'People') {
-                                    todoTitle = `Reply to direct message from ${t.title}`;
-                                    todoExplanation = `${t.title} (${t.subtitle}) sent you a direct message on ${dateStr}: "${t.lastMessage}". Click View to open the conversation and send your response.`;
+                                    todoTitle = `Unread direct email from ${t.title}`;
+                                    todoExplanation = `Noctis Summary (${dateKey} at ${timeOnly}): ${t.title} (${t.subtitle}) sent a direct message: "${t.lastMessage}". Click View to open the conversation and send your reply.`;
                                     actionLabel = 'View';
                                     actionIcon = '✉️';
                                 }
@@ -2237,6 +2291,9 @@ export function MessagingView({
                                     todoTitle,
                                     todoExplanation,
                                     dateStr,
+                                    dateKey,
+                                    timeOnly,
+                                    sortTimestamp,
                                     attCount: Math.max(atts.length, hasAtt ? 1 : 0),
                                     msgCount: (t.messages || []).length || 1,
                                     actionLabel,
@@ -2244,12 +2301,58 @@ export function MessagingView({
                                 };
                             });
 
-                        const visibleTodos = showAllNoctisTodos
-                            ? activeNoctisTodos
-                            : activeNoctisTodos.slice(0, 4);
-                        const remainingTodosCount = Math.max(
+                        // Group unread emails chronologically by the exact calendar date they came in
+                        const dateMap = new Map<
+                            string,
+                            {
+                                dateKey: string;
+                                sortTimestamp: number;
+                                items: typeof activeNoctisTodos;
+                                autoSummary: string;
+                            }
+                        >();
+
+                        for (const item of activeNoctisTodos) {
+                            const existing = dateMap.get(item.dateKey);
+                            if (existing) {
+                                existing.items.push(item);
+                            } else {
+                                dateMap.set(item.dateKey, {
+                                    dateKey: item.dateKey,
+                                    sortTimestamp: item.sortTimestamp,
+                                    items: [item],
+                                    autoSummary: '',
+                                });
+                            }
+                        }
+
+                        const dateGroups = Array.from(dateMap.values())
+                            .sort((a, b) => b.sortTimestamp - a.sortTimestamp)
+                            .map((group) => {
+                                const apiDateSummary = noctisDateSummaries[group.dateKey];
+                                const sendersList = group.items
+                                    .map((i) => i.thread.title)
+                                    .join(', ');
+                                const fallbackDateSummary = `${group.items.length} unread ${
+                                    group.items.length === 1 ? 'email' : 'emails'
+                                } arrived on ${group.dateKey} from ${sendersList}. ${group.items
+                                    .map(
+                                        (i) =>
+                                            `${i.thread.title} (${i.timeOnly}): "${i.thread.lastMessage.slice(0, 90)}"`
+                                    )
+                                    .join(' · ')}`;
+                                return {
+                                    ...group,
+                                    autoSummary: apiDateSummary || fallbackDateSummary,
+                                };
+                            });
+
+                        const visibleDateGroups = showAllNoctisTodos
+                            ? dateGroups
+                            : dateGroups.slice(0, 4);
+                        const hiddenDatesCount = Math.max(
                             0,
-                            activeNoctisTodos.length - visibleTodos.length
+                            dateGroups.length - visibleDateGroups.length
                         );
 
                         const noctisTopics = [
@@ -2306,16 +2409,16 @@ export function MessagingView({
                         return (
                             <div className="flex-1 bg-white overflow-y-auto px-6 sm:px-10 py-7 h-full">
                                 <div className="max-w-4xl mx-auto">
-                                    {/* Top Row: Noctis Badge + Updated just now refresh button */}
-                                    <div className="flex items-center justify-between gap-3 mb-2">
-                                        <div className="flex items-center gap-2">
+                                    {/* Top Row: Noctis Badge + Unread Search Scope + Updated just now refresh button */}
+                                    <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+                                        <div className="flex flex-wrap items-center gap-2">
                                             <span className="inline-flex items-center gap-1.5 rounded-md bg-[#E8F0FE] text-[#1967D2] px-2.5 py-0.5 text-xs font-extrabold">
                                                 <span>✨</span>
                                                 <span>Noctis</span>
                                             </span>
                                             <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
                                                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                                                <span>API Connected</span>
+                                                <span>Unread Email Search &amp; Date Summary</span>
                                             </span>
                                         </div>
 
@@ -2324,11 +2427,11 @@ export function MessagingView({
                                             onClick={() => fetchNoctisInboxBriefing()}
                                             disabled={isNoctisLoading}
                                             className="inline-flex items-center gap-1.5 rounded-full bg-slate-200/80 hover:bg-slate-300/80 text-slate-700 px-3.5 py-1 text-xs font-bold transition-all cursor-pointer disabled:opacity-60"
-                                            title="Call Noctis API to refresh inbox explanation"
+                                            title="Call Noctis API to search unread emails and summarize by arrival date"
                                         >
                                             <span>
                                                 {isNoctisLoading
-                                                    ? 'Syncing with Noctis...'
+                                                    ? 'Searching unread emails...'
                                                     : noctisUpdatedAtLabel}
                                             </span>
                                             <span className={isNoctisLoading ? 'animate-spin' : ''}>
@@ -2337,27 +2440,72 @@ export function MessagingView({
                                         </button>
                                     </div>
 
-                                    {/* Main Headline matching screenshot: "Hi Kwesi 👋 You have 12 to-dos and 6 topics to catch up on." */}
-                                    <h1 className="text-2xl sm:text-[32px] font-extrabold text-slate-900 tracking-tight leading-snug mb-5">
-                                        Hi {firstName} 👋 You have{' '}
+                                    {/* Main Headline: Noctis Unread Emails & Arrival Dates */}
+                                    <h1 className="text-2xl sm:text-[32px] font-extrabold text-slate-900 tracking-tight leading-snug mb-4">
+                                        Hi {firstName} 👋 Noctis found{' '}
                                         <span className="text-[#1967D2]">
-                                            {activeNoctisTodos.length}{' '}
-                                            {activeNoctisTodos.length === 1 ? 'to-do' : 'to-dos'}
+                                            {activeNoctisTodos.length} unread{' '}
+                                            {activeNoctisTodos.length === 1 ? 'email' : 'emails'}
                                         </span>{' '}
-                                        and{' '}
+                                        summarized across{' '}
                                         <span className="text-[#1967D2]">
-                                            {noctisTopics.length} topics
-                                        </span>{' '}
-                                        to catch up on.
+                                            {dateGroups.length}{' '}
+                                            {dateGroups.length === 1 ? 'date' : 'dates'}
+                                        </span>
+                                        .
                                     </h1>
 
-                                    {/* Live Noctis API Explanation Box + Ask Noctis About Your Inbox */}
+                                    {/* Filter Scope Pills: Unread & Pending vs Strict Unread Badge vs All Emails */}
+                                    <div className="flex flex-wrap items-center gap-2 mb-5">
+                                        <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mr-1">
+                                            🔍 Noctis Search Filter:
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setNoctisUnreadFilterMode('unread_and_pending')
+                                            }
+                                            className={`rounded-full px-3 py-1 text-xs font-bold transition-all cursor-pointer ${
+                                                noctisUnreadFilterMode === 'unread_and_pending'
+                                                    ? 'bg-[#1967D2] text-white shadow-2xs'
+                                                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                            }`}
+                                        >
+                                            Unread &amp; Pending Replies ({unreadAndPendingCount})
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setNoctisUnreadFilterMode('strict_unread')
+                                            }
+                                            className={`rounded-full px-3 py-1 text-xs font-bold transition-all cursor-pointer ${
+                                                noctisUnreadFilterMode === 'strict_unread'
+                                                    ? 'bg-[#1967D2] text-white shadow-2xs'
+                                                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                            }`}
+                                        >
+                                            Unread Badge Only ({strictUnreadThreadsCount})
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setNoctisUnreadFilterMode('all')}
+                                            className={`rounded-full px-3 py-1 text-xs font-bold transition-all cursor-pointer ${
+                                                noctisUnreadFilterMode === 'all'
+                                                    ? 'bg-[#1967D2] text-white shadow-2xs'
+                                                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                            }`}
+                                        >
+                                            All Inbox Emails by Date ({threads.length})
+                                        </button>
+                                    </div>
+
+                                    {/* Live Noctis API Date-Grouped Unread Summary Box + Ask Noctis Bar */}
                                     <div className="mb-7 rounded-2xl bg-[#F8FAFD] border border-[#D3E3FD] p-4 sm:p-5 shadow-2xs">
                                         <div className="flex items-center justify-between gap-2 mb-2">
                                             <div className="flex items-center gap-2">
                                                 <span className="text-sm">✨</span>
                                                 <h2 className="text-xs font-black uppercase tracking-wider text-[#041E49]">
-                                                    Noctis Live Inbox Briefing &amp; Explanation
+                                                    Noctis Unread Email Summary by Arrival Date
                                                 </h2>
                                             </div>
                                             <span className="text-[10px] font-bold text-slate-500">
@@ -2365,19 +2513,27 @@ export function MessagingView({
                                             </span>
                                         </div>
 
-                                        <p className="text-xs sm:text-sm text-slate-800 leading-relaxed whitespace-pre-line font-medium mb-3.5">
+                                        <div className="text-xs sm:text-sm text-slate-800 leading-relaxed whitespace-pre-line font-medium mb-3.5 bg-white/80 rounded-xl border border-blue-100 p-3.5">
                                             {noctisBriefingText ||
-                                                `Noctis has analyzed all ${threads.length} conversations in your ConnectLn Inbox (${totalUnreadCount} unread). Priority follow-up is recommended for ${threads
-                                                    .slice(0, 3)
-                                                    .map((t) => t.title)
-                                                    .join(', ')}.`}
-                                        </p>
+                                                dateGroups
+                                                    .map(
+                                                        (g) =>
+                                                            `📅 ${g.dateKey} (${g.items.length} unread):\n` +
+                                                            g.items
+                                                                .map(
+                                                                    (i) =>
+                                                                        `• ${i.thread.title} (${i.timeOnly}): "${i.thread.lastMessage}"`
+                                                                )
+                                                                .join('\n')
+                                                    )
+                                                    .join('\n\n')}
+                                        </div>
 
                                         {noctisCustomAnswer && (
                                             <div className="mb-3.5 rounded-xl bg-white border border-blue-200 p-3.5">
                                                 <div className="flex items-center justify-between mb-1">
                                                     <span className="text-[11px] font-extrabold text-[#0A66C2]">
-                                                        💬 Noctis Answer:
+                                                        💬 Noctis Date &amp; Email Analysis:
                                                     </span>
                                                     <button
                                                         type="button"
@@ -2393,7 +2549,7 @@ export function MessagingView({
                                             </div>
                                         )}
 
-                                        {/* Ask Noctis About Your Inbox Bar */}
+                                        {/* Ask Noctis About Unread Emails & Dates Bar */}
                                         <form
                                             onSubmit={(e) => {
                                                 e.preventDefault();
@@ -2408,7 +2564,7 @@ export function MessagingView({
                                                 onChange={(e) =>
                                                     setNoctisQuestionInput(e.target.value)
                                                 }
-                                                placeholder="Ask Noctis to explain any message, attachment, or thread in your inbox..."
+                                                placeholder="Ask Noctis to search unread emails or summarize messages from a specific date (e.g. Nov 2, Oct 26, Oct 23)..."
                                                 className="flex-1 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#0A66C2] focus:outline-none"
                                             />
                                             <button
@@ -2425,10 +2581,10 @@ export function MessagingView({
                                         {/* 1-Click Quick Prompts for Noctis */}
                                         <div className="flex flex-wrap gap-1.5 mt-2.5">
                                             {[
-                                                'Explain all attached files & dates in my inbox',
-                                                'Summarize my direct peer messages',
-                                                'Which messages need urgent replies today?',
-                                                'Summarize recruiter & vendor inquiries',
+                                                'Summarize my unread emails grouped by the dates they came in',
+                                                'Explain all attached files & arrival dates in my unread emails',
+                                                'Which unread emails need urgent replies today?',
+                                                'Summarize unread direct peer messages by date',
                                             ].map((promptChip) => (
                                                 <button
                                                     key={promptChip}
@@ -2445,12 +2601,17 @@ export function MessagingView({
                                         </div>
                                     </div>
 
-                                    {/* Section 1: Suggested to-dos (matching screenshot layout) */}
+                                    {/* Section 1: Unread Emails Grouped & Summarized by Date Received */}
                                     <div className="mb-8">
-                                        <div className="flex items-center justify-between mb-3">
-                                            <h3 className="text-sm font-bold text-slate-800">
-                                                Suggested to-dos
-                                            </h3>
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div>
+                                                <h3 className="text-sm sm:text-base font-extrabold text-slate-900">
+                                                    📅 Unread Emails Summarized by Date Received
+                                                </h3>
+                                                <p className="text-xs text-slate-500">
+                                                    Grouped chronologically by the calendar date each unread email arrived in your ConnectLn mailbox
+                                                </p>
+                                            </div>
                                             {completedNoctisTodoIds.length > 0 && (
                                                 <button
                                                     type="button"
@@ -2464,110 +2625,210 @@ export function MessagingView({
                                                     }}
                                                     className="text-xs font-bold text-[#1967D2] hover:underline cursor-pointer"
                                                 >
-                                                    Restore {completedNoctisTodoIds.length} completed
+                                                    Restore {completedNoctisTodoIds.length} marked read
                                                 </button>
                                             )}
                                         </div>
 
-                                        <div className="space-y-3">
-                                            {visibleTodos.map((item) => (
-                                                <div
-                                                    key={item.thread.id}
-                                                    className="rounded-2xl bg-[#F0F4F9] hover:bg-[#E9EEF6] transition-all p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                                        {visibleDateGroups.length === 0 ? (
+                                            <div className="rounded-2xl bg-[#F0F4F9] p-6 text-center">
+                                                <p className="text-sm font-bold text-slate-800 mb-1">
+                                                    🎉 No unread emails matching this filter!
+                                                </p>
+                                                <p className="text-xs text-slate-600 mb-3">
+                                                    Switch to &ldquo;Unread &amp; Pending Replies&rdquo; or &ldquo;All Inbox Emails by Date&rdquo; to see Noctis date-by-date summaries.
+                                                </p>
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setNoctisUnreadFilterMode(
+                                                            'unread_and_pending'
+                                                        )
+                                                    }
+                                                    className="rounded-full bg-[#1967D2] text-white px-4 py-1.5 text-xs font-bold cursor-pointer"
                                                 >
-                                                    <div className="flex-1 min-w-0">
-                                                        <h4 className="text-sm font-extrabold text-slate-900 mb-1">
-                                                            {item.todoTitle}
-                                                        </h4>
-                                                        <p className="text-xs sm:text-[13px] text-slate-700 leading-relaxed">
-                                                            {item.todoExplanation}{' '}
-                                                            <span className="inline-flex items-center gap-1 rounded-full bg-white/90 border border-slate-300/80 px-2 py-0.2 text-[11px] font-bold text-slate-600 align-middle ml-1">
-                                                                <span>
-                                                                    {item.attCount > 0 ? '📎' : '💬'}
+                                                    Show Unread &amp; Pending Emails by Date
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-6">
+                                                {visibleDateGroups.map((dateGroup) => (
+                                                    <div
+                                                        key={dateGroup.dateKey}
+                                                        className="rounded-2xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-2xs"
+                                                    >
+                                                        {/* Date Header Banner */}
+                                                        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-200">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#E8F0FE] text-[#1967D2] px-3 py-1 text-xs sm:text-sm font-extrabold">
+                                                                    <span>📅</span>
+                                                                    <span>{dateGroup.dateKey}</span>
                                                                 </span>
-                                                                <span>
-                                                                    {item.attCount > 0
-                                                                        ? item.attCount
-                                                                        : item.msgCount}
+                                                                <span className="rounded-full bg-amber-100 text-amber-900 px-2.5 py-0.5 text-[11px] font-extrabold">
+                                                                    {dateGroup.items.length} Unread{' '}
+                                                                    {dateGroup.items.length === 1
+                                                                        ? 'Email'
+                                                                        : 'Emails'}
                                                                 </span>
+                                                            </div>
+                                                            <span className="text-[11px] font-bold text-slate-500">
+                                                                Arrival Date Summary by Noctis
                                                             </span>
-                                                        </p>
-                                                    </div>
+                                                        </div>
 
-                                                    {/* Right-side Action Pills matching screenshot (View / Open pill, Snooze clock, Done checkmark, Quick Draft menu) */}
-                                                    <div className="flex items-center gap-2 shrink-0">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setSelectedThreadId(item.thread.id);
-                                                                setActiveMailboxFolder('inbox');
-                                                                setMobileShowChat(true);
-                                                            }}
-                                                            className="inline-flex items-center gap-1.5 rounded-full bg-[#C2E7FF] hover:bg-[#A8D8F8] text-[#001D35] px-4 py-2 text-xs font-extrabold transition-all cursor-pointer shadow-2xs"
-                                                        >
-                                                            {item.actionIcon && (
-                                                                <span>{item.actionIcon}</span>
-                                                            )}
-                                                            <span>{item.actionLabel}</span>
-                                                            <span className="text-[10px] ml-0.5">
-                                                                ▾
-                                                            </span>
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) =>
-                                                                toggleSnoozeThread(
-                                                                    item.thread.id,
-                                                                    e
-                                                                )
-                                                            }
-                                                            title="Snooze this conversation"
-                                                            className="w-8 h-8 rounded-full hover:bg-slate-200/90 flex items-center justify-center text-slate-600 text-sm transition-all cursor-pointer"
-                                                        >
-                                                            🕒
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                markNoctisTodoDone(item.thread.id)
-                                                            }
-                                                            title="Mark to-do as completed"
-                                                            className="w-8 h-8 rounded-full hover:bg-emerald-100 flex items-center justify-center text-slate-700 hover:text-emerald-700 font-bold text-sm transition-all cursor-pointer"
-                                                        >
-                                                            ✓
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                const draft =
-                                                                    getEffectiveDraftForThread(
-                                                                        item.thread
-                                                                    ) ||
-                                                                    `Hi ${item.thread.title.split('(')[0].trim()}, following up on your message from ${item.dateStr}.`;
-                                                                saveDraftForThread(
-                                                                    item.thread.id,
-                                                                    draft,
-                                                                    false
-                                                                );
-                                                                setMessageInput(draft);
-                                                                setSelectedThreadId(item.thread.id);
-                                                                setActiveMailboxFolder('inbox');
-                                                                setMobileShowChat(true);
-                                                                triggerToast(
-                                                                    `✨ Noctis prepared a draft reply to ${item.thread.title}.`
-                                                                );
-                                                            }}
-                                                            title="Open thread with Noctis suggested reply"
-                                                            className="w-8 h-8 rounded-full hover:bg-slate-200/90 flex items-center justify-center text-slate-600 font-black text-sm transition-all cursor-pointer"
-                                                        >
-                                                            ⋮
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
+                                                        {/* Noctis Summary for this specific Date */}
+                                                        <div className="mb-3.5 rounded-xl bg-[#F8FAFD] border border-[#D3E3FD] px-3.5 py-2.5">
+                                                            <p className="text-xs sm:text-[13px] text-slate-800 leading-relaxed font-medium">
+                                                                <span className="font-extrabold text-[#1967D2] mr-1.5">
+                                                                    ✨ Noctis Summary for{' '}
+                                                                    {dateGroup.dateKey}:
+                                                                </span>
+                                                                {dateGroup.autoSummary}
+                                                            </p>
+                                                        </div>
 
-                                        {activeNoctisTodos.length > 4 && (
+                                                        {/* Unread Email Cards for this Date */}
+                                                        <div className="space-y-2.5">
+                                                            {dateGroup.items.map((item) => (
+                                                                <div
+                                                                    key={item.thread.id}
+                                                                    className="rounded-2xl bg-[#F0F4F9] hover:bg-[#E9EEF6] transition-all p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                                                                >
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                                                                            <h4 className="text-sm font-extrabold text-slate-900">
+                                                                                {item.todoTitle}
+                                                                            </h4>
+                                                                            <span className="rounded-md bg-white border border-slate-200 px-2 py-0.5 text-[10px] font-extrabold text-[#1967D2]">
+                                                                                📅 {item.dateStr}
+                                                                            </span>
+                                                                            {(item.thread
+                                                                                .unreadCount || 0) >
+                                                                                0 && (
+                                                                                <span className="rounded-full bg-blue-600 text-white px-2 py-0.5 text-[10px] font-black">
+                                                                                    Unread
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                        <p className="text-xs sm:text-[13px] text-slate-700 leading-relaxed">
+                                                                            {item.todoExplanation}{' '}
+                                                                            <span className="inline-flex items-center gap-1 rounded-full bg-white/90 border border-slate-300/80 px-2 py-0.2 text-[11px] font-bold text-slate-600 align-middle ml-1">
+                                                                                <span>
+                                                                                    {item.attCount >
+                                                                                    0
+                                                                                        ? '📎'
+                                                                                        : '💬'}
+                                                                                </span>
+                                                                                <span>
+                                                                                    {item.attCount >
+                                                                                    0
+                                                                                        ? item.attCount
+                                                                                        : item.msgCount}
+                                                                                </span>
+                                                                            </span>
+                                                                        </p>
+                                                                    </div>
+
+                                                                    {/* Right-side Action Pills matching screenshot (View / Open pill, Snooze clock, Done checkmark, Quick Draft menu) */}
+                                                                    <div className="flex items-center gap-2 shrink-0">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                setSelectedThreadId(
+                                                                                    item.thread.id
+                                                                                );
+                                                                                setActiveMailboxFolder(
+                                                                                    'inbox'
+                                                                                );
+                                                                                setMobileShowChat(
+                                                                                    true
+                                                                                );
+                                                                            }}
+                                                                            className="inline-flex items-center gap-1.5 rounded-full bg-[#C2E7FF] hover:bg-[#A8D8F8] text-[#001D35] px-4 py-2 text-xs font-extrabold transition-all cursor-pointer shadow-2xs"
+                                                                        >
+                                                                            {item.actionIcon && (
+                                                                                <span>
+                                                                                    {
+                                                                                        item.actionIcon
+                                                                                    }
+                                                                                </span>
+                                                                            )}
+                                                                            <span>
+                                                                                {item.actionLabel}
+                                                                            </span>
+                                                                            <span className="text-[10px] ml-0.5">
+                                                                                ▾
+                                                                            </span>
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={(e) =>
+                                                                                toggleSnoozeThread(
+                                                                                    item.thread.id,
+                                                                                    e
+                                                                                )
+                                                                            }
+                                                                            title="Snooze this conversation"
+                                                                            className="w-8 h-8 rounded-full hover:bg-slate-200/90 flex items-center justify-center text-slate-600 text-sm transition-all cursor-pointer"
+                                                                        >
+                                                                            🕒
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() =>
+                                                                                markNoctisTodoDone(
+                                                                                    item.thread.id
+                                                                                )
+                                                                            }
+                                                                            title="Mark unread email as reviewed/done"
+                                                                            className="w-8 h-8 rounded-full hover:bg-emerald-100 flex items-center justify-center text-slate-700 hover:text-emerald-700 font-bold text-sm transition-all cursor-pointer"
+                                                                        >
+                                                                            ✓
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                const draft =
+                                                                                    getEffectiveDraftForThread(
+                                                                                        item.thread
+                                                                                    ) ||
+                                                                                    `Hi ${item.thread.title.split('(')[0].trim()}, following up on your message from ${item.dateStr}.`;
+                                                                                saveDraftForThread(
+                                                                                    item.thread.id,
+                                                                                    draft,
+                                                                                    false
+                                                                                );
+                                                                                setMessageInput(
+                                                                                    draft
+                                                                                );
+                                                                                setSelectedThreadId(
+                                                                                    item.thread.id
+                                                                                );
+                                                                                setActiveMailboxFolder(
+                                                                                    'inbox'
+                                                                                );
+                                                                                setMobileShowChat(
+                                                                                    true
+                                                                                );
+                                                                                triggerToast(
+                                                                                    `✨ Noctis prepared a draft reply to ${item.thread.title}.`
+                                                                                );
+                                                                            }}
+                                                                            title="Open thread with Noctis suggested reply"
+                                                                            className="w-8 h-8 rounded-full hover:bg-slate-200/90 flex items-center justify-center text-slate-600 font-black text-sm transition-all cursor-pointer"
+                                                                        >
+                                                                            ⋮
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {dateGroups.length > 4 && (
                                             <button
                                                 type="button"
                                                 onClick={() =>
@@ -2578,8 +2839,8 @@ export function MessagingView({
                                                 <span>{showAllNoctisTodos ? '⌃' : '⌄'}</span>
                                                 <span>
                                                     {showAllNoctisTodos
-                                                        ? 'Show less'
-                                                        : `Show ${remainingTodosCount} more`}
+                                                        ? 'Show fewer dates'
+                                                        : `Show ${hiddenDatesCount} more date groups`}
                                                 </span>
                                             </button>
                                         )}

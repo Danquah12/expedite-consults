@@ -14,6 +14,8 @@ export interface NoctisInboxThreadDigest {
   subtitle?: string
   channelType?: string
   unreadCount?: number
+  isUnreadOrPending?: boolean
+  dateHeading?: string
   lastMessage?: string
   lastMessageTime?: string
   attachments?: string[]
@@ -21,39 +23,75 @@ export interface NoctisInboxThreadDigest {
   recentMessages?: Array<{ sender: string; text: string; timestamp: string }>
 }
 
-function buildSynthesizedInboxExplanation(
+function extractDateOnlyFromLabel(label?: string, dateHeading?: string): string {
+  if (dateHeading && dateHeading.trim()) return dateHeading.trim()
+  if (!label) return 'Recent'
+  const parts = label.split('·').map((s) => s.trim())
+  if (parts.length >= 1 && /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d+/i.test(parts[0])) {
+    return parts[0]
+  }
+  return label.trim() || 'Recent'
+}
+
+function buildDateGroupedUnreadSummary(
   memberName: string,
   threads: NoctisInboxThreadDigest[],
   customQuestion?: string
-): string {
+): { fullText: string; dateSummaries: Record<string, string> } {
   const firstName = (memberName || 'Member').trim().split(/\s+/)[0] || 'Member'
-  const totalThreads = threads.length
-  const unreadThreads = threads.filter((t) => (t.unreadCount || 0) > 0)
-  const withAttachments = threads.filter((t) => (t.attachments && t.attachments.length > 0) || (t.lastMessage || '').includes('📎') || (t.lastMessage || '').toLowerCase().includes('attached:'))
-  const directPeers = threads.filter((t) => t.channelType === 'People')
-  const recruiters = threads.filter((t) => t.channelType === 'Companies')
-  const vendors = threads.filter((t) => t.channelType === 'Products')
-  const guilds = threads.filter((t) => t.channelType === 'Communities')
+  const unreadTargets = threads.filter((t) => t.isUnreadOrPending || (t.unreadCount || 0) > 0)
+  const targetList = unreadTargets.length > 0 ? unreadTargets : threads
 
-  const topHighlights = threads.slice(0, 5).map((t) => {
-    const attNote = t.attachments && t.attachments.length > 0 ? ` (includes attachment: ${t.attachments.join(', ')})` : ''
-    return `• ${t.title} (${t.lastMessageTime || 'Recent'}): "${(t.lastMessage || '').slice(0, 140)}"${attNote}`
-  })
-
-  if (customQuestion && customQuestion.trim()) {
-    return (
-      `Noctis Inbox Analysis for ${firstName} regarding "${customQuestion.trim()}":\n\n` +
-      `Your ConnectLn mailbox currently holds ${totalThreads} active conversations (${unreadThreads.length} unread, ${withAttachments.length} with attached documents, ${directPeers.length} direct peer threads, ${recruiters.length} recruiter outreach threads, ${vendors.length} commercial vendor quotes, and ${guilds.length} profession guild channels).\n\n` +
-      `Key Inbox Contents:\n${topHighlights.join('\n')}`
-    )
+  const byDate = new Map<string, NoctisInboxThreadDigest[]>()
+  for (const t of targetList) {
+    const dKey = extractDateOnlyFromLabel(t.lastMessageTime, t.dateHeading)
+    const arr = byDate.get(dKey) || []
+    arr.push(t)
+    byDate.set(dKey, arr)
   }
 
-  return (
-    `Noctis has analyzed all ${totalThreads} conversations in your ConnectLn Inbox (${unreadThreads.length} unread, ${withAttachments.length} containing files or engineering/career attachments). ` +
-    `Priority attention is recommended for ${directPeers.slice(0, 3).map((d) => d.title).join(', ') || 'your direct peer messages'}` +
-    (recruiters.length > 0 ? `, along with ${recruiters.length} hiring/recruiter inquiry (${recruiters[0].title})` : '') +
-    (vendors.length > 0 ? ` and ${vendors.length} commercial vendor desk thread (${vendors[0].title}).` : '.')
-  )
+  const dateSummaries: Record<string, string> = {}
+  const dateBlocks: string[] = []
+
+  for (const [dateKey, items] of byDate.entries()) {
+    const itemSummaries = items.map((t) => {
+      const attNote =
+        t.attachments && t.attachments.length > 0
+          ? ` [Attached: ${t.attachments.join(', ')}]`
+          : ''
+      const timeOnly = (t.lastMessageTime || '').includes('·')
+        ? (t.lastMessageTime || '').split('·')[1]?.trim()
+        : t.lastMessageTime || ''
+      return `${t.title}${timeOnly ? ` (${timeOnly})` : ''}: "${(t.lastMessage || '').slice(0, 130)}"${attNote}`
+    })
+
+    const singleDateSummary =
+      `On ${dateKey}, you received ${items.length} ${items.length === 1 ? 'email/message' : 'emails/messages'} from ${items.map((x) => x.title).join(', ')}. ` +
+      itemSummaries.join(' · ')
+
+    dateSummaries[dateKey] = singleDateSummary
+    dateBlocks.push(`📅 ${dateKey} (${items.length} ${items.length === 1 ? 'Unread Email' : 'Unread Emails'}):\n` + items.map((t) => {
+      const attNote = t.attachments && t.attachments.length > 0 ? ` (📎 Attached: ${t.attachments.join(', ')})` : ''
+      return `  • ${t.title} (${t.subtitle || 'Verified Member'}) at ${t.lastMessageTime || dateKey}: "${(t.lastMessage || '').slice(0, 150)}"${attNote}`
+    }).join('\n'))
+  }
+
+  if (customQuestion && customQuestion.trim()) {
+    return {
+      fullText:
+        `Noctis Unread Email Search & Date Summary for ${firstName} ("${customQuestion.trim()}"):\n\n` +
+        `Found ${targetList.length} unread/pending emails across ${byDate.size} ${byDate.size === 1 ? 'date' : 'dates'}:\n\n` +
+        dateBlocks.join('\n\n'),
+      dateSummaries,
+    }
+  }
+
+  return {
+    fullText:
+      `Noctis searched your ConnectLn mailbox and found ${targetList.length} unread/pending emails across ${byDate.size} arrival ${byDate.size === 1 ? 'date' : 'dates'}, summarized chronologically below:\n\n` +
+      dateBlocks.join('\n\n'),
+    dateSummaries,
+  }
 }
 
 /**
@@ -84,23 +122,30 @@ export async function POST(req: Request) {
 
   if (isInboxBriefing) {
     const customQ = (body?.question || '').trim()
-    const digestLines = inboxThreads
+    const unreadOrPending = inboxThreads.filter((t) => t.isUnreadOrPending || (t.unreadCount || 0) > 0)
+    const targetThreads = unreadOrPending.length > 0 ? unreadOrPending : inboxThreads
+
+    const digestLines = targetThreads
       .map((t, i) => {
         const atts = t.attachments && t.attachments.length > 0 ? ` | Attachments: ${t.attachments.join(', ')}` : ''
-        const unread = t.unreadCount && t.unreadCount > 0 ? ` [UNREAD: ${t.unreadCount}]` : ''
-        return `${i + 1}. [${t.channelType || 'Direct'}] ${t.title} (${t.subtitle || 'Verified Member'}) — Sent/Updated: ${t.lastMessageTime || 'Recent'}${unread} — Message: "${(t.lastMessage || '').slice(0, 180)}"${atts}`
+        const dateHeading = extractDateOnlyFromLabel(t.lastMessageTime, t.dateHeading)
+        return `${i + 1}. [Date: ${dateHeading}] [${t.channelType || 'Direct'}] From: ${t.title} (${t.subtitle || 'Verified Member'}) — Received: ${t.lastMessageTime || dateHeading} — Content: "${(t.lastMessage || '').slice(0, 180)}"${atts}`
       })
       .join('\n')
 
-    const fallbackSummary = buildSynthesizedInboxExplanation(memberName, inboxThreads, customQ)
+    const { fullText: fallbackSummary, dateSummaries } = buildDateGroupedUnreadSummary(
+      memberName,
+      inboxThreads,
+      customQ
+    )
 
     const noctisPrompt =
-      `You are Noctis, the AI Inbox & Executive Intelligence assistant inside ConnectLn (https://www.connectln.app).\n` +
+      `You are Noctis, the AI Unread Email & Inbox Intelligence assistant inside ConnectLn (https://www.connectln.app).\n` +
       `The signed-in member is ${memberName}${body?.profile?.profession ? ` (${body.profile.profession})` : ''}.\n` +
-      `Here are the exact live contents of ${memberName}'s ConnectLn Inbox:\n${digestLines}\n\n` +
+      `Below are the unread/pending emails found in ${memberName}'s ConnectLn Inbox, along with the exact dates they arrived:\n${digestLines}\n\n` +
       (customQ
-        ? `Answer the member's specific question about their inbox concisely and accurately based ONLY on the inbox contents above: "${customQ}"`
-        : `Provide a concise, executive 3-to-4 sentence briefing explaining the contents of ${memberName}'s inbox: highlight the most urgent direct messages, any attached reports/screenshots (with their dates), recruiter opportunities, and recommended immediate actions.`)
+        ? `Answer the member's question about their unread emails grouped by the dates they arrived based ONLY on the inbox contents above: "${customQ}"`
+        : `Search and summarize these unread emails grouped chronologically by the exact calendar dates they arrived (e.g., Nov 2, 2026, Oct 26, 2026, Oct 23, 2026). For each date, clearly state who sent the email/message, what they wrote or attached, and the recommended next step.`)
 
     const ctrl = new AbortController()
     const timer = setTimeout(() => ctrl.abort(), 14000)
@@ -126,8 +171,9 @@ export async function POST(req: Request) {
             {
               text: data.text.trim(),
               fallbackSummary,
+              dateSummaries,
               source: 'noctis-live-api',
-              analyzedCount: inboxThreads.length,
+              analyzedCount: targetThreads.length,
               timestampIso: new Date().toISOString()
             },
             { headers: { 'cache-control': 'no-store' } }
@@ -135,7 +181,7 @@ export async function POST(req: Request) {
         }
       }
     } catch {
-      // Fall through to synthesized Noctis briefing so the inbox explanation is always instant & reliable
+      // Fall through to synthesized Noctis date-grouped unread summary
     } finally {
       clearTimeout(timer)
     }
@@ -143,8 +189,10 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         text: fallbackSummary,
+        fallbackSummary,
+        dateSummaries,
         source: 'noctis-engine',
-        analyzedCount: inboxThreads.length,
+        analyzedCount: targetThreads.length,
         timestampIso: new Date().toISOString()
       },
       { headers: { 'cache-control': 'no-store' } }
