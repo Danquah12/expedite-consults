@@ -149,6 +149,34 @@ export function MessagingView({
     const [showNewLabelInput, setShowNewLabelInput] = useState(false);
     const [newLabelName, setNewLabelName] = useState('');
 
+    // Noctis Inbox API Briefing States
+    const [noctisBriefingText, setNoctisBriefingText] = useState<string>('');
+    const [isNoctisLoading, setIsNoctisLoading] = useState<boolean>(false);
+    const [noctisUpdatedAtLabel, setNoctisUpdatedAtLabel] = useState<string>('Updated just now');
+    const [noctisQuestionInput, setNoctisQuestionInput] = useState<string>('');
+    const [noctisCustomAnswer, setNoctisCustomAnswer] = useState<string | null>(null);
+    const [showAllNoctisTodos, setShowAllNoctisTodos] = useState<boolean>(false);
+    const [completedNoctisTodoIds, setCompletedNoctisTodoIds] = useState<string[]>(() => {
+        if (typeof window === 'undefined') return [];
+        try {
+            const raw = localStorage.getItem('connectln_noctis_done_todos_v1');
+            return raw ? JSON.parse(raw) : [];
+        } catch {
+            return [];
+        }
+    });
+
+    const markNoctisTodoDone = (threadId: string) => {
+        setCompletedNoctisTodoIds((prev) => {
+            const next = prev.includes(threadId) ? prev : [...prev, threadId];
+            try {
+                localStorage.setItem('connectln_noctis_done_todos_v1', JSON.stringify(next));
+            } catch {}
+            return next;
+        });
+        triggerToast('✓ Marked to-do as completed in Noctis.');
+    };
+
     const saveDraftForThread = (threadId: string, draftText: string, showToast = false) => {
         const clean = draftText;
         setSavedDraftsByThread((prev) => {
@@ -883,11 +911,75 @@ export function MessagingView({
         threads.find((t) => t.id === selectedThreadId) ||
         threads[0];
 
+    const fetchNoctisInboxBriefing = async (customQuestion?: string) => {
+        setIsNoctisLoading(true);
+        try {
+            const digest = threads.slice(0, 20).map((t) => {
+                const lastMsg = t.messages?.[t.messages.length - 1];
+                const atts: string[] = [];
+                for (const m of t.messages || []) {
+                    for (const a of m.attachments || []) {
+                        if (a?.name && !atts.includes(a.name)) atts.push(a.name);
+                    }
+                }
+                return {
+                    id: t.id,
+                    title: t.title,
+                    subtitle: t.subtitle,
+                    channelType: t.channelType,
+                    unreadCount: t.unreadCount,
+                    lastMessage: t.lastMessage,
+                    lastMessageTime: formatMessageSentDateTime(lastMsg, t.lastMessageTime),
+                    attachments: atts,
+                    messagesCount: (t.messages || []).length,
+                };
+            });
+
+            const res = await fetch('/api/connectin/noctis', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    mode: 'inbox_briefing',
+                    question: customQuestion || undefined,
+                    inboxThreads: digest,
+                    profile: {
+                        name: currentUser?.name || 'Kwesi Asiedu',
+                        profession: currentUser?.headline || currentUser?.professionEnclave || '',
+                    },
+                }),
+            });
+            const data = await res.json().catch(() => null);
+            if (data?.text) {
+                if (customQuestion) {
+                    setNoctisCustomAnswer(data.text);
+                } else {
+                    setNoctisBriefingText(data.text);
+                }
+                setNoctisUpdatedAtLabel(
+                    `Updated ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
+                );
+            }
+        } catch {
+            // Keep existing synthesis
+        } finally {
+            setIsNoctisLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (activeMailboxFolder === 'ai_inbox' && threads.length > 0) {
+            fetchNoctisInboxBriefing();
+        }
+    }, [activeMailboxFolder, selectedEnclave, threads.length]);
+
     const handleSelectMailboxFolder = (folder: ConnectLnMailboxFolder) => {
         setActiveMailboxFolder(folder);
         setActiveCustomLabel(null);
         setActiveChannel('All');
         setSearchQuery('');
+        if (folder === 'ai_inbox') {
+            fetchNoctisInboxBriefing();
+        }
         const matching = threads.filter((t) => matchesMailboxFolder(t, folder));
         if (matching.length > 0) {
             const target = matching.find((t) => t.id === selectedThreadId) || matching[0];
@@ -1770,8 +1862,8 @@ export function MessagingView({
                                 },
                                 {
                                     id: 'ai_inbox' as ConnectLnMailboxFolder,
-                                    label: 'AI Inbox',
-                                    subBadge: 'Noctis',
+                                    label: 'Noctis',
+                                    boldCount: true,
                                     icon: (
                                         <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l1.5 3.5L17 8l-3.5 1.5L12 13l-1.5-3.5L7 8l3.5-1.5L12 3z" />
@@ -1906,11 +1998,6 @@ export function MessagingView({
                                     <span className="flex items-center gap-3 min-w-0 truncate">
                                         {item.icon}
                                         <span className="truncate">{item.label}</span>
-                                        {item.subBadge && (
-                                            <span className="rounded bg-indigo-100 text-indigo-800 px-1 py-0.2 text-[9px] font-extrabold border border-indigo-200">
-                                                {item.subBadge}
-                                            </span>
-                                        )}
                                     </span>
                                     {count > 0 && (
                                         <span
@@ -2075,12 +2162,489 @@ export function MessagingView({
                     </div>
                 </div>
 
-                {/* Column 2: Channels & Conversation Thread List */}
-                <div
-                    className={`w-full md:w-[360px] border-r border-slate-200 flex-col bg-slate-50/60 shrink-0 h-full ${
-                        mobileShowChat ? 'hidden md:flex' : 'flex'
-                    }`}
-                >
+                {/* When "Noctis" is selected in the left navigation rail: render the Noctis Inbox Intelligence & Briefing Dashboard */}
+                {activeMailboxFolder === 'ai_inbox' && !activeCustomLabel ? (
+                    (() => {
+                        const firstName =
+                            (currentUser?.name || 'Kwesi').trim().split(/\s+/)[0] || 'Kwesi';
+
+                        const activeNoctisTodos = threads
+                            .filter(
+                                (t) =>
+                                    !completedNoctisTodoIds.includes(t.id) &&
+                                    !snoozedIds.includes(t.id)
+                            )
+                            .map((t) => {
+                                const lastMsg = t.messages?.[t.messages.length - 1];
+                                const dateStr = formatMessageSentDateTime(
+                                    lastMsg,
+                                    t.lastMessageTime
+                                );
+                                const atts: string[] = [];
+                                for (const m of t.messages || []) {
+                                    for (const a of m.attachments || []) {
+                                        if (a?.name && !atts.includes(a.name)) atts.push(a.name);
+                                    }
+                                }
+                                const hasAtt =
+                                    atts.length > 0 ||
+                                    t.lastMessage.includes('📎') ||
+                                    t.lastMessage.toLowerCase().includes('attached:');
+
+                                let todoTitle = `Follow up with ${t.title}`;
+                                let todoExplanation = `${t.title} (${t.subtitle}) sent a message on ${dateStr}: "${t.lastMessage}". You can open the thread to reply, schedule a meeting, or attach a verified ConnectLn document.`;
+                                let actionLabel = 'View';
+                                let actionIcon = '✉️';
+
+                                if (hasAtt) {
+                                    const fileName =
+                                        atts[0] ||
+                                        t.lastMessage
+                                            .replace(/^.*attached:\s*/i, '')
+                                            .slice(0, 48) ||
+                                        'attached file';
+                                    todoTitle = `Review attached file & respond to ${t.title} (${fileName})`;
+                                    todoExplanation = `${t.title} (${t.subtitle}) shared a message with attachment "${fileName}" on ${dateStr}. Review the attached document and confirm next steps or project requirements in the thread.`;
+                                    actionLabel = 'Open';
+                                    actionIcon = '🔗';
+                                } else if (t.channelType === 'Companies') {
+                                    todoTitle = `Respond to hiring & role briefing with ${t.title}`;
+                                    todoExplanation = `${t.title} (${t.subtitle}) reached out on ${dateStr} regarding an open position: "${t.lastMessage}". You can reply with your availability, attach your ConnectLn resume, or schedule an intro call.`;
+                                    actionLabel = 'View';
+                                    actionIcon = '';
+                                } else if (t.channelType === 'Products') {
+                                    todoTitle = `Review commercial spec & quote with ${t.title}`;
+                                    todoExplanation = `${t.title} (${t.subtitle}) updated your vendor desk thread on ${dateStr}: "${t.lastMessage}". Open the thread to confirm pricing, delivery lead time, or technical specifications.`;
+                                    actionLabel = 'Open';
+                                    actionIcon = '🔗';
+                                } else if (
+                                    t.lastMessage.toLowerCase().includes('huddle') ||
+                                    t.lastMessage.toLowerCase().includes('meeting')
+                                ) {
+                                    todoTitle = `Confirm Video Huddle & meeting follow-up with ${t.title}`;
+                                    todoExplanation = `Your E2EE Video Huddle or scheduled session with ${t.title} (${t.subtitle}) was logged on ${dateStr}: "${t.lastMessage}". Review session notes or schedule the next follow-up call.`;
+                                    actionLabel = 'View';
+                                    actionIcon = '';
+                                } else if (t.channelType === 'People') {
+                                    todoTitle = `Reply to direct message from ${t.title}`;
+                                    todoExplanation = `${t.title} (${t.subtitle}) sent you a direct message on ${dateStr}: "${t.lastMessage}". Click View to open the conversation and send your response.`;
+                                    actionLabel = 'View';
+                                    actionIcon = '✉️';
+                                }
+
+                                return {
+                                    thread: t,
+                                    todoTitle,
+                                    todoExplanation,
+                                    dateStr,
+                                    attCount: Math.max(atts.length, hasAtt ? 1 : 0),
+                                    msgCount: (t.messages || []).length || 1,
+                                    actionLabel,
+                                    actionIcon,
+                                };
+                            });
+
+                        const visibleTodos = showAllNoctisTodos
+                            ? activeNoctisTodos
+                            : activeNoctisTodos.slice(0, 4);
+                        const remainingTodosCount = Math.max(
+                            0,
+                            activeNoctisTodos.length - visibleTodos.length
+                        );
+
+                        const noctisTopics = [
+                            {
+                                id: 'topic_direct',
+                                title: 'Direct Peer Conversations',
+                                icon: '👤',
+                                items: threads.filter((t) => t.channelType === 'People'),
+                                summary:
+                                    '1-on-1 verified member messages, job connections, and peer follow-ups.',
+                            },
+                            {
+                                id: 'topic_attachments',
+                                title: 'Attached Reports, Screenshots & Specs',
+                                icon: '📎',
+                                items: threads.filter((t) => hasAttachmentInThread(t)),
+                                summary:
+                                    'Conversations containing uploaded reports, engineering blueprints, or screenshots.',
+                            },
+                            {
+                                id: 'topic_recruiters',
+                                title: 'Hiring Teams & Recruiter Outreach',
+                                icon: '💼',
+                                items: threads.filter((t) => t.channelType === 'Companies'),
+                                summary:
+                                    'Direct interview invitations, compensation bands, and role specifications.',
+                            },
+                            {
+                                id: 'topic_vendors',
+                                title: 'Commercial Vendor Quotes & Procurement',
+                                icon: '🛍️',
+                                items: threads.filter((t) => t.channelType === 'Products'),
+                                summary:
+                                    'Equipment quotes, software/tooling licenses, and BOM pricing.',
+                            },
+                            {
+                                id: 'topic_huddles',
+                                title: 'Video Huddles & Scheduled Meetings',
+                                icon: '🎥',
+                                items: threads.filter((t) => hasMeetingOrHuddleInThread(t)),
+                                summary:
+                                    'Completed live E2EE video huddles and calendar meeting invitations.',
+                            },
+                            {
+                                id: 'topic_guilds',
+                                title: 'Profession Guilds & Enclave Forums',
+                                icon: '🌐',
+                                items: threads.filter((t) => t.channelType === 'Communities'),
+                                summary:
+                                    'Trade standards, peer-reviewed briefings, and regional guild updates.',
+                            },
+                        ];
+
+                        return (
+                            <div className="flex-1 bg-white overflow-y-auto px-6 sm:px-10 py-7 h-full">
+                                <div className="max-w-4xl mx-auto">
+                                    {/* Top Row: Noctis Badge + Updated just now refresh button */}
+                                    <div className="flex items-center justify-between gap-3 mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <span className="inline-flex items-center gap-1.5 rounded-md bg-[#E8F0FE] text-[#1967D2] px-2.5 py-0.5 text-xs font-extrabold">
+                                                <span>✨</span>
+                                                <span>Noctis</span>
+                                            </span>
+                                            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                                <span>API Connected</span>
+                                            </span>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => fetchNoctisInboxBriefing()}
+                                            disabled={isNoctisLoading}
+                                            className="inline-flex items-center gap-1.5 rounded-full bg-slate-200/80 hover:bg-slate-300/80 text-slate-700 px-3.5 py-1 text-xs font-bold transition-all cursor-pointer disabled:opacity-60"
+                                            title="Call Noctis API to refresh inbox explanation"
+                                        >
+                                            <span>
+                                                {isNoctisLoading
+                                                    ? 'Syncing with Noctis...'
+                                                    : noctisUpdatedAtLabel}
+                                            </span>
+                                            <span className={isNoctisLoading ? 'animate-spin' : ''}>
+                                                ↻
+                                            </span>
+                                        </button>
+                                    </div>
+
+                                    {/* Main Headline matching screenshot: "Hi Kwesi 👋 You have 12 to-dos and 6 topics to catch up on." */}
+                                    <h1 className="text-2xl sm:text-[32px] font-extrabold text-slate-900 tracking-tight leading-snug mb-5">
+                                        Hi {firstName} 👋 You have{' '}
+                                        <span className="text-[#1967D2]">
+                                            {activeNoctisTodos.length}{' '}
+                                            {activeNoctisTodos.length === 1 ? 'to-do' : 'to-dos'}
+                                        </span>{' '}
+                                        and{' '}
+                                        <span className="text-[#1967D2]">
+                                            {noctisTopics.length} topics
+                                        </span>{' '}
+                                        to catch up on.
+                                    </h1>
+
+                                    {/* Live Noctis API Explanation Box + Ask Noctis About Your Inbox */}
+                                    <div className="mb-7 rounded-2xl bg-[#F8FAFD] border border-[#D3E3FD] p-4 sm:p-5 shadow-2xs">
+                                        <div className="flex items-center justify-between gap-2 mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm">✨</span>
+                                                <h2 className="text-xs font-black uppercase tracking-wider text-[#041E49]">
+                                                    Noctis Live Inbox Briefing &amp; Explanation
+                                                </h2>
+                                            </div>
+                                            <span className="text-[10px] font-bold text-slate-500">
+                                                Powered by /api/connectin/noctis
+                                            </span>
+                                        </div>
+
+                                        <p className="text-xs sm:text-sm text-slate-800 leading-relaxed whitespace-pre-line font-medium mb-3.5">
+                                            {noctisBriefingText ||
+                                                `Noctis has analyzed all ${threads.length} conversations in your ConnectLn Inbox (${totalUnreadCount} unread). Priority follow-up is recommended for ${threads
+                                                    .slice(0, 3)
+                                                    .map((t) => t.title)
+                                                    .join(', ')}.`}
+                                        </p>
+
+                                        {noctisCustomAnswer && (
+                                            <div className="mb-3.5 rounded-xl bg-white border border-blue-200 p-3.5">
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <span className="text-[11px] font-extrabold text-[#0A66C2]">
+                                                        💬 Noctis Answer:
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setNoctisCustomAnswer(null)}
+                                                        className="text-[10px] font-bold text-slate-400 hover:text-slate-700 cursor-pointer"
+                                                    >
+                                                        Dismiss ✕
+                                                    </button>
+                                                </div>
+                                                <p className="text-xs sm:text-sm text-slate-800 whitespace-pre-line leading-relaxed">
+                                                    {noctisCustomAnswer}
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        {/* Ask Noctis About Your Inbox Bar */}
+                                        <form
+                                            onSubmit={(e) => {
+                                                e.preventDefault();
+                                                if (!noctisQuestionInput.trim()) return;
+                                                fetchNoctisInboxBriefing(noctisQuestionInput.trim());
+                                            }}
+                                            className="flex flex-col sm:flex-row gap-2"
+                                        >
+                                            <input
+                                                type="text"
+                                                value={noctisQuestionInput}
+                                                onChange={(e) =>
+                                                    setNoctisQuestionInput(e.target.value)
+                                                }
+                                                placeholder="Ask Noctis to explain any message, attachment, or thread in your inbox..."
+                                                className="flex-1 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#0A66C2] focus:outline-none"
+                                            />
+                                            <button
+                                                type="submit"
+                                                disabled={
+                                                    isNoctisLoading || !noctisQuestionInput.trim()
+                                                }
+                                                className="rounded-xl bg-[#0A66C2] hover:bg-[#004182] disabled:bg-slate-300 px-4 py-2 text-xs font-extrabold text-white transition-all cursor-pointer shrink-0"
+                                            >
+                                                {isNoctisLoading ? 'Asking Noctis...' : 'Ask Noctis →'}
+                                            </button>
+                                        </form>
+
+                                        {/* 1-Click Quick Prompts for Noctis */}
+                                        <div className="flex flex-wrap gap-1.5 mt-2.5">
+                                            {[
+                                                'Explain all attached files & dates in my inbox',
+                                                'Summarize my direct peer messages',
+                                                'Which messages need urgent replies today?',
+                                                'Summarize recruiter & vendor inquiries',
+                                            ].map((promptChip) => (
+                                                <button
+                                                    key={promptChip}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setNoctisQuestionInput(promptChip);
+                                                        fetchNoctisInboxBriefing(promptChip);
+                                                    }}
+                                                    className="rounded-full bg-white hover:bg-blue-50 text-[#0A66C2] border border-blue-200 px-2.5 py-1 text-[11px] font-bold transition-all cursor-pointer"
+                                                >
+                                                    ✨ {promptChip}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Section 1: Suggested to-dos (matching screenshot layout) */}
+                                    <div className="mb-8">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <h3 className="text-sm font-bold text-slate-800">
+                                                Suggested to-dos
+                                            </h3>
+                                            {completedNoctisTodoIds.length > 0 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setCompletedNoctisTodoIds([]);
+                                                        try {
+                                                            localStorage.removeItem(
+                                                                'connectln_noctis_done_todos_v1'
+                                                            );
+                                                        } catch {}
+                                                    }}
+                                                    className="text-xs font-bold text-[#1967D2] hover:underline cursor-pointer"
+                                                >
+                                                    Restore {completedNoctisTodoIds.length} completed
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            {visibleTodos.map((item) => (
+                                                <div
+                                                    key={item.thread.id}
+                                                    className="rounded-2xl bg-[#F0F4F9] hover:bg-[#E9EEF6] transition-all p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                                                >
+                                                    <div className="flex-1 min-w-0">
+                                                        <h4 className="text-sm font-extrabold text-slate-900 mb-1">
+                                                            {item.todoTitle}
+                                                        </h4>
+                                                        <p className="text-xs sm:text-[13px] text-slate-700 leading-relaxed">
+                                                            {item.todoExplanation}{' '}
+                                                            <span className="inline-flex items-center gap-1 rounded-full bg-white/90 border border-slate-300/80 px-2 py-0.2 text-[11px] font-bold text-slate-600 align-middle ml-1">
+                                                                <span>
+                                                                    {item.attCount > 0 ? '📎' : '💬'}
+                                                                </span>
+                                                                <span>
+                                                                    {item.attCount > 0
+                                                                        ? item.attCount
+                                                                        : item.msgCount}
+                                                                </span>
+                                                            </span>
+                                                        </p>
+                                                    </div>
+
+                                                    {/* Right-side Action Pills matching screenshot (View / Open pill, Snooze clock, Done checkmark, Quick Draft menu) */}
+                                                    <div className="flex items-center gap-2 shrink-0">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setSelectedThreadId(item.thread.id);
+                                                                setActiveMailboxFolder('inbox');
+                                                                setMobileShowChat(true);
+                                                            }}
+                                                            className="inline-flex items-center gap-1.5 rounded-full bg-[#C2E7FF] hover:bg-[#A8D8F8] text-[#001D35] px-4 py-2 text-xs font-extrabold transition-all cursor-pointer shadow-2xs"
+                                                        >
+                                                            {item.actionIcon && (
+                                                                <span>{item.actionIcon}</span>
+                                                            )}
+                                                            <span>{item.actionLabel}</span>
+                                                            <span className="text-[10px] ml-0.5">
+                                                                ▾
+                                                            </span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) =>
+                                                                toggleSnoozeThread(
+                                                                    item.thread.id,
+                                                                    e
+                                                                )
+                                                            }
+                                                            title="Snooze this conversation"
+                                                            className="w-8 h-8 rounded-full hover:bg-slate-200/90 flex items-center justify-center text-slate-600 text-sm transition-all cursor-pointer"
+                                                        >
+                                                            🕒
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                markNoctisTodoDone(item.thread.id)
+                                                            }
+                                                            title="Mark to-do as completed"
+                                                            className="w-8 h-8 rounded-full hover:bg-emerald-100 flex items-center justify-center text-slate-700 hover:text-emerald-700 font-bold text-sm transition-all cursor-pointer"
+                                                        >
+                                                            ✓
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const draft =
+                                                                    getEffectiveDraftForThread(
+                                                                        item.thread
+                                                                    ) ||
+                                                                    `Hi ${item.thread.title.split('(')[0].trim()}, following up on your message from ${item.dateStr}.`;
+                                                                saveDraftForThread(
+                                                                    item.thread.id,
+                                                                    draft,
+                                                                    false
+                                                                );
+                                                                setMessageInput(draft);
+                                                                setSelectedThreadId(item.thread.id);
+                                                                setActiveMailboxFolder('inbox');
+                                                                setMobileShowChat(true);
+                                                                triggerToast(
+                                                                    `✨ Noctis prepared a draft reply to ${item.thread.title}.`
+                                                                );
+                                                            }}
+                                                            title="Open thread with Noctis suggested reply"
+                                                            className="w-8 h-8 rounded-full hover:bg-slate-200/90 flex items-center justify-center text-slate-600 font-black text-sm transition-all cursor-pointer"
+                                                        >
+                                                            ⋮
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {activeNoctisTodos.length > 4 && (
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setShowAllNoctisTodos((prev) => !prev)
+                                                }
+                                                className="mt-3.5 inline-flex items-center gap-2 text-xs font-extrabold text-slate-700 hover:text-slate-950 px-2 py-1 rounded-lg hover:bg-slate-100 transition-all cursor-pointer"
+                                            >
+                                                <span>{showAllNoctisTodos ? '⌃' : '⌄'}</span>
+                                                <span>
+                                                    {showAllNoctisTodos
+                                                        ? 'Show less'
+                                                        : `Show ${remainingTodosCount} more`}
+                                                </span>
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* Section 2: 6 Topics to catch up on */}
+                                    <div>
+                                        <h3 className="text-sm font-bold text-slate-800 mb-3">
+                                            Topics to catch up on ({noctisTopics.length})
+                                        </h3>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            {noctisTopics.map((topic) => (
+                                                <div
+                                                    key={topic.id}
+                                                    className="rounded-2xl border border-slate-200 bg-[#F8FAFD] p-4 flex flex-col justify-between gap-2.5"
+                                                >
+                                                    <div>
+                                                        <div className="flex items-center justify-between gap-2 mb-1">
+                                                            <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 flex items-center gap-1.5">
+                                                                <span>{topic.icon}</span>
+                                                                <span>{topic.title}</span>
+                                                            </h4>
+                                                            <span className="rounded-full bg-[#E8F0FE] text-[#1967D2] px-2 py-0.5 text-[10px] font-black">
+                                                                {topic.items.length}{' '}
+                                                                {topic.items.length === 1
+                                                                    ? 'thread'
+                                                                    : 'threads'}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-xs text-slate-600 mb-2">
+                                                            {topic.summary}
+                                                        </p>
+                                                    </div>
+                                                    <div className="flex flex-wrap gap-1.5">
+                                                        {topic.items.slice(0, 3).map((t) => (
+                                                            <button
+                                                                key={t.id}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setSelectedThreadId(t.id);
+                                                                    setActiveMailboxFolder('inbox');
+                                                                    setMobileShowChat(true);
+                                                                }}
+                                                                className="rounded-lg bg-white hover:bg-blue-50 text-slate-800 hover:text-[#0A66C2] border border-slate-200 px-2.5 py-1 text-[11px] font-bold transition-all cursor-pointer truncate max-w-full"
+                                                            >
+                                                                {t.title} →
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })()
+                ) : (
+                    <>
+                        {/* Column 2: Channels & Conversation Thread List */}
+                        <div
+                            className={`w-full md:w-[360px] border-r border-slate-200 flex-col bg-slate-50/60 shrink-0 h-full ${
+                                mobileShowChat ? 'hidden md:flex' : 'flex'
+                            }`}
+                        >
                     {/* Sidebar Header */}
                     <div className="p-3.5 bg-white border-b border-slate-200">
                         <div className="flex justify-between items-center mb-2.5">
@@ -3071,6 +3635,8 @@ export function MessagingView({
                             to start messaging.
                         </p>
                     </div>
+                )}
+                    </>
                 )}
             </div>
 
