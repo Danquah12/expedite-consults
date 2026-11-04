@@ -28,6 +28,11 @@ export interface CommCallParticipant {
     data_url: string
     ts: number
   } | null
+  recent_audio_chunks?: Array<{
+    seq: number
+    data_url: string
+    ts: number
+  }> | null
   participant_state: "RINGING" | "NEGOTIATING" | "CONNECTED" | "RECONNECTING" | "LEFT"
   e2ee_media_fingerprint: string
 }
@@ -92,6 +97,7 @@ let lastDiskLoadMs = 0
 let lastDiskSaveMs = 0
 let lastCloudPullMs = 0
 const lastCloudParticipantPushMap = new Map<string, number>()
+const lastCloudAudioSeqMap = new Map<string, number>()
 
 function getTwilioCallsAuthHeader(): string | null {
   const sid = process.env.TWILIO_ACCOUNT_SID || ""
@@ -106,67 +112,129 @@ function makeCloudParticipantKey(callId: string, userId: string): string {
   return `p__${cleanCall}__${cleanUser}`
 }
 
-async function pushCloudCallParticipant(callId: string, participant: CommCallParticipant, force = false): Promise<void> {
-  const auth = getTwilioCallsAuthHeader()
-  if (!auth) return
-  const key = makeCloudParticipantKey(callId, participant.user_id)
-  const nowMs = Date.now()
-  const lastPush = lastCloudParticipantPushMap.get(key) || 0
-  if (!force && nowMs - lastPush < 2200) return
-  lastCloudParticipantPushMap.set(key, nowMs)
+function makeCloudAudioKey(callId: string, userId: string): string {
+  const cleanCall = String(callId || "room").replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 36)
+  const cleanUser = String(userId || "peer").replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 36)
+  return `a__${cleanCall}__${cleanUser}`
+}
 
-  try {
-    const hasSmallAudio =
-      participant.live_audio_chunk &&
-      typeof participant.live_audio_chunk.data_url === "string" &&
-      participant.live_audio_chunk.data_url.length < 7500
-    const maxFrameLen = hasSmallAudio ? 7500 : 11500
-    const compactParticipant = {
-      ...participant,
-      call_id: callId,
-      // Keep item well under Twilio Sync 16KB limit while syncing both voice audio and video frames
-      live_frame:
-        participant.live_frame && participant.live_frame.length < maxFrameLen
-          ? participant.live_frame
-          : null,
-      live_audio_chunk: hasSmallAudio ? participant.live_audio_chunk : null,
-    }
-    const baseUrl = `https://sync.twilio.com/v1/Services/default/Maps/${CALLS_SYNC_MAP_NAME}`
-    const serialized = JSON.stringify(compactParticipant)
+async function upsertTwilioSyncItem(auth: string, key: string, serialized: string): Promise<void> {
+  const baseUrl = `https://sync.twilio.com/v1/Services/default/Maps/${CALLS_SYNC_MAP_NAME}`
+  const updateRes = await fetch(`${baseUrl}/Items/${encodeURIComponent(key)}`, {
+    method: "POST",
+    headers: {
+      Authorization: auth,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({ Data: serialized, Ttl: "60" }).toString(),
+  })
+  if (updateRes.ok) return
 
-    const updateRes = await fetch(`${baseUrl}/Items/${encodeURIComponent(key)}`, {
+  if (updateRes.status === 404) {
+    await fetch("https://sync.twilio.com/v1/Services/default/Maps", {
       method: "POST",
       headers: {
         Authorization: auth,
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: new URLSearchParams({ Data: serialized, Ttl: "60" }).toString(),
-    })
-    if (updateRes.ok) return
+      body: new URLSearchParams({ UniqueName: CALLS_SYNC_MAP_NAME }).toString(),
+    }).catch(() => {})
 
-    if (updateRes.status === 404) {
-      await fetch("https://sync.twilio.com/v1/Services/default/Maps", {
-        method: "POST",
-        headers: {
-          Authorization: auth,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({ UniqueName: CALLS_SYNC_MAP_NAME }).toString(),
-      }).catch(() => {})
+    await fetch(`${baseUrl}/Items`, {
+      method: "POST",
+      headers: {
+        Authorization: auth,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        Key: key,
+        Data: serialized,
+        Ttl: "60",
+      }).toString(),
+    }).catch(() => {})
+  }
+}
 
-      await fetch(`${baseUrl}/Items`, {
-        method: "POST",
-        headers: {
-          Authorization: auth,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          Key: key,
-          Data: serialized,
-          Ttl: "60",
-        }).toString(),
-      }).catch(() => {})
+async function pushCloudCallParticipant(callId: string, participant: CommCallParticipant, force = false): Promise<void> {
+  const auth = getTwilioCallsAuthHeader()
+  if (!auth) return
+  const key = makeCloudParticipantKey(callId, participant.user_id)
+  const audioKey = makeCloudAudioKey(callId, participant.user_id)
+  const nowMs = Date.now()
+
+  // 1. Always push new voice audio chunks immediately to their dedicated 16KB item key (`a__call__user`) so voice is never throttled or dropped by video frames
+  const latestSeq = participant.live_audio_chunk?.seq || 0
+  const lastPushedSeq = lastCloudAudioSeqMap.get(audioKey) || 0
+  if (participant.is_muted) {
+    if (lastPushedSeq !== -1) {
+      lastCloudAudioSeqMap.set(audioKey, -1)
+      upsertTwilioSyncItem(
+        auth,
+        audioKey,
+        JSON.stringify({
+          kind: "audio",
+          call_id: callId,
+          user_id: participant.user_id,
+          is_muted: true,
+          last_seen_ms: nowMs,
+          live_audio_chunk: null,
+          recent_audio_chunks: [],
+        })
+      ).catch(() => {})
     }
+  } else if (latestSeq > lastPushedSeq && participant.live_audio_chunk?.data_url) {
+    lastCloudAudioSeqMap.set(audioKey, latestSeq)
+    const compactChunks = (participant.recent_audio_chunks || [participant.live_audio_chunk])
+      .filter((c) => c && typeof c.data_url === "string" && c.data_url.length < 13500)
+      .slice(-2)
+    let audioPayload = JSON.stringify({
+      kind: "audio",
+      call_id: callId,
+      user_id: participant.user_id,
+      is_muted: false,
+      last_seen_ms: nowMs,
+      live_audio_chunk:
+        participant.live_audio_chunk.data_url.length < 13500 ? participant.live_audio_chunk : null,
+      recent_audio_chunks: compactChunks,
+    })
+    // Ensure under Twilio Sync 16KB limit even with 2 chunks
+    if (audioPayload.length > 15200) {
+      audioPayload = JSON.stringify({
+        kind: "audio",
+        call_id: callId,
+        user_id: participant.user_id,
+        is_muted: false,
+        last_seen_ms: nowMs,
+        live_audio_chunk:
+          participant.live_audio_chunk.data_url.length < 14000 ? participant.live_audio_chunk : null,
+        recent_audio_chunks: compactChunks.slice(-1),
+      })
+    }
+    upsertTwilioSyncItem(auth, audioKey, audioPayload).catch(() => {})
+  }
+
+  // 2. Push participant metadata + live video frame (`p__call__user`) every 950ms
+  const lastPush = lastCloudParticipantPushMap.get(key) || 0
+  if (!force && nowMs - lastPush < 950) return
+  lastCloudParticipantPushMap.set(key, nowMs)
+
+  try {
+    const compactParticipant = {
+      ...participant,
+      call_id: callId,
+      live_frame:
+        participant.live_frame && participant.live_frame.length < 12500
+          ? participant.live_frame
+          : null,
+      live_audio_chunk:
+        participant.live_audio_chunk &&
+        typeof participant.live_audio_chunk.data_url === "string" &&
+        participant.live_audio_chunk.data_url.length < 2800
+          ? participant.live_audio_chunk
+          : null,
+      recent_audio_chunks: undefined,
+    }
+    await upsertTwilioSyncItem(auth, key, JSON.stringify(compactParticipant))
   } catch {
     // non-fatal
   }
@@ -176,14 +244,14 @@ async function pullCloudCallParticipants(): Promise<void> {
   const auth = getTwilioCallsAuthHeader()
   if (!auth) return
   const nowMs = Date.now()
-  if (nowMs - lastCloudPullMs < 2000) return
+  if (nowMs - lastCloudPullMs < 750) return
   lastCloudPullMs = nowMs
 
   try {
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), 1400)
     const res = await fetch(
-      `https://sync.twilio.com/v1/Services/default/Maps/${CALLS_SYNC_MAP_NAME}/Items?PageSize=80`,
+      `https://sync.twilio.com/v1/Services/default/Maps/${CALLS_SYNC_MAP_NAME}/Items?PageSize=100`,
       {
         method: "GET",
         headers: { Authorization: auth },
@@ -195,9 +263,16 @@ async function pullCloudCallParticipants(): Promise<void> {
     if (!res.ok) return
     const json = await res.json()
     const items = Array.isArray(json.items) ? json.items : []
+
+    // First pass: merge participant records (`p__`)
+    const audioItems: any[] = []
     for (const item of items) {
       const data = item?.data
       if (!data || !data.call_id || !data.user_id) continue
+      if (data.kind === "audio" || String(item?.key || "").startsWith("a__")) {
+        audioItems.push(data)
+        continue
+      }
       if (data.participant_state === "LEFT" || !data.last_seen_ms || nowMs - data.last_seen_ms >= PARTICIPANT_TTL_MS) {
         continue
       }
@@ -208,15 +283,49 @@ async function pullCloudCallParticipants(): Promise<void> {
         record.participants.push(data as CommCallParticipant)
       } else {
         const localP = record.participants[existingIdx]
-        if ((data.last_seen_ms || 0) > (localP.last_seen_ms || 0)) {
+        if ((data.last_seen_ms || 0) >= (localP.last_seen_ms || 0)) {
           record.participants[existingIdx] = {
             ...localP,
             ...data,
             live_frame: data.live_frame || localP.live_frame || null,
             live_audio_chunk: data.live_audio_chunk || localP.live_audio_chunk || null,
+            recent_audio_chunks: data.recent_audio_chunks || localP.recent_audio_chunks || null,
           }
         } else if (!localP.peer_id && data.peer_id) {
           record.participants[existingIdx].peer_id = data.peer_id
+        }
+      }
+    }
+
+    // Second pass: merge dedicated voice audio items (`a__`) so every participant receives the latest voice chunks
+    for (const aData of audioItems) {
+      if (!aData.last_seen_ms || nowMs - aData.last_seen_ms >= PARTICIPANT_TTL_MS) continue
+      const record = ACTIVE_CALLS_STORE.get(aData.call_id)
+      if (!record || record.state === "ENDED") continue
+      const existingIdx = record.participants.findIndex((p) => p.user_id === aData.user_id)
+      if (existingIdx < 0) continue
+      const localP = record.participants[existingIdx]
+      if (aData.is_muted) {
+        localP.is_muted = true
+        localP.live_audio_chunk = null
+        localP.recent_audio_chunks = null
+      } else {
+        const remoteSeq = aData.live_audio_chunk?.seq || 0
+        const localSeq = localP.live_audio_chunk?.seq || 0
+        if (remoteSeq >= localSeq && aData.live_audio_chunk) {
+          localP.live_audio_chunk = aData.live_audio_chunk
+        }
+        if (Array.isArray(aData.recent_audio_chunks) && aData.recent_audio_chunks.length > 0) {
+          const combined = [...(localP.recent_audio_chunks || []), ...aData.recent_audio_chunks]
+          const bySeq = new Map<number, { seq: number; data_url: string; ts: number }>()
+          for (const c of combined) {
+            if (c && typeof c.seq === "number" && c.data_url) {
+              bySeq.set(c.seq, c)
+            }
+          }
+          localP.recent_audio_chunks = Array.from(bySeq.values())
+            .sort((a, b) => a.seq - b.seq)
+            .slice(-3)
         }
       }
     }
@@ -592,6 +701,26 @@ export async function POST(req: NextRequest) {
               }
             : existingIdx >= 0
             ? record.participants[existingIdx].live_audio_chunk
+            : null,
+        recent_audio_chunks:
+          body.is_muted === true
+            ? null
+            : Array.isArray(body.recent_audio_chunks) && body.recent_audio_chunks.length > 0
+            ? body.recent_audio_chunks
+                .filter(
+                  (c: any) =>
+                    c &&
+                    typeof c.data_url === "string" &&
+                    c.data_url.startsWith("data:audio/")
+                )
+                .map((c: any) => ({
+                  seq: Number(c.seq) || nowMs,
+                  data_url: c.data_url,
+                  ts: Number(c.ts) || nowMs,
+                }))
+                .slice(-3)
+            : existingIdx >= 0
+            ? record.participants[existingIdx].recent_audio_chunks
             : null,
         participant_state: "CONNECTED",
         e2ee_media_fingerprint:

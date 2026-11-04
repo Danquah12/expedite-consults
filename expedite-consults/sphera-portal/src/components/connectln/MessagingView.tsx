@@ -20,6 +20,11 @@ import {
     formatMessageSentDateTime,
     formatMessageDateHeading,
 } from '@/lib/direct-mailbox-sync';
+import {
+    startLiveVoiceChunkCapture,
+    GaplessRemoteVoicePlayer,
+    EncodedVoiceChunk,
+} from '@/lib/vibe-voice-codec';
 
 type ChannelFilterType = 'All' | 'People' | 'Companies' | 'Products' | 'Communities';
 type ConnectLnMailboxFolder =
@@ -495,17 +500,21 @@ export function MessagingView({
                     video: preferredCamId
                         ? { deviceId: { exact: preferredCamId }, width: { ideal: 1280 }, height: { ideal: 720 } }
                         : { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
-                    audio: true,
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true,
+                    },
                 });
             } catch {
-                // Attempt 2: Video-only (in case microphone is missing or locked)
+                // Attempt 2: Simpler Video + Audio
                 try {
                     stream = await navigator.mediaDevices.getUserMedia({
                         video: preferredCamId ? { deviceId: { exact: preferredCamId } } : true,
-                        audio: false,
+                        audio: true,
                     });
                 } catch {
-                    // Attempt 3: Try any other available videoinput device on the computer
+                    // Attempt 3: Try any available videoinput device on the computer
                     try {
                         const allDevs = await navigator.mediaDevices.enumerateDevices();
                         const cams = allDevs.filter((d) => d.kind === 'videoinput' && d.deviceId);
@@ -519,6 +528,26 @@ export function MessagingView({
                             } catch {}
                         }
                     } catch {}
+                }
+            }
+
+            // Guarantee microphone audio track is attached if video fallback lacked audio
+            if (stream && stream.getAudioTracks().length === 0) {
+                try {
+                    const micStream = await navigator.mediaDevices.getUserMedia({
+                        video: false,
+                        audio: {
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            autoGainControl: true,
+                        },
+                    });
+                    micStream.getAudioTracks().forEach((t) => {
+                        t.enabled = !isMicMuted;
+                        stream!.addTrack(t);
+                    });
+                } catch {
+                    // ignore if no mic hardware exists
                 }
             }
 
@@ -544,9 +573,25 @@ export function MessagingView({
                 return;
             }
 
-            // Fallback if physical webcam is locked by another app or blocked: show live self-preview stream so user ALWAYS sees themselves
+            // Fallback if physical webcam is locked by another app or blocked: show live self-preview stream + attach real microphone!
             const fallbackStream = createLiveSelfPreviewStream();
             if (fallbackStream) {
+                try {
+                    const micStream = await navigator.mediaDevices.getUserMedia({
+                        video: false,
+                        audio: {
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            autoGainControl: true,
+                        },
+                    });
+                    micStream.getAudioTracks().forEach((t) => {
+                        t.enabled = !isMicMuted;
+                        fallbackStream.addTrack(t);
+                    });
+                } catch {
+                    // ignore if no mic hardware exists
+                }
                 localStreamRef.current = fallbackStream;
                 setLocalStreamState(fallbackStream);
                 setHasLocalStream(true);
@@ -1030,7 +1075,37 @@ export function MessagingView({
         }
     };
 
-    // Sync live video frames with /api/v1/calls when Messaging Video Huddle is active
+    // Live voice capture & playback refs for Messaging Video/Audio Huddle
+    const huddleLatestAudioChunkRef = useRef<EncodedVoiceChunk | undefined>(undefined);
+    const huddleRecentAudioChunksRef = useRef<EncodedVoiceChunk[]>([]);
+    const huddleVoicePlayerRef = useRef<GaplessRemoteVoicePlayer | null>(null);
+
+    // Capture 900ms universal WAV PCM voice chunks when Messaging Huddle is open
+    useEffect(() => {
+        if (!isCallModalOpen || !localStreamState) {
+            huddleLatestAudioChunkRef.current = undefined;
+            huddleRecentAudioChunksRef.current = [];
+            return;
+        }
+        if (!huddleVoicePlayerRef.current) {
+            huddleVoicePlayerRef.current = new GaplessRemoteVoicePlayer();
+        }
+        huddleVoicePlayerRef.current.unlock();
+        const stopCapture = startLiveVoiceChunkCapture(
+            localStreamState,
+            () => isMicMuted,
+            (latest, recentWindow) => {
+                huddleLatestAudioChunkRef.current = latest;
+                huddleRecentAudioChunksRef.current = recentWindow;
+            },
+            900
+        );
+        return () => {
+            stopCapture();
+        };
+    }, [isCallModalOpen, localStreamState, isMicMuted]);
+
+    // Sync live video frames & live voice chunks with /api/v1/calls when Messaging Video Huddle is active
     useEffect(() => {
         if (!isCallModalOpen || !activeThread) return;
         let mounted = true;
@@ -1109,6 +1184,8 @@ export function MessagingView({
                         is_muted: isMicMuted,
                         is_video_on: isCameraOn,
                         live_frame: localFrame,
+                        live_audio_chunk: !isMicMuted ? huddleLatestAudioChunkRef.current : undefined,
+                        recent_audio_chunks: !isMicMuted ? huddleRecentAudioChunksRef.current : undefined,
                     }),
                 });
                 const data = await res.json();
@@ -1142,8 +1219,30 @@ export function MessagingView({
                     }
                 }
 
-                // Verify new frames asynchronously and update state immediately with all active remote peers
+                // Verify new frames asynchronously and play remote audio chunks immediately
                 for (const peer of activeRemotes) {
+                    if (
+                        peer.live_audio_chunk ||
+                        (Array.isArray(peer.recent_audio_chunks) && peer.recent_audio_chunks.length > 0)
+                    ) {
+                        if (!huddleVoicePlayerRef.current) {
+                            huddleVoicePlayerRef.current = new GaplessRemoteVoicePlayer();
+                        }
+                        if (Array.isArray(peer.recent_audio_chunks) && peer.recent_audio_chunks.length > 0) {
+                            huddleVoicePlayerRef.current.enqueueChunks(
+                                peer.user_id,
+                                peer.recent_audio_chunks,
+                                Boolean(peer.is_muted)
+                            );
+                        } else if (peer.live_audio_chunk) {
+                            huddleVoicePlayerRef.current.enqueueChunk(
+                                peer.user_id,
+                                peer.live_audio_chunk,
+                                Boolean(peer.is_muted)
+                            );
+                        }
+                    }
+
                     if (
                         typeof peer.live_frame === 'string' &&
                         peer.live_frame.length > 3200 &&
@@ -1217,7 +1316,7 @@ export function MessagingView({
         window.addEventListener('beforeunload', handleUnloadLeave);
 
         syncHuddleFrame();
-        const hb = setInterval(syncHuddleFrame, 1600);
+        const hb = setInterval(syncHuddleFrame, 900);
         return () => {
             mounted = false;
             clearInterval(hb);
