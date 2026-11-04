@@ -1847,6 +1847,46 @@ function buildComprehensiveProfessionWheelTalks(): WheelVideoTalk[] {
 
 export const EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = buildComprehensiveProfessionWheelTalks()
 
+const PROFESSION_ALIAS_MAP: Record<string, string> = {
+  er_trauma_nurse: "critical_care_er_nurse",
+  nurse: "registered_nurse",
+  nursing: "registered_nurse",
+  rn: "registered_nurse",
+  bsn: "registered_nurse",
+  lpn: "licensed_practical_nurse",
+  np: "nurse_practitioner_pa",
+  carpenter: "carpenter",
+  carpentry: "carpenter",
+  woodworker: "cabinetmaker",
+  joiner: "finish_carpenter",
+  doctor: "physician",
+  md: "physician",
+  surgeon: "surgeon_specialist_md",
+  orthopedic_trauma_surgeon: "surgeon_specialist_md",
+  diesel_fleet_mechanic: "diesel_mechanic",
+  ev_powertrain_technician: "ev_technician",
+  red_team_operator: "penetration_tester",
+  scada_ics_security: "cybersecurity_architect",
+  malware_reverse_engineer: "incident_responder"
+}
+
+const PROFESSION_SIBLING_FAMILIES: Record<string, string[]> = {
+  carpenter: ["carpenter", "finish_carpenter", "commercial_framing_carpenter", "cabinetmaker"],
+  finish_carpenter: ["finish_carpenter", "carpenter", "cabinetmaker", "commercial_framing_carpenter"],
+  commercial_framing_carpenter: ["commercial_framing_carpenter", "carpenter", "finish_carpenter", "cabinetmaker"],
+  cabinetmaker: ["cabinetmaker", "finish_carpenter", "carpenter", "commercial_framing_carpenter"],
+  registered_nurse: ["registered_nurse", "critical_care_er_nurse", "nurse_practitioner_pa", "licensed_practical_nurse", "medical_assistant_aide"],
+  critical_care_er_nurse: ["critical_care_er_nurse", "registered_nurse", "nurse_practitioner_pa", "licensed_practical_nurse", "paramedic_emt"],
+  nurse_practitioner_pa: ["nurse_practitioner_pa", "registered_nurse", "critical_care_er_nurse", "physician", "licensed_practical_nurse"],
+  licensed_practical_nurse: ["licensed_practical_nurse", "registered_nurse", "medical_assistant_aide", "critical_care_er_nurse"],
+  physician: ["physician", "surgeon_specialist_md", "nurse_practitioner_pa", "registered_nurse", "pharmacist"],
+  surgeon_specialist_md: ["surgeon_specialist_md", "physician", "critical_care_er_nurse", "registered_nurse"],
+  electrician: ["electrician", "solar_pv_installer", "elevator_escalator_mechanic", "hvac_technician"],
+  plumber: ["plumber", "pipefitter_steamfitter", "hvac_technician"],
+  welder: ["welder", "structural_ironworker", "sheet_metal_worker", "machinist_cnc"],
+  mechanic: ["mechanic", "diesel_mechanic", "ev_technician", "auto_body_collision"]
+}
+
 /**
  * Resolves the best-matching ProfessionDefinition for a user based on their
  * professionId, profession string, or headline.
@@ -1861,12 +1901,58 @@ export function resolveProfessionForUser(user?: {
   if (!user) return undefined
 
   if (user.professionId) {
-    const exact = ALL_PROFESSIONS.find(p => p.id === user.professionId)
+    const mappedId = PROFESSION_ALIAS_MAP[user.professionId.toLowerCase()] || user.professionId
+    const exact = ALL_PROFESSIONS.find(p => p.id === mappedId || p.id === user.professionId)
     if (exact) return exact
+  }
+
+  const combinedText = `${user.profession || ""} ${user.headline || ""} ${user.name || ""}`.toLowerCase()
+
+  // Fast keyword detection for explicit professions (Carpenter, Nurse, Doctor, Electrician, Plumber, Welder, Mechanic, Cyber, etc.)
+  if (combinedText.includes("trauma nurse") || combinedText.includes("icu nurse") || combinedText.includes("er nurse") || combinedText.includes("ccrn")) {
+    const p = ALL_PROFESSIONS.find(x => x.id === "critical_care_er_nurse")
+    if (p) return p
+  }
+  if (combinedText.includes("nurse practitioner") || combinedText.includes("aprn") || combinedText.includes("fnp")) {
+    const p = ALL_PROFESSIONS.find(x => x.id === "nurse_practitioner_pa")
+    if (p) return p
+  }
+  if (combinedText.includes("lpn") || combinedText.includes("lvn") || combinedText.includes("practical nurse")) {
+    const p = ALL_PROFESSIONS.find(x => x.id === "licensed_practical_nurse")
+    if (p) return p
+  }
+  if (combinedText.includes("nurse") || combinedText.includes("nursing") || /\brn\b/.test(combinedText) || /\bbsn\b/.test(combinedText)) {
+    const p = ALL_PROFESSIONS.find(x => x.id === "registered_nurse")
+    if (p) return p
+  }
+  if (combinedText.includes("finish carpenter") || combinedText.includes("joiner")) {
+    const p = ALL_PROFESSIONS.find(x => x.id === "finish_carpenter")
+    if (p) return p
+  }
+  if (combinedText.includes("cabinetmaker") || combinedText.includes("cabinet")) {
+    const p = ALL_PROFESSIONS.find(x => x.id === "cabinetmaker")
+    if (p) return p
+  }
+  if (combinedText.includes("carpenter") || combinedText.includes("carpentry") || combinedText.includes("timber framing")) {
+    const p = ALL_PROFESSIONS.find(x => x.id === "carpenter")
+    if (p) return p
+  }
+  if (combinedText.includes("surgeon") || combinedText.includes("surgical") || combinedText.includes("orthopedic")) {
+    const p = ALL_PROFESSIONS.find(x => x.id === "surgeon_specialist_md")
+    if (p) return p
+  }
+  if (combinedText.includes("physician") || combinedText.includes("doctor") || combinedText.includes("cardiologist") || /\bmd\b/.test(combinedText)) {
+    const p = ALL_PROFESSIONS.find(x => x.id === "physician")
+    if (p) return p
   }
 
   if (user.profession) {
     const cleanProf = user.profession.trim().toLowerCase()
+    const mappedAlias = PROFESSION_ALIAS_MAP[cleanProf]
+    if (mappedAlias) {
+      const aliasHit = ALL_PROFESSIONS.find(p => p.id === mappedAlias)
+      if (aliasHit) return aliasHit
+    }
     const exactTitle = ALL_PROFESSIONS.find(
       p => p.title.toLowerCase() === cleanProf || p.id.toLowerCase() === cleanProf
     )
@@ -1888,6 +1974,11 @@ export function resolveProfessionForUser(user?: {
       return mainTitle.length >= 4 && cleanHeadline.includes(mainTitle)
     })
     if (matchedByHeadline) return matchedByHeadline
+
+    if (cleanHeadline.includes("cyber") || cleanHeadline.includes("security") || cleanHeadline.includes("zero trust") || cleanHeadline.includes("rmf") || cleanHeadline.includes("ciso")) {
+      const cyberProf = ALL_PROFESSIONS.find(p => p.enclaveId === "tech_cybersecurity")
+      if (cyberProf) return cyberProf
+    }
   }
 
   if (user.professionEnclave) {
@@ -1898,11 +1989,90 @@ export function resolveProfessionForUser(user?: {
 }
 
 /**
+ * Returns ONLY the videos that belong to the logged-in user's specific profession
+ * and its direct sibling specialties (e.g. ONLY Carpentry videos for a Carpenter;
+ * ONLY Nursing & Clinical Medical videos for a Nurse) so unrelated professions never mix in.
+ */
+export function getStrictProfessionVideosForUser(user?: {
+  professionId?: string
+  profession?: string
+  professionEnclave?: string
+  headline?: string
+  name?: string
+} | null): WheelVideoTalk[] {
+  if (!user) return EDUCATIONAL_WHEEL_TALKS.slice(0, 4)
+
+  const resolvedProf = resolveProfessionForUser(user)
+  const targetProfId = resolvedProf?.id || user.professionId
+  const familyIds = targetProfId
+    ? (PROFESSION_SIBLING_FAMILIES[targetProfId] || [targetProfId])
+    : []
+
+  const seenIds = new Set<string>()
+  const seenYoutubeIds = new Set<string>()
+  const strictList: WheelVideoTalk[] = []
+
+  const pushUnique = (talk?: WheelVideoTalk) => {
+    if (!talk || !talk.thumbnailUrl || seenIds.has(talk.id)) return
+    seenIds.add(talk.id)
+    seenYoutubeIds.add(talk.youtubeId)
+    strictList.push(talk)
+  }
+
+  // 1. Exact professionId matches first (Core Masterclasses + Verified Career Videos)
+  if (targetProfId) {
+    for (const talk of CORE_EDUCATIONAL_WHEEL_TALKS) {
+      if (talk.professionId === targetProfId) pushUnique(talk)
+    }
+    const exactCareer = EDUCATIONAL_WHEEL_TALKS.find(t => t.id === `wheel-prof-${targetProfId}`)
+    pushUnique(exactCareer)
+    for (const talk of EDUCATIONAL_WHEEL_TALKS) {
+      if (talk.professionId === targetProfId) pushUnique(talk)
+    }
+  }
+
+  // 2. Direct sibling family matches (e.g. Carpenter -> Finish Carpenter, Framing Carpenter, Cabinetmaker; Nurse -> RN, ICU/ER Nurse, NP, LPN)
+  for (const sibId of familyIds) {
+    if (sibId === targetProfId) continue
+    for (const talk of CORE_EDUCATIONAL_WHEEL_TALKS) {
+      if (talk.professionId === sibId) pushUnique(talk)
+    }
+    const sibCareer = EDUCATIONAL_WHEEL_TALKS.find(t => t.id === `wheel-prof-${sibId}`)
+    pushUnique(sibCareer)
+  }
+
+  // 3. If this profession still has fewer than 3 videos, match only talks sharing the primary profession noun
+  if (strictList.length < 3 && resolvedProf) {
+    const primaryNoun = resolvedProf.title
+      .replace(/\(.*?\)/g, "")
+      .split(/[,/&—-]/)[0]
+      .trim()
+      .toLowerCase()
+    if (primaryNoun.length >= 4) {
+      for (const talk of EDUCATIONAL_WHEEL_TALKS) {
+        if (strictList.length >= 6) break
+        const hay = `${talk.title} ${talk.speakerTitle}`.toLowerCase()
+        if (hay.includes(primaryNoun)) pushUnique(talk)
+      }
+    }
+  }
+
+  // 4. Ensure at least 2 videos exist by falling back to same-category talks only if needed
+  if (strictList.length < 2 && resolvedProf?.enclaveId) {
+    for (const talk of CORE_EDUCATIONAL_WHEEL_TALKS) {
+      if (strictList.length >= 4) break
+      if (talk.enclaveId === resolvedProf.enclaveId && !seenYoutubeIds.has(talk.youtubeId)) {
+        pushUnique(talk)
+      }
+    }
+  }
+
+  return strictList.length > 0 ? strictList : EDUCATIONAL_WHEEL_TALKS.slice(0, 4)
+}
+
+/**
  * Returns a tiered list of educational & field videos specifically matched to the
- * user's claimed profession:
- * - Tier 1: Exact professionId matches (both Core Masterclass talks and Verified Career talks)
- * - Tier 2: Sibling/related professions sharing keywords (e.g., Carpenter -> Finish Carpenter, Cabinetmaker)
- * - Tier 3: Same-enclave verified talks
+ * user's claimed profession (strict profession family first, then same-enclave).
  */
 export function getTieredVideosForUser(user?: {
   professionId?: string
@@ -1911,84 +2081,7 @@ export function getTieredVideosForUser(user?: {
   headline?: string
   name?: string
 } | null): WheelVideoTalk[] {
-  if (!user) return EDUCATIONAL_WHEEL_TALKS.slice(0, 6)
-
-  const resolvedProf = resolveProfessionForUser(user)
-  const targetProfId = resolvedProf?.id || user.professionId
-  const targetEnclaveId = resolvedProf?.enclaveId || user.professionEnclave
-  const seenIds = new Set<string>()
-  const seenYoutubeIds = new Set<string>()
-  const result: WheelVideoTalk[] = []
-
-  const pushUnique = (talk?: WheelVideoTalk) => {
-    if (!talk || seenIds.has(talk.id)) return
-    seenIds.add(talk.id)
-    seenYoutubeIds.add(talk.youtubeId)
-    result.push(talk)
-  }
-
-  // Tier 1A: Core curated masterclasses matching exact professionId (e.g. wheel-joinery-framing for carpenter)
-  if (targetProfId) {
-    for (const talk of CORE_EDUCATIONAL_WHEEL_TALKS) {
-      if (talk.professionId === targetProfId) {
-        pushUnique(talk)
-      }
-    }
-    // Tier 1B: Dedicated verified career video wheel-prof-<id>
-    const profTalk = EDUCATIONAL_WHEEL_TALKS.find(t => t.id === `wheel-prof-${targetProfId}`)
-    pushUnique(profTalk)
-    // Any other talk with matching professionId
-    for (const talk of EDUCATIONAL_WHEEL_TALKS) {
-      if (talk.professionId === targetProfId) {
-        pushUnique(talk)
-      }
-    }
-  }
-
-  // Tier 2: Related sibling profession talks by keyword (e.g. "carpenter" -> finish_carpenter, cabinetmaker)
-  const rawKeywords = [
-    resolvedProf?.title || "",
-    user.profession || "",
-    targetProfId ? targetProfId.replace(/_/g, " ") : ""
-  ]
-    .join(" ")
-    .toLowerCase()
-    .split(/[^a-z0-9]+/)
-    .filter(w => w.length >= 4 && !["with", "and", "the", "from", "general", "senior", "lead", "master", "certified", "specialist", "technician", "worker"].includes(w))
-
-  if (rawKeywords.length > 0) {
-    for (const talk of EDUCATIONAL_WHEEL_TALKS) {
-      if (seenIds.has(talk.id) || seenYoutubeIds.has(talk.youtubeId)) continue
-      const hay = `${talk.title} ${talk.speakerTitle} ${talk.professionId || ""}`.toLowerCase()
-      if (rawKeywords.some(kw => hay.includes(kw))) {
-        pushUnique(talk)
-      }
-    }
-  }
-
-  // Tier 3: Same-enclave talks with verified YouTube IDs
-  if (targetEnclaveId) {
-    for (const talk of CORE_EDUCATIONAL_WHEEL_TALKS) {
-      if (talk.enclaveId === targetEnclaveId && !seenYoutubeIds.has(talk.youtubeId)) {
-        pushUnique(talk)
-      }
-    }
-    for (const talk of EDUCATIONAL_WHEEL_TALKS) {
-      if (talk.enclaveId === targetEnclaveId && !seenYoutubeIds.has(talk.youtubeId)) {
-        pushUnique(talk)
-      }
-    }
-  }
-
-  // Fallback if still < 4 talks
-  for (const talk of EDUCATIONAL_WHEEL_TALKS) {
-    if (result.length >= 12) break
-    if (!seenYoutubeIds.has(talk.youtubeId)) {
-      pushUnique(talk)
-    }
-  }
-
-  return result
+  return getStrictProfessionVideosForUser(user)
 }
 
 /**

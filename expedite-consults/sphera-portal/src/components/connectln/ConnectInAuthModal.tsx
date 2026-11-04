@@ -369,11 +369,12 @@ export function ConnectInAuthModal({
       const vaultProfile = getVaultProfileForUser({ email: signInEmail, name: signInName.trim() || resolvedName })
       const finalName = signInName.trim() || vaultProfile?.name || resolvedName
       const explicitProf = signInProfessionId !== "auto_detect" ? findProfessionById(signInProfessionId) : null
-      const vaultProf = (!explicitProf && vaultProfile?.professionId) ? findProfessionById(vaultProfile.professionId) : null
-      const keywordProf = (!explicitProf && !vaultProf)
+      const keywordProf = !explicitProf
         ? resolveProfessionForUser({ profession: `${signInName} ${signInEmail}` })
         : null
-      const selectedProf = explicitProf || vaultProf || keywordProf
+      const overrideProf = explicitProf || keywordProf
+      const vaultProf = (!overrideProf && vaultProfile?.professionId) ? findProfessionById(vaultProfile.professionId) : null
+      const selectedProf = overrideProf || vaultProf
 
       const res = await fetch("/api/connectin/auth/verify-otp", {
         method: "POST",
@@ -388,7 +389,7 @@ export function ConnectInAuthModal({
           profession: selectedProf?.title || vaultProfile?.profession,
           professionCategory: selectedProf?.categoryName || vaultProfile?.professionCategory,
           professionEnclave: selectedProf?.enclaveId || vaultProfile?.professionEnclave,
-          headline: explicitProf ? explicitProf.defaultHeadline : vaultProfile?.headline,
+          headline: overrideProf ? overrideProf.defaultHeadline : vaultProfile?.headline,
           otpChallengeToken
         })
       })
@@ -446,12 +447,12 @@ export function ConnectInAuthModal({
           professionId: selectedProf.id,
           professionCategory: selectedProf.categoryName,
           professionEnclave: selectedProf.enclaveId,
-          headline: explicitProf ? selectedProf.defaultHeadline : (vaultProfile?.headline || selectedProf.defaultHeadline),
-          experience: (vaultProfile?.experience && vaultProfile.experience.length > 0 && !explicitProf) ? vaultProfile.experience : generatedDomainProfile.experience,
-          certifications: (vaultProfile?.certifications && vaultProfile.certifications.length > 0 && !explicitProf) ? vaultProfile.certifications : generatedDomainProfile.certifications,
-          skills: (vaultProfile?.skills && vaultProfile.skills.length > 0 && !explicitProf) ? vaultProfile.skills : generatedDomainProfile.skills,
-          coverImage: vaultProfile?.coverImage || generatedDomainProfile.coverImage,
-          about: (vaultProfile?.about && !explicitProf) ? vaultProfile.about : generatedDomainProfile.about
+          headline: overrideProf ? selectedProf.defaultHeadline : (vaultProfile?.headline || selectedProf.defaultHeadline),
+          experience: (vaultProfile?.experience && vaultProfile.experience.length > 0 && !overrideProf) ? vaultProfile.experience : generatedDomainProfile.experience,
+          certifications: (vaultProfile?.certifications && vaultProfile.certifications.length > 0 && !overrideProf) ? vaultProfile.certifications : generatedDomainProfile.certifications,
+          skills: (vaultProfile?.skills && vaultProfile.skills.length > 0 && !overrideProf) ? vaultProfile.skills : generatedDomainProfile.skills,
+          coverImage: overrideProf ? generatedDomainProfile.coverImage : (vaultProfile?.coverImage || generatedDomainProfile.coverImage),
+          about: (vaultProfile?.about && !overrideProf) ? vaultProfile.about : generatedDomainProfile.about
         } : {})
       }
 

@@ -384,13 +384,15 @@ export function getExplicitStoredUser(): UserProfile | null {
         ? KWESI_ASIEDU_PARSED_DATA.experiences
         : []
 
-      const finalHeadline = (isKwesi && (!merged.headline || merged.headline.includes("Master Carpenter") || merged.headline.includes("Verified ConnectIn Member")))
-        ? KWESI_ASIEDU_PARSED_DATA.headline
-        : (merged.headline || vaultEntry?.headline || 'Verified ConnectIn Member')
+      const hasExplicitProfessionChoice = Boolean(parsed.professionId)
 
-      const finalAbout = (isKwesi && (!merged.about || merged.about.includes("Practicing") || merged.about.length < 50))
+      const finalHeadline = (isKwesi && !hasExplicitProfessionChoice && (!merged.headline || merged.headline.includes("Master Carpenter") || merged.headline.includes("Verified ConnectIn Member")))
+        ? KWESI_ASIEDU_PARSED_DATA.headline
+        : (parsed.headline || merged.headline || vaultEntry?.headline || 'Verified ConnectIn Member')
+
+      const finalAbout = (isKwesi && !hasExplicitProfessionChoice && (!merged.about || merged.about.includes("Practicing") || merged.about.length < 50))
         ? KWESI_ASIEDU_PARSED_DATA.about
-        : (merged.about || vaultEntry?.about)
+        : (parsed.about || merged.about || vaultEntry?.about)
 
       const persistentAvatar = loadPersistentAvatar({ ...merged, email })
       const persistentCover = loadPersistentCover({ ...merged, email })

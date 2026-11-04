@@ -1,6 +1,6 @@
 import { Post, UserProfile } from './connectln-data'
 import { ALL_PROFESSIONS, PROFESSION_ENCLAVES } from './connectin-professions'
-import { getTieredVideosForUser, resolveProfessionForUser } from './connectin-videos'
+import { getStrictProfessionVideosForUser, resolveProfessionForUser } from './connectin-videos'
 
 interface ProfessionVisualPack {
   actionPhotos: string[]
@@ -13,6 +13,149 @@ interface ProfessionVisualPack {
   fieldStoryLead: string
   secondStoryLead: string
   guideTitle: string
+}
+
+const PROFESSION_SPECIFIC_PACKS: Record<string, ProfessionVisualPack> = {
+  carpenter: {
+    actionPhotos: [
+      'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=1200&auto=format&fit=crop&q=85',
+      'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=1200&auto=format&fit=crop&q=85',
+      'https://images.unsplash.com/photo-1541888946425-d09bb18086f6?w=1200&auto=format&fit=crop&q=85'
+    ],
+    peerAuthors: [
+      {
+        name: 'Caleb Vance',
+        rolePrefix: 'Master Carpenter & Heavy Timber Framing Lead',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80',
+        followersText: '48,920 followers'
+      },
+      {
+        name: 'Hank Sterling',
+        rolePrefix: 'Senior Finish & Structural Joinery Superintendent',
+        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80',
+        followersText: '31,400 followers'
+      }
+    ],
+    fieldStoryLead: 'In the carpentry shop and on the framing deck today—precision joinery starts long before the first timber cut is made.',
+    secondStoryLead: 'Laying out mortise-and-tenon heavy timber bents and checking plumb/square tolerances with our carpentry crew this morning.',
+    guideTitle: '7 Master Carpenter Joinery, Framing & Blueprint Standards [Free Guide]'
+  },
+  finish_carpenter: {
+    actionPhotos: [
+      'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=1200&auto=format&fit=crop&q=85',
+      'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=1200&auto=format&fit=crop&q=85'
+    ],
+    peerAuthors: [
+      {
+        name: 'Erik Lindqvist',
+        rolePrefix: 'Master Finish Carpenter & Architectural Millwork Lead',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80',
+        followersText: '34,200 followers'
+      },
+      {
+        name: 'Caleb Vance',
+        rolePrefix: 'Master Carpenter & Custom Stairbuilder',
+        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80',
+        followersText: '48,920 followers'
+      }
+    ],
+    fieldStoryLead: 'Scribing custom crown molding and architectural millwork to 1/64-inch tolerance on site today.',
+    secondStoryLead: 'Nothing beats tight cope joints, acclimated hardwood, and clean dust-extracted track-saw cuts.',
+    guideTitle: '7 Finish Carpentry & Architectural Millwork Standards [Free Guide]'
+  },
+  registered_nurse: {
+    actionPhotos: [
+      'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1200&auto=format&fit=crop&q=85',
+      'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=1200&auto=format&fit=crop&q=85',
+      'https://images.unsplash.com/photo-1551076805-e1869033e561?w=1200&auto=format&fit=crop&q=85'
+    ],
+    peerAuthors: [
+      {
+        name: 'Maya Lin-Vasquez, BSN, RN, CCRN',
+        rolePrefix: 'Clinical Charge Nurse & Critical Care Nursing Educator',
+        avatar: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=300&auto=format&fit=crop&q=80',
+        followersText: '68,420 followers'
+      },
+      {
+        name: 'Sarah Jenkins, DNP, APRN, RN',
+        rolePrefix: 'Director of Inpatient Nursing & Bedside Patient Safety',
+        avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&auto=format&fit=crop&q=80',
+        followersText: '51,900 followers'
+      }
+    ],
+    fieldStoryLead: 'On the nursing unit this shift—structured SBAR bedside handoffs, smart-pump IV titration, and early sepsis recognition save lives every day.',
+    secondStoryLead: 'Proud of our Registered Nurses and clinical care team today. Compassionate bedside vigilance and evidence-based nursing protocols make all the difference for our patients.',
+    guideTitle: '7 Nursing Clinical Triage, IV Medication Safety & SBAR Handoff Protocols [Free Guide]'
+  },
+  critical_care_er_nurse: {
+    actionPhotos: [
+      'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=1200&auto=format&fit=crop&q=85',
+      'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1200&auto=format&fit=crop&q=85'
+    ],
+    peerAuthors: [
+      {
+        name: 'Maya Lin-Vasquez, BSN, RN, CCRN, CEN',
+        rolePrefix: 'Level-1 Trauma & ICU Critical Care Charge Nurse',
+        avatar: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=300&auto=format&fit=crop&q=80',
+        followersText: '68,420 followers'
+      },
+      {
+        name: 'Hannah Okafor, MSN, RN, CCRN',
+        rolePrefix: 'Emergency Department Trauma Resuscitation Lead',
+        avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&auto=format&fit=crop&q=80',
+        followersText: '44,800 followers'
+      }
+    ],
+    fieldStoryLead: 'Inside the ICU & Level-1 Trauma bay today—hemodynamic arterial-line monitoring, vasopressor titration to MAP ≥ 65 mmHg, and rapid TNCC nursing triage.',
+    secondStoryLead: 'Running trauma resuscitation drills with our ER and ICU nursing team this morning. Calm communication under pressure is the heart of critical care nursing.',
+    guideTitle: '7 ICU & Emergency Trauma Nursing Resuscitation Standards [Free Guide]'
+  },
+  nurse_practitioner_pa: {
+    actionPhotos: [
+      'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1200&auto=format&fit=crop&q=85',
+      'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=1200&auto=format&fit=crop&q=85'
+    ],
+    peerAuthors: [
+      {
+        name: 'Sarah Jenkins, DNP, APRN, FNP-BC',
+        rolePrefix: 'Lead Nurse Practitioner & Acute Care Clinical Director',
+        avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&auto=format&fit=crop&q=80',
+        followersText: '54,300 followers'
+      },
+      {
+        name: 'Maya Lin-Vasquez, BSN, RN, CCRN',
+        rolePrefix: 'Advanced Practice Nursing & Clinical Education Lead',
+        avatar: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=300&auto=format&fit=crop&q=80',
+        followersText: '68,420 followers'
+      }
+    ],
+    fieldStoryLead: 'Advanced practice nursing rounds today—integrating point-of-care diagnostics, autonomous prescribing, and holistic patient education.',
+    secondStoryLead: 'Collaborating across our NP, PA, and RN teams to streamline inpatient-to-outpatient continuity of care.',
+    guideTitle: '7 Nurse Practitioner & Advanced Clinical Practice Protocols [Free Guide]'
+  },
+  licensed_practical_nurse: {
+    actionPhotos: [
+      'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=1200&auto=format&fit=crop&q=85',
+      'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1200&auto=format&fit=crop&q=85'
+    ],
+    peerAuthors: [
+      {
+        name: 'brianna Carter, LPN, IV-Cert',
+        rolePrefix: 'Senior Licensed Practical Nurse & Wound Care Lead',
+        avatar: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=300&auto=format&fit=crop&q=80',
+        followersText: '39,100 followers'
+      },
+      {
+        name: 'Maya Lin-Vasquez, BSN, RN',
+        rolePrefix: 'Clinical Nursing Supervisor & Mentor',
+        avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&auto=format&fit=crop&q=80',
+        followersText: '68,420 followers'
+      }
+    ],
+    fieldStoryLead: 'Bedside nursing excellence in action—sterile wound dressing changes, accurate MAR medication pass, and attentive patient monitoring.',
+    secondStoryLead: 'Working alongside our LPN and RN care team today to deliver safe, compassionate rehabilitation and bedside care.',
+    guideTitle: '7 LPN / LVN Bedside Nursing, Wound Care & Medication Safety Tips [Free Guide]'
+  }
 }
 
 const PROFESSION_SPECIFIC_PHOTOS: Record<string, string[]> = {
@@ -28,6 +171,14 @@ const PROFESSION_SPECIFIC_PHOTOS: Record<string, string[]> = {
   cabinetmaker: [
     'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=1200&auto=format&fit=crop&q=85',
     'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=1200&auto=format&fit=crop&q=85'
+  ],
+  registered_nurse: [
+    'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1200&auto=format&fit=crop&q=85',
+    'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=1200&auto=format&fit=crop&q=85'
+  ],
+  critical_care_er_nurse: [
+    'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=1200&auto=format&fit=crop&q=85',
+    'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1200&auto=format&fit=crop&q=85'
   ],
   electrician: [
     'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1200&auto=format&fit=crop&q=85',
@@ -101,21 +252,21 @@ const ENCLAVE_VISUAL_PACKS: Record<string, ProfessionVisualPack> = {
   },
   healthcare_medicine: {
     actionPhotos: [
-      'https://images.unsplash.com/photo-1551076805-e1869033e561?w=1200&auto=format&fit=crop&q=85',
-      'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1200&auto=format&fit=crop&q=85'
+      'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1200&auto=format&fit=crop&q=85',
+      'https://images.unsplash.com/photo-1551076805-e1869033e561?w=1200&auto=format&fit=crop&q=85'
     ],
     peerAuthors: [
       {
-        name: 'Dr. Elena Rostova, MD, FACS',
-        rolePrefix: 'Chief of Clinical Operations',
-        avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&auto=format&fit=crop&q=80',
+        name: 'Maya Lin-Vasquez, BSN, RN, CCRN',
+        rolePrefix: 'Clinical Nursing & Patient Care Lead',
+        avatar: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=300&auto=format&fit=crop&q=80',
         followersText: '64,110 followers'
       },
       {
-        name: 'Maya Lin-Vasquez, BSN, RN',
-        rolePrefix: 'Level-1 Trauma & Clinical Charge Lead',
-        avatar: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=300&auto=format&fit=crop&q=80',
-        followersText: '42,300 followers'
+        name: 'Dr. Elena Rostova, MD, FACS',
+        rolePrefix: 'Chief of Clinical & Medical Operations',
+        avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&auto=format&fit=crop&q=80',
+        followersText: '58,300 followers'
       }
     ],
     fieldStoryLead: 'On the clinical floor today—clear team communication during rapid handoffs saves lives every single shift.',
@@ -228,23 +379,27 @@ export function buildProfessionTieredFeedPosts(user?: UserProfile | null): Post[
     PROFESSION_ENCLAVES.find(e => e.id === (resolvedProf.enclaveId || user?.professionEnclave)) ||
     PROFESSION_ENCLAVES[0]
 
-  const tieredVideos = getTieredVideosForUser({
+  const strictVideos = getStrictProfessionVideosForUser({
     professionId: resolvedProf.id,
     profession: user?.profession || resolvedProf.title,
     professionEnclave: enclave.id,
-    headline: user?.headline
+    headline: user?.headline,
+    name: user?.name
   })
 
-  const primaryVideo = tieredVideos[0]
-  const secondaryVideo = tieredVideos[1] || tieredVideos[0]
+  const primaryVideo = strictVideos[0]
+  const secondaryVideo = strictVideos[1] || strictVideos[0]
 
-  const pack = ENCLAVE_VISUAL_PACKS[enclave.id] || DEFAULT_VISUAL_PACK
+  const pack =
+    PROFESSION_SPECIFIC_PACKS[resolvedProf.id] ||
+    ENCLAVE_VISUAL_PACKS[enclave.id] ||
+    DEFAULT_VISUAL_PACK
   const specificPhotos = PROFESSION_SPECIFIC_PHOTOS[resolvedProf.id] || pack.actionPhotos
   const photo1 = specificPhotos[0] || pack.actionPhotos[0]
   const photo2 = specificPhotos[1] || pack.actionPhotos[1] || pack.actionPhotos[0]
 
   const profTitle = resolvedProf.title
-  const cleanShortTitle = profTitle.split('(')[0].trim()
+  const cleanShortTitle = profTitle.split('(')[0].split('-')[0].trim()
   const skills = resolvedProf.typicalSkills || ['Field Execution', 'Safety Standards', 'Quality Control', 'Master Craftsmanship']
   const primaryTool = resolvedProf.tools?.[0]
   const secondaryTool = resolvedProf.tools?.[1]
@@ -267,7 +422,7 @@ export function buildProfessionTieredFeedPosts(user?: UserProfile | null): Post[
     author: {
       id: `guild_lead_${resolvedProf.id}`,
       name: `${peer1.name}`,
-      headline: `Master ${cleanShortTitle} · ${peer1.rolePrefix} (${enclave.shortName})`,
+      headline: `${cleanShortTitle} · ${peer1.rolePrefix}`,
       avatar: peer1.avatar,
       connectionDegree: '1st',
       isFollowing: true,
@@ -277,7 +432,7 @@ export function buildProfessionTieredFeedPosts(user?: UserProfile | null): Post[
     visibility: 'Public',
     feedCategory: 'for_you',
     feedSubCategory: enclave.shortName,
-    content: `🎥 LIVE FROM THE FIELD — ${profTitle} Masterclass: "${primaryVideo.title}"\n\nFor everyone logged in across our ${cleanShortTitle} community today: watch how our crew executes ${skills.slice(0, 3).join(', ')} in real time${primaryTool ? ` using ${primaryTool.name}` : ''}.\n\nKey field benchmarks from today's session:\n• ${primaryVideo.takeaways[0] || skills[0]}\n• ${primaryVideo.takeaways[1] || skills[1]}\n• ${primaryVideo.takeaways[2] || skills[2]}\n\nPress play below to watch the full ${cleanShortTitle} demonstration or share with your crew.`,
+    content: `🎥 LIVE FROM THE FIELD — ${profTitle} Masterclass: "${primaryVideo.title}"\n\nFor everyone logged in across our ${cleanShortTitle} community today: watch how our team executes ${skills.slice(0, 3).join(', ')} in real time${primaryTool ? ` using ${primaryTool.name}` : ''}.\n\nKey ${cleanShortTitle} benchmarks from today's session:\n• ${primaryVideo.takeaways[0] || skills[0]}\n• ${primaryVideo.takeaways[1] || skills[1]}\n• ${primaryVideo.takeaways[2] || skills[2]}\n\nPress play below to watch the full ${cleanShortTitle} video demonstration.`,
     hashtags,
     media: {
       type: 'video',
@@ -333,7 +488,7 @@ export function buildProfessionTieredFeedPosts(user?: UserProfile | null): Post[
     isProfessionTiered: true,
     author: {
       id: `guild_institute_${resolvedProf.id}`,
-      name: `${cleanShortTitle} Guild & Field Standards`,
+      name: `${cleanShortTitle} Guild & Practice Standards`,
       headline: `${peer1.followersText} · Official ${enclave.shortName} Directorate`,
       avatar: peer2.avatar,
       connectionDegree: 'Following',
@@ -345,34 +500,34 @@ export function buildProfessionTieredFeedPosts(user?: UserProfile | null): Post[
     visibility: 'Public',
     feedCategory: 'for_you',
     feedSubCategory: enclave.shortName,
-    content: `${pack.fieldStoryLead}\n\nWhether you're leading a ${cleanShortTitle} crew on-site or refining your workflow in ${skills[0] || 'field operations'} and ${skills[1] || 'precision layout'}, having the right specification checklist changes everything. Download our free 2026 ${cleanShortTitle} Field Guide below.`,
+    content: `${pack.fieldStoryLead}\n\nWhether you are practicing as a ${cleanShortTitle} or leading ${skills[0] || 'daily operations'} and ${skills[1] || 'quality verification'}, having the right checklist changes everything. Download our free 2026 ${cleanShortTitle} Guide below.`,
     hashtags,
     media: {
       type: 'image',
       url: photo1,
       aspectRatio: '4/3',
-      title: `7 ${cleanShortTitle} Field Standards & Execution Tips [Free Guide]`,
+      title: pack.guideTitle || `7 ${cleanShortTitle} Field Standards & Execution Tips [Free Guide]`,
       domain: `${resolvedProf.id.replace(/_/g, '')}.connectln.org`,
       submitsText: '142 downloads today',
       overlayTitle: `7 ${cleanShortTitle} Standards`,
-      overlaySubtitle: `Mastering ${skills.slice(0, 2).join(' & ')} on Every Job`,
-      description: `Verified ${profTitle} field handbook covering ${skills.slice(0, 4).join(', ')}.`,
+      overlaySubtitle: `Mastering ${skills.slice(0, 2).join(' & ')} Every Day`,
+      description: `Verified ${profTitle} handbook covering ${skills.slice(0, 4).join(', ')}.`,
       downloadGuide: {
-        title: `7 ${cleanShortTitle} Field Standards & Execution Tips [Free Guide]`,
+        title: pack.guideTitle || `7 ${cleanShortTitle} Field Standards & Execution Tips [Free Guide]`,
         subtitle: `142 fellow ${cleanShortTitle} professionals downloaded this guide`,
         ctaLabel: 'Download',
-        fileName: `${resolvedProf.id.toUpperCase()}_2026_Field_Standards_Guide.txt`,
+        fileName: `${resolvedProf.id.toUpperCase()}_2026_Standards_Guide.txt`,
         checklist: [
-          `1. Primary Competency Standard: ${skills[0] || 'Precision Layout & Verification'}`,
-          `2. Field Execution Protocol: ${skills[1] || 'Tolerance & Calibration Checks'}`,
+          `1. Primary Competency Standard: ${skills[0] || 'Precision Verification'}`,
+          `2. Core Execution Protocol: ${skills[1] || 'Calibration & Safety Checks'}`,
           `3. Quality & Safety Benchmark: ${skills[2] || 'Inspection & Sign-Off'}`,
-          `4. Advanced Craftsmanship: ${skills[3] || 'Workflow Optimization'}`,
+          `4. Advanced Practice: ${skills[3] || 'Workflow Optimization'}`,
           primaryTool
-            ? `5. Primary Instrument Setup: ${primaryTool.name} — ${primaryTool.description}`
-            : `5. Tooling & Material Readiness Verification`,
+            ? `5. Primary Instrument / System: ${primaryTool.name} — ${primaryTool.description}`
+            : `5. Equipment & Readiness Verification`,
           secondaryTool
             ? `6. Secondary System Integration: ${secondaryTool.name} — ${secondaryTool.description}`
-            : `6. Crew Handoff & Documentation Checklist`,
+            : `6. Team Handoff & Documentation Checklist`,
           `7. ${enclave.securityClearanceTier} Compliance & Guild Verification Sign-Off`
         ]
       }
@@ -415,7 +570,7 @@ export function buildProfessionTieredFeedPosts(user?: UserProfile | null): Post[
     visibility: 'Public',
     feedCategory: 'for_you',
     feedSubCategory: enclave.shortName,
-    content: `Hands-on ${cleanShortTitle} session from this week's field training: "${secondaryVideo.title}"\n\nWe broke down how experienced ${cleanShortTitle} practitioners approach ${skills.slice(1, 4).join(', ')}${secondaryTool ? ` alongside ${secondaryTool.name}` : ''}. Watch the full walkthrough below and let me know how your team handles this in the field!`,
+    content: `Hands-on ${cleanShortTitle} session from this week's training: "${secondaryVideo.title}"\n\nWe broke down how experienced ${cleanShortTitle} practitioners approach ${skills.slice(1, 4).join(', ')}${secondaryTool ? ` alongside ${secondaryTool.name}` : ''}. Watch the full walkthrough below!`,
     hashtags,
     media: {
       type: 'video',
@@ -424,7 +579,7 @@ export function buildProfessionTieredFeedPosts(user?: UserProfile | null): Post[
       thumbnailUrl: `https://i.ytimg.com/vi/${secondaryVideo.youtubeId}/hqdefault.jpg`,
       aspectRatio: '16/9',
       title: secondaryVideo.title,
-      domain: `${enclave.shortName.toUpperCase()} · ${cleanShortTitle.toUpperCase()} FIELD VIDEO`,
+      domain: `${enclave.shortName.toUpperCase()} · ${cleanShortTitle.toUpperCase()} VIDEO`,
       duration: secondaryVideo.duration || '4:48',
       serialPlate: secondaryVideo.serialPlate,
       brandName: 'ConnectLn',
@@ -449,7 +604,7 @@ export function buildProfessionTieredFeedPosts(user?: UserProfile | null): Post[
     comments: []
   }
 
-  // 4. Tier-1 Second Photo & Story Post: Peer Field Story with People Actively Working (Matches LinkedIn Screenshots 1 & 3)
+  // 4. Tier-1 Second Photo & Story Post: Peer Story with People Actively Doing the Profession
   const postPhotoStory2: Post = {
     id: `post_prof_story_photo_${resolvedProf.id}`,
     professionId: resolvedProf.id,
@@ -468,13 +623,13 @@ export function buildProfessionTieredFeedPosts(user?: UserProfile | null): Post[
     visibility: 'Public',
     feedCategory: 'for_you',
     feedSubCategory: enclave.shortName,
-    content: `${pack.secondStoryLead}\n\nToday our ${cleanShortTitle} team completed full verification on ${skills[0] || 'structural layout'} and ${skills[2] || 'quality inspection'}. Proud of the dedication and craftsmanship every person brought to the job today.`,
+    content: `${pack.secondStoryLead}\n\nToday our ${cleanShortTitle} team completed full verification on ${skills[0] || 'core protocols'} and ${skills[2] || 'quality inspection'}. Proud of the dedication and skill every person brought today.`,
     hashtags,
     media: {
       type: 'image',
       url: photo2,
       aspectRatio: '16/10',
-      overlayTitle: `${cleanShortTitle} in Action: Field Craftsmanship & Precision`,
+      overlayTitle: `${cleanShortTitle} in Action: Real-World Practice & Excellence`,
       title: `${profTitle}: Real-World Execution & Team Standards in 2026`,
       domain: `connectln.org/${resolvedProf.id}`
     },

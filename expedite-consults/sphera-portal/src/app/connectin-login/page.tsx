@@ -373,11 +373,12 @@ export default function ConnectInLoginPage() {
       const vaultProfile = getVaultProfileForUser({ email: signInEmail, name: signInName.trim() || resolvedName })
       const finalName = signInName.trim() || vaultProfile?.name || resolvedName
       const explicitProf = signInProfessionId !== "auto_detect" ? findProfessionById(signInProfessionId) : null
-      const vaultProf = (!explicitProf && vaultProfile?.professionId) ? findProfessionById(vaultProfile.professionId) : null
-      const keywordProf = (!explicitProf && !vaultProf)
+      const keywordProf = !explicitProf
         ? resolveProfessionForUser({ profession: `${signInName} ${signInEmail}` })
         : null
-      const selectedProf = explicitProf || vaultProf || keywordProf
+      const overrideProf = explicitProf || keywordProf
+      const vaultProf = (!overrideProf && vaultProfile?.professionId) ? findProfessionById(vaultProfile.professionId) : null
+      const selectedProf = overrideProf || vaultProf
 
       const res = await fetch("/api/connectin/auth/verify-otp", {
         method: "POST",
@@ -392,7 +393,7 @@ export default function ConnectInLoginPage() {
           profession: selectedProf?.title || vaultProfile?.profession,
           professionCategory: selectedProf?.categoryName || vaultProfile?.professionCategory,
           professionEnclave: selectedProf?.enclaveId || vaultProfile?.professionEnclave,
-          headline: explicitProf ? explicitProf.defaultHeadline : vaultProfile?.headline,
+          headline: overrideProf ? overrideProf.defaultHeadline : vaultProfile?.headline,
           otpChallengeToken
         })
       })
@@ -470,12 +471,12 @@ export default function ConnectInLoginPage() {
               professionId: selectedProf.id,
               professionCategory: selectedProf.categoryName,
               professionEnclave: selectedProf.enclaveId,
-              headline: explicitProf ? selectedProf.defaultHeadline : (vaultProfile?.headline || selectedProf.defaultHeadline),
-              experience: (vaultProfile?.experience && vaultProfile.experience.length > 0 && !explicitProf) ? vaultProfile.experience : generatedDomainProfile.experience,
-              certifications: (vaultProfile?.certifications && vaultProfile.certifications.length > 0 && !explicitProf) ? vaultProfile.certifications : generatedDomainProfile.certifications,
-              skills: (vaultProfile?.skills && vaultProfile.skills.length > 0 && !explicitProf) ? vaultProfile.skills : generatedDomainProfile.skills,
-              coverImage: vaultProfile?.coverImage || generatedDomainProfile.coverImage,
-              about: (vaultProfile?.about && !explicitProf) ? vaultProfile.about : generatedDomainProfile.about
+              headline: overrideProf ? selectedProf.defaultHeadline : (vaultProfile?.headline || selectedProf.defaultHeadline),
+              experience: (vaultProfile?.experience && vaultProfile.experience.length > 0 && !overrideProf) ? vaultProfile.experience : generatedDomainProfile.experience,
+              certifications: (vaultProfile?.certifications && vaultProfile.certifications.length > 0 && !overrideProf) ? vaultProfile.certifications : generatedDomainProfile.certifications,
+              skills: (vaultProfile?.skills && vaultProfile.skills.length > 0 && !overrideProf) ? vaultProfile.skills : generatedDomainProfile.skills,
+              coverImage: overrideProf ? generatedDomainProfile.coverImage : (vaultProfile?.coverImage || generatedDomainProfile.coverImage),
+              about: (vaultProfile?.about && !overrideProf) ? vaultProfile.about : generatedDomainProfile.about
             } : {})
           }
 
@@ -838,9 +839,45 @@ export default function ConnectInLoginPage() {
                     <ProfessionSearchPopout
                       selectedProfessionId={signInProfessionId}
                       onSelectProfession={(profId) => setSignInProfessionId(profId)}
-                      label={t("profession_label", "Select Professional Profile & Enclave")}
+                      label={t("profession_label", "Select Your Profession (Determines Your Videos & Feed)")}
                       showAutoDetectOption={true}
                     />
+
+                    {/* Quick 1-Click Profession Selector Pills */}
+                    <div className="space-y-1.5">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 block">
+                        Quick Select Profession (Tailors Videos & Feed on Login):
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[
+                          { id: "carpenter", label: "🔨 Carpenter", desc: "Carpentry & Joinery Videos" },
+                          { id: "registered_nurse", label: "🩺 Nurse (RN / Medical)", desc: "Nursing & Clinical Videos" },
+                          { id: "physician", label: "⚕️ Doctor / Physician", desc: "Medical & Surgical Videos" },
+                          { id: "electrician", label: "⚡ Electrician", desc: "Electrical Trade Videos" },
+                          { id: "plumber", label: "🔧 Plumber", desc: "Plumbing & Piping Videos" },
+                          { id: "mechanic", label: "🚗 Auto Mechanic", desc: "Automotive Diagnostic Videos" },
+                          { id: "red_team_operator", label: "🛡️ Cybersecurity", desc: "Cyber & Red Team Videos" },
+                          { id: "software_engineer", label: "💻 Software Engineer", desc: "Software & Cloud Videos" }
+                        ].map((preset) => {
+                          const isSelected = signInProfessionId === preset.id
+                          return (
+                            <button
+                              key={preset.id}
+                              type="button"
+                              onClick={() => setSignInProfessionId(preset.id)}
+                              title={preset.desc}
+                              className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition-all cursor-pointer border ${
+                                isSelected
+                                  ? "bg-[#0A66C2] text-white border-[#0A66C2] shadow-xs"
+                                  : "bg-zinc-100 dark:bg-zinc-800/90 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-[#0A66C2]"
+                              }`}
+                            >
+                              {preset.label}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
 
                     {/* Full Name Input (Ensures unique identity, signature & profile badge per user) */}
                     <div className="space-y-1">

@@ -32,7 +32,9 @@ import {
   getStoredCustomVideos,
   saveStoredCustomVideo,
   getMatchedWheelVideoForUser,
-  getTieredVideosForUser
+  getTieredVideosForUser,
+  getStrictProfessionVideosForUser,
+  resolveProfessionForUser
 } from "@/lib/connectin-videos"
 import { PROFESSION_ENCLAVES, ALL_PROFESSIONS, findEnclaveById } from "@/lib/connectin-professions"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
@@ -55,7 +57,7 @@ interface ConnectInVideoWheelProps {
 
 export function ConnectInVideoWheel({
   className = "",
-  defaultCategory = "my_enclave",
+  defaultCategory = "my_profession",
   activeEnclaveId,
   user,
   title = "The Wheel — Multi-Profession Masterclasses & Briefings",
@@ -135,35 +137,46 @@ export function ConnectInVideoWheel({
 
   const extractedVideoId = useMemo(() => extractYouTubeId(submitUrl), [submitUrl])
 
-  // Videos tiered to the logged-in user based on the profession selected at registration/login
+  // Videos strictly tied to the logged-in user's claimed profession
+  const resolvedUserProf = useMemo(
+    () => resolveProfessionForUser(user),
+    [user?.professionId, user?.profession, user?.professionEnclave, user?.headline, user?.name]
+  )
   const tieredUserVideos = useMemo(
-    () => getTieredVideosForUser(user),
-    [user?.professionId, user?.profession, user?.professionEnclave, user?.headline]
+    () => getStrictProfessionVideosForUser(user),
+    [user?.professionId, user?.profession, user?.professionEnclave, user?.headline, user?.name]
   )
   const assignedUserVideo = useMemo(
     () => tieredUserVideos[0] || getMatchedWheelVideoForUser(user),
     [tieredUserVideos, user]
   )
+  const [isPlayingHeroInline, setIsPlayingHeroInline] = useState(false)
 
-  // Keep filter synced when user logs in with a specific profession
+  // Keep filter synced when user logs in or switches profession — default strictly to their profession!
   useEffect(() => {
-    if (user?.professionId || user?.profession || activeEnclaveId) {
-      setSelectedFilter("my_enclave")
-      setSelectedProfessionId("all")
-    }
-  }, [user?.professionId, user?.profession, activeEnclaveId])
+    setSelectedFilter("my_profession")
+    setSelectedProfessionId("all")
+    setIsPlayingHeroInline(false)
+  }, [user?.professionId, user?.profession, user?.headline, activeEnclaveId])
 
   // Professions available in current selected enclave filter
   const availableProfessions = useMemo(() => {
     if (selectedFilter === "all") return ALL_PROFESSIONS
-    const targetEnclaveId = selectedFilter === "my_enclave" ? effectiveEnclaveId : selectedFilter
+    const targetEnclaveId = (selectedFilter === "my_enclave" || selectedFilter === "my_profession") ? effectiveEnclaveId : selectedFilter
     return ALL_PROFESSIONS.filter(p => p.enclaveId === targetEnclaveId)
   }, [selectedFilter, effectiveEnclaveId])
 
-  // Filter talks based on selected enclave, profession, and search query — always placing the user's tiered profession videos first
+  // Filter talks based on selected profession, enclave, and search query — defaulting strictly to the logged-in user's profession videos!
   const filteredTalks = useMemo(() => {
+    const q = professionSearchQuery.trim().toLowerCase()
+
+    // Strict Profession-Only View (Default when user logs in: Carpenter sees ONLY Carpenter videos, Nurse sees ONLY Nursing/Medical videos)
+    if (selectedFilter === "my_profession" && selectedProfessionId === "all" && !q) {
+      return tieredUserVideos
+    }
+
     let list = allTalks.filter(t => !!t.thumbnailUrl) // hide cards with no verified, playable video
-    if (selectedFilter === "my_enclave") {
+    if (selectedFilter === "my_enclave" || selectedFilter === "my_profession") {
       list = list.filter(t => t.enclaveId === effectiveEnclaveId)
     } else if (selectedFilter !== "all") {
       list = list.filter(t => t.enclaveId === selectedFilter || t.category === selectedFilter)
@@ -171,7 +184,6 @@ export function ConnectInVideoWheel({
     if (selectedProfessionId !== "all") {
       list = list.filter(t => t.professionId === selectedProfessionId)
     }
-    const q = professionSearchQuery.trim().toLowerCase()
     if (q) {
       list = list.filter(
         t =>
@@ -183,7 +195,7 @@ export function ConnectInVideoWheel({
       )
     }
 
-    // Place all of the user's tiered profession videos at the very front when in default/enclave view
+    // Place all of the user's tiered profession videos at the very front when in enclave/all view
     if (
       tieredUserVideos.length > 0 &&
       !q &&
@@ -447,14 +459,20 @@ export function ConnectInVideoWheel({
     }, 1500)
   }
 
-  // Filter Categories with Counts across ALL Profession Enclaves
+  // Filter Categories with Counts across ALL Profession Enclaves — My Profession first!
+  const shortProfLabel = (resolvedUserProf?.title || user?.profession || "My Profession").split("(")[0].split("-")[0].trim()
   const filterChips = [
-    { id: "all", label: `All Briefings (${allTalks.length})`, icon: "🎡" },
+    {
+      id: "my_profession",
+      label: `My Profession: ${shortProfLabel} (${tieredUserVideos.length})`,
+      icon: "🎯"
+    },
     {
       id: "my_enclave",
       label: `My Enclave: ${activeEnclave?.shortName || 'Current'} (${allTalks.filter(t => !!t.thumbnailUrl && t.enclaveId === effectiveEnclaveId).length})`,
       icon: activeEnclave?.icon || "🔨"
     },
+    { id: "all", label: `All Briefings (${allTalks.length})`, icon: "🎡" },
     ...PROFESSION_ENCLAVES.map(enc => ({
       id: enc.id,
       label: `${enc.shortName} (${allTalks.filter(t => !!t.thumbnailUrl && t.enclaveId === enc.id).length})`,
@@ -647,56 +665,101 @@ export function ConnectInVideoWheel({
         </span>
       </div>
 
-      {/* Assigned Profession Video Highlight Bar — Matches User's Registered Profession */}
+      {/* Featured Inline 16:9 Profession Video Stage — Directly Shows the Video for the Logged-In User's Profession */}
       {assignedUserVideo && (
-        <div
-          onClick={() => setActiveVideo(assignedUserVideo)}
-          className="mb-2.5 rounded-xl border border-amber-500/40 bg-gradient-to-r from-[#26201A] via-[#2B241D] to-[#1F1B18] p-2.5 sm:px-3.5 sm:py-2.5 flex flex-wrap items-center justify-between gap-2.5 cursor-pointer hover:border-amber-400 transition-all shadow-sm"
-        >
-          <div className="flex items-center gap-2.5 min-w-0 flex-1">
-            <div className="relative h-9 w-9 rounded-full overflow-hidden border-2 border-[#0066FF] shrink-0 bg-zinc-900">
-              <img
-                src={userProfilePic}
-                alt={user?.name || "Member"}
-                onError={(e) => {
-                  e.currentTarget.src = "/brand/kwesi-avatar.png"
-                }}
-                className="h-full w-full object-cover"
-              />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 border border-amber-400/40 px-2 py-0.5 text-[10px] font-extrabold text-amber-300">
-                  🎯 Assigned to Your Profession
-                </span>
-                <span className="rounded bg-[#A64532] px-1.5 py-0.5 font-mono text-[10px] font-bold text-white">
-                  {assignedUserVideo.serialPlate}
-                </span>
-                {user?.profession && (
-                  <span className="text-[10px] font-semibold text-sky-300">
-                    · {user.profession}
-                  </span>
-                )}
+        <div className="mb-3 rounded-2xl border border-amber-500/50 bg-[#141210] overflow-hidden shadow-lg">
+          <div className="p-2.5 sm:px-3.5 sm:py-2.5 bg-gradient-to-r from-[#26201A] via-[#2B241D] to-[#1F1B18] border-b border-amber-500/30 flex flex-wrap items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+              <div className="relative h-9 w-9 rounded-full overflow-hidden border-2 border-[#0066FF] shrink-0 bg-zinc-900">
+                <img
+                  src={userProfilePic}
+                  alt={user?.name || "Member"}
+                  onError={(e) => {
+                    e.currentTarget.src = "/brand/kwesi-avatar.png"
+                  }}
+                  className="h-full w-full object-cover"
+                />
               </div>
-              <p className="text-xs font-bold text-white leading-snug break-words mt-0.5">
-                {assignedUserVideo.title}
-              </p>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 border border-amber-400/40 px-2 py-0.5 text-[10px] font-extrabold text-amber-300">
+                    🎯 Showing Video for Your Logged-In Profession: {shortProfLabel}
+                  </span>
+                  <span className="rounded bg-[#A64532] px-1.5 py-0.5 font-mono text-[10px] font-bold text-white">
+                    {assignedUserVideo.serialPlate}
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm font-extrabold text-white leading-snug break-words mt-0.5">
+                  {assignedUserVideo.title}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsPlayingHeroInline(!isPlayingHeroInline)}
+                style={{ backgroundColor: "#A64532", color: "#FFFFFF" }}
+                className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-bold shadow-xs hover:opacity-95 transition-opacity cursor-pointer"
+              >
+                <Play className="h-3 w-3 fill-current" />
+                <span>{isPlayingHeroInline ? "Playing Inline" : "Play Video Now"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveVideo(assignedUserVideo)}
+                className="inline-flex items-center gap-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 px-3 py-1.5 text-[11px] font-semibold text-white cursor-pointer"
+              >
+                <span>Full Screen</span>
+              </button>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                setActiveVideo(assignedUserVideo)
-              }}
-              style={{ backgroundColor: "#A64532", color: "#FFFFFF" }}
-              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold shadow-xs hover:opacity-95 transition-opacity cursor-pointer"
-            >
-              <Play className="h-3 w-3 fill-current" />
-              <span>{assignedUserVideo.searchUrl ? "Find Videos for My Profession" : "Watch My Profession Video"}</span>
-            </button>
+          {/* 16:9 Video Stage Showing the Logged-In Profession's Video */}
+          <div className="relative aspect-video w-full bg-black overflow-hidden">
+            {isPlayingHeroInline ? (
+              <ConnectLnStudioPlayer
+                youtubeId={assignedUserVideo.youtubeId}
+                title={assignedUserVideo.title}
+                serialPlate={assignedUserVideo.serialPlate}
+                speaker={assignedUserVideo.speaker}
+                durationLabel={assignedUserVideo.duration || "5:15"}
+                className="h-full w-full"
+              />
+            ) : (
+              <div
+                onClick={() => setIsPlayingHeroInline(true)}
+                className="relative h-full w-full cursor-pointer group overflow-hidden"
+              >
+                <img
+                  src={assignedUserVideo.thumbnailUrl || `https://i.ytimg.com/vi/${assignedUserVideo.youtubeId}/hqdefault.jpg`}
+                  alt={assignedUserVideo.title}
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/30" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-[#0A66C2]/95 text-white shadow-2xl ring-4 ring-white/30 transition-transform duration-200 group-hover:scale-110">
+                    <Play className="h-7 w-7 sm:h-8 sm:w-8 fill-current ml-1" />
+                  </div>
+                </div>
+                <div className="absolute inset-x-0 bottom-0 p-3.5 sm:p-4 flex items-end justify-between gap-3">
+                  <div className="min-w-0">
+                    <span className="inline-block rounded bg-amber-500 text-zinc-950 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider mb-1">
+                      {shortProfLabel} Masterclass Video
+                    </span>
+                    <h3 className="text-sm sm:text-base font-extrabold text-white leading-snug line-clamp-2">
+                      {assignedUserVideo.title}
+                    </h3>
+                    <p className="text-[11px] text-zinc-300 line-clamp-1 mt-0.5">
+                      {assignedUserVideo.speaker} · {assignedUserVideo.speakerTitle}
+                    </p>
+                  </div>
+                  <span className="shrink-0 rounded bg-black/85 px-2.5 py-1 font-mono text-[11px] font-bold text-white border border-white/15">
+                    ▶ Click to Play
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

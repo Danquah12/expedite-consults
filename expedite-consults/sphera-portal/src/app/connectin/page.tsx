@@ -104,6 +104,7 @@ import {
 import { isSuperAdminUser, createUniqueUserProfile, createFreshInvitedUserProfile, generatePersonalSignatureAvatar, isForeignPersonaAvatar } from "@/lib/connectin-profile"
 import {
   PROFESSION_ENCLAVES,
+  ALL_PROFESSIONS,
   findEnclaveById,
   findProfessionById
 } from "@/lib/connectin-professions"
@@ -1460,16 +1461,37 @@ export default function ConnectLnPage() {
   // Filter & Tier Posts based on the User's Claimed Profession, Stream, Sub-category, Search Query, Feed Type, or Tag
   const resolvedUserProf = resolveProfessionForUser(userData)
   const activeProfId = resolvedUserProf?.id || userData?.professionId
+
+  const handleSwitchActiveProfession = (profId: string) => {
+    const prof = findProfessionById(profId)
+    if (!prof) return
+    const updatedUser: UserProfile = {
+      ...userData,
+      professionId: prof.id,
+      profession: prof.title,
+      professionCategory: prof.categoryName,
+      professionEnclave: prof.enclaveId,
+      headline: prof.defaultHeadline || `${prof.title} · Verified ConnectLn Member`
+    }
+    setUserData(updatedUser)
+    saveStoredUser(updatedUser)
+    setSelectedEnclaves([prof.enclaveId])
+  }
+
   const filteredPosts = posts
     .filter(post => {
-      // 0. Strict Profession & Enclave Segregation (keep user's own posts and posts tiered to their active profession)
+      // 0. Strict Profession-First Feed: When a user logs in (e.g. Carpenter or Nurse), show ONLY their profession's videos & stories unless "All Enclaves" is explicitly selected
       const isUserOwnPost = post.author?.connectionDegree === 'You'
       const isActiveProfTiered = Boolean(
         activeProfId &&
         (post.professionId === activeProfId || post.targetProfessions?.includes(activeProfId))
       )
-      const isAllSelected = selectedEnclaves.length === 0 || selectedEnclaves.includes('all') || selectedEnclaves.length >= PROFESSION_ENCLAVES.length
-      if (!isAllSelected && !isUserOwnPost && !isActiveProfTiered) {
+      const isAllSelected = selectedEnclaves.includes('all') || selectedEnclaves.length >= PROFESSION_ENCLAVES.length
+      if (!isAllSelected && activeFeedCategory === 'for_you' && !searchQuery && !selectedTagFilter) {
+        if (!isUserOwnPost && !isActiveProfTiered) {
+          return false
+        }
+      } else if (!isAllSelected && !isUserOwnPost && !isActiveProfTiered) {
         const postEnclave = post.professionEnclave || 'tech_software'
         if (postEnclave !== 'all' && !selectedEnclaves.includes(postEnclave)) {
           return false
@@ -1650,6 +1672,66 @@ export default function ConnectLnPage() {
                 >
                   Profile →
                 </button>
+              </div>
+
+              {/* Active Logged-In Profession Switcher & Feed Indicator */}
+              <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 shadow-xs space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500 shrink-0" />
+                    <span className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100 truncate">
+                      Logged-In Profession Feed:{" "}
+                      <span className="text-[#0A66C2] dark:text-sky-400">
+                        {resolvedUserProf?.title || userData.profession || "Master Carpenter"}
+                      </span>
+                    </span>
+                  </div>
+                  <select
+                    value={activeProfId || "carpenter"}
+                    onChange={(e) => handleSwitchActiveProfession(e.target.value)}
+                    className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-2.5 py-1 text-[11px] font-bold text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2] max-w-[230px] cursor-pointer"
+                    title="Switch logged-in profession to see its videos and stories"
+                  >
+                    {ALL_PROFESSIONS.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Quick Profession Pills (Carpenter, Nurse, Doctor, Electrician, Mechanic, Cybersecurity, Software) */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 shrink-0 mr-1">
+                    Quick View:
+                  </span>
+                  {[
+                    { id: "carpenter", label: "🔨 Carpenter" },
+                    { id: "registered_nurse", label: "🩺 Nurse (RN / Medical)" },
+                    { id: "physician", label: "⚕️ Physician / Doctor" },
+                    { id: "electrician", label: "⚡ Electrician" },
+                    { id: "plumber", label: "🔧 Plumber" },
+                    { id: "mechanic", label: "🚗 Auto Mechanic" },
+                    { id: "cybersecurity_architect", label: "🛡️ Cybersecurity" },
+                    { id: "software_engineer", label: "💻 Software Engineer" }
+                  ].map((item) => {
+                    const isActive = activeProfId === item.id
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => handleSwitchActiveProfession(item.id)}
+                        className={`px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition-all cursor-pointer shrink-0 ${
+                          isActive
+                            ? "bg-[#0A66C2] text-white shadow-xs"
+                            : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
 
               {/* LinkedIn-Style Top "Start a post" Box (Video, Photo, Write article — Matches Screenshot 1) */}
