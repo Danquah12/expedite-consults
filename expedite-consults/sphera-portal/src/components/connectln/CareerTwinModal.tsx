@@ -15,7 +15,8 @@ import {
   Lightbulb,
   Check,
   Target,
-  Copy
+  Copy,
+  X
 } from "lucide-react"
 import {
   Dialog,
@@ -193,35 +194,35 @@ export function CareerTwinModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl p-0 overflow-hidden sm:rounded-2xl">
         {/* Top Header */}
-        <DialogHeader className="border-b border-zinc-800 bg-gradient-to-r from-[#14181C] via-[#1B222C] to-[#0F2942] px-5 sm:px-6 py-4 text-white">
+        <DialogHeader className="border-b border-[#DFD5C5] bg-[#F4EFE6] dark:bg-zinc-900 dark:border-zinc-800 px-5 sm:px-6 py-4 pr-12 text-zinc-900 dark:text-zinc-100">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-start sm:items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 border border-amber-400/40 text-amber-300 shadow-xs">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 border border-amber-300 text-amber-800 shadow-xs">
                 <Bot className="h-5 w-5" />
               </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <DialogTitle className="text-sm sm:text-base font-bold text-white">
+                  <DialogTitle className="text-sm sm:text-base font-extrabold text-zinc-900 dark:text-zinc-100">
                     Noctis™ CareerTwin Interview Prep Studio
                   </DialogTitle>
-                  <span className="rounded-full bg-amber-500/20 border border-amber-400/40 px-2.5 py-0.5 text-[10px] font-bold text-amber-300">
+                  <span className="rounded-full bg-amber-100 border border-amber-300 px-2.5 py-0.5 text-[10px] font-bold text-amber-900">
                     ✨ {prepPack.questions.length} Tailored Interview Questions Ready
                   </span>
                 </div>
-                <p className="text-xs text-zinc-300 mt-0.5 line-clamp-1">
-                  Prepared for: <strong className="text-white">{prepPack.jobTitle}</strong> at <strong className="text-sky-300">{prepPack.company}</strong> ({prepPack.location})
+                <p className="text-xs text-zinc-600 dark:text-zinc-300 mt-0.5 line-clamp-1">
+                  Prepared for: <strong className="text-zinc-900 dark:text-white">{prepPack.jobTitle}</strong> at <strong className="text-[#0A66C2]">{prepPack.company}</strong> ({prepPack.location})
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 shrink-0 flex-wrap">
               <button
                 type="button"
                 onClick={handleCopyAllQuestions}
-                className="rounded-full bg-white/10 hover:bg-white/20 border border-white/15 px-3 py-1.5 text-[11px] font-semibold text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="rounded-full bg-white hover:bg-zinc-100 border border-zinc-300 px-3 py-1.5 text-[11px] font-bold text-zinc-800 flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
                 title="Copy all 25 questions and Noctis sample answers"
               >
-                {copiedGuide ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                {copiedGuide ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
                 <span>{copiedGuide ? "Copied 25 Q&As!" : "Copy All 25"}</span>
               </button>
               <button
@@ -232,6 +233,15 @@ export function CareerTwinModal({
               >
                 <Download className="h-3.5 w-3.5" />
                 <span>{downloadedPack ? "✓ Guide Downloaded" : "Download 25-Q Guide"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-full bg-white hover:bg-rose-50 border border-zinc-300 hover:border-rose-300 px-3 py-1.5 text-[11px] font-bold text-zinc-800 hover:text-rose-700 flex items-center gap-1 transition-colors cursor-pointer shadow-2xs"
+                title="Close Interview Prep Studio"
+              >
+                <X className="h-3.5 w-3.5 stroke-[2.5]" />
+                <span>Close</span>
               </button>
             </div>
           </div>
@@ -738,6 +748,23 @@ export function CareerTwinModal({
               </div>
             </div>
           )}
+        </div>
+
+        {/* Persistent Bottom Footer with Close Button */}
+        <div className="flex items-center justify-between border-t border-[#DFD5C5] bg-[#F4EFE6] dark:bg-zinc-900 dark:border-zinc-800 px-5 sm:px-6 py-3 text-xs">
+          <span className="text-zinc-600 dark:text-zinc-400 font-medium">
+            Noctis™ CareerTwin · {practicedCount} of {prepPack.questions.length} questions practiced
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full bg-white hover:bg-zinc-100 border border-zinc-300 px-4 py-1.5 text-xs font-bold text-zinc-900 flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+            >
+              <X className="h-3.5 w-3.5 stroke-[2.5]" />
+              <span>Close Prep Studio</span>
+            </button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
