@@ -17,6 +17,7 @@ import { UserProfile } from "@/lib/connectln-data"
 import { saveStoredUser, saveStoredSessionRoute, getVaultProfileForUser, getDefaultPortraitForUser } from "@/lib/connectin-storage"
 import { createUniqueUserProfile, resolveDisplayName, isSuperAdminUser, isDedicatedAdminAccount, isExactKwesiUser, isForeignPersonaAvatar } from "@/lib/connectin-profile"
 import { findProfessionById, PROFESSION_ENCLAVES } from "@/lib/connectin-professions"
+import { resolveProfessionForUser } from "@/lib/connectin-videos"
 import { ProfessionSearchPopout } from "@/components/connectln/ProfessionSearchPopout"
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 import { signIn } from "next-auth/react"
@@ -369,7 +370,10 @@ export function ConnectInAuthModal({
       const finalName = signInName.trim() || vaultProfile?.name || resolvedName
       const explicitProf = signInProfessionId !== "auto_detect" ? findProfessionById(signInProfessionId) : null
       const vaultProf = (!explicitProf && vaultProfile?.professionId) ? findProfessionById(vaultProfile.professionId) : null
-      const selectedProf = explicitProf || vaultProf
+      const keywordProf = (!explicitProf && !vaultProf)
+        ? resolveProfessionForUser({ profession: `${signInName} ${signInEmail}` })
+        : null
+      const selectedProf = explicitProf || vaultProf || keywordProf
 
       const res = await fetch("/api/connectin/auth/verify-otp", {
         method: "POST",
@@ -456,6 +460,7 @@ export function ConnectInAuthModal({
       saveStoredUser(profileToSave)
       saveStoredSessionRoute(targetTab, 'personal')
       if (typeof window !== "undefined") {
+        localStorage.removeItem("connectin_posts_v1")
         localStorage.removeItem("connectin_is_signed_out")
       }
 
@@ -622,6 +627,7 @@ export function ConnectInAuthModal({
       saveStoredUser(profileToSave)
       saveStoredSessionRoute(targetTab, targetWorkspace)
       if (typeof window !== "undefined") {
+        localStorage.removeItem("connectin_posts_v1")
         localStorage.removeItem("connectin_is_signed_out")
       }
 

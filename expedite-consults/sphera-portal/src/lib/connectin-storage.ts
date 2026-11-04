@@ -2,6 +2,7 @@
 
 import { Post, UserProfile, MessageThread, SuggestedConnection, initialPosts, currentUser, initialMessages, suggestedConnections } from "./connectln-data"
 import { AdminUserRecord, ADMIN_USERS_DIRECTORY } from "./connectin-iam-data"
+import { buildProfessionTieredFeedPosts } from "./connectin-profession-feed"
 import {
   createUniqueUserProfile,
   generatePersonalSignatureAvatar,
@@ -307,25 +308,34 @@ export function getVaultProfileForUser(user?: Partial<UserProfile> | null): Part
   }
 }
 
-export function loadStoredPosts(): Post[] {
+export function loadStoredPosts(explicitUser?: UserProfile | null): Post[] {
   if (typeof window === 'undefined') return initialPosts
   try {
     const saved = localStorage.getItem(STORAGE_KEYS.POSTS)
     const parsed: Post[] = saved ? JSON.parse(saved) : initialPosts
-    const activeUser = getExplicitStoredUser() || currentUser
+    const activeUser = explicitUser || getExplicitStoredUser() || currentUser
     const userPic = resolveUserProfilePicture(activeUser)
+    const tieredPosts = buildProfessionTieredFeedPosts(activeUser)
+    const tieredById = new Map(tieredPosts.map(tp => [tp.id, tp]))
+
     // Merge any newer initialPosts that were added after the mobile/desktop browser first cached localStorage
     const parsedIds = new Set(parsed.map(p => p.id))
     const missingInitialPosts = initialPosts.filter(ip => !parsedIds.has(ip.id))
     const mergedPosts = [...parsed, ...missingInitialPosts]
-    // Ensure featured DSTRIKE shared video post is present and any user-authored posts use the active user's own name, headline, and profile picture
-    const hasFeaturedVideo = mergedPosts.some(p => p.id === 'post_dstrike_wheel_masterclass' || p.media?.type === 'video')
-    const baseList = hasFeaturedVideo ? mergedPosts : [initialPosts[0], ...mergedPosts]
-    return baseList.map(p => {
-      if (p.author?.connectionDegree === 'You' || p.id === 'post_dstrike_wheel_masterclass') {
+
+    // Filter out stale auto-generated profession-tiered posts from previous profession sessions
+    const remainingPosts = mergedPosts.filter(p => {
+      if (p.id === 'post_dstrike_wheel_masterclass') return false
+      if (p.id.startsWith('post_prof_')) return false
+      if (tieredById.has(p.id)) return false
+      return true
+    })
+
+    const combinedList = [...tieredPosts, ...remainingPosts]
+    return combinedList.map(p => {
+      if (p.author?.connectionDegree === 'You') {
         return {
           ...p,
-          professionEnclave: p.media?.type === 'video' ? 'all' : p.professionEnclave,
           author: {
             ...p.author,
             name: activeUser.name || p.author.name,

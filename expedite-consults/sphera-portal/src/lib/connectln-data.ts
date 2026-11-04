@@ -139,8 +139,10 @@ export interface EmbeddedProductData {
 
 export interface Post {
   id: string
+  professionId?: string
   professionEnclave?: string
   targetProfessions?: string[]
+  isProfessionTiered?: boolean
   author: {
     id: string
     name: string
@@ -148,6 +150,8 @@ export interface Post {
     avatar: string
     connectionDegree: '1st' | '2nd' | '3rd' | 'You' | 'Following'
     isFollowing?: boolean
+    followersText?: string
+    isPromoted?: boolean
   }
   timestamp: string
   visibility: 'Public' | 'Connections'
@@ -189,6 +193,16 @@ export interface Post {
     serialPlate?: string
     brandName?: string
     takeaways?: string[]
+    submitsText?: string
+    overlayTitle?: string
+    overlaySubtitle?: string
+    downloadGuide?: {
+      title: string
+      subtitle: string
+      ctaLabel?: string
+      fileName?: string
+      checklist?: string[]
+    }
   }
   stats: {
     likesCount: number

@@ -1848,6 +1848,150 @@ function buildComprehensiveProfessionWheelTalks(): WheelVideoTalk[] {
 export const EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = buildComprehensiveProfessionWheelTalks()
 
 /**
+ * Resolves the best-matching ProfessionDefinition for a user based on their
+ * professionId, profession string, or headline.
+ */
+export function resolveProfessionForUser(user?: {
+  professionId?: string
+  profession?: string
+  professionEnclave?: string
+  headline?: string
+  name?: string
+} | null) {
+  if (!user) return undefined
+
+  if (user.professionId) {
+    const exact = ALL_PROFESSIONS.find(p => p.id === user.professionId)
+    if (exact) return exact
+  }
+
+  if (user.profession) {
+    const cleanProf = user.profession.trim().toLowerCase()
+    const exactTitle = ALL_PROFESSIONS.find(
+      p => p.title.toLowerCase() === cleanProf || p.id.toLowerCase() === cleanProf
+    )
+    if (exactTitle) return exactTitle
+
+    const partialTitle = ALL_PROFESSIONS.find(
+      p =>
+        cleanProf.includes(p.title.toLowerCase()) ||
+        p.title.toLowerCase().includes(cleanProf) ||
+        cleanProf.includes(p.id.replace(/_/g, " "))
+    )
+    if (partialTitle) return partialTitle
+  }
+
+  if (user.headline) {
+    const cleanHeadline = user.headline.toLowerCase()
+    const matchedByHeadline = ALL_PROFESSIONS.find(p => {
+      const mainTitle = p.title.replace(/\(.*?\)/g, "").split("/")[0].split("&")[0].trim().toLowerCase()
+      return mainTitle.length >= 4 && cleanHeadline.includes(mainTitle)
+    })
+    if (matchedByHeadline) return matchedByHeadline
+  }
+
+  if (user.professionEnclave) {
+    return ALL_PROFESSIONS.find(p => p.enclaveId === user.professionEnclave)
+  }
+
+  return undefined
+}
+
+/**
+ * Returns a tiered list of educational & field videos specifically matched to the
+ * user's claimed profession:
+ * - Tier 1: Exact professionId matches (both Core Masterclass talks and Verified Career talks)
+ * - Tier 2: Sibling/related professions sharing keywords (e.g., Carpenter -> Finish Carpenter, Cabinetmaker)
+ * - Tier 3: Same-enclave verified talks
+ */
+export function getTieredVideosForUser(user?: {
+  professionId?: string
+  profession?: string
+  professionEnclave?: string
+  headline?: string
+  name?: string
+} | null): WheelVideoTalk[] {
+  if (!user) return EDUCATIONAL_WHEEL_TALKS.slice(0, 6)
+
+  const resolvedProf = resolveProfessionForUser(user)
+  const targetProfId = resolvedProf?.id || user.professionId
+  const targetEnclaveId = resolvedProf?.enclaveId || user.professionEnclave
+  const seenIds = new Set<string>()
+  const seenYoutubeIds = new Set<string>()
+  const result: WheelVideoTalk[] = []
+
+  const pushUnique = (talk?: WheelVideoTalk) => {
+    if (!talk || seenIds.has(talk.id)) return
+    seenIds.add(talk.id)
+    seenYoutubeIds.add(talk.youtubeId)
+    result.push(talk)
+  }
+
+  // Tier 1A: Core curated masterclasses matching exact professionId (e.g. wheel-joinery-framing for carpenter)
+  if (targetProfId) {
+    for (const talk of CORE_EDUCATIONAL_WHEEL_TALKS) {
+      if (talk.professionId === targetProfId) {
+        pushUnique(talk)
+      }
+    }
+    // Tier 1B: Dedicated verified career video wheel-prof-<id>
+    const profTalk = EDUCATIONAL_WHEEL_TALKS.find(t => t.id === `wheel-prof-${targetProfId}`)
+    pushUnique(profTalk)
+    // Any other talk with matching professionId
+    for (const talk of EDUCATIONAL_WHEEL_TALKS) {
+      if (talk.professionId === targetProfId) {
+        pushUnique(talk)
+      }
+    }
+  }
+
+  // Tier 2: Related sibling profession talks by keyword (e.g. "carpenter" -> finish_carpenter, cabinetmaker)
+  const rawKeywords = [
+    resolvedProf?.title || "",
+    user.profession || "",
+    targetProfId ? targetProfId.replace(/_/g, " ") : ""
+  ]
+    .join(" ")
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(w => w.length >= 4 && !["with", "and", "the", "from", "general", "senior", "lead", "master", "certified", "specialist", "technician", "worker"].includes(w))
+
+  if (rawKeywords.length > 0) {
+    for (const talk of EDUCATIONAL_WHEEL_TALKS) {
+      if (seenIds.has(talk.id) || seenYoutubeIds.has(talk.youtubeId)) continue
+      const hay = `${talk.title} ${talk.speakerTitle} ${talk.professionId || ""}`.toLowerCase()
+      if (rawKeywords.some(kw => hay.includes(kw))) {
+        pushUnique(talk)
+      }
+    }
+  }
+
+  // Tier 3: Same-enclave talks with verified YouTube IDs
+  if (targetEnclaveId) {
+    for (const talk of CORE_EDUCATIONAL_WHEEL_TALKS) {
+      if (talk.enclaveId === targetEnclaveId && !seenYoutubeIds.has(talk.youtubeId)) {
+        pushUnique(talk)
+      }
+    }
+    for (const talk of EDUCATIONAL_WHEEL_TALKS) {
+      if (talk.enclaveId === targetEnclaveId && !seenYoutubeIds.has(talk.youtubeId)) {
+        pushUnique(talk)
+      }
+    }
+  }
+
+  // Fallback if still < 4 talks
+  for (const talk of EDUCATIONAL_WHEEL_TALKS) {
+    if (result.length >= 12) break
+    if (!seenYoutubeIds.has(talk.youtubeId)) {
+      pushUnique(talk)
+    }
+  }
+
+  return result
+}
+
+/**
  * Resolves the exact educational video talk assigned to a user based on the profession
  * they selected at the time of registration (matching professionId, profession title, or enclave).
  */
@@ -1857,56 +2001,8 @@ export function getMatchedWheelVideoForUser(user?: {
   professionEnclave?: string
   headline?: string
 } | null): WheelVideoTalk {
-  if (!user) return EDUCATIONAL_WHEEL_TALKS[0]
-
-  // 1. Direct match on professionId (prefer the dedicated profession masterclass wheel-prof-<id>)
-  if (user.professionId) {
-    const exactProfTalk = EDUCATIONAL_WHEEL_TALKS.find(
-      t => t.id === `wheel-prof-${user.professionId}` || t.professionId === user.professionId
-    )
-    if (exactProfTalk) return exactProfTalk
-  }
-
-  // 2. Match by profession title string against ALL_PROFESSIONS
-  if (user.profession) {
-    const cleanProf = user.profession.trim().toLowerCase()
-    const matchedProfDef = ALL_PROFESSIONS.find(
-      p =>
-        p.title.toLowerCase() === cleanProf ||
-        p.id.toLowerCase() === cleanProf ||
-        cleanProf.includes(p.title.toLowerCase()) ||
-        p.title.toLowerCase().includes(cleanProf)
-    )
-    if (matchedProfDef) {
-      const exactTalk = EDUCATIONAL_WHEEL_TALKS.find(
-        t => t.id === `wheel-prof-${matchedProfDef.id}` || t.professionId === matchedProfDef.id
-      )
-      if (exactTalk) return exactTalk
-    }
-  }
-
-  // 3. Match by user headline keywords against ALL_PROFESSIONS
-  if (user.headline) {
-    const cleanHeadline = user.headline.toLowerCase()
-    const matchedByHeadline = ALL_PROFESSIONS.find(p => {
-      const mainTitle = p.title.replace(/\(.*?\)/g, "").split("/")[0].split("&")[0].trim().toLowerCase()
-      return mainTitle.length >= 5 && cleanHeadline.includes(mainTitle)
-    })
-    if (matchedByHeadline) {
-      const exactTalk = EDUCATIONAL_WHEEL_TALKS.find(
-        t => t.id === `wheel-prof-${matchedByHeadline.id}` || t.professionId === matchedByHeadline.id
-      )
-      if (exactTalk) return exactTalk
-    }
-  }
-
-  // 4. Fallback to user's professionEnclave
-  if (user.professionEnclave) {
-    const enclaveTalk = EDUCATIONAL_WHEEL_TALKS.find(t => t.enclaveId === user.professionEnclave)
-    if (enclaveTalk) return enclaveTalk
-  }
-
-  return EDUCATIONAL_WHEEL_TALKS[0]
+  const tiered = getTieredVideosForUser(user)
+  return tiered[0] || EDUCATIONAL_WHEEL_TALKS[0]
 }
 
 export const ONBOARDING_GUIDE_CHAPTERS: OnboardingGuideChapter[] = [

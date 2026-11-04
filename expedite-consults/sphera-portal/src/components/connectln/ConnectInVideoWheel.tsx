@@ -31,7 +31,8 @@ import {
   extractYouTubeId,
   getStoredCustomVideos,
   saveStoredCustomVideo,
-  getMatchedWheelVideoForUser
+  getMatchedWheelVideoForUser,
+  getTieredVideosForUser
 } from "@/lib/connectin-videos"
 import { PROFESSION_ENCLAVES, ALL_PROFESSIONS, findEnclaveById } from "@/lib/connectin-professions"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
@@ -54,7 +55,7 @@ interface ConnectInVideoWheelProps {
 
 export function ConnectInVideoWheel({
   className = "",
-  defaultCategory = "all",
+  defaultCategory = "my_enclave",
   activeEnclaveId,
   user,
   title = "The Wheel — Multi-Profession Masterclasses & Briefings",
@@ -134,11 +135,23 @@ export function ConnectInVideoWheel({
 
   const extractedVideoId = useMemo(() => extractYouTubeId(submitUrl), [submitUrl])
 
-  // Video assigned to the logged-in user based on the profession selected at registration
-  const assignedUserVideo = useMemo(
-    () => getMatchedWheelVideoForUser(user),
+  // Videos tiered to the logged-in user based on the profession selected at registration/login
+  const tieredUserVideos = useMemo(
+    () => getTieredVideosForUser(user),
     [user?.professionId, user?.profession, user?.professionEnclave, user?.headline]
   )
+  const assignedUserVideo = useMemo(
+    () => tieredUserVideos[0] || getMatchedWheelVideoForUser(user),
+    [tieredUserVideos, user]
+  )
+
+  // Keep filter synced when user logs in with a specific profession
+  useEffect(() => {
+    if (user?.professionId || user?.profession || activeEnclaveId) {
+      setSelectedFilter("my_enclave")
+      setSelectedProfessionId("all")
+    }
+  }, [user?.professionId, user?.profession, activeEnclaveId])
 
   // Professions available in current selected enclave filter
   const availableProfessions = useMemo(() => {
@@ -147,7 +160,7 @@ export function ConnectInVideoWheel({
     return ALL_PROFESSIONS.filter(p => p.enclaveId === targetEnclaveId)
   }, [selectedFilter, effectiveEnclaveId])
 
-  // Filter talks based on selected enclave, profession, and search query — always placing the user's assigned profession video first
+  // Filter talks based on selected enclave, profession, and search query — always placing the user's tiered profession videos first
   const filteredTalks = useMemo(() => {
     let list = allTalks.filter(t => !!t.thumbnailUrl) // hide cards with no verified, playable video
     if (selectedFilter === "my_enclave") {
@@ -170,19 +183,20 @@ export function ConnectInVideoWheel({
       )
     }
 
-    // Place the user's assigned profession video #1 first when in default view or matching enclave/profession
+    // Place all of the user's tiered profession videos at the very front when in default/enclave view
     if (
-      assignedUserVideo &&
+      tieredUserVideos.length > 0 &&
       !q &&
       selectedProfessionId === "all" &&
-      (selectedFilter === "all" || selectedFilter === "my_enclave" || selectedFilter === assignedUserVideo.enclaveId)
+      (selectedFilter === "all" || selectedFilter === "my_enclave" || selectedFilter === assignedUserVideo?.enclaveId)
     ) {
-      const rest = list.filter(t => t.id !== assignedUserVideo.id)
-      return [assignedUserVideo, ...rest]
+      const tieredIds = new Set(tieredUserVideos.map(v => v.id))
+      const rest = list.filter(t => !tieredIds.has(t.id))
+      return [...tieredUserVideos, ...rest]
     }
 
     return list
-  }, [allTalks, selectedFilter, effectiveEnclaveId, selectedProfessionId, professionSearchQuery, assignedUserVideo])
+  }, [allTalks, selectedFilter, effectiveEnclaveId, selectedProfessionId, professionSearchQuery, tieredUserVideos, assignedUserVideo])
 
   // Smooth scroll left / right
   const scrollWheel = (direction: 'left' | 'right') => {

@@ -107,7 +107,8 @@ import {
   findEnclaveById,
   findProfessionById
 } from "@/lib/connectin-professions"
-import { getMatchedWheelVideoForUser } from "@/lib/connectin-videos"
+import { getMatchedWheelVideoForUser, resolveProfessionForUser } from "@/lib/connectin-videos"
+import { buildProfessionTieredFeedPosts } from "@/lib/connectin-profession-feed"
 import { SlidersHorizontal, Sparkles, Bell, CheckCircle2, ShieldCheck, Filter, Bookmark, Vote, BookOpen, ExternalLink, ChevronDown, ChevronUp } from "lucide-react"
 import { useLanguage } from "@/context/LanguageContext"
 
@@ -574,7 +575,7 @@ export default function ConnectLnPage() {
         if (isMounted) {
           setIsAuthenticated(true)
           setUserData(explicitUser)
-          const savedPosts = loadStoredPosts()
+          const savedPosts = loadStoredPosts(explicitUser)
           const savedConnections = loadStoredConnections()
           const savedRoute = loadStoredSessionRoute()
           if (savedPosts && savedPosts.length > 0) setPosts(savedPosts)
@@ -756,82 +757,43 @@ export default function ConnectLnPage() {
     }
   }, [userData, hasHydrated, isAuthenticated])
 
-  // Automatically sync the user's active enclave and assigned featured video post to the profession selected at registration
+  // Automatically sync the user's active enclave and profession-tiered videos/stories to the profession selected at login
   useEffect(() => {
     if (!userData) return
-    if (userData.professionEnclave) {
-      setSelectedEnclaves([userData.professionEnclave])
+    const resolvedProf = resolveProfessionForUser(userData)
+    const targetEnclave = resolvedProf?.enclaveId || userData.professionEnclave
+    if (targetEnclave) {
+      setSelectedEnclaves([targetEnclave])
     }
-    const matchedTalk = getMatchedWheelVideoForUser(userData)
-    if (!matchedTalk) return
 
-    const resolvedPic = resolveUserProfilePicture(userData)
-    const ytUrl = `https://www.youtube.com/watch?v=${matchedTalk.youtubeId}`
+    const tieredPosts = buildProfessionTieredFeedPosts({
+      ...userData,
+      professionId: resolvedProf?.id || userData.professionId,
+      profession: userData.profession || resolvedProf?.title,
+      professionEnclave: targetEnclave
+    })
+    if (!tieredPosts || tieredPosts.length === 0) return
 
     setPosts(prev => {
-      const updatedPost: Post = {
-        id: 'post_dstrike_wheel_masterclass',
-        professionEnclave: 'all',
-        author: {
-          id: userData.id || 'user_current',
-          name: userData.name || 'Kwesi Asiedu',
-          headline: userData.headline || `${userData.profession || matchedTalk.categoryLabel} · Verified ConnectLn Member`,
-          avatar: resolvedPic,
-          connectionDegree: 'You',
-          isFollowing: false
-        },
-        timestamp: `Just now · 🎯 Assigned to ${userData.profession || matchedTalk.categoryLabel} · 🌐`,
-        visibility: 'Public',
-        postType: 'standard',
-        feedCategory: 'for_you',
-        feedSubCategory: 'All',
-        content: `🎬 Assigned Profession Masterclass on ConnectLn The Wheel: "${matchedTalk.title}" (${matchedTalk.serialPlate})\n\n${matchedTalk.summary}`,
-        hashtags: matchedTalk.tags && matchedTalk.tags.length > 0 ? matchedTalk.tags : ['#ConnectLn', '#Masterclass', '#RealWork'],
-        media: {
-          type: 'video',
-          url: ytUrl,
-          youtubeId: matchedTalk.youtubeId,
-          thumbnailUrl: `https://i.ytimg.com/vi/${matchedTalk.youtubeId}/hqdefault.jpg`,
-          title: matchedTalk.title,
-          description: `${matchedTalk.speaker} · ${matchedTalk.speakerTitle}`,
-          duration: matchedTalk.duration,
-          serialPlate: matchedTalk.serialPlate,
-          brandName: 'ConnectLn',
-          takeaways: matchedTalk.takeaways,
-          aspectRatio: '16:9'
-        },
-        stats: {
-          likesCount: 412,
-          commentsCount: 38,
-          repostsCount: 64,
-          reactionsBreakdown: { like: 240, celebrate: 92, support: 40, love: 28, insightful: 12, funny: 0 }
-        },
-        userReaction: null,
-        isSaved: false,
-        comments: []
+      const firstExisting = prev.find(p => p.id === 'post_dstrike_wheel_masterclass')
+      if (
+        firstExisting &&
+        firstExisting.professionId === tieredPosts[0].professionId &&
+        firstExisting.media?.youtubeId === tieredPosts[0].media?.youtubeId &&
+        prev.some(p => p.id === tieredPosts[1]?.id)
+      ) {
+        return prev
       }
 
-      const existingIdx = prev.findIndex(p => p.id === 'post_dstrike_wheel_masterclass')
-      if (existingIdx >= 0) {
-        const current = prev[existingIdx]
-        if (
-          current.media?.youtubeId === matchedTalk.youtubeId &&
-          current.media?.title === matchedTalk.title &&
-          current.author?.name === updatedPost.author.name &&
-          current.author?.avatar === updatedPost.author.avatar
-        ) {
-          return prev
-        }
-        const copy = [...prev]
-        copy[existingIdx] = {
-          ...current,
-          ...updatedPost,
-          stats: current.stats || updatedPost.stats,
-          comments: current.comments || []
-        }
-        return copy
-      }
-      return [updatedPost, ...prev]
+      const tieredIds = new Set(tieredPosts.map(tp => tp.id))
+      const cleanedPrev = prev.filter(p => {
+        if (p.id === 'post_dstrike_wheel_masterclass') return false
+        if (p.id.startsWith('post_prof_')) return false
+        if (tieredIds.has(p.id)) return false
+        return true
+      })
+
+      return [...tieredPosts, ...cleanedPrev]
     })
   }, [
     userData?.id,
@@ -1495,68 +1457,84 @@ export default function ConnectLnPage() {
 
   const activeCategoryConfig = FEED_CATEGORIES.find(c => c.id === activeFeedCategory) || FEED_CATEGORIES[0]
 
-  // Filter Posts based on Stream, Sub-category, Search Query, Feed Type, or Tag
-  const filteredPosts = posts.filter(post => {
-    // 0. Strict Need-to-Know Enclave Segregation (always keep user's own posts and shared video cards visible)
-    const isUserOrVideoPost = post.author?.connectionDegree === 'You' || post.media?.type === 'video'
-    const isAllSelected = selectedEnclaves.length === 0 || selectedEnclaves.includes('all') || selectedEnclaves.length >= PROFESSION_ENCLAVES.length
-    if (!isAllSelected && !isUserOrVideoPost) {
-      const postEnclave = post.professionEnclave || 'tech_software'
-      if (postEnclave !== 'all' && !selectedEnclaves.includes(postEnclave)) {
-        return false
+  // Filter & Tier Posts based on the User's Claimed Profession, Stream, Sub-category, Search Query, Feed Type, or Tag
+  const resolvedUserProf = resolveProfessionForUser(userData)
+  const activeProfId = resolvedUserProf?.id || userData?.professionId
+  const filteredPosts = posts
+    .filter(post => {
+      // 0. Strict Profession & Enclave Segregation (keep user's own posts and posts tiered to their active profession)
+      const isUserOwnPost = post.author?.connectionDegree === 'You'
+      const isActiveProfTiered = Boolean(
+        activeProfId &&
+        (post.professionId === activeProfId || post.targetProfessions?.includes(activeProfId))
+      )
+      const isAllSelected = selectedEnclaves.length === 0 || selectedEnclaves.includes('all') || selectedEnclaves.length >= PROFESSION_ENCLAVES.length
+      if (!isAllSelected && !isUserOwnPost && !isActiveProfTiered) {
+        const postEnclave = post.professionEnclave || 'tech_software'
+        if (postEnclave !== 'all' && !selectedEnclaves.includes(postEnclave)) {
+          return false
+        }
       }
-    }
 
-    // 1. Feed Stream Category
-    if (activeFeedCategory === 'products') {
-      if (post.feedCategory !== 'products' && !post.embeddedProduct && post.postType !== 'product_announcement') return false
-    } else if (activeFeedCategory === 'research') {
-      if (post.feedCategory !== 'research' && !post.hashtags?.some(h => h.toLowerCase().includes('research') || h.toLowerCase().includes('whitepaper'))) return false
-    } else if (activeFeedCategory === 'following') {
-      if (post.author.connectionDegree === 'You' || (!post.author.isFollowing && post.author.connectionDegree !== '1st')) return false
-    }
+      // 1. Feed Stream Category
+      if (activeFeedCategory === 'products') {
+        if (post.feedCategory !== 'products' && !post.embeddedProduct && post.postType !== 'product_announcement') return false
+      } else if (activeFeedCategory === 'research') {
+        if (post.feedCategory !== 'research' && !post.hashtags?.some(h => h.toLowerCase().includes('research') || h.toLowerCase().includes('whitepaper'))) return false
+      } else if (activeFeedCategory === 'following') {
+        if (post.author.connectionDegree === 'You' || (!post.author.isFollowing && post.author.connectionDegree !== '1st')) return false
+      }
 
-    // 2. Sub-Category Filtering
-    if (activeFeedSubCategory && activeFeedSubCategory !== 'All') {
-      const sub = activeFeedSubCategory.toLowerCase()
-      const matchPostSub = post.feedSubCategory?.toLowerCase().includes(sub)
-      const matchContent = post.content.toLowerCase().includes(sub)
-      const matchHashtags = post.hashtags?.some(h => h.toLowerCase().includes(sub.replace(/\s+/g, '')))
-      const matchEmbedded = post.embeddedProduct && (
-        post.embeddedProduct.category.toLowerCase().includes(sub) ||
-        post.embeddedProduct.name.toLowerCase().includes(sub) ||
-        post.embeddedProduct.badge.toLowerCase().includes(sub)
+      // 2. Sub-Category Filtering
+      if (activeFeedSubCategory && activeFeedSubCategory !== 'All') {
+        const sub = activeFeedSubCategory.toLowerCase()
+        const matchPostSub = post.feedSubCategory?.toLowerCase().includes(sub)
+        const matchContent = post.content.toLowerCase().includes(sub)
+        const matchHashtags = post.hashtags?.some(h => h.toLowerCase().includes(sub.replace(/\s+/g, '')))
+        const matchEmbedded = post.embeddedProduct && (
+          post.embeddedProduct.category.toLowerCase().includes(sub) ||
+          post.embeddedProduct.name.toLowerCase().includes(sub) ||
+          post.embeddedProduct.badge.toLowerCase().includes(sub)
+        )
+        if (!matchPostSub && !matchContent && !matchHashtags && !matchEmbedded) return false
+      }
+
+      // 3. Format Scope Filter
+      if (feedTypeFilter === 'saved' && !post.isSaved) return false
+      if (feedTypeFilter === 'polls' && post.postType !== 'poll') return false
+      if (feedTypeFilter === 'documents' && post.postType !== 'document') return false
+
+      // 4. Tag Filtering
+      if (selectedTagFilter) {
+        const matchTag = post.hashtags?.some(h =>
+          h.toLowerCase().includes(selectedTagFilter.toLowerCase().replace('#', ''))
+        )
+        if (!matchTag) return false
+      }
+
+      // 5. Global Search Filter
+      if (!searchQuery) return true
+      const q = searchQuery.toLowerCase()
+      return (
+        post.content.toLowerCase().includes(q) ||
+        post.author.name.toLowerCase().includes(q) ||
+        post.author.headline.toLowerCase().includes(q) ||
+        (post.embeddedProduct && (
+          post.embeddedProduct.name.toLowerCase().includes(q) ||
+          post.embeddedProduct.tagline.toLowerCase().includes(q) ||
+          post.embeddedProduct.category.toLowerCase().includes(q)
+        ))
       )
-      if (!matchPostSub && !matchContent && !matchHashtags && !matchEmbedded) return false
-    }
-
-    // 3. Format Scope Filter
-    if (feedTypeFilter === 'saved' && !post.isSaved) return false
-    if (feedTypeFilter === 'polls' && post.postType !== 'poll') return false
-    if (feedTypeFilter === 'documents' && post.postType !== 'document') return false
-
-    // 4. Tag Filtering
-    if (selectedTagFilter) {
-      const matchTag = post.hashtags?.some(h =>
-        h.toLowerCase().includes(selectedTagFilter.toLowerCase().replace('#', ''))
-      )
-      if (!matchTag) return false
-    }
-
-    // 5. Global Search Filter
-    if (!searchQuery) return true
-    const q = searchQuery.toLowerCase()
-    return (
-      post.content.toLowerCase().includes(q) ||
-      post.author.name.toLowerCase().includes(q) ||
-      post.author.headline.toLowerCase().includes(q) ||
-      (post.embeddedProduct && (
-        post.embeddedProduct.name.toLowerCase().includes(q) ||
-        post.embeddedProduct.tagline.toLowerCase().includes(q) ||
-        post.embeddedProduct.category.toLowerCase().includes(q)
-      ))
-    )
-  })
+    })
+    .sort((a, b) => {
+      const score = (p: Post) => {
+        if (activeProfId && (p.professionId === activeProfId || p.targetProfessions?.includes(activeProfId))) return 3
+        if (p.isProfessionTiered) return 2
+        if (userData?.professionEnclave && p.professionEnclave === userData.professionEnclave) return 1
+        return 0
+      }
+      return score(b) - score(a)
+    })
 
   if (!hasHydrated) {
     return (
@@ -1673,6 +1651,10 @@ export default function ConnectLnPage() {
                   Profile →
                 </button>
               </div>
+
+              {/* LinkedIn-Style Top "Start a post" Box (Video, Photo, Write article — Matches Screenshot 1) */}
+              <PostCreator user={userData} onAddPost={handleAddPost} />
+
               {/* Desktop Educational Masterclass Wheel */}
               <div className="hidden sm:block">
                 {showFeedWheel ? (
@@ -2156,9 +2138,6 @@ export default function ConnectLnPage() {
                   </button>
                 </div>
               )}
-
-              {/* "Start a post" Creator */}
-              <PostCreator user={userData} onAddPost={handleAddPost} />
 
               {/* Feed Sort & Separator */}
               <div className="flex items-center justify-between py-1 px-1 text-xs text-zinc-500 dark:text-zinc-400">

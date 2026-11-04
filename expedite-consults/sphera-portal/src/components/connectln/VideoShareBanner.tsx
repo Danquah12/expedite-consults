@@ -193,15 +193,105 @@ export function VideoShareBanner({
 
   return (
     <div
-      className="relative w-full overflow-hidden rounded-2xl border border-zinc-800 shadow-lg transition-all hover:shadow-xl"
+      className="relative w-full overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-md transition-all hover:shadow-lg"
       style={{ backgroundColor: "#171513", color: "#F5F0EB" }}
     >
+      {/* FULL-WIDTH 16:9 LINKEDIN-STYLE INLINE VIDEO STAGE (Plays directly in feed or shows high-res action preview) */}
+      {(resolvedYtId || videoUrl || resolvedThumb) && (
+        <div className="relative aspect-video w-full overflow-hidden bg-black border-b border-white/10">
+          {isPlayingInline && (resolvedYtId || videoUrl) ? (
+            <>
+              {resolvedYtId ? (
+                <ConnectLnStudioPlayer
+                  youtubeId={resolvedYtId}
+                  title={videoTitle}
+                  serialPlate={serialPlate || "CLN-VID"}
+                  speaker={resolvedAuthor}
+                  durationLabel={duration}
+                  className="h-full w-full"
+                />
+              ) : (
+                <video
+                  src={videoUrl}
+                  controls
+                  autoPlay
+                  className="h-full w-full object-contain bg-black"
+                />
+              )}
+              <button
+                type="button"
+                onClick={() => setIsPlayingInline(false)}
+                style={{ backgroundColor: "rgba(0,0,0,0.85)", color: "#FFFFFF" }}
+                className="absolute top-3 right-3 z-20 rounded-full px-3 py-1 text-[11px] font-bold border border-white/20 cursor-pointer hover:bg-black"
+              >
+                ✕ Close Player
+              </button>
+            </>
+          ) : (
+            <div
+              onClick={handlePlayTrigger}
+              className="relative h-full w-full cursor-pointer group overflow-hidden"
+            >
+              {resolvedThumb && (
+                <img
+                  src={resolvedThumb}
+                  alt={videoTitle}
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/30" />
+
+              {/* Top-left Verified Profession Stream Badge */}
+              <div className="absolute top-3 left-3 flex items-center gap-2">
+                {serialPlate && (
+                  <span
+                    className="rounded-md px-2 py-0.5 font-mono text-[10px] font-extrabold uppercase tracking-wider shadow-sm"
+                    style={{ backgroundColor: "#A64532", color: "#FFFFFF" }}
+                  >
+                    {serialPlate}
+                  </span>
+                )}
+                <span className="rounded-md bg-black/70 backdrop-blur-xs px-2.5 py-0.5 text-[10px] font-bold text-white border border-white/15">
+                  🎥 Verified Profession Field Stream
+                </span>
+              </div>
+
+              {/* Center Play Button (LinkedIn Video Player Style) */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-[#0A66C2]/95 text-white shadow-2xl ring-4 ring-white/30 transition-transform duration-200 group-hover:scale-110">
+                  <Play className="h-7 w-7 sm:h-8 sm:w-8 fill-current ml-1" />
+                </div>
+              </div>
+
+              {/* Bottom Title & Duration Overlay */}
+              <div className="absolute inset-x-0 bottom-0 p-3.5 sm:p-4 flex items-end justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="text-sm sm:text-base font-extrabold text-white leading-snug line-clamp-2 drop-shadow-sm">
+                    {videoTitle}
+                  </h3>
+                  {videoSubtitle && (
+                    <p className="mt-0.5 text-[11px] sm:text-xs text-zinc-200 line-clamp-1">
+                      {videoSubtitle}
+                    </p>
+                  )}
+                </div>
+                {duration && (
+                  <span className="shrink-0 rounded bg-black/85 px-2 py-0.5 font-mono text-[11px] font-bold text-white border border-white/15">
+                    {duration}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* OFFICIAL CONNECTLN LOGO CARD WITH USER PROFILE PICTURE INSERTED INSIDE */}
       <div
         onClick={handlePlayTrigger}
         className={`${
-          compact ? "p-3.5 sm:p-4" : "p-4 sm:p-6"
-        } flex flex-col sm:flex-row items-center gap-4 sm:gap-6 cursor-pointer group w-full`}
+          compact ? "p-3 sm:p-3.5" : "p-3.5 sm:p-4"
+        } flex flex-col sm:flex-row items-center gap-3.5 sm:gap-5 cursor-pointer group w-full`}
         style={{
           background:
             "radial-gradient(circle at 50% 50%, #221F1D 0%, #171513 100%)"
@@ -369,39 +459,6 @@ export function VideoShareBanner({
           </div>
         </div>
       </div>
-
-      {/* Inline Video Player (When User Clicks Play and No External Modal Handler Overrides) */}
-      {isPlayingInline && (resolvedYtId || videoUrl) && (
-        <div className="px-4 pb-3">
-          <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-black border border-white/15 shadow-inner">
-            {resolvedYtId ? (
-              <ConnectLnStudioPlayer
-                youtubeId={resolvedYtId}
-                title={videoTitle}
-                serialPlate={serialPlate || "CLN-VID"}
-                speaker={resolvedAuthor}
-                durationLabel={duration}
-                className="h-full w-full"
-              />
-            ) : (
-              <video
-                src={videoUrl}
-                controls
-                autoPlay
-                className="h-full w-full object-contain bg-black"
-              />
-            )}
-            <button
-              type="button"
-              onClick={() => setIsPlayingInline(false)}
-              style={{ backgroundColor: "rgba(0,0,0,0.85)", color: "#FFFFFF" }}
-              className="absolute top-2 right-2 rounded-full px-2.5 py-1 text-[10px] font-bold border border-white/20 cursor-pointer"
-            >
-              ✕ Close Player
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Multi-Platform Direct Sharing Bar (WhatsApp, LinkedIn, X, Facebook, Email, Copy Link) */}
       {!hideShareBar && (

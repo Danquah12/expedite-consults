@@ -113,10 +113,8 @@ export function FeedPostCard({
   const displayedContent = isExpanded || !isLongText ? activeContent : activeContent.slice(0, 240) + "..."
 
   const [showShareModal, setShowShareModal] = useState(false)
-  const isCurrentUserPost =
-    post.author.connectionDegree === 'You' ||
-    post.id === 'post_dstrike_wheel_masterclass' ||
-    post.media?.type === 'video'
+  const [downloadedGuide, setDownloadedGuide] = useState(false)
+  const isCurrentUserPost = post.author.connectionDegree === 'You'
   const resolvedAuthorName = isCurrentUserPost
     ? (currentUser.name || post.author.name)
     : post.author.name
@@ -127,6 +125,45 @@ export function FeedPostCard({
   const resolvedPostAuthorPic = isCurrentUserPost
     ? resolvedUserPic
     : (post.author.avatar || generatePersonalSignatureAvatar({ name: post.author.name }))
+
+  const handleDownloadGuide = () => {
+    const guide = post.media?.downloadGuide
+    const title = guide?.title || post.media?.title || `${resolvedAuthorName} Field Guide`
+    const checklist = guide?.checklist || [
+      `1. Primary Field Standard & Verification`,
+      `2. Safety & Quality Compliance Sign-Off`,
+      `3. Operational Execution & Peer Review`
+    ]
+    const content = [
+      `====================================================================`,
+      `CONNECTLN OFFICIAL PROFESSION FIELD GUIDE`,
+      `${title}`,
+      `====================================================================`,
+      `Author: ${resolvedAuthorName} (${resolvedAuthorHeadline})`,
+      `Prepared for: ${currentUser.name || 'ConnectLn Practitioner'} (${currentUser.profession || currentUser.headline || 'Verified Member'})`,
+      ``,
+      `SUMMARY:`,
+      post.content,
+      ``,
+      `KEY FIELD STANDARDS & CHECKLIST:`,
+      ...checklist.map(item => `  [x] ${item}`),
+      ``,
+      `Generated via ConnectLn Profession Directorate`
+    ].join('\n')
+
+    if (typeof window !== 'undefined') {
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = guide?.fileName || 'ConnectLn_Profession_Field_Guide.txt'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    }
+    setDownloadedGuide(true)
+  }
 
   const postSnippet = (post.content || post.media?.title || "").slice(0, 90).replace(/\n/g, " ").trim()
 
@@ -394,10 +431,11 @@ export function FeedPostCard({
                     avatar: resolvedPostAuthorPic
                   })
                 }
-                className="font-bold text-sm text-zinc-900 hover:underline hover:text-[#0A66C2] cursor-pointer dark:text-zinc-100"
+                className="font-bold text-sm text-zinc-900 hover:underline hover:text-[#0A66C2] cursor-pointer dark:text-zinc-100 inline-flex items-center gap-1"
                 title={`Open ${resolvedAuthorName}'s Workspace`}
               >
-                {resolvedAuthorName}
+                <span>{resolvedAuthorName}</span>
+                <ShieldCheck className="h-3.5 w-3.5 text-zinc-600 dark:text-zinc-300 shrink-0" />
               </span>
               {post.author.connectionDegree !== 'You' && (
                 <span className="text-xs text-zinc-400 font-normal">
@@ -410,15 +448,15 @@ export function FeedPostCard({
                     setIsFollowing(!isFollowing)
                     onFollowToggle(post.author.id)
                   }}
-                  className="flex items-center gap-1 text-xs font-semibold text-[#0A66C2] hover:bg-sky-50 px-2 py-0.5 rounded-md dark:hover:bg-sky-950/30 ml-1"
+                  className="flex items-center gap-1 text-xs font-bold text-[#0A66C2] hover:bg-sky-50 px-2.5 py-0.5 rounded-full dark:hover:bg-sky-950/30 ml-1"
                 >
                   {isFollowing ? (
                     <>
-                      <UserCheck className="h-3 w-3" /> Following
+                      <UserCheck className="h-3.5 w-3.5" /> Following
                     </>
                   ) : (
                     <>
-                      <UserPlus className="h-3 w-3" /> Follow
+                      + Follow
                     </>
                   )}
                 </button>
@@ -851,50 +889,67 @@ export function FeedPostCard({
         </div>
       )}
 
-      {/* Standard Image Media with Profile Picture Inserted into ConnectLn Logo Header */}
+      {/* LinkedIn-Style Full-Width Edge-to-Edge Image & Downloadable Guide Card */}
       {post.media && post.media.type === 'image' && (
-        <div className="mx-4 my-3 overflow-hidden rounded-2xl border border-zinc-800 shadow-md" style={{ backgroundColor: '#171513' }}>
-          {/* Official ConnectLn Logo Strip with Profile Picture Inserted */}
-          <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10" style={{ backgroundColor: '#171513', color: '#F5F0EB' }}>
-            <div className="flex items-center gap-2.5 min-w-0">
-              <img
-                src={resolvedPostAuthorPic}
-                alt={resolvedAuthorName}
-                onError={(e) => {
-                  e.currentTarget.src = generatePersonalSignatureAvatar({ name: resolvedAuthorName })
-                }}
-                className="h-9 w-9 rounded-full object-cover ring-2 ring-[#0066FF] shrink-0"
-              />
-              <div className="min-w-0">
-                <p className="text-xs font-extrabold truncate" style={{ color: '#F5F0EB' }}>{resolvedAuthorName}</p>
-                <p className="text-[10px] truncate" style={{ color: '#9E9891' }}>Tickets, vouches, and real work</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <img
-                src="/brand/connectln-icon-256.png"
-                alt="ConnectLn"
-                className="h-7 w-7 rounded-lg object-contain"
-              />
-              <div className="flex flex-col">
-                <span className="text-sm font-black tracking-tight leading-none" style={{ color: '#F5F0EB' }}>ConnectLn</span>
-                <span className="mt-0.5 h-1 w-4/5 rounded-full" style={{ backgroundColor: '#A64532' }} />
-              </div>
-            </div>
-          </div>
-          <div className="relative w-full overflow-hidden bg-zinc-900 max-h-[480px]">
+        <div className="my-2 w-full overflow-hidden border-y border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900">
+          <div className="relative w-full overflow-hidden bg-zinc-900">
             <img
               src={post.media.url}
-              alt="Post content"
-              className="w-full object-cover max-h-[480px]"
+              alt={post.media.title || "Post content"}
+              className="w-full object-cover max-h-[540px]"
             />
+
+            {/* Optional Editorial / Story Banner Overlay (Matches LinkedIn Screenshots 2, 3, and 4) */}
+            {post.media.overlayTitle && (
+              <div className="absolute left-0 bottom-5 max-w-[88%] sm:max-w-[78%] bg-gradient-to-r from-[#8B2E16]/95 via-[#9E381E]/90 to-[#8B2E16]/80 backdrop-blur-xs px-4 py-3 text-white shadow-lg border-r-4 border-amber-400">
+                <p className="text-sm sm:text-lg font-extrabold leading-tight drop-shadow-xs">
+                  {post.media.overlayTitle}
+                </p>
+                {post.media.overlaySubtitle && (
+                  <p className="mt-0.5 text-[11px] sm:text-xs font-medium text-amber-100">
+                    {post.media.overlaySubtitle}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
+
+          {/* LinkedIn-Style Guide / Article Caption + Full-Width Download Button (Matches Screenshots 2 & 4) */}
+          {(post.media.title || post.media.downloadGuide) && (
+            <div className="bg-white dark:bg-zinc-900">
+              <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800">
+                <h4 className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100 leading-snug">
+                  {post.media.downloadGuide?.title || post.media.title}
+                </h4>
+                <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+                  {post.media.submitsText || post.media.downloadGuide?.subtitle || post.media.domain || "connectln.org"}
+                </p>
+              </div>
+
+              {post.media.downloadGuide && (
+                <button
+                  type="button"
+                  onClick={handleDownloadGuide}
+                  className="w-full py-2.5 px-4 flex items-center justify-center gap-2 text-xs sm:text-sm font-bold text-[#0A66C2] dark:text-sky-400 hover:bg-sky-50/70 dark:hover:bg-sky-950/30 transition-colors cursor-pointer"
+                >
+                  <svg className="h-4 w-4 stroke-current" fill="none" strokeWidth="2.2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3" />
+                  </svg>
+                  <span>
+                    {downloadedGuide
+                      ? "✓ Field Guide Downloaded (Click to download again)"
+                      : (post.media.downloadGuide.ctaLabel || "Download")}
+                  </span>
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Signature Profile + ConnectLn Video Share Banner (When a video is shared from The Wheel or anywhere on ConnectLn) */}
+      {/* LinkedIn-Style Full-Width 16:9 Inline Video + ConnectLn Share Card */}
       {post.media && post.media.type === 'video' && (
-        <div className="mx-4 my-3">
+        <div className="my-2 w-full">
           <VideoShareBanner
             avatarUrl={resolvedPostAuthorPic}
             userAvatar={resolvedPostAuthorPic}
