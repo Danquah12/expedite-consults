@@ -2458,7 +2458,7 @@ export function VibeVideoCallStudio({
     []
   )
 
-  // Unlock shared Web Audio context on any user interaction so mobile/desktop browsers never silence remote voices
+  // Unlock shared Web Audio context on any user interaction or pointer movement so mobile/desktop browsers never silence remote voices
   useEffect(() => {
     if (typeof window === "undefined") return
     if (!voicePlayerRef.current) {
@@ -2468,16 +2468,22 @@ export function VibeVideoCallStudio({
       voicePlayerRef.current?.unlock()
     }
     window.addEventListener("pointerdown", unlockCtx)
-    window.addEventListener("touchstart", unlockCtx)
+    window.addEventListener("pointermove", unlockCtx, { passive: true })
+    window.addEventListener("mousemove", unlockCtx, { passive: true })
+    window.addEventListener("touchstart", unlockCtx, { passive: true })
     window.addEventListener("keydown", unlockCtx)
+    window.addEventListener("click", unlockCtx)
     return () => {
       window.removeEventListener("pointerdown", unlockCtx)
+      window.removeEventListener("pointermove", unlockCtx)
+      window.removeEventListener("mousemove", unlockCtx)
       window.removeEventListener("touchstart", unlockCtx)
       window.removeEventListener("keydown", unlockCtx)
+      window.removeEventListener("click", unlockCtx)
     }
   }, [])
 
-  // Rolling 900ms universal WAV PCM voice capture from local microphone so all participants across Safari/Chrome/iOS/Android hear each other clearly
+  // Rolling 750ms universal WAV PCM + MediaRecorder dual-engine voice capture from local microphone
   useEffect(() => {
     if (typeof window === "undefined") return
     if (!localStreamState || callState === "ENDED") {
@@ -2492,7 +2498,7 @@ export function VibeVideoCallStudio({
         latestLocalAudioChunkRef.current = latest
         recentLocalAudioChunksRef.current = recentWindow
       },
-      900
+      750
     )
     return () => {
       stopCapture()
@@ -2577,36 +2583,26 @@ export function VibeVideoCallStudio({
     })
   }, [localStreamState])
 
-  // LAYER 1: Real WebRTC Multi-Device Video/Audio & Data Mesh via PeerJS (`slot-0` .. `slot-11` + dynamic peer IDs)
+  // LAYER 1: Real WebRTC Multi-Device Video/Audio & Data Mesh via PeerJS (Collision-free unique peer ID + fast P2P DataChannel & MediaStream)
   useEffect(() => {
     if (typeof window === "undefined") return
     let isCancelled = false
     let peerInstance: any = null
     let syncTimer: ReturnType<typeof setInterval> | null = null
+    let fastDataTimer: ReturnType<typeof setInterval> | null = null
     const activeMediaCalls = activeMediaCallsRef.current
     const activeDataConns = new Map<string, any>()
+    const pendingDataConnAtMs = new Map<string, number>()
     const liveStreamPeers = new Set<string>()
     const lastCallAttemptMs = new Map<string, number>()
 
     const cleanRoomKey =
       callId.replace(/[^a-zA-Z0-9]/g, "").toLowerCase().slice(0, 20) || "viberoom9b0bbf68"
-    const allSlots = Array.from({ length: 12 }, (_, idx) => `vibe-connectln-${cleanRoomKey}-slot-${idx}`)
+    const allSlots = Array.from({ length: 6 }, (_, idx) => `vibe-connectln-${cleanRoomKey}-slot-${idx}`)
     const uniqueFallbackPeerId = `vibe-connectln-${cleanRoomKey}-${localParticipantId.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()}`
 
-    // Distribute guests across slots 1..11 based on participantId hash so 2nd, 3rd, 4th, 5th guests never collide on slot-1
-    const pidHash = localParticipantId
-      .split("")
-      .reduce((acc, ch) => (acc * 31 + ch.charCodeAt(0)) >>> 0, 7)
-    const guestSlots = allSlots.slice(1) // slot-1 .. slot-11
-    const startOffset = pidHash % guestSlots.length
-    const rotatedGuestSlots = [
-      ...guestSlots.slice(startOffset),
-      ...guestSlots.slice(0, startOffset),
-    ]
-
-    const slotOrder = isInvitedGuestLink
-      ? [...rotatedGuestSlots, allSlots[0], uniqueFallbackPeerId]
-      : [allSlots[0], ...rotatedGuestSlots, uniqueFallbackPeerId]
+    // Put uniqueFallbackPeerId FIRST so PeerJS registers on 0.peerjs.com in ~150ms without ever colliding on slot-0!
+    const slotOrder = [uniqueFallbackPeerId, ...allSlots]
 
     // Helper: builds outgoing MediaStream using Virtual Background canvas video track (when active) + microphone audio track
     const getOutgoingCallMediaStream = (): MediaStream | null => {
@@ -2641,6 +2637,24 @@ export function VibeVideoCallStudio({
         if (isCancelled) return
         liveStreamPeers.add(mediaCall.peer)
         setRemoteStreams((prev) => ({ ...prev, [mediaCall.peer]: remoteStream }))
+        // Ensure the participant tile has remotePeerId set to mediaCall.peer so the 30fps WebRTC <video> mounts immediately
+        if (mediaCall.metadata?.participantId) {
+          peerSyncStateRef.current.upsertRemoteFriendTile({
+            participantId: mediaCall.metadata.participantId,
+            peerId: mediaCall.peer,
+            name: mediaCall.metadata.name || "Connected Participant",
+            role: mediaCall.metadata.role,
+            device: mediaCall.metadata.device,
+          })
+        } else {
+          setParticipants((prev) =>
+            prev.map((p) =>
+              !p.isLocal && (!p.remotePeerId || p.id === mediaCall.peer)
+                ? { ...p, remotePeerId: mediaCall.peer }
+                : p
+            )
+          )
+        }
       })
       mediaCall.on("close", () => {
         liveStreamPeers.delete(mediaCall.peer)
@@ -2660,7 +2674,9 @@ export function VibeVideoCallStudio({
     const bindDataConn = (conn: any) => {
       if (!conn || !conn.peer) return
       knownRemotePeerIdsRef.current.add(conn.peer)
+      pendingDataConnAtMs.set(conn.peer, Date.now())
       conn.on("open", () => {
+        pendingDataConnAtMs.delete(conn.peer)
         activeDataConns.set(conn.peer, conn)
         const st = peerSyncStateRef.current
         try {
@@ -2729,9 +2745,11 @@ export function VibeVideoCallStudio({
         }
       })
       conn.on("close", () => {
+        pendingDataConnAtMs.delete(conn.peer)
         activeDataConns.delete(conn.peer)
       })
       conn.on("error", () => {
+        pendingDataConnAtMs.delete(conn.peer)
         activeDataConns.delete(conn.peer)
       })
     }
@@ -2780,16 +2798,10 @@ export function VibeVideoCallStudio({
           setMyPeerId(openedId)
           peerSyncStateRef.current.appendLog(`WebRTC Room Mesh ready on channel [${openedId}] — listening for all participants...`)
 
-          // Periodically sync with all slots AND all discovered dynamic peer IDs in this room
-          syncTimer = setInterval(() => {
-            if (isCancelled || !peerInstance || peerInstance.destroyed) return
+          // High-speed 380ms P2P DataChannel frame & audio relay for any open DataConnections
+          fastDataTimer = setInterval(() => {
+            if (isCancelled || !peerInstance || peerInstance.destroyed || activeDataConns.size === 0) return
             const st = peerSyncStateRef.current
-            const frame = st.captureCompactLiveFrame()
-            const activeStage = st.captureActiveSharedStagePayload()
-            const targetPeerIds = Array.from(
-              new Set([...allSlots, ...Array.from(knownRemotePeerIdsRef.current)])
-            ).filter((id) => id && id !== openedId)
-
             const syncPayload = {
               type: "VIBE_PEER_SYNC",
               participantId: localParticipantId,
@@ -2802,27 +2814,49 @@ export function VibeVideoCallStudio({
               isVideoOn: st.isCameraOn,
               virtualBgId: st.selectedVirtualBgId,
               virtualBgBadge: st.selectedVirtualBgId !== "none" ? st.activeVirtualBgOption.badgeText : undefined,
-              liveFrame: frame,
+              liveFrame: st.captureCompactLiveFrame(),
               liveAudioChunk: !st.isMicMuted ? latestLocalAudioChunkRef.current : undefined,
               recentAudioChunks: !st.isMicMuted ? recentLocalAudioChunksRef.current : undefined,
-              sharedStage: activeStage,
+              sharedStage: st.captureActiveSharedStagePayload(),
             }
+            activeDataConns.forEach((conn) => {
+              if (conn && conn.open) {
+                try {
+                  conn.send(syncPayload)
+                } catch {
+                  // ignore
+                }
+              }
+            })
+          }, 380)
+
+          // Connect & establish bidirectional WebRTC MediaStream with discovered active peers in the room
+          syncTimer = setInterval(() => {
+            if (isCancelled || !peerInstance || peerInstance.destroyed) return
+            const st = peerSyncStateRef.current
+            const discoveredPeers = Array.from(knownRemotePeerIdsRef.current).filter(
+              (id) => id && id !== openedId
+            )
+            // Only dial discovered active peer IDs (or slot-0/slot-1 if none discovered yet) so we never flood PeerJS signaling
+            const targetPeerIds =
+              discoveredPeers.length > 0
+                ? discoveredPeers
+                : allSlots.slice(0, 2).filter((id) => id !== openedId)
 
             const nowMs = Date.now()
             for (const targetSlot of targetPeerIds) {
               const existingConn = activeDataConns.get(targetSlot)
-              if (existingConn && existingConn.open) {
-                try {
-                  existingConn.send(syncPayload)
-                } catch {
-                  // ignore
-                }
-              } else {
-                try {
-                  const newConn = peerInstance.connect(targetSlot, { reliable: true })
-                  bindDataConn(newConn)
-                } catch {
-                  // ignore
+              const pendingSince = pendingDataConnAtMs.get(targetSlot) || 0
+              if (!existingConn || !existingConn.open) {
+                // Only initiate a new DataConnection if one is not already negotiating within the last 6.5s
+                if (nowMs - pendingSince > 6500) {
+                  try {
+                    pendingDataConnAtMs.set(targetSlot, nowMs)
+                    const newConn = peerInstance.connect(targetSlot, { reliable: true })
+                    bindDataConn(newConn)
+                  } catch {
+                    // ignore
+                  }
                 }
               }
 
@@ -2843,11 +2877,12 @@ export function VibeVideoCallStudio({
                   !liveStreamPeers.has(targetSlot) ||
                   (outStream && outStream.getAudioTracks().length > 0 && !hasOutgoingAudioSender)
 
+                // Give STUN/TURN ICE negotiation a full 8.5s window to complete before retrying
                 if (
                   outStream &&
                   (outStream.getVideoTracks().length > 0 || outStream.getAudioTracks().length > 0) &&
                   needsMediaCall &&
-                  nowMs - lastTry > 2800
+                  nowMs - lastTry > 8500
                 ) {
                   lastCallAttemptMs.set(targetSlot, nowMs)
                   try {
@@ -2866,7 +2901,7 @@ export function VibeVideoCallStudio({
                 }
               }
             }
-          }, 900)
+          }, 1100)
         })
 
         peer.on("connection", (incomingConn: any) => {
@@ -2903,6 +2938,7 @@ export function VibeVideoCallStudio({
     return () => {
       isCancelled = true
       if (syncTimer) clearInterval(syncTimer)
+      if (fastDataTimer) clearInterval(fastDataTimer)
       if (peerInstance) {
         try {
           peerInstance.destroy()
@@ -3063,7 +3099,7 @@ export function VibeVideoCallStudio({
     }
 
     sendHeartbeat()
-    const interval = setInterval(sendHeartbeat, 900)
+    const interval = setInterval(sendHeartbeat, 650)
 
     const handleBeforeUnload = () => {
       fetch("/api/v1/calls", {
@@ -4732,8 +4768,21 @@ export function VibeVideoCallStudio({
             {participants.map((part) => {
               const isLocalTile = Boolean(part.isLocal)
               const showLiveVideoInTile = isLocalTile && isHardwareCameraActive && isCameraOn
-              const remoteStream =
+              let remoteStream: MediaStream | undefined =
                 !isLocalTile && part.remotePeerId ? remoteStreams[part.remotePeerId] : undefined
+              if (!isLocalTile && !remoteStream) {
+                const claimedPeerIds = new Set(
+                  participants
+                    .filter((p) => !p.isLocal && p.id !== part.id && p.remotePeerId && remoteStreams[p.remotePeerId])
+                    .map((p) => p.remotePeerId as string)
+                )
+                const unclaimedEntry = Object.entries(remoteStreams).find(
+                  ([peerKey]) => !claimedPeerIds.has(peerKey)
+                )
+                if (unclaimedEntry) {
+                  remoteStream = unclaimedEntry[1]
+                }
+              }
               const showRemoteFriendLiveVideo = !isLocalTile && part.isVideoOn
 
               return (
@@ -4810,8 +4859,8 @@ export function VibeVideoCallStudio({
                     </>
                   )}
 
-                  {/* LAYER 1 (zIndex 4): BRIGHT LIVE STUDIO VIDEO FEED FOR ALL REMOTE PARTICIPANTS WITH VIDEO ON */}
-                  {!isLocalTile && part.isVideoOn && (
+                  {/* LAYER 1 (zIndex 4): STUDIO FALLBACK FEED ONLY WHEN NEITHER LIVE FRAME NOR WEBRTC STREAM EXISTS */}
+                  {!isLocalTile && part.isVideoOn && !part.liveFrame && !remoteStream && (
                     <RemoteParticipantStudioFeed participant={part} />
                   )}
 
@@ -4835,7 +4884,7 @@ export function VibeVideoCallStudio({
                     />
                   )}
 
-                  {/* LAYER 3 (zIndex 6): LIVE REMOTE WEBRTC MEDIASTREAM (Always mounted when stream exists so audio always plays) */}
+                  {/* LAYER 3 (zIndex 6): LIVE REMOTE WEBRTC MEDIASTREAM (Always mounted when stream exists so 30fps video & audio play) */}
                   {!isLocalTile && remoteStream && (
                     <RemotePeerVideoElement stream={remoteStream} isVideoOn={part.isVideoOn} />
                   )}

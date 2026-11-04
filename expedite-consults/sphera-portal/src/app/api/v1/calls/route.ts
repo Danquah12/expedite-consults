@@ -120,38 +120,47 @@ function makeCloudAudioKey(callId: string, userId: string): string {
 
 async function upsertTwilioSyncItem(auth: string, key: string, serialized: string): Promise<void> {
   const baseUrl = `https://sync.twilio.com/v1/Services/default/Maps/${CALLS_SYNC_MAP_NAME}`
-  const updateRes = await fetch(`${baseUrl}/Items/${encodeURIComponent(key)}`, {
-    method: "POST",
-    headers: {
-      Authorization: auth,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({ Data: serialized, Ttl: "60" }).toString(),
-  })
-  if (updateRes.ok) return
-
-  if (updateRes.status === 404) {
-    await fetch("https://sync.twilio.com/v1/Services/default/Maps", {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 1100)
+  try {
+    const updateRes = await fetch(`${baseUrl}/Items/${encodeURIComponent(key)}`, {
       method: "POST",
       headers: {
         Authorization: auth,
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: new URLSearchParams({ UniqueName: CALLS_SYNC_MAP_NAME }).toString(),
-    }).catch(() => {})
+      body: new URLSearchParams({ Data: serialized, Ttl: "60" }).toString(),
+      signal: controller.signal,
+    })
+    if (updateRes.ok) return
 
-    await fetch(`${baseUrl}/Items`, {
-      method: "POST",
-      headers: {
-        Authorization: auth,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        Key: key,
-        Data: serialized,
-        Ttl: "60",
-      }).toString(),
-    }).catch(() => {})
+    if (updateRes.status === 404) {
+      await fetch("https://sync.twilio.com/v1/Services/default/Maps", {
+        method: "POST",
+        headers: {
+          Authorization: auth,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({ UniqueName: CALLS_SYNC_MAP_NAME }).toString(),
+      }).catch(() => {})
+
+      await fetch(`${baseUrl}/Items`, {
+        method: "POST",
+        headers: {
+          Authorization: auth,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          Key: key,
+          Data: serialized,
+          Ttl: "60",
+        }).toString(),
+      }).catch(() => {})
+    }
+  } catch {
+    // non-fatal timeout
+  } finally {
+    clearTimeout(timer)
   }
 }
 
@@ -161,6 +170,7 @@ async function pushCloudCallParticipant(callId: string, participant: CommCallPar
   const key = makeCloudParticipantKey(callId, participant.user_id)
   const audioKey = makeCloudAudioKey(callId, participant.user_id)
   const nowMs = Date.now()
+  const pendingWrites: Promise<void>[] = []
 
   // 1. Always push new voice audio chunks immediately to their dedicated 16KB item key (`a__call__user`) so voice is never throttled or dropped by video frames
   const latestSeq = participant.live_audio_chunk?.seq || 0
@@ -168,19 +178,21 @@ async function pushCloudCallParticipant(callId: string, participant: CommCallPar
   if (participant.is_muted) {
     if (lastPushedSeq !== -1) {
       lastCloudAudioSeqMap.set(audioKey, -1)
-      upsertTwilioSyncItem(
-        auth,
-        audioKey,
-        JSON.stringify({
-          kind: "audio",
-          call_id: callId,
-          user_id: participant.user_id,
-          is_muted: true,
-          last_seen_ms: nowMs,
-          live_audio_chunk: null,
-          recent_audio_chunks: [],
-        })
-      ).catch(() => {})
+      pendingWrites.push(
+        upsertTwilioSyncItem(
+          auth,
+          audioKey,
+          JSON.stringify({
+            kind: "audio",
+            call_id: callId,
+            user_id: participant.user_id,
+            is_muted: true,
+            last_seen_ms: nowMs,
+            live_audio_chunk: null,
+            recent_audio_chunks: [],
+          })
+        )
+      )
     }
   } else if (latestSeq > lastPushedSeq && participant.live_audio_chunk?.data_url) {
     lastCloudAudioSeqMap.set(audioKey, latestSeq)
@@ -210,20 +222,18 @@ async function pushCloudCallParticipant(callId: string, participant: CommCallPar
         recent_audio_chunks: compactChunks.slice(-1),
       })
     }
-    upsertTwilioSyncItem(auth, audioKey, audioPayload).catch(() => {})
+    pendingWrites.push(upsertTwilioSyncItem(auth, audioKey, audioPayload))
   }
 
-  // 2. Push participant metadata + live video frame (`p__call__user`) every 950ms
+  // 2. Push participant metadata + live video frame (`p__call__user`) every 350ms
   const lastPush = lastCloudParticipantPushMap.get(key) || 0
-  if (!force && nowMs - lastPush < 950) return
-  lastCloudParticipantPushMap.set(key, nowMs)
-
-  try {
+  if (force || nowMs - lastPush >= 350) {
+    lastCloudParticipantPushMap.set(key, nowMs)
     const compactParticipant = {
       ...participant,
       call_id: callId,
       live_frame:
-        participant.live_frame && participant.live_frame.length < 12500
+        participant.live_frame && participant.live_frame.length < 13500
           ? participant.live_frame
           : null,
       live_audio_chunk:
@@ -234,9 +244,11 @@ async function pushCloudCallParticipant(callId: string, participant: CommCallPar
           : null,
       recent_audio_chunks: undefined,
     }
-    await upsertTwilioSyncItem(auth, key, JSON.stringify(compactParticipant))
-  } catch {
-    // non-fatal
+    pendingWrites.push(upsertTwilioSyncItem(auth, key, JSON.stringify(compactParticipant)))
+  }
+
+  if (pendingWrites.length > 0) {
+    await Promise.all(pendingWrites).catch(() => {})
   }
 }
 
@@ -244,7 +256,7 @@ async function pullCloudCallParticipants(): Promise<void> {
   const auth = getTwilioCallsAuthHeader()
   if (!auth) return
   const nowMs = Date.now()
-  if (nowMs - lastCloudPullMs < 750) return
+  if (nowMs - lastCloudPullMs < 250) return
   lastCloudPullMs = nowMs
 
   try {
@@ -749,8 +761,8 @@ export async function POST(req: NextRequest) {
         }).catch(() => {})
       }
 
-      // Sync participant to global cloud map so all Vercel serverless instances see all participants in real time
-      pushCloudCallParticipant(callId, updatedParticipant, existingIdx < 0).catch(() => {})
+      // Sync participant to global cloud map (awaited so Vercel Serverless never freezes the outbound Twilio Sync request mid-flight)
+      await pushCloudCallParticipant(callId, updatedParticipant, existingIdx < 0).catch(() => {})
 
       // Prune stale participants who haven't sent a heartbeat in > 25 seconds so disconnected/ended users never stay frozen
       record.participants = record.participants.filter(

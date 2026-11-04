@@ -1098,7 +1098,7 @@ export function MessagingView({
                 huddleLatestAudioChunkRef.current = latest;
                 huddleRecentAudioChunksRef.current = recentWindow;
             },
-            900
+            750
         );
         return () => {
             stopCapture();
@@ -1316,7 +1316,7 @@ export function MessagingView({
         window.addEventListener('beforeunload', handleUnloadLeave);
 
         syncHuddleFrame();
-        const hb = setInterval(syncHuddleFrame, 900);
+        const hb = setInterval(syncHuddleFrame, 650);
         return () => {
             mounted = false;
             clearInterval(hb);
