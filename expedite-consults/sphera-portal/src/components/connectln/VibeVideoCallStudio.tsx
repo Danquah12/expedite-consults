@@ -83,77 +83,34 @@ function RemotePeerAudioTrackPlayer({
     el.muted = false
     el.volume = 1.0
 
-    let audioCtx: AudioContext | null = null
-    let sourceNode: MediaStreamAudioSourceNode | null = null
-    let analyserNode: AnalyserNode | null = null
-    let gainNode: GainNode | null = null
-
-    const ensureWebAudioBoost = () => {
-      try {
-        if (stream.getAudioTracks().length === 0) return
-        if (!audioCtx) {
-          const Ctx =
-            window.AudioContext ||
-            (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
-          if (Ctx) {
-            audioCtx = new Ctx()
-            sourceNode = audioCtx.createMediaStreamSource(stream)
-            analyserNode = audioCtx.createAnalyser()
-            analyserNode.fftSize = 64
-            gainNode = audioCtx.createGain()
-            gainNode.gain.value = 1.45
-            sourceNode.connect(analyserNode)
-            analyserNode.connect(gainNode)
-            gainNode.connect(audioCtx.destination)
-          }
-        }
-        if (audioCtx && audioCtx.state === "suspended") {
-          audioCtx.resume().catch(() => {})
-        }
-      } catch {
-        // fallback to HTMLAudioElement playback
-      }
-    }
-
     const tryPlayAudio = () => {
       if (!audioRef.current) return
       audioRef.current.muted = false
       audioRef.current.volume = 1.0
       audioRef.current.play().catch(() => {})
-      ensureWebAudioBoost()
     }
 
     tryPlayAudio()
     const watchdog = window.setInterval(() => {
       const aEl = audioRef.current
-      if (aEl && aEl.paused) {
+      if (aEl && (aEl.paused || aEl.muted)) {
         aEl.muted = false
         aEl.volume = 1.0
         aEl.play().catch(() => {})
-      }
-      if (audioCtx && audioCtx.state === "suspended") {
-        audioCtx.resume().catch(() => {})
       }
       if (onVerifiedActiveAudio) {
         const liveUnmutedTracks = stream
           .getAudioTracks()
           .filter((t) => t.readyState === "live" && t.enabled && !t.muted)
-        let hasSignal = false
-        if (liveUnmutedTracks.length > 0 && analyserNode && audioCtx?.state === "running") {
-          const bins = new Uint8Array(analyserNode.frequencyBinCount)
-          analyserNode.getByteFrequencyData(bins)
-          const sum = bins.reduce((a, b) => a + b, 0)
-          hasSignal = sum > 24
-        }
         onVerifiedActiveAudio(
           peerKey,
-          Boolean(liveUnmutedTracks.length > 0 && aEl && !aEl.paused && hasSignal)
+          Boolean(liveUnmutedTracks.length > 0 && aEl && !aEl.paused && !aEl.muted)
         )
       }
-    }, 800)
+    }, 1000)
 
-    window.addEventListener("pointerdown", tryPlayAudio)
-    window.addEventListener("touchstart", tryPlayAudio)
+    window.addEventListener("pointerdown", tryPlayAudio, { passive: true })
+    window.addEventListener("touchstart", tryPlayAudio, { passive: true })
     window.addEventListener("keydown", tryPlayAudio)
 
     return () => {
@@ -162,16 +119,6 @@ function RemotePeerAudioTrackPlayer({
       window.removeEventListener("pointerdown", tryPlayAudio)
       window.removeEventListener("touchstart", tryPlayAudio)
       window.removeEventListener("keydown", tryPlayAudio)
-      try {
-        sourceNode?.disconnect()
-        analyserNode?.disconnect()
-        gainNode?.disconnect()
-        if (audioCtx && audioCtx.state !== "closed") {
-          audioCtx.close().catch(() => {})
-        }
-      } catch {
-        // ignore
-      }
     }
   }, [peerKey, stream, onVerifiedActiveAudio])
 
@@ -1663,40 +1610,10 @@ export function VibeVideoCallStudio({
         }
       }
 
-      // Connect Web Audio API analyser for real-time voice level meter
+      // Note: Mic level meter is updated directly inside startLiveVoiceChunkCapture via the shared AudioContext
+      // so we never attach a second AudioContext to the microphone hardware track on macOS/iOS.
       if (hasAudioTrack) {
-        try {
-          const AudioCtx =
-            window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
-          if (AudioCtx) {
-            if (audioContextRef.current) {
-              audioContextRef.current.close().catch(() => {})
-            }
-            const ctx = new AudioCtx()
-            audioContextRef.current = ctx
-            const source = ctx.createMediaStreamSource(stream)
-            const analyser = ctx.createAnalyser()
-            analyser.fftSize = 64
-            source.connect(analyser)
-            const dataArray = new Uint8Array(analyser.frequencyBinCount)
-
-            if (animFrameRef.current) {
-              window.clearInterval(animFrameRef.current)
-              cancelAnimationFrame(animFrameRef.current)
-              animFrameRef.current = null
-            }
-            const updateMeter = () => {
-              analyser.getByteFrequencyData(dataArray)
-              const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length
-              const nextLevel = Math.min(100, Math.max(8, Math.round(avg * 1.6)))
-              setMicLevel((prev) => (Math.abs(prev - nextLevel) >= 4 ? nextLevel : prev))
-            }
-            updateMeter()
-            animFrameRef.current = window.setInterval(updateMeter, 350)
-          }
-        } catch {
-          // Ignore WebAudio analyser errors
-        }
+        setMicLevel(18)
       }
     },
     [appendLog, bindStreamToVideoElement, createFallbackSelfViewStream, localDisplayName]
@@ -1705,7 +1622,7 @@ export function VibeVideoCallStudio({
   const handleSelectCameraDevice = useCallback(
     (deviceId: string) => {
       setSelectedVideoDeviceId(deviceId)
-      startHardwareCameraAndMic(false, deviceId, selectedAudioDeviceId || undefined)
+      startHardwareCameraAndMic(deviceId, selectedAudioDeviceId || undefined, false)
     },
     [selectedAudioDeviceId, startHardwareCameraAndMic]
   )
@@ -2145,8 +2062,15 @@ export function VibeVideoCallStudio({
     }
   }, [])
 
+  // Throttle frame encoding to at most once every 700ms so main thread never stalls
+  const lastFrameCaptureAtMsRef = useRef<number>(0)
+
   // Capture a compact 240x160 JPEG frame using a single persistent offscreen canvas (prevents GPU context exhaustion!)
   const captureCompactLiveFrame = useCallback((): string | null => {
+    const now = Date.now()
+    if (now - lastFrameCaptureAtMsRef.current < 700 && lastValidLocalFrameRef.current) {
+      return isCameraOn ? lastValidLocalFrameRef.current : null
+    }
     if (
       selectedVirtualBgId !== "none" &&
       virtualBgCanvasRef.current &&
@@ -2159,6 +2083,7 @@ export function VibeVideoCallStudio({
         if (bgCanvas.width > 0 && bgCtx && isCanvasFrameNonBlack(bgCtx, bgCanvas.width, bgCanvas.height)) {
           const encodedBg = bgCanvas.toDataURL("image/jpeg", 0.64)
           if (encodedBg && encodedBg.length > 3200) {
+            lastFrameCaptureAtMsRef.current = now
             lastValidLocalFrameRef.current = encodedBg
             return encodedBg
           }
@@ -2196,6 +2121,7 @@ export function VibeVideoCallStudio({
       }
       const encoded = canvas.toDataURL("image/jpeg", 0.58)
       if (encoded && encoded.length > 3200) {
+        lastFrameCaptureAtMsRef.current = now
         lastValidLocalFrameRef.current = encoded
         return encoded
       }
@@ -2458,7 +2384,7 @@ export function VibeVideoCallStudio({
     []
   )
 
-  // Unlock shared Web Audio context on any user interaction or pointer movement so mobile/desktop browsers never silence remote voices
+  // Unlock shared Web Audio context on user click/touch/key interaction
   useEffect(() => {
     if (typeof window === "undefined") return
     if (!voicePlayerRef.current) {
@@ -2468,22 +2394,18 @@ export function VibeVideoCallStudio({
       voicePlayerRef.current?.unlock()
     }
     window.addEventListener("pointerdown", unlockCtx)
-    window.addEventListener("pointermove", unlockCtx, { passive: true })
-    window.addEventListener("mousemove", unlockCtx, { passive: true })
     window.addEventListener("touchstart", unlockCtx, { passive: true })
     window.addEventListener("keydown", unlockCtx)
     window.addEventListener("click", unlockCtx)
     return () => {
       window.removeEventListener("pointerdown", unlockCtx)
-      window.removeEventListener("pointermove", unlockCtx)
-      window.removeEventListener("mousemove", unlockCtx)
       window.removeEventListener("touchstart", unlockCtx)
       window.removeEventListener("keydown", unlockCtx)
       window.removeEventListener("click", unlockCtx)
     }
   }, [])
 
-  // Rolling 750ms universal WAV PCM + MediaRecorder dual-engine voice capture from local microphone
+  // Rolling 850ms universal WAV PCM voice capture + mic level meter from local microphone
   useEffect(() => {
     if (typeof window === "undefined") return
     if (!localStreamState || callState === "ENDED") {
@@ -2498,7 +2420,10 @@ export function VibeVideoCallStudio({
         latestLocalAudioChunkRef.current = latest
         recentLocalAudioChunksRef.current = recentWindow
       },
-      750
+      850,
+      (lvl) => {
+        setMicLevel((prev) => (Math.abs(prev - lvl) >= 4 ? lvl : prev))
+      }
     )
     return () => {
       stopCapture()
@@ -2599,10 +2524,18 @@ export function VibeVideoCallStudio({
     const cleanRoomKey =
       callId.replace(/[^a-zA-Z0-9]/g, "").toLowerCase().slice(0, 20) || "viberoom9b0bbf68"
     const allSlots = Array.from({ length: 6 }, (_, idx) => `vibe-connectln-${cleanRoomKey}-slot-${idx}`)
+    const guestSlots = allSlots.slice(1)
+    const guestStartOffset = Math.floor(Math.random() * guestSlots.length)
+    const rotatedGuestSlots = [
+      ...guestSlots.slice(guestStartOffset),
+      ...guestSlots.slice(0, guestStartOffset),
+    ]
     const uniqueFallbackPeerId = `vibe-connectln-${cleanRoomKey}-${localParticipantId.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()}`
 
-    // Put uniqueFallbackPeerId FIRST so PeerJS registers on 0.peerjs.com in ~150ms without ever colliding on slot-0!
-    const slotOrder = [uniqueFallbackPeerId, ...allSlots]
+    // Host starts at slot-0; invited friends start at slot-1..5 so they discover each other immediately even across domains!
+    const slotOrder = isInvitedGuestLink
+      ? [...rotatedGuestSlots, allSlots[0], uniqueFallbackPeerId]
+      : [allSlots[0], ...rotatedGuestSlots, uniqueFallbackPeerId]
 
     // Helper: builds outgoing MediaStream using Virtual Background canvas video track (when active) + microphone audio track
     const getOutgoingCallMediaStream = (): MediaStream | null => {
@@ -2798,9 +2731,9 @@ export function VibeVideoCallStudio({
           setMyPeerId(openedId)
           peerSyncStateRef.current.appendLog(`WebRTC Room Mesh ready on channel [${openedId}] — listening for all participants...`)
 
-          // High-speed 380ms P2P DataChannel frame & audio relay for any open DataConnections
-          fastDataTimer = setInterval(() => {
-            if (isCancelled || !peerInstance || peerInstance.destroyed || activeDataConns.size === 0) return
+          // Connect & sync with discovered active peers + deterministic room slots every 950ms
+          syncTimer = setInterval(() => {
+            if (isCancelled || !peerInstance || peerInstance.destroyed) return
             const st = peerSyncStateRef.current
             const syncPayload = {
               type: "VIBE_PEER_SYNC",
@@ -2819,44 +2752,28 @@ export function VibeVideoCallStudio({
               recentAudioChunks: !st.isMicMuted ? recentLocalAudioChunksRef.current : undefined,
               sharedStage: st.captureActiveSharedStagePayload(),
             }
-            activeDataConns.forEach((conn) => {
-              if (conn && conn.open) {
-                try {
-                  conn.send(syncPayload)
-                } catch {
-                  // ignore
-                }
-              }
-            })
-          }, 380)
 
-          // Connect & establish bidirectional WebRTC MediaStream with discovered active peers in the room
-          syncTimer = setInterval(() => {
-            if (isCancelled || !peerInstance || peerInstance.destroyed) return
-            const st = peerSyncStateRef.current
-            const discoveredPeers = Array.from(knownRemotePeerIdsRef.current).filter(
-              (id) => id && id !== openedId
-            )
-            // Only dial discovered active peer IDs (or slot-0/slot-1 if none discovered yet) so we never flood PeerJS signaling
-            const targetPeerIds =
-              discoveredPeers.length > 0
-                ? discoveredPeers
-                : allSlots.slice(0, 2).filter((id) => id !== openedId)
+            const targetPeerIds = Array.from(
+              new Set([...allSlots, ...Array.from(knownRemotePeerIdsRef.current)])
+            ).filter((id) => id && id !== openedId)
 
             const nowMs = Date.now()
             for (const targetSlot of targetPeerIds) {
               const existingConn = activeDataConns.get(targetSlot)
               const pendingSince = pendingDataConnAtMs.get(targetSlot) || 0
-              if (!existingConn || !existingConn.open) {
-                // Only initiate a new DataConnection if one is not already negotiating within the last 6.5s
-                if (nowMs - pendingSince > 6500) {
-                  try {
-                    pendingDataConnAtMs.set(targetSlot, nowMs)
-                    const newConn = peerInstance.connect(targetSlot, { reliable: true })
-                    bindDataConn(newConn)
-                  } catch {
-                    // ignore
-                  }
+              if (existingConn && existingConn.open) {
+                try {
+                  existingConn.send(syncPayload)
+                } catch {
+                  // ignore
+                }
+              } else if (nowMs - pendingSince > 5500) {
+                try {
+                  pendingDataConnAtMs.set(targetSlot, nowMs)
+                  const newConn = peerInstance.connect(targetSlot, { reliable: true })
+                  bindDataConn(newConn)
+                } catch {
+                  // ignore
                 }
               }
 
@@ -2877,12 +2794,11 @@ export function VibeVideoCallStudio({
                   !liveStreamPeers.has(targetSlot) ||
                   (outStream && outStream.getAudioTracks().length > 0 && !hasOutgoingAudioSender)
 
-                // Give STUN/TURN ICE negotiation a full 8.5s window to complete before retrying
                 if (
                   outStream &&
                   (outStream.getVideoTracks().length > 0 || outStream.getAudioTracks().length > 0) &&
                   needsMediaCall &&
-                  nowMs - lastTry > 8500
+                  nowMs - lastTry > 7500
                 ) {
                   lastCallAttemptMs.set(targetSlot, nowMs)
                   try {
@@ -2901,7 +2817,7 @@ export function VibeVideoCallStudio({
                 }
               }
             }
-          }, 1100)
+          }, 950)
         })
 
         peer.on("connection", (incomingConn: any) => {
@@ -3099,7 +3015,7 @@ export function VibeVideoCallStudio({
     }
 
     sendHeartbeat()
-    const interval = setInterval(sendHeartbeat, 650)
+    const interval = setInterval(sendHeartbeat, 900)
 
     const handleBeforeUnload = () => {
       fetch("/api/v1/calls", {
