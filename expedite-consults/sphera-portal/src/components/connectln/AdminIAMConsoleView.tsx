@@ -103,6 +103,7 @@ export function AdminIAMConsoleView({
   // Navigation tabs
   const [activeAdminTab, setActiveAdminTab] = useState<
     | 'overview'
+    | 'devhub'
     | 'user_activity'
     | 'users'
     | 'content'
@@ -461,6 +462,7 @@ export function AdminIAMConsoleView({
       title: "Core Operations",
       items: [
         { id: 'overview', label: 'Dashboard & Metrics', icon: BarChart3, badge: 'Live' },
+        { id: 'devhub', label: 'ConnectLn DevHub (IDP)', icon: Laptop, badge: 'v1.0', highlight: true },
         { id: 'user_activity', label: 'User Activity Log', icon: Activity, badge: userActivityLogs.length },
         { id: 'users', label: 'User Management', icon: Users, badge: users.length },
         { id: 'content', label: 'Content & Feed', icon: FileText, badge: contentItems.length },
@@ -550,7 +552,23 @@ export function AdminIAMConsoleView({
             </p>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <button
+              onClick={() => setActiveAdminTab('devhub')}
+              className="rounded-full bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-xs font-bold text-white transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+            >
+              <Laptop className="h-3.5 w-3.5" />
+              <span>ConnectLn DevHub (Control Plane)</span>
+            </button>
+            <a
+              href="https://connectln-devhub.vercel.app"
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full border border-indigo-500/40 bg-indigo-50/70 dark:bg-indigo-950/40 px-4 py-2 text-xs font-bold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors flex items-center gap-1.5"
+            >
+              <span>Open Standalone DevHub URL</span>
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
             <button
               onClick={() => onNavigateTab('home')}
               className="rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-4 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors flex items-center gap-1.5"
@@ -637,6 +655,170 @@ export function AdminIAMConsoleView({
 
         {/* Right Main Content Area */}
         <div className="md:col-span-8 lg:col-span-9 space-y-5">
+          {/* MODULE 0: CONNECTLN DEVHUB — ENGINEERING CONTROL PLANE */}
+          {activeAdminTab === 'devhub' && (
+            <div className="space-y-4">
+              <div className="rounded-2xl border-2 border-indigo-500/40 bg-white dark:bg-zinc-900 p-5 shadow-sm space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">ConnectLn DevHub</span>
+                      <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/60 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 dark:text-emerald-300">
+                        Standalone Engineering Platform · v1.0 Connected
+                      </span>
+                      <span className="rounded bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 text-[11px] font-mono text-indigo-700 dark:text-indigo-300">
+                        https://connectln-devhub.vercel.app
+                      </span>
+                    </div>
+                    <h2 className="text-xl sm:text-2xl font-bold text-zinc-950 dark:text-white mt-1">
+                      Engineering Control Center (Admin Console Bridge)
+                    </h2>
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
+                      Centralized engineering workspace for developing, testing, securing, and deploying ConnectLn without disrupting live member operations.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <a
+                      href="https://connectln-devhub.vercel.app"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-xl bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-xs font-bold text-white flex items-center gap-1.5 shadow-sm"
+                    >
+                      <span>Launch Full Screen at connectln-devhub.vercel.app</span>
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                    <a
+                      href="https://connectln-devhub.vercel.app/api/devhub"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-xs font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 flex items-center gap-1.5"
+                    >
+                      <FileCode className="h-3.5 w-3.5 text-indigo-500" />
+                      <span>Control Plane JSON State</span>
+                    </a>
+                  </div>
+                </div>
+
+                {/* 6-Card Engineering Control Center Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <a
+                    href="https://connectln-devhub.vercel.app"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-4 rounded-xl bg-[#EEF2FF] dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/60 hover:shadow-md transition-all"
+                  >
+                    <div className="font-bold text-sm text-zinc-950 dark:text-white flex items-center justify-between">
+                      <span>Code Workspace</span>
+                      <ExternalLink className="h-3.5 w-3.5 text-indigo-600" />
+                    </div>
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
+                      Repositories (`Danquah12/expedite-consults`), branches, pull requests and code reviews.
+                    </p>
+                  </a>
+
+                  <a
+                    href="https://connectln-devhub.vercel.app"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-4 rounded-xl bg-[#ECFDF5] dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 hover:shadow-md transition-all"
+                  >
+                    <div className="font-bold text-sm text-zinc-950 dark:text-white flex items-center justify-between">
+                      <span>Environments</span>
+                      <ExternalLink className="h-3.5 w-3.5 text-emerald-600" />
+                    </div>
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
+                      Development, QA, staging, protected production and ephemeral PR preview sandboxes.
+                    </p>
+                  </a>
+
+                  <a
+                    href="https://connectln-devhub.vercel.app"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-4 rounded-xl bg-[#F5F3FF] dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/60 hover:shadow-md transition-all"
+                  >
+                    <div className="font-bold text-sm text-zinc-950 dark:text-white flex items-center justify-between">
+                      <span>Testing Center</span>
+                      <ExternalLink className="h-3.5 w-3.5 text-purple-600" />
+                    </div>
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
+                      10 testing layers, 9-step ConnectLn E2E simulator, and 20/20 acceptance scenarios.
+                    </p>
+                  </a>
+
+                  <a
+                    href="https://connectln-devhub.vercel.app"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-4 rounded-xl bg-[#FFFBEB] dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 hover:shadow-md transition-all"
+                  >
+                    <div className="font-bold text-sm text-zinc-950 dark:text-white flex items-center justify-between">
+                      <span>Deployment Center</span>
+                      <ExternalLink className="h-3.5 w-3.5 text-amber-600" />
+                    </div>
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
+                      14-stage CI/CD pipeline, dual-authorized releases, and 1-click instant rollback.
+                    </p>
+                  </a>
+
+                  <a
+                    href="https://connectln-devhub.vercel.app"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-4 rounded-xl bg-[#FEF2F2] dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/60 hover:shadow-md transition-all"
+                  >
+                    <div className="font-bold text-sm text-zinc-950 dark:text-white flex items-center justify-between">
+                      <span>Security Center</span>
+                      <ExternalLink className="h-3.5 w-3.5 text-rose-600" />
+                    </div>
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
+                      SAST, DAST, SCA, Secrets, Container, API Sec, IaC, SBOM and 9 RBAC roles.
+                    </p>
+                  </a>
+
+                  <a
+                    href="https://connectln-devhub.vercel.app"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-4 rounded-xl bg-[#ECFEFF] dark:bg-cyan-950/30 border border-cyan-200 dark:border-cyan-800/60 hover:shadow-md transition-all"
+                  >
+                    <div className="font-bold text-sm text-zinc-950 dark:text-white flex items-center justify-between">
+                      <span>Monitoring Center</span>
+                      <ExternalLink className="h-3.5 w-3.5 text-cyan-700" />
+                    </div>
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
+                      Application health, OpenTelemetry traces, DORA metrics, and 20/20 DevHub gates.
+                    </p>
+                  </a>
+                </div>
+
+                {/* Embedded Live Standalone ConnectLn DevHub Portal */}
+                <div className="rounded-2xl overflow-hidden border-2 border-slate-800 bg-[#070B14] shadow-xl">
+                  <div className="bg-[#0A0F1D] px-4 py-2.5 border-b border-slate-800 flex items-center justify-between text-xs text-slate-300">
+                    <div className="flex items-center gap-2">
+                      <span className="h-2.5 w-2.5 rounded-full bg-emerald-400"></span>
+                      <span className="font-mono font-bold text-white">LIVE CONTROL PLANE VIEWPORT: https://connectln-devhub.vercel.app</span>
+                    </div>
+                    <a
+                      href="https://connectln-devhub.vercel.app"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-indigo-400 hover:underline font-semibold flex items-center gap-1"
+                    >
+                      Pop Out to Dedicated Browser Tab <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                  <iframe
+                    src="https://connectln-devhub.vercel.app"
+                    title="ConnectLn DevHub Standalone Engineering Control Plane"
+                    className="w-full h-[820px] border-0"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* MODULE 1: DASHBOARD & METRICS OVERVIEW */}
           {activeAdminTab === 'overview' && (
             <div className="space-y-5">
@@ -681,6 +863,42 @@ export function AdminIAMConsoleView({
                 </div>
               </div>
 
+              {/* ─── CONNECTLN DEVHUB — ENGINEERING CONTROL CENTER BRIDGE ─── */}
+              <div className="rounded-2xl border-2 border-indigo-500/40 bg-gradient-to-r from-indigo-950 via-slate-900 to-indigo-950 p-5 text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="rounded-full bg-emerald-500/20 border border-emerald-400/40 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300">
+                      STANDALONE IDP CONNECTED · v1.0
+                    </span>
+                    <span className="font-mono text-xs text-indigo-300">https://connectln-devhub.vercel.app</span>
+                  </div>
+                  <h3 className="text-base sm:text-lg font-bold text-white">
+                    ConnectLn DevHub — Engineering Control Plane &amp; Software Lifecycle Platform
+                  </h3>
+                  <p className="text-xs text-slate-300 max-w-2xl">
+                    14 engineering modules connected: Code Workspace, Isolated Ephemeral Environments, 21-Table DB Schema, OpenAPI 3.1 Tester, 9-Step E2E Lifecycle Simulator, 8-Pillar Security Center, CI/CD Controller, and 20/20 Acceptance Gates.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                  <button
+                    onClick={() => setActiveAdminTab('devhub')}
+                    className="rounded-xl bg-indigo-500 hover:bg-indigo-400 px-4 py-2.5 text-xs font-bold text-white transition-all flex items-center gap-1.5 cursor-pointer shadow-md"
+                  >
+                    <Laptop className="h-4 w-4" />
+                    <span>Open DevHub in Console</span>
+                  </button>
+                  <a
+                    href="https://connectln-devhub.vercel.app"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-xl border border-indigo-400/40 bg-white/10 hover:bg-white/20 px-4 py-2.5 text-xs font-bold text-white transition-all flex items-center gap-1.5"
+                  >
+                    <span>Launch Separate URL</span>
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                </div>
+              </div>
+
               {/* ─── LIVE NEW USERS & RECENT SIGN-INS TRACKER ─── */}
               <div className="rounded-2xl border-2 border-[#0A66C2]/30 bg-white dark:bg-zinc-900 p-5 shadow-xs space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800 pb-3.5">
@@ -702,7 +920,23 @@ export function AdminIAMConsoleView({
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <button
+              onClick={() => setActiveAdminTab('devhub')}
+              className="rounded-full bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-xs font-bold text-white transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+            >
+              <Laptop className="h-3.5 w-3.5" />
+              <span>ConnectLn DevHub (Control Plane)</span>
+            </button>
+            <a
+              href="https://connectln-devhub.vercel.app"
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full border border-indigo-500/40 bg-indigo-50/70 dark:bg-indigo-950/40 px-4 py-2 text-xs font-bold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors flex items-center gap-1.5"
+            >
+              <span>Open Standalone DevHub URL</span>
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
                     <button
                       onClick={fetchLiveAdminData}
                       disabled={isLoadingUsers}
@@ -845,7 +1079,23 @@ export function AdminIAMConsoleView({
                       Real-time telemetry of everything users do across the platform: Likes/Reactions, Comments, Reposts, External Shares, Posts, Resumes, and Sign-Ins.
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <button
+              onClick={() => setActiveAdminTab('devhub')}
+              className="rounded-full bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-xs font-bold text-white transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+            >
+              <Laptop className="h-3.5 w-3.5" />
+              <span>ConnectLn DevHub (Control Plane)</span>
+            </button>
+            <a
+              href="https://connectln-devhub.vercel.app"
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full border border-indigo-500/40 bg-indigo-50/70 dark:bg-indigo-950/40 px-4 py-2 text-xs font-bold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors flex items-center gap-1.5"
+            >
+              <span>Open Standalone DevHub URL</span>
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
                     <button
                       onClick={fetchLiveAdminData}
                       className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"

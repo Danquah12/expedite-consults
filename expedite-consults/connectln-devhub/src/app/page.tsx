@@ -296,8 +296,18 @@ const updatedProfile = await prisma.user.update({
             </div>
           </div>
 
-          {/* RIGHT CONTROLS: GITHUB SYNC + RBAC IDENTITY SWITCHER */}
+          {/* RIGHT CONTROLS: ADMIN CONSOLE BRIDGE + GITHUB SYNC + RBAC IDENTITY SWITCHER */}
           <div className="flex items-center gap-2.5 flex-wrap">
+            <a
+              href="https://conectln.com"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600/20 border border-indigo-500/40 text-xs font-semibold text-indigo-200 hover:bg-indigo-600/30"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
+              <span>ConnectLn Admin Console</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
             <a
               href="https://github.com/Danquah12/expedite-consults"
               target="_blank"
