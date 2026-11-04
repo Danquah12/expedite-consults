@@ -1,0 +1,13 @@
+openapi: 3.1.0
+info:
+  title: ConnectLn DevHub Control Plane API
+  version: 1.0.0
+paths:
+  /api/devhub:
+    get:
+      summary: Retrieve live DevHub Control Plane state
+    post:
+      summary: Execute RBAC-validated DevHub engineering actions
+  /api/devhub/webhooks/github:
+    post:
+      summary: Receive HMAC-SHA256 verified GitHub repository webhooks

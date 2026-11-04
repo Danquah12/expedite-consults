@@ -1,0 +1,23 @@
+version: "3.9"
+services:
+  connectln-devhub-portal:
+    build: .
+    container_name: connectln-devhub-portal
+    ports:
+      - "3005:3005"
+    environment:
+      - NODE_ENV=development
+      - DEVHUB_DATABASE_URL=postgresql://devhub:devhub_sandbox@devhub-postgres:5432/connectln_devhub
+      - CONNECTLN_SANDBOX_DB_URL=postgresql://sandbox:sandbox_only@devhub-postgres:5432/connectln_dev
+    depends_on:
+      - devhub-postgres
+
+  devhub-postgres:
+    image: postgres:16-alpine
+    container_name: connectln-devhub-postgres
+    environment:
+      POSTGRES_USER: devhub
+      POSTGRES_PASSWORD: devhub_sandbox
+      POSTGRES_DB: connectln_devhub
+    ports:
+      - "5439:5432"
