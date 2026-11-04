@@ -1013,6 +1013,7 @@ export function MessagingView({
         setActiveCustomLabel(null);
         setActiveChannel('All');
         setSearchQuery('');
+        setMobileShowChat(false);
         if (folder === 'ai_inbox') {
             fetchNoctisInboxBriefing();
         }
@@ -1858,15 +1859,15 @@ export function MessagingView({
             </div>
 
             {/* Main Three-Column ConnectLn Mailbox Layout: (1) ConnectLn Mailbox Menu Rail, (2) Thread List, (3) Active Conversation */}
-            <div className="flex flex-col md:flex-row h-[calc(100vh-210px)] min-h-[640px]">
-                {/* Column 1: Customized ConnectLn Mailbox Navigation Rail */}
+            <div className="flex flex-col md:flex-row min-h-[680px] md:h-[calc(100vh-210px)]">
+                {/* Column 1: Customized ConnectLn Mailbox Navigation Rail (Horizontal strip on mobile < md, vertical rail on md+) */}
                 <div
-                    className={`w-full md:w-[218px] border-b md:border-b-0 md:border-r border-slate-200 bg-[#F6F8FC] flex-col shrink-0 py-3 px-2 overflow-y-auto select-none ${
+                    className={`w-full md:w-[218px] border-b md:border-b-0 md:border-r border-slate-200 bg-[#F6F8FC] flex-col shrink-0 py-2 md:py-3 px-2 md:overflow-y-auto select-none ${
                         mobileShowChat ? 'hidden md:flex' : 'flex'
                     }`}
                 >
                     {/* ConnectLn Branded Mailbox Badge */}
-                    <div className="px-3 pb-2.5 mb-1.5 border-b border-slate-200/80 flex items-center justify-between">
+                    <div className="px-2 md:px-3 pb-2 md:pb-2.5 mb-1.5 border-b border-slate-200/80 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <img
                                 src="/brand/connectln-icon-256.png"
@@ -1882,8 +1883,8 @@ export function MessagingView({
                         </span>
                     </div>
 
-                    {/* Primary 12 ConnectLn Mailbox Menu Items (Customized from attached menu design) */}
-                    <div className="space-y-0.5">
+                    {/* Primary 12 ConnectLn Mailbox Menu Items (Horizontal scrollable pills on mobile, vertical rail on desktop) */}
+                    <div className="flex md:flex-col items-center md:items-stretch gap-1 md:gap-0 md:space-y-0.5 overflow-x-auto md:overflow-x-visible no-scrollbar pb-1 md:pb-0">
                         {(
                             [
                                 {
@@ -2023,7 +2024,7 @@ export function MessagingView({
                                     key={item.id}
                                     type="button"
                                     onClick={() => handleSelectMailboxFolder(item.id)}
-                                    className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-full text-xs transition-all cursor-pointer ${
+                                    className={`shrink-0 md:w-full flex items-center justify-between gap-1.5 md:gap-2 px-3 py-1.5 rounded-full text-xs transition-all cursor-pointer whitespace-nowrap ${
                                         isActive
                                             ? 'bg-[#D3E3FD] text-[#041E49] font-extrabold shadow-2xs'
                                             : item.boldCount && count > 0
@@ -2031,7 +2032,7 @@ export function MessagingView({
                                             : 'text-slate-700 font-medium hover:bg-slate-200/70'
                                     }`}
                                 >
-                                    <span className="flex items-center gap-3 min-w-0 truncate">
+                                    <span className="flex items-center gap-1.5 md:gap-3 min-w-0 truncate">
                                         {item.icon}
                                         <span className="truncate">{item.label}</span>
                                     </span>
@@ -2056,7 +2057,7 @@ export function MessagingView({
                         <button
                             type="button"
                             onClick={() => setShowMoreFolders((prev) => !prev)}
-                            className="w-full flex items-center gap-3 px-3 py-1.5 rounded-full text-xs font-medium text-slate-700 hover:bg-slate-200/70 transition-all cursor-pointer"
+                            className="shrink-0 md:w-full flex items-center gap-1.5 md:gap-3 px-3 py-1.5 rounded-full text-xs font-medium text-slate-700 hover:bg-slate-200/70 transition-all cursor-pointer whitespace-nowrap"
                         >
                             <svg
                                 className={`w-4 h-4 shrink-0 transition-transform ${
@@ -2069,21 +2070,21 @@ export function MessagingView({
                             >
                                 <polyline points="6 9 12 15 18 9" />
                             </svg>
-                            <span>{showMoreFolders ? 'Less' : 'More'}</span>
+                            <span>{showMoreFolders ? 'Less' : 'More & Labels'}</span>
                         </button>
 
                         {showMoreFolders && (
-                            <div className="space-y-0.5 pl-1 animate-in fade-in">
+                            <div className="flex md:flex-col items-center md:items-stretch gap-1 md:gap-0 md:space-y-0.5 pl-1 animate-in fade-in">
                                 <button
                                     type="button"
                                     onClick={() => handleSelectMailboxFolder('scheduled')}
-                                    className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-full text-xs transition-all cursor-pointer ${
+                                    className={`shrink-0 md:w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-full text-xs transition-all cursor-pointer whitespace-nowrap ${
                                         activeMailboxFolder === 'scheduled' && !activeCustomLabel
                                             ? 'bg-[#D3E3FD] text-[#041E49] font-extrabold'
                                             : 'text-slate-700 font-medium hover:bg-slate-200/70'
                                     }`}
                                 >
-                                    <span className="flex items-center gap-3">
+                                    <span className="flex items-center gap-2 md:gap-3">
                                         <span>📅</span>
                                         <span>Scheduled</span>
                                     </span>
@@ -2094,13 +2095,13 @@ export function MessagingView({
                                 <button
                                     type="button"
                                     onClick={() => handleSelectMailboxFolder('all_mail')}
-                                    className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-full text-xs transition-all cursor-pointer ${
+                                    className={`shrink-0 md:w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-full text-xs transition-all cursor-pointer whitespace-nowrap ${
                                         activeMailboxFolder === 'all_mail' && !activeCustomLabel
                                             ? 'bg-[#D3E3FD] text-[#041E49] font-extrabold'
                                             : 'text-slate-700 font-medium hover:bg-slate-200/70'
                                     }`}
                                 >
-                                    <span className="flex items-center gap-3">
+                                    <span className="flex items-center gap-2 md:gap-3">
                                         <span>📬</span>
                                         <span>All Mail</span>
                                     </span>
@@ -2112,8 +2113,8 @@ export function MessagingView({
                         )}
                     </div>
 
-                    {/* ConnectLn Custom Labels Section ("Labels +") */}
-                    <div className="mt-4 pt-3 border-t border-slate-200/90">
+                    {/* ConnectLn Custom Labels Section ("Labels +") — Always visible on md+, collapsible via More & Labels on mobile */}
+                    <div className={`${showMoreFolders ? 'block' : 'hidden md:block'} mt-2 md:mt-4 pt-2 md:pt-3 border-t border-slate-200/90`}>
                         <div className="flex items-center justify-between px-3 mb-1.5">
                             <span className="text-xs font-bold text-slate-800 tracking-tight">
                                 Labels

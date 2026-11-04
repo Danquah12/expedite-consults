@@ -388,10 +388,39 @@ export default function ConnectLnPage() {
   const [isMultiEnclaveMode, setIsMultiEnclaveMode] = useState<boolean>(true)
   const [isVideoGuideOpen, setIsVideoGuideOpen] = useState(false)
   const [showFeedWheel, setShowFeedWheel] = useState(true)
-  const [showMobileWheel, setShowMobileWheel] = useState(false)
+  const [showMobileWheel, setShowMobileWheel] = useState(true)
   const [showMobileCommunityDrawer, setShowMobileCommunityDrawer] = useState(false)
-  const [showMobileSubFilters, setShowMobileSubFilters] = useState(false)
+  const [showMobileSubFilters, setShowMobileSubFilters] = useState(true)
   const [hasHydrated, setHasHydrated] = useState(false)
+
+  // Ensure mobile and desktop browsers immediately run the latest ConnectLn release (2026.11.03.v5) without stale Service Workers or Cache Storage
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const CURRENT_RELEASE_VERSION = "2026.11.03.v5"
+    try {
+      const prevVersion = localStorage.getItem("connectln_release_version_v5")
+      if (prevVersion !== CURRENT_RELEASE_VERSION) {
+        localStorage.setItem("connectln_release_version_v5", CURRENT_RELEASE_VERSION)
+        if ("serviceWorker" in navigator) {
+          navigator.serviceWorker.getRegistrations().then(regs => {
+            regs.forEach(r => r.unregister())
+          }).catch(() => {})
+        }
+        if ("caches" in window) {
+          caches.keys().then(keys => {
+            keys.forEach(k => caches.delete(k))
+          }).catch(() => {})
+        }
+        const mergedPosts = loadStoredPosts()
+        if (mergedPosts && mergedPosts.length > 0) {
+          setPosts(mergedPosts)
+          saveStoredPosts(mergedPosts)
+        }
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, [])
   const [inviteClaimModal, setInviteClaimModal] = useState<{
     isOpen: boolean
     inviterName: string
@@ -1683,14 +1712,14 @@ export default function ConnectLnPage() {
                 )}
               </div>
 
-              {/* Mobile Collapsible Wheel Teaser Bar (< sm) */}
+              {/* Mobile Masterclass Wheel (< sm) — Open by default to match laptop */}
               <div className="sm:hidden space-y-2">
                 <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20 border border-amber-200/80 dark:border-amber-900/40 shadow-2xs">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="text-base shrink-0">🎡</span>
                     <div className="min-w-0">
-                      <p className="font-bold text-amber-950 dark:text-amber-200 text-xs truncate">The Wheel Masterclasses</p>
-                      <p className="text-[10px] text-amber-800/80 dark:text-amber-400/80 truncate">38 verified field briefings & talks</p>
+                      <p className="font-bold text-amber-950 dark:text-amber-200 text-xs truncate">The Wheel — Multi-Profession Masterclasses</p>
+                      <p className="text-[10px] text-amber-800/80 dark:text-amber-400/80 truncate">524+ Masterclasses across 483 Professions</p>
                     </div>
                   </div>
                   <button
@@ -1706,8 +1735,8 @@ export default function ConnectLnPage() {
                     <ConnectInVideoWheel
                       activeEnclaveId={selectedEnclaves[0] || userData?.professionEnclave || 'trades_construction'}
                       user={userData}
-                      title="The Wheel — Masterclasses"
-                      subtitle="5-minute verified briefings & standards"
+                      title="The Wheel — Multi-Profession Masterclasses & Briefings"
+                      subtitle="Curated trade apprenticeship standards, software architecture, clinical medicine, and verified field briefings."
                       onOpenVideoGuide={() => setIsVideoGuideOpen(true)}
                       onShareVideoToFeed={handleShareWheelVideoToFeed}
                     />

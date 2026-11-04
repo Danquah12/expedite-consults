@@ -314,9 +314,13 @@ export function loadStoredPosts(): Post[] {
     const parsed: Post[] = saved ? JSON.parse(saved) : initialPosts
     const activeUser = getExplicitStoredUser() || currentUser
     const userPic = resolveUserProfilePicture(activeUser)
+    // Merge any newer initialPosts that were added after the mobile/desktop browser first cached localStorage
+    const parsedIds = new Set(parsed.map(p => p.id))
+    const missingInitialPosts = initialPosts.filter(ip => !parsedIds.has(ip.id))
+    const mergedPosts = [...parsed, ...missingInitialPosts]
     // Ensure featured DSTRIKE shared video post is present and any user-authored posts use the active user's own name, headline, and profile picture
-    const hasFeaturedVideo = parsed.some(p => p.id === 'post_dstrike_wheel_masterclass' || p.media?.type === 'video')
-    const baseList = hasFeaturedVideo ? parsed : [initialPosts[0], ...parsed]
+    const hasFeaturedVideo = mergedPosts.some(p => p.id === 'post_dstrike_wheel_masterclass' || p.media?.type === 'video')
+    const baseList = hasFeaturedVideo ? mergedPosts : [initialPosts[0], ...mergedPosts]
     return baseList.map(p => {
       if (p.author?.connectionDegree === 'You' || p.id === 'post_dstrike_wheel_masterclass') {
         return {

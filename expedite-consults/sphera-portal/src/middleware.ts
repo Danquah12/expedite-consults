@@ -139,20 +139,20 @@ export async function middleware(request: NextRequest) {
 
   if (pathname === "/") {
     const url = request.nextUrl.clone();
-    if (
-      host.includes("conectln") ||
-      host.includes("connectln") ||
-      host.includes("connectin") ||
-      host.includes("sphera-portal")
-    ) {
-      url.pathname = "/connectin";
-    } else {
-      url.pathname = "/connectin";
-    }
-    return NextResponse.redirect(url);
+    url.pathname = "/connectin";
+    const redir = NextResponse.redirect(url);
+    redir.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    redir.headers.set("Pragma", "no-cache");
+    redir.headers.set("Expires", "0");
+    return redir;
   }
 
-  return NextResponse.next();
+  const res = NextResponse.next();
+  res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.headers.set("Pragma", "no-cache");
+  res.headers.set("Expires", "0");
+  res.headers.set("X-ConnectLn-Version", "2026.11.03.v5");
+  return res;
 }
 
 export const config = {
