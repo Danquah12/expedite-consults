@@ -192,9 +192,9 @@ export function CareerTwinModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl p-0 overflow-hidden sm:rounded-2xl">
+      <DialogContent hideCloseButton className="max-w-4xl p-0 overflow-hidden sm:rounded-2xl">
         {/* Top Header */}
-        <DialogHeader className="border-b border-[#DFD5C5] bg-[#F4EFE6] dark:bg-zinc-900 dark:border-zinc-800 px-5 sm:px-6 py-4 pr-12 text-zinc-900 dark:text-zinc-100">
+        <DialogHeader className="border-b border-[#DFD5C5] bg-[#F4EFE6] dark:bg-zinc-900 dark:border-zinc-800 px-5 sm:px-6 py-4 text-zinc-900 dark:text-zinc-100">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-start sm:items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 border border-amber-300 text-amber-800 shadow-xs">
@@ -748,23 +748,6 @@ export function CareerTwinModal({
               </div>
             </div>
           )}
-        </div>
-
-        {/* Persistent Bottom Footer with Close Button */}
-        <div className="flex items-center justify-between border-t border-[#DFD5C5] bg-[#F4EFE6] dark:bg-zinc-900 dark:border-zinc-800 px-5 sm:px-6 py-3 text-xs">
-          <span className="text-zinc-600 dark:text-zinc-400 font-medium">
-            Noctis™ CareerTwin · {practicedCount} of {prepPack.questions.length} questions practiced
-          </span>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-full bg-white hover:bg-zinc-100 border border-zinc-300 px-4 py-1.5 text-xs font-bold text-zinc-900 flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
-            >
-              <X className="h-3.5 w-3.5 stroke-[2.5]" />
-              <span>Close Prep Studio</span>
-            </button>
-          </div>
         </div>
       </DialogContent>
     </Dialog>
