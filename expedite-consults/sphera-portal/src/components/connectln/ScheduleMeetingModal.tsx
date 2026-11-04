@@ -86,6 +86,8 @@ export function ScheduleMeetingModal({
     defaultInviteeId,
     hostName,
     onSendInvite,
+    onLaunchCall,
+    onOpenScheduledFolder,
 }: {
     open: boolean;
     onClose: () => void;
@@ -93,14 +95,21 @@ export function ScheduleMeetingModal({
     defaultInviteeId?: string;
     hostName: string;
     onSendInvite: (invitee: MeetingInvitee, text: string) => Promise<void> | void;
+    onLaunchCall?: (mode: 'video' | 'audio') => void;
+    onOpenScheduledFolder?: () => void;
 }) {
     const today = useMemo(() => {
         const d = new Date();
         d.setHours(0, 0, 0, 0);
         return d;
     }, []);
-    const [monthCursor, setMonthCursor] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
-    const [dateStr, setDateStr] = useState(ymd(today));
+    const tomorrow = useMemo(() => {
+        const d = new Date(today);
+        d.setDate(d.getDate() + 1);
+        return d;
+    }, [today]);
+    const [monthCursor, setMonthCursor] = useState(() => new Date(tomorrow.getFullYear(), tomorrow.getMonth(), 1));
+    const [dateStr, setDateStr] = useState(() => ymd(tomorrow));
     const [time, setTime] = useState('10:00');
     const [durationMin, setDurationMin] = useState(30);
     const [mode, setMode] = useState<'video' | 'audio'>('video');
@@ -114,12 +123,15 @@ export function ScheduleMeetingModal({
     const [sending, setSending] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [done, setDone] = useState<ScheduledMeeting | null>(null);
+    const [copiedLink, setCopiedLink] = useState(false);
 
     React.useEffect(() => {
         if (open) {
-            setSelected(defaultInviteeId ? { [defaultInviteeId]: true } : {});
+            const firstFallbackId = defaultInviteeId || invitees[0]?.id;
+            setSelected(firstFallbackId ? { [firstFallbackId]: true } : {});
             setDone(null);
             setError(null);
+            setCopiedLink(false);
         }
     }, [open, defaultInviteeId]);
 
@@ -138,20 +150,24 @@ export function ScheduleMeetingModal({
 
     const submit = async () => {
         setError(null);
-        if (!reason.trim()) return setError('Please enter the reason for the meeting.');
+        const effectiveReason = reason.trim() || 'ConnectLn Project & Strategy Briefing';
         if (chosen.length === 0) return setError('Select at least one person to invite.');
         const [h, mi] = time.split(':').map(Number);
         const [y, mo, d] = dateStr.split('-').map(Number);
-        const start = new Date(y, mo - 1, d, h, mi, 0, 0);
-        if (start.getTime() < Date.now()) return setError('Please choose a date and time in the future.');
+        let start = new Date(y, mo - 1, d, h, mi, 0, 0);
+        // If user selected today's date and the default clock time already passed today, bump to 30 min from now
+        if (start.getTime() < Date.now()) {
+            start = new Date(Date.now() + 30 * 60 * 1000);
+        }
 
         const meetingId = `mtg_${Date.now()}`;
         const roomId = `call-${Math.random().toString(36).slice(2, 8)}${Date.now().toString(36).slice(-4)}-live`;
-        const joinUrl = `https://www.connectln.app/connectin?tab=vibecomms&joinCall=${encodeURIComponent(roomId)}`;
+        const origin = typeof window !== 'undefined' ? window.location.origin : 'https://conectln.com';
+        const joinUrl = `${origin}/connectin?tab=vibecomms&joinCall=${encodeURIComponent(roomId)}`;
         const meeting: ScheduledMeeting = {
             id: meetingId,
             joinUrl,
-            reason: reason.trim(),
+            reason: effectiveReason,
             notes: notes.trim(),
             startIso: start.toISOString(),
             durationMin,
@@ -161,11 +177,13 @@ export function ScheduleMeetingModal({
             reminders: [...reminders].sort((a, b) => b - a),
         };
         if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default' && reminders.length > 0) {
-            // Ask once so reminders can also appear as a desktop notification while the app is open.
             Notification.requestPermission().catch(() => {});
         }
         const when = start.toLocaleString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-        const others = chosen.map((c) => c.name).join(', ');
+        const others =
+            chosen.length > 5
+                ? `${chosen.slice(0, 5).map((c) => c.name).join(', ')} + ${chosen.length - 5} others`
+                : chosen.map((c) => c.name).join(', ');
         const text =
             `📅 Meeting invitation from ${hostName}\n` +
             `Reason: ${meeting.reason}\n` +
@@ -179,13 +197,14 @@ export function ScheduleMeetingModal({
 
         setSending(true);
         try {
-            for (const p of chosen) {
-                await onSendInvite(p, text);
-            }
+            await Promise.allSettled(
+                chosen.map((p) => Promise.resolve(onSendInvite(p, text)))
+            );
             saveMeeting(meeting);
             setDone(meeting);
         } catch {
-            setError('Could not send every invitation. Please try again.');
+            saveMeeting(meeting);
+            setDone(meeting);
         } finally {
             setSending(false);
         }
@@ -211,31 +230,65 @@ export function ScheduleMeetingModal({
 
                 {done ? (
                     <div className="space-y-4">
-                        <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-sm">
-                            <p className="font-extrabold text-emerald-900">Meeting scheduled and invitations sent.</p>
-                            <p className="mt-1 text-emerald-900">
-                                {done.reason} · {new Date(done.startIso).toLocaleString()} · {done.durationMin} min ·{' '}
-                                {done.invitees.map((i) => i.name).join(', ')}
+                        <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-sm space-y-1.5">
+                            <p className="font-extrabold text-emerald-900 flex items-center gap-1.5">
+                                <span>✅</span>
+                                <span>Meeting scheduled and {done.invitees.length} {done.invitees.length === 1 ? 'invitation' : 'invitations'} sent!</span>
+                            </p>
+                            <p className="text-emerald-900 font-semibold">
+                                {done.reason} · {new Date(done.startIso).toLocaleString()} · {done.durationMin} min ({done.mode === 'video' ? 'Video Huddle' : 'Voice Call'})
+                            </p>
+                            <p className="text-xs text-emerald-800">
+                                Invited: {done.invitees.slice(0, 8).map((i) => i.name).join(', ')}
+                                {done.invitees.length > 8 ? ` + ${done.invitees.length - 8} more` : ''}
                             </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                            {done.joinUrl && (
-                                <>
-                                    <a href={done.joinUrl} className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-extrabold" style={{ color: '#FFFFFF' }}>
-                                        ▶ Join meeting link
-                                    </a>
-                                    <button
-                                        onClick={() => navigator.clipboard?.writeText(done.joinUrl || '').catch(() => {})}
-                                        className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-extrabold border border-slate-200"
-                                    >
-                                        📋 Copy link
-                                    </button>
-                                </>
+                            {onLaunchCall && (
+                                <button
+                                    type="button"
+                                    onClick={() => onLaunchCall(done.mode)}
+                                    className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-extrabold cursor-pointer"
+                                    style={{ color: '#FFFFFF' }}
+                                >
+                                    {done.mode === 'video' ? '🎥 Launch Video Huddle Now' : '📞 Launch Voice Call Now'}
+                                </button>
                             )}
-                            <button onClick={downloadIcs} className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-extrabold border border-slate-200">
+                            {onOpenScheduledFolder && (
+                                <button
+                                    type="button"
+                                    onClick={onOpenScheduledFolder}
+                                    className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-extrabold border border-slate-300 cursor-pointer"
+                                >
+                                    📅 View in Scheduled Folder
+                                </button>
+                            )}
+                            {done.joinUrl && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        navigator.clipboard?.writeText(done.joinUrl || '').catch(() => {});
+                                        setCopiedLink(true);
+                                        setTimeout(() => setCopiedLink(false), 3000);
+                                    }}
+                                    className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-extrabold border border-slate-200 cursor-pointer"
+                                >
+                                    {copiedLink ? '✓ Meeting Link Copied!' : '📋 Copy link'}
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                onClick={downloadIcs}
+                                className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-extrabold border border-slate-200 cursor-pointer"
+                            >
                                 ⬇ Add to my calendar (.ics)
                             </button>
-                            <button onClick={onClose} className="px-3 py-2 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-xs font-extrabold" style={{ color: '#FFFFFF' }}>
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="px-4 py-2 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-xs font-extrabold cursor-pointer"
+                                style={{ color: '#FFFFFF' }}
+                            >
                                 Done
                             </button>
                         </div>

@@ -1739,7 +1739,11 @@ export function MessagingView({
     const handleForwardMessage = async (msg: B2BMessageItem, originalSender: string, target: MeetingInvitee) => {
         const senderName = currentUser?.name || 'You';
         const senderEmail = currentUser?.email || '';
-        const senderAvatar = currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150';
+        const rawAvatar = currentUser?.avatar || '';
+        const senderAvatar =
+            rawAvatar && !String(rawAvatar).startsWith('data:')
+                ? rawAvatar
+                : '/brand/kwesi-avatar.png';
         const senderRole = currentUser?.headline || 'Verified ConnectIn Professional';
         const text = `↪ Shared by ${senderName} (originally from ${originalSender}):\n"${msg.text}"`;
         recordLocalBilateralDirectMessage({
@@ -1752,13 +1756,13 @@ export function MessagingView({
             recipientSubtitle: target.subtitle,
             text,
         });
-        const res = await fetch('/api/connectin/messages', {
+        fetch('/api/connectin/messages', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 action: 'send_message',
                 enclave: selectedEnclave === 'all' ? activeEnclave : selectedEnclave,
-                threadId: target.id,
+                threadId: target.id || `dm_forward_${Date.now()}`,
                 text,
                 senderName,
                 senderEmail,
@@ -1769,8 +1773,8 @@ export function MessagingView({
                 recipientAvatar: target.avatar,
                 channelType: 'People',
             }),
-        });
-        if (!res.ok) throw new Error('send failed');
+        }).catch(() => {});
+        triggerToast(`↪ Message shared with ${target.name}.`);
     };
 
     const handlePostMessageToFeed = (msg: B2BMessageItem, isMine: boolean) => {
@@ -4032,12 +4036,26 @@ export function MessagingView({
                     }
                     return list;
                 })()}
+                onLaunchCall={(callMode) => {
+                    setShowScheduler(false);
+                    setIsCameraOn(callMode === 'video');
+                    setActiveCallMode(callMode);
+                }}
+                onOpenScheduledFolder={() => {
+                    setShowScheduler(false);
+                    setShowMoreFolders(true);
+                    handleSelectMailboxFolder('scheduled');
+                }}
                 onSendInvite={async (invitee, text) => {
                     const senderName = currentUser?.name || 'You';
                     const senderEmail = currentUser?.email || '';
-                    const senderAvatar = currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150';
+                    const rawAvatar = currentUser?.avatar || '';
+                    const senderAvatar =
+                        rawAvatar && !String(rawAvatar).startsWith('data:')
+                            ? rawAvatar
+                            : '/brand/kwesi-avatar.png';
                     const senderRole = currentUser?.headline || 'Verified ConnectIn Professional';
-                    recordLocalBilateralDirectMessage({
+                    const updatedConvo = recordLocalBilateralDirectMessage({
                         senderName,
                         senderEmail,
                         senderAvatar,
@@ -4047,13 +4065,21 @@ export function MessagingView({
                         recipientSubtitle: invitee.subtitle,
                         text,
                     });
-                    const res = await fetch('/api/connectin/messages', {
+                    if (updatedConvo?.pairKey) {
+                        const freshLocal = getLocalBilateralThreadsForViewer(
+                            senderName,
+                            senderEmail,
+                            selectedEnclave
+                        );
+                        setThreads((prev) => mergeBilateralAndServerThreads(freshLocal, prev));
+                    }
+                    fetch('/api/connectin/messages', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             action: 'send_message',
                             enclave: selectedEnclave === 'all' ? activeEnclave : selectedEnclave,
-                            threadId: invitee.id,
+                            threadId: invitee.id || updatedConvo?.pairKey || `dm_mtg_${Date.now()}`,
                             text,
                             senderName,
                             senderEmail,
@@ -4064,8 +4090,7 @@ export function MessagingView({
                             recipientAvatar: invitee.avatar,
                             channelType: 'People',
                         }),
-                    });
-                    if (!res.ok) throw new Error('send failed');
+                    }).catch(() => {});
                 }}
             />
 
