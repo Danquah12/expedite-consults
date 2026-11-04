@@ -137,6 +137,94 @@ function RemotePeerAudioTrackPlayer({
   )
 }
 
+// Zero-re-render live frame bus so incoming P2P/HTTP video frames update the tile's <img> directly without re-rendering the 5,600-line studio
+const remoteLiveFrameCache = new Map<string, string>()
+const remoteLiveFrameListeners = new Map<string, Set<(frameUrl: string) => void>>()
+
+function publishRemoteLiveFrame(participantId: string | undefined, peerId: string | undefined, frameUrl: string | null | undefined) {
+  if (!frameUrl || typeof frameUrl !== "string" || frameUrl.length < 1800) return
+  const keys = [participantId, peerId].filter((k): k is string => Boolean(k))
+  for (const key of keys) {
+    if (remoteLiveFrameCache.get(key) === frameUrl) continue
+    remoteLiveFrameCache.set(key, frameUrl)
+    const subs = remoteLiveFrameListeners.get(key)
+    if (subs) {
+      subs.forEach((cb) => cb(frameUrl))
+    }
+  }
+}
+
+function RemoteLiveFrameOverlay({
+  participantId,
+  remotePeerId,
+  initialFrame,
+  altName,
+  zIndex,
+}: {
+  participantId: string
+  remotePeerId?: string
+  initialFrame?: string | null
+  altName: string
+  zIndex: number
+}) {
+  const imgRef = useRef<HTMLImageElement | null>(null)
+  const initialSrc =
+    remoteLiveFrameCache.get(participantId) ||
+    (remotePeerId ? remoteLiveFrameCache.get(remotePeerId) : undefined) ||
+    (typeof initialFrame === "string" && initialFrame.length > 1800 ? initialFrame : "")
+
+  useEffect(() => {
+    const updateFrame = (nextFrame: string) => {
+      if (imgRef.current && nextFrame) {
+        imgRef.current.src = nextFrame
+        imgRef.current.style.display = "block"
+      }
+    }
+    const latest =
+      remoteLiveFrameCache.get(participantId) ||
+      (remotePeerId ? remoteLiveFrameCache.get(remotePeerId) : undefined)
+    if (latest) {
+      updateFrame(latest)
+    }
+
+    const keys = [participantId, remotePeerId].filter((k): k is string => Boolean(k))
+    for (const k of keys) {
+      let set = remoteLiveFrameListeners.get(k)
+      if (!set) {
+        set = new Set()
+        remoteLiveFrameListeners.set(k, set)
+      }
+      set.add(updateFrame)
+    }
+    return () => {
+      for (const k of keys) {
+        remoteLiveFrameListeners.get(k)?.delete(updateFrame)
+      }
+    }
+  }, [participantId, remotePeerId])
+
+  return (
+    <img
+      ref={imgRef}
+      src={initialSrc || undefined}
+      alt={altName}
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: "100%",
+        height: "100%",
+        objectFit: "cover",
+        backgroundColor: "transparent",
+        display: initialSrc ? "block" : "none",
+        zIndex,
+      }}
+    />
+  )
+}
+
 function RemotePeerVideoElement({ stream, isVideoOn = true }: { stream: MediaStream; isVideoOn?: boolean }) {
   const ref = useRef<HTMLVideoElement | null>(null)
   const [hasLiveVideoFrames, setHasLiveVideoFrames] = useState(false)
@@ -144,7 +232,6 @@ function RemotePeerVideoElement({ stream, isVideoOn = true }: { stream: MediaStr
   useEffect(() => {
     const el = ref.current
     if (!el || !stream) return
-    setHasLiveVideoFrames(false)
     if (el.srcObject !== stream) {
       el.srcObject = stream
     }
@@ -200,7 +287,7 @@ function RemotePeerVideoElement({ stream, isVideoOn = true }: { stream: MediaStr
         backgroundColor: "transparent",
         opacity: showVideo ? 1 : 0,
         pointerEvents: showVideo ? "auto" : "none",
-        zIndex: 6,
+        zIndex: 8,
       }}
     />
   )
@@ -2062,13 +2149,14 @@ export function VibeVideoCallStudio({
     }
   }, [])
 
-  // Throttle frame encoding to at most once every 700ms so main thread never stalls
+  // Throttle frame encoding to 260ms (~4 FPS) and avoid repeated GPU getImageData readbacks once camera is verified live
   const lastFrameCaptureAtMsRef = useRef<number>(0)
+  const hasVerifiedCameraNonBlackRef = useRef<boolean>(false)
 
-  // Capture a compact 240x160 JPEG frame using a single persistent offscreen canvas (prevents GPU context exhaustion!)
+  // Capture a compact 216x144 JPEG frame using a single persistent offscreen canvas (prevents GPU context exhaustion!)
   const captureCompactLiveFrame = useCallback((): string | null => {
     const now = Date.now()
-    if (now - lastFrameCaptureAtMsRef.current < 700 && lastValidLocalFrameRef.current) {
+    if (now - lastFrameCaptureAtMsRef.current < 260 && lastValidLocalFrameRef.current) {
       return isCameraOn ? lastValidLocalFrameRef.current : null
     }
     if (
@@ -2079,10 +2167,9 @@ export function VibeVideoCallStudio({
     ) {
       try {
         const bgCanvas = virtualBgCanvasRef.current
-        const bgCtx = bgCanvas.getContext("2d")
-        if (bgCanvas.width > 0 && bgCtx && isCanvasFrameNonBlack(bgCtx, bgCanvas.width, bgCanvas.height)) {
-          const encodedBg = bgCanvas.toDataURL("image/jpeg", 0.64)
-          if (encodedBg && encodedBg.length > 3200) {
+        if (bgCanvas.width > 0) {
+          const encodedBg = bgCanvas.toDataURL("image/jpeg", 0.54)
+          if (encodedBg && encodedBg.length > 2200) {
             lastFrameCaptureAtMsRef.current = now
             lastValidLocalFrameRef.current = encodedBg
             return encodedBg
@@ -2109,18 +2196,21 @@ export function VibeVideoCallStudio({
       let canvas = liveFrameCaptureCanvasRef.current
       if (!canvas) {
         canvas = document.createElement("canvas")
-        canvas.width = 240
-        canvas.height = 160
+        canvas.width = 216
+        canvas.height = 144
         liveFrameCaptureCanvasRef.current = canvas
       }
-      const ctx = canvas.getContext("2d", { willReadFrequently: true })
+      const ctx = canvas.getContext("2d")
       if (!ctx) return lastValidLocalFrameRef.current
       ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height)
-      if (!isCanvasFrameNonBlack(ctx, canvas.width, canvas.height)) {
-        return lastValidLocalFrameRef.current
+      if (!hasVerifiedCameraNonBlackRef.current) {
+        if (!isCanvasFrameNonBlack(ctx, canvas.width, canvas.height)) {
+          return lastValidLocalFrameRef.current
+        }
+        hasVerifiedCameraNonBlackRef.current = true
       }
-      const encoded = canvas.toDataURL("image/jpeg", 0.58)
-      if (encoded && encoded.length > 3200) {
+      const encoded = canvas.toDataURL("image/jpeg", 0.52)
+      if (encoded && encoded.length > 2200) {
         lastFrameCaptureAtMsRef.current = now
         lastValidLocalFrameRef.current = encoded
         return encoded
@@ -2193,6 +2283,9 @@ export function VibeVideoCallStudio({
       if (info.peerId) {
         knownRemotePeerIdsRef.current.add(info.peerId)
       }
+      if (typeof info.liveFrame === "string" && info.liveFrame.length > 1800) {
+        publishRemoteLiveFrame(info.participantId, info.peerId, info.liveFrame)
+      }
 
       setParticipants((prev) => {
         const normName = (info.name || "").trim().toLowerCase()
@@ -2241,33 +2334,59 @@ export function VibeVideoCallStudio({
           ? `${resolvedBaseName} (${info.participantId.slice(-3).toUpperCase()})`
           : resolvedBaseName
 
+        const nextRole =
+          info.role ||
+          (existingTile?.isRealRemotePeer ? existingTile.role : "Connected Participant · Live Video")
+        const nextDevice = info.device || existingTile?.device || "Remote WebRTC Camera"
+        const nextPeerId = info.peerId || existingTile?.remotePeerId
+        const nextVirtualBgId =
+          info.virtualBgId !== undefined
+            ? info.virtualBgId
+            : existingTile?.virtualBgId || "none"
+        const nextVirtualBgBadge =
+          info.virtualBgBadge !== undefined
+            ? info.virtualBgBadge
+            : existingTile?.virtualBgBadge
+        const nextIsMuted = typeof info.isMuted === "boolean" ? info.isMuted : existingTile?.isMuted ?? false
+        const nextIsVideoOn = typeof info.isVideoOn === "boolean" ? info.isVideoOn : existingTile?.isVideoOn ?? true
+        const hadInitialFrame = Boolean(existingTile?.liveFrame)
+        const nextLiveFrame =
+          existingTile?.liveFrame ||
+          (typeof info.liveFrame === "string" && info.liveFrame.length > 1800 ? info.liveFrame : null)
+
+        // FAST PATH: If this real participant tile is already in the grid and none of its structural props changed,
+        // return `prev` directly so React skips re-rendering the 5,600-line studio (frames update via RemoteLiveFrameOverlay)!
+        if (
+          existingTile &&
+          existingTile.isRealRemotePeer &&
+          existingTile.id === info.participantId &&
+          existingTile.name === finalDisplayName &&
+          existingTile.role === nextRole &&
+          existingTile.device === nextDevice &&
+          existingTile.remotePeerId === nextPeerId &&
+          existingTile.virtualBgId === nextVirtualBgId &&
+          existingTile.virtualBgBadge === nextVirtualBgBadge &&
+          existingTile.isMuted === nextIsMuted &&
+          existingTile.isVideoOn === nextIsVideoOn &&
+          (hadInitialFrame || !nextLiveFrame) &&
+          !prev.some((p) => !p.isLocal && !p.isRealRemotePeer)
+        ) {
+          return prev
+        }
+
         const updatedTile: CallParticipantTile = {
-          // Always use the authoritative info.participantId so heartbeats and WebRTC streams stay bound to this device
           id: info.participantId,
           name: finalDisplayName,
-          role:
-            info.role ||
-            (existingTile?.isRealRemotePeer ? existingTile.role : "Connected Participant · Live Video"),
-          device: info.device || existingTile?.device || "Remote WebRTC Camera",
+          role: nextRole,
+          device: nextDevice,
           isLocal: false,
           isRealRemotePeer: true,
-          remotePeerId: info.peerId || existingTile?.remotePeerId,
-          virtualBgId:
-            info.virtualBgId !== undefined
-              ? info.virtualBgId
-              : existingTile?.virtualBgId || "none",
-          virtualBgBadge:
-            info.virtualBgBadge !== undefined
-              ? info.virtualBgBadge
-              : existingTile?.virtualBgBadge,
-          liveFrame:
-            typeof info.liveFrame === "string" && info.liveFrame.length > 3200
-              ? info.liveFrame
-              : existingTile && typeof existingTile.liveFrame === "string" && existingTile.liveFrame.length > 3200
-              ? existingTile.liveFrame
-              : null,
-          isMuted: typeof info.isMuted === "boolean" ? info.isMuted : existingTile?.isMuted ?? false,
-          isVideoOn: typeof info.isVideoOn === "boolean" ? info.isVideoOn : existingTile?.isVideoOn ?? true,
+          remotePeerId: nextPeerId,
+          virtualBgId: nextVirtualBgId,
+          virtualBgBadge: nextVirtualBgBadge,
+          liveFrame: nextLiveFrame,
+          isMuted: nextIsMuted,
+          isVideoOn: nextIsVideoOn,
           isSpeaking: true,
           e2eeFingerprint: existingTile?.e2eeFingerprint || "9042 7718 3310 5582",
           connectionType: "P2P host/srflx",
@@ -2405,7 +2524,7 @@ export function VibeVideoCallStudio({
     }
   }, [])
 
-  // Rolling 850ms universal WAV PCM voice capture + mic level meter from local microphone
+  // Rolling 480ms universal WAV PCM voice capture from local microphone (no per-chunk React state updates)
   useEffect(() => {
     if (typeof window === "undefined") return
     if (!localStreamState || callState === "ENDED") {
@@ -2420,10 +2539,7 @@ export function VibeVideoCallStudio({
         latestLocalAudioChunkRef.current = latest
         recentLocalAudioChunksRef.current = recentWindow
       },
-      850,
-      (lvl) => {
-        setMicLevel((prev) => (Math.abs(prev - lvl) >= 4 ? lvl : prev))
-      }
+      480
     )
     return () => {
       stopCapture()
@@ -2472,38 +2588,33 @@ export function VibeVideoCallStudio({
     appendLog,
   ])
 
+  const dialRemotePeerNowRef = useRef<((targetPeerId: string) => void) | null>(null)
+
   // Whenever localStreamState updates (e.g., after getUserMedia finishes), push tracks to any existing WebRTC calls
+  // and immediately dial any known remote peer that doesn't yet have our outgoing video+audio stream!
   useEffect(() => {
     if (!localStreamState) return
     const vTrack = localStreamState.getVideoTracks()[0]
     const aTrack = localStreamState.getAudioTracks()[0]
-    activeMediaCallsRef.current.forEach((mediaCall) => {
+    activeMediaCallsRef.current.forEach((mediaCall, peerId) => {
       const pc: RTCPeerConnection | undefined = mediaCall?.peerConnection
       if (!pc || typeof pc.getSenders !== "function") return
       const senders = pc.getSenders()
-      if (vTrack) {
-        const vSender = senders.find((s) => s.track && s.track.kind === "video")
-        if (vSender && typeof vSender.replaceTrack === "function") {
-          vSender.replaceTrack(vTrack).catch(() => {})
-        } else if (typeof pc.addTrack === "function") {
-          try {
-            pc.addTrack(vTrack, localStreamState)
-          } catch {
-            // ignore
-          }
-        }
+      const vSender = vTrack ? senders.find((s) => s.track && s.track.kind === "video") : undefined
+      const aSender = aTrack ? senders.find((s) => s.track && s.track.kind === "audio") : undefined
+      if (vTrack && vSender && typeof vSender.replaceTrack === "function") {
+        vSender.replaceTrack(vTrack).catch(() => {})
       }
-      if (aTrack) {
-        const aSender = senders.find((s) => s.track && s.track.kind === "audio")
-        if (aSender && typeof aSender.replaceTrack === "function") {
-          aSender.replaceTrack(aTrack).catch(() => {})
-        } else if (typeof pc.addTrack === "function") {
-          try {
-            pc.addTrack(aTrack, localStreamState)
-          } catch {
-            // ignore
-          }
-        }
+      if (aTrack && aSender && typeof aSender.replaceTrack === "function") {
+        aSender.replaceTrack(aTrack).catch(() => {})
+      }
+      if ((vTrack && !vSender) || (aTrack && !aSender)) {
+        dialRemotePeerNowRef.current?.(peerId)
+      }
+    })
+    knownRemotePeerIdsRef.current.forEach((peerId) => {
+      if (!activeMediaCallsRef.current.has(peerId)) {
+        dialRemotePeerNowRef.current?.(peerId)
       }
     })
   }, [localStreamState])
@@ -2524,18 +2635,12 @@ export function VibeVideoCallStudio({
     const cleanRoomKey =
       callId.replace(/[^a-zA-Z0-9]/g, "").toLowerCase().slice(0, 20) || "viberoom9b0bbf68"
     const allSlots = Array.from({ length: 6 }, (_, idx) => `vibe-connectln-${cleanRoomKey}-slot-${idx}`)
-    const guestSlots = allSlots.slice(1)
-    const guestStartOffset = Math.floor(Math.random() * guestSlots.length)
-    const rotatedGuestSlots = [
-      ...guestSlots.slice(guestStartOffset),
-      ...guestSlots.slice(0, guestStartOffset),
-    ]
-    const uniqueFallbackPeerId = `vibe-connectln-${cleanRoomKey}-${localParticipantId.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()}`
+    const cleanUser = localParticipantId.replace(/[^a-zA-Z0-9]/g, "").toLowerCase().slice(-10) || "peer"
+    const sessionTag = Math.random().toString(36).slice(2, 6)
+    const guaranteedUniquePeerId = `vibe-${cleanRoomKey}-${cleanUser}-${sessionTag}`
 
-    // Host starts at slot-0; invited friends start at slot-1..5 so they discover each other immediately even across domains!
-    const slotOrder = isInvitedGuestLink
-      ? [...rotatedGuestSlots, allSlots[0], uniqueFallbackPeerId]
-      : [allSlots[0], ...rotatedGuestSlots, uniqueFallbackPeerId]
+    // Put guaranteedUniquePeerId FIRST so PeerJS registers on 0.peerjs.com in <150ms without ever colliding with a refreshed tab!
+    const slotOrder = [guaranteedUniquePeerId, ...allSlots]
 
     // Helper: builds outgoing MediaStream using Virtual Background canvas video track (when active) + microphone audio track
     const getOutgoingCallMediaStream = (): MediaStream | null => {
@@ -2687,6 +2792,65 @@ export function VibeVideoCallStudio({
       })
     }
 
+    const dialRemotePeerNow = (targetSlot: string) => {
+      if (isCancelled || !peerInstance || peerInstance.destroyed || !targetSlot || targetSlot === peerInstance.id) {
+        return
+      }
+      const st = peerSyncStateRef.current
+      const nowMs = Date.now()
+      const existingConn = activeDataConns.get(targetSlot)
+      const pendingSince = pendingDataConnAtMs.get(targetSlot) || 0
+      if (!existingConn || !existingConn.open) {
+        if (nowMs - pendingSince > 4200) {
+          try {
+            pendingDataConnAtMs.set(targetSlot, nowMs)
+            const newConn = peerInstance.connect(targetSlot, { reliable: true })
+            bindDataConn(newConn)
+          } catch {
+            // ignore
+          }
+        }
+      }
+
+      const outStream = getOutgoingCallMediaStream()
+      const lastTry = lastCallAttemptMs.get(targetSlot) || 0
+      const existingCall = activeMediaCalls.get(targetSlot)
+      const existingPc: RTCPeerConnection | undefined = existingCall?.peerConnection
+      const senders =
+        existingPc && typeof existingPc.getSenders === "function" ? existingPc.getSenders() : []
+      const hasOutgoingVideoSender = senders.some((s) => s.track && s.track.kind === "video")
+      const hasOutgoingAudioSender = senders.some((s) => s.track && s.track.kind === "audio")
+
+      const needsMediaCall =
+        !liveStreamPeers.has(targetSlot) ||
+        (outStream && outStream.getVideoTracks().length > 0 && !hasOutgoingVideoSender) ||
+        (outStream && outStream.getAudioTracks().length > 0 && !hasOutgoingAudioSender)
+
+      if (
+        outStream &&
+        (outStream.getVideoTracks().length > 0 || outStream.getAudioTracks().length > 0) &&
+        needsMediaCall &&
+        nowMs - lastTry > 4500
+      ) {
+        lastCallAttemptMs.set(targetSlot, nowMs)
+        try {
+          const outCall = peerInstance.call(targetSlot, outStream, {
+            metadata: {
+              participantId: localParticipantId,
+              name: st.localDisplayName,
+              role: isInvitedGuestLink ? "Invited Friend · Live Video" : "Host · Local Camera & Mic",
+              device: st.activeCameraLabel,
+            },
+          })
+          if (outCall) bindMediaCall(outCall)
+        } catch {
+          // ignore
+        }
+      }
+    }
+
+    dialRemotePeerNowRef.current = dialRemotePeerNow
+
     const initPeerAtSlot = async (tryIndex: number) => {
       if (isCancelled || tryIndex >= slotOrder.length) return
       try {
@@ -2698,26 +2862,12 @@ export function VibeVideoCallStudio({
         const peer = new PeerClass(candidatePeerId, {
           debug: 0,
           config: {
+            iceCandidatePoolSize: 4,
             iceServers: [
               { urls: "stun:stun.l.google.com:19302" },
               { urls: "stun:stun1.l.google.com:19302" },
               { urls: "stun:stun2.l.google.com:19302" },
               { urls: "stun:stun.cloudflare.com:3478" },
-              {
-                urls: "turn:openrelay.metered.ca:80",
-                username: "openrelayproject",
-                credential: "openrelayproject",
-              },
-              {
-                urls: "turn:openrelay.metered.ca:443",
-                username: "openrelayproject",
-                credential: "openrelayproject",
-              },
-              {
-                urls: "turn:openrelay.metered.ca:443?transport=tcp",
-                username: "openrelayproject",
-                credential: "openrelayproject",
-              },
             ],
           },
         })
@@ -2731,9 +2881,16 @@ export function VibeVideoCallStudio({
           setMyPeerId(openedId)
           peerSyncStateRef.current.appendLog(`WebRTC Room Mesh ready on channel [${openedId}] — listening for all participants...`)
 
-          // Connect & sync with discovered active peers + deterministic room slots every 950ms
-          syncTimer = setInterval(() => {
-            if (isCancelled || !peerInstance || peerInstance.destroyed) return
+          // Dial any already-discovered remote peers immediately
+          knownRemotePeerIdsRef.current.forEach((remoteId) => {
+            if (remoteId && remoteId !== openedId) {
+              dialRemotePeerNow(remoteId)
+            }
+          })
+
+          // Fast 290ms P2P DataChannel frame & audio relay for open DataConnections (zero React re-renders!)
+          fastDataTimer = setInterval(() => {
+            if (isCancelled || !peerInstance || peerInstance.destroyed || activeDataConns.size === 0) return
             const st = peerSyncStateRef.current
             const syncPayload = {
               type: "VIBE_PEER_SYNC",
@@ -2752,72 +2909,32 @@ export function VibeVideoCallStudio({
               recentAudioChunks: !st.isMicMuted ? recentLocalAudioChunksRef.current : undefined,
               sharedStage: st.captureActiveSharedStagePayload(),
             }
+            activeDataConns.forEach((conn) => {
+              if (conn && conn.open) {
+                try {
+                  conn.send(syncPayload)
+                } catch {
+                  // ignore
+                }
+              }
+            })
+          }, 290)
 
-            const targetPeerIds = Array.from(
-              new Set([...allSlots, ...Array.from(knownRemotePeerIdsRef.current)])
-            ).filter((id) => id && id !== openedId)
+          // Connect & maintain WebRTC MediaStream with discovered active peers every 900ms
+          syncTimer = setInterval(() => {
+            if (isCancelled || !peerInstance || peerInstance.destroyed) return
+            const discoveredPeers = Array.from(knownRemotePeerIdsRef.current).filter(
+              (id) => id && id !== openedId
+            )
+            const targetPeerIds =
+              discoveredPeers.length > 0
+                ? discoveredPeers
+                : allSlots.slice(0, 2).filter((id) => id !== openedId)
 
-            const nowMs = Date.now()
             for (const targetSlot of targetPeerIds) {
-              const existingConn = activeDataConns.get(targetSlot)
-              const pendingSince = pendingDataConnAtMs.get(targetSlot) || 0
-              if (existingConn && existingConn.open) {
-                try {
-                  existingConn.send(syncPayload)
-                } catch {
-                  // ignore
-                }
-              } else if (nowMs - pendingSince > 5500) {
-                try {
-                  pendingDataConnAtMs.set(targetSlot, nowMs)
-                  const newConn = peerInstance.connect(targetSlot, { reliable: true })
-                  bindDataConn(newConn)
-                } catch {
-                  // ignore
-                }
-              }
-
-              // Initiate or retry live WebRTC media call whenever targetSlot is a known active remote peer OR has an open DataConn
-              const isConfirmedRemotePeer =
-                knownRemotePeerIdsRef.current.has(targetSlot) || Boolean(existingConn && existingConn.open)
-              if (isConfirmedRemotePeer) {
-                const outStream = getOutgoingCallMediaStream()
-                const lastTry = lastCallAttemptMs.get(targetSlot) || 0
-                const existingCall = activeMediaCalls.get(targetSlot)
-                const existingPc: RTCPeerConnection | undefined = existingCall?.peerConnection
-                const hasOutgoingAudioSender =
-                  existingPc &&
-                  typeof existingPc.getSenders === "function" &&
-                  existingPc.getSenders().some((s) => s.track && s.track.kind === "audio")
-
-                const needsMediaCall =
-                  !liveStreamPeers.has(targetSlot) ||
-                  (outStream && outStream.getAudioTracks().length > 0 && !hasOutgoingAudioSender)
-
-                if (
-                  outStream &&
-                  (outStream.getVideoTracks().length > 0 || outStream.getAudioTracks().length > 0) &&
-                  needsMediaCall &&
-                  nowMs - lastTry > 7500
-                ) {
-                  lastCallAttemptMs.set(targetSlot, nowMs)
-                  try {
-                    const outCall = peerInstance.call(targetSlot, outStream, {
-                      metadata: {
-                        participantId: localParticipantId,
-                        name: st.localDisplayName,
-                        role: isInvitedGuestLink ? "Invited Friend · Live Video" : "Host · Local Camera & Mic",
-                        device: st.activeCameraLabel,
-                      },
-                    })
-                    if (outCall) bindMediaCall(outCall)
-                  } catch {
-                    // ignore
-                  }
-                }
-              }
+              dialRemotePeerNow(targetSlot)
             }
-          }, 950)
+          }, 900)
         })
 
         peer.on("connection", (incomingConn: any) => {
@@ -2853,6 +2970,7 @@ export function VibeVideoCallStudio({
 
     return () => {
       isCancelled = true
+      dialRemotePeerNowRef.current = null
       if (syncTimer) clearInterval(syncTimer)
       if (fastDataTimer) clearInterval(fastDataTimer)
       if (peerInstance) {
@@ -2953,6 +3071,7 @@ export function VibeVideoCallStudio({
                   activeRemoteUserIds.add(p.peer_id)
                   activeRemotePeerIds.add(p.peer_id)
                   knownRemotePeerIdsRef.current.add(p.peer_id)
+                  dialRemotePeerNowRef.current?.(p.peer_id)
                 }
                 if (typeof p.display_name === "string" && p.display_name.trim()) {
                   activeRemoteNames.add(p.display_name.trim().toLowerCase())
@@ -3015,7 +3134,7 @@ export function VibeVideoCallStudio({
     }
 
     sendHeartbeat()
-    const interval = setInterval(sendHeartbeat, 900)
+    const interval = setInterval(sendHeartbeat, 540)
 
     const handleBeforeUnload = () => {
       fetch("/api/v1/calls", {
@@ -4780,23 +4899,14 @@ export function VibeVideoCallStudio({
                     <RemoteParticipantStudioFeed participant={part} />
                   )}
 
-                  {/* LAYER 2 (zIndex 5 or 7): LIVE REMOTE CAMERA FRAME RELAY (HTTP / PeerJS DataChannel) */}
-                  {!isLocalTile && part.liveFrame && part.isVideoOn && (
-                    <img
-                      src={part.liveFrame}
-                      alt={part.name}
-                      style={{
-                        position: "absolute",
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        backgroundColor: "transparent",
-                        zIndex: part.virtualBgId && part.virtualBgId !== "none" ? 7 : 5,
-                      }}
+                  {/* LAYER 2 (zIndex 5 or 7): ZERO-RE-RENDER LIVE REMOTE CAMERA FRAME RELAY (HTTP / PeerJS DataChannel) */}
+                  {!isLocalTile && part.isVideoOn && (
+                    <RemoteLiveFrameOverlay
+                      participantId={part.id}
+                      remotePeerId={part.remotePeerId}
+                      initialFrame={part.liveFrame}
+                      altName={part.name}
+                      zIndex={part.virtualBgId && part.virtualBgId !== "none" ? 7 : 5}
                     />
                   )}
 

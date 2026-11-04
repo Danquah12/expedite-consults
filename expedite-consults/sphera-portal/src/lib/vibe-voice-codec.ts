@@ -6,8 +6,8 @@ export interface EncodedVoiceChunk {
   ts: number
 }
 
-const TARGET_SAMPLE_RATE = 5500 // 5.5 kHz voice band (~4,675 bytes per 850ms chunk = ~6.2 KB base64)
-const DEFAULT_CHUNK_DURATION_MS = 850
+const TARGET_SAMPLE_RATE = 5500 // 5.5 kHz voice band (~2,640 bytes per 480ms chunk = ~3.5 KB base64)
+const DEFAULT_CHUNK_DURATION_MS = 480
 
 let sharedVoiceAudioCtx: AudioContext | null = null
 
@@ -261,12 +261,16 @@ export class GaplessRemoteVoicePlayer {
     if (valid.length === 0) return
 
     const lastSeq = this.lastPlayedSeqByPeer.get(peerKey) ?? -1
-    for (const chunk of valid) {
-      if (chunk.seq <= lastSeq) continue
-      if (lastSeq === -1 && valid.length > 1 && chunk !== valid[valid.length - 1]) {
-        this.lastPlayedSeqByPeer.set(peerKey, chunk.seq)
-        continue
-      }
+    const unplayed = valid.filter((c) => c.seq > lastSeq)
+    if (unplayed.length === 0) return
+
+    // If multiple chunks arrived in a burst or first time joining, only play the newest 1-2 chunks so voice never lags behind real-time
+    const toPlay = lastSeq === -1 ? unplayed.slice(-1) : unplayed.slice(-2)
+    if (unplayed.length > toPlay.length) {
+      this.lastPlayedSeqByPeer.set(peerKey, unplayed[unplayed.length - toPlay.length - 1].seq)
+    }
+
+    for (const chunk of toPlay) {
       this.lastPlayedSeqByPeer.set(peerKey, chunk.seq)
       this.playSingleChunk(peerKey, chunk.data_url)
     }
@@ -299,7 +303,8 @@ export class GaplessRemoteVoicePlayer {
 
     const now = ctx.currentTime
     const prevEnd = this.nextStartTimeByPeer.get(peerKey) || 0
-    const startAt = prevEnd > now && prevEnd - now < 1.6 ? prevEnd : now + 0.008
+    // Keep max buffered lookahead under 0.65s so audio stays tightly synchronized with live video
+    const startAt = prevEnd > now && prevEnd - now < 0.65 ? prevEnd : now + 0.006
     src.start(startAt)
     this.nextStartTimeByPeer.set(peerKey, startAt + audioBuffer.duration)
   }

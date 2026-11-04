@@ -1098,7 +1098,7 @@ export function MessagingView({
                 huddleLatestAudioChunkRef.current = latest;
                 huddleRecentAudioChunksRef.current = recentWindow;
             },
-            750
+            480
         );
         return () => {
             stopCapture();
@@ -1245,38 +1245,9 @@ export function MessagingView({
 
                     if (
                         typeof peer.live_frame === 'string' &&
-                        peer.live_frame.length > 3200 &&
-                        verifiedRemoteFramesRef.current.get(peer.user_id) !== peer.live_frame
+                        peer.live_frame.length > 2200
                     ) {
-                        const candidateUrl: string = peer.live_frame;
-                        const peerId: string = peer.user_id;
-                        // Set immediately if we had no frame yet so there's zero delay when a 2nd/3rd person joins
-                        if (!verifiedRemoteFramesRef.current.has(peerId)) {
-                            verifiedRemoteFramesRef.current.set(peerId, candidateUrl);
-                        }
-                        const img = new Image();
-                        img.onload = () => {
-                            if (!mounted) return;
-                            try {
-                                if (!huddleVerifyCanvasRef.current) {
-                                    const vc = document.createElement('canvas');
-                                    vc.width = 16;
-                                    vc.height = 16;
-                                    huddleVerifyCanvasRef.current = vc;
-                                }
-                                const vc = huddleVerifyCanvasRef.current;
-                                const vctx = vc.getContext('2d', { willReadFrequently: true });
-                                if (vctx) {
-                                    vctx.drawImage(img, 0, 0, 16, 16);
-                                    if (isCanvasBright(vctx, 16, 16)) {
-                                        verifiedRemoteFramesRef.current.set(peerId, candidateUrl);
-                                    }
-                                }
-                            } catch {
-                                verifiedRemoteFramesRef.current.set(peerId, candidateUrl);
-                            }
-                        };
-                        img.src = candidateUrl;
+                        verifiedRemoteFramesRef.current.set(peer.user_id, peer.live_frame);
                     }
                 }
 
@@ -1316,7 +1287,7 @@ export function MessagingView({
         window.addEventListener('beforeunload', handleUnloadLeave);
 
         syncHuddleFrame();
-        const hb = setInterval(syncHuddleFrame, 650);
+        const hb = setInterval(syncHuddleFrame, 500);
         return () => {
             mounted = false;
             clearInterval(hb);
