@@ -2427,6 +2427,7 @@ export default function ConnectLnPage() {
             onNavigateCareerSuite={() => setActiveTab('careersuite')}
             onNavigateLearning={() => setActiveTab('learning')}
             onNavigateMarketplace={() => setActiveTab('marketplace')}
+            onNavigateMessaging={() => setActiveTab('messaging')}
             onJobPublished={(newJob) => {
               const feedPost: FeedPost = {
                 id: 'job_post_' + Date.now(),

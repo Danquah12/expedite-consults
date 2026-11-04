@@ -46,12 +46,14 @@ import { CareerTwinModal } from "./CareerTwinModal"
 
 import { UserProfile } from "@/lib/connectln-data"
 import { trackUserActivity } from "@/lib/connectin-storage"
+import { recordLocalBilateralDirectMessage } from "@/lib/direct-mailbox-sync"
 
 interface JobsViewProps {
   currentUser?: UserProfile
   onNavigateCareerSuite?: () => void
   onNavigateLearning?: () => void
   onNavigateMarketplace?: () => void
+  onNavigateMessaging?: () => void
   onJobPublished?: (job: GlobalJobItem) => void
 }
 
@@ -349,6 +351,7 @@ export function JobsView({
   currentUser,
   onNavigateLearning,
   onNavigateMarketplace,
+  onNavigateMessaging,
   onJobPublished
 }: JobsViewProps) {
   // Primary Master Mode
@@ -485,6 +488,17 @@ export function JobsView({
     setIsOutreachModalOpen(true)
   }
 
+  const handleJumpToRecruitingThread = (candName: string) => {
+    try {
+      sessionStorage.setItem(
+        'connectln_open_messaging_target_v1',
+        JSON.stringify({ threadTitle: candName, channel: 'Companies' })
+      )
+    } catch {}
+    setIsOutreachModalOpen(false)
+    onNavigateMessaging?.()
+  }
+
   const handleSendCandidateOutreach = (e: React.FormEvent) => {
     e.preventDefault()
     if (!outreachCandidate) return
@@ -495,12 +509,65 @@ export function JobsView({
     } catch {
       // ignore
     }
+
+    const senderName = currentUser?.name || 'Kwesi Asiedu'
+    const senderEmail = (currentUser as any)?.email || 'kwesi.asiedu@connectin.app'
+    const senderAvatar = currentUser?.avatar || '/brand/kwesi-avatar.png'
+    const senderRole = currentUser?.headline || 'Verified Hiring Lead · ConnectLn Recruiting Hub'
+    const recipientSubtitle = `${outreachCandidate.headline} · ${outreachCandidate.location} (${outreachCandidate.matchScore}% Match)`
+    const formattedOutreachText =
+      `🎯 Recruiting Outreach — ${outreachRoleTitle}\n` +
+      `💰 Compensation: ${outreachCompRange}\n` +
+      `📅 Interview Format: ${outreachInterviewFormat}\n\n` +
+      outreachMessage.trim()
+    const autoReplyText =
+      `Hi ${senderName.split(' ')[0]}! Thank you for reaching out regarding the ${outreachRoleTitle} role (${outreachCompRange}). ` +
+      `I reviewed the briefing and I'm available for the ${outreachInterviewFormat} this week. Let's coordinate details right here in this thread!`
+
+    recordLocalBilateralDirectMessage({
+      senderName,
+      senderEmail,
+      senderAvatar,
+      senderRole,
+      recipientName: outreachCandidate.name,
+      recipientAvatar: outreachCandidate.avatar,
+      recipientSubtitle,
+      subject: `Recruiting Outreach: ${outreachRoleTitle} (${outreachCompRange})`,
+      text: formattedOutreachText,
+      channelType: 'Companies',
+      subType: 'Recruiter',
+      initialPartnerReplyText: autoReplyText
+    })
+
+    fetch('/api/connectin/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'create_thread',
+        enclave: selectedEnclave === 'all' ? (currentUser?.professionEnclave || 'trades_construction') : selectedEnclave,
+        title: outreachCandidate.name,
+        recipientName: outreachCandidate.name,
+        subtitle: recipientSubtitle,
+        recipientSubtitle,
+        avatar: outreachCandidate.avatar,
+        recipientAvatar: outreachCandidate.avatar,
+        channelType: 'Companies',
+        text: formattedOutreachText,
+        senderName,
+        senderEmail,
+        senderAvatar,
+        senderRole
+      })
+    }).catch(() => {})
+
     trackUserActivity({
       type: 'job_apply',
       title: `Sent Recruiter Outreach to ${outreachCandidate.name}`,
       subtitle: `${outreachRoleTitle} · ${outreachCompRange}`
     })
-    setOutreachStep('sent')
+
+    // Wire directly to the Messages tab -> Recruiting (Companies) tab and open this conversation
+    handleJumpToRecruitingThread(outreachCandidate.name)
   }
 
   // Current active country config
@@ -1855,33 +1922,33 @@ export function JobsView({
                 </div>
 
                 {/* Recruiter Action Buttons */}
-                <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2">
+                <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2 flex-wrap">
                   <span className="text-[11px] text-zinc-500 font-medium">
                     Certifications: {cand.certifications.join(', ')}
                   </span>
 
-                  <button
-                    type="button"
-                    onClick={() => handleOpenCandidateOutreach(cand)}
-                    style={{ color: '#FFFFFF' }}
-                    className={`rounded-full px-4 py-1.5 text-xs font-bold text-white transition-colors cursor-pointer shrink-0 flex items-center gap-1.5 shadow-2xs ${
-                      reachedOutCandidateIds.includes(cand.id)
-                        ? "bg-emerald-600 hover:bg-emerald-700"
-                        : "bg-[#0A66C2] hover:bg-[#004182]"
-                    }`}
-                  >
-                    {reachedOutCandidateIds.includes(cand.id) ? (
-                      <>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {reachedOutCandidateIds.includes(cand.id) && (
+                      <button
+                        type="button"
+                        onClick={() => handleJumpToRecruitingThread(cand.name)}
+                        style={{ color: '#FFFFFF' }}
+                        className="rounded-full bg-emerald-600 hover:bg-emerald-700 px-3.5 py-1.5 text-xs font-bold text-white transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                      >
                         <Check className="h-3.5 w-3.5" />
-                        <span>Invitation Sent</span>
-                      </>
-                    ) : (
-                      <>
-                        <Send className="h-3 w-3" />
-                        <span>Reach Out</span>
-                      </>
+                        <span>💬 Open in Recruiting Messages</span>
+                      </button>
                     )}
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenCandidateOutreach(cand)}
+                      style={{ color: '#FFFFFF' }}
+                      className="rounded-full bg-[#0A66C2] hover:bg-[#004182] px-4 py-1.5 text-xs font-bold text-white transition-colors cursor-pointer shrink-0 flex items-center gap-1.5 shadow-2xs"
+                    >
+                      <Send className="h-3 w-3" />
+                      <span>{reachedOutCandidateIds.includes(cand.id) ? "Message Again" : "Reach Out"}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -2546,7 +2613,7 @@ export function JobsView({
                       className="rounded-full bg-[#0A66C2] hover:bg-[#004182] px-5 py-2 text-xs font-bold text-white flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
                     >
                       <Send className="h-3.5 w-3.5" />
-                      <span>Send Direct Invitation</span>
+                      <span>Send &amp; Open in Recruiting Messages →</span>
                     </button>
                   </div>
                 </form>

@@ -833,11 +833,42 @@ export function MessagingView({
         const localBilateral = getLocalBilateralThreadsForViewer(vName, vEmail, selectedEnclave);
         const immediate = mergeBilateralAndServerThreads(localBilateral, enclaveThreads);
         setThreads(immediate);
-        setSelectedThreadId((prev) =>
-            immediate.some((t) => t.id === prev)
-                ? prev
-                : (selectedEnclave !== 'all' && enclaveThreads[0]?.id) || immediate[0]?.id || ''
-        );
+
+        // Check if Recruiting Hub ("Reach Out") handed off a specific recruiting conversation to open
+        let handoffMatchedId = '';
+        if (typeof window !== 'undefined') {
+            try {
+                const rawHandoff = sessionStorage.getItem('connectln_open_messaging_target_v1');
+                if (rawHandoff) {
+                    sessionStorage.removeItem('connectln_open_messaging_target_v1');
+                    const parsed = JSON.parse(rawHandoff);
+                    const targetName = String(parsed?.threadTitle || '').trim().toLowerCase();
+                    const targetChannel = (parsed?.channel as ChannelFilterType) || 'Companies';
+                    setActiveMailboxFolder('inbox');
+                    setActiveCustomLabel(null);
+                    setActiveChannel(targetChannel);
+                    const found = immediate.find(
+                        (t) => t.title.trim().toLowerCase() === targetName
+                    );
+                    if (found) {
+                        handoffMatchedId = found.id;
+                        setSelectedThreadId(found.id);
+                        setMobileShowChat(true);
+                        triggerToast(
+                            `Recruiting conversation with ${found.title} opened in 🏢 Recruiters tab.`
+                        );
+                    }
+                }
+            } catch {}
+        }
+
+        if (!handoffMatchedId) {
+            setSelectedThreadId((prev) =>
+                immediate.some((t) => t.id === prev)
+                    ? prev
+                    : (selectedEnclave !== 'all' && enclaveThreads[0]?.id) || immediate[0]?.id || ''
+            );
+        }
 
         const fetchLiveThreads = async (showSpinner = false) => {
             if (showSpinner) setIsLoadingThreads(true);
@@ -1490,8 +1521,12 @@ export function MessagingView({
         const targetThreadId = activeThread.id;
         const targetEntityName = activeThread.title;
 
-        // If People DM, persist immediately in bilateral local mailbox so recipient receives it in 0ms
-        if (activeThread.channelType === 'People' || targetThreadId.startsWith('dm_pair__')) {
+        // Persist immediately in bilateral local mailbox so People DMs and Recruiting threads keep all messages across reloads
+        if (
+            activeThread.channelType === 'People' ||
+            activeThread.channelType === 'Companies' ||
+            targetThreadId.startsWith('dm_pair__')
+        ) {
             recordLocalBilateralDirectMessage({
                 senderName,
                 senderEmail,
@@ -1502,6 +1537,8 @@ export function MessagingView({
                 recipientSubtitle: activeThread.subtitle,
                 text: finalText,
                 attachment: pendingAttachment || undefined,
+                channelType: activeThread.channelType,
+                subType: activeThread.subType as any,
             });
         }
 

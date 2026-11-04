@@ -23,6 +23,8 @@ export interface LocalBilateralMessage {
 
 export interface LocalBilateralConversation {
   pairKey: string
+  channelType?: "People" | "Companies" | "Products" | "Communities"
+  subType?: "DM" | "Recruiter" | "Vendor" | "Guild"
   participantA: {
     name: string
     email?: string
@@ -376,6 +378,9 @@ export function recordLocalBilateralDirectMessage(params: {
   subject?: string
   text: string
   attachment?: string
+  channelType?: "People" | "Companies" | "Products" | "Communities"
+  subType?: "DM" | "Recruiter" | "Vendor" | "Guild"
+  initialPartnerReplyText?: string
 }): LocalBilateralConversation | null {
   if (typeof window === "undefined") return null
   try {
@@ -384,6 +389,7 @@ export function recordLocalBilateralDirectMessage(params: {
     const nowIso = new Date().toISOString()
     const nowLabel = formatMessageSentDateTime(nowIso)
     const senderNorm = normalizeDmName(params.senderName)
+    const recipientNorm = normalizeDmName(params.recipientName)
 
     const newMsg: LocalBilateralMessage = {
       id: `local_dm_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
@@ -401,15 +407,40 @@ export function recordLocalBilateralDirectMessage(params: {
       readBy: [senderNorm]
     }
 
+    const appendedMsgs: LocalBilateralMessage[] = [newMsg]
+    if (params.initialPartnerReplyText) {
+      const replyIso = new Date(Date.now() + 1000).toISOString()
+      appendedMsgs.push({
+        id: `local_dm_${Date.now() + 1}_reply`,
+        senderName: params.recipientName,
+        senderEmail: params.recipientEmail,
+        senderAvatar:
+          params.recipientAvatar ||
+          `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(params.recipientName)}&backgroundColor=0a66c2`,
+        senderRole:
+          params.recipientSubtitle || "Verified ConnectLn Candidate · Recruiting Hub",
+        recipientName: params.senderName,
+        recipientEmail: params.senderEmail,
+        text: params.initialPartnerReplyText,
+        timestamp: formatMessageSentDateTime(replyIso),
+        createdAtIso: replyIso,
+        readBy: [recipientNorm, senderNorm]
+      })
+    }
+
     const existing = store[pairKey]
     const updated: LocalBilateralConversation = existing
       ? {
           ...existing,
-          messages: [...existing.messages, newMsg],
+          channelType: params.channelType || existing.channelType || "People",
+          subType: params.subType || existing.subType || "DM",
+          messages: [...existing.messages, ...appendedMsgs],
           updatedAtIso: nowIso
         }
       : {
           pairKey,
+          channelType: params.channelType || "People",
+          subType: params.subType || (params.channelType === "Companies" ? "Recruiter" : "DM"),
           participantA: {
             name: params.senderName,
             email: params.senderEmail,
@@ -426,7 +457,7 @@ export function recordLocalBilateralDirectMessage(params: {
               params.recipientSubtitle ||
               "Verified ConnectLn Professional · Direct Member Channel"
           },
-          messages: [newMsg],
+          messages: appendedMsgs,
           updatedAtIso: nowIso
         }
 
@@ -544,18 +575,29 @@ export function getLocalBilateralThreadsForViewer(
 
     const lastMsg = orderedMessages[orderedMessages.length - 1]
 
+    const resolvedChannel = convo.channelType || "People"
+    const resolvedSubType =
+      convo.subType || (resolvedChannel === "Companies" ? "Recruiter" : "DM")
+
     results.push({
       id: convo.pairKey,
       professionEnclave: enclave,
-      channelType: "People",
-      subType: "DM",
+      channelType: resolvedChannel,
+      subType: resolvedSubType,
       title: partner.name,
-      subtitle: partner.headline || "Verified ConnectLn Professional · Direct Member Channel",
+      subtitle:
+        partner.headline ||
+        (resolvedChannel === "Companies"
+          ? "Verified ConnectLn Recruiting Thread · Direct Hiring Channel"
+          : "Verified ConnectLn Professional · Direct Member Channel"),
       avatar:
         partner.avatar ||
         `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(partner.name)}&backgroundColor=0a66c2`,
       isVerified: true,
-      verifiedBadge: "✓ Direct Member Message",
+      verifiedBadge:
+        resolvedChannel === "Companies"
+          ? "✓ Recruiting & Interview Thread"
+          : "✓ Direct Member Message",
       onlineStatus: "online",
       unreadCount,
       lastMessage: lastMsg ? lastMsg.text.replace(/\n/g, " · ") : "New conversation",
