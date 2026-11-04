@@ -479,7 +479,7 @@ export function buildProfessionTieredFeedPosts(user?: UserProfile | null): Post[
     ]
   }
 
-  // 2. Tier-1 Photo & Story Post + Downloadable Guide (Matches LinkedIn Screenshots 2 & 4)
+  // 2. Tier-1 Red-Framed Poster & Downloadable Guide Card (Matches Fisher Investments "7 Income Streams" Screenshot)
   const postPhotoGuide: Post = {
     id: `post_prof_photo_guide_${resolvedProf.id}`,
     professionId: resolvedProf.id,
@@ -488,33 +488,39 @@ export function buildProfessionTieredFeedPosts(user?: UserProfile | null): Post[
     isProfessionTiered: true,
     author: {
       id: `guild_institute_${resolvedProf.id}`,
-      name: `${cleanShortTitle} Guild & Practice Standards`,
-      headline: `${peer1.followersText} · Official ${enclave.shortName} Directorate`,
+      name: `${cleanShortTitle} Guild & Practice Advisory`,
+      headline: `${peer1.followersText} · Promoted Executive Guide`,
       avatar: peer2.avatar,
       connectionDegree: 'Following',
       isFollowing: true,
       followersText: peer1.followersText,
-      isPromoted: false
+      isPromoted: true
     },
-    timestamp: '45m · 🌐',
+    timestamp: 'Promoted · 🌐',
     visibility: 'Public',
     feedCategory: 'for_you',
     feedSubCategory: enclave.shortName,
-    content: `${pack.fieldStoryLead}\n\nWhether you are practicing as a ${cleanShortTitle} or leading ${skills[0] || 'daily operations'} and ${skills[1] || 'quality verification'}, having the right checklist changes everything. Download our free 2026 ${cleanShortTitle} Guide below.`,
+    content: `${pack.fieldStoryLead}\n\nPlanning for high-value contracts and career growth doesn't have to be overwhelming. Download our free 2026 ${cleanShortTitle} Guide for help preparing a high-performing practice and portfolio.`,
     hashtags,
     media: {
       type: 'image',
+      visualStyle: 'poster_frame',
       url: photo1,
+      youtubeId: primaryVideo.youtubeId,
+      duration: primaryVideo.duration || '4:15',
       aspectRatio: '4/3',
-      title: pack.guideTitle || `7 ${cleanShortTitle} Field Standards & Execution Tips [Free Guide]`,
-      domain: `${resolvedProf.id.replace(/_/g, '')}.connectln.org`,
-      submitsText: '142 downloads today',
-      overlayTitle: `7 ${cleanShortTitle} Standards`,
-      overlaySubtitle: `Mastering ${skills.slice(0, 2).join(' & ')} Every Day`,
+      mastheadText: '2026 OFFICIAL BLUEPRINT',
+      sealText: enclave.shortName.slice(0, 6).toUpperCase(),
+      brandName: `CONNECTLN ${cleanShortTitle.toUpperCase()} DIRECTORATE®`,
+      title: pack.guideTitle || `7 ${cleanShortTitle} Contract & Practice Strategies [Free Guide]`,
+      domain: `${resolvedProf.id.replace(/_/g, '')}.conectln.com`,
+      submitsText: '94 others have submitted',
+      overlayTitle: `7 ${cleanShortTitle} Streams`,
+      overlaySubtitle: `to Help Verified ${cleanShortTitle} Leaders Master ${skills.slice(0, 2).join(' & ')}`,
       description: `Verified ${profTitle} handbook covering ${skills.slice(0, 4).join(', ')}.`,
       downloadGuide: {
         title: pack.guideTitle || `7 ${cleanShortTitle} Field Standards & Execution Tips [Free Guide]`,
-        subtitle: `142 fellow ${cleanShortTitle} professionals downloaded this guide`,
+        subtitle: `94 others have submitted`,
         ctaLabel: 'Download',
         fileName: `${resolvedProf.id.toUpperCase()}_2026_Standards_Guide.txt`,
         checklist: [
@@ -550,7 +556,112 @@ export function buildProfessionTieredFeedPosts(user?: UserProfile | null): Post[
     comments: []
   }
 
-  // 3. Tier-1 Second Video Post: Sibling/Career Video Tied to the User's Claimed Profession
+  // 3. Tier-1 Editorial Podium & Keynote Portrait Card (Matches Wall Street Journal Podium Screenshot)
+  const postPodiumKeynote: Post = {
+    id: `post_prof_podium_keynote_${resolvedProf.id}`,
+    professionId: resolvedProf.id,
+    professionEnclave: enclave.id,
+    targetProfessions: [resolvedProf.id],
+    isProfessionTiered: true,
+    author: {
+      id: `wsj_summit_${resolvedProf.id}`,
+      name: `The ${enclave.shortName} Journal ✓`,
+      headline: `142,800 followers · National Summit & Industry Briefing`,
+      avatar: peer1.avatar,
+      connectionDegree: '1st',
+      isFollowing: true
+    },
+    timestamp: '2h · 🌐',
+    visibility: 'Public',
+    feedCategory: 'for_you',
+    feedSubCategory: enclave.shortName,
+    content: `National ${cleanShortTitle} Council & Industry Leaders convene to announce new 2026 credentialing fast-tracks, compensation benchmarks, and hands-on safety standards across ${skills.slice(0, 3).join(', ')}.`,
+    hashtags,
+    media: {
+      type: 'image',
+      visualStyle: 'editorial_podium',
+      url: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&auto=format&fit=crop&q=85',
+      youtubeId: secondaryVideo.youtubeId,
+      duration: secondaryVideo.duration || '4:48',
+      mastheadText: 'CLN',
+      overlaySubtitle: `SUMMIT KEYNOTE 2026`,
+      overlayTitle: `${cleanShortTitle} Leaders Unveil 2026 National Standards for ${skills[0] || 'Field Excellence'}`,
+      title: `2026 ${profTitle} National Keynote & Regulatory Briefing`,
+      submitsText: 'Live Keynote Coverage · Full Photo & Video Briefing'
+    },
+    stats: {
+      likesCount: 542,
+      commentsCount: 64,
+      repostsCount: 91,
+      reactionsBreakdown: {
+        like: 320,
+        celebrate: 110,
+        support: 42,
+        love: 35,
+        insightful: 35,
+        funny: 0
+      }
+    },
+    userReaction: null,
+    isSaved: false,
+    comments: []
+  }
+
+  // 4. Tier-1 News Portrait Card (Matches Kenya Times / ICJ Judge Phoebe Okowa Screenshot)
+  const postPhotoStory2: Post = {
+    id: `post_prof_story_photo_${resolvedProf.id}`,
+    professionId: resolvedProf.id,
+    professionEnclave: enclave.id,
+    targetProfessions: [resolvedProf.id],
+    isProfessionTiered: true,
+    author: {
+      id: `peer_story_${resolvedProf.id}`,
+      name: `${peer1.name}`,
+      headline: `Senior ${cleanShortTitle} · ${enclave.shortName}`,
+      avatar: peer1.avatar,
+      connectionDegree: '1st',
+      isFollowing: true
+    },
+    timestamp: '3h · 🌐',
+    visibility: 'Public',
+    feedCategory: 'for_you',
+    feedSubCategory: enclave.shortName,
+    content: `${pack.secondStoryLead}\n\nToday our ${cleanShortTitle} team completed full verification on ${skills[0] || 'core protocols'} and ${skills[2] || 'quality inspection'}. Proud of the dedication and skill every person brought today.`,
+    hashtags,
+    media: {
+      type: 'image',
+      visualStyle: 'news_portrait',
+      url: photo2,
+      youtubeId: primaryVideo.youtubeId,
+      duration: primaryVideo.duration || '4:15',
+      aspectRatio: '16/10',
+      brandName: 'ConnectLn',
+      mastheadText: `The ${cleanShortTitle} Times`,
+      sealText: 'CLN',
+      overlaySubtitle: 'NOV 04, 2026',
+      overlayTitle: `${peer1.name} Leads Verified ${cleanShortTitle} Team to 100% Compliance on ${skills[0] || 'Field Standards'}`,
+      title: `${profTitle}: Real-World Execution & Team Standards in 2026`,
+      domain: `https://conectln.com/${resolvedProf.id}`
+    },
+    stats: {
+      likesCount: 312,
+      commentsCount: 41,
+      repostsCount: 27,
+      reactionsBreakdown: {
+        like: 210,
+        celebrate: 54,
+        support: 18,
+        love: 20,
+        insightful: 10,
+        funny: 0
+      }
+    },
+    userReaction: null,
+    isSaved: false,
+    comments: []
+  }
+
+  // 5. Tier-1 Second Video Post: Sibling/Career Video Tied to the User's Claimed Profession
   const postVideo2: Post = {
     id: `post_prof_video_secondary_${resolvedProf.id}`,
     professionId: resolvedProf.id,
@@ -566,7 +677,7 @@ export function buildProfessionTieredFeedPosts(user?: UserProfile | null): Post[
       isFollowing: false,
       followersText: peer2.followersText
     },
-    timestamp: '1h · 🌐',
+    timestamp: '4h · 🌐',
     visibility: 'Public',
     feedCategory: 'for_you',
     feedSubCategory: enclave.shortName,
@@ -604,52 +715,5 @@ export function buildProfessionTieredFeedPosts(user?: UserProfile | null): Post[
     comments: []
   }
 
-  // 4. Tier-1 Second Photo & Story Post: Peer Story with People Actively Doing the Profession
-  const postPhotoStory2: Post = {
-    id: `post_prof_story_photo_${resolvedProf.id}`,
-    professionId: resolvedProf.id,
-    professionEnclave: enclave.id,
-    targetProfessions: [resolvedProf.id],
-    isProfessionTiered: true,
-    author: {
-      id: `peer_story_${resolvedProf.id}`,
-      name: `${peer1.name}`,
-      headline: `Senior ${cleanShortTitle} · ${enclave.shortName}`,
-      avatar: peer1.avatar,
-      connectionDegree: '3rd',
-      isFollowing: false
-    },
-    timestamp: '2h · 🌐',
-    visibility: 'Public',
-    feedCategory: 'for_you',
-    feedSubCategory: enclave.shortName,
-    content: `${pack.secondStoryLead}\n\nToday our ${cleanShortTitle} team completed full verification on ${skills[0] || 'core protocols'} and ${skills[2] || 'quality inspection'}. Proud of the dedication and skill every person brought today.`,
-    hashtags,
-    media: {
-      type: 'image',
-      url: photo2,
-      aspectRatio: '16/10',
-      overlayTitle: `${cleanShortTitle} in Action: Real-World Practice & Excellence`,
-      title: `${profTitle}: Real-World Execution & Team Standards in 2026`,
-      domain: `connectln.org/${resolvedProf.id}`
-    },
-    stats: {
-      likesCount: 312,
-      commentsCount: 41,
-      repostsCount: 27,
-      reactionsBreakdown: {
-        like: 210,
-        celebrate: 54,
-        support: 18,
-        love: 20,
-        insightful: 10,
-        funny: 0
-      }
-    },
-    userReaction: null,
-    isSaved: false,
-    comments: []
-  }
-
-  return [postVideo1, postPhotoGuide, postVideo2, postPhotoStory2]
+  return [postPhotoGuide, postPodiumKeynote, postPhotoStory2, postVideo1, postVideo2]
 }

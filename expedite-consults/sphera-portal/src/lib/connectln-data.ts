@@ -196,6 +196,9 @@ export interface Post {
     submitsText?: string
     overlayTitle?: string
     overlaySubtitle?: string
+    visualStyle?: 'poster_frame' | 'editorial_podium' | 'news_portrait' | 'banner_overlay'
+    sealText?: string
+    mastheadText?: string
     downloadGuide?: {
       title: string
       subtitle: string

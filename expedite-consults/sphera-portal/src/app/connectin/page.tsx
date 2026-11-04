@@ -9,6 +9,7 @@ import { MeetingReminders } from "@/components/connectln/MeetingReminders"
 import { LeftSidebarProfile } from "@/components/connectln/LeftSidebarProfile"
 import { PostCreator } from "@/components/connectln/PostCreator"
 import { FeedPostCard } from "@/components/connectln/FeedPostCard"
+import { LinkedInStoriesStrip } from "@/components/connectln/LinkedInStoriesStrip"
 import { RightSidebarNews } from "@/components/connectln/RightSidebarNews"
 import { ProfileView } from "@/components/connectln/ProfileView"
 import { NetworkView } from "@/components/connectln/NetworkView"
@@ -1737,6 +1738,89 @@ export default function ConnectLnPage() {
               {/* LinkedIn-Style Top "Start a post" Box (Video, Photo, Write article — Matches Screenshot 1) */}
               <PostCreator user={userData} onAddPost={handleAddPost} />
 
+              {/* 4-Card Rounded LinkedIn Professional Stories, Framed Posters & Live Video Strip */}
+              <LinkedInStoriesStrip
+                currentUser={userData}
+                onShareStoryToFeed={(story, mode) => {
+                  const newPost: Post = {
+                    id: 'post_story_share_' + Date.now(),
+                    professionEnclave: selectedEnclaves[0] || userData?.professionEnclave || 'all',
+                    author: {
+                      id: userData.id,
+                      name: userData.name,
+                      headline: userData.headline,
+                      avatar: userData.avatar,
+                      connectionDegree: 'You',
+                      isFollowing: false
+                    },
+                    timestamp: 'Just now · 🌐',
+                    visibility: 'Public',
+                    postType: 'standard',
+                    feedCategory: 'for_you',
+                    feedSubCategory: 'All',
+                    content: `${story.title} — ${story.subtitle}`,
+                    hashtags: ['#ConnectLn', '#ProfessionalStories', '#Leadership'],
+                    media:
+                      mode === 'video'
+                        ? {
+                            type: 'video',
+                            url: `https://www.youtube.com/watch?v=${story.youtubeId}`,
+                            youtubeId: story.youtubeId,
+                            thumbnailUrl: story.imageUrl,
+                            title: story.title,
+                            description: story.subtitle,
+                            duration: story.duration
+                          }
+                        : {
+                            type: 'image',
+                            url: story.imageUrl,
+                            visualStyle:
+                              story.cardStyle === 'poster_frame'
+                                ? 'poster_frame'
+                                : story.cardStyle === 'news_portrait'
+                                ? 'news_portrait'
+                                : 'editorial_podium',
+                            youtubeId: story.youtubeId,
+                            duration: story.duration,
+                            overlayTitle: story.title,
+                            overlaySubtitle: story.subtitle,
+                            title: story.title,
+                            submitsText: story.submitsText || 'Shared via ConnectLn Stories'
+                          },
+                    stats: {
+                      likesCount: 1,
+                      commentsCount: 0,
+                      repostsCount: 0,
+                      reactionsBreakdown: { like: 1, celebrate: 0, support: 0, love: 0, insightful: 0, funny: 0 }
+                    },
+                    userReaction: null,
+                    isSaved: false,
+                    comments: []
+                  }
+                  const updated = [newPost, ...posts]
+                  setPosts(updated)
+                  saveStoredPosts(updated)
+                }}
+              />
+
+              {/* Top Featured LinkedIn-Format Visual Posts (Poster Frame, Podium Keynote & News Portrait) Above the Fold */}
+              {filteredPosts.length > 0 && (
+                <div className="space-y-3">
+                  {filteredPosts.slice(0, 3).map((post) => (
+                    <FeedPostCard
+                      key={post.id}
+                      post={post}
+                      currentUser={userData}
+                      onToggleReaction={handleToggleReaction}
+                      onAddComment={handleAddComment}
+                      onToggleSave={handleToggleSave}
+                      onVotePoll={handleVotePoll}
+                      onSelectMember={handleInspectMember}
+                    />
+                  ))}
+                </div>
+              )}
+
               {/* Desktop Educational Masterclass Wheel */}
               <div className="hidden sm:block">
                 {showFeedWheel ? (
@@ -2236,9 +2320,9 @@ export default function ConnectLnPage() {
                 </div>
               </div>
 
-              {/* Feed Posts */}
+              {/* Feed Posts (Remaining Stream) */}
               <div className="space-y-3">
-                {filteredPosts.map((post) => (
+                {filteredPosts.slice(3).map((post) => (
                   <FeedPostCard
                     key={post.id}
                     post={post}

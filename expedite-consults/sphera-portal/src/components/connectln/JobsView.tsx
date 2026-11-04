@@ -1487,10 +1487,10 @@ export function JobsView({
                                 setIsCareerTwinOpen(true)
                               }}
                               className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700 border border-purple-200 hover:bg-purple-100 dark:bg-purple-950/40 dark:border-purple-800 dark:text-purple-300 transition-all flex items-center gap-1 cursor-pointer"
-                              title="AI Interview Simulation"
+                              title="Noctis AI Interview Prep: 25+ Tailored Interview Questions & Sample Answers for this Job"
                             >
                               <Sparkles className="h-3 w-3 text-amber-500" />
-                              <span>CareerTwin™ Prep</span>
+                              <span>CareerTwin™ Prep (25+ Qs)</span>
                             </button>
 
                             <button
@@ -1667,6 +1667,8 @@ export function JobsView({
                       setCareerTwinJob({
                         title: app.jobTitle,
                         company: app.company,
+                        location: app.location,
+                        salaryRange: app.salary,
                         description: `Interview preparation for ${app.jobTitle} at ${app.company}.`
                       })
                       setIsCareerTwinOpen(true)
@@ -1674,7 +1676,7 @@ export function JobsView({
                     className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700 hover:bg-purple-100 dark:bg-purple-950/40 dark:text-purple-300 flex items-center gap-1 cursor-pointer"
                   >
                     <Sparkles className="h-3 w-3 text-amber-500" />
-                    <span>Interview Prep</span>
+                    <span>Noctis™ Interview Prep (25+ Qs)</span>
                   </button>
 
                   <span className="text-[11px] text-zinc-400">

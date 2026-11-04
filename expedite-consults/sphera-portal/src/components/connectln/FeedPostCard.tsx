@@ -114,6 +114,7 @@ export function FeedPostCard({
 
   const [showShareModal, setShowShareModal] = useState(false)
   const [downloadedGuide, setDownloadedGuide] = useState(false)
+  const [watchCompanionVideo, setWatchCompanionVideo] = useState(false)
   const isCurrentUserPost = post.author.connectionDegree === 'You'
   const resolvedAuthorName = isCurrentUserPost
     ? (currentUser.name || post.author.name)
@@ -889,32 +890,180 @@ export function FeedPostCard({
         </div>
       )}
 
-      {/* LinkedIn-Style Full-Width Edge-to-Edge Image & Downloadable Guide Card */}
+      {/* LinkedIn-Style Full-Width Edge-to-Edge Image, Framed Poster, WSJ Podium, News Portrait & Companion Video Card */}
       {post.media && post.media.type === 'image' && (
         <div className="my-2 w-full overflow-hidden border-y border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900">
-          <div className="relative w-full overflow-hidden bg-zinc-900">
-            <img
-              src={post.media.url}
-              alt={post.media.title || "Post content"}
-              className="w-full object-cover max-h-[540px]"
-            />
+          {/* Optional Photo / Companion Video Switcher Pill Bar */}
+          {post.media.youtubeId && (
+            <div className="flex items-center justify-between px-4 py-2 bg-zinc-100/90 dark:bg-zinc-800/90 border-b border-zinc-200 dark:border-zinc-700 text-xs">
+              <span className="font-semibold text-zinc-600 dark:text-zinc-300 flex items-center gap-1.5">
+                <Play className="h-3.5 w-3.5 text-[#0A66C2]" />
+                <span>Includes both Professional Photo Card &amp; Live Video Briefing</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setWatchCompanionVideo((prev) => !prev)}
+                className="rounded-full bg-[#0A66C2] hover:bg-[#004182] px-3 py-1 text-[11px] font-bold text-white transition-colors cursor-pointer"
+              >
+                {watchCompanionVideo ? "📷 View Photo Card" : `🎬 Watch Live Video (${post.media.duration || "3:45"})`}
+              </button>
+            </div>
+          )}
 
-            {/* Optional Editorial / Story Banner Overlay (Matches LinkedIn Screenshots 2, 3, and 4) */}
-            {post.media.overlayTitle && (
-              <div className="absolute left-0 bottom-5 max-w-[88%] sm:max-w-[78%] bg-gradient-to-r from-[#8B2E16]/95 via-[#9E381E]/90 to-[#8B2E16]/80 backdrop-blur-xs px-4 py-3 text-white shadow-lg border-r-4 border-amber-400">
-                <p className="text-sm sm:text-lg font-extrabold leading-tight drop-shadow-xs">
-                  {post.media.overlayTitle}
-                </p>
-                {post.media.overlaySubtitle && (
-                  <p className="mt-0.5 text-[11px] sm:text-xs font-medium text-amber-100">
-                    {post.media.overlaySubtitle}
+          {watchCompanionVideo && post.media.youtubeId ? (
+            <div className="aspect-video w-full bg-black">
+              <iframe
+                src={`https://www.youtube.com/embed/${post.media.youtubeId}?autoplay=1&rel=0`}
+                title={post.media.title || "ConnectLn Video Briefing"}
+                className="w-full h-full border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          ) : post.media.visualStyle === 'poster_frame' ? (
+            /* 1. FISHER INVESTMENTS RED-FRAMED POSTER FORMAT (Matches Screenshot 1: "7 Income Streams") */
+            <div className="w-full bg-white p-3 sm:p-4 border-[10px] border-[#E10600]">
+              <div className="rounded-sm bg-gradient-to-b from-sky-50/70 via-white to-white p-4 sm:p-6 space-y-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-3xl sm:text-4xl leading-none select-none">🇺🇸</span>
+                    <span className="rounded bg-red-50 border border-red-200 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-[#E10600]">
+                      {post.media.mastheadText || "2026 EXECUTIVE GUIDE"}
+                    </span>
+                  </div>
+                  {post.media.sealText && (
+                    <span className="rounded-full bg-zinc-900 px-2.5 py-1 text-[10px] font-black text-white uppercase tracking-wider">
+                      {post.media.sealText}
+                    </span>
+                  )}
+                </div>
+
+                <div className="space-y-1">
+                  <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-zinc-950 leading-tight">
+                    {post.media.overlayTitle || "7 Income & Contract Streams"}
+                  </h3>
+                  <p className="text-sm sm:text-base font-medium text-zinc-700 leading-snug">
+                    {post.media.overlaySubtitle || "to Help Verified Professionals & Practice Owners Build $1,000,000+ Portfolios"}
                   </p>
-                )}
-              </div>
-            )}
-          </div>
+                </div>
 
-          {/* LinkedIn-Style Guide / Article Caption + Full-Width Download Button (Matches Screenshots 2 & 4) */}
+                <div className="relative w-full h-64 sm:h-80 rounded-md overflow-hidden border border-zinc-200 shadow-xs">
+                  <img
+                    src={post.media.url}
+                    alt={post.media.title || "Poster visual"}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                <div className="pt-1 text-center">
+                  <span className="font-serif text-sm sm:text-base font-bold tracking-[0.2em] uppercase text-emerald-900">
+                    {post.media.brandName || "EXPEDITE & CONNECTLN ADVISORY®"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : post.media.visualStyle === 'editorial_podium' ? (
+            /* 2. WALL STREET JOURNAL PODIUM KEYNOTE FORMAT (Matches Screenshot 2: "ELECTION 2026 / Podium Serif") */
+            <div className="relative w-full overflow-hidden bg-zinc-950">
+              <img
+                src={post.media.url}
+                alt={post.media.title || "Keynote speaker"}
+                className="w-full object-cover max-h-[560px]"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-transparent" />
+
+              <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between gap-4">
+                <div className="space-y-1.5 max-w-[88%]">
+                  <span className="inline-block text-xs sm:text-sm font-extrabold uppercase tracking-[0.18em] text-sky-300">
+                    {post.media.overlaySubtitle || "KEYNOTE BRIEFING 2026"}
+                  </span>
+                  <h3 className="font-serif text-xl sm:text-3xl font-bold text-white leading-tight drop-shadow-sm">
+                    {post.media.overlayTitle || post.media.title}
+                  </h3>
+                </div>
+                <span className="font-serif text-lg sm:text-2xl font-black tracking-tighter text-white/90 shrink-0">
+                  {post.media.mastheadText || "CLN"}
+                </span>
+              </div>
+            </div>
+          ) : post.media.visualStyle === 'news_portrait' ? (
+            /* 3. KENYA TIMES / ICJ JUDGE PORTRAIT NEWS CARD (Matches Screenshot 3: "NEWS" Red Pill + Dark Box) */
+            <div className="relative w-full overflow-hidden bg-zinc-950 border-b-[6px] border-[#E10600]">
+              <img
+                src={post.media.url}
+                alt={post.media.title || "Featured portrait"}
+                className="w-full object-cover max-h-[560px]"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-black/35" />
+
+              {/* Top Left Emblem & Top Right Masthead + Date */}
+              <div className="absolute top-4 left-4 right-4 flex items-start justify-between gap-3">
+                <div className="h-12 w-12 rounded-full bg-black/85 border-2 border-[#E10600] flex items-center justify-center text-white font-serif font-black text-lg shadow-lg">
+                  {post.media.brandName?.slice(0, 1) || "C"}
+                </div>
+                <div className="text-right text-white drop-shadow-sm">
+                  <p className="font-serif text-base sm:text-xl font-black tracking-wide">
+                    {post.media.mastheadText || "The ConnectLn Times"}
+                  </p>
+                  <p className="text-[11px] sm:text-xs font-extrabold uppercase tracking-widest text-zinc-200">
+                    {post.media.overlaySubtitle || "NOV 04, 2026"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Middle-Right Official Seal Badge */}
+              {post.media.sealText && (
+                <div className="absolute right-5 top-1/3 h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-white/95 text-[#0A66C2] border-2 border-sky-200 shadow-xl flex flex-col items-center justify-center p-1 text-center">
+                  <span className="text-xs sm:text-sm font-black leading-none">⚖️</span>
+                  <span className="text-[11px] sm:text-xs font-black tracking-tight mt-0.5">
+                    {post.media.sealText}
+                  </span>
+                </div>
+              )}
+
+              {/* Bottom News Pill + Red Accent Rule + Dark Headline Box */}
+              <div className="absolute bottom-4 left-4 right-4 space-y-0">
+                <div className="flex items-end">
+                  <span className="bg-[#E10600] text-white text-xs sm:text-sm font-black uppercase px-3.5 py-1 tracking-wider">
+                    NEWS
+                  </span>
+                  <div className="h-[3px] flex-1 bg-[#E10600]" />
+                </div>
+                <div className="bg-black/85 backdrop-blur-xs px-4 py-3.5 text-white shadow-xl">
+                  <h3 className="text-lg sm:text-2xl font-extrabold leading-snug">
+                    {post.media.overlayTitle || post.media.title}
+                  </h3>
+                  <p className="text-[11px] text-zinc-300 text-right mt-1 font-mono">
+                    {post.media.domain || "https://conectln.com"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* 4. STANDARD FULL-BLEED ACTION PHOTO WITH OPTIONAL CALLOUT BANNER */
+            <div className="relative w-full overflow-hidden bg-zinc-900">
+              <img
+                src={post.media.url}
+                alt={post.media.title || "Post content"}
+                className="w-full object-cover max-h-[540px]"
+              />
+
+              {post.media.overlayTitle && (
+                <div className="absolute left-0 bottom-5 max-w-[88%] sm:max-w-[78%] bg-gradient-to-r from-[#8B2E16]/95 via-[#9E381E]/90 to-[#8B2E16]/80 backdrop-blur-xs px-4 py-3 text-white shadow-lg border-r-4 border-amber-400">
+                  <p className="text-sm sm:text-lg font-extrabold leading-tight drop-shadow-xs">
+                    {post.media.overlayTitle}
+                  </p>
+                  {post.media.overlaySubtitle && (
+                    <p className="mt-0.5 text-[11px] sm:text-xs font-medium text-amber-100">
+                      {post.media.overlaySubtitle}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* LinkedIn-Style Guide / Article Caption + Full-Width Download Button (Matches Fisher Investments Screenshot) */}
           {(post.media.title || post.media.downloadGuide) && (
             <div className="bg-white dark:bg-zinc-900">
               <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800">
@@ -922,7 +1071,7 @@ export function FeedPostCard({
                   {post.media.downloadGuide?.title || post.media.title}
                 </h4>
                 <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
-                  {post.media.submitsText || post.media.downloadGuide?.subtitle || post.media.domain || "connectln.org"}
+                  {post.media.submitsText || post.media.downloadGuide?.subtitle || post.media.domain || "conectln.com"}
                 </p>
               </div>
 
