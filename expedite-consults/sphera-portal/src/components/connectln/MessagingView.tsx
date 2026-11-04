@@ -145,14 +145,48 @@ export function MessagingView({
         }
     });
     const composerInputRef = useRef<HTMLInputElement | null>(null);
-    const [customLabels, setCustomLabels] = useState<Array<{ id: string; name: string; color: string }>>([
+    const enclaveScrollRef = useRef<HTMLDivElement | null>(null);
+    const DEFAULT_CUSTOM_LABELS = [
         { id: 'verified_dm', name: 'Verified DMs', color: '#0A66C2' },
         { id: 'specs_files', name: 'Specs & Attachments', color: '#059669' },
         { id: 'video_huddle', name: 'Video Huddles', color: '#7C3AED' },
         { id: 'job_offers', name: 'Hiring & Offers', color: '#D97706' },
-    ]);
+    ];
+    const [customLabels, setCustomLabels] = useState<Array<{ id: string; name: string; color: string }>>(() => {
+        if (typeof window === 'undefined') return DEFAULT_CUSTOM_LABELS;
+        try {
+            const raw = localStorage.getItem('connectln_custom_labels_v1');
+            if (!raw) return DEFAULT_CUSTOM_LABELS;
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_CUSTOM_LABELS;
+        } catch {
+            return DEFAULT_CUSTOM_LABELS;
+        }
+    });
+    const [threadCustomLabels, setThreadCustomLabels] = useState<Record<string, string[]>>(() => {
+        if (typeof window === 'undefined') return {};
+        try {
+            const raw = localStorage.getItem('connectln_thread_labels_v1');
+            return raw ? JSON.parse(raw) : {};
+        } catch {
+            return {};
+        }
+    });
     const [showNewLabelInput, setShowNewLabelInput] = useState(false);
     const [newLabelName, setNewLabelName] = useState('');
+
+    const toggleLabelOnThread = (threadId: string, labelId: string) => {
+        setThreadCustomLabels((prev) => {
+            const current = prev[threadId] || [];
+            const exists = current.includes(labelId);
+            const nextList = exists ? current.filter((x) => x !== labelId) : [...current, labelId];
+            const next = { ...prev, [threadId]: nextList };
+            try {
+                localStorage.setItem('connectln_thread_labels_v1', JSON.stringify(next));
+            } catch {}
+            return next;
+        });
+    };
 
     // Noctis Inbox API Briefing States
     const [noctisBriefingText, setNoctisBriefingText] = useState<string>('');
@@ -761,6 +795,32 @@ export function MessagingView({
         }
     }, [currentUser?.professionEnclave]);
 
+    const handleSelectEnclave = (enclaveId: string, buttonEl?: HTMLElement | null) => {
+        setSelectedEnclave(enclaveId);
+        setActiveChannel('All');
+        setActiveCustomLabel(null);
+        setSearchQuery('');
+        if (buttonEl) {
+            try {
+                buttonEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            } catch {}
+        }
+        const vName = currentUser?.name || '';
+        const vEmail = currentUser?.email || '';
+        const enclaveThreads = getEnclaveB2BThreads(enclaveId);
+        const localBilateral = getLocalBilateralThreadsForViewer(vName, vEmail, enclaveId);
+        const immediate = mergeBilateralAndServerThreads(localBilateral, enclaveThreads);
+        setThreads(immediate);
+        // When selecting a specific profession enclave, select its primary profession thread so the conversation pane updates immediately
+        const targetThread =
+            enclaveId !== 'all' && enclaveThreads.length > 0
+                ? enclaveThreads[0]
+                : immediate[0];
+        if (targetThread) {
+            setSelectedThreadId(targetThread.id);
+        }
+    };
+
     // Load threads from backend API + local bilateral mailbox whenever selectedEnclave or currentUser changes
     useEffect(() => {
         let cancelled = false;
@@ -768,14 +828,14 @@ export function MessagingView({
         const vEmail = currentUser?.email || '';
 
         // Immediately populate with local bilateral DMs + enclave threads for zero-latency switch
+        const enclaveThreads = getEnclaveB2BThreads(selectedEnclave);
         const localBilateral = getLocalBilateralThreadsForViewer(vName, vEmail, selectedEnclave);
-        const immediate = mergeBilateralAndServerThreads(
-            localBilateral,
-            getEnclaveB2BThreads(selectedEnclave)
-        );
+        const immediate = mergeBilateralAndServerThreads(localBilateral, enclaveThreads);
         setThreads(immediate);
         setSelectedThreadId((prev) =>
-            immediate.some((t) => t.id === prev) ? prev : immediate[0]?.id || ''
+            immediate.some((t) => t.id === prev)
+                ? prev
+                : (selectedEnclave !== 'all' && enclaveThreads[0]?.id) || immediate[0]?.id || ''
         );
 
         const fetchLiveThreads = async (showSpinner = false) => {
@@ -794,7 +854,7 @@ export function MessagingView({
                     setSelectedThreadId((prev) =>
                         merged.some((t: B2BConversationThread) => t.id === prev)
                             ? prev
-                            : merged[0].id
+                            : (selectedEnclave !== 'all' && data.threads[0]?.id) || merged[0].id
                     );
                 }
             } catch {
@@ -845,12 +905,16 @@ export function MessagingView({
     const hasMeetingOrHuddleInThread = (t: B2BConversationThread) =>
         t.lastMessage.toLowerCase().includes('huddle') ||
         t.lastMessage.toLowerCase().includes('meeting') ||
+        t.lastMessage.toLowerCase().includes('call') ||
+        t.lastMessage.toLowerCase().includes('briefing') ||
         (t.messages || []).some(
             (m) =>
                 m.text.toLowerCase().includes('meeting invitation') ||
                 m.text.toLowerCase().includes('video huddle') ||
+                m.text.toLowerCase().includes('voice call') ||
                 m.text.toLowerCase().includes('rsvp')
-        );
+        ) ||
+        (t.channelType === 'People' && t.onlineStatus === 'online');
 
     const isThreadStarredById = (threadId: string): boolean => {
         if (unstarredIds.includes(threadId)) return false;
@@ -926,10 +990,31 @@ export function MessagingView({
 
     const matchesCustomLabel = (t: B2BConversationThread, labelId: string | null): boolean => {
         if (!labelId) return true;
+        const explicitTags = threadCustomLabels[t.id] || [];
+        if (explicitTags.includes(labelId)) return true;
         if (labelId === 'verified_dm') return t.channelType === 'People' && Boolean(t.isVerified);
         if (labelId === 'specs_files') return hasAttachmentInThread(t);
         if (labelId === 'video_huddle') return hasMeetingOrHuddleInThread(t);
-        if (labelId === 'job_offers') return t.channelType === 'Companies' || t.lastMessage.toLowerCase().includes('job');
+        if (labelId === 'job_offers')
+            return (
+                t.channelType === 'Companies' ||
+                t.lastMessage.toLowerCase().includes('job') ||
+                t.lastMessage.toLowerCase().includes('recruiting') ||
+                t.lastMessage.toLowerCase().includes('role')
+            );
+        const customDef = customLabels.find((l) => l.id === labelId);
+        if (customDef) {
+            const kw = customDef.name.trim().toLowerCase();
+            if (
+                kw &&
+                (t.title.toLowerCase().includes(kw) ||
+                    t.subtitle.toLowerCase().includes(kw) ||
+                    t.lastMessage.toLowerCase().includes(kw))
+            ) {
+                return true;
+            }
+            return false;
+        }
         return true;
     };
 
@@ -937,8 +1022,11 @@ export function MessagingView({
         threads.filter((t) => matchesMailboxFolder(t, folder)).length;
 
     // Filter threads based on activeMailboxFolder, activeCustomLabel, activeChannel & searchQuery
+    // When a custom label is selected, filter across all threads so the thread list count always matches the label badge count
     const filteredThreads = threads.filter((t) => {
-        const matchesFolder = matchesMailboxFolder(t, activeMailboxFolder);
+        const matchesFolder = activeCustomLabel
+            ? true
+            : matchesMailboxFolder(t, activeMailboxFolder);
         const matchesLabel = matchesCustomLabel(t, activeCustomLabel);
         const matchesChannel = activeChannel === 'All' || t.channelType === activeChannel;
         const q = searchQuery.trim().toLowerCase();
@@ -1072,6 +1160,25 @@ export function MessagingView({
             } else if (savedDraftsByThread[target.id]) {
                 setMessageInput(savedDraftsByThread[target.id]);
             }
+        }
+    };
+
+    const handleSelectCustomLabel = (labelId: string) => {
+        if (activeCustomLabel === labelId) {
+            setActiveCustomLabel(null);
+            return;
+        }
+        setActiveCustomLabel(labelId);
+        if (activeMailboxFolder === 'ai_inbox') {
+            setActiveMailboxFolder('inbox');
+        }
+        setActiveChannel('All');
+        setSearchQuery('');
+        setMobileShowChat(false);
+        const matching = threads.filter((t) => matchesCustomLabel(t, labelId));
+        if (matching.length > 0) {
+            const target = matching.find((t) => t.id === selectedThreadId) || matching[0];
+            setSelectedThreadId(target.id);
         }
     };
 
@@ -1888,43 +1995,68 @@ export function MessagingView({
                     </div>
                 </div>
 
-                {/* Scrollable 15-Profession Pill Bar */}
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+                {/* Scrollable 15-Profession Pill Bar with Left / Right Scroll Controls */}
+                <div className="flex items-center gap-1.5">
                     <button
+                        type="button"
                         onClick={() => {
-                            setSelectedEnclave('all');
-                            setActiveChannel('All');
+                            enclaveScrollRef.current?.scrollBy({ left: -280, behavior: 'smooth' });
                         }}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all border ${
-                            selectedEnclave === 'all'
-                                ? 'bg-[#0A66C2] border-[#0A66C2] shadow-sm'
-                                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-                        }`}
-                        style={selectedEnclave === 'all' ? { color: '#FFFFFF' } : undefined}
+                        title="Scroll professions left"
+                        className="shrink-0 w-7 h-7 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-black text-sm flex items-center justify-center shadow-2xs cursor-pointer"
                     >
-                        🌐 All Professions
+                        ‹
                     </button>
-                    {PROFESSION_ENCLAVES.map((enc) => {
-                        const isSelected = selectedEnclave === enc.id;
-                        return (
-                            <button
-                                key={enc.id}
-                                onClick={() => {
-                                    setSelectedEnclave(enc.id);
-                                    setActiveChannel('All');
-                                }}
-                                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all border flex items-center gap-1 ${
-                                    isSelected
-                                        ? 'bg-[#0A66C2] border-[#0A66C2] shadow-sm'
-                                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-                                }`}
-                                style={isSelected ? { color: '#FFFFFF' } : undefined}
-                            >
-                                <span>{enc.icon}</span>
-                                <span>{enc.shortName}</span>
-                            </button>
-                        );
-                    })}
+                    <div
+                        ref={enclaveScrollRef}
+                        className="flex-1 flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar scroll-smooth"
+                    >
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                handleSelectEnclave('all', e.currentTarget);
+                            }}
+                            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all border cursor-pointer ${
+                                selectedEnclave === 'all'
+                                    ? 'bg-[#0A66C2] border-[#0A66C2] shadow-sm'
+                                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                            }`}
+                            style={selectedEnclave === 'all' ? { color: '#FFFFFF' } : undefined}
+                        >
+                            🌐 All Professions
+                        </button>
+                        {PROFESSION_ENCLAVES.map((enc) => {
+                            const isSelected = selectedEnclave === enc.id;
+                            return (
+                                <button
+                                    key={enc.id}
+                                    type="button"
+                                    onClick={(e) => {
+                                        handleSelectEnclave(enc.id, e.currentTarget);
+                                    }}
+                                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all border flex items-center gap-1 cursor-pointer ${
+                                        isSelected
+                                            ? 'bg-[#0A66C2] border-[#0A66C2] shadow-sm'
+                                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                                    }`}
+                                    style={isSelected ? { color: '#FFFFFF' } : undefined}
+                                >
+                                    <span>{enc.icon}</span>
+                                    <span>{enc.shortName}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            enclaveScrollRef.current?.scrollBy({ left: 280, behavior: 'smooth' });
+                        }}
+                        title="Scroll professions right"
+                        className="shrink-0 w-7 h-7 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-black text-sm flex items-center justify-center shadow-2xs cursor-pointer"
+                    >
+                        ›
+                    </button>
                 </div>
             </div>
 
@@ -2206,10 +2338,25 @@ export function MessagingView({
                                     const clean = newLabelName.trim();
                                     if (!clean) return;
                                     const id = `lbl_${Date.now()}`;
-                                    setCustomLabels((prev) => [
-                                        ...prev,
-                                        { id, name: clean, color: '#0A66C2' },
-                                    ]);
+                                    setCustomLabels((prev) => {
+                                        const next = [
+                                            ...prev,
+                                            { id, name: clean, color: '#0A66C2' },
+                                        ];
+                                        try {
+                                            localStorage.setItem(
+                                                'connectln_custom_labels_v1',
+                                                JSON.stringify(next)
+                                            );
+                                        } catch {}
+                                        return next;
+                                    });
+                                    if (activeThread) {
+                                        toggleLabelOnThread(activeThread.id, id);
+                                        triggerToast(
+                                            `🏷️ Label "${clean}" created and applied to ${activeThread.title}.`
+                                        );
+                                    }
                                     setNewLabelName('');
                                     setShowNewLabelInput(false);
                                 }}
@@ -2241,12 +2388,10 @@ export function MessagingView({
                                     <button
                                         key={lbl.id}
                                         type="button"
-                                        onClick={() => {
-                                            setActiveCustomLabel(isSelected ? null : lbl.id);
-                                        }}
+                                        onClick={() => handleSelectCustomLabel(lbl.id)}
                                         className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-full text-xs transition-all cursor-pointer ${
                                             isSelected
-                                                ? 'bg-[#D3E3FD] text-[#041E49] font-extrabold'
+                                                ? 'bg-[#D3E3FD] text-[#041E49] font-extrabold shadow-2xs'
                                                 : 'text-slate-700 font-medium hover:bg-slate-200/70'
                                         }`}
                                     >
@@ -2258,7 +2403,13 @@ export function MessagingView({
                                             <span className="truncate">{lbl.name}</span>
                                         </span>
                                         {lblCount > 0 && (
-                                            <span className="text-[10px] font-semibold text-slate-500">
+                                            <span
+                                                className={`text-[10px] shrink-0 ${
+                                                    isSelected
+                                                        ? 'font-extrabold text-[#041E49]'
+                                                        : 'font-semibold text-slate-500'
+                                                }`}
+                                            >
                                                 {lblCount}
                                             </span>
                                         )}
@@ -2989,15 +3140,45 @@ export function MessagingView({
                                         </span>
                                     )}
                                 </h2>
-                                <p className="text-[11px] text-slate-500 font-semibold">
-                                    {activeMailboxFolder === 'drafts'
-                                        ? '📝 Unsent Drafts • Click any draft to edit or send'
-                                        : 'Direct Peers • Hiring Teams • Commercial Vendors • Guilds'}
+                                <p className="text-[11px] text-slate-500 font-semibold flex items-center gap-1.5 flex-wrap">
+                                    {activeCustomLabel ? (
+                                        <>
+                                            <span className="text-[#0A66C2] font-extrabold">
+                                                🏷️ Label:{' '}
+                                                {customLabels.find((l) => l.id === activeCustomLabel)?.name ||
+                                                    activeCustomLabel}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => setActiveCustomLabel(null)}
+                                                className="text-[10px] font-bold text-slate-500 hover:text-slate-900 bg-slate-100 px-1.5 py-0.2 rounded cursor-pointer"
+                                            >
+                                                ✕ Clear
+                                            </button>
+                                        </>
+                                    ) : activeMailboxFolder === 'drafts' ? (
+                                        '📝 Unsent Drafts • Click any draft to edit or send'
+                                    ) : activeMailboxFolder !== 'inbox' ? (
+                                        <>
+                                            <span className="text-[#0A66C2] font-extrabold capitalize">
+                                                📂 {activeMailboxFolder.replace('_', ' ')}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleSelectMailboxFolder('inbox')}
+                                                className="text-[10px] font-bold text-slate-500 hover:text-slate-900 bg-slate-100 px-1.5 py-0.2 rounded cursor-pointer"
+                                            >
+                                                ✕ Back to Inbox
+                                            </button>
+                                        </>
+                                    ) : (
+                                        'Direct Peers • Hiring Teams • Commercial Vendors • Guilds'
+                                    )}
                                 </p>
                             </div>
-                            <span className="text-[11px] font-black text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md">
+                            <span className="text-[11px] font-black text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md shrink-0">
                                 {filteredThreads.length}{' '}
-                                {activeMailboxFolder === 'drafts'
+                                {activeMailboxFolder === 'drafts' && !activeCustomLabel
                                     ? filteredThreads.length === 1
                                         ? 'Draft'
                                         : 'Drafts'
@@ -3055,8 +3236,25 @@ export function MessagingView({
                                 return (
                                     <button
                                         key={tab.id}
-                                        onClick={() => setActiveChannel(tab.id)}
-                                        className={`px-2.5 py-1.5 rounded-lg text-[11px] font-extrabold whitespace-nowrap transition-all flex items-center gap-1 border ${
+                                        type="button"
+                                        onClick={() => {
+                                            setActiveChannel(tab.id);
+                                            setActiveCustomLabel(null);
+                                            if (
+                                                ['purchases', 'social', 'forums', 'promotions'].includes(
+                                                    activeMailboxFolder
+                                                )
+                                            ) {
+                                                setActiveMailboxFolder('inbox');
+                                            }
+                                            const matching = threads.filter((t) =>
+                                                tab.id === 'All' ? true : t.channelType === tab.id
+                                            );
+                                            if (matching.length > 0 && !matching.some((t) => t.id === selectedThreadId)) {
+                                                setSelectedThreadId(matching[0].id);
+                                            }
+                                        }}
+                                        className={`px-2.5 py-1.5 rounded-lg text-[11px] font-extrabold whitespace-nowrap transition-all flex items-center gap-1 border cursor-pointer ${
                                             isActive
                                                 ? 'bg-slate-900 border-slate-900 shadow-sm'
                                                 : 'bg-slate-100 text-slate-700 border-slate-200/80 hover:bg-slate-200/70'
