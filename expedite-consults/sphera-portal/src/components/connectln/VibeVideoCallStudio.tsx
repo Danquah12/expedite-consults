@@ -142,7 +142,7 @@ const remoteLiveFrameCache = new Map<string, string>()
 const remoteLiveFrameListeners = new Map<string, Set<(frameUrl: string) => void>>()
 
 function publishRemoteLiveFrame(participantId: string | undefined, peerId: string | undefined, frameUrl: string | null | undefined) {
-  if (!frameUrl || typeof frameUrl !== "string" || frameUrl.length < 1800) return
+  if (!frameUrl || typeof frameUrl !== "string" || !frameUrl.startsWith("data:image/") || frameUrl.length < 800) return
   const keys = [participantId, peerId].filter((k): k is string => Boolean(k))
   for (const key of keys) {
     if (remoteLiveFrameCache.get(key) === frameUrl) continue
@@ -2149,14 +2149,14 @@ export function VibeVideoCallStudio({
     }
   }, [])
 
-  // Throttle frame encoding to 260ms (~4 FPS) and avoid repeated GPU getImageData readbacks once camera is verified live
+  // Throttle frame encoding to 200ms (~5 FPS) and avoid repeated GPU getImageData readbacks once camera is verified live
   const lastFrameCaptureAtMsRef = useRef<number>(0)
   const hasVerifiedCameraNonBlackRef = useRef<boolean>(false)
 
-  // Capture a compact 216x144 JPEG frame using a single persistent offscreen canvas (prevents GPU context exhaustion!)
+  // Capture a compact 208x138 JPEG frame using a single persistent offscreen canvas (prevents GPU context exhaustion!)
   const captureCompactLiveFrame = useCallback((): string | null => {
     const now = Date.now()
-    if (now - lastFrameCaptureAtMsRef.current < 260 && lastValidLocalFrameRef.current) {
+    if (now - lastFrameCaptureAtMsRef.current < 200 && lastValidLocalFrameRef.current) {
       return isCameraOn ? lastValidLocalFrameRef.current : null
     }
     if (
@@ -2168,8 +2168,8 @@ export function VibeVideoCallStudio({
       try {
         const bgCanvas = virtualBgCanvasRef.current
         if (bgCanvas.width > 0) {
-          const encodedBg = bgCanvas.toDataURL("image/jpeg", 0.54)
-          if (encodedBg && encodedBg.length > 2200) {
+          const encodedBg = bgCanvas.toDataURL("image/jpeg", 0.50)
+          if (encodedBg && encodedBg.length > 800) {
             lastFrameCaptureAtMsRef.current = now
             lastValidLocalFrameRef.current = encodedBg
             return encodedBg
@@ -2196,8 +2196,8 @@ export function VibeVideoCallStudio({
       let canvas = liveFrameCaptureCanvasRef.current
       if (!canvas) {
         canvas = document.createElement("canvas")
-        canvas.width = 216
-        canvas.height = 144
+        canvas.width = 208
+        canvas.height = 138
         liveFrameCaptureCanvasRef.current = canvas
       }
       const ctx = canvas.getContext("2d")
@@ -2209,8 +2209,8 @@ export function VibeVideoCallStudio({
         }
         hasVerifiedCameraNonBlackRef.current = true
       }
-      const encoded = canvas.toDataURL("image/jpeg", 0.52)
-      if (encoded && encoded.length > 2200) {
+      const encoded = canvas.toDataURL("image/jpeg", 0.50)
+      if (encoded && encoded.length > 800) {
         lastFrameCaptureAtMsRef.current = now
         lastValidLocalFrameRef.current = encoded
         return encoded
@@ -2283,7 +2283,7 @@ export function VibeVideoCallStudio({
       if (info.peerId) {
         knownRemotePeerIdsRef.current.add(info.peerId)
       }
-      if (typeof info.liveFrame === "string" && info.liveFrame.length > 1800) {
+      if (typeof info.liveFrame === "string" && info.liveFrame.length > 800) {
         publishRemoteLiveFrame(info.participantId, info.peerId, info.liveFrame)
       }
 
@@ -2352,7 +2352,7 @@ export function VibeVideoCallStudio({
         const hadInitialFrame = Boolean(existingTile?.liveFrame)
         const nextLiveFrame =
           existingTile?.liveFrame ||
-          (typeof info.liveFrame === "string" && info.liveFrame.length > 1800 ? info.liveFrame : null)
+          (typeof info.liveFrame === "string" && info.liveFrame.length > 800 ? info.liveFrame : null)
 
         // FAST PATH: If this real participant tile is already in the grid and none of its structural props changed,
         // return `prev` directly so React skips re-rendering the 5,600-line studio (frames update via RemoteLiveFrameOverlay)!
@@ -2830,7 +2830,7 @@ export function VibeVideoCallStudio({
         outStream &&
         (outStream.getVideoTracks().length > 0 || outStream.getAudioTracks().length > 0) &&
         needsMediaCall &&
-        nowMs - lastTry > 4500
+        nowMs - lastTry > 9500
       ) {
         lastCallAttemptMs.set(targetSlot, nowMs)
         try {
@@ -2851,6 +2851,8 @@ export function VibeVideoCallStudio({
 
     dialRemotePeerNowRef.current = dialRemotePeerNow
 
+    let resolvedIceServers: any[] | null = null
+
     const initPeerAtSlot = async (tryIndex: number) => {
       if (isCancelled || tryIndex >= slotOrder.length) return
       try {
@@ -2858,12 +2860,27 @@ export function VibeVideoCallStudio({
         const PeerClass = PeerModule.Peer || PeerModule.default
         if (!PeerClass || isCancelled) return
 
+        if (!resolvedIceServers) {
+          try {
+            const iceRes = await fetch("/api/v1/calls?ice=1", { cache: "no-store" })
+            if (iceRes.ok) {
+              const iceJson = await iceRes.json()
+              if (Array.isArray(iceJson?.ice_servers) && iceJson.ice_servers.length > 0) {
+                resolvedIceServers = iceJson.ice_servers
+              }
+            }
+          } catch {
+            // fallback to STUN below
+          }
+        }
+        if (isCancelled) return
+
         const candidatePeerId = slotOrder[tryIndex]
         const peer = new PeerClass(candidatePeerId, {
           debug: 0,
           config: {
             iceCandidatePoolSize: 4,
-            iceServers: [
+            iceServers: resolvedIceServers || [
               { urls: "stun:stun.l.google.com:19302" },
               { urls: "stun:stun1.l.google.com:19302" },
               { urls: "stun:stun2.l.google.com:19302" },
@@ -2888,7 +2905,7 @@ export function VibeVideoCallStudio({
             }
           })
 
-          // Fast 290ms P2P DataChannel frame & audio relay for open DataConnections (zero React re-renders!)
+          // Fast 220ms P2P DataChannel frame & audio relay for open DataConnections (zero React re-renders!)
           fastDataTimer = setInterval(() => {
             if (isCancelled || !peerInstance || peerInstance.destroyed || activeDataConns.size === 0) return
             const st = peerSyncStateRef.current
@@ -2918,7 +2935,7 @@ export function VibeVideoCallStudio({
                 }
               }
             })
-          }, 290)
+          }, 220)
 
           // Connect & maintain WebRTC MediaStream with discovered active peers every 900ms
           syncTimer = setInterval(() => {
@@ -3134,7 +3151,7 @@ export function VibeVideoCallStudio({
     }
 
     sendHeartbeat()
-    const interval = setInterval(sendHeartbeat, 540)
+    const interval = setInterval(sendHeartbeat, 380)
 
     const handleBeforeUnload = () => {
       fetch("/api/v1/calls", {

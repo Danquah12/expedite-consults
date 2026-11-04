@@ -1148,12 +1148,12 @@ export function MessagingView({
                         huddleCaptureCanvasRef.current = c;
                     }
                     const c = huddleCaptureCanvasRef.current;
-                    const ctx = c.getContext('2d', { willReadFrequently: true });
+                    const ctx = c.getContext('2d');
                     if (ctx) {
                         ctx.drawImage(vEl, 0, 0, c.width, c.height);
-                        if (isCanvasBright(ctx, c.width, c.height)) {
-                            const encoded = c.toDataURL('image/jpeg', 0.58);
-                            if (encoded && encoded.length > 3200) {
+                        if (lastValidLocalHuddleFrameRef.current || isCanvasBright(ctx, c.width, c.height)) {
+                            const encoded = c.toDataURL('image/jpeg', 0.52);
+                            if (encoded && encoded.length > 800) {
                                 localFrame = encoded;
                                 lastValidLocalHuddleFrameRef.current = encoded;
                             }
@@ -1245,7 +1245,7 @@ export function MessagingView({
 
                     if (
                         typeof peer.live_frame === 'string' &&
-                        peer.live_frame.length > 2200
+                        peer.live_frame.length > 800
                     ) {
                         verifiedRemoteFramesRef.current.set(peer.user_id, peer.live_frame);
                     }
@@ -1287,7 +1287,7 @@ export function MessagingView({
         window.addEventListener('beforeunload', handleUnloadLeave);
 
         syncHuddleFrame();
-        const hb = setInterval(syncHuddleFrame, 500);
+        const hb = setInterval(syncHuddleFrame, 380);
         return () => {
             mounted = false;
             clearInterval(hb);
