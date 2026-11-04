@@ -453,6 +453,56 @@ export function JobsView({
   const [applyStep, setApplyStep] = useState<'form' | 'success'>('form')
   const [isLoadingJobs, setIsLoadingJobs] = useState(false)
 
+  // Recruiter Direct Outreach Modal State
+  const [outreachCandidate, setOutreachCandidate] = useState<CandidateProfile | null>(null)
+  const [isOutreachModalOpen, setIsOutreachModalOpen] = useState(false)
+  const [outreachStep, setOutreachStep] = useState<'compose' | 'sent'>('compose')
+  const [outreachRoleTitle, setOutreachRoleTitle] = useState('')
+  const [outreachCompRange, setOutreachCompRange] = useState('$155,000 – $195,000 / yr + Sign-On Bonus')
+  const [outreachInterviewFormat, setOutreachInterviewFormat] = useState('30-Min Executive Video Briefing (Zoom / ConnectLn Meet)')
+  const [outreachMessage, setOutreachMessage] = useState('')
+  const [reachedOutCandidateIds, setReachedOutCandidateIds] = useState<string[]>([])
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('connectin_recruiter_outreach_v1')
+      if (saved) setReachedOutCandidateIds(JSON.parse(saved))
+    } catch {
+      // ignore
+    }
+  }, [])
+
+  const handleOpenCandidateOutreach = (cand: CandidateProfile) => {
+    const defaultRole = cand.headline.split('|')[0]?.trim() || 'Senior Lead Specialist'
+    setOutreachCandidate(cand)
+    setOutreachRoleTitle(defaultRole)
+    setOutreachCompRange('$155,000 – $195,000 / yr + Sign-On Bonus')
+    setOutreachInterviewFormat('30-Min Executive Video Briefing (Zoom / ConnectLn Meet)')
+    setOutreachMessage(
+      `Hi ${cand.name.split(' ')[0]},\n\nI reviewed your verified ConnectLn profile (${cand.matchScore}% match) and was impressed by your credentials in ${cand.verifiedProducts.slice(0, 2).join(' & ')} (${cand.certifications.join(', ')}).\n\nWe are actively hiring for a ${defaultRole} role (${cand.location}) and would love to invite you to a fast-track interview with our hiring lead this week. Let me know if you are open to a quick 30-minute briefing!`
+    )
+    setOutreachStep('compose')
+    setIsOutreachModalOpen(true)
+  }
+
+  const handleSendCandidateOutreach = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!outreachCandidate) return
+    const updated = Array.from(new Set([...reachedOutCandidateIds, outreachCandidate.id]))
+    setReachedOutCandidateIds(updated)
+    try {
+      localStorage.setItem('connectin_recruiter_outreach_v1', JSON.stringify(updated))
+    } catch {
+      // ignore
+    }
+    trackUserActivity({
+      type: 'job_apply',
+      title: `Sent Recruiter Outreach to ${outreachCandidate.name}`,
+      subtitle: `${outreachRoleTitle} · ${outreachCompRange}`
+    })
+    setOutreachStep('sent')
+  }
+
   // Current active country config
   const currentCountry = COUNTRIES_CONFIG.find(c => c.code === selectedCountryCode) || COUNTRIES_CONFIG[0]
   const currentEnclaveObj = PROFESSION_ENCLAVES.find(e => e.id === selectedEnclave)
@@ -1805,18 +1855,32 @@ export function JobsView({
                 </div>
 
                 {/* Recruiter Action Buttons */}
-                <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+                <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2">
                   <span className="text-[11px] text-zinc-500 font-medium">
                     Certifications: {cand.certifications.join(', ')}
                   </span>
 
                   <button
-                    onClick={() => {
-                      alert(`Direct recruiting invitation sent to ${cand.name}. Calendar link and salary briefing dispatched.`)
-                    }}
-                    className="rounded-full bg-[#0A66C2] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#004182] transition-colors cursor-pointer"
+                    type="button"
+                    onClick={() => handleOpenCandidateOutreach(cand)}
+                    style={{ color: '#FFFFFF' }}
+                    className={`rounded-full px-4 py-1.5 text-xs font-bold text-white transition-colors cursor-pointer shrink-0 flex items-center gap-1.5 shadow-2xs ${
+                      reachedOutCandidateIds.includes(cand.id)
+                        ? "bg-emerald-600 hover:bg-emerald-700"
+                        : "bg-[#0A66C2] hover:bg-[#004182]"
+                    }`}
                   >
-                    Reach Out
+                    {reachedOutCandidateIds.includes(cand.id) ? (
+                      <>
+                        <Check className="h-3.5 w-3.5" />
+                        <span>Invitation Sent</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-3 w-3" />
+                        <span>Reach Out</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -2349,6 +2413,160 @@ export function JobsView({
                     <button
                       onClick={() => setIsApplyModalOpen(false)}
                       className="rounded-full bg-[#0A66C2] px-5 py-2 text-xs font-bold text-white hover:bg-[#004182] cursor-pointer"
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* RECRUITER DIRECT OUTREACH & INTERVIEW INVITATION MODAL */}
+      <Dialog open={isOutreachModalOpen} onOpenChange={setIsOutreachModalOpen}>
+        <DialogContent className="max-w-lg">
+          {outreachCandidate && (
+            <>
+              <DialogHeader>
+                <div className="flex items-center gap-3">
+                  <img
+                    src={outreachCandidate.avatar}
+                    alt={outreachCandidate.name}
+                    className="h-11 w-11 rounded-full object-cover border border-purple-300 shrink-0"
+                  />
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <DialogTitle className="text-base font-extrabold text-zinc-900 dark:text-zinc-100">
+                        Reach Out to {outreachCandidate.name}
+                      </DialogTitle>
+                      <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                        🎯 {outreachCandidate.matchScore}% Match
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-500 mt-0.5 line-clamp-1">
+                      {outreachCandidate.headline} · {outreachCandidate.location}
+                    </p>
+                  </div>
+                </div>
+              </DialogHeader>
+
+              {outreachStep === 'compose' ? (
+                <form onSubmit={handleSendCandidateOutreach} className="space-y-3.5 pt-2 text-xs">
+                  <div className="rounded-xl bg-purple-50/70 border border-purple-200/80 p-3 space-y-1">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-purple-800">
+                      Verified Licenses, Tools &amp; Certifications Matched:
+                    </p>
+                    <p className="font-semibold text-zinc-800">
+                      {outreachCandidate.verifiedProducts.join(' · ')} ({outreachCandidate.certifications.join(', ')})
+                    </p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-zinc-700 dark:text-zinc-300">
+                      Target Role / Position Title
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={outreachRoleTitle}
+                      onChange={(e) => setOutreachRoleTitle(e.target.value)}
+                      className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-xs text-zinc-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="font-bold text-zinc-700 dark:text-zinc-300">
+                        Compensation &amp; Bonus Briefing
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={outreachCompRange}
+                        onChange={(e) => setOutreachCompRange(e.target.value)}
+                        className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-xs text-zinc-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="font-bold text-zinc-700 dark:text-zinc-300">
+                        Interview Format
+                      </label>
+                      <select
+                        value={outreachInterviewFormat}
+                        onChange={(e) => setOutreachInterviewFormat(e.target.value)}
+                        className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-xs text-zinc-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100"
+                      >
+                        <option value="30-Min Executive Video Briefing (Zoom / ConnectLn Meet)">30-Min Executive Video Briefing</option>
+                        <option value="Direct Hiring Manager Phone Call (15 Min)">Direct Hiring Manager Call (15 Min)</option>
+                        <option value="On-Site / Technical Walkthrough & Offer Review">On-Site / Technical Walkthrough</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label className="font-bold text-zinc-700 dark:text-zinc-300">
+                        Direct Recruiter InMail &amp; Calendar Invitation
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setOutreachMessage(
+                            `Hi ${outreachCandidate.name.split(' ')[0]},\n\nYour verified background in ${outreachCandidate.capabilities.join(', ')} and active ${outreachCandidate.certifications.join(', ')} credentials stood out immediately (${outreachCandidate.matchScore}% match).\n\nWe are extending a priority interview invitation for ${outreachRoleTitle} (${outreachCompRange}). Are you available for a ${outreachInterviewFormat} this Thursday or Friday?`
+                          )
+                        }
+                        className="text-[11px] font-bold text-[#0A66C2] hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <Sparkles className="h-3 w-3" />
+                        <span>✨ Polish with Noctis AI</span>
+                      </button>
+                    </div>
+                    <textarea
+                      rows={4}
+                      required
+                      value={outreachMessage}
+                      onChange={(e) => setOutreachMessage(e.target.value)}
+                      className="w-full rounded-lg border border-zinc-300 p-2.5 text-xs text-zinc-900 leading-relaxed dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-200 dark:border-zinc-800">
+                    <button
+                      type="button"
+                      onClick={() => setIsOutreachModalOpen(false)}
+                      className="rounded-full px-4 py-1.5 text-xs font-bold text-zinc-600 hover:bg-zinc-100 cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      style={{ color: '#FFFFFF' }}
+                      className="rounded-full bg-[#0A66C2] hover:bg-[#004182] px-5 py-2 text-xs font-bold text-white flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                    >
+                      <Send className="h-3.5 w-3.5" />
+                      <span>Send Direct Invitation</span>
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="py-5 text-center space-y-3 text-xs">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
+                    <Check className="h-6 w-6" />
+                  </div>
+                  <h4 className="font-extrabold text-base text-zinc-900 dark:text-zinc-100">
+                    Direct Recruiting Invitation Sent to {outreachCandidate.name}!
+                  </h4>
+                  <p className="text-zinc-600 dark:text-zinc-300 max-w-md mx-auto leading-relaxed">
+                    Your invitation for <strong>{outreachRoleTitle}</strong> ({outreachCompRange}) and a calendar booking link for a <strong>{outreachInterviewFormat}</strong> have been delivered to {outreachCandidate.name}&apos;s ConnectLn Inbox.
+                  </p>
+                  <div className="pt-2 flex items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsOutreachModalOpen(false)}
+                      style={{ color: '#FFFFFF' }}
+                      className="rounded-full bg-[#0A66C2] hover:bg-[#004182] px-6 py-2 text-xs font-bold text-white cursor-pointer"
                     >
                       Done
                     </button>
