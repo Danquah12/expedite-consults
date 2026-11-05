@@ -42,7 +42,7 @@ import { UserProfile } from "@/lib/connectln-data"
 import { resolveUserProfilePicture, isKwesiAccount } from "@/lib/connectin-storage"
 import { buildSharePreviewUrl } from "@/lib/connectin-share"
 import { VideoShareBanner } from "./VideoShareBanner"
-import { ConnectLnStudioPlayer } from "./ConnectLnStudioPlayer"
+import { ConnectLnStudioPlayer, CONNECTLN_VIDEO_PLAY_EVENT, notifyExclusiveVideoPlay } from "./ConnectLnStudioPlayer"
 
 interface ConnectInVideoWheelProps {
   className?: string
@@ -151,6 +151,26 @@ export function ConnectInVideoWheel({
     [tieredUserVideos, user]
   )
   const [isPlayingHeroInline, setIsPlayingHeroInline] = useState(false)
+  const wheelHeroPlayerIdRef = useRef<string>(`wheel-hero-${Math.random().toString(36).slice(2, 10)}`)
+  const wheelModalPlayerIdRef = useRef<string>(`wheel-modal-${Math.random().toString(36).slice(2, 10)}`)
+
+  // Stop hero inline video whenever any other video starts playing across the app
+  useEffect(() => {
+    const handleExclusivePlay = (e: Event) => {
+      const customEvent = e as CustomEvent<{ playerId?: string }>
+      const activeId = customEvent.detail?.playerId
+      if (activeId && activeId !== wheelHeroPlayerIdRef.current) {
+        setIsPlayingHeroInline(false)
+      }
+      if (activeId && activeId !== wheelModalPlayerIdRef.current && activeId !== wheelHeroPlayerIdRef.current) {
+        setActiveVideo(null)
+      }
+    }
+    window.addEventListener(CONNECTLN_VIDEO_PLAY_EVENT, handleExclusivePlay)
+    return () => {
+      window.removeEventListener(CONNECTLN_VIDEO_PLAY_EVENT, handleExclusivePlay)
+    }
+  }, [])
 
   // Keep filter synced when user logs in or switches profession — default strictly to their profession!
   useEffect(() => {
@@ -698,7 +718,15 @@ export function ConnectInVideoWheel({
             <div className="flex items-center gap-1.5 shrink-0">
               <button
                 type="button"
-                onClick={() => setIsPlayingHeroInline(!isPlayingHeroInline)}
+                onClick={() => {
+                  if (isPlayingHeroInline) {
+                    setIsPlayingHeroInline(false)
+                  } else {
+                    setActiveVideo(null)
+                    notifyExclusiveVideoPlay(wheelHeroPlayerIdRef.current)
+                    setIsPlayingHeroInline(true)
+                  }
+                }}
                 style={{ backgroundColor: "#A64532", color: "#FFFFFF" }}
                 className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-bold shadow-xs hover:opacity-95 transition-opacity cursor-pointer"
               >
@@ -707,7 +735,11 @@ export function ConnectInVideoWheel({
               </button>
               <button
                 type="button"
-                onClick={() => setActiveVideo(assignedUserVideo)}
+                onClick={() => {
+                  setIsPlayingHeroInline(false)
+                  notifyExclusiveVideoPlay(wheelModalPlayerIdRef.current)
+                  setActiveVideo(assignedUserVideo)
+                }}
                 className="inline-flex items-center gap-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 px-3 py-1.5 text-[11px] font-semibold text-white cursor-pointer"
               >
                 <span>Full Screen</span>
@@ -724,11 +756,17 @@ export function ConnectInVideoWheel({
                 serialPlate={assignedUserVideo.serialPlate}
                 speaker={assignedUserVideo.speaker}
                 durationLabel={assignedUserVideo.duration || "5:15"}
+                playerId={wheelHeroPlayerIdRef.current}
+                onExclusiveStop={() => setIsPlayingHeroInline(false)}
                 className="h-full w-full"
               />
             ) : (
               <div
-                onClick={() => setIsPlayingHeroInline(true)}
+                onClick={() => {
+                  setActiveVideo(null)
+                  notifyExclusiveVideoPlay(wheelHeroPlayerIdRef.current)
+                  setIsPlayingHeroInline(true)
+                }}
                 className="relative h-full w-full cursor-pointer group overflow-hidden"
               >
                 <img
@@ -795,7 +833,11 @@ export function ConnectInVideoWheel({
             return (
               <div
                 key={talk.id}
-                onClick={() => setActiveVideo(talk)}
+                onClick={() => {
+                  setIsPlayingHeroInline(false)
+                  notifyExclusiveVideoPlay(wheelModalPlayerIdRef.current)
+                  setActiveVideo(talk)
+                }}
                 className={`group relative h-[20.5rem] w-[16.5rem] sm:w-[18.5rem] shrink-0 snap-center rounded-2xl overflow-hidden border bg-[#25211D] hover:border-[#0066FF] transition-all duration-300 hover:scale-[1.02] cursor-pointer flex flex-col justify-between shadow-md ${
                   isAssignedToUser ? "border-amber-400 ring-1 ring-amber-400/50" : "border-[#3E3832]"
                 }`}
@@ -1048,6 +1090,7 @@ export function ConnectInVideoWheel({
                       serialPlate={activeVideo.serialPlate}
                       speaker={activeVideo.speaker}
                       durationLabel={activeVideo.duration}
+                      playerId={wheelModalPlayerIdRef.current}
                       className="h-full w-full"
                     />
 
@@ -1118,6 +1161,7 @@ export function ConnectInVideoWheel({
                     youtubeId={activeVideo.youtubeId}
                     thumbnailUrl={activeVideo.thumbnailUrl}
                     videoUrl={`https://www.youtube.com/watch?v=${activeVideo.youtubeId}`}
+                    onPlayClick={() => modalPlayerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
                     duration={activeVideo.duration}
                     serialPlate={activeVideo.serialPlate}
                     takeaways={activeVideo.takeaways}

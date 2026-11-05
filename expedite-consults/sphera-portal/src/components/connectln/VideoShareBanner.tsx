@@ -1,10 +1,10 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useRef, useEffect } from "react"
 import { Play, ShieldCheck, Share2, Copy, Check, Mail } from "lucide-react"
 import { resolveUserProfilePicture, isDefaultPlaceholderAvatar, generatePersonalSignatureAvatar, isForeignPersonaAvatar } from "@/lib/connectin-storage"
 import { buildSharePreviewUrl, useSharePic } from "@/lib/connectin-share"
-import { ConnectLnStudioPlayer } from "./ConnectLnStudioPlayer"
+import { ConnectLnStudioPlayer, CONNECTLN_VIDEO_PLAY_EVENT, notifyExclusiveVideoPlay } from "./ConnectLnStudioPlayer"
 
 export interface VideoShareBannerProps {
   /** Sharer's profile picture (circular on the left inside the ConnectLn Logo Card) */
@@ -65,6 +65,22 @@ export function VideoShareBanner({
 }: VideoShareBannerProps) {
   const [isPlayingInline, setIsPlayingInline] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
+  const bannerPlayerIdRef = useRef<string>(`cln-banner-${Math.random().toString(36).slice(2, 10)}`)
+
+  // Stop inline playback whenever any other video starts playing across ConnectLn
+  useEffect(() => {
+    const handleExclusivePlay = (e: Event) => {
+      const customEvent = e as CustomEvent<{ playerId?: string }>
+      const activeId = customEvent.detail?.playerId
+      if (activeId && activeId !== bannerPlayerIdRef.current) {
+        setIsPlayingInline(false)
+      }
+    }
+    window.addEventListener(CONNECTLN_VIDEO_PLAY_EVENT, handleExclusivePlay)
+    return () => {
+      window.removeEventListener(CONNECTLN_VIDEO_PLAY_EVENT, handleExclusivePlay)
+    }
+  }, [])
 
   const resolvedAuthor = authorName || userName || "ConnectIn Member"
   const candidateAvatar = avatarUrl || userAvatar
@@ -89,7 +105,12 @@ export function VideoShareBanner({
           videoUrl.includes("youtu.be") ||
           videoUrl.endsWith(".mp4")))
     ) {
-      setIsPlayingInline(true)
+      if (isPlayingInline) {
+        setIsPlayingInline(false)
+      } else {
+        notifyExclusiveVideoPlay(bannerPlayerIdRef.current)
+        setIsPlayingInline(true)
+      }
     } else if (videoUrl) {
       window.open(videoUrl, "_blank", "noopener,noreferrer")
     }
@@ -208,11 +229,14 @@ export function VideoShareBanner({
                   serialPlate={serialPlate || "CLN-VID"}
                   speaker={resolvedAuthor}
                   durationLabel={duration}
+                  playerId={bannerPlayerIdRef.current}
+                  onExclusiveStop={() => setIsPlayingInline(false)}
                   className="h-full w-full"
                 />
               ) : (
                 <video
                   src={videoUrl}
+                  data-connectln-player-id={bannerPlayerIdRef.current}
                   controls
                   autoPlay
                   className="h-full w-full object-contain bg-black"

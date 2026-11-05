@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import {
   Play,
   Pause,
@@ -59,6 +59,7 @@ import {
 import { UserProfile } from "@/lib/connectln-data"
 import { ConnectInVideoWheel } from "@/components/connectln/ConnectInVideoWheel"
 import { VideoShareBanner } from "@/components/connectln/VideoShareBanner"
+import { CONNECTLN_VIDEO_PLAY_EVENT, notifyExclusiveVideoPlay } from "@/components/connectln/ConnectLnStudioPlayer"
 
 interface MediaViewProps {
   currentUser: UserProfile
@@ -82,6 +83,27 @@ export function MediaView({
   const [videos, setVideos] = useState<MediaVideoItem[]>(initialVideos)
   const [selectedVideo, setSelectedVideo] = useState<MediaVideoItem | null>(initialVideos[0] || null)
   const [isPlaying, setIsPlaying] = useState(false)
+  const mediaPlayerIdRef = useRef<string>(`media-view-${Math.random().toString(36).slice(2, 10)}`)
+
+  useEffect(() => {
+    if (isPlaying) {
+      notifyExclusiveVideoPlay(mediaPlayerIdRef.current)
+    }
+  }, [isPlaying, selectedVideo?.id])
+
+  useEffect(() => {
+    const handleExclusivePlay = (e: Event) => {
+      const customEvent = e as CustomEvent<{ playerId?: string }>
+      const activeId = customEvent.detail?.playerId
+      if (activeId && activeId !== mediaPlayerIdRef.current) {
+        setIsPlaying(false)
+      }
+    }
+    window.addEventListener(CONNECTLN_VIDEO_PLAY_EVENT, handleExclusivePlay)
+    return () => {
+      window.removeEventListener(CONNECTLN_VIDEO_PLAY_EVENT, handleExclusivePlay)
+    }
+  }, [])
   const [currentPlaybackSeconds, setCurrentPlaybackSeconds] = useState(0)
   const [aiSearchPrompt, setAiSearchPrompt] = useState("")
   const [aiSearchFeedback, setAiSearchFeedback] = useState<string | null>(null)

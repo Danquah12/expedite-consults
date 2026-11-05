@@ -3,6 +3,47 @@
 import React, { useState, useRef, useEffect, useCallback } from "react"
 import { Play, Pause, Volume2, VolumeX, Maximize2, Minimize2, RotateCcw } from "lucide-react"
 
+export const CONNECTLN_VIDEO_PLAY_EVENT = "connectln:exclusive-video-play"
+
+export function notifyExclusiveVideoPlay(activePlayerId: string) {
+  if (typeof window === "undefined") return
+  ;(window as any).__connectlnActiveVideoPlayerId = activePlayerId
+  window.dispatchEvent(
+    new CustomEvent(CONNECTLN_VIDEO_PLAY_EVENT, {
+      detail: { playerId: activePlayerId },
+    })
+  )
+  // Also pause any HTML5 <video> elements on the page (except live WebRTC camera streams with srcObject)
+  try {
+    const videos = document.querySelectorAll("video")
+    videos.forEach((v) => {
+      if (!v.srcObject && v.dataset.connectlnPlayerId !== activePlayerId && !v.paused) {
+        v.pause()
+      }
+    })
+  } catch {
+    // ignore
+  }
+}
+
+// Global capture-phase listener so native <video> elements also enforce single-video playback
+if (typeof window !== "undefined" && !(window as any).__connectlnGlobalVideoGuardInstalled) {
+  ;(window as any).__connectlnGlobalVideoGuardInstalled = true
+  document.addEventListener(
+    "play",
+    (e) => {
+      const target = e.target
+      if (target instanceof HTMLVideoElement && !target.srcObject) {
+        if (!target.dataset.connectlnPlayerId) {
+          target.dataset.connectlnPlayerId = `html5-video-${Math.random().toString(36).slice(2, 10)}`
+        }
+        notifyExclusiveVideoPlay(target.dataset.connectlnPlayerId)
+      }
+    },
+    true
+  )
+}
+
 interface ConnectLnStudioPlayerProps {
   youtubeId: string
   title: string
@@ -11,6 +52,8 @@ interface ConnectLnStudioPlayerProps {
   durationLabel?: string
   autoPlay?: boolean
   className?: string
+  playerId?: string
+  onExclusiveStop?: () => void
 }
 
 export function ConnectLnStudioPlayer({
@@ -20,12 +63,19 @@ export function ConnectLnStudioPlayer({
   speaker = "ConnectLn Masterclass",
   durationLabel = "3:00",
   autoPlay = true,
-  className = "h-[230px] sm:h-[280px] w-full"
+  className = "h-[230px] sm:h-[280px] w-full",
+  playerId,
+  onExclusiveStop
 }: ConnectLnStudioPlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
+  const generatedIdRef = useRef<string>(`cln-studio-${Math.random().toString(36).slice(2, 10)}`)
+  const effectivePlayerId = playerId || generatedIdRef.current
+  const onExclusiveStopRef = useRef(onExclusiveStop)
+  onExclusiveStopRef.current = onExclusiveStop
 
   const [isPlaying, setIsPlaying] = useState<boolean>(autoPlay)
+  const [isStoppedByOther, setIsStoppedByOther] = useState<boolean>(false)
   const [isMuted, setIsMuted] = useState<boolean>(false)
   const [currentTime, setCurrentTime] = useState<number>(0)
   const [duration, setDuration] = useState<number>(() => {
@@ -52,10 +102,36 @@ export function ConnectLnStudioPlayer({
     )
   }, [])
 
+  // Listen for any other video starting on the page and immediately stop this one
+  useEffect(() => {
+    const handleExclusivePlay = (e: Event) => {
+      const customEvent = e as CustomEvent<{ playerId?: string }>
+      const activeId = customEvent.detail?.playerId
+      if (activeId && activeId !== effectivePlayerId) {
+        sendPlayerCommand("pauseVideo")
+        sendPlayerCommand("stopVideo")
+        setIsPlaying(false)
+        setIsStoppedByOther(true)
+        setShowControls(true)
+        if (onExclusiveStopRef.current) {
+          onExclusiveStopRef.current()
+        }
+      }
+    }
+    window.addEventListener(CONNECTLN_VIDEO_PLAY_EVENT, handleExclusivePlay)
+    return () => {
+      window.removeEventListener(CONNECTLN_VIDEO_PLAY_EVENT, handleExclusivePlay)
+    }
+  }, [effectivePlayerId, sendPlayerCommand])
+
   // Subscribe to YouTube iframe state/time events via postMessage
   useEffect(() => {
     setIsPlaying(autoPlay)
+    setIsStoppedByOther(false)
     setCurrentTime(0)
+    if (autoPlay) {
+      notifyExclusiveVideoPlay(effectivePlayerId)
+    }
 
     const handleMessage = (e: MessageEvent) => {
       if (!e.data || typeof e.data !== "string") return
@@ -102,7 +178,7 @@ export function ConnectLnStudioPlayer({
       window.removeEventListener("message", handleMessage)
       clearInterval(interval)
     }
-  }, [youtubeId, autoPlay])
+  }, [youtubeId, autoPlay, effectivePlayerId])
 
   // Fallback timer so scrubber progresses smoothly and loops when reaching duration
   useEffect(() => {
@@ -123,11 +199,13 @@ export function ConnectLnStudioPlayer({
 
   const togglePlay = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation()
-    if (isPlaying) {
+    if (isPlaying && !isStoppedByOther) {
       sendPlayerCommand("pauseVideo")
       setIsPlaying(false)
       setShowControls(true)
     } else {
+      notifyExclusiveVideoPlay(effectivePlayerId)
+      setIsStoppedByOther(false)
       sendPlayerCommand("playVideo")
       setIsPlaying(true)
       triggerControlsVisibility()
@@ -153,6 +231,8 @@ export function ConnectLnStudioPlayer({
 
   const handleRestart = (e: React.MouseEvent) => {
     e.stopPropagation()
+    notifyExclusiveVideoPlay(effectivePlayerId)
+    setIsStoppedByOther(false)
     setCurrentTime(0)
     sendPlayerCommand("seekTo", [0, true])
     sendPlayerCommand("playVideo")
@@ -187,16 +267,24 @@ export function ConnectLnStudioPlayer({
       onClick={togglePlay}
       className={`relative overflow-hidden bg-black select-none group cursor-pointer ${className}`}
     >
-      {/* Cropped Video Surface — hides native top title & bottom watermark */}
+      {/* Cropped Video Surface — hides native top title & bottom watermark; unmounts iframe if stopped by another video */}
       <div className="absolute inset-x-0 -top-[62px] -bottom-[62px] pointer-events-none">
-        <iframe
-          ref={iframeRef}
-          key={youtubeId}
-          src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=${autoPlay ? 1 : 0}&loop=1&playlist=${youtubeId}&controls=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&playsinline=1&enablejsapi=1`}
-          title={title}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          className="h-full w-full border-0 pointer-events-none"
-        />
+        {isStoppedByOther ? (
+          <img
+            src={`https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`}
+            alt={title}
+            className="h-full w-full object-cover opacity-75"
+          />
+        ) : (
+          <iframe
+            ref={iframeRef}
+            key={youtubeId}
+            src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=${autoPlay ? 1 : 0}&loop=1&playlist=${youtubeId}&controls=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&playsinline=1&enablejsapi=1`}
+            title={title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            className="h-full w-full border-0 pointer-events-none"
+          />
+        )}
       </div>
 
       {/* Top ConnectLn Studio Header Overlay */}
