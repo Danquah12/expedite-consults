@@ -47,6 +47,7 @@ import { translatePostText } from "@/lib/translations/post-translator"
 import { resolveUserProfilePicture, generatePersonalSignatureAvatar, trackUserActivity } from "@/lib/connectin-storage"
 import { buildSharePreviewUrl, useSharePic } from "@/lib/connectin-share"
 import { VideoShareBanner } from "./VideoShareBanner"
+import { ConnectLnStudioPlayer } from "./ConnectLnStudioPlayer"
 
 interface FeedPostCardProps {
   post: Post
@@ -912,12 +913,14 @@ export function FeedPostCard({
 
           {watchCompanionVideo && post.media.youtubeId ? (
             <div className="aspect-video w-full bg-black">
-              <iframe
-                src={`https://www.youtube.com/embed/${post.media.youtubeId}?autoplay=1&rel=0`}
+              <ConnectLnStudioPlayer
+                youtubeId={post.media.youtubeId}
                 title={post.media.title || "ConnectLn Video Briefing"}
-                className="w-full h-full border-0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
+                serialPlate={post.media.serialPlate || "CLN-FEED"}
+                speaker={resolvedAuthorName}
+                durationLabel={post.media.duration || "3:45"}
+                onExclusiveStop={() => setWatchCompanionVideo(false)}
+                className="h-full w-full"
               />
             </div>
           ) : post.media.visualStyle === 'poster_frame' ? (

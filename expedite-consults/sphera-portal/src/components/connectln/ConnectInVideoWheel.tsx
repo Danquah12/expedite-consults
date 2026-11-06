@@ -146,9 +146,15 @@ export function ConnectInVideoWheel({
     () => getStrictProfessionVideosForUser(user),
     [user?.professionId, user?.profession, user?.professionEnclave, user?.headline, user?.name]
   )
-  const assignedUserVideo = useMemo(
+  const [selectedStageVideo, setSelectedStageVideo] = useState<WheelVideoTalk | null>(null)
+  const heroStageRef = useRef<HTMLDivElement>(null)
+  const defaultAssignedUserVideo = useMemo(
     () => tieredUserVideos[0] || getMatchedWheelVideoForUser(user),
     [tieredUserVideos, user]
+  )
+  const assignedUserVideo = useMemo(
+    () => selectedStageVideo || defaultAssignedUserVideo,
+    [selectedStageVideo, defaultAssignedUserVideo]
   )
   const [isPlayingHeroInline, setIsPlayingHeroInline] = useState(false)
   const wheelHeroPlayerIdRef = useRef<string>(`wheel-hero-${Math.random().toString(36).slice(2, 10)}`)
@@ -175,6 +181,7 @@ export function ConnectInVideoWheel({
   // Keep filter synced when user logs in or switches profession — default strictly to their profession!
   useEffect(() => {
     setSelectedFilter("my_profession")
+    setSelectedStageVideo(null)
     setSelectedProfessionId("all")
     setIsPlayingHeroInline(false)
   }, [user?.professionId, user?.profession, user?.headline, activeEnclaveId])
@@ -687,7 +694,7 @@ export function ConnectInVideoWheel({
 
       {/* Featured Inline 16:9 Profession Video Stage — Directly Shows the Video for the Logged-In User's Profession */}
       {assignedUserVideo && (
-        <div className="mb-3 rounded-2xl border border-amber-500/50 bg-[#141210] overflow-hidden shadow-lg">
+        <div ref={heroStageRef} className="mb-3 rounded-2xl border border-amber-500/50 bg-[#141210] overflow-hidden shadow-lg">
           <div className="p-2.5 sm:px-3.5 sm:py-2.5 bg-gradient-to-r from-[#26201A] via-[#2B241D] to-[#1F1B18] border-b border-amber-500/30 flex flex-wrap items-center justify-between gap-2.5">
             <div className="flex items-center gap-2.5 min-w-0 flex-1">
               <div className="relative h-9 w-9 rounded-full overflow-hidden border-2 border-[#0066FF] shrink-0 bg-zinc-900">
@@ -751,6 +758,7 @@ export function ConnectInVideoWheel({
           <div className="relative aspect-video w-full bg-black overflow-hidden">
             {isPlayingHeroInline ? (
               <ConnectLnStudioPlayer
+                key={`${assignedUserVideo.id}-${assignedUserVideo.youtubeId}`}
                 youtubeId={assignedUserVideo.youtubeId}
                 title={assignedUserVideo.title}
                 serialPlate={assignedUserVideo.serialPlate}
@@ -834,9 +842,11 @@ export function ConnectInVideoWheel({
               <div
                 key={talk.id}
                 onClick={() => {
-                  setIsPlayingHeroInline(false)
-                  notifyExclusiveVideoPlay(wheelModalPlayerIdRef.current)
-                  setActiveVideo(talk)
+                  setActiveVideo(null)
+                  setSelectedStageVideo(talk)
+                  notifyExclusiveVideoPlay(wheelHeroPlayerIdRef.current)
+                  setIsPlayingHeroInline(true)
+                  heroStageRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" })
                 }}
                 className={`group relative h-[20.5rem] w-[16.5rem] sm:w-[18.5rem] shrink-0 snap-center rounded-2xl overflow-hidden border bg-[#25211D] hover:border-[#0066FF] transition-all duration-300 hover:scale-[1.02] cursor-pointer flex flex-col justify-between shadow-md ${
                   isAssignedToUser ? "border-amber-400 ring-1 ring-amber-400/50" : "border-[#3E3832]"
@@ -974,7 +984,7 @@ export function ConnectInVideoWheel({
         <p className="text-[11px] flex items-center gap-1.5">
           <span>🎓</span>
           <span>
-            Covers all 20 professional enclaves: {allTalks.filter((t) => !t.searchUrl).length} with a verified video, and a YouTube career search for the other {allTalks.filter((t) => t.searchUrl).length}. Every shared video inserts your Profile Picture into the ConnectLn Logo Card.
+            Covers all 20 professional enclaves with {allTalks.length} verified videos playing directly inside the ConnectLn Studio Player. Every shared video inserts your Profile Picture into the ConnectLn Logo Card.
           </span>
         </p>
         <button

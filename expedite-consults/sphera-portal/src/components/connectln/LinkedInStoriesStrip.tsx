@@ -16,6 +16,7 @@ import {
 } from "lucide-react"
 import { UserProfile } from "@/lib/connectln-data"
 import { resolveUserProfilePicture } from "@/lib/connectin-storage"
+import { ConnectLnStudioPlayer } from "./ConnectLnStudioPlayer"
 
 export interface LinkedInStoryItem {
   id: string
@@ -372,12 +373,13 @@ export function LinkedInStoriesStrip({
             {/* Media Content */}
             {viewMode === 'video' ? (
               <div className="aspect-video w-full bg-black">
-                <iframe
-                  src={`https://www.youtube.com/embed/${activeStory.youtubeId}?autoplay=1&rel=0`}
+                <ConnectLnStudioPlayer
+                  youtubeId={activeStory.youtubeId}
                   title={activeStory.title}
-                  className="w-full h-full border-0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
+                  serialPlate={activeStory.badgeText || "CLN-STORY"}
+                  speaker={activeStory.authorName}
+                  durationLabel={activeStory.duration}
+                  className="h-full w-full"
                 />
               </div>
             ) : (

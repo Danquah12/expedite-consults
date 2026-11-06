@@ -1,6 +1,7 @@
 "use client"
 
 import { X } from "lucide-react"
+import { ConnectLnStudioPlayer } from "./ConnectLnStudioPlayer"
 import React, { useState, useRef } from "react"
 import {
   FileText,
@@ -1234,13 +1235,14 @@ export function ConnectLnStudiesCatalogView({
                     <div className="lg:col-span-8 space-y-4">
                       <div className="rounded-2xl overflow-hidden border border-zinc-800 bg-black aspect-video relative shadow-xl">
                         {!useMp4Fallback ? (
-                          <iframe
+                          <ConnectLnStudioPlayer
                             key={`${activeDossier.youtubeId}-${activeVideoChapter}`}
-                            src={`https://www.youtube.com/embed/${activeDossier.youtubeId}?autoplay=1&rel=0`}
+                            youtubeId={activeDossier.youtubeId}
                             title={activeDossier.course.title}
+                            serialPlate={activeDossier.course.code || "CLN-COURSE"}
+                            speaker={activeDossier.course.instructor || "ConnectLn Academy"}
+                            durationLabel={activeDossier.course.duration || "12:00"}
                             className="w-full h-full"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
                           />
                         ) : (
                           <video

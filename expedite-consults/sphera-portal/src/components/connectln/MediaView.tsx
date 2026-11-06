@@ -59,7 +59,7 @@ import {
 import { UserProfile } from "@/lib/connectln-data"
 import { ConnectInVideoWheel } from "@/components/connectln/ConnectInVideoWheel"
 import { VideoShareBanner } from "@/components/connectln/VideoShareBanner"
-import { CONNECTLN_VIDEO_PLAY_EVENT, notifyExclusiveVideoPlay } from "@/components/connectln/ConnectLnStudioPlayer"
+import { ConnectLnStudioPlayer, CONNECTLN_VIDEO_PLAY_EVENT, notifyExclusiveVideoPlay } from "@/components/connectln/ConnectLnStudioPlayer"
 
 interface MediaViewProps {
   currentUser: UserProfile
@@ -390,13 +390,30 @@ export function MediaView({
                 {/* Video Player Display Container */}
                 <div className="relative aspect-video w-full bg-slate-950 overflow-hidden group">
                   {isPlaying && selectedVideo.youtubeId ? (
-                    <iframe
+                    <>
+                    <ConnectLnStudioPlayer
+                      key={`${selectedVideo.id}-${selectedVideo.youtubeId}`}
+                      youtubeId={selectedVideo.youtubeId}
+                      title={selectedVideo.title}
+                      serialPlate={`MEDIA-${selectedVideo.id.toUpperCase()}`}
+                      speaker={selectedVideo.channelName}
+                      durationLabel={selectedVideo.duration}
+                      playerId={mediaPlayerIdRef.current}
+                      onExclusiveStop={() => setIsPlaying(false)}
+                      className="h-full w-full"
+                    />
+                    {false ? <iframe
                       src={`https://www.youtube.com/embed/${selectedVideo.youtubeId}?autoplay=1&rel=0`}
                       title={selectedVideo.title}
                       className="h-full w-full border-0"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                       allowFullScreen
+                    /> : null}
+                    {/* comment-start
+                      allowFullScreen
                     />
+                    */}
+                    </>
                   ) : (
                     <>
                       <img
