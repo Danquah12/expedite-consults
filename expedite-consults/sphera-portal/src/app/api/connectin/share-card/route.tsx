@@ -19,6 +19,8 @@ function getInitials(name: string): string {
 export async function GET(req: NextRequest) {
   const { searchParams, origin } = new URL(req.url)
   const name = (searchParams.get("n") || "ConnectLn Member").slice(0, 32)
+  const title = (searchParams.get("t") || "").slice(0, 76)
+  const sub = (searchParams.get("sub") || "").slice(0, 48)
   const rawPic = searchParams.get("p") || ""
 
   const isKwesi = name.toLowerCase().includes("kwesi")
@@ -188,13 +190,30 @@ export async function GET(req: NextRequest) {
             <div
               style={{
                 display: "flex",
-                fontSize: 20,
-                fontWeight: 700,
-                color: "#9A948C",
+                fontSize: 18,
+                fontWeight: 800,
+                color: "#F5F0EB",
+                lineHeight: 1.25,
               }}
             >
-              Tickets, vouches, and real work
+              {title && title !== "ConnectLn Masterclass"
+                ? title
+                : "Tickets, vouches, and real work"}
             </div>
+
+            {sub && (
+              <div
+                style={{
+                  display: "flex",
+                  marginTop: 6,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: "#E07A5F",
+                }}
+              >
+                {sub}
+              </div>
+            )}
           </div>
         </div>
       </div>

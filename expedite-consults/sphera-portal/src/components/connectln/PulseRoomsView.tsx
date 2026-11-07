@@ -37,7 +37,9 @@ import {
   SlidersHorizontal,
   ChevronRight,
   ShieldCheck,
-  RefreshCw
+  RefreshCw,
+  Copy,
+  Mail
 } from "lucide-react"
 import {
   PulseArticle,
@@ -57,6 +59,8 @@ import {
 } from "@/lib/pulse-news-data"
 import { pulseRoomsData, PulseRoom } from "@/lib/nextgen-data"
 import { UserProfile } from "@/lib/connectln-data"
+import { resolveUserProfilePicture, generatePersonalSignatureAvatar } from "@/lib/connectin-storage"
+import { buildSharePreviewUrl, useSharePic } from "@/lib/connectin-share"
 import {
   Dialog,
   DialogContent,
@@ -114,6 +118,198 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
   // Upvotes & Bookmark state
   const [upvotedIds, setUpvotedIds] = useState<string[]>([])
   const [savedArticleIds, setSavedArticleIds] = useState<string[]>([])
+
+  // Share Pulse Card Modal State (ConnectLn Logo + User Profile Picture Card)
+  const [articleToShare, setArticleToShare] = useState<PulseArticle | null>(null)
+  const [shareFeedback, setShareFeedback] = useState<string | null>(null)
+  const [copyFeedback, setCopyFeedback] = useState<boolean>(false)
+
+  const sharerName = currentUser?.name || "Kwesi Asiedu"
+  const sharerRole = professionTitle || currentUser?.headline || currentUser?.role || "Verified Professional · ConnectLn"
+  const userProfilePic = resolveUserProfilePicture(currentUser)
+  const sharePic = useSharePic(userProfilePic)
+
+  const getPulseSharePayload = (art: PulseArticle) => {
+    const shareUrl = buildSharePreviewUrl({
+      to: `/connectin?tab=pulse`,
+      title: art.title,
+      sharerName,
+      pic: sharePic,
+      subtitle: `Pulse Intelligence · ${art.category}`,
+    })
+    const takeawayLine =
+      art.aiKeyTakeaways && art.aiKeyTakeaways.length > 0
+        ? `\n• ${art.aiKeyTakeaways.slice(0, 2).join("\n• ")}`
+        : ""
+    const shareText = `${art.title} — Shared by ${sharerName} via ConnectLn Pulse (${art.category})${takeawayLine}`
+    return { shareUrl, shareText }
+  }
+
+  const handleShareWhatsApp = (art: PulseArticle) => {
+    const { shareUrl, shareText } = getPulseSharePayload(art)
+    window.open(
+      `https://api.whatsapp.com/send?text=${encodeURIComponent(`${shareText}\n\n${shareUrl}`)}`,
+      "_blank",
+      "noopener,noreferrer"
+    )
+    setShareFeedback("Opening WhatsApp with your ConnectLn Logo & Profile Picture card...")
+    setTimeout(() => setShareFeedback(null), 4000)
+  }
+
+  const handleShareLinkedIn = (art: PulseArticle) => {
+    const { shareUrl, shareText } = getPulseSharePayload(art)
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(`${shareText}\n\n${shareUrl}`).catch(() => {})
+    }
+    window.open(
+      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
+      "_blank",
+      "noopener,noreferrer"
+    )
+    setShareFeedback("Opening LinkedIn Share (caption also copied to clipboard)...")
+    setTimeout(() => setShareFeedback(null), 4000)
+  }
+
+  const handleShareFacebook = (art: PulseArticle) => {
+    const { shareUrl, shareText } = getPulseSharePayload(art)
+    window.open(
+      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`,
+      "_blank",
+      "noopener,noreferrer"
+    )
+    setShareFeedback("Opening Facebook Share with your ConnectLn Logo & Profile Picture card...")
+    setTimeout(() => setShareFeedback(null), 4000)
+  }
+
+  const handleShareInstagram = (art: PulseArticle) => {
+    const { shareUrl, shareText } = getPulseSharePayload(art)
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(`${shareText}\n\n${shareUrl}`).catch(() => {})
+    }
+    setShareFeedback("Copied ConnectLn Pulse caption & link! Paste into your Instagram Story, Bio, or Direct Message.")
+    window.open("https://www.instagram.com/", "_blank", "noopener,noreferrer")
+    setTimeout(() => setShareFeedback(null), 5000)
+  }
+
+  const handleShareTwitter = (art: PulseArticle) => {
+    const { shareUrl, shareText } = getPulseSharePayload(art)
+    window.open(
+      `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`,
+      "_blank",
+      "noopener,noreferrer"
+    )
+    setShareFeedback("Opening X (Twitter) with your ConnectLn Logo & Profile Picture card...")
+    setTimeout(() => setShareFeedback(null), 4000)
+  }
+
+  const handleShareEmail = (art: PulseArticle) => {
+    const { shareUrl, shareText } = getPulseSharePayload(art)
+    const subject = encodeURIComponent(`[ConnectLn Pulse] ${art.title} — Shared by ${sharerName}`)
+    const body = encodeURIComponent(`${shareText}\n\nRead full analysis on ConnectLn:\n${shareUrl}`)
+    window.location.href = `mailto:?subject=${subject}&body=${body}`
+    setShareFeedback("Opening your email client with the ConnectLn Pulse intelligence link...")
+    setTimeout(() => setShareFeedback(null), 4000)
+  }
+
+  const handleCopyShareLink = (art: PulseArticle) => {
+    const { shareUrl, shareText } = getPulseSharePayload(art)
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(`${shareText}\n\n${shareUrl}`).catch(() => {})
+    }
+    setCopyFeedback(true)
+    setShareFeedback("Copied ConnectLn Pulse share card link & summary to clipboard!")
+    setTimeout(() => {
+      setCopyFeedback(false)
+      setShareFeedback(null)
+    }, 3500)
+  }
+
+  const openShareForAdvisory = (adv: CyberThreatAdvisory) => {
+    setArticleToShare({
+      id: `adv-share-${adv.id}`,
+      title: `🚨 [${adv.cveId}] ${adv.title}`,
+      summary: adv.summary,
+      fullContent: `${adv.summary}\n\nRecommended Mitigation: ${adv.mitigationAction}`,
+      category: "Cybersecurity",
+      publishedAt: adv.publishedAt,
+      readTime: "3 min read",
+      author: {
+        name: sharerName,
+        role: sharerRole,
+        avatar: userProfilePic,
+        source: "ConnectLn Threat Radar",
+      },
+      coverImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=900&auto=format&fit=crop&q=80",
+      aiKeyTakeaways: [
+        `Advisory ID: ${adv.cveId} (${adv.severity})`,
+        `Recommended Protocol: ${adv.mitigationAction}`,
+      ],
+      sourceLinks: [
+        { title: `${adv.cveId} Official Record`, url: adv.sourceUrl, domain: "cisa.gov / nist.gov" },
+      ],
+      tags: [adv.cveId, "ZeroDay", "ThreatRadar", "ConnectLnPulse"],
+      upvotesCount: 128,
+      commentsCount: 24,
+      isBreaking: true,
+    })
+  }
+
+  const openShareForAIBrief = (pillarTitle?: string, pillarSummary?: string, pillarUrl?: string) => {
+    setArticleToShare({
+      id: `aibrief-share-${Date.now()}`,
+      title: pillarTitle ? `${pillarTitle} — ${aiBrief.headline}` : aiBrief.headline,
+      summary: pillarSummary || aiBrief.executiveSummary,
+      fullContent: pillarSummary || aiBrief.executiveSummary,
+      category: "AI Daily Brief",
+      publishedAt: aiBrief.date,
+      readTime: aiBrief.audioDuration,
+      author: {
+        name: sharerName,
+        role: sharerRole,
+        avatar: userProfilePic,
+        source: "ConnectLn AI Daily Brief",
+      },
+      coverImage: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=900&auto=format&fit=crop&q=80",
+      aiKeyTakeaways: aiBrief.keyPillars.map((p) => `${p.emoji} ${p.pillar}: ${p.summary}`),
+      sourceLinks: [
+        { title: "Grounded Source", url: pillarUrl || "https://www.conectln.com/connectin", domain: "conectln.com" },
+      ],
+      tags: ["AIDailyBrief", "ConnectLnPulse", "ExecutiveIntelligence"],
+      upvotesCount: 310,
+      commentsCount: 42,
+      isBreaking: true,
+    })
+  }
+
+  const openShareForAudioRoom = (room: PulseRoom) => {
+    setArticleToShare({
+      id: `room-share-${room.id}`,
+      title: `🎙️ Live Pulse Audio Stage: ${room.title}`,
+      summary: `Join ${room.listenersCount} professionals listening live in the ${room.category} stage hosted by ${room.speakers.map((s) => s.name).join(", ")}.`,
+      fullContent: `Live Pulse Audio Stage (${room.category}) started ${room.startedAt}.`,
+      category: room.category,
+      publishedAt: `LIVE NOW · ${room.listenersCount} listening`,
+      readTime: "Live Audio Stage",
+      author: {
+        name: sharerName,
+        role: sharerRole,
+        avatar: userProfilePic,
+        source: "ConnectLn Live Audio Stage",
+      },
+      coverImage: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=900&auto=format&fit=crop&q=80",
+      aiKeyTakeaways: [
+        `Hosted by ${room.speakers.map((s) => `${s.name} (${s.role})`).join(", ")}`,
+        `${room.listenersCount} verified practitioners currently in the room`,
+      ],
+      sourceLinks: [
+        { title: "Join ConnectLn Pulse Stage", url: "https://www.conectln.com/connectin?tab=pulse", domain: "conectln.com" },
+      ],
+      tags: ["LiveAudioStage", "ConnectLnPulse", room.category.replace(/\s+/g, "")],
+      upvotesCount: room.listenersCount,
+      commentsCount: 19,
+      isBreaking: true,
+    })
+  }
 
   // Audio Stage / Room State
   const [rooms, setRooms] = useState<PulseRoom[]>(() => getEnclavePulseRooms(enclaveId))
@@ -677,6 +873,49 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
                         )}
                       </div>
 
+                      {/* Top-Right Share Pill Button on Card */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setArticleToShare(article)
+                        }}
+                        className="absolute top-3 right-3 rounded-full bg-[#0066FF] hover:bg-[#0052CC] px-3 py-1 text-[11px] font-extrabold text-white flex items-center gap-1 shadow-lg border border-white/25 transition-all cursor-pointer z-10"
+                        title="Share Pulse Intelligence with your ConnectLn Logo & Profile Picture Card"
+                      >
+                        <Share2 className="h-3 w-3" />
+                        <span>Share</span>
+                      </button>
+
+                      {/* Bottom-Left User Profile Picture + ConnectLn Logo Badge on Card */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setArticleToShare(article)
+                        }}
+                        className="absolute bottom-2.5 left-3 rounded-full bg-[#171513]/90 hover:bg-[#171513] backdrop-blur-md pl-1 pr-3 py-1 flex items-center gap-2 border border-white/20 shadow-lg transition-all cursor-pointer z-10"
+                        title="Click to share with your Profile Picture & ConnectLn Logo Card"
+                      >
+                        <img
+                          src={userProfilePic}
+                          alt={sharerName}
+                          onError={(e) => {
+                            e.currentTarget.onerror = null
+                            e.currentTarget.src = generatePersonalSignatureAvatar(sharerName)
+                          }}
+                          className="h-7 w-7 rounded-full object-cover border-2 border-[#0066FF] shrink-0"
+                        />
+                        <img
+                          src="/brand/connectln-icon-256.png"
+                          alt="ConnectLn"
+                          className="h-4 w-4 rounded-xs object-contain shrink-0"
+                        />
+                        <span className="text-[11px] font-black text-white tracking-tight">
+                          ConnectLn
+                        </span>
+                      </button>
+
                       {article.biasRating && (
                         <div className="absolute bottom-3 right-3 rounded-full bg-black/75 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-emerald-300 border border-emerald-500/40">
                           {article.biasRating.factCheckStatus}
@@ -743,11 +982,11 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
                   </div>
 
                   {/* Bottom Interaction Bar */}
-                  <div className="p-5 pt-3 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 flex items-center justify-between text-xs">
+                  <div className="p-5 pt-3 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 flex items-center justify-between text-xs gap-2 flex-wrap">
                     <div className="flex items-center gap-3">
                       <button
                         onClick={() => toggleUpvote(article.id)}
-                        className={`flex items-center gap-1.5 font-bold transition-colors ${
+                        className={`flex items-center gap-1.5 font-bold transition-colors cursor-pointer ${
                           isUpvoted
                             ? "text-[#0A66C2]"
                             : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
@@ -759,17 +998,26 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
 
                       <button
                         onClick={() => setSelectedArticle(article)}
-                        className="flex items-center gap-1.5 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 font-semibold"
+                        className="flex items-center gap-1.5 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 font-semibold cursor-pointer"
                       >
                         <MessageSquare className="h-4 w-4" />
                         <span>{article.commentsCount} comments</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setArticleToShare(article)}
+                        className="flex items-center gap-1.5 text-[#0066FF] hover:text-[#004182] font-extrabold transition-colors cursor-pointer"
+                      >
+                        <Share2 className="h-3.5 w-3.5" />
+                        <span>Share</span>
                       </button>
                     </div>
 
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => toggleSaveArticle(article.id)}
-                        className={`p-1.5 rounded-full transition-colors ${
+                        className={`p-1.5 rounded-full transition-colors cursor-pointer ${
                           isSaved
                             ? "text-[#0A66C2] bg-sky-50 dark:bg-sky-950"
                             : "text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
@@ -780,7 +1028,7 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
 
                       <button
                         onClick={() => setSelectedArticle(article)}
-                        className="rounded-full bg-[#0A66C2] px-3.5 py-1.5 text-xs font-bold text-white hover:bg-[#004182] transition-colors"
+                        className="rounded-full bg-[#0A66C2] px-3.5 py-1.5 text-xs font-bold text-white hover:bg-[#004182] transition-colors cursor-pointer"
                       >
                         Read Full Analysis →
                       </button>
@@ -811,23 +1059,33 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
                 </h2>
               </div>
 
-              {/* Audio Playback Simulator */}
-              <button
-                onClick={() => setIsPlayingAudio(!isPlayingAudio)}
-                className="rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 px-4 py-2.5 text-xs font-bold text-white transition-all flex items-center gap-2 shadow-md shrink-0"
-              >
-                {isPlayingAudio ? (
-                  <>
-                    <Pause className="h-4 w-4 text-amber-300" />
-                    <span>Pause Audio Brief ({aiBrief.audioDuration})</span>
-                  </>
-                ) : (
-                  <>
-                    <Play className="h-4 w-4 text-emerald-300 fill-emerald-300" />
-                    <span>🎧 Listen to Brief ({aiBrief.audioDuration})</span>
-                  </>
-                )}
-              </button>
+              {/* Audio Playback Simulator & Share AI Brief */}
+              <div className="flex items-center gap-2 flex-wrap shrink-0">
+                <button
+                  type="button"
+                  onClick={() => openShareForAIBrief()}
+                  className="rounded-xl bg-[#0066FF] hover:bg-[#0052CC] px-3.5 py-2.5 text-xs font-extrabold text-white transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
+                >
+                  <Share2 className="h-3.5 w-3.5" />
+                  <span>Share AI Brief</span>
+                </button>
+                <button
+                  onClick={() => setIsPlayingAudio(!isPlayingAudio)}
+                  className="rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 px-4 py-2.5 text-xs font-bold text-white transition-all flex items-center gap-2 shadow-md shrink-0 cursor-pointer"
+                >
+                  {isPlayingAudio ? (
+                    <>
+                      <Pause className="h-4 w-4 text-amber-300" />
+                      <span>Pause Audio Brief ({aiBrief.audioDuration})</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-4 w-4 text-emerald-300 fill-emerald-300" />
+                      <span>🎧 Listen to Brief ({aiBrief.audioDuration})</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
 
             <p className="text-xs sm:text-sm text-purple-100 leading-relaxed max-w-3xl pt-1">
@@ -843,11 +1101,21 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
                 className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs hover:border-purple-400 hover:shadow-lg transition-all dark:border-zinc-800 dark:bg-zinc-900 flex flex-col justify-between space-y-4"
               >
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">{pillar.emoji}</span>
-                    <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
-                      {pillar.pillar}
-                    </h3>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">{pillar.emoji}</span>
+                      <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
+                        {pillar.pillar}
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => openShareForAIBrief(pillar.pillar, pillar.summary, pillar.sourceUrl)}
+                      className="rounded-full bg-[#0066FF] hover:bg-[#0052CC] px-2.5 py-1 text-[10px] font-extrabold text-white flex items-center gap-1 shrink-0 cursor-pointer"
+                    >
+                      <Share2 className="h-3 w-3" />
+                      <span>Share</span>
+                    </button>
                   </div>
 
                   <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">
@@ -855,19 +1123,40 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
                   </p>
                 </div>
 
-                <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800">
-                  <span className="text-[10px] font-bold uppercase text-zinc-400 block mb-1">
-                    Grounded Source:
-                  </span>
-                  <a
-                    href={pillar.sourceUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs font-bold text-[#0A66C2] hover:underline flex items-center gap-1"
-                  >
-                    <span>{pillar.primarySource}</span>
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
+                <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase text-zinc-400 block mb-1">
+                      Grounded Source:
+                    </span>
+                    <a
+                      href={pillar.sourceUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs font-bold text-[#0A66C2] hover:underline flex items-center gap-1"
+                    >
+                      <span>{pillar.primarySource}</span>
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                  <div className="flex items-center gap-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 pl-1 pr-2.5 py-0.5 border border-zinc-200 dark:border-zinc-700">
+                    <img
+                      src={userProfilePic}
+                      alt={sharerName}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null
+                        e.currentTarget.src = generatePersonalSignatureAvatar(sharerName)
+                      }}
+                      className="h-5 w-5 rounded-full object-cover border border-[#0066FF]"
+                    />
+                    <img
+                      src="/brand/connectln-icon-256.png"
+                      alt="ConnectLn"
+                      className="h-3.5 w-3.5 rounded-xs"
+                    />
+                    <span className="text-[10px] font-black text-zinc-800 dark:text-zinc-200">
+                      ConnectLn
+                    </span>
+                  </div>
                 </div>
               </div>
             ))}
@@ -954,6 +1243,28 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
                         {adv.severity}
                       </span>
                       <span className="text-xs text-zinc-400">{adv.publishedAt}</span>
+                      <button
+                        type="button"
+                        onClick={() => openShareForAdvisory(adv)}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-[#171513] pl-1 pr-2.5 py-0.5 border border-zinc-700 cursor-pointer"
+                        title="Share with your Profile Picture & ConnectLn Logo Card"
+                      >
+                        <img
+                          src={userProfilePic}
+                          alt={sharerName}
+                          onError={(e) => {
+                            e.currentTarget.onerror = null
+                            e.currentTarget.src = generatePersonalSignatureAvatar(sharerName)
+                          }}
+                          className="h-4 w-4 rounded-full object-cover border border-[#0066FF]"
+                        />
+                        <img
+                          src="/brand/connectln-icon-256.png"
+                          alt="ConnectLn"
+                          className="h-3.5 w-3.5 rounded-xs"
+                        />
+                        <span className="text-[10px] font-black text-white">ConnectLn</span>
+                      </button>
                     </div>
 
                     <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 pt-1">
@@ -961,7 +1272,15 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
                     </h3>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 flex-wrap shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => openShareForAdvisory(adv)}
+                      className="rounded-full bg-[#0066FF] hover:bg-[#0052CC] px-3 py-1 text-xs font-extrabold text-white flex items-center gap-1 shrink-0 cursor-pointer shadow-xs"
+                    >
+                      <Share2 className="h-3 w-3" />
+                      <span>Share</span>
+                    </button>
                     <button
                       type="button"
                       onClick={() => handleAnnounceAdvisoryToFeed(adv)}
@@ -1049,12 +1368,25 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
                 onClick={() => setActiveRoom(room)}
                 className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs hover:border-[#0A66C2] hover:shadow-lg transition-all cursor-pointer dark:border-zinc-800 dark:bg-zinc-900 space-y-4"
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-2.5 py-0.5 text-[11px] font-bold text-red-600 dark:bg-red-950 dark:text-red-400">
                     <span className="h-2 w-2 rounded-full bg-red-600 animate-ping" />
                     LIVE NOW · {room.listenersCount} listening
                   </span>
-                  <span className="text-xs text-zinc-400 font-semibold">{room.category}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-zinc-400 font-semibold">{room.category}</span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        openShareForAudioRoom(room)
+                      }}
+                      className="rounded-full bg-[#0066FF] hover:bg-[#0052CC] px-2.5 py-1 text-[10px] font-extrabold text-white flex items-center gap-1 cursor-pointer"
+                    >
+                      <Share2 className="h-3 w-3" />
+                      <span>Share</span>
+                    </button>
+                  </div>
                 </div>
 
                 <h3 className="font-bold text-base text-zinc-900 leading-snug dark:text-zinc-100">
@@ -1062,23 +1394,43 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
                 </h3>
 
                 {/* Speakers Cluster */}
-                <div className="flex items-center gap-3 pt-1">
-                  <div className="flex -space-x-3">
-                    {room.speakers.map((spk) => (
-                      <img
-                        key={spk.id}
-                        src={spk.avatar}
-                        alt={spk.name}
-                        className="h-10 w-10 rounded-full border-2 border-white object-cover dark:border-zinc-900"
-                        title={spk.name}
-                      />
-                    ))}
+                <div className="flex items-center justify-between gap-3 pt-1">
+                  <div className="flex items-center gap-3">
+                    <div className="flex -space-x-3">
+                      {room.speakers.map((spk) => (
+                        <img
+                          key={spk.id}
+                          src={spk.avatar}
+                          alt={spk.name}
+                          className="h-10 w-10 rounded-full border-2 border-white object-cover dark:border-zinc-900"
+                          title={spk.name}
+                        />
+                      ))}
+                    </div>
+                    <div className="text-xs">
+                      <p className="font-bold text-zinc-800 dark:text-zinc-200">
+                        {room.speakers.map(s => s.name.split(' ')[0]).join(', ')}
+                      </p>
+                      <p className="text-zinc-400 text-[11px]">Hosting Stage</p>
+                    </div>
                   </div>
-                  <div className="text-xs">
-                    <p className="font-bold text-zinc-800 dark:text-zinc-200">
-                      {room.speakers.map(s => s.name.split(' ')[0]).join(', ')}
-                    </p>
-                    <p className="text-zinc-400 text-[11px]">Hosting Stage</p>
+
+                  <div className="flex items-center gap-1.5 rounded-full bg-[#171513] pl-1 pr-2.5 py-0.5 border border-zinc-700">
+                    <img
+                      src={userProfilePic}
+                      alt={sharerName}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null
+                        e.currentTarget.src = generatePersonalSignatureAvatar(sharerName)
+                      }}
+                      className="h-5 w-5 rounded-full object-cover border border-[#0066FF]"
+                    />
+                    <img
+                      src="/brand/connectln-icon-256.png"
+                      alt="ConnectLn"
+                      className="h-3.5 w-3.5 rounded-xs"
+                    />
+                    <span className="text-[10px] font-black text-white">ConnectLn</span>
                   </div>
                 </div>
 
@@ -1120,6 +1472,33 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
                       {selectedArticle.biasRating.factCheckStatus} (Score: {selectedArticle.biasRating.credibilityScore}/100)
                     </span>
                   )}
+                </div>
+                <div className="absolute bottom-3 left-4 flex items-center gap-2">
+                  <div className="rounded-full bg-[#171513]/90 backdrop-blur-md pl-1 pr-3 py-1 flex items-center gap-2 border border-white/20 shadow-lg">
+                    <img
+                      src={userProfilePic}
+                      alt={sharerName}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null
+                        e.currentTarget.src = generatePersonalSignatureAvatar(sharerName)
+                      }}
+                      className="h-7 w-7 rounded-full object-cover border-2 border-[#0066FF]"
+                    />
+                    <img
+                      src="/brand/connectln-icon-256.png"
+                      alt="ConnectLn"
+                      className="h-4 w-4 rounded-xs"
+                    />
+                    <span className="text-xs font-black text-white">ConnectLn</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setArticleToShare(selectedArticle)}
+                    className="rounded-full bg-[#0066FF] hover:bg-[#0052CC] px-3.5 py-1.5 text-xs font-extrabold text-white flex items-center gap-1.5 shadow-lg border border-white/20 cursor-pointer"
+                  >
+                    <Share2 className="h-3.5 w-3.5" />
+                    <span>Share Pulse Card</span>
+                  </button>
                 </div>
               </div>
 
@@ -1492,6 +1871,209 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
               </button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* SHARE PULSE INTELLIGENCE CARD MODAL (CONNECTLN LOGO + USER PROFILE PICTURE CARD) */}
+      <Dialog
+        open={!!articleToShare}
+        onOpenChange={(open) => {
+          if (!open) {
+            setArticleToShare(null)
+            setShareFeedback(null)
+          }
+        }}
+      >
+        <DialogContent className="max-w-xl bg-[#181615] text-[#F5F0EB] border border-white/15 p-0 overflow-hidden rounded-3xl">
+          {articleToShare && (
+            <div className="p-6 space-y-5">
+              <DialogHeader>
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#0066FF]/20 border border-[#0066FF]/50 px-3 py-1 text-[11px] font-extrabold text-[#66B2FF]">
+                    <Share2 className="h-3.5 w-3.5" />
+                    Share Pulse Intelligence · ConnectLn Logo Card
+                  </span>
+                </div>
+                <DialogTitle className="text-lg font-black text-white pt-1">
+                  Share Pulse Information with Your Profile Picture &amp; ConnectLn Logo
+                </DialogTitle>
+              </DialogHeader>
+
+              {/* OFFICIAL CONNECTLN LOGO CARD WITH USER PROFILE PICTURE + PULSE INFORMATION */}
+              <div
+                className="rounded-2xl overflow-hidden border border-[#2E2A27] shadow-2xl relative p-5"
+                style={{
+                  background: "radial-gradient(circle at 25% 20%, #231F1C 0%, #171513 75%)",
+                }}
+              >
+                <div className="flex flex-col sm:flex-row items-center gap-5">
+                  {/* LEFT COLUMN: User Profile Picture + Name + Role */}
+                  <div className="flex flex-col items-center text-center sm:w-44 shrink-0">
+                    <div className="relative">
+                      <img
+                        src={userProfilePic}
+                        alt={sharerName}
+                        onError={(e) => {
+                          e.currentTarget.onerror = null
+                          e.currentTarget.src = generatePersonalSignatureAvatar(sharerName)
+                        }}
+                        className="h-24 w-24 rounded-full object-cover border-[3px] border-[#0066FF] shadow-xl bg-[#0D1E3A]"
+                      />
+                      <span
+                        className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-[#0066FF] border-2 border-[#171513] flex items-center justify-center shadow-md"
+                        title="Verified ConnectLn Professional"
+                      >
+                        <ShieldCheck className="h-4 w-4 text-white" />
+                      </span>
+                    </div>
+                    <p className="text-sm font-black text-white mt-2.5 leading-tight">
+                      {sharerName}
+                    </p>
+                    <p className="text-[11px] font-semibold text-[#A09A90] mt-0.5 line-clamp-2">
+                      {sharerRole}
+                    </p>
+                  </div>
+
+                  {/* RIGHT COLUMN: Official ConnectLn Logo + Pulse Intelligence Card Preview */}
+                  <div className="flex-1 flex flex-col items-center sm:items-start text-center sm:text-left border-t sm:border-t-0 sm:border-l border-white/10 pt-4 sm:pt-0 sm:pl-5 min-w-0">
+                    <div className="flex items-center gap-2.5">
+                      <img
+                        src="/brand/connectln-icon-256.png"
+                        alt="ConnectLn Emblem"
+                        className="h-10 w-10 rounded-xl shadow-lg object-contain border border-white/10"
+                      />
+                      <div>
+                        <div className="text-2xl font-black tracking-tight text-[#F5F0EB] leading-none">
+                          ConnectLn
+                        </div>
+                        <div className="w-28 h-1 rounded-full bg-[#A64532] mt-1" />
+                      </div>
+                    </div>
+
+                    {/* Shared Pulse Information Box */}
+                    <div className="mt-3 w-full rounded-xl bg-black/45 border border-white/15 p-3 space-y-1.5 text-left">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="rounded-full bg-[#A64532]/30 border border-[#E07A5F]/40 px-2 py-0.5 text-[10px] font-extrabold text-[#F2A68D]">
+                          📡 Pulse · {articleToShare.category}
+                        </span>
+                        <span className="text-[10px] font-mono text-[#9A948C]">
+                          {articleToShare.publishedAt}
+                        </span>
+                      </div>
+                      <p className="text-xs sm:text-sm font-black text-white line-clamp-2 leading-snug">
+                        {articleToShare.title}
+                      </p>
+                      <p className="text-[11px] text-[#C8C2B8] line-clamp-2 leading-relaxed">
+                        {articleToShare.summary}
+                      </p>
+                      {articleToShare.aiKeyTakeaways && articleToShare.aiKeyTakeaways.length > 0 && (
+                        <div className="pt-1 border-t border-white/10 text-[10px] text-emerald-300 font-semibold truncate">
+                          ✓ {articleToShare.aiKeyTakeaways[0]}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Feedback Toast inside Modal */}
+              {shareFeedback && (
+                <div className="rounded-xl bg-emerald-500/15 border border-emerald-500/40 px-3.5 py-2.5 text-xs font-bold text-emerald-300 flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+                  <span>{shareFeedback}</span>
+                </div>
+              )}
+
+              {/* SOCIAL MEDIA SHARE BUTTONS */}
+              <div className="space-y-2">
+                <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#9A948C]">
+                  Share Pulse Card Instantly Across Platforms
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => handleShareWhatsApp(articleToShare)}
+                    className="flex items-center justify-center gap-2 rounded-xl bg-[#25D366] hover:bg-[#1EBE5D] text-white font-extrabold text-xs py-2.5 px-3 shadow-md transition-all cursor-pointer"
+                  >
+                    <MessageSquare className="h-4 w-4 fill-white" />
+                    <span>WhatsApp</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleShareLinkedIn(articleToShare)}
+                    className="flex items-center justify-center gap-2 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white font-extrabold text-xs py-2.5 px-3 shadow-md transition-all cursor-pointer"
+                  >
+                    <Share2 className="h-4 w-4" />
+                    <span>LinkedIn</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleShareFacebook(articleToShare)}
+                    className="flex items-center justify-center gap-2 rounded-xl bg-[#1877F2] hover:bg-[#1464CC] text-white font-extrabold text-xs py-2.5 px-3 shadow-md transition-all cursor-pointer"
+                  >
+                    <Globe className="h-4 w-4" />
+                    <span>Facebook</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleShareInstagram(articleToShare)}
+                    className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#F58529] via-[#DD2A7B] to-[#8134AF] hover:opacity-95 text-white font-extrabold text-xs py-2.5 px-3 shadow-md transition-all cursor-pointer"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    <span>Instagram</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleShareTwitter(articleToShare)}
+                    className="flex items-center justify-center gap-2 rounded-xl bg-zinc-900 hover:bg-black border border-white/20 text-white font-extrabold text-xs py-2.5 px-3 shadow-md transition-all cursor-pointer"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    <span>X (Twitter)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleShareEmail(articleToShare)}
+                    className="flex items-center justify-center gap-2 rounded-xl bg-[#A8432B] hover:bg-[#8E3622] text-white font-extrabold text-xs py-2.5 px-3 shadow-md transition-all cursor-pointer"
+                  >
+                    <Mail className="h-4 w-4" />
+                    <span>Email</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* COPY SHARE LINK BAR */}
+              <div className="pt-2 border-t border-white/10 flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={getPulseSharePayload(articleToShare).shareUrl}
+                  className="flex-1 rounded-xl bg-black/50 border border-white/15 px-3 py-2 text-[11px] text-[#C8C2B8] font-mono focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleCopyShareLink(articleToShare)}
+                  className="rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-2 text-xs font-extrabold text-white flex items-center gap-1.5 shrink-0 transition-all cursor-pointer"
+                >
+                  {copyFeedback ? (
+                    <>
+                      <Check className="h-3.5 w-3.5 text-emerald-400" />
+                      <span className="text-emerald-300">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3.5 w-3.5" />
+                      <span>Copy Link</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

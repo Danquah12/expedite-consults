@@ -9,11 +9,16 @@ export async function generateMetadata({ searchParams }: { searchParams: Params 
   const sp = await searchParams
   const name = one(sp.n)
   const title = one(sp.t) || "ConnectLn Masterclass"
+  const sub = one(sp.sub)
   const plate = one(sp.d) || one(sp.plate)
-  const img = new URLSearchParams({ n: name, t: title, plate, p: one(sp.p), cb: "2" })
-  const image = `https://www.connectln.app/api/connectin/share-card?${img.toString()}`
-  const fullTitle = "ConnectLn — Tickets, vouches, and real work"
-  const desc = "ConnectLn: The zero-trust professional network. Verified tickets, vouches, and real work across cloud, cybersecurity, trades, and enterprise teams."
+  const img = new URLSearchParams({ n: name, t: title, sub, plate, p: one(sp.p), cb: "3" })
+  const image = `https://www.conectln.com/api/connectin/share-card?${img.toString()}`
+  const fullTitle = title && title !== "ConnectLn Masterclass"
+    ? `${title} — Shared via ConnectLn Pulse`
+    : "ConnectLn — Tickets, vouches, and real work"
+  const desc = sub
+    ? `${sub} · Shared by ${name || "ConnectLn Member"} on ConnectLn.`
+    : "ConnectLn: The zero-trust professional network. Verified tickets, vouches, and real work across cloud, cybersecurity, trades, and enterprise teams."
   return {
     title: fullTitle,
     description: desc,
