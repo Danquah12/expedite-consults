@@ -129,6 +129,18 @@ export function VideoShareBanner({
       return m ? m[1] : null
     })()
 
+  // Auto-play inline if this specific feed post video was opened via a shared post link (?postId=...&video=...)
+  useEffect(() => {
+    if (typeof window === "undefined" || !resolvedYtId || compact) return
+    const params = new URLSearchParams(window.location.search)
+    const sharedPostId = params.get("postId")
+    const sharedVid = params.get("video")
+    if (sharedPostId && sharedVid && sharedVid === resolvedYtId) {
+      notifyExclusiveVideoPlay(bannerPlayerIdRef.current)
+      setIsPlayingInline(true)
+    }
+  }, [resolvedYtId, compact])
+
   // ConnectLn OpenGraph URL so WhatsApp, LinkedIn, X, Facebook, and messages render the ConnectLn Logo + Profile Picture Card
   const resolvedShareUrl = buildSharePreviewUrl({
     to: `/connectin?video=${encodeURIComponent(resolvedYtId || "")}&plate=${encodeURIComponent(serialPlate || "CLN-VID")}&vtitle=${encodeURIComponent((videoTitle || "").slice(0, 120))}`,
