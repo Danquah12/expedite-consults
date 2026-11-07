@@ -12,6 +12,18 @@ import {
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
+export interface PulseSourceTelemetry {
+  id: string
+  name: string
+  endpoint: string
+  protocol: string
+  status: 'SYNCED' | 'FALLBACK'
+  latencyMs: number
+  itemsSynced: number
+  latestItemTitle: string
+  lastSyncedAt: string
+}
+
 // In-memory store for user-published live Pulse Intelligence Reports
 const USER_PUBLISHED_PULSE_ARTICLES: PulseArticle[] = []
 
@@ -169,19 +181,36 @@ const COVER_IMAGES_BY_CATEGORY: Record<string, string> = {
 async function fetchLiveCisaKevAdvisories(): Promise<{
   advisories: CyberThreatAdvisory[]
   articles: PulseArticle[]
+  telemetry: PulseSourceTelemetry
 }> {
+  const start = Date.now()
+  const endpoint = 'https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json'
   try {
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), 3200)
-    const res = await fetch(
-      'https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json',
-      {
-        signal: controller.signal,
-        cache: 'no-store',
-      }
-    )
+    const res = await fetch(endpoint, {
+      signal: controller.signal,
+      cache: 'no-store',
+    })
     clearTimeout(timer)
-    if (!res.ok) return { advisories: [], articles: [] }
+    const latencyMs = Date.now() - start
+    if (!res.ok) {
+      return {
+        advisories: [],
+        articles: [],
+        telemetry: {
+          id: 'cisa_kev',
+          name: 'U.S. CISA Known Exploited Vulnerabilities (KEV)',
+          endpoint,
+          protocol: 'HTTPS JSON Feed (no-store)',
+          status: 'FALLBACK',
+          latencyMs,
+          itemsSynced: 0,
+          latestItemTitle: 'Using local statutory CISA fallback advisories',
+          lastSyncedAt: new Date().toISOString(),
+        },
+      }
+    }
     const data = await res.json()
     const vulns = Array.isArray(data?.vulnerabilities) ? data.vulnerabilities : []
     const latest = vulns
@@ -264,29 +293,75 @@ Ransomware Campaign Correlation: ${v.knownRansomwareCampaignUse || 'Under active
       commentsCount: 52 + idx * 11,
     }))
 
-    return { advisories, articles }
+    return {
+      advisories,
+      articles,
+      telemetry: {
+        id: 'cisa_kev',
+        name: 'U.S. CISA Known Exploited Vulnerabilities (KEV)',
+        endpoint,
+        protocol: 'HTTPS JSON Feed (no-store)',
+        status: 'SYNCED',
+        latencyMs,
+        itemsSynced: advisories.length + articles.length,
+        latestItemTitle: articles[0]?.title || advisories[0]?.title || 'CISA KEV Catalog Synced',
+        lastSyncedAt: new Date().toISOString(),
+      },
+    }
   } catch {
-    return { advisories: [], articles: [] }
+    return {
+      advisories: [],
+      articles: [],
+      telemetry: {
+        id: 'cisa_kev',
+        name: 'U.S. CISA Known Exploited Vulnerabilities (KEV)',
+        endpoint,
+        protocol: 'HTTPS JSON Feed (no-store)',
+        status: 'FALLBACK',
+        latencyMs: Date.now() - start,
+        itemsSynced: 0,
+        latestItemTitle: 'Using local statutory CISA fallback advisories',
+        lastSyncedAt: new Date().toISOString(),
+      },
+    }
   }
 }
 
-async function fetchLiveHackerNewsArticles(enclaveId?: string): Promise<PulseArticle[]> {
+async function fetchLiveHackerNewsArticles(enclaveId?: string): Promise<{
+  articles: PulseArticle[]
+  telemetry: PulseSourceTelemetry
+}> {
+  const start = Date.now()
+  const endpoint = 'https://hn.algolia.com/api/v1/search_by_date?tags=story&numericFilters=points>5&hitsPerPage=12'
   try {
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), 3200)
-    const res = await fetch(
-      'https://hn.algolia.com/api/v1/search_by_date?tags=story&numericFilters=points>5&hitsPerPage=12',
-      {
-        signal: controller.signal,
-        cache: 'no-store',
-      }
-    )
+    const res = await fetch(endpoint, {
+      signal: controller.signal,
+      cache: 'no-store',
+    })
     clearTimeout(timer)
-    if (!res.ok) return []
+    const latencyMs = Date.now() - start
+    if (!res.ok) {
+      return {
+        articles: [],
+        telemetry: {
+          id: 'hn_algolia',
+          name: 'Hacker News Algolia Real-Time Firehose',
+          endpoint,
+          protocol: 'REST JSON Stream (no-store)',
+          status: 'FALLBACK',
+          latencyMs,
+          itemsSynced: 0,
+          latestItemTitle: 'Fallback active',
+          lastSyncedAt: new Date().toISOString(),
+        },
+      }
+    }
     const data = await res.json()
     const hits = Array.isArray(data?.hits) ? data.hits : []
 
-    return hits
+    const articles = hits
       .filter((h: any) => h?.title && (h?.url || h?.story_text))
       .slice(0, 6)
       .map((h: any, idx: number): PulseArticle => {
@@ -352,25 +427,89 @@ This live report was ingested directly from ${domain} via the ConnectLn Real-Tim
           commentsCount: Number(h.num_comments) || 18,
         }
       })
+
+    return {
+      articles,
+      telemetry: {
+        id: 'hn_algolia',
+        name: 'Hacker News Algolia Real-Time Firehose',
+        endpoint,
+        protocol: 'REST JSON Stream (no-store)',
+        status: 'SYNCED',
+        latencyMs,
+        itemsSynced: articles.length,
+        latestItemTitle: articles[0]?.title || 'Synced',
+        lastSyncedAt: new Date().toISOString(),
+      },
+    }
   } catch {
-    return []
+    return {
+      articles: [],
+      telemetry: {
+        id: 'hn_algolia',
+        name: 'Hacker News Algolia Real-Time Firehose',
+        endpoint,
+        protocol: 'REST JSON Stream (no-store)',
+        status: 'FALLBACK',
+        latencyMs: Date.now() - start,
+        itemsSynced: 0,
+        latestItemTitle: 'Fallback active',
+        lastSyncedAt: new Date().toISOString(),
+      },
+    }
   }
 }
 
-async function fetchLiveDevToArticles(enclaveId?: string): Promise<PulseArticle[]> {
+async function fetchLiveDevToArticles(enclaveId?: string): Promise<{
+  articles: PulseArticle[]
+  telemetry: PulseSourceTelemetry
+}> {
+  const start = Date.now()
+  const endpoint = 'https://dev.to/api/articles?per_page=6&top=1'
   try {
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), 3200)
-    const res = await fetch('https://dev.to/api/articles?per_page=6&top=1', {
+    const res = await fetch(endpoint, {
       signal: controller.signal,
       cache: 'no-store',
     })
     clearTimeout(timer)
-    if (!res.ok) return []
+    const latencyMs = Date.now() - start
+    if (!res.ok) {
+      return {
+        articles: [],
+        telemetry: {
+          id: 'devto_live',
+          name: 'Dev.to Live Engineering & AI Stream',
+          endpoint,
+          protocol: 'REST JSON Stream (no-store)',
+          status: 'FALLBACK',
+          latencyMs,
+          itemsSynced: 0,
+          latestItemTitle: 'Fallback active',
+          lastSyncedAt: new Date().toISOString(),
+        },
+      }
+    }
     const items = await res.json()
-    if (!Array.isArray(items)) return []
+    if (!Array.isArray(items)) {
+      return {
+        articles: [],
+        telemetry: {
+          id: 'devto_live',
+          name: 'Dev.to Live Engineering & AI Stream',
+          endpoint,
+          protocol: 'REST JSON Stream (no-store)',
+          status: 'FALLBACK',
+          latencyMs,
+          itemsSynced: 0,
+          latestItemTitle: 'Fallback active',
+          lastSyncedAt: new Date().toISOString(),
+        },
+      }
+    }
 
-    return items.slice(0, 4).map((item: any, idx: number): PulseArticle => {
+    const articles = items.slice(0, 4).map((item: any, idx: number): PulseArticle => {
       const category = classifyArticleCategory(`${item.title || ''} ${(item.tag_list || []).join(' ')}`, enclaveId)
       return {
         id: `live_devto_${item.id || idx}`,
@@ -419,8 +558,36 @@ async function fetchLiveDevToArticles(enclaveId?: string): Promise<PulseArticle[
         commentsCount: Number(item.comments_count) || 14,
       }
     })
+
+    return {
+      articles,
+      telemetry: {
+        id: 'devto_live',
+        name: 'Dev.to Live Engineering & AI Stream',
+        endpoint,
+        protocol: 'REST JSON Stream (no-store)',
+        status: 'SYNCED',
+        latencyMs,
+        itemsSynced: articles.length,
+        latestItemTitle: articles[0]?.title || 'Synced',
+        lastSyncedAt: new Date().toISOString(),
+      },
+    }
   } catch {
-    return []
+    return {
+      articles: [],
+      telemetry: {
+        id: 'devto_live',
+        name: 'Dev.to Live Engineering & AI Stream',
+        endpoint,
+        protocol: 'REST JSON Stream (no-store)',
+        status: 'FALLBACK',
+        latencyMs: Date.now() - start,
+        itemsSynced: 0,
+        latestItemTitle: 'Fallback active',
+        lastSyncedAt: new Date().toISOString(),
+      },
+    }
   }
 }
 
@@ -456,8 +623,8 @@ export async function GET(req: NextRequest) {
     ...USER_PUBLISHED_PULSE_ARTICLES,
     ...professionArticles,
     ...(enclaveId && enclaveId !== 'tech_cybersecurity' ? [] : cisaLive.articles),
-    ...hnLive,
-    ...devToLive,
+    ...hnLive.articles,
+    ...devToLive.articles,
     ...liveStampedBaseArticles,
   ]
 
@@ -474,14 +641,56 @@ export async function GET(req: NextRequest) {
       ? baseAdvisories
       : [...cisaLive.advisories, ...baseAdvisories].slice(0, 5)
 
+  const nowIso = new Date().toISOString()
+  const sourceTelemetry: PulseSourceTelemetry[] = [
+    cisaLive.telemetry,
+    hnLive.telemetry,
+    devToLive.telemetry,
+    {
+      id: 'enclave_telemetry',
+      name: 'ConnectLn 20-Enclave & Profession Intelligence Engine',
+      endpoint: 'internal://pulse-news-data/enclaves',
+      protocol: 'In-Memory Enclave Engine',
+      status: 'SYNCED',
+      latencyMs: 2,
+      itemsSynced: liveStampedBaseArticles.length + professionArticles.length + baseAdvisories.length,
+      latestItemTitle:
+        professionArticles[0]?.title ||
+        liveStampedBaseArticles[0]?.title ||
+        'Enclave Intelligence Active',
+      lastSyncedAt: nowIso,
+    },
+    {
+      id: 'member_dispatches',
+      name: 'Verified Member Field Dispatches (POST /api/connectin/pulse)',
+      endpoint: '/api/connectin/pulse',
+      protocol: 'Direct Member Ingestion',
+      status: 'SYNCED',
+      latencyMs: 1,
+      itemsSynced: USER_PUBLISHED_PULSE_ARTICLES.length,
+      latestItemTitle:
+        USER_PUBLISHED_PULSE_ARTICLES[0]?.title || 'Ready for member field report submissions',
+      lastSyncedAt: nowIso,
+    },
+  ]
+
   return NextResponse.json(
     {
       ok: true,
-      syncedAt: new Date().toISOString(),
+      syncedAt: nowIso,
       formattedDate: getFormattedTodayDate(),
       liveExternalCount:
-        cisaLive.articles.length + hnLive.length + devToLive.length + professionArticles.length,
-      sourcesActive: ['CISA KEV Catalog', 'Hacker News Algolia Firehose', 'Dev.to Live API', 'ConnectLn Enclave Wire'],
+        cisaLive.articles.length +
+        hnLive.articles.length +
+        devToLive.articles.length +
+        professionArticles.length,
+      sourcesActive: [
+        'CISA KEV Catalog',
+        'Hacker News Algolia Firehose',
+        'Dev.to Live API',
+        'ConnectLn Enclave Wire',
+      ],
+      sourceTelemetry,
       advisories: combinedAdvisories,
       articles: combinedArticles,
       aiBrief: {

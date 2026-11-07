@@ -90,6 +90,7 @@ import {
   loadStoredUserActivityLogs,
   UserActivityEvent
 } from "@/lib/connectin-storage"
+import { AdminPulseSyncTab } from "./AdminPulseSyncTab"
 
 interface AdminIAMConsoleViewProps {
   currentUser: UserProfile
@@ -103,6 +104,7 @@ export function AdminIAMConsoleView({
   // Navigation tabs
   const [activeAdminTab, setActiveAdminTab] = useState<
     | 'overview'
+    | 'pulse_sync'
     | 'devhub'
     | 'user_activity'
     | 'users'
@@ -462,6 +464,7 @@ export function AdminIAMConsoleView({
       title: "Core Operations",
       items: [
         { id: 'overview', label: 'Dashboard & Metrics', icon: BarChart3, badge: 'Live' },
+        { id: 'pulse_sync', label: 'Pulse Live Sync', icon: Radio, badge: 'Live Wire', highlight: true },
         { id: 'devhub', label: 'ConnectLn DevHub (IDP)', icon: Laptop, badge: 'v1.0', highlight: true },
         { id: 'user_activity', label: 'User Activity Log', icon: Activity, badge: userActivityLogs.length },
         { id: 'users', label: 'User Management', icon: Users, badge: users.length },
@@ -560,6 +563,13 @@ export function AdminIAMConsoleView({
               <Laptop className="h-3.5 w-3.5" />
               <span>ConnectLn DevHub (Control Plane)</span>
             </button>
+            <button
+              onClick={() => setActiveAdminTab('pulse_sync')}
+              className="rounded-full bg-emerald-600 hover:bg-emerald-500 px-4 py-2 text-xs font-bold text-white transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+            >
+              <Radio className="h-3.5 w-3.5 animate-pulse" />
+              <span>Pulse Live Sync Monitor</span>
+            </button>
             <a
               href="https://connectln-devhub.vercel.app"
               target="_blank"
@@ -655,6 +665,14 @@ export function AdminIAMConsoleView({
 
         {/* Right Main Content Area */}
         <div className="md:col-span-8 lg:col-span-9 space-y-5">
+          {/* MODULE 0A: PULSE LIVE SYNC MONITOR */}
+          {activeAdminTab === 'pulse_sync' && (
+            <AdminPulseSyncTab
+              onShowNotice={showNotice}
+              onNavigateToPulse={() => onNavigateTab('pulse')}
+            />
+          )}
+
           {/* MODULE 0: CONNECTLN DEVHUB — ENGINEERING CONTROL PLANE */}
           {activeAdminTab === 'devhub' && (
             <div className="space-y-4">
@@ -928,6 +946,13 @@ export function AdminIAMConsoleView({
               <Laptop className="h-3.5 w-3.5" />
               <span>ConnectLn DevHub (Control Plane)</span>
             </button>
+            <button
+              onClick={() => setActiveAdminTab('pulse_sync')}
+              className="rounded-full bg-emerald-600 hover:bg-emerald-500 px-4 py-2 text-xs font-bold text-white transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+            >
+              <Radio className="h-3.5 w-3.5 animate-pulse" />
+              <span>Pulse Live Sync Monitor</span>
+            </button>
             <a
               href="https://connectln-devhub.vercel.app"
               target="_blank"
@@ -1086,6 +1111,13 @@ export function AdminIAMConsoleView({
             >
               <Laptop className="h-3.5 w-3.5" />
               <span>ConnectLn DevHub (Control Plane)</span>
+            </button>
+            <button
+              onClick={() => setActiveAdminTab('pulse_sync')}
+              className="rounded-full bg-emerald-600 hover:bg-emerald-500 px-4 py-2 text-xs font-bold text-white transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+            >
+              <Radio className="h-3.5 w-3.5 animate-pulse" />
+              <span>Pulse Live Sync Monitor</span>
             </button>
             <a
               href="https://connectln-devhub.vercel.app"
