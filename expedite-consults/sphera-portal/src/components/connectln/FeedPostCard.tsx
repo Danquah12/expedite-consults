@@ -246,10 +246,20 @@ export function FeedPostCard({
 
   const sharerPic = useSharePic(resolveUserProfilePicture(currentUser))
   const getPostShareData = () => {
-    const origin = "https://www.connectln.app"
+    const origin = "https://www.conectln.com"
     const snippet = (post.content || "").slice(0, 100).replace(/\n/g, ' ').trim()
+    const postParams = new URLSearchParams({
+      tab: "home",
+      postId: post.id,
+      postTitle: snippet || `Post by ${resolvedAuthorName}`,
+      postAuthor: resolvedAuthorName,
+    })
+    if (post.media?.youtubeId) {
+      postParams.set("video", post.media.youtubeId)
+      postParams.set("vtitle", (post.media.title || snippet || "").slice(0, 120))
+    }
     const postUrl = buildSharePreviewUrl({
-      to: `/connectin?v=connectln5`,
+      to: `/connectin?${postParams.toString()}`,
       title: snippet || `Post by ${resolvedAuthorName}`,
       sharerName: currentUser?.name || "",
       pic: sharerPic,
@@ -389,7 +399,10 @@ export function FeedPostCard({
   }
 
   return (
-    <article className="overflow-visible rounded-xl border border-zinc-200 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-900 transition-all">
+    <article
+      id={`connectln-post-${post.id}`}
+      className="overflow-visible rounded-xl border border-zinc-200 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-900 transition-all"
+    >
       {/* Celebration Banner Header if milestone */}
       {post.celebration && (
         <div className="flex items-center gap-2 border-b border-amber-100 bg-gradient-to-r from-amber-50/80 to-sky-50/80 px-4 py-2 text-xs font-semibold text-amber-900 dark:border-amber-900/40 dark:from-amber-950/20 dark:to-sky-950/20 dark:text-amber-300">

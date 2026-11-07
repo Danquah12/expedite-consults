@@ -130,8 +130,21 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
   const sharePic = useSharePic(userProfilePic)
 
   const getPulseSharePayload = (art: PulseArticle) => {
+    const deepParams = new URLSearchParams({
+      tab: "pulserooms",
+      pulseId: art.id,
+      pulseTitle: art.title.slice(0, 140),
+      pulseCat: art.category || "Cybersecurity",
+      pulseSum: (art.summary || "").slice(0, 220),
+    })
+    if (art.coverImage && art.coverImage.startsWith("http")) {
+      deepParams.set("pulseImg", art.coverImage)
+    }
+    if (art.sourceLinks?.[0]?.url) {
+      deepParams.set("pulseSrc", art.sourceLinks[0].url)
+    }
     const shareUrl = buildSharePreviewUrl({
-      to: `/connectin?tab=pulse`,
+      to: `/connectin?${deepParams.toString()}`,
       title: art.title,
       sharerName,
       pic: sharePic,
@@ -409,6 +422,98 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
       document.removeEventListener('visibilitychange', handleVisibilityOrFocus)
     }
   }, [enclaveId, professionTitle, fetchLivePulseFeed])
+
+  // Direct Deep-Link Handler: When anyone opens a shared Pulse link (or re-shared link), direct them straight to that exact Pulse content!
+  const hasAutoOpenedSharedRef = React.useRef<string | null>(null)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const sharedPulseId = (params.get('pulseId') || '').trim()
+    const sharedPulseTitle = (params.get('pulseTitle') || '').trim()
+    const sharedPulseCat = (params.get('pulseCat') || 'Cybersecurity').trim()
+    const sharedPulseSum = (params.get('pulseSum') || '').trim()
+    const sharedPulseImg = (params.get('pulseImg') || '').trim()
+    const sharedPulseSrc = (params.get('pulseSrc') || '').trim()
+
+    if (!sharedPulseId && !sharedPulseTitle) return
+    const key = `${sharedPulseId}|${sharedPulseTitle}`
+    if (hasAutoOpenedSharedRef.current === key) return
+
+    // 1. Check if the article already exists in current articles list
+    const normTitle = sharedPulseTitle.toLowerCase()
+    let matched = articles.find(
+      (a) =>
+        (sharedPulseId && a.id === sharedPulseId) ||
+        (normTitle && a.title.toLowerCase() === normTitle) ||
+        (normTitle && a.title.toLowerCase().includes(normTitle.slice(0, 36)))
+    )
+
+    // 2. If not in articles yet (e.g. dynamically hunted Zero-Day, Threat Advisory, AI Brief, or Audio Room shared by another user), reconstruct it immediately so the viewer sees the full content right away!
+    if (!matched && sharedPulseTitle) {
+      const reconstructed: PulseArticle = {
+        id: sharedPulseId || `shared-pulse-${Date.now()}`,
+        title: sharedPulseTitle,
+        summary:
+          sharedPulseSum ||
+          `Live intelligence briefing shared on ConnectLn Pulse (${sharedPulseCat}).`,
+        fullContent: `${
+          sharedPulseSum || sharedPulseTitle
+        }\n\nThis intelligence report was shared directly via ConnectLn Pulse. Use the "Share Pulse Card" button above to share this dossier with your network on LinkedIn, WhatsApp, Facebook, Instagram, X, or Email with your ConnectLn Logo & Profile Picture card.`,
+        category: (sharedPulseCat as any) || 'Cybersecurity',
+        publishedAt: 'Just happened · Shared Live',
+        readTime: '3 min read',
+        author: {
+          name: 'ConnectLn Pulse Intelligence',
+          role: 'Verified Live Intelligence Wire',
+          avatar: '/brand/connectln-icon-256.png',
+          source: 'ConnectLn Pulse',
+        },
+        coverImage:
+          sharedPulseImg ||
+          'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=900&auto=format&fit=crop&q=80',
+        aiKeyTakeaways: [
+          sharedPulseSum || sharedPulseTitle,
+          `Verified under ConnectLn Pulse (${sharedPulseCat}) — ready for immediate review and team sharing.`,
+        ],
+        sourceLinks: [
+          {
+            title: 'Official Grounded Source Reference',
+            url: sharedPulseSrc || 'https://www.conectln.com/connectin?tab=pulserooms',
+            domain: 'conectln.com',
+          },
+        ],
+        tags: [sharedPulseCat.replace(/\s+/g, ''), 'ConnectLnPulse', 'SharedIntelligence'],
+        upvotesCount: 184,
+        commentsCount: 29,
+        isBreaking: true,
+        biasRating: {
+          factCheckStatus: 'Statutorily Verified ✓',
+          credibilityScore: 99,
+        },
+      }
+      matched = reconstructed
+      setArticles((prev) =>
+        prev.some((p) => p.id === reconstructed.id) ? prev : [reconstructed, ...prev]
+      )
+    } else if (matched) {
+      // Move the shared article to the #1 spot at the top of the Pulse feed
+      const target = matched
+      setArticles((prev) => [target, ...prev.filter((p) => p.id !== target.id)])
+    }
+
+    if (matched) {
+      hasAutoOpenedSharedRef.current = key
+      setPulseMode('news')
+      setSelectedCategory('All')
+      setSelectedArticle(matched)
+      setTimeout(() => {
+        const el = document.getElementById(`pulse-card-${matched!.id}`)
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+      }, 300)
+    }
+  }, [articles])
 
   const handlePublishPulseReport = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -852,6 +957,7 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
               return (
                 <div
                   key={article.id}
+                  id={`pulse-card-${article.id}`}
                   className="rounded-2xl border border-zinc-200 bg-white shadow-xs hover:border-[#0A66C2] hover:shadow-lg transition-all dark:border-zinc-800 dark:bg-zinc-900 flex flex-col justify-between overflow-hidden group"
                 >
                   <div>

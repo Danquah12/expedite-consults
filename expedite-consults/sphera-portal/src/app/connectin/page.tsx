@@ -479,6 +479,13 @@ export default function ConnectLnPage() {
 
       const urlParams = new URLSearchParams(window.location.search)
       const tabParam = urlParams.get("tab")
+      const pulseIdParam = (urlParams.get("pulseId") || "").trim()
+      const pulseTitleParam = (urlParams.get("pulseTitle") || "").trim()
+      const videoParam = (urlParams.get("video") || "").trim()
+      const plateParam = (urlParams.get("plate") || "").trim()
+      const postIdParam = (urlParams.get("postId") || "").trim()
+      const postTitleParam = (urlParams.get("postTitle") || "").trim()
+      const postAuthorParam = (urlParams.get("postAuthor") || "").trim()
       const joinCallParam = urlParams.get("joinCall")
       const inviteParam = urlParams.get("invite")
       const invitedEmailParam = (urlParams.get("invitedEmail") || "").trim()
@@ -489,9 +496,31 @@ export default function ConnectLnPage() {
       const refParam = (urlParams.get("ref") || "").trim()
       const cidParam = (urlParams.get("cid") || "").trim()
 
+      const hasSharedContentLink = Boolean(
+        pulseIdParam ||
+        pulseTitleParam ||
+        tabParam === "pulse" ||
+        tabParam === "pulserooms" ||
+        videoParam ||
+        plateParam ||
+        postIdParam
+      )
+
       const resolvedUrlTab =
         joinCallParam || tabParam === "vibecomms"
           ? "vibecomms"
+          : pulseIdParam || pulseTitleParam || tabParam === "pulse" || tabParam === "pulserooms"
+          ? "pulserooms"
+          : videoParam || plateParam || postIdParam || tabParam === "home"
+          ? "home"
+          : tabParam === "media"
+          ? "media"
+          : tabParam === "learning"
+          ? "learning"
+          : tabParam === "marketplace"
+          ? "marketplace"
+          : tabParam === "network"
+          ? "network"
           : tabParam === "careersuite" || tabParam === "resume"
           ? "careersuite"
           : tabParam === "jobs"
@@ -516,7 +545,7 @@ export default function ConnectLnPage() {
 
       // When a user clicks an invitation link from an email/SMS, force them to authenticate on /connectin-login with a fresh profile!
       // NEVER log them in using the inviter's credentials or session.
-      if (isInvitationLink && !joinCallParam) {
+      if (isInvitationLink && !joinCallParam && !hasSharedContentLink) {
         try {
           localStorage.removeItem("connectin_user_profile")
           localStorage.removeItem("connectin_user_v1")
@@ -557,6 +586,19 @@ export default function ConnectLnPage() {
           setIsAuthenticated(true)
           setIsAuthModalOpen(false)
           setActiveTab("vibecomms")
+          setHasHydrated(true)
+        }
+        return
+      }
+
+      // If someone opens a shared content link (Pulse card, video, or feed post), direct them straight to the content without blocking on login!
+      if (hasSharedContentLink && (!explicitUser || isSignedOut)) {
+        if (isMounted) {
+          setIsAuthenticated(true)
+          setIsAuthModalOpen(false)
+          if (resolvedUrlTab) {
+            setActiveTab(resolvedUrlTab as any)
+          }
           setHasHydrated(true)
         }
         return
@@ -637,8 +679,8 @@ export default function ConnectLnPage() {
         // User has signed in before but profile data is missing — keep them in, fetch from server
         if (isMounted) {
           setIsAuthenticated(true)
-          if (joinCallParam || tabParam === "vibecomms") {
-            setActiveTab("vibecomms")
+          if (resolvedUrlTab) {
+            setActiveTab(resolvedUrlTab as any)
           }
           setHasHydrated(true)
         }
@@ -702,9 +744,12 @@ export default function ConnectLnPage() {
         console.warn("[Auth] /me check:", e)
       }
 
-      // Default to authenticated guest/member view so https://www.connectln.app/connectin always loads immediately
+      // Default to authenticated guest/member view so https://www.conectln.com/connectin always loads immediately
       if (isMounted) {
         setIsAuthenticated(true)
+        if (resolvedUrlTab) {
+          setActiveTab(resolvedUrlTab as any)
+        }
         setHasHydrated(true)
       }
     }
@@ -712,6 +757,60 @@ export default function ConnectLnPage() {
     initializeAuth()
     return () => { isMounted = false }
   }, [router])
+
+  // Direct Deep-Link Handler for Shared Feed Posts (?postId=...)
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const urlParams = new URLSearchParams(window.location.search)
+    const sharedPostId = (urlParams.get("postId") || "").trim()
+    const sharedPostTitle = (urlParams.get("postTitle") || "").trim()
+    const sharedPostAuthor = (urlParams.get("postAuthor") || "").trim()
+    const sharedVideoId = (urlParams.get("video") || "").trim()
+    if (!sharedPostId) return
+
+    setActiveTab("home")
+    setPosts((prev) => {
+      const existing = prev.find((p) => p.id === sharedPostId)
+      if (existing) {
+        return [existing, ...prev.filter((p) => p.id !== sharedPostId)]
+      }
+      if (!sharedPostTitle) return prev
+      const constructedPost: Post = {
+        id: sharedPostId,
+        author: {
+          name: sharedPostAuthor || "ConnectLn Member",
+          headline: "Shared via ConnectLn Direct Link",
+          avatar: generatePersonalSignatureAvatar(sharedPostAuthor || "ConnectLn Member"),
+          isVerified: true,
+        },
+        timestamp: "Shared just now",
+        content: sharedPostTitle,
+        likes: 42,
+        commentsCount: 8,
+        reposts: 12,
+        userReaction: null,
+        isSaved: false,
+        comments: [],
+        media: sharedVideoId
+          ? {
+              type: "video",
+              url: `https://www.youtube.com/watch?v=${sharedVideoId}`,
+              youtubeId: sharedVideoId,
+              title: sharedPostTitle,
+            }
+          : undefined,
+      }
+      return [constructedPost, ...prev]
+    })
+
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`connectln-post-${sharedPostId}`)
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" })
+      }
+    }, 350)
+    return () => clearTimeout(timer)
+  }, [])
 
   // Hard guard: Normal users must never land on the adminiam tab
   useEffect(() => {

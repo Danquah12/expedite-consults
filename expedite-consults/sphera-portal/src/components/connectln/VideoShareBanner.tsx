@@ -131,7 +131,7 @@ export function VideoShareBanner({
 
   // ConnectLn OpenGraph URL so WhatsApp, LinkedIn, X, Facebook, and messages render the ConnectLn Logo + Profile Picture Card
   const resolvedShareUrl = buildSharePreviewUrl({
-    to: `/connectin?video=${encodeURIComponent(resolvedYtId || "")}&plate=${encodeURIComponent(serialPlate || "CLN-VID")}`,
+    to: `/connectin?video=${encodeURIComponent(resolvedYtId || "")}&plate=${encodeURIComponent(serialPlate || "CLN-VID")}&vtitle=${encodeURIComponent((videoTitle || "").slice(0, 120))}`,
     title: videoTitle,
     sharerName: resolvedAuthor,
     pic: sharePic,

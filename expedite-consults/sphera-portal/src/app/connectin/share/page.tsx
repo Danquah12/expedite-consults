@@ -30,12 +30,16 @@ export async function generateMetadata({ searchParams }: { searchParams: Params 
 export default async function SharePage({ searchParams }: { searchParams: Params }) {
   const sp = await searchParams
   const to = one(sp.to)
+  const title = one(sp.t)
+  const sub = one(sp.sub)
   const vid = one(sp.v) || one(sp.video)
   const plate = one(sp.d) || one(sp.plate)
   // same-site paths only (no open redirect)
   const target =
     to.startsWith("/") && !to.startsWith("//")
       ? to
-      : `/connectin?video=${encodeURIComponent(vid)}&plate=${encodeURIComponent(plate)}`
+      : sub.toLowerCase().includes("pulse")
+      ? `/connectin?tab=pulserooms&pulseTitle=${encodeURIComponent(title)}`
+      : `/connectin?video=${encodeURIComponent(vid)}&plate=${encodeURIComponent(plate)}&vtitle=${encodeURIComponent(title)}`
   return <ShareRedirect target={target} />
 }

@@ -84,12 +84,15 @@ export function ConnectInVideoWheel({
           params.delete("plate")
           const cleanSearch = params.toString()
           const cleanUrl = window.location.pathname + (cleanSearch ? `?${cleanSearch}` : "") + window.location.hash
-          window.history.replaceState({}, "", cleanUrl)
+          const sharedVTitle = params.get("vtitle") || "ConnectLn Shared Masterclass"
           const found = combined.find(
             t => (sharedVideoId && t.youtubeId === sharedVideoId) || (sharedPlate && t.serialPlate === sharedPlate)
           )
           if (found) {
-            setActiveVideo(found)
+            setSelectedStageVideo(found); setActiveVideo(found); setTimeout(() => { heroStageRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }) }, 250)
+          } else if (sharedVideoId && /^[a-zA-Z0-9_-]{11}$/.test(sharedVideoId)) {
+            const fallbackTalk: WheelVideoTalk = { id: `shared-vid-${sharedVideoId}`, serialPlate: sharedPlate || "CLN-SHARED", title: sharedVTitle, speaker: "ConnectLn Verified Member", speakerTitle: "Direct Shared Masterclass", category: "all", categoryLabel: "Shared Masterclass", enclaveId: user?.professionEnclave || "trades_construction", duration: "5:00", youtubeId: sharedVideoId, thumbnailUrl: `https://i.ytimg.com/vi/${sharedVideoId}/hqdefault.jpg`, summary: sharedVTitle, takeaways: ["Shared directly via ConnectLn — click Share to pass this masterclass on with your Profile Picture & ConnectLn Logo Card."], tags: ["#ConnectLn", "#Masterclass"] };
+            setSelectedStageVideo(fallbackTalk); setActiveVideo(fallbackTalk); setTimeout(() => { heroStageRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }) }, 250)
           }
         }
       }
@@ -328,7 +331,7 @@ export function ConnectInVideoWheel({
 
   const buildShareUrl = (video: WheelVideoTalk) => {
     return buildSharePreviewUrl({
-      to: `/connectin?video=${encodeURIComponent(video.youtubeId)}&plate=${encodeURIComponent(video.serialPlate)}`,
+      to: `/connectin?video=${encodeURIComponent(video.youtubeId)}&plate=${encodeURIComponent(video.serialPlate)}&vtitle=${encodeURIComponent((video.title || "").slice(0, 120))}`,
       title: video.title,
       sharerName: user?.name || "",
       pic: sharePic,
