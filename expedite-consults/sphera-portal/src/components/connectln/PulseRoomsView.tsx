@@ -92,7 +92,9 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
   const [isSyncing, setIsSyncing] = useState<boolean>(false)
   const [lastSyncedAt, setLastSyncedAt] = useState<string>('Just now')
   const [liveDateLabel, setLiveDateLabel] = useState<string>(() => getFormattedTodayDate())
-  const [liveExternalCount, setLiveExternalCount] = useState<number>(8)
+  const [liveExternalCount, setLiveExternalCount] = useState<number>(12)
+  const [nextSyncSeconds, setNextSyncSeconds] = useState<number>(45)
+  const [tickerIndex, setTickerIndex] = useState<number>(0)
 
   // Publish Live Pulse Report Modal State
   const [showPublishModal, setShowPublishModal] = useState<boolean>(false)
@@ -152,6 +154,7 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
           second: '2-digit',
         })
         setLastSyncedAt(nowTime)
+        setNextSyncSeconds(45)
       }
     } catch {
       // Keep local fallback articles on network error
@@ -171,10 +174,37 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
     setSelectedCategory('All')
     fetchLivePulseFeed()
 
-    const interval = setInterval(() => {
-      fetchLivePulseFeed()
-    }, 60000)
-    return () => clearInterval(interval)
+    // 1-second countdown heartbeat that triggers a live fetch every 45 seconds
+    const countdownTimer = setInterval(() => {
+      setNextSyncSeconds((prev) => {
+        if (prev <= 1) {
+          fetchLivePulseFeed()
+          return 45
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    // Rotate live breaking wire ticker every 6 seconds
+    const tickerTimer = setInterval(() => {
+      setTickerIndex((prev) => prev + 1)
+    }, 6000)
+
+    // Re-sync immediately when user returns to browser tab
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible') {
+        fetchLivePulseFeed()
+      }
+    }
+    window.addEventListener('focus', handleVisibilityOrFocus)
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus)
+
+    return () => {
+      clearInterval(countdownTimer)
+      clearInterval(tickerTimer)
+      window.removeEventListener('focus', handleVisibilityOrFocus)
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus)
+    }
   }, [enclaveId, professionTitle, fetchLivePulseFeed])
 
   const handlePublishPulseReport = async (e: React.FormEvent) => {
@@ -404,6 +434,33 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
       {/* ========================================================================= */}
       {pulseMode === 'news' && (
         <div className="space-y-5">
+          {/* Continuous Live Breaking Wire Ticker */}
+          {articles.length > 0 && (
+            <div className="rounded-xl border border-emerald-500/30 bg-gradient-to-r from-slate-900 via-zinc-900 to-slate-900 px-4 py-2.5 text-white shadow-xs flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-300 shrink-0">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+                  LIVE WIRE STREAM
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedArticle(articles[tickerIndex % articles.length])}
+                  className="text-xs sm:text-sm font-bold text-zinc-100 hover:text-sky-300 truncate text-left cursor-pointer transition-colors"
+                >
+                  [{articles[tickerIndex % articles.length]?.category}]{" "}
+                  {articles[tickerIndex % articles.length]?.title}
+                </button>
+              </div>
+              <div className="flex items-center gap-2 text-[11px] text-zinc-300 font-mono shrink-0">
+                <span className="text-emerald-300">
+                  {articles[tickerIndex % articles.length]?.publishedAt}
+                </span>
+                <span>·</span>
+                <span>Auto-sync in {nextSyncSeconds}s</span>
+              </div>
+            </div>
+          )}
+
           {/* Search & Live Sync Header */}
           <div className="rounded-xl border border-zinc-200 bg-white p-3.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 flex flex-wrap items-center justify-between gap-3">
             <div className="relative flex-1 min-w-[240px] flex items-center rounded-lg bg-zinc-50 px-3 py-2 border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800/80">

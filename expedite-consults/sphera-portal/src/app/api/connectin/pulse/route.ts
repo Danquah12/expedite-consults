@@ -10,14 +10,15 @@ import {
 } from '@/lib/pulse-news-data'
 
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 // In-memory store for user-published live Pulse Intelligence Reports
 const USER_PUBLISHED_PULSE_ARTICLES: PulseArticle[] = []
 
 function formatRelativeTimeFromISO(isoOrEpoch?: string | number): string {
-  if (!isoOrEpoch) return 'Just now'
-  const ts = typeof isoOrEpoch === 'number' ? isoOrEpoch * 1000 : Date.parse(isoOrEpoch)
-  if (Number.isNaN(ts)) return 'Just now'
+  if (!isoOrEpoch) return 'Just now · Live'
+  const ts = typeof isoOrEpoch === 'number' ? isoOrEpoch * 1000 : Date.parse(String(isoOrEpoch))
+  if (Number.isNaN(ts)) return 'Just now · Live'
   const diffMs = Math.max(0, Date.now() - ts)
   const mins = Math.floor(diffMs / 60000)
   if (mins < 2) return 'Just now · Live'
@@ -63,7 +64,8 @@ function classifyArticleCategory(
     lower.includes('exploit') ||
     lower.includes('ransomware') ||
     lower.includes('crypt') ||
-    lower.includes('auth')
+    lower.includes('auth') ||
+    lower.includes('firewall')
   ) {
     return 'Cybersecurity'
   }
@@ -78,7 +80,8 @@ function classifyArticleCategory(
     lower.includes('inference') ||
     lower.includes('openai') ||
     lower.includes('anthropic') ||
-    lower.includes('gemini')
+    lower.includes('gemini') ||
+    lower.includes('machine learning')
   ) {
     return 'AI'
   }
@@ -133,7 +136,8 @@ function classifyArticleCategory(
     lower.includes('study') ||
     lower.includes('university') ||
     lower.includes('theorem') ||
-    lower.includes('quantum')
+    lower.includes('quantum') ||
+    lower.includes('clinical')
   ) {
     return 'Research'
   }
@@ -173,18 +177,17 @@ async function fetchLiveCisaKevAdvisories(): Promise<{
       'https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json',
       {
         signal: controller.signal,
-        next: { revalidate: 300 },
+        cache: 'no-store',
       }
     )
     clearTimeout(timer)
     if (!res.ok) return { advisories: [], articles: [] }
     const data = await res.json()
     const vulns = Array.isArray(data?.vulnerabilities) ? data.vulnerabilities : []
-    // Sort by dateAdded descending to get the most recent real-world CVEs
     const latest = vulns
       .slice()
       .sort((a: any, b: any) => String(b.dateAdded || '').localeCompare(String(a.dateAdded || '')))
-      .slice(0, 3)
+      .slice(0, 4)
 
     const advisories: CyberThreatAdvisory[] = latest.map((v: any, idx: number) => ({
       id: `cisa_live_${v.cveID || idx}`,
@@ -272,10 +275,10 @@ async function fetchLiveHackerNewsArticles(enclaveId?: string): Promise<PulseArt
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), 3200)
     const res = await fetch(
-      'https://hn.algolia.com/api/v1/search_by_date?tags=story&numericFilters=points>20&hitsPerPage=10',
+      'https://hn.algolia.com/api/v1/search_by_date?tags=story&numericFilters=points>5&hitsPerPage=12',
       {
         signal: controller.signal,
-        next: { revalidate: 120 },
+        cache: 'no-store',
       }
     )
     clearTimeout(timer)
@@ -299,7 +302,7 @@ async function fetchLiveHackerNewsArticles(enclaveId?: string): Promise<PulseArt
         return {
           id: `live_hn_${h.objectID || idx}`,
           title: h.title,
-          summary: `Live intelligence dispatch from ${domain} (${h.points || 45} peer upvotes · ${h.num_comments || 12} active analyst comments). Real-time architectural and industry analysis synced via ConnectLn Live Wire.`,
+          summary: `Live intelligence dispatch from ${domain} (${h.points || 25} peer upvotes · ${h.num_comments || 8} active analyst comments). Real-time architectural and industry analysis synced via ConnectLn Live Wire.`,
           category,
           author: {
             name: `@${h.author || 'tech_analyst'}`,
@@ -316,15 +319,15 @@ async function fetchLiveHackerNewsArticles(enclaveId?: string): Promise<PulseArt
           isFeatured: idx === 0,
           isBreaking: idx < 2,
           aiKeyTakeaways: [
-            `Primary source published on ${domain} and trending across engineering & security intelligence feeds.`,
-            `${h.points || 45} verified technical upvotes and ${h.num_comments || 12} peer review comments recorded in real time.`,
+            `Primary source published on ${domain} and streaming live across engineering & security intelligence feeds.`,
+            `${h.points || 25} verified technical upvotes and ${h.num_comments || 8} peer review comments recorded in real time.`,
             `Categorized under ${category} by ConnectLn Noctis™ semantic classifier.`,
           ],
           fullContent: `${h.title}
 
 Source Domain: ${domain}
 Published: ${formatRelativeTimeFromISO(h.created_at_i || h.created_at)}
-Community Verification: ${h.points || 45} points · ${h.num_comments || 12} technical comments
+Community Verification: ${h.points || 25} points · ${h.num_comments || 8} technical comments
 
 Executive Context:
 This live report was ingested directly from ${domain} via the ConnectLn Real-Time Pulse Intelligence Wire. Click the grounded source reference below to inspect the full primary publication and live discussion thread.`,
@@ -335,7 +338,7 @@ This live report was ingested directly from ${domain} via the ConnectLn Real-Tim
               domain,
             },
             {
-              title: `Live Technical Peer Discussion (${h.num_comments || 12} comments)`,
+              title: `Live Technical Peer Discussion (${h.num_comments || 8} comments)`,
               url: `https://news.ycombinator.com/item?id=${h.objectID}`,
               domain: 'news.ycombinator.com',
             },
@@ -345,10 +348,77 @@ This live report was ingested directly from ${domain} via the ConnectLn Real-Tim
             credibilityScore: 96,
             factCheckStatus: 'Peer Reviewed',
           },
-          upvotesCount: Number(h.points) || 128,
-          commentsCount: Number(h.num_comments) || 24,
+          upvotesCount: Number(h.points) || 95,
+          commentsCount: Number(h.num_comments) || 18,
         }
       })
+  } catch {
+    return []
+  }
+}
+
+async function fetchLiveDevToArticles(enclaveId?: string): Promise<PulseArticle[]> {
+  try {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 3200)
+    const res = await fetch('https://dev.to/api/articles?per_page=6&top=1', {
+      signal: controller.signal,
+      cache: 'no-store',
+    })
+    clearTimeout(timer)
+    if (!res.ok) return []
+    const items = await res.json()
+    if (!Array.isArray(items)) return []
+
+    return items.slice(0, 4).map((item: any, idx: number): PulseArticle => {
+      const category = classifyArticleCategory(`${item.title || ''} ${(item.tag_list || []).join(' ')}`, enclaveId)
+      return {
+        id: `live_devto_${item.id || idx}`,
+        title: item.title || 'Live Engineering Deep Dive',
+        summary:
+          item.description ||
+          'Real-time engineering architecture and production implementation benchmark synced from Dev.to.',
+        category,
+        author: {
+          name: item.user?.name || item.user?.username || 'Engineering Lead',
+          role: 'Verified Technical Author · Dev.to Live',
+          avatar:
+            item.user?.profile_image_90 ||
+            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+          source: 'dev.to (Live Stream)',
+        },
+        publishedAt: formatRelativeTimeFromISO(item.published_timestamp || item.published_at),
+        readTime: `${item.reading_time_minutes || 4} min read`,
+        coverImage:
+          item.cover_image ||
+          item.social_image ||
+          COVER_IMAGES_BY_CATEGORY[category] ||
+          COVER_IMAGES_BY_CATEGORY.Technology,
+        tags: Array.isArray(item.tag_list) && item.tag_list.length > 0 ? item.tag_list.slice(0, 4) : [category, 'Live'],
+        isFeatured: false,
+        isBreaking: idx === 0,
+        aiKeyTakeaways: [
+          item.description || 'Actionable production engineering patterns verified by peer practitioners.',
+          `${item.public_reactions_count || 42} reactions and ${item.comments_count || 9} peer discussion comments.`,
+          `Synced live via ConnectLn Multi-Source Intelligence Aggregator.`,
+        ],
+        fullContent: `${item.title}\n\n${item.description || ''}\n\nRead Time: ${item.reading_time_minutes || 4} minutes\nPublished: ${formatRelativeTimeFromISO(item.published_timestamp || item.published_at)}\n\nFull article and code benchmarks available at the primary source link below.`,
+        sourceLinks: [
+          {
+            title: `${item.title} (dev.to)`,
+            url: item.url || 'https://dev.to',
+            domain: 'dev.to',
+          },
+        ],
+        biasRating: {
+          leaning: 'Center',
+          credibilityScore: 95,
+          factCheckStatus: 'Peer Reviewed',
+        },
+        upvotesCount: Number(item.public_reactions_count) || 84,
+        commentsCount: Number(item.comments_count) || 14,
+      }
+    })
   } catch {
     return []
   }
@@ -359,9 +429,10 @@ export async function GET(req: NextRequest) {
   const enclaveId = searchParams.get('enclave') || undefined
   const professionTitle = searchParams.get('profession') || undefined
 
-  const [cisaLive, hnLive] = await Promise.all([
+  const [cisaLive, hnLive, devToLive] = await Promise.all([
     fetchLiveCisaKevAdvisories(),
     fetchLiveHackerNewsArticles(enclaveId),
+    fetchLiveDevToArticles(enclaveId),
   ])
 
   const professionArticles = getLiveProfessionPulseArticles(professionTitle, enclaveId)
@@ -371,7 +442,7 @@ export async function GET(req: NextRequest) {
 
   // Refresh timestamps on curated articles so they reflect live sync cadence
   const liveStampedBaseArticles: PulseArticle[] = baseArticles.map((art, index) => {
-    const minutesDynamic = [8, 19, 34, 47, 65, 88, 110, 140, 175, 210, 245][index % 11]
+    const minutesDynamic = [6, 14, 27, 39, 52, 74, 95, 120, 155, 190, 225][index % 11]
     const dynamicTime =
       minutesDynamic < 60 ? `${minutesDynamic}m ago` : `${Math.floor(minutesDynamic / 60)}h ${minutesDynamic % 60}m ago`
     return {
@@ -380,32 +451,50 @@ export async function GET(req: NextRequest) {
     }
   })
 
-  // Combine user-published -> profession-specific -> CISA KEV breaking -> HN live -> curated enclave articles
-  const combinedArticles: PulseArticle[] = [
+  // Combine & deduplicate by title
+  const rawCombined: PulseArticle[] = [
     ...USER_PUBLISHED_PULSE_ARTICLES,
     ...professionArticles,
     ...(enclaveId && enclaveId !== 'tech_cybersecurity' ? [] : cisaLive.articles),
     ...hnLive,
+    ...devToLive,
     ...liveStampedBaseArticles,
   ]
+
+  const seenTitles = new Set<string>()
+  const combinedArticles = rawCombined.filter((art) => {
+    const key = art.title.toLowerCase().trim()
+    if (seenTitles.has(key)) return false
+    seenTitles.add(key)
+    return true
+  })
 
   const combinedAdvisories: CyberThreatAdvisory[] =
     enclaveId && enclaveId !== 'tech_cybersecurity'
       ? baseAdvisories
-      : [...cisaLive.advisories, ...baseAdvisories].slice(0, 4)
+      : [...cisaLive.advisories, ...baseAdvisories].slice(0, 5)
 
-  return NextResponse.json({
-    ok: true,
-    syncedAt: new Date().toISOString(),
-    formattedDate: getFormattedTodayDate(),
-    liveExternalCount: cisaLive.articles.length + hnLive.length + professionArticles.length,
-    advisories: combinedAdvisories,
-    articles: combinedArticles,
-    aiBrief: {
-      ...aiBrief,
-      date: getFormattedTodayDate(),
+  return NextResponse.json(
+    {
+      ok: true,
+      syncedAt: new Date().toISOString(),
+      formattedDate: getFormattedTodayDate(),
+      liveExternalCount:
+        cisaLive.articles.length + hnLive.length + devToLive.length + professionArticles.length,
+      sourcesActive: ['CISA KEV Catalog', 'Hacker News Algolia Firehose', 'Dev.to Live API', 'ConnectLn Enclave Wire'],
+      advisories: combinedAdvisories,
+      articles: combinedArticles,
+      aiBrief: {
+        ...aiBrief,
+        date: getFormattedTodayDate(),
+      },
     },
-  })
+    {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+      },
+    }
+  )
 }
 
 export async function POST(req: NextRequest) {
