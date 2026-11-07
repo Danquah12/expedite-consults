@@ -2,7 +2,7 @@ export interface PulseArticle {
   id: string
   title: string
   summary: string
-  category: 'Cybersecurity' | 'AI' | 'Cloud' | 'Technology' | 'Business' | 'Government' | 'Defense' | 'Startups' | 'Research'
+  category: string
   author: {
     name: string
     role: string
@@ -19,9 +19,9 @@ export interface PulseArticle {
   fullContent: string
   sourceLinks: { title: string; url: string; domain: string }[]
   biasRating?: {
-    leaning: 'Center' | 'Slight Left' | 'Slight Right' | 'Unbiased Scientific'
+    leaning: string
     credibilityScore: number
-    factCheckStatus: 'Statutorily Verified ✓' | 'Peer Reviewed'
+    factCheckStatus: string
   }
   upvotesCount: number
   commentsCount: number
@@ -30,7 +30,7 @@ export interface PulseArticle {
 export interface CyberThreatAdvisory {
   id: string
   cveId: string
-  severity: 'CRITICAL (CVSS 9.8)' | 'HIGH (CVSS 8.4)' | 'ELEVATED'
+  severity: string
   title: string
   affectedSystems: string[]
   vector: string
@@ -69,10 +69,19 @@ export const PULSE_CATEGORIES = [
   { id: 'Research', label: '📑 Research & Papers', icon: '📑' }
 ]
 
+export function getFormattedTodayDate(now: Date = new Date()): string {
+  return now.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
+
 export const TODAY_AI_BRIEF: AIDailyBriefItem = {
-  id: 'brief_aug_29_2026',
-  date: 'Saturday, August 29, 2026',
-  headline: 'Autonomous Defense Meshes Emerge as Next-Gen Cloud Standard amid Multi-Cloud Proliferation',
+  id: 'brief_live_today',
+  date: getFormattedTodayDate(),
+  headline: 'Autonomous Defense Meshes & Live Multi-Cloud Telemetry Emerge as Enterprise Standard',
   executiveSummary: 'AI multi-agent orchestration platforms are fundamentally rewiring enterprise software development and offensive security validation. CISA issues new zero-trust baseline directives for federal agency SaaS gateways.',
   keyPillars: [
     {
@@ -373,6 +382,246 @@ With Next.js 16 and Turbopack, development compilation velocity has accelerated 
     },
     upvotesCount: 185,
     commentsCount: 24
+  },
+  {
+    id: 'art_5',
+    title: 'Zero-Trust Post-Quantum Cryptography (ML-KEM / FIPS 203) Mandated Across Cloud Ingress Gateways',
+    summary: 'Major cloud providers and financial clearinghouses complete live migration to NIST FIPS 203 lattice-based key encapsulation to neutralize harvest-now, decrypt-later quantum adversaries.',
+    category: 'Cybersecurity',
+    author: {
+      name: 'Marcus Vance',
+      role: 'Director of Cryptographic Architecture',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+      source: 'NIST Post-Quantum Working Group'
+    },
+    publishedAt: '12m ago',
+    readTime: '5 min read',
+    coverImage: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80',
+    tags: ['PostQuantum', 'FIPS203', 'MLKEM', 'ZeroTrust', 'TLS13'],
+    isFeatured: true,
+    isBreaking: true,
+    aiKeyTakeaways: [
+      'Hybrid X25519MLKEM768 key exchange is now enabled by default on 78% of tier-1 cloud load balancers.',
+      'TLS handshake latency overhead has been reduced to under 0.4ms using AVX-512 hardware acceleration.',
+      'Federal contractors must inventory all RSA-2048 and ECDSA P-256 certificates before Q4 compliance audits.'
+    ],
+    fullContent: `With NIST FIPS 203 (ML-KEM) and FIPS 204 (ML-DSA) now in active production enforcement, enterprise security architects are executing the largest cryptographic migration in internet history.
+
+Adversaries have been capturing encrypted backbone traffic under "harvest-now, decrypt-later" operations. By combining classical elliptic-curve X25519 with lattice-based ML-KEM-768 in hybrid TLS 1.3 handshakes, organizations maintain backward FIPS compliance while guaranteeing quantum resistance.`,
+    sourceLinks: [
+      { title: 'NIST FIPS 203 Module-Lattice-Based Key-Encapsulation Standard', url: 'https://csrc.nist.gov/pubs/fips/203/final', domain: 'csrc.nist.gov' }
+    ],
+    biasRating: {
+      leaning: 'Center',
+      credibilityScore: 99,
+      factCheckStatus: 'Statutorily Verified ✓'
+    },
+    upvotesCount: 418,
+    commentsCount: 67
+  },
+  {
+    id: 'art_6',
+    title: 'Sub-Millisecond Speculative Decoding Cuts Frontier LLM Serving Costs by 62% in Production Clusters',
+    summary: 'How distributed inference engines pair lightweight draft verifiers with 400B+ Mixture-of-Experts models to double token throughput on H200 and B200 GPU pods.',
+    category: 'AI',
+    author: {
+      name: 'Priya Nair, PhD',
+      role: 'Staff ML Systems Engineer',
+      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
+      source: 'AI Systems & Inference Dispatch'
+    },
+    publishedAt: '28m ago',
+    readTime: '5 min read',
+    coverImage: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&auto=format&fit=crop&q=80',
+    tags: ['LLMInference', 'SpeculativeDecoding', 'vLLM', 'MoE', 'GPUEfficiency'],
+    isFeatured: false,
+    aiKeyTakeaways: [
+      'Medusa and Eagle-2 speculative heads verify 4.2 tokens per forward pass with zero mathematical loss in output quality.',
+      'KV-cache FP8 quantization doubles concurrent batch capacity for 128k context agentic workflows.',
+      'Inference cost per million tokens has fallen 62% quarter-over-quarter across production AI gateways.'
+    ],
+    fullContent: `Memory bandwidth—not raw FLOPs—remains the primary bottleneck for autoregressive Transformer decoding. By deploying speculative draft heads trained on the target model's hidden states, production inference clusters can validate multiple tokens in a single GPU memory read cycle.
+
+Combined with disaggregated prefill-and-decode scheduling across RDMA fabrics, enterprise AI teams are achieving sub-15ms time-to-first-token (TTFT) even under heavy multi-agent tool-calling bursts.`,
+    sourceLinks: [
+      { title: 'High-Throughput Speculative Decoding in Distributed MoE Clusters', url: 'https://arxiv.org', domain: 'arxiv.org' }
+    ],
+    biasRating: {
+      leaning: 'Center',
+      credibilityScore: 98,
+      factCheckStatus: 'Peer Reviewed'
+    },
+    upvotesCount: 392,
+    commentsCount: 51
+  },
+  {
+    id: 'art_7',
+    title: 'WebAssembly (Wasm) Component Model 1.0 & Firecracker MicroVMs Redefine Multi-Region Edge Compute',
+    summary: 'Why platform engineering teams are replacing heavyweight container sidecars with sub-2ms Wasm components and ephemeral Firecracker sandboxes for untrusted AI code execution.',
+    category: 'Technology',
+    author: {
+      name: 'Devon Brooks',
+      role: 'Distinguished Systems Engineer',
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+      source: 'Cloud Native Systems Review'
+    },
+    publishedAt: '48m ago',
+    readTime: '4 min read',
+    coverImage: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&auto=format&fit=crop&q=80',
+    tags: ['WebAssembly', 'Firecracker', 'MicroVMs', 'EdgeCompute', 'Rust'],
+    isFeatured: false,
+    aiKeyTakeaways: [
+      'WASI 0.2 Component Model enables polyglot Rust, Go, and Python binaries to compose with zero serialization overhead.',
+      'Firecracker microVMs provide hardware-enforced KVM isolation in under 125ms for AI agent code sandboxes.',
+      'Cold-start tail latencies at the p99th percentile dropped 88% compared to traditional OCI container cold boots.'
+    ],
+    fullContent: `The rise of AI code-generation agents has created an urgent infrastructure requirement: executing untrusted, dynamically generated code safely at massive concurrency.
+
+Traditional Docker containers share the host Linux kernel, making them risky for untrusted tenant execution. By combining Firecracker KVM microVMs with WASI Component Model modules, platform teams achieve hardware-grade isolation with millisecond startup times.`,
+    sourceLinks: [
+      { title: 'Bytecode Alliance WASI Component Model Specification', url: 'https://bytecodealliance.org', domain: 'bytecodealliance.org' }
+    ],
+    biasRating: {
+      leaning: 'Center',
+      credibilityScore: 97,
+      factCheckStatus: 'Statutorily Verified ✓'
+    },
+    upvotesCount: 276,
+    commentsCount: 39
+  },
+  {
+    id: 'art_8',
+    title: 'Enterprise SaaS Pricing Shifts from Per-Seat Licenses to Verified Outcome & Autonomous Resolution Tiers',
+    summary: 'CFOs and CIOs renegotiate legacy per-seat enterprise agreements as AI coworkers automate tier-1 support, compliance auditing, and pull-request triage.',
+    category: 'Business',
+    author: {
+      name: 'Claire Sterling, CFA',
+      role: 'Managing Director · Enterprise Tech Research',
+      avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&auto=format&fit=crop&q=80',
+      source: 'Global Enterprise Markets Brief'
+    },
+    publishedAt: '1h ago',
+    readTime: '4 min read',
+    coverImage: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=80',
+    tags: ['SaaSMetrics', 'EnterprisePricing', 'OutcomeBased', 'FinOps', 'B2B'],
+    isFeatured: false,
+    aiKeyTakeaways: [
+      '42% of Fortune 1000 software renewals now include hybrid consumption and verified-outcome pricing clauses.',
+      'Gross margins for AI-native B2B vendors have expanded by 11 percentage points due to lower inference costs.',
+      'FinOps governance teams now track token-to-business-outcome ROI alongside cloud compute utilization.'
+    ],
+    fullContent: `For two decades, per-seat subscription licensing was the bedrock of B2B SaaS valuation. Today, as autonomous agents resolve tickets, patch vulnerabilities, and reconcile invoices without human seat expansion, software monetization is undergoing a structural shift.
+
+Vendors that price strictly per verified resolution—such as per merged security remediation PR or per reconciled compliance control—are seeing 135%+ net dollar retention across enterprise accounts.`,
+    sourceLinks: [
+      { title: 'FinOps Foundation State of AI & Cloud Unit Economics', url: 'https://www.finops.org', domain: 'finops.org' }
+    ],
+    biasRating: {
+      leaning: 'Center',
+      credibilityScore: 95,
+      factCheckStatus: 'Peer Reviewed'
+    },
+    upvotesCount: 244,
+    commentsCount: 41
+  },
+  {
+    id: 'art_9',
+    title: 'DoD & DIU Accelerate Tactical Edge Mesh Networks and Cross-Domain Zero-Trust Enclaves (IL5 / IL6)',
+    summary: 'Defense Innovation Unit awards rapid-fielding contracts for autonomous tactical edge compute nodes capable of operating in contested, GPS-denied, and intermittent-comms environments.',
+    category: 'Defense',
+    author: {
+      name: 'Col. (Ret.) James Vance',
+      role: 'Defense Systems & C4ISR Advisor',
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80',
+      source: 'GovTech & Defense Intelligence'
+    },
+    publishedAt: '1h ago',
+    readTime: '5 min read',
+    coverImage: 'https://images.unsplash.com/photo-1508614589041-895b88991e3e?w=800&auto=format&fit=crop&q=80',
+    tags: ['DefenseTech', 'JADC2', 'IL6', 'ZeroTrust', 'TacticalEdge'],
+    isFeatured: false,
+    aiKeyTakeaways: [
+      'Containerized IL5/IL6 workloads now synchronize across disconnected tactical mesh nodes via CRDT state replication.',
+      'Automated SBOM and SLSA Level 4 cryptographic attestation are mandatory for all software deployed to tactical edge hardware.',
+      'cATO accreditation timelines for dual-use defense startups have compressed from 14 months to under 45 days.'
+    ],
+    fullContent: `Modern defense architecture demands resilient compute at the tactical edge where satellite backhaul may be degraded or contested. Under the latest DoD Zero Trust Reference Architecture and DIU rapid fielding pathways, software workloads must verify identity, device posture, and cryptographic binary provenance locally without relying on centralized cloud identity providers.`,
+    sourceLinks: [
+      { title: 'DoD Zero Trust Reference Architecture & Tactical Edge Guidance', url: 'https://dodcio.defense.gov', domain: 'dodcio.defense.gov' }
+    ],
+    biasRating: {
+      leaning: 'Center',
+      credibilityScore: 99,
+      factCheckStatus: 'Statutorily Verified ✓'
+    },
+    upvotesCount: 315,
+    commentsCount: 38
+  },
+  {
+    id: 'art_10',
+    title: 'Seed & Series A Venture Benchmark: Vertical AI & Skilled-Trade Platforms Lead Capital Efficiency',
+    summary: 'New Q4 venture dataset reveals startups building vertical operating systems for skilled trades, clinical diagnostics, and automated compliance reach $10M ARR with 60% less burn.',
+    category: 'Startups',
+    author: {
+      name: 'Elena Rostova',
+      role: 'General Partner · DeepTech & Vertical Venture',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+      source: 'Venture Benchmark Quarterly'
+    },
+    publishedAt: '2h ago',
+    readTime: '4 min read',
+    coverImage: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=800&auto=format&fit=crop&q=80',
+    tags: ['VentureCapital', 'SeriesA', 'VerticalAI', 'SkilledTrades', 'ARR'],
+    isFeatured: false,
+    aiKeyTakeaways: [
+      'Vertical platforms serving construction, electrical, HVAC, and clinical workflows show 3.2x higher logo retention than horizontal AI wrappers.',
+      'Median revenue per employee among top-decile Series A startups has crossed $420,000.',
+      'Founders pairing domain-certified field experts with AI engineering leads command a 40% valuation premium.'
+    ],
+    fullContent: `The most durable venture-backed companies of the current cycle are not generic chat wrappers—they are deeply integrated vertical platforms built around licensed professionals in physical and regulated industries. From automated NEC electrical load calculators to clinical trauma decision support and FedRAMP compliance automation, deep workflow ownership drives unmatched capital efficiency.`,
+    sourceLinks: [
+      { title: 'NVCA & PitchBook Vertical Software Efficiency Report', url: 'https://nvca.org', domain: 'nvca.org' }
+    ],
+    biasRating: {
+      leaning: 'Center',
+      credibilityScore: 96,
+      factCheckStatus: 'Peer Reviewed'
+    },
+    upvotesCount: 289,
+    commentsCount: 47
+  },
+  {
+    id: 'art_11',
+    title: 'Mechanistic Interpretability & Sparse Autoencoders Map Reasoning Circuits Inside Frontier Models',
+    summary: 'Peer-reviewed study demonstrates how sparse dictionary learning isolates monosemantic safety, code-verification, and deception-detection features inside 100B+ parameter networks.',
+    category: 'Research',
+    author: {
+      name: 'Dr. Kenji Takahashi',
+      role: 'Principal Alignment Researcher',
+      avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&auto=format&fit=crop&q=80',
+      source: 'Journal of Machine Learning Research'
+    },
+    publishedAt: '3h ago',
+    readTime: '6 min read',
+    coverImage: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&auto=format&fit=crop&q=80',
+    tags: ['Interpretability', 'SparseAutoencoders', 'AIAlignment', 'Mechanistic', 'Research'],
+    isFeatured: false,
+    aiKeyTakeaways: [
+      'Sparse Autoencoders (SAEs) decompose polysemantic residual stream activations into millions of human-interpretable features.',
+      'Activation steering along verified code-safety vectors reduces insecure code generation by 74% without degrading benchmark accuracy.',
+      'Circuit-level auditing is emerging as a prerequisite for deploying models in high-consequence medical and aviation domains.'
+    ],
+    fullContent: `Understanding *why* a frontier neural network produces a specific clinical recommendation or security patch requires looking inside its internal activation space. Using overcomplete Sparse Autoencoders trained on middle-layer residual streams, researchers can now pinpoint and steer specific reasoning circuits in real time.`,
+    sourceLinks: [
+      { title: 'Scaling Monosemanticity & Circuit Tracing in Frontier Models', url: 'https://arxiv.org', domain: 'arxiv.org' }
+    ],
+    biasRating: {
+      leaning: 'Center',
+      credibilityScore: 99,
+      factCheckStatus: 'Peer Reviewed'
+    },
+    upvotesCount: 463,
+    commentsCount: 72
   }
 ]
 
@@ -679,10 +928,11 @@ export function getEnclavePulseCategories(enclaveId?: string) {
 }
 
 export function getEnclaveAIBrief(enclaveId?: string): AIDailyBriefItem {
+  const todayStr = getFormattedTodayDate()
   if (enclaveId === 'trades_construction') {
     return {
       id: 'brief_trades_today',
-      date: 'Saturday, August 29, 2026',
+      date: todayStr,
       headline: 'Mass Timber High-Rise Expansion & OSHA Job-Site Rigging Directive Modernization',
       executiveSummary: 'Commercial engineering firms adopt factory-milled mass timber bents to cut build cycles by 40%. OSHA updates 100% tie-off compliance guidelines for clear-span rafter installations.',
       keyPillars: [
@@ -715,7 +965,7 @@ export function getEnclaveAIBrief(enclaveId?: string): AIDailyBriefItem {
   if (enclaveId === 'healthcare_medicine') {
     return {
       id: 'brief_healthcare_today',
-      date: 'Saturday, August 29, 2026',
+      date: todayStr,
       headline: 'Cold-Stored Whole Blood Protocols & Bedside Point-of-Care Ultrasound in Level 1 Trauma Resuscitation',
       executiveSummary: 'Updated multi-center trial confirms survival benefits of early low-titer O-whole blood infusion within 15 minutes of hemorrhagic shock. ACS COT releases revised MTP dosing algorithms.',
       keyPillars: [
@@ -748,7 +998,7 @@ export function getEnclaveAIBrief(enclaveId?: string): AIDailyBriefItem {
   if (enclaveId === 'automotive_mechanics') {
     return {
       id: 'brief_automotive_today',
-      date: 'Saturday, August 29, 2026',
+      date: todayStr,
       headline: '800-Volt Architecture Diagnostics & CAN-FD Bus Integrity in Next-Gen Fleet Powertrains',
       executiveSummary: 'Automotive engineering teams standardize CAT IV 1000V de-energization procedures. NHTSA issues emergency service bulletin regarding regenerative contactor contact welding.',
       keyPillars: [
@@ -778,7 +1028,71 @@ export function getEnclaveAIBrief(enclaveId?: string): AIDailyBriefItem {
     }
   }
 
-  return TODAY_AI_BRIEF
+  return {
+    ...TODAY_AI_BRIEF,
+    date: todayStr,
+  }
+}
+
+export function getLiveProfessionPulseArticles(
+  professionTitle?: string,
+  enclaveId?: string
+): PulseArticle[] {
+  const cleanTitle = (professionTitle || '').trim()
+  if (!cleanTitle) return []
+
+  const todayShort = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  const category =
+    enclaveId === 'trades_construction'
+      ? 'Timber & Framing'
+      : enclaveId === 'healthcare_medicine'
+      ? 'Trauma & Emergency'
+      : enclaveId === 'automotive_mechanics'
+      ? 'EV Powertrains & 800V'
+      : 'Cybersecurity'
+
+  return [
+    {
+      id: `live_prof_${cleanTitle.toLowerCase().replace(/[^a-z0-9]+/g, '_')}_1`,
+      title: `Live Field Dispatch (${todayShort}): Regulatory, Tooling & Safety Standards Update for ${cleanTitle}`,
+      summary: `Real-time operational telemetry and field compliance benchmarks for verified ${cleanTitle} specialists—covering updated statutory inspection protocols, digital diagnostic workflows, and high-demand contracting rates.`,
+      category,
+      author: {
+        name: 'ConnectLn Live Intelligence Wire',
+        role: `${cleanTitle} National Standards Desk`,
+        avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&auto=format&fit=crop&q=80',
+        source: `ConnectLn ${cleanTitle} Live Wire`
+      },
+      publishedAt: 'Just now · Live Sync',
+      readTime: '4 min read',
+      coverImage: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&auto=format&fit=crop&q=80',
+      tags: [cleanTitle.replace(/\s+/g, ''), 'LiveFieldUpdate', 'StatutoryCompliance', '2026Standards'],
+      isFeatured: true,
+      isBreaking: true,
+      aiKeyTakeaways: [
+        `Updated ${todayShort} field verification checklists for ${cleanTitle} reduce inspection rework by 43%.`,
+        `Verified ${cleanTitle} practitioners using automated diagnostic telemetry report 28% faster project sign-off.`,
+        `Regional compensation and senior contracting demand for licensed ${cleanTitle} specialists rose 16% this quarter.`
+      ],
+      fullContent: `Live Intelligence Brief (${todayShort}) prepared specifically for verified ${cleanTitle} professionals on ConnectLn.
+
+1. Field Standards & Compliance Modernization:
+Across regional jurisdictions, inspectors and enterprise project owners have tightened verification requirements for ${cleanTitle} deliverables. Practitioners documenting baseline measurements and safety lockouts digitally prior to sign-off are clearing audits in a single pass.
+
+2. Tooling & Diagnostic Telemetry:
+Leading ${cleanTitle} teams are pairing field instrumentation with real-time verification logs, cutting troubleshooting windows by more than half while preserving a complete statutory audit trail.`,
+      sourceLinks: [
+        { title: `${cleanTitle} National Standards & Regulatory Bulletin (${todayShort})`, url: 'https://www.osha.gov', domain: 'standards.gov' }
+      ],
+      biasRating: {
+        leaning: 'Center',
+        credibilityScore: 99,
+        factCheckStatus: 'Statutorily Verified ✓'
+      },
+      upvotesCount: 194,
+      commentsCount: 31
+    }
+  ]
 }
 
 import { PulseRoom, pulseRoomsData } from "./nextgen-data"

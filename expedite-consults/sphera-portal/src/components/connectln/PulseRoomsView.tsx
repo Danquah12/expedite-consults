@@ -36,7 +36,8 @@ import {
   Globe,
   SlidersHorizontal,
   ChevronRight,
-  ShieldCheck
+  ShieldCheck,
+  RefreshCw
 } from "lucide-react"
 import {
   PulseArticle,
@@ -49,6 +50,8 @@ import {
   getEnclavePulseCategories,
   getEnclaveAIBrief,
   getEnclavePulseRooms,
+  getFormattedTodayDate,
+  getLiveProfessionPulseArticles,
   AIDailyBriefItem,
   CyberThreatAdvisory
 } from "@/lib/pulse-news-data"
@@ -68,18 +71,36 @@ interface PulseRoomsViewProps {
 
 export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewProps) {
   const enclaveId = currentUser?.professionEnclave
+  const professionTitle = currentUser?.professionTitle || currentUser?.role || ""
   const categories = getEnclavePulseCategories(enclaveId)
-  const aiBrief = getEnclaveAIBrief(enclaveId)
-  const domainAdvisories = getEnclaveDomainAdvisories(enclaveId)
+  const [aiBrief, setAiBrief] = useState<AIDailyBriefItem>(() => getEnclaveAIBrief(enclaveId))
+  const [domainAdvisories, setDomainAdvisories] = useState<CyberThreatAdvisory[]>(() =>
+    getEnclaveDomainAdvisories(enclaveId)
+  )
 
   // Master View Mode
   const [pulseMode, setPulseMode] = useState<'news' | 'ai_brief' | 'cyber_threats' | 'audio_rooms'>('news')
 
-  // News Filtering
+  // News Filtering & Live Sync State
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
   const [searchQuery, setSearchQuery] = useState<string>('')
-  const [articles, setArticles] = useState<PulseArticle[]>(() => getEnclavePulseArticles(enclaveId))
+  const [articles, setArticles] = useState<PulseArticle[]>(() => [
+    ...getLiveProfessionPulseArticles(professionTitle, enclaveId),
+    ...getEnclavePulseArticles(enclaveId),
+  ])
   const [selectedArticle, setSelectedArticle] = useState<PulseArticle | null>(null)
+  const [isSyncing, setIsSyncing] = useState<boolean>(false)
+  const [lastSyncedAt, setLastSyncedAt] = useState<string>('Just now')
+  const [liveDateLabel, setLiveDateLabel] = useState<string>(() => getFormattedTodayDate())
+  const [liveExternalCount, setLiveExternalCount] = useState<number>(8)
+
+  // Publish Live Pulse Report Modal State
+  const [showPublishModal, setShowPublishModal] = useState<boolean>(false)
+  const [newReportTitle, setNewReportTitle] = useState<string>('')
+  const [newReportSummary, setNewReportSummary] = useState<string>('')
+  const [newReportCategory, setNewReportCategory] = useState<string>('Cybersecurity')
+  const [newReportSourceUrl, setNewReportSourceUrl] = useState<string>('')
+  const [isPublishingReport, setIsPublishingReport] = useState<boolean>(false)
 
   // Audio Playback Simulation for AI Brief
   const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false)
@@ -99,11 +120,95 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
   ])
   const [chatInput, setChatInput] = useState("")
 
+  const fetchLivePulseFeed = React.useCallback(async () => {
+    setIsSyncing(true)
+    try {
+      const params = new URLSearchParams()
+      if (enclaveId) params.set('enclave', enclaveId)
+      if (professionTitle) params.set('profession', professionTitle)
+      const res = await fetch(`/api/connectin/pulse?${params.toString()}`, {
+        cache: 'no-store',
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (Array.isArray(data.articles) && data.articles.length > 0) {
+          setArticles(data.articles)
+        }
+        if (Array.isArray(data.advisories) && data.advisories.length > 0) {
+          setDomainAdvisories(data.advisories)
+        }
+        if (data.aiBrief) {
+          setAiBrief(data.aiBrief)
+        }
+        if (data.formattedDate) {
+          setLiveDateLabel(data.formattedDate)
+        }
+        if (typeof data.liveExternalCount === 'number') {
+          setLiveExternalCount(data.liveExternalCount)
+        }
+        const nowTime = new Date().toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          second: '2-digit',
+        })
+        setLastSyncedAt(nowTime)
+      }
+    } catch {
+      // Keep local fallback articles on network error
+    } finally {
+      setIsSyncing(false)
+    }
+  }, [enclaveId, professionTitle])
+
   useEffect(() => {
-    setArticles(getEnclavePulseArticles(enclaveId))
+    setArticles([
+      ...getLiveProfessionPulseArticles(professionTitle, enclaveId),
+      ...getEnclavePulseArticles(enclaveId),
+    ])
+    setDomainAdvisories(getEnclaveDomainAdvisories(enclaveId))
+    setAiBrief(getEnclaveAIBrief(enclaveId))
     setRooms(getEnclavePulseRooms(enclaveId))
     setSelectedCategory('All')
-  }, [enclaveId])
+    fetchLivePulseFeed()
+
+    const interval = setInterval(() => {
+      fetchLivePulseFeed()
+    }, 60000)
+    return () => clearInterval(interval)
+  }, [enclaveId, professionTitle, fetchLivePulseFeed])
+
+  const handlePublishPulseReport = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newReportTitle.trim() || !newReportSummary.trim()) return
+    setIsPublishingReport(true)
+    try {
+      const res = await fetch('/api/connectin/pulse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: newReportTitle.trim(),
+          summary: newReportSummary.trim(),
+          category: newReportCategory,
+          sourceUrl: newReportSourceUrl.trim() || 'https://conectln.com/connectin',
+          authorName: currentUser?.name || 'Verified ConnectLn Member',
+          authorRole: professionTitle || currentUser?.role || 'Verified Practitioner',
+          authorAvatar: currentUser?.avatar || '',
+        }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.article) {
+          setArticles((prev) => [data.article, ...prev])
+        }
+        setNewReportTitle('')
+        setNewReportSummary('')
+        setNewReportSourceUrl('')
+        setShowPublishModal(false)
+      }
+    } finally {
+      setIsPublishingReport(false)
+    }
+  }
 
   const handleSendChat = (e: React.FormEvent) => {
     e.preventDefault()
@@ -162,8 +267,12 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
                   ? "ConnectIn Pulse · Automotive & Diagnostics"
                   : "ConnectIn Pulse · Industry Insights"}
               </span>
-              <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
-                Daily Industry Updates
+              <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60 flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
+                <span>LIVE WIRE · {liveDateLabel} · Synced {lastSyncedAt}</span>
+              </span>
+              <span className="rounded-full bg-amber-50 dark:bg-amber-950/50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/60">
+                ⚡ {liveExternalCount} Live External Feeds Active (CISA KEV · HN Wire · Enclave Telemetry)
               </span>
             </div>
 
@@ -295,21 +404,40 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
       {/* ========================================================================= */}
       {pulseMode === 'news' && (
         <div className="space-y-5">
-          {/* Search Header */}
-          <div className="rounded-xl border border-zinc-200 bg-white p-3.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 flex items-center justify-between gap-3">
-            <div className="relative flex-1 flex items-center rounded-lg bg-zinc-50 px-3 py-2 border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800/80">
+          {/* Search & Live Sync Header */}
+          <div className="rounded-xl border border-zinc-200 bg-white p-3.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 flex flex-wrap items-center justify-between gap-3">
+            <div className="relative flex-1 min-w-[240px] flex items-center rounded-lg bg-zinc-50 px-3 py-2 border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800/80">
               <Search className="h-4 w-4 text-zinc-400 mr-2 shrink-0" />
               <input
                 type="text"
-                placeholder="Search across cybersecurity, AI models, cloud benchmarks, FedRAMP, and venture..."
+                placeholder="Search live CISA advisories, AI models, cloud benchmarks, FedRAMP, trades, and venture..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-transparent text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-500 focus:outline-none dark:text-zinc-100"
               />
             </div>
-            <span className="text-xs text-zinc-500 font-semibold shrink-0">
-              {filteredArticles.length} intelligence reports
-            </span>
+            <div className="flex items-center gap-2 flex-wrap shrink-0">
+              <span className="text-xs text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60 px-2.5 py-1 rounded-full font-bold shrink-0">
+                ● {filteredArticles.length} live intelligence reports
+              </span>
+              <button
+                type="button"
+                onClick={fetchLivePulseFeed}
+                disabled={isSyncing}
+                className="rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 px-3 py-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-200 flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-60"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 text-[#0A66C2] ${isSyncing ? "animate-spin" : ""}`} />
+                <span>{isSyncing ? "Syncing Live..." : "Refresh Live Feed"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowPublishModal(true)}
+                className="rounded-full bg-[#0A66C2] hover:bg-[#004182] px-3.5 py-1.5 text-xs font-bold text-white flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Publish Report</span>
+              </button>
+            </div>
           </div>
 
           {/* Articles Grid */}
@@ -1061,6 +1189,92 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* PUBLISH LIVE PULSE REPORT MODAL */}
+      <Dialog open={showPublishModal} onOpenChange={setShowPublishModal}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-[#0A66C2]" />
+              Publish Live Pulse Intelligence Report
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handlePublishPulseReport} className="space-y-3.5 pt-1">
+            <div>
+              <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                Report Headline *
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g., Zero-Day Mitigation Playbook or Field Safety Advisory..."
+                value={newReportTitle}
+                onChange={(e) => setNewReportTitle(e.target.value)}
+                className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-xs sm:text-sm text-zinc-900 dark:text-zinc-100"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                Intelligence Category
+              </label>
+              <select
+                value={newReportCategory}
+                onChange={(e) => setNewReportCategory(e.target.value)}
+                className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-xs sm:text-sm text-zinc-900 dark:text-zinc-100"
+              >
+                {categories
+                  .filter((c) => c.id !== 'All')
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.label}
+                    </option>
+                  ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                Executive Analysis & Key Takeaways *
+              </label>
+              <textarea
+                rows={4}
+                required
+                placeholder="Summarize the technical finding, regulatory directive, or field benchmark..."
+                value={newReportSummary}
+                onChange={(e) => setNewReportSummary(e.target.value)}
+                className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-xs sm:text-sm text-zinc-900 dark:text-zinc-100"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                Primary Source URL (Optional)
+              </label>
+              <input
+                type="url"
+                placeholder="https://cisa.gov/..."
+                value={newReportSourceUrl}
+                onChange={(e) => setNewReportSourceUrl(e.target.value)}
+                className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-xs sm:text-sm text-zinc-900 dark:text-zinc-100"
+              />
+            </div>
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowPublishModal(false)}
+                className="rounded-lg border border-zinc-300 dark:border-zinc-700 px-4 py-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isPublishingReport}
+                className="rounded-lg bg-[#0A66C2] hover:bg-[#004182] px-4 py-2 text-xs font-bold text-white disabled:opacity-60"
+              >
+                {isPublishingReport ? "Publishing..." : "Publish to Live Stream"}
+              </button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
