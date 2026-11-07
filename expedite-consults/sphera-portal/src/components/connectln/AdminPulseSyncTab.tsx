@@ -42,7 +42,7 @@ export function AdminPulseSyncTab({
 }: AdminPulseSyncTabProps) {
   const [enclaveFilter, setEnclaveFilter] = useState<string>("tech_cybersecurity")
   const [sourceFilter, setSourceFilter] = useState<
-    "all" | "cisa" | "hn" | "devto" | "enclave" | "member"
+    "all" | "cisa" | "nvd" | "zeroday" | "hn" | "devto" | "enclave" | "member"
   >("all")
   const [searchQuery, setSearchQuery] = useState<string>("")
   const [isSyncing, setIsSyncing] = useState<boolean>(false)
@@ -146,8 +146,12 @@ export function AdminPulseSyncTab({
     return () => clearInterval(timer)
   }, [fetchSyncTelemetry])
 
-  const getArticleOriginType = (art: PulseArticle): "cisa" | "hn" | "devto" | "member" | "enclave" => {
+  const getArticleOriginType = (
+    art: PulseArticle
+  ): "cisa" | "nvd" | "zeroday" | "hn" | "devto" | "member" | "enclave" => {
     if (art.id.startsWith("pulse_cisa_")) return "cisa"
+    if (art.id.startsWith("pulse_nvd_")) return "nvd"
+    if (art.id.startsWith("zeroday_wire_") || art.id.startsWith("user_pulse_zeroday_")) return "zeroday"
     if (art.id.startsWith("live_hn_")) return "hn"
     if (art.id.startsWith("live_devto_")) return "devto"
     if (art.id.startsWith("user_pulse_")) return "member"
@@ -159,7 +163,21 @@ export function AdminPulseSyncTab({
     if (origin === "cisa") {
       return (
         <span className="inline-flex items-center gap-1 rounded-full bg-red-100 dark:bg-red-950/70 px-2.5 py-0.5 text-[10px] font-bold text-red-700 dark:text-red-300 border border-red-300/60">
-          🔴 CISA KEV Live
+          🔴 CISA KEV 0-Day
+        </span>
+      )
+    }
+    if (origin === "nvd") {
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 dark:bg-rose-950/70 px-2.5 py-0.5 text-[10px] font-bold text-rose-700 dark:text-rose-300 border border-rose-300/60">
+          🔬 NIST NVD CVE
+        </span>
+      )
+    }
+    if (origin === "zeroday") {
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 dark:bg-orange-950/70 px-2.5 py-0.5 text-[10px] font-bold text-orange-800 dark:text-orange-300 border border-orange-300/60">
+          🚨 Zero-Day &amp; Breach Wire
         </span>
       )
     }
@@ -520,6 +538,14 @@ export function AdminPulseSyncTab({
             {
               id: "cisa",
               label: `🔴 CISA KEV (${articles.filter((a) => getArticleOriginType(a) === "cisa").length})`,
+            },
+            {
+              id: "nvd",
+              label: `🔬 NIST NVD (${articles.filter((a) => getArticleOriginType(a) === "nvd").length})`,
+            },
+            {
+              id: "zeroday",
+              label: `🚨 0-Day & Breach Wire (${articles.filter((a) => getArticleOriginType(a) === "zeroday").length})`,
             },
             {
               id: "hn",

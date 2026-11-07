@@ -95,6 +95,10 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
   const [liveExternalCount, setLiveExternalCount] = useState<number>(12)
   const [nextSyncSeconds, setNextSyncSeconds] = useState<number>(45)
   const [tickerIndex, setTickerIndex] = useState<number>(0)
+  const [zeroDayCount, setZeroDayCount] = useState<number>(10)
+  const [zeroDayQuery, setZeroDayQuery] = useState<string>('')
+  const [isHuntingZeroDay, setIsHuntingZeroDay] = useState<boolean>(false)
+  const [lastHuntedArticle, setLastHuntedArticle] = useState<PulseArticle | null>(null)
 
   // Publish Live Pulse Report Modal State
   const [showPublishModal, setShowPublishModal] = useState<boolean>(false)
@@ -147,6 +151,9 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
         }
         if (typeof data.liveExternalCount === 'number') {
           setLiveExternalCount(data.liveExternalCount)
+        }
+        if (typeof data.zeroDayCount === 'number') {
+          setZeroDayCount(data.zeroDayCount)
         }
         const nowTime = new Date().toLocaleTimeString('en-US', {
           hour: 'numeric',
@@ -237,6 +244,58 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
       }
     } finally {
       setIsPublishingReport(false)
+    }
+  }
+
+  const handleHuntZeroDay = async (overrideQuery?: string) => {
+    const target = (overrideQuery !== undefined ? overrideQuery : zeroDayQuery).trim()
+    setIsHuntingZeroDay(true)
+    try {
+      const res = await fetch('/api/connectin/pulse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'hunt_zeroday',
+          targetQuery: target,
+        }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.article) {
+          setArticles((prev) => [data.article, ...prev.filter((a) => a.id !== data.article.id)])
+          setLastHuntedArticle(data.article)
+          setSelectedCategory('All')
+        }
+        if (data.advisory) {
+          setDomainAdvisories((prev) => [data.advisory, ...prev])
+          setZeroDayCount((prev) => prev + 1)
+        }
+      }
+    } finally {
+      setIsHuntingZeroDay(false)
+    }
+  }
+
+  const handleAnnounceAdvisoryToFeed = async (adv: CyberThreatAdvisory) => {
+    const res = await fetch('/api/connectin/pulse', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: `🚨 [FIRST TO ANNOUNCE · ${adv.cveId}] ${adv.title}`,
+        summary: `${adv.summary} Mandatory Mitigation: ${adv.mitigationAction}`,
+        category: 'Cybersecurity',
+        sourceUrl: adv.sourceUrl,
+        authorName: 'CISA & NVD Threat Radar',
+        authorRole: 'First-to-Announce Security Advisory',
+      }),
+    })
+    if (res.ok) {
+      const data = await res.json()
+      if (data.article) {
+        setArticles((prev) => [data.article, ...prev])
+        setLastHuntedArticle(data.article)
+        setPulseMode('news')
+      }
     }
   }
 
@@ -460,6 +519,97 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
               </div>
             </div>
           )}
+
+          {/* AUTONOMOUS ZERO-DAY, CISA KEV & NIST NVD BREACH HUNTER COMMAND BAR */}
+          <div className="rounded-2xl border-2 border-red-500/40 bg-gradient-to-r from-slate-950 via-red-950/90 to-slate-950 p-4 sm:p-5 text-white shadow-lg space-y-3.5">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/25 border border-red-400/50 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-red-200">
+                    <span className="h-2 w-2 rounded-full bg-red-400 animate-ping" />
+                    FIRST TO ANNOUNCE · AUTONOMOUS ZERO-DAY &amp; BREACH HUNTER
+                  </span>
+                  <span className="rounded-full bg-amber-500/20 border border-amber-400/40 px-2.5 py-0.5 text-[10px] font-bold text-amber-200">
+                    🔴 {zeroDayCount} Active Zero-Days &amp; Compromises Synced (CISA KEV · NIST NVD · Global Breach Wire)
+                  </span>
+                </div>
+                <h3 className="text-sm sm:text-base font-black text-white">
+                  Real-Time Zero-Day Vulnerability Discovery, CISA/NVD Compromise Correlation &amp; First-to-Announce Dispatch
+                </h3>
+              </div>
+
+              <div className="flex items-center gap-1.5 flex-wrap shrink-0">
+                {[
+                  { label: "🔥 Global 0-Day Sweep", q: "" },
+                  { label: "🔴 CISA Ransomware", q: "ransomware" },
+                  { label: "🛡️ Fortinet / Ivanti", q: "Fortinet" },
+                  { label: "☁️ Kubernetes / Linux", q: "Linux" },
+                ].map((preset) => (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => {
+                      setZeroDayQuery(preset.q)
+                      handleHuntZeroDay(preset.q)
+                    }}
+                    disabled={isHuntingZeroDay}
+                    className="rounded-full bg-white/10 hover:bg-white/20 border border-white/15 px-2.5 py-1 text-[11px] font-bold text-red-100 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                handleHuntZeroDay()
+              }}
+              className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2"
+            >
+              <div className="relative flex-1 flex items-center rounded-xl bg-black/50 px-3.5 py-2 border border-red-400/30">
+                <Target className="h-4 w-4 text-red-400 mr-2 shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Enter CVE, vendor, or compromise to research & announce first (e.g., CVE-2026, Cisco, Ivanti, Microsoft, OpenSSH)..."
+                  value={zeroDayQuery}
+                  onChange={(e) => setZeroDayQuery(e.target.value)}
+                  className="w-full bg-transparent text-xs sm:text-sm text-white placeholder:text-zinc-400 focus:outline-none"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isHuntingZeroDay}
+                className="rounded-xl bg-red-600 hover:bg-red-500 px-4 py-2.5 text-xs font-black text-white flex items-center justify-center gap-1.5 shadow-md transition-all cursor-pointer shrink-0 disabled:opacity-60"
+              >
+                <Zap className={`h-4 w-4 ${isHuntingZeroDay ? "animate-bounce" : ""}`} />
+                <span>
+                  {isHuntingZeroDay
+                    ? "Scanning CISA KEV, NVD & Breach Feeds..."
+                    : "🚨 Research & Announce First on Pulse"}
+                </span>
+              </button>
+            </form>
+
+            {lastHuntedArticle && (
+              <div className="rounded-xl bg-emerald-950/80 border border-emerald-400/40 px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                  <span className="font-bold text-emerald-200 truncate">
+                    Announced First on Pulse: {lastHuntedArticle.title}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedArticle(lastHuntedArticle)}
+                  className="rounded-lg bg-emerald-500 hover:bg-emerald-400 px-3 py-1 text-[11px] font-black text-slate-950 shrink-0 cursor-pointer"
+                >
+                  Open Zero-Day Dossier →
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* Search & Live Sync Header */}
           <div className="rounded-xl border border-zinc-200 bg-white p-3.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 flex flex-wrap items-center justify-between gap-3">
@@ -811,23 +961,33 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
                     </h3>
                   </div>
 
-                  <a
-                    href={adv.sourceUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-full bg-zinc-100 hover:bg-zinc-200 px-3 py-1 text-xs font-bold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 flex items-center gap-1 shrink-0"
-                  >
-                    <span>
-                      {enclaveId === 'trades_construction'
-                        ? "OSHA Standards"
-                        : enclaveId === 'healthcare_medicine'
-                        ? "FDA / CDC Guideline"
-                        : enclaveId === 'automotive_mechanics'
-                        ? "NHTSA Bulletin"
-                        : "CISA Advisory"}
-                    </span>
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleAnnounceAdvisoryToFeed(adv)}
+                      className="rounded-full bg-red-600 hover:bg-red-500 px-3 py-1 text-xs font-bold text-white flex items-center gap-1 shrink-0 cursor-pointer shadow-xs"
+                    >
+                      <Zap className="h-3 w-3" />
+                      <span>Announce First on Pulse</span>
+                    </button>
+                    <a
+                      href={adv.sourceUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-full bg-zinc-100 hover:bg-zinc-200 px-3 py-1 text-xs font-bold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 flex items-center gap-1 shrink-0"
+                    >
+                      <span>
+                        {enclaveId === 'trades_construction'
+                          ? "OSHA Standards"
+                          : enclaveId === 'healthcare_medicine'
+                          ? "FDA / CDC Guideline"
+                          : enclaveId === 'automotive_mechanics'
+                          ? "NHTSA Bulletin"
+                          : "CISA / NVD Record"}
+                      </span>
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
                 </div>
 
                 <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
