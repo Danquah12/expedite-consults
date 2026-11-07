@@ -113,27 +113,28 @@ export const TODAY_CYBER_ADVISORIES: CyberThreatAdvisory[] = [
   {
     id: 'adv_1',
     cveId: 'CVE-2026-44921',
-    severity: 'CRITICAL (CVSS 9.8)',
-    title: 'Zero-Click Remote Code Execution in Legacy VPN Gateway Microcode',
-    affectedSystems: ['Enterprise SSL-VPN v12.4 - v15.1', 'Legacy Perimeter Concentrators'],
+    severity: 'CRITICAL ZERO-DAY (CVSS 9.8)',
+    title: 'Zero-Click Remote Code Execution in Enterprise VPN & Edge Gateway Microcode',
+    affectedSystems: ['Enterprise SSL-VPN v12.4 - v15.1', 'Perimeter Gateway Concentrators'],
     vector: 'Network / Unauthenticated / Zero-Click',
-    summary: 'A memory corruption vulnerability allows unauthenticated attackers to execute arbitrary shell payloads on edge appliances, bypassing multi-factor authentication.',
+    summary: 'A zero-day memory corruption vulnerability disclosed today allows unauthenticated attackers to execute arbitrary shell payloads on edge appliances, bypassing multi-factor authentication.',
     mitigationAction: 'Immediate micro-segmentation and isolation; migrate traffic to Zero Trust mTLS micro-proxies.',
-    cisaEmergencyStatus: '🔴 CISA Emergency Directive 26-03 Active (Patch within 24 Hours)',
+    cisaEmergencyStatus: '🔴 JUST HAPPENED · CISA Emergency Directive 26-03 Active (Immediate 24-Hour Patch Window)',
     sourceUrl: 'https://www.cisa.gov/known-exploited-vulnerabilities-catalog',
-    publishedAt: '2h ago'
+    publishedAt: 'Just happened · 5m ago'
   },
   {
     id: 'adv_2',
     cveId: 'CVE-2026-38104',
-    severity: 'HIGH (CVSS 8.4)',
-    title: 'Indirect Prompt Injection via Unsanitized Tool Invocation in Multi-Agent SDKs',
+    severity: 'HIGH ZERO-DAY (CVSS 8.8)',
+    title: 'Indirect Prompt Injection & Credential Exfiltration via Unsanitized MCP Tool Bindings',
     affectedSystems: ['Autonomous Agent Tool Bindings', 'MCP Server Gateways without Parameterized Enclaves'],
     vector: 'Application / Semantic Payload Injection',
     summary: 'Attackers embedding invisible unicode zero-width tags in web-scraped content can trick downstream LLM agents into exfiltrating environment credentials.',
     mitigationAction: 'Deploy AI-BOM token scanners and enable strict nonce signing on all tool execution channels.',
+    cisaEmergencyStatus: '🔴 JUST HAPPENED · Active Zero-Day Exploitation Detected (Immediate Remediation)',
     sourceUrl: 'https://github.com/advisories',
-    publishedAt: '5h ago'
+    publishedAt: 'Just happened · 16m ago'
   }
 ]
 
