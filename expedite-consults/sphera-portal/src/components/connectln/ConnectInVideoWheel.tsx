@@ -67,7 +67,7 @@ export function ConnectInVideoWheel({
 }: ConnectInVideoWheelProps) {
   const [allTalks, setAllTalks] = useState<WheelVideoTalk[]>(EDUCATIONAL_WHEEL_TALKS)
   const userProfilePic = resolveUserProfilePicture(user)
-  const hasSharedVideoFromUrlRef = useRef<boolean>(false)
+  // Reverted auto-play from shared link
 
   useEffect(() => {
     try {
@@ -80,7 +80,7 @@ export function ConnectInVideoWheel({
         const params = new URLSearchParams(window.location.search)
         const sharedVideoId = params.get("video")
         const sharedPlate = params.get("plate")
-        if (!params.get("postId") && (sharedVideoId || sharedPlate)) {
+        if (sharedVideoId || sharedPlate) {
           params.delete("video")
           params.delete("plate")
           const cleanSearch = params.toString()
@@ -90,10 +90,10 @@ export function ConnectInVideoWheel({
             t => (sharedVideoId && t.youtubeId === sharedVideoId) || (sharedPlate && t.serialPlate === sharedPlate)
           )
           if (found) {
-            hasSharedVideoFromUrlRef.current = true; setSelectedStageVideo(found); setActiveVideo(null); notifyExclusiveVideoPlay(wheelHeroPlayerIdRef.current); setIsPlayingHeroInline(true); setTimeout(() => { heroStageRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }) }, 250)
+            setSelectedStageVideo(found); setActiveVideo(found); setTimeout(() => { heroStageRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }) }, 250)
           } else if (sharedVideoId && /^[a-zA-Z0-9_-]{11}$/.test(sharedVideoId)) {
             const fallbackTalk: WheelVideoTalk = { id: `shared-vid-${sharedVideoId}`, serialPlate: sharedPlate || "CLN-SHARED", title: sharedVTitle, speaker: "ConnectLn Verified Member", speakerTitle: "Direct Shared Masterclass", category: "all", categoryLabel: "Shared Masterclass", enclaveId: user?.professionEnclave || "trades_construction", duration: "5:00", youtubeId: sharedVideoId, thumbnailUrl: `https://i.ytimg.com/vi/${sharedVideoId}/hqdefault.jpg`, summary: sharedVTitle, takeaways: ["Shared directly via ConnectLn — click Share to pass this masterclass on with your Profile Picture & ConnectLn Logo Card."], tags: ["#ConnectLn", "#Masterclass"] };
-            hasSharedVideoFromUrlRef.current = true; setSelectedStageVideo(fallbackTalk); setActiveVideo(null); notifyExclusiveVideoPlay(wheelHeroPlayerIdRef.current); setIsPlayingHeroInline(true); setTimeout(() => { heroStageRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }) }, 250)
+            setSelectedStageVideo(fallbackTalk); setActiveVideo(fallbackTalk); setTimeout(() => { heroStageRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }) }, 250)
           }
         }
       }
@@ -184,7 +184,7 @@ export function ConnectInVideoWheel({
 
   // Keep filter synced when user logs in or switches profession — default strictly to their profession!
   useEffect(() => {
-    if (hasSharedVideoFromUrlRef.current) return; setSelectedFilter("my_profession")
+    setSelectedFilter("my_profession")
     setSelectedStageVideo(null)
     setSelectedProfessionId("all")
     setIsPlayingHeroInline(false)

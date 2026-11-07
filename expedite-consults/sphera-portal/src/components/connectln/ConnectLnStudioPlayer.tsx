@@ -76,18 +76,7 @@ export function ConnectLnStudioPlayer({
 
   const [isPlaying, setIsPlaying] = useState<boolean>(autoPlay)
   const [isStoppedByOther, setIsStoppedByOther] = useState<boolean>(false)
-  // When a viewer opens a shared video link directly from WhatsApp/LinkedIn/SMS/Email, the browser has no prior click gesture on this page yet (navigator.userActivation.hasBeenActive === false).
-  // Cross-origin iframes (youtube-nocookie.com) only auto-play on cold page loads when mute=1 is set initially; we then unmute on the user's first tap/click anywhere!
-  const [startedFromColdLink] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false
-    const ua = (navigator as any).userActivation
-    if (ua && typeof ua.hasBeenActive === "boolean") {
-      return !ua.hasBeenActive
-    }
-    const params = new URLSearchParams(window.location.search)
-    return Boolean(params.get("video") || params.get("plate"))
-  })
-  const [isMuted, setIsMuted] = useState<boolean>(() => autoPlay && startedFromColdLink)
+  const [isMuted, setIsMuted] = useState<boolean>(false)
   const [currentTime, setCurrentTime] = useState<number>(0)
   const [duration, setDuration] = useState<number>(() => {
     const parts = durationLabel.split(":").map(Number)
@@ -191,23 +180,6 @@ export function ConnectLnStudioPlayer({
     }
   }, [youtubeId, autoPlay, effectivePlayerId])
 
-  // If the video auto-played from a shared link in muted mode (to satisfy browser autoplay rules), automatically unmute on the user's first interaction anywhere on the page
-  useEffect(() => {
-    if (!startedFromColdLink || !isMuted || !isPlaying) return
-    const unlockAudio = () => {
-      sendPlayerCommand("unMute")
-      sendPlayerCommand("setVolume", [100])
-      sendPlayerCommand("playVideo")
-      setIsMuted(false)
-    }
-    window.addEventListener("pointerdown", unlockAudio, { once: true })
-    window.addEventListener("keydown", unlockAudio, { once: true })
-    return () => {
-      window.removeEventListener("pointerdown", unlockAudio)
-      window.removeEventListener("keydown", unlockAudio)
-    }
-  }, [startedFromColdLink, isMuted, isPlaying, sendPlayerCommand])
-
   // Fallback timer so scrubber progresses smoothly and loops when reaching duration
   useEffect(() => {
     if (!isPlaying) return
@@ -307,16 +279,9 @@ export function ConnectLnStudioPlayer({
           <iframe
             ref={iframeRef}
             key={youtubeId}
-            src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=${autoPlay ? 1 : 0}&mute=${autoPlay && startedFromColdLink ? 1 : 0}&loop=1&playlist=${youtubeId}&controls=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&playsinline=1&enablejsapi=1`}
+            src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=${autoPlay ? 1 : 0}&loop=1&playlist=${youtubeId}&controls=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&playsinline=1&enablejsapi=1`}
             title={title}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            onLoad={() => {
-              if (autoPlay) {
-                setTimeout(() => {
-                  sendPlayerCommand("playVideo")
-                }, 150)
-              }
-            }}
             className="h-full w-full border-0 pointer-events-none"
           />
         )}
@@ -339,21 +304,9 @@ export function ConnectLnStudioPlayer({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          {isMuted && isPlaying && (
-            <button
-              type="button"
-              onClick={toggleMute}
-              className="rounded-full bg-[#0066FF] hover:bg-[#0052CC] px-2.5 py-1 text-[10px] font-extrabold text-white flex items-center gap-1 shadow-lg animate-pulse cursor-pointer pointer-events-auto"
-            >
-              <VolumeX className="h-3 w-3" />
-              <span>Tap for Sound</span>
-            </button>
-          )}
-          <span className="rounded-md bg-black/60 border border-white/15 px-2 py-0.5 text-[10px] font-mono font-bold text-amber-300 shrink-0">
-            {serialPlate}
-          </span>
-        </div>
+        <span className="rounded-md bg-black/60 border border-white/15 px-2 py-0.5 text-[10px] font-mono font-bold text-amber-300 shrink-0">
+          {serialPlate}
+        </span>
       </div>
 
       {/* Center Play / Pause Indicator */}
