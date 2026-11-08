@@ -306,10 +306,19 @@ export function NetworkView({
   }, [currentUser?.name, (currentUser as any)?.email, handledInviteNames])
 
   useEffect(() => {
-    // Also push any existing local outbound invites to the cloud store on mount so recipients & Received Invitations see them
+    const safeSenderAvatar =
+      currentUser?.avatar && !currentUser.avatar.startsWith('data:')
+        ? currentUser.avatar
+        : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(currentUser?.name || 'Member')}&backgroundColor=0a66c2`
+
+    // Push any existing local outbound invites to the cloud store on mount so the recipient sees them in Invitations Received
     if (typeof window !== 'undefined' && outboundInvites.length > 0) {
       for (const inv of outboundInvites) {
         if (!inv || inv.id === 'out_1' || inv.id === 'out_2') continue
+        const safeRecipAvatar =
+          inv.avatar && !inv.avatar.startsWith('data:')
+            ? inv.avatar
+            : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(inv.name || 'Member')}&backgroundColor=0a66c2`
         fetch('/api/connectin/invite', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -318,18 +327,19 @@ export function NetworkView({
             cid: (inv as any).cid || inv.id,
             recipientName: inv.name,
             recipientHeadline: inv.headline,
-            recipientAvatar: inv.avatar,
+            recipientAvatar: safeRecipAvatar,
             recipients: inv.email ? [inv.email] : inv.phone ? [inv.phone] : [],
             senderName: currentUser?.name || 'Member',
+            senderEmail: (currentUser as any)?.email || '',
             senderHeadline: currentUser?.headline || '',
-            senderAvatar: currentUser?.avatar || '',
+            senderAvatar: safeSenderAvatar,
             customNote: inv.customNote || ''
           })
         }).catch(() => {})
       }
     }
     syncInvitationsWithCloud()
-    const timer = setInterval(syncInvitationsWithCloud, 8000)
+    const timer = setInterval(syncInvitationsWithCloud, 4000)
     return () => clearInterval(timer)
   }, [syncInvitationsWithCloud])
 
@@ -382,63 +392,43 @@ export function NetworkView({
     [connections.length, sentAcceptedCount]
   )
 
-  // Build live unified Invitations Received list (Cloud Received + Active Outbound/Platform Invites + Unhandled Enclave Invites)
+  // Build live LinkedIn-style Invitations Received list: ONLY invitations sent TO currentUser by other users
   const invitations: any[] = React.useMemo(() => {
     const handledSet = new Set(handledInviteNames.map(n => n.toLowerCase().trim()))
+    const myNorm = String(currentUser?.name || '').toLowerCase().trim()
     const seen = new Set<string>()
     const list: any[] = []
 
     const pushInvite = (inv: any) => {
       if (!inv || !inv.name) return
       const norm = String(inv.name).toLowerCase().trim()
-      if (!norm || connectedNamesSet.has(norm) || handledSet.has(norm) || seen.has(norm)) return
+      if (!norm || norm === myNorm || connectedNamesSet.has(norm) || handledSet.has(norm) || seen.has(norm)) return
       seen.add(norm)
       list.push(inv)
     }
 
-    // 1. Live cloud-synced invitations from /api/connectin/invite
     for (const inv of cloudReceivedInvites) {
       pushInvite(inv)
     }
 
-    // 2. Active user-dispatched invitations so invited users are always visible in the invitation list
-    for (const out of outboundInvites) {
-      if (!out || out.id === 'out_1' || out.id === 'out_2' || out.status === 'accepted') continue
-      pushInvite({
-        id: `inv_from_${out.id}`,
-        cid: (out as any).cid || out.id,
-        name: out.name,
-        headline: out.headline || 'Invited on ConnectLn · Pending Acceptance',
-        avatar:
-          out.avatar ||
-          `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(out.name)}&backgroundColor=0a66c2`,
-        mutualCount: 16,
-        timeAgo: out.sentAt || 'Just now',
-        customNote: out.customNote,
-        email: out.email,
-        phone: out.phone,
-        isFromOutbound: true
-      })
-    }
-
-    // 3. Enclave inbound invitations (e.g. Markus Thorne, Sarah Jenkins) if not yet accepted or ignored
-    for (const inv of baseEnclaveInvitations) {
-      pushInvite(inv)
-    }
-
     return list
-  }, [cloudReceivedInvites, outboundInvites, baseEnclaveInvitations, connectedNamesSet, handledInviteNames])
+  }, [cloudReceivedInvites, connectedNamesSet, handledInviteNames, currentUser?.name])
+
+  const receivedInviteByNameMap = React.useMemo(() => {
+    const m = new Map<string, any>()
+    for (const inv of invitations) {
+      if (inv?.name) m.set(String(inv.name).toLowerCase().trim(), inv)
+    }
+    return m
+  }, [invitations])
 
   const pendingNamesSet = React.useMemo(() => {
     const s = new Set<string>()
     for (const o of outboundInvites) {
       if (o?.name) s.add(o.name.toLowerCase().trim())
     }
-    for (const i of invitations) {
-      if (i?.name) s.add(i.name.toLowerCase().trim())
-    }
     return s
-  }, [outboundInvites, invitations])
+  }, [outboundInvites])
 
   // Keep user profile connectionsCount synced with the exact count of My Connections
   useEffect(() => {
@@ -723,6 +713,15 @@ export function NetworkView({
       return next
     })
 
+    const safeSenderAvatar =
+      currentUser?.avatar && !currentUser.avatar.startsWith('data:')
+        ? currentUser.avatar
+        : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(currentUser?.name || 'Member')}&backgroundColor=0a66c2`
+    const safeRecipAvatar =
+      person.avatar && !person.avatar.startsWith('data:')
+        ? person.avatar
+        : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(person.name || 'Member')}&backgroundColor=0a66c2`
+
     fetch("/api/connectin/invite", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -731,17 +730,19 @@ export function NetworkView({
         cid: itemCid,
         recipientName: person.name,
         recipientHeadline: person.headline,
-        recipientAvatar: person.avatar,
+        recipientAvatar: safeRecipAvatar,
+        recipients: (person as any).email ? [(person as any).email] : [],
         senderName: currentUser.name,
+        senderEmail: (currentUser as any).email || "",
         senderHeadline: currentUser.headline,
-        senderAvatar: currentUser.avatar,
+        senderAvatar: safeSenderAvatar,
         customNote: note || ""
       })
     })
       .then(() => syncInvitationsWithCloud())
       .catch(() => {})
 
-    showToast(`✓ Invitation sent to ${person.name}${note ? ' with note' : ''}! Added to Invitations Sent & Received list.`)
+    showToast(`✓ Invitation sent to ${person.name}${note ? ' with note' : ''}! Added to Invitations Sent.`)
   }
 
   // Handle New Invites from InviteModal (email / sms / link)
@@ -1513,12 +1514,6 @@ export function NetworkView({
                         >
                           Withdraw
                         </button>
-                        <button
-                          onClick={() => handleAcceptOutboundInvite(inv.id)}
-                          className="rounded-full bg-[#0A66C2] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#004182] shadow-xs"
-                        >
-                          Accept
-                        </button>
                       </div>
                     </div>
                   ))}
@@ -1744,27 +1739,43 @@ export function NetworkView({
                           </button>
                           <button
                             onClick={() => {
+                              const incoming = receivedInviteByNameMap.get(String(person.name || '').toLowerCase().trim())
+                              if (incoming) {
+                                handleAcceptInvite(incoming.id)
+                                return
+                              }
                               if (person.isConnected) {
                                 setActiveTab('connections')
+                                return
+                              }
+                              if (person.isPending) {
+                                setActiveTab('sent_invites')
                                 return
                               }
                               handleSendConnectionWithNote(person.id)
                             }}
                             className={`ml-auto rounded-xl px-3.5 py-1.5 text-[11px] font-extrabold transition-all flex items-center gap-1 cursor-pointer ${
-                              person.isConnected
+                              receivedInviteByNameMap.has(String(person.name || '').toLowerCase().trim())
+                                ? "bg-[#0A66C2] hover:bg-[#004182] text-white shadow-sm ring-2 ring-blue-300"
+                                : person.isConnected
                                 ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                                 : person.isPending
                                 ? "border border-zinc-300 text-zinc-500"
                                 : "bg-[#A64532] hover:bg-[#8E3929] text-white shadow-2xs"
                             }`}
                           >
-                            {person.isConnected ? (
+                            {receivedInviteByNameMap.has(String(person.name || '').toLowerCase().trim()) ? (
+                              <>
+                                <Check className="h-3 w-3" />
+                                <span>Accept Invite</span>
+                              </>
+                            ) : person.isConnected ? (
                               <>
                                 <Check className="h-3 w-3" />
                                 <span>Vouched</span>
                               </>
                             ) : person.isPending ? (
-                              <span>Pending</span>
+                              <span>Invite Sent</span>
                             ) : (
                               <>
                                 <UserPlus className="h-3 w-3" />
@@ -1925,27 +1936,43 @@ export function NetworkView({
 
                         <button
                           onClick={() => {
+                            const incoming = receivedInviteByNameMap.get(String(person.name || '').toLowerCase().trim())
+                            if (incoming) {
+                              handleAcceptInvite(incoming.id)
+                              return
+                            }
                             if (person.isConnected) {
                               setActiveTab('connections')
+                              return
+                            }
+                            if (person.isPending) {
+                              setActiveTab('sent_invites')
                               return
                             }
                             handleSendConnectionWithNote(person.id)
                           }}
                           className={`flex-1 rounded-xl py-1.5 text-[11px] font-extrabold transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                            person.isConnected
+                            receivedInviteByNameMap.has(String(person.name || '').toLowerCase().trim())
+                              ? "bg-[#0A66C2] text-white hover:bg-[#004182] shadow-sm ring-2 ring-blue-300"
+                              : person.isConnected
                               ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-300"
                               : person.isPending
                               ? "border border-zinc-300 text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400"
                               : "bg-[#0A66C2] text-white hover:bg-[#004182] shadow-2xs"
                           }`}
                         >
-                          {person.isConnected ? (
+                          {receivedInviteByNameMap.has(String(person.name || '').toLowerCase().trim()) ? (
+                            <>
+                              <Check className="h-3 w-3" />
+                              <span>Accept Invite</span>
+                            </>
+                          ) : person.isConnected ? (
                             <>
                               <Check className="h-3 w-3 text-emerald-600" />
                               <span>Vouched</span>
                             </>
                           ) : person.isPending ? (
-                            <span>Pending</span>
+                            <span>Invite Sent</span>
                           ) : (
                             <>
                               <UserPlus className="h-3 w-3" />

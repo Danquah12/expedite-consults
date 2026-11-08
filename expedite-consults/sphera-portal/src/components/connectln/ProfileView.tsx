@@ -1152,7 +1152,7 @@ export function ProfileView({
                         }`}
                       >
                         <CheckCircle2 className="h-3.5 w-3.5" />
-                        <span>{isMemberConnected ? `Connected with ${user.name.split(' ')[0]} ✓` : `+ Connect with ${user.name.split(' ')[0]}`}</span>
+                        <span>{isMemberConnected ? `Invitation Sent ✓` : `+ Connect with ${user.name.split(' ')[0]}`}</span>
                       </button>
 
                       <button

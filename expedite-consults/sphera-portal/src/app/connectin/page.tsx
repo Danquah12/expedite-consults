@@ -1039,6 +1039,7 @@ export default function ConnectLnPage() {
               liveSuggested.push({
                 id: uniqueId,
                 name: u.name,
+                email: u.email || "",
                 headline: u.headline || `${u.profession || "Specialist"} · ConnectIn Verified Network`,
                 avatar: cleanAvatar,
                 mutualConnections: 14,
@@ -1491,9 +1492,22 @@ export default function ConnectLnPage() {
   // Handle Connect / Follow Toggles — sends an invitation first (moves to My Connections when Accepted)
   const handleToggleConnect = (personId: string) => {
     const normInput = String(personId || "").toLowerCase().trim()
-    const targetPerson = suggestedPeople.find(
-      p => p.id === personId || p.name.toLowerCase().trim() === normInput
-    )
+    const targetPerson =
+      suggestedPeople.find(p => p.id === personId || p.name.toLowerCase().trim() === normInput) ||
+      (inspectedMember &&
+      (inspectedMember.id === personId || String(inspectedMember.name || "").toLowerCase().trim() === normInput)
+        ? {
+            id: inspectedMember.id || `member_${normInput}`,
+            name: inspectedMember.name,
+            email: inspectedMember.email || "",
+            headline: inspectedMember.headline || "Verified Professional · ConnectIn Member",
+            avatar:
+              inspectedMember.avatar ||
+              `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(inspectedMember.name || "M")}&backgroundColor=0a66c2`,
+            isConnected: false,
+            isPending: false
+          }
+        : undefined)
     setSuggestedPeople(prev => {
       const updated = prev.map(person => {
         if (person.id !== personId && person.name.toLowerCase().trim() !== normInput) {
@@ -1529,6 +1543,15 @@ export default function ConnectLnPage() {
           localStorage.setItem("connectin_my_outbound_invites_v2", JSON.stringify([newOut, ...filtered]))
         } catch {}
       }
+      const compactSenderAvatar =
+        userData.avatar && !String(userData.avatar).startsWith("data:")
+          ? userData.avatar
+          : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(userData.name || "M")}&backgroundColor=0a66c2`
+      const compactRecipientAvatar =
+        targetPerson.avatar && !String(targetPerson.avatar).startsWith("data:")
+          ? targetPerson.avatar
+          : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(targetPerson.name || "M")}&backgroundColor=0a66c2`
+
       fetch("/api/connectin/invite", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1536,11 +1559,13 @@ export default function ConnectLnPage() {
           channel: "member_connect",
           cid: itemCid,
           recipientName: targetPerson.name,
+          recipientEmail: (targetPerson as any).email || "",
           recipientHeadline: targetPerson.headline,
-          recipientAvatar: targetPerson.avatar,
+          recipientAvatar: compactRecipientAvatar,
           senderName: userData.name,
+          senderEmail: userData.email || "",
           senderHeadline: userData.headline,
-          senderAvatar: userData.avatar
+          senderAvatar: compactSenderAvatar
         })
       }).catch(() => {})
       trackUserActivity({
