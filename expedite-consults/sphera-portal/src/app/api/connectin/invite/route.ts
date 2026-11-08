@@ -3,15 +3,25 @@ import { sendConnectInInviteSMS, sendConnectInInviteVoiceCall, formatE164Phone }
 import { sendConnectInInviteEmail } from "@/lib/connectin-email"
 import { recordGlobalUserActivity } from "@/lib/connectin-cloud-sync"
 
-interface StoredInviteRecord {
+export interface StoredInviteRecord {
   cid: string
   recipientName: string
   recipientEmail?: string
   recipientPhone?: string
+  recipientHeadline?: string
+  recipientAvatar?: string
   senderName: string
+  senderEmail?: string
   senderHeadline?: string
+  senderAvatar?: string
+  customNote?: string
+  channel?: "sms" | "email" | "call" | "link" | "member_connect"
+  status?: "pending" | "accepted" | "ignored" | "withdrawn"
   createdAt: number
 }
+
+const SYNC_INVITES_MAP = "connectin_invitations_map_v1"
+const SYNC_INVITES_KEY = "global_invites_v1"
 
 const globalForInvites = globalThis as unknown as {
   __connectlnInviteRecords?: Map<string, StoredInviteRecord>
@@ -22,6 +32,103 @@ function getInviteStore(): Map<string, StoredInviteRecord> {
     globalForInvites.__connectlnInviteRecords = new Map<string, StoredInviteRecord>()
   }
   return globalForInvites.__connectlnInviteRecords
+}
+
+function getTwilioAuthHeader(): string | null {
+  const sid = process.env.TWILIO_ACCOUNT_SID || ""
+  const token = process.env.TWILIO_AUTH_TOKEN || ""
+  if (!sid || !token) return null
+  return `Basic ${Buffer.from(`${sid}:${token}`).toString("base64")}`
+}
+
+async function pullCloudInvites(): Promise<StoredInviteRecord[]> {
+  const auth = getTwilioAuthHeader()
+  if (!auth) return []
+  try {
+    const res = await fetch(
+      `https://sync.twilio.com/v1/Services/default/Maps/${SYNC_INVITES_MAP}/Items/${encodeURIComponent(SYNC_INVITES_KEY)}`,
+      {
+        method: "GET",
+        headers: { Authorization: auth },
+        cache: "no-store"
+      }
+    )
+    if (!res.ok) return []
+    const json = await res.json()
+    return Array.isArray(json?.data?.items) ? (json.data.items as StoredInviteRecord[]) : []
+  } catch {
+    return []
+  }
+}
+
+async function pushCloudInvites(items: StoredInviteRecord[]): Promise<void> {
+  const auth = getTwilioAuthHeader()
+  if (!auth) return
+  try {
+    const baseUrl = `https://sync.twilio.com/v1/Services/default/Maps/${SYNC_INVITES_MAP}`
+    const serialized = JSON.stringify({ items: items.slice(0, 80) })
+    const updateRes = await fetch(`${baseUrl}/Items/${encodeURIComponent(SYNC_INVITES_KEY)}`, {
+      method: "POST",
+      headers: {
+        Authorization: auth,
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: new URLSearchParams({ Data: serialized }).toString()
+    })
+    if (updateRes.ok) return
+    if (updateRes.status === 404) {
+      await fetch("https://sync.twilio.com/v1/Services/default/Maps", {
+        method: "POST",
+        headers: {
+          Authorization: auth,
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({ UniqueName: SYNC_INVITES_MAP }).toString()
+      }).catch(() => {})
+      await fetch(`${baseUrl}/Items`, {
+        method: "POST",
+        headers: {
+          Authorization: auth,
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({ Key: SYNC_INVITES_KEY, Data: serialized }).toString()
+      }).catch(() => {})
+    }
+  } catch {
+    // best-effort cloud persistence
+  }
+}
+
+async function syncAndSaveInviteRecord(record: StoredInviteRecord): Promise<StoredInviteRecord[]> {
+  const store = getInviteStore()
+  store.set(record.cid, record)
+  const cloudItems = await pullCloudInvites()
+  for (const item of cloudItems) {
+    if (item && item.cid && !store.has(item.cid)) {
+      store.set(item.cid, item)
+    } else if (item && item.cid && store.has(item.cid)) {
+      const local = store.get(item.cid)!
+      // Preserve accepted/ignored/withdrawn status if updated more recently
+      if (item.status && item.status !== "pending" && local.status === "pending" && item.cid !== record.cid) {
+        store.set(item.cid, item)
+      }
+    }
+  }
+  store.set(record.cid, record)
+  const all = Array.from(store.values()).sort((a, b) => b.createdAt - a.createdAt)
+  await pushCloudInvites(all)
+  return all
+}
+
+function formatRelativeTimeAgo(timestampMs: number): string {
+  const diffSec = Math.max(0, Math.floor((Date.now() - timestampMs) / 1000))
+  if (diffSec < 60) return "Just now"
+  const diffMin = Math.floor(diffSec / 60)
+  if (diffMin < 60) return `${diffMin}m ago`
+  const diffHr = Math.floor(diffMin / 60)
+  if (diffHr < 24) return `${diffHr}h ago`
+  const diffDays = Math.floor(diffHr / 24)
+  return `${diffDays}d ago`
 }
 
 const COMMON_SURNAMES = [
@@ -142,25 +249,140 @@ export async function GET(req: NextRequest) {
   const email = (searchParams.get("email") || "").trim().toLowerCase()
   const phone = (searchParams.get("phone") || "").trim()
   const inviter = (searchParams.get("inviter") || "").trim().toLowerCase()
+  const user = (searchParams.get("user") || "").trim().toLowerCase()
 
   const store = getInviteStore()
+  const cloudItems = await pullCloudInvites()
+  for (const item of cloudItems) {
+    if (item && item.cid) {
+      const existing = store.get(item.cid)
+      if (!existing || (item.status && item.status !== "pending" && existing.status === "pending")) {
+        store.set(item.cid, item)
+      }
+    }
+  }
 
   if (cid && store.has(cid)) {
     const rec = store.get(cid)
     return NextResponse.json({ success: true, invite: rec, record: rec })
   }
 
-  // Search most recent matching invite by email, phone, or inviter
   const allRecords = Array.from(store.values()).sort((a, b) => b.createdAt - a.createdAt)
+  const activeRecords = allRecords.filter((r) => r.status !== "withdrawn" && r.status !== "ignored" && r.status !== "accepted")
+  const acceptedRecords = allRecords.filter((r) => r.status === "accepted")
+
   const matched =
     allRecords.find((r) => (email && r.recipientEmail === email) || (phone && r.recipientPhone === phone)) ||
     allRecords.find((r) => inviter && r.senderName.toLowerCase().includes(inviter) && r.recipientName) ||
     allRecords[0]
 
+  // Build receivedInvites & sentInvites for NetworkView
+  const receivedInvites = activeRecords.map((rec) => {
+    const isDirectToCurrentUser =
+      Boolean(user && rec.recipientName && rec.recipientName.toLowerCase().trim() === user) ||
+      Boolean(email && rec.recipientEmail && rec.recipientEmail.toLowerCase().trim() === email)
+    const displayName = isDirectToCurrentUser
+      ? rec.senderName || rec.recipientName || "ConnectLn Member"
+      : rec.recipientName || rec.recipientEmail || rec.recipientPhone || rec.senderName || "ConnectLn Member"
+    const displayHeadline = isDirectToCurrentUser
+      ? rec.senderHeadline || `Invited you to connect on ConnectLn`
+      : rec.recipientHeadline ||
+        (rec.recipientEmail
+          ? `Invited by ${rec.senderName} via Email · ${rec.recipientEmail}`
+          : rec.recipientPhone
+          ? `Invited by ${rec.senderName} via SMS · ${rec.recipientPhone}`
+          : `Invited by ${rec.senderName} · ConnectLn Network`)
+    const displayAvatar = isDirectToCurrentUser
+      ? rec.senderAvatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayName)}&backgroundColor=0a66c2`
+      : rec.recipientAvatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayName)}&backgroundColor=0a66c2`
+
+    return {
+      id: `inv_${rec.cid}`,
+      cid: rec.cid,
+      name: displayName,
+      headline: displayHeadline,
+      avatar: displayAvatar,
+      mutualCount: 18,
+      timeAgo: formatRelativeTimeAgo(rec.createdAt),
+      customNote: rec.customNote,
+      senderName: rec.senderName,
+      recipientName: rec.recipientName,
+      email: rec.recipientEmail,
+      phone: rec.recipientPhone,
+      channel: rec.channel || "link",
+      status: rec.status || "pending"
+    }
+  })
+
+  const sentInvites = activeRecords
+    .filter((rec) => !user || !rec.senderName || rec.senderName.toLowerCase().trim() === user)
+    .map((rec) => {
+      const displayName = rec.recipientName || rec.recipientEmail || rec.recipientPhone || "Invited Member"
+      return {
+        id: `out_${rec.cid}`,
+        cid: rec.cid,
+        name: displayName,
+        headline:
+          rec.recipientHeadline ||
+          (rec.recipientEmail
+            ? `Invited via Email · ${rec.recipientEmail}`
+            : rec.recipientPhone
+            ? `Invited via SMS · ${rec.recipientPhone}`
+            : `Invited via ConnectLn`),
+        avatar:
+          rec.recipientAvatar ||
+          `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayName)}&backgroundColor=0a66c2`,
+        email: rec.recipientEmail,
+        phone: rec.recipientPhone,
+        sentAt: formatRelativeTimeAgo(rec.createdAt),
+        customNote: rec.customNote,
+        status: (rec.status || "pending") as "pending" | "accepted"
+      }
+    })
+
+  const acceptedConnections = acceptedRecords
+    .filter((rec) => {
+      if (!user) return true
+      const sName = (rec.senderName || "").toLowerCase().trim()
+      const rName = (rec.recipientName || "").toLowerCase().trim()
+      const rEmail = (rec.recipientEmail || "").toLowerCase().trim()
+      return sName === user || rName === user || (email && rEmail === email)
+    })
+    .map((rec) => {
+      const isSender = Boolean(user && rec.senderName && rec.senderName.toLowerCase().trim() === user)
+      const peerName = isSender
+        ? rec.recipientName || rec.recipientEmail || rec.recipientPhone || "Connected Member"
+        : rec.senderName || rec.recipientName || "Connected Member"
+      const peerHeadline = isSender
+        ? rec.recipientHeadline || "Verified ConnectLn Member"
+        : rec.senderHeadline || "Verified ConnectLn Member"
+      const peerAvatar = isSender
+        ? rec.recipientAvatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(peerName)}&backgroundColor=0a66c2`
+        : rec.senderAvatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(peerName)}&backgroundColor=0a66c2`
+      return {
+        id: `conn_${rec.cid}`,
+        cid: rec.cid,
+        name: peerName,
+        headline: peerHeadline,
+        avatar: peerAvatar,
+        connectedSince: isSender ? "Invitation Sent · Accepted" : "Invitation Received · Accepted",
+        originType: isSender ? "sent_accepted" : "received_accepted",
+        capabilities: ["Verified Specialist", "1st Degree Peer"],
+        verifiedBadges: [isSender ? "✓ Invitation Sent & Accepted" : "✓ Invitation Received & Accepted"],
+        mutualCount: 18,
+        isOnline: true,
+        email: rec.recipientEmail
+      }
+    })
+
   return NextResponse.json({
     success: Boolean(matched),
     invite: matched || null,
-    record: matched || null
+    record: matched || null,
+    receivedInvites,
+    sentInvites,
+    acceptedConnections,
+    allInvites: activeRecords
   })
 }
 
@@ -168,29 +390,74 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const {
+      action,
       channel,
       cid = "",
       recipients,
       recipientName = "",
+      recipientHeadline = "",
+      recipientAvatar = "",
       recipientNames = {},
       message,
+      customNote = "",
       senderName = "Member",
+      senderEmail = "",
       senderHeadline = "",
+      senderAvatar = "",
+      status = "pending",
       inviteLink = "https://www.connectln.app/connectin"
     } = body
 
     const store = getInviteStore()
 
-    // Support lightweight link registration so copied/shared links also remember the invited person's name on the server
-    if (channel === "register_link") {
-      const recordCid = (cid || `cin_${Date.now().toString(36)}`).trim()
-      if (recipientName.trim()) {
-        store.set(recordCid, {
+    if (action === "update_status") {
+      const cloudItems = await pullCloudInvites()
+      for (const item of cloudItems) {
+        if (item && item.cid && !store.has(item.cid)) {
+          store.set(item.cid, item)
+        }
+      }
+      const targetCid = String(cid || "").replace(/^(inv_|out_)/, "").trim()
+      const normName = String(recipientName || "").toLowerCase().trim()
+      let updatedCount = 0
+      for (const [key, rec] of store.entries()) {
+        if (
+          (targetCid && (key === targetCid || rec.cid === targetCid)) ||
+          (normName &&
+            (rec.recipientName?.toLowerCase().trim() === normName ||
+              rec.senderName?.toLowerCase().trim() === normName))
+        ) {
+          store.set(key, { ...rec, status })
+          updatedCount++
+        }
+      }
+      const all = Array.from(store.values()).sort((a, b) => b.createdAt - a.createdAt)
+      await pushCloudInvites(all)
+      return NextResponse.json({ success: true, updatedCount })
+    }
+
+    // Support lightweight link & in-app connection registration so copied/shared links and member connects persist on the server
+    if (channel === "register_link" || channel === "member_connect") {
+      const recordCid = (cid || `cin_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 5)}`).trim()
+      const cleanRecip = (recipientName || (Array.isArray(recipients) ? String(recipients[0] || "") : "")).trim()
+      if (cleanRecip) {
+        const firstRecipient = Array.isArray(recipients) && recipients.length > 0 ? String(recipients[0]).trim() : ""
+        const isEmail = firstRecipient.includes("@")
+        const isPhone = !isEmail && firstRecipient.replace(/[^\d+]/g, "").length >= 10
+        await syncAndSaveInviteRecord({
           cid: recordCid,
-          recipientName: recipientName.trim(),
-          recipientEmail: Array.isArray(recipients) ? recipients[0] : undefined,
+          recipientName: cleanRecip,
+          recipientEmail: isEmail ? firstRecipient.toLowerCase() : undefined,
+          recipientPhone: isPhone ? firstRecipient : undefined,
+          recipientHeadline: recipientHeadline || undefined,
+          recipientAvatar: recipientAvatar || undefined,
           senderName,
-          senderHeadline,
+          senderEmail: senderEmail || undefined,
+          senderHeadline: senderHeadline || undefined,
+          senderAvatar: senderAvatar || undefined,
+          customNote: customNote || undefined,
+          channel: channel === "member_connect" ? "member_connect" : "link",
+          status: "pending",
           createdAt: Date.now()
         })
       }
@@ -215,14 +482,21 @@ export async function POST(req: NextRequest) {
           continue
         }
 
-        const resolvedRecipientName = (recipientNames?.[rawPhone] || recipientNames?.[cleanPhone] || recipientName || "").trim()
-        const itemCid = cid || `cin_${Date.now().toString(36)}`
-        store.set(itemCid, {
+        const resolvedRecipientName = (recipientNames?.[rawPhone] || recipientNames?.[cleanPhone] || recipientName || cleanPhone).trim()
+        const itemCid = cid || `cin_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 5)}`
+        await syncAndSaveInviteRecord({
           cid: itemCid,
           recipientName: resolvedRecipientName,
           recipientPhone: cleanPhone,
+          recipientHeadline: recipientHeadline || `Invited via SMS · ${cleanPhone}`,
+          recipientAvatar: recipientAvatar || undefined,
           senderName,
-          senderHeadline,
+          senderEmail: senderEmail || undefined,
+          senderHeadline: senderHeadline || undefined,
+          senderAvatar: senderAvatar || undefined,
+          customNote: customNote || undefined,
+          channel: "sms",
+          status: "pending",
           createdAt: Date.now()
         })
 
@@ -282,14 +556,21 @@ export async function POST(req: NextRequest) {
           continue
         }
 
-        const resolvedRecipientName = (recipientNames?.[rawPhone] || recipientNames?.[cleanPhone] || recipientName || "").trim()
-        const itemCid = cid || `cin_${Date.now().toString(36)}`
-        store.set(itemCid, {
+        const resolvedRecipientName = (recipientNames?.[rawPhone] || recipientNames?.[cleanPhone] || recipientName || cleanPhone).trim()
+        const itemCid = cid || `cin_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 5)}`
+        await syncAndSaveInviteRecord({
           cid: itemCid,
           recipientName: resolvedRecipientName,
           recipientPhone: cleanPhone,
+          recipientHeadline: recipientHeadline || `Invited via Voice Call · ${cleanPhone}`,
+          recipientAvatar: recipientAvatar || undefined,
           senderName,
-          senderHeadline,
+          senderEmail: senderEmail || undefined,
+          senderHeadline: senderHeadline || undefined,
+          senderAvatar: senderAvatar || undefined,
+          customNote: customNote || undefined,
+          channel: "call",
+          status: "pending",
           createdAt: Date.now()
         })
 
@@ -357,13 +638,20 @@ export async function POST(req: NextRequest) {
           deriveHumanNameFromEmail(rawEntry)
         ).trim()
 
-        const itemCid = cid || `cin_${Date.now().toString(36)}`
-        store.set(itemCid, {
+        const itemCid = cid || `cin_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 5)}`
+        await syncAndSaveInviteRecord({
           cid: itemCid,
-          recipientName: resolvedRecipientName,
+          recipientName: resolvedRecipientName || cleanEmail,
           recipientEmail: cleanEmail,
+          recipientHeadline: recipientHeadline || `Invited via Email · ${cleanEmail}`,
+          recipientAvatar: recipientAvatar || undefined,
           senderName,
-          senderHeadline,
+          senderEmail: senderEmail || undefined,
+          senderHeadline: senderHeadline || undefined,
+          senderAvatar: senderAvatar || undefined,
+          customNote: customNote || undefined,
+          channel: "email",
+          status: "pending",
           createdAt: Date.now()
         })
 

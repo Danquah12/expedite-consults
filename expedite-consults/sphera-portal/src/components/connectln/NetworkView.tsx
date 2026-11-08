@@ -153,16 +153,33 @@ export function NetworkView({
   // Feedback toast
   const [toastMessage, setToastMessage] = useState<string | null>(null)
 
-  // Persistent custom-added and removed 1st-degree connections
+  // Persistent Accepted Connections (Strictly: Invitations Sent & Accepted + Invitations Received & Accepted)
   const [customConnections, setCustomConnections] = useState<ConnectedMember[]>(() => {
     if (typeof window === 'undefined') return []
     try {
-      const raw = localStorage.getItem('connectin_my_custom_connections_v2')
-      return raw ? JSON.parse(raw) : []
+      const rawV3 = localStorage.getItem('connectin_accepted_connections_v3')
+      if (rawV3) return JSON.parse(rawV3)
+      // Migrate only real accepted invitation connections from v2 if any
+      const rawV2 = localStorage.getItem('connectin_my_custom_connections_v2')
+      if (rawV2) {
+        const parsed = JSON.parse(rawV2)
+        if (Array.isArray(parsed)) {
+          const acceptedOnly = parsed.filter((c: any) =>
+            String(c?.connectedSince || '').toLowerCase().includes('invitation') ||
+            String(c?.connectedSince || '').toLowerCase().includes('accepted')
+          )
+          localStorage.setItem('connectin_accepted_connections_v3', JSON.stringify(acceptedOnly))
+          return acceptedOnly
+        }
+      }
+      return []
     } catch {
       return []
     }
   })
+
+  const [cloudAcceptedConnections, setCloudAcceptedConnections] = useState<ConnectedMember[]>([])
+  const [cloudReceivedInvites, setCloudReceivedInvites] = useState<any[]>([])
 
   const [removedConnectionNames, setRemovedConnectionNames] = useState<string[]>(() => {
     if (typeof window === 'undefined') return []
@@ -174,20 +191,48 @@ export function NetworkView({
     }
   })
 
+  const [handledInviteNames, setHandledInviteNames] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return []
+    try {
+      const raw = localStorage.getItem('connectin_handled_invites_v3')
+      return raw ? JSON.parse(raw) : []
+    } catch {
+      return []
+    }
+  })
+
+  const saveHandledInviteNames = (next: string[]) => {
+    setHandledInviteNames(next)
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('connectin_handled_invites_v3', JSON.stringify(next))
+      } catch {}
+    }
+  }
+
   const [outboundInvites, setOutboundInvites] = useState<OutboundInvitation[]>(() => {
-    if (typeof window === 'undefined') return initialOutboundInvitations
+    if (typeof window === 'undefined') return []
     try {
       const raw = localStorage.getItem('connectin_my_outbound_invites_v2')
-      return raw ? JSON.parse(raw) : initialOutboundInvitations
+      const parsed = raw ? JSON.parse(raw) : []
+      if (!Array.isArray(parsed)) return []
+      // Exclude the 2 old static demo items (out_1 Dr. Elena Vance, out_2 Gen. Marcus Vance)
+      return parsed.filter(
+        (inv: any) =>
+          inv &&
+          inv.id !== 'out_1' &&
+          inv.id !== 'out_2' &&
+          inv.status !== 'accepted'
+      )
     } catch {
-      return initialOutboundInvitations
+      return []
     }
   })
 
   useEffect(() => {
     if (typeof window === 'undefined') return
     try {
-      const raw = localStorage.getItem('connectin_my_custom_connections_v2')
+      const raw = localStorage.getItem('connectin_accepted_connections_v3')
       if (raw) {
         setCustomConnections(JSON.parse(raw))
       }
@@ -204,23 +249,92 @@ export function NetworkView({
       // ignore
     }
   }, [outboundInvites])
+
   const [catchUpEvents, setCatchUpEvents] = useState<CatchUpEvent[]>(initialCatchUpEvents)
   const [companies, setCompanies] = useState<CompanyNetworkItem[]>(() => getEnclaveCompanies(enclaveId))
   const [organizations, setOrganizations] = useState<OrganizationNetworkItem[]>(() => getEnclaveOrganizations(enclaveId))
   const [circles, setCircles] = useState<ProfessionalCircleItem[]>(() => getEnclaveCircles(enclaveId))
   const [topics, setTopics] = useState<FollowedTopicItem[]>(() => getEnclaveTopics(enclaveId))
-  const [invitations, setInvitations] = useState<any[]>(() => getEnclaveInvitations(enclaveId))
+  const [baseEnclaveInvitations, setBaseEnclaveInvitations] = useState<any[]>(() => getEnclaveInvitations(enclaveId))
 
   useEffect(() => {
     setCompanies(getEnclaveCompanies(enclaveId))
     setOrganizations(getEnclaveOrganizations(enclaveId))
     setCircles(getEnclaveCircles(enclaveId))
     setTopics(getEnclaveTopics(enclaveId))
-    setInvitations(getEnclaveInvitations(enclaveId))
+    setBaseEnclaveInvitations(getEnclaveInvitations(enclaveId))
     setSelectedCapability('All')
   }, [enclaveId])
 
-  // Build unified, deduplicated 1st-degree connections list so count ALWAYS matches the exact items in My Connections
+  // Sync local outbound invites to cloud & fetch live received/sent/accepted invitations from /api/connectin/invite
+  const syncInvitationsWithCloud = React.useCallback(async () => {
+    if (typeof window === 'undefined') return
+    const userName = String(currentUser?.name || '').trim()
+    const userEmail = String((currentUser as any)?.email || '').trim()
+    try {
+      const res = await fetch(
+        `/api/connectin/invite?user=${encodeURIComponent(userName)}&email=${encodeURIComponent(userEmail)}`,
+        { cache: 'no-store' }
+      )
+      if (!res.ok) return
+      const data = await res.json()
+
+      if (Array.isArray(data.receivedInvites)) {
+        setCloudReceivedInvites(data.receivedInvites)
+      }
+      if (Array.isArray(data.acceptedConnections)) {
+        setCloudAcceptedConnections(data.acceptedConnections)
+      }
+      if (Array.isArray(data.sentInvites)) {
+        setOutboundInvites(prev => {
+          const handledSet = new Set(handledInviteNames.map(n => n.toLowerCase().trim()))
+          const map = new Map<string, OutboundInvitation>()
+          for (const item of [...data.sentInvites, ...prev]) {
+            if (!item || !item.name || item.id === 'out_1' || item.id === 'out_2') continue
+            const norm = String(item.name).toLowerCase().trim()
+            if (!norm || handledSet.has(norm) || item.status === 'accepted') continue
+            if (!map.has(norm)) {
+              map.set(norm, item)
+            }
+          }
+          return Array.from(map.values())
+        })
+      }
+    } catch {
+      // ignore network error
+    }
+  }, [currentUser?.name, (currentUser as any)?.email, handledInviteNames])
+
+  useEffect(() => {
+    // Also push any existing local outbound invites to the cloud store on mount so recipients & Received Invitations see them
+    if (typeof window !== 'undefined' && outboundInvites.length > 0) {
+      for (const inv of outboundInvites) {
+        if (!inv || inv.id === 'out_1' || inv.id === 'out_2') continue
+        fetch('/api/connectin/invite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            channel: 'register_link',
+            cid: (inv as any).cid || inv.id,
+            recipientName: inv.name,
+            recipientHeadline: inv.headline,
+            recipientAvatar: inv.avatar,
+            recipients: inv.email ? [inv.email] : inv.phone ? [inv.phone] : [],
+            senderName: currentUser?.name || 'Member',
+            senderHeadline: currentUser?.headline || '',
+            senderAvatar: currentUser?.avatar || '',
+            customNote: inv.customNote || ''
+          })
+        }).catch(() => {})
+      }
+    }
+    syncInvitationsWithCloud()
+    const timer = setInterval(syncInvitationsWithCloud, 8000)
+    return () => clearInterval(timer)
+  }, [syncInvitationsWithCloud])
+
+  // Build unified, deduplicated 1st-degree connections list:
+  // STRICTLY EQUAL TO: (Invitations Sent & Accepted) + (Invitations Received & Accepted)
   const connections: ConnectedMember[] = React.useMemo(() => {
     const removedSet = new Set(removedConnectionNames.map(n => n.toLowerCase().trim()))
     const myNormName = String(currentUser?.name || '').toLowerCase().trim()
@@ -235,48 +349,96 @@ export function NetworkView({
       list.push(item)
     }
 
-    // 1. Newly accepted / custom-added connections first
+    // 1. Local Accepted Invitations (Sent & Accepted + Received & Accepted)
     for (const c of customConnections) {
       pushUnique(c)
     }
 
-    // 2. Any member in suggestedPeople who is currently connected (isConnected === true)
-    for (const p of suggestedPeople) {
-      if (p.isConnected) {
-        const safeCaps = (p.capabilities || []).map((cap: any) =>
-          typeof cap === 'string' ? cap : String(cap?.name || cap || '')
-        ).filter(Boolean)
-        pushUnique({
-          id: `conn_sug_${p.id}`,
-          name: p.name,
-          headline: p.headline,
-          avatar: p.avatar,
-          connectedSince: 'Connected on ConnectLn',
-          capabilities: safeCaps.length > 0 ? safeCaps : ['Verified Specialist'],
-          verifiedBadges: p.verifiedBadges || ['✓ Verified Member'],
-          mutualCount: p.mutualConnections || 18,
-          isOnline: true
-        })
-      }
-    }
-
-    // 3. Active enclave 1st-degree connections
-    for (const c of getEnclaveConnectedMembers(enclaveId)) {
-      pushUnique(c)
-    }
-
-    // 4. Healthcare, Clinical Pharmacy, Nursing, Medical Aide & Admin 1st-degree peers
-    for (const c of getEnclaveConnectedMembers('healthcare_medicine')) {
-      pushUnique(c)
-    }
-
-    // 5. Core global 1st-degree connections
-    for (const c of initialConnectedMembers) {
+    // 2. Cloud-Synced Accepted Invitations (Sent & Accepted + Received & Accepted)
+    for (const c of cloudAcceptedConnections) {
       pushUnique(c)
     }
 
     return list
-  }, [customConnections, suggestedPeople, enclaveId, removedConnectionNames, currentUser?.name])
+  }, [customConnections, cloudAcceptedConnections, removedConnectionNames, currentUser?.name])
+
+  const connectedNamesSet = React.useMemo(
+    () => new Set(connections.map(c => c.name.toLowerCase().trim())),
+    [connections]
+  )
+
+  const sentAcceptedCount = React.useMemo(
+    () =>
+      connections.filter(
+        c =>
+          (c as any).originType === 'sent_accepted' ||
+          String(c.connectedSince || '').toLowerCase().includes('sent')
+      ).length,
+    [connections]
+  )
+
+  const receivedAcceptedCount = React.useMemo(
+    () => Math.max(0, connections.length - sentAcceptedCount),
+    [connections.length, sentAcceptedCount]
+  )
+
+  // Build live unified Invitations Received list (Cloud Received + Active Outbound/Platform Invites + Unhandled Enclave Invites)
+  const invitations: any[] = React.useMemo(() => {
+    const handledSet = new Set(handledInviteNames.map(n => n.toLowerCase().trim()))
+    const seen = new Set<string>()
+    const list: any[] = []
+
+    const pushInvite = (inv: any) => {
+      if (!inv || !inv.name) return
+      const norm = String(inv.name).toLowerCase().trim()
+      if (!norm || connectedNamesSet.has(norm) || handledSet.has(norm) || seen.has(norm)) return
+      seen.add(norm)
+      list.push(inv)
+    }
+
+    // 1. Live cloud-synced invitations from /api/connectin/invite
+    for (const inv of cloudReceivedInvites) {
+      pushInvite(inv)
+    }
+
+    // 2. Active user-dispatched invitations so invited users are always visible in the invitation list
+    for (const out of outboundInvites) {
+      if (!out || out.id === 'out_1' || out.id === 'out_2' || out.status === 'accepted') continue
+      pushInvite({
+        id: `inv_from_${out.id}`,
+        cid: (out as any).cid || out.id,
+        name: out.name,
+        headline: out.headline || 'Invited on ConnectLn · Pending Acceptance',
+        avatar:
+          out.avatar ||
+          `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(out.name)}&backgroundColor=0a66c2`,
+        mutualCount: 16,
+        timeAgo: out.sentAt || 'Just now',
+        customNote: out.customNote,
+        email: out.email,
+        phone: out.phone,
+        isFromOutbound: true
+      })
+    }
+
+    // 3. Enclave inbound invitations (e.g. Markus Thorne, Sarah Jenkins) if not yet accepted or ignored
+    for (const inv of baseEnclaveInvitations) {
+      pushInvite(inv)
+    }
+
+    return list
+  }, [cloudReceivedInvites, outboundInvites, baseEnclaveInvitations, connectedNamesSet, handledInviteNames])
+
+  const pendingNamesSet = React.useMemo(() => {
+    const s = new Set<string>()
+    for (const o of outboundInvites) {
+      if (o?.name) s.add(o.name.toLowerCase().trim())
+    }
+    for (const i of invitations) {
+      if (i?.name) s.add(i.name.toLowerCase().trim())
+    }
+    return s
+  }, [outboundInvites, invitations])
 
   // Keep user profile connectionsCount synced with the exact count of My Connections
   useEffect(() => {
@@ -289,6 +451,7 @@ export function NetworkView({
     setCustomConnections(next)
     if (typeof window !== 'undefined') {
       try {
+        localStorage.setItem('connectin_accepted_connections_v3', JSON.stringify(next))
         localStorage.setItem('connectin_my_custom_connections_v2', JSON.stringify(next))
       } catch {}
     }
@@ -308,49 +471,150 @@ export function NetworkView({
     setTimeout(() => setToastMessage(null), 3000)
   }
 
-  // Handle Accept Inbound Invitation
+  // Handle Accept Inbound Invitation -> Moves from Invitations Received to My Connections
   const handleAcceptInvite = (id: string) => {
     const invite = invitations.find(inv => inv.id === id)
     if (!invite) return
 
-    // Remove from invitations
-    setInvitations(prev => prev.filter(inv => inv.id !== id))
-
     const normInviteName = invite.name.toLowerCase().trim()
+    const wasSentByMe =
+      Boolean(invite.isFromOutbound) ||
+      outboundInvites.some(o => o.name.toLowerCase().trim() === normInviteName) ||
+      (invite.senderName && String(invite.senderName).toLowerCase().trim() === String(currentUser?.name || '').toLowerCase().trim())
+
+    // Mark as handled so it leaves pending lists
+    if (!handledInviteNames.some(n => n.toLowerCase().trim() === normInviteName)) {
+      saveHandledInviteNames([...handledInviteNames, normInviteName])
+    }
+    setOutboundInvites(prev => prev.filter(o => o.name.toLowerCase().trim() !== normInviteName))
+    setCloudReceivedInvites(prev => prev.filter(i => i.id !== id && String(i.name || '').toLowerCase().trim() !== normInviteName))
+
     if (removedConnectionNames.some(n => n.toLowerCase().trim() === normInviteName)) {
       saveRemovedConnectionNames(removedConnectionNames.filter(n => n.toLowerCase().trim() !== normInviteName))
     }
 
-    // Add to 1st-degree connections
+    // Add to My Connections (1st-degree)
     const newConn: ConnectedMember = {
       id: 'conn_' + Date.now(),
       name: invite.name,
       headline: invite.headline,
       avatar: invite.avatar,
-      connectedSince: 'Connected just now',
+      connectedSince: wasSentByMe ? 'Invitation Sent · Accepted' : 'Invitation Received · Accepted',
       capabilities: invite.capabilities || ['Verified Specialist'],
-      verifiedBadges: ['✓ Verified Member'],
+      verifiedBadges: [wasSentByMe ? '✓ Invitation Sent & Accepted' : '✓ Invitation Received & Accepted'],
       mutualCount: invite.mutualCount || 15,
       isOnline: true,
-      email: invite.email
-    }
+      email: invite.email,
+      ...(wasSentByMe ? { originType: 'sent_accepted' } : { originType: 'received_accepted' })
+    } as ConnectedMember
 
     saveCustomConnections([newConn, ...customConnections.filter(c => c.name.toLowerCase().trim() !== normInviteName)])
-    showToast(`🎉 You and ${invite.name} are now connected! (${connections.length + 1} Connections)`)
+
+    fetch('/api/connectin/invite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'update_status',
+        cid: invite.cid || invite.id,
+        recipientName: invite.name,
+        status: 'accepted'
+      })
+    }).catch(() => {})
+
+    showToast(`🎉 Invitation accepted! ${invite.name} is now in My Connections (${connections.length + 1} Connections).`)
+  }
+
+  // Handle Accept Outbound Invitation -> Moves from Invitations Sent to My Connections
+  const handleAcceptOutboundInvite = (id: string) => {
+    const inv = outboundInvites.find(i => i.id === id)
+    if (!inv) return
+
+    const normName = inv.name.toLowerCase().trim()
+    if (!handledInviteNames.some(n => n.toLowerCase().trim() === normName)) {
+      saveHandledInviteNames([...handledInviteNames, normName])
+    }
+    setOutboundInvites(prev => prev.filter(i => i.id !== id && i.name.toLowerCase().trim() !== normName))
+    setCloudReceivedInvites(prev => prev.filter(i => String(i.name || '').toLowerCase().trim() !== normName))
+
+    if (removedConnectionNames.some(n => n.toLowerCase().trim() === normName)) {
+      saveRemovedConnectionNames(removedConnectionNames.filter(n => n.toLowerCase().trim() !== normName))
+    }
+
+    const newConn: ConnectedMember = {
+      id: 'conn_sent_' + Date.now(),
+      name: inv.name,
+      headline: inv.headline,
+      avatar: inv.avatar,
+      connectedSince: 'Invitation Sent · Accepted',
+      capabilities: ['Verified Specialist'],
+      verifiedBadges: ['✓ Invitation Sent & Accepted'],
+      mutualCount: 18,
+      isOnline: true,
+      email: inv.email,
+      originType: 'sent_accepted'
+    } as ConnectedMember
+
+    saveCustomConnections([newConn, ...customConnections.filter(c => c.name.toLowerCase().trim() !== normName)])
+
+    fetch('/api/connectin/invite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'update_status',
+        cid: (inv as any).cid || inv.id,
+        recipientName: inv.name,
+        status: 'accepted'
+      })
+    }).catch(() => {})
+
+    showToast(`🎉 Invitation Sent to ${inv.name} Accepted! Added to My Connections (${connections.length + 1} Connections).`)
   }
 
   // Handle Ignore Inbound Invitation
   const handleIgnoreInvite = (id: string) => {
     const invite = invitations.find(inv => inv.id === id)
-    setInvitations(prev => prev.filter(inv => inv.id !== id))
     if (invite) {
+      const normName = invite.name.toLowerCase().trim()
+      if (!handledInviteNames.some(n => n.toLowerCase().trim() === normName)) {
+        saveHandledInviteNames([...handledInviteNames, normName])
+      }
+      setOutboundInvites(prev => prev.filter(o => o.name.toLowerCase().trim() !== normName))
+      setCloudReceivedInvites(prev => prev.filter(i => i.id !== id && String(i.name || '').toLowerCase().trim() !== normName))
+      fetch('/api/connectin/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update_status',
+          cid: invite.cid || invite.id,
+          recipientName: invite.name,
+          status: 'ignored'
+        })
+      }).catch(() => {})
       showToast(`Invitation from ${invite.name} ignored.`)
     }
   }
 
   // Handle Withdraw Outbound Invite
   const handleWithdrawOutbound = (id: string) => {
-    setOutboundInvites(prev => prev.filter(inv => inv.id !== id))
+    const inv = outboundInvites.find(i => i.id === id)
+    setOutboundInvites(prev => prev.filter(i => i.id !== id))
+    if (inv) {
+      const normName = inv.name.toLowerCase().trim()
+      if (!handledInviteNames.some(n => n.toLowerCase().trim() === normName)) {
+        saveHandledInviteNames([...handledInviteNames, normName])
+      }
+      setCloudReceivedInvites(prev => prev.filter(i => String(i.name || '').toLowerCase().trim() !== normName))
+      fetch('/api/connectin/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update_status',
+          cid: (inv as any).cid || inv.id,
+          recipientName: inv.name,
+          status: 'withdrawn'
+        })
+      }).catch(() => {})
+    }
     showToast(`Invitation withdrawn successfully.`)
   }
 
@@ -423,77 +687,74 @@ export function NetworkView({
         showToast(`Reminder invitation dispatched to recipient.`)
       }
     } else {
-      showToast(`Reminder invitation dispatched to recipient.`)
+      showToast(`Reminder invitation dispatched to ${inv.name}.`)
     }
   }
 
-  // Handle Send Connection with optional note — immediately connects and adds to My Connections + logs in Invitations Sent
+  // Handle Send Connection Invitation — adds to Invitations Sent & syncs to Invitations Received (moves to My Connections when Accepted!)
   const handleSendConnectionWithNote = (personId: string, note?: string) => {
     const person = suggestedPeople.find(p => p.id === personId)
     if (!person) return
 
     const normName = person.name.toLowerCase().trim()
-    if (removedConnectionNames.some(n => n.toLowerCase().trim() === normName)) {
-      saveRemovedConnectionNames(removedConnectionNames.filter(n => n.toLowerCase().trim() !== normName))
+    // Remove from handled/ignored set if re-inviting
+    if (handledInviteNames.some(n => n.toLowerCase().trim() === normName)) {
+      saveHandledInviteNames(handledInviteNames.filter(n => n.toLowerCase().trim() !== normName))
     }
 
-    onToggleConnect(personId)
-
-    const safeCaps = (person.capabilities || []).map((cap: any) =>
-      typeof cap === 'string' ? cap : String(cap?.name || cap || '')
-    ).filter(Boolean)
-
-    const newConn: ConnectedMember = {
-      id: `conn_${person.id}_${Date.now()}`,
-      name: person.name,
-      headline: person.headline,
-      avatar: person.avatar,
-      connectedSince: 'Connected just now',
-      capabilities: safeCaps.length > 0 ? safeCaps : ['Verified Specialist'],
-      verifiedBadges: person.verifiedBadges || ['✓ Verified Member'],
-      mutualCount: person.mutualConnections || 18,
-      isOnline: true
-    }
-
-    saveCustomConnections([
-      newConn,
-      ...customConnections.filter(c => c.name.toLowerCase().trim() !== normName)
-    ])
-
+    const itemCid = `cin_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 5)}`
     const newOutbound: OutboundInvitation = {
-      id: 'out_' + Date.now(),
+      id: `out_${itemCid}`,
       name: person.name,
       headline: person.headline,
       avatar: person.avatar,
       sentAt: 'Just now',
       customNote: note,
       status: 'pending',
-      type: 'person'
+      type: 'person',
+      ...( { cid: itemCid } as any )
     }
 
     setOutboundInvites(prev => {
-      const next = [newOutbound, ...prev]
+      const next = [newOutbound, ...prev.filter(p => p.name.toLowerCase().trim() !== normName)]
       try {
         localStorage.setItem('connectin_my_outbound_invites_v2', JSON.stringify(next))
       } catch {}
       return next
     })
+
     fetch("/api/connectin/invite", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        channel: "register_link",
+        channel: "member_connect",
+        cid: itemCid,
         recipientName: person.name,
+        recipientHeadline: person.headline,
+        recipientAvatar: person.avatar,
         senderName: currentUser.name,
-        senderHeadline: currentUser.headline
+        senderHeadline: currentUser.headline,
+        senderAvatar: currentUser.avatar,
+        customNote: note || ""
       })
-    }).catch(() => {})
-    showToast(`✓ Connected with ${person.name}${note ? ' (Note delivered)' : ''}! Added to My Connections.`)
+    })
+      .then(() => syncInvitationsWithCloud())
+      .catch(() => {})
+
+    showToast(`✓ Invitation sent to ${person.name}${note ? ' with note' : ''}! Added to Invitations Sent & Received list.`)
   }
 
-  // Handle New Invites from InviteModal (email / sms)
+  // Handle New Invites from InviteModal (email / sms / link)
   const handleNewOutboundInvites = (newInvites: OutboundInvitation[]) => {
-    setOutboundInvites(prev => [...newInvites, ...prev])
+    const newNames = new Set(newInvites.map(i => String(i.name || '').toLowerCase().trim()).filter(Boolean))
+    if (newNames.size > 0) {
+      saveHandledInviteNames(handledInviteNames.filter(n => !newNames.has(n.toLowerCase().trim())))
+    }
+    setOutboundInvites(prev => {
+      const existingFiltered = prev.filter(p => !newNames.has(p.name.toLowerCase().trim()))
+      return [...newInvites, ...existingFiltered]
+    })
+    setTimeout(() => syncInvitationsWithCloud(), 400)
   }
 
   // Toggle company / org / circle / topic follows
@@ -551,17 +812,16 @@ export function NetworkView({
     return 0 // default recent
   })
 
-  const connectedNamesSet = React.useMemo(
-    () => new Set(connections.map(c => c.name.toLowerCase().trim())),
-    [connections]
-  )
-
   // Filter People based on Capability, Search, and Enclave Prioritization
   const filteredPeople = suggestedPeople
-    .map(p => ({
-      ...p,
-      isConnected: p.isConnected || connectedNamesSet.has(String(p.name || '').toLowerCase().trim())
-    }))
+    .map(p => {
+      const norm = String(p.name || '').toLowerCase().trim()
+      return {
+        ...p,
+        isConnected: connectedNamesSet.has(norm),
+        isPending: !connectedNamesSet.has(norm) && pendingNamesSet.has(norm)
+      }
+    })
     .filter(p => {
       const safeCaps = (p.capabilities || []).map((cap: any) => (typeof cap === 'string' ? cap : String(cap?.name || cap || '')))
       const matchCapability =
@@ -931,7 +1191,7 @@ export function NetworkView({
               <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800 pb-3">
                   <div>
-                    <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                    <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2 flex-wrap">
                       <span>
                         {filteredConnections.length === totalConnectionsDisplay
                           ? `${totalConnectionsDisplay} Connections`
@@ -940,9 +1200,12 @@ export function NetworkView({
                       <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300">
                         1st Degree
                       </span>
+                      <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[10px] font-bold text-[#0A66C2] border border-blue-200 dark:bg-blue-950 dark:text-sky-300">
+                        {sentAcceptedCount} Sent &amp; Accepted + {receivedAcceptedCount} Received &amp; Accepted = {totalConnectionsDisplay}
+                      </span>
                     </h3>
                     <p className="text-xs text-zinc-500 mt-0.5">
-                      Direct cryptographic peers in your trusted network.
+                      Strictly equals Invitations Sent &amp; Accepted ({sentAcceptedCount}) + Invitations Received &amp; Accepted ({receivedAcceptedCount}).
                     </p>
                   </div>
 
@@ -1249,6 +1512,12 @@ export function NetworkView({
                           className="rounded-full border border-zinc-300 px-3 py-1.5 text-xs font-bold text-zinc-500 hover:text-red-600 hover:border-red-300 dark:border-zinc-700 dark:text-zinc-400"
                         >
                           Withdraw
+                        </button>
+                        <button
+                          onClick={() => handleAcceptOutboundInvite(inv.id)}
+                          className="rounded-full bg-[#0A66C2] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#004182] shadow-xs"
+                        >
+                          Accept
                         </button>
                       </div>
                     </div>

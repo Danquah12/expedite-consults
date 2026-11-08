@@ -437,7 +437,7 @@ export default function ConnectLnPage() {
   const connectWithInviterInStorage = (inviterName: string, inviterHeadline?: string) => {
     if (typeof window === "undefined" || !inviterName) return
     try {
-      const raw = localStorage.getItem("connectin_my_custom_connections_v2")
+      const raw = localStorage.getItem("connectin_accepted_connections_v3") || localStorage.getItem("connectin_my_custom_connections_v2")
       const existing = raw ? JSON.parse(raw) : []
       const normInviter = inviterName.toLowerCase().trim()
       const isKwesiInviter = normInviter.includes("kwesi")
@@ -452,11 +452,12 @@ export default function ConnectLnPage() {
         avatar: isKwesiInviter
           ? initialCurrentUser.avatar
           : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(inviterName)}&backgroundColor=0a66c2`,
-        connectedSince: "Connected via direct invitation",
+        connectedSince: "Invitation Received · Accepted",
+        originType: "received_accepted",
         capabilities: isKwesiInviter
           ? ["Zero Trust Architecture", "GovCloud Security", "Enterprise Leadership"]
           : ["Verified Peer", "Direct Connection"],
-        verifiedBadges: ["✓ Verified Inviter", "1st Degree"],
+        verifiedBadges: ["✓ Invitation Received & Accepted", "1st Degree"],
         mutualCount: 24,
         isOnline: true
       }
@@ -464,7 +465,17 @@ export default function ConnectLnPage() {
         inviterConn,
         ...(Array.isArray(existing) ? existing.filter((c: any) => String(c?.name || "").toLowerCase().trim() !== normInviter) : [])
       ]
+      localStorage.setItem("connectin_accepted_connections_v3", JSON.stringify(updated))
       localStorage.setItem("connectin_my_custom_connections_v2", JSON.stringify(updated))
+      fetch("/api/connectin/invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "update_status",
+          recipientName: inviterName,
+          status: "accepted"
+        })
+      }).catch(() => {})
     } catch {
       // ignore storage errors
     }
@@ -1477,7 +1488,7 @@ export default function ConnectLnPage() {
     })
   }
 
-  // Handle Connect / Follow Toggles
+  // Handle Connect / Follow Toggles — sends an invitation first (moves to My Connections when Accepted)
   const handleToggleConnect = (personId: string) => {
     const normInput = String(personId || "").toLowerCase().trim()
     const targetPerson = suggestedPeople.find(
@@ -1488,22 +1499,57 @@ export default function ConnectLnPage() {
         if (person.id !== personId && person.name.toLowerCase().trim() !== normInput) {
           return person
         }
-        if (person.isConnected) {
+        if (person.isConnected || person.isPending) {
           return { ...person, isConnected: false, isPending: false }
         }
-        return { ...person, isConnected: true, isPending: false }
+        return { ...person, isConnected: false, isPending: true }
       })
       saveStoredConnections(updated)
       return updated
     })
-    if (targetPerson && !targetPerson.isConnected) {
+    if (targetPerson && !targetPerson.isConnected && !targetPerson.isPending) {
+      const itemCid = `cin_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 5)}`
+      if (typeof window !== "undefined") {
+        try {
+          const raw = localStorage.getItem("connectin_my_outbound_invites_v2")
+          const existing = raw ? JSON.parse(raw) : []
+          const newOut = {
+            id: `out_${itemCid}`,
+            cid: itemCid,
+            name: targetPerson.name,
+            headline: targetPerson.headline,
+            avatar: targetPerson.avatar,
+            sentAt: "Just now",
+            status: "pending",
+            type: "person"
+          }
+          const filtered = Array.isArray(existing)
+            ? existing.filter((i: any) => i && i.id !== "out_1" && i.id !== "out_2" && String(i.name || "").toLowerCase().trim() !== targetPerson.name.toLowerCase().trim())
+            : []
+          localStorage.setItem("connectin_my_outbound_invites_v2", JSON.stringify([newOut, ...filtered]))
+        } catch {}
+      }
+      fetch("/api/connectin/invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          channel: "member_connect",
+          cid: itemCid,
+          recipientName: targetPerson.name,
+          recipientHeadline: targetPerson.headline,
+          recipientAvatar: targetPerson.avatar,
+          senderName: userData.name,
+          senderHeadline: userData.headline,
+          senderAvatar: userData.avatar
+        })
+      }).catch(() => {})
       trackUserActivity({
-        actionType: 'USER_CONNECTED',
-        actionLabel: 'Connected with Member',
+        actionType: 'USER_INVITED',
+        actionLabel: 'Sent Connection Invitation',
         category: 'network',
         targetId: personId,
         targetTitle: targetPerson.name,
-        details: `Connected with ${targetPerson.name} (${targetPerson.headline})`,
+        details: `Sent connection invitation to ${targetPerson.name} (${targetPerson.headline})`,
         user: userData
       })
     }
