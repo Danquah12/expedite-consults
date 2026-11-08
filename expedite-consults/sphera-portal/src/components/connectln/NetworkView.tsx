@@ -153,26 +153,25 @@ export function NetworkView({
   // Feedback toast
   const [toastMessage, setToastMessage] = useState<string | null>(null)
 
+  // Per-User Scoped Storage Namespace so every new user starts with 0 Connections, 0 Sent Invites, and 0 Received Invites
+  const userScopeKey = React.useMemo(() => {
+    const emailPart = String((currentUser as any)?.email || '')
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]/g, '_')
+    const namePart = String(currentUser?.name || 'guest')
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]/g, '_')
+    return `${emailPart}__${namePart}`
+  }, [(currentUser as any)?.email, currentUser?.name])
+
   // Persistent Accepted Connections (Strictly: Invitations Sent & Accepted + Invitations Received & Accepted)
   const [customConnections, setCustomConnections] = useState<ConnectedMember[]>(() => {
     if (typeof window === 'undefined') return []
     try {
-      const rawV3 = localStorage.getItem('connectin_accepted_connections_v3')
-      if (rawV3) return JSON.parse(rawV3)
-      // Migrate only real accepted invitation connections from v2 if any
-      const rawV2 = localStorage.getItem('connectin_my_custom_connections_v2')
-      if (rawV2) {
-        const parsed = JSON.parse(rawV2)
-        if (Array.isArray(parsed)) {
-          const acceptedOnly = parsed.filter((c: any) =>
-            String(c?.connectedSince || '').toLowerCase().includes('invitation') ||
-            String(c?.connectedSince || '').toLowerCase().includes('accepted')
-          )
-          localStorage.setItem('connectin_accepted_connections_v3', JSON.stringify(acceptedOnly))
-          return acceptedOnly
-        }
-      }
-      return []
+      const raw = localStorage.getItem(`connectin_accepted_v5_${userScopeKey}`)
+      return raw ? JSON.parse(raw) : []
     } catch {
       return []
     }
@@ -184,7 +183,7 @@ export function NetworkView({
   const [removedConnectionNames, setRemovedConnectionNames] = useState<string[]>(() => {
     if (typeof window === 'undefined') return []
     try {
-      const raw = localStorage.getItem('connectin_my_removed_connections_v2')
+      const raw = localStorage.getItem(`connectin_removed_v5_${userScopeKey}`)
       return raw ? JSON.parse(raw) : []
     } catch {
       return []
@@ -194,7 +193,7 @@ export function NetworkView({
   const [handledInviteNames, setHandledInviteNames] = useState<string[]>(() => {
     if (typeof window === 'undefined') return []
     try {
-      const raw = localStorage.getItem('connectin_handled_invites_v3')
+      const raw = localStorage.getItem(`connectin_handled_v5_${userScopeKey}`)
       return raw ? JSON.parse(raw) : []
     } catch {
       return []
@@ -205,7 +204,7 @@ export function NetworkView({
     setHandledInviteNames(next)
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem('connectin_handled_invites_v3', JSON.stringify(next))
+        localStorage.setItem(`connectin_handled_v5_${userScopeKey}`, JSON.stringify(next))
       } catch {}
     }
   }
@@ -213,10 +212,9 @@ export function NetworkView({
   const [outboundInvites, setOutboundInvites] = useState<OutboundInvitation[]>(() => {
     if (typeof window === 'undefined') return []
     try {
-      const raw = localStorage.getItem('connectin_my_outbound_invites_v2')
+      const raw = localStorage.getItem(`connectin_outbound_v5_${userScopeKey}`)
       const parsed = raw ? JSON.parse(raw) : []
       if (!Array.isArray(parsed)) return []
-      // Exclude the 2 old static demo items (out_1 Dr. Elena Vance, out_2 Gen. Marcus Vance)
       return parsed.filter(
         (inv: any) =>
           inv &&
@@ -232,23 +230,33 @@ export function NetworkView({
   useEffect(() => {
     if (typeof window === 'undefined') return
     try {
-      const raw = localStorage.getItem('connectin_accepted_connections_v3')
-      if (raw) {
-        setCustomConnections(JSON.parse(raw))
-      }
+      const rawAccepted = localStorage.getItem(`connectin_accepted_v5_${userScopeKey}`)
+      setCustomConnections(rawAccepted ? JSON.parse(rawAccepted) : [])
+
+      const rawOutbound = localStorage.getItem(`connectin_outbound_v5_${userScopeKey}`)
+      setOutboundInvites(rawOutbound ? JSON.parse(rawOutbound) : [])
+
+      const rawHandled = localStorage.getItem(`connectin_handled_v5_${userScopeKey}`)
+      setHandledInviteNames(rawHandled ? JSON.parse(rawHandled) : [])
+
+      const rawRemoved = localStorage.getItem(`connectin_removed_v5_${userScopeKey}`)
+      setRemovedConnectionNames(rawRemoved ? JSON.parse(rawRemoved) : [])
+
+      setCloudReceivedInvites([])
+      setCloudAcceptedConnections([])
     } catch {
       // ignore
     }
-  }, [currentUser?.name])
+  }, [userScopeKey])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
     try {
-      localStorage.setItem('connectin_my_outbound_invites_v2', JSON.stringify(outboundInvites))
+      localStorage.setItem(`connectin_outbound_v5_${userScopeKey}`, JSON.stringify(outboundInvites))
     } catch {
       // ignore
     }
-  }, [outboundInvites])
+  }, [outboundInvites, userScopeKey])
 
   const [catchUpEvents, setCatchUpEvents] = useState<CatchUpEvent[]>(initialCatchUpEvents)
   const [companies, setCompanies] = useState<CompanyNetworkItem[]>(() => getEnclaveCompanies(enclaveId))
@@ -306,38 +314,6 @@ export function NetworkView({
   }, [currentUser?.name, (currentUser as any)?.email, handledInviteNames])
 
   useEffect(() => {
-    const safeSenderAvatar =
-      currentUser?.avatar && !currentUser.avatar.startsWith('data:')
-        ? currentUser.avatar
-        : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(currentUser?.name || 'Member')}&backgroundColor=0a66c2`
-
-    // Push any existing local outbound invites to the cloud store on mount so the recipient sees them in Invitations Received
-    if (typeof window !== 'undefined' && outboundInvites.length > 0) {
-      for (const inv of outboundInvites) {
-        if (!inv || inv.id === 'out_1' || inv.id === 'out_2') continue
-        const safeRecipAvatar =
-          inv.avatar && !inv.avatar.startsWith('data:')
-            ? inv.avatar
-            : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(inv.name || 'Member')}&backgroundColor=0a66c2`
-        fetch('/api/connectin/invite', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            channel: 'register_link',
-            cid: (inv as any).cid || inv.id,
-            recipientName: inv.name,
-            recipientHeadline: inv.headline,
-            recipientAvatar: safeRecipAvatar,
-            recipients: inv.email ? [inv.email] : inv.phone ? [inv.phone] : [],
-            senderName: currentUser?.name || 'Member',
-            senderEmail: (currentUser as any)?.email || '',
-            senderHeadline: currentUser?.headline || '',
-            senderAvatar: safeSenderAvatar,
-            customNote: inv.customNote || ''
-          })
-        }).catch(() => {})
-      }
-    }
     syncInvitationsWithCloud()
     const timer = setInterval(syncInvitationsWithCloud, 4000)
     return () => clearInterval(timer)
@@ -441,8 +417,7 @@ export function NetworkView({
     setCustomConnections(next)
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem('connectin_accepted_connections_v3', JSON.stringify(next))
-        localStorage.setItem('connectin_my_custom_connections_v2', JSON.stringify(next))
+        localStorage.setItem(`connectin_accepted_v5_${userScopeKey}`, JSON.stringify(next))
       } catch {}
     }
   }
@@ -451,7 +426,7 @@ export function NetworkView({
     setRemovedConnectionNames(next)
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem('connectin_my_removed_connections_v2', JSON.stringify(next))
+        localStorage.setItem(`connectin_removed_v5_${userScopeKey}`, JSON.stringify(next))
       } catch {}
     }
   }
@@ -708,7 +683,7 @@ export function NetworkView({
     setOutboundInvites(prev => {
       const next = [newOutbound, ...prev.filter(p => p.name.toLowerCase().trim() !== normName)]
       try {
-        localStorage.setItem('connectin_my_outbound_invites_v2', JSON.stringify(next))
+        localStorage.setItem(`connectin_outbound_v5_${userScopeKey}`, JSON.stringify(next))
       } catch {}
       return next
     })

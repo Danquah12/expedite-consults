@@ -714,7 +714,7 @@ export function LeftSidebarProfile({
         {/* Compact 3-Column Analytics Strip + Slim Profile Strength Bar */}
         {(() => {
           const sidebarAnalytics = getProfileTailoredAnalytics(user)
-          const strength = Math.min(100, Math.max(10, user.profileStrength ?? 92))
+          const strength = isAdminUser ? Math.min(100, Math.max(10, user.profileStrength ?? 92)) : 0
           return (
             <div className="border-t border-zinc-100 dark:border-zinc-800/80 px-3.5 py-2.5 space-y-2">
               <div className="grid grid-cols-3 divide-x divide-zinc-100 dark:divide-zinc-800 text-center">

@@ -453,6 +453,14 @@ export function getExplicitStoredUser(): UserProfile | null {
         ...(resolvedCover ? { coverImage: resolvedCover } : {}),
         role: sanitizedRole,
         roles: sanitizedRoles,
+        ...(isAdmin ? {} : {
+          connectionsCount: 0,
+          followersCount: 0,
+          profileViews: 0,
+          postImpressions: 0,
+          searchAppearances: 0,
+          profileStrength: 0
+        })
       } as UserProfile
     }
     return null

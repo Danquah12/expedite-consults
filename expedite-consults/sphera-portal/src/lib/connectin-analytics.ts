@@ -6,6 +6,7 @@
 
 import { UserProfile } from "./connectln-data"
 import { findEnclaveById } from "./connectin-professions"
+import { isSuperAdminUser } from "./connectin-profile"
 
 export interface ProfileViewerItem {
   id: string
@@ -344,43 +345,26 @@ export function getProfileTailoredAnalytics(
     hash = (hash * 31 + seedText.charCodeAt(i)) >>> 0
   }
 
-  const viewerCount = (customViewers && customViewers.length > 0) ? customViewers.length : INITIAL_PROFILE_VIEWERS.length
-  const connectionsCount = user?.connectionsCount && user.connectionsCount > 0 ? user.connectionsCount : 14
-  const expCount = Array.isArray(user?.experience) ? user!.experience.length : 2
-  const certCount = Array.isArray(user?.certifications) ? user!.certifications.length : 2
+  const isAdmin = isSuperAdminUser(user)
+  const viewerCount = (customViewers && customViewers.length > 0) ? customViewers.length : 0
+  const connectionsCount = user?.connectionsCount && user.connectionsCount > 0 ? user.connectionsCount : 0
+  const expCount = Array.isArray(user?.experience) ? user!.experience.length : 0
+  const certCount = Array.isArray(user?.certifications) ? user!.certifications.length : 0
 
-  // Ensure Profile Views NEVER shows 0!
-  const computedBaseViews =
-    180 +
-    (hash % 240) +
-    Math.min(connectionsCount * 4, 1200) +
-    rawSkills.length * 24 +
-    expCount * 38 +
-    certCount * 25 +
-    viewerCount * 18
+  // New / regular users start at 0 for Profile Viewers, Content Reach, and Directory Discoveries
+  const effectiveProfileViews = isAdmin
+    ? (user?.profileViews && user.profileViews > 0 ? user.profileViews : 19400)
+    : 0
 
-  const effectiveProfileViews =
-    user?.profileViews && user.profileViews > 0
-      ? Math.max(user.profileViews, viewerCount * 16)
-      : computedBaseViews
+  const effectiveTotalReach = isAdmin
+    ? (user?.postImpressions && user.postImpressions > 0 ? user.postImpressions : 520000)
+    : 0
 
-  const computedBaseReach =
-    Math.round(effectiveProfileViews * 6.4) + (hash % 850)
+  const effectiveUniqueViewers = isAdmin ? Math.round(effectiveTotalReach * 0.65) : 0
 
-  const effectiveTotalReach =
-    user?.postImpressions && user.postImpressions > 0
-      ? user.postImpressions
-      : computedBaseReach
-
-  const effectiveUniqueViewers = Math.round(effectiveTotalReach * 0.65)
-
-  const computedBaseDiscoveries =
-    Math.max(96, Math.round(effectiveProfileViews * 0.38) + rawSkills.length * 14 + (hash % 45))
-
-  const effectiveDiscoveries =
-    user?.searchAppearances && user.searchAppearances > 0
-      ? user.searchAppearances
-      : computedBaseDiscoveries
+  const effectiveDiscoveries = isAdmin
+    ? (user?.searchAppearances && user.searchAppearances > 0 ? user.searchAppearances : 180)
+    : 0
 
   // Enclave-specific organizations, job roles, viewers, and credentials
   type EnclaveTemplate = {
@@ -980,26 +964,28 @@ export function getProfileTailoredAnalytics(
 
   const reachData: ContentReachData = {
     totalReach: effectiveTotalReach,
-    weeklyChangePercent: 24.6,
+    weeklyChangePercent: isAdmin ? 24.6 : 0,
     uniqueViewers: effectiveUniqueViewers,
-    engagementRate: 8.8,
-    dailyTrends: dynamicDailyTrends,
-    topPosts: dynamicPosts,
-    topCompanies: dynamicTopCompanies,
-    topJobRoles: dynamicJobRoles
+    engagementRate: isAdmin ? 8.8 : 0,
+    dailyTrends: isAdmin ? dynamicDailyTrends : dailyWeights.map(w => ({ day: w.day, reach: 0, uniqueViewers: 0 })),
+    topPosts: isAdmin ? dynamicPosts : [],
+    topCompanies: isAdmin ? dynamicTopCompanies : [],
+    topJobRoles: isAdmin ? dynamicJobRoles : []
   }
 
   const discoveryData: DirectoryDiscoveryData = {
     totalDiscoveries: effectiveDiscoveries,
-    weeklyChangePercent: 19.4,
-    searcherCount: Math.max(42, Math.round(effectiveDiscoveries * 0.82)),
-    topSearchKeywords: dynamicKeywords,
-    searchingCompanies: dynamicSearchingCompanies,
-    searcherSeniority: [
-      { level: `Executive & Department Leadership (${enclaveInfo?.shortName || 'Domain'})`, percentage: 42 },
-      { level: 'Specialized Recruiting & Talent Partners', percentage: 34 },
-      { level: 'Enterprise RFP, Contracting & Procurement Leads', percentage: 24 }
-    ]
+    weeklyChangePercent: isAdmin ? 19.4 : 0,
+    searcherCount: isAdmin ? Math.max(42, Math.round(effectiveDiscoveries * 0.82)) : 0,
+    topSearchKeywords: isAdmin ? dynamicKeywords : [],
+    searchingCompanies: isAdmin ? dynamicSearchingCompanies : [],
+    searcherSeniority: isAdmin
+      ? [
+          { level: `Executive & Department Leadership (${enclaveInfo?.shortName || 'Domain'})`, percentage: 42 },
+          { level: 'Specialized Recruiting & Talent Partners', percentage: 34 },
+          { level: 'Enterprise RFP, Contracting & Procurement Leads', percentage: 24 }
+        ]
+      : []
   }
 
   return {
@@ -1007,17 +993,20 @@ export function getProfileTailoredAnalytics(
     effectiveTotalReach,
     effectiveUniqueViewers,
     effectiveDiscoveries,
-    decisionMakerRatio: `${Math.min(78, 62 + (rawSkills.length % 12)).toFixed(1)}%`,
-    standingBadge: `Top 1% ${enclaveInfo?.shortName || 'Verified'}`,
-    peakTrafficNote:
-      activeTemplate?.peakNote ||
-      `Activity from ${enclaveInfo?.name || 'Enterprise'} decision-makers inspecting ${safeName}'s profile spikes +46% mid-week.`,
-    credentialTiers: activeTemplate?.credentialTiers || [
-      { label: user?.profession?.split(' ')[0] || 'Verified ID', percent: 57 },
-      { label: 'Enterprise Buyer', percent: 29 },
-      { label: 'Fellow Grade', percent: 14 }
-    ],
-    viewers: baseViewersSource,
+    decisionMakerRatio: isAdmin ? `${Math.min(78, 62 + (rawSkills.length % 12)).toFixed(1)}%` : '0%',
+    standingBadge: isAdmin ? `Top 1% ${enclaveInfo?.shortName || 'Verified'}` : 'New Member',
+    peakTrafficNote: isAdmin
+      ? (activeTemplate?.peakNote ||
+        `Activity from ${enclaveInfo?.name || 'Enterprise'} decision-makers inspecting ${safeName}'s profile spikes +46% mid-week.`)
+      : `Welcome to ConnectLn, ${safeName}! Your profile viewers, content reach, and directory discoveries start at 0 and grow as you connect and share.`,
+    credentialTiers: isAdmin
+      ? (activeTemplate?.credentialTiers || [
+          { label: user?.profession?.split(' ')[0] || 'Verified ID', percent: 57 },
+          { label: 'Enterprise Buyer', percent: 29 },
+          { label: 'Fellow Grade', percent: 14 }
+        ])
+      : [],
+    viewers: isAdmin ? baseViewersSource : [],
     reachData,
     discoveryData
   }

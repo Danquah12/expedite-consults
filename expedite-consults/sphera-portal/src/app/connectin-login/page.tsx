@@ -97,38 +97,8 @@ export default function ConnectInLoginPage() {
     invitedPhone: string
   } | null>(null)
 
-  const connectWithInviterInStorage = (inviterName: string, inviterHeadline?: string) => {
-    if (typeof window === "undefined" || !inviterName) return
-    try {
-      const raw = localStorage.getItem("connectin_my_custom_connections_v2")
-      const existing = raw ? JSON.parse(raw) : []
-      const normInviter = inviterName.toLowerCase().trim()
-      const isKwesiInviter = normInviter.includes("kwesi")
-      const inviterConn = {
-        id: `conn_inviter_${Date.now()}`,
-        name: inviterName,
-        headline:
-          inviterHeadline ||
-          (isKwesiInviter
-            ? "Founder & Chief Security Officer @ Expedite Consults · Zero Trust & AI Architecture"
-            : "Verified ConnectLn Member · 1st-Degree Inviter"),
-        avatar: generatePersonalSignatureAvatar({ name: inviterName, email: "" }),
-        connectedSince: "Connected via direct invitation",
-        capabilities: isKwesiInviter
-          ? ["Zero Trust Architecture", "GovCloud Security", "Enterprise Leadership"]
-          : ["Verified Peer", "Direct Connection"],
-        verifiedBadges: ["✓ Verified Inviter", "1st Degree"],
-        mutualCount: 1,
-        isOnline: true
-      }
-      const updated = [
-        inviterConn,
-        ...(Array.isArray(existing) ? existing.filter((c: any) => String(c?.name || "").toLowerCase().trim() !== normInviter) : [])
-      ]
-      localStorage.setItem("connectin_my_custom_connections_v2", JSON.stringify(updated))
-    } catch {
-      // ignore storage errors
-    }
+  const connectWithInviterInStorage = (_inviterName: string, _inviterHeadline?: string) => {
+    // New users start with 0 connections, 0 sent invitations, and 0 received invitations until explicitly accepted
   }
 
   // Detect invitation links on mount, immediately clear any existing inviter session, and force fresh authentication

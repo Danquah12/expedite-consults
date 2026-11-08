@@ -1322,10 +1322,10 @@ export function ProfileView({
                         <Eye className="h-3.5 w-3.5 text-[#0A66C2]" />
                       </div>
                       <p className="text-xl font-black text-zinc-900 dark:text-zinc-100">
-                        {(user.profileViews ?? 1428).toLocaleString()}
+                        {(user.profileViews ?? 0).toLocaleString()}
                       </p>
                       <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
-                        +14.8% · 84 Unique Enterprises
+                        {(user.profileViews ?? 0) > 0 ? "+14.8% · Unique Enterprises" : "0 Unique Viewers"}
                       </p>
                     </div>
 
@@ -1338,10 +1338,10 @@ export function ProfileView({
                         <TrendingUp className="h-3.5 w-3.5 text-purple-600" />
                       </div>
                       <p className="text-xl font-black text-zinc-900 dark:text-zinc-100">
-                        {(user.postImpressions ?? 9840).toLocaleString()}
+                        {(user.postImpressions ?? 0).toLocaleString()}
                       </p>
                       <p className="text-[10px] text-purple-600 dark:text-purple-400 font-bold">
-                        +24.6% · Multi-Channel Broadcasts
+                        {(user.postImpressions ?? 0) > 0 ? "+24.6% · Multi-Channel Broadcasts" : "0 Multi-Channel Broadcasts"}
                       </p>
                     </div>
 
@@ -1354,10 +1354,10 @@ export function ProfileView({
                         <Search className="h-3.5 w-3.5 text-emerald-600" />
                       </div>
                       <p className="text-xl font-black text-zinc-900 dark:text-zinc-100">
-                        {(user.searchAppearances ?? 342).toLocaleString()}
+                        {(user.searchAppearances ?? 0).toLocaleString()}
                       </p>
                       <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
-                        +18.2% · Talent Query Matches
+                        {(user.searchAppearances ?? 0) > 0 ? "+18.2% · Talent Query Matches" : "0 Talent Query Matches"}
                       </p>
                     </div>
                   </div>

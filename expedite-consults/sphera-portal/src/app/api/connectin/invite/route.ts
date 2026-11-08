@@ -182,6 +182,20 @@ async function syncAndSaveInviteRecord(rawRecord: StoredInviteRecord): Promise<S
   return Array.from(store.values()).sort((a, b) => b.createdAt - a.createdAt)
 }
 
+function isRealDistinctMemberName(nameStr?: string): boolean {
+  const n = (nameStr || "").toLowerCase().trim()
+  if (!n || n.includes("@") || /^[\d+\-\s()]+$/.test(n)) return false
+  if (
+    n === "member" ||
+    n === "connectin member" ||
+    n === "connectln member" ||
+    n.startsWith("invited ")
+  ) {
+    return false
+  }
+  return true
+}
+
 function doesInviteMatchUser(
   targetName?: string,
   targetEmail?: string,
@@ -198,26 +212,32 @@ function doesInviteMatchUser(
   const qEmail = (queryEmail || "").toLowerCase().trim()
   const qPhone = (queryPhone || "").replace(/[^\d]/g, "").slice(-10)
 
-  if (qEmail && tEmail && qEmail === tEmail) return true
-  if (qPhone && qPhone.length === 10 && tPhone && qPhone === tPhone) return true
-  if (qName && tName) {
+  const hasRealTargetName = isRealDistinctMemberName(tName)
+  const hasRealQueryName = isRealDistinctMemberName(qName)
+
+  // If both the record and the logged-in user have real member names, match strictly by name
+  // (so two different personas/users sharing the same 2FA email never inherit each other's invites or connections)
+  if (hasRealTargetName && hasRealQueryName) {
     if (qName === tName) return true
     const qCompact = qName.replace(/[^a-z0-9]/g, "")
     const tCompact = tName.replace(/[^a-z0-9]/g, "")
     if (qCompact.length >= 3 && qCompact === tCompact) return true
-    // Also match if one is a single-word handle/first-name >= 4 chars that matches the first token of the other
     const qTokens = qName.split(/\s+/).filter(Boolean)
     const tTokens = tName.split(/\s+/).filter(Boolean)
     if (qTokens.length === 1 && qTokens[0].length >= 4 && tTokens[0] === qTokens[0]) return true
     if (tTokens.length === 1 && tTokens[0].length >= 4 && qTokens[0] === tTokens[0]) return true
+    return false
   }
-  // Match email prefix with name (e.g. "yaaldg@gmail.com" <-> "Yaaldg")
-  if (qEmail && tName) {
+
+  if (qEmail && tEmail && qEmail === tEmail) return true
+  if (qPhone && qPhone.length === 10 && tPhone && qPhone === tPhone) return true
+  // Match email prefix with name (e.g. "yaaldg@gmail.com" <-> "Yaaldg") when target was invited by email only
+  if (!hasRealTargetName && qEmail && tName) {
     const qLocal = qEmail.split("@")[0].replace(/[^a-z0-9]/g, "")
     const tCompact = tName.replace(/[^a-z0-9]/g, "")
     if (qLocal.length >= 4 && qLocal === tCompact) return true
   }
-  if (tEmail && qName) {
+  if (!hasRealTargetName && tEmail && qName) {
     const tLocal = tEmail.split("@")[0].replace(/[^a-z0-9]/g, "")
     const qCompact = qName.replace(/[^a-z0-9]/g, "")
     if (tLocal.length >= 4 && tLocal === qCompact) return true
@@ -372,7 +392,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: true, invite: rec, record: rec })
   }
 
-  const allRecords = Array.from(store.values()).sort((a, b) => b.createdAt - a.createdAt)
+  const allRecords = Array.from(store.values())
+    .filter((r) => r.channel !== "register_link")
+    .sort((a, b) => b.createdAt - a.createdAt)
   const activeRecords = allRecords.filter((r) => r.status !== "withdrawn" && r.status !== "ignored" && r.status !== "accepted")
   const acceptedRecords = allRecords.filter((r) => r.status === "accepted")
 
