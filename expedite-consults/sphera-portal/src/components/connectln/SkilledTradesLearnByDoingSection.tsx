@@ -455,6 +455,125 @@ export function SkilledTradesLearnByDoingSection({
     }
   }
 
+  const getLessonInstructorProfile = (
+    lessonId: string,
+    creator: string,
+    category: SkilledTradesCategory
+  ): {
+    instructorName: string
+    role: string
+    avatarUrl: string
+    ringColor: string
+  } => {
+    switch (lessonId) {
+      case 'lbd_carpentry_tools_1':
+        return {
+          instructorName: 'Master Tom Silva',
+          role: 'Master Finish Carpenter · This Old House',
+          avatarUrl:
+            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+          ringColor: '#D97706'
+        }
+      case 'lbd_carpentry_clamps_2':
+        return {
+          instructorName: 'Master Norm Abram',
+          role: 'Master Woodworker & Joiner · This Old House',
+          avatarUrl:
+            'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+          ringColor: '#D97706'
+        }
+      case 'lbd_auto_hood_3':
+        return {
+          instructorName: 'Jean-Luc Moreau, ASE',
+          role: 'Lead Automotive Instructor · CAA-Quebec',
+          avatarUrl:
+            'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+          ringColor: '#0284C7'
+        }
+      case 'lbd_auto_obd2_4':
+        return {
+          instructorName: 'Marcus Vance, ASE L1',
+          role: 'Master OBD-II Diagnostician · AutoZone',
+          avatarUrl:
+            'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+          ringColor: '#0284C7'
+        }
+      case 'lbd_painting_prep_5':
+        return {
+          instructorName: 'Elena Rostova',
+          role: 'Master Architectural Painter · Sherwin-Williams',
+          avatarUrl:
+            'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+          ringColor: '#059669'
+        }
+      case 'lbd_painting_brush_roller_6':
+        return {
+          instructorName: 'Carlos Mendez',
+          role: `Lead Finish Specialist · ${creator}`,
+          avatarUrl:
+            'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+          ringColor: '#059669'
+        }
+      case 'lbd_plumbing_shutoff_7':
+        return {
+          instructorName: 'Master Devon Brooks',
+          role: 'Licensed Master Plumber · Roto-Rooter',
+          avatarUrl:
+            'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+          ringColor: '#0891B2'
+        }
+      case 'lbd_plumbing_fittings_8':
+        return {
+          instructorName: 'Amara Osei, Master Plumber',
+          role: 'Piping & Fittings Educator · The Home Depot',
+          avatarUrl:
+            'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+          ringColor: '#0891B2'
+        }
+      case 'lbd_electrical_multimeter_9':
+        return {
+          instructorName: 'Becky Stern',
+          role: 'Lead Electronics & Multimeter Educator · DigiKey',
+          avatarUrl:
+            'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+          ringColor: '#CA8A04'
+        }
+      case 'lbd_welding_compare_10':
+        return {
+          instructorName: 'Tim Miller, CWI',
+          role: 'Certified Welding Educator · Miller Welders',
+          avatarUrl:
+            'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+          ringColor: '#EA580C'
+        }
+      case 'lbd_welding_mig_11':
+        return {
+          instructorName: 'Kwame Mensah, AWS CWI',
+          role: 'Master MIG & Fabrication Instructor · TimWelds',
+          avatarUrl:
+            'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+          ringColor: '#EA580C'
+        }
+      case 'lbd_hvac_airflow_12':
+        return {
+          instructorName: 'Sarah Jenkins, NATE',
+          role: 'Senior Airflow & Filtration Engineer · Trane',
+          avatarUrl:
+            'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+          ringColor: '#4F46E5'
+        }
+      case 'lbd_hvac_refrigeration_13':
+      default:
+        return {
+          instructorName: 'Bryan Orr',
+          role: `Founder & Master HVACR Educator · ${category}`,
+          avatarUrl:
+            'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+          ringColor: '#4F46E5'
+        }
+    }
+  }
+
   if (mode === 'home_videos_only') {
     const activeLesson =
       SKILLED_TRADES_LEARN_BY_DOING_LESSONS.find(l => l.id === activeVideoLessonId) ||
@@ -462,34 +581,6 @@ export function SkilledTradesLearnByDoingSection({
       SKILLED_TRADES_LEARN_BY_DOING_LESSONS[0]
 
     const visibleHomeLessons = filteredLessons.filter(l => !dismissedLessonMap[l.id])
-
-    const getCreatorBadgeStyle = (creator: string, category: SkilledTradesCategory) => {
-      const words = creator
-        .replace(/[^a-zA-Z0-9 ]/g, ' ')
-        .split(' ')
-        .filter(Boolean)
-      const initials =
-        words.length >= 2
-          ? `${words[0][0]}${words[1][0]}`.toUpperCase()
-          : creator.slice(0, 2).toUpperCase()
-
-      switch (category) {
-        case 'Carpentry':
-          return { initials, bg: '#7C4323', ring: '#F59E0B' }
-        case 'Auto Mechanics':
-          return { initials, bg: '#0F172A', ring: '#38BDF8' }
-        case 'Painting & Decorating':
-          return { initials, bg: '#065F46', ring: '#34D399' }
-        case 'Plumbing':
-          return { initials, bg: '#155E75', ring: '#22D3EE' }
-        case 'Electrical Fundamentals':
-          return { initials, bg: '#713F12', ring: '#FACC15' }
-        case 'Welding':
-          return { initials, bg: '#9A3412', ring: '#FB923C' }
-        case 'HVAC':
-          return { initials, bg: '#1E3A8A', ring: '#818CF8' }
-      }
-    }
 
     return (
       <section
@@ -576,7 +667,11 @@ export function SkilledTradesLearnByDoingSection({
             const serialPlate = `CLN-LBD${String(lesson.lessonNumber).padStart(2, '0')}`
             const isActiveCard = activeVideoLessonId === lesson.id
 
-            const creatorBadge = getCreatorBadgeStyle(cardCreator, lesson.category)
+            const instructorProfile = getLessonInstructorProfile(
+              lesson.id,
+              cardCreator,
+              lesson.category
+            )
             const isCaptionExpanded = Boolean(expandedCaptionMap[lesson.id])
             const isLiked = Boolean(likedLessonMap[lesson.id])
             const isReposted = Boolean(repostedLessonMap[lesson.id])
@@ -602,29 +697,36 @@ export function SkilledTradesLearnByDoingSection({
                 data-lbd-lesson-id={lesson.id}
                 className="rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-xs transition-all"
               >
-                {/* 1. LINKEDIN AUTHOR HEADER (Matches Screenshot 2: Crest + Organization Name + Shield + ••• + ✕ + 1h • 🌐) */}
+                {/* 1. LINKEDIN AUTHOR HEADER WITH AI HUMAN FACE AVATAR */}
                 <div className="px-4 pt-3.5 pb-2 flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3 min-w-0">
-                    <div
-                      style={{
-                        backgroundColor: creatorBadge.bg,
-                        color: '#FFFFFF',
-                        borderColor: creatorBadge.ring
-                      }}
-                      className="h-11 w-11 rounded-full border-2 flex items-center justify-center font-black text-xs tracking-tight shrink-0 shadow-2xs"
-                    >
-                      {creatorBadge.initials}
+                    <div className="relative shrink-0">
+                      <img
+                        src={instructorProfile.avatarUrl}
+                        alt={instructorProfile.instructorName}
+                        style={{ borderColor: instructorProfile.ringColor }}
+                        className="h-12 w-12 rounded-full object-cover border-2 shadow-xs bg-zinc-200 dark:bg-zinc-800"
+                      />
+                      <span
+                        title="Verified ConnectLn Master Instructor"
+                        className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-emerald-600 border-2 border-white dark:border-zinc-900 flex items-center justify-center"
+                      >
+                        <Check className="h-2.5 w-2.5 text-white stroke-[3]" />
+                      </span>
                     </div>
                     <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <h3 className="text-[15px] font-bold text-zinc-900 dark:text-zinc-100 truncate leading-snug">
-                          {cardCreator} — {lesson.category} Academy
+                          {instructorProfile.instructorName} · {cardCreator}
                         </h3>
                       </div>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1 mt-0.5">
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400 truncate leading-tight">
+                        {instructorProfile.role}
+                      </p>
+                      <p className="text-[11px] text-zinc-500 dark:text-zinc-400 flex items-center gap-1 mt-0.5">
                         <span>{lesson.lessonNumber}h</span>
                         <span>•</span>
-                        <Globe className="h-3.5 w-3.5 inline text-zinc-500 dark:text-zinc-400" />
+                        <Globe className="h-3 w-3 inline text-zinc-500 dark:text-zinc-400" />
                       </p>
                     </div>
                   </div>
@@ -739,7 +841,9 @@ export function SkilledTradesLearnByDoingSection({
                       youtubeId={cardYoutubeId}
                       title={cardTitle}
                       serialPlate={serialPlate}
-                      speaker={cardCreator}
+                      speaker={instructorProfile.instructorName}
+                      speakerRole={cardCreator}
+                      speakerAvatarUrl={instructorProfile.avatarUrl}
                       durationLabel=""
                       autoPlay={autoPlayRequested}
                       initialMuted={true}
@@ -772,7 +876,35 @@ export function SkilledTradesLearnByDoingSection({
                         alt={cardTitle}
                         className="h-full w-full object-cover group-hover:scale-[1.01] transition-transform duration-300"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-black/30" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-black/60" />
+
+                      {/* Top Studio Bar with AI Human Instructor Face */}
+                      <div
+                        style={{ color: '#FFFFFF' }}
+                        className="absolute inset-x-0 top-0 px-4 py-2.5 flex items-center justify-between gap-3"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <img
+                            src={instructorProfile.avatarUrl}
+                            alt={instructorProfile.instructorName}
+                            className="h-7 w-7 rounded-full object-cover border border-amber-400/80 shrink-0 shadow-sm"
+                          />
+                          <div className="min-w-0">
+                            <p style={{ color: '#FFFFFF' }} className="text-xs font-bold truncate">
+                              {cardTitle}
+                            </p>
+                            <p style={{ color: '#E4E4E7' }} className="text-[10px] truncate">
+                              {instructorProfile.instructorName} · {cardCreator} · {serialPlate}
+                            </p>
+                          </div>
+                        </div>
+                        <span
+                          style={{ color: '#FCD34D' }}
+                          className="rounded-md bg-black/75 border border-white/15 px-2 py-0.5 text-[10px] font-mono font-bold shrink-0"
+                        >
+                          {serialPlate}
+                        </span>
+                      </div>
 
                       {/* Center Play Button */}
                       <div className="absolute inset-0 flex items-center justify-center">
@@ -815,7 +947,8 @@ export function SkilledTradesLearnByDoingSection({
                     {cardTitle} — {cardCreator}
                   </h4>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                    {submitsCount} submits · {lesson.skillsCovered.length} Skills Covered &amp; Practice Workbench
+                    {submitsCount} submits · {lesson.skillsCovered.length}{' '}
+                    <span>Skills Covered &amp; Practice Workbench</span>
                   </p>
                 </div>
 
@@ -1197,6 +1330,11 @@ export function SkilledTradesLearnByDoingSection({
                 playability === 'playable'
               const isPlayingInline = activeVideoLessonId === lesson.id && canEmbed
               const isExpanded = expandedLessonId === lesson.id
+              const instructorProfile = getLessonInstructorProfile(
+                lesson.id,
+                displayCreator,
+                lesson.category
+              )
 
               return (
                 <div
@@ -1211,25 +1349,29 @@ export function SkilledTradesLearnByDoingSection({
                   }`}
                 >
                   <div>
-                    {/* Top Metadata Ribbon */}
+                    {/* Top Metadata Ribbon with AI Human Instructor Avatar */}
                     <div className="px-5 pt-4 pb-3 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2 flex-wrap">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 px-2.5 py-0.5 text-[11px] font-bold text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700">
-                          {getCategoryIcon(lesson.category)}
-                          <span>{lesson.category}</span>
-                        </span>
-                        <span className="rounded-full bg-blue-50 dark:bg-blue-950/60 px-2.5 py-0.5 text-[10px] font-bold text-[#0A66C2] dark:text-sky-300 border border-blue-200 dark:border-blue-800">
-                          {lesson.level} Lesson
-                        </span>
-                        <span className="text-[11px] font-mono font-bold text-zinc-500 dark:text-zinc-400">
-                          {displayVideoLabel}
-                        </span>
-                        {/* Only display duration if verified and non-empty */}
-                        {displayDuration && displayDuration.trim().length > 0 && (
-                          <span className="rounded bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-[10px] font-mono text-zinc-600 dark:text-zinc-400">
-                            {displayDuration}
-                          </span>
-                        )}
+                      <div className="flex items-center gap-2.5 flex-wrap">
+                        <img
+                          src={instructorProfile.avatarUrl}
+                          alt={instructorProfile.instructorName}
+                          style={{ borderColor: instructorProfile.ringColor }}
+                          className="h-9 w-9 rounded-full object-cover border-2 shrink-0 shadow-2xs"
+                        />
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100 leading-tight">
+                            {instructorProfile.instructorName} · {displayCreator}
+                          </p>
+                          <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-[10px] font-bold text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700">
+                              {getCategoryIcon(lesson.category)}
+                              <span>{lesson.category}</span>
+                            </span>
+                            <span className="text-[10px] font-mono font-bold text-zinc-500 dark:text-zinc-400">
+                              {displayVideoLabel}
+                            </span>
+                          </div>
+                        </div>
                       </div>
 
                       {/* Original Creator Attribution Pill */}
@@ -1288,7 +1430,9 @@ export function SkilledTradesLearnByDoingSection({
                             youtubeId={displayYoutubeId}
                             title={displayTitle}
                             serialPlate={`CLN-LBD${String(lesson.lessonNumber).padStart(2, '0')}`}
-                            speaker={displayCreator}
+                            speaker={instructorProfile.instructorName}
+                            speakerRole={displayCreator}
+                            speakerAvatarUrl={instructorProfile.avatarUrl}
                             durationLabel={displayDuration || ""}
                             autoPlay={autoPlayRequested}
                             initialMuted={false}

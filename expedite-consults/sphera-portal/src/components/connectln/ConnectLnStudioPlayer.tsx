@@ -49,6 +49,9 @@ interface ConnectLnStudioPlayerProps {
   title: string
   serialPlate?: string
   speaker?: string
+  speakerRole?: string
+  speakerAvatarUrl?: string
+  posterImageUrl?: string
   durationLabel?: string
   autoPlay?: boolean
   initialMuted?: boolean
@@ -62,6 +65,9 @@ export function ConnectLnStudioPlayer({
   title,
   serialPlate = "CLN-STUDIO",
   speaker = "ConnectLn Masterclass",
+  speakerRole,
+  speakerAvatarUrl,
+  posterImageUrl,
   durationLabel = "3:00",
   autoPlay = true,
   initialMuted = false,
@@ -325,10 +331,11 @@ export function ConnectLnStudioPlayer({
         <button
           type="button"
           onClick={toggleMute}
-          className="absolute top-12 left-3 z-30 inline-flex items-center gap-1.5 rounded-full bg-black/80 hover:bg-[#0A66C2] text-white border border-white/25 px-3 py-1 text-[11px] font-extrabold shadow-lg backdrop-blur-xs transition-all cursor-pointer"
+          style={{ color: "#FFFFFF" }}
+          className="absolute top-12 left-3 z-30 inline-flex items-center gap-1.5 rounded-full bg-black/85 hover:bg-[#0A66C2] border border-white/25 px-3 py-1 text-[11px] font-extrabold shadow-lg backdrop-blur-xs transition-all cursor-pointer"
         >
           <VolumeX className="h-3.5 w-3.5 text-amber-400" />
-          <span>Auto-Playing · Tap for Sound 🔊</span>
+          <span style={{ color: "#FFFFFF" }}>Auto-Playing · Tap for Sound 🔊</span>
         </button>
       )}
 
@@ -340,13 +347,23 @@ export function ConnectLnStudioPlayer({
         }`}
       >
         <div className="flex items-center gap-2.5 min-w-0">
-          {/* Official ConnectLn Squircle Badge */}
-          <div className="h-7 w-7 rounded-lg bg-[#171513] border border-white/15 flex items-center justify-center shrink-0 shadow-sm">
-            <span style={{ color: "#FFFFFF" }} className="font-black text-xs tracking-tighter">C</span>
-          </div>
+          {/* Instructor Human Face Avatar or Official ConnectLn Squircle Badge */}
+          {speakerAvatarUrl ? (
+            <img
+              src={speakerAvatarUrl}
+              alt={speaker}
+              className="h-7 w-7 rounded-full object-cover border border-amber-400/80 shrink-0 shadow-sm"
+            />
+          ) : (
+            <div className="h-7 w-7 rounded-lg bg-[#171513] border border-white/15 flex items-center justify-center shrink-0 shadow-sm">
+              <span style={{ color: "#FFFFFF" }} className="font-black text-xs tracking-tighter">C</span>
+            </div>
+          )}
           <div className="min-w-0">
             <p style={{ color: "#FFFFFF" }} className="text-xs font-bold truncate drop-shadow-xs">{title}</p>
-            <p style={{ color: "#E4E4E7" }} className="text-[10px] truncate">{speaker} · {serialPlate}</p>
+            <p style={{ color: "#E4E4E7" }} className="text-[10px] truncate">
+              {speaker}{speakerRole ? ` · ${speakerRole}` : ""} · {serialPlate}
+            </p>
           </div>
         </div>
 
