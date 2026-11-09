@@ -1242,13 +1242,18 @@ export default function ConnectLnPage() {
 
   // Handle Post Creation
   const handleAddPost = (newPostData: Omit<Post, 'id' | 'timestamp' | 'stats' | 'comments'>) => {
+    const resolvedProf = resolveProfessionForUser(userData)
+    const currentProfId = resolvedProf?.id || userData.professionId
     const effectiveEnclave = selectedEnclaves[0] && selectedEnclaves[0] !== 'all'
       ? selectedEnclaves[0]
       : (userData.professionEnclave || 'trades_construction')
 
     const newPost: Post = {
       ...newPostData,
+      professionId: newPostData.professionId || currentProfId,
       professionEnclave: newPostData.professionEnclave || effectiveEnclave,
+      feedCategory: newPostData.feedCategory || 'for_you',
+      feedSubCategory: newPostData.feedSubCategory || 'All',
       id: 'post_' + Date.now(),
       timestamp: 'Just now · 🌐',
       stats: {
@@ -1267,18 +1272,27 @@ export default function ConnectLnPage() {
       comments: []
     }
 
-    setPosts(prev => [newPost, ...prev])
+    setActiveFeedCategory('for_you')
+    setActiveFeedSubCategory('All')
+    setFeedTypeFilter('all')
+    setSelectedTagFilter(null)
+
+    setPosts(prev => {
+      const updated = [newPost, ...prev]
+      saveStoredPosts(updated)
+      return updated
+    })
     if (userData?.name) {
       recordLiveContentReach({
         userName: userData.name,
-        title: `Published ${newPost.media?.type ? newPost.media.type.toUpperCase() : 'Feed Post'}: "${(newPost.content || '').slice(0, 60)}"`,
+        title: `Published ${newPost.media?.type ? newPost.media.type.toUpperCase() : newPost.postType ? newPost.postType.toUpperCase() : 'Feed Post'}: "${(newPost.content || '').slice(0, 60)}"`,
         category: 'Feed Post',
         actorName: userData.name
       })
     }
     trackUserActivity({
       actionType: 'POST_CREATED',
-      actionLabel: `Published a New Post (${newPost.media?.type ? newPost.media.type.toUpperCase() : 'Feed Post'})`,
+      actionLabel: `Published a New Post (${newPost.media?.type ? newPost.media.type.toUpperCase() : newPost.postType ? newPost.postType.toUpperCase() : 'Feed Post'})`,
       category: 'content',
       targetId: newPost.id,
       targetTitle: `Post by ${userData.name}`,
@@ -1705,7 +1719,15 @@ export default function ConnectLnPage() {
   const combinedFeedPosts = React.useMemo(() => {
     const seenIds = new Set<string>()
     const merged: Post[] = []
-    for (const p of [...followedMemberSyntheticPosts, ...posts]) {
+    const userCreatedPosts = posts.filter(
+      (p) =>
+        p &&
+        p.author?.connectionDegree === 'You' &&
+        !p.isProfessionTiered &&
+        p.id !== 'post_dstrike_wheel_masterclass' &&
+        !p.id.startsWith('post_prof_')
+    )
+    for (const p of [...userCreatedPosts, ...followedMemberSyntheticPosts, ...posts]) {
       if (!p || !p.id || seenIds.has(p.id)) continue
       seenIds.add(p.id)
       const authorKey = normalizeFollowKey(p.author?.name)
@@ -1822,6 +1844,14 @@ export default function ConnectLnPage() {
     })
     .sort((a, b) => {
       const score = (p: Post) => {
+        if (
+          p.author?.connectionDegree === 'You' &&
+          !p.isProfessionTiered &&
+          p.id !== 'post_dstrike_wheel_masterclass' &&
+          !p.id.startsWith('post_prof_')
+        ) {
+          return 10
+        }
         if (activeProfId && (p.professionId === activeProfId || p.targetProfessions?.includes(activeProfId))) return 3
         if (p.isProfessionTiered) return 2
         if (userData?.professionEnclave && p.professionEnclave === userData.professionEnclave) return 1

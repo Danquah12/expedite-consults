@@ -166,6 +166,9 @@ export interface Post {
     title: string
     totalPages: number
     slides: DocumentSlide[]
+    fileUrl?: string
+    fileSize?: string
+    fileType?: string
   }
   celebration?: {
     type: 'new_job' | 'anniversary' | 'certificate' | 'project'

@@ -103,6 +103,9 @@ export function FeedPostCard({
 
   // Poll state
   const [localPoll, setLocalPoll] = useState<PollData | undefined>(post.poll)
+  React.useEffect(() => {
+    setLocalPoll(post.poll)
+  }, [post.poll])
 
   // Automatic translation support
   const translationResult = useMemo(() => {
@@ -681,14 +684,58 @@ export function FeedPostCard({
       {/* 2. DOCUMENT / MULTI-PAGE SLIDER (If post is document) */}
       {post.document && (
         <div className="relative mx-4 my-2 overflow-hidden rounded-xl border border-zinc-200 bg-zinc-900 text-white shadow-md dark:border-zinc-800">
-          <div className="flex items-center justify-between bg-zinc-950 px-4 py-2 text-xs border-b border-zinc-800">
+          <div className="flex items-center justify-between gap-2 bg-zinc-950 px-4 py-2 text-xs border-b border-zinc-800">
             <span className="flex items-center gap-1.5 font-semibold text-zinc-300 truncate">
-              <FileText className="h-4 w-4 text-[#0A66C2]" />
-              {post.document.title}
+              <FileText className="h-4 w-4 text-[#0A66C2] shrink-0" />
+              <span className="truncate">{post.document.title}</span>
+              {post.document.fileSize && (
+                <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] text-zinc-400 shrink-0">
+                  {post.document.fileSize}
+                </span>
+              )}
             </span>
-            <span className="text-zinc-400 font-mono">
-              {currentSlideIndex + 1} / {post.document.totalPages}
-            </span>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window === "undefined" || !post.document) return
+                  if (post.document.fileUrl) {
+                    const a = document.createElement("a")
+                    a.href = post.document.fileUrl
+                    a.download = post.document.title || "ConnectLn_Document"
+                    document.body.appendChild(a)
+                    a.click()
+                    document.body.removeChild(a)
+                    return
+                  }
+                  const docText = [
+                    `====================================================================`,
+                    `CONNECTLN SPECIFICATION DOCUMENT: ${post.document.title}`,
+                    `Author: ${resolvedAuthorName} (${resolvedAuthorHeadline})`,
+                    `====================================================================`,
+                    ``,
+                    ...post.document.slides.map(
+                      (s) => `[Slide ${s.slideNumber} — ${s.visualTag || "SECTION"}]\n${s.title}\n${s.content}\n`
+                    )
+                  ].join("\n")
+                  const blob = new Blob([docText], { type: "text/plain;charset=utf-8" })
+                  const url = URL.createObjectURL(blob)
+                  const a = document.createElement("a")
+                  a.href = url
+                  a.download = (post.document.title || "ConnectLn_Document").replace(/\.pdf$/i, "") + ".txt"
+                  document.body.appendChild(a)
+                  a.click()
+                  document.body.removeChild(a)
+                  URL.revokeObjectURL(url)
+                }}
+                className="rounded-full bg-[#0A66C2] hover:bg-[#004182] px-2.5 py-0.5 text-[10px] font-bold text-white transition-colors cursor-pointer"
+              >
+                ⬇ Download
+              </button>
+              <span className="text-zinc-400 font-mono">
+                {currentSlideIndex + 1} / {post.document.totalPages}
+              </span>
+            </div>
           </div>
 
           {/* Slide Content Box */}
