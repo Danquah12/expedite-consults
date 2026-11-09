@@ -170,7 +170,7 @@ export function NetworkView({
   const [customConnections, setCustomConnections] = useState<ConnectedMember[]>(() => {
     if (typeof window === 'undefined') return []
     try {
-      const raw = localStorage.getItem(`connectin_accepted_v5_${userScopeKey}`)
+      const raw = localStorage.getItem(`connectin_accepted_v6_${userScopeKey}`)
       return raw ? JSON.parse(raw) : []
     } catch {
       return []
@@ -183,7 +183,7 @@ export function NetworkView({
   const [removedConnectionNames, setRemovedConnectionNames] = useState<string[]>(() => {
     if (typeof window === 'undefined') return []
     try {
-      const raw = localStorage.getItem(`connectin_removed_v5_${userScopeKey}`)
+      const raw = localStorage.getItem(`connectin_removed_v6_${userScopeKey}`)
       return raw ? JSON.parse(raw) : []
     } catch {
       return []
@@ -193,7 +193,7 @@ export function NetworkView({
   const [handledInviteNames, setHandledInviteNames] = useState<string[]>(() => {
     if (typeof window === 'undefined') return []
     try {
-      const raw = localStorage.getItem(`connectin_handled_v5_${userScopeKey}`)
+      const raw = localStorage.getItem(`connectin_handled_v6_${userScopeKey}`)
       return raw ? JSON.parse(raw) : []
     } catch {
       return []
@@ -204,7 +204,7 @@ export function NetworkView({
     setHandledInviteNames(next)
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem(`connectin_handled_v5_${userScopeKey}`, JSON.stringify(next))
+        localStorage.setItem(`connectin_handled_v6_${userScopeKey}`, JSON.stringify(next))
       } catch {}
     }
   }
@@ -212,7 +212,7 @@ export function NetworkView({
   const [outboundInvites, setOutboundInvites] = useState<OutboundInvitation[]>(() => {
     if (typeof window === 'undefined') return []
     try {
-      const raw = localStorage.getItem(`connectin_outbound_v5_${userScopeKey}`)
+      const raw = localStorage.getItem(`connectin_outbound_v6_${userScopeKey}`)
       const parsed = raw ? JSON.parse(raw) : []
       if (!Array.isArray(parsed)) return []
       return parsed.filter(
@@ -230,16 +230,16 @@ export function NetworkView({
   useEffect(() => {
     if (typeof window === 'undefined') return
     try {
-      const rawAccepted = localStorage.getItem(`connectin_accepted_v5_${userScopeKey}`)
+      const rawAccepted = localStorage.getItem(`connectin_accepted_v6_${userScopeKey}`)
       setCustomConnections(rawAccepted ? JSON.parse(rawAccepted) : [])
 
-      const rawOutbound = localStorage.getItem(`connectin_outbound_v5_${userScopeKey}`)
+      const rawOutbound = localStorage.getItem(`connectin_outbound_v6_${userScopeKey}`)
       setOutboundInvites(rawOutbound ? JSON.parse(rawOutbound) : [])
 
-      const rawHandled = localStorage.getItem(`connectin_handled_v5_${userScopeKey}`)
+      const rawHandled = localStorage.getItem(`connectin_handled_v6_${userScopeKey}`)
       setHandledInviteNames(rawHandled ? JSON.parse(rawHandled) : [])
 
-      const rawRemoved = localStorage.getItem(`connectin_removed_v5_${userScopeKey}`)
+      const rawRemoved = localStorage.getItem(`connectin_removed_v6_${userScopeKey}`)
       setRemovedConnectionNames(rawRemoved ? JSON.parse(rawRemoved) : [])
 
       setCloudReceivedInvites([])
@@ -252,7 +252,7 @@ export function NetworkView({
   useEffect(() => {
     if (typeof window === 'undefined') return
     try {
-      localStorage.setItem(`connectin_outbound_v5_${userScopeKey}`, JSON.stringify(outboundInvites))
+      localStorage.setItem(`connectin_outbound_v6_${userScopeKey}`, JSON.stringify(outboundInvites))
     } catch {
       // ignore
     }
@@ -294,19 +294,17 @@ export function NetworkView({
         setCloudAcceptedConnections(data.acceptedConnections)
       }
       if (Array.isArray(data.sentInvites)) {
-        setOutboundInvites(prev => {
-          const handledSet = new Set(handledInviteNames.map(n => n.toLowerCase().trim()))
-          const map = new Map<string, OutboundInvitation>()
-          for (const item of [...data.sentInvites, ...prev]) {
-            if (!item || !item.name || item.id === 'out_1' || item.id === 'out_2') continue
-            const norm = String(item.name).toLowerCase().trim()
-            if (!norm || handledSet.has(norm) || item.status === 'accepted') continue
-            if (!map.has(norm)) {
-              map.set(norm, item)
-            }
+        const handledSet = new Set(handledInviteNames.map(n => n.toLowerCase().trim()))
+        const map = new Map<string, OutboundInvitation>()
+        for (const item of data.sentInvites) {
+          if (!item || !item.name || item.id === 'out_1' || item.id === 'out_2') continue
+          const norm = String(item.name).toLowerCase().trim()
+          if (!norm || handledSet.has(norm) || item.status === 'accepted') continue
+          if (!map.has(norm)) {
+            map.set(norm, item)
           }
-          return Array.from(map.values())
-        })
+        }
+        setOutboundInvites(Array.from(map.values()))
       }
     } catch {
       // ignore network error
@@ -417,7 +415,7 @@ export function NetworkView({
     setCustomConnections(next)
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem(`connectin_accepted_v5_${userScopeKey}`, JSON.stringify(next))
+        localStorage.setItem(`connectin_accepted_v6_${userScopeKey}`, JSON.stringify(next))
       } catch {}
     }
   }
@@ -426,7 +424,7 @@ export function NetworkView({
     setRemovedConnectionNames(next)
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem(`connectin_removed_v5_${userScopeKey}`, JSON.stringify(next))
+        localStorage.setItem(`connectin_removed_v6_${userScopeKey}`, JSON.stringify(next))
       } catch {}
     }
   }
@@ -683,7 +681,7 @@ export function NetworkView({
     setOutboundInvites(prev => {
       const next = [newOutbound, ...prev.filter(p => p.name.toLowerCase().trim() !== normName)]
       try {
-        localStorage.setItem(`connectin_outbound_v5_${userScopeKey}`, JSON.stringify(next))
+        localStorage.setItem(`connectin_outbound_v6_${userScopeKey}`, JSON.stringify(next))
       } catch {}
       return next
     })

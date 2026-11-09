@@ -393,7 +393,7 @@ export async function GET(req: NextRequest) {
   }
 
   const allRecords = Array.from(store.values())
-    .filter((r) => r.channel !== "register_link")
+    .filter((r) => r.channel !== "register_link" && r.channel !== "link")
     .sort((a, b) => b.createdAt - a.createdAt)
   const activeRecords = allRecords.filter((r) => r.status !== "withdrawn" && r.status !== "ignored" && r.status !== "accepted")
   const acceptedRecords = allRecords.filter((r) => r.status === "accepted")

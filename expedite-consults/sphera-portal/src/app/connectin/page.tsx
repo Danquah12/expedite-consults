@@ -1491,7 +1491,7 @@ export default function ConnectLnPage() {
             .trim()
             .replace(/[^a-z0-9]/g, "_")
           const userScopeKey = `${emailPart}__${namePart}`
-          const raw = localStorage.getItem(`connectin_outbound_v5_${userScopeKey}`)
+          const raw = localStorage.getItem(`connectin_outbound_v6_${userScopeKey}`)
           const existing = raw ? JSON.parse(raw) : []
           const newOut = {
             id: `out_${itemCid}`,
@@ -1506,7 +1506,7 @@ export default function ConnectLnPage() {
           const filtered = Array.isArray(existing)
             ? existing.filter((i: any) => i && i.id !== "out_1" && i.id !== "out_2" && String(i.name || "").toLowerCase().trim() !== targetPerson.name.toLowerCase().trim())
             : []
-          localStorage.setItem(`connectin_outbound_v5_${userScopeKey}`, JSON.stringify([newOut, ...filtered]))
+          localStorage.setItem(`connectin_outbound_v6_${userScopeKey}`, JSON.stringify([newOut, ...filtered]))
         } catch {}
       }
       const compactSenderAvatar =
