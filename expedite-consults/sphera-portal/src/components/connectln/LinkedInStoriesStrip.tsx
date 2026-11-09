@@ -126,16 +126,12 @@ export function LinkedInStoriesStrip({
 
   const userAvatar = resolveUserProfilePicture(currentUser)
 
-  // Step cards & spotlight highlight clockwise
+  // Step cards & spotlight highlight clockwise (pure top-level state updates)
   const stepClockwise = React.useCallback(() => {
-    setClockwiseSlot((prevSlot) => {
-      const nextSlot = (prevSlot + 1) % 4
-      // Every clockwise step shifts the story deck clockwise so cards visibly move across the strip
-      setStories((prevStories) => {
-        if (prevStories.length <= 1) return prevStories
-        return [prevStories[prevStories.length - 1], ...prevStories.slice(0, prevStories.length - 1)]
-      })
-      return nextSlot
+    setClockwiseSlot((prevSlot) => (prevSlot + 1) % 4)
+    setStories((prevStories) => {
+      if (prevStories.length <= 1) return prevStories
+      return [prevStories[prevStories.length - 1], ...prevStories.slice(0, prevStories.length - 1)]
     })
   }, [])
 
@@ -143,7 +139,7 @@ export function LinkedInStoriesStrip({
     if (!isRotatingClockwise || isHoverPaused || activeStory || isAddModalOpen) return
     const timer = setInterval(() => {
       stepClockwise()
-    }, 3200)
+    }, 3500)
     return () => clearInterval(timer)
   }, [isRotatingClockwise, isHoverPaused, activeStory, isAddModalOpen, stepClockwise])
 
@@ -178,39 +174,15 @@ export function LinkedInStoriesStrip({
     <div
       onMouseEnter={() => setIsHoverPaused(true)}
       onMouseLeave={() => setIsHoverPaused(false)}
-      className="relative rounded-2xl p-[2px] overflow-hidden shadow-sm"
+      className="rounded-xl border border-emerald-500/40 bg-white p-3.5 shadow-2xs dark:border-emerald-500/30 dark:bg-zinc-900 space-y-2.5"
     >
-      <style>{`
-        @keyframes connectlnClockwiseSpin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        @keyframes connectlnCardSlideInClockwise {
-          0% { opacity: 0.72; transform: translateX(-14px) scale(0.97); }
-          100% { opacity: 1; transform: translateX(0) scale(1); }
-        }
-      `}</style>
-      {/* Clockwise-Rotating Highlight Border Around the Strip */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -inset-[120%] opacity-90"
-        style={{
-          background:
-            "conic-gradient(from 0deg, transparent 0deg, transparent 250deg, #10b981 290deg, #0A66C2 330deg, #22c55e 360deg)",
-          animation: isRotatingClockwise && !isHoverPaused ? "connectlnClockwiseSpin 5s linear infinite" : "none"
-        }}
-      />
-
-      <div className="relative rounded-[14px] border border-emerald-500/30 bg-white p-3.5 dark:border-emerald-500/30 dark:bg-zinc-900 space-y-2.5">
       {/* Header Bar */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
           <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#0A66C2]/10 text-[#0A66C2] dark:bg-sky-500/20 dark:text-sky-400">
             <RotateCw
-              className="h-3.5 w-3.5"
-              style={{
-                animation: isRotatingClockwise && !isHoverPaused ? "connectlnClockwiseSpin 4s linear infinite" : "none"
-              }}
+              className={`h-3.5 w-3.5 ${isRotatingClockwise && !isHoverPaused ? "animate-spin" : ""}`}
+              style={{ animationDuration: "4s" }}
             />
           </span>
           <div>
@@ -268,9 +240,6 @@ export function LinkedInStoriesStrip({
               onClick={() => {
                 setActiveStory(story)
                 setViewMode('photo')
-              }}
-              style={{
-                animation: "connectlnCardSlideInClockwise 480ms cubic-bezier(0.22, 1, 0.36, 1)"
               }}
               className={`group relative h-52 sm:h-56 rounded-2xl overflow-hidden cursor-pointer transition-all duration-500 ${
                 isClockwiseSpotlight
@@ -623,7 +592,6 @@ export function LinkedInStoriesStrip({
           </div>
         </div>
       )}
-      </div>
     </div>
   )
 }
