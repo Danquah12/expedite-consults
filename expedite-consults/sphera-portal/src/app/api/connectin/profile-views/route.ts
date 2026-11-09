@@ -71,6 +71,25 @@ function formatRelativeAgo(iso: string, prefix = ''): string {
     return prefix ? `${prefix} ${days}d ago` : `${days}d ago`;
 }
 
+function formatViewedDateTime(iso: string): string {
+    const dt = new Date(iso);
+    if (!Number.isNaN(dt.getTime())) {
+        const datePart = dt.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+        });
+        const timePart = dt.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+        });
+        const relPart = formatRelativeAgo(iso);
+        return `Viewed ${datePart} · ${timePart} (${relPart})`;
+    }
+    return formatRelativeAgo(iso, 'Viewed');
+}
+
 function emptyBundle(): TargetTelemetryBundle {
     return { checks: [], reachEvents: [], discoveryEvents: [] };
 }
@@ -152,6 +171,7 @@ function mergeChecks(a: CloudCredentialCheckItem[], b: CloudCredentialCheckItem[
             map.set(vKey, {
                 ...item,
                 viewCount: Math.max(item.viewCount || 1, existing?.viewCount || 1),
+                visitCount: Math.max(item.visitCount || 1, existing?.visitCount || 1),
             });
         }
     }
@@ -200,7 +220,7 @@ export async function GET(req: Request) {
         ok: true,
         checks: merged.checks.map((c) => ({
             ...c,
-            viewedAt: formatRelativeAgo(c.createdAtIso, 'Viewed'),
+            viewedAt: formatViewedDateTime(c.createdAtIso),
         })),
         reachEvents: merged.reachEvents.map((r) => ({
             ...r,

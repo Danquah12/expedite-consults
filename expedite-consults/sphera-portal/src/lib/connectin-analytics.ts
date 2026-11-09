@@ -243,6 +243,34 @@ export function formatAgoFromIso(iso?: string, prefix = ''): string {
   return prefix ? `${prefix} ${days}d ago` : `${days}d ago`
 }
 
+/**
+ * Formats a profile viewer timestamp with the exact calendar date, clock time, and relative age
+ * e.g. "Viewed Nov 9, 2026 · 5:32 AM (Just now)"
+ */
+export function formatProfileViewDateTime(iso?: string, fallbackViewedAt?: string): string {
+  if (iso) {
+    const dt = new Date(iso)
+    if (!Number.isNaN(dt.getTime())) {
+      const datePart = dt.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      })
+      const timePart = dt.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      })
+      const relPart = formatAgoFromIso(iso)
+      return `Viewed ${datePart} · ${timePart} (${relPart})`
+    }
+  }
+  if (fallbackViewedAt && /\d{4}/.test(fallbackViewedAt)) {
+    return fallbackViewedAt
+  }
+  return fallbackViewedAt || 'Viewed recently'
+}
+
 export function loadLiveUserTelemetry(userName?: string): UserLiveTelemetryBundle {
   if (typeof window === 'undefined' || !userName) {
     return { checks: [], reachEvents: [], discoveryEvents: [] }
@@ -291,7 +319,7 @@ export async function syncLiveUserTelemetryFromCloud(userName?: string): Promise
             `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(c.viewerName || 'Member')}&backgroundColor=0a66c2`,
           company: c.viewerCompany || 'ConnectLn Network',
           location: c.viewerLocation || 'United States',
-          viewedAt: formatAgoFromIso(c.createdAtIso, 'Viewed'),
+          viewedAt: formatProfileViewDateTime(c.createdAtIso, c.viewedAt),
           createdAtIso: c.createdAtIso,
           viewVector: c.viewVector || 'Profile & Dossier Inspection',
           clearanceLevel: c.clearanceLevel || '✓ Live Profile Viewer',
@@ -313,12 +341,18 @@ export async function syncLiveUserTelemetryFromCloud(userName?: string): Promise
       if (!existing) {
         checkMap.set(k, {
           ...item,
-          viewedAt: item.createdAtIso ? formatAgoFromIso(item.createdAtIso, 'Viewed') : item.viewedAt
+          viewedAt: formatProfileViewDateTime(item.createdAtIso, item.viewedAt)
         })
       } else {
         const mergedCount = Math.max(Number(existing.visitCount) || 1, Number(item.visitCount) || 1)
+        const newerIso =
+          item.createdAtIso && (!existing.createdAtIso || item.createdAtIso > existing.createdAtIso)
+            ? item.createdAtIso
+            : existing.createdAtIso
         checkMap.set(k, {
           ...existing,
+          createdAtIso: newerIso,
+          viewedAt: formatProfileViewDateTime(newerIso, existing.viewedAt),
           visitCount: mergedCount
         })
       }
@@ -394,7 +428,11 @@ export function getProfileTailoredAnalytics(
     if (!v || !v.name) continue
     const k = v.name.toLowerCase().trim()
     if (!viewerMap.has(k)) {
-      viewerMap.set(k, formatViewerForPrivacy(v))
+      const formatted = formatViewerForPrivacy(v)
+      viewerMap.set(k, {
+        ...formatted,
+        viewedAt: formatProfileViewDateTime(v.createdAtIso, v.viewedAt)
+      })
     }
   }
   const mergedLiveViewers = Array.from(viewerMap.values())
@@ -832,7 +870,7 @@ export function recordLiveProfileView(params: {
     avatar: safeAvatar,
     company: params.viewerCompany || 'ConnectLn Network',
     location: params.viewerLocation || 'United States',
-    viewedAt: 'Viewed just now',
+    viewedAt: formatProfileViewDateTime(nowIso),
     createdAtIso: nowIso,
     viewVector: params.viewVector || 'Profile & Dossier Inspection',
     clearanceLevel:

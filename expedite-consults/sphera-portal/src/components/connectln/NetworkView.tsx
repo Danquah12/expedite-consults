@@ -80,6 +80,7 @@ import {
   loadViewerPrivacyMode,
   saveViewerPrivacyMode,
   formatViewerForPrivacy,
+  formatProfileViewDateTime,
   ViewerPrivacyMode,
   getProfileTailoredAnalytics
 } from "@/lib/connectin-analytics"
@@ -2324,8 +2325,9 @@ export function NetworkView({
                                   <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2] group-hover:underline">
                                     {viewer.name}
                                   </h4>
-                                  <span className="rounded bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 text-[10px] font-bold text-[#0A66C2] dark:text-sky-300">
-                                    {viewer.viewedAt || 'Viewed recently'}
+                                  <span className="inline-flex items-center gap-1 rounded bg-blue-50 dark:bg-blue-950/60 border border-blue-200/70 dark:border-blue-800/70 px-2 py-0.5 text-[10px] font-bold text-[#0A66C2] dark:text-sky-300">
+                                    <Clock className="h-3 w-3 shrink-0" />
+                                    <span>{formatProfileViewDateTime(viewer.createdAtIso, viewer.viewedAt)}</span>
                                   </span>
                                   {(viewer.visitCount || 1) > 1 && (
                                     <span className="rounded bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300">
@@ -2339,9 +2341,14 @@ export function NetworkView({
                                 <p className="text-xs text-zinc-500 truncate dark:text-zinc-400">
                                   {viewer.headline}
                                 </p>
-                                <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold">
-                                  👁️ Source: {viewer.viewVector || 'Profile & Dossier Inspection'}
-                                </p>
+                                <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px]">
+                                  <span className="text-emerald-700 dark:text-emerald-400 font-semibold">
+                                    👁️ Source: {viewer.viewVector || 'Profile & Dossier Inspection'}
+                                  </span>
+                                  <span className="text-zinc-500 dark:text-zinc-400 font-medium">
+                                    🗓️ {formatProfileViewDateTime(viewer.createdAtIso, viewer.viewedAt)}
+                                  </span>
+                                </div>
                               </div>
                             </div>
 

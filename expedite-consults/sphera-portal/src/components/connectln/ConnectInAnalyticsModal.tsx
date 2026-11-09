@@ -40,7 +40,8 @@ import {
   saveStoredProfileViewers,
   recordProfileView,
   getProfileTailoredAnalytics,
-  syncLiveUserTelemetryFromCloud
+  syncLiveUserTelemetryFromCloud,
+  formatProfileViewDateTime
 } from "@/lib/connectin-analytics"
 
 interface ConnectInAnalyticsModalProps {
@@ -449,8 +450,11 @@ export function ConnectInAnalyticsModal({
                             {viewer.headline}
                           </p>
 
-                          <div className="flex items-center gap-2 text-[11px] text-zinc-400 flex-wrap pt-0.5">
-                            <span>{viewer.viewedAt.startsWith('Checked') ? viewer.viewedAt : `Checked ${viewer.viewedAt}`}</span>
+                          <div className="flex items-center gap-2 text-[11px] text-zinc-500 dark:text-zinc-400 flex-wrap pt-0.5">
+                            <span className="inline-flex items-center gap-1 rounded bg-blue-50 dark:bg-blue-950/60 border border-blue-200/70 dark:border-blue-800/70 px-2 py-0.5 text-[10px] font-bold text-[#0A66C2] dark:text-sky-300">
+                              <Clock className="h-3 w-3 shrink-0" />
+                              <span>{formatProfileViewDateTime(viewer.createdAtIso, viewer.viewedAt)}</span>
+                            </span>
                             <span>·</span>
                             <span className="text-[#0A66C2] dark:text-sky-400 font-medium">
                               {viewer.viewVector}
