@@ -338,13 +338,18 @@ export function loadStoredPosts(explicitUser?: UserProfile | null): Post[] {
     const tieredPosts = buildProfessionTieredFeedPosts(activeUser)
     const tieredById = new Map(tieredPosts.map(tp => [tp.id, tp]))
 
-    // Collect all user-created posts (from dedicated key + any inside parsed)
+    // Collect all user-created posts (from dedicated key + any inside parsed), excluding stale 9mwE1Aih9uU slide shares
+    const isStaleFallProtectionPost = (post?: Post | null) =>
+      Boolean(post?.media?.youtubeId === '9mwE1Aih9uU' || (post?.id?.startsWith('post_story_share_') && post?.media?.youtubeId === '9mwE1Aih9uU'))
+
     const userPostsMap = new Map<string, Post>()
     for (const up of savedUserPosts) {
-      if (up && up.id) userPostsMap.set(up.id, { ...up, isUserCreated: true })
+      if (up && up.id && !isStaleFallProtectionPost(up)) {
+        userPostsMap.set(up.id, { ...up, isUserCreated: true })
+      }
     }
     for (const p of parsed) {
-      if (isRealUserCreatedPost(p) && !userPostsMap.has(p.id)) {
+      if (isRealUserCreatedPost(p) && !isStaleFallProtectionPost(p) && !userPostsMap.has(p.id)) {
         userPostsMap.set(p.id, { ...p, isUserCreated: true })
       }
     }
@@ -358,6 +363,7 @@ export function loadStoredPosts(explicitUser?: UserProfile | null): Post[] {
     // Filter out stale auto-generated profession-tiered posts & already-collected userCreatedList
     const remainingPosts = mergedPosts.filter(p => {
       if (!p || !p.id) return false
+      if (isStaleFallProtectionPost(p)) return false
       if (userPostsMap.has(p.id)) return false
       if (p.id === 'post_dstrike_wheel_masterclass') return false
       if (p.id.startsWith('post_prof_')) return false

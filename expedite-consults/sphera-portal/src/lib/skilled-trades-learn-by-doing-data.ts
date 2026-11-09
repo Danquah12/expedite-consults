@@ -209,13 +209,10 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
       'https://www.caaquebec.com/en/advices/videos/how-to-take-proper-care-of-your-vehicle/vehicle-maintenance-how-to-check-oil',
     referenceArticleUrl:
       'https://www.caaquebec.com/en/advices/videos/how-to-take-proper-care-of-your-vehicle/vehicle-maintenance-how-to-check-oil',
-    youtubeId: undefined,
-    embedAvailable: false,
-    embedUnavailableReason:
-      'Hosted on CAA-Quebec’s external advisory portal where direct inline iframe embedding is disabled. Use "Watch on original site" to view the video directly on CAA-Quebec.',
+    youtubeId: 'TQYhIhaDsl8',
+    embedAvailable: true,
     duration: '', // Unverified duration intentionally left blank
-    thumbnailUrl:
-      'https://images.unsplash.com/photo-1487754180451-c456f719a1fc?w=900&auto=format&fit=crop&q=80',
+    thumbnailUrl: 'https://i.ytimg.com/vi/TQYhIhaDsl8/hqdefault.jpg',
     practiceActivity:
       'Find the oil-check instructions in a vehicle’s owner manual and identify the procedure specified for that vehicle.',
     practiceDeliverablePrompt:
@@ -255,13 +252,10 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
     ],
     sourceVideoUrl: 'https://www.autozone.com/diy/videos/fixfinder-selfservice-224015421',
     referenceArticleUrl: 'https://www.autozone.com/diy/videos/fixfinder-selfservice-224015421',
-    youtubeId: undefined,
-    embedAvailable: false,
-    embedUnavailableReason:
-      'Hosted on AutoZone’s DIY video portal where third-party inline iframe embedding is restricted. Use "Watch on original site" to watch the demonstration on AutoZone.',
+    youtubeId: '9FV2L7btUEE',
+    embedAvailable: true,
     duration: '', // Unverified duration intentionally left blank
-    thumbnailUrl:
-      'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=900&auto=format&fit=crop&q=80',
+    thumbnailUrl: 'https://i.ytimg.com/vi/9FV2L7btUEE/hqdefault.jpg',
     practiceActivity:
       'Write down the demonstrated scan sequence and the information you would retain for further diagnosis.',
     practiceDeliverablePrompt:
@@ -304,13 +298,10 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
     sourceVideoUrl: 'https://www.sherwin-williams.com/en-us/project-center/paint/how-to-prep-walls',
     referenceArticleUrl:
       'https://www.sherwin-williams.com/en-us/project-center/paint/how-to-prep-walls',
-    youtubeId: undefined,
-    embedAvailable: false,
-    embedUnavailableReason:
-      'Hosted on the Sherwin-Williams Project Center where direct third-party iframe embedding is unavailable. Use "Watch on original site" to view the lesson on Sherwin-Williams.',
+    youtubeId: 'f_23fk6aEHA',
+    embedAvailable: true,
     duration: '', // Unverified duration intentionally left blank
-    thumbnailUrl:
-      'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=900&auto=format&fit=crop&q=80',
+    thumbnailUrl: 'https://i.ytimg.com/vi/f_23fk6aEHA/hqdefault.jpg',
     practiceActivity:
       'Create a preparation checklist for one room, including the surfaces and furniture that need protection.',
     practiceDeliverablePrompt:
@@ -352,13 +343,10 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
       'https://www.sherwin-williams.com/en-us/project-center/paint/best-order-painting-room',
     referenceArticleUrl:
       'https://www.sherwin-williams.com/en-us/project-center/paint/best-order-painting-room',
-    youtubeId: undefined,
-    embedAvailable: false,
-    embedUnavailableReason:
-      'Hosted on the Sherwin-Williams Project Center (with companion FrogTape video library resource) where inline iframe embedding is restricted. Use "Watch on original site" to view directly.',
+    youtubeId: 'HNefCphXHoc',
+    embedAvailable: true,
     duration: '', // Unverified duration intentionally left blank
-    thumbnailUrl:
-      'https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=900&auto=format&fit=crop&q=80',
+    thumbnailUrl: 'https://i.ytimg.com/vi/HNefCphXHoc/hqdefault.jpg',
     practiceActivity:
       'Use a practice panel to demonstrate a brushed edge and an adjacent rolled section (and practice applying painter’s tape along a short straight edge and noting the steps for removing it cleanly).',
     practiceDeliverablePrompt:
@@ -391,7 +379,8 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
       ],
       sourceVideoUrl: 'https://www.frogtape.com/application-advice/video-library',
       referenceArticleUrl: 'https://www.frogtape.com/application-advice/video-library',
-      embedAvailable: false,
+      youtubeId: 'GNvhciYDbt4',
+      embedAvailable: true,
       duration: '',
       practiceActivity:
         'Practice applying tape along a short straight edge and note the steps for removing it cleanly.',
@@ -437,13 +426,10 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
       'https://www.rotorooter.com/plumbing-videos/flooding/how-to-shut-off-your-water/',
     referenceArticleUrl:
       'https://www.rotorooter.com/plumbing-videos/flooding/how-to-shut-off-your-water/',
-    youtubeId: undefined,
-    embedAvailable: false,
-    embedUnavailableReason:
-      'Hosted on Roto-Rooter’s plumbing video portal where direct inline iframe embedding is unavailable. Use "Watch on original site" to view directly on Roto-Rooter.',
+    youtubeId: 'fFMBzVv-5Zs',
+    embedAvailable: true,
     duration: '', // Unverified duration intentionally left blank
-    thumbnailUrl:
-      'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=900&auto=format&fit=crop&q=80',
+    thumbnailUrl: 'https://i.ytimg.com/vi/fFMBzVv-5Zs/hqdefault.jpg',
     practiceActivity:
       'Locate the main water shutoff valve in a home or building, identify whether it uses a wheel handle (gate valve) or lever handle (ball valve), and document the shutoff direction.',
     practiceDeliverablePrompt:
@@ -485,13 +471,10 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
       'https://videos.homedepot.com/detail/video/6049169514001/types-of-pipe-fittings',
     referenceArticleUrl:
       'https://videos.homedepot.com/detail/video/6049169514001/types-of-pipe-fittings',
-    youtubeId: undefined,
-    embedAvailable: false,
-    embedUnavailableReason:
-      'Hosted on The Home Depot video portal (videos.homedepot.com) where third-party iframe embedding is restricted. Use "Watch on original site" to view directly on The Home Depot.',
+    youtubeId: 'FM2j9zy_s18',
+    embedAvailable: true,
     duration: '', // Unverified duration intentionally left blank
-    thumbnailUrl:
-      'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=900&auto=format&fit=crop&q=80',
+    thumbnailUrl: 'https://i.ytimg.com/vi/FM2j9zy_s18/hqdefault.jpg',
     practiceActivity:
       'Identify three common pipe fittings (such as an elbow, tee, coupling, or reducer) and explain how each is used in a plumbing run.',
     practiceDeliverablePrompt:
@@ -535,13 +518,10 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
       'https://www.digikey.com/en/videos/d/digi-key-electronics/how-to-use-a-multimeter-electronics-with-becky-stern-digikey',
     referenceArticleUrl:
       'https://www.digikey.com/en/videos/d/digi-key-electronics/how-to-use-a-multimeter-electronics-with-becky-stern-digikey',
-    youtubeId: undefined,
-    embedAvailable: false,
-    embedUnavailableReason:
-      'Hosted on DigiKey’s technical video portal where direct inline iframe embedding is restricted. Use "Watch on original site" to view Becky Stern’s multimeter demonstration on DigiKey.',
+    youtubeId: 'DLO1LMjQN34',
+    embedAvailable: true,
     duration: '', // Unverified duration intentionally left blank
-    thumbnailUrl:
-      'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=900&auto=format&fit=crop&q=80',
+    thumbnailUrl: 'https://i.ytimg.com/vi/DLO1LMjQN34/hqdefault.jpg',
     practiceActivity:
       'Perform a probe touch continuity check on a multimeter, measure the voltage of a common household battery (e.g., AA or 9V), and record your dial setting and reading.',
     practiceDeliverablePrompt:
@@ -628,13 +608,10 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
       'https://www.cwbgroup.org/resources/videos/electric-welding-safety-how-to-be-safe',
     referenceArticleUrl:
       'https://www.cwbgroup.org/resources/videos/electric-welding-safety-how-to-be-safe',
-    youtubeId: undefined,
-    embedAvailable: false,
-    embedUnavailableReason:
-      'Hosted on the CWB Group resource portal (cwbgroup.org) where third-party iframe embedding is restricted. Use "Watch on original site" to watch Electric Welding Safety on CWB Group.',
+    youtubeId: 'A14OejQiDvQ',
+    embedAvailable: true,
     duration: '', // Unverified duration intentionally left blank
-    thumbnailUrl:
-      'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=900&auto=format&fit=crop&q=80',
+    thumbnailUrl: 'https://i.ytimg.com/vi/A14OejQiDvQ/hqdefault.jpg',
     practiceActivity:
       'Create a pre-weld safety inspection checklist covering personal protective equipment (PPE), welding screens to protect nearby people, ventilation, and clearing flammable materials from the work area.',
     practiceDeliverablePrompt:
@@ -678,13 +655,10 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
       'https://www.trane.com/residential/how-to-change-a-furnace-filter-video/',
     referenceArticleUrl:
       'https://www.trane.com/residential/how-to-change-a-furnace-filter-video/',
-    youtubeId: undefined,
-    embedAvailable: false,
-    embedUnavailableReason:
-      'Hosted on Trane’s residential HVAC portal (trane.com) where direct inline iframe embedding is restricted. Use "Watch on original site" to view the video on Trane.',
+    youtubeId: 'uKneslTwJdY',
+    embedAvailable: true,
     duration: '', // Unverified duration intentionally left blank
-    thumbnailUrl:
-      'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=900&auto=format&fit=crop&q=80',
+    thumbnailUrl: 'https://i.ytimg.com/vi/uKneslTwJdY/hqdefault.jpg',
     practiceActivity:
       'Locate the air filter on a residential furnace or air handler, record its printed dimensions (length × width × depth), and note the direction the airflow arrow must point when sliding the new filter in.',
     practiceDeliverablePrompt:
@@ -724,13 +698,10 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
     ],
     sourceVideoUrl: 'https://www.hvacrschool.com/videos/refrigeration-cycle-101/',
     referenceArticleUrl: 'https://www.hvacrschool.com/videos/refrigeration-cycle-101/',
-    youtubeId: undefined,
-    embedAvailable: false,
-    embedUnavailableReason:
-      'Hosted on HVAC School (hvacrschool.com) where direct third-party iframe embedding is restricted. Use "Watch on original site" to watch Bryan Orr’s Refrigeration Cycle 101 video.',
+    youtubeId: 'VJX0LyxRV0E',
+    embedAvailable: true,
     duration: '', // Unverified duration intentionally left blank
-    thumbnailUrl:
-      'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=900&auto=format&fit=crop&q=80',
+    thumbnailUrl: 'https://i.ytimg.com/vi/VJX0LyxRV0E/hqdefault.jpg',
     practiceActivity:
       'List the four core components of the vapor-compression refrigeration cycle in sequence and write one sentence explaining the role of each component.',
     practiceDeliverablePrompt:

@@ -34,8 +34,11 @@ import {
   computeLessonProgress,
   createInitialLessonTelemetry
 } from "@/lib/skilled-trades-learn-by-doing-data"
+import { UserProfile } from "@/lib/connectln-data"
+import { ConnectLnStudioPlayer, notifyExclusiveVideoPlay } from "./ConnectLnStudioPlayer"
 
 interface SkilledTradesLearnByDoingSectionProps {
+  user?: UserProfile | null
   onTelemetryChange?: (summary: {
     savedLessonIds: string[]
     journeyLessonIds: string[]
@@ -48,6 +51,7 @@ interface SkilledTradesLearnByDoingSectionProps {
 type CategoryFilter = 'All' | SkilledTradesCategory | 'Saved' | 'Learning Journey'
 
 export function SkilledTradesLearnByDoingSection({
+  user,
   onTelemetryChange,
   onClaimCertificate
 }: SkilledTradesLearnByDoingSectionProps) {
@@ -55,7 +59,10 @@ export function SkilledTradesLearnByDoingSection({
   const [telemetryMap, setTelemetryMap] = useState<Record<string, LearnByDoingLessonTelemetry>>(() =>
     loadAllLearnByDoingTelemetry()
   )
-  const [activeVideoLessonId, setActiveVideoLessonId] = useState<string | null>(null)
+  const [activeVideoLessonId, setActiveVideoLessonId] = useState<string | null>(
+    SKILLED_TRADES_LEARN_BY_DOING_LESSONS[0]?.id || null
+  )
+  const [autoPlayRequested, setAutoPlayRequested] = useState<boolean>(false)
   const [expandedLessonId, setExpandedLessonId] = useState<string | null>(
     SKILLED_TRADES_LEARN_BY_DOING_LESSONS[0]?.id || null
   )
@@ -179,13 +186,21 @@ export function SkilledTradesLearnByDoingSection({
     })
   }
 
-  // Action 1: Watch (Embedded verified video vs. opening video panel)
+  // Action 1: Watch inside ConnectLn Studio Player
   const handleWatchAction = (lesson: LearnByDoingLesson) => {
     setExpandedLessonId(lesson.id)
-    const playability = embedPlayabilityMap[lesson.id] || (lesson.embedAvailable ? 'playable' : 'unavailable')
-    if (lesson.embedAvailable && lesson.youtubeId && playability === 'playable') {
+    const activeVariant =
+      lesson.id === 'lbd_painting_brush_roller_6' && lesson6Variant === 'companion'
+        ? lesson.companionVariant
+        : null
+    const targetYoutubeId = activeVariant?.youtubeId || lesson.youtubeId
+    const targetEmbedAvailable = activeVariant ? activeVariant.embedAvailable : lesson.embedAvailable
+    const playability = embedPlayabilityMap[lesson.id] || (targetEmbedAvailable ? 'playable' : 'unavailable')
+    if (targetEmbedAvailable && targetYoutubeId && playability === 'playable') {
+      notifyExclusiveVideoPlay(`lbd-player-${lesson.id}`)
+      setAutoPlayRequested(true)
       setActiveVideoLessonId(lesson.id)
-      // Record a verified embedded video view when user launches and plays the verified embedded player
+      // Record a verified embedded video view when user launches and plays inside ConnectLn Studio Player
       updateLessonTelemetry(lesson.id, curr => ({
         ...curr,
         verifiedVideoViews: curr.verifiedVideoViews + 1,
@@ -508,14 +523,18 @@ export function SkilledTradesLearnByDoingSection({
                 ? activeVariant.knowledgeCheck
                 : lesson.knowledgeCheck
               const displayDuration = activeVariant ? activeVariant.duration : lesson.duration
+              const displayYoutubeId = activeVariant?.youtubeId || lesson.youtubeId
+              const displayEmbedAvailable = activeVariant ? activeVariant.embedAvailable : lesson.embedAvailable
+              const displayThumbnailUrl = displayYoutubeId
+                ? `https://i.ytimg.com/vi/${displayYoutubeId}/hqdefault.jpg`
+                : lesson.thumbnailUrl
 
               const playability =
                 embedPlayabilityMap[lesson.id] ||
-                (lesson.embedAvailable && lesson.youtubeId ? 'playable' : 'unavailable')
+                (displayEmbedAvailable && displayYoutubeId ? 'playable' : 'unavailable')
               const canEmbed =
-                !activeVariant &&
-                lesson.embedAvailable &&
-                Boolean(lesson.youtubeId) &&
+                displayEmbedAvailable &&
+                Boolean(displayYoutubeId) &&
                 playability === 'playable'
               const isPlayingInline = activeVideoLessonId === lesson.id && canEmbed
               const isExpanded = expandedLessonId === lesson.id
@@ -600,28 +619,28 @@ export function SkilledTradesLearnByDoingSection({
                       </div>
                     )}
 
-                    {/* Video Player / Source Video Area */}
+                    {/* Video Player / Source Video Area (ConnectLn Studio Player) */}
                     <div className="relative bg-slate-950">
-                      {isPlayingInline && lesson.youtubeId ? (
+                      {isPlayingInline && displayYoutubeId ? (
                         <div className="relative aspect-video w-full bg-black">
-                          <iframe
-                            src={`https://www.youtube.com/embed/${lesson.youtubeId}?autoplay=1&rel=0&modestbranding=1`}
-                            title={`${displayTitle} — ${displayCreator}`}
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                            className="h-full w-full border-0"
-                            onError={() =>
-                              setEmbedPlayabilityMap(prev => ({
-                                ...prev,
-                                [lesson.id]: 'unavailable'
-                              }))
-                            }
+                          <ConnectLnStudioPlayer
+                            key={`${lesson.id}-${displayYoutubeId}-${lesson6Variant}`}
+                            youtubeId={displayYoutubeId}
+                            title={displayTitle}
+                            serialPlate={`CLN-LBD${String(lesson.lessonNumber).padStart(2, '0')}`}
+                            speaker={displayCreator}
+                            durationLabel={displayDuration || ""}
+                            autoPlay={autoPlayRequested}
+                            initialMuted={false}
+                            playerId={`lbd-player-${lesson.id}`}
+                            onExclusiveStop={() => setActiveVideoLessonId(null)}
+                            className="h-full w-full"
                           />
                         </div>
                       ) : (
                         <div className="relative h-52 sm:h-56 w-full overflow-hidden">
                           <img
-                            src={lesson.thumbnailUrl}
+                            src={displayThumbnailUrl}
                             alt={displayTitle}
                             className="h-full w-full object-cover opacity-80"
                           />
@@ -632,7 +651,7 @@ export function SkilledTradesLearnByDoingSection({
                             {canEmbed ? (
                               <span className="rounded-full bg-emerald-500/90 text-slate-950 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide flex items-center gap-1 shadow-xs">
                                 <Play className="h-2.5 w-2.5 fill-slate-950" />
-                                Verified Inline Video Player
+                                ConnectLn Studio Player Ready
                               </span>
                             ) : playability === 'checking' ? (
                               <span className="rounded-full bg-zinc-800/90 text-zinc-200 px-2.5 py-0.5 text-[10px] font-semibold">
@@ -670,7 +689,7 @@ export function SkilledTradesLearnByDoingSection({
                                 className="group rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 px-5 py-2.5 text-xs font-black shadow-lg flex items-center gap-2 cursor-pointer transition-transform hover:scale-105"
                               >
                                 <Play className="h-4 w-4 fill-slate-950" />
-                                <span>Watch Lesson Video ({displayCreator})</span>
+                                <span>Play in ConnectLn Player ({displayCreator})</span>
                               </button>
                             ) : (
                               <div className="max-w-md rounded-xl bg-slate-950/90 border border-white/15 p-3.5 text-white space-y-2 backdrop-blur-md">

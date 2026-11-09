@@ -75,6 +75,7 @@ import { AdminIAMConsoleView } from "@/components/connectln/AdminIAMConsoleView"
 import { ConnectInAuthModal } from "@/components/connectln/ConnectInAuthModal"
 import { ConnectInAnalyticsModal } from "@/components/connectln/ConnectInAnalyticsModal"
 import { ConnectInVideoWheel } from "@/components/connectln/ConnectInVideoWheel"
+import { SkilledTradesLearnByDoingSection } from "@/components/connectln/SkilledTradesLearnByDoingSection"
 import { ConnectInVideoGuideModal } from "@/components/connectln/ConnectInVideoGuideModal"
 import { VeteransAndFranchiseNetworksView } from "@/components/connectln/VeteransAndFranchiseNetworksView"
 import {
@@ -2094,11 +2095,14 @@ export default function ConnectLnPage() {
                   </span>
                   {[
                     { id: "carpenter", label: "🔨 Carpenter" },
+                    { id: "plumber", label: "🔧 Plumber" },
+                    { id: "electrician", label: "⚡ Electrician" },
+                    { id: "welder", label: "🔥 Welder" },
+                    { id: "hvac_refrigeration_tech", label: "❄️ HVAC" },
+                    { id: "mechanic", label: "🚗 Auto Mechanic" },
+                    { id: "painter", label: "🎨 Painter" },
                     { id: "registered_nurse", label: "🩺 Nurse (RN / Medical)" },
                     { id: "physician", label: "⚕️ Physician / Doctor" },
-                    { id: "electrician", label: "⚡ Electrician" },
-                    { id: "plumber", label: "🔧 Plumber" },
-                    { id: "mechanic", label: "🚗 Auto Mechanic" },
                     { id: "cybersecurity_architect", label: "🛡️ Cybersecurity" },
                     { id: "software_engineer", label: "💻 Software Engineer" }
                   ].map((item) => {
@@ -2119,10 +2123,37 @@ export default function ConnectLnPage() {
                     )
                   })}
                 </div>
+
+                {/* Direct 1-Click Jump Bar to All 13 Skilled Trades Videos & Learning Academy */}
+                <div className="pt-1.5 border-t border-zinc-100 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById("home-skilled-trades-learn-by-doing")
+                      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" })
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 px-3 py-1.5 text-[11px] font-extrabold shadow-2xs transition-colors cursor-pointer"
+                  >
+                    <span>🛠️</span>
+                    <span>View All 13 Skilled Trades Video Lessons (Carpentry, Plumbing, Electrical, Welding, HVAC, Auto, Painting) ↓</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('learning')}
+                    className="inline-flex items-center gap-1 rounded-lg bg-[#0A66C2]/10 hover:bg-[#0A66C2]/20 text-[#0A66C2] dark:text-sky-300 border border-[#0A66C2]/30 px-2.5 py-1 text-[11px] font-bold transition-colors cursor-pointer"
+                  >
+                    <span>🎓 Open Full Learning Tab →</span>
+                  </button>
+                </div>
               </div>
 
               {/* LinkedIn-Style Top "Start a post" Box (Video, Photo, Write article — Matches Screenshot 1) */}
               <PostCreator user={userData} onAddPost={handleAddPost} />
+
+              {/* Skilled Trades: Learn by Doing — All 13 Video Lessons Directly on the Home Feed */}
+              <div id="home-skilled-trades-learn-by-doing" className="scroll-mt-20">
+                <SkilledTradesLearnByDoingSection user={userData} />
+              </div>
 
               {/* User's Own Newly Published Feed Posts (Celebrate, Video, Photo, Poll, Document, AI Post) — Shown Immediately Below Composer */}
               {myPublishedPosts.length > 0 && (

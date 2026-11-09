@@ -148,6 +148,216 @@ const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
     ],
     tags: ["#Welding", "#MIGWelding", "#TIGWelding", "#StickWelding", "#MillerWelders", "#LearnByDoing"]
   },
+  {
+    id: "wheel-lbd-welding-safety",
+    serialPlate: "CLN-LBD11",
+    title: "Welding Safety: Protective Equipment, Bystander Shielding & Work Area Prep (Electric Welding Safety)",
+    speaker: "Way of the Wrench, featured by CWB Group",
+    speakerTitle: "Original Creator · Skilled Trades: Learn by Doing (Welding)",
+    youtubeId: "A14OejQiDvQ",
+    duration: "",
+    category: "trade",
+    categoryLabel: "Skilled Trades: Learn by Doing",
+    enclaveId: "trades_construction",
+    professionId: "welder",
+    thumbnailUrl: "https://i.ytimg.com/vi/A14OejQiDvQ/hqdefault.jpg",
+    summary: "Learn about protective equipment, protecting nearby people, and preparing the work area.",
+    takeaways: [
+      "Skill Covered: Welding Helmet Shade, Flame-Resistant PPE & Bystander Welding Screens",
+      "Practice Activity: Create a pre-weld safety inspection checklist covering PPE, screens, and clearing flammables",
+      "Original Resource: https://www.cwbgroup.org/resources/videos/electric-welding-safety-how-to-be-safe"
+    ],
+    tags: ["#WeldingSafety", "#CWBGroup", "#WayOfTheWrench", "#PPE", "#LearnByDoing"]
+  },
+  {
+    id: "wheel-lbd-plumbing-shutoff",
+    serialPlate: "CLN-LBD07",
+    title: "Plumbing Basics: Emergency Main Water Shutoff (How to Shut-Off Your Water)",
+    speaker: "Roto-Rooter",
+    speakerTitle: "Original Creator · Skilled Trades: Learn by Doing (Plumbing)",
+    youtubeId: "fFMBzVv-5Zs",
+    duration: "",
+    category: "trade",
+    categoryLabel: "Skilled Trades: Learn by Doing",
+    enclaveId: "trades_construction",
+    professionId: "plumber",
+    thumbnailUrl: "https://i.ytimg.com/vi/fFMBzVv-5Zs/hqdefault.jpg",
+    summary: "Recognize the household main water shutoff and understand its role when a plumbing emergency occurs.",
+    takeaways: [
+      "Skill Covered: Main Water Shutoff Valve Identification (Ball Valve vs. Gate Valve)",
+      "Practice Activity: Locate the main water shutoff valve and document its handle type and shutoff direction",
+      "Original Resource: https://www.rotorooter.com/plumbing-videos/flooding/how-to-shut-off-your-water/"
+    ],
+    tags: ["#Plumbing", "#WaterShutoff", "#RotoRooter", "#EmergencyPlumbing", "#LearnByDoing"]
+  },
+  {
+    id: "wheel-lbd-plumbing-fittings",
+    serialPlate: "CLN-LBD08",
+    title: "Plumbing Basics: Types of Pipe Fittings & Terminology",
+    speaker: "The Home Depot",
+    speakerTitle: "Original Creator · Skilled Trades: Learn by Doing (Plumbing)",
+    youtubeId: "FM2j9zy_s18",
+    duration: "",
+    category: "trade",
+    categoryLabel: "Skilled Trades: Learn by Doing",
+    enclaveId: "trades_construction",
+    professionId: "plumber",
+    thumbnailUrl: "https://i.ytimg.com/vi/FM2j9zy_s18/hqdefault.jpg",
+    summary: "Become familiar with common pipe fittings and plumbing terminology.",
+    takeaways: [
+      "Skill Covered: Elbows, Tees, Wyes, Couplings, Reducers & Adapters",
+      "Practice Activity: Label three common pipe fittings and explain how each is used in a plumbing run",
+      "Original Resource: https://videos.homedepot.com/detail/video/6049169514001/types-of-pipe-fittings"
+    ],
+    tags: ["#Plumbing", "#PipeFittings", "#TheHomeDepot", "#LearnByDoing"]
+  },
+  {
+    id: "wheel-lbd-electrical-multimeter",
+    serialPlate: "CLN-LBD09",
+    title: "Electrical Fundamentals: How to Use a Multimeter (Voltage, Resistance, Current & Continuity)",
+    speaker: "DigiKey / Becky Stern",
+    speakerTitle: "Original Creator · Skilled Trades: Learn by Doing (Electrical Fundamentals)",
+    youtubeId: "DLO1LMjQN34",
+    duration: "",
+    category: "trade",
+    categoryLabel: "Skilled Trades: Learn by Doing",
+    enclaveId: "trades_construction",
+    professionId: "electrician",
+    thumbnailUrl: "https://i.ytimg.com/vi/DLO1LMjQN34/hqdefault.jpg",
+    summary: "Understand the meter’s functions for voltage, resistance, current, and continuity checks.",
+    takeaways: [
+      "Skill Covered: DC/AC Voltage, Continuity Beep Test, Resistance (Ohms) & Probe Port Placement",
+      "Practice Activity: Identify settings on an unconnected multimeter and measure a household battery",
+      "Original Resource: https://www.digikey.com/en/videos/d/digi-key-electronics/how-to-use-a-multimeter-electronics-with-becky-stern-digikey"
+    ],
+    tags: ["#Electrical", "#Multimeter", "#DigiKey", "#BeckyStern", "#LearnByDoing"]
+  },
+  {
+    id: "wheel-lbd-hvac-refrig-cycle",
+    serialPlate: "CLN-LBD13",
+    title: "HVAC Fundamentals: Refrigeration Cycle 101 (4 Core Components)",
+    speaker: "HVAC School / Bryan Orr",
+    speakerTitle: "Original Creator · Skilled Trades: Learn by Doing (HVAC)",
+    youtubeId: "VJX0LyxRV0E",
+    duration: "",
+    category: "trade",
+    categoryLabel: "Skilled Trades: Learn by Doing",
+    enclaveId: "trades_construction",
+    professionId: "hvac_refrigeration_tech",
+    thumbnailUrl: "https://i.ytimg.com/vi/VJX0LyxRV0E/hqdefault.jpg",
+    summary: "Identify the compressor, condenser, metering device, and evaporator and understand their basic roles.",
+    takeaways: [
+      "Skill Covered: Compressor, Condenser Coil, Metering Device (TXV) & Evaporator Coil Roles",
+      "Practice Activity: Draw or list the four main refrigeration components in sequence and explain each role",
+      "Original Resource: https://www.hvacrschool.com/videos/refrigeration-cycle-101/"
+    ],
+    tags: ["#HVAC", "#RefrigerationCycle", "#HVACSchool", "#BryanOrr", "#LearnByDoing"]
+  },
+  {
+    id: "wheel-lbd-hvac-furnace-filter",
+    serialPlate: "CLN-LBD12",
+    title: "HVAC Maintenance: How to Change a Furnace Filter",
+    speaker: "Trane",
+    speakerTitle: "Original Creator · Skilled Trades: Learn by Doing (HVAC)",
+    youtubeId: "uKneslTwJdY",
+    duration: "",
+    category: "trade",
+    categoryLabel: "Skilled Trades: Learn by Doing",
+    enclaveId: "trades_construction",
+    professionId: "hvac_refrigeration_tech",
+    thumbnailUrl: "https://i.ytimg.com/vi/uKneslTwJdY/hqdefault.jpg",
+    summary: "Understand filter location and the demonstrated replacement task.",
+    takeaways: [
+      "Skill Covered: Furnace Filter Compartment Location, Airflow Arrow Alignment & Replacement",
+      "Practice Activity: Locate the air filter on a furnace, record its dimensions, and note airflow arrow direction",
+      "Original Resource: https://www.trane.com/residential/how-to-change-a-furnace-filter-video/"
+    ],
+    tags: ["#HVAC", "#FurnaceFilter", "#Trane", "#LearnByDoing"]
+  },
+  {
+    id: "wheel-lbd-auto-oil-check",
+    serialPlate: "CLN-LBD03",
+    title: "Vehicle Maintenance: Checking Your Engine Oil",
+    speaker: "CAA-Quebec",
+    speakerTitle: "Original Creator · Skilled Trades: Learn by Doing (Auto Mechanics)",
+    youtubeId: "TQYhIhaDsl8",
+    duration: "",
+    category: "automotive_mechanics",
+    categoryLabel: "Skilled Trades: Learn by Doing",
+    enclaveId: "automotive_mechanics",
+    professionId: "mechanic",
+    thumbnailUrl: "https://i.ytimg.com/vi/TQYhIhaDsl8/hqdefault.jpg",
+    summary: "The video demonstrates locating the dipstick, checking the oil level, and reading it against the dipstick’s markings.",
+    takeaways: [
+      "Skill Covered: Dipstick Location, Wipe & Re-Insert Procedure, Reading Min/Max Markings",
+      "Practice Activity: Find the oil-check instructions in a vehicle’s owner manual and identify the procedure",
+      "Original Resource: https://www.caaquebec.com/en/advices/videos/how-to-take-proper-care-of-your-vehicle/vehicle-maintenance-how-to-check-oil"
+    ],
+    tags: ["#AutoMechanics", "#EngineOil", "#CAAQuebec", "#LearnByDoing"]
+  },
+  {
+    id: "wheel-lbd-auto-fixfinder",
+    serialPlate: "CLN-LBD04",
+    title: "Auto Diagnostics: Your First Diagnostic Scan (Reading Check-Engine Information)",
+    speaker: "AutoZone",
+    speakerTitle: "Original Creator · Skilled Trades: Learn by Doing (Auto Mechanics)",
+    youtubeId: "9FV2L7btUEE",
+    duration: "",
+    category: "automotive_mechanics",
+    categoryLabel: "Skilled Trades: Learn by Doing",
+    enclaveId: "automotive_mechanics",
+    professionId: "mechanic",
+    thumbnailUrl: "https://i.ytimg.com/vi/9FV2L7btUEE/hqdefault.jpg",
+    summary: "This demonstration shows how AutoZone’s reader retrieves trouble-code information and produces a report for further diagnosis.",
+    takeaways: [
+      "Skill Covered: OBD-II Data Link Connector Location, Scanner Workflow & DTC Report Retrieval",
+      "Practice Activity: Write down the demonstrated scan sequence and the information you would retain",
+      "Original Resource: https://www.autozone.com/diy/videos/fixfinder-selfservice-224015421"
+    ],
+    tags: ["#AutoDiagnostics", "#OBD2", "#AutoZone", "#CheckEngine", "#LearnByDoing"]
+  },
+  {
+    id: "wheel-lbd-painting-prep",
+    serialPlate: "CLN-LBD05",
+    title: "Painting Basics: Preparing the Surface (Preparing Walls for Painting)",
+    speaker: "Sherwin-Williams",
+    speakerTitle: "Original Creator · Skilled Trades: Learn by Doing (Painting & Decorating)",
+    youtubeId: "f_23fk6aEHA",
+    duration: "",
+    category: "trade",
+    categoryLabel: "Skilled Trades: Learn by Doing",
+    enclaveId: "trades_construction",
+    professionId: "painter",
+    thumbnailUrl: "https://i.ytimg.com/vi/f_23fk6aEHA/hqdefault.jpg",
+    summary: "Learners see how cleaning walls, masking trim, protecting floors, and preparing surfaces contribute to a successful painting job.",
+    takeaways: [
+      "Skill Covered: Wall Cleaning, Masking Trim & Baseboards, Floor & Furniture Protection",
+      "Practice Activity: Create a preparation checklist for one room, including surfaces and furniture to protect",
+      "Original Resource: https://www.sherwin-williams.com/en-us/project-center/paint/how-to-prep-walls"
+    ],
+    tags: ["#Painting", "#SurfacePrep", "#SherwinWilliams", "#LearnByDoing"]
+  },
+  {
+    id: "wheel-lbd-painting-room",
+    serialPlate: "CLN-LBD06",
+    title: "Painting Technique: Clean Edges and an Even Finish (Brush & Roller)",
+    speaker: "Sherwin-Williams",
+    speakerTitle: "Original Creator · Skilled Trades: Learn by Doing (Painting & Decorating)",
+    youtubeId: "HNefCphXHoc",
+    duration: "",
+    category: "trade",
+    categoryLabel: "Skilled Trades: Learn by Doing",
+    enclaveId: "trades_construction",
+    professionId: "painter",
+    thumbnailUrl: "https://i.ytimg.com/vi/HNefCphXHoc/hqdefault.jpg",
+    summary: "This lesson covers room-painting order, painting edges with a brush, and using a roller while maintaining a wet edge to reduce visible lap marks.",
+    takeaways: [
+      "Skill Covered: Room-Painting Order, Cutting In Edges with a Brush, Rolling & Wet-Edge Control",
+      "Practice Activity: Use a practice panel to demonstrate a brushed edge and an adjacent rolled section",
+      "Original Resource: https://www.sherwin-williams.com/en-us/project-center/paint/best-order-painting-room"
+    ],
+    tags: ["#PaintingTechnique", "#BrushAndRoller", "#SherwinWilliams", "#LearnByDoing"]
+  },
   // ─── 1. SKILLED TRADES & CRAFTSMANSHIP (trades_construction) ──────
   {
     id: "wheel-lineman-apprentice",

@@ -552,39 +552,40 @@ Proven track record of scaling high-availability Next.js, Kubernetes, and AWS/GC
 }
 
 export const initialPosts: Post[] = [
-  // ─── 0. FEATURED WHEEL VIDEO SHARE WITH PROFILE PICTURE & DSTRIKE CARD ───
+  // ─── 0. FEATURED SKILLED TRADES: LEARN BY DOING VIDEO SHARES ───
   {
     id: 'post_dstrike_wheel_masterclass',
-    professionEnclave: 'all',
+    professionEnclave: 'trades_construction',
+    targetProfessions: ['carpenter', 'finish_carpenter', 'commercial_framing_carpenter', 'general_contractor'],
     author: {
       id: 'user_kwesi_asiedu',
-      name: 'Kwesi Asiedu',
-      headline: 'Principal Cloud & Security Architect | AI Infrastructure & Zero Trust Lead @ Expedite Consults',
+      name: 'This Old House · Skilled Trades: Learn by Doing',
+      headline: 'Original Creator · Carpentry Basics: Marking and Checking Angles (Using a Speed Square)',
       avatar: '/brand/kwesi-avatar.png',
       connectionDegree: 'You',
       isFollowing: false
     },
-    timestamp: 'Just now · 🎡 Shared from The Wheel · 🌐',
+    timestamp: 'Just now · 🛠️ Skilled Trades: Learn by Doing · 🌐',
     visibility: 'Public',
     postType: 'standard',
     feedCategory: 'for_you',
     feedSubCategory: 'All',
-    content: `🎬 Shared a Masterclass Briefing on ConnectLn The Wheel: "OSHA Fall Protection & Harness Inspection — 4-Point Field Protocol" (CLN-CMP01)\n\nField-grade safety briefing covering full-body harness webbing inspection, shock-absorber pack verification, dorsal D-ring positioning, and swing-fall clearance calculation.`,
-    hashtags: ['#Safety', '#OSHA', '#Construction', '#Compliance', '#ConnectLn', '#RealWork'],
+    content: `🪚 Skilled Trades: Learn by Doing — "Carpentry Basics: Marking and Checking Angles" (Original Creator: This Old House)\n\nLearners explore how a speed square helps mark 90° perpendicular and 45° miter angles and check whether corners are square before moving into cutting and assembly.\n\n• Practice Activity: Mark a perpendicular line and a 45-degree line on scrap wood, then photograph the markings.`,
+    hashtags: ['#Carpentry', '#SpeedSquare', '#ThisOldHouse', '#LearnByDoing', '#ConnectLn'],
     media: {
       type: 'video',
-      url: 'https://www.youtube.com/watch?v=9mwE1Aih9uU',
-      youtubeId: '9mwE1Aih9uU',
-      thumbnailUrl: 'https://i.ytimg.com/vi/9mwE1Aih9uU/hqdefault.jpg',
-      title: 'OSHA 30 Jobsite Fall Protection & Subpart M Compliance',
-      description: 'Expedite Safety Directorate · Authorized OSHA 500 Instructor',
-      duration: '4:22',
-      serialPlate: 'CLN-CMP01',
+      url: 'https://www.youtube.com/watch?v=gNhWpuWvtEA',
+      youtubeId: 'gNhWpuWvtEA',
+      thumbnailUrl: 'https://i.ytimg.com/vi/gNhWpuWvtEA/hqdefault.jpg',
+      title: 'Carpentry Basics: Marking and Checking Angles (Using a Speed Square)',
+      description: 'This Old House · Skilled Trades: Learn by Doing (Carpentry)',
+      duration: '',
+      serialPlate: 'CLN-LBD01',
       brandName: 'ConnectLn',
       takeaways: [
-        'Inspect all load-bearing straps for UV fraying, chemical burns, or pulled stitching before every shift',
-        'Verify the dorsal D-ring sits squarely between the shoulder blades and chest strap is mid-sternum',
-        'Calculate total fall clearance: Free Fall (6 ft) + Deceleration (3.5 ft) + Worker Height + Safety Factor (2 ft)'
+        'Keep the speed square lip (fence) pressed firmly against the reference edge of the board',
+        'Mark crisp 90-degree crosscut lines and 45-degree miter layout lines accurately',
+        'Check inside and outside assembly corners for true squareness'
       ],
       aspectRatio: '16:9'
     },
@@ -593,6 +594,98 @@ export const initialPosts: Post[] = [
       commentsCount: 38,
       repostsCount: 64,
       reactionsBreakdown: { like: 240, celebrate: 92, support: 40, love: 28, insightful: 12, funny: 0 }
+    },
+    userReaction: null,
+    isSaved: false,
+    comments: []
+  },
+  {
+    id: 'post_lbd_welding_miller_feed',
+    professionEnclave: 'trades_construction',
+    targetProfessions: ['welder', 'carpenter', 'electrician', 'plumber'],
+    author: {
+      id: 'author_miller_welders',
+      name: 'Miller Welders · Skilled Trades: Learn by Doing',
+      headline: 'Original Creator · Welding Basics: Comparing MIG, Stick & TIG Welding',
+      avatar: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=400&auto=format&fit=crop&q=80',
+      connectionDegree: '1st',
+      isFollowing: true
+    },
+    timestamp: '5m ago · 🔥 Skilled Trades: Learn by Doing · 🌐',
+    visibility: 'Public',
+    postType: 'standard',
+    feedCategory: 'for_you',
+    feedSubCategory: 'All',
+    content: `🔥 Skilled Trades: Learn by Doing — "Welding Basics for Beginners: Comparing MIG, Stick & TIG Welding" (Original Creator: Miller Welders)\n\nCompare MIG (GMAW), Stick (SMAW), and TIG (GTAW) welding and understand the metal thicknesses, outdoor/indoor conditions, and precision applications each process suits best.\n\n• Practice Activity: Compare MIG, stick, and TIG welding in a 3-row chart and match each to a real trade job.`,
+    hashtags: ['#Welding', '#MIGWelding', '#TIGWelding', '#StickWelding', '#MillerWelders', '#LearnByDoing'],
+    media: {
+      type: 'video',
+      url: 'https://www.youtube.com/watch?v=OWThL97tq3k',
+      youtubeId: 'OWThL97tq3k',
+      thumbnailUrl: 'https://i.ytimg.com/vi/OWThL97tq3k/hqdefault.jpg',
+      title: 'Welding Basics: Comparing MIG, Stick & TIG Welding',
+      description: 'Miller Welders · Skilled Trades: Learn by Doing (Welding)',
+      duration: '',
+      serialPlate: 'CLN-LBD10',
+      brandName: 'ConnectLn',
+      takeaways: [
+        'MIG (GMAW): Continuous wire feed & shielding gas for high-productivity shop fabrication',
+        'Stick (SMAW): Flux-coated electrode ideal for outdoor structural steel and windy conditions',
+        'TIG (GTAW): Non-consumable tungsten electrode with foot-pedal heat control for precision stainless & aluminum'
+      ],
+      aspectRatio: '16:9'
+    },
+    stats: {
+      likesCount: 389,
+      commentsCount: 41,
+      repostsCount: 57,
+      reactionsBreakdown: { like: 225, celebrate: 88, support: 39, love: 25, insightful: 12, funny: 0 }
+    },
+    userReaction: null,
+    isSaved: false,
+    comments: []
+  },
+  {
+    id: 'post_lbd_clamps_thisoldhouse_feed',
+    professionEnclave: 'trades_construction',
+    targetProfessions: ['carpenter', 'finish_carpenter', 'cabinetmaker'],
+    author: {
+      id: 'author_this_old_house_clamps',
+      name: 'This Old House · Skilled Trades: Learn by Doing',
+      headline: 'Original Creator · Carpentry Basics: Choosing the Right Clamp',
+      avatar: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&auto=format&fit=crop&q=80',
+      connectionDegree: '1st',
+      isFollowing: true
+    },
+    timestamp: '9m ago · 🪚 Skilled Trades: Learn by Doing · 🌐',
+    visibility: 'Public',
+    postType: 'standard',
+    feedCategory: 'for_you',
+    feedSubCategory: 'All',
+    content: `🪚 Skilled Trades: Learn by Doing — "Carpentry Basics: Choosing the Right Clamp" (Original Creator: This Old House)\n\nExplore different clamp types (bar clamps, pipe clamps, C-clamps, spring clamps, and quick-grip clamps) and how to use scrap wood cauls/pads to protect finished wood surfaces while clamping.\n\n• Practice Activity: Identify two clamp types and explain which job each would suit best, including how to protect the wood’s surface.`,
+    hashtags: ['#Carpentry', '#Clamps', '#Woodworking', '#ThisOldHouse', '#LearnByDoing'],
+    media: {
+      type: 'video',
+      url: 'https://www.youtube.com/watch?v=GHiOk_8mlq0',
+      youtubeId: 'GHiOk_8mlq0',
+      thumbnailUrl: 'https://i.ytimg.com/vi/GHiOk_8mlq0/hqdefault.jpg',
+      title: 'Carpentry Basics: Choosing the Right Clamp (Choosing and Using Clamps)',
+      description: 'This Old House · Skilled Trades: Learn by Doing (Carpentry)',
+      duration: '',
+      serialPlate: 'CLN-LBD02',
+      brandName: 'ConnectLn',
+      takeaways: [
+        'Match bar, pipe, C-clamp, and quick-grip clamps to glue-up and assembly tasks',
+        'Place scrap wood cauls or protective pads between metal jaws and finished lumber',
+        'Apply balanced clamping pressure without bowing or marring the workpiece'
+      ],
+      aspectRatio: '16:9'
+    },
+    stats: {
+      likesCount: 364,
+      commentsCount: 33,
+      repostsCount: 49,
+      reactionsBreakdown: { like: 210, celebrate: 82, support: 34, love: 26, insightful: 12, funny: 0 }
     },
     userReaction: null,
     isSaved: false,
