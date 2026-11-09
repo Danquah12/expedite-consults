@@ -139,6 +139,7 @@ export interface EmbeddedProductData {
 
 export interface Post {
   id: string
+  isUserCreated?: boolean
   professionId?: string
   professionEnclave?: string
   targetProfessions?: string[]
@@ -1652,7 +1653,7 @@ Read the full open-access technical report and architecture blueprint below:`,
       name: 'Alex Taylor',
       headline: 'Principal Cloud & Security Architect | AI Infrastructure & Zero Trust Lead @ Expedite Consults',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
-      connectionDegree: 'You'
+      connectionDegree: '1st'
     },
     timestamp: '1h · 🌐',
     visibility: 'Public',

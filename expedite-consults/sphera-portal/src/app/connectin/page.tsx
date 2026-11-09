@@ -867,15 +867,31 @@ export default function ConnectLnPage() {
         return prev
       }
 
+      const isUserCreatedPost = (p: Post) =>
+        Boolean(
+          p &&
+            (p.isUserCreated ||
+              p.id?.startsWith('user_post_') ||
+              p.id?.startsWith('post_story_share_') ||
+              (p.author?.connectionDegree === 'You' &&
+                !p.isProfessionTiered &&
+                p.id !== 'post_dstrike_wheel_masterclass' &&
+                !p.id?.startsWith('post_prof_') &&
+                p.id !== 'post_poll_1'))
+        )
+
+      const userCreatedInPrev = prev.filter(isUserCreatedPost)
+      const userCreatedIds = new Set(userCreatedInPrev.map(p => p.id))
       const tieredIds = new Set(tieredPosts.map(tp => tp.id))
       const cleanedPrev = prev.filter(p => {
+        if (userCreatedIds.has(p.id)) return false
         if (p.id === 'post_dstrike_wheel_masterclass') return false
         if (p.id.startsWith('post_prof_')) return false
         if (tieredIds.has(p.id)) return false
         return true
       })
 
-      return [...tieredPosts, ...cleanedPrev]
+      return [...userCreatedInPrev, ...tieredPosts, ...cleanedPrev]
     })
   }, [
     userData?.id,
@@ -1248,40 +1264,55 @@ export default function ConnectLnPage() {
       ? selectedEnclaves[0]
       : (userData.professionEnclave || 'trades_construction')
 
+    const newPostId = 'user_post_' + Date.now()
     const newPost: Post = {
       ...newPostData,
+      isUserCreated: true,
       professionId: newPostData.professionId || currentProfId,
       professionEnclave: newPostData.professionEnclave || effectiveEnclave,
       feedCategory: newPostData.feedCategory || 'for_you',
       feedSubCategory: newPostData.feedSubCategory || 'All',
-      id: 'post_' + Date.now(),
+      id: newPostId,
       timestamp: 'Just now · 🌐',
       stats: {
         likesCount: 1,
         commentsCount: 0,
         repostsCount: 0,
         reactionsBreakdown: {
-          like: 1,
-          celebrate: 0,
+          like: newPostData.postType === 'celebration' ? 0 : 1,
+          celebrate: newPostData.postType === 'celebration' ? 1 : 0,
           support: 0,
           love: 0,
           insightful: 0,
           funny: 0
         }
       },
+      userReaction: newPostData.postType === 'celebration' ? 'celebrate' : newPostData.userReaction ?? null,
       comments: []
     }
 
+    setActiveTab('home')
     setActiveFeedCategory('for_you')
     setActiveFeedSubCategory('All')
     setFeedTypeFilter('all')
     setSelectedTagFilter(null)
+    setSearchQuery('')
 
     setPosts(prev => {
-      const updated = [newPost, ...prev]
+      const updated = [newPost, ...prev.filter(p => p.id !== newPostId)]
       saveStoredPosts(updated)
       return updated
     })
+
+    if (typeof window !== 'undefined') {
+      setTimeout(() => {
+        const el = document.getElementById(`connectln-post-${newPostId}`)
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+      }, 120)
+    }
+
     if (userData?.name) {
       recordLiveContentReach({
         userName: userData.name,
@@ -1298,6 +1329,14 @@ export default function ConnectLnPage() {
       targetTitle: `Post by ${userData.name}`,
       details: (newPost.content || '').slice(0, 140),
       user: userData
+    })
+  }
+
+  const handleDeletePost = (postId: string) => {
+    setPosts(prev => {
+      const updated = prev.filter(p => p.id !== postId)
+      saveStoredPosts(updated)
+      return updated
     })
   }
 
@@ -1845,10 +1884,14 @@ export default function ConnectLnPage() {
     .sort((a, b) => {
       const score = (p: Post) => {
         if (
-          p.author?.connectionDegree === 'You' &&
-          !p.isProfessionTiered &&
-          p.id !== 'post_dstrike_wheel_masterclass' &&
-          !p.id.startsWith('post_prof_')
+          p.isUserCreated ||
+          p.id?.startsWith('user_post_') ||
+          p.id?.startsWith('post_story_share_') ||
+          (p.author?.connectionDegree === 'You' &&
+            !p.isProfessionTiered &&
+            p.id !== 'post_dstrike_wheel_masterclass' &&
+            !p.id.startsWith('post_prof_') &&
+            p.id !== 'post_poll_1')
         ) {
           return 10
         }
@@ -1859,6 +1902,22 @@ export default function ConnectLnPage() {
       }
       return score(b) - score(a)
     })
+
+  const isUserCreatedFeedPost = (p: Post) =>
+    Boolean(
+      p &&
+        (p.isUserCreated ||
+          p.id?.startsWith('user_post_') ||
+          p.id?.startsWith('post_story_share_') ||
+          (p.author?.connectionDegree === 'You' &&
+            !p.isProfessionTiered &&
+            p.id !== 'post_dstrike_wheel_masterclass' &&
+            !p.id?.startsWith('post_prof_') &&
+            p.id !== 'post_poll_1'))
+    )
+
+  const myPublishedPosts = filteredPosts.filter(isUserCreatedFeedPost)
+  const communityFeedPosts = filteredPosts.filter(p => !isUserCreatedFeedPost(p))
 
   if (!hasHydrated) {
     return (
@@ -2065,12 +2124,33 @@ export default function ConnectLnPage() {
               {/* LinkedIn-Style Top "Start a post" Box (Video, Photo, Write article — Matches Screenshot 1) */}
               <PostCreator user={userData} onAddPost={handleAddPost} />
 
+              {/* User's Own Newly Published Feed Posts (Celebrate, Video, Photo, Poll, Document, AI Post) — Shown Immediately Below Composer */}
+              {myPublishedPosts.length > 0 && (
+                <div className="space-y-3">
+                  {myPublishedPosts.map((post) => (
+                    <FeedPostCard
+                      key={post.id}
+                      post={post}
+                      currentUser={userData}
+                      onToggleReaction={handleToggleReaction}
+                      onAddComment={handleAddComment}
+                      onToggleSave={handleToggleSave}
+                      onVotePoll={handleVotePoll}
+                      onSelectMember={handleInspectMember}
+                      onDeletePost={handleDeletePost}
+                    />
+                  ))}
+                </div>
+              )}
+
               {/* 4-Card Rounded LinkedIn Professional Stories, Framed Posters & Live Video Strip */}
               <LinkedInStoriesStrip
                 currentUser={userData}
                 onShareStoryToFeed={(story, mode) => {
+                  const newPostId = 'post_story_share_' + Date.now()
                   const newPost: Post = {
-                    id: 'post_story_share_' + Date.now(),
+                    id: newPostId,
+                    isUserCreated: true,
                     professionEnclave: selectedEnclaves[0] || userData?.professionEnclave || 'all',
                     author: {
                       id: userData.id,
@@ -2127,13 +2207,19 @@ export default function ConnectLnPage() {
                   const updated = [newPost, ...posts]
                   setPosts(updated)
                   saveStoredPosts(updated)
+                  if (typeof window !== 'undefined') {
+                    setTimeout(() => {
+                      const el = document.getElementById(`connectln-post-${newPostId}`)
+                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                    }, 120)
+                  }
                 }}
               />
 
               {/* Top Featured LinkedIn-Format Visual Posts (Poster Frame, Podium Keynote & News Portrait) Above the Fold */}
-              {filteredPosts.length > 0 && (
+              {communityFeedPosts.length > 0 && (
                 <div className="space-y-3">
-                  {filteredPosts.slice(0, 3).map((post) => (
+                  {communityFeedPosts.slice(0, 3).map((post) => (
                     <FeedPostCard
                       key={post.id}
                       post={post}
@@ -2143,6 +2229,7 @@ export default function ConnectLnPage() {
                       onToggleSave={handleToggleSave}
                       onVotePoll={handleVotePoll}
                       onSelectMember={handleInspectMember}
+                      onDeletePost={handleDeletePost}
                     />
                   ))}
                 </div>
@@ -2649,7 +2736,7 @@ export default function ConnectLnPage() {
 
               {/* Feed Posts (Remaining Stream) */}
               <div className="space-y-3">
-                {filteredPosts.slice(3).map((post) => (
+                {communityFeedPosts.slice(3).map((post) => (
                   <FeedPostCard
                     key={post.id}
                     post={post}
@@ -2659,6 +2746,7 @@ export default function ConnectLnPage() {
                     onToggleSave={handleToggleSave}
                     onVotePoll={handleVotePoll}
                     onSelectMember={handleInspectMember}
+                    onDeletePost={handleDeletePost}
                   />
                 ))}
 

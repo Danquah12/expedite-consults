@@ -58,6 +58,7 @@ interface FeedPostCardProps {
   onFollowToggle?: (authorId: string) => void
   onVotePoll?: (postId: string, optionId: string) => void
   onSelectMember?: (member: any) => void
+  onDeletePost?: (postId: string) => void
 }
 
 const reactionIcons: Record<ReactionType, { label: string; icon: string; color: string }> = {
@@ -77,7 +78,8 @@ export function FeedPostCard({
   onToggleSave,
   onFollowToggle,
   onVotePoll,
-  onSelectMember
+  onSelectMember,
+  onDeletePost
 }: FeedPostCardProps) {
   const { t, language } = useLanguage()
   const [isExpanded, setIsExpanded] = useState(false)
@@ -513,11 +515,22 @@ export function FeedPostCard({
                     onToggleSave(post.id)
                     setShowMenu(false)
                   }}
-                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800 cursor-pointer"
                 >
                   <Bookmark className={`h-4 w-4 ${post.isSaved ? "fill-zinc-700 dark:fill-zinc-200 text-transparent" : ""}`} />
                   <span>{post.isSaved ? t("unsave_post", "Unsave post") : t("save_post", "Save post")}</span>
                 </button>
+                {isCurrentUserPost && onDeletePost && (
+                  <button
+                    onClick={() => {
+                      onDeletePost(post.id)
+                      setShowMenu(false)
+                    }}
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30 font-semibold cursor-pointer"
+                  >
+                    <span>🗑️ Delete post</span>
+                  </button>
+                )}
                 <div className="my-1 border-t border-zinc-100 dark:border-zinc-800 pt-1">
                   <span className="px-3 py-0.5 text-[10px] uppercase font-bold text-zinc-400 block">Share Post</span>
                   <button
@@ -617,6 +630,26 @@ export function FeedPostCard({
               {tag}
             </span>
           ))}
+        </div>
+      )}
+
+      {/* 0. CELEBRATION MILESTONE HERO BANNER (When post is a Celebration without separate media) */}
+      {post.celebration && !post.media && (
+        <div className="mx-4 my-2 overflow-hidden rounded-xl border border-emerald-200 dark:border-emerald-800/70 bg-gradient-to-br from-emerald-50 via-teal-50/70 to-amber-50/60 dark:from-emerald-950/40 dark:via-zinc-900 dark:to-amber-950/20 p-5 text-center space-y-2.5 shadow-2xs">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white dark:bg-zinc-800 border border-emerald-200 dark:border-emerald-700 text-3xl shadow-xs">
+            {post.celebration.badge || "🎉"}
+          </div>
+          <div className="space-y-1">
+            <span className="inline-block rounded-full bg-emerald-600/10 dark:bg-emerald-500/20 border border-emerald-500/30 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+              Verified Milestone Celebration
+            </span>
+            <h3 className="text-sm sm:text-base font-extrabold text-zinc-900 dark:text-zinc-100 leading-snug max-w-md mx-auto">
+              {post.celebration.headline}
+            </h3>
+            <p className="text-[11px] font-medium text-zinc-600 dark:text-zinc-400">
+              {resolvedAuthorName} · {resolvedAuthorHeadline}
+            </p>
+          </div>
         </div>
       )}
 

@@ -308,32 +308,66 @@ export function getVaultProfileForUser(user?: Partial<UserProfile> | null): Part
   }
 }
 
+const USER_CREATED_POSTS_KEY = 'connectin_user_created_posts_v2'
+
+function isRealUserCreatedPost(p: Post): boolean {
+  if (!p || !p.id) return false
+  if (p.isUserCreated || p.id.startsWith('user_post_') || p.id.startsWith('post_story_share_')) return true
+  if (
+    p.author?.connectionDegree === 'You' &&
+    !p.isProfessionTiered &&
+    p.id !== 'post_dstrike_wheel_masterclass' &&
+    p.id !== 'post_poll_1' &&
+    !p.id.startsWith('post_prof_')
+  ) {
+    return true
+  }
+  return false
+}
+
 export function loadStoredPosts(explicitUser?: UserProfile | null): Post[] {
   if (typeof window === 'undefined') return initialPosts
   try {
     const saved = localStorage.getItem(STORAGE_KEYS.POSTS)
     const parsed: Post[] = saved ? JSON.parse(saved) : initialPosts
+    const savedUserPostsRaw = localStorage.getItem(USER_CREATED_POSTS_KEY)
+    const savedUserPosts: Post[] = savedUserPostsRaw ? JSON.parse(savedUserPostsRaw) : []
+
     const activeUser = explicitUser || getExplicitStoredUser() || currentUser
     const userPic = resolveUserProfilePicture(activeUser)
     const tieredPosts = buildProfessionTieredFeedPosts(activeUser)
     const tieredById = new Map(tieredPosts.map(tp => [tp.id, tp]))
+
+    // Collect all user-created posts (from dedicated key + any inside parsed)
+    const userPostsMap = new Map<string, Post>()
+    for (const up of savedUserPosts) {
+      if (up && up.id) userPostsMap.set(up.id, { ...up, isUserCreated: true })
+    }
+    for (const p of parsed) {
+      if (isRealUserCreatedPost(p) && !userPostsMap.has(p.id)) {
+        userPostsMap.set(p.id, { ...p, isUserCreated: true })
+      }
+    }
+    const userCreatedList = Array.from(userPostsMap.values())
 
     // Merge any newer initialPosts that were added after the mobile/desktop browser first cached localStorage
     const parsedIds = new Set(parsed.map(p => p.id))
     const missingInitialPosts = initialPosts.filter(ip => !parsedIds.has(ip.id))
     const mergedPosts = [...parsed, ...missingInitialPosts]
 
-    // Filter out stale auto-generated profession-tiered posts from previous profession sessions
+    // Filter out stale auto-generated profession-tiered posts & already-collected userCreatedList
     const remainingPosts = mergedPosts.filter(p => {
+      if (!p || !p.id) return false
+      if (userPostsMap.has(p.id)) return false
       if (p.id === 'post_dstrike_wheel_masterclass') return false
       if (p.id.startsWith('post_prof_')) return false
       if (tieredById.has(p.id)) return false
       return true
     })
 
-    const combinedList = [...tieredPosts, ...remainingPosts]
+    const combinedList = [...userCreatedList, ...tieredPosts, ...remainingPosts]
     return combinedList.map(p => {
-      if (p.author?.connectionDegree === 'You') {
+      if (p.author?.connectionDegree === 'You' || p.isUserCreated) {
         return {
           ...p,
           author: {
@@ -355,7 +389,29 @@ export function loadStoredPosts(explicitUser?: UserProfile | null): Post[] {
 export function saveStoredPosts(posts: Post[]) {
   if (typeof window === 'undefined') return
   try {
-    localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(posts))
+    // 1. Always save user-created posts to their dedicated high-reliability storage key first
+    const userCreated = posts
+      .filter(isRealUserCreatedPost)
+      .map(p => ({
+        ...p,
+        isUserCreated: true,
+        author: {
+          ...p.author,
+          // Strip heavy base64 avatar on disk since loadStoredPosts & FeedPostCard re-attach userPic live
+          avatar: p.author?.avatar?.startsWith('data:') ? '' : p.author?.avatar || ''
+        }
+      }))
+    localStorage.setItem(USER_CREATED_POSTS_KEY, JSON.stringify(userCreated))
+
+    // 2. Save full posts list with base64 author avatars stripped so QuotaExceededError never occurs
+    const compactPosts = posts.map(p => ({
+      ...p,
+      author: {
+        ...p.author,
+        avatar: p.author?.avatar?.startsWith('data:') ? '' : p.author?.avatar || ''
+      }
+    }))
+    localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(compactPosts))
   } catch (e) {
     console.error('Failed to save posts to storage', e)
   }
