@@ -1,8 +1,10 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import {
   Play,
+  Pause,
+  RotateCw,
   Plus,
   X,
   Download,
@@ -127,7 +129,7 @@ export function LinkedInStoriesStrip({
   const userAvatar = resolveUserProfilePicture(currentUser)
 
   // Step cards & spotlight highlight clockwise (pure top-level state updates)
-  const stepClockwise = React.useCallback(() => {
+  const stepClockwise = useCallback(() => {
     setClockwiseSlot((prevSlot) => (prevSlot + 1) % 4)
     setStories((prevStories) => {
       if (prevStories.length <= 1) return prevStories
