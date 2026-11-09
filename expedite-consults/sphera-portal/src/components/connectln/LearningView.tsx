@@ -67,6 +67,7 @@ import {
 import dynamic from "next/dynamic"
 import { UserProfile } from "@/lib/connectln-data"
 import { ConnectInVideoWheel } from "@/components/connectln/ConnectInVideoWheel"
+import { SkilledTradesLearnByDoingSection } from "@/components/connectln/SkilledTradesLearnByDoingSection"
 import {
   LEARNING_VENDOR_SOURCES,
   VENDOR_CATEGORY_TABS,
@@ -204,7 +205,18 @@ export function LearningView({
   onNavigateMarketplace
 }: LearningViewProps) {
   // Master Mode: Courses vs Labs vs Certifications vs Learning Paths vs VibeTOK Hub vs ConnectLn Studies vs Career Mastery Academy vs Change/Upgrade Profession vs Vendors
-  const [learningMode, setLearningMode] = useState<'courses' | 'labs' | 'certifications' | 'paths' | 'vibetok' | 'connectln_studies' | 'career_mastery' | 'change_profession' | 'vendors'>('paths')
+  const [learningMode, setLearningMode] = useState<'courses' | 'labs' | 'certifications' | 'paths' | 'vibetok' | 'connectln_studies' | 'career_mastery' | 'change_profession' | 'vendors' | 'learn_by_doing'>('paths')
+  const [learnByDoingSummary, setLearnByDoingSummary] = useState<{
+    savedLessonIds: string[]
+    journeyLessonIds: string[]
+    completedLessonIds: string[]
+    overallProgressPercent: number
+  }>({
+    savedLessonIds: [],
+    journeyLessonIds: [],
+    completedLessonIds: [],
+    overallProgressPercent: 0
+  })
   const [selectedMobilityCareerNumber, setSelectedMobilityCareerNumber] = useState<number | null>(null)
   const [vibetokExpanded, setVibetokExpanded] = useState(false)
   const [vibetokKey, setVibetokKey] = useState(0)
@@ -862,6 +874,19 @@ export function LearningView({
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
             <button
               type="button"
+              onClick={() => setLearningMode('learn_by_doing')}
+              className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                learningMode === 'learn_by_doing'
+                  ? "bg-amber-400 text-slate-950 font-black shadow-xs"
+                  : "bg-amber-50 dark:bg-amber-950/50 text-amber-900 dark:text-amber-300 hover:bg-amber-100 border border-amber-300 dark:border-amber-800"
+              }`}
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>🛠️ Skilled Trades: Learn by Doing (Carpentry · Auto · Painting · Plumbing · Electrical · Welding · HVAC)</span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => setLearningMode('vendors')}
               className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
                 learningMode === 'vendors'
@@ -1102,7 +1127,7 @@ export function LearningView({
             <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 shrink-0 mr-1">
               Category:
             </span>
-            {['All', 'Cybersecurity', 'AI', 'Cloud', 'Programming', 'Business'].map((cat) => {
+            {['All', 'Skilled Trades: Learn by Doing', 'Cybersecurity', 'AI', 'Cloud', 'Programming', 'Business'].map((cat) => {
               const isSelected = selectedCourseCat === cat
               return (
                 <button
@@ -1122,6 +1147,14 @@ export function LearningView({
           </div>
         )}
       </div>
+
+      {/* Skilled Trades: Learn by Doing Collection (Carpentry, Auto Mechanics, Painting & Decorating, Plumbing, Electrical, Welding, HVAC) */}
+      {(learningMode === 'paths' || learningMode === 'learn_by_doing' || learningMode === 'courses') && (
+        <SkilledTradesLearnByDoingSection
+          onTelemetryChange={setLearnByDoingSummary}
+          onClaimCertificate={handleClaimCertificate}
+        />
+      )}
 
       {/* Expedite Consults Educational Video Talk Wheel */}
       <ConnectInVideoWheel
@@ -1532,11 +1565,23 @@ export function LearningView({
 
                   <div className="p-5 space-y-3">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-zinc-500">{course.duration}</span>
-                      <span className="flex items-center gap-1 text-amber-500 font-bold">
-                        <Star className="h-3.5 w-3.5 fill-amber-500" />
-                        {course.rating} ({course.reviewsCount})
+                      <span className="font-semibold text-zinc-500">
+                        {course.duration && course.duration.trim().length > 0
+                          ? course.duration
+                          : course.originalCreator
+                          ? `Original Creator: ${course.originalCreator}`
+                          : "Self-Paced Lesson"}
                       </span>
+                      {course.rating > 0 ? (
+                        <span className="flex items-center gap-1 text-amber-500 font-bold">
+                          <Star className="h-3.5 w-3.5 fill-amber-500" />
+                          {course.rating} ({course.reviewsCount})
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                          Real Activity Tracked
+                        </span>
+                      )}
                     </div>
 
                     <h3

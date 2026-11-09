@@ -85,6 +85,69 @@ export function getAllWheelTalks(activeEnclaveId?: string): WheelVideoTalk[] {
 }
 
 const CORE_EDUCATIONAL_WHEEL_TALKS: WheelVideoTalk[] = [
+  {
+    id: "wheel-lbd-speed-square",
+    serialPlate: "CLN-LBD01",
+    title: "Carpentry Basics: Marking and Checking Angles (Video 1: Using a Speed Square)",
+    speaker: "This Old House",
+    speakerTitle: "Original Creator · Skilled Trades: Learn by Doing (Carpentry)",
+    youtubeId: "gNhWpuWvtEA",
+    duration: "",
+    category: "trade",
+    categoryLabel: "Skilled Trades: Learn by Doing",
+    enclaveId: "trades_construction",
+    professionId: "carpenter",
+    thumbnailUrl: "https://i.ytimg.com/vi/gNhWpuWvtEA/hqdefault.jpg",
+    summary: "Learners explore how a speed square helps mark angles and check whether corners are square. This is a useful starting lesson before moving into cutting and assembly.",
+    takeaways: [
+      "Skill Covered: Speed Square Layout, Marking 90° & 45° Angles, Checking Corner Squareness",
+      "Practice Activity: Mark a perpendicular line and a 45-degree line on scrap wood, then photograph the markings",
+      "Reference Guide: https://www.thisoldhouse.com/tools/how-to-use-a-speed-square"
+    ],
+    tags: ["#Carpentry", "#SpeedSquare", "#ThisOldHouse", "#LearnByDoing"]
+  },
+  {
+    id: "wheel-lbd-clamps",
+    serialPlate: "CLN-LBD02",
+    title: "Carpentry Basics: Choosing the Right Clamp (Video 2: Choosing and Using Clamps)",
+    speaker: "This Old House",
+    speakerTitle: "Original Creator · Skilled Trades: Learn by Doing (Carpentry)",
+    youtubeId: "GHiOk_8mlq0",
+    duration: "",
+    category: "trade",
+    categoryLabel: "Skilled Trades: Learn by Doing",
+    enclaveId: "trades_construction",
+    professionId: "finish_carpenter",
+    thumbnailUrl: "https://i.ytimg.com/vi/GHiOk_8mlq0/hqdefault.jpg",
+    summary: "This lesson introduces different clamp types and the jobs they suit, including ways to protect the wood’s surface while holding it securely.",
+    takeaways: [
+      "Skill Covered: Clamp Selection, Workpiece Holding & Wood Surface Protection",
+      "Practice Activity: Identify two clamp types and explain which job each would suit best",
+      "Reference Guide: https://www.thisoldhouse.com/tools/all-about-clamps"
+    ],
+    tags: ["#Carpentry", "#Clamps", "#Woodworking", "#ThisOldHouse", "#LearnByDoing"]
+  },
+  {
+    id: "wheel-lbd-welding-basics",
+    serialPlate: "CLN-LBD10",
+    title: "Welding Basics: Comparing MIG, Stick & TIG Welding (Welding Basics for Beginners)",
+    speaker: "Miller Welders",
+    speakerTitle: "Original Creator · Skilled Trades: Learn by Doing (Welding)",
+    youtubeId: "OWThL97tq3k",
+    duration: "",
+    category: "trade",
+    categoryLabel: "Skilled Trades: Learn by Doing",
+    enclaveId: "trades_construction",
+    professionId: "welder",
+    thumbnailUrl: "https://i.ytimg.com/vi/OWThL97tq3k/hqdefault.jpg",
+    summary: "Compare MIG, stick, and TIG welding and the applications discussed in the introduction.",
+    takeaways: [
+      "Skill Covered: Comparing MIG (GMAW), Stick (SMAW), and TIG (GTAW) Welding Processes",
+      "Practice Activity: Compare MIG, stick, and TIG welding and match each process to its application",
+      "Original Creator: Miller Welders (https://www.youtube.com/watch?v=OWThL97tq3k)"
+    ],
+    tags: ["#Welding", "#MIGWelding", "#TIGWelding", "#StickWelding", "#MillerWelders", "#LearnByDoing"]
+  },
   // ─── 1. SKILLED TRADES & CRAFTSMANSHIP (trades_construction) ──────
   {
     id: "wheel-lineman-apprentice",
@@ -1822,7 +1885,19 @@ function buildComprehensiveProfessionWheelTalks(): WheelVideoTalk[] {
   }
 
   // Group all talks by enclave and interleave round-robin so The Wheel immediately showcases EVERY profession discipline!
-  const allCombined = [...CORE_EDUCATIONAL_WHEEL_TALKS, ...generatedTalks]
+  const rawCombined = [...CORE_EDUCATIONAL_WHEEL_TALKS, ...generatedTalks]
+  const seenTalkIds = new Set<string>()
+  const seenSourceVideos = new Set<string>()
+  const allCombined: WheelVideoTalk[] = []
+  for (const talk of rawCombined) {
+    if (seenTalkIds.has(talk.id)) continue
+    if (talk.youtubeId && seenSourceVideos.has(talk.youtubeId) && talk.id.startsWith("wheel-lbd-")) {
+      continue
+    }
+    seenTalkIds.add(talk.id)
+    if (talk.youtubeId) seenSourceVideos.add(talk.youtubeId)
+    allCombined.push(talk)
+  }
   const buckets = new Map<string, WheelVideoTalk[]>()
   for (const talk of allCombined) {
     const key = talk.enclaveId || "general"

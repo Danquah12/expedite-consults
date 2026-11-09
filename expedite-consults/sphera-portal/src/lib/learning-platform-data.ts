@@ -1,8 +1,35 @@
+import {
+  SKILLED_TRADES_LEARN_BY_DOING_LESSONS,
+  normalizeSourceVideoKey
+} from './skilled-trades-learn-by-doing-data'
+
 export interface LearningCourse {
   id: string
   title: string
-  category: 'Cybersecurity' | 'AI' | 'Cloud' | 'Programming' | 'Business'
-  provider: "O'Reilly" | "ConnectIn Masterclass" | "Coursera" | "Udemy" | "AWS Training"
+  category:
+    | 'Cybersecurity'
+    | 'AI'
+    | 'Cloud'
+    | 'Programming'
+    | 'Business'
+    | 'Skilled Trades: Learn by Doing'
+  provider:
+    | "O'Reilly"
+    | "ConnectIn Masterclass"
+    | "Coursera"
+    | "Udemy"
+    | "AWS Training"
+    | "This Old House"
+    | "CAA-Quebec"
+    | "AutoZone"
+    | "Sherwin-Williams"
+    | "FrogTape"
+  originalCreator?: string
+  sourceVideoUrl?: string
+  referenceArticleUrl?: string
+  practiceActivity?: string
+  skillsCovered?: string[]
+  isLearnByDoingCatalogue?: boolean
   instructor: {
     name: string
     role: string
@@ -810,9 +837,64 @@ export function getEnclaveLearningPath(enclaveId?: string): CareerLearningPath {
   }
 }
 
+export const SKILLED_TRADES_LEARN_BY_DOING_COURSES: LearningCourse[] =
+  SKILLED_TRADES_LEARN_BY_DOING_LESSONS.map((lesson, idx) => ({
+    id: lesson.id,
+    title: `${lesson.title} (${lesson.videoLabel})`,
+    category: 'Skilled Trades: Learn by Doing',
+    provider: (lesson.originalCreator as LearningCourse['provider']) || 'ConnectIn Masterclass',
+    originalCreator: lesson.originalCreator,
+    sourceVideoUrl: lesson.sourceVideoUrl,
+    referenceArticleUrl: lesson.referenceArticleUrl,
+    practiceActivity: lesson.practiceActivity,
+    skillsCovered: lesson.skillsCovered,
+    isLearnByDoingCatalogue: true,
+    instructor: {
+      name: lesson.originalCreator,
+      role: `Original Creator · ${lesson.category}`,
+      avatar:
+        idx < 2
+          ? 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=100&auto=format&fit=crop&q=80'
+          : idx < 4
+          ? 'https://images.unsplash.com/photo-1487754180451-c456f719a1fc?w=100&auto=format&fit=crop&q=80'
+          : 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=100&auto=format&fit=crop&q=80'
+    },
+    rating: 0, // Unseeded — recorded strictly from actual user activity
+    reviewsCount: 0, // Unseeded — no simulated learners
+    duration: lesson.duration, // Left blank for unverified durations
+    level: 'Beginner',
+    coverImage: lesson.thumbnailUrl,
+    summary: lesson.description,
+    curriculumModules: [
+      ...lesson.skillsCovered.map((s, i) => `${i + 1}. Skill Covered: ${s}`),
+      `Practice Activity: ${lesson.practiceActivity}`,
+      `Knowledge Check: ${lesson.knowledgeCheck.question}`
+    ],
+    hasCertificate: true,
+    isEnrolled: false,
+    progressPercent: 0,
+    recommendedMarketplaceTools: []
+  }))
+
+function deduplicateCoursesBySourceVideo(courses: LearningCourse[]): LearningCourse[] {
+  const seenIds = new Set<string>()
+  const seenSourceKeys = new Set<string>()
+  const result: LearningCourse[] = []
+  for (const c of courses) {
+    if (seenIds.has(c.id)) continue
+    const sourceKey = c.sourceVideoUrl ? normalizeSourceVideoKey(c.sourceVideoUrl) : ''
+    if (sourceKey && seenSourceKeys.has(sourceKey)) continue
+    seenIds.add(c.id)
+    if (sourceKey) seenSourceKeys.add(sourceKey)
+    result.push(c)
+  }
+  return result
+}
+
 export function getEnclaveLearningCourses(enclaveId?: string): LearningCourse[] {
   if (enclaveId === 'trades_construction') {
-    return [
+    return deduplicateCoursesBySourceVideo([
+      ...SKILLED_TRADES_LEARN_BY_DOING_COURSES,
       {
         id: 'crs_timber_1',
         title: 'Heavy Timber Mortise & Tenon Joinery & Bent Fabrication',
@@ -901,11 +983,11 @@ export function getEnclaveLearningCourses(enclaveId?: string): LearningCourse[] 
         hasCertificate: true,
         recommendedMarketplaceTools: []
       }
-    ]
+    ])
   }
 
   if (enclaveId === 'healthcare_medicine') {
-    return [
+    return deduplicateCoursesBySourceVideo([
       {
         id: 'crs_health_atls',
         title: 'Advanced Trauma Life Support (ATLS 10th Ed) & Damage Control',
@@ -967,12 +1049,14 @@ export function getEnclaveLearningCourses(enclaveId?: string): LearningCourse[] 
         ],
         hasCertificate: true,
         recommendedMarketplaceTools: []
-      }
-    ]
+      },
+      ...SKILLED_TRADES_LEARN_BY_DOING_COURSES
+    ])
   }
 
   if (enclaveId === 'automotive_mechanics') {
-    return [
+    return deduplicateCoursesBySourceVideo([
+      ...SKILLED_TRADES_LEARN_BY_DOING_COURSES,
       {
         id: 'crs_auto_scope',
         title: 'PicoScope 4-Channel CAN-FD & Oscilloscope Waveforms',
@@ -1035,11 +1119,14 @@ export function getEnclaveLearningCourses(enclaveId?: string): LearningCourse[] 
         hasCertificate: true,
         recommendedMarketplaceTools: []
       }
-    ]
+    ])
   }
 
   // tech_cybersecurity or default
-  return LEARNING_COURSES_DATA
+  return deduplicateCoursesBySourceVideo([
+    ...LEARNING_COURSES_DATA,
+    ...SKILLED_TRADES_LEARN_BY_DOING_COURSES
+  ])
 }
 
 export function getEnclaveInteractiveLabs(enclaveId?: string): InteractiveLab[] {
