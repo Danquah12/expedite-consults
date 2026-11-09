@@ -91,14 +91,25 @@ const BASE_COUNTRIES_CONFIG: CountryConfig[] = [
     hubs: ['All Hubs', 'New York, NY', 'San Francisco, CA', 'Washington, DC / MD / VA', 'Austin, TX', 'Seattle, WA', 'Boston, MA', 'US Remote']
   },
   {
-    code: 'GH',
-    name: 'Ghana',
-    flag: '🇬🇭',
-    languages: ['English (Official)', 'Twi', 'Ga', 'Fante', 'Ewe'],
-    primaryLanguage: 'English',
-    currency: 'GHS',
-    currencySymbol: 'GH₵',
-    hubs: ['All Hubs', 'Accra (Airport City / East Legon)', 'Kumasi (Tech Hub)', 'Tema', 'Takoradi', 'Remote Ghana']
+    code: 'AF',
+    name: 'Africa',
+    flag: '🌍',
+    languages: ['English (Official)', 'French', 'Swahili', 'Arabic', 'Portuguese', 'Twi', 'Yoruba'],
+    primaryLanguage: 'English / Pan-African',
+    currency: 'USD',
+    currencySymbol: '$',
+    hubs: [
+      'All Hubs',
+      'Accra, Ghana',
+      'Lagos, Nigeria',
+      'Nairobi, Kenya',
+      'Johannesburg & Cape Town, South Africa',
+      'Kigali, Rwanda',
+      'Cairo, Egypt',
+      'Casablanca, Morocco',
+      'Addis Ababa, Ethiopia',
+      'Remote Africa'
+    ]
   },
   {
     code: 'DE',
@@ -4305,7 +4316,8 @@ export function getEnclaveSearchPlaceholder(enclaveId: string, countryName: stri
 export function getCountryShortLabel(country: CountryConfig): string {
   const map: Record<string, string> = {
     US: 'United States',
-    GH: 'Ghana',
+    AF: 'Africa',
+    GH: 'Africa',
     DE: 'Germany',
     GB: 'United Kingdom',
     CA: 'Canada',
@@ -4749,6 +4761,35 @@ const REGIONAL_EMPLOYERS_BY_COUNTRY: Record<string, Record<string, RegionalEmplo
       { company: 'Royal Bank of Canada (RBC) & Desjardins Cooperative', applyUrl: 'https://jobs.rbc.com/', source: 'RBC Careers' }
     ]
   },
+  AF: {
+    trades_construction: [
+      { company: 'WBHO Pan-Africa, Julius Berger & Consar Construction (Accra / Lagos / Johannesburg)', applyUrl: 'https://www.wbho.co.za/careers/', source: 'WBHO & Julius Berger Africa' },
+      { company: 'Orascom Construction, CPS Africa & Devtraco MEP Engineering', applyUrl: 'https://orascom.com/careers/', source: 'Orascom & Devtraco Africa' }
+    ],
+    energy_utilities_environment: [
+      { company: 'Volta River Authority (VRA), KenGen Geothermal, Eskom & Newmont Africa Gold Mines', applyUrl: 'https://www.vra.com/', source: 'VRA, KenGen & Newmont Africa' },
+      { company: 'Bui Power Authority, Elsewedy Electric & SunKing Pan-African Solar Microgrids', applyUrl: 'https://buipower.com/', source: 'Pan-African Energy & Solar' }
+    ],
+    aviation_aerospace_maritime: [
+      { company: 'Ethiopian Airlines MRO, Kenya Airways Technical & Tema/Mombasa/Tanger-Med Ports', applyUrl: 'https://corporate.ethiopianairlines.com/AboutEthiopian/careers', source: 'Ethiopian MRO & African Ports' }
+    ],
+    telecom_digital_infrastructure: [
+      { company: 'MTN Group Pan-Africa Fiber, Safaricom M-Pesa, Liquid Intelligent Tech & PAIX Data Centres', applyUrl: 'https://www.mtn.com/careers/', source: 'MTN, Safaricom & Liquid Africa' }
+    ],
+    science_laboratory_research: [
+      { company: 'Noguchi Memorial Institute (Accra), KEMRI (Nairobi) & Africa CDC Laboratories', applyUrl: 'https://noguchi.ug.edu.gh/', source: 'Noguchi, KEMRI & Africa CDC' }
+    ],
+    healthcare_medicine: [
+      { company: 'Nyaho Medical Centre,UGMC Accra, Netcare South Africa & Aga Khan University Hospital Nairobi', applyUrl: 'https://nyahomedical.com/careers/', source: 'Pan-African Hospital Network' },
+      { company: 'Korle-Bu Teaching Hospital, Lagos University Teaching Hospital & Groote Schuur Cape Town', applyUrl: 'https://ugmc.ug.edu.gh/', source: 'African Teaching Hospitals' }
+    ],
+    automotive_mechanics: [
+      { company: 'Toyota Tsusho Africa, Volkswagen Rwanda/SA & Spiro Pan-African EV Fleet', applyUrl: 'https://www.toyotaghana.com/', source: 'Toyota Africa & Spiro EV' }
+    ],
+    tech_cybersecurity: [
+      { company: 'Flutterwave Security, Paystack (Stripe Africa), MTN Cyber Defense & Standard Bank SOC', applyUrl: 'https://flutterwave.com/careers', source: 'Pan-African Cyber & FinTech SOC' }
+    ]
+  },
   GH: {
     trades_construction: [
       { company: 'WBHO Ghana & Consar Construction Ltd', applyUrl: 'https://www.wbho.co.za/careers/', source: 'WBHO Ghana Careers' },
@@ -4778,6 +4819,7 @@ const REGIONAL_EMPLOYERS_BY_COUNTRY: Record<string, Record<string, RegionalEmplo
 }
 
 const DEFAULT_COUNTRY_CORPORATIONS: Record<string, { prefix: string; url: string }> = {
+  AF: { prefix: 'MTN Group / Dangote / Safaricom / WBHO / Ethiopian Airlines / Ecobank Pan-Africa', url: 'https://www.mtn.com/careers/' },
   JP: { prefix: 'Mitsubishi / Sony / Kajima Corporation Japan', url: 'https://www.sony.com/en/SonyInfo/Careers/' },
   NG: { prefix: 'Dangote Group / Julius Berger / NLNG / Flutterwave Nigeria', url: 'https://flutterwave.com/careers' },
   AU: { prefix: 'Lendlease / BHP Mining / Qantas Engineering / Ramsay Health Australia', url: 'https://www.lendlease.com/au/careers/' },
@@ -5052,14 +5094,18 @@ export function getLocalizedJobsForCountryAndEnclave(
   enclaveId: string = 'all',
   extraJobs: GlobalJobItem[] = []
 ): GlobalJobItem[] {
-  const country = COUNTRIES_CONFIG.find(c => c.code === countryCode) || COUNTRIES_CONFIG[0]
+  const normalizedCode = countryCode === 'GH' ? 'AF' : countryCode
+  const country = COUNTRIES_CONFIG.find(c => c.code === normalizedCode) || COUNTRIES_CONFIG[0]
   const realHubs = country.hubs.filter(h => h !== 'All Hubs')
 
   const allExplicit = [...extraJobs, ...GLOBAL_JOBS_CATALOG]
 
   // 1. Direct explicit matches for this exact country & enclave
   const directCountryMatches = allExplicit.filter(j => {
-    const countryMatch = j.countryCode === countryCode
+    const countryMatch =
+      normalizedCode === 'AF'
+        ? ['AF', 'GH', 'NG', 'KE', 'ZA', 'EG'].includes(j.countryCode)
+        : j.countryCode === normalizedCode
     const enclaveMatch = !enclaveId || enclaveId === 'all' || j.professionEnclave === enclaveId
     return countryMatch && enclaveMatch
   })

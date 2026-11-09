@@ -66,6 +66,8 @@ export function NotificationsView({
   currentUserProfession = ""
 }: NotificationsViewProps) {
   const [selectedCategory, setSelectedCategory] = useState<'All' | 'Lookups & Vouches' | 'Security' | 'Career' | 'Marketplace' | 'Learning' | 'Social'>('All')
+  const [lookupVouchSubFilter, setLookupVouchSubFilter] = useState<'all' | 'lookups' | 'vouches'>('all')
+  const [lookupActorTypeFilter, setLookupActorTypeFilter] = useState<'all' | 'search_appearance' | 'profile_click'>('all')
   const [notifications, setNotifications] = useState<CategorizedNotificationItem[]>(INITIAL_CATEGORIZED_NOTIFICATIONS)
   const [unreadOnly, setUnreadOnly] = useState(false)
   const [readDynamicAlertIds, setReadDynamicAlertIds] = useState<string[]>([])
@@ -232,10 +234,51 @@ export function NotificationsView({
     }))
   }, [followBundle])
 
+  const tailoredCareerAlertItems = React.useMemo<CategorizedNotificationItem[]>(() => {
+    const profLabel = (currentUserProfession || 'Master Carpenter & Heavy Timber Specialist').trim()
+    return [
+      {
+        id: `career_tailored_prof_${profLabel.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`,
+        category: 'Career',
+        subType: 'Job Match',
+        actor: {
+          name: 'ConnectLn Direct-Hire Talent Radar',
+          role: 'Verified Skills-First Career Matcher',
+          avatar: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=100&auto=format&fit=crop&q=80'
+        },
+        title: `💼 4 Direct-Hire & Contract Matches for ${profLabel} ($118K–$176K / yr)`,
+        description: `Employers in United States, Africa, UK & Germany matched your verified Proof-of-Work dossier, OSHA/trade tickets, and peer vouches for immediate interview fast-track.`,
+        timestamp: '22m ago',
+        unread: !readDynamicAlertIds.includes(`career_tailored_prof_${profLabel.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`),
+        priority: 'high',
+        actionText: 'View Matched Jobs',
+        targetTab: 'jobs'
+      },
+      {
+        id: 'career_cyber_essential_2026',
+        category: 'Career',
+        subType: 'Job Match',
+        actor: {
+          name: 'Cybersecurity & Essential Trades Hiring Enclave',
+          role: '22-Enclave Live Requisition Feed',
+          avatar: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=100&auto=format&fit=crop&q=80'
+        },
+        title: '🛡️🛠️ New Requisitions: Cybersecurity (SOC, Pentest, OT/ICS, CISO) & Essential Trades (Lineman, Elevator, CDL-A, Master Carpenter)',
+        description: '48 new verified openings published with transparent pay bands, zero 4-year degree gatekeeping (STARs pathway), and 1-click CareerTwin™ application.',
+        timestamp: '1h ago',
+        unread: !readDynamicAlertIds.includes('career_cyber_essential_2026'),
+        priority: 'high',
+        actionText: 'Explore Live Jobs',
+        targetTab: 'jobs'
+      }
+    ]
+  }, [currentUserProfession, readDynamicAlertIds])
+
   const allCombinedNotifications = React.useMemo(() => {
     const dynamicItems = [
       ...liveLookupAlertItems,
       ...liveVouchAlertItems,
+      ...tailoredCareerAlertItems,
       ...liveFollowerNotificationItems
     ]
     const existingIds = new Set(dynamicItems.map(i => i.id))
@@ -243,7 +286,7 @@ export function NotificationsView({
       ...dynamicItems,
       ...notifications.filter(n => !existingIds.has(n.id))
     ]
-  }, [liveLookupAlertItems, liveVouchAlertItems, liveFollowerNotificationItems, notifications])
+  }, [liveLookupAlertItems, liveVouchAlertItems, tailoredCareerAlertItems, liveFollowerNotificationItems, notifications])
 
   // Noctis Alerts Intelligence States
   const [showNoctisOverview, setShowNoctisOverview] = useState<boolean>(true)
@@ -257,21 +300,30 @@ export function NotificationsView({
   const [loadingSingleAlertId, setLoadingSingleAlertId] = useState<string | null>(null)
   const [singleAlertQuestions, setSingleAlertQuestions] = useState<Record<string, string>>({})
 
-  const isLookupOrVouchAlert = (n: CategorizedNotificationItem) =>
+  const isLookupAlert = (n: CategorizedNotificationItem) =>
     n.subType === 'Weekly Lookup Digest' ||
-    n.subType === 'Who Looked You Up' ||
+    n.subType === 'Who Looked You Up'
+
+  const isVouchAlert = (n: CategorizedNotificationItem) =>
     n.subType === 'Peer Vouch Received'
 
-  // Category counts
+  const isLookupOrVouchAlert = (n: CategorizedNotificationItem) =>
+    isLookupAlert(n) || isVouchAlert(n)
+
+  // Category counts (Lookups & Vouches are counted in their dedicated tab so Career & Social show distinct counts)
   const getCategoryCount = (cat: string) => {
     if (cat === 'All') return allCombinedNotifications.length
     if (cat === 'Lookups & Vouches') return allCombinedNotifications.filter(isLookupOrVouchAlert).length
+    if (cat === 'Career') return allCombinedNotifications.filter(n => n.category === 'Career' && !isLookupOrVouchAlert(n)).length
+    if (cat === 'Social') return allCombinedNotifications.filter(n => n.category === 'Social' && !isLookupOrVouchAlert(n)).length
     return allCombinedNotifications.filter(n => n.category === cat).length
   }
 
   const getUnreadCount = (cat: string) => {
     if (cat === 'All') return allCombinedNotifications.filter(n => n.unread).length
     if (cat === 'Lookups & Vouches') return allCombinedNotifications.filter(n => isLookupOrVouchAlert(n) && n.unread).length
+    if (cat === 'Career') return allCombinedNotifications.filter(n => n.category === 'Career' && !isLookupOrVouchAlert(n) && n.unread).length
+    if (cat === 'Social') return allCombinedNotifications.filter(n => n.category === 'Social' && !isLookupOrVouchAlert(n) && n.unread).length
     return allCombinedNotifications.filter(n => n.category === cat && n.unread).length
   }
 
@@ -281,11 +333,24 @@ export function NotificationsView({
       selectedCategory === 'All'
         ? true
         : selectedCategory === 'Lookups & Vouches'
-        ? isLookupOrVouchAlert(n)
+        ? lookupVouchSubFilter === 'lookups'
+          ? isLookupAlert(n)
+          : lookupVouchSubFilter === 'vouches'
+          ? isVouchAlert(n)
+          : isLookupOrVouchAlert(n)
+        : selectedCategory === 'Career'
+        ? n.category === 'Career' && !isLookupOrVouchAlert(n)
+        : selectedCategory === 'Social'
+        ? n.category === 'Social' && !isLookupOrVouchAlert(n)
         : n.category === selectedCategory
     const matchUnread = !unreadOnly || n.unread
     return matchCategory && matchUnread
   })
+
+  const filteredLookupActors = React.useMemo(() => {
+    if (lookupActorTypeFilter === 'all') return recentLookupActors
+    return recentLookupActors.filter(a => a.discoveryType === lookupActorTypeFilter)
+  }, [recentLookupActors, lookupActorTypeFilter])
 
   const serializeAlertForNoctis = (n: CategorizedNotificationItem) => ({
     id: n.id,
@@ -486,10 +551,13 @@ export function NotificationsView({
                 <button
                   key={cat.id}
                   type="button"
-                  onClick={() => setSelectedCategory(cat.id as any)}
+                  onClick={() => {
+                    setSelectedCategory(cat.id as any)
+                    setLookupVouchSubFilter('all')
+                  }}
                   className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
                     isSelected
-                      ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
+                      ? "bg-[#0A66C2] text-white font-semibold shadow-xs ring-2 ring-[#0A66C2]/30"
                       : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700/70"
                   }`}
                 >
@@ -521,16 +589,77 @@ export function NotificationsView({
             <span>{unreadOnly ? "Showing Unread Only" : "Show All"}</span>
           </button>
         </div>
+
+        {/* Active Category Filter Status Bar & Sub-Filters */}
+        {selectedCategory !== 'All' && (
+          <div className="mt-3.5 rounded-xl border border-blue-200 dark:border-blue-800/80 bg-blue-50/70 dark:bg-blue-950/40 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#0A66C2] text-white px-2.5 py-0.5 text-[11px] font-extrabold">
+                <span>Active Filter: {selectedCategory}</span>
+                <span>({filteredNotifications.length})</span>
+              </span>
+              <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                {selectedCategory === 'Lookups & Vouches'
+                  ? `Showing ${weeklyLookupsCount} Weekly Directory Lookups, ${vouchEvents.length} Verified Peer Vouches & ${filteredNotifications.length} Lookup/Vouch Alert Cards`
+                  : selectedCategory === 'Career'
+                  ? `Showing ${filteredNotifications.length} Direct-Hire Job Matches, Interview Schedules & Recruiter Outreach Signals`
+                  : `Showing ${filteredNotifications.length} filtered ${selectedCategory} alerts`}
+              </span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-1.5">
+              {selectedCategory === 'Lookups & Vouches' && (
+                <>
+                  {[
+                    { id: 'all', label: `All (${allCombinedNotifications.filter(isLookupOrVouchAlert).length})` },
+                    { id: 'lookups', label: `🔍 Weekly Lookups Only (${allCombinedNotifications.filter(isLookupAlert).length})` },
+                    { id: 'vouches', label: `🤝 Peer Vouches Only (${allCombinedNotifications.filter(isVouchAlert).length})` }
+                  ].map((sub) => (
+                    <button
+                      key={sub.id}
+                      type="button"
+                      onClick={() => setLookupVouchSubFilter(sub.id as any)}
+                      className={`rounded-full px-2.5 py-1 text-[11px] font-bold transition-all cursor-pointer ${
+                        lookupVouchSubFilter === sub.id
+                          ? "bg-amber-600 text-white shadow-2xs"
+                          : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-700 hover:bg-amber-50"
+                      }`}
+                    >
+                      {sub.label}
+                    </button>
+                  ))}
+                </>
+              )}
+              {selectedCategory === 'Career' && (
+                <button
+                  type="button"
+                  onClick={() => onNavigateTab && onNavigateTab('jobs')}
+                  className="rounded-full bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 text-[11px] font-extrabold transition-all cursor-pointer"
+                >
+                  Open Live Jobs Board →
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedCategory('All')
+                  setLookupVouchSubFilter('all')
+                }}
+                className="rounded-full bg-white dark:bg-zinc-800 hover:bg-zinc-100 text-zinc-700 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-700 px-2.5 py-1 text-[11px] font-bold transition-all cursor-pointer"
+              >
+                Reset to All ({getCategoryCount('All')}) ✕
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* 1.25 WEEKLY DIRECTORY LOOKUPS & VERIFIED PEER VOUCHES ALERT HUB */}
-      {(selectedCategory === 'All' ||
-        selectedCategory === 'Lookups & Vouches' ||
-        selectedCategory === 'Career' ||
-        selectedCategory === 'Social') && (
+      {/* 1.25 WEEKLY DIRECTORY LOOKUPS & VERIFIED PEER VOUCHES ALERT HUB (Only shown in 'All' or 'Lookups & Vouches' so Career/Social/Learning/Solutions/Security show their cards immediately at the top!) */}
+      {(selectedCategory === 'All' || selectedCategory === 'Lookups & Vouches') && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* LEFT CARD: WEEKLY DIRECTORY LOOKUPS & WHO WAS TRYING TO LOOKUP THE USER */}
-          <div className="rounded-2xl border border-amber-300/80 dark:border-amber-800/70 bg-gradient-to-br from-amber-50/80 via-white to-orange-50/40 dark:from-zinc-900 dark:via-zinc-900 dark:to-amber-950/20 p-5 shadow-xs flex flex-col justify-between">
+          {(lookupVouchSubFilter === 'all' || lookupVouchSubFilter === 'lookups') && (
+          <div className={`rounded-2xl border border-amber-300/80 dark:border-amber-800/70 bg-gradient-to-br from-amber-50/80 via-white to-orange-50/40 dark:from-zinc-900 dark:via-zinc-900 dark:to-amber-950/20 p-5 shadow-xs flex flex-col justify-between ${lookupVouchSubFilter === 'lookups' ? 'lg:col-span-2' : ''}`}>
             <div>
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div>
@@ -551,25 +680,68 @@ export function NotificationsView({
                 </div>
               </div>
 
-              {/* Breakdown Pills */}
+              {/* Interactive Breakdown Filter Pills */}
               <div className="grid grid-cols-2 gap-2 mb-3.5">
-                <div className="rounded-xl bg-white/90 dark:bg-zinc-800/90 border border-amber-200/80 dark:border-zinc-700 px-3 py-2 flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-zinc-600 dark:text-zinc-300">🔎 Search Appearances</span>
-                  <span className="text-sm font-black text-amber-700 dark:text-amber-400">{weeklySearchAppearances}</span>
-                </div>
-                <div className="rounded-xl bg-white/90 dark:bg-zinc-800/90 border border-amber-200/80 dark:border-zinc-700 px-3 py-2 flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-zinc-600 dark:text-zinc-300">👆 Direct Profile Clicks</span>
-                  <span className="text-sm font-black text-[#0A66C2] dark:text-sky-400">{weeklyProfileClicks}</span>
-                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setLookupActorTypeFilter(prev =>
+                      prev === 'search_appearance' ? 'all' : 'search_appearance'
+                    )
+                  }
+                  className={`rounded-xl border px-3 py-2 flex items-center justify-between transition-all cursor-pointer ${
+                    lookupActorTypeFilter === 'search_appearance'
+                      ? "bg-amber-600 text-white border-amber-700 shadow-xs"
+                      : "bg-white/90 dark:bg-zinc-800/90 border-amber-200/80 dark:border-zinc-700 hover:border-amber-400"
+                  }`}
+                >
+                  <span className={`text-[11px] font-bold ${lookupActorTypeFilter === 'search_appearance' ? 'text-white' : 'text-zinc-600 dark:text-zinc-300'}`}>
+                    🔎 Search Appearances
+                  </span>
+                  <span className={`text-sm font-black ${lookupActorTypeFilter === 'search_appearance' ? 'text-white' : 'text-amber-700 dark:text-amber-400'}`}>
+                    {weeklySearchAppearances}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setLookupActorTypeFilter(prev =>
+                      prev === 'profile_click' ? 'all' : 'profile_click'
+                    )
+                  }
+                  className={`rounded-xl border px-3 py-2 flex items-center justify-between transition-all cursor-pointer ${
+                    lookupActorTypeFilter === 'profile_click'
+                      ? "bg-[#0A66C2] text-white border-[#004182] shadow-xs"
+                      : "bg-white/90 dark:bg-zinc-800/90 border-amber-200/80 dark:border-zinc-700 hover:border-blue-400"
+                  }`}
+                >
+                  <span className={`text-[11px] font-bold ${lookupActorTypeFilter === 'profile_click' ? 'text-white' : 'text-zinc-600 dark:text-zinc-300'}`}>
+                    👆 Direct Profile Clicks
+                  </span>
+                  <span className={`text-sm font-black ${lookupActorTypeFilter === 'profile_click' ? 'text-white' : 'text-[#0A66C2] dark:text-sky-400'}`}>
+                    {weeklyProfileClicks}
+                  </span>
+                </button>
               </div>
 
               {/* Who Was Trying to Lookup You List */}
               <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
                 <div className="text-[11px] font-extrabold uppercase tracking-wider text-amber-900 dark:text-amber-300 flex items-center justify-between">
-                  <span>Who Was Trying to Lookup You ({recentLookupActors.length})</span>
+                  <span>
+                    Who Was Trying to Lookup You ({filteredLookupActors.length})
+                    {lookupActorTypeFilter !== 'all' && (
+                      <button
+                        type="button"
+                        onClick={() => setLookupActorTypeFilter('all')}
+                        className="ml-2 text-[10px] underline text-[#0A66C2] cursor-pointer"
+                      >
+                        Show All ({recentLookupActors.length})
+                      </button>
+                    )}
+                  </span>
                   <span className="text-[10px] font-semibold text-zinc-500">Keyword &amp; Vector</span>
                 </div>
-                {recentLookupActors.slice(0, 5).map((actor) => (
+                {filteredLookupActors.slice(0, 6).map((actor) => (
                   <div
                     key={actor.id}
                     className="rounded-xl bg-white dark:bg-zinc-800/90 border border-zinc-200/90 dark:border-zinc-700/80 p-2.5 flex items-start justify-between gap-2.5 shadow-2xs"
@@ -616,16 +788,21 @@ export function NotificationsView({
                 type="button"
                 onClick={() => {
                   setSelectedCategory('Lookups & Vouches')
+                  setLookupVouchSubFilter('lookups')
                 }}
                 className="rounded-full bg-amber-600 hover:bg-amber-700 text-white px-3 py-1 text-[11px] font-extrabold transition-all shrink-0 cursor-pointer"
               >
-                Filter Lookup Alerts →
+                {selectedCategory === 'Lookups & Vouches' && lookupVouchSubFilter === 'lookups'
+                  ? '✓ Filtering Lookup Alerts Below'
+                  : 'Filter Lookup Alerts →'}
               </button>
             </div>
           </div>
+          )}
 
           {/* RIGHT CARD: WHO VOUCHED FOR YOU (PEER VOUCH LEDGER IN ALERTS) */}
-          <div className="rounded-2xl border border-emerald-300/80 dark:border-emerald-800/70 bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/40 dark:from-zinc-900 dark:via-zinc-900 dark:to-emerald-950/20 p-5 shadow-xs flex flex-col justify-between">
+          {(lookupVouchSubFilter === 'all' || lookupVouchSubFilter === 'vouches') && (
+          <div className={`rounded-2xl border border-emerald-300/80 dark:border-emerald-800/70 bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/40 dark:from-zinc-900 dark:via-zinc-900 dark:to-emerald-950/20 p-5 shadow-xs flex flex-col justify-between ${lookupVouchSubFilter === 'vouches' ? 'lg:col-span-2' : ''}`}>
             <div>
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div>
@@ -652,7 +829,7 @@ export function NotificationsView({
                   <span>Recent Peer Vouches &amp; Attestations</span>
                   <span className="text-[10px] font-semibold text-zinc-500">Skill / Credential</span>
                 </div>
-                {vouchEvents.slice(0, 5).map((vouch) => (
+                {vouchEvents.slice(0, 6).map((vouch) => (
                   <div
                     key={vouch.id}
                     className="rounded-xl bg-white dark:bg-zinc-800/90 border border-zinc-200/90 dark:border-zinc-700/80 p-2.5 flex items-start justify-between gap-2.5 shadow-2xs"
@@ -705,22 +882,35 @@ export function NotificationsView({
               <span className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-400">
                 Every peer endorsement &amp; trade vouch alerts you immediately.
               </span>
-              <button
-                type="button"
-                onClick={() => {
-                  if (onNavigateTab) onNavigateTab('profile')
-                }}
-                className="rounded-full bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 text-[11px] font-extrabold transition-all shrink-0 cursor-pointer"
-              >
-                Open Profile Vouches →
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategory('Lookups & Vouches')
+                    setLookupVouchSubFilter('vouches')
+                  }}
+                  className="rounded-full bg-emerald-100 hover:bg-emerald-200 text-emerald-900 px-2.5 py-1 text-[11px] font-extrabold transition-all shrink-0 cursor-pointer"
+                >
+                  Filter Vouch Alerts
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onNavigateTab) onNavigateTab('profile')
+                  }}
+                  className="rounded-full bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 text-[11px] font-extrabold transition-all shrink-0 cursor-pointer"
+                >
+                  Open Profile Vouches →
+                </button>
+              </div>
             </div>
           </div>
+          )}
         </div>
       )}
 
-      {/* 1.5 NOCTIS ALERTS INTELLIGENCE & SIGNAL EXPLANATION PANEL */}
-      {showNoctisOverview && (
+      {/* 1.5 NOCTIS ALERTS INTELLIGENCE & SIGNAL EXPLANATION PANEL (Shown in 'All' view or when explicitly toggled) */}
+      {showNoctisOverview && selectedCategory === 'All' && (
         <div className="rounded-2xl border border-[#D3E3FD] bg-[#F8FAFD] p-5 sm:p-6 shadow-xs">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
             <div className="flex flex-wrap items-center gap-2">
