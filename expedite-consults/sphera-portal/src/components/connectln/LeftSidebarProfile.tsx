@@ -80,7 +80,32 @@ export function LeftSidebarProfile({
   const [pinnedIds, setPinnedIds] = useState<string[]>([])
   const [professionFilterQuery, setProfessionFilterQuery] = useState("")
   const [telemetryTick, setTelemetryTick] = useState(0)
+  const [availabilityStatus, setAvailabilityStatus] = useState<'Open' | 'Available for Hire' | 'Open to Shifts' | 'Booked'>('Open')
   const { t } = useLanguage()
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    try {
+      const savedStatus = localStorage.getItem(`connectin_availability_v1__${(user.name || 'default').toLowerCase()}`)
+      if (savedStatus === 'Open' || savedStatus === 'Available for Hire' || savedStatus === 'Open to Shifts' || savedStatus === 'Booked') {
+        setAvailabilityStatus(savedStatus)
+      }
+    } catch {}
+  }, [user?.name])
+
+  const cycleAvailabilityStatus = () => {
+    const order: Array<'Open' | 'Available for Hire' | 'Open to Shifts' | 'Booked'> = [
+      'Open',
+      'Available for Hire',
+      'Open to Shifts',
+      'Booked'
+    ]
+    const next = order[(order.indexOf(availabilityStatus) + 1) % order.length]
+    setAvailabilityStatus(next)
+    try {
+      localStorage.setItem(`connectin_availability_v1__${(user.name || 'default').toLowerCase()}`, next)
+    } catch {}
+  }
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -709,10 +734,19 @@ export function LeftSidebarProfile({
                   <span className="shrink-0">{enclaveInfo?.icon || '🔨'}</span>
                   <span className="truncate">{displayProfessionTitle}</span>
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 px-2 py-0.5 text-[9px] font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 shrink-0">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  Open
-                </span>
+                <button
+                  type="button"
+                  onClick={cycleAvailabilityStatus}
+                  title="Click to toggle your work availability status"
+                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold border shrink-0 cursor-pointer transition-colors ${
+                    availabilityStatus === 'Booked'
+                      ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/25'
+                      : 'bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/20 hover:bg-emerald-500/20'
+                  }`}
+                >
+                  <span className={`h-1.5 w-1.5 rounded-full ${availabilityStatus === 'Booked' ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+                  {availabilityStatus}
+                </button>
               </div>
               <div className="flex items-center justify-between gap-2 text-[10px] text-zinc-500 dark:text-zinc-400">
                 <span className="truncate">{enclaveInfo?.shortName || 'Verified'} Community</span>

@@ -401,9 +401,20 @@ export function JobsView({
   const [selectedJob, setSelectedJob] = useState<GlobalJobItem | null>(null)
   const [isJobDetailOpen, setIsJobDetailOpen] = useState(false)
 
-  // Applications State
-  const [applications, setApplications] = useState<JobApplicationItem[]>(initialUserApplications)
+  // Applications State (100% real user applications — starts at 0 for new accounts)
+  const userAppsStorageKey = `connectin_user_apps_v2__${(currentUser?.name || 'default').toLowerCase().trim()}`
+  const [applications, setApplications] = useState<JobApplicationItem[]>([])
   const [appStageFilter, setAppStageFilter] = useState<'all' | 'applied' | 'interview' | 'offer' | 'rejected'>('all')
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const raw = localStorage.getItem(userAppsStorageKey)
+      setApplications(raw ? JSON.parse(raw) : [])
+    } catch {
+      setApplications([])
+    }
+  }, [userAppsStorageKey])
 
   // Recruiting State
   const [candidates] = useState<CandidateProfile[]>(initialCandidatesData)
@@ -743,6 +754,13 @@ export function JobsView({
     if (selectedJob) {
       setAppliedJobIds(prev => [...prev, selectedJob.id])
       const flywheel = getJobFlywheelRecommendation(selectedJob)
+      const nowStamp = new Date().toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+      })
       const newApp: JobApplicationItem = {
         id: 'app_' + Date.now(),
         jobTitle: selectedJob.title,
@@ -751,11 +769,17 @@ export function JobsView({
         location: selectedJob.location,
         salary: selectedJob.salaryRange,
         stage: 'applied',
-        appliedDate: 'Just now',
+        appliedDate: `Applied ${nowStamp}`,
         nextStep: 'Application submitted · Synced with Employer ATS',
         productVerifiedMatch: flywheel.primarySkill
       }
-      setApplications(prev => [newApp, ...prev])
+      setApplications(prev => {
+        const next = [newApp, ...prev]
+        try {
+          localStorage.setItem(userAppsStorageKey, JSON.stringify(next))
+        } catch {}
+        return next
+      })
       setApplyStep('success')
       trackUserActivity({
         actionType: 'JOB_APPLIED',

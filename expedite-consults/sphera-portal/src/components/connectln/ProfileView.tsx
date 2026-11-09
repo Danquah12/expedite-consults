@@ -79,7 +79,8 @@ import {
   loadStoredDirectoryDiscoveries,
   recordProfileView,
   getProfileTailoredAnalytics,
-  syncLiveUserTelemetryFromCloud
+  syncLiveUserTelemetryFromCloud,
+  formatProfileViewDateTime
 } from "@/lib/connectin-analytics"
 import { getQualifiedJobsForSkills, SkillQualifiedJob } from "@/lib/skill-qualified-jobs"
 
@@ -151,7 +152,7 @@ export function ProfileView({
 
     const normalizedExistingSkills = (user.skills || []).map((s: any) =>
       typeof s === 'string'
-        ? { name: s, endorsements: 52, endorsers: ['Verified Resume NLP'] }
+        ? { name: s, endorsements: 0, endorsers: ['Verified Resume NLP'] }
         : { ...s, name: String(s?.name || '') }
     ).filter(s => s.name.trim().length > 0)
 
@@ -160,7 +161,7 @@ export function ProfileView({
       const existingSkillNames = normalizedExistingSkills.map(s => s.name.toLowerCase())
       const additionalSkills = options.extractedSkills
         .filter(s => Boolean(s) && !existingSkillNames.includes(String(s).toLowerCase()))
-        .map(s => ({ name: String(s), endorsements: 1, endorsers: ['Verified Resume NLP'] }))
+        .map(s => ({ name: String(s), endorsements: 0, endorsers: ['Verified Resume NLP'] }))
       mergedSkills = [...normalizedExistingSkills, ...additionalSkills]
     }
 
@@ -777,7 +778,7 @@ export function ProfileView({
 
   const handleEndorseSkill = (skillName: string) => {
     setSkills(prev =>
-      prev.map(s => (s.name === skillName ? { ...s, endorsementsCount: s.endorsementsCount + 1 } : s))
+      prev.map(s => (s.name === skillName ? { ...s, endorsementsCount: (s.endorsementsCount || 0) + 1 } : s))
     )
     setSkillEndorsementBonuses(prev => ({
       ...prev,
@@ -787,7 +788,7 @@ export function ProfileView({
       const updatedSkills = user.skills.map((s: any) => {
         const sName = typeof s === 'string' ? s : s.name
         if (sName === skillName) {
-          const currentCount = typeof s === 'object' ? (s.endorsements || s.endorsementsCount || 52) : 52
+          const currentCount = typeof s === 'object' ? (s.endorsements ?? s.endorsementsCount ?? 0) : 0
           return {
             ...(typeof s === 'object' ? s : { name: sName, endorsers: [] }),
             name: sName,
@@ -810,7 +811,7 @@ export function ProfileView({
       ? user.skills
       : enclaveWorkspace.verifiedSkills.map(vs => ({
           name: vs.name,
-          endorsements: vs.endorsementsCount || 52,
+          endorsements: 0,
           endorsers: [vs.verifiedBy]
         }))
     if (!existingSkills.some((s: any) => (typeof s === 'string' ? s : s.name).toLowerCase() === trimmed.toLowerCase())) {
@@ -818,7 +819,7 @@ export function ProfileView({
         ...user,
         skills: [
           ...existingSkills,
-          { name: trimmed, endorsements: 52, endorsers: [`${enclaveInfo?.name || 'ConnectIn'} Master Board`] }
+          { name: trimmed, endorsements: 0, endorsers: [`${enclaveInfo?.name || 'ConnectIn'} Master Board`] }
         ]
       }
       saveStoredUser(updatedUser)
@@ -985,7 +986,7 @@ export function ProfileView({
                 Connections
               </span>
               <p className="text-lg sm:text-xl font-black text-emerald-600 dark:text-emerald-400">
-                {(user.connectionsCount && user.connectionsCount > 0 ? user.connectionsCount : 14).toLocaleString()}
+                {(user.connectionsCount ?? 0).toLocaleString()}
               </p>
               <span className="text-[10px] text-zinc-400">
                 Verified Network
@@ -1587,16 +1588,10 @@ export function ProfileView({
             ? 'Last 90 Days'
             : 'Last 12 Months'
 
-        const scaledProfileViews = Math.max(
-          viewers.length,
-          Math.round(tailoredAnalytics.effectiveProfileViews * (analyticsTimeframe === '30d' ? 1 : tfMultiplier / 4.2))
-        )
-        const scaledTotalReach = Math.round(tailoredAnalytics.effectiveTotalReach * (analyticsTimeframe === '7d' ? 1 : tfMultiplier / 1.8))
-        const scaledUniqueViewers = Math.round(tailoredAnalytics.effectiveUniqueViewers * (analyticsTimeframe === '7d' ? 1 : tfMultiplier / 1.8))
-        const scaledDiscoveries = Math.max(
-          12,
-          Math.round(tailoredAnalytics.effectiveDiscoveries * (analyticsTimeframe === '30d' ? 1 : tfMultiplier / 4.2))
-        )
+        const scaledProfileViews = tailoredAnalytics.effectiveProfileViews
+        const scaledTotalReach = tailoredAnalytics.effectiveTotalReach
+        const scaledUniqueViewers = tailoredAnalytics.effectiveUniqueViewers
+        const scaledDiscoveries = tailoredAnalytics.effectiveDiscoveries
 
         const userTopSkillNames = (Array.isArray(user.skills) && user.skills.length > 0
           ? user.skills.map((s: any) => (typeof s === 'string' ? s : s?.name)).filter(Boolean)
@@ -1941,7 +1936,7 @@ export function ProfileView({
                   ))}
                 </div>
                 <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                  38% Directors/VP · {(user.connectionsCount && user.connectionsCount > 0 ? user.connectionsCount : 14).toLocaleString()} Connections
+                  {(user.connectionsCount ?? 0).toLocaleString()} Verified Connections
                 </p>
               </div>
             </div>
@@ -2476,7 +2471,7 @@ export function ProfileView({
                             </div>
                             <p className="text-xs text-zinc-500 truncate">{viewer.headline}</p>
                             <p className="text-[11px] text-zinc-400">
-                              {viewer.company} · Viewed via: <strong>{viewer.viewVector}</strong> ({viewer.viewedAt})
+                              {viewer.company} · Viewed via: <strong>{viewer.viewVector}</strong> · 🗓️ <strong>{formatProfileViewDateTime(viewer.createdAtIso, viewer.viewedAt)}</strong>
                             </p>
                           </div>
                         </div>
@@ -2705,7 +2700,7 @@ export function ProfileView({
         const activeSkillsList = (user.skills && user.skills.length > 0)
           ? user.skills.map((s: any) => {
               const sName = typeof s === 'string' ? s : s.name
-              const baseEndorsements = typeof s === 'object' ? (s.endorsements || s.endorsementsCount || 52) : 52
+              const baseEndorsements = typeof s === 'object' ? (s.endorsements ?? s.endorsementsCount ?? 0) : 0
               return {
                 name: sName,
                 category: (enclaveInfo?.shortName || 'Trades') as any,
@@ -2717,7 +2712,7 @@ export function ProfileView({
             })
           : enclaveWorkspace.verifiedSkills.map((vs) => ({
               ...vs,
-              endorsementsCount: (vs.endorsementsCount || 52) + (skillEndorsementBonuses[vs.name] || 0)
+              endorsementsCount: skillEndorsementBonuses[vs.name] || 0
             }))
 
         const verifiedSkillNames = activeSkillsList.map((s) => s.name)
