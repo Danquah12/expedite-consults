@@ -40,7 +40,9 @@ import {
   RefreshCw,
   ThumbsUp,
   Clock,
-  ArrowRight
+  ArrowRight,
+  Eye,
+  TrendingUp
 } from "lucide-react"
 import {
   SuggestedConnection,
@@ -70,6 +72,17 @@ import {
 import { WarmIntroModal } from "./WarmIntroModal"
 import { InviteMembersModal } from "./InviteMembersModal"
 import { ConnectWithNoteModal } from "./ConnectWithNoteModal"
+import {
+  loadLiveUserTelemetry,
+  syncLiveUserTelemetryFromCloud,
+  recordLiveContentReach,
+  recordLiveDirectoryDiscovery,
+  loadViewerPrivacyMode,
+  saveViewerPrivacyMode,
+  formatViewerForPrivacy,
+  ViewerPrivacyMode,
+  getProfileTailoredAnalytics
+} from "@/lib/connectin-analytics"
 
 interface NetworkViewProps {
   suggestedPeople: SuggestedConnection[]
@@ -78,6 +91,7 @@ interface NetworkViewProps {
   currentUser?: UserProfile
   onNavigateMessaging?: (person?: any) => void
   onUpdateConnectionsCount?: (newCount: number) => void
+  initialSubTab?: 'people' | 'connections' | 'received_invites' | 'sent_invites' | 'profile_viewers'
 }
 
 export function getEnclaveCapabilityFilters(enclaveId?: string) {
@@ -130,14 +144,49 @@ export function NetworkView({
   onSelectMember,
   currentUser = defaultUser,
   onNavigateMessaging,
-  onUpdateConnectionsCount
+  onUpdateConnectionsCount,
+  initialSubTab
 }: NetworkViewProps) {
   const enclaveId = currentUser?.professionEnclave
   const capabilityFilters = getEnclaveCapabilityFilters(enclaveId)
 
   const [activeTab, setActiveTab] = useState<
-    'people' | 'connections' | 'received_invites' | 'sent_invites' | 'companies' | 'organizations' | 'circles' | 'topics' | 'catchup'
-  >('people')
+    'people' | 'connections' | 'received_invites' | 'sent_invites' | 'profile_viewers' | 'companies' | 'organizations' | 'circles' | 'topics' | 'catchup'
+  >(initialSubTab || 'people')
+  const [telemetryViewSubTab, setTelemetryViewSubTab] = useState<'viewers' | 'reach' | 'discoveries'>('viewers')
+  const [reachKindFilter, setReachKindFilter] = useState<'all' | 'view' | 'interaction'>('all')
+  const [discoveryTypeFilter, setDiscoveryTypeFilter] = useState<'all' | 'search_appearance' | 'profile_click'>('all')
+  const [viewerPrivacyMode, setViewerPrivacyMode] = useState<ViewerPrivacyMode>(() => loadViewerPrivacyMode(currentUser?.name))
+  const [liveTelemetry, setLiveTelemetry] = useState(() => loadLiveUserTelemetry(currentUser?.name))
+  const tailoredTelemetry = React.useMemo(
+    () => getProfileTailoredAnalytics(currentUser),
+    [currentUser, liveTelemetry]
+  )
+
+  useEffect(() => {
+    if (initialSubTab) {
+      setActiveTab(initialSubTab)
+    }
+  }, [initialSubTab])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const refresh = () => setLiveTelemetry(loadLiveUserTelemetry(currentUser?.name))
+    refresh()
+    window.addEventListener('connectln-telemetry-updated', refresh)
+    if (currentUser?.name) {
+      syncLiveUserTelemetryFromCloud(currentUser.name).then(b => setLiveTelemetry(b)).catch(() => {})
+    }
+    const timer = setInterval(() => {
+      if (currentUser?.name) {
+        syncLiveUserTelemetryFromCloud(currentUser.name).then(b => setLiveTelemetry(b)).catch(() => {})
+      }
+    }, 5000)
+    return () => {
+      window.removeEventListener('connectln-telemetry-updated', refresh)
+      clearInterval(timer)
+    }
+  }, [currentUser?.name])
 
   const [selectedCapability, setSelectedCapability] = useState<string>('All')
   const [searchFilter, setSearchFilter] = useState<string>('')
@@ -170,7 +219,7 @@ export function NetworkView({
   const [customConnections, setCustomConnections] = useState<ConnectedMember[]>(() => {
     if (typeof window === 'undefined') return []
     try {
-      const raw = localStorage.getItem(`connectin_accepted_v6_${userScopeKey}`)
+      const raw = localStorage.getItem(`connectin_accepted_v7_${userScopeKey}`)
       return raw ? JSON.parse(raw) : []
     } catch {
       return []
@@ -230,7 +279,7 @@ export function NetworkView({
   useEffect(() => {
     if (typeof window === 'undefined') return
     try {
-      const rawAccepted = localStorage.getItem(`connectin_accepted_v6_${userScopeKey}`)
+      const rawAccepted = localStorage.getItem(`connectin_accepted_v7_${userScopeKey}`)
       setCustomConnections(rawAccepted ? JSON.parse(rawAccepted) : [])
 
       const rawOutbound = localStorage.getItem(`connectin_outbound_v6_${userScopeKey}`)
@@ -454,7 +503,7 @@ export function NetworkView({
     setCustomConnections(next)
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem(`connectin_accepted_v6_${userScopeKey}`, JSON.stringify(next))
+        localStorage.setItem(`connectin_accepted_v7_${userScopeKey}`, JSON.stringify(next))
       } catch {}
     }
   }
@@ -798,6 +847,22 @@ export function NetworkView({
       .then(() => syncInvitationsWithCloud())
       .catch(() => {})
 
+    recordLiveDirectoryDiscovery({
+      targetName: person.name,
+      keyword: selectedCapability !== 'All' ? `Specialty: ${selectedCapability}` : 'People You May Know Directory',
+      searcherName: currentUser.name,
+      searcherHeadline: currentUser.headline,
+      searcherCompany: currentUser.profession || 'ConnectLn Network',
+      source: 'Connection Invitation Sent'
+    })
+    recordLiveContentReach({
+      userName: currentUser.name,
+      title: `Sent Connection Invitation to ${person.name}`,
+      category: 'Network Invite',
+      actorName: currentUser.name,
+      details: person.headline
+    })
+
     showToast(`✓ Invitation sent to ${person.name}${note ? ' with note' : ''}! Added to Invitations Sent.`)
   }
 
@@ -927,6 +992,34 @@ export function NetworkView({
 
   // Exact 1-to-1 count matching the actual 1st-degree connections in My Connections
   const totalConnectionsDisplay = connections.length
+
+  // Record real Directory Search Appearances (`search_appearance`) when a user searches or filters specialties in Network
+  useEffect(() => {
+    const trimmedSearch = searchFilter.trim()
+    const hasActiveSpecialty = selectedCapability && selectedCapability !== 'All'
+    if (!trimmedSearch && !hasActiveSpecialty) return
+    if (trimmedSearch && trimmedSearch.length < 2) return
+    if (!currentUser?.name) return
+
+    const timer = setTimeout(() => {
+      const keywordLabel = trimmedSearch
+        ? `Directory Search: "${trimmedSearch}"`
+        : `Specialty Filter: "${selectedCapability}"`
+      for (const person of filteredPeople.slice(0, 6)) {
+        if (!person?.name) continue
+        recordLiveDirectoryDiscovery({
+          targetName: person.name,
+          keyword: keywordLabel,
+          searcherName: currentUser.name,
+          searcherHeadline: currentUser.headline || currentUser.profession || 'Verified ConnectLn Member',
+          searcherCompany: currentUser.profession || 'ConnectLn Network',
+          source: 'Directory Search Appearance',
+          discoveryType: 'search_appearance'
+        })
+      }
+    }, 600)
+    return () => clearTimeout(timer)
+  }, [searchFilter, selectedCapability, currentUser?.name])
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-16">
@@ -1107,7 +1200,31 @@ export function NetworkView({
                 </span>
               </button>
 
-              {/* 4. People You May Know */}
+              {/* 4. Who Viewed My Profile (under Connections) */}
+              <button
+                onClick={() => setActiveTab('profile_viewers')}
+                className={`flex w-full items-center justify-between py-2 px-2.5 rounded-lg font-semibold transition-all ${
+                  activeTab === 'profile_viewers'
+                    ? "bg-[#0A66C2] text-white shadow-2xs"
+                    : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <Eye className="h-4 w-4" />
+                  <span>Who Viewed My Profile</span>
+                </span>
+                <span className={`text-[10px] rounded-full px-1.5 py-0.2 font-mono font-bold ${
+                  activeTab === 'profile_viewers'
+                    ? "bg-white/20 text-white"
+                    : liveTelemetry.checks.length > 0
+                    ? "bg-blue-600 text-white"
+                    : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
+                }`}>
+                  {liveTelemetry.checks.length}
+                </span>
+              </button>
+
+              {/* 5. People You May Know */}
               <button
                 onClick={() => setActiveTab('people')}
                 className={`flex w-full items-center justify-between py-2 px-2.5 rounded-lg font-semibold transition-all ${
@@ -1578,6 +1695,405 @@ export function NetworkView({
             </div>
           )}
 
+          {/* TAB: WHO VIEWED MY PROFILE (UNDER CONNECTIONS + LIVE CONTENT REACH & DIRECTORY DISCOVERED) */}
+          {activeTab === 'profile_viewers' && (
+            <div className="rounded-xl border border-zinc-200 bg-white p-4 sm:p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800 pb-3">
+                <div>
+                  <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2 flex-wrap">
+                    <Eye className="h-4 w-4 text-[#0A66C2]" />
+                    <span>Who Viewed My Profile</span>
+                    <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                      ● Real Activity Data (No Placeholders)
+                    </span>
+                  </h3>
+                  <p className="text-xs text-zinc-500 mt-0.5">
+                    Real-time record of members who visited your profile, content &amp; modules you reached (Learning, Alerts, Media, Feed), and directory search appearances vs. profile clicks.
+                  </p>
+                </div>
+
+                {/* Viewer Privacy Settings Control */}
+                <div className="flex items-center gap-2 bg-zinc-50 dark:bg-zinc-800/70 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-1.5 shrink-0">
+                  <Lock className="h-3.5 w-3.5 text-[#0A66C2] shrink-0" />
+                  <span className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300 whitespace-nowrap">
+                    My Viewing Privacy:
+                  </span>
+                  <select
+                    value={viewerPrivacyMode}
+                    onChange={(e) => {
+                      const nextMode = e.target.value as ViewerPrivacyMode
+                      setViewerPrivacyMode(nextMode)
+                      if (currentUser?.name) {
+                        saveViewerPrivacyMode(currentUser.name, nextMode)
+                      }
+                    }}
+                    className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1 text-[11px] font-bold text-zinc-800 dark:text-zinc-100 focus:outline-none cursor-pointer"
+                  >
+                    <option value="full">Full Profile (Name, Role &amp; Photo)</option>
+                    <option value="role_only">Semi-Private (Role &amp; Organization Only)</option>
+                    <option value="anonymous">Private Mode (Anonymous Member)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* 3 Live Telemetry Sub-Tabs */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 rounded-xl bg-zinc-100/80 dark:bg-zinc-800/80 p-1 text-xs font-bold">
+                <button
+                  onClick={() => setTelemetryViewSubTab('viewers')}
+                  className={`py-2 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    telemetryViewSubTab === 'viewers'
+                      ? "bg-white dark:bg-zinc-900 text-[#0A66C2] shadow-xs"
+                      : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-900"
+                  }`}
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                  <span>Who Viewed My Profile ({tailoredTelemetry.effectiveProfileViews})</span>
+                </button>
+                <button
+                  onClick={() => setTelemetryViewSubTab('reach')}
+                  className={`py-2 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    telemetryViewSubTab === 'reach'
+                      ? "bg-white dark:bg-zinc-900 text-purple-600 shadow-xs"
+                      : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-900"
+                  }`}
+                >
+                  <TrendingUp className="h-3.5 w-3.5" />
+                  <span>Content Reach ({tailoredTelemetry.effectiveTotalReach})</span>
+                </button>
+                <button
+                  onClick={() => setTelemetryViewSubTab('discoveries')}
+                  className={`py-2 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    telemetryViewSubTab === 'discoveries'
+                      ? "bg-white dark:bg-zinc-900 text-emerald-600 shadow-xs"
+                      : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-900"
+                  }`}
+                >
+                  <Search className="h-3.5 w-3.5" />
+                  <span>Directory Discovered ({tailoredTelemetry.effectiveDiscoveries})</span>
+                </button>
+              </div>
+
+              {/* SUB-TAB 1: WHO VIEWED MY PROFILE */}
+              {telemetryViewSubTab === 'viewers' && (
+                <div className="space-y-4">
+                  {/* Summary Breakdown: Unique Viewers vs Total Visits */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div className="rounded-xl border border-blue-200/70 dark:border-blue-900/50 bg-blue-50/40 dark:bg-blue-950/20 p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Unique Profile Viewers</p>
+                      <p className="text-xl font-extrabold text-[#0A66C2] dark:text-sky-400 mt-0.5">
+                        {tailoredTelemetry.effectiveProfileViews}
+                      </p>
+                      <p className="text-[10px] text-zinc-500">Deduplicated by member</p>
+                    </div>
+                    <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-800/40 p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Total Profile Visits</p>
+                      <p className="text-xl font-extrabold text-zinc-900 dark:text-zinc-100 mt-0.5">
+                        {tailoredTelemetry.totalProfileVisitEvents}
+                      </p>
+                      <p className="text-[10px] text-zinc-500">Includes repeat dossier checks</p>
+                    </div>
+                    <div className="col-span-2 sm:col-span-1 rounded-xl border border-emerald-200/70 dark:border-emerald-900/50 bg-emerald-50/40 dark:bg-emerald-950/20 p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Privacy Compliance</p>
+                      <p className="text-xs font-extrabold text-emerald-700 dark:text-emerald-300 mt-1">
+                        ✓ Respects Viewer Privacy Mode
+                      </p>
+                      <p className="text-[10px] text-zinc-500 mt-0.5">Full, Role-Only, or Anonymous</p>
+                    </div>
+                  </div>
+
+                  {tailoredTelemetry.viewers.length === 0 ? (
+                    <div className="py-12 text-center text-zinc-500 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800">
+                      <Eye className="h-10 w-10 mx-auto text-zinc-300 mb-2" />
+                      <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">No Profile Viewers Yet (0)</p>
+                      <p className="text-xs text-zinc-400 mt-1 max-w-md mx-auto">
+                        Whenever a member on ConnectLn visits your profile or clicks Inspect Dossier, their visit is recorded here live with their privacy-adjusted identity, timestamp, and entry channel.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                      {tailoredTelemetry.viewers.map((rawViewer) => {
+                        const viewer = formatViewerForPrivacy(rawViewer)
+                        const isAnon = viewer.privacyMode === 'anonymous'
+                        const vNorm = String(rawViewer.name || '').toLowerCase().trim()
+                        const isAlreadyConn = connectedNamesSet.has(vNorm)
+                        const isAlreadyPending = pendingNamesSet.has(vNorm)
+                        const matchedSuggestion = suggestedPeople.find(p => p.name.toLowerCase().trim() === vNorm)
+                        return (
+                          <div key={viewer.id} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 first:pt-1 last:pb-0">
+                            <div
+                              onClick={() => !isAnon && onSelectMember?.(rawViewer)}
+                              className={`flex items-start gap-3 min-w-0 ${isAnon ? "cursor-default" : "cursor-pointer group"}`}
+                            >
+                              <img
+                                src={viewer.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(viewer.name)}&backgroundColor=0a66c2`}
+                                alt={viewer.name}
+                                className="h-12 w-12 rounded-full object-cover border border-zinc-200 dark:border-zinc-800 shrink-0 group-hover:ring-2 group-hover:ring-[#0A66C2] transition-all"
+                              />
+                              <div className="min-w-0 space-y-0.5">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2] group-hover:underline">
+                                    {viewer.name}
+                                  </h4>
+                                  <span className="rounded bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 text-[10px] font-bold text-[#0A66C2] dark:text-sky-300">
+                                    {viewer.viewedAt || 'Viewed recently'}
+                                  </span>
+                                  {(viewer.visitCount || 1) > 1 && (
+                                    <span className="rounded bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300">
+                                      {viewer.visitCount} visits
+                                    </span>
+                                  )}
+                                  <span className="rounded bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-[10px] font-semibold text-zinc-600 dark:text-zinc-300">
+                                    {viewer.clearanceLevel}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-zinc-500 truncate dark:text-zinc-400">
+                                  {viewer.headline}
+                                </p>
+                                <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold">
+                                  👁️ Source: {viewer.viewVector || 'Profile & Dossier Inspection'}
+                                </p>
+                              </div>
+                            </div>
+
+                            {!isAnon && (
+                              <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                                <button
+                                  onClick={() => onSelectMember?.(rawViewer)}
+                                  className="rounded-full border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 cursor-pointer"
+                                >
+                                  View Workspace
+                                </button>
+                                <button
+                                  onClick={() => onNavigateMessaging && onNavigateMessaging(rawViewer)}
+                                  className="rounded-full border border-[#0A66C2] px-3 py-1.5 text-xs font-bold text-[#0A66C2] hover:bg-blue-50 cursor-pointer"
+                                >
+                                  Message
+                                </button>
+                                {!isAlreadyConn && !isAlreadyPending && matchedSuggestion && (
+                                  <button
+                                    onClick={() => handleSendConnectionWithNote(matchedSuggestion.id)}
+                                    className="rounded-full bg-[#0A66C2] px-3.5 py-1.5 text-xs font-bold text-white hover:bg-[#004182] flex items-center gap-1 cursor-pointer"
+                                  >
+                                    <UserPlus className="h-3.5 w-3.5" />
+                                    <span>Connect</span>
+                                  </button>
+                                )}
+                                {isAlreadyPending && (
+                                  <span className="rounded-full border border-zinc-300 px-3 py-1.5 text-xs font-semibold text-zinc-500">
+                                    Invite Sent
+                                  </span>
+                                )}
+                                {isAlreadyConn && (
+                                  <span className="rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1.5 text-xs font-bold text-emerald-700">
+                                    ✓ Connected
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* SUB-TAB 2: LIVE CONTENT REACH (UNIQUE VIEWERS vs TOTAL VIEWS vs INTERACTIONS) */}
+              {telemetryViewSubTab === 'reach' && (
+                <div className="space-y-4">
+                  {/* 3 Distinct Content Reach Metric Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="rounded-xl border border-purple-200/70 dark:border-purple-900/50 bg-purple-50/40 dark:bg-purple-950/20 p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Unique Viewers</p>
+                      <p className="text-xl font-extrabold text-purple-700 dark:text-purple-300 mt-0.5">
+                        {tailoredTelemetry.effectiveUniqueViewers}
+                      </p>
+                      <p className="text-[10px] text-zinc-500">Distinct viewers &amp; content reaches</p>
+                    </div>
+                    <div className="rounded-xl border border-blue-200/70 dark:border-blue-900/50 bg-blue-50/40 dark:bg-blue-950/20 p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Total Views</p>
+                      <p className="text-xl font-extrabold text-[#0A66C2] dark:text-sky-400 mt-0.5">
+                        {tailoredTelemetry.effectiveTotalViews}
+                      </p>
+                      <p className="text-[10px] text-zinc-500">Learning, Alerts, Media &amp; Profile views</p>
+                    </div>
+                    <div className="rounded-xl border border-emerald-200/70 dark:border-emerald-900/50 bg-emerald-50/40 dark:bg-emerald-950/20 p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Interactions</p>
+                      <p className="text-xl font-extrabold text-emerald-700 dark:text-emerald-300 mt-0.5">
+                        {tailoredTelemetry.effectiveInteractions}
+                      </p>
+                      <p className="text-[10px] text-zinc-500">Posts, reactions, comments, shares &amp; saves</p>
+                    </div>
+                  </div>
+
+                  {/* Filter pills: All vs Views vs Interactions */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[11px] font-bold text-zinc-500">Filter Activity:</span>
+                    {[
+                      { id: 'all' as const, label: `All Reach (${liveTelemetry.reachEvents.length})` },
+                      { id: 'view' as const, label: `Views (${tailoredTelemetry.effectiveTotalViews})` },
+                      { id: 'interaction' as const, label: `Interactions (${tailoredTelemetry.effectiveInteractions})` }
+                    ].map(f => (
+                      <button
+                        key={f.id}
+                        onClick={() => setReachKindFilter(f.id)}
+                        className={`rounded-full px-3 py-1 text-xs font-bold transition-all cursor-pointer ${
+                          reachKindFilter === f.id
+                            ? "bg-purple-600 text-white"
+                            : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200"
+                        }`}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {liveTelemetry.reachEvents.filter(e => reachKindFilter === 'all' || (e.eventKind || 'view') === reachKindFilter).length === 0 ? (
+                    <div className="py-12 text-center text-zinc-500 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800">
+                      <TrendingUp className="h-10 w-10 mx-auto text-zinc-300 mb-2" />
+                      <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">No Content Reach Activity Yet (0)</p>
+                      <p className="text-xs text-zinc-400 mt-1 max-w-md mx-auto">
+                        Open Learning courses, check Alerts, watch Media briefings, or publish/react/comment on Feed posts to see real-time Views and Interactions recorded here.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                      {liveTelemetry.reachEvents
+                        .filter(e => reachKindFilter === 'all' || (e.eventKind || 'view') === reachKindFilter)
+                        .map((ev) => {
+                          const isInteraction = ev.eventKind === 'interaction'
+                          return (
+                            <div key={ev.id} className="py-3.5 flex items-center justify-between gap-3">
+                              <div className="min-w-0 space-y-0.5">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className={`rounded-md px-2 py-0.5 text-[10px] font-bold border ${
+                                    isInteraction
+                                      ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300"
+                                      : "bg-blue-50 dark:bg-blue-950/60 border-blue-200 dark:border-blue-800 text-[#0A66C2] dark:text-sky-300"
+                                  }`}>
+                                    {isInteraction ? '⚡ Interaction' : '👁️ View'}
+                                  </span>
+                                  <span className="rounded-md bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 px-2 py-0.5 text-[10px] font-bold text-purple-700 dark:text-purple-300">
+                                    {ev.category}
+                                  </span>
+                                  <p className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 truncate">
+                                    {ev.title}
+                                  </p>
+                                </div>
+                                <p className="text-xs text-zinc-500 truncate">
+                                  Actor: {ev.actorName || currentUser?.name} {ev.details ? `· ${ev.details}` : ''}
+                                </p>
+                              </div>
+                              <span className="text-[11px] font-semibold text-zinc-400 shrink-0">
+                                {ev.timeAgo || 'Just now'}
+                              </span>
+                            </div>
+                          )
+                        })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* SUB-TAB 3: LIVE DIRECTORY DISCOVERED (SEARCH APPEARANCES vs PROFILE CLICKS) */}
+              {telemetryViewSubTab === 'discoveries' && (
+                <div className="space-y-4">
+                  {/* 3 Distinct Directory Discovery Metric Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="rounded-xl border border-emerald-200/70 dark:border-emerald-900/50 bg-emerald-50/40 dark:bg-emerald-950/20 p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Total Discoveries</p>
+                      <p className="text-xl font-extrabold text-emerald-700 dark:text-emerald-300 mt-0.5">
+                        {tailoredTelemetry.effectiveDiscoveries}
+                      </p>
+                      <p className="text-[10px] text-zinc-500">Combined search appearances &amp; clicks</p>
+                    </div>
+                    <div className="rounded-xl border border-amber-200/70 dark:border-amber-900/50 bg-amber-50/40 dark:bg-amber-950/20 p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Search Appearances</p>
+                      <p className="text-xl font-extrabold text-amber-700 dark:text-amber-300 mt-0.5">
+                        {tailoredTelemetry.effectiveSearchAppearances}
+                      </p>
+                      <p className="text-[10px] text-zinc-500">Matched in directory &amp; specialty filters</p>
+                    </div>
+                    <div className="rounded-xl border border-blue-200/70 dark:border-blue-900/50 bg-blue-50/40 dark:bg-blue-950/20 p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Profile Clicks</p>
+                      <p className="text-xl font-extrabold text-[#0A66C2] dark:text-sky-400 mt-0.5">
+                        {tailoredTelemetry.effectiveProfileClicks}
+                      </p>
+                      <p className="text-[10px] text-zinc-500">Direct clicks on profile or Connect from directory</p>
+                    </div>
+                  </div>
+
+                  {/* Filter pills: All vs Search Appearances vs Profile Clicks */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[11px] font-bold text-zinc-500">Filter Discovery Type:</span>
+                    {[
+                      { id: 'all' as const, label: `All Discoveries (${tailoredTelemetry.effectiveDiscoveries})` },
+                      { id: 'search_appearance' as const, label: `Search Appearances (${tailoredTelemetry.effectiveSearchAppearances})` },
+                      { id: 'profile_click' as const, label: `Profile Clicks (${tailoredTelemetry.effectiveProfileClicks})` }
+                    ].map(f => (
+                      <button
+                        key={f.id}
+                        onClick={() => setDiscoveryTypeFilter(f.id)}
+                        className={`rounded-full px-3 py-1 text-xs font-bold transition-all cursor-pointer ${
+                          discoveryTypeFilter === f.id
+                            ? "bg-emerald-600 text-white"
+                            : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200"
+                        }`}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {liveTelemetry.discoveryEvents.filter(d => discoveryTypeFilter === 'all' || (d.discoveryType || 'profile_click') === discoveryTypeFilter).length === 0 ? (
+                    <div className="py-12 text-center text-zinc-500 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800">
+                      <Search className="h-10 w-10 mx-auto text-zinc-300 mb-2" />
+                      <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">No Directory Discoveries Yet (0)</p>
+                      <p className="text-xs text-zinc-400 mt-1 max-w-md mx-auto">
+                        Whenever your profile appears in a directory/specialty search or someone clicks your profile from directory listings, each event is logged here with its exact keyword and searcher.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                      {liveTelemetry.discoveryEvents
+                        .filter(d => discoveryTypeFilter === 'all' || (d.discoveryType || 'profile_click') === discoveryTypeFilter)
+                        .map((disc) => {
+                          const isClick = (disc.discoveryType || 'profile_click') === 'profile_click'
+                          return (
+                            <div key={disc.id} className="py-3.5 flex items-center justify-between gap-3">
+                              <div className="min-w-0 space-y-0.5">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className={`rounded-md px-2 py-0.5 text-[10px] font-bold border ${
+                                    isClick
+                                      ? "bg-blue-50 dark:bg-blue-950/60 border-blue-200 dark:border-blue-800 text-[#0A66C2] dark:text-sky-300"
+                                      : "bg-amber-50 dark:bg-amber-950/60 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300"
+                                  }`}>
+                                    {isClick ? '👆 Profile Click' : '🔍 Search Appearance'}
+                                  </span>
+                                  <span className="rounded-md bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                                    {disc.keyword}
+                                  </span>
+                                  <p className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 truncate">
+                                    By {disc.searcherName}
+                                  </p>
+                                </div>
+                                <p className="text-xs text-zinc-500 truncate">
+                                  {disc.searcherHeadline} · {disc.source}
+                                </p>
+                              </div>
+                              <span className="text-[11px] font-semibold text-zinc-400 shrink-0">
+                                {disc.timeAgo || 'Just now'}
+                              </span>
+                            </div>
+                          )
+                        })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* TAB 1: PEOPLE (CAPABILITY-BASED GRAPH) */}
           {activeTab === 'people' && (
             <div className="space-y-4">
@@ -1828,14 +2344,14 @@ export function NetworkView({
                             ) : person.isConnected ? (
                               <>
                                 <Check className="h-3 w-3" />
-                                <span>Vouched</span>
+                                <span>Connected</span>
                               </>
                             ) : person.isPending ? (
                               <span>Invite Sent</span>
                             ) : (
                               <>
                                 <UserPlus className="h-3 w-3" />
-                                <span>Vouch &amp; Connect</span>
+                                <span>Connect</span>
                               </>
                             )}
                           </button>
@@ -1847,17 +2363,17 @@ export function NetworkView({
               </div>
 
               {/* ═══════════════════════════════════════════════════════════════════════ */}
-              {/* SECTION 2: VERIFIED GUILD PEERS & VOUCH-READY SPECIALISTS              */}
+              {/* SECTION 2: VERIFIED GUILD PEERS & SPECIALISTS YOU MAY KNOW             */}
               {/* ═══════════════════════════════════════════════════════════════════════ */}
               <div className="flex items-center justify-between pt-2">
                 <div>
                   <h3 className="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                     <span className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-[#0A66C2] text-[10px] font-black text-white">C</span>
-                    <span>Verified Guild Peers &amp; Vouch-Ready Specialists in</span>
+                    <span>Verified Guild Peers &amp; Specialists You May Know in</span>
                     <span className="text-[#0A66C2] font-black">{selectedCapability}</span>
                   </h3>
                   <p className="text-xs text-zinc-500">
-                    Practitioners matched by verified ticket history, trade licenses, and mutual guild vouches.
+                    Practitioners matched by verified ticket history, trade licenses, and shared specialties.
                   </p>
                 </div>
                 <span className="text-xs text-zinc-500 font-bold font-mono">
@@ -2025,14 +2541,14 @@ export function NetworkView({
                           ) : person.isConnected ? (
                             <>
                               <Check className="h-3 w-3 text-emerald-600" />
-                              <span>Vouched</span>
+                              <span>Connected</span>
                             </>
                           ) : person.isPending ? (
                             <span>Invite Sent</span>
                           ) : (
                             <>
                               <UserPlus className="h-3 w-3" />
-                              <span>Vouch</span>
+                              <span>Connect</span>
                             </>
                           )}
                         </button>

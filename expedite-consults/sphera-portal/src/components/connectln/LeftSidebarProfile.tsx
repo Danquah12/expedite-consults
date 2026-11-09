@@ -31,7 +31,7 @@ import { isSuperAdminUser } from "@/lib/connectin-profile"
 import { findEnclaveById, ALL_PROFESSIONS, ProfessionDefinition } from "@/lib/connectin-professions"
 import { useLanguage } from "@/context/LanguageContext"
 import { TradeEnclaveWidgets } from "@/components/connectln/TradeEnclaveWidgets"
-import { getProfileTailoredAnalytics } from "@/lib/connectin-analytics"
+import { getProfileTailoredAnalytics, syncLiveUserTelemetryFromCloud } from "@/lib/connectin-analytics"
 
 const VALID_SIDEBAR_TABS = new Set([
   'accountsecurity','adminiam','advisory','aiagents','bounties','careersuite','code','collaboration',
@@ -79,7 +79,26 @@ export function LeftSidebarProfile({
   const [customProfessionId, setCustomProfessionId] = useState<string>("")
   const [pinnedIds, setPinnedIds] = useState<string[]>([])
   const [professionFilterQuery, setProfessionFilterQuery] = useState("")
+  const [telemetryTick, setTelemetryTick] = useState(0)
   const { t } = useLanguage()
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const handleUpdate = () => setTelemetryTick(v => v + 1)
+    window.addEventListener("connectln-telemetry-updated", handleUpdate)
+    if (user?.name) {
+      syncLiveUserTelemetryFromCloud(user.name).then(() => setTelemetryTick(v => v + 1)).catch(() => {})
+    }
+    const timer = setInterval(() => {
+      if (user?.name) {
+        syncLiveUserTelemetryFromCloud(user.name).then(() => setTelemetryTick(v => v + 1)).catch(() => {})
+      }
+    }, 5000)
+    return () => {
+      window.removeEventListener("connectln-telemetry-updated", handleUpdate)
+      clearInterval(timer)
+    }
+  }, [user?.name])
 
   const isAdminUser = isSuperAdminUser(user)
   const userStorageKey = `connectin_cmd_center_${(user.email || user.name || 'default').toLowerCase().replace(/[^a-z0-9]/g, '_')}`

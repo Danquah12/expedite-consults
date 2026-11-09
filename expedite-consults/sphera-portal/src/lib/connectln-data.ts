@@ -408,12 +408,12 @@ export const currentUser: UserProfile = {
   avatar: '/brand/kwesi-avatar.png',
   coverImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80',
   location: 'Greater New York City Area · Contact info',
-  connectionsCount: 842,
-  followersCount: 3120,
-  profileViews: 1428,
-  postImpressions: 9840,
-  searchAppearances: 342,
-  profileStrength: 100,
+  connectionsCount: 0,
+  followersCount: 0,
+  profileViews: 0,
+  postImpressions: 0,
+  searchAppearances: 0,
+  profileStrength: 92,
   about: `Passionate Technology Leader with 10+ years specializing in Autonomous Defense Loops, Cloud Security Posture Management, Enterprise Zero Trust architecture, and Distributed Multi-Agent Systems.
 
 Proven track record of scaling high-availability Next.js, Kubernetes, and AWS/GCP cloud platforms while securing critical infrastructure. Currently spearheading advanced cybersecurity resilience and digital transformation at Expedite Consults.`,

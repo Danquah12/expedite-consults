@@ -78,7 +78,8 @@ import {
   loadStoredContentReach,
   loadStoredDirectoryDiscoveries,
   recordProfileView,
-  getProfileTailoredAnalytics
+  getProfileTailoredAnalytics,
+  syncLiveUserTelemetryFromCloud
 } from "@/lib/connectin-analytics"
 import { getQualifiedJobsForSkills, SkillQualifiedJob } from "@/lib/skill-qualified-jobs"
 
@@ -280,6 +281,7 @@ export function ProfileView({
   const [isMemberConnected, setIsMemberConnected] = useState<boolean>(false)
 
   const [analyticsSubTab, setAnalyticsSubTab] = useState<'viewers' | 'reach' | 'discoveries'>('viewers')
+  const [telemetryTick, setTelemetryTick] = useState(0)
   const tailoredAnalytics = React.useMemo(() => getProfileTailoredAnalytics(user), [
     user.id,
     user.name,
@@ -291,7 +293,8 @@ export function ProfileView({
     user.postImpressions,
     user.searchAppearances,
     user.connectionsCount,
-    user.skills
+    user.skills,
+    telemetryTick
   ])
   const [viewers, setViewers] = useState<ProfileViewerItem[]>(() => getProfileTailoredAnalytics(user).viewers)
   const reachData = tailoredAnalytics.reachData
@@ -304,7 +307,23 @@ export function ProfileView({
     setWorkspaceSection('profile')
     setIsMemberConnected(false)
     setViewers(getProfileTailoredAnalytics(user).viewers)
+    if (user?.name) {
+      syncLiveUserTelemetryFromCloud(user.name).then(() => {
+        setTelemetryTick(v => v + 1)
+        setViewers(getProfileTailoredAnalytics(user).viewers)
+      }).catch(() => {})
+    }
   }, [user.id, user.name, user.professionEnclave, user.profession])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const handleUpdate = () => {
+      setTelemetryTick(v => v + 1)
+      setViewers(getProfileTailoredAnalytics(user).viewers)
+    }
+    window.addEventListener('connectln-telemetry-updated', handleUpdate)
+    return () => window.removeEventListener('connectln-telemetry-updated', handleUpdate)
+  }, [user])
 
   const handleToggleViewerConnect = (viewerId: string) => {
     setViewers(prev => {
@@ -1322,10 +1341,10 @@ export function ProfileView({
                         <Eye className="h-3.5 w-3.5 text-[#0A66C2]" />
                       </div>
                       <p className="text-xl font-black text-zinc-900 dark:text-zinc-100">
-                        {(user.profileViews ?? 0).toLocaleString()}
+                        {tailoredAnalytics.effectiveProfileViews.toLocaleString()}
                       </p>
                       <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
-                        {(user.profileViews ?? 0) > 0 ? "+14.8% · Unique Enterprises" : "0 Unique Viewers"}
+                        {tailoredAnalytics.effectiveProfileViews > 0 ? `✓ ${tailoredAnalytics.effectiveProfileViews} Live Viewer(s)` : "0 Live Viewers"}
                       </p>
                     </div>
 
@@ -1338,10 +1357,10 @@ export function ProfileView({
                         <TrendingUp className="h-3.5 w-3.5 text-purple-600" />
                       </div>
                       <p className="text-xl font-black text-zinc-900 dark:text-zinc-100">
-                        {(user.postImpressions ?? 0).toLocaleString()}
+                        {tailoredAnalytics.effectiveTotalReach.toLocaleString()}
                       </p>
                       <p className="text-[10px] text-purple-600 dark:text-purple-400 font-bold">
-                        {(user.postImpressions ?? 0) > 0 ? "+24.6% · Multi-Channel Broadcasts" : "0 Multi-Channel Broadcasts"}
+                        {tailoredAnalytics.effectiveTotalReach > 0 ? `✓ ${tailoredAnalytics.effectiveTotalReach} Live Content & Module Event(s)` : "0 Content & Module Reach"}
                       </p>
                     </div>
 
@@ -1354,10 +1373,10 @@ export function ProfileView({
                         <Search className="h-3.5 w-3.5 text-emerald-600" />
                       </div>
                       <p className="text-xl font-black text-zinc-900 dark:text-zinc-100">
-                        {(user.searchAppearances ?? 0).toLocaleString()}
+                        {tailoredAnalytics.effectiveDiscoveries.toLocaleString()}
                       </p>
                       <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
-                        {(user.searchAppearances ?? 0) > 0 ? "+18.2% · Talent Query Matches" : "0 Talent Query Matches"}
+                        {tailoredAnalytics.effectiveDiscoveries > 0 ? `✓ ${tailoredAnalytics.effectiveDiscoveries} Live Directory Match(es)` : "0 Directory Discoveries"}
                       </p>
                     </div>
                   </div>

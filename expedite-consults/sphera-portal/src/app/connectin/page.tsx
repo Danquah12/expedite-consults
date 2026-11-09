@@ -104,6 +104,11 @@ import {
 } from "@/lib/connectin-storage"
 import { isSuperAdminUser, createUniqueUserProfile, createFreshInvitedUserProfile, generatePersonalSignatureAvatar, isForeignPersonaAvatar } from "@/lib/connectin-profile"
 import {
+  recordLiveProfileView,
+  recordLiveContentReach,
+  recordLiveDirectoryDiscovery
+} from "@/lib/connectin-analytics"
+import {
   PROFESSION_ENCLAVES,
   ALL_PROFESSIONS,
   findEnclaveById,
@@ -166,6 +171,7 @@ export default function ConnectLnPage() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false)
   const [analyticsModalTab, setAnalyticsModalTab] = useState<'viewers' | 'reach' | 'discoveries'>('viewers')
+  const [networkInitialSubTab, setNetworkInitialSubTab] = useState<'connections' | 'invitations' | 'sent' | 'profile_viewers' | 'pymk'>('pymk')
   const [activeWorkspace, setActiveWorkspace] = useState<'personal' | 'enterprise' | 'creator' | 'seller'>('personal')
 
   const COMMON_SURNAMES_LIST = [
@@ -1210,23 +1216,17 @@ export default function ConnectLnPage() {
       if (typeof window !== "undefined") {
         window.scrollTo({ top: 0, behavior: "smooth" })
       }
-      // Record cross-user Credential & Dossier Check in Cloud Sync so the target member sees who checked their credentials
+      // Record cross-user Credential & Dossier Check in Cloud Sync AND Live Telemetry so the target member sees who viewed their profile and the viewer's Content Reach increments live
       if (memberProfile.name && userData.name && memberProfile.name.toLowerCase() !== userData.name.toLowerCase()) {
-        fetch('/api/connectin/profile-views', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            targetName: memberProfile.name,
-            viewerName: userData.name,
-            viewerHeadline: userData.headline || `${userData.profession || 'Verified ConnectLn Professional'} · ConnectLn Member`,
-            viewerAvatar: userData.avatar || '',
-            viewerCompany: userData.profession || 'ConnectLn Network',
-            viewerLocation: userData.location || 'United States',
-            viewerClearance: 'Verified Member · 1st',
-            viewerCategory: 'peer',
-            viewVector: 'Ticket Scouting & Dossier Lookup'
-          })
-        }).catch(() => {})
+        recordLiveProfileView({
+          targetName: memberProfile.name,
+          viewerName: userData.name,
+          viewerHeadline: userData.headline || `${userData.profession || 'Verified ConnectLn Professional'} · ConnectLn Member`,
+          viewerAvatar: userData.avatar || '',
+          viewerCompany: userData.profession || 'ConnectLn Network',
+          viewerLocation: userData.location || 'United States',
+          viewVector: 'Profile & Dossier Inspection'
+        })
       }
     } catch (err) {
       console.error("[ConnectIn] Failed to inspect member workspace:", err)
@@ -1261,6 +1261,14 @@ export default function ConnectLnPage() {
     }
 
     setPosts(prev => [newPost, ...prev])
+    if (userData?.name) {
+      recordLiveContentReach({
+        userName: userData.name,
+        title: `Published ${newPost.media?.type ? newPost.media.type.toUpperCase() : 'Feed Post'}: "${(newPost.content || '').slice(0, 60)}"`,
+        category: 'Feed Post',
+        actorName: userData.name
+      })
+    }
     trackUserActivity({
       actionType: 'POST_CREATED',
       actionLabel: `Published a New Post (${newPost.media?.type ? newPost.media.type.toUpperCase() : 'Feed Post'})`,
@@ -1331,6 +1339,23 @@ export default function ConnectLnPage() {
 
   // Handle Reactions (Like, Celebrate, Support, Love, Insightful, Funny)
   const handleToggleReaction = (postId: string, reaction: ReactionType | null) => {
+    const targetPost = posts.find(p => p.id === postId)
+    if (reaction && userData?.name) {
+      recordLiveContentReach({
+        userName: userData.name,
+        title: `Reacted (${reaction}) to post by ${targetPost?.author?.name || 'Member'}: "${(targetPost?.content || '').slice(0, 50)}"`,
+        category: 'Feed Post',
+        actorName: userData.name
+      })
+      if (targetPost?.author?.name && targetPost.author.name.toLowerCase() !== userData.name.toLowerCase()) {
+        recordLiveContentReach({
+          userName: targetPost.author.name,
+          title: `${userData.name} reacted (${reaction}) to your post`,
+          category: 'Feed Post',
+          actorName: userData.name
+        })
+      }
+    }
     setPosts(prev =>
       prev.map(p => {
         if (p.id !== postId) return p
@@ -1363,6 +1388,23 @@ export default function ConnectLnPage() {
 
   // Handle Comments & Replies
   const handleAddComment = (postId: string, commentText: string, parentCommentId?: string) => {
+    const targetPost = posts.find(p => p.id === postId)
+    if (userData?.name) {
+      recordLiveContentReach({
+        userName: userData.name,
+        title: `Commented on post by ${targetPost?.author?.name || 'Member'}: "${commentText.slice(0, 50)}"`,
+        category: 'Feed Post',
+        actorName: userData.name
+      })
+      if (targetPost?.author?.name && targetPost.author.name.toLowerCase() !== userData.name.toLowerCase()) {
+        recordLiveContentReach({
+          userName: targetPost.author.name,
+          title: `${userData.name} commented on your post: "${commentText.slice(0, 50)}"`,
+          category: 'Feed Post',
+          actorName: userData.name
+        })
+      }
+    }
     const newComment = {
       id: 'c_' + Date.now(),
       author: {
@@ -1435,6 +1477,14 @@ export default function ConnectLnPage() {
     setPosts(prev =>
       prev.map(p => (p.id === postId ? { ...p, isSaved: !p.isSaved } : p))
     )
+    if (nextSaved && userData?.name) {
+      recordLiveContentReach({
+        userName: userData.name,
+        title: `Saved & Reached Content by ${targetPost?.author?.name || 'Member'}: "${(targetPost?.content || '').slice(0, 50)}"`,
+        category: 'Feed Post',
+        actorName: userData.name
+      })
+    }
     trackUserActivity({
       actionType: 'POST_SAVED',
       actionLabel: nextSaved ? 'Bookmarked / Saved Post' : 'Removed Post Bookmark',
@@ -1534,6 +1584,20 @@ export default function ConnectLnPage() {
           senderAvatar: compactSenderAvatar
         })
       }).catch(() => {})
+      if (targetPerson.name && userData.name) {
+        recordLiveDirectoryDiscovery({
+          userName: targetPerson.name,
+          keyword: `Connection Invitation from ${userData.name} (${userData.profession || 'Verified Member'})`,
+          searcherName: userData.name,
+          searcherRole: userData.headline || userData.profession || 'Verified ConnectLn Member'
+        })
+        recordLiveContentReach({
+          userName: userData.name,
+          title: `Expanded Trade Network · Invited ${targetPerson.name}`,
+          category: 'Profile',
+          actorName: userData.name
+        })
+      }
       trackUserActivity({
         actionType: 'USER_INVITED',
         actionLabel: 'Sent Connection Invitation',
@@ -1722,6 +1786,27 @@ export default function ConnectLnPage() {
           if (tab === 'profile') setInspectedMember(null)
           setActiveTab(tab as any)
           setSelectedTagFilter(null)
+          if (userData?.name) {
+            const tabTelemetryMap: Record<string, { title: string; category: 'Learning' | 'Alerts' | 'Media' | 'Feed Post' | 'Jobs' | 'Marketplace' | 'Pulse' | 'Profile' }> = {
+              learning: { title: 'Reached ConnectLn Learning & Trade Mastery Academy', category: 'Learning' },
+              notifications: { title: 'Checked ConnectLn Live Alerts & Dispatch Signals', category: 'Alerts' },
+              media: { title: 'Explored ConnectLn Media & Video Briefings', category: 'Media' },
+              jobs: { title: 'Browsed Verified Trade & Career Opportunities (Jobs)', category: 'Jobs' },
+              marketplace: { title: 'Visited ConnectLn Marketplace & Equipment Solutions', category: 'Marketplace' },
+              pulserooms: { title: 'Joined ConnectLn Live Pulse Audio Rooms', category: 'Pulse' },
+              vibe: { title: 'Opened ConnectLn Pulse & Unified Communications', category: 'Pulse' },
+              messaging: { title: 'Opened ConnectLn Direct Messaging & Dispatch', category: 'Alerts' }
+            }
+            const mapped = tabTelemetryMap[String(tab)]
+            if (mapped) {
+              recordLiveContentReach({
+                userName: userData.name,
+                title: mapped.title,
+                category: mapped.category,
+                actorName: userData.name
+              })
+            }
+          }
         }}
         user={userData}
         unreadMessagesCount={1}
@@ -1770,8 +1855,13 @@ export default function ConnectLnPage() {
                 onOpenInboundBountiesModal={() => setIsInboundBountiesModalOpen(true)}
                 onOpenAuthModal={() => setIsAuthModalOpen(true)}
                 onOpenAnalytics={(tab) => {
-                  setAnalyticsModalTab(tab)
-                  setIsAnalyticsModalOpen(true)
+                  if (tab === 'viewers') {
+                    setNetworkInitialSubTab('profile_viewers')
+                    setActiveTab('network')
+                  } else {
+                    setAnalyticsModalTab(tab)
+                    setIsAnalyticsModalOpen(true)
+                  }
                 }}
               />
             </div>
@@ -2553,6 +2643,7 @@ export default function ConnectLnPage() {
             onSelectMember={handleInspectMember}
             onNavigateMessaging={(person) => handleOpenDirectMessage(person)}
             onUpdateConnectionsCount={(newCount) => setUserData(prev => ({ ...prev, connectionsCount: newCount }))}
+            initialSubTab={networkInitialSubTab}
           />
         )}
 
