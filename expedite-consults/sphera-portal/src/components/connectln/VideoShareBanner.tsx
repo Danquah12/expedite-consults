@@ -277,7 +277,7 @@ export function VideoShareBanner({
                   serialPlate={serialPlate || "CLN-VID"}
                   speaker={resolvedAuthor}
                   durationLabel={duration}
-                  initialMuted={startedByScroll}
+                  initialMuted={false}
                   playerId={bannerPlayerIdRef.current}
                   onExclusiveStop={() => setIsPlayingInline(false)}
                   className="h-full w-full"
@@ -288,7 +288,6 @@ export function VideoShareBanner({
                   data-connectln-player-id={bannerPlayerIdRef.current}
                   controls
                   autoPlay
-                  muted={startedByScroll}
                   playsInline
                   loop
                   className="h-full w-full object-contain bg-black"

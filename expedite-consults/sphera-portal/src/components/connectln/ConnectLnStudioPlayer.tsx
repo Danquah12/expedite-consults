@@ -218,12 +218,32 @@ export function ConnectLnStudioPlayer({
     e.stopPropagation()
     if (isMuted) {
       sendPlayerCommand("unMute")
+      sendPlayerCommand("setVolume", [100])
+      sendPlayerCommand("playVideo")
       setIsMuted(false)
     } else {
       sendPlayerCommand("mute")
       setIsMuted(true)
     }
   }
+
+  // Ensure sound is unmuted at 100% volume on user interaction if autoPlay is active
+  useEffect(() => {
+    if (!autoPlay || isMuted) return
+    const unlockAudio = () => {
+      sendPlayerCommand("unMute")
+      sendPlayerCommand("setVolume", [100])
+      if (isPlaying && !isStoppedByOther) {
+        sendPlayerCommand("playVideo")
+      }
+    }
+    window.addEventListener("pointerdown", unlockAudio, { passive: true })
+    window.addEventListener("keydown", unlockAudio, { passive: true })
+    return () => {
+      window.removeEventListener("pointerdown", unlockAudio)
+      window.removeEventListener("keydown", unlockAudio)
+    }
+  }, [autoPlay, isMuted, isPlaying, isStoppedByOther, sendPlayerCommand])
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTime = parseFloat(e.target.value)
@@ -287,6 +307,10 @@ export function ConnectLnStudioPlayer({
             onLoad={() => {
               if (autoPlay) {
                 setTimeout(() => {
+                  if (!initialMuted) {
+                    sendPlayerCommand("unMute")
+                    sendPlayerCommand("setVolume", [100])
+                  }
                   sendPlayerCommand("playVideo")
                 }, 150)
               }

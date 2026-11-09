@@ -795,7 +795,7 @@ export function ConnectInVideoWheel({
                 serialPlate={assignedUserVideo.serialPlate}
                 speaker={assignedUserVideo.speaker}
                 durationLabel={assignedUserVideo.duration || "5:15"}
-                initialMuted={heroStartedByScroll}
+                initialMuted={false}
                 playerId={wheelHeroPlayerIdRef.current}
                 onExclusiveStop={() => setIsPlayingHeroInline(false)}
                 className="h-full w-full"
