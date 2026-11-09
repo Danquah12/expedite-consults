@@ -334,6 +334,7 @@ export function ConnectLnStudioPlayer({
 
       {/* Top ConnectLn Studio Header Overlay */}
       <div
+        style={{ color: "#FFFFFF" }}
         className={`absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-black/85 via-black/45 to-transparent px-4 py-2.5 flex items-center justify-between gap-3 transition-opacity duration-300 ${
           showControls || !isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"
         }`}
@@ -341,15 +342,15 @@ export function ConnectLnStudioPlayer({
         <div className="flex items-center gap-2.5 min-w-0">
           {/* Official ConnectLn Squircle Badge */}
           <div className="h-7 w-7 rounded-lg bg-[#171513] border border-white/15 flex items-center justify-center shrink-0 shadow-sm">
-            <span className="text-white font-black text-xs tracking-tighter">C</span>
+            <span style={{ color: "#FFFFFF" }} className="font-black text-xs tracking-tighter">C</span>
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-bold text-white truncate drop-shadow-xs">{title}</p>
-            <p className="text-[10px] text-zinc-300 truncate">{speaker} · {serialPlate}</p>
+            <p style={{ color: "#FFFFFF" }} className="text-xs font-bold truncate drop-shadow-xs">{title}</p>
+            <p style={{ color: "#E4E4E7" }} className="text-[10px] truncate">{speaker} · {serialPlate}</p>
           </div>
         </div>
 
-        <span className="rounded-md bg-black/60 border border-white/15 px-2 py-0.5 text-[10px] font-mono font-bold text-amber-300 shrink-0">
+        <span style={{ color: "#FCD34D" }} className="rounded-md bg-black/75 border border-white/15 px-2 py-0.5 text-[10px] font-mono font-bold shrink-0">
           {serialPlate}
         </span>
       </div>
@@ -360,7 +361,7 @@ export function ConnectLnStudioPlayer({
           !isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-90"
         }`}
       >
-        <div className="h-14 w-14 rounded-full bg-black/70 border border-white/25 text-white flex items-center justify-center shadow-2xl backdrop-blur-xs">
+        <div style={{ color: "#FFFFFF" }} className="h-14 w-14 rounded-full bg-black/70 border border-white/25 flex items-center justify-center shadow-2xl backdrop-blur-xs">
           {isPlaying ? <Pause className="h-6 w-6 fill-white" /> : <Play className="h-6 w-6 fill-white ml-0.5" />}
         </div>
       </div>
@@ -368,6 +369,7 @@ export function ConnectLnStudioPlayer({
       {/* Bottom ConnectLn Studio Control Bar (Replaces YouTube Bar & Logo) */}
       <div
         onClick={(e) => e.stopPropagation()}
+        style={{ color: "#FFFFFF" }}
         className={`absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/95 via-black/75 to-transparent px-4 pt-5 pb-2.5 space-y-1.5 transition-opacity duration-300 ${
           showControls || !isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"
         }`}
@@ -393,11 +395,12 @@ export function ConnectLnStudioPlayer({
         </div>
 
         {/* Controls & ConnectLn Studio Watermark Row */}
-        <div className="flex items-center justify-between gap-3 text-white">
+        <div style={{ color: "#FFFFFF" }} className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <button
               type="button"
               onClick={togglePlay}
+              style={{ color: "#FFFFFF" }}
               className="p-1 rounded-lg hover:bg-white/15 transition-colors cursor-pointer"
               title={isPlaying ? "Pause" : "Play"}
             >
@@ -407,6 +410,7 @@ export function ConnectLnStudioPlayer({
             <button
               type="button"
               onClick={handleRestart}
+              style={{ color: "#FFFFFF" }}
               className="p-1 rounded-lg hover:bg-white/15 transition-colors cursor-pointer"
               title="Restart briefing"
             >
@@ -416,24 +420,25 @@ export function ConnectLnStudioPlayer({
             <button
               type="button"
               onClick={toggleMute}
+              style={{ color: "#FFFFFF" }}
               className="p-1 rounded-lg hover:bg-white/15 transition-colors cursor-pointer"
               title={isMuted ? "Unmute" : "Mute"}
             >
               {isMuted ? <VolumeX className="h-4 w-4 text-rose-400" /> : <Volume2 className="h-4 w-4" />}
             </button>
 
-            <span className="text-[11px] font-mono font-semibold text-zinc-200">
-              {formatTime(currentTime)} <span className="text-zinc-400">/ {formatTime(duration)}</span>
+            <span style={{ color: "#F4F4F5" }} className="text-[11px] font-mono font-semibold">
+              {formatTime(currentTime)} <span style={{ color: "#A1A1AA" }}>/ {formatTime(duration)}</span>
             </span>
           </div>
 
           {/* Right side: ConnectLn Studio Brand Pill + Fullscreen (Where YouTube watermark used to be) */}
           <div className="flex items-center gap-2.5">
             <div className="flex items-center gap-1.5 rounded-md bg-[#171513]/90 border border-white/15 px-2.5 py-1 shadow-xs">
-              <span className="inline-flex h-4 w-4 items-center justify-center rounded bg-[#A64532] text-[10px] font-black text-white">
+              <span style={{ color: "#FFFFFF" }} className="inline-flex h-4 w-4 items-center justify-center rounded bg-[#A64532] text-[10px] font-black">
                 C
               </span>
-              <span className="text-[11px] font-extrabold tracking-tight text-white">
+              <span style={{ color: "#FFFFFF" }} className="text-[11px] font-extrabold tracking-tight">
                 ConnectLn
               </span>
             </div>
@@ -441,6 +446,7 @@ export function ConnectLnStudioPlayer({
             <button
               type="button"
               onClick={toggleFullscreen}
+              style={{ color: "#FFFFFF" }}
               className="p-1 rounded-lg hover:bg-white/15 transition-colors cursor-pointer"
               title="Toggle fullscreen"
             >

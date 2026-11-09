@@ -107,6 +107,53 @@ export function SkilledTradesLearnByDoingSection({
   const [businessAnswers, setBusinessAnswers] = useState<Record<string, number>>({})
   const [bookmarkedProposedIds, setBookmarkedProposedIds] = useState<Record<string, boolean>>({})
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
+  const homeCardRefs = useRef<Record<string, HTMLDivElement | null>>({})
+
+  // LinkedIn-style Auto-Play on Scroll for Home Feed Big Video Cards
+  useEffect(() => {
+    if (mode !== 'home_videos_only' || typeof window === 'undefined' || !('IntersectionObserver' in window)) {
+      return
+    }
+    const observer = new IntersectionObserver(
+      entries => {
+        let bestLessonId: string | null = null
+        let bestRatio = 0
+        for (const entry of entries) {
+          const lid = (entry.target as HTMLElement).dataset.lbdLessonId
+          if (entry.isIntersecting && lid && entry.intersectionRatio >= 0.55) {
+            if (entry.intersectionRatio > bestRatio) {
+              bestRatio = entry.intersectionRatio
+              bestLessonId = lid
+            }
+          }
+        }
+        if (bestLessonId) {
+          setActiveVideoLessonId(prev => {
+            if (prev !== bestLessonId) {
+              notifyExclusiveVideoPlay(`lbd-home-player-${bestLessonId}`)
+              setAutoPlayRequested(true)
+              return bestLessonId
+            }
+            return prev
+          })
+        }
+      },
+      {
+        root: null,
+        rootMargin: '-12% 0px -12% 0px',
+        threshold: [0.55, 0.75]
+      }
+    )
+
+    const currentRefs = homeCardRefs.current
+    Object.values(currentRefs).forEach(el => {
+      if (el) observer.observe(el)
+    })
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [mode, selectedCategory])
 
   // Load persisted telemetry on mount
   useEffect(() => {
@@ -394,40 +441,40 @@ export function SkilledTradesLearnByDoingSection({
       SKILLED_TRADES_LEARN_BY_DOING_LESSONS.find(l => l.id === activeVideoLessonId) ||
       filteredLessons[0] ||
       SKILLED_TRADES_LEARN_BY_DOING_LESSONS[0]
-    const isActiveLesson6 =
-      activeLesson?.id === 'lbd_painting_brush_roller_6' && Boolean(activeLesson.companionVariant)
-    const activeHeroVariant =
-      isActiveLesson6 && lesson6Variant === 'companion' && activeLesson?.companionVariant
-        ? activeLesson.companionVariant
-        : null
-    const heroYoutubeId = activeHeroVariant?.youtubeId || activeLesson?.youtubeId
-    const heroTitle = activeHeroVariant ? activeHeroVariant.title : activeLesson?.title
-    const heroCreator = activeHeroVariant ? activeHeroVariant.originalCreator : activeLesson?.originalCreator
-    const heroVideoLabel = activeHeroVariant ? activeHeroVariant.videoLabel : activeLesson?.videoLabel
 
     return (
       <section
         id="skilled-trades-learn-by-doing"
-        className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden"
+        className="space-y-4"
       >
-        {/* Sleek Home Feed Video Showcase Header */}
-        <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-amber-950 px-4 py-3.5 text-white border-b border-amber-500/30">
+        {/* Top LinkedIn-Style Video Feed Filter Card */}
+        <div
+          style={{ backgroundColor: '#1C140D', color: '#FFFFFF' }}
+          className="rounded-2xl border border-amber-500/40 px-4 py-3.5 shadow-sm space-y-2.5"
+        >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
-              <span className="rounded-full bg-amber-400 text-slate-950 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shrink-0">
-                <Play className="h-3 w-3 fill-slate-950" />
-                ConnectLn Studio Videos
+              <span
+                style={{ backgroundColor: '#D97706', color: '#FFFFFF' }}
+                className="rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1.5 shrink-0"
+              >
+                <Play className="h-3 w-3 fill-current" />
+                <span>CONNECTLN STUDIO VIDEOS</span>
               </span>
-              <h2 className="text-sm sm:text-base font-black tracking-tight text-white truncate">
-                Skilled Trades Video Showcase (13 Masterclasses)
-              </h2>
+              <span
+                style={{ color: '#FDE68A' }}
+                className="text-xs sm:text-sm font-extrabold tracking-tight truncate"
+              >
+                Auto-Plays as You Scroll ({filteredLessons.length} Masterclasses)
+              </span>
             </div>
 
             {onOpenInLearnTab && (
               <button
                 type="button"
                 onClick={() => onOpenInLearnTab(activeLesson?.id, activeLesson?.category)}
-                className="rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 px-3 py-1 text-[11px] font-black inline-flex items-center gap-1.5 shadow-xs transition-all cursor-pointer shrink-0"
+                style={{ backgroundColor: '#B45309', color: '#FFFFFF' }}
+                className="rounded-full hover:opacity-95 px-3.5 py-1.5 text-[11px] font-black inline-flex items-center gap-1.5 shadow-xs transition-all cursor-pointer shrink-0 border border-amber-400/40"
               >
                 <BookOpen className="h-3.5 w-3.5" />
                 <span>📖 Detailed Notes, Practice &amp; Quizzes in Learn Tab →</span>
@@ -435,8 +482,8 @@ export function SkilledTradesLearnByDoingSection({
             )}
           </div>
 
-          {/* Compact Trade Video Filter Pills */}
-          <div className="mt-2.5 flex items-center gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {/* Trade Filter Pills */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {(
               [
                 { id: 'All', label: `All ${totalLessonsCount} Videos` },
@@ -462,14 +509,15 @@ export function SkilledTradesLearnByDoingSection({
                         : SKILLED_TRADES_LEARN_BY_DOING_LESSONS.find(l => l.category === tab.id)
                     if (firstMatch) {
                       setActiveVideoLessonId(firstMatch.id)
-                      setAutoPlayRequested(false)
+                      setAutoPlayRequested(true)
                     }
                   }}
-                  className={`rounded-full px-2.5 py-1 text-[11px] font-bold transition-all shrink-0 cursor-pointer ${
+                  style={
                     isSelected
-                      ? 'bg-amber-400 text-slate-950 shadow-2xs'
-                      : 'bg-white/10 text-zinc-200 hover:bg-white/20 border border-white/15'
-                  }`}
+                      ? { backgroundColor: '#D97706', color: '#FFFFFF' }
+                      : { backgroundColor: 'rgba(255,255,255,0.1)', color: '#F4F4F5' }
+                  }
+                  className="rounded-full px-3 py-1 text-[11px] font-bold transition-all shrink-0 cursor-pointer border border-white/15"
                 >
                   {tab.label}
                 </button>
@@ -478,179 +526,225 @@ export function SkilledTradesLearnByDoingSection({
           </div>
         </div>
 
-        {/* Featured Active ConnectLn Studio Player Theater */}
-        {activeLesson && heroYoutubeId && (
-          <div className="bg-slate-950 border-b border-zinc-800">
-            {isActiveLesson6 && activeLesson.companionVariant && (
-              <div className="px-4 py-2 bg-emerald-950/60 border-b border-emerald-800/50 flex items-center justify-between gap-2 flex-wrap">
-                <span className="text-[11px] font-bold text-emerald-200">
-                  Painting Lesson 6 Video Feed:
-                </span>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setLesson6Variant('primary')}
-                    className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold cursor-pointer ${
-                      lesson6Variant === 'primary'
-                        ? 'bg-emerald-400 text-slate-950'
-                        : 'bg-white/10 text-zinc-200 border border-white/15'
-                    }`}
-                  >
-                    Brush &amp; Roller (Sherwin-Williams)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setLesson6Variant('companion')}
-                    className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold cursor-pointer ${
-                      lesson6Variant === 'companion'
-                        ? 'bg-emerald-400 text-slate-950'
-                        : 'bg-white/10 text-zinc-200 border border-white/15'
-                    }`}
-                  >
-                    Clean Paint Edges (FrogTape)
-                  </button>
-                </div>
-              </div>
-            )}
+        {/* Vertical Stack of Big Full-Width LinkedIn Video Cards (Auto-Play on Scroll) */}
+        <div className="space-y-4">
+          {filteredLessons.map(lesson => {
+            const isLesson6 =
+              lesson.id === 'lbd_painting_brush_roller_6' && Boolean(lesson.companionVariant)
+            const activeVariant =
+              isLesson6 && lesson6Variant === 'companion' && lesson.companionVariant
+                ? lesson.companionVariant
+                : null
+            const cardYoutubeId = activeVariant?.youtubeId || lesson.youtubeId
+            const cardTitle = activeVariant ? activeVariant.title : lesson.title
+            const cardCreator = activeVariant ? activeVariant.originalCreator : lesson.originalCreator
+            const cardVideoLabel = activeVariant ? activeVariant.videoLabel : lesson.videoLabel
+            const cardThumbUrl = cardYoutubeId
+              ? `https://i.ytimg.com/vi/${cardYoutubeId}/hqdefault.jpg`
+              : lesson.thumbnailUrl
+            const serialPlate = `CLN-LBD${String(lesson.lessonNumber).padStart(2, '0')}`
+            const isActiveCard = activeVideoLessonId === lesson.id
 
-            <div className="relative aspect-video w-full bg-black">
-              <ConnectLnStudioPlayer
-                key={`home-hero-${activeLesson.id}-${heroYoutubeId}-${lesson6Variant}`}
-                youtubeId={heroYoutubeId}
-                title={heroTitle || ''}
-                serialPlate={`CLN-LBD${String(activeLesson.lessonNumber).padStart(2, '0')}`}
-                speaker={heroCreator || ''}
-                durationLabel=""
-                autoPlay={autoPlayRequested}
-                initialMuted={false}
-                playerId={`lbd-home-player-${activeLesson.id}`}
-                className="h-full w-full"
-              />
-            </div>
-
-            <div className="px-4 py-2.5 bg-slate-900 flex flex-wrap items-center justify-between gap-2 text-xs text-white">
-              <div className="min-w-0">
-                <span className="text-[10px] font-bold text-amber-300 uppercase tracking-wider block">
-                  Now Loaded in ConnectLn Player · {activeLesson.category} · {heroVideoLabel}
-                </span>
-                <p className="font-bold text-xs sm:text-sm text-white truncate">
-                  {heroTitle} — <span className="text-zinc-300 font-medium">{heroCreator}</span>
-                </p>
-              </div>
-              {onOpenInLearnTab && (
-                <button
-                  type="button"
-                  onClick={() => onOpenInLearnTab(activeLesson.id, activeLesson.category)}
-                  className="rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-white px-3 py-1.5 text-[11px] font-bold inline-flex items-center gap-1.5 cursor-pointer shrink-0 transition-colors"
-                >
-                  <BookOpen className="h-3.5 w-3.5" />
-                  <span>Study Detailed Notes &amp; Practice in Learn Tab →</span>
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Compact Video-Only Playlist Grid (No Notes / No Quizzes on Home Page) */}
-        <div className="p-3.5 sm:p-4 bg-zinc-50/70 dark:bg-zinc-950/40">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {filteredLessons.map(lesson => {
-              const isSelected = activeVideoLessonId === lesson.id
-              const thumbUrl = lesson.youtubeId
-                ? `https://i.ytimg.com/vi/${lesson.youtubeId}/hqdefault.jpg`
-                : lesson.thumbnailUrl
-
-              return (
-                <div
-                  key={lesson.id}
-                  className={`group rounded-xl border overflow-hidden transition-all bg-white dark:bg-zinc-900 flex flex-col justify-between ${
-                    isSelected
-                      ? 'border-amber-500 ring-2 ring-amber-500/30 shadow-sm'
-                      : 'border-zinc-200/90 dark:border-zinc-800 hover:border-[#0A66C2]'
-                  }`}
-                >
-                  {/* Video Thumbnail Card */}
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => handleWatchAction(lesson)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        handleWatchAction(lesson)
-                      }
-                    }}
-                    className="relative h-36 w-full bg-slate-950 overflow-hidden cursor-pointer"
-                  >
-                    <img
-                      src={thumbUrl}
-                      alt={lesson.title}
-                      className="h-full w-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/35 to-transparent" />
-
-                    {/* Top Badges */}
-                    <div className="absolute top-2 left-2.5 right-2.5 flex items-center justify-between gap-1.5">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-950/85 text-white px-2 py-0.5 text-[10px] font-bold border border-white/15">
-                        {getCategoryIcon(lesson.category)}
-                        <span>{lesson.category}</span>
-                      </span>
-                      <span className="rounded-full bg-amber-400 text-slate-950 px-2 py-0.5 text-[9px] font-black uppercase">
-                        Video {lesson.lessonNumber}
-                      </span>
-                    </div>
-
-                    {/* Center Play Pill */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span
-                        className={`rounded-full px-3.5 py-1.5 text-[11px] font-black shadow-md inline-flex items-center gap-1.5 transition-transform group-hover:scale-105 ${
-                          isSelected
-                            ? 'bg-emerald-400 text-slate-950'
-                            : 'bg-amber-400 text-slate-950'
+            return (
+              <div
+                key={lesson.id}
+                ref={el => {
+                  homeCardRefs.current[lesson.id] = el
+                }}
+                data-lbd-lesson-id={lesson.id}
+                className={`rounded-2xl border bg-white dark:bg-zinc-900 overflow-hidden transition-all shadow-sm ${
+                  isActiveCard
+                    ? 'border-amber-500/80 ring-2 ring-amber-500/20'
+                    : 'border-zinc-200/90 dark:border-zinc-800'
+                }`}
+              >
+                {/* Optional Lesson 6 Switcher (Sherwin-Williams vs FrogTape) */}
+                {isLesson6 && lesson.companionVariant && (
+                  <div className="px-4 py-2 bg-emerald-50 dark:bg-emerald-950/40 border-b border-emerald-200 dark:border-emerald-800/50 flex items-center justify-between gap-2 flex-wrap">
+                    <span className="text-[11px] font-bold text-emerald-900 dark:text-emerald-200">
+                      Painting &amp; Decorating Video 6 Topic:
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setLesson6Variant('primary')}
+                        className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold cursor-pointer ${
+                          lesson6Variant === 'primary'
+                            ? 'bg-emerald-700 text-white'
+                            : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-700'
                         }`}
                       >
-                        <Play className="h-3.5 w-3.5 fill-slate-950" />
-                        <span>{isSelected ? 'Playing Above' : 'Play Video'}</span>
-                      </span>
-                    </div>
-
-                    {/* Bottom Title */}
-                    <div className="absolute bottom-2 left-2.5 right-2.5">
-                      <p className="text-[10px] font-bold text-amber-300 truncate">
-                        {lesson.originalCreator}
-                      </p>
-                      <h3 className="text-xs font-black text-white leading-tight line-clamp-1">
-                        {lesson.title}
-                      </h3>
+                        Brush &amp; Roller (Sherwin-Williams)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setLesson6Variant('companion')}
+                        className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold cursor-pointer ${
+                          lesson6Variant === 'companion'
+                            ? 'bg-emerald-700 text-white'
+                            : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-700'
+                        }`}
+                      >
+                        Clean Paint Edges (FrogTape)
+                      </button>
                     </div>
                   </div>
+                )}
 
-                  {/* Minimal Video Footer: Play + Open Notes in Learn Tab */}
-                  <div className="px-3 py-2 bg-zinc-50 dark:bg-zinc-900 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleWatchAction(lesson)}
-                      className="text-[11px] font-extrabold text-[#0A66C2] dark:text-sky-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                {/* Big Full-Width 16:9 ConnectLn Studio Video Area */}
+                <div className="relative aspect-video w-full bg-black">
+                  {isActiveCard && cardYoutubeId ? (
+                    <ConnectLnStudioPlayer
+                      key={`home-card-${lesson.id}-${cardYoutubeId}-${lesson6Variant}`}
+                      youtubeId={cardYoutubeId}
+                      title={cardTitle}
+                      serialPlate={serialPlate}
+                      speaker={cardCreator}
+                      durationLabel=""
+                      autoPlay={autoPlayRequested}
+                      initialMuted={true}
+                      playerId={`lbd-home-player-${lesson.id}`}
+                      className="h-full w-full"
+                    />
+                  ) : (
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => {
+                        notifyExclusiveVideoPlay(`lbd-home-player-${lesson.id}`)
+                        setAutoPlayRequested(true)
+                        setActiveVideoLessonId(lesson.id)
+                        handleWatchAction(lesson)
+                      }}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          notifyExclusiveVideoPlay(`lbd-home-player-${lesson.id}`)
+                          setAutoPlayRequested(true)
+                          setActiveVideoLessonId(lesson.id)
+                          handleWatchAction(lesson)
+                        }
+                      }}
+                      className="relative h-full w-full overflow-hidden cursor-pointer group"
                     >
-                      <Play className="h-3 w-3 fill-current" />
-                      <span>{isSelected ? 'Active in Player' : 'Watch in Player'}</span>
-                    </button>
+                      <img
+                        src={cardThumbUrl}
+                        alt={cardTitle}
+                        className="h-full w-full object-cover opacity-90 group-hover:scale-[1.02] transition-transform duration-300"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/20 to-black/80" />
 
+                      {/* Top Studio Bar */}
+                      <div
+                        style={{ color: '#FFFFFF' }}
+                        className="absolute inset-x-0 top-0 px-4 py-2.5 flex items-center justify-between gap-3"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="h-7 w-7 rounded-lg bg-[#171513] border border-white/20 flex items-center justify-center shrink-0">
+                            <span style={{ color: '#FFFFFF' }} className="font-black text-xs">
+                              C
+                            </span>
+                          </div>
+                          <div className="min-w-0">
+                            <p style={{ color: '#FFFFFF' }} className="text-xs font-bold truncate">
+                              {cardTitle}
+                            </p>
+                            <p style={{ color: '#E4E4E7' }} className="text-[10px] truncate">
+                              {cardCreator} · {serialPlate}
+                            </p>
+                          </div>
+                        </div>
+                        <span
+                          style={{ color: '#FCD34D' }}
+                          className="rounded-md bg-black/75 border border-white/15 px-2 py-0.5 text-[10px] font-mono font-bold shrink-0"
+                        >
+                          {serialPlate}
+                        </span>
+                      </div>
+
+                      {/* Center Play Button */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div
+                          style={{ color: '#FFFFFF' }}
+                          className="h-14 w-14 rounded-full bg-black/75 border border-white/30 flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform"
+                        >
+                          <Play className="h-6 w-6 fill-white ml-0.5" />
+                        </div>
+                      </div>
+
+                      {/* Bottom ConnectLn Studio Bar */}
+                      <div
+                        style={{ color: '#FFFFFF' }}
+                        className="absolute inset-x-0 bottom-0 px-4 py-2.5 flex items-center justify-between gap-3"
+                      >
+                        <span style={{ color: '#E4E4E7' }} className="text-[11px] font-semibold">
+                          Scroll into view or tap to play in ConnectLn Player
+                        </span>
+                        <div className="flex items-center gap-1.5 rounded-md bg-[#171513]/90 border border-white/15 px-2.5 py-1">
+                          <span
+                            style={{ color: '#FFFFFF' }}
+                            className="inline-flex h-4 w-4 items-center justify-center rounded bg-[#A64532] text-[10px] font-black"
+                          >
+                            C
+                          </span>
+                          <span
+                            style={{ color: '#FFFFFF' }}
+                            className="text-[11px] font-extrabold tracking-tight"
+                          >
+                            ConnectLn
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Big Card Footer (Matches Screenshot: Title + Creator + Study Detailed Notes in Learn Tab Button) */}
+                <div className="p-4 bg-white dark:bg-zinc-900 space-y-2.5">
+                  <div className="space-y-0.5">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 block">
+                      {isActiveCard ? 'NOW LOADED IN CONNECTLN PLAYER' : 'CONNECTLN STUDIO MASTERCLASS'} ·{' '}
+                      {lesson.category.toUpperCase()} · {cardVideoLabel.toUpperCase()}
+                    </span>
+                    <h3 className="text-sm sm:text-base font-black text-zinc-900 dark:text-zinc-100 leading-snug">
+                      {cardTitle} —{' '}
+                      <span className="font-semibold text-zinc-600 dark:text-zinc-400">
+                        {cardCreator}
+                      </span>
+                    </h3>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
                     {onOpenInLearnTab && (
                       <button
                         type="button"
                         onClick={() => onOpenInLearnTab(lesson.id, lesson.category)}
-                        className="text-[11px] font-bold text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 inline-flex items-center gap-1 cursor-pointer"
+                        style={{ backgroundColor: '#7C4323', color: '#FFFFFF' }}
+                        className="rounded-lg hover:opacity-95 px-3.5 py-2 text-xs font-extrabold inline-flex items-center gap-1.5 cursor-pointer transition-opacity shadow-xs"
                       >
-                        <FileText className="h-3 w-3 text-amber-600 dark:text-amber-400" />
-                        <span>Notes &amp; Quiz →</span>
+                        <BookOpen className="h-3.5 w-3.5" />
+                        <span>Study Detailed Notes &amp; Practice in Learn Tab →</span>
                       </button>
                     )}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        notifyExclusiveVideoPlay(`lbd-home-player-${lesson.id}`)
+                        setAutoPlayRequested(true)
+                        setActiveVideoLessonId(lesson.id)
+                        handleWatchAction(lesson)
+                      }}
+                      className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 px-3 py-1.5 text-xs font-bold text-zinc-800 dark:text-zinc-200 inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+                    >
+                      <Play className="h-3.5 w-3.5 fill-current" />
+                      <span>{isActiveCard ? 'Playing Above' : 'Play Now'}</span>
+                    </button>
                   </div>
                 </div>
-              )
-            })}
-          </div>
+              </div>
+            )
+          })}
         </div>
       </section>
     )

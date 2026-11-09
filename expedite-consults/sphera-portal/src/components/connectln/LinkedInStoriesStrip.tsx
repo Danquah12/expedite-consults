@@ -493,7 +493,7 @@ export function LinkedInStoriesStrip({
                       <div className="h-[2px] flex-1 bg-[#E10600]" />
                     </div>
                     <div className="bg-black/80 p-1.5 rounded-xs">
-                      <p className="text-[10px] font-extrabold text-white leading-tight line-clamp-3">
+                      <p style={{ color: "#FFFFFF" }} className="text-[10px] font-extrabold leading-tight line-clamp-3">
                         {story.title}
                       </p>
                     </div>
@@ -511,27 +511,27 @@ export function LinkedInStoriesStrip({
 
                   {/* Top Author Pill & Video Play Indicator */}
                   <div className="absolute top-2 left-2 right-2 flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 bg-black/55 backdrop-blur-xs rounded-full pr-2 pl-0.5 py-0.5">
+                    <div className="flex items-center gap-1.5 bg-black/75 backdrop-blur-xs rounded-full pr-2 pl-0.5 py-0.5 border border-white/15">
                       <img
                         src={story.authorAvatar}
                         alt={story.authorName}
                         className="h-5 w-5 rounded-full object-cover ring-1 ring-white"
                       />
-                      <span className="text-[9px] font-bold text-white truncate max-w-[90px]">
+                      <span style={{ color: "#FFFFFF" }} className="text-[9px] font-bold truncate max-w-[90px]">
                         {story.authorName}
                       </span>
                     </div>
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#0A66C2] text-white shadow-md">
+                    <span style={{ color: "#FFFFFF" }} className="flex h-6 w-6 items-center justify-center rounded-full bg-[#0A66C2] shadow-md">
                       <Play className="h-3 w-3 fill-current ml-0.5" />
                     </span>
                   </div>
 
                   {/* Bottom Editorial Serif Headline */}
                   <div className="absolute bottom-2.5 left-2.5 right-2.5 space-y-0.5">
-                    <span className="text-[8px] font-extrabold tracking-widest uppercase text-sky-300 block">
+                    <span style={{ color: "#7DD3FC" }} className="text-[8px] font-extrabold tracking-widest uppercase block">
                       {story.badgeText}
                     </span>
-                    <p className="font-serif text-[11px] sm:text-xs font-bold text-white leading-snug line-clamp-3 drop-shadow-xs">
+                    <p style={{ color: "#FFFFFF" }} className="font-serif text-[11px] sm:text-xs font-bold leading-snug line-clamp-3 drop-shadow-xs">
                       {story.title}
                     </p>
                   </div>
