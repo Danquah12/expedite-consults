@@ -1673,6 +1673,116 @@ export const PROFESSION_ENCLAVES: ProfessionEnclave[] = [
         ]
       },
       {
+        id: "cloud_zero_trust_security_architect",
+        title: "Cloud Security & Zero-Trust Architect (AWS / GCP / Azure / GovCloud)",
+        enclaveId: "tech_cybersecurity",
+        categoryName: "Cloud & Zero-Trust Security",
+        defaultHeadline: "Principal Cloud Security & Zero-Trust Architect (CCSP, CISSP) · Multi-Cloud CNAPP, BeyondCorp, eBPF Runtime Defense & GovCloud IL5/IL6",
+        typicalSkills: ["Zero-Trust Architecture (NIST 800-207)", "AWS / GCP / Azure Cloud Security", "CNAPP & CSPM (Wiz / Prisma)", "Kubernetes & eBPF Hardening", "mTLS & Workload Identity Federation"],
+        tools: [
+          { name: "Zero-Trust Microsegmentation & CNAPP Posture Graph", icon: "☁️", description: "Real-time attack path graph across AWS, GCP, Azure & Kubernetes clusters", badge: "NIST 800-207" }
+        ]
+      },
+      {
+        id: "soc_analyst_siem_soar_engineer",
+        title: "SOC Analyst (Tier 1–3), SIEM Detection & SOAR Automation Engineer",
+        enclaveId: "tech_cybersecurity",
+        categoryName: "SOC, SIEM & Threat Hunting",
+        defaultHeadline: "Lead SOC Tier-3 Detection Engineer & Threat Hunter (GCIA, GCIH, CySA+) · Splunk ES, Microsoft Sentinel, CrowdStrike Falcon XDR & Sigma/YARA Rules",
+        typicalSkills: ["SIEM Detection Engineering (Splunk / Sentinel)", "EDR / XDR Triage (CrowdStrike / Defender)", "Sigma & YARA Rule Authoring", "SOAR Playbook Automation", "MITRE ATT&CK Threat Hunting"],
+        tools: [
+          { name: "SIEM/XDR Alert Triage & MITRE ATT&CK Coverage Matrix", icon: "📡", description: "Automated SOAR containment playbooks, Sigma rule validator & dwell-time telemetry", badge: "24/7 SOC" }
+        ]
+      },
+      {
+        id: "pentester_bug_bounty_appsec",
+        title: "Offensive Penetration Tester, Ethical Hacker & Bug Bounty Hunter (OSCP / GPEN)",
+        enclaveId: "tech_cybersecurity",
+        categoryName: "Penetration Testing & Red Team",
+        defaultHeadline: "Senior Offensive Security Penetration Tester (OSCP, OSWE, GPEN) · Web/API/Mobile Exploitation, Cloud IAM Privilege Escalation & Internal AD Pentesting",
+        typicalSkills: ["Web, API & GraphQL Penetration Testing", "Burp Suite Pro & Custom Nuclei Templates", "Active Directory / Entra ID BloodHound", "Mobile iOS/Android Reverse Engineering", "CVSS 4.0 PoC Reporting"],
+        tools: [
+          { name: "Offensive Pentest Findings & CVSS 4.0 PoC Vault", icon: "🎯", description: "Exploit reproduction chains, Burp/Nuclei telemetry & executive remediation tracker", badge: "OSCP / GPEN" }
+        ]
+      },
+      {
+        id: "dfir_incident_responder_malware_re",
+        title: "DFIR Incident Responder, Ransomware Recovery & Malware Reverse Engineer (GCFA / GREM)",
+        enclaveId: "tech_cybersecurity",
+        categoryName: "DFIR & Malware Analysis",
+        defaultHeadline: "Principal DFIR Incident Commander & Malware Reverse Engineer (GCFA, GREM, GNFA) · Memory Forensics, Ransomware Containment & Ghidra/IDA Pro Triage",
+        typicalSkills: ["Digital Forensics & Incident Response (DFIR)", "Memory Forensics (Volatility 3 / VelociRaptor)", "Malware Reverse Engineering (Ghidra / IDA Pro)", "Ransomware Extortion & Clean-Room Recovery", "Chain-of-Custody Timeline Reconstruction"],
+        tools: [
+          { name: "DFIR Memory Forensics & Ransomware Containment War Room", icon: "🧬", description: "Live VelociRaptor artifact collection, IOC sweep & immutable backup restoration timeline", badge: "GCFA / GREM" }
+        ]
+      },
+      {
+        id: "devsecops_appsec_aspm_engineer",
+        title: "Application Security (AppSec), DevSecOps & ASPM Pipeline Architect",
+        enclaveId: "tech_cybersecurity",
+        categoryName: "AppSec & DevSecOps",
+        defaultHeadline: "Staff Application Security & DevSecOps Architect (CSSLP, CASE) · SAST/DAST/SCA Guardrails, SLSA Level 3 Supply-Chain Security, SBOM & Threat Modeling",
+        typicalSkills: ["Application Security Posture Management (ASPM)", "SAST / DAST / SCA (Semgrep, Snyk, CodeQL)", "SLSA Software Supply Chain & CycloneDX SBOM", "CI/CD Secrets & Container Signing (Cosign)", "STRIDE Threat Modeling"],
+        tools: [
+          { name: "Code-to-Cloud ASPM & SBOM Supply-Chain Gatekeeper", icon: "🔐", description: "Automated PR reachability analysis, container signature verification & zero-day dependency blocking", badge: "SLSA Level 3" }
+        ]
+      },
+      {
+        id: "grc_fedramp_cmmc_rmf_auditor",
+        title: "Cybersecurity GRC Lead, FedRAMP / CMMC Assessor & NIST RMF ISSO/ISSM",
+        enclaveId: "tech_cybersecurity",
+        categoryName: "GRC, FedRAMP & CMMC Compliance",
+        defaultHeadline: "Principal Cybersecurity GRC Architect, CMMC Certified Assessor (CCA) & DoD RMF ISSM (CISSP, CISA, CRISC) · NIST SP 800-53/171, FedRAMP High Continuous ATO & SOC 2 Type II",
+        typicalSkills: ["NIST SP 800-53 Rev 5 & RMF (eMASS / Xacta)", "CMMC 2.0 Level 2/3 & NIST 800-171", "FedRAMP Moderate/High & Continuous ATO (cATO)", "SOC 2 Type II, ISO 27001 & HIPAA/PCI-DSS", "OSCAL Compliance-as-Code & POA&M Governance"],
+        tools: [
+          { name: "Aegis RMF Continuous ATO, FedRAMP & CMMC Control Matrix", icon: "📜", description: "Automated NIST 800-53/171 control inheritance, POA&M burndown & OSCAL package generator", badge: "FedRAMP / CMMC" }
+        ]
+      },
+      {
+        id: "iam_pam_zero_trust_identity_engineer",
+        title: "Identity & Access Management (IAM / PAM / CIAM) Security Architect",
+        enclaveId: "tech_cybersecurity",
+        categoryName: "IAM & Identity Security",
+        defaultHeadline: "Principal Identity Security & PAM Architect (CIDPRO, CISSP) · Okta/Entra ID Federation, CyberArk Privileged Access, FIDO2/WebAuthn Passkeys & Non-Human Identity (NHI) Governance",
+        typicalSkills: ["Enterprise IAM & CIAM (Okta / Microsoft Entra ID / Ping)", "Privileged Access Management (CyberArk / Delinea / BeyondTrust)", "FIDO2 / WebAuthn Phishing-Resistant MFA", "OIDC, SAML 2.0, SCIM & RBAC/ABAC Policy", "Identity Governance & Administration (SailPoint IGA)"],
+        tools: [
+          { name: "Zero-Trust Identity Graph, PAM Vault & NHI Key Rotator", icon: "🔑", description: "Detects Toxic IAM privilege combinations, orphaned service accounts & JIT elevation sessions", badge: "FIDO2 / PAM" }
+        ]
+      },
+      {
+        id: "ai_llm_security_adversarial_ml_engineer",
+        title: "AI / LLM Security, Adversarial Red-Teaming & Guardrail Defense Engineer",
+        enclaveId: "tech_cybersecurity",
+        categoryName: "AI & LLM Security",
+        defaultHeadline: "Staff AI Security & Adversarial ML Red-Team Engineer · OWASP LLM Top 10, Prompt Injection Defense, Agentic Sandbox Isolation & Model Weight Integrity",
+        typicalSkills: ["OWASP Top 10 for LLMs & Agentic AI", "Automated Prompt Injection & Jailbreak Red-Teaming", "AI Guardrails, RAG Data-Poisoning Defense & DLP", "Confidential Computing (TEE / NVIDIA H100 Enclaves)", "MITRE ATLAS & NIST AI RMF"],
+        tools: [
+          { name: "Adversarial LLM Red-Team Harness & Agentic Sandbox Firewall", icon: "🤖", description: "Continuous jailbreak probing, MCP tool-call policy enforcement & RAG exfiltration blocker", badge: "MITRE ATLAS" }
+        ]
+      },
+      {
+        id: "cyber_threat_intelligence_osint_analyst",
+        title: "Cyber Threat Intelligence (CTI), Nation-State APT & Dark-Web OSINT Analyst",
+        enclaveId: "tech_cybersecurity",
+        categoryName: "SOC, SIEM & Threat Hunting",
+        defaultHeadline: "Principal Cyber Threat Intelligence (CTI) Analyst (GCTI) · Nation-State APT Tracking, Dark-Web Ransomware Monitoring, STIX/TAXII Feeds & Diamond Model Attribution",
+        typicalSkills: ["GIAC Cyber Threat Intelligence (GCTI)", "Nation-State APT & FinCrime Campaign Attribution", "Dark-Web Tor / Telegram Credential & Leak Monitoring", "MISP, OpenCTI & STIX/TAXII Threat Feeds", "Executive Geopolitical Cyber Briefings"],
+        tools: [
+          { name: "APT Campaign Diamond Model & Dark-Web IOC Feed Console", icon: "🕵️", description: "Live ransomware leak-site monitor, STIX/TAXII indicator enrichment & adversary TTP tracker", badge: "GCTI / OSINT" }
+        ]
+      },
+      {
+        id: "ciso_fractional_cyber_executive",
+        title: "Chief Information Security Officer (CISO) & Fractional / vCISO Executive",
+        enclaveId: "tech_cybersecurity",
+        categoryName: "Cyber Executive & vCISO",
+        defaultHeadline: "Chief Information Security Officer (CISO / vCISO) · SEC Cyber Disclosure Governance, Board Risk Quantification (FAIR), Cyber Insurance & Global Security Operations",
+        typicalSkills: ["CISO & Fractional vCISO Executive Leadership", "SEC Cybersecurity Disclosure & Board Reporting", "FAIR Quantitative Cyber Risk Modeling", "Enterprise Breach Crisis Command & Cyber Insurance", "M&A Cybersecurity Due Diligence"],
+        tools: [
+          { name: "CISO Board Risk Quantification (FAIR) & SEC Readiness Deck", icon: "🛡️", description: "Translates technical telemetry into dollar-denominated risk exposure and board compliance scorecards", badge: "CISO Command" }
+        ]
+      },
+      {
         id: "industrial_ot_cyber_technician",
         title: "Industrial Cybersecurity (OT / ICS / SCADA) Technician",
         enclaveId: "tech_cybersecurity",
@@ -2809,6 +2919,161 @@ const EXTRA_SPECIALIZED_PROFESSIONS: ProfessionDefinition[] = [
     defaultHeadline: 'AI Agent Workflow Architect, Bubble/Retool No-Code Developer & RLHF Domain Evaluator · n8n/Make Orchestration, RAG Knowledge Bases & API Documentation',
     typicalSkills: ['n8n / Zapier / Make AI Workflows', 'Retool / Bubble Internal Tools', 'RLHF & Red-Team Annotation', 'Docs-as-Code Technical Writing', 'CRM Revenue Operations'],
     tools: [{ name: 'Multi-Agent Webhook Canvas & RLHF Eval Rubric', icon: '🤖', description: 'JSON schema tool-calling tester, prompt regression benchmark and automated SOP builder', badge: 'AI Ops Verified' }]
+  },
+
+  // ── Category 43: Essential Field, Transport, Municipal, Domestic & Artisanal Professions Ignored by LinkedIn ──
+  {
+    id: 'cdl_long_haul_hazmat_tanker_driver',
+    title: 'CDL Class A Long-Haul OTR, Heavy-Haul Lowboy & HazMat Tanker Truck Driver',
+    enclaveId: 'automotive_mechanics',
+    categoryName: 'Professions LinkedIn Ignored — CDL Trucking & Heavy Haul',
+    defaultHeadline: 'Million-Mile Safe CDL Class A Owner-Operator & HazMat/Tanker Specialist (TWIC) · Oversize RGN Lowboy Loads, FMCSA HOS Compliance & Reefer Cold-Chain',
+    typicalSkills: ['CDL Class A w/ HazMat (H) & Tanker (N) Endorsements', 'Oversize / Overweight RGN Lowboy Hauling', 'TWIC Port Access & DOT Pre-Trip Inspection', 'ELD / FMCSA Hours-of-Service Compliance', 'Mountain Grade Braking & Winter Chain-Up'],
+    tools: [{ name: 'CDL Axle-Weight Bridge Formula, ELD & Per-Mile Rate Calculator', icon: '🚛', description: 'Kingpin-to-rear-axle bridge weight calculator, IFTA fuel tax log & load-board RPM analyzer', badge: 'CDL Class A / TWIC' }]
+  },
+  {
+    id: 'heavy_tow_rotator_roadside_recovery',
+    title: 'Heavy-Duty Rotator Tow Operator, Highway Incident Recovery & Diesel Roadside Tech',
+    enclaveId: 'automotive_mechanics',
+    categoryName: 'Professions LinkedIn Ignored — Heavy Recovery & Fleet Rescue',
+    defaultHeadline: 'WreckMaster Level 6/7 Certified 75-Ton Rotator Operator & Heavy Recovery Specialist · Tractor-Trailer Rollover Rigging, Air-Cushion Recovery & Roadside Diesel Repair',
+    typicalSkills: ['WreckMaster / TIMS Heavy Recovery Certification', '75-Ton Rotator Winch & Snatch-Block Rigging', 'Air-Cushion Jacking & HazMat Spill Containment', 'Mobile Air-Brake & Roadside Diesel Diagnostics', 'CDL Class A Towing Endorsement'],
+    tools: [{ name: 'Heavy Recovery Winch Tension & Mire-Resistance Calculator', icon: '🪝', description: 'Calculates snatch-block mechanical advantage, working load limits (WLL) and rollover uprighting vectors', badge: 'WreckMaster 6/7' }]
+  },
+  {
+    id: 'elevator_escalator_constructor_mechanic',
+    title: 'Licensed Elevator & Escalator Constructor / Mechanic (NEIEP / QEI)',
+    enclaveId: 'trades_construction',
+    categoryName: 'Professions LinkedIn Ignored — Vertical Transportation & MEP',
+    defaultHeadline: 'NEIEP Certified Elevator Constructor Mechanic & QEI Inspector · High-Speed Gearless Traction Hoistways, Hydraulic Plungers, ASME A17.1 Safety Tests & Microprocessor Dispatch',
+    typicalSkills: ['NEIEP / IUEC Elevator Mechanic License', 'ASME A17.1 / CSA B44 Safety Code & CAT-1/CAT-5 Load Testing', 'Gearless Permanent-Magnet Traction & VVVF Drives', 'Hoistway Rail Alignment & Governor Rope Rigging', 'Escalator Step-Chain & Comb-Plate Calibration'],
+    tools: [{ name: 'ASME A17.1 Hoistway Safety, Rope Tension & Dispatch Diagnostic Log', icon: '🛗', description: 'Governor trip-speed verifier, wire-rope shackle equalization and door-lock safety circuit tracer', badge: 'NEIEP / QEI' }]
+  },
+  {
+    id: 'high_voltage_lineman_storm_restoration',
+    title: 'Journeyman High-Voltage Power Lineman & Storm Emergency Restoration Specialist',
+    enclaveId: 'energy_utilities_environment',
+    categoryName: 'Professions LinkedIn Ignored — Power Linework & Grid Storm Crew',
+    defaultHeadline: 'IBEW Journeyman Lineman · 138kV/500kV Barehand Live-Line Gloving/Hot-Stick Work, Helicopter Long-Line Stringing, Padmount Transformers & Hurricane Grid Restoration',
+    typicalSkills: ['Journeyman Lineman Card (IBEW / DOL)', 'Live-Line Rubber Gloving & Hot-Stick (15kV–500kV)', 'Pole Climbing, Bucket Truck & Digger Derrick Rigging', 'Three-Phase Wye/Delta Transformer Banking', 'OSHA 1910.269 Equipotential Grounding ("Grounds First")'],
+    tools: [{ name: 'Three-Phase Transformer Vector, Sag-Tension & Grounding Log', icon: '⚡', description: 'Conductor sag-tension chart,wye-delta phasor diagram verifier and storm feeder switching ticket', badge: 'Journeyman Lineman' }]
+  },
+  {
+    id: 'septic_trenchless_sewer_hydro_excavation',
+    title: 'Septic System Installer, Hydro-Vac Excavator & Trenchless Pipe Bursting Tech',
+    enclaveId: 'trades_construction',
+    categoryName: 'Professions LinkedIn Ignored — Underground Utilities & Septic',
+    defaultHeadline: 'Licensed Master Septic Installer, Hydro-Vac Daylight Operator & Trenchless CIPP Sewer Rehabilitation Specialist · Soil Percolation, Leach Fields & Confined Space Entry',
+    typicalSkills: ['Onsite Wastewater / Septic Tank & Mound Design', 'Hydro-Vac Non-Destructive Daylight Excavation', 'Trenchless Cured-in-Place Pipe (CIPP) & Pipe Bursting', 'NASSCO Crawler Camera & Locator Sonde', 'OSHA Trench Shoring & Confined Space Rescue'],
+    tools: [{ name: 'Septic Percolation Sizing, Trench Slope & CIPP Resin Cure Calc', icon: '🚜', description: 'Gallons-per-day leach field trench calculator, laser grade slope & UV/steam liner cure timer', badge: 'NAWT / NASSCO' }]
+  },
+  {
+    id: 'high_rise_rope_access_window_facade_tech',
+    title: 'SPRAT / IRATA High-Rise Rope Access Technician, Skyscraper Window & Facade Specialist',
+    enclaveId: 'trades_construction',
+    categoryName: 'Professions LinkedIn Ignored — High-Angle Rope Access & Exterior',
+    defaultHeadline: 'SPRAT / IRATA Level III Rope Access Supervisor · Skyscraper Curtain-Wall Window Washing,Bosun Chair Rigging, Wind-Turbine Blade Repair & Caulk/Sealant Restoration',
+    typicalSkills: ['SPRAT / IRATA Level I–III Rope Access Certification', 'Dual-Line Descender, Deviation & Aid-Climbing Rigging', 'Davits, Outriggers & Roof Anchor Load Verification', 'High-Rise Curtain-Wall Glass Cleaning & Caulking', 'Pick-Off Technical Rope Rescue'],
+    tools: [{ name: 'Rope Access Anchor Rigging Plan, Wind-Speed Cutoff & Rescue Log', icon: '🧗', description: 'Roof davit anchor vector calculator, anemometer wind-gust log and rope retirement hour tracker', badge: 'SPRAT / IRATA L3' }]
+  },
+  {
+    id: 'locksmith_safe_vault_access_control_tech',
+    title: 'Master Locksmith, Bank Vault/Safe Technician & Access Control Installer (CRL / CPS)',
+    enclaveId: 'trades_construction',
+    categoryName: 'Professions LinkedIn Ignored — Locksmithing, Safes & Door Hardware',
+    defaultHeadline: 'ALOA Certified Master Locksmith (CML) & SAVTA Safe/Vault Technician · Master Key System Bitting Charts, GSA Container Manipulation, Automotive Transponder EEPROM & Maglocks',
+    typicalSkills: ['ALOA Master Key System Hierarchy & IC Cores', 'UL TL-15/TL-30 Safe Manipulation & Scope Drilling', 'NFPA 101 Panic Hardware & Fire-Door Closers', 'Automotive Smart-Key EEPROM & Immobilizer Programming', 'OSDP / Wiegand Card Readers & Electric Strikes'],
+    tools: [{ name: 'Master Key Bitting Matrix & Safe Lock Drill-Point Reference', icon: '🗝️', description: 'MACS bitting generator, zero-ghost pin stack calculator and NFPA 101 egress hardware checklist', badge: 'ALOA CML / SAVTA' }]
+  },
+  {
+    id: 'commercial_fisherman_mariculture_deck_boss',
+    title: 'Commercial Fisherman, Offshore Crab/Lobster Captain, Oyster Farmer & Deck Boss',
+    enclaveId: 'agriculture_natural_resources',
+    categoryName: 'Professions LinkedIn Ignored — Commercial Fishing & Aquaculture',
+    defaultHeadline: 'USCG Licensed Fishing Vessel Master & Offshore Deck Boss · Longline/Purse-Seine/Pot Rigging, Hydraulic Hauler Ops, RSW Hold Refrigeration & Oyster/Kelp Mariculture',
+    typicalSkills: ['Commercial Pot, Trawl, Longline & Gillnet Gear Rigging', 'Refrigerated Sea Water (RSW) & Slurry Ice Hold Quality', 'USCG Commercial Fishing Vessel Safety & EPIRB/SART Drills', 'Bivalve Oyster/Clam Hatchery & Offshore Kelp Lines', 'NOAA Electronic Vessel Trip Reporting (eVTR) & Quota'],
+    tools: [{ name: 'Catch Quota, RSW Hold Temperature & Tow/Pot Plotter Log', icon: '🦀', description: 'Species poundage quota ledger, pot-string GPS lat/long plotter & vessel stability free-surface check', badge: 'USCG / NOAA' }]
+  },
+  {
+    id: 'arborist_tree_surgeon_line_clearance',
+    title: 'ISA Certified Arborist, Crane Tree Surgeon & Utility Line-Clearance Climber',
+    enclaveId: 'agriculture_natural_resources',
+    categoryName: 'Professions LinkedIn Ignored — Arboriculture & Tree Care',
+    defaultHeadline: 'ISA Board Certified Master Arborist, TCIA Certified Treecare Safety Professional (CTSP) & Utility Line-Clearance Specialist · Crane-Assisted Removals, SRS Rope Climbing & Sonic Tomography',
+    typicalSkills: ['ISA Certified Arborist & TRAQ Tree Risk Assessment', 'Stationary Rope System (SRS) & Spur/Spikeless Climbing', 'Crane-Assisted Heavy Timber Rigging & Negative Blocking', 'EHAP Utility Line-Clearance (ANSI Z133)', 'Plant Health Care (PHC) Trunk Injection & Chainsaw Felling'],
+    tools: [{ name: 'ANSI Z133 Rigging Drop-Zone, Green-Log Weight & TRAQ Risk Calc', icon: '🌲', description: 'Calculates green-wood log weight by species/diameter, rigging block shock loads and ISA TRAQ risk scores', badge: 'ISA / TCIA CTSP' }]
+  },
+  {
+    id: 'hospital_evs_biohazard_sterile_custodian',
+    title: 'Hospital Environmental Services (EVS), Biohazard Decontamination & Cleanroom Custodian',
+    enclaveId: 'healthcare_medicine',
+    categoryName: 'Professions LinkedIn Ignored — Hospital EVS, Sanitation & Bio-Decontamination',
+    defaultHeadline: 'AHE Certified Healthcare Environmental Services Technician (CHEST) & OSHA Bloodborne Biohazard Specialist · Operating Room Terminal Cleaning, UV-C Disinfection & ATP Bioluminescence',
+    typicalSkills: ['AHE CHEST Operating Room & ICU Terminal Disinfection', 'EPA List-N Sporicidal (C. diff / MRSA / Candida auris) Dwell Times', 'UV-C Pulsed Xenon Robot & Hydrogen Peroxide Vapor (HPV)', 'ATP Bioluminescence Swab Auditing & Sharps/Regulated Medical Waste', 'ISO Class 5–8 Cleanroom Gowning & Unidirectional Mop Protocol'],
+    tools: [{ name: 'OR Terminal Turnover, Disinfectant Dwell-Time & ATP RLU Audit Log', icon: '🧼', description: 'Tracks ICU/OR room turnover SLAs, sporicidal contact timers and ATP bioluminescence pass/fail readings', badge: 'AHE CHEST / OSHA' }]
+  },
+  {
+    id: 'estate_housekeeper_nanny_newborn_doula',
+    title: 'Private Estate Housekeeper, Professional Nanny, Postpartum Doula & Household Manager',
+    enclaveId: 'personal_services_wellness',
+    categoryName: 'Professions LinkedIn Ignored — Domestic, Childcare, Doula & Estate Ops',
+    defaultHeadline: 'INA Credentialed Nanny, DONA Certified Postpartum Doula & Private Estate Executive Housekeeper · Museum-Grade Silver/Fine-Textile Care, Infant Sleep Conditioning & Household Vendor Management',
+    typicalSkills: ['DONA Birth & Postpartum Doula / Newborn Care Specialist (NCS)', 'INA Credentialed Nanny & Pediatric CPR/First Aid', 'Fine Linen, Cashmere, Marble, Silver & Art-Surface Conservation', 'Private Estate Inventory, Provisioning & Vendor Supervision', 'Strict NDA Confidentiality & High-Net-Worth Family Protocol'],
+    tools: [{ name: 'Estate Surface Care Guide, Newborn Feed/Sleep Log & Household Ledger', icon: '🏡', description: 'Infant milestone/feeding tracker, museum fabric/stone care cards and estate maintenance schedule', badge: 'INA / DONA Verified' }]
+  },
+  {
+    id: 'street_vendor_food_truck_market_stall_owner',
+    title: 'Food Truck Owner-Operator, Open-Air Market Vendor, Kiosk Entrepreneur & Street-Food Chef',
+    enclaveId: 'commerce_small_business',
+    categoryName: 'Professions LinkedIn Ignored — Mobile Food Trucks, Street Markets & Kiosks',
+    defaultHeadline: 'Licensed Mobile Food-Truck Chef-Owner & Farmers/Night-Market Vendor · Commissary Prep, NFPA 96 Propane/Ansul Hood Safety, High-Volume Festival Line Speed & Mobile POS',
+    typicalSkills: ['Mobile Food-Truck Kitchen Layout, Generator & Propane Safety', 'Health Department Mobile Vending Permits & Commissary Logs', 'High-Volume Festival/Event Prep Par-Level Forecasting', 'Open-Air Farmers Market / Night-Market Booth Merchandising', 'Tap-to-Pay Mobile POS & Daily Cash-Flow Margin Tracking'],
+    tools: [{ name: 'Food-Truck Event Prep Calculator, Commissary Temperature & Permit Tracker', icon: '🚚', description: 'Calculates festival portion par-levels, holding-temperature HACCP logs and daily truck net profit', badge: 'ServSafe / Mobile Vendor' }]
+  },
+  {
+    id: 'master_tailor_seamstress_cobbler_alterations',
+    title: 'Master Bespoke Tailor, Bridal Seamstress, Garment Patternmaker & Leather Alterations Artisan',
+    enclaveId: 'creative_media_arts',
+    categoryName: 'Professions LinkedIn Ignored — Bespoke Tailoring, Seamstress & Alterations',
+    defaultHeadline: 'Savile-Row Trained Master Bespoke Tailor & Bridal Couture Seamstress · Hand-Padded Horsehair Canvas, 32-Point Anatomical Measure, Corsetry Boning & Vintage Garment Restoration',
+    typicalSkills: ['Bespoke Suit Pattern Drafting & Hand-Padded Canvas', 'Bridal Gown Bustles, Beadwork & Couture Alterations', 'Industrial Juki Blind-Stitch, Overlock & Walking-Foot Machines', 'Leather, Suede, Fur & Heavy Denim Re-weaving', '32-Point Anatomical Fitting & Drape Correction'],
+    tools: [{ name: '32-Point Client Measurement Card, Pattern Allowance & Fitting Queue', icon: '🪡', description: 'Stores client posture/drop-shoulder measurements, fabric yardage layouts and bridal fitting milestones', badge: 'Master Tailor' }]
+  },
+  {
+    id: 'small_engine_chainsaw_generator_marine_outboard',
+    title: 'Small Engine, Chainsaw, Standby Generator & Marine Outboard Motor Master Mechanic',
+    enclaveId: 'automotive_mechanics',
+    categoryName: 'Professions LinkedIn Ignored — Small Engine, Generator & Marine Repair',
+    defaultHeadline: 'EETC Certified Master Small-Engine Technician, EGSA Standby Generator Specialist & ABYC Marine Outboard Mechanic · Stihl/Husqvarna 2-Stroke, Generac ATS & Yamaha/Mercury Four-Stroke',
+    typicalSkills: ['EETC 2-Stroke & 4-Stroke Carburetor / EFI Diagnostics', 'Generac / Kohler Standby Generator & Automatic Transfer Switch (ATS)', 'Yamaha / Mercury / Honda Marine Outboard Lower-Unit & Trim', 'Zero-Turn Commercial Mower Hydrostatic Drive Overhaul', 'Chainsaw Bar/Chain Grinding & Compression Leak-Down Testing'],
+    tools: [{ name: 'Small-Engine Compression/Spark Spec, Generator Load & Outboard Hour Log', icon: '🚤', description: '2-stroke/4-stroke valve clearance tables, ATS transfer test logs and marine impeller service reminders', badge: 'EETC / EGSA / ABYC' }]
+  },
+  {
+    id: 'longshoreman_stevedore_port_cargo_rigger',
+    title: 'Port Longshoreman, Stevedore, Ro-Ro Ship Lasher & Intermodal Container Crane Rigger',
+    enclaveId: 'aviation_aerospace_maritime',
+    categoryName: 'Professions LinkedIn Ignored — Port Longshoremen, Stevedores & Cargo Rigging',
+    defaultHeadline: 'ILWU / ILA Port Longshoreman, Shipboard Stevedore Foreperson & Heavy-Lift Breakbulk Rigger (TWIC) · Ship-to-Shore (STS) Gantry, Top-Handler Reach Stackers & Ro-Ro Vessel Lashing',
+    typicalSkills: ['Ship-to-Shore (STS) Container Crane & RTG Rubber-Tired Gantry', 'Top-Handler, Reach-Stacker & UTR Bomb-Cart Terminal Tractor', 'Breakbulk Heavy-Lift Spreader-Bar Rigging & Ro-Ro Lashing', 'IMDG Code Hazardous Marine Cargo Segregation', 'TWIC Maritime Security & OSHA 1917/1918 Longshoring Safety'],
+    tools: [{ name: 'Vessel Bay-Plan Container Twistlock, Reefers & Heavy-Lift Lashing Log', icon: '⚓', description: 'Tracks TEU container moves per hour, IMDG hazmat bay separation and Ro-Ro chain lashing tension', badge: 'ILWU / ILA / TWIC' }]
+  },
+  {
+    id: 'moving_captain_fine_art_piano_rigger',
+    title: 'Household Moving Crew Captain, Concert Piano Mover & Museum Fine-Art Crating Rigger',
+    enclaveId: 'commerce_small_business',
+    categoryName: 'Professions LinkedIn Ignored — Moving, Piano Rigging & Fine-Art Crating',
+    defaultHeadline: 'ATA ProMover Certified Moving Crew Captain, Concert Grand Piano Rigger & ISPM-15 Museum Art Packer · Stair-Climber Rigging, High-Value Cube Sheets & Climate-Controlled Air-Ride Van Ops',
+    typicalSkills: ['Concert Grand Piano Skid-Board & Crane/Hoist Window Rigging', 'ISPM-15 Custom Museum Crate Building & Microclimate Packing', 'High-Density 26ft Box-Truck / 53ft Household Van Tier Loading', 'Bill of Lading, High-Value Inventory Tagging & Claims Zero-Damage', 'Electronic Stair-Climber Dollies, Floor Runners & Door-Jamb Protection'],
+    tools: [{ name: 'Household Cube-Sheet Volume Estimator, Piano Stair Clearance & Bol Tracker', icon: '📦', description: 'Calculates cubic-footage/weight load factor, staircase turn-radius geometry and itemized condition inventory', badge: 'ProMover / Art Rigger' }]
+  },
+  {
+    id: 'sanitation_refuse_recycling_street_sweeper',
+    title: 'Municipal Sanitation Driver, Automated Refuse Operator, Transfer Station & Recycling Lead',
+    enclaveId: 'community_civic_security',
+    categoryName: 'Professions LinkedIn Ignored — Municipal Sanitation, Refuse & Recycling',
+    defaultHeadline: 'SWANA Certified Municipal Sanitation Specialist & CDL Automated Side-Loader (ASL) Operator · Zero-Accident Residential/Commercial Roll-Off Routes, MRF Optical Sorting & Leachate Safety',
+    typicalSkills: ['CDL Class B Front-Loader, Rear-Loader, Roll-Off & Automated Side-Loader (ASL)', 'SWANA Materials Recovery Facility (MRF) & Transfer Station Operations', 'Hydraulic Packer Blade Lockout/Tagout (LOTO) & Lithium-Battery Fire Prevention', 'Municipal Street Sweeper & Winter Salter/Snowplow Operations', 'Household Hazardous Waste (HHW) & E-Waste Diversion'],
+    tools: [{ name: 'Sanitation Route Tonnage, Compactor Hydraulic Pre-Trip & MRF Bale Log', icon: '🚛', description: 'Logs daily tip-ticket tonnage, route container exceptions and hydraulic packer pressure checks', badge: 'SWANA / CDL-B' }]
   }
 ]
 

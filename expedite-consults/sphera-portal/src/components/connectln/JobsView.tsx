@@ -62,6 +62,8 @@ function getEnclaveJobCategories(enclaveId?: string) {
     case 'all':
       return [
         { id: 'All', label: 'All Live Openings', icon: '🌐' },
+        { id: 'Cybersecurity', label: 'Cybersecurity (SOC, Pentest, Cloud, GRC, OT & CISO)', icon: '🛡️' },
+        { id: 'Professions LinkedIn Ignored', label: 'Professions LinkedIn Ignored (CDL, Lineman, Elevator, Arborist, EVS)', icon: '🛠️' },
         { id: 'Veterans & Military Transition', label: 'Veterans, DoD SkillBridge & SDVOSB', icon: '🎖️' },
         { id: 'Multi-Unit Franchise Ownership', label: 'Franchise Networks & VetFran Owners', icon: '🏪' },
         { id: 'Herbal, Botanical & Integrative Medicine', label: 'Herbal & Botanical Medicine (RH-AHG/ND)', icon: '🌿' },
@@ -288,6 +290,20 @@ function getEnclaveJobCategories(enclaveId?: string) {
         { id: 'Fitness, Wellness & MedSpa Franchises', label: 'Fitness Studios, Gyms & Senior Care', icon: '🏋️' },
         { id: 'Franchise Development, Brokerage & FDD Law', label: 'Franchise Dev (CFE), Brokers & FBCs', icon: '📜' },
         { id: 'Recommended', label: 'Recommended for You', icon: '⭐' }
+      ]
+    case 'tech_cybersecurity':
+      return [
+        { id: 'All', label: 'All Cybersecurity, Red Team, SOC, Cloud & OT Roles', icon: '🛡️' },
+        { id: 'Cloud & Zero-Trust Security', label: 'Cloud Security & Zero-Trust Architect', icon: '☁️' },
+        { id: 'SOC, SIEM & Threat Hunting', label: 'SOC Analyst, SIEM & Threat Hunting', icon: '🎯' },
+        { id: 'Penetration Testing & Red Team', label: 'Penetration Testing, Red Team & Bug Bounty', icon: '🕵️' },
+        { id: 'AppSec & DevSecOps', label: 'AppSec, DevSecOps & ASPM', icon: '🔐' },
+        { id: 'GRC, FedRAMP & CMMC Compliance', label: 'GRC, FedRAMP, CMMC & NIST RMF (ISSO/ISSM)', icon: '📋' },
+        { id: 'IAM & Identity Security', label: 'IAM, PAM, Okta & Passkey Identity', icon: '🔑' },
+        { id: 'OT / ICS / SCADA Security', label: 'Industrial OT / ICS / SCADA Security', icon: '🏭' },
+        { id: 'Cyber Executive & vCISO', label: 'CISO, Fractional vCISO & Cyber Leadership', icon: '🦅' },
+        { id: 'Recommended', label: 'Recommended for You', icon: '⭐' },
+        { id: 'Remote', label: 'Remote Only', icon: '🌍' }
       ]
     default:
       return [
