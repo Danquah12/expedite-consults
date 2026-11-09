@@ -163,7 +163,7 @@ export function InviteMembersModal({
     details?: string
   } | null>(null)
 
-  const persistRecipientRecord = (nameVal: string, emailVal?: string, phoneVal?: string) => {
+  const persistRecipientRecord = (nameVal: string, emailVal?: string, phoneVal?: string, skipServerPost = false) => {
     const cleanName = (nameVal || "").trim()
     if (!cleanName) return
     try {
@@ -185,18 +185,20 @@ export function InviteMembersModal({
         JSON.stringify([newEntry, ...(Array.isArray(existing) ? existing : [])])
       )
     } catch {}
-    fetch("/api/connectin/invite", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        channel: "register_link",
-        cid: inviteCid,
-        recipientName: cleanName,
-        recipients: emailVal ? [emailVal] : phoneVal ? [phoneVal] : [],
-        senderName: currentUser.name,
-        senderHeadline: currentUser.headline
-      })
-    }).catch(() => {})
+    if (!skipServerPost) {
+      fetch("/api/connectin/invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          channel: "register_link",
+          cid: inviteCid,
+          recipientName: cleanName,
+          recipients: emailVal ? [emailVal] : phoneVal ? [phoneVal] : [],
+          senderName: currentUser.name,
+          senderHeadline: currentUser.headline
+        })
+      }).catch(() => {})
+    }
   }
 
   const handleCopyLink = (textToCopy: string, type: "link" | "sms" | "email") => {
@@ -265,7 +267,7 @@ export function InviteMembersModal({
       const personName = recipientName.trim()
         ? recipientName.trim()
         : (deriveNameFromEmailAddress(rawEntry) || deriveNameFromEmailAddress(email) || (email.split("@")[0].charAt(0).toUpperCase() + email.split("@")[0].slice(1)))
-      persistRecipientRecord(personName, email)
+      persistRecipientRecord(personName, email, undefined, true)
       return {
         id: 'out_' + Date.now() + Math.random().toString(36).slice(2, 6),
         cid: inviteCid,
@@ -297,6 +299,11 @@ export function InviteMembersModal({
           inviteLink
         })
       })
+
+      if (onInviteSent) {
+        onInviteSent(newOutbound)
+      }
+      setInviteCid(`cin_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 5)}`)
 
       const data = await res.json()
 
@@ -353,7 +360,7 @@ export function InviteMembersModal({
 
     const newOutbound = parsedPhones.map(phone => {
       const personName = recipientName.trim() || effectiveRecipientName || phone
-      persistRecipientRecord(personName, undefined, phone)
+      persistRecipientRecord(personName, undefined, phone, true)
       return {
         id: 'out_sms_' + Date.now() + Math.random().toString(36).slice(2, 6),
         cid: inviteCid,
@@ -385,6 +392,11 @@ export function InviteMembersModal({
           inviteLink: loginLink
         })
       })
+
+      if (onInviteSent) {
+        onInviteSent(newOutbound)
+      }
+      setInviteCid(`cin_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 5)}`)
 
       const data = await res.json()
 

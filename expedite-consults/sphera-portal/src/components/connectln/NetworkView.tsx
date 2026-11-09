@@ -290,16 +290,38 @@ export function NetworkView({
       if (Array.isArray(data.receivedInvites)) {
         setCloudReceivedInvites(data.receivedInvites)
       }
+      const nextCloudAccepted: ConnectedMember[] = Array.isArray(data.acceptedConnections)
+        ? data.acceptedConnections
+        : []
       if (Array.isArray(data.acceptedConnections)) {
-        setCloudAcceptedConnections(data.acceptedConnections)
+        setCloudAcceptedConnections(nextCloudAccepted)
       }
       if (Array.isArray(data.sentInvites)) {
         const handledSet = new Set(handledInviteNames.map(n => n.toLowerCase().trim()))
+        const acceptedNameSet = new Set(
+          [...customConnections, ...nextCloudAccepted]
+            .map(c => String(c?.name || '').toLowerCase().trim())
+            .filter(Boolean)
+        )
+        const acceptedEmailSet = new Set(
+          [...customConnections, ...nextCloudAccepted]
+            .map(c => String((c as any)?.email || '').toLowerCase().trim())
+            .filter(Boolean)
+        )
         const map = new Map<string, OutboundInvitation>()
         for (const item of data.sentInvites) {
           if (!item || !item.name || item.id === 'out_1' || item.id === 'out_2') continue
           const norm = String(item.name).toLowerCase().trim()
-          if (!norm || handledSet.has(norm) || item.status === 'accepted') continue
+          const normEmail = String(item.email || '').toLowerCase().trim()
+          if (
+            !norm ||
+            handledSet.has(norm) ||
+            acceptedNameSet.has(norm) ||
+            (normEmail && acceptedEmailSet.has(normEmail)) ||
+            item.status === 'accepted'
+          ) {
+            continue
+          }
           if (!map.has(norm)) {
             map.set(norm, item)
           }
@@ -309,7 +331,7 @@ export function NetworkView({
     } catch {
       // ignore network error
     }
-  }, [currentUser?.name, (currentUser as any)?.email, handledInviteNames])
+  }, [currentUser?.name, (currentUser as any)?.email, handledInviteNames, customConnections])
 
   useEffect(() => {
     syncInvitationsWithCloud()
@@ -350,6 +372,23 @@ export function NetworkView({
     () => new Set(connections.map(c => c.name.toLowerCase().trim())),
     [connections]
   )
+
+  // Guarantee that any user in My Connections is immediately purged from Invitations Sent (-1)
+  useEffect(() => {
+    if (connections.length === 0) return
+    const connNames = new Set(connections.map(c => String(c.name || '').toLowerCase().trim()).filter(Boolean))
+    const connEmails = new Set(connections.map(c => String((c as any).email || '').toLowerCase().trim()).filter(Boolean))
+    setOutboundInvites(prev => {
+      const filtered = prev.filter(inv => {
+        const n = String(inv?.name || '').toLowerCase().trim()
+        const e = String(inv?.email || '').toLowerCase().trim()
+        if (n && connNames.has(n)) return false
+        if (e && connEmails.has(e)) return false
+        return true
+      })
+      return filtered.length === prev.length ? prev : filtered
+    })
+  }, [connections])
 
   const sentAcceptedCount = React.useMemo(
     () =>
@@ -473,16 +512,48 @@ export function NetworkView({
 
     saveCustomConnections([newConn, ...customConnections.filter(c => c.name.toLowerCase().trim() !== normInviteName)])
 
+    // Also remove currentUser from the sender's local Invitations Sent if on the same browser
+    if (typeof window !== 'undefined' && currentUser?.name) {
+      try {
+        const senderSlug = normInviteName.replace(/[^a-z0-9]/g, '_')
+        const myNormName = String(currentUser.name || '').toLowerCase().trim()
+        const myNormEmail = String((currentUser as any)?.email || '').toLowerCase().trim()
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i)
+          if (!k) continue
+          if (k.startsWith('connectin_outbound_v6_') && k.endsWith(`__${senderSlug}`)) {
+            const rawOut = localStorage.getItem(k)
+            const outList = rawOut ? JSON.parse(rawOut) : []
+            if (Array.isArray(outList)) {
+              const nextOut = outList.filter((item: any) => {
+                const n = String(item?.name || '').toLowerCase().trim()
+                const e = String(item?.email || '').toLowerCase().trim()
+                if (n && n === myNormName) return false
+                if (myNormEmail && e && e === myNormEmail) return false
+                return true
+              })
+              localStorage.setItem(k, JSON.stringify(nextOut))
+            }
+          }
+        }
+      } catch {}
+    }
+
     fetch('/api/connectin/invite', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         action: 'update_status',
         cid: invite.cid || invite.id,
-        recipientName: invite.name,
+        senderName: invite.senderName || invite.name,
+        recipientName: currentUser?.name || invite.recipientName || invite.name,
+        recipientEmail: (currentUser as any)?.email || '',
+        recipientHeadline: currentUser?.headline || '',
         status: 'accepted'
       })
-    }).catch(() => {})
+    })
+      .then(() => syncInvitationsWithCloud())
+      .catch(() => {})
 
     showToast(`🎉 Invitation accepted! ${invite.name} is now in My Connections (${connections.length + 1} Connections).`)
   }
@@ -525,10 +596,14 @@ export function NetworkView({
       body: JSON.stringify({
         action: 'update_status',
         cid: (inv as any).cid || inv.id,
+        senderName: currentUser?.name || 'Member',
         recipientName: inv.name,
+        recipientEmail: inv.email || '',
         status: 'accepted'
       })
-    }).catch(() => {})
+    })
+      .then(() => syncInvitationsWithCloud())
+      .catch(() => {})
 
     showToast(`🎉 Invitation Sent to ${inv.name} Accepted! Added to My Connections (${connections.length + 1} Connections).`)
   }
@@ -549,10 +624,14 @@ export function NetworkView({
         body: JSON.stringify({
           action: 'update_status',
           cid: invite.cid || invite.id,
-          recipientName: invite.name,
+          senderName: invite.senderName || invite.name,
+          recipientName: currentUser?.name || invite.recipientName || invite.name,
+          recipientEmail: (currentUser as any)?.email || '',
           status: 'ignored'
         })
-      }).catch(() => {})
+      })
+        .then(() => syncInvitationsWithCloud())
+        .catch(() => {})
       showToast(`Invitation from ${invite.name} ignored.`)
     }
   }
@@ -573,10 +652,14 @@ export function NetworkView({
         body: JSON.stringify({
           action: 'update_status',
           cid: (inv as any).cid || inv.id,
+          senderName: currentUser?.name || 'Member',
           recipientName: inv.name,
+          recipientEmail: inv.email || '',
           status: 'withdrawn'
         })
-      }).catch(() => {})
+      })
+        .then(() => syncInvitationsWithCloud())
+        .catch(() => {})
     }
     showToast(`Invitation withdrawn successfully.`)
   }

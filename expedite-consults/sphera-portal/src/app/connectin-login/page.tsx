@@ -97,8 +97,113 @@ export default function ConnectInLoginPage() {
     invitedPhone: string
   } | null>(null)
 
-  const connectWithInviterInStorage = (_inviterName: string, _inviterHeadline?: string) => {
-    // New users start with 0 connections, 0 sent invitations, and 0 received invitations until explicitly accepted
+  const connectWithInviterInStorage = async (
+    inviterName: string,
+    inviterHeadline?: string,
+    acceptedUser?: { name?: string; email?: string; headline?: string; avatar?: string }
+  ) => {
+    const cleanInviter = (inviterName || "").trim()
+    if (!cleanInviter || cleanInviter.toLowerCase() === "a connectln member") return
+
+    const urlParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null
+    const cidFromUrl = (urlParams?.get("cid") || "").trim()
+    const myName = (
+      acceptedUser?.name ||
+      signInName ||
+      `${joinFirstName} ${joinLastName}`.trim() ||
+      inviteContext?.invitedName ||
+      ""
+    ).trim()
+    const myEmail = (
+      acceptedUser?.email ||
+      signInEmail ||
+      joinEmail ||
+      inviteContext?.invitedEmail ||
+      ""
+    )
+      .toLowerCase()
+      .trim()
+    const myHeadline = acceptedUser?.headline || "Verified ConnectLn Member"
+
+    if (typeof window !== "undefined" && myName) {
+      try {
+        const emailPart = myEmail.replace(/[^a-z0-9]/g, "_")
+        const namePart = myName.toLowerCase().replace(/[^a-z0-9]/g, "_")
+        const myScopeKey = `${emailPart}__${namePart}`
+
+        // 1. Add inviter to the accepted user's My Connections (Invitation Received · Accepted) and mark handled (-1 from Invitations Received)
+        const inviterConn = {
+          id: `conn_inv_${Date.now()}`,
+          name: cleanInviter,
+          headline: inviterHeadline || "Verified ConnectLn Professional",
+          avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(cleanInviter)}&backgroundColor=0a66c2`,
+          connectedSince: "Invitation Received · Accepted",
+          originType: "received_accepted",
+          capabilities: ["Verified Specialist", "1st Degree Peer"],
+          verifiedBadges: ["✓ Invitation Received & Accepted"],
+          mutualCount: 18,
+          isOnline: true
+        }
+        const rawMyAccepted = localStorage.getItem(`connectin_accepted_v6_${myScopeKey}`)
+        const myAcceptedList = rawMyAccepted ? JSON.parse(rawMyAccepted) : []
+        const filteredMyAccepted = Array.isArray(myAcceptedList)
+          ? myAcceptedList.filter((c: any) => String(c?.name || "").toLowerCase().trim() !== cleanInviter.toLowerCase())
+          : []
+        localStorage.setItem(
+          `connectin_accepted_v6_${myScopeKey}`,
+          JSON.stringify([inviterConn, ...filteredMyAccepted])
+        )
+
+        const rawMyHandled = localStorage.getItem(`connectin_handled_v6_${myScopeKey}`)
+        const myHandledList = rawMyHandled ? JSON.parse(rawMyHandled) : []
+        if (Array.isArray(myHandledList) && !myHandledList.includes(cleanInviter.toLowerCase())) {
+          localStorage.setItem(
+            `connectin_handled_v6_${myScopeKey}`,
+            JSON.stringify([...myHandledList, cleanInviter.toLowerCase()])
+          )
+        }
+
+        // 2. Also remove this user from the inviter's local Invitations Sent if on the same browser
+        const inviterSlug = cleanInviter.toLowerCase().replace(/[^a-z0-9]/g, "_")
+        const myNormName = myName.toLowerCase().trim()
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i)
+          if (!k) continue
+          if (k.startsWith("connectin_outbound_v6_") && k.endsWith(`__${inviterSlug}`)) {
+            const rawOut = localStorage.getItem(k)
+            const outList = rawOut ? JSON.parse(rawOut) : []
+            if (Array.isArray(outList)) {
+              const nextOut = outList.filter((item: any) => {
+                const n = String(item?.name || "").toLowerCase().trim()
+                const e = String(item?.email || "").toLowerCase().trim()
+                if (n && n === myNormName) return false
+                if (myEmail && e && e === myEmail) return false
+                return true
+              })
+              localStorage.setItem(k, JSON.stringify(nextOut))
+            }
+          }
+        }
+      } catch {}
+    }
+
+    try {
+      await fetch("/api/connectin/invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "update_status",
+          cid: cidFromUrl,
+          senderName: cleanInviter,
+          senderHeadline: inviterHeadline || "Verified ConnectLn Professional",
+          recipientName: myName,
+          recipientEmail: myEmail,
+          recipientPhone: inviteContext?.invitedPhone || "",
+          recipientHeadline: myHeadline,
+          status: "accepted"
+        })
+      })
+    } catch {}
   }
 
   // Detect invitation links on mount, immediately clear any existing inviter session, and force fresh authentication
@@ -451,7 +556,7 @@ export default function ConnectInLoginPage() {
           }
 
       if (inviteContext?.inviterName) {
-        connectWithInviterInStorage(inviteContext.inviterName, inviteContext.inviterHeadline)
+        await connectWithInviterInStorage(inviteContext.inviterName, inviteContext.inviterHeadline, profileToSave)
       }
 
       const targetTab = shouldOpenAdminPortal ? 'adminiam' : 'home'
@@ -622,7 +727,7 @@ export default function ConnectInLoginPage() {
       }
 
       if (inviteContext?.inviterName) {
-        connectWithInviterInStorage(inviteContext.inviterName, inviteContext.inviterHeadline)
+        await connectWithInviterInStorage(inviteContext.inviterName, inviteContext.inviterHeadline, profileToSave)
       }
 
       saveStoredUser(profileToSave)
@@ -1716,7 +1821,7 @@ export default function ConnectInLoginPage() {
             })
             saveStoredUser(fresh)
             saveStoredSessionRoute("home", "personal")
-            connectWithInviterInStorage(inviteContext.inviterName, inviteContext.inviterHeadline)
+            connectWithInviterInStorage(inviteContext.inviterName, inviteContext.inviterHeadline, fresh)
           }
         }}
       />
@@ -1738,7 +1843,7 @@ export default function ConnectInLoginPage() {
             })
             saveStoredUser(fresh)
             saveStoredSessionRoute("home", "personal")
-            connectWithInviterInStorage(inviteContext.inviterName, inviteContext.inviterHeadline)
+            connectWithInviterInStorage(inviteContext.inviterName, inviteContext.inviterHeadline, fresh)
           }
         }}
       />

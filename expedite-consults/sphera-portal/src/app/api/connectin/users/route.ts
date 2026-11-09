@@ -212,9 +212,9 @@ export async function PUT(req: NextRequest) {
               : bu.mfaStatus?.includes("Microsoft")
               ? "Microsoft Entra ID"
               : "Verified Member",
-            lastLoginAt: nowIso,
-            createdAt: nowIso,
-            updatedAt: nowIso
+            lastLoginAt: bu.lastLoginAt || "",
+            createdAt: bu.createdAt || nowIso,
+            updatedAt: bu.updatedAt || ""
           })
         )
       )

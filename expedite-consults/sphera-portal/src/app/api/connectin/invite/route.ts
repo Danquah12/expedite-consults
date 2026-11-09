@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { sendConnectInInviteSMS, sendConnectInInviteVoiceCall, formatE164Phone } from "@/lib/connectin-sms"
 import { sendConnectInInviteEmail } from "@/lib/connectin-email"
-import { recordGlobalUserActivity } from "@/lib/connectin-cloud-sync"
+import { recordGlobalUserActivity, pullCloudUsersIntoDb } from "@/lib/connectin-cloud-sync"
 
 export interface StoredInviteRecord {
   cid: string
@@ -107,10 +107,54 @@ async function upsertMapItemInTwilio(mapName: string, key: string, dataObj: any)
   }
 }
 
+function getStatusPriority(status?: StoredInviteRecord["status"]): number {
+  if (status === "accepted") return 3
+  if (status === "withdrawn" || status === "ignored") return 2
+  return 1
+}
+
+function mergeInviteRecord(
+  existing: StoredInviteRecord | undefined,
+  incoming: StoredInviteRecord
+): StoredInviteRecord {
+  if (!existing) return incoming
+  const existPrio = getStatusPriority(existing.status)
+  const incPrio = getStatusPriority(incoming.status)
+  const winningStatus = incPrio >= existPrio ? incoming.status : existing.status
+  const winningChannel =
+    existing.channel && existing.channel !== "link"
+      ? existing.channel
+      : incoming.channel || existing.channel
+  return sanitizeInviteRecord({
+    ...existing,
+    ...incoming,
+    recipientName:
+      isRealDistinctMemberName(incoming.recipientName)
+        ? incoming.recipientName
+        : existing.recipientName || incoming.recipientName,
+    recipientEmail: incoming.recipientEmail || existing.recipientEmail,
+    recipientPhone: incoming.recipientPhone || existing.recipientPhone,
+    recipientHeadline: incoming.recipientHeadline || existing.recipientHeadline,
+    recipientAvatar: incoming.recipientAvatar || existing.recipientAvatar,
+    senderHeadline: incoming.senderHeadline || existing.senderHeadline,
+    senderAvatar: incoming.senderAvatar || existing.senderAvatar,
+    channel: winningChannel,
+    status: winningStatus || "pending"
+  })
+}
+
 async function pullCloudInvites(): Promise<StoredInviteRecord[]> {
   const auth = getTwilioAuthHeader()
   if (!auth) return []
   const recordsMap = new Map<string, StoredInviteRecord>()
+
+  const putRecord = (candidate: StoredInviteRecord) => {
+    const cleanCid = String(candidate.cid || "").replace(/^(inv_|out_)/, "").trim()
+    if (!cleanCid || !candidate.senderName) return
+    const normalized = { ...candidate, cid: cleanCid }
+    const prev = recordsMap.get(cleanCid)
+    recordsMap.set(cleanCid, mergeInviteRecord(prev, normalized))
+  }
 
   const collectFromMap = async (mapName: string) => {
     try {
@@ -131,11 +175,11 @@ async function pullCloudInvites(): Promise<StoredInviteRecord[]> {
         if (Array.isArray(d.items)) {
           for (const sub of d.items) {
             if (sub && sub.cid && sub.senderName) {
-              recordsMap.set(sub.cid, sub as StoredInviteRecord)
+              putRecord(sub as StoredInviteRecord)
             }
           }
         } else if (d.cid && d.senderName && (d.recipientName || d.recipientEmail || d.recipientPhone)) {
-          recordsMap.set(d.cid, d as StoredInviteRecord)
+          putRecord(d as StoredInviteRecord)
         }
       }
     } catch {
@@ -143,10 +187,7 @@ async function pullCloudInvites(): Promise<StoredInviteRecord[]> {
     }
   }
 
-  await Promise.all([
-    collectFromMap(SYNC_INVITES_MAP),
-    collectFromMap(SYNC_BACKUP_MAP)
-  ])
+  await collectFromMap(SYNC_INVITES_MAP)
 
   return Array.from(recordsMap.values())
 }
@@ -155,29 +196,29 @@ async function syncAndSaveInviteRecord(rawRecord: StoredInviteRecord): Promise<S
   const record = sanitizeInviteRecord(rawRecord)
   const store = getInviteStore()
 
-  // Prevent duplicate pending records for the same sender -> recipient pair
+  // Prevent duplicate records for the same sender -> recipient pair
   const sNorm = record.senderName.toLowerCase().trim()
   const rNorm = record.recipientName.toLowerCase().trim()
+  const rEmailNorm = (record.recipientEmail || "").toLowerCase().trim()
   let existingCidToReuse: string | null = null
+  let existingRec: StoredInviteRecord | undefined = undefined
   for (const [k, existing] of store.entries()) {
-    if (
-      existing.senderName.toLowerCase().trim() === sNorm &&
-      existing.recipientName.toLowerCase().trim() === rNorm &&
-      existing.status === "pending"
-    ) {
+    const sameSender = existing.senderName.toLowerCase().trim() === sNorm
+    const sameRecip =
+      (rNorm && existing.recipientName.toLowerCase().trim() === rNorm) ||
+      (rEmailNorm && (existing.recipientEmail || "").toLowerCase().trim() === rEmailNorm)
+    if (sameSender && sameRecip && (existing.status === "pending" || existing.status === "accepted")) {
       existingCidToReuse = k
+      existingRec = existing
       break
     }
   }
   const finalCid = existingCidToReuse || record.cid
-  const finalRecord: StoredInviteRecord = { ...record, cid: finalCid }
+  const finalRecord: StoredInviteRecord = mergeInviteRecord(existingRec, { ...record, cid: finalCid })
   store.set(finalCid, finalRecord)
 
   const itemKey = `inv_${finalCid.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 48)}`
-  await Promise.all([
-    upsertMapItemInTwilio(SYNC_INVITES_MAP, itemKey, finalRecord),
-    upsertMapItemInTwilio(SYNC_BACKUP_MAP, itemKey, finalRecord)
-  ])
+  await upsertMapItemInTwilio(SYNC_INVITES_MAP, itemKey, finalRecord)
 
   return Array.from(store.values()).sort((a, b) => b.createdAt - a.createdAt)
 }
@@ -196,6 +237,15 @@ function isRealDistinctMemberName(nameStr?: string): boolean {
   return true
 }
 
+function isSharedFounderEmail(emailStr?: string): boolean {
+  const e = (emailStr || "").toLowerCase().trim()
+  return (
+    e === "asiedudanquah@gmail.com" ||
+    e === "kasiedu@expedite-consults.com" ||
+    e === "kasiedu@expediteconsults.com"
+  )
+}
+
 function doesInviteMatchUser(
   targetName?: string,
   targetEmail?: string,
@@ -211,6 +261,11 @@ function doesInviteMatchUser(
   const qName = (queryName || "").toLowerCase().trim()
   const qEmail = (queryEmail || "").toLowerCase().trim()
   const qPhone = (queryPhone || "").replace(/[^\d]/g, "").slice(-10)
+
+  // If the record has a dedicated non-founder email and it matches the user's email, match!
+  if (qEmail && tEmail && qEmail === tEmail && !isSharedFounderEmail(tEmail)) {
+    return true
+  }
 
   const hasRealTargetName = isRealDistinctMemberName(tName)
   const hasRealQueryName = isRealDistinctMemberName(qName)
@@ -377,14 +432,74 @@ export async function GET(req: NextRequest) {
   const user = (searchParams.get("user") || "").trim().toLowerCase()
 
   const store = getInviteStore()
-  const cloudItems = await pullCloudInvites()
+  const [cloudItems, cloudUsers] = await Promise.all([
+    pullCloudInvites(),
+    pullCloudUsersIntoDb()
+  ])
   for (const item of cloudItems) {
     if (item && item.cid) {
       const existing = store.get(item.cid)
-      if (!existing || (item.status && item.status !== "pending" && existing.status === "pending")) {
-        store.set(item.cid, item)
+      store.set(item.cid, mergeInviteRecord(existing, item))
+    }
+  }
+
+  // Auto-promote pending invitations to "accepted" when the invited recipient has accepted & logged into ConnectLn
+  const newlyAcceptedRecords: StoredInviteRecord[] = []
+  for (const [key, rec] of store.entries()) {
+    if (!rec || (rec.status && rec.status !== "pending")) continue
+    const matchedCloudUser = cloudUsers.find((u) => {
+      if (!u || (!u.name && !u.email)) return false
+      // Don't match sender to themselves
+      if (u.name && rec.senderName && u.name.toLowerCase().trim() === rec.senderName.toLowerCase().trim()) {
+        return false
+      }
+      return doesInviteMatchUser(
+        rec.recipientName,
+        rec.recipientEmail,
+        rec.recipientPhone,
+        u.name,
+        u.email,
+        u.phone
+      )
+    })
+
+    if (matchedCloudUser) {
+      const isExternalChannel =
+        rec.channel === "email" ||
+        rec.channel === "sms" ||
+        rec.channel === "call" ||
+        rec.channel === "link"
+      const userLoginMs = Date.parse(matchedCloudUser.lastLoginAt || matchedCloudUser.updatedAt || "")
+      const loggedInAfterInvite = !Number.isNaN(userLoginMs) && userLoginMs >= rec.createdAt - 60_000
+      const isPreFixSessionInvite = rec.createdAt < 1794186000000
+
+      if (isExternalChannel || loggedInAfterInvite || isPreFixSessionInvite) {
+        const promoted = sanitizeInviteRecord({
+          ...rec,
+          recipientName: isRealDistinctMemberName(matchedCloudUser.name)
+            ? matchedCloudUser.name
+            : rec.recipientName,
+          recipientEmail: rec.recipientEmail || matchedCloudUser.email || undefined,
+          recipientHeadline:
+            matchedCloudUser.headline && !matchedCloudUser.headline.startsWith("Invited via")
+              ? matchedCloudUser.headline
+              : rec.recipientHeadline,
+          recipientAvatar: matchedCloudUser.avatar || rec.recipientAvatar,
+          status: "accepted"
+        })
+        store.set(key, promoted)
+        newlyAcceptedRecords.push(promoted)
       }
     }
+  }
+
+  if (newlyAcceptedRecords.length > 0) {
+    Promise.all(
+      newlyAcceptedRecords.map((uRec) => {
+        const itemKey = `inv_${uRec.cid.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 48)}`
+        return upsertMapItemInTwilio(SYNC_INVITES_MAP, itemKey, uRec)
+      })
+    ).catch(() => {})
   }
 
   if (cid && store.has(cid)) {
@@ -393,10 +508,24 @@ export async function GET(req: NextRequest) {
   }
 
   const allRecords = Array.from(store.values())
-    .filter((r) => r.channel !== "register_link" && r.channel !== "link")
+    .filter((r) => Boolean(r.recipientName || r.recipientEmail || r.recipientPhone))
     .sort((a, b) => b.createdAt - a.createdAt)
-  const activeRecords = allRecords.filter((r) => r.status !== "withdrawn" && r.status !== "ignored" && r.status !== "accepted")
   const acceptedRecords = allRecords.filter((r) => r.status === "accepted")
+
+  // Exclude any pending record if the same sender <-> recipient pair already has an accepted connection
+  const activeRecords = allRecords.filter((r) => {
+    if (r.status === "withdrawn" || r.status === "ignored" || r.status === "accepted") return false
+    const alreadyAccepted = acceptedRecords.some((acc) => {
+      const sameDirection =
+        doesInviteMatchUser(acc.senderName, acc.senderEmail, undefined, r.senderName, r.senderEmail, undefined) &&
+        doesInviteMatchUser(acc.recipientName, acc.recipientEmail, acc.recipientPhone, r.recipientName, r.recipientEmail, r.recipientPhone)
+      const reverseDirection =
+        doesInviteMatchUser(acc.senderName, acc.senderEmail, undefined, r.recipientName, r.recipientEmail, r.recipientPhone) &&
+        doesInviteMatchUser(acc.recipientName, acc.recipientEmail, acc.recipientPhone, r.senderName, r.senderEmail, undefined)
+      return sameDirection || reverseDirection
+    })
+    return !alreadyAccepted
+  })
 
   const matched =
     allRecords.find((r) => (email && r.recipientEmail === email) || (phone && r.recipientPhone === phone)) ||
@@ -516,6 +645,8 @@ export async function POST(req: NextRequest) {
       cid = "",
       recipients,
       recipientName = "",
+      recipientEmail = "",
+      recipientPhone = "",
       recipientHeadline = "",
       recipientAvatar = "",
       recipientNames = {},
@@ -534,32 +665,89 @@ export async function POST(req: NextRequest) {
     if (action === "update_status") {
       const cloudItems = await pullCloudInvites()
       for (const item of cloudItems) {
-        if (item && item.cid && !store.has(item.cid)) {
-          store.set(item.cid, item)
+        if (item && item.cid) {
+          const existing = store.get(item.cid)
+          store.set(item.cid, mergeInviteRecord(existing, item))
         }
       }
-      const targetCid = String(cid || "").replace(/^(inv_|out_|inv_from_)/, "").trim()
+      const targetCid = String(cid || "").replace(/^(inv_|out_|inv_from_|conn_)/, "").trim()
       const normRecip = String(recipientName || "").toLowerCase().trim()
+      const normRecipEmail = String(recipientEmail || (Array.isArray(recipients) ? recipients[0] || "" : "")).toLowerCase().trim()
       const normSender = String(senderName || "").toLowerCase().trim()
       const updatedRecords: StoredInviteRecord[] = []
+
       for (const [key, rec] of store.entries()) {
-        const matchByCid = Boolean(targetCid && (key === targetCid || rec.cid === targetCid))
-        const matchByNames =
+        const matchByCid = Boolean(targetCid && targetCid !== "live" && (key === targetCid || rec.cid === targetCid))
+        const matchDirectPair =
+          Boolean(normSender && normSender !== "member") &&
+          Boolean(normRecip || normRecipEmail) &&
+          doesInviteMatchUser(rec.senderName, rec.senderEmail, undefined, normSender, senderEmail, undefined) &&
+          doesInviteMatchUser(rec.recipientName, rec.recipientEmail, rec.recipientPhone, normRecip, normRecipEmail, recipientPhone)
+        const matchReversePair =
+          Boolean(normSender && normSender !== "member") &&
+          Boolean(normRecip || normRecipEmail) &&
+          doesInviteMatchUser(rec.senderName, rec.senderEmail, undefined, normRecip, normRecipEmail, recipientPhone) &&
+          doesInviteMatchUser(rec.recipientName, rec.recipientEmail, rec.recipientPhone, normSender, senderEmail, undefined)
+        const matchLegacyByNames =
           Boolean(normRecip && (rec.recipientName?.toLowerCase().trim() === normRecip || rec.senderName?.toLowerCase().trim() === normRecip)) &&
           (!normSender || normSender === "member" || rec.senderName?.toLowerCase().trim() === normSender || rec.recipientName?.toLowerCase().trim() === normSender)
-        if (matchByCid || matchByNames) {
-          const updated = sanitizeInviteRecord({ ...rec, status })
+
+        if (matchByCid || matchDirectPair || matchReversePair || matchLegacyByNames) {
+          const updated = sanitizeInviteRecord({
+            ...rec,
+            recipientName:
+              status === "accepted" && isRealDistinctMemberName(recipientName) && normRecip !== rec.senderName.toLowerCase().trim()
+                ? recipientName
+                : rec.recipientName,
+            recipientEmail: normRecipEmail || rec.recipientEmail,
+            recipientHeadline:
+              status === "accepted" && recipientHeadline
+                ? recipientHeadline
+                : rec.recipientHeadline,
+            recipientAvatar:
+              status === "accepted" && recipientAvatar
+                ? recipientAvatar
+                : rec.recipientAvatar,
+            status
+          })
           store.set(key, updated)
           updatedRecords.push(updated)
         }
       }
+
+      // If accepting an invitation (e.g. via email/SMS invite link) and no prior pending record matched in store, create the accepted record
+      if (
+        status === "accepted" &&
+        updatedRecords.length === 0 &&
+        normSender &&
+        normSender !== "member" &&
+        (normRecip || normRecipEmail) &&
+        normSender !== normRecip
+      ) {
+        const fallbackCid = targetCid && targetCid !== "live" ? targetCid : `cin_${Date.now().toString(36)}`
+        const createdAccepted = sanitizeInviteRecord({
+          cid: fallbackCid,
+          recipientName: recipientName || normRecipEmail || "Connected Member",
+          recipientEmail: normRecipEmail || undefined,
+          recipientPhone: recipientPhone || undefined,
+          recipientHeadline: recipientHeadline || "Verified ConnectLn Member",
+          recipientAvatar: recipientAvatar || undefined,
+          senderName,
+          senderEmail: senderEmail || undefined,
+          senderHeadline: senderHeadline || "Verified ConnectLn Member",
+          senderAvatar: senderAvatar || undefined,
+          channel: "email",
+          status: "accepted",
+          createdAt: Date.now()
+        })
+        store.set(fallbackCid, createdAccepted)
+        updatedRecords.push(createdAccepted)
+      }
+
       await Promise.all(
         updatedRecords.map(async (uRec) => {
           const itemKey = `inv_${uRec.cid.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 48)}`
-          await Promise.all([
-            upsertMapItemInTwilio(SYNC_INVITES_MAP, itemKey, uRec),
-            upsertMapItemInTwilio(SYNC_BACKUP_MAP, itemKey, uRec)
-          ])
+          await upsertMapItemInTwilio(SYNC_INVITES_MAP, itemKey, uRec)
         })
       )
       return NextResponse.json({ success: true, updatedCount: updatedRecords.length })
