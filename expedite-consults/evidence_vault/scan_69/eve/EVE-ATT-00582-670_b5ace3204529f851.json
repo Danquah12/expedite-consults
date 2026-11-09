@@ -1,0 +1,52 @@
+{
+  "original_finding_id": 6419,
+  "asset_and_origin_identity": "ASSET-00453 | https://pentest-ground.com:443",
+  "approved_scope_and_roe": "Host pentest-ground.com:443 matches ROE authorized origin 'https://pentest-ground.com:443'.",
+  "validation_adapter_and_version": "EVE-NET-001 (eve-adapter/2.3.0)",
+  "test_timestamp": "2026-11-09T02:45:28.608070+00:00",
+  "preconditions": {
+    "vulnerability_class": "network_service_validation",
+    "affected_technology": "web-application",
+    "detected_version": null,
+    "cve_applicable": false,
+    "preconditions_satisfied": true
+  },
+  "execution_transcript": {
+    "adapter_id": "EVE-NET-001",
+    "adapter_version": "eve-adapter/2.3.0",
+    "probed_endpoint": "https://pentest-ground.com/",
+    "finding_key": "PORT-OPEN-7001-WEBLOGIC::T42_PENTEST_GROUND_COM",
+    "safety_mode": "READ_ONLY_DETERMINISTIC",
+    "timestamp": "2026-11-09T02:45:28.605375+00:00",
+    "probe_steps": [
+      {
+        "step": 1,
+        "action": "EVALUATE_CONTROL_STATE",
+        "target": "https://pentest-ground.com/",
+        "title": "[pentest-ground.com] Service Port Open: 7001/TCP (WebLogic) on pentest-ground.com [65,535 TCP Sweep]",
+        "observation_excerpt": "[Target: https://pentest-ground.com/] Full 65,535 TCP port sweep verified a live TCP handshake on port 7001/TCP (WebLogic) on target pentest-ground.com. Oracle WebLogic application server console/T3 port."
+      }
+    ]
+  },
+  "request_response_evidence": [
+    {
+      "step": 1,
+      "action": "EVALUATE_CONTROL_STATE",
+      "target": "https://pentest-ground.com/",
+      "title": "[pentest-ground.com] Service Port Open: 7001/TCP (WebLogic) on pentest-ground.com [65,535 TCP Sweep]",
+      "observation_excerpt": "[Target: https://pentest-ground.com/] Full 65,535 TCP port sweep verified a live TCP handshake on port 7001/TCP (WebLogic) on target pentest-ground.com. Oracle WebLogic application server console/T3 port."
+    }
+  ],
+  "expected_vs_actual": {
+    "expected": "Verify whether missing control or configuration allows direct unauthorized boundary crossing.",
+    "actual": "Configuration/control gap confirmed at HTTP layer; no direct unauthorized data access or code execution resulted.",
+    "reproduced_behavior": false
+  },
+  "execution_outcome": "OBSERVATION_CONFIRMED",
+  "evidence_confidence": 0.88,
+  "exploitability_confidence": 0.15,
+  "impact_confidence": 0.05,
+  "operator_or_approving_identity": "secops-lead@expedite-consults.io",
+  "sha256_evidence_digest": "a7e66ff1e653f77b503946f56b64ad6a2cdad74b17d80c1350c208cfbc439779",
+  "attempt_key": "EVE-ATT-00582-670"
+}

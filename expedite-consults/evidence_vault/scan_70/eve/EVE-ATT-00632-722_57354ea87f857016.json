@@ -1,0 +1,52 @@
+{
+  "original_finding_id": 6628,
+  "asset_and_origin_identity": "ASSET-00462 | https://pentesterlab.com:443",
+  "approved_scope_and_roe": "Host pentesterlab.com:443 matches ROE authorized origin 'https://pentesterlab.com:443'.",
+  "validation_adapter_and_version": "EVE-NET-001 (eve-adapter/2.3.0)",
+  "test_timestamp": "2026-11-09T03:03:24.937087+00:00",
+  "preconditions": {
+    "vulnerability_class": "network_service_validation",
+    "affected_technology": "web-application",
+    "detected_version": null,
+    "cve_applicable": false,
+    "preconditions_satisfied": true
+  },
+  "execution_transcript": {
+    "adapter_id": "EVE-NET-001",
+    "adapter_version": "eve-adapter/2.3.0",
+    "probed_endpoint": "https://pentesterlab.com/",
+    "finding_key": "UDP-PORT-OPEN-53-DNS::T36_PENTESTERLAB_COM",
+    "safety_mode": "READ_ONLY_DETERMINISTIC",
+    "timestamp": "2026-11-09T03:03:24.935179+00:00",
+    "probe_steps": [
+      {
+        "step": 1,
+        "action": "EVALUATE_CONTROL_STATE",
+        "target": "https://pentesterlab.com/",
+        "title": "[pentesterlab.com] Service Port Open: 53/UDP (DNS) on pentesterlab.com [65,535 UDP Sweep]",
+        "observation_excerpt": "[Target: https://pentesterlab.com/] Full 65,535 UDP port & datagram service sweep verified active service on port 53/UDP (DNS) on target pentesterlab.com.\nCaptured UDP Service Telemetry: DNS 53/UDP Authoritative/Resolver Verified (pentesterlab.com -> 54.147.203.247). Domain Name "
+      }
+    ]
+  },
+  "request_response_evidence": [
+    {
+      "step": 1,
+      "action": "EVALUATE_CONTROL_STATE",
+      "target": "https://pentesterlab.com/",
+      "title": "[pentesterlab.com] Service Port Open: 53/UDP (DNS) on pentesterlab.com [65,535 UDP Sweep]",
+      "observation_excerpt": "[Target: https://pentesterlab.com/] Full 65,535 UDP port & datagram service sweep verified active service on port 53/UDP (DNS) on target pentesterlab.com.\nCaptured UDP Service Telemetry: DNS 53/UDP Authoritative/Resolver Verified (pentesterlab.com -> 54.147.203.247). Domain Name "
+    }
+  ],
+  "expected_vs_actual": {
+    "expected": "Verify whether missing control or configuration allows direct unauthorized boundary crossing.",
+    "actual": "Configuration/control gap confirmed at HTTP layer; no direct unauthorized data access or code execution resulted.",
+    "reproduced_behavior": false
+  },
+  "execution_outcome": "OBSERVATION_CONFIRMED",
+  "evidence_confidence": 0.88,
+  "exploitability_confidence": 0.15,
+  "impact_confidence": 0.05,
+  "operator_or_approving_identity": "secops-lead@expedite-consults.io",
+  "sha256_evidence_digest": "33c5506263ceacf675867403e1aaaae5f5284a058bba718df1b47089a4a54240",
+  "attempt_key": "EVE-ATT-00632-722"
+}

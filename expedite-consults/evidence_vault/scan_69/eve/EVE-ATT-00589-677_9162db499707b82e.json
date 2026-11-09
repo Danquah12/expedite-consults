@@ -1,0 +1,52 @@
+{
+  "original_finding_id": 6386,
+  "asset_and_origin_identity": "ASSET-00444 | https://github.com:443",
+  "approved_scope_and_roe": "Host github.com:443 matches ROE authorized origin 'https://github.com:443'.",
+  "validation_adapter_and_version": "EVE-NET-001 (eve-adapter/2.3.0)",
+  "test_timestamp": "2026-11-09T02:45:29.605550+00:00",
+  "preconditions": {
+    "vulnerability_class": "network_service_validation",
+    "affected_technology": "web-application",
+    "detected_version": null,
+    "cve_applicable": false,
+    "preconditions_satisfied": true
+  },
+  "execution_transcript": {
+    "adapter_id": "EVE-NET-001",
+    "adapter_version": "eve-adapter/2.3.0",
+    "probed_endpoint": "https://github.com/digininja/DVWA",
+    "finding_key": "UDP-PORT-OPEN-443-HTTP_3_QUIC::T3_GITHUB_COM_DIGININJA_DVWA",
+    "safety_mode": "READ_ONLY_DETERMINISTIC",
+    "timestamp": "2026-11-09T02:45:29.603552+00:00",
+    "probe_steps": [
+      {
+        "step": 1,
+        "action": "EVALUATE_CONTROL_STATE",
+        "target": "https://github.com/digininja/DVWA",
+        "title": "[github.com/digininja/DVWA] Service Port Open: 443/UDP (HTTP/3-QUIC) on github.com [65,535 UDP Sweep]",
+        "observation_excerpt": "[Target: https://github.com/digininja/DVWA] Full 65,535 UDP port & datagram service sweep verified active service on port 443/UDP (HTTP/3-QUIC) on target github.com.\nCaptured UDP Service Telemetry: HTTP/3 QUIC UDP Transport (advertised via Alt-Svc h3=\":443\"). HTTP/3 over QUIC (RF"
+      }
+    ]
+  },
+  "request_response_evidence": [
+    {
+      "step": 1,
+      "action": "EVALUATE_CONTROL_STATE",
+      "target": "https://github.com/digininja/DVWA",
+      "title": "[github.com/digininja/DVWA] Service Port Open: 443/UDP (HTTP/3-QUIC) on github.com [65,535 UDP Sweep]",
+      "observation_excerpt": "[Target: https://github.com/digininja/DVWA] Full 65,535 UDP port & datagram service sweep verified active service on port 443/UDP (HTTP/3-QUIC) on target github.com.\nCaptured UDP Service Telemetry: HTTP/3 QUIC UDP Transport (advertised via Alt-Svc h3=\":443\"). HTTP/3 over QUIC (RF"
+    }
+  ],
+  "expected_vs_actual": {
+    "expected": "Verify whether missing control or configuration allows direct unauthorized boundary crossing.",
+    "actual": "Configuration/control gap confirmed at HTTP layer; no direct unauthorized data access or code execution resulted.",
+    "reproduced_behavior": false
+  },
+  "execution_outcome": "OBSERVATION_CONFIRMED",
+  "evidence_confidence": 0.88,
+  "exploitability_confidence": 0.15,
+  "impact_confidence": 0.05,
+  "operator_or_approving_identity": "secops-lead@expedite-consults.io",
+  "sha256_evidence_digest": "ce84bfd40cb005e45560308cf9b99a9147536691492dc7fb2ae56ead09b3a2e8",
+  "attempt_key": "EVE-ATT-00589-677"
+}

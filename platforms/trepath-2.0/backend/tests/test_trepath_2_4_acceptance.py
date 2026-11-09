@@ -336,3 +336,71 @@ def test_07_export_scan_42_and_juice_shop_e2e_pdfs_zero_version_drift(db_session
     if ARTIFACT_DIR.exists():
         (ARTIFACT_DIR / "trepath-post-exploitation-report-scan-45-v2.6.pdf").write_bytes(pdf_45)
         (ARTIFACT_DIR / "trepath-juice-shop-e2e-closure-report-v2.6.pdf").write_bytes(pdf_js)
+
+
+def test_08_two_factor_authentication_rfc6238_totp_and_backup_codes():
+    """Verify TrePath 2.6 RFC 6238 TOTP Two-Factor Authentication (Step 1 Challenge, Step 2 TOTP & Backup Code Verification)."""
+    from fastapi.testclient import TestClient
+    from app.main import app
+
+    client = TestClient(app)
+
+    # 1. Step 1: Primary Operator Credentials -> Issue 2FA Challenge
+    r1 = client.post(
+        "/api/v1/auth/2fa/login",
+        json={"email": "admin@trepath.org", "password": "TrePathAdmin2026!"},
+    )
+    assert r1.status_code == 200, r1.text
+    challenge = r1.json()
+    assert challenge["mfa_required"] is True
+    assert len(challenge["pre_auth_token"]) > 20
+    assert len(challenge["totp_secret"]) >= 16
+    assert challenge["otpauth_uri"].startswith("otpauth://totp/")
+    assert len(challenge["current_totp_code_demo"]) == 6
+    assert challenge["current_totp_code_demo"].isdigit()
+    assert "TP26-8841-9920" in challenge["backup_codes"]
+
+    # 2. Negative check: Wrong 6-digit TOTP code must be rejected with HTTP 401
+    r_bad = client.post(
+        "/api/v1/auth/2fa/verify",
+        json={"pre_auth_token": challenge["pre_auth_token"], "code": "000000"},
+    )
+    if challenge["current_totp_code_demo"] != "000000":
+        assert r_bad.status_code == 401
+
+    # 3. Positive check: Valid 6-digit RFC 6238 TOTP code succeeds
+    r2 = client.post(
+        "/api/v1/auth/2fa/verify",
+        json={
+            "pre_auth_token": challenge["pre_auth_token"],
+            "code": challenge["current_totp_code_demo"],
+        },
+    )
+    assert r2.status_code == 200, r2.text
+    v_totp = r2.json()
+    assert v_totp["mfa_verified"] is True
+    assert v_totp["verification_method"] == "RFC6238_TOTP"
+    assert len(v_totp["access_token"]) > 20
+
+    # 4. Positive check: Valid Backup Recovery Code succeeds
+    r3 = client.post(
+        "/api/v1/auth/2fa/verify",
+        json={
+            "pre_auth_token": challenge["pre_auth_token"],
+            "code": "TP26-8841-9920",
+        },
+    )
+    assert r3.status_code == 200, r3.text
+    v_backup = r3.json()
+    assert v_backup["mfa_verified"] is True
+    assert v_backup["verification_method"] == "RECOVERY_BACKUP_CODE"
+
+    # 5. Check /api/v1/auth/2fa/status with issued access_token
+    r_status = client.get(
+        "/api/v1/auth/2fa/status",
+        headers={"Authorization": f"Bearer {v_totp['access_token']}"},
+    )
+    assert r_status.status_code == 200, r_status.text
+    st_json = r_status.json()
+    assert st_json["mfa_enabled"] is True
+    assert st_json["verified_count"] >= 2

@@ -69,7 +69,7 @@ const CWE_GUARD_PATTERNS: Record<string, RegExp[]> = {
     /allowedPages|array_key_exists|in_array|realpath|basename|str_starts_with/i,
   ],
   "CWE-327": [
-    /AES\/GCM\/NoPadding|AESGCM|AesGcm|createCipheriv\s*\(\s*['"]aes-256-gcm['"]|GCMParameterSpec|sodium_crypto_aead_aes256gcm_encrypt|aes-256-gcm/i,
+    /AES\/GCM\/NoPadding|AESGCM|AesGcm|createCipheriv\s*\(\s*['"]aes-256-gcm['"]|GCMParameterSpec|sodium_crypto_aead_aes256gcm_encrypt|aes-256-gcm|BCryptPasswordEncoder|Argon2PasswordEncoder|PBKDF2WithHmacSHA256|BCrypt|Argon2|SHA-256|SHA-384|SHA-512/i,
   ],
   "CWE-328": [
     /PBKDF2WithHmacSHA256|Argon2|BCrypt|scrypt|Rfc2898DeriveBytes|hashlib\.pbkdf2_hmac|PasswordHasher|password_hash|PASSWORD_ARGON2ID|PASSWORD_BCRYPT/i,
@@ -105,10 +105,40 @@ const CWE_GUARD_PATTERNS: Record<string, RegExp[]> = {
     /findByIdAndTenantId|findByIdAndUserId|findByIdAndOwnerId|AccessDeniedException|UnauthorizedAccessException|tenant_id|user_id|@PreAuthorize|authorize/i,
   ],
   "CWE-639": [
-    /findByIdAndTenantId|findByIdAndUserId|findByIdAndOwnerId|AccessDeniedException|UnauthorizedAccessException|tenant_id|user_id/i,
+    /findByIdAndTenantId|findByIdAndUserId|findByIdAndOwnerId|AccessDeniedException|UnauthorizedAccessException|tenant_id|user_id|tenantId/i,
   ],
   "CWE-347": [
     /setSigningKey|RequireSignedTokens|algorithms|RS256|HS256|jwt\.verify|ValidateIssuerSigningKey/i,
+  ],
+  "CWE-601": [
+    /ALLOWED_REDIRECT_PATHS|ALLOWED_PATHS|url_has_allowed_host_and_scheme|parsedRedirect\.origin|trustedOrigin|safePath/i,
+  ],
+  "CWE-94": [
+    /JSON\.parse|SafeFormulaSchema|evaluateSafeFormulaAst|parseContributionPercent|Number\.parseFloat|objectMapper\.readValue|ast\.literal_eval|-proc:none|ALLOWED_OPS/i,
+  ],
+  "CWE-915": [
+    /ProfileUpdateRequest|ProfileUpdateDto|ProfileUpdateSchema|ALLOWED_FIELDS|displayName,\s*timeZone/i,
+  ],
+  "CWE-943": [
+    /String\s*\(|typeof\s+.*===\s*['"]string['"]|\$eq|sanitizeFilter|Number\s*\(/i,
+  ],
+  "CWE-400": [
+    /rateLimit|maxBuffer|timeout|limit|MAX_LENGTH|validator\./i,
+  ],
+  "CWE-798": [
+    /process\.env|os\.environ|os\.getenv|System\.getenv|getenv\s*\(|IConfiguration|_configuration|GetConnectionString|SecretManager|KeyVault|Configuration\[|GetEnvironmentVariable/i,
+  ],
+  "CWE-1395": [
+    /npm\s+install|package\.json|package-lock\.json|upgrade|patched|version|semver|PackageReference|dependency|dependencies|devDependencies|resolutions|overrides/i,
+  ],
+  "CWE-1022": [
+    /noopener|noreferrer|window\.opener\s*=\s*null/i,
+  ],
+  "CWE-362": [
+    /FOR\s+UPDATE|SERIALIZABLE|Lock|Mutex|Interlocked|SemaphoreSlim|synchronized|transaction|SET\s+balance\s*=\s*balance\s*-\s*\$1[\s\S]*AND\s+balance\s*>=\s*\$1|RETURNING\s+balance|FileChannel\.open/i,
+  ],
+  "CWE-942": [
+    /ALLOWED_ORIGINS|Access-Control-Allow-Origin|CorsOptions|WithOrigins|origin\s*:/i,
   ],
 };
 

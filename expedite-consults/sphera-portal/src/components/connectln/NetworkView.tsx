@@ -83,6 +83,17 @@ import {
   ViewerPrivacyMode,
   getProfileTailoredAnalytics
 } from "@/lib/connectin-analytics"
+import {
+  loadUserFollowBundle,
+  syncUserFollowBundleFromCloud,
+  getFollowRelationshipState,
+  followMember,
+  unfollowMember,
+  blockMemberForFollow,
+  unblockMemberForFollow,
+  updateFollowPrivacySettings,
+  normalizeFollowKey
+} from "@/lib/connectin-follow"
 
 interface NetworkViewProps {
   suggestedPeople: SuggestedConnection[]
@@ -91,7 +102,7 @@ interface NetworkViewProps {
   currentUser?: UserProfile
   onNavigateMessaging?: (person?: any) => void
   onUpdateConnectionsCount?: (newCount: number) => void
-  initialSubTab?: 'people' | 'connections' | 'received_invites' | 'sent_invites' | 'profile_viewers'
+  initialSubTab?: 'people' | 'connections' | 'followers' | 'following' | 'received_invites' | 'sent_invites' | 'profile_viewers'
 }
 
 export function getEnclaveCapabilityFilters(enclaveId?: string) {
@@ -151,8 +162,9 @@ export function NetworkView({
   const capabilityFilters = getEnclaveCapabilityFilters(enclaveId)
 
   const [activeTab, setActiveTab] = useState<
-    'people' | 'connections' | 'received_invites' | 'sent_invites' | 'profile_viewers' | 'companies' | 'organizations' | 'circles' | 'topics' | 'catchup'
+    'people' | 'connections' | 'followers' | 'following' | 'received_invites' | 'sent_invites' | 'profile_viewers' | 'companies' | 'organizations' | 'circles' | 'topics' | 'catchup'
   >(initialSubTab || 'people')
+  const [followBundle, setFollowBundle] = useState(() => loadUserFollowBundle(currentUser?.name))
   const [telemetryViewSubTab, setTelemetryViewSubTab] = useState<'viewers' | 'reach' | 'discoveries'>('viewers')
   const [reachKindFilter, setReachKindFilter] = useState<'all' | 'view' | 'interaction'>('all')
   const [discoveryTypeFilter, setDiscoveryTypeFilter] = useState<'all' | 'search_appearance' | 'profile_click'>('all')
@@ -168,6 +180,25 @@ export function NetworkView({
       setActiveTab(initialSubTab)
     }
   }, [initialSubTab])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const refreshFollow = () => setFollowBundle(loadUserFollowBundle(currentUser?.name))
+    refreshFollow()
+    window.addEventListener('connectln-follow-updated', refreshFollow)
+    if (currentUser?.name) {
+      syncUserFollowBundleFromCloud(currentUser.name).then(b => setFollowBundle(b)).catch(() => {})
+    }
+    const followTimer = setInterval(() => {
+      if (currentUser?.name) {
+        syncUserFollowBundleFromCloud(currentUser.name).then(b => setFollowBundle(b)).catch(() => {})
+      }
+    }, 5000)
+    return () => {
+      window.removeEventListener('connectln-follow-updated', refreshFollow)
+      clearInterval(followTimer)
+    }
+  }, [currentUser?.name])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -1158,6 +1189,54 @@ export function NetworkView({
                 </span>
               </button>
 
+              {/* 1b. Followers (People who follow you — one-way inbound) */}
+              <button
+                onClick={() => setActiveTab('followers')}
+                className={`flex w-full items-center justify-between py-2 px-2.5 rounded-lg font-semibold transition-all ${
+                  activeTab === 'followers'
+                    ? "bg-[#0A66C2] text-white shadow-2xs"
+                    : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <Radio className="h-4 w-4" />
+                  <span>Followers</span>
+                </span>
+                <span className={`text-[10px] rounded-full px-1.5 py-0.2 font-mono font-bold ${
+                  activeTab === 'followers'
+                    ? "bg-white/20 text-white"
+                    : followBundle.followers.length > 0
+                    ? "bg-emerald-600 text-white"
+                    : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
+                }`}>
+                  {followBundle.followers.length}
+                </span>
+              </button>
+
+              {/* 1c. Following (People whose updates you follow — one-way outbound) */}
+              <button
+                onClick={() => setActiveTab('following')}
+                className={`flex w-full items-center justify-between py-2 px-2.5 rounded-lg font-semibold transition-all ${
+                  activeTab === 'following'
+                    ? "bg-[#0A66C2] text-white shadow-2xs"
+                    : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>Following</span>
+                </span>
+                <span className={`text-[10px] rounded-full px-1.5 py-0.2 font-mono font-bold ${
+                  activeTab === 'following'
+                    ? "bg-white/20 text-white"
+                    : followBundle.following.length > 0
+                    ? "bg-[#0A66C2] text-white"
+                    : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
+                }`}>
+                  {followBundle.following.length}
+                </span>
+              </button>
+
               {/* 2. Invitations Received */}
               <button
                 onClick={() => setActiveTab('received_invites')}
@@ -1589,6 +1668,417 @@ export function NetworkView({
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB: FOLLOWERS & FOLLOWING (ONE-WAY FOLLOW GRAPH, PRIVACY & BLOCKING) */}
+          {(activeTab === 'followers' || activeTab === 'following') && (
+            <div className="rounded-xl border border-zinc-200 bg-white p-4 sm:p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-5">
+              {/* Top Header + Sub-Tab Switcher (Followers vs Following) */}
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800 pb-3">
+                <div>
+                  <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2 flex-wrap">
+                    <Radio className="h-4 w-4 text-[#0A66C2]" />
+                    <span>
+                      {activeTab === 'followers'
+                        ? `People Following You (${followBundle.followers.length})`
+                        : `People You Follow (${followBundle.following.length})`}
+                    </span>
+                    <span className="rounded-full bg-blue-50 border border-blue-200 px-2.5 py-0.5 text-[10px] font-bold text-[#0A66C2] dark:bg-blue-950 dark:text-sky-300">
+                      One-Way Follow Graph · Separate from Connections
+                    </span>
+                  </h3>
+                  <p className="text-xs text-zinc-500 mt-0.5">
+                    {activeTab === 'followers'
+                      ? 'People who choose to receive your public updates in their feed. Following is one-way — click "+ Follow back" if you also want to receive their updates.'
+                      : 'People whose public posts and articles you choose to receive in your feed without needing a mutual connection invitation.'}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('followers')}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                      activeTab === 'followers'
+                        ? "bg-[#0A66C2] text-white shadow-xs"
+                        : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200"
+                    }`}
+                  >
+                    Followers ({followBundle.followers.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('following')}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                      activeTab === 'following'
+                        ? "bg-[#0A66C2] text-white shadow-xs"
+                        : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200"
+                    }`}
+                  >
+                    Following ({followBundle.following.length})
+                  </button>
+                </div>
+              </div>
+
+              {/* LinkedIn-Style 3-Relationship Distinction Card */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="rounded-xl border border-blue-200/70 dark:border-blue-900/50 bg-blue-50/40 dark:bg-blue-950/20 p-3 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-extrabold text-[#0A66C2] dark:text-sky-400">Following ({followBundle.following.length})</span>
+                    <span className="text-[10px] font-mono font-bold text-zinc-500">One-Way Outbound</span>
+                  </div>
+                  <p className="text-[11px] text-zinc-600 dark:text-zinc-300">
+                    People whose public updates you choose to receive (e.g., You follow John Sianaa).
+                  </p>
+                </div>
+                <div className="rounded-xl border border-emerald-200/70 dark:border-emerald-900/50 bg-emerald-50/40 dark:bg-emerald-950/20 p-3 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-extrabold text-emerald-700 dark:text-emerald-300">Followers ({followBundle.followers.length})</span>
+                    <span className="text-[10px] font-mono font-bold text-zinc-500">One-Way Inbound</span>
+                  </div>
+                  <p className="text-[11px] text-zinc-600 dark:text-zinc-300">
+                    People who choose to receive your public updates (e.g., John follows you).
+                  </p>
+                </div>
+                <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-800/40 p-3 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-extrabold text-zinc-900 dark:text-zinc-100">Connections ({totalConnectionsDisplay})</span>
+                    <span className="text-[10px] font-mono font-bold text-zinc-500">Two-Way Mutual</span>
+                  </div>
+                  <p className="text-[11px] text-zinc-600 dark:text-zinc-300">
+                    A relationship both people accept via a connection invitation.
+                  </p>
+                </div>
+              </div>
+
+              {/* Follow Privacy, Visibility, Notifications & Blocking Controls */}
+              <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 p-3.5 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-[#0A66C2]" />
+                    <span className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100">
+                      Follow Privacy, Notifications &amp; Blocking Settings
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 text-xs">
+                    <label className="flex items-center gap-1.5 font-semibold text-zinc-700 dark:text-zinc-300">
+                      <span>Who can follow me:</span>
+                      <select
+                        value={followBundle.settings.whoCanFollow}
+                        onChange={(e) => {
+                          if (!currentUser?.name) return
+                          const next = updateFollowPrivacySettings(currentUser.name, {
+                            whoCanFollow: e.target.value as 'everyone' | 'connections_only'
+                          })
+                          setFollowBundle(next)
+                          setToastMessage(`Follow permission updated: ${e.target.value === 'everyone' ? 'Everyone on ConnectLn' : 'Only 1st-Degree Connections'}`)
+                          setTimeout(() => setToastMessage(null), 3000)
+                        }}
+                        className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1 text-[11px] font-bold text-zinc-900 dark:text-zinc-100 cursor-pointer"
+                      >
+                        <option value="everyone">Everyone on ConnectLn</option>
+                        <option value="connections_only">Only 1st-Degree Connections</option>
+                      </select>
+                    </label>
+
+                    <label className="flex items-center gap-1.5 font-semibold text-zinc-700 dark:text-zinc-300">
+                      <span>List visibility:</span>
+                      <select
+                        value={followBundle.settings.whoCanSeeFollowLists}
+                        onChange={(e) => {
+                          if (!currentUser?.name) return
+                          const next = updateFollowPrivacySettings(currentUser.name, {
+                            whoCanSeeFollowLists: e.target.value as 'everyone' | 'connections' | 'only_me'
+                          })
+                          setFollowBundle(next)
+                        }}
+                        className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1 text-[11px] font-bold text-zinc-900 dark:text-zinc-100 cursor-pointer"
+                      >
+                        <option value="everyone">Everyone</option>
+                        <option value="connections">Connections Only</option>
+                        <option value="only_me">Only Me</option>
+                      </select>
+                    </label>
+
+                    <label className="flex items-center gap-1.5 font-semibold text-zinc-700 dark:text-zinc-300 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={followBundle.settings.notifyOnNewFollower}
+                        onChange={(e) => {
+                          if (!currentUser?.name) return
+                          const next = updateFollowPrivacySettings(currentUser.name, {
+                            notifyOnNewFollower: e.target.checked
+                          })
+                          setFollowBundle(next)
+                        }}
+                        className="rounded border-zinc-300 text-[#0A66C2] focus:ring-[#0A66C2]"
+                      />
+                      <span>Alert on new followers</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Blocked Users List (if any) */}
+                {followBundle.blockedUsers.length > 0 && (
+                  <div className="pt-2 border-t border-zinc-200/80 dark:border-zinc-700/80 flex flex-wrap items-center gap-2">
+                    <span className="text-[11px] font-bold text-red-600 dark:text-red-400">
+                      Blocked Accounts ({followBundle.blockedUsers.length}):
+                    </span>
+                    {followBundle.blockedUsers.map((b) => (
+                      <span
+                        key={b.name}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 px-2.5 py-0.5 text-[11px] font-semibold text-red-700 dark:text-red-300"
+                      >
+                        <span>{b.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!currentUser?.name) return
+                            const next = unblockMemberForFollow({
+                              actorName: currentUser.name,
+                              targetName: b.name
+                            })
+                            setFollowBundle(next)
+                            setToastMessage(`Unblocked ${b.name}.`)
+                            setTimeout(() => setToastMessage(null), 3000)
+                          }}
+                          className="text-[10px] font-extrabold underline hover:text-red-900 cursor-pointer"
+                        >
+                          Unblock
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* VIEW A: FOLLOWERS LIST (People following you, with Follow back or Following / Unfollow buttons) */}
+              {activeTab === 'followers' && (
+                <div>
+                  {followBundle.followers.length === 0 ? (
+                    <div className="py-12 text-center text-zinc-500 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800">
+                      <Radio className="h-10 w-10 mx-auto text-zinc-300 mb-2" />
+                      <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">0 Followers so far</p>
+                      <p className="text-xs text-zinc-400 mt-1 max-w-md mx-auto">
+                        When another member clicks &ldquo;+ Follow&rdquo; on your profile or card, they appear here immediately and you can choose to &ldquo;+ Follow back&rdquo;.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                      {followBundle.followers.map((follower) => {
+                        const rel = getFollowRelationshipState(currentUser?.name, follower.name)
+                        const isConn = connectedNamesSet.has(normalizeFollowKey(follower.name))
+                        return (
+                          <div key={follower.id} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 first:pt-1 last:pb-0">
+                            <div
+                              onClick={() => onSelectMember?.(follower)}
+                              className="flex items-start gap-3 cursor-pointer group min-w-0"
+                            >
+                              <img
+                                src={follower.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(follower.name)}&backgroundColor=0a66c2`}
+                                alt={follower.name}
+                                className="h-12 w-12 rounded-full object-cover border border-zinc-200 dark:border-zinc-800 shrink-0 group-hover:ring-2 group-hover:ring-[#0A66C2] transition-all"
+                              />
+                              <div className="min-w-0 space-y-0.5">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2] group-hover:underline">
+                                    {follower.name}
+                                  </h4>
+                                  <span className="rounded bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                                    Follows you · {follower.followedAgo || 'Recently'}
+                                  </span>
+                                  {isConn && (
+                                    <span className="rounded bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 text-[10px] font-bold text-[#0A66C2] dark:text-sky-300">
+                                      1st-Degree Connection
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-zinc-500 truncate dark:text-zinc-400">
+                                  {follower.headline}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0 self-end sm:self-center flex-wrap">
+                              <button
+                                type="button"
+                                onClick={() => onSelectMember?.(follower)}
+                                className="rounded-full border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 cursor-pointer"
+                              >
+                                View Workspace
+                              </button>
+                              {rel.isFollowing ? (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (!currentUser?.name) return
+                                    const res = unfollowMember({
+                                      actorName: currentUser.name,
+                                      targetName: follower.name
+                                    })
+                                    setFollowBundle(res.actorBundle)
+                                    setToastMessage(`Unfollowed ${follower.name}.`)
+                                    setTimeout(() => setToastMessage(null), 3000)
+                                  }}
+                                  className="rounded-full border border-emerald-600 bg-emerald-50 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-700 px-3.5 py-1.5 text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                                  title={`Click to unfollow ${follower.name}`}
+                                >
+                                  <Check className="h-3.5 w-3.5" />
+                                  <span>Following (Unfollow)</span>
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (!currentUser?.name) return
+                                    const res = followMember({
+                                      actorId: currentUser.id,
+                                      actorName: currentUser.name,
+                                      actorHeadline: currentUser.headline,
+                                      actorAvatar: currentUser.avatar,
+                                      actorProfession: currentUser.profession,
+                                      actorLocation: currentUser.location,
+                                      targetId: follower.id,
+                                      targetName: follower.name,
+                                      targetHeadline: follower.headline,
+                                      targetAvatar: follower.avatar,
+                                      isConnectedWithTarget: isConn
+                                    })
+                                    if (res.ok && res.actorBundle) {
+                                      setFollowBundle(res.actorBundle)
+                                      setToastMessage(`You are now following ${follower.name} back!`)
+                                    } else if (res.error) {
+                                      setToastMessage(res.error)
+                                    }
+                                    setTimeout(() => setToastMessage(null), 3000)
+                                  }}
+                                  className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-3.5 py-1.5 text-xs font-bold flex items-center gap-1 cursor-pointer shadow-2xs"
+                                >
+                                  <Plus className="h-3.5 w-3.5" />
+                                  <span>Follow back</span>
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (!currentUser?.name) return
+                                  const next = blockMemberForFollow({
+                                    actorName: currentUser.name,
+                                    targetName: follower.name,
+                                    targetHeadline: follower.headline,
+                                    targetAvatar: follower.avatar
+                                  })
+                                  setFollowBundle(next)
+                                  setToastMessage(`Blocked ${follower.name} and removed follow relationship.`)
+                                  setTimeout(() => setToastMessage(null), 3000)
+                                }}
+                                className="rounded-full border border-zinc-200 dark:border-zinc-700 px-2.5 py-1.5 text-[11px] font-semibold text-zinc-500 hover:text-red-600 hover:border-red-300 cursor-pointer"
+                                title={`Block ${follower.name}`}
+                              >
+                                Block
+                              </button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* VIEW B: FOLLOWING LIST (People you follow, with Unfollow option) */}
+              {activeTab === 'following' && (
+                <div>
+                  {followBundle.following.length === 0 ? (
+                    <div className="py-12 text-center text-zinc-500 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800">
+                      <CheckCircle2 className="h-10 w-10 mx-auto text-zinc-300 mb-2" />
+                      <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">You aren&apos;t following anyone yet (0)</p>
+                      <p className="text-xs text-zinc-400 mt-1 max-w-md mx-auto">
+                        Click &ldquo;+ Follow&rdquo; beside any member in &ldquo;Verified Fellows to Follow&rdquo; or on member cards below to receive their public updates in your feed.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                      {followBundle.following.map((followed) => {
+                        const rel = getFollowRelationshipState(currentUser?.name, followed.name)
+                        const targetBundle = loadUserFollowBundle(followed.name)
+                        return (
+                          <div key={followed.id} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 first:pt-1 last:pb-0">
+                            <div
+                              onClick={() => onSelectMember?.(followed)}
+                              className="flex items-start gap-3 cursor-pointer group min-w-0"
+                            >
+                              <img
+                                src={followed.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(followed.name)}&backgroundColor=0a66c2`}
+                                alt={followed.name}
+                                className="h-12 w-12 rounded-full object-cover border border-zinc-200 dark:border-zinc-800 shrink-0 group-hover:ring-2 group-hover:ring-[#0A66C2] transition-all"
+                              />
+                              <div className="min-w-0 space-y-0.5">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2] group-hover:underline">
+                                    {followed.name}
+                                  </h4>
+                                  <span className="rounded bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 px-2 py-0.5 text-[10px] font-bold text-[#0A66C2] dark:text-sky-300">
+                                    ✓ Following · {followed.followedAgo || 'Recently'}
+                                  </span>
+                                  {rel.followsYou && (
+                                    <span className="rounded bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                                      Follows you too
+                                    </span>
+                                  )}
+                                  <span className="text-[10px] font-semibold text-zinc-400">
+                                    {targetBundle.followers.length} {targetBundle.followers.length === 1 ? 'follower' : 'followers'}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-zinc-500 truncate dark:text-zinc-400">
+                                  {followed.headline}
+                                </p>
+                                <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold">
+                                  📰 Public posts &amp; articles from {followed.name} are active in your Feed
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0 self-end sm:self-center flex-wrap">
+                              <button
+                                type="button"
+                                onClick={() => onSelectMember?.(followed)}
+                                className="rounded-full border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 cursor-pointer"
+                              >
+                                View Workspace
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => onNavigateMessaging && onNavigateMessaging(followed)}
+                                className="rounded-full border border-[#0A66C2] px-3 py-1.5 text-xs font-bold text-[#0A66C2] hover:bg-blue-50 cursor-pointer"
+                              >
+                                Message
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (!currentUser?.name) return
+                                  const res = unfollowMember({
+                                    actorName: currentUser.name,
+                                    targetName: followed.name
+                                  })
+                                  setFollowBundle(res.actorBundle)
+                                  setToastMessage(`Unfollowed ${followed.name}. Both counts updated.`)
+                                  setTimeout(() => setToastMessage(null), 3000)
+                                }}
+                                className="rounded-full border border-red-300 dark:border-red-800 bg-red-50/70 dark:bg-red-950/40 text-red-700 dark:text-red-300 hover:bg-red-100 px-3.5 py-1.5 text-xs font-bold cursor-pointer transition-colors"
+                              >
+                                Unfollow
+                              </button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -2505,6 +2995,80 @@ export function NetworkView({
                           <MessageSquare className="h-3 w-3" />
                           <span>DM</span>
                         </button>
+
+                        {/* One-way Follow / Follow back / Following button (separate from Connect) */}
+                        {(() => {
+                          const rel = getFollowRelationshipState(currentUser?.name, person.name)
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (!currentUser?.name) return
+                                if (rel.isFollowing) {
+                                  const res = unfollowMember({
+                                    actorName: currentUser.name,
+                                    targetName: person.name
+                                  })
+                                  setFollowBundle(res.actorBundle)
+                                  setToastMessage(`Unfollowed ${person.name}.`)
+                                  setTimeout(() => setToastMessage(null), 3000)
+                                  return
+                                }
+                                const res = followMember({
+                                  actorId: currentUser.id,
+                                  actorName: currentUser.name,
+                                  actorHeadline: currentUser.headline,
+                                  actorAvatar: currentUser.avatar,
+                                  actorProfession: currentUser.profession,
+                                  actorLocation: currentUser.location,
+                                  targetId: person.id,
+                                  targetName: person.name,
+                                  targetHeadline: person.headline,
+                                  targetAvatar: person.avatar,
+                                  isConnectedWithTarget: Boolean(person.isConnected)
+                                })
+                                if (res.ok && res.actorBundle) {
+                                  setFollowBundle(res.actorBundle)
+                                  setToastMessage(`Now following ${person.name}. Their public posts will appear in your feed.`)
+                                } else if (res.error) {
+                                  setToastMessage(res.error)
+                                }
+                                setTimeout(() => setToastMessage(null), 3000)
+                              }}
+                              className={`flex-1 rounded-xl py-1.5 text-[11px] font-extrabold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                                rel.isFollowing
+                                  ? "border border-emerald-600 bg-emerald-50 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                                  : rel.followsYou
+                                  ? "border border-[#0A66C2] bg-blue-50 text-[#0A66C2] hover:bg-blue-100"
+                                  : "border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 hover:border-[#0A66C2] hover:text-[#0A66C2]"
+                              }`}
+                              title={
+                                rel.isFollowing
+                                  ? `Following ${person.name} — click to Unfollow`
+                                  : rel.followsYou
+                                  ? `${person.name} follows you — click to Follow back`
+                                  : `Follow ${person.name} (one-way updates)`
+                              }
+                            >
+                              {rel.isFollowing ? (
+                                <>
+                                  <Check className="h-3 w-3" />
+                                  <span>Following</span>
+                                </>
+                              ) : rel.followsYou ? (
+                                <>
+                                  <Plus className="h-3 w-3" />
+                                  <span>Follow back</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Plus className="h-3 w-3" />
+                                  <span>Follow</span>
+                                </>
+                              )}
+                            </button>
+                          )
+                        })()}
 
                         <button
                           onClick={() => {

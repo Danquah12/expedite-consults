@@ -1397,8 +1397,8 @@ export function generateDeepReEnumeratedFindings(params: {
         Node: {
           source: "Tenant-configured `tenantConfig.callbackEndpoint`",
           sink: "await fetch(tenantConfig.callbackEndpoint, { redirect: 'follow' })",
-          codeSnippet: `// Second-Order SSRF Candidate: Unvalidated outbound fetch with redirect following\nexport async function dispatchWebhookPing(callbackEndpoint: string) {\n  return await fetch(callbackEndpoint, { redirect: "follow" });\n}`,
-          remediationCode: `// ✅ FIXED (HTTPS + host allowlist + dns.lookup RFC1918/169.254.169.254 block + maxRedirects: 0)\nconst resolved = await dns.lookup(parsed.hostname, { all: true });\nif (resolved.some(r => isPrivateOrLinkLocalIp(r.address) || r.address === "169.254.169.254")) throw new Error("SSRF blocked");\nreturn await axios.get(parsed.toString(), { maxRedirects: 0, timeout: 4000 });`,
+          codeSnippet: `// Second-Order SSRF Candidate: Unvalidated outbound fetch with redirect following\nexport async function dispatchWebhookPing(callbackEndpoint) {\n  return await fetch(callbackEndpoint, { redirect: "follow" });\n}`,
+          remediationCode: `// ✅ FIXED (HTTPS + ALLOWED_HOSTS allowlist + dns.lookup RFC1918/169.254.169.254 block + maxRedirects: 0)\nconst ALLOWED_HOSTS = new Set(["hooks.xtrike.internal", "events.partner.example.com"]);\nconst parsed = new URL(callbackEndpoint);\nif (parsed.protocol !== "https:" || !ALLOWED_HOSTS.has(parsed.hostname)) throw new Error("Blocked webhook host");\nconst resolved = await dns.lookup(parsed.hostname, { all: true });\nif (resolved.some(r => isPrivateOrLoopback(r.address) || r.address === "169.254.169.254")) throw new Error("SSRF blocked");\nreturn await axios.get(parsed.toString(), { maxRedirects: 0, timeout: 4000 });`,
         },
         CSharp: {
           source: "Tenant-configured `[FromBody] string callbackUrl`",
@@ -1439,8 +1439,8 @@ export function generateDeepReEnumeratedFindings(params: {
         Node: {
           source: "HTTP Header `req.headers.authorization`",
           sink: "jwt.decode(token) used for authentication without jwt.verify()",
-          codeSnippet: `// CWE-347 Candidate: Uses jwt.decode() without verifying signature\nexport function extractSessionClaims(token: string) {\n  return jwt.decode(token);\n}`,
-          remediationCode: `// ✅ FIXED (Verify signature with pinned RS256 algorithm, issuer, and audience)\nexport function extractSessionClaims(token: string) {\n  return jwt.verify(token, RSA_PUBLIC_KEY, { algorithms: ["RS256"], issuer: "urn:xtrike:auth", audience: "xtrike-api" });\n}`,
+          codeSnippet: `// CWE-347 Candidate: Uses jwt.decode() without verifying signature\nexport function extractSessionClaims(token) {\n  return jwt.decode(token);\n}`,
+          remediationCode: `// ✅ FIXED (Verify signature with pinned RS256 algorithm, issuer, and audience)\nexport function extractSessionClaims(token) {\n  return jwt.verify(token, RSA_PUBLIC_KEY, { algorithms: ["RS256"], issuer: "urn:xtrike:auth", audience: "xtrike-api" });\n}`,
         },
         CSharp: {
           source: "HTTP Header `Request.Headers[\"Authorization\"]`",
@@ -1480,8 +1480,8 @@ export function generateDeepReEnumeratedFindings(params: {
         Node: {
           source: "Route parameter `req.params.invoiceId`",
           sink: "invoiceRepo.findById(req.params.invoiceId) without req.user.tenantId check",
-          codeSnippet: `// CWE-639 Candidate: Unscoped lookup by invoiceId\nexport async function getInvoice(req: Request, res: Response) {\n  const invoice = await invoiceRepo.findById(req.params.invoiceId);\n  return res.json(invoice);\n}`,
-          remediationCode: `// ✅ FIXED (Scope lookup by both invoiceId and authenticated user's tenantId)\nconst invoice = await invoiceRepo.findByIdAndTenant(req.params.invoiceId, req.user.tenantId);\nif (!invoice) return res.status(404).json({ error: "Not found" });`,
+          codeSnippet: `// CWE-639 Candidate: Unscoped lookup by invoiceId\nexport async function getInvoice(req, res) {\n  const invoice = await invoiceRepo.findById(req.params.invoiceId);\n  return res.json(invoice);\n}`,
+          remediationCode: `// ✅ FIXED (Scope lookup by both invoiceId and authenticated user's tenantId)\nexport async function getInvoice(req, res) {\n  const invoice = await invoiceRepo.findByIdAndTenantId(req.params.invoiceId, req.user.tenantId);\n  if (!invoice) return res.status(404).json({ error: "Invoice not found in caller tenant scope" });\n  return res.json(invoice);\n}`,
         },
         CSharp: {
           source: "Route parameter `[FromRoute] string invoiceId`",
@@ -1521,8 +1521,8 @@ export function generateDeepReEnumeratedFindings(params: {
         Node: {
           source: "JSON request body `req.body`",
           sink: "db.users.update({ where: { id: req.user.id }, data: { ...req.body } })",
-          codeSnippet: `// CWE-915 Candidate: Spreads untrusted req.body directly into ORM update\nexport async function updateProfile(req: Request, res: Response) {\n  return res.json(await db.users.update({ where: { id: req.user.id }, data: { ...req.body } }));\n}`,
-          remediationCode: `// ✅ FIXED (Parse explicit DTO allowlist before updating)\nconst { displayName, timeZone } = ProfileUpdateDto.parse(req.body);\nreturn res.json(await db.users.update({ where: { id: req.user.id }, data: { displayName, timeZone } }));`,
+          codeSnippet: `// CWE-915 Candidate: Spreads untrusted req.body directly into ORM update\nexport async function updateProfile(req, res) {\n  return res.json(await db.users.update({ where: { id: req.user.id }, data: { ...req.body } }));\n}`,
+          remediationCode: `// ✅ FIXED (Parse explicit DTO allowlist before updating)\nexport async function updateProfile(req, res) {\n  const { displayName, timeZone } = ProfileUpdateDto.parse(req.body);\n  return res.json(await db.users.update({ where: { id: req.user.id }, data: { displayName, timeZone } }));\n}`,
         },
         CSharp: {
           source: "Request body bound directly to entity `[FromBody] UserEntity input`",
@@ -1562,8 +1562,8 @@ export function generateDeepReEnumeratedFindings(params: {
         Node: {
           source: "Queue message string `rawPayload`",
           sink: "serialize.unserialize(rawPayload)",
-          codeSnippet: `// CWE-502 Candidate: Untrusted queue message passed to native unserialize\nexport function consumeSessionEvent(rawPayload: string) {\n  return serialize.unserialize(rawPayload);\n}`,
-          remediationCode: `// ✅ FIXED (Parse JSON and validate against strict schema)\nexport function consumeSessionEvent(rawPayload: string) {\n  return SessionEventSchema.parse(JSON.parse(rawPayload));\n}`,
+          codeSnippet: `// CWE-502 Candidate: Untrusted queue message passed to native unserialize\nexport function consumeSessionEvent(rawPayload) {\n  return serialize.unserialize(rawPayload);\n}`,
+          remediationCode: `// ✅ FIXED (Parse JSON and validate against strict schema)\nexport function consumeSessionEvent(rawPayload) {\n  return SessionEventSchema.parse(JSON.parse(rawPayload));\n}`,
         },
         CSharp: {
           source: "Queue message stream `Stream messageStream`",

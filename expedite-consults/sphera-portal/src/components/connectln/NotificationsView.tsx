@@ -29,6 +29,15 @@ import {
   CategorizedNotificationItem,
   INITIAL_CATEGORIZED_NOTIFICATIONS
 } from "@/lib/notifications-engine-data"
+import {
+  loadUserFollowBundle,
+  syncUserFollowBundleFromCloud,
+  getFollowRelationshipState,
+  followMember,
+  unfollowMember,
+  markFollowNotificationsRead,
+  UserFollowBundle
+} from "@/lib/connectin-follow"
 
 interface NoctisAlertCardExplanation {
   alertId: string
@@ -52,6 +61,52 @@ export function NotificationsView({
   const [selectedCategory, setSelectedCategory] = useState<'All' | 'Security' | 'Career' | 'Marketplace' | 'Learning' | 'Social'>('All')
   const [notifications, setNotifications] = useState<CategorizedNotificationItem[]>(INITIAL_CATEGORIZED_NOTIFICATIONS)
   const [unreadOnly, setUnreadOnly] = useState(false)
+  const [followBundle, setFollowBundle] = useState<UserFollowBundle>(() =>
+    loadUserFollowBundle(currentUserName)
+  )
+
+  useEffect(() => {
+    if (!currentUserName) return
+    const refreshFollow = () => {
+      setFollowBundle(loadUserFollowBundle(currentUserName))
+    }
+    refreshFollow()
+    syncUserFollowBundleFromCloud(currentUserName).then((cloudBundle) => {
+      setFollowBundle(cloudBundle)
+    })
+    window.addEventListener('connectln-follow-updated', refreshFollow)
+    return () => window.removeEventListener('connectln-follow-updated', refreshFollow)
+  }, [currentUserName])
+
+  // Convert live follower notifications into CategorizedNotificationItems (respecting notifyOnNewFollower preference)
+  const liveFollowerNotificationItems = React.useMemo<CategorizedNotificationItem[]>(() => {
+    if (!followBundle.settings?.notifyOnNewFollower) return []
+    return (followBundle.notifications || []).map((fn) => ({
+      id: fn.id,
+      category: 'Social' as const,
+      subType: 'New Follower',
+      actor: {
+        name: fn.followerName,
+        role: fn.followerHeadline,
+        avatar: fn.followerAvatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(fn.followerName)}&backgroundColor=0a66c2`
+      },
+      title: `${fn.followerName} started following you on ConnectLn`,
+      description: `${fn.followerHeadline} · Following is one-way — they now receive your public updates in their feed. Click "+ Follow back" if you also want to receive their updates.`,
+      timestamp: fn.timeAgo || 'Recently',
+      unread: Boolean(fn.unread),
+      priority: 'normal' as const,
+      actionText: 'Manage Followers',
+      targetTab: 'network'
+    }))
+  }, [followBundle])
+
+  const allCombinedNotifications = React.useMemo(() => {
+    const existingIds = new Set(liveFollowerNotificationItems.map(i => i.id))
+    return [
+      ...liveFollowerNotificationItems,
+      ...notifications.filter(n => !existingIds.has(n.id))
+    ]
+  }, [liveFollowerNotificationItems, notifications])
 
   // Noctis Alerts Intelligence States
   const [showNoctisOverview, setShowNoctisOverview] = useState<boolean>(true)
@@ -67,17 +122,17 @@ export function NotificationsView({
 
   // Category counts
   const getCategoryCount = (cat: string) => {
-    if (cat === 'All') return notifications.length
-    return notifications.filter(n => n.category === cat).length
+    if (cat === 'All') return allCombinedNotifications.length
+    return allCombinedNotifications.filter(n => n.category === cat).length
   }
 
   const getUnreadCount = (cat: string) => {
-    if (cat === 'All') return notifications.filter(n => n.unread).length
-    return notifications.filter(n => n.category === cat && n.unread).length
+    if (cat === 'All') return allCombinedNotifications.filter(n => n.unread).length
+    return allCombinedNotifications.filter(n => n.category === cat && n.unread).length
   }
 
   // Filtered Notifications
-  const filteredNotifications = notifications.filter(n => {
+  const filteredNotifications = allCombinedNotifications.filter(n => {
     const matchCategory = selectedCategory === 'All' || n.category === selectedCategory
     const matchUnread = !unreadOnly || n.unread
     return matchCategory && matchUnread
@@ -187,10 +242,18 @@ export function NotificationsView({
     setNotifications(prev =>
       prev.map(n => (n.id === id ? { ...n, unread: false } : n))
     )
+    if (currentUserName && id.startsWith('fnotif_')) {
+      const next = markFollowNotificationsRead(currentUserName)
+      setFollowBundle(next)
+    }
   }
 
   const handleMarkAllRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, unread: false })))
+    if (currentUserName) {
+      const next = markFollowNotificationsRead(currentUserName)
+      setFollowBundle(next)
+    }
   }
 
   const handleNotificationAction = (item: CategorizedNotificationItem) => {
@@ -507,6 +570,47 @@ export function NotificationsView({
                       <span>↗</span>
                     </a>
                   )}
+                  {notif.subType === 'New Follower' && notif.actor?.name && (() => {
+                    const rel = getFollowRelationshipState(currentUserName, notif.actor.name)
+                    return rel.isFollowing ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!currentUserName) return
+                          const res = unfollowMember({
+                            actorName: currentUserName,
+                            targetName: notif.actor.name
+                          })
+                          setFollowBundle(res.actorBundle)
+                        }}
+                        className="rounded-full border border-emerald-600 bg-emerald-50 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-700 px-3.5 py-2 text-xs font-extrabold transition-all flex items-center gap-1 cursor-pointer"
+                      >
+                        <Check className="h-3.5 w-3.5" />
+                        <span>Following (Unfollow)</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!currentUserName) return
+                          const res = followMember({
+                            actorName: currentUserName,
+                            actorHeadline: currentUserProfession || 'Verified ConnectLn Professional',
+                            targetName: notif.actor.name,
+                            targetHeadline: notif.actor.role,
+                            targetAvatar: notif.actor.avatar
+                          })
+                          if (res.ok && res.actorBundle) {
+                            setFollowBundle(res.actorBundle)
+                          }
+                        }}
+                        className="rounded-full bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 text-xs font-extrabold transition-all flex items-center gap-1 shadow-xs cursor-pointer"
+                      >
+                        <span>+ Follow back</span>
+                      </button>
+                    )
+                  })()}
+
                   <button
                     onClick={() => handleNotificationAction(notif)}
                     className={`rounded-full px-4 py-2 text-xs font-extrabold text-white transition-all flex items-center gap-1.5 shadow-sm cursor-pointer ${

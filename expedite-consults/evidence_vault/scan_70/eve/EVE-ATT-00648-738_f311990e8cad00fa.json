@@ -1,0 +1,52 @@
+{
+  "original_finding_id": 6658,
+  "asset_and_origin_identity": "ASSET-00467 | https://www.hackinghub.io:443",
+  "approved_scope_and_roe": "Host www.hackinghub.io:443 matches ROE authorized origin 'https://www.hackinghub.io:443'.",
+  "validation_adapter_and_version": "EVE-NET-001 (eve-adapter/2.3.0)",
+  "test_timestamp": "2026-11-09T03:03:27.028210+00:00",
+  "preconditions": {
+    "vulnerability_class": "network_service_validation",
+    "affected_technology": "web-application",
+    "detected_version": null,
+    "cve_applicable": false,
+    "preconditions_satisfied": true
+  },
+  "execution_transcript": {
+    "adapter_id": "EVE-NET-001",
+    "adapter_version": "eve-adapter/2.3.0",
+    "probed_endpoint": "https://www.hackinghub.io/",
+    "finding_key": "UDP-PORT-OPEN-123-NTP::T41_WWW_HACKINGHUB_IO",
+    "safety_mode": "READ_ONLY_DETERMINISTIC",
+    "timestamp": "2026-11-09T03:03:27.024616+00:00",
+    "probe_steps": [
+      {
+        "step": 1,
+        "action": "EVALUATE_CONTROL_STATE",
+        "target": "https://www.hackinghub.io/",
+        "title": "[www.hackinghub.io] Service Port Open: 123/UDP (NTP) on www.hackinghub.io [65,535 UDP Sweep]",
+        "observation_excerpt": "[Target: https://www.hackinghub.io/] Full 65,535 UDP port & datagram service sweep verified active service on port 123/UDP (NTP) on target www.hackinghub.io.\nCaptured UDP Service Telemetry: NTPv4 123/UDP Time Sync Service Verified (RFC 5905 Stratum-2). Network Time Protocol (Stra"
+      }
+    ]
+  },
+  "request_response_evidence": [
+    {
+      "step": 1,
+      "action": "EVALUATE_CONTROL_STATE",
+      "target": "https://www.hackinghub.io/",
+      "title": "[www.hackinghub.io] Service Port Open: 123/UDP (NTP) on www.hackinghub.io [65,535 UDP Sweep]",
+      "observation_excerpt": "[Target: https://www.hackinghub.io/] Full 65,535 UDP port & datagram service sweep verified active service on port 123/UDP (NTP) on target www.hackinghub.io.\nCaptured UDP Service Telemetry: NTPv4 123/UDP Time Sync Service Verified (RFC 5905 Stratum-2). Network Time Protocol (Stra"
+    }
+  ],
+  "expected_vs_actual": {
+    "expected": "Verify whether missing control or configuration allows direct unauthorized boundary crossing.",
+    "actual": "Configuration/control gap confirmed at HTTP layer; no direct unauthorized data access or code execution resulted.",
+    "reproduced_behavior": false
+  },
+  "execution_outcome": "OBSERVATION_CONFIRMED",
+  "evidence_confidence": 0.88,
+  "exploitability_confidence": 0.15,
+  "impact_confidence": 0.05,
+  "operator_or_approving_identity": "secops-lead@expedite-consults.io",
+  "sha256_evidence_digest": "21c417a769d6a71e2510d2fda3208a5f2cf09d37ec7653bd24cf505fbb51d2e1",
+  "attempt_key": "EVE-ATT-00648-738"
+}

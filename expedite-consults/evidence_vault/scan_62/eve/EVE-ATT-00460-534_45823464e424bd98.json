@@ -1,0 +1,52 @@
+{
+  "original_finding_id": 5061,
+  "asset_and_origin_identity": "ASSET-00338 | https://owasp.org:443",
+  "approved_scope_and_roe": "Host owasp.org:443 matches ROE authorized origin 'https://owasp.org:443'.",
+  "validation_adapter_and_version": "EVE-TLS-001 (eve-adapter/2.3.0)",
+  "test_timestamp": "2026-11-06T17:32:56.160171+00:00",
+  "preconditions": {
+    "vulnerability_class": "tls_crypto_validation",
+    "affected_technology": "http",
+    "detected_version": null,
+    "cve_applicable": false,
+    "preconditions_satisfied": true
+  },
+  "execution_transcript": {
+    "adapter_id": "EVE-TLS-001",
+    "adapter_version": "eve-adapter/2.3.0",
+    "probed_endpoint": "https://owasp.org/www-project-juice-shop/",
+    "finding_key": "HTTP-HEADER-CONTENT_SECURITY_POLICY::T2_OWASP_ORG_WWW_PROJECT_JUICE_",
+    "safety_mode": "READ_ONLY_DETERMINISTIC",
+    "timestamp": "2026-11-06T17:32:56.140652+00:00",
+    "probe_steps": [
+      {
+        "step": 1,
+        "action": "EVALUATE_CONTROL_STATE",
+        "target": "https://owasp.org/www-project-juice-shop/",
+        "title": "[owasp.org/www-project-juice-shop] Missing Content-Security-Policy",
+        "observation_excerpt": "[Target: https://owasp.org/www-project-juice-shop/] The HTTP response did not include the content-security-policy response header. This confirms a header observation only; it does not prove an exploit."
+      }
+    ]
+  },
+  "request_response_evidence": [
+    {
+      "step": 1,
+      "action": "EVALUATE_CONTROL_STATE",
+      "target": "https://owasp.org/www-project-juice-shop/",
+      "title": "[owasp.org/www-project-juice-shop] Missing Content-Security-Policy",
+      "observation_excerpt": "[Target: https://owasp.org/www-project-juice-shop/] The HTTP response did not include the content-security-policy response header. This confirms a header observation only; it does not prove an exploit."
+    }
+  ],
+  "expected_vs_actual": {
+    "expected": "Verify whether missing control or configuration allows direct unauthorized boundary crossing.",
+    "actual": "Configuration/control gap confirmed at HTTP layer; no direct unauthorized data access or code execution resulted.",
+    "reproduced_behavior": false
+  },
+  "execution_outcome": "OBSERVATION_CONFIRMED",
+  "evidence_confidence": 0.88,
+  "exploitability_confidence": 0.15,
+  "impact_confidence": 0.05,
+  "operator_or_approving_identity": "secops-lead@expedite-consults.io",
+  "sha256_evidence_digest": "3c76dec4eedc40c7eb2f6858cc18c8bbf42ef3fa9b74f8e21d85247b7c9288eb",
+  "attempt_key": "EVE-ATT-00460-534"
+}

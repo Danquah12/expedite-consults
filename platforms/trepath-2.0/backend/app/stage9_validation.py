@@ -172,8 +172,34 @@ def _apply_reconciliation_to_session(db: Session, scan_id: int) -> bool:
                     dirty = True
 
         # 3. Reconcile AttackPath states (`ATTACK_PATH_CORRELATED` vs `ATTACK_PATH_VALIDATED`) and per-step transition evidence
+        #    AttackGraph 2.12 Invariant: INFERRED_EDGE != TECHNIQUE_VALIDATED_EDGE
+        #    Never overwrite an explicit INFERRED edge or canonical PATH-TWIN-SIMULATED / PATH-LAB-VALIDATED / PATH-OBSERVED path!
         paths = db.query(models.AttackPath).filter_by(scan_id=scan_id).all()
         for ap in paths:
+            pk_upper = (ap.path_key or "").upper()
+            title_upper = (ap.title or "").upper()
+            if pk_upper.startswith(("PATH-LAB-VALIDATED-", "PATH-TWIN-SIMULATED-", "PATH-OBSERVED-")) or any(
+                tag in title_upper for tag in ("[VALIDATED_PATH]", "[SIMULATED_PATH]", "[OBSERVED_PATH]")
+            ):
+                # Enforce AttackGraph 2.12 invariant on simulated paths so Step 2 remains INFERRED
+                if "SIMULATED" in pk_upper or "SIMULATED" in title_upper:
+                    sim_steps = list(ap.steps_json or [])
+                    sim_dirty = False
+                    for s_idx, s_obj in enumerate(sim_steps):
+                        if s_idx > 0 and s_obj.get("edge_evidence_state") != "INFERRED":
+                            s_obj["edge_evidence_state"] = "INFERRED"
+                            s_obj["transition_rationale"] = (
+                                "INFERRED by Noctis Twin simulation; AttackGraph 2.12 invariant "
+                                "`INFERRED_EDGE != TECHNIQUE_VALIDATED_EDGE` prevents promotion to VALIDATED_PATH."
+                            )
+                            s_obj["execution_result"] = "ProofState=OBSERVATION_CONFIRMED | Edge=INFERRED"
+                            sim_dirty = True
+                    if sim_dirty or ap.proof_state != models.ProofState.OBSERVATION_CONFIRMED:
+                        ap.steps_json = sim_steps
+                        ap.proof_state = models.ProofState.OBSERVATION_CONFIRMED
+                        dirty = True
+                continue
+
             steps = list(ap.steps_json or [])
             all_edges_proven = True
             updated_steps: list[dict[str, Any]] = []
@@ -181,7 +207,12 @@ def _apply_reconciliation_to_session(db: Session, scan_id: int) -> bool:
             for idx, st in enumerate(steps):
                 fid = st.get("finding_id")
                 cur_f = finding_by_id.get(fid) if isinstance(fid, int) else None
-                if cur_f is not None:
+                if st.get("edge_evidence_state") == "INFERRED":
+                    edge_state = "INFERRED"
+                    edge_rationale = st.get("transition_rationale") or "Inferred transition; not actively validated."
+                    if cur_f is not None:
+                        prev_finding = cur_f
+                elif cur_f is not None:
                     edge_state, edge_rationale = classify_node_and_edge_evidence(cur_f, prev_finding if idx > 0 else None)
                     prev_finding = cur_f
                 else:

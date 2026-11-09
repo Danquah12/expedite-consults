@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { DeveloperAssistAgent } from "@/components/DeveloperAssistAgent";
+import TwoFactorAuthGate from "@/components/auth/TwoFactorAuthGate";
 
 const newsreader = Newsreader({
   subsets: ["latin"],
@@ -43,10 +44,12 @@ export default function RootLayout({
       className={`${newsreader.variable} ${inter.variable} ${jetbrainsMono.variable}`}
     >
       <body className="min-h-screen flex flex-col antialiased">
-        <Navbar />
-        <main className="flex-1">{children}</main>
-        <Footer />
-        <DeveloperAssistAgent />
+        <TwoFactorAuthGate>
+          <Navbar />
+          <main className="flex-1">{children}</main>
+          <Footer />
+          <DeveloperAssistAgent />
+        </TwoFactorAuthGate>
       </body>
     </html>
   );

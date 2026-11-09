@@ -119,8 +119,8 @@ def _detect_engine_and_category(finding_key: str, title: str) -> tuple[str, str,
         engine = "Nmap v7.95 Service & NSE Engine"
     elif fk.startswith("TLS-"):
         engine = "TrePath TLS/SSL Cryptographic Auditor"
-    elif fk.startswith("PORT-"):
-        engine = "TrePath 1,000-Port TCP Discovery Engine"
+    elif fk.startswith(("PORT-", "UDP-PORT-")):
+        engine = "TrePath 65,535 TCP + 65,535 UDP Service Discovery Engine"
     elif fk.startswith("WEB-"):
         engine = "TrePath Sensitive Route Reconnaissance"
     elif fk.startswith("APP-ACTIVE"):

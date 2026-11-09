@@ -1304,6 +1304,92 @@ DefaultHostnameVerifier hostnameVerifier = new DefaultHostnameVerifier();`,
     remediationSummary:
       "Neutralize CR/LF control characters (\\r, \\n) before logging user-controlled values and use structured parameterized logger bindings.",
   },
+  "REDIR-EXPRESS-REDIRECT": {
+    cwe: "CWE-601",
+    cweName: "URL Redirection to Untrusted Site ('Open Redirect')",
+    owasp: "A01:2021 · Broken Access Control (ASVS V5.1.5)",
+    asvs: "ASVS V5.1.5",
+    nist80053: "SI-10 · Information Input Validation",
+    severity: "Medium",
+    cvss: 6.1,
+    epss: 0.088,
+    mitreAttack: "T1566.002 (Spearphishing Link / Client HTTP Open Redirect)",
+    sanitizerHint: "Enforce relative-path validation (/^\\/[a-zA-Z0-9/_-]+$/) and approved destination path allowlist before calling res.redirect()",
+    remediationSummary:
+      "Distinguish client HTTP redirects (CWE-601) from server-side outbound requests (CWE-918 SSRF): validate req.query.url against an explicit server-side allowlist of relative application paths and reject external origins, protocol-relative URLs (//evil.example), and backslash bypasses.",
+    remediationCode: `// ❌ VULNERABLE (Open Redirect — CWE-601: client browser redirected to unvalidated req.query.url)
+// return res.redirect(req.query.url);
+
+// ✅ FIXED (Node.js / Express — Relative-Path & Approved-Destination Allowlist Guard)
+const ALLOWED_REDIRECT_PATHS = new Set(["/dashboard", "/profile", "/contributions", "/allocations", "/memoranda", "/login"]);
+const rawRedirect = typeof req.query.url === "string" ? req.query.url.trim() : "/dashboard";
+const parsedRedirect = new URL(rawRedirect, "https://app.internal.local");
+if (
+  rawRedirect.startsWith("//") ||
+  rawRedirect.includes("\\\\") ||
+  parsedRedirect.origin !== "https://app.internal.local" ||
+  !ALLOWED_REDIRECT_PATHS.has(parsedRedirect.pathname)
+) {
+  return res.redirect(302, "/dashboard");
+}
+return res.redirect(302, parsedRedirect.pathname + parsedRedirect.search);`,
+  },
+  "REDIR-JAVA-SENDREDIRECT": {
+    cwe: "CWE-601",
+    cweName: "URL Redirection to Untrusted Site ('Open Redirect')",
+    owasp: "A01:2021 · Broken Access Control (ASVS V5.1.5)",
+    asvs: "ASVS V5.1.5",
+    nist80053: "SI-10 · Information Input Validation",
+    severity: "Medium",
+    cvss: 6.1,
+    epss: 0.088,
+    mitreAttack: "T1566.002 (Spearphishing Link / Client HTTP Open Redirect)",
+    sanitizerHint: "Validate redirect target against an approved server-side relative-path allowlist before calling sendRedirect()",
+    remediationSummary:
+      "Validate the redirect target against a server-side allowlist of relative paths and reject absolute or protocol-relative URLs before calling HttpServletResponse.sendRedirect().",
+  },
+  "REDIR-PY-FLASK-DJANGO": {
+    cwe: "CWE-601",
+    cweName: "URL Redirection to Untrusted Site ('Open Redirect')",
+    owasp: "A01:2021 · Broken Access Control (ASVS V5.1.5)",
+    asvs: "ASVS V5.1.5",
+    nist80053: "SI-10 · Information Input Validation",
+    severity: "Medium",
+    cvss: 6.1,
+    epss: 0.088,
+    mitreAttack: "T1566.002 (Spearphishing Link / Client HTTP Open Redirect)",
+    sanitizerHint: "Validate redirect target with url_has_allowed_host_and_scheme() or relative path allowlist",
+    remediationSummary:
+      "Verify that redirect targets have no external netloc/scheme and match an allowlist of internal routes before calling redirect().",
+  },
+  "REDIR-PHP-HEADER-LOCATION": {
+    cwe: "CWE-601",
+    cweName: "URL Redirection to Untrusted Site ('Open Redirect')",
+    owasp: "A01:2021 · Broken Access Control (ASVS V5.1.5)",
+    asvs: "ASVS V5.1.5",
+    nist80053: "SI-10 · Information Input Validation",
+    severity: "Medium",
+    cvss: 6.1,
+    epss: 0.088,
+    mitreAttack: "T1566.002 (Spearphishing Link / Client HTTP Open Redirect)",
+    sanitizerHint: "Map redirect key against an approved relative path allowlist before emitting Location header",
+    remediationSummary:
+      "Validate redirect destinations against a strict server-side relative path allowlist before sending a Location header.",
+  },
+  "REDIR-GO-HTTPREDIRECT": {
+    cwe: "CWE-601",
+    cweName: "URL Redirection to Untrusted Site ('Open Redirect')",
+    owasp: "A01:2021 · Broken Access Control (ASVS V5.1.5)",
+    asvs: "ASVS V5.1.5",
+    nist80053: "SI-10 · Information Input Validation",
+    severity: "Medium",
+    cvss: 6.1,
+    epss: 0.088,
+    mitreAttack: "T1566.002 (Spearphishing Link / Client HTTP Open Redirect)",
+    sanitizerHint: "Parse redirect target with url.Parse() and enforce empty Host/Scheme and allowlisted relative Path",
+    remediationSummary:
+      "Verify that parsed URL has empty Scheme and Host and starts with a single '/' matching an allowlisted path before calling http.Redirect().",
+  },
 };
 
 // Materialize the complete 400-Plugin Catalog deterministically

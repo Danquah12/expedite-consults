@@ -1,9 +1,16 @@
 "use client";
 
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Shield, Cpu, CheckCircle2, Play, BarChart3, Layers, GitGraph, Bot, Box, Printer, Sparkles, Activity } from "lucide-react";
+import { Shield, Cpu, CheckCircle2, Play, BarChart3, Layers, GitGraph, Bot, Box, Printer, Sparkles, Activity, KeyRound, Lock, LogOut } from "lucide-react";
 import { openAskNoctisPopup } from "@/components/DeveloperAssistAgent";
+import {
+  open2FASecurityModal,
+  openExecutiveGatewayDashboard,
+  trigger2FALockSession,
+} from "@/components/auth/TwoFactorAuthGate";
+import { loadActive2FASession, TwoFactorSession } from "@/lib/two-factor-auth";
 
 const NAV_LINKS = [
   { label: "Front Desk", href: "/", badge: "P05", icon: Shield },
@@ -16,10 +23,19 @@ const NAV_LINKS = [
   { label: "Taint Graph", href: "/taint-graph", icon: GitGraph },
   { label: "AI-BOM", href: "/ai-bom", icon: Box },
   { label: "Dev Assist", href: "/developer-assist", icon: Bot },
+  { label: "2FA Auth", href: "/login", badge: "TOTP", icon: KeyRound },
 ];
 
 export default function Navbar() {
   const pathname = usePathname();
+  const [session, setSession] = useState<TwoFactorSession | null>(null);
+
+  useEffect(() => {
+    setSession(loadActive2FASession());
+    const sync = () => setSession(loadActive2FASession());
+    window.addEventListener("xtrike-2fa-updated", sync);
+    return () => window.removeEventListener("xtrike-2fa-updated", sync);
+  }, []);
 
   return (
     <header
@@ -54,18 +70,68 @@ export default function Navbar() {
             </div>
           </Link>
 
-          <div className="flex items-center gap-2.5 shrink-0">
-            <div
-              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
-              style={{
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
-                color: "var(--muted)",
-              }}
-            >
-              <CheckCircle2 className="w-3.5 h-3.5" style={{ color: "var(--success)" }} />
-              <span>PTES &amp; NIST 800-115 &middot; 6-Stage Proof Pipeline</span>
-            </div>
+          <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+            {session ? (
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => openExecutiveGatewayDashboard()}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-opacity hover:opacity-90"
+                  style={{
+                    background: "var(--surface)",
+                    border: "1px solid var(--accent)",
+                    color: "var(--accent)",
+                  }}
+                  title="Open Executive Command Gateway Dashboard & Operator Login Screen"
+                >
+                  <BarChart3 className="w-3.5 h-3.5 shrink-0" />
+                  <span>Gateway Dashboard</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => open2FASecurityModal()}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-opacity hover:opacity-90"
+                  style={{
+                    background: "rgba(45, 106, 79, 0.12)",
+                    border: "1px solid rgba(45, 106, 79, 0.38)",
+                    color: "#2d6a4f",
+                  }}
+                  title="Inspect 2FA Session Signature & Security Audit Log"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                  <span className="hidden sm:inline">2FA Verified:</span>
+                  <span className="font-bold">{session.name}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => trigger2FALockSession()}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-opacity hover:opacity-90"
+                  style={{
+                    background: "rgba(180, 35, 24, 0.1)",
+                    border: "1px solid rgba(180, 35, 24, 0.35)",
+                    color: "#b42318",
+                  }}
+                  title="Lock 2FA Session & Return to Executive Gateway Dashboard + Login"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">Lock 2FA</span>
+                </button>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
+                style={{
+                  background: "var(--surface)",
+                  border: "1px solid var(--accent)",
+                  color: "var(--accent)",
+                  textDecoration: "none",
+                }}
+              >
+                <Lock className="w-3.5 h-3.5" />
+                <span>2FA Sign In</span>
+              </Link>
+            )}
 
             <Link
               href="/reports"

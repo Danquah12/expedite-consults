@@ -276,17 +276,25 @@ export function MessageActionBar({
 
             <div className="flex flex-wrap items-center gap-1">
                 {REACTIONS.map((r) => {
-                    const mine = (msg.reactions?.[r.kind] || []).includes(myKey);
+                    const list = msg.reactions?.[r.kind] || [];
+                    const mine = list.includes(myKey);
                     return (
                         <button
                             key={r.kind}
                             type="button"
-                            title={r.label}
+                            title={
+                                list.length > 0
+                                    ? `${r.label} (${list.length}): ${list.join(', ')}`
+                                    : r.label
+                            }
                             aria-label={r.label}
                             onClick={() => onReact(r.kind)}
-                            className={`${btn} ${mine ? '!border-[#0A66C2] !bg-blue-50 !text-[#0A66C2]' : ''}`}
+                            className={`${btn} ${mine ? '!border-[#0A66C2] !bg-blue-50 !text-[#0A66C2]' : list.length > 0 ? '!border-emerald-300 !bg-emerald-50/70 !text-emerald-900' : ''}`}
                         >
                             <span>{r.emoji}</span>
+                            {list.length > 0 && (
+                                <span className="text-[10px] font-black">{list.length}</span>
+                            )}
                         </button>
                     );
                 })}
@@ -309,6 +317,28 @@ export function MessageActionBar({
                 </button>
                 {note && <span className="text-[11px] font-bold text-emerald-700">{note}</span>}
             </div>
+
+            {/* Visible list of who reacted so both sender and recipient immediately see each other's reactions */}
+            {(() => {
+                const activeReacts = REACTIONS.map((r) => ({
+                    ...r,
+                    users: msg.reactions?.[r.kind] || [],
+                })).filter((r) => r.users.length > 0);
+                if (activeReacts.length === 0) return null;
+                return (
+                    <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                        {activeReacts.map((r) => (
+                            <span
+                                key={r.kind}
+                                className="inline-flex items-center gap-1 rounded-full bg-slate-100 border border-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-700 capitalize"
+                            >
+                                <span>{r.emoji}</span>
+                                <span>{r.users.join(', ')}</span>
+                            </span>
+                        ))}
+                    </div>
+                );
+            })()}
 
             {showShare && (
                 <div className="w-80 max-w-full rounded-xl border border-slate-200 bg-white p-2.5 shadow-xl text-slate-900">

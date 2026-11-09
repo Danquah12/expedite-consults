@@ -19,6 +19,8 @@ export interface LocalBilateralMessage {
   timestamp: string
   createdAtIso: string
   readBy: string[]
+  reactions?: Partial<Record<'like' | 'up' | 'down' | 'rsvp_yes' | 'rsvp_no' | 'rsvp_maybe', string[]>>
+  comments?: { id: string; author: string; avatar?: string; text: string; createdAtIso: string }[]
 }
 
 export interface LocalBilateralConversation {
@@ -470,6 +472,118 @@ export function recordLocalBilateralDirectMessage(params: {
   }
 }
 
+export function recordLocalBilateralMessageReaction(params: {
+  messageId: string
+  messageText?: string
+  actorName: string
+  reaction: 'like' | 'up' | 'down' | 'rsvp_yes' | 'rsvp_no' | 'rsvp_maybe'
+  partnerName?: string
+}) {
+  if (typeof window === "undefined") return
+  try {
+    const store = loadLocalBilateralConversations()
+    const actorKey = normalizeDmName(params.actorName)
+    if (!actorKey) return
+    let changed = false
+
+    for (const convo of Object.values(store)) {
+      if (params.partnerName) {
+        const matchesPartner =
+          doesDmParticipantMatch(convo.participantA.name, params.partnerName) ||
+          doesDmParticipantMatch(convo.participantB.name, params.partnerName)
+        if (!matchesPartner) continue
+      }
+
+      convo.messages = (convo.messages || []).map(m => {
+        const matchesId = m.id === params.messageId
+        const matchesText =
+          Boolean(params.messageText) &&
+          m.text.trim() === (params.messageText || "").trim()
+        if (!matchesId && !matchesText) return m
+
+        changed = true
+        const reactions: Record<string, string[]> = { ...(m.reactions || {}) }
+        const current = new Set(reactions[params.reaction] || [])
+        if (current.has(actorKey)) {
+          current.delete(actorKey)
+        } else {
+          current.add(actorKey)
+          const opposite = params.reaction === "up" ? "down" : params.reaction === "down" ? "up" : null
+          if (opposite && reactions[opposite]) {
+            reactions[opposite] = reactions[opposite].filter(k => k !== actorKey)
+          }
+          if (params.reaction.startsWith("rsvp_")) {
+            for (const other of ["rsvp_yes", "rsvp_no", "rsvp_maybe"]) {
+              if (other !== params.reaction && reactions[other]) {
+                reactions[other] = reactions[other].filter(k => k !== actorKey)
+              }
+            }
+          }
+        }
+        reactions[params.reaction] = Array.from(current)
+        return { ...m, reactions }
+      })
+    }
+
+    if (changed) {
+      localStorage.setItem(SHARED_DM_STORAGE_KEY, JSON.stringify(store))
+      window.dispatchEvent(new CustomEvent("connectin_dm_updated"))
+    }
+  } catch {}
+}
+
+export function recordLocalBilateralMessageComment(params: {
+  messageId: string
+  messageText?: string
+  actorName: string
+  actorAvatar?: string
+  commentText: string
+  partnerName?: string
+}) {
+  if (typeof window === "undefined") return
+  try {
+    const store = loadLocalBilateralConversations()
+    const cleanText = String(params.commentText || "").trim().slice(0, 200)
+    if (!cleanText) return
+    let changed = false
+
+    for (const convo of Object.values(store)) {
+      if (params.partnerName) {
+        const matchesPartner =
+          doesDmParticipantMatch(convo.participantA.name, params.partnerName) ||
+          doesDmParticipantMatch(convo.participantB.name, params.partnerName)
+        if (!matchesPartner) continue
+      }
+
+      convo.messages = (convo.messages || []).map(m => {
+        const matchesId = m.id === params.messageId
+        const matchesText =
+          Boolean(params.messageText) &&
+          m.text.trim() === (params.messageText || "").trim()
+        if (!matchesId && !matchesText) return m
+
+        changed = true
+        const nextComment = {
+          id: `cmt_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+          author: params.actorName,
+          avatar: params.actorAvatar || "",
+          text: cleanText,
+          createdAtIso: new Date().toISOString()
+        }
+        return {
+          ...m,
+          comments: [...(m.comments || []), nextComment].slice(-10)
+        }
+      })
+    }
+
+    if (changed) {
+      localStorage.setItem(SHARED_DM_STORAGE_KEY, JSON.stringify(store))
+      window.dispatchEvent(new CustomEvent("connectin_dm_updated"))
+    }
+  } catch {}
+}
+
 export function markLocalBilateralConversationRead(partnerNameOrPairKey: string, viewerName: string) {
   if (typeof window === "undefined" || !viewerName) return
   try {
@@ -557,6 +671,8 @@ export function getLocalBilateralThreadsForViewer(
         text: m.text,
         timestamp: formattedTime,
         createdAtIso: resolvedIso,
+        reactions: m.reactions,
+        comments: m.comments,
         attachments: m.attachment ? [{ name: m.attachment, type: "Document" }] : undefined
       }
     })
@@ -712,14 +828,36 @@ export function mergeBilateralAndServerThreads(
 
     const combinedMsgs: B2BMessageItem[] = [...existing.messages]
     for (const lm of lt.messages) {
-      const alreadyExists = combinedMsgs.some(
+      const existingIdx = combinedMsgs.findIndex(
         em =>
           em.id === lm.id ||
           (em.text.trim() === lm.text.trim() &&
             normalizeDmName(em.sender.name) === normalizeDmName(lm.sender.name))
       )
-      if (!alreadyExists) {
+      if (existingIdx === -1) {
         combinedMsgs.push(lm)
+      } else {
+        // Merge reactions and comments from both server and local bilateral message
+        const em = combinedMsgs[existingIdx]
+        const mergedReactions: Record<string, string[]> = { ...(em.reactions || {}) }
+        if (lm.reactions) {
+          for (const [rKey, rUsers] of Object.entries(lm.reactions)) {
+            if (Array.isArray(rUsers)) {
+              mergedReactions[rKey] = Array.from(new Set([...(mergedReactions[rKey] || []), ...rUsers]))
+            }
+          }
+        }
+        const mergedComments = [...(em.comments || [])]
+        for (const c of lm.comments || []) {
+          if (!mergedComments.some(ec => ec.id === c.id || (ec.author === c.author && ec.text === c.text))) {
+            mergedComments.push(c)
+          }
+        }
+        combinedMsgs[existingIdx] = {
+          ...em,
+          reactions: Object.keys(mergedReactions).length > 0 ? mergedReactions : em.reactions,
+          comments: mergedComments.length > 0 ? mergedComments : em.comments
+        }
       }
     }
     const sortedMsgs = sortMessagesChronologically(combinedMsgs)

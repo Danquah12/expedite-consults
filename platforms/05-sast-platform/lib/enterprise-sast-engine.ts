@@ -291,9 +291,9 @@ const parsed = SafeFormulaSchema.parse(JSON.parse(req.body.formula));`,
     ibmRuleId: "IBM-APPSCAN-DESER-004",
     fortifyKingdom: "Input Validation and Representation",
     fortifyAnalyzer: "Structural",
-    sinkPattern: /(?:\.readObject\s*\(|pickle\.loads?\s*\(|yaml\.load\s*\([^,)]*\)|yaml\.unsafe_load\s*\(|unserialize\s*\(\s*\$|BinaryFormatter\.Deserialize|JsonConvert\.DeserializeObject.*TypeNameHandling\.(?:All|Auto|Objects))/i,
-    sourceHints: /(?:Cookie|getInputStream|req\.body|request\.data|base64|bais|token)/i,
-    sanitizerPattern: /(?:yaml\.safe_load|ObjectInputFilter|ValidatingObjectInputStream|TypeNameHandling\.None)/i,
+    sinkPattern: /(?:\.readObject\s*\(|pickle\.loads?\s*\(|yaml\.load\s*\([^,)]*\)|yaml\.unsafe_load\s*\(|unserialize\s*\(\s*\$|(?:BinaryFormatter|NetDataContractSerializer|SoapFormatter|LosFormatter|bf|formatter|binaryFormatter)\.Deserialize\s*\(|new\s+BinaryFormatter\s*\(\s*\)\.Deserialize\s*\(|JsonConvert\.DeserializeObject.*TypeNameHandling\.(?:All|Auto|Objects))/i,
+    sourceHints: /(?:Cookie|getInputStream|req\.body|request\.data|Request\.Body|bodyStream|\[FromBody\]|base64|bais|token)/i,
+    sanitizerPattern: /(?:yaml\.safe_load|ObjectInputFilter|ValidatingObjectInputStream|TypeNameHandling\.None|JsonSerializer\.Deserialize)/i,
     defaultSource: "Serialized HTTP Body / Cookie Stream",
     defaultSink: "Native Object Deserializer (.readObject / pickle / yaml.load)",
     privilegeGain: "Candidate denial-of-service or code execution if compatible gadget classes exist on runtime classpath",
@@ -497,6 +497,66 @@ const parsed = SafeFormulaSchema.parse(JSON.parse(req.body.formula));`,
     ],
   },
   {
+    id: "RULE-REDIR-601",
+    cwe: "CWE-601",
+    cweName: "URL Redirection to Untrusted Site ('Open Redirect')",
+    title: "Client HTTP Open Redirect via Unvalidated Redirect Target (CWE-601)",
+    severity: "Medium",
+    cvss: 6.1,
+    epss: 0.088,
+    mitre: "T1566.002",
+    owasp: "A01:2021",
+    owaspCategory: "Broken Access Control",
+    validatorPriority: 4,
+    validatorName: "OpenRedirectTargetValidator",
+    checkmarxQuery: "XTRIKE-XQL/Medium_Threat/Open_Redirect",
+    ibmRuleId: "IBM-APPSCAN-REDIR-601",
+    fortifyKingdom: "Input Validation and Representation",
+    fortifyAnalyzer: "Dataflow",
+    sinkPattern: /(?:res\.redirect\s*\(\s*req\.(?:query|body|params)|sendRedirect\s*\(\s*request\.getParameter|http\.Redirect\s*\([^)]*r\.URL\.Query)/i,
+    sourceHints: /(?:req\.query|req\.body|req\.params|request\.getParameter|r\.URL\.Query)/i,
+    sanitizerPattern: /(?:ALLOWED_REDIRECT_PATHS|ALLOWED_PATHS|url_has_allowed_host_and_scheme|startsWith\s*\(\s*["']\/["']\s*\))/i,
+    defaultSource: "HTTP Query / Request Redirect Parameter (req.query.url / next)",
+    defaultSink: "Client HTTP 3xx Redirect Response Header (res.redirect / sendRedirect)",
+    privilegeGain:
+      "Demonstrated (Static Scope): Unvalidated request parameter controls HTTP 3xx Location header, redirecting victim browser to an arbitrary external domain (CWE-601 Open Redirect; distinct from CWE-918 server-side outbound request).",
+    executiveSummary:
+      "XTRIKE DeepFlow and XTRIKE XQL traced an untrusted request parameter directly into an HTTP browser redirect sink (`res.redirect` / `sendRedirect`) without relative-path or destination-domain allowlist validation (CWE-601 Open Redirect).",
+    businessImpact:
+      "Attackers can craft links on the trusted application origin that silently redirect users after login or interaction to external credential-phishing or OAuth token-harvesting sites.",
+    rootCause:
+      "Passing `req.query.url` directly to `res.redirect()` allows absolute URLs (`https://evil.example`), protocol-relative URLs (`//evil.example`), or backslash bypasses (`\\/\\/evil.example`) to control the HTTP `Location` response header.",
+    compliance: [
+      { framework: "OWASP Top 10", reference: "A01:2021", description: "Broken Access Control (OWASP ASVS v4.0.3 §5.1.5 Open Redirect)" },
+      { framework: "NIST 800-53", reference: "SI-10", description: "Information Input Validation" },
+      { framework: "PCI DSS", reference: "Req 6.2.4", description: "Prevent unvalidated redirects and forwards" },
+    ],
+    remediation: [
+      {
+        platform: "Node.js",
+        explanation:
+          "Validate redirect targets as relative internal paths against an explicit server-side allowlist (ALLOWED_REDIRECT_PATHS), and reject external origins, protocol-relative URLs (//), and backslash bypasses before calling res.redirect().",
+        code: `// ❌ VULNERABLE (Open Redirect — CWE-601: client browser redirected to unvalidated req.query.url)\n// return res.redirect(req.query.url);\n\n// ✅ FIXED (Node.js / Express — Relative-Path & Approved-Destination Allowlist Guard)\nconst ALLOWED_REDIRECT_PATHS = new Set(["/dashboard", "/profile", "/contributions", "/allocations", "/memoranda", "/login"]);\nconst rawRedirect = typeof req.query.url === "string" ? req.query.url.trim() : "/dashboard";\nconst parsedRedirect = new URL(rawRedirect, "https://app.internal.local");\nif (\n  rawRedirect.startsWith("//") ||\n  rawRedirect.includes("\\\\") ||\n  parsedRedirect.origin !== "https://app.internal.local" ||\n  !ALLOWED_REDIRECT_PATHS.has(parsedRedirect.pathname)\n) {\n  return res.redirect(302, "/dashboard");\n}\nreturn res.redirect(302, parsedRedirect.pathname + parsedRedirect.search);`,
+      },
+      {
+        platform: "Java",
+        explanation:
+          "Validate the redirect destination against an explicit server-side allowlist of internal relative paths before calling HttpServletResponse.sendRedirect().",
+        code: `// ❌ VULNERABLE\nresponse.sendRedirect(request.getParameter("url"));\n\n// ✅ FIXED (Java Servlet Relative-Path Allowlist)\nString target = request.getParameter("url");\nif (target == null || !Set.of("/dashboard", "/profile", "/accounts").contains(target)) {\n    response.sendRedirect("/dashboard");\n    return;\n}\nresponse.sendRedirect(target);`,
+      },
+      {
+        platform: "Python",
+        explanation:
+          "Verify that the redirect URL has no external scheme/netloc and matches an allowlisted internal path before calling redirect().",
+        code: `# ❌ VULNERABLE\nreturn redirect(request.args.get("url"))\n\n# ✅ FIXED\nfrom urllib.parse import urlparse\nparsed = urlparse(request.args.get("url", "/dashboard"))\nif parsed.scheme or parsed.netloc or parsed.path not in {"/dashboard", "/profile"}:\n    return redirect("/dashboard")\nreturn redirect(parsed.path)`,
+      },
+    ],
+    validationSteps: [
+      "Verify `https://evil.example`, `//evil.example`, `/\\evil.example`, and `javascript:alert(1)` are rejected and fallback to `/dashboard`.",
+      "Verify approved internal relative routes (`/dashboard`, `/profile`, `/contributions`) redirect as expected.",
+    ],
+  },
+  {
     id: "RULE-SECRET-798",
     cwe: "CWE-798",
     cweName: "Use of Hard-coded Credentials",
@@ -513,9 +573,9 @@ const parsed = SafeFormulaSchema.parse(JSON.parse(req.body.formula));`,
     ibmRuleId: "IBM-APPSCAN-SECRET-008",
     fortifyKingdom: "Security Features",
     fortifyAnalyzer: "Configuration",
-    sinkPattern: /(?:(?:api[_-]?key|secret[_-]?key|password|passwd|jwt[_-]?secret|private[_-]?key|aws_secret_access_key|client_secret|stripe_secret|db_pass)\s*[:=]\s*["'][A-Za-z0-9_\-./+=!@#$%^&*]{8,}["']|AKIA[0-9A-Z]{16}|sk_live_[0-9a-zA-Z]{16,}|ghp_[0-9a-zA-Z]{20,}|-----BEGIN (?:RSA |EC )?PRIVATE KEY-----)/i,
-    sourceHints: /(?:const|let|var|String|final|private|public|export)/i,
-    sanitizerPattern: /(?:process\.env\.|os\.environ|System\.getenv|Vault|SecretsManager)/i,
+    sinkPattern: /(?:(?:api[_-]?key|secret[_-]?key|password|passwd|jwt[_-]?secret|private[_-]?key|aws_secret_access_key|client_secret|stripe_secret|db_pass)\s*[:=]\s*["'][A-Za-z0-9_\-./+=!@#$%^&*]{8,}["']|(?:Password|Pwd)\s*=\s*[A-Za-z0-9_\-./+=!@#$%^&*]{8,}\s*;|AKIA[0-9A-Z]{16}|sk_live_[0-9a-zA-Z]{16,}|ghp_[0-9a-zA-Z]{20,}|-----BEGIN (?:RSA |EC )?PRIVATE KEY-----)/i,
+    sourceHints: /(?:const|let|var|using|SqlConnection|ConnectionString|String|final|private|public|export)/i,
+    sanitizerPattern: /(?:process\.env\.|os\.environ|System\.getenv|Vault|SecretsManager|GetConnectionString)/i,
     defaultSource: "Source Code Literal Constant",
     defaultSink: "Authentication / Signing Key Constant",
     privilegeGain: "Requires manual validation: if credential is a live production secret, enables unauthorized authentication or token signing",
@@ -1504,10 +1564,14 @@ var principal = handler.ValidateToken(rawToken, validationParams, out _);`,
   },
   "CWE-798": {
     platform: "C#",
-    explanation: "Remove hardcoded secrets from source code and load credentials from IConfiguration backed by Azure Key Vault / AWS Secrets Manager / environment variables.",
-    code: `// ✅ FIXED: load signing key from externalized secret store via IConfiguration
-var signingSecret = configuration["Jwt:SigningKey"]
-    ?? throw new InvalidOperationException("Missing Jwt:SigningKey in secret store");`,
+    explanation: "Remove hardcoded connection-string passwords and secrets from C# source code; load connection strings via IConfiguration.GetConnectionString(\"InvoicesDb\") backed by Azure Key Vault / Managed Identity (Authentication=Active Directory Default).",
+    code: `// ❌ VULNERABLE: embedded SQL password in connection string literal
+// using var conn = new SqlConnection("Server=tcp:prod-db;Password=HardcodedDotNetSecret!2026;");
+
+// ✅ FIXED: externalized secret / passwordless Managed Identity connection via IConfiguration
+var connString = configuration.GetConnectionString("InvoicesDb")
+    ?? throw new InvalidOperationException("Missing ConnectionStrings:InvoicesDb in Azure Key Vault / secret store");
+using var conn = new SqlConnection(connString);`,
   },
 };
 
@@ -1789,6 +1853,10 @@ const CVSS_VECTORS_BY_CWE: Record<string, { vector: string; rationale: string }>
   "CWE-918": {
     vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:N/A:N",
     rationale: "Outbound HTTP client accepts unvalidated destination URL without scheme/host allowlist or RFC1918/link-local egress block.",
+  },
+  "CWE-601": {
+    vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N",
+    rationale: "Unvalidated request parameter controls HTTP 3xx Location redirect header, redirecting victim browser to an untrusted external origin.",
   },
   "CWE-798": {
     vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",

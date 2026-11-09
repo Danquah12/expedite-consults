@@ -1,6 +1,6 @@
 import enum
 from datetime import datetime, timezone
-from sqlalchemy import String, Integer, Boolean, DateTime, ForeignKey, Text, JSON, Enum, Float
+from sqlalchemy import String, Integer, Boolean, DateTime, ForeignKey, Text, JSON, Enum, Float, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .database import Base
 
@@ -650,5 +650,412 @@ class UnifiedFindingRecord(Base):
     noctis_posture_state: Mapped[str] = mapped_column(String(60), default="OPEN_DETECTED")
     evidence_sha256: Mapped[str] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+# ==============================================================================
+# TrePath 2.6 — RFC 6238 TOTP Two-Factor Authentication (2FA) & Backup Codes
+# ==============================================================================
+
+class UserTwoFactorConfig(Base):
+    __tablename__ = "user_2fa_configs"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True, index=True)
+    totp_secret: Mapped[str] = mapped_column(String(64))
+    is_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    backup_codes_json: Mapped[list] = mapped_column(JSON, default=list)
+    verified_count: Mapped[int] = mapped_column(Integer, default=0)
+    last_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+# ==============================================================================
+# TrePath 2.12 — Developer Implementation Specification Logical Entities
+# Preserves all existing identifiers and historical scan records while adding
+# the 14 canonical Section 4 logical entities for AttackGraph 2.12, Noctis AI,
+# EVE 3.1, RiskEngine 2.12, EvidenceCore 2.12, and RTEX 2.12.
+# ==============================================================================
+
+class AuthorizationRecord(Base):
+    __tablename__ = "authorization_records"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    auth_key: Mapped[str] = mapped_column(String(60), unique=True, index=True)  # e.g. AUTH-ROE-0001
+    engagement_id: Mapped[int] = mapped_column(ForeignKey("engagements.id"), index=True)
+    scan_id: Mapped[int | None] = mapped_column(ForeignKey("scans.id"), index=True, nullable=True)
+    tenant_id: Mapped[str] = mapped_column(String(80), index=True, default="TENANT-EXPEDITE-PROD")
+    asset_id: Mapped[int | None] = mapped_column(ForeignKey("assets.id"), index=True, nullable=True)
+    authorized_by: Mapped[str] = mapped_column(String(160), default="ciso-approval@expedite-consults.io")
+    scope_inclusion: Mapped[str] = mapped_column(String(40), default="IN_SCOPE")  # IN_SCOPE | OUT_OF_SCOPE
+    exploitation_permission: Mapped[str] = mapped_column(String(60), default="CONTROLLED_VALIDATION_ALLOWED")  # PASSIVE_ONLY | CONTROLLED_VALIDATION_ALLOWED | DENIED
+    allowed_adapter_families: Mapped[list] = mapped_column(JSON, default=list)
+    max_requests_per_second: Mapped[int] = mapped_column(Integer, default=10)
+    execution_quota: Mapped[int] = mapped_column(Integer, default=250)
+    human_approval_required_for_high_impact: Mapped[bool] = mapped_column(Boolean, default=True)
+    signature_sha256: Mapped[str] = mapped_column(String(64), index=True)
+    valid_from: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    valid_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class SecurityFindingRecord(Base):
+    __tablename__ = "security_findings"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    security_finding_key: Mapped[str] = mapped_column(String(60), unique=True, index=True)  # e.g. SF-212-0001
+    scan_id: Mapped[int] = mapped_column(ForeignKey("scans.id"), index=True)
+    legacy_finding_id: Mapped[int | None] = mapped_column(ForeignKey("findings.id"), index=True, nullable=True)
+    asset_id: Mapped[int | None] = mapped_column(ForeignKey("assets.id"), index=True, nullable=True)
+    tenant_id: Mapped[str] = mapped_column(String(80), index=True, default="TENANT-EXPEDITE-PROD")
+    title: Mapped[str] = mapped_column(String(300))
+    vulnerability_class: Mapped[str] = mapped_column(String(80), index=True)
+    cwe_id: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    cve_id: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    cve_applicability_state: Mapped[str] = mapped_column(String(60), default="FIRST_PARTY_CODE_FLAW")  # CONFIRMED_APPLICABLE | BANNER_ONLY_UNVERIFIED | FIRST_PARTY_CODE_FLAW | NOT_APPLICABLE
+    epistemic_category: Mapped[str] = mapped_column(String(60), default="CONFIRMED_FACT")  # CONFIRMED_FACT | INFERRED_CONCLUSION | SIMULATED_SCENARIO | UNVERIFIED_HYPOTHESIS
+    execution_status: Mapped[str] = mapped_column(String(60), default="EXPLOITATION_ATTEMPTED")
+    technical_outcome: Mapped[str] = mapped_column(String(60), default="IMPACT_VERIFIED")
+    cvss_base_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    technical_security_risk: Mapped[float] = mapped_column(Float, default=0.0)
+    business_exposure_risk: Mapped[float] = mapped_column(Float, default=0.0)
+    evidence_confidence: Mapped[float] = mapped_column(Float, default=0.95)
+    remediation_state: Mapped[str] = mapped_column(String(60), default="REMEDIATION_VERIFIED")
+    supporting_evidence_ids: Mapped[list] = mapped_column(JSON, default=list)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class SourceProvenance(Base):
+    __tablename__ = "source_provenance"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    provenance_key: Mapped[str] = mapped_column(String(60), unique=True, index=True)  # e.g. SRC-PROV-0001
+    scan_id: Mapped[int] = mapped_column(ForeignKey("scans.id"), index=True)
+    finding_id: Mapped[int | None] = mapped_column(ForeignKey("findings.id"), index=True, nullable=True)
+    repository_url: Mapped[str] = mapped_column(String(512))
+    branch: Mapped[str] = mapped_column(String(120), default="main")
+    commit_sha_before: Mapped[str] = mapped_column(String(64), index=True)
+    commit_sha_after: Mapped[str | None] = mapped_column(String(64), index=True, nullable=True)
+    file_path: Mapped[str] = mapped_column(String(512))
+    start_line: Mapped[int] = mapped_column(Integer, default=1)
+    end_line: Mapped[int] = mapped_column(Integer, default=1)
+    ast_source_expression: Mapped[str] = mapped_column(Text, default="")
+    ast_sink_expression: Mapped[str] = mapped_column(Text, default="")
+    sanitizer_present: Mapped[bool] = mapped_column(Boolean, default=False)
+    sast_rule_id: Mapped[str] = mapped_column(String(60), default="PLG-001")
+    dast_endpoint_url: Mapped[str] = mapped_column(String(1024), default="")
+    sast_dast_correlation_confidence: Mapped[float] = mapped_column(Float, default=0.99)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class AttackGraphNodeRecord(Base):
+    __tablename__ = "attack_graph_nodes"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    node_key: Mapped[str] = mapped_column(String(80), index=True)  # e.g. NODE-ASSET-LAB-01
+    scan_id: Mapped[int] = mapped_column(ForeignKey("scans.id"), index=True)
+    asset_id: Mapped[int | None] = mapped_column(ForeignKey("assets.id"), index=True, nullable=True)
+    node_type: Mapped[str] = mapped_column(String(60), index=True)  # ENTRY_ENDPOINT | IDENTITY_ROLE | VULNERABILITY_SINK | PRIVILEGE_BOUNDARY | DATA_CROWN_JEWEL
+    label: Mapped[str] = mapped_column(String(255))
+    origin: Mapped[str] = mapped_column(String(255), index=True)
+    privilege_level: Mapped[str] = mapped_column(String(60), default="ROLE_CUSTOMER")
+    is_chokepoint: Mapped[bool] = mapped_column(Boolean, default=False)
+    blast_radius_score: Mapped[float] = mapped_column(Float, default=0.0)
+    metadata_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class AttackGraphEdgeRecord(Base):
+    __tablename__ = "attack_graph_edges"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    edge_key: Mapped[str] = mapped_column(String(80), index=True)  # e.g. EDGE-212-0001
+    scan_id: Mapped[int] = mapped_column(ForeignKey("scans.id"), index=True)
+    asset_id: Mapped[int | None] = mapped_column(ForeignKey("assets.id"), index=True, nullable=True)
+    path_classification: Mapped[str] = mapped_column(String(40), index=True)  # OBSERVED_PATH | SIMULATED_PATH | VALIDATED_PATH
+    source_node_key: Mapped[str] = mapped_column(String(80), index=True)
+    destination_node_key: Mapped[str] = mapped_column(String(80), index=True)
+    evidence_identifier: Mapped[str] = mapped_column(String(120), index=True)
+    relationship_type: Mapped[str] = mapped_column(String(80))  # EXPLOITS_SINK | ESCALATES_PRIVILEGE | ACCESSES_TENANT_DATA | OBSERVED_SURFACE
+    provenance_classification: Mapped[str] = mapped_column(String(60))  # EMPIRICAL_EVE_PROOF | SAST_DAST_CORRELATED | DIGITAL_TWIN_SIMULATION | PASSIVE_OBSERVATION
+    confidence_score: Mapped[float] = mapped_column(Float, default=0.95)
+    validation_timestamp: Mapped[str] = mapped_column(String(64))
+    supporting_artifact: Mapped[str] = mapped_column(String(255))
+    inferred_only: Mapped[bool] = mapped_column(Boolean, default=False)
+    promoted_to_validated: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ValidationJobRecord(Base):
+    __tablename__ = "validation_jobs"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    validation_job_key: Mapped[str] = mapped_column(String(60), unique=True, index=True)  # e.g. EVE31-JOB-0001
+    scan_id: Mapped[int] = mapped_column(ForeignKey("scans.id"), index=True)
+    finding_id: Mapped[int | None] = mapped_column(ForeignKey("findings.id"), index=True, nullable=True)
+    asset_id: Mapped[int | None] = mapped_column(ForeignKey("assets.id"), index=True, nullable=True)
+    authorization_record_key: Mapped[str] = mapped_column(String(60), index=True)
+    validation_domain: Mapped[str] = mapped_column(String(80), index=True)  # SQL_INJECTION | BOLA | BFLA | AUTH_WEAKNESS | SESSION_MGMT | API_SECURITY | BUSINESS_LOGIC | TENANT_ISOLATION | PRIVILEGE_BOUNDARY
+    adapter_id: Mapped[str] = mapped_column(String(60), index=True)
+    execution_status: Mapped[str] = mapped_column(String(60))  # EXECUTED | HELD_BY_ROE | PRECONDITION_NOT_MET | TEST_BLOCKED | TEST_NOT_APPLICABLE
+    safe_rate_limit_rps: Mapped[int] = mapped_column(Integer, default=5)
+    negative_control_included: Mapped[bool] = mapped_column(Boolean, default=True)
+    destructive_actions_permitted: Mapped[bool] = mapped_column(Boolean, default=False)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    completed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ValidationResultRecord(Base):
+    __tablename__ = "validation_results"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    result_key: Mapped[str] = mapped_column(String(60), unique=True, index=True)  # e.g. EVE31-RES-0001
+    validation_job_key: Mapped[str] = mapped_column(String(60), index=True)
+    scan_id: Mapped[int] = mapped_column(ForeignKey("scans.id"), index=True)
+    finding_id: Mapped[int | None] = mapped_column(ForeignKey("findings.id"), index=True, nullable=True)
+    execution_status: Mapped[str] = mapped_column(String(60))  # EXECUTED | HELD_BY_ROE | BLOCKED
+    technical_outcome: Mapped[str] = mapped_column(String(60))  # IMPACT_VERIFIED | EXPLOITABILITY_VALIDATED | EXPLOITATION_FAILED | OBSERVATION_CONFIRMED
+    negative_control_outcome: Mapped[str] = mapped_column(String(60), default="PASSED_NEGATIVE_CONTROL")
+    boundary_crossed: Mapped[str] = mapped_column(String(160), default="NONE")
+    evidence_artifact_sha256: Mapped[str] = mapped_column(String(64), index=True)
+    ed25519_signature_b64: Mapped[str] = mapped_column(Text, default="")
+    summary: Mapped[str] = mapped_column(Text, default="")
+    verified_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class RetestRecord(Base):
+    __tablename__ = "retest_records"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    retest_record_key: Mapped[str] = mapped_column(String(60), unique=True, index=True)  # e.g. RTEX212-0001
+    scan_id: Mapped[int] = mapped_column(ForeignKey("scans.id"), index=True)
+    finding_id: Mapped[int | None] = mapped_column(ForeignKey("findings.id"), index=True, nullable=True)
+    remediation_state: Mapped[str] = mapped_column(String(60))  # REMEDIATION_VERIFIED | PARTIALLY_REMEDIATED | REGRESSION_REOPENED | WAF_MASKED_REJECTED
+    commit_before: Mapped[str] = mapped_column(String(64))
+    commit_after: Mapped[str] = mapped_column(String(64))
+    waf_only_block_detected: Mapped[bool] = mapped_column(Boolean, default=False)
+    regression_detected: Mapped[bool] = mapped_column(Boolean, default=False)
+    sla_due_at: Mapped[str] = mapped_column(String(64))
+    sla_status: Mapped[str] = mapped_column(String(40), default="WITHIN_SLA")
+    evidence_t0_sha256: Mapped[str] = mapped_column(String(64))
+    evidence_t1_sha256: Mapped[str] = mapped_column(String(64))
+    closure_decision: Mapped[str] = mapped_column(String(60))  # CLOSED_VERIFIED | REMAINS_OPEN | REOPENED_ON_REGRESSION
+    qualifies_for_risk_reduction: Mapped[bool] = mapped_column(Boolean, default=True)
+    executed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class RiskSnapshotRecord(Base):
+    __tablename__ = "risk_snapshots"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    snapshot_key: Mapped[str] = mapped_column(String(60), unique=True, index=True)  # e.g. RISK-212-T0
+    scan_id: Mapped[int] = mapped_column(ForeignKey("scans.id"), index=True)
+    asset_id: Mapped[int | None] = mapped_column(ForeignKey("assets.id"), index=True, nullable=True)
+    phase_label: Mapped[str] = mapped_column(String(40))  # T0_BASELINE | T1_POST_RTEX | T2_REGRESSION_CHECK
+    technical_security_risk_10: Mapped[float] = mapped_column(Float)
+    business_exposure_risk_10: Mapped[float] = mapped_column(Float)
+    composite_trepath_risk_10: Mapped[float] = mapped_column(Float)
+    max_cvss_reference: Mapped[float] = mapped_column(Float, default=8.6)
+    banner_only_cve_count_excluded: Mapped[int] = mapped_column(Integer, default=3)
+    third_party_observations_isolated: Mapped[bool] = mapped_column(Boolean, default=True)
+    formula_documentation_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    trigger_evidence_ids: Mapped[list] = mapped_column(JSON, default=list)
+    recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class SigningKeyRecord(Base):
+    __tablename__ = "signing_keys"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    key_id: Mapped[str] = mapped_column(String(80), unique=True, index=True)  # e.g. trepath-ed25519-2026-q4-active
+    algorithm: Mapped[str] = mapped_column(String(40), default="Ed25519 (RFC 8032)")
+    public_key_pem: Mapped[str] = mapped_column(Text)
+    public_key_fingerprint_sha256: Mapped[str] = mapped_column(String(64), index=True)
+    status: Mapped[str] = mapped_column(String(40), default="ACTIVE")  # ACTIVE | ROTATED | REVOKED
+    custody_provider: Mapped[str] = mapped_column(String(80), default="EvidenceCore-HSM-Enclave-v2.15")
+    rotated_from_key_id: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    revocation_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+# ==============================================================================
+# TrePath 2.15 — Section 5 Principal Database Entities (Completing All 19 Tables)
+# Every entity is traceable to an assessment (scan_id), an asset (asset_id),
+# and an authorization record (authorization_record_key).
+# ==============================================================================
+
+class OrganizationRecord(Base):
+    __tablename__ = "organizations"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    org_key: Mapped[str] = mapped_column(String(60), unique=True, index=True)  # e.g. ORG-EXPEDITE-CONSULTS-01
+    name: Mapped[str] = mapped_column(String(200), default="Expedite Consults Ltd")
+    tenant_id: Mapped[str] = mapped_column(String(80), index=True, default="TENANT-EXPEDITE-PROD")
+    scan_id: Mapped[int | None] = mapped_column(ForeignKey("scans.id"), index=True, nullable=True)
+    asset_id: Mapped[int | None] = mapped_column(ForeignKey("assets.id"), index=True, nullable=True)
+    authorization_record_key: Mapped[str] = mapped_column(String(60), default="AUTH-ROE-215-0001")
+    governance_tier: Mapped[str] = mapped_column(String(60), default="ENTERPRISE_ASSURANCE_2_15")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class RolePermissionRecord(Base):
+    __tablename__ = "roles"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    role_key: Mapped[str] = mapped_column(String(60), unique=True, index=True)  # e.g. ROLE-SEC-ENG-ADMIN
+    role_name: Mapped[str] = mapped_column(String(80), index=True)
+    permissions_json: Mapped[list] = mapped_column(JSON, default=list)
+    can_approve_high_impact_validation: Mapped[bool] = mapped_column(Boolean, default=False)
+    scan_id: Mapped[int | None] = mapped_column(ForeignKey("scans.id"), index=True, nullable=True)
+    asset_id: Mapped[int | None] = mapped_column(ForeignKey("assets.id"), index=True, nullable=True)
+    authorization_record_key: Mapped[str] = mapped_column(String(60), default="AUTH-ROE-215-0001")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class SensorRecord(Base):
+    __tablename__ = "sensors"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    sensor_key: Mapped[str] = mapped_column(String(60), unique=True, index=True)  # e.g. SENSOR-XTRIKE-SAST-01
+    sensor_name: Mapped[str] = mapped_column(String(120))
+    sensor_family: Mapped[str] = mapped_column(String(60), index=True)  # SAST | DAST | EVE | PEVE | WEBPULSE | OTEL
+    engine_version: Mapped[str] = mapped_column(String(40), default="2.15.0")
+    deterministic_authority: Mapped[bool] = mapped_column(Boolean, default=True)
+    scan_id: Mapped[int | None] = mapped_column(ForeignKey("scans.id"), index=True, nullable=True)
+    asset_id: Mapped[int | None] = mapped_column(ForeignKey("assets.id"), index=True, nullable=True)
+    authorization_record_key: Mapped[str] = mapped_column(String(60), default="AUTH-ROE-215-0001")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class SensorExecutionRecord(Base):
+    __tablename__ = "sensor_executions"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    execution_key: Mapped[str] = mapped_column(String(60), unique=True, index=True)  # e.g. SENS-EXEC-215-0001
+    sensor_key: Mapped[str] = mapped_column(String(60), index=True)
+    scan_id: Mapped[int] = mapped_column(ForeignKey("scans.id"), index=True)
+    asset_id: Mapped[int | None] = mapped_column(ForeignKey("assets.id"), index=True, nullable=True)
+    authorization_record_key: Mapped[str] = mapped_column(String(60), index=True, default="AUTH-ROE-215-0001")
+    reconciliation_state: Mapped[str] = mapped_column(String(60), default="EXECUTED_WITH_FINDINGS")
+    raw_observations_count: Mapped[int] = mapped_column(Integer, default=0)
+    consolidated_findings_count: Mapped[int] = mapped_column(Integer, default=0)
+    evidence_sha256: Mapped[str] = mapped_column(String(64), index=True)
+    executed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ExploitValidationRecord(Base):
+    __tablename__ = "exploit_validations"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    exploit_validation_key: Mapped[str] = mapped_column(String(60), unique=True, index=True)  # e.g. EVE215-VAL-0001
+    scan_id: Mapped[int] = mapped_column(ForeignKey("scans.id"), index=True)
+    asset_id: Mapped[int | None] = mapped_column(ForeignKey("assets.id"), index=True, nullable=True)
+    finding_id: Mapped[int | None] = mapped_column(ForeignKey("findings.id"), index=True, nullable=True)
+    authorization_record_key: Mapped[str] = mapped_column(String(60), index=True, default="AUTH-ROE-215-0001")
+    vulnerability_class: Mapped[str] = mapped_column(String(80), index=True)  # 10 required classes
+    test_identifier: Mapped[str] = mapped_column(String(80), index=True)
+    preconditions: Mapped[str] = mapped_column(Text)
+    authorization_validation: Mapped[str] = mapped_column(String(120))
+    execution_status: Mapped[str] = mapped_column(String(60))
+    evidence_artifact_id: Mapped[str] = mapped_column(String(80))
+    evidence_sha256: Mapped[str] = mapped_column(String(64), index=True)
+    exploitability_result: Mapped[str] = mapped_column(String(80))
+    impact_classification: Mapped[str] = mapped_column(String(120))
+    cleanup_confirmation: Mapped[str] = mapped_column(String(160))
+    failure_explanation: Mapped[str] = mapped_column(Text)
+    environment_provenance: Mapped[str] = mapped_column(String(60), default="CONTROLLED_SANDBOX")  # LIVE_AUTHORIZED_TARGET | CONTROLLED_SANDBOX | SIMULATION
+    verified_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ModelDecisionRecord(Base):
+    __tablename__ = "model_decisions"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    decision_key: Mapped[str] = mapped_column(String(60), unique=True, index=True)  # e.g. NOCTIS-DEC-215-0001
+    scan_id: Mapped[int] = mapped_column(ForeignKey("scans.id"), index=True)
+    asset_id: Mapped[int | None] = mapped_column(ForeignKey("assets.id"), index=True, nullable=True)
+    finding_id: Mapped[int | None] = mapped_column(ForeignKey("findings.id"), index=True, nullable=True)
+    authorization_record_key: Mapped[str] = mapped_column(String(60), index=True, default="AUTH-ROE-215-0001")
+    epistemic_classification: Mapped[str] = mapped_column(String(80), index=True)
+    # 5 required ER-01 states:
+    # FACT_OBSERVED_BY_SENSOR | FINDING_CONFIRMED_BY_DETERMINISTIC_VALIDATION |
+    # AI_GENERATED_HYPOTHESIS | SIMULATED_ATTACK_PATH | VERIFIED_COMPROMISE
+    deterministic_authority_engine: Mapped[str] = mapped_column(String(80))  # EVE 3.0 | PEVE 2.15 | AttackGraph 2.15 | RTEX 2.15 | EvidenceCore 2.15
+    noctis_independently_declared: Mapped[bool] = mapped_column(Boolean, default=False)
+    supporting_evidence_ids: Mapped[list] = mapped_column(JSON, default=list)
+    confidence_score: Mapped[float] = mapped_column(Float, default=0.95)
+    rejected_hypothesis_explanation: Mapped[str] = mapped_column(Text, default="")
+    human_approval_status: Mapped[str] = mapped_column(String(60), default="NOT_REQUIRED_READ_ONLY")
+    claim_summary: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+# ==============================================================================
+# TrePath 2.19.1 (TP219.1) — Canonical Data Models (Section 3.1 - 3.4)
+# ReconciliationEngine, IndependentValidationEngine, BenchmarkIntegrityEngine, ReleaseIntegrityEngine
+# ==============================================================================
+
+class CanonicalEndpoint(Base):
+    __tablename__ = "canonical_endpoints"
+    __table_args__ = (
+        UniqueConstraint("engagement_id", "canonical_url", "HTTP_method", name="uq_canonical_endpoint_engagement_identity"),
+    )
+    id: Mapped[int] = mapped_column(primary_key=True)
+    endpoint_id: Mapped[str] = mapped_column(String(64), unique=True, index=True)  # e.g. CEP-65-0001
+    engagement_id: Mapped[int] = mapped_column(ForeignKey("engagements.id"), index=True)
+    scan_id: Mapped[int] = mapped_column(ForeignKey("scans.id"), index=True)
+    asset_id: Mapped[str] = mapped_column(String(64), index=True)  # e.g. ASSET-00001
+    canonical_url: Mapped[str] = mapped_column(String(2048), index=True)
+    normalized_path: Mapped[str] = mapped_column(String(1024), default="/")
+    http_method: Mapped[str] = mapped_column("HTTP_method", String(16), default="GET")
+    discovered_timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    discovery_source: Mapped[str] = mapped_column(String(80), default="WEBPULSE_2_19_1")
+    reachability_status: Mapped[str] = mapped_column(String(60), default="REACHABLE_CANONICAL")  # REACHABLE_CANONICAL | EXCLUDED_STATIC_ASSET | EXCLUDED_REDIRECT_ALIAS | SUB_RESOURCE_MERGED
+    endpoint_classification: Mapped[str] = mapped_column(String(60), default="PASSIVE_EXTERNAL_ENDPOINT")  # ACTIVE_LAB_ENDPOINT | PASSIVE_EXTERNAL_ENDPOINT | STATIC_ASSET | REDIRECT_ALIAS
+    redirect_parent_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    exclusion_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    authorization_level: Mapped[str] = mapped_column(String(60), default="PASSIVE_OBSERVATION_ONLY")  # FULL_ACTIVE_ROE | PASSIVE_OBSERVATION_ONLY
+    evidence_artifact_ids: Mapped[list] = mapped_column(JSON, default=list)
+    inventory_version: Mapped[str] = mapped_column(String(40), default="TP219.1-INV-v1")
+
+
+class FindingLineage(Base):
+    __tablename__ = "finding_lineages"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    lineage_id: Mapped[str] = mapped_column(String(64), unique=True, index=True)  # e.g. LIN-65-0001
+    engagement_id: Mapped[int] = mapped_column(ForeignKey("engagements.id"), index=True)
+    scan_id: Mapped[int] = mapped_column(ForeignKey("scans.id"), index=True)
+    observation_id: Mapped[str] = mapped_column(String(64), index=True)  # e.g. OBS-65-0001
+    normalized_observation_id: Mapped[str] = mapped_column(String(64), index=True)  # e.g. NOBS-65-0001
+    root_cause_id: Mapped[str] = mapped_column(String(64), index=True)  # e.g. RC-65-01
+    finding_id: Mapped[str] = mapped_column(String(64), index=True)  # e.g. F-01
+    directive_id: Mapped[str] = mapped_column(String(64), index=True)  # e.g. DIR-01
+    retest_id: Mapped[str] = mapped_column(String(64), index=True)  # e.g. RTEX-VER-SQLI001
+    closure_id: Mapped[str | None] = mapped_column(String(64), index=True, nullable=True)  # e.g. CLOSURE-F01-T1
+    relationship_type: Mapped[str] = mapped_column(String(80), default="MANY_OBS_TO_ONE_ROOT_CAUSE_TO_DIRECTIVES")
+    confidence: Mapped[float] = mapped_column(Float, default=0.99)
+    evidence_references: Mapped[list] = mapped_column(JSON, default=list)
+    created_timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class CanonicalEvidenceArtifact(Base):
+    __tablename__ = "canonical_evidence_artifacts"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    artifact_id: Mapped[str] = mapped_column(String(64), unique=True, index=True)  # e.g. ART-65-0001
+    engagement_id: Mapped[int] = mapped_column(ForeignKey("engagements.id"), index=True)
+    scan_id: Mapped[int] = mapped_column(ForeignKey("scans.id"), index=True)
+    artifact_type: Mapped[str] = mapped_column(String(80), index=True)  # T0_RAW_SENSOR | EVE_PEVE_VALIDATION | RTEX_RETEST | ATTACKGRAPH_RISK | SCOPE_ROE | VERIFIER_METADATA
+    producer_engine: Mapped[str] = mapped_column(String(80), index=True)
+    producer_version: Mapped[str] = mapped_column(String(40), default="2.19.1")
+    content_sha256: Mapped[str] = mapped_column(String(64), index=True)
+    signature_reference: Mapped[str] = mapped_column(String(128))
+    parent_artifact_id: Mapped[str | None] = mapped_column(String(64), index=True, nullable=True)
+    collection_timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    evidence_classification: Mapped[str] = mapped_column(String(80), default="SEALED_PRIMARY_EVIDENCE")
+    storage_location: Mapped[str] = mapped_column(String(1024))
+    manifest_membership: Mapped[str] = mapped_column(String(80), default="INCLUDED_IN_CANONICAL_MANIFEST")
+    verification_status: Mapped[str] = mapped_column(String(60), default="SHA256_AND_PARENT_HASH_VERIFIED")
+
+
+class EngineVersionManifestRecord(Base):
+    __tablename__ = "engine_version_manifests"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    release_id: Mapped[str] = mapped_column(String(64), index=True)  # e.g. TP219.1
+    engine_id: Mapped[str] = mapped_column(String(64), unique=True, index=True)  # e.g. ENG-NOCTIS-AI
+    engine_version: Mapped[str] = mapped_column(String(40))  # e.g. 2.19.1
+    schema_version: Mapped[str] = mapped_column(String(64))  # e.g. Noctis-Schema-v2.19.1
+    build_hash: Mapped[str] = mapped_column(String(64))
+    dependency_versions: Mapped[dict] = mapped_column(JSON, default=dict)
+    compatibility_policy: Mapped[str] = mapped_column(String(255))
+    migration_reference: Mapped[str] = mapped_column(String(128))
+    build_timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    signature_reference: Mapped[str] = mapped_column(String(128))
+
+
+
+
 
 

@@ -11,6 +11,35 @@ class TokenOut(BaseModel):
     access_token: str
     token_type: str = "bearer"
 
+class TwoFactorLoginIn(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=6, max_length=128)
+
+class TwoFactorChallengeOut(BaseModel):
+    mfa_required: bool = True
+    pre_auth_token: str
+    email: str
+    role: str
+    totp_enrolled: bool = True
+    totp_secret: str
+    otpauth_uri: str
+    current_totp_code_demo: str
+    remaining_seconds: int
+    backup_codes: list[str]
+
+class TwoFactorVerifyIn(BaseModel):
+    pre_auth_token: str
+    code: str = Field(min_length=6, max_length=32)
+
+class TwoFactorVerifyOut(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    mfa_verified: bool = True
+    verification_method: str
+    email: str
+    role: str
+    verified_at_utc: str
+
 class UserOut(BaseModel):
     id: int
     email: EmailStr

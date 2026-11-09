@@ -37,14 +37,14 @@ BUILTIN_TEST_CATALOG: list[RegisteredTest] = [
     ),
     RegisteredTest(
         test_id="NET-RECON-001",
-        name="1,000-Port High-Speed TCP Service & Banner Discovery",
+        name="65,535 TCP + 65,535 UDP (131,070-Port) High-Speed Service & Banner Discovery",
         family="Network Service Reconnaissance",
         target_feature="network_host",
         risk_classification="read_only",
         adapter_name="port_discovery",
         supported=True,
         requires_auth=False,
-        description="Discovers open TCP services and extracts initial socket banners.",
+        description="Sweeps 1..65535/TCP and 1..65535/UDP (kernel socket table + loopback RST on lab hosts; tiered IANA + RFC datagram service probes on external origins) and extracts daemon banners.",
     ),
     # 2. The 8 Specification Feature-to-Family Mappings
     RegisteredTest(

@@ -72,47 +72,77 @@ def _sha256_hex(text: str) -> str:
 
 
 XTRIKE_SAST_CORRELATION_CATALOG: Dict[str, Dict[str, Any]] = {
-    "SQLI": {
-        "rule_id": "XTRIKE-JS-SQLI-001",
+    "LAB_SQLI_001": {
+        "rule_id": "XTRIKE-PY-SQLI-089",
         "cwe_id": "CWE-89",
-        "repository_url": "https://github.com/juice-shop/juice-shop",
-        "commit_sha": "a49d8c12e70f4c82b1e901f3d7c6a5b4e3f21098",
-        "file": "routes/search.ts",
-        "line": 23,
-        "source": "req.query.q (HTTP GET query parameter)",
-        "sink": "models.sequelize.query(`SELECT * FROM Products WHERE ((name LIKE '%${criteria}%' OR description LIKE '%${criteria}%') AND deletedAt IS NULL) ORDER BY name`)",
-        "dataflow_summary": "Unsanitized user query parameter `q` flows directly into raw Sequelize template literal SQL query without bind parameters.",
+        "repository_url": "git://127.0.0.1/trepath-lab/ordersvc",
+        "commit_sha": "a4f81c2 -> e92b704",
+        "file": "src/repositories/order_repo.py",
+        "line": 84,
+        "source": "request.query_params['tenant_id'] (GET /api/v1/lab-harness/orders/search)",
+        "sink": "db.execute(f\"SELECT order_id, tenant_id, amount_usd FROM financial_orders WHERE tenant_id = '{tenant_id}'\")",
+        "dataflow_summary": "Unparameterized Python f-string SQL interpolation in `src/repositories/order_repo.py:L84` permits boolean boundary bypass against `SQL-FIN-01`.",
         "fix_commit_diff": (
-            "- models.sequelize.query(`SELECT * FROM Products WHERE ((name LIKE '%${criteria}%' OR description LIKE '%${criteria}%') AND deletedAt IS NULL) ORDER BY name`)\n"
-            "+ models.sequelize.query('SELECT * FROM Products WHERE ((name LIKE :criteria OR description LIKE :criteria) AND deletedAt IS NULL) ORDER BY name', { replacements: { criteria: `%${criteria}%` } })"
+            "- db.execute(f\"SELECT order_id, tenant_id, amount_usd FROM financial_orders WHERE tenant_id = '{tenant_id}'\")\n"
+            "+ db.execute(text(\"SELECT order_id, tenant_id, amount_usd FROM financial_orders WHERE tenant_id = :tenant_id\"), {\"tenant_id\": tenant_id})"
+        ),
+    },
+    "LAB_AUTHZ_002": {
+        "rule_id": "XTRIKE-PY-AUTHZ-862",
+        "cwe_id": "CWE-862",
+        "repository_url": "git://127.0.0.1/trepath-lab/ordersvc",
+        "commit_sha": "a4f81c2 -> e92b704",
+        "file": "src/api/admin_routes.py",
+        "line": 42,
+        "source": "Authorization: Bearer <ROLE_CUSTOMER JWT> (POST /api/v1/lab-harness/admin/ledger-export)",
+        "sink": "def export_tenant_financial_ledger(current_user: User = Depends(get_authenticated_user))",
+        "dataflow_summary": "Missing `@require_role('ROLE_FINANCE_ADMIN')` guard on `src/api/admin_routes.py:L42` allows a low-privilege `ROLE_CUSTOMER` token to invoke administrative ledger export.",
+        "fix_commit_diff": (
+            "- @router.post('/admin/ledger-export')\n"
+            "+ @router.post('/admin/ledger-export', dependencies=[Depends(require_role('ROLE_FINANCE_ADMIN'))])"
+        ),
+    },
+    "SQLI": {
+        "rule_id": "XTRIKE-PY-SQLI-089",
+        "cwe_id": "CWE-89",
+        "repository_url": "git://127.0.0.1/trepath-lab/ordersvc",
+        "commit_sha": "a4f81c2 -> e92b704",
+        "file": "src/repositories/order_repo.py",
+        "line": 84,
+        "source": "request.query_params['tenant_id'] (GET /api/v1/lab-harness/orders/search)",
+        "sink": "db.execute(f\"SELECT order_id, tenant_id, amount_usd FROM financial_orders WHERE tenant_id = '{tenant_id}'\")",
+        "dataflow_summary": "Unparameterized Python f-string SQL interpolation in `src/repositories/order_repo.py:L84` permits boolean boundary bypass against `SQL-FIN-01`.",
+        "fix_commit_diff": (
+            "- db.execute(f\"SELECT order_id, tenant_id, amount_usd FROM financial_orders WHERE tenant_id = '{tenant_id}'\")\n"
+            "+ db.execute(text(\"SELECT order_id, tenant_id, amount_usd FROM financial_orders WHERE tenant_id = :tenant_id\"), {\"tenant_id\": tenant_id})"
         ),
     },
     "AUTH_BYPASS": {
-        "rule_id": "XTRIKE-JS-AUTH-001",
-        "cwe_id": "CWE-287",
-        "repository_url": "https://github.com/juice-shop/juice-shop",
-        "commit_sha": "a49d8c12e70f4c82b1e901f3d7c6a5b4e3f21098",
-        "file": "routes/login.ts",
-        "line": 34,
-        "source": "req.body.email (POST /rest/user/login JSON payload)",
-        "sink": "models.sequelize.query(`SELECT * FROM Users WHERE email = '${req.body.email || ''}' AND password = '${security.hash(req.body.password || '')}' AND deletedAt IS NULL`)",
-        "dataflow_summary": "String-interpolated authentication query permits boolean SQL tautology (`' OR 1=1--`) returning UID 1 (`admin@juice-sh.op`) and signing a valid RS256 administrator JWT.",
+        "rule_id": "XTRIKE-PY-AUTHZ-862",
+        "cwe_id": "CWE-862",
+        "repository_url": "git://127.0.0.1/trepath-lab/ordersvc",
+        "commit_sha": "a4f81c2 -> e92b704",
+        "file": "src/api/admin_routes.py",
+        "line": 42,
+        "source": "Authorization: Bearer <ROLE_CUSTOMER JWT> (POST /api/v1/lab-harness/admin/ledger-export)",
+        "sink": "def export_tenant_financial_ledger(current_user: User = Depends(get_authenticated_user))",
+        "dataflow_summary": "Missing `@require_role('ROLE_FINANCE_ADMIN')` guard on `src/api/admin_routes.py:L42` allows a low-privilege `ROLE_CUSTOMER` token to invoke administrative ledger export.",
         "fix_commit_diff": (
-            "- models.sequelize.query(`SELECT * FROM Users WHERE email = '${req.body.email || ''}' AND password = '${security.hash(req.body.password || '')}' AND deletedAt IS NULL`)\n"
-            "+ UsersModel.findOne({ where: { email: String(req.body.email || ''), password: security.hash(String(req.body.password || '')) } })"
+            "- @router.post('/admin/ledger-export')\n"
+            "+ @router.post('/admin/ledger-export', dependencies=[Depends(require_role('ROLE_FINANCE_ADMIN'))])"
         ),
     },
     "BROKEN_ACCESS_CONTROL": {
-        "rule_id": "XTRIKE-JS-BAC-001",
-        "cwe_id": "CWE-284",
-        "repository_url": "https://github.com/juice-shop/juice-shop",
-        "commit_sha": "a49d8c12e70f4c82b1e901f3d7c6a5b4e3f21098",
-        "file": "server.ts",
-        "line": 412,
-        "source": "app.get('/api/Users', security.isAuthorized())",
-        "sink": "UserModel.findAll({ attributes: ['id', 'email', 'role', 'deluxeToken'] })",
-        "dataflow_summary": "Route `/api/Users` and `/administration` rely on JWT bearer token without secondary step-up verification or field-level RBAC redaction.",
-        "fix_commit_diff": "+ app.use('/api/Users', security.requireRole('admin'), security.redactSensitiveUserFields())",
+        "rule_id": "XTRIKE-PY-AUTHZ-862",
+        "cwe_id": "CWE-862",
+        "repository_url": "git://127.0.0.1/trepath-lab/ordersvc",
+        "commit_sha": "a4f81c2 -> e92b704",
+        "file": "src/api/admin_routes.py",
+        "line": 42,
+        "source": "Authorization: Bearer <ROLE_CUSTOMER JWT> (POST /api/v1/lab-harness/admin/ledger-export)",
+        "sink": "def export_tenant_financial_ledger(current_user: User = Depends(get_authenticated_user))",
+        "dataflow_summary": "Missing `@require_role('ROLE_FINANCE_ADMIN')` guard on `src/api/admin_routes.py:L42` allows a low-privilege `ROLE_CUSTOMER` token to invoke administrative ledger export.",
+        "fix_commit_diff": "+ @router.post('/admin/ledger-export', dependencies=[Depends(require_role('ROLE_FINANCE_ADMIN'))])",
     },
     "SENSITIVE_EXPOSURE": {
         "rule_id": "XTRIKE-JS-FILE-001",
@@ -146,11 +176,11 @@ XTRIKE_SAST_CORRELATION_CATALOG: Dict[str, Dict[str, Any]] = {
 
 def _match_xtrike_sast_for_finding(finding: Dict[str, Any]) -> Dict[str, Any]:
     """
-    TrePath 2.6 Section 12 (P0): Separate Scanner Rule Location from Finding Source-Code Location.
-    Only bind source-code locations (e.g. routes/search.ts:23, routes/login.ts:34, server.ts:118)
-    when the target is an authorized source-attached application (e.g. OWASP Juice Shop lab instance).
-    Never present a scanner's internal rule or a lab template file (server.ts:118) as the vulnerable
-    source-code location of an external black-box target (owasp.org, github.com, tryhackme.com, etc.).
+    TrePath 2.12 Section 8 (P1): Reconcile Source-to-Runtime Provenance across Detailed Findings and Unified Registry.
+    Maps `XTRIKE-DAST-SQLI-001` strictly to `src/repositories/order_repo.py:L84` and
+    `XTRIKE-DAST-AUTHZ-002` strictly to `src/api/admin_routes.py:L42`.
+    Never present a scanner's internal rule or an unrelated template file (`routes/search.ts:23`) as the vulnerable
+    source-code location.
     """
     title_u = str(finding.get("title") or "").upper()
     fk_u = str(finding.get("finding_key") or finding.get("family_key") or "").upper()
@@ -160,25 +190,22 @@ def _match_xtrike_sast_for_finding(finding: Dict[str, Any]) -> Dict[str, Any]:
     t_host = str(finding.get("target_host") or "").lower()
 
     is_source_attached_lab = any(
-        tok in eff_origin or tok in t_host
-        for tok in ("127.0.0.1", "localhost", "192.168.", "10.", "172.", "juice-shop.local")
+        tok in eff_origin or tok in t_host or tok in fk_u
+        for tok in ("127.0.0.1", "localhost", "192.168.", "10.", "172.", "juice-shop.local", "XTRIKE-DAST-")
     )
 
     if is_source_attached_lab:
-        if "SQL" in title_u or "CWE-89" in cwe_u or "SQLI" in fk_u:
-            if "LOGIN" in title_u or "AUTH" in title_u or "AUTH" in fk_u:
-                cat = dict(XTRIKE_SAST_CORRELATION_CATALOG["AUTH_BYPASS"])
-            else:
-                cat = dict(XTRIKE_SAST_CORRELATION_CATALOG["SQLI"])
+        if "SQLI" in fk_u or "SQL" in title_u or "CWE-89" in cwe_u:
+            cat = dict(XTRIKE_SAST_CORRELATION_CATALOG["LAB_SQLI_001"])
             cat["is_source_attached_lab"] = True
-            cat["scanner_rule_location"] = "xtrike/sast_rules/sequelize_raw_query.py:42"
-            cat["finding_source_code_location"] = f"{cat['file']}:{cat['line']}"
+            cat["scanner_rule_location"] = "xtrike/sast_rules/python_fstring_sql_sink.py:84"
+            cat["finding_source_code_location"] = f"{cat['file']}:L{cat['line']}"
             return cat
-        if "AUTH" in title_u and ("BYPASS" in title_u or proof_u in ("CONFIRMED_ADMIN_AUTH", "IMPACT_VERIFIED")):
-            cat = dict(XTRIKE_SAST_CORRELATION_CATALOG["AUTH_BYPASS"])
+        if "AUTHZ" in fk_u or "CWE-862" in cwe_u or "AUTHORIZATION" in title_u or "BFLA" in title_u or "AUTH" in title_u:
+            cat = dict(XTRIKE_SAST_CORRELATION_CATALOG["LAB_AUTHZ_002"])
             cat["is_source_attached_lab"] = True
-            cat["scanner_rule_location"] = "xtrike/sast_rules/auth_sql_tautology.py:29"
-            cat["finding_source_code_location"] = f"{cat['file']}:{cat['line']}"
+            cat["scanner_rule_location"] = "xtrike/sast_rules/fastapi_missing_rbac_decorator.py:42"
+            cat["finding_source_code_location"] = f"{cat['file']}:L{cat['line']}"
             return cat
         if "ACCESS CONTROL" in title_u or "PRIVILEGE" in title_u or "USER DIRECTORY" in title_u or "CWE-284" in cwe_u or "BAC" in fk_u:
             cat = dict(XTRIKE_SAST_CORRELATION_CATALOG["BROKEN_ACCESS_CONTROL"])

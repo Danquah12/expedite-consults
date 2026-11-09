@@ -109,6 +109,13 @@ import {
   recordLiveDirectoryDiscovery
 } from "@/lib/connectin-analytics"
 import {
+  loadUserFollowBundle,
+  syncUserFollowBundleFromCloud,
+  buildFollowedMemberPosts,
+  normalizeFollowKey,
+  UserFollowBundle
+} from "@/lib/connectin-follow"
+import {
   PROFESSION_ENCLAVES,
   ALL_PROFESSIONS,
   findEnclaveById,
@@ -171,7 +178,7 @@ export default function ConnectLnPage() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false)
   const [analyticsModalTab, setAnalyticsModalTab] = useState<'viewers' | 'reach' | 'discoveries'>('viewers')
-  const [networkInitialSubTab, setNetworkInitialSubTab] = useState<'connections' | 'invitations' | 'sent' | 'profile_viewers' | 'pymk'>('pymk')
+  const [networkInitialSubTab, setNetworkInitialSubTab] = useState<'connections' | 'invitations' | 'sent' | 'profile_viewers' | 'followers' | 'following' | 'pymk'>('pymk')
   const [activeWorkspace, setActiveWorkspace] = useState<'personal' | 'enterprise' | 'creator' | 'seller'>('personal')
 
   const COMMON_SURNAMES_LIST = [
@@ -1663,6 +1670,61 @@ export default function ConnectLnPage() {
   const resolvedUserProf = resolveProfessionForUser(userData)
   const activeProfId = resolvedUserProf?.id || userData?.professionId
 
+  // Live Follow Graph state so followed members' eligible public posts immediately appear in the user's feed
+  const [userFollowBundle, setUserFollowBundle] = useState<UserFollowBundle>(() =>
+    loadUserFollowBundle(userData?.name)
+  )
+
+  useEffect(() => {
+    if (!userData?.name) return
+    const refreshFollow = () => {
+      setUserFollowBundle(loadUserFollowBundle(userData.name))
+    }
+    refreshFollow()
+    syncUserFollowBundleFromCloud(userData.name).then((cloudBundle) => {
+      setUserFollowBundle(cloudBundle)
+    })
+    window.addEventListener('connectln-follow-updated', refreshFollow)
+    return () => window.removeEventListener('connectln-follow-updated', refreshFollow)
+  }, [userData?.name])
+
+  const followedNamesSet = React.useMemo(() => {
+    const s = new Set<string>()
+    for (const f of userFollowBundle.following || []) {
+      const k = normalizeFollowKey(f.name)
+      if (k) s.add(k)
+    }
+    return s
+  }, [userFollowBundle.following])
+
+  const followedMemberSyntheticPosts = React.useMemo(
+    () => buildFollowedMemberPosts(userFollowBundle.following || [], posts) as Post[],
+    [userFollowBundle.following, posts]
+  )
+
+  const combinedFeedPosts = React.useMemo(() => {
+    const seenIds = new Set<string>()
+    const merged: Post[] = []
+    for (const p of [...followedMemberSyntheticPosts, ...posts]) {
+      if (!p || !p.id || seenIds.has(p.id)) continue
+      seenIds.add(p.id)
+      const authorKey = normalizeFollowKey(p.author?.name)
+      const isFollowed = Boolean(authorKey && followedNamesSet.has(authorKey))
+      merged.push(
+        isFollowed
+          ? {
+              ...p,
+              author: {
+                ...p.author,
+                isFollowing: true
+              }
+            }
+          : p
+      )
+    }
+    return merged
+  }, [followedMemberSyntheticPosts, posts, followedNamesSet])
+
   const handleSwitchActiveProfession = (profId: string) => {
     const prof = findProfessionById(profId)
     if (!prof) return
@@ -1679,20 +1741,29 @@ export default function ConnectLnPage() {
     setSelectedEnclaves([prof.enclaveId])
   }
 
-  const filteredPosts = posts
+  const filteredPosts = combinedFeedPosts
     .filter(post => {
-      // 0. Strict Profession-First Feed: When a user logs in (e.g. Carpenter or Nurse), show ONLY their profession's videos & stories unless "All Enclaves" is explicitly selected
+      // Respect post privacy: only public / Anyone posts (or 1st-degree connection posts) are eligible via following
       const isUserOwnPost = post.author?.connectionDegree === 'You'
+      const isFollowedAuthor = Boolean(
+        post.author?.isFollowing ||
+        followedNamesSet.has(normalizeFollowKey(post.author?.name))
+      )
+      if (!isUserOwnPost && post.visibility === 'Connections' && post.author?.connectionDegree !== '1st') {
+        return false
+      }
+
+      // 0. Strict Profession-First Feed + Followed Members: Show user's own posts, followed members' eligible public posts, and their profession's posts
       const isActiveProfTiered = Boolean(
         activeProfId &&
         (post.professionId === activeProfId || post.targetProfessions?.includes(activeProfId))
       )
       const isAllSelected = selectedEnclaves.includes('all') || selectedEnclaves.length >= PROFESSION_ENCLAVES.length
       if (!isAllSelected && activeFeedCategory === 'for_you' && !searchQuery && !selectedTagFilter) {
-        if (!isUserOwnPost && !isActiveProfTiered) {
+        if (!isUserOwnPost && !isFollowedAuthor && !isActiveProfTiered) {
           return false
         }
-      } else if (!isAllSelected && !isUserOwnPost && !isActiveProfTiered) {
+      } else if (!isAllSelected && !isUserOwnPost && !isFollowedAuthor && !isActiveProfTiered) {
         const postEnclave = post.professionEnclave || 'tech_software'
         if (postEnclave !== 'all' && !selectedEnclaves.includes(postEnclave)) {
           return false
@@ -1705,7 +1776,7 @@ export default function ConnectLnPage() {
       } else if (activeFeedCategory === 'research') {
         if (post.feedCategory !== 'research' && !post.hashtags?.some(h => h.toLowerCase().includes('research') || h.toLowerCase().includes('whitepaper'))) return false
       } else if (activeFeedCategory === 'following') {
-        if (post.author.connectionDegree === 'You' || (!post.author.isFollowing && post.author.connectionDegree !== '1st')) return false
+        if (post.author.connectionDegree === 'You' || (!isFollowedAuthor && post.author.connectionDegree !== '1st')) return false
       }
 
       // 2. Sub-Category Filtering
@@ -2586,10 +2657,15 @@ export default function ConnectLnPage() {
               <RightSidebarNews
                 news={trendingNews}
                 suggestedPeople={suggestedPeople}
+                currentUser={userData}
                 onToggleConnect={handleToggleConnect}
                 onSelectMember={handleInspectMember}
                 onNewsClick={(headline) => setSearchQuery(headline.slice(0, 15))}
                 onNavigateTab={(tab) => setActiveTab(tab as any)}
+                onOpenNetworkSubTab={(subTab) => {
+                  setNetworkInitialSubTab(subTab)
+                  setActiveTab('network')
+                }}
                 onOpenAIAssistant={(query) => {
                   if (query) setSearchQuery(query)
                   setIsAIAssistantOpen(true)

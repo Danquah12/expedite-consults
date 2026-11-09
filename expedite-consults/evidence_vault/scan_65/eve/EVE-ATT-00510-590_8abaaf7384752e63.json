@@ -1,0 +1,52 @@
+{
+  "original_finding_id": 5600,
+  "asset_and_origin_identity": "ASSET-00385 | https://google-gruyere.appspot.com:443",
+  "approved_scope_and_roe": "Host google-gruyere.appspot.com:443 matches ROE authorized origin 'https://google-gruyere.appspot.com:443'.",
+  "validation_adapter_and_version": "EVE-TLS-001 (eve-adapter/2.3.0)",
+  "test_timestamp": "2026-11-08T22:10:05.078747+00:00",
+  "preconditions": {
+    "vulnerability_class": "tls_crypto_validation",
+    "affected_technology": "web-application",
+    "detected_version": null,
+    "cve_applicable": false,
+    "preconditions_satisfied": true
+  },
+  "execution_transcript": {
+    "adapter_id": "EVE-TLS-001",
+    "adapter_version": "eve-adapter/2.3.0",
+    "probed_endpoint": "https://google-gruyere.appspot.com/",
+    "finding_key": "HTTP-HEADER-CONTENT_SECURITY_POLICY::T15_GOOGLE_GRUYERE_APPSPOT_COM",
+    "safety_mode": "READ_ONLY_DETERMINISTIC",
+    "timestamp": "2026-11-08T22:10:05.065563+00:00",
+    "probe_steps": [
+      {
+        "step": 1,
+        "action": "EVALUATE_CONTROL_STATE",
+        "target": "https://google-gruyere.appspot.com/",
+        "title": "[google-gruyere.appspot.com] Missing Content-Security-Policy",
+        "observation_excerpt": "[Target: https://google-gruyere.appspot.com/] The HTTP response did not include the content-security-policy response header. This confirms a header observation only; it does not prove an exploit."
+      }
+    ]
+  },
+  "request_response_evidence": [
+    {
+      "step": 1,
+      "action": "EVALUATE_CONTROL_STATE",
+      "target": "https://google-gruyere.appspot.com/",
+      "title": "[google-gruyere.appspot.com] Missing Content-Security-Policy",
+      "observation_excerpt": "[Target: https://google-gruyere.appspot.com/] The HTTP response did not include the content-security-policy response header. This confirms a header observation only; it does not prove an exploit."
+    }
+  ],
+  "expected_vs_actual": {
+    "expected": "Verify whether missing control or configuration allows direct unauthorized boundary crossing.",
+    "actual": "Configuration/control gap confirmed at HTTP layer; no direct unauthorized data access or code execution resulted.",
+    "reproduced_behavior": false
+  },
+  "execution_outcome": "OBSERVATION_CONFIRMED",
+  "evidence_confidence": 0.88,
+  "exploitability_confidence": 0.15,
+  "impact_confidence": 0.05,
+  "operator_or_approving_identity": "secops-lead@expedite-consults.io",
+  "sha256_evidence_digest": "5d9144b313d28c481395e82e76d3d9e5aaac3b25f831dbe5ad3f8927341452dd",
+  "attempt_key": "EVE-ATT-00510-590"
+}

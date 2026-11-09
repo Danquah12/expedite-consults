@@ -1,0 +1,53 @@
+{
+  "original_finding_id": 1546,
+  "asset_and_origin_identity": "ASSET-00044 | https://portswigger.net:443",
+  "approved_scope_and_roe": "Host portswigger.net:443 matches ROE authorized origin 'https://portswigger.net:443'.",
+  "validation_adapter_and_version": "EVE-AUTH-001 (eve-adapter/2.3.0)",
+  "test_timestamp": "2026-11-04T21:48:53.493896+00:00",
+  "preconditions": {
+    "vulnerability_class": "authentication_validation",
+    "affected_technology": "web-application",
+    "detected_version": null,
+    "cve_applicable": false,
+    "preconditions_satisfied": true
+  },
+  "execution_transcript": {
+    "adapter_id": "EVE-AUTH-001",
+    "probed_endpoint": "https://portswigger.net/web-security/dashboard",
+    "finding_key": "DAST-ADMIN-ACCESS-EP-01558",
+    "probe_steps": [
+      {
+        "step": 1,
+        "method": "GET",
+        "url": "https://portswigger.net/web-security/dashboard",
+        "status_code": 200,
+        "privileged_admin_markers_present": false,
+        "public_or_login_gate_confirmed": true,
+        "note": "Evaluated response body markers: route serves public academy/login HTML without administrative state controls."
+      }
+    ]
+  },
+  "request_response_evidence": [
+    {
+      "step": 1,
+      "method": "GET",
+      "url": "https://portswigger.net/web-security/dashboard",
+      "status_code": 200,
+      "privileged_admin_markers_present": false,
+      "public_or_login_gate_confirmed": true,
+      "note": "Evaluated response body markers: route serves public academy/login HTML without administrative state controls."
+    }
+  ],
+  "expected_vs_actual": {
+    "expected": "Verify whether HTTP 200 on candidate /dashboard or /admin path grants unauthenticated access to administrative controls.",
+    "actual": "Route https://portswigger.net/web-security/dashboard returned HTTP 200 with public content / login gate markers only; zero privileged management controls, user tables, or administrative actions were accessible without authentication.",
+    "reproduced_behavior": false
+  },
+  "execution_outcome": "EXPLOITATION_FAILED",
+  "evidence_confidence": 0.92,
+  "exploitability_confidence": 0.05,
+  "impact_confidence": 0.0,
+  "operator_or_approving_identity": "secops-lead@expedite-consults.io",
+  "sha256_evidence_digest": "a0109bdf0aadee8a4e6a666de331bc2cfcd28f0ea6cb67875b6b477674372cb3",
+  "attempt_key": "EVE-ATT-00320-371"
+}

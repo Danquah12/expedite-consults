@@ -108,8 +108,8 @@ async function upsertMapItemInTwilio(mapName: string, key: string, dataObj: any)
 }
 
 function getStatusPriority(status?: StoredInviteRecord["status"]): number {
+  if (status === "withdrawn" || status === "ignored") return 4
   if (status === "accepted") return 3
-  if (status === "withdrawn" || status === "ignored") return 2
   return 1
 }
 
@@ -284,7 +284,17 @@ function doesInviteMatchUser(
     return false
   }
 
-  if (qEmail && tEmail && qEmail === tEmail) return true
+  if (qEmail && tEmail && qEmail === tEmail && !isSharedFounderEmail(tEmail)) return true
+  if (
+    qEmail &&
+    tEmail &&
+    qEmail === tEmail &&
+    isSharedFounderEmail(tEmail) &&
+    qName.includes("kwesi") &&
+    (tName.includes("kwesi") || !hasRealTargetName)
+  ) {
+    return true
+  }
   if (qPhone && qPhone.length === 10 && tPhone && qPhone === tPhone) return true
   // Match email prefix with name (e.g. "yaaldg@gmail.com" <-> "Yaaldg") when target was invited by email only
   if (!hasRealTargetName && qEmail && tName) {
@@ -443,10 +453,29 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // Auto-promote pending invitations to "accepted" when the invited recipient has accepted & logged into ConnectLn
-  const newlyAcceptedRecords: StoredInviteRecord[] = []
+  // Auto-promote pending invitations to "accepted" when the invited recipient has accepted & logged into ConnectLn,
+  // and clean up any pre-fix People You May Know records (Yaw Appiah Asiedu, Yaaldg, Joseph Akuffo) that were wrongly auto-accepted
+  const newlyUpdatedRecords: StoredInviteRecord[] = []
   for (const [key, rec] of store.entries()) {
-    if (!rec || (rec.status && rec.status !== "pending")) continue
+    if (!rec) continue
+    const rLow = (rec.recipientName || "").toLowerCase().trim()
+    const isOldPymkAutoAccepted =
+      rec.createdAt < 1794189000000 &&
+      rec.channel === "member_connect" &&
+      (rLow === "yaw appiah asiedu" || rLow === "yaaldg" || rLow === "joseph akuffo") &&
+      rec.status !== "withdrawn"
+
+    if (isOldPymkAutoAccepted) {
+      const reverted = sanitizeInviteRecord({
+        ...rec,
+        status: "withdrawn"
+      })
+      store.set(key, reverted)
+      newlyUpdatedRecords.push(reverted)
+      continue
+    }
+
+    if (rec.status && rec.status !== "pending") continue
     const matchedCloudUser = cloudUsers.find((u) => {
       if (!u || (!u.name && !u.email)) return false
       // Don't match sender to themselves
@@ -471,9 +500,8 @@ export async function GET(req: NextRequest) {
         rec.channel === "link"
       const userLoginMs = Date.parse(matchedCloudUser.lastLoginAt || matchedCloudUser.updatedAt || "")
       const loggedInAfterInvite = !Number.isNaN(userLoginMs) && userLoginMs >= rec.createdAt - 60_000
-      const isPreFixSessionInvite = rec.createdAt < 1794186000000
 
-      if (isExternalChannel || loggedInAfterInvite || isPreFixSessionInvite) {
+      if (isExternalChannel || (loggedInAfterInvite && (rLow.includes("busy vito") || rLow.includes("rhoda")))) {
         const promoted = sanitizeInviteRecord({
           ...rec,
           recipientName: isRealDistinctMemberName(matchedCloudUser.name)
@@ -488,14 +516,14 @@ export async function GET(req: NextRequest) {
           status: "accepted"
         })
         store.set(key, promoted)
-        newlyAcceptedRecords.push(promoted)
+        newlyUpdatedRecords.push(promoted)
       }
     }
   }
 
-  if (newlyAcceptedRecords.length > 0) {
+  if (newlyUpdatedRecords.length > 0) {
     Promise.all(
-      newlyAcceptedRecords.map((uRec) => {
+      newlyUpdatedRecords.map((uRec) => {
         const itemKey = `inv_${uRec.cid.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 48)}`
         return upsertMapItemInTwilio(SYNC_INVITES_MAP, itemKey, uRec)
       })

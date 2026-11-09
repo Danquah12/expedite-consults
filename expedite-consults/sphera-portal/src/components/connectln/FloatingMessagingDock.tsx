@@ -20,6 +20,7 @@ import {
   getLocalBilateralThreadsForViewer,
   mergeBilateralAndServerThreads,
   recordLocalBilateralDirectMessage,
+  recordLocalBilateralMessageReaction,
   markLocalBilateralConversationRead,
   doesDmParticipantMatch,
   normalizeDmName,
@@ -606,9 +607,79 @@ export function FloatingMessagingDock({
                           )}
                         </div>
                         <p className="text-xs">{msg.text}</p>
-                        <div className="mt-1 text-[9px] text-right flex items-center justify-end gap-1 opacity-75">
-                          <span>{formatMessageSentDateTime(msg, msg.timestamp)}</span>
-                          {isMe && <CheckCheck className="h-2.5 w-2.5" />}
+                        {/* Live Reaction Chips & 1-Tap Reactions in Mini Dock */}
+                        <div className="mt-1.5 flex flex-wrap items-center justify-between gap-1.5">
+                          <div className="flex items-center gap-1">
+                            {(
+                              [
+                                { kind: "like" as const, emoji: "❤️", label: "Like" },
+                                { kind: "up" as const, emoji: "👍", label: "Thumbs up" },
+                                { kind: "down" as const, emoji: "👎", label: "Thumbs down" }
+                              ]
+                            ).map((r) => {
+                              const myKey = normalizeDmName(viewerName)
+                              const list = msg.reactions?.[r.kind] || []
+                              const mine = Boolean(myKey && list.includes(myKey))
+                              return (
+                                <button
+                                  key={r.kind}
+                                  type="button"
+                                  title={
+                                    list.length > 0
+                                      ? `${r.label} (${list.length}): ${list.join(", ")}`
+                                      : r.label
+                                  }
+                                  onClick={() => {
+                                    if (!viewerName) return
+                                    recordLocalBilateralMessageReaction({
+                                      messageId: msg.id,
+                                      messageText: msg.text,
+                                      actorName: viewerName,
+                                      reaction: r.kind,
+                                      partnerName: activeChatThread.title
+                                    })
+                                    fetch("/api/connectin/messages", {
+                                      method: "POST",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({
+                                        action: "react_message",
+                                        enclave: enclaveId,
+                                        threadId: activeChatThread.id,
+                                        recipientName: activeChatThread.title,
+                                        recipientSubtitle: activeChatThread.subtitle,
+                                        recipientAvatar: activeChatThread.avatar,
+                                        messageId: msg.id,
+                                        messageText: msg.text,
+                                        messageSenderName: isMe ? viewerName : msg.sender.name,
+                                        reaction: r.kind,
+                                        viewerName,
+                                        senderName: viewerName,
+                                        senderEmail: viewerEmail,
+                                        senderAvatar: currentUser?.avatar || ""
+                                      })
+                                    }).catch(() => {})
+                                    syncMailbox()
+                                  }}
+                                  className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold transition-all cursor-pointer ${
+                                    mine
+                                      ? "bg-amber-300 text-zinc-900 ring-1 ring-amber-500"
+                                      : list.length > 0
+                                      ? "bg-white text-zinc-900 shadow-2xs border border-zinc-200"
+                                      : isMe
+                                      ? "bg-white/15 text-white hover:bg-white/25"
+                                      : "bg-white/80 text-zinc-700 hover:bg-white border border-zinc-200/70"
+                                  }`}
+                                >
+                                  <span>{r.emoji}</span>
+                                  {list.length > 0 && <span>{list.length}</span>}
+                                </button>
+                              )
+                            })}
+                          </div>
+                          <div className="text-[9px] text-right flex items-center justify-end gap-1 opacity-75">
+                            <span>{formatMessageSentDateTime(msg, msg.timestamp)}</span>
+                            {isMe && <CheckCheck className="h-2.5 w-2.5" />}
+                          </div>
                         </div>
                       </div>
                     </div>

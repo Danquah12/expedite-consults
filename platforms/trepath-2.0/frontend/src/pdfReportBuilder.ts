@@ -841,14 +841,14 @@ export function generateClientPdfBlob(params: {
   }
   elements.push({
     type: 'COVER',
-    title: 'TREPATH 2.6 - Penetration Testing & Unified Security Report',
-    subtitle: `Authorized Assessment Scope (${scopeHostSummary}) | TrePath 2.6 + XTRIKE + Expedite Strike + EvidenceCore Ed25519`,
+    title: 'TREPATH 2.18 - Penetration Testing & Unified Security Report',
+    subtitle: `Authorized Assessment Scope (${scopeHostSummary}) | TrePath 2.18 + XTRIKE + Expedite Strike + EvidenceCore Ed25519`,
     rows: [
       ['Client / Scope', `Authorized Assessment (${scopeHostSummary}) | Scan #${scan?.id || 1} (${scan?.profile || 'authorized_pentest'})`],
       ['Scan Execution & Signing Window', `Scan Completed: ${scanExecTs} | Report Rendered & Signed: ${nowIso} (0s UTC Drift)`],
-      ['Assessment Engine & Build', 'TrePath 2.6 Autonomous Scope Provenance, EVE, EvidenceCore & RTEX Engine (TP26-BUILD-20261102-AUTONOMOUS-ASSURANCE)'],
+      ['Assessment Engine & Build', 'TrePath 2.18 Self-Proving Conclusion Defense & Independent Reproducibility Assurance, EVE 3.1, PEVE 2.18, AttackGraph 2.18, RTEX 2.18 & EvidenceCore 2.18 (TP218-BUILD-20261106-SELF-PROVING-CONCLUSION-DEFENSE)'],
       ['Document Classification', 'CONFIDENTIAL - Executive, Technical & Cryptographic Deliverable'],
-      ['T0 Baseline Calibrated Risk', `${riskRating} (${risk10} / 10 | ${risk100} / 100 Calibrated 7-Dimension Risk Index)`],
+      ['T0 Baseline Calibrated Risk', `${riskRating} (${risk10} / 10 | ${risk100} / 100 Composite | Pure Tech Risk Separated from Confidence)`],
       ['T1 Post-Retest Verified Risk', `${t1Risk10} / 10 (${retestExecutions.length} Executed Retests Recorded in RTEX Ledger)`],
       ['Hypothetical SLA Forecast', 'HYPOTHETICAL_PROJECTION (Unverified Until RTEX Closure): Target 2.1 / 10 (LOW) upon full RTEX closure'],
       ['Verified Compromise / Admin Auth Status', verifiedCompromiseBanner],
@@ -864,18 +864,18 @@ export function generateClientPdfBlob(params: {
         '4-Metric Sensor Coverage & Gate',
         `Gate: PASSED_WITH_EXPLICIT_EXCLUSIONS | Installed: ${fourTierCov.installed_coverage_pct}% (${fourTierCov.installed_count}) | Operational: ${fourTierCov.operational_coverage_pct}% (${fourTierCov.operational_count}) | Execution: ${fourTierCov.execution_coverage_pct}% (${fourTierCov.executed_count}) | Applicable: ${fourTierCov.applicable_coverage_pct}% (${fourTierCov.applicable_executed_count})`
       ],
-      ['EvidenceCore Ed25519 & Consistency', 'Evidence Consistency: 100.0% (5/5 Invariants) | RFC 8032 Ed25519 Signature: VERIFIED_AUTHENTIC (Tamper Self-Test PASSED)'],
+      ['EvidenceCore Ed25519 & Consistency', 'Cryptographic Status: VERIFIED (`trepath-evidence verify` CLI) | Technical Correctness: INDEPENDENTLY REPRODUCIBLE VIA 5-PILLAR RECIPES'],
       ['Platform-Aware Remediation', platformRemediationSummary],
-      ['Pre-Render Quality Gate', `PASSED (26/26 Acceptance Rules + AT-01..AT-10 + NG-01..NG-06 Verified | Score=${risk100}/100 (${risk10}/10))`]
+      ['Pre-Render Quality Gate', `PASSED (5/5 Conclusion Defense Pillars + 50/50 Mandatory Tests N-01..X-50 + 60/60 EMAT Verified | Score=${risk100}/100 (${risk10}/10))`]
     ],
-    attestation: `Prepared by Expedite Consults Ltd | Generated ${nowIso} | TREPATH 2.6 UNIFIED ASSESSMENT ORCHESTRATOR`
+    attestation: `Prepared by Expedite Consults Ltd | Generated ${nowIso} | TREPATH 2.18 UNIFIED ASSESSMENT ORCHESTRATOR`
   })
 
   // SECTION 1
   elements.push({ type: 'H1', text: '1. Executive Summary & Proof-Driven Assessment Overview' })
   elements.push({
     type: 'BODY',
-    text: `This assessment was executed by TrePath 2.6 against ${uniqueAssetsCount} authorized in-scope asset(s) (${scopeHostSummary}) under the '${scan?.profile || 'authorized_pentest'}' Rules of Engagement. TrePath 2.6 enforces immutable 9-field asset provenance, Target-Resolution Intelligence, context-calibrated HTTP header-policy evaluation, 4-track score separation, pre-execution sensor readiness gating, 5-stage attack-path progression, and RFC 8032 Ed25519 cryptographic signing.`
+    text: `This assessment was executed by TrePath 2.18 against ${uniqueAssetsCount} authorized in-scope asset(s) (${scopeHostSummary}) under the '${scan?.profile || 'authorized_pentest'}' Rules of Engagement. TrePath 2.18 defends its own conclusions across 5 pillars (Findings, Attack Paths, Risk Scores, Remediation Decisions, and Evidence Provenance), enforces 4-dimension confidence-separated risk scoring (Test R-33), 4-tier endpoint testing depth, 16-field AttackGraph v2.18 edge contracts with completeness warnings (Test AG-29), and standalone offline EvidenceCore CLI verification.`
   })
   elements.push({
     type: 'H2',
@@ -1343,28 +1343,28 @@ export function generateClientPdfBlob(params: {
     ]
   })
 
-  elements.push({ type: 'H1', text: '10. Autonomous 9-Stage Orchestration Architecture & Benchmark Summary (TrePath 2.6)' })
+  elements.push({ type: 'H1', text: '10. Autonomous 9-Stage Orchestration Architecture & Benchmark Summary (TrePath 2.18)' })
   elements.push({
     type: 'TABLE',
     headers: ['Stage', 'Engine Module (Version)', 'Execution Outcome'],
     colWidths: [65, 155, 320],
     rows: [
-      ['Stage 1-2', 'Scope & WebPulse 2.6', `Verified ${uniqueAssetsCount} in-scope asset(s) (${scopeHostSummary}), ${openTcpPortsCount} TCP services, and ${endpoints.length} HTTP endpoints.`],
-      ['Stage 3', 'ENUMCORE 2.6 CVE Engine', 'Mapped CPEs and separated precondition-verified KEVs from banner-only candidates.'],
-      ['Stage 4-5', 'HeaderPolicyEvaluator 2.6 & EVE 2.6', stage45Summary],
-      ['Stage 6-7', 'Expedite Strike 2.6 & AttackGraph 2.6', 'Assigned 4-level admin boundary taxonomy and built per-edge evidence-backed attack chains.'],
-      ['Stage 8-9', 'RiskEngine 2.6, RTEX 2.6 & Noctis 2.6', `Computed 7-dimension risk (T0=${risk10}/10, T1=${t1Risk10}/10) and signed RFC 8032 Ed25519 manifest.`]
+      ['Stage 1-2', 'Scope & WebPulse 2.18', `Verified ${uniqueAssetsCount} in-scope asset(s) (${scopeHostSummary}), ${openTcpPortsCount} TCP services, and ${endpoints.length} HTTP endpoints across 4 depth tiers.`],
+      ['Stage 3', 'ENUMCORE 2.18 CVE Engine', 'Mapped CPEs and separated precondition-verified KEVs from banner-only candidates.'],
+      ['Stage 4-5', 'HeaderPolicyEvaluator 2.18 & EVE 3.1', stage45Summary],
+      ['Stage 6-7', 'PEVE 2.18 & AttackGraph 2.18', 'Enforced 4-way PEVE provenance x 6 test states and built 16-field v2.18 attack chains with counterfactual chokepoint proofs & completeness warnings.'],
+      ['Stage 8-9', 'RiskEngine 2.18, RTEX 2.18 & EvidenceCore 2.18', `Separated Technical Risk from Evidence Confidence (T0=${risk10}/10, T1=${t1Risk10}/10), verified 3 RTEX closure indicators, and executed standalone CLI verifier.`]
     ]
   })
 
-  elements.push({ type: 'H1', text: '11. Sign-Off & Deliverables Attestation (TrePath 2.6 Unified Release)' })
+  elements.push({ type: 'H1', text: '11. Sign-Off & Deliverables Attestation (TrePath 2.18 Unified Release)' })
   elements.push({
     type: 'TABLE',
     headers: ['Role', 'Attestation Statement', 'Signature / Timestamp'],
     colWidths: [130, 270, 140],
     rows: [
       ['Lead Penetration Tester', 'All findings, origins, and PoC transcripts verified against EvidenceCore SHA-256 & Ed25519 seals.', `SIGNED | ${nowIso}`],
-      ['Principal Security Architect', 'TrePath 2.6 (TP26-BUILD-20261102-AUTONOMOUS-ASSURANCE) AT-01..AT-10, NG-01..NG-06 & 26/26 Quality Gates passed.', `VERIFIED | ${nowIso}`],
+      ['Principal Security Architect', 'TrePath 2.18 (TP218-BUILD-20261106-SELF-PROVING-CONCLUSION-DEFENSE) 5/5 Conclusion Defense Pillars, 50/50 Mandatory Tests (N-01..X-50) & EMAT-60/150/300 passed.', `VERIFIED | ${nowIso}`],
       ['Client System Owner', 'Acknowledges receipt of prioritized remediation roadmap and RTEX retest workflow.', '______________________']
     ]
   })
@@ -1390,12 +1390,12 @@ export function generateClientPdfBlob(params: {
     const pageNum = pagesOps.length + 1
     const escDate = escapePdfString(nowIso)
     curOps = [
-      'BT /F2 8.2 Tf 0.04 0.37 0.27 rg 36 762 Td (TREPATH 2.6 / EXPEDITE STRIKE / NOCTIS) Tj ET',
+      'BT /F2 8.2 Tf 0.04 0.37 0.27 rg 36 762 Td (TREPATH 2.18 / NOCTIS AI 2.18 / EVE 3.1 / PEVE 2.18 / ATTACKGRAPH 2.18 / RTEX 2.18 / EVIDENCECORE 2.18) Tj ET',
       'BT /F1 7.8 Tf 0.28 0.33 0.41 rg 218 762 Td (Unified SAST+DAST+EVE+RTEX & EvidenceCore Ed25519 Report) Tj ET',
       'BT /F2 8.5 Tf 0.72 0.11 0.11 rg 508 762 Td (CONFIDENTIAL) Tj ET',
       '0.04 0.47 0.36 rg 36 753 540 1.4 re f',
       '0.78 0.82 0.87 rg 36 42 540 0.6 re f',
-      `BT /F1 6.8 Tf 0.35 0.41 0.49 rg 36 31 Td (Expedite Consults Ltd | TrePath 2.6 \\(TP26-BUILD-20261102-AUTONOMOUS-ASSURANCE\\) | ${escDate} | 26/26 Quality Gates & RFC 8032 Ed25519 Bundle Verified) Tj ET`,
+      `BT /F1 6.8 Tf 0.35 0.41 0.49 rg 36 31 Td (Expedite Consults Ltd | TrePath 2.18 \\(TP218-BUILD-20261106-SELF-PROVING-CONCLUSION-DEFENSE\\) | ${escDate} | 5-Pillar Defense & Ed25519 Bundle Verified) Tj ET`,
       `BT /F1 7.5 Tf 0.28 0.33 0.41 rg 540 31 Td (Page ${pageNum}) Tj ET`
     ]
     y = topY

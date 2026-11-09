@@ -1,0 +1,52 @@
+{
+  "original_finding_id": 4,
+  "asset_and_origin_identity": "ASSET-00001 | http://192.168.195.140:80",
+  "approved_scope_and_roe": "Private lab host 192.168.195.140:80 authorized by ROE allow_private_networks=True.",
+  "validation_adapter_and_version": "EVE-NET-001 (eve-adapter/2.3.0)",
+  "test_timestamp": "2026-11-04T21:48:46.326238+00:00",
+  "preconditions": {
+    "vulnerability_class": "network_service_validation",
+    "affected_technology": "Apache",
+    "detected_version": "2.4.49",
+    "cve_applicable": false,
+    "preconditions_satisfied": true
+  },
+  "execution_transcript": {
+    "adapter_id": "EVE-NET-001",
+    "adapter_version": "eve-adapter/2.3.0",
+    "probed_endpoint": "http://192.168.195.140:80/",
+    "finding_key": "PORT-OPEN-8080-HTTP-ALT",
+    "safety_mode": "READ_ONLY_DETERMINISTIC",
+    "timestamp": "2026-11-04T21:48:46.325028+00:00",
+    "probe_steps": [
+      {
+        "step": 1,
+        "action": "EVALUATE_CONTROL_STATE",
+        "target": "http://192.168.195.140:80/",
+        "title": "Open Network Service: TCP/8080 (Tomcat)",
+        "observation_excerpt": "TCP port 8080 is open."
+      }
+    ]
+  },
+  "request_response_evidence": [
+    {
+      "step": 1,
+      "action": "EVALUATE_CONTROL_STATE",
+      "target": "http://192.168.195.140:80/",
+      "title": "Open Network Service: TCP/8080 (Tomcat)",
+      "observation_excerpt": "TCP port 8080 is open."
+    }
+  ],
+  "expected_vs_actual": {
+    "expected": "Verify whether missing control or configuration allows direct unauthorized boundary crossing.",
+    "actual": "Configuration/control gap confirmed at HTTP layer; no direct unauthorized data access or code execution resulted.",
+    "reproduced_behavior": false
+  },
+  "execution_outcome": "OBSERVATION_CONFIRMED",
+  "evidence_confidence": 0.88,
+  "exploitability_confidence": 0.15,
+  "impact_confidence": 0.05,
+  "operator_or_approving_identity": "secops-lead@expedite-consults.io",
+  "sha256_evidence_digest": "515147753e2b8417eb346f074af58f666004d164fe13cc940fd2db9f9e53b31b",
+  "attempt_key": "EVE-ATT-00003-3"
+}

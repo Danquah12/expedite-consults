@@ -1,0 +1,51 @@
+{
+  "original_finding_id": 5901,
+  "asset_and_origin_identity": "ASSET-00406 | https://www.root-me.org:443",
+  "approved_scope_and_roe": "Host www.root-me.org:443 matches ROE authorized origin 'https://www.root-me.org:443'.",
+  "validation_adapter_and_version": "EVE-AUTHZ-001 (eve-adapter/2.3.0)",
+  "test_timestamp": "2026-11-09T01:40:19.608821+00:00",
+  "preconditions": {
+    "vulnerability_class": "authorization_validation",
+    "affected_technology": "web-application",
+    "detected_version": null,
+    "cve_applicable": false,
+    "preconditions_satisfied": true
+  },
+  "execution_transcript": {
+    "adapter_id": "EVE-AUTHZ-001",
+    "probed_endpoint": "https://www.root-me.org/.within.website/x/cmd/anubis/api/honeypot/f93779cc-4372-43ca-91f2-d9448168ed45/init",
+    "finding_key": "DAST-API-AUTHZ-EP-10707",
+    "probe_steps": [
+      {
+        "step": 1,
+        "method": "GET",
+        "url": "https://www.root-me.org/.within.website/x/cmd/anubis/api/honeypot/f93779cc-4372-43ca-91f2-d9448168ed45/init",
+        "antibot_or_honeypot_signature": true,
+        "sensitive_entity_fields_found": [],
+        "conclusion": "Public anti-bot challenge route; authorization bypass rejected."
+      }
+    ]
+  },
+  "request_response_evidence": [
+    {
+      "step": 1,
+      "method": "GET",
+      "url": "https://www.root-me.org/.within.website/x/cmd/anubis/api/honeypot/f93779cc-4372-43ca-91f2-d9448168ed45/init",
+      "antibot_or_honeypot_signature": true,
+      "sensitive_entity_fields_found": [],
+      "conclusion": "Public anti-bot challenge route; authorization bypass rejected."
+    }
+  ],
+  "expected_vs_actual": {
+    "expected": "Determine if unauthenticated JSON/API response exposes protected application records or is an anti-bot challenge endpoint.",
+    "actual": "Endpoint https://www.root-me.org/.within.website/x/cmd/anubis/api/honeypot/f93779cc-4372-43ca-91f2-d9448168ed45/init confirmed as an Anubis / anti-bot proof-of-work challenge initialization route; response contains zero user records, session tokens, or tenant data.",
+    "reproduced_behavior": false
+  },
+  "execution_outcome": "EXPLOITATION_FAILED",
+  "evidence_confidence": 0.92,
+  "exploitability_confidence": 0.05,
+  "impact_confidence": 0.0,
+  "operator_or_approving_identity": "secops-lead@expedite-consults.io",
+  "sha256_evidence_digest": "f8d112e007eaae05a71ce8f64b677bfe83ba435f7a289fe884629f387b9cf44a",
+  "attempt_key": "EVE-ATT-00541-623"
+}

@@ -25,6 +25,29 @@ SEVERITY_TO_PRIORITY: dict[str, str] = {
     "low": "P3-Backlog",
 }
 
+REMEDIATION_LIFECYCLE_STATES: tuple[str, ...] = (
+    "OPEN",
+    "ASSIGNED",
+    "IN_PROGRESS",
+    "READY_FOR_RETEST",
+    "RETESTING",
+    "VERIFIED",
+    "CLOSED",
+    "FAILED_RETEST",
+    "PARTIALLY_REMEDIATED",
+    "REOPENED",
+)
+
+RTEX_SEVEN_POINT_VERIFICATION_SPEC: dict[str, str] = {
+    "regression_check": "Verify surrounding endpoint status codes and application headers do not regress after control deployment.",
+    "negative_waf_block_check": "Distinguish genuine origin control remediation from generic CDN/WAF block pages (HTTP 403 challenge vs. origin header presence).",
+    "environment_verification": "Confirm retest probe resolves to the identical in-scope origin and TLS certificate fingerprint as T0.",
+    "partial_remediation_status": "Detect when a multi-directive header (e.g. CSP) is added but retains unsafe-inline or wildcard directives (PARTIALLY_REMEDIATED).",
+    "reopened_detection": "Detect when a previously VERIFIED control regresses in a subsequent scan or retest (transitions to REOPENED).",
+    "before_after_diff": "Capture side-by-side T0 vs. T1 HTTP response headers / TCP banner diff sealed in EvidenceCore.",
+    "measured_t1_risk_recalculation": "Recalculate measured_t1_risk_score only when RTEX seals a REMEDIATION_VERIFIED artifact (manual closure without RTEX is prohibited).",
+}
+
 HEADER_FINDING_MAP: dict[str, str] = {
     "HTTP-CSP-MISSING": "content-security-policy",
     "HTTP-HSTS-MISSING": "strict-transport-security",
@@ -66,7 +89,7 @@ def generate_remediation_tasks(
     )
     consolidated = intel_summary["consolidated_security_findings"]
 
-    for idx, cf in enumerate(consolidated[:15], start=1):
+    for idx, cf in enumerate(consolidated, start=1):
         f_id = cf["finding_id"]
         fk = cf["finding_key"]
         sev = cf["severity"]

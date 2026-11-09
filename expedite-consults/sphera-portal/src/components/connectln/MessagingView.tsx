@@ -16,6 +16,8 @@ import {
     getLocalBilateralThreadsForViewer,
     mergeBilateralAndServerThreads,
     recordLocalBilateralDirectMessage,
+    recordLocalBilateralMessageReaction,
+    recordLocalBilateralMessageComment,
     markLocalBilateralConversationRead,
     doesDmParticipantMatch,
     formatMessageSentDateTime,
@@ -1651,9 +1653,17 @@ export function MessagingView({
         );
     };
 
-    const messageActionBody = () => ({
+    const messageActionBody = (msg?: B2BMessageItem) => ({
         enclave: selectedEnclave === 'all' ? activeEnclave : selectedEnclave,
         threadId: activeThread?.id,
+        recipientName: activeThread?.title || '',
+        recipientSubtitle: activeThread?.subtitle || '',
+        recipientAvatar: activeThread?.avatar || '',
+        messageText: msg?.text || '',
+        messageSenderName:
+            msg?.sender.id === 'me' || msg?.sender.name === 'You'
+                ? currentUser?.name || ''
+                : msg?.sender.name || '',
         viewerName: currentUser?.name || '',
         senderName: currentUser?.name || '',
         senderEmail: currentUser?.email || '',
@@ -1663,6 +1673,14 @@ export function MessagingView({
     const handleReactToMessage = async (msg: B2BMessageItem, kind: MessageReactionKind) => {
         const me = (currentUser?.name || '').toLowerCase().trim().replace(/\s+/g, ' ');
         if (!me) return;
+        // Persist in bilateral local store immediately so reactions survive polling & sync across accounts
+        recordLocalBilateralMessageReaction({
+            messageId: msg.id,
+            messageText: msg.text,
+            actorName: currentUser?.name || me,
+            reaction: kind,
+            partnerName: activeThread?.title,
+        });
         // Optimistic update so the tap feels instant
         updateMessage(msg.id, (m) => {
             const reactions: Record<string, string[]> = { ...(m.reactions || {}) };
@@ -1687,7 +1705,12 @@ export function MessagingView({
             const res = await fetch('/api/connectin/messages', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'react_message', messageId: msg.id, reaction: kind, ...messageActionBody() }),
+                body: JSON.stringify({
+                    action: 'react_message',
+                    messageId: msg.id,
+                    reaction: kind,
+                    ...messageActionBody(msg),
+                }),
             });
             const data = await res.json();
             if (data?.ok) updateMessage(msg.id, (m) => ({ ...m, reactions: data.reactions || {} }));
@@ -1722,12 +1745,25 @@ export function MessagingView({
             text: text.slice(0, 200),
             createdAtIso: new Date().toISOString(),
         };
+        recordLocalBilateralMessageComment({
+            messageId: msg.id,
+            messageText: msg.text,
+            actorName: author,
+            actorAvatar: local.avatar,
+            commentText: text,
+            partnerName: activeThread?.title,
+        });
         updateMessage(msg.id, (m) => ({ ...m, comments: [...(m.comments || []), local].slice(-10) }));
         try {
             const res = await fetch('/api/connectin/messages', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'comment_message', messageId: msg.id, commentText: text, ...messageActionBody() }),
+                body: JSON.stringify({
+                    action: 'comment_message',
+                    messageId: msg.id,
+                    commentText: text,
+                    ...messageActionBody(msg),
+                }),
             });
             const data = await res.json();
             if (data?.ok) updateMessage(msg.id, (m) => ({ ...m, comments: data.comments || [] }));

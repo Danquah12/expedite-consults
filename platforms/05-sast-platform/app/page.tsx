@@ -21,15 +21,15 @@ export default function Home() {
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#3a404c" }} />
-              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#3a404c" }} />
-              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#3a404c" }} />
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#9e2a2b" }} />
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#996b1f" }} />
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#2d6a4f" }} />
               <span style={{ fontSize: 11, fontWeight: 800, color: "#4a4239", marginLeft: 6, letterSpacing: "0.05em" }}>
                 XTRIKE SAST RISK POSTURE
               </span>
             </div>
-            <span style={{ fontSize: 10, fontWeight: 800, color: "#46a36e", display: "flex", alignItems: "center", gap: 4 }}>
-              <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#46a36e", display: "inline-block" }} />
+            <span style={{ fontSize: 10, fontWeight: 800, color: "#2d6a4f", display: "flex", alignItems: "center", gap: 4 }}>
+              <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#2d6a4f", display: "inline-block" }} />
               LIVE TELEMETRY
             </span>
           </div>
@@ -46,7 +46,7 @@ export default function Home() {
           }}>
             <div style={{
               background: "#8b4528",
-              color: "#f3eee4",
+              color: "#fbf8f3",
               padding: "2px 8px",
               borderRadius: 4,
               fontSize: 10,
@@ -55,8 +55,8 @@ export default function Home() {
               TACKLE TODAY &rarr;
             </div>
             <div style={{ display: "flex", gap: 10, fontSize: 10.5, fontWeight: 800 }}>
-              <span style={{ color: "#e5484d" }}>37 Critical</span>
-              <span style={{ color: "#e2853b" }}>45 Urgent</span>
+              <span style={{ color: "#9e2a2b" }}>37 Critical</span>
+              <span style={{ color: "#8b4528" }}>45 Urgent</span>
               <span style={{ color: "#5c5349" }}>13 Pending</span>
             </div>
           </div>
@@ -68,28 +68,28 @@ export default function Home() {
               </div>
               <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", height: 85, padding: "0 6px" }}>
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 9, fontWeight: 800, color: "#e5484d" }}>37</div>
-                  <div style={{ width: 14, height: 60, background: "#e5484d", borderRadius: "3px 3px 0 0" }} />
+                  <div style={{ fontSize: 9, fontWeight: 800, color: "#9e2a2b" }}>37</div>
+                  <div style={{ width: 14, height: 60, background: "#9e2a2b", borderRadius: "3px 3px 0 0" }} />
                   <div style={{ fontSize: 8.5, color: "var(--muted)", marginTop: 2 }}>CRIT</div>
                 </div>
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 9, fontWeight: 800, color: "#e2853b" }}>45</div>
-                  <div style={{ width: 14, height: 75, background: "#e2853b", borderRadius: "3px 3px 0 0" }} />
+                  <div style={{ fontSize: 9, fontWeight: 800, color: "#8b4528" }}>45</div>
+                  <div style={{ width: 14, height: 75, background: "#8b4528", borderRadius: "3px 3px 0 0" }} />
                   <div style={{ fontSize: 8.5, color: "var(--muted)", marginTop: 2 }}>HIGH</div>
                 </div>
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 9, fontWeight: 800, color: "#d6a847" }}>34</div>
-                  <div style={{ width: 14, height: 48, background: "#d6a847", borderRadius: "3px 3px 0 0" }} />
+                  <div style={{ fontSize: 9, fontWeight: 800, color: "#996b1f" }}>34</div>
+                  <div style={{ width: 14, height: 48, background: "#996b1f", borderRadius: "3px 3px 0 0" }} />
                   <div style={{ fontSize: 8.5, color: "var(--muted)", marginTop: 2 }}>MED</div>
                 </div>
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 9, fontWeight: 800, color: "#8b4528" }}>28</div>
-                  <div style={{ width: 14, height: 35, background: "#8b4528", borderRadius: "3px 3px 0 0" }} />
+                  <div style={{ fontSize: 9, fontWeight: 800, color: "#2d6a4f" }}>28</div>
+                  <div style={{ width: 14, height: 35, background: "#2d6a4f", borderRadius: "3px 3px 0 0" }} />
                   <div style={{ fontSize: 8.5, color: "var(--muted)", marginTop: 2 }}>LOW</div>
                 </div>
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 9, fontWeight: 800, color: "#8b4528" }}>22</div>
-                  <div style={{ width: 14, height: 26, background: "#8b4528", borderRadius: "3px 3px 0 0" }} />
+                  <div style={{ fontSize: 9, fontWeight: 800, color: "#5c5349" }}>22</div>
+                  <div style={{ width: 14, height: 26, background: "#5c5349", borderRadius: "3px 3px 0 0" }} />
                   <div style={{ fontSize: 8.5, color: "var(--muted)", marginTop: 2 }}>INFO</div>
                 </div>
               </div>
@@ -102,9 +102,9 @@ export default function Home() {
                   width: 75,
                   height: 75,
                   borderRadius: "50%",
-                  border: "6px solid #e2853b",
-                  borderTopColor: "#e5484d",
-                  borderRightColor: "#46a36e",
+                  border: "6px solid #996b1f",
+                  borderTopColor: "#9e2a2b",
+                  borderRightColor: "#2d6a4f",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
@@ -115,8 +115,8 @@ export default function Home() {
                 </div>
               </div>
               <div style={{ fontSize: 9, display: "flex", flexDirection: "column", gap: 2 }}>
-                <div style={{ color: "#4a4239" }}>&bull; Requires attention: <span style={{ color: "#e5484d" }}>24%</span></div>
-                <div style={{ color: "#4a4239" }}>&bull; 1-Click Easy Fix: <span style={{ color: "#46a36e" }}>76%</span></div>
+                <div style={{ color: "#4a4239" }}>&bull; Requires attention: <span style={{ color: "#9e2a2b", fontWeight: 700 }}>24%</span></div>
+                <div style={{ color: "#4a4239" }}>&bull; 1-Click Easy Fix: <span style={{ color: "#2d6a4f", fontWeight: 700 }}>76%</span></div>
               </div>
             </div>
           </div>
@@ -131,26 +131,26 @@ export default function Home() {
         <div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
             <div style={{ fontSize: 12, fontWeight: 800, color: "#8b4528" }}>Real-time Hybrid Scan</div>
-            <span style={{ fontSize: 10, color: "#46a36e", fontWeight: 800, background: "rgba(70, 163, 110, 0.15)", padding: "2px 6px", borderRadius: 4 }}>
+            <span style={{ fontSize: 10, color: "#2d6a4f", fontWeight: 800, background: "rgba(45, 106, 79, 0.14)", padding: "2px 6px", borderRadius: 4 }}>
               94.2% False Positives Eliminated
             </span>
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <div style={{ background: "#f3eee4", padding: 10, borderRadius: 8, border: "1px solid rgba(70, 163, 110, 0.3)" }}>
+            <div style={{ background: "#f3eee4", padding: 10, borderRadius: 8, border: "1px solid rgba(45, 106, 79, 0.35)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, fontWeight: 800 }}>
                 <span style={{ color: "#1f1b18" }}>FUS-02 &middot; SSRF in WebhookDispatcher</span>
-                <span style={{ color: "#46a36e" }}>FALSE POSITIVE CUT</span>
+                <span style={{ color: "#2d6a4f" }}>FALSE POSITIVE CUT</span>
               </div>
               <div style={{ fontSize: 10, color: "#5c5349", marginTop: 4 }}>
                 XTRIKE Neural-Triage v4 verified private subnet filter at L82 blocks cloud metadata 169.254.169.254.
               </div>
             </div>
 
-            <div style={{ background: "#f3eee4", padding: 10, borderRadius: 8, border: "1px solid rgba(229, 72, 77, 0.3)" }}>
+            <div style={{ background: "#f3eee4", padding: 10, borderRadius: 8, border: "1px solid rgba(158, 42, 43, 0.35)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, fontWeight: 800 }}>
                 <span style={{ color: "#1f1b18" }}>FUS-01 &middot; SQL Injection in Profile</span>
-                <span style={{ color: "#e5484d" }}>CONFIRMED EXPLOITABLE</span>
+                <span style={{ color: "#9e2a2b" }}>CONFIRMED EXPLOITABLE</span>
               </div>
               <div style={{ fontSize: 10, color: "#5c5349", marginTop: 4 }}>
                 Direct parameter concatenation without parameterized query. 1-Click PR Fix generated.
@@ -190,8 +190,8 @@ export default function Home() {
           </pre>
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div style={{ fontSize: 10, color: "#46a36e" }}>&check; XTRIKE regression test generated</div>
-            <button style={{ background: "#8b4528", border: "none", color: "#f3eee4", fontSize: 10.5, fontWeight: 900, padding: "4px 10px", borderRadius: 4 }}>
+            <div style={{ fontSize: 10, color: "#2d6a4f", fontWeight: 700 }}>&check; XTRIKE regression test generated</div>
+            <button style={{ background: "#8b4528", border: "none", color: "#fbf8f3", fontSize: 10.5, fontWeight: 900, padding: "4px 10px", borderRadius: 4 }}>
               Merge Pull Request
             </button>
           </div>
@@ -212,15 +212,15 @@ export default function Home() {
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <div style={{ display: "flex", justifyContent: "space-between", background: "#f3eee4", padding: "8px 10px", borderRadius: 6, fontSize: 10.5 }}>
               <span style={{ color: "#1f1b18", fontWeight: 700 }}>xtrike-llm/Core-8B-Instruct</span>
-              <span style={{ color: "#46a36e", fontWeight: 800 }}>Safetensors (Clean)</span>
+              <span style={{ color: "#2d6a4f", fontWeight: 800 }}>Safetensors (Clean)</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", background: "#f3eee4", padding: "8px 10px", borderRadius: 6, fontSize: 10.5 }}>
               <span style={{ color: "#1f1b18", fontWeight: 700 }}>xtrike-rag-agent-v2</span>
-              <span style={{ color: "#e5484d", fontWeight: 800 }}>Indirect Prompt Injection</span>
+              <span style={{ color: "#9e2a2b", fontWeight: 800 }}>Indirect Prompt Injection</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", background: "#f3eee4", padding: "8px 10px", borderRadius: 6, fontSize: 10.5 }}>
               <span style={{ color: "#1f1b18", fontWeight: 700 }}>mcp-filesystem-server-v1</span>
-              <span style={{ color: "#e2853b", fontWeight: 800 }}>Tool Path Traversal Guard</span>
+              <span style={{ color: "#996b1f", fontWeight: 800 }}>Tool Path Traversal Guard</span>
             </div>
           </div>
         </div>
@@ -234,7 +234,7 @@ export default function Home() {
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
             <div style={{ fontSize: 12, fontWeight: 800, color: "#8b4528" }}>XTRIKE IDE &amp; Desktop Endpoint</div>
-            <span style={{ fontSize: 10, color: "#46a36e", fontWeight: 800 }}>CONNECTED</span>
+            <span style={{ fontSize: 10, color: "#2d6a4f", fontWeight: 800 }}>CONNECTED</span>
           </div>
 
           <pre style={{
@@ -305,7 +305,7 @@ export default function Home() {
                 href="/fusion-engine"
                 style={{
                   background: "#8b4528",
-                  color: "#f3eee4",
+                  color: "#fbf8f3",
                   padding: "13px 26px",
                   borderRadius: 10,
                   fontSize: 14,
@@ -352,7 +352,7 @@ export default function Home() {
               border: "1px solid var(--border)",
               borderRadius: 20,
               padding: 24,
-              boxShadow: "0 20px 50px rgba(0, 0, 0, 0.6)",
+              boxShadow: "0 12px 32px rgba(31, 27, 24, 0.08)",
               backdropFilter: "blur(20px)",
               minHeight: 330,
               display: "flex",
@@ -611,6 +611,297 @@ export default function Home() {
               </div>
             </div>
           </Link>
+        </div>
+      </section>
+
+      {/* =====================================================================
+          "UNIFIED. SCALABLE. SECURE." 4-PILLAR VALUE STRIP (SCREENSHOT 2)
+         ===================================================================== */}
+      <section style={{ maxWidth: 1360, margin: "68px auto 0 auto", padding: "0 20px" }}>
+        <div
+          style={{
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
+            borderRadius: 20,
+            padding: "44px 36px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 36 }}>
+            <span
+              style={{
+                width: 4,
+                height: 34,
+                borderRadius: 2,
+                background: "linear-gradient(180deg, #8b4528 0%, #2d6a4f 100%)",
+                display: "inline-block",
+              }}
+            />
+            <h2 style={{ fontSize: 32, fontWeight: 900, color: "#1f1b18", margin: 0, letterSpacing: "-0.02em" }}>
+              Unified. Scalable. Secure.
+            </h2>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+              gap: 32,
+            }}
+          >
+            {/* Card 1: Control and visibility */}
+            <div>
+              <div style={{ height: 120, marginBottom: 18, display: "flex", alignItems: "center" }}>
+                <svg viewBox="0 0 180 110" style={{ width: 165, height: 105 }}>
+                  <rect x="6" y="18" width="128" height="82" rx="4" fill="#ece5d8" stroke="#1f1b18" strokeWidth="2" />
+                  <rect x="6" y="18" width="10" height="82" fill="#1f1b18" />
+                  <rect x="24" y="8" width="42" height="36" rx="3" fill="#2d6a4f" />
+                  <polygon points="45,17 54,22 54,31 45,36 36,31 36,22" fill="#fbf8f3" />
+                  <rect x="74" y="14" width="66" height="38" rx="3" fill="#68b684" />
+                  <rect x="82" y="34" width="6" height="12" fill="#1f1b18" />
+                  <rect x="92" y="26" width="6" height="20" fill="#8b4528" />
+                  <rect x="102" y="30" width="6" height="16" fill="#1f1b18" />
+                  <rect x="112" y="22" width="6" height="24" fill="#8b4528" />
+                  <rect x="122" y="28" width="6" height="18" fill="#1f1b18" />
+                  <rect x="24" y="54" width="52" height="36" rx="3" fill="#fbf8f3" />
+                  <path d="M 34 80 A 16 16 0 0 1 66 80" fill="none" stroke="#2d6a4f" strokeWidth="4" />
+                  <rect x="82" y="60" width="36" height="34" rx="3" fill="#5c5349" />
+                  <rect x="112" y="50" width="40" height="36" rx="3" fill="#8b4528" />
+                  <circle cx="132" cy="70" r="9" fill="#fbf8f3" />
+                  <text x="132" y="74" textAnchor="middle" fill="#1f1b18" fontSize="12" fontWeight="900">!</text>
+                </svg>
+              </div>
+              <h3 style={{ fontSize: 17, fontWeight: 800, color: "#1f1b18", marginBottom: 10 }}>
+                Control and visibility
+              </h3>
+              <p style={{ fontSize: 13.5, color: "#5c5349", lineHeight: 1.6, margin: 0 }}>
+                Gain deep visibility across infrastructure, polyglot applications, SAST taint paths, and user
+                experience in one platform. Our library of more than 2,000 monitoring integrations and 400+ CWE AST
+                plugins makes full-stack observability possible.
+              </p>
+            </div>
+
+            {/* Card 2: Value at scale */}
+            <div>
+              <div style={{ height: 120, marginBottom: 18, display: "flex", alignItems: "center" }}>
+                <svg viewBox="0 0 140 110" style={{ width: 130, height: 105 }}>
+                  <circle cx="65" cy="55" r="44" fill="#fbf8f3" stroke="#1f1b18" strokeWidth="5" />
+                  <path d="M 65 15 A 40 40 0 0 1 102 72 L 65 55 Z" fill="#cbe3d6" />
+                  <path d="M 65 32 A 23 23 0 0 1 86 65 L 65 55 Z" fill="#2d6a4f" />
+                  <circle cx="65" cy="55" r="9" fill="#ece5d8" />
+                  <circle cx="65" cy="55" r="4" fill="#1f1b18" />
+                  <line x1="65" y1="55" x2="104" y2="73" stroke="#8b4528" strokeWidth="2.5" />
+                </svg>
+              </div>
+              <h3 style={{ fontSize: 17, fontWeight: 800, color: "#1f1b18", marginBottom: 10 }}>
+                Value at scale
+              </h3>
+              <p style={{ fontSize: 13.5, color: "#5c5349", lineHeight: 1.6, margin: 0 }}>
+                Predictable host, repository, and service-based licensing that reduces observability and AppSec spend
+                by up to 70% without compromising on enterprise-grade 8-engine static analysis or runtime proof
+                capabilities.
+              </p>
+            </div>
+
+            {/* Card 3: Secure by design */}
+            <div>
+              <div style={{ height: 120, marginBottom: 18, display: "flex", alignItems: "center" }}>
+                <svg viewBox="0 0 140 110" style={{ width: 130, height: 105 }}>
+                  <path
+                    d="M 48 34 L 48 20 L 65 10 L 82 20 L 82 34"
+                    fill="none"
+                    stroke="#1f1b18"
+                    strokeWidth="5"
+                    strokeLinejoin="round"
+                  />
+                  <polygon points="65,24 104,45 104,83 65,104 26,83 26,45" fill="#68b684" />
+                  <polygon points="65,33 95,50 95,78 65,95 35,78 35,50" fill="#2d6a4f" />
+                  <polygon points="65,45 83,55 83,73 65,83 47,73 47,55" fill="#1f1b18" />
+                  <path
+                    d="M 65 53 L 73 57 L 73 65 C 73 70 65 74 65 74 C 65 74 57 70 57 65 L 57 57 Z"
+                    fill="none"
+                    stroke="#fbf8f3"
+                    strokeWidth="2"
+                  />
+                </svg>
+              </div>
+              <h3 style={{ fontSize: 17, fontWeight: 800, color: "#1f1b18", marginBottom: 10 }}>
+                Secure by design
+              </h3>
+              <p style={{ fontSize: 13.5, color: "#5c5349", lineHeight: 1.6, margin: 0 }}>
+                Built for sovereign and critical-infrastructure organizations, with Ed25519 cryptographic evidence
+                ledgers, isolated exploit sandboxes, and support for fully air-gapped deployments where needed.
+              </p>
+            </div>
+
+            {/* Card 4: Best in class ROI */}
+            <div>
+              <div style={{ height: 120, marginBottom: 18, display: "flex", alignItems: "center" }}>
+                <svg viewBox="0 0 160 110" style={{ width: 150, height: 105 }}>
+                  <path d="M 32 95 L 32 42 L 25 49 M 32 42 L 39 49" stroke="#e6b89c" strokeWidth="6" strokeLinecap="round" fill="none" />
+                  <path d="M 52 95 L 52 34 L 46 40 M 52 34 L 58 40" stroke="#1f1b18" strokeWidth="5" strokeLinecap="round" fill="none" />
+                  <path d="M 104 95 L 104 42 L 98 48 M 104 42 L 110 48" stroke="#5c5349" strokeWidth="5" strokeLinecap="round" fill="none" />
+                  <path d="M 124 95 L 124 68 L 119 73 M 124 68 L 129 73" stroke="#1f1b18" strokeWidth="5" strokeLinecap="round" fill="none" />
+                  <polygon points="78,8 90,28 90,66 66,66 66,28" fill="#68b684" />
+                  <polygon points="66,48 56,64 66,64" fill="#2d6a4f" />
+                  <polygon points="90,48 100,64 90,64" fill="#2d6a4f" />
+                  <polygon points="78,30 84,34 84,41 78,45 72,41 72,34" fill="#1f1b18" />
+                  <polygon points="72,66 84,66 78,82" fill="#8b4528" />
+                  <path d="M 38 96 Q 48 80 64 86 Q 78 74 96 86 Q 112 82 120 96 Z" fill="#5c5349" />
+                </svg>
+              </div>
+              <h3 style={{ fontSize: 17, fontWeight: 800, color: "#1f1b18", marginBottom: 10 }}>
+                Best in class ROI
+              </h3>
+              <p style={{ fontSize: 13.5, color: "#5c5349", lineHeight: 1.6, margin: 0 }}>
+                Eliminate tool sprawl across SAST, SCA, infrastructure, network, and synthetic UX monitoring. Lower
+                false-positive triage effort by 94.2% and realize value faster with a unified autonomous platform.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================================
+          USE CASES — INFRASTRUCTURE MONITORING & APPLICATION OBSERVABILITY
+          (SCREENSHOT 3)
+         ===================================================================== */}
+      <section style={{ maxWidth: 1360, margin: "44px auto 0 auto", padding: "0 20px" }}>
+        <div
+          style={{
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
+            borderRadius: 20,
+            padding: "44px 36px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 28 }}>
+            <span
+              style={{
+                width: 4,
+                height: 34,
+                borderRadius: 2,
+                background: "linear-gradient(180deg, #8b4528 0%, #2d6a4f 100%)",
+                display: "inline-block",
+              }}
+            />
+            <h2 style={{ fontSize: 32, fontWeight: 900, color: "#1f1b18", margin: 0, letterSpacing: "-0.02em" }}>
+              Use cases
+            </h2>
+          </div>
+
+          {/* Row 1: Infrastructure Monitoring */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+              gap: 40,
+              alignItems: "center",
+              paddingBottom: 40,
+              borderBottom: "1px solid var(--border)",
+            }}
+          >
+            <div>
+              <h3 style={{ fontSize: 24, fontWeight: 800, color: "#1f1b18", marginBottom: 12 }}>
+                Infrastructure Monitoring
+              </h3>
+              <p style={{ fontSize: 14.5, color: "#5c5349", lineHeight: 1.65, marginBottom: 18 }}>
+                Keep your critical servers, Kubernetes clusters, networks, and databases available and performing at
+                their best. XTRIKE gives you real-time visibility into your full hybrid stack, so you can detect
+                resource saturation early, resolve incidents faster with Noctis AI, and plan capacity with confidence.
+              </p>
+              <Link
+                href="/cyber-monitoring"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  fontSize: 14,
+                  fontWeight: 800,
+                  color: "#8b4528",
+                  textDecoration: "none",
+                }}
+              >
+                <span>Learn more</span>
+                <ArrowRight size={15} />
+              </Link>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <svg viewBox="0 0 360 210" style={{ width: "100%", maxWidth: 350, height: "auto" }}>
+                <polygon points="30,130 155,70 210,105 110,185" fill="#e2d9c8" />
+                <polygon points="175,115 280,60 340,120 225,190" fill="#ece5d8" />
+                <rect x="135" y="42" width="28" height="58" rx="2" fill="#2d6a4f" />
+                <polygon points="135,42 149,34 177,42 163,50" fill="#68b684" />
+                <ellipse cx="96" cy="95" rx="16" ry="8" fill="#2d6a4f" />
+                <rect x="80" y="95" width="32" height="22" fill="#1f1b18" />
+                <ellipse cx="96" cy="117" rx="16" ry="8" fill="#1f1b18" />
+                <polygon points="110,148 136,136 162,148 136,160" fill="#2d6a4f" />
+                <polygon points="215,38 258,15 258,68 215,91" fill="#e6b89c" />
+                <polygon points="255,102 302,78 302,138 255,162" fill="#d99b78" />
+                <circle cx="278" cy="120" r="5" fill="#1f1b18" />
+                <circle cx="266" cy="108" r="3" fill="#1f1b18" />
+                <circle cx="290" cy="108" r="3" fill="#1f1b18" />
+                <circle cx="266" cy="132" r="3" fill="#1f1b18" />
+                <circle cx="290" cy="132" r="3" fill="#1f1b18" />
+              </svg>
+            </div>
+          </div>
+
+          {/* Row 2: Application Observability & Code-to-Runtime Security */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+              gap: 40,
+              alignItems: "center",
+              paddingTop: 40,
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <svg viewBox="0 0 360 210" style={{ width: "100%", maxWidth: 350, height: "auto" }}>
+                <polygon points="30,135 150,75 195,120 105,190" fill="#e2d9c8" />
+                <polygon points="165,120 275,70 330,130 215,190" fill="#ece5d8" />
+                <polygon points="48,62 92,38 92,102 48,126" fill="#e3f0e9" stroke="#2d6a4f" strokeWidth="1.5" />
+                <polygon points="105,46 148,24 148,112 105,134" fill="#cbe3d6" stroke="#2d6a4f" strokeWidth="1.5" />
+                <polygon points="195,58 238,36 238,118 195,140" fill="#f4e5dc" stroke="#8b4528" strokeWidth="1.5" />
+                <polygon points="252,52 296,28 296,112 252,136" fill="#e6b89c" stroke="#8b4528" strokeWidth="1.5" />
+                <path
+                  d="M 70 86 C 100 68, 118 75, 130 78 C 160 85, 190 65, 218 82 C 242 95, 260 75, 276 72"
+                  fill="none"
+                  stroke="#2d6a4f"
+                  strokeWidth="3"
+                  strokeDasharray="4 2"
+                />
+              </svg>
+            </div>
+
+            <div>
+              <h3 style={{ fontSize: 24, fontWeight: 800, color: "#1f1b18", marginBottom: 12 }}>
+                Application Observability &amp; Code-to-Runtime Proof
+              </h3>
+              <p style={{ fontSize: 14.5, color: "#5c5349", lineHeight: 1.65, marginBottom: 18 }}>
+                Understand application health, synthetic user journeys, and vulnerability exploitability across modern
+                cloud microservices and legacy systems alike. XTRIKE connects application signals and AST taint paths
+                with underlying infrastructure, so you can spot bottlenecks faster, verify patches in isolated
+                sandboxes, and deliver a resilient user experience.
+              </p>
+              <Link
+                href="/cyber-monitoring"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  fontSize: 14,
+                  fontWeight: 800,
+                  color: "#8b4528",
+                  textDecoration: "none",
+                }}
+              >
+                <span>Explore Full-Stack Suites (Server, Network, DB &amp; UX)</span>
+                <ArrowRight size={15} />
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
     </div>

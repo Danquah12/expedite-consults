@@ -1,0 +1,73 @@
+{
+  "original_finding_id": 926,
+  "asset_and_origin_identity": "ASSET-00008 | http://192.168.195.139:80",
+  "approved_scope_and_roe": "Private lab host 192.168.195.139:80 authorized by ROE allow_private_networks=True.",
+  "validation_adapter_and_version": "EVE-NET-001 (eve-adapter/2.3.0)",
+  "test_timestamp": "2026-11-04T21:48:53.854742+00:00",
+  "preconditions": {
+    "vulnerability_class": "network_service_validation",
+    "affected_technology": "Apache",
+    "detected_version": "2.2.8",
+    "cve_applicable": true,
+    "preconditions_satisfied": true
+  },
+  "execution_transcript": {
+    "adapter_id": "EVE-NET-001",
+    "probed_endpoint": "http://192.168.195.139:80/",
+    "finding_key": "SMB-LIST-EP-SMB-ASSET-00008",
+    "probe_steps": [
+      {
+        "step": 1,
+        "protocol": "SMB/445",
+        "action": "NULL_SESSION_SHARE_LIST",
+        "shares": [
+          "print$",
+          "tmp",
+          "opt",
+          "IPC$",
+          "ADMIN$"
+        ]
+      },
+      {
+        "step": 2,
+        "protocol": "SMB/445",
+        "action": "READ_ONLY_DIR_LIST",
+        "share": "tmp",
+        "entries_verified": true
+      }
+    ]
+  },
+  "request_response_evidence": [
+    {
+      "step": 1,
+      "protocol": "SMB/445",
+      "action": "NULL_SESSION_SHARE_LIST",
+      "shares": [
+        "print$",
+        "tmp",
+        "opt",
+        "IPC$",
+        "ADMIN$"
+      ]
+    },
+    {
+      "step": 2,
+      "protocol": "SMB/445",
+      "action": "READ_ONLY_DIR_LIST",
+      "share": "tmp",
+      "entries_verified": true
+    }
+  ],
+  "expected_vs_actual": {
+    "expected": "Verify whether TCP 445 Samba service permits unauthenticated null-session share enumeration and directory listing.",
+    "actual": "Controlled null-session SMB bind to http://192.168.195.139:80/ (445/tcp) succeeded without credentials, enumerating shares (print$, tmp, opt, IPC$, ADMIN$) and listing world-writable /tmp directory entries.",
+    "reproduced_behavior": true
+  },
+  "execution_outcome": "CONFIRMED_UNAUTHORIZED_ACCESS",
+  "evidence_confidence": 0.95,
+  "exploitability_confidence": 0.92,
+  "impact_confidence": 0.9,
+  "operator_or_approving_identity": "secops-lead@expedite-consults.io",
+  "sha256_evidence_digest": "aadb3ff74fd7a99ed04cc0ac5b48b03d56692cdd8e9800dca61f8533e667e5d3",
+  "attempt_key": "EVE-ATT-00322-373"
+}

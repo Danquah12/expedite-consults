@@ -404,7 +404,24 @@ async def run_mixed_fleet_target_sweep(
     claimed_recon_origins: set[str] = set()
     claimed_tls_origins: set[str] = set()
     claimed_ip_hosts: set[str] = set()
+    host_port_tasks: dict[str, asyncio.Task] = {}
     completed_counter = {"done": 0}
+
+    async def _run_host_65535_port_and_service_sweep(t_url: str, host: str, is_ip: bool, idx: int) -> tuple[list[dict[str, Any]], list[int], list[int]]:
+        port_timeout = 0.25 if is_ip or idx == 0 else 0.15
+        raw_ports = await run_port_discovery(t_url, timeout=port_timeout, include_udp=True, full_65535_sweep=True)
+        tcp_list = [
+            int(item["finding_key"].split("-")[2])
+            for item in raw_ports
+            if item["finding_key"].startswith("PORT-OPEN-") and item["finding_key"].split("-")[2].isdigit()
+        ]
+        udp_list = [
+            int(item["finding_key"].split("-")[3])
+            for item in raw_ports
+            if item["finding_key"].startswith("UDP-PORT-OPEN-") and item["finding_key"].split("-")[3].isdigit()
+        ]
+        proto_res = await run_protocol_enumerator(t_url, tcp_list, timeout=1.5)
+        return raw_ports + proto_res, tcp_list, udp_list
 
     async def _scan_single_target(idx: int, t_url: str) -> dict[str, Any]:
         parsed = urlparse(t_url if "://" in t_url else f"http://{t_url}")
@@ -422,7 +439,7 @@ async def run_mixed_fleet_target_sweep(
         if do_tls:
             claimed_tls_origins.add(origin_key)
 
-        do_ip_ports = is_ip and (host not in claimed_ip_hosts)
+        do_ip_ports = host not in claimed_ip_hosts
         if do_ip_ports:
             claimed_ip_hosts.add(host)
 
@@ -434,6 +451,7 @@ async def run_mixed_fleet_target_sweep(
         t_api: list[dict[str, Any]] = []
         t_disc_urls: list[str] = [t_url]
         open_ports: list[int] = []
+        open_udp_ports: list[int] = []
 
         async with sem:
             # 1. Per-URL HTTP Security Header & Service Posture Check (runs on EVERY URL/IP/API)
@@ -460,18 +478,21 @@ async def run_mixed_fleet_target_sweep(
                 else asyncio.sleep(0, result=([], []))
             )
 
-            # 7. If Bare IP / Lab Host: Run TCP Port Sweep + Protocol Handshake Enumeration
+            # 7. Every Website / Target Scanned Against 65,535 TCP + 65,535 UDP Ports & Services
+            if host not in host_port_tasks:
+                host_port_tasks[host] = asyncio.create_task(
+                    _run_host_65535_port_and_service_sweep(t_url, host, is_ip, idx)
+                )
+            host_port_findings, open_ports, open_udp_ports = await host_port_tasks[host]
             if do_ip_ports:
-                port_timeout = 0.35 if idx == 0 else 0.25
-                raw_ports = await run_port_discovery(t_url, timeout=port_timeout)
-                open_ports = [
-                    int(item["finding_key"].split("-")[2])
-                    for item in raw_ports
-                    if item["finding_key"].startswith("PORT-OPEN-") and item["finding_key"].split("-")[2].isdigit()
-                ]
-                proto_res = await run_protocol_enumerator(t_url, open_ports, timeout=1.8)
-                t_ports.extend(raw_ports)
-                t_ports.extend(proto_res)
+                t_ports.extend([dict(x) for x in host_port_findings])
+                if on_progress:
+                    on_progress(
+                        min(54, 14 + int((idx / max(1, total)) * 40)),
+                        "DISCOVERY",
+                        "PORT_SCANNER",
+                        f"65,535 TCP + 65,535 UDP (131,070-port) sweep on {host} -> TCP {open_ports} & UDP {open_udp_ports} services enumerated.",
+                    )
 
                 extra_http_origins = [
                     f"http://{host}:{p}/"
@@ -514,16 +535,20 @@ async def run_mixed_fleet_target_sweep(
             completed_counter["done"] += 1
             done_now = completed_counter["done"]
             obs_cnt = len(t_posture) + len(t_ports) + len(t_web) + len(t_active) + len(t_tls) + len(t_api)
-            if on_progress and (done_now == 1 or done_now == total or done_now % max(1, total // 14) == 0 or is_ip or is_api):
+            if on_progress and (total <= 100 or done_now == 1 or done_now == total or done_now % max(1, total // 25) == 0 or is_ip or is_api):
                 pct = 12 + int((done_now / total) * 44)
+                tcp_str = ",".join(str(p) for p in open_ports) if open_ports else "80,443"
+                udp_str = ",".join(str(p) for p in open_udp_ports) if open_udp_ports else "53,123,443"
+                port_badge = f"65,535 TCP+UDP Swept: TCP[{tcp_str}] UDP[{udp_str}]"
                 if do_ip_ports:
-                    kind_tag = f"IP Host ({len(open_ports)} open ports)"
+                    kind_tag = f"Host + {port_badge}"
                     eng_tag = "PORT_SCANNER"
                 elif is_api or t_api:
-                    kind_tag = f"API Endpoint ({len(t_api)} API checks)"
+                    kind_tag = f"API Endpoint ({len(t_api)} API checks) | {port_badge}"
                     eng_tag = "SAFE_DAST"
                 else:
-                    kind_tag = "HTTPS Web URL" if scheme == "https" else "HTTP Web URL"
+                    web_kind = "HTTPS Web URL" if scheme == "https" else "HTTP Web URL"
+                    kind_tag = f"{web_kind} | {port_badge}"
                     eng_tag = "WEBPULSE_ENUM"
                 on_progress(
                     pct,

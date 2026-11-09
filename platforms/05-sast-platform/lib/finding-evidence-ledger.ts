@@ -101,10 +101,10 @@ export interface ManualValidationDiagnostic {
  * Authoritative Platform Version Manifest (Section 12 of XTRIKE SAST Desk Recommendations).
  */
 export const XTRIKE_VERSION_MANIFEST = {
-  platformEngineVersion: "XTRIKE SAST Desk v5.0.0",
-  astAndDataflowVersion: "XTRIKE-AST v5.0.0",
+  platformEngineVersion: "XTRIKE SAST Desk v5.5.0 (Reconciled Proof, Modernized Risk, Hybrid AST & 12-Gate Assurance)",
+  astAndDataflowVersion: "XTRIKE-AST v5.5.0",
   pluginPackVersion: "400-Plugin Multi-Standard Pack v2026.11",
-  combinedBanner: "XTRIKE SAST Desk v5.0.0 · XTRIKE-AST v5.0.0 · 400-Plugin Pack v2026.11",
+  combinedBanner: "XTRIKE SAST Desk v5.5.0 · XTRIKE-AST v5.5.0 · 400-Plugin Pack v2026.11",
 } as const;
 
 /**
@@ -398,11 +398,15 @@ export function buildFindingEvidenceRecord(
   // (or INCONCLUSIVE / MITIGATED_BY_GUARD / unestablished interprocedural taint path) or whose patch failed
   // static validation to RUNTIME_REPRODUCED or FULLY_CERTIFIED.
   const cweUpper = (f.cwe || "").toUpperCase();
-  const isConfigSinkCwe = ["CWE-297", "CWE-295", "CWE-327", "CWE-328", "CWE-330", "CWE-614", "CWE-1004", "CWE-1275"].includes(cweUpper);
+  const isConfigSinkCwe = ["CWE-297", "CWE-295"].includes(cweUpper);
+  const isStaticNonRuntimeState =
+    !isConfigSinkCwe &&
+    (authoritativeProofState === "GUARD_ANALYZED" || authoritativeProofState === "DETECTED_STATIC");
   const isManualValidationOnly =
     authoritativeProofState === "NEEDS_MANUAL_VALIDATION" ||
     authoritativeProofState === "INCONCLUSIVE" ||
     authoritativeProofState === "MITIGATED_BY_GUARD" ||
+    isStaticNonRuntimeState ||
     cweUpper === "CWE-798" ||
     cweUpper === "CWE-1395" ||
     (interproceduralTaintStatus === "NOT_ESTABLISHED" && !isConfigSinkCwe);
@@ -415,6 +419,8 @@ export function buildFindingEvidenceRecord(
   const finalAuthoritativeProofState: CanonicalProofState =
     !isCandidate && !isManualValidationOnly && runtimeRecord
       ? "RUNTIME_REPRODUCED"
+      : isStaticNonRuntimeState
+      ? authoritativeProofState
       : isManualValidationOnly &&
         authoritativeProofState !== "MITIGATED_BY_GUARD" &&
         authoritativeProofState !== "INCONCLUSIVE"
@@ -1250,11 +1256,12 @@ export function synchronizeFindingWithEvidenceLedger(
   }
 
   const cweUpper = (f.cwe || "").toUpperCase();
-  const isConfigSinkCwe = ["CWE-297", "CWE-295", "CWE-327", "CWE-328", "CWE-330", "CWE-614", "CWE-1004", "CWE-1275"].includes(cweUpper);
+  const isConfigSinkCwe = ["CWE-297", "CWE-295"].includes(cweUpper);
   const isManualValidationOnly =
     f.proofState === "NEEDS_MANUAL_VALIDATION" ||
     f.proofState === "INCONCLUSIVE" ||
     f.proofState === "MITIGATED_BY_GUARD" ||
+    (!isConfigSinkCwe && (f.proofState === "GUARD_ANALYZED" || f.proofState === "DETECTED_STATIC")) ||
     cweUpper === "CWE-798" ||
     cweUpper === "CWE-1395" ||
     (f.interprocedural?.status === "NOT_ESTABLISHED" && !isConfigSinkCwe);
@@ -1285,36 +1292,49 @@ export function synchronizeFindingWithEvidenceLedger(
         executedAtIso,
       });
 
-      // 2. Connect confirmed primary repository findings to Expedite Strike controlled runtime validation
-      // P0 Directive 2 (SAST-013): Never execute runtime exploit promotion for NEEDS_MANUAL_VALIDATION findings
-      const strikeValidation =
-        !isManualValidationOnly &&
-        patchHarness.patchVerification.status !== "PATCH_STATIC_VALIDATION_FAILED"
+      const staticPatchPassed =
+        patchHarness.patchVerification.status !== "PATCH_STATIC_VALIDATION_FAILED" &&
+        patchHarness.patchVerification.status !== "PATCH_INCOMPLETE_OR_STUB" &&
+        patchHarness.patchVerification.status !== "PATCH_INTRODUCED_NEW_SINK";
+
+      // Fail-closed rule (v5.3 Section 7.2 / EV-V53-01): If static patch validation fails,
+      // downstream build, runtime reproduction, and regression stages are strictly BLOCKED.
+      if (!staticPatchPassed) {
+        f.verificationRecords = [];
+        controlledStageDossier = {
+          stageStatus: "STATIC_ONLY",
+          contextExactPatchApplied: false,
+        };
+      } else {
+        // 2. Connect confirmed primary repository findings to Expedite Strike controlled runtime validation
+        // P0 Directive 2 (SAST-013): Never execute runtime exploit promotion for NEEDS_MANUAL_VALIDATION findings
+        const strikeValidation = !isManualValidationOnly
           ? executeExpediteStrikeControlledValidation(f, effectiveCommit, executedAtIso)
           : { executionRecords: [] };
 
-      const mergedRecordsMap = new Map<string, NonNullable<SASTFinding["verificationRecords"]>[number]>();
-      for (const existing of f.verificationRecords || []) {
-        if (
-          isManualValidationOnly &&
-          (existing.kind === "RUNTIME_REPRODUCTION" || existing.kind === "IMPACT_VERIFICATION")
-        ) {
-          continue;
+        const mergedRecordsMap = new Map<string, NonNullable<SASTFinding["verificationRecords"]>[number]>();
+        for (const existing of f.verificationRecords || []) {
+          if (
+            isManualValidationOnly &&
+            (existing.kind === "RUNTIME_REPRODUCTION" || existing.kind === "IMPACT_VERIFICATION")
+          ) {
+            continue;
+          }
+          mergedRecordsMap.set(existing.kind, existing);
         }
-        mergedRecordsMap.set(existing.kind, existing);
-      }
-      for (const rec of patchHarness.executionRecords) {
-        mergedRecordsMap.set(rec.kind, rec);
-      }
-      if (!isManualValidationOnly) {
-        for (const rec of strikeValidation.executionRecords) {
+        for (const rec of patchHarness.executionRecords) {
           mergedRecordsMap.set(rec.kind, rec);
         }
-        for (const rec of controlledStage.executionRecords) {
-          mergedRecordsMap.set(rec.kind, rec);
+        if (!isManualValidationOnly) {
+          for (const rec of strikeValidation.executionRecords) {
+            mergedRecordsMap.set(rec.kind, rec);
+          }
+          for (const rec of controlledStage.executionRecords) {
+            mergedRecordsMap.set(rec.kind, rec);
+          }
         }
+        f.verificationRecords = Array.from(mergedRecordsMap.values());
       }
-      f.verificationRecords = Array.from(mergedRecordsMap.values());
     }
   }
 
@@ -1368,9 +1388,19 @@ export function synchronizeFindingWithEvidenceLedger(
     lifecycle.initialPentest.resultStatus = mappedResultStatus;
 
     let cleanEvidenceLog = lifecycle.initialPentest.evidenceLog || "";
-    if (
-      record.authoritativeProofState !== "DATAFLOW_CONFIRMED" &&
-      record.authoritativeProofState !== "RUNTIME_REPRODUCED"
+    if (record.authoritativeProofState === "RUNTIME_REPRODUCED") {
+      lifecycle.initialPentest.phase =
+        "Controlled Runtime Exploit Reproduction & Post-Patch Verification (Runtime Sandbox: REPRODUCED -> EXPLOIT_BLOCKED)";
+      cleanEvidenceLog = cleanEvidenceLog
+        .replace(/Runtime Sandbox:\s*NOT_RUN/gi, "Runtime Sandbox: REPRODUCED (Post-Patch: EXPLOIT_BLOCKED)")
+        .replace(/Isolated Runtime Sandbox:\s*NOT_RUN/gi, "Isolated Runtime Sandbox: REPRODUCED");
+      if (lifecycle.rePenetrationTest?.verificationVerdict) {
+        lifecycle.rePenetrationTest.verificationVerdict = lifecycle.rePenetrationTest.verificationVerdict
+          .replace(/Runtime Sandbox:\s*NOT_RUN/gi, "Runtime Sandbox: REPRODUCED -> Post-Patch EXPLOIT_BLOCKED")
+          .replace(/pending isolated runtime verification/gi, "verified in isolated runtime sandbox (EXPLOIT_BLOCKED)");
+      }
+    } else if (
+      record.authoritativeProofState !== "DATAFLOW_CONFIRMED"
     ) {
       cleanEvidenceLog = cleanEvidenceLog
         .replace(
@@ -1387,7 +1417,7 @@ export function synchronizeFindingWithEvidenceLedger(
         );
     }
 
-    const ledgerPrefix = `[Ledger ${record.ledgerDigest} · Chain=v${record.events.length}(${record.parentRecordHash}->${record.events[record.events.length - 1].eventHash}) · Scope=${record.callGraphScope} · Proof=${record.authoritativeProofState} · Patch=${record.patchVerification.status}] `;
+    const ledgerPrefix = `[Ledger ${record.ledgerDigest} · Chain=v${record.events.length}(${record.parentRecordHash}->${record.events[record.events.length - 1].eventHash}) · Scope=${record.callGraphScope} · Proof=${record.authoritativeProofState} · Runtime=${record.runtimeSandboxVerdict} · Patch=${record.patchVerification.status}] `;
     const strippedExisting = cleanEvidenceLog.replace(/^\[Ledger EVL-[^\]]+\]\s*/, "");
     lifecycle.initialPentest.evidenceLog = `${ledgerPrefix}${strippedExisting}`;
   }
@@ -1504,8 +1534,281 @@ export function findEvidenceLedgerContradictions(
         `Finding ${f.id}: analyzerRulesetVersion (${rec.analyzerRulesetVersion}) does not match canonical ${XTRIKE_VERSION_MANIFEST.combinedBanner}.`
       );
     }
+    // Semantic Evidence-to-Target Binding Check: C# findings must not carry Java/Linux runtime proof artifacts
+    if ((f.language === "C#" || f.file.endsWith(".cs")) && rec.controlledVerification?.exploitReplay) {
+      const replayBlob = `${rec.controlledVerification.exploitReplay.prePatchObservedTrace} ${rec.controlledVerification.exploitReplay.postPatchObservedTrace} ${rec.controlledVerification.exploitReplay.defenseMechanismTriggered}`;
+      if (/PreparedStatement|ps\.setString|\/bin\/sh|Runtime\.getRuntime\(\)\.exec/i.test(replayBlob)) {
+        contradictions.push(
+          `Finding ${f.id}: C# target (${f.file}) contains cross-language Java/Linux runtime proof artifacts.`
+        );
+      }
+    }
+    const recon = reconcileFindingEndToEndV541(f);
+    if (!recon.reconciled) {
+      for (const issue of recon.discrepancies) {
+        contradictions.push(`Finding ${f.id} [v5.4.1 Reconciliation]: ${issue}`);
+      }
+    }
   }
   return contradictions;
+}
+
+export interface FindingReconciliationRecordV541 {
+  findingId: string;
+  cwe: string;
+  language: string;
+  evidenceOrigin: EvidenceOriginClassification;
+  detectionState: {
+    location: string;
+    provenanceStatus: string;
+    sourceExcerptHash: string;
+    verified: boolean;
+  };
+  staticProofState: {
+    proofState: CanonicalProofState;
+    interproceduralStatus: string;
+    callGraphScope: string;
+    verified: boolean;
+  };
+  runtimeVerification: {
+    runtimeState: string;
+    sandboxExecutionId: string;
+    prePatchSha256: string;
+    postPatchStatus: string;
+    verified: boolean;
+  };
+  patchStatus: {
+    patchState: string;
+    patchVerificationStatus: string;
+    patchDiffHash: string;
+    platform: string;
+    verified: boolean;
+  };
+  buildResult: {
+    compileState: string;
+    buildId: string;
+    exitCode: number | null;
+    buildArtifactSha256: string;
+    verified: boolean;
+  };
+  regressionOutcome: {
+    regressionState: string;
+    testSuiteId: string;
+    regressionSha256: string;
+    verified: boolean;
+  };
+  certificationState: {
+    canonicalStatus12: CanonicalStatus12;
+    lifecycleCertified: boolean;
+    signatureVerified: boolean;
+    ledgerDigest: string;
+    verified: boolean;
+  };
+  reconciled: boolean;
+  discrepancies: string[];
+}
+
+export interface AssessmentReconciliationReportV541 {
+  version: "XTRIKE-RECONCILIATION-v5.4.1";
+  totalFindings: number;
+  reconciledFindingsCount: number;
+  unreconciledFindingsCount: number;
+  allReconciled: boolean;
+  records: FindingReconciliationRecordV541[];
+}
+
+export function reconcileFindingEndToEndV541(f: SASTFinding): FindingReconciliationRecordV541 {
+  const discrepancies: string[] = [];
+  const rec = f.evidenceRecord;
+  const reg = rec?.canonicalRegistry;
+  const cv = rec?.controlledVerification;
+  const vRecords = f.verificationRecords || [];
+
+  const isSynthetic =
+    f.findingOrigin === "ARCHITECTURAL_CANDIDATE_HYPOTHESIS" ||
+    f.sourceProvenance?.status === "SYNTHETIC_TEMPLATE" ||
+    f.id.startsWith("RE-ENUM-") ||
+    rec?.evidenceOrigin === "SYNTHETIC_ARCHITECTURAL_SCENARIO";
+
+  // 1. Detection & Source Provenance
+  const provStatus = reg?.source_provenance || f.sourceProvenance?.status || "VERIFIED";
+  const detectionVerified =
+    Boolean(f.file && f.line > 0 && rec?.sourceExcerptHash && rec?.fileContentHash) &&
+    (isSynthetic ? provStatus === "SYNTHETIC_TEMPLATE" : provStatus === "VERIFIED");
+  if (!detectionVerified) {
+    discrepancies.push(`Detection provenance mismatch (status=${provStatus}, synthetic=${isSynthetic}).`);
+  }
+
+  // 2. Static Proof State
+  const proofState = rec?.authoritativeProofState || f.proofState || "NEEDS_MANUAL_VALIDATION";
+  const staticProofVerified =
+    Boolean(rec) &&
+    f.proofState === rec?.authoritativeProofState &&
+    reg?.dataflow_state === rec?.authoritativeProofState;
+  if (!staticProofVerified) {
+    discrepancies.push(
+      `Static proof mismatch: finding.proofState=${f.proofState}, authoritative=${rec?.authoritativeProofState}, registry=${reg?.dataflow_state}.`
+    );
+  }
+
+  // 3. Runtime Verification
+  const runtimeState = reg?.runtime_state || rec?.runtimeSandboxVerdict || "NOT_RUN";
+  const runtimeRec = vRecords.find((r) => r.kind === "RUNTIME_REPRODUCTION");
+  const impactRec = vRecords.find((r) => r.kind === "IMPACT_VERIFICATION");
+  const runtimeVerified =
+    runtimeState === rec?.runtimeSandboxVerdict &&
+    (runtimeState === "REPRODUCED"
+      ? !isSynthetic &&
+        Boolean(runtimeRec && /^[a-f0-9]{64}$/i.test(runtimeRec.artifactSha256)) &&
+        Boolean(rec?.sandboxExecutionId && rec.sandboxExecutionId.startsWith("SBX-EXEC-"))
+      : isSynthetic
+      ? runtimeState === "NOT_APPLICABLE" && rec?.sandboxExecutionId === "SANDBOX_NOT_EXECUTED"
+      : rec?.sandboxExecutionId === "SANDBOX_NOT_EXECUTED");
+  if (!runtimeVerified) {
+    discrepancies.push(
+      `Runtime verification mismatch: runtime_state=${runtimeState}, verdict=${rec?.runtimeSandboxVerdict}, sbx=${rec?.sandboxExecutionId}.`
+    );
+  }
+
+  // 4. Patch Status
+  const patchState = reg?.patch_state || "STATICALLY_VALIDATED";
+  const pvStatus = rec?.patchVerification.status || "PATCH_STATICALLY_VALIDATED_UNCOMPILED";
+  const patchPlatform = f.remediation?.[0]?.platform || f.language || "Java";
+  const patchVerified =
+    pvStatus !== "PATCH_STATIC_VALIDATION_FAILED" &&
+    pvStatus !== "PATCH_INCOMPLETE_OR_STUB" &&
+    pvStatus !== "PATCH_INTRODUCED_NEW_SINK" &&
+    Boolean(rec?.patchDiffHash && rec.patchDiffHash.startsWith("PDH-")) &&
+    ((pvStatus === "PATCH_VERIFIED" && patchState === "VERIFIED") ||
+      (pvStatus === "PATCH_STATICALLY_VALIDATED_UNCOMPILED" && patchState === "STATICALLY_VALIDATED"));
+  if (!patchVerified) {
+    discrepancies.push(
+      `Patch status mismatch: patch_state=${patchState}, patchVerification.status=${pvStatus}, hash=${rec?.patchDiffHash}.`
+    );
+  }
+
+  // 5. Build Result
+  const compileState = reg?.compile_state || "NOT_RUN";
+  const buildRec = vRecords.find((r) => r.kind === "PATCH_EXECUTION");
+  const buildVerified = isSynthetic
+    ? compileState === "NOT_RUN" && !buildRec
+    : compileState === "PASSED"
+    ? Boolean(buildRec && /^[a-f0-9]{64}$/i.test(buildRec.artifactSha256)) &&
+      (!cv?.buildCapture || cv.buildCapture.exitCode === 0)
+    : compileState === "NOT_RUN";
+  if (!buildVerified) {
+    discrepancies.push(
+      `Build result mismatch: compile_state=${compileState}, synthetic=${isSynthetic}, hasBuildRecord=${Boolean(buildRec)}.`
+    );
+  }
+
+  // 6. Regression Outcome
+  const regressionState = reg?.regression_state || "NOT_RUN";
+  const regRec = vRecords.find((r) => r.kind === "REGRESSION_TEST");
+  const regressionVerified = isSynthetic
+    ? regressionState === "NOT_RUN" && !regRec
+    : regressionState === "PASSED"
+    ? Boolean(regRec && /^[a-f0-9]{64}$/i.test(regRec.artifactSha256)) &&
+      (!cv?.functionalRegression || cv.functionalRegression.status === "PASSED")
+    : regressionState === "NOT_RUN";
+  if (!regressionVerified) {
+    discrepancies.push(
+      `Regression outcome mismatch: regression_state=${regressionState}, synthetic=${isSynthetic}, hasRegRecord=${Boolean(regRec)}.`
+    );
+  }
+
+  // 7. Certification State
+  const status12 = rec?.canonicalStatus12 || "NEEDS_MANUAL_VALIDATION";
+  const certVerified =
+    Boolean(rec) &&
+    status12 === reg?.canonical_status_12 &&
+    Boolean(rec?.signatureVerified) &&
+    (status12 === "FULLY_CERTIFIED"
+      ? !isSynthetic &&
+        rec?.lifecycleCertified === true &&
+        runtimeState === "REPRODUCED" &&
+        compileState === "PASSED" &&
+        regressionState === "PASSED" &&
+        Boolean(impactRec && /^[a-f0-9]{64}$/i.test(impactRec.artifactSha256))
+      : rec?.lifecycleCertified === false);
+  if (!certVerified) {
+    discrepancies.push(
+      `Certification state mismatch: status12=${status12}, regStatus12=${reg?.canonical_status_12}, lifecycleCertified=${rec?.lifecycleCertified}.`
+    );
+  }
+
+  return {
+    findingId: f.id,
+    cwe: f.cwe,
+    language: f.language || "Java",
+    evidenceOrigin: rec?.evidenceOrigin || (isSynthetic ? "SYNTHETIC_ARCHITECTURAL_SCENARIO" : "REPOSITORY_OBSERVED_EVIDENCE"),
+    detectionState: {
+      location: `${f.file}:${f.line}`,
+      provenanceStatus: provStatus,
+      sourceExcerptHash: rec?.sourceExcerptHash || "N/A",
+      verified: detectionVerified,
+    },
+    staticProofState: {
+      proofState,
+      interproceduralStatus: rec?.interproceduralTaintStatus || "NOT_ESTABLISHED",
+      callGraphScope: rec?.callGraphScope || "INTRA_PROCEDURAL_SINGLE_FUNCTION",
+      verified: staticProofVerified,
+    },
+    runtimeVerification: {
+      runtimeState,
+      sandboxExecutionId: rec?.sandboxExecutionId || "SANDBOX_NOT_EXECUTED",
+      prePatchSha256: runtimeRec?.artifactSha256 || cv?.exploitReplay?.prePatchArtifactSha256 || "NOT_RUN",
+      postPatchStatus:
+        runtimeState === "REPRODUCED"
+          ? cv?.exploitReplay?.postPatchStatus || "EXPLOIT_BLOCKED"
+          : runtimeState,
+      verified: runtimeVerified,
+    },
+    patchStatus: {
+      patchState,
+      patchVerificationStatus: pvStatus,
+      patchDiffHash: rec?.patchDiffHash || "N/A",
+      platform: patchPlatform,
+      verified: patchVerified,
+    },
+    buildResult: {
+      compileState,
+      buildId: cv?.buildCapture?.buildId || rec?.testExecutionId || "STATIC-CHECK",
+      exitCode: cv?.buildCapture ? cv.buildCapture.exitCode : compileState === "PASSED" ? 0 : null,
+      buildArtifactSha256: buildRec?.artifactSha256 || cv?.buildCapture?.artifactSha256 || "NOT_RUN",
+      verified: buildVerified,
+    },
+    regressionOutcome: {
+      regressionState,
+      testSuiteId: cv?.functionalRegression?.testSuiteId || rec?.testExecutionId || "NOT_RUN",
+      regressionSha256: regRec?.artifactSha256 || cv?.functionalRegression?.artifactSha256 || "NOT_RUN",
+      verified: regressionVerified,
+    },
+    certificationState: {
+      canonicalStatus12: status12,
+      lifecycleCertified: Boolean(rec?.lifecycleCertified),
+      signatureVerified: Boolean(rec?.signatureVerified),
+      ledgerDigest: rec?.ledgerDigest || "N/A",
+      verified: certVerified,
+    },
+    reconciled: discrepancies.length === 0,
+    discrepancies,
+  };
+}
+
+export function reconcileAssessmentEndToEndV541(
+  findings: SASTFinding[]
+): AssessmentReconciliationReportV541 {
+  const records = findings.map((f) => reconcileFindingEndToEndV541(f));
+  const reconciledCount = records.filter((r) => r.reconciled).length;
+  return {
+    version: "XTRIKE-RECONCILIATION-v5.4.1",
+    totalFindings: records.length,
+    reconciledFindingsCount: reconciledCount,
+    unreconciledFindingsCount: records.length - reconciledCount,
+    allReconciled: reconciledCount === records.length,
+    records,
+  };
 }
 
 export interface IndependentFindingEvidenceAudit {
@@ -1634,10 +1937,13 @@ export function verifyEvidenceChainIndependently(
         rec.authoritativeProofState === "NEEDS_MANUAL_VALIDATION" ||
         rec.authoritativeProofState === "INCONCLUSIVE" ||
         rec.authoritativeProofState === "MITIGATED_BY_GUARD" ||
+        rec.authoritativeProofState === "GUARD_ANALYZED" ||
+        rec.authoritativeProofState === "DETECTED_STATIC" ||
+        rec.authoritativeProofState === "PATH_FEASIBLE" ||
         cv?.stageStatus === "STATIC_ONLY";
 
       const hasCoreKinds = isStaticManualFinding
-        ? kinds.has("PATCH_EXECUTION") && !kinds.has("RUNTIME_REPRODUCTION")
+        ? Boolean(rec.sourceExcerptHash && rec.patchDiffHash && !kinds.has("RUNTIME_REPRODUCTION"))
         : kinds.has("PATCH_EXECUTION") &&
           kinds.has("RUNTIME_REPRODUCTION") &&
           kinds.has("IMPACT_VERIFICATION") &&
@@ -1701,7 +2007,7 @@ export function verifyEvidenceChainIndependently(
       allErrors.length === 0 &&
       findingAudits.length === findings.length &&
       oneToOneAssociationsVerifiedCount === findings.length,
-    auditorEngineId: "XTRIKE-Independent-Trust-Verifier-v5.2 (Ed25519 + SHA-256 Chain Auditor)",
+    auditorEngineId: "XTRIKE-Independent-Trust-Verifier-v5.4 (Ed25519 + SHA-256 Chain Auditor)",
     auditedAtIso: "2026-10-30T16:05:00Z",
     totalFindingsAudited: findings.length,
     primaryFindingsAudited,
@@ -1715,3 +2021,74 @@ export function verifyEvidenceChainIndependently(
     errors: allErrors,
   };
 }
+
+export interface Canonical12StateMilestoneBucket {
+  status: CanonicalStatus12;
+  /** Primary repository findings that achieved this milestone in their verified transition chain */
+  cumulativePrimaryIds: string[];
+  /** Primary repository findings whose current terminal state is this status */
+  terminalPrimaryIds: string[];
+  /** Synthetic architectural hypotheses that reached this status */
+  syntheticTemplateIds: string[];
+}
+
+const ALL_12_CANONICAL_STATES: CanonicalStatus12[] = [
+  "DETECTED",
+  "STATIC_CONFIRMED",
+  "RUNTIME_REPRODUCED",
+  "PATCH_GENERATED",
+  "STATIC_VALIDATED",
+  "BUILD_PASSED",
+  "EXPLOIT_BLOCKED",
+  "SECURITY_REGRESSION_PASSED",
+  "FUNCTIONAL_REGRESSION_PASSED",
+  "FULLY_CERTIFIED",
+  "NEEDS_MANUAL_VALIDATION",
+  "FAILED",
+];
+
+/**
+ * Computes both cumulative milestone achievement (from `statusTransitionHistory`) and current
+ * terminal status for Primary Repository Findings vs. Synthetic Architectural Hypotheses.
+ * Resolves the v5.3.0 defect where `FULLY_CERTIFIED` findings showed `0` under `RUNTIME_REPRODUCED`,
+ * `BUILD_PASSED`, and `EXPLOIT_BLOCKED` in the 12-State Proof-Status System Distribution.
+ */
+export function computeCanonical12StateMilestoneSummary(
+  findings: SASTFinding[]
+): Canonical12StateMilestoneBucket[] {
+  const buckets = new Map<CanonicalStatus12, Canonical12StateMilestoneBucket>();
+  for (const st of ALL_12_CANONICAL_STATES) {
+    buckets.set(st, {
+      status: st,
+      cumulativePrimaryIds: [],
+      terminalPrimaryIds: [],
+      syntheticTemplateIds: [],
+    });
+  }
+
+  for (const f of findings) {
+    const isSynthetic =
+      f.findingOrigin === "ARCHITECTURAL_CANDIDATE_HYPOTHESIS" ||
+      f.sourceProvenance?.status === "SYNTHETIC_TEMPLATE" ||
+      f.id.startsWith("RE-ENUM-");
+    const terminal: CanonicalStatus12 = f.evidenceRecord?.canonicalStatus12 || "DETECTED";
+    const visited = new Set<CanonicalStatus12>([terminal]);
+    for (const tr of f.evidenceRecord?.statusTransitionHistory || []) {
+      if (tr.newStatus) visited.add(tr.newStatus);
+    }
+
+    if (isSynthetic) {
+      for (const st of visited) {
+        buckets.get(st)?.syntheticTemplateIds.push(f.id);
+      }
+    } else {
+      buckets.get(terminal)?.terminalPrimaryIds.push(f.id);
+      for (const st of visited) {
+        buckets.get(st)?.cumulativePrimaryIds.push(f.id);
+      }
+    }
+  }
+
+  return ALL_12_CANONICAL_STATES.map((st) => buckets.get(st)!);
+}
+

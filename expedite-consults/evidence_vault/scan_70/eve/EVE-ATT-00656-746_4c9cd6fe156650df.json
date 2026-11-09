@@ -1,0 +1,52 @@
+{
+  "original_finding_id": 6675,
+  "asset_and_origin_identity": "ASSET-00470 | https://gandalf.lakera.ai:443",
+  "approved_scope_and_roe": "Host gandalf.lakera.ai:443 matches ROE authorized origin 'https://gandalf.lakera.ai:443'.",
+  "validation_adapter_and_version": "EVE-NET-001 (eve-adapter/2.3.0)",
+  "test_timestamp": "2026-11-09T03:03:27.762170+00:00",
+  "preconditions": {
+    "vulnerability_class": "network_service_validation",
+    "affected_technology": "web-application",
+    "detected_version": null,
+    "cve_applicable": false,
+    "preconditions_satisfied": true
+  },
+  "execution_transcript": {
+    "adapter_id": "EVE-NET-001",
+    "adapter_version": "eve-adapter/2.3.0",
+    "probed_endpoint": "https://gandalf.lakera.ai/",
+    "finding_key": "UDP-PORT-OPEN-53-DNS::T44_GANDALF_LAKERA_AI",
+    "safety_mode": "READ_ONLY_DETERMINISTIC",
+    "timestamp": "2026-11-09T03:03:27.760310+00:00",
+    "probe_steps": [
+      {
+        "step": 1,
+        "action": "EVALUATE_CONTROL_STATE",
+        "target": "https://gandalf.lakera.ai/",
+        "title": "[gandalf.lakera.ai] Service Port Open: 53/UDP (DNS) on gandalf.lakera.ai [65,535 UDP Sweep]",
+        "observation_excerpt": "[Target: https://gandalf.lakera.ai/] Full 65,535 UDP port & datagram service sweep verified active service on port 53/UDP (DNS) on target gandalf.lakera.ai.\nCaptured UDP Service Telemetry: DNS 53/UDP Authoritative/Resolver Verified (gandalf.lakera.ai -> 216.150.16.193). Domain Na"
+      }
+    ]
+  },
+  "request_response_evidence": [
+    {
+      "step": 1,
+      "action": "EVALUATE_CONTROL_STATE",
+      "target": "https://gandalf.lakera.ai/",
+      "title": "[gandalf.lakera.ai] Service Port Open: 53/UDP (DNS) on gandalf.lakera.ai [65,535 UDP Sweep]",
+      "observation_excerpt": "[Target: https://gandalf.lakera.ai/] Full 65,535 UDP port & datagram service sweep verified active service on port 53/UDP (DNS) on target gandalf.lakera.ai.\nCaptured UDP Service Telemetry: DNS 53/UDP Authoritative/Resolver Verified (gandalf.lakera.ai -> 216.150.16.193). Domain Na"
+    }
+  ],
+  "expected_vs_actual": {
+    "expected": "Verify whether missing control or configuration allows direct unauthorized boundary crossing.",
+    "actual": "Configuration/control gap confirmed at HTTP layer; no direct unauthorized data access or code execution resulted.",
+    "reproduced_behavior": false
+  },
+  "execution_outcome": "OBSERVATION_CONFIRMED",
+  "evidence_confidence": 0.88,
+  "exploitability_confidence": 0.15,
+  "impact_confidence": 0.05,
+  "operator_or_approving_identity": "secops-lead@expedite-consults.io",
+  "sha256_evidence_digest": "2ad6cfbc72028baba8b4703916fac7fa78665fe174ae0620812fb3398f00a173",
+  "attempt_key": "EVE-ATT-00656-746"
+}

@@ -129,7 +129,30 @@ function mergeCloudConversationsIntoMemory(cloudConvos: CloudDirectConversation[
             const existing = msgMap.get(m.id);
             if (existing) {
                 const mergedReadBy = Array.from(new Set([...(existing.readBy || []), ...(m.readBy || [])]));
-                msgMap.set(m.id, { ...existing, ...m, readBy: mergedReadBy });
+                const mergedReactions: Record<string, string[]> = { ...(existing.reactions || {}) };
+                if (m.reactions) {
+                    for (const [rKey, rUsers] of Object.entries(m.reactions)) {
+                        if (Array.isArray(rUsers)) {
+                            mergedReactions[rKey] = Array.from(
+                                new Set([...(mergedReactions[rKey] || []), ...rUsers])
+                            );
+                        }
+                    }
+                }
+                const mergedComments = [...(existing.comments || [])];
+                for (const c of m.comments || []) {
+                    if (!mergedComments.some((ec) => ec.id === c.id || (ec.author === c.author && ec.text === c.text))) {
+                        mergedComments.push(c);
+                    }
+                }
+                msgMap.set(m.id, {
+                    ...existing,
+                    ...m,
+                    readBy: mergedReadBy,
+                    reactions:
+                        Object.keys(mergedReactions).length > 0 ? mergedReactions : existing.reactions || m.reactions,
+                    comments: mergedComments.length > 0 ? mergedComments : existing.comments || m.comments,
+                });
             } else {
                 msgMap.set(m.id, m);
             }
@@ -476,8 +499,17 @@ export async function POST(request: Request) {
 
         // Reactions (like / thumbs up / thumbs down) and comments on a direct message, visible to both people
         if (action === 'react_message' || action === 'comment_message') {
-            const { messageId, reaction, commentText, senderAvatar: actorAvatar } = body as {
+            const {
+                messageId,
+                messageText,
+                messageSenderName,
+                reaction,
+                commentText,
+                senderAvatar: actorAvatar,
+            } = body as {
                 messageId?: string;
+                messageText?: string;
+                messageSenderName?: string;
                 reaction?: string;
                 commentText?: string;
                 senderAvatar?: string;
@@ -488,6 +520,8 @@ export async function POST(request: Request) {
             }
             let foundConvo: CloudDirectConversation | null = null;
             let foundMsg: CloudDirectMessage | null = null;
+
+            // 1. Search by exact messageId across all bilateral conversations
             for (const c of Object.values(bilateralConversationsByPairKey)) {
                 const m = (c.messages || []).find((x) => x.id === messageId);
                 if (m) {
@@ -496,6 +530,85 @@ export async function POST(request: Request) {
                     break;
                 }
             }
+
+            // 2. Fallback: if message had an optimistic/local ID (e.g. local_dm_... or local-...), match by threadId/recipientName + messageText
+            if (!foundMsg && messageText) {
+                const cleanTargetText = String(messageText).trim();
+                const candidateConvo =
+                    (threadId && bilateralConversationsByPairKey[threadId]) ||
+                    (recipientName ? bilateralConversationsByPairKey[makeDmPairKey(actorName, recipientName)] : null);
+
+                const searchPool = candidateConvo
+                    ? [candidateConvo, ...Object.values(bilateralConversationsByPairKey)]
+                    : Object.values(bilateralConversationsByPairKey);
+
+                for (const c of searchPool) {
+                    const isPart =
+                        doesParticipantMatch(c.participantA.name, actorName, c.participantA.email, senderEmail) ||
+                        doesParticipantMatch(c.participantB.name, actorName, c.participantB.email, senderEmail);
+                    if (!isPart) continue;
+                    // Search from newest to oldest for matching message text
+                    const msgs = c.messages || [];
+                    for (let i = msgs.length - 1; i >= 0; i--) {
+                        const m = msgs[i];
+                        if (m.text.trim() === cleanTargetText) {
+                            if (!messageSenderName || doesParticipantMatch(m.senderName, messageSenderName)) {
+                                foundConvo = c;
+                                foundMsg = m;
+                                break;
+                            }
+                        }
+                    }
+                    if (foundMsg) break;
+                }
+            }
+
+            // 3. If the message only existed in the user's local bilateral store and not yet in cloud, create/sync the message into the bilateral conversation now so the other user sees the message AND the reaction!
+            if (!foundMsg && messageText && recipientName) {
+                const pairKey = makeDmPairKey(actorName, recipientName);
+                const nowIso = new Date().toISOString();
+                const resolvedSender = messageSenderName || actorName;
+                const resolvedRecipient = doesParticipantMatch(resolvedSender, actorName)
+                    ? recipientName
+                    : actorName;
+                const syncedMsg: CloudDirectMessage = {
+                    id: messageId,
+                    senderName: resolvedSender,
+                    senderAvatar: actorAvatar || '/brand/kwesi-avatar.png',
+                    senderRole: senderRole || 'Verified ConnectLn Professional',
+                    recipientName: resolvedRecipient,
+                    text: String(messageText),
+                    timestamp: formatMessageSentDateTime(nowIso),
+                    createdAtIso: nowIso,
+                    readBy: [normalizeParticipantKey(actorName)],
+                };
+                if (!bilateralConversationsByPairKey[pairKey]) {
+                    bilateralConversationsByPairKey[pairKey] = {
+                        pairKey,
+                        participantA: {
+                            name: actorName,
+                            email: senderEmail,
+                            avatar: actorAvatar || '/brand/kwesi-avatar.png',
+                            headline: senderRole,
+                        },
+                        participantB: {
+                            name: recipientName,
+                            email: recipientEmail,
+                            avatar:
+                                recipientAvatar ||
+                                `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(recipientName)}&backgroundColor=0a66c2`,
+                            headline: recipientSubtitle || 'Verified ConnectLn Member',
+                        },
+                        messages: [syncedMsg],
+                        updatedAtIso: nowIso,
+                    };
+                } else {
+                    bilateralConversationsByPairKey[pairKey].messages.push(syncedMsg);
+                }
+                foundConvo = bilateralConversationsByPairKey[pairKey];
+                foundMsg = syncedMsg;
+            }
+
             if (!foundConvo || !foundMsg) {
                 // Not a stored member-to-member message (e.g. a demo thread): nothing to save on the server
                 return NextResponse.json({ ok: false, error: 'message_not_stored' });

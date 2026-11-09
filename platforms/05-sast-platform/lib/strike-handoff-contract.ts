@@ -48,8 +48,10 @@ export interface StrikeHandoffEnvelope {
 
 export interface LanguageCapabilityRow {
   language: string;
+  tier: "TIER_1_FULL_INTERPROCEDURAL_AND_SANDBOX" | "TIER_2_INTRAPROCEDURAL_AND_GUARD_ANALYSIS";
   intraProceduralAst: "SUPPORTED" | "PARTIAL";
   interProceduralCallGraph: "SUPPORTED (Direct Calls)" | "PARTIAL" | "NOT_MODELLED";
+  sandboxHarnessSupport: "SUPPORTED (Isolated Build + Replay)" | "STATIC_PATCH_VALIDATION_ONLY";
   frameworkBindings: string;
   asyncAndQueues: string;
   dynamicDispatchAndReflection: "NOT_MODELLED";
@@ -57,42 +59,72 @@ export interface LanguageCapabilityRow {
 
 export const LANGUAGE_CAPABILITY_MATRIX: LanguageCapabilityRow[] = [
   {
-    language: "C# (.NET / ASP.NET Core)",
+    language: "Java (Spring Boot / Jakarta Servlet / JDBC)",
+    tier: "TIER_1_FULL_INTERPROCEDURAL_AND_SANDBOX",
     intraProceduralAst: "SUPPORTED",
     interProceduralCallGraph: "SUPPORTED (Direct Calls)",
+    sandboxHarnessSupport: "SUPPORTED (Isolated Build + Replay)",
+    frameworkBindings: "@RequestParam, @PathVariable, @RequestBody, @RequestHeader, HttpServletRequest.getParameter",
+    asyncAndQueues: "Direct method calls modelled; JMS/Kafka/@Async proxies NOT_MODELLED",
+    dynamicDispatchAndReflection: "NOT_MODELLED",
+  },
+  {
+    language: "C# (.NET 8 / ASP.NET Core / ADO.NET / EF Core)",
+    tier: "TIER_1_FULL_INTERPROCEDURAL_AND_SANDBOX",
+    intraProceduralAst: "SUPPORTED",
+    interProceduralCallGraph: "SUPPORTED (Direct Calls)",
+    sandboxHarnessSupport: "SUPPORTED (Isolated Build + Replay)",
     frameworkBindings: "[FromQuery], [FromBody], [FromRoute], [FromForm], [FromHeader], Request.Query/Form/Body",
     asyncAndQueues: "async/await direct method calls modelled; MassTransit/ServiceBus queues NOT_MODELLED",
     dynamicDispatchAndReflection: "NOT_MODELLED",
   },
   {
     language: "Python (Flask / FastAPI / Django)",
+    tier: "TIER_1_FULL_INTERPROCEDURAL_AND_SANDBOX",
     intraProceduralAst: "SUPPORTED",
     interProceduralCallGraph: "SUPPORTED (Direct Calls)",
+    sandboxHarnessSupport: "SUPPORTED (Isolated Build + Replay)",
     frameworkBindings: "request.args, request.form, request.json, request.GET/POST, sys.argv",
     asyncAndQueues: "async def direct calls modelled; Celery/RQ/Kafka queues NOT_MODELLED",
     dynamicDispatchAndReflection: "NOT_MODELLED",
   },
   {
-    language: "JavaScript / TypeScript (Express / Koa / Node)",
+    language: "JavaScript / TypeScript (Express / Next.js / Koa / Node)",
+    tier: "TIER_1_FULL_INTERPROCEDURAL_AND_SANDBOX",
     intraProceduralAst: "SUPPORTED",
     interProceduralCallGraph: "SUPPORTED (Direct Calls)",
+    sandboxHarnessSupport: "SUPPORTED (Isolated Build + Replay)",
     frameworkBindings: "req.query, req.body, req.params, req.headers, ctx.query/request.body",
     asyncAndQueues: "async/await arrow & function calls modelled; BullMQ/EventEmitter NOT_MODELLED",
     dynamicDispatchAndReflection: "NOT_MODELLED",
   },
   {
-    language: "Java (Spring Boot / Jakarta Servlet)",
+    language: "PHP (Laravel / Symfony / PDO) — Tier-2",
+    tier: "TIER_2_INTRAPROCEDURAL_AND_GUARD_ANALYSIS",
     intraProceduralAst: "SUPPORTED",
-    interProceduralCallGraph: "SUPPORTED (Direct Calls)",
-    frameworkBindings: "@RequestParam, @PathVariable, @RequestBody, @RequestHeader, HttpServletRequest.getParameter",
-    asyncAndQueues: "Direct method calls modelled; JMS/Kafka/@Async proxies NOT_MODELLED",
+    interProceduralCallGraph: "NOT_MODELLED",
+    sandboxHarnessSupport: "STATIC_PATCH_VALIDATION_ONLY",
+    frameworkBindings: "$_GET, $_POST, $_REQUEST, $request->input/query (Intra-function & guard dominance)",
+    asyncAndQueues: "NOT_MODELLED",
     dynamicDispatchAndReflection: "NOT_MODELLED",
   },
   {
-    language: "Go / PHP / Ruby / Kotlin / Swift",
+    language: "Go (net/http / Gin / Echo / database/sql) — Tier-2",
+    tier: "TIER_2_INTRAPROCEDURAL_AND_GUARD_ANALYSIS",
     intraProceduralAst: "SUPPORTED",
     interProceduralCallGraph: "NOT_MODELLED",
-    frameworkBindings: "Intra-function source/sink pattern & guard dominance only",
+    sandboxHarnessSupport: "STATIC_PATCH_VALIDATION_ONLY",
+    frameworkBindings: "r.URL.Query(), r.FormValue(), c.Param/Query (Intra-function & guard dominance)",
+    asyncAndQueues: "Goroutine channel hops NOT_MODELLED",
+    dynamicDispatchAndReflection: "NOT_MODELLED",
+  },
+  {
+    language: "Ruby / Kotlin / Swift — Tier-2",
+    tier: "TIER_2_INTRAPROCEDURAL_AND_GUARD_ANALYSIS",
+    intraProceduralAst: "SUPPORTED",
+    interProceduralCallGraph: "NOT_MODELLED",
+    sandboxHarnessSupport: "STATIC_PATCH_VALIDATION_ONLY",
+    frameworkBindings: "params[], Call.parameters, URLComponents (Intra-function & guard dominance only)",
     asyncAndQueues: "NOT_MODELLED",
     dynamicDispatchAndReflection: "NOT_MODELLED",
   },

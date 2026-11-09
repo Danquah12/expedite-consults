@@ -1,0 +1,47 @@
+{
+  "original_finding_id": 5529,
+  "asset_and_origin_identity": "ASSET-00375 | https://www.hackthissite.org:443",
+  "approved_scope_and_roe": "Host www.hackthissite.org:443 matches ROE authorized origin 'https://www.hackthissite.org:443'.",
+  "validation_adapter_and_version": "EVE-CSRF-001 (eve-adapter/2.3.0)",
+  "test_timestamp": "2026-11-08T13:08:44.533557+00:00",
+  "preconditions": {
+    "vulnerability_class": "csrf_validation",
+    "affected_technology": "web-application",
+    "detected_version": null,
+    "cve_applicable": false,
+    "preconditions_satisfied": true
+  },
+  "execution_transcript": {
+    "adapter_id": "EVE-CSRF-001",
+    "probed_endpoint": "https://www.hackthissite.org/",
+    "finding_key": "ENUM-FORM-NOCSRF-1::T39_WWW_HACKTHISSITE_ORG",
+    "probe_steps": [
+      {
+        "step": 1,
+        "action": "FORM_CONTEXT_VALIDATION",
+        "requires_authenticated_session": false,
+        "state_changing_action": false
+      }
+    ]
+  },
+  "request_response_evidence": [
+    {
+      "step": 1,
+      "action": "FORM_CONTEXT_VALIDATION",
+      "requires_authenticated_session": false,
+      "state_changing_action": false
+    }
+  ],
+  "expected_vs_actual": {
+    "expected": "Determine if form lacking CSRF token is an authenticated state-changing action or a pre-authentication login/search form.",
+    "actual": "Contextual inspection of https://www.hackthissite.org/ confirmed the form is an unauthenticated login/public form; authenticated state-changing CSRF exploitation is not applicable without an authenticated session action.",
+    "reproduced_behavior": false
+  },
+  "execution_outcome": "EXPLOITATION_FAILED",
+  "evidence_confidence": 0.92,
+  "exploitability_confidence": 0.05,
+  "impact_confidence": 0.0,
+  "operator_or_approving_identity": "secops-lead@expedite-consults.io",
+  "sha256_evidence_digest": "aefad08b5fabc72cd3b5e5dd105eedd44be18f879a2a9faac8ad29a129289d39",
+  "attempt_key": "EVE-ATT-00505-583"
+}

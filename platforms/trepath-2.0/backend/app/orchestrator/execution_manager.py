@@ -310,6 +310,12 @@ def execute_orchestrated_ingestion_and_lifecycle(
     # Stage 8b / EVE: Exploit Validation Engine (Preconditions -> Approval -> Safe Execution -> Proof -> Impact)
     from ..eve import ExploitOrchestrator
     eve_summary = ExploitOrchestrator.validate_scan_findings(db, scan.id)
+
+    # Stage 8c / TrePath 2.11 Controlled Lab Validation & RTEX 2.11 Cycle (AT-01..AT-12)
+    if (scan.profile or "authorized_pentest") == "authorized_pentest":
+        from ..trepath_2_11_validation_harness import execute_trepath_2_11_controlled_lab_cycle_on_scan
+        execute_trepath_2_11_controlled_lab_cycle_on_scan(db, scan.id)
+
     _notify(
         98,
         "EVE_VALIDATION",

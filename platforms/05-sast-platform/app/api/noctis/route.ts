@@ -8,6 +8,11 @@ import {
   resolveTypedProofClassification,
   runTenGateReportAcceptanceSuite,
 } from "@/lib/cvss31";
+import {
+  buildNoctisGroundedReasoningV53,
+  verifyAssessmentV53,
+  computeV53FiveDimensionRisk,
+} from "@/lib/xtrike-v53-engine";
 import FINDINGS from "@/data/findings";
 import type { SASTFinding } from "@/types/sast";
 
@@ -309,9 +314,9 @@ function buildLocalSastAnswer(
     ].join("\n");
   }
 
-  // 7.5. Check if asking about SAST Posture KPIs, Sink Sensors, Repository Mesh (710 nodes, 15,808 gates), or xtrike-sast-cli v4.2.0 installation
+  // 7.5. Check if asking about SAST Posture KPIs, Cyber Monitor Menu Items, Sink Sensors, Repository Mesh, Hourglass, Hybrid Fleet, Explain with AI, Synthetic UX, Server/Network/DB Suites, or xtrike-sast-cli
   if (
-    /\b(posture|cyber\s*kpi|cyber\s*monitor|open\s*sast|16\.8k|6\.4k|1\.3k|sink\s*sensor|sink\s*trigger|213\s*active|exploit\s*probes|84\/100|1,?765\s*nodes|710\s*repo|710\s*node|15,?808|release-gate|payment-settlement-core|identity-oauth-gateway|graphql-mobile-bff|order-fulfillment-api|dynamic-rule-compiler|webhook-event-broker|payment-ledger-svc|oauth-token-gateway|graphql-edge-bff|order-worker-node|compiler-sandbox-vm|terraform-eks-mod|xtrike-sast-cli|4\.2\.0|ptes-nist-800-115|daemon\s+start|apt\s+install|dnf\s+install)\b/i.test(
+    /\b(menu-prod-|menu-sol-|menu-price-|learn-|menu-comm-|operator\s*guide|plug-ins|changelog|werks|monitoring\s*basics|webinars|replay\s*videos|knowledge\s*base|engineering\s*blog|podcasts|operator\s*&\s*appsec\s*classes|certification\s*schedule|training\s*tracks|air-gapped|posture|cyber\s*kpi|cyber\s*monitor|hourglass|ingest|transform|analyze|solve|hybrid\s*fleet|hybrid\s*enterprise|explain\s*with\s*ai|win-dc-04|filesystem\s*c|owasp-benchmark-dotnet|benchmarkdotnet|synthetic|user\s*journey|user\s*experience|ux\s*latency|641\s*ms|1\.25\s*s|4\.92\s*s|server\s*monitoring|network\s*monitoring|database\s*monitoring|switches|firewalls|open\s*sast|16\.8k|6\.4k|1\.3k|sink\s*sensor|sink\s*trigger|213\s*active|exploit\s*probes|84\/100|1,?765\s*nodes|710\s*repo|710\s*node|15,?808|release-gate|payment-settlement-core|identity-oauth-gateway|graphql-mobile-bff|order-fulfillment-api|dynamic-rule-compiler|webhook-event-broker|payment-ledger-svc|oauth-token-gateway|graphql-edge-bff|order-worker-node|compiler-sandbox-vm|terraform-eks-mod|xtrike-sast-cli|4\.2\.0|5\.2\.0|ptes-nist-800-115|daemon\s+start|apt\s+install|dnf\s+install)\b/i.test(
       q
     )
   ) {
@@ -440,6 +445,11 @@ export async function POST(request: Request) {
     }
 
     const localSastSynthesis = buildLocalSastAnswer(question, body.scanRepoName, body.findings);
+    const sampleFindingForGrounding =
+      FINDINGS.find((f) => question.toUpperCase().includes(f.id)) || FINDINGS[0];
+    const noctisReasoningV53 = buildNoctisGroundedReasoningV53(sampleFindingForGrounding);
+    const v53IntegritySummary = verifyAssessmentV53(FINDINGS);
+    const v53Risk5D = computeV53FiveDimensionRisk(FINDINGS);
 
     // Query live Noctis API (https://dstrike.app/api/noctis) in the background and return the unified response into the in-app pop-up
     try {
@@ -486,6 +496,14 @@ export async function POST(request: Request) {
             ok: true,
             answer: finalAnswer,
             model: remoteData.model || "noctis-sast-live-api",
+            noctisReasoningV53,
+            v53Assurance: {
+              specVersion: "XTRIKE-SAST-DESK-v5.3.0",
+              evidenceIntegrityValid: v53IntegritySummary.valid,
+              oneToOneArtifactLinks: `${v53IntegritySummary.oneToOneArtifactAssociationsVerified}/${v53IntegritySummary.totalFindings}`,
+              repositoryTechnicalRisk: v53Risk5D.repositoryTechnicalRisk.score,
+              promotionEligible: false,
+            },
             assetsSynced: {
               plugins: SAST_400_PLUGINS.length,
               findings: Array.isArray(body.findings) ? body.findings.length : FINDINGS.length,
@@ -502,7 +520,15 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ok: true,
       answer: localSastSynthesis,
-      model: "noctis-sast-engine-v1",
+      model: "noctis-sast-engine-v5.3",
+      noctisReasoningV53,
+      v53Assurance: {
+        specVersion: "XTRIKE-SAST-DESK-v5.3.0",
+        evidenceIntegrityValid: v53IntegritySummary.valid,
+        oneToOneArtifactLinks: `${v53IntegritySummary.oneToOneArtifactAssociationsVerified}/${v53IntegritySummary.totalFindings}`,
+        repositoryTechnicalRisk: v53Risk5D.repositoryTechnicalRisk.score,
+        promotionEligible: false,
+      },
       assetsSynced: {
         plugins: SAST_400_PLUGINS.length,
         findings: Array.isArray(body.findings) ? body.findings.length : FINDINGS.length,

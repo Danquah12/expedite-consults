@@ -74,6 +74,17 @@ def normalize_discovered_assets(
                 is_http=(port_num in HTTP_CANDIDATE_PORTS or "http" in svc_name),
                 is_tls=(port_num in TLS_CANDIDATE_PORTS or "https" in svc_name or "ssl" in svc_name),
             )
+        elif len(parts) >= 4 and parts[0] == "UDP" and parts[1] == "PORT" and parts[2] == "OPEN" and parts[3].isdigit():
+            port_num = int(parts[3])
+            svc_name = parts[4].lower() if len(parts) > 4 else "udp"
+            services[100000 + port_num] = NormalizedService(
+                port=port_num,
+                protocol="udp",
+                service_name=svc_name,
+                banner=str(item.get("evidence") or "")[:180],
+                is_http=(port_num in (443, 8443) or "quic" in svc_name or "http" in svc_name),
+                is_tls=(port_num in (443, 8443) or "quic" in svc_name),
+            )
 
     sorted_ports = sorted(open_ports)
 

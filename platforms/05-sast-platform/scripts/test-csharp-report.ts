@@ -20,6 +20,28 @@ import { validateSourceProvenance } from "../lib/source-provenance";
 import { buildStrikeHandoffEnvelope } from "../lib/strike-handoff-contract";
 import { normalizeFindingCvssAndProof } from "../lib/cvss31";
 import { consolidateAdjacentRootCauseFindings } from "../lib/live-sast-scanner";
+import FINDINGS from "../data/findings";
+import { CANONICAL_VALIDATION_FINDINGS } from "../lib/validation-engine";
+import { buildDeepExploitabilityDossier } from "../lib/deep-enumeration-engine";
+import { getLanguageMatchedRemediation } from "../lib/enterprise-sast-engine";
+import {
+  computeModernizedRiskEngineV55,
+  runXtrikeV55TwelveGateAcceptanceSuite,
+} from "../lib/xtrike-v55-engine";
+import {
+  computeThreeScopeReleaseGatesV60,
+  computeSixTierRemediationBreakdownV60,
+  computeCanonicalRiskObjectV60,
+  buildAcceptanceSuiteSupersessionLedgerV60,
+  computeFiveStateRiskDisclosureContractV60,
+  buildCanonicalFindingRegistryV60,
+  runIndependentEvidenceVerifierTenPointV60,
+  reconstructAttackPathsV60,
+  getNineSubsystemArchitectureV60,
+  getSevenContractVersionGovernanceV60,
+  evaluateElevenSuitePermanentBenchmarkV60,
+  computeSecurityAssuranceDashboardV60,
+} from "../lib/xtrike-v60-engine";
 
 const benchRepo = findBenchmarkRepoByUrl("https://github.com/OWASP/BenchmarkDotNet");
 const files = benchRepo ? benchRepo.seedFiles : LANGUAGE_STARTER_CODEBASES["C#"];
@@ -674,4 +696,183 @@ console.log("P0 SAST-013 Verified:", {
   diagnosticPresent: Boolean(sast013Synced.evidenceRecord?.manualValidationDiagnostic),
 });
 
-console.log("ALL JAVA SHIFTLEFTSECURITY/BENCHMARK, OWASP/BENCHMARK (B101E4), OWASP/BENCHMARKPHP (A1978A), SAST-012, SAST-013, SCA-007 PROVENANCE, CONTROLLED VERIFICATION STAGE & PROOF INTEGRITY CHECKS PASSED");
+// ---- Test exact app/reports/page.tsx pipeline on default FINDINGS + CANONICAL_VALIDATION_FINDINGS ----
+const defaultValMap = new Map(CANONICAL_VALIDATION_FINDINGS.map((vf) => [vf.findingId, vf]));
+const defaultFullCommit = "9f4c2a1b8e7d0312a4f5c6d7".padEnd(40, "a1b2c3d4e5f60718293a").slice(0, 40);
+const defaultTargetName = "xtrike-core/enterprise-banking-api";
+const defaultReportFindings = FINDINGS.map((f, idx) => {
+  const lang = f.language || "Java";
+  const languageMatched = {
+    ...f,
+    language: lang,
+    remediation: getLanguageMatchedRemediation(f.remediation || [], lang, f.cwe),
+  };
+  const normalized = normalizeFindingCvssAndProof(languageMatched, defaultValMap.get(f.id));
+  const withDossier = {
+    ...normalized,
+    deepExploitability: buildDeepExploitabilityDossier(normalized, idx),
+  };
+  return synchronizeFindingWithEvidenceLedger(withDossier, defaultFullCommit, defaultTargetName);
+});
+const defaultReportIssues = validateReportIntegrity(defaultReportFindings, defaultValMap);
+console.log("Default /reports FINDINGS Integrity Issues:", defaultReportIssues);
+if (defaultReportIssues.length > 0) {
+  console.error("FAIL: Default /reports FINDINGS had integrity issues:", defaultReportIssues);
+  process.exit(1);
+}
+
+// ---- Test exact app/reports/page.tsx pipeline on OWASP/www-project-benchmark (f502b2c34d5e2002) ----
+const portalBench = findBenchmarkRepoByUrl("https://github.com/OWASP/www-project-benchmark")!;
+const portalCommit = "f502b2c34d5e2002a1b2c3d4e5f60718293aa1b2";
+const portalRes = scanFilesWithEnterpriseEngines({
+  files: portalBench.seedFiles,
+  repoUrl: "OWASP/www-project-benchmark",
+  branch: "master",
+  commitSha: portalCommit,
+  primaryLanguage: "Java",
+  selectedEngines: ["XQL"],
+});
+const portalDeep = generateDeepReEnumeratedFindings({
+  primaryFindings: portalRes.findings,
+  primaryValidation: portalRes.validationFindings,
+  repoUrl: "OWASP/www-project-benchmark",
+  commitSha: portalCommit,
+  language: "Java",
+});
+const portalValMap = new Map(portalDeep.allValidationFindings.map((vf) => [vf.findingId, vf]));
+const portalReportFindings = portalDeep.allFindings.map((f, idx) => {
+  const lang = f.language || "Java";
+  const languageMatched = {
+    ...f,
+    language: lang,
+    remediation: getLanguageMatchedRemediation(f.remediation || [], lang, f.cwe),
+  };
+  const normalized = normalizeFindingCvssAndProof(languageMatched, portalValMap.get(f.id));
+  const withDossier = {
+    ...normalized,
+    deepExploitability: buildDeepExploitabilityDossier(normalized, idx),
+  };
+  return synchronizeFindingWithEvidenceLedger(withDossier, portalCommit, "OWASP/www-project-benchmark");
+});
+const portalIssues = validateReportIntegrity(portalReportFindings, portalValMap);
+console.log("OWASP/www-project-benchmark (f502b2c3) Findings:", portalReportFindings.length, "Integrity Issues:", portalIssues);
+if (portalIssues.length > 0) {
+  console.error("FAIL: OWASP/www-project-benchmark had integrity issues:", portalIssues);
+  process.exit(1);
+}
+
+// ---- XTRIKE 5.5 12-Gate Release Acceptance Suite (XTR-01 .. XTR-12) Verification ----
+const v55PortalGates = runXtrikeV55TwelveGateAcceptanceSuite(portalReportFindings);
+const v55PortalRisk = computeModernizedRiskEngineV55(portalReportFindings);
+const v55PortalPassCount = v55PortalGates.filter((g) => g.status === "PASS").length;
+console.log(
+  "XTRIKE v5.5 12-Gate Suite (OWASP/www-project-benchmark):",
+  `${v55PortalPassCount}/${v55PortalGates.length}`,
+  "Pre->Post Risk:",
+  `${v55PortalRisk.portfolioScores.preMergeRepositoryResidualRiskIndex}->${v55PortalRisk.portfolioScores.postPatchProjectedResidualRiskIndex}`
+);
+for (const gate of v55PortalGates) {
+  console.log(`  [${gate.status}] ${gate.id} (${gate.requirement}): ${gate.measuredEvidence}`);
+}
+if (v55PortalPassCount !== 12) {
+  console.error("FAIL: XTRIKE v5.5 12-Gate Suite failed on OWASP/www-project-benchmark:", v55PortalGates.filter((g) => g.status !== "PASS"));
+  process.exit(1);
+}
+
+const v55DefaultGates = runXtrikeV55TwelveGateAcceptanceSuite(defaultReportFindings);
+const v55DefaultPassCount = v55DefaultGates.filter((g) => g.status === "PASS").length;
+console.log(
+  "XTRIKE v5.5 12-Gate Suite (Default FINDINGS):",
+  `${v55DefaultPassCount}/${v55DefaultGates.length}`
+);
+if (v55DefaultPassCount !== 12) {
+  console.error("FAIL: XTRIKE v5.5 12-Gate Suite failed on Default FINDINGS:", v55DefaultGates.filter((g) => g.status !== "PASS"));
+  process.exit(1);
+}
+
+// ---- XTRIKE v5.5.0 Technical Remediation & v6.0 Governance Verification ----
+for (const [label, suiteFindings] of [
+  ["C# BenchmarkDotNet", deep.allFindings],
+  ["Java ShiftLeftSecurity/Benchmark", javaDeep.allFindings],
+  ["PHP DVWA / BenchmarkPHP", phpConsolidated.findings],
+  ["OWASP/www-project-benchmark", portalReportFindings],
+  ["Default FINDINGS", defaultReportFindings],
+] as const) {
+  const gates3 = computeThreeScopeReleaseGatesV60(suiteFindings);
+  const rem6 = computeSixTierRemediationBreakdownV60(suiteFindings);
+  const risk6 = computeCanonicalRiskObjectV60(suiteFindings);
+  const supLedger = buildAcceptanceSuiteSupersessionLedgerV60(suiteFindings);
+  const fiveStateRisk = computeFiveStateRiskDisclosureContractV60(suiteFindings);
+  const regRecords = buildCanonicalFindingRegistryV60(suiteFindings, label);
+  const verifier10 = runIndependentEvidenceVerifierTenPointV60(suiteFindings);
+  const attackPaths = reconstructAttackPathsV60(suiteFindings);
+  const dash = computeSecurityAssuranceDashboardV60(suiteFindings);
+  const passedChecks = verifier10.checks.filter((c) => c.status === "VERIFIED").length;
+
+  console.log(`v6.0 Governance [${label}]:`, {
+    gate1Engine: gates3.engineReleaseGate.status,
+    gate2Remediation: `${gates3.remediationVerificationGate.status} (${rem6.tiers[4].count}/${rem6.totalPrimaryFindings} Exploit-Blocked vs ${rem6.tiers[2].count}/${rem6.totalPrimaryFindings} Build-Passed)`,
+    gate3ProdDeploy: gates3.productionDeploymentGate.status,
+    canonicalRisk: {
+      inherent: risk6.inherentRisk.score,
+      observed: risk6.currentObservedRisk.score,
+      contextAdjusted: risk6.contextAdjustedRisk.score,
+      confidence: risk6.evidenceConfidence.score,
+      harnessProjected: risk6.residualRiskAfterVerifiedRemediation.score,
+      prodActive: risk6.residualRiskAfterProductionDeployment.score,
+    },
+    fiveStateContractInvariant: fiveStateRisk.productionRiskUnchangedInvariantVerified,
+    verifier10Point: `${passedChecks}/${verifier10.checks.length} (LLM Final Authority=${verifier10.llmFinalAuthorityPermitted})`,
+    attackPathsReconstructed: attackPaths.length,
+    refusalToPromoteRate: `${dash.correctRefusalToPromoteRatePercent}%`,
+    prodCertification: `${dash.metrics[4].headlinePercent}%`,
+    v53Reconciled: `${supLedger.suites[0].passedTests}/${supLedger.suites[0].totalTests}`,
+    v55Reconciled: `${supLedger.suites[1].passedTests}/${supLedger.suites[1].totalTests}`,
+  });
+
+  if (
+    gates3.engineReleaseGate.status !== "PASSED_ENGINE_READY" ||
+    gates3.productionDeploymentGate.status !== "BLOCKED_UNMERGED_PRODUCTION" ||
+    gates3.overallTargetApplicationReleaseAllowed !== false
+  ) {
+    console.error(`FAIL [${label}]: 3-Scope Release Gates violated invariant:`, gates3);
+    process.exit(1);
+  }
+  if (
+    risk6.residualRiskAfterProductionDeployment.score !== risk6.currentObservedRisk.score ||
+    !fiveStateRisk.productionRiskUnchangedInvariantVerified ||
+    fiveStateRisk.states.length !== 5
+  ) {
+    console.error(`FAIL [${label}]: Production residual risk must equal current observed risk before PR merge`);
+    process.exit(1);
+  }
+  if (!supLedger.allHistoricalDiscrepanciesResolved) {
+    console.error(`FAIL [${label}]: Historical 18-test vs 12-gate supersession ledger unreconciled:`, supLedger);
+    process.exit(1);
+  }
+  if (
+    !verifier10.overallValid ||
+    passedChecks !== 10 ||
+    verifier10.llmFinalAuthorityPermitted !== false ||
+    regRecords.length !== suiteFindings.length ||
+    dash.correctRefusalToPromoteRatePercent !== 100 ||
+    dash.metrics[4].headlinePercent !== 0
+  ) {
+    console.error(`FAIL [${label}]: v6.0 10-point verifier / dashboard / registry check failed:`, {
+      verifier10,
+      regRecordsLen: regRecords.length,
+      dash,
+    });
+    process.exit(1);
+  }
+}
+
+const arch9 = getNineSubsystemArchitectureV60();
+const contracts7 = getSevenContractVersionGovernanceV60();
+const bench11 = evaluateElevenSuitePermanentBenchmarkV60();
+if (arch9.length !== 9 || contracts7.length !== 7 || bench11.length !== 11) {
+  console.error("FAIL: Expected 9 architecture subsystems, 7 version contracts, and 11 permanent benchmark suites");
+  process.exit(1);
+}
+
+console.log("ALL XTRIKE v5.5.0 & v6.0 3-SCOPE GATES, 6-TIER REMEDIATION, CANONICAL RISK OBJECT, 5-STATE RISK CONTRACT, 10-POINT VERIFIER, ATTACK-PATH ENGINE, 11-SUITE BENCHMARK & 18/18 -> 12/12 SUPERSESSION LEDGER CHECKS PASSED");
