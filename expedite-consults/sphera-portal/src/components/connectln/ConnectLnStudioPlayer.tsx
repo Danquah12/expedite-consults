@@ -51,6 +51,7 @@ interface ConnectLnStudioPlayerProps {
   speaker?: string
   durationLabel?: string
   autoPlay?: boolean
+  initialMuted?: boolean
   className?: string
   playerId?: string
   onExclusiveStop?: () => void
@@ -63,6 +64,7 @@ export function ConnectLnStudioPlayer({
   speaker = "ConnectLn Masterclass",
   durationLabel = "3:00",
   autoPlay = true,
+  initialMuted = false,
   className = "h-[230px] sm:h-[280px] w-full",
   playerId,
   onExclusiveStop
@@ -76,7 +78,7 @@ export function ConnectLnStudioPlayer({
 
   const [isPlaying, setIsPlaying] = useState<boolean>(autoPlay)
   const [isStoppedByOther, setIsStoppedByOther] = useState<boolean>(false)
-  const [isMuted, setIsMuted] = useState<boolean>(false)
+  const [isMuted, setIsMuted] = useState<boolean>(initialMuted)
   const [currentTime, setCurrentTime] = useState<number>(0)
   const [duration, setDuration] = useState<number>(() => {
     const parts = durationLabel.split(":").map(Number)
@@ -279,13 +281,32 @@ export function ConnectLnStudioPlayer({
           <iframe
             ref={iframeRef}
             key={youtubeId}
-            src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=${autoPlay ? 1 : 0}&loop=1&playlist=${youtubeId}&controls=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&playsinline=1&enablejsapi=1`}
+            src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=${autoPlay ? 1 : 0}&mute=${initialMuted ? 1 : 0}&loop=1&playlist=${youtubeId}&controls=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&playsinline=1&enablejsapi=1`}
             title={title}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            onLoad={() => {
+              if (autoPlay) {
+                setTimeout(() => {
+                  sendPlayerCommand("playVideo")
+                }, 150)
+              }
+            }}
             className="h-full w-full border-0 pointer-events-none"
           />
         )}
       </div>
+
+      {/* Floating Unmute Badge when Auto-Playing Muted on Scroll */}
+      {isPlaying && isMuted && !isStoppedByOther && (
+        <button
+          type="button"
+          onClick={toggleMute}
+          className="absolute top-12 left-3 z-30 inline-flex items-center gap-1.5 rounded-full bg-black/80 hover:bg-[#0A66C2] text-white border border-white/25 px-3 py-1 text-[11px] font-extrabold shadow-lg backdrop-blur-xs transition-all cursor-pointer"
+        >
+          <VolumeX className="h-3.5 w-3.5 text-amber-400" />
+          <span>Auto-Playing · Tap for Sound 🔊</span>
+        </button>
+      )}
 
       {/* Top ConnectLn Studio Header Overlay */}
       <div

@@ -161,8 +161,35 @@ export function ConnectInVideoWheel({
     [selectedStageVideo, defaultAssignedUserVideo]
   )
   const [isPlayingHeroInline, setIsPlayingHeroInline] = useState(false)
+  const [heroStartedByScroll, setHeroStartedByScroll] = useState(true)
+  const heroUserManuallyStoppedRef = useRef<boolean>(false)
   const wheelHeroPlayerIdRef = useRef<string>(`wheel-hero-${Math.random().toString(36).slice(2, 10)}`)
   const wheelModalPlayerIdRef = useRef<string>(`wheel-modal-${Math.random().toString(36).slice(2, 10)}`)
+
+  // Auto-play the Hero Stage video when scrolled into view on the Home Page, and pause when scrolled out
+  useEffect(() => {
+    const node = heroStageRef.current
+    if (!node || !assignedUserVideo?.youtubeId || typeof IntersectionObserver === "undefined") return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0]
+        if (!entry) return
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.45) {
+          if (!heroUserManuallyStoppedRef.current && !activeVideo) {
+            setHeroStartedByScroll(true)
+            notifyExclusiveVideoPlay(wheelHeroPlayerIdRef.current)
+            setIsPlayingHeroInline(true)
+          }
+        } else if (!entry.isIntersecting || entry.intersectionRatio < 0.15) {
+          heroUserManuallyStoppedRef.current = false
+          setIsPlayingHeroInline(false)
+        }
+      },
+      { threshold: [0, 0.15, 0.45, 0.75] }
+    )
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [assignedUserVideo?.youtubeId, activeVideo])
 
   // Stop hero inline video whenever any other video starts playing across the app
   useEffect(() => {
@@ -768,6 +795,7 @@ export function ConnectInVideoWheel({
                 serialPlate={assignedUserVideo.serialPlate}
                 speaker={assignedUserVideo.speaker}
                 durationLabel={assignedUserVideo.duration || "5:15"}
+                initialMuted={heroStartedByScroll}
                 playerId={wheelHeroPlayerIdRef.current}
                 onExclusiveStop={() => setIsPlayingHeroInline(false)}
                 className="h-full w-full"

@@ -41,6 +41,8 @@ export interface VideoShareBannerProps {
   compact?: boolean
   /** Hide the bottom share bar when embedded in a modal that already has a share bar */
   hideShareBar?: boolean
+  /** Automatically play inline when scrolled into viewport on the Home Feed */
+  autoPlayOnScroll?: boolean
 }
 
 export function VideoShareBanner({
@@ -61,11 +63,15 @@ export function VideoShareBanner({
   onPlayClick,
   onWatchClick,
   compact = false,
-  hideShareBar = false
+  hideShareBar = false,
+  autoPlayOnScroll = true
 }: VideoShareBannerProps) {
   const [isPlayingInline, setIsPlayingInline] = useState(false)
+  const [startedByScroll, setStartedByScroll] = useState(true)
   const [copiedLink, setCopiedLink] = useState(false)
   const bannerPlayerIdRef = useRef<string>(`cln-banner-${Math.random().toString(36).slice(2, 10)}`)
+  const videoStageRef = useRef<HTMLDivElement>(null)
+  const userManuallyStoppedRef = useRef<boolean>(false)
 
   // Stop inline playback whenever any other video starts playing across ConnectLn
   useEffect(() => {
@@ -106,8 +112,11 @@ export function VideoShareBanner({
           videoUrl.endsWith(".mp4")))
     ) {
       if (isPlayingInline) {
+        userManuallyStoppedRef.current = true
         setIsPlayingInline(false)
       } else {
+        userManuallyStoppedRef.current = false
+        setStartedByScroll(false)
         notifyExclusiveVideoPlay(bannerPlayerIdRef.current)
         setIsPlayingInline(true)
       }
@@ -128,6 +137,42 @@ export function VideoShareBanner({
       )
       return m ? m[1] : null
     })()
+
+  // Auto-play inline when scrolled into viewport on the Home Page, and pause when scrolled out of view
+  useEffect(() => {
+    if (!autoPlayOnScroll || resolvedPlayHandler) return
+    const playable = Boolean(
+      resolvedYtId ||
+      (videoUrl &&
+        (videoUrl.includes("youtube.com") ||
+          videoUrl.includes("youtu.be") ||
+          videoUrl.endsWith(".mp4")))
+    )
+    if (!playable) return
+    const node = videoStageRef.current
+    if (!node || typeof IntersectionObserver === "undefined") return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0]
+        if (!entry) return
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.45) {
+          if (!userManuallyStoppedRef.current) {
+            setStartedByScroll(true)
+            notifyExclusiveVideoPlay(bannerPlayerIdRef.current)
+            setIsPlayingInline(true)
+          }
+        } else if (!entry.isIntersecting || entry.intersectionRatio < 0.15) {
+          userManuallyStoppedRef.current = false
+          setIsPlayingInline(false)
+        }
+      },
+      { threshold: [0, 0.15, 0.45, 0.75] }
+    )
+
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [autoPlayOnScroll, resolvedPlayHandler, resolvedYtId, videoUrl])
 
   // ConnectLn OpenGraph URL so WhatsApp, LinkedIn, X, Facebook, and messages render the ConnectLn Logo + Profile Picture Card
   const resolvedShareUrl = buildSharePreviewUrl({
@@ -217,9 +262,12 @@ export function VideoShareBanner({
       className="relative w-full overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-md transition-all hover:shadow-lg"
       style={{ backgroundColor: "#171513", color: "#F5F0EB" }}
     >
-      {/* FULL-WIDTH 16:9 LINKEDIN-STYLE INLINE VIDEO STAGE (Plays directly in feed or shows high-res action preview) */}
+      {/* FULL-WIDTH 16:9 LINKEDIN-STYLE INLINE VIDEO STAGE (Auto-plays when scrolled into view on the Home Feed) */}
       {(resolvedYtId || videoUrl || resolvedThumb) && (
-        <div className="relative aspect-video w-full overflow-hidden bg-black border-b border-white/10">
+        <div
+          ref={videoStageRef}
+          className="relative aspect-video w-full overflow-hidden bg-black border-b border-white/10"
+        >
           {isPlayingInline && (resolvedYtId || videoUrl) ? (
             <>
               {resolvedYtId ? (
@@ -229,6 +277,7 @@ export function VideoShareBanner({
                   serialPlate={serialPlate || "CLN-VID"}
                   speaker={resolvedAuthor}
                   durationLabel={duration}
+                  initialMuted={startedByScroll}
                   playerId={bannerPlayerIdRef.current}
                   onExclusiveStop={() => setIsPlayingInline(false)}
                   className="h-full w-full"
@@ -239,12 +288,18 @@ export function VideoShareBanner({
                   data-connectln-player-id={bannerPlayerIdRef.current}
                   controls
                   autoPlay
+                  muted={startedByScroll}
+                  playsInline
+                  loop
                   className="h-full w-full object-contain bg-black"
                 />
               )}
               <button
                 type="button"
-                onClick={() => setIsPlayingInline(false)}
+                onClick={() => {
+                  userManuallyStoppedRef.current = true
+                  setIsPlayingInline(false)
+                }}
                 style={{ backgroundColor: "rgba(0,0,0,0.85)", color: "#FFFFFF" }}
                 className="absolute top-3 right-3 z-20 rounded-full px-3 py-1 text-[11px] font-bold border border-white/20 cursor-pointer hover:bg-black"
               >
