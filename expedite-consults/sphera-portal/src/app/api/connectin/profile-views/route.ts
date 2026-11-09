@@ -34,9 +34,22 @@ export interface CloudDirectoryDiscoveryItem {
     keyword: string;
     searcherName: string;
     searcherHeadline: string;
+    searcherAvatar?: string;
     searcherCompany: string;
     source: string;
     discoveryType?: 'search_appearance' | 'profile_click';
+    createdAtIso: string;
+}
+
+export interface CloudVouchItem {
+    id: string;
+    voucherName: string;
+    voucherHeadline: string;
+    voucherAvatar: string;
+    voucherCompany: string;
+    voucherRelation?: string;
+    skillOrCredential: string;
+    note?: string;
     createdAtIso: string;
 }
 
@@ -44,6 +57,7 @@ interface TargetTelemetryBundle {
     checks: CloudCredentialCheckItem[];
     reachEvents: CloudContentReachItem[];
     discoveryEvents: CloudDirectoryDiscoveryItem[];
+    vouchEvents: CloudVouchItem[];
 }
 
 const SYNC_CHECKS_MAP = 'connectin_profile_checks_v2';
@@ -91,7 +105,7 @@ function formatViewedDateTime(iso: string): string {
 }
 
 function emptyBundle(): TargetTelemetryBundle {
-    return { checks: [], reachEvents: [], discoveryEvents: [] };
+    return { checks: [], reachEvents: [], discoveryEvents: [], vouchEvents: [] };
 }
 
 async function pullCloudTelemetryForTarget(key: string): Promise<TargetTelemetryBundle> {
@@ -113,6 +127,7 @@ async function pullCloudTelemetryForTarget(key: string): Promise<TargetTelemetry
             checks: Array.isArray(d.checks) ? d.checks : Array.isArray(d.items) ? d.items : [],
             reachEvents: Array.isArray(d.reachEvents) ? d.reachEvents : [],
             discoveryEvents: Array.isArray(d.discoveryEvents) ? d.discoveryEvents : [],
+            vouchEvents: Array.isArray(d.vouchEvents) ? d.vouchEvents : [],
         };
     } catch {
         return emptyBundle();
@@ -127,7 +142,8 @@ async function pushCloudTelemetryForTarget(key: string, bundle: TargetTelemetryB
         const serialized = JSON.stringify({
             checks: bundle.checks.slice(0, 40),
             reachEvents: bundle.reachEvents.slice(0, 50),
-            discoveryEvents: bundle.discoveryEvents.slice(0, 40),
+            discoveryEvents: bundle.discoveryEvents.slice(0, 50),
+            vouchEvents: (bundle.vouchEvents || []).slice(0, 40),
         });
         const updateRes = await fetch(`${baseUrl}/Items/${encodeURIComponent(key)}`, {
             method: 'POST',
@@ -194,6 +210,7 @@ function mergeBundles(a: TargetTelemetryBundle, b: TargetTelemetryBundle): Targe
         checks: mergeChecks(a.checks || [], b.checks || []),
         reachEvents: mergeById(a.reachEvents || [], b.reachEvents || []),
         discoveryEvents: mergeById(a.discoveryEvents || [], b.discoveryEvents || []),
+        vouchEvents: mergeById(a.vouchEvents || [], b.vouchEvents || []),
     };
 }
 
@@ -206,15 +223,25 @@ export async function GET(req: Request) {
             checks: [],
             reachEvents: [],
             discoveryEvents: [],
+            vouchEvents: [],
             profileViewsCount: 0,
             contentReachCount: 0,
             directoryDiscoveriesCount: 0,
+            weeklyLookupsCount: 0,
+            vouchesCount: 0,
         });
     }
     const key = targetMapKey(targetName);
     const cloud = await pullCloudTelemetryForTarget(key);
     const merged = mergeBundles(memoryTelemetryByTargetKey[key] || emptyBundle(), cloud);
     memoryTelemetryByTargetKey[key] = merged;
+
+    const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+    const nowMs = Date.now();
+    const weeklyLookupsCount = merged.discoveryEvents.filter((d) => {
+        const ts = new Date(d.createdAtIso || 0).getTime();
+        return Number.isFinite(ts) && nowMs - ts <= sevenDaysMs;
+    }).length;
 
     return NextResponse.json({
         ok: true,
@@ -230,9 +257,15 @@ export async function GET(req: Request) {
             ...d,
             timeAgo: formatRelativeAgo(d.createdAtIso),
         })),
+        vouchEvents: (merged.vouchEvents || []).map((v) => ({
+            ...v,
+            timeAgo: formatRelativeAgo(v.createdAtIso),
+        })),
         profileViewsCount: merged.checks.length,
         contentReachCount: merged.reachEvents.length,
         directoryDiscoveriesCount: merged.discoveryEvents.length,
+        weeklyLookupsCount,
+        vouchesCount: (merged.vouchEvents || []).length,
     });
 }
 
@@ -286,6 +319,11 @@ export async function POST(req: Request) {
             const keyword = String(body.keyword || 'ConnectLn Directory Search').slice(0, 100);
             const searcherName = String(body.searcherName || 'ConnectLn Member').slice(0, 90);
             const searcherHeadline = String(body.searcherHeadline || 'Verified ConnectLn Professional').slice(0, 140);
+            const rawSearcherAvatar = String(body.searcherAvatar || '');
+            const searcherAvatar =
+                rawSearcherAvatar && !rawSearcherAvatar.startsWith('data:')
+                    ? rawSearcherAvatar
+                    : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(searcherName)}&backgroundColor=0a66c2`;
             const searcherCompany = String(body.searcherCompany || 'ConnectLn Network').slice(0, 90);
             const source = String(body.source || 'Directory & Specialty Search').slice(0, 90);
             const discoveryType: 'search_appearance' | 'profile_click' =
@@ -295,6 +333,7 @@ export async function POST(req: Request) {
                 keyword,
                 searcherName,
                 searcherHeadline,
+                searcherAvatar,
                 searcherCompany,
                 source,
                 discoveryType,
@@ -310,6 +349,43 @@ export async function POST(req: Request) {
                 ok: true,
                 recordedDiscovery: newDisc,
                 directoryDiscoveriesCount: updated.discoveryEvents.length,
+            });
+        }
+
+        if (eventType === 'peer_vouch') {
+            const voucherName = String(body.voucherName || 'Verified ConnectLn Fellow').slice(0, 90);
+            const voucherHeadline = String(body.voucherHeadline || 'Verified ConnectLn Professional').slice(0, 140);
+            const rawVoucherAvatar = String(body.voucherAvatar || '');
+            const voucherAvatar =
+                rawVoucherAvatar && !rawVoucherAvatar.startsWith('data:')
+                    ? rawVoucherAvatar
+                    : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(voucherName)}&backgroundColor=059669`;
+            const voucherCompany = String(body.voucherCompany || 'ConnectLn Verified Guild').slice(0, 90);
+            const voucherRelation = String(body.voucherRelation || 'Verified Industry Peer').slice(0, 90);
+            const skillOrCredential = String(body.skillOrCredential || 'Professional Craftsmanship & Execution').slice(0, 120);
+            const note = String(body.note || `Vouched for ${targetName}'s verified hands-on execution in ${skillOrCredential}.`).slice(0, 280);
+
+            const newVouch: CloudVouchItem = {
+                id: String(body.id || `vch_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`),
+                voucherName,
+                voucherHeadline,
+                voucherAvatar,
+                voucherCompany,
+                voucherRelation,
+                skillOrCredential,
+                note,
+                createdAtIso: nowIso,
+            };
+            const updated: TargetTelemetryBundle = {
+                ...current,
+                vouchEvents: mergeById([newVouch], current.vouchEvents || []),
+            };
+            memoryTelemetryByTargetKey[key] = updated;
+            await pushCloudTelemetryForTarget(key, updated);
+            return NextResponse.json({
+                ok: true,
+                recordedVouch: newVouch,
+                vouchesCount: (updated.vouchEvents || []).length,
             });
         }
 
@@ -375,6 +451,7 @@ export async function POST(req: Request) {
             keyword: viewVector,
             searcherName: privacyMode === 'anonymous' ? 'Anonymous ConnectLn Member' : viewerName,
             searcherHeadline: headline,
+            searcherAvatar: safeAvatar,
             searcherCompany: company,
             source: 'Directory Profile Click',
             discoveryType: 'profile_click',
@@ -385,6 +462,7 @@ export async function POST(req: Request) {
             checks: mergeChecks([newItem], current.checks),
             reachEvents: current.reachEvents,
             discoveryEvents: mergeById([newDiscFromView], current.discoveryEvents),
+            vouchEvents: current.vouchEvents || [],
         };
         memoryTelemetryByTargetKey[key] = updated;
         await pushCloudTelemetryForTarget(key, updated);

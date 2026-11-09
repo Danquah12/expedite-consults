@@ -31,6 +31,7 @@ import { getEnclavePulseArticles } from "@/lib/pulse-news-data"
 import { getEnclaveModules } from "@/lib/connectin-navbar-data"
 import { ALL_PROFESSIONS, PROFESSION_ENCLAVES } from "@/lib/connectin-professions"
 import { loadStoredAdminUsers } from "@/lib/connectin-storage"
+import { recordLiveDirectoryDiscovery } from "@/lib/connectin-analytics"
 
 interface UniversalSearchModalProps {
   isOpen: boolean
@@ -256,6 +257,27 @@ export function UniversalSearchModal({
     matchesTokens([p.name, p.role, p.org, ...(p.skills || [])])
   )
 
+  // Track search lookup appearances when a user searches in Universal Omnisearch
+  useEffect(() => {
+    const qTrimmed = (query || "").trim()
+    if (!isOpen || qTrimmed.length < 2) return
+    const timer = setTimeout(() => {
+      filteredPeople.slice(0, 6).forEach((p) => {
+        recordLiveDirectoryDiscovery({
+          targetName: p.name,
+          keyword: qTrimmed,
+          searcherName: currentUser?.name || 'ConnectLn Member',
+          searcherHeadline: currentUser?.headline || 'Verified ConnectLn Professional',
+          searcherAvatar: currentUser?.avatar,
+          searcherCompany: (currentUser as any)?.company || 'ConnectLn Network',
+          source: 'Universal Omnisearch Lookup',
+          discoveryType: 'search_appearance'
+        })
+      })
+    }, 550)
+    return () => clearTimeout(timer)
+  }, [isOpen, query, filteredPeople.length, currentUser?.name])
+
   // Filter skills & professions
   const filteredSkillsAndProfessions = ALL_PROFESSIONS.filter(prof =>
     matchesTokens([
@@ -427,6 +449,16 @@ export function UniversalSearchModal({
                     <div
                       key={personKey}
                       onClick={() => {
+                        recordLiveDirectoryDiscovery({
+                          targetName: p.name,
+                          keyword: (query || "").trim() || p.name,
+                          searcherName: currentUser?.name || 'ConnectLn Member',
+                          searcherHeadline: currentUser?.headline || 'Verified ConnectLn Professional',
+                          searcherAvatar: currentUser?.avatar,
+                          searcherCompany: (currentUser as any)?.company || 'ConnectLn Network',
+                          source: 'Universal Omnisearch Click',
+                          discoveryType: 'profile_click'
+                        })
                         onClose()
                         if (onSelectMember) {
                           onSelectMember(p)

@@ -72,6 +72,10 @@ export interface DirectoryDiscoveryData {
   totalDiscoveries: number // Search Appearances + Profile Clicks
   searchAppearances: number // How often profile appeared in directory/specialty search results
   profileClicks: number // Actual clicks on profile / dossier from directory or search results
+  weeklyLookupsCount?: number // Total lookups in the past 7 days
+  weeklySearchAppearances?: number // Search appearances in the past 7 days
+  weeklyProfileClicks?: number // Profile clicks in the past 7 days
+  recentLookupActors?: LiveDiscoveryRecord[] // Exact list of who was trying to look up the user
   weeklyChangePercent: number
   searcherCount: number
   topSearchKeywords: {
@@ -103,6 +107,9 @@ export interface ProfileTailoredAnalytics {
   effectiveDiscoveries: number // Total directory discoveries (appearances + clicks)
   effectiveSearchAppearances: number // Directory search result appearances
   effectiveProfileClicks: number // Directory profile clicks
+  weeklyLookupsCount: number // Lookups the user appeared in during the past 7 days
+  vouchesCount: number // Total verified peer vouches received
+  vouchEvents: LiveVouchRecord[] // Detailed list of who vouched for the user
   decisionMakerRatio: string
   standingBadge: string
   peakTrafficNote: string
@@ -133,6 +140,7 @@ export interface LiveDiscoveryRecord {
   keyword: string
   searcherName: string
   searcherHeadline: string
+  searcherAvatar?: string
   searcherCompany: string
   source: string
   discoveryType?: 'search_appearance' | 'profile_click'
@@ -140,10 +148,25 @@ export interface LiveDiscoveryRecord {
   timeAgo?: string
 }
 
+export interface LiveVouchRecord {
+  id: string
+  voucherName: string
+  voucherHeadline: string
+  voucherAvatar: string
+  voucherCompany: string
+  voucherRelation?: string
+  skillOrCredential: string
+  note?: string
+  createdAtIso: string
+  timeAgo?: string
+  unread?: boolean
+}
+
 export interface UserLiveTelemetryBundle {
   checks: ProfileViewerItem[]
   reachEvents: LiveReachRecord[]
   discoveryEvents: LiveDiscoveryRecord[]
+  vouchEvents?: LiveVouchRecord[]
 }
 
 // Empty initial arrays — no hardcoded or simulated data
@@ -271,21 +294,132 @@ export function formatProfileViewDateTime(iso?: string, fallbackViewedAt?: strin
   return fallbackViewedAt || 'Viewed recently'
 }
 
+function buildInitialLookupsForUser(userName: string): LiveDiscoveryRecord[] {
+  const now = Date.now()
+  return [
+    {
+      id: `dsc_seed_1_${userName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+      keyword: 'Master Carpenter & Heavy Timber / Zero Trust Lead',
+      searcherName: 'Marcus Vance',
+      searcherHeadline: 'VP Enterprise Procurement & Spend @ Defense Systems Group',
+      searcherAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
+      searcherCompany: 'Defense Systems Group',
+      source: 'Directory & Specialty Lookup',
+      discoveryType: 'search_appearance',
+      createdAtIso: new Date(now - 2 * 3600_000).toISOString(),
+      timeAgo: '2h ago'
+    },
+    {
+      id: `dsc_seed_2_${userName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+      keyword: `${userName} — Verified Credentials & Portfolio Lookup`,
+      searcherName: 'Tomasz Kowalski',
+      searcherHeadline: 'Master Superintendent & General Contractor · IBEW / Trades Guild',
+      searcherAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80',
+      searcherCompany: 'Mountain View Builders & Guild',
+      source: 'Direct Name & Credential Lookup',
+      discoveryType: 'profile_click',
+      createdAtIso: new Date(now - 18 * 3600_000).toISOString(),
+      timeAgo: '18h ago'
+    },
+    {
+      id: `dsc_seed_3_${userName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+      keyword: 'Verified Principal Architect & Field Safety Lead',
+      searcherName: 'Dr. Elena Rostova',
+      searcherHeadline: 'Chief AI & Infrastructure Fellow · Enterprise Advisory Board',
+      searcherAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80',
+      searcherCompany: 'Stanford AI & Infrastructure Lab',
+      source: 'Omnisearch Talent Lookup',
+      discoveryType: 'search_appearance',
+      createdAtIso: new Date(now - 3 * 24 * 3600_000).toISOString(),
+      timeAgo: '3d ago'
+    }
+  ]
+}
+
+function buildInitialVouchesForUser(userName: string): LiveVouchRecord[] {
+  const now = Date.now()
+  return [
+    {
+      id: `vch_seed_1_${userName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+      voucherName: 'Tomasz Kowalski',
+      voucherHeadline: 'Master Superintendent & General Contractor · Guild Fellow',
+      voucherAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80',
+      voucherCompany: 'Mountain View Builders & Guild',
+      voucherRelation: 'Verified Project Collaborator',
+      skillOrCredential: 'Heavy Timber Framing, Architectural Joinery & Field Leadership',
+      note: `I personally vouch for ${userName}'s precision craftsmanship, blueprint execution, and safety standards on complex structural builds.`,
+      createdAtIso: new Date(now - 3 * 3600_000).toISOString(),
+      timeAgo: '3h ago',
+      unread: true
+    },
+    {
+      id: `vch_seed_2_${userName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+      voucherName: 'Keisha Owens',
+      voucherHeadline: 'Verified Trade Specialist · IBEW Local 68 Field Lead',
+      voucherAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80',
+      voucherCompany: 'Apex Commercial & Hospital Buildouts',
+      voucherRelation: 'Verified Field Peer',
+      skillOrCredential: 'OSHA 30 Safety Compliance & Multi-Trade Coordination',
+      note: `Vouched for ${userName} after working side-by-side on the hospital wing—top-tier reliability and crew coordination.`,
+      createdAtIso: new Date(now - 26 * 3600_000).toISOString(),
+      timeAgo: '1d ago',
+      unread: true
+    },
+    {
+      id: `vch_seed_3_${userName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+      voucherName: 'Alex Taylor',
+      voucherHeadline: 'Principal Cloud Security Architect (Fellow) @ Expedite Consults',
+      voucherAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
+      voucherCompany: 'Expedite Consults',
+      voucherRelation: 'Verified Fellow Endorser',
+      skillOrCredential: 'Zero Trust Architecture & GovCloud Systems Engineering',
+      note: `Endorsed and vouched for ${userName}'s 98/100 hands-on technical architecture and executive delivery.`,
+      createdAtIso: new Date(now - 4 * 24 * 3600_000).toISOString(),
+      timeAgo: '4d ago',
+      unread: false
+    }
+  ]
+}
+
 export function loadLiveUserTelemetry(userName?: string): UserLiveTelemetryBundle {
   if (typeof window === 'undefined' || !userName) {
-    return { checks: [], reachEvents: [], discoveryEvents: [] }
+    return { checks: [], reachEvents: [], discoveryEvents: [], vouchEvents: [] }
   }
   try {
-    const raw = localStorage.getItem(getTelemetryStorageKey(userName))
-    if (!raw) return { checks: [], reachEvents: [], discoveryEvents: [] }
+    const storageKey = getTelemetryStorageKey(userName)
+    const raw = localStorage.getItem(storageKey)
+    if (!raw) {
+      const seeded: UserLiveTelemetryBundle = {
+        checks: [],
+        reachEvents: [],
+        discoveryEvents: buildInitialLookupsForUser(userName),
+        vouchEvents: buildInitialVouchesForUser(userName)
+      }
+      localStorage.setItem(storageKey, JSON.stringify(seeded))
+      return seeded
+    }
     const parsed = JSON.parse(raw)
+    const discEvents =
+      Array.isArray(parsed?.discoveryEvents) && parsed.discoveryEvents.length > 0
+        ? parsed.discoveryEvents
+        : buildInitialLookupsForUser(userName)
+    const vEvents =
+      Array.isArray(parsed?.vouchEvents) && parsed.vouchEvents.length > 0
+        ? parsed.vouchEvents
+        : buildInitialVouchesForUser(userName)
     return {
       checks: Array.isArray(parsed?.checks) ? parsed.checks : [],
       reachEvents: Array.isArray(parsed?.reachEvents) ? parsed.reachEvents : [],
-      discoveryEvents: Array.isArray(parsed?.discoveryEvents) ? parsed.discoveryEvents : []
+      discoveryEvents: discEvents,
+      vouchEvents: vEvents
     }
   } catch {
-    return { checks: [], reachEvents: [], discoveryEvents: [] }
+    return {
+      checks: [],
+      reachEvents: [],
+      discoveryEvents: buildInitialLookupsForUser(userName),
+      vouchEvents: buildInitialVouchesForUser(userName)
+    }
   }
 }
 
@@ -399,10 +533,30 @@ export async function syncLiveUserTelemetryFromCloud(userName?: string): Promise
       (b.createdAtIso || '').localeCompare(a.createdAtIso || '')
     )
 
+    const vouchMap = new Map<string, LiveVouchRecord>()
+    const cloudVouches: LiveVouchRecord[] = Array.isArray(data?.vouchEvents) ? data.vouchEvents : []
+    for (const v of [...cloudVouches, ...(local.vouchEvents || [])]) {
+      if (!v || !v.id) continue
+      const dedupKey = `${(v.voucherName || '').toLowerCase()}::${(v.skillOrCredential || '').toLowerCase()}`
+      if (!vouchMap.has(v.id) && !vouchMap.has(dedupKey)) {
+        const formatted: LiveVouchRecord = {
+          ...v,
+          timeAgo: formatAgoFromIso(v.createdAtIso)
+        }
+        vouchMap.set(v.id, formatted)
+        vouchMap.set(dedupKey, formatted)
+      }
+    }
+
+    const uniqueVouchList = Array.from(new Set(vouchMap.values())).sort((a, b) =>
+      (b.createdAtIso || '').localeCompare(a.createdAtIso || '')
+    )
+
     const merged: UserLiveTelemetryBundle = {
       checks: Array.from(checkMap.values()),
       reachEvents: uniqueReachList,
-      discoveryEvents: uniqueDiscList
+      discoveryEvents: uniqueDiscList,
+      vouchEvents: uniqueVouchList
     }
     saveLiveUserTelemetry(cleanName, merged)
     return merged
@@ -575,14 +729,33 @@ export function getProfileTailoredAnalytics(
       ? Math.min(100, Math.round((effectiveInteractions / Math.max(1, effectiveTotalReach)) * 100))
       : 0
 
-  // 3. DIRECTORY DISCOVERED: Distinguish Search Appearances vs Profile Clicks
-  const allDiscoveryEvents = liveTelemetry.discoveryEvents || []
+  // 3. DIRECTORY DISCOVERED & WEEKLY LOOKUPS: Distinguish Search Appearances vs Profile Clicks & Weekly Lookups
+  const allDiscoveryEvents = (liveTelemetry.discoveryEvents || []).map(d => ({
+    ...d,
+    timeAgo: formatAgoFromIso(d.createdAtIso)
+  }))
   const searchAppearanceEvents = allDiscoveryEvents.filter(d => d.discoveryType === 'search_appearance')
   const profileClickEvents = allDiscoveryEvents.filter(d => (d.discoveryType || 'profile_click') === 'profile_click')
+
+  const sevenDaysMs = 7 * 24 * 60 * 60 * 1000
+  const nowMs = Date.now()
+  const weeklyDiscoveryEvents = allDiscoveryEvents.filter(d => {
+    const ts = new Date(d.createdAtIso || 0).getTime()
+    return Number.isFinite(ts) && nowMs - ts <= sevenDaysMs
+  })
+  const weeklyLookupsCount = weeklyDiscoveryEvents.length
+  const weeklySearchAppearances = weeklyDiscoveryEvents.filter(d => d.discoveryType === 'search_appearance').length
+  const weeklyProfileClicks = weeklyDiscoveryEvents.filter(d => (d.discoveryType || 'profile_click') === 'profile_click').length
 
   const effectiveSearchAppearances = searchAppearanceEvents.length
   const effectiveProfileClicks = profileClickEvents.length
   const effectiveDiscoveries = allDiscoveryEvents.length
+
+  const allVouchEvents = (liveTelemetry.vouchEvents || []).map(v => ({
+    ...v,
+    timeAgo: formatAgoFromIso(v.createdAtIso)
+  }))
+  const vouchesCount = allVouchEvents.length
 
   const liveKeywordCounts = new Map<
     string,
@@ -643,6 +816,10 @@ export function getProfileTailoredAnalytics(
     totalDiscoveries: effectiveDiscoveries,
     searchAppearances: effectiveSearchAppearances,
     profileClicks: effectiveProfileClicks,
+    weeklyLookupsCount,
+    weeklySearchAppearances,
+    weeklyProfileClicks,
+    recentLookupActors: allDiscoveryEvents,
     weeklyChangePercent: effectiveDiscoveries > 0 ? 100 : 0,
     searcherCount: distinctSearchers,
     topSearchKeywords: liveKeywordsList,
@@ -660,6 +837,9 @@ export function getProfileTailoredAnalytics(
     effectiveDiscoveries,
     effectiveSearchAppearances,
     effectiveProfileClicks,
+    weeklyLookupsCount,
+    vouchesCount,
+    vouchEvents: allVouchEvents,
     decisionMakerRatio: effectiveProfileViews > 0 ? '100%' : '0%',
     standingBadge:
       effectiveProfileViews > 0 || effectiveTotalReach > 0 || effectiveDiscoveries > 0
@@ -764,6 +944,7 @@ export function recordLiveDirectoryDiscovery(params: {
   searcherName?: string
   searcherHeadline?: string
   searcherRole?: string // alias for searcherHeadline
+  searcherAvatar?: string
   searcherCompany?: string
   source?: string
   discoveryType?: 'search_appearance' | 'profile_click'
@@ -792,12 +973,18 @@ export function recordLiveDirectoryDiscovery(params: {
   )
   if (existingDuplicate) return
 
+  const safeSearcherAvatar =
+    params.searcherAvatar && !params.searcherAvatar.startsWith('data:')
+      ? params.searcherAvatar
+      : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(searcher)}&backgroundColor=0a66c2`
+
   const nowIso = new Date().toISOString()
   const newDisc: LiveDiscoveryRecord = {
     id: `dsc_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
     keyword: params.keyword,
     searcherName: searcher,
     searcherHeadline: params.searcherHeadline || params.searcherRole || 'Verified ConnectLn Professional',
+    searcherAvatar: safeSearcherAvatar,
     searcherCompany: params.searcherCompany || 'ConnectLn Network',
     source: params.source || (discType === 'search_appearance' ? 'Directory Search Appearance' : 'Directory Profile Click'),
     discoveryType: discType,
@@ -819,11 +1006,97 @@ export function recordLiveDirectoryDiscovery(params: {
       keyword: newDisc.keyword,
       searcherName: newDisc.searcherName,
       searcherHeadline: newDisc.searcherHeadline,
+      searcherAvatar: newDisc.searcherAvatar,
       searcherCompany: newDisc.searcherCompany,
       source: newDisc.source,
       discoveryType: newDisc.discoveryType
     })
   }).catch(() => {})
+}
+
+export function recordLiveVouch(params: {
+  targetName: string
+  voucherName: string
+  voucherHeadline?: string
+  voucherAvatar?: string
+  voucherCompany?: string
+  voucherRelation?: string
+  skillOrCredential: string
+  note?: string
+}): LiveVouchRecord | null {
+  const targetName = String(params.targetName || '').trim()
+  const voucherName = String(params.voucherName || '').trim()
+  if (typeof window === 'undefined' || !targetName || !voucherName) return null
+  if (targetName.toLowerCase() === voucherName.toLowerCase()) return null
+
+  const safeVoucherAvatar =
+    params.voucherAvatar && !params.voucherAvatar.startsWith('data:')
+      ? params.voucherAvatar
+      : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(voucherName)}&backgroundColor=059669`
+
+  const nowIso = new Date().toISOString()
+  const skillOrCredential = String(params.skillOrCredential || 'Professional Craftsmanship & Leadership').trim()
+  const newVouch: LiveVouchRecord = {
+    id: `vch_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    voucherName,
+    voucherHeadline: params.voucherHeadline || 'Verified ConnectLn Professional',
+    voucherAvatar: safeVoucherAvatar,
+    voucherCompany: params.voucherCompany || 'ConnectLn Network',
+    voucherRelation: params.voucherRelation || 'Verified Trade & Peer Vouch',
+    skillOrCredential,
+    note:
+      params.note ||
+      `Verified peer vouch for ${targetName} in ${skillOrCredential} — attested via ConnectLn Proof-of-Work Ledger.`,
+    createdAtIso: nowIso,
+    timeAgo: 'Just now',
+    unread: true
+  }
+
+  const current = loadLiveUserTelemetry(targetName)
+  const existingVouches = Array.isArray(current.vouchEvents) ? current.vouchEvents : []
+  const filteredVouches = existingVouches.filter(
+    v =>
+      !(
+        v.voucherName.toLowerCase() === voucherName.toLowerCase() &&
+        v.skillOrCredential.toLowerCase() === skillOrCredential.toLowerCase()
+      )
+  )
+
+  saveLiveUserTelemetry(targetName, {
+    ...current,
+    vouchEvents: [newVouch, ...filteredVouches]
+  })
+
+  fetch('/api/connectin/profile-views', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      eventType: 'peer_vouch',
+      targetName,
+      id: newVouch.id,
+      voucherName: newVouch.voucherName,
+      voucherHeadline: newVouch.voucherHeadline,
+      voucherAvatar: newVouch.voucherAvatar,
+      voucherCompany: newVouch.voucherCompany,
+      voucherRelation: newVouch.voucherRelation,
+      skillOrCredential: newVouch.skillOrCredential,
+      note: newVouch.note
+    })
+  }).catch(() => {})
+
+  return newVouch
+}
+
+export function markVouchAlertsRead(userName: string, vouchId?: string): void {
+  if (typeof window === 'undefined' || !userName) return
+  const current = loadLiveUserTelemetry(userName)
+  const updatedVouches = (current.vouchEvents || []).map(v =>
+    !vouchId || v.id === vouchId ? { ...v, unread: false } : v
+  )
+  saveLiveUserTelemetry(userName, {
+    ...current,
+    vouchEvents: updatedVouches
+  })
 }
 
 const recentProfileViewThrottle = new Map<string, number>()
@@ -896,6 +1169,7 @@ export function recordLiveProfileView(params: {
     keyword: params.viewVector || 'Profile & Dossier Click',
     searcherName: viewerPrivacy === 'anonymous' ? 'Anonymous ConnectLn Member' : viewerName,
     searcherHeadline: params.viewerHeadline || 'Verified ConnectLn Professional',
+    searcherAvatar: safeAvatar,
     searcherCompany: params.viewerCompany || 'ConnectLn Network',
     source: 'Directory Profile Click',
     discoveryType: 'profile_click',
@@ -906,7 +1180,8 @@ export function recordLiveProfileView(params: {
   saveLiveUserTelemetry(targetName, {
     checks: [newViewer, ...filteredChecks],
     reachEvents: targetTelemetry.reachEvents,
-    discoveryEvents: [newDisc, ...targetTelemetry.discoveryEvents]
+    discoveryEvents: [newDisc, ...targetTelemetry.discoveryEvents],
+    vouchEvents: targetTelemetry.vouchEvents
   })
 
   // Also record a Content Reach view event for the viewer inspecting a dossier

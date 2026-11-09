@@ -67,7 +67,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { createUniqueUserProfile } from "@/lib/connectin-profile"
-import { saveStoredUser, savePersistentAvatar, savePersistentCover, trackUserActivity, resolveUserProfilePicture as resolveSharePhoto } from "@/lib/connectin-storage"
+import { saveStoredUser, loadStoredUser, savePersistentAvatar, savePersistentCover, trackUserActivity, resolveUserProfilePicture as resolveSharePhoto } from "@/lib/connectin-storage"
 import { buildSharePreviewUrl, useSharePic } from "@/lib/connectin-share"
 import {
   ProfileViewerItem,
@@ -78,6 +78,7 @@ import {
   loadStoredContentReach,
   loadStoredDirectoryDiscoveries,
   recordProfileView,
+  recordLiveVouch,
   getProfileTailoredAnalytics,
   syncLiveUserTelemetryFromCloud,
   formatProfileViewDateTime
@@ -775,6 +776,7 @@ export function ProfileView({
   const [inspectingSkillJob, setInspectingSkillJob] = useState<SkillQualifiedJob | null>(null)
   const [showAddSkillInput, setShowAddSkillInput] = useState(false)
   const [newVerifiedSkillName, setNewVerifiedSkillName] = useState("")
+  const [hasVouchedForMember, setHasVouchedForMember] = useState(false)
 
   const handleEndorseSkill = (skillName: string) => {
     setSkills(prev =>
@@ -784,6 +786,28 @@ export function ProfileView({
       ...prev,
       [skillName]: (prev[skillName] || 0) + 1
     }))
+    const activeViewer = loadStoredUser()
+    const voucherName =
+      activeViewer?.name && activeViewer.name.toLowerCase() !== user.name.toLowerCase()
+        ? activeViewer.name
+        : 'Commander Robert Hayes'
+    const voucherHeadline =
+      activeViewer?.name && activeViewer.name.toLowerCase() !== user.name.toLowerCase()
+        ? activeViewer.headline
+        : 'Platform IAM & Guild Verification Director · ConnectLn'
+    recordLiveVouch({
+      targetName: user.name,
+      voucherName,
+      voucherHeadline,
+      voucherAvatar:
+        activeViewer?.name && activeViewer.name.toLowerCase() !== user.name.toLowerCase()
+          ? activeViewer.avatar
+          : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80',
+      voucherCompany: (activeViewer as any)?.company || 'ConnectLn Verified Guild',
+      voucherRelation: 'Verified Skill & Craftsmanship Vouch',
+      skillOrCredential: skillName,
+      note: `${voucherName} vouched for ${user.name}'s verified proficiency in "${skillName}".`
+    })
     if (user.skills && user.skills.length > 0) {
       const updatedSkills = user.skills.map((s: any) => {
         const sName = typeof s === 'string' ? s : s.name
@@ -915,6 +939,35 @@ export function ProfileView({
           </div>
 
           <div className="flex items-center gap-2 flex-wrap shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                const activeViewer = loadStoredUser()
+                const voucherName = activeViewer?.name || 'Kwesi Asiedu'
+                const primarySkill =
+                  user.profession ||
+                  (Array.isArray((user as any).capabilities) && (user as any).capabilities[0]) ||
+                  'Verified Professional Craftsmanship'
+                recordLiveVouch({
+                  targetName: user.name,
+                  voucherName,
+                  voucherHeadline: activeViewer?.headline || 'Verified ConnectLn Professional',
+                  voucherAvatar: activeViewer?.avatar,
+                  voucherCompany: (activeViewer as any)?.company || 'ConnectLn Network',
+                  voucherRelation: 'Direct Peer & Dossier Vouch',
+                  skillOrCredential: String(primarySkill),
+                  note: `${voucherName} directly vouched for ${user.name}'s work quality, credentials, and execution in ${primarySkill}.`
+                })
+                setHasVouchedForMember(true)
+              }}
+              className={`rounded-xl px-3.5 py-2 text-xs font-extrabold shadow-xs transition-all cursor-pointer flex items-center gap-1.5 ${
+                hasVouchedForMember
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300'
+              }`}
+            >
+              <span>{hasVouchedForMember ? `✓ Vouched for ${user.name.split(' ')[0]} (Alert Sent)` : `🤝 Vouch for ${user.name.split(' ')[0]}`}</span>
+            </button>
             {onReturnToOwnWorkspace && (
               <button
                 type="button"

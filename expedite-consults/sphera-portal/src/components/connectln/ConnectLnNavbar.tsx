@@ -49,6 +49,7 @@ import { isSuperAdminUser } from "@/lib/connectin-profile"
 import { getCategorizedMoreMenu, getEnclaveSearchPlaceholder, getEnclaveModules } from "@/lib/connectin-navbar-data"
 import { findEnclaveById, ALL_PROFESSIONS, PROFESSION_ENCLAVES } from "@/lib/connectin-professions"
 import { loadStoredAdminUsers } from "@/lib/connectin-storage"
+import { recordLiveDirectoryDiscovery } from "@/lib/connectin-analytics"
 import { ThemeColorSwitcher } from "@/components/theme/ThemeColorSwitcher"
 import { LanguageSwitcher } from "@/components/language/LanguageSwitcher"
 import { useLanguage } from "@/context/LanguageContext"
@@ -398,6 +399,27 @@ export function ConnectLnNavbar({
     : allSearchableMembers.filter(p => p.name.toLowerCase() !== (user?.name || "").toLowerCase())
   ).slice(0, searchDropdownTab === 'members' ? 12 : 5)
 
+  // Track search lookup appearances when a user searches for members in the Navbar
+  useEffect(() => {
+    const qTrimmed = searchQuery.trim()
+    if (!isSearchFocused || qTrimmed.length < 2) return
+    const timer = setTimeout(() => {
+      matchingMembers.slice(0, 5).forEach((member) => {
+        recordLiveDirectoryDiscovery({
+          targetName: member.name,
+          keyword: qTrimmed,
+          searcherName: user?.name || 'ConnectLn Member',
+          searcherHeadline: user?.headline || 'Verified ConnectLn Professional',
+          searcherAvatar: user?.avatar,
+          searcherCompany: (user as any)?.company || 'ConnectLn Network',
+          source: 'Navbar Directory Lookup',
+          discoveryType: 'search_appearance'
+        })
+      })
+    }, 550)
+    return () => clearTimeout(timer)
+  }, [isSearchFocused, searchQuery, matchingMembers.length, user?.name])
+
   // Filter modules by query (also show top modules when browsing)
   const matchingModules = (searchQuery.trim()
     ? ALL_MODULES.filter(m =>
@@ -612,6 +634,16 @@ export function ConnectLnNavbar({
                             <div
                               key={member.id}
                               onClick={() => {
+                                recordLiveDirectoryDiscovery({
+                                  targetName: member.name,
+                                  keyword: searchQuery.trim() || member.name,
+                                  searcherName: user?.name || 'ConnectLn Member',
+                                  searcherHeadline: user?.headline || 'Verified ConnectLn Professional',
+                                  searcherAvatar: user?.avatar,
+                                  searcherCompany: (user as any)?.company || 'ConnectLn Network',
+                                  source: 'Navbar Lookup Click',
+                                  discoveryType: 'profile_click'
+                                })
                                 if (onSelectMember) {
                                   onSelectMember(member)
                                 } else {

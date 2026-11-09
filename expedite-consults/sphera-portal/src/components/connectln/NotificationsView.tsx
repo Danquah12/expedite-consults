@@ -38,6 +38,13 @@ import {
   markFollowNotificationsRead,
   UserFollowBundle
 } from "@/lib/connectin-follow"
+import {
+  loadLiveUserTelemetry,
+  syncLiveUserTelemetryFromCloud,
+  getProfileTailoredAnalytics,
+  markVouchAlertsRead,
+  UserLiveTelemetryBundle
+} from "@/lib/connectin-analytics"
 
 interface NoctisAlertCardExplanation {
   alertId: string
@@ -58,11 +65,15 @@ export function NotificationsView({
   currentUserName = "Kwesi Asiedu",
   currentUserProfession = ""
 }: NotificationsViewProps) {
-  const [selectedCategory, setSelectedCategory] = useState<'All' | 'Security' | 'Career' | 'Marketplace' | 'Learning' | 'Social'>('All')
+  const [selectedCategory, setSelectedCategory] = useState<'All' | 'Lookups & Vouches' | 'Security' | 'Career' | 'Marketplace' | 'Learning' | 'Social'>('All')
   const [notifications, setNotifications] = useState<CategorizedNotificationItem[]>(INITIAL_CATEGORIZED_NOTIFICATIONS)
   const [unreadOnly, setUnreadOnly] = useState(false)
+  const [readDynamicAlertIds, setReadDynamicAlertIds] = useState<string[]>([])
   const [followBundle, setFollowBundle] = useState<UserFollowBundle>(() =>
     loadUserFollowBundle(currentUserName)
+  )
+  const [liveTelemetry, setLiveTelemetry] = useState<UserLiveTelemetryBundle>(() =>
+    loadLiveUserTelemetry(currentUserName)
   )
 
   useEffect(() => {
@@ -70,13 +81,134 @@ export function NotificationsView({
     const refreshFollow = () => {
       setFollowBundle(loadUserFollowBundle(currentUserName))
     }
+    const refreshTelemetry = () => {
+      setLiveTelemetry(loadLiveUserTelemetry(currentUserName))
+    }
     refreshFollow()
+    refreshTelemetry()
     syncUserFollowBundleFromCloud(currentUserName).then((cloudBundle) => {
       setFollowBundle(cloudBundle)
     })
+    syncLiveUserTelemetryFromCloud(currentUserName).then((cloudTelemetry) => {
+      setLiveTelemetry(cloudTelemetry)
+    })
     window.addEventListener('connectln-follow-updated', refreshFollow)
-    return () => window.removeEventListener('connectln-follow-updated', refreshFollow)
+    window.addEventListener('connectln-telemetry-updated', refreshTelemetry)
+    return () => {
+      window.removeEventListener('connectln-follow-updated', refreshFollow)
+      window.removeEventListener('connectln-telemetry-updated', refreshTelemetry)
+    }
   }, [currentUserName])
+
+  const tailoredAnalytics = React.useMemo(
+    () =>
+      getProfileTailoredAnalytics({
+        name: currentUserName,
+        profession: currentUserProfession || "Master Carpenter"
+      } as any),
+    [currentUserProfession, currentUserName, liveTelemetry]
+  )
+
+  const weeklyLookupsCount = tailoredAnalytics.discoveryData.weeklyLookupsCount
+  const weeklySearchAppearances = tailoredAnalytics.discoveryData.weeklySearchAppearances
+  const weeklyProfileClicks = tailoredAnalytics.discoveryData.weeklyProfileClicks
+  const recentLookupActors = tailoredAnalytics.discoveryData.recentLookupActors || []
+  const vouchEvents = tailoredAnalytics.vouchEvents || []
+
+  // Convert Weekly Lookups & Who Tried to Lookup the User into Alert items
+  const liveLookupAlertItems = React.useMemo<CategorizedNotificationItem[]>(() => {
+    const items: CategorizedNotificationItem[] = []
+    const uniqueSearcherNames: string[] = Array.from(
+      new Set(recentLookupActors.map(a => String(a.searcherName || '')).filter(Boolean))
+    )
+    const topKeywords: string[] = Array.from(
+      new Set(recentLookupActors.map(a => String(a.keyword || '')).filter(Boolean))
+    ).slice(0, 3)
+
+    if (weeklyLookupsCount > 0) {
+      const digestId = `lookup_weekly_digest_${currentUserName.toLowerCase().replace(/\s+/g, '_')}`
+      items.push({
+        id: digestId,
+        category: 'Career',
+        subType: 'Weekly Lookup Digest',
+        actor: {
+          name: uniqueSearcherNames[0] || 'ConnectLn Directory Radar',
+          role: `Weekly Search & Lookup Telemetry (${weeklyLookupsCount} Lookups in 7d)`,
+          avatar:
+            recentLookupActors[0]?.searcherAvatar ||
+            `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(uniqueSearcherNames[0] || 'CL')}&backgroundColor=0a66c2`
+        },
+        title: `🔍 Weekly Lookup Report: You appeared in ${weeklyLookupsCount} lookups this week (${weeklySearchAppearances} search appearances · ${weeklyProfileClicks} direct profile lookups)`,
+        description: `Who was trying to look you up: ${
+          uniqueSearcherNames.length > 0 ? uniqueSearcherNames.join(', ') : 'Verified ConnectLn Members'
+        }. Top lookup queries matching your profile: ${
+          topKeywords.map(k => `"${k}"`).join(', ') || '"Verified Professional"'
+        }.`,
+        timestamp: 'Weekly Digest · Live',
+        unread: !readDynamicAlertIds.includes(digestId),
+        priority: 'high',
+        actionText: 'Inspect Lookup Dossier',
+        targetTab: 'profile'
+      })
+    }
+
+    recentLookupActors.slice(0, 8).forEach((lookup, idx) => {
+      const alertId = `lookup_actor_${lookup.id || idx}`
+      const isDirectClick = lookup.discoveryType === 'profile_click'
+      items.push({
+        id: alertId,
+        category: 'Career',
+        subType: 'Who Looked You Up',
+        actor: {
+          name: lookup.searcherName,
+          role: `${lookup.searcherHeadline} · ${lookup.searcherCompany}`,
+          avatar:
+            lookup.searcherAvatar ||
+            `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(lookup.searcherName)}&backgroundColor=0a66c2`
+        },
+        title: `🔍 ${lookup.searcherName} (${lookup.searcherCompany}) looked you up via "${lookup.keyword}"`,
+        description: `${
+          isDirectClick
+            ? 'Direct Profile Lookup: Clicked your dossier directly from directory lookup results'
+            : 'Search Lookup Appearance: Your profile appeared in their live directory lookup'
+        } via ${lookup.source} · Role: ${lookup.searcherHeadline}. Counted in your ${weeklyLookupsCount} weekly lookups.`,
+        timestamp: lookup.timeAgo || 'This week',
+        unread: idx < 2 && !readDynamicAlertIds.includes(alertId),
+        priority: 'normal',
+        actionText: 'View Profile & Lookups',
+        targetTab: 'profile'
+      })
+    })
+
+    return items
+  }, [weeklyLookupsCount, weeklySearchAppearances, weeklyProfileClicks, recentLookupActors, currentUserName, readDynamicAlertIds])
+
+  // Convert Peer Vouches ("Who Vouched for a User") into Alert items
+  const liveVouchAlertItems = React.useMemo<CategorizedNotificationItem[]>(() => {
+    return vouchEvents.map((vouch) => {
+      const alertId = `vouch_alert_${vouch.id}`
+      const isUnread = Boolean(vouch.unread) && !readDynamicAlertIds.includes(alertId)
+      return {
+        id: alertId,
+        category: 'Social',
+        subType: 'Peer Vouch Received',
+        actor: {
+          name: vouch.voucherName,
+          role: `${vouch.voucherHeadline} · ${vouch.voucherCompany}`,
+          avatar:
+            vouch.voucherAvatar ||
+            `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(vouch.voucherName)}&backgroundColor=059669`
+        },
+        title: `🤝 ${vouch.voucherName} vouched for you in "${vouch.skillOrCredential}"`,
+        description: `"${vouch.note}" — Verified ${vouch.voucherRelation} (${vouch.voucherHeadline} at ${vouch.voucherCompany}). Recorded on your ConnectLn Proof-of-Work & Endorsement Ledger.`,
+        timestamp: vouch.timeAgo || 'Recently',
+        unread: isUnread,
+        priority: 'high',
+        actionText: 'View Vouch on Profile',
+        targetTab: 'profile'
+      }
+    })
+  }, [vouchEvents, readDynamicAlertIds])
 
   // Convert live follower notifications into CategorizedNotificationItems (respecting notifyOnNewFollower preference)
   const liveFollowerNotificationItems = React.useMemo<CategorizedNotificationItem[]>(() => {
@@ -101,12 +233,17 @@ export function NotificationsView({
   }, [followBundle])
 
   const allCombinedNotifications = React.useMemo(() => {
-    const existingIds = new Set(liveFollowerNotificationItems.map(i => i.id))
+    const dynamicItems = [
+      ...liveLookupAlertItems,
+      ...liveVouchAlertItems,
+      ...liveFollowerNotificationItems
+    ]
+    const existingIds = new Set(dynamicItems.map(i => i.id))
     return [
-      ...liveFollowerNotificationItems,
+      ...dynamicItems,
       ...notifications.filter(n => !existingIds.has(n.id))
     ]
-  }, [liveFollowerNotificationItems, notifications])
+  }, [liveLookupAlertItems, liveVouchAlertItems, liveFollowerNotificationItems, notifications])
 
   // Noctis Alerts Intelligence States
   const [showNoctisOverview, setShowNoctisOverview] = useState<boolean>(true)
@@ -120,20 +257,32 @@ export function NotificationsView({
   const [loadingSingleAlertId, setLoadingSingleAlertId] = useState<string | null>(null)
   const [singleAlertQuestions, setSingleAlertQuestions] = useState<Record<string, string>>({})
 
+  const isLookupOrVouchAlert = (n: CategorizedNotificationItem) =>
+    n.subType === 'Weekly Lookup Digest' ||
+    n.subType === 'Who Looked You Up' ||
+    n.subType === 'Peer Vouch Received'
+
   // Category counts
   const getCategoryCount = (cat: string) => {
     if (cat === 'All') return allCombinedNotifications.length
+    if (cat === 'Lookups & Vouches') return allCombinedNotifications.filter(isLookupOrVouchAlert).length
     return allCombinedNotifications.filter(n => n.category === cat).length
   }
 
   const getUnreadCount = (cat: string) => {
     if (cat === 'All') return allCombinedNotifications.filter(n => n.unread).length
+    if (cat === 'Lookups & Vouches') return allCombinedNotifications.filter(n => isLookupOrVouchAlert(n) && n.unread).length
     return allCombinedNotifications.filter(n => n.category === cat && n.unread).length
   }
 
   // Filtered Notifications
   const filteredNotifications = allCombinedNotifications.filter(n => {
-    const matchCategory = selectedCategory === 'All' || n.category === selectedCategory
+    const matchCategory =
+      selectedCategory === 'All'
+        ? true
+        : selectedCategory === 'Lookups & Vouches'
+        ? isLookupOrVouchAlert(n)
+        : n.category === selectedCategory
     const matchUnread = !unreadOnly || n.unread
     return matchCategory && matchUnread
   })
@@ -242,17 +391,26 @@ export function NotificationsView({
     setNotifications(prev =>
       prev.map(n => (n.id === id ? { ...n, unread: false } : n))
     )
+    setReadDynamicAlertIds(prev => (prev.includes(id) ? prev : [...prev, id]))
     if (currentUserName && id.startsWith('fnotif_')) {
       const next = markFollowNotificationsRead(currentUserName)
       setFollowBundle(next)
+    }
+    if (currentUserName && id.startsWith('vouch_alert_')) {
+      const rawVouchId = id.replace('vouch_alert_', '')
+      markVouchAlertsRead(currentUserName, rawVouchId)
+      setLiveTelemetry(loadLiveUserTelemetry(currentUserName))
     }
   }
 
   const handleMarkAllRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, unread: false })))
+    setReadDynamicAlertIds(allCombinedNotifications.map(n => n.id))
     if (currentUserName) {
       const next = markFollowNotificationsRead(currentUserName)
       setFollowBundle(next)
+      markVouchAlertsRead(currentUserName)
+      setLiveTelemetry(loadLiveUserTelemetry(currentUserName))
     }
   }
 
@@ -274,10 +432,10 @@ export function NotificationsView({
               Notifications &amp; Activity
             </span>
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 mt-1.5">
-              Updates &amp; Career Signals
+              Updates, Weekly Lookups &amp; Peer Vouches
             </h1>
             <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-xl">
-              Stay informed on peer connections, career matches, community discussions, and account alerts.
+              Track who was trying to look you up this week, who vouched for your skills, peer connections, and career signals.
             </p>
           </div>
 
@@ -316,6 +474,7 @@ export function NotificationsView({
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
             {[
               { id: 'All', label: 'All', count: getCategoryCount('All'), unread: getUnreadCount('All') },
+              { id: 'Lookups & Vouches', label: '🔍🤝 Lookups & Vouches', count: getCategoryCount('Lookups & Vouches'), unread: getUnreadCount('Lookups & Vouches') },
               { id: 'Career', label: '💼 Career', count: getCategoryCount('Career'), unread: getUnreadCount('Career') },
               { id: 'Social', label: '💬 Network & Community', count: getCategoryCount('Social'), unread: getUnreadCount('Social') },
               { id: 'Learning', label: '🎓 Learning', count: getCategoryCount('Learning'), unread: getUnreadCount('Learning') },
@@ -363,6 +522,202 @@ export function NotificationsView({
           </button>
         </div>
       </div>
+
+      {/* 1.25 WEEKLY DIRECTORY LOOKUPS & VERIFIED PEER VOUCHES ALERT HUB */}
+      {(selectedCategory === 'All' ||
+        selectedCategory === 'Lookups & Vouches' ||
+        selectedCategory === 'Career' ||
+        selectedCategory === 'Social') && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* LEFT CARD: WEEKLY DIRECTORY LOOKUPS & WHO WAS TRYING TO LOOKUP THE USER */}
+          <div className="rounded-2xl border border-amber-300/80 dark:border-amber-800/70 bg-gradient-to-br from-amber-50/80 via-white to-orange-50/40 dark:from-zinc-900 dark:via-zinc-900 dark:to-amber-950/20 p-5 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 dark:bg-amber-950/70 border border-amber-300 dark:border-amber-700 px-2.5 py-0.5 text-[11px] font-extrabold text-amber-900 dark:text-amber-300">
+                    <span>🔍</span>
+                    <span>WEEKLY LOOKUPS RADAR (PAST 7 DAYS)</span>
+                  </span>
+                  <h2 className="text-base sm:text-lg font-black text-zinc-900 dark:text-zinc-100 mt-1.5">
+                    You Appeared in {weeklyLookupsCount} Lookups This Week
+                  </h2>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                    Real-time directory search telemetry showing <strong className="text-zinc-900 dark:text-zinc-200">who was trying to look you up</strong> and the exact search query used.
+                  </p>
+                </div>
+                <div className="shrink-0 rounded-xl bg-amber-600 text-white px-3.5 py-2 text-center shadow-xs">
+                  <div className="text-xl font-black leading-none">{weeklyLookupsCount}</div>
+                  <div className="text-[9px] font-extrabold uppercase tracking-wider mt-0.5">Weekly</div>
+                </div>
+              </div>
+
+              {/* Breakdown Pills */}
+              <div className="grid grid-cols-2 gap-2 mb-3.5">
+                <div className="rounded-xl bg-white/90 dark:bg-zinc-800/90 border border-amber-200/80 dark:border-zinc-700 px-3 py-2 flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-zinc-600 dark:text-zinc-300">🔎 Search Appearances</span>
+                  <span className="text-sm font-black text-amber-700 dark:text-amber-400">{weeklySearchAppearances}</span>
+                </div>
+                <div className="rounded-xl bg-white/90 dark:bg-zinc-800/90 border border-amber-200/80 dark:border-zinc-700 px-3 py-2 flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-zinc-600 dark:text-zinc-300">👆 Direct Profile Clicks</span>
+                  <span className="text-sm font-black text-[#0A66C2] dark:text-sky-400">{weeklyProfileClicks}</span>
+                </div>
+              </div>
+
+              {/* Who Was Trying to Lookup You List */}
+              <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                <div className="text-[11px] font-extrabold uppercase tracking-wider text-amber-900 dark:text-amber-300 flex items-center justify-between">
+                  <span>Who Was Trying to Lookup You ({recentLookupActors.length})</span>
+                  <span className="text-[10px] font-semibold text-zinc-500">Keyword &amp; Vector</span>
+                </div>
+                {recentLookupActors.slice(0, 5).map((actor) => (
+                  <div
+                    key={actor.id}
+                    className="rounded-xl bg-white dark:bg-zinc-800/90 border border-zinc-200/90 dark:border-zinc-700/80 p-2.5 flex items-start justify-between gap-2.5 shadow-2xs"
+                  >
+                    <div className="flex items-start gap-2.5 min-w-0">
+                      <img
+                        src={
+                          actor.searcherAvatar ||
+                          `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(actor.searcherName)}&backgroundColor=0a66c2`
+                        }
+                        alt={actor.searcherName}
+                        className="h-9 w-9 rounded-lg object-cover shrink-0 ring-1 ring-amber-300/60"
+                      />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100 truncate">
+                            {actor.searcherName}
+                          </span>
+                          <span className="rounded-full bg-amber-100 dark:bg-amber-950/70 px-1.5 py-0.2 text-[9px] font-bold text-amber-800 dark:text-amber-300">
+                            {actor.discoveryType === 'profile_click' ? 'Direct Lookup' : 'Search Appearance'}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                          {actor.searcherHeadline} · {actor.searcherCompany}
+                        </p>
+                        <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                          <span className="rounded-md bg-blue-50 dark:bg-blue-950/60 border border-blue-200/70 dark:border-blue-800 px-1.5 py-0.5 text-[10px] font-bold text-[#0A66C2] dark:text-sky-300">
+                            Query: &ldquo;{actor.keyword}&rdquo;
+                          </span>
+                          <span className="text-[10px] text-zinc-400 font-mono">{actor.timeAgo}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-3.5 pt-2.5 border-t border-amber-200/60 dark:border-zinc-800 flex items-center justify-between gap-2">
+              <span className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-400">
+                Weekly lookup digest is automatically sent to your Alerts stream.
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedCategory('Lookups & Vouches')
+                }}
+                className="rounded-full bg-amber-600 hover:bg-amber-700 text-white px-3 py-1 text-[11px] font-extrabold transition-all shrink-0 cursor-pointer"
+              >
+                Filter Lookup Alerts →
+              </button>
+            </div>
+          </div>
+
+          {/* RIGHT CARD: WHO VOUCHED FOR YOU (PEER VOUCH LEDGER IN ALERTS) */}
+          <div className="rounded-2xl border border-emerald-300/80 dark:border-emerald-800/70 bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/40 dark:from-zinc-900 dark:via-zinc-900 dark:to-emerald-950/20 p-5 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-700 px-2.5 py-0.5 text-[11px] font-extrabold text-emerald-900 dark:text-emerald-300">
+                    <span>🤝</span>
+                    <span>VERIFIED PEER VOUCHES LEDGER</span>
+                  </span>
+                  <h2 className="text-base sm:text-lg font-black text-zinc-900 dark:text-zinc-100 mt-1.5">
+                    Who Vouched for You ({vouchEvents.length} Verified Vouches)
+                  </h2>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                    Peers, supervisors, and trade partners who attested to your <strong className="text-zinc-900 dark:text-zinc-200">Proof-of-Work &amp; Verified Skills</strong>.
+                  </p>
+                </div>
+                <div className="shrink-0 rounded-xl bg-emerald-600 text-white px-3.5 py-2 text-center shadow-xs">
+                  <div className="text-xl font-black leading-none">{vouchEvents.length}</div>
+                  <div className="text-[9px] font-extrabold uppercase tracking-wider mt-0.5">Vouches</div>
+                </div>
+              </div>
+
+              {/* Who Vouched For You List */}
+              <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                <div className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-900 dark:text-emerald-300 flex items-center justify-between">
+                  <span>Recent Peer Vouches &amp; Attestations</span>
+                  <span className="text-[10px] font-semibold text-zinc-500">Skill / Credential</span>
+                </div>
+                {vouchEvents.slice(0, 5).map((vouch) => (
+                  <div
+                    key={vouch.id}
+                    className="rounded-xl bg-white dark:bg-zinc-800/90 border border-zinc-200/90 dark:border-zinc-700/80 p-2.5 flex items-start justify-between gap-2.5 shadow-2xs"
+                  >
+                    <div className="flex items-start gap-2.5 min-w-0">
+                      <img
+                        src={
+                          vouch.voucherAvatar ||
+                          `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(vouch.voucherName)}&backgroundColor=059669`
+                        }
+                        alt={vouch.voucherName}
+                        className="h-9 w-9 rounded-lg object-cover shrink-0 ring-1 ring-emerald-300/60"
+                      />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100">
+                            {vouch.voucherName}
+                          </span>
+                          <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/70 px-1.5 py-0.2 text-[9px] font-bold text-emerald-800 dark:text-emerald-300">
+                            ✓ {vouch.voucherRelation}
+                          </span>
+                          {vouch.unread && (
+                            <span className="rounded-full bg-red-600 px-1.5 py-0.2 text-[9px] font-black text-white">
+                              NEW
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                          {vouch.voucherHeadline} · {vouch.voucherCompany}
+                        </p>
+                        <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                          <span className="rounded-md bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-800 px-1.5 py-0.5 text-[10px] font-extrabold text-emerald-800 dark:text-emerald-300">
+                            🤝 Vouched Skill: {vouch.skillOrCredential}
+                          </span>
+                          <span className="text-[10px] text-zinc-400 font-mono">{vouch.timeAgo}</span>
+                        </div>
+                        {vouch.note && (
+                          <p className="mt-1 text-[11px] italic text-zinc-600 dark:text-zinc-300 line-clamp-2">
+                            &ldquo;{vouch.note}&rdquo;
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-3.5 pt-2.5 border-t border-emerald-200/60 dark:border-zinc-800 flex items-center justify-between gap-2">
+              <span className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-400">
+                Every peer endorsement &amp; trade vouch alerts you immediately.
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (onNavigateTab) onNavigateTab('profile')
+                }}
+                className="rounded-full bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 text-[11px] font-extrabold transition-all shrink-0 cursor-pointer"
+              >
+                Open Profile Vouches →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 1.5 NOCTIS ALERTS INTELLIGENCE & SIGNAL EXPLANATION PANEL */}
       {showNoctisOverview && (

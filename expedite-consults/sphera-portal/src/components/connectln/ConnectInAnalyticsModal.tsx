@@ -685,14 +685,68 @@ export function ConnectInAnalyticsModal({
                   <span className="text-[11px] text-zinc-500">Direct clicks from listings</span>
                 </div>
 
-                <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 p-4 space-y-1">
-                  <span className="text-xs text-zinc-500">Unique Searchers</span>
-                  <p className="text-2xl font-black text-zinc-900 dark:text-zinc-100">
-                    {discoveryData.searcherCount}
+                <div className="rounded-2xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/40 dark:bg-amber-950/20 p-4 space-y-1">
+                  <span className="text-xs text-amber-800 dark:text-amber-300 font-semibold">Weekly Lookups (7d)</span>
+                  <p className="text-2xl font-black text-amber-900 dark:text-amber-100">
+                    {(discoveryData.weeklyLookupsCount ?? tailored.effectiveDiscoveries).toLocaleString()}
                   </p>
-                  <span className="text-[11px] text-zinc-500">Verified ConnectLn members</span>
+                  <span className="text-[11px] font-bold text-amber-700 dark:text-amber-400">
+                    Sent to your Alerts Tab
+                  </span>
                 </div>
               </div>
+
+              {/* Who Was Trying to Lookup You This Week (Live Searcher Log) */}
+              {discoveryData.recentLookupActors && discoveryData.recentLookupActors.length > 0 && (
+                <div className="rounded-2xl border border-amber-200 dark:border-amber-800/70 bg-gradient-to-br from-amber-50/60 via-white to-orange-50/30 dark:from-zinc-900 dark:to-amber-950/20 p-5 space-y-3.5 shadow-xs">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                      <Users className="h-4 w-4 text-amber-600" />
+                      <span>Who Was Trying to Lookup You This Week ({discoveryData.recentLookupActors.length} Lookup Events)</span>
+                    </h3>
+                    <span className="rounded-full bg-amber-100 dark:bg-amber-950/70 border border-amber-300 dark:border-amber-700 px-2.5 py-0.5 text-[10px] font-extrabold text-amber-900 dark:text-amber-300">
+                      🔔 Synced with Alerts Tab
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {discoveryData.recentLookupActors.slice(0, 8).map((actor) => (
+                      <div
+                        key={actor.id}
+                        className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 flex items-start gap-3 shadow-2xs"
+                      >
+                        <img
+                          src={
+                            actor.searcherAvatar ||
+                            `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(actor.searcherName)}&backgroundColor=0a66c2`
+                          }
+                          alt={actor.searcherName}
+                          className="h-10 w-10 rounded-xl object-cover shrink-0 ring-1 ring-amber-300/60"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-1.5">
+                            <p className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 truncate">
+                              {actor.searcherName}
+                            </p>
+                            <span className="text-[10px] font-mono text-zinc-400 shrink-0">{actor.timeAgo}</span>
+                          </div>
+                          <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                            {actor.searcherHeadline} · {actor.searcherCompany}
+                          </p>
+                          <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
+                            <span className="rounded bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 px-1.5 py-0.5 text-[10px] font-bold text-[#0A66C2] dark:text-sky-300">
+                              Query: &ldquo;{actor.keyword}&rdquo;
+                            </span>
+                            <span className="rounded bg-amber-100 dark:bg-amber-950/60 px-1.5 py-0.5 text-[9px] font-bold text-amber-800 dark:text-amber-300">
+                              {actor.discoveryType === 'profile_click' ? 'Direct Lookup Click' : 'Search Appearance'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Exact Search Queries Table */}
               <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-4 shadow-xs">

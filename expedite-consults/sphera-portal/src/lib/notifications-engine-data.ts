@@ -6,6 +6,10 @@ export interface CategorizedNotificationItem {
     | 'Comment'
     | 'Repost'
     | 'Connection'
+    | 'New Follower'
+    | 'Weekly Lookup Digest'
+    | 'Who Looked You Up'
+    | 'Peer Vouch Received'
     | 'Job Match'
     | 'Application Update'
     | 'Recruiter Message'
@@ -29,7 +33,7 @@ export interface CategorizedNotificationItem {
   timestamp: string
   unread: boolean
   actionText: string
-  targetTab: 'home' | 'jobs' | 'marketplace' | 'learning' | 'pulserooms' | 'messaging' | 'peerreview' | 'compensation'
+  targetTab: 'home' | 'jobs' | 'marketplace' | 'learning' | 'pulserooms' | 'messaging' | 'peerreview' | 'compensation' | 'network' | 'profile'
   targetPayload?: string
   priority?: 'high' | 'normal' | 'critical'
   externalUrl?: string
