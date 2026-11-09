@@ -257,6 +257,36 @@ const MILITARY_TRANSLATION_PRESETS: MilitaryTranslationPreset[] = [
       { title: "Veterans Business Battle & Entrepreneurship Fellowship", provider: "Rice University / SBA VBOC", duration: "8 Weeks", funding: "Fellowship Grant" }
     ],
     matchingFranchiseCategories: ["Fitness and Gyms", "Food and Restaurants", "Fast Food", "Home Improvement", "Cleaning Services"]
+  },
+  {
+    id: "ignored_essential_trades_88m_12p",
+    code: "MOS 88M / 12P / 12Q / Navy Seabee CE / USCG BM",
+    branch: "U.S. Army / Navy Seabees / Marines / Coast Guard",
+    militaryTitle: "Heavy Transport (CDL), Prime Power Lineman, High-Rise Rigging & Maritime Specialist (Professions LinkedIn Ignored)",
+    summary: "Operated heavy tactical tractor-trailers (HET/LHS), high-voltage prime power substations, vertical rigging, and offshore maritime vessels under extreme weather and operational conditions.",
+    militarySkills: [
+      "Military Heavy Tractor-Trailer & Lowboy Superload Operations (FMCSA CDL Waiver Eligible)",
+      "High-Voltage Transmission Distribution & Tactical Substation Switching (13.8kV–500kV)",
+      "Heavy Crane Rigging, Elevator/Hoist Hydraulics & High-Angle Rope Access",
+      "USCG Offshore Vessel Navigation, Deck Seamanship & Port Stevedoring",
+      "OSHA 30 / Confined Space / HazMat & Bio-Decontamination Protocols"
+    ],
+    civilianRoles: [
+      { title: "Journeyman High-Voltage Power Lineman & Storm Crew Lead (13.8kV–500kV)", matchScore: 99, salaryBand: "$138,000 - $245,000 / yr", demandLevel: "Critical Need" },
+      { title: "Licensed Elevator & Escalator Constructor Mechanic (NEIEP / IUEC)", matchScore: 98, salaryBand: "$132,000 - $195,000 / yr", demandLevel: "Urgent Fill" },
+      { title: "CDL Class A Heavy-Haul Lowboy & 75-Ton Rotator Recovery Captain", matchScore: 98, salaryBand: "$112,000 - $168,000 / yr", demandLevel: "Critical Need" },
+      { title: "USCG Offshore Commercial Captain / Port Longshoreman Crane Rigger", matchScore: 95, salaryBand: "$105,000 - $162,000 / yr", demandLevel: "High Demand" },
+      { title: "ISA Certified Crane Arborist / Trenchless CIPP Sewer Rehab Lead", matchScore: 94, salaryBand: "$96,000 - $145,000 / yr", demandLevel: "Active Hiring" }
+    ],
+    skillGaps: [
+      "FMCSA Military CDL Skills Test Waiver Filing & HazMat (H/X) TSA Fingerprint Endorsement",
+      "Veterans in Piping (VIP) / Helmets to Hardhats IBEW & IUEC Direct-Entry Apprenticeship Placement"
+    ],
+    recommendedTraining: [
+      { title: "Helmets to Hardhats: IUEC Elevator & IBEW High-Voltage Lineman Direct Entry", provider: "Helmets to Hardhats / GI Bill OJT", duration: "Direct Union Entry", funding: "GI Bill Monthly Housing Allowance + Full Journeyman Scale" },
+      { title: "FMCSA Military CDL Class A Skills Waiver & Heavy-Haul Certification", provider: "State DMV / Troops Into Transportation", duration: "2 Weeks", funding: "100% DoD SkillBridge / GI Bill Funded" }
+    ],
+    matchingFranchiseCategories: ["Transportation and Logistics", "Home Improvement", "Automotive Services", "Cleaning Services"]
   }
 ]
 
@@ -367,6 +397,36 @@ const VETERAN_PROFILES: VeteranMemberProfile[] = [
     investmentBudget: "$100,000 - $250,000",
     skills: ["SCORE Franchise & SMB Advisory", "EPA 608 / Commercial HVAC", "Maritime Diesel", "B2B Service Contracts"],
     mentorshipOffer: "Free weekly SCORE & VBOC business plan reviews for transitioning mechanics & tradespeople"
+  },
+  {
+    id: "vet_7_lineman_seabee",
+    name: "Cole Hawkins (U.S. Navy Seabee Vet · IBEW Lineman)",
+    branch: "U.S. Navy Seabees",
+    rankAndCode: "CE1 (E-6) · Construction Electrician & 12P Prime Power",
+    category: "Military-to-Civilian Career Transition",
+    headline: "500kV High-Voltage Transmission Lineman & Helmets-to-Hardhats Mentor (IBEW / IUEC Elevator Direct Entry)",
+    location: "Houston, TX",
+    avatar: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=160&auto=format&fit=crop&q=80",
+    verificationStatus: "Optional Military Verified (Privacy-Safe)",
+    openToBusinessOwnership: true,
+    investmentBudget: "$150,000",
+    skills: ["500kV High-Voltage Lineman", "Helmets to Hardhats Union Entry", "IUEC Elevator & IBEW Placement", "OSHA 1910.269"],
+    mentorshipOffer: "Helping Seabees, 12P/12Q Engineers & Marines fast-track into $150K–$245K Lineman & Elevator Constructor roles"
+  },
+  {
+    id: "vet_8_cdl_heavyhaul",
+    name: "Hank Mercer (U.S. Army 88M Vet · Heavy-Haul SDVOSB)",
+    branch: "U.S. Army",
+    rankAndCode: "SFC (E-7) · MOS 88M Heavy Motor Transport Operator",
+    category: "Veteran-Owned Businesses",
+    headline: "Founder @ Patriot 19-Axle Heavy-Haul & 75-Ton Rotator Recovery SDVOSB · FMCSA Military CDL Waiver Mentor",
+    location: "Dallas, TX",
+    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=160&auto=format&fit=crop&q=80",
+    verificationStatus: "SBA VetCert SDVOSB Verified",
+    openToBusinessOwnership: true,
+    investmentBudget: "$250,000+",
+    skills: ["CDL Class A Heavy-Haul & HazMat", "FMCSA Military CDL Skills Waiver", "75-Ton Rotator Recovery", "SDVOSB Freight Contracts"],
+    mentorshipOffer: "Guiding 88M / 3531 veterans through Military CDL Skills Waivers, owner-operator lowboy rigs & logistics franchises"
   }
 ]
 

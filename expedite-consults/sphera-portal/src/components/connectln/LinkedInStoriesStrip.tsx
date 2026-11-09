@@ -36,9 +36,111 @@ export interface LinkedInStoryItem {
   comments: number
   submitsText?: string
   sealText?: string
+  reelCategory?: 'cyber' | 'ignored' | 'veterans' | 'clinical_trades'
 }
 
 const INITIAL_LINKEDIN_STORIES: LinkedInStoryItem[] = [
+  {
+    id: 'story_cyber_soc_redteam',
+    authorName: 'Tariq Al-Mansoor, OSCP & Alex Taylor, CISSP',
+    authorHeadline: 'Principal Red Team Operator, SOC Tier-3 & Cloud Zero-Trust Cadre',
+    authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
+    badgeText: 'CYBER OPS 2026',
+    cardStyle: 'podium',
+    title: 'Inside Ægis Autonomous SOC: Live Red-Team Adversary Emulation, eBPF Kernel Defense & CMMC 2.0 cATO',
+    subtitle: 'Live Cyber Briefing · SOC, Pentest, Cloud, GRC & OT/SCADA',
+    imageUrl: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1000&auto=format&fit=crop&q=80',
+    youtubeId: 'L_Guz73e6fw',
+    duration: '4:35',
+    likes: 1640,
+    comments: 198,
+    sealText: 'SOC',
+    reelCategory: 'cyber'
+  },
+  {
+    id: 'story_ignored_lineman_elevator_cdl',
+    authorName: 'Essential Masters Guild (IBEW · IUEC · CDL Class A)',
+    authorHeadline: 'Professions LinkedIn Ignored · 500kV Linemen, Elevator Mechanics & Heavy-Haul Drivers',
+    authorAvatar: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&auto=format&fit=crop&q=80',
+    badgeText: 'ESSENTIAL MASTERS',
+    cardStyle: 'field_action',
+    title: 'Professions LinkedIn Ignored: 500kV Storm Linemen, High-Rise Elevator Constructors & 19-Axle CDL Heavy-Haul',
+    subtitle: 'Verified Field Proof-of-Work · $115K–$245K Essential Careers',
+    imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=1000&auto=format&fit=crop&q=80',
+    youtubeId: 'zu6p3_df20A',
+    duration: '5:20',
+    likes: 2180,
+    comments: 264,
+    sealText: 'PRO',
+    reelCategory: 'ignored'
+  },
+  {
+    id: 'story_veterans_skillbridge_sdvosb',
+    authorName: 'Maj. Marcus Vance (USMC Ret.) & MSgt. Elena Rostova',
+    authorHeadline: 'DoD SkillBridge, SBA VetCert SDVOSB & VetFran Multi-Unit Network',
+    authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
+    badgeText: 'VETERAN COMMAND',
+    cardStyle: 'news_portrait',
+    title: 'Military-to-Civilian Command: MOS 17C Cyber, 88M CDL, 12P Lineman & 68W Medic Direct Hiring & VetFran Ownership',
+    subtitle: '180-DAY DOD SKILLBRIDGE · SDVOSB SOLE-SOURCE',
+    imageUrl: 'https://images.unsplash.com/photo-1508614589041-895b88991e3e?w=1000&auto=format&fit=crop&q=80',
+    youtubeId: '9mwE1Aih9uU',
+    duration: '4:48',
+    likes: 1890,
+    comments: 215,
+    sealText: 'VET',
+    reelCategory: 'veterans'
+  },
+  {
+    id: 'story_clinical_field_action',
+    authorName: 'Elena Rostova, RN, CCRN & Field Leads',
+    authorHeadline: 'Level 1 Clinical Nursing, Mass Timber & 800V EV Operations',
+    authorAvatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&auto=format&fit=crop&q=80',
+    badgeText: 'LIVE IN ACTION',
+    cardStyle: 'field_action',
+    title: 'Frontline Professionals in Action: Clinical Nursing Rounds, Mass Timber & Solar Microgrids',
+    subtitle: 'Verified Hands-On Photo & Video Reel',
+    imageUrl: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=1000&auto=format&fit=crop&q=80',
+    youtubeId: '9mwE1Aih9uU',
+    duration: '5:10',
+    likes: 930,
+    comments: 81,
+    reelCategory: 'clinical_trades'
+  },
+  {
+    id: 'story_cyber_ot_scada_dfir',
+    authorName: 'James Kowalski, GICSP & Dr. Liam O’Connor',
+    authorHeadline: 'OT/ICS SCADA Grid Defense, DFIR Malware Reverse Engineering & IAM',
+    authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80',
+    badgeText: 'OT & DFIR LAB',
+    cardStyle: 'poster_frame',
+    title: 'Zero-Day OT Grid Defense',
+    subtitle: 'Protecting Substations, PLC Firmware & Active Directory from Ransomware',
+    imageUrl: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1000&auto=format&fit=crop&q=80',
+    youtubeId: 'L_Guz73e6fw',
+    duration: '4:15',
+    likes: 1320,
+    comments: 147,
+    submitsText: '412 Security Architects downloaded playbook',
+    reelCategory: 'cyber'
+  },
+  {
+    id: 'story_ignored_arborist_fishing_evs',
+    authorName: 'Capt. Erik Lindqvist & ISA Master Arborists',
+    authorHeadline: 'Offshore Crab/Lobster Captains, Crane Tree Surgeons, Hospital EVS & 75-Ton Rotator Tow',
+    authorAvatar: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=400&auto=format&fit=crop&q=80',
+    badgeText: 'FIELD REEL',
+    cardStyle: 'field_action',
+    title: 'Unsung Masters: Crane Tree Removal, Bering Sea Crab Captains, OR Bio-Decontamination & 75-Ton Highway Recovery',
+    subtitle: 'Real Trades & Essential Work · Zero Corporate Fluff',
+    imageUrl: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1000&auto=format&fit=crop&q=80',
+    youtubeId: 'f4cT6_t7690',
+    duration: '4:55',
+    likes: 1750,
+    comments: 209,
+    sealText: 'IGN',
+    reelCategory: 'ignored'
+  },
   {
     id: 'story_podium_keynote',
     authorName: 'The Wall Street & Capitol Summit',
@@ -52,7 +154,8 @@ const INITIAL_LINKEDIN_STORIES: LinkedInStoryItem[] = [
     youtubeId: '9mwE1Aih9uU',
     duration: '3:45',
     likes: 842,
-    comments: 94
+    comments: 94,
+    reelCategory: 'clinical_trades'
   },
   {
     id: 'story_fisher_poster',
@@ -68,7 +171,8 @@ const INITIAL_LINKEDIN_STORIES: LinkedInStoryItem[] = [
     duration: '4:12',
     likes: 618,
     comments: 52,
-    submitsText: '148 others have submitted · Free Blueprint'
+    submitsText: '148 others have submitted · Free Blueprint',
+    reelCategory: 'veterans'
   },
   {
     id: 'story_icj_news_portrait',
@@ -84,22 +188,8 @@ const INITIAL_LINKEDIN_STORIES: LinkedInStoryItem[] = [
     duration: '2:58',
     likes: 1204,
     comments: 136,
-    sealText: 'ICJ'
-  },
-  {
-    id: 'story_clinical_field_action',
-    authorName: 'Elena Rostova, RN, CCRN & Field Leads',
-    authorHeadline: 'Level 1 Clinical Nursing, Mass Timber & 800V EV Operations',
-    authorAvatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&auto=format&fit=crop&q=80',
-    badgeText: 'LIVE IN ACTION',
-    cardStyle: 'field_action',
-    title: 'Frontline Professionals in Action: Clinical Nursing Rounds, Mass Timber & Solar Microgrids',
-    subtitle: 'Verified Hands-On Photo & Video Reel',
-    imageUrl: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=1000&auto=format&fit=crop&q=80',
-    youtubeId: '9mwE1Aih9uU',
-    duration: '5:10',
-    likes: 930,
-    comments: 81
+    sealText: 'ICJ',
+    reelCategory: 'clinical_trades'
   }
 ]
 
@@ -125,6 +215,11 @@ export function LinkedInStoriesStrip({
   const [clockwiseSlot, setClockwiseSlot] = useState<number>(0)
   const [isRotatingClockwise, setIsRotatingClockwise] = useState<boolean>(true)
   const [isHoverPaused, setIsHoverPaused] = useState<boolean>(false)
+  const [reelFilter, setReelFilter] = useState<'all' | 'cyber' | 'ignored' | 'veterans' | 'clinical_trades'>('all')
+
+  const displayedStories = reelFilter === 'all'
+    ? stories
+    : stories.filter((s) => s.reelCategory === reelFilter)
 
   const userAvatar = resolveUserProfilePicture(currentUser)
 
@@ -232,9 +327,36 @@ export function LinkedInStoriesStrip({
         </div>
       </div>
 
+      {/* Category Filter Pills for Reels */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+        {[
+          { id: 'all', label: '🌐 All Live Reels (9)' },
+          { id: 'cyber', label: '🛡️ Cybersecurity & Red Team' },
+          { id: 'ignored', label: '🛠️ Professions LinkedIn Ignored' },
+          { id: 'veterans', label: '🎖️ Veterans & SkillBridge' },
+          { id: 'clinical_trades', label: '🏥 Clinical, Legal & Trades' },
+        ].map((pill) => (
+          <button
+            key={pill.id}
+            type="button"
+            onClick={() => {
+              setReelFilter(pill.id as any)
+              setClockwiseSlot(0)
+            }}
+            className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold transition-all cursor-pointer ${
+              reelFilter === pill.id
+                ? "bg-[#0A66C2] text-white shadow-2xs"
+                : "border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100"
+            }`}
+          >
+            {pill.label}
+          </button>
+        ))}
+      </div>
+
       {/* 4-Card Rounded LinkedIn Story Strip (Moving Clockwise) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-        {stories.slice(0, 4).map((story, idx) => {
+        {(displayedStories.length > 0 ? displayedStories : stories).slice(0, 4).map((story, idx) => {
           const isClockwiseSpotlight = idx === clockwiseSlot
           return (
             <div

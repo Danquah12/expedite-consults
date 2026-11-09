@@ -4137,6 +4137,237 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
       channel: 'Clinical Informatics Support',
       responseHours: '< 1 Hour'
     }
+  },
+  {
+    id: 'prod_ignored_cdl_lineman_elevator_suite',
+    name: 'Essential Trades Field Command — CDL Heavy-Haul ELD, 500kV Lineman & NEIEP Elevator Constructor Suite',
+    tagline: 'Professions LinkedIn Ignored: FMCSA DOT Superload Bridge-Weight Routing, IEEE 516 500kV Hot-Line Approach Telemetry & ASME A17.1 High-Rise Elevator Diagnostic Console',
+    category: 'Enterprise Solutions',
+    subCategory: 'Trades & Vocational Network',
+    launchpadCategory: 'trades',
+    isLaunchpadDeployed: true,
+    isVercelLive: true,
+    liveUrl: 'https://www.osha.gov/',
+    demoUrl: 'https://www.fmcsa.dot.gov/',
+    icon: '🛠️',
+    badge: '🛠️ Professions LinkedIn Ignored · CDL, Lineman & Elevator',
+    rating: 4.99,
+    reviewsCount: 842,
+    activeUsersCount: '46,000+ Linemen, CDL Captains & Elevator Mechanics',
+    pricing: {
+      displayPrice: '$0 Field Tier / Pro Crew',
+      billingPeriod: 'verified field command suite',
+      hasFreeTrial: true,
+      trialDays: 30
+    },
+    vendor: {
+      name: 'ConnectLn Essential Field Guilds (IBEW · IUEC · Heavy-Haul)',
+      logo: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=100&auto=format&fit=crop&q=80',
+      isVerified: true,
+      isFellow: true
+    },
+    overview: 'Built specifically for the high-earning skilled professions corporate networks ignored: CDL Class A Heavy-Haul Lowboy & HazMat Drivers, 75-Ton Rotator Tow Operators, Journeyman 500kV High-Voltage Power Linemen, and Licensed NEIEP / QEI Elevator & Escalator Constructors. Unifies multi-state superload bridge-weight permit routing, IEEE 516 / OSHA 1910.269 live-line approach calculators, and ASME A17.1 Category 1/5 elevator safety test logs.',
+    features: [
+      { title: 'CDL Class A Superload & 75-Ton Rotator Recovery Telemetry', desc: '19-axle lowboy bridge-formula axle weight calculator, FMCSA HOS/ELD compliance, HazMat ERG placards, and WreckMaster multi-winch vector tensioning.' },
+      { title: '500kV High-Voltage Lineman & Storm Restoration Command', desc: 'IEEE 516 minimum approach distance (MAD) tables, 3-phase transformer vector banking, and Mutual-Aid storm outage crew dispatch.' },
+      { title: 'NEIEP / QEI High-Rise Elevator & Escalator Constructor Suite', desc: 'ASME A17.1 Category 1 & 5 overspeed governor/safety drop logs, regenerative VFD hoist drive diagnostics, and CAN-bus door interlock tracing.' }
+    ],
+    screenshots: [
+      'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&auto=format&fit=crop&q=80'
+    ],
+    architecture: {
+      title: 'Offline-First Ruggedized Field Telemetry & Statutory Compliance Engine',
+      summary: 'Works offline in remote transmission corridors, elevator hoistways, and interstate heavy-haul routes with cryptographic inspection sign-off.',
+      layers: ['Ruggedized Mobile & Tablet Field Console', 'FMCSA / OSHA 1910.269 / ASME A17.1 Statutory Rule Engine', 'Union Hall & Fleet Dispatch Sync'],
+      latency: '< 10ms local calculation',
+      dataPrivacy: 'Zero-Trust Field Signature Attestation'
+    },
+    integrations: ['FMCSA ELD Gateway', 'OSHA 1910.269 / 1926', 'ASME A17.1 QEI Portal', 'IBEW Storm Roster', 'DAT / McLeod Heavy-Haul'],
+    security: {
+      compliance: ['OSHA 29 CFR 1910.269', 'ASME A17.1 / CSA B44', 'FMCSA 49 CFR Part 395'],
+      encryption: 'AES-256 Offline Vault + TLS 1.3',
+      isolation: 'Crew & Contractor Role Segregation'
+    },
+    pricingTiers: [
+      {
+        name: 'Field Operator & Crew Access',
+        price: '$0',
+        period: 'instant field launch',
+        description: 'Immediate access to CDL Heavy-Haul, 500kV Lineman, and ASME A17.1 Elevator Constructor calculators and checklists.',
+        features: ['19-Axle Bridge Formula & HazMat ERG', 'IEEE 516 Live-Line MAD Calculator', 'ASME A17.1 Cat 1/5 Elevator Logs', '75-Ton Rotator Winch Vectoring'],
+        recommended: true,
+        ctaText: 'Launch Essential Trades Suite ↗'
+      }
+    ],
+    reviews: [
+      {
+        author: 'Cole Hawkins, IBEW Journeyman Lineman',
+        role: '500kV Transmission & Storm Restoration Foreman',
+        company: 'Quanta Services',
+        avatar: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=200&auto=format&fit=crop&q=80',
+        rating: 5,
+        text: 'Finally a platform that treats linemen, elevator mechanics, and heavy-haul drivers like the high-tech professionals we are.',
+        date: 'November 2, 2026'
+      }
+    ],
+    documentation: {
+      quickstart: 'Select your field craft (CDL Heavy-Haul, 500kV Lineman, or Elevator Constructor) to load statutory tables and inspection logs.',
+      apiEndpoints: ['GET /api/field/ieee516-mad', 'POST /api/field/asme-a17-cat5'],
+      sdkSupport: ['iOS / Android Rugged Tablet', 'Web PWA', 'PDF Statutory Export']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.99% Uptime',
+      channel: '24/7 Storm & Field Operations Desk',
+      responseHours: '< 15 Mins'
+    }
+  },
+  {
+    id: 'prod_ignored_arborist_septic_evs_suite',
+    name: 'Unsung Masters Operations Kit — ISA Crane Arborist, Trenchless CIPP Sewer, Offshore Captain & Hospital EVS Suite',
+    tagline: 'Professions LinkedIn Ignored: ANSI Z133 Crane Tree Rigging, NASSCO PACP Hydro-Vac/CIPP, NOAA Commercial Fishing & Hospital OR Bio-Decontamination',
+    category: 'Software',
+    subCategory: 'Productivity & Field Notes',
+    launchpadCategory: 'trades',
+    isLaunchpadDeployed: true,
+    isVercelLive: true,
+    liveUrl: 'https://www.isa-arbor.com/',
+    demoUrl: 'https://www.cdc.gov/',
+    icon: '🌲',
+    badge: '🛠️ Ignored Professions · Arborist, EVS, Maritime & Septic',
+    rating: 4.98,
+    reviewsCount: 519,
+    activeUsersCount: '31,400+ Field & Clinical Support Masters',
+    pricing: {
+      displayPrice: '$0 Free / $49 Pro',
+      billingPeriod: 'multi-craft field kit',
+      hasFreeTrial: true,
+      trialDays: 30
+    },
+    vendor: {
+      name: 'ConnectLn Unsung Masters Collective',
+      logo: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=100&auto=format&fit=crop&q=80',
+      isVerified: true,
+      isFellow: true
+    },
+    overview: 'Purpose-built operational calculators and compliance logs for ISA Certified Crane Arborists, Septic & Hydro-Vac Trenchless CIPP Technicians, SPRAT/IRATA High-Rise Rope Access Techs, Commercial Crab/Lobster & Oyster Captains, and Hospital EVS / Surgical OR Bio-Decontamination Specialists.',
+    features: [
+      { title: 'ISA Crane Arborist & SPRAT/IRATA High-Rise Rope Access', desc: 'Green-wood log weight tables, crane working-load-limit (WLL) sling angles, and dual-rope Petzl ID/ASAP anchor logs.' },
+      { title: 'Hospital EVS OR Bio-Decontamination & NASSCO Trenchless Sewer', desc: 'ATP bioluminescence RLU surgical turnover verification, UV-C spore kill logs, and NASSCO PACP CCTV sewer liner Resin cure calculators.' },
+      { title: 'Commercial Fishing Captain, Estate Manager & Mobile Food-Truck Ops', desc: 'USCG vessel stability & NOAA catch logs, estate household runbooks, and NFPA 96 food-truck commissary checklists.' }
+    ],
+    screenshots: [
+      'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&auto=format&fit=crop&q=80'
+    ],
+    architecture: {
+      title: 'Multi-Craft Field Calculator & Compliance Ledger',
+      summary: 'Instant field calculators and regulatory audit trails for arboriculture, hospital infection control, maritime, and underground utilities.',
+      layers: ['Field Calculator & Logbook UI', 'ANSI Z133 / CDC EVS / NASSCO Compliance Core', 'Client & Inspector PDF Sign-Off'],
+      latency: '< 15ms',
+      dataPrivacy: 'HIPAA & OSHA Compliant Logs'
+    },
+    integrations: ['ANSI Z133 Arborist', 'AHE CHEST Hospital EVS', 'NASSCO PACP', 'NOAA Fisheries VMS'],
+    security: {
+      compliance: ['ANSI Z133', 'CDC / EPA List K & N', 'OSHA 1910.146 Confined Space'],
+      encryption: 'TLS 1.3 + AES-256',
+      isolation: 'Tenant-Isolated Field Logs'
+    },
+    pricingTiers: [
+      {
+        name: 'Field Master Edition',
+        price: '$0',
+        period: 'free access',
+        description: 'Full access to arborist, hospital EVS, trenchless sewer, rope access, and maritime field calculators.',
+        features: ['Green Log Weight & Crane WLL', 'OR Terminal Clean ATP RLU Logs', 'CIPP Liner Resin Cure Calculator', 'USCG Stability & Catch Logbook'],
+        recommended: true,
+        ctaText: 'Open Field Masters Kit ↗'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Choose your specialty module and generate instant safety and client sign-off reports.',
+      apiEndpoints: ['GET /api/field/arborist-wll', 'POST /api/field/evs-atp-log'],
+      sdkSupport: ['Mobile PWA', 'Web Browser']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.9% Uptime',
+      channel: 'Field Guild Support',
+      responseHours: '< 2 Hours'
+    }
+  },
+  {
+    id: 'prod_veterans_sdvosb_skillbridge_hub',
+    name: 'Military Veterans Command — SBA VetCert SDVOSB, DoD SkillBridge & VetFran Multi-Unit Portal',
+    tagline: 'AI MOS/AFSC/NEC-to-Civilian Translator, 180-Day DoD SkillBridge Fellowships, FAR 19.14 SDVOSB Sole-Source & 650+ VetFran Franchise Discounts',
+    category: 'Enterprise Solutions',
+    subCategory: 'Veterans & Military Transition',
+    launchpadCategory: 'career',
+    isLaunchpadDeployed: true,
+    isVercelLive: true,
+    liveUrl: 'https://www.sba.gov/counseling/boots-to-business/',
+    demoUrl: 'https://www.franchise.org/franchising-for-veterans/',
+    icon: '🎖️',
+    badge: '🎖️ 100% Free for Military Veterans, Spouses & SDVOSBs',
+    rating: 5.0,
+    reviewsCount: 964,
+    activeUsersCount: '58,000+ Veterans, Transitioning Service Members & SDVOSBs',
+    pricing: {
+      displayPrice: '$0 (100% Free for Veterans)',
+      billingPeriod: 'veteran career & ownership suite',
+      hasFreeTrial: true
+    },
+    vendor: {
+      name: 'ConnectLn Veterans, SkillBridge & VetFran Alliance',
+      logo: 'https://images.unsplash.com/photo-1508614589041-895b88991e3e?w=100&auto=format&fit=crop&q=80',
+      isVerified: true,
+      isFellow: true
+    },
+    overview: 'Complete command center for transitioning U.S. & Allied service members, veterans, and military spouses. Translates MOS/AFSC/NEC codes (17C/1B4X1 Cyber, 88M/92A CDL & Logistics, 12P Prime Power Lineman, 68W/HM Combat Medic, 15T Aviation, 11B/0311 Command) into $115K–$235K civilian jobs, 180-day DoD SkillBridge fellowships, SBA VetCert SDVOSB sole-source federal contracts (FAR 19.14), and VetFran franchise ownership with 20%–50% fee waivers.',
+    features: [
+      { title: 'AI MOS / AFSC / NEC Skills Translator & Cleared Job Matcher', desc: 'Maps military specialties directly to cybersecurity, heavy transport (Military CDL Skills Waiver), utility lineman, clinical, and executive roles.' },
+      { title: 'SBA VetCert SDVOSB & FAR 19.14 Sole-Source Capture', desc: 'Step-by-step SBA VetCert certification, SAM.gov UEI registration, and $4.5M–$7M sole-source federal contract templates.' },
+      { title: 'VetFran Multi-Unit Franchise Directory & FDD Item 19 Analyzer', desc: 'Compare 650+ veteran-friendly franchises with verified military fee discounts and SBA 7(a) Veteran Advantage loan calculators.' }
+    ],
+    screenshots: [
+      'https://images.unsplash.com/photo-1508614589041-895b88991e3e?w=800&auto=format&fit=crop&q=80'
+    ],
+    architecture: {
+      title: 'Privacy-Safe Military Verification & Career/Franchise Matching Engine',
+      summary: 'Zero-exposure DD-214 / Service Record verification paired with live DoD SkillBridge, SDVOSB, and VetFran directories.',
+      layers: ['MOS/AFSC/NEC AI Translation Engine', 'DoD SkillBridge & Cleared Hiring Matcher', 'VetFran FDD Item 19 & SBA 7(a) Capital Stack Modeler'],
+      latency: '< 15ms',
+      dataPrivacy: 'Privacy-Safe Optional Military Verification'
+    },
+    integrations: ['SBA VetCert', 'DoD SkillBridge', 'VetFran / IFA', 'SCORE Mentors', 'IVMF Syracuse O2O', 'SAM.gov'],
+    security: {
+      compliance: ['NIST 800-53', 'FAR Subpart 19.14 (SDVOSB)', '38 U.S.C. § 8127 Veterans First'],
+      encryption: 'FIPS 140-3 TLS 1.3 + AES-256',
+      isolation: 'Veteran Privacy-Preserving Enclave'
+    },
+    pricingTiers: [
+      {
+        name: 'Veteran & Military Spouse All-Access',
+        price: '$0',
+        period: '100% free forever for veterans',
+        description: 'Full access to MOS translation, DoD SkillBridge fellowships, SDVOSB templates, and VetFran franchise matching.',
+        features: ['AI MOS/AFSC/NEC Translator', '180-Day DoD SkillBridge Matcher', 'SBA VetCert SDVOSB Playbook', 'VetFran 20%–50% Fee Waiver Directory'],
+        recommended: true,
+        ctaText: 'Launch Veterans Command ↗'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Enter your MOS, AFSC, or NEC code—or select your investment budget—to view matched civilian roles and VetFran franchises.',
+      apiEndpoints: ['POST /api/veterans/mos-translate', 'GET /api/veterans/vetfran-matches'],
+      sdkSupport: ['Web Portal', 'ConnectLn Veterans Tab']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.99% Uptime',
+      channel: 'Veteran Peer Mentors & SCORE / VBOC Desk',
+      responseHours: '< 1 Hour'
+    }
   }
 ]
 

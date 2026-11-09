@@ -107,9 +107,15 @@ interface NetworkViewProps {
 }
 
 export function getEnclaveCapabilityFilters(enclaveId?: string) {
+  const sharedCrossPills = [
+    { id: 'Professions LinkedIn Ignored', label: 'Professions LinkedIn Ignored (CDL, Lineman, Elevator, EVS)', icon: '🛠️' },
+    { id: 'Veterans & DoD SkillBridge', label: 'Veterans, SkillBridge & SDVOSB', icon: '🎖️' },
+    { id: 'Cloud Security', label: 'Cybersecurity, SOC & Red Team', icon: '🛡️' },
+  ]
   if (enclaveId === 'trades_construction') {
     return [
-      { id: 'All', label: 'All Trade Disciplines', icon: '🌐' },
+      { id: 'All', label: 'All Trade & Essential Disciplines', icon: '🌐' },
+      ...sharedCrossPills,
       { id: 'Timber Framing', label: 'Timber Framing', icon: '🌲' },
       { id: 'Architectural Joinery', label: 'Architectural Joinery', icon: '🪚' },
       { id: 'OSHA 30', label: 'OSHA 30 Safety Lead', icon: '🦺' },
@@ -121,6 +127,7 @@ export function getEnclaveCapabilityFilters(enclaveId?: string) {
   if (enclaveId === 'healthcare_medicine') {
     return [
       { id: 'All', label: 'All Clinical & Health Roles', icon: '🌐' },
+      ...sharedCrossPills,
       { id: 'PharmD', label: 'Pharmacists (PharmD/BCPS)', icon: '💊' },
       { id: 'Physician', label: 'Physicians & Surgeons (MD/DO)', icon: '🩺' },
       { id: 'Critical Care', label: 'Nurses (RN/CCRN/NP)', icon: '🏥' },
@@ -132,6 +139,7 @@ export function getEnclaveCapabilityFilters(enclaveId?: string) {
   if (enclaveId === 'automotive_mechanics') {
     return [
       { id: 'All', label: 'All Master Diagnostics', icon: '🌐' },
+      ...sharedCrossPills,
       { id: 'CAN-Bus Oscilloscope', label: 'CAN-Bus Oscilloscope', icon: '⚡' },
       { id: '800V EV Lockout', label: '800V EV Safety & Inverters', icon: '🔋' },
       { id: 'Cummins Fleet', label: 'Cummins & Fleet Diesel', icon: '🚚' },
@@ -141,12 +149,15 @@ export function getEnclaveCapabilityFilters(enclaveId?: string) {
   }
   return [
     { id: 'All', label: 'All Capabilities', icon: '🌐' },
-    { id: 'Cloud Security', label: 'Cloud Security', icon: '🛡️' },
-    { id: 'Penetration Testing', label: 'Penetration Testing', icon: '🎯' },
-    { id: 'AI Security', label: 'AI Security', icon: '🤖' },
-    { id: 'DevSecOps', label: 'DevSecOps', icon: '⚡' },
-    { id: 'RMF', label: 'RMF (Risk Management Framework)', icon: '🏛️' },
-    { id: 'Zero Trust', label: 'Zero Trust Architecture', icon: '🔒' }
+    { id: 'Professions LinkedIn Ignored', label: 'Professions LinkedIn Ignored (CDL, Lineman, Elevator, EVS)', icon: '🛠️' },
+    { id: 'Veterans & DoD SkillBridge', label: 'Veterans, SkillBridge & SDVOSB', icon: '🎖️' },
+    { id: 'Cloud Security', label: 'Cloud Security & Zero Trust', icon: '🛡️' },
+    { id: 'Penetration Testing', label: 'Penetration Testing & Red Team', icon: '🎯' },
+    { id: 'SOC SIEM & Sigma Threat Hunting', label: 'SOC SIEM & DFIR Forensics', icon: '🔍' },
+    { id: 'AI Security', label: 'AI & LLM Security', icon: '🤖' },
+    { id: 'DevSecOps', label: 'AppSec & DevSecOps', icon: '⚡' },
+    { id: 'RMF', label: 'GRC, CMMC & DoD RMF', icon: '🏛️' },
+    { id: 'SCADA / OT Security', label: 'OT / ICS / SCADA Security', icon: '🏭' }
   ]
 }
 

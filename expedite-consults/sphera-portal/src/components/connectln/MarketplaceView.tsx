@@ -262,7 +262,10 @@ export function MarketplaceView({
       p.id === 'prod_desknote_lime_live' ||
       p.id === 'prod_expedite_consults_official_portal' ||
       p.id === 'prod_sphera_production_launchpad' ||
-      p.id === 'prod_pdfadore_suite'
+      p.id === 'prod_pdfadore_suite' ||
+      p.id === 'prod_ignored_cdl_lineman_elevator_suite' ||
+      p.id === 'prod_ignored_arborist_septic_evs_suite' ||
+      p.id === 'prod_veterans_sdvosb_skillbridge_hub'
 
     if (!showAllEcosystem && !searchQuery.trim() && !isGlobalCategory && !isFeaturedGlobalApp && selectedSubCategory === 'All') {
       if (userEnclave === 'trades_construction') {

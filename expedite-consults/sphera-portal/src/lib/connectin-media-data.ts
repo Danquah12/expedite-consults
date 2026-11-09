@@ -249,10 +249,210 @@ export const FEATURED_VIDEOS_DATA: MediaVideoItem[] = [
       { type: 'github', label: 'eBPF Kubernetes YAML Manifests', url: 'https://cilium.io/' },
       { type: 'cert', label: 'Claim Verified ConnectIn eBPF Badge', url: 'https://www.cncf.io/' }
     ]
+  },
+  {
+    id: 'vid_cyber_soc_redteam_dfir',
+    title: 'Cybersecurity Operations Masterclass: SOC Tier-3 Threat Hunting, OSCP Red-Teaming, DFIR Memory Forensics & OT/SCADA Defense',
+    channelName: 'Tariq Al-Mansoor, OSCP/CRTO & James Kowalski, CISSP, GICSP',
+    channelAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+    channelRole: 'Principal Red Team Operator, DFIR Incident Commander & OT/SCADA Security Lead',
+    channelFollowers: '112.4K Followers',
+    isVerifiedChannel: true,
+    duration: '36:20',
+    durationSeconds: 2180,
+    views: '128.4K views',
+    uploadTimeAgo: '1 day ago',
+    category: 'Threat Intelligence',
+    thumbnail: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1000&auto=format&fit=crop&q=80',
+    youtubeId: 'L_Guz73e6fw',
+    visibility: 'Public',
+    description: 'Comprehensive hands-on cybersecurity walkthrough covering all 12 ConnectLn Cybersecurity tracks: Splunk/Sentinel Sigma threat hunting, Active Directory BloodHound attack path remediation, Volatility 3 RAM forensics, CMMC 2.0 / FedRAMP High cATO, and IEC 62443 industrial substation defense.',
+    likesCount: 7420,
+    commentsCount: 538,
+    chapters: [
+      { timestamp: '00:00', seconds: 0, title: 'SOC Tier-3 Detection Engineering: Sigma, YARA & KQL Threat Hunting' },
+      { timestamp: '09:15', seconds: 555, title: 'Offensive Red Team & Bug Bounty: Active Directory Kerberoasting & API SSRF' },
+      { timestamp: '18:40', seconds: 1120, title: 'DFIR Incident Response: Volatility 3 Memory Forensics & Ransomware Containment' },
+      { timestamp: '27:30', seconds: 1650, title: 'OT/ICS SCADA Substation Defense & CMMC Level 2–3 / NIST 800-53 RMF' }
+    ],
+    transcript: [
+      { timestamp: '00:40', seconds: 40, speaker: 'Tariq Al-Mansoor, OSCP', text: 'Every offensive red-team engagement proves that identity is the new perimeter. By auditing BloodHound Tier-0 paths and enforcing FIDO2 passkeys, you break the adversary kill chain.' },
+      { timestamp: '18:50', seconds: 1130, speaker: 'James Kowalski, GICSP', text: 'In industrial OT/ICS substations, we enforce unidirectional hardware data diodes between Level 3 site operations and Level 4 corporate IT.' }
+    ],
+    embeddedProduct: {
+      id: 'prod_aagiis_federal_rmf',
+      name: 'Aagiis DoD RMF & Expedite Strike Cyber Defense Suite',
+      icon: '🛡️',
+      price: 'Free Live Evaluation',
+      tagline: 'Autonomous DAST/SAST, SOC Threat Hunting & DoDI 8510.01 RMF cATO.',
+      trialAvailable: true,
+      liveUrl: 'https://aagiis.com/'
+    },
+    resources: [
+      { type: 'docs', label: 'Live Platform: Aagiis DoD RMF & STIG Compliance Suite ↗', url: 'https://aagiis.com/' },
+      { type: 'github', label: 'Live Platform: Expedite Strike Autonomous DAST & Red-Team ↗', url: 'https://dstrike-app.vercel.app' }
+    ],
+    relatedJobs: [
+      { id: 'cyber_soc_1', title: 'Principal SOC Detection & Threat Hunting Engineer (SIEM / XDR / SOAR)', company: 'CrowdStrike & Mandiant Defense', location: 'Austin, TX / Remote', salary: '$175K - $225K' },
+      { id: 'cyber_pentest_1', title: 'Staff Offensive Security & Red Team Operator (OSCP / OSWE / GXPN)', company: 'Bishop Fox & Expedite Strike', location: 'Remote', salary: '$190K - $245K' }
+    ]
+  },
+  {
+    id: 'vid_ignored_lineman_elevator_cdl',
+    title: 'Professions LinkedIn Ignored: 500kV High-Voltage Storm Linemen, NEIEP High-Rise Elevator Constructors & 19-Axle CDL Heavy-Haul',
+    channelName: 'Essential Field Masters Guild (IBEW · IUEC · Heavy-Haul)',
+    channelAvatar: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=200&auto=format&fit=crop&q=80',
+    channelRole: 'Journeyman 500kV Linemen, QEI Elevator Mechanics & 180,000-lb Superload Captains',
+    channelFollowers: '146.8K Followers',
+    isVerifiedChannel: true,
+    duration: '33:45',
+    durationSeconds: 2025,
+    views: '184.2K views',
+    uploadTimeAgo: '1 day ago',
+    category: 'Technical Walkthrough',
+    thumbnail: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=1000&auto=format&fit=crop&q=80',
+    youtubeId: 'zu6p3_df20A',
+    visibility: 'Public',
+    description: 'Corporate networks ignored the backbone of modern civilization—ConnectLn puts them front and center. Watch Journeyman High-Voltage Linemen execute live-line 500kV barehand helicopter bonding, Licensed IUEC Elevator Constructors commission 80-story gearless traction hoists, and CDL Class A Heavy-Haul Drivers move 180,000-lb substation transformers.',
+    likesCount: 11240,
+    commentsCount: 842,
+    chapters: [
+      { timestamp: '00:00', seconds: 0, title: 'Journeyman 500kV Power Lineman: IEEE 516 Hot-Stick & Faraday Suit Live-Line Bonding' },
+      { timestamp: '09:30', seconds: 570, title: 'Licensed IUEC / NEIEP Elevator Constructor: ASME A17.1 High-Rise Traction Hoist & Governor Test' },
+      { timestamp: '19:15', seconds: 1155, title: 'CDL Class A Heavy-Haul & 75-Ton Rotator Tow: 19-Axle Lowboy Bridge Weight & Rigging' },
+      { timestamp: '27:40', seconds: 1660, title: 'ISA Crane Arborist, Offshore Crab Captain & Hospital OR Bio-Decontamination' }
+    ],
+    transcript: [
+      { timestamp: '00:45', seconds: 45, speaker: 'Buckingham 500kV Lineman Lead', text: 'When a Category 4 hurricane takes down 345kV transmission towers, hospitals and data centers go dark until linemen climb and splice the grid back together.' },
+      { timestamp: '09:40', seconds: 580, speaker: 'Master Elevator Constructor (NEIEP)', text: 'Every high-rise skyscraper relies on ASME A17.1 certified elevator constructors calibrating regenerative VFD drives and emergency overspeed safeties.' }
+    ],
+    embeddedProduct: {
+      id: 'prod_ignored_cdl_lineman_elevator_suite',
+      name: 'Essential Trades Field Command: CDL Superload, 500kV Grid & ASME A17.1 Elevator Suite',
+      icon: '🛠️',
+      price: 'Free Field Access',
+      tagline: 'DOT Heavy-Haul bridge tables, IEEE 516 hot-line calculators & ASME A17.1 logs.',
+      trialAvailable: true,
+      liveUrl: 'https://www.osha.gov/'
+    },
+    resources: [
+      { type: 'docs', label: 'OSHA High-Voltage Electric Power (29 CFR 1910.269) Standards ↗', url: 'https://www.osha.gov/' },
+      { type: 'cert', label: 'FMCSA CDL Class A Heavy-Haul & HazMat Regulations ↗', url: 'https://www.fmcsa.dot.gov/' }
+    ],
+    relatedJobs: [
+      { id: 'ignored_lineman_1', title: 'Journeyman High-Voltage Power Lineman & Storm Crew Lead (13.8kV–500kV)', company: 'Quanta Services & IBEW Utility Contractors', location: 'Houston, TX / Nationwide', salary: '$138K - $245K (w/ Storm OT)' },
+      { id: 'ignored_elevator_1', title: 'Licensed Elevator & Escalator Constructor Mechanic (NEIEP / QEI)', company: 'Otis, TK Elevator & KONE High-Rise', location: 'New York, NY / Chicago', salary: '$132K - $195K' },
+      { id: 'ignored_cdl_1', title: 'CDL Class A Heavy-Haul Lowboy & OTR HazMat Driver', company: 'Landstar Heavy-Haul & Patriot Tank Lines', location: 'Nationwide Lanes', salary: '$112K - $168K' }
+    ]
+  },
+  {
+    id: 'vid_veterans_skillbridge_sdvosb',
+    title: 'Military Veterans & DoD SkillBridge Command: MOS 17C Cyber, 88M CDL, 12P Lineman & VetFran Multi-Unit Ownership',
+    channelName: 'Maj. Marcus Vance (USMC Ret.) & MSgt. Elena Rostova (USAF)',
+    channelAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+    channelRole: 'DoD SkillBridge Host Cadre, SBA VetCert SDVOSB Founders & VetFran Multi-Unit Owners',
+    channelFollowers: '94.3K Followers',
+    isVerifiedChannel: true,
+    duration: '29:15',
+    durationSeconds: 1755,
+    views: '104.6K views',
+    uploadTimeAgo: '2 days ago',
+    category: 'Learning',
+    thumbnail: 'https://images.unsplash.com/photo-1508614589041-895b88991e3e?w=1000&auto=format&fit=crop&q=80',
+    youtubeId: '9mwE1Aih9uU',
+    visibility: 'Public',
+    description: 'Complete tactical playbook for transitioning service members and veterans: translating MOS/AFSC/NEC codes (17C/1B4X1 Cyber, 88M/92A Heavy Transport & Logistics, 12P Prime Power Lineman, 68W/HM Combat Medic, 15T Aviation) into $120K–$235K civilian roles, 180-day DoD SkillBridge fellowships, SBA VetCert SDVOSB sole-source contracts (FAR 19.14), and VetFran franchise ownership.',
+    likesCount: 6890,
+    commentsCount: 475,
+    chapters: [
+      { timestamp: '00:00', seconds: 0, title: '180-Day DoD SkillBridge Approval & Command Authorization Strategy' },
+      { timestamp: '08:20', seconds: 500, title: 'MOS/AFSC Translation: 17C Cyber, 88M CDL Waivers & 12P Utility Lineman Direct Entry' },
+      { timestamp: '17:10', seconds: 1030, title: 'SBA VetCert SDVOSB Certification & FAR 19.14 Federal Sole-Source Contracts' },
+      { timestamp: '23:45', seconds: 1425, title: 'VetFran 20%–50% Franchise Fee Waivers & SBA 7(a) Veteran Advantage Loans' }
+    ],
+    transcript: [
+      { timestamp: '00:50', seconds: 50, speaker: 'Maj. Marcus Vance (USMC Ret.)', text: 'Your military experience is an unfair advantage when translated properly—whether stepping into aPrincipal Zero-Trust role, commanding a heavy-haul fleet with a Military CDL Skills Test Waiver, or acquiring a multi-unit franchise.' }
+    ],
+    embeddedProduct: {
+      id: 'prod_veterans_sdvosb_skillbridge_hub',
+      name: 'SBA VetCert SDVOSB, DoD SkillBridge & VetFran Command Portal',
+      icon: '🎖️',
+      price: '100% Free for Veterans',
+      tagline: 'Official MOS translator, DoD SkillBridge directory & SBA VetCert SDVOSB portal.',
+      trialAvailable: true,
+      liveUrl: 'https://www.sba.gov/counseling/boots-to-business/'
+    },
+    resources: [
+      { type: 'docs', label: 'Official Portal: SBA Boots to Business & VetCert SDVOSB ↗', url: 'https://www.sba.gov/counseling/boots-to-business/' },
+      { type: 'cert', label: 'Official Portal: VetFran 650+ Veteran-Friendly Franchises ↗', url: 'https://www.franchise.org/franchising-for-veterans/' }
+    ],
+    relatedJobs: [
+      { id: 'vet_cyber_1', title: 'Cleared DoD SkillBridge & Principal Cyber Architect (TS/SCI)', company: 'Aegis Valor SDVOSB & Defense Partners', location: 'Arlington, VA / Remote', salary: '$168K - $225K' }
+    ]
   }
 ]
 
 export const MEDIA_CLIPS_DATA: MediaClipItem[] = [
+  {
+    id: 'clip_cyber_redteam_soc',
+    title: '60-Second Cyber Defense: Stopping Kerberoasting & Ransomware Lateral Movement with eBPF & BloodHound',
+    creatorName: 'Tariq Al-Mansoor, OSCP/CRTO',
+    creatorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+    creatorRole: 'Principal Red Team Operator & SOC Detection Lead',
+    duration: '0:58',
+    views: '192.4K',
+    likes: '16.8K',
+    thumbnail: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=500&auto=format&fit=crop&q=80',
+    topic: 'Cybersecurity & Red Team',
+    actionType: 'View Job',
+    actionLabel: 'View Cybersecurity Jobs →',
+    actionTargetTab: 'jobs'
+  },
+  {
+    id: 'clip_ignored_lineman_500kv',
+    title: 'Professions LinkedIn Ignored: 500kV Helicopter Barehand Lineman Bonding & $220K+ Storm Restoration',
+    creatorName: 'Cole Hawkins, IBEW Journeyman Lineman',
+    creatorAvatar: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=100&auto=format&fit=crop&q=80',
+    creatorRole: '500kV Transmission Lineman & Storm Crew Foreman',
+    duration: '0:59',
+    views: '248.6K',
+    likes: '24.2K',
+    thumbnail: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=500&auto=format&fit=crop&q=80',
+    topic: 'Professions LinkedIn Ignored',
+    actionType: 'View Job',
+    actionLabel: 'View Lineman & Ignored Jobs →',
+    actionTargetTab: 'jobs'
+  },
+  {
+    id: 'clip_ignored_elevator_cdl',
+    title: 'High-Rise Elevator Constructor (NEIEP) & 19-Axle CDL Heavy-Haul Superload Field Check',
+    creatorName: 'Dante Rossi, QEI & Hank Mercer, CDL-A',
+    creatorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+    creatorRole: 'IUEC Elevator Mechanic & 180,000-lb Superload Captain',
+    duration: '0:54',
+    views: '186.1K',
+    likes: '18.5K',
+    thumbnail: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=500&auto=format&fit=crop&q=80',
+    topic: 'Professions LinkedIn Ignored',
+    actionType: 'View Job',
+    actionLabel: 'Explore CDL & Elevator Roles →',
+    actionTargetTab: 'jobs'
+  },
+  {
+    id: 'clip_veterans_skillbridge',
+    title: 'Veterans Command: How to Turn MOS 17C, 88M, 12P & 68W into $150K+ Careers or a VetFran Franchise',
+    creatorName: 'Maj. Marcus Vance, PMP (USMC Ret.)',
+    creatorAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80',
+    creatorRole: 'DoD SkillBridge & VetFran Multi-Unit Mentor',
+    duration: '0:57',
+    views: '154.9K',
+    likes: '14.9K',
+    thumbnail: 'https://images.unsplash.com/photo-1508614589041-895b88991e3e?w=500&auto=format&fit=crop&q=80',
+    topic: 'Veterans & DoD SkillBridge',
+    actionType: 'Follow Expert',
+    actionLabel: 'Open Veterans Hub →',
+    actionTargetTab: 'veterans'
+  },
   {
     id: 'clip_pharm_1',
     title: '60-Second Clinical Pearl: Vancomycin AUC/MIC vs Trough Monitoring & USP <797> IV Checks',
@@ -349,6 +549,44 @@ export const MEDIA_CLIPS_DATA: MediaClipItem[] = [
 ]
 
 export const LIVE_STREAMS_DATA: LiveStreamEvent[] = [
+  {
+    id: 'live_ignored_essential_masters',
+    title: 'LIVE Field Broadcast: 500kV Storm Linemen, NEIEP High-Rise Elevator Constructors & CDL 19-Axle Superload Crew',
+    hostName: 'Cole Hawkins (IBEW Lineman), Dante Rossi (QEI Elevator) & Hank Mercer (CDL-A Heavy-Haul)',
+    hostAvatar: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=200&auto=format&fit=crop&q=80',
+    hostRole: 'Professions LinkedIn Ignored · National Essential Trades Panel',
+    company: 'IBEW · IUEC · Landstar Heavy-Haul · Quanta Services',
+    status: 'LIVE NOW',
+    liveViewersCount: 2190,
+    scheduledTime: 'Streaming Live · Essential Field Masters Dispatch',
+    description: 'Live interactive walkthrough from a 500kV transmission substation, an 80-story gearless traction elevator machine room, and a 180,000-lb transformer heavy-haul convoy.',
+    youtubeId: 'zu6p3_df20A',
+    featuredProduct: {
+      name: 'Essential Trades Field Command Suite',
+      icon: '🛠️',
+      price: 'Free Field Access',
+      liveUrl: 'https://www.osha.gov/'
+    }
+  },
+  {
+    id: 'live_veterans_sdvosb_command',
+    title: 'LIVE Veterans & DoD SkillBridge Command: MOS 17C Cyber, 88M CDL, 12P Lineman & VetFran Multi-Unit Ownership',
+    hostName: 'Maj. Marcus Vance (USMC Ret.) & MSgt. Elena Rostova (USAF Veteran)',
+    hostAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+    hostRole: 'DoD SkillBridge Host Employers, SBA VetCert SDVOSB Founders & VetFran Mentors',
+    company: 'SBA VetCert · DoD SkillBridge · VetFran IFA',
+    status: 'LIVE NOW',
+    liveViewersCount: 1640,
+    scheduledTime: 'Streaming Live · Military-to-Civilian & Franchise Briefing',
+    description: 'Live Q&A helping transitioning service members and veterans convert MOS/AFSC/NEC skills into $140K–$235K civilian careers, SDVOSB sole-source contracts, and VetFran franchise ownership.',
+    youtubeId: '9mwE1Aih9uU',
+    featuredProduct: {
+      name: 'SBA Boots to Business & VetFran Hub',
+      icon: '🎖️',
+      price: '100% Free for Veterans',
+      liveUrl: 'https://www.sba.gov/counseling/boots-to-business/'
+    }
+  },
   {
     id: 'live_health_grand_rounds',
     title: 'LIVE Multi-Profession Grand Rounds: Clinical Pharmacy, Attending Physicians, ICU Nursing, Medical Aides & Hospital Command',
@@ -1024,19 +1262,52 @@ export const AUTOMOTIVE_PODCASTS_DATA: PodcastShow[] = [
     isMonetized: true,
     monthlyMembershipPrice: '$15 / mo (Waveform Library & DTC Case Studies)',
     episodes: []
+  },
+  {
+    id: 'show_ignored_essential_masters',
+    title: 'Professions LinkedIn Ignored: The Essential Masters Podcast (Linemen, Elevator Mechanics, CDL Heavy-Haul & Offshore)',
+    tagline: 'Real conversations with 500kV storm linemen, IUEC high-rise elevator constructors, 19-axle CDL heavy-haul captains, ISA crane arborists, and commercial fishermen.',
+    hostName: 'Cole Hawkins (IBEW Lineman) & Dante Rossi (IUEC QEI)',
+    hostRole: '500kV Transmission Lineman & Licensed High-Rise Elevator Constructor',
+    hostAvatar: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=200&auto=format&fit=crop&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&auto=format&fit=crop&q=80',
+    category: 'Leadership & CISO',
+    subscribersCount: '84.2K Subscribers',
+    rating: '4.99 ★',
+    reviewsCount: 912,
+    totalEpisodes: 31,
+    isMonetized: true,
+    monthlyMembershipPrice: '$10 / mo (Union Apprenticeship & Storm Roster Guides)',
+    episodes: []
   }
 ]
 
 export function getEnclaveMediaVideos(enclaveId?: string): MediaVideoItem[] {
-  if (enclaveId === 'trades_construction') return [...TRADES_VIDEOS_DATA, ...HEALTHCARE_VIDEOS_DATA.slice(0, 2)]
-  if (enclaveId === 'healthcare_medicine') return HEALTHCARE_VIDEOS_DATA
-  if (enclaveId === 'automotive_mechanics') return [...AUTOMOTIVE_VIDEOS_DATA, ...HEALTHCARE_VIDEOS_DATA.slice(0, 2)]
-  return [...HEALTHCARE_VIDEOS_DATA, ...FEATURED_VIDEOS_DATA]
+  const allCombined = [
+    ...FEATURED_VIDEOS_DATA,
+    ...TRADES_VIDEOS_DATA,
+    ...HEALTHCARE_VIDEOS_DATA,
+    ...AUTOMOTIVE_VIDEOS_DATA
+  ]
+  if (enclaveId === 'tech_cybersecurity') {
+    return [...FEATURED_VIDEOS_DATA, ...TRADES_VIDEOS_DATA.slice(0, 1), ...HEALTHCARE_VIDEOS_DATA.slice(0, 2)]
+  }
+  if (enclaveId === 'veterans_military') {
+    const vetFirst = FEATURED_VIDEOS_DATA.filter(v => v.id === 'vid_veterans_skillbridge_sdvosb' || v.id === 'vid_ignored_lineman_elevator_cdl' || v.id === 'vid_cyber_soc_redteam_dfir')
+    return [...vetFirst, ...TRADES_VIDEOS_DATA, ...HEALTHCARE_VIDEOS_DATA.slice(0, 2)]
+  }
+  if (enclaveId === 'trades_construction') {
+    const ignoredTrades = FEATURED_VIDEOS_DATA.filter(v => v.id === 'vid_ignored_lineman_elevator_cdl' || v.id === 'vid_veterans_skillbridge_sdvosb')
+    return [...ignoredTrades, ...TRADES_VIDEOS_DATA, ...HEALTHCARE_VIDEOS_DATA.slice(0, 2)]
+  }
+  if (enclaveId === 'healthcare_medicine') return [...HEALTHCARE_VIDEOS_DATA, ...FEATURED_VIDEOS_DATA]
+  if (enclaveId === 'automotive_mechanics') return [...AUTOMOTIVE_VIDEOS_DATA, ...FEATURED_VIDEOS_DATA, ...HEALTHCARE_VIDEOS_DATA.slice(0, 2)]
+  return allCombined
 }
 
 export function getEnclavePodcasts(enclaveId?: string): PodcastShow[] {
-  if (enclaveId === 'trades_construction') return [...TRADES_PODCASTS_DATA, ...HEALTHCARE_PODCASTS_DATA]
+  if (enclaveId === 'trades_construction') return [...TRADES_PODCASTS_DATA, ...AUTOMOTIVE_PODCASTS_DATA, ...PODCAST_SHOWS_DATA]
   if (enclaveId === 'healthcare_medicine') return [...HEALTHCARE_PODCASTS_DATA, ...PODCAST_SHOWS_DATA]
-  if (enclaveId === 'automotive_mechanics') return [...AUTOMOTIVE_PODCASTS_DATA, ...HEALTHCARE_PODCASTS_DATA]
-  return [...HEALTHCARE_PODCASTS_DATA, ...PODCAST_SHOWS_DATA]
+  if (enclaveId === 'automotive_mechanics') return [...AUTOMOTIVE_PODCASTS_DATA, ...TRADES_PODCASTS_DATA, ...HEALTHCARE_PODCASTS_DATA]
+  return [...PODCAST_SHOWS_DATA, ...AUTOMOTIVE_PODCASTS_DATA, ...HEALTHCARE_PODCASTS_DATA, ...TRADES_PODCASTS_DATA]
 }

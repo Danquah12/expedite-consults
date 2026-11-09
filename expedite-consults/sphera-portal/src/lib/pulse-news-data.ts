@@ -58,7 +58,9 @@ export interface AIDailyBriefItem {
 
 export const PULSE_CATEGORIES = [
   { id: 'All', label: '🌐 All Intelligence', icon: '🌐' },
-  { id: 'Cybersecurity', label: '🔐 Cybersecurity', icon: '🔐' },
+  { id: 'Cybersecurity', label: '🔐 Cybersecurity (SOC, Red Team, OT & CMMC)', icon: '🔐' },
+  { id: 'Professions LinkedIn Ignored', label: '🛠️ Professions LinkedIn Ignored (CDL, Lineman, Elevator, EVS)', icon: '🛠️' },
+  { id: 'Veterans & SkillBridge', label: '🎖️ Veterans, DoD SkillBridge & SDVOSB', icon: '🎖️' },
   { id: 'AI', label: '🤖 AI & Frontier Models', icon: '🤖' },
   { id: 'Cloud', label: '☁️ Cloud & Infrastructure', icon: '☁️' },
   { id: 'Technology', label: '💻 Technology', icon: '💻' },
@@ -623,6 +625,116 @@ Vendors that price strictly per verified resolution—such as per merged securit
     },
     upvotesCount: 463,
     commentsCount: 72
+  },
+  {
+    id: 'art_ignored_lineman_elevator_cdl',
+    title: 'Professions LinkedIn Ignored: 500kV Grid Linemen, High-Rise Elevator Constructors & CDL Superload Drivers Command $135K–$245K',
+    summary: 'As hyperscale AI data centers, transmission substations, and high-rise infrastructure expand nationwide, Journeyman IBEW Linemen, NEIEP/IUEC Elevator Mechanics, and 19-Axle CDL Heavy-Haul Captains are out-earning traditional corporate roles.',
+    category: 'Professions LinkedIn Ignored',
+    author: {
+      name: 'Cole Hawkins (IBEW) & Dante Rossi (IUEC QEI)',
+      role: '500kV Transmission Lineman & Licensed High-Rise Elevator Constructor',
+      avatar: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=100&auto=format&fit=crop&q=80',
+      source: 'ConnectLn Essential Field Wire'
+    },
+    publishedAt: '14m ago',
+    readTime: '4 min read',
+    coverImage: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&auto=format&fit=crop&q=80',
+    tags: ['ProfessionsLinkedInIgnored', '500kVLineman', 'ElevatorConstructor', 'CDLHeavyHaul', 'SkilledTrades'],
+    isFeatured: true,
+    isBreaking: true,
+    aiKeyTakeaways: [
+      'Journeyman High-Voltage Linemen (13.8kV–500kV) with storm restoration double-time average $165K–$245K annually with zero student loan debt.',
+      'Licensed NEIEP / QEI Elevator & Escalator Constructors lead all building trades in base hourly + pension/annuity compensation.',
+      'CDL Class A 19-axle superload and 75-ton rotator recovery operators see 34% rate increases moving substation transformers and heavy machinery.'
+    ],
+    fullContent: `For over 20 years, legacy white-collar social networks ignored the essential professionals who build, power, move, and maintain the physical world. ConnectLn was architected to change that permanently.
+
+Across North America and global industrial corridors, the expansion of 500kV transmission grids, 80-story urban towers, and heavy industrial logistics has created unprecedented demand for verified hands-on masters:
+• Journeyman High-Voltage Power Linemen performing live-line barehand helicopter bonding and IEEE 516 substation switching.
+• Licensed IUEC / NEIEP Elevator & Escalator Constructors commissioning gearless traction hoists and ASME A17.1 safety governors.
+• CDL Class A Heavy-Haul Lowboy Captains and 75-Ton Rotator Tow Operators executing multi-state superload moves.`,
+    sourceLinks: [
+      { title: 'OSHA 29 CFR 1910.269 Electric Power Generation, Transmission & Distribution', url: 'https://www.osha.gov', domain: 'osha.gov' },
+      { title: 'FMCSA Commercial Driver License & Heavy-Haul Standards', url: 'https://www.fmcsa.dot.gov', domain: 'fmcsa.dot.gov' }
+    ],
+    biasRating: {
+      leaning: 'Center',
+      credibilityScore: 99,
+      factCheckStatus: 'Field Verified ✓'
+    },
+    upvotesCount: 842,
+    commentsCount: 164
+  },
+  {
+    id: 'art_ignored_arborist_fishing_evs',
+    title: 'Unsung Essential Masters: Crane Arborists, Hospital OR Bio-Decontamination Leads, Offshore Captains & Trenchless Sewer Techs',
+    summary: 'How ConnectLn verifies proof-of-work for ISA Certified Crane Tree Surgeons, Hospital EVS Surgical Turnover Specialists, Commercial Crab/Lobster Captains, SPRAT Rope Access Techs, and Master Locksmiths.',
+    category: 'Professions LinkedIn Ignored',
+    author: {
+      name: 'Capt. Erik Lindqvist & Maria Santos, CHEST',
+      role: 'Offshore Commercial Captain & Hospital OR Bio-Decontamination Lead',
+      avatar: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=100&auto=format&fit=crop&q=80',
+      source: 'ConnectLn Essential Guilds Dispatch'
+    },
+    publishedAt: '29m ago',
+    readTime: '4 min read',
+    coverImage: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&auto=format&fit=crop&q=80',
+    tags: ['ISAArborist', 'HospitalEVS', 'CommercialFishing', 'RopeAccess', 'TrenchlessCIPP'],
+    isFeatured: true,
+    aiKeyTakeaways: [
+      'Hospital EVS & OR Bio-Decontamination Specialists using UV-C robotics and ATP bioluminescence testing cut surgical site infections by 38%.',
+      'ISA Certified Crane Arborists and SPRAT/IRATA Level 3 Rope Access Supervisors command premium hazard and municipal contracts.',
+      'NASSCO PACP Trenchless CIPP sewer rehabilitation technicians restore municipal water mains without street excavation.'
+    ],
+    fullContent: `Every surgery depends on a Certified Healthcare Environmental Services Technician (CHEST) executing terminal OR bio-decontamination. Every storm-damaged utility corridor depends on ISA Certified Crane Arborists clearing hazardous timber near energized primaries. Every coastal economy relies on USCG-licensed Commercial Fishermen and Longshoremen.
+
+On ConnectLn, these 15+ essential professions have their own verified credentials, peer vouches, live field calculators, and direct-hire job boards.`,
+    sourceLinks: [
+      { title: 'ISA Certified Arborist & ANSI Z133 Safety Standard', url: 'https://www.isa-arbor.com', domain: 'isa-arbor.com' }
+    ],
+    biasRating: {
+      leaning: 'Center',
+      credibilityScore: 99,
+      factCheckStatus: 'Field Verified ✓'
+    },
+    upvotesCount: 618,
+    commentsCount: 112
+  },
+  {
+    id: 'art_veterans_skillbridge_sdvosb',
+    title: 'Military Veterans & DoD SkillBridge Surge: MOS 17C Cyber, 88M CDL, 12P Lineman & VetFran Multi-Unit Ownership',
+    summary: 'Transitioning service members and veterans leverage ConnectLn AI MOS translation, 180-day DoD SkillBridge fellowships, SBA VetCert SDVOSB sole-source awards, and VetFran 20%–50% franchise fee waivers.',
+    category: 'Veterans & SkillBridge',
+    author: {
+      name: 'Maj. Marcus Vance, PMP (USMC Ret.)',
+      role: 'DoD SkillBridge Host & VetFran Multi-Unit Franchise Owner',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+      source: 'ConnectLn Veterans & SDVOSB Command'
+    },
+    publishedAt: '19m ago',
+    readTime: '5 min read',
+    coverImage: 'https://images.unsplash.com/photo-1508614589041-895b88991e3e?w=800&auto=format&fit=crop&q=80',
+    tags: ['Veterans', 'DoDSkillBridge', 'SDVOSB', 'VetFran', 'MilitaryTransition'],
+    isFeatured: true,
+    isBreaking: true,
+    aiKeyTakeaways: [
+      '180-day DoD SkillBridge fellowships place active-duty service members directly into $140K–$225K cyber, logistics, aviation, and trade roles at full military pay.',
+      'FMCSA Military CDL Skills Test Waiver allows 88M / 3531 motor transport veterans to obtain commercial Class A CDLs without retaking road exams.',
+      'SBA VetCert SDVOSB certification unlocks FAR 19.14 sole-source federal contracts up to $4.5M (services) and $7M (manufacturing).'
+    ],
+    fullContent: `Transitioning from active duty or the Reserve/National Guard should never mean starting at the bottom. Through ConnectLn's Veterans & Franchise Networks hub, service members translate their MOS, AFSC, and NEC experience directly into high-paying civilian careers or multi-unit business ownership.`,
+    sourceLinks: [
+      { title: 'SBA Boots to Business & VetCert SDVOSB Portal', url: 'https://www.sba.gov/counseling/boots-to-business/', domain: 'sba.gov' },
+      { title: 'VetFran (International Franchise Association) Veteran Directory', url: 'https://www.franchise.org/franchising-for-veterans/', domain: 'franchise.org' }
+    ],
+    biasRating: {
+      leaning: 'Center',
+      credibilityScore: 99,
+      factCheckStatus: 'Statutorily Verified ✓'
+    },
+    upvotesCount: 729,
+    commentsCount: 143
   }
 ]
 
@@ -885,16 +997,25 @@ Plugging a 4-channel automotive scope into DLC pin 6 and 14 provides immediate p
 ]
 
 export function getEnclavePulseArticles(enclaveId?: string): PulseArticle[] {
-  if (enclaveId === 'trades_construction') return TRADES_PULSE_ARTICLES
-  if (enclaveId === 'healthcare_medicine') return HEALTHCARE_PULSE_ARTICLES
-  if (enclaveId === 'automotive_mechanics') return AUTOMOTIVE_PULSE_ARTICLES
+  const globalMustInclude = PULSE_ARTICLES_DATA.filter(
+    a => a.category === 'Professions LinkedIn Ignored' || a.category === 'Veterans & SkillBridge' || a.category === 'Cybersecurity'
+  )
+  if (enclaveId === 'trades_construction') return [...TRADES_PULSE_ARTICLES, ...globalMustInclude]
+  if (enclaveId === 'healthcare_medicine') return [...HEALTHCARE_PULSE_ARTICLES, ...globalMustInclude]
+  if (enclaveId === 'automotive_mechanics') return [...AUTOMOTIVE_PULSE_ARTICLES, ...globalMustInclude]
   return PULSE_ARTICLES_DATA
 }
 
 export function getEnclavePulseCategories(enclaveId?: string) {
+  const sharedPills = [
+    { id: 'Cybersecurity', label: '🔐 Cybersecurity (SOC, Pentest, OT & CMMC)', icon: '🔐' },
+    { id: 'Professions LinkedIn Ignored', label: '🛠️ Professions LinkedIn Ignored (CDL, Lineman, Elevator)', icon: '🛠️' },
+    { id: 'Veterans & SkillBridge', label: '🎖️ Veterans & DoD SkillBridge', icon: '🎖️' },
+  ]
   if (enclaveId === 'trades_construction') {
     return [
       { id: 'All', label: '🌐 All Trade News', icon: '🌐' },
+      ...sharedPills,
       { id: 'Timber & Framing', label: '🌲 Timber & Framing', icon: '🌲' },
       { id: 'Millwork & Joinery', label: '🪚 Millwork & Joinery', icon: '🪚' },
       { id: 'OSHA & Safety', label: '🦺 OSHA & Safety Standards', icon: '🦺' },
@@ -906,6 +1027,7 @@ export function getEnclavePulseCategories(enclaveId?: string) {
   if (enclaveId === 'healthcare_medicine') {
     return [
       { id: 'All', label: '🌐 All Clinical News', icon: '🌐' },
+      ...sharedPills,
       { id: 'Trauma Surgery', label: '🔪 Trauma & Acute Care Surgery', icon: '🔪' },
       { id: 'Emergency Nursing', label: '🩺 Emergency Nursing (TNCC)', icon: '🩺' },
       { id: 'Pharmacology & MTP', label: '🩸 Pharmacology & MTP', icon: '🩸' },
@@ -917,6 +1039,7 @@ export function getEnclavePulseCategories(enclaveId?: string) {
   if (enclaveId === 'automotive_mechanics') {
     return [
       { id: 'All', label: '🌐 All Automotive News', icon: '🌐' },
+      ...sharedPills,
       { id: 'EV Powertrains & 800V', label: '🔋 EV Powertrains & 800V', icon: '🔋' },
       { id: 'Diagnostics & Scopes', label: '⚡ Diagnostics & Oscilloscopes', icon: '⚡' },
       { id: 'Engine & Transmission', label: '🔧 Engine & Transmission Rebuild', icon: '🔧' },
@@ -1218,9 +1341,86 @@ export const AUTOMOTIVE_PULSE_ROOMS: PulseRoom[] = [
   }
 ]
 
+export const IGNORED_AND_VETERANS_PULSE_ROOMS: PulseRoom[] = [
+  {
+    id: 'room_ignored_essential_1',
+    title: '🎙️ LIVE: Professions LinkedIn Ignored — 500kV Storm Linemen, NEIEP High-Rise Elevator Constructors & CDL 19-Axle Superload Crew',
+    category: 'Professions LinkedIn Ignored',
+    host: {
+      name: 'Cole Hawkins, IBEW Journeyman Lineman',
+      role: '500kV Transmission Lineman & Storm Crew Foreman',
+      avatar: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=100&auto=format&fit=crop&q=80'
+    },
+    speakers: [
+      {
+        id: 'spk_ign_1',
+        name: 'Cole Hawkins',
+        role: '500kV Power Lineman',
+        avatar: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=100&auto=format&fit=crop&q=80',
+        isSpeaking: true,
+        isMuted: false
+      },
+      {
+        id: 'spk_ign_2',
+        name: 'Dante Rossi, QEI',
+        role: 'IUEC Elevator Constructor',
+        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+        isSpeaking: false,
+        isMuted: false
+      }
+    ],
+    listenersCount: 418,
+    startedAt: 'Live for 15 mins',
+    tags: ['500kV Lineman', 'Elevator Constructor', 'CDL Heavy-Haul', 'ISA Arborist', 'Hospital EVS'],
+    isLive: true,
+    aiSummaryNotes: [
+      'IEEE 516 minimum approach distances and Faraday suit helicopter bonding on 500kV transmission lines.',
+      'ASME A17.1 Category 5 high-rise gearless elevator governor & safety drop testing protocols.',
+      '19-axle lowboy superload bridge formula permits and 75-ton rotator highway recovery rigging.'
+    ]
+  },
+  {
+    id: 'room_veterans_command_1',
+    title: '🎙️ LIVE: Military Veterans & DoD SkillBridge Command — MOS 17C Cyber, 88M CDL, 12P Lineman & VetFran Multi-Unit Ownership',
+    category: 'Veterans & DoD SkillBridge',
+    host: {
+      name: 'Maj. Marcus Vance, PMP (USMC Ret.)',
+      role: 'DoD SkillBridge Host & VetFran Multi-Unit Owner',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80'
+    },
+    speakers: [
+      {
+        id: 'spk_vet_1',
+        name: 'Maj. Marcus Vance (USMC)',
+        role: 'VetFran Multi-Unit Owner',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+        isSpeaking: true,
+        isMuted: false
+      },
+      {
+        id: 'spk_vet_2',
+        name: 'MSgt. Elena Rostova (USAF)',
+        role: 'SBA VetCert SDVOSB CEO',
+        avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
+        isSpeaking: false,
+        isMuted: false
+      }
+    ],
+    listenersCount: 364,
+    startedAt: 'Live for 27 mins',
+    tags: ['DoD SkillBridge', 'SBA VetCert SDVOSB', 'MOS 17C / 88M / 12P', 'VetFran Franchises'],
+    isLive: true,
+    aiSummaryNotes: [
+      'Converting MOS 17C/1B4X1 Cyber, 88M Heavy Transport, and 12P Prime Power Lineman into $140K–$235K civilian offers.',
+      'Capturing FAR 19.14 sole-source federal contracts up to $4.5M with SBA VetCert SDVOSB certification.',
+      'Using VetFran 20%–50% franchise fee waivers and SBA 7(a) Veteran Advantage loans to acquire multi-unit territories.'
+    ]
+  }
+]
+
 export function getEnclavePulseRooms(enclaveId?: string): PulseRoom[] {
-  if (enclaveId === 'trades_construction') return TRADES_PULSE_ROOMS
-  if (enclaveId === 'healthcare_medicine') return HEALTHCARE_PULSE_ROOMS
-  if (enclaveId === 'automotive_mechanics') return AUTOMOTIVE_PULSE_ROOMS
-  return pulseRoomsData
+  if (enclaveId === 'trades_construction') return [...TRADES_PULSE_ROOMS, ...IGNORED_AND_VETERANS_PULSE_ROOMS]
+  if (enclaveId === 'healthcare_medicine') return [...HEALTHCARE_PULSE_ROOMS, ...IGNORED_AND_VETERANS_PULSE_ROOMS]
+  if (enclaveId === 'automotive_mechanics') return [...AUTOMOTIVE_PULSE_ROOMS, ...IGNORED_AND_VETERANS_PULSE_ROOMS]
+  return [...IGNORED_AND_VETERANS_PULSE_ROOMS, ...pulseRoomsData]
 }

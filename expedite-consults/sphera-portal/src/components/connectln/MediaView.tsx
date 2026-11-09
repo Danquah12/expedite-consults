@@ -307,6 +307,36 @@ export function MediaView({
         </div>
       </div>
 
+      {/* 1-Click Enclave & Profession Media Filter Pills */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[11px]">
+        {[
+          { id: 'all', label: '🌐 All Enclave Media', targetId: '' },
+          { id: 'cyber', label: '🛡️ Cybersecurity (SOC, Red Team, Cloud, OT)', targetId: 'vid_cyber_soc_redteam_dfir' },
+          { id: 'ignored', label: '🛠️ Professions LinkedIn Ignored (500kV Lineman, Elevator, CDL)', targetId: 'vid_ignored_lineman_elevator_cdl' },
+          { id: 'veterans', label: '🎖️ Veterans & DoD SkillBridge (MOS 17C, 88M, 12P, VetFran)', targetId: 'vid_veterans_skillbridge_sdvosb' },
+          { id: 'clinical', label: '🏥 Clinical Pharmacy, Doctors & ICU Nursing', targetId: 'vid_pharmacy_stewardship' },
+        ].map((pill) => (
+          <button
+            key={pill.id}
+            type="button"
+            onClick={() => {
+              const allVids = getEnclaveMediaVideos('all')
+              setVideos(allVids)
+              setActiveMediaTab('for_you')
+              if (pill.targetId) {
+                const found = allVids.find(v => v.id === pill.targetId)
+                if (found) setSelectedVideo(found)
+              } else if (allVids[0]) {
+                setSelectedVideo(allVids[0])
+              }
+            }}
+            className="shrink-0 rounded-full border border-emerald-500/30 bg-emerald-50/70 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 px-3 py-1 font-bold text-emerald-800 dark:text-emerald-300 transition-colors cursor-pointer"
+          >
+            {pill.label}
+          </button>
+        ))}
+      </div>
+
       {/* Expedite Consults Educational Video Talk Wheel */}
       <ConnectInVideoWheel
         activeEnclaveId={enclaveId}
