@@ -120,8 +120,32 @@ export function LinkedInStoriesStrip({
   const [newStoryStyle, setNewStoryStyle] = useState<'podium' | 'poster_frame' | 'news_portrait' | 'field_action'>('news_portrait')
   const [newStoryImageUrl, setNewStoryImageUrl] = useState("https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1000&auto=format&fit=crop&q=80")
   const [sharedBanner, setSharedBanner] = useState(false)
+  const [clockwiseSlot, setClockwiseSlot] = useState<number>(0)
+  const [isRotatingClockwise, setIsRotatingClockwise] = useState<boolean>(true)
+  const [isHoverPaused, setIsHoverPaused] = useState<boolean>(false)
 
   const userAvatar = resolveUserProfilePicture(currentUser)
+
+  // Step cards & spotlight highlight clockwise
+  const stepClockwise = React.useCallback(() => {
+    setClockwiseSlot((prevSlot) => {
+      const nextSlot = (prevSlot + 1) % 4
+      // Every clockwise step shifts the story deck clockwise so cards visibly move across the strip
+      setStories((prevStories) => {
+        if (prevStories.length <= 1) return prevStories
+        return [prevStories[prevStories.length - 1], ...prevStories.slice(0, prevStories.length - 1)]
+      })
+      return nextSlot
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!isRotatingClockwise || isHoverPaused || activeStory || isAddModalOpen) return
+    const timer = setInterval(() => {
+      stepClockwise()
+    }, 3200)
+    return () => clearInterval(timer)
+  }, [isRotatingClockwise, isHoverPaused, activeStory, isAddModalOpen, stepClockwise])
 
   const handleCreateStory = (e: React.FormEvent) => {
     e.preventDefault()
@@ -151,36 +175,93 @@ export function LinkedInStoriesStrip({
   }
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-3.5 shadow-2xs dark:border-zinc-800 dark:bg-zinc-900 space-y-2.5">
+    <div
+      onMouseEnter={() => setIsHoverPaused(true)}
+      onMouseLeave={() => setIsHoverPaused(false)}
+      className="relative rounded-2xl p-[2px] overflow-hidden shadow-sm"
+    >
+      <style>{`
+        @keyframes connectlnClockwiseSpin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes connectlnCardSlideInClockwise {
+          0% { opacity: 0.72; transform: translateX(-14px) scale(0.97); }
+          100% { opacity: 1; transform: translateX(0) scale(1); }
+        }
+      `}</style>
+      {/* Clockwise-Rotating Highlight Border Around the Strip */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -inset-[120%] opacity-90"
+        style={{
+          background:
+            "conic-gradient(from 0deg, transparent 0deg, transparent 250deg, #10b981 290deg, #0A66C2 330deg, #22c55e 360deg)",
+          animation: isRotatingClockwise && !isHoverPaused ? "connectlnClockwiseSpin 5s linear infinite" : "none"
+        }}
+      />
+
+      <div className="relative rounded-[14px] border border-emerald-500/30 bg-white p-3.5 dark:border-emerald-500/30 dark:bg-zinc-900 space-y-2.5">
       {/* Header Bar */}
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
           <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#0A66C2]/10 text-[#0A66C2] dark:bg-sky-500/20 dark:text-sky-400">
-            <Sparkles className="h-3.5 w-3.5" />
+            <RotateCw
+              className="h-3.5 w-3.5"
+              style={{
+                animation: isRotatingClockwise && !isHoverPaused ? "connectlnClockwiseSpin 4s linear infinite" : "none"
+              }}
+            />
           </span>
           <div>
-            <h3 className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100 leading-tight">
-              Professional Stories, Keynotes &amp; Live Action Reels
-            </h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100 leading-tight">
+                Professional Stories, Keynotes &amp; Live Action Reels
+              </h3>
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300/70 dark:border-emerald-800 px-2 py-0.2 text-[9px] font-bold text-emerald-700 dark:text-emerald-300">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                {isHoverPaused ? "Paused on Hover" : isRotatingClockwise ? "Moving Clockwise ↻" : "Manual Mode"}
+              </span>
+            </div>
             <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
               Click any card to view full-resolution photo or watch live video briefing
             </p>
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setIsAddModalOpen(true)}
-          className="rounded-full bg-[#0A66C2] hover:bg-[#004182] px-3 py-1 text-[11px] font-bold text-white flex items-center gap-1 shadow-2xs transition-colors cursor-pointer shrink-0"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          <span>+ Post Story / Poster</span>
-        </button>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            type="button"
+            onClick={stepClockwise}
+            title="Step clockwise now"
+            className="rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 px-2.5 py-1 text-[10px] font-bold text-zinc-700 dark:text-zinc-200 flex items-center gap-1 cursor-pointer transition-colors"
+          >
+            <RotateCw className="h-3 w-3 text-emerald-600" />
+            <span>Step ↻</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsRotatingClockwise((prev) => !prev)}
+            title={isRotatingClockwise ? "Pause clockwise motion" : "Resume clockwise motion"}
+            className="rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 p-1.5 text-zinc-700 dark:text-zinc-200 cursor-pointer transition-colors"
+          >
+            {isRotatingClockwise ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsAddModalOpen(true)}
+            className="rounded-full bg-[#0A66C2] hover:bg-[#004182] px-3 py-1 text-[11px] font-bold text-white flex items-center gap-1 shadow-2xs transition-colors cursor-pointer shrink-0"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span>+ Post Story / Poster</span>
+          </button>
+        </div>
       </div>
 
-      {/* 4-Card Rounded LinkedIn Story Strip (Matching Screenshot 1) */}
+      {/* 4-Card Rounded LinkedIn Story Strip (Moving Clockwise) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-        {stories.slice(0, 4).map((story) => {
+        {stories.slice(0, 4).map((story, idx) => {
+          const isClockwiseSpotlight = idx === clockwiseSlot
           return (
             <div
               key={story.id}
@@ -188,7 +269,14 @@ export function LinkedInStoriesStrip({
                 setActiveStory(story)
                 setViewMode('photo')
               }}
-              className="group relative h-52 sm:h-56 rounded-2xl overflow-hidden cursor-pointer border border-zinc-200/90 dark:border-zinc-700/80 shadow-xs hover:shadow-md transition-all"
+              style={{
+                animation: "connectlnCardSlideInClockwise 480ms cubic-bezier(0.22, 1, 0.36, 1)"
+              }}
+              className={`group relative h-52 sm:h-56 rounded-2xl overflow-hidden cursor-pointer transition-all duration-500 ${
+                isClockwiseSpotlight
+                  ? "ring-2 ring-emerald-500 shadow-lg shadow-emerald-500/20 -translate-y-0.5"
+                  : "border border-zinc-200/90 dark:border-zinc-700/80 shadow-xs hover:shadow-md"
+              }`}
             >
               {/* Card Variant 1: Framed Poster Style (Matches Fisher Investments 7 Income Streams Card) */}
               {story.cardStyle === 'poster_frame' ? (
@@ -535,6 +623,7 @@ export function LinkedInStoriesStrip({
           </div>
         </div>
       )}
+      </div>
     </div>
   )
 }
