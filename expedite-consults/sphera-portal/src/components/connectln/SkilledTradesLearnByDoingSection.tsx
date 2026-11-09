@@ -39,6 +39,10 @@ import { ConnectLnStudioPlayer, notifyExclusiveVideoPlay } from "./ConnectLnStud
 
 interface SkilledTradesLearnByDoingSectionProps {
   user?: UserProfile | null
+  mode?: 'full_academy' | 'home_videos_only'
+  initialLessonId?: string | null
+  initialCategory?: SkilledTradesCategory | null
+  onOpenInLearnTab?: (lessonId?: string, category?: SkilledTradesCategory) => void
   onTelemetryChange?: (summary: {
     savedLessonIds: string[]
     journeyLessonIds: string[]
@@ -52,20 +56,45 @@ type CategoryFilter = 'All' | SkilledTradesCategory | 'Saved' | 'Learning Journe
 
 export function SkilledTradesLearnByDoingSection({
   user,
+  mode = 'full_academy',
+  initialLessonId = null,
+  initialCategory = null,
+  onOpenInLearnTab,
   onTelemetryChange,
   onClaimCertificate
 }: SkilledTradesLearnByDoingSectionProps) {
-  const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('All')
+  const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>(
+    initialCategory || 'All'
+  )
   const [telemetryMap, setTelemetryMap] = useState<Record<string, LearnByDoingLessonTelemetry>>(() =>
     loadAllLearnByDoingTelemetry()
   )
   const [activeVideoLessonId, setActiveVideoLessonId] = useState<string | null>(
-    SKILLED_TRADES_LEARN_BY_DOING_LESSONS[0]?.id || null
+    initialLessonId || SKILLED_TRADES_LEARN_BY_DOING_LESSONS[0]?.id || null
   )
   const [autoPlayRequested, setAutoPlayRequested] = useState<boolean>(false)
   const [expandedLessonId, setExpandedLessonId] = useState<string | null>(
-    SKILLED_TRADES_LEARN_BY_DOING_LESSONS[0]?.id || null
+    initialLessonId || SKILLED_TRADES_LEARN_BY_DOING_LESSONS[0]?.id || null
   )
+
+  useEffect(() => {
+    if (initialCategory) {
+      setSelectedCategory(initialCategory)
+    }
+  }, [initialCategory])
+
+  useEffect(() => {
+    if (initialLessonId) {
+      setActiveVideoLessonId(initialLessonId)
+      setExpandedLessonId(initialLessonId)
+      if (typeof window !== 'undefined' && mode === 'full_academy') {
+        setTimeout(() => {
+          const el = document.getElementById(`lbd-lesson-card-${initialLessonId}`)
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }, 180)
+      }
+    }
+  }, [initialLessonId, mode])
   // Tracks whether each YouTube video ID has been verified playable via oEmbed / runtime check
   const [embedPlayabilityMap, setEmbedPlayabilityMap] = useState<
     Record<string, 'checking' | 'playable' | 'unavailable'>
@@ -360,6 +389,273 @@ export function SkilledTradesLearnByDoingSection({
     }
   }
 
+  if (mode === 'home_videos_only') {
+    const activeLesson =
+      SKILLED_TRADES_LEARN_BY_DOING_LESSONS.find(l => l.id === activeVideoLessonId) ||
+      filteredLessons[0] ||
+      SKILLED_TRADES_LEARN_BY_DOING_LESSONS[0]
+    const isActiveLesson6 =
+      activeLesson?.id === 'lbd_painting_brush_roller_6' && Boolean(activeLesson.companionVariant)
+    const activeHeroVariant =
+      isActiveLesson6 && lesson6Variant === 'companion' && activeLesson?.companionVariant
+        ? activeLesson.companionVariant
+        : null
+    const heroYoutubeId = activeHeroVariant?.youtubeId || activeLesson?.youtubeId
+    const heroTitle = activeHeroVariant ? activeHeroVariant.title : activeLesson?.title
+    const heroCreator = activeHeroVariant ? activeHeroVariant.originalCreator : activeLesson?.originalCreator
+    const heroVideoLabel = activeHeroVariant ? activeHeroVariant.videoLabel : activeLesson?.videoLabel
+
+    return (
+      <section
+        id="skilled-trades-learn-by-doing"
+        className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden"
+      >
+        {/* Sleek Home Feed Video Showcase Header */}
+        <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-amber-950 px-4 py-3.5 text-white border-b border-amber-500/30">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="rounded-full bg-amber-400 text-slate-950 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shrink-0">
+                <Play className="h-3 w-3 fill-slate-950" />
+                ConnectLn Studio Videos
+              </span>
+              <h2 className="text-sm sm:text-base font-black tracking-tight text-white truncate">
+                Skilled Trades Video Showcase (13 Masterclasses)
+              </h2>
+            </div>
+
+            {onOpenInLearnTab && (
+              <button
+                type="button"
+                onClick={() => onOpenInLearnTab(activeLesson?.id, activeLesson?.category)}
+                className="rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 px-3 py-1 text-[11px] font-black inline-flex items-center gap-1.5 shadow-xs transition-all cursor-pointer shrink-0"
+              >
+                <BookOpen className="h-3.5 w-3.5" />
+                <span>📖 Detailed Notes, Practice &amp; Quizzes in Learn Tab →</span>
+              </button>
+            )}
+          </div>
+
+          {/* Compact Trade Video Filter Pills */}
+          <div className="mt-2.5 flex items-center gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {(
+              [
+                { id: 'All', label: `All ${totalLessonsCount} Videos` },
+                { id: 'Carpentry', label: '🪚 Carpentry (2)' },
+                { id: 'Auto Mechanics', label: '🔧 Auto (2)' },
+                { id: 'Painting & Decorating', label: '🎨 Painting (2)' },
+                { id: 'Plumbing', label: '🚰 Plumbing (2)' },
+                { id: 'Electrical Fundamentals', label: '⚡ Electrical (1)' },
+                { id: 'Welding', label: '🔥 Welding (2)' },
+                { id: 'HVAC', label: '❄️ HVAC (2)' }
+              ] as { id: CategoryFilter; label: string }[]
+            ).map(tab => {
+              const isSelected = selectedCategory === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategory(tab.id)
+                    const firstMatch =
+                      tab.id === 'All'
+                        ? SKILLED_TRADES_LEARN_BY_DOING_LESSONS[0]
+                        : SKILLED_TRADES_LEARN_BY_DOING_LESSONS.find(l => l.category === tab.id)
+                    if (firstMatch) {
+                      setActiveVideoLessonId(firstMatch.id)
+                      setAutoPlayRequested(false)
+                    }
+                  }}
+                  className={`rounded-full px-2.5 py-1 text-[11px] font-bold transition-all shrink-0 cursor-pointer ${
+                    isSelected
+                      ? 'bg-amber-400 text-slate-950 shadow-2xs'
+                      : 'bg-white/10 text-zinc-200 hover:bg-white/20 border border-white/15'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Featured Active ConnectLn Studio Player Theater */}
+        {activeLesson && heroYoutubeId && (
+          <div className="bg-slate-950 border-b border-zinc-800">
+            {isActiveLesson6 && activeLesson.companionVariant && (
+              <div className="px-4 py-2 bg-emerald-950/60 border-b border-emerald-800/50 flex items-center justify-between gap-2 flex-wrap">
+                <span className="text-[11px] font-bold text-emerald-200">
+                  Painting Lesson 6 Video Feed:
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setLesson6Variant('primary')}
+                    className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold cursor-pointer ${
+                      lesson6Variant === 'primary'
+                        ? 'bg-emerald-400 text-slate-950'
+                        : 'bg-white/10 text-zinc-200 border border-white/15'
+                    }`}
+                  >
+                    Brush &amp; Roller (Sherwin-Williams)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLesson6Variant('companion')}
+                    className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold cursor-pointer ${
+                      lesson6Variant === 'companion'
+                        ? 'bg-emerald-400 text-slate-950'
+                        : 'bg-white/10 text-zinc-200 border border-white/15'
+                    }`}
+                  >
+                    Clean Paint Edges (FrogTape)
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="relative aspect-video w-full bg-black">
+              <ConnectLnStudioPlayer
+                key={`home-hero-${activeLesson.id}-${heroYoutubeId}-${lesson6Variant}`}
+                youtubeId={heroYoutubeId}
+                title={heroTitle || ''}
+                serialPlate={`CLN-LBD${String(activeLesson.lessonNumber).padStart(2, '0')}`}
+                speaker={heroCreator || ''}
+                durationLabel=""
+                autoPlay={autoPlayRequested}
+                initialMuted={false}
+                playerId={`lbd-home-player-${activeLesson.id}`}
+                className="h-full w-full"
+              />
+            </div>
+
+            <div className="px-4 py-2.5 bg-slate-900 flex flex-wrap items-center justify-between gap-2 text-xs text-white">
+              <div className="min-w-0">
+                <span className="text-[10px] font-bold text-amber-300 uppercase tracking-wider block">
+                  Now Loaded in ConnectLn Player · {activeLesson.category} · {heroVideoLabel}
+                </span>
+                <p className="font-bold text-xs sm:text-sm text-white truncate">
+                  {heroTitle} — <span className="text-zinc-300 font-medium">{heroCreator}</span>
+                </p>
+              </div>
+              {onOpenInLearnTab && (
+                <button
+                  type="button"
+                  onClick={() => onOpenInLearnTab(activeLesson.id, activeLesson.category)}
+                  className="rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-white px-3 py-1.5 text-[11px] font-bold inline-flex items-center gap-1.5 cursor-pointer shrink-0 transition-colors"
+                >
+                  <BookOpen className="h-3.5 w-3.5" />
+                  <span>Study Detailed Notes &amp; Practice in Learn Tab →</span>
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Compact Video-Only Playlist Grid (No Notes / No Quizzes on Home Page) */}
+        <div className="p-3.5 sm:p-4 bg-zinc-50/70 dark:bg-zinc-950/40">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {filteredLessons.map(lesson => {
+              const isSelected = activeVideoLessonId === lesson.id
+              const thumbUrl = lesson.youtubeId
+                ? `https://i.ytimg.com/vi/${lesson.youtubeId}/hqdefault.jpg`
+                : lesson.thumbnailUrl
+
+              return (
+                <div
+                  key={lesson.id}
+                  className={`group rounded-xl border overflow-hidden transition-all bg-white dark:bg-zinc-900 flex flex-col justify-between ${
+                    isSelected
+                      ? 'border-amber-500 ring-2 ring-amber-500/30 shadow-sm'
+                      : 'border-zinc-200/90 dark:border-zinc-800 hover:border-[#0A66C2]'
+                  }`}
+                >
+                  {/* Video Thumbnail Card */}
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleWatchAction(lesson)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        handleWatchAction(lesson)
+                      }
+                    }}
+                    className="relative h-36 w-full bg-slate-950 overflow-hidden cursor-pointer"
+                  >
+                    <img
+                      src={thumbUrl}
+                      alt={lesson.title}
+                      className="h-full w-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/35 to-transparent" />
+
+                    {/* Top Badges */}
+                    <div className="absolute top-2 left-2.5 right-2.5 flex items-center justify-between gap-1.5">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-950/85 text-white px-2 py-0.5 text-[10px] font-bold border border-white/15">
+                        {getCategoryIcon(lesson.category)}
+                        <span>{lesson.category}</span>
+                      </span>
+                      <span className="rounded-full bg-amber-400 text-slate-950 px-2 py-0.5 text-[9px] font-black uppercase">
+                        Video {lesson.lessonNumber}
+                      </span>
+                    </div>
+
+                    {/* Center Play Pill */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span
+                        className={`rounded-full px-3.5 py-1.5 text-[11px] font-black shadow-md inline-flex items-center gap-1.5 transition-transform group-hover:scale-105 ${
+                          isSelected
+                            ? 'bg-emerald-400 text-slate-950'
+                            : 'bg-amber-400 text-slate-950'
+                        }`}
+                      >
+                        <Play className="h-3.5 w-3.5 fill-slate-950" />
+                        <span>{isSelected ? 'Playing Above' : 'Play Video'}</span>
+                      </span>
+                    </div>
+
+                    {/* Bottom Title */}
+                    <div className="absolute bottom-2 left-2.5 right-2.5">
+                      <p className="text-[10px] font-bold text-amber-300 truncate">
+                        {lesson.originalCreator}
+                      </p>
+                      <h3 className="text-xs font-black text-white leading-tight line-clamp-1">
+                        {lesson.title}
+                      </h3>
+                    </div>
+                  </div>
+
+                  {/* Minimal Video Footer: Play + Open Notes in Learn Tab */}
+                  <div className="px-3 py-2 bg-zinc-50 dark:bg-zinc-900 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleWatchAction(lesson)}
+                      className="text-[11px] font-extrabold text-[#0A66C2] dark:text-sky-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <Play className="h-3 w-3 fill-current" />
+                      <span>{isSelected ? 'Active in Player' : 'Watch in Player'}</span>
+                    </button>
+
+                    {onOpenInLearnTab && (
+                      <button
+                        type="button"
+                        onClick={() => onOpenInLearnTab(lesson.id, lesson.category)}
+                        className="text-[11px] font-bold text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <FileText className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                        <span>Notes &amp; Quiz →</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section
       id="skilled-trades-learn-by-doing"
@@ -473,10 +769,49 @@ export function SkilledTradesLearnByDoingSection({
             Recorded User Interactions: <strong className="text-amber-300">{totalInteractions}</strong>
           </div>
         </div>
+
+        {/* Quick-Jump Section Bar on Learn Tab */}
+        <div className="mt-3 pt-3 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300">
+              Study Guide Sections:
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById('lbd-detailed-lessons-grid')
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }}
+              className="rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 px-2.5 py-1 text-[11px] font-bold text-white cursor-pointer transition-colors"
+            >
+              📚 13 Video Lessons &amp; Detailed Study Notes
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById('lbd-running-your-business')
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }}
+              className="rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 px-2.5 py-1 text-[11px] font-bold text-emerald-200 cursor-pointer transition-colors"
+            >
+              💼 Running Your Business Path (5 Steps)
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById('lbd-next-professions-catalogue')
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }}
+              className="rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-400/40 px-2.5 py-1 text-[11px] font-bold text-indigo-200 cursor-pointer transition-colors"
+            >
+              🗺️ Next 10 Professions Catalogue
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Main Lessons Grid */}
-      <div className="p-5 sm:p-6 space-y-5 bg-zinc-50/60 dark:bg-zinc-950/40">
+      <div id="lbd-detailed-lessons-grid" className="p-5 sm:p-6 space-y-5 bg-zinc-50/60 dark:bg-zinc-950/40 scroll-mt-20">
         {filteredLessons.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-8 text-center space-y-2">
             <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200">
@@ -494,11 +829,11 @@ export function SkilledTradesLearnByDoingSection({
               onClick={() => setSelectedCategory('All')}
               className="mt-2 rounded-full bg-[#0A66C2] hover:bg-[#004182] px-4 py-1.5 text-xs font-bold text-white cursor-pointer"
             >
-              Show All 6 Beginner Lessons
+              Show All 13 Beginner Lessons
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {filteredLessons.map(lesson => {
               const t = telemetryMap[lesson.id] || createInitialLessonTelemetry(lesson.id)
               const isLesson6 = lesson.id === 'lbd_painting_brush_roller_6' && Boolean(lesson.companionVariant)
@@ -542,7 +877,8 @@ export function SkilledTradesLearnByDoingSection({
               return (
                 <div
                   key={lesson.id}
-                  className={`rounded-2xl border transition-all flex flex-col justify-between bg-white dark:bg-zinc-900 shadow-xs overflow-hidden ${
+                  id={`lbd-lesson-card-${lesson.id}`}
+                  className={`rounded-2xl border transition-all flex flex-col justify-between bg-white dark:bg-zinc-900 shadow-sm overflow-hidden scroll-mt-24 ${
                     t.isCompleted
                       ? 'border-emerald-400 dark:border-emerald-700 ring-1 ring-emerald-400/30'
                       : isExpanded
@@ -858,59 +1194,108 @@ export function SkilledTradesLearnByDoingSection({
                       </div>
                     )}
 
-                    {/* Lesson Content Body: Description, Skills Covered, Practice Activity & Knowledge Check */}
+                    {/* Lesson Content Body: Beautiful Detailed Study Notes, Skills Covered, Practice Activity & Knowledge Check */}
                     <div className="p-5 space-y-4">
-                      {/* Description */}
-                      <div className="space-y-1.5">
-                        <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
-                          {displayDescription}
-                        </p>
-                        <div className="flex items-center gap-3 flex-wrap text-[11px] text-zinc-500 dark:text-zinc-400">
-                          <span>
-                            Original Creator: <strong className="text-zinc-800 dark:text-zinc-200">{displayCreator}</strong>
-                          </span>
-                          <span>·</span>
+                      {/* Structured Detailed Study Notes Card */}
+                      <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-gradient-to-br from-slate-50/90 via-white to-blue-50/30 dark:from-zinc-900 dark:via-zinc-900 dark:to-slate-950 p-4 space-y-3 shadow-2xs">
+                        <div className="flex items-center justify-between gap-2 flex-wrap border-b border-slate-200/80 dark:border-zinc-800 pb-2.5">
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-[#0A66C2] text-white">
+                              <BookOpen className="h-3.5 w-3.5" />
+                            </span>
+                            <div>
+                              <span className="text-[10px] font-black uppercase tracking-wider text-[#0A66C2] dark:text-sky-400 block">
+                                Detailed Lesson Study Notes · Lesson {lesson.lessonNumber}
+                              </span>
+                              <h4 className="text-xs sm:text-sm font-black text-zinc-900 dark:text-zinc-100">
+                                {displayTitle}
+                              </h4>
+                            </div>
+                          </div>
+
                           <a
                             href={displayRefUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={() => handleOutboundVideoClick(lesson, displayCreator)}
-                            className="text-[#0A66C2] dark:text-sky-400 font-semibold hover:underline inline-flex items-center gap-1"
+                            className="rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2.5 py-1 text-[10px] font-bold text-[#0A66C2] dark:text-sky-300 hover:underline inline-flex items-center gap-1"
                           >
                             <span>Reference Guide ({displayCreatorDomain})</span>
-                            <ExternalLink className="h-3 w-3" />
+                            <ExternalLink className="h-2.5 w-2.5" />
                           </a>
-                          {!canEmbed && (
-                            <>
-                              <span>·</span>
-                              <button
-                                type="button"
-                                onClick={() => handleConfirmExternalVideoReviewed(lesson.id)}
-                                className="text-emerald-700 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
-                              >
-                                {t.videoReviewed
-                                  ? '✓ Video Reviewed on Original Site'
-                                  : 'Mark Video Reviewed After Watching'}
-                              </button>
-                            </>
-                          )}
                         </div>
-                      </div>
 
-                      {/* Skills Covered */}
-                      <div className="space-y-1.5">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 block">
-                          Skills Covered:
-                        </span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {displaySkills.map(skill => (
-                            <span
-                              key={skill}
-                              className="rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2.5 py-1 text-[11px] font-semibold text-zinc-800 dark:text-zinc-200"
-                            >
-                              {skill}
+                        {/* Lesson Overview */}
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                            Lesson Overview &amp; Objective
+                          </span>
+                          <p className="text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed font-medium">
+                            {displayDescription}
+                          </p>
+                        </div>
+
+                        {/* Step-by-Step Technical Field Notes */}
+                        {lesson.detailedStudyNotes && lesson.detailedStudyNotes.length > 0 && (
+                          <div className="space-y-2 pt-1">
+                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-600 dark:text-zinc-300 flex items-center gap-1.5">
+                              <Sparkles className="h-3 w-3 text-amber-500" />
+                              <span>Key Technical Concepts &amp; Step-by-Step Field Notes</span>
                             </span>
-                          ))}
+                            <div className="space-y-1.5">
+                              {lesson.detailedStudyNotes.map((note, nIdx) => {
+                                const colonIndex = note.indexOf(':')
+                                const heading = colonIndex > 0 ? note.slice(0, colonIndex + 1) : ''
+                                const body = colonIndex > 0 ? note.slice(colonIndex + 1) : note
+                                return (
+                                  <div
+                                    key={nIdx}
+                                    className="rounded-lg bg-white dark:bg-zinc-800/80 border border-zinc-200/80 dark:border-zinc-700/80 px-3 py-2 flex items-start gap-2.5 text-xs leading-relaxed text-zinc-700 dark:text-zinc-300"
+                                  >
+                                    <span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-amber-400/90 text-slate-950 text-[10px] font-black">
+                                      {nIdx + 1}
+                                    </span>
+                                    <p>
+                                      {heading && (
+                                        <strong className="font-extrabold text-zinc-900 dark:text-zinc-100">
+                                          {heading}
+                                        </strong>
+                                      )}
+                                      {body}
+                                    </p>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Master Craftsman Field Tip */}
+                        {lesson.fieldTip && (
+                          <div className="rounded-lg bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-300/70 dark:border-emerald-800/60 px-3 py-2 text-[11px] text-emerald-950 dark:text-emerald-200 flex items-start gap-2">
+                            <span className="font-black text-emerald-700 dark:text-emerald-400 shrink-0">
+                              💡 Pro Field Tip:
+                            </span>
+                            <span className="leading-snug">{lesson.fieldTip}</span>
+                          </div>
+                        )}
+
+                        {/* Skills Covered */}
+                        <div className="space-y-1.5 pt-1">
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 block">
+                            Core Trade Skills Covered:
+                          </span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {displaySkills.map(skill => (
+                              <span
+                                key={skill}
+                                className="inline-flex items-center gap-1 rounded-lg bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/70 px-2.5 py-1 text-[11px] font-bold text-[#0A66C2] dark:text-sky-300"
+                              >
+                                <CheckCircle2 className="h-3 w-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                <span>{skill}</span>
+                              </span>
+                            ))}
+                          </div>
                         </div>
                       </div>
 
@@ -1151,7 +1536,7 @@ export function SkilledTradesLearnByDoingSection({
         {/* ===================================================================== */}
         {/* UNIVERSAL "RUNNING YOUR BUSINESS" LEARNING PATH FOR EVERY TRADE       */}
         {/* ===================================================================== */}
-        <div className="mt-8 rounded-2xl border border-emerald-500/40 bg-gradient-to-br from-slate-950 via-emerald-950/80 to-slate-900 p-5 sm:p-6 text-white space-y-4">
+        <div id="lbd-running-your-business" className="mt-8 rounded-2xl border border-emerald-500/40 bg-gradient-to-br from-slate-950 via-emerald-950/80 to-slate-900 p-5 sm:p-6 text-white space-y-4 scroll-mt-20">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
@@ -1254,7 +1639,7 @@ export function SkilledTradesLearnByDoingSection({
         {/* ===================================================================== */}
         {/* PROPOSED NEXT PROFESSIONS & LESSON TOPICS (VIDEO SELECTION PENDING)   */}
         {/* ===================================================================== */}
-        <div className="mt-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 space-y-4">
+        <div id="lbd-next-professions-catalogue" className="mt-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 space-y-4 scroll-mt-20">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <div className="flex items-center gap-2 flex-wrap">

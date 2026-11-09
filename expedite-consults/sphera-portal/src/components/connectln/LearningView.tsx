@@ -68,6 +68,7 @@ import dynamic from "next/dynamic"
 import { UserProfile } from "@/lib/connectln-data"
 import { ConnectInVideoWheel } from "@/components/connectln/ConnectInVideoWheel"
 import { SkilledTradesLearnByDoingSection } from "@/components/connectln/SkilledTradesLearnByDoingSection"
+import { SkilledTradesCategory } from "@/lib/skilled-trades-learn-by-doing-data"
 import {
   LEARNING_VENDOR_SOURCES,
   VENDOR_CATEGORY_TABS,
@@ -195,17 +196,21 @@ export const VIBETOK_PRODUCTION_ROUTES: VibetokProductionRoute[] = [
 
 interface LearningViewProps {
   user: UserProfile
+  initialLearnByDoingLessonId?: string | null
+  initialLearnByDoingCategory?: SkilledTradesCategory | null
   onAddCertificateToProfile?: (certificate: any) => void
   onNavigateMarketplace?: () => void
 }
 
 export function LearningView({
   user,
+  initialLearnByDoingLessonId = null,
+  initialLearnByDoingCategory = null,
   onAddCertificateToProfile,
   onNavigateMarketplace
 }: LearningViewProps) {
-  // Master Mode: Courses vs Labs vs Certifications vs Learning Paths vs VibeTOK Hub vs ConnectLn Studies vs Career Mastery Academy vs Change/Upgrade Profession vs Vendors
-  const [learningMode, setLearningMode] = useState<'courses' | 'labs' | 'certifications' | 'paths' | 'vibetok' | 'connectln_studies' | 'career_mastery' | 'change_profession' | 'vendors' | 'learn_by_doing'>('paths')
+  // Master Mode: Skilled Trades Learn by Doing (Default) vs Courses vs Labs vs Certifications vs Learning Paths vs VibeTOK Hub vs ConnectLn Studies vs Career Mastery Academy vs Change/Upgrade Profession vs Vendors
+  const [learningMode, setLearningMode] = useState<'courses' | 'labs' | 'certifications' | 'paths' | 'vibetok' | 'connectln_studies' | 'career_mastery' | 'change_profession' | 'vendors' | 'learn_by_doing'>('learn_by_doing')
   const [learnByDoingSummary, setLearnByDoingSummary] = useState<{
     savedLessonIds: string[]
     journeyLessonIds: string[]
@@ -287,6 +292,12 @@ export function LearningView({
   const [whitePaperViewAll, setWhitePaperViewAll] = useState<boolean>(false)
   const [highlightedSkillName, setHighlightedSkillName] = useState<string | null>(null)
   const [customStepStatuses, setCustomStepStatuses] = useState<Record<string, 'Completed' | 'In Progress' | 'Up Next'>>({})
+
+  useEffect(() => {
+    if (initialLearnByDoingLessonId || initialLearnByDoingCategory) {
+      setLearningMode('learn_by_doing')
+    }
+  }, [initialLearnByDoingLessonId, initialLearnByDoingCategory])
 
   useEffect(() => {
     setCourses(getEnclaveLearningCourses(user.professionEnclave))
@@ -598,6 +609,7 @@ export function LearningView({
         {/* ===================================================================== */}
         {/* CONNECTED GLOBAL VENDOR LEARNING SOURCES (O'REILLY, LINKEDIN, GITHUB) */}
         {/* ===================================================================== */}
+        {learningMode !== 'learn_by_doing' && (
         <div className="mt-5 pt-4 border-t border-zinc-100 dark:border-zinc-800 space-y-3.5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2 flex-wrap">
@@ -868,6 +880,7 @@ export function LearningView({
             </div>
           )}
         </div>
+        )}
 
         {/* Master Modes Switcher */}
         <div className="mt-5 pt-3.5 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-3 flex-wrap">
@@ -1151,6 +1164,10 @@ export function LearningView({
       {/* Skilled Trades: Learn by Doing Collection (Carpentry, Auto Mechanics, Painting & Decorating, Plumbing, Electrical, Welding, HVAC) */}
       {(learningMode === 'paths' || learningMode === 'learn_by_doing' || learningMode === 'courses') && (
         <SkilledTradesLearnByDoingSection
+          user={user}
+          mode="full_academy"
+          initialLessonId={initialLearnByDoingLessonId}
+          initialCategory={initialLearnByDoingCategory}
           onTelemetryChange={setLearnByDoingSummary}
           onClaimCertificate={handleClaimCertificate}
         />

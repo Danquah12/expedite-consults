@@ -57,6 +57,8 @@ export interface LearnByDoingLesson {
   practiceActivity: string
   practiceDeliverablePrompt: string
   knowledgeCheck: LearnByDoingKnowledgeCheck
+  detailedStudyNotes?: string[]
+  fieldTip?: string
   companionVariant?: LearnByDoingLessonVariant
 }
 
@@ -139,7 +141,14 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
       correctIndex: 1,
       explanation:
         'Pressing the speed square’s T-bar lip (fence) flush against the reference edge of the lumber registers the tool so the 90° perpendicular edge and 45° hypotenuse edge are accurate.'
-    }
+    },
+    detailedStudyNotes: [
+      'Registering the Fence (T-Bar Lip): Always press the flanged lip of the speed square firmly against the straight reference edge of the board before marking or guiding a saw.',
+      'Marking 90° Crosscuts & 45° Miters: Scribe along the perpendicular ruler edge for a square 90° cutoff line, or along the angled hypotenuse edge for an exact 45° miter.',
+      'Swinging Custom Angles with the Pivot Point: Hold the corner pivot mark against the board edge, rotate the square until your desired degree mark (0°–90°) aligns with the same board edge, and scribe along the hypotenuse.',
+      'Checking Inside & Outside Corners: Place the 90° corner of the square against assembled framing or box corners; any daylight gap indicates the joint is out of square.'
+    ],
+    fieldTip: 'Keep your pencil sharp (or use a carpenter’s mechanical pencil) and pull the line in a single stroke while keeping constant thumb pressure on the speed square fence.'
   },
   {
     id: 'lbd_carpentry_clamps_2',
@@ -182,7 +191,14 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
       correctIndex: 1,
       explanation:
         'Using slip-on jaw pads or placing clean scrap wood pads (cauls) between the clamp jaws and the workpiece distributes clamping force and prevents bruising the wood grain.'
-    }
+    },
+    detailedStudyNotes: [
+      'One-Handed / Trigger Bar Clamps: Ideal for quick positioning, holding workpieces to a bench while drilling or cutting, and light-to-medium assembly.',
+      'Pipe & Parallel-Jaw Bar Clamps: Deliver strong, even pressure across wide panel glue-ups, cabinet carcasses, and furniture frames without bowing the stock.',
+      'Spring, C-Clamps & Handscrew Clamps: Spring clamps suit fast tack-holds; C-clamps offer high point force for jigs; wooden handscrews conform to angled or delicate workpieces.',
+      'Protecting Finished Wood Surfaces: Always place clean scrap wood blocks (cauls) or rubber jaw pads between metal clamp jaws and your workpiece to prevent grain denting and iron glue stains.'
+    ],
+    fieldTip: 'Dry-fit your clamps and scrap pads before applying wood glue so you know every clamp reaches and pulls square before the glue begins to tack.'
   },
 
   // ─── CATEGORY 2: AUTO MECHANICS (2 Beginner Lessons) ─────────────────────
@@ -229,7 +245,14 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
       correctIndex: 1,
       explanation:
         'Oil splashed along the dipstick tube gives a false high or smeared reading. Wiping the dipstick clean, reinserting it all the way, and pulling it out again shows the true oil level between the minimum and maximum markings.'
-    }
+    },
+    detailedStudyNotes: [
+      'Park on Level Ground & Allow Drain-Back: Park on a flat surface with the engine off and wait several minutes (or check cold per the owner manual) so oil drains back into the oil pan.',
+      'Locate & Pull the Dipstick: Identify the brightly colored engine oil dipstick loop (typically yellow or orange), pull it out smoothly, and hold a cloth or paper towel underneath.',
+      'Wipe Clean, Reinsert Fully & Withdraw: Wipe all splashed oil from the tip, push the dipstick all the way back into its tube until seated, and pull it out a second time.',
+      'Read Against Min/Max Markings: Verify the oil film sits between the lower (MIN/ADD) and upper (MAX/FULL) pinholes or crosshatched safe zone, and note oil color and clarity.'
+    ],
+    fieldTip: 'Never overfill past the MAX mark—excess oil can be whipped into foam by the crankshaft, reducing oil pressure and fouling spark plugs or catalytic converters.'
   },
   {
     id: 'lbd_auto_check_engine_scan_4',
@@ -272,7 +295,14 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
       correctIndex: 0,
       explanation:
         'A diagnostic scanner retrieves trouble codes and freeze-frame/report data from the vehicle’s computer through the OBD-II connector, providing structured information to guide further pinpointed diagnosis.'
-    }
+    },
+    detailedStudyNotes: [
+      'Locating the 16-Pin OBD-II Port (DLC): Look underneath the driver-side dashboard near the steering column for the trapezoidal 16-pin Data Link Connector.',
+      'Connecting the Code Reader: With the vehicle parked safely, plug the scanner cable firmly into the OBD-II port and turn the ignition to the ON/RUN position (or as prompted by the tool).',
+      'Retrieving DTCs & Freeze-Frame Context: Read stored, pending, and permanent Diagnostic Trouble Codes (e.g., P0xxx powertrain codes) along with the system description.',
+      'Using the Report to Guide Diagnosis: Record the exact alphanumeric code, code definition, and secondary fault codes before clearing anything—a DTC identifies an affected circuit or system test failure, not automatically a bad part.'
+    ],
+    fieldTip: 'A steady Check Engine Light indicates an emissions or sensor fault to inspect soon, whereas a flashing Check Engine Light warns of an active misfire that can rapidly overheat the catalytic converter.'
   },
 
   // ─── CATEGORY 3: PAINTING & DECORATING (2 Beginner Lessons) ──────────────
@@ -318,7 +348,14 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
       correctIndex: 0,
       explanation:
         'Clean, dull, dry walls ensure strong paint adhesion and uniform sheen, while masking trim and laying drop cloths protect adjacent surfaces and speed up brush and roller work.'
-    }
+    },
+    detailedStudyNotes: [
+      'Clear, Cover & Protect the Room: Move furniture to the center of the room, cover with plastic sheeting, lay canvas drop cloths along floors, and remove switch/outlet cover plates.',
+      'Wash & Dust Wall Surfaces: Wipe down walls, baseboards, and trim with a damp sponge or mild cleaner to remove dust, cobwebs, hand oils, and kitchen grease that block paint adhesion.',
+      'Fill Imperfections & Sand Smooth: Patch nail holes and dings with spackling compound, let dry completely, sand flush with fine-grit sandpaper, and wipe away sanding dust.',
+      'Mask Trim & Spot-Prime Repairs: Apply painter’s tape neatly along baseboards, window casings, and door trim, and spot-prime bare drywall patches so they do not flash through the topcoat.'
+    ],
+    fieldTip: 'Professional painters spend up to 60–70% of a room project on surface preparation—the quality of your finish coat is determined before you open the paint can.'
   },
   {
     id: 'lbd_painting_brush_roller_6',
@@ -364,6 +401,13 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
       explanation:
         'Rolling into a still-wet brushed edge and overlapping roller passes while the paint remains wet prevents double-thickness buildup, sheen flashing, and visible lap marks.'
     },
+    detailedStudyNotes: [
+      'Top-to-Bottom Room Sequence: Paint the ceiling first, then cut in and roll the walls one wall at a time, and finish with the trim, doors, and baseboards (or paint trim first and mask once cured).',
+      'Cutting In with an Angled Sash Brush: Load the bottom third of a 2"–2.5" angled brush, tap (do not wipe) excess paint, and brush a 2–3 inch border along ceiling lines, corners, and trim.',
+      'Rolling in a W/M Pattern with a Wet Edge: Immediately roll the adjacent wall area in a 3×3 ft "W" pattern while your brushed border is still wet, then finish with light vertical lay-off strokes.',
+      'Clean Tape Application & 45° Removal (FrogTape Companion): Apply tape in short unstretched sections, burnish the edge firmly to activate edge-sealing, and pull back at a 45° angle while paint is still damp.'
+    ],
+    fieldTip: 'Cut in and roll one wall completely before moving to the next wall so your brushed border never dries before your roller blends into it.',
     companionVariant: {
       id: 'lbd_painting_frogtape_6b',
       videoLabel: 'Video 6 (Companion): Using Painter’s Tape Cleanly',
@@ -446,7 +490,14 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
       correctIndex: 0,
       explanation:
         'While individual fixture stop valves isolate a single sink or toilet, the main water shutoff valve cuts pressurized flow to the entire household plumbing system during a burst pipe or major leak.'
-    }
+    },
+    detailedStudyNotes: [
+      'Fixture Angle Stops vs. Main House Shut-Off: Individual sinks and toilets have local stop valves underneath, but a burst supply pipe requires closing the building’s main water shut-off valve.',
+      'Common Main Valve Locations: Look where the municipal water line enters the home—typically in the basement along the front foundation wall, inside a utility closet, near the water heater, or in an exterior underground meter box.',
+      'Ball Valve (Lever) vs. Gate Valve (Wheel): A quarter-turn ball valve closes by rotating the straight lever 90° so it sits perpendicular to the pipe; a round wheel gate valve closes by turning clockwise ("righty-tighty") until snug.',
+      'Relieving Residual Pipe Pressure: After closing the main shut-off valve, open the lowest faucet in the building to drain standing water and relieve line pressure.'
+    ],
+    fieldTip: 'Attach a bright high-visibility tag to the main water shut-off valve today so anyone in the household or shop can locate and close it within seconds during a leak.'
   },
   {
     id: 'lbd_plumbing_pipe_fittings_8',
@@ -491,7 +542,14 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
       correctIndex: 0,
       explanation:
         'A coupling connects two straight pipe sections of the same size in a continuous run, whereas a T-shaped tee fitting combines or splits fluid flow across three ports.'
-    }
+    },
+    detailedStudyNotes: [
+      'Elbows (90° & 45° Sweeps): Change the direction of a pipe run around corners or framing obstacles; street elbows have one male (spigot) end and one female (hub) end to save space.',
+      'Tees & Wyes: Tee fittings branch a supply line at 90° across three ports; Wye (Y) fittings enter at 45° to keep drainage waste flowing smoothly without clogging.',
+      'Couplings, Reducers & Bushings: Couplings join two straight pipes of equal diameter; reducers and bushings transition cleanly between larger and smaller pipe diameters.',
+      'Adapters, Unions, Caps & Plugs: Male/female adapters transition between smooth slip/solder pipe and threaded NPT ends; caps fit over pipe ends while plugs thread inside fittings.'
+    ],
+    fieldTip: 'Match both nominal pipe size (ID/OD schedule) and material compatibility (Copper, PEX, CPVC, PVC, or Brass) before assembling any fitting.'
   },
 
   // ─── CATEGORY 5: ELECTRICAL FUNDAMENTALS ─────────────────────────────────
@@ -538,7 +596,14 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
       correctIndex: 0,
       explanation:
         'Resistance and continuity modes send a small internal test current from the multimeter through the component; testing resistance or continuity on a live, energized circuit gives false readings and can blow the meter fuse.'
-    }
+    },
+    detailedStudyNotes: [
+      'Probe Lead Port Setup: Plug the black test lead into the COM (Common) jack and the red test lead into the VΩmA jack for voltage, resistance, and continuity checks.',
+      'Measuring DC & AC Voltage (Parallel Test): Select V⎓ (DC) for batteries/electronics or V~ (AC) for household power and touch probes across (in parallel with) the two test points.',
+      'Continuity & Resistance (De-Energized Only): Power OFF the circuit, select the sound-wave continuity symbol or Ω (Ohms), and touch probes across a wire, switch, or fuse—an audible beep confirms an unbroken path.',
+      'Measuring Current (Series Test): Current (Amps) requires breaking the circuit so current flows in series through the meter; never place probes across a voltage source while plugged into the Amps jack.'
+    ],
+    fieldTip: 'Touch the two probe tips together in Continuity mode before every diagnostic session to verify your test leads and internal meter fuse are intact.'
   },
 
   // ─── CATEGORY 6: WELDING (2 Beginner Lessons) ────────────────────────────
@@ -583,7 +648,14 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
       correctIndex: 0,
       explanation:
         'Stick welding (Shielded Metal Arc Welding) uses a flux-coated electrode that generates its own protective gas shield and slag as it melts, making it ideal for outdoor, windy, or thicker structural steel applications.'
-    }
+    },
+    detailedStudyNotes: [
+      'MIG Welding (GMAW — Wire Feed + Shielding Gas): Feeds continuous solid wire through a trigger gun with shielding gas; easiest for beginners to learn and ideal for clean indoor fabrication, auto body, and mild steel.',
+      'Stick Welding (SMAW — Flux-Coated Electrode): Uses a consumable flux-coated rod without an external gas cylinder; performs reliably outdoors in wind, on rusty/painted structural steel, and heavy repair jobs.',
+      'TIG Welding (GTAW — Non-Consumable Tungsten + Filler Rod): Uses a sharp tungsten electrode, foot/finger amperage control, and hand-fed filler rod with pure argon for surgical precision on thin stainless steel, aluminum, and chromoly.',
+      'Matching Process to Metal Thickness & Environment: Choose MIG for high-productivity shop work, Stick for outdoor/field structural work, and TIG for cosmetic, thin-gauge, or non-ferrous metals.'
+    ],
+    fieldTip: 'Clean base metal to bright shiny steel before MIG or TIG welding—mill scale, oil, and rust cause porosity and weak weld penetration.'
   },
   {
     id: 'lbd_welding_safety_cwb_11',
@@ -628,7 +700,14 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
       correctIndex: 0,
       explanation:
         'Safe electric welding requires full operator PPE, UV/spark curtains or screens to protect nearby workers from arc eye, proper fume extraction/ventilation, and clearing all combustibles from the work area.'
-    }
+    },
+    detailedStudyNotes: [
+      'Head-to-Toe Flame-Resistant PPE: Wear an auto-darkening welding helmet (Shade 9–13), ANSI Z87.1 safety glasses underneath, flame-resistant cotton/leather jacket, gauntlet leather gloves, and high-top leather boots.',
+      'Protecting Nearby People & Bystanders: Position UV-filtering welding curtains/screens around the booth, warn coworkers before striking an arc ("Cover!"), and prevent bystander arc-eye flash.',
+      'Preparing the Work Area & Fire Prevention: Remove all flammable liquids, rags, paper, and butane lighters within a 35-foot spark radius, and keep a rated ABC fire extinguisher within immediate reach.',
+      'Electrical & Fume Safety: Inspect leads and ground clamp insulation, keep floor dry, position fume extraction or cross-ventilation to keep your breathing zone clear of weld plume.'
+    ],
+    fieldTip: 'Never wear synthetic fabrics (polyester/nylon) or cuffed pants when welding—sparks melt synthetics onto skin and can lodge inside pant cuffs.'
   },
 
   // ─── CATEGORY 7: HVAC (2 Beginner Lessons) ───────────────────────────────
@@ -675,7 +754,14 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
       correctIndex: 0,
       explanation:
         'The airflow arrow on a furnace filter frame indicates the structurally reinforced side of the filter media and must always point in the direction of air travel—from the return duct toward the furnace blower.'
-    }
+    },
+    detailedStudyNotes: [
+      'Power Down the Furnace First: Switch the thermostat to OFF and flip the furnace service disconnect switch off so the blower fan does not pull dust in while the filter slot is open.',
+      'Locate the Filter Rack & Read Dimensions: Find the filter slot between the return-air drop duct and the furnace blower cabinet, slide out the old filter, and note the nominal size printed on the frame (e.g., 16×25×1).',
+      'Orient the Airflow Arrow Toward the Furnace: Locate the printed "AIRFLOW →" arrow on the new filter’s cardboard frame and point the arrow toward the blower motor/furnace cabinet.',
+      'Close the Access Cover & Restore Power: Slide the new filter smoothly into the track, refit the filter door to prevent unfiltered basement air bypass, and turn the furnace switch back on.'
+    ],
+    fieldTip: 'Write the installation date on the cardboard edge of the new filter with a permanent marker so anyone inspecting the unit knows exactly when it was last changed.'
   },
   {
     id: 'lbd_hvac_refrigeration_cycle_13',
@@ -718,7 +804,14 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
       correctIndex: 0,
       explanation:
         'In the refrigeration cycle, the compressor pumps high-temperature vapor to the condenser (which rejects heat and condenses refrigerant to liquid), the metering device drops its pressure/temperature, and the evaporator absorbs indoor heat as the refrigerant boils back into vapor.'
-    }
+    },
+    detailedStudyNotes: [
+      '1. Compressor (The Heart / Vapor Pump): Takes in low-pressure, low-temperature superheated refrigerant vapor from the suction line and compresses it into high-pressure, high-temperature vapor.',
+      '2. Condenser Coil (Outdoor Heat Rejection): Hot high-pressure vapor flows through the outdoor condenser coil where outdoor fan air removes heat, condensing the refrigerant into a warm high-pressure subcooled liquid.',
+      '3. Metering Device / TXV (Pressure Drop): The high-pressure liquid passes through a restriction (piston, capillary tube, or Thermostatic Expansion Valve), causing a sharp drop in pressure and boiling temperature.',
+      '4. Evaporator Coil (Indoor Heat Absorption): Cold low-pressure liquid/vapor mixture enters the indoor evaporator coil, absorbs heat from indoor room air blowing across the fins, boils completely into vapor, and returns to the compressor.'
+    ],
+    fieldTip: 'Remember the dividing line of the refrigeration loop: the Compressor and Metering Device separate the High-Pressure (Condensing) side from the Low-Pressure (Evaporating) side.'
   }
 ]
 

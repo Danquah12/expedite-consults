@@ -795,6 +795,9 @@ export default function ConnectLnPage() {
   }, [])
 
   // Hard guard: Normal users must never land on the adminiam tab
+  const [focusedLearnLessonId, setFocusedLearnLessonId] = useState<string | null>(null)
+  const [focusedLearnCategory, setFocusedLearnCategory] = useState<any>(null)
+
   useEffect(() => {
     if (activeTab === 'adminiam' && !isSuperAdminUser(userData)) {
       setActiveTab('home')
@@ -2150,9 +2153,20 @@ export default function ConnectLnPage() {
               {/* LinkedIn-Style Top "Start a post" Box (Video, Photo, Write article — Matches Screenshot 1) */}
               <PostCreator user={userData} onAddPost={handleAddPost} />
 
-              {/* Skilled Trades: Learn by Doing — All 13 Video Lessons Directly on the Home Feed */}
+              {/* Skilled Trades: Learn by Doing — Videos Only Showcase on the Home Feed */}
               <div id="home-skilled-trades-learn-by-doing" className="scroll-mt-20">
-                <SkilledTradesLearnByDoingSection user={userData} />
+                <SkilledTradesLearnByDoingSection
+                  user={userData}
+                  mode="home_videos_only"
+                  onOpenInLearnTab={(lessonId, category) => {
+                    setFocusedLearnLessonId(lessonId || null)
+                    setFocusedLearnCategory(category || null)
+                    setActiveTab('learning')
+                    if (typeof window !== 'undefined') {
+                      window.scrollTo({ top: 0, behavior: 'smooth' })
+                    }
+                  }}
+                />
               </div>
 
               {/* User's Own Newly Published Feed Posts (Celebrate, Video, Photo, Poll, Document, AI Post) — Shown Immediately Below Composer */}
@@ -2923,6 +2937,8 @@ export default function ConnectLnPage() {
         {activeTab === 'learning' && (
           <LearningView
             user={userData}
+            initialLearnByDoingLessonId={focusedLearnLessonId}
+            initialLearnByDoingCategory={focusedLearnCategory}
             onAddCertificateToProfile={handleAddCertificateToProfile}
             onNavigateMarketplace={() => setActiveTab('marketplace')}
           />
