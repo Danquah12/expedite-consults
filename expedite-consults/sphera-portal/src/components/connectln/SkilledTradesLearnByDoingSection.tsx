@@ -19,7 +19,15 @@ import {
   BookOpen,
   Award,
   FileText,
-  X
+  X,
+  ThumbsUp,
+  MessageSquare,
+  Repeat2,
+  Send,
+  MoreHorizontal,
+  Globe,
+  ShieldCheck,
+  SquarePen
 } from "lucide-react"
 import {
   SkilledTradesCategory,
@@ -106,6 +114,17 @@ export function SkilledTradesLearnByDoingSection({
   const [practiceSavedBanner, setPracticeSavedBanner] = useState<Record<string, boolean>>({})
   const [businessAnswers, setBusinessAnswers] = useState<Record<string, number>>({})
   const [bookmarkedProposedIds, setBookmarkedProposedIds] = useState<Record<string, boolean>>({})
+  // LinkedIn Social Post Card state for Home Feed video cards
+  const [likedLessonMap, setLikedLessonMap] = useState<Record<string, boolean>>({})
+  const [repostedLessonMap, setRepostedLessonMap] = useState<Record<string, boolean>>({})
+  const [expandedCaptionMap, setExpandedCaptionMap] = useState<Record<string, boolean>>({})
+  const [dismissedLessonMap, setDismissedLessonMap] = useState<Record<string, boolean>>({})
+  const [openCommentsLessonMap, setOpenCommentsLessonMap] = useState<Record<string, boolean>>({})
+  const [commentInputMap, setCommentInputMap] = useState<Record<string, string>>({})
+  const [userCommentsMap, setUserCommentsMap] = useState<
+    Record<string, { id: string; author: string; text: string; time: string }[]>
+  >({})
+  const [sharedToastLessonId, setSharedToastLessonId] = useState<string | null>(null)
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
   const homeCardRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
@@ -442,58 +461,54 @@ export function SkilledTradesLearnByDoingSection({
       filteredLessons[0] ||
       SKILLED_TRADES_LEARN_BY_DOING_LESSONS[0]
 
+    const visibleHomeLessons = filteredLessons.filter(l => !dismissedLessonMap[l.id])
+
+    const getCreatorBadgeStyle = (creator: string, category: SkilledTradesCategory) => {
+      const words = creator
+        .replace(/[^a-zA-Z0-9 ]/g, ' ')
+        .split(' ')
+        .filter(Boolean)
+      const initials =
+        words.length >= 2
+          ? `${words[0][0]}${words[1][0]}`.toUpperCase()
+          : creator.slice(0, 2).toUpperCase()
+
+      switch (category) {
+        case 'Carpentry':
+          return { initials, bg: '#7C4323', ring: '#F59E0B' }
+        case 'Auto Mechanics':
+          return { initials, bg: '#0F172A', ring: '#38BDF8' }
+        case 'Painting & Decorating':
+          return { initials, bg: '#065F46', ring: '#34D399' }
+        case 'Plumbing':
+          return { initials, bg: '#155E75', ring: '#22D3EE' }
+        case 'Electrical Fundamentals':
+          return { initials, bg: '#713F12', ring: '#FACC15' }
+        case 'Welding':
+          return { initials, bg: '#9A3412', ring: '#FB923C' }
+        case 'HVAC':
+          return { initials, bg: '#1E3A8A', ring: '#818CF8' }
+      }
+    }
+
     return (
       <section
         id="skilled-trades-learn-by-doing"
-        className="space-y-4"
+        className="space-y-3"
       >
-        {/* Top LinkedIn-Style Video Feed Filter Card */}
-        <div
-          style={{ backgroundColor: '#1C140D', color: '#FFFFFF' }}
-          className="rounded-2xl border border-amber-500/40 px-4 py-3.5 shadow-sm space-y-2.5"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <span
-                style={{ backgroundColor: '#D97706', color: '#FFFFFF' }}
-                className="rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1.5 shrink-0"
-              >
-                <Play className="h-3 w-3 fill-current" />
-                <span>CONNECTLN STUDIO VIDEOS</span>
-              </span>
-              <span
-                style={{ color: '#FDE68A' }}
-                className="text-xs sm:text-sm font-extrabold tracking-tight truncate"
-              >
-                Auto-Plays as You Scroll ({filteredLessons.length} Masterclasses)
-              </span>
-            </div>
-
-            {onOpenInLearnTab && (
-              <button
-                type="button"
-                onClick={() => onOpenInLearnTab(activeLesson?.id, activeLesson?.category)}
-                style={{ backgroundColor: '#B45309', color: '#FFFFFF' }}
-                className="rounded-full hover:opacity-95 px-3.5 py-1.5 text-[11px] font-black inline-flex items-center gap-1.5 shadow-xs transition-all cursor-pointer shrink-0 border border-amber-400/40"
-              >
-                <BookOpen className="h-3.5 w-3.5" />
-                <span>📖 Detailed Notes, Practice &amp; Quizzes in Learn Tab →</span>
-              </button>
-            )}
-          </div>
-
-          {/* Trade Filter Pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {/* Clean, Unobtrusive LinkedIn Feed Category Filter Strip */}
+        <div className="rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 shadow-2xs flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {(
               [
-                { id: 'All', label: `All ${totalLessonsCount} Videos` },
-                { id: 'Carpentry', label: '🪚 Carpentry (2)' },
-                { id: 'Auto Mechanics', label: '🔧 Auto (2)' },
-                { id: 'Painting & Decorating', label: '🎨 Painting (2)' },
-                { id: 'Plumbing', label: '🚰 Plumbing (2)' },
-                { id: 'Electrical Fundamentals', label: '⚡ Electrical (1)' },
-                { id: 'Welding', label: '🔥 Welding (2)' },
-                { id: 'HVAC', label: '❄️ HVAC (2)' }
+                { id: 'All', label: `All Videos (${totalLessonsCount})` },
+                { id: 'Carpentry', label: '🪚 Carpentry' },
+                { id: 'Auto Mechanics', label: '🔧 Auto' },
+                { id: 'Painting & Decorating', label: '🎨 Painting' },
+                { id: 'Plumbing', label: '🚰 Plumbing' },
+                { id: 'Electrical Fundamentals', label: '⚡ Electrical' },
+                { id: 'Welding', label: '🔥 Welding' },
+                { id: 'HVAC', label: '❄️ HVAC' }
               ] as { id: CategoryFilter; label: string }[]
             ).map(tab => {
               const isSelected = selectedCategory === tab.id
@@ -514,21 +529,37 @@ export function SkilledTradesLearnByDoingSection({
                   }}
                   style={
                     isSelected
-                      ? { backgroundColor: '#D97706', color: '#FFFFFF' }
-                      : { backgroundColor: 'rgba(255,255,255,0.1)', color: '#F4F4F5' }
+                      ? { backgroundColor: '#7C4323', color: '#FFFFFF' }
+                      : undefined
                   }
-                  className="rounded-full px-3 py-1 text-[11px] font-bold transition-all shrink-0 cursor-pointer border border-white/15"
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+                    isSelected
+                      ? 'shadow-2xs'
+                      : 'bg-zinc-100 hover:bg-zinc-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200/80 dark:border-zinc-700'
+                  }`}
                 >
                   {tab.label}
                 </button>
               )
             })}
           </div>
+
+          {onOpenInLearnTab && (
+            <button
+              type="button"
+              onClick={() => onOpenInLearnTab(activeLesson?.id, activeLesson?.category)}
+              className="shrink-0 text-xs font-bold text-[#0A66C2] dark:text-sky-400 hover:underline inline-flex items-center gap-1 cursor-pointer pl-1"
+            >
+              <BookOpen className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Notes &amp; Quizzes</span>
+              <span>→</span>
+            </button>
+          )}
         </div>
 
-        {/* Vertical Stack of Big Full-Width LinkedIn Video Cards (Auto-Play on Scroll) */}
-        <div className="space-y-4">
-          {filteredLessons.map(lesson => {
+        {/* Vertical Stack of Native LinkedIn Feed Video Post Cards (Auto-Play as You Scroll) */}
+        <div className="space-y-3">
+          {visibleHomeLessons.map(lesson => {
             const isLesson6 =
               lesson.id === 'lbd_painting_brush_roller_6' && Boolean(lesson.companionVariant)
             const activeVariant =
@@ -545,33 +576,142 @@ export function SkilledTradesLearnByDoingSection({
             const serialPlate = `CLN-LBD${String(lesson.lessonNumber).padStart(2, '0')}`
             const isActiveCard = activeVideoLessonId === lesson.id
 
+            const creatorBadge = getCreatorBadgeStyle(cardCreator, lesson.category)
+            const isCaptionExpanded = Boolean(expandedCaptionMap[lesson.id])
+            const isLiked = Boolean(likedLessonMap[lesson.id])
+            const isReposted = Boolean(repostedLessonMap[lesson.id])
+            const isSaved = Boolean(telemetryMap[lesson.id]?.isSaved)
+            const userComments = userCommentsMap[lesson.id] || []
+            const isCommentsOpen = Boolean(openCommentsLessonMap[lesson.id])
+
+            // Deterministic LinkedIn-style counts matching the screenshots (14, 110, 6, etc.)
+            const baseLikes = 14 + ((lesson.lessonNumber * 19) % 96)
+            const likesCount = baseLikes + (isLiked ? 1 : 0)
+            const baseComments = 1 + ((lesson.lessonNumber * 7) % 24)
+            const commentsCount = baseComments + userComments.length
+            const baseReposts = 1 + ((lesson.lessonNumber * 5) % 18)
+            const repostsCount = baseReposts + (isReposted ? 1 : 0)
+            const submitsCount = 28 + lesson.lessonNumber * 7
+
             return (
-              <div
+              <article
                 key={lesson.id}
                 ref={el => {
-                  homeCardRefs.current[lesson.id] = el
+                  homeCardRefs.current[lesson.id] = el as HTMLDivElement | null
                 }}
                 data-lbd-lesson-id={lesson.id}
-                className={`rounded-2xl border bg-white dark:bg-zinc-900 overflow-hidden transition-all shadow-sm ${
-                  isActiveCard
-                    ? 'border-amber-500/80 ring-2 ring-amber-500/20'
-                    : 'border-zinc-200/90 dark:border-zinc-800'
-                }`}
+                className="rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-xs transition-all"
               >
-                {/* Optional Lesson 6 Switcher (Sherwin-Williams vs FrogTape) */}
-                {isLesson6 && lesson.companionVariant && (
-                  <div className="px-4 py-2 bg-emerald-50 dark:bg-emerald-950/40 border-b border-emerald-200 dark:border-emerald-800/50 flex items-center justify-between gap-2 flex-wrap">
-                    <span className="text-[11px] font-bold text-emerald-900 dark:text-emerald-200">
-                      Painting &amp; Decorating Video 6 Topic:
+                {/* 1. LINKEDIN AUTHOR HEADER (Matches Screenshot 2: Crest + Organization Name + Shield + ••• + ✕ + 1h • 🌐) */}
+                <div className="px-4 pt-3.5 pb-2 flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div
+                      style={{
+                        backgroundColor: creatorBadge.bg,
+                        color: '#FFFFFF',
+                        borderColor: creatorBadge.ring
+                      }}
+                      className="h-11 w-11 rounded-full border-2 flex items-center justify-center font-black text-xs tracking-tight shrink-0 shadow-2xs"
+                    >
+                      {creatorBadge.initials}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <h3 className="text-[15px] font-bold text-zinc-900 dark:text-zinc-100 truncate leading-snug">
+                          {cardCreator} — {lesson.category} Academy
+                        </h3>
+                      </div>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1 mt-0.5">
+                        <span>{lesson.lessonNumber}h</span>
+                        <span>•</span>
+                        <Globe className="h-3.5 w-3.5 inline text-zinc-500 dark:text-zinc-400" />
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Right Header Icons: Verification Shield + ••• (Save) + ✕ (Dismiss) */}
+                  <div className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400 shrink-0">
+                    <span title="Verified ConnectLn Trade Educator" className="p-1">
+                      <ShieldCheck className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
                     </span>
-                    <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleSaveLesson(lesson.id)}
+                      title={isSaved ? 'Saved to Learning Journey' : 'Save video lesson'}
+                      className="p-1 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setDismissedLessonMap(prev => ({ ...prev, [lesson.id]: true }))
+                      }
+                      title="Hide post from feed"
+                      className="p-1 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2. LINKEDIN POST CAPTION ABOVE VIDEO (Matches Screenshot 2: [DIALOGUES] Description.... more) */}
+                <div className="px-4 pb-3 text-[14px] text-zinc-900 dark:text-zinc-100 leading-relaxed">
+                  {!isCaptionExpanded ? (
+                    <p>
+                      <span className="font-semibold">
+                        [{lesson.category.toUpperCase()} · {cardVideoLabel.toUpperCase()}]
+                      </span>{' '}
+                      {lesson.description}{' '}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedCaptionMap(prev => ({ ...prev, [lesson.id]: true }))
+                        }
+                        className="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium cursor-pointer"
+                      >
+                        .... more
+                      </button>
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      <p>
+                        <span className="font-semibold">
+                          [{lesson.category.toUpperCase()} · {cardVideoLabel.toUpperCase()}]
+                        </span>{' '}
+                        {lesson.description}
+                      </p>
+                      <div className="pl-3 border-l-2 border-amber-500/60 space-y-1 text-xs text-zinc-700 dark:text-zinc-300">
+                        <p className="font-bold text-zinc-900 dark:text-zinc-100">
+                          Key Skills Covered in This Video:
+                        </p>
+                        {lesson.skillsCovered.map((sk, idx) => (
+                          <p key={idx}>• {sk}</p>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedCaptionMap(prev => ({ ...prev, [lesson.id]: false }))
+                        }
+                        className="text-xs text-zinc-500 hover:underline cursor-pointer"
+                      >
+                        Show less
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Optional Lesson 6 Switcher (Sherwin-Williams vs FrogTape) */}
+                  {isLesson6 && lesson.companionVariant && (
+                    <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[11px] font-semibold text-zinc-500">Topic:</span>
                       <button
                         type="button"
                         onClick={() => setLesson6Variant('primary')}
-                        className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold cursor-pointer ${
+                        className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold cursor-pointer ${
                           lesson6Variant === 'primary'
                             ? 'bg-emerald-700 text-white'
-                            : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-700'
+                            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300'
                         }`}
                       >
                         Brush &amp; Roller (Sherwin-Williams)
@@ -579,19 +719,19 @@ export function SkilledTradesLearnByDoingSection({
                       <button
                         type="button"
                         onClick={() => setLesson6Variant('companion')}
-                        className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold cursor-pointer ${
+                        className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold cursor-pointer ${
                           lesson6Variant === 'companion'
                             ? 'bg-emerald-700 text-white'
-                            : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-700'
+                            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300'
                         }`}
                       >
                         Clean Paint Edges (FrogTape)
                       </button>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
 
-                {/* Big Full-Width 16:9 ConnectLn Studio Video Area */}
+                {/* 3. FULL-BLEED EDGE-TO-EDGE VIDEO (Matches Screenshot 2: Zero Side Margins, Plays Automatically on Scroll) */}
                 <div className="relative aspect-video w-full bg-black">
                   {isActiveCard && cardYoutubeId ? (
                     <ConnectLnStudioPlayer
@@ -630,37 +770,9 @@ export function SkilledTradesLearnByDoingSection({
                       <img
                         src={cardThumbUrl}
                         alt={cardTitle}
-                        className="h-full w-full object-cover opacity-90 group-hover:scale-[1.02] transition-transform duration-300"
+                        className="h-full w-full object-cover group-hover:scale-[1.01] transition-transform duration-300"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/20 to-black/80" />
-
-                      {/* Top Studio Bar */}
-                      <div
-                        style={{ color: '#FFFFFF' }}
-                        className="absolute inset-x-0 top-0 px-4 py-2.5 flex items-center justify-between gap-3"
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="h-7 w-7 rounded-lg bg-[#171513] border border-white/20 flex items-center justify-center shrink-0">
-                            <span style={{ color: '#FFFFFF' }} className="font-black text-xs">
-                              C
-                            </span>
-                          </div>
-                          <div className="min-w-0">
-                            <p style={{ color: '#FFFFFF' }} className="text-xs font-bold truncate">
-                              {cardTitle}
-                            </p>
-                            <p style={{ color: '#E4E4E7' }} className="text-[10px] truncate">
-                              {cardCreator} · {serialPlate}
-                            </p>
-                          </div>
-                        </div>
-                        <span
-                          style={{ color: '#FCD34D' }}
-                          className="rounded-md bg-black/75 border border-white/15 px-2 py-0.5 text-[10px] font-mono font-bold shrink-0"
-                        >
-                          {serialPlate}
-                        </span>
-                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-black/30" />
 
                       {/* Center Play Button */}
                       <div className="absolute inset-0 flex items-center justify-center">
@@ -672,77 +784,195 @@ export function SkilledTradesLearnByDoingSection({
                         </div>
                       </div>
 
-                      {/* Bottom ConnectLn Studio Bar */}
-                      <div
-                        style={{ color: '#FFFFFF' }}
-                        className="absolute inset-x-0 bottom-0 px-4 py-2.5 flex items-center justify-between gap-3"
-                      >
-                        <span style={{ color: '#E4E4E7' }} className="text-[11px] font-semibold">
-                          Scroll into view or tap to play in ConnectLn Player
-                        </span>
-                        <div className="flex items-center gap-1.5 rounded-md bg-[#171513]/90 border border-white/15 px-2.5 py-1">
+                      {/* Lower-Third Green/Gold Broadcast Banner (Matches Screenshot 2's DOCTORAL DIALOGUE lower-third!) */}
+                      <div className="absolute inset-x-0 bottom-0 flex items-stretch h-11 overflow-hidden">
+                        <div
+                          style={{ backgroundColor: 'rgba(6, 78, 59, 0.92)', color: '#FFFFFF' }}
+                          className="flex-1 px-4 flex items-center justify-between min-w-0"
+                        >
                           <span
                             style={{ color: '#FFFFFF' }}
-                            className="inline-flex h-4 w-4 items-center justify-center rounded bg-[#A64532] text-[10px] font-black"
+                            className="text-xs sm:text-sm font-medium truncate"
                           >
-                            C
+                            {cardTitle}
                           </span>
-                          <span
-                            style={{ color: '#FFFFFF' }}
-                            className="text-[11px] font-extrabold tracking-tight"
-                          >
-                            ConnectLn
-                          </span>
+                        </div>
+                        <div
+                          style={{ backgroundColor: '#FACC15', color: '#064E3B' }}
+                          className="px-3.5 flex flex-col justify-center items-center shrink-0 font-black uppercase leading-none text-[10px] sm:text-[11px] tracking-tight"
+                        >
+                          <span>{lesson.category.split(' ')[0]}</span>
+                          <span>MASTERCLASS</span>
                         </div>
                       </div>
                     </div>
                   )}
                 </div>
 
-                {/* Big Card Footer (Matches Screenshot: Title + Creator + Study Detailed Notes in Learn Tab Button) */}
-                <div className="p-4 bg-white dark:bg-zinc-900 space-y-2.5">
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 block">
-                      {isActiveCard ? 'NOW LOADED IN CONNECTLN PLAYER' : 'CONNECTLN STUDIO MASTERCLASS'} ·{' '}
-                      {lesson.category.toUpperCase()} · {cardVideoLabel.toUpperCase()}
-                    </span>
-                    <h3 className="text-sm sm:text-base font-black text-zinc-900 dark:text-zinc-100 leading-snug">
-                      {cardTitle} —{' '}
-                      <span className="font-semibold text-zinc-600 dark:text-zinc-400">
-                        {cardCreator}
-                      </span>
-                    </h3>
-                  </div>
+                {/* 4. SUBTLE GRAY-BLUE TITLE STRIP + FULL-WIDTH CENTERED CTA (Matches Screenshot 3: Title + "35 submits" + "✏️ Sign Up") */}
+                <div className="bg-[#F3F6F8] dark:bg-zinc-800/70 px-4 py-2.5 border-t border-zinc-200/80 dark:border-zinc-800">
+                  <h4 className="text-[14px] font-bold text-zinc-900 dark:text-zinc-100 leading-snug">
+                    {cardTitle} — {cardCreator}
+                  </h4>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                    {submitsCount} submits · {lesson.skillsCovered.length} Skills Covered &amp; Practice Workbench
+                  </p>
+                </div>
 
-                  <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
-                    {onOpenInLearnTab && (
-                      <button
-                        type="button"
-                        onClick={() => onOpenInLearnTab(lesson.id, lesson.category)}
-                        style={{ backgroundColor: '#7C4323', color: '#FFFFFF' }}
-                        className="rounded-lg hover:opacity-95 px-3.5 py-2 text-xs font-extrabold inline-flex items-center gap-1.5 cursor-pointer transition-opacity shadow-xs"
-                      >
-                        <BookOpen className="h-3.5 w-3.5" />
-                        <span>Study Detailed Notes &amp; Practice in Learn Tab →</span>
-                      </button>
-                    )}
+                {onOpenInLearnTab && (
+                  <button
+                    type="button"
+                    onClick={() => onOpenInLearnTab(lesson.id, lesson.category)}
+                    className="w-full py-2.5 px-4 bg-white hover:bg-zinc-50 dark:bg-zinc-900 dark:hover:bg-zinc-800/80 border-t border-zinc-200/80 dark:border-zinc-800 flex items-center justify-center gap-2 text-[#0A66C2] dark:text-sky-400 font-semibold text-[14px] transition-colors cursor-pointer"
+                  >
+                    <SquarePen className="h-4 w-4" />
+                    <span>Study Detailed Notes &amp; Practice in Learn Tab</span>
+                  </button>
+                )}
 
+                {/* 5. LINKEDIN SOCIAL REACTIONS & ENGAGEMENT BAR (Matches Screenshots 1, 2 & 3: 👍 14  💬 1  🔁 1  ✈️ + 👍❤️💡 on right) */}
+                <div className="px-4 py-2.5 border-t border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center justify-between">
+                  <div className="flex items-center gap-5 text-zinc-600 dark:text-zinc-400">
+                    {/* Like */}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setLikedLessonMap(prev => ({ ...prev, [lesson.id]: !prev[lesson.id] }))
+                      }
+                      className={`inline-flex items-center gap-1.5 text-xs font-medium hover:text-[#0A66C2] transition-colors cursor-pointer ${
+                        isLiked ? 'text-[#0A66C2] dark:text-sky-400 font-bold' : ''
+                      }`}
+                    >
+                      <ThumbsUp className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
+                      <span>{likesCount}</span>
+                    </button>
+
+                    {/* Comment */}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setOpenCommentsLessonMap(prev => ({
+                          ...prev,
+                          [lesson.id]: !prev[lesson.id]
+                        }))
+                      }
+                      className="inline-flex items-center gap-1.5 text-xs font-medium hover:text-[#0A66C2] transition-colors cursor-pointer"
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                      <span>{commentsCount}</span>
+                    </button>
+
+                    {/* Repost */}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setRepostedLessonMap(prev => ({
+                          ...prev,
+                          [lesson.id]: !prev[lesson.id]
+                        }))
+                      }
+                      className={`inline-flex items-center gap-1.5 text-xs font-medium hover:text-emerald-600 transition-colors cursor-pointer ${
+                        isReposted ? 'text-emerald-600 dark:text-emerald-400 font-bold' : ''
+                      }`}
+                    >
+                      <Repeat2 className="h-4 w-4" />
+                      <span>{repostsCount}</span>
+                    </button>
+
+                    {/* Send / Share */}
                     <button
                       type="button"
                       onClick={() => {
-                        notifyExclusiveVideoPlay(`lbd-home-player-${lesson.id}`)
-                        setAutoPlayRequested(true)
-                        setActiveVideoLessonId(lesson.id)
-                        handleWatchAction(lesson)
+                        if (typeof window !== 'undefined' && navigator.clipboard) {
+                          navigator.clipboard.writeText(window.location.href).catch(() => {})
+                        }
+                        setSharedToastLessonId(lesson.id)
+                        setTimeout(() => {
+                          setSharedToastLessonId(prev => (prev === lesson.id ? null : prev))
+                        }, 2000)
                       }}
-                      className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 px-3 py-1.5 text-xs font-bold text-zinc-800 dark:text-zinc-200 inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+                      title="Share video post"
+                      className="inline-flex items-center gap-1 text-xs font-medium hover:text-[#0A66C2] transition-colors cursor-pointer"
                     >
-                      <Play className="h-3.5 w-3.5 fill-current" />
-                      <span>{isActiveCard ? 'Playing Above' : 'Play Now'}</span>
+                      <Send className="h-4 w-4" />
+                      {sharedToastLessonId === lesson.id && (
+                        <span className="text-[10px] font-bold text-emerald-600">Copied!</span>
+                      )}
                     </button>
                   </div>
+
+                  {/* Right-Side Overlapping Reaction Badges (👍❤️💡 Matches Screenshots 1, 2 & 3) */}
+                  <div className="flex items-center -space-x-1">
+                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#0A66C2] text-[10px] text-white ring-2 ring-white dark:ring-zinc-900">
+                      👍
+                    </span>
+                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[10px] text-white ring-2 ring-white dark:ring-zinc-900">
+                      ❤️
+                    </span>
+                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] text-white ring-2 ring-white dark:ring-zinc-900">
+                      💡
+                    </span>
+                  </div>
                 </div>
-              </div>
+
+                {/* Optional Inline Comment Box when Comment icon is clicked */}
+                {isCommentsOpen && (
+                  <div className="px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border-t border-zinc-200/80 dark:border-zinc-800 space-y-2.5">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={commentInputMap[lesson.id] || ''}
+                        onChange={e =>
+                          setCommentInputMap(prev => ({
+                            ...prev,
+                            [lesson.id]: e.target.value
+                          }))
+                        }
+                        placeholder="Add a comment or field takeaway..."
+                        className="flex-1 rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3.5 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-[#0A66C2]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const text = (commentInputMap[lesson.id] || '').trim()
+                          if (!text) return
+                          setUserCommentsMap(prev => ({
+                            ...prev,
+                            [lesson.id]: [
+                              ...(prev[lesson.id] || []),
+                              {
+                                id: `c_${Date.now()}`,
+                                author: user?.name || 'Verified Member',
+                                text,
+                                time: 'Just now'
+                              }
+                            ]
+                          }))
+                          setCommentInputMap(prev => ({ ...prev, [lesson.id]: '' }))
+                        }}
+                        style={{ backgroundColor: '#0A66C2', color: '#FFFFFF' }}
+                        className="rounded-full px-3.5 py-1.5 text-xs font-bold cursor-pointer"
+                      >
+                        Post
+                      </button>
+                    </div>
+                    {userComments.map(c => (
+                      <div
+                        key={c.id}
+                        className="rounded-lg bg-white dark:bg-zinc-900 p-2.5 border border-zinc-200/70 dark:border-zinc-800 text-xs"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-zinc-900 dark:text-zinc-100">
+                            {c.author}
+                          </span>
+                          <span className="text-[10px] text-zinc-400">{c.time}</span>
+                        </div>
+                        <p className="text-zinc-700 dark:text-zinc-300 mt-0.5">{c.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </article>
             )
           })}
         </div>
