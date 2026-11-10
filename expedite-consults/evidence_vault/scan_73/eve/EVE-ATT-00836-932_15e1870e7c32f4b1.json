@@ -1,0 +1,52 @@
+{
+  "original_finding_id": 7443,
+  "asset_and_origin_identity": "ASSET-00514 | https://genai.owasp.org:443",
+  "approved_scope_and_roe": "Host genai.owasp.org:443 matches ROE authorized origin 'https://genai.owasp.org:443'.",
+  "validation_adapter_and_version": "EVE-NET-001 (eve-adapter/2.3.0)",
+  "test_timestamp": "2026-11-09T16:28:51.278522+00:00",
+  "preconditions": {
+    "vulnerability_class": "network_service_validation",
+    "affected_technology": "web-application",
+    "detected_version": null,
+    "cve_applicable": false,
+    "preconditions_satisfied": true
+  },
+  "execution_transcript": {
+    "adapter_id": "EVE-NET-001",
+    "adapter_version": "eve-adapter/2.3.0",
+    "probed_endpoint": "https://genai.owasp.org/",
+    "finding_key": "UDP-PORT-OPEN-443-HTTP_3_QUIC::T43_GENAI_OWASP_ORG",
+    "safety_mode": "READ_ONLY_DETERMINISTIC",
+    "timestamp": "2026-11-09T16:28:51.276730+00:00",
+    "probe_steps": [
+      {
+        "step": 1,
+        "action": "EVALUATE_CONTROL_STATE",
+        "target": "https://genai.owasp.org/",
+        "title": "[genai.owasp.org] Service Port Open: 443/UDP (HTTP/3-QUIC) on genai.owasp.org [65,535 UDP Sweep]",
+        "observation_excerpt": "[Target: https://genai.owasp.org/] Full 65,535 UDP port & datagram service sweep verified active service on port 443/UDP (HTTP/3-QUIC) on target genai.owasp.org.\nCaptured UDP Service Telemetry: HTTP/3 QUIC UDP Transport Verified (RFC 9000 / Alt-Svc h3=\":443\"). HTTP/3 over QUIC (R"
+      }
+    ]
+  },
+  "request_response_evidence": [
+    {
+      "step": 1,
+      "action": "EVALUATE_CONTROL_STATE",
+      "target": "https://genai.owasp.org/",
+      "title": "[genai.owasp.org] Service Port Open: 443/UDP (HTTP/3-QUIC) on genai.owasp.org [65,535 UDP Sweep]",
+      "observation_excerpt": "[Target: https://genai.owasp.org/] Full 65,535 UDP port & datagram service sweep verified active service on port 443/UDP (HTTP/3-QUIC) on target genai.owasp.org.\nCaptured UDP Service Telemetry: HTTP/3 QUIC UDP Transport Verified (RFC 9000 / Alt-Svc h3=\":443\"). HTTP/3 over QUIC (R"
+    }
+  ],
+  "expected_vs_actual": {
+    "expected": "Verify whether missing control or configuration allows direct unauthorized boundary crossing.",
+    "actual": "Configuration/control gap confirmed at HTTP layer; no direct unauthorized data access or code execution resulted.",
+    "reproduced_behavior": false
+  },
+  "execution_outcome": "OBSERVATION_CONFIRMED",
+  "evidence_confidence": 0.88,
+  "exploitability_confidence": 0.15,
+  "impact_confidence": 0.05,
+  "operator_or_approving_identity": "secops-lead@expedite-consults.io",
+  "sha256_evidence_digest": "3d647883228fbee1ec53d810c571681081e07d9199e389bba53c94be1c7a1152",
+  "attempt_key": "EVE-ATT-00836-932"
+}

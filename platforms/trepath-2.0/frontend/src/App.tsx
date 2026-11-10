@@ -742,15 +742,38 @@ export default function App() {
     })
   }, [api])
 
+  function resetScanResultsToZero() {
+    setFindings([])
+    setSelectedFinding(null)
+    setEvidenceList([])
+    setAssets([])
+    setEndpoints([])
+    setTechnologies([])
+    setIntelMatches([])
+    setPlans([])
+    setExecutions([])
+    setAttackPaths([])
+    setRemediations([])
+    setRiskProfile(null)
+    setSelectedScan(null)
+    setScanProgress(0)
+    setScanStage('READY_FRESH_ZERO')
+    setScanEvents([])
+    setScanMessage('Previous scan cleared to 0 — ready for a completely fresh scan instance.')
+  }
+
   async function handleCreateEngagementAndScan() {
     const primaryTarget = expandedScope.primaryTargetUrl || targetUrl
     const scopeTargetCount = Math.max(1, expandedScope.totalExpandedTargets)
     const allowedOriginsList = expandedScope.allowedOrigins.length > 0 ? expandedScope.allowedOrigins : [primaryTarget]
     const targetUrlsList = expandedScope.targetUrls.length > 0 ? expandedScope.targetUrls : [primaryTarget]
 
+    // Reset all previous scan results to 0 / empty so every new scan starts completely fresh
+    resetScanResultsToZero()
+
     setScanning(true)
     setElapsedSeconds(0)
-    setScanProgress(2)
+    setScanProgress(0)
     setScanStage('SCOPE')
     setScanEvents([{
       id: 0,
@@ -1467,21 +1490,25 @@ export default function App() {
     ? assets.map(a => a.hostname || a.target_url)
     : undefined
 
+  const isFreshZeroState = scanning || !selectedScan
+
   return (
     <ExpediteCheckObservabilityHub
-      scanId={selectedScan?.id || 53}
+      scanId={isFreshZeroState ? 0 : selectedScan.id}
+      isScanning={isFreshZeroState}
+      scanProgress={scanProgress}
       targetUrl={targetUrl}
       apiBase={api}
-      assetsCount={assets.length || 15}
-      endpointsCount={endpoints.length || 379}
-      rawObservationsCount={findings.length || 186}
-      consolidatedFindingsCount={19}
-      validatedExploitsCount={2}
-      rtexVerifiedCount={2}
-      riskT0={7.65}
-      riskT1={2.64}
-      hostsList={hostNames}
-      findingsSample={findings.slice(0, 8)}
+      assetsCount={isFreshZeroState ? 0 : (riskProfile?.executive_counts?.unique_assets_count ?? assets.length)}
+      endpointsCount={isFreshZeroState ? 0 : (riskProfile?.executive_counts?.canonical_reachable_endpoints_count ?? endpoints.length)}
+      rawObservationsCount={isFreshZeroState ? 0 : (riskProfile?.executive_counts?.raw_scanner_observations ?? findings.length)}
+      consolidatedFindingsCount={isFreshZeroState ? 0 : (riskProfile?.unique_security_findings_count ?? findings.length)}
+      validatedExploitsCount={isFreshZeroState ? 0 : (riskProfile?.confirmed_exploitable_count ?? 0)}
+      rtexVerifiedCount={isFreshZeroState ? 0 : (riskProfile?.remediated_findings_count ?? 0)}
+      riskT0={isFreshZeroState ? 0 : (riskProfile?.overall_risk_index_10 ?? 0)}
+      riskT1={isFreshZeroState ? 0 : (riskProfile?.verified_t1_risk_index_10 ?? 0)}
+      hostsList={isFreshZeroState ? [] : hostNames}
+      findingsSample={isFreshZeroState ? [] : findings.slice(0, 8)}
       activeAppTab={tab}
       onSelectAppTab={setTab}
       operatorEmail={loginEmail}
@@ -1495,8 +1522,8 @@ export default function App() {
             <div className="brand">
               <div className="brandmark"><Shield size={22} /></div>
               <div>
-                <b>TrePath 2.14</b>
-                <small>SIX-ENGINE ASSURANCE v2.14</small>
+                <b>TrePath 2.19.3</b>
+                <small>SIX-ENGINE ASSURANCE v2.19.3</small>
               </div>
             </div>
 
@@ -1582,23 +1609,23 @@ export default function App() {
             <section className="grid">
               <article className="tile">
                 <span>Normalized Assets</span>
-                <strong>{assets.length || '1'}</strong>
-                <small>{assets[0]?.asset_key || 'ASSET-00001'} · {endpoints.length} Endpoints</small>
+                <strong>{isFreshZeroState ? 0 : assets.length}</strong>
+                <small>{isFreshZeroState ? 'Fresh Scan State (Reset to 0)' : (assets[0]?.asset_key || '0 Assets')} · {isFreshZeroState ? 0 : endpoints.length} Endpoints</small>
               </article>
               <article className="tile">
                 <span>ENUMCORE Matches</span>
-                <strong>{intelMatches.length}</strong>
-                <small>{technologies.length} Fingerprinted Technologies</small>
+                <strong>{isFreshZeroState ? 0 : intelMatches.length}</strong>
+                <small>{isFreshZeroState ? 0 : technologies.length} Fingerprinted Technologies</small>
               </article>
               <article className="tile">
                 <span>Test Executions</span>
-                <strong>{executions.length}</strong>
-                <small>{plans.filter(p => p.selection_status === 'ELIGIBLE').length} Eligible / {plans.filter(p => p.selection_status === 'BLOCKED_BY_SCOPE').length} Blocked</small>
+                <strong>{isFreshZeroState ? 0 : executions.length}</strong>
+                <small>{isFreshZeroState ? 0 : plans.filter(p => p.selection_status === 'ELIGIBLE').length} Eligible / {isFreshZeroState ? 0 : plans.filter(p => p.selection_status === 'BLOCKED_BY_SCOPE').length} Blocked</small>
               </article>
               <article className="tile">
                 <span>Verified Findings</span>
-                <strong>{findings.length}</strong>
-                <small>FIPS 180-4 SHA-256 Provenance</small>
+                <strong>{isFreshZeroState ? 0 : findings.length}</strong>
+                <small>{isFreshZeroState ? 'Previous Scan Reset to 0' : 'FIPS 180-4 SHA-256 Provenance'}</small>
               </article>
             </section>
 
@@ -1687,6 +1714,7 @@ export default function App() {
                         onChange={e => {
                           setSelectedPreset(e.target.value)
                           if (e.target.value) setTargetUrl(e.target.value)
+                          resetScanResultsToZero()
                         }}
                       >
                         {PRESET_VMS.map(p => (
@@ -1703,7 +1731,10 @@ export default function App() {
                         <input
                           style={{ width: '100%', background: '#0b1222', border: '1px solid #34445c', color: '#dce7f4', padding: '10px', borderRadius: '7px' }}
                           value={targetUrl}
-                          onChange={e => setTargetUrl(e.target.value)}
+                          onChange={e => {
+                            setTargetUrl(e.target.value)
+                            resetScanResultsToZero()
+                          }}
                           placeholder="192.168.195.139 or http://192.168.195.139:8080/manager/html"
                         />
                       </div>
@@ -1761,6 +1792,7 @@ export default function App() {
                             const sample = OWASP_BENCHMARK_URLS.join('\n')
                             setBulkTargetsText(sample)
                             setTargetUrl(OWASP_BENCHMARK_URLS[0])
+                            resetScanResultsToZero()
                           }}
                           style={{ fontSize: '10.5px', padding: '4px 8px', background: '#063225', color: '#34d399', border: '1px solid #10b981', fontWeight: 700, borderRadius: '5px', cursor: 'pointer' }}
                         >
@@ -1784,6 +1816,7 @@ export default function App() {
                             ].join('\n')
                             setBulkTargetsText(sample)
                             setTargetUrl('http://192.168.195.139')
+                            resetScanResultsToZero()
                           }}
                           style={{ fontSize: '10.5px', padding: '4px 8px', background: '#1e1b4b', color: '#a5b4fc', border: '1px solid #6366f1', fontWeight: 700, borderRadius: '5px', cursor: 'pointer' }}
                         >
@@ -1795,6 +1828,7 @@ export default function App() {
                             const sample = '192.168.195.139\nhttp://192.168.195.139:8080/manager/html\nhttp://192.168.195.139/phpinfo.php\nhttp://192.168.195.139/phpMyAdmin/\n192.168.195.140\n192.168.195.130'
                             setBulkTargetsText(sample)
                             setTargetUrl('http://192.168.195.139')
+                            resetScanResultsToZero()
                           }}
                           style={{ fontSize: '10.5px', padding: '4px 8px', background: '#0f2942', color: '#38bdf8', border: '1px solid #0284c7', borderRadius: '5px', cursor: 'pointer' }}
                         >
@@ -1806,6 +1840,7 @@ export default function App() {
                             const sample = '192.168.195.0/24\nhttp://192.168.195.139:8080/manager/html\nhttp://192.168.195.139/phpMyAdmin/'
                             setBulkTargetsText(sample)
                             setTargetUrl('http://192.168.195.139')
+                            resetScanResultsToZero()
                           }}
                           style={{ fontSize: '10.5px', padding: '4px 8px', background: '#0f2942', color: '#38bdf8', border: '1px solid #0284c7', borderRadius: '5px', cursor: 'pointer' }}
                         >
@@ -1817,6 +1852,7 @@ export default function App() {
                             const sample = '192.168.195.139\nhttp://192.168.195.139:8080/manager/html\n10.10.0.1-10.10.39.14'
                             setBulkTargetsText(sample)
                             setTargetUrl('http://192.168.195.139')
+                            resetScanResultsToZero()
                           }}
                           style={{ fontSize: '10.5px', padding: '4px 8px', background: '#063225', color: '#34d399', border: '1px solid #10b981', borderRadius: '5px', cursor: 'pointer' }}
                         >
@@ -1832,6 +1868,7 @@ export default function App() {
                         setBulkTargetsText(e.target.value)
                         const parsed = expandClientTargetScope(e.target.value, MAX_FLEET_TARGETS)
                         if (parsed.primaryTargetUrl) setTargetUrl(parsed.primaryTargetUrl)
+                        resetScanResultsToZero()
                       }}
                       placeholder="Paste IPs, CIDRs, IP ranges, or full URLs (one per line or comma-separated)..."
                       style={{
@@ -1908,13 +1945,21 @@ export default function App() {
                   </label>
                 </div>
 
-                <div style={{ display: 'flex', gap: '10px', marginTop: '10px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '10px', marginTop: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
                   <button 
                     disabled={scanning} 
                     onClick={handleCreateEngagementAndScan}
                     style={{ background: '#10b981', color: '#032014', border: 'none', fontWeight: 600, padding: '12px 20px', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '7px', cursor: scanning ? 'not-allowed' : 'pointer' }}
                   >
                     <Play size={16} /> {scanning ? `Scanning in Progress (${scanProgress}%)...` : 'Execute TrePath 2.0 Assessment'}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={scanning}
+                    onClick={resetScanResultsToZero}
+                    style={{ background: '#0b1629', color: '#94a3b8', border: '1px solid #334155', fontWeight: 600, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '7px', cursor: scanning ? 'not-allowed' : 'pointer' }}
+                  >
+                    <RefreshCw size={15} /> Reset Previous Scan to 0
                   </button>
                   {executions.length > 0 && !scanning && (
                     <button

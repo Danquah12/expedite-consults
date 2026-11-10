@@ -1,0 +1,52 @@
+{
+  "original_finding_id": 7156,
+  "asset_and_origin_identity": "ASSET-00494 | https://tryhackme.com:443",
+  "approved_scope_and_roe": "Host tryhackme.com:443 matches ROE authorized origin 'https://tryhackme.com:443'.",
+  "validation_adapter_and_version": "EVE-NET-001 (eve-adapter/2.3.0)",
+  "test_timestamp": "2026-11-09T15:12:00.650872+00:00",
+  "preconditions": {
+    "vulnerability_class": "network_service_validation",
+    "affected_technology": "web-application",
+    "detected_version": null,
+    "cve_applicable": false,
+    "preconditions_satisfied": true
+  },
+  "execution_transcript": {
+    "adapter_id": "EVE-NET-001",
+    "adapter_version": "eve-adapter/2.3.0",
+    "probed_endpoint": "https://tryhackme.com/",
+    "finding_key": "UDP-PORT-OPEN-443-HTTP_3_QUIC::T38_TRYHACKME_COM",
+    "safety_mode": "READ_ONLY_DETERMINISTIC",
+    "timestamp": "2026-11-09T15:12:00.642630+00:00",
+    "probe_steps": [
+      {
+        "step": 1,
+        "action": "EVALUATE_CONTROL_STATE",
+        "target": "https://tryhackme.com/",
+        "title": "[tryhackme.com] Service Port Open: 443/UDP (HTTP/3-QUIC) on tryhackme.com [65,535 UDP Sweep]",
+        "observation_excerpt": "[Target: https://tryhackme.com/] Full 65,535 UDP port & datagram service sweep verified active service on port 443/UDP (HTTP/3-QUIC) on target tryhackme.com.\nCaptured UDP Service Telemetry: HTTP/3 QUIC UDP Transport Verified (RFC 9000 / Alt-Svc h3=\":443\"). HTTP/3 over QUIC (RFC 9"
+      }
+    ]
+  },
+  "request_response_evidence": [
+    {
+      "step": 1,
+      "action": "EVALUATE_CONTROL_STATE",
+      "target": "https://tryhackme.com/",
+      "title": "[tryhackme.com] Service Port Open: 443/UDP (HTTP/3-QUIC) on tryhackme.com [65,535 UDP Sweep]",
+      "observation_excerpt": "[Target: https://tryhackme.com/] Full 65,535 UDP port & datagram service sweep verified active service on port 443/UDP (HTTP/3-QUIC) on target tryhackme.com.\nCaptured UDP Service Telemetry: HTTP/3 QUIC UDP Transport Verified (RFC 9000 / Alt-Svc h3=\":443\"). HTTP/3 over QUIC (RFC 9"
+    }
+  ],
+  "expected_vs_actual": {
+    "expected": "Verify whether missing control or configuration allows direct unauthorized boundary crossing.",
+    "actual": "Configuration/control gap confirmed at HTTP layer; no direct unauthorized data access or code execution resulted.",
+    "reproduced_behavior": false
+  },
+  "execution_outcome": "OBSERVATION_CONFIRMED",
+  "evidence_confidence": 0.88,
+  "exploitability_confidence": 0.15,
+  "impact_confidence": 0.05,
+  "operator_or_approving_identity": "secops-lead@expedite-consults.io",
+  "sha256_evidence_digest": "601d4cec9ab2c34776eab4b90d9f7ccc941bf1faf0908d359c2449552d20228c",
+  "attempt_key": "EVE-ATT-00761-855"
+}

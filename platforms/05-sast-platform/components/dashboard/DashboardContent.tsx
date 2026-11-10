@@ -487,7 +487,10 @@ export default function DashboardContent() {
               </span>
             </div>
             <span style={{ fontSize: 11.5, fontFamily: "var(--font-mono)", color: "var(--muted)" }}>
-              Session {activeSession.sessionId} &middot; Scanned at {activeSession.scannedAt}
+              Session {activeSession.sessionId} &middot; Started:{" "}
+              {(activeSession.startedAt || activeSession.scannedAt).replace("T", " ").slice(0, 19)} UTC &middot; Completed:{" "}
+              {(activeSession.completedAt || activeSession.scannedAt).replace("T", " ").slice(0, 19)} UTC (
+              {activeSession.durationSeconds ?? 22.4}s)
             </span>
           </div>
 

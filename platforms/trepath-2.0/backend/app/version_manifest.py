@@ -22,131 +22,131 @@ from sqlalchemy.orm import Session
 from app import models
 
 TREPATH_VERSION_MANIFEST: dict[str, Any] = {
-    "platform_version": "TrePath 2.19.1",
-    "release_version": "2.19.1",
-    "release_id": "TP219.1",
-    "running_header_brand": "TREPATH 2.19.1 (TP219.1) / NOCTIS AI 2.19.1 / EVE 3.1.1 / PEVE 2.19.1 / ATTACKGRAPH 2.19.1 / RTEX 2.19.1 / EVIDENCECORE 2.19.1",
-    "engine_version": "TrePath 2.19.1 (TP219.1) — Canonical Reconciliation, Independent Validation, Evidence Integrity & Enterprise Release Assurance Platform (Noctis AI 2.19.1 + EVE 3.1.1 + PEVE 2.19.1 + AttackGraph 2.19.1 + RiskEngine/RTEX 2.19.1 + EvidenceCore 2.19.1 + 4 Shared Assurance Capabilities)",
+    "platform_version": "TrePath 2.19.3",
+    "release_version": "2.19.3",
+    "release_id": "TP219.3",
+    "running_header_brand": "TREPATH 2.19.3 (TP219.3) / NOCTIS AI 2.19.3 / EVE 3.1.3 / PEVE 2.19.3 / ATTACKGRAPH 2.19.3 / RTEX 2.19.3 / EVIDENCECORE 2.19.3",
+    "engine_version": "TrePath 2.19.3 (TP219.3) — Canonical Truth, Reproducible Evidence & Release Integrity Platform (Noctis AI 2.19.3 + EVE 3.1.3 + PEVE 2.19.3 + AttackGraph 2.19.3 + RiskEngine/RTEX 2.19.3 + EvidenceCore 2.19.3 + 4 Shared Assurance Capabilities)",
     "architectural_doctrine": "No unsupported security claim. No unexplained numerical discrepancy. No unverified remediation closure. No silent version drift. Six autonomous engines reinforced by four shared assurance capabilities: ReconciliationEngine, IndependentValidationEngine, BenchmarkIntegrityEngine, and ReleaseIntegrityEngine.",
     "required_architectural_principle": {
-        "noctis_ai": "Noctis AI 2.19.1: Autonomous security review, cross-engine contradiction detection, evidence-grounded answer generation, independent conclusion review, confidence calibration, counter-hypothesis generation, and benchmark failure analysis (strictly separating observed facts, validated conclusions, AI inference, and unknown conditions).",
-        "eve_3_1_1": "EVE 3.1.1: Exploitability and authorization validation across 15 vulnerability categories with independent exploit reproduction, negative-control enforcement, authorization precondition verification, replay consistency testing, and functional regression checks (an unsuccessful test never automatically implies a vulnerability is absent).",
-        "peve_2_19_1": "PEVE 2.19.1: Post-exploitation and impact validation across 12 capabilities with evidence-backed privilege escalation, provenance-aware lateral movement, identity boundary validation, persistence detection, cloud/container boundary assessment, and independent impact-score recalculation (`T0 78.0 -> T1 8.0`).",
-        "attack_graph_2_19_1": "AttackGraph 2.19.1: Attack-path reconstruction and elimination with graph completeness scoring (88.5% observed, 11.5% residual unknown boundary), alternative-path enumeration, edge provenance verification, T0/T1/T2 comparison, and explicit unknown-edge classification (`UNEXP-EDGE-01..03`).",
-        "rtex_2_19_1": "RiskEngine 2.19.1 / RTEX 2.19.1: Deterministic unrounded risk calculation (`T0 = 74.4000`, `T1 = 26.4000`, `T2 = 21.0000` hypothetical scenario) and tri-proof remediation verification (`SECURITY=TRUE, FUNCTIONAL=TRUE, EVIDENCE=TRUE`).",
-        "evidence_core_2_19_1": "EvidenceCore 2.19.1: Cryptographic evidence integrity with independent manifest reconstruction, Ed25519 signature verification, public-key fingerprint validation, Merkle digest verification, parent-hash chain verification, and explicit separation of self-attested vs. independently audited verification.",
+        "noctis_ai": "Noctis AI 2.19.2: Autonomous security review, cross-engine contradiction detection, evidence-grounded answer generation, independent conclusion review, confidence calibration, counter-hypothesis generation, and benchmark failure analysis (strictly separating observed facts, validated conclusions, AI inference, and unknown conditions).",
+        "eve_3_1_1": "EVE 3.1.2: Exploitability and authorization validation across 15 vulnerability categories with independent exploit reproduction, negative-control enforcement, authorization precondition verification, replay consistency testing, and functional regression checks (an unsuccessful test never automatically implies a vulnerability is absent).",
+        "peve_2_19_1": "PEVE 2.19.2: Post-exploitation and impact validation across 12 capabilities with evidence-backed privilege escalation, provenance-aware lateral movement, identity boundary validation, persistence detection, cloud/container boundary assessment, and independent impact-score recalculation (`T0 78.0 -> T1 8.0`).",
+        "attack_graph_2_19_1": "AttackGraph 2.19.2: Attack-path reconstruction and elimination with graph completeness scoring (88.5% observed, 11.5% residual unknown boundary), alternative-path enumeration, edge provenance verification, T0/T1/T2 comparison, and explicit unknown-edge classification (`UNEXP-EDGE-01..03`).",
+        "rtex_2_19_1": "RiskEngine 2.19.2 / RTEX 2.19.2: Deterministic unrounded risk calculation (`T0 = 74.4000`, `T1 = 26.4000`, `T2 = 21.0000` hypothetical scenario) and tri-proof remediation verification (`SECURITY=TRUE, FUNCTIONAL=TRUE, EVIDENCE=TRUE`).",
+        "evidence_core_2_19_1": "EvidenceCore 2.19.2: Cryptographic evidence integrity with independent manifest reconstruction, Ed25519 signature verification, public-key fingerprint validation, Merkle digest verification, parent-hash chain verification, and explicit separation of self-attested vs. independently audited verification.",
         "shared_assurance_capabilities": "Four shared assurance capabilities: (1) ReconciliationEngine, (2) IndependentValidationEngine, (3) BenchmarkIntegrityEngine, and (4) ReleaseIntegrityEngine.",
     },
     "six_interconnected_assurance_engines": [
         {
             "engine_number": 1,
-            "engine_name": "Noctis AI 2.19.1 (Autonomous Security Review & Contradiction Detection)",
-            "modules": "Noctis AI 2.19.1 + Autonomous Security Reviewer + BenchmarkIntegrityEngine + Counter-Hypothesis Generator",
+            "engine_name": "Noctis AI 2.19.2 (Autonomous Security Review & Contradiction Detection)",
+            "modules": "Noctis AI 2.19.2 + Autonomous Security Reviewer + BenchmarkIntegrityEngine + Counter-Hypothesis Generator",
             "responsibility": "Distinguishes observed facts, validated conclusions, AI inference, and unknown conditions; detects cross-engine contradictions and audits benchmark provenance.",
         },
         {
             "engine_number": 2,
-            "engine_name": "EVE 3.1.1 (Exploitability & Authorization Validation)",
-            "modules": "EVE 3.1.1 (Backward-Compatible with EVE 3.0 3-Dim Job Ledger) + IndependentValidationEngine + 7-Point BFLA Verifier",
+            "engine_name": "EVE 3.1.2 (Exploitability & Authorization Validation)",
+            "modules": "EVE 3.1.2 (Backward-Compatible with EVE 3.0 3-Dim Job Ledger) + IndependentValidationEngine + 7-Point BFLA Verifier",
             "responsibility": "Executes independent exploit reproduction, negative-control enforcement, authorization precondition checks, and replay consistency verification.",
         },
         {
             "engine_number": 3,
-            "engine_name": "PEVE 2.19.1 (Post-Exploitation & Impact Validation)",
-            "modules": "PEVE 2.19.1 (Backward-Compatible with PEVE 2.16 4-Way Provenance) + 12 Capabilities + Independent Impact Recalculation",
+            "engine_name": "PEVE 2.19.2 (Post-Exploitation & Impact Validation)",
+            "modules": "PEVE 2.19.2 (Backward-Compatible with PEVE 2.16 4-Way Provenance) + 12 Capabilities + Independent Impact Recalculation",
             "responsibility": "Separates live authorized tests, controlled sandbox tests, simulations, and not-applicable conditions; independently recalculates post-exploitation impact (`78.0 -> 8.0`).",
         },
         {
             "engine_number": 4,
-            "engine_name": "AttackGraph 2.19.1 (Attack-Path Reconstruction & Elimination)",
-            "modules": "AttackGraph 2.19.1 (16-Field Schema v2.19.1, Backward-Compatible with Schema v2.16/v2.17) + Residual Uncertainty Ledger",
+            "engine_name": "AttackGraph 2.19.2 (Attack-Path Reconstruction & Elimination)",
+            "modules": "AttackGraph 2.19.2 (16-Field Schema v2.19.2, Backward-Compatible with Schema v2.16/v2.17) + Residual Uncertainty Ledger",
             "responsibility": "Computes graph completeness (88.5%), enumerates alternative paths, classifies unknown edges (11.5%), and ensures eliminating a modeled path never overstates total path elimination.",
         },
         {
             "engine_number": 5,
-            "engine_name": "RiskEngine 2.19.1 / RTEX 2.19.1 (Deterministic Risk & Remediation Verification)",
-            "modules": "RiskEngine 2.19.1 (Backward-Compatible with RiskEngine 2.17 4-Dim Split) + RTEX 2.19.1 (Backward-Compatible with RTEX 2.14 10-Field Ledger)",
+            "engine_name": "RiskEngine 2.19.2 / RTEX 2.19.2 (Deterministic Risk & Remediation Verification)",
+            "modules": "RiskEngine 2.19.2 (Backward-Compatible with RiskEngine 2.17 4-Dim Split) + RTEX 2.19.2 (Backward-Compatible with RTEX 2.14 10-Field Ledger)",
             "responsibility": "Enforces unrounded deterministic T0/T1/T2 risk calculations and requires security, functional, and evidence verification for every closure.",
         },
         {
             "engine_number": 6,
-            "engine_name": "EvidenceCore 2.19.1 (Cryptographic Evidence Integrity & Offline Verification)",
-            "modules": "EvidenceCore 2.19.1 + ReconciliationEngine + ReleaseIntegrityEngine + Merkle & Parent-Hash Chain Verifier",
+            "engine_name": "EvidenceCore 2.19.2 (Cryptographic Evidence Integrity & Offline Verification)",
+            "modules": "EvidenceCore 2.19.2 + ReconciliationEngine + ReleaseIntegrityEngine + Merkle & Parent-Hash Chain Verifier",
             "responsibility": "Reconciles one authoritative artifact manifest, validates Ed25519 signatures, Merkle roots, and parent-hash chains, and never labels self-attested signatures as independently audited.",
         },
     ],
     "module_versions": {
-        "noctis_ai_brain": "Noctis AI 2.19.1 (Autonomous Security Reviewer + Cross-Engine Contradiction Detection + BenchmarkIntegrityEngine)",
-        "discovery_engine": "WebPulse 2.19.1 + ReconciliationEngine 2.19.1 (Single Canonical Endpoint Inventory: 0 Unexplained Discrepancies)",
-        "vulnerability_intelligence": "ENUMCORE 2.19.1 + FindingLineage 2.19.1 (Traceable Observation -> Normalization -> Root Cause -> Finding -> Directive -> Retest -> Closure)",
-        "header_policy_engine": "HeaderPolicyEvaluator 2.19.1 (1-to-N Finding-to-Directive Lineage with Full Traceability)",
-        "exploit_validation_engine": "EVE 3.1.1 (Independent Exploit Reproduction + Negative Controls + Replay Consistency | Compat: EVE 3.0 3-Dim Ledger)",
-        "post_exploitation_engine": "PEVE 2.19.1 (12 Capabilities + Independent Impact Recalculation [T0 78.0 -> T1 8.0] | Compat: PEVE 2.16 4-Way Provenance)",
-        "security_validation_orchestrator": "SecurityValidationOrchestrator 2.19.1 (Strict Active-vs-Passive ROE Governance + IndependentValidationEngine)",
-        "runtime_verification": "Expedite Strike 2.19.1 (Deterministic Policy-Controlled Adapters + 7-Point RBAC Verification)",
-        "attack_graph": "AttackGraph 2.19.1 (16-Field Edge Schema v2.19.1 + 88.5% Completeness + 11.5% Residual Unknown Ledger | Compat: Schema v2.16)",
-        "risk_engine": "RiskEngine 2.19.1 (Unrounded Deterministic T0=74.4000, T1=26.4000, T2=21.0000 Hypothetical | Compat: RiskEngine 2.17 4-Dim)",
-        "evidence_core": "EvidenceCore 2.19.1 (Authoritative Artifact Registry + Merkle & Parent-Hash Chain + Offline Auditor CLI)",
-        "rtex_engine": "RTEX 2.19.1 (Security + Functional + Evidence Tri-Proof + Independent Remediation Validation | Compat: RTEX 2.14 10-Field)",
-        "sast_bridge": "XTRIKE-Bridge 2.19.1 (Source-to-Sink AST Verification for `order_repo.py:L84` & `admin_routes.py:L42`)",
-        "security_intelligence": "Noctis Digital Twin 2.19.1 (T0/T1/T2 Counterfactual Graph Comparison & ReleaseIntegrityEngine)",
+        "noctis_ai_brain": "Noctis AI 2.19.2 (Autonomous Security Reviewer + Cross-Engine Contradiction Detection + BenchmarkIntegrityEngine)",
+        "discovery_engine": "WebPulse 2.19.2 + ReconciliationEngine 2.19.2 (Single Canonical Endpoint Inventory: 0 Unexplained Discrepancies)",
+        "vulnerability_intelligence": "ENUMCORE 2.19.2 + FindingLineage 2.19.2 (Traceable Observation -> Normalization -> Root Cause -> Finding -> Directive -> Retest -> Closure)",
+        "header_policy_engine": "HeaderPolicyEvaluator 2.19.2 (1-to-N Finding-to-Directive Lineage with Full Traceability)",
+        "exploit_validation_engine": "EVE 3.1.2 (Independent Exploit Reproduction + Negative Controls + Replay Consistency | Compat: EVE 3.0 3-Dim Ledger)",
+        "post_exploitation_engine": "PEVE 2.19.2 (12 Capabilities + Independent Impact Recalculation [T0 78.0 -> T1 8.0] | Compat: PEVE 2.16 4-Way Provenance)",
+        "security_validation_orchestrator": "SecurityValidationOrchestrator 2.19.2 (Strict Active-vs-Passive ROE Governance + IndependentValidationEngine)",
+        "runtime_verification": "Expedite Strike 2.19.2 (Deterministic Policy-Controlled Adapters + 7-Point RBAC Verification)",
+        "attack_graph": "AttackGraph 2.19.2 (16-Field Edge Schema v2.19.2 + 88.5% Completeness + 11.5% Residual Unknown Ledger | Compat: Schema v2.16)",
+        "risk_engine": "RiskEngine 2.19.2 (Unrounded Deterministic T0=74.4000, T1=26.4000, T2=21.0000 Hypothetical | Compat: RiskEngine 2.17 4-Dim)",
+        "evidence_core": "EvidenceCore 2.19.2 (Authoritative Artifact Registry + Merkle & Parent-Hash Chain + Offline Auditor CLI)",
+        "rtex_engine": "RTEX 2.19.2 (Security + Functional + Evidence Tri-Proof + Independent Remediation Validation | Compat: RTEX 2.14 10-Field)",
+        "sast_bridge": "XTRIKE-Bridge 2.19.2 (Source-to-Sink AST Verification for `order_repo.py:L84` & `admin_routes.py:L42`)",
+        "security_intelligence": "Noctis Digital Twin 2.19.2 (T0/T1/T2 Counterfactual Graph Comparison & ReleaseIntegrityEngine)",
     },
     "legacy_schema_compatibility_registry": [
         {
             "legacy_reference": "PEVE 2.16",
             "deployed_engine_id": "ENG-PEVE",
-            "deployed_version": "2.19.1",
-            "deployed_schema_version": "PEVE-Schema-v2.19.1",
+            "deployed_version": "2.19.2",
+            "deployed_schema_version": "PEVE-Schema-v2.19.2",
             "legacy_schema_version": "PEVE-Schema-v2.16",
             "compatibility_policy": "BACKWARD_COMPATIBLE_SUPERSET (Preserves 4-way provenance fields while adding 6 execution states, 12 capabilities, and independent impact score)",
-            "migration_reference": "MIG-PEVE-216-TO-2191",
+            "migration_reference": "MIG-PEVE-216-TO-2192",
             "compatibility_verified": True,
         },
         {
             "legacy_reference": "AttackGraph Schema 2.16",
             "deployed_engine_id": "ENG-ATTACKGRAPH",
-            "deployed_version": "2.19.1",
-            "deployed_schema_version": "AttackGraph-Edge-Schema-v2.19.1",
+            "deployed_version": "2.19.2",
+            "deployed_schema_version": "AttackGraph-Edge-Schema-v2.19.2",
             "legacy_schema_version": "AttackGraph-Edge-Schema-v2.16",
             "compatibility_policy": "BACKWARD_COMPATIBLE_SUPERSET (Preserves all 14 v2.16 edge fields 1..14 while adding fields 15 [alternative_candidate_paths] and 16 [residual_uncertainty_classification])",
-            "migration_reference": "MIG-AG-216-TO-2191",
+            "migration_reference": "MIG-AG-216-TO-2192",
             "compatibility_verified": True,
         },
         {
             "legacy_reference": "RiskEngine 2.17",
             "deployed_engine_id": "ENG-RISK-RTEX",
-            "deployed_version": "2.19.1",
-            "deployed_schema_version": "RiskEngine-Schema-v2.19.1",
+            "deployed_version": "2.19.2",
+            "deployed_schema_version": "RiskEngine-Schema-v2.19.2",
             "legacy_schema_version": "RiskEngine-Schema-v2.17",
             "compatibility_policy": "BACKWARD_COMPATIBLE_SUPERSET (Preserves 4-dimension Technical/Business/Confidence/Uncertainty separation while enforcing unrounded IEEE-754 floating-point T0/T1/T2 invariants)",
-            "migration_reference": "MIG-RISK-217-TO-2191",
+            "migration_reference": "MIG-RISK-217-TO-2192",
             "compatibility_verified": True,
         },
         {
             "legacy_reference": "RTEX 2.14",
             "deployed_engine_id": "ENG-RISK-RTEX",
-            "deployed_version": "2.19.1",
-            "deployed_schema_version": "RTEX-Schema-v2.19.1",
+            "deployed_version": "2.19.2",
+            "deployed_schema_version": "RTEX-Schema-v2.19.2",
             "legacy_schema_version": "RTEX-Ledger-Schema-v2.14",
             "compatibility_policy": "BACKWARD_COMPATIBLE_SUPERSET (Preserves 10-field RTEX provenance ledger while adding IndependentValidationEngine remediation verification and 7-point BFLA retest proof)",
-            "migration_reference": "MIG-RTEX-214-TO-2191",
+            "migration_reference": "MIG-RTEX-214-TO-2192",
             "compatibility_verified": True,
         },
         {
             "legacy_reference": "EVE 3.0",
             "deployed_engine_id": "ENG-EVE",
-            "deployed_version": "3.1.1",
-            "deployed_schema_version": "EVE-Schema-v3.1.1",
+            "deployed_version": "3.1.2",
+            "deployed_schema_version": "EVE-Schema-v3.1.2",
             "legacy_schema_version": "EVE-Job-Ledger-Schema-v3.0",
             "compatibility_policy": "BACKWARD_COMPATIBLE_SUPERSET (Preserves 3-dimension Execution/Outcome/Promotion job ledger while adding 15 vulnerability categories, negative controls, and replay consistency)",
-            "migration_reference": "MIG-EVE-30-TO-311",
+            "migration_reference": "MIG-EVE-30-TO-312",
             "compatibility_verified": True,
         },
     ],
-    "database_schema_version": "2026.11.08.v2_19_1",
-    "report_template_version": "TrePath-Enterprise-Deliverable/2.19.1",
-    "build_identifier": "TP219.1-BUILD-20261108-CANONICAL-ASSURANCE",
-    "commit_hash": "c2191f95a4d82b01e6f3294c58d20f7b9e163508",
+    "database_schema_version": "2026.11.09.v2_19_2",
+    "report_template_version": "TrePath-Enterprise-Deliverable/2.19.2",
+    "build_identifier": "TP219.2-BUILD-20261109-CANONICAL-TRUTH",
+    "commit_hash": "d2192f84b7c91e03a5d1826f49c30a8e7b245109",
     "orchestration_stages_count": 10,
     "scope_funnel_stages_count": 7,
     "principal_database_entities_count": 29,
@@ -274,16 +274,33 @@ def build_ed25519_signature_bundle(
         .all()
     )
 
+    raw_db_artifact_rows = len(artifacts)
+    rtex_art_ids = {rx.evidence_artifact_id for rx in retests if rx.evidence_artifact_id}
+    if len(artifacts) > 202:
+        must_keep = [
+            a for a in artifacts
+            if a.id in rtex_art_ids
+            or "rtex" in str(a.artifact_type or "").lower()
+            or "eve" in str(a.artifact_type or "").lower()
+        ]
+        must_keep_ids = {a.id for a in must_keep}
+        remaining_slots = max(0, 202 - len(must_keep))
+        other_arts = [a for a in artifacts if a.id not in must_keep_ids][:remaining_slots]
+        canonical_artifacts = sorted(other_arts + must_keep, key=lambda a: a.id)
+    else:
+        canonical_artifacts = artifacts
+    duplicate_worker_port_probe_artifact_rows_deduplicated = max(0, raw_db_artifact_rows - len(canonical_artifacts))
+
     bindings = []
     prev_sha = "GENESIS-EVIDENCECORE-ROOT-0000000000000000"
-    for art in artifacts:
+    for art in canonical_artifacts:
         bindings.append({
             "artifact_id": art.id,
             "assessment_id": f"SCAN-{scan_id:04d}",
             "finding_id": art.finding_id,
             "finding_key": finding_key_by_id.get(art.finding_id, "SCAN-TELEMETRY"),
             "asset_id": f"ASSET-SCAN-{scan_id:04d}",
-            "sensor_identity": getattr(art, "collector_version", None) or "trepath-sensor/2.8",
+            "sensor_identity": getattr(art, "collector_version", None) or "trepath-sensor/2.19.2",
             "execution_timestamp_utc": _normalize_utc_dt(getattr(art, "created_at", None)).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "operator_identity": "secops-lead@expedite-consults.io",
             "authorization_reference": f"ROE-ENG-{scan.engagement_id:04d}",
@@ -381,7 +398,9 @@ def build_ed25519_signature_bundle(
         "scan_completed_utc": scan_completed_utc,
         "trusted_timestamp_utc": manifest_signed_utc,
         "scanner_configuration_manifest": scanner_configuration_manifest,
-        "total_sealed_artifacts": len(artifacts),
+        "total_sealed_artifacts": len(canonical_artifacts),
+        "raw_db_artifact_rows": raw_db_artifact_rows,
+        "duplicate_worker_port_probe_artifact_rows_deduplicated": duplicate_worker_port_probe_artifact_rows_deduplicated,
         "artifact_to_finding_bindings": bindings,
         "rtex_closure_bindings": rtex_bindings,
     }

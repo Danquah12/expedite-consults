@@ -1,0 +1,52 @@
+{
+  "original_finding_id": 6878,
+  "asset_and_origin_identity": "ASSET-00476 | https://portswigger.net:443",
+  "approved_scope_and_roe": "Host portswigger.net:443 matches ROE authorized origin 'https://portswigger.net:443'.",
+  "validation_adapter_and_version": "EVE-NET-001 (eve-adapter/2.3.0)",
+  "test_timestamp": "2026-11-09T10:36:55.055211+00:00",
+  "preconditions": {
+    "vulnerability_class": "network_service_validation",
+    "affected_technology": "web-application",
+    "detected_version": null,
+    "cve_applicable": false,
+    "preconditions_satisfied": true
+  },
+  "execution_transcript": {
+    "adapter_id": "EVE-NET-001",
+    "adapter_version": "eve-adapter/2.3.0",
+    "probed_endpoint": "https://portswigger.net/web-security",
+    "finding_key": "UDP-PORT-OPEN-53-DNS::T35_PORTSWIGGER_NET_WEB_SECURITY",
+    "safety_mode": "READ_ONLY_DETERMINISTIC",
+    "timestamp": "2026-11-09T10:36:55.052066+00:00",
+    "probe_steps": [
+      {
+        "step": 1,
+        "action": "EVALUATE_CONTROL_STATE",
+        "target": "https://portswigger.net/web-security",
+        "title": "[portswigger.net/web-security] Service Port Open: 53/UDP (DNS) on portswigger.net [65,535 UDP Sweep]",
+        "observation_excerpt": "[Target: https://portswigger.net/web-security] Full 65,535 UDP port & datagram service sweep verified active service on port 53/UDP (DNS) on target portswigger.net.\nCaptured UDP Service Telemetry: DNS 53/UDP Authoritative/Resolver Verified (portswigger.net -> 108.138.85.120). Dom"
+      }
+    ]
+  },
+  "request_response_evidence": [
+    {
+      "step": 1,
+      "action": "EVALUATE_CONTROL_STATE",
+      "target": "https://portswigger.net/web-security",
+      "title": "[portswigger.net/web-security] Service Port Open: 53/UDP (DNS) on portswigger.net [65,535 UDP Sweep]",
+      "observation_excerpt": "[Target: https://portswigger.net/web-security] Full 65,535 UDP port & datagram service sweep verified active service on port 53/UDP (DNS) on target portswigger.net.\nCaptured UDP Service Telemetry: DNS 53/UDP Authoritative/Resolver Verified (portswigger.net -> 108.138.85.120). Dom"
+    }
+  ],
+  "expected_vs_actual": {
+    "expected": "Verify whether missing control or configuration allows direct unauthorized boundary crossing.",
+    "actual": "Configuration/control gap confirmed at HTTP layer; no direct unauthorized data access or code execution resulted.",
+    "reproduced_behavior": false
+  },
+  "execution_outcome": "OBSERVATION_CONFIRMED",
+  "evidence_confidence": 0.88,
+  "exploitability_confidence": 0.15,
+  "impact_confidence": 0.05,
+  "operator_or_approving_identity": "secops-lead@expedite-consults.io",
+  "sha256_evidence_digest": "260752b4edba50737967edadbf7125f7cec7bb973c590f5e5cd17b9e96734133",
+  "attempt_key": "EVE-ATT-00689-781"
+}

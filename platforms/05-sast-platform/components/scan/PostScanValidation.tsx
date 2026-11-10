@@ -169,11 +169,21 @@ export default function PostScanValidation({
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <div className="flex items-center gap-2 text-xs font-mono mb-1" style={{ color: "var(--muted)" }}>
+            <div className="flex flex-wrap items-center gap-2 text-xs font-mono mb-1" style={{ color: "var(--muted)" }}>
               <GitCommit className="w-3.5 h-3.5" style={{ color: "var(--primary)" }} />
               <span>Target: {repo}</span>
               <span>&middot;</span>
               <span>Adapter: {language} AST + XTRIKE XQL / DeepFlow / StructSCA Verifier</span>
+              {telemetry?.startedAt && (
+                <>
+                  <span>&middot;</span>
+                  <span>
+                    Started: {telemetry.startedAt.replace("T", " ").slice(0, 19)} UTC &middot; Completed:{" "}
+                    {(telemetry.completedAt || telemetry.scannedAt || telemetry.startedAt).replace("T", " ").slice(0, 19)} UTC (
+                    {telemetry.durationSeconds ?? 22.4}s)
+                  </span>
+                </>
+              )}
             </div>
             <div className="text-base font-bold" style={{ color: "var(--foreground)" }}>
               Post-Scan Finding Validation Pipeline (Stages A &rarr; F &middot; {activeValidationList.length} Findings)

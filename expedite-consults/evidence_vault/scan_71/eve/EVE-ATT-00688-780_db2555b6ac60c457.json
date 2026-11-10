@@ -1,0 +1,52 @@
+{
+  "original_finding_id": 6875,
+  "asset_and_origin_identity": "ASSET-00475 | https://google-gruyere.appspot.com:443",
+  "approved_scope_and_roe": "Host google-gruyere.appspot.com:443 matches ROE authorized origin 'https://google-gruyere.appspot.com:443'.",
+  "validation_adapter_and_version": "EVE-NET-001 (eve-adapter/2.3.0)",
+  "test_timestamp": "2026-11-09T10:36:54.978716+00:00",
+  "preconditions": {
+    "vulnerability_class": "network_service_validation",
+    "affected_technology": "web-application",
+    "detected_version": null,
+    "cve_applicable": false,
+    "preconditions_satisfied": true
+  },
+  "execution_transcript": {
+    "adapter_id": "EVE-NET-001",
+    "adapter_version": "eve-adapter/2.3.0",
+    "probed_endpoint": "https://google-gruyere.appspot.com/",
+    "finding_key": "UDP-PORT-OPEN-443-HTTP_3_QUIC::T15_GOOGLE_GRUYERE_APPSPOT_COM",
+    "safety_mode": "READ_ONLY_DETERMINISTIC",
+    "timestamp": "2026-11-09T10:36:54.976678+00:00",
+    "probe_steps": [
+      {
+        "step": 1,
+        "action": "EVALUATE_CONTROL_STATE",
+        "target": "https://google-gruyere.appspot.com/",
+        "title": "[google-gruyere.appspot.com] Service Port Open: 443/UDP (HTTP/3-QUIC) on google-gruyere.appspot.com [65,535 UDP Sweep]",
+        "observation_excerpt": "[Target: https://google-gruyere.appspot.com/] Full 65,535 UDP port & datagram service sweep verified active service on port 443/UDP (HTTP/3-QUIC) on target google-gruyere.appspot.com.\nCaptured UDP Service Telemetry: HTTP/3 QUIC UDP Transport Verified (RFC 9000 / Alt-Svc h3=\":443\""
+      }
+    ]
+  },
+  "request_response_evidence": [
+    {
+      "step": 1,
+      "action": "EVALUATE_CONTROL_STATE",
+      "target": "https://google-gruyere.appspot.com/",
+      "title": "[google-gruyere.appspot.com] Service Port Open: 443/UDP (HTTP/3-QUIC) on google-gruyere.appspot.com [65,535 UDP Sweep]",
+      "observation_excerpt": "[Target: https://google-gruyere.appspot.com/] Full 65,535 UDP port & datagram service sweep verified active service on port 443/UDP (HTTP/3-QUIC) on target google-gruyere.appspot.com.\nCaptured UDP Service Telemetry: HTTP/3 QUIC UDP Transport Verified (RFC 9000 / Alt-Svc h3=\":443\""
+    }
+  ],
+  "expected_vs_actual": {
+    "expected": "Verify whether missing control or configuration allows direct unauthorized boundary crossing.",
+    "actual": "Configuration/control gap confirmed at HTTP layer; no direct unauthorized data access or code execution resulted.",
+    "reproduced_behavior": false
+  },
+  "execution_outcome": "OBSERVATION_CONFIRMED",
+  "evidence_confidence": 0.88,
+  "exploitability_confidence": 0.15,
+  "impact_confidence": 0.05,
+  "operator_or_approving_identity": "secops-lead@expedite-consults.io",
+  "sha256_evidence_digest": "af8c301fe44d3664f5620df189f1f2af6e1a4c487564537e14408f034892ab0e",
+  "attempt_key": "EVE-ATT-00688-780"
+}

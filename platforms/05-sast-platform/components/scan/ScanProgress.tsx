@@ -14,6 +14,7 @@ import {
   RefreshCw,
   ShieldAlert,
   Layers,
+  Clock,
 } from "lucide-react";
 import type { AttachedSourceFile } from "./RepoInput";
 import type { LiveScanTelemetry } from "@/lib/enterprise-sast-engine";
@@ -119,19 +120,36 @@ export default function ScanProgress({
   const [totalFiles, setTotalFiles] = useState(attachedFiles.length || 34);
   const [resolvedCommit, setResolvedCommit] = useState(commitSha.slice(0, 8));
   const [isCompleted, setIsCompleted] = useState(false);
+  const [startedAtIso, setStartedAtIso] = useState<string>(() => new Date().toISOString());
+  const [completedAtIso, setCompletedAtIso] = useState<string | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
 
   const logRef = useRef<HTMLDivElement>(null);
+
+  const formatTimestampBadge = (iso?: string | null) => {
+    if (!iso) return "In Progress…";
+    const ms = Date.parse(iso);
+    if (Number.isNaN(ms)) return iso;
+    const d = new Date(ms);
+    const localTime = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    const utcIso = d.toISOString().replace(/\.\d{3}Z$/, "Z");
+    return `${localTime} (${utcIso})`;
+  };
 
   // Clear previous scan state and fetch the new deep multi-pass backend telemetry
   useEffect(() => {
     let cancelled = false;
+    const freshStartIso = new Date().toISOString();
     clearActiveScanSession();
     setTelemetryData(null);
     setOverallPct(2);
     setFilesScanned(0);
     setIsCompleted(false);
+    setStartedAtIso(freshStartIso);
+    setCompletedAtIso(null);
+    setElapsedSeconds(0);
     setLogs([
-      `[RESET]     Cleared previous scan session state and findings buffer...`,
+      `[RESET]     Cleared previous scan session state and findings buffer at ${freshStartIso}...`,
       `[DISPATCH]  Initializing 7-Phase Deep Enumeration & Multi-DB Exploitability Engine for ${repo} (${language} AST · 400 Plugins)...`,
       `[DB-SYNC]   Connected to GitHub Advisory (GHSA), SearchSploit/Exploit-DB, Google OSV.dev/KEV, and VulnDB/EPSS feeds...`,
     ]);
@@ -148,19 +166,25 @@ export default function ScanProgress({
             language,
             engines: activeEngines,
             attachedFiles,
+            startedAt: freshStartIso,
           }),
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data: LiveScanTelemetry = await res.json();
         if (cancelled) return;
 
-        setTelemetryData(data);
+        const enrichedWithStart: LiveScanTelemetry = {
+          ...data,
+          startedAt: data.startedAt || freshStartIso,
+        };
+        setTelemetryData(enrichedWithStart);
         setResolvedCommit((data.commitSha || commitSha).slice(0, 8));
         setTotalFiles(data.filesScanned || 34);
 
         try {
-          sessionStorage.setItem("xtrike_live_sast_scan_v1", JSON.stringify(data));
-          localStorage.setItem("xtrike_live_sast_scan_v1", JSON.stringify(data));
+          clearActiveScanSession();
+          sessionStorage.setItem("xtrike_live_sast_scan_v1", JSON.stringify(enrichedWithStart));
+          localStorage.setItem("xtrike_live_sast_scan_v1", JSON.stringify(enrichedWithStart));
           window.dispatchEvent(new Event("xtrike-scan-updated"));
         } catch {
           // ignore storage quota errors
@@ -190,18 +214,46 @@ export default function ScanProgress({
     const incrementPerTick = 100 / (durationMs / tickMs);
 
     const iv = setInterval(() => {
+      setElapsedSeconds(
+        Number(((Date.now() - new Date(startedAtIso).getTime()) / 1000).toFixed(1))
+      );
       setOverallPct((prev) => {
         const next = Math.min(100, prev + incrementPerTick);
         if (next >= 100) {
+          const doneIso = new Date().toISOString();
+          const durSec = Math.max(
+            0.1,
+            Number(((new Date(doneIso).getTime() - new Date(startedAtIso).getTime()) / 1000).toFixed(1))
+          );
+          setCompletedAtIso(doneIso);
+          setElapsedSeconds(durSec);
           setIsCompleted(true);
           clearInterval(iv);
+          setTelemetryData((curr) => {
+            if (!curr) return curr;
+            const updated: LiveScanTelemetry = {
+              ...curr,
+              startedAt: curr.startedAt || startedAtIso,
+              completedAt: doneIso,
+              durationSeconds: durSec,
+              scannedAt: doneIso,
+            };
+            try {
+              sessionStorage.setItem("xtrike_live_sast_scan_v1", JSON.stringify(updated));
+              localStorage.setItem("xtrike_live_sast_scan_v1", JSON.stringify(updated));
+              window.dispatchEvent(new Event("xtrike-scan-updated"));
+            } catch {
+              // ignore storage quota errors
+            }
+            return updated;
+          });
         }
         return next;
       });
     }, tickMs);
 
     return () => clearInterval(iv);
-  }, [depthMode, isCompleted]);
+  }, [depthMode, isCompleted, startedAtIso]);
 
   // Sync streamed logs and file counts with overallPct
   useEffect(() => {
@@ -227,11 +279,33 @@ export default function ScanProgress({
   }, [logs]);
 
   const handleCompleteImmediately = () => {
+    const doneIso = new Date().toISOString();
+    const durSec = Math.max(
+      0.1,
+      Number(((new Date(doneIso).getTime() - new Date(startedAtIso).getTime()) / 1000).toFixed(1))
+    );
+    setCompletedAtIso(doneIso);
+    setElapsedSeconds(durSec);
     setOverallPct(100);
     setIsCompleted(true);
     if (telemetryData) {
+      const updated: LiveScanTelemetry = {
+        ...telemetryData,
+        startedAt: telemetryData.startedAt || startedAtIso,
+        completedAt: doneIso,
+        durationSeconds: durSec,
+        scannedAt: doneIso,
+      };
+      setTelemetryData(updated);
       setLogs(telemetryData.logs || []);
       setFilesScanned(telemetryData.filesScanned || totalFiles);
+      try {
+        sessionStorage.setItem("xtrike_live_sast_scan_v1", JSON.stringify(updated));
+        localStorage.setItem("xtrike_live_sast_scan_v1", JSON.stringify(updated));
+        window.dispatchEvent(new Event("xtrike-scan-updated"));
+      } catch {
+        // ignore storage quota errors
+      }
     }
   };
 
@@ -315,6 +389,26 @@ export default function ScanProgress({
               >
                 <GitCommit size={13} color="#8b4528" />
                 {repo} @ {resolvedCommit}
+              </span>
+              <span
+                style={{
+                  fontSize: 11,
+                  fontFamily: "monospace",
+                  color: "#5c5349",
+                  background: "var(--surface)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 6,
+                  padding: "2px 8px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 5,
+                }}
+              >
+                <Clock size={12} color="#8b4528" />
+                Started: {formatTimestampBadge(startedAtIso)} &middot;{" "}
+                {isCompleted && completedAtIso
+                  ? `Completed: ${formatTimestampBadge(completedAtIso)} (${elapsedSeconds}s)`
+                  : `Elapsed: ${elapsedSeconds}s`}
               </span>
             </div>
             <div style={{ fontSize: 15, fontWeight: 800, color: "#1f1b18" }}>

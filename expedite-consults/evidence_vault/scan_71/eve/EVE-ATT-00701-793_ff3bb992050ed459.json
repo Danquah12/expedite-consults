@@ -1,0 +1,52 @@
+{
+  "original_finding_id": 6901,
+  "asset_and_origin_identity": "ASSET-00480 | https://www.hackthissite.org:443",
+  "approved_scope_and_roe": "Host www.hackthissite.org:443 matches ROE authorized origin 'https://www.hackthissite.org:443'.",
+  "validation_adapter_and_version": "EVE-NET-001 (eve-adapter/2.3.0)",
+  "test_timestamp": "2026-11-09T10:36:56.221965+00:00",
+  "preconditions": {
+    "vulnerability_class": "network_service_validation",
+    "affected_technology": "web-application",
+    "detected_version": null,
+    "cve_applicable": false,
+    "preconditions_satisfied": true
+  },
+  "execution_transcript": {
+    "adapter_id": "EVE-NET-001",
+    "adapter_version": "eve-adapter/2.3.0",
+    "probed_endpoint": "https://www.hackthissite.org/",
+    "finding_key": "UDP-PORT-OPEN-53-DNS::T39_WWW_HACKTHISSITE_ORG",
+    "safety_mode": "READ_ONLY_DETERMINISTIC",
+    "timestamp": "2026-11-09T10:36:56.220049+00:00",
+    "probe_steps": [
+      {
+        "step": 1,
+        "action": "EVALUATE_CONTROL_STATE",
+        "target": "https://www.hackthissite.org/",
+        "title": "[www.hackthissite.org] Service Port Open: 53/UDP (DNS) on www.hackthissite.org [65,535 UDP Sweep]",
+        "observation_excerpt": "[Target: https://www.hackthissite.org/] Full 65,535 UDP port & datagram service sweep verified active service on port 53/UDP (DNS) on target www.hackthissite.org.\nCaptured UDP Service Telemetry: DNS 53/UDP Authoritative/Resolver Verified (www.hackthissite.org -> 137.74.187.101). "
+      }
+    ]
+  },
+  "request_response_evidence": [
+    {
+      "step": 1,
+      "action": "EVALUATE_CONTROL_STATE",
+      "target": "https://www.hackthissite.org/",
+      "title": "[www.hackthissite.org] Service Port Open: 53/UDP (DNS) on www.hackthissite.org [65,535 UDP Sweep]",
+      "observation_excerpt": "[Target: https://www.hackthissite.org/] Full 65,535 UDP port & datagram service sweep verified active service on port 53/UDP (DNS) on target www.hackthissite.org.\nCaptured UDP Service Telemetry: DNS 53/UDP Authoritative/Resolver Verified (www.hackthissite.org -> 137.74.187.101). "
+    }
+  ],
+  "expected_vs_actual": {
+    "expected": "Verify whether missing control or configuration allows direct unauthorized boundary crossing.",
+    "actual": "Configuration/control gap confirmed at HTTP layer; no direct unauthorized data access or code execution resulted.",
+    "reproduced_behavior": false
+  },
+  "execution_outcome": "OBSERVATION_CONFIRMED",
+  "evidence_confidence": 0.88,
+  "exploitability_confidence": 0.15,
+  "impact_confidence": 0.05,
+  "operator_or_approving_identity": "secops-lead@expedite-consults.io",
+  "sha256_evidence_digest": "84bf842e17920da4a05ae3b4ba3a60860b21768de25a8396eb9a6a2fb8b05208",
+  "attempt_key": "EVE-ATT-00701-793"
+}

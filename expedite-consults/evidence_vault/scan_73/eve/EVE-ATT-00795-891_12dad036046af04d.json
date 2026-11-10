@@ -1,0 +1,52 @@
+{
+  "original_finding_id": 7435,
+  "asset_and_origin_identity": "ASSET-00513 | https://pentest-ground.com:443",
+  "approved_scope_and_roe": "Host pentest-ground.com:443 matches ROE authorized origin 'https://pentest-ground.com:443'.",
+  "validation_adapter_and_version": "EVE-NET-001 (eve-adapter/2.3.0)",
+  "test_timestamp": "2026-11-09T16:28:47.138690+00:00",
+  "preconditions": {
+    "vulnerability_class": "network_service_validation",
+    "affected_technology": "web-application",
+    "detected_version": null,
+    "cve_applicable": false,
+    "preconditions_satisfied": true
+  },
+  "execution_transcript": {
+    "adapter_id": "EVE-NET-001",
+    "adapter_version": "eve-adapter/2.3.0",
+    "probed_endpoint": "https://pentest-ground.com/",
+    "finding_key": "PORT-OPEN-9000-SONARQUBE_PHP_FPM::T42_PENTEST_GROUND_COM",
+    "safety_mode": "READ_ONLY_DETERMINISTIC",
+    "timestamp": "2026-11-09T16:28:47.136829+00:00",
+    "probe_steps": [
+      {
+        "step": 1,
+        "action": "EVALUATE_CONTROL_STATE",
+        "target": "https://pentest-ground.com/",
+        "title": "[pentest-ground.com] Service Port Open: 9000/TCP (SonarQube/PHP-FPM) on pentest-ground.com [65,535 TCP Sweep]",
+        "observation_excerpt": "[Target: https://pentest-ground.com/] Full 65,535 TCP port sweep verified a live TCP handshake on port 9000/TCP (SonarQube/PHP-FPM) on target pentest-ground.com.\nCaptured Daemon Banner: Server: nginx/1.31.8 Application service or FastCGI listener on port 9000."
+      }
+    ]
+  },
+  "request_response_evidence": [
+    {
+      "step": 1,
+      "action": "EVALUATE_CONTROL_STATE",
+      "target": "https://pentest-ground.com/",
+      "title": "[pentest-ground.com] Service Port Open: 9000/TCP (SonarQube/PHP-FPM) on pentest-ground.com [65,535 TCP Sweep]",
+      "observation_excerpt": "[Target: https://pentest-ground.com/] Full 65,535 TCP port sweep verified a live TCP handshake on port 9000/TCP (SonarQube/PHP-FPM) on target pentest-ground.com.\nCaptured Daemon Banner: Server: nginx/1.31.8 Application service or FastCGI listener on port 9000."
+    }
+  ],
+  "expected_vs_actual": {
+    "expected": "Verify whether missing control or configuration allows direct unauthorized boundary crossing.",
+    "actual": "Configuration/control gap confirmed at HTTP layer; no direct unauthorized data access or code execution resulted.",
+    "reproduced_behavior": false
+  },
+  "execution_outcome": "OBSERVATION_CONFIRMED",
+  "evidence_confidence": 0.88,
+  "exploitability_confidence": 0.15,
+  "impact_confidence": 0.05,
+  "operator_or_approving_identity": "secops-lead@expedite-consults.io",
+  "sha256_evidence_digest": "e98ea540f3cab5a336f91669a932a00a7e0c9f11cbfcc13d4383130fbc7e5bbe",
+  "attempt_key": "EVE-ATT-00795-891"
+}

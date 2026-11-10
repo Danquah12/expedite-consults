@@ -1,0 +1,52 @@
+{
+  "original_finding_id": 7120,
+  "asset_and_origin_identity": "ASSET-00488 | https://owasp.org:443",
+  "approved_scope_and_roe": "Host owasp.org:443 matches ROE authorized origin 'https://owasp.org:443'.",
+  "validation_adapter_and_version": "EVE-NET-001 (eve-adapter/2.3.0)",
+  "test_timestamp": "2026-11-09T15:11:58.328616+00:00",
+  "preconditions": {
+    "vulnerability_class": "network_service_validation",
+    "affected_technology": "HTTP",
+    "detected_version": null,
+    "cve_applicable": false,
+    "preconditions_satisfied": true
+  },
+  "execution_transcript": {
+    "adapter_id": "EVE-NET-001",
+    "adapter_version": "eve-adapter/2.3.0",
+    "probed_endpoint": "https://owasp.org/projects/juice-shop",
+    "finding_key": "UDP-PORT-OPEN-53-DNS::T1_OWASP_ORG_PROJECTS_JUICE_SHO",
+    "safety_mode": "READ_ONLY_DETERMINISTIC",
+    "timestamp": "2026-11-09T15:11:58.325088+00:00",
+    "probe_steps": [
+      {
+        "step": 1,
+        "action": "EVALUATE_CONTROL_STATE",
+        "target": "https://owasp.org/projects/juice-shop",
+        "title": "[owasp.org/projects/juice-shop] Service Port Open: 53/UDP (DNS) on owasp.org [65,535 UDP Sweep]",
+        "observation_excerpt": "[Target: https://owasp.org/projects/juice-shop] Full 65,535 UDP port & datagram service sweep verified active service on port 53/UDP (DNS) on target owasp.org.\nCaptured UDP Service Telemetry: DNS 53/UDP Authoritative/Resolver Verified (owasp.org -> 216.150.1.1). Domain Name Syste"
+      }
+    ]
+  },
+  "request_response_evidence": [
+    {
+      "step": 1,
+      "action": "EVALUATE_CONTROL_STATE",
+      "target": "https://owasp.org/projects/juice-shop",
+      "title": "[owasp.org/projects/juice-shop] Service Port Open: 53/UDP (DNS) on owasp.org [65,535 UDP Sweep]",
+      "observation_excerpt": "[Target: https://owasp.org/projects/juice-shop] Full 65,535 UDP port & datagram service sweep verified active service on port 53/UDP (DNS) on target owasp.org.\nCaptured UDP Service Telemetry: DNS 53/UDP Authoritative/Resolver Verified (owasp.org -> 216.150.1.1). Domain Name Syste"
+    }
+  ],
+  "expected_vs_actual": {
+    "expected": "Verify whether missing control or configuration allows direct unauthorized boundary crossing.",
+    "actual": "Configuration/control gap confirmed at HTTP layer; no direct unauthorized data access or code execution resulted.",
+    "reproduced_behavior": false
+  },
+  "execution_outcome": "OBSERVATION_CONFIRMED",
+  "evidence_confidence": 0.88,
+  "exploitability_confidence": 0.15,
+  "impact_confidence": 0.05,
+  "operator_or_approving_identity": "secops-lead@expedite-consults.io",
+  "sha256_evidence_digest": "beb812598e5747e42855590f0639a3a92089b92392478abb82f7223983a8da91",
+  "attempt_key": "EVE-ATT-00741-835"
+}

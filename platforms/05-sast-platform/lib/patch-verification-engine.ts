@@ -1,5 +1,6 @@
 export type PatchVerificationStatus =
   | "PATCH_VERIFIED"
+  | "PATCH_COMPILED_UNVERIFIED_REMEDIATION"
   | "PATCH_STATICALLY_VALIDATED_UNCOMPILED"
   | "PATCH_STATIC_VALIDATION_FAILED"
   | "PATCH_INCOMPLETE_OR_STUB"
@@ -54,7 +55,7 @@ export interface PatchVerificationResult {
 
 const CWE_GUARD_PATTERNS: Record<string, RegExp[]> = {
   "CWE-89": [
-    /prepareStatement|PreparedStatement|SqlParameter|Parameters\.Add|cursor\.execute\s*\([^+%]+,\s*[\[(]|mysqli_prepare|mysqli_stmt_bind_param|bind_param|bindValue|bindParam|->prepare\s*\(|\$\d+|\?/i,
+    /prepareStatement|PreparedStatement|SqlParameter|Parameters\.Add|cursor\.execute\s*\([^+%]+,\s*[\[(]|mysqli_prepare|mysqli_stmt_bind_param|bind_param|bindValue|bindParam|->prepare\s*\(|replacements|QueryTypes\.SELECT|:searchPattern|\$\d+|\?/i,
   ],
   "CWE-78": [
     /ProcessBuilder|execFile|subprocess\.run\s*\(\s*\[|shell\s*=\s*False|UseShellExecute\s*=\s*false|ArgumentList|proc_open\s*\(\s*\[|escapeshellarg|exec\.Command\s*\(\s*"[^"]+"\s*,/i,
@@ -123,7 +124,19 @@ const CWE_GUARD_PATTERNS: Record<string, RegExp[]> = {
     /String\s*\(|typeof\s+.*===\s*['"]string['"]|\$eq|sanitizeFilter|Number\s*\(/i,
   ],
   "CWE-400": [
-    /rateLimit|maxBuffer|timeout|limit|MAX_LENGTH|validator\./i,
+    /rateLimit|maxBuffer|timeout|limit|limits|fileSize|MAX_LENGTH|MAX_INPUT_LENGTH|server\.close|exitCode|validator\./i,
+  ],
+  "CWE-770": [
+    /limits|fileSize|files\s*:|fields\s*:|maxBuffer|rateLimit|MAX_LENGTH/i,
+  ],
+  "CWE-382": [
+    /server\.close|exitCode|initiateGracefulShutdown|next\s*\(\s*err\s*\)/i,
+  ],
+  "CWE-200": [
+    /x-powered-by|hidePoweredBy|helmet|disable\s*\(/i,
+  ],
+  "CWE-1333": [
+    /escapeRegExp|replace\s*\(|slice\s*\(|RE2/i,
   ],
   "CWE-798": [
     /process\.env|os\.environ|os\.getenv|System\.getenv|getenv\s*\(|IConfiguration|_configuration|GetConnectionString|SecretManager|KeyVault|Configuration\[|GetEnvironmentVariable/i,
@@ -225,12 +238,14 @@ export function verifyRemediationPatch(params: {
   vulnerableSnippet: string;
   remediationSnippet: string;
   compiledAndRetested?: boolean;
+  remediationCertified?: boolean;
 }): PatchVerificationResult {
   const {
     cwe,
     language,
     remediationSnippet,
     compiledAndRetested = false,
+    remediationCertified = compiledAndRetested,
   } = params;
 
   const trimmed = (remediationSnippet || "").trim();
@@ -306,11 +321,19 @@ export function verifyRemediationPatch(params: {
     {
       checkId: "PV-05",
       label: "Target Build Compilation & Security Regression Test",
-      passed: compiledAndRetested,
-      executionState: compiledAndRetested ? "EXECUTED_RUNTIME" : "NOT_EXECUTED",
-      detail: compiledAndRetested
-        ? "Patch compiled in target build tree and verified against regression harness."
-        : "NOT_EXECUTED — Static source diff validated; target build compilation, security regression test, and functional test suite must be executed in CI/CD.",
+      passed: compiledAndRetested && remediationCertified,
+      executionState:
+        compiledAndRetested && remediationCertified
+          ? "EXECUTED_RUNTIME"
+          : compiledAndRetested
+          ? "VERIFIED_STATIC"
+          : "NOT_EXECUTED",
+      detail:
+        compiledAndRetested && remediationCertified
+          ? "Patch compiled in target build tree and verified against pre/post-patch security regression harness."
+          : compiledAndRetested
+          ? "Patch compiled in isolated build harness, but security remediation certification is gated pending manual provenance / pre-patch runtime reproduction."
+          : "NOT_EXECUTED — Static source diff validated; target build compilation, security regression test, and functional test suite must be executed in CI/CD.",
     },
   ];
 
@@ -328,9 +351,12 @@ export function verifyRemediationPatch(params: {
   } else if (!staticPassed) {
     status = "PATCH_STATIC_VALIDATION_FAILED";
     currentLifecycleStage = "PATCH_GENERATED";
-  } else if (compiledAndRetested) {
+  } else if (compiledAndRetested && remediationCertified) {
     status = "PATCH_VERIFIED";
     currentLifecycleStage = "REMEDIATION_VERIFIED";
+  } else if (compiledAndRetested) {
+    status = "PATCH_COMPILED_UNVERIFIED_REMEDIATION";
+    currentLifecycleStage = "PATCH_COMPILED";
   } else {
     status = "PATCH_STATICALLY_VALIDATED_UNCOMPILED";
     currentLifecycleStage = "PATCH_STATICALLY_VALIDATED";
@@ -354,8 +380,13 @@ export function verifyRemediationPatch(params: {
     },
     {
       stage: "SECURITY_TEST_PASSED",
-      status: compiledAndRetested ? "PASSED" : "NOT_RUN",
-      artifactRef: compiledAndRetested ? `SEC-RETEST-${patchDiffHash}` : "NOT_EXECUTED (Static Mode)",
+      status: compiledAndRetested && remediationCertified ? "PASSED" : "NOT_RUN",
+      artifactRef:
+        compiledAndRetested && remediationCertified
+          ? `SEC-RETEST-${patchDiffHash}`
+          : compiledAndRetested
+          ? "GATED_MANUAL_PROVENANCE_VALIDATION"
+          : "NOT_EXECUTED (Static Mode)",
     },
     {
       stage: "FUNCTIONAL_TEST_PASSED",
@@ -365,7 +396,12 @@ export function verifyRemediationPatch(params: {
     {
       stage: "REMEDIATION_VERIFIED",
       status: status === "PATCH_VERIFIED" ? "PASSED" : "NOT_RUN",
-      artifactRef: status === "PATCH_VERIFIED" ? `VERIFIED-${patchDiffHash}` : "AWAITING_BUILD_AND_RETEST",
+      artifactRef:
+        status === "PATCH_VERIFIED"
+          ? `VERIFIED-${patchDiffHash}`
+          : compiledAndRetested
+          ? "AWAITING_MANUAL_PROVENANCE_AND_REPLAY"
+          : "AWAITING_BUILD_AND_RETEST",
     },
   ];
 

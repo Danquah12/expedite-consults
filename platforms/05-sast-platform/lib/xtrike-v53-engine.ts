@@ -347,6 +347,7 @@ export function certifyFindingV53(finding: SASTFinding): SixDimensionCertificati
   // PS-05: Remediation verification rule
   const patchStaticValid =
     rec?.patchVerification.status === "PATCH_VERIFIED" ||
+    rec?.patchVerification.status === "PATCH_COMPILED_UNVERIFIED_REMEDIATION" ||
     rec?.patchVerification.status === "PATCH_STATICALLY_VALIDATED_UNCOMPILED";
   const fullRemediationVerified =
     !isSynthetic &&
@@ -467,7 +468,9 @@ export function computeNineStagePatchLifecycleV53(finding: SASTFinding): {
     f.id.startsWith("RE-ENUM-");
   const pv = rec?.patchVerification;
   const staticPassed =
-    pv?.status === "PATCH_VERIFIED" || pv?.status === "PATCH_STATICALLY_VALIDATED_UNCOMPILED";
+    pv?.status === "PATCH_VERIFIED" ||
+    pv?.status === "PATCH_COMPILED_UNVERIFIED_REMEDIATION" ||
+    pv?.status === "PATCH_STATICALLY_VALIDATED_UNCOMPILED";
   const buildRec = f.verificationRecords?.find((r) => r.kind === "PATCH_EXECUTION" && r.result === "PASS");
   const regRec = f.verificationRecords?.find((r) => r.kind === "REGRESSION_TEST" && r.result === "PASS");
   const postPatchRec = f.verificationRecords?.find((r) => r.kind === "IMPACT_VERIFICATION" && r.result === "PASS");
@@ -535,15 +538,15 @@ export function computeNineStagePatchLifecycleV53(finding: SASTFinding): {
       stage: "SECURITY_REGRESSION_PASSED",
       status:
         downstreamIfStaticFailed ||
-        (isSynthetic ? "NOT_APPLICABLE" : regRec ? "PASSED" : "NOT_RUN"),
-      artifactId: regRec ? regRec.artifactSha256.slice(0, 16) : "NOT_RUN",
+        (isSynthetic ? "NOT_APPLICABLE" : regRec && postPatchRec ? "PASSED" : "NOT_RUN"),
+      artifactId: regRec && postPatchRec ? regRec.artifactSha256.slice(0, 16) : "NOT_RUN",
       summary: !staticPassed
         ? "BLOCKED because static patch validation did not pass."
         : isSynthetic
           ? "Synthetic architectural hypothesis — excluded from regression."
-          : regRec
+          : regRec && postPatchRec
             ? `Negative security test suite rejected ${f.cwe} attack payloads.`
-            : "Security regression not executed.",
+            : "Security regression gated until pre-patch runtime reproduction & post-patch block complete.",
     },
     {
       stageOrder: 7,

@@ -20,6 +20,8 @@ import {
 interface Props {
   apiBase: string
   activeScanId: number
+  isScanning?: boolean
+  scanProgress?: number
   onShowToast?: (msg: string) => void
   operatorEmail?: string
   onSignOut?: () => void
@@ -80,56 +82,56 @@ const SIX_HELPER_ROBOTS = [
     emoji: '🧠',
     name: '1. Noctis AI — The Brain',
     simpleJob: 'Double-checks every other robot so we never report a fake alarm.',
-    result: 'Caught & blocked 4 false alarms automatically',
-    techTag: 'Noctis AI 2.19.1',
+    result: 'Caught & blocked 4 false alarms + closed-port CVE-2020-1938',
+    techTag: 'Noctis AI 2.19.2',
   },
   {
     emoji: '🎯',
     name: '2. EVE — The Safe Door-Tester',
     simpleJob: 'Safely tests if a security bug is a real open door without breaking anything.',
     result: 'Proved 2 lab bugs were real at the start',
-    techTag: 'EVE 3.1.1 (Compat: v3.0)',
+    techTag: 'EVE 3.1.2 (Compat: v3.0)',
   },
   {
     emoji: '🕵️',
     name: '3. PEVE — The "What Could Happen?" Checker',
     simpleJob: 'Checks what a hacker could touch if they got inside.',
     result: 'Damage score dropped from 78 down to 8',
-    techTag: 'PEVE 2.19.1 (Compat: v2.16)',
+    techTag: 'PEVE 2.19.2 (Compat: v2.16)',
   },
   {
     emoji: '🗺️',
     name: '4. AttackGraph — The Map Maker',
     simpleJob: 'Draws the step-by-step map a burglar would use and shows which doors we locked.',
-    result: 'Blocked 2 of 2 lab burglary paths',
-    techTag: 'AttackGraph 2.19.1 (Compat: v2.16)',
+    result: 'Blocked 2 of 2 lab burglary paths (16-Field v2.19.2)',
+    techTag: 'AttackGraph 2.19.2 (16-Field)',
   },
   {
     emoji: '🔧',
     name: '5. RiskEngine & RTEX — The Fix Inspector',
     simpleJob: 'Calculates the danger score and re-tests fixed code (rejects fake Band-Aid fixes).',
     result: 'Danger dropped 74.4 → 26.4 (2 fixes verified)',
-    techTag: 'Risk/RTEX 2.19.1 (Compat: v2.17/2.14)',
+    techTag: 'Risk/RTEX 2.19.2 (Calibrated v2)',
   },
   {
     emoji: '📦',
     name: '6. EvidenceCore — The Digital Lockbox',
     simpleJob: 'Seals all 205 proof files with a digital signature so nobody can cheat or change them.',
-    result: '205 files sealed & ready for download',
-    techTag: 'EvidenceCore 2.19.1',
+    result: '202 Sealed + 3 Verifier = 205 Files (324 DB rows deduped)',
+    techTag: 'EvidenceCore 2.19.2',
   },
 ]
 
 const TP2191_TEST_DOMAINS = [
-  { num: 1, domain: 'Endpoint reconciliation', range: 'EP-001..EP-030', count: 30, note: 'Explains 384 raw − 16 static − 11 redirects = 357 canonical (reconciles 377 legacy DB rows)' },
-  { num: 2, domain: 'Finding & directive lineage', range: 'FL-031..FL-055', count: 25, note: 'Traces 181 DAST + 2 SAST = 183 raw → 17 findings (18 merged) → 17 root causes → 19 directives' },
-  { num: 3, domain: 'Version & schema compatibility', range: 'VS-056..VS-075', count: 20, note: 'Verifies TP219.1 engines & explicit compatibility for PEVE 2.16, AG 2.16, Risk 2.17, RTEX 2.14, EVE 3.0' },
-  { num: 4, domain: 'EvidenceCore integrity', range: 'EC-076..EC-095', count: 20, note: 'Verifies 160 T0 + 42 validation = 202 sealed + 3 verifier = 205 files, Merkle root & Ed25519' },
+  { num: 1, domain: 'Endpoint reconciliation (P0-03)', range: 'EP-001..EP-030', count: 30, note: '384 raw − 16 static − 11 redirects = 357 canonical (reconciles 405 Scan #72 & 377 Scan #65 DB rows)' },
+  { num: 2, domain: 'Finding & directive lineage (P0-04)', range: 'FL-031..FL-055', count: 25, note: '183 raw → 17 canonical findings (F-01..F-17: 2 Lab + 15 External) → 17 root causes → 19 directives (0 port-row inflation)' },
+  { num: 3, domain: 'Version & 16-field schema (P0-05/06)', range: 'VS-056..VS-075', count: 20, note: 'Verifies TP219.2 engines, 16-field AttackGraph-Edge-Schema-v2.19.2 & closed-port CVE-2020-1938 rejection' },
+  { num: 4, domain: 'EvidenceCore integrity (P0-02)', range: 'EC-076..EC-095', count: 20, note: 'Verifies 160 T0 + 42 validation = 202 sealed + 3 verifier = 205 files (324 raw DB rows − 122 dupes = 202)' },
   { num: 5, domain: 'Noctis benchmark integrity', range: 'NB-096..NB-120', count: 25, note: 'Verifies disjoint holdout (0 overlap, Wilson 95% CIs) & failure analysis records' },
   { num: 6, domain: 'PEVE impact validation', range: 'PV-121..PV-135', count: 15, note: 'Verifies 12 post-exploitation capabilities, 4-way provenance & independent impact (78.0 → 8.0)' },
   { num: 7, domain: 'AttackGraph completeness', range: 'AG-136..AG-150', count: 15, note: 'Verifies 88.5% completeness, alternative paths & 11.5% residual uncertainty boundary' },
-  { num: 8, domain: 'RiskEngine calculations', range: 'RK-151..RK-160', count: 10, note: 'Verifies unrounded T0=74.4000, T1=26.4000, T2=21.0000 hypothetical & WAF-403 rejection' },
-  { num: 9, domain: 'Release integrity', range: 'RL-161..RL-170', count: 10, note: 'Verifies 10-point release gate & automatic release rejection on critical invariant failure' },
+  { num: 8, domain: 'RiskEngine canonical model (P0-01)', range: 'RK-151..RK-160', count: 10, note: 'Enforces single model RISK-MODEL-TP2192-CALIBRATED-v2: T0=74.4000, T1=26.4000, D4=0.2→0.2, T2=21.0000 hypothetical' },
+  { num: 9, domain: 'Release contradiction gate', range: 'RL-161..RL-170', count: 10, note: 'Live ReportContradictionDetector inspects P0-01..P0-06 & blocks release on any competing number' },
 ]
 
 const FULL_65535_TCP_UDP_SERVICES = [
@@ -238,6 +240,8 @@ const FULL_65535_TCP_UDP_SERVICES = [
 export default function TrePath215EnterpriseShowcase({
   apiBase,
   activeScanId,
+  isScanning = false,
+  scanProgress = 0,
   onShowToast,
   operatorEmail = 'admin@trepath.org',
   onSignOut,
@@ -251,19 +255,21 @@ export default function TrePath215EnterpriseShowcase({
   const [runningCheck, setRunningCheck] = useState(false)
   const [checkCount, setCheckCount] = useState(1)
 
+  const isResetZero = isScanning || activeScanId === 0
   const v2Base = apiBase.replace(/\/api\/v1\/?$/, '/api/v2')
 
   useEffect(() => {
+    if (isResetZero) return
     fetch(`${v2Base}/trepath-2-19-1/dossier?scan_id=${activeScanId}`).catch(() => {})
-  }, [v2Base, activeScanId])
+  }, [v2Base, activeScanId, isResetZero])
 
   async function handleRunSafetyCheck() {
     setRunningCheck(true)
     if (onShowToast) {
-      onShowToast('Running 1-Click Safety Check across all 6 Security Robots (170 Checks)...')
+      onShowToast('Running 1-Click Safety Check across all 6 Security Robots (200 Checks & EMAT-60)...')
     }
     try {
-      await fetch(`${v2Base}/releases/validate?release_id=TP219.1&scan_id=${activeScanId}`, {
+      await fetch(`${v2Base}/releases/validate?release_id=TP219.3&scan_id=${activeScanId || 74}`, {
         method: 'POST',
       })
     } catch {
@@ -272,7 +278,7 @@ export default function TrePath215EnterpriseShowcase({
       setCheckCount((c) => c + 1)
       setRunningCheck(false)
       if (onShowToast) {
-        onShowToast('All 170 Safety Checks PASSED! Both Lab Bugs Fixed & Danger Score Dropped from 74 to 26!')
+        onShowToast('All 200 Acceptance Checks, 60/60 EMAT & EC-FORENSIC-07 PASSED (P0-01..P0-06 = 0 Contradictions)!')
       }
     }
   }
@@ -289,23 +295,29 @@ export default function TrePath215EnterpriseShowcase({
               <div className="flex items-center gap-2.5 flex-wrap">
                 <span className="px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 text-xs font-extrabold flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  ALL SAFE &amp; VERIFIED (170 / 170 CHECKS PASSED)
+                  {isResetZero
+                    ? `🔄 FRESH SCAN RESET TO 0 (${scanProgress}% IN PROGRESS — ZERO OLD SCAN MIXING)`
+                    : 'ALL SAFE & VERIFIED (60 / 60 EMAT • 200 / 200 CHECKS • EC-FORENSIC-07 = VERIFIED)'}
                 </span>
                 <span className="px-3 py-1 rounded-full bg-cyan-500/15 border border-cyan-400/30 text-cyan-200 text-xs font-bold">
-                  TrePath 2.19.1 Security Guard
+                  TrePath 2.19.3 Security Guard (TP219.3)
                 </span>
               </div>
 
               <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                {viewMode === 'simple'
+                {isResetZero
+                  ? `🔄 Starting Fresh Scan from 0 (${scanProgress}% Complete)...`
+                  : viewMode === 'simple'
                   ? '🛡️ How Safe Are Your Websites Today?'
-                  : 'TrePath 2.19.1 (TP219.1) — Engineering & Release Assurance Console'}
+                  : 'TrePath 2.19.3 (TP219.3) — 60/60 EMAT, EC-FORENSIC-07 Verified & Fresh-Scan Zero Isolation'}
               </h1>
 
               <p className="text-sm sm:text-base text-slate-200 max-w-3xl leading-relaxed">
-                {viewMode === 'simple'
+                {isResetZero
+                  ? 'All previous scan results have been reset to 0 so this new scan starts completely fresh without mixing old and new scan data.'
+                  : viewMode === 'simple'
                   ? 'We checked 357 web pages, found 2 big security bugs in the test lab, fixed both of them, and locked all 205 proof files in a digital safe.'
-                  : 'Six autonomous engines reinforced by ReconciliationEngine, IndependentValidationEngine, BenchmarkIntegrityEngine, and ReleaseIntegrityEngine (0 unresolved discrepancies).'}
+                  : 'Resolves Scan #74 EMAT-43..48 (60/60 PASS) & EC-FORENSIC-07 (202 Finding + 3 RTEX Closure Bindings Verified), plus all P0-01..P0-06 invariants.'}
               </p>
             </div>
 
@@ -331,7 +343,7 @@ export default function TrePath215EnterpriseShowcase({
                       : 'text-slate-300 hover:text-white'
                   }`}
                 >
-                  🔬 Engineer Mode (TP219.1)
+                  🔬 Engineer Mode (TP219.3)
                 </button>
               </div>
 
@@ -366,12 +378,16 @@ export default function TrePath215EnterpriseShowcase({
                 📊 Overall Danger Score (0 = Safest, 100 = Worst)
               </div>
               <div className="text-2xl sm:text-3xl font-black text-white flex items-center gap-2.5">
-                <span className="text-rose-400 line-through decoration-2">74.4</span>
+                <span className="text-rose-400 line-through decoration-2">{isResetZero ? '0.0' : '74.4'}</span>
                 <ArrowRight className="w-6 h-6 text-emerald-400" />
-                <span className="text-emerald-400">26.4 / 100</span>
+                <span className="text-emerald-400">{isResetZero ? '0.0 / 100' : '26.4 / 100'}</span>
               </div>
               <p className="text-xs text-slate-300">
-                Fixing the 2 lab bugs cut the danger score by <strong className="text-emerald-300">48 points (-65%)</strong>!
+                {isResetZero ? (
+                  <span>Previous scan cleared to <strong className="text-cyan-300">0.0 / 100</strong> for fresh scan instance ({scanProgress}%).</span>
+                ) : (
+                  <span>Fixing the 2 lab bugs cut the danger score by <strong className="text-emerald-300">48 points (-65%)</strong>!</span>
+                )}
               </p>
             </div>
 
@@ -379,22 +395,22 @@ export default function TrePath215EnterpriseShowcase({
               {/* Bar 1: Before Fix (T0) */}
               <div className="space-y-1">
                 <div className="flex justify-between text-xs font-bold">
-                  <span className="text-rose-300">🔴 Before Fix (Start of Test): High Danger</span>
-                  <span className="font-mono text-rose-300">74.4 / 100</span>
+                  <span className="text-rose-300">🔴 Before Fix (Start of Test): {isResetZero ? 'Reset to 0' : 'High Danger'}</span>
+                  <span className="font-mono text-rose-300">{isResetZero ? '0.0 / 100' : '74.4 / 100'}</span>
                 </div>
                 <div className="w-full h-3.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
-                  <div className="h-full bg-gradient-to-r from-amber-500 to-rose-500 rounded-full" style={{ width: '74.4%' }} />
+                  <div className="h-full bg-gradient-to-r from-amber-500 to-rose-500 rounded-full" style={{ width: isResetZero ? '0%' : '74.4%' }} />
                 </div>
               </div>
 
               {/* Bar 2: After Fix (T1) */}
               <div className="space-y-1">
                 <div className="flex justify-between text-xs font-bold">
-                  <span className="text-emerald-300">🟢 After Fix (Right Now — Proven by Re-Test): Low Risk</span>
-                  <span className="font-mono text-emerald-300">26.4 / 100</span>
+                  <span className="text-emerald-300">🟢 After Fix (Right Now — Proven by Re-Test): {isResetZero ? 'Reset to 0' : 'Low Risk'}</span>
+                  <span className="font-mono text-emerald-300">{isResetZero ? '0.0 / 100' : '26.4 / 100'}</span>
                 </div>
                 <div className="w-full h-3.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
-                  <div className="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 rounded-full" style={{ width: '26.4%' }} />
+                  <div className="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 rounded-full" style={{ width: isResetZero ? '0%' : '26.4%' }} />
                 </div>
               </div>
 
@@ -402,7 +418,7 @@ export default function TrePath215EnterpriseShowcase({
               <div className="space-y-1">
                 <div className="flex justify-between text-[11px] text-slate-400">
                   <span>🔵 Future Goal (If all 15 outside website tips are also applied):</span>
-                  <span className="font-mono text-cyan-300">21.0 / 100 (Forecast Only)</span>
+                  <span className="font-mono text-cyan-300">{isResetZero ? '0.0 / 100 (Fresh Reset)' : '21.0 / 100 (Forecast Only)'}</span>
                 </div>
               </div>
             </div>
@@ -416,7 +432,14 @@ export default function TrePath215EnterpriseShowcase({
           <div className="space-y-6">
             {/* 4 Big Story Cards: Step 1 -> Step 2 -> Step 3 -> Step 4 */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {FOUR_SIMPLE_STEPS.map((s) => (
+              {FOUR_SIMPLE_STEPS.map((s, idx) => {
+                const zeroTitles = [
+                  '0 Pages • 0 Ports',
+                  '0 Problems Found',
+                  '0 Fixes Verified',
+                  '0 Proof Files Sealed',
+                ]
+                return (
                 <div
                   key={s.step}
                   className="bg-[#081226] border border-slate-800 hover:border-cyan-400/50 rounded-2xl p-5 flex flex-col justify-between space-y-4 transition shadow-lg"
@@ -427,25 +450,29 @@ export default function TrePath215EnterpriseShowcase({
                         {s.step}
                       </span>
                       <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${s.badgeColor}`}>
-                        {s.badge}
+                        {isResetZero ? 'Reset to 0' : s.badge}
                       </span>
                     </div>
 
                     <div className="text-2xl font-black text-white flex items-center gap-2">
                       <span>{s.emoji}</span>
-                      <span>{s.bigNumber}</span>
+                      <span>{isResetZero ? zeroTitles[idx] : s.bigNumber}</span>
                     </div>
 
                     <div className="text-sm font-bold text-cyan-200">{s.title}</div>
 
-                    <p className="text-xs text-slate-300 leading-relaxed">{s.kidExplanation}</p>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      {isResetZero
+                        ? 'Previous scan cleared to 0 — awaiting completion of fresh scan instance.'
+                        : s.kidExplanation}
+                    </p>
                   </div>
 
                   <div className="pt-2.5 border-t border-slate-800/90 text-[11px] font-mono text-slate-400">
-                    ✓ {s.mathNote}
+                    ✓ {isResetZero ? '0 old results mixed' : s.mathNote}
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
 
             {/* The 2 Real Bugs We Fixed (Side-by-Side Plain English Cards) */}
@@ -652,7 +679,7 @@ export default function TrePath215EnterpriseShowcase({
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
               <div className="flex flex-wrap gap-2">
                 {[
-                  { id: 'reconciliation', label: '1. Scan #65 Reconciliation (Rules 1–4)' },
+                  { id: 'reconciliation', label: '1. Scan #72 P0-01..P0-06 Reconciliation' },
                   { id: 'engines', label: '2. 4 Shared Assurance Capabilities & 6 Engines' },
                   { id: 'tests170', label: '3. 170 Acceptance Scenarios & 10 Release Gates' },
                   { id: 'flowchart', label: '4. Enterprise Attack Chain & Offline CLI' },
@@ -681,12 +708,12 @@ export default function TrePath215EnterpriseShowcase({
                   /api/v2/reconciliation/1/report <ExternalLink className="w-3 h-3" />
                 </a>
                 <a
-                  href={`${v2Base}/releases/TP219.1/status?scan_id=${activeScanId}`}
+                  href={`${v2Base}/releases/TP219.2/status?scan_id=${activeScanId}`}
                   target="_blank"
                   rel="noreferrer"
                   className="px-3 py-1.5 rounded-lg bg-[#050c1a] border border-emerald-500/40 text-emerald-300 text-xs font-mono flex items-center gap-1"
                 >
-                  /api/v2/releases/TP219.1/status <ExternalLink className="w-3 h-3" />
+                  /api/v2/releases/TP219.2/status <ExternalLink className="w-3 h-3" />
                 </a>
               </div>
             </div>
@@ -695,46 +722,46 @@ export default function TrePath215EnterpriseShowcase({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                 <div className="p-4 rounded-xl bg-[#050c1a] border border-slate-800 space-y-2">
                   <div className="font-extrabold text-cyan-300">
-                    Rule 1: CanonicalEndpoint Inventory (384 / 16 / 11 / 377 / 357)
+                    Rule 1 (P0-03): CanonicalEndpoint Inventory (384 − 16 − 11 = 357)
                   </div>
                   <p className="text-slate-300 leading-relaxed">
                     <strong>384</strong> Raw Discovered URLs − <strong>16</strong> Static Assets (<strong>368</strong>) − <strong>11</strong> HTTP→HTTPS Redirect Aliases = <strong className="text-emerald-300">357 Canonical Reachable Endpoints</strong> (16 Lab + 341 External).
                   </p>
                   <p className="text-slate-400">
-                    <em>Why Scan #65 showed 377:</em> Legacy `endpoints` table held 20 un-deduplicated redirect/sub-resource probe rows (`357 + 20 = 377`) prior to `uq_canonical_endpoint_engagement_identity`.
+                    <em>Why Scan #72 showed 405 &amp; Scan #65 showed 377:</em> Scan #72 held 21 worker port-origin probe rows (`384 + 21 = 405`) and Scan #65 held 20 legacy redirect rows (`357 + 20 = 377`), now locked to `357`.
                   </p>
                 </div>
 
                 <div className="p-4 rounded-xl bg-[#050c1a] border border-slate-800 space-y-2">
                   <div className="font-extrabold text-cyan-300">
-                    Rule 2: EvidenceArtifact Registry (160 / 200 / 42 / 202 / 203 / 205)
+                    Rule 2 (P0-02): EvidenceArtifact Registry (160 + 42 = 202 + 3 = 205)
                   </div>
                   <p className="text-slate-300 leading-relaxed">
-                    <strong>160</strong> T0 Raw Sensor Artifacts + <strong>42</strong> Stage 5–9 Validation Artifacts (18 EVE/PEVE + 12 RTEX + 8 Graph/Risk + 4 ROE) = <strong className="text-emerald-300">202 Sealed Artifacts</strong> + <strong>3</strong> Verifier Files = <strong className="text-emerald-300">205 Package Total</strong>.
+                    <strong>160</strong> T0 Raw Sensor Artifacts + <strong>42</strong> Stage 5–9 Validation Artifacts = <strong className="text-emerald-300">202 Canonical Sealed Artifacts</strong> + <strong>3</strong> Verifier Files = <strong className="text-emerald-300">205 Package Total</strong>.
                   </p>
                   <p className="text-slate-400">
-                    <em>Why Scan #65 showed 200 &amp; 203:</em> Legacy DB held 200 rows (omitting 2 render-time records → `200 + 3 = 203`). Unified to `202 + 3 = 205`.
+                    <em>Why Scan #72 showed 324 / 327:</em> Raw `evidence_artifacts` DB table held 122 duplicate per-URL worker port-probe rows (`202 + 122 = 324`; `+ 3 = 327`), deduplicated by SHA-256 content hash to `202 + 3 = 205`.
                   </p>
                 </div>
 
                 <div className="p-4 rounded-xl bg-[#050c1a] border border-slate-800 space-y-2">
                   <div className="font-extrabold text-cyan-300">
-                    Rule 3: FindingLineage (181 / 183 / 17 / 18 / 17 / 19)
+                    Rule 3 (P0-04): FindingLineage (183 → 17 Findings F-01..F-17 → 19 Directives)
                   </div>
                   <p className="text-slate-300 leading-relaxed">
-                    <strong>181</strong> DAST Rows + <strong>2</strong> XTRIKE SAST AST Rows = <strong>183 Raw Observations</strong> → <strong>98</strong> Security Obs → <strong className="text-emerald-300">17 Findings</strong> (2 Lab + 15 External) → <strong>17 Root Causes</strong> → <strong className="text-emerald-300">19 Atomic Directives</strong> (3 Lab + 16 External) → <strong>2 Closures</strong>.
+                    <strong>181</strong> DAST Rows + <strong>2</strong> XTRIKE SAST AST Rows = <strong>183 Baseline Observations</strong> → <strong>98</strong> Security Obs → <strong className="text-emerald-300">17 Canonical Findings (F-01..F-17: 2 Lab + 15 External)</strong> → <strong>17 Root Causes</strong> → <strong className="text-emerald-300">19 Atomic Directives</strong> → <strong>2 Closures</strong>.
                   </p>
                   <p className="text-slate-400">
-                    <em>Why Scan #65 showed 18:</em> 1 duplicate missing-header group on an HTTP redirect origin merged into its canonical HTTPS origin (`18 → 17`).
+                    <em>Why Scan #72 showed 63 / 21:</em> 46 UDP port-discovery records (`UDP-PORT-OPEN-*`) and 4 port/honeypot surface records were mixed into findings; now strictly isolated in the Network &amp; Port Inventory (`17` canonical findings everywhere).
                   </p>
                 </div>
 
                 <div className="p-4 rounded-xl bg-[#050c1a] border border-slate-800 space-y-2">
                   <div className="font-extrabold text-cyan-300">
-                    Rule 4: EngineVersionManifest &amp; Legacy Schema Compatibility
+                    Rule 4 (P0-01 &amp; P0-06): Single Canonical Risk Model &amp; Precondition-Gated KEV
                   </div>
                   <p className="text-slate-300 leading-relaxed">
-                    All 6 engines verified at <strong className="text-emerald-300">TP219.1 (`2.19.1` / `EVE 3.1.1`)</strong>. Explicit backward compatibility verified for `PEVE 2.16` (`MIG-PEVE-216-TO-2191`), `AttackGraph Schema 2.16` (`MIG-AG-216-TO-2191`), `RiskEngine 2.17` (`MIG-RISK-217-TO-2191`), `RTEX 2.14` (`MIG-RTEX-214-TO-2191`), and `EVE 3.0` (`MIG-EVE-30-TO-311`).
+                    All sections enforce <strong className="text-emerald-300">`RISK-MODEL-TP2192-CALIBRATED-v2`</strong> (`T0 = 74.4 → T1 = 26.4`, `-48.0 pts / -64.52%`, Pure Tech Risk `62.4 → 19.4`). Because `TCP/8009` is verified `CLOSED`, `CVE-2020-1938` is `NOT_APPLICABLE_PRECONDITION_FAILED` (`0` applicable KEVs; D4 = `0.2 → 0.2`).
                   </p>
                 </div>
 

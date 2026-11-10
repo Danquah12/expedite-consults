@@ -1,0 +1,52 @@
+{
+  "original_finding_id": 7448,
+  "asset_and_origin_identity": "ASSET-00515 | https://gandalf.lakera.ai:443",
+  "approved_scope_and_roe": "Host gandalf.lakera.ai:443 matches ROE authorized origin 'https://gandalf.lakera.ai:443'.",
+  "validation_adapter_and_version": "EVE-NET-001 (eve-adapter/2.3.0)",
+  "test_timestamp": "2026-11-09T16:28:51.521765+00:00",
+  "preconditions": {
+    "vulnerability_class": "network_service_validation",
+    "affected_technology": "web-application",
+    "detected_version": null,
+    "cve_applicable": false,
+    "preconditions_satisfied": true
+  },
+  "execution_transcript": {
+    "adapter_id": "EVE-NET-001",
+    "adapter_version": "eve-adapter/2.3.0",
+    "probed_endpoint": "https://gandalf.lakera.ai/",
+    "finding_key": "UDP-PORT-OPEN-443-HTTP_3_QUIC::T44_GANDALF_LAKERA_AI",
+    "safety_mode": "READ_ONLY_DETERMINISTIC",
+    "timestamp": "2026-11-09T16:28:51.519843+00:00",
+    "probe_steps": [
+      {
+        "step": 1,
+        "action": "EVALUATE_CONTROL_STATE",
+        "target": "https://gandalf.lakera.ai/",
+        "title": "[gandalf.lakera.ai] Service Port Open: 443/UDP (HTTP/3-QUIC) on gandalf.lakera.ai [65,535 UDP Sweep]",
+        "observation_excerpt": "[Target: https://gandalf.lakera.ai/] Full 65,535 UDP port & datagram service sweep verified active service on port 443/UDP (HTTP/3-QUIC) on target gandalf.lakera.ai.\nCaptured UDP Service Telemetry: HTTP/3 QUIC UDP Transport Verified (RFC 9000 / Alt-Svc h3=\":443\"). HTTP/3 over QUI"
+      }
+    ]
+  },
+  "request_response_evidence": [
+    {
+      "step": 1,
+      "action": "EVALUATE_CONTROL_STATE",
+      "target": "https://gandalf.lakera.ai/",
+      "title": "[gandalf.lakera.ai] Service Port Open: 443/UDP (HTTP/3-QUIC) on gandalf.lakera.ai [65,535 UDP Sweep]",
+      "observation_excerpt": "[Target: https://gandalf.lakera.ai/] Full 65,535 UDP port & datagram service sweep verified active service on port 443/UDP (HTTP/3-QUIC) on target gandalf.lakera.ai.\nCaptured UDP Service Telemetry: HTTP/3 QUIC UDP Transport Verified (RFC 9000 / Alt-Svc h3=\":443\"). HTTP/3 over QUI"
+    }
+  ],
+  "expected_vs_actual": {
+    "expected": "Verify whether missing control or configuration allows direct unauthorized boundary crossing.",
+    "actual": "Configuration/control gap confirmed at HTTP layer; no direct unauthorized data access or code execution resulted.",
+    "reproduced_behavior": false
+  },
+  "execution_outcome": "OBSERVATION_CONFIRMED",
+  "evidence_confidence": 0.88,
+  "exploitability_confidence": 0.15,
+  "impact_confidence": 0.05,
+  "operator_or_approving_identity": "secops-lead@expedite-consults.io",
+  "sha256_evidence_digest": "c65953c52cd9456663df08620a4b3e1f03e449becc8c6dc671d8309691d73d3d",
+  "attempt_key": "EVE-ATT-00839-935"
+}

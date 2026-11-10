@@ -6,13 +6,16 @@ import {
   computeAuditableRiskWorksheet,
   runTenGateReportAcceptanceSuite,
   proofStateBuckets,
+  resolveTypedProofClassification,
 } from "../lib/cvss31";
+import { computeProofLifecycle } from "../lib/proof-lifecycle";
 import { computeRiskIntelligence } from "../lib/risk-intelligence";
 import {
   validateFindingProvenance,
   findEvidenceLedgerContradictions,
   synchronizeFindingWithEvidenceLedger,
   verifyEvidenceChainIndependently,
+  reconcileAssessmentEndToEndV541,
 } from "../lib/finding-evidence-ledger";
 import { runExternalBenchmarkAccuracySuite } from "../lib/controlled-verification-stage";
 import { summarizePatchVerificationPortfolio } from "../lib/patch-verification-engine";
@@ -42,6 +45,7 @@ import {
   evaluateElevenSuitePermanentBenchmarkV60,
   computeSecurityAssuranceDashboardV60,
 } from "../lib/xtrike-v60-engine";
+import { buildCorrectiveAuditBundleV552 } from "../lib/xtrike-v552-corrective-engine";
 
 const benchRepo = findBenchmarkRepoByUrl("https://github.com/OWASP/BenchmarkDotNet");
 const files = benchRepo ? benchRepo.seedFiles : LANGUAGE_STARTER_CODEBASES["C#"];
@@ -302,14 +306,20 @@ const javaPortfolio = summarizePatchVerificationPortfolio(
 const javaPrimaryCount = javaWithBuildAndSandbox.filter(
   (f) => f.findingOrigin !== "ARCHITECTURAL_CANDIDATE_HYPOTHESIS" && !f.id.startsWith("RE-ENUM-")
 ).length;
-console.log("ShiftLeftSecurity/Benchmark (ea0146) Primary Findings:", javaPrimaryCount, "Patch Portfolio (Controlled Verification Stage):", javaPortfolio);
+const javaRuntimeReproducedCount = javaWithBuildAndSandbox.filter(
+  (f) =>
+    f.findingOrigin !== "ARCHITECTURAL_CANDIDATE_HYPOTHESIS" &&
+    !f.id.startsWith("RE-ENUM-") &&
+    f.evidenceRecord?.canonicalRegistry.runtime_state === "REPRODUCED"
+).length;
+console.log("ShiftLeftSecurity/Benchmark (ea0146) Primary Findings:", javaPrimaryCount, "Runtime Reproduced:", javaRuntimeReproducedCount, "Patch Portfolio (Controlled Verification Stage):", javaPortfolio);
 if (
   javaPortfolio.compiledSuccessfullyCount !== javaPrimaryCount ||
-  javaPortfolio.securityRegressionPassedCount !== javaPrimaryCount ||
   javaPortfolio.functionalRegressionPassedCount !== javaPrimaryCount ||
-  javaPortfolio.remediationVerifiedCount !== javaPrimaryCount
+  javaPortfolio.securityRegressionPassedCount !== javaRuntimeReproducedCount ||
+  javaPortfolio.remediationVerifiedCount !== javaRuntimeReproducedCount
 ) {
-  console.error("FAIL: Expected all primary repository patches (and 0 synthetic hypotheses) to compile and pass regression in Controlled Verification Stage:", javaPortfolio);
+  console.error("FAIL: Expected primary repository patches to compile (and only runtime-reproduced findings to claim REMEDIATION_VERIFIED) in Controlled Verification Stage:", javaPortfolio);
   process.exit(1);
 }
 const javaBuildGates = runTenGateReportAcceptanceSuite(javaWithBuildAndSandbox, javaVMap);
@@ -875,4 +885,302 @@ if (arch9.length !== 9 || contracts7.length !== 7 || bench11.length !== 11) {
   process.exit(1);
 }
 
-console.log("ALL XTRIKE v5.5.0 & v6.0 3-SCOPE GATES, 6-TIER REMEDIATION, CANONICAL RISK OBJECT, 5-STATE RISK CONTRACT, 10-POINT VERIFIER, ATTACK-PATH ENGINE, 11-SUITE BENCHMARK & 18/18 -> 12/12 SUPERSESSION LEDGER CHECKS PASSED");
+// ---- XTRIKE v5.5.2 Detection-Correctness, Patch-Fidelity, 4-Layer Verification & 60-Test Regression Verification ----
+const v552Bundle = buildCorrectiveAuditBundleV552(undefined, "XTRIKE-RPT-4E98F1-2026");
+console.log("XTRIKE v5.5.2 Corrective Audit Summary:", {
+  version: v552Bundle.version,
+  adjudicatedCount: v552Bundle.adjudicatedFindings.length,
+  confirmedProductionRisk: `${v552Bundle.separatedRisk.authoritativeConfirmedProductionRiskScore}/100 (down from ${v552Bundle.separatedRisk.preAdjudicationRawScore}/100 raw)`,
+  benchmark26Manifest: `${v552Bundle.benchmark26Manifest.activeCalibrationCases} active + ${v552Bundle.benchmark26Manifest.heldOutScopeFixtures} held-out = ${v552Bundle.benchmark26Manifest.totalCatalogedFixtures} total`,
+  regression60: `${v552Bundle.regressionSuite60.passedTests}/${v552Bundle.regressionSuite60.totalTests} passed`,
+  categoryCounts: v552Bundle.regressionSuite60.categoryCounts,
+});
+
+if (!v552Bundle.regressionSuite60.allPassed || v552Bundle.regressionSuite60.passedTests !== 60) {
+  const failed = v552Bundle.regressionSuite60.results.filter((r) => !r.passed);
+  console.error("FAIL: XTRIKE v5.5.2 60-Test Regression Suite had failures:", failed);
+  process.exit(1);
+}
+if (
+  v552Bundle.benchmark26Manifest.entries.length !== 26 ||
+  v552Bundle.separatedRisk.authoritativeConfirmedProductionRiskScore !== 18 ||
+  v552Bundle.separatedRisk.testClientExcludedExposureScore !== 0
+) {
+  console.error("FAIL: XTRIKE v5.5.2 benchmark manifest or separated risk invariant failed");
+  process.exit(1);
+}
+
+// ---- XTRIKE v5.5.3 OWASP Juice Shop Audit (XTRIKE-RPT-266448-2026) & Cross-Repo Isolation Verification ----
+const juiceShopCommit = "266448085bc2a1b2c3d4e5f60718293aa1b2c3d4";
+const juiceShopScan = scanFilesWithEnterpriseEngines({
+  files: [
+    {
+      path: "routes/search.ts",
+      language: "TypeScript",
+      content: `import models = require('../models/index')\nmodule.exports = function searchProducts () {\n  return (req: Request, res: Response, next: NextFunction) => {\n    let criteria: any = req.query.q === 'undefined' ? '' : req.query.q ?? ''\n    criteria = (criteria.length <= 200) ? criteria : criteria.substring(0, 200)\n    models.sequelize.query(\`SELECT * FROM Products WHERE ((name LIKE '%\${criteria}%' OR description LIKE '%\${criteria}%') AND deletedAt IS NULL) ORDER BY name\`).then(([products]: any) => {\n      res.json(utils.queryResultToJson(products))\n    })\n  }\n}`,
+    },
+    {
+      path: "server.ts",
+      language: "TypeScript",
+      content: `import express = require('express')\nimport multer = require('multer')\nconst app = express()\nconst storage = multer.diskStorage({\n  destination: '/tmp/uploads',\n  filename: (_req: any, file: any, cb: any) => {\n    cb(null, security.sanitizeFilename(file.originalname))\n  }\n})\nconst uploadToDisk = multer({ storage: storage, fileFilter: fileFilter })\nif (process.env.STATIC_FILES) {\n  process.exit(0)\n}\nfunction closeGracefully (exitCode: number) {\n  process.exit(exitCode)\n}`,
+    },
+    {
+      path: "package.json",
+      language: "Node.js",
+      content: `{\n  "name": "juice-shop",\n  "dependencies": {\n    "jsonwebtoken": "^0.4.0",\n    "compression": "~1.7.4",\n    "express-jwt": "0.1.3"\n  }\n}`,
+    },
+  ],
+  repoUrl: "https://github.com/juice-shop/juice-shop",
+  branch: "master",
+  commitSha: juiceShopCommit,
+  primaryLanguage: "TypeScript",
+  selectedEngines: ["XTRIKE XQL", "XTRIKE DeepFlow", "XTRIKE StructSCA", "XTRIKE AST-Query"],
+});
+
+const juiceShopSynced = juiceShopScan.findings.map((f) =>
+  synchronizeFindingWithEvidenceLedger(
+    { ...f },
+    juiceShopCommit,
+    "juice-shop/juice-shop",
+    { executeSandboxAndBuildHarness: true }
+  )
+);
+
+// 1. P0-01: Verify SAST-001 (routes/search.ts) uses Sequelize replacements on Products and criteria (NEVER orders / req.db.query)
+const jsSqli = juiceShopSynced.find((f) => f.cwe === "CWE-89" && f.file === "routes/search.ts");
+if (
+  !jsSqli ||
+  !/models\.sequelize\.query/i.test(jsSqli.remediation[0]?.code || "") ||
+  !/Products/i.test(jsSqli.remediation[0]?.code || "") ||
+  !/replacements/i.test(jsSqli.remediation[0]?.code || "") ||
+  /FROM\s+orders/i.test(jsSqli.remediation[0]?.code || "") ||
+  /FROM\s+orders/i.test(jsSqli.evidenceRecord?.controlledVerification?.exploitReplay?.prePatchObservedTrace || "")
+) {
+  console.error("FAIL [P0-01]: Juice Shop routes/search.ts SQLi remediation or runtime trace mismatched:", jsSqli);
+  process.exit(1);
+}
+
+// 2. P0-02: Verify non-request lifecycle process.exit(0) and process.exit(exitCode) are suppressed
+const jsProcessExit = juiceShopSynced.filter((f) => /process\.exit/i.test(f.sink || ""));
+if (jsProcessExit.length !== 0) {
+  console.error("FAIL [P0-02]: Expected 0 findings for startup/shutdown process.exit(0 | exitCode):", jsProcessExit);
+  process.exit(1);
+}
+
+// 3. P0-02: Verify Multer limits (CWE-770) preserves storage & fileFilter (never memoryStorage) and Multer originalname (CWE-22) is GUARD_ANALYZED
+const jsMulterLimits = juiceShopSynced.find((f) => f.cwe === "CWE-770");
+const jsMulterFilename = juiceShopSynced.find((f) => f.cwe === "CWE-22" && /sanitizeFilename/i.test(f.sink || ""));
+const jsXPoweredBy = juiceShopSynced.find((f) => f.cwe === "CWE-200");
+if (
+  !jsMulterLimits ||
+  /memoryStorage/i.test(jsMulterLimits.remediation[0]?.code || "") ||
+  !/limits\s*:/i.test(jsMulterLimits.remediation[0]?.code || "") ||
+  !jsMulterFilename ||
+  jsMulterFilename.proofState !== "GUARD_ANALYZED" ||
+  /readFileSync/i.test(jsMulterFilename.remediation[0]?.code || "") ||
+  !jsXPoweredBy ||
+  jsXPoweredBy.proofState !== "GUARD_ANALYZED"
+) {
+  console.error("FAIL [P0-02]: Juice Shop server.ts findings misclassified or mismatched patch:", {
+    jsMulterLimits,
+    jsMulterFilename,
+    jsXPoweredBy,
+  });
+  process.exit(1);
+}
+
+// 4. P0-03 & P0-06: Verify package.json CWE-1395 finding uses 8-stage SCA pipeline and never emits package.json:caller()
+const jsJwtSca = juiceShopSynced.find((f) => f.cwe === "CWE-1395");
+const jsDiag = jsJwtSca?.evidenceRecord?.manualValidationDiagnostic;
+if (
+  !jsJwtSca ||
+  !jsDiag ||
+  /package\.json:caller\(\)/i.test(jsDiag.propagationPathSummary) ||
+  !/1\.\s*Manifest/i.test(jsDiag.propagationPathSummary)
+) {
+  console.error("FAIL [P0-06]: CWE-1395 package.json finding failed 8-stage SCA diagnostic check:", jsDiag);
+  process.exit(1);
+}
+
+// 5. P0-04 & P0-05: Verify Juice Shop Corrective Audit Bundle has 0 WebGoat Java references and 12/12 XTR v5.5 gates pass with 0 reconciliation errors
+const jsAuditBundle = buildCorrectiveAuditBundleV552(
+  juiceShopSynced,
+  "XTRIKE-RPT-266448-2026",
+  "juice-shop/juice-shop",
+  juiceShopCommit
+);
+const jsAuditJson = JSON.stringify({
+  adjudicatedFindings: jsAuditBundle.adjudicatedFindings,
+  separatedRisk: jsAuditBundle.separatedRisk,
+  fourLayerVerification: jsAuditBundle.fourLayerVerification,
+});
+if (/SqlInjectionLesson8|BlindScript|PathTraversalIntegrationTest|49927b9fd0f0/i.test(jsAuditJson)) {
+  console.error("FAIL [P0-04]: Cross-repository WebGoat contamination detected in Juice Shop audit bundle:", jsAuditJson);
+  process.exit(1);
+}
+const jsV55Gates = runXtrikeV55TwelveGateAcceptanceSuite(juiceShopSynced);
+const jsReconcile = reconcileAssessmentEndToEndV541(juiceShopSynced);
+const jsContradictions = findEvidenceLedgerContradictions(juiceShopSynced);
+console.log("OWASP Juice Shop (XTRIKE-RPT-266448-2026) Verification:", {
+  findingsCount: juiceShopSynced.length,
+  v55GatesPassed: `${jsV55Gates.filter((g) => g.status === "PASS").length}/${jsV55Gates.length}`,
+  reconciled: jsReconcile.allReconciled,
+  contradictions: jsContradictions.length,
+  webGoatContamination: false,
+});
+if (
+  jsV55Gates.some((g) => g.status !== "PASS") ||
+  !jsReconcile.allReconciled ||
+  jsContradictions.length !== 0
+) {
+  console.error("FAIL [P0-05]: Juice Shop report failed v5.5 gates or reconciliation:", {
+    failedGates: jsV55Gates.filter((g) => g.status !== "PASS"),
+    jsReconcile,
+    jsContradictions,
+  });
+  process.exit(1);
+}
+
+// ============================================================================
+// XTRIKE v5.5.3 — OWASP BenchmarkDotNet (XTRIKE-RPT-B104D2-2026) Audit Verification
+// ============================================================================
+const csCommit = "b104d2e9a1b2c3d4e5f60718293aa1b2c3d4e5f6";
+const csSynced = deep.allFindings.map((f, idx) => {
+  const withDossier = {
+    ...f,
+    deepExploitability: buildDeepExploitabilityDossier({ ...f, deepExploitability: undefined }, idx),
+  };
+  return synchronizeFindingWithEvidenceLedger(
+    withDossier,
+    csCommit,
+    "OWASP/BenchmarkDotNet",
+    { executeSandboxAndBuildHarness: true }
+  );
+});
+const csPrimary = csSynced.filter(
+  (f) => f.findingOrigin !== "ARCHITECTURAL_CANDIDATE_HYPOTHESIS" && !f.id.startsWith("RE-ENUM-")
+);
+const csSynthetic = csSynced.filter(
+  (f) => f.findingOrigin === "ARCHITECTURAL_CANDIDATE_HYPOTHESIS" || f.id.startsWith("RE-ENUM-")
+);
+const csWs = computeAuditableRiskWorksheet(csSynced);
+const csAuditBundle = buildCorrectiveAuditBundleV552(
+  csSynced,
+  "XTRIKE-RPT-B104D2-2026",
+  "OWASP/BenchmarkDotNet",
+  csCommit
+);
+const csPrimaryPortfolio = summarizePatchVerificationPortfolio(
+  csPrimary.map((f) => f.evidenceRecord?.patchVerification)
+);
+
+// 1. P0 Risk Reconciliation: Single authoritative risk score (42/100) across Worksheet and Corrective Audit (no 42 vs 54 contradiction)
+// AND unified post-harness projected residual risk (13/100) across Page 3 (v55ModernizedRisk) and Pages 4-5 (CanonicalRiskObjectV60) (no 11 vs 13 contradiction)
+const csV55Risk = computeModernizedRiskEngineV55(csSynced);
+const csV60Risk = computeCanonicalRiskObjectV60(csSynced);
+if (
+  csWs.compositeRiskScore !== 42 ||
+  csAuditBundle.separatedRisk.authoritativeConfirmedProductionRiskScore !== csWs.compositeRiskScore ||
+  csV55Risk.portfolioScores.postPatchProjectedResidualRiskIndex !== 13 ||
+  csV60Risk.residualRiskAfterVerifiedRemediation.score !== 13 ||
+  csV55Risk.portfolioScores.postPatchProjectedResidualRiskIndex !== csV60Risk.residualRiskAfterVerifiedRemediation.score
+) {
+  console.error("FAIL [B104D2-P0-RISK]: Risk score or residual risk contradiction on OWASP BenchmarkDotNet:", {
+    worksheetScore: csWs.compositeRiskScore,
+    auditBundleScore: csAuditBundle.separatedRisk.authoritativeConfirmedProductionRiskScore,
+    v55ResidualRisk: csV55Risk.portfolioScores.postPatchProjectedResidualRiskIndex,
+    v60ResidualRisk: csV60Risk.residualRiskAfterVerifiedRemediation.score,
+  });
+  process.exit(1);
+}
+
+// 2. P0 SAST-001 (CWE-798) Patch Lifecycle vs Remediation Certification & 7-Stage Proof Lifecycle:
+// SAST-001 is NEEDS_MANUAL_VALIDATION -> must report PATCH_COMPILED_UNVERIFIED_REMEDIATION (never UNCOMPILED),
+// cap at PATCH_COMPILED, and mark 7-stage REMEDIATION_VERIFIED as BLOCKED (never PASSED when runtime is NOT_RUN)
+const csSast001 = csPrimary.find((f) => f.id === "SAST-001" && f.cwe === "CWE-798");
+const csSast001Lifecycle = csSast001 ? computeProofLifecycle(csSast001) : undefined;
+const csSast001RemMilestone = csSast001Lifecycle?.stages.find((s) => s.stage === "REMEDIATION_VERIFIED");
+if (
+  !csSast001 ||
+  csSast001.proofState !== "NEEDS_MANUAL_VALIDATION" ||
+  csSast001.evidenceRecord?.patchVerification.currentLifecycleStage !== "PATCH_COMPILED" ||
+  csSast001.evidenceRecord?.patchVerification.status !== "PATCH_COMPILED_UNVERIFIED_REMEDIATION" ||
+  csSast001.evidenceRecord?.canonicalRegistry.patch_state !== "COMPILED_UNVERIFIED" ||
+  csSast001.evidenceRecord?.canonicalRegistry.remediation_state !== "STATIC_READY_UNVERIFIED" ||
+  csSast001RemMilestone?.verdict !== "BLOCKED" ||
+  csPrimaryPortfolio.compiledSuccessfullyCount !== 4 ||
+  csPrimaryPortfolio.remediationVerifiedCount !== 3
+) {
+  console.error("FAIL [B104D2-P0-LIFECYCLE]: SAST-001 (NEEDS_MANUAL_VALIDATION) patch label or 7-stage REMEDIATION_VERIFIED mismatch:", {
+    sast001Stage: csSast001?.evidenceRecord?.patchVerification.currentLifecycleStage,
+    sast001Status: csSast001?.evidenceRecord?.patchVerification.status,
+    sast001PatchState: csSast001?.evidenceRecord?.canonicalRegistry.patch_state,
+    sast001RemMilestone: csSast001RemMilestone,
+    csPrimaryPortfolio,
+  });
+  process.exit(1);
+}
+
+// 3. P0 Zero Cross-Report Contamination in C# Corrective Audit Bundle (no Multer, npm SemVer, process.exit, or WebGoat Java text)
+const csAuditText = JSON.stringify({
+  adjudicatedFindings: csAuditBundle.adjudicatedFindings,
+  separatedRisk: csAuditBundle.separatedRisk,
+  fourLayerVerification: csAuditBundle.fourLayerVerification,
+  correctivePhases: csAuditBundle.correctivePhases,
+});
+if (/Multer|npm SemVer|process\.exit|SqlInjectionLesson8|BlindScript|PathTraversalIntegrationTest/i.test(csAuditText)) {
+  console.error("FAIL [B104D2-P0-ISOLATION]: Cross-report JS/Java text found in C# BenchmarkDotNet audit bundle:", csAuditText);
+  process.exit(1);
+}
+
+// 4. P0 Synthetic Hypotheses (RE-ENUM-001..010) Wording: zero "Observed Static Evidence", "Static AST confirmed",
+// "Static AST analyzer confirmed", "AST sink matched", "Literal string constant present in AST", or manualValidationDiagnostic
+for (const sf of csSynthetic) {
+  const sfTyped = resolveTypedProofClassification(sf);
+  const sfFullText = JSON.stringify({
+    deepExploitability: sf.deepExploitability,
+    evidenceRecord: sf.evidenceRecord,
+    typedProof: sfTyped,
+  });
+  if (
+    sf.evidenceRecord?.manualValidationDiagnostic ||
+    /Observed Static Evidence|Static AST confirmed|Static AST analyzer confirmed|AST sink matched|Lexical & AST sink detection matched|Literal string constant present in AST|identified statically in AST/i.test(
+      sfFullText
+    )
+  ) {
+    console.error("FAIL [B104D2-P0-SYNTHETIC]: Synthetic finding claimed observed AST sink:", sf.id, sfFullText);
+    process.exit(1);
+  }
+}
+
+// 5. P0 Report Integrity & Attack-Path Call-Graph Accuracy:
+const csIntegrityIssues = validateReportIntegrity(csSynced);
+const csLedgerContradictions = findEvidenceLedgerContradictions(csSynced);
+const csPaths = reconstructAttackPathsV60(csSynced);
+if (
+  csIntegrityIssues.length > 0 ||
+  csLedgerContradictions.length > 0 ||
+  !csPaths[0]?.chainPattern.includes("Intra-Procedural") ||
+  csPaths[0]?.predicates.multiVulnerabilityChainable !== false ||
+  csPaths[1]?.predicates.pathReachable !== "CANDIDATE_UNVERIFIED"
+) {
+  console.error("FAIL [B104D2-P0-INTEGRITY]: Integrity issues or attack path mismatch:", {
+    csIntegrityIssues,
+    csLedgerContradictions,
+    csPaths,
+  });
+  process.exit(1);
+}
+
+console.log("OWASP BenchmarkDotNet (XTRIKE-RPT-B104D2-2026) Audit Verification:", {
+  authoritativeRiskScore: `${csWs.compositeRiskScore}/100 (Unified across Page 4 & Page 6)`,
+  residualRiskAfterHarness: `${csV55Risk.portfolioScores.postPatchProjectedResidualRiskIndex}/100 (Unified across Page 3 & Pages 4-5)`,
+  sast001Lifecycle: `${csSast001.proofState} -> ${csSast001.evidenceRecord?.patchVerification.status} (${csSast001.evidenceRecord?.patchVerification.currentLifecycleStage}, 7-stage REMEDIATION_VERIFIED=${csSast001RemMilestone?.verdict})`,
+  primaryPortfolio: `${csPrimaryPortfolio.compiledSuccessfullyCount}/4 Compiled · ${csPrimaryPortfolio.remediationVerifiedCount}/4 Remediation Verified`,
+  crossReportContamination: false,
+  syntheticHypothesesClean: `${csSynthetic.length}/10 labeled Illustrative Architectural Hypothesis (0 AST sink claims)`,
+  integrityIssues: csIntegrityIssues.length,
+  attackPathsAligned: true,
+});
+
+console.log("ALL XTRIKE v5.5.0, v5.5.2 (60/60 REGRESSION TESTS), v5.5.3 (OWASP JUICE SHOP & OWASP BENCHMARKDOTNET B104D2 P0 AUDIT FIXES) & v6.0 GOVERNANCE CHECKS PASSED");

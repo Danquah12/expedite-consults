@@ -48,6 +48,8 @@ export type UnifiedAppTab =
 export interface LiveTelemetryProps {
   apiBase?: string
   scanId?: number
+  isScanning?: boolean
+  scanProgress?: number
   targetUrl?: string
   assetsCount?: number
   endpointsCount?: number
@@ -91,16 +93,18 @@ type InfoDrawerTopic =
 
 export default function ExpediteCheckObservabilityHub({
   apiBase,
-  scanId: initialScanId = 53,
+  scanId: initialScanId = 74,
+  isScanning = false,
+  scanProgress = 0,
   targetUrl = 'https://owasp.org, https://hackthissite.org, http://127.0.0.1:8008',
   assetsCount: initialAssetsCount = 15,
-  endpointsCount: initialEndpointsCount = 379,
-  rawObservationsCount: initialRawCount = 186,
-  consolidatedFindingsCount: initialConsolidatedCount = 19,
+  endpointsCount: initialEndpointsCount = 357,
+  rawObservationsCount: initialRawCount = 183,
+  consolidatedFindingsCount: initialConsolidatedCount = 17,
   validatedExploitsCount: initialValidatedCount = 2,
   rtexVerifiedCount: initialRtexCount = 2,
-  riskT0: initialRiskT0 = 7.7,
-  riskT1: initialRiskT1 = 2.6,
+  riskT0: initialRiskT0 = 7.44,
+  riskT1: initialRiskT1 = 2.64,
   hostsList = [
     'ordersvc-lab.internal (127.0.0.1:8008)',
     'sql-fin-01.internal (Tier-0 DB)',
@@ -1825,6 +1829,8 @@ ${buildNoctisPlatformLedgers()}`
           <TrePath215EnterpriseShowcase
             apiBase={resolvedApi}
             activeScanId={activeScanId}
+            isScanning={isScanning}
+            scanProgress={scanProgress}
             onShowToast={showToast}
             operatorEmail={operatorEmail}
             onSignOut={onSignOut}

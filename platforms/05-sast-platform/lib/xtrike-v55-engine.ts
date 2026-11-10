@@ -39,6 +39,7 @@ export type StaticPatchVerificationStateV55 =
 
 export type RuntimeHarnessRemediationStateV55 =
   | "HARNESS_BUILD_AND_REGRESSION_VERIFIED"
+  | "HARNESS_BUILD_PASSED_REMEDIATION_UNVERIFIED"
   | "STATIC_DIFF_ONLY_UNCOMPILED"
   | "NOT_APPLICABLE_SYNTHETIC";
 
@@ -104,7 +105,9 @@ export function computeProofVectorV55(rawFinding: SASTFinding): ProofVectorV55 {
         reg?.regression_state === "PASSED" &&
         rec?.patchVerification.status === "PATCH_VERIFIED"
       ? "HARNESS_BUILD_AND_REGRESSION_VERIFIED"
-      : "STATIC_DIFF_ONLY_UNCOMPILED";
+      : reg?.compile_state === "PASSED"
+        ? "HARNESS_BUILD_PASSED_REMEDIATION_UNVERIFIED"
+        : "STATIC_DIFF_ONLY_UNCOMPILED";
 
   const productionDeploymentState: ProductionDeploymentAssuranceStateV55 = isSynthetic
     ? "NOT_APPLICABLE_SYNTHETIC"
@@ -309,7 +312,7 @@ export function computeModernizedRiskEngineV55(
       : pv.harnessRemediationState === "HARNESS_BUILD_AND_REGRESSION_VERIFIED"
         ? Math.round(preMergeResidualRiskScore * 0.08) // 92% risk reduction verified in isolated harness; 8% residual until prod deploy
         : pv.staticPatchState === "STATIC_PATCH_VALIDATED"
-          ? Math.round(preMergeResidualRiskScore * 0.35) // Static patch validated only; compiler/runtime verification still required
+          ? Math.round(preMergeResidualRiskScore * 0.75) // Static/compiled patch validated only; 75% residual retained until runtime exploit block is verified
           : preMergeResidualRiskScore;
 
     const qualifiedSeverityLabel =

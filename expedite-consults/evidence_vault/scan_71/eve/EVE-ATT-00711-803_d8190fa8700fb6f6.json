@@ -1,0 +1,52 @@
+{
+  "original_finding_id": 6922,
+  "asset_and_origin_identity": "ASSET-00483 | https://pentest-ground.com:443",
+  "approved_scope_and_roe": "Host pentest-ground.com:443 matches ROE authorized origin 'https://pentest-ground.com:443'.",
+  "validation_adapter_and_version": "EVE-NET-001 (eve-adapter/2.3.0)",
+  "test_timestamp": "2026-11-09T10:36:57.262230+00:00",
+  "preconditions": {
+    "vulnerability_class": "network_service_validation",
+    "affected_technology": "web-application",
+    "detected_version": null,
+    "cve_applicable": false,
+    "preconditions_satisfied": true
+  },
+  "execution_transcript": {
+    "adapter_id": "EVE-NET-001",
+    "adapter_version": "eve-adapter/2.3.0",
+    "probed_endpoint": "https://pentest-ground.com/",
+    "finding_key": "UDP-PORT-OPEN-123-NTP::T42_PENTEST_GROUND_COM",
+    "safety_mode": "READ_ONLY_DETERMINISTIC",
+    "timestamp": "2026-11-09T10:36:57.260045+00:00",
+    "probe_steps": [
+      {
+        "step": 1,
+        "action": "EVALUATE_CONTROL_STATE",
+        "target": "https://pentest-ground.com/",
+        "title": "[pentest-ground.com] Service Port Open: 123/UDP (NTP) on pentest-ground.com [65,535 UDP Sweep]",
+        "observation_excerpt": "[Target: https://pentest-ground.com/] Full 65,535 UDP port & datagram service sweep verified active service on port 123/UDP (NTP) on target pentest-ground.com.\nCaptured UDP Service Telemetry: NTPv4 123/UDP Time Sync Service Verified (RFC 5905 Stratum-2). Network Time Protocol (St"
+      }
+    ]
+  },
+  "request_response_evidence": [
+    {
+      "step": 1,
+      "action": "EVALUATE_CONTROL_STATE",
+      "target": "https://pentest-ground.com/",
+      "title": "[pentest-ground.com] Service Port Open: 123/UDP (NTP) on pentest-ground.com [65,535 UDP Sweep]",
+      "observation_excerpt": "[Target: https://pentest-ground.com/] Full 65,535 UDP port & datagram service sweep verified active service on port 123/UDP (NTP) on target pentest-ground.com.\nCaptured UDP Service Telemetry: NTPv4 123/UDP Time Sync Service Verified (RFC 5905 Stratum-2). Network Time Protocol (St"
+    }
+  ],
+  "expected_vs_actual": {
+    "expected": "Verify whether missing control or configuration allows direct unauthorized boundary crossing.",
+    "actual": "Configuration/control gap confirmed at HTTP layer; no direct unauthorized data access or code execution resulted.",
+    "reproduced_behavior": false
+  },
+  "execution_outcome": "OBSERVATION_CONFIRMED",
+  "evidence_confidence": 0.88,
+  "exploitability_confidence": 0.15,
+  "impact_confidence": 0.05,
+  "operator_or_approving_identity": "secops-lead@expedite-consults.io",
+  "sha256_evidence_digest": "f539d2e40577c011f8c6a1350ad6b9fbef31a079f3f44575bebb3bde55e766b9",
+  "attempt_key": "EVE-ATT-00711-803"
+}

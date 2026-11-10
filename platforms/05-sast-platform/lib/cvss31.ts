@@ -5,7 +5,11 @@ import type {
   EvidenceCategory,
 } from "@/types/sast";
 import type { CanonicalValidationFinding } from "@/lib/validation-engine";
-import { isValidVerificationRecord, validateExecutionRecordStrict } from "@/lib/proof-lifecycle";
+import {
+  isValidVerificationRecord,
+  validateExecutionRecordStrict,
+  computeProofLifecycle,
+} from "@/lib/proof-lifecycle";
 import { remediationLanguageIssue } from "@/lib/source-provenance";
 import {
   synchronizeFindingWithEvidenceLedger,
@@ -219,7 +223,20 @@ export function resolveTypedProofClassification(
 ): TypedProofClassification {
   const cwe = (f.cwe || "").toUpperCase();
   const isArchCandidate =
-    f.id.startsWith("RE-ENUM-") || f.findingOrigin === "ARCHITECTURAL_CANDIDATE_HYPOTHESIS";
+    f.id.startsWith("RE-ENUM-") ||
+    f.findingOrigin === "ARCHITECTURAL_CANDIDATE_HYPOTHESIS" ||
+    f.sourceProvenance?.status === "SYNTHETIC_TEMPLATE";
+
+  const qualifyArchCandidate = (res: TypedProofClassification): TypedProofClassification => {
+    if (!isArchCandidate) return res;
+    return {
+      ...res,
+      evidenceHeading: `Synthetic Architectural Threat-Modeling Hypothesis (${res.evidenceType} — Template Only, File Not in Repository)`,
+      modeledAssumptions:
+        "Synthetic architectural threat-modeling template (file not present in scanned repository). Separated from Pass-1 primary scanned repository findings; no construct or sink was observed in the repository's AST.",
+      controlDominanceSummary: `Control Inspected: Architectural threat-modeling template for ${cwe} (${f.file}:${f.line} — file not present in repository) | Dominance: SYNTHETIC_TEMPLATE_ONLY | Effectiveness: NOT_OBSERVED_IN_REPOSITORY`,
+    };
+  };
 
   if (f.status === "Resolved" || vf?.status === "not_reproduced" || f.proofState === "MITIGATED_BY_GUARD") {
     return {
@@ -256,7 +273,7 @@ export function resolveTypedProofClassification(
 
   // 1. Secret Provenance & Log/Comment Credential Checks -> NEEDS_MANUAL_VALIDATION
   if (cwe === "CWE-798" || cwe === "CWE-532" || cwe === "CWE-615") {
-    return {
+    return qualifyArchCandidate({
       proofState: "NEEDS_MANUAL_VALIDATION",
       evidenceType: "SECRET_PROVENANCE",
       evidenceHeading: "Secret Provenance & Deployment Scope Verification Trace",
@@ -266,7 +283,7 @@ export function resolveTypedProofClassification(
       controlDominanceSummary:
         f.controlDominanceSummary ||
         "Control Inspected: Externalized Secret Manager / System.getenv() injection | Dominance: NOT_DOMINATED (Literal string constant present in AST) | Effectiveness: REQUIRES_HUMAN_PROVENANCE_CHECK",
-    };
+    });
   }
 
   // 2. Authorization Enforcement (IDOR / BOLA, JWT verification, CSRF, Rate Limiting, Mass Assignment) -> GUARD_ANALYZED
@@ -289,7 +306,7 @@ export function resolveTypedProofClassification(
             : cwe === "CWE-352"
               ? "Synchronizer CSRF token & SameSite cookie enforcement guard"
               : "Per-principal / per-IP rate-limiting & account lockout guard";
-    return {
+    return qualifyArchCandidate({
       proofState: "GUARD_ANALYZED",
       evidenceType: "AUTHORIZATION_ENFORCEMENT",
       evidenceHeading: "Authorization & Access-Control Guard Analysis Trace",
@@ -299,12 +316,12 @@ export function resolveTypedProofClassification(
       controlDominanceSummary:
         f.controlDominanceSummary ||
         `Control Inspected: ${specificControl} | Dominance: ABSENT_ON_PATH (0 dominating guards in local controller/service CFG before sink at ${f.file}:${f.line}) | Effectiveness: UNMITIGATED_IN_CODE (External gateway/RLS policies not assumed)`,
-    };
+    });
   }
 
   // 3. Cryptographic & PRNG Primitives -> DETECTED_STATIC
   if (cwe === "CWE-327" || cwe === "CWE-328" || cwe === "CWE-330" || cwe === "CWE-338") {
-    return {
+    return qualifyArchCandidate({
       proofState: "DETECTED_STATIC",
       evidenceType: "CRYPTOGRAPHIC_PRIMITIVE",
       evidenceHeading: "Cryptographic & PRNG Primitive AST Inspection",
@@ -314,12 +331,12 @@ export function resolveTypedProofClassification(
       controlDominanceSummary:
         f.controlDominanceSummary ||
         "Control Inspected: Approved FIPS 140-3 / NIST SP 800-131A primitive (Argon2id / AES-256-GCM / SecureRandom / crypto.randomBytes) | Dominance: WEAK_PRIMITIVE_INVOKED | Effectiveness: INSUFFICIENT_CRYPTOGRAPHIC_STRENGTH",
-    };
+    });
   }
 
   // 4. Concurrency / Race Condition -> PATH_FEASIBLE
   if (cwe === "CWE-362") {
-    return {
+    return qualifyArchCandidate({
       proofState: "PATH_FEASIBLE",
       evidenceType: "CONCURRENCY_STATE",
       evidenceHeading: "Concurrent State & Transaction Isolation Feasibility Trace",
@@ -329,12 +346,12 @@ export function resolveTypedProofClassification(
       controlDominanceSummary:
         f.controlDominanceSummary ||
         "Control Inspected: Pessimistic row lock (SELECT ... FOR UPDATE) / SERIALIZABLE isolation | Dominance: ABSENT_IN_METHOD | Effectiveness: RACE_WINDOW_FEASIBLE",
-    };
+    });
   }
 
   // 4b. Resource limits / configuration guards (CWE-400 / CWE-770 / CWE-382 / CWE-1333) -> GUARD_ANALYZED (never DETECTED_STATIC)
   if (cwe === "CWE-400" || cwe === "CWE-770" || cwe === "CWE-382" || cwe === "CWE-1333") {
-    return {
+    return qualifyArchCandidate({
       proofState: "GUARD_ANALYZED",
       evidenceType: "CONFIGURATION_CONTROL",
       evidenceHeading: "Resource-Limit & Runtime Configuration Guard Analysis Trace",
@@ -344,17 +361,34 @@ export function resolveTypedProofClassification(
       controlDominanceSummary:
         f.controlDominanceSummary ||
         `Control Inspected: Explicit resource limit / bounded input / graceful shutdown guard | Dominance: ABSENT_IN_LOCAL_CONFIG (${f.file}:${f.line}) | Effectiveness: UNBOUNDED_DEFAULT_ACTIVE`,
-    };
+    });
   }
 
-  // 4c. Path traversal without a verified downstream file I/O sink -> NEEDS_MANUAL_VALIDATION (candidate)
+  // 4c. Path traversal with custom sanitizer wrapper -> GUARD_ANALYZED; without downstream file I/O sink -> NEEDS_MANUAL_VALIDATION
   if (cwe === "CWE-22") {
+    if (
+      /\b(?:sanitizeFilename|path\.basename|secure_filename)\s*\(/i.test(
+        `${f.codeSnippet || ""}\n${f.sink || ""}`
+      )
+    ) {
+      return qualifyArchCandidate({
+        proofState: "GUARD_ANALYZED",
+        evidenceType: "TAINT_DATAFLOW",
+        evidenceHeading: "Custom Sanitizer Guard Inspection Trace (security.sanitizeFilename)",
+        modeledAssumptions:
+          f.modeledAssumptions ||
+          "Cited upload filename callback already wraps file.originalname in security.sanitizeFilename(...); static control inspection verifies sanitizer presence while recommending path.basename() + canonical UPLOAD_DIR prefix enforcement.",
+        controlDominanceSummary:
+          f.controlDominanceSummary ||
+          `Control Inspected: Custom filename sanitizer security.sanitizeFilename(file.originalname) | Dominance: PRESENT_AT_SINK (${f.file}:${f.line}) | Effectiveness: VERIFY_HELPER_STRIPS_DOTDOT_AND_NULL_BYTES`,
+      });
+    }
     const hasFileIoSink =
       /(?:readAllBytes|readAllLines|new\s+FileInputStream|new\s+FileReader|new\s+FileOutputStream|Files\.(?:read|write|newInputStream|copy|delete)|fs\.(?:readFile|readFileSync|createReadStream|writeFile|writeFileSync|unlink)|res\.sendFile|open\s*\()/i.test(
         `${f.codeSnippet || ""}\n${f.sink || ""}`
       );
     if (!hasFileIoSink) {
-      return {
+      return qualifyArchCandidate({
         proofState: "NEEDS_MANUAL_VALIDATION",
         evidenceType: "TAINT_DATAFLOW",
         evidenceHeading: "Path Construction Candidate — Downstream File I/O Sink Trace Pending",
@@ -364,13 +398,13 @@ export function resolveTypedProofClassification(
         controlDominanceSummary:
           f.controlDominanceSummary ||
           `Control Inspected: Canonical base-directory containment check | Dominance: NOT_ESTABLISHED (no file I/O sink in excerpt at ${f.file}:${f.line}) | Effectiveness: REQUIRES_SINK_TRACE`,
-      };
+      });
     }
   }
 
   // 5. Dependency Version Check -> NEEDS_MANUAL_VALIDATION (version evidence only, never a taint path)
   if (cwe === "CWE-1395") {
-    return {
+    return qualifyArchCandidate({
       proofState: "NEEDS_MANUAL_VALIDATION",
       evidenceType: "DEPENDENCY_VERSION",
       evidenceHeading: "Dependency Manifest & Vulnerable API Reachability Trace",
@@ -380,7 +414,7 @@ export function resolveTypedProofClassification(
       controlDominanceSummary:
         f.controlDominanceSummary ||
         "Control Inspected: Patched dependency version constraint & vulnerable API call-graph reachability | Dominance: MANIFEST_VERSION_AFFECTED | Effectiveness: REQUIRES_CALLGRAPH_REACHABILITY_CHECK",
-    };
+    });
   }
 
   // 6. Configuration, TLS Certificate/Hostname Validation, Headers, Cookies, CORS, Tabnabbing, Iframe Sandbox, Debug Routes, Input Schema, IAM -> GUARD_ANALYZED
@@ -418,7 +452,7 @@ export function resolveTypedProofClassification(
                 : cwe === "CWE-942"
                   ? "Strict CORS Origin allowlist validation"
                   : "Security configuration property & least-privilege boundary enforcement";
-    return {
+    return qualifyArchCandidate({
       proofState: "GUARD_ANALYZED",
       evidenceType: "CONFIGURATION_CONTROL",
       evidenceHeading:
@@ -433,12 +467,12 @@ export function resolveTypedProofClassification(
       controlDominanceSummary:
         f.controlDominanceSummary ||
         `Control Inspected: ${configGuard} | Dominance: ABSENT_IN_LOCAL_CONFIG (${f.file}:${f.line}) | Effectiveness: PERMISSIVE_TLS_BYPASS_ACTIVE`,
-    };
+    });
   }
 
   // 7. React innerHTML / Context-Dependent DOM Sink -> NEEDS_MANUAL_VALIDATION if provenance unestablished
   if (cwe === "CWE-79" && f.id === "F-024") {
-    return {
+    return qualifyArchCandidate({
       proofState: "NEEDS_MANUAL_VALIDATION",
       evidenceType: "TAINT_DATAFLOW",
       evidenceHeading: "DOM Sink & Upstream Sanitizer Provenance Trace",
@@ -448,22 +482,19 @@ export function resolveTypedProofClassification(
       controlDominanceSummary:
         f.controlDominanceSummary ||
         "Control Inspected: DOMPurify.sanitize() before dangerouslySetInnerHTML | Dominance: ABSENT_AT_RENDER_SINK | Effectiveness: REQUIRES_STORAGE_PROVENANCE_VERIFICATION",
-    };
+    });
   }
 
   // 8. Pass-2/3 Second-Order Architectural Candidates (RE-ENUM-*) -> PATH_FEASIBLE (never conflated with Pass-1 DATAFLOW_CONFIRMED)
   if (isArchCandidate) {
-    return {
+    return qualifyArchCandidate({
       proofState: "PATH_FEASIBLE",
       evidenceType: "TAINT_DATAFLOW",
       evidenceHeading: "Second-Order Architectural Candidate Feasibility Trace (Pass 2/3)",
       modeledAssumptions:
-        f.modeledAssumptions ||
-        "Pass-2/3 architectural re-enumeration modeled a feasible second-order or cross-module sink pattern; separated from Pass-1 primary scanned code findings until direct repository call-graph wiring and sandbox reproduction are executed.",
-      controlDominanceSummary:
-        f.controlDominanceSummary ||
-        `Control Inspected: Second-order input parameterization / allowlist guard at ${f.file}:${f.line} | Dominance: MODELED_ARCHITECTURAL_CANDIDATE | Effectiveness: REQUIRES_CROSS_MODULE_TRACE_AND_SANDBOX_VERIFICATION`,
-    };
+        "Synthetic architectural threat-modeling template (file not present in scanned repository). Separated from Pass-1 primary scanned repository findings; no construct or sink was observed in the repository's AST.",
+      controlDominanceSummary: `Control Inspected: Architectural threat-modeling template for ${cwe} (${f.file}:${f.line} — file not present in repository) | Dominance: SYNTHETIC_TEMPLATE_ONLY | Effectiveness: NOT_OBSERVED_IN_REPOSITORY`,
+    });
   }
 
   // 9. Genuine Pass-1 Source-to-Dangerous-Sink Taint Flows in Scanned Repository Code
@@ -1343,6 +1374,17 @@ export function validateReportIntegrity(
         code: "REMEDIATION_LANGUAGE_MISMATCH",
         findingId: f.id,
         detail: `${f.id} is ${f.language} but remediation is labelled ${rem.platform}.`,
+      });
+    }
+    // Fail-closed check: 7-stage proof lifecycle REMEDIATION_VERIFIED must never be PASSED when runtime reproduction was NOT_RUN
+    const lifecycle = computeProofLifecycle(f);
+    const remMilestone = lifecycle.stages.find((s) => s.stage === "REMEDIATION_VERIFIED");
+    const runtimeState = f.evidenceRecord?.canonicalRegistry.runtime_state || "NOT_RUN";
+    if (remMilestone && remMilestone.verdict === "PASSED" && runtimeState !== "REPRODUCED") {
+      issues.push({
+        code: "EVIDENCE_LEDGER_CONTRADICTION",
+        findingId: f.id,
+        detail: `${f.id}: 7-stage proof lifecycle marks REMEDIATION_VERIFIED as PASSED while runtime_state is ${runtimeState}.`,
       });
     }
   });

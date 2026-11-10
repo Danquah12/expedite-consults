@@ -322,7 +322,10 @@ export function computeProofLifecycle(f: SASTFinding): ProofLifecycle {
 
   const isTaintClass = f.evidenceType === "TAINT_DATAFLOW" || !f.evidenceType;
   const ip = f.interprocedural;
-  const isSynthetic = f.sourceProvenance?.status === "SYNTHETIC_TEMPLATE";
+  const isSynthetic =
+    f.sourceProvenance?.status === "SYNTHETIC_TEMPLATE" ||
+    f.findingOrigin === "ARCHITECTURAL_CANDIDATE_HYPOTHESIS" ||
+    f.id.startsWith("RE-ENUM-");
 
   const discovered: LifecycleStage = isSynthetic
     ? {
@@ -330,7 +333,7 @@ export function computeProofLifecycle(f: SASTFinding): ProofLifecycle {
         status: "ACHIEVED",
         verdict: "PASSED",
         prerequisites: [],
-        evidence: `${f.cwe} architectural candidate hypothesis generated for ${f.file}:${f.line} (SYNTHETIC_TEMPLATE)`,
+        evidence: `${f.cwe} architectural candidate hypothesis generated for ${f.file}:${f.line} (SYNTHETIC_TEMPLATE — file not present in repository)`,
       }
     : {
         stage: "DISCOVERED",
@@ -342,15 +345,6 @@ export function computeProofLifecycle(f: SASTFinding): ProofLifecycle {
 
   const dataflow: LifecycleStage = (() => {
     const prerequisites: LifecycleStageId[] = ["DISCOVERED"];
-    if (!isTaintClass) {
-      return {
-        stage: "DATAFLOW_VALIDATED",
-        status: "NOT_APPLICABLE",
-        verdict: "NOT_APPLICABLE",
-        prerequisites,
-        evidence: `${f.evidenceType} evidence is evaluated by guard/config inspection rather than taint dataflow`,
-      };
-    }
     if (isSynthetic) {
       return {
         stage: "DATAFLOW_VALIDATED",
@@ -358,6 +352,15 @@ export function computeProofLifecycle(f: SASTFinding): ProofLifecycle {
         verdict: "BLOCKED",
         prerequisites,
         evidence: "Blocked: candidate template file is not present in scanned source tree",
+      };
+    }
+    if (!isTaintClass) {
+      return {
+        stage: "DATAFLOW_VALIDATED",
+        status: "NOT_APPLICABLE",
+        verdict: "NOT_APPLICABLE",
+        prerequisites,
+        evidence: `${f.evidenceType} evidence is evaluated by guard/config inspection rather than taint dataflow`,
       };
     }
     if (ip?.status === "ESTABLISHED") {
@@ -396,18 +399,35 @@ export function computeProofLifecycle(f: SASTFinding): ProofLifecycle {
     };
   })();
 
-  const guard: LifecycleStage = {
-    stage: "GUARD_EVALUATED",
-    status: f.controlDominanceSummary ? "ACHIEVED" : "NOT_RUN",
-    verdict: f.controlDominanceSummary ? "PASSED" : "NOT_RUN",
-    prerequisites: ["DISCOVERED"],
-    evidence: f.controlDominanceSummary
-      ? f.controlDominanceSummary.slice(0, 160)
-      : "no control-dominance analysis recorded",
-  };
+  const guard: LifecycleStage = isSynthetic
+    ? {
+        stage: "GUARD_EVALUATED",
+        status: "NOT_APPLICABLE",
+        verdict: "NOT_APPLICABLE",
+        prerequisites: ["DISCOVERED"],
+        evidence: "Synthetic architectural hypothesis template — file not present in scanned source tree",
+      }
+    : {
+        stage: "GUARD_EVALUATED",
+        status: f.controlDominanceSummary ? "ACHIEVED" : "NOT_RUN",
+        verdict: f.controlDominanceSummary ? "PASSED" : "NOT_RUN",
+        prerequisites: ["DISCOVERED"],
+        evidence: f.controlDominanceSummary
+          ? f.controlDominanceSummary.slice(0, 160)
+          : "no control-dominance analysis recorded",
+      };
 
   const path: LifecycleStage = (() => {
     const prerequisites: LifecycleStageId[] = ["DISCOVERED", "DATAFLOW_VALIDATED"];
+    if (isSynthetic) {
+      return {
+        stage: "PATH_VALIDATED",
+        status: "BLOCKED",
+        verdict: "BLOCKED",
+        prerequisites,
+        evidence: "Blocked: candidate template file is not present in scanned source tree",
+      };
+    }
     if (!isTaintClass) {
       return {
         stage: "PATH_VALIDATED",
@@ -541,30 +561,45 @@ export function computeProofLifecycle(f: SASTFinding): ProofLifecycle {
             evidence: "No stored impact-verification record",
           };
 
-  const remediationStage: LifecycleStage =
-    patchRec && regRec
+  const remediationStage: LifecycleStage = isSynthetic
+    ? {
+        stage: "REMEDIATION_VERIFIED",
+        status: "NOT_APPLICABLE",
+        verdict: "NOT_APPLICABLE",
+        prerequisites: ["DISCOVERED", "RUNTIME_REPRODUCED", "IMPACT_VERIFIED"],
+        evidence: "Not applicable: synthetic architectural hypothesis template (not present in scanned repository)",
+      }
+    : patchRec && regRec && runtimeRec && impactRec && f.proofState !== "NEEDS_MANUAL_VALIDATION"
       ? {
           stage: "REMEDIATION_VERIFIED",
           status: "ACHIEVED",
           verdict: "PASSED",
-          prerequisites: ["DISCOVERED"],
-          evidence: `Patch compiled and regression test passed (${patchRec.executedAt})`,
+          prerequisites: ["DISCOVERED", "RUNTIME_REPRODUCED", "IMPACT_VERIFIED"],
+          evidence: `Patch compiled and security regression test passed (${patchRec.executedAt})`,
         }
       : patchFail
         ? {
             stage: "REMEDIATION_VERIFIED",
             status: "NOT_ACHIEVED",
             verdict: "FAILED",
-            prerequisites: ["DISCOVERED"],
+            prerequisites: ["DISCOVERED", "RUNTIME_REPRODUCED", "IMPACT_VERIFIED"],
             evidence: `Patch compilation or regression test failed (${patchFail.executedAt})`,
           }
-        : {
-            stage: "REMEDIATION_VERIFIED",
-            status: "NOT_RUN",
-            verdict: "NOT_RUN",
-            prerequisites: ["DISCOVERED"],
-            evidence: `Static ${f.remediation?.[0]?.platform || f.language} remediation diff generated; compiler & regression harness NOT_RUN`,
-          };
+        : patchRec && (!runtimeRec || !impactRec || f.proofState === "NEEDS_MANUAL_VALIDATION")
+          ? {
+              stage: "REMEDIATION_VERIFIED",
+              status: "BLOCKED",
+              verdict: "BLOCKED",
+              prerequisites: ["DISCOVERED", "RUNTIME_REPRODUCED", "IMPACT_VERIFIED"],
+              evidence: `Patch compiled cleanly in build harness (${patchRec.executedAt}), but security remediation certification is BLOCKED until RUNTIME_REPRODUCED and IMPACT_VERIFIED prerequisites complete`,
+            }
+          : {
+              stage: "REMEDIATION_VERIFIED",
+              status: "NOT_RUN",
+              verdict: "NOT_RUN",
+              prerequisites: ["DISCOVERED", "RUNTIME_REPRODUCED", "IMPACT_VERIFIED"],
+              evidence: `Static ${f.remediation?.[0]?.platform || f.language} remediation diff generated; compiler & regression harness NOT_RUN`,
+            };
 
   const stages: LifecycleStage[] = [
     discovered,

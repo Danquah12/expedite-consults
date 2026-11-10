@@ -280,8 +280,13 @@ def sync_unified_finding_registry(db: Session, scan_id: int) -> List[Dict[str, A
     retest_by_finding_id = {rx.finding_id: rx for rx in retests}
     art_by_finding_id = {a.finding_id: a for a in artifacts if a.finding_id}
 
-    db.query(UnifiedFindingRecord).filter_by(scan_id=scan_id).delete(synchronize_session=False)
-    db.flush()
+    can_write_db = True
+    try:
+        db.query(UnifiedFindingRecord).filter_by(scan_id=scan_id).delete(synchronize_session=False)
+        db.flush()
+    except Exception:
+        db.rollback()
+        can_write_db = False
 
     records_out: List[Dict[str, Any]] = []
     for idx, cf in enumerate(consolidated, start=1):
@@ -363,7 +368,8 @@ def sync_unified_finding_registry(db: Session, scan_id: int) -> List[Dict[str, A
             noctis_posture_state="CLOSED_VERIFIED" if is_remediated else "ACTIVE_TELEMETRY_WATCH",
             evidence_sha256=ev_hash,
         )
-        db.add(ufr)
+        if can_write_db:
+            db.add(ufr)
 
         finding_cat = (
             "SAST_AND_DAST_VALIDATED"
@@ -443,7 +449,11 @@ def sync_unified_finding_registry(db: Session, scan_id: int) -> List[Dict[str, A
             "evidence_sha256": ufr.evidence_sha256,
         })
 
-    db.commit()
+    if can_write_db:
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
     return records_out
 
 

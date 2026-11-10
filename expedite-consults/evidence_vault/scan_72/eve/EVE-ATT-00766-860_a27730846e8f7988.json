@@ -1,0 +1,52 @@
+{
+  "original_finding_id": 7165,
+  "asset_and_origin_identity": "ASSET-00496 | https://www.root-me.org:443",
+  "approved_scope_and_roe": "Host www.root-me.org:443 matches ROE authorized origin 'https://www.root-me.org:443'.",
+  "validation_adapter_and_version": "EVE-NET-001 (eve-adapter/2.3.0)",
+  "test_timestamp": "2026-11-09T15:12:01.208519+00:00",
+  "preconditions": {
+    "vulnerability_class": "network_service_validation",
+    "affected_technology": "web-application",
+    "detected_version": null,
+    "cve_applicable": false,
+    "preconditions_satisfied": true
+  },
+  "execution_transcript": {
+    "adapter_id": "EVE-NET-001",
+    "adapter_version": "eve-adapter/2.3.0",
+    "probed_endpoint": "https://www.root-me.org/",
+    "finding_key": "UDP-PORT-OPEN-123-NTP::T40_WWW_ROOT_ME_ORG",
+    "safety_mode": "READ_ONLY_DETERMINISTIC",
+    "timestamp": "2026-11-09T15:12:01.206619+00:00",
+    "probe_steps": [
+      {
+        "step": 1,
+        "action": "EVALUATE_CONTROL_STATE",
+        "target": "https://www.root-me.org/",
+        "title": "[www.root-me.org] Service Port Open: 123/UDP (NTP) on www.root-me.org [65,535 UDP Sweep]",
+        "observation_excerpt": "[Target: https://www.root-me.org/] Full 65,535 UDP port & datagram service sweep verified active service on port 123/UDP (NTP) on target www.root-me.org.\nCaptured UDP Service Telemetry: NTPv4 123/UDP Time Sync Service Verified (RFC 5905 Stratum-2). Network Time Protocol (Stratum "
+      }
+    ]
+  },
+  "request_response_evidence": [
+    {
+      "step": 1,
+      "action": "EVALUATE_CONTROL_STATE",
+      "target": "https://www.root-me.org/",
+      "title": "[www.root-me.org] Service Port Open: 123/UDP (NTP) on www.root-me.org [65,535 UDP Sweep]",
+      "observation_excerpt": "[Target: https://www.root-me.org/] Full 65,535 UDP port & datagram service sweep verified active service on port 123/UDP (NTP) on target www.root-me.org.\nCaptured UDP Service Telemetry: NTPv4 123/UDP Time Sync Service Verified (RFC 5905 Stratum-2). Network Time Protocol (Stratum "
+    }
+  ],
+  "expected_vs_actual": {
+    "expected": "Verify whether missing control or configuration allows direct unauthorized boundary crossing.",
+    "actual": "Configuration/control gap confirmed at HTTP layer; no direct unauthorized data access or code execution resulted.",
+    "reproduced_behavior": false
+  },
+  "execution_outcome": "OBSERVATION_CONFIRMED",
+  "evidence_confidence": 0.88,
+  "exploitability_confidence": 0.15,
+  "impact_confidence": 0.05,
+  "operator_or_approving_identity": "secops-lead@expedite-consults.io",
+  "sha256_evidence_digest": "b49c128d09ce6b1a095335542077715a1164a87383f3b147c870853e27a2dab6",
+  "attempt_key": "EVE-ATT-00766-860"
+}

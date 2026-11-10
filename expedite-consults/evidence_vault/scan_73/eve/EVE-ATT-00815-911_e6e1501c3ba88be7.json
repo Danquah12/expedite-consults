@@ -1,0 +1,52 @@
+{
+  "original_finding_id": 7401,
+  "asset_and_origin_identity": "ASSET-00507 | https://pentesterlab.com:443",
+  "approved_scope_and_roe": "Host pentesterlab.com:443 matches ROE authorized origin 'https://pentesterlab.com:443'.",
+  "validation_adapter_and_version": "EVE-NET-001 (eve-adapter/2.3.0)",
+  "test_timestamp": "2026-11-09T16:28:49.196898+00:00",
+  "preconditions": {
+    "vulnerability_class": "network_service_validation",
+    "affected_technology": "web-application",
+    "detected_version": null,
+    "cve_applicable": false,
+    "preconditions_satisfied": true
+  },
+  "execution_transcript": {
+    "adapter_id": "EVE-NET-001",
+    "adapter_version": "eve-adapter/2.3.0",
+    "probed_endpoint": "https://pentesterlab.com/",
+    "finding_key": "UDP-PORT-OPEN-443-HTTP_3_QUIC::T36_PENTESTERLAB_COM",
+    "safety_mode": "READ_ONLY_DETERMINISTIC",
+    "timestamp": "2026-11-09T16:28:49.195044+00:00",
+    "probe_steps": [
+      {
+        "step": 1,
+        "action": "EVALUATE_CONTROL_STATE",
+        "target": "https://pentesterlab.com/",
+        "title": "[pentesterlab.com] Service Port Open: 443/UDP (HTTP/3-QUIC) on pentesterlab.com [65,535 UDP Sweep]",
+        "observation_excerpt": "[Target: https://pentesterlab.com/] Full 65,535 UDP port & datagram service sweep verified active service on port 443/UDP (HTTP/3-QUIC) on target pentesterlab.com.\nCaptured UDP Service Telemetry: HTTP/3 QUIC UDP Transport Verified (RFC 9000 / Alt-Svc h3=\":443\"). HTTP/3 over QUIC "
+      }
+    ]
+  },
+  "request_response_evidence": [
+    {
+      "step": 1,
+      "action": "EVALUATE_CONTROL_STATE",
+      "target": "https://pentesterlab.com/",
+      "title": "[pentesterlab.com] Service Port Open: 443/UDP (HTTP/3-QUIC) on pentesterlab.com [65,535 UDP Sweep]",
+      "observation_excerpt": "[Target: https://pentesterlab.com/] Full 65,535 UDP port & datagram service sweep verified active service on port 443/UDP (HTTP/3-QUIC) on target pentesterlab.com.\nCaptured UDP Service Telemetry: HTTP/3 QUIC UDP Transport Verified (RFC 9000 / Alt-Svc h3=\":443\"). HTTP/3 over QUIC "
+    }
+  ],
+  "expected_vs_actual": {
+    "expected": "Verify whether missing control or configuration allows direct unauthorized boundary crossing.",
+    "actual": "Configuration/control gap confirmed at HTTP layer; no direct unauthorized data access or code execution resulted.",
+    "reproduced_behavior": false
+  },
+  "execution_outcome": "OBSERVATION_CONFIRMED",
+  "evidence_confidence": 0.88,
+  "exploitability_confidence": 0.15,
+  "impact_confidence": 0.05,
+  "operator_or_approving_identity": "secops-lead@expedite-consults.io",
+  "sha256_evidence_digest": "707f1a79977d132e133e498b2a8a8a8ef140f4dbb12a4b80cf43b2a6e1ab5520",
+  "attempt_key": "EVE-ATT-00815-911"
+}

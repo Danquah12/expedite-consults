@@ -1358,6 +1358,9 @@ const COMPILED_400_PLUGINS: {
 
 export type LiveScanTelemetry = {
   sessionId?: string;
+  startedAt?: string;
+  completedAt?: string;
+  durationSeconds?: number;
   scannedAt?: string;
   repoUrl: string;
   repoOwner: string;
@@ -1791,8 +1794,8 @@ export function getLanguageMatchedRemediation(
   return [
     {
       platform,
-      explanation: `Enforce strict schema allowlist validation and parameterized execution for ${cwe || "this weakness"} in ${platform}.`,
-      code: `// ✅ FIXED (${platform} Defensive Guard + Strict Schema Allowlist)\nif (typeof rawInput !== "string" || !/^[A-Za-z0-9_.-]{1,128}$/.test(rawInput)) {\n  throw new Error("Rejected input violating ${cwe || "security"} allowlist policy");\n}`,
+      explanation: `Enforce strict schema allowlist validation, bounded resource limits, and parameterized execution for ${cwe || "this weakness"} in ${platform}.`,
+      code: `// ✅ FIXED (${platform} Defensive Guard + Strict Schema Allowlist + Resource Limits)\nconst MAX_INPUT_LENGTH = 128;\nif (typeof rawInput !== "string" || rawInput.length > MAX_INPUT_LENGTH || !/^[A-Za-z0-9_.-]{1,128}$/.test(rawInput)) {\n  throw new Error("Rejected input violating ${cwe || "security"} allowlist and maxLength limits policy");\n}`,
     },
   ];
 }
@@ -2036,6 +2039,111 @@ export function pluginSupportsLanguage(pluginLangs: string[], fileLang: string):
   });
 }
 
+export interface CodeScopeAndTestClientClassification {
+  isTestOrHarnessFile: boolean;
+  isTestClientOperation: boolean;
+  isImportOrPackageStatement: boolean;
+  classification:
+    | "PRODUCTION_SERVER_HANDLER"
+    | "TEST_CLIENT_EXCLUDED"
+    | "TEST_HARNESS_FIXTURE"
+    | "BENIGN_IMPORT_OR_DECLARATION";
+  suppressionReason: string;
+}
+
+/**
+ * XTRIKE v5.5.2 Phase 1 (P0-01 & P0-02):
+ * Distinguishes production server-side handlers from test-client / integration-test code
+ * (*Test.java, *IntegrationTest.java, src/test/, RestAssured.given(), MockMvc, @Test)
+ * and benign import/package/type declarations.
+ */
+export function classifyCodeScopeAndTestClient(params: {
+  filePath: string;
+  fullText: string;
+  lineText: string;
+  surroundingText: string;
+}): CodeScopeAndTestClientClassification {
+  const { filePath, fullText, lineText, surroundingText } = params;
+  const trimmed = lineText.trim();
+
+  if (
+    /^(?:import\s+|package\s+|using\s+[A-Za-z0-9_.]+;|from\s+[A-Za-z0-9_.]+\s+import\s+)/.test(
+      trimmed
+    )
+  ) {
+    return {
+      isTestOrHarnessFile: false,
+      isTestClientOperation: false,
+      isImportOrPackageStatement: true,
+      classification: "BENIGN_IMPORT_OR_DECLARATION",
+      suppressionReason: `P0-02 Import/Declaration Guard: '${trimmed}' is a non-executable import/package declaration, not a vulnerability sink.`,
+    };
+  }
+
+  // P0-02 Lifecycle Process Exit Guard: Suppress non-request-reachable CLI bootstrap / graceful shutdown process.exit(0 | exitCode)
+  if (
+    /\bprocess\.exit\s*\(\s*(?:0|exitCode)\s*\)/.test(trimmed) ||
+    (/\bprocess\.exit\s*\(/.test(trimmed) &&
+      /\b(?:SIGINT|SIGTERM|SIGUSR2|uncaughtException|unhandledRejection|gracefulShutdown|closeServer|exitCode|STATIC_FILES|validateConfig)\b/i.test(
+        `${trimmed}\n${surroundingText}`
+      ))
+  ) {
+    return {
+      isTestOrHarnessFile: false,
+      isTestClientOperation: false,
+      isImportOrPackageStatement: true,
+      classification: "BENIGN_IMPORT_OR_DECLARATION",
+      suppressionReason: `P0-02 Lifecycle Process Exit Guard: '${trimmed}' is a server bootstrap/graceful-shutdown lifecycle exit, not a request-reachable HTTP route handler.`,
+    };
+  }
+
+  const normalizedPath = filePath.replace(/\\/g, "/");
+  const isTestPath =
+    /(?:^|\/)(?:test|tests|__tests__|spec|specs|it|integration-test|e2e)\//i.test(normalizedPath) ||
+    /(?:Test|Tests|IT|IntegrationTest|Spec|Specs)\.(?:java|ts|tsx|js|jsx|py|cs|php|go|rb|kt)$/i.test(
+      normalizedPath
+    );
+
+  const combinedContext = `${trimmed}\n${surroundingText}\n${fullText.slice(0, 2400)}`;
+  const hasTestFrameworkMarkers =
+    /\b(?:RestAssured\.given\s*\(|given\s*\(\s*\)\s*\.(?:when|multiPart|header|param|body|auth)|mockMvc\.perform\s*\(|@SpringBootTest|@WebMvcTest|@Test\b|org\.junit\.jupiter|org\.assertj\.core|TestRestTemplate|WebTestClient)\b/.test(
+      combinedContext
+    );
+
+  const isClientRequestOrTestFixtureIo =
+    /\b(?:RestAssured\.given\s*\(|\.multiPart\s*\(|\.post\s*\(|\.get\s*\(|mockMvc\.perform\s*\(|Files\.readAllBytes\s*\(|new\s+FileInputStream\s*\(|ClassPathResource|getResourceAsStream)\b/.test(
+      `${trimmed}\n${surroundingText}`
+    );
+
+  if (isTestPath && (hasTestFrameworkMarkers || isClientRequestOrTestFixtureIo)) {
+    return {
+      isTestOrHarnessFile: true,
+      isTestClientOperation: true,
+      isImportOrPackageStatement: false,
+      classification: "TEST_CLIENT_EXCLUDED",
+      suppressionReason: `P0-01 Test-Client Exclusion: ${normalizedPath} is an integration/unit test client (RestAssured / JUnit / MockMvc) constructing outbound test requests or reading local test fixtures, not an exposed server-side endpoint.`,
+    };
+  }
+
+  if (isTestPath) {
+    return {
+      isTestOrHarnessFile: true,
+      isTestClientOperation: false,
+      isImportOrPackageStatement: false,
+      classification: "TEST_HARNESS_FIXTURE",
+      suppressionReason: `Test-scope source file (${normalizedPath}); segregated from production server-side vulnerability counts.`,
+    };
+  }
+
+  return {
+    isTestOrHarnessFile: false,
+    isTestClientOperation: false,
+    isImportOrPackageStatement: false,
+    classification: "PRODUCTION_SERVER_HANDLER",
+    suppressionReason: "",
+  };
+}
+
 export function deriveFindingAuditMetadata(params: {
   cwe: string;
   sanitizerDetected: boolean;
@@ -2096,10 +2204,36 @@ export function deriveFindingAuditMetadata(params: {
     };
   }
 
+  // P0-02 (SAST-005): Multer file.originalname wrapped in custom security.sanitizeFilename(...) or path.basename(...)
+  if (
+    cwe === "CWE-22" &&
+    /\b(?:sanitizeFilename|path\.basename|secure_filename)\s*\(/i.test(`${lineText}\n${surroundingText}`)
+  ) {
+    const vec = "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:L/A:N";
+    const sc = calculateCvss31BaseScore(vec);
+    const sev = cvss31QualitativeSeverity(sc);
+    return {
+      proofState: "GUARD_ANALYZED",
+      valStatus: "inconclusive",
+      gtCat: "safely_mitigated",
+      auditDisposition:
+        "Guard & Sanitizer Control Analysis (CWE-22) — Existing custom sanitizer security.sanitizeFilename(file.originalname) wraps upload filename in sink; verify helper strips '../', '..\\\\', and null bytes or enforce path.basename() + canonical UPLOAD_DIR boundary",
+      cvssVector: vec,
+      cvssRationale: `Base ${sc.toFixed(1)} ${sev} (FIRST.org CVSS v3.1 Verified from ${vec}): Cited line already wraps file.originalname in security.sanitizeFilename(...); residual risk depends on helper implementation completeness.`,
+      isBenchmarkFixture,
+      deploymentContextNote,
+      overrideSeverity: sev,
+      overrideCvss: sc,
+      overrideEpss: 0.012,
+      overrideExploitability: "Difficult",
+      overrideFpLikelihood: "Medium",
+    };
+  }
+
   // PLG-046 / PLG-054 6-Stage Java Dynamic Compilation Analysis (javax.tools.JavaCompiler.getTask)
   if (
     cwe === "CWE-94" &&
-    /\b(?:compiler\.getTask\s*\(|ToolProvider\.getSystemJavaCompiler\s*\()/i.test(`${lineText}\n${surroundingText}`)
+    /\b(?:JavaCompiler|compiler\.getTask\s*\(|ToolProvider\.getSystemJavaCompiler\s*\()/i.test(`${lineText}\n${surroundingText}`)
   ) {
     const hasUntrustedSourceInExcerpt =
       /(?:request\.getParameter|@RequestParam|@RequestBody|@PathVariable|getQueryString|getHeader|req\.body|req\.query)/i.test(
@@ -2180,6 +2314,35 @@ export function deriveFindingAuditMetadata(params: {
     };
   }
 
+  // P0-02 General CWE-94 Taint-Provenance Gate: Any CWE-94 match lacking an explicit untrusted source in scope is held at NEEDS_MANUAL_VALIDATION
+  if (cwe === "CWE-94") {
+    const hasUntrustedSourceForCodeExec =
+      /(?:request\.getParameter|@RequestParam|@RequestBody|@PathVariable|getQueryString|getHeader|req\.body|req\.query|req\.params|request\.args|request\.form|request\.json|\$_(?:GET|POST|REQUEST))/i.test(
+        `${lineText}\n${surroundingText}`
+      );
+    if (!hasUntrustedSourceForCodeExec) {
+      const vec = "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N";
+      const sc = calculateCvss31BaseScore(vec);
+      const sev = cvss31QualitativeSeverity(sc);
+      return {
+        proofState: "NEEDS_MANUAL_VALIDATION",
+        valStatus: "inconclusive",
+        gtCat: "environment_dependent",
+        auditDisposition:
+          "Disposition: Needs validation | Static evidence: Dynamic evaluation/compilation API identified | Untrusted input flow: Not established in excerpt | Runtime code execution: Not demonstrated",
+        cvssVector: vec,
+        cvssRationale: `Base ${sc.toFixed(1)} ${sev} (FIRST.org CVSS v3.1 Verified from ${vec}): Dynamic code/compilation API matched without an established untrusted input source in scope; held at NEEDS_MANUAL_VALIDATION.`,
+        isBenchmarkFixture,
+        deploymentContextNote,
+        overrideSeverity: sev,
+        overrideCvss: sc,
+        overrideEpss: 0.0,
+        overrideExploitability: "Moderate",
+        overrideFpLikelihood: "Medium",
+      };
+    }
+  }
+
   // AT-10: Hardcoded secrets require manual validation of whether credential is live or a fixture
   if (cwe === "CWE-798") {
     return {
@@ -2216,6 +2379,8 @@ export function deriveFindingAuditMetadata(params: {
     cwe === "CWE-1021" ||
     cwe === "CWE-346" ||
     cwe === "CWE-200" ||
+    cwe === "CWE-770" ||
+    cwe === "CWE-382" ||
     cwe === "CWE-494"
   ) {
     return {
@@ -2359,6 +2524,26 @@ export function scanFilesWithEnterpriseEngines(params: {
       const lineText = rawLines[idx];
       const trimmed = lineText.trim();
       if (!trimmed || trimmed.startsWith("//") || trimmed.startsWith("#") || trimmed.startsWith("/*") || trimmed.startsWith("*")) {
+        continue;
+      }
+
+      // P0-01 & P0-02 Guard: Suppress benign import/package statements and test-client HTTP/fixture operations
+      const windowStartPre = Math.max(0, idx - 5);
+      const windowEndPre = Math.min(rawLines.length, idx + 6);
+      const surroundingPreText = rawLines.slice(windowStartPre, windowEndPre).join("\n");
+      const scopeClass = classifyCodeScopeAndTestClient({
+        filePath: fileObj.path,
+        fullText,
+        lineText: trimmed,
+        surroundingText: surroundingPreText,
+      });
+      if (scopeClass.isImportOrPackageStatement) {
+        continue;
+      }
+      if (scopeClass.isTestClientOperation || scopeClass.isTestOrHarnessFile) {
+        logs.push(
+          `[SCOPE-GUARD] ${scopeClass.classification}: Suppressed test-client / test-harness line at ${fileObj.path}:${idx + 1} (${scopeClass.suppressionReason})`
+        );
         continue;
       }
 

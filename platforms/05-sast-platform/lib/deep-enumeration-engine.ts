@@ -1052,14 +1052,36 @@ export function buildDeepExploitabilityDossier(
 
   const isNeedsValidation = proofState === "NEEDS_MANUAL_VALIDATION";
 
-  const initialResultStatus =
-    proofState === "MITIGATED_BY_GUARD"
+  const isSyntheticReEnum =
+    finding.id.startsWith("RE-ENUM-") ||
+    finding.findingOrigin === "ARCHITECTURAL_CANDIDATE_HYPOTHESIS" ||
+    finding.sourceProvenance?.status === "SYNTHETIC_TEMPLATE";
+
+  const initialResultStatus = isSyntheticReEnum
+    ? "SYNTHETIC_ARCHITECTURAL_HYPOTHESIS (Template Only — Not Observed in Repository)"
+    : proofState === "MITIGATED_BY_GUARD"
       ? "GUARDED"
       : proofState === "NEEDS_MANUAL_VALIDATION"
         ? "NEEDS_MANUAL_VALIDATION"
         : proofState === "DETECTED_STATIC"
           ? "STATIC_CANDIDATE"
           : "DATAFLOW_CONFIRMED (Runtime: NOT_RUN)";
+
+  const reEnumSummaryText = isSyntheticReEnum
+    ? kb.reEnumSummary.replace(
+        /Static AST confirmed/gi,
+        "Illustrative architectural threat hypothesis modeled for"
+      )
+    : kb.reEnumSummary;
+
+  const attackChainStepsList = isSyntheticReEnum
+    ? kb.attackChainSteps.map((step) =>
+        step.replace(
+          /Stage 1 \[Observed Static Evidence\]:/gi,
+          "Stage 1 [Illustrative Architectural Hypothesis — Template Only, Not Observed in Repository]:"
+        )
+      )
+    : kb.attackChainSteps;
 
   return {
     enumerationPhase: {
@@ -1105,26 +1127,36 @@ export function buildDeepExploitabilityDossier(
     },
     penetrationTestLifecycle: {
       initialPentest: {
-        phase: "Static AST & Dataflow Verification (Isolated Runtime Sandbox: NOT_RUN)",
+        phase: isSyntheticReEnum
+          ? "Synthetic Architectural Threat-Modeling Template (Not Observed in Scanned Repository)"
+          : "Static AST & Dataflow Verification (Isolated Runtime Sandbox: NOT_RUN)",
         probeType: kb.probeType,
         targetBoundary: kb.targetBoundary,
         resultStatus: initialResultStatus,
-        evidenceLog: isJavaCompilerSink
-          ? `[STATIC-AUDIT] Java compiler API identified at ${finding.file}:${finding.line} (${finding.sink.slice(0, 52)}) | Disposition: Needs validation | Untrusted input flow: Not established by excerpt | Runtime code execution: Not demonstrated | Actual impact: Unconfirmed | CVSS / EPSS: Reassessment required.`
-          : `[STATIC-TRACE] Source (${finding.source.slice(0, 48)}) -> Sink (${finding.sink.slice(0, 48)}) at ${finding.file}:${finding.line} | Canonical State: ${proofState} | Runtime Sandbox: NOT_RUN.`,
+        evidenceLog: isSyntheticReEnum
+          ? `[SYNTHETIC-HYPOTHESIS] Illustrative ${finding.language} architectural threat pattern (${finding.cwe}) modeled for template path ${finding.file} (SYNTHETIC_TEMPLATE — file not present in scanned repository; excluded from Primary Code Risk Index).`
+          : isJavaCompilerSink
+            ? `[STATIC-AUDIT] Java compiler API identified at ${finding.file}:${finding.line} (${finding.sink.slice(0, 52)}) | Disposition: Needs validation | Untrusted input flow: Not established by excerpt | Runtime code execution: Not demonstrated | Actual impact: Unconfirmed | CVSS / EPSS: Reassessment required.`
+            : `[STATIC-TRACE] Source (${finding.source.slice(0, 48)}) -> Sink (${finding.sink.slice(0, 48)}) at ${finding.file}:${finding.line} | Canonical State: ${proofState} | Runtime Sandbox: NOT_RUN.`,
       },
       reEnumeration: {
-        triggeredBy: `Static call-graph & architectural surface review for ${finding.id} (${finding.cwe})`,
+        triggeredBy: isSyntheticReEnum
+          ? `Synthetic architectural threat-modeling pass for ${finding.id} (${finding.cwe})`
+          : `Static call-graph & architectural surface review for ${finding.id} (${finding.cwe})`,
         newlyDiscoveredSurface: kb.reEnumSurface,
         secondarySinksFound: isNeedsValidation ? 0 : kb.secondarySinks,
-        summary: kb.reEnumSummary,
+        summary: reEnumSummaryText,
       },
       rePenetrationTest: {
         chainId: `STATIC-CHAIN-${finding.id}-${finding.cwe.replace("CWE-", "")}`,
-        attackChainSteps: kb.attackChainSteps,
+        attackChainSteps: attackChainStepsList,
         chainedCvss: finding.cvss,
-        verificationVerdict: finding.auditDisposition || kb.verificationVerdict,
-        proofArtifact: `AST-FINGERPRINT-${finding.id}-L${finding.line}`,
+        verificationVerdict: isSyntheticReEnum
+          ? `[Illustrative Architectural Hypothesis — Template Only, Not Observed in Repository] ${finding.auditDisposition || kb.verificationVerdict}`
+          : finding.auditDisposition || kb.verificationVerdict,
+        proofArtifact: isSyntheticReEnum
+          ? `SYNTHETIC-TEMPLATE-${finding.id}`
+          : `AST-FINGERPRINT-${finding.id}-L${finding.line}`,
       },
       postExploitation: {
         privilegeAttained: isNeedsValidation
@@ -1827,9 +1859,9 @@ export function generateDeepReEnumeratedFindings(params: {
       fortifyKingdom: "Input Validation and Representation",
       fortifyAnalyzer: "Dataflow",
       engines: [
-        { name: "XTRIKE XQL", confidence: 0.94, confirmed: true, details: `Deep Re-Enumeration AST query matched ${tpl.cwe}` },
-        { name: "XTRIKE DeepFlow", confidence: 0.92, confirmed: true, details: `Second-order taint path modeled across module boundary` },
-        { name: "XTRIKE StructSCA", confidence: 0.93, confirmed: true, details: `[Dataflow] Candidate sink verified statically` },
+        { name: "XTRIKE XQL", confidence: 0.94, confirmed: true, details: `[Threat-Model] Illustrative ${tpl.cwe} architectural hypothesis template` },
+        { name: "XTRIKE DeepFlow", confidence: 0.92, confirmed: true, details: `[Threat-Model] Second-order architectural hypothesis pattern (template only)` },
+        { name: "XTRIKE StructSCA", confidence: 0.93, confirmed: true, details: `[Threat-Model] Synthetic architectural blueprint (not observed in repository)` },
         { name: "XTRIKE AST-Query", confidence: 0.93, confirmed: true, details: `Mapped to ${tpl.cwe} / OWASP ASVS v4.0.3` },
       ],
       confidence: 0.93,
@@ -1844,7 +1876,7 @@ export function generateDeepReEnumeratedFindings(params: {
         { label: `${tpl.cwe} Sink`, type: "vulnerability", description: variant.sink },
         { label: "Hypothesized Impact", type: "impact", description: "Requires Isolated Runtime Reproduction" },
       ],
-      executiveSummary: `${tpl.passType} identified ${tpl.title} at ${resolvedFilePath}:${tpl.line} (${language}). Classified as an architectural candidate hypothesis (Isolated runtime sandbox reproduction: NOT_RUN).`,
+      executiveSummary: `[Illustrative Architectural Hypothesis — Template Only, Not Observed in Repository] ${tpl.passType} modeled ${tpl.title} for template path ${resolvedFilePath}:${tpl.line} (${language}). Excluded from observed repository vulnerability counts and authoritative risk score.`,
       businessImpact: "Represents a second-order or architectural weakness candidate that should be evaluated and remediated alongside primary Pass-1 findings.",
       rootCause: summaryFor(tpl),
       falsePositiveLikelihood: "Very Low",

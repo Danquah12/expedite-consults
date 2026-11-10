@@ -62,6 +62,8 @@ export function computeThreeScopeReleaseGatesV60(
   );
   const v55Gates = runXtrikeV55TwelveGateAcceptanceSuite(findings);
   const v55Passed = v55Gates.filter((g) => g.status === "PASS").length;
+  const allV55Passed = v55Passed === v55Gates.length;
+  const failedV55Ids = v55Gates.filter((g) => g.status !== "PASS").map((g) => g.id);
 
   const remBreakdown = computeSixTierRemediationBreakdownV60(findings);
   const allPrimaryCertified =
@@ -71,10 +73,11 @@ export function computeThreeScopeReleaseGatesV60(
     gateId: "GATE-1-ENGINE-RELEASE",
     gateName: "1. Engine Release Gate (Analyzer Readiness)",
     governedScope: "XTRIKE_ANALYZER_SOFTWARE",
-    status: "PASSED_ENGINE_READY",
-    passedMetrics: `${v55Passed}/${v55Gates.length} XTR engine acceptance gates passed · 0 report reconciliation errors`,
-    blockingReason:
-      "NONE for analyzer software — NOTE: Engine readiness never certifies that the scanned target application is safe to deploy.",
+    status: allV55Passed ? "PASSED_ENGINE_READY" : "BLOCKED_UNMERGED_PRODUCTION",
+    passedMetrics: `${v55Passed}/${v55Gates.length} XTR engine acceptance gates passed · ${allV55Passed ? 0 : failedV55Ids.length} report reconciliation errors`,
+    blockingReason: allV55Passed
+      ? "NONE for analyzer software — NOTE: Engine readiness never certifies that the scanned target application is safe to deploy."
+      : `BLOCKED: ${failedV55Ids.length} XTR engine acceptance gate(s) failed (${failedV55Ids.join(", ")}). Engine readiness cannot be claimed until all 12 gates pass.`,
     evidencePrerequisite:
       "All 12 XTR-01..XTR-12 engine self-tests, cryptographic verifier checks, and fixture suites pass.",
   };
@@ -167,7 +170,11 @@ export function computeSixTierRemediationBreakdownV60(
   const tier2Ids = primary
     .filter((f) => {
       const st = f.evidenceRecord?.patchVerification.status;
-      return st === "PATCH_VERIFIED" || st === "PATCH_STATICALLY_VALIDATED_UNCOMPILED";
+      return (
+        st === "PATCH_VERIFIED" ||
+        st === "PATCH_COMPILED_UNVERIFIED_REMEDIATION" ||
+        st === "PATCH_STATICALLY_VALIDATED_UNCOMPILED"
+      );
     })
     .map((f) => f.id);
 
@@ -1391,9 +1398,9 @@ export function runIndependentEvidenceVerifierTenPointV60(
       checkNumber: 5,
       targetProperty: "Test execution records",
       verifiedCount: primary.filter((r) => r.regression_status === "PASSED").length,
-      eligibleCount: primary.length,
+      eligibleCount: exploitBlockedRecords.length,
       status: "VERIFIED",
-      verificationDetail: "All functional & security test records validated for 64-hex SHA-256 and timestamp integrity.",
+      verificationDetail: `${primary.filter((r) => r.regression_status === "PASSED").length}/${exploitBlockedRecords.length} runtime-reproduced findings validated for 64-hex SHA-256 security regression test integrity (manual-validation items gated).`,
     },
     {
       checkNumber: 6,
@@ -1485,22 +1492,46 @@ export function reconstructAttackPathsV60(
   );
 
   const sqli = primary.find((f) => f.cwe === "CWE-89") || primary[0];
-  const cmdi = primary.find((f) => f.cwe === "CWE-78") || primary[1] || primary[0];
+  const cmdi = primary.find(
+    (f) =>
+      f.cwe === "CWE-78" &&
+      (f.proofState === "RUNTIME_REPRODUCED" || f.proofState === "DATAFLOW_CONFIRMED")
+  );
+  const unprovenSecondary = primary.find(
+    (f) =>
+      f.id !== sqli?.id &&
+      f.proofState !== "RUNTIME_REPRODUCED" &&
+      f.proofState !== "DATAFLOW_CONFIRMED"
+  );
 
   const paths: ReconstructedAttackPathV60[] = [];
 
   if (sqli) {
+    const hasCrossFunctionChain = Boolean(sqli.interprocedural?.crossesFunctions);
+    const canConfirmMultiChain = Boolean(
+      cmdi &&
+        cmdi.id !== sqli.id &&
+        hasCrossFunctionChain &&
+        (sqli.proofState === "RUNTIME_REPRODUCED" || sqli.proofState === "DATAFLOW_CONFIRMED")
+    );
+    const localFnName =
+      sqli.interprocedural?.functionChain?.[0] ||
+      `${sqli.file.split("/").pop()?.replace(/\.\w+$/, "") || "Controller"}::Action()`;
     paths.push({
       pathId: `ATK-PATH-01-${sqli.id}`,
-      primaryFindingIds: cmdi && cmdi.id !== sqli.id ? [sqli.id, cmdi.id] : [sqli.id],
-      chainPattern: "External Input → Controller → Service → Database → Privileged Operation",
+      primaryFindingIds: canConfirmMultiChain && cmdi ? [sqli.id, cmdi.id] : [sqli.id],
+      chainPattern: hasCrossFunctionChain
+        ? "External Input → Controller → Service → Database → Privileged Operation"
+        : "External Input → Controller Action (Intra-Procedural Single-Function Trace) → Sink",
       nodes: {
         externalInput: sqli.source || "HTTP Request Parameter / JSON Payload",
         controller: `${sqli.file.split("/").pop() || sqli.file}:${sqli.line} (Ingress Endpoint)`,
-        service: sqli.interprocedural?.functionChain?.[1] || "DomainQueryDispatcher::process()",
+        service: hasCrossFunctionChain
+          ? sqli.interprocedural?.functionChain?.[1] || "DomainQueryDispatcher::process()"
+          : `Intra-Procedural Scope within ${localFnName} (0 cross-function hops)`,
         databaseOrQueue: sqli.sink || "Relational SQL Query / Persistence Layer",
         privilegedOperation:
-          cmdi && cmdi.id !== sqli.id
+          canConfirmMultiChain && cmdi
             ? `Chained OS Command Execution (${cmdi.id} :: ${cmdi.sink || cmdi.cwe}) under service account`
             : "Unrestricted relational table read/write & credential extraction",
       },
@@ -1514,37 +1545,45 @@ export function reconstructAttackPathsV60(
         authorizationEnforced: false,
         sanitizationOccurs: false,
         destinationSensitive: true,
-        multiVulnerabilityChainable: Boolean(cmdi && cmdi.id !== sqli.id),
+        multiVulnerabilityChainable: canConfirmMultiChain,
       },
       chainedImpactSummary:
-        cmdi && cmdi.id !== sqli.id
+        canConfirmMultiChain && cmdi
           ? `Shared untrusted request input feeds both ${sqli.id} (${sqli.cwe} SQL Injection) and ${cmdi.id} (${cmdi.cwe} OS Command Injection), enabling single-request database exfiltration + host command execution.`
-          : `Untrusted input traverses ${sqli.file}:${sqli.line} without dominating parameterization or authorization guard to reach sensitive database state.`,
+          : !hasCrossFunctionChain
+            ? `Intra-procedural single-function taint path verified within ${sqli.file}:${sqli.line} (${sqli.id} ${sqli.cwe}; 0 cross-function call-graph hops in current scan). Independent single-endpoint findings${cmdi ? ` (such as ${cmdi.id} ${cmdi.cwe} in ${cmdi.file.split("/").pop()})` : ""} are evaluated in their own controller scope rather than chained across non-existent service hops.`
+            : unprovenSecondary
+              ? `Single-finding verified path for ${sqli.id} (${sqli.cwe}); secondary item ${unprovenSecondary.id} (${unprovenSecondary.cwe}, proofState=${unprovenSecondary.proofState}) is explicitly excluded from confirmed multi-vulnerability chaining per P0-02/Section 5.`
+              : `Untrusted input traverses ${sqli.file}:${sqli.line} without dominating parameterization or authorization guard to reach sensitive database state.`,
     });
   }
 
+  const anyCrossFunctionInScan = primary.some((f) => Boolean(f.interprocedural?.crossesFunctions));
   paths.push({
     pathId: "ATK-PATH-02-DISTRIBUTED-QUEUE",
-    primaryFindingIds: primary.slice(0, 2).map((f) => f.id),
-    chainPattern: "External Input → Controller → Service → Broker/Database → Privileged Operation",
+    primaryFindingIds: anyCrossFunctionInScan ? primary.slice(0, 2).map((f) => f.id) : [],
+    chainPattern: anyCrossFunctionInScan
+      ? "External Input → Controller → Service → Broker/Database → Privileged Operation"
+      : "[MODELED ARCHITECTURAL HYPOTHESIS — 0 Cross-Function Queue Traces in Current Scan]",
     nodes: {
-      externalInput: "HTTP POST /api/v1/exports (User-supplied filter / callback)",
-      controller: "ExportController::enqueueJob()",
+      externalInput: "HTTP POST /api/v1/exports (Illustrative Threat-Model Entry)",
+      controller: "ExportController::enqueueJob() (Reference Model)",
       service: "ReportExportService::publishToBroker(DistributedTaintContextId)",
-      databaseOrQueue: "RabbitMQ / Kafka / Second-Order PostgreSQL Audit Table",
-      privilegedOperation: "Async Worker Shell / SSRF / File-System Sink Execution",
+      databaseOrQueue: "RabbitMQ / Kafka / Second-Order Audit Table (Modeled)",
+      privilegedOperation: "Async Worker Shell / SSRF / File-System Sink Execution (Modeled)",
     },
     predicates: {
       attackerControlsInput: true,
-      pathReachable: "CONFIRMED_REACHABLE",
+      pathReachable: anyCrossFunctionInScan ? "CONFIRMED_REACHABLE" : "CANDIDATE_UNVERIFIED",
       authenticationRequired: true,
       authorizationEnforced: false,
       sanitizationOccurs: false,
       destinationSensitive: true,
-      multiVulnerabilityChainable: true,
+      multiVulnerabilityChainable: anyCrossFunctionInScan,
     },
-    chainedImpactSummary:
-      "Demonstrates second-order asynchronous taint propagation where attacker input crosses a message broker or database storage boundary before triggering a privileged worker sink.",
+    chainedImpactSummary: anyCrossFunctionInScan
+      ? "Demonstrates second-order asynchronous taint propagation where attacker input crosses a message broker or database storage boundary before triggering a privileged worker sink."
+      : "[MODELED ARCHITECTURAL HYPOTHESIS — NOT OBSERVED IN REPOSITORY] Reference threat-model blueprint illustrating asynchronous broker/queue taint propagation; 0 cross-function or message-queue traces were observed in the scanned repository.",
   });
 
   return paths;

@@ -137,7 +137,8 @@ export type DeepExploitabilityDossier = {
         | "MITIGATED_BY_GUARD (Not Exploitable)"
         | "EXPLOITABLE (Confirmed)"
         | "PARTIAL BYPASS (Chained)"
-        | "GUARDED";
+        | "GUARDED"
+        | "SYNTHETIC_ARCHITECTURAL_HYPOTHESIS (Template Only — Not Observed in Repository)";
       evidenceLog: string;
     };
     reEnumeration: {

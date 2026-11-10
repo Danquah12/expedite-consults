@@ -119,7 +119,7 @@ export interface CanonicalFindingRegistryEntry {
   path_feasibility: "FEASIBLE" | "INFEASIBLE" | "GUARDED" | "NOT_ESTABLISHED";
   runtime_state: "REPRODUCED" | "BLOCKED" | "NOT_RUN" | "NOT_APPLICABLE";
   impact_state: "VERIFIED" | "NOT_RUN" | "NOT_APPLICABLE";
-  patch_state: "VERIFIED" | "STATICALLY_VALIDATED" | "STATIC_VALIDATION_FAILED" | "INCOMPLETE_OR_STUB";
+  patch_state: "VERIFIED" | "COMPILED_UNVERIFIED" | "STATICALLY_VALIDATED" | "STATIC_VALIDATION_FAILED" | "INCOMPLETE_OR_STUB";
   compile_state: "PASSED" | "FAILED" | "NOT_RUN";
   regression_state: "PASSED" | "FAILED" | "NOT_RUN";
   remediation_state: "VERIFIED" | "STATIC_READY_UNVERIFIED" | "UNVERIFIED";
@@ -376,24 +376,6 @@ export function buildFindingEvidenceRecord(
       r.result === "PASS"
   );
 
-  const primaryRemediationCode = f.remediation?.[0]?.code || "";
-  const patchVerification = verifyRemediationPatch({
-    cwe: f.cwe,
-    language: f.language || "Java",
-    vulnerableSnippet: f.codeSnippet || "",
-    remediationSnippet: primaryRemediationCode,
-    compiledAndRetested: Boolean(patchRecord),
-  });
-
-  const stepStatusMap = new Map(patchVerification.lifecycleSteps.map((s) => [s.stage, s.status]));
-  const isPatchCompiled = stepStatusMap.get("PATCH_COMPILED") === "PASSED";
-  const isRetested =
-    stepStatusMap.get("SECURITY_TEST_PASSED") === "PASSED" &&
-    stepStatusMap.get("FUNCTIONAL_TEST_PASSED") === "PASSED";
-  const isStaticPatchValid =
-    patchVerification.status === "PATCH_VERIFIED" ||
-    patchVerification.status === "PATCH_STATICALLY_VALIDATED_UNCOMPILED";
-
   // P0 Directive 2 (SAST-013): Never promote a finding whose static proof state is NEEDS_MANUAL_VALIDATION
   // (or INCONCLUSIVE / MITIGATED_BY_GUARD / unestablished interprocedural taint path) or whose patch failed
   // static validation to RUNTIME_REPRODUCED or FULLY_CERTIFIED.
@@ -410,6 +392,28 @@ export function buildFindingEvidenceRecord(
     cweUpper === "CWE-798" ||
     cweUpper === "CWE-1395" ||
     (interproceduralTaintStatus === "NOT_ESTABLISHED" && !isConfigSinkCwe);
+
+  const primaryRemediationCode = f.remediation?.[0]?.code || "";
+  const canCertifyRemediation =
+    !isCandidate && !isManualValidationOnly && Boolean(rawRuntimeRecord) && Boolean(patchRecord);
+  const patchVerification = verifyRemediationPatch({
+    cwe: f.cwe,
+    language: f.language || "Java",
+    vulnerableSnippet: f.codeSnippet || "",
+    remediationSnippet: primaryRemediationCode,
+    compiledAndRetested: Boolean(patchRecord) && !isCandidate,
+    remediationCertified: canCertifyRemediation,
+  });
+
+  const stepStatusMap = new Map(patchVerification.lifecycleSteps.map((s) => [s.stage, s.status]));
+  const isPatchCompiled = stepStatusMap.get("PATCH_COMPILED") === "PASSED";
+  const isRetested =
+    stepStatusMap.get("SECURITY_TEST_PASSED") === "PASSED" &&
+    stepStatusMap.get("FUNCTIONAL_TEST_PASSED") === "PASSED";
+  const isStaticPatchValid =
+    patchVerification.status === "PATCH_VERIFIED" ||
+    patchVerification.status === "PATCH_COMPILED_UNVERIFIED_REMEDIATION" ||
+    patchVerification.status === "PATCH_STATICALLY_VALIDATED_UNCOMPILED";
 
   const runtimeRecord =
     !isCandidate && !isManualValidationOnly && isStaticPatchValid
@@ -491,7 +495,9 @@ export function buildFindingEvidenceRecord(
     actor: "XTRIKE-AST-Scanner-v5.0",
     timestamp: evidenceTimestamp,
     parentEventHash: genesisHash,
-    summary: `Discovered ${f.cwe} sink at ${f.file}:${f.line} in ${normRepo}@${normCommit.slice(0, 12)} (manifest=${scanManifestHash.slice(0, 22)}, excerpt=${sourceExcerptHash}, origin=${evidenceOrigin}).`,
+    summary: isCandidate
+      ? `Modeled synthetic ${f.cwe} architectural threat hypothesis template for ${f.file}:${f.line} (file not present in ${normRepo}@${normCommit.slice(0, 12)}, manifest=${scanManifestHash.slice(0, 22)}, excerpt=${sourceExcerptHash}, origin=${evidenceOrigin}).`
+      : `Discovered ${f.cwe} sink at ${f.file}:${f.line} in ${normRepo}@${normCommit.slice(0, 12)} (manifest=${scanManifestHash.slice(0, 22)}, excerpt=${sourceExcerptHash}, origin=${evidenceOrigin}).`,
   };
   const v1Hash = computeFullEventRecordHash(v1Base);
   const v1Event: EvidenceLedgerEvent = { ...v1Base, eventHash: v1Hash };
@@ -537,9 +543,9 @@ export function buildFindingEvidenceRecord(
   const verificationSignature = `SIG-ED25519-${computeDigestHex(`${publicKeyId}|${ledgerDigest}|${scanManifestHash}|${v1Hash}|${v2Hash}|${v3Hash}|${v4Hash}`)}${computeDigestHex(`SIGB|${v4Hash}|${fileContentHash}|${sourceExcerptHash}`).slice(0, 8)}`;
 
   const isVerified =
-    Boolean(runtimeRecord) ||
-    Boolean(patchRecord) ||
-    patchVerification.status === "PATCH_VERIFIED";
+    !isManualValidationOnly &&
+    !isCandidate &&
+    (Boolean(runtimeRecord) || patchVerification.status === "PATCH_VERIFIED");
 
   const hasImpactRecord = Boolean(
     !isManualValidationOnly &&
@@ -598,6 +604,8 @@ export function buildFindingEvidenceRecord(
     patch_state:
       patchVerification.status === "PATCH_VERIFIED" && pathTraversalAdversarialPassed
         ? "VERIFIED"
+        : patchVerification.status === "PATCH_COMPILED_UNVERIFIED_REMEDIATION"
+        ? "COMPILED_UNVERIFIED"
         : patchVerification.status === "PATCH_STATICALLY_VALIDATED_UNCOMPILED"
         ? "STATICALLY_VALIDATED"
         : patchVerification.status === "PATCH_INCOMPLETE_OR_STUB"
@@ -622,7 +630,9 @@ export function buildFindingEvidenceRecord(
       newStatus: "DETECTED",
       timestamp: evidenceTimestamp,
       actor: "XTRIKE-AST-Scanner-v5.0",
-      supportingEvidence: `AST sink matched ${f.cwe} at ${f.file}:${f.line} (excerpt=${sourceExcerptHash}).`,
+      supportingEvidence: isCandidate
+        ? `Modeled synthetic ${f.cwe} architectural threat hypothesis template for ${f.file}:${f.line} (SYNTHETIC_TEMPLATE — file not present in repository, excerpt=${sourceExcerptHash}).`
+        : `AST sink matched ${f.cwe} at ${f.file}:${f.line} (excerpt=${sourceExcerptHash}).`,
       artifactHash: v1Hash,
     },
     {
@@ -748,7 +758,9 @@ export function buildFindingEvidenceRecord(
       label: "1. Detection",
       status: "PASSED",
       artifactRef: `${sourceExcerptHash} (${f.file}:${f.line})`,
-      summary: `AST & rule engine matched ${f.cwe} sink at ${f.file}:${f.line}.`,
+      summary: isCandidate
+        ? `Synthetic architectural threat-modeling template generated for ${f.cwe} (${f.file}:${f.line} — file not present in repository).`
+        : `AST & rule engine matched ${f.cwe} sink at ${f.file}:${f.line}.`,
     },
     {
       stageNumber: 2,
@@ -846,24 +858,33 @@ export function buildFindingEvidenceRecord(
       stageNumber: 9,
       stageKey: "FUNCTIONAL_REGRESSION_TESTING",
       label: "9. Functional Regression Testing",
-      status: isRetested
-        ? "PASSED"
-        : isCandidate
-        ? "NOT_APPLICABLE"
-        : "PENDING",
-      artifactRef: isRetested ? testExecutionId : "NOT_RUN",
-      summary: isRetested
-        ? `Baseline functional contract tests passed with 100% parity (${testExecutionId}).`
-        : "Architectural template — functional regression not applicable.",
+      status:
+        stepStatusMap.get("FUNCTIONAL_TEST_PASSED") === "PASSED"
+          ? "PASSED"
+          : isCandidate
+          ? "NOT_APPLICABLE"
+          : "PENDING",
+      artifactRef:
+        stepStatusMap.get("FUNCTIONAL_TEST_PASSED") === "PASSED" ? testExecutionId : "NOT_RUN",
+      summary:
+        stepStatusMap.get("FUNCTIONAL_TEST_PASSED") === "PASSED"
+          ? `Baseline functional contract tests passed with 100% parity (${testExecutionId}).`
+          : "Architectural template — functional regression not applicable.",
     },
     {
       stageNumber: 10,
       stageKey: "ENVIRONMENT_CONFIG_VALIDATION",
       label: "10. Environment & Configuration Validation",
-      status: isCandidate ? "NOT_APPLICABLE" : "PASSED",
+      status: isCandidate
+        ? "NOT_APPLICABLE"
+        : finalAuthoritativeProofState === "NEEDS_MANUAL_VALIDATION"
+        ? "PENDING"
+        : "PASSED",
       artifactRef: `ENV-CFG-${normCommit.slice(0, 8).toUpperCase()}`,
       summary: isCandidate
         ? "Architectural threat scenario — runtime environment validation not applicable."
+        : finalAuthoritativeProofState === "NEEDS_MANUAL_VALIDATION"
+        ? `Awaiting manual secret-store / environment configuration correlation for ${f.cwe} at ${f.file}:${f.line}.`
         : `Verified TLS 1.3/1.2 protocol policy, DefaultHostnameVerifier enforcement, secret externalization, and container runtime hardening.`,
     },
     {
@@ -888,37 +909,59 @@ export function buildFindingEvidenceRecord(
     },
   ];
 
-  // Build ManualValidationDiagnostic for NEEDS_MANUAL_VALIDATION findings (Section 2 — SAST-013)
+  const isScaDependencyFinding =
+    cweUpper === "CWE-1395" ||
+    f.id.startsWith("SCA-") ||
+    /(?:^|\/)package\.json$|pom\.xml$|requirements\.txt$|go\.mod$|\.csproj$/i.test(f.file);
+
+  // Build ManualValidationDiagnostic for NEEDS_MANUAL_VALIDATION primary repository findings (never for synthetic templates)
   const manualValidationDiagnostic: ManualValidationDiagnostic | undefined =
-    finalAuthoritativeProofState === "NEEDS_MANUAL_VALIDATION"
-      ? {
-          findingId: f.id,
-          cwe: f.cwe,
-          staticLimitationReason:
-            cweUpper === "CWE-798"
-              ? `Hardcoded credential/token literal detected at ${f.file}:${f.line} via AST constant-entropy inspection; determining whether the secret is active in production authentication flows or is a non-production test fixture requires environment/key-vault correlation.`
-              : `Static AST analyzer confirmed a dangerous ${f.cwe} sink at ${f.file}:${f.line}, but the upstream caller invokes this method across a dynamic interface/reflection boundary where the concrete runtime dispatch target is not statically resolvable in a single compilation unit.`,
-          candidateSource:
-            f.source ||
-            `External request parameter / upstream service DTO entering module containing ${f.file}`,
-          propagationPathSummary:
-            (f.interprocedural?.functionChain && f.interprocedural.functionChain.length > 0
-              ? f.interprocedural.functionChain.join(" → ")
-              : `${f.file.split("/").pop() || f.file}:caller() → ${f.file.split("/").pop() || f.file}:line_${f.line}`) +
-            ` (taint status: ${interproceduralTaintStatus}, scope: ${callGraphScope})`,
-          vulnerableSink: `${f.sink || f.codeSnippet?.trim() || f.cwe} at ${f.file}:${f.line}`,
-          missingFunctionOrModuleRelationship:
-            cweUpper === "CWE-798"
-              ? `Binding between literal credential at ${f.file}:${f.line} and production IAM / KMS secret provider configuration.`
-              : `Concrete interface implementation binding between controller/message-listener entrypoint and ${f.file}:${f.line} across dependency-injection wiring.`,
-          requiredVerificationProtocol: [
-            `1. Trace the dependency-injection / interface binding supplying the input argument to ${f.file}:${f.line} and record the concrete caller method signature.`,
-            `2. Execute an isolated JUnit / Expedite Strike harness test invoking the upstream controller endpoint with a non-destructive ${f.cwe} canary token.`,
-            `3. Verify that the defensive remediation patch (${patchDiffHash}) compiles cleanly and blocks the canary payload before promoting canonical_status_12 from NEEDS_MANUAL_VALIDATION to FULLY_CERTIFIED.`,
-          ],
-          promotionGatePolicy:
-            "STRICT_P0_GATE: Findings in NEEDS_MANUAL_VALIDATION are barred from claiming RUNTIME_REPRODUCED or FULLY_CERTIFIED until complete inter-procedural source-to-sink provenance and pre/post-patch exploit replay artifacts are attached.",
-        }
+    !isCandidate && finalAuthoritativeProofState === "NEEDS_MANUAL_VALIDATION"
+      ? isScaDependencyFinding
+        ? {
+            findingId: f.id,
+            cwe: f.cwe,
+            staticLimitationReason: `8-Stage SCA Dependency Pipeline matched a vulnerable dependency declaration at ${f.file}:${f.line}; confirming exploitability in this application requires lockfile resolution verification and first-party call-graph reachability analysis of the affected package API.`,
+            candidateSource: `Dependency manifest declaration in ${f.file}:${f.line} (${(f.sink || f.title).trim()})`,
+            propagationPathSummary: `1. Manifest (${f.file}:${f.line}) → 2. Lockfile Resolution → 3. Resolved Package → 4. Advisory Match → 5. Affected Version Range → 6. Call-Graph Reachability → 7. Patched Version Pin → 8. Upgrade Regression Test`,
+            vulnerableSink: `Dependency manifest entry ${(f.sink || f.codeSnippet?.trim() || f.cwe).trim()} at ${f.file}:${f.line}`,
+            missingFunctionOrModuleRelationship: `Resolved transitive version in package-lock.json / yarn.lock and first-party import/call-site reachability of the vulnerable package export.`,
+            requiredVerificationProtocol: [
+              `1. Verify the resolved package version in package-lock.json / yarn.lock against the advisory's affected SemVer range.`,
+              `2. Inspect first-party import statements and call sites to verify whether the vulnerable package API is invoked with untrusted input.`,
+              `3. Pin the concrete patched SemVer release in ${f.file}, regenerate the lockfile, and execute npm audit --omit=dev + unit regression tests.`,
+            ],
+            promotionGatePolicy:
+              "STRICT_P0_SCA_GATE: Dependency advisory findings (CWE-1395) use the 8-stage SCA verification pipeline and are never promoted to first-party code-sink taint reproduction.",
+          }
+        : {
+            findingId: f.id,
+            cwe: f.cwe,
+            staticLimitationReason:
+              cweUpper === "CWE-798"
+                ? `Hardcoded credential/token literal detected at ${f.file}:${f.line} via AST constant-entropy inspection; determining whether the secret is active in production authentication flows or is a non-production test fixture requires environment/key-vault correlation.`
+                : `Static AST analyzer confirmed a dangerous ${f.cwe} sink at ${f.file}:${f.line}, but the upstream caller invokes this method across a dynamic interface/reflection boundary where the concrete runtime dispatch target is not statically resolvable in a single compilation unit.`,
+            candidateSource:
+              f.source ||
+              `External request parameter / upstream service DTO entering module containing ${f.file}`,
+            propagationPathSummary:
+              (f.interprocedural?.functionChain && f.interprocedural.functionChain.length > 0
+                ? f.interprocedural.functionChain.join(" → ")
+                : `${f.file.split("/").pop() || f.file}:caller() → ${f.file.split("/").pop() || f.file}:line_${f.line}`) +
+              ` (taint status: ${interproceduralTaintStatus}, scope: ${callGraphScope})`,
+            vulnerableSink: `${f.sink || f.codeSnippet?.trim() || f.cwe} at ${f.file}:${f.line}`,
+            missingFunctionOrModuleRelationship:
+              cweUpper === "CWE-798"
+                ? `Binding between literal credential at ${f.file}:${f.line} and production IAM / KMS secret provider configuration.`
+                : `Concrete interface implementation binding between controller/message-listener entrypoint and ${f.file}:${f.line} across dependency-injection wiring.`,
+            requiredVerificationProtocol: [
+              `1. Trace the dependency-injection / interface binding supplying the input argument to ${f.file}:${f.line} and record the concrete caller method signature.`,
+              `2. Execute an isolated harness test invoking the upstream endpoint with a non-destructive ${f.cwe} canary token.`,
+              `3. Verify that the defensive remediation patch (${patchDiffHash}) compiles cleanly and blocks the canary payload before promoting canonical_status_12 from NEEDS_MANUAL_VALIDATION to FULLY_CERTIFIED.`,
+            ],
+            promotionGatePolicy:
+              "STRICT_P0_GATE: Findings in NEEDS_MANUAL_VALIDATION are barred from claiming RUNTIME_REPRODUCED or FULLY_CERTIFIED until complete inter-procedural source-to-sink provenance and pre/post-patch exploit replay artifacts are attached.",
+          }
       : undefined;
 
   const eightStageLifecycle: EightStageCertificationStep[] = [
@@ -928,7 +971,9 @@ export function buildFindingEvidenceRecord(
       label: "1. Detect",
       status: isVerified ? "CERTIFIED" : "COMPLETED_STATIC",
       artifactRef: `${sourceExcerptHash} (${f.file}:${f.line})`,
-      summary: `Lexical & AST sink detection matched ${f.cwe} at ${f.file}:${f.line}.`,
+      summary: isCandidate
+        ? `Synthetic architectural threat hypothesis template modeled for ${f.cwe} (${f.file}:${f.line} — file not present in repository).`
+        : `Lexical & AST sink detection matched ${f.cwe} at ${f.file}:${f.line}.`,
     },
     {
       stage: "TRACE",
@@ -964,7 +1009,7 @@ export function buildFindingEvidenceRecord(
       label: "4. Remediate",
       status: !isStaticPatchValid
         ? "FAILED"
-        : isPatchCompiled && isRetested
+        : !isManualValidationOnly && !isCandidate && isPatchCompiled && isRetested
         ? "CERTIFIED"
         : "COMPLETED_STATIC",
       artifactRef: patchDiffHash,
@@ -976,7 +1021,11 @@ export function buildFindingEvidenceRecord(
       stage: "COMPILE",
       order: 5,
       label: "5. Compile",
-      status: isPatchCompiled ? "CERTIFIED" : "PENDING",
+      status: isPatchCompiled
+        ? finalAuthoritativeProofState === "NEEDS_MANUAL_VALIDATION"
+          ? "COMPLETED_STATIC"
+          : "CERTIFIED"
+        : "PENDING",
       artifactRef: isPatchCompiled ? testExecutionId : "NOT_RUN (STATIC_ONLY)",
       summary: isPatchCompiled
         ? `Patched AST unit compiled cleanly in polyglot build harness (${testExecutionId}).`
@@ -986,11 +1035,22 @@ export function buildFindingEvidenceRecord(
       stage: "RETEST",
       order: 6,
       label: "6. Retest",
-      status: isRetested && pathTraversalAdversarialPassed ? "CERTIFIED" : "PENDING",
-      artifactRef: isRetested ? testExecutionId : "NOT_RUN (STATIC_ONLY)",
-      summary: isRetested && pathTraversalAdversarialPassed
-        ? `CWE-${f.cwe.replace(/^CWE-/i, "")} exploit replay neutralized${isPathTraversalCwe ? " (symlink, hard-link & TOCTOU verified)" : ""} & baseline functional suite passed.`
-        : "Awaiting post-patch exploit replay & functional regression suite (STATIC_ONLY scan mode).",
+      status:
+        isRetested && pathTraversalAdversarialPassed && !isManualValidationOnly
+          ? "CERTIFIED"
+          : "PENDING",
+      artifactRef:
+        isRetested && !isManualValidationOnly
+          ? testExecutionId
+          : finalAuthoritativeProofState === "NEEDS_MANUAL_VALIDATION"
+          ? "GATED_MANUAL_PROVENANCE_VALIDATION"
+          : "NOT_RUN (STATIC_ONLY)",
+      summary:
+        isRetested && pathTraversalAdversarialPassed && !isManualValidationOnly
+          ? `CWE-${f.cwe.replace(/^CWE-/i, "")} exploit replay neutralized${isPathTraversalCwe ? " (symlink, hard-link & TOCTOU verified)" : ""} & baseline functional suite passed.`
+          : finalAuthoritativeProofState === "NEEDS_MANUAL_VALIDATION"
+          ? "Security exploit replay gated pending manual provenance validation; functional compilation check passed."
+          : "Awaiting post-patch exploit replay & functional regression suite (STATIC_ONLY scan mode).",
     },
     {
       stage: "VERIFY",
@@ -1549,6 +1609,45 @@ export function findEvidenceLedgerContradictions(
         contradictions.push(`Finding ${f.id} [v5.4.1 Reconciliation]: ${issue}`);
       }
     }
+    // Fail-closed check: compiled patch must never be labeled UNCOMPILED
+    if (
+      rec.canonicalRegistry.compile_state === "PASSED" &&
+      /UNCOMPILED/i.test(rec.patchVerification.status)
+    ) {
+      contradictions.push(
+        `Finding ${f.id}: compile_state is PASSED but patchVerification.status is ${rec.patchVerification.status}.`
+      );
+    }
+    // Fail-closed check: synthetic architectural hypothesis must never claim confirmed AST sink
+    const isSyntheticFinding =
+      f.findingOrigin === "ARCHITECTURAL_CANDIDATE_HYPOTHESIS" ||
+      f.sourceProvenance?.status === "SYNTHETIC_TEMPLATE" ||
+      f.id.startsWith("RE-ENUM-") ||
+      rec.evidenceOrigin === "SYNTHETIC_ARCHITECTURAL_SCENARIO";
+    if (isSyntheticFinding) {
+      if (rec.manualValidationDiagnostic) {
+        contradictions.push(
+          `Finding ${f.id}: synthetic architectural template must not attach manualValidationDiagnostic claiming an observed AST sink.`
+        );
+      }
+      const synthText = [
+        rec.events[0]?.summary || "",
+        rec.statusTransitionHistory[0]?.supportingEvidence || "",
+        rec.elevenStageRemediationLifecycle[0]?.summary || "",
+        rec.eightStageLifecycle[0]?.summary || "",
+        f.controlDominanceSummary || "",
+        f.modeledAssumptions || "",
+      ].join(" ");
+      if (
+        /Static AST analyzer confirmed|AST sink matched|Lexical & AST sink detection matched|Literal string constant present in AST|identified statically in AST/i.test(
+          synthText
+        )
+      ) {
+        contradictions.push(
+          `Finding ${f.id}: synthetic architectural template contains prose claiming an observed AST sink in a non-existent file.`
+        );
+      }
+    }
   }
   return contradictions;
 }
@@ -1680,7 +1779,12 @@ export function reconcileFindingEndToEndV541(f: SASTFinding): FindingReconciliat
     pvStatus !== "PATCH_INTRODUCED_NEW_SINK" &&
     Boolean(rec?.patchDiffHash && rec.patchDiffHash.startsWith("PDH-")) &&
     ((pvStatus === "PATCH_VERIFIED" && patchState === "VERIFIED") ||
-      (pvStatus === "PATCH_STATICALLY_VALIDATED_UNCOMPILED" && patchState === "STATICALLY_VALIDATED"));
+      (pvStatus === "PATCH_COMPILED_UNVERIFIED_REMEDIATION" &&
+        patchState === "COMPILED_UNVERIFIED" &&
+        reg?.compile_state === "PASSED") ||
+      (pvStatus === "PATCH_STATICALLY_VALIDATED_UNCOMPILED" &&
+        patchState === "STATICALLY_VALIDATED" &&
+        reg?.compile_state !== "PASSED"));
   if (!patchVerified) {
     discrepancies.push(
       `Patch status mismatch: patch_state=${patchState}, patchVerification.status=${pvStatus}, hash=${rec?.patchDiffHash}.`
