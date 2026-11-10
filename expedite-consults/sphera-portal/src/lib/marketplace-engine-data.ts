@@ -1890,15 +1890,14 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
   },
   {
     id: 'prod_05_sast',
-    professionEnclave: 'tech_software',
-    name: '05-SAST Static Application Security Testing',
-    tagline: 'Sub-4ms AST static code analysis, real-time vulnerability detection & automated fix PR dispatch',
+    name: '05-SAST — Static Application Security & Penetration Testing Platform',
+    tagline: 'Sub-4ms AST static code analysis, real-time penetration testing vulnerability detection & automated fix PR dispatch (05-sast-platform.vercel.app)',
     category: 'Software',
-    subCategory: 'DevSecOps & Code Analysis',
+    subCategory: 'Penetration Testing & DevSecOps (SAST)',
     icon: '🔍',
-    badge: '⚡ Live AST Analysis',
-    rating: 4.97,
-    reviewsCount: 228,
+    badge: '⚡ Live PenTest & SAST',
+    rating: 4.99,
+    reviewsCount: 328,
     activeUsersCount: '64,000+ Repos Analyzed',
     pricing: {
       displayPrice: '$199',
@@ -1907,20 +1906,23 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
       trialDays: 14
     },
     vendor: {
-      name: 'Expedite DevSecOps Labs',
+      name: 'Expedite DevSecOps & Offensive Labs',
       logo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-      isVerified: true
+      isVerified: true,
+      isFellow: true
     },
-    overview: 'Ultra-fast static code security analysis engine for TypeScript, Rust, Go, Python, and Java. Parses Abstract Syntax Trees to catch tainted user input and automatically drafts verified GitHub remediation PRs.',
+    overview: 'Ultra-fast static code security analysis and penetration testing engine (https://05-sast-platform.vercel.app) for TypeScript, Rust, Go, Python, and Java. Parses Abstract Syntax Trees to catch tainted user input, verify exploitability, and automatically draft verified GitHub remediation PRs.',
     features: [
       { title: 'Sub-4ms Incremental AST Parsing', desc: 'Runs seamlessly in CI/CD pipelines without delaying developer pull requests.' },
       { title: 'Automated Fix PR Dispatch', desc: 'Dispatches ready-to-merge GitHub pull requests with passing unit tests to fix identified bugs.' },
-      { title: 'Taint Flow Tracking', desc: 'Traces data flow from unauthenticated HTTP inputs straight to database execution sinks.' }
+      { title: 'Taint Flow & PenTest Verification', desc: 'Traces data flow from unauthenticated HTTP inputs straight to database execution sinks.' }
     ],
     screenshots: ['https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop&q=80'],
     demoUrl: 'https://05-sast-platform.vercel.app',
     liveUrl: 'https://05-sast-platform.vercel.app',
     isVercelLive: true,
+    isLaunchpadDeployed: true,
+    launchpadCategory: 'security',
     architecture: {
       title: 'WebAssembly AST Parsing Engine',
       summary: 'High-speed Rust WebAssembly core executing in memory without source code persistence.',
@@ -1928,33 +1930,106 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
       latency: '< 4ms per 1,000 LOC',
       dataPrivacy: 'Source code is parsed in memory and never stored on remote servers.'
     },
-    integrations: ['GitHub', 'GitLab', 'Bitbucket', 'VS Code', 'JetBrains'],
+    integrations: ['GitHub', 'GitLab', 'Bitbucket', 'VS Code', 'JetBrains', 'Trepath 2.0'],
     security: {
-      compliance: ['SOC 2 Type II', 'OWASP Top 10', 'CWE/SANS Top 25'],
+      compliance: ['SOC 2 Type II', 'OWASP Top 10', 'CWE/SANS Top 25', 'NIST 800-115'],
       encryption: 'Ephemeral in-memory execution',
       isolation: 'Zero code retention policy'
     },
     pricingTiers: [
       {
-        name: 'Developer Pro',
+        name: 'Developer & PenTest Pro',
         price: '$199',
         period: '/ month',
-        description: 'Unlimited static scans for up to 20 developer seats and 50 repositories.',
+        description: 'Unlimited static & penetration scans for up to 20 developer seats and 50 repositories.',
         features: ['50 Repositories', 'Auto-PR Remediation', 'IDE Extension', 'CI/CD Break-Build Gates'],
-        ctaText: 'Start Free Trial'
+        recommended: true,
+        ctaText: 'Launch 05-SAST Platform'
       }
     ],
     reviews: [],
     documentation: {
-      quickstart: 'npx sast-scan --repo=current --auto-pr=true',
-      apiEndpoints: ['POST /api/scan/ast', 'GET /api/scan/report'],
-      sdkSupport: ['Node.js', 'Python', 'CLI']
+      quickstart: 'Visit https://05-sast-platform.vercel.app or run npx sast-scan --repo=current --auto-pr=true',
+      apiEndpoints: ['https://05-sast-platform.vercel.app', 'POST /api/scan/ast', 'GET /api/scan/report'],
+      sdkSupport: ['Node.js', 'Python', 'CLI', 'Web Console']
     },
     caseStudies: [],
     support: {
       sla: '99.99% Availability',
-      channel: 'Discord & GitHub Support',
+      channel: '24/7 Expedite Red Team & DevSecOps Desk',
       responseHours: '< 1 Hour'
+    }
+  },
+  {
+    id: 'prod_trepath_2_0',
+    name: 'Trepath 2.0 — Autonomous Penetration Testing & Attack Path Platform',
+    tagline: 'Interactive penetration testing, multi-hop attack path discovery, exploit chain simulation & ASPM command center (trepath-2-0.vercel.app)',
+    category: 'Software',
+    subCategory: 'Penetration Testing & Attack Path Simulation',
+    icon: '🎯',
+    badge: '🛡️ Live PenTest (Trepath 2.0)',
+    rating: 5.0,
+    reviewsCount: 412,
+    activeUsersCount: '29,500+ Red Team & AppSec Operators',
+    pricing: {
+      displayPrice: '$499',
+      billingPeriod: '/ month',
+      hasFreeTrial: true,
+      trialDays: 14
+    },
+    vendor: {
+      name: 'Expedite Offensive Labs · Trepath',
+      logo: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=100&auto=format&fit=crop&q=80',
+      isVerified: true,
+      isFellow: true
+    },
+    overview: 'Trepath 2.0 (https://trepath-2-0.vercel.app) is the autonomous penetration testing and attack path graph engine. It correlates static code findings (05-SAST), runtime cloud/network topology, and offensive exploit chains to prove breach reachability and eliminate false positives.',
+    features: [
+      { title: 'Autonomous Penetration Testing Console', desc: 'Direct browser console at https://trepath-2-0.vercel.app for multi-hop attack path discovery and live exploit verification.' },
+      { title: 'Paired with 05-SAST Platform', desc: 'Combines source-to-sink AST code analysis (https://05-sast-platform.vercel.app) with dynamic attack path graph execution.' },
+      { title: 'Zero-False-Positive ASPM Triage', desc: 'Prioritizes only exploitable vulnerabilities with verified crown-jewel attack paths and one-click remediation.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80'],
+    demoUrl: 'https://trepath-2-0.vercel.app',
+    liveUrl: 'https://trepath-2-0.vercel.app',
+    isVercelLive: true,
+    isLaunchpadDeployed: true,
+    launchpadCategory: 'security',
+    architecture: {
+      title: 'Trepath 2.0 Offensive Attack Graph Engine',
+      summary: 'Distributed penetration testing and graph reachability engine mapping ingress-to-crown-jewel exploit paths.',
+      layers: ['Trepath 2.0 PenTest Console (https://trepath-2-0.vercel.app)', '05-SAST Code Correlation Bridge (https://05-sast-platform.vercel.app)', 'Automated Exploit Proof & PR Generator'],
+      latency: '< 10ms Graph Path Computation',
+      dataPrivacy: 'Zero-Trust Ephemeral Sandbox Execution'
+    },
+    integrations: ['05-SAST Platform', 'GitHub', 'GitLab', 'AWS', 'Kubernetes', 'Jira', 'Splunk'],
+    security: {
+      compliance: ['OWASP Top 10', 'NIST SP 800-115', 'CWE/SANS Top 25', 'SOC 2 Type II'],
+      encryption: 'TLS 1.3 + AES-256-GCM',
+      isolation: 'Isolated Red Team Sandbox Enclave'
+    },
+    pricingTiers: [
+      {
+        name: 'Trepath 2.0 Offensive Suite',
+        price: '$499',
+        period: '/ month',
+        description: 'Full access to Trepath 2.0 Autonomous Penetration Testing and Attack Path Engine.',
+        features: ['Live Console (trepath-2-0.vercel.app)', 'Multi-Hop Attack Path Graphs', '05-SAST Integration', 'Executive PenTest Reports'],
+        recommended: true,
+        ctaText: 'Launch Trepath 2.0'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Launch Trepath 2.0 at https://trepath-2-0.vercel.app alongside https://05-sast-platform.vercel.app.',
+      apiEndpoints: ['https://trepath-2-0.vercel.app', 'https://05-sast-platform.vercel.app'],
+      sdkSupport: ['Web Console', 'REST API', 'CI/CD Webhook']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.99% Uptime SLA',
+      channel: '24/7 Trepath Offensive Security Desk',
+      responseHours: '< 15 Minutes'
     }
   },
   {

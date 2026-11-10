@@ -791,7 +791,7 @@ export function MarketplaceView({
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="rounded-md bg-[#0A66C2]/10 text-[#0A66C2] dark:text-sky-400 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider">
-                📂 Categorized Flagship Platforms (8 Live Cards)
+                📂 Categorized Flagship Platforms (10 Live Cards)
               </span>
               <span className="text-xs text-zinc-500 dark:text-zinc-400">
                 Every platform organized into dedicated cards with direct launch buttons
@@ -804,7 +804,7 @@ export function MarketplaceView({
                   onClick={() => setShowFlagshipInSolutions(!showFlagshipInSolutions)}
                   className="rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-2.5 py-1 text-xs font-bold cursor-pointer transition-colors"
                 >
-                  {showFlagshipInSolutions ? '▲ Hide 8 Flagship Cards' : '▼ Show 8 Flagship Cards'}
+                  {showFlagshipInSolutions ? '▲ Hide 10 Flagship Cards' : '▼ Show 10 Flagship Cards'}
                 </button>
               )}
               {selectedSubCategory !== 'All' && (
@@ -1203,6 +1203,102 @@ export function MarketplaceView({
                 </a>
               </div>
             </div>
+
+            {/* Card 9: 05-SAST — Penetration Testing & Static Analysis Platform */}
+            <div className="rounded-xl border border-teal-200 dark:border-teal-900/60 bg-teal-50/40 dark:bg-teal-950/20 p-3.5 flex flex-col justify-between space-y-3 shadow-2xs hover:shadow-md transition-all">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-1.5">
+                  <span className="rounded-md bg-teal-700 text-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                    6. Penetration Testing &amp; SAST
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-teal-800 dark:text-teal-300">
+                    05-SAST Live
+                  </span>
+                </div>
+                <div className="flex items-start gap-2 pt-0.5">
+                  <span className="text-xl shrink-0">🔍</span>
+                  <div>
+                    <h3 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 leading-snug">
+                      05-SAST — Penetration Testing &amp; AST
+                    </h3>
+                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-0.5">
+                      Sub-4ms AST static code analysis, penetration testing vulnerability detection &amp; automated fix PRs.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="pt-2 border-t border-teal-200/60 dark:border-teal-800/50 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    fetchNoctisMarketplaceSalesAgent({
+                      productId: 'prod_05_sast',
+                      question: 'Pitch 05-SAST Penetration Testing & Static Code Analysis Platform (https://05-sast-platform.vercel.app) — explain its AST engine, auto-PRs, and ROI.',
+                      scrollToHub: true
+                    })
+                  }
+                  className="text-[11px] font-extrabold text-[#1967D2] hover:underline cursor-pointer"
+                >
+                  ✨ Ask Noctis
+                </button>
+                <a
+                  href="https://05-sast-platform.vercel.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-lg bg-teal-700 hover:bg-teal-800 text-white px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
+                >
+                  <span>Launch 05-SAST ↗</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Card 10: Trepath 2.0 — Autonomous Penetration Testing & Attack Path */}
+            <div className="rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/40 dark:bg-rose-950/20 p-3.5 flex flex-col justify-between space-y-3 shadow-2xs hover:shadow-md transition-all">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-1.5">
+                  <span className="rounded-md bg-rose-700 text-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                    6. Autonomous PenTest &amp; ASPM
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-rose-800 dark:text-rose-300">
+                    Trepath 2.0
+                  </span>
+                </div>
+                <div className="flex items-start gap-2 pt-0.5">
+                  <span className="text-xl shrink-0">🎯</span>
+                  <div>
+                    <h3 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 leading-snug">
+                      Trepath 2.0 — Penetration Testing
+                    </h3>
+                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-0.5">
+                      Autonomous penetration testing, multi-hop attack path discovery, exploit verification &amp; ASPM engine.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="pt-2 border-t border-rose-200/60 dark:border-rose-800/50 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    fetchNoctisMarketplaceSalesAgent({
+                      productId: 'prod_trepath_2_0',
+                      question: 'Pitch Trepath 2.0 Autonomous Penetration Testing & Attack Path Engine (https://trepath-2-0.vercel.app) — explain how it works and why Red Teams use it.',
+                      scrollToHub: true
+                    })
+                  }
+                  className="text-[11px] font-extrabold text-[#1967D2] hover:underline cursor-pointer"
+                >
+                  ✨ Ask Noctis
+                </button>
+                <a
+                  href="https://trepath-2-0.vercel.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-lg bg-rose-700 hover:bg-rose-800 text-white px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
+                >
+                  <span>Launch Trepath 2.0 ↗</span>
+                </a>
+              </div>
+            </div>
           </div>
           )}
         </div>
@@ -1320,6 +1416,26 @@ export function MarketplaceView({
                       <p className="text-[11px] text-zinc-500 line-clamp-2">
                         {sol.problemStatement}
                       </p>
+                      {sol.id === 'sol_pentest_aspm' && (
+                        <div className="pt-1.5 flex items-center gap-1.5 flex-wrap" onClick={(e) => e.stopPropagation()}>
+                          <a
+                            href="https://05-sast-platform.vercel.app"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 text-[10px] font-bold shadow-2xs inline-flex items-center gap-1 transition-colors"
+                          >
+                            <span>🚀 Launch 05-SAST ↗</span>
+                          </a>
+                          <a
+                            href="https://trepath-2-0.vercel.app"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-white px-2.5 py-1 text-[10px] font-bold shadow-2xs inline-flex items-center gap-1 transition-colors"
+                          >
+                            <span>🎯 Launch Trepath 2.0 ↗</span>
+                          </a>
+                        </div>
+                      )}
                     </div>
 
                     <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-[10px] text-zinc-400 font-mono">
@@ -1338,7 +1454,7 @@ export function MarketplaceView({
           {selectedSolution && (
             <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 space-y-6">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-100 pb-5 dark:border-zinc-800">
-                <div className="space-y-1">
+                <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <span className="text-3xl">{selectedSolution.icon}</span>
                     <h3 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-zinc-100">
@@ -1348,6 +1464,26 @@ export function MarketplaceView({
                   <p className="text-xs text-zinc-600 dark:text-zinc-300 max-w-2xl leading-relaxed">
                     <strong>Target Outcome:</strong> {selectedSolution.targetOutcome}
                   </p>
+                  {selectedSolution.id === 'sol_pentest_aspm' && (
+                    <div className="pt-1 flex items-center gap-2.5 flex-wrap">
+                      <a
+                        href="https://05-sast-platform.vercel.app"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 text-xs font-extrabold shadow-xs inline-flex items-center gap-1.5 transition-colors"
+                      >
+                        <span>🚀 Launch 05-SAST Platform (05-sast-platform.vercel.app) ↗</span>
+                      </a>
+                      <a
+                        href="https://trepath-2-0.vercel.app"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white px-3.5 py-2 text-xs font-extrabold shadow-xs inline-flex items-center gap-1.5 transition-colors"
+                      >
+                        <span>🎯 Launch Trepath 2.0 PenTest (trepath-2-0.vercel.app) ↗</span>
+                      </a>
+                    </div>
+                  )}
                 </div>
 
                 <div className="rounded-xl bg-zinc-100 dark:bg-zinc-800 p-3 text-right shrink-0">

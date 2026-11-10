@@ -215,24 +215,24 @@ export const ENTERPRISE_SOLUTIONS_DATA: SolutionPackage[] = [
     },
     recommendedProducts: [
       {
-        id: 'expedite-strike',
-        name: 'Expedite Strike & Fusion 2026 (DAST Engine)',
-        icon: '⚡',
-        tagline: 'Autonomous Red Teaming, ASPM & Hybrid AI AppSec with live web scanning.',
+        id: 'prod_05_sast',
+        name: '05-SAST & Penetration Testing Platform (Static & Offensive AST)',
+        icon: '🔍',
+        tagline: 'Sub-4ms AST static code analysis, penetration testing vulnerability verification & automated fix PR dispatch.',
+        price: '$199 / mo',
+        trialAvailable: true,
+        actionText: 'Launch 14-Day Sandbox',
+        liveUrl: 'https://05-sast-platform.vercel.app'
+      },
+      {
+        id: 'prod_trepath_2_0',
+        name: 'Trepath 2.0 — Autonomous Penetration Testing & Attack Path Engine',
+        icon: '🎯',
+        tagline: 'Live penetration testing, multi-hop attack path graph simulation, exploit chain verification & ASPM portal.',
         price: '$499 / mo',
         trialAvailable: true,
         actionText: 'Launch 14-Day Sandbox',
-        liveUrl: 'https://strike-2026-21.vercel.app'
-      },
-      {
-        id: 'aegis-pentest',
-        name: 'Expedite Strike Web Interface & PenTest Hub',
-        icon: '🎯',
-        tagline: 'Rust-accelerated attack chain execution engine and executive reporting portal.',
-        price: '$899 / mo',
-        trialAvailable: true,
-        actionText: 'Request Demo',
-        liveUrl: 'https://strike-landing-chi.vercel.app'
+        liveUrl: 'https://trepath-2-0.vercel.app'
       }
     ],
     recommendedServices: [
