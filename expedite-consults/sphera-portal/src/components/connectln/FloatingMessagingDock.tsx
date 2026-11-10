@@ -65,7 +65,7 @@ export function FloatingMessagingDock({
 
   const [isDockOpen, setIsDockOpen] = useState(false)
   const [isMelissaOfferOpen, setIsMelissaOfferOpen] = useState(true)
-  const [isMelissaMinimized, setIsMelissaMinimized] = useState(false)
+  const [isMelissaMinimized, setIsMelissaMinimized] = useState(true)
   const [melissaResponseState, setMelissaResponseState] = useState<'pending' | 'get_started' | 'not_today' | 'not_interested'>('pending')
   const [melissaAlertEnabled, setMelissaAlertEnabled] = useState(true)
   const [melissaTargetRole, setMelissaTargetRole] = useState(
@@ -443,7 +443,7 @@ export function FloatingMessagingDock({
         }}
       />
 
-      {/* 0. Melissa Torres — ConnectLn Offer (Job Search Alert Concierge Card matching user screenshot) */}
+      {/* 0. ConnectLn Offer (Job Search Alert Concierge Card — without Melissa Torres name) */}
       {isMelissaOfferOpen && !activeChatThread && (
         isMelissaMinimized ? (
           <button
@@ -451,29 +451,25 @@ export function FloatingMessagingDock({
             onClick={() => setIsMelissaMinimized(false)}
             className="pointer-events-auto flex items-center gap-2.5 rounded-t-xl border border-zinc-300 bg-white px-3.5 py-2.5 shadow-2xl hover:bg-zinc-50 transition-colors cursor-pointer"
           >
-            <img
-              src={MELISSA_TORRES_AVATAR}
-              alt="Melissa Torres"
-              className="h-7 w-7 rounded-full object-cover ring-1 ring-[#0A66C2]/30"
-            />
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#0A66C2] text-white text-xs font-black shrink-0">
+              in
+            </div>
             <div className="text-left">
-              <p className="text-xs font-bold text-zinc-900 leading-none">Melissa Torres</p>
-              <p className="text-[10px] text-zinc-500 mt-0.5">ConnectLn Offer · Job Alerts</p>
+              <p className="text-xs font-bold text-zinc-900 leading-none">ConnectLn Job Alerts</p>
+              <p className="text-[10px] text-zinc-500 mt-0.5">Set Up Alerts for Jobs You Want</p>
             </div>
             <ChevronUp className="h-4 w-4 text-zinc-500 ml-1" />
           </button>
         ) : (
           <div className="pointer-events-auto flex flex-col w-[92vw] sm:w-[390px] max-h-[545px] rounded-t-xl border border-zinc-300 bg-white text-zinc-900 shadow-[0_8px_36px_rgba(0,0,0,0.22)] overflow-hidden animate-in slide-in-from-bottom-4">
-            {/* Top Bar: Avatar + Melissa Torres + ... + Minimize + X */}
+            {/* Top Bar: ConnectLn Job Alerts + ... + Minimize + X */}
             <div className="flex items-center justify-between border-b border-zinc-200 bg-white px-3.5 py-2.5 shrink-0">
               <div className="flex items-center gap-2.5 min-w-0">
-                <img
-                  src={MELISSA_TORRES_AVATAR}
-                  alt="Melissa Torres"
-                  className="h-8 w-8 rounded-full object-cover shrink-0"
-                />
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0A66C2] text-white text-xs font-black shrink-0">
+                  in
+                </div>
                 <span className="font-bold text-sm text-zinc-900 truncate">
-                  Melissa Torres
+                  ConnectLn Job Alerts
                 </span>
               </div>
               <div className="flex items-center gap-1 text-zinc-600">
@@ -623,22 +619,20 @@ export function FloatingMessagingDock({
 
               {/* Sender Profile Block */}
               <div className="space-y-1.5">
-                <img
-                  src={MELISSA_TORRES_AVATAR}
-                  alt="Melissa Torres"
-                  className="h-16 w-16 rounded-full object-cover border border-zinc-200 shadow-2xs"
-                />
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#0A66C2] text-white text-lg font-black border border-zinc-200 shadow-2xs">
+                  in
+                </div>
                 <div className="pt-0.5">
                   <div className="flex items-center gap-1.5">
                     <span className="font-bold text-base text-zinc-900">
-                      Melissa Torres
+                      ConnectLn Job Alerts
                     </span>
                     <span className="inline-flex items-center justify-center rounded bg-[#B86714] px-1 py-0.2 text-[10px] font-black text-white leading-tight">
                       in
                     </span>
                   </div>
                   <p className="text-xs text-zinc-600 leading-snug mt-0.5">
-                    Senior Manager @ ConnectLn | Conscious Business, Online Advertising
+                    ConnectLn Career &amp; Job Search Alert Team
                   </p>
                 </div>
               </div>
@@ -654,15 +648,13 @@ export function FloatingMessagingDock({
 
               {/* Message Body */}
               <div className="flex items-start gap-2.5">
-                <img
-                  src={MELISSA_TORRES_AVATAR}
-                  alt="Melissa Torres"
-                  className="h-9 w-9 rounded-full object-cover shrink-0 mt-0.5"
-                />
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0A66C2] text-white text-xs font-black shrink-0 mt-0.5">
+                  in
+                </div>
                 <div className="min-w-0 flex-1 space-y-2.5 text-[13.5px] text-zinc-800 leading-relaxed">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="font-bold text-sm text-zinc-900">
-                      Melissa Torres
+                      ConnectLn Job Alerts
                     </span>
                     <span className="inline-flex items-center justify-center rounded bg-[#B86714] px-1 py-0.2 text-[9px] font-black text-white leading-tight">
                       in
@@ -672,14 +664,12 @@ export function FloatingMessagingDock({
 
                   <p>Hi {viewerFirstName},</p>
 
-                  <p>My name is Melissa, and I&apos;m from the ConnectLn team.</p>
-
                   <p>
                     Want a heads-up when new roles open? Set up a job alert to get notified as soon as new jobs get posted at companies you like.
                   </p>
 
                   <p>
-                    To create an alert, just turn the job search alert toggle to &ldquo;on&rdquo; at the bottom of your job search results page.
+                    To create an alert, just turn the job search alert toggle to &ldquo;on&rdquo; in the <strong>Alerts</strong> tab or on your job search results page.
                   </p>
 
                   {/* 3 Action Pill Buttons matching Screenshot */}
@@ -1290,7 +1280,7 @@ export function FloatingMessagingDock({
 
             {/* Conversation List */}
             <div className="flex-1 overflow-y-auto divide-y divide-zinc-100">
-              {/* Pinned Melissa Torres — ConnectLn Offer Row */}
+              {/* Pinned ConnectLn Offer Row */}
               <div
                 onClick={() => {
                   setActiveChatThread(null)
@@ -1300,24 +1290,22 @@ export function FloatingMessagingDock({
                 className="flex items-start gap-2.5 p-2.5 bg-blue-50/40 hover:bg-blue-50 cursor-pointer transition-colors"
               >
                 <div className="relative shrink-0">
-                  <img
-                    src={MELISSA_TORRES_AVATAR}
-                    alt="Melissa Torres"
-                    className="h-8 w-8 rounded-full object-cover"
-                  />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0A66C2] text-white text-xs font-black">
+                    in
+                  </div>
                   <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-1 ring-white" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-1">
                     <p className="font-bold text-xs text-zinc-900 truncate">
-                      Melissa Torres
+                      ConnectLn Job Alerts
                     </p>
                     <span className="text-[10px] font-semibold text-[#0A66C2]">
                       Nov 10
                     </span>
                   </div>
                   <p className="text-[11px] font-semibold text-zinc-800 truncate mt-0.5">
-                    ConnectLn Offer: Want a heads-up when new roles open? Set up a job alert...
+                    Want a heads-up when new roles open? Set up a job alert...
                   </p>
                 </div>
               </div>

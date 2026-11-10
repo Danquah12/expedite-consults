@@ -1440,7 +1440,7 @@ export function JobsView({
 
           {/* Main Job Results Feed */}
           <div className="md:col-span-8 lg:col-span-9 space-y-4">
-            {/* Top Job Search Alert Toggle Bar (Connected to Melissa Torres ConnectLn Offer) */}
+            {/* Top Job Search Alert Toggle Bar */}
             <div
               id="connectln-job-search-alert-top-bar"
               className={`rounded-2xl border-2 p-3.5 sm:p-4 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs ${
@@ -1450,11 +1450,9 @@ export function JobsView({
               }`}
             >
               <div className="flex items-start gap-3">
-                <img
-                  src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=240&auto=format&fit=crop&q=80"
-                  alt="Melissa Torres"
-                  className="h-10 w-10 rounded-full object-cover border border-zinc-200 shrink-0 mt-0.5"
-                />
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0A66C2] text-white text-xs font-black shrink-0 mt-0.5">
+                  🔔
+                </div>
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
@@ -1471,7 +1469,7 @@ export function JobsView({
                     </span>
                   </div>
                   <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                    Melissa Torres · ConnectLn Offer: Get notified as soon as new roles get posted at companies you like ({currentCountry?.name || 'Global & Local'}).
+                    ConnectLn Job Alerts: Get notified as soon as new roles get posted at companies you like ({currentCountry?.name || 'Global & Local'}).
                   </p>
                 </div>
               </div>
@@ -1805,7 +1803,7 @@ export function JobsView({
                     </div>
                   )}
 
-                  {/* Bottom Job Search Alert Toggle Bar (Connected to Melissa Torres ConnectLn Offer) */}
+                  {/* Bottom Job Search Alert Toggle Bar */}
                   <div
                     id="connectln-job-search-alert-bar"
                     className={`mt-4 rounded-2xl border-2 p-4 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
@@ -1815,11 +1813,9 @@ export function JobsView({
                     }`}
                   >
                     <div className="flex items-start gap-3">
-                      <img
-                        src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=240&auto=format&fit=crop&q=80"
-                        alt="Melissa Torres"
-                        className="h-10 w-10 rounded-full object-cover border border-zinc-200 shrink-0 mt-0.5"
-                      />
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0A66C2] text-white text-xs font-black shrink-0 mt-0.5">
+                        🔔
+                      </div>
                       <div className="space-y-0.5">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">

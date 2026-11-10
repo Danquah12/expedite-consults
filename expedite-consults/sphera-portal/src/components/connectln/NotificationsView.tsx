@@ -60,12 +60,111 @@ interface NotificationsViewProps {
   currentUserProfession?: string
 }
 
+export interface SavedConnectLnJobAlert {
+  id: string
+  roleOrTrade: string
+  companies: string
+  location: string
+  opportunityType: 'Employment' | 'Contract project' | 'Apprenticeship' | 'All Types'
+  frequency: 'Instant' | 'Daily' | 'Weekly'
+  enabled: boolean
+  createdAt: string
+}
+
 export function NotificationsView({
   onNavigateTab,
   currentUserName = "Kwesi Asiedu",
   currentUserProfession = ""
 }: NotificationsViewProps) {
-  const [selectedCategory, setSelectedCategory] = useState<'All' | 'Lookups & Vouches' | 'Security' | 'Career' | 'Marketplace' | 'Learning' | 'Social'>('All')
+  const [selectedCategory, setSelectedCategory] = useState<'All' | 'Job Alerts' | 'Lookups & Vouches' | 'Security' | 'Career' | 'Marketplace' | 'Learning' | 'Social'>('All')
+  const [jobAlertEnabled, setJobAlertEnabled] = useState<boolean>(true)
+  const [newAlertRole, setNewAlertRole] = useState<string>(
+    currentUserProfession || "AI Automation Consultant / Master Carpenter / Lead Specialist"
+  )
+  const [newAlertCompany, setNewAlertCompany] = useState<string>(
+    "Verified Employers, Franchise Networks & Local Businesses"
+  )
+  const [newAlertLocation, setNewAlertLocation] = useState<string>("Laurel, MD · Remote & Local")
+  const [newAlertOpportunityType, setNewAlertOpportunityType] = useState<'Employment' | 'Contract project' | 'Apprenticeship' | 'All Types'>('All Types')
+  const [newAlertFrequency, setNewAlertFrequency] = useState<'Instant' | 'Daily' | 'Weekly'>('Instant')
+  const [jobAlertSavedToast, setJobAlertSavedToast] = useState<string | null>(null)
+  const [savedJobAlerts, setSavedJobAlerts] = useState<SavedConnectLnJobAlert[]>([
+    {
+      id: 'ja_default_1',
+      roleOrTrade: currentUserProfession || 'AI Automation Consultant & Voice AI Solutions Lead',
+      companies: 'Enterprise & Verified ConnectLn Employers',
+      location: 'Laurel, MD · Remote / Hybrid',
+      opportunityType: 'All Types',
+      frequency: 'Instant',
+      enabled: true,
+      createdAt: 'Active · Instant notifications on'
+    },
+    {
+      id: 'ja_default_2',
+      roleOrTrade: 'Skilled Trades, Custom Joinery, Welding & Field Project Contracts',
+      companies: 'Local Business Networks, General Contractors & Franchise Locations',
+      location: 'Maryland, DC, Virginia & Nationwide',
+      opportunityType: 'Contract project',
+      frequency: 'Daily',
+      enabled: true,
+      createdAt: 'Active · Daily digest on'
+    }
+  ])
+
+  useEffect(() => {
+    try {
+      const savedToggle = localStorage.getItem('connectln_job_search_alert_enabled')
+      if (savedToggle !== null) setJobAlertEnabled(savedToggle === 'true')
+      const rawAlerts = localStorage.getItem('connectln_saved_job_alerts_v1')
+      if (rawAlerts) {
+        const parsed = JSON.parse(rawAlerts)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setSavedJobAlerts(parsed)
+        }
+      }
+    } catch {}
+  }, [])
+
+  const handleCreateCustomJobAlert = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newAlertRole.trim()) return
+    const created: SavedConnectLnJobAlert = {
+      id: 'ja_' + Date.now(),
+      roleOrTrade: newAlertRole.trim(),
+      companies: newAlertCompany.trim() || 'All Verified Employers',
+      location: newAlertLocation.trim() || 'Remote & Local',
+      opportunityType: newAlertOpportunityType,
+      frequency: newAlertFrequency,
+      enabled: true,
+      createdAt: `Created just now · ${newAlertFrequency} alerts ON`
+    }
+    const updated = [created, ...savedJobAlerts]
+    setSavedJobAlerts(updated)
+    setJobAlertEnabled(true)
+    try {
+      localStorage.setItem('connectln_saved_job_alerts_v1', JSON.stringify(updated))
+      localStorage.setItem('connectln_job_search_alert_enabled', 'true')
+      window.dispatchEvent(new Event('connectln-job-alert-updated'))
+    } catch {}
+    setJobAlertSavedToast(`✓ Job alert created for "${created.roleOrTrade}" (${created.frequency})`)
+    setTimeout(() => setJobAlertSavedToast(null), 4000)
+  }
+
+  const handleToggleSingleJobAlert = (id: string) => {
+    const updated = savedJobAlerts.map(a => (a.id === id ? { ...a, enabled: !a.enabled } : a))
+    setSavedJobAlerts(updated)
+    try {
+      localStorage.setItem('connectln_saved_job_alerts_v1', JSON.stringify(updated))
+    } catch {}
+  }
+
+  const handleDeleteSingleJobAlert = (id: string) => {
+    const updated = savedJobAlerts.filter(a => a.id !== id)
+    setSavedJobAlerts(updated)
+    try {
+      localStorage.setItem('connectln_saved_job_alerts_v1', JSON.stringify(updated))
+    } catch {}
+  }
   const [lookupVouchSubFilter, setLookupVouchSubFilter] = useState<'all' | 'lookups' | 'vouches'>('all')
   const [lookupActorTypeFilter, setLookupActorTypeFilter] = useState<'all' | 'search_appearance' | 'profile_click'>('all')
   const [notifications, setNotifications] = useState<CategorizedNotificationItem[]>(INITIAL_CATEGORIZED_NOTIFICATIONS)
@@ -313,6 +412,7 @@ export function NotificationsView({
   // Category counts (Lookups & Vouches are counted in their dedicated tab so Career & Social show distinct counts)
   const getCategoryCount = (cat: string) => {
     if (cat === 'All') return allCombinedNotifications.length
+    if (cat === 'Job Alerts') return savedJobAlerts.length
     if (cat === 'Lookups & Vouches') return allCombinedNotifications.filter(isLookupOrVouchAlert).length
     if (cat === 'Career') return allCombinedNotifications.filter(n => n.category === 'Career' && !isLookupOrVouchAlert(n)).length
     if (cat === 'Social') return allCombinedNotifications.filter(n => n.category === 'Social' && !isLookupOrVouchAlert(n)).length
@@ -321,6 +421,7 @@ export function NotificationsView({
 
   const getUnreadCount = (cat: string) => {
     if (cat === 'All') return allCombinedNotifications.filter(n => n.unread).length
+    if (cat === 'Job Alerts') return savedJobAlerts.filter(a => a.enabled).length
     if (cat === 'Lookups & Vouches') return allCombinedNotifications.filter(n => isLookupOrVouchAlert(n) && n.unread).length
     if (cat === 'Career') return allCombinedNotifications.filter(n => n.category === 'Career' && !isLookupOrVouchAlert(n) && n.unread).length
     if (cat === 'Social') return allCombinedNotifications.filter(n => n.category === 'Social' && !isLookupOrVouchAlert(n) && n.unread).length
@@ -332,6 +433,8 @@ export function NotificationsView({
     const matchCategory =
       selectedCategory === 'All'
         ? true
+        : selectedCategory === 'Job Alerts'
+        ? n.category === 'Career' && !isLookupOrVouchAlert(n)
         : selectedCategory === 'Lookups & Vouches'
         ? lookupVouchSubFilter === 'lookups'
           ? isLookupAlert(n)
@@ -534,55 +637,49 @@ export function NotificationsView({
           </div>
         </div>
 
-        {/* Featured ConnectLn Offer: Melissa Torres Job Search Alert Card */}
+        {/* Featured ConnectLn Job Search Alert Card (without Melissa Torres name) */}
         <div className="mt-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs overflow-hidden">
           <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-800/50 px-4 py-2 text-xs text-zinc-500">
-            <span className="font-semibold text-zinc-700 dark:text-zinc-300">ConnectLn Offer · Career &amp; Job Alert Concierge</span>
+            <span className="font-semibold text-zinc-700 dark:text-zinc-300">ConnectLn Offer · Job Search Alert</span>
             <span>Nov 10 · 10:49 AM</span>
           </div>
           <div className="p-4 sm:p-5 flex flex-col sm:flex-row items-start gap-4">
-            <img
-              src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=240&auto=format&fit=crop&q=80"
-              alt="Melissa Torres"
-              className="h-14 w-14 rounded-full object-cover border border-zinc-200 shrink-0"
-            />
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#0A66C2] text-white text-lg font-black border border-zinc-200 shrink-0 shadow-2xs">
+              in
+            </div>
             <div className="min-w-0 flex-1 space-y-2 text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed">
               <div>
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="font-bold text-base text-zinc-900 dark:text-zinc-100">
-                    Melissa Torres
+                    ConnectLn Job Alerts
                   </span>
                   <span className="inline-flex items-center justify-center rounded bg-[#B86714] px-1.5 py-0.2 text-[10px] font-black text-white leading-tight">
                     in
                   </span>
                   <span className="text-xs text-zinc-500">
-                    Senior Manager @ ConnectLn | Conscious Business, Online Advertising
+                    ConnectLn Career &amp; Job Alert Team
                   </span>
                 </div>
               </div>
 
               <p>Hi {(currentUserName || "Kwesi").split(" ")[0]},</p>
-              <p>My name is Melissa, and I&apos;m from the ConnectLn team.</p>
               <p>
                 Want a heads-up when new roles open? Set up a job alert to get notified as soon as new jobs get posted at companies you like.
               </p>
               <p>
-                To create an alert, just turn the job search alert toggle to &ldquo;on&rdquo; at the bottom of your job search results page.
+                To create an alert, click <strong>Get started</strong> below or open the <strong>🔔 Set Up Job Alerts</strong> tab right here in Alerts.
               </p>
 
               <div className="pt-1.5 flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={() => {
+                    setSelectedCategory('Job Alerts')
+                    setJobAlertEnabled(true)
                     try {
                       localStorage.setItem('connectln_job_search_alert_enabled', 'true')
                       window.dispatchEvent(new Event('connectln-job-alert-updated'))
                     } catch {}
-                    if (onNavigateTab) onNavigateTab('jobs')
-                    setTimeout(() => {
-                      const el = document.getElementById('connectln-job-search-alert-top-bar')
-                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                    }, 250)
                   }}
                   className="rounded-full border-2 border-[#0A66C2] bg-[#0A66C2] text-white hover:bg-[#004182] px-4 py-1.5 text-xs sm:text-sm font-bold transition-colors cursor-pointer"
                 >
@@ -614,6 +711,7 @@ export function NotificationsView({
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
             {[
               { id: 'All', label: 'All', count: getCategoryCount('All'), unread: getUnreadCount('All') },
+              { id: 'Job Alerts', label: '🔔 Set Up Job Alerts', count: getCategoryCount('Job Alerts'), unread: getUnreadCount('Job Alerts') },
               { id: 'Lookups & Vouches', label: '🔍🤝 Lookups & Vouches', count: getCategoryCount('Lookups & Vouches'), unread: getUnreadCount('Lookups & Vouches') },
               { id: 'Career', label: '💼 Career', count: getCategoryCount('Career'), unread: getUnreadCount('Career') },
               { id: 'Social', label: '💬 Network & Community', count: getCategoryCount('Social'), unread: getUnreadCount('Social') },
@@ -728,6 +826,253 @@ export function NotificationsView({
           </div>
         )}
       </div>
+
+      {/* 1.15 SET UP ALERTS FOR JOBS YOU WANT (Visible in 'All' and 'Job Alerts' tab) */}
+      {(selectedCategory === 'Job Alerts' || selectedCategory === 'All') && (
+        <div
+          id="connectln-alerts-job-alert-studio"
+          className="rounded-2xl border-2 border-[#0A66C2] bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-xs space-y-5"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-100 dark:border-zinc-800 pb-4">
+            <div className="flex items-start gap-3.5">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0A66C2] text-white text-base font-black shrink-0 shadow-xs">
+                🔔
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100">
+                    Set Up Alerts for Jobs You Want
+                  </h2>
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase ${
+                      jobAlertEnabled
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-zinc-200 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
+                    }`}
+                  >
+                    {jobAlertEnabled ? '✓ Master Alert Toggle ON' : 'Master Alert Toggle OFF'}
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-0.5">
+                  Create custom alerts for roles, trades, projects, apprenticeships, and companies you want to follow. Get notified as soon as matching jobs are posted.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={jobAlertEnabled}
+                onClick={() => {
+                  const next = !jobAlertEnabled
+                  setJobAlertEnabled(next)
+                  try {
+                    localStorage.setItem('connectln_job_search_alert_enabled', String(next))
+                    window.dispatchEvent(new Event('connectln-job-alert-updated'))
+                  } catch {}
+                }}
+                className="flex items-center gap-2 rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3.5 py-1.5 cursor-pointer"
+              >
+                <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
+                  Job Search Alert: {jobAlertEnabled ? 'ON' : 'OFF'}
+                </span>
+                <span
+                  className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors ${
+                    jobAlertEnabled ? 'bg-[#0A66C2]' : 'bg-zinc-300 dark:bg-zinc-600'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                      jobAlertEnabled ? 'translate-x-5' : 'translate-x-1'
+                    }`}
+                  />
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onNavigateTab && onNavigateTab('jobs')}
+                className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-4 py-2 text-xs font-bold transition-colors cursor-pointer shadow-2xs"
+              >
+                Open Jobs Board →
+              </button>
+            </div>
+          </div>
+
+          {/* Create New Job Alert Form */}
+          <form onSubmit={handleCreateCustomJobAlert} className="rounded-2xl border border-blue-200/80 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-950/20 p-4 space-y-3.5">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <span className="text-xs font-extrabold uppercase tracking-wider text-[#0A66C2] dark:text-sky-400">
+                + Create a New Job Search Alert
+              </span>
+              {jobAlertSavedToast && (
+                <span className="rounded-full bg-emerald-600 text-white px-3 py-0.5 text-xs font-bold">
+                  {jobAlertSavedToast}
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div>
+                <label className="block text-[11px] font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                  Job Title, Trade, or Skill You Want
+                </label>
+                <input
+                  type="text"
+                  value={newAlertRole}
+                  onChange={(e) => setNewAlertRole(e.target.value)}
+                  placeholder="e.g. AI Consultant, Carpenter, Mechanic, Nurse..."
+                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-xs font-semibold text-zinc-900 dark:text-zinc-100"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                  Companies or Employers You Like
+                </label>
+                <input
+                  type="text"
+                  value={newAlertCompany}
+                  onChange={(e) => setNewAlertCompany(e.target.value)}
+                  placeholder="e.g. Any Verified Employer, Franchise, Hospital..."
+                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-xs font-semibold text-zinc-900 dark:text-zinc-100"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                  Location / Remote Preference
+                </label>
+                <input
+                  type="text"
+                  value={newAlertLocation}
+                  onChange={(e) => setNewAlertLocation(e.target.value)}
+                  placeholder="e.g. Laurel, MD · Remote / Hybrid"
+                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-xs font-semibold text-zinc-900 dark:text-zinc-100"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[11px] font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                    Opportunity Type
+                  </label>
+                  <select
+                    value={newAlertOpportunityType}
+                    onChange={(e) => setNewAlertOpportunityType(e.target.value as any)}
+                    className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-2 text-xs font-semibold text-zinc-900 dark:text-zinc-100"
+                  >
+                    <option value="All Types">All Types</option>
+                    <option value="Employment">Employment</option>
+                    <option value="Contract project">Contract Project</option>
+                    <option value="Apprenticeship">Apprenticeship</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                    Alert Frequency
+                  </label>
+                  <select
+                    value={newAlertFrequency}
+                    onChange={(e) => setNewAlertFrequency(e.target.value as any)}
+                    className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-2 text-xs font-semibold text-zinc-900 dark:text-zinc-100"
+                  >
+                    <option value="Instant">Instant</option>
+                    <option value="Daily">Daily</option>
+                    <option value="Weekly">Weekly</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-1">
+              <button
+                type="submit"
+                className="rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white px-5 py-2 text-xs font-bold shadow-xs transition-colors cursor-pointer"
+              >
+                + Save &amp; Activate Job Alert
+              </button>
+            </div>
+          </form>
+
+          {/* Saved Job Alerts List */}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-500">
+                Your Configured Job Search Alerts ({savedJobAlerts.length})
+              </h3>
+              <span className="text-[11px] text-zinc-500">
+                Synced with ConnectLn Jobs &amp; Work Workspace
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {savedJobAlerts.map((alertItem) => (
+                <div
+                  key={alertItem.id}
+                  className={`rounded-xl border p-3.5 flex flex-col justify-between gap-3 transition-all ${
+                    alertItem.enabled
+                      ? 'border-blue-200 dark:border-blue-800 bg-white dark:bg-zinc-900 shadow-2xs'
+                      : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/50 opacity-75'
+                  }`}
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
+                        {alertItem.roleOrTrade}
+                      </span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold shrink-0 ${
+                          alertItem.enabled
+                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                            : 'bg-zinc-200 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
+                        }`}
+                      >
+                        {alertItem.enabled ? `${alertItem.frequency} ON` : 'Paused'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                      <strong>Companies:</strong> {alertItem.companies}
+                    </p>
+                    <p className="text-xs text-zinc-500">
+                      📍 {alertItem.location} · 💼 {alertItem.opportunityType} · {alertItem.createdAt}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleSingleJobAlert(alertItem.id)}
+                        className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 px-2.5 py-1 text-[11px] font-bold text-zinc-700 dark:text-zinc-300 cursor-pointer"
+                      >
+                        {alertItem.enabled ? 'Pause Alert' : 'Turn On'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteSingleJobAlert(alertItem.id)}
+                        className="rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-red-50 hover:text-red-600 px-2.5 py-1 text-[11px] font-semibold text-zinc-500 cursor-pointer"
+                      >
+                        Remove
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => onNavigateTab && onNavigateTab('jobs')}
+                      className="text-xs font-bold text-[#0A66C2] hover:underline cursor-pointer"
+                    >
+                      View Matching Jobs →
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 1.25 WEEKLY DIRECTORY LOOKUPS & VERIFIED PEER VOUCHES ALERT HUB (Only shown in 'All' or 'Lookups & Vouches' so Career/Social/Learning/Solutions/Security show their cards immediately at the top!) */}
       {(selectedCategory === 'All' || selectedCategory === 'Lookups & Vouches') && (
