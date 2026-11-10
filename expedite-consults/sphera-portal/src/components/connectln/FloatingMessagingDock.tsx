@@ -672,7 +672,7 @@ export function FloatingMessagingDock({
                     To create an alert, just turn the job search alert toggle to &ldquo;on&rdquo; in the <strong>Alerts</strong> tab or on your job search results page.
                   </p>
 
-                  {/* 3 Action Pill Buttons matching Screenshot */}
+                  {/* Action Pill Button */}
                   <div className="pt-2 flex flex-wrap items-center gap-2">
                     <button
                       type="button"
@@ -703,26 +703,6 @@ export function FloatingMessagingDock({
                       }`}
                     >
                       Get started
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMelissaResponseState('not_today')
-                        setTimeout(() => setIsMelissaMinimized(true), 700)
-                      }}
-                      className="rounded-full border-2 border-[#0A66C2] bg-white hover:bg-blue-50 px-4 py-1.5 text-sm font-bold text-[#0A66C2] transition-colors cursor-pointer"
-                    >
-                      Not today
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMelissaResponseState('not_interested')
-                        setTimeout(() => setIsMelissaOfferOpen(false), 700)
-                      }}
-                      className="rounded-full border-2 border-[#0A66C2] bg-white hover:bg-blue-50 px-4 py-1.5 text-sm font-bold text-[#0A66C2] transition-colors cursor-pointer"
-                    >
-                      Not interested
                     </button>
                   </div>
 

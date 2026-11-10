@@ -685,22 +685,6 @@ export function NotificationsView({
                 >
                   Get started
                 </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (onNavigateTab) onNavigateTab('jobs')
-                  }}
-                  className="rounded-full border-2 border-[#0A66C2] bg-white dark:bg-zinc-900 hover:bg-blue-50 px-4 py-1.5 text-xs sm:text-sm font-bold text-[#0A66C2] transition-colors cursor-pointer"
-                >
-                  Not today
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedCategory('Career')}
-                  className="rounded-full border-2 border-[#0A66C2] bg-white dark:bg-zinc-900 hover:bg-blue-50 px-4 py-1.5 text-xs sm:text-sm font-bold text-[#0A66C2] transition-colors cursor-pointer"
-                >
-                  Not interested
-                </button>
               </div>
             </div>
           </div>
