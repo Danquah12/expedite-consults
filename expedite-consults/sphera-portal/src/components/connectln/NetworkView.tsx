@@ -103,7 +103,18 @@ interface NetworkViewProps {
   currentUser?: UserProfile
   onNavigateMessaging?: (person?: any) => void
   onUpdateConnectionsCount?: (newCount: number) => void
-  initialSubTab?: 'people' | 'connections' | 'followers' | 'following' | 'received_invites' | 'sent_invites' | 'profile_viewers'
+  initialSubTab?:
+    | 'people'
+    | 'connections'
+    | 'followers'
+    | 'following'
+    | 'received_invites'
+    | 'sent_invites'
+    | 'profile_viewers'
+    | 'pymk'
+    | 'invitations'
+    | 'sent'
+  resetTrigger?: number
 }
 
 export function getEnclaveCapabilityFilters(enclaveId?: string) {
@@ -168,14 +179,43 @@ export function NetworkView({
   currentUser = defaultUser,
   onNavigateMessaging,
   onUpdateConnectionsCount,
-  initialSubTab
+  initialSubTab,
+  resetTrigger
 }: NetworkViewProps) {
   const enclaveId = currentUser?.professionEnclave
   const capabilityFilters = getEnclaveCapabilityFilters(enclaveId)
 
+  const normalizeSubTab = (
+    tab?: NetworkViewProps['initialSubTab']
+  ):
+    | 'people'
+    | 'connections'
+    | 'followers'
+    | 'following'
+    | 'received_invites'
+    | 'sent_invites'
+    | 'profile_viewers' => {
+    if (!tab || tab === 'connections') return 'connections'
+    if (tab === 'pymk' || tab === 'people') return 'people'
+    if (tab === 'invitations' || tab === 'received_invites') return 'received_invites'
+    if (tab === 'sent' || tab === 'sent_invites') return 'sent_invites'
+    return tab
+  }
+
   const [activeTab, setActiveTab] = useState<
-    'people' | 'connections' | 'followers' | 'following' | 'received_invites' | 'sent_invites' | 'profile_viewers' | 'companies' | 'organizations' | 'circles' | 'topics' | 'catchup'
-  >(initialSubTab || 'people')
+    | 'people'
+    | 'connections'
+    | 'followers'
+    | 'following'
+    | 'received_invites'
+    | 'sent_invites'
+    | 'profile_viewers'
+    | 'companies'
+    | 'organizations'
+    | 'circles'
+    | 'topics'
+    | 'catchup'
+  >(() => normalizeSubTab(initialSubTab))
   const [followBundle, setFollowBundle] = useState(() => loadUserFollowBundle(currentUser?.name))
   const [telemetryViewSubTab, setTelemetryViewSubTab] = useState<'viewers' | 'reach' | 'discoveries'>('viewers')
   const [reachKindFilter, setReachKindFilter] = useState<'all' | 'view' | 'interaction'>('all')
@@ -188,10 +228,8 @@ export function NetworkView({
   )
 
   useEffect(() => {
-    if (initialSubTab) {
-      setActiveTab(initialSubTab)
-    }
-  }, [initialSubTab])
+    setActiveTab(normalizeSubTab(initialSubTab))
+  }, [initialSubTab, resetTrigger])
 
   useEffect(() => {
     if (typeof window === 'undefined') return

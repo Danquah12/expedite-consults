@@ -179,7 +179,8 @@ export default function ConnectLnPage() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false)
   const [analyticsModalTab, setAnalyticsModalTab] = useState<'viewers' | 'reach' | 'discoveries'>('viewers')
-  const [networkInitialSubTab, setNetworkInitialSubTab] = useState<'connections' | 'invitations' | 'sent' | 'profile_viewers' | 'followers' | 'following' | 'pymk'>('pymk')
+  const [networkInitialSubTab, setNetworkInitialSubTab] = useState<'connections' | 'invitations' | 'sent' | 'profile_viewers' | 'followers' | 'following' | 'pymk'>('connections')
+  const [networkResetTrigger, setNetworkResetTrigger] = useState(0)
   const [activeWorkspace, setActiveWorkspace] = useState<'personal' | 'enterprise' | 'creator' | 'seller'>('personal')
 
   const COMMON_SURNAMES_LIST = [
@@ -1948,6 +1949,10 @@ export default function ConnectLnPage() {
         activeTab={activeTab}
         onSelectTab={(tab) => {
           if (tab === 'profile') setInspectedMember(null)
+          if (tab === 'network') {
+            setNetworkInitialSubTab('connections')
+            setNetworkResetTrigger((prev) => prev + 1)
+          }
           setActiveTab(tab as any)
           setSelectedTagFilter(null)
           if (userData?.name) {
@@ -2013,6 +2018,10 @@ export default function ConnectLnPage() {
                 }}
                 onNavigateTab={(tab) => {
                   if (tab === 'profile') setInspectedMember(null)
+                  if (tab === 'network') {
+                    setNetworkInitialSubTab('connections')
+                    setNetworkResetTrigger((prev) => prev + 1)
+                  }
                   setActiveTab(tab as any)
                 }}
                 onOpenIDModal={() => setIsIDModalOpen(true)}
@@ -2824,9 +2833,16 @@ export default function ConnectLnPage() {
                 onToggleConnect={handleToggleConnect}
                 onSelectMember={handleInspectMember}
                 onNewsClick={(headline) => setSearchQuery(headline.slice(0, 15))}
-                onNavigateTab={(tab) => setActiveTab(tab as any)}
+                onNavigateTab={(tab) => {
+                  if (tab === 'network') {
+                    setNetworkInitialSubTab('connections')
+                    setNetworkResetTrigger((prev) => prev + 1)
+                  }
+                  setActiveTab(tab as any)
+                }}
                 onOpenNetworkSubTab={(subTab) => {
                   setNetworkInitialSubTab(subTab)
+                  setNetworkResetTrigger((prev) => prev + 1)
                   setActiveTab('network')
                 }}
                 onOpenAIAssistant={(query) => {
@@ -2883,6 +2899,7 @@ export default function ConnectLnPage() {
             onNavigateMessaging={(person) => handleOpenDirectMessage(person)}
             onUpdateConnectionsCount={(newCount) => setUserData(prev => ({ ...prev, connectionsCount: newCount }))}
             initialSubTab={networkInitialSubTab}
+            resetTrigger={networkResetTrigger}
           />
         )}
 
