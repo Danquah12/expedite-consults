@@ -577,16 +577,33 @@ async function flushTranslationQueue(lang: LanguageCode) {
     const joined = slice.map(([str]) => str.replace(/\n/g, " ")).join("\n ||| \n")
 
     try {
-      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${encodeURIComponent(
-        lang
-      )}&dt=t&q=${encodeURIComponent(joined)}`
-      const res = await fetch(url)
-      if (!res.ok) continue
-      const data = await res.json()
-      if (!Array.isArray(data) || !Array.isArray(data[0])) continue
+      let splitParts: string[] = []
+      const apiRes = await fetch("/api/connectin/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          texts: slice.map(([str]) => str.replace(/\n/g, " ")),
+          targetLang: lang,
+        }),
+      })
+      if (apiRes.ok) {
+        const apiData = await apiRes.json()
+        if (Array.isArray(apiData?.translations)) {
+          splitParts = apiData.translations
+        }
+      }
 
-      const fullTranslated = data[0].map((part: any) => part?.[0] || "").join("")
-      const splitParts = fullTranslated.split(/\s*\|\|\|\s*/)
+      if (!splitParts.length) {
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${encodeURIComponent(
+          lang
+        )}&dt=t&q=${encodeURIComponent(joined)}`
+        const res = await fetch(url)
+        if (!res.ok) continue
+        const data = await res.json()
+        if (!Array.isArray(data) || !Array.isArray(data[0])) continue
+        const fullTranslated = data[0].map((part: any) => part?.[0] || "").join("")
+        splitParts = fullTranslated.split(/\s*\|\|\|\s*/)
+      }
 
       slice.forEach(([origTrimmed, textNodes], idx) => {
         const translatedPiece = (splitParts[idx] || "").trim()
@@ -621,7 +638,7 @@ function shouldSkipElement(el: Element | null): boolean {
   ) {
     return true
   }
-  if (el.getAttribute("translate") === "no" || el.classList.contains("notranslate")) {
+  if (el.closest('[data-no-translate="true"], [translate="no"], .notranslate')) {
     return true
   }
   return false
@@ -702,11 +719,91 @@ export function applyLivePageTranslation(lang: LanguageCode) {
   }
 }
 
+export async function translateLinesLive(lines: string[], lang: LanguageCode): Promise<string[]> {
+  if (!lines.length || lang === "en") return lines
+  const cache = loadPersistentCache(lang)
+
+  // Check if all lines are already cached
+  const results: string[] = new Array(lines.length)
+  const missingIndices: number[] = []
+  const missingTexts: string[] = []
+
+  lines.forEach((line, idx) => {
+    const trimmed = (line || "").trim()
+    if (!trimmed) {
+      results[idx] = line
+      return
+    }
+    const instant = lookupInstantTranslation(trimmed, lang)
+    if (instant && instant !== trimmed) {
+      results[idx] = instant
+      return
+    }
+    if (cache[trimmed]) {
+      results[idx] = cache[trimmed]
+      return
+    }
+    missingIndices.push(idx)
+    missingTexts.push(trimmed)
+  })
+
+  if (missingTexts.length === 0) return results
+
+  try {
+    const apiRes = await fetch("/api/connectin/translate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ texts: missingTexts, targetLang: lang }),
+    })
+    if (apiRes.ok) {
+      const apiData = await apiRes.json()
+      if (Array.isArray(apiData?.translations) && apiData.translations.length === missingTexts.length) {
+        missingIndices.forEach((origIdx, mIdx) => {
+          const t = (apiData.translations[mIdx] || missingTexts[mIdx]).trim()
+          results[origIdx] = t
+          cache[missingTexts[mIdx]] = t
+        })
+        savePersistentCache(lang)
+        return results
+      }
+    }
+  } catch {
+    // Fallback to direct client translation
+  }
+
+  const fallbackTranslated = await Promise.all(missingTexts.map((t) => translateTextLive(t, lang)))
+  missingIndices.forEach((origIdx, mIdx) => {
+    results[origIdx] = fallbackTranslated[mIdx]
+  })
+  return results
+}
+
 export async function translateTextLive(text: string, lang: LanguageCode): Promise<string> {
   const trimmed = (text || "").trim()
   if (!trimmed || lang === "en") return text
   const instant = lookupInstantTranslation(trimmed, lang)
-  if (instant) return instant
+  if (instant && instant !== trimmed) return instant
+
+  try {
+    const apiRes = await fetch("/api/connectin/translate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ texts: [trimmed], targetLang: lang }),
+    })
+    if (apiRes.ok) {
+      const apiData = await apiRes.json()
+      const first = apiData?.translations?.[0]
+      if (first) {
+        const cache = getLangCache(lang)
+        cache[trimmed] = first.trim()
+        savePersistentCache(lang)
+        return first.trim()
+      }
+    }
+  } catch {
+    // fallback below
+  }
+
   try {
     const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${encodeURIComponent(
       lang
@@ -727,10 +824,5 @@ export async function translateTextLive(text: string, lang: LanguageCode): Promi
     // fallback
   }
   return text
-}
-
-export async function translateLinesLive(lines: string[], lang: LanguageCode): Promise<string[]> {
-  if (!lines.length || lang === "en") return lines
-  return Promise.all(lines.map((line) => translateTextLive(line, lang)))
 }
 
