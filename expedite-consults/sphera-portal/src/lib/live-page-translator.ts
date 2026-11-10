@@ -661,14 +661,79 @@ export const INSTANT_UI_PHRASES: Partial<Record<Exclude<LanguageCode, "en">, Rec
   },
 }
 
-// Build reverse map from English TRANSLATIONS values to keys so any matching string in the DOM gets translated
+// Build forward & reverse maps across all languages so we NEVER store a translated string as the "original English" text
 const englishValueToKeyMap: Record<string, string> = {}
+const englishValuesSet = new Set<string>()
+const reverseTranslatedToEnglishMap: Record<string, string> = {}
+
 if (TRANSLATIONS?.en) {
   for (const [k, v] of Object.entries(TRANSLATIONS.en)) {
     if (v && typeof v === "string") {
-      englishValueToKeyMap[v.trim()] = k
+      const trimmedEn = v.trim()
+      englishValueToKeyMap[trimmedEn] = k
+      englishValuesSet.add(trimmedEn)
     }
   }
+}
+
+// Populate reverseTranslatedToEnglishMap from all TRANSLATIONS dictionaries
+for (const [langCode, dict] of Object.entries(TRANSLATIONS)) {
+  if (langCode === "en" || !dict) continue
+  for (const [k, translatedVal] of Object.entries(dict)) {
+    const enOriginal = TRANSLATIONS.en?.[k]
+    if (translatedVal && enOriginal && translatedVal.trim() !== enOriginal.trim()) {
+      reverseTranslatedToEnglishMap[translatedVal.trim()] = enOriginal.trim()
+    }
+  }
+}
+
+// Populate reverseTranslatedToEnglishMap from all INSTANT_UI_PHRASES dictionaries
+for (const [, phraseDict] of Object.entries(INSTANT_UI_PHRASES)) {
+  if (!phraseDict) continue
+  for (const [enPhrase, translatedPhrase] of Object.entries(phraseDict)) {
+    if (enPhrase && translatedPhrase && enPhrase.trim() !== translatedPhrase.trim()) {
+      reverseTranslatedToEnglishMap[translatedPhrase.trim()] = enPhrase.trim()
+      englishValuesSet.add(enPhrase.trim())
+    }
+  }
+}
+
+let allCachesLoadedForReverse = false
+function ensureAllPersistentCachesInReverseMap() {
+  if (allCachesLoadedForReverse || typeof window === "undefined") return
+  allCachesLoadedForReverse = true
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key && key.startsWith("connectln_i18n_cache_")) {
+        const raw = localStorage.getItem(key)
+        if (raw) {
+          const parsed = JSON.parse(raw) as Record<string, string>
+          for (const [enStr, transStr] of Object.entries(parsed)) {
+            if (enStr && transStr && enStr.trim() !== transStr.trim()) {
+              reverseTranslatedToEnglishMap[transStr.trim()] = enStr.trim()
+            }
+          }
+        }
+      }
+    }
+  } catch {}
+}
+
+/**
+ * Given any string currently in a DOM node or placeholder, returns its canonical English original
+ * if it matches any static or cached translation from another language.
+ */
+export function toCanonicalEnglish(text: string): string {
+  const trimmed = (text || "").trim()
+  if (!trimmed) return text
+  if (englishValuesSet.has(trimmed)) return text
+  ensureAllPersistentCachesInReverseMap()
+  const recoveredEn = reverseTranslatedToEnglishMap[trimmed]
+  if (recoveredEn) {
+    return text.replace(trimmed, recoveredEn)
+  }
+  return text
 }
 
 function loadPersistentCache(lang: LanguageCode): Record<string, string> {
@@ -678,7 +743,13 @@ function loadPersistentCache(lang: LanguageCode): Record<string, string> {
     try {
       const raw = localStorage.getItem(`connectln_i18n_cache_${lang}_v1`)
       if (raw) {
-        Object.assign(initial, JSON.parse(raw))
+        const parsed = JSON.parse(raw) as Record<string, string>
+        Object.assign(initial, parsed)
+        for (const [enStr, transStr] of Object.entries(parsed)) {
+          if (enStr && transStr && enStr.trim() !== transStr.trim()) {
+            reverseTranslatedToEnglishMap[transStr.trim()] = enStr.trim()
+          }
+        }
       }
     } catch {}
   }
@@ -697,26 +768,39 @@ function savePersistentCache(lang: LanguageCode) {
 }
 
 export function lookupInstantTranslation(text: string, lang: LanguageCode): string | null {
-  if (lang === "en") return text
-  const trimmed = text.trim()
+  const canonicalEn = toCanonicalEnglish(text)
+  if (lang === "en") return canonicalEn
+  const trimmed = canonicalEn.trim()
   if (!trimmed) return null
 
   const phraseDict = INSTANT_UI_PHRASES[lang as Exclude<LanguageCode, "en">]
   if (phraseDict && phraseDict[trimmed]) {
-    return text.replace(trimmed, phraseDict[trimmed])
+    return canonicalEn.replace(trimmed, phraseDict[trimmed])
   }
 
   const key = englishValueToKeyMap[trimmed]
   if (key && TRANSLATIONS[lang]?.[key]) {
-    return text.replace(trimmed, TRANSLATIONS[lang][key])
+    return canonicalEn.replace(trimmed, TRANSLATIONS[lang]![key])
   }
 
   const cache = loadPersistentCache(lang)
   if (cache[trimmed]) {
-    return text.replace(trimmed, cache[trimmed])
+    return canonicalEn.replace(trimmed, cache[trimmed])
   }
 
   return null
+}
+
+function containsForeignScriptOrKnownTranslation(str: string): boolean {
+  const trimmed = (str || "").trim()
+  if (!trimmed) return false
+  if (englishValuesSet.has(trimmed)) return false
+  if (reverseTranslatedToEnglishMap[trimmed]) return true
+  // Non-Latin scripts (Chinese, Japanese, Korean, Arabic, Hebrew, Cyrillic, Devanagari, Bengali, Tamil, Thai, Amharic, Greek)
+  // plus African extended letters (ɛɔɖƒŋʋɣ) and European diacritics
+  return /[\u0370-\u1fff\u3040-\ud7af\uf900-\uffffɛɔɖƒŋʋɣƐƆƉƑŊƲƔàâçéèêëîïôùûüÿñáíóúãõäößășțżźńłćśÀÂÇÉÈÊËÎÏÔÙÛÜŸÑÁÍÓÚÃÕÄÖ]/.test(
+    trimmed
+  )
 }
 
 let pendingQueue: Map<string, Set<Text>> = new Map()
@@ -724,7 +808,7 @@ let flushTimer: ReturnType<typeof setTimeout> | null = null
 let activeTargetLang: LanguageCode = "en"
 
 async function flushTranslationQueue(lang: LanguageCode) {
-  if (lang === "en" || pendingQueue.size === 0) return
+  if (activeTargetLang !== lang || pendingQueue.size === 0) return
   const entries = Array.from(pendingQueue.entries())
   pendingQueue = new Map()
 
@@ -754,7 +838,7 @@ async function flushTranslationQueue(lang: LanguageCode) {
       }
 
       if (!splitParts.length) {
-        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${encodeURIComponent(
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${encodeURIComponent(
           lang
         )}&dt=t&q=${encodeURIComponent(joined)}`
         const res = await fetch(url)
@@ -765,19 +849,33 @@ async function flushTranslationQueue(lang: LanguageCode) {
         splitParts = fullTranslated.split(/\s*\|\|\|\s*/)
       }
 
+      if (activeTargetLang !== lang) return
+
       slice.forEach(([origTrimmed, textNodes], idx) => {
         const translatedPiece = (splitParts[idx] || "").trim()
         if (translatedPiece && translatedPiece !== origTrimmed) {
-          cache[origTrimmed] = translatedPiece
-          textNodes.forEach((node) => {
-            if (activeTargetLang === lang && node.isConnected) {
-              const origFull = originalTextMap.get(node) || origTrimmed
-              node.nodeValue = origFull.replace(origTrimmed, translatedPiece)
-            }
-          })
+          if (lang === "en") {
+            reverseTranslatedToEnglishMap[origTrimmed] = translatedPiece
+            textNodes.forEach((node) => {
+              if (activeTargetLang === "en" && node.isConnected) {
+                originalTextMap.set(node, translatedPiece)
+                node.nodeValue = translatedPiece
+              }
+            })
+          } else {
+            cache[origTrimmed] = translatedPiece
+            reverseTranslatedToEnglishMap[translatedPiece] = origTrimmed
+            textNodes.forEach((node) => {
+              if (activeTargetLang === lang && node.isConnected) {
+                const origFull = toCanonicalEnglish(originalTextMap.get(node) || origTrimmed)
+                originalTextMap.set(node, origFull)
+                node.nodeValue = origFull.replace(origTrimmed, translatedPiece)
+              }
+            })
+          }
         }
       })
-      savePersistentCache(lang)
+      if (lang !== "en") savePersistentCache(lang)
     } catch {
       // Network or CORS fallback: leave static dictionary translations intact
     }
@@ -808,20 +906,35 @@ export function applyLivePageTranslation(lang: LanguageCode) {
   if (typeof document === "undefined" || !document.body) return
   activeTargetLang = lang
 
-  // 1. Translate input placeholders
+  // Always clear any pending queue/timer from a previous language so translations never mix!
+  if (flushTimer) {
+    clearTimeout(flushTimer)
+    flushTimer = null
+  }
+  pendingQueue = new Map()
+  ensureAllPersistentCachesInReverseMap()
+
+  // 1. Translate or restore input placeholders
   const inputs = document.body.querySelectorAll("input[placeholder], textarea[placeholder]")
   inputs.forEach((el) => {
     const currentPlaceholder = el.getAttribute("placeholder") || ""
-    if (!originalPlaceholderMap.has(el)) {
-      originalPlaceholderMap.set(el, currentPlaceholder)
-    }
-    const orig = originalPlaceholderMap.get(el) || currentPlaceholder
+    const canonicalCurrent = toCanonicalEnglish(currentPlaceholder)
+    const existingOrig = originalPlaceholderMap.get(el)
+    const canonicalExisting = existingOrig ? toCanonicalEnglish(existingOrig) : ""
+    const bestEn =
+      canonicalExisting && !containsForeignScriptOrKnownTranslation(canonicalExisting)
+        ? canonicalExisting
+        : canonicalCurrent
+    originalPlaceholderMap.set(el, bestEn)
+
     if (lang === "en") {
-      if (currentPlaceholder !== orig) el.setAttribute("placeholder", orig)
+      if (currentPlaceholder !== bestEn) {
+        el.setAttribute("placeholder", bestEn)
+      }
       return
     }
-    const instant = lookupInstantTranslation(orig, lang)
-    if (instant) {
+    const instant = lookupInstantTranslation(bestEn, lang)
+    if (instant && currentPlaceholder !== instant) {
       el.setAttribute("placeholder", instant)
     }
   })
@@ -844,15 +957,34 @@ export function applyLivePageTranslation(lang: LanguageCode) {
   let currentNode = walker.nextNode() as Text | null
   while (currentNode) {
     const currentVal = currentNode.nodeValue || ""
-    if (!originalTextMap.has(currentNode)) {
-      originalTextMap.set(currentNode, currentVal)
-    }
-    const origVal = originalTextMap.get(currentNode) || currentVal
+    const canonicalCurrent = toCanonicalEnglish(currentVal)
+    const existingOrig = originalTextMap.get(currentNode)
+    const canonicalExisting = existingOrig ? toCanonicalEnglish(existingOrig) : ""
+
+    // Pick the cleanest English baseline between canonicalExisting and canonicalCurrent
+    const origVal =
+      canonicalExisting && !containsForeignScriptOrKnownTranslation(canonicalExisting)
+        ? canonicalExisting
+        : canonicalCurrent
+    originalTextMap.set(currentNode, origVal)
     const origTrimmed = origVal.trim()
 
     if (lang === "en") {
-      if (currentNode.nodeValue !== origVal) {
+      if (canonicalCurrent !== currentVal) {
+        // Direct match in reverseTranslatedToEnglishMap (e.g. "首页" -> "Home", "Demander à Noctis" -> "Ask Noctis")
+        currentNode.nodeValue = canonicalCurrent
+        originalTextMap.set(currentNode, canonicalCurrent)
+      } else if (!containsForeignScriptOrKnownTranslation(origVal) && currentNode.nodeValue !== origVal) {
         currentNode.nodeValue = origVal
+      } else if (containsForeignScriptOrKnownTranslation(currentNode.nodeValue || "")) {
+        // Still foreign — queue for automatic English recovery via /api/connectin/translate (sl=auto&tl=en)
+        const foreignTrimmed = (currentNode.nodeValue || "").trim()
+        if (foreignTrimmed.length >= 2 && foreignTrimmed.length <= 420) {
+          if (!pendingQueue.has(foreignTrimmed)) {
+            pendingQueue.set(foreignTrimmed, new Set())
+          }
+          pendingQueue.get(foreignTrimmed)!.add(currentNode)
+        }
       }
     } else {
       const instant = lookupInstantTranslation(origVal, lang)
@@ -871,8 +1003,7 @@ export function applyLivePageTranslation(lang: LanguageCode) {
     currentNode = walker.nextNode() as Text | null
   }
 
-  if (lang !== "en" && pendingQueue.size > 0) {
-    if (flushTimer) clearTimeout(flushTimer)
+  if (pendingQueue.size > 0) {
     flushTimer = setTimeout(() => {
       flushTranslationQueue(lang)
     }, 80)
@@ -922,6 +1053,9 @@ export async function translateLinesLive(lines: string[], lang: LanguageCode): P
           const t = (apiData.translations[mIdx] || missingTexts[mIdx]).trim()
           results[origIdx] = t
           cache[missingTexts[mIdx]] = t
+          if (t !== missingTexts[mIdx]) {
+            reverseTranslatedToEnglishMap[t] = missingTexts[mIdx]
+          }
         })
         savePersistentCache(lang)
         return results
@@ -939,8 +1073,9 @@ export async function translateLinesLive(lines: string[], lang: LanguageCode): P
 }
 
 export async function translateTextLive(text: string, lang: LanguageCode): Promise<string> {
-  const trimmed = (text || "").trim()
-  if (!trimmed || lang === "en") return text
+  const canonical = toCanonicalEnglish(text)
+  const trimmed = (canonical || "").trim()
+  if (!trimmed || lang === "en") return canonical
   const instant = lookupInstantTranslation(trimmed, lang)
   if (instant && instant !== trimmed) return instant
 
@@ -954,10 +1089,14 @@ export async function translateTextLive(text: string, lang: LanguageCode): Promi
       const apiData = await apiRes.json()
       const first = apiData?.translations?.[0]
       if (first) {
-        const cache = getLangCache(lang)
-        cache[trimmed] = first.trim()
+        const cleanFirst = first.trim()
+        const cache = loadPersistentCache(lang)
+        cache[trimmed] = cleanFirst
+        if (cleanFirst !== trimmed) {
+          reverseTranslatedToEnglishMap[cleanFirst] = trimmed
+        }
         savePersistentCache(lang)
-        return first.trim()
+        return cleanFirst
       }
     }
   } catch {
@@ -969,20 +1108,24 @@ export async function translateTextLive(text: string, lang: LanguageCode): Promi
       lang
     )}&dt=t&q=${encodeURIComponent(trimmed)}`
     const res = await fetch(url)
-    if (!res.ok) return text
+    if (!res.ok) return canonical
     const data = await res.json()
     const translated = Array.isArray(data?.[0])
       ? data[0].map((seg: any) => seg?.[0] || "").join("")
       : ""
     if (translated) {
-      const cache = getLangCache(lang)
-      cache[trimmed] = translated.trim()
+      const cleanTrans = translated.trim()
+      const cache = loadPersistentCache(lang)
+      cache[trimmed] = cleanTrans
+      if (cleanTrans !== trimmed) {
+        reverseTranslatedToEnglishMap[cleanTrans] = trimmed
+      }
       savePersistentCache(lang)
-      return translated.trim()
+      return cleanTrans
     }
   } catch {
     // fallback
   }
-  return text
+  return canonical
 }
 

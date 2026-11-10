@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 
 const TRANSLATE_TARGET_MAP: Record<string, string> = {
+  en: "en",
   ak: "ak",
   ee: "ee",
   gaa: "gaa",
@@ -23,12 +24,13 @@ const TRANSLATE_TARGET_MAP: Record<string, string> = {
 
 async function translateSingleText(text: string, targetLang: string): Promise<string> {
   const trimmed = (text || "").trim()
-  if (!trimmed || targetLang === "en") return text
+  if (!trimmed) return text
 
   const tl = TRANSLATE_TARGET_MAP[targetLang] || targetLang
 
   try {
-    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${encodeURIComponent(
+    // Use sl=auto so any source language (English or previously translated DOM text) translates cleanly to targetLang (including "en"!)
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${encodeURIComponent(
       tl
     )}&dt=t&q=${encodeURIComponent(trimmed)}`
     const res = await fetch(url, {
@@ -54,7 +56,7 @@ export async function POST(req: NextRequest) {
     const texts: string[] = Array.isArray(body?.texts) ? body.texts.slice(0, 40) : []
     const targetLang = String(body?.targetLang || "en").trim()
 
-    if (!texts.length || targetLang === "en") {
+    if (!texts.length) {
       return NextResponse.json({ translations: texts })
     }
 

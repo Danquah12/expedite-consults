@@ -141,13 +141,13 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       applyLivePageTranslation(language);
     };
 
-    // Translate immediately on language switch or initial render
+    // Translate or restore to English immediately on language switch and after React commits
     triggerTranslate();
-    const initialTimer = setTimeout(triggerTranslate, 150);
+    const initialTimer = setTimeout(triggerTranslate, 120);
+    const secondTimer = setTimeout(triggerTranslate, 350);
 
     // Observe DOM mutations (tab switches, modal opens, async job/feed loads)
     const observer = new MutationObserver(() => {
-      if (language === "en") return;
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => {
         applyLivePageTranslation(language);
@@ -163,6 +163,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       clearTimeout(initialTimer);
+      clearTimeout(secondTimer);
       if (timer) clearTimeout(timer);
       observer.disconnect();
     };
@@ -173,20 +174,18 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }, [applyLanguage]);
 
   const t = useCallback((key: string, fallback?: string): string => {
+    const enDict = TRANSLATIONS.en;
+    const enText = (enDict && enDict[key]) || fallback || key;
+    if (language === "en") {
+      return enText;
+    }
     const langDict = TRANSLATIONS[language];
     if (langDict && langDict[key]) {
       return langDict[key];
     }
-    if (language !== "en") {
-      const instant = lookupInstantTranslation(fallback || key, language);
-      if (instant) return instant;
-    }
-    // Fallback to English dictionary
-    const enDict = TRANSLATIONS.en;
-    if (enDict && enDict[key]) {
-      return enDict[key];
-    }
-    return fallback || key;
+    const instant = lookupInstantTranslation(enText, language);
+    if (instant) return instant;
+    return enText;
   }, [language]);
 
   const currentLanguage = useMemo(
