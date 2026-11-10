@@ -67,6 +67,14 @@ export function FloatingMessagingDock({
   const [isMelissaOfferOpen, setIsMelissaOfferOpen] = useState(true)
   const [isMelissaMinimized, setIsMelissaMinimized] = useState(false)
   const [melissaResponseState, setMelissaResponseState] = useState<'pending' | 'get_started' | 'not_today' | 'not_interested'>('pending')
+  const [melissaAlertEnabled, setMelissaAlertEnabled] = useState(true)
+  const [melissaTargetRole, setMelissaTargetRole] = useState(
+    currentUser?.profession || "AI Automation Consultant & Lead Specialist"
+  )
+  const [melissaTargetLocation, setMelissaTargetLocation] = useState(
+    currentUser?.location || "Laurel, MD & Remote"
+  )
+  const [melissaAlertFreq, setMelissaAlertFreq] = useState<'Instant' | 'Daily' | 'Weekly'>('Instant')
   const [threads, setThreads] = useState<B2BConversationThread[]>(() =>
     getEnclaveB2BThreads(enclaveId)
   )
@@ -504,6 +512,115 @@ export function FloatingMessagingDock({
 
             {/* Scrollable Message Content */}
             <div className="flex-1 overflow-y-auto px-4 py-3.5 space-y-3">
+              {/* If Get started was clicked, show the Interactive Job Search Alert Setup right at the TOP so it never gets cut off */}
+              {melissaResponseState === 'get_started' && (
+                <div className="rounded-2xl border-2 border-[#0A66C2] bg-blue-50/90 p-3.5 space-y-2.5 text-xs text-zinc-900 shadow-xs animate-in fade-in">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-extrabold text-[#0A66C2] uppercase tracking-wider text-[11px]">
+                      🔔 Job Search Alert Active
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !melissaAlertEnabled
+                        setMelissaAlertEnabled(next)
+                        try {
+                          localStorage.setItem('connectln_job_search_alert_enabled', String(next))
+                          window.dispatchEvent(new Event('connectln-job-alert-updated'))
+                        } catch {}
+                      }}
+                      className="flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <span className="text-[11px] font-bold text-zinc-800">
+                        {melissaAlertEnabled ? 'Alert ON' : 'Alert OFF'}
+                      </span>
+                      <span
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                          melissaAlertEnabled ? 'bg-emerald-600' : 'bg-zinc-300'
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                            melissaAlertEnabled ? 'translate-x-4.5' : 'translate-x-1'
+                          }`}
+                        />
+                      </span>
+                    </button>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div>
+                      <label className="block text-[10px] font-bold text-zinc-600 mb-0.5">
+                        Target Role / Trade / Company
+                      </label>
+                      <input
+                        type="text"
+                        value={melissaTargetRole}
+                        onChange={(e) => setMelissaTargetRole(e.target.value)}
+                        className="w-full rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-900"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <div>
+                        <label className="block text-[10px] font-bold text-zinc-600 mb-0.5">
+                          Location
+                        </label>
+                        <input
+                          type="text"
+                          value={melissaTargetLocation}
+                          onChange={(e) => setMelissaTargetLocation(e.target.value)}
+                          className="w-full rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-zinc-600 mb-0.5">
+                          Frequency
+                        </label>
+                        <select
+                          value={melissaAlertFreq}
+                          onChange={(e) => setMelissaAlertFreq(e.target.value as any)}
+                          className="w-full rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-xs font-semibold text-zinc-900"
+                        >
+                          <option value="Instant">Instant</option>
+                          <option value="Daily">Daily</option>
+                          <option value="Weekly">Weekly</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      try {
+                        localStorage.setItem('connectln_job_search_alert_enabled', String(melissaAlertEnabled))
+                        localStorage.setItem(
+                          'connectln_job_search_alert_config',
+                          JSON.stringify({
+                            enabled: melissaAlertEnabled,
+                            role: melissaTargetRole,
+                            location: melissaTargetLocation,
+                            frequency: melissaAlertFreq
+                          })
+                        )
+                        window.dispatchEvent(new Event('connectln-job-alert-updated'))
+                      } catch {}
+                      setIsMelissaMinimized(true)
+                      if (onNavigateJobs) {
+                        onNavigateJobs()
+                      }
+                      setTimeout(() => {
+                        const el = document.getElementById('connectln-job-search-alert-top-bar')
+                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                      }, 200)
+                    }}
+                    className="w-full rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white py-2 px-3 text-xs font-bold shadow-xs transition-colors cursor-pointer"
+                  >
+                    ✓ Save Alert &amp; Open Matching Jobs →
+                  </button>
+                </div>
+              )}
+
               {/* Sender Profile Block */}
               <div className="space-y-1.5">
                 <img
@@ -571,15 +688,29 @@ export function FloatingMessagingDock({
                       type="button"
                       onClick={() => {
                         setMelissaResponseState('get_started')
+                        setMelissaAlertEnabled(true)
                         try {
                           localStorage.setItem('connectln_job_search_alert_enabled', 'true')
+                          localStorage.setItem(
+                            'connectln_job_search_alert_config',
+                            JSON.stringify({
+                              enabled: true,
+                              role: melissaTargetRole,
+                              location: melissaTargetLocation,
+                              frequency: melissaAlertFreq
+                            })
+                          )
                           window.dispatchEvent(new Event('connectln-job-alert-updated'))
                         } catch {}
                         if (onNavigateJobs) {
                           onNavigateJobs()
                         }
                       }}
-                      className="rounded-full border-2 border-[#0A66C2] bg-white hover:bg-blue-50 px-4 py-1.5 text-sm font-bold text-[#0A66C2] transition-colors cursor-pointer"
+                      className={`rounded-full border-2 px-4 py-1.5 text-sm font-bold transition-colors cursor-pointer ${
+                        melissaResponseState === 'get_started'
+                          ? 'border-[#0A66C2] bg-[#0A66C2] text-white'
+                          : 'border-[#0A66C2] bg-white hover:bg-blue-50 text-[#0A66C2]'
+                      }`}
                     >
                       Get started
                     </button>
@@ -587,7 +718,7 @@ export function FloatingMessagingDock({
                       type="button"
                       onClick={() => {
                         setMelissaResponseState('not_today')
-                        setTimeout(() => setIsMelissaMinimized(true), 900)
+                        setTimeout(() => setIsMelissaMinimized(true), 700)
                       }}
                       className="rounded-full border-2 border-[#0A66C2] bg-white hover:bg-blue-50 px-4 py-1.5 text-sm font-bold text-[#0A66C2] transition-colors cursor-pointer"
                     >
@@ -597,7 +728,7 @@ export function FloatingMessagingDock({
                       type="button"
                       onClick={() => {
                         setMelissaResponseState('not_interested')
-                        setTimeout(() => setIsMelissaOfferOpen(false), 900)
+                        setTimeout(() => setIsMelissaOfferOpen(false), 700)
                       }}
                       className="rounded-full border-2 border-[#0A66C2] bg-white hover:bg-blue-50 px-4 py-1.5 text-sm font-bold text-[#0A66C2] transition-colors cursor-pointer"
                     >
@@ -606,8 +737,110 @@ export function FloatingMessagingDock({
                   </div>
 
                   {melissaResponseState === 'get_started' && (
-                    <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-2.5 text-xs font-semibold text-emerald-800">
-                      ✓ Job search alert turned ON! We&apos;ve opened your Job Search Results page with live alerts active.
+                    <div className="mt-2 rounded-2xl border-2 border-[#0A66C2] bg-blue-50/70 p-3.5 space-y-2.5 text-xs text-zinc-900 animate-in fade-in">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-extrabold text-[#0A66C2] uppercase tracking-wider text-[11px]">
+                          🔔 Job Search Alert Setup
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const next = !melissaAlertEnabled
+                            setMelissaAlertEnabled(next)
+                            try {
+                              localStorage.setItem('connectln_job_search_alert_enabled', String(next))
+                              window.dispatchEvent(new Event('connectln-job-alert-updated'))
+                            } catch {}
+                          }}
+                          className="flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <span className="text-[11px] font-bold text-zinc-800">
+                            {melissaAlertEnabled ? 'Alert ON' : 'Alert OFF'}
+                          </span>
+                          <span
+                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                              melissaAlertEnabled ? 'bg-emerald-600' : 'bg-zinc-300'
+                            }`}
+                          >
+                            <span
+                              className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                                melissaAlertEnabled ? 'translate-x-4.5' : 'translate-x-1'
+                              }`}
+                            />
+                          </span>
+                        </button>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <div>
+                          <label className="block text-[10px] font-bold text-zinc-600 mb-0.5">
+                            Target Role / Trade
+                          </label>
+                          <input
+                            type="text"
+                            value={melissaTargetRole}
+                            onChange={(e) => setMelissaTargetRole(e.target.value)}
+                            className="w-full rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-900"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          <div>
+                            <label className="block text-[10px] font-bold text-zinc-600 mb-0.5">
+                              Location
+                            </label>
+                            <input
+                              type="text"
+                              value={melissaTargetLocation}
+                              onChange={(e) => setMelissaTargetLocation(e.target.value)}
+                              className="w-full rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-900"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-zinc-600 mb-0.5">
+                              Frequency
+                            </label>
+                            <select
+                              value={melissaAlertFreq}
+                              onChange={(e) => setMelissaAlertFreq(e.target.value as any)}
+                              className="w-full rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-xs font-semibold text-zinc-900"
+                            >
+                              <option value="Instant">Instant</option>
+                              <option value="Daily">Daily</option>
+                              <option value="Weekly">Weekly</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          try {
+                            localStorage.setItem('connectln_job_search_alert_enabled', String(melissaAlertEnabled))
+                            localStorage.setItem(
+                              'connectln_job_search_alert_config',
+                              JSON.stringify({
+                                enabled: melissaAlertEnabled,
+                                role: melissaTargetRole,
+                                location: melissaTargetLocation,
+                                frequency: melissaAlertFreq
+                              })
+                            )
+                            window.dispatchEvent(new Event('connectln-job-alert-updated'))
+                          } catch {}
+                          setIsMelissaMinimized(true)
+                          if (onNavigateJobs) {
+                            onNavigateJobs()
+                          }
+                          setTimeout(() => {
+                            const el = document.getElementById('connectln-job-search-alert-top-bar')
+                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                          }, 200)
+                        }}
+                        className="w-full rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white py-2 px-3 text-xs font-bold shadow-xs transition-colors cursor-pointer"
+                      >
+                        ✓ Save Alert &amp; Open Matching Jobs →
+                      </button>
                     </div>
                   )}
                   {melissaResponseState === 'not_today' && (

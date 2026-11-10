@@ -579,8 +579,12 @@ export function NotificationsView({
                       window.dispatchEvent(new Event('connectln-job-alert-updated'))
                     } catch {}
                     if (onNavigateTab) onNavigateTab('jobs')
+                    setTimeout(() => {
+                      const el = document.getElementById('connectln-job-search-alert-top-bar')
+                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                    }, 250)
                   }}
-                  className="rounded-full border-2 border-[#0A66C2] bg-white dark:bg-zinc-900 hover:bg-blue-50 px-4 py-1.5 text-xs sm:text-sm font-bold text-[#0A66C2] transition-colors cursor-pointer"
+                  className="rounded-full border-2 border-[#0A66C2] bg-[#0A66C2] text-white hover:bg-[#004182] px-4 py-1.5 text-xs sm:text-sm font-bold transition-colors cursor-pointer"
                 >
                   Get started
                 </button>
