@@ -2,6 +2,8 @@
 
 import React, { useState, useRef, useEffect, useCallback } from "react"
 import { Play, Pause, Volume2, VolumeX, Maximize2, Minimize2, RotateCcw } from "lucide-react"
+import { useLanguage } from "@/context/LanguageContext"
+import { NoctisVideoInterpreterPopup } from "./NoctisVideoInterpreterPopup"
 
 export const CONNECTLN_VIDEO_PLAY_EVENT = "connectln:exclusive-video-play"
 
@@ -53,6 +55,8 @@ interface ConnectLnStudioPlayerProps {
   speakerAvatarUrl?: string
   posterImageUrl?: string
   durationLabel?: string
+  description?: string
+  takeaways?: string[]
   autoPlay?: boolean
   initialMuted?: boolean
   className?: string
@@ -69,12 +73,15 @@ export function ConnectLnStudioPlayer({
   speakerAvatarUrl,
   posterImageUrl,
   durationLabel = "3:00",
+  description,
+  takeaways,
   autoPlay = true,
   initialMuted = false,
   className = "h-[230px] sm:h-[280px] w-full",
   playerId,
   onExclusiveStop
 }: ConnectLnStudioPlayerProps) {
+  const { language } = useLanguage()
   const containerRef = useRef<HTMLDivElement>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const generatedIdRef = useRef<string>(`cln-studio-${Math.random().toString(36).slice(2, 10)}`)
@@ -307,7 +314,7 @@ export function ConnectLnStudioPlayer({
           <iframe
             ref={iframeRef}
             key={youtubeId}
-            src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=${autoPlay ? 1 : 0}&mute=${initialMuted ? 1 : 0}&loop=1&playlist=${youtubeId}&controls=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&playsinline=1&enablejsapi=1`}
+            src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=${autoPlay ? 1 : 0}&mute=${initialMuted ? 1 : 0}&loop=1&playlist=${youtubeId}&controls=0&rel=0&modestbranding=1&iv_load_policy=3&cc_load_policy=${language !== "en" ? 1 : 0}&cc_lang_pref=${language}&hl=${language}&disablekb=1&fs=0&playsinline=1&enablejsapi=1`}
             title={title}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             onLoad={() => {
@@ -325,6 +332,31 @@ export function ConnectLnStudioPlayer({
           />
         )}
       </div>
+
+      {/* Noctis AI Live Video Language Interpreter & Voice Dubbing Pop-up */}
+      {!isStoppedByOther && (
+        <NoctisVideoInterpreterPopup
+          title={title}
+          speaker={speaker}
+          speakerRole={speakerRole}
+          serialPlate={serialPlate}
+          description={description}
+          takeaways={takeaways}
+          currentTime={currentTime}
+          duration={duration}
+          isPlaying={isPlaying}
+          onMuteOriginalVideo={(shouldMute) => {
+            if (shouldMute) {
+              sendPlayerCommand("mute")
+              setIsMuted(true)
+            } else {
+              sendPlayerCommand("unMute")
+              sendPlayerCommand("setVolume", [100])
+              setIsMuted(false)
+            }
+          }}
+        />
+      )}
 
       {/* Floating Unmute Badge when Auto-Playing Muted on Scroll */}
       {isPlaying && isMuted && !isStoppedByOther && (

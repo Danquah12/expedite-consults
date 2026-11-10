@@ -5,6 +5,7 @@ import { Play, ShieldCheck, Share2, Copy, Check, Mail } from "lucide-react"
 import { resolveUserProfilePicture, isDefaultPlaceholderAvatar, generatePersonalSignatureAvatar, isForeignPersonaAvatar } from "@/lib/connectin-storage"
 import { buildSharePreviewUrl, useSharePic } from "@/lib/connectin-share"
 import { ConnectLnStudioPlayer, CONNECTLN_VIDEO_PLAY_EVENT, notifyExclusiveVideoPlay } from "./ConnectLnStudioPlayer"
+import { NoctisVideoInterpreterPopup } from "./NoctisVideoInterpreterPopup"
 
 export interface VideoShareBannerProps {
   /** Sharer's profile picture (circular on the left inside the ConnectLn Logo Card) */
@@ -276,6 +277,9 @@ export function VideoShareBanner({
                   title={videoTitle}
                   serialPlate={serialPlate || "CLN-VID"}
                   speaker={resolvedAuthor}
+                  speakerRole={resolvedHeadline}
+                  description={videoSubtitle}
+                  takeaways={takeaways}
                   durationLabel={duration}
                   initialMuted={false}
                   playerId={bannerPlayerIdRef.current}
@@ -310,6 +314,14 @@ export function VideoShareBanner({
               onClick={handlePlayTrigger}
               className="relative h-full w-full cursor-pointer group overflow-hidden"
             >
+              <NoctisVideoInterpreterPopup
+                title={videoTitle}
+                speaker={resolvedAuthor}
+                speakerRole={resolvedHeadline}
+                serialPlate={serialPlate || "CLN-VID"}
+                description={videoSubtitle}
+                takeaways={takeaways}
+              />
               {resolvedThumb && (
                 <img
                   src={resolvedThumb}

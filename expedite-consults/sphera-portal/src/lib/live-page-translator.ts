@@ -701,3 +701,36 @@ export function applyLivePageTranslation(lang: LanguageCode) {
     }, 80)
   }
 }
+
+export async function translateTextLive(text: string, lang: LanguageCode): Promise<string> {
+  const trimmed = (text || "").trim()
+  if (!trimmed || lang === "en") return text
+  const instant = lookupInstantTranslation(trimmed, lang)
+  if (instant) return instant
+  try {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${encodeURIComponent(
+      lang
+    )}&dt=t&q=${encodeURIComponent(trimmed)}`
+    const res = await fetch(url)
+    if (!res.ok) return text
+    const data = await res.json()
+    const translated = Array.isArray(data?.[0])
+      ? data[0].map((seg: any) => seg?.[0] || "").join("")
+      : ""
+    if (translated) {
+      const cache = getLangCache(lang)
+      cache[trimmed] = translated.trim()
+      savePersistentCache(lang)
+      return translated.trim()
+    }
+  } catch {
+    // fallback
+  }
+  return text
+}
+
+export async function translateLinesLive(lines: string[], lang: LanguageCode): Promise<string[]> {
+  if (!lines.length || lang === "en") return lines
+  return Promise.all(lines.map((line) => translateTextLive(line, lang)))
+}
+

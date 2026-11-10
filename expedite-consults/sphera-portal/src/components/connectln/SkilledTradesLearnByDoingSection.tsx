@@ -44,6 +44,7 @@ import {
 } from "@/lib/skilled-trades-learn-by-doing-data"
 import { UserProfile } from "@/lib/connectln-data"
 import { ConnectLnStudioPlayer, notifyExclusiveVideoPlay } from "./ConnectLnStudioPlayer"
+import { NoctisVideoInterpreterPopup } from "./NoctisVideoInterpreterPopup"
 
 interface SkilledTradesLearnByDoingSectionProps {
   user?: UserProfile | null
@@ -844,6 +845,8 @@ export function SkilledTradesLearnByDoingSection({
                       speaker={instructorProfile.instructorName}
                       speakerRole={cardCreator}
                       speakerAvatarUrl={instructorProfile.avatarUrl}
+                      description={lesson.description}
+                      takeaways={lesson.skillsCovered}
                       durationLabel=""
                       autoPlay={autoPlayRequested}
                       initialMuted={true}
@@ -871,6 +874,14 @@ export function SkilledTradesLearnByDoingSection({
                       }}
                       className="relative h-full w-full overflow-hidden cursor-pointer group"
                     >
+                      <NoctisVideoInterpreterPopup
+                        title={cardTitle}
+                        speaker={instructorProfile.instructorName}
+                        speakerRole={cardCreator}
+                        serialPlate={serialPlate}
+                        description={lesson.description}
+                        takeaways={lesson.skillsCovered}
+                      />
                       <img
                         src={cardThumbUrl}
                         alt={cardTitle}
@@ -1433,6 +1444,8 @@ export function SkilledTradesLearnByDoingSection({
                             speaker={instructorProfile.instructorName}
                             speakerRole={displayCreator}
                             speakerAvatarUrl={instructorProfile.avatarUrl}
+                            description={lesson.description}
+                            takeaways={lesson.skillsCovered}
                             durationLabel={displayDuration || ""}
                             autoPlay={autoPlayRequested}
                             initialMuted={false}
