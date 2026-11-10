@@ -758,6 +758,35 @@ export function WorkAndBusinessHubView({
                 </div>
               </div>
 
+              {/* Member's Active "Looking for a Job" Badge & Card Banner */}
+              <div className="rounded-2xl border border-emerald-300 dark:border-emerald-800/80 bg-gradient-to-r from-emerald-50/90 via-white to-teal-50/70 dark:from-emerald-950/40 dark:via-zinc-900 dark:to-teal-950/30 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="relative h-12 w-12 rounded-full ring-2 ring-emerald-500 overflow-hidden shrink-0">
+                    <img src={currentUser.avatar} alt={currentUser.name} className="h-full w-full object-cover" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 text-white px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider shadow-2xs">
+                        💼 Looking for a Job
+                      </span>
+                      <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 truncate">
+                        {currentUser.name}
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 truncate mt-0.5">
+                      {currentUser.profession || 'Verified Specialist'} · Employment, Contract Projects &amp; Apprenticeships · {currentUser.location || 'Laurel, MD'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onNavigateTab('profile')}
+                  className="rounded-xl border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-zinc-800 hover:bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-200 shrink-0 cursor-pointer"
+                >
+                  Customize &quot;Looking for a Job&quot; Card →
+                </button>
+              </div>
+
               {/* Search & Opportunity Kind Filter Pills */}
               <div className="flex flex-col sm:flex-row gap-2.5">
                 <div className="relative flex-1">

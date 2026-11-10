@@ -394,6 +394,78 @@ export function ProfileView({
   const [editCover, setEditCover] = useState(user.coverImage || "")
   const [editSavedSuccess, setEditSavedSuccess] = useState(false)
 
+  // "Looking for a Job" Badge & Card State (ConnectLn replacement for LinkedIn #OPENTOWORK)
+  const [jobBadgeStatus, setJobBadgeStatus] = useState<'Looking for a Job' | 'Looking for Projects' | 'Available for Hire' | 'Booked'>('Looking for a Job')
+  const [jobCardRoles, setJobCardRoles] = useState<string>(
+    `${user.profession || 'Senior Specialist'}, Lead Consultant & Project Manager`
+  )
+  const [jobCardWorkTypes, setJobCardWorkTypes] = useState<string>(
+    'Full-time Employment · Contract Projects · Advisory'
+  )
+  const [jobCardLocations, setJobCardLocations] = useState<string>(
+    `${user.location || 'Laurel, MD'} · On-site, Hybrid & Remote`
+  )
+  const [jobCardStartTiming, setJobCardStartTiming] = useState<string>(
+    'Immediate Start · Verified Credentials Ready'
+  )
+  const [isEditingJobCard, setIsEditingJobCard] = useState<boolean>(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const loadJobCardState = () => {
+      try {
+        const keySuffix = (user.name || 'default').toLowerCase()
+        const savedStatus = localStorage.getItem(`connectin_availability_v1__${keySuffix}`)
+        if (
+          savedStatus === 'Looking for a Job' ||
+          savedStatus === 'Looking for Projects' ||
+          savedStatus === 'Available for Hire' ||
+          savedStatus === 'Booked'
+        ) {
+          setJobBadgeStatus(savedStatus)
+        } else if (savedStatus === 'Open' || savedStatus === 'Open to Shifts') {
+          setJobBadgeStatus('Looking for a Job')
+        }
+        const rawCard = localStorage.getItem(`connectin_looking_for_job_card_v1__${keySuffix}`)
+        if (rawCard) {
+          const parsed = JSON.parse(rawCard)
+          if (parsed.roles) setJobCardRoles(parsed.roles)
+          if (parsed.workTypes) setJobCardWorkTypes(parsed.workTypes)
+          if (parsed.locations) setJobCardLocations(parsed.locations)
+          if (parsed.startTiming) setJobCardStartTiming(parsed.startTiming)
+        } else {
+          setJobCardRoles(`${user.profession || 'Senior Specialist'}, Lead Consultant & Project Manager`)
+          setJobCardLocations(`${user.location || 'Laurel, MD'} · On-site, Hybrid & Remote`)
+        }
+      } catch {}
+    }
+    loadJobCardState()
+    window.addEventListener('connectln-job-status-updated', loadJobCardState)
+    return () => window.removeEventListener('connectln-job-status-updated', loadJobCardState)
+  }, [user?.name, user?.profession, user?.location])
+
+  const handleSaveJobCard = (nextStatus?: 'Looking for a Job' | 'Looking for Projects' | 'Available for Hire' | 'Booked') => {
+    const statusToSave = nextStatus || jobBadgeStatus
+    setJobBadgeStatus(statusToSave)
+    try {
+      const keySuffix = (user.name || 'default').toLowerCase()
+      localStorage.setItem(`connectin_availability_v1__${keySuffix}`, statusToSave)
+      localStorage.setItem(
+        `connectin_looking_for_job_card_v1__${keySuffix}`,
+        JSON.stringify({
+          roles: jobCardRoles,
+          workTypes: jobCardWorkTypes,
+          locations: jobCardLocations,
+          startTiming: jobCardStartTiming
+        })
+      )
+      window.dispatchEvent(new Event('connectln-job-status-updated'))
+    } catch {}
+    setIsEditingJobCard(false)
+    setPhotoSuccessMsg(`✓ "Looking for a Job" badge & card updated (${statusToSave})`)
+    setTimeout(() => setPhotoSuccessMsg(null), 3500)
+  }
+
   const compressImageFile = (
     file: File,
     maxWidth: number,
@@ -1142,7 +1214,13 @@ export function ProfileView({
               <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
                 <div className="flex flex-col sm:flex-row sm:items-end gap-4">
                   <div className="relative group shrink-0 -mt-16">
-                    <div className="relative h-28 w-28 rounded-2xl border-4 border-white bg-white shadow-xl overflow-hidden dark:border-zinc-900">
+                    <div
+                      className={`relative h-28 w-28 rounded-2xl bg-white shadow-xl overflow-hidden ${
+                        jobBadgeStatus !== 'Booked'
+                          ? 'border-4 border-emerald-500 ring-2 ring-white dark:ring-zinc-900'
+                          : 'border-4 border-white dark:border-zinc-900'
+                      }`}
+                    >
                       <img
                         src={user.avatar}
                         alt={user.name}
@@ -1165,7 +1243,38 @@ export function ProfileView({
                       )}
                     </div>
 
-                    {/* Camera icon badge at bottom right (Owner only) */}
+                    {/* ConnectLn "Looking for a Job" Avatar Badge Ribbon */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!isViewingOtherMember) {
+                          const order: Array<'Looking for a Job' | 'Looking for Projects' | 'Available for Hire' | 'Booked'> = [
+                            'Looking for a Job',
+                            'Looking for Projects',
+                            'Available for Hire',
+                            'Booked'
+                          ]
+                          const next = order[(order.indexOf(jobBadgeStatus) + 1) % order.length]
+                          handleSaveJobCard(next)
+                        }
+                      }}
+                      title="Click to cycle Looking for a Job badge"
+                      className={`absolute -bottom-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider shadow-md border z-10 cursor-pointer transition-transform hover:scale-105 ${
+                        jobBadgeStatus === 'Booked'
+                          ? 'bg-amber-600 text-white border-amber-300'
+                          : 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 text-white border-emerald-200'
+                      }`}
+                    >
+                      {jobBadgeStatus === 'Looking for a Job'
+                        ? '💼 Looking for a Job'
+                        : jobBadgeStatus === 'Looking for Projects'
+                        ? '🔨 Looking for Projects'
+                        : jobBadgeStatus === 'Available for Hire'
+                        ? '✅ Available for Hire'
+                        : '⏳ Booked'}
+                    </button>
+
+                    {/* Camera icon badge at top right of avatar (Owner only) */}
                     {!isViewingOtherMember && (
                       <button
                         type="button"
@@ -1173,19 +1282,31 @@ export function ProfileView({
                           setPhotoModalTab('avatar')
                           setIsPhotoModalOpen(true)
                         }}
-                        className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white flex items-center justify-center shadow-md border-2 border-white dark:border-zinc-900 cursor-pointer transition-transform hover:scale-110"
+                        className="absolute -top-1.5 -right-1.5 h-7 w-7 rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white flex items-center justify-center shadow-md border-2 border-white dark:border-zinc-900 cursor-pointer transition-transform hover:scale-110 z-10"
                         title="Upload or Change Profile Photo"
                       >
-                        <Camera className="h-4 w-4" />
+                        <Camera className="h-3.5 w-3.5" />
                       </button>
                     )}
                   </div>
 
-                  <div className="space-y-1 pt-1">
+                  <div className="space-y-1 pt-2 sm:pt-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h2 className="text-2xl font-black text-zinc-900 dark:text-zinc-100">
                         {user.name}
                       </h2>
+                      <span
+                        onClick={() => !isViewingOtherMember && setIsEditingJobCard(!isEditingJobCard)}
+                        className={`rounded-full px-3 py-0.5 text-xs font-extrabold border flex items-center gap-1.5 shadow-2xs cursor-pointer ${
+                          jobBadgeStatus === 'Booked'
+                            ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800'
+                            : 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white border-emerald-500'
+                        }`}
+                        title="ConnectLn Looking for a Job Badge"
+                      >
+                        <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
+                        <span>{jobBadgeStatus}</span>
+                      </span>
                       <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold border flex items-center gap-1.5 ${enclaveInfo?.badgeBg || 'bg-blue-100 text-[#0A66C2] dark:bg-blue-950 dark:text-blue-300'}`}>
                         <span>{enclaveInfo?.icon || '🛡️'}</span>
                         <span>{user.profession || enclaveInfo?.shortName || 'Verified Member'}</span>
@@ -1316,6 +1437,171 @@ export function ProfileView({
                     </>
                   )}
                 </div>
+              </div>
+
+              {/* CONNECTLN "LOOKING FOR A JOB" SHOWCASE CARD (Replaces LinkedIn's generic Open to Work box) */}
+              <div className="mt-5 rounded-2xl border-2 border-emerald-400/70 dark:border-emerald-700/70 bg-gradient-to-r from-emerald-50/90 via-teal-50/50 to-sky-50/60 dark:from-emerald-950/40 dark:via-zinc-900 dark:to-teal-950/30 p-4 sm:p-5 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                  <div className="space-y-1.5 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-white shadow-xs">
+                        <Briefcase className="h-3.5 w-3.5" />
+                        <span>{jobBadgeStatus}</span>
+                      </span>
+                      <span className="rounded-full bg-white/90 dark:bg-zinc-800 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                        ✓ Verified ConnectLn Job &amp; Project Seeker Card
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 pt-1">
+                      <div className="rounded-xl bg-white/90 dark:bg-zinc-900/80 border border-emerald-200/80 dark:border-emerald-800/60 p-2.5">
+                        <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                          Target Roles &amp; Trades
+                        </p>
+                        <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100 mt-0.5">
+                          {jobCardRoles}
+                        </p>
+                      </div>
+                      <div className="rounded-xl bg-white/90 dark:bg-zinc-900/80 border border-emerald-200/80 dark:border-emerald-800/60 p-2.5">
+                        <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                          Opportunity Types
+                        </p>
+                        <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100 mt-0.5">
+                          {jobCardWorkTypes}
+                        </p>
+                      </div>
+                      <div className="rounded-xl bg-white/90 dark:bg-zinc-900/80 border border-emerald-200/80 dark:border-emerald-800/60 p-2.5">
+                        <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                          Location &amp; Availability
+                        </p>
+                        <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100 mt-0.5">
+                          {jobCardLocations} · {jobCardStartTiming}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex sm:flex-col items-center sm:items-end gap-2 shrink-0">
+                    {!isViewingOtherMember ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingJobCard(!isEditingJobCard)}
+                          className="rounded-xl bg-white dark:bg-zinc-800 hover:bg-emerald-50 dark:hover:bg-zinc-700 text-emerald-800 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700 px-3.5 py-2 text-xs font-bold shadow-2xs flex items-center gap-1.5 cursor-pointer transition-colors"
+                        >
+                          <Edit3 className="h-3.5 w-3.5" />
+                          <span>{isEditingJobCard ? 'Close Editor' : 'Customize Job Card'}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onNavigateJobs && onNavigateJobs(user.profession || '')}
+                          className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer transition-colors"
+                        >
+                          <span>Browse Matching Jobs →</span>
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => onNavigateMessaging && onNavigateMessaging(user)}
+                        className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <MessageSquarePlus className="h-3.5 w-3.5" />
+                        <span>Invite {user.name.split(' ')[0]} to Apply</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Inline Editor for "Looking for a Job" Badge & Card */}
+                {isEditingJobCard && !isViewingOtherMember && (
+                  <div className="mt-4 pt-4 border-t border-emerald-200 dark:border-emerald-800/80 grid grid-cols-1 sm:grid-cols-2 gap-3 animate-in fade-in">
+                    <div>
+                      <label className="block text-[11px] font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                        Badge Status
+                      </label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {(['Looking for a Job', 'Looking for Projects', 'Available for Hire', 'Booked'] as const).map((st) => (
+                          <button
+                            key={st}
+                            type="button"
+                            onClick={() => setJobBadgeStatus(st)}
+                            className={`rounded-lg px-2.5 py-1.5 text-xs font-bold border cursor-pointer transition-all ${
+                              jobBadgeStatus === st
+                                ? 'bg-emerald-600 text-white border-emerald-600'
+                                : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-300 dark:border-zinc-700'
+                            }`}
+                          >
+                            {st}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                        Target Roles &amp; Trades
+                      </label>
+                      <input
+                        type="text"
+                        value={jobCardRoles}
+                        onChange={(e) => setJobCardRoles(e.target.value)}
+                        className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-900 dark:text-zinc-100"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                        Opportunity Types (Employment / Contract / Apprenticeship)
+                      </label>
+                      <input
+                        type="text"
+                        value={jobCardWorkTypes}
+                        onChange={(e) => setJobCardWorkTypes(e.target.value)}
+                        className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-900 dark:text-zinc-100"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                        Preferred Locations &amp; Start Availability
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="text"
+                          value={jobCardLocations}
+                          onChange={(e) => setJobCardLocations(e.target.value)}
+                          placeholder="Locations"
+                          className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-900 dark:text-zinc-100"
+                        />
+                        <input
+                          type="text"
+                          value={jobCardStartTiming}
+                          onChange={(e) => setJobCardStartTiming(e.target.value)}
+                          placeholder="Start timing"
+                          className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-900 dark:text-zinc-100"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="sm:col-span-2 flex justify-end gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingJobCard(false)}
+                        className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3.5 py-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-300 cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSaveJobCard()}
+                        className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-1.5 text-xs font-bold shadow-xs cursor-pointer"
+                      >
+                        Save &quot;Looking for a Job&quot; Card
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Bio & Statement */}

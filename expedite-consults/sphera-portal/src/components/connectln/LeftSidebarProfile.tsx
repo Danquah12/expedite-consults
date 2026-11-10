@@ -80,30 +80,33 @@ export function LeftSidebarProfile({
   const [pinnedIds, setPinnedIds] = useState<string[]>([])
   const [professionFilterQuery, setProfessionFilterQuery] = useState("")
   const [telemetryTick, setTelemetryTick] = useState(0)
-  const [availabilityStatus, setAvailabilityStatus] = useState<'Open' | 'Available for Hire' | 'Open to Shifts' | 'Booked'>('Open')
+  const [availabilityStatus, setAvailabilityStatus] = useState<'Looking for a Job' | 'Looking for Projects' | 'Available for Hire' | 'Booked'>('Looking for a Job')
   const { t } = useLanguage()
 
   useEffect(() => {
     if (typeof window === "undefined") return
     try {
       const savedStatus = localStorage.getItem(`connectin_availability_v1__${(user.name || 'default').toLowerCase()}`)
-      if (savedStatus === 'Open' || savedStatus === 'Available for Hire' || savedStatus === 'Open to Shifts' || savedStatus === 'Booked') {
+      if (savedStatus === 'Looking for a Job' || savedStatus === 'Looking for Projects' || savedStatus === 'Available for Hire' || savedStatus === 'Booked') {
         setAvailabilityStatus(savedStatus)
+      } else if (savedStatus === 'Open' || savedStatus === 'Open to Shifts') {
+        setAvailabilityStatus('Looking for a Job')
       }
     } catch {}
   }, [user?.name])
 
   const cycleAvailabilityStatus = () => {
-    const order: Array<'Open' | 'Available for Hire' | 'Open to Shifts' | 'Booked'> = [
-      'Open',
+    const order: Array<'Looking for a Job' | 'Looking for Projects' | 'Available for Hire' | 'Booked'> = [
+      'Looking for a Job',
+      'Looking for Projects',
       'Available for Hire',
-      'Open to Shifts',
       'Booked'
     ]
     const next = order[(order.indexOf(availabilityStatus) + 1) % order.length]
     setAvailabilityStatus(next)
     try {
       localStorage.setItem(`connectin_availability_v1__${(user.name || 'default').toLowerCase()}`, next)
+      window.dispatchEvent(new Event("connectln-job-status-updated"))
     } catch {}
   }
 
@@ -697,17 +700,42 @@ export function LeftSidebarProfile({
 
         {/* Avatar & User Details */}
         <div className="relative px-4 pb-3 pt-0 text-center">
-          <div className="-mt-10 mb-2 flex justify-center">
+          <div className="-mt-10 mb-3 flex justify-center">
             <div
               onClick={onViewProfile}
-              className="relative h-18 w-18 cursor-pointer rounded-full border-2 border-white bg-white shadow-md transition-transform hover:scale-105 dark:border-zinc-900"
+              className={`relative h-20 w-20 cursor-pointer rounded-full bg-white shadow-md transition-transform hover:scale-105 ${
+                availabilityStatus !== 'Booked'
+                  ? 'ring-3 ring-emerald-500 border-2 border-white dark:border-zinc-900'
+                  : 'border-2 border-white dark:border-zinc-900'
+              }`}
             >
               <img
                 src={user.avatar}
                 alt={user.name}
                 className="h-full w-full rounded-full object-cover"
               />
-              <span className="absolute bottom-0 right-0 h-4 w-4 rounded-full border-2 border-white bg-emerald-500 dark:border-zinc-900" title="Available" />
+              {/* ConnectLn "Looking for a Job" Badge on Avatar (replaces LinkedIn #OPENTOWORK) */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  cycleAvailabilityStatus()
+                }}
+                title="Click to cycle your Looking for a Job badge status"
+                className={`absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-2 py-0.5 text-[8.5px] font-extrabold uppercase tracking-wider shadow-md border transition-all cursor-pointer ${
+                  availabilityStatus === 'Booked'
+                    ? 'bg-amber-600 text-white border-amber-300'
+                    : 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 text-white border-emerald-200'
+                }`}
+              >
+                {availabilityStatus === 'Looking for a Job'
+                  ? '💼 Looking for a Job'
+                  : availabilityStatus === 'Looking for Projects'
+                  ? '🔨 Looking for Projects'
+                  : availabilityStatus === 'Available for Hire'
+                  ? '✅ Available for Hire'
+                  : '⏳ Booked'}
+              </button>
             </div>
           </div>
 
@@ -726,39 +754,59 @@ export function LeftSidebarProfile({
             </p>
           </button>
 
-          {/* Unified Specialty & Availability Pill (Clean, Single-Card Identity) */}
+          {/* Dedicated "Looking for a Job" Card (Clean ConnectLn Card instead of LinkedIn's generic Open to Work) */}
           <div className="pt-2.5 text-left">
-            <div className="rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-800/40 px-3 py-2 space-y-1">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5 min-w-0 truncate">
-                  <span className="shrink-0">{enclaveInfo?.icon || '🔨'}</span>
-                  <span className="truncate">{displayProfessionTitle}</span>
-                </span>
+            <div className="rounded-xl border border-emerald-300/80 dark:border-emerald-800/70 bg-gradient-to-br from-emerald-50/90 via-white to-teal-50/60 dark:from-emerald-950/35 dark:via-zinc-900 dark:to-teal-950/25 p-2.5 shadow-2xs space-y-1.5">
+              <div className="flex items-center justify-between gap-1.5">
                 <button
                   type="button"
                   onClick={cycleAvailabilityStatus}
-                  title="Click to toggle your work availability status"
-                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold border shrink-0 cursor-pointer transition-colors ${
+                  title="Click to switch status (Looking for a Job / Looking for Projects / Available for Hire / Booked)"
+                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-extrabold border shrink-0 cursor-pointer transition-all ${
                     availabilityStatus === 'Booked'
-                      ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/25'
-                      : 'bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/20 hover:bg-emerald-500/20'
+                      ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-300 dark:border-amber-800'
+                      : 'bg-emerald-600 text-white border-emerald-500 shadow-2xs hover:bg-emerald-700'
                   }`}
                 >
-                  <span className={`h-1.5 w-1.5 rounded-full ${availabilityStatus === 'Booked' ? 'bg-amber-500' : 'bg-emerald-500'}`} />
-                  {availabilityStatus}
+                  <span className={`h-1.5 w-1.5 rounded-full ${availabilityStatus === 'Booked' ? 'bg-amber-500' : 'bg-white animate-pulse'}`} />
+                  <span>{availabilityStatus}</span>
                 </button>
-              </div>
-              <div className="flex items-center justify-between gap-2 text-[10px] text-zinc-500 dark:text-zinc-400">
-                <span className="truncate">{enclaveInfo?.shortName || 'Verified'} Community</span>
                 {onOpenIDModal && (
                   <button
                     type="button"
                     onClick={onOpenIDModal}
-                    className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline shrink-0 cursor-pointer"
+                    className="text-[10px] font-bold text-[#0A66C2] dark:text-sky-400 hover:underline shrink-0 cursor-pointer"
                   >
                     🪪 ID Verified
                   </button>
                 )}
+              </div>
+
+              <div className="space-y-0.5">
+                <p className="text-[11px] font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-1 truncate">
+                  <span className="shrink-0">{enclaveInfo?.icon || '🔨'}</span>
+                  <span className="truncate">{displayProfessionTitle}</span>
+                </p>
+                <p className="text-[10px] text-zinc-600 dark:text-zinc-400 truncate">
+                  Full-time · Contract Projects · {user.location || 'Immediate Start'}
+                </p>
+              </div>
+
+              <div className="pt-1 border-t border-emerald-200/60 dark:border-emerald-900/50 flex items-center justify-between text-[10px]">
+                <button
+                  type="button"
+                  onClick={onViewProfile}
+                  className="font-bold text-emerald-700 dark:text-emerald-300 hover:underline cursor-pointer"
+                >
+                  Edit Job Card
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onNavigateTab && onNavigateTab('jobs')}
+                  className="font-bold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer"
+                >
+                  Matching Jobs →
+                </button>
               </div>
             </div>
           </div>
