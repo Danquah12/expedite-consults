@@ -29,6 +29,14 @@ export const NOCTIS_SOCIAL_MENU_GROUP: MoreMenuGroup = {
   category: "Connected Social & Global Network 🌙",
   items: [
     {
+      id: "desk_note_official",
+      label: "📓 Desk Note",
+      desc: "Unified digital notebook, field logs & collaborative workspace (https://desk-note.app/)",
+      url: "https://desk-note.app/",
+      isExternal: true,
+      badge: "DESK-NOTE.APP"
+    },
+    {
       id: "noctis_social",
       label: "🌙 Noctis Social Network",
       desc: "Connect & engage on Noctis Social (https://www.noctis.social)",
@@ -79,11 +87,11 @@ function getCategorizedMoreMenuInternal(
           },
           {
             id: "desknote_app",
-            label: "📓 DeskNote Jobsite & Field Notebook",
-            desc: "Digital trade dossiers, cut-list notes & takeoff records",
-            url: "https://desk-note-kwesi-asiedus-projects.vercel.app",
+            label: "📓 Desk Note (Jobsite & Field Notebook)",
+            desc: "Digital trade dossiers, cut-list notes & takeoff records (https://desk-note.app/)",
+            url: "https://desk-note.app/",
             isExternal: true,
-            badge: "LIVE APP"
+            badge: "DESK-NOTE.APP"
           },
           { id: "procurement", label: "📋 Subcontractor Bids & RFPs", desc: "$340K commercial framing, plumbing & electrical bids" },
           { id: "marketplace", label: "📐 Blueprint Takeoff & Spec Viewer", desc: "Interactive architectural plan markups" },
@@ -146,11 +154,11 @@ function getCategorizedMoreMenuInternal(
         items: [
           {
             id: "desknote_auto",
-            label: "📓 DeskNote Diagnostic Logs & Bay Notebook",
-            desc: "Digital vehicle inspection logs & scope waveform records",
-            url: "https://desk-note-kwesi-asiedus-projects.vercel.app",
+            label: "📓 Desk Note (Diagnostic Logs & Bay Notebook)",
+            desc: "Digital vehicle inspection logs & scope waveform records (https://desk-note.app/)",
+            url: "https://desk-note.app/",
             isExternal: true,
-            badge: "LIVE APP"
+            badge: "DESK-NOTE.APP"
           },
           {
             id: "skillhands_auto",
@@ -211,11 +219,11 @@ function getCategorizedMoreMenuInternal(
         items: [
           {
             id: "desknote_agri",
-            label: "📓 DeskNote Farm & Field Journal",
-            desc: "Soil NPK records, irrigation timings & harvest yield logs",
-            url: "https://desk-note-kwesi-asiedus-projects.vercel.app",
+            label: "📓 Desk Note (Farm & Field Journal)",
+            desc: "Soil NPK records, irrigation timings & harvest yield logs (https://desk-note.app/)",
+            url: "https://desk-note.app/",
             isExternal: true,
-            badge: "LIVE APP"
+            badge: "DESK-NOTE.APP"
           },
           {
             id: "bazaar_agri",
@@ -803,7 +811,7 @@ export function getEnclaveModules(enclaveId?: string, isAdminUser: boolean = fal
     case 'trades_construction':
       return [
         { id: "skillhands", label: "SkillHands Vocational Hub", desc: "Hands-on trade tasks & artisan network", icon: "🛠️", url: "https://skillhands-client.vercel.app", isExternal: true, badge: "LIVE APP" },
-        { id: "desknote", label: "DeskNote Field Notebook", desc: "Digital jobsite dossiers & cut-lists", icon: "📓", url: "https://desk-note-kwesi-asiedus-projects.vercel.app", isExternal: true, badge: "LIVE APP" },
+        { id: "desknote", label: "Desk Note Field Notebook", desc: "Digital jobsite dossiers & cut-lists (desk-note.app)", icon: "📓", url: "https://desk-note.app/", isExternal: true, badge: "DESK-NOTE.APP" },
         { id: "jobs", label: "Trades & Construction Jobs", desc: "Active commercial framing, plumbing & electrical roles", icon: "🔨" },
         { id: "marketplace", label: "Tools & Lumber Marketplace", desc: "Festool, total stations & timber stock", icon: "🧰" },
         { id: "bazaar", label: "Bazaar Machinery Marketplace", desc: "Heavy trade tooling & hardware", icon: "🛍️", url: "https://bazaar-standalone.vercel.app", isExternal: true, badge: "COMMERCE" },
@@ -817,7 +825,7 @@ export function getEnclaveModules(enclaveId?: string, isAdminUser: boolean = fal
 
     case 'automotive_mechanics':
       return [
-        { id: "desknote_auto", label: "DeskNote Diagnostic Logs", desc: "OBD-II telemetry notes & shop records", icon: "📓", url: "https://desk-note-kwesi-asiedus-projects.vercel.app", isExternal: true, badge: "LIVE APP" },
+        { id: "desknote_auto", label: "Desk Note Diagnostic Logs", desc: "OBD-II telemetry notes & shop records (desk-note.app)", icon: "📓", url: "https://desk-note.app/", isExternal: true, badge: "DESK-NOTE.APP" },
         { id: "skillhands_auto", label: "SkillHands Auto Technicians", desc: "Verified master technicians network", icon: "🛠️", url: "https://skillhands-client.vercel.app", isExternal: true, badge: "LIVE APP" },
         { id: "jobs", label: "Master Tech & Fleet Jobs", desc: "Dealership master diagnostics & heavy diesel", icon: "🔧" },
         { id: "marketplace", label: "Snap-on & Scope Marketplace", desc: "PicoScopes, scan tools & EV PPE", icon: "⚡" },
@@ -831,7 +839,7 @@ export function getEnclaveModules(enclaveId?: string, isAdminUser: boolean = fal
 
     case 'agriculture_natural_resources':
       return [
-        { id: "desknote_agri", label: "DeskNote Farm Journal", desc: "Field logs & crop agronomy notes", icon: "📓", url: "https://desk-note-kwesi-asiedus-projects.vercel.app", isExternal: true, badge: "LIVE APP" },
+        { id: "desknote_agri", label: "Desk Note Farm Journal", desc: "Field logs & crop agronomy notes (desk-note.app)", icon: "📓", url: "https://desk-note.app/", isExternal: true, badge: "DESK-NOTE.APP" },
         { id: "bazaar_agri", label: "Bazaar Farm Equipment", desc: "Tractors, combine machinery & marine gear", icon: "🛍️", url: "https://bazaar-standalone.vercel.app", isExternal: true, badge: "COMMERCE" },
         { id: "jobs", label: "Agri & Natural Resource Jobs", desc: "Ranch managers, agronomists & forestry roles", icon: "🌾" },
         { id: "marketplace", label: "Grain Futures & Livestock Desk", desc: "Real-time CBOT prices & cattle indexes", icon: "📈" },

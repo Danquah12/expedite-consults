@@ -367,6 +367,7 @@ export function ConnectLnNavbar({
     { id: "labs", label: "R&D Papers, Patents & Labs", icon: "🧪", badge: "Research", desc: "Peer-reviewed technical papers, benchmarks, and datasets", url: undefined },
     { id: "profile", label: "My Profile & Portfolio", icon: "👤", badge: "Account", desc: "View and customize your professional profile, skills, and resume", url: undefined },
     { id: "security", label: "Account Security & IAM Settings", icon: "🔑", badge: "Security", desc: "Passkeys, MFA, active sessions, and privacy controls", url: undefined },
+    { id: "ext-desknote", label: "Desk Note", icon: "📓", badge: "Live App", desc: "Unified digital notebook, field logs & collaborative workspace (https://desk-note.app/)", url: "https://desk-note.app/" },
     { id: "ext-noctis-ai", label: "Ask Noctis AI", icon: "🌌", badge: "Live App", desc: "Autonomous Cyber & Enterprise Intelligence Assistant (dstrike.app/noctis)", url: "https://dstrike.app/noctis" },
     { id: "ext-pdfadore", label: "PDFAdore Document Suite", icon: "📑", badge: "Live App", desc: "Sign, convert, redact, and analyze PDF documents", url: "https://www.pdfadore.com" },
     { id: "ext-launchpad", label: "Expedite Launchpad Hub", icon: "⚡", badge: "Live App", desc: "Unified Expedite Consults enterprise application portal", url: "https://launchpad.expediteconsults.com" },
@@ -1842,23 +1843,42 @@ export function ConnectLnNavbar({
                     <span className="text-[10px] font-bold truncate w-full">Resume Prep</span>
                   </button>
 
-                  {/* 9. Noctis Social (https://www.noctis.social) */}
-                  <a
-                    href="https://www.noctis.social"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setIsMoreOpen(false)}
-                    className="p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer bg-gradient-to-br from-slate-900 via-indigo-950 to-purple-950 text-white border border-indigo-400/50 hover:border-indigo-300 shadow-xs col-span-3 sm:col-span-3 mt-1"
-                    title="Open Noctis Social (https://www.noctis.social)"
-                  >
-                    <div className="flex items-center justify-center gap-2 w-full">
-                      <Moon className="h-4 w-4 text-amber-300 shrink-0" />
-                      <span className="text-xs font-extrabold tracking-tight">Noctis Social</span>
-                      <span className="rounded-full bg-indigo-500/30 border border-indigo-400/40 px-2 py-0.2 text-[9px] font-mono font-bold text-indigo-200">
-                        noctis.social ↗
-                      </span>
-                    </div>
-                  </a>
+                  {/* 9. Desk Note (https://desk-note.app/) & Noctis Social (https://www.noctis.social) */}
+                  <div className="col-span-3 sm:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-1.5 mt-1">
+                    <a
+                      href="https://desk-note.app/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setIsMoreOpen(false)}
+                      className="p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer bg-gradient-to-br from-emerald-800 via-teal-800 to-emerald-950 text-white border border-emerald-400/50 hover:border-emerald-300 shadow-xs"
+                      title="Open Desk Note (https://desk-note.app/)"
+                    >
+                      <div className="flex items-center justify-center gap-1.5 w-full">
+                        <span className="text-sm shrink-0">📓</span>
+                        <span className="text-xs font-extrabold tracking-tight">Desk Note</span>
+                        <span className="rounded-full bg-emerald-500/30 border border-emerald-400/40 px-1.5 py-0.2 text-[9px] font-mono font-bold text-emerald-100">
+                          desk-note.app ↗
+                        </span>
+                      </div>
+                    </a>
+
+                    <a
+                      href="https://www.noctis.social"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setIsMoreOpen(false)}
+                      className="p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer bg-gradient-to-br from-slate-900 via-indigo-950 to-purple-950 text-white border border-indigo-400/50 hover:border-indigo-300 shadow-xs"
+                      title="Open Noctis Social (https://www.noctis.social)"
+                    >
+                      <div className="flex items-center justify-center gap-1.5 w-full">
+                        <Moon className="h-4 w-4 text-amber-300 shrink-0" />
+                        <span className="text-xs font-extrabold tracking-tight">Noctis Social</span>
+                        <span className="rounded-full bg-indigo-500/30 border border-indigo-400/40 px-1.5 py-0.2 text-[9px] font-mono font-bold text-indigo-200">
+                          noctis.social ↗
+                        </span>
+                      </div>
+                    </a>
+                  </div>
                 </div>
               </div>
 
