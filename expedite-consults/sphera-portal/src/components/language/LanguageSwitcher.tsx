@@ -37,7 +37,7 @@ export function LanguageSwitcher({
   };
 
   return (
-    <div ref={containerRef} className={`relative inline-block text-left ${className}`}>
+    <div ref={containerRef} data-no-translate="true" className={`relative inline-block text-left ${className}`}>
       {/* Trigger Button */}
       <button
         type="button"

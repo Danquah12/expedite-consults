@@ -7,6 +7,10 @@ import {
   SUPPORTED_LANGUAGES,
   TRANSLATIONS
 } from "@/lib/translations";
+import {
+  applyLivePageTranslation,
+  lookupInstantTranslation
+} from "@/lib/live-page-translator";
 
 interface LanguageContextType {
   language: LanguageCode;
@@ -128,6 +132,42 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     };
   }, [applyDomAttributes, applyLanguage, language]);
 
+  // Global DOM-wide translation across all views, tabs, modals, and dynamic cards
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const triggerTranslate = () => {
+      applyLivePageTranslation(language);
+    };
+
+    // Translate immediately on language switch or initial render
+    triggerTranslate();
+    const initialTimer = setTimeout(triggerTranslate, 150);
+
+    // Observe DOM mutations (tab switches, modal opens, async job/feed loads)
+    const observer = new MutationObserver(() => {
+      if (language === "en") return;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        applyLivePageTranslation(language);
+      }, 120);
+    });
+
+    if (document.body) {
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+      });
+    }
+
+    return () => {
+      clearTimeout(initialTimer);
+      if (timer) clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, [language]);
+
   const setLanguage = useCallback((newLang: LanguageCode) => {
     applyLanguage(newLang);
   }, [applyLanguage]);
@@ -136,6 +176,10 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const langDict = TRANSLATIONS[language];
     if (langDict && langDict[key]) {
       return langDict[key];
+    }
+    if (language !== "en") {
+      const instant = lookupInstantTranslation(fallback || key, language);
+      if (instant) return instant;
     }
     // Fallback to English dictionary
     const enDict = TRANSLATIONS.en;

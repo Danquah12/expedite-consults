@@ -982,7 +982,7 @@ export function ConnectLnNavbar({
             title="Ask Noctis"
           >
             <Sparkles className="h-3.5 w-3.5 text-[#C88A24] dark:text-amber-300 transition-transform group-hover:scale-110 shrink-0" />
-            <span className="text-[11px] sm:text-xs font-semibold">Ask Noctis</span>
+            <span className="text-[11px] sm:text-xs font-semibold">{t("nav_ask_noctis", "Ask Noctis")}</span>
             <span className="hidden xl:inline rounded bg-amber-200/60 dark:bg-amber-900/60 px-1.5 py-0.2 text-[9px] font-bold text-[#5C3800] dark:text-amber-100">
               Q&amp;A
             </span>
@@ -1000,7 +1000,7 @@ export function ConnectLnNavbar({
                   ? "text-[#0A66C2] font-semibold"
                   : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
               }`}
-              title={`${user.name} (Me)`}
+              title={`${user.name} (${t("nav_me", "Me")})`}
             >
               <div className="relative h-6 w-6 sm:h-6 sm:w-6 rounded-full overflow-hidden border border-zinc-300 dark:border-zinc-700 shrink-0 ring-1 ring-[#0A66C2]/30">
                 <img
@@ -1010,7 +1010,7 @@ export function ConnectLnNavbar({
                 />
               </div>
               <span className="flex items-center gap-0.5 text-[10px] mt-0.5 font-medium">
-                Me <ChevronDown className="h-3 w-3" />
+                {t("nav_me", "Me")} <ChevronDown className="h-3 w-3" />
               </span>
             </button>
 
@@ -1315,7 +1315,7 @@ export function ConnectLnNavbar({
               title="Access Role Gate & Persona Switcher"
             >
               <Key className="h-3.5 w-3.5 text-amber-300 dark:text-amber-500 shrink-0" />
-              <span>Gate</span>
+              <span>{t("nav_gate", "Gate")}</span>
             </button>
           )}
 
