@@ -881,6 +881,12 @@ export function SkilledTradesLearnByDoingSection({
                         serialPlate={serialPlate}
                         description={lesson.description}
                         takeaways={lesson.skillsCovered}
+                        onRequestPlayVideo={() => {
+                          notifyExclusiveVideoPlay(`lbd-home-player-${lesson.id}`)
+                          setAutoPlayRequested(true)
+                          setActiveVideoLessonId(lesson.id)
+                          handleWatchAction(lesson)
+                        }}
                       />
                       <img
                         src={cardThumbUrl}

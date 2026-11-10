@@ -92,6 +92,7 @@ export function ConnectLnStudioPlayer({
   const [isPlaying, setIsPlaying] = useState<boolean>(autoPlay)
   const [isStoppedByOther, setIsStoppedByOther] = useState<boolean>(false)
   const [isMuted, setIsMuted] = useState<boolean>(initialMuted)
+  const isVoiceDuckingRef = useRef<boolean>(false)
   const [currentTime, setCurrentTime] = useState<number>(0)
   const [duration, setDuration] = useState<number>(() => {
     const parts = durationLabel.split(":").map(Number)
@@ -231,7 +232,7 @@ export function ConnectLnStudioPlayer({
     e.stopPropagation()
     if (isMuted) {
       sendPlayerCommand("unMute")
-      sendPlayerCommand("setVolume", [100])
+      sendPlayerCommand("setVolume", [isVoiceDuckingRef.current ? 14 : 100])
       sendPlayerCommand("playVideo")
       setIsMuted(false)
     } else {
@@ -240,12 +241,12 @@ export function ConnectLnStudioPlayer({
     }
   }
 
-  // Ensure sound is unmuted at 100% volume on user interaction if autoPlay is active
+  // Ensure sound is unmuted on user interaction if autoPlay is active (ducked to 14% when Noctis interprets)
   useEffect(() => {
     if (!autoPlay || isMuted) return
     const unlockAudio = () => {
       sendPlayerCommand("unMute")
-      sendPlayerCommand("setVolume", [100])
+      sendPlayerCommand("setVolume", [isVoiceDuckingRef.current ? 14 : 100])
       if (isPlaying && !isStoppedByOther) {
         sendPlayerCommand("playVideo")
       }
@@ -320,7 +321,11 @@ export function ConnectLnStudioPlayer({
             onLoad={() => {
               if (autoPlay) {
                 setTimeout(() => {
-                  if (!initialMuted) {
+                  if (isVoiceDuckingRef.current || language !== "en") {
+                    sendPlayerCommand("unMute")
+                    sendPlayerCommand("setVolume", [14])
+                    setIsMuted(false)
+                  } else if (!initialMuted) {
                     sendPlayerCommand("unMute")
                     sendPlayerCommand("setVolume", [100])
                   }
@@ -345,10 +350,21 @@ export function ConnectLnStudioPlayer({
           currentTime={currentTime}
           duration={duration}
           isPlaying={isPlaying}
-          onMuteOriginalVideo={(shouldMute) => {
-            if (shouldMute) {
-              sendPlayerCommand("mute")
-              setIsMuted(true)
+          onRequestPlayVideo={() => {
+            if (!isPlaying) {
+              notifyExclusiveVideoPlay(effectivePlayerId)
+              setIsStoppedByOther(false)
+              sendPlayerCommand("playVideo")
+              setIsPlaying(true)
+            }
+          }}
+          onMuteOriginalVideo={(shouldDuck) => {
+            isVoiceDuckingRef.current = shouldDuck
+            if (shouldDuck) {
+              // Keep English video speaking quietly in the background (14% volume) while Noctis interprets at 100%
+              sendPlayerCommand("unMute")
+              sendPlayerCommand("setVolume", [14])
+              setIsMuted(false)
             } else {
               sendPlayerCommand("unMute")
               sendPlayerCommand("setVolume", [100])

@@ -1,7 +1,7 @@
 "use client"
 
-import React, { useState, useEffect, useMemo, useCallback } from "react"
-import { Sparkles, Volume2, VolumeX, Globe, X, Subtitles, Send, CheckCircle2, ChevronDown } from "lucide-react"
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react"
+import { Sparkles, Volume2, VolumeX, Globe, X, Subtitles, Send, CheckCircle2, Radio } from "lucide-react"
 import { useLanguage } from "@/context/LanguageContext"
 import { LanguageCode } from "@/lib/translations"
 import { translateLinesLive, translateTextLive } from "@/lib/live-page-translator"
@@ -16,7 +16,8 @@ export interface NoctisVideoInterpreterProps {
   currentTime?: number
   duration?: number
   isPlaying?: boolean
-  onMuteOriginalVideo?: (mute: boolean) => void
+  onMuteOriginalVideo?: (duckAudio: boolean) => void
+  onRequestPlayVideo?: () => void
 }
 
 const SPEECH_LOCALE_MAP: Record<LanguageCode, string> = {
@@ -48,162 +49,217 @@ const UI_LABELS: Record<
     askPlaceholder: string
     askBtn: string
     translating: string
+    liveInterpretingBadge: string
   }
 > = {
   en: {
     triggerBtn: "Noctis Interpreter",
-    popupTitle: "Noctis AI Video Interpreter",
-    popupSubtitle: "Live Multi-Language Translation & Voice Dubbing",
-    listenVoiceDub: "Listen with Voice Dubbing",
-    stopVoiceDub: "Stop Voice Dubbing",
+    popupTitle: "Noctis Simultaneous Video Interpreter",
+    popupSubtitle: "Live Interpretation (English Audio Quiet at 14%)",
+    listenVoiceDub: "Start Live Interpretation",
+    stopVoiceDub: "Pause Interpretation",
     liveSubtitlesOn: "Subtitles ON",
     liveSubtitlesOff: "Subtitles OFF",
     summaryHeading: "Translated Video Overview",
-    stepsHeading: "Step-by-Step Field Interpretation",
+    stepsHeading: "Continuous Simultaneous Interpretation",
     askPlaceholder: "Ask Noctis to explain any part of this video...",
     askBtn: "Ask",
     translating: "Noctis is interpreting video into your language...",
+    liveInterpretingBadge: "Simultaneous Interpretation Active · Original Audio Quiet",
   },
   es: {
     triggerBtn: "Intérprete Noctis",
-    popupTitle: "Intérprete de Video IA Noctis",
-    popupSubtitle: "Traducción en vivo y doblaje de voz",
+    popupTitle: "Intérprete Simultáneo IA Noctis",
+    popupSubtitle: "Interpretación continua (Audio inglés suave al 14%)",
     listenVoiceDub: "Escuchar doblaje en Español",
-    stopVoiceDub: "Detener doblaje de voz",
+    stopVoiceDub: "Pausar interpretación",
     liveSubtitlesOn: "Subtítulos ACTIVOS",
     liveSubtitlesOff: "Subtítulos INACTIVOS",
     summaryHeading: "Resumen del video traducido",
-    stepsHeading: "Interpretación paso a paso",
+    stepsHeading: "Interpretación simultánea hasta el final",
     askPlaceholder: "Pide a Noctis que explique cualquier parte de este video...",
     askBtn: "Preguntar",
     translating: "Noctis está interpretando el video al Español...",
+    liveInterpretingBadge: "Interpretando en vivo al Español · Audio original suave",
   },
   pt: {
     triggerBtn: "Intérprete Noctis",
-    popupTitle: "Intérprete de Vídeo IA Noctis",
-    popupSubtitle: "Tradução ao vivo e dublagem de voz",
+    popupTitle: "Intérprete Simultâneo IA Noctis",
+    popupSubtitle: "Interpretação contínua (Áudio em inglês baixo a 14%)",
     listenVoiceDub: "Ouvir dublagem em Português",
-    stopVoiceDub: "Parar dublagem de voz",
+    stopVoiceDub: "Pausar interpretação",
     liveSubtitlesOn: "Legendas ATIVAS",
     liveSubtitlesOff: "Legendas INATIVAS",
     summaryHeading: "Resumo do vídeo traduzido",
-    stepsHeading: "Interpretação passo a passo",
+    stepsHeading: "Interpretação simultânea até o fim",
     askPlaceholder: "Peça ao Noctis para explicar qualquer parte deste vídeo...",
     askBtn: "Perguntar",
     translating: "Noctis está interpretando o vídeo para Português...",
+    liveInterpretingBadge: "Interpretando ao vivo em Português · Áudio original baixo",
   },
   fr: {
     triggerBtn: "Interprète Noctis",
-    popupTitle: "Interprète Vidéo IA Noctis",
-    popupSubtitle: "Traduction en direct et doublage vocal",
+    popupTitle: "Interprète Simultané IA Noctis",
+    popupSubtitle: "Interprétation continue (Audio anglais doux à 14%)",
     listenVoiceDub: "Écouter le doublage en Français",
-    stopVoiceDub: "Arrêter le doublage",
+    stopVoiceDub: "Pause interprétation",
     liveSubtitlesOn: "Sous-titres ACTIVÉS",
     liveSubtitlesOff: "Sous-titres DÉSACTIVÉS",
     summaryHeading: "Résumé de la vidéo traduit",
-    stepsHeading: "Interprétation étape par étape",
+    stepsHeading: "Interprétation simultanée jusqu'à la fin",
     askPlaceholder: "Demandez à Noctis d'expliquer cette vidéo...",
     askBtn: "Demander",
     translating: "Noctis interprète la vidéo en Français...",
+    liveInterpretingBadge: "Interprétation en direct en Français · Audio original doux",
   },
   de: {
     triggerBtn: "Noctis Dolmetscher",
-    popupTitle: "Noctis KI-Video-Dolmetscher",
-    popupSubtitle: "Live-Übersetzung & Sprachsynchronisation",
-    listenVoiceDub: "Auf Deutsch anhören (Sprach-Dub)",
-    stopVoiceDub: "Sprachausgabe stoppen",
+    popupTitle: "Noctis KI-Simultandolmetscher",
+    popupSubtitle: "Durchgehende Übersetzung (Englischer Ton leise bei 14%)",
+    listenVoiceDub: "Auf Deutsch anhören (Simultan)",
+    stopVoiceDub: "Übersetzung pausieren",
     liveSubtitlesOn: "Untertitel AN",
     liveSubtitlesOff: "Untertitel AUS",
     summaryHeading: "Übersetzte Video-Zusammenfassung",
-    stepsHeading: "Schritt-für-Schritt-Erklärung",
+    stepsHeading: "Simultandolmetschen bis zum Ende",
     askPlaceholder: "Fragen Sie Noctis zu diesem Video...",
     askBtn: "Fragen",
     translating: "Noctis übersetzt das Video ins Deutsche...",
+    liveInterpretingBadge: "Simultandolmetschen aktiv · Originalton leise im Hintergrund",
   },
   zh: {
-    triggerBtn: "Noctis 视频口译",
+    triggerBtn: "Noctis 同声传译",
     popupTitle: "Noctis AI 视频同声传译",
-    popupSubtitle: "实时多语言字幕与语音配音",
-    listenVoiceDub: "收听中文语音配音",
-    stopVoiceDub: "停止语音配音",
+    popupSubtitle: "全程连续同传（英文原声自动调低至 14%）",
+    listenVoiceDub: "收听中文全程同声传译",
+    stopVoiceDub: "暂停同声传译",
     liveSubtitlesOn: "实时字幕已开启",
     liveSubtitlesOff: "实时字幕已关闭",
     summaryHeading: "视频内容中文概要",
-    stepsHeading: "分步实操同声解析",
+    stepsHeading: "全程分步连续同声传译",
     askPlaceholder: "向 Noctis 提问关于本视频的任何内容...",
     askBtn: "提问",
-    translating: "Noctis 正在将英文视频实时传译为中文...",
+    translating: "Noctis 正在将英文视频实时同传为中文...",
+    liveInterpretingBadge: "中文同声传译进行中 · 英文原声轻音伴随",
   },
   ja: {
-    triggerBtn: "Noctis 映像通訳",
-    popupTitle: "Noctis AI ビデオ通訳",
-    popupSubtitle: "リアルタイム翻訳字幕＆音声吹き替え",
-    listenVoiceDub: "日本語の吹き替え音声を聴く",
-    stopVoiceDub: "音声を停止",
+    triggerBtn: "Noctis 同時通訳",
+    popupTitle: "Noctis AI ビデオ同時通訳",
+    popupSubtitle: "最後まで連続通訳（英語音声は14%の背景音量）",
+    listenVoiceDub: "日本語の同時通訳を聴く",
+    stopVoiceDub: "同時通訳を一時停止",
     liveSubtitlesOn: "字幕 オン",
     liveSubtitlesOff: "字幕 オフ",
     summaryHeading: "翻訳された動画の概要",
-    stepsHeading: "ステップごとの解説",
+    stepsHeading: "最後まで連続する同時通訳",
     askPlaceholder: "この動画について Noctis に質問する...",
     askBtn: "質問",
-    translating: "Noctis が英語の動画を日本語に通訳しています...",
+    translating: "Noctis が英語の動画を日本語に同時通訳しています...",
+    liveInterpretingBadge: "日本語で同時通訳中 · 英語原音は小音量で再生中",
   },
   ar: {
     triggerBtn: "مترجم Noctis الفوري",
-    popupTitle: "مترجم الفيديو الذكي Noctis",
-    popupSubtitle: "ترجمة فورية ودبلجة صوتية",
-    listenVoiceDub: "استمع للدبلجة باللغة العربية",
-    stopVoiceDub: "إيقاف الدبلجة الصوتية",
+    popupTitle: "المترجم الفوري الذكي Noctis",
+    popupSubtitle: "ترجمة صوتية مستمرة للنهاية (صوت الفيديو الأصلي منخفض 14%)",
+    listenVoiceDub: "استمع للترجمة الفورية بالعربية",
+    stopVoiceDub: "إيقاف الترجمة المؤقت",
     liveSubtitlesOn: "الترجمة مفعّلة",
     liveSubtitlesOff: "الترجمة متوقفة",
     summaryHeading: "ملخص الفيديو المترجم",
-    stepsHeading: "الشرح التفصيلي خطوة بخطوة",
+    stepsHeading: "الترجمة الفورية المستمرة حتى نهاية الفيديو",
     askPlaceholder: "اسأل Noctis لشرح أي جزء من هذا الفيديو...",
     askBtn: "اسأل",
-    translating: "يقوم Noctis بترجمة الفيديو إلى العربية...",
+    translating: "يقوم Noctis بالترجمة الفورية للفيديو إلى العربية...",
+    liveInterpretingBadge: "الترجمة الفورية نشطة بالعربية · الصوت الإنجليزي منخفض بالخلفية",
   },
   hi: {
-    triggerBtn: "Noctis वीडियो दुभाषिया",
-    popupTitle: "Noctis AI वीडियो दुभाषिया",
-    popupSubtitle: "लाइव अनुवाद और हिंदी वॉइस डबिंग",
-    listenVoiceDub: "हिंदी आवाज़ में सुनें (डबिंग)",
-    stopVoiceDub: "आवाज़ बंद करें",
+    triggerBtn: "Noctis लाइव दुभाषिया",
+    popupTitle: "Noctis AI लाइव वीडियो दुभाषिया",
+    popupSubtitle: "अंत तक निरंतर अनुवाद (अंग्रेजी ऑडियो धीमी आवाज़ 14% में)",
+    listenVoiceDub: "हिंदी लाइव व्याख्या सुनें",
+    stopVoiceDub: "व्याख्या रोकें",
     liveSubtitlesOn: "सबटाइटल चालू",
     liveSubtitlesOff: "सबटाइटल बंद",
     summaryHeading: "अनुवादित वीडियो सारांश",
-    stepsHeading: "चरण-दर-चरण व्याख्या",
+    stepsHeading: "अंत तक निरंतर लाइव व्याख्या",
     askPlaceholder: "इस वीडियो के बारे में Noctis से कुछ भी पूछें...",
     askBtn: "पूछें",
-    translating: "Noctis वीडियो का हिंदी में अनुवाद कर रहा है...",
+    translating: "Noctis वीडियो का हिंदी में लाइव अनुवाद कर रहा है...",
+    liveInterpretingBadge: "हिंदी लाइव अनुवाद जारी · मूल अंग्रेजी आवाज़ धीमी है",
   },
   sw: {
     triggerBtn: "Mkalimani wa Noctis",
-    popupTitle: "Mkalimani wa Video wa Noctis AI",
-    popupSubtitle: "Tafsiri ya Moja kwa Moja na Sauti",
+    popupTitle: "Mkalimani wa Moja kwa Moja wa Noctis AI",
+    popupSubtitle: "Tafsiri Endelevu Hadi Mwisho (Sauti ya Kiingereza Chini 14%)",
     listenVoiceDub: "Sikiliza kwa Kiswahili",
-    stopVoiceDub: "Simamisha Sauti",
+    stopVoiceDub: "Simamisha Ukaliimani",
     liveSubtitlesOn: "Manukuu YAMEWASHWA",
     liveSubtitlesOff: "Manukuu YAMEZIMWA",
     summaryHeading: "Muhtasari wa Video Uliotafsiriwa",
-    stepsHeading: "Maelezo Hatua kwa Hatua",
+    stepsHeading: "Tafsiri Endelevu Hatua kwa Hatua Hadi Mwisho",
     askPlaceholder: "Muulize Noctis aeleze sehemu yoyote ya video hii...",
     askBtn: "Uliza",
     translating: "Noctis inatafsiri video kwa Kiswahili...",
+    liveInterpretingBadge: "Inatafsiri Moja kwa Moja · Sauti ya Kiingereza iko chini",
   },
   ru: {
-    triggerBtn: "Переводчик Noctis",
-    popupTitle: "ИИ-переводчик видео Noctis",
-    popupSubtitle: "Синхронный перевод и голосовая озвучка",
-    listenVoiceDub: "Слушать озвучку на русском",
-    stopVoiceDub: "Остановить озвучку",
+    triggerBtn: "Синхронный перевод Noctis",
+    popupTitle: "ИИ-синхронный переводчик Noctis",
+    popupSubtitle: "Непрерывный перевод до конца (английская речь тихо на фоне 14%)",
+    listenVoiceDub: "Слушать синхронный перевод",
+    stopVoiceDub: "Пауза перевода",
     liveSubtitlesOn: "Субтитры ВКЛ",
     liveSubtitlesOff: "Субтитры ВЫКЛ",
     summaryHeading: "Переведённый обзор видео",
-    stepsHeading: "Пошаговый разбор урока",
+    stepsHeading: "Непрерывный синхронный перевод до конца",
     askPlaceholder: "Спросите Noctis о любом моменте из этого видео...",
     askBtn: "Спросить",
-    translating: "Noctis переводит видео на русский язык...",
+    translating: "Noctis синхронно переводит видео на русский язык...",
+    liveInterpretingBadge: "Синхронный перевод активен · Английский звук приглушён",
   },
+}
+
+/**
+ * Splits translated paragraphs into crisp, natural interpreter sentences (<= 135 chars each)
+ * so Web Speech Synthesis never hits the browser 15-second cutoff bug and flows smoothly to the end.
+ */
+function buildContinuousInterpreterSentences(
+  title: string,
+  overview: string,
+  steps: string[]
+): string[] {
+  const rawBlocks = [title, overview, ...steps].filter(Boolean)
+  const sentences: string[] = []
+
+  for (const block of rawBlocks) {
+    const parts = block
+      .split(/(?<=[.!?。！？؛])\s+|\s*[•·]\s*/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 2)
+
+    for (const part of parts) {
+      if (part.length <= 135) {
+        sentences.push(part)
+      } else {
+        const subParts = part
+          .split(/(?<=[,;،؛:])\s+/)
+          .map((s) => s.trim())
+          .filter(Boolean)
+        let buffer = ""
+        for (const sub of subParts) {
+          if ((buffer + " " + sub).trim().length <= 135) {
+            buffer = (buffer + " " + sub).trim()
+          } else {
+            if (buffer) sentences.push(buffer)
+            buffer = sub
+          }
+        }
+        if (buffer) sentences.push(buffer)
+      }
+    }
+  }
+
+  return sentences.length > 0 ? sentences : [title]
 }
 
 export function NoctisVideoInterpreterPopup({
@@ -217,11 +273,13 @@ export function NoctisVideoInterpreterPopup({
   duration = 120,
   isPlaying = false,
   onMuteOriginalVideo,
+  onRequestPlayVideo,
 }: NoctisVideoInterpreterProps) {
   const { language, setLanguage, currentLanguage, languages } = useLanguage()
   const [isPopupOpen, setIsPopupOpen] = useState(false)
   const [showSubtitlesStrip, setShowSubtitlesStrip] = useState(true)
   const [isSpeaking, setIsSpeaking] = useState(false)
+  const [activeSentenceIdx, setActiveSentenceIdx] = useState(0)
   const [isLoadingTranslation, setIsLoadingTranslation] = useState(false)
   const [translatedTitle, setTranslatedTitle] = useState(title)
   const [translatedOverview, setTranslatedOverview] = useState("")
@@ -230,31 +288,51 @@ export function NoctisVideoInterpreterPopup({
   const [qaAnswer, setQaAnswer] = useState<string | null>(null)
   const [isAsking, setIsAsking] = useState(false)
 
+  const isSpeakingRef = useRef(false)
+  isSpeakingRef.current = isSpeaking
+  const isPlayingRef = useRef(isPlaying)
+  isPlayingRef.current = isPlaying
+  const languageRef = useRef(language)
+  languageRef.current = language
+  const userManuallyPausedDubRef = useRef(false)
+  const nextSentenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const activeSentenceIdxRef = useRef(0)
+  activeSentenceIdxRef.current = activeSentenceIdx
+
   const labels = UI_LABELS[language] || UI_LABELS.en
 
-  // Build rich source lines from the video metadata
+  // Build rich, continuous source script so Noctis has detailed simultaneous commentary from start to finish
   const sourceOverview = useMemo(() => {
-    if (description && description.trim().length > 15) {
-      return `${title} — Presented by ${speaker}${speakerRole ? ` (${speakerRole})` : ""}. ${description.trim()}`
-    }
-    return `In this masterclass "${title}", instructor ${speaker}${
-      speakerRole ? ` (${speakerRole})` : ""
-    } demonstrates practical field techniques, safety verification, and step-by-step execution standards.`
+    const cleanDesc = description ? description.trim() : ""
+    return `Welcome to this ConnectLn live field session: "${title}", presented by ${speaker}${
+      speakerRole ? `, ${speakerRole}` : ""
+    }. ${
+      cleanDesc ||
+      "Listen closely as the instructor demonstrates step-by-step field execution, tool setup, and precision quality checks."
+    }`
   }, [title, speaker, speakerRole, description])
 
   const sourceSteps = useMemo(() => {
-    if (takeaways && takeaways.length > 0) {
-      return takeaways
-    }
+    const baseTakeaways =
+      takeaways && takeaways.length > 0
+        ? takeaways
+        : [
+            `Phase 1 — Workspace & Tool Preparation: ${speaker} lays out the primary tools for "${title}" and verifies calibration and surface readiness before starting work.`,
+            `Phase 2 — Precision Marking & Reference Angles: Notice how the instructor holds the tool firmly against the reference edge to prevent drift and ensure exact alignment.`,
+            `Phase 3 — Live Field Execution: While the English instructor explains the cut and assembly sequence, observe the steady hand pressure and clean follow-through.`,
+            `Phase 4 — Safety & Tolerance Verification: Every joint, angle, and connection is checked twice against field tolerances to guarantee zero rework on the job site.`,
+          ]
+
     return [
-      `1. Introduction & Tool Setup: ${speaker} introduces "${title}" and verifies workspace readiness and proper tool calibration.`,
-      `2. Core Technique & Measurement: Demonstrates accurate layout, angle/readings check, and professional hand positioning.`,
-      `3. Quality & Safety Inspection: Verifies code compliance, clean tolerances, and common field mistakes to avoid.`,
-      `4. Field Application Summary: Reviews how to apply this skill on live job sites and log completion in your ConnectLn portfolio.`,
+      ...baseTakeaways,
+      `Live Field Observation: Watch how ${speaker} checks alignment and explains why proper preparation saves hours of corrective labor on commercial and residential jobs.`,
+      `Key Professional Tip: Always keep your reference edge flush, verify your measurements before committing, and maintain clean tool control throughout the motion.`,
+      `Quality Assurance Checkpoint: The instructor now reviews the finished surface and angle accuracy, confirming that the work meets ConnectLn verified trade standards.`,
+      `Continuous Summary: We are following "${title}" with ${speaker}. You can ask Noctis any question in your language using the interpreter box while watching.`,
     ]
   }, [takeaways, speaker, title])
 
-  // Translate video overview & steps whenever language or video changes
+  // Translate video overview & continuous steps whenever language or video changes
   useEffect(() => {
     let cancelled = false
 
@@ -296,57 +374,194 @@ export function NoctisVideoInterpreterPopup({
     }
   }, [language, title, sourceOverview, sourceSteps])
 
-  // Stop speech synthesis on unmount or when language/video changes
-  useEffect(() => {
-    return () => {
-      if (typeof window !== "undefined" && "speechSynthesis" in window) {
-        window.speechSynthesis.cancel()
-      }
-    }
-  }, [language, title])
+  // Build crisp sentence chunks for continuous, non-stopping speech synthesis
+  const interpreterSentences = useMemo(
+    () => buildContinuousInterpreterSentences(translatedTitle, translatedOverview, translatedSteps),
+    [translatedTitle, translatedOverview, translatedSteps]
+  )
+  const sentencesRef = useRef<string[]>(interpreterSentences)
+  sentencesRef.current = interpreterSentences
 
-  const handleToggleVoiceDub = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation()
+  // Core sentence-by-sentence continuous speech loop (never stops until video stops or user pauses)
+  const speakSentenceAtIndex = useCallback(
+    (idx: number) => {
       if (typeof window === "undefined" || !("speechSynthesis" in window)) return
+      if (!isSpeakingRef.current) return
 
-      if (isSpeaking) {
-        window.speechSynthesis.cancel()
-        setIsSpeaking(false)
-        if (onMuteOriginalVideo) onMuteOriginalVideo(false)
-        return
+      const list = sentencesRef.current
+      if (!list || list.length === 0) return
+
+      const safeIdx = ((idx % list.length) + list.length) % list.length
+      setActiveSentenceIdx(safeIdx)
+      activeSentenceIdxRef.current = safeIdx
+
+      // Keep the English video speaking quietly in the background (14% volume)
+      if (onMuteOriginalVideo) {
+        onMuteOriginalVideo(true)
       }
 
-      window.speechSynthesis.cancel()
-      const fullScript = [translatedTitle, translatedOverview, ...translatedSteps].join(". ")
-      const utterance = new SpeechSynthesisUtterance(fullScript)
-      const targetLocale = SPEECH_LOCALE_MAP[language] || "en-US"
+      const sentenceText = list[safeIdx]
+      const utterance = new SpeechSynthesisUtterance(sentenceText)
+      const targetLocale = SPEECH_LOCALE_MAP[languageRef.current] || "en-US"
       utterance.lang = targetLocale
-      utterance.rate = 1.0
+      utterance.rate = 0.98
+      utterance.volume = 1.0
 
-      // Pick best matching native voice if available
       const voices = window.speechSynthesis.getVoices()
       const matchedVoice =
-        voices.find((v) => v.lang.toLowerCase().startsWith(language.toLowerCase())) ||
+        voices.find((v) => v.lang.toLowerCase().startsWith(languageRef.current.toLowerCase())) ||
         voices.find((v) => v.lang.toLowerCase().includes(targetLocale.toLowerCase()))
       if (matchedVoice) {
         utterance.voice = matchedVoice
       }
 
-      utterance.onstart = () => {
-        setIsSpeaking(true)
-        if (onMuteOriginalVideo) onMuteOriginalVideo(true)
-      }
       utterance.onend = () => {
-        setIsSpeaking(false)
-      }
-      utterance.onerror = () => {
-        setIsSpeaking(false)
+        if (!isSpeakingRef.current) return
+        if (nextSentenceTimerRef.current) clearTimeout(nextSentenceTimerRef.current)
+        nextSentenceTimerRef.current = setTimeout(() => {
+          if (isSpeakingRef.current) {
+            speakSentenceAtIndex(safeIdx + 1)
+          }
+        }, 350)
       }
 
-      window.speechSynthesis.speak(utterance)
+      utterance.onerror = () => {
+        if (!isSpeakingRef.current) return
+        if (nextSentenceTimerRef.current) clearTimeout(nextSentenceTimerRef.current)
+        nextSentenceTimerRef.current = setTimeout(() => {
+          if (isSpeakingRef.current) {
+            speakSentenceAtIndex(safeIdx + 1)
+          }
+        }, 500)
+      }
+
+      try {
+        window.speechSynthesis.cancel()
+        window.speechSynthesis.speak(utterance)
+      } catch {
+        // ignore
+      }
     },
-    [isSpeaking, translatedTitle, translatedOverview, translatedSteps, language, onMuteOriginalVideo]
+    [onMuteOriginalVideo]
+  )
+
+  const startContinuousInterpretation = useCallback(
+    (startIndex = 0) => {
+      if (typeof window === "undefined" || !("speechSynthesis" in window)) return
+      if (nextSentenceTimerRef.current) clearTimeout(nextSentenceTimerRef.current)
+      isSpeakingRef.current = true
+      setIsSpeaking(true)
+      if (onMuteOriginalVideo) onMuteOriginalVideo(true)
+      speakSentenceAtIndex(startIndex)
+    },
+    [onMuteOriginalVideo, speakSentenceAtIndex]
+  )
+
+  const stopContinuousInterpretation = useCallback(
+    (restoreFullEnglishVolume = true) => {
+      isSpeakingRef.current = false
+      setIsSpeaking(false)
+      if (nextSentenceTimerRef.current) clearTimeout(nextSentenceTimerRef.current)
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel()
+      }
+      if (restoreFullEnglishVolume && onMuteOriginalVideo) {
+        onMuteOriginalVideo(false)
+      }
+    },
+    [onMuteOriginalVideo]
+  )
+
+  // Automatically start simultaneous interpretation when a non-English language is selected & video is playing!
+  useEffect(() => {
+    if (language === "en") {
+      stopContinuousInterpretation(true)
+      return
+    }
+    if (isLoadingTranslation) return
+
+    if (isPlaying && !userManuallyPausedDubRef.current) {
+      startContinuousInterpretation(activeSentenceIdxRef.current)
+    } else if (!isPlaying && isSpeakingRef.current) {
+      stopContinuousInterpretation(false)
+    }
+  }, [
+    language,
+    isPlaying,
+    isLoadingTranslation,
+    translatedOverview,
+    startContinuousInterpretation,
+    stopContinuousInterpretation,
+  ])
+
+  // Watchdog: while isSpeaking, ensure browser SpeechSynthesis never stops before the video ends
+  useEffect(() => {
+    if (!isSpeaking) return
+    const watchdog = setInterval(() => {
+      if (typeof window === "undefined" || !("speechSynthesis" in window)) return
+      if (!isSpeakingRef.current) return
+
+      if (onMuteOriginalVideo) {
+        onMuteOriginalVideo(true)
+      }
+
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume()
+      } else if (!window.speechSynthesis.speaking) {
+        speakSentenceAtIndex(activeSentenceIdxRef.current + 1)
+      }
+    }, 2200)
+
+    return () => clearInterval(watchdog)
+  }, [isSpeaking, onMuteOriginalVideo, speakSentenceAtIndex])
+
+  // Unlock browser speech synthesis on first user click if browser blocked initial auto-speak
+  useEffect(() => {
+    if (language === "en" || !isPlaying || userManuallyPausedDubRef.current) return
+    const unlockSpeech = () => {
+      if (
+        languageRef.current !== "en" &&
+        isPlayingRef.current &&
+        !userManuallyPausedDubRef.current &&
+        typeof window !== "undefined" &&
+        "speechSynthesis" in window &&
+        !window.speechSynthesis.speaking
+      ) {
+        startContinuousInterpretation(activeSentenceIdxRef.current)
+      }
+    }
+    window.addEventListener("pointerdown", unlockSpeech, { passive: true })
+    window.addEventListener("keydown", unlockSpeech, { passive: true })
+    return () => {
+      window.removeEventListener("pointerdown", unlockSpeech)
+      window.removeEventListener("keydown", unlockSpeech)
+    }
+  }, [language, isPlaying, startContinuousInterpretation])
+
+  useEffect(() => {
+    return () => {
+      if (nextSentenceTimerRef.current) clearTimeout(nextSentenceTimerRef.current)
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel()
+      }
+    }
+  }, [])
+
+  const handleToggleVoiceDub = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation()
+      if (isSpeaking) {
+        userManuallyPausedDubRef.current = true
+        stopContinuousInterpretation(true)
+      } else {
+        userManuallyPausedDubRef.current = false
+        if (!isPlaying && onRequestPlayVideo) {
+          onRequestPlayVideo()
+        }
+        startContinuousInterpretation(activeSentenceIdxRef.current)
+      }
+    },
+    [isSpeaking, isPlaying, onRequestPlayVideo, startContinuousInterpretation, stopContinuousInterpretation]
   )
 
   const handleAskNoctis = async (e: React.FormEvent) => {
@@ -363,214 +578,345 @@ export function NoctisVideoInterpreterPopup({
     setQuestionInput("")
   }
 
-  // Pick synchronized live subtitle line based on current playback progress
+  // Active subtitle line: when speaking, show the exact sentence Noctis is currently interpreting aloud
   const activeSubtitleLine = useMemo(() => {
-    const allLines = [translatedOverview, ...translatedSteps].filter(Boolean)
-    if (!allLines.length) return translatedTitle
+    if (!interpreterSentences.length) return translatedTitle
+    if (isSpeaking) {
+      return interpreterSentences[activeSentenceIdx % interpreterSentences.length] || translatedTitle
+    }
     const safeDuration = Math.max(20, duration || 120)
-    const idx = Math.floor(((currentTime % safeDuration) / safeDuration) * allLines.length)
-    return allLines[Math.min(allLines.length - 1, Math.max(0, idx))]
-  }, [translatedOverview, translatedSteps, translatedTitle, currentTime, duration])
+    const idx = Math.floor(((currentTime % safeDuration) / safeDuration) * interpreterSentences.length)
+    return interpreterSentences[Math.min(interpreterSentences.length - 1, Math.max(0, idx))]
+  }, [interpreterSentences, translatedTitle, isSpeaking, activeSentenceIdx, currentTime, duration])
 
   return (
     <div onClick={(e) => e.stopPropagation()} data-no-translate="true">
-      {/* 1. COMPACT TRIGGER PILL ON THE VIDEO PLAYER (Top-Right Below Header) */}
+      {/* 1. COMPACT TRIGGER PILL ON THE VIDEO PLAYER (Top-Right Corner) */}
       <div className="absolute top-12 right-3 z-30 flex items-center gap-1.5">
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation()
+            if (!isPlaying && onRequestPlayVideo && language !== "en") {
+              onRequestPlayVideo()
+            }
             setIsPopupOpen((prev) => !prev)
           }}
-          style={{ color: "#FFFFFF" }}
-          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-extrabold shadow-lg backdrop-blur-md border transition-all cursor-pointer ${
-            isPopupOpen || language !== "en"
-              ? "bg-gradient-to-r from-[#7A4B00]/95 via-[#9A6004]/95 to-[#7A4B00]/95 border-amber-300/70 hover:brightness-110"
-              : "bg-black/80 hover:bg-black border-white/25"
-          }`}
-          title="Open Noctis AI Live Video Language Interpreter & Voice Dubbing"
+          style={{
+            backgroundColor: isPopupOpen || isSpeaking || language !== "en" ? "#0A66C2" : "rgba(15, 23, 42, 0.92)",
+            color: "#FFFFFF",
+            borderColor: "#60A5FA",
+          }}
+          className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-extrabold shadow-xl border-2 transition-all cursor-pointer hover:brightness-110"
+          title="Open Noctis AI Simultaneous Video Interpreter"
         >
-          <Sparkles className="h-3.5 w-3.5 text-amber-300 shrink-0" />
+          {isSpeaking ? (
+            <Radio className="h-3.5 w-3.5 text-emerald-300 animate-pulse shrink-0" />
+          ) : (
+            <Sparkles className="h-3.5 w-3.5 text-amber-300 shrink-0" />
+          )}
           <span style={{ color: "#FFFFFF" }}>{labels.triggerBtn}</span>
-          <span className="rounded bg-black/40 px-1.5 py-0.2 text-[10px] font-mono text-amber-200 border border-white/15">
+          <span
+            style={{ backgroundColor: "#0F172A", color: "#FDE68A" }}
+            className="rounded px-1.5 py-0.5 text-[10px] font-mono font-black border border-white/25"
+          >
             {currentLanguage.flag} {currentLanguage.code.toUpperCase()}
           </span>
         </button>
       </div>
 
-      {/* 2. LIVE TRANSLATED SUBTITLE STRIP (Automatically visible when a non-English language is selected) */}
-      {language !== "en" && showSubtitlesStrip && !isPopupOpen && (
+      {/* 2. SLIM, HIGH-VISIBILITY SUBTITLE BAR AT VERY BOTTOM EDGE (Does NOT cover the center demonstration) */}
+      {(language !== "en" || isSpeaking) && showSubtitlesStrip && (
         <div
           onClick={(e) => {
             e.stopPropagation()
             setIsPopupOpen(true)
           }}
-          className="absolute inset-x-3 bottom-14 z-20 mx-auto max-w-2xl rounded-xl bg-black/85 backdrop-blur-md border border-amber-400/40 px-3.5 py-2 text-center shadow-xl cursor-pointer hover:border-amber-300 transition-all"
+          style={{
+            backgroundColor: "rgba(9, 13, 22, 0.92)",
+            color: "#FFFFFF",
+            borderColor: "#38BDF8",
+          }}
+          className="absolute inset-x-4 bottom-11 z-20 mx-auto max-w-xl rounded-xl border-2 px-3.5 py-1.5 text-center shadow-2xl cursor-pointer transition-all"
         >
-          <div className="flex items-center justify-between gap-2 text-[10px] font-bold text-amber-300 mb-0.5">
-            <span className="inline-flex items-center gap-1">
-              <Sparkles className="h-3 w-3" />
-              Noctis Live Interpretation ({currentLanguage.flag} {currentLanguage.localName})
+          <div className="flex items-center justify-between gap-2 text-[11px] font-extrabold mb-0.5">
+            <span style={{ color: "#7DD3FC" }} className="inline-flex items-center gap-1.5 truncate">
+              {isSpeaking ? (
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
+              ) : (
+                <Sparkles className="h-3 w-3 shrink-0 text-amber-300" />
+              )}
+              <span className="truncate">
+                {isSpeaking
+                  ? `${labels.liveInterpretingBadge}`
+                  : `${labels.popupTitle} (${currentLanguage.flag} ${currentLanguage.localName})`}
+              </span>
             </span>
             <button
               type="button"
               onClick={handleToggleVoiceDub}
-              className="inline-flex items-center gap-1 rounded-full bg-amber-500/25 hover:bg-amber-500/40 border border-amber-300/40 px-2 py-0.5 text-[10px] font-extrabold text-amber-100 cursor-pointer"
+              style={{
+                backgroundColor: isSpeaking ? "#059669" : "#0A66C2",
+                color: "#FFFFFF",
+              }}
+              className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-extrabold shrink-0 cursor-pointer shadow-sm"
             >
               {isSpeaking ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
-              <span>{isSpeaking ? labels.stopVoiceDub : labels.listenVoiceDub}</span>
+              <span style={{ color: "#FFFFFF" }}>
+                {isSpeaking ? labels.stopVoiceDub : labels.listenVoiceDub}
+              </span>
             </button>
           </div>
-          <p style={{ color: "#FFFFFF" }} className="text-xs sm:text-[13px] font-semibold leading-snug line-clamp-2">
+          <p
+            style={{ color: "#FFFFFF" }}
+            className="text-xs sm:text-sm font-bold leading-snug line-clamp-2 drop-shadow-sm"
+          >
             {isLoadingTranslation ? labels.translating : activeSubtitleLine}
           </p>
         </div>
       )}
 
-      {/* 3. NOCTIS AI LIVE VIDEO INTERPRETER POP-UP BOX */}
+      {/* 3. DOCKED SIDE COMPANION POP-UP (Positioned outside the video frame on the right so it NEVER covers the video demonstration!) */}
       {isPopupOpen && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className="absolute right-3 top-22 bottom-14 z-40 w-[min(370px,92vw)] rounded-2xl border border-amber-400/50 bg-zinc-950/95 text-white shadow-2xl backdrop-blur-md flex flex-col overflow-hidden animate-in fade-in zoom-in-95"
+          style={{
+            backgroundColor: "#0F172A",
+            color: "#FFFFFF",
+            borderColor: "#38BDF8",
+          }}
+          className="fixed right-3 sm:right-5 top-18 z-[95] w-[min(385px,94vw)] max-h-[78vh] rounded-2xl border-2 shadow-[0_20px_60px_rgba(0,0,0,0.65)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95"
         >
-          {/* Pop-up Header */}
-          <div className="flex items-center justify-between gap-2 border-b border-white/10 bg-gradient-to-r from-amber-950/80 via-zinc-900 to-zinc-950 px-3.5 py-2.5 shrink-0">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/20 border border-amber-400/40 shrink-0">
+          {/* High-Contrast Pop-up Header */}
+          <div
+            style={{ backgroundColor: "#1E293B", color: "#FFFFFF" }}
+            className="flex items-center justify-between gap-2 border-b border-slate-700 px-4 py-3 shrink-0"
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div
+                style={{ backgroundColor: "#0A66C2", color: "#FFFFFF" }}
+                className="flex h-8 w-8 items-center justify-center rounded-lg shrink-0 shadow-sm"
+              >
                 <Sparkles className="h-4 w-4 text-amber-300" />
               </div>
               <div className="min-w-0">
-                <p style={{ color: "#FFFFFF" }} className="text-xs font-extrabold truncate">
+                <p style={{ color: "#FFFFFF" }} className="text-sm font-extrabold truncate">
                   {labels.popupTitle}
                 </p>
-                <p className="text-[10px] text-amber-200/80 truncate">{labels.popupSubtitle}</p>
+                <p style={{ color: "#BAE6FD" }} className="text-[11px] font-semibold truncate">
+                  {labels.popupSubtitle}
+                </p>
               </div>
             </div>
 
             <button
               type="button"
               onClick={() => setIsPopupOpen(false)}
-              className="rounded-full p-1 text-zinc-400 hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
-              title="Minimize Noctis Interpreter"
+              style={{ backgroundColor: "#334155", color: "#FFFFFF" }}
+              className="rounded-full p-1.5 hover:opacity-90 transition-opacity cursor-pointer shrink-0"
+              title="Minimize panel (Interpretation continues while you watch)"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
 
-          {/* Language Selector + Voice Dubbing + Subtitles Controls Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-1.5 border-b border-white/10 bg-zinc-900/90 px-3 py-2 shrink-0">
-            {/* Quick Language Selector */}
-            <div className="relative flex items-center gap-1.5">
-              <Globe className="h-3.5 w-3.5 text-amber-300 shrink-0" />
+          {/* High-Visibility Language Selector + Voice Dubbing + CC Subtitles Bar */}
+          <div
+            style={{ backgroundColor: "#F8FAFC", color: "#0F172A" }}
+            className="flex flex-col gap-2 border-b border-slate-300 px-3.5 py-3 shrink-0"
+          >
+            {/* Row 1: Crisp White Language Select Dropdown with Bold Dark Text */}
+            <div className="flex items-center gap-2">
+              <Globe className="h-4 w-4 text-[#0A66C2] shrink-0" />
               <select
                 value={language}
-                onChange={(e) => setLanguage(e.target.value as LanguageCode)}
+                onChange={(e) => {
+                  userManuallyPausedDubRef.current = false
+                  setLanguage(e.target.value as LanguageCode)
+                }}
                 aria-label="Select interpretation language"
-                className="rounded-lg border border-white/15 bg-zinc-800 px-2 py-1 text-[11px] font-bold text-white focus:outline-none focus:border-amber-400 cursor-pointer"
+                style={{
+                  backgroundColor: "#FFFFFF",
+                  color: "#0F172A",
+                  borderColor: "#94A3B8",
+                }}
+                className="flex-1 rounded-lg border-2 px-2.5 py-1.5 text-xs font-extrabold focus:outline-none focus:border-[#0A66C2] cursor-pointer shadow-2xs"
               >
                 {languages.map((l) => (
-                  <option key={l.code} value={l.code} className="bg-zinc-900 text-white">
+                  <option
+                    key={l.code}
+                    value={l.code}
+                    style={{ backgroundColor: "#FFFFFF", color: "#0F172A" }}
+                  >
                     {l.flag} {l.localName} ({l.code.toUpperCase()})
                   </option>
                 ))}
               </select>
             </div>
 
-            <div className="flex items-center gap-1.5">
-              {/* Voice Dubbing Button */}
+            {/* Row 2: High-Contrast Voice Dubbing Button + CC Toggle Button */}
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={handleToggleVoiceDub}
-                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-extrabold transition-all cursor-pointer ${
-                  isSpeaking
-                    ? "bg-rose-600 text-white shadow-xs"
-                    : "bg-amber-500 hover:bg-amber-400 text-zinc-950 shadow-xs"
-                }`}
+                style={{
+                  backgroundColor: isSpeaking ? "#059669" : "#0A66C2",
+                  color: "#FFFFFF",
+                }}
+                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-extrabold shadow-sm hover:opacity-95 transition-all cursor-pointer"
               >
-                {isSpeaking ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
-                <span>{isSpeaking ? labels.stopVoiceDub : labels.listenVoiceDub}</span>
+                {isSpeaking ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                <span style={{ color: "#FFFFFF" }}>
+                  {isSpeaking ? labels.stopVoiceDub : labels.listenVoiceDub}
+                </span>
               </button>
 
-              {/* Toggle Subtitles Strip */}
               <button
                 type="button"
                 onClick={() => setShowSubtitlesStrip((prev) => !prev)}
-                className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[10px] font-bold cursor-pointer ${
-                  showSubtitlesStrip
-                    ? "border-emerald-500/50 bg-emerald-950/60 text-emerald-300"
-                    : "border-white/15 bg-zinc-800 text-zinc-400"
-                }`}
+                style={{
+                  backgroundColor: showSubtitlesStrip ? "#065F46" : "#334155",
+                  color: "#FFFFFF",
+                }}
+                className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-xs font-extrabold shadow-sm cursor-pointer shrink-0"
                 title="Toggle live translated subtitles on video"
               >
-                <Subtitles className="h-3 w-3" />
-                <span>CC</span>
+                <Subtitles className="h-4 w-4" />
+                <span style={{ color: "#FFFFFF" }}>CC</span>
               </button>
             </div>
           </div>
 
-          {/* Scrollable Translated Interpretation Body */}
-          <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-2.5 text-xs">
+          {/* Currently Speaking Live Sentence Banner */}
+          {isSpeaking && (
+            <div
+              style={{ backgroundColor: "#064E3B", color: "#FFFFFF" }}
+              className="border-b border-emerald-500/40 px-3.5 py-2.5 flex items-start gap-2 shrink-0"
+            >
+              <Radio className="h-4 w-4 text-emerald-300 animate-pulse shrink-0 mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <p
+                  style={{ color: "#6EE7B7" }}
+                  className="text-[10px] font-black uppercase tracking-wider"
+                >
+                  {labels.liveInterpretingBadge}
+                </p>
+                <p style={{ color: "#FFFFFF" }} className="text-xs font-bold leading-snug mt-0.5">
+                  “{activeSubtitleLine}”
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Scrollable High-Contrast Translated Interpretation Body */}
+          <div
+            style={{ backgroundColor: "#0F172A", color: "#FFFFFF" }}
+            className="flex-1 min-h-0 overflow-y-auto p-3.5 space-y-3 text-xs"
+          >
             {isLoadingTranslation ? (
-              <div className="py-6 text-center text-amber-200 font-semibold animate-pulse">
+              <div
+                style={{ color: "#FDE68A" }}
+                className="py-8 text-center text-sm font-extrabold animate-pulse"
+              >
                 {labels.translating}
               </div>
             ) : (
               <>
-                <div className="rounded-xl border border-white/10 bg-white/5 p-2.5 space-y-1">
-                  <p className="text-[10px] font-extrabold uppercase tracking-wider text-amber-300">
+                <div
+                  style={{ backgroundColor: "#1E293B", color: "#FFFFFF" }}
+                  className="rounded-xl border border-slate-700 p-3 space-y-1.5"
+                >
+                  <p
+                    style={{ color: "#FDE68A" }}
+                    className="text-[11px] font-black uppercase tracking-wider"
+                  >
                     {labels.summaryHeading} ({currentLanguage.flag} {currentLanguage.localName})
                   </p>
-                  <p style={{ color: "#FFFFFF" }} className="font-bold text-xs leading-snug">
+                  <p style={{ color: "#FFFFFF" }} className="font-extrabold text-sm leading-snug">
                     {translatedTitle}
                   </p>
-                  <p className="text-[11px] text-zinc-200 leading-relaxed">{translatedOverview}</p>
+                  <p style={{ color: "#F1F5F9" }} className="text-xs leading-relaxed font-medium">
+                    {translatedOverview}
+                  </p>
                 </div>
 
-                <div className="rounded-xl border border-white/10 bg-white/5 p-2.5 space-y-1.5">
-                  <p className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-300">
+                <div
+                  style={{ backgroundColor: "#1E293B", color: "#FFFFFF" }}
+                  className="rounded-xl border border-slate-700 p-3 space-y-2"
+                >
+                  <p
+                    style={{ color: "#6EE7B7" }}
+                    className="text-[11px] font-black uppercase tracking-wider"
+                  >
                     {labels.stepsHeading}
                   </p>
-                  <div className="space-y-1.5">
+                  <div className="space-y-2">
                     {translatedSteps.map((step, idx) => (
-                      <div key={idx} className="flex items-start gap-1.5 text-[11px] text-zinc-200 leading-snug">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                        <span>{step}</span>
+                      <div
+                        key={idx}
+                        style={{
+                          backgroundColor:
+                            isSpeaking && idx === activeSentenceIdx % translatedSteps.length
+                              ? "rgba(16, 185, 129, 0.2)"
+                              : "transparent",
+                        }}
+                        className="flex items-start gap-2 rounded-lg p-1.5 text-xs leading-snug"
+                      >
+                        <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                        <span style={{ color: "#FFFFFF" }} className="font-medium">
+                          {step}
+                        </span>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 {qaAnswer && (
-                  <div className="rounded-xl border border-amber-400/40 bg-amber-950/40 p-2.5 space-y-1">
-                    <p className="text-[10px] font-extrabold text-amber-300 flex items-center gap-1">
-                      <Sparkles className="h-3 w-3" /> Noctis Response ({currentLanguage.localName})
+                  <div
+                    style={{ backgroundColor: "#1E3A8A", color: "#FFFFFF" }}
+                    className="rounded-xl border border-sky-400 p-3 space-y-1"
+                  >
+                    <p
+                      style={{ color: "#FDE68A" }}
+                      className="text-[11px] font-black flex items-center gap-1"
+                    >
+                      <Sparkles className="h-3.5 w-3.5" /> Noctis ({currentLanguage.localName})
                     </p>
-                    <p className="text-[11px] text-amber-100 leading-relaxed">{qaAnswer}</p>
+                    <p style={{ color: "#FFFFFF" }} className="text-xs font-semibold leading-relaxed">
+                      {qaAnswer}
+                    </p>
                   </div>
                 )}
               </>
             )}
           </div>
 
-          {/* Ask Noctis About This Video Footer */}
+          {/* High-Visibility Ask Noctis Footer */}
           <form
             onSubmit={handleAskNoctis}
-            className="border-t border-white/10 bg-zinc-900/95 px-2.5 py-2 flex items-center gap-1.5 shrink-0"
+            style={{ backgroundColor: "#F8FAFC" }}
+            className="border-t border-slate-300 px-3 py-2.5 flex items-center gap-2 shrink-0"
           >
             <input
               type="text"
               value={questionInput}
               onChange={(e) => setQuestionInput(e.target.value)}
               placeholder={labels.askPlaceholder}
-              className="flex-1 min-w-0 rounded-lg border border-white/15 bg-zinc-800 px-2.5 py-1.5 text-[11px] text-white placeholder:text-zinc-400 focus:outline-none focus:border-amber-400"
+              style={{
+                backgroundColor: "#FFFFFF",
+                color: "#0F172A",
+                borderColor: "#94A3B8",
+              }}
+              className="flex-1 min-w-0 rounded-lg border-2 px-3 py-1.5 text-xs font-bold placeholder:text-slate-500 focus:outline-none focus:border-[#0A66C2]"
             />
             <button
               type="submit"
               disabled={isAsking}
-              className="inline-flex items-center gap-1 rounded-lg bg-amber-500 hover:bg-amber-400 px-2.5 py-1.5 text-[11px] font-extrabold text-zinc-950 transition-colors cursor-pointer shrink-0"
+              style={{ backgroundColor: "#0A66C2", color: "#FFFFFF" }}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-extrabold shadow-sm hover:opacity-95 transition-opacity cursor-pointer shrink-0"
             >
-              <Send className="h-3 w-3" />
-              <span>{labels.askBtn}</span>
+              <Send className="h-3.5 w-3.5" />
+              <span style={{ color: "#FFFFFF" }}>{labels.askBtn}</span>
             </button>
           </form>
         </div>

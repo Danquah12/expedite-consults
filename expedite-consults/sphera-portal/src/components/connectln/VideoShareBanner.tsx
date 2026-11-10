@@ -321,6 +321,12 @@ export function VideoShareBanner({
                 serialPlate={serialPlate || "CLN-VID"}
                 description={videoSubtitle}
                 takeaways={takeaways}
+                onRequestPlayVideo={() => {
+                  userManuallyStoppedRef.current = false
+                  setStartedByScroll(false)
+                  notifyExclusiveVideoPlay(bannerPlayerIdRef.current)
+                  setIsPlayingInline(true)
+                }}
               />
               {resolvedThumb && (
                 <img
