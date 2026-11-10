@@ -637,10 +637,10 @@ export function NotificationsView({
           </div>
         </div>
 
-        {/* Featured ConnectLn Job Search Alert Card (without Melissa Torres name) */}
+        {/* Featured ConnectLn Job Alert Request Card */}
         <div className="mt-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs overflow-hidden">
           <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-800/50 px-4 py-2 text-xs text-zinc-500">
-            <span className="font-semibold text-zinc-700 dark:text-zinc-300">ConnectLn Offer · Job Search Alert</span>
+            <span className="font-semibold text-zinc-700 dark:text-zinc-300">ConnectLn Opportunity Radar · Job Alert Request</span>
             <span>Nov 10 · 10:49 AM</span>
           </div>
           <div className="p-4 sm:p-5 flex flex-col sm:flex-row items-start gap-4">
@@ -653,13 +653,13 @@ export function NotificationsView({
               <div>
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="font-bold text-base text-zinc-900 dark:text-zinc-100">
-                    ConnectLn Job Alerts
+                    ConnectLn Job Alert Request
                   </span>
                   <span className="inline-flex items-center justify-center rounded bg-[#a64532] px-1.5 py-0.2 text-[10px] font-black text-white leading-tight">
                     CLn
                   </span>
                   <span className="text-xs text-zinc-500">
-                    ConnectLn Career &amp; Job Alert Team
+                    ConnectLn Opportunity Radar · Direct Job, Contract &amp; Apprenticeship Alerts
                   </span>
                 </div>
               </div>

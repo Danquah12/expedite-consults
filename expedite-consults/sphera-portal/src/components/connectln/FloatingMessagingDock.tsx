@@ -64,8 +64,8 @@ export function FloatingMessagingDock({
   const viewerFirstName = (currentUser?.name || "Kwesi").split(" ")[0]
 
   const [isDockOpen, setIsDockOpen] = useState(false)
-  const [isMelissaOfferOpen, setIsMelissaOfferOpen] = useState(false)
-  const [isMelissaMinimized, setIsMelissaMinimized] = useState(true)
+  const [isMelissaOfferOpen, setIsMelissaOfferOpen] = useState(true)
+  const [isMelissaMinimized, setIsMelissaMinimized] = useState(false)
   const [melissaResponseState, setMelissaResponseState] = useState<'pending' | 'get_started' | 'not_today' | 'not_interested'>('pending')
   const [melissaAlertEnabled, setMelissaAlertEnabled] = useState(true)
   const [melissaTargetRole, setMelissaTargetRole] = useState(
@@ -443,7 +443,7 @@ export function FloatingMessagingDock({
         }}
       />
 
-      {/* 0. ConnectLn Offer (Job Search Alert Concierge Card — without Melissa Torres name) */}
+      {/* 0. ConnectLn Job Alert Request (Positioned right beside the Messaging box) */}
       {isMelissaOfferOpen && !activeChatThread && (
         isMelissaMinimized ? (
           <button
@@ -457,14 +457,14 @@ export function FloatingMessagingDock({
               className="h-7 w-7 rounded-lg object-contain bg-[#1a1917] shrink-0"
             />
             <div className="text-left">
-              <p className="text-xs font-bold text-zinc-900 leading-none">ConnectLn Job Alerts</p>
-              <p className="text-[10px] text-zinc-500 mt-0.5">Set Up Alerts for Jobs You Want</p>
+              <p className="text-xs font-bold text-zinc-900 leading-none">ConnectLn Job Alert Request</p>
+              <p className="text-[10px] text-zinc-500 mt-0.5">Instant Job &amp; Project Match Radar</p>
             </div>
             <ChevronUp className="h-4 w-4 text-zinc-500 ml-1" />
           </button>
         ) : (
           <div className="pointer-events-auto flex flex-col w-[92vw] sm:w-[390px] max-h-[545px] rounded-t-xl border border-zinc-300 bg-white text-zinc-900 shadow-[0_8px_36px_rgba(0,0,0,0.22)] overflow-hidden animate-in slide-in-from-bottom-4">
-            {/* Top Bar: ConnectLn Job Alerts + ... + Minimize + X */}
+            {/* Top Bar: ConnectLn Job Alert Request + ... + Minimize + X */}
             <div className="flex items-center justify-between border-b border-zinc-200 bg-white px-3.5 py-2.5 shrink-0">
               <div className="flex items-center gap-2.5 min-w-0">
                 <img
@@ -473,7 +473,7 @@ export function FloatingMessagingDock({
                   className="h-8 w-8 rounded-lg object-contain bg-[#1a1917] shrink-0"
                 />
                 <span className="font-bold text-sm text-zinc-900 truncate">
-                  ConnectLn Job Alerts
+                  ConnectLn Job Alert Request
                 </span>
               </div>
               <div className="flex items-center gap-1 text-zinc-600">
@@ -504,9 +504,9 @@ export function FloatingMessagingDock({
               </div>
             </div>
 
-            {/* Subheader: ConnectLn Offer | Nov 10 */}
+            {/* Subheader: ConnectLn Opportunity Radar | Nov 10 */}
             <div className="flex items-center justify-between border-b border-zinc-200 bg-zinc-50/60 px-4 py-1.5 text-xs text-zinc-500 shrink-0">
-              <span>ConnectLn Offer</span>
+              <span>ConnectLn Opportunity Radar</span>
               <span>Nov 10</span>
             </div>
 
@@ -631,14 +631,14 @@ export function FloatingMessagingDock({
                 <div className="pt-0.5">
                   <div className="flex items-center gap-1.5">
                     <span className="font-bold text-base text-zinc-900">
-                      ConnectLn Job Alerts
+                      ConnectLn Job Alert Request
                     </span>
                     <span className="inline-flex items-center justify-center rounded bg-[#a64532] px-1 py-0.2 text-[10px] font-black text-white leading-tight">
                       CLn
                     </span>
                   </div>
                   <p className="text-xs text-zinc-600 leading-snug mt-0.5">
-                    ConnectLn Career &amp; Job Search Alert Team
+                    ConnectLn Opportunity Radar · Direct Job, Contract &amp; Apprenticeship Alerts
                   </p>
                 </div>
               </div>
@@ -662,7 +662,7 @@ export function FloatingMessagingDock({
                 <div className="min-w-0 flex-1 space-y-2.5 text-[13.5px] text-zinc-800 leading-relaxed">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="font-bold text-sm text-zinc-900">
-                      ConnectLn Job Alerts
+                      ConnectLn Job Alert Request
                     </span>
                     <span className="inline-flex items-center justify-center rounded bg-[#a64532] px-1 py-0.2 text-[9px] font-black text-white leading-tight">
                       CLn
