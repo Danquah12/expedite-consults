@@ -78,6 +78,8 @@ import { ConnectInVideoWheel } from "@/components/connectln/ConnectInVideoWheel"
 import { SkilledTradesLearnByDoingSection } from "@/components/connectln/SkilledTradesLearnByDoingSection"
 import { ConnectInVideoGuideModal } from "@/components/connectln/ConnectInVideoGuideModal"
 import { VeteransAndFranchiseNetworksView } from "@/components/connectln/VeteransAndFranchiseNetworksView"
+import { WorkAndBusinessHubView } from "@/components/connectln/WorkAndBusinessHubView"
+import { WorkBusinessItemId } from "@/lib/work-business-data"
 import {
   currentUser as initialCurrentUser,
   initialPosts,
@@ -168,7 +170,9 @@ export default function ConnectLnPage() {
     | 'notifications'
     | 'profile'
     | 'vibe'
+    | 'workbusiness'
   >('home')
+  const [workBusinessSection, setWorkBusinessSection] = useState<WorkBusinessItemId>('find_work')
 
   const router = useRouter()
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
@@ -1947,6 +1951,11 @@ export default function ConnectLnPage() {
       {/* Top Sticky Navigation */}
       <ConnectLnNavbar
         activeTab={activeTab}
+        activeWorkBusinessItem={workBusinessSection}
+        onSelectWorkBusinessItem={(itemId) => {
+          setWorkBusinessSection(itemId)
+          setActiveTab('workbusiness')
+        }}
         onSelectTab={(tab) => {
           if (tab === 'profile') setInspectedMember(null)
           if (tab === 'network') {
@@ -2947,6 +2956,35 @@ export default function ConnectLnPage() {
             initialSection={activeTab === 'franchises' ? 'franchises' : 'veterans'}
             onNavigateTab={(tab) => setActiveTab(tab as any)}
             onOpenDirectMessage={handleOpenDirectMessage}
+          />
+        )}
+
+        {/* VIEW 4.8: CONNECTLN WORK & BUSINESS HUB (ALL 14 WORKSPACE & GROW WORKFLOWS) */}
+        {activeTab === 'workbusiness' && (
+          <WorkAndBusinessHubView
+            currentUser={userData}
+            initialSection={workBusinessSection}
+            onNavigateTab={(tab) => {
+              if (tab === 'network') {
+                setNetworkInitialSubTab('connections')
+                setNetworkResetTrigger((prev) => prev + 1)
+              }
+              setActiveTab(tab as any)
+            }}
+            onOpenWhoViewedMyProfile={() => {
+              setNetworkInitialSubTab('profile_viewers')
+              setNetworkResetTrigger((prev) => prev + 1)
+              setActiveTab('network')
+            }}
+            onOpenAnalyticsModal={(tab) => {
+              setAnalyticsModalTab(tab)
+              setIsAnalyticsModalOpen(true)
+            }}
+            onOpenLearnTab={(lessonId, category) => {
+              if (lessonId) setFocusedLearnLessonId(lessonId)
+              if (category) setFocusedLearnCategory(category)
+              setActiveTab('learning')
+            }}
           />
         )}
 

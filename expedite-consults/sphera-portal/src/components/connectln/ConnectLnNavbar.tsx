@@ -41,9 +41,18 @@ import {
   Zap,
   Tv,
   Key,
-  ExternalLink
+  ExternalLink,
+  ChevronRight,
+  Settings,
+  HelpCircle,
+  Globe,
+  TrendingUp,
+  Plus,
+  Compass,
+  CheckCircle2
 } from "lucide-react"
 import { UserProfile, SuggestedConnection, getEnclaveConnectedMembers } from "@/lib/connectln-data"
+import { WORK_BUSINESS_MENU_ITEMS, WorkBusinessItemId } from "@/lib/work-business-data"
 import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 import { isSuperAdminUser } from "@/lib/connectin-profile"
 import { getCategorizedMoreMenu, getEnclaveSearchPlaceholder, getEnclaveModules } from "@/lib/connectin-navbar-data"
@@ -58,6 +67,8 @@ interface ConnectLnNavbarProps {
   user: UserProfile
   activeTab: string
   onSelectTab: (tabId: string) => void
+  onSelectWorkBusinessItem?: (itemId: WorkBusinessItemId) => void
+  activeWorkBusinessItem?: WorkBusinessItemId
   searchQuery: string
   onSearchChange: (q: string) => void
   unreadMessagesCount?: number
@@ -78,6 +89,8 @@ export function ConnectLnNavbar({
   user,
   activeTab,
   onSelectTab,
+  onSelectWorkBusinessItem,
+  activeWorkBusinessItem = 'find_work',
   searchQuery,
   onSearchChange,
   unreadMessagesCount = 1,
@@ -95,6 +108,9 @@ export function ConnectLnNavbar({
 }: ConnectLnNavbarProps) {
   const [isMeOpen, setIsMeOpen] = useState(false)
   const [isMoreOpen, setIsMoreOpen] = useState(false)
+  const [hoveredWorkBusinessId, setHoveredWorkBusinessId] = useState<WorkBusinessItemId>(activeWorkBusinessItem || 'find_work')
+  const [showLegacyHubsInMore, setShowLegacyHubsInMore] = useState(false)
+  const [showMeWorkspaceSwitcher, setShowMeWorkspaceSwitcher] = useState(false)
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false)
   const [isWorkspaceMenuOpen, setIsWorkspaceMenuOpen] = useState(false)
@@ -998,211 +1014,258 @@ export function ConnectLnNavbar({
               </span>
             </button>
 
-            {/* Dropdown Menu Modal/Popover */}
+            {/* Dropdown Menu Modal/Popover — Clean LinkedIn-Style "Me" Menu */}
             {isMeOpen && (
               <>
                 <div
                   className="fixed inset-0 z-[55] bg-black/40 backdrop-blur-2xs lg:bg-black/20"
                   onClick={() => setIsMeOpen(false)}
                 />
-                <div className="fixed lg:absolute inset-x-2 lg:inset-x-auto lg:right-0 top-[6.75rem] bottom-24 lg:top-12 lg:bottom-auto lg:max-h-[85vh] lg:w-80 max-w-[360px] sm:left-auto sm:right-2 sm:w-80 rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 flex flex-col overflow-hidden z-[60]">
-                  <div className="flex items-start justify-between border-b border-zinc-100 pb-3 dark:border-zinc-800 shrink-0">
-                    <div className="flex items-start gap-3 flex-1 min-w-0">
-                      <img
-                        src={user.avatar}
-                        alt={user.name}
-                        className="h-12 w-12 rounded-full object-cover ring-2 ring-[#0A66C2]/20 shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1">
-                          <p className="font-bold text-sm text-zinc-900 truncate dark:text-zinc-100">
-                            {user.name}
-                          </p>
-                          <ShieldCheck className="h-4 w-4 text-[#0A66C2] shrink-0" />
-                        </div>
-                        <p className="text-xs text-zinc-500 truncate dark:text-zinc-400">
-                          {user.headline}
-                        </p>
-                        {user.professionEnclave && (() => {
-                          const enc = findEnclaveById(user.professionEnclave)
-                          return (
-                            <div className="mt-1 flex items-center gap-1">
-                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                                {enc?.icon || '🛡️'} {enc?.shortName || enc?.name || 'Verified Enclave'}
-                              </span>
-                            </div>
-                          )
-                        })()}
-                      </div>
-                    </div>
+                <div className="fixed lg:absolute inset-x-2 lg:inset-x-auto lg:right-0 top-[6.75rem] bottom-24 lg:top-12 lg:bottom-auto lg:max-h-[85vh] lg:w-[340px] max-w-[360px] sm:left-auto sm:right-2 sm:w-[340px] rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 flex flex-col overflow-hidden z-[60]">
+                  <div className="flex-1 min-h-0 overflow-y-auto space-y-2.5 pr-0.5">
+                    {/* 1. Clickable Profile Card (Name + Shield + Headline + >) */}
                     <button
                       type="button"
-                      onClick={() => setIsMeOpen(false)}
-                      className="rounded-full p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors ml-1 shrink-0 cursor-pointer"
-                      title="Close"
-                      aria-label="Close profile menu"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-
-                  <div className="flex-1 min-h-0 overflow-y-auto pt-2 space-y-2 pr-1">
-                    <p className="px-2 py-0.5 font-bold text-zinc-900 dark:text-zinc-100 text-[10px] uppercase tracking-wider font-mono">
-                      {t("active_workspace_switcher", "Active Workspace Switcher")}
-                    </p>
-
-                    {/* 4 Persona Cards */}
-                    <div className="grid grid-cols-2 gap-1.5 text-xs">
-                      <button
-                        onClick={() => {
-                          if (onSelectWorkspace) onSelectWorkspace('personal')
-                          onSelectTab('home')
-                          setIsMeOpen(false)
-                        }}
-                        className={`p-2 rounded-xl text-left border transition-all ${
-                          activeWorkspace === 'personal'
-                            ? "bg-blue-50 border-[#0A66C2] text-[#0A66C2] font-bold dark:bg-blue-950/40 dark:border-blue-700"
-                            : "bg-zinc-50 border-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300"
-                        }`}
-                      >
-                        <p className="font-bold text-[11px]">👤 {t("workspace_personal", "Personal")}</p>
-                        <p className="text-[9px] opacity-70">{t("workspace_personal_desc", "Feed, Jobs & Labs")}</p>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          if (onSelectWorkspace) onSelectWorkspace('enterprise')
-                          onSelectTab('procurement')
-                          setIsMeOpen(false)
-                        }}
-                        className={`p-2 rounded-xl text-left border transition-all ${
-                          activeWorkspace === 'enterprise'
-                            ? "bg-emerald-50 border-emerald-600 text-emerald-700 font-bold dark:bg-emerald-950/40 dark:border-emerald-700"
-                            : "bg-zinc-50 border-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300"
-                        }`}
-                      >
-                        <p className="font-bold text-[11px]">🏢 {t("workspace_enterprise", "Enterprise")}</p>
-                        <p className="text-[9px] opacity-70">{t("workspace_enterprise_desc", "$2.4M Spend Desk")}</p>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          if (onSelectWorkspace) onSelectWorkspace('creator')
-                          onSelectTab('media')
-                          setIsMeOpen(false)
-                        }}
-                        className={`p-2 rounded-xl text-left border transition-all ${
-                          activeWorkspace === 'creator'
-                            ? "bg-purple-50 border-purple-600 text-purple-700 font-bold dark:bg-purple-950/40 dark:border-purple-700"
-                            : "bg-zinc-50 border-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300"
-                        }`}
-                      >
-                        <p className="font-bold text-[11px]">🎬 {t("workspace_studio", "Studio")}</p>
-                        <p className="text-[9px] opacity-70">{t("workspace_studio_desc", "Video & Podcasts")}</p>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          if (onSelectWorkspace) onSelectWorkspace('seller')
-                          onSelectTab('sellercenter')
-                          setIsMeOpen(false)
-                        }}
-                        className={`p-2 rounded-xl text-left border transition-all ${
-                          activeWorkspace === 'seller'
-                            ? "bg-amber-50 border-amber-600 text-amber-700 font-bold dark:bg-amber-950/40 dark:border-amber-700"
-                            : "bg-zinc-50 border-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300"
-                        }`}
-                      >
-                        <p className="font-bold text-[11px]">💼 {t("workspace_seller", "Seller")}</p>
-                        <p className="text-[9px] opacity-70">{t("workspace_seller_desc", "$122.7K MRR")}</p>
-                      </button>
-                    </div>
-
-                    <button
                       onClick={() => {
                         onSelectTab('profile')
                         setIsMeOpen(false)
                       }}
-                      className="w-full rounded-xl bg-[#0A66C2] py-2 text-center text-xs font-bold text-white hover:bg-[#004182] transition-colors shadow-xs mt-2"
+                      className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/90 hover:bg-zinc-50 dark:hover:bg-zinc-800/70 p-3 flex items-center justify-between gap-3 text-left transition-colors cursor-pointer group"
                     >
-                      {t("view_unified_profile", "View Unified Profile & Portfolio 📁")}
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <img
+                          src={user.avatar}
+                          alt={user.name}
+                          className="h-12 w-12 rounded-full object-cover ring-1 ring-zinc-200 dark:ring-zinc-700 shrink-0"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1">
+                            <p className="font-bold text-base text-zinc-900 dark:text-zinc-100 truncate">
+                              {user.name}
+                            </p>
+                            <ShieldCheck className="h-4 w-4 text-zinc-700 dark:text-zinc-300 shrink-0" />
+                          </div>
+                          <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-snug mt-0.5">
+                            {user.headline}
+                          </p>
+                        </div>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-zinc-500 group-hover:translate-x-0.5 transition-transform shrink-0" />
                     </button>
 
-                    {/* Quick Preferences: Theme & Language */}
-                    <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800">
-                      <p className="px-2 py-0.5 font-bold text-zinc-900 dark:text-zinc-100 text-[10px] uppercase tracking-wider font-mono">
-                        {t("preferences_label", "Preferences & Appearance")}
-                      </p>
-                      <div className="flex items-center justify-between gap-2 px-2 py-1.5">
-                        <span className="text-xs text-zinc-600 dark:text-zinc-300 font-medium">{t("theme_style", "Theme & Style")}</span>
-                        <ThemeColorSwitcher align="right" />
-                      </div>
-                      <div className="flex items-center justify-between gap-2 px-2 py-1.5">
-                        <span className="text-xs text-zinc-600 dark:text-zinc-300 font-medium">{t("language_label", "Language")}</span>
-                        <LanguageSwitcher align="right" />
-                      </div>
-                    </div>
+                    {/* 2. Analytics Card Row (> opens Real Activity & Insights) */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onSelectWorkBusinessItem) {
+                          onSelectWorkBusinessItem('activity_insights')
+                        } else {
+                          onSelectTab('workbusiness')
+                        }
+                        setIsMeOpen(false)
+                      }}
+                      className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/90 hover:bg-zinc-50 dark:hover:bg-zinc-800/70 px-3.5 py-3 flex items-center justify-between text-left transition-colors cursor-pointer group"
+                    >
+                      <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                        Analytics
+                      </span>
+                      <ChevronRight className="h-4.5 w-4.5 text-zinc-500 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                    </button>
 
-                    {isAdminUser ? (
-                      <div className="grid grid-cols-2 gap-1.5 pt-1">
-                        <button
-                          onClick={() => {
-                            onSelectTab('accountsecurity')
-                            setIsMeOpen(false)
-                          }}
-                          className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 p-1.5 text-center text-[11px] font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100"
-                        >
-                          {t("security_keys", "🔐 Security & Keys")}
-                        </button>
-                        <button
-                          onClick={() => {
-                            onSelectTab('adminiam')
-                            setIsMeOpen(false)
-                          }}
-                          className="rounded-xl border border-red-200 dark:border-red-800/60 bg-red-50/50 dark:bg-red-950/40 p-1.5 text-center text-[11px] font-bold text-red-700 dark:text-red-300 hover:bg-red-100"
-                        >
-                          {t("admin_console", "🛡️ Admin Console")}
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="pt-1">
-                        <button
-                          onClick={() => {
-                            onSelectTab('accountsecurity')
-                            setIsMeOpen(false)
-                          }}
-                          className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 p-2 text-center text-xs font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 transition-colors"
-                        >
-                          {t("account_security_passkeys", "🔐 Account Security & Passkeys")}
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                    {/* 3. Saved posts Card Row (> opens Saved work & posts) */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onSelectWorkBusinessItem) {
+                          onSelectWorkBusinessItem('my_work_applications')
+                        } else {
+                          onSelectTab('workbusiness')
+                        }
+                        setIsMeOpen(false)
+                      }}
+                      className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/90 hover:bg-zinc-50 dark:hover:bg-zinc-800/70 px-3.5 py-3 flex items-center justify-between text-left transition-colors cursor-pointer group"
+                    >
+                      <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                        Saved posts
+                      </span>
+                      <ChevronRight className="h-4.5 w-4.5 text-zinc-500 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                    </button>
 
-                  <div className="mt-3 space-y-1 border-t border-zinc-100 pt-2 text-xs text-zinc-600 dark:border-zinc-800 dark:text-zinc-300">
-                    <p className="px-2 py-1 font-bold text-zinc-900 dark:text-zinc-100 text-[11px] uppercase tracking-wider">
-                      {t("verified_identity_status", "Verified Identity Status")}
-                    </p>
-                    <div className="px-2 text-[11px] text-zinc-500 space-y-0.5">
-                      <p>• {t("role_label", "Role")}: <span className="font-semibold text-zinc-700 dark:text-zinc-200 capitalize">{(user as any).role || "personal"}</span></p>
-                      <p>• {t("clearance_label", "Clearance")}: <span className="font-semibold text-zinc-700 dark:text-zinc-200">{(user as any).clearanceLevel || "Level 2 Verified Identity"}</span></p>
-                      <p>• {t("verification_label", "Verification")}: <span className="text-emerald-600 font-semibold">FIDO2 / Zero-Trust Active ✓</span></p>
-                    </div>
-
-                    {isAdminUser && onOpenAuthModal && (
+                    {/* 4. Action Links List */}
+                    <div className="pt-1 space-y-0.5">
+                      {/* Job Posting Account */}
                       <button
+                        type="button"
                         onClick={() => {
-                          onOpenAuthModal()
+                          if (onSelectWorkBusinessItem) {
+                            onSelectWorkBusinessItem('post_job_project')
+                          } else {
+                            onSelectTab('jobs')
+                          }
                           setIsMeOpen(false)
                         }}
-                        className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-950 py-2 text-xs font-bold shadow-xs hover:opacity-90 transition-all mt-2 cursor-pointer"
+                        className="w-full rounded-lg px-2.5 py-2.5 flex items-center gap-3 text-left text-sm font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                       >
-                        <Key className="h-3.5 w-3.5 text-amber-300" />
-                        <span>{t("switch_persona_gate", "Switch Persona / Auth Gate 🔑")}</span>
+                        <Briefcase className="h-5 w-5 text-zinc-600 dark:text-zinc-400 shrink-0" />
+                        <span>Job Posting Account</span>
                       </button>
-                    )}
 
+                      {/* Settings & Privacy */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onSelectTab('accountsecurity')
+                          setIsMeOpen(false)
+                        }}
+                        className="w-full rounded-lg px-2.5 py-2.5 flex items-center justify-between gap-3 text-left text-sm font-semibold text-zinc-800 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Settings className="h-5 w-5 text-zinc-700 dark:text-zinc-300 shrink-0" />
+                          <span>Settings &amp; Privacy</span>
+                        </div>
+                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
+                          FIDO2
+                        </span>
+                      </button>
+
+                      {/* Help */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (onOpenAIAssistant) onOpenAIAssistant()
+                          setIsMeOpen(false)
+                        }}
+                        className="w-full rounded-lg px-2.5 py-2.5 flex items-center gap-3 text-left text-sm font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                      >
+                        <HelpCircle className="h-5 w-5 text-zinc-600 dark:text-zinc-400 shrink-0" />
+                        <span>Help</span>
+                      </button>
+
+                      {/* Language & Theme */}
+                      <div className="rounded-lg px-2.5 py-2 flex items-center justify-between gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+                        <div className="flex items-center gap-3 text-sm font-medium text-zinc-700 dark:text-zinc-200">
+                          <Globe className="h-5 w-5 text-zinc-600 dark:text-zinc-400 shrink-0" />
+                          <span>{t("language_label", "Language")}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <ThemeColorSwitcher align="right" />
+                          <LanguageSwitcher align="right" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Collapsible Workspace & Admin Controls */}
+                    <div className="pt-1 border-t border-zinc-100 dark:border-zinc-800">
+                      <button
+                        type="button"
+                        onClick={() => setShowMeWorkspaceSwitcher(!showMeWorkspaceSwitcher)}
+                        className="w-full px-2.5 py-1.5 flex items-center justify-between text-[11px] font-bold text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 cursor-pointer"
+                      >
+                        <span>Workspaces &amp; Identity Controls</span>
+                        <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showMeWorkspaceSwitcher ? "rotate-180" : ""}`} />
+                      </button>
+
+                      {showMeWorkspaceSwitcher && (
+                        <div className="mt-1.5 space-y-2 px-1 pb-1">
+                          <div className="grid grid-cols-2 gap-1.5 text-xs">
+                            <button
+                              onClick={() => {
+                                if (onSelectWorkspace) onSelectWorkspace('personal')
+                                onSelectTab('home')
+                                setIsMeOpen(false)
+                              }}
+                              className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
+                                activeWorkspace === 'personal'
+                                  ? "bg-blue-50 border-[#0A66C2] text-[#0A66C2] font-bold dark:bg-blue-950/40 dark:border-blue-700"
+                                  : "bg-zinc-50 border-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300"
+                              }`}
+                            >
+                              <p className="font-bold text-[11px]">👤 {t("workspace_personal", "Personal")}</p>
+                              <p className="text-[9px] opacity-70">{t("workspace_personal_desc", "Feed, Jobs & Labs")}</p>
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                if (onSelectWorkspace) onSelectWorkspace('enterprise')
+                                onSelectTab('procurement')
+                                setIsMeOpen(false)
+                              }}
+                              className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
+                                activeWorkspace === 'enterprise'
+                                  ? "bg-emerald-50 border-emerald-600 text-emerald-700 font-bold dark:bg-emerald-950/40 dark:border-emerald-700"
+                                  : "bg-zinc-50 border-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300"
+                              }`}
+                            >
+                              <p className="font-bold text-[11px]">🏢 {t("workspace_enterprise", "Enterprise")}</p>
+                              <p className="text-[9px] opacity-70">{t("workspace_enterprise_desc", "$2.4M Spend Desk")}</p>
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                if (onSelectWorkspace) onSelectWorkspace('creator')
+                                onSelectTab('media')
+                                setIsMeOpen(false)
+                              }}
+                              className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
+                                activeWorkspace === 'creator'
+                                  ? "bg-purple-50 border-purple-600 text-purple-700 font-bold dark:bg-purple-950/40 dark:border-purple-700"
+                                  : "bg-zinc-50 border-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300"
+                              }`}
+                            >
+                              <p className="font-bold text-[11px]">🎬 {t("workspace_studio", "Studio")}</p>
+                              <p className="text-[9px] opacity-70">{t("workspace_studio_desc", "Video & Podcasts")}</p>
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                if (onSelectWorkspace) onSelectWorkspace('seller')
+                                onSelectTab('sellercenter')
+                                setIsMeOpen(false)
+                              }}
+                              className={`p-2 rounded-xl text-left border transition-all cursor-pointer ${
+                                activeWorkspace === 'seller'
+                                  ? "bg-amber-50 border-amber-600 text-amber-700 font-bold dark:bg-amber-950/40 dark:border-amber-700"
+                                  : "bg-zinc-50 border-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300"
+                              }`}
+                            >
+                              <p className="font-bold text-[11px]">💼 {t("workspace_seller", "Seller")}</p>
+                              <p className="text-[9px] opacity-70">{t("workspace_seller_desc", "$122.7K MRR")}</p>
+                            </button>
+                          </div>
+
+                          {isAdminUser && (
+                            <div className="grid grid-cols-2 gap-1.5 pt-1">
+                              <button
+                                onClick={() => {
+                                  onSelectTab('adminiam')
+                                  setIsMeOpen(false)
+                                }}
+                                className="rounded-xl border border-red-200 dark:border-red-800/60 bg-red-50/50 dark:bg-red-950/40 p-1.5 text-center text-[11px] font-bold text-red-700 dark:text-red-300 hover:bg-red-100 cursor-pointer"
+                              >
+                                🛡️ Admin Console
+                              </button>
+                              {onOpenAuthModal && (
+                                <button
+                                  onClick={() => {
+                                    onOpenAuthModal()
+                                    setIsMeOpen(false)
+                                  }}
+                                  className="rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-950 p-1.5 text-center text-[11px] font-bold hover:opacity-90 cursor-pointer"
+                                >
+                                  🔑 Auth Gate
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Sign out footer matching Screenshot 1 */}
+                  <div className="mt-2 border-t border-zinc-200 dark:border-zinc-800 pt-2 shrink-0">
                     <button
+                      type="button"
                       onClick={() => {
                         setIsMeOpen(false)
                         if (onSignOut) {
@@ -1211,10 +1274,9 @@ export function ConnectLnNavbar({
                           window.location.href = '/connectin-login'
                         }
                       }}
-                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 font-semibold mt-1.5 cursor-pointer"
+                      className="w-full rounded-lg px-2.5 py-2 text-left text-sm font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                     >
-                      <LogOut className="h-4 w-4" />
-                      <span>{t("sign_out", "Sign Out")}</span>
+                      {t("sign_out", "Sign out")}
                     </button>
                   </div>
                 </div>
@@ -1553,7 +1615,7 @@ export function ConnectLnNavbar({
         </div>
       </nav>
 
-      {/* ── Global "More Modules & Hubs" Modal Dropdown (Mobile, Tablet & Desktop) ── */}
+      {/* ── Global "ConnectLn — Work & Business" Two-Column Menu Dropdown (Mobile, Tablet & Desktop) ── */}
       {isMoreOpen && (
         <>
           <div
@@ -1562,367 +1624,346 @@ export function ConnectLnNavbar({
           />
           <div
             ref={moreDropdownRef}
-            className="fixed z-[60] inset-x-2 sm:inset-x-auto sm:right-4 lg:right-6 top-[6.75rem] bottom-24 lg:top-14 lg:bottom-auto sm:max-h-[85vh] sm:w-[440px] max-w-[460px] rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 flex flex-col overflow-hidden"
+            className="fixed z-[60] inset-x-2 sm:inset-x-auto sm:right-4 lg:right-6 top-[4.5rem] sm:top-[4.25rem] bottom-20 sm:bottom-auto max-h-[86vh] sm:w-[680px] max-w-[700px] rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 flex flex-col overflow-hidden"
           >
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-zinc-100 pb-2.5 dark:border-zinc-800 shrink-0">
-              <div>
-                <p className="font-bold text-sm text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
-                  <Grid3X3 className="h-4 w-4 text-[#0A66C2]" />
-                  <span>{t("connectin_modules_hubs", "ConnectIn Modules & Hubs")}</span>
-                </p>
-                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                  {t("enterprise_solutions_desc", "Enterprise Solutions, Company Pages & Trust Operations")}
-                </p>
+            {/* Top Bar — "ConnectLn — Work & Business" matching Screenshot 3 */}
+            <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 px-5 py-3 bg-zinc-50/70 dark:bg-zinc-900/90 shrink-0">
+              <div className="flex items-center gap-2">
+                <Grid3X3 className="h-4 w-4 text-zinc-700 dark:text-zinc-300" />
+                <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
+                  ConnectLn — Work &amp; Business
+                </span>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsMoreOpen(false)}
-                className="rounded-full p-1.5 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shrink-0 cursor-pointer"
-                title="Close"
-                aria-label="Close menu"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                <a
+                  href="https://desk-note.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setIsMoreOpen(false)}
+                  className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2.5 py-1 text-[11px] font-bold text-emerald-800 dark:text-emerald-200 hover:bg-emerald-100 transition-colors"
+                  title="Open Desk Note (https://desk-note.app/)"
+                >
+                  <span>📓 Desk Note</span>
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setIsMoreOpen(false)}
+                  className="rounded-full p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                  title="Close"
+                  aria-label="Close menu"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
             </div>
 
-            {/* Scrollable Categories List */}
-            <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pt-2.5 pr-1">
-              {/* Dedicated Community Networks — Veterans & Franchise Cards */}
-              <div className="rounded-xl bg-gradient-to-r from-emerald-50/80 via-teal-50/50 to-amber-50/70 dark:from-emerald-950/30 dark:via-teal-950/20 dark:to-amber-950/20 p-2.5 border border-emerald-200/80 dark:border-emerald-900/50">
-                <div className="flex items-center justify-between mb-2 px-0.5">
-                  <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
-                    Dedicated Community Networks
-                  </p>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300">
-                    AI Matched
-                  </span>
+            {/* Scrollable Body */}
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              {/* Two Columns: Left = "My workspace" (manages existing activity), Right = "Grow with ConnectLn" (starts a new action) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-zinc-200 dark:divide-zinc-800">
+                {/* LEFT COLUMN: My workspace */}
+                <div className="p-4 sm:p-5 space-y-1">
+                  <div className="pb-2">
+                    <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100">
+                      My workspace
+                    </h3>
+                    <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                      Manage your existing applications, services, inquiries &amp; pages
+                    </p>
+                  </div>
+
+                  {WORK_BUSINESS_MENU_ITEMS.filter((item) => item.column === 'workspace').map((item) => {
+                    const isHoveredOrActive = hoveredWorkBusinessId === item.id
+                    const renderIcon = () => {
+                      switch (item.id) {
+                        case 'my_work_applications':
+                          return <Briefcase className="h-4 w-4" />
+                        case 'my_services_inquiries':
+                          return <Wrench className="h-4 w-4" />
+                        case 'my_communities':
+                          return <Users className="h-4 w-4" />
+                        case 'my_learning':
+                          return <GraduationCap className="h-4 w-4" />
+                        case 'my_business_pages':
+                          return <Building2 className="h-4 w-4" />
+                        case 'activity_insights':
+                          return <TrendingUp className="h-4 w-4" />
+                        case 'billing_settings':
+                          return <Settings className="h-4 w-4" />
+                        default:
+                          return <Briefcase className="h-4 w-4" />
+                      }
+                    }
+                    return (
+                      <React.Fragment key={item.id}>
+                        {item.isBottomDividerItem && (
+                          <div className="my-2 border-t border-zinc-200 dark:border-zinc-800" />
+                        )}
+                        <button
+                          type="button"
+                          onMouseEnter={() => setHoveredWorkBusinessId(item.id)}
+                          onFocus={() => setHoveredWorkBusinessId(item.id)}
+                          onClick={() => {
+                            setHoveredWorkBusinessId(item.id)
+                            if (onSelectWorkBusinessItem) {
+                              onSelectWorkBusinessItem(item.id)
+                            } else {
+                              onSelectTab('workbusiness')
+                            }
+                            setIsMoreOpen(false)
+                          }}
+                          className={`w-full rounded-xl p-2.5 flex items-start gap-3 text-left transition-all cursor-pointer ${
+                            isHoveredOrActive
+                              ? "bg-blue-50/90 dark:bg-blue-950/40 ring-1 ring-blue-200 dark:ring-blue-800/70"
+                              : "hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                          }`}
+                        >
+                          <div
+                            className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                              isHoveredOrActive
+                                ? "bg-[#0A66C2] text-white"
+                                : "bg-blue-50 dark:bg-zinc-800 text-[#0A66C2] dark:text-blue-400"
+                            }`}
+                          >
+                            {renderIcon()}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 leading-snug">
+                              {item.title}
+                            </p>
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-snug mt-0.5">
+                              {item.subtitle}
+                            </p>
+                          </div>
+                        </button>
+                      </React.Fragment>
+                    )
+                  })}
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {/* Card 1: ConnectLn Veterans Network */}
+
+                {/* RIGHT COLUMN: Grow with ConnectLn */}
+                <div className="p-4 sm:p-5 space-y-1">
+                  <div className="pb-2">
+                    <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100">
+                      Grow with ConnectLn
+                    </h3>
+                    <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                      Start a new action: find work, hire, offer services or learn
+                    </p>
+                  </div>
+
+                  {WORK_BUSINESS_MENU_ITEMS.filter((item) => item.column === 'grow').map((item) => {
+                    const isHoveredOrActive = hoveredWorkBusinessId === item.id
+                    const renderIcon = () => {
+                      switch (item.id) {
+                        case 'find_work':
+                          return <Search className="h-4 w-4" />
+                        case 'post_job_project':
+                          return <Plus className="h-4 w-4" />
+                        case 'find_professional':
+                          return <CheckCircle2 className="h-4 w-4" />
+                        case 'offer_services':
+                          return <Award className="h-4 w-4" />
+                        case 'explore_communities':
+                          return <Compass className="h-4 w-4" />
+                        case 'learn_practical_skills':
+                          return <GraduationCap className="h-4 w-4" />
+                        case 'create_business_page':
+                          return <Plus className="h-4 w-4" />
+                        default:
+                          return <Compass className="h-4 w-4" />
+                      }
+                    }
+                    return (
+                      <React.Fragment key={item.id}>
+                        {item.isBottomDividerItem && (
+                          <div className="my-2 border-t border-zinc-200 dark:border-zinc-800" />
+                        )}
+                        <button
+                          type="button"
+                          onMouseEnter={() => setHoveredWorkBusinessId(item.id)}
+                          onFocus={() => setHoveredWorkBusinessId(item.id)}
+                          onClick={() => {
+                            setHoveredWorkBusinessId(item.id)
+                            if (onSelectWorkBusinessItem) {
+                              onSelectWorkBusinessItem(item.id)
+                            } else {
+                              onSelectTab('workbusiness')
+                            }
+                            setIsMoreOpen(false)
+                          }}
+                          className={`w-full rounded-xl p-2.5 flex items-start gap-3 text-left transition-all cursor-pointer ${
+                            isHoveredOrActive
+                              ? "bg-blue-50/90 dark:bg-blue-950/40 ring-1 ring-blue-200 dark:ring-blue-800/70"
+                              : "hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                          }`}
+                        >
+                          <div
+                            className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                              isHoveredOrActive
+                                ? "bg-[#0A66C2] text-white"
+                                : "bg-blue-50 dark:bg-zinc-800 text-[#0A66C2] dark:text-blue-400"
+                            }`}
+                          >
+                            {renderIcon()}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 leading-snug">
+                              {item.title}
+                            </p>
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-snug mt-0.5">
+                              {item.subtitle}
+                            </p>
+                          </div>
+                        </button>
+                      </React.Fragment>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Bottom Contextual Description Strip matching Screenshot 3 */}
+              {(() => {
+                const activeMenuObj =
+                  WORK_BUSINESS_MENU_ITEMS.find((i) => i.id === hoveredWorkBusinessId) ||
+                  WORK_BUSINESS_MENU_ITEMS.find((i) => i.id === 'find_work')!
+                return (
+                  <div className="border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50/90 dark:bg-zinc-900 px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
+                        {activeMenuObj.title}
+                      </p>
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5 leading-relaxed">
+                        {activeMenuObj.footerDescription}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onSelectWorkBusinessItem) {
+                          onSelectWorkBusinessItem(activeMenuObj.id)
+                        } else {
+                          onSelectTab('workbusiness')
+                        }
+                        setIsMoreOpen(false)
+                      }}
+                      className="rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white px-3.5 py-2 text-xs font-bold shrink-0 transition-colors cursor-pointer"
+                    >
+                      Open {activeMenuObj.title} →
+                    </button>
+                  </div>
+                )
+              })()}
+
+              {/* Compact Partner & Specialized Shortcuts Footer */}
+              <div className="border-t border-zinc-200 dark:border-zinc-800 px-5 py-2.5 bg-white dark:bg-zinc-950 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-1.5">
                   <button
                     type="button"
                     onClick={() => {
                       onSelectTab('veterans')
                       setIsMoreOpen(false)
                     }}
-                    className={`p-3 rounded-xl flex flex-col items-start justify-between text-left transition-all cursor-pointer border ${
-                      activeTab === 'veterans'
-                        ? "bg-emerald-700 text-white border-emerald-600 shadow-md"
-                        : "bg-white dark:bg-zinc-800/90 text-zinc-900 dark:text-zinc-100 border-emerald-200 dark:border-emerald-800/70 hover:border-emerald-500 hover:shadow-xs"
-                    }`}
+                    className="rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/40 px-2.5 py-1 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 cursor-pointer"
                   >
-                    <div className="flex items-center justify-between w-full mb-1.5">
-                      <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${
-                        activeTab === 'veterans'
-                          ? "bg-white/20 text-white"
-                          : "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300"
-                      }`}>
-                        <Award className="h-4.5 w-4.5" />
-                      </div>
-                      <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${
-                        activeTab === 'veterans'
-                          ? "bg-white/20 text-white"
-                          : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800"
-                      }`}>
-                        🎖️ VETERANS
-                      </span>
-                    </div>
-                    <p className="text-xs font-extrabold leading-tight">
-                      Veterans Network
-                    </p>
-                    <p className={`text-[10px] mt-1 line-clamp-2 leading-snug ${
-                      activeTab === 'veterans' ? "text-emerald-50" : "text-zinc-500 dark:text-zinc-400"
-                    }`}>
-                      AI Military Skills Translator, transition jobs, VetFran &amp; veteran mentorship
-                    </p>
+                    🎖️ Veterans Network
                   </button>
-
-                  {/* Card 2: ConnectLn Franchise Network */}
                   <button
                     type="button"
                     onClick={() => {
                       onSelectTab('franchises')
                       setIsMoreOpen(false)
                     }}
-                    className={`p-3 rounded-xl flex flex-col items-start justify-between text-left transition-all cursor-pointer border ${
-                      activeTab === 'franchises'
-                        ? "bg-amber-600 text-white border-amber-500 shadow-md"
-                        : "bg-white dark:bg-zinc-800/90 text-zinc-900 dark:text-zinc-100 border-amber-200 dark:border-amber-800/70 hover:border-amber-500 hover:shadow-xs"
-                    }`}
+                    className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/70 dark:bg-amber-950/40 px-2.5 py-1 text-[11px] font-bold text-amber-800 dark:text-amber-300 hover:bg-amber-100 cursor-pointer"
                   >
-                    <div className="flex items-center justify-between w-full mb-1.5">
-                      <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${
-                        activeTab === 'franchises'
-                          ? "bg-white/20 text-white"
-                          : "bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300"
-                      }`}>
-                        <Store className="h-4.5 w-4.5" />
-                      </div>
-                      <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${
-                        activeTab === 'franchises'
-                          ? "bg-white/20 text-white"
-                          : "bg-amber-50 text-amber-700 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800"
-                      }`}>
-                        🏪 FRANCHISE
-                      </span>
-                    </div>
-                    <p className="text-xs font-extrabold leading-tight">
-                      Franchise Network
-                    </p>
-                    <p className={`text-[10px] mt-1 line-clamp-2 leading-snug ${
-                      activeTab === 'franchises' ? "text-amber-50" : "text-zinc-500 dark:text-zinc-400"
-                    }`}>
-                      Franchise directory, FDD opportunities, investors, suppliers &amp; resales
-                    </p>
+                    🏪 Franchise Network
                   </button>
-                </div>
-              </div>
-
-              {/* Enterprise & Platform Hubs 9-Card Grid */}
-              <div className="rounded-xl bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-purple-50/70 dark:from-blue-950/30 dark:via-indigo-950/20 dark:to-purple-950/20 p-2.5 border border-blue-100 dark:border-blue-900/50">
-                <div className="flex items-center justify-between mb-2 px-0.5">
-                  <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                    Enterprise &amp; Specialized Hubs
-                  </p>
-                  <span className="text-[9px] font-semibold text-[#0A66C2]">9 Direct Hubs</span>
-                </div>
-                <div className="grid grid-cols-3 gap-1.5 text-center">
-                  {/* 1. Wallet & Escrow */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onSelectTab('wallet')
-                      setIsMoreOpen(false)
-                    }}
-                    className={`p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
-                      activeTab === 'wallet'
-                        ? "bg-emerald-600 text-white shadow-xs"
-                        : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700 hover:border-emerald-300"
-                    }`}
-                  >
-                    <DollarSign className={`h-5 w-5 mb-1 ${activeTab === 'wallet' ? "text-white" : "text-emerald-600 dark:text-emerald-400"}`} />
-                    <span className="text-[10px] font-bold truncate w-full">Wallet</span>
-                  </button>
-
-                  {/* 1.5. VibeChat (Next-Gen WhatsApp+ Unified Comms) */}
                   <button
                     type="button"
                     onClick={() => {
                       onSelectTab('vibecomms')
                       setIsMoreOpen(false)
                     }}
-                    className={`p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
-                      activeTab === 'vibecomms'
-                        ? "bg-emerald-600 text-white shadow-xs"
-                        : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-emerald-300/90 dark:border-emerald-700 hover:border-emerald-400"
-                    }`}
-                    title="Vibe / DeskNote Next-Gen WhatsApp+ Unified Communications (E2EE, WebRTC, Communities & AI)"
+                    className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 px-2.5 py-1 text-[11px] font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 cursor-pointer"
                   >
-                    <MessageSquare className={`h-5 w-5 mb-1 ${activeTab === 'vibecomms' ? "text-white" : "text-emerald-600 dark:text-emerald-400"}`} />
-                    <span className="text-[10px] font-bold truncate w-full">VibeChat</span>
+                    💬 VibeChat
                   </button>
-
-                  {/* 2. Company Directory */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onSelectTab('company')
-                      setIsMoreOpen(false)
-                    }}
-                    className={`p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
-                      activeTab === 'company'
-                        ? "bg-blue-600 text-white shadow-xs"
-                        : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700 hover:border-blue-300"
-                    }`}
-                  >
-                    <Building2 className={`h-5 w-5 mb-1 ${activeTab === 'company' ? "text-white" : "text-blue-600 dark:text-blue-400"}`} />
-                    <span className="text-[10px] font-bold truncate w-full">Companies</span>
-                  </button>
-
-                  {/* 3. Guilds & Ecosystem */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onSelectTab('guilds')
-                      setIsMoreOpen(false)
-                    }}
-                    className={`p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
-                      activeTab === 'guilds'
-                        ? "bg-amber-600 text-white shadow-xs"
-                        : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700 hover:border-amber-300"
-                    }`}
-                  >
-                    <Shield className={`h-5 w-5 mb-1 ${activeTab === 'guilds' ? "text-white" : "text-amber-600 dark:text-amber-400"}`} />
-                    <span className="text-[10px] font-bold truncate w-full">Guilds</span>
-                  </button>
-
-                  {/* 4. Bounties & Hackathons */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onSelectTab('bounties')
-                      setIsMoreOpen(false)
-                    }}
-                    className={`p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
-                      activeTab === 'bounties'
-                        ? "bg-orange-600 text-white shadow-xs"
-                        : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700 hover:border-orange-300"
-                    }`}
-                  >
-                    <Flame className={`h-5 w-5 mb-1 ${activeTab === 'bounties' ? "text-white" : "text-orange-500"}`} />
-                    <span className="text-[10px] font-bold truncate w-full">Bounties</span>
-                  </button>
-
-                  {/* 5. Events & Live */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onSelectTab('events')
-                      setIsMoreOpen(false)
-                    }}
-                    className={`p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
-                      activeTab === 'events'
-                        ? "bg-indigo-600 text-white shadow-xs"
-                        : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700 hover:border-indigo-300"
-                    }`}
-                  >
-                    <Calendar className={`h-5 w-5 mb-1 ${activeTab === 'events' ? "text-white" : "text-indigo-600 dark:text-indigo-400"}`} />
-                    <span className="text-[10px] font-bold truncate w-full">Events</span>
-                  </button>
-
-                  {/* 6. Procurement & RFPs */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onSelectTab('procurement')
-                      setIsMoreOpen(false)
-                    }}
-                    className={`p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
-                      activeTab === 'procurement'
-                        ? "bg-teal-600 text-white shadow-xs"
-                        : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700 hover:border-teal-300"
-                    }`}
-                  >
-                    <FileCheck className={`h-5 w-5 mb-1 ${activeTab === 'procurement' ? "text-white" : "text-teal-600 dark:text-teal-400"}`} />
-                    <span className="text-[10px] font-bold truncate w-full">RFPs</span>
-                  </button>
-
-                  {/* 7. Launchpad */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onSelectTab('launchpad')
-                      setIsMoreOpen(false)
-                    }}
-                    className={`p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
-                      activeTab === 'launchpad'
-                        ? "bg-purple-600 text-white shadow-xs"
-                        : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700 hover:border-purple-300"
-                    }`}
-                  >
-                    <Rocket className={`h-5 w-5 mb-1 ${activeTab === 'launchpad' ? "text-white" : "text-purple-600 dark:text-purple-400"}`} />
-                    <span className="text-[10px] font-bold truncate w-full">Launchpad</span>
-                  </button>
-
-                  {/* 8. CareerSuite AI / Resume Prep */}
                   <button
                     type="button"
                     onClick={() => {
                       onSelectTab('careersuite')
                       setIsMoreOpen(false)
                     }}
-                    className={`p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
-                      activeTab === 'careersuite'
-                        ? "bg-cyan-600 text-white shadow-xs"
-                        : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700 hover:border-cyan-300"
-                    }`}
-                    title="Resume Preparation App & AI Tailoring Studio (https://www.connectln.app/connectin)"
+                    className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 px-2.5 py-1 text-[11px] font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 cursor-pointer"
                   >
-                    <Award className={`h-5 w-5 mb-1 ${activeTab === 'careersuite' ? "text-white" : "text-cyan-600 dark:text-cyan-400"}`} />
-                    <span className="text-[10px] font-bold truncate w-full">Resume Prep</span>
+                    📄 Resume Prep
                   </button>
-
-                  {/* 9. Desk Note (https://desk-note.app/) & Noctis Social (https://www.noctis.social) */}
-                  <div className="col-span-3 sm:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-1.5 mt-1">
-                    <a
-                      href="https://desk-note.app/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => setIsMoreOpen(false)}
-                      className="p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer bg-gradient-to-br from-emerald-800 via-teal-800 to-emerald-950 text-white border border-emerald-400/50 hover:border-emerald-300 shadow-xs"
-                      title="Open Desk Note (https://desk-note.app/)"
-                    >
-                      <div className="flex items-center justify-center gap-1.5 w-full">
-                        <span className="text-sm shrink-0">📓</span>
-                        <span className="text-xs font-extrabold tracking-tight">Desk Note</span>
-                        <span className="rounded-full bg-emerald-500/30 border border-emerald-400/40 px-1.5 py-0.2 text-[9px] font-mono font-bold text-emerald-100">
-                          desk-note.app ↗
-                        </span>
-                      </div>
-                    </a>
-
-                    <a
-                      href="https://www.noctis.social"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => setIsMoreOpen(false)}
-                      className="p-2 rounded-xl flex flex-col items-center justify-center text-center transition-all cursor-pointer bg-gradient-to-br from-slate-900 via-indigo-950 to-purple-950 text-white border border-indigo-400/50 hover:border-indigo-300 shadow-xs"
-                      title="Open Noctis Social (https://www.noctis.social)"
-                    >
-                      <div className="flex items-center justify-center gap-1.5 w-full">
-                        <Moon className="h-4 w-4 text-amber-300 shrink-0" />
-                        <span className="text-xs font-extrabold tracking-tight">Noctis Social</span>
-                        <span className="rounded-full bg-indigo-500/30 border border-indigo-400/40 px-1.5 py-0.2 text-[9px] font-mono font-bold text-indigo-200">
-                          noctis.social ↗
-                        </span>
-                      </div>
-                    </a>
-                  </div>
+                  <a
+                    href="https://www.noctis.social"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setIsMoreOpen(false)}
+                    className="rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/70 dark:bg-indigo-950/40 px-2.5 py-1 text-[11px] font-bold text-indigo-800 dark:text-indigo-300 hover:bg-indigo-100"
+                  >
+                    🌙 Noctis Social ↗
+                  </a>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setShowLegacyHubsInMore(!showLegacyHubsInMore)}
+                  className="text-[11px] font-semibold text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 flex items-center gap-1 cursor-pointer"
+                >
+                  <span>All Platform Modules</span>
+                  <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showLegacyHubsInMore ? "rotate-180" : ""}`} />
+                </button>
               </div>
 
-              {categorizedMoreMenu.map((group) => (
-                <div key={group.category} className="space-y-1">
-                  <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 px-2">
-                    {group.category}
-                  </p>
-                  <div className="space-y-0.5">
-                    {group.items.map((menu) => (
-                      <button
-                        key={menu.id + menu.label}
-                        type="button"
-                        onClick={() => {
-                          if (menu.url) {
-                            window.open(menu.url, '_blank', 'noopener,noreferrer')
-                          } else {
-                            onSelectTab(menu.id)
-                          }
-                          setIsMoreOpen(false)
-                        }}
-                        className="w-full rounded-xl p-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors flex items-center justify-between group cursor-pointer"
-                      >
-                        <div className="min-w-0 flex-1 pr-2">
-                          <div className="flex items-center gap-1.5">
-                            <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2] truncate">
-                              {menu.label}
-                            </p>
-                            {menu.badge && (
-                              <span className="text-[8px] font-mono font-bold px-1.5 py-0.2 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300 shrink-0">
-                                {menu.badge}
-                              </span>
+              {showLegacyHubsInMore && (
+                <div className="border-t border-zinc-200 dark:border-zinc-800 p-4 space-y-3 bg-zinc-50/50 dark:bg-zinc-900/50">
+                  {categorizedMoreMenu.map((group) => (
+                    <div key={group.category} className="space-y-1">
+                      <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 px-2">
+                        {group.category}
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
+                        {group.items.map((menu) => (
+                          <button
+                            key={menu.id + menu.label}
+                            type="button"
+                            onClick={() => {
+                              if (menu.url) {
+                                window.open(menu.url, '_blank', 'noopener,noreferrer')
+                              } else {
+                                onSelectTab(menu.id)
+                              }
+                              setIsMoreOpen(false)
+                            }}
+                            className="w-full rounded-xl p-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors flex items-center justify-between group cursor-pointer"
+                          >
+                            <div className="min-w-0 flex-1 pr-2">
+                              <div className="flex items-center gap-1.5">
+                                <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2] truncate">
+                                  {menu.label}
+                                </p>
+                                {menu.badge && (
+                                  <span className="text-[8px] font-mono font-bold px-1.5 py-0.2 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300 shrink-0">
+                                    {menu.badge}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-zinc-400 truncate">{menu.desc}</p>
+                            </div>
+                            {menu.url && (
+                              <ExternalLink className="h-3.5 w-3.5 text-zinc-400 group-hover:text-[#0A66C2] shrink-0" />
                             )}
-                          </div>
-                          <p className="text-[10px] text-zinc-400 truncate">{menu.desc}</p>
-                        </div>
-                        {menu.url && (
-                          <ExternalLink className="h-3.5 w-3.5 text-zinc-400 group-hover:text-[#0A66C2] shrink-0" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </>
