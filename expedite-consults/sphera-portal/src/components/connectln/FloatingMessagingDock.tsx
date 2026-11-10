@@ -451,9 +451,11 @@ export function FloatingMessagingDock({
             onClick={() => setIsMelissaMinimized(false)}
             className="pointer-events-auto flex items-center gap-2.5 rounded-t-xl border border-zinc-300 bg-white px-3.5 py-2.5 shadow-2xl hover:bg-zinc-50 transition-colors cursor-pointer"
           >
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#0A66C2] text-white text-xs font-black shrink-0">
-              in
-            </div>
+            <img
+              src="/brand/connectln-icon.png"
+              alt="ConnectLn"
+              className="h-7 w-7 rounded-lg object-contain bg-[#1a1917] shrink-0"
+            />
             <div className="text-left">
               <p className="text-xs font-bold text-zinc-900 leading-none">ConnectLn Job Alerts</p>
               <p className="text-[10px] text-zinc-500 mt-0.5">Set Up Alerts for Jobs You Want</p>
@@ -465,9 +467,11 @@ export function FloatingMessagingDock({
             {/* Top Bar: ConnectLn Job Alerts + ... + Minimize + X */}
             <div className="flex items-center justify-between border-b border-zinc-200 bg-white px-3.5 py-2.5 shrink-0">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0A66C2] text-white text-xs font-black shrink-0">
-                  in
-                </div>
+                <img
+                  src="/brand/connectln-icon.png"
+                  alt="ConnectLn"
+                  className="h-8 w-8 rounded-lg object-contain bg-[#1a1917] shrink-0"
+                />
                 <span className="font-bold text-sm text-zinc-900 truncate">
                   ConnectLn Job Alerts
                 </span>
@@ -619,16 +623,18 @@ export function FloatingMessagingDock({
 
               {/* Sender Profile Block */}
               <div className="space-y-1.5">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#0A66C2] text-white text-lg font-black border border-zinc-200 shadow-2xs">
-                  in
-                </div>
+                <img
+                  src="/brand/connectln-icon.png"
+                  alt="ConnectLn"
+                  className="h-14 w-14 rounded-2xl object-contain bg-[#1a1917] border border-zinc-200 shadow-2xs"
+                />
                 <div className="pt-0.5">
                   <div className="flex items-center gap-1.5">
                     <span className="font-bold text-base text-zinc-900">
                       ConnectLn Job Alerts
                     </span>
-                    <span className="inline-flex items-center justify-center rounded bg-[#B86714] px-1 py-0.2 text-[10px] font-black text-white leading-tight">
-                      in
+                    <span className="inline-flex items-center justify-center rounded bg-[#a64532] px-1 py-0.2 text-[10px] font-black text-white leading-tight">
+                      CLn
                     </span>
                   </div>
                   <p className="text-xs text-zinc-600 leading-snug mt-0.5">
@@ -648,16 +654,18 @@ export function FloatingMessagingDock({
 
               {/* Message Body */}
               <div className="flex items-start gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0A66C2] text-white text-xs font-black shrink-0 mt-0.5">
-                  in
-                </div>
+                <img
+                  src="/brand/connectln-icon.png"
+                  alt="ConnectLn"
+                  className="h-9 w-9 rounded-xl object-contain bg-[#1a1917] shrink-0 mt-0.5"
+                />
                 <div className="min-w-0 flex-1 space-y-2.5 text-[13.5px] text-zinc-800 leading-relaxed">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="font-bold text-sm text-zinc-900">
                       ConnectLn Job Alerts
                     </span>
-                    <span className="inline-flex items-center justify-center rounded bg-[#B86714] px-1 py-0.2 text-[9px] font-black text-white leading-tight">
-                      in
+                    <span className="inline-flex items-center justify-center rounded bg-[#a64532] px-1 py-0.2 text-[9px] font-black text-white leading-tight">
+                      CLn
                     </span>
                     <span className="text-xs text-zinc-500">• 10:49 AM</span>
                   </div>
@@ -1270,9 +1278,11 @@ export function FloatingMessagingDock({
                 className="flex items-start gap-2.5 p-2.5 bg-blue-50/40 hover:bg-blue-50 cursor-pointer transition-colors"
               >
                 <div className="relative shrink-0">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0A66C2] text-white text-xs font-black">
-                    in
-                  </div>
+                  <img
+                    src="/brand/connectln-icon.png"
+                    alt="ConnectLn"
+                    className="h-8 w-8 rounded-lg object-contain bg-[#1a1917]"
+                  />
                   <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-1 ring-white" />
                 </div>
                 <div className="min-w-0 flex-1">

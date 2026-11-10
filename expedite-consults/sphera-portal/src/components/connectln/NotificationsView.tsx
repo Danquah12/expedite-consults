@@ -644,17 +644,19 @@ export function NotificationsView({
             <span>Nov 10 · 10:49 AM</span>
           </div>
           <div className="p-4 sm:p-5 flex flex-col sm:flex-row items-start gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#0A66C2] text-white text-lg font-black border border-zinc-200 shrink-0 shadow-2xs">
-              in
-            </div>
+            <img
+              src="/brand/connectln-icon.png"
+              alt="ConnectLn"
+              className="h-14 w-14 rounded-2xl object-contain bg-[#1a1917] border border-zinc-200 shrink-0 shadow-2xs"
+            />
             <div className="min-w-0 flex-1 space-y-2 text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed">
               <div>
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="font-bold text-base text-zinc-900 dark:text-zinc-100">
                     ConnectLn Job Alerts
                   </span>
-                  <span className="inline-flex items-center justify-center rounded bg-[#B86714] px-1.5 py-0.2 text-[10px] font-black text-white leading-tight">
-                    in
+                  <span className="inline-flex items-center justify-center rounded bg-[#a64532] px-1.5 py-0.2 text-[10px] font-black text-white leading-tight">
+                    CLn
                   </span>
                   <span className="text-xs text-zinc-500">
                     ConnectLn Career &amp; Job Alert Team
