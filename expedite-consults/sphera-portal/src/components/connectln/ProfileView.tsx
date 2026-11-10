@@ -1143,7 +1143,7 @@ export function ProfileView({
             { id: 'portfolio', label: '💼 Portfolio' },
             { id: 'skills', label: '🛡️ Skills' },
             { id: 'certifications', label: '📜 Certifications' },
-            { id: 'experience', label: '🏛️ Experience' },
+            ...(!isViewingOtherMember ? [{ id: 'experience', label: '🏛️ Experience' }] : []),
             { id: 'publications', label: '📑 Publications' },
             { id: 'reviews', label: '⭐ Reviews' },
             { id: 'products', label: isViewingOtherMember ? `🛍️ ${user.name.split(' ')[0]}'s Products` : '🛍️ My Products' }
@@ -1725,7 +1725,8 @@ export function ProfileView({
             </div>
           </div>
 
-          {/* UPLOADED RESUME & WORK EXPERIENCE SECTION DIRECTLY ON PROFILE */}
+          {/* UPLOADED RESUME & WORK EXPERIENCE SECTION DIRECTLY ON PROFILE (Owner only — hidden when viewing another member's profile) */}
+          {!isViewingOtherMember && (
           <div
             id="profile-uploaded-resume-section"
             className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-5"
@@ -1887,6 +1888,7 @@ export function ProfileView({
               </div>
             )}
           </div>
+          )}
 
           {/* Reconciled Trade Dispatch, Expiration Desk & Hall Invites for Trades Enclave */}
           {effectiveEnclaveId === 'trades_construction' && (
@@ -3700,9 +3702,9 @@ export function ProfileView({
       )}
 
       {/* ========================================================================= */}
-      {/* 5. EXPERIENCE */}
+      {/* 5. EXPERIENCE (Owner only) */}
       {/* ========================================================================= */}
-      {workspaceSection === 'experience' && (
+      {workspaceSection === 'experience' && !isViewingOtherMember && (
         <div id="workspace-experience-section" className="space-y-4">
           {/* Header Toolbar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-zinc-200 dark:border-zinc-800">
