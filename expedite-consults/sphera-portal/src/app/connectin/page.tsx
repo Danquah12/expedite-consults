@@ -3305,6 +3305,7 @@ export default function ConnectLnPage() {
       <FloatingMessagingDock
         currentUser={userData}
         onOpenFullMessaging={() => setActiveTab('messaging')}
+        onNavigateJobs={() => setActiveTab('jobs')}
         composeRecipient={composeRecipient}
         onCloseComposeRecipient={() => setComposeRecipient(null)}
         suppressAutoOpen={activeTab === 'messaging' || !!inspectedMember}

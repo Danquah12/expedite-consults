@@ -534,6 +534,77 @@ export function NotificationsView({
           </div>
         </div>
 
+        {/* Featured ConnectLn Offer: Melissa Torres Job Search Alert Card */}
+        <div className="mt-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs overflow-hidden">
+          <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-800/50 px-4 py-2 text-xs text-zinc-500">
+            <span className="font-semibold text-zinc-700 dark:text-zinc-300">ConnectLn Offer · Career &amp; Job Alert Concierge</span>
+            <span>Nov 10 · 10:49 AM</span>
+          </div>
+          <div className="p-4 sm:p-5 flex flex-col sm:flex-row items-start gap-4">
+            <img
+              src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=240&auto=format&fit=crop&q=80"
+              alt="Melissa Torres"
+              className="h-14 w-14 rounded-full object-cover border border-zinc-200 shrink-0"
+            />
+            <div className="min-w-0 flex-1 space-y-2 text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed">
+              <div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="font-bold text-base text-zinc-900 dark:text-zinc-100">
+                    Melissa Torres
+                  </span>
+                  <span className="inline-flex items-center justify-center rounded bg-[#B86714] px-1.5 py-0.2 text-[10px] font-black text-white leading-tight">
+                    in
+                  </span>
+                  <span className="text-xs text-zinc-500">
+                    Senior Manager @ ConnectLn | Conscious Business, Online Advertising
+                  </span>
+                </div>
+              </div>
+
+              <p>Hi {(currentUserName || "Kwesi").split(" ")[0]},</p>
+              <p>My name is Melissa, and I&apos;m from the ConnectLn team.</p>
+              <p>
+                Want a heads-up when new roles open? Set up a job alert to get notified as soon as new jobs get posted at companies you like.
+              </p>
+              <p>
+                To create an alert, just turn the job search alert toggle to &ldquo;on&rdquo; at the bottom of your job search results page.
+              </p>
+
+              <div className="pt-1.5 flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    try {
+                      localStorage.setItem('connectln_job_search_alert_enabled', 'true')
+                      window.dispatchEvent(new Event('connectln-job-alert-updated'))
+                    } catch {}
+                    if (onNavigateTab) onNavigateTab('jobs')
+                  }}
+                  className="rounded-full border-2 border-[#0A66C2] bg-white dark:bg-zinc-900 hover:bg-blue-50 px-4 py-1.5 text-xs sm:text-sm font-bold text-[#0A66C2] transition-colors cursor-pointer"
+                >
+                  Get started
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onNavigateTab) onNavigateTab('jobs')
+                  }}
+                  className="rounded-full border-2 border-[#0A66C2] bg-white dark:bg-zinc-900 hover:bg-blue-50 px-4 py-1.5 text-xs sm:text-sm font-bold text-[#0A66C2] transition-colors cursor-pointer"
+                >
+                  Not today
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedCategory('Career')}
+                  className="rounded-full border-2 border-[#0A66C2] bg-white dark:bg-zinc-900 hover:bg-blue-50 px-4 py-1.5 text-xs sm:text-sm font-bold text-[#0A66C2] transition-colors cursor-pointer"
+                >
+                  Not interested
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Notification Categories Filter Ribbon */}
         <div className="mt-5 pt-3.5 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">

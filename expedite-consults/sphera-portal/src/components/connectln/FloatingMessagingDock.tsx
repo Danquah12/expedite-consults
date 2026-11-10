@@ -38,15 +38,20 @@ export interface DirectMessageRecipient {
 interface FloatingMessagingDockProps {
   currentUser: UserProfile
   onOpenFullMessaging?: () => void
+  onNavigateJobs?: () => void
   composeRecipient?: DirectMessageRecipient | null
   onCloseComposeRecipient?: () => void
   /** When true (e.g. the full Messaging page is open) incoming messages do not auto-open this popup. */
   suppressAutoOpen?: boolean
 }
 
+const MELISSA_TORRES_AVATAR =
+  "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=240&auto=format&fit=crop&q=80"
+
 export function FloatingMessagingDock({
   currentUser,
   onOpenFullMessaging,
+  onNavigateJobs,
   composeRecipient,
   onCloseComposeRecipient,
   suppressAutoOpen = false,
@@ -56,8 +61,12 @@ export function FloatingMessagingDock({
   const enclaveId = currentUser?.professionEnclave || "trades_construction"
   const viewerName = currentUser?.name || ""
   const viewerEmail = (currentUser as any)?.email || ""
+  const viewerFirstName = (currentUser?.name || "Kwesi").split(" ")[0]
 
   const [isDockOpen, setIsDockOpen] = useState(false)
+  const [isMelissaOfferOpen, setIsMelissaOfferOpen] = useState(true)
+  const [isMelissaMinimized, setIsMelissaMinimized] = useState(false)
+  const [melissaResponseState, setMelissaResponseState] = useState<'pending' | 'get_started' | 'not_today' | 'not_interested'>('pending')
   const [threads, setThreads] = useState<B2BConversationThread[]>(() =>
     getEnclaveB2BThreads(enclaveId)
   )
@@ -425,6 +434,198 @@ export function FloatingMessagingDock({
           e.target.value = ""
         }}
       />
+
+      {/* 0. Melissa Torres — ConnectLn Offer (Job Search Alert Concierge Card matching user screenshot) */}
+      {isMelissaOfferOpen && !activeChatThread && (
+        isMelissaMinimized ? (
+          <button
+            type="button"
+            onClick={() => setIsMelissaMinimized(false)}
+            className="pointer-events-auto flex items-center gap-2.5 rounded-t-xl border border-zinc-300 bg-white px-3.5 py-2.5 shadow-2xl hover:bg-zinc-50 transition-colors cursor-pointer"
+          >
+            <img
+              src={MELISSA_TORRES_AVATAR}
+              alt="Melissa Torres"
+              className="h-7 w-7 rounded-full object-cover ring-1 ring-[#0A66C2]/30"
+            />
+            <div className="text-left">
+              <p className="text-xs font-bold text-zinc-900 leading-none">Melissa Torres</p>
+              <p className="text-[10px] text-zinc-500 mt-0.5">ConnectLn Offer · Job Alerts</p>
+            </div>
+            <ChevronUp className="h-4 w-4 text-zinc-500 ml-1" />
+          </button>
+        ) : (
+          <div className="pointer-events-auto flex flex-col w-[92vw] sm:w-[390px] max-h-[545px] rounded-t-xl border border-zinc-300 bg-white text-zinc-900 shadow-[0_8px_36px_rgba(0,0,0,0.22)] overflow-hidden animate-in slide-in-from-bottom-4">
+            {/* Top Bar: Avatar + Melissa Torres + ... + Minimize + X */}
+            <div className="flex items-center justify-between border-b border-zinc-200 bg-white px-3.5 py-2.5 shrink-0">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <img
+                  src={MELISSA_TORRES_AVATAR}
+                  alt="Melissa Torres"
+                  className="h-8 w-8 rounded-full object-cover shrink-0"
+                />
+                <span className="font-bold text-sm text-zinc-900 truncate">
+                  Melissa Torres
+                </span>
+              </div>
+              <div className="flex items-center gap-1 text-zinc-600">
+                <button
+                  type="button"
+                  onClick={() => setIsMelissaMinimized(true)}
+                  className="rounded-full p-1.5 hover:bg-zinc-100 hover:text-zinc-900 transition-colors cursor-pointer"
+                  title="More options"
+                >
+                  <span className="text-sm font-bold leading-none px-0.5">•••</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsMelissaMinimized(true)}
+                  className="rounded-full p-1.5 hover:bg-zinc-100 hover:text-zinc-900 transition-colors cursor-pointer"
+                  title="Minimize"
+                >
+                  <Minimize2 className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsMelissaOfferOpen(false)}
+                  className="rounded-full p-1.5 hover:bg-zinc-100 hover:text-zinc-900 transition-colors cursor-pointer"
+                  title="Close"
+                >
+                  <X className="h-4.5 w-4.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Subheader: ConnectLn Offer | Nov 10 */}
+            <div className="flex items-center justify-between border-b border-zinc-200 bg-zinc-50/60 px-4 py-1.5 text-xs text-zinc-500 shrink-0">
+              <span>ConnectLn Offer</span>
+              <span>Nov 10</span>
+            </div>
+
+            {/* Scrollable Message Content */}
+            <div className="flex-1 overflow-y-auto px-4 py-3.5 space-y-3">
+              {/* Sender Profile Block */}
+              <div className="space-y-1.5">
+                <img
+                  src={MELISSA_TORRES_AVATAR}
+                  alt="Melissa Torres"
+                  className="h-16 w-16 rounded-full object-cover border border-zinc-200 shadow-2xs"
+                />
+                <div className="pt-0.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-base text-zinc-900">
+                      Melissa Torres
+                    </span>
+                    <span className="inline-flex items-center justify-center rounded bg-[#B86714] px-1 py-0.2 text-[10px] font-black text-white leading-tight">
+                      in
+                    </span>
+                  </div>
+                  <p className="text-xs text-zinc-600 leading-snug mt-0.5">
+                    Senior Manager @ ConnectLn | Conscious Business, Online Advertising
+                  </p>
+                </div>
+              </div>
+
+              {/* TODAY Divider */}
+              <div className="relative flex items-center py-1">
+                <div className="flex-grow border-t border-zinc-200" />
+                <span className="mx-3 shrink-0 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+                  TODAY
+                </span>
+                <div className="flex-grow border-t border-zinc-200" />
+              </div>
+
+              {/* Message Body */}
+              <div className="flex items-start gap-2.5">
+                <img
+                  src={MELISSA_TORRES_AVATAR}
+                  alt="Melissa Torres"
+                  className="h-9 w-9 rounded-full object-cover shrink-0 mt-0.5"
+                />
+                <div className="min-w-0 flex-1 space-y-2.5 text-[13.5px] text-zinc-800 leading-relaxed">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-bold text-sm text-zinc-900">
+                      Melissa Torres
+                    </span>
+                    <span className="inline-flex items-center justify-center rounded bg-[#B86714] px-1 py-0.2 text-[9px] font-black text-white leading-tight">
+                      in
+                    </span>
+                    <span className="text-xs text-zinc-500">• 10:49 AM</span>
+                  </div>
+
+                  <p>Hi {viewerFirstName},</p>
+
+                  <p>My name is Melissa, and I&apos;m from the ConnectLn team.</p>
+
+                  <p>
+                    Want a heads-up when new roles open? Set up a job alert to get notified as soon as new jobs get posted at companies you like.
+                  </p>
+
+                  <p>
+                    To create an alert, just turn the job search alert toggle to &ldquo;on&rdquo; at the bottom of your job search results page.
+                  </p>
+
+                  {/* 3 Action Pill Buttons matching Screenshot */}
+                  <div className="pt-2 flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMelissaResponseState('get_started')
+                        try {
+                          localStorage.setItem('connectln_job_search_alert_enabled', 'true')
+                          window.dispatchEvent(new Event('connectln-job-alert-updated'))
+                        } catch {}
+                        if (onNavigateJobs) {
+                          onNavigateJobs()
+                        }
+                      }}
+                      className="rounded-full border-2 border-[#0A66C2] bg-white hover:bg-blue-50 px-4 py-1.5 text-sm font-bold text-[#0A66C2] transition-colors cursor-pointer"
+                    >
+                      Get started
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMelissaResponseState('not_today')
+                        setTimeout(() => setIsMelissaMinimized(true), 900)
+                      }}
+                      className="rounded-full border-2 border-[#0A66C2] bg-white hover:bg-blue-50 px-4 py-1.5 text-sm font-bold text-[#0A66C2] transition-colors cursor-pointer"
+                    >
+                      Not today
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMelissaResponseState('not_interested')
+                        setTimeout(() => setIsMelissaOfferOpen(false), 900)
+                      }}
+                      className="rounded-full border-2 border-[#0A66C2] bg-white hover:bg-blue-50 px-4 py-1.5 text-sm font-bold text-[#0A66C2] transition-colors cursor-pointer"
+                    >
+                      Not interested
+                    </button>
+                  </div>
+
+                  {melissaResponseState === 'get_started' && (
+                    <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-2.5 text-xs font-semibold text-emerald-800">
+                      ✓ Job search alert turned ON! We&apos;ve opened your Job Search Results page with live alerts active.
+                    </div>
+                  )}
+                  {melissaResponseState === 'not_today' && (
+                    <div className="rounded-xl bg-zinc-100 border border-zinc-200 p-2 text-xs text-zinc-600">
+                      Got it — we&apos;ll keep this in your Messaging dock for whenever you&apos;re ready.
+                    </div>
+                  )}
+                  {melissaResponseState === 'not_interested' && (
+                    <div className="rounded-xl bg-zinc-100 border border-zinc-200 p-2 text-xs text-zinc-600">
+                      Thanks for letting us know. Dismissing offer.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      )}
 
       {/* 1. ConnectLn Style "New message" User Compose Pop-up Box */}
       {activeChatThread && (
@@ -856,6 +1057,37 @@ export function FloatingMessagingDock({
 
             {/* Conversation List */}
             <div className="flex-1 overflow-y-auto divide-y divide-zinc-100">
+              {/* Pinned Melissa Torres — ConnectLn Offer Row */}
+              <div
+                onClick={() => {
+                  setActiveChatThread(null)
+                  setIsMelissaOfferOpen(true)
+                  setIsMelissaMinimized(false)
+                }}
+                className="flex items-start gap-2.5 p-2.5 bg-blue-50/40 hover:bg-blue-50 cursor-pointer transition-colors"
+              >
+                <div className="relative shrink-0">
+                  <img
+                    src={MELISSA_TORRES_AVATAR}
+                    alt="Melissa Torres"
+                    className="h-8 w-8 rounded-full object-cover"
+                  />
+                  <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-1 ring-white" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-1">
+                    <p className="font-bold text-xs text-zinc-900 truncate">
+                      Melissa Torres
+                    </p>
+                    <span className="text-[10px] font-semibold text-[#0A66C2]">
+                      Nov 10
+                    </span>
+                  </div>
+                  <p className="text-[11px] font-semibold text-zinc-800 truncate mt-0.5">
+                    ConnectLn Offer: Want a heads-up when new roles open? Set up a job alert...
+                  </p>
+                </div>
+              </div>
               {filteredThreads.map((t) => (
                 <div
                   key={t.id}

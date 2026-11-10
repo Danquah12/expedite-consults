@@ -18,7 +18,7 @@ export const Route = createFileRoute("/")({
       throw redirect({ to: "/noctis", replace: true });
     }
     if (href.includes("?") || href.includes("#feed")) return;
-    throw redirect({ to: "/start", replace: true });
+    throw redirect({ to: "/social", replace: true });
   },
   component: AcademyPage,
 });
@@ -33,7 +33,7 @@ function AcademyPage() {
       return;
     }
     if (stay) return;
-    void router.navigate({ to: "/start", replace: true });
+    void router.navigate({ to: "/social", replace: true });
   }, [router, stay]);
   if (stay) {
     return (

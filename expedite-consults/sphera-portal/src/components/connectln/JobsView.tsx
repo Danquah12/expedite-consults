@@ -492,15 +492,38 @@ export function JobsView({
   const [outreachInterviewFormat, setOutreachInterviewFormat] = useState('30-Min Executive Video Briefing (Zoom / ConnectLn Meet)')
   const [outreachMessage, setOutreachMessage] = useState('')
   const [reachedOutCandidateIds, setReachedOutCandidateIds] = useState<string[]>([])
+  const [jobSearchAlertEnabled, setJobSearchAlertEnabled] = useState<boolean>(true)
+  const [jobAlertFrequency, setJobAlertFrequency] = useState<'Instant' | 'Daily' | 'Weekly'>('Instant')
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem('connectin_recruiter_outreach_v1')
       if (saved) setReachedOutCandidateIds(JSON.parse(saved))
+      const savedAlert = localStorage.getItem('connectln_job_search_alert_enabled')
+      if (savedAlert !== null) {
+        setJobSearchAlertEnabled(savedAlert === 'true')
+      }
     } catch {
       // ignore
     }
+    const handleAlertSync = () => {
+      try {
+        const val = localStorage.getItem('connectln_job_search_alert_enabled')
+        if (val !== null) setJobSearchAlertEnabled(val === 'true')
+      } catch {}
+    }
+    window.addEventListener('connectln-job-alert-updated', handleAlertSync)
+    return () => window.removeEventListener('connectln-job-alert-updated', handleAlertSync)
   }, [])
+
+  const handleToggleJobSearchAlert = () => {
+    const next = !jobSearchAlertEnabled
+    setJobSearchAlertEnabled(next)
+    try {
+      localStorage.setItem('connectln_job_search_alert_enabled', String(next))
+      window.dispatchEvent(new Event('connectln-job-alert-updated'))
+    } catch {}
+  }
 
   const handleOpenCandidateOutreach = (cand: CandidateProfile) => {
     const defaultRole = cand.headline.split('|')[0]?.trim() || 'Senior Lead Specialist'
@@ -1709,6 +1732,78 @@ export function JobsView({
                       </button>
                     </div>
                   )}
+
+                  {/* Bottom Job Search Alert Toggle Bar (Connected to Melissa Torres ConnectLn Offer) */}
+                  <div
+                    id="connectln-job-search-alert-bar"
+                    className={`mt-4 rounded-2xl border-2 p-4 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                      jobSearchAlertEnabled
+                        ? 'border-[#0A66C2] bg-blue-50/70 dark:bg-blue-950/30 dark:border-blue-700'
+                        : 'border-zinc-200 bg-zinc-50 dark:bg-zinc-900 dark:border-zinc-800'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <img
+                        src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=240&auto=format&fit=crop&q=80"
+                        alt="Melissa Torres"
+                        className="h-10 w-10 rounded-full object-cover border border-zinc-200 shrink-0 mt-0.5"
+                      />
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
+                            Job search alert for {searchQuery ? `"${searchQuery}"` : currentEnclaveObj?.name || currentUser.profession || 'Your Target Roles'}
+                          </span>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase ${
+                              jobSearchAlertEnabled
+                                ? 'bg-emerald-600 text-white'
+                                : 'bg-zinc-200 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
+                            }`}
+                          >
+                            {jobSearchAlertEnabled ? 'Alert ON' : 'Alert OFF'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                          Get notified as soon as new roles get posted at companies you like ({selectedCountry === 'ALL' ? 'Global & Local' : selectedCountry}).
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 shrink-0">
+                      <select
+                        value={jobAlertFrequency}
+                        onChange={(e) => setJobAlertFrequency(e.target.value as any)}
+                        className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1.5 text-xs font-semibold text-zinc-800 dark:text-zinc-200"
+                      >
+                        <option value="Instant">Instant Alerts</option>
+                        <option value="Daily">Daily Digest</option>
+                        <option value="Weekly">Weekly Summary</option>
+                      </select>
+
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={jobSearchAlertEnabled}
+                        onClick={handleToggleJobSearchAlert}
+                        className="flex items-center gap-2 cursor-pointer"
+                      >
+                        <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
+                          {jobSearchAlertEnabled ? 'On' : 'Off'}
+                        </span>
+                        <span
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                            jobSearchAlertEnabled ? 'bg-[#0A66C2]' : 'bg-zinc-300 dark:bg-zinc-700'
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4.5 w-4.5 transform rounded-full bg-white shadow transition-transform ${
+                              jobSearchAlertEnabled ? 'translate-x-5.5' : 'translate-x-1'
+                            }`}
+                          />
+                        </span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
