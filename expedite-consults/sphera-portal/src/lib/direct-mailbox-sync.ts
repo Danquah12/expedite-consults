@@ -672,7 +672,12 @@ export function getLocalBilateralThreadsForViewer(
         timestamp: formattedTime,
         createdAtIso: resolvedIso,
         reactions: m.reactions,
-        comments: m.comments,
+        comments: m.comments?.map(c => ({
+          ...c,
+          avatar:
+            c.avatar ||
+            `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(c.author)}&backgroundColor=0a66c2`
+        })),
         attachments: m.attachment ? [{ name: m.attachment, type: "Document" }] : undefined
       }
     })
@@ -692,8 +697,9 @@ export function getLocalBilateralThreadsForViewer(
     const lastMsg = orderedMessages[orderedMessages.length - 1]
 
     const resolvedChannel = convo.channelType || "People"
-    const resolvedSubType =
+    const rawSubType =
       convo.subType || (resolvedChannel === "Companies" ? "Recruiter" : "DM")
+    const resolvedSubType = (rawSubType === "Guild" ? "Community Chat" : rawSubType) as any
 
     results.push({
       id: convo.pairKey,

@@ -298,7 +298,7 @@ export interface OrganizationNetworkItem {
   name: string
   tagline: string
   logo: string
-  type: 'Federal Agency' | 'Standards Body' | 'Non-Profit Consortium' | 'Defense Entity'
+  type: 'Federal Agency' | 'Standards Body' | 'Non-Profit Consortium' | 'Defense Entity' | string
   capabilities: string[]
   membersCount: string
   isFollowing?: boolean
