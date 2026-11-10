@@ -131,47 +131,80 @@ export function SkilledTradesLearnByDoingSection({
 
   // LinkedIn-style Auto-Play on Scroll for Home Feed Big Video Cards
   useEffect(() => {
-    if (mode !== 'home_videos_only' || typeof window === 'undefined' || !('IntersectionObserver' in window)) {
+    if (mode !== 'home_videos_only' || typeof window === 'undefined') {
       return
     }
-    const observer = new IntersectionObserver(
-      entries => {
-        let bestLessonId: string | null = null
-        let bestRatio = 0
-        for (const entry of entries) {
-          const lid = (entry.target as HTMLElement).dataset.lbdLessonId
-          if (entry.isIntersecting && lid && entry.intersectionRatio >= 0.55) {
-            if (entry.intersectionRatio > bestRatio) {
-              bestRatio = entry.intersectionRatio
-              bestLessonId = lid
-            }
+
+    const pickBestVisibleLesson = () => {
+      const vh = window.innerHeight || document.documentElement.clientHeight || 800
+      const viewportCenter = vh / 2
+      let bestLessonId: string | null = null
+      let bestScore = -Infinity
+
+      for (const [lid, el] of Object.entries(homeCardRefs.current)) {
+        if (!el) continue
+        const rect = el.getBoundingClientRect()
+        if (rect.height <= 0) continue
+        const visibleTop = Math.max(0, rect.top)
+        const visibleBottom = Math.min(vh, rect.bottom)
+        const visibleHeight = Math.max(0, visibleBottom - visibleTop)
+        const visibleRatio = visibleHeight / Math.min(rect.height, vh)
+
+        if (visibleRatio >= 0.42) {
+          const cardCenter = rect.top + rect.height / 2
+          const distanceFromCenter = Math.abs(cardCenter - viewportCenter)
+          const score = visibleRatio * 1000 - distanceFromCenter
+          if (score > bestScore) {
+            bestScore = score
+            bestLessonId = lid
           }
         }
-        if (bestLessonId) {
-          setActiveVideoLessonId(prev => {
-            if (prev !== bestLessonId) {
-              notifyExclusiveVideoPlay(`lbd-home-player-${bestLessonId}`)
-              setAutoPlayRequested(true)
-              return bestLessonId
-            }
-            return prev
-          })
-        }
-      },
-      {
-        root: null,
-        rootMargin: '-12% 0px -12% 0px',
-        threshold: [0.55, 0.75]
       }
-    )
 
-    const currentRefs = homeCardRefs.current
-    Object.values(currentRefs).forEach(el => {
-      if (el) observer.observe(el)
-    })
+      if (bestLessonId) {
+        setActiveVideoLessonId(prev => {
+          if (prev !== bestLessonId) {
+            notifyExclusiveVideoPlay(`lbd-home-player-${bestLessonId}`)
+            setAutoPlayRequested(true)
+            return bestLessonId
+          }
+          return prev
+        })
+      }
+    }
+
+    let rafId: number | null = null
+    const handleScroll = () => {
+      if (rafId !== null) return
+      rafId = window.requestAnimationFrame(() => {
+        rafId = null
+        pickBestVisibleLesson()
+      })
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+
+    let observer: IntersectionObserver | null = null
+    if ('IntersectionObserver' in window) {
+      observer = new IntersectionObserver(
+        () => {
+          pickBestVisibleLesson()
+        },
+        {
+          root: null,
+          rootMargin: '-6% 0px -6% 0px',
+          threshold: [0.25, 0.42, 0.6, 0.75]
+        }
+      )
+      Object.values(homeCardRefs.current).forEach(el => {
+        if (el) observer?.observe(el)
+      })
+    }
 
     return () => {
-      observer.disconnect()
+      window.removeEventListener('scroll', handleScroll)
+      if (rafId !== null) window.cancelAnimationFrame(rafId)
+      observer?.disconnect()
     }
   }, [mode, selectedCategory])
 
@@ -293,7 +326,9 @@ export function SkilledTradesLearnByDoingSection({
     const targetEmbedAvailable = activeVariant ? activeVariant.embedAvailable : lesson.embedAvailable
     const playability = embedPlayabilityMap[lesson.id] || (targetEmbedAvailable ? 'playable' : 'unavailable')
     if (targetEmbedAvailable && targetYoutubeId && playability === 'playable') {
-      notifyExclusiveVideoPlay(`lbd-player-${lesson.id}`)
+      notifyExclusiveVideoPlay(
+        mode === 'home_videos_only' ? `lbd-home-player-${lesson.id}` : `lbd-player-${lesson.id}`
+      )
       setAutoPlayRequested(true)
       setActiveVideoLessonId(lesson.id)
       // Record a verified embedded video view when user launches and plays inside ConnectLn Studio Player
@@ -739,7 +774,7 @@ export function SkilledTradesLearnByDoingSection({
                     </span>
                     <button
                       type="button"
-                      onClick={() => handleToggleSaveLesson(lesson.id)}
+                      onClick={() => handleToggleSave(lesson.id)}
                       title={isSaved ? 'Saved to Learning Journey' : 'Save video lesson'}
                       className="p-1 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                     >
