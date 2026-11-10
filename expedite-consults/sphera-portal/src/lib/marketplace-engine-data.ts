@@ -2033,6 +2033,78 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
     }
   },
   {
+    id: 'prod_pentest_standalone_lab',
+    name: 'Expedite Standalone Penetration Testing & Red Team App (/app/?standalone=1)',
+    tagline: 'Standalone interactive penetration testing console, live exploit execution sandbox & offensive security assessment terminal',
+    category: 'Software',
+    subCategory: 'Penetration Testing & Red Team Console',
+    icon: '🛡️',
+    badge: '⚡ Live Standalone PenTest App',
+    rating: 5.0,
+    reviewsCount: 318,
+    activeUsersCount: '21,400+ Offensive Security Operators',
+    pricing: {
+      displayPrice: '$399',
+      billingPeriod: '/ month',
+      hasFreeTrial: true,
+      trialDays: 14
+    },
+    vendor: {
+      name: 'Expedite Offensive Labs',
+      logo: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=100&auto=format&fit=crop&q=80',
+      isVerified: true,
+      isFellow: true
+    },
+    overview: 'The Expedite Standalone Penetration Testing & Red Team App (https://dome-jerry-females-creations.trycloudflare.com/app/?standalone=1) provides a dedicated full-screen standalone offensive security and penetration testing environment for live target reconnaissance, vulnerability exploitation, and red-team verification.',
+    features: [
+      { title: 'Standalone PenTest Console (/app/?standalone=1)', desc: 'Direct full-screen standalone execution environment at https://dome-jerry-females-creations.trycloudflare.com/app/?standalone=1.' },
+      { title: 'Integrated with 05-SAST & Trepath 2.0', desc: 'Works alongside 05-SAST (https://05-sast-platform.vercel.app) and Trepath 2.0 (https://trepath-2-0.vercel.app) for end-to-end offensive assurance.' },
+      { title: 'Live Exploit & Payload Telemetry', desc: 'Real-time offensive scan execution, exploit verification, and actionable remediation reporting.' }
+    ],
+    screenshots: ['https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop&q=80'],
+    demoUrl: 'https://dome-jerry-females-creations.trycloudflare.com/app/?standalone=1',
+    liveUrl: 'https://dome-jerry-females-creations.trycloudflare.com/app/?standalone=1',
+    isVercelLive: true,
+    isLaunchpadDeployed: true,
+    launchpadCategory: 'security',
+    architecture: {
+      title: 'Isolated Cloud Tunnel Penetration Testing Runtime',
+      summary: 'Edge-tunneled standalone offensive security workbench with ephemeral exploit sandboxes.',
+      layers: ['Standalone App UI (/app/?standalone=1)', 'Cloudflare Zero-Trust Tunnel Ingress', 'Offensive Payload & Verification Engine'],
+      latency: '< 15ms Interactive Terminal Dispatch',
+      dataPrivacy: 'Isolated Ephemeral Red Team Enclave'
+    },
+    integrations: ['05-SAST Platform', 'Trepath 2.0', 'EXPEDITE STRIKE DAST', 'GitHub', 'Jira'],
+    security: {
+      compliance: ['OWASP Top 10', 'NIST SP 800-115', 'PTES', 'OSSTMM'],
+      encryption: 'TLS 1.3 Cloudflare Tunnel',
+      isolation: 'Standalone Sandbox Execution'
+    },
+    pricingTiers: [
+      {
+        name: 'Standalone PenTest Suite',
+        price: '$399',
+        period: '/ month',
+        description: 'Immediate access to the Standalone Penetration Testing App (/app/?standalone=1).',
+        features: ['Standalone PenTest Console', 'Live Reconnaissance & Exploit Verification', '05-SAST & Trepath 2.0 Sync', 'Executive PenTest Reporting'],
+        recommended: true,
+        ctaText: 'Launch Standalone PenTest App'
+      }
+    ],
+    reviews: [],
+    documentation: {
+      quickstart: 'Launch the standalone penetration testing app directly at https://dome-jerry-females-creations.trycloudflare.com/app/?standalone=1.',
+      apiEndpoints: ['https://dome-jerry-females-creations.trycloudflare.com/app/?standalone=1'],
+      sdkSupport: ['Standalone Web App', 'REST API', 'CLI']
+    },
+    caseStudies: [],
+    support: {
+      sla: '99.99% Availability',
+      channel: '24/7 Expedite Offensive Security Desk',
+      responseHours: '< 15 Minutes'
+    }
+  },
+  {
     id: 'prod_06_sca',
     professionEnclave: 'tech_software',
     name: '06-SCA Software Composition Analysis & AI-BOM',

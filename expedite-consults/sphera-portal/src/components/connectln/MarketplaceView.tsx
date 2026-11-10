@@ -791,7 +791,7 @@ export function MarketplaceView({
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="rounded-md bg-[#0A66C2]/10 text-[#0A66C2] dark:text-sky-400 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider">
-                📂 Categorized Flagship Platforms (10 Live Cards)
+                📂 Categorized Flagship Platforms (11 Live Cards)
               </span>
               <span className="text-xs text-zinc-500 dark:text-zinc-400">
                 Every platform organized into dedicated cards with direct launch buttons
@@ -804,7 +804,7 @@ export function MarketplaceView({
                   onClick={() => setShowFlagshipInSolutions(!showFlagshipInSolutions)}
                   className="rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-2.5 py-1 text-xs font-bold cursor-pointer transition-colors"
                 >
-                  {showFlagshipInSolutions ? '▲ Hide 10 Flagship Cards' : '▼ Show 10 Flagship Cards'}
+                  {showFlagshipInSolutions ? '▲ Hide 11 Flagship Cards' : '▼ Show 11 Flagship Cards'}
                 </button>
               )}
               {selectedSubCategory !== 'All' && (
@@ -1299,6 +1299,54 @@ export function MarketplaceView({
                 </a>
               </div>
             </div>
+
+            {/* Card 11: Standalone Penetration Testing & Red Team App */}
+            <div className="rounded-xl border border-amber-300 dark:border-amber-900/60 bg-amber-50/40 dark:bg-amber-950/20 p-3.5 flex flex-col justify-between space-y-3 shadow-2xs hover:shadow-md transition-all">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-1.5">
+                  <span className="rounded-md bg-amber-700 text-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                    6. Standalone PenTest App
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-amber-800 dark:text-amber-300">
+                    /app/?standalone=1
+                  </span>
+                </div>
+                <div className="flex items-start gap-2 pt-0.5">
+                  <span className="text-xl shrink-0">🛡️</span>
+                  <div>
+                    <h3 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 leading-snug">
+                      Standalone PenTest &amp; Red Team App
+                    </h3>
+                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-0.5">
+                      Interactive standalone penetration testing console, live exploit sandbox &amp; red-team assessment terminal.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="pt-2 border-t border-amber-200/60 dark:border-amber-800/50 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    fetchNoctisMarketplaceSalesAgent({
+                      productId: 'prod_pentest_standalone_lab',
+                      question: 'Pitch the Standalone Penetration Testing & Red Team App (https://dome-jerry-females-creations.trycloudflare.com/app/?standalone=1) — explain its capabilities and live sandbox.',
+                      scrollToHub: true
+                    })
+                  }
+                  className="text-[11px] font-extrabold text-[#1967D2] hover:underline cursor-pointer"
+                >
+                  ✨ Ask Noctis
+                </button>
+                <a
+                  href="https://dome-jerry-females-creations.trycloudflare.com/app/?standalone=1"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-lg bg-amber-700 hover:bg-amber-800 text-white px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
+                >
+                  <span>Launch Standalone App ↗</span>
+                </a>
+              </div>
+            </div>
           </div>
           )}
         </div>
@@ -1434,6 +1482,14 @@ export function MarketplaceView({
                           >
                             <span>🎯 Launch Trepath 2.0 ↗</span>
                           </a>
+                          <a
+                            href="https://dome-jerry-females-creations.trycloudflare.com/app/?standalone=1"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-lg bg-amber-700 hover:bg-amber-800 text-white px-2.5 py-1 text-[10px] font-bold shadow-2xs inline-flex items-center gap-1 transition-colors"
+                          >
+                            <span>🛡️ Launch Standalone PenTest App ↗</span>
+                          </a>
                         </div>
                       )}
                     </div>
@@ -1481,6 +1537,14 @@ export function MarketplaceView({
                         className="rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white px-3.5 py-2 text-xs font-extrabold shadow-xs inline-flex items-center gap-1.5 transition-colors"
                       >
                         <span>🎯 Launch Trepath 2.0 PenTest (trepath-2-0.vercel.app) ↗</span>
+                      </a>
+                      <a
+                        href="https://dome-jerry-females-creations.trycloudflare.com/app/?standalone=1"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-xl bg-amber-700 hover:bg-amber-800 text-white px-3.5 py-2 text-xs font-extrabold shadow-xs inline-flex items-center gap-1.5 transition-colors"
+                      >
+                        <span>🛡️ Launch Standalone PenTest App (/app/?standalone=1) ↗</span>
                       </a>
                     </div>
                   )}

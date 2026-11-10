@@ -233,6 +233,16 @@ export const ENTERPRISE_SOLUTIONS_DATA: SolutionPackage[] = [
         trialAvailable: true,
         actionText: 'Launch 14-Day Sandbox',
         liveUrl: 'https://trepath-2-0.vercel.app'
+      },
+      {
+        id: 'prod_pentest_standalone_lab',
+        name: 'Expedite Standalone Penetration Testing & Red Team App (/app/?standalone=1)',
+        icon: '🛡️',
+        tagline: 'Standalone interactive penetration testing console, live exploit execution sandbox & offensive assessment terminal.',
+        price: '$399 / mo',
+        trialAvailable: true,
+        actionText: 'Launch 14-Day Sandbox',
+        liveUrl: 'https://dome-jerry-females-creations.trycloudflare.com/app/?standalone=1'
       }
     ],
     recommendedServices: [
