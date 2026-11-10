@@ -290,7 +290,7 @@ const UI_LABELS: Record<
   en: {
     triggerBtn: "Noctis Interpreter",
     popupTitle: "Noctis Simultaneous Video Interpreter",
-    popupSubtitle: "Live Interpretation (English Audio Quiet at 14%)",
+    popupSubtitle: "Live Interpretation (English Lowered to 4% · Voice Boosted 260%)",
     listenVoiceDub: "🔊 Start Live Voice Interpretation",
     stopVoiceDub: "⏸ Pause Voice Interpretation",
     summaryHeading: "Translated Video Overview",
@@ -298,12 +298,12 @@ const UI_LABELS: Record<
     askPlaceholder: "Ask Noctis to explain any part of this video...",
     askBtn: "Ask",
     translating: "Noctis is interpreting video into your language...",
-    liveInterpretingBadge: "Simultaneous Interpretation Active · Original Audio Quiet",
+    liveInterpretingBadge: "Simultaneous Interpretation Active · English Lowered (4%)",
   },
   es: {
     triggerBtn: "Intérprete Noctis",
     popupTitle: "Intérprete Simultáneo IA Noctis",
-    popupSubtitle: "Interpretación continua (Audio inglés suave al 14%)",
+    popupSubtitle: "Interpretación continua (Audio inglés al 4% · Voz aumentada)",
     listenVoiceDub: "🔊 Escuchar interpretación en Español",
     stopVoiceDub: "⏸ Pausar interpretación",
     summaryHeading: "Resumen del video traducido",
@@ -311,12 +311,12 @@ const UI_LABELS: Record<
     askPlaceholder: "Pide a Noctis que explique cualquier parte de este video...",
     askBtn: "Preguntar",
     translating: "Noctis está interpretando el video al Español...",
-    liveInterpretingBadge: "Hablando en Español · Audio original suave al 14%",
+    liveInterpretingBadge: "Voz en Español aumentada · Audio inglés bajo (4%)",
   },
   pt: {
     triggerBtn: "Intérprete Noctis",
     popupTitle: "Intérprete Simultâneo IA Noctis",
-    popupSubtitle: "Interpretação contínua (Áudio em inglês baixo a 14%)",
+    popupSubtitle: "Interpretação contínua (Inglês reduzido a 4% · Voz ampliada)",
     listenVoiceDub: "🔊 Ouvir interpretação em Português",
     stopVoiceDub: "⏸ Pausar interpretação",
     summaryHeading: "Resumo do vídeo traduzido",
@@ -324,12 +324,12 @@ const UI_LABELS: Record<
     askPlaceholder: "Peça ao Noctis para explicar qualquer parte deste vídeo...",
     askBtn: "Perguntar",
     translating: "Noctis está interpretando o vídeo para Português...",
-    liveInterpretingBadge: "Falando em Português · Áudio original baixo (14%)",
+    liveInterpretingBadge: "Voz em Português ampliada · Inglês reduzido (4%)",
   },
   fr: {
     triggerBtn: "Interprète Noctis",
     popupTitle: "Interprète Simultané IA Noctis",
-    popupSubtitle: "Interprétation continue (Audio anglais doux à 14%)",
+    popupSubtitle: "Interprétation continue (Audio anglais à 4% · Voix amplifiée)",
     listenVoiceDub: "🔊 Écouter l'interprétation en Français",
     stopVoiceDub: "⏸ Pause interprétation",
     summaryHeading: "Résumé de la vidéo traduit",
@@ -337,12 +337,12 @@ const UI_LABELS: Record<
     askPlaceholder: "Demandez à Noctis d'expliquer cette vidéo...",
     askBtn: "Demander",
     translating: "Noctis interprète la vidéo en Français...",
-    liveInterpretingBadge: "Voix en Français active · Audio original doux (14%)",
+    liveInterpretingBadge: "Voix en Français amplifiée · Audio anglais bas (4%)",
   },
   de: {
     triggerBtn: "Noctis Dolmetscher",
     popupTitle: "Noctis KI-Simultandolmetscher",
-    popupSubtitle: "Durchgehende Übersetzung (Englischer Ton leise bei 14%)",
+    popupSubtitle: "Durchgehende Übersetzung (Englisch 4% · Stimme verstärkt)",
     listenVoiceDub: "🔊 Auf Deutsch anhören (Simultan)",
     stopVoiceDub: "⏸ Übersetzung pausieren",
     summaryHeading: "Übersetzte Video-Zusammenfassung",
@@ -350,12 +350,12 @@ const UI_LABELS: Record<
     askPlaceholder: "Fragen Sie Noctis zu diesem Video...",
     askBtn: "Fragen",
     translating: "Noctis übersetzt das Video ins Deutsche...",
-    liveInterpretingBadge: "Deutsche Sprachausgabe aktiv · Originalton leise (14%)",
+    liveInterpretingBadge: "Deutsche Stimme verstärkt · Originalton leise (4%)",
   },
   zh: {
     triggerBtn: "Noctis 同声传译",
     popupTitle: "Noctis AI 视频同声传译",
-    popupSubtitle: "全程连续同传（英文原声自动调低至 14%）",
+    popupSubtitle: "全程连续同传（英文原声调低至 4% · 同传语音增强）",
     listenVoiceDub: "🔊 收听中文全程同声传译",
     stopVoiceDub: "⏸ 暂停同声传译",
     summaryHeading: "视频内容中文概要",
@@ -363,12 +363,12 @@ const UI_LABELS: Record<
     askPlaceholder: "向 Noctis 提问关于本视频的任何内容...",
     askBtn: "提问",
     translating: "Noctis 正在将英文视频实时同传为中文...",
-    liveInterpretingBadge: "中文语音同传进行中 · 英文原声轻音伴随 (14%)",
+    liveInterpretingBadge: "中文语音增强同传中 · 英文原声调低 (4%)",
   },
   ja: {
     triggerBtn: "Noctis 同時通訳",
     popupTitle: "Noctis AI ビデオ同時通訳",
-    popupSubtitle: "最後まで連続通訳（英語音声は14%の背景音量）",
+    popupSubtitle: "最後まで連続通訳（英語原音4%・通訳音声ブースト）",
     listenVoiceDub: "🔊 日本語の同時通訳音声を聴く",
     stopVoiceDub: "⏸ 同時通訳を一時停止",
     summaryHeading: "翻訳された動画の概要",
@@ -376,12 +376,12 @@ const UI_LABELS: Record<
     askPlaceholder: "この動画について Noctis に質問する...",
     askBtn: "質問",
     translating: "Noctis が英語の動画を日本語に同時通訳しています...",
-    liveInterpretingBadge: "日本語音声で同時通訳中 · 英語原音は小音量 (14%)",
+    liveInterpretingBadge: "日本語通訳音声ブースト中 · 英語原音は小音量 (4%)",
   },
   ar: {
     triggerBtn: "مترجم Noctis الفوري",
     popupTitle: "المترجم الفوري الذكي Noctis",
-    popupSubtitle: "ترجمة صوتية مستمرة للنهاية (صوت الفيديو الأصلي منخفض 14%)",
+    popupSubtitle: "ترجمة صوتية مستمرة (خفض الصوت الإنجليزي إلى 4% وتقوية صوت الترجمة)",
     listenVoiceDub: "🔊 استمع للترجمة الصوتية بالعربية",
     stopVoiceDub: "⏸ إيقاف الترجمة المؤقت",
     summaryHeading: "ملخص الفيديو المترجم",
@@ -389,12 +389,12 @@ const UI_LABELS: Record<
     askPlaceholder: "اسأل Noctis لشرح أي جزء من هذا الفيديو...",
     askBtn: "اسأل",
     translating: "يقوم Noctis بالترجمة الفورية للفيديو إلى العربية...",
-    liveInterpretingBadge: "يتحدث الآن بالعربية · الصوت الإنجليزي منخفض بالخلفية",
+    liveInterpretingBadge: "صوت الترجمة العربية مُعزّز · الصوت الإنجليزي منخفض (4%)",
   },
   hi: {
     triggerBtn: "Noctis लाइव दुभाषिया",
     popupTitle: "Noctis AI लाइव वीडियो दुभाषिया",
-    popupSubtitle: "अंत तक निरंतर अनुवाद (अंग्रेजी ऑडियो धीमी आवाज़ 14% में)",
+    popupSubtitle: "अंत तक निरंतर अनुवाद (अंग्रेजी ऑडियो 4% · अनुवाद की आवाज़ तेज़)",
     listenVoiceDub: "🔊 हिंदी लाइव आवाज़ में सुनें",
     stopVoiceDub: "⏸ व्याख्या रोकें",
     summaryHeading: "अनुवादित वीडियो सारांश",
@@ -402,12 +402,12 @@ const UI_LABELS: Record<
     askPlaceholder: "इस वीडियो के बारे में Noctis से कुछ भी पूछें...",
     askBtn: "पूछें",
     translating: "Noctis वीडियो का हिंदी में लाइव अनुवाद कर रहा है...",
-    liveInterpretingBadge: "हिंदी आवाज़ में लाइव अनुवाद जारी · मूल आवाज़ धीमी (14%)",
+    liveInterpretingBadge: "हिंदी अनुवाद आवाज़ तेज़ · मूल आवाज़ धीमी (4%)",
   },
   sw: {
     triggerBtn: "Mkalimani wa Noctis",
     popupTitle: "Mkalimani wa Moja kwa Moja wa Noctis AI",
-    popupSubtitle: "Tafsiri Endelevu Hadi Mwisho (Sauti ya Kiingereza Chini 14%)",
+    popupSubtitle: "Tafsiri Endelevu (Sauti ya Kiingereza 4% · Sauti ya Tafsiri Imeongezwa)",
     listenVoiceDub: "🔊 Sikiliza Sauti kwa Kiswahili",
     stopVoiceDub: "⏸ Simamisha Ukaliimani",
     summaryHeading: "Muhtasari wa Video Uliotafsiriwa",
@@ -415,12 +415,12 @@ const UI_LABELS: Record<
     askPlaceholder: "Muulize Noctis aeleze sehemu yoyote ya video hii...",
     askBtn: "Uliza",
     translating: "Noctis inatafsiri video kwa Kiswahili...",
-    liveInterpretingBadge: "Inazungumza kwa Kiswahili · Sauti ya Kiingereza iko chini",
+    liveInterpretingBadge: "Sauti ya Kiswahili Imeongezwa · Kiingereza Chini (4%)",
   },
   ru: {
     triggerBtn: "Синхронный перевод Noctis",
     popupTitle: "ИИ-синхронный переводчик Noctis",
-    popupSubtitle: "Непрерывный перевод до конца (английская речь тихо на фоне 14%)",
+    popupSubtitle: "Непрерывный перевод (английский звук 4% · громкость перевода усилена)",
     listenVoiceDub: "🔊 Слушать озвучку на русском",
     stopVoiceDub: "⏸ Пауза перевода",
     summaryHeading: "Переведённый обзор видео",
@@ -428,7 +428,7 @@ const UI_LABELS: Record<
     askPlaceholder: "Спросите Noctis о любом моменте из этого видео...",
     askBtn: "Спросить",
     translating: "Noctis синхронно переводит видео на русский язык...",
-    liveInterpretingBadge: "Голосовой перевод на русском · Английский звук тихо (14%)",
+    liveInterpretingBadge: "Голос перевода усилен · Английский звук тихо (4%)",
   },
 }
 
@@ -520,11 +520,71 @@ export function NoctisVideoInterpreterPopup({
   const onRequestPlayVideoRef = useRef(onRequestPlayVideo)
   onRequestPlayVideoRef.current = onRequestPlayVideo
   const preloadAudioRef = useRef<HTMLAudioElement | null>(null)
+  const audioCtxRef = useRef<AudioContext | null>(null)
+  const gainNodeRef = useRef<GainNode | null>(null)
+  const isAudioBoostedRef = useRef<boolean>(false)
   const spokenLangAndTitleRef = useRef<string>("")
   const userManuallyPausedDubRef = useRef(false)
   const nextSentenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const activeSentenceIdxRef = useRef(0)
   activeSentenceIdxRef.current = activeSentenceIdx
+
+  // Connect the Noctis TTS <audio> element to Web Audio API DynamicsCompressor + 2.6x GainNode (260% Volume Boost)
+  const boostInterpretationAudioElement = useCallback((audioEl: HTMLAudioElement) => {
+    audioEl.volume = 1.0
+    if (typeof window === "undefined") return
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
+      if (!AudioCtx) return
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new AudioCtx()
+      }
+      const ctx = audioCtxRef.current
+      const connectChain = () => {
+        if (isAudioBoostedRef.current || ctx.state !== "running") return
+        try {
+          const source = ctx.createMediaElementSource(audioEl)
+          const compressor = ctx.createDynamicsCompressor()
+          compressor.threshold.setValueAtTime(-24, ctx.currentTime)
+          compressor.knee.setValueAtTime(16, ctx.currentTime)
+          compressor.ratio.setValueAtTime(4, ctx.currentTime)
+          compressor.attack.setValueAtTime(0.003, ctx.currentTime)
+          compressor.release.setValueAtTime(0.15, ctx.currentTime)
+
+          const gain = ctx.createGain()
+          gain.gain.setValueAtTime(2.6, ctx.currentTime) // 260% amplified interpretation voice
+          gainNodeRef.current = gain
+
+          source.connect(compressor)
+          compressor.connect(gain)
+          gain.connect(ctx.destination)
+          isAudioBoostedRef.current = true
+        } catch {
+          // Ignore if already connected
+        }
+      }
+      if (ctx.state === "suspended") {
+        ctx.resume().then(connectChain).catch(() => {})
+      } else {
+        connectChain()
+      }
+    } catch {
+      // Fallback: standard volume = 1.0 remains active
+    }
+  }, [])
+
+  // Also lower or restore any HTML5 <video> elements on the page when Noctis interpretation is active
+  const setPageVideoElementsDucking = useCallback((duck: boolean) => {
+    if (typeof document === "undefined") return
+    try {
+      const videos = document.querySelectorAll("video")
+      videos.forEach((v) => {
+        if (!v.srcObject) {
+          v.volume = duck ? 0.04 : 1.0
+        }
+      })
+    } catch {}
+  }, [])
 
   const labels = UI_LABELS[language] || UI_LABELS.en
   const takeawaysKey = useMemo(() => (takeaways || []).join("||"), [takeaways])
@@ -679,10 +739,11 @@ export function NoctisVideoInterpreterPopup({
     setActiveSentenceIdx(safeIdx)
     activeSentenceIdxRef.current = safeIdx
 
-    // Keep the English video speaking quietly in the background (14% volume)
+    // Keep the English video speaking very quietly in the background (4% volume)
     if (onMuteOriginalVideoRef.current) {
       onMuteOriginalVideoRef.current(true)
     }
+    setPageVideoElementsDucking(true)
 
     const sentenceText = list[safeIdx]
     const nextSentenceText = list[(safeIdx + 1) % list.length]
@@ -740,15 +801,20 @@ export function NoctisVideoInterpreterPopup({
       }
     }
 
-    // Primary: Play real native voice MP3 stream via `/api/connectin/tts`
+    // Primary: Play real native voice MP3 stream via `/api/connectin/tts` with 260% Web Audio Gain Boost
     try {
       if (!audioRef.current) {
         audioRef.current = new Audio()
+        audioRef.current.crossOrigin = "anonymous"
       }
       const audio = audioRef.current
       audio.onended = null
       audio.onerror = null
+      audio.onplay = () => {
+        boostInterpretationAudioElement(audio)
+      }
       audio.volume = 1.0
+      boostInterpretationAudioElement(audio)
       audio.src = `/api/connectin/tts?lang=${encodeURIComponent(
         targetLang
       )}&text=${encodeURIComponent(sentenceText.slice(0, 190))}`
@@ -767,7 +833,7 @@ export function NoctisVideoInterpreterPopup({
     } catch {
       speakWithBrowserFallback()
     }
-  }, [])
+  }, [boostInterpretationAudioElement, setPageVideoElementsDucking])
 
   const startContinuousInterpretation = useCallback(
     (startIndex = 0) => {
@@ -777,9 +843,10 @@ export function NoctisVideoInterpreterPopup({
       isSpeakingRef.current = true
       setIsSpeaking(true)
       if (onMuteOriginalVideoRef.current) onMuteOriginalVideoRef.current(true)
+      setPageVideoElementsDucking(true)
       speakSentenceAtIndex(startIndex)
     },
-    [speakSentenceAtIndex, stopAudioOutput]
+    [speakSentenceAtIndex, stopAudioOutput, setPageVideoElementsDucking]
   )
 
   const stopContinuousInterpretation = useCallback(
@@ -787,11 +854,14 @@ export function NoctisVideoInterpreterPopup({
       isSpeakingRef.current = false
       setIsSpeaking(false)
       stopAudioOutput()
-      if (restoreFullEnglishVolume && onMuteOriginalVideoRef.current) {
-        onMuteOriginalVideoRef.current(false)
+      if (restoreFullEnglishVolume) {
+        if (onMuteOriginalVideoRef.current) {
+          onMuteOriginalVideoRef.current(false)
+        }
+        setPageVideoElementsDucking(false)
       }
     },
-    [stopAudioOutput]
+    [stopAudioOutput, setPageVideoElementsDucking]
   )
 
   // Automatically start simultaneous interpretation ONLY when not already speaking (never interrupt active speech!)
