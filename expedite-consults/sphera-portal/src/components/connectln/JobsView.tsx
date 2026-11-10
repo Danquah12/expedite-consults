@@ -1458,7 +1458,7 @@ export function JobsView({
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
-                      Job search alert for {searchQuery ? `"${searchQuery}"` : currentEnclaveObj?.name || currentUser.profession || 'Your Target Roles'}
+                      Job search alert for {searchQuery ? `"${searchQuery}"` : currentEnclaveObj?.name || (currentUser as any)?.profession || currentUser?.headline || 'Your Target Roles'}
                     </span>
                     <span
                       className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase ${
@@ -1471,7 +1471,7 @@ export function JobsView({
                     </span>
                   </div>
                   <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                    Melissa Torres · ConnectLn Offer: Get notified as soon as new roles get posted at companies you like ({selectedCountry === 'ALL' ? 'Global & Local' : selectedCountry}).
+                    Melissa Torres · ConnectLn Offer: Get notified as soon as new roles get posted at companies you like ({currentCountry?.name || 'Global & Local'}).
                   </p>
                 </div>
               </div>
@@ -1823,7 +1823,7 @@ export function JobsView({
                       <div className="space-y-0.5">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
-                            Job search alert for {searchQuery ? `"${searchQuery}"` : currentEnclaveObj?.name || currentUser.profession || 'Your Target Roles'}
+                            Job search alert for {searchQuery ? `"${searchQuery}"` : currentEnclaveObj?.name || (currentUser as any)?.profession || currentUser?.headline || 'Your Target Roles'}
                           </span>
                           <span
                             className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase ${
@@ -1836,7 +1836,7 @@ export function JobsView({
                           </span>
                         </div>
                         <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                          Get notified as soon as new roles get posted at companies you like ({selectedCountry === 'ALL' ? 'Global & Local' : selectedCountry}).
+                          Get notified as soon as new roles get posted at companies you like ({currentCountry?.name || 'Global & Local'}).
                         </p>
                       </div>
                     </div>
