@@ -1,12 +1,35 @@
 import { NextRequest, NextResponse } from "next/server"
 
+const TRANSLATE_TARGET_MAP: Record<string, string> = {
+  ak: "ak",
+  ee: "ee",
+  gaa: "gaa",
+  ha: "ha",
+  yo: "yo",
+  ig: "ig",
+  sw: "sw",
+  am: "am",
+  om: "om",
+  so: "so",
+  zu: "zu",
+  xh: "xh",
+  rw: "rw",
+  sn: "sn",
+  wo: "wo",
+  lg: "lg",
+  he: "iw",
+  zh: "zh-CN",
+}
+
 async function translateSingleText(text: string, targetLang: string): Promise<string> {
   const trimmed = (text || "").trim()
   if (!trimmed || targetLang === "en") return text
 
+  const tl = TRANSLATE_TARGET_MAP[targetLang] || targetLang
+
   try {
     const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${encodeURIComponent(
-      targetLang
+      tl
     )}&dt=t&q=${encodeURIComponent(trimmed)}`
     const res = await fetch(url, {
       headers: {

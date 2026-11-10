@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { Globe, Check, ChevronDown } from "lucide-react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
+import { Globe, Check, ChevronDown, Search } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { LanguageCode } from "@/lib/translations";
 
@@ -18,6 +18,7 @@ export function LanguageSwitcher({
 }: LanguageSwitcherProps) {
   const { language, setLanguage, currentLanguage, languages, t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Close when clicking outside
@@ -31,9 +32,22 @@ export function LanguageSwitcher({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const filteredLanguages = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return languages;
+    return languages.filter(
+      (l) =>
+        l.localName.toLowerCase().includes(q) ||
+        l.name.toLowerCase().includes(q) ||
+        l.code.toLowerCase().includes(q) ||
+        (l.region && l.region.toLowerCase().includes(q))
+    );
+  }, [languages, searchQuery]);
+
   const handleSelectLanguage = (code: LanguageCode) => {
     setLanguage(code);
     setIsOpen(false);
+    setSearchQuery("");
   };
 
   return (
@@ -59,7 +73,7 @@ export function LanguageSwitcher({
         <Globe className="h-3.5 w-3.5 text-[#0A66C2] dark:text-sky-400 shrink-0" />
         <span className="text-sm shrink-0 leading-none">{currentLanguage.flag}</span>
         {!compact && (
-          <span className="truncate max-w-[85px] hidden sm:inline-block">
+          <span className="truncate max-w-[95px] hidden sm:inline-block">
             {currentLanguage.localName}
           </span>
         )}
@@ -81,7 +95,7 @@ export function LanguageSwitcher({
             onClick={() => setIsOpen(false)}
           />
           <div
-            className={`absolute z-50 mt-1.5 w-60 rounded-xl border border-zinc-200 bg-white p-1.5 shadow-xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 ${
+            className={`absolute z-50 mt-1.5 w-72 rounded-xl border border-zinc-200 bg-white p-1.5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 ${
               align === "right" ? "right-0" : "left-0"
             }`}
           >
@@ -89,16 +103,30 @@ export function LanguageSwitcher({
             <div className="flex items-center justify-between px-2.5 py-2 border-b border-zinc-100 dark:border-zinc-800">
               <span className="text-[11px] font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
                 <Globe className="h-3.5 w-3.5 text-[#0A66C2] dark:text-sky-400" />
-                {t("language_select", "Platform Language")}
+                {t("language_select", "Global & African Languages")}
               </span>
-              <span className="text-[10px] font-mono text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">
-                11 Global
+              <span className="text-[10px] font-mono font-bold text-[#0A66C2] dark:text-sky-300 bg-blue-50 dark:bg-sky-950/60 px-1.5 py-0.5 rounded">
+                {languages.length} Languages
               </span>
             </div>
 
+            {/* Instant Search Filter */}
+            <div className="px-2 pt-2 pb-1">
+              <div className="relative flex items-center">
+                <Search className="h-3.5 w-3.5 text-zinc-400 absolute left-2.5 pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search Twi, Ewe, Hausa, Français..."
+                  className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 pl-8 pr-2.5 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:border-[#0A66C2]"
+                />
+              </div>
+            </div>
+
             {/* Language Options List */}
-            <div className="max-h-72 overflow-y-auto py-1 space-y-0.5 scrollbar-thin">
-              {languages.map((item) => {
+            <div className="max-h-80 overflow-y-auto py-1 space-y-0.5 scrollbar-thin">
+              {filteredLanguages.map((item) => {
                 const isSelected = item.code === language;
 
                 return (
@@ -139,7 +167,7 @@ export function LanguageSwitcher({
 
             {/* Quick Helper Note */}
             <div className="border-t border-zinc-100 px-2 py-1.5 text-[10px] text-zinc-400 dark:border-zinc-800 text-center">
-              Changes interface language across the entire platform
+              Translates entire platform &amp; Noctis video interpretation
             </div>
           </div>
         </>

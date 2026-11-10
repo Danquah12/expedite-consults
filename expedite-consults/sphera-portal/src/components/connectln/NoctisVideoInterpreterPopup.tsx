@@ -30,22 +30,110 @@ function claimExclusiveInterpreter(instanceId: string) {
   )
 }
 
-const SPEECH_LOCALE_MAP: Record<LanguageCode, string> = {
+const SPEECH_LOCALE_MAP: Partial<Record<LanguageCode, string>> = {
   en: "en-US",
+  ak: "ak-GH",
+  ee: "ee-GH",
+  gaa: "ak-GH",
+  ha: "ha-NG",
+  yo: "yo-NG",
+  ig: "ig-NG",
+  sw: "sw-KE",
+  am: "am-ET",
+  om: "om-ET",
+  so: "so-SO",
+  zu: "zu-ZA",
+  xh: "xh-ZA",
+  rw: "rw-RW",
+  sn: "sn-ZW",
+  wo: "wo-SN",
+  lg: "lg-UG",
   es: "es-ES",
   fr: "fr-FR",
   de: "de-DE",
   pt: "pt-BR",
+  it: "it-IT",
+  nl: "nl-NL",
+  pl: "pl-PL",
+  uk: "uk-UA",
+  ru: "ru-RU",
+  tr: "tr-TR",
+  el: "el-GR",
+  sv: "sv-SE",
+  ar: "ar-SA",
+  fa: "fa-IR",
+  he: "he-IL",
+  hi: "hi-IN",
+  bn: "bn-BD",
+  ur: "ur-PK",
+  pa: "pa-IN",
+  ta: "ta-IN",
   zh: "zh-CN",
   ja: "ja-JP",
-  ar: "ar-SA",
-  hi: "hi-IN",
-  sw: "sw-KE",
-  ru: "ru-RU",
+  ko: "ko-KR",
+  vi: "vi-VN",
+  th: "th-TH",
+  id: "id-ID",
+  ms: "ms-MY",
+  tl: "fil-PH",
 }
 
 // Instant native translations for common skilled-trades & platform video titles, descriptions, and takeaways
-const NATIVE_VIDEO_PHRASES: Record<Exclude<LanguageCode, "en">, Record<string, string>> = {
+const NATIVE_VIDEO_PHRASES: Partial<Record<Exclude<LanguageCode, "en">, Record<string, string>>> = {
+  ak: {
+    "Carpentry Basics: Marking and Checking Angles": "Duadwuma Mfitiaseɛ: Ntwea ahorow Nsɛnkyerɛnne ne Nhwehwɛmu",
+    "Learners explore how a speed square helps mark angles and check whether corners are square. This is a useful starting lesson before moving into cutting and assembly.":
+      "Adesuafoɔ sua sɛnea Speed Square boa ma wɔhyɛ ntwea agyiraeɛ pɛpɛɛpɛ na wɔhwɛ sɛ ntwea no gyina hɔ tẽẽ ansa na wɔatwa nnua no aka abom.",
+    "Speed Square Layout": "Speed Square Nhyehyɛeɛ ne Nsusuwiiɛ",
+    "Marking 90° Perpendicular Lines": "90° Nsensaneeɛ Tẽẽ Agyiraehyɛ",
+    "Marking 45° Miter Angles": "45° Ntwea Agyiraehyɛ",
+    "Checking Corner Squareness": "Ntwea Pɛpɛɛpɛ Nhwehwɛmu",
+  },
+  ee: {
+    "Carpentry Basics: Marking and Checking Angles": "Atikpakpa Gɔmedzenuwo: Dzogoewo Dzesiɖoɖo Kple Dodokpɔ",
+    "Learners explore how a speed square helps mark angles and check whether corners are square. This is a useful starting lesson before moving into cutting and assembly.":
+      "Nusrɔ̃lawo srɔ̃a ale si Speed Square kpena ɖe ame ŋu woɖoa dzesi dzogoewo eye wokpɔa egbɔ be dzogoewo sɔ nyuie hafi woatso atia aƒo ƒu.",
+    "Speed Square Layout": "Speed Square Ɖoɖo Kple Dzesiɖoɖo",
+    "Marking 90° Perpendicular Lines": "90° Fli Dzɔdzɔewo Dzesiɖoɖo",
+    "Marking 45° Miter Angles": "45° Dzogoewo Dzesiɖoɖo",
+    "Checking Corner Squareness": "Dzogoewo Ƒe Sɔsɔ Dodokpɔ",
+  },
+  gaa: {
+    "Carpentry Basics: Marking and Checking Angles": "Gbɛjianɔtoo Shishijee: Koŋi Kadii Kɛ Kwɛmɔ",
+    "Learners explore how a speed square helps mark angles and check whether corners are square. This is a useful starting lesson before moving into cutting and assembly.":
+      "Nikaselɔi kaseɔ bɔ ni Speed Square yeɔ ebuaa kɛkadiɔ koŋi ni akwɛɔ akɛ koŋi lɛ ja jogbaŋŋ dani afolɔ tsei lɛ.",
+    "Speed Square Layout": "Speed Square Nitsumɔ Kɛ Kadimɔ",
+    "Marking 90° Perpendicular Lines": "90° Fligbɛi Jajɛi Kadimɔ",
+    "Marking 45° Miter Angles": "45° Koŋi Kadimɔ",
+    "Checking Corner Squareness": "Koŋi Jajamɔ Kwɛmɔ",
+  },
+  ha: {
+    "Carpentry Basics: Marking and Checking Angles": "Tushen Aikin Kafinta: Yin Alama da Duba Kusurwoyi",
+    "Learners explore how a speed square helps mark angles and check whether corners are square. This is a useful starting lesson before moving into cutting and assembly.":
+      "Dalibai suna koyon yadda ma'aunin Speed Square ke taimakawa wajen yi wa kusurwoyi alama da tabbatar da daidaiton kusurwa kafin yankawa da haɗawa.",
+    "Speed Square Layout": "Tsarin Ma'aunin Speed Square",
+    "Marking 90° Perpendicular Lines": "Yin Alamar Layukan 90° Madaidaici",
+    "Marking 45° Miter Angles": "Yin Alamar Kusurwar 45°",
+    "Checking Corner Squareness": "Duba Daidaiton Kusurwoyi",
+  },
+  yo: {
+    "Carpentry Basics: Marking and Checking Angles": "Ìpìlẹ̀ Iṣẹ́ Káfíńtà: Fífi Àmì Sí àti Yíyẹ Àwọn Igùn Wò",
+    "Learners explore how a speed square helps mark angles and check whether corners are square. This is a useful starting lesson before moving into cutting and assembly.":
+      "Àwọn akẹ́kọ̀ọ́ ń kọ́ bí irinṣẹ́ Speed Square ṣe ń ràn wọ́n lọ́wọ́ láti fi àmì sí àwọn igùn àti láti rí i dájú pé igùn náà gún régé kí wọ́n tó gé igi.",
+    "Speed Square Layout": "Ìlànà Irinṣẹ́ Speed Square",
+    "Marking 90° Perpendicular Lines": "Fífi Àmì Sí Ìlà 90° Títọ́",
+    "Marking 45° Miter Angles": "Fífi Àmì Sí Igùn 45°",
+    "Checking Corner Squareness": "Yíyẹ Bóyá Igùn Gún Régé Wò",
+  },
+  ig: {
+    "Carpentry Basics: Marking and Checking Angles": "Ntọala Ọrụ Ọkwa Nka: Ịka Akara na Ịlele Nkuku",
+    "Learners explore how a speed square helps mark angles and check whether corners are square. This is a useful starting lesson before moving into cutting and assembly.":
+      "Ndị na-amụ ihe na-achọpụta otu Speed Square si enyere aka ịka akara nkuku ma lelee ma nkuku hà kwụ ọtọ tupu ịkpụ na ijikọ osisi.",
+    "Speed Square Layout": "Nhazi Speed Square",
+    "Marking 90° Perpendicular Lines": "Ịka Akara Ahịrị 90° Kwụ Ọtọ",
+    "Marking 45° Miter Angles": "Ịka Akara Nkuku 45°",
+    "Checking Corner Squareness": "Ịlele Igwe Ngụkọta Nkuku",
+  },
   pt: {
     "Carpentry Basics: Marking and Checking Angles": "Noções básicas de carpintaria: marcação e verificação de ângulos",
     "Learners explore how a speed square helps mark angles and check whether corners are square. This is a useful starting lesson before moving into cutting and assembly.":
@@ -147,6 +235,72 @@ function buildNativeLocalizedTemplate(
   translatedTakeaways: string[]
 ): { overview: string; steps: string[] } {
   switch (lang) {
+    case "ak":
+      return {
+        overview: `Akwaaba ba ConnectLn nsaanodwuma adesua yi mu: "${translatedTitle}", a ${speaker} de brɛ mo. ${translatedDesc}`,
+        steps: [
+          ...translatedTakeaways,
+          `Anammɔn 1 — Nnwinnadeɛ Ahoboa: ${speaker} de Speed Square no to dua no ano pɛpɛɛpɛ na ɔhwɛ sɛ ɛhyia yie ansa na wahyɛ agyiraeɛ.`,
+          `Anammɔn 2 — Ntwea Agyiraehyɛ Wɔ Pon So: Hwɛ sɛnea kyerɛkyerɛfoɔ no sɔ adwinnadeɛ no mu dennen twa nsensaneeɛ 90° ne 45° pɛpɛɛpɛ.`,
+          `Anammɔn 3 — Nhwehwɛmu ne Ahobammɔ: Wɔsan susuw ntwea biara mprenu ansa na wɔatwa dua no sɛnea mfomsoɔ biara remma.`,
+          `Anammɔn 4 — ConnectLn Nkyerɛaseɛ Toa So: Borɔfo nne no ano yɛ brɛoo wɔ akyi, na Noctis rekyerɛ aseɛ wɔ Twi kasa mu kɔsi video no awiei.`,
+        ],
+      }
+    case "ee":
+      return {
+        overview: `Woezɔ va ConnectLn dɔwɔwɔ ƒe nusrɔ̃ƒe sia: "${translatedTitle}", si ${speaker} tsɔ vɛ. ${translatedDesc}`,
+        steps: [
+          ...translatedTakeaways,
+          `Afɔɖeɖe 1 — Dɔwɔnuwo Dzadzraɖo: ${speaker} daa Speed Square la ɖe atia ƒe to tututu eye wòléa ŋku ɖe eŋu hafi ɖoa dzesi.`,
+          `Afɔɖeɖe 2 — Dzogoewo Dzesiɖoɖo Pɛpɛpɛ: Kpɔ ale si nufiala la lé dɔwɔnua sesĩe be wòate fli dzɔdzɔe 90° kple 45°.`,
+          `Afɔɖeɖe 3 — Dodokpɔ Kple Dedienɔnɔ: Wodoa dzogoe sia dzogoe kpɔna zi eve hafi tsoa atia be vodada nagava o.`,
+          `Afɔɖeɖe 4 — Gbegɔmeɖeɖe Yi Edzi: Yevugbe ƒe gbeɖiɖi bɔbɔ ɖe megbe eye Noctis le egɔme ɖem ɖe Eʋegbe me vaseɖe nuwuwu.`,
+        ],
+      }
+    case "gaa":
+      return {
+        overview: `Atuu kɛba ConnectLn nitsumɔ nikasemɔ nɛɛ mli: "${translatedTitle}", ni ${speaker} tsɔɔ. ${translatedDesc}`,
+        steps: [
+          ...translatedTakeaways,
+          `Gbɛfaŋ 1 — Nitsumɔnii Toomɔ: ${speaker} maa Speed Square lɛ yɛ tso lɛ naa pɛpɛɛpɛ dani ekadiɔ.`,
+          `Gbɛfaŋ 2 — Koŋi Kadimɔ Yɛ Okpɔlɔ Nɔ: Kwɛmɔ bɔ ni tsɔɔlɔ lɛ hiɛɔ dade lɛ mli kpɛŋŋ kɛha 90° kɛ 45° fligbɛi.`,
+          `Gbɛfaŋ 3 — Kwɛmɔ Jogbaŋŋ: Akwɛɔ koŋi fɛɛ koŋi shii enyɔ dani afolɔ tso lɛ.`,
+          `Gbɛfaŋ 4 — Wiemɔ Shishitsɔɔmɔ: Blɔfo gbee lɛ baa shi yɛ sɛɛ ni Noctis tsɔɔ shishi yɛ Gã mli kɛyashi naagbee.`,
+        ],
+      }
+    case "ha":
+      return {
+        overview: `Barka da zuwa wannan darasin koyon aiki na ConnectLn: "${translatedTitle}", wanda ${speaker} ke gabatarwa. ${translatedDesc}`,
+        steps: [
+          ...translatedTakeaways,
+          `Mataki na 1 — Shirya Kayan Aiki: ${speaker} yana sanya ma'aunin a gefen katako don tabbatar da daidaito kafin yin alama.`,
+          `Mataki na 2 — Yin Alama Daidai: Lura da yadda malamin ke riƙe ma'aunin sosai don zana layukan 90° da 45° cif-cif.`,
+          `Mataki na 3 — Duba Inganci da Tsaro: Ana auna kowace kusurwa sau biyu kafin yankawa don guje wa kuskure.`,
+          `Mataki na 4 — Fassara Har Karshe: Muryar Turanci tana ƙasa a baya yayin da Noctis ke ci gaba da fassara cikin Hausa har zuwa ƙarshen bidiyon.`,
+        ],
+      }
+    case "yo":
+      return {
+        overview: `Ẹ káàbọ̀ sí ìdánilẹ́kọ̀ọ́ iṣẹ́-ọwọ́ ConnectLn yìí: "${translatedTitle}", tí ${speaker} ń darí. ${translatedDesc}`,
+        steps: [
+          ...translatedTakeaways,
+          `Ìpele 1 — Ìmúrasílẹ̀ Irinṣẹ́: ${speaker} gbé irinṣẹ́ náà sórí etí igi láti rí i dájú pé ó dọ́gba kí ó tó fi àmì sí i.`,
+          `Ìpele 2 — Fífi Àmì Sí Igùn Pẹ̀lú Ìpéye: Ẹ kíyè sí bí olùkọ́ náà ṣe di irinṣẹ́ náà mú ṣinṣin láti fa ìlà 90° àti 45° gún régé.`,
+          `Ìpele 3 — Àyẹ̀wò Ìdánilójú: Gbogbo igùn ni a ń yẹ̀ wò lẹ́ẹ̀mejì kí a tó gé igi náà.`,
+          `Ìpele 4 — Ìtumọ̀ Títí Dé Opin: Ohùn Gẹ̀ẹ́sì wà ní ìsàlẹ̀ nígbà tí Noctis ń gbé ìtumọ̀ jáde ní Èdè Yorùbá títí dé ìparí fídíò náà.`,
+        ],
+      }
+    case "ig":
+      return {
+        overview: `Nnọọ na ọmụmụ ihe ọrụ aka ConnectLn a: "${translatedTitle}", nke ${speaker} na-egosi. ${translatedDesc}`,
+        steps: [
+          ...translatedTakeaways,
+          `Nzọụkwụ 1 — Nkwadebe Ngwá Ọrụ: ${speaker} na-etinye ngwá ọrụ n'akụkụ osisi iji hụ na ọ kwụ ọtọ tupu ịka akara.`,
+          `Nzọụkwụ 2 — Ịka Akara Ziri Ezi: Hụ ka onye nkuzi si ejide Speed Square ike iji dọta ahịrị 90° na 45° ziri ezi.`,
+          `Nzọụkwụ 3 — Nyocha Ọdịmma na Nchekwa: A na-elele nkuku ọ bụla ugboro abụọ tupu ịkpụ osisi.`,
+          `Nzọụkwụ 4 — Ntụgharị Asụsụ Ruo Njedebe: Olu Bekee dị ala n'azụ ebe Noctis na-atụgharị n'asụsụ Igbo ruo na ngwụcha vidio a.`,
+        ],
+      }
     case "pt":
       return {
         overview: `Bem-vindo a esta sessão prática ao vivo da ConnectLn: "${translatedTitle}", apresentada por ${speaker}. ${translatedDesc}`,
@@ -271,22 +425,102 @@ function buildNativeLocalizedTemplate(
   }
 }
 
-const UI_LABELS: Record<
-  LanguageCode,
-  {
-    triggerBtn: string
-    popupTitle: string
-    popupSubtitle: string
-    listenVoiceDub: string
-    stopVoiceDub: string
-    summaryHeading: string
-    stepsHeading: string
-    askPlaceholder: string
-    askBtn: string
-    translating: string
-    liveInterpretingBadge: string
-  }
+const UI_LABELS: Partial<
+  Record<
+    LanguageCode,
+    {
+      triggerBtn: string
+      popupTitle: string
+      popupSubtitle: string
+      listenVoiceDub: string
+      stopVoiceDub: string
+      summaryHeading: string
+      stepsHeading: string
+      askPlaceholder: string
+      askBtn: string
+      translating: string
+      liveInterpretingBadge: string
+    }
+  >
 > = {
+  ak: {
+    triggerBtn: "Noctis Kasa Kyerɛfoɔ",
+    popupTitle: "Noctis AI Video Kasa Kyerɛfoɔ (Twi)",
+    popupSubtitle: "Nkyerɛaseɛ Toa So (Borɔfo 4% · Twi Nne Kɔ Soro 260%)",
+    listenVoiceDub: "🔊 Tie Nkyerɛaseɛ Wɔ Twi Mu",
+    stopVoiceDub: "⏸ Gyina Twi Nkyerɛaseɛ",
+    summaryHeading: "Video Mu Nsɛm Titiriw (Twi)",
+    stepsHeading: "Anammɔn Biara Nkyerɛaseɛ Kɔsi Awiei",
+    askPlaceholder: "Bisa Noctis asɛm biara fa video yi ho...",
+    askBtn: "Bisa",
+    translating: "Noctis rekyerɛ video yi ase akɔ Twi mu...",
+    liveInterpretingBadge: "Twi Nkyerɛaseɛ Rekɔ So · Borɔfo Nne Brɛoo (4%)",
+  },
+  ee: {
+    triggerBtn: "Noctis Gbegɔmeɖela",
+    popupTitle: "Noctis AI Video Gbegɔmeɖela (Eʋegbe)",
+    popupSubtitle: "Gbegɔmeɖeɖe Yi Edzi (Yevugbe 4% · Eʋegbe Gbe Sesĩe)",
+    listenVoiceDub: "🔊 Đó To Gbegɔmeɖeɖe Le Eʋegbe Me",
+    stopVoiceDub: "⏸ Dzudzɔ Gbegɔmeɖeɖe Vie",
+    summaryHeading: "Video Ƒe Nuƒoƒo Kpui (Eʋegbe)",
+    stepsHeading: "Gbegɔmeɖeɖe Ɖeka-Ɖeka Vaseɖe Nuwuwu",
+    askPlaceholder: "Bia Noctis be wòaɖe video sia me...",
+    askBtn: "Bia",
+    translating: "Noctis le video la gɔme ɖem ɖe Eʋegbe me...",
+    liveInterpretingBadge: "Eʋegbe Gbegɔmeɖeɖe Le Edzi Yim · Yevugbe Bɔbɔ (4%)",
+  },
+  gaa: {
+    triggerBtn: "Noctis Shishitsɔɔlɔ",
+    popupTitle: "Noctis AI Video Shishitsɔɔlɔ (Gã)",
+    popupSubtitle: "Shishitsɔɔmɔ (Blɔfo 4% · Gã Gbee Waa)",
+    listenVoiceDub: "🔊 Bo Shishitsɔɔmɔ Toi Yɛ Gã Mli",
+    stopVoiceDub: "⏸ Wa Shishitsɔɔmɔ",
+    summaryHeading: "Video Mli Sane (Gã)",
+    stepsHeading: "Shishitsɔɔmɔ Kɛyashi Naagbee",
+    askPlaceholder: "Bi Noctis sane yɛ video nɛɛ he...",
+    askBtn: "Bi",
+    translating: "Noctis miitsɔɔ video lɛ shishi kɛya Gã mli...",
+    liveInterpretingBadge: "Gã Shishitsɔɔmɔ Miya Nɔ · Blɔfo Gbee Shi (4%)",
+  },
+  ha: {
+    triggerBtn: "Mai Fassara Noctis",
+    popupTitle: "Mai Fassara Bidiyo na Noctis AI (Hausa)",
+    popupSubtitle: "Fassara Kai Tsaye (Turanci 4% · Muryar Hausa Mai Ƙarfi)",
+    listenVoiceDub: "🔊 Saurari Fassara Cikin Hausa",
+    stopVoiceDub: "⏸ Dakatar da Fassara",
+    summaryHeading: "Taƙaitaccen Bayanin Bidiyo",
+    stepsHeading: "Fassara Daki-daki Har Karshe",
+    askPlaceholder: "Tambayi Noctis game da wannan bidiyon...",
+    askBtn: "Tambaya",
+    translating: "Noctis yana fassara bidiyon zuwa Hausa...",
+    liveInterpretingBadge: "Ana Fassara Cikin Hausa · Turanci Ƙasa (4%)",
+  },
+  yo: {
+    triggerBtn: "Ògbùfọ̀ Noctis",
+    popupTitle: "Ògbùfọ̀ Fídíò Noctis AI (Yorùbá)",
+    popupSubtitle: "Ìtumọ̀ Lójú Ẹsẹ̀ (Gẹ̀ẹ́sì 4% · Ohùn Yorùbá Lókè)",
+    listenVoiceDub: "🔊 Tẹ́tí Sí Ìtumọ̀ Ní Èdè Yorùbá",
+    stopVoiceDub: "⏸ Dá Ìtumọ̀Dúró",
+    summaryHeading: "Àkópọ̀ Fídíò Tí A Túmọ̀",
+    stepsHeading: "Ìtumọ̀ Lẹ́sẹẹsẹ Títí Dé Opin",
+    askPlaceholder: "Béèrè lọ́wọ́ Noctis nípa fídíò yìí...",
+    askBtn: "Béèrè",
+    translating: "Noctis ń túmọ̀ fídíò náà sí Yorùbá...",
+    liveInterpretingBadge: "Ìtumọ̀ Yorùbá Ń Lọ Lọ́wọ́ · Ohùn Gẹ̀ẹ́sì Ní Ìsàlẹ̀ (4%)",
+  },
+  ig: {
+    triggerBtn: "Onye Ntụgharị Noctis",
+    popupTitle: "Onye Ntụgharị Vidio Noctis AI (Igbo)",
+    popupSubtitle: "Ntụgharị Na-aga N'ihu (Bekee 4% · Olu Igbo Dị Elu)",
+    listenVoiceDub: "🔊 Gee Ntụgharị N'asụsụ Igbo",
+    stopVoiceDub: "⏸ Kwụsịtụ Ntụgharị",
+    summaryHeading: "Nchịkọta Vidio A Tụgharịrị",
+    stepsHeading: "Ntụgharị Nzọụkwụ Ruo Njedebe",
+    askPlaceholder: "Jụọ Noctis ka ọ kọwaa akụkụ ọ bụla nke vidio a...",
+    askBtn: "Jụọ",
+    translating: "Noctis na-atụgharị vidio a n'asụsụ Igbo...",
+    liveInterpretingBadge: "Ntụgharị Igbo Na-aga N'ihu · Olu Bekee Dị Ala (4%)",
+  },
   en: {
     triggerBtn: "Noctis Interpreter",
     popupTitle: "Noctis Simultaneous Video Interpreter",
@@ -586,7 +820,22 @@ export function NoctisVideoInterpreterPopup({
     } catch {}
   }, [])
 
-  const labels = UI_LABELS[language] || UI_LABELS.en
+  const labels = useMemo(() => {
+    if (UI_LABELS[language]) return UI_LABELS[language]!
+    return {
+      triggerBtn: `Noctis · ${currentLanguage.localName}`,
+      popupTitle: `Noctis AI Interpreter (${currentLanguage.localName})`,
+      popupSubtitle: `${currentLanguage.localName} Live Voice (+260%) · English Audio Lowered (4%)`,
+      listenVoiceDub: `🔊 Listen in ${currentLanguage.localName}`,
+      stopVoiceDub: `⏸ Pause ${currentLanguage.localName} Voice`,
+      summaryHeading: `Translated Video Overview (${currentLanguage.localName})`,
+      stepsHeading: `Simultaneous Interpretation (${currentLanguage.localName})`,
+      askPlaceholder: `Ask Noctis in ${currentLanguage.localName}...`,
+      askBtn: "Ask",
+      translating: `Noctis is interpreting into ${currentLanguage.localName}...`,
+      liveInterpretingBadge: `Speaking in ${currentLanguage.localName} · English Lowered (4%)`,
+    }
+  }, [language, currentLanguage.localName])
   const takeawaysKey = useMemo(() => (takeaways || []).join("||"), [takeaways])
 
   // Translate title, description, and takeaways ONLY when language or video content changes (never on 500ms timer ticks!)
@@ -636,8 +885,27 @@ export function NoctisVideoInterpreterPopup({
       setTranslatedOverview(initialTpl.overview)
       setTranslatedSteps(initialTpl.steps)
 
+      const hasNativeTemplate = [
+        "ak",
+        "ee",
+        "gaa",
+        "ha",
+        "yo",
+        "ig",
+        "pt",
+        "es",
+        "fr",
+        "de",
+        "zh",
+        "ja",
+        "ar",
+        "hi",
+        "sw",
+        "ru",
+      ].includes(language)
+
       const needsDynamicTranslation =
-        !instantTitle || !instantDesc || instantTakeaways.some((x) => !x)
+        !hasNativeTemplate || !instantTitle || !instantDesc || instantTakeaways.some((x) => !x)
 
       if (!needsDynamicTranslation) {
         setIsLoadingTranslation(false)
@@ -646,24 +914,36 @@ export function NoctisVideoInterpreterPopup({
 
       setIsLoadingTranslation(true)
       try {
-        const toTranslate = [title, cleanDesc, ...baseTakeaways]
-        const translatedList = await translateLinesLive(toTranslate, language)
-        if (!cancelled && translatedList.length === toTranslate.length) {
-          const finalTitle = instantTitle || translatedList[0]
-          const finalDesc = instantDesc || translatedList[1]
-          const finalTakeaways = baseTakeaways.map(
-            (_, idx) => instantTakeaways[idx] || translatedList[idx + 2]
-          )
-          const finalTpl = buildNativeLocalizedTemplate(
-            language,
-            finalTitle,
-            speaker,
-            finalDesc,
-            finalTakeaways
-          )
-          setTranslatedTitle(finalTitle)
-          setTranslatedOverview(finalTpl.overview)
-          setTranslatedSteps(finalTpl.steps)
+        if (hasNativeTemplate) {
+          const toTranslate = [title, cleanDesc, ...baseTakeaways]
+          const translatedList = await translateLinesLive(toTranslate, language)
+          if (!cancelled && translatedList.length === toTranslate.length) {
+            const finalTitle = instantTitle || translatedList[0]
+            const finalDesc = instantDesc || translatedList[1]
+            const finalTakeaways = baseTakeaways.map(
+              (_, idx) => instantTakeaways[idx] || translatedList[idx + 2]
+            )
+            const finalTpl = buildNativeLocalizedTemplate(
+              language,
+              finalTitle,
+              speaker,
+              finalDesc,
+              finalTakeaways
+            )
+            setTranslatedTitle(finalTitle)
+            setTranslatedOverview(finalTpl.overview)
+            setTranslatedSteps(finalTpl.steps)
+          }
+        } else {
+          // Translate full English template overview + steps into any of the 38 world/African languages!
+          const enTpl = buildNativeLocalizedTemplate("en", title, speaker, cleanDesc, baseTakeaways)
+          const toTranslate = [title, enTpl.overview, ...enTpl.steps]
+          const translatedList = await translateLinesLive(toTranslate, language)
+          if (!cancelled && translatedList.length === toTranslate.length) {
+            setTranslatedTitle(translatedList[0])
+            setTranslatedOverview(translatedList[1])
+            setTranslatedSteps(translatedList.slice(2))
+          }
         }
       } catch {
         // Native template already set

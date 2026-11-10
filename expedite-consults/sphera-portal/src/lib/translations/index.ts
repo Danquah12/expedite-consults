@@ -1,15 +1,49 @@
 export type LanguageCode =
   | "en"
+  | "ak"
+  | "ee"
+  | "gaa"
+  | "ha"
+  | "yo"
+  | "ig"
+  | "sw"
+  | "am"
+  | "zu"
+  | "xh"
+  | "so"
+  | "rw"
+  | "sn"
+  | "wo"
+  | "lg"
+  | "om"
   | "es"
   | "fr"
   | "de"
   | "pt"
+  | "it"
+  | "nl"
+  | "pl"
+  | "uk"
+  | "ru"
+  | "tr"
+  | "el"
+  | "sv"
+  | "ar"
+  | "fa"
+  | "he"
+  | "hi"
+  | "bn"
+  | "ur"
+  | "pa"
+  | "ta"
   | "zh"
   | "ja"
-  | "ar"
-  | "hi"
-  | "sw"
-  | "ru";
+  | "ko"
+  | "vi"
+  | "th"
+  | "id"
+  | "ms"
+  | "tl";
 
 export interface LanguageMeta {
   code: LanguageCode;
@@ -17,23 +51,67 @@ export interface LanguageMeta {
   localName: string;
   flag: string;
   dir: "ltr" | "rtl";
+  region?: string;
 }
 
 export const SUPPORTED_LANGUAGES: LanguageMeta[] = [
-  { code: "en", name: "English", localName: "English", flag: "🇺🇸", dir: "ltr" },
-  { code: "es", name: "Spanish", localName: "Español", flag: "🇪🇸", dir: "ltr" },
-  { code: "fr", name: "French", localName: "Français", flag: "🇫🇷", dir: "ltr" },
-  { code: "de", name: "German", localName: "Deutsch", flag: "🇩🇪", dir: "ltr" },
-  { code: "pt", name: "Portuguese", localName: "Português", flag: "🇧🇷", dir: "ltr" },
-  { code: "zh", name: "Chinese (Simplified)", localName: "简体中文", flag: "🇨🇳", dir: "ltr" },
-  { code: "ja", name: "Japanese", localName: "日本語", flag: "🇯🇵", dir: "ltr" },
-  { code: "ar", name: "Arabic", localName: "العربية", flag: "🇸🇦", dir: "rtl" },
-  { code: "hi", name: "Hindi", localName: "हिन्दी", flag: "🇮🇳", dir: "ltr" },
-  { code: "sw", name: "Swahili", localName: "Kiswahili", flag: "🇰🇪", dir: "ltr" },
-  { code: "ru", name: "Russian", localName: "Русский", flag: "🇷🇺", dir: "ltr" },
+  // Primary & Major African Languages (Ghana, West, East, Horn & Southern Africa)
+  { code: "en", name: "English", localName: "English", flag: "🇺🇸", dir: "ltr", region: "Global" },
+  { code: "ak", name: "Twi (Akan · Ghana)", localName: "Twi (Akan)", flag: "🇬🇭", dir: "ltr", region: "Africa" },
+  { code: "ee", name: "Ewe (Ghana & Togo)", localName: "Eʋegbe (Ewe)", flag: "🇬🇭", dir: "ltr", region: "Africa" },
+  { code: "gaa", name: "Ga (Accra · Ghana)", localName: "Gã", flag: "🇬🇭", dir: "ltr", region: "Africa" },
+  { code: "ha", name: "Hausa (West Africa)", localName: "Harshen Hausa", flag: "🇳🇬", dir: "ltr", region: "Africa" },
+  { code: "yo", name: "Yoruba (West Africa)", localName: "Èdè Yorùbá", flag: "🇳🇬", dir: "ltr", region: "Africa" },
+  { code: "ig", name: "Igbo (West Africa)", localName: "Ásụ̀sụ́ Ìgbò", flag: "🇳🇬", dir: "ltr", region: "Africa" },
+  { code: "sw", name: "Swahili (East Africa)", localName: "Kiswahili", flag: "🇰🇪", dir: "ltr", region: "Africa" },
+  { code: "am", name: "Amharic (Ethiopia)", localName: "አማርኛ", flag: "🇪🇹", dir: "ltr", region: "Africa" },
+  { code: "om", name: "Oromo (Horn of Africa)", localName: "Afaan Oromoo", flag: "🇪🇹", dir: "ltr", region: "Africa" },
+  { code: "so", name: "Somali (Horn of Africa)", localName: "Af-Soomaali", flag: "🇸🇴", dir: "ltr", region: "Africa" },
+  { code: "zu", name: "Zulu (Southern Africa)", localName: "isiZulu", flag: "🇿🇦", dir: "ltr", region: "Africa" },
+  { code: "xh", name: "Xhosa (Southern Africa)", localName: "isiXhosa", flag: "🇿🇦", dir: "ltr", region: "Africa" },
+  { code: "rw", name: "Kinyarwanda (Rwanda)", localName: "Ikinyarwanda", flag: "🇷🇼", dir: "ltr", region: "Africa" },
+  { code: "sn", name: "Shona (Zimbabwe)", localName: "chiShona", flag: "🇿🇼", dir: "ltr", region: "Africa" },
+  { code: "wo", name: "Wolof (Senegal & Gambia)", localName: "Wolof", flag: "🇸🇳", dir: "ltr", region: "Africa" },
+  { code: "lg", name: "Luganda (Uganda)", localName: "Oluganda", flag: "🇺🇬", dir: "ltr", region: "Africa" },
+
+  // Major Americas & European Languages
+  { code: "es", name: "Spanish", localName: "Español", flag: "🇪🇸", dir: "ltr", region: "Americas & Europe" },
+  { code: "fr", name: "French", localName: "Français", flag: "🇫🇷", dir: "ltr", region: "Europe & Africa" },
+  { code: "pt", name: "Portuguese", localName: "Português", flag: "🇧🇷", dir: "ltr", region: "Americas, Europe & Africa" },
+  { code: "de", name: "German", localName: "Deutsch", flag: "🇩🇪", dir: "ltr", region: "Europe" },
+  { code: "it", name: "Italian", localName: "Italiano", flag: "🇮🇹", dir: "ltr", region: "Europe" },
+  { code: "nl", name: "Dutch", localName: "Nederlands", flag: "🇳🇱", dir: "ltr", region: "Europe" },
+  { code: "pl", name: "Polish", localName: "Polski", flag: "🇵🇱", dir: "ltr", region: "Europe" },
+  { code: "uk", name: "Ukrainian", localName: "Українська", flag: "🇺🇦", dir: "ltr", region: "Europe" },
+  { code: "ru", name: "Russian", localName: "Русский", flag: "🇷🇺", dir: "ltr", region: "Europe & Asia" },
+  { code: "tr", name: "Turkish", localName: "Türkçe", flag: "🇹🇷", dir: "ltr", region: "Europe & Asia" },
+  { code: "el", name: "Greek", localName: "Ελληνικά", flag: "🇬🇷", dir: "ltr", region: "Europe" },
+  { code: "sv", name: "Swedish", localName: "Svenska", flag: "🇸🇪", dir: "ltr", region: "Europe" },
+
+  // Middle East & South / Central Asia
+  { code: "ar", name: "Arabic", localName: "العربية", flag: "🇸🇦", dir: "rtl", region: "MENA & Africa" },
+  { code: "fa", name: "Persian (Farsi)", localName: "فارसी", flag: "🇮🇷", dir: "rtl", region: "Middle East" },
+  { code: "he", name: "Hebrew", localName: "עברית", flag: "🇮🇱", dir: "rtl", region: "Middle East" },
+  { code: "hi", name: "Hindi", localName: "हिन्दी", flag: "🇮🇳", dir: "ltr", region: "South Asia" },
+  { code: "bn", name: "Bengali", localName: "বাংলা", flag: "🇧🇩", dir: "ltr", region: "South Asia" },
+  { code: "ur", name: "Urdu", localName: "اردو", flag: "🇵🇰", dir: "rtl", region: "South Asia" },
+  { code: "pa", name: "Punjabi", localName: "ਪੰਜਾਬੀ", flag: "🇮🇳", dir: "ltr", region: "South Asia" },
+  { code: "ta", name: "Tamil", localName: "தமிழ்", flag: "🇮🇳", dir: "ltr", region: "South Asia" },
+
+  // East & Southeast Asia
+  { code: "zh", name: "Chinese (Simplified)", localName: "简体中文", flag: "🇨🇳", dir: "ltr", region: "East Asia" },
+  { code: "ja", name: "Japanese", localName: "日本語", flag: "🇯🇵", dir: "ltr", region: "East Asia" },
+  { code: "ko", name: "Korean", localName: "한국어", flag: "🇰🇷", dir: "ltr", region: "East Asia" },
+  { code: "vi", name: "Vietnamese", localName: "Tiếng Việt", flag: "🇻🇳", dir: "ltr", region: "Southeast Asia" },
+  { code: "th", name: "Thai", localName: "ไทย", flag: "🇹🇭", dir: "ltr", region: "Southeast Asia" },
+  { code: "id", name: "Indonesian", localName: "Bahasa Indonesia", flag: "🇮🇩", dir: "ltr", region: "Southeast Asia" },
+  { code: "ms", name: "Malay", localName: "Bahasa Melayu", flag: "🇲🇾", dir: "ltr", region: "Southeast Asia" },
+  { code: "tl", name: "Filipino (Tagalog)", localName: "Filipino", flag: "🇵🇭", dir: "ltr", region: "Southeast Asia" },
 ];
 
-export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
+export const TRANSLATIONS: Partial<Record<LanguageCode, Record<string, string>>> & {
+  en: Record<string, string>;
+} = {
   // ─────────────────────────────────────────────────────────────────────────────
   // 1. ENGLISH (Default)
   // ─────────────────────────────────────────────────────────────────────────────
@@ -2517,6 +2595,191 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     vibe_ai_desc: "Кампусный и профессиональный интеллект",
     vibe_online: "В сети",
     qa_badge: "Вопросы",
+  },
 
+  // ─────────────────────────────────────────────────────────────────────────────
+  // 12. TWI / AKAN (Ghana)
+  // ─────────────────────────────────────────────────────────────────────────────
+  ak: {
+    nav_home: "Fie",
+    nav_home_short: "Fie",
+    nav_network: "Nkitahodi",
+    nav_network_short: "Nkitaho",
+    nav_jobs: "Adwuma",
+    nav_jobs_short: "Adwuma",
+    nav_marketplace: "Aguadibea 🛍️",
+    nav_marketplace_short: "Gua",
+    nav_media: "Video 🎥",
+    nav_media_short: "Video",
+    nav_pulse: "Pulse 📰",
+    nav_pulse_short: "Pulse",
+    nav_learning: "Adesua 🎓",
+    nav_learning_short: "Sua",
+    nav_messages: "Nkra 💬",
+    nav_messages_short: "Nkra",
+    nav_alerts_short: "Kɔkɔbɔ",
+    nav_more: "Bio",
+    nav_me: "Me",
+    nav_gate: "Kwan",
+    search_placeholder: "Hwehwɛ adwumayɛfo, adesua, nimdeɛ...",
+    search_button: "Hwehwɛ",
+    sign_out: "Fi Adi",
+    language_select: "Kasa (Twi)",
+    ask_vibe_ai: "Bisa Noctis",
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // 13. EWE / EƲEGBE (Ghana & Togo)
+  // ─────────────────────────────────────────────────────────────────────────────
+  ee: {
+    nav_home: "Aƒeme",
+    nav_home_short: "Aƒeme",
+    nav_network: "Kadodo",
+    nav_network_short: "Kadodo",
+    nav_jobs: "Dɔwɔnawo",
+    nav_jobs_short: "Dɔwo",
+    nav_marketplace: "Asime 🛍️",
+    nav_marketplace_short: "Asi",
+    nav_media: "Video 🎥",
+    nav_media_short: "Video",
+    nav_pulse: "Pulse 📰",
+    nav_pulse_short: "Pulse",
+    nav_learning: "Nusrɔ̃ƒe 🎓",
+    nav_learning_short: "Srɔ̃ nu",
+    nav_messages: "Gbedeasiwo 💬",
+    nav_messages_short: "Gbedeasi",
+    nav_alerts_short: "Nyadzɔdzɔ",
+    nav_more: "Bubuawo",
+    nav_me: "Nye",
+    nav_gate: "Agbo",
+    search_placeholder: "Di dɔwɔlawo, nusrɔ̃nawo kple aɖaŋuwo...",
+    search_button: "Di",
+    sign_out: "Do Go",
+    language_select: "Gbe (Eʋegbe)",
+    ask_vibe_ai: "Bia Noctis",
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // 14. GA / GÃ (Accra · Ghana)
+  // ─────────────────────────────────────────────────────────────────────────────
+  gaa: {
+    nav_home: "Shĩa",
+    nav_home_short: "Shĩa",
+    nav_network: "Sharɔ",
+    nav_network_short: "Sharɔ",
+    nav_jobs: "Nitsumɔi",
+    nav_jobs_short: "Nitsumɔ",
+    nav_marketplace: "Jara 🛍️",
+    nav_marketplace_short: "Jara",
+    nav_media: "Video 🎥",
+    nav_media_short: "Video",
+    nav_pulse: "Pulse 📰",
+    nav_pulse_short: "Pulse",
+    nav_learning: "Nikasemɔ 🎓",
+    nav_learning_short: "Kasemɔ",
+    nav_messages: "Shɛɛi 💬",
+    nav_messages_short: "Shɛɛ",
+    nav_alerts_short: "Adafitswaa",
+    nav_more: "Krokomɛi",
+    nav_me: "Mi",
+    nav_gate: "Agbó",
+    search_placeholder: "Taomɔ nitsulɔi, nikasemɔi...",
+    search_button: "Taomɔ",
+    sign_out: "Je Kpo",
+    language_select: "Wiemɔ (Gã)",
+    ask_vibe_ai: "Bi Noctis",
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // 15. HAUSA (West Africa)
+  // ─────────────────────────────────────────────────────────────────────────────
+  ha: {
+    nav_home: "Gida",
+    nav_home_short: "Gida",
+    nav_network: "Hanyar Sadarwa",
+    nav_network_short: "Sadarwa",
+    nav_jobs: "Ayyuka",
+    nav_jobs_short: "Aiki",
+    nav_marketplace: "Kasuwa 🛍️",
+    nav_marketplace_short: "Kasuwa",
+    nav_media: "Bidiyo 🎥",
+    nav_media_short: "Bidiyo",
+    nav_pulse: "Pulse 📰",
+    nav_pulse_short: "Pulse",
+    nav_learning: "Koyo 🎓",
+    nav_learning_short: "Koyo",
+    nav_messages: "Saƙonni 💬",
+    nav_messages_short: "Saƙo",
+    nav_alerts_short: "Sanarwa",
+    nav_more: "Ƙari",
+    nav_me: "Ni",
+    nav_gate: "Ƙofa",
+    search_placeholder: "Bincika mambobi, darussa, ƙwarewa...",
+    search_button: "Bincika",
+    sign_out: "Fita",
+    language_select: "Harshe (Hausa)",
+    ask_vibe_ai: "Tambayi Noctis",
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // 16. YORUBA (West Africa)
+  // ─────────────────────────────────────────────────────────────────────────────
+  yo: {
+    nav_home: "Ilé",
+    nav_home_short: "Ilé",
+    nav_network: "Ẹgbẹ́",
+    nav_network_short: "Ẹgbẹ́",
+    nav_jobs: "Iṣẹ́",
+    nav_jobs_short: "Iṣẹ́",
+    nav_marketplace: "Ọjà 🛍️",
+    nav_marketplace_short: "Ọjà",
+    nav_media: "Fídíò 🎥",
+    nav_media_short: "Fídíò",
+    nav_pulse: "Pulse 📰",
+    nav_pulse_short: "Pulse",
+    nav_learning: "Ẹ̀kọ́ 🎓",
+    nav_learning_short: "Ẹ̀kọ́",
+    nav_messages: "Iṣẹ́ Ránṣẹ́ 💬",
+    nav_messages_short: "Iṣẹ́",
+    nav_alerts_short: "Ìfitónilétí",
+    nav_more: "Síwájú",
+    nav_me: "Èmi",
+    nav_gate: "Ẹnu-ọ̀nà",
+    search_placeholder: "Wá àwọn ọmọ ẹgbẹ́, ẹ̀kọ́, iṣẹ́-ọwọ́...",
+    search_button: "Wá",
+    sign_out: "Jáde",
+    language_select: "Èdè (Yorùbá)",
+    ask_vibe_ai: "Béèrè lọ́wọ́ Noctis",
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // 17. IGBO (West Africa)
+  // ─────────────────────────────────────────────────────────────────────────────
+  ig: {
+    nav_home: "Ụlọ",
+    nav_home_short: "Ụlọ",
+    nav_network: "Njikọ",
+    nav_network_short: "Njikọ",
+    nav_jobs: "Ọrụ",
+    nav_jobs_short: "Ọrụ",
+    nav_marketplace: "Ahịa 🛍️",
+    nav_marketplace_short: "Ahịa",
+    nav_media: "Vidio 🎥",
+    nav_media_short: "Vidio",
+    nav_pulse: "Pulse 📰",
+    nav_pulse_short: "Pulse",
+    nav_learning: "Ọmụmụ 🎓",
+    nav_learning_short: "Mụọ",
+    nav_messages: "Ozi 💬",
+    nav_messages_short: "Ozi",
+    nav_alerts_short: "Ọkwa",
+    nav_more: "Ndị ọzọ",
+    nav_me: "Mụ",
+    nav_gate: "Ọnụ ụzọ",
+    search_placeholder: "Chọọ ndị otu, ọmụmụ, nka...",
+    search_button: "Chọọ",
+    sign_out: "Pụọ",
+    language_select: "Asụsụ (Igbo)",
+    ask_vibe_ai: "Jụọ Noctis",
   }
 };
