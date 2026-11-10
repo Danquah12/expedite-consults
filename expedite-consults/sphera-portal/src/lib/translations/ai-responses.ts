@@ -322,7 +322,13 @@ Grundprinzip: **„Niemals vertrauen, immer verifizieren“** (*Never Trust, Alw
   }
 
   // Generic fallback translation for any other prompt
-  const langPrefixes: Record<LanguageCode, string> = {
+  const langPrefixes: Partial<Record<LanguageCode, string>> = {
+    ak: `Mayɛ w'abisaeɛ a ɛfa "${prompt}" ho no ho adwuma. ConnectIn AI ahyehyɛ abenfoɔ a wɔagye wɔn atom ne adesua a ɛfata:`,
+    ee: `Meɖo ŋu na wò biabia si ku ɖe "${prompt}" ŋu. ConnectIn AI ƒo eŋuti nunyalagãwo kple nusɔsrɔ̃wo nu ƒu:`,
+    gaa: `Mitsu osɛɛbii ni kɔɔ "${prompt}" he lɛ he nii. ConnectIn AI ebua nilee kɛ nikasemɔi anaa:`,
+    ha: `Na sarrafa tambayarku game da "${prompt}". ConnectIn AI ya tattara ƙwararru da darussan da suka dace:`,
+    yo: `Mo ti ṣiṣẹ́ lórí ìbéèrè rẹ nípa "${prompt}". ConnectIn AI ti ṣajọpọ̀ àwọn amọ̀jọ̀gbọ́n àti ẹ̀kọ́ tó báramu:`,
+    ig: `Emezuru m ajụjụ gịbasara "${prompt}". ConnectIn AI achịkọtala ndị ọkachamara na ọmụmụ ihe dabara adaba:`,
     es: `He procesado tu consulta sobre "${prompt}". ConnectIn AI ha indexado expertos verificados, cursos técnicos y soluciones recomendadas:`,
     fr: `J'ai traité votre demande concernant « ${prompt} ». ConnectIn AI a répertorié les experts vérifiés, formations et solutions correspondantes :`,
     de: `Ich habe Ihre Anfrage zu „${prompt}“ verarbeitet. ConnectIn AI hat passende verifizierte Experten und Fachkurse indiziert:`,
@@ -339,7 +345,7 @@ Grundprinzip: **„Niemals vertrauen, immer verifizieren“** (*Never Trust, Alw
   return {
     id: `ai_${Date.now()}`,
     sender: "assistant",
-    text: langPrefixes[lang] || langPrefixes.es,
+    text: langPrefixes[lang] || langPrefixes.en || "",
     suggestedCards: [
       {
         title: lang === "es" ? "Explorar catálogo de soluciones" : "Explore Solutions Hub",

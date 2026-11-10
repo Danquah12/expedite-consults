@@ -121,6 +121,34 @@ export function ProfileView({
   const [editingExperience, setEditingExperience] = useState<ParsedExperience | null>(null)
   const [resumeSuccessBanner, setResumeSuccessBanner] = useState<string | null>(null)
 
+  const syncPublicProfileToCloud = (profileToSync: UserProfile) => {
+    if (isViewingOtherMember || typeof window === 'undefined') return
+    try {
+      fetch('/api/connectin/users', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: profileToSync.id,
+          name: profileToSync.name,
+          headline: profileToSync.headline,
+          location: profileToSync.location,
+          about: profileToSync.about,
+          avatar: profileToSync.avatar,
+          coverImage: profileToSync.coverImage,
+          skills: (profileToSync.skills || []).map((s: any) =>
+            typeof s === 'string' ? s : s?.name
+          ).filter(Boolean),
+          profession: profileToSync.profession,
+          professionId: profileToSync.professionId,
+          professionCategory: profileToSync.professionCategory,
+          professionEnclave: profileToSync.professionEnclave
+        })
+      }).catch(() => {})
+    } catch {
+      // ignore offline error
+    }
+  }
+
   const handleApplyResumeExperience = (
     newExperiences: ParsedExperience[],
     options: {
@@ -183,7 +211,10 @@ export function ProfileView({
       ...({ uploadedResume: uploadedResumeMeta } as any)
     }
 
-    saveStoredUser(updatedUser)
+    if (!isViewingOtherMember) {
+      saveStoredUser(updatedUser)
+      syncPublicProfileToCloud(updatedUser)
+    }
     trackUserActivity({
       actionType: 'RESUME_UPLOADED',
       actionLabel: 'Uploaded & Applied Resume to Profile',
@@ -243,7 +274,10 @@ export function ProfileView({
       experience: nextExpList
     }
 
-    saveStoredUser(updatedUser)
+    if (!isViewingOtherMember) {
+      saveStoredUser(updatedUser)
+      syncPublicProfileToCloud(updatedUser)
+    }
     if (onUpdateUser) {
       onUpdateUser(updatedUser)
     }
@@ -256,7 +290,10 @@ export function ProfileView({
       ...user,
       experience: nextExpList
     }
-    saveStoredUser(updatedUser)
+    if (!isViewingOtherMember) {
+      saveStoredUser(updatedUser)
+      syncPublicProfileToCloud(updatedUser)
+    }
     if (onUpdateUser) {
       onUpdateUser(updatedUser)
     }
@@ -585,7 +622,10 @@ export function ProfileView({
       ...user,
       avatar: newAvatarUrl
     }
-    saveStoredUser(updated)
+    if (!isViewingOtherMember) {
+      saveStoredUser(updated)
+      syncPublicProfileToCloud(updated)
+    }
     trackUserActivity({
       actionType: 'PROFILE_UPDATED',
       actionLabel: 'Updated & Trimmed Profile Picture',
@@ -626,7 +666,10 @@ export function ProfileView({
       ...user,
       coverImage: newCoverUrl
     }
-    saveStoredUser(updated)
+    if (!isViewingOtherMember) {
+      saveStoredUser(updated)
+      syncPublicProfileToCloud(updated)
+    }
     if (onUpdateUser) {
       onUpdateUser(updated)
     }
@@ -809,7 +852,10 @@ export function ProfileView({
       savePersistentCover(resolvedCover, updated)
     }
 
-    saveStoredUser(updated)
+    if (!isViewingOtherMember) {
+      saveStoredUser(updated)
+      syncPublicProfileToCloud(updated)
+    }
     if (onUpdateUser) {
       onUpdateUser(updated)
     }
@@ -894,7 +940,10 @@ export function ProfileView({
         return s
       })
       const updatedUser: UserProfile = { ...user, skills: updatedSkills }
+      if (!isViewingOtherMember) {
       saveStoredUser(updatedUser)
+      syncPublicProfileToCloud(updatedUser)
+    }
       if (onUpdateUser) onUpdateUser(updatedUser)
     }
   }
@@ -918,7 +967,10 @@ export function ProfileView({
           { name: trimmed, endorsements: 0, endorsers: [`${enclaveInfo?.name || 'ConnectIn'} Master Board`] }
         ]
       }
+      if (!isViewingOtherMember) {
       saveStoredUser(updatedUser)
+      syncPublicProfileToCloud(updatedUser)
+    }
       if (onUpdateUser) onUpdateUser(updatedUser)
     }
     setNewVerifiedSkillName("")
@@ -1088,21 +1140,23 @@ export function ProfileView({
 
           {/* Quick Metrics Reflecting User Profile */}
           <div className="flex items-center gap-2.5 sm:gap-3 shrink-0 flex-wrap">
-            <div
-              onClick={() => setWorkspaceSection('analytics')}
-              className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 hover:border-[#0A66C2] p-3 text-center min-w-[115px] cursor-pointer transition-all"
-              title="Open Profile Analytics"
-            >
-              <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 dark:text-zinc-400">
-                Profile Views
-              </span>
-              <p className="text-lg sm:text-xl font-black text-[#0A66C2] dark:text-sky-400">
-                {tailoredAnalytics.effectiveProfileViews.toLocaleString()}
-              </p>
-              <span className="text-[10px] text-zinc-400">
-                {viewers.length} Direct Viewers
-              </span>
-            </div>
+            {!isViewingOtherMember && (
+              <div
+                onClick={() => setWorkspaceSection('analytics')}
+                className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 hover:border-[#0A66C2] p-3 text-center min-w-[115px] cursor-pointer transition-all"
+                title="Open Profile Analytics"
+              >
+                <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 dark:text-zinc-400">
+                  Profile Views
+                </span>
+                <p className="text-lg sm:text-xl font-black text-[#0A66C2] dark:text-sky-400">
+                  {tailoredAnalytics.effectiveProfileViews.toLocaleString()}
+                </p>
+                <span className="text-[10px] text-zinc-400">
+                  {viewers.length} Direct Viewers
+                </span>
+              </div>
+            )}
             <div
               onClick={() => setWorkspaceSection('profile')}
               className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 hover:border-emerald-500 p-3 text-center min-w-[115px] cursor-pointer transition-all"
@@ -1139,7 +1193,7 @@ export function ProfileView({
         <div className="mt-5 pt-3.5 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
           {[
             { id: 'profile', label: '👤 Profile' },
-            { id: 'analytics', label: '📊 Analytics' },
+            ...(!isViewingOtherMember ? [{ id: 'analytics', label: '📊 Analytics' }] : []),
             { id: 'portfolio', label: '💼 Portfolio' },
             { id: 'skills', label: '🛡️ Skills' },
             { id: 'certifications', label: '📜 Certifications' },
@@ -1653,7 +1707,8 @@ export function ProfileView({
                   </div>
                 </div>
 
-                {/* ANALYTICS & IDENTITY RADAR STRIP */}
+                {/* ANALYTICS & IDENTITY RADAR STRIP (Owner only — private to your own profile) */}
+                {!isViewingOtherMember && (
                 <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/70 p-5 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -1721,6 +1776,7 @@ export function ProfileView({
                     </div>
                   </div>
                 </div>
+                )}
               </div>
             </div>
           </div>
@@ -1890,8 +1946,8 @@ export function ProfileView({
           </div>
           )}
 
-          {/* Reconciled Trade Dispatch, Expiration Desk & Hall Invites for Trades Enclave */}
-          {effectiveEnclaveId === 'trades_construction' && (
+          {/* Reconciled Trade Dispatch, Expiration Desk & Hall Invites for Trades Enclave (Owner only) */}
+          {!isViewingOtherMember && effectiveEnclaveId === 'trades_construction' && (
             <div className="pt-2">
               <TradeEnclaveWidgets
                 user={user}
@@ -1908,9 +1964,9 @@ export function ProfileView({
       )}
 
       {/* ========================================================================= */}
-      {/* 📊 ANALYTICS, GRAPHS, TRENDS & USER INTELLIGENCE SUB-SECTION              */}
+      {/* 📊 ANALYTICS, GRAPHS, TRENDS & USER INTELLIGENCE SUB-SECTION (Owner only) */}
       {/* ========================================================================= */}
-      {workspaceSection === 'analytics' && (() => {
+      {workspaceSection === 'analytics' && !isViewingOtherMember && (() => {
         const tfMultiplier =
           analyticsTimeframe === '7d'
             ? 1
@@ -3116,23 +3172,27 @@ export function ProfileView({
                     <span>Verified Skill Capabilities &amp; Multi-Factor Evidence</span>
                   </h3>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                    Click any verified skill below to filter the jobs you directly qualify for based on your competency evidence.
+                    {isViewingOtherMember
+                      ? `Verified capabilities and multi-factor competency evidence for ${user.name}.`
+                      : "Click any verified skill below to filter the jobs you directly qualify for based on your competency evidence."}
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setShowAddSkillInput(!showAddSkillInput)}
-                    className="rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/70 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 px-3 py-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-300 transition-colors flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    <span>Add Verified Skill</span>
-                  </button>
-                </div>
+                {!isViewingOtherMember && (
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setShowAddSkillInput(!showAddSkillInput)}
+                      className="rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/70 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 px-3 py-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-300 transition-colors flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      <span>Add Verified Skill</span>
+                    </button>
+                  </div>
+                )}
               </div>
 
-              {showAddSkillInput && (
+              {showAddSkillInput && !isViewingOtherMember && (
                 <form
                   onSubmit={handleAddVerifiedSkill}
                   className="rounded-xl border border-indigo-200 dark:border-indigo-800/80 bg-indigo-50/40 dark:bg-indigo-950/30 p-3.5 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5"
@@ -3211,32 +3271,34 @@ export function ProfileView({
                         <span className="text-amber-600 dark:text-amber-400">✓ Peer Supervised</span>
                       </div>
 
-                      {/* Direct Skill-to-Jobs Qualification Footer */}
-                      <div className="flex items-center justify-between pt-0.5">
-                        <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
-                          <Briefcase className="h-3.5 w-3.5" />
-                          <span>Qualifies you for <strong>{matchingJobsCount}</strong> open roles</span>
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedSkillJobFilter(
-                              isSelectedFilter ? 'all' : skill.name
-                            )
-                            if (typeof window !== 'undefined') {
-                              const el = document.getElementById('skill-qualified-jobs-section')
-                              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                            }
-                          }}
-                          className={`text-[11px] font-bold px-2.5 py-1 rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
-                            isSelectedFilter
-                              ? "bg-[#0A66C2] text-white"
-                              : "text-[#0A66C2] dark:text-sky-400 hover:bg-blue-50 dark:hover:bg-blue-950/50"
-                          }`}
-                        >
-                          <span>{isSelectedFilter ? "Showing Matches ✓" : "Filter Jobs by Skill →"}</span>
-                        </button>
-                      </div>
+                      {/* Direct Skill-to-Jobs Qualification Footer (Owner only) */}
+                      {!isViewingOtherMember && (
+                        <div className="flex items-center justify-between pt-0.5">
+                          <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                            <Briefcase className="h-3.5 w-3.5" />
+                            <span>Qualifies you for <strong>{matchingJobsCount}</strong> open roles</span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedSkillJobFilter(
+                                isSelectedFilter ? 'all' : skill.name
+                              )
+                              if (typeof window !== 'undefined') {
+                                const el = document.getElementById('skill-qualified-jobs-section')
+                                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                              }
+                            }}
+                            className={`text-[11px] font-bold px-2.5 py-1 rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
+                              isSelectedFilter
+                                ? "bg-[#0A66C2] text-white"
+                                : "text-[#0A66C2] dark:text-sky-400 hover:bg-blue-50 dark:hover:bg-blue-950/50"
+                            }`}
+                          >
+                            <span>{isSelectedFilter ? "Showing Matches ✓" : "Filter Jobs by Skill →"}</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )
                 })}
@@ -3244,8 +3306,9 @@ export function ProfileView({
             </div>
 
             {/* ===================================================================== */}
-            {/* 💼 JOBS YOU QUALIFY FOR BASED ON YOUR VERIFIED SKILLS                 */}
+            {/* 💼 JOBS YOU QUALIFY FOR BASED ON YOUR VERIFIED SKILLS (Owner only)    */}
             {/* ===================================================================== */}
+            {!isViewingOtherMember && (
             <div
               id="skill-qualified-jobs-section"
               className="rounded-2xl border border-emerald-500/30 bg-white dark:bg-zinc-900 p-6 shadow-md space-y-5"
@@ -3646,6 +3709,7 @@ export function ProfileView({
                 </Dialog>
               )}
             </div>
+            )}
           </div>
         )
       })()}
@@ -3655,8 +3719,8 @@ export function ProfileView({
       {/* ========================================================================= */}
       {workspaceSection === 'certifications' && (
         <div className="space-y-5">
-          {/* Reconciled Trade Tickets & License Expiration Desk */}
-          {effectiveEnclaveId === 'trades_construction' && (
+          {/* Reconciled Trade Tickets & License Expiration Desk (Owner only) */}
+          {!isViewingOtherMember && effectiveEnclaveId === 'trades_construction' && (
             <TradeEnclaveWidgets
               user={user}
               onNavigateTab={() => setWorkspaceSection('certifications')}
@@ -4010,23 +4074,28 @@ export function ProfileView({
                   Seller &amp; Developer Hub
                 </span>
                 <h3 className="text-xl sm:text-2xl font-black text-white">
-                  My Products &amp; Storefront Management
+                  {isViewingOtherMember ? `${user.name}'s Products & Storefront` : 'My Products & Storefront Management'}
                 </h3>
                 <p className="text-xs sm:text-sm text-purple-200">
-                  Manage everything you sell through ConnectIn Marketplace: software subscriptions, masterclasses, and consulting retainers.
+                  {isViewingOtherMember
+                    ? `Explore software subscriptions, masterclasses, and consulting retainers offered by ${user.name} on ConnectIn Marketplace.`
+                    : 'Manage everything you sell through ConnectIn Marketplace: software subscriptions, masterclasses, and consulting retainers.'}
                 </p>
               </div>
 
-              <button
-                onClick={() => setIsAddProductModalOpen(true)}
-                className="rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 px-4 py-2.5 text-xs font-black text-white shadow-md flex items-center gap-1.5 shrink-0"
-              >
-                <Plus className="h-4 w-4" />
-                <span>+ List New Product</span>
-              </button>
+              {!isViewingOtherMember && (
+                <button
+                  onClick={() => setIsAddProductModalOpen(true)}
+                  className="rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 px-4 py-2.5 text-xs font-black text-white shadow-md flex items-center gap-1.5 shrink-0"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>+ List New Product</span>
+                </button>
+              )}
             </div>
 
-            {/* Seller KPIs */}
+            {/* Seller KPIs (Owner only) */}
+            {!isViewingOtherMember && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
               <div className="rounded-xl bg-black/40 border border-white/15 p-3 text-center">
                 <span className="text-[10px] text-zinc-400 uppercase font-mono">Total Monthly MRR</span>
@@ -4045,13 +4114,14 @@ export function ProfileView({
                 <p className="text-lg sm:text-xl font-black text-sky-400">207 Leads</p>
               </div>
             </div>
+            )}
           </div>
 
           {/* Active Product Listings Table */}
           <div className="space-y-4">
             <h4 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
               <Store className="h-5 w-5 text-purple-600" />
-              <span>Your Active Marketplace Listings ({myProducts.length})</span>
+              <span>{isViewingOtherMember ? `${user.name.split(' ')[0]}'s Active Marketplace Listings (${myProducts.length})` : `Your Active Marketplace Listings (${myProducts.length})`}</span>
             </h4>
 
             <div className="space-y-3">
