@@ -387,8 +387,8 @@ export function NotificationsView({
     ]
   }, [liveLookupAlertItems, liveVouchAlertItems, tailoredCareerAlertItems, liveFollowerNotificationItems, notifications])
 
-  // Noctis Alerts Intelligence States
-  const [showNoctisOverview, setShowNoctisOverview] = useState<boolean>(true)
+  // Noctis Alerts Intelligence States (collapsed by default to avoid clutter)
+  const [showNoctisOverview, setShowNoctisOverview] = useState<boolean>(false)
   const [isNoctisOverviewLoading, setIsNoctisOverviewLoading] = useState<boolean>(false)
   const [noctisOverviewText, setNoctisOverviewText] = useState<string>("")
   const [noctisUpdatedAtLabel, setNoctisUpdatedAtLabel] = useState<string>("Updated just now")
@@ -811,8 +811,8 @@ export function NotificationsView({
         )}
       </div>
 
-      {/* 1.15 SET UP ALERTS FOR JOBS YOU WANT (Visible in 'All' and 'Job Alerts' tab) */}
-      {(selectedCategory === 'Job Alerts' || selectedCategory === 'All') && (
+      {/* 1.15 SET UP ALERTS FOR JOBS YOU WANT (Shown only when user clicks '🔔 Set Up Job Alerts' tab or 'Get started' to keep default view uncluttered) */}
+      {selectedCategory === 'Job Alerts' && (
         <div
           id="connectln-alerts-job-alert-studio"
           className="rounded-2xl border-2 border-[#0A66C2] bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-xs space-y-5"

@@ -64,7 +64,7 @@ export function FloatingMessagingDock({
   const viewerFirstName = (currentUser?.name || "Kwesi").split(" ")[0]
 
   const [isDockOpen, setIsDockOpen] = useState(false)
-  const [isMelissaOfferOpen, setIsMelissaOfferOpen] = useState(true)
+  const [isMelissaOfferOpen, setIsMelissaOfferOpen] = useState(false)
   const [isMelissaMinimized, setIsMelissaMinimized] = useState(true)
   const [melissaResponseState, setMelissaResponseState] = useState<'pending' | 'get_started' | 'not_today' | 'not_interested'>('pending')
   const [melissaAlertEnabled, setMelissaAlertEnabled] = useState(true)
