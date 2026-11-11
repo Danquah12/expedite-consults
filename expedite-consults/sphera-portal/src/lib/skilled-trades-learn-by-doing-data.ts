@@ -816,11 +816,11 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
     ],
     fieldTip: 'Remember the dividing line of the refrigeration loop: the Compressor and Metering Device separate the High-Pressure (Condensing) side from the Low-Pressure (Evaporating) side.'
   },
-  // ─── INTERNATIONAL MULTI-LANGUAGE MASTERCLASSES (Interpreted Back to English & 46 Languages) ───
+  // ─── INTERNATIONAL MULTI-LANGUAGE MASTERCLASSES (Interpreted Across All 46 Languages) ───
   {
     id: 'lbd_intl_es_carpentry_speedsquare_14',
     lessonNumber: 14,
-    videoLabel: 'Global Training (Español → English): Escuadra Rápida en Carpintería',
+    videoLabel: 'Global Training (Español): Escuadra Rápida en Carpintería',
     title: 'Escuadra Rápida y Funciones de Trazado (Spanish Carpentry Masterclass)',
     category: 'Carpentry',
     enclaveId: 'trades_construction',
@@ -829,14 +829,14 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
     originalCreator: 'Taller de Ideas de Erick · Red SENA / Formación Técnica',
     creatorDomain: 'tallerdeideas.com',
     sourceLanguage: 'es',
-    sourceLanguageLabel: '🇪🇸 Español (Interpreted to English)',
+    sourceLanguageLabel: '🇪🇸 Español',
     description:
-      'Authentic Spanish-language carpentry training demonstrating how master Latin American woodworkers use the speed square (escuadra rápida) as a saw guide, protractor, and layout tool—simultaneously interpreted into English by Noctis.',
+      'Authentic Spanish-language carpentry training demonstrating how master Latin American woodworkers use the speed square (escuadra rápida) as a saw guide, protractor, and layout tool—with live multilingual audio interpretation by Noctis.',
     skillsCovered: [
       'Speed Square Saw-Guide Fence (Guía de Corte)',
       '90° & 45° Layout Scribing (Trazado de Ángulos)',
       'Rafter Pitch & Pivot Marking (Uso del Pivote)',
-      'Bilingual Spanish-to-English Technical Terms'
+      'Cross-Language Technical Terminology'
     ],
     sourceVideoUrl: 'https://www.youtube.com/watch?v=vLBRNuzVTHg',
     referenceArticleUrl: 'https://www.youtube.com/watch?v=vLBRNuzVTHg',
@@ -845,12 +845,12 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
     duration: '',
     thumbnailUrl: 'https://i.ytimg.com/vi/vLBRNuzVTHg/hqdefault.jpg',
     practiceActivity:
-      'Follow the Spanish masterclass with live English interpretation to scribe a 90° crosscut and guide a circular saw base along the speed square fence.',
+      'Follow the Spanish masterclass with live Noctis audio interpretation in your preferred language to scribe a 90° crosscut and guide a circular saw base along the speed square fence.',
     practiceDeliverablePrompt:
-      'Record your key takeaway from the Spanish-to-English carpentry demonstration and how the speed square lip acts as a straight-edge track.',
+      'Record your key takeaway from the Spanish carpentry demonstration and how the speed square lip acts as a straight-edge track.',
     knowledgeCheck: {
       question:
-        'In this Spanish carpentry training (interpreted into English), how does the speed square ("escuadra rápida") double as a circular saw guide?',
+        'In this Spanish carpentry training, how does the speed square ("escuadra rápida") double as a circular saw guide?',
       options: [
         'By pressing the T-bar fence tightly against the board edge and running the circular saw baseplate flush along the 90° body edge',
         'By removing the fence lip from the square',
@@ -871,7 +871,7 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
   {
     id: 'lbd_intl_fr_carpentry_joinery_15',
     lessonNumber: 15,
-    videoLabel: 'Global Training (Français → English): Assemblages d’Ébénisterie',
+    videoLabel: 'Global Training (Français): Assemblages d’Ébénisterie',
     title: '8 Techniques d’Assemblage du Bois (French Cabinetry & Joinery)',
     category: 'Carpentry',
     enclaveId: 'trades_construction',
@@ -880,9 +880,9 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
     originalCreator: 'Astuces Design · Compagnons & Ébénisterie France',
     creatorDomain: 'astucesdesign.com',
     sourceLanguage: 'fr',
-    sourceLanguageLabel: '🇫🇷 Français (Interpreted to English)',
+    sourceLanguageLabel: '🇫🇷 Français',
     description:
-      'French woodworking and cabinetmaking ("ébénisterie") training covering 8 core wood joinery techniques—including mortise-and-tenon, dowel, biscuit, and half-lap joints—interpreted live into English.',
+      'French woodworking and cabinetmaking ("ébénisterie") training covering 8 core wood joinery techniques—including mortise-and-tenon, dowel, biscuit, and half-lap joints—with live multilingual audio interpretation by Noctis.',
     skillsCovered: [
       'French Cabinetmaking Joinery (Assemblages Bois)',
       'Half-Lap & Miter Joints (Mi-Bois & Coupe d’Onglet)',
@@ -896,7 +896,7 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
     duration: '',
     thumbnailUrl: 'https://i.ytimg.com/vi/eSXgnV8WKw8/hqdefault.jpg',
     practiceActivity:
-      'Compare two of the 8 French joinery methods interpreted into English (such as half-lap vs. dowel joinery) and select which fits a cabinet frame.',
+      'Compare two of the 8 French joinery methods (such as half-lap vs. dowel joinery) and select which fits a cabinet frame.',
     practiceDeliverablePrompt:
       'Note which French wood joinery method from the video provides the best alignment and glue surface area for your project.',
     knowledgeCheck: {
@@ -916,7 +916,7 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
   {
     id: 'lbd_intl_ja_carpentry_joinery_16',
     lessonNumber: 16,
-    videoLabel: 'Global Training (日本語 → English): 日本建築の継手と仕口',
+    videoLabel: 'Global Training (日本語): 日本建築の継手と仕口',
     title: '継手と仕口の違い｜木造の組み方の基本 (Japanese Timber Joinery)',
     category: 'Carpentry',
     enclaveId: 'trades_construction',
@@ -925,9 +925,9 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
     originalCreator: '建築現場の教科書 · Japanese Timber Craft Portal',
     creatorDomain: 'kenchiku-genba.jp',
     sourceLanguage: 'ja',
-    sourceLanguageLabel: '🇯🇵 日本語 (Interpreted to English)',
+    sourceLanguageLabel: '🇯🇵 日本語',
     description:
-      'Japanese architectural carpentry training explaining the fundamental difference between "Tsugite" (継手 — lengthening splice joints) and "Shikuchi" (仕口 — angled intersection joints) in traditional timber framing, interpreted live into English.',
+      'Japanese architectural carpentry training explaining the fundamental difference between "Tsugite" (継手 — lengthening splice joints) and "Shikuchi" (仕口 — angled intersection joints) in traditional timber framing, with live multilingual audio interpretation by Noctis.',
     skillsCovered: [
       'Tsugite Timber Splicing (継手 · Longitudinal Beam Splices)',
       'Shikuchi Angled Framing Joints (仕口 · Post-to-Beam Intersections)',
@@ -941,12 +941,12 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
     duration: '',
     thumbnailUrl: 'https://i.ytimg.com/vi/4iGL2mh2Qf4/hqdefault.jpg',
     practiceActivity:
-      'Listen to the English interpretation of this Japanese timber framing lesson and sketch the difference between a longitudinal splice (Tsugite) and a right-angle corner joint (Shikuchi).',
+      'Listen to the Noctis interpretation of this Japanese timber framing lesson and sketch the difference between a longitudinal splice (Tsugite) and a right-angle corner joint (Shikuchi).',
     practiceDeliverablePrompt:
-      'Explain in your own words the difference between Tsugite (継手) and Shikuchi (仕口) as interpreted from the Japanese masterclass.',
+      'Explain in your own words the difference between Tsugite (継手) and Shikuchi (仕口) from the Japanese masterclass.',
     knowledgeCheck: {
       question:
-        'In Japanese timber framing (interpreted into English), what is the distinction between "Tsugite" (継手) and "Shikuchi" (仕口)?',
+        'In Japanese timber framing, what is the distinction between "Tsugite" (継手) and "Shikuchi" (仕口)?',
       options: [
         'Tsugite joins two timbers end-to-end in the same direction to lengthen a beam/post, while Shikuchi joins two timbers at an angle (such as a post meeting a beam)',
         'Tsugite is a type of paint, while Shikuchi is a saw blade',
@@ -961,7 +961,7 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
   {
     id: 'lbd_intl_pt_carpentry_marcenaria_17',
     lessonNumber: 17,
-    videoLabel: 'Global Training (Português → English): Ferramentas de Marcenaria',
+    videoLabel: 'Global Training (Português): Ferramentas de Marcenaria',
     title: 'Ferramentas Essenciais para Começar na Marcenaria (Portuguese Workshop Guide)',
     category: 'Carpentry',
     enclaveId: 'trades_construction',
@@ -970,9 +970,9 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
     originalCreator: 'Oficina Empoeirados · SENAI / Marcenaria Brasil',
     creatorDomain: 'empoeirados.com.br',
     sourceLanguage: 'pt',
-    sourceLanguageLabel: '🇧🇷 Português (Interpreted to English)',
+    sourceLanguageLabel: '🇧🇷 Português',
     description:
-      'Brazilian Portuguese woodworking ("marcenaria") workshop guide introducing the essential hand and power tools for accurate measuring, clamping, sawing, and finishing—interpreted back into English.',
+      'Brazilian Portuguese woodworking ("marcenaria") workshop guide introducing the essential hand and power tools for accurate measuring, clamping, sawing, and finishing—with live multilingual audio interpretation by Noctis.',
     skillsCovered: [
       'Measuring & Layout Tools (Esquadro, Trena e Graminho)',
       'Hand Saws & Chisels (Serrote Japonês e Formões)',
@@ -986,12 +986,12 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
     duration: '',
     thumbnailUrl: 'https://i.ytimg.com/vi/HoaKf6pQQgw/hqdefault.jpg',
     practiceActivity:
-      'Watch the Portuguese workshop guide with live English interpretation and list the 5 foundational layout and clamping tools recommended before buying large stationary machines.',
+      'Watch the Portuguese workshop guide with live Noctis interpretation and list the 5 foundational layout and clamping tools recommended before buying large stationary machines.',
     practiceDeliverablePrompt:
-      'List the starter woodworking tools highlighted in the Portuguese-to-English session and why precision measuring tools come first.',
+      'List the starter woodworking tools highlighted in the Portuguese session and why precision measuring tools come first.',
     knowledgeCheck: {
       question:
-        'According to the Brazilian woodworking ("marcenaria") training interpreted into English, why should a beginner invest in quality measuring squares and clamps before expensive stationary machinery?',
+        'According to the Brazilian woodworking ("marcenaria") training, why should a beginner invest in quality measuring squares and clamps before expensive stationary machinery?',
       options: [
         'Because accurate layout markings and rigid clamping determine whether joints fit squarely, regardless of which saw cuts the wood',
         'Because clamps can cut wood without a saw',
@@ -1006,7 +1006,7 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
   {
     id: 'lbd_intl_sw_carpentry_veta_18',
     lessonNumber: 18,
-    videoLabel: 'Global Training (Kiswahili → English): Mafunzo ya Ufundi Seremala (VETA)',
+    videoLabel: 'Global Training (Kiswahili): Mafunzo ya Ufundi Seremala (VETA)',
     title: 'Fani ya Ufundi Seremala na Ukaguzi wa Mbao (East African VETA Carpentry)',
     category: 'Carpentry',
     enclaveId: 'trades_construction',
@@ -1015,12 +1015,12 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
     originalCreator: 'VETA Tanzania · Vocational Education & Training Authority',
     creatorDomain: 'veta.go.tz',
     sourceLanguage: 'sw',
-    sourceLanguageLabel: '🇹🇿 Kiswahili (Interpreted to English)',
+    sourceLanguageLabel: '🇹🇿 Kiswahili',
     description:
-      'Official East African Vocational Education and Training Authority (VETA) Kiswahili training on hardwood selection, timber planing, mortising, and furniture assembly—interpreted live into English.',
+      'Official East African Vocational Education and Training Authority (VETA) Kiswahili training on hardwood selection, timber planing, mortising, and furniture assembly—with live multilingual audio interpretation by Noctis.',
     skillsCovered: [
       'Hardwood Timber Inspection & Seasoning (Ukaguzi wa Mbao)',
-      'Workshop Planing & Thicknessing (urandaji wa mbao)',
+      'Workshop Planing & Thicknessing (Urandaji wa Mbao)',
       'Mortise & Tenon Frame Assembly (Uunganishaji wa Samani)',
       'Vocational Workshop Safety Standards (Usalama Karakana)'
     ],
@@ -1031,12 +1031,12 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
     duration: '',
     thumbnailUrl: 'https://i.ytimg.com/vi/plet8C6DtN0/hqdefault.jpg',
     practiceActivity:
-      'Listen to the Kiswahili-to-English VETA vocational briefing and identify the steps used to prepare rough-sawn hardwood into square, planed furniture stock.',
+      'Listen to the Kiswahili VETA vocational briefing in your preferred language and identify the steps used to prepare rough-sawn hardwood into square, planed furniture stock.',
     practiceDeliverablePrompt:
       'Summarize the timber preparation and joint-fitting steps taught in the VETA Kiswahili carpentry lesson.',
     knowledgeCheck: {
       question:
-        'In the VETA Kiswahili vocational carpentry training (interpreted into English), what must be verified on rough timber before cutting joinery?',
+        'In the VETA Kiswahili vocational carpentry training, what must be verified on rough timber before cutting joinery?',
       options: [
         'That the timber is properly seasoned/dry and planed flat and square on its reference face and edge',
         'That the wood is soaked in water immediately before gluing',
@@ -1051,7 +1051,7 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
   {
     id: 'lbd_intl_fr_plumbing_copper_19',
     lessonNumber: 19,
-    videoLabel: 'Global Training (Français → English): Brasure Cuivre en Plomberie',
+    videoLabel: 'Global Training (Français): Brasure Cuivre en Plomberie',
     title: 'Brasure Cuivre : Réaliser une Bonne Brasure Sans Fuite (French Plumbing)',
     category: 'Plumbing',
     enclaveId: 'trades_construction',
@@ -1060,9 +1060,9 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
     originalCreator: 'Mister MALLEKH · Génie Climatique & Plomberie France',
     creatorDomain: 'afpa.fr',
     sourceLanguage: 'fr',
-    sourceLanguageLabel: '🇫🇷 Français (Interpreted to English)',
+    sourceLanguageLabel: '🇫🇷 Français',
     description:
-      'French plumbing and thermal engineering ("plomberie / génie climatique") demonstration on copper pipe deburring, flux application, flame control, and capillary brazing ("brasure cuivre")—interpreted live into English.',
+      'French plumbing and thermal engineering ("plomberie / génie climatique") demonstration on copper pipe deburring, flux application, flame control, and capillary brazing ("brasure cuivre")—with live multilingual audio interpretation by Noctis.',
     skillsCovered: [
       'Copper Tube Cutting & Deburring (Coupe et Ébavurage)',
       'Mechanical Abrasion & Fluxing (Décapage et Flux)',
@@ -1076,12 +1076,12 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
     duration: '',
     thumbnailUrl: 'https://i.ytimg.com/vi/b2jdJ3yGdmI/hqdefault.jpg',
     practiceActivity:
-      'Watch the French copper brazing tutorial with live English interpretation and write down the 4 preparation steps required before lighting the torch.',
+      'Watch the French copper brazing tutorial with live Noctis interpretation and write down the 4 preparation steps required before lighting the torch.',
     practiceDeliverablePrompt:
-      'List the critical copper pipe cleaning, fluxing, and heating rules explained in the French-to-English plumbing lesson.',
+      'List the critical copper pipe cleaning, fluxing, and heating rules explained in the French plumbing lesson.',
     knowledgeCheck: {
       question:
-        'In the French copper brazing ("brasure cuivre") lesson interpreted into English, why should the torch flame heat the copper fitting socket rather than melting the filler rod directly in the flame?',
+        'In the French copper brazing ("brasure cuivre") lesson, why should the torch flame heat the copper fitting socket rather than melting the filler rod directly in the flame?',
       options: [
         'Heating the copper tube and fitting evenly draws the molten filler alloy into the joint gap by capillary action for a leak-free seal',
         'Because filler rod only melts when dipped in cold water',
@@ -1096,7 +1096,7 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
   {
     id: 'lbd_intl_es_electrical_20',
     lessonNumber: 20,
-    videoLabel: 'Global Training (Español → English): Curso de Electricidad Básica',
+    videoLabel: 'Global Training (Español): Curso de Electricidad Básica',
     title: 'Curso de Electricidad Residencial Desde Cero (Spanish Electrical Portal)',
     category: 'Electrical Fundamentals',
     enclaveId: 'trades_construction',
@@ -1105,9 +1105,9 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
     originalCreator: 'Universo Eléctrico · Instituto Técnico de Electricidad',
     creatorDomain: 'universoelectrico.com',
     sourceLanguage: 'es',
-    sourceLanguageLabel: '🇪🇸 Español (Interpreted to English)',
+    sourceLanguageLabel: '🇪🇸 Español',
     description:
-      'Spanish residential electrical engineering lesson covering phase (fase), neutral (neutro), protective earth ground (tierra física), thermomagnetic circuit breakers, and safe wiring schematics—interpreted live into English.',
+      'Spanish residential electrical engineering lesson covering phase (fase), neutral (neutro), protective earth ground (tierra física), thermomagnetic circuit breakers, and safe wiring schematics—with live multilingual audio interpretation by Noctis.',
     skillsCovered: [
       'Phase, Neutral & Earth Ground Identification (Fase, Neutro y Tierra)',
       'Thermomagnetic Breaker Protection (Interruptor Termomagnético)',
@@ -1121,12 +1121,12 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
     duration: '',
     thumbnailUrl: 'https://i.ytimg.com/vi/BhgBXZdHWhU/hqdefault.jpg',
     practiceActivity:
-      'Follow the Spanish-to-English electrical briefing and diagram how the main differential switch and thermomagnetic breakers protect lighting and receptacle branch circuits.',
+      'Follow the Spanish electrical briefing in your preferred language and diagram how the main differential switch and thermomagnetic breakers protect lighting and receptacle branch circuits.',
     practiceDeliverablePrompt:
       'Explain the difference between a thermomagnetic breaker ("termomagnético") and a differential/GFCI switch ("diferencial") from the interpreted lesson.',
     knowledgeCheck: {
       question:
-        'In this Spanish residential electrical lesson (interpreted into English), how do the thermomagnetic breaker ("interruptor termomagnético") and differential switch ("interruptor diferencial") work together?',
+        'In this Spanish residential electrical lesson, how do the thermomagnetic breaker ("interruptor termomagnético") and differential switch ("interruptor diferencial") work together?',
       options: [
         'The thermomagnetic breaker protects wires against overloads and short circuits, while the differential switch (RCD/GFCI) protects people from earth-leakage electric shock',
         'Both devices only measure monthly utility billing',
@@ -1141,7 +1141,7 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
   {
     id: 'lbd_intl_ar_electrical_schematics_21',
     lessonNumber: 21,
-    videoLabel: 'Global Training (العربية → English): شرح مخططات أنظمة الكهرباء',
+    videoLabel: 'Global Training (العربية): شرح مخططات أنظمة الكهرباء',
     title: 'شرح مخططات جميع أنظمة الكهرباء (Arabic Electrical Distribution Schematics)',
     category: 'Electrical Fundamentals',
     enclaveId: 'trades_construction',
@@ -1150,9 +1150,9 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
     originalCreator: 'Eng. Haytham Saeid · Arab Electrical Engineering Academy',
     creatorDomain: 'haythamsaeid.com',
     sourceLanguage: 'ar',
-    sourceLanguageLabel: '🇪🇬 العربية (Interpreted to English)',
+    sourceLanguageLabel: '🇪🇬 العربية',
     description:
-      'Comprehensive Arabic electrical engineering training explaining how to read single-line and three-line power distribution diagrams, panelboard schedules, and earthing layouts—interpreted live into English.',
+      'Comprehensive Arabic electrical engineering training explaining how to read single-line and three-line power distribution diagrams, panelboard schedules, and earthing layouts—with live multilingual audio interpretation by Noctis.',
     skillsCovered: [
       'Reading Single-Line Diagrams (المخططات الأحادية)',
       'Distribution Panelboard Load Balancing',
@@ -1166,12 +1166,12 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
     duration: '',
     thumbnailUrl: 'https://i.ytimg.com/vi/UcqnZnFnz8I/hqdefault.jpg',
     practiceActivity:
-      'Listen to the Arabic-to-English electrical schematics briefing and trace the path from the incoming main breaker through the busbars to individual branch loads.',
+      'Listen to the Arabic electrical schematics briefing in your preferred language and trace the path from the incoming main breaker through the busbars to individual branch loads.',
     practiceDeliverablePrompt:
-      'Describe how single-line schematics indicate breaker amperage ratings and cable conductor sizes as explained in the Arabic-to-English lesson.',
+      'Describe how single-line schematics indicate breaker amperage ratings and cable conductor sizes as explained in the Arabic lesson.',
     knowledgeCheck: {
       question:
-        'When reading an architectural or industrial electrical schematic (as explained in the Arabic training interpreted into English), why must cable cross-sectional area (mm² or AWG) always be matched to the circuit breaker rating?',
+        'When reading an architectural or industrial electrical schematic, why must cable cross-sectional area (mm² or AWG) always be matched to the circuit breaker rating?',
       options: [
         'So the circuit breaker trips before the cable insulation overheats under sustained overload current',
         'Because thicker cables decrease voltage to zero',
@@ -1186,7 +1186,7 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
   {
     id: 'lbd_intl_it_painting_22',
     lessonNumber: 22,
-    videoLabel: 'Global Training (Italiano → English): Imbiancare con Pennello e Rullo',
+    videoLabel: 'Global Training (Italiano): Imbiancare con Pennello e Rullo',
     title: 'Imbiancare Pareti con Pennello e Rullo (Italian Decorating Masterclass)',
     category: 'Painting & Decorating',
     enclaveId: 'trades_construction',
@@ -1195,9 +1195,9 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
     originalCreator: 'Leroy Merlin Italia · Scuola del Fai da Te',
     creatorDomain: 'leroymerlin.it',
     sourceLanguage: 'it',
-    sourceLanguageLabel: '🇮🇹 Italiano (Interpreted to English)',
+    sourceLanguageLabel: '🇮🇹 Italiano',
     description:
-      'Italian architectural painting and decorating tutorial from Leroy Merlin Italia demonstrating when to cut in with an angled brush ("pennello"), roll large wall planes ("rullo"), or spray—interpreted live into English.',
+      'Italian architectural painting and decorating tutorial from Leroy Merlin Italia demonstrating when to cut in with an angled brush ("pennello"), roll large wall planes ("rullo"), or spray—with live multilingual audio interpretation by Noctis.',
     skillsCovered: [
       'Cutting In Corners & Trim with a Brush (Profilatura a Pennello)',
       'Cross-Rolling Wall Planes Evenly (Stesura a Rullo Incrociata)',
@@ -1211,12 +1211,12 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
     duration: '',
     thumbnailUrl: 'https://i.ytimg.com/vi/uQsdjJLkqiA/hqdefault.jpg',
     practiceActivity:
-      'Watch the Italian painting guide with live English interpretation and note how cutting in perimeter edges with a brush pairs with cross-rolling the main wall.',
+      'Watch the Italian painting guide with live Noctis interpretation and note how cutting in perimeter edges with a brush pairs with cross-rolling the main wall.',
     practiceDeliverablePrompt:
       'Summarize the Italian masterclass rules for combining brush ("pennello") perimeter cutting-in with roller ("rullo") passes.',
     knowledgeCheck: {
       question:
-        'In the Leroy Merlin Italia painting tutorial (interpreted into English), why do professional decorators cut in corners and perimeter trim with a brush ("pennello") before rolling the wall ("rullo")?',
+        'In the Leroy Merlin Italia painting tutorial, why do professional decorators cut in corners and perimeter trim with a brush ("pennello") before rolling the wall ("rullo")?',
       options: [
         'A cylindrical roller cannot reach tight inside corners without bumping adjacent walls or trim, so a brush creates a clean border that the roller blends into while wet',
         'Because rollers can only be used on floors',
@@ -1231,7 +1231,7 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
   {
     id: 'lbd_intl_es_hvac_23',
     lessonNumber: 23,
-    videoLabel: 'Global Training (Español → English): Ciclo de Refrigeración HVAC',
+    videoLabel: 'Global Training (Español): Ciclo de Refrigeración HVAC',
     title: 'Cómo Funciona el Ciclo de Refrigeración en Aire Acondicionado (Spanish HVAC)',
     category: 'HVAC',
     enclaveId: 'trades_construction',
@@ -1240,9 +1240,9 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
     originalCreator: 'Electrotec · Instituto Tecnológico de Climatización',
     creatorDomain: 'electrotec.pe',
     sourceLanguage: 'es',
-    sourceLanguageLabel: '🇵🇪 Español (Interpreted to English)',
+    sourceLanguageLabel: '🇵🇪 Español',
     description:
-      'Spanish HVAC and climate engineering lesson from Electrotec visually tracing refrigerant pressure, temperature, phase change, superheat, and subcooling across a split air-conditioning system—interpreted live into English.',
+      'Spanish HVAC and climate engineering lesson from Electrotec visually tracing refrigerant pressure, temperature, phase change, superheat, and subcooling across a split air-conditioning system—with live multilingual audio interpretation by Noctis.',
     skillsCovered: [
       'Split-System Refrigerant Flow (Compresor, Condensador, Capilar, Evaporador)',
       'High-Side vs. Low-Side Pressure Gauges (Manómetros de Alta y Baja)',
@@ -1256,12 +1256,12 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
     duration: '',
     thumbnailUrl: 'https://i.ytimg.com/vi/W8GEdpDWSIQ/hqdefault.jpg',
     practiceActivity:
-      'Follow the Spanish-to-English HVAC briefing and trace the refrigerant state (vapor vs. liquid) at the inlet and outlet of each of the four components.',
+      'Follow the Spanish HVAC briefing in your preferred language and trace the refrigerant state (vapor vs. liquid) at the inlet and outlet of each of the four components.',
     practiceDeliverablePrompt:
       'Write down the refrigerant pressure and phase state entering and leaving the compressor and expansion device as interpreted from the Electrotec HVAC lesson.',
     knowledgeCheck: {
       question:
-        'In the Spanish Electrotec HVAC training (interpreted into English), why must refrigerant enter the compressor suction port as a low-pressure vapor rather than a liquid?',
+        'In the Spanish Electrotec HVAC training, why must refrigerant enter the compressor suction port as a low-pressure vapor rather than a liquid?',
       options: [
         'Liquids are non-compressible; liquid refrigerant entering the compressor cylinders ("liquid slugging") can severely damage valves and pistons',
         'Because compressors are designed to pump solid ice',
@@ -1276,7 +1276,7 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
   {
     id: 'lbd_intl_hi_automech_24',
     lessonNumber: 24,
-    videoLabel: 'Global Training (हिन्दी → English): Automobile Powertrain & Chassis',
+    videoLabel: 'Global Training (हिन्दी): Automobile Powertrain & Chassis',
     title: 'Automobile Engineering: Engine, Transmission & Chassis Systems (Hindi Auto Portal)',
     category: 'Auto Mechanics',
     enclaveId: 'automotive_mechanics',
@@ -1285,9 +1285,9 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
     originalCreator: 'Indian Automobile Engineer · ITI Automotive Portal',
     creatorDomain: 'ncvtmis.gov.in',
     sourceLanguage: 'hi',
-    sourceLanguageLabel: '🇮🇳 हिन्दी (Interpreted to English)',
+    sourceLanguageLabel: '🇮🇳 हिन्दी',
     description:
-      'Hindi automotive engineering lesson breaking down the core subsystems of a motor vehicle—internal combustion engine, clutch/transmission drivetrain, suspension, steering, braking, and electrical—interpreted live into English.',
+      'Hindi automotive engineering lesson breaking down the core subsystems of a motor vehicle—internal combustion engine, clutch/transmission drivetrain, suspension, steering, braking, and electrical—with live multilingual audio interpretation by Noctis.',
     skillsCovered: [
       'Powertrain Architecture (Engine, Clutch, Gearbox, Differential)',
       'Chassis Frame, Suspension & Braking Subsystems',
@@ -1301,12 +1301,12 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
     duration: '',
     thumbnailUrl: 'https://i.ytimg.com/vi/bEBU-hytsxU/hqdefault.jpg',
     practiceActivity:
-      'Listen to the Hindi-to-English automotive engineering briefing and trace how mechanical torque travels from the engine crankshaft to the driven road wheels.',
+      'Listen to the Hindi automotive engineering briefing in your preferred language and trace how mechanical torque travels from the engine crankshaft to the driven road wheels.',
     practiceDeliverablePrompt:
-      'List the drivetrain components in order from the engine flywheel to the wheels as explained in the Hindi-to-English automotive lesson.',
+      'List the drivetrain components in order from the engine flywheel to the wheels as explained in the automotive lesson.',
     knowledgeCheck: {
       question:
-        'In the Hindi automotive engineering lesson (interpreted into English), what is the correct sequence of drivetrain components that transmit power from the engine to the driven wheels?',
+        'In the Hindi automotive engineering lesson, what is the correct sequence of drivetrain components that transmit power from the engine to the driven wheels?',
       options: [
         'Engine Crankshaft → Flywheel / Clutch (or Torque Converter) → Transmission Gearbox → Driveshaft → Differential → Axle Shafts → Wheels',
         'Radiator → Steering Wheel → Exhaust Pipe → Headlights',
@@ -1316,6 +1316,186 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
       correctIndex: 0,
       explanation:
         'Rotational torque generated by the engine passes through the clutch/torque converter to the transmission (for gear reduction), then via the driveshaft and differential to the axle shafts and wheels.'
+    }
+  },
+  {
+    id: 'lbd_intl_vi_carpentry_25',
+    lessonNumber: 25,
+    videoLabel: 'Global Training (Tiếng Việt): Kỹ Thuật Ghép Mộng Góc Vuông',
+    title: 'Cách Ghép Mộng Góc Vuông Trong Nghề Mộc (Vietnamese Joinery Masterclass)',
+    category: 'Carpentry',
+    enclaveId: 'trades_construction',
+    professionId: 'carpenter',
+    level: 'Beginner',
+    originalCreator: 'Mộc GO DND · Vietnamese Woodworking & Craft Academy',
+    creatorDomain: 'mocgodnd.vn',
+    sourceLanguage: 'vi',
+    sourceLanguageLabel: '🇻🇳 Tiếng Việt',
+    description:
+      'Authentic Vietnamese woodworking ("nghề mộc") field demonstration showing how to lay out, chisel, and fit a right-angle interlocking corner mortise-and-tenon joint ("ghép mộng góc vuông")—with live multilingual audio translation into French, Chinese, Spanish, Polish, English, or any of 46 languages.',
+    skillsCovered: [
+      'Vietnamese Corner Joinery (Ghép Mộng Góc Vuông)',
+      'Precision Marking & Gauge Scribing (Lấy Dấu Mộng Gỗ)',
+      'Clean Chisel Parings & Shoulder Fit (Đục Mộng Khít)',
+      'Squareness Verification Under Clamp Load'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=wtbjRB9ewik',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=wtbjRB9ewik',
+    youtubeId: 'wtbjRB9ewik',
+    embedAvailable: true,
+    duration: '',
+    thumbnailUrl: 'https://i.ytimg.com/vi/wtbjRB9ewik/hqdefault.jpg',
+    practiceActivity:
+      'Watch this Vietnamese carpentry demonstration while listening in French, Chinese, Spanish, or English via Noctis, and note how the shoulder cuts lock the corner at 90 degrees.',
+    practiceDeliverablePrompt:
+      'Describe how the Vietnamese corner mortise-and-tenon joint prevents racking and twisting compared to a simple butt joint.',
+    knowledgeCheck: {
+      question:
+        'In the Vietnamese woodworking lesson ("Cách Ghép Mộng Góc Vuông"), what gives the interlocking right-angle mortise-and-tenon joint its superior mechanical rigidity?',
+      options: [
+        'Precisely mated shoulder cheeks and interlocking tenon walls resist twisting and provide large long-grain glue surfaces on all faces',
+        'Leaving a 10 mm gap between the boards',
+        'Only painting the outside of the wood without cutting a joint',
+        'Cutting the wood without measuring'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Interlocking right-angle mortise-and-tenon shoulders register the two members at 90° mechanically while maximizing long-grain bonding surface.'
+    }
+  },
+  {
+    id: 'lbd_intl_vi_electrical_26',
+    lessonNumber: 26,
+    videoLabel: 'Global Training (Tiếng Việt): Lắp Mạch Điện Khởi Động Từ',
+    title: 'Hướng Dẫn Lắp Mạch Điện Khởi Động Từ (Vietnamese Contactor & Motor Control)',
+    category: 'Electrical Fundamentals',
+    enclaveId: 'trades_construction',
+    professionId: 'electrician',
+    level: 'Beginner',
+    originalCreator: 'Kỹ Thuật Điện Việt Nam · Industrial Electrical Portal',
+    creatorDomain: 'kythuatdien.vn',
+    sourceLanguage: 'vi',
+    sourceLanguageLabel: '🇻🇳 Tiếng Việt',
+    description:
+      'Vietnamese electrical engineering training demonstrating how to wire a magnetic contactor ("khởi động từ"), start/stop push-button control circuit, and latching auxiliary contact ("tiếp điểm duy trì")—with live multilingual audio interpretation by Noctis.',
+    skillsCovered: [
+      'Magnetic Contactor Coil & Power Poles (Cuộn Hút A1-A2 & Tiếp Điểm Động Lực)',
+      'Start/Stop Push-Button Control Loop (Mạch Điều Khiển Nút Nhấn ON/OFF)',
+      'Auxiliary Holding Contact Wiring (Tiếp Điểm Thường Mở NO Duy Trì)',
+      'Thermal Overload Relay Integration'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=HIL5QCQ6pRQ',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=HIL5QCQ6pRQ',
+    youtubeId: 'HIL5QCQ6pRQ',
+    embedAvailable: true,
+    duration: '',
+    thumbnailUrl: 'https://i.ytimg.com/vi/HIL5QCQ6pRQ/hqdefault.jpg',
+    practiceActivity:
+      'Listen to this Vietnamese electrical control lesson in French, Chinese, Spanish, or English and trace the holding contact loop parallel to the momentary START button.',
+    practiceDeliverablePrompt:
+      'Explain why the normally open (NO) auxiliary contact (13-14) is wired in parallel with the START button on a magnetic contactor.',
+    knowledgeCheck: {
+      question:
+        'In the Vietnamese magnetic contactor ("khởi động từ") wiring lesson, what is the role of the normally open (NO) auxiliary holding contact wired in parallel with the START push-button?',
+      options: [
+        'It latches the control circuit closed so the contactor coil remains energized after you release the momentary START button, until the STOP button is pressed',
+        'It permanently disconnects the ground wire',
+        'It increases voltage from 220V to 10,000V',
+        'It replaces the need for circuit breakers'
+      ],
+      correctIndex: 0,
+      explanation:
+        'When the momentary START button is pressed, the coil pulls in and closes the parallel NO auxiliary contact (13-14), maintaining coil current until interrupted by the NC STOP button or overload relay.'
+    }
+  },
+  {
+    id: 'lbd_intl_pl_electrical_27',
+    lessonNumber: 27,
+    videoLabel: 'Global Training (Polski): Jak Podłączyć Rozdzielnię Elektryczną',
+    title: 'Jak Podłączyć Rozdzielnię Elektryczną (Polish Distribution Panel Masterclass)',
+    category: 'Electrical Fundamentals',
+    enclaveId: 'trades_construction',
+    professionId: 'electrician',
+    level: 'Beginner',
+    originalCreator: 'Akademia Dobrych Instalacji · Polish Electrical Institute',
+    creatorDomain: 'akademiadobrychinstalacji.pl',
+    sourceLanguage: 'pl',
+    sourceLanguageLabel: '🇵🇱 Polski',
+    description:
+      'Polish electrical installation training ("Akademia Dobrych Instalacji") demonstrating DIN-rail distribution board assembly, residual-current devices (RCD / wyłącznik różnicowoprądowy), comb busbars, and neutral/PE terminal blocks—with live multilingual audio interpretation by Noctis.',
+    skillsCovered: [
+      'DIN-Rail Switchgear Layout (Montaż Osprzętu w Rozdzielnicy)',
+      'RCD & Overcurrent Breaker Grouping (Wyłączniki Różnicowoprądowe i Nadprądowe)',
+      'Insulated Comb Busbar Connections (Szyny Łączeniowe Grzebieniowe)',
+      'Neutral (N) & Protective Earth (PE) Busbar Termination'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=1AMM9co45r4',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=1AMM9co45r4',
+    youtubeId: '1AMM9co45r4',
+    embedAvailable: true,
+    duration: '',
+    thumbnailUrl: 'https://i.ytimg.com/vi/1AMM9co45r4/hqdefault.jpg',
+    practiceActivity:
+      'Watch the Polish electrical panelboard tutorial in Spanish, French, English, or Polish and note how separate Neutral (N) bars are assigned to each RCD group.',
+    practiceDeliverablePrompt:
+      'Explain why circuits protected by different RCDs ("wyłączniki różnicowoprądowe") must use separate isolated Neutral (N) busbars.',
+    knowledgeCheck: {
+      question:
+        'In the Polish distribution board ("rozdzielnia elektryczna") training, why must each RCD group have its own dedicated Neutral (N) terminal bar?',
+      options: [
+        'Connecting neutrals from different RCDs together causes nuisance tripping because return current divides between the RCDs, creating an imbalance',
+        'Because neutral wires are never used in Europe',
+        'So the panel door cannot close',
+        'Busbars are only decorative'
+      ],
+      correctIndex: 0,
+      explanation:
+        'An RCD monitors the exact balance of phase and neutral current passing through its own toroidal transformer; sharing neutrals across RCDs causes immediate nuisance tripping.'
+    }
+  },
+  {
+    id: 'lbd_intl_zh_carpentry_28',
+    lessonNumber: 28,
+    videoLabel: 'Global Training (简体中文): 传统木工榫卯结构实操',
+    title: '中国传统木工榫卯结构与精准开榫 (Chinese Mortise & Tenon Joinery)',
+    category: 'Carpentry',
+    enclaveId: 'trades_construction',
+    professionId: 'carpenter',
+    level: 'Beginner',
+    originalCreator: '传统木工非遗传承 · Chinese Timber Joinery Academy',
+    creatorDomain: 'woodcraft.cn',
+    sourceLanguage: 'zh',
+    sourceLanguageLabel: '🇨🇳 简体中文',
+    description:
+      'Chinese traditional woodworking ("榫卯结构" — Sunmao interlocking mortise-and-tenon joinery) demonstrating how structural wood joints lock together in three dimensions without nails or screws—with live multilingual audio interpretation by Noctis.',
+    skillsCovered: [
+      'Sunmao Interlocking Joinery (传统榫卯结构)',
+      'Three-Way Mitered Mortise & Tenon Layout',
+      'Sliding Dovetail & Keyed Tenon Locking',
+      'Precision Chisel & Saw Kerf Fit'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=kaMGOVfuzlY',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=kaMGOVfuzlY',
+    youtubeId: 'kaMGOVfuzlY',
+    embedAvailable: true,
+    duration: '',
+    thumbnailUrl: 'https://i.ytimg.com/vi/kaMGOVfuzlY/hqdefault.jpg',
+    practiceActivity:
+      'Watch this Chinese mortise-and-tenon ("榫卯") masterclass interpreted into your preferred language and trace the insertion order of the interlocking members.',
+    practiceDeliverablePrompt:
+      'Describe how Chinese Sunmao (榫卯) joinery resists pulling forces in all three axes without metal fasteners.',
+    knowledgeCheck: {
+      question:
+        'How does traditional Chinese "Sunmao" (榫卯) joinery achieve structural strength without nails or screws?',
+      options: [
+        'Through complementary interlocking geometry (tenons "榫" and mortises "卯") that mechanically trap each member against tension and shear while accommodating seasonal wood movement',
+        'By taping the outside of the boards with paper',
+        'By leaving the joints loose so they fall apart',
+        'By using only wet bark'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Sunmao (榫卯) joinery uses interlocking geometric shoulders, keyed tenons, and dovetail profiles so structural loads tighten the joint mechanically.'
     }
   }
 ]

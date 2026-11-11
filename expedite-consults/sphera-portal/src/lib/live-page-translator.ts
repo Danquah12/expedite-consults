@@ -1010,8 +1010,13 @@ export function applyLivePageTranslation(lang: LanguageCode) {
   }
 }
 
-export async function translateLinesLive(lines: string[], lang: LanguageCode): Promise<string[]> {
-  if (!lines.length || lang === "en") return lines
+export async function translateLinesLive(
+  lines: string[],
+  lang: LanguageCode,
+  forceTranslateSourceToTarget = false
+): Promise<string[]> {
+  if (!lines.length) return lines
+  if (lang === "en" && !forceTranslateSourceToTarget) return lines
   const cache = loadPersistentCache(lang)
 
   // Check if all lines are already cached
@@ -1025,10 +1030,12 @@ export async function translateLinesLive(lines: string[], lang: LanguageCode): P
       results[idx] = line
       return
     }
-    const instant = lookupInstantTranslation(trimmed, lang)
-    if (instant && instant !== trimmed) {
-      results[idx] = instant
-      return
+    if (lang !== "en") {
+      const instant = lookupInstantTranslation(trimmed, lang)
+      if (instant && instant !== trimmed) {
+        results[idx] = instant
+        return
+      }
     }
     if (cache[trimmed]) {
       results[idx] = cache[trimmed]
@@ -1053,7 +1060,7 @@ export async function translateLinesLive(lines: string[], lang: LanguageCode): P
           const t = (apiData.translations[mIdx] || missingTexts[mIdx]).trim()
           results[origIdx] = t
           cache[missingTexts[mIdx]] = t
-          if (t !== missingTexts[mIdx]) {
+          if (lang !== "en" && t !== missingTexts[mIdx]) {
             reverseTranslatedToEnglishMap[t] = missingTexts[mIdx]
           }
         })
@@ -1065,19 +1072,28 @@ export async function translateLinesLive(lines: string[], lang: LanguageCode): P
     // Fallback to direct client translation
   }
 
-  const fallbackTranslated = await Promise.all(missingTexts.map((t) => translateTextLive(t, lang)))
+  const fallbackTranslated = await Promise.all(
+    missingTexts.map((t) => translateTextLive(t, lang, forceTranslateSourceToTarget))
+  )
   missingIndices.forEach((origIdx, mIdx) => {
     results[origIdx] = fallbackTranslated[mIdx]
   })
   return results
 }
 
-export async function translateTextLive(text: string, lang: LanguageCode): Promise<string> {
-  const canonical = toCanonicalEnglish(text)
+export async function translateTextLive(
+  text: string,
+  lang: LanguageCode,
+  forceTranslateSourceToTarget = false
+): Promise<string> {
+  const canonical = forceTranslateSourceToTarget ? text : toCanonicalEnglish(text)
   const trimmed = (canonical || "").trim()
-  if (!trimmed || lang === "en") return canonical
-  const instant = lookupInstantTranslation(trimmed, lang)
-  if (instant && instant !== trimmed) return instant
+  if (!trimmed) return canonical
+  if (lang === "en" && !forceTranslateSourceToTarget) return canonical
+  if (lang !== "en") {
+    const instant = lookupInstantTranslation(trimmed, lang)
+    if (instant && instant !== trimmed) return instant
+  }
 
   try {
     const apiRes = await fetch("/api/connectin/translate", {
@@ -1092,7 +1108,7 @@ export async function translateTextLive(text: string, lang: LanguageCode): Promi
         const cleanFirst = first.trim()
         const cache = loadPersistentCache(lang)
         cache[trimmed] = cleanFirst
-        if (cleanFirst !== trimmed) {
+        if (lang !== "en" && cleanFirst !== trimmed) {
           reverseTranslatedToEnglishMap[cleanFirst] = trimmed
         }
         savePersistentCache(lang)
@@ -1104,7 +1120,7 @@ export async function translateTextLive(text: string, lang: LanguageCode): Promi
   }
 
   try {
-    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${encodeURIComponent(
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${encodeURIComponent(
       lang
     )}&dt=t&q=${encodeURIComponent(trimmed)}`
     const res = await fetch(url)
@@ -1117,7 +1133,7 @@ export async function translateTextLive(text: string, lang: LanguageCode): Promi
       const cleanTrans = translated.trim()
       const cache = loadPersistentCache(lang)
       cache[trimmed] = cleanTrans
-      if (cleanTrans !== trimmed) {
+      if (lang !== "en" && cleanTrans !== trimmed) {
         reverseTranslatedToEnglishMap[cleanTrans] = trimmed
       }
       savePersistentCache(lang)

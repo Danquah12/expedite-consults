@@ -27,6 +27,11 @@ import {
   normalizeFollowKey
 } from "@/lib/connectin-follow"
 import { useLanguage } from "@/context/LanguageContext"
+import { SUPPORTED_LANGUAGES } from "@/lib/translations"
+import {
+  parseNoctisLanguageCommand,
+  dispatchNoctisLanguageCommand
+} from "./NoctisVideoInterpreterPopup"
 
 interface RightSidebarNewsProps {
   news: NewsItem[]
@@ -55,10 +60,39 @@ export function RightSidebarNews({
 }: RightSidebarNewsProps) {
   const [showAllNews, setShowAllNews] = useState(false)
   const [sidebarQuery, setSidebarQuery] = useState("")
+  const [noctisAudioToast, setNoctisAudioToast] = useState<string | null>(null)
   const [followTick, setFollowTick] = useState(0)
   const [followFeedback, setFollowFeedback] = useState<string | null>(null)
-  const { t } = useLanguage()
+  const { t, setLanguage } = useLanguage()
   const displayedNews = showAllNews ? news : news.slice(0, 3)
+
+  const handleSidebarAskNoctis = (rawText: string) => {
+    const trimmed = rawText.trim()
+    if (!trimmed) {
+      if (onOpenAIAssistant) onOpenAIAssistant()
+      return
+    }
+    const isVideoAudioRequest =
+      /\b(play|video|interpret|translate|speak|listen|hear|audio|voice|dub|sound|en\s+|in\s+|po\s+|auf\s+|bằng\s+|用)\b/i.test(
+        trimmed
+      )
+    const matchedLang = isVideoAudioRequest ? parseNoctisLanguageCommand(trimmed) : null
+    if (matchedLang) {
+      dispatchNoctisLanguageCommand(matchedLang)
+      setLanguage(matchedLang)
+      const langMeta = SUPPORTED_LANGUAGES.find(l => l.code === matchedLang)
+      setNoctisAudioToast(
+        `🎙️ Noctis translating & playing video audio in ${langMeta ? `${langMeta.flag} ${langMeta.localName} (${langMeta.name})` : matchedLang.toUpperCase()}`
+      )
+      setSidebarQuery("")
+      setTimeout(() => setNoctisAudioToast(null), 5000)
+      return
+    }
+    if (onOpenAIAssistant) {
+      onOpenAIAssistant(trimmed)
+      setSidebarQuery("")
+    }
+  }
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -119,30 +153,30 @@ export function RightSidebarNews({
         <div className="flex items-center gap-1.5 bg-zinc-50 dark:bg-zinc-800/80 rounded-lg p-1 border border-zinc-200/90 dark:border-zinc-700/80 focus-within:border-[#0A66C2] transition-all">
           <input
             type="text"
-            placeholder={t("ask_noctis_placeholder", "Ask a question or search skills...")}
+            placeholder={t("ask_noctis_placeholder", 'Ask Noctis or say "Play this video in Chinese"...')}
             value={sidebarQuery}
             onChange={(e) => setSidebarQuery(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && onOpenAIAssistant) {
-                onOpenAIAssistant(sidebarQuery)
-                setSidebarQuery("")
+              if (e.key === 'Enter') {
+                handleSidebarAskNoctis(sidebarQuery)
               }
             }}
             className="flex-1 bg-transparent px-2 py-1 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none"
           />
           <button
             type="button"
-            onClick={() => {
-              if (onOpenAIAssistant) {
-                onOpenAIAssistant(sidebarQuery)
-                setSidebarQuery("")
-              }
-            }}
+            onClick={() => handleSidebarAskNoctis(sidebarQuery)}
             className="rounded-md bg-[#0A66C2] hover:bg-[#004182] px-2.5 py-1 text-[11px] font-semibold text-white transition-colors shrink-0 cursor-pointer"
           >
             {t("search_button", "Ask")}
           </button>
         </div>
+
+        {noctisAudioToast && (
+          <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 px-2.5 py-1.5 text-[11px] font-bold text-emerald-800 dark:text-emerald-200">
+            {noctisAudioToast}
+          </div>
+        )}
 
         {/* Subtle 2-chip quick sparks */}
         <div className="flex items-center gap-1.5">

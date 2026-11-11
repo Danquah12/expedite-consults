@@ -35,7 +35,12 @@ import {
 import { cn } from "@/lib/utils"
 import { UserProfile } from "@/lib/connectln-data"
 import { useLanguage } from "@/context/LanguageContext"
+import { SUPPORTED_LANGUAGES } from "@/lib/translations"
 import { LanguageSwitcher } from "@/components/language/LanguageSwitcher"
+import {
+  parseNoctisLanguageCommand,
+  dispatchNoctisLanguageCommand
+} from "./NoctisVideoInterpreterPopup"
 import { getLocalizedInitialMessage, getLocalizedAIAnswer } from "@/lib/translations/ai-responses"
 import { findConnectLnTopic, connectLnOverview } from "@/lib/connectln-knowledge"
 import { PROFESSION_ENCLAVES } from "@/lib/connectin-professions"
@@ -316,7 +321,7 @@ export function ConnectInAIAssistant({
   initialMode = 'chat',
   initialQuery = ""
 }: ConnectInAIAssistantProps) {
-  const { language, t } = useLanguage()
+  const { language, setLanguage, t } = useLanguage()
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [mode, setMode] = useState<'vibe' | 'chat' | 'career'>('chat')
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -367,6 +372,46 @@ export function ConnectInAIAssistant({
 
     setMessages(prev => [...prev, userMsg])
     setQuery("")
+
+    // Check if the user is instructing Noctis to play/translate/interpret video audio in a preferred language
+    const isVideoAudioCmd =
+      /\b(play|video|interpret|translate|speak|listen|hear|audio|voice|dub|sound|en\s+|in\s+|po\s+|auf\s+|bằng\s+|用)\b/i.test(
+        promptText
+      )
+    const matchedCmdLang = isVideoAudioCmd ? parseNoctisLanguageCommand(promptText) : null
+    if (matchedCmdLang) {
+      dispatchNoctisLanguageCommand(matchedCmdLang)
+      setLanguage(matchedCmdLang)
+      const langMeta = SUPPORTED_LANGUAGES.find(l => l.code === matchedCmdLang)
+      const langDisplay = langMeta
+        ? `${langMeta.flag} **${langMeta.localName}** (${langMeta.name})`
+        : `**${matchedCmdLang.toUpperCase()}**`
+      const cmdReply: ChatMessage = {
+        id: `ai_${Date.now()}`,
+        sender: 'assistant',
+        text: `🎙️ **Noctis Multilingual Video Audio Translation Activated**\n\nI have switched the spoken video audio translation to ${langDisplay}.\n\n• **Cross-Language Support:** Regardless of the video's original spoken language (French, Spanish, Vietnamese, Polish, Chinese, Japanese, Arabic, Hindi, Swahili, or English), Noctis now translates the spoken content and plays the audio in ${langDisplay}.\n• **Original Audio Ducking:** The original video volume is automatically ducked so you hear the translated narration clearly.`,
+        suggestedCards: [
+          {
+            title: `Watch Global Multilingual Videos in ${langMeta?.name || matchedCmdLang.toUpperCase()}`,
+            category: "Noctis Audio Interpreter",
+            actionText: "Return to Videos",
+            targetTab: "feed",
+            matchPercent: `${langMeta?.flag || "🌐"} Live Audio`
+          },
+          {
+            title: "Open Learn-by-Doing Academy",
+            category: "28 Field Lessons",
+            actionText: "Open Academy",
+            targetTab: "learning",
+            matchPercent: "All 46 Languages"
+          }
+        ]
+      }
+      setMessages(prev => [...prev, cmdReply])
+      setIsTyping(false)
+      return
+    }
+
     setIsTyping(true)
 
     // Local scripted answers: used for localized replies and as the fallback if Noctis is unreachable

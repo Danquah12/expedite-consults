@@ -66,6 +66,7 @@ import {
 } from "@/lib/learning-roadmap-whitepapers"
 import dynamic from "next/dynamic"
 import { UserProfile } from "@/lib/connectln-data"
+import { useLanguage } from "@/context/LanguageContext"
 import { ConnectInVideoWheel } from "@/components/connectln/ConnectInVideoWheel"
 import { ConnectLnStudioPlayer } from "@/components/connectln/ConnectLnStudioPlayer"
 import { SkilledTradesLearnByDoingSection } from "@/components/connectln/SkilledTradesLearnByDoingSection"
@@ -210,6 +211,7 @@ export function LearningView({
   onAddCertificateToProfile,
   onNavigateMarketplace
 }: LearningViewProps) {
+  const { currentLanguage } = useLanguage()
   // Master Mode: Skilled Trades Learn by Doing (Default) vs Courses vs Labs vs Certifications vs Learning Paths vs VibeTOK Hub vs ConnectLn Studies vs Career Mastery Academy vs Change/Upgrade Profession vs Vendors
   const [learningMode, setLearningMode] = useState<'courses' | 'labs' | 'certifications' | 'paths' | 'vibetok' | 'connectln_studies' | 'career_mastery' | 'change_profession' | 'vendors' | 'learn_by_doing'>('learn_by_doing')
   const [learnByDoingSummary, setLearnByDoingSummary] = useState<{
@@ -1579,7 +1581,7 @@ export function LearningView({
                       </span>
                       {course.sourceLanguageLabel && (
                         <span className="rounded-full bg-[#0A66C2]/95 px-2.5 py-0.5 text-[10px] font-extrabold text-white border border-sky-300/60 shadow-sm">
-                          {course.sourceLanguageLabel}
+                          {course.sourceLanguageLabel} → {currentLanguage.flag} {currentLanguage.localName}
                         </span>
                       )}
                     </div>
