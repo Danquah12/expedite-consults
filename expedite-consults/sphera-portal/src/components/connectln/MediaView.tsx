@@ -82,8 +82,29 @@ export function MediaView({
 
   const [videos, setVideos] = useState<MediaVideoItem[]>(initialVideos)
   const [selectedVideo, setSelectedVideo] = useState<MediaVideoItem | null>(initialVideos[0] || null)
-  const [isPlaying, setIsPlaying] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(true)
   const mediaPlayerIdRef = useRef<string>(`media-view-${Math.random().toString(36).slice(2, 10)}`)
+  const mediaStageRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const node = mediaStageRef.current
+    if (!node || !selectedVideo?.youtubeId || typeof IntersectionObserver === "undefined") return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0]
+        if (!entry) return
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.4) {
+          notifyExclusiveVideoPlay(mediaPlayerIdRef.current)
+          setIsPlaying(true)
+        } else if (!entry.isIntersecting || entry.intersectionRatio < 0.15) {
+          setIsPlaying(false)
+        }
+      },
+      { threshold: [0, 0.15, 0.4, 0.75] }
+    )
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [selectedVideo?.id, selectedVideo?.youtubeId, activeMediaTab])
 
   useEffect(() => {
     if (isPlaying) {
@@ -294,7 +315,13 @@ export function MediaView({
           {mediaNavTabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveMediaTab(tab.id as any)}
+              onClick={() => {
+                setActiveMediaTab(tab.id as any)
+                if (tab.id === 'for_you' || tab.id === 'following' || tab.id === 'learning') {
+                  notifyExclusiveVideoPlay(mediaPlayerIdRef.current)
+                  setIsPlaying(true)
+                }
+              }}
               className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all shrink-0 ${
                 activeMediaTab === tab.id
                   ? "bg-[#0A66C2] text-white shadow-xs"
@@ -329,6 +356,8 @@ export function MediaView({
               } else if (allVids[0]) {
                 setSelectedVideo(allVids[0])
               }
+              notifyExclusiveVideoPlay(mediaPlayerIdRef.current)
+              setIsPlaying(true)
             }}
             className="shrink-0 rounded-full border border-emerald-500/30 bg-emerald-50/70 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 px-3 py-1 font-bold text-emerald-800 dark:text-emerald-300 transition-colors cursor-pointer"
           >
@@ -418,7 +447,7 @@ export function MediaView({
             {selectedVideo && (
               <div className="rounded-2xl border border-zinc-200 bg-white overflow-hidden shadow-md dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
                 {/* Video Player Display Container */}
-                <div className="relative aspect-video w-full bg-slate-950 overflow-hidden group">
+                <div ref={mediaStageRef} className="relative aspect-video w-full bg-slate-950 overflow-hidden group">
                   {isPlaying && selectedVideo.youtubeId ? (
                     <>
                     <ConnectLnStudioPlayer
@@ -428,6 +457,8 @@ export function MediaView({
                       serialPlate={`MEDIA-${selectedVideo.id.toUpperCase()}`}
                       speaker={selectedVideo.channelName}
                       durationLabel={selectedVideo.duration}
+                      autoPlay={true}
+                      initialMuted={false}
                       playerId={mediaPlayerIdRef.current}
                       onExclusiveStop={() => setIsPlaying(false)}
                       className="h-full w-full"

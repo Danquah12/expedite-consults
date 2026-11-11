@@ -129,13 +129,15 @@ export function SkilledTradesLearnByDoingSection({
   >({})
   const [sharedToastLessonId, setSharedToastLessonId] = useState<string | null>(null)
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
-  const homeCardRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const homeCardRefs = useRef<Record<string, HTMLElement | null>>({})
 
-  // LinkedIn-style Auto-Play on Scroll for Home Feed Big Video Cards
+  // LinkedIn-style Auto-Play on Scroll / Focus across Home Feed & Academy Tabs
   useEffect(() => {
-    if (mode !== 'home_videos_only' || typeof window === 'undefined') {
+    if (typeof window === 'undefined') {
       return
     }
+
+    const playerPrefix = mode === 'home_videos_only' ? 'lbd-home-player-' : 'lbd-player-'
 
     const pickBestVisibleLesson = () => {
       const vh = window.innerHeight || document.documentElement.clientHeight || 800
@@ -152,7 +154,7 @@ export function SkilledTradesLearnByDoingSection({
         const visibleHeight = Math.max(0, visibleBottom - visibleTop)
         const visibleRatio = visibleHeight / Math.min(rect.height, vh)
 
-        if (visibleRatio >= 0.42) {
+        if (visibleRatio >= 0.38) {
           const cardCenter = rect.top + rect.height / 2
           const distanceFromCenter = Math.abs(cardCenter - viewportCenter)
           const score = visibleRatio * 1000 - distanceFromCenter
@@ -166,7 +168,7 @@ export function SkilledTradesLearnByDoingSection({
       if (bestLessonId) {
         setActiveVideoLessonId(prev => {
           if (prev !== bestLessonId) {
-            notifyExclusiveVideoPlay(`lbd-home-player-${bestLessonId}`)
+            notifyExclusiveVideoPlay(`${playerPrefix}${bestLessonId}`)
             setAutoPlayRequested(true)
             return bestLessonId
           }
@@ -195,7 +197,7 @@ export function SkilledTradesLearnByDoingSection({
         {
           root: null,
           rootMargin: '-6% 0px -6% 0px',
-          threshold: [0.25, 0.42, 0.6, 0.75]
+          threshold: [0.25, 0.38, 0.6, 0.75]
         }
       )
       Object.values(homeCardRefs.current).forEach(el => {
@@ -203,9 +205,17 @@ export function SkilledTradesLearnByDoingSection({
       })
     }
 
+    const initRaf = window.requestAnimationFrame(() => {
+      Object.values(homeCardRefs.current).forEach(el => {
+        if (el) observer?.observe(el)
+      })
+      pickBestVisibleLesson()
+    })
+
     return () => {
       window.removeEventListener('scroll', handleScroll)
       if (rafId !== null) window.cancelAnimationFrame(rafId)
+      window.cancelAnimationFrame(initRaf)
       observer?.disconnect()
     }
   }, [mode, selectedCategory])
@@ -739,6 +749,7 @@ export function SkilledTradesLearnByDoingSection({
                             )
                           : SKILLED_TRADES_LEARN_BY_DOING_LESSONS.find(l => l.category === tab.id)
                     if (firstMatch) {
+                      notifyExclusiveVideoPlay(`lbd-home-player-${firstMatch.id}`)
                       setActiveVideoLessonId(firstMatch.id)
                       setAutoPlayRequested(true)
                     }
@@ -817,7 +828,11 @@ export function SkilledTradesLearnByDoingSection({
               <article
                 key={lesson.id}
                 ref={el => {
-                  homeCardRefs.current[lesson.id] = el as HTMLDivElement | null
+                  if (el) {
+                    homeCardRefs.current[lesson.id] = el
+                  } else {
+                    delete homeCardRefs.current[lesson.id]
+                  }
                 }}
                 data-lbd-lesson-id={lesson.id}
                 className="rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-xs transition-all"
@@ -983,6 +998,7 @@ export function SkilledTradesLearnByDoingSection({
                       autoPlay={autoPlayRequested}
                       initialMuted={false}
                       playerId={`lbd-home-player-${lesson.id}`}
+                      onExclusiveStop={() => setActiveVideoLessonId(null)}
                       className="h-full w-full"
                     />
                   ) : (
@@ -1355,7 +1371,26 @@ export function SkilledTradesLearnByDoingSection({
                 <button
                   key={tab.id}
                   type="button"
-                  onClick={() => setSelectedCategory(tab.id)}
+                  onClick={() => {
+                    setSelectedCategory(tab.id)
+                    const firstMatch =
+                      tab.id === 'All'
+                        ? SKILLED_TRADES_LEARN_BY_DOING_LESSONS[0]
+                        : tab.id === 'Global Interpreted'
+                          ? SKILLED_TRADES_LEARN_BY_DOING_LESSONS.find(
+                              l => Boolean(l.sourceLanguage && l.sourceLanguage !== 'en')
+                            )
+                          : tab.id === 'Saved'
+                            ? SKILLED_TRADES_LEARN_BY_DOING_LESSONS.find(l => telemetryMap[l.id]?.isSaved)
+                            : tab.id === 'Learning Journey'
+                              ? SKILLED_TRADES_LEARN_BY_DOING_LESSONS.find(l => telemetryMap[l.id]?.inLearningJourney)
+                              : SKILLED_TRADES_LEARN_BY_DOING_LESSONS.find(l => l.category === tab.id)
+                    if (firstMatch) {
+                      notifyExclusiveVideoPlay(`lbd-player-${firstMatch.id}`)
+                      setActiveVideoLessonId(firstMatch.id)
+                      setAutoPlayRequested(true)
+                    }
+                  }}
                   className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
                     isSelected
                       ? 'bg-amber-400 text-slate-950 shadow-xs'
@@ -1493,6 +1528,13 @@ export function SkilledTradesLearnByDoingSection({
                 <div
                   key={lesson.id}
                   id={`lbd-lesson-card-${lesson.id}`}
+                  ref={el => {
+                    if (el) {
+                      homeCardRefs.current[lesson.id] = el
+                    } else {
+                      delete homeCardRefs.current[lesson.id]
+                    }
+                  }}
                   className={`rounded-2xl border transition-all flex flex-col justify-between bg-white dark:bg-zinc-900 shadow-sm overflow-hidden scroll-mt-24 ${
                     t.isCompleted
                       ? 'border-emerald-400 dark:border-emerald-700 ring-1 ring-emerald-400/30'

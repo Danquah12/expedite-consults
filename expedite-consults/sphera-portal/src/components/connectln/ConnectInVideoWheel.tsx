@@ -156,40 +156,11 @@ export function ConnectInVideoWheel({
     () => tieredUserVideos[0] || getMatchedWheelVideoForUser(user),
     [tieredUserVideos, user]
   )
-  const assignedUserVideo = useMemo(
-    () => selectedStageVideo || defaultAssignedUserVideo,
-    [selectedStageVideo, defaultAssignedUserVideo]
-  )
   const [isPlayingHeroInline, setIsPlayingHeroInline] = useState(false)
   const [heroStartedByScroll, setHeroStartedByScroll] = useState(true)
   const heroUserManuallyStoppedRef = useRef<boolean>(false)
   const wheelHeroPlayerIdRef = useRef<string>(`wheel-hero-${Math.random().toString(36).slice(2, 10)}`)
   const wheelModalPlayerIdRef = useRef<string>(`wheel-modal-${Math.random().toString(36).slice(2, 10)}`)
-
-  // Auto-play the Hero Stage video when scrolled into view on the Home Page, and pause when scrolled out
-  useEffect(() => {
-    const node = heroStageRef.current
-    if (!node || !assignedUserVideo?.youtubeId || typeof IntersectionObserver === "undefined") return
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0]
-        if (!entry) return
-        if (entry.isIntersecting && entry.intersectionRatio >= 0.45) {
-          if (!heroUserManuallyStoppedRef.current && !activeVideo) {
-            setHeroStartedByScroll(true)
-            notifyExclusiveVideoPlay(wheelHeroPlayerIdRef.current)
-            setIsPlayingHeroInline(true)
-          }
-        } else if (!entry.isIntersecting || entry.intersectionRatio < 0.15) {
-          heroUserManuallyStoppedRef.current = false
-          setIsPlayingHeroInline(false)
-        }
-      },
-      { threshold: [0, 0.15, 0.45, 0.75] }
-    )
-    observer.observe(node)
-    return () => observer.disconnect()
-  }, [assignedUserVideo?.youtubeId, activeVideo])
 
   // Stop hero inline video whenever any other video starts playing across the app
   useEffect(() => {
@@ -258,7 +229,7 @@ export function ConnectInVideoWheel({
       tieredUserVideos.length > 0 &&
       !q &&
       selectedProfessionId === "all" &&
-      (selectedFilter === "all" || selectedFilter === "my_enclave" || selectedFilter === assignedUserVideo?.enclaveId)
+      (selectedFilter === "all" || selectedFilter === "my_enclave" || selectedFilter === defaultAssignedUserVideo?.enclaveId)
     ) {
       const tieredIds = new Set(tieredUserVideos.map(v => v.id))
       const rest = list.filter(t => !tieredIds.has(t.id))
@@ -266,7 +237,37 @@ export function ConnectInVideoWheel({
     }
 
     return list
-  }, [allTalks, selectedFilter, effectiveEnclaveId, selectedProfessionId, professionSearchQuery, tieredUserVideos, assignedUserVideo])
+  }, [allTalks, selectedFilter, effectiveEnclaveId, selectedProfessionId, professionSearchQuery, tieredUserVideos, defaultAssignedUserVideo])
+
+  const assignedUserVideo = useMemo(
+    () => selectedStageVideo || filteredTalks[0] || defaultAssignedUserVideo,
+    [selectedStageVideo, filteredTalks, defaultAssignedUserVideo]
+  )
+
+  // Auto-play the Hero Stage video when scrolled into view, and pause when scrolled out
+  useEffect(() => {
+    const node = heroStageRef.current
+    if (!node || !assignedUserVideo?.youtubeId || typeof IntersectionObserver === "undefined") return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0]
+        if (!entry) return
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.4) {
+          if (!heroUserManuallyStoppedRef.current && !activeVideo) {
+            setHeroStartedByScroll(true)
+            notifyExclusiveVideoPlay(wheelHeroPlayerIdRef.current)
+            setIsPlayingHeroInline(true)
+          }
+        } else if (!entry.isIntersecting || entry.intersectionRatio < 0.15) {
+          heroUserManuallyStoppedRef.current = false
+          setIsPlayingHeroInline(false)
+        }
+      },
+      { threshold: [0, 0.15, 0.4, 0.75] }
+    )
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [assignedUserVideo?.youtubeId, activeVideo])
 
   // Smooth scroll left / right
   const scrollWheel = (direction: 'left' | 'right') => {
@@ -660,6 +661,11 @@ export function ConnectInVideoWheel({
                 onClick={() => {
                   setSelectedFilter(chip.id)
                   setSelectedProfessionId("all")
+                  setSelectedStageVideo(null)
+                  heroUserManuallyStoppedRef.current = false
+                  setHeroStartedByScroll(false)
+                  notifyExclusiveVideoPlay(wheelHeroPlayerIdRef.current)
+                  setIsPlayingHeroInline(true)
                 }}
                 className={`px-3 py-1 rounded-full text-[11px] font-semibold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
                   selectedFilter === chip.id
@@ -683,7 +689,14 @@ export function ConnectInVideoWheel({
           </span>
           <select
             value={selectedProfessionId}
-            onChange={(e) => setSelectedProfessionId(e.target.value)}
+            onChange={(e) => {
+              setSelectedProfessionId(e.target.value)
+              setSelectedStageVideo(null)
+              heroUserManuallyStoppedRef.current = false
+              setHeroStartedByScroll(false)
+              notifyExclusiveVideoPlay(wheelHeroPlayerIdRef.current)
+              setIsPlayingHeroInline(true)
+            }}
             className="rounded-xl bg-[#25211D] border border-amber-500/30 px-3 py-1.5 text-[11px] font-semibold text-white focus:border-amber-400 focus:outline-none max-w-xs sm:max-w-sm cursor-pointer"
           >
             <option value="all">
@@ -711,6 +724,11 @@ export function ConnectInVideoWheel({
                 setSelectedFilter("all")
                 setSelectedProfessionId("all")
                 setProfessionSearchQuery("")
+                setSelectedStageVideo(null)
+                heroUserManuallyStoppedRef.current = false
+                setHeroStartedByScroll(false)
+                notifyExclusiveVideoPlay(wheelHeroPlayerIdRef.current)
+                setIsPlayingHeroInline(true)
               }}
               className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/15 text-[11px] font-semibold text-amber-300 cursor-pointer"
             >
