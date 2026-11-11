@@ -350,19 +350,18 @@ export default function ConnectInLoginPage() {
     setIsMicrosoftModalOpen(true)
   }
 
-  // Web Speech API Voice Call Engine (Speaks 6-digit code for automated voice call simulation & verification)
+  // Studio Human Voice Call Engine (Speaks 6-digit code using real human voice actor)
   const playVoiceCallAudio = (codeToSpeak?: string) => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) return
+    if (typeof window === "undefined") return
     try {
-      window.speechSynthesis.cancel() // Stop any previous playback
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel()
       const codeDigits = (codeToSpeak || activeDispatchedCode || "123456").split("").join(", ")
       const text = `Hello! This is ConnectIn Security by Expedite Consults. Your one-time verification code is: ${codeDigits}. I repeat: ${codeDigits}. Thank you for using ConnectIn.`
-      const utterance = new SpeechSynthesisUtterance(text)
-      utterance.rate = 0.92
-      utterance.pitch = 1.05
-      window.speechSynthesis.speak(utterance)
+      const audio = new Audio(`/api/connectin/tts?v=human3&lang=en&text=${encodeURIComponent(text)}`)
+      audio.volume = 1.0
+      audio.play().catch(() => {})
     } catch (e) {
-      console.warn("[Voice Call SpeechSynthesis notice]", e)
+      console.warn("[Voice Call Audio notice]", e)
     }
   }
 

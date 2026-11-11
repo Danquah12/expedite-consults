@@ -33,20 +33,24 @@ export function XTrendingSidebar({
   const featuredVerse = dailyVerses[0];
 
   const handleToggleAudio = () => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    if (typeof window === "undefined") return;
+    const win = window as any;
     if (isPlayingDailyVerse) {
-      window.speechSynthesis.cancel();
+      if (win.__xSidebarHumanAudio) {
+        try { win.__xSidebarHumanAudio.pause(); } catch {}
+      }
       setIsPlayingDailyVerse(false);
     } else {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(
-        `${featuredVerse.reference}. ${featuredVerse.text}`
-      );
-      utterance.rate = 0.95;
-      utterance.onend = () => setIsPlayingDailyVerse(false);
-      utterance.onerror = () => setIsPlayingDailyVerse(false);
-      window.speechSynthesis.speak(utterance);
+      if (win.__xSidebarHumanAudio) {
+        try { win.__xSidebarHumanAudio.pause(); } catch {}
+      }
+      const text = `${featuredVerse.reference}. ${featuredVerse.text}`.slice(0, 255);
+      const audio = new Audio(`/api/connectin/tts?v=human3&lang=en&text=${encodeURIComponent(text)}`);
+      win.__xSidebarHumanAudio = audio;
+      audio.onended = () => setIsPlayingDailyVerse(false);
+      audio.onerror = () => setIsPlayingDailyVerse(false);
       setIsPlayingDailyVerse(true);
+      audio.play().catch(() => setIsPlayingDailyVerse(false));
     }
   };
 

@@ -88,12 +88,17 @@ export function ConnectLnStudioPlayer({
 }: ConnectLnStudioPlayerProps) {
   const { language } = useLanguage()
   const normalizedSourceLang = (sourceLanguage || "en").toLowerCase()
-  const isInterpretingNeeded = language !== normalizedSourceLang
+  const preferredNoctisLang =
+    typeof window !== "undefined" && (window as any).__noctisPreferredAudioLang
+      ? String((window as any).__noctisPreferredAudioLang).toLowerCase()
+      : language
+  const isInterpretingNeeded =
+    language !== normalizedSourceLang || preferredNoctisLang !== normalizedSourceLang
   const languageRef = useRef(language)
   languageRef.current = language
   const sourceLangRef = useRef(normalizedSourceLang)
   sourceLangRef.current = normalizedSourceLang
-  const initialLangRef = useRef(language)
+  const initialLangRef = useRef(preferredNoctisLang)
   const containerRef = useRef<HTMLDivElement>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const generatedIdRef = useRef<string>(`cln-studio-${Math.random().toString(36).slice(2, 10)}`)
@@ -130,31 +135,22 @@ export function ConnectLnStudioPlayer({
     )
   }, [])
 
-  // On mobile devices (iOS Safari / Android Chrome), HTMLMediaElement.volume & YouTube setVolume() are read-only
-  // and always play at 100% hardware volume. Therefore on mobile we MUST call "mute" on the English video
-  // when Noctis interpretation is active so the interpretation voice is crystal clear without competing 100% English audio.
+  // When Noctis interpretation is active (shouldDuck === true), completely MUTE the original video audio
+  // on ALL devices (desktop and mobile) so you NEVER hear two people talking at the same time!
   const applyVoiceDuckingToPlayer = useCallback(
     (shouldDuck: boolean) => {
-      const isMobileDevice =
-        typeof window !== "undefined" &&
-        (window.matchMedia?.("(pointer: coarse)").matches ||
-          /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent || "") ||
-          window.innerWidth < 768)
-
       if (shouldDuck) {
-        if (isMobileDevice) {
-          sendPlayerCommand("setVolume", [2])
+        sendPlayerCommand("setVolume", [0])
+        sendPlayerCommand("mute")
+        setTimeout(() => {
+          sendPlayerCommand("setVolume", [0])
           sendPlayerCommand("mute")
-          setTimeout(() => sendPlayerCommand("mute"), 80)
-          setTimeout(() => sendPlayerCommand("mute"), 300)
-          setIsMuted(true)
-        } else {
-          sendPlayerCommand("unMute")
-          sendPlayerCommand("setVolume", [4])
-          setTimeout(() => sendPlayerCommand("setVolume", [4]), 80)
-          setTimeout(() => sendPlayerCommand("setVolume", [4]), 300)
-          setIsMuted(false)
-        }
+        }, 80)
+        setTimeout(() => {
+          sendPlayerCommand("setVolume", [0])
+          sendPlayerCommand("mute")
+        }, 300)
+        setIsMuted(true)
       } else {
         sendPlayerCommand("unMute")
         sendPlayerCommand("setVolume", [100])
@@ -201,6 +197,21 @@ export function ConnectLnStudioPlayer({
       try {
         const data = JSON.parse(e.data)
         if (data.event === "infoDelivery" && data.info) {
+          const activePrefLang =
+            typeof window !== "undefined" && (window as any).__noctisPreferredAudioLang
+              ? String((window as any).__noctisPreferredAudioLang).toLowerCase()
+              : languageRef.current
+          if (
+            isVoiceDuckingRef.current ||
+            languageRef.current !== sourceLangRef.current ||
+            activePrefLang !== sourceLangRef.current
+          ) {
+            const win = iframeRef.current?.contentWindow
+            if (win) {
+              win.postMessage(JSON.stringify({ event: "command", func: "setVolume", args: [0] }), "*")
+              win.postMessage(JSON.stringify({ event: "command", func: "mute", args: [] }), "*")
+            }
+          }
           if (typeof data.info.currentTime === "number") {
             setCurrentTime(data.info.currentTime)
           }
@@ -234,25 +245,17 @@ export function ConnectLnStudioPlayer({
       const win = iframeRef.current?.contentWindow
       if (win) {
         win.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), "*")
-        // Continuously enforce original audio ducking whenever Noctis interpretation is active
-        // (On mobile OS browsers where setVolume is ignored, mute the original track so interpretation is crystal clear)
+        // Continuously enforce original video audio MUTE whenever Noctis interpretation is active
+        // so the original speaker never talks over the Noctis human interpreter
         if (isVoiceDuckingRef.current || languageRef.current !== sourceLangRef.current) {
-          const isMobileDevice =
-            typeof window !== "undefined" &&
-            (window.matchMedia?.("(pointer: coarse)").matches ||
-              /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent || "") ||
-              window.innerWidth < 768)
-          if (isMobileDevice) {
-            win.postMessage(
-              JSON.stringify({ event: "command", func: "mute", args: [] }),
-              "*"
-            )
-          } else {
-            win.postMessage(
-              JSON.stringify({ event: "command", func: "setVolume", args: [4] }),
-              "*"
-            )
-          }
+          win.postMessage(
+            JSON.stringify({ event: "command", func: "setVolume", args: [0] }),
+            "*"
+          )
+          win.postMessage(
+            JSON.stringify({ event: "command", func: "mute", args: [] }),
+            "*"
+          )
         }
       }
     }, 800)

@@ -303,27 +303,26 @@ export function GospelHub({ onShareToFeed, initialSubTab = "devotional" }: Gospe
     startSyntheticWorshipPad();
   };
 
-  // Web Speech API for Scripture reading
+  // Studio Human Voice for Scripture reading
   const handleToggleAudio = () => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-      alert("Audio speech synthesis is not supported on this browser.");
-      return;
-    }
-
+    if (typeof window === "undefined") return;
+    const win = window as any;
     if (isPlayingAudio) {
-      window.speechSynthesis.cancel();
+      if (win.__gospelHubHumanAudio) {
+        try { win.__gospelHubHumanAudio.pause(); } catch {}
+      }
       setIsPlayingAudio(false);
     } else {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(
-        `${currentVerse.reference}. ${currentVerse.text}. Reflection: ${currentVerse.commentary}`
-      );
-      utterance.rate = 0.92;
-      utterance.pitch = 1.0;
-      utterance.onend = () => setIsPlayingAudio(false);
-      utterance.onerror = () => setIsPlayingAudio(false);
-      window.speechSynthesis.speak(utterance);
+      if (win.__gospelHubHumanAudio) {
+        try { win.__gospelHubHumanAudio.pause(); } catch {}
+      }
+      const text = `${currentVerse.reference}. ${currentVerse.text}. Reflection: ${currentVerse.commentary}`.slice(0, 255);
+      const audio = new Audio(`/api/connectin/tts?v=human3&lang=en&text=${encodeURIComponent(text)}`);
+      win.__gospelHubHumanAudio = audio;
+      audio.onended = () => setIsPlayingAudio(false);
+      audio.onerror = () => setIsPlayingAudio(false);
       setIsPlayingAudio(true);
+      audio.play().catch(() => setIsPlayingAudio(false));
     }
   };
 

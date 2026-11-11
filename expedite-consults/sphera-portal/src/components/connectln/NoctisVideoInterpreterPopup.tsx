@@ -670,263 +670,263 @@ const UI_LABELS: Partial<
 > = {
   ak: {
     triggerBtn: "Noctis Kasa Kyerɛfoɔ",
-    popupTitle: "Noctis AI Video Kasa Kyerɛfoɔ (Twi)",
-    popupSubtitle: "Nkyerɛaseɛ Toa So (Borɔfo 4% · Twi Nne Kɔ Soro 260%)",
-    listenVoiceDub: "🔊 Tie Nkyerɛaseɛ Wɔ Twi Mu",
+    popupTitle: "Noctis Onipa Nne Kasa Kyerɛfoɔ (Twi)",
+    popupSubtitle: "Onipa Nne Pɛpɛɛpɛ · Nkyerɛaseɛ Toa So",
+    listenVoiceDub: "🔊 Tie Onipa Nne Wɔ Twi Mu",
     stopVoiceDub: "⏸ Gyina Twi Nkyerɛaseɛ",
     summaryHeading: "Video Mu Nsɛm Titiriw (Twi)",
-    stepsHeading: "Anammɔn Biara Nkyerɛaseɛ Kɔsi Awiei",
+    stepsHeading: "Nsɛm A Wɔka Wɔ Video Yi Mu Pɛpɛɛpɛ (Twi)",
     askPlaceholder: "Bisa Noctis asɛm biara fa video yi ho...",
     askBtn: "Bisa",
     translating: "Noctis rekyerɛ video yi ase akɔ Twi mu...",
-    liveInterpretingBadge: "Twi Nkyerɛaseɛ Rekɔ So · Borɔfo Nne Brɛoo (4%)",
+    liveInterpretingBadge: "Onipa Nne · Twi Nkyerɛaseɛ Rekɔ So",
   },
   ee: {
     triggerBtn: "Noctis Gbegɔmeɖela",
-    popupTitle: "Noctis AI Video Gbegɔmeɖela (Eʋegbe)",
-    popupSubtitle: "Gbegɔmeɖeɖe Yi Edzi (Yevugbe 4% · Eʋegbe Gbe Sesĩe)",
-    listenVoiceDub: "🔊 Đó To Gbegɔmeɖeɖe Le Eʋegbe Me",
+    popupTitle: "Noctis Amegbetɔ Gbe Gbegɔmeɖela (Eʋegbe)",
+    popupSubtitle: "Amegbetɔ Gbe · Gbegɔmeɖeɖe Yi Edzi",
+    listenVoiceDub: "🔊 Đó To Amegbetɔ Gbe Le Eʋegbe Me",
     stopVoiceDub: "⏸ Dzudzɔ Gbegɔmeɖeɖe Vie",
     summaryHeading: "Video Ƒe Nuƒoƒo Kpui (Eʋegbe)",
-    stepsHeading: "Gbegɔmeɖeɖe Ɖeka-Ɖeka Vaseɖe Nuwuwu",
+    stepsHeading: "Nya Siwo Kata Wogblɔ Pɛpɛpɛ (Eʋegbe)",
     askPlaceholder: "Bia Noctis be wòaɖe video sia me...",
     askBtn: "Bia",
     translating: "Noctis le video la gɔme ɖem ɖe Eʋegbe me...",
-    liveInterpretingBadge: "Eʋegbe Gbegɔmeɖeɖe Le Edzi Yim · Yevugbe Bɔbɔ (4%)",
+    liveInterpretingBadge: "Amegbetɔ Gbe · Eʋegbe Gbegɔmeɖeɖe",
   },
   gaa: {
     triggerBtn: "Noctis Shishitsɔɔlɔ",
-    popupTitle: "Noctis AI Video Shishitsɔɔlɔ (Gã)",
-    popupSubtitle: "Shishitsɔɔmɔ (Blɔfo 4% · Gã Gbee Waa)",
-    listenVoiceDub: "🔊 Bo Shishitsɔɔmɔ Toi Yɛ Gã Mli",
+    popupTitle: "Noctis Gbɔmɔ Gbee Shishitsɔɔlɔ (Gã)",
+    popupSubtitle: "Gbɔmɔ Gbee · Shishitsɔɔmɔ",
+    listenVoiceDub: "🔊 Bo Gbɔmɔ Gbee Toi Yɛ Gã Mli",
     stopVoiceDub: "⏸ Wa Shishitsɔɔmɔ",
     summaryHeading: "Video Mli Sane (Gã)",
-    stepsHeading: "Shishitsɔɔmɔ Kɛyashi Naagbee",
+    stepsHeading: "Wiemɔ Pɛpɛɛpɛ Kɛyashi Naagbee (Gã)",
     askPlaceholder: "Bi Noctis sane yɛ video nɛɛ he...",
     askBtn: "Bi",
     translating: "Noctis miitsɔɔ video lɛ shishi kɛya Gã mli...",
-    liveInterpretingBadge: "Gã Shishitsɔɔmɔ Miya Nɔ · Blɔfo Gbee Shi (4%)",
+    liveInterpretingBadge: "Gbɔmɔ Gbee · Gã Shishitsɔɔmɔ",
   },
   ha: {
     triggerBtn: "Mai Fassara Noctis",
-    popupTitle: "Mai Fassara Bidiyo na Noctis AI (Hausa)",
-    popupSubtitle: "Fassara Kai Tsaye (Turanci 4% · Muryar Hausa Mai Ƙarfi)",
-    listenVoiceDub: "🔊 Saurari Fassara Cikin Hausa",
+    popupTitle: "Mai Fassara Muryar Mutum Noctis (Hausa)",
+    popupSubtitle: "Muryar Mutum Kai Tsaye · Fassara Kalma da Kalma",
+    listenVoiceDub: "🔊 Saurari Muryar Mutum Cikin Hausa",
     stopVoiceDub: "⏸ Dakatar da Fassara",
     summaryHeading: "Taƙaitaccen Bayanin Bidiyo",
-    stepsHeading: "Fassara Daki-daki Har Karshe",
+    stepsHeading: "Fassarar Kalma da Kalma Har Karshe",
     askPlaceholder: "Tambayi Noctis game da wannan bidiyon...",
     askBtn: "Tambaya",
     translating: "Noctis yana fassara bidiyon zuwa Hausa...",
-    liveInterpretingBadge: "Ana Fassara Cikin Hausa · Turanci Ƙasa (4%)",
+    liveInterpretingBadge: "Muryar Mutum · Fassara Cikin Hausa",
   },
   yo: {
     triggerBtn: "Ògbùfọ̀ Noctis",
-    popupTitle: "Ògbùfọ̀ Fídíò Noctis AI (Yorùbá)",
-    popupSubtitle: "Ìtumọ̀ Lójú Ẹsẹ̀ (Gẹ̀ẹ́sì 4% · Ohùn Yorùbá Lókè)",
-    listenVoiceDub: "🔊 Tẹ́tí Sí Ìtumọ̀ Ní Èdè Yorùbá",
-    stopVoiceDub: "⏸ Dá Ìtumọ̀Dúró",
+    popupTitle: "Ògbùfọ̀ Ohùn Ènìyàn Noctis (Yorùbá)",
+    popupSubtitle: "Ohùn Ènìyàn Gidi · Ìtumọ̀ Lójú Ẹsẹ̀",
+    listenVoiceDub: "🔊 Tẹ́tí Sí Ohùn Ènìyàn Ní Yorùbá",
+    stopVoiceDub: "⏸ Dá Ìtumọ̀ Dúró",
     summaryHeading: "Àkópọ̀ Fídíò Tí A Túmọ̀",
-    stepsHeading: "Ìtumọ̀ Lẹ́sẹẹsẹ Títí Dé Opin",
+    stepsHeading: "Ìtumọ̀ Ọ̀rọ̀-sí-Ọ̀rọ̀ Títí Dé Opin",
     askPlaceholder: "Béèrè lọ́wọ́ Noctis nípa fídíò yìí...",
     askBtn: "Béèrè",
     translating: "Noctis ń túmọ̀ fídíò náà sí Yorùbá...",
-    liveInterpretingBadge: "Ìtumọ̀ Yorùbá Ń Lọ Lọ́wọ́ · Ohùn Gẹ̀ẹ́sì Ní Ìsàlẹ̀ (4%)",
+    liveInterpretingBadge: "Ohùn Ènìyàn · Ìtumọ̀ Yorùbá",
   },
   ig: {
     triggerBtn: "Onye Ntụgharị Noctis",
-    popupTitle: "Onye Ntụgharị Vidio Noctis AI (Igbo)",
-    popupSubtitle: "Ntụgharị Na-aga N'ihu (Bekee 4% · Olu Igbo Dị Elu)",
-    listenVoiceDub: "🔊 Gee Ntụgharị N'asụsụ Igbo",
+    popupTitle: "Onye Ntụgharị Olu Mmadụ Noctis (Igbo)",
+    popupSubtitle: "Olu Mmadụ · Ntụgharị Okwu n'Okwu",
+    listenVoiceDub: "🔊 Gee Olu Mmadụ N'asụsụ Igbo",
     stopVoiceDub: "⏸ Kwụsịtụ Ntụgharị",
     summaryHeading: "Nchịkọta Vidio A Tụgharịrị",
-    stepsHeading: "Ntụgharị Nzọụkwụ Ruo Njedebe",
+    stepsHeading: "Ntụgharị Okwu n'Okwu Ruo Njedebe",
     askPlaceholder: "Jụọ Noctis ka ọ kọwaa akụkụ ọ bụla nke vidio a...",
     askBtn: "Jụọ",
     translating: "Noctis na-atụgharị vidio a n'asụsụ Igbo...",
-    liveInterpretingBadge: "Ntụgharị Igbo Na-aga N'ihu · Olu Bekee Dị Ala (4%)",
+    liveInterpretingBadge: "Olu Mmadụ · Ntụgharị Igbo",
   },
   en: {
-    triggerBtn: "Noctis Interpreter",
-    popupTitle: "Noctis Simultaneous Video Interpreter (English)",
-    popupSubtitle: "Live English Interpretation (Original Audio Lowered · English Voice Boosted 260%)",
-    listenVoiceDub: "🔊 Listen in English",
+    triggerBtn: "Noctis Human Voice",
+    popupTitle: "Noctis Studio Human Voice Interpreter (English)",
+    popupSubtitle: "100% Studio Human Voice · Verbatim Word-for-Word",
+    listenVoiceDub: "🔊 Listen (Human Voice · English)",
     stopVoiceDub: "⏸ Pause English Audio",
-    summaryHeading: "Interpreted English Video Overview",
-    stepsHeading: "Continuous English Simultaneous Interpretation",
+    summaryHeading: "Interpreted English Video Context",
+    stepsHeading: "Verbatim Spoken Transcript (Word-for-Word)",
     askPlaceholder: "Tell Noctis: “Play this video in Chinese / Spanish / Polish...” or ask a question",
     askBtn: "Send",
-    translating: "Noctis is translating this video into English...",
-    liveInterpretingBadge: "Speaking in English · Original Video Audio Lowered",
+    translating: "Noctis is translating verbatim speech into English...",
+    liveInterpretingBadge: "Studio Human Voice · Original Video Muted",
   },
   es: {
-    triggerBtn: "Intérprete Noctis",
-    popupTitle: "Intérprete Simultáneo IA Noctis (Español)",
-    popupSubtitle: "Interpretación continua en Español (Audio original al 4% · Voz aumentada)",
-    listenVoiceDub: "🔊 Escuchar en Español",
+    triggerBtn: "Voz Humana Noctis",
+    popupTitle: "Intérprete de Voz Humana Noctis (Español)",
+    popupSubtitle: "100% Voz Humana de Estudio · Interpretación Literal",
+    listenVoiceDub: "🔊 Escuchar Voz Humana (Español)",
     stopVoiceDub: "⏸ Pausar Español",
-    summaryHeading: "Resumen del video traducido (Español)",
-    stepsHeading: "Interpretación simultánea hasta el final",
+    summaryHeading: "Contexto del video (Español)",
+    stepsHeading: "Transcripción Literal Palabra por Palabra (Español)",
     askPlaceholder: "Di a Noctis: «Reproducir en Polaco / Chino / Francés...» o haz una pregunta",
     askBtn: "Enviar",
-    translating: "Noctis está traduciendo el video al Español...",
-    liveInterpretingBadge: "Hablando en Español · Audio original bajo (4%)",
+    translating: "Noctis está traduciendo palabra por palabra al Español...",
+    liveInterpretingBadge: "Voz Humana en Español · Audio original silenciado",
   },
   pt: {
-    triggerBtn: "Intérprete Noctis",
-    popupTitle: "Intérprete Simultâneo IA Noctis (Português)",
-    popupSubtitle: "Interpretação contínua em Português (Áudio original a 4% · Voz ampliada)",
-    listenVoiceDub: "🔊 Ouvir em Português",
+    triggerBtn: "Voz Humana Noctis",
+    popupTitle: "Intérprete de Voz Humana Noctis (Português)",
+    popupSubtitle: "100% Voz Humana de Estúdio · Tradução Literal",
+    listenVoiceDub: "🔊 Ouvir Voz Humana (Português)",
     stopVoiceDub: "⏸ Pausar Português",
-    summaryHeading: "Resumo do vídeo traduzido (Português)",
-    stepsHeading: "Interpretação simultânea até o fim",
+    summaryHeading: "Contexto do vídeo (Português)",
+    stepsHeading: "Transcrição Literal Palavra por Palavra (Português)",
     askPlaceholder: "Peça ao Noctis: «Reproduzir em Chinês / Espanhol...» ou faça uma pergunta",
     askBtn: "Enviar",
-    translating: "Noctis está traduzindo o vídeo para Português...",
-    liveInterpretingBadge: "Falando em Português · Áudio original reduzido (4%)",
+    translating: "Noctis está traduzindo palavra por palabra para Português...",
+    liveInterpretingBadge: "Voz Humana em Português · Áudio original silenciado",
   },
   fr: {
-    triggerBtn: "Interprète Noctis",
-    popupTitle: "Interprète Simultané IA Noctis (Français)",
-    popupSubtitle: "Interprétation continue en Français (Audio original à 4% · Voix amplifiée)",
-    listenVoiceDub: "🔊 Écouter en Français",
+    triggerBtn: "Voix Humaine Noctis",
+    popupTitle: "Interprète Voix Humaine Noctis (Français)",
+    popupSubtitle: "100% Voix Humaine Studio · Mot à Mot Verbatim",
+    listenVoiceDub: "🔊 Écouter Voix Humaine (Français)",
     stopVoiceDub: "⏸ Pause Français",
-    summaryHeading: "Résumé de la vidéo traduit (Français)",
-    stepsHeading: "Interprétation simultanée jusqu'à la fin",
+    summaryHeading: "Contexte de la vidéo (Français)",
+    stepsHeading: "Transcription Verbatim Mot à Mot (Français)",
     askPlaceholder: "Dites à Noctis : « Jouer en Chinois / Espagnol / Polonais... » ou posez une question",
     askBtn: "Envoyer",
-    translating: "Noctis traduit la vidéo en Français...",
-    liveInterpretingBadge: "Voix en Français active · Audio original bas (4%)",
+    translating: "Noctis traduit mot à mot en Français...",
+    liveInterpretingBadge: "Voix Humaine en Français · Audio original coupé",
   },
   pl: {
-    triggerBtn: "Tłumacz Noctis",
-    popupTitle: "Tłumacz Symultaniczny AI Noctis (Polski)",
-    popupSubtitle: "Ciągłe tłumaczenie głosowe na Polski (Oryginalny dźwięk 4% · Głos wzmocniony)",
-    listenVoiceDub: "🔊 Słuchaj po Polsku",
+    triggerBtn: "Ludzki Głos Noctis",
+    popupTitle: "Tłumacz z Ludzkim Głosem Noctis (Polski)",
+    popupSubtitle: "100% Naturalny Ludzki Głos · Dosłowne Tłumaczenie",
+    listenVoiceDub: "🔊 Słuchaj (Ludzki Głos · Polski)",
     stopVoiceDub: "⏸ Wstrzymaj Polski",
-    summaryHeading: "Przetłumaczone podsumowanie wideo (Polski)",
-    stepsHeading: "Tłumaczenie symultaniczne krok po kroku",
+    summaryHeading: "Kontekst wideo (Polski)",
+    stepsHeading: "Dosłowna Transkrypcja Słowo w Słowo (Polski)",
     askPlaceholder: "Powiedz Noctis: „Odtwórz po chińsku / hiszpańsku / francusku...” lub zadaj pytanie",
     askBtn: "Wyślij",
-    translating: "Noctis tłumaczy wideo na język polski...",
-    liveInterpretingBadge: "Mówi po Polsku · Oryginalny dźwięk wyciszony (4%)",
+    translating: "Noctis tłumaczy słowo w słowo na język polski...",
+    liveInterpretingBadge: "Ludzki Głos (Polski) · Oryginalny dźwięk wyciszony",
   },
   vi: {
-    triggerBtn: "Phiên dịch Noctis",
-    popupTitle: "Phiên Dịch Cabin AI Noctis (Tiếng Việt)",
-    popupSubtitle: "Thuyết minh Tiếng Việt liên tục (Âm gốc 4% · Giọng đọc tăng cường)",
-    listenVoiceDub: "🔊 Nghe bằng Tiếng Việt",
+    triggerBtn: "Giọng Người Thật Noctis",
+    popupTitle: "Phiên Dịch Giọng Người Thật Noctis (Tiếng Việt)",
+    popupSubtitle: "100% Giọng Người Thật Phòng Thu · Dịch Nguyên Văn",
+    listenVoiceDub: "🔊 Nghe Giọng Người Thật (Tiếng Việt)",
     stopVoiceDub: "⏸ Tạm dừng Tiếng Việt",
-    summaryHeading: "Tóm tắt nội dung video (Tiếng Việt)",
-    stepsHeading: "Thuyết minh trực tiếp từng bước đến cuối video",
+    summaryHeading: "Ngữ cảnh video (Tiếng Việt)",
+    stepsHeading: "Lời Thoại Nguyên Văn Từng Câu (Tiếng Việt)",
     askPlaceholder: "Nói với Noctis: “Phát bằng tiếng Trung / Pháp / Tây Ban Nha...” hoặc đặt câu hỏi",
     askBtn: "Gửi",
-    translating: "Noctis đang dịch video sang Tiếng Việt...",
-    liveInterpretingBadge: "Đang thuyết minh Tiếng Việt · Âm gốc hạ nhỏ (4%)",
+    translating: "Noctis đang dịch nguyên văn sang Tiếng Việt...",
+    liveInterpretingBadge: "Giọng Người Thật Tiếng Việt · Đã tắt tiếng gốc",
   },
   it: {
-    triggerBtn: "Interprete Noctis",
-    popupTitle: "Interprete Simultaneo IA Noctis (Italiano)",
-    popupSubtitle: "Interpretazione continua in Italiano (Audio originale 4% · Voce amplificata)",
-    listenVoiceDub: "🔊 Ascolta in Italiano",
+    triggerBtn: "Voce Umana Noctis",
+    popupTitle: "Interprete Voce Umana Noctis (Italiano)",
+    popupSubtitle: "100% Voce Umana da Studio · Traduzione Letterale",
+    listenVoiceDub: "🔊 Ascolta Voce Umana (Italiano)",
     stopVoiceDub: "⏸ Pausa Italiano",
-    summaryHeading: "Riepilogo video tradotto (Italiano)",
-    stepsHeading: "Interpretazione simultanea fino alla fine",
+    summaryHeading: "Contesto video (Italiano)",
+    stepsHeading: "Trascrizione Letterale Parola per Parola (Italiano)",
     askPlaceholder: "Chiedi a Noctis: «Riproduci in Cinese / Spagnolo / Francese...»",
     askBtn: "Invia",
-    translating: "Noctis sta traducendo il video in Italiano...",
-    liveInterpretingBadge: "Parla in Italiano · Audio originale abbassato (4%)",
+    translating: "Noctis sta traducendo parola per parola in Italiano...",
+    liveInterpretingBadge: "Voce Umana in Italiano · Audio originale disattivato",
   },
   de: {
-    triggerBtn: "Noctis Dolmetscher",
-    popupTitle: "Noctis KI-Simultandolmetscher (Deutsch)",
-    popupSubtitle: "Durchgehende Übersetzung (Originalton 4% · Stimme verstärkt)",
-    listenVoiceDub: "🔊 Auf Deutsch anhören",
+    triggerBtn: "Menschliche Stimme Noctis",
+    popupTitle: "Noctis Dolmetscher mit Menschlicher Stimme (Deutsch)",
+    popupSubtitle: "100% Natürliche Menschliche Stimme · Wortgetreu",
+    listenVoiceDub: "🔊 Menschliche Stimme anhören (Deutsch)",
     stopVoiceDub: "⏸ Deutsch pausieren",
-    summaryHeading: "Übersetzte Video-Zusammenfassung (Deutsch)",
-    stepsHeading: "Simultandolmetschen bis zum Ende",
+    summaryHeading: "Video-Kontext (Deutsch)",
+    stepsHeading: "Wortgetreues Sprecher-Transkript (Deutsch)",
     askPlaceholder: "Sagen Sie Noctis: „Auf Chinesisch / Spanisch / Polnisch abspielen...“",
     askBtn: "Senden",
-    translating: "Noctis übersetzt das Video ins Deutsche...",
-    liveInterpretingBadge: "Spricht Deutsch · Originalton leise (4%)",
+    translating: "Noctis übersetzt wortgetreu ins Deutsche...",
+    liveInterpretingBadge: "Menschliche Stimme (Deutsch) · Originalton stumm",
   },
   zh: {
-    triggerBtn: "Noctis 同声传译",
-    popupTitle: "Noctis AI 视频同声传译 (中文)",
-    popupSubtitle: "全程连续中文同传（视频原声调低至 4% · 中文语音增强）",
-    listenVoiceDub: "🔊 收听中文语音同传",
+    triggerBtn: "Noctis 真人语音",
+    popupTitle: "Noctis 真人语音视频同声传译 (中文)",
+    popupSubtitle: "100% 录音室真人人声 · 逐字逐句原话同传",
+    listenVoiceDub: "🔊 收听真人中文同传",
     stopVoiceDub: "⏸ 暂停中文同传",
-    summaryHeading: "视频内容中文概要",
-    stepsHeading: "全程分步连续中文同声传译",
+    summaryHeading: "视频背景说明",
+    stepsHeading: "讲师原话逐句同传字幕 (中文)",
     askPlaceholder: "告诉 Noctis：“用中文 / 法语 / 西班牙语 / 波兰语播放” 或提问...",
     askBtn: "发送",
-    translating: "Noctis 正在将视频实时同传为中文...",
-    liveInterpretingBadge: "正在用中文同声传译 · 视频原声已调低 (4%)",
+    translating: "Noctis 正在将讲师原话逐句同传为中文...",
+    liveInterpretingBadge: "真人中文同传中 · 视频原声已静音",
   },
   ja: {
-    triggerBtn: "Noctis 同時通訳",
-    popupTitle: "Noctis AI ビデオ同時通訳 (日本語)",
-    popupSubtitle: "最後まで連続通訳（原音4%・通訳音声ブースト）",
-    listenVoiceDub: "🔊 日本語で聴く",
+    triggerBtn: "Noctis 肉声通訳",
+    popupTitle: "Noctis スタジオ肉声ビデオ同時通訳 (日本語)",
+    popupSubtitle: "100% 自然な人間の声 · 一言一句そのまま同時通訳",
+    listenVoiceDub: "🔊 日本語（人間の声）で聴く",
     stopVoiceDub: "⏸ 日本語を一時停止",
-    summaryHeading: "翻訳された動画の概要 (日本語)",
-    stepsHeading: "最後まで連続する同時通訳",
+    summaryHeading: "動画のコンテキスト (日本語)",
+    stepsHeading: "講師の発言そのままの逐語通訳 (日本語)",
     askPlaceholder: "Noctisに「中国語 / スペイン語 / フランス語で再生」と指示、または質問...",
     askBtn: "送信",
-    translating: "Noctis が動画を日本語に同時通訳しています...",
-    liveInterpretingBadge: "日本語で同時通訳中 · 原音は小音量 (4%)",
+    translating: "Noctis が発言を日本語に逐語通訳しています...",
+    liveInterpretingBadge: "人間の声で日本語通訳中 · 原音ミュート",
   },
   ar: {
-    triggerBtn: "مترجم Noctis الفوري",
-    popupTitle: "المترجم الفوري الذكي Noctis (العربية)",
-    popupSubtitle: "ترجمة صوتية مستمرة (خفض الصوت الأصلي إلى 4% وتقوية صوت الترجمة)",
-    listenVoiceDub: "🔊 استمع بالعربية",
+    triggerBtn: "صوت بشري Noctis",
+    popupTitle: "المترجم الفوري بصوت بشري طبيعي Noctis (العربية)",
+    popupSubtitle: "صوت بشري حقيقي 100% · ترجمة حرفية لكلام المحاضر",
+    listenVoiceDub: "🔊 استمع بصوت بشري (العربية)",
     stopVoiceDub: "⏸ إيقاف مؤقت",
-    summaryHeading: "ملخص الفيديو المترجم (العربية)",
-    stepsHeading: "الترجمة الفورية المستمرة حتى نهاية الفيديو",
+    summaryHeading: "سياق الفيديو (العربية)",
+    stepsHeading: "الترجمة الحرفية الكاملة لكلام المتحدث (العربية)",
     askPlaceholder: "اطلب من Noctis: «شغّل الفيديو بالصينية / الإسبانية / الفرنسية...»",
     askBtn: "إرسال",
-    translating: "يقوم Noctis بالترجمة الفورية للفيديو إلى العربية...",
-    liveInterpretingBadge: "يتحدث بالعربية · الصوت الأصلي منخفض (4%)",
+    translating: "يقوم Noctis بالترجمة الحرفية للفيديو إلى العربية...",
+    liveInterpretingBadge: "صوت بشري بالعربية · الصوت الأصلي مكتوم",
   },
   hi: {
-    triggerBtn: "Noctis लाइव दुभाषिया",
-    popupTitle: "Noctis AI लाइव वीडियो दुभाषिया (हिन्दी)",
-    popupSubtitle: "अंत तक निरंतर अनुवाद (मूल ऑडियो 4% · अनुवाद की आवाज़ तेज़)",
-    listenVoiceDub: "🔊 हिंदी में सुनें",
+    triggerBtn: "Noctis मानव आवाज़",
+    popupTitle: "Noctis प्राकृतिक मानव आवाज़ दुभाषिया (हिन्दी)",
+    popupSubtitle: "100% असली मानव आवाज़ · शब्दशः लाइव अनुवाद",
+    listenVoiceDub: "🔊 मानव आवाज़ में सुनें (हिन्दी)",
     stopVoiceDub: "⏸ व्याख्या रोकें",
-    summaryHeading: "अनुवादित वीडियो सारांश (हिन्दी)",
-    stepsHeading: "अंत तक निरंतर लाइव व्याख्या",
+    summaryHeading: "वीडियो संदर्भ (हिन्दी)",
+    stepsHeading: "वक्ता के शब्दों का शब्दशः अनुवाद (हिन्दी)",
     askPlaceholder: "Noctis से कहें: “यह वीडियो चीनी / स्पेनिश / फ्रेंच में चलाएं”...",
     askBtn: "भेजें",
-    translating: "Noctis वीडियो का हिंदी में लाइव अनुवाद कर रहा है...",
-    liveInterpretingBadge: "हिंदी में बोल रहा है · मूल आवाज़ धीमी (4%)",
+    translating: "Noctis वीडियो का शब्दशः हिंदी में अनुवाद कर रहा है...",
+    liveInterpretingBadge: "मानव आवाज़ (हिन्दी) · मूल आवाज़ म्यूट",
   },
   sw: {
-    triggerBtn: "Mkalimani wa Noctis",
-    popupTitle: "Mkalimani wa Moja kwa Moja wa Noctis AI (Kiswahili)",
-    popupSubtitle: "Tafsiri Endelevu (Sauti ya Asili 4% · Sauti ya Tafsiri Imeongezwa)",
-    listenVoiceDub: "🔊 Sikiliza kwa Kiswahili",
+    triggerBtn: "Sauti ya Binadamu Noctis",
+    popupTitle: "Mkalimani wa Sauti ya Binadamu Noctis (Kiswahili)",
+    popupSubtitle: "100% Sauti Halisi ya Binadamu · Tafsiri Neno kwa Neno",
+    listenVoiceDub: "🔊 Sikiliza Sauti ya Binadamu (Kiswahili)",
     stopVoiceDub: "⏸ Simamisha",
-    summaryHeading: "Muhtasari wa Video Uliotafsiriwa (Kiswahili)",
-    stepsHeading: "Tafsiri Endelevu Hatua kwa Hatua Hadi Mwisho",
+    summaryHeading: "Muktadha wa Video (Kiswahili)",
+    stepsHeading: "Tafsiri Neno kwa Neno ya Mzungumzaji (Kiswahili)",
     askPlaceholder: "Mwambie Noctis: “Cheza video hii kwa Kichina / Kihispania / Kifaransa...”",
     askBtn: "Tuma",
-    translating: "Noctis inatafsiri video kwa Kiswahili...",
-    liveInterpretingBadge: "Inazungumza Kiswahili · Sauti ya Asili Chini (4%)",
+    translating: "Noctis inatafsiri neno kwa neno kwa Kiswahili...",
+    liveInterpretingBadge: "Sauti ya Binadamu (Kiswahili) · Sauti ya Asili Imezimwa",
   },
   ru: {
-    triggerBtn: "Синхронный перевод Noctis",
-    popupTitle: "ИИ-синхронный переводчик Noctis (Русский)",
-    popupSubtitle: "Непрерывный перевод (оригинальный звук 4% · громкость перевода усилена)",
-    listenVoiceDub: "🔊 Слушать на русском",
+    triggerBtn: "Живой голос Noctis",
+    popupTitle: "Синхронный переводчик с живым человеческим голосом Noctis (Русский)",
+    popupSubtitle: "100% живой студийный голос · Дословный перевод речи",
+    listenVoiceDub: "🔊 Слушать (Живой голос · Русский)",
     stopVoiceDub: "⏸ Пауза",
-    summaryHeading: "Переведённый обзор видео (Русский)",
-    stepsHeading: "Непрерывный синхронный перевод до конца",
+    summaryHeading: "Контекст видео (Русский)",
+    stepsHeading: "Дословный перевод речи спикера (Русский)",
     askPlaceholder: "Скажите Noctis: «Воспроизвести на китайском / испанском / польском...»",
     askBtn: "Отправить",
-    translating: "Noctis синхронно переводит видео на русский язык...",
-    liveInterpretingBadge: "Говорит по-русски · Оригинальный звук тихо (4%)",
+    translating: "Noctis дословно переводит речь на русский язык...",
+    liveInterpretingBadge: "Живой голос (Русский) · Оригинальный звук выключен",
   },
 }
 
@@ -1061,15 +1061,16 @@ function getInitialVideoScript(
   }
 }
 
-// Singleton shared HTMLAudioElement + Clean Studio Gain across all video cards on the page.
-// Reusing a single unlocked HTMLAudioElement allows IntersectionObserver scroll-to-next-video auto-play to work in Chrome/Safari/Edge without NotAllowedError!
+// Singleton shared HTMLAudioElement across all video cards on the page.
+// Plays Studio Natural Human Voice Actor MP3 directly through hardware audio output without WebAudio graph disconnection
+// or browser speechSynthesis robotic voices, guaranteeing strictly ONE human voice at a time.
 function getSharedNoctisAudio(): HTMLAudioElement | null {
   if (typeof window === "undefined") return null
   const win = window as any
   if (!win.__noctisSharedAudioEl) {
     const audio = new Audio()
-    audio.crossOrigin = "anonymous"
     audio.preload = "auto"
+    audio.volume = 1.0
     win.__noctisSharedAudioEl = audio
   }
   return win.__noctisSharedAudioEl as HTMLAudioElement
@@ -1087,40 +1088,8 @@ function getSharedNoctisPreloadAudio(): HTMLAudioElement | null {
 }
 
 function ensureSharedAudioBoostGraph(audioEl: HTMLAudioElement) {
+  audioEl.muted = false
   audioEl.volume = 1.0
-  if (typeof window === "undefined") return
-  const win = window as any
-  try {
-    const AudioCtx = window.AudioContext || win.webkitAudioContext
-    if (!AudioCtx) return
-    if (!win.__noctisSharedAudioCtx) {
-      win.__noctisSharedAudioCtx = new AudioCtx()
-    }
-    const ctx: AudioContext = win.__noctisSharedAudioCtx
-    const connectChain = () => {
-      if (win.__noctisSharedAudioBoosted || ctx.state !== "running") return
-      try {
-        const source = ctx.createMediaElementSource(audioEl)
-
-        // Clean studio gain without artificial EQ distortion so the natural human voice sounds 100% authentic and warm
-        const gain = ctx.createGain()
-        gain.gain.setValueAtTime(1.85, ctx.currentTime)
-
-        source.connect(gain)
-        gain.connect(ctx.destination)
-        win.__noctisSharedAudioBoosted = true
-      } catch {
-        // Ignore if already connected
-      }
-    }
-    if (ctx.state === "suspended") {
-      ctx.resume().then(connectChain).catch(() => {})
-    } else {
-      connectChain()
-    }
-  } catch {
-    // Fallback: standard volume = 1.0 remains active
-  }
 }
 
 const QUICK_AUDIO_LANG_CHIPS: LanguageCode[] = ["es", "pl", "fr", "zh", "vi", "en", "ak", "ar"]
@@ -1250,23 +1219,17 @@ export function NoctisVideoInterpreterPopup({
     ensureSharedAudioBoostGraph(audioEl)
   }, [])
 
-  // Lower or restore any HTML5 <video> elements on the page when Noctis interpretation is active
-  // (On iOS/Android mobile browsers where video.volume is read-only and always 100%, set video.muted = true while interpreting)
+  // Completely MUTE any HTML5 <video> elements on the page when Noctis interpretation is active
+  // so you NEVER hear two people talking at the same time on desktop or mobile!
   const setPageVideoElementsDucking = useCallback((duck: boolean) => {
     if (typeof document === "undefined" || typeof window === "undefined") return
     try {
-      const isMobileDevice =
-        window.matchMedia?.("(pointer: coarse)").matches ||
-        /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent || "") ||
-        window.innerWidth < 768
       const videos = document.querySelectorAll("video")
       videos.forEach((v) => {
         if (!v.srcObject) {
           if (duck) {
-            v.volume = 0.04
-            if (isMobileDevice) {
-              v.muted = true
-            }
+            v.volume = 0
+            v.muted = true
           } else {
             v.volume = 1.0
             v.muted = false
@@ -1316,22 +1279,24 @@ export function NoctisVideoInterpreterPopup({
       clearTimeout(nextSentenceTimerRef.current)
       nextSentenceTimerRef.current = null
     }
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      try {
+        window.speechSynthesis.cancel()
+      } catch {}
+    }
     const isCurrentActiveOwner =
       typeof window !== "undefined" &&
       (forceStopShared || (window as any).__activeNoctisInterpreterId === instanceIdRef.current)
 
     if (isCurrentActiveOwner) {
+      const win = window as any
+      win.__noctisAudioPlaySeq = (win.__noctisAudioPlaySeq || 0) + 1
       const sharedAudio = getSharedNoctisAudio()
       if (sharedAudio) {
         try {
-          sharedAudio.pause()
           sharedAudio.onended = null
           sharedAudio.onerror = null
-        } catch {}
-      }
-      if (typeof window !== "undefined" && "speechSynthesis" in window) {
-        try {
-          window.speechSynthesis.cancel()
+          sharedAudio.pause()
         } catch {}
       }
     }
@@ -1357,11 +1322,20 @@ export function NoctisVideoInterpreterPopup({
   }, [stopAudioOutput])
 
   // Core sentence-by-sentence continuous verbatim human voice player:
-  // Uses singleton `/api/connectin/tts` (Studio Natural Human Voice Actors) with next-sentence preloading.
+  // Uses ONLY `/api/connectin/tts?v=human3` (Studio Natural Human Voice Actors) with strict single-voice sequence locking.
+  // NEVER invokes `window.speechSynthesis` so robotic browser AI voices can never speak or overlap!
   const speakSentenceAtIndex = useCallback((idx: number) => {
     if (typeof window === "undefined") return
     if (!isSpeakingRef.current) return
-    if ((window as any).__activeNoctisInterpreterId !== instanceIdRef.current) return
+    const win = window as any
+    if (win.__activeNoctisInterpreterId !== instanceIdRef.current) return
+
+    // Always cancel any stray browser speechSynthesis so robotic OS voices never talk
+    if ("speechSynthesis" in window) {
+      try {
+        window.speechSynthesis.cancel()
+      } catch {}
+    }
 
     const list = sentencesRef.current
     if (!list || list.length === 0) return
@@ -1370,7 +1344,7 @@ export function NoctisVideoInterpreterPopup({
     setActiveSentenceIdx(safeIdx)
     activeSentenceIdxRef.current = safeIdx
 
-    // Duck/mute original video track while Noctis speaks the target language
+    // Completely mute original video track while Noctis human voice speaks
     if (onMuteOriginalVideoRef.current) {
       onMuteOriginalVideoRef.current(true)
     }
@@ -1381,12 +1355,16 @@ export function NoctisVideoInterpreterPopup({
     const targetLang = audioLangRef.current
     const speakerParam = speakerNameRef.current || ""
 
+    // Increment global sequence token so any previous in-flight request is immediately invalidated
+    const mySeq = (win.__noctisAudioPlaySeq || 0) + 1
+    win.__noctisAudioPlaySeq = mySeq
+
     // Preload the NEXT verbatim spoken line in the background so there is zero gap between sentences!
     if (nextSentenceText) {
       try {
         const preloadAudio = getSharedNoctisPreloadAudio()
         if (preloadAudio) {
-          preloadAudio.src = `/api/connectin/tts?lang=${encodeURIComponent(
+          preloadAudio.src = `/api/connectin/tts?v=human3&lang=${encodeURIComponent(
             targetLang
           )}&speaker=${encodeURIComponent(speakerParam)}&text=${encodeURIComponent(
             nextSentenceText.slice(0, 260)
@@ -1398,94 +1376,80 @@ export function NoctisVideoInterpreterPopup({
 
     const scheduleNextSentence = (delayMs = 150) => {
       if (!isSpeakingRef.current) return
+      if (win.__noctisAudioPlaySeq !== mySeq) return
       if (nextSentenceTimerRef.current) clearTimeout(nextSentenceTimerRef.current)
       nextSentenceTimerRef.current = setTimeout(() => {
         if (
           isSpeakingRef.current &&
-          (window as any).__activeNoctisInterpreterId === instanceIdRef.current
+          win.__activeNoctisInterpreterId === instanceIdRef.current &&
+          win.__noctisAudioPlaySeq === mySeq
         ) {
           speakSentenceAtIndex(safeIdx + 1)
         }
       }, delayMs)
     }
 
-    const speakWithBrowserFallback = () => {
-      if (!("speechSynthesis" in window) || !isSpeakingRef.current) return
-      if ((window as any).__activeNoctisInterpreterId !== instanceIdRef.current) return
-      try {
-        const utterance = new SpeechSynthesisUtterance(sentenceText)
-        const targetLocale = SPEECH_LOCALE_MAP[targetLang] || "en-US"
-        utterance.lang = targetLocale
-        utterance.rate = 1.0
-        utterance.volume = 1.0
-
-        const voices = window.speechSynthesis.getVoices()
-        const langVoices = voices.filter(
-          (v) =>
-            v.lang.toLowerCase().startsWith(targetLang.toLowerCase()) ||
-            v.lang.toLowerCase().includes(targetLocale.toLowerCase())
-        )
-        // Prefer Natural / Online (Natural) / Siri / Premium human voices over robotic desktop synths
-        const naturalHumanVoice =
-          langVoices.find((v) => /natural|online|siri|premium|neural|enhanced/i.test(v.name)) ||
-          langVoices[0]
-        if (naturalHumanVoice) {
-          utterance.voice = naturalHumanVoice
-        }
-
-        utterance.onend = () => scheduleNextSentence(150)
-        utterance.onerror = () => scheduleNextSentence(350)
-        window.speechSynthesis.speak(utterance)
-      } catch {
-        scheduleNextSentence(1500)
-      }
-    }
-
-    // Primary: Play Studio Natural Human Voice Actor MP3 stream via `/api/connectin/tts` at natural 1.0x cadence
     try {
       const audio = getSharedNoctisAudio()
-      if (!audio) {
-        speakWithBrowserFallback()
-        return
-      }
+      if (!audio) return
+
       audio.onended = null
       audio.onerror = null
-      audio.onplay = () => {
-        try {
-          ;(audio as any).preservesPitch = true
-          audio.playbackRate = 1.0
-        } catch {}
-        boostInterpretationAudioElement(audio)
-      }
+      try {
+        audio.pause()
+      } catch {}
+
+      audio.muted = false
       audio.volume = 1.0
-      boostInterpretationAudioElement(audio)
-      audio.src = `/api/connectin/tts?lang=${encodeURIComponent(
+      try {
+        ;(audio as any).preservesPitch = true
+        audio.playbackRate = 1.0
+      } catch {}
+
+      audio.src = `/api/connectin/tts?v=human3&lang=${encodeURIComponent(
         targetLang
       )}&speaker=${encodeURIComponent(speakerParam)}&text=${encodeURIComponent(
         sentenceText.slice(0, 260)
       )}`
+
       audio.onended = () => {
-        if ((window as any).__activeNoctisInterpreterId === instanceIdRef.current) {
-          scheduleNextSentence(160)
+        if (
+          win.__activeNoctisInterpreterId === instanceIdRef.current &&
+          win.__noctisAudioPlaySeq === mySeq
+        ) {
+          scheduleNextSentence(140)
         }
       }
       audio.onerror = () => {
-        if ((window as any).__activeNoctisInterpreterId === instanceIdRef.current) {
-          speakWithBrowserFallback()
+        if (
+          win.__activeNoctisInterpreterId === instanceIdRef.current &&
+          win.__noctisAudioPlaySeq === mySeq
+        ) {
+          scheduleNextSentence(600)
         }
       }
+
       const playPromise = audio.play()
       if (playPromise && typeof playPromise.catch === "function") {
-        playPromise.catch(() => {
-          if ((window as any).__activeNoctisInterpreterId === instanceIdRef.current) {
-            speakWithBrowserFallback()
+        playPromise.catch((err: any) => {
+          // If interrupted by a newer sentence/language selection (AbortError), do nothing — the newer request owns playback.
+          // If blocked by autoplay policy before first user tap (NotAllowedError), wait for the global pointerdown/touchstart listener to resume.
+          const errName = String(err?.name || "")
+          if (errName === "AbortError" || errName === "NotAllowedError") {
+            return
+          }
+          if (
+            win.__activeNoctisInterpreterId === instanceIdRef.current &&
+            win.__noctisAudioPlaySeq === mySeq
+          ) {
+            scheduleNextSentence(800)
           }
         })
       }
     } catch {
-      speakWithBrowserFallback()
+      // Wait for next sentence or user interaction
     }
-  }, [boostInterpretationAudioElement, setPageVideoElementsDucking])
+  }, [setPageVideoElementsDucking])
 
   const startContinuousInterpretation = useCallback(
     (startIndex = 0) => {

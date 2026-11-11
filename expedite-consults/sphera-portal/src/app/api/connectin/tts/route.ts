@@ -632,7 +632,7 @@ async function synthesizeStudioHumanVoiceAttempt(text: string, voiceName: string
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
-      const ssml = `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'><voice name='${voiceName}'><prosody pitch='+0Hz' rate='+0%' volume='+0%'>${escaped}</prosody></voice></speak>`
+      const ssml = `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'><voice name='${voiceName}'><prosody pitch='+0Hz' rate='+0%' volume='+30%'>${escaped}</prosody></voice></speak>`
       const ssmlMsg =
         `X-RequestId:${reqId}\r\n` +
         `Content-Type:application/ssml+xml\r\n` +
@@ -707,16 +707,22 @@ async function synthesizeStudioHumanVoiceAttempt(text: string, voiceName: string
   })
 }
 
-async function synthesizeStudioHumanVoice(text: string, voiceName: string): Promise<Buffer | null> {
-  try {
-    const buf = await synthesizeStudioHumanVoiceAttempt(text, voiceName)
-    if (buf && buf.byteLength > 200) return buf
-  } catch (err: any) {
-    if (String(err?.message || "").includes("HTTP 403")) {
+async function synthesizeStudioHumanVoice(
+  text: string,
+  primaryVoiceName: string,
+  backupVoiceName: string
+): Promise<{ buffer: Buffer; actor: string } | null> {
+  const candidates = [primaryVoiceName, backupVoiceName, "en-US-AndrewMultilingualNeural"]
+  for (const voice of candidates) {
+    for (let attempt = 0; attempt < 2; attempt++) {
       try {
-        const retryBuf = await synthesizeStudioHumanVoiceAttempt(text, voiceName)
-        if (retryBuf && retryBuf.byteLength > 200) return retryBuf
-      } catch {}
+        const buf = await synthesizeStudioHumanVoiceAttempt(text, voice)
+        if (buf && buf.byteLength > 200) {
+          return { buffer: buf, actor: voice }
+        }
+      } catch {
+        // Retry once on transient socket/clock-skew error, then try next studio human actor
+      }
     }
   }
   return null
@@ -737,72 +743,37 @@ export async function GET(req: NextRequest) {
   const rawLang = (searchParams.get("lang") || "en").trim().toLowerCase()
   const speaker = (searchParams.get("speaker") || "").trim()
   const genderParam = (searchParams.get("gender") || "").trim().toLowerCase()
-  const primaryTl = PRIMARY_TTS_LANG_MAP[rawLang] || rawLang || "en"
 
   if (!rawText) {
     return new NextResponse("Missing text", { status: 400 })
   }
 
-  // 1. Primary Studio Natural Human Voice Actor (24kHz 48kbps MP3)
+  // 100% Studio Natural Human Voice Actor (24kHz 48kbps MP3) — never robotic synth
   const actorPair = NATURAL_HUMAN_VOICE_ACTORS[rawLang] || NATURAL_HUMAN_VOICE_ACTORS.en
   const useFemale = isFemaleSpeakerName(speaker, genderParam)
   const chosenVoiceActor = useFemale ? actorPair.female : actorPair.male
+  const backupVoiceActor = useFemale
+    ? "en-US-AvaMultilingualNeural"
+    : "en-US-AndrewMultilingualNeural"
   const needsPhoneticReshape = PHONETIC_RESHAPE_LANGS.has(rawLang)
   const humanVoiceText = reshapeForAuthenticSpokenPronunciation(rawText, rawLang, needsPhoneticReshape)
 
-  const studioHumanBuffer = await synthesizeStudioHumanVoice(humanVoiceText, chosenVoiceActor)
-  if (studioHumanBuffer && studioHumanBuffer.byteLength > 200) {
-    return new NextResponse(new Uint8Array(studioHumanBuffer), {
+  const studioHumanResult = await synthesizeStudioHumanVoice(
+    humanVoiceText,
+    chosenVoiceActor,
+    backupVoiceActor
+  )
+  if (studioHumanResult && studioHumanResult.buffer.byteLength > 200) {
+    return new NextResponse(new Uint8Array(studioHumanResult.buffer), {
       status: 200,
       headers: {
         "Content-Type": "audio/mpeg",
-        "X-Voice-Actor": chosenVoiceActor,
+        "X-Voice-Actor": studioHumanResult.actor,
+        "X-Voice-Type": "studio-human-actor",
         "Cache-Control": "public, max-age=86400, s-maxage=86400",
       },
     })
   }
 
-  // 2. Secondary Fallback at natural 1.0x human cadence
-  const candidateLangs = Array.from(
-    new Set([primaryTl, ...(PHONETIC_FALLBACK_TTS_VOICE[rawLang] || []), "sw", "en"])
-  )
-
-  for (let i = 0; i < candidateLangs.length; i++) {
-    const tl = candidateLangs[i]
-    const textForVoice = reshapeForAuthenticSpokenPronunciation(rawText, rawLang, i > 0)
-
-    const endpoints = [
-      `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(textForVoice)}&tl=${encodeURIComponent(tl)}&total=1&idx=0&textlen=${textForVoice.length}&client=tw-ob&ttsspeed=1.0`,
-      `https://translate.googleapis.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(textForVoice)}&tl=${encodeURIComponent(tl)}&client=gtx&ttsspeed=1.0`,
-    ]
-
-    for (const url of endpoints) {
-      try {
-        const response = await fetch(url, {
-          headers: {
-            "User-Agent":
-              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
-            Referer: "https://translate.google.com/",
-          },
-        })
-
-        if (response.ok) {
-          const arrayBuffer = await response.arrayBuffer()
-          if (arrayBuffer.byteLength > 100) {
-            return new NextResponse(arrayBuffer, {
-              status: 200,
-              headers: {
-                "Content-Type": "audio/mpeg",
-                "Cache-Control": "public, max-age=86400, s-maxage=86400",
-              },
-            })
-          }
-        }
-      } catch {
-        // Try next endpoint / fallback voice
-      }
-    }
-  }
-
-  return new NextResponse("TTS unavailable", { status: 502 })
+  return new NextResponse("Human voice studio stream temporarily busy", { status: 503 })
 }
