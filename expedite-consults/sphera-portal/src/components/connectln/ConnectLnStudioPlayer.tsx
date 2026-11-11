@@ -109,10 +109,14 @@ export function ConnectLnStudioPlayer({
   onExclusiveStopRef.current = onExclusiveStop
 
   const [isPlaying, setIsPlaying] = useState<boolean>(autoPlay)
+  const [hasVideoStarted, setHasVideoStarted] = useState<boolean>(false)
   const [isStoppedByOther, setIsStoppedByOther] = useState<boolean>(false)
   const userPausedManuallyRef = useRef<boolean>(false)
   const unmuteBlockedByBrowserRef = useRef<boolean>(false)
+  const hasUnmutedOnceRef = useRef<boolean>(false)
+  const ytPlayerStateRef = useRef<number>(-1)
   const lastUnmuteSentAtRef = useRef<number>(0)
+  const lastRecoveryAtRef = useRef<number>(0)
   const [isMuted, setIsMuted] = useState<boolean>(initialMuted)
   const isVoiceDuckingRef = useRef<boolean>(false)
   const userManuallyMutedRef = useRef<boolean>(false)
@@ -159,40 +163,27 @@ export function ConnectLnStudioPlayer({
       if (shouldDuck || shouldMuteForTranslation()) {
         sendPlayerCommand("setVolume", [0])
         sendPlayerCommand("mute")
-        if (!userPausedManuallyRef.current) {
+        if (!userPausedManuallyRef.current && (ytPlayerStateRef.current === 2 || ytPlayerStateRef.current === 5)) {
           sendPlayerCommand("playVideo")
         }
         setTimeout(() => {
           if (isVoiceDuckingRef.current || shouldMuteForTranslation()) {
             sendPlayerCommand("setVolume", [0])
             sendPlayerCommand("mute")
-            if (!userPausedManuallyRef.current) {
+            if (!userPausedManuallyRef.current && (ytPlayerStateRef.current === 2 || ytPlayerStateRef.current === 5)) {
               sendPlayerCommand("playVideo")
             }
           }
         }, 80)
-        setTimeout(() => {
-          if (isVoiceDuckingRef.current || shouldMuteForTranslation()) {
-            sendPlayerCommand("setVolume", [0])
-            sendPlayerCommand("mute")
-            if (!userPausedManuallyRef.current) {
-              sendPlayerCommand("playVideo")
-            }
-          }
-        }, 280)
-      } else if (!userManuallyMutedRef.current && !unmuteBlockedByBrowserRef.current) {
+      } else if (
+        ytPlayerStateRef.current === 1 &&
+        !userManuallyMutedRef.current &&
+        !unmuteBlockedByBrowserRef.current
+      ) {
+        hasUnmutedOnceRef.current = true
         lastUnmuteSentAtRef.current = Date.now()
         sendPlayerCommand("unMute")
         sendPlayerCommand("setVolume", [100])
-        if (!userPausedManuallyRef.current) {
-          sendPlayerCommand("playVideo")
-        }
-        setTimeout(() => {
-          if (!isVoiceDuckingRef.current && !shouldMuteForTranslation() && !userManuallyMutedRef.current && !unmuteBlockedByBrowserRef.current) {
-            sendPlayerCommand("unMute")
-            sendPlayerCommand("setVolume", [100])
-          }
-        }, 80)
         setIsMuted(false)
       }
     },
@@ -225,6 +216,10 @@ export function ConnectLnStudioPlayer({
   useEffect(() => {
     userPausedManuallyRef.current = false
     unmuteBlockedByBrowserRef.current = false
+    hasUnmutedOnceRef.current = false
+    ytPlayerStateRef.current = -1
+    lastRecoveryAtRef.current = 0
+    setHasVideoStarted(false)
     setIsPlaying(autoPlay)
     setIsStoppedByOther(false)
     setCurrentTime(0)
@@ -239,38 +234,58 @@ export function ConnectLnStudioPlayer({
       try {
         const data = JSON.parse(e.data)
         if (data.event === "infoDelivery" && data.info) {
-          if (shouldMuteForTranslation()) {
-            win.postMessage(JSON.stringify({ event: "command", func: "setVolume", args: [0] }), "*")
-            win.postMessage(JSON.stringify({ event: "command", func: "mute", args: [] }), "*")
-          } else if (!userManuallyMutedRef.current && !unmuteBlockedByBrowserRef.current && !initialMuted) {
-            lastUnmuteSentAtRef.current = Date.now()
-            win.postMessage(JSON.stringify({ event: "command", func: "unMute", args: [] }), "*")
-            win.postMessage(JSON.stringify({ event: "command", func: "setVolume", args: [100] }), "*")
-          }
           if (typeof data.info.currentTime === "number") {
             setCurrentTime(data.info.currentTime)
+            if (data.info.currentTime > 0.05) {
+              setHasVideoStarted(true)
+            }
           }
           if (typeof data.info.duration === "number" && data.info.duration > 0) {
             setDuration(data.info.duration)
           }
           if (typeof data.info.playerState === "number") {
-            // 1 = playing, 2 = paused, 0 = ended (auto-replay continuously until user clicks Next Talk)
-            if (data.info.playerState === 1) {
+            const pState = data.info.playerState
+            ytPlayerStateRef.current = pState
+
+            // 1 = playing, 2 = paused, 0 = ended (never interrupt -1 unstarted or 3 buffering!)
+            if (pState === 1) {
               setIsPlaying(true)
-            } else if (data.info.playerState === 0) {
+              setHasVideoStarted(true)
+              if (shouldMuteForTranslation()) {
+                win.postMessage(JSON.stringify({ event: "command", func: "setVolume", args: [0] }), "*")
+                win.postMessage(JSON.stringify({ event: "command", func: "mute", args: [] }), "*")
+              } else if (
+                !userManuallyMutedRef.current &&
+                !unmuteBlockedByBrowserRef.current &&
+                !initialMuted &&
+                !hasUnmutedOnceRef.current
+              ) {
+                hasUnmutedOnceRef.current = true
+                lastUnmuteSentAtRef.current = Date.now()
+                win.postMessage(JSON.stringify({ event: "command", func: "unMute", args: [] }), "*")
+                win.postMessage(JSON.stringify({ event: "command", func: "setVolume", args: [100] }), "*")
+                setIsMuted(false)
+              }
+            } else if (pState === 0) {
               setCurrentTime(0)
               setIsPlaying(true)
               win.postMessage(JSON.stringify({ event: "command", func: "seekTo", args: [0, true] }), "*")
               win.postMessage(JSON.stringify({ event: "command", func: "playVideo", args: [] }), "*")
-            } else if (data.info.playerState === 2 || data.info.playerState === -1 || data.info.playerState === 5) {
+            } else if (pState === 2 || pState === 5) {
               if (!userPausedManuallyRef.current) {
-                // Browser paused the iframe (e.g. blocked unmuted autoplay during translation or card switch).
-                // Keep the video moving smoothly by muting the iframe and forcing playVideo!
-                if (Date.now() - lastUnmuteSentAtRef.current < 2500) {
+                // Browser paused the iframe (e.g. blocked unmuted autoplay).
+                // Keep the video moving smoothly by muting the iframe and resuming playVideo!
+                if (Date.now() - lastUnmuteSentAtRef.current < 3500) {
                   unmuteBlockedByBrowserRef.current = true
+                  if (!shouldMuteForTranslation()) {
+                    setIsMuted(true)
+                  }
                 }
-                win.postMessage(JSON.stringify({ event: "command", func: "mute", args: [] }), "*")
-                win.postMessage(JSON.stringify({ event: "command", func: "playVideo", args: [] }), "*")
+                if (Date.now() - lastRecoveryAtRef.current > 900) {
+                  lastRecoveryAtRef.current = Date.now()
+                  win.postMessage(JSON.stringify({ event: "command", func: "mute", args: [] }), "*")
+                  win.postMessage(JSON.stringify({ event: "command", func: "playVideo", args: [] }), "*")
+                }
                 setIsPlaying(true)
               } else {
                 setIsPlaying(false)
@@ -288,7 +303,7 @@ export function ConnectLnStudioPlayer({
       const win = iframeRef.current?.contentWindow
       if (win) {
         win.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), "*")
-        if (shouldMuteForTranslation()) {
+        if (shouldMuteForTranslation() && ytPlayerStateRef.current === 1) {
           win.postMessage(
             JSON.stringify({ event: "command", func: "setVolume", args: [0] }),
             "*"
@@ -297,22 +312,16 @@ export function ConnectLnStudioPlayer({
             JSON.stringify({ event: "command", func: "mute", args: [] }),
             "*"
           )
-          if (!userPausedManuallyRef.current) {
-            win.postMessage(
-              JSON.stringify({ event: "command", func: "playVideo", args: [] }),
-              "*"
-            )
-          }
-        } else if (!userManuallyMutedRef.current && !unmuteBlockedByBrowserRef.current && !initialMuted) {
-          lastUnmuteSentAtRef.current = Date.now()
-          win.postMessage(
-            JSON.stringify({ event: "command", func: "unMute", args: [] }),
-            "*"
-          )
-          win.postMessage(
-            JSON.stringify({ event: "command", func: "setVolume", args: [100] }),
-            "*"
-          )
+        }
+        // Only kick playVideo if YouTube is paused (2) or cued (5) — never while -1 (loading) or 3 (buffering)
+        if (
+          !userPausedManuallyRef.current &&
+          (ytPlayerStateRef.current === 2 || ytPlayerStateRef.current === 5) &&
+          Date.now() - lastRecoveryAtRef.current > 1200
+        ) {
+          lastRecoveryAtRef.current = Date.now()
+          win.postMessage(JSON.stringify({ event: "command", func: "mute", args: [] }), "*")
+          win.postMessage(JSON.stringify({ event: "command", func: "playVideo", args: [] }), "*")
         }
       }
     }, 800)
@@ -354,6 +363,7 @@ export function ConnectLnStudioPlayer({
       setIsStoppedByOther(false)
       userManuallyMutedRef.current = false
       if (!shouldMuteForTranslation()) {
+        hasUnmutedOnceRef.current = true
         lastUnmuteSentAtRef.current = Date.now()
         sendPlayerCommand("unMute")
         sendPlayerCommand("setVolume", [100])
@@ -375,6 +385,7 @@ export function ConnectLnStudioPlayer({
       userManuallyMutedRef.current = false
       const muteForTrans = shouldMuteForTranslation()
       if (!muteForTrans) {
+        hasUnmutedOnceRef.current = true
         lastUnmuteSentAtRef.current = Date.now()
         sendPlayerCommand("unMute")
       }
@@ -390,28 +401,31 @@ export function ConnectLnStudioPlayer({
     }
   }
 
-  // Ensure sound is unmuted on any user interaction when Noctis is not speaking
+  // Ensure sound is unmuted on user interaction when Noctis is not speaking and video has already started
   useEffect(() => {
     const unlockAudio = () => {
-      unmuteBlockedByBrowserRef.current = false
+      if (isStoppedByOther || ytPlayerStateRef.current === -1) return
       if (shouldMuteForTranslation()) {
         applyVoiceDuckingToPlayer(true)
-      } else if (!userManuallyMutedRef.current) {
-        applyVoiceDuckingToPlayer(false)
+      } else if (!userManuallyMutedRef.current && unmuteBlockedByBrowserRef.current) {
+        unmuteBlockedByBrowserRef.current = false
+        hasUnmutedOnceRef.current = true
+        lastUnmuteSentAtRef.current = Date.now()
+        sendPlayerCommand("unMute")
+        sendPlayerCommand("setVolume", [100])
+        setIsMuted(false)
       }
-      if (!userPausedManuallyRef.current && !isStoppedByOther) {
+      if (!userPausedManuallyRef.current && ytPlayerStateRef.current === 2) {
         sendPlayerCommand("playVideo")
       }
     }
     window.addEventListener("pointerdown", unlockAudio, { passive: true })
     window.addEventListener("touchstart", unlockAudio, { passive: true })
-    window.addEventListener("keydown", unlockAudio, { passive: true })
     return () => {
       window.removeEventListener("pointerdown", unlockAudio)
       window.removeEventListener("touchstart", unlockAudio)
-      window.removeEventListener("keydown", unlockAudio)
     }
-  }, [isPlaying, isStoppedByOther, sendPlayerCommand, applyVoiceDuckingToPlayer, shouldMuteForTranslation])
+  }, [isStoppedByOther, sendPlayerCommand, applyVoiceDuckingToPlayer, shouldMuteForTranslation])
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTime = parseFloat(e.target.value)
@@ -465,7 +479,7 @@ export function ConnectLnStudioPlayer({
       <div className="absolute inset-x-0 -top-[62px] -bottom-[62px] pointer-events-none">
         {isStoppedByOther ? (
           <img
-            src={`https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`}
+            src={posterImageUrl || `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`}
             alt={title}
             className="h-full w-full object-cover opacity-75"
           />
@@ -477,23 +491,24 @@ export function ConnectLnStudioPlayer({
             title={title}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             onLoad={() => {
-              if (autoPlay) {
-                setTimeout(() => {
-                  if (shouldMuteForTranslation()) {
-                    applyVoiceDuckingToPlayer(true)
-                  } else if (!initialMuted && !userManuallyMutedRef.current && !unmuteBlockedByBrowserRef.current) {
-                    lastUnmuteSentAtRef.current = Date.now()
-                    sendPlayerCommand("unMute")
-                    sendPlayerCommand("setVolume", [100])
-                  }
-                  sendPlayerCommand("playVideo")
-                }, 150)
+              const win = iframeRef.current?.contentWindow
+              if (win) {
+                win.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), "*")
               }
             }}
             className="h-full w-full border-0 pointer-events-none"
           />
         )}
       </div>
+
+      {/* Instant Thumbnail Preview Overlay while YouTube stream initializes (Prevents initial black screen!) */}
+      {!hasVideoStarted && !isStoppedByOther && (
+        <img
+          src={posterImageUrl || `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`}
+          alt={title}
+          className="absolute inset-0 z-[5] h-full w-full object-cover pointer-events-none transition-opacity duration-200"
+        />
+      )}
 
       {/* Noctis AI Live Video Language Interpreter & Voice Dubbing Pop-up */}
       {!isStoppedByOther && (

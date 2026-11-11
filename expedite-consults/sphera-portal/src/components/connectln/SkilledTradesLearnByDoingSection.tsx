@@ -221,57 +221,13 @@ export function SkilledTradesLearnByDoingSection({
     setPracticeDrafts(drafts)
   }, [])
 
-  // Verify playability of each lesson's YouTube video before enabling the embedded player
+  // Mark all verified YouTube lesson videos playable immediately in a single pass
   useEffect(() => {
-    let cancelled = false
-    async function verifyVideos() {
-      for (const lesson of SKILLED_TRADES_LEARN_BY_DOING_LESSONS) {
-        if (!lesson.embedAvailable || !lesson.youtubeId) {
-          if (!cancelled) {
-            setEmbedPlayabilityMap(prev => ({ ...prev, [lesson.id]: 'unavailable' }))
-          }
-          continue
-        }
-
-        if (!cancelled) {
-          setEmbedPlayabilityMap(prev => ({ ...prev, [lesson.id]: 'checking' }))
-        }
-
-        try {
-          const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(
-            `https://www.youtube.com/watch?v=${lesson.youtubeId}`
-          )}&format=json`
-          const res = await fetch(oembedUrl)
-          if (!cancelled) {
-            setEmbedPlayabilityMap(prev => ({
-              ...prev,
-              [lesson.id]: res.ok ? 'playable' : 'unavailable'
-            }))
-          }
-        } catch {
-          // If browser blocks cross-origin oEmbed or offline, fallback to thumbnail probe
-          const img = new Image()
-          img.onload = () => {
-            if (!cancelled) {
-              setEmbedPlayabilityMap(prev => ({
-                ...prev,
-                [lesson.id]: img.naturalWidth > 120 ? 'playable' : 'unavailable'
-              }))
-            }
-          }
-          img.onerror = () => {
-            if (!cancelled) {
-              setEmbedPlayabilityMap(prev => ({ ...prev, [lesson.id]: 'unavailable' }))
-            }
-          }
-          img.src = `https://i.ytimg.com/vi/${lesson.youtubeId}/hqdefault.jpg`
-        }
-      }
+    const initialMap: Record<string, 'checking' | 'playable' | 'unavailable'> = {}
+    for (const lesson of SKILLED_TRADES_LEARN_BY_DOING_LESSONS) {
+      initialMap[lesson.id] = lesson.embedAvailable && lesson.youtubeId ? 'playable' : 'unavailable'
     }
-    verifyVideos()
-    return () => {
-      cancelled = true
-    }
+    setEmbedPlayabilityMap(initialMap)
   }, [])
 
   // Notify parent LearningView whenever telemetry updates
