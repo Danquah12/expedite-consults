@@ -939,13 +939,26 @@ export function NoctisVideoInterpreterPopup({
   }, [])
 
   // Also lower or restore any HTML5 <video> elements on the page when Noctis interpretation is active
+  // (On iOS/Android mobile browsers where video.volume is read-only and always 100%, set video.muted = true while interpreting)
   const setPageVideoElementsDucking = useCallback((duck: boolean) => {
-    if (typeof document === "undefined") return
+    if (typeof document === "undefined" || typeof window === "undefined") return
     try {
+      const isMobileDevice =
+        window.matchMedia?.("(pointer: coarse)").matches ||
+        /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent || "") ||
+        window.innerWidth < 768
       const videos = document.querySelectorAll("video")
       videos.forEach((v) => {
         if (!v.srcObject) {
-          v.volume = duck ? 0.04 : 1.0
+          if (duck) {
+            v.volume = 0.04
+            if (isMobileDevice) {
+              v.muted = true
+            }
+          } else {
+            v.volume = 1.0
+            v.muted = false
+          }
         }
       })
     } catch {}

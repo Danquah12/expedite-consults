@@ -121,6 +121,41 @@ export function ConnectLnStudioPlayer({
     )
   }, [])
 
+  // On mobile devices (iOS Safari / Android Chrome), HTMLMediaElement.volume & YouTube setVolume() are read-only
+  // and always play at 100% hardware volume. Therefore on mobile we MUST call "mute" on the English video
+  // when Noctis interpretation is active so the interpretation voice is crystal clear without competing 100% English audio.
+  const applyVoiceDuckingToPlayer = useCallback(
+    (shouldDuck: boolean) => {
+      const isMobileDevice =
+        typeof window !== "undefined" &&
+        (window.matchMedia?.("(pointer: coarse)").matches ||
+          /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent || "") ||
+          window.innerWidth < 768)
+
+      if (shouldDuck) {
+        if (isMobileDevice) {
+          sendPlayerCommand("setVolume", [2])
+          sendPlayerCommand("mute")
+          setTimeout(() => sendPlayerCommand("mute"), 80)
+          setTimeout(() => sendPlayerCommand("mute"), 300)
+          setIsMuted(true)
+        } else {
+          sendPlayerCommand("unMute")
+          sendPlayerCommand("setVolume", [4])
+          setTimeout(() => sendPlayerCommand("setVolume", [4]), 80)
+          setTimeout(() => sendPlayerCommand("setVolume", [4]), 300)
+          setIsMuted(false)
+        }
+      } else {
+        sendPlayerCommand("unMute")
+        sendPlayerCommand("setVolume", [100])
+        setTimeout(() => sendPlayerCommand("setVolume", [100]), 80)
+        setIsMuted(false)
+      }
+    },
+    [sendPlayerCommand]
+  )
+
   // Listen for any other video starting on the page and immediately stop this one
   useEffect(() => {
     const handleExclusivePlay = (e: Event) => {
@@ -190,12 +225,25 @@ export function ConnectLnStudioPlayer({
       const win = iframeRef.current?.contentWindow
       if (win) {
         win.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), "*")
-        // Continuously enforce 4% whisper volume on English audio whenever Noctis interpretation is active
+        // Continuously enforce English audio ducking whenever Noctis interpretation is active
+        // (On mobile OS browsers where setVolume is ignored, mute the English track so interpretation is crystal clear)
         if (isVoiceDuckingRef.current || languageRef.current !== "en") {
-          win.postMessage(
-            JSON.stringify({ event: "command", func: "setVolume", args: [4] }),
-            "*"
-          )
+          const isMobileDevice =
+            typeof window !== "undefined" &&
+            (window.matchMedia?.("(pointer: coarse)").matches ||
+              /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent || "") ||
+              window.innerWidth < 768)
+          if (isMobileDevice) {
+            win.postMessage(
+              JSON.stringify({ event: "command", func: "mute", args: [] }),
+              "*"
+            )
+          } else {
+            win.postMessage(
+              JSON.stringify({ event: "command", func: "setVolume", args: [4] }),
+              "*"
+            )
+          }
         }
       }
     }, 800)
@@ -253,18 +301,12 @@ export function ConnectLnStudioPlayer({
     }
   }
 
-  // Ensure sound is unmuted on user interaction if autoPlay is active (lowered to 4% whisper when Noctis interprets)
+  // Ensure sound is unmuted on user interaction if autoPlay is active (lowered to 4% whisper on desktop, muted on mobile when Noctis interprets)
   useEffect(() => {
     if (!autoPlay || isMuted) return
     const unlockAudio = () => {
       const shouldDuck = isVoiceDuckingRef.current || languageRef.current !== "en"
-      sendPlayerCommand("unMute")
-      sendPlayerCommand("setVolume", [shouldDuck ? 4 : 100])
-      setTimeout(() => {
-        sendPlayerCommand("setVolume", [
-          isVoiceDuckingRef.current || languageRef.current !== "en" ? 4 : 100,
-        ])
-      }, 90)
+      applyVoiceDuckingToPlayer(shouldDuck)
       if (isPlaying && !isStoppedByOther) {
         sendPlayerCommand("playVideo")
       }
@@ -275,7 +317,7 @@ export function ConnectLnStudioPlayer({
       window.removeEventListener("pointerdown", unlockAudio)
       window.removeEventListener("keydown", unlockAudio)
     }
-  }, [autoPlay, isMuted, isPlaying, isStoppedByOther, sendPlayerCommand])
+  }, [autoPlay, isMuted, isPlaying, isStoppedByOther, sendPlayerCommand, applyVoiceDuckingToPlayer])
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTime = parseFloat(e.target.value)
@@ -333,18 +375,14 @@ export function ConnectLnStudioPlayer({
           <iframe
             ref={iframeRef}
             key={youtubeId}
-            src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=${autoPlay ? 1 : 0}&mute=${initialMuted ? 1 : 0}&loop=1&playlist=${youtubeId}&controls=0&rel=0&modestbranding=1&iv_load_policy=3&cc_load_policy=${initialLangRef.current !== "en" ? 1 : 0}&cc_lang_pref=${initialLangRef.current}&hl=${initialLangRef.current}&disablekb=1&fs=0&playsinline=1&enablejsapi=1`}
+            src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=${autoPlay ? 1 : 0}&mute=${initialMuted || initialLangRef.current !== "en" ? 1 : 0}&loop=1&playlist=${youtubeId}&controls=0&rel=0&modestbranding=1&iv_load_policy=3&cc_load_policy=${initialLangRef.current !== "en" ? 1 : 0}&cc_lang_pref=${initialLangRef.current}&hl=${initialLangRef.current}&disablekb=1&fs=0&playsinline=1&enablejsapi=1`}
             title={title}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             onLoad={() => {
               if (autoPlay) {
                 setTimeout(() => {
                   if (isVoiceDuckingRef.current || languageRef.current !== "en") {
-                    sendPlayerCommand("unMute")
-                    sendPlayerCommand("setVolume", [4])
-                    setTimeout(() => sendPlayerCommand("setVolume", [4]), 250)
-                    setTimeout(() => sendPlayerCommand("setVolume", [4]), 700)
-                    setIsMuted(false)
+                    applyVoiceDuckingToPlayer(true)
                   } else if (!initialMuted) {
                     sendPlayerCommand("unMute")
                     sendPlayerCommand("setVolume", [100])
@@ -380,19 +418,7 @@ export function ConnectLnStudioPlayer({
           }}
           onMuteOriginalVideo={(shouldDuck) => {
             isVoiceDuckingRef.current = shouldDuck
-            if (shouldDuck) {
-              // Keep English video speaking very quietly in the background (4% whisper volume) while Noctis interprets loudly
-              sendPlayerCommand("unMute")
-              sendPlayerCommand("setVolume", [4])
-              setTimeout(() => sendPlayerCommand("setVolume", [4]), 80)
-              setTimeout(() => sendPlayerCommand("setVolume", [4]), 300)
-              setIsMuted(false)
-            } else {
-              sendPlayerCommand("unMute")
-              sendPlayerCommand("setVolume", [100])
-              setTimeout(() => sendPlayerCommand("setVolume", [100]), 80)
-              setIsMuted(false)
-            }
+            applyVoiceDuckingToPlayer(shouldDuck)
           }}
         />
       )}
