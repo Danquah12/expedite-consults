@@ -83,7 +83,7 @@ export function SkilledTradesLearnByDoingSection({
   const [activeVideoLessonId, setActiveVideoLessonId] = useState<string | null>(
     initialLessonId || SKILLED_TRADES_LEARN_BY_DOING_LESSONS[0]?.id || null
   )
-  const [autoPlayRequested, setAutoPlayRequested] = useState<boolean>(false)
+  const [autoPlayRequested, setAutoPlayRequested] = useState<boolean>(true)
   const [expandedLessonId, setExpandedLessonId] = useState<string | null>(
     initialLessonId || SKILLED_TRADES_LEARN_BY_DOING_LESSONS[0]?.id || null
   )

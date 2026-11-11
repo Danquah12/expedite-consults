@@ -643,12 +643,14 @@ async function synthesizeStudioHumanVoiceAttempt(text: string, voiceName: string
 
       let rxBuffer = Buffer.alloc(0)
       const audioChunks: Buffer[] = []
+      let inAudioContinuation = false
 
       socket.on("data", (chunk: Buffer) => {
         rxBuffer = Buffer.concat([rxBuffer, chunk])
         while (rxBuffer.length >= 2) {
           const byte0 = rxBuffer[0]
           const byte1 = rxBuffer[1]
+          const fin = (byte0 & 0x80) !== 0
           const opcode = byte0 & 0x0f
           let payloadLen = byte1 & 0x7f
           let offset = 2
@@ -670,10 +672,19 @@ async function synthesizeStudioHumanVoiceAttempt(text: string, voiceName: string
               const headerLen = framePayload.readUInt16BE(0)
               const headerStr = framePayload.subarray(2, 2 + headerLen).toString("utf8")
               if (headerStr.includes("Path:audio")) {
-                audioChunks.push(framePayload.subarray(2 + headerLen + 2))
+                audioChunks.push(framePayload.subarray(2 + headerLen))
+                inAudioContinuation = !fin
+              } else {
+                inAudioContinuation = false
               }
             }
+          } else if (opcode === 0x00) {
+            if (inAudioContinuation) {
+              audioChunks.push(framePayload)
+              if (fin) inAudioContinuation = false
+            }
           } else if (opcode === 0x01) {
+            inAudioContinuation = false
             const textStr = framePayload.toString("utf8")
             if (textStr.includes("Path:turn.end")) {
               const result = Buffer.concat(audioChunks)

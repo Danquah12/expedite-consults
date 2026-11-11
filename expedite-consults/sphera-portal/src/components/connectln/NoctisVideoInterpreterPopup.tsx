@@ -1383,7 +1383,7 @@ export function NoctisVideoInterpreterPopup({
       try {
         const preloadAudio = getSharedNoctisPreloadAudio()
         if (preloadAudio) {
-          preloadAudio.src = `/api/connectin/tts?v=human4&lang=${encodeURIComponent(
+          preloadAudio.src = `/api/connectin/tts?v=human5&lang=${encodeURIComponent(
             targetLang
           )}&speaker=${encodeURIComponent(speakerParam)}${needsServerTranslate}&text=${encodeURIComponent(
             nextSentenceText.slice(0, 260)
@@ -1426,7 +1426,7 @@ export function NoctisVideoInterpreterPopup({
         audio.playbackRate = 1.0
       } catch {}
 
-      audio.src = `/api/connectin/tts?v=human4&lang=${encodeURIComponent(
+      audio.src = `/api/connectin/tts?v=human5&lang=${encodeURIComponent(
         targetLang
       )}&speaker=${encodeURIComponent(speakerParam)}${needsServerTranslate}&text=${encodeURIComponent(
         sentenceText.slice(0, 260)
@@ -1461,12 +1461,6 @@ export function NoctisVideoInterpreterPopup({
           scheduleNextSentence(600)
         }
       }
-
-      // Mute original video track as soon as Noctis starts playing
-      if (onMuteOriginalVideoRef.current) {
-        onMuteOriginalVideoRef.current(true)
-      }
-      setPageVideoElementsDucking(true)
 
       const playPromise = audio.play()
       if (playPromise && typeof playPromise.catch === "function") {
@@ -1509,6 +1503,7 @@ export function NoctisVideoInterpreterPopup({
       if (typeof window === "undefined") return
       stopAudioOutput(true)
       claimExclusiveInterpreter(instanceIdRef.current)
+      ;(window as any).__activePlayingNoctisInstanceId = instanceIdRef.current
       isSpeakingRef.current = true
       setIsSpeaking(true)
       speakSentenceAtIndex(startIndex)
@@ -1531,6 +1526,13 @@ export function NoctisVideoInterpreterPopup({
     [stopAudioOutput, setPageVideoElementsDucking]
   )
 
+  // Track the most recently playing video instance so global language switcher always targets it
+  useEffect(() => {
+    if (isPlaying && typeof window !== "undefined") {
+      ;(window as any).__activePlayingNoctisInstanceId = instanceIdRef.current
+    }
+  }, [isPlaying])
+
   // Helper to switch the spoken target language for this video (and across Noctis) and IMMEDIATELY play it
   // synchronously inside the user's click/change event so browser autoplay NEVER blocks it!
   const selectSpokenAudioLanguage = useCallback(
@@ -1538,8 +1540,10 @@ export function NoctisVideoInterpreterPopup({
       userManuallyPausedDubRef.current = false
       setForceSpeakEvenIfSameLang(true)
       forceSpeakRef.current = true
+      prevGlobalLangRef.current = targetCode
       if (typeof window !== "undefined") {
         ;(window as any).__noctisPreferredAudioLang = targetCode
+        ;(window as any).__activePlayingNoctisInstanceId = instanceIdRef.current
       }
       stopAudioOutput(true)
       setAudioLang(targetCode)
@@ -1598,6 +1602,42 @@ export function NoctisVideoInterpreterPopup({
       youtubeId,
     ]
   )
+
+  // Listen synchronously to `sphera-lang-changed` dispatched by the top navbar LanguageSwitcher
+  // so `audio.play()` runs synchronously inside the navbar click event!
+  useEffect(() => {
+    const handleSyncNavbarLangChange = (e: Event) => {
+      const custom = e as CustomEvent<LanguageCode>
+      const newLang = custom.detail
+      if (!newLang || prevGlobalLangRef.current === newLang) return
+      prevGlobalLangRef.current = newLang
+      if (typeof window !== "undefined") {
+        ;(window as any).__noctisPreferredAudioLang = newLang
+      }
+      userManuallyPausedDubRef.current = false
+      const win = window as any
+      const isPrimaryActive =
+        win.__activePlayingNoctisInstanceId === instanceIdRef.current ||
+        (!win.__activePlayingNoctisInstanceId && (isPlayingRef.current || isPopupOpenRef.current))
+
+      if (isPrimaryActive && (isPlayingRef.current || isPopupOpenRef.current)) {
+        if (newLang !== sourceLangRef.current) {
+          selectSpokenAudioLanguage(newLang, false)
+        } else {
+          setForceSpeakEvenIfSameLang(false)
+          forceSpeakRef.current = false
+          setAudioLang(newLang)
+          audioLangRef.current = newLang
+          stopContinuousInterpretation(true)
+        }
+      } else {
+        setAudioLang(newLang)
+        audioLangRef.current = newLang
+      }
+    }
+    window.addEventListener("sphera-lang-changed", handleSyncNavbarLangChange)
+    return () => window.removeEventListener("sphera-lang-changed", handleSyncNavbarLangChange)
+  }, [selectSpokenAudioLanguage, stopContinuousInterpretation])
 
   useEffect(() => {
     if (prevGlobalLangRef.current !== language) {
@@ -1808,19 +1848,15 @@ export function NoctisVideoInterpreterPopup({
           readyScriptKeyRef.current = cacheKey
           setIsLoadingTranslation(false)
 
-          // Start speaking the translated verbatim speech in `audioLang` if not already started synchronously by user gesture!
-          const sharedAudio = getSharedNoctisAudio()
-          const alreadyPlayingThisSession =
-            isSpeakingRef.current &&
-            spokenLangAndTitleRef.current === cacheKey &&
-            sharedAudio &&
-            !sharedAudio.paused
+          // Start speaking the translated verbatim speech in `audioLang` ONLY if not already started synchronously by user gesture!
+          const alreadyStartedThisSession =
+            isSpeakingRef.current && spokenLangAndTitleRef.current === cacheKey
           if (
             audioLangRef.current === targetLang &&
             (targetLang !== sourceLangRef.current || forceSpeakRef.current) &&
             (isPlayingRef.current || isPopupOpenRef.current) &&
             !userManuallyPausedDubRef.current &&
-            !alreadyPlayingThisSession
+            !alreadyStartedThisSession
           ) {
             spokenLangAndTitleRef.current = cacheKey
             startContinuousInterpretation(0)
@@ -1858,8 +1894,8 @@ export function NoctisVideoInterpreterPopup({
           startContinuousInterpretation(0)
         }
       }
-    } else if (!isPlaying && isSpeakingRef.current && !isPopupOpen) {
-      stopContinuousInterpretation(false)
+    } else if (!isPlaying && isSpeakingRef.current && !isPopupOpen && !forceSpeakRef.current) {
+      stopContinuousInterpretation(true)
     }
   }, [
     audioLang,
@@ -1872,44 +1908,35 @@ export function NoctisVideoInterpreterPopup({
     stopContinuousInterpretation,
   ])
 
-  // Unlock shared browser audio on ANY user interaction (capture phase) and resume interpretation if needed
+  // Resume interpretation on user interaction if initial autoplay was blocked by the browser
   useEffect(() => {
+    if (!isInterpretingNeeded || (!isPlaying && !isPopupOpen) || userManuallyPausedDubRef.current) return
     const unlockAudio = () => {
-      primeSharedAudioOnUserGesture()
       if (userManuallyPausedDubRef.current) return
       const sharedAudio = getSharedNoctisAudio()
       if (sharedAudio) {
         ensureSharedAudioBoostGraph(sharedAudio)
       }
-      if (
-        isSpeakingRef.current &&
-        (window as any).__activeNoctisInterpreterId === instanceIdRef.current &&
-        sharedAudio &&
-        !sharedAudio.paused
-      ) {
+      if (isSpeakingRef.current) {
         return
       }
       const sessionKey = `${audioLangRef.current}::${scriptIdKey}`
       if (
         (audioLangRef.current !== sourceLangRef.current || forceSpeakRef.current) &&
         (isPlayingRef.current || isPopupOpenRef.current) &&
-        !userManuallyPausedDubRef.current &&
-        (!isSpeakingRef.current ||
-          (window as any).__activeNoctisInterpreterId !== instanceIdRef.current ||
-          !sharedAudio ||
-          sharedAudio.paused)
+        !userManuallyPausedDubRef.current
       ) {
         spokenLangAndTitleRef.current = sessionKey
         startContinuousInterpretation(activeSentenceIdxRef.current)
       }
     }
-    window.addEventListener("pointerdown", unlockAudio, { capture: true, passive: true })
-    window.addEventListener("keydown", unlockAudio, { capture: true, passive: true })
-    window.addEventListener("touchstart", unlockAudio, { capture: true, passive: true })
+    window.addEventListener("pointerdown", unlockAudio, { passive: true })
+    window.addEventListener("keydown", unlockAudio, { passive: true })
+    window.addEventListener("touchstart", unlockAudio, { passive: true })
     return () => {
-      window.removeEventListener("pointerdown", unlockAudio, { capture: true })
-      window.removeEventListener("keydown", unlockAudio, { capture: true })
-      window.removeEventListener("touchstart", unlockAudio, { capture: true })
+      window.removeEventListener("pointerdown", unlockAudio)
+      window.removeEventListener("keydown", unlockAudio)
+      window.removeEventListener("touchstart", unlockAudio)
     }
   }, [audioLang, isInterpretingNeeded, scriptIdKey, isPlaying, isPopupOpen, startContinuousInterpretation])
 
