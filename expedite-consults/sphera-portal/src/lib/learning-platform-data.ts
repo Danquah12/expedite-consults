@@ -27,6 +27,8 @@ export interface LearningCourse {
   originalCreator?: string
   sourceVideoUrl?: string
   referenceArticleUrl?: string
+  sourceLanguage?: string
+  sourceLanguageLabel?: string
   practiceActivity?: string
   skillsCovered?: string[]
   isLearnByDoingCatalogue?: boolean
@@ -233,7 +235,7 @@ export const LEARNING_COURSES_DATA: LearningCourse[] = [
     hasCertificate: true,
     recommendedMarketplaceTools: [
       {
-        id: 'aegis-pentest-hub',
+        id: ' aegis-pentest-hub',
         name: 'ÆGIS SOC Autonomous PenTest Hub',
         icon: '⚡',
         tagline: 'Rust-accelerated attack chain execution engine.',
@@ -242,6 +244,152 @@ export const LEARNING_COURSES_DATA: LearningCourse[] = [
         actionText: 'Request Demo'
       }
     ]
+  },
+  // ─── INTERNATIONAL MULTI-LANGUAGE COURSES ACROSS PROFESSIONS (Interpreted Back to English) ───
+  {
+    id: 'crs_intl_fr_anssi_cyber',
+    title: '42 Règles ANSSI : Sécurité des Systèmes & Réseaux (French National Cyber Agency → English)',
+    category: 'Cybersecurity',
+    provider: 'ConnectIn Masterclass',
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=zGVM7myTE6E',
+    referenceArticleUrl: 'https://cyber.gouv.fr/publications/guide-dhygiene-informatique',
+    sourceLanguage: 'fr',
+    sourceLanguageLabel: '🇫🇷 Français · ANSSI (Interpreted to English)',
+    instructor: {
+      name: 'Clément Moreau · ANSSI Cyber Hygiene',
+      role: 'Architecte Sécurité Réseau & Systèmes (France)',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80'
+    },
+    rating: 4.98,
+    reviewsCount: 640,
+    duration: '6 hours (Interpreted to English)',
+    level: 'Intermediate',
+    coverImage: 'https://i.ytimg.com/vi/zGVM7myTE6E/hqdefault.jpg',
+    summary: 'Official French National Cybersecurity Agency (ANSSI) 42 essential rules for hardening enterprise Active Directory, network segmentation, privileged access, and cryptographic authentication—simultaneously interpreted into English.',
+    curriculumModules: [
+      '1. Inventorying & Isolating Administrative Tier-0 Privileges (Cloisonnement des Comptes)',
+      '2. Network VLAN Segmentation & Filtering Bastion Hosts (Filtrage Réseau)',
+      '3. Multi-Factor Cryptographic Authentication & SSH Hardening',
+      '4. Centralized Syslog Auditing & Incident Containment'
+    ],
+    hasCertificate: true,
+    recommendedMarketplaceTools: []
+  },
+  {
+    id: 'crs_intl_es_incibe_cyber',
+    title: 'Ciberseguridad para la Empresa e Infraestructura (INCIBE Spain → English)',
+    category: 'Cybersecurity',
+    provider: 'ConnectIn Masterclass',
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=EHjmxujXIaQ',
+    referenceArticleUrl: 'https://www.incibe.es/empresas',
+    sourceLanguage: 'es',
+    sourceLanguageLabel: '🇪🇸 Español · INCIBE (Interpreted to English)',
+    instructor: {
+      name: 'Instituto Nacional de Ciberseguridad (INCIBE)',
+      role: 'Spanish National Cybersecurity Institute',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'
+    },
+    rating: 4.96,
+    reviewsCount: 510,
+    duration: '5 hours (Interpreted to English)',
+    level: 'Beginner',
+    coverImage: 'https://i.ytimg.com/vi/EHjmxujXIaQ/hqdefault.jpg',
+    summary: 'Spanish National Institute of Cybersecurity (INCIBE) training on corporate risk assessment, ransomware backup resilience, endpoint access control, and incident response—interpreted live into English.',
+    curriculumModules: [
+      '1. Identifying Critical Enterprise Data Assets & Threat Vectors',
+      '2. Access Control Policies & Principle of Least Privilege',
+      '3. 3-2-1 Immutable Backup Strategy Against Ransomware',
+      '4. Phishing Defense & Incident Response Protocol'
+    ],
+    hasCertificate: true,
+    recommendedMarketplaceTools: []
+  },
+  {
+    id: 'crs_intl_de_cloud_arch',
+    title: 'Die Grundbegriffe des Cloud Computing : IaaS, PaaS & SaaS (German Cloud Portal → English)',
+    category: 'Cloud',
+    provider: 'AWS Training',
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=alYIYtIxIVE',
+    referenceArticleUrl: 'https://www.bsi.bund.de/DE/Themen/Unternehmen-und-Organisationen/Informationen-und-Empfehlungen/Cloud-Computing/cloud-computing_node.html',
+    sourceLanguage: 'de',
+    sourceLanguageLabel: '🇩🇪 Deutsch (Interpreted to English)',
+    instructor: {
+      name: 'Morpheus Systems · Cloud Engineering Germany',
+      role: 'Distributed Cloud & Infrastructure Educator',
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80'
+    },
+    rating: 4.95,
+    reviewsCount: 490,
+    duration: '4 hours (Interpreted to English)',
+    level: 'Beginner',
+    coverImage: 'https://i.ytimg.com/vi/alYIYtIxIVE/hqdefault.jpg',
+    summary: 'German cloud architecture briefing explaining Infrastructure-as-a-Service (IaaS), Platform-as-a-Service (PaaS), Software-as-a-Service (SaaS), and shared responsibility boundaries—simultaneously interpreted into English.',
+    curriculumModules: [
+      '1. On-Premises vs. IaaS Virtualization & Hypervisor Layer',
+      '2. PaaS Managed Runtime & Container Orchestration',
+      '3. SaaS Multi-Tenant Architecture & API Integration',
+      '4. Cloud Shared Responsibility & EU/BSI Compliance'
+    ],
+    hasCertificate: true,
+    recommendedMarketplaceTools: []
+  },
+  {
+    id: 'crs_intl_ja_ai_deeplearning',
+    title: 'AIの本質を解説：ニューラルネットワークとディープラーニング (Japanese AI Portal → English)',
+    category: 'AI',
+    provider: 'Coursera',
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=H2MMMFK8G6g',
+    referenceArticleUrl: 'https://www.jdla.org/',
+    sourceLanguage: 'ja',
+    sourceLanguageLabel: '🇯🇵 日本語 (Interpreted to English)',
+    instructor: {
+      name: 'Kenichi Sato · Tokyo AI Division',
+      role: 'Principal Deep Learning & Neural Architecture Researcher',
+      avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&auto=format&fit=crop&q=80'
+    },
+    rating: 4.99,
+    reviewsCount: 720,
+    duration: '5 hours (Interpreted to English)',
+    level: 'Beginner',
+    coverImage: 'https://i.ytimg.com/vi/H2MMMFK8G6g/hqdefault.jpg',
+    summary: 'Japanese artificial intelligence and deep learning course breaking down perceptrons, multi-layer neural networks, backpropagation, and representation learning—simultaneously interpreted into English.',
+    curriculumModules: [
+      '1. Symbolic AI vs. Statistical Machine Learning Foundations',
+      '2. Neural Network Layers, Weights & Activation Functions',
+      '3. Deep Representation Learning & Feature Extraction',
+      '4. Deploying Enterprise AI Models Safely'
+    ],
+    hasCertificate: true,
+    recommendedMarketplaceTools: []
+  },
+  {
+    id: 'crs_intl_pt_finance_dfc',
+    title: 'Demonstração de Fluxo de Caixa (DFC) : Operacional, Investimento e Financiamento (Portuguese Finance → English)',
+    category: 'Business',
+    provider: 'ConnectIn Masterclass',
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=L9DNl1nJFPE',
+    referenceArticleUrl: 'https://cfc.org.br/',
+    sourceLanguage: 'pt',
+    sourceLanguageLabel: '🇧🇷 Português (Interpreted to English)',
+    instructor: {
+      name: 'Prof. Gabriel Coelho, CPA/CRC',
+      role: 'Corporate Accounting & Cash Flow Specialist',
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80'
+    },
+    rating: 4.97,
+    reviewsCount: 580,
+    duration: '4 hours (Interpreted to English)',
+    level: 'Beginner',
+    coverImage: 'https://i.ytimg.com/vi/L9DNl1nJFPE/hqdefault.jpg',
+    summary: 'Brazilian Portuguese corporate finance and accounting masterclass on building and analyzing the Statement of Cash Flows (DFC) across Operating, Investing, and Financing activities—interpreted live into English.',
+    curriculumModules: [
+      '1. Operating Cash Flow (Fluxo Operacional) & Working Capital',
+      '2. Investing Cash Flow (Fluxo de Investimento) & CAPEX',
+      '3. Financing Cash Flow (Fluxo de Financiamento) & Debt/Equity',
+      '4. Direct vs. Indirect Cash Flow Reconciliation'
+    ],
+    hasCertificate: true,
+    recommendedMarketplaceTools: []
   }
 ]
 
@@ -846,6 +994,8 @@ export const SKILLED_TRADES_LEARN_BY_DOING_COURSES: LearningCourse[] =
     originalCreator: lesson.originalCreator,
     sourceVideoUrl: lesson.sourceVideoUrl,
     referenceArticleUrl: lesson.referenceArticleUrl,
+    sourceLanguage: lesson.sourceLanguage,
+    sourceLanguageLabel: lesson.sourceLanguageLabel,
     practiceActivity: lesson.practiceActivity,
     skillsCovered: lesson.skillsCovered,
     isLearnByDoingCatalogue: true,
@@ -1046,6 +1196,64 @@ export function getEnclaveLearningCourses(enclaveId?: string): LearningCourse[] 
           '2. Belmont RI-2 Setup, Priming & Ultrasonic Air Elimination',
           '3. Thromboelastography (TEG) Directed Component Therapy',
           '4. Monitoring Hypocalcemia, Acidosis & Hypothermia Triad'
+        ],
+        hasCertificate: true,
+        recommendedMarketplaceTools: []
+      },
+      {
+        id: 'crs_intl_es_health_rcp',
+        title: 'Cómo Realizar RCP en Adultos y Bebés (Mass General Brigham Spanish Clinical Portal → English)',
+        category: 'Business',
+        provider: 'ConnectIn Masterclass',
+        sourceVideoUrl: 'https://www.youtube.com/watch?v=86V_9l84GL0',
+        referenceArticleUrl: 'https://www.massgeneralbrigham.org/',
+        sourceLanguage: 'es',
+        sourceLanguageLabel: '🇪🇸 Español · Clinical (Interpreted to English)',
+        instructor: {
+          name: 'Mass General Brigham Clinical Education',
+          role: 'Emergency Medicine & Cardiopulmonary Resuscitation Team',
+          avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=100&auto=format&fit=crop&q=80'
+        },
+        rating: 4.99,
+        reviewsCount: 890,
+        duration: '3 hours (Interpreted to English)',
+        level: 'Beginner',
+        coverImage: 'https://i.ytimg.com/vi/86V_9l84GL0/hqdefault.jpg',
+        summary: 'Spanish clinical emergency training from Mass General Brigham demonstrating high-quality adult and infant cardiopulmonary resuscitation (RCP), compression depth/rate, and airway rescue—simultaneously interpreted into English.',
+        curriculumModules: [
+          '1. Scene Safety, Responsiveness Check & Emergency Activation',
+          '2. High-Quality Adult Chest Compressions (100–120/min)',
+          '3. Infant Two-Finger / Two-Thumb Encircling Compression Technique',
+          '4. Automated External Defibrillator (AED / DEA) Integration'
+        ],
+        hasCertificate: true,
+        recommendedMarketplaceTools: []
+      },
+      {
+        id: 'crs_intl_fr_health_secours',
+        title: 'Premiers Secours : Réagir en Cas d’Urgence Médicale (French Clinical Portal → English)',
+        category: 'Business',
+        provider: 'ConnectIn Masterclass',
+        sourceVideoUrl: 'https://www.youtube.com/watch?v=yXsLB1hOpIM',
+        referenceArticleUrl: 'https://www.info.gouv.fr/risques/les-gestes-qui-sauvent',
+        sourceLanguage: 'fr',
+        sourceLanguageLabel: '🇫🇷 Français · SAMU / Urgences (Interpreted to English)',
+        instructor: {
+          name: 'Dr. Claire Laurent · Urgences & Secours France',
+          role: 'Emergency Physician & First-Response Educator',
+          avatar: 'https://images.unsplash.com/photo-1594824813571-638f02614d3f?w=100&auto=format&fit=crop&q=80'
+        },
+        rating: 4.98,
+        reviewsCount: 610,
+        duration: '3 hours (Interpreted to English)',
+        level: 'Beginner',
+        coverImage: 'https://i.ytimg.com/vi/yXsLB1hOpIM/hqdefault.jpg',
+        summary: 'French national emergency medical response training ("Premiers Secours / Gestes qui sauvent") covering hemorrhage control, recovery position (PLS), airway obstruction, and cardiac arrest response—interpreted live into English.',
+        curriculumModules: [
+          '1. Protéger et Alerter (Scene Protection & SAMU 15 / 112 Triage)',
+          '2. Hemorrhage Compression & Tourniquet Application',
+          '3. Position Latérale de Sécurité (PLS / Lateral Recovery Position)',
+          '4. Defibrillation & Continuous Cardiopulmonary Resuscitation'
         ],
         hasCertificate: true,
         recommendedMarketplaceTools: []

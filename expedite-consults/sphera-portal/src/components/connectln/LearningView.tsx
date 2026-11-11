@@ -1573,8 +1573,15 @@ export function LearningView({
                 <div>
                   <div className="relative h-44 w-full overflow-hidden bg-slate-950">
                     <img src={course.coverImage} alt="" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90" />
-                    <div className="absolute top-3 left-3 rounded-full bg-black/75 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-white border border-white/20">
-                      {course.category}
+                    <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap">
+                      <span className="rounded-full bg-black/75 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-white border border-white/20">
+                        {course.category}
+                      </span>
+                      {course.sourceLanguageLabel && (
+                        <span className="rounded-full bg-[#0A66C2]/95 px-2.5 py-0.5 text-[10px] font-extrabold text-white border border-sky-300/60 shadow-sm">
+                          {course.sourceLanguageLabel}
+                        </span>
+                      )}
                     </div>
                     <div className="absolute bottom-3 right-3 rounded-full bg-indigo-950/90 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-indigo-300 border border-indigo-500/40">
                       {course.provider}
@@ -2311,6 +2318,8 @@ export function LearningView({
                   speakerAvatarUrl={selectedCourse.instructor.avatar}
                   description={selectedCourse.summary}
                   takeaways={selectedCourse.curriculumModules}
+                  sourceLanguage={selectedCourse.sourceLanguage}
+                  sourceLanguageLabel={selectedCourse.sourceLanguageLabel}
                   durationLabel={selectedCourse.duration || "12:00"}
                   autoPlay={true}
                   initialMuted={false}

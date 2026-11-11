@@ -43,6 +43,9 @@ export interface LearnByDoingLesson {
   level: 'Beginner'
   originalCreator: string
   creatorDomain: string
+  /** Source spoken language of the video (defaults to 'en' if omitted). Non-English videos are automatically interpreted into English (or any selected language)! */
+  sourceLanguage?: string
+  sourceLanguageLabel?: string
   description: string
   skillsCovered: string[]
   sourceVideoUrl: string
@@ -812,6 +815,508 @@ export const SKILLED_TRADES_LEARN_BY_DOING_LESSONS: LearnByDoingLesson[] = [
       '4. Evaporator Coil (Indoor Heat Absorption): Cold low-pressure liquid/vapor mixture enters the indoor evaporator coil, absorbs heat from indoor room air blowing across the fins, boils completely into vapor, and returns to the compressor.'
     ],
     fieldTip: 'Remember the dividing line of the refrigeration loop: the Compressor and Metering Device separate the High-Pressure (Condensing) side from the Low-Pressure (Evaporating) side.'
+  },
+  // ─── INTERNATIONAL MULTI-LANGUAGE MASTERCLASSES (Interpreted Back to English & 46 Languages) ───
+  {
+    id: 'lbd_intl_es_carpentry_speedsquare_14',
+    lessonNumber: 14,
+    videoLabel: 'Global Training (Español → English): Escuadra Rápida en Carpintería',
+    title: 'Escuadra Rápida y Funciones de Trazado (Spanish Carpentry Masterclass)',
+    category: 'Carpentry',
+    enclaveId: 'trades_construction',
+    professionId: 'carpenter',
+    level: 'Beginner',
+    originalCreator: 'Taller de Ideas de Erick · Red SENA / Formación Técnica',
+    creatorDomain: 'tallerdeideas.com',
+    sourceLanguage: 'es',
+    sourceLanguageLabel: '🇪🇸 Español (Interpreted to English)',
+    description:
+      'Authentic Spanish-language carpentry training demonstrating how master Latin American woodworkers use the speed square (escuadra rápida) as a saw guide, protractor, and layout tool—simultaneously interpreted into English by Noctis.',
+    skillsCovered: [
+      'Speed Square Saw-Guide Fence (Guía de Corte)',
+      '90° & 45° Layout Scribing (Trazado de Ángulos)',
+      'Rafter Pitch & Pivot Marking (Uso del Pivote)',
+      'Bilingual Spanish-to-English Technical Terms'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=vLBRNuzVTHg',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=vLBRNuzVTHg',
+    youtubeId: 'vLBRNuzVTHg',
+    embedAvailable: true,
+    duration: '',
+    thumbnailUrl: 'https://i.ytimg.com/vi/vLBRNuzVTHg/hqdefault.jpg',
+    practiceActivity:
+      'Follow the Spanish masterclass with live English interpretation to scribe a 90° crosscut and guide a circular saw base along the speed square fence.',
+    practiceDeliverablePrompt:
+      'Record your key takeaway from the Spanish-to-English carpentry demonstration and how the speed square lip acts as a straight-edge track.',
+    knowledgeCheck: {
+      question:
+        'In this Spanish carpentry training (interpreted into English), how does the speed square ("escuadra rápida") double as a circular saw guide?',
+      options: [
+        'By pressing the T-bar fence tightly against the board edge and running the circular saw baseplate flush along the 90° body edge',
+        'By removing the fence lip from the square',
+        'By placing the square underneath the board while cutting',
+        'Speed squares can only be used on drywall'
+      ],
+      correctIndex: 0,
+      explanation:
+        'When the speed square fence is held firmly against the lumber edge, its thick aluminum 90° edge serves as a rigid straight-edge fence for a circular saw shoe.'
+    },
+    detailedStudyNotes: [
+      'Guía de Corte Recto (Straight Saw Guide): Hold the T-fence flush against the board edge so your circular saw baseplate rides smoothly along the square for a dead-square 90° cut.',
+      'Transportador de Ángulos (Angle Protractor): Anchor the corner pivot pin ("pivote") and rotate the square until the desired degree graduation aligns with the board edge.',
+      'Trazado Paralelo (Parallel Ripping Marks): Use the notched slots inside the triangle cutout to hold your pencil tip and slide the square along the board edge for parallel rip lines.'
+    ],
+    fieldTip: 'Global Trade Insight: Knowing both English ("Speed Square / Rafter Square") and Spanish ("Escuadra Rápida") terms improves safety and coordination on multilingual jobsites.'
+  },
+  {
+    id: 'lbd_intl_fr_carpentry_joinery_15',
+    lessonNumber: 15,
+    videoLabel: 'Global Training (Français → English): Assemblages d’Ébénisterie',
+    title: '8 Techniques d’Assemblage du Bois (French Cabinetry & Joinery)',
+    category: 'Carpentry',
+    enclaveId: 'trades_construction',
+    professionId: 'finish_carpenter',
+    level: 'Beginner',
+    originalCreator: 'Astuces Design · Compagnons & Ébénisterie France',
+    creatorDomain: 'astucesdesign.com',
+    sourceLanguage: 'fr',
+    sourceLanguageLabel: '🇫🇷 Français (Interpreted to English)',
+    description:
+      'French woodworking and cabinetmaking ("ébénisterie") training covering 8 core wood joinery techniques—including mortise-and-tenon, dowel, biscuit, and half-lap joints—interpreted live into English.',
+    skillsCovered: [
+      'French Cabinetmaking Joinery (Assemblages Bois)',
+      'Half-Lap & Miter Joints (Mi-Bois & Coupe d’Onglet)',
+      'Dowel & Domino Alignment (Tourillons & Lamello)',
+      'Mortise & Tenon Structural Strength (Tenon et Mortaise)'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=eSXgnV8WKw8',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=eSXgnV8WKw8',
+    youtubeId: 'eSXgnV8WKw8',
+    embedAvailable: true,
+    duration: '',
+    thumbnailUrl: 'https://i.ytimg.com/vi/eSXgnV8WKw8/hqdefault.jpg',
+    practiceActivity:
+      'Compare two of the 8 French joinery methods interpreted into English (such as half-lap vs. dowel joinery) and select which fits a cabinet frame.',
+    practiceDeliverablePrompt:
+      'Note which French wood joinery method from the video provides the best alignment and glue surface area for your project.',
+    knowledgeCheck: {
+      question:
+        'Why do French cabinetmakers ("ébénistes") reinforce butt or miter joints with dowels ("tourillons"), biscuits ("lamellos"), or tenons?',
+      options: [
+        'End-grain glue joints alone are weak; internal splines, dowels, or tenons add long-grain glue surface and mechanical shear resistance',
+        'Dowels are only used so you do not have to measure the wood',
+        'Glue is never used in woodworking',
+        'Miter joints cannot be clamped'
+      ],
+      correctIndex: 0,
+      explanation:
+        'End grain absorbs glue rapidly and forms a brittle bond; adding dowels, biscuits, or mortise-and-tenon joinery introduces strong long-grain-to-long-grain bonding and mechanical registration.'
+    }
+  },
+  {
+    id: 'lbd_intl_ja_carpentry_joinery_16',
+    lessonNumber: 16,
+    videoLabel: 'Global Training (日本語 → English): 日本建築の継手と仕口',
+    title: '継手と仕口の違い｜木造の組み方の基本 (Japanese Timber Joinery)',
+    category: 'Carpentry',
+    enclaveId: 'trades_construction',
+    professionId: 'carpenter',
+    level: 'Beginner',
+    originalCreator: '建築現場の教科書 · Japanese Timber Craft Portal',
+    creatorDomain: 'kenchiku-genba.jp',
+    sourceLanguage: 'ja',
+    sourceLanguageLabel: '🇯🇵 日本語 (Interpreted to English)',
+    description:
+      'Japanese architectural carpentry training explaining the fundamental difference between "Tsugite" (継手 — lengthening splice joints) and "Shikuchi" (仕口 — angled intersection joints) in traditional timber framing, interpreted live into English.',
+    skillsCovered: [
+      'Tsugite Timber Splicing (継手 · Longitudinal Beam Splices)',
+      'Shikuchi Angled Framing Joints (仕口 · Post-to-Beam Intersections)',
+      'Interlocking Load Transfer Without Fasteners',
+      'Precision Marking & Chisel Layout'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=4iGL2mh2Qf4',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=4iGL2mh2Qf4',
+    youtubeId: '4iGL2mh2Qf4',
+    embedAvailable: true,
+    duration: '',
+    thumbnailUrl: 'https://i.ytimg.com/vi/4iGL2mh2Qf4/hqdefault.jpg',
+    practiceActivity:
+      'Listen to the English interpretation of this Japanese timber framing lesson and sketch the difference between a longitudinal splice (Tsugite) and a right-angle corner joint (Shikuchi).',
+    practiceDeliverablePrompt:
+      'Explain in your own words the difference between Tsugite (継手) and Shikuchi (仕口) as interpreted from the Japanese masterclass.',
+    knowledgeCheck: {
+      question:
+        'In Japanese timber framing (interpreted into English), what is the distinction between "Tsugite" (継手) and "Shikuchi" (仕口)?',
+      options: [
+        'Tsugite joins two timbers end-to-end in the same direction to lengthen a beam/post, while Shikuchi joins two timbers at an angle (such as a post meeting a beam)',
+        'Tsugite is a type of paint, while Shikuchi is a saw blade',
+        'Both terms refer only to concrete foundations',
+        'Shikuchi only applies to plumbing pipes'
+      ],
+      correctIndex: 0,
+      explanation:
+        'In Japanese carpentry, Tsugite (継手) splices timbers longitudinally along the same axis, whereas Shikuchi (仕口) connects members intersecting at an angle (such as column-to-beam connections).'
+    }
+  },
+  {
+    id: 'lbd_intl_pt_carpentry_marcenaria_17',
+    lessonNumber: 17,
+    videoLabel: 'Global Training (Português → English): Ferramentas de Marcenaria',
+    title: 'Ferramentas Essenciais para Começar na Marcenaria (Portuguese Workshop Guide)',
+    category: 'Carpentry',
+    enclaveId: 'trades_construction',
+    professionId: 'carpenter',
+    level: 'Beginner',
+    originalCreator: 'Oficina Empoeirados · SENAI / Marcenaria Brasil',
+    creatorDomain: 'empoeirados.com.br',
+    sourceLanguage: 'pt',
+    sourceLanguageLabel: '🇧🇷 Português (Interpreted to English)',
+    description:
+      'Brazilian Portuguese woodworking ("marcenaria") workshop guide introducing the essential hand and power tools for accurate measuring, clamping, sawing, and finishing—interpreted back into English.',
+    skillsCovered: [
+      'Measuring & Layout Tools (Esquadro, Trena e Graminho)',
+      'Hand Saws & Chisels (Serrote Japonês e Formões)',
+      'Clamping & Workholding (Grampos e Sargentos)',
+      'Workshop Safety & Dust Control (EPIs)'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=HoaKf6pQQgw',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=HoaKf6pQQgw',
+    youtubeId: 'HoaKf6pQQgw',
+    embedAvailable: true,
+    duration: '',
+    thumbnailUrl: 'https://i.ytimg.com/vi/HoaKf6pQQgw/hqdefault.jpg',
+    practiceActivity:
+      'Watch the Portuguese workshop guide with live English interpretation and list the 5 foundational layout and clamping tools recommended before buying large stationary machines.',
+    practiceDeliverablePrompt:
+      'List the starter woodworking tools highlighted in the Portuguese-to-English session and why precision measuring tools come first.',
+    knowledgeCheck: {
+      question:
+        'According to the Brazilian woodworking ("marcenaria") training interpreted into English, why should a beginner invest in quality measuring squares and clamps before expensive stationary machinery?',
+      options: [
+        'Because accurate layout markings and rigid clamping determine whether joints fit squarely, regardless of which saw cuts the wood',
+        'Because clamps can cut wood without a saw',
+        'Because measuring tools never need to be checked',
+        'Stationary machines do not require layout lines'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Accurate layout tools (squares, marking gauges, tape measures) and reliable clamps ("grampos/sargentos") are the foundation of clean joinery and safe cutting.'
+    }
+  },
+  {
+    id: 'lbd_intl_sw_carpentry_veta_18',
+    lessonNumber: 18,
+    videoLabel: 'Global Training (Kiswahili → English): Mafunzo ya Ufundi Seremala (VETA)',
+    title: 'Fani ya Ufundi Seremala na Ukaguzi wa Mbao (East African VETA Carpentry)',
+    category: 'Carpentry',
+    enclaveId: 'trades_construction',
+    professionId: 'carpenter',
+    level: 'Beginner',
+    originalCreator: 'VETA Tanzania · Vocational Education & Training Authority',
+    creatorDomain: 'veta.go.tz',
+    sourceLanguage: 'sw',
+    sourceLanguageLabel: '🇹🇿 Kiswahili (Interpreted to English)',
+    description:
+      'Official East African Vocational Education and Training Authority (VETA) Kiswahili training on hardwood selection, timber planing, mortising, and furniture assembly—interpreted live into English.',
+    skillsCovered: [
+      'Hardwood Timber Inspection & Seasoning (Ukaguzi wa Mbao)',
+      'Workshop Planing & Thicknessing (urandaji wa mbao)',
+      'Mortise & Tenon Frame Assembly (Uunganishaji wa Samani)',
+      'Vocational Workshop Safety Standards (Usalama Karakana)'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=plet8C6DtN0',
+    referenceArticleUrl: 'https://www.veta.go.tz/',
+    youtubeId: 'plet8C6DtN0',
+    embedAvailable: true,
+    duration: '',
+    thumbnailUrl: 'https://i.ytimg.com/vi/plet8C6DtN0/hqdefault.jpg',
+    practiceActivity:
+      'Listen to the Kiswahili-to-English VETA vocational briefing and identify the steps used to prepare rough-sawn hardwood into square, planed furniture stock.',
+    practiceDeliverablePrompt:
+      'Summarize the timber preparation and joint-fitting steps taught in the VETA Kiswahili carpentry lesson.',
+    knowledgeCheck: {
+      question:
+        'In the VETA Kiswahili vocational carpentry training (interpreted into English), what must be verified on rough timber before cutting joinery?',
+      options: [
+        'That the timber is properly seasoned/dry and planed flat and square on its reference face and edge',
+        'That the wood is soaked in water immediately before gluing',
+        'That knots are placed directly inside thin tenons',
+        'That measurements are estimated by eye without a rule'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Preparing a flat reference face and square reference edge on properly seasoned timber ensures that all layout lines and joints remain true without warping.'
+    }
+  },
+  {
+    id: 'lbd_intl_fr_plumbing_copper_19',
+    lessonNumber: 19,
+    videoLabel: 'Global Training (Français → English): Brasure Cuivre en Plomberie',
+    title: 'Brasure Cuivre : Réaliser une Bonne Brasure Sans Fuite (French Plumbing)',
+    category: 'Plumbing',
+    enclaveId: 'trades_construction',
+    professionId: 'plumber',
+    level: 'Beginner',
+    originalCreator: 'Mister MALLEKH · Génie Climatique & Plomberie France',
+    creatorDomain: 'afpa.fr',
+    sourceLanguage: 'fr',
+    sourceLanguageLabel: '🇫🇷 Français (Interpreted to English)',
+    description:
+      'French plumbing and thermal engineering ("plomberie / génie climatique") demonstration on copper pipe deburring, flux application, flame control, and capillary brazing ("brasure cuivre")—interpreted live into English.',
+    skillsCovered: [
+      'Copper Tube Cutting & Deburring (Coupe et Ébavurage)',
+      'Mechanical Abrasion & Fluxing (Décapage et Flux)',
+      'Even Torch Heating & Capillary Action (Chauffe et Capillarité)',
+      'Avoiding Overheating & Cold Joints'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=b2jdJ3yGdmI',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=b2jdJ3yGdmI',
+    youtubeId: 'b2jdJ3yGdmI',
+    embedAvailable: true,
+    duration: '',
+    thumbnailUrl: 'https://i.ytimg.com/vi/b2jdJ3yGdmI/hqdefault.jpg',
+    practiceActivity:
+      'Watch the French copper brazing tutorial with live English interpretation and write down the 4 preparation steps required before lighting the torch.',
+    practiceDeliverablePrompt:
+      'List the critical copper pipe cleaning, fluxing, and heating rules explained in the French-to-English plumbing lesson.',
+    knowledgeCheck: {
+      question:
+        'In the French copper brazing ("brasure cuivre") lesson interpreted into English, why should the torch flame heat the copper fitting socket rather than melting the filler rod directly in the flame?',
+      options: [
+        'Heating the copper tube and fitting evenly draws the molten filler alloy into the joint gap by capillary action for a leak-free seal',
+        'Because filler rod only melts when dipped in cold water',
+        'So the flux burns into black carbon before the rod touches the pipe',
+        'Copper fittings do not need to be cleaned before brazing'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Capillary brazing relies on the heated copper tube and fitting socket reaching brazing temperature so the filler metal is drawn uniformly throughout the entire socket.'
+    }
+  },
+  {
+    id: 'lbd_intl_es_electrical_20',
+    lessonNumber: 20,
+    videoLabel: 'Global Training (Español → English): Curso de Electricidad Básica',
+    title: 'Curso de Electricidad Residencial Desde Cero (Spanish Electrical Portal)',
+    category: 'Electrical Fundamentals',
+    enclaveId: 'trades_construction',
+    professionId: 'electrician',
+    level: 'Beginner',
+    originalCreator: 'Universo Eléctrico · Instituto Técnico de Electricidad',
+    creatorDomain: 'universoelectrico.com',
+    sourceLanguage: 'es',
+    sourceLanguageLabel: '🇪🇸 Español (Interpreted to English)',
+    description:
+      'Spanish residential electrical engineering lesson covering phase (fase), neutral (neutro), protective earth ground (tierra física), thermomagnetic circuit breakers, and safe wiring schematics—interpreted live into English.',
+    skillsCovered: [
+      'Phase, Neutral & Earth Ground Identification (Fase, Neutro y Tierra)',
+      'Thermomagnetic Breaker Protection (Interruptor Termomagnético)',
+      'Residual Current / GFCI Safety (Interruptor Diferencial)',
+      'Residential Branch Circuit Wiring'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=BhgBXZdHWhU',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=BhgBXZdHWhU',
+    youtubeId: 'BhgBXZdHWhU',
+    embedAvailable: true,
+    duration: '',
+    thumbnailUrl: 'https://i.ytimg.com/vi/BhgBXZdHWhU/hqdefault.jpg',
+    practiceActivity:
+      'Follow the Spanish-to-English electrical briefing and diagram how the main differential switch and thermomagnetic breakers protect lighting and receptacle branch circuits.',
+    practiceDeliverablePrompt:
+      'Explain the difference between a thermomagnetic breaker ("termomagnético") and a differential/GFCI switch ("diferencial") from the interpreted lesson.',
+    knowledgeCheck: {
+      question:
+        'In this Spanish residential electrical lesson (interpreted into English), how do the thermomagnetic breaker ("interruptor termomagnético") and differential switch ("interruptor diferencial") work together?',
+      options: [
+        'The thermomagnetic breaker protects wires against overloads and short circuits, while the differential switch (RCD/GFCI) protects people from earth-leakage electric shock',
+        'Both devices only measure monthly utility billing',
+        'The neutral wire is never connected to the load',
+        'Protective earth ground is used to carry normal return current instead of neutral'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Thermomagnetic breakers trip on thermal overload or magnetic short-circuit current, while differential (RCD/GFCI) switches detect current leakage to earth to prevent electrocution.'
+    }
+  },
+  {
+    id: 'lbd_intl_ar_electrical_schematics_21',
+    lessonNumber: 21,
+    videoLabel: 'Global Training (العربية → English): شرح مخططات أنظمة الكهرباء',
+    title: 'شرح مخططات جميع أنظمة الكهرباء (Arabic Electrical Distribution Schematics)',
+    category: 'Electrical Fundamentals',
+    enclaveId: 'trades_construction',
+    professionId: 'electrician',
+    level: 'Beginner',
+    originalCreator: 'Eng. Haytham Saeid · Arab Electrical Engineering Academy',
+    creatorDomain: 'haythamsaeid.com',
+    sourceLanguage: 'ar',
+    sourceLanguageLabel: '🇪🇬 العربية (Interpreted to English)',
+    description:
+      'Comprehensive Arabic electrical engineering training explaining how to read single-line and three-line power distribution diagrams, panelboard schedules, and earthing layouts—interpreted live into English.',
+    skillsCovered: [
+      'Reading Single-Line Diagrams (المخططات الأحادية)',
+      'Distribution Panelboard Load Balancing',
+      'Circuit Breaker Sizing & Cable Cross-Sections',
+      'Protective Earthing & Bonding Schematics'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=UcqnZnFnz8I',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=UcqnZnFnz8I',
+    youtubeId: 'UcqnZnFnz8I',
+    embedAvailable: true,
+    duration: '',
+    thumbnailUrl: 'https://i.ytimg.com/vi/UcqnZnFnz8I/hqdefault.jpg',
+    practiceActivity:
+      'Listen to the Arabic-to-English electrical schematics briefing and trace the path from the incoming main breaker through the busbars to individual branch loads.',
+    practiceDeliverablePrompt:
+      'Describe how single-line schematics indicate breaker amperage ratings and cable conductor sizes as explained in the Arabic-to-English lesson.',
+    knowledgeCheck: {
+      question:
+        'When reading an architectural or industrial electrical schematic (as explained in the Arabic training interpreted into English), why must cable cross-sectional area (mm² or AWG) always be matched to the circuit breaker rating?',
+      options: [
+        'So the circuit breaker trips before the cable insulation overheats under sustained overload current',
+        'Because thicker cables decrease voltage to zero',
+        'Circuit breakers are chosen only by the color of the wall',
+        'Schematics do not specify conductor sizes'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Coordinating conductor ampacity (cross-sectional area) with the overcurrent protective device ensures the breaker interrupts excessive current before conductor insulation is damaged.'
+    }
+  },
+  {
+    id: 'lbd_intl_it_painting_22',
+    lessonNumber: 22,
+    videoLabel: 'Global Training (Italiano → English): Imbiancare con Pennello e Rullo',
+    title: 'Imbiancare Pareti con Pennello e Rullo (Italian Decorating Masterclass)',
+    category: 'Painting & Decorating',
+    enclaveId: 'trades_construction',
+    professionId: 'painter_decorator',
+    level: 'Beginner',
+    originalCreator: 'Leroy Merlin Italia · Scuola del Fai da Te',
+    creatorDomain: 'leroymerlin.it',
+    sourceLanguage: 'it',
+    sourceLanguageLabel: '🇮🇹 Italiano (Interpreted to English)',
+    description:
+      'Italian architectural painting and decorating tutorial from Leroy Merlin Italia demonstrating when to cut in with an angled brush ("pennello"), roll large wall planes ("rullo"), or spray—interpreted live into English.',
+    skillsCovered: [
+      'Cutting In Corners & Trim with a Brush (Profilatura a Pennello)',
+      'Cross-Rolling Wall Planes Evenly (Stesura a Rullo Incrociata)',
+      'Selecting Nap Length by Wall Texture',
+      'Masking & Drop-Cloth Surface Protection'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=uQsdjJLkqiA',
+    referenceArticleUrl: 'https://www.leroymerlin.it/guide/decorare/come-imbiancare-casa-con-il-rullo.html',
+    youtubeId: 'uQsdjJLkqiA',
+    embedAvailable: true,
+    duration: '',
+    thumbnailUrl: 'https://i.ytimg.com/vi/uQsdjJLkqiA/hqdefault.jpg',
+    practiceActivity:
+      'Watch the Italian painting guide with live English interpretation and note how cutting in perimeter edges with a brush pairs with cross-rolling the main wall.',
+    practiceDeliverablePrompt:
+      'Summarize the Italian masterclass rules for combining brush ("pennello") perimeter cutting-in with roller ("rullo") passes.',
+    knowledgeCheck: {
+      question:
+        'In the Leroy Merlin Italia painting tutorial (interpreted into English), why do professional decorators cut in corners and perimeter trim with a brush ("pennello") before rolling the wall ("rullo")?',
+      options: [
+        'A cylindrical roller cannot reach tight inside corners without bumping adjacent walls or trim, so a brush creates a clean border that the roller blends into while wet',
+        'Because rollers can only be used on floors',
+        'Because brushes dry in 5 seconds',
+        'Walls should never be primed before painting'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Cutting in corners and edges with a brush first—and immediately rolling into the wet border—produces uniform coverage without lap marks or paint splatters on adjacent ceilings.'
+    }
+  },
+  {
+    id: 'lbd_intl_es_hvac_23',
+    lessonNumber: 23,
+    videoLabel: 'Global Training (Español → English): Ciclo de Refrigeración HVAC',
+    title: 'Cómo Funciona el Ciclo de Refrigeración en Aire Acondicionado (Spanish HVAC)',
+    category: 'HVAC',
+    enclaveId: 'trades_construction',
+    professionId: 'hvac_refrigeration_tech',
+    level: 'Beginner',
+    originalCreator: 'Electrotec · Instituto Tecnológico de Climatización',
+    creatorDomain: 'electrotec.pe',
+    sourceLanguage: 'es',
+    sourceLanguageLabel: '🇵🇪 Español (Interpreted to English)',
+    description:
+      'Spanish HVAC and climate engineering lesson from Electrotec visually tracing refrigerant pressure, temperature, phase change, superheat, and subcooling across a split air-conditioning system—interpreted live into English.',
+    skillsCovered: [
+      'Split-System Refrigerant Flow (Compresor, Condensador, Capilar, Evaporador)',
+      'High-Side vs. Low-Side Pressure Gauges (Manómetros de Alta y Baja)',
+      'Latent Heat of Vaporization & Condensation',
+      'Indoor Blower & Outdoor Condenser Airflow'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=W8GEdpDWSIQ',
+    referenceArticleUrl: 'https://electrotec.pe/',
+    youtubeId: 'W8GEdpDWSIQ',
+    embedAvailable: true,
+    duration: '',
+    thumbnailUrl: 'https://i.ytimg.com/vi/W8GEdpDWSIQ/hqdefault.jpg',
+    practiceActivity:
+      'Follow the Spanish-to-English HVAC briefing and trace the refrigerant state (vapor vs. liquid) at the inlet and outlet of each of the four components.',
+    practiceDeliverablePrompt:
+      'Write down the refrigerant pressure and phase state entering and leaving the compressor and expansion device as interpreted from the Electrotec HVAC lesson.',
+    knowledgeCheck: {
+      question:
+        'In the Spanish Electrotec HVAC training (interpreted into English), why must refrigerant enter the compressor suction port as a low-pressure vapor rather than a liquid?',
+      options: [
+        'Liquids are non-compressible; liquid refrigerant entering the compressor cylinders ("liquid slugging") can severely damage valves and pistons',
+        'Because compressors are designed to pump solid ice',
+        'Because the evaporator coil heats the outdoor air',
+        'Refrigerant never changes phase in an air conditioner'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Vapor compressors are designed strictly to compress gas; ensuring complete vaporization (proper superheat) in the evaporator protects the compressor from liquid slugging.'
+    }
+  },
+  {
+    id: 'lbd_intl_hi_automech_24',
+    lessonNumber: 24,
+    videoLabel: 'Global Training (हिन्दी → English): Automobile Powertrain & Chassis',
+    title: 'Automobile Engineering: Engine, Transmission & Chassis Systems (Hindi Auto Portal)',
+    category: 'Auto Mechanics',
+    enclaveId: 'automotive_mechanics',
+    professionId: 'auto_mechanic',
+    level: 'Beginner',
+    originalCreator: 'Indian Automobile Engineer · ITI Automotive Portal',
+    creatorDomain: 'ncvtmis.gov.in',
+    sourceLanguage: 'hi',
+    sourceLanguageLabel: '🇮🇳 हिन्दी (Interpreted to English)',
+    description:
+      'Hindi automotive engineering lesson breaking down the core subsystems of a motor vehicle—internal combustion engine, clutch/transmission drivetrain, suspension, steering, braking, and electrical—interpreted live into English.',
+    skillsCovered: [
+      'Powertrain Architecture (Engine, Clutch, Gearbox, Differential)',
+      'Chassis Frame, Suspension & Braking Subsystems',
+      'Cooling, Lubrication & Fuel Delivery Loops',
+      'Systematic Multi-Point Vehicle Inspection'
+    ],
+    sourceVideoUrl: 'https://www.youtube.com/watch?v=bEBU-hytsxU',
+    referenceArticleUrl: 'https://www.youtube.com/watch?v=bEBU-hytsxU',
+    youtubeId: 'bEBU-hytsxU',
+    embedAvailable: true,
+    duration: '',
+    thumbnailUrl: 'https://i.ytimg.com/vi/bEBU-hytsxU/hqdefault.jpg',
+    practiceActivity:
+      'Listen to the Hindi-to-English automotive engineering briefing and trace how mechanical torque travels from the engine crankshaft to the driven road wheels.',
+    practiceDeliverablePrompt:
+      'List the drivetrain components in order from the engine flywheel to the wheels as explained in the Hindi-to-English automotive lesson.',
+    knowledgeCheck: {
+      question:
+        'In the Hindi automotive engineering lesson (interpreted into English), what is the correct sequence of drivetrain components that transmit power from the engine to the driven wheels?',
+      options: [
+        'Engine Crankshaft → Flywheel / Clutch (or Torque Converter) → Transmission Gearbox → Driveshaft → Differential → Axle Shafts → Wheels',
+        'Radiator → Steering Wheel → Exhaust Pipe → Headlights',
+        'Alternator → Windshield Wiper → Brake Caliper',
+        'Battery → Air Filter → Muffler'
+      ],
+      correctIndex: 0,
+      explanation:
+        'Rotational torque generated by the engine passes through the clutch/torque converter to the transmission (for gear reduction), then via the driveshaft and differential to the axle shafts and wheels.'
+    }
   }
 ]
 

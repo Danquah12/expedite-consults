@@ -13,6 +13,9 @@ export interface NoctisVideoInterpreterProps {
   serialPlate?: string
   description?: string
   takeaways?: string[]
+  /** Spoken language of the source video (defaults to "en"). If non-English (e.g. "es", "fr", "ja") and user is on English, Noctis interprets it into English! */
+  sourceLanguage?: string
+  sourceLanguageLabel?: string
   currentTime?: number
   duration?: number
   isPlaying?: boolean
@@ -523,16 +526,16 @@ const UI_LABELS: Partial<
   },
   en: {
     triggerBtn: "Noctis Interpreter",
-    popupTitle: "Noctis Simultaneous Video Interpreter",
-    popupSubtitle: "Live Interpretation (English Lowered to 4% · Voice Boosted 260%)",
-    listenVoiceDub: "🔊 Start Live Voice Interpretation",
-    stopVoiceDub: "⏸ Pause Voice Interpretation",
-    summaryHeading: "Translated Video Overview",
-    stepsHeading: "Continuous Simultaneous Interpretation",
-    askPlaceholder: "Ask Noctis to explain any part of this video...",
+    popupTitle: "Noctis Simultaneous Video Interpreter (English)",
+    popupSubtitle: "Live English Interpretation (Original Audio Lowered · English Voice Boosted 260%)",
+    listenVoiceDub: "🔊 Listen to English Interpretation",
+    stopVoiceDub: "⏸ Pause English Interpretation",
+    summaryHeading: "Interpreted English Video Overview",
+    stepsHeading: "Continuous English Simultaneous Interpretation",
+    askPlaceholder: "Ask Noctis in English to explain any part of this video...",
     askBtn: "Ask",
-    translating: "Noctis is interpreting video into your language...",
-    liveInterpretingBadge: "Simultaneous Interpretation Active · English Lowered (4%)",
+    translating: "Noctis is interpreting this global video into English...",
+    liveInterpretingBadge: "Interpreting into English · Original Audio Lowered",
   },
   es: {
     triggerBtn: "Intérprete Noctis",
@@ -881,6 +884,8 @@ export function NoctisVideoInterpreterPopup({
   serialPlate = "CLN-VID",
   description = "",
   takeaways = [],
+  sourceLanguage = "en",
+  sourceLanguageLabel,
   currentTime = 0,
   duration = 120,
   isPlaying = false,
@@ -888,6 +893,8 @@ export function NoctisVideoInterpreterPopup({
   onRequestPlayVideo,
 }: NoctisVideoInterpreterProps) {
   const { language, setLanguage, currentLanguage, languages } = useLanguage()
+  const normalizedSourceLang = (sourceLanguage || "en").toLowerCase()
+  const isInterpretingNeeded = language !== normalizedSourceLang
   const instanceIdRef = useRef<string>(`noctis-int-${Math.random().toString(36).slice(2, 10)}`)
 
   const initialScript = useMemo(
@@ -923,6 +930,8 @@ export function NoctisVideoInterpreterPopup({
   isPopupOpenRef.current = isPopupOpen
   const languageRef = useRef(language)
   languageRef.current = language
+  const sourceLangRef = useRef(normalizedSourceLang)
+  sourceLangRef.current = normalizedSourceLang
   const onMuteOriginalVideoRef = useRef(onMuteOriginalVideo)
   onMuteOriginalVideoRef.current = onMuteOriginalVideo
   const onRequestPlayVideoRef = useRef(onRequestPlayVideo)
@@ -1202,7 +1211,7 @@ export function NoctisVideoInterpreterPopup({
         )
         setIsLoadingTranslation(false)
         if (
-          language !== "en" &&
+          language !== sourceLangRef.current &&
           (isPlayingRef.current || isPopupOpenRef.current) &&
           !userManuallyPausedDubRef.current &&
           (!isSpeakingRef.current || spokenLangAndTitleRef.current !== cacheKey)
@@ -1229,11 +1238,28 @@ export function NoctisVideoInterpreterPopup({
 
       if (language === "en") {
         const tpl = buildNativeLocalizedTemplate("en", title, speaker, cleanDesc, baseTakeaways)
+        TRANSLATED_VIDEO_SCRIPT_CACHE.set(cacheKey, {
+          title,
+          overview: tpl.overview,
+          steps: tpl.steps,
+          isFullyTranslated: true,
+        })
         setTranslatedTitle(title)
         setTranslatedOverview(tpl.overview)
         setTranslatedSteps(tpl.steps)
         sentencesRef.current = buildContinuousInterpreterSentences(title, tpl.overview, tpl.steps)
         setIsLoadingTranslation(false)
+        // If this is a non-English international training video (e.g. Spanish, French, Japanese, Arabic, Hindi, Swahili)
+        // and the user's selected language is English ("en"), automatically interpret it back into English aloud!
+        if (
+          sourceLangRef.current !== "en" &&
+          (isPlayingRef.current || isPopupOpenRef.current) &&
+          !userManuallyPausedDubRef.current &&
+          (!isSpeakingRef.current || spokenLangAndTitleRef.current !== cacheKey)
+        ) {
+          spokenLangAndTitleRef.current = cacheKey
+          startContinuousInterpretation(0)
+        }
         return
       }
 
@@ -1356,7 +1382,7 @@ export function NoctisVideoInterpreterPopup({
           )
           // As soon as translation finishes for a newly scrolled-to video, start speaking in the target language!
           if (
-            languageRef.current !== "en" &&
+            languageRef.current !== sourceLangRef.current &&
             (isPlayingRef.current || isPopupOpenRef.current) &&
             !userManuallyPausedDubRef.current
           ) {
@@ -1375,11 +1401,11 @@ export function NoctisVideoInterpreterPopup({
     return () => {
       cancelled = true
     }
-  }, [language, title, speaker, description, takeawaysKey, startContinuousInterpretation]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [language, normalizedSourceLang, title, speaker, description, takeawaysKey, startContinuousInterpretation]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Automatically start simultaneous interpretation when video becomes active on scroll or click
   useEffect(() => {
-    if (language === "en") {
+    if (language === normalizedSourceLang) {
       spokenLangAndTitleRef.current = ""
       if (isSpeakingRef.current) {
         stopContinuousInterpretation(true)
@@ -1395,7 +1421,7 @@ export function NoctisVideoInterpreterPopup({
       // If script is already translated (cached or native dictionary), start immediately;
       // otherwise runInterpretation() will start it as soon as translateLinesLive finishes (~150ms)
       const cached = TRANSLATED_VIDEO_SCRIPT_CACHE.get(sessionKey)
-      if (cached?.isFullyTranslated || !isLoadingTranslation) {
+      if (cached?.isFullyTranslated || !isLoadingTranslation || language === "en") {
         if (!isSpeakingRef.current || spokenLangAndTitleRef.current !== sessionKey) {
           spokenLangAndTitleRef.current = sessionKey
           startContinuousInterpretation(0)
@@ -1406,6 +1432,7 @@ export function NoctisVideoInterpreterPopup({
     }
   }, [
     language,
+    normalizedSourceLang,
     title,
     isPlaying,
     isPopupOpen,
@@ -1418,7 +1445,7 @@ export function NoctisVideoInterpreterPopup({
   useEffect(() => {
     const sessionKey = `${language}::${title}`
     if (
-      language !== "en" &&
+      language !== normalizedSourceLang &&
       isPopupOpen &&
       !userManuallyPausedDubRef.current &&
       spokenLangAndTitleRef.current !== sessionKey
@@ -1427,16 +1454,16 @@ export function NoctisVideoInterpreterPopup({
         onRequestPlayVideoRef.current()
       }
       const cached = TRANSLATED_VIDEO_SCRIPT_CACHE.get(sessionKey)
-      if (cached?.isFullyTranslated || !isLoadingTranslation) {
+      if (cached?.isFullyTranslated || !isLoadingTranslation || language === "en") {
         spokenLangAndTitleRef.current = sessionKey
         startContinuousInterpretation(0)
       }
     }
-  }, [language, title, isPopupOpen, isLoadingTranslation, startContinuousInterpretation])
+  }, [language, normalizedSourceLang, title, isPopupOpen, isLoadingTranslation, startContinuousInterpretation])
 
   // Unlock shared browser audio & AudioContext on any user interaction and resume if needed
   useEffect(() => {
-    if (language === "en" || (!isPlaying && !isPopupOpen) || userManuallyPausedDubRef.current) return
+    if (!isInterpretingNeeded || (!isPlaying && !isPopupOpen) || userManuallyPausedDubRef.current) return
     const unlockAudio = () => {
       const sharedAudio = getSharedNoctisAudio()
       if (sharedAudio) {
@@ -1451,7 +1478,7 @@ export function NoctisVideoInterpreterPopup({
         return
       }
       if (
-        languageRef.current !== "en" &&
+        languageRef.current !== sourceLangRef.current &&
         (isPlayingRef.current || isPopupOpenRef.current) &&
         !userManuallyPausedDubRef.current &&
         (!isSpeakingRef.current ||
@@ -1471,7 +1498,7 @@ export function NoctisVideoInterpreterPopup({
       window.removeEventListener("keydown", unlockAudio)
       window.removeEventListener("touchstart", unlockAudio)
     }
-  }, [language, title, isPlaying, isPopupOpen, startContinuousInterpretation])
+  }, [language, isInterpretingNeeded, title, isPlaying, isPopupOpen, startContinuousInterpretation])
 
   // Cleanup on unmount (only stops shared audio if this instance is still the active interpreter)
   useEffect(() => {
@@ -1545,12 +1572,12 @@ export function NoctisVideoInterpreterPopup({
               return
             }
             setIsPopupOpen(nextOpen)
-            if (nextOpen && language !== "en" && !isSpeakingRef.current) {
+            if (nextOpen && isInterpretingNeeded && !isSpeakingRef.current) {
               startContinuousInterpretation(activeSentenceIdxRef.current)
             }
           }}
           style={{
-            backgroundColor: isPopupOpen || isSpeaking || language !== "en" ? "#0A66C2" : "rgba(15, 23, 42, 0.92)",
+            backgroundColor: isPopupOpen || isSpeaking || isInterpretingNeeded ? "#0A66C2" : "rgba(15, 23, 42, 0.92)",
             color: "#FFFFFF",
             borderColor: "#60A5FA",
           }}
@@ -1562,7 +1589,11 @@ export function NoctisVideoInterpreterPopup({
           ) : (
             <Sparkles className="h-3.5 w-3.5 text-amber-300 shrink-0" />
           )}
-          <span style={{ color: "#FFFFFF" }}>{labels.triggerBtn}</span>
+          <span style={{ color: "#FFFFFF" }}>
+            {sourceLanguageLabel && language === "en"
+              ? `${sourceLanguageLabel}`
+              : labels.triggerBtn}
+          </span>
           <span
             style={{ backgroundColor: "#0F172A", color: "#FDE68A" }}
             className="rounded px-1.5 py-0.5 text-[10px] font-mono font-black border border-white/25"
@@ -1573,7 +1604,7 @@ export function NoctisVideoInterpreterPopup({
       </div>
 
       {/* 2. SLIM, HIGH-VISIBILITY SUBTITLE BAR AT VERY BOTTOM EDGE */}
-      {(language !== "en" || isSpeaking) && showSubtitlesStrip && (
+      {(isInterpretingNeeded || isSpeaking) && showSubtitlesStrip && (
         <div
           onClick={(e) => {
             e.stopPropagation()

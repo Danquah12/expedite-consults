@@ -679,6 +679,39 @@ export const LEARNING_VENDOR_SOURCES: LearningVendorSource[] = [
     featuredFlagship: false,
     defaultConnected: false,
   },
+  {
+    id: "global-multilingual-trade-academies",
+    name: "Global Vocational & Professional Portals (Interpreted to English)",
+    shortName: "Global Portals",
+    category: "trades_medical_industry",
+    categoryLabel: "AFPA France · SENA · SENAI Brasil · VETA East Africa · ANSSI · INCIBE · JDLA Japan",
+    tagline: "Non-English national vocational, trade, clinical, and cyber academies from around the world—automatically interpreted into English by Noctis.",
+    description:
+      "Stream and study authentic non-English training from France (AFPA, Compagnons du Devoir, ANSSI), Spain & Latin America (SENA, INCIBE, Electrotec), Brazil (SENAI, Empoeirados), East Africa (VETA Tanzania/Kenya), Germany (BSI, Handwerkskammer), Italy (Leroy Merlin Scuola), India (NCVT ITI), and Japan (JDLA & Miyadaiku Timberwright Portals) with live Noctis interpretation back into English.",
+    logoText: "🌍 GLOBAL → EN",
+    accentGradient: "from-[#0A66C2] via-indigo-700 to-emerald-700",
+    badgeText: "INTERPRETED TO ENGLISH",
+    officialUrl: "https://www.afpa.fr/",
+    searchUrlTemplate: "https://www.youtube.com/results?search_query={query}",
+    popularTopics: [
+      "AFPA & Compagnons Carpentry/Plumbing (Français → English)",
+      "SENA & Electrotec Electrical/HVAC (Español → English)",
+      "SENAI & Empoeirados Woodworking/Finance (Português → English)",
+      "VETA East Africa Vocational Trades (Kiswahili → English)",
+      "Japanese Timber Joinery & Deep Learning (日本語 → English)",
+    ],
+    quickLinks: [
+      { label: "AFPA Vocational France", url: "https://www.afpa.fr/", badge: "🇫🇷 FR → EN" },
+      { label: "ANSSI Cyber France", url: "https://cyber.gouv.fr/", badge: "🇫🇷 Cyber → EN" },
+      { label: "INCIBE Cyber Spain", url: "https://www.incibe.es/", badge: "🇪🇸 Cyber → EN" },
+      { label: "VETA Vocational Tanzania", url: "https://www.veta.go.tz/", badge: "🇹🇿 SW → EN" },
+      { label: "Leroy Merlin Scuola Italia", url: "https://www.leroymerlin.it/guide/", badge: "🇮🇹 IT → EN" },
+    ],
+    supportsCeus: true,
+    ceuBadge: "Noctis Live English Interpretation Active",
+    featuredFlagship: true,
+    defaultConnected: true,
+  },
 ]
 
 /**

@@ -61,7 +61,7 @@ interface SkilledTradesLearnByDoingSectionProps {
   onClaimCertificate?: (certTitle: string) => void
 }
 
-type CategoryFilter = 'All' | SkilledTradesCategory | 'Saved' | 'Learning Journey'
+type CategoryFilter = 'All' | 'Global Interpreted' | SkilledTradesCategory | 'Saved' | 'Learning Journey'
 
 export function SkilledTradesLearnByDoingSection({
   user,
@@ -451,10 +451,16 @@ export function SkilledTradesLearnByDoingSection({
   const filteredLessons = SKILLED_TRADES_LEARN_BY_DOING_LESSONS.filter(lesson => {
     const t = telemetryMap[lesson.id] || createInitialLessonTelemetry(lesson.id)
     if (selectedCategory === 'All') return true
+    if (selectedCategory === 'Global Interpreted') {
+      return Boolean(lesson.sourceLanguage && lesson.sourceLanguage !== 'en')
+    }
     if (selectedCategory === 'Saved') return t.isSaved
     if (selectedCategory === 'Learning Journey') return t.inLearningJourney
     return lesson.category === selectedCategory
   })
+  const globalInterpretedCount = SKILLED_TRADES_LEARN_BY_DOING_LESSONS.filter(
+    l => Boolean(l.sourceLanguage && l.sourceLanguage !== 'en')
+  ).length
 
   // Real user activity totals (zero seeded numbers)
   const allTelemetry = Object.values(telemetryMap)
@@ -598,6 +604,94 @@ export function SkilledTradesLearnByDoingSection({
             'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
           ringColor: '#4F46E5'
         }
+      case 'lbd_intl_es_carpentry_speedsquare_14':
+        return {
+          instructorName: 'Maestro Erick Morales',
+          role: 'Master Carpenter & Technical Educator · Taller de Ideas (🇪🇸 Español → EN)',
+          avatarUrl:
+            'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+          ringColor: '#B45309'
+        }
+      case 'lbd_intl_fr_carpentry_joinery_15':
+        return {
+          instructorName: 'Laurent Moreau, Compagnon',
+          role: 'Maître Ébéniste · Astuces Design France (🇫🇷 Français → EN)',
+          avatarUrl:
+            'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+          ringColor: '#B45309'
+        }
+      case 'lbd_intl_ja_carpentry_joinery_16':
+        return {
+          instructorName: 'Kenji Takahashi (高橋 健司)',
+          role: 'Master Miyadaiku Timberwright · 建築現場の教科書 (🇯🇵 日本語 → EN)',
+          avatarUrl:
+            'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+          ringColor: '#B45309'
+        }
+      case 'lbd_intl_pt_carpentry_marcenaria_17':
+        return {
+          instructorName: 'Leandro & Luciano · Empoeirados',
+          role: 'SENAI Woodworking & Marcenaria Educators (🇧🇷 Português → EN)',
+          avatarUrl:
+            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+          ringColor: '#B45309'
+        }
+      case 'lbd_intl_sw_carpentry_veta_18':
+        return {
+          instructorName: 'Mwalimu Juma Bakari',
+          role: 'Senior Vocational Carpentry Instructor · VETA Tanzania (🇹🇿 Kiswahili → EN)',
+          avatarUrl:
+            'https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+          ringColor: '#B45309'
+        }
+      case 'lbd_intl_fr_plumbing_copper_19':
+        return {
+          instructorName: 'Karim Mallekh',
+          role: 'Formateur Génie Climatique & Plomberie · AFPA (🇫🇷 Français → EN)',
+          avatarUrl:
+            'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+          ringColor: '#0284C7'
+        }
+      case 'lbd_intl_es_electrical_20':
+        return {
+          instructorName: 'Ing. Carlos Mendoza',
+          role: 'Residential & Industrial Electrical Instructor · Universo Eléctrico (🇪🇸 Español → EN)',
+          avatarUrl:
+            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+          ringColor: '#D97706'
+        }
+      case 'lbd_intl_ar_electrical_schematics_21':
+        return {
+          instructorName: 'Eng. Haytham Saeid (م. هيثم سعيد)',
+          role: 'Principal Electrical Distribution Instructor (🇪🇬 العربية → EN)',
+          avatarUrl:
+            'https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+          ringColor: '#D97706'
+        }
+      case 'lbd_intl_it_painting_22':
+        return {
+          instructorName: 'Marco Rossi · Leroy Merlin Italia',
+          role: 'Maestro Decoratore & Finishing Specialist (🇮🇹 Italiano → EN)',
+          avatarUrl:
+            'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+          ringColor: '#059669'
+        }
+      case 'lbd_intl_es_hvac_23':
+        return {
+          instructorName: 'Ing. Roberto Salazar · Electrotec',
+          role: 'HVACR & Thermal Systems Professor (🇵🇪 Español → EN)',
+          avatarUrl:
+            'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+          ringColor: '#4F46E5'
+        }
+      case 'lbd_intl_hi_automech_24':
+        return {
+          instructorName: 'Er. Rajesh Sharma, ITI',
+          role: 'Senior Automotive Powertrain Educator (🇮🇳 हिन्दी → EN)',
+          avatarUrl:
+            'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
+          ringColor: '#0284C7'
+        }
       case 'lbd_hvac_refrigeration_13':
       default:
         return {
@@ -629,6 +723,7 @@ export function SkilledTradesLearnByDoingSection({
             {(
               [
                 { id: 'All', label: `All Videos (${totalLessonsCount})` },
+                { id: 'Global Interpreted', label: `🌍 Global → English (${globalInterpretedCount})` },
                 { id: 'Carpentry', label: '🪚 Carpentry' },
                 { id: 'Auto Mechanics', label: '🔧 Auto' },
                 { id: 'Painting & Decorating', label: '🎨 Painting' },
@@ -648,7 +743,11 @@ export function SkilledTradesLearnByDoingSection({
                     const firstMatch =
                       tab.id === 'All'
                         ? SKILLED_TRADES_LEARN_BY_DOING_LESSONS[0]
-                        : SKILLED_TRADES_LEARN_BY_DOING_LESSONS.find(l => l.category === tab.id)
+                        : tab.id === 'Global Interpreted'
+                          ? SKILLED_TRADES_LEARN_BY_DOING_LESSONS.find(
+                              l => Boolean(l.sourceLanguage && l.sourceLanguage !== 'en')
+                            )
+                          : SKILLED_TRADES_LEARN_BY_DOING_LESSONS.find(l => l.category === tab.id)
                     if (firstMatch) {
                       setActiveVideoLessonId(firstMatch.id)
                       setAutoPlayRequested(true)
@@ -795,6 +894,12 @@ export function SkilledTradesLearnByDoingSection({
 
                 {/* 2. LINKEDIN POST CAPTION ABOVE VIDEO (Matches Screenshot 2: [DIALOGUES] Description.... more) */}
                 <div className="px-4 pb-3 text-[14px] text-zinc-900 dark:text-zinc-100 leading-relaxed">
+                  {lesson.sourceLanguageLabel && (
+                    <div className="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-sky-50 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-800 px-2.5 py-0.5 text-[11px] font-bold text-[#0A66C2] dark:text-sky-300">
+                      <Globe className="h-3 w-3 shrink-0" />
+                      <span>{lesson.sourceLanguageLabel} · Source: {lesson.creatorDomain}</span>
+                    </div>
+                  )}
                   {!isCaptionExpanded ? (
                     <p>
                       <span className="font-semibold">
@@ -882,6 +987,8 @@ export function SkilledTradesLearnByDoingSection({
                       speakerAvatarUrl={instructorProfile.avatarUrl}
                       description={lesson.description}
                       takeaways={lesson.skillsCovered}
+                      sourceLanguage={lesson.sourceLanguage}
+                      sourceLanguageLabel={lesson.sourceLanguageLabel}
                       durationLabel=""
                       autoPlay={autoPlayRequested}
                       initialMuted={true}
@@ -916,6 +1023,8 @@ export function SkilledTradesLearnByDoingSection({
                         serialPlate={serialPlate}
                         description={lesson.description}
                         takeaways={lesson.skillsCovered}
+                        sourceLanguage={lesson.sourceLanguage}
+                        sourceLanguageLabel={lesson.sourceLanguageLabel}
                         onRequestPlayVideo={() => {
                           notifyExclusiveVideoPlay(`lbd-home-player-${lesson.id}`)
                           setAutoPlayRequested(true)
@@ -1238,13 +1347,14 @@ export function SkilledTradesLearnByDoingSection({
             {(
               [
                 { id: 'All', label: `All ${totalLessonsCount} Lessons`, count: totalLessonsCount },
-                { id: 'Carpentry', label: '🪚 Carpentry', count: 2 },
-                { id: 'Auto Mechanics', label: '🔧 Auto Mechanics', count: 2 },
-                { id: 'Painting & Decorating', label: '🎨 Painting & Decorating', count: 2 },
-                { id: 'Plumbing', label: '🚰 Plumbing', count: 2 },
-                { id: 'Electrical Fundamentals', label: '⚡ Electrical Fundamentals', count: 1 },
-                { id: 'Welding', label: '🔥 Welding', count: 2 },
-                { id: 'HVAC', label: '❄️ HVAC', count: 2 },
+                { id: 'Global Interpreted', label: '🌍 Global → English', count: globalInterpretedCount },
+                { id: 'Carpentry', label: '🪚 Carpentry', count: SKILLED_TRADES_LEARN_BY_DOING_LESSONS.filter(l => l.category === 'Carpentry').length },
+                { id: 'Auto Mechanics', label: '🔧 Auto Mechanics', count: SKILLED_TRADES_LEARN_BY_DOING_LESSONS.filter(l => l.category === 'Auto Mechanics').length },
+                { id: 'Painting & Decorating', label: '🎨 Painting & Decorating', count: SKILLED_TRADES_LEARN_BY_DOING_LESSONS.filter(l => l.category === 'Painting & Decorating').length },
+                { id: 'Plumbing', label: '🚰 Plumbing', count: SKILLED_TRADES_LEARN_BY_DOING_LESSONS.filter(l => l.category === 'Plumbing').length },
+                { id: 'Electrical Fundamentals', label: '⚡ Electrical Fundamentals', count: SKILLED_TRADES_LEARN_BY_DOING_LESSONS.filter(l => l.category === 'Electrical Fundamentals').length },
+                { id: 'Welding', label: '🔥 Welding', count: SKILLED_TRADES_LEARN_BY_DOING_LESSONS.filter(l => l.category === 'Welding').length },
+                { id: 'HVAC', label: '❄️ HVAC', count: SKILLED_TRADES_LEARN_BY_DOING_LESSONS.filter(l => l.category === 'HVAC').length },
                 { id: 'Saved', label: '🔖 Saved Content', count: totalSavedCount },
                 { id: 'Learning Journey', label: '🧭 My Learning Journey', count: totalJourneyCount }
               ] as { id: CategoryFilter; label: string; count: number }[]
@@ -1487,6 +1597,8 @@ export function SkilledTradesLearnByDoingSection({
                             speakerAvatarUrl={instructorProfile.avatarUrl}
                             description={lesson.description}
                             takeaways={lesson.skillsCovered}
+                            sourceLanguage={lesson.sourceLanguage}
+                            sourceLanguageLabel={lesson.sourceLanguageLabel}
                             durationLabel={displayDuration || ""}
                             autoPlay={autoPlayRequested}
                             initialMuted={false}

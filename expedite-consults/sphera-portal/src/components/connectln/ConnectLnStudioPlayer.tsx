@@ -57,6 +57,9 @@ interface ConnectLnStudioPlayerProps {
   durationLabel?: string
   description?: string
   takeaways?: string[]
+  /** Spoken language of the source video (defaults to "en"). If non-English (e.g. "es", "fr", "ja") and user is on English, Noctis interprets it into English! */
+  sourceLanguage?: string
+  sourceLanguageLabel?: string
   autoPlay?: boolean
   initialMuted?: boolean
   className?: string
@@ -75,6 +78,8 @@ export function ConnectLnStudioPlayer({
   durationLabel = "3:00",
   description,
   takeaways,
+  sourceLanguage = "en",
+  sourceLanguageLabel,
   autoPlay = true,
   initialMuted = false,
   className = "h-[230px] sm:h-[280px] w-full",
@@ -82,8 +87,12 @@ export function ConnectLnStudioPlayer({
   onExclusiveStop
 }: ConnectLnStudioPlayerProps) {
   const { language } = useLanguage()
+  const normalizedSourceLang = (sourceLanguage || "en").toLowerCase()
+  const isInterpretingNeeded = language !== normalizedSourceLang
   const languageRef = useRef(language)
   languageRef.current = language
+  const sourceLangRef = useRef(normalizedSourceLang)
+  sourceLangRef.current = normalizedSourceLang
   const initialLangRef = useRef(language)
   const containerRef = useRef<HTMLDivElement>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
@@ -95,7 +104,7 @@ export function ConnectLnStudioPlayer({
   const [isPlaying, setIsPlaying] = useState<boolean>(autoPlay)
   const [isStoppedByOther, setIsStoppedByOther] = useState<boolean>(false)
   const [isMuted, setIsMuted] = useState<boolean>(initialMuted)
-  const isVoiceDuckingRef = useRef<boolean>(language !== "en")
+  const isVoiceDuckingRef = useRef<boolean>(isInterpretingNeeded)
   const [currentTime, setCurrentTime] = useState<number>(0)
   const [duration, setDuration] = useState<number>(() => {
     const parts = durationLabel.split(":").map(Number)
@@ -225,9 +234,9 @@ export function ConnectLnStudioPlayer({
       const win = iframeRef.current?.contentWindow
       if (win) {
         win.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), "*")
-        // Continuously enforce English audio ducking whenever Noctis interpretation is active
-        // (On mobile OS browsers where setVolume is ignored, mute the English track so interpretation is crystal clear)
-        if (isVoiceDuckingRef.current || languageRef.current !== "en") {
+        // Continuously enforce original audio ducking whenever Noctis interpretation is active
+        // (On mobile OS browsers where setVolume is ignored, mute the original track so interpretation is crystal clear)
+        if (isVoiceDuckingRef.current || languageRef.current !== sourceLangRef.current) {
           const isMobileDevice =
             typeof window !== "undefined" &&
             (window.matchMedia?.("(pointer: coarse)").matches ||
@@ -290,7 +299,7 @@ export function ConnectLnStudioPlayer({
     e.stopPropagation()
     if (isMuted) {
       sendPlayerCommand("unMute")
-      const targetVol = isVoiceDuckingRef.current || languageRef.current !== "en" ? 4 : 100
+      const targetVol = isVoiceDuckingRef.current || languageRef.current !== sourceLangRef.current ? 4 : 100
       sendPlayerCommand("setVolume", [targetVol])
       setTimeout(() => sendPlayerCommand("setVolume", [targetVol]), 80)
       sendPlayerCommand("playVideo")
@@ -305,7 +314,7 @@ export function ConnectLnStudioPlayer({
   useEffect(() => {
     if (!autoPlay || isMuted) return
     const unlockAudio = () => {
-      const shouldDuck = isVoiceDuckingRef.current || languageRef.current !== "en"
+      const shouldDuck = isVoiceDuckingRef.current || languageRef.current !== sourceLangRef.current
       applyVoiceDuckingToPlayer(shouldDuck)
       if (isPlaying && !isStoppedByOther) {
         sendPlayerCommand("playVideo")
@@ -375,13 +384,13 @@ export function ConnectLnStudioPlayer({
           <iframe
             ref={iframeRef}
             key={youtubeId}
-            src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=${autoPlay ? 1 : 0}&mute=${initialMuted || initialLangRef.current !== "en" ? 1 : 0}&loop=1&playlist=${youtubeId}&controls=0&rel=0&modestbranding=1&iv_load_policy=3&cc_load_policy=${initialLangRef.current !== "en" ? 1 : 0}&cc_lang_pref=${initialLangRef.current}&hl=${initialLangRef.current}&disablekb=1&fs=0&playsinline=1&enablejsapi=1`}
+            src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=${autoPlay ? 1 : 0}&mute=${initialMuted || initialLangRef.current !== normalizedSourceLang ? 1 : 0}&loop=1&playlist=${youtubeId}&controls=0&rel=0&modestbranding=1&iv_load_policy=3&cc_load_policy=${initialLangRef.current !== normalizedSourceLang ? 1 : 0}&cc_lang_pref=${initialLangRef.current}&hl=${initialLangRef.current}&disablekb=1&fs=0&playsinline=1&enablejsapi=1`}
             title={title}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             onLoad={() => {
               if (autoPlay) {
                 setTimeout(() => {
-                  if (isVoiceDuckingRef.current || languageRef.current !== "en") {
+                  if (isVoiceDuckingRef.current || languageRef.current !== sourceLangRef.current) {
                     applyVoiceDuckingToPlayer(true)
                   } else if (!initialMuted) {
                     sendPlayerCommand("unMute")
@@ -405,6 +414,8 @@ export function ConnectLnStudioPlayer({
           serialPlate={serialPlate}
           description={description}
           takeaways={takeaways}
+          sourceLanguage={normalizedSourceLang}
+          sourceLanguageLabel={sourceLanguageLabel}
           currentTime={currentTime}
           duration={duration}
           isPlaying={isPlaying}
@@ -424,7 +435,7 @@ export function ConnectLnStudioPlayer({
       )}
 
       {/* Floating Unmute Badge when Auto-Playing Muted on Scroll */}
-      {isPlaying && isMuted && !isStoppedByOther && language === "en" && !isVoiceDuckingRef.current && (
+      {isPlaying && isMuted && !isStoppedByOther && language === normalizedSourceLang && !isVoiceDuckingRef.current && (
         <button
           type="button"
           onClick={toggleMute}
