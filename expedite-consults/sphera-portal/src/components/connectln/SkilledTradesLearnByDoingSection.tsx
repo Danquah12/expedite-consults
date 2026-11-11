@@ -1025,7 +1025,7 @@ export function SkilledTradesLearnByDoingSection({
                       sourceLanguageLabel={lesson.sourceLanguageLabel}
                       durationLabel=""
                       autoPlay={autoPlayRequested}
-                      initialMuted={true}
+                      initialMuted={false}
                       playerId={`lbd-home-player-${lesson.id}`}
                       className="h-full w-full"
                     />

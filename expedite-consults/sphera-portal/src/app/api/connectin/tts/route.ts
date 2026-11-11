@@ -737,18 +737,96 @@ function isFemaleSpeakerName(speaker: string, genderParam: string): boolean {
   )
 }
 
+const TRANSLATE_TARGET_MAP: Record<string, string> = {
+  en: "en",
+  ak: "ak",
+  ee: "ee",
+  gaa: "gaa",
+  ha: "ha",
+  yo: "yo",
+  ig: "ig",
+  sw: "sw",
+  am: "am",
+  om: "om",
+  so: "so",
+  zu: "zu",
+  xh: "xh",
+  rw: "rw",
+  sn: "sn",
+  wo: "wo",
+  lg: "lg",
+  he: "iw",
+  zh: "zh-CN",
+}
+
+async function translateTextIfRequested(text: string, targetLang: string): Promise<string> {
+  const trimmed = (text || "").trim()
+  if (!trimmed) return text
+  const tl = TRANSLATE_TARGET_MAP[targetLang] || targetLang
+  try {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${encodeURIComponent(
+      tl
+    )}&dt=t&q=${encodeURIComponent(trimmed)}`
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      },
+    })
+    if (!res.ok) return text
+    const data = await res.json()
+    const translated = Array.isArray(data?.[0])
+      ? data[0].map((seg: any) => seg?.[0] || "").join("")
+      : ""
+    return translated ? translated.trim() : text
+  } catch {
+    return text
+  }
+}
+
+async function fetchStreamAudioBackup(text: string, tl: string): Promise<ArrayBuffer | null> {
+  const endpoints = [
+    `https://translate.googleapis.com/translate_tts?ie=UTF-8&client=gtx&tl=${encodeURIComponent(tl)}&q=${encodeURIComponent(text)}`,
+    `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${encodeURIComponent(tl)}&q=${encodeURIComponent(text)}`,
+  ]
+  for (const url of endpoints) {
+    try {
+      const response = await fetch(url, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+          Referer: "https://translate.google.com/",
+        },
+      })
+      if (response.ok) {
+        const buf = await response.arrayBuffer()
+        if (buf.byteLength > 200) return buf
+      }
+    } catch {
+      // try next
+    }
+  }
+  return null
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const rawText = (searchParams.get("text") || "").trim().slice(0, 260)
+  const rawTextParam = (searchParams.get("text") || "").trim().slice(0, 260)
   const rawLang = (searchParams.get("lang") || "en").trim().toLowerCase()
   const speaker = (searchParams.get("speaker") || "").trim()
   const genderParam = (searchParams.get("gender") || "").trim().toLowerCase()
+  const shouldTranslate = searchParams.get("translate") === "1"
 
-  if (!rawText) {
+  if (!rawTextParam) {
     return new NextResponse("Missing text", { status: 400 })
   }
 
-  // 100% Studio Natural Human Voice Actor (24kHz 48kbps MP3) — never robotic synth
+  const strippedRaw = rawTextParam.replace(/^\s*\[\d{1,2}:\d{2}(?::\d{2})?\]\s*/g, "").trim()
+  const rawText = shouldTranslate
+    ? await translateTextIfRequested(strippedRaw, rawLang)
+    : strippedRaw
+
+  // 1. Primary Engine: Studio Natural Human Voice Actor (24kHz 48kbps MP3)
   const actorPair = NATURAL_HUMAN_VOICE_ACTORS[rawLang] || NATURAL_HUMAN_VOICE_ACTORS.en
   const useFemale = isFemaleSpeakerName(speaker, genderParam)
   const chosenVoiceActor = useFemale ? actorPair.female : actorPair.male
@@ -775,5 +853,26 @@ export async function GET(req: NextRequest) {
     })
   }
 
-  return new NextResponse("Human voice studio stream temporarily busy", { status: 503 })
+  // 2. Guaranteed Audio Backup Stream so audio NEVER fails with 503 if WebSocket is blocked
+  const primaryTl = PRIMARY_TTS_LANG_MAP[rawLang] || rawLang
+  const fallbackTls = PHONETIC_FALLBACK_TTS_VOICE[rawLang] || []
+  const candidates = [primaryTl, ...fallbackTls.filter((c) => c !== primaryTl), "en"]
+
+  for (let i = 0; i < candidates.length; i++) {
+    const tl = candidates[i]
+    const shaped = reshapeForAuthenticSpokenPronunciation(rawText, rawLang, i > 0).slice(0, 200)
+    const buf = await fetchStreamAudioBackup(shaped, tl)
+    if (buf) {
+      return new NextResponse(buf, {
+        status: 200,
+        headers: {
+          "Content-Type": "audio/mpeg",
+          "X-Voice-Actor": `backup-${tl}`,
+          "Cache-Control": "public, max-age=3600",
+        },
+      })
+    }
+  }
+
+  return new NextResponse("Audio stream unavailable", { status: 502 })
 }

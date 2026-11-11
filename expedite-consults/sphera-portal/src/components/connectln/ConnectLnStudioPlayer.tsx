@@ -109,7 +109,8 @@ export function ConnectLnStudioPlayer({
   const [isPlaying, setIsPlaying] = useState<boolean>(autoPlay)
   const [isStoppedByOther, setIsStoppedByOther] = useState<boolean>(false)
   const [isMuted, setIsMuted] = useState<boolean>(initialMuted)
-  const isVoiceDuckingRef = useRef<boolean>(isInterpretingNeeded)
+  const isVoiceDuckingRef = useRef<boolean>(false)
+  const userManuallyMutedRef = useRef<boolean>(false)
   const [currentTime, setCurrentTime] = useState<number>(0)
   const [duration, setDuration] = useState<number>(() => {
     const parts = durationLabel.split(":").map(Number)
@@ -135,26 +136,35 @@ export function ConnectLnStudioPlayer({
     )
   }, [])
 
-  // When Noctis interpretation is active (shouldDuck === true), completely MUTE the original video audio
-  // on ALL devices (desktop and mobile) so you NEVER hear two people talking at the same time!
+  // When Noctis interpretation is actively speaking (shouldDuck === true), completely MUTE the original video audio
+  // on ALL devices (desktop and mobile) so you NEVER hear two people talking at the same time.
+  // When Noctis stops speaking (shouldDuck === false), immediately restore full 100% original video sound!
   const applyVoiceDuckingToPlayer = useCallback(
     (shouldDuck: boolean) => {
       if (shouldDuck) {
         sendPlayerCommand("setVolume", [0])
         sendPlayerCommand("mute")
         setTimeout(() => {
-          sendPlayerCommand("setVolume", [0])
-          sendPlayerCommand("mute")
+          if (isVoiceDuckingRef.current) {
+            sendPlayerCommand("setVolume", [0])
+            sendPlayerCommand("mute")
+          }
         }, 80)
         setTimeout(() => {
-          sendPlayerCommand("setVolume", [0])
-          sendPlayerCommand("mute")
-        }, 300)
-        setIsMuted(true)
-      } else {
+          if (isVoiceDuckingRef.current) {
+            sendPlayerCommand("setVolume", [0])
+            sendPlayerCommand("mute")
+          }
+        }, 280)
+      } else if (!userManuallyMutedRef.current) {
         sendPlayerCommand("unMute")
         sendPlayerCommand("setVolume", [100])
-        setTimeout(() => sendPlayerCommand("setVolume", [100]), 80)
+        setTimeout(() => {
+          if (!isVoiceDuckingRef.current && !userManuallyMutedRef.current) {
+            sendPlayerCommand("unMute")
+            sendPlayerCommand("setVolume", [100])
+          }
+        }, 80)
         setIsMuted(false)
       }
     },
@@ -197,19 +207,14 @@ export function ConnectLnStudioPlayer({
       try {
         const data = JSON.parse(e.data)
         if (data.event === "infoDelivery" && data.info) {
-          const activePrefLang =
-            typeof window !== "undefined" && (window as any).__noctisPreferredAudioLang
-              ? String((window as any).__noctisPreferredAudioLang).toLowerCase()
-              : languageRef.current
-          if (
-            isVoiceDuckingRef.current ||
-            languageRef.current !== sourceLangRef.current ||
-            activePrefLang !== sourceLangRef.current
-          ) {
-            const win = iframeRef.current?.contentWindow
-            if (win) {
+          const win = iframeRef.current?.contentWindow
+          if (win) {
+            if (isVoiceDuckingRef.current) {
               win.postMessage(JSON.stringify({ event: "command", func: "setVolume", args: [0] }), "*")
               win.postMessage(JSON.stringify({ event: "command", func: "mute", args: [] }), "*")
+            } else if (!userManuallyMutedRef.current) {
+              win.postMessage(JSON.stringify({ event: "command", func: "unMute", args: [] }), "*")
+              win.postMessage(JSON.stringify({ event: "command", func: "setVolume", args: [100] }), "*")
             }
           }
           if (typeof data.info.currentTime === "number") {
@@ -225,7 +230,6 @@ export function ConnectLnStudioPlayer({
             } else if (data.info.playerState === 0) {
               setCurrentTime(0)
               setIsPlaying(true)
-              const win = iframeRef.current?.contentWindow
               if (win) {
                 win.postMessage(JSON.stringify({ event: "command", func: "seekTo", args: [0, true] }), "*")
                 win.postMessage(JSON.stringify({ event: "command", func: "playVideo", args: [] }), "*")
@@ -245,15 +249,22 @@ export function ConnectLnStudioPlayer({
       const win = iframeRef.current?.contentWindow
       if (win) {
         win.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), "*")
-        // Continuously enforce original video audio MUTE whenever Noctis interpretation is active
-        // so the original speaker never talks over the Noctis human interpreter
-        if (isVoiceDuckingRef.current || languageRef.current !== sourceLangRef.current) {
+        if (isVoiceDuckingRef.current) {
           win.postMessage(
             JSON.stringify({ event: "command", func: "setVolume", args: [0] }),
             "*"
           )
           win.postMessage(
             JSON.stringify({ event: "command", func: "mute", args: [] }),
+            "*"
+          )
+        } else if (!userManuallyMutedRef.current) {
+          win.postMessage(
+            JSON.stringify({ event: "command", func: "unMute", args: [] }),
+            "*"
+          )
+          win.postMessage(
+            JSON.stringify({ event: "command", func: "setVolume", args: [100] }),
             "*"
           )
         }
@@ -292,6 +303,12 @@ export function ConnectLnStudioPlayer({
     } else {
       notifyExclusiveVideoPlay(effectivePlayerId)
       setIsStoppedByOther(false)
+      userManuallyMutedRef.current = false
+      if (!isVoiceDuckingRef.current) {
+        sendPlayerCommand("unMute")
+        sendPlayerCommand("setVolume", [100])
+        setIsMuted(false)
+      }
       sendPlayerCommand("playVideo")
       setIsPlaying(true)
       triggerControlsVisibility()
@@ -301,35 +318,41 @@ export function ConnectLnStudioPlayer({
   const toggleMute = (e: React.MouseEvent) => {
     e.stopPropagation()
     if (isMuted) {
+      userManuallyMutedRef.current = false
       sendPlayerCommand("unMute")
-      const targetVol = isVoiceDuckingRef.current || languageRef.current !== sourceLangRef.current ? 4 : 100
+      const targetVol = isVoiceDuckingRef.current ? 0 : 100
       sendPlayerCommand("setVolume", [targetVol])
       setTimeout(() => sendPlayerCommand("setVolume", [targetVol]), 80)
       sendPlayerCommand("playVideo")
       setIsMuted(false)
     } else {
+      userManuallyMutedRef.current = true
       sendPlayerCommand("mute")
       setIsMuted(true)
     }
   }
 
-  // Ensure sound is unmuted on user interaction if autoPlay is active (lowered to 4% whisper on desktop, muted on mobile when Noctis interprets)
+  // Ensure sound is unmuted on any user interaction when Noctis is not speaking
   useEffect(() => {
-    if (!autoPlay || isMuted) return
     const unlockAudio = () => {
-      const shouldDuck = isVoiceDuckingRef.current || languageRef.current !== sourceLangRef.current
-      applyVoiceDuckingToPlayer(shouldDuck)
+      if (isVoiceDuckingRef.current) {
+        applyVoiceDuckingToPlayer(true)
+      } else if (!userManuallyMutedRef.current) {
+        applyVoiceDuckingToPlayer(false)
+      }
       if (isPlaying && !isStoppedByOther) {
         sendPlayerCommand("playVideo")
       }
     }
     window.addEventListener("pointerdown", unlockAudio, { passive: true })
+    window.addEventListener("touchstart", unlockAudio, { passive: true })
     window.addEventListener("keydown", unlockAudio, { passive: true })
     return () => {
       window.removeEventListener("pointerdown", unlockAudio)
+      window.removeEventListener("touchstart", unlockAudio)
       window.removeEventListener("keydown", unlockAudio)
     }
-  }, [autoPlay, isMuted, isPlaying, isStoppedByOther, sendPlayerCommand, applyVoiceDuckingToPlayer])
+  }, [isPlaying, isStoppedByOther, sendPlayerCommand, applyVoiceDuckingToPlayer])
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTime = parseFloat(e.target.value)
@@ -387,15 +410,15 @@ export function ConnectLnStudioPlayer({
           <iframe
             ref={iframeRef}
             key={youtubeId}
-            src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=${autoPlay ? 1 : 0}&mute=${initialMuted || initialLangRef.current !== normalizedSourceLang ? 1 : 0}&loop=1&playlist=${youtubeId}&controls=0&rel=0&modestbranding=1&iv_load_policy=3&cc_load_policy=${initialLangRef.current !== normalizedSourceLang ? 1 : 0}&cc_lang_pref=${initialLangRef.current}&hl=${initialLangRef.current}&disablekb=1&fs=0&playsinline=1&enablejsapi=1`}
+            src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=${autoPlay ? 1 : 0}&mute=${initialMuted ? 1 : 0}&loop=1&playlist=${youtubeId}&controls=0&rel=0&modestbranding=1&iv_load_policy=3&cc_load_policy=${initialLangRef.current !== normalizedSourceLang ? 1 : 0}&cc_lang_pref=${initialLangRef.current}&hl=${initialLangRef.current}&disablekb=1&fs=0&playsinline=1&enablejsapi=1`}
             title={title}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             onLoad={() => {
               if (autoPlay) {
                 setTimeout(() => {
-                  if (isVoiceDuckingRef.current || languageRef.current !== sourceLangRef.current) {
+                  if (isVoiceDuckingRef.current) {
                     applyVoiceDuckingToPlayer(true)
-                  } else if (!initialMuted) {
+                  } else if (!initialMuted && !userManuallyMutedRef.current) {
                     sendPlayerCommand("unMute")
                     sendPlayerCommand("setVolume", [100])
                   }
