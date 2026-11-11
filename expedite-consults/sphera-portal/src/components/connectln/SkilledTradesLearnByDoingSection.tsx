@@ -848,10 +848,13 @@ export function SkilledTradesLearnByDoingSection({
                         className="h-12 w-12 rounded-full object-cover border-2 shadow-xs bg-zinc-200 dark:bg-zinc-800"
                       />
                       <span
-                        title="Verified ConnectLn Master Instructor"
-                        className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-emerald-600 border-2 border-white dark:border-zinc-900 flex items-center justify-center"
+                        title="Verified ConnectLn Master Instructor · Online"
+                        className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full flex items-center justify-center"
                       >
-                        <Check className="h-2.5 w-2.5 text-white stroke-[3]" />
+                        <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
+                        <span className="relative h-4 w-4 rounded-full bg-emerald-500 border-2 border-white dark:border-zinc-900 flex items-center justify-center online-dot-blink">
+                          <Check className="h-2.5 w-2.5 text-white stroke-[3]" />
+                        </span>
                       </span>
                     </div>
                     <div className="min-w-0">
@@ -1547,12 +1550,23 @@ export function SkilledTradesLearnByDoingSection({
                     {/* Top Metadata Ribbon with AI Human Instructor Avatar */}
                     <div className="px-5 pt-4 pb-3 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2 flex-wrap">
                       <div className="flex items-center gap-2.5 flex-wrap">
-                        <img
-                          src={instructorProfile.avatarUrl}
-                          alt={instructorProfile.instructorName}
-                          style={{ borderColor: instructorProfile.ringColor }}
-                          className="h-9 w-9 rounded-full object-cover border-2 shrink-0 shadow-2xs"
-                        />
+                        <div className="relative shrink-0">
+                          <img
+                            src={instructorProfile.avatarUrl}
+                            alt={instructorProfile.instructorName}
+                            style={{ borderColor: instructorProfile.ringColor }}
+                            className="h-9 w-9 rounded-full object-cover border-2 shrink-0 shadow-2xs"
+                          />
+                          <span
+                            title="Verified ConnectLn Master Instructor · Online"
+                            className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full flex items-center justify-center"
+                          >
+                            <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
+                            <span className="relative h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-zinc-900 flex items-center justify-center online-dot-blink">
+                              <Check className="h-2 w-2 text-white stroke-[3]" />
+                            </span>
+                          </span>
+                        </div>
                         <div className="min-w-0">
                           <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100 leading-tight">
                             {instructorProfile.instructorName} · {displayCreator}

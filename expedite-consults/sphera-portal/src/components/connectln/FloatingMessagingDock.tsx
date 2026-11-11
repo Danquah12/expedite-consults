@@ -734,7 +734,10 @@ export function FloatingMessagingDock({
                 className="h-12 w-12 rounded-full object-cover border border-zinc-200"
               />
               {activeChatThread.onlineStatus === "online" && (
-                <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white" />
+                <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full flex items-center justify-center">
+                  <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
+                  <span className="relative h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white online-dot-blink" />
+                </span>
               )}
             </div>
             <div className="min-w-0 flex-1">
@@ -1032,7 +1035,7 @@ export function FloatingMessagingDock({
                 alt="Me"
                 className="h-6 w-6 rounded-full object-cover"
               />
-              <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-1 ring-white" />
+              <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-1 ring-white online-dot-blink" />
             </div>
             <span className="font-bold text-xs text-zinc-900">Messaging</span>
             {totalUnread > 0 && (
@@ -1112,7 +1115,7 @@ export function FloatingMessagingDock({
                     alt="ConnectLn"
                     className="h-8 w-8 rounded-lg object-contain bg-[#1a1917]"
                   />
-                  <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-1 ring-white" />
+                  <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-1 ring-white online-dot-blink" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-1">
@@ -1164,7 +1167,7 @@ export function FloatingMessagingDock({
                       className="h-8 w-8 rounded-full object-cover"
                     />
                     {t.onlineStatus === "online" && (
-                      <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-1 ring-white" />
+                      <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-1 ring-white online-dot-blink" />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">

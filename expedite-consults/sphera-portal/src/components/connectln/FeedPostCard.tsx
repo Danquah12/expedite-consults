@@ -428,7 +428,7 @@ export function FeedPostCard({
                 avatar: resolvedPostAuthorPic
               })
             }
-            className="relative h-12 w-12 shrink-0 rounded-full overflow-hidden ring-2 ring-[#0066FF] cursor-pointer hover:ring-[#0A66C2] transition-all"
+            className="relative h-12 w-12 shrink-0 cursor-pointer group"
             title={`Open ${resolvedAuthorName}'s Workspace`}
           >
             <img
@@ -437,8 +437,15 @@ export function FeedPostCard({
               onError={(e) => {
                 e.currentTarget.src = generatePersonalSignatureAvatar({ name: resolvedAuthorName })
               }}
-              className="h-full w-full object-cover"
+              className="h-12 w-12 rounded-full object-cover ring-2 ring-[#0066FF] group-hover:ring-[#0A66C2] transition-all"
             />
+            <span
+              title={`${resolvedAuthorName} · Online`}
+              className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full flex items-center justify-center"
+            >
+              <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
+              <span className="relative h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-zinc-900 online-dot-blink" />
+            </span>
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">

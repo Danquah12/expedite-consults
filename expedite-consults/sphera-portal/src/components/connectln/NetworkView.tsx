@@ -1559,7 +1559,13 @@ export function NetworkView({
                               }}
                             />
                             {conn.isOnline && (
-                              <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-zinc-900" title="Online now" />
+                              <span
+                                className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full flex items-center justify-center"
+                                title="Online now"
+                              >
+                                <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
+                                <span className="relative h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-zinc-900 online-dot-blink" />
+                              </span>
                             )}
                           </div>
 

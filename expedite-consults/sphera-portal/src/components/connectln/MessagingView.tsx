@@ -3005,7 +3005,10 @@ export function MessagingView({
                                                 }`}
                                             />
                                             {thread.onlineStatus === 'online' && (
-                                                <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white absolute -bottom-0.5 -right-0.5 shadow-sm" />
+                                                <span className="w-3.5 h-3.5 rounded-full flex items-center justify-center absolute -bottom-0.5 -right-0.5">
+                                                    <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
+                                                    <span className="relative w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white shadow-sm online-dot-blink" />
+                                                </span>
                                             )}
                                         </div>
 
@@ -3166,7 +3169,10 @@ export function MessagingView({
                                             }`}
                                         />
                                         {activeThread.onlineStatus === 'online' && (
-                                            <span className="w-3 h-3 rounded-full bg-emerald-500 border-2 border-white absolute -bottom-0.5 -right-0.5" />
+                                            <span className="w-3 h-3 rounded-full flex items-center justify-center absolute -bottom-0.5 -right-0.5">
+                                                <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
+                                                <span className="relative w-3 h-3 rounded-full bg-emerald-500 border-2 border-white online-dot-blink" />
+                                            </span>
                                         )}
                                     </div>
                                     <div className="min-w-0 flex-1">
@@ -4341,7 +4347,7 @@ export function MessagingView({
                                                             alt={peerTitle}
                                                             className="w-20 h-20 rounded-full object-cover border-4 border-emerald-500 shadow-lg"
                                                         />
-                                                        <span className="w-4 h-4 rounded-full bg-emerald-400 border-2 border-slate-900 absolute bottom-0 right-0" />
+                                                        <span className="w-4 h-4 rounded-full bg-emerald-400 border-2 border-slate-900 absolute bottom-0 right-0 online-dot-blink" />
                                                     </div>
                                                     <h4 className="font-black text-sm text-white text-center truncate max-w-full">
                                                         {peerTitle}
@@ -4413,7 +4419,7 @@ export function MessagingView({
                                                     alt={activeThread.title}
                                                     className="w-20 h-20 rounded-full object-cover border-4 border-emerald-500 shadow-lg"
                                                 />
-                                                <span className="w-4 h-4 rounded-full bg-emerald-400 border-2 border-slate-900 absolute bottom-0 right-0" />
+                                                <span className="w-4 h-4 rounded-full bg-emerald-400 border-2 border-slate-900 absolute bottom-0 right-0 online-dot-blink" />
                                             </div>
                                             <h4 className="font-black text-sm text-white text-center truncate max-w-full">
                                                 {activeThread.title}

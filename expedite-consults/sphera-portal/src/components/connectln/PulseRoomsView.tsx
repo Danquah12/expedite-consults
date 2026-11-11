@@ -1823,7 +1823,10 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
                         }`}
                       />
                       {spk.isSpeaking && (
-                        <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-white" />
+                        <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full flex items-center justify-center">
+                          <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
+                          <span className="relative h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-white online-dot-blink" />
+                        </span>
                       )}
                     </div>
                     <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100 truncate w-full">

@@ -714,6 +714,13 @@ export function LeftSidebarProfile({
                 alt={user.name}
                 className="h-full w-full rounded-full object-cover"
               />
+              <span
+                title={`${user.name} · Online`}
+                className="absolute top-0.5 right-0.5 h-3.5 w-3.5 rounded-full flex items-center justify-center"
+              >
+                <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
+                <span className="relative h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-zinc-900 online-dot-blink" />
+              </span>
               {/* ConnectLn "Looking for a Job" Badge on Avatar (replaces LinkedIn #OPENTOWORK) */}
               <button
                 type="button"
