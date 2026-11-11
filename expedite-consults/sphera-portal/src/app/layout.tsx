@@ -10,13 +10,24 @@ const inter = Inter({
 });
 
 export const viewport: Viewport = {
-  themeColor: "#00d4ff",
+  themeColor: "#1C1916",
   width: "device-width",
   initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: "cover",
 };
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://conectln.com"),
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "ConnectLn",
+  },
+  formatDetection: {
+    telephone: false,
+  },
   title: {
     default: "ConnectLn — Tickets, vouches, and real work",
     template: "%s | ConnectLn",

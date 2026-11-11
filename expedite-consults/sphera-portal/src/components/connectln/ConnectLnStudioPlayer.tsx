@@ -332,6 +332,32 @@ export function ConnectLnStudioPlayer({
     }
   }, [youtubeId, autoPlay, initialMuted, effectivePlayerId, shouldMuteForTranslation])
 
+  // On mobile devices (iOS Safari / Android Chrome), automatically unmute active video on first user touch/tap if browser initially forced muted autoplay
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const handleFirstMobileTouch = () => {
+      if (
+        unmuteBlockedByBrowserRef.current &&
+        !userManuallyMutedRef.current &&
+        !shouldMuteForTranslation() &&
+        ytPlayerStateRef.current === 1
+      ) {
+        unmuteBlockedByBrowserRef.current = false
+        hasUnmutedOnceRef.current = true
+        lastUnmuteSentAtRef.current = Date.now()
+        sendPlayerCommand("unMute")
+        sendPlayerCommand("setVolume", [100])
+        setIsMuted(false)
+      }
+    }
+    window.addEventListener("touchstart", handleFirstMobileTouch, { passive: true })
+    window.addEventListener("click", handleFirstMobileTouch, { passive: true })
+    return () => {
+      window.removeEventListener("touchstart", handleFirstMobileTouch)
+      window.removeEventListener("click", handleFirstMobileTouch)
+    }
+  }, [sendPlayerCommand, shouldMuteForTranslation])
+
   // Fallback timer so scrubber progresses smoothly and loops when reaching duration
   useEffect(() => {
     if (!isPlaying) return
@@ -549,17 +575,17 @@ export function ConnectLnStudioPlayer({
           type="button"
           onClick={toggleMute}
           style={{ color: "#FFFFFF" }}
-          className="absolute top-12 left-3 z-30 inline-flex items-center gap-1.5 rounded-full bg-black/85 hover:bg-[#0A66C2] border border-white/25 px-3 py-1 text-[11px] font-extrabold shadow-lg backdrop-blur-xs transition-all cursor-pointer"
+          className="absolute top-10 sm:top-12 left-2 sm:left-3 z-30 inline-flex items-center gap-1 sm:gap-1.5 rounded-full bg-black/85 hover:bg-[#0A66C2] border border-white/25 px-2.5 sm:px-3 py-1 text-[10px] sm:text-[11px] font-extrabold shadow-lg backdrop-blur-xs transition-all cursor-pointer"
         >
-          <VolumeX className="h-3.5 w-3.5 text-amber-400" />
-          <span style={{ color: "#FFFFFF" }}>Auto-Playing · Tap for Sound 🔊</span>
+          <VolumeX className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-amber-400" />
+          <span style={{ color: "#FFFFFF" }}>Tap for Sound 🔊</span>
         </button>
       )}
 
       {/* Top ConnectLn Studio Header Overlay */}
       <div
         style={{ color: "#FFFFFF" }}
-        className={`absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-black/85 via-black/45 to-transparent px-4 py-2.5 flex items-center justify-between gap-3 transition-opacity duration-300 ${
+        className={`absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-black/85 via-black/45 to-transparent px-2.5 sm:px-4 py-1.5 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-3 transition-opacity duration-300 ${
           showControls || !isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"
         }`}
       >

@@ -2054,7 +2054,7 @@ export function NoctisVideoInterpreterPopup({
   return (
     <div onClick={(e) => e.stopPropagation()} data-no-translate="true" translate="no" className="notranslate">
       {/* 1. COMPACT TRIGGER PILL ON THE VIDEO PLAYER (Top-Right Corner) */}
-      <div className="absolute top-12 right-3 z-30 flex items-center gap-1.5">
+      <div className="absolute top-10 sm:top-12 right-2 sm:right-3 z-30 flex items-center gap-1.5">
         <button
           type="button"
           onClick={(e) => {
@@ -2085,7 +2085,7 @@ export function NoctisVideoInterpreterPopup({
             color: "#FFFFFF",
             borderColor: "#60A5FA",
           }}
-          className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-extrabold shadow-xl border-2 transition-all cursor-pointer hover:brightness-110"
+          className="inline-flex items-center gap-1 sm:gap-1.5 rounded-full px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-extrabold shadow-xl border-2 transition-all cursor-pointer hover:brightness-110"
           title="Open Noctis Multilingual Video Audio Interpreter"
         >
           {isSpeaking ? (
@@ -2192,7 +2192,7 @@ export function NoctisVideoInterpreterPopup({
         </div>
       )}
 
-      {/* 3. DOCKED SIDE COMPANION POP-UP (Positioned outside the video frame on the right so it NEVER covers the video demonstration!) */}
+      {/* 3. DOCKED SIDE / MOBILE SHEET COMPANION POP-UP (Responsive on Mobile & Desktop!) */}
       {isPopupOpen && (
         <div
           onClick={(e) => e.stopPropagation()}
@@ -2201,7 +2201,7 @@ export function NoctisVideoInterpreterPopup({
             color: "#FFFFFF",
             borderColor: "#38BDF8",
           }}
-          className="fixed right-3 sm:right-5 top-18 z-[95] w-[min(395px,94vw)] max-h-[80vh] rounded-2xl border-2 shadow-[0_20px_60px_rgba(0,0,0,0.65)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95"
+          className="fixed inset-x-2 sm:inset-x-auto sm:right-5 bottom-2 sm:bottom-auto sm:top-18 z-[95] w-auto sm:w-[min(395px,94vw)] max-h-[74vh] sm:max-h-[80vh] rounded-2xl border-2 shadow-[0_20px_60px_rgba(0,0,0,0.65)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95"
         >
           {/* High-Contrast Pop-up Header */}
           <div
@@ -2278,7 +2278,7 @@ export function NoctisVideoInterpreterPopup({
                   color: "#0F172A",
                   borderColor: "#94A3B8",
                 }}
-                className="flex-1 rounded-lg border-2 px-2.5 py-1.5 text-xs font-extrabold focus:outline-none focus:border-[#0A66C2] cursor-pointer shadow-2xs"
+                className="flex-1 rounded-lg border-2 px-2.5 py-1.5 text-base sm:text-xs font-extrabold focus:outline-none focus:border-[#0A66C2] cursor-pointer shadow-2xs"
               >
                 {languages.map((l) => (
                   <option
@@ -2462,7 +2462,7 @@ export function NoctisVideoInterpreterPopup({
                 color: "#0F172A",
                 borderColor: "#94A3B8",
               }}
-              className="flex-1 min-w-0 rounded-lg border-2 px-2.5 py-1.5 text-xs font-bold placeholder:text-slate-500 focus:outline-none focus:border-[#0A66C2]"
+              className="flex-1 min-w-0 rounded-lg border-2 px-2.5 py-1.5 text-base sm:text-xs font-bold placeholder:text-slate-500 focus:outline-none focus:border-[#0A66C2]"
             />
             <button
               type="submit"

@@ -436,7 +436,7 @@ export default function ConnectLnPage() {
     } catch {
       // ignore DOM icon errors
     }
-    const CURRENT_RELEASE_VERSION = "2026.11.03.v5"
+    const CURRENT_RELEASE_VERSION = "2026.11.11.gold-standard-5"
     try {
       const prevVersion = localStorage.getItem("connectln_release_version_v5")
       if (prevVersion !== CURRENT_RELEASE_VERSION) {
