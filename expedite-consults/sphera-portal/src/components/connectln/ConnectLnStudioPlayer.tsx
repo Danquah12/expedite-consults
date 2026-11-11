@@ -408,6 +408,7 @@ export function ConnectLnStudioPlayer({
       {/* Noctis AI Live Video Language Interpreter & Voice Dubbing Pop-up */}
       {!isStoppedByOther && (
         <NoctisVideoInterpreterPopup
+          youtubeId={youtubeId}
           title={title}
           speaker={speaker}
           speakerRole={speakerRole}

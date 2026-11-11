@@ -1051,6 +1051,7 @@ export function SkilledTradesLearnByDoingSection({
                       className="relative h-full w-full overflow-hidden cursor-pointer group"
                     >
                       <NoctisVideoInterpreterPopup
+                        youtubeId={cardYoutubeId}
                         title={cardTitle}
                         speaker={instructorProfile.instructorName}
                         speakerRole={cardCreator}

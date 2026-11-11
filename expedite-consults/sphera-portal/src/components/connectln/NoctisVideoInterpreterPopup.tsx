@@ -5,6 +5,7 @@ import { Sparkles, Volume2, VolumeX, Globe, X, Subtitles, Send, CheckCircle2, Ra
 import { useLanguage } from "@/context/LanguageContext"
 import { LanguageCode, SUPPORTED_LANGUAGES } from "@/lib/translations"
 import { translateLinesLive, translateTextLive } from "@/lib/live-page-translator"
+import { getVerbatimSpokenSegmentsForVideo } from "@/lib/video-verbatim-transcripts"
 
 export const NOCTIS_LANGUAGE_COMMAND_EVENT = "connectln:noctis-command-language"
 
@@ -97,6 +98,7 @@ export function dispatchNoctisLanguageCommand(langCode: LanguageCode) {
 }
 
 export interface NoctisVideoInterpreterProps {
+  youtubeId?: string
   title: string
   speaker?: string
   speakerRole?: string
@@ -929,25 +931,38 @@ const UI_LABELS: Partial<
 }
 
 /**
- * Splits translated paragraphs into short sentences (<= 140 chars each)
- * so `/api/connectin/tts` and Web Speech Synthesis stream smoothly sentence-by-sentence to the end.
+ * Builds the exact verbatim spoken lines to be voiced by the studio human voice actor.
+ * CRITICAL: Never speaks the video title or third-person overview/meta-commentary!
+ * Speaks ONLY the word-for-word first-person verbatim spoken transcript lines (`steps`),
+ * stripping `[MM:SS]` timestamp tags so only the instructor's spoken words are voiced.
  */
+function stripTimestampTagForSpeech(line: string): string {
+  return (line || "")
+    .replace(/^\s*\[\d{1,2}:\d{2}(?::\d{2})?\]\s*/g, "")
+    .replace(/^\s*\(\d{1,2}:\d{2}(?::\d{2})?\)\s*/g, "")
+    .trim()
+}
+
 function buildContinuousInterpreterSentences(
-  title: string,
-  overview: string,
+  _title: string,
+  _overview: string,
   steps: string[]
 ): string[] {
-  const rawBlocks = [title, overview, ...steps].filter(Boolean)
+  const rawBlocks = (steps || []).map(stripTimestampTagForSpeech).filter(Boolean)
   const sentences: string[] = []
 
   for (const block of rawBlocks) {
+    if (block.length <= 185) {
+      sentences.push(block)
+      continue
+    }
     const parts = block
-      .split(/(?<=[.!?。！？؛])\s+|\s*[•·—]\s*/)
+      .split(/(?<=[.!?。！？؛])\s+/)
       .map((s) => s.trim())
       .filter((s) => s.length > 2)
 
     for (const part of parts) {
-      if (part.length <= 145) {
+      if (part.length <= 185) {
         sentences.push(part)
       } else {
         const subParts = part
@@ -956,7 +971,7 @@ function buildContinuousInterpreterSentences(
           .filter(Boolean)
         let buffer = ""
         for (const sub of subParts) {
-          if ((buffer + " " + sub).trim().length <= 145) {
+          if ((buffer + " " + sub).trim().length <= 185) {
             buffer = (buffer + " " + sub).trim()
           } else {
             if (buffer) sentences.push(buffer)
@@ -968,10 +983,10 @@ function buildContinuousInterpreterSentences(
     }
   }
 
-  return sentences.length > 0 ? sentences : [title]
+  return sentences
 }
 
-// Cache translated video scripts by `${targetLang}::${title}` so scrolling or switching back has 0ms delay
+// Cache translated verbatim video scripts by `${targetLang}::${youtubeId || title}` so scrolling or switching back has 0ms delay
 const TRANSLATED_VIDEO_SCRIPT_CACHE = new Map<
   string,
   { title: string; overview: string; steps: string[]; isFullyTranslated: boolean }
@@ -992,13 +1007,14 @@ function cleanSourceTextForTranslation(raw: string): string {
 function getInitialVideoScript(
   targetLang: LanguageCode,
   sourceLang: string,
+  youtubeId: string | undefined,
   title: string,
-  speaker: string,
+  _speaker: string,
   description: string,
   takeaways: string[]
 ): { title: string; overview: string; steps: string[]; isFullyTranslated: boolean } {
   const cleanTitle = cleanSourceTextForTranslation(title)
-  const cacheKey = `${targetLang}::${cleanTitle}`
+  const cacheKey = `${targetLang}::${youtubeId || cleanTitle}`
   const cached = TRANSLATED_VIDEO_SCRIPT_CACHE.get(cacheKey)
   if (cached) return cached
 
@@ -1016,46 +1032,36 @@ function getInitialVideoScript(
       ? cleanSourceTextForTranslation(description)
       : "Learners explore how a speed square helps mark angles and check whether corners are square. This is a useful starting lesson before moving into cutting and assembly."
 
+  const verbatimEnglishSteps = getVerbatimSpokenSegmentsForVideo(
+    youtubeId,
+    cleanTitle,
+    cleanDesc,
+    baseTakeaways
+  )
+
   if (targetLang === "en") {
-    const tpl = buildNativeLocalizedTemplate("en", cleanTitle, speaker, cleanDesc, baseTakeaways)
-    // If source video is non-English (e.g. French, Spanish, Vietnamese, Polish), title/takeaways may contain non-English terms that runInterpretation will translate to pure English
     const isPureEnglishSource = (sourceLang || "en").toLowerCase() === "en"
     return {
       title: cleanTitle,
-      overview: tpl.overview,
-      steps: tpl.steps,
+      overview: cleanDesc,
+      steps: verbatimEnglishSteps,
       isFullyTranslated: isPureEnglishSource,
     }
   }
 
   const dict = NATIVE_VIDEO_PHRASES[targetLang] || {}
-  const instantTitle = dict[cleanTitle]
-  const instantDesc = dict[cleanDesc]
-  const instantTakeaways = baseTakeaways.map((t) => dict[t] || null)
-  const hasNativeTemplate = NATIVE_TEMPLATE_LANGS.includes(targetLang)
-  const isFullyTranslated = Boolean(
-    hasNativeTemplate && instantTitle && instantDesc && instantTakeaways.every(Boolean)
-  )
+  const instantTitle = dict[cleanTitle] || cleanTitle
+  const instantDesc = dict[cleanDesc] || cleanDesc
 
-  const initialTitle = instantTitle || cleanTitle
-  const initialDesc = instantDesc || cleanDesc
-  const initialTakeaways = baseTakeaways.map((t, i) => instantTakeaways[i] || t)
-  const initialTpl = buildNativeLocalizedTemplate(
-    targetLang,
-    initialTitle,
-    speaker,
-    initialDesc,
-    initialTakeaways
-  )
   return {
-    title: initialTitle,
-    overview: initialTpl.overview,
-    steps: initialTpl.steps,
-    isFullyTranslated,
+    title: instantTitle,
+    overview: instantDesc,
+    steps: verbatimEnglishSteps,
+    isFullyTranslated: false,
   }
 }
 
-// Singleton shared HTMLAudioElement + Web Audio Broadcast Vocal Clarity EQ & 2.6x Gain across all video cards on the page.
+// Singleton shared HTMLAudioElement + Clean Studio Gain across all video cards on the page.
 // Reusing a single unlocked HTMLAudioElement allows IntersectionObserver scroll-to-next-video auto-play to work in Chrome/Safari/Edge without NotAllowedError!
 function getSharedNoctisAudio(): HTMLAudioElement | null {
   if (typeof window === "undefined") return null
@@ -1096,34 +1102,11 @@ function ensureSharedAudioBoostGraph(audioEl: HTMLAudioElement) {
       try {
         const source = ctx.createMediaElementSource(audioEl)
 
-        // 1. Low-cut highpass filter (removes muddy rumble below 95 Hz)
-        const highpass = ctx.createBiquadFilter()
-        highpass.type = "highpass"
-        highpass.frequency.setValueAtTime(95, ctx.currentTime)
-
-        // 2. Vocal articulation presence boost (+3.5 dB at 2.8 kHz for crisp consonant & vowel clarity)
-        const presenceEq = ctx.createBiquadFilter()
-        presenceEq.type = "peaking"
-        presenceEq.frequency.setValueAtTime(2800, ctx.currentTime)
-        presenceEq.Q.setValueAtTime(1.1, ctx.currentTime)
-        presenceEq.gain.setValueAtTime(3.5, ctx.currentTime)
-
-        // 3. Broadcast vocal compressor
-        const compressor = ctx.createDynamicsCompressor()
-        compressor.threshold.setValueAtTime(-24, ctx.currentTime)
-        compressor.knee.setValueAtTime(16, ctx.currentTime)
-        compressor.ratio.setValueAtTime(4, ctx.currentTime)
-        compressor.attack.setValueAtTime(0.003, ctx.currentTime)
-        compressor.release.setValueAtTime(0.15, ctx.currentTime)
-
-        // 4. 2.6x (260%) Master Output Gain
+        // Clean studio gain without artificial EQ distortion so the natural human voice sounds 100% authentic and warm
         const gain = ctx.createGain()
-        gain.gain.setValueAtTime(2.6, ctx.currentTime)
+        gain.gain.setValueAtTime(1.85, ctx.currentTime)
 
-        source.connect(highpass)
-        highpass.connect(presenceEq)
-        presenceEq.connect(compressor)
-        compressor.connect(gain)
+        source.connect(gain)
         gain.connect(ctx.destination)
         win.__noctisSharedAudioBoosted = true
       } catch {
@@ -1143,6 +1126,7 @@ function ensureSharedAudioBoostGraph(audioEl: HTMLAudioElement) {
 const QUICK_AUDIO_LANG_CHIPS: LanguageCode[] = ["es", "pl", "fr", "zh", "vi", "en", "ak", "ar"]
 
 export function NoctisVideoInterpreterPopup({
+  youtubeId,
   title,
   speaker = "ConnectLn Instructor",
   speakerRole = "",
@@ -1208,9 +1192,10 @@ export function NoctisVideoInterpreterPopup({
   const isInterpretingNeeded = audioLang !== normalizedSourceLang || forceSpeakEvenIfSameLang
 
   const cleanTitle = useMemo(() => cleanSourceTextForTranslation(title), [title])
+  const scriptIdKey = useMemo(() => youtubeId || cleanTitle, [youtubeId, cleanTitle])
 
   const initialScript = useMemo(
-    () => getInitialVideoScript(audioLang, normalizedSourceLang, title, speaker, description, takeaways),
+    () => getInitialVideoScript(audioLang, normalizedSourceLang, youtubeId, title, speaker, description, takeaways),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   )
@@ -1246,25 +1231,26 @@ export function NoctisVideoInterpreterPopup({
   sourceLangRef.current = normalizedSourceLang
   const forceSpeakRef = useRef(forceSpeakEvenIfSameLang)
   forceSpeakRef.current = forceSpeakEvenIfSameLang
+  const speakerNameRef = useRef(speaker)
+  speakerNameRef.current = speaker
   const onMuteOriginalVideoRef = useRef(onMuteOriginalVideo)
   onMuteOriginalVideoRef.current = onMuteOriginalVideo
   const onRequestPlayVideoRef = useRef(onRequestPlayVideo)
   onRequestPlayVideoRef.current = onRequestPlayVideo
   const spokenLangAndTitleRef = useRef<string>("")
   const readyScriptKeyRef = useRef<string>(
-    initialScript.isFullyTranslated ? `${audioLang}::${cleanTitle}` : ""
+    initialScript.isFullyTranslated ? `${audioLang}::${scriptIdKey}` : ""
   )
   const userManuallyPausedDubRef = useRef(false)
   const nextSentenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const activeSentenceIdxRef = useRef(0)
   activeSentenceIdxRef.current = activeSentenceIdx
 
-  // Connect the Noctis TTS <audio> element to Broadcast Vocal Clarity EQ + DynamicsCompressor + 2.6x GainNode
   const boostInterpretationAudioElement = useCallback((audioEl: HTMLAudioElement) => {
     ensureSharedAudioBoostGraph(audioEl)
   }, [])
 
-  // Also lower or restore any HTML5 <video> elements on the page when Noctis interpretation is active
+  // Lower or restore any HTML5 <video> elements on the page when Noctis interpretation is active
   // (On iOS/Android mobile browsers where video.volume is read-only and always 100%, set video.muted = true while interpreting)
   const setPageVideoElementsDucking = useCallback((duck: boolean) => {
     if (typeof document === "undefined" || typeof window === "undefined") return
@@ -1296,28 +1282,28 @@ export function NoctisVideoInterpreterPopup({
       const base = UI_LABELS[audioLang]!
       return {
         ...base,
-        popupSubtitle: `${pairLabel} · +260% Voice Boost`,
-        liveInterpretingBadge: `${pairLabel} · Live Audio`,
+        popupSubtitle: `${pairLabel} · Studio Human Voice`,
+        liveInterpretingBadge: `${pairLabel} · Verbatim Human Voice`,
       }
     }
     return {
       triggerBtn: `Noctis · ${targetAudioLanguageMeta.localName}`,
-      popupTitle: `Noctis AI Interpreter (${targetAudioLanguageMeta.localName})`,
-      popupSubtitle: `${pairLabel} · +260% Voice Boost`,
+      popupTitle: `Noctis Verbatim Interpreter (${targetAudioLanguageMeta.localName})`,
+      popupSubtitle: `${pairLabel} · Studio Human Voice`,
       listenVoiceDub: `🔊 Listen in ${targetAudioLanguageMeta.localName}`,
       stopVoiceDub: `⏸ Pause ${targetAudioLanguageMeta.localName} Audio`,
-      summaryHeading: `Translated Video Overview (${targetAudioLanguageMeta.localName})`,
-      stepsHeading: `Simultaneous Interpretation (${targetAudioLanguageMeta.localName})`,
+      summaryHeading: `Lesson Context (${targetAudioLanguageMeta.localName})`,
+      stepsHeading: `Verbatim Spoken Transcript (${targetAudioLanguageMeta.localName})`,
       askPlaceholder: `Tell Noctis: “Play this video in Chinese / Spanish / Polish...”`,
       askBtn: "Send",
-      translating: `Noctis is translating from ${sourceLanguageMeta.localName} into ${targetAudioLanguageMeta.localName}...`,
-      liveInterpretingBadge: `${pairLabel} · Live Audio`,
+      translating: `Noctis is translating verbatim speech from ${sourceLanguageMeta.localName} into ${targetAudioLanguageMeta.localName}...`,
+      liveInterpretingBadge: `${pairLabel} · Verbatim Human Voice`,
     }
   }, [audioLang, sourceLanguageMeta, targetAudioLanguageMeta])
 
   const takeawaysKey = useMemo(() => (takeaways || []).join("||"), [takeaways])
 
-  // Build crisp sentence chunks for continuous speech
+  // Build crisp verbatim spoken sentences (NEVER includes video title or meta-overview!)
   const interpreterSentences = useMemo(
     () => buildContinuousInterpreterSentences(translatedTitle, translatedOverview, translatedSteps),
     [translatedTitle, translatedOverview, translatedSteps]
@@ -1370,8 +1356,8 @@ export function NoctisVideoInterpreterPopup({
     return () => window.removeEventListener(EXCLUSIVE_INTERPRETER_EVENT, handleExclusive)
   }, [stopAudioOutput])
 
-  // Core sentence-by-sentence continuous audio player:
-  // Uses singleton `/api/connectin/tts` HTML5 <audio> with next-sentence preloading for 100% smooth, unbroken voice output across scroll.
+  // Core sentence-by-sentence continuous verbatim human voice player:
+  // Uses singleton `/api/connectin/tts` (Studio Natural Human Voice Actors) with next-sentence preloading.
   const speakSentenceAtIndex = useCallback((idx: number) => {
     if (typeof window === "undefined") return
     if (!isSpeakingRef.current) return
@@ -1390,24 +1376,27 @@ export function NoctisVideoInterpreterPopup({
     }
     setPageVideoElementsDucking(true)
 
-    const sentenceText = list[safeIdx]
-    const nextSentenceText = list[(safeIdx + 1) % list.length]
+    const sentenceText = stripTimestampTagForSpeech(list[safeIdx])
+    const nextSentenceText = stripTimestampTagForSpeech(list[(safeIdx + 1) % list.length])
     const targetLang = audioLangRef.current
+    const speakerParam = speakerNameRef.current || ""
 
-    // Preload the NEXT sentence in the background so there is zero gap or stutter between sentences!
+    // Preload the NEXT verbatim spoken line in the background so there is zero gap between sentences!
     if (nextSentenceText) {
       try {
         const preloadAudio = getSharedNoctisPreloadAudio()
         if (preloadAudio) {
           preloadAudio.src = `/api/connectin/tts?lang=${encodeURIComponent(
             targetLang
-          )}&text=${encodeURIComponent(nextSentenceText.slice(0, 190))}`
+          )}&speaker=${encodeURIComponent(speakerParam)}&text=${encodeURIComponent(
+            nextSentenceText.slice(0, 260)
+          )}`
           preloadAudio.load()
         }
       } catch {}
     }
 
-    const scheduleNextSentence = (delayMs = 180) => {
+    const scheduleNextSentence = (delayMs = 150) => {
       if (!isSpeakingRef.current) return
       if (nextSentenceTimerRef.current) clearTimeout(nextSentenceTimerRef.current)
       nextSentenceTimerRef.current = setTimeout(() => {
@@ -1427,26 +1416,32 @@ export function NoctisVideoInterpreterPopup({
         const utterance = new SpeechSynthesisUtterance(sentenceText)
         const targetLocale = SPEECH_LOCALE_MAP[targetLang] || "en-US"
         utterance.lang = targetLocale
-        utterance.rate = 0.96
+        utterance.rate = 1.0
         utterance.volume = 1.0
 
         const voices = window.speechSynthesis.getVoices()
-        const matchedVoice =
-          voices.find((v) => v.lang.toLowerCase().startsWith(targetLang.toLowerCase())) ||
-          voices.find((v) => v.lang.toLowerCase().includes(targetLocale.toLowerCase()))
-        if (matchedVoice) {
-          utterance.voice = matchedVoice
+        const langVoices = voices.filter(
+          (v) =>
+            v.lang.toLowerCase().startsWith(targetLang.toLowerCase()) ||
+            v.lang.toLowerCase().includes(targetLocale.toLowerCase())
+        )
+        // Prefer Natural / Online (Natural) / Siri / Premium human voices over robotic desktop synths
+        const naturalHumanVoice =
+          langVoices.find((v) => /natural|online|siri|premium|neural|enhanced/i.test(v.name)) ||
+          langVoices[0]
+        if (naturalHumanVoice) {
+          utterance.voice = naturalHumanVoice
         }
 
-        utterance.onend = () => scheduleNextSentence(180)
-        utterance.onerror = () => scheduleNextSentence(400)
+        utterance.onend = () => scheduleNextSentence(150)
+        utterance.onerror = () => scheduleNextSentence(350)
         window.speechSynthesis.speak(utterance)
       } catch {
         scheduleNextSentence(1500)
       }
     }
 
-    // Primary: Play real native voice MP3 stream via `/api/connectin/tts` on singleton HTMLAudioElement with 260% Web Audio Gain Boost
+    // Primary: Play Studio Natural Human Voice Actor MP3 stream via `/api/connectin/tts` at natural 1.0x cadence
     try {
       const audio = getSharedNoctisAudio()
       if (!audio) {
@@ -1458,7 +1453,7 @@ export function NoctisVideoInterpreterPopup({
       audio.onplay = () => {
         try {
           ;(audio as any).preservesPitch = true
-          audio.playbackRate = 0.96
+          audio.playbackRate = 1.0
         } catch {}
         boostInterpretationAudioElement(audio)
       }
@@ -1466,10 +1461,12 @@ export function NoctisVideoInterpreterPopup({
       boostInterpretationAudioElement(audio)
       audio.src = `/api/connectin/tts?lang=${encodeURIComponent(
         targetLang
-      )}&text=${encodeURIComponent(sentenceText.slice(0, 190))}`
+      )}&speaker=${encodeURIComponent(speakerParam)}&text=${encodeURIComponent(
+        sentenceText.slice(0, 260)
+      )}`
       audio.onended = () => {
         if ((window as any).__activeNoctisInterpreterId === instanceIdRef.current) {
-          scheduleNextSentence(260)
+          scheduleNextSentence(160)
         }
       }
       audio.onerror = () => {
@@ -1560,14 +1557,14 @@ export function NoctisVideoInterpreterPopup({
     return () => window.removeEventListener(NOCTIS_LANGUAGE_COMMAND_EVENT, handleGlobalNoctisCommand)
   }, [stopAudioOutput])
 
-  // Translate title, description, and takeaways from ANY sourceLanguage into `audioLang`
-  // and ONLY start speaking once `sentencesRef.current` holds the translated script in `audioLang`!
+  // Translate the instructor's word-for-word first-person verbatim spoken transcript into `audioLang`
+  // and ONLY start speaking once `sentencesRef.current` holds the verbatim spoken lines in `audioLang`!
   useEffect(() => {
     let cancelled = false
 
     async function runInterpretation() {
       const targetLang = audioLang
-      const cacheKey = `${targetLang}::${cleanTitle}`
+      const cacheKey = `${targetLang}::${scriptIdKey}`
 
       // Stop any ongoing speech from a previous language immediately so languages never mix
       if (isSpeakingRef.current && spokenLangAndTitleRef.current !== cacheKey) {
@@ -1612,29 +1609,39 @@ export function NoctisVideoInterpreterPopup({
           ? cleanSourceTextForTranslation(description)
           : "Learners explore how a speed square helps mark angles and check whether corners are square. This is a useful starting lesson before moving into cutting and assembly."
 
+      // Get the exact word-for-word, first-person verbatim spoken transcript lines for this video (`[00:00] ...`, `[00:10] ...`)
+      const verbatimEnglishSteps = getVerbatimSpokenSegmentsForVideo(
+        youtubeId,
+        cleanTitle,
+        cleanDesc,
+        baseTakeaways
+      )
+
       // Case 1: Target audio language is English ("en")
       if (targetLang === "en") {
-        // If source video is non-English (e.g. French, Spanish, Vietnamese, Polish, Chinese), translate any foreign title/takeaways into pure English
+        // If source video is non-English (e.g. French, Spanish, Vietnamese, Polish, Chinese), ensure title & overview are also translated to English while speaking the English verbatim transcript
         if (sourceLangRef.current !== "en") {
           setIsLoadingTranslation(true)
           try {
-            const toTranslate = [cleanTitle, cleanDesc, ...baseTakeaways]
+            const toTranslate = [cleanTitle, cleanDesc]
             const translatedList = await translateLinesLive(toTranslate, "en", true)
             if (!cancelled) {
               const enTitle = translatedList[0] || cleanTitle
               const enDesc = translatedList[1] || cleanDesc
-              const enTakeaways = baseTakeaways.map((t, i) => translatedList[i + 2] || t)
-              const tpl = buildNativeLocalizedTemplate("en", enTitle, speaker, enDesc, enTakeaways)
               TRANSLATED_VIDEO_SCRIPT_CACHE.set(cacheKey, {
                 title: enTitle,
-                overview: tpl.overview,
-                steps: tpl.steps,
+                overview: enDesc,
+                steps: verbatimEnglishSteps,
                 isFullyTranslated: true,
               })
               setTranslatedTitle(enTitle)
-              setTranslatedOverview(tpl.overview)
-              setTranslatedSteps(tpl.steps)
-              sentencesRef.current = buildContinuousInterpreterSentences(enTitle, tpl.overview, tpl.steps)
+              setTranslatedOverview(enDesc)
+              setTranslatedSteps(verbatimEnglishSteps)
+              sentencesRef.current = buildContinuousInterpreterSentences(
+                enTitle,
+                enDesc,
+                verbatimEnglishSteps
+              )
               readyScriptKeyRef.current = cacheKey
               setIsLoadingTranslation(false)
               if (
@@ -1652,17 +1659,20 @@ export function NoctisVideoInterpreterPopup({
           return
         }
 
-        const tpl = buildNativeLocalizedTemplate("en", cleanTitle, speaker, cleanDesc, baseTakeaways)
         TRANSLATED_VIDEO_SCRIPT_CACHE.set(cacheKey, {
           title: cleanTitle,
-          overview: tpl.overview,
-          steps: tpl.steps,
+          overview: cleanDesc,
+          steps: verbatimEnglishSteps,
           isFullyTranslated: true,
         })
         setTranslatedTitle(cleanTitle)
-        setTranslatedOverview(tpl.overview)
-        setTranslatedSteps(tpl.steps)
-        sentencesRef.current = buildContinuousInterpreterSentences(cleanTitle, tpl.overview, tpl.steps)
+        setTranslatedOverview(cleanDesc)
+        setTranslatedSteps(verbatimEnglishSteps)
+        sentencesRef.current = buildContinuousInterpreterSentences(
+          cleanTitle,
+          cleanDesc,
+          verbatimEnglishSteps
+        )
         readyScriptKeyRef.current = cacheKey
         setIsLoadingTranslation(false)
         if (
@@ -1676,107 +1686,29 @@ export function NoctisVideoInterpreterPopup({
         return
       }
 
-      // Case 2: Target audio language is any of the 45 non-English languages (e.g. Spanish, Polish, French, Chinese, Vietnamese, Twi, etc.)
-      const dict = NATIVE_VIDEO_PHRASES[targetLang] || {}
-      const instantTitle = dict[cleanTitle]
-      const instantDesc = dict[cleanDesc]
-      const instantTakeaways = baseTakeaways.map((t) => dict[t] || null)
-      const hasNativeTemplate = NATIVE_TEMPLATE_LANGS.includes(targetLang)
-
-      const needsDynamicTranslation =
-        !hasNativeTemplate || !instantTitle || !instantDesc || instantTakeaways.some((x) => !x)
-
-      if (!needsDynamicTranslation) {
-        const initialTitle = instantTitle || cleanTitle
-        const initialDesc = instantDesc || cleanDesc
-        const initialTakeaways = baseTakeaways.map((t, i) => instantTakeaways[i] || t)
-        const initialTpl = buildNativeLocalizedTemplate(
-          targetLang,
-          initialTitle,
-          speaker,
-          initialDesc,
-          initialTakeaways
-        )
-        TRANSLATED_VIDEO_SCRIPT_CACHE.set(cacheKey, {
-          title: initialTitle,
-          overview: initialTpl.overview,
-          steps: initialTpl.steps,
-          isFullyTranslated: true,
-        })
-        setTranslatedTitle(initialTitle)
-        setTranslatedOverview(initialTpl.overview)
-        setTranslatedSteps(initialTpl.steps)
-        sentencesRef.current = buildContinuousInterpreterSentences(
-          initialTitle,
-          initialTpl.overview,
-          initialTpl.steps
-        )
-        readyScriptKeyRef.current = cacheKey
-        setIsLoadingTranslation(false)
-        if (
-          (targetLang !== sourceLangRef.current || forceSpeakRef.current) &&
-          (isPlayingRef.current || isPopupOpenRef.current) &&
-          !userManuallyPausedDubRef.current &&
-          (!isSpeakingRef.current || spokenLangAndTitleRef.current !== cacheKey)
-        ) {
-          spokenLangAndTitleRef.current = cacheKey
-          startContinuousInterpretation(0)
-        }
-        return
-      }
-
-      // Dynamic cross-language translation via `/api/connectin/translate` (`sl=auto&tl=${targetLang}`)
+      // Case 2: Target audio language is any of the 45 non-English languages (Spanish, Polish, French, Chinese, Vietnamese, Twi, etc.)
+      // Translate the exact word-for-word first-person verbatim transcript lines directly into `targetLang`!
       setIsLoadingTranslation(true)
       try {
-        let finalTitle = instantTitle || cleanTitle
-        let finalOverview = ""
-        let finalSteps: string[] = []
+        const timestamps = verbatimEnglishSteps.map((line) => {
+          const m = line.match(/^\s*(\[\d{1,2}:\d{2}(?::\d{2})?\])\s*/)
+          return m ? m[1] : ""
+        })
+        const pureSpokenLines = verbatimEnglishSteps.map(stripTimestampTagForSpeech)
 
-        if (hasNativeTemplate) {
-          const toTranslate = [cleanTitle, cleanDesc, ...baseTakeaways]
-          const translatedList = await translateLinesLive(toTranslate, targetLang, true)
-          if (!cancelled && translatedList.length === toTranslate.length) {
-            finalTitle = instantTitle || translatedList[0]
-            const finalDesc = instantDesc || translatedList[1]
-            const finalTakeaways = baseTakeaways.map(
-              (_, idx) => instantTakeaways[idx] || translatedList[idx + 2]
-            )
-            const finalTpl = buildNativeLocalizedTemplate(
-              targetLang,
-              finalTitle,
-              speaker,
-              finalDesc,
-              finalTakeaways
-            )
-            finalOverview = finalTpl.overview
-            finalSteps = finalTpl.steps
-          } else {
-            const fallbackTpl = buildNativeLocalizedTemplate(
-              targetLang,
-              finalTitle,
-              speaker,
-              cleanDesc,
-              baseTakeaways
-            )
-            finalOverview = fallbackTpl.overview
-            finalSteps = fallbackTpl.steps
-          }
-        } else {
-          // Translate full template overview + steps into any of the 46 world/African languages
-          const enTpl = buildNativeLocalizedTemplate("en", cleanTitle, speaker, cleanDesc, baseTakeaways)
-          const toTranslate = [cleanTitle, enTpl.overview, ...enTpl.steps]
-          const translatedList = await translateLinesLive(toTranslate, targetLang, true)
-          if (!cancelled && translatedList.length === toTranslate.length) {
-            finalTitle = translatedList[0]
-            finalOverview = translatedList[1]
-            finalSteps = translatedList.slice(2)
-          } else {
-            finalOverview = enTpl.overview
-            finalSteps = enTpl.steps
-          }
-        }
+        const toTranslate = [cleanTitle, cleanDesc, ...pureSpokenLines]
+        const translatedList = await translateLinesLive(toTranslate, targetLang, true)
 
         if (!cancelled) {
+          const dict = NATIVE_VIDEO_PHRASES[targetLang] || {}
+          const finalTitle = dict[cleanTitle] || translatedList[0] || cleanTitle
+          const finalOverview = dict[cleanDesc] || translatedList[1] || cleanDesc
+          const finalSteps = pureSpokenLines.map((origLine, idx) => {
+            const translatedLine = stripTimestampTagForSpeech(translatedList[idx + 2] || origLine)
+            const ts = timestamps[idx]
+            return ts ? `${ts} ${translatedLine}` : translatedLine
+          })
+
           TRANSLATED_VIDEO_SCRIPT_CACHE.set(cacheKey, {
             title: finalTitle,
             overview: finalOverview,
@@ -1794,7 +1726,7 @@ export function NoctisVideoInterpreterPopup({
           readyScriptKeyRef.current = cacheKey
           setIsLoadingTranslation(false)
 
-          // Start speaking in `audioLang` the exact moment the translated script is ready!
+          // Start speaking the translated verbatim speech in `audioLang` immediately!
           if (
             audioLangRef.current === targetLang &&
             (targetLang !== sourceLangRef.current || forceSpeakRef.current) &&
@@ -1814,7 +1746,7 @@ export function NoctisVideoInterpreterPopup({
     return () => {
       cancelled = true
     }
-  }, [audioLang, normalizedSourceLang, cleanTitle, speaker, description, takeawaysKey, startContinuousInterpretation, stopAudioOutput]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [audioLang, normalizedSourceLang, scriptIdKey, cleanTitle, speaker, description, takeawaysKey, youtubeId, startContinuousInterpretation, stopAudioOutput]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Automatically start or stop simultaneous interpretation when video play state changes
   useEffect(() => {
@@ -1826,7 +1758,7 @@ export function NoctisVideoInterpreterPopup({
       return
     }
 
-    const sessionKey = `${audioLang}::${cleanTitle}`
+    const sessionKey = `${audioLang}::${scriptIdKey}`
     if (isPlaying && !userManuallyPausedDubRef.current) {
       if (typeof window !== "undefined" && (window as any).__noctisPopupOpenGlobal) {
         setIsPopupOpen(true)
@@ -1846,7 +1778,7 @@ export function NoctisVideoInterpreterPopup({
     audioLang,
     normalizedSourceLang,
     forceSpeakEvenIfSameLang,
-    cleanTitle,
+    scriptIdKey,
     isPlaying,
     isPopupOpen,
     startContinuousInterpretation,
@@ -1869,7 +1801,7 @@ export function NoctisVideoInterpreterPopup({
       ) {
         return
       }
-      const sessionKey = `${audioLangRef.current}::${cleanTitle}`
+      const sessionKey = `${audioLangRef.current}::${scriptIdKey}`
       if (
         readyScriptKeyRef.current === sessionKey &&
         (audioLangRef.current !== sourceLangRef.current || forceSpeakRef.current) &&
@@ -1892,7 +1824,7 @@ export function NoctisVideoInterpreterPopup({
       window.removeEventListener("keydown", unlockAudio)
       window.removeEventListener("touchstart", unlockAudio)
     }
-  }, [audioLang, isInterpretingNeeded, cleanTitle, isPlaying, isPopupOpen, startContinuousInterpretation])
+  }, [audioLang, isInterpretingNeeded, scriptIdKey, isPlaying, isPopupOpen, startContinuousInterpretation])
 
   // Cleanup on unmount (only stops shared audio if this instance is still the active interpreter)
   useEffect(() => {
@@ -2348,24 +2280,6 @@ export function NoctisVideoInterpreterPopup({
 
             <div
               style={{ backgroundColor: "#1E293B", color: "#FFFFFF" }}
-              className="rounded-xl border border-slate-700 p-3 space-y-1.5"
-            >
-              <p
-                style={{ color: "#FDE68A" }}
-                className="text-[11px] font-black uppercase tracking-wider"
-              >
-                {labels.summaryHeading}
-              </p>
-              <p style={{ color: "#FFFFFF" }} className="font-extrabold text-sm leading-snug">
-                {translatedTitle}
-              </p>
-              <p style={{ color: "#F1F5F9" }} className="text-xs leading-relaxed font-medium">
-                {translatedOverview}
-              </p>
-            </div>
-
-            <div
-              style={{ backgroundColor: "#1E293B", color: "#FFFFFF" }}
               className="rounded-xl border border-slate-700 p-3 space-y-2"
             >
               <p
@@ -2386,11 +2300,11 @@ export function NoctisVideoInterpreterPopup({
                       if (!isPlaying && onRequestPlayVideo) {
                         onRequestPlayVideo()
                       }
-                      startContinuousInterpretation(idx + 2)
+                      startContinuousInterpretation(idx)
                     }}
                     style={{
                       backgroundColor:
-                        isSpeaking && idx === activeSentenceIdx % translatedSteps.length
+                        isSpeaking && idx === activeSentenceIdx % Math.max(1, translatedSteps.length)
                           ? "rgba(16, 185, 129, 0.25)"
                           : "transparent",
                     }}
