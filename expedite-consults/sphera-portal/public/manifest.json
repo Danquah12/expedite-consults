@@ -1,23 +1,23 @@
 {
-  "name": "SPHERA — Universal Social & Career Ecosystem",
-  "short_name": "SPHERA",
-  "description": "Unified Social Feed, Reels Theater, Encrypted Messenger, Local Bazaar, TS/SCI Career Bounties, and Esports.",
-  "start_url": "/feed",
+  "name": "ConnectLn — Tickets, vouches, and real work",
+  "short_name": "ConnectLn",
+  "description": "ConnectLn: The zero-trust professional network. Verified tickets, vouches, and real work across cloud, cybersecurity, trades, and enterprise teams.",
+  "start_url": "/connectin",
   "display": "standalone",
-  "background_color": "#08090d",
-  "theme_color": "#00d4ff",
+  "background_color": "#1C1916",
+  "theme_color": "#7C4323",
   "orientation": "portrait",
-  "categories": ["social", "productivity", "shopping", "gaming"],
+  "categories": ["business", "productivity", "education", "social"],
   "icons": [
     {
-      "src": "/icon.png",
-      "sizes": "192x192",
+      "src": "/brand/connectln-icon.png",
+      "sizes": "114x114",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon.png",
-      "sizes": "512x512",
+      "src": "/brand/connectln-icon-256.png",
+      "sizes": "256x256",
       "type": "image/png",
       "purpose": "any maskable"
     }

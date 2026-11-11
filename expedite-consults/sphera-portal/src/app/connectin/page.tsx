@@ -418,6 +418,24 @@ export default function ConnectLnPage() {
   // Ensure mobile and desktop browsers immediately run the latest ConnectLn release (2026.11.03.v5) without stale Service Workers or Cache Storage
   useEffect(() => {
     if (typeof window === "undefined") return
+    try {
+      const iconHref = "/brand/connectln-icon-256.png?v=5"
+      const existingIcons = document.querySelectorAll<HTMLLinkElement>("link[rel*='icon']")
+      if (existingIcons.length > 0) {
+        existingIcons.forEach(link => {
+          link.type = "image/png"
+          link.href = iconHref
+        })
+      } else {
+        const link = document.createElement("link")
+        link.rel = "icon"
+        link.type = "image/png"
+        link.href = iconHref
+        document.head.appendChild(link)
+      }
+    } catch {
+      // ignore DOM icon errors
+    }
     const CURRENT_RELEASE_VERSION = "2026.11.03.v5"
     try {
       const prevVersion = localStorage.getItem("connectln_release_version_v5")
