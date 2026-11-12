@@ -498,10 +498,11 @@ export function MarketplaceView({
                 setSelectedMainCategory('Launchpad')
                 setSelectedSubCategory('All')
               }}
+              style={{ color: '#FBF8F3' }}
               className={`rounded-xl px-3.5 py-2 text-xs font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer transition-all ${
                 selectedMainCategory === 'Launchpad'
-                  ? "bg-purple-600 text-white ring-2 ring-purple-400/50 shadow-md"
-                  : "bg-[#0A66C2] hover:bg-[#004182] text-white"
+                  ? "bg-[#5E3119] text-[#FBF8F3] ring-2 ring-[#7C4225]/40 shadow-md"
+                  : "bg-[#7C4225] hover:bg-[#5E3119] text-[#FBF8F3]"
               }`}
             >
               <Sparkles className="h-3.5 w-3.5" />
@@ -511,13 +512,14 @@ export function MarketplaceView({
             <button
               type="button"
               onClick={() => activateSolutionsHub()}
+              style={selectedMainCategory === 'Solutions' ? { color: '#FBF8F3' } : undefined}
               className={`rounded-xl px-3.5 py-2 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
                 selectedMainCategory === 'Solutions'
-                  ? "bg-amber-500 hover:bg-amber-400 text-zinc-950 border border-amber-400 shadow-md ring-2 ring-amber-400/50"
-                  : "bg-amber-50 dark:bg-amber-950/50 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700 shadow-2xs"
+                  ? "bg-[#7C4225] hover:bg-[#5E3119] text-[#FBF8F3] border border-[#5E3119] shadow-md"
+                  : "bg-[#EFE8DA] dark:bg-zinc-800 hover:bg-[#E5DEC9] dark:hover:bg-zinc-700 text-[#5E3119] dark:text-zinc-200 border border-[#DDD3C2] dark:border-zinc-700 shadow-2xs"
               }`}
             >
-              <Zap className={`h-3.5 w-3.5 ${selectedMainCategory === 'Solutions' ? 'text-zinc-950 fill-zinc-950' : 'text-amber-500 fill-amber-500'}`} />
+              <Zap className="h-3.5 w-3.5" />
               <span>{selectedMainCategory === 'Solutions' ? 'Solutions Hub (Active)' : 'Solutions Hub'}</span>
             </button>
 
@@ -529,20 +531,21 @@ export function MarketplaceView({
                   fetchNoctisMarketplaceSalesAgent({ scrollToHub: true })
                 }
               }}
-              className={`rounded-xl px-3.5 py-2 text-xs font-extrabold flex items-center gap-1.5 cursor-pointer transition-all shadow-xs ${
+              style={showNoctisSalesHub ? { color: '#FBF8F3' } : undefined}
+              className={`rounded-xl px-3.5 py-2 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all shadow-xs ${
                 showNoctisSalesHub
-                  ? "bg-[#1967D2] hover:bg-[#1557B0] text-white ring-2 ring-blue-300/60"
-                  : "bg-[#E8F0FE] hover:bg-[#D2E3FC] text-[#1967D2] border border-[#1967D2]/30"
+                  ? "bg-[#292521] hover:bg-[#1C1917] text-[#FBF8F3]"
+                  : "bg-[#EFE8DA] hover:bg-[#E5DEC9] text-[#292521] border border-[#DDD3C2]"
               }`}
             >
               <Bot className="h-3.5 w-3.5" />
-              <span>{showNoctisSalesHub ? "✨ Noctis Sales Agent: ON" : "✨ Ask Noctis Sales Agent"}</span>
+              <span>{showNoctisSalesHub ? "Noctis Sales Agent: ON" : "Ask Noctis Sales Agent"}</span>
             </button>
 
             <button
               type="button"
               onClick={() => setIsVendorModalOpen(true)}
-              className="rounded-xl bg-purple-50 dark:bg-purple-950/50 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 px-3.5 py-2 text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+              className="rounded-xl bg-[#FBF8F3] dark:bg-zinc-800 hover:bg-[#EFE8DA] dark:hover:bg-zinc-700 text-[#57534E] dark:text-zinc-300 border border-[#DDD3C2] dark:border-zinc-700 px-3.5 py-2 text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
             >
               <PlusCircle className="h-3.5 w-3.5" />
               <span>List Product / Service</span>
@@ -554,20 +557,19 @@ export function MarketplaceView({
         {showNoctisSalesHub && (
           <div
             id="noctis-marketplace-sales-hub"
-            className="rounded-2xl border border-[#D3E3FD] bg-[#F8FAFD] p-4 sm:p-5 text-slate-900 shadow-xs space-y-4"
+            className="rounded-2xl border border-[#DDD3C2] bg-[#FBF8F3] p-4 sm:p-5 text-[#292521] shadow-xs space-y-4"
           >
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-md bg-[#E8F0FE] text-[#1967D2] px-2.5 py-0.5 text-xs font-extrabold">
-                  <span>✨</span>
+                <span className="inline-flex items-center gap-1.5 rounded-md bg-[#EFE8DA] text-[#5E3119] border border-[#DDD3C2] px-2.5 py-0.5 text-xs font-extrabold">
                   <span>Noctis Marketing &amp; Sales Agent</span>
                 </span>
-                <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                <span className="text-[11px] font-semibold text-[#57534E] bg-[#F3EDE2] border border-[#DDD3C2] px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#7C4225]" />
                   <span>Learned All {MASTER_MARKETPLACE_PRODUCTS.length} Market Products · {ENTERPRISE_SOLUTIONS_DATA.length} Blueprints · {spheraAppsData.length} Sphera Apps</span>
                 </span>
-                <span className="text-[11px] font-extrabold text-violet-700 bg-violet-50 border border-violet-200 px-2.5 py-0.5 rounded-full">
-                  🔮 Noctis API Connected
+                <span className="text-[11px] font-semibold text-[#5E3119] bg-[#EFE8DA] border border-[#DDD3C2] px-2.5 py-0.5 rounded-full">
+                  Noctis API Connected
                 </span>
               </div>
 
@@ -575,33 +577,36 @@ export function MarketplaceView({
                 type="button"
                 onClick={() => fetchNoctisMarketplaceSalesAgent()}
                 disabled={isNoctisSalesLoading}
-                className="inline-flex items-center gap-1.5 rounded-full bg-slate-200/80 hover:bg-slate-300/80 text-slate-700 px-3 py-1 text-xs font-bold transition-all cursor-pointer disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#EFE8DA] hover:bg-[#E5DEC9] text-[#57534E] border border-[#DDD3C2] px-3 py-1 text-xs font-bold transition-all cursor-pointer disabled:opacity-60"
               >
                 <span>{isNoctisSalesLoading ? "Noctis pitching..." : noctisUpdatedAtLabel}</span>
                 <span className={isNoctisSalesLoading ? "animate-spin" : ""}>↻</span>
               </button>
             </div>
 
-            {/* Active Product Sales Deep-Dive Card (When user clicks "✨ Ask Noctis" on a product or asks about a specific product) */}
+            {/* Active Product Sales Deep-Dive Card (When user clicks "Ask Noctis" on a product or asks about a specific product) */}
             {noctisActivePitch && (
-              <div className="rounded-2xl border border-blue-200 bg-white p-4 sm:p-5 shadow-xs space-y-3.5">
-                <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-3">
+              <div className="rounded-2xl border border-[#DDD3C2] bg-white p-4 sm:p-5 shadow-xs space-y-3.5">
+                <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#E6DEC8] pb-3">
                   <div>
                     <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <span className="rounded-md bg-[#1967D2] text-white px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider">
-                        🎯 Noctis Product Sales Deep-Dive
+                      <span
+                        style={{ color: '#FBF8F3' }}
+                        className="rounded-md bg-[#7C4225] text-[#FBF8F3] px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider"
+                      >
+                        Noctis Product Sales Deep-Dive
                       </span>
-                      <span className="text-xs font-bold text-slate-500">
+                      <span className="text-xs font-bold text-[#78716C]">
                         {noctisActivePitch.vendorName} · {noctisActivePitch.category} ({noctisActivePitch.subCategory})
                       </span>
                     </div>
-                    <h3 className="text-base sm:text-lg font-black text-slate-900">
+                    <h3 className="text-base sm:text-lg font-black text-[#292521]">
                       {noctisActivePitch.headlinePitch}
                     </h3>
                   </div>
 
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-black text-emerald-700">
+                    <span className="rounded-lg bg-[#EFE8DA] border border-[#DDD3C2] px-3 py-1 text-xs font-black text-[#5E3119]">
                       {noctisActivePitch.displayPrice} ({noctisActivePitch.billingPeriod})
                     </span>
                     {noctisActivePitch.liveUrl && !noctisActivePitch.liveUrl.includes('/noctis') && (
@@ -609,7 +614,8 @@ export function MarketplaceView({
                         href={noctisActivePitch.liveUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-extrabold shadow-2xs"
+                        style={{ color: '#FBF8F3' }}
+                        className="rounded-lg bg-[#7C4225] hover:bg-[#5E3119] text-[#FBF8F3] px-3 py-1.5 text-xs font-extrabold shadow-2xs"
                       >
                         Launch {noctisActivePitch.productName.split('—')[0].trim()} ↗
                       </a>
@@ -619,14 +625,14 @@ export function MarketplaceView({
 
                 {/* 4-Column Sales Pitch Breakdown */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-                  <div className="rounded-xl bg-[#F8FAFD] border border-blue-100 p-3 space-y-1.5">
-                    <div className="font-extrabold text-[#1967D2]">
-                      ⚙️ What It Has &amp; Does
+                  <div className="rounded-xl bg-[#FBF8F3] border border-[#E6DEC8] p-3 space-y-1.5">
+                    <div className="font-extrabold text-[#5E3119]">
+                      What It Has &amp; Does
                     </div>
-                    <p className="text-slate-700 leading-relaxed line-clamp-5">
+                    <p className="text-[#57534E] leading-relaxed line-clamp-5">
                       {noctisActivePitch.whatItDoesAndHowItWorks}
                     </p>
-                    <ul className="space-y-1 pt-1 text-[11px] text-slate-700">
+                    <ul className="space-y-1 pt-1 text-[11px] text-[#57534E]">
                       {noctisActivePitch.featureHighlights.slice(0, 3).map((f, idx) => (
                         <li key={idx}>
                           • <strong>{f.title}:</strong> {f.desc}
@@ -635,18 +641,18 @@ export function MarketplaceView({
                     </ul>
                   </div>
 
-                  <div className="rounded-xl bg-[#F8FAFD] border border-blue-100 p-3 space-y-1.5">
-                    <div className="font-extrabold text-indigo-800">
-                      🔒 Architecture &amp; Compliance
+                  <div className="rounded-xl bg-[#FBF8F3] border border-[#E6DEC8] p-3 space-y-1.5">
+                    <div className="font-extrabold text-[#5E3119]">
+                      Architecture &amp; Compliance
                     </div>
-                    <p className="text-slate-700 leading-relaxed whitespace-pre-line">
+                    <p className="text-[#57534E] leading-relaxed whitespace-pre-line">
                       {noctisActivePitch.architectureAndSecurity}
                     </p>
                     <div className="flex flex-wrap gap-1 pt-1">
                       {noctisActivePitch.complianceBadges.map((b, idx) => (
                         <span
                           key={idx}
-                          className="rounded bg-white border border-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-700"
+                          className="rounded bg-white border border-[#DDD3C2] px-1.5 py-0.5 text-[10px] font-bold text-[#57534E]"
                         >
                           {b}
                         </span>
@@ -654,11 +660,11 @@ export function MarketplaceView({
                     </div>
                   </div>
 
-                  <div className="rounded-xl bg-[#F8FAFD] border border-blue-100 p-3 space-y-1.5">
-                    <div className="font-extrabold text-emerald-800">
-                      📈 Proven ROI &amp; Why Buy Now
+                  <div className="rounded-xl bg-[#FBF8F3] border border-[#E6DEC8] p-3 space-y-1.5">
+                    <div className="font-extrabold text-[#5E3119]">
+                      Proven ROI &amp; Why Buy Now
                     </div>
-                    <ul className="space-y-1.5 text-slate-700 list-disc pl-4">
+                    <ul className="space-y-1.5 text-[#57534E] list-disc pl-4">
                       {noctisActivePitch.whyBuyNowAndROI.map((roi, idx) => (
                         <li key={idx} className="leading-snug">
                           {roi}
@@ -667,18 +673,18 @@ export function MarketplaceView({
                     </ul>
                   </div>
 
-                  <div className="rounded-xl bg-[#F8FAFD] border border-blue-100 p-3 flex flex-col justify-between space-y-2">
+                  <div className="rounded-xl bg-[#FBF8F3] border border-[#E6DEC8] p-3 flex flex-col justify-between space-y-2">
                     <div className="space-y-1.5">
-                      <div className="font-extrabold text-amber-800">
-                        💳 Pricing Tiers &amp; Trial Offer
+                      <div className="font-extrabold text-[#5E3119]">
+                        Pricing Tiers &amp; Trial Offer
                       </div>
                       {noctisActivePitch.pricingSummary.slice(0, 3).map((tier, idx) => (
-                        <div key={idx} className="rounded-lg bg-white border border-slate-200 p-2">
-                          <div className="flex items-center justify-between font-bold text-slate-900">
+                        <div key={idx} className="rounded-lg bg-white border border-[#DDD3C2] p-2">
+                          <div className="flex items-center justify-between font-bold text-[#292521]">
                             <span>{tier.name}</span>
-                            <span className="text-emerald-700">{tier.price}</span>
+                            <span className="text-[#7C4225]">{tier.price}</span>
                           </div>
-                          <p className="text-[10px] text-slate-500 line-clamp-1">{tier.description}</p>
+                          <p className="text-[10px] text-[#78716C] line-clamp-1">{tier.description}</p>
                         </div>
                       ))}
                     </div>
@@ -687,9 +693,10 @@ export function MarketplaceView({
                       onClick={() =>
                         handleGenerateLicense({ name: noctisActivePitch.productName }, 'trial')
                       }
-                      className="w-full rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-white py-1.5 text-xs font-extrabold cursor-pointer"
+                      style={{ color: '#FBF8F3' }}
+                      className="w-full rounded-lg bg-[#7C4225] hover:bg-[#5E3119] text-[#FBF8F3] py-1.5 text-xs font-extrabold cursor-pointer"
                     >
-                      Claim 14-Day Free Trial Key ⚡
+                      Claim 14-Day Free Trial Key
                     </button>
                   </div>
                 </div>
@@ -697,9 +704,9 @@ export function MarketplaceView({
             )}
 
             {/* Live Noctis Sales Narrative Box */}
-            <div className="rounded-xl bg-white border border-blue-100 p-4 text-xs sm:text-sm text-slate-800 leading-relaxed whitespace-pre-line break-words overflow-x-hidden font-medium max-h-64 overflow-y-auto">
+            <div className="rounded-xl bg-white border border-[#E6DEC8] p-4 text-xs sm:text-sm text-[#292521] leading-relaxed whitespace-pre-line break-words overflow-x-hidden font-medium max-h-64 overflow-y-auto">
               {(noctisSalesText ||
-                `✨ Hi ${currentUser?.name?.split(' ')[0] || 'there'}! I am Noctis, your AI Marketing & Enterprise Solutions Sales Agent inside the ConnectLn Market. I know every feature, architecture spec, compliance standard, and pricing tier across all ${MASTER_MARKETPLACE_PRODUCTS.length} products. Ask me to pitch any platform or click "✨ Ask Noctis" on any product card below!`)
+                `Hi ${currentUser?.name?.split(' ')[0] || 'there'}! I am Noctis, your AI Marketing & Enterprise Solutions Sales Agent inside the ConnectLn Market. I know every feature, architecture spec, compliance standard, and pricing tier across all ${MASTER_MARKETPLACE_PRODUCTS.length} products. Ask me to pitch any platform or click "Ask Noctis" on any product card below!`)
                 .replace(/```noctis-dashboard[\s\S]*?```/gi, '')
                 .replace(/\*\*/g, '')
                 .replace(/^#{1,4}\s+/gm, '')}
@@ -722,12 +729,13 @@ export function MarketplaceView({
                 value={noctisSalesQuestion}
                 onChange={(e) => setNoctisSalesQuestion(e.target.value)}
                 placeholder="Ask Noctis Sales Agent about any Market product, pricing, ROI, compliance, or ask for a custom executive pitch..."
-                className="flex-1 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#0A66C2] focus:outline-none"
+                className="flex-1 rounded-xl border border-[#DDD3C2] bg-white px-3.5 py-2 text-xs sm:text-sm text-[#292521] focus:border-[#7C4225] focus:outline-none"
               />
               <button
                 type="submit"
                 disabled={isNoctisSalesLoading || !noctisSalesQuestion.trim()}
-                className="rounded-xl bg-[#0A66C2] hover:bg-[#004182] disabled:bg-slate-300 px-4 py-2 text-xs font-extrabold text-white transition-all cursor-pointer shrink-0"
+                style={{ color: '#FBF8F3' }}
+                className="rounded-xl bg-[#7C4225] hover:bg-[#5E3119] disabled:bg-[#D8CEBE] px-4 py-2 text-xs font-extrabold text-[#FBF8F3] transition-all cursor-pointer shrink-0"
               >
                 {isNoctisSalesLoading ? "Asking Noctis..." : "Ask Noctis Sales Agent →"}
               </button>
@@ -737,32 +745,32 @@ export function MarketplaceView({
             <div className="flex flex-wrap gap-1.5">
               {[
                 {
-                  label: "🔮 Pitch DSTRIKE & Noctis Threat Prediction",
+                  label: "Pitch DSTRIKE & Noctis Threat Prediction",
                   productId: "prod_dstrike_noctis_platform",
                   q: "Pitch DSTRIKE and Noctis Threat Prediction — explain everything it does, features, compliance, and ROI."
                 },
                 {
-                  label: "🛡️ Pitch Aagiis DoD RMF & cATO (aagiis.com)",
+                  label: "Pitch Aagiis DoD RMF & cATO (aagiis.com)",
                   productId: "prod_aagiis_federal_rmf",
                   q: "Give me a full executive sales pitch for Aagiis Federal Compliance & DoD RMF (https://aagiis.com) and why defense teams buy it."
                 },
                 {
-                  label: "🎯 Pitch EXPEDITE STRIKE™ DAST Engine (/engine)",
+                  label: "Pitch EXPEDITE STRIKE™ DAST Engine (/engine)",
                   productId: "prod_expedite_strike_dast_engine",
                   q: "Deep-dive EXPEDITE STRIKE DAST Engine (/engine) — how it works, zero false positives, OWASP Top 10 coverage, and pricing."
                 },
                 {
-                  label: "📓 Pitch DeskNote E2EE & PDFAdore Suite",
+                  label: "Pitch DeskNote E2EE & PDFAdore Suite",
                   productId: "prod_desknote_lime_live",
                   q: "Pitch DeskNote E2EE Notebook and PDFAdore (31+ PDF Tools) for field engineering and enterprise teams."
                 },
                 {
-                  label: "🚀 Pitch Master Launchpad (67+ Platforms)",
+                  label: "Pitch Master Launchpad (67+ Platforms)",
                   productId: "prod_expedite_ecosystem_launchpad",
                   q: "Explain everything included in the Expedite Consults Digital Ecosystem Launchpad (67+ Platforms) and how to get started."
                 },
                 {
-                  label: "💰 Compare Pricing Tiers & Free Trials",
+                  label: "Compare Pricing Tiers & Free Trials",
                   productId: "",
                   q: "Compare pricing tiers, 14-day free trials, and enterprise ROI across our top Marketplace platforms."
                 }
@@ -777,7 +785,7 @@ export function MarketplaceView({
                       productId: chip.productId || undefined
                     })
                   }}
-                  className="rounded-full bg-white hover:bg-blue-50 text-[#0A66C2] border border-blue-200 px-2.5 py-1 text-[11px] font-bold transition-all cursor-pointer"
+                  className="rounded-full bg-[#EFE8DA] hover:bg-[#E5DEC9] text-[#5E3119] border border-[#DDD3C2] px-2.5 py-1 text-[11px] font-bold transition-all cursor-pointer"
                 >
                   {chip.label}
                 </button>
@@ -787,13 +795,13 @@ export function MarketplaceView({
         )}
 
         {/* FEATURED PLATFORMS IN CARDS (Automatically collapses when Solutions Hub is active so Solutions Blueprints appear immediately above the fold!) */}
-        <div className="space-y-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+        <div className="space-y-3 pt-2 border-t border-[#E6DEC8] dark:border-zinc-800">
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="rounded-md bg-[#0A66C2]/10 text-[#0A66C2] dark:text-sky-400 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider">
-                📂 Categorized Flagship Platforms (11 Live Cards)
+              <span className="rounded-md bg-[#EFE8DA] text-[#5E3119] border border-[#D8CEBE] dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider">
+                Categorized Flagship Platforms (11 Live Cards)
               </span>
-              <span className="text-xs text-zinc-500 dark:text-zinc-400">
+              <span className="text-xs text-[#78716C] dark:text-zinc-400">
                 Every platform organized into dedicated cards with direct launch buttons
               </span>
             </div>
@@ -802,7 +810,7 @@ export function MarketplaceView({
                 <button
                   type="button"
                   onClick={() => setShowFlagshipInSolutions(!showFlagshipInSolutions)}
-                  className="rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-2.5 py-1 text-xs font-bold cursor-pointer transition-colors"
+                  className="rounded-lg bg-[#EFE8DA] dark:bg-zinc-800 hover:bg-[#E5DEC9] dark:hover:bg-zinc-700 text-[#292521] dark:text-zinc-300 px-2.5 py-1 text-xs font-bold cursor-pointer transition-colors"
                 >
                   {showFlagshipInSolutions ? '▲ Hide 11 Flagship Cards' : '▼ Show 11 Flagship Cards'}
                 </button>
@@ -811,7 +819,7 @@ export function MarketplaceView({
                 <button
                   type="button"
                   onClick={() => setSelectedSubCategory('All')}
-                  className="text-xs font-bold text-[#0A66C2] hover:underline cursor-pointer"
+                  className="text-xs font-bold text-[#7C4225] hover:underline cursor-pointer"
                 >
                   Show All Categories ✕
                 </button>
@@ -822,29 +830,26 @@ export function MarketplaceView({
           {(selectedMainCategory !== 'Solutions' || showFlagshipInSolutions) && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
             {/* Card 1: Aagiis — Federal Compliance & DoD RMF */}
-            <div className="rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/40 dark:bg-emerald-950/20 p-3.5 flex flex-col justify-between space-y-3 shadow-2xs hover:shadow-md transition-all">
-              <div className="space-y-1.5">
+            <div className="rounded-xl border border-[#DDD3C2] dark:border-zinc-800 bg-[#FBF8F3] dark:bg-zinc-900 p-4 flex flex-col justify-between space-y-3 shadow-2xs hover:border-[#7C4225]/50 hover:shadow-md transition-all">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between gap-1.5">
-                  <span className="rounded-md bg-emerald-600 text-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                  <span className="rounded-md bg-[#EFE8DA] text-[#5E3119] border border-[#DDD3C2] dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
                     1. Federal Compliance &amp; RMF
                   </span>
-                  <span className="text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-300">
+                  <span className="text-[10px] font-mono font-semibold text-[#78716C] dark:text-zinc-400 shrink-0">
                     DoDI 8510.01
                   </span>
                 </div>
-                <div className="flex items-start gap-2 pt-0.5">
-                  <span className="text-xl shrink-0">🛡️</span>
-                  <div>
-                    <h3 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 leading-snug">
-                      Aagiis — Federal Compliance Solutions
-                    </h3>
-                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-0.5">
-                      DoD RMF &amp; DCSA NISP Platform (DoDI 8510.01), Continuous ATO (cATO), eMASS &amp; NIST 800-53 Rev 5.
-                    </p>
-                  </div>
+                <div>
+                  <h3 className="font-bold text-xs sm:text-sm text-[#292521] dark:text-zinc-100 leading-snug">
+                    Aagiis — Federal Compliance Solutions
+                  </h3>
+                  <p className="text-[11px] text-[#57534E] dark:text-zinc-400 line-clamp-2 mt-1 leading-relaxed">
+                    DoD RMF &amp; DCSA NISP Platform (DoDI 8510.01), Continuous ATO (cATO), eMASS &amp; NIST 800-53 Rev 5.
+                  </p>
                 </div>
               </div>
-              <div className="pt-2 border-t border-emerald-200/60 dark:border-emerald-800/50 flex items-center justify-between gap-2">
+              <div className="pt-2.5 border-t border-[#E6DEC8] dark:border-zinc-800 flex items-center justify-between gap-2">
                 <button
                   type="button"
                   onClick={() =>
@@ -854,15 +859,16 @@ export function MarketplaceView({
                       scrollToHub: true
                     })
                   }
-                  className="text-[11px] font-extrabold text-[#1967D2] hover:underline cursor-pointer"
+                  className="text-[11px] font-semibold text-[#57534E] hover:text-[#292521] dark:text-zinc-400 dark:hover:text-zinc-200 hover:underline cursor-pointer"
                 >
-                  ✨ Ask Noctis
+                  Ask Noctis
                 </button>
                 <a
                   href="https://aagiis.com/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
+                  style={{ color: '#FBF8F3' }}
+                  className="rounded-lg bg-[#7C4225] hover:bg-[#5E3119] text-[#FBF8F3] px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
                 >
                   <span>Launch aagiis.com ↗</span>
                 </a>
@@ -870,29 +876,26 @@ export function MarketplaceView({
             </div>
 
             {/* Card 2: EXPEDITE STRIKE™ — DAST Engine (/engine) */}
-            <div className="rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50/40 dark:bg-red-950/20 p-3.5 flex flex-col justify-between space-y-3 shadow-2xs hover:shadow-md transition-all">
-              <div className="space-y-1.5">
+            <div className="rounded-xl border border-[#DDD3C2] dark:border-zinc-800 bg-[#FBF8F3] dark:bg-zinc-900 p-4 flex flex-col justify-between space-y-3 shadow-2xs hover:border-[#7C4225]/50 hover:shadow-md transition-all">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between gap-1.5">
-                  <span className="rounded-md bg-red-600 text-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                  <span className="rounded-md bg-[#EFE8DA] text-[#5E3119] border border-[#DDD3C2] dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
                     2. DAST &amp; Vulnerability Engine
                   </span>
-                  <span className="text-[10px] font-mono font-bold text-red-700 dark:text-red-300">
+                  <span className="text-[10px] font-mono font-semibold text-[#78716C] dark:text-zinc-400 shrink-0">
                     XTRIKE · /engine
                   </span>
                 </div>
-                <div className="flex items-start gap-2 pt-0.5">
-                  <span className="text-xl shrink-0">🎯</span>
-                  <div>
-                    <h3 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 leading-snug">
-                      EXPEDITE STRIKE™ — DAST Engine Dashboard
-                    </h3>
-                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-0.5">
-                      XTRIKE &amp; Aegis.SOC live DAST Engine &amp; Vulnerability Scanner Dashboard for web &amp; API targets.
-                    </p>
-                  </div>
+                <div>
+                  <h3 className="font-bold text-xs sm:text-sm text-[#292521] dark:text-zinc-100 leading-snug">
+                    EXPEDITE STRIKE™ — DAST Engine Dashboard
+                  </h3>
+                  <p className="text-[11px] text-[#57534E] dark:text-zinc-400 line-clamp-2 mt-1 leading-relaxed">
+                    XTRIKE &amp; Aegis.SOC live DAST Engine &amp; Vulnerability Scanner Dashboard for web &amp; API targets.
+                  </p>
                 </div>
               </div>
-              <div className="pt-2 border-t border-red-200/60 dark:border-red-800/50 flex items-center justify-between gap-2">
+              <div className="pt-2.5 border-t border-[#E6DEC8] dark:border-zinc-800 flex items-center justify-between gap-2">
                 <button
                   type="button"
                   onClick={() =>
@@ -902,15 +905,16 @@ export function MarketplaceView({
                       scrollToHub: true
                     })
                   }
-                  className="text-[11px] font-extrabold text-[#1967D2] hover:underline cursor-pointer"
+                  className="text-[11px] font-semibold text-[#57534E] hover:text-[#292521] dark:text-zinc-400 dark:hover:text-zinc-200 hover:underline cursor-pointer"
                 >
-                  ✨ Ask Noctis
+                  Ask Noctis
                 </button>
                 <a
                   href="https://11-dast-security-platform.vercel.app/engine"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-lg bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
+                  style={{ color: '#FBF8F3' }}
+                  className="rounded-lg bg-[#7C4225] hover:bg-[#5E3119] text-[#FBF8F3] px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
                 >
                   <span>Open DAST /engine ↗</span>
                 </a>
@@ -918,29 +922,26 @@ export function MarketplaceView({
             </div>
 
             {/* Card 3: EXPEDITE STRIKE™ — Main Platform Landing Page */}
-            <div className="rounded-xl border border-orange-200 dark:border-orange-900/60 bg-orange-50/40 dark:bg-orange-950/20 p-3.5 flex flex-col justify-between space-y-3 shadow-2xs hover:shadow-md transition-all">
-              <div className="space-y-1.5">
+            <div className="rounded-xl border border-[#DDD3C2] dark:border-zinc-800 bg-[#FBF8F3] dark:bg-zinc-900 p-4 flex flex-col justify-between space-y-3 shadow-2xs hover:border-[#7C4225]/50 hover:shadow-md transition-all">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between gap-1.5">
-                  <span className="rounded-md bg-orange-600 text-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                  <span className="rounded-md bg-[#EFE8DA] text-[#5E3119] border border-[#DDD3C2] dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
                     2. Web Interface Security
                   </span>
-                  <span className="text-[10px] font-mono font-bold text-orange-700 dark:text-orange-300">
+                  <span className="text-[10px] font-mono font-semibold text-[#78716C] dark:text-zinc-400 shrink-0">
                     OWASP Top 10
                   </span>
                 </div>
-                <div className="flex items-start gap-2 pt-0.5">
-                  <span className="text-xl shrink-0">🌐</span>
-                  <div>
-                    <h3 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 leading-snug">
-                      EXPEDITE STRIKE™ — Main Platform Landing
-                    </h3>
-                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-0.5">
-                      Main DAST &amp; Web Interface Security Platform command portal, architecture specs &amp; compliance matrix.
-                    </p>
-                  </div>
+                <div>
+                  <h3 className="font-bold text-xs sm:text-sm text-[#292521] dark:text-zinc-100 leading-snug">
+                    EXPEDITE STRIKE™ — Main Platform Landing
+                  </h3>
+                  <p className="text-[11px] text-[#57534E] dark:text-zinc-400 line-clamp-2 mt-1 leading-relaxed">
+                    Main DAST &amp; Web Interface Security Platform command portal, architecture specs &amp; compliance matrix.
+                  </p>
                 </div>
               </div>
-              <div className="pt-2 border-t border-orange-200/60 dark:border-orange-800/50 flex items-center justify-between gap-2">
+              <div className="pt-2.5 border-t border-[#E6DEC8] dark:border-zinc-800 flex items-center justify-between gap-2">
                 <button
                   type="button"
                   onClick={() =>
@@ -950,15 +951,16 @@ export function MarketplaceView({
                       scrollToHub: true
                     })
                   }
-                  className="text-[11px] font-extrabold text-[#1967D2] hover:underline cursor-pointer"
+                  className="text-[11px] font-semibold text-[#57534E] hover:text-[#292521] dark:text-zinc-400 dark:hover:text-zinc-200 hover:underline cursor-pointer"
                 >
-                  ✨ Ask Noctis
+                  Ask Noctis
                 </button>
                 <a
                   href="https://11-dast-security-platform.vercel.app"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-lg bg-orange-600 hover:bg-orange-700 text-white px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
+                  style={{ color: '#FBF8F3' }}
+                  className="rounded-lg bg-[#7C4225] hover:bg-[#5E3119] text-[#FBF8F3] px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
                 >
                   <span>Main Landing Page ↗</span>
                 </a>
@@ -966,29 +968,26 @@ export function MarketplaceView({
             </div>
 
             {/* Card 4: DSTRIKE — Main App */}
-            <div className="rounded-xl border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/40 dark:bg-indigo-950/20 p-3.5 flex flex-col justify-between space-y-3 shadow-2xs hover:shadow-md transition-all">
-              <div className="space-y-1.5">
+            <div className="rounded-xl border border-[#DDD3C2] dark:border-zinc-800 bg-[#FBF8F3] dark:bg-zinc-900 p-4 flex flex-col justify-between space-y-3 shadow-2xs hover:border-[#7C4225]/50 hover:shadow-md transition-all">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between gap-1.5">
-                  <span className="rounded-md bg-indigo-700 text-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                  <span className="rounded-md bg-[#EFE8DA] text-[#5E3119] border border-[#DDD3C2] dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
                     3. Autonomous Cyber Defense
                   </span>
-                  <span className="text-[10px] font-mono font-bold text-indigo-700 dark:text-indigo-300">
+                  <span className="text-[10px] font-mono font-semibold text-[#78716C] dark:text-zinc-400 shrink-0">
                     dstrike.app
                   </span>
                 </div>
-                <div className="flex items-start gap-2 pt-0.5">
-                  <span className="text-xl shrink-0">⚡</span>
-                  <div>
-                    <h3 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 leading-snug">
-                      DSTRIKE — Main App
-                    </h3>
-                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-0.5">
-                      Autonomous cyber defense, attack surface management, and continuous threat telemetry platform.
-                    </p>
-                  </div>
+                <div>
+                  <h3 className="font-bold text-xs sm:text-sm text-[#292521] dark:text-zinc-100 leading-snug">
+                    DSTRIKE — Main App
+                  </h3>
+                  <p className="text-[11px] text-[#57534E] dark:text-zinc-400 line-clamp-2 mt-1 leading-relaxed">
+                    Autonomous cyber defense, attack surface management, and continuous threat telemetry platform.
+                  </p>
                 </div>
               </div>
-              <div className="pt-2 border-t border-indigo-200/60 dark:border-indigo-800/50 flex items-center justify-between gap-2">
+              <div className="pt-2.5 border-t border-[#E6DEC8] dark:border-zinc-800 flex items-center justify-between gap-2">
                 <button
                   type="button"
                   onClick={() =>
@@ -998,15 +997,16 @@ export function MarketplaceView({
                       scrollToHub: true
                     })
                   }
-                  className="text-[11px] font-extrabold text-[#1967D2] hover:underline cursor-pointer"
+                  className="text-[11px] font-semibold text-[#57534E] hover:text-[#292521] dark:text-zinc-400 dark:hover:text-zinc-200 hover:underline cursor-pointer"
                 >
-                  ✨ Ask Noctis
+                  Ask Noctis
                 </button>
                 <a
                   href="https://dstrike.app"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-lg bg-indigo-700 hover:bg-indigo-800 text-white px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
+                  style={{ color: '#FBF8F3' }}
+                  className="rounded-lg bg-[#7C4225] hover:bg-[#5E3119] text-[#FBF8F3] px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
                 >
                   <span>Launch dstrike.app ↗</span>
                 </a>
@@ -1014,33 +1014,30 @@ export function MarketplaceView({
             </div>
 
             {/* Card 5: DSTRIKE Prediction Desk (Noctis) */}
-            <div className="rounded-xl border border-violet-200 dark:border-violet-900/60 bg-violet-50/40 dark:bg-violet-950/20 p-3.5 flex flex-col justify-between space-y-3 shadow-2xs hover:shadow-md transition-all">
-              <div className="space-y-1.5">
+            <div className="rounded-xl border border-[#DDD3C2] dark:border-zinc-800 bg-[#FBF8F3] dark:bg-zinc-900 p-4 flex flex-col justify-between space-y-3 shadow-2xs hover:border-[#7C4225]/50 hover:shadow-md transition-all">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between gap-1.5">
-                  <span className="rounded-md bg-violet-700 text-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                  <span className="rounded-md bg-[#EFE8DA] text-[#5E3119] border border-[#DDD3C2] dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
                     3. Threat Prediction Intelligence
                   </span>
-                  <span className="text-[10px] font-mono font-bold text-violet-700 dark:text-violet-300">
+                  <span className="text-[10px] font-mono font-semibold text-[#78716C] dark:text-zinc-400 shrink-0">
                     Noctis AI
                   </span>
                 </div>
-                <div className="flex items-start gap-2 pt-0.5">
-                  <span className="text-xl shrink-0">🔮</span>
-                  <div>
-                    <h3 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 leading-snug">
-                      DSTRIKE Threat Prediction (Noctis)
-                    </h3>
-                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-0.5">
-                      Probabilistic cyber threat forecasting, zero-day exploit probability curves &amp; geopolitical risk modeling.
-                    </p>
-                  </div>
+                <div>
+                  <h3 className="font-bold text-xs sm:text-sm text-[#292521] dark:text-zinc-100 leading-snug">
+                    DSTRIKE Threat Prediction (Noctis)
+                  </h3>
+                  <p className="text-[11px] text-[#57534E] dark:text-zinc-400 line-clamp-2 mt-1 leading-relaxed">
+                    Probabilistic cyber threat forecasting, zero-day exploit probability curves &amp; geopolitical risk modeling.
+                  </p>
                 </div>
               </div>
-              <div className="pt-2 border-t border-violet-200/60 dark:border-violet-800/50 flex items-center justify-between gap-2">
+              <div className="pt-2.5 border-t border-[#E6DEC8] dark:border-zinc-800 flex items-center justify-between gap-2">
                 <button
                   type="button"
                   onClick={() => setSelectedSubCategory('Cyber_Prediction')}
-                  className="text-[11px] font-semibold text-violet-800 dark:text-violet-300 hover:underline cursor-pointer"
+                  className="text-[11px] font-semibold text-[#57534E] hover:text-[#292521] dark:text-zinc-400 dark:hover:text-zinc-200 hover:underline cursor-pointer"
                 >
                   Filter Category
                 </button>
@@ -1053,37 +1050,35 @@ export function MarketplaceView({
                       scrollToHub: true
                     })
                   }
-                  className="rounded-lg bg-violet-700 hover:bg-violet-800 text-white px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors cursor-pointer"
+                  style={{ color: '#FBF8F3' }}
+                  className="rounded-lg bg-[#7C4225] hover:bg-[#5E3119] text-[#FBF8F3] px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors cursor-pointer"
                 >
-                  <span>✨ Ask Noctis</span>
+                  <span>Ask Noctis</span>
                 </button>
               </div>
             </div>
 
             {/* Card 6: DeskNote — Productivity & Field Notes */}
-            <div className="rounded-xl border border-lime-300 dark:border-lime-900/60 bg-lime-50/40 dark:bg-lime-950/20 p-3.5 flex flex-col justify-between space-y-3 shadow-2xs hover:shadow-md transition-all">
-              <div className="space-y-1.5">
+            <div className="rounded-xl border border-[#DDD3C2] dark:border-zinc-800 bg-[#FBF8F3] dark:bg-zinc-900 p-4 flex flex-col justify-between space-y-3 shadow-2xs hover:border-[#7C4225]/50 hover:shadow-md transition-all">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between gap-1.5">
-                  <span className="rounded-md bg-lime-700 text-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                  <span className="rounded-md bg-[#EFE8DA] text-[#5E3119] border border-[#DDD3C2] dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
                     4. Productivity &amp; Field Notes
                   </span>
-                  <span className="text-[10px] font-mono font-bold text-lime-800 dark:text-lime-300">
+                  <span className="text-[10px] font-mono font-semibold text-[#78716C] dark:text-zinc-400 shrink-0">
                     E2EE Notebook
                   </span>
                 </div>
-                <div className="flex items-start gap-2 pt-0.5">
-                  <span className="text-xl shrink-0">📓</span>
-                  <div>
-                    <h3 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 leading-snug">
-                      DeskNote — Productivity Workspace
-                    </h3>
-                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-0.5">
-                      Tactile multi-subject digital notebook with voice notes, sketch canvas, punch-lists &amp; AES-256 encryption.
-                    </p>
-                  </div>
+                <div>
+                  <h3 className="font-bold text-xs sm:text-sm text-[#292521] dark:text-zinc-100 leading-snug">
+                    DeskNote — Productivity Workspace
+                  </h3>
+                  <p className="text-[11px] text-[#57534E] dark:text-zinc-400 line-clamp-2 mt-1 leading-relaxed">
+                    Tactile multi-subject digital notebook with voice notes, sketch canvas, punch-lists &amp; AES-256 encryption.
+                  </p>
                 </div>
               </div>
-              <div className="pt-2 border-t border-lime-200/60 dark:border-lime-800/50 flex items-center justify-between gap-2">
+              <div className="pt-2.5 border-t border-[#E6DEC8] dark:border-zinc-800 flex items-center justify-between gap-2">
                 <button
                   type="button"
                   onClick={() =>
@@ -1093,15 +1088,16 @@ export function MarketplaceView({
                       scrollToHub: true
                     })
                   }
-                  className="text-[11px] font-extrabold text-[#1967D2] hover:underline cursor-pointer"
+                  className="text-[11px] font-semibold text-[#57534E] hover:text-[#292521] dark:text-zinc-400 dark:hover:text-zinc-200 hover:underline cursor-pointer"
                 >
-                  ✨ Ask Noctis
+                  Ask Noctis
                 </button>
                 <a
                   href="https://desk-note-lime.vercel.app/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-lg bg-lime-700 hover:bg-lime-800 text-white px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
+                  style={{ color: '#FBF8F3' }}
+                  className="rounded-lg bg-[#7C4225] hover:bg-[#5E3119] text-[#FBF8F3] px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
                 >
                   <span>Launch DeskNote ↗</span>
                 </a>
@@ -1109,29 +1105,26 @@ export function MarketplaceView({
             </div>
 
             {/* Card 7: Expedite Consults — Official Enterprise Portal */}
-            <div className="rounded-xl border border-sky-200 dark:border-sky-900/60 bg-sky-50/40 dark:bg-sky-950/20 p-3.5 flex flex-col justify-between space-y-3 shadow-2xs hover:shadow-md transition-all">
-              <div className="space-y-1.5">
+            <div className="rounded-xl border border-[#DDD3C2] dark:border-zinc-800 bg-[#FBF8F3] dark:bg-zinc-900 p-4 flex flex-col justify-between space-y-3 shadow-2xs hover:border-[#7C4225]/50 hover:shadow-md transition-all">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between gap-1.5">
-                  <span className="rounded-md bg-[#0A66C2] text-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                  <span className="rounded-md bg-[#EFE8DA] text-[#5E3119] border border-[#DDD3C2] dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
                     5. Enterprise Advisory Portal
                   </span>
-                  <span className="text-[10px] font-mono font-bold text-[#0A66C2] dark:text-sky-300">
+                  <span className="text-[10px] font-mono font-semibold text-[#78716C] dark:text-zinc-400 shrink-0">
                     Official HQ
                   </span>
                 </div>
-                <div className="flex items-start gap-2 pt-0.5">
-                  <span className="text-xl shrink-0">🏛️</span>
-                  <div>
-                    <h3 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 leading-snug">
-                      Expedite Consults — Official Portal
-                    </h3>
-                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-0.5">
-                      Enterprise Cyber, AI &amp; Federal Advisory headquarters for DevSecOps, Zero Trust &amp; executive retainers.
-                    </p>
-                  </div>
+                <div>
+                  <h3 className="font-bold text-xs sm:text-sm text-[#292521] dark:text-zinc-100 leading-snug">
+                    Expedite Consults — Official Portal
+                  </h3>
+                  <p className="text-[11px] text-[#57534E] dark:text-zinc-400 line-clamp-2 mt-1 leading-relaxed">
+                    Enterprise Cyber, AI &amp; Federal Advisory headquarters for DevSecOps, Zero Trust &amp; executive retainers.
+                  </p>
                 </div>
               </div>
-              <div className="pt-2 border-t border-sky-200/60 dark:border-sky-800/50 flex items-center justify-between gap-2">
+              <div className="pt-2.5 border-t border-[#E6DEC8] dark:border-zinc-800 flex items-center justify-between gap-2">
                 <button
                   type="button"
                   onClick={() =>
@@ -1141,15 +1134,16 @@ export function MarketplaceView({
                       scrollToHub: true
                     })
                   }
-                  className="text-[11px] font-extrabold text-[#1967D2] hover:underline cursor-pointer"
+                  className="text-[11px] font-semibold text-[#57534E] hover:text-[#292521] dark:text-zinc-400 dark:hover:text-zinc-200 hover:underline cursor-pointer"
                 >
-                  ✨ Ask Noctis
+                  Ask Noctis
                 </button>
                 <a
                   href="https://www.expediteconsults.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-white px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
+                  style={{ color: '#FBF8F3' }}
+                  className="rounded-lg bg-[#7C4225] hover:bg-[#5E3119] text-[#FBF8F3] px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
                 >
                   <span>expediteconsults.com ↗</span>
                 </a>
@@ -1157,29 +1151,26 @@ export function MarketplaceView({
             </div>
 
             {/* Card 8: Sphera Portal — Live Production Launchpad */}
-            <div className="rounded-xl border border-purple-200 dark:border-purple-900/60 bg-purple-50/40 dark:bg-purple-950/20 p-3.5 flex flex-col justify-between space-y-3 shadow-2xs hover:shadow-md transition-all">
-              <div className="space-y-1.5">
+            <div className="rounded-xl border border-[#DDD3C2] dark:border-zinc-800 bg-[#FBF8F3] dark:bg-zinc-900 p-4 flex flex-col justify-between space-y-3 shadow-2xs hover:border-[#7C4225]/50 hover:shadow-md transition-all">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between gap-1.5">
-                  <span className="rounded-md bg-purple-700 text-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                  <span className="rounded-md bg-[#EFE8DA] text-[#5E3119] border border-[#DDD3C2] dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
                     5. Production Launchpad
                   </span>
-                  <span className="text-[10px] font-mono font-bold text-purple-700 dark:text-purple-300">
+                  <span className="text-[10px] font-mono font-semibold text-[#78716C] dark:text-zinc-400 shrink-0">
                     Cloud OS
                   </span>
                 </div>
-                <div className="flex items-start gap-2 pt-0.5">
-                  <span className="text-xl shrink-0">🚀</span>
-                  <div>
-                    <h3 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 leading-snug">
-                      Sphera Portal — Production Launchpad
-                    </h3>
-                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-0.5">
-                      Live multi-enclave Cloud OS hosting ConnectLn, Career Passport, Bazaar Marketplace &amp; Campus Hubs.
-                    </p>
-                  </div>
+                <div>
+                  <h3 className="font-bold text-xs sm:text-sm text-[#292521] dark:text-zinc-100 leading-snug">
+                    Sphera Portal — Production Launchpad
+                  </h3>
+                  <p className="text-[11px] text-[#57534E] dark:text-zinc-400 line-clamp-2 mt-1 leading-relaxed">
+                    Live multi-enclave Cloud OS hosting ConnectLn, Career Passport, Bazaar Marketplace &amp; Campus Hubs.
+                  </p>
                 </div>
               </div>
-              <div className="pt-2 border-t border-purple-200/60 dark:border-purple-800/50 flex items-center justify-between gap-2">
+              <div className="pt-2.5 border-t border-[#E6DEC8] dark:border-zinc-800 flex items-center justify-between gap-2">
                 <button
                   type="button"
                   onClick={() =>
@@ -1189,15 +1180,16 @@ export function MarketplaceView({
                       scrollToHub: true
                     })
                   }
-                  className="text-[11px] font-extrabold text-[#1967D2] hover:underline cursor-pointer"
+                  className="text-[11px] font-semibold text-[#57534E] hover:text-[#292521] dark:text-zinc-400 dark:hover:text-zinc-200 hover:underline cursor-pointer"
                 >
-                  ✨ Ask Noctis
+                  Ask Noctis
                 </button>
                 <a
                   href="https://sphera-portal.vercel.app"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-lg bg-purple-700 hover:bg-purple-800 text-white px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
+                  style={{ color: '#FBF8F3' }}
+                  className="rounded-lg bg-[#7C4225] hover:bg-[#5E3119] text-[#FBF8F3] px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
                 >
                   <span>sphera-portal ↗</span>
                 </a>
@@ -1205,29 +1197,26 @@ export function MarketplaceView({
             </div>
 
             {/* Card 9: 05-SAST — Penetration Testing & Static Analysis Platform */}
-            <div className="rounded-xl border border-teal-200 dark:border-teal-900/60 bg-teal-50/40 dark:bg-teal-950/20 p-3.5 flex flex-col justify-between space-y-3 shadow-2xs hover:shadow-md transition-all">
-              <div className="space-y-1.5">
+            <div className="rounded-xl border border-[#DDD3C2] dark:border-zinc-800 bg-[#FBF8F3] dark:bg-zinc-900 p-4 flex flex-col justify-between space-y-3 shadow-2xs hover:border-[#7C4225]/50 hover:shadow-md transition-all">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between gap-1.5">
-                  <span className="rounded-md bg-teal-700 text-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                  <span className="rounded-md bg-[#EFE8DA] text-[#5E3119] border border-[#DDD3C2] dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
                     6. Penetration Testing &amp; SAST
                   </span>
-                  <span className="text-[10px] font-mono font-bold text-teal-800 dark:text-teal-300">
+                  <span className="text-[10px] font-mono font-semibold text-[#78716C] dark:text-zinc-400 shrink-0">
                     05-SAST Live
                   </span>
                 </div>
-                <div className="flex items-start gap-2 pt-0.5">
-                  <span className="text-xl shrink-0">🔍</span>
-                  <div>
-                    <h3 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 leading-snug">
-                      05-SAST — Penetration Testing &amp; AST
-                    </h3>
-                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-0.5">
-                      Sub-4ms AST static code analysis, penetration testing vulnerability detection &amp; automated fix PRs.
-                    </p>
-                  </div>
+                <div>
+                  <h3 className="font-bold text-xs sm:text-sm text-[#292521] dark:text-zinc-100 leading-snug">
+                    05-SAST — Penetration Testing &amp; AST
+                  </h3>
+                  <p className="text-[11px] text-[#57534E] dark:text-zinc-400 line-clamp-2 mt-1 leading-relaxed">
+                    Sub-4ms AST static code analysis, penetration testing vulnerability detection &amp; automated fix PRs.
+                  </p>
                 </div>
               </div>
-              <div className="pt-2 border-t border-teal-200/60 dark:border-teal-800/50 flex items-center justify-between gap-2">
+              <div className="pt-2.5 border-t border-[#E6DEC8] dark:border-zinc-800 flex items-center justify-between gap-2">
                 <button
                   type="button"
                   onClick={() =>
@@ -1237,15 +1226,16 @@ export function MarketplaceView({
                       scrollToHub: true
                     })
                   }
-                  className="text-[11px] font-extrabold text-[#1967D2] hover:underline cursor-pointer"
+                  className="text-[11px] font-semibold text-[#57534E] hover:text-[#292521] dark:text-zinc-400 dark:hover:text-zinc-200 hover:underline cursor-pointer"
                 >
-                  ✨ Ask Noctis
+                  Ask Noctis
                 </button>
                 <a
                   href="https://05-sast-platform.vercel.app"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-lg bg-teal-700 hover:bg-teal-800 text-white px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
+                  style={{ color: '#FBF8F3' }}
+                  className="rounded-lg bg-[#7C4225] hover:bg-[#5E3119] text-[#FBF8F3] px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
                 >
                   <span>Launch 05-SAST ↗</span>
                 </a>
@@ -1253,29 +1243,26 @@ export function MarketplaceView({
             </div>
 
             {/* Card 10: Trepath 2.0 — Autonomous Penetration Testing & Attack Path */}
-            <div className="rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/40 dark:bg-rose-950/20 p-3.5 flex flex-col justify-between space-y-3 shadow-2xs hover:shadow-md transition-all">
-              <div className="space-y-1.5">
+            <div className="rounded-xl border border-[#DDD3C2] dark:border-zinc-800 bg-[#FBF8F3] dark:bg-zinc-900 p-4 flex flex-col justify-between space-y-3 shadow-2xs hover:border-[#7C4225]/50 hover:shadow-md transition-all">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between gap-1.5">
-                  <span className="rounded-md bg-rose-700 text-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                  <span className="rounded-md bg-[#EFE8DA] text-[#5E3119] border border-[#DDD3C2] dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
                     6. Autonomous PenTest &amp; ASPM
                   </span>
-                  <span className="text-[10px] font-mono font-bold text-rose-800 dark:text-rose-300">
+                  <span className="text-[10px] font-mono font-semibold text-[#78716C] dark:text-zinc-400 shrink-0">
                     Trepath 2.0
                   </span>
                 </div>
-                <div className="flex items-start gap-2 pt-0.5">
-                  <span className="text-xl shrink-0">🎯</span>
-                  <div>
-                    <h3 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 leading-snug">
-                      Trepath 2.0 — Penetration Testing
-                    </h3>
-                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-0.5">
-                      Autonomous penetration testing, multi-hop attack path discovery, exploit verification &amp; ASPM engine.
-                    </p>
-                  </div>
+                <div>
+                  <h3 className="font-bold text-xs sm:text-sm text-[#292521] dark:text-zinc-100 leading-snug">
+                    Trepath 2.0 — Penetration Testing
+                  </h3>
+                  <p className="text-[11px] text-[#57534E] dark:text-zinc-400 line-clamp-2 mt-1 leading-relaxed">
+                    Autonomous penetration testing, multi-hop attack path discovery, exploit verification &amp; ASPM engine.
+                  </p>
                 </div>
               </div>
-              <div className="pt-2 border-t border-rose-200/60 dark:border-rose-800/50 flex items-center justify-between gap-2">
+              <div className="pt-2.5 border-t border-[#E6DEC8] dark:border-zinc-800 flex items-center justify-between gap-2">
                 <button
                   type="button"
                   onClick={() =>
@@ -1285,15 +1272,16 @@ export function MarketplaceView({
                       scrollToHub: true
                     })
                   }
-                  className="text-[11px] font-extrabold text-[#1967D2] hover:underline cursor-pointer"
+                  className="text-[11px] font-semibold text-[#57534E] hover:text-[#292521] dark:text-zinc-400 dark:hover:text-zinc-200 hover:underline cursor-pointer"
                 >
-                  ✨ Ask Noctis
+                  Ask Noctis
                 </button>
                 <a
                   href="https://trepath-2-0.vercel.app"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-lg bg-rose-700 hover:bg-rose-800 text-white px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
+                  style={{ color: '#FBF8F3' }}
+                  className="rounded-lg bg-[#7C4225] hover:bg-[#5E3119] text-[#FBF8F3] px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
                 >
                   <span>Launch Trepath 2.0 ↗</span>
                 </a>
@@ -1301,29 +1289,26 @@ export function MarketplaceView({
             </div>
 
             {/* Card 11: Standalone Penetration Testing & Red Team App */}
-            <div className="rounded-xl border border-amber-300 dark:border-amber-900/60 bg-amber-50/40 dark:bg-amber-950/20 p-3.5 flex flex-col justify-between space-y-3 shadow-2xs hover:shadow-md transition-all">
-              <div className="space-y-1.5">
+            <div className="rounded-xl border border-[#DDD3C2] dark:border-zinc-800 bg-[#FBF8F3] dark:bg-zinc-900 p-4 flex flex-col justify-between space-y-3 shadow-2xs hover:border-[#7C4225]/50 hover:shadow-md transition-all">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between gap-1.5">
-                  <span className="rounded-md bg-amber-700 text-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                  <span className="rounded-md bg-[#EFE8DA] text-[#5E3119] border border-[#DDD3C2] dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
                     6. Standalone PenTest App
                   </span>
-                  <span className="text-[10px] font-mono font-bold text-amber-800 dark:text-amber-300">
+                  <span className="text-[10px] font-mono font-semibold text-[#78716C] dark:text-zinc-400 shrink-0">
                     /app/?standalone=1
                   </span>
                 </div>
-                <div className="flex items-start gap-2 pt-0.5">
-                  <span className="text-xl shrink-0">🛡️</span>
-                  <div>
-                    <h3 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 leading-snug">
-                      Standalone PenTest &amp; Red Team App
-                    </h3>
-                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-0.5">
-                      Interactive standalone penetration testing console, live exploit sandbox &amp; red-team assessment terminal.
-                    </p>
-                  </div>
+                <div>
+                  <h3 className="font-bold text-xs sm:text-sm text-[#292521] dark:text-zinc-100 leading-snug">
+                    Standalone PenTest &amp; Red Team App
+                  </h3>
+                  <p className="text-[11px] text-[#57534E] dark:text-zinc-400 line-clamp-2 mt-1 leading-relaxed">
+                    Interactive standalone penetration testing console, live exploit sandbox &amp; red-team assessment terminal.
+                  </p>
                 </div>
               </div>
-              <div className="pt-2 border-t border-amber-200/60 dark:border-amber-800/50 flex items-center justify-between gap-2">
+              <div className="pt-2.5 border-t border-[#E6DEC8] dark:border-zinc-800 flex items-center justify-between gap-2">
                 <button
                   type="button"
                   onClick={() =>
@@ -1333,15 +1318,16 @@ export function MarketplaceView({
                       scrollToHub: true
                     })
                   }
-                  className="text-[11px] font-extrabold text-[#1967D2] hover:underline cursor-pointer"
+                  className="text-[11px] font-semibold text-[#57534E] hover:text-[#292521] dark:text-zinc-400 dark:hover:text-zinc-200 hover:underline cursor-pointer"
                 >
-                  ✨ Ask Noctis
+                  Ask Noctis
                 </button>
                 <a
                   href="https://dome-jerry-females-creations.trycloudflare.com/app/?standalone=1"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-lg bg-amber-700 hover:bg-amber-800 text-white px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
+                  style={{ color: '#FBF8F3' }}
+                  className="rounded-lg bg-[#7C4225] hover:bg-[#5E3119] text-[#FBF8F3] px-3 py-1.5 text-[11px] font-bold shadow-2xs flex items-center gap-1 transition-colors"
                 >
                   <span>Launch Standalone App ↗</span>
                 </a>
@@ -1352,7 +1338,7 @@ export function MarketplaceView({
         </div>
 
         {/* Master Category Tabs (Wrapped cleanly into cards/pills so none are hidden off-screen) */}
-        <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 space-y-2.5">
+        <div className="pt-3 border-t border-[#E6DEC8] dark:border-zinc-800 space-y-2.5">
           <div className="flex items-center gap-1.5 flex-wrap text-xs">
             {marketplaceTabs.map((cat: any) => {
               const isSelected = selectedMainCategory === cat.id
@@ -1368,12 +1354,11 @@ export function MarketplaceView({
                       setSelectedSubCategory('All')
                     }
                   }}
+                  style={isSelected ? { color: '#FBF8F3' } : undefined}
                   className={`rounded-xl px-3.5 py-2 text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
                     isSelected
-                      ? cat.id === 'Solutions'
-                        ? "bg-amber-500 text-zinc-950 font-bold shadow-sm ring-2 ring-amber-400/50"
-                        : "bg-[#0A66C2] text-white font-semibold shadow-xs"
-                      : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700/70"
+                      ? "bg-[#7C4225] text-[#FBF8F3] font-bold shadow-xs"
+                      : "bg-[#EFE8DA] dark:bg-zinc-800 text-[#292521] dark:text-zinc-300 hover:bg-[#E5DEC9] dark:hover:bg-zinc-700 border border-[#DDD3C2] dark:border-zinc-700/70"
                   }`}
                 >
                   <span>{cat.label}</span>
@@ -1383,17 +1368,17 @@ export function MarketplaceView({
           </div>
 
           {/* QUICK SOLUTIONS ACTION BAR (High-contrast & wrapped so nothing is hidden) */}
-          <div className="pt-2.5 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-2 flex-wrap text-xs">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 shrink-0 mr-1 flex items-center gap-1">
-              <Zap className="h-3.5 w-3.5 fill-amber-500 text-amber-500" /> Outcome Blueprints:
+          <div className="pt-2.5 border-t border-[#E6DEC8] dark:border-zinc-800 flex items-center gap-2 flex-wrap text-xs">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#7C4225] dark:text-amber-400 shrink-0 mr-1 flex items-center gap-1">
+              <Zap className="h-3.5 w-3.5" /> Outcome Blueprints:
             </span>
             {[
-              { label: '🔐 Secure my AWS cloud', id: 'sol_secure_aws' },
-              { label: '📋 Achieve FedRAMP & cATO', id: 'sol_fedramp_cato' },
-              { label: '🛡️ Autonomous PenTest & ASPM', id: 'sol_pentest_aspm' },
-              { label: '🤖 Deploy AI Securely (MCP)', id: 'sol_ai_security' },
-              { label: '🏗️ Jobsite CAD & Total Station', id: 'sol_trades_cad_jobsite' },
-              { label: '🏥 Clinical Pharmacy, Nursing & Admin', id: 'sol_clinical_pharmacy_health' }
+              { label: 'Secure my AWS cloud', id: 'sol_secure_aws' },
+              { label: 'Achieve FedRAMP & cATO', id: 'sol_fedramp_cato' },
+              { label: 'Autonomous PenTest & ASPM', id: 'sol_pentest_aspm' },
+              { label: 'Deploy AI Securely (MCP)', id: 'sol_ai_security' },
+              { label: 'Jobsite CAD & Total Station', id: 'sol_trades_cad_jobsite' },
+              { label: 'Clinical Pharmacy, Nursing & Admin', id: 'sol_clinical_pharmacy_health' }
             ].map((sol) => {
               const isPillActive = selectedMainCategory === 'Solutions' && selectedSolution?.id === sol.id
               return (
@@ -1401,10 +1386,11 @@ export function MarketplaceView({
                   key={sol.id}
                   type="button"
                   onClick={() => activateSolutionsHub(sol.id)}
+                  style={isPillActive ? { color: '#FBF8F3' } : undefined}
                   className={`rounded-lg text-xs px-3 py-1.5 font-semibold transition-all border cursor-pointer ${
                     isPillActive
-                      ? "bg-amber-500 text-zinc-950 border-amber-500 font-bold shadow-xs ring-2 ring-amber-400/40"
-                      : "bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-900 dark:text-amber-200 border-amber-200/80 dark:border-amber-800/60"
+                      ? "bg-[#7C4225] text-[#FBF8F3] border-[#5E3119] font-bold shadow-xs"
+                      : "bg-[#FBF8F3] dark:bg-zinc-900 hover:bg-[#EFE8DA] dark:hover:bg-zinc-800 text-[#5E3119] dark:text-zinc-200 border-[#DDD3C2] dark:border-zinc-700"
                   }`}
                 >
                   {sol.label}
@@ -1930,24 +1916,24 @@ export function MarketplaceView({
           </div>
 
           {/* CATEGORIZED ECOSYSTEM DIRECTORY & STRUCTURED MARKETPLACE PILLARS */}
-          <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 sm:p-5 shadow-xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
+          <div className="rounded-2xl border border-[#DDD3C2] dark:border-zinc-800 bg-[#FBF8F3] dark:bg-zinc-900 p-4 sm:p-5 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#E6DEC8] dark:border-zinc-800 pb-3">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#0A66C2] dark:text-sky-400">
-                  📂 Structured Marketplace Taxonomy
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#7C4225] dark:text-amber-300">
+                  Structured Marketplace Taxonomy
                 </span>
-                <h3 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-zinc-100">
+                <h3 className="text-sm sm:text-base font-bold text-[#292521] dark:text-zinc-100">
                   Browse Featured Platforms by Category
                 </h3>
               </div>
               <div className="flex items-center gap-1.5 flex-wrap">
                 {[
-                  { id: 'All', label: '✨ All Categories' },
-                  { id: 'Compliance_RMF', label: '🏛️ Federal Compliance & RMF' },
-                  { id: 'DAST_Offensive', label: '🎯 DAST & Web Security' },
-                  { id: 'Cyber_Prediction', label: '⚡ Cyber Defense & Prediction' },
-                  { id: 'Productivity_Notes', label: '📓 Productivity & Field Notes' },
-                  { id: 'Portals_Launchpads', label: '🚀 Enterprise Portals & Launchpads' }
+                  { id: 'All', label: 'All Categories' },
+                  { id: 'Compliance_RMF', label: 'Federal Compliance & RMF' },
+                  { id: 'DAST_Offensive', label: 'DAST & Web Security' },
+                  { id: 'Cyber_Prediction', label: 'Cyber Defense & Prediction' },
+                  { id: 'Productivity_Notes', label: 'Productivity & Field Notes' },
+                  { id: 'Portals_Launchpads', label: 'Enterprise Portals & Launchpads' }
                 ].map((catFilter) => {
                   const isActive = selectedSubCategory === catFilter.id
                   return (
@@ -1955,10 +1941,11 @@ export function MarketplaceView({
                       key={catFilter.id}
                       type="button"
                       onClick={() => setSelectedSubCategory(catFilter.id)}
+                      style={isActive ? { color: '#FBF8F3' } : undefined}
                       className={`rounded-full px-3 py-1 text-[11px] font-bold transition-all cursor-pointer ${
                         isActive
-                          ? "bg-[#0A66C2] text-white shadow-xs"
-                          : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                          ? "bg-[#7C4225] text-[#FBF8F3] shadow-xs"
+                          : "bg-[#EFE8DA] dark:bg-zinc-800 text-[#57534E] dark:text-zinc-300 hover:bg-[#E5DEC9] dark:hover:bg-zinc-700"
                       }`}
                     >
                       {catFilter.label}
@@ -1975,33 +1962,32 @@ export function MarketplaceView({
                 onClick={() => setSelectedSubCategory(selectedSubCategory === 'Compliance_RMF' ? 'All' : 'Compliance_RMF')}
                 className={`rounded-xl border p-3.5 transition-all cursor-pointer flex flex-col justify-between space-y-2.5 ${
                   selectedSubCategory === 'Compliance_RMF'
-                    ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/30 ring-2 ring-emerald-500/30"
-                    : "border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/40 hover:border-emerald-400"
+                    ? "border-[#7C4225] bg-[#F5EFE4] dark:bg-zinc-800 ring-1 ring-[#7C4225]/30"
+                    : "border-[#DDD3C2] dark:border-zinc-800 bg-white/70 dark:bg-zinc-800/40 hover:border-[#7C4225]/50"
                 }`}
               >
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-lg">🛡️</span>
-                    <span className="rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 text-[9px] font-bold uppercase">
+                    <span className="rounded-md bg-[#EFE8DA] text-[#5E3119] border border-[#DDD3C2] dark:bg-zinc-800 dark:text-zinc-300 px-2 py-0.5 text-[9px] font-bold uppercase">
                       DoDI 8510.01 · NISP
                     </span>
                   </div>
-                  <h4 className="font-bold text-xs text-zinc-900 dark:text-zinc-100">
+                  <h4 className="font-bold text-xs text-[#292521] dark:text-zinc-100">
                     1. Federal Compliance &amp; DoD RMF
                   </h4>
-                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-snug">
+                  <p className="text-[11px] text-[#57534E] dark:text-zinc-400 leading-snug">
                     Aagiis DoD RMF, DCSA NISP (32 CFR Part 117), DISA STIG &amp; cATO governance.
                   </p>
                 </div>
-                <div className="pt-2 border-t border-zinc-200/70 dark:border-zinc-700/60 flex flex-col gap-1">
+                <div className="pt-2 border-t border-[#E6DEC8] dark:border-zinc-700/60 flex flex-col gap-1">
                   <a
                     href="https://aagiis.com/"
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 hover:underline flex items-center justify-between"
+                    className="text-[11px] font-bold text-[#7C4225] dark:text-amber-300 hover:underline flex items-center justify-between"
                   >
-                    <span>🛡️ Aagiis Platform</span>
+                    <span>Aagiis Platform</span>
                     <span>aagiis.com ↗</span>
                   </a>
                 </div>
@@ -2012,33 +1998,32 @@ export function MarketplaceView({
                 onClick={() => setSelectedSubCategory(selectedSubCategory === 'DAST_Offensive' ? 'All' : 'DAST_Offensive')}
                 className={`rounded-xl border p-3.5 transition-all cursor-pointer flex flex-col justify-between space-y-2.5 ${
                   selectedSubCategory === 'DAST_Offensive'
-                    ? "border-orange-500 bg-orange-50/50 dark:bg-orange-950/30 ring-2 ring-orange-500/30"
-                    : "border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/40 hover:border-orange-400"
+                    ? "border-[#7C4225] bg-[#F5EFE4] dark:bg-zinc-800 ring-1 ring-[#7C4225]/30"
+                    : "border-[#DDD3C2] dark:border-zinc-800 bg-white/70 dark:bg-zinc-800/40 hover:border-[#7C4225]/50"
                 }`}
               >
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-lg">🎯</span>
-                    <span className="rounded-full bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300 px-2 py-0.5 text-[9px] font-bold uppercase">
+                    <span className="rounded-md bg-[#EFE8DA] text-[#5E3119] border border-[#DDD3C2] dark:bg-zinc-800 dark:text-zinc-300 px-2 py-0.5 text-[9px] font-bold uppercase">
                       XTRIKE &amp; Aegis.SOC
                     </span>
                   </div>
-                  <h4 className="font-bold text-xs text-zinc-900 dark:text-zinc-100">
+                  <h4 className="font-bold text-xs text-[#292521] dark:text-zinc-100">
                     2. DAST &amp; Web Security
                   </h4>
-                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-snug">
+                  <p className="text-[11px] text-[#57534E] dark:text-zinc-400 leading-snug">
                     EXPEDITE STRIKE™ Live DAST Engine (/engine) &amp; Vulnerability Scanner.
                   </p>
                 </div>
-                <div className="pt-2 border-t border-zinc-200/70 dark:border-zinc-700/60 flex flex-col gap-1">
+                <div className="pt-2 border-t border-[#E6DEC8] dark:border-zinc-700/60 flex flex-col gap-1">
                   <a
                     href="https://11-dast-security-platform.vercel.app/engine"
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="text-[11px] font-bold text-orange-700 dark:text-orange-400 hover:underline flex items-center justify-between"
+                    className="text-[11px] font-bold text-[#7C4225] dark:text-amber-300 hover:underline flex items-center justify-between"
                   >
-                    <span>🎯 DAST Engine</span>
+                    <span>DAST Engine</span>
                     <span>/engine ↗</span>
                   </a>
                   <a
@@ -2046,9 +2031,9 @@ export function MarketplaceView({
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-300 hover:underline flex items-center justify-between"
+                    className="text-[11px] font-semibold text-[#57534E] dark:text-zinc-300 hover:underline flex items-center justify-between"
                   >
-                    <span>🌐 Main Landing</span>
+                    <span>Main Landing</span>
                     <span>Platform ↗</span>
                   </a>
                 </div>
@@ -2059,33 +2044,32 @@ export function MarketplaceView({
                 onClick={() => setSelectedSubCategory(selectedSubCategory === 'Cyber_Prediction' ? 'All' : 'Cyber_Prediction')}
                 className={`rounded-xl border p-3.5 transition-all cursor-pointer flex flex-col justify-between space-y-2.5 ${
                   selectedSubCategory === 'Cyber_Prediction'
-                    ? "border-violet-500 bg-violet-50/50 dark:bg-violet-950/30 ring-2 ring-violet-500/30"
-                    : "border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/40 hover:border-violet-400"
+                    ? "border-[#7C4225] bg-[#F5EFE4] dark:bg-zinc-800 ring-1 ring-[#7C4225]/30"
+                    : "border-[#DDD3C2] dark:border-zinc-800 bg-white/70 dark:bg-zinc-800/40 hover:border-[#7C4225]/50"
                 }`}
               >
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-lg">🔮</span>
-                    <span className="rounded-full bg-violet-100 dark:bg-violet-950 text-violet-800 dark:text-violet-300 px-2 py-0.5 text-[9px] font-bold uppercase">
+                    <span className="rounded-md bg-[#EFE8DA] text-[#5E3119] border border-[#DDD3C2] dark:bg-zinc-800 dark:text-zinc-300 px-2 py-0.5 text-[9px] font-bold uppercase">
                       DSTRIKE &amp; Noctis
                     </span>
                   </div>
-                  <h4 className="font-bold text-xs text-zinc-900 dark:text-zinc-100">
+                  <h4 className="font-bold text-xs text-[#292521] dark:text-zinc-100">
                     3. Cyber Defense &amp; Prediction
                   </h4>
-                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-snug">
+                  <p className="text-[11px] text-[#57534E] dark:text-zinc-400 leading-snug">
                     DSTRIKE Autonomous Cyber Defense &amp; Noctis Threat Prediction Desk.
                   </p>
                 </div>
-                <div className="pt-2 border-t border-zinc-200/70 dark:border-zinc-700/60 flex flex-col gap-1">
+                <div className="pt-2 border-t border-[#E6DEC8] dark:border-zinc-700/60 flex flex-col gap-1">
                   <a
                     href="https://dstrike.app"
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="text-[11px] font-bold text-violet-700 dark:text-violet-400 hover:underline flex items-center justify-between"
+                    className="text-[11px] font-bold text-[#7C4225] dark:text-amber-300 hover:underline flex items-center justify-between"
                   >
-                    <span>⚡ Main App</span>
+                    <span>Main App</span>
                     <span>dstrike.app ↗</span>
                   </a>
                   <button
@@ -2098,9 +2082,9 @@ export function MarketplaceView({
                         scrollToHub: true
                       })
                     }}
-                    className="text-[11px] font-semibold text-fuchsia-700 dark:text-fuchsia-400 hover:underline flex items-center justify-between cursor-pointer text-left"
+                    className="text-[11px] font-semibold text-[#57534E] dark:text-zinc-300 hover:underline flex items-center justify-between cursor-pointer text-left"
                   >
-                    <span>✨ Ask Noctis</span>
+                    <span>Ask Noctis</span>
                     <span>In-App Pitch →</span>
                   </button>
                 </div>
@@ -2111,33 +2095,32 @@ export function MarketplaceView({
                 onClick={() => setSelectedSubCategory(selectedSubCategory === 'Productivity_Notes' ? 'All' : 'Productivity_Notes')}
                 className={`rounded-xl border p-3.5 transition-all cursor-pointer flex flex-col justify-between space-y-2.5 ${
                   selectedSubCategory === 'Productivity_Notes'
-                    ? "border-lime-500 bg-lime-50/50 dark:bg-lime-950/30 ring-2 ring-lime-500/30"
-                    : "border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/40 hover:border-lime-400"
+                    ? "border-[#7C4225] bg-[#F5EFE4] dark:bg-zinc-800 ring-1 ring-[#7C4225]/30"
+                    : "border-[#DDD3C2] dark:border-zinc-800 bg-white/70 dark:bg-zinc-800/40 hover:border-[#7C4225]/50"
                 }`}
               >
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-lg">📓</span>
-                    <span className="rounded-full bg-lime-100 dark:bg-lime-950 text-lime-800 dark:text-lime-300 px-2 py-0.5 text-[9px] font-bold uppercase">
+                    <span className="rounded-md bg-[#EFE8DA] text-[#5E3119] border border-[#DDD3C2] dark:bg-zinc-800 dark:text-zinc-300 px-2 py-0.5 text-[9px] font-bold uppercase">
                       E2EE Workspace
                     </span>
                   </div>
-                  <h4 className="font-bold text-xs text-zinc-900 dark:text-zinc-100">
+                  <h4 className="font-bold text-xs text-[#292521] dark:text-zinc-100">
                     4. Productivity &amp; Field Notes
                   </h4>
-                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-snug">
+                  <p className="text-[11px] text-[#57534E] dark:text-zinc-400 leading-snug">
                     DeskNote E2EE digital notebook, voice logs &amp; PDFAdore utilities.
                   </p>
                 </div>
-                <div className="pt-2 border-t border-zinc-200/70 dark:border-zinc-700/60 flex flex-col gap-1">
+                <div className="pt-2 border-t border-[#E6DEC8] dark:border-zinc-700/60 flex flex-col gap-1">
                   <a
                     href="https://desk-note-lime.vercel.app/"
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="text-[11px] font-bold text-lime-700 dark:text-lime-400 hover:underline flex items-center justify-between"
+                    className="text-[11px] font-bold text-[#7C4225] dark:text-amber-300 hover:underline flex items-center justify-between"
                   >
-                    <span>📓 DeskNote Live</span>
+                    <span>DeskNote Live</span>
                     <span>desk-note ↗</span>
                   </a>
                   <a
@@ -2145,9 +2128,9 @@ export function MarketplaceView({
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 hover:underline flex items-center justify-between"
+                    className="text-[11px] font-semibold text-[#57534E] dark:text-zinc-300 hover:underline flex items-center justify-between"
                   >
-                    <span>📄 PDFAdore</span>
+                    <span>PDFAdore</span>
                     <span>pdfadore.com ↗</span>
                   </a>
                 </div>
@@ -2158,33 +2141,32 @@ export function MarketplaceView({
                 onClick={() => setSelectedSubCategory(selectedSubCategory === 'Portals_Launchpads' ? 'All' : 'Portals_Launchpads')}
                 className={`rounded-xl border p-3.5 transition-all cursor-pointer flex flex-col justify-between space-y-2.5 ${
                   selectedSubCategory === 'Portals_Launchpads'
-                    ? "border-sky-500 bg-sky-50/50 dark:bg-sky-950/30 ring-2 ring-sky-500/30"
-                    : "border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/40 hover:border-sky-400"
+                    ? "border-[#7C4225] bg-[#F5EFE4] dark:bg-zinc-800 ring-1 ring-[#7C4225]/30"
+                    : "border-[#DDD3C2] dark:border-zinc-800 bg-white/70 dark:bg-zinc-800/40 hover:border-[#7C4225]/50"
                 }`}
               >
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-lg">🏛️</span>
-                    <span className="rounded-full bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 px-2 py-0.5 text-[9px] font-bold uppercase">
+                    <span className="rounded-md bg-[#EFE8DA] text-[#5E3119] border border-[#DDD3C2] dark:bg-zinc-800 dark:text-zinc-300 px-2 py-0.5 text-[9px] font-bold uppercase">
                       Official Flagship
                     </span>
                   </div>
-                  <h4 className="font-bold text-xs text-zinc-900 dark:text-zinc-100">
+                  <h4 className="font-bold text-xs text-[#292521] dark:text-zinc-100">
                     5. Portals &amp; Launchpads
                   </h4>
-                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-snug">
+                  <p className="text-[11px] text-[#57534E] dark:text-zinc-400 leading-snug">
                     Expedite Consults Official Portal &amp; Sphera Live Production Launchpad.
                   </p>
                 </div>
-                <div className="pt-2 border-t border-zinc-200/70 dark:border-zinc-700/60 flex flex-col gap-1">
+                <div className="pt-2 border-t border-[#E6DEC8] dark:border-zinc-700/60 flex flex-col gap-1">
                   <a
                     href="https://www.expediteconsults.com"
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="text-[11px] font-bold text-[#0A66C2] dark:text-sky-400 hover:underline flex items-center justify-between"
+                    className="text-[11px] font-bold text-[#7C4225] dark:text-amber-300 hover:underline flex items-center justify-between"
                   >
-                    <span>🏛️ Expedite Consults</span>
+                    <span>Expedite Consults</span>
                     <span>Official ↗</span>
                   </a>
                   <a
@@ -2192,9 +2174,9 @@ export function MarketplaceView({
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center justify-between"
+                    className="text-[11px] font-semibold text-[#57534E] dark:text-zinc-300 hover:underline flex items-center justify-between"
                   >
-                    <span>🚀 Sphera Launchpad</span>
+                    <span>Sphera Launchpad</span>
                     <span>Live Portal ↗</span>
                   </a>
                 </div>
@@ -2206,24 +2188,24 @@ export function MarketplaceView({
             {filteredProducts.map((product) => (
               <div
                 key={product.id}
-                className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs hover:border-[#0A66C2] hover:shadow-lg transition-all dark:border-zinc-800 dark:bg-zinc-900 flex flex-col justify-between space-y-4 relative overflow-hidden"
+                className="rounded-2xl border border-[#DDD3C2] bg-[#FBF8F3] p-5 shadow-xs hover:border-[#7C4225]/60 hover:shadow-md transition-all dark:border-zinc-800 dark:bg-zinc-900 flex flex-col justify-between space-y-4 relative overflow-hidden"
               >
                 <div className="space-y-3">
                   {/* Top Badges Strip */}
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="rounded-md bg-blue-50 dark:bg-blue-950/60 text-[#0A66C2] dark:text-sky-300 border border-blue-200/70 dark:border-blue-800/70 px-2 py-0.5 text-[10px] font-bold">
-                        📂 {product.category} · {product.subCategory}
+                      <span className="rounded-md bg-[#EFE8DA] dark:bg-zinc-800 text-[#5E3119] dark:text-zinc-300 border border-[#DDD3C2] dark:border-zinc-700 px-2 py-0.5 text-[10px] font-bold">
+                        {product.category} · {product.subCategory}
                       </span>
                       {product.isVercelLive && (
-                        <span className="rounded-md bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-400/40 px-2 py-0.5 text-[10px] font-mono font-bold">
-                          ☁️ LIVE
+                        <span className="rounded-md bg-[#F3EDE2] text-[#78716C] dark:bg-zinc-800 dark:text-zinc-400 border border-[#DDD3C2] dark:border-zinc-700 px-2 py-0.5 text-[10px] font-mono font-bold">
+                          LIVE
                         </span>
                       )}
                     </div>
 
                     {product.badge && (
-                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-950 dark:text-amber-300 shrink-0">
+                      <span className="rounded-full bg-[#EFE8DA] px-2 py-0.5 text-[10px] font-bold text-[#5E3119] border border-[#DDD3C2] dark:bg-zinc-800 dark:text-zinc-300 shrink-0">
                         {product.badge}
                       </span>
                     )}
@@ -2232,34 +2214,34 @@ export function MarketplaceView({
                   {/* Header */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-3">
-                      <span className="text-3xl">{product.icon}</span>
+                      <span className="text-2xl">{product.icon}</span>
                       <div>
-                        <h4 className="font-bold text-base text-zinc-900 dark:text-zinc-100 leading-tight">
+                        <h4 className="font-bold text-base text-[#292521] dark:text-zinc-100 leading-tight">
                           {product.name}
                         </h4>
-                        <p className="text-xs text-zinc-500 flex items-center gap-1 mt-0.5">
+                        <p className="text-xs text-[#78716C] flex items-center gap-1 mt-0.5">
                           <span>{product.vendor.name}</span>
                           {product.vendor.isVerified && (
-                            <ShieldCheck className="h-3 w-3 text-[#0A66C2]" />
+                            <ShieldCheck className="h-3 w-3 text-[#7C4225]" />
                           )}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-relaxed">
+                  <p className="text-xs text-[#57534E] dark:text-zinc-400 line-clamp-2 leading-relaxed">
                     {product.tagline}
                   </p>
 
                   {/* Architecture & Compliance tags */}
                   <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
                     {product.architecture?.latency && (
-                      <span className="text-[10px] text-zinc-500 font-mono bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded border border-zinc-200 dark:border-zinc-750">
-                        ⚡ {product.architecture.latency}
+                      <span className="text-[10px] text-[#78716C] font-mono bg-[#F3EDE2] dark:bg-zinc-800 px-2 py-0.5 rounded border border-[#DDD3C2] dark:border-zinc-750">
+                        {product.architecture.latency}
                       </span>
                     )}
                     {product.security?.compliance?.slice(0, 2).map((comp, idx) => (
-                      <span key={idx} className="text-[10px] text-zinc-600 dark:text-zinc-400 font-semibold bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-750">
+                      <span key={idx} className="text-[10px] text-[#57534E] dark:text-zinc-400 font-semibold bg-[#F3EDE2] dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-[#DDD3C2] dark:border-zinc-750">
                         {comp}
                       </span>
                     ))}
@@ -2267,23 +2249,23 @@ export function MarketplaceView({
 
                   {/* Pricing and Rating */}
                   <div className="flex items-center justify-between text-xs pt-1">
-                    <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                      {product.pricing.displayPrice} <span className="text-[10px] font-normal text-zinc-400">{product.pricing.billingPeriod}</span>
+                    <span className="font-bold text-[#292521] dark:text-zinc-100">
+                      {product.pricing.displayPrice} <span className="text-[10px] font-normal text-[#78716C]">{product.pricing.billingPeriod}</span>
                     </span>
-                    <span className="text-amber-500 font-bold">
+                    <span className="text-[#7C4225] dark:text-amber-400 font-bold">
                       ★ {product.rating} ({product.reviewsCount})
                     </span>
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2 flex-wrap">
-                  <div className="flex items-center gap-2">
+                <div className="pt-3 border-t border-[#E6DEC8] dark:border-zinc-800 flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2.5">
                     <button
                       onClick={() => {
                         setSelectedProduct(product)
                         setActiveProductTab('overview')
                       }}
-                      className="text-xs font-bold text-[#0A66C2] hover:underline cursor-pointer"
+                      className="text-xs font-bold text-[#7C4225] hover:underline cursor-pointer"
                     >
                       View Details →
                     </button>
@@ -2298,10 +2280,9 @@ export function MarketplaceView({
                           question: `Give a full marketing and sales deep-dive on ${product.name}: everything it has, what it does, architecture, ROI, and pricing.`
                         })
                       }}
-                      className="rounded-full bg-[#E8F0FE] hover:bg-[#D2E3FC] text-[#1967D2] border border-[#1967D2]/30 px-2.5 py-1 text-[11px] font-extrabold flex items-center gap-1 cursor-pointer transition-all"
+                      className="rounded-lg bg-[#EFE8DA] hover:bg-[#E5DEC9] text-[#5E3119] border border-[#DDD3C2] px-2.5 py-1 text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-all"
                       title={`Ask Noctis AI Sales Agent to pitch and explain ${product.name}`}
                     >
-                      <span>✨</span>
                       <span>Ask Noctis</span>
                     </button>
                   </div>
@@ -2319,10 +2300,10 @@ export function MarketplaceView({
                             window.open(product.liveUrl, '_blank', 'noopener,noreferrer')
                           }
                         }}
-                        className="rounded-full bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-bold shadow-xs transition-all flex items-center gap-1 cursor-pointer"
+                        style={{ color: '#FBF8F3' }}
+                        className="rounded-lg bg-[#7C4225] hover:bg-[#5E3119] text-[#FBF8F3] px-3 py-1.5 text-xs font-bold shadow-xs transition-all flex items-center gap-1 cursor-pointer"
                         title={product.liveUrl}
                       >
-                        <Zap className="h-3 w-3 fill-amber-300 text-amber-300" />
                         <span>Launch Live ↗</span>
                       </button>
                     )}
@@ -2335,7 +2316,7 @@ export function MarketplaceView({
                         href={product.demoUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="rounded-full bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 text-xs font-bold shadow-xs transition-all flex items-center gap-1 cursor-pointer"
+                        className="rounded-lg bg-[#EFE8DA] hover:bg-[#E5DEC9] text-[#5E3119] border border-[#DDD3C2] px-3 py-1.5 text-xs font-bold shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
                         title={product.demoUrl}
                       >
                         <ExternalLink className="h-3 w-3" />
@@ -2351,7 +2332,8 @@ export function MarketplaceView({
 
                     <button
                       onClick={() => handleGenerateLicense(product, 'trial')}
-                      className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-3 py-1.5 text-xs font-bold shadow-xs transition-all cursor-pointer"
+                      className="rounded-lg bg-[#292521] hover:bg-[#1C1917] text-[#FBF8F3] px-3 py-1.5 text-xs font-bold shadow-xs transition-all cursor-pointer"
+                      style={{ color: '#FBF8F3' }}
                     >
                       {product.pricing.hasFreeTrial ? "Free Trial" : "Buy Now"}
                     </button>
