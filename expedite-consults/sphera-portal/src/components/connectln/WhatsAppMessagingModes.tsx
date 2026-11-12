@@ -17,10 +17,13 @@ export interface StatusUpdateItem {
     authorAvatar: string;
     timestampLabel: string;
     viewed: boolean;
-    mediaType: 'text' | 'photo';
+    mediaType: 'text' | 'photo' | 'video';
     text: string;
     bgColor?: string;
     imageUrl?: string;
+    videoUrl?: string;
+    videoDuration?: string;
+    videoTitle?: string;
     professionTag?: string;
 }
 
@@ -67,6 +70,39 @@ export interface ArchivedChatEntry {
     subtitle?: string;
 }
 
+const STATUS_VIDEO_PRESETS = [
+    {
+        label: 'City & Site Architecture Reel',
+        videoUrl: '/status-videos/spot.mp4',
+        posterUrl: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=900',
+    },
+    {
+        label: 'Executive Property Walkthrough',
+        videoUrl: '/status-videos/realtor.mp4',
+        posterUrl: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=900',
+    },
+    {
+        label: 'Clinical & Biomedical Bench Reel',
+        videoUrl: '/status-videos/physician.mp4',
+        posterUrl: 'https://images.unsplash.com/photo-1579154204601-01588f351e67?w=900',
+    },
+    {
+        label: 'Systems & Software Build Clip',
+        videoUrl: '/status-videos/developer.mp4',
+        posterUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=900',
+    },
+    {
+        label: 'AI Agentic Flywheel Telemetry',
+        videoUrl: '/status-videos/agentic_flywheel.mp4',
+        posterUrl: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=900',
+    },
+    {
+        label: 'Aerospace & Orbital Telemetry',
+        videoUrl: '/status-videos/nasa_space.mp4',
+        posterUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=900',
+    },
+];
+
 const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
     {
         id: 'st_boat',
@@ -74,9 +110,13 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
         timestampLabel: 'Today at 1:58 PM',
         viewed: false,
-        mediaType: 'photo',
-        text: 'New site delivery & structural blueprint inspection complete — ready for phase 2.',
+        mediaType: 'video',
+        videoUrl: '/status-videos/spot.mp4',
+        videoDuration: '0:18',
+        videoTitle: 'Downtown Site & Structural Corridor Walkthrough',
+        text: 'New site delivery & structural blueprint inspection complete — ready for phase 2 commissioning.',
         imageUrl: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=900',
+        bgColor: 'linear-gradient(135deg, #292521 0%, #3d3730 100%)',
         professionTag: 'Field Operations',
     },
     {
@@ -85,8 +125,12 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         authorAvatar: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=150',
         timestampLabel: 'Today at 12:14 PM',
         viewed: false,
-        mediaType: 'text',
-        text: '🚀 Live Cloud Security & Zero-Trust Lab cohort starts at 4:00 PM EST! Drop a message to join.',
+        mediaType: 'video',
+        videoUrl: '/status-videos/k8s_ebpf.mp4',
+        videoDuration: '0:24',
+        videoTitle: 'Live Cloud Cluster & Runtime Telemetry Lab',
+        text: 'Live Cloud Security & Zero-Trust runtime lab cohort starts at 4:00 PM EST! Drop a message to join.',
+        imageUrl: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=900',
         bgColor: 'linear-gradient(135deg, #5e3119 0%, #7c4225 55%, #3d3730 100%)',
         professionTag: 'Cyber & IT Training',
     },
@@ -96,9 +140,13 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         authorAvatar: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=150',
         timestampLabel: 'Today at 7:56 AM',
         viewed: false,
-        mediaType: 'photo',
-        text: 'Commercial interior & executive office collection now in stock for regional contractors.',
+        mediaType: 'video',
+        videoUrl: '/status-videos/realtor.mp4',
+        videoDuration: '0:22',
+        videoTitle: 'Commercial Interior & Executive Suite Walkthrough',
+        text: 'Commercial interior & executive office collection now in stock for regional contractors and design teams.',
         imageUrl: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=900',
+        bgColor: 'linear-gradient(135deg, #3b1e10 0%, #5e3119 100%)',
         professionTag: 'Commercial Furnishings',
     },
     {
@@ -107,8 +155,12 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
         timestampLabel: 'Today at 2:10 PM',
         viewed: false,
-        mediaType: 'text',
-        text: 'On-site commissioning wrapped ahead of schedule. Grateful for the entire crew! ⚡',
+        mediaType: 'video',
+        videoUrl: '/status-videos/developer.mp4',
+        videoDuration: '0:16',
+        videoTitle: 'Control Systems & Automation Build Verification',
+        text: 'On-site systems commissioning wrapped ahead of schedule. Grateful for the entire engineering crew!',
+        imageUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=900',
         bgColor: 'linear-gradient(135deg, #3b1e10 0%, #7c4225 100%)',
         professionTag: 'Systems Engineering',
     },
@@ -118,9 +170,14 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         authorAvatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150',
         timestampLabel: 'Today at 10:35 AM',
         viewed: true,
-        mediaType: 'text',
-        text: 'Reviewing Q4 procurement tenders and supplier SLA renewals today.',
+        mediaType: 'video',
+        videoUrl: '/status-videos/calc.mp4',
+        videoDuration: '0:20',
+        videoTitle: 'Q4 Engineering Cost & Tender Modeling',
+        text: 'Reviewing Q4 procurement tenders, structural load calculations, and supplier SLA renewals today.',
+        imageUrl: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=900',
         bgColor: 'linear-gradient(135deg, #3d3730 0%, #524b42 100%)',
+        professionTag: 'Procurement & Estimation',
     },
     {
         id: 'st_mike_mukasa',
@@ -128,9 +185,14 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         authorAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
         timestampLabel: 'Today at 9:29 AM',
         viewed: true,
-        mediaType: 'photo',
-        text: 'Morning team briefing at the central workshop.',
+        mediaType: 'video',
+        videoUrl: '/status-videos/scenario_drill.mp4',
+        videoDuration: '0:25',
+        videoTitle: 'Central Workshop & Operations Readiness Briefing',
+        text: 'Morning team briefing and live scenario readiness check at the central workshop.',
         imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=900',
+        bgColor: 'linear-gradient(135deg, #292521 0%, #443c34 100%)',
+        professionTag: 'Workshop Operations',
     },
     {
         id: 'st_suzzan',
@@ -138,9 +200,14 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         authorAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
         timestampLabel: 'Today at 9:02 AM',
         viewed: true,
-        mediaType: 'photo',
-        text: 'New commercial property listing open for walkthroughs this week.',
+        mediaType: 'video',
+        videoUrl: '/status-videos/nasa_space.mp4',
+        videoDuration: '0:30',
+        videoTitle: 'Global Commercial Corridor & Aerial Overview',
+        text: 'New commercial property portfolio & executive campus listings open for private walkthroughs this week.',
         imageUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=900',
+        bgColor: 'linear-gradient(135deg, #292521 0%, #5e3119 100%)',
+        professionTag: 'Commercial Real Estate',
     },
     {
         id: 'st_naana',
@@ -148,9 +215,14 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         authorAvatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150',
         timestampLabel: 'Today at 7:03 AM',
         viewed: true,
-        mediaType: 'text',
-        text: 'Blessed morning! Wishing everyone a productive Thursday.',
+        mediaType: 'video',
+        videoUrl: '/status-videos/hallelujah_choir.mp4',
+        videoDuration: '0:28',
+        videoTitle: 'Morning Inspiration & Harmony Session',
+        text: 'Blessed morning! Wishing everyone an uplifting and productive Thursday.',
+        imageUrl: 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=900',
         bgColor: 'linear-gradient(135deg, #63331b 0%, #8a4b29 100%)',
+        professionTag: 'Community & Culture',
     },
     {
         id: 'st_branding',
@@ -158,9 +230,14 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         authorAvatar: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=150',
         timestampLabel: 'Today at 4:54 AM',
         viewed: true,
-        mediaType: 'text',
-        text: 'Updated brand identity assets uploaded to the shared project folder.',
+        mediaType: 'video',
+        videoUrl: '/status-videos/bounce.mp4',
+        videoDuration: '0:21',
+        videoTitle: 'Brand Identity Motion Reel & Visual Campaign',
+        text: 'Updated brand identity motion reel and visual campaign assets uploaded to the shared project folder.',
+        imageUrl: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=900',
         bgColor: 'linear-gradient(135deg, #292521 0%, #524b42 100%)',
+        professionTag: 'Creative Direction',
     },
     {
         id: 'st_ob',
@@ -168,9 +245,14 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         authorAvatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150',
         timestampLabel: 'Today at 4:12 AM',
         viewed: true,
-        mediaType: 'text',
-        text: 'Early shift diagnostics complete.',
+        mediaType: 'video',
+        videoUrl: '/status-videos/run.mp4',
+        videoDuration: '0:19',
+        videoTitle: 'Early Shift Field Run & Diagnostics',
+        text: 'Early shift field run & morning diagnostics complete — all systems green for today.',
+        imageUrl: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=900',
         bgColor: 'linear-gradient(135deg, #1c1917 0%, #3d3730 100%)',
+        professionTag: 'Field Diagnostics',
     },
 ];
 
@@ -565,12 +647,13 @@ export function WhatsAppModeWorkspace({
 
     // ---- STATUS STATE ----
     const [statusList, setStatusList] = useState<StatusUpdateItem[]>(INITIAL_STATUS_UPDATES);
-    const [activeStatusId, setActiveStatusId] = useState<string | null>(null);
+    const [activeStatusId, setActiveStatusId] = useState<string | null>('st_boat');
     const [statusComposerMode, setStatusComposerMode] = useState<'text' | 'photo' | null>(null);
     const [statusDraftText, setStatusDraftText] = useState('');
     const [statusDraftImage, setStatusDraftImage] = useState(
         'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=900'
     );
+    const [statusDraftVideo, setStatusDraftVideo] = useState('/status-videos/physician.mp4');
     const [statusBgColor, setStatusBgColor] = useState(
         'linear-gradient(135deg, #5e3119 0%, #7c4225 55%, #3d3730 100%)'
     );
@@ -611,6 +694,9 @@ export function WhatsAppModeWorkspace({
         const recentStatuses = statusList.filter((s) => !s.viewed);
         const viewedStatuses = statusList.filter((s) => s.viewed);
         const activeStatus = statusList.find((s) => s.id === activeStatusId) || null;
+        const activeIndex = activeStatus
+            ? statusList.findIndex((s) => s.id === activeStatus.id)
+            : -1;
 
         const handleOpenStatus = (item: StatusUpdateItem) => {
             setActiveStatusId(item.id);
@@ -620,19 +706,44 @@ export function WhatsAppModeWorkspace({
             );
         };
 
+        const handleStepStatus = (delta: number) => {
+            if (!statusList.length) return;
+            const nextIdx =
+                activeIndex >= 0
+                    ? (activeIndex + delta + statusList.length) % statusList.length
+                    : 0;
+            handleOpenStatus(statusList[nextIdx]);
+        };
+
         const handlePublishStatus = (e: React.FormEvent) => {
             e.preventDefault();
-            if (!statusDraftText.trim()) return;
+            if (!statusDraftText.trim() && statusComposerMode !== 'photo') return;
+            const isVideoDraft =
+                statusComposerMode === 'photo' &&
+                Boolean(
+                    statusDraftVideo &&
+                        (statusDraftVideo.endsWith('.mp4') || statusDraftVideo.endsWith('.webm'))
+                );
             const newStatus: StatusUpdateItem = {
                 id: `st_me_${Date.now()}`,
                 authorName: `${userName} (My Status)`,
                 authorAvatar: userAvatar,
                 timestampLabel: 'Just now',
                 viewed: false,
-                mediaType: statusComposerMode === 'photo' ? 'photo' : 'text',
-                text: statusDraftText.trim(),
+                mediaType:
+                    statusComposerMode === 'photo'
+                        ? isVideoDraft
+                            ? 'video'
+                            : 'photo'
+                        : 'text',
+                text:
+                    statusDraftText.trim() ||
+                    'New 24-hour ConnectLn video status update.',
                 bgColor: statusBgColor,
                 imageUrl: statusComposerMode === 'photo' ? statusDraftImage : undefined,
+                videoUrl: isVideoDraft ? statusDraftVideo : undefined,
+                videoDuration: isVideoDraft ? '0:22' : undefined,
+                videoTitle: isVideoDraft ? 'My 24h Video Status' : undefined,
                 professionTag: 'Verified Status Update',
             };
             setStatusList((prev) => [newStatus, ...prev]);
@@ -645,9 +756,9 @@ export function WhatsAppModeWorkspace({
         return (
             <div className="flex-1 flex flex-col md:flex-row h-full bg-[#FBF8F3] overflow-hidden">
                 {/* Left Column: Status List */}
-                <div className="w-full md:w-[360px] border-r border-[#E0D6C5] flex flex-col h-full bg-[#FBF8F3] shrink-0">
-                    {/* Header */}
-                    <div className="px-4 py-3.5 flex items-center justify-between border-b border-[#E0D6C5]/60">
+                <div className="w-full md:w-[360px] border-r border-[#E0D6C5] flex flex-col h-full bg-[#FBF8F3] shrink-0 overflow-hidden">
+                    {/* Header (shrink-0 prevents overlap) */}
+                    <div className="px-4 py-3.5 flex items-center justify-between border-b border-[#E0D6C5]/60 shrink-0 bg-[#FBF8F3]">
                         <div className="flex items-center gap-2">
                             <span
                                 className="w-6 h-6 rounded-lg bg-[#7C4225] flex items-center justify-center text-[11px] font-bold shadow-2xs"
@@ -655,16 +766,21 @@ export function WhatsAppModeWorkspace({
                             >
                                 ✦
                             </span>
-                            <h2 className="text-xl font-bold text-[#1C1917]">Status</h2>
+                            <h2 className="text-xl font-bold text-[#1C1917]" translate="no">
+                                Status
+                            </h2>
+                            <span className="rounded-md bg-[#EFE8DA] border border-[#D8CEBE] px-2 py-0.5 text-[10px] font-bold text-[#5E3119]">
+                                {statusList.length} Videos
+                            </span>
                         </div>
                         <div className="flex items-center gap-1.5">
                             <button
                                 type="button"
                                 onClick={() => {
                                     setActiveStatusId(null);
-                                    setStatusComposerMode('text');
+                                    setStatusComposerMode('photo');
                                 }}
-                                title="Publish new ConnectLn Status"
+                                title="Publish new ConnectLn Video or Text Status"
                                 className="w-8 h-8 rounded-xl bg-[#EFE8DA] hover:bg-[#E2D9C8] border border-[#D0C4AE] flex items-center justify-center text-[#5E3119] cursor-pointer transition-colors"
                             >
                                 {/* ConnectLn Diamond Sparkle + Nib Seal */}
@@ -678,7 +794,7 @@ export function WhatsAppModeWorkspace({
                                     setActiveStatusId(null);
                                     setStatusComposerMode(null);
                                 }}
-                                title="Status privacy & options"
+                                title="View all 24h Status Video Reels"
                                 className="w-8 h-8 rounded-xl bg-[#EFE8DA] hover:bg-[#E2D9C8] border border-[#D0C4AE] flex items-center justify-center text-[#57534E] cursor-pointer transition-colors"
                             >
                                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -690,14 +806,14 @@ export function WhatsAppModeWorkspace({
                         </div>
                     </div>
 
-                    {/* My Status Row */}
-                    <div className="px-2 py-2">
+                    {/* My Status Row (shrink-0 prevents scroll list from clipping under My status) */}
+                    <div className="px-2 py-2 border-b border-[#E0D6C5]/50 shrink-0 bg-[#FBF8F3]">
                         <div
                             onClick={() => {
                                 setActiveStatusId(null);
-                                setStatusComposerMode('text');
+                                setStatusComposerMode('photo');
                             }}
-                            className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-[#EFE8DA]/70 cursor-pointer transition-colors"
+                            className="flex items-center gap-3 p-2 rounded-xl hover:bg-[#EFE8DA]/70 cursor-pointer transition-colors"
                         >
                             <div className="relative shrink-0">
                                 <img
@@ -712,29 +828,31 @@ export function WhatsAppModeWorkspace({
                                     ✦
                                 </span>
                             </div>
-                            <div className="min-w-0">
+                            <div className="min-w-0 flex-1">
                                 <p className="text-sm font-semibold text-[#1C1917]">My status</p>
-                                <p className="text-xs text-[#78716C]">Click to add status update</p>
+                                <p className="text-xs text-[#78716C] truncate">
+                                    Click to share a 24h video or text status
+                                </p>
                             </div>
                         </div>
                     </div>
 
                     {/* Scrollable Recent & Viewed Lists */}
-                    <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-4">
+                    <div className="flex-1 min-h-0 overflow-y-auto px-2 py-2.5 space-y-4">
                         {recentStatuses.length > 0 && (
                             <div>
-                                <p className="px-2.5 py-1.5 text-xs font-semibold text-[#78716C] uppercase tracking-wider">
-                                    Recent
+                                <p className="px-2.5 py-1 text-[11px] font-bold text-[#78716C] uppercase tracking-wider">
+                                    Recent ({recentStatuses.length})
                                 </p>
-                                <div className="space-y-0.5">
+                                <div className="space-y-1">
                                     {recentStatuses.map((st) => (
                                         <div
                                             key={st.id}
                                             onClick={() => handleOpenStatus(st)}
                                             className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition-colors ${
                                                 activeStatusId === st.id
-                                                    ? 'bg-[#EFE8DA]'
-                                                    : 'hover:bg-[#F6F1E7]'
+                                                    ? 'bg-[#EFE8DA] border border-[#D8CEBE]'
+                                                    : 'hover:bg-[#F6F1E7] border border-transparent'
                                             }`}
                                         >
                                             <div className="relative p-0.5 rounded-2xl border-2 border-[#7C4225] shrink-0">
@@ -744,17 +862,27 @@ export function WhatsAppModeWorkspace({
                                                     className="w-10 h-10 rounded-xl object-cover"
                                                 />
                                                 <span
-                                                    className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-md bg-[#7C4225] border border-[#FBF8F3] text-[8px] flex items-center justify-center leading-none"
+                                                    className="absolute -top-1 -right-1 w-4 h-4 rounded-md bg-[#7C4225] border border-[#FBF8F3] text-[8px] flex items-center justify-center leading-none"
                                                     style={{ color: '#FBF8F3' }}
                                                 >
-                                                    ✦
+                                                    ▶
                                                 </span>
                                             </div>
                                             <div className="min-w-0 flex-1">
-                                                <p className="text-sm font-semibold text-[#1C1917] truncate">
-                                                    {st.authorName}
+                                                <div className="flex items-center justify-between gap-1">
+                                                    <p className="text-sm font-semibold text-[#1C1917] truncate">
+                                                        {st.authorName}
+                                                    </p>
+                                                    {st.videoDuration && (
+                                                        <span className="rounded bg-[#EFE8DA] border border-[#D8CEBE] px-1.5 py-0.5 text-[9px] font-mono font-bold text-[#5E3119] shrink-0">
+                                                            ▶ {st.videoDuration}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-[11px] text-[#57534E] truncate">
+                                                    {st.videoTitle || st.text}
                                                 </p>
-                                                <p className="text-xs text-[#78716C]">
+                                                <p className="text-[10px] text-[#78716C]">
                                                     {st.timestampLabel}
                                                 </p>
                                             </div>
@@ -766,32 +894,50 @@ export function WhatsAppModeWorkspace({
 
                         {viewedStatuses.length > 0 && (
                             <div>
-                                <p className="px-2.5 py-1.5 text-xs font-semibold text-[#78716C] uppercase tracking-wider">
-                                    Viewed
+                                <p className="px-2.5 py-1 text-[11px] font-bold text-[#78716C] uppercase tracking-wider">
+                                    Viewed ({viewedStatuses.length})
                                 </p>
-                                <div className="space-y-0.5">
+                                <div className="space-y-1">
                                     {viewedStatuses.map((st) => (
                                         <div
                                             key={st.id}
                                             onClick={() => handleOpenStatus(st)}
                                             className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition-colors ${
                                                 activeStatusId === st.id
-                                                    ? 'bg-[#EFE8DA]'
-                                                    : 'hover:bg-[#F6F1E7]'
+                                                    ? 'bg-[#EFE8DA] border border-[#D8CEBE]'
+                                                    : 'hover:bg-[#F6F1E7] border border-transparent'
                                             }`}
                                         >
-                                            <div className="p-0.5 rounded-2xl border-2 border-[#D0C4AE] shrink-0">
+                                            <div className="relative p-0.5 rounded-2xl border-2 border-[#D0C4AE] shrink-0">
                                                 <img
                                                     src={st.authorAvatar}
                                                     alt={st.authorName}
                                                     className="w-10 h-10 rounded-xl object-cover"
                                                 />
+                                                {st.videoUrl && (
+                                                    <span
+                                                        className="absolute -bottom-1 -right-1 w-4 h-4 rounded-md bg-[#57534E] border border-[#FBF8F3] text-[8px] flex items-center justify-center leading-none"
+                                                        style={{ color: '#FBF8F3' }}
+                                                    >
+                                                        ▶
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="min-w-0 flex-1">
-                                                <p className="text-sm font-medium text-[#1C1917] truncate">
-                                                    {st.authorName}
+                                                <div className="flex items-center justify-between gap-1">
+                                                    <p className="text-sm font-medium text-[#1C1917] truncate">
+                                                        {st.authorName}
+                                                    </p>
+                                                    {st.videoDuration && (
+                                                        <span className="rounded bg-[#F3EDE2] border border-[#DDD3C2] px-1.5 py-0.5 text-[9px] font-mono font-semibold text-[#57534E] shrink-0">
+                                                            ▶ {st.videoDuration}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-[11px] text-[#57534E] truncate">
+                                                    {st.videoTitle || st.text}
                                                 </p>
-                                                <p className="text-xs text-[#78716C]">
+                                                <p className="text-[10px] text-[#78716C]">
                                                     {st.timestampLabel}
                                                 </p>
                                             </div>
@@ -803,15 +949,15 @@ export function WhatsAppModeWorkspace({
                     </div>
                 </div>
 
-                {/* Right Column: Share Statuses Canvas / Active Status Viewer / Composer */}
-                <div className="flex-1 bg-[#F3EDE2] flex flex-col items-center justify-center p-6 relative overflow-y-auto">
+                {/* Right Column: Share Statuses Canvas / Active Video Status Viewer / Composer */}
+                <div className="flex-1 bg-[#F3EDE2] flex flex-col items-center justify-between p-4 sm:p-6 relative overflow-y-auto">
                     {statusComposerMode ? (
-                        <div className="w-full max-w-lg bg-[#FBF8F3] rounded-2xl shadow-lg border border-[#E0D6C5] p-6 animate-in fade-in">
+                        <div className="w-full max-w-xl bg-[#FBF8F3] rounded-2xl shadow-lg border border-[#E0D6C5] p-6 my-auto animate-in fade-in">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-base font-bold text-[#1C1917]">
                                     {statusComposerMode === 'text'
-                                        ? '✏️ Create Text Status (24h)'
-                                        : '📷 Share Photo & Video Status (24h)'}
+                                        ? 'Create Text Status (24h)'
+                                        : 'Share Video & Photo Status (24h)'}
                                 </h3>
                                 <button
                                     type="button"
@@ -823,22 +969,28 @@ export function WhatsAppModeWorkspace({
                             </div>
                             <form onSubmit={handlePublishStatus} className="space-y-4">
                                 <div
-                                    className="rounded-2xl p-6 min-h-[200px] flex flex-col items-center justify-center text-center shadow-inner relative overflow-hidden"
+                                    className="rounded-2xl p-5 min-h-[220px] flex flex-col items-center justify-center text-center shadow-inner relative overflow-hidden"
                                     style={{ background: statusBgColor }}
                                 >
-                                    {statusComposerMode === 'photo' && statusDraftImage && (
-                                        <img
-                                            src={statusDraftImage}
-                                            alt="Preview"
-                                            className="w-full h-40 object-cover rounded-xl mb-3 border border-white/20"
+                                    {statusComposerMode === 'photo' && statusDraftVideo && (
+                                        <video
+                                            key={statusDraftVideo}
+                                            src={statusDraftVideo}
+                                            poster={statusDraftImage}
+                                            autoPlay
+                                            muted
+                                            loop
+                                            playsInline
+                                            controls
+                                            className="w-full max-h-52 object-cover rounded-xl mb-3 border border-white/20 bg-black"
                                         />
                                     )}
                                     <textarea
                                         value={statusDraftText}
                                         onChange={(e) => setStatusDraftText(e.target.value)}
-                                        placeholder="Type your 24-hour status update..."
-                                        rows={3}
-                                        className="w-full bg-transparent placeholder-white/75 text-center font-bold text-lg focus:outline-none resize-none"
+                                        placeholder="Add a caption to your 24-hour status update..."
+                                        rows={2}
+                                        className="w-full bg-transparent placeholder-white/75 text-center font-bold text-base focus:outline-none resize-none"
                                         style={{ color: '#FBF8F3' }}
                                     />
                                 </div>
@@ -869,14 +1021,39 @@ export function WhatsAppModeWorkspace({
                                         ))}
                                     </div>
                                 ) : (
-                                    <div>
-                                        <label className="block text-xs font-semibold text-[#57534E] mb-1">
-                                            Photo / Video URL or Preset:
+                                    <div className="space-y-2.5">
+                                        <label className="block text-xs font-semibold text-[#57534E]">
+                                            Select a Curated Status Video Reel (or paste MP4 URL):
                                         </label>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {STATUS_VIDEO_PRESETS.map((preset) => (
+                                                <button
+                                                    key={preset.videoUrl}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setStatusDraftVideo(preset.videoUrl);
+                                                        setStatusDraftImage(preset.posterUrl);
+                                                    }}
+                                                    style={
+                                                        statusDraftVideo === preset.videoUrl
+                                                            ? { color: '#FBF8F3' }
+                                                            : undefined
+                                                    }
+                                                    className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border transition-colors cursor-pointer ${
+                                                        statusDraftVideo === preset.videoUrl
+                                                            ? 'bg-[#7C4225] border-[#5E3119] text-[#FBF8F3]'
+                                                            : 'bg-[#EFE8DA] hover:bg-[#E5DEC9] border-[#DDD3C2] text-[#5E3119]'
+                                                    }`}
+                                                >
+                                                    ▶ {preset.label}
+                                                </button>
+                                            ))}
+                                        </div>
                                         <input
                                             type="text"
-                                            value={statusDraftImage}
-                                            onChange={(e) => setStatusDraftImage(e.target.value)}
+                                            value={statusDraftVideo}
+                                            onChange={(e) => setStatusDraftVideo(e.target.value)}
+                                            placeholder="/status-videos/physician.mp4"
                                             className="w-full border border-[#D0C4AE] bg-[#F8F4EC] rounded-lg px-3 py-1.5 text-xs text-[#1C1917]"
                                         />
                                     </div>
@@ -901,165 +1078,294 @@ export function WhatsAppModeWorkspace({
                             </form>
                         </div>
                     ) : activeStatus ? (
-                        <div className="w-full max-w-md bg-[#1C1917] rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-[#524B42] animate-in fade-in">
-                            {/* Top Progress & Author Bar */}
-                            <div className="p-4 bg-[#141210]/80 flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <img
-                                        src={activeStatus.authorAvatar}
-                                        alt={activeStatus.authorName}
-                                        className="w-10 h-10 rounded-full object-cover border-2 border-[#BC9675]"
-                                    />
-                                    <div>
-                                        <p
-                                            className="text-sm font-bold"
-                                            style={{ color: '#FBF8F3' }}
-                                        >
-                                            {activeStatus.authorName}
-                                        </p>
-                                        <p className="text-[11px] text-[#D0C4AE]">
-                                            {activeStatus.timestampLabel}
-                                        </p>
+                        <div className="w-full max-w-2xl my-auto space-y-3 animate-in fade-in">
+                            <div className="w-full bg-[#1C1917] rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-[#524B42]">
+                                {/* Segmented Status Progress Strip */}
+                                <div className="px-4 pt-3 flex items-center gap-1 bg-[#141210]">
+                                    {statusList.map((st, idx) => (
+                                        <button
+                                            key={st.id}
+                                            type="button"
+                                            onClick={() => handleOpenStatus(st)}
+                                            title={st.authorName}
+                                            className={`h-1.5 flex-1 rounded-full transition-all cursor-pointer ${
+                                                st.id === activeStatus.id
+                                                    ? 'bg-[#D69E6B]'
+                                                    : idx < activeIndex
+                                                    ? 'bg-[#7C4225]'
+                                                    : 'bg-white/20 hover:bg-white/40'
+                                            }`}
+                                        />
+                                    ))}
+                                </div>
+
+                                {/* Top Author & Navigation Bar */}
+                                <div className="px-4 py-3 bg-[#141210] flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <img
+                                            src={activeStatus.authorAvatar}
+                                            alt={activeStatus.authorName}
+                                            className="w-10 h-10 rounded-full object-cover border-2 border-[#BC9675] shrink-0"
+                                        />
+                                        <div className="min-w-0">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <p
+                                                    className="text-sm font-bold truncate"
+                                                    style={{ color: '#FBF8F3' }}
+                                                >
+                                                    {activeStatus.authorName}
+                                                </p>
+                                                {activeStatus.professionTag && (
+                                                    <span className="rounded-md bg-[#7C4225]/40 border border-[#BC9675]/40 px-2 py-0.5 text-[10px] font-bold text-[#FBF8F3]">
+                                                        {activeStatus.professionTag}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-[11px] text-[#D0C4AE]">
+                                                {activeStatus.timestampLabel}
+                                                {activeStatus.videoTitle
+                                                    ? ` • ${activeStatus.videoTitle}`
+                                                    : ''}
+                                            </p>
+                                        </div>
                                     </div>
+
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleStepStatus(-1)}
+                                            className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold cursor-pointer"
+                                            style={{ color: '#FBF8F3' }}
+                                            title="Previous Status Video"
+                                        >
+                                            ← Prev
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleStepStatus(1)}
+                                            className="px-2.5 py-1 rounded-lg bg-[#7C4225] hover:bg-[#5E3119] text-xs font-bold cursor-pointer"
+                                            style={{ color: '#FBF8F3' }}
+                                            title="Next Status Video"
+                                        >
+                                            Next →
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setActiveStatusId(null)}
+                                            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-sm font-bold cursor-pointer ml-1"
+                                            style={{ color: '#FBF8F3' }}
+                                            title="Back to All Status Video Reels"
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Story Video / Media Body */}
+                                <div
+                                    className="p-4 sm:p-5 flex flex-col items-center justify-center text-center space-y-3"
+                                    style={{
+                                        background:
+                                            activeStatus.bgColor ||
+                                            'linear-gradient(135deg, #292521 0%, #3d3730 100%)',
+                                        color: '#FBF8F3',
+                                    }}
+                                >
+                                    {activeStatus.videoUrl ? (
+                                        <div className="w-full rounded-xl overflow-hidden border border-white/15 bg-black shadow-xl">
+                                            <video
+                                                key={activeStatus.id}
+                                                src={activeStatus.videoUrl}
+                                                poster={activeStatus.imageUrl}
+                                                autoPlay
+                                                loop
+                                                playsInline
+                                                controls
+                                                className="w-full h-[260px] sm:h-[310px] object-cover bg-black"
+                                            />
+                                        </div>
+                                    ) : activeStatus.imageUrl ? (
+                                        <img
+                                            src={activeStatus.imageUrl}
+                                            alt={activeStatus.authorName}
+                                            className="w-full max-h-64 object-cover rounded-xl shadow-md"
+                                        />
+                                    ) : null}
+
+                                    <p className="text-sm sm:text-base font-semibold leading-relaxed max-w-xl px-2">
+                                        {activeStatus.text}
+                                    </p>
+                                </div>
+
+                                {/* Reply to Status Bar */}
+                                <form
+                                    onSubmit={(e) => {
+                                        e.preventDefault();
+                                        if (!statusReplyText.trim()) return;
+                                        triggerToast(
+                                            `💬 Replied to ${activeStatus.authorName}'s status: "${statusReplyText}"`
+                                        );
+                                        setStatusReplyText('');
+                                    }}
+                                    className="p-3 bg-[#292521] flex items-center gap-2 border-t border-white/10"
+                                >
+                                    <input
+                                        type="text"
+                                        value={statusReplyText}
+                                        onChange={(e) => setStatusReplyText(e.target.value)}
+                                        placeholder={`Reply to ${activeStatus.authorName}...`}
+                                        className="flex-1 bg-[#3D3730] placeholder-[#D0C4AE] text-xs rounded-full px-4 py-2 focus:outline-none"
+                                        style={{ color: '#FBF8F3' }}
+                                    />
+                                    <button
+                                        type="submit"
+                                        className="px-4 py-2 rounded-full bg-[#7C4225] hover:bg-[#5E3119] text-xs font-bold cursor-pointer shrink-0"
+                                        style={{ color: '#FBF8F3' }}
+                                    >
+                                        Send
+                                    </button>
+                                </form>
+                            </div>
+
+                            {/* Quick Switch Strip of All 10 Status Videos */}
+                            <div className="bg-[#FBF8F3] border border-[#DDD3C2] rounded-xl p-2.5 flex items-center justify-between gap-2 overflow-x-auto">
+                                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                                    {statusList.map((st) => {
+                                        const isCurrent = st.id === activeStatus.id;
+                                        return (
+                                            <button
+                                                key={st.id}
+                                                type="button"
+                                                onClick={() => handleOpenStatus(st)}
+                                                style={isCurrent ? { color: '#FBF8F3' } : undefined}
+                                                className={`rounded-lg px-2.5 py-1 text-[11px] font-bold flex items-center gap-1.5 shrink-0 cursor-pointer transition-all border ${
+                                                    isCurrent
+                                                        ? 'bg-[#7C4225] border-[#5E3119] text-[#FBF8F3]'
+                                                        : 'bg-[#EFE8DA] hover:bg-[#E5DEC9] border-[#DDD3C2] text-[#292521]'
+                                                }`}
+                                            >
+                                                <span>▶</span>
+                                                <span className="max-w-[110px] truncate">
+                                                    {st.authorName}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                                 <button
                                     type="button"
-                                    onClick={() => setActiveStatusId(null)}
-                                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-sm font-bold cursor-pointer"
+                                    onClick={() => {
+                                        setActiveStatusId(null);
+                                        setStatusComposerMode('photo');
+                                    }}
                                     style={{ color: '#FBF8F3' }}
+                                    className="rounded-lg bg-[#292521] hover:bg-[#1C1917] text-[#FBF8F3] px-3 py-1 text-[11px] font-bold shrink-0 cursor-pointer"
                                 >
-                                    ✕
+                                    + Post Video Status
                                 </button>
                             </div>
-
-                            {/* Story Body */}
-                            <div
-                                className="min-h-[320px] p-6 flex flex-col items-center justify-center text-center"
-                                style={{
-                                    background:
-                                        activeStatus.bgColor ||
-                                        'linear-gradient(135deg, #292521 0%, #3d3730 100%)',
-                                    color: '#FBF8F3',
-                                }}
-                            >
-                                {activeStatus.imageUrl && (
-                                    <img
-                                        src={activeStatus.imageUrl}
-                                        alt={activeStatus.authorName}
-                                        className="w-full max-h-56 object-cover rounded-xl mb-4 shadow-md"
-                                    />
-                                )}
-                                <p className="text-base font-semibold leading-relaxed max-w-sm">
-                                    {activeStatus.text}
-                                </p>
-                            </div>
-
-                            {/* Reply to Status Bar */}
-                            <form
-                                onSubmit={(e) => {
-                                    e.preventDefault();
-                                    if (!statusReplyText.trim()) return;
-                                    triggerToast(
-                                        `💬 Replied to ${activeStatus.authorName}'s status: "${statusReplyText}"`
-                                    );
-                                    setStatusReplyText('');
-                                }}
-                                className="p-3 bg-[#292521] flex items-center gap-2"
-                            >
-                                <input
-                                    type="text"
-                                    value={statusReplyText}
-                                    onChange={(e) => setStatusReplyText(e.target.value)}
-                                    placeholder={`Reply to ${activeStatus.authorName}...`}
-                                    className="flex-1 bg-[#3D3730] placeholder-[#D0C4AE] text-xs rounded-full px-4 py-2 focus:outline-none"
-                                    style={{ color: '#FBF8F3' }}
-                                />
-                                <button
-                                    type="submit"
-                                    className="px-3.5 py-1.5 rounded-full bg-[#7C4225] hover:bg-[#5E3119] text-xs font-bold cursor-pointer"
-                                    style={{ color: '#FBF8F3' }}
-                                >
-                                    Send
-                                </button>
-                            </form>
                         </div>
                     ) : (
-                        /* Default "Share statuses" Screen in Desk Note Editorial Palette */
-                        <div className="text-center max-w-md flex flex-col items-center">
-                            <div className="w-20 h-20 mb-4 rounded-2xl bg-[#EFE8DA] border-2 border-[#D0C4AE] shadow-xs flex items-center justify-center text-[#7C4225]">
-                                {/* ConnectLn Bespoke 4-Pointed Editorial Compass & Starburst Crest */}
-                                <svg
-                                    className="w-11 h-11"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth={1.7}
-                                >
-                                    <rect x="3.5" y="3.5" width="17" height="17" rx="3.5" strokeDasharray="3 2" />
-                                    <polygon
-                                        points="12 4.5 14.2 9.8 19.5 12 14.2 14.2 12 19.5 9.8 14.2 4.5 12 9.8 9.8"
-                                        fill="currentColor"
-                                        fillOpacity={0.18}
-                                        strokeLinejoin="round"
-                                    />
-                                    <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none" />
-                                </svg>
+                        /* Status Video Reels Gallery + Share Statuses Controls */
+                        <div className="w-full max-w-3xl my-auto space-y-5">
+                            <div className="bg-[#FBF8F3] border border-[#DDD3C2] rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xs">
+                                <div className="flex items-center gap-3.5">
+                                    <div className="w-12 h-12 rounded-2xl bg-[#EFE8DA] border border-[#D0C4AE] flex items-center justify-center text-[#7C4225] shrink-0">
+                                        <svg
+                                            className="w-6 h-6"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth={1.8}
+                                        >
+                                            <polygon
+                                                points="12 3.5 14.3 9.7 20.5 12 14.3 14.3 12 20.5 9.7 14.3 3.5 12 9.7 9.7"
+                                                strokeLinejoin="round"
+                                            />
+                                            <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-base font-bold text-[#1C1917]">
+                                            24-Hour Status Video Reels
+                                        </h3>
+                                        <p className="text-xs text-[#57534E]">
+                                            Click any status video below to watch or share your own 24-hour video update.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <button
+                                        type="button"
+                                        onClick={() => setStatusComposerMode('text')}
+                                        className="rounded-xl bg-[#EFE8DA] hover:bg-[#E2D9C8] border border-[#D0C4AE] text-[#5E3119] px-3.5 py-2 text-xs font-bold cursor-pointer transition-colors"
+                                    >
+                                        Text Status
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setStatusComposerMode('photo')}
+                                        style={{ color: '#FBF8F3' }}
+                                        className="rounded-xl bg-[#7C4225] hover:bg-[#5E3119] text-[#FBF8F3] px-3.5 py-2 text-xs font-bold cursor-pointer transition-colors"
+                                    >
+                                        + Share Video Status
+                                    </button>
+                                </div>
                             </div>
-                            <h3 className="text-2xl font-normal text-[#1C1917] mb-2">
-                                Share statuses
-                            </h3>
-                            <p className="text-sm text-[#57534E] mb-7">
-                                Share photos, videos and text that disappear after 24 hours.
-                            </p>
-                            <div className="flex items-center justify-center gap-8">
-                                <button
-                                    type="button"
-                                    onClick={() => setStatusComposerMode('text')}
-                                    className="flex flex-col items-center gap-2 group cursor-pointer"
-                                >
-                                    <span className="w-12 h-12 rounded-2xl bg-[#EFE8DA] group-hover:bg-[#E2D9C8] border border-[#D0C4AE] flex items-center justify-center text-[#5E3119] transition-colors shadow-2xs">
-                                        {/* ConnectLn Editorial Fountain Nib Emblem */}
-                                        <svg
-                                            className="w-5 h-5"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            strokeWidth={1.9}
-                                        >
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l7-7 3 3-7 7-3-3z" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M2 2l7.586 7.586" />
-                                            <circle cx="11" cy="11" r="2" />
-                                        </svg>
-                                    </span>
-                                    <span className="text-xs font-semibold text-[#57534E]">
-                                        Text status
-                                    </span>
-                                </button>
 
-                                <button
-                                    type="button"
-                                    onClick={() => setStatusComposerMode('photo')}
-                                    className="flex flex-col items-center gap-2 group cursor-pointer"
-                                >
-                                    <span className="w-12 h-12 rounded-2xl bg-[#EFE8DA] group-hover:bg-[#E2D9C8] border border-[#D0C4AE] flex items-center justify-center text-[#5E3119] transition-colors shadow-2xs">
-                                        {/* ConnectLn Studio Cinema Frame & Aperture Emblem */}
-                                        <svg
-                                            className="w-5 h-5"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            strokeWidth={1.9}
-                                        >
-                                            <rect x="3" y="4" width="18" height="16" rx="3" />
-                                            <circle cx="8.5" cy="9.5" r="1.5" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 15l-4.5-4.5L7 20" />
-                                        </svg>
-                                    </span>
-                                    <span className="text-xs font-semibold text-[#57534E]">
-                                        Photo and video
-                                    </span>
-                                </button>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                                {statusList.slice(0, 6).map((st) => (
+                                    <div
+                                        key={st.id}
+                                        onClick={() => handleOpenStatus(st)}
+                                        className="rounded-xl border border-[#DDD3C2] bg-[#FBF8F3] overflow-hidden shadow-2xs hover:border-[#7C4225] hover:shadow-md transition-all cursor-pointer group"
+                                    >
+                                        <div className="relative h-32 bg-[#1C1917] overflow-hidden">
+                                            {st.videoUrl ? (
+                                                <video
+                                                    src={st.videoUrl}
+                                                    poster={st.imageUrl}
+                                                    muted
+                                                    loop
+                                                    playsInline
+                                                    onMouseEnter={(e) => e.currentTarget.play().catch(() => {})}
+                                                    onMouseLeave={(e) => {
+                                                        e.currentTarget.pause();
+                                                        e.currentTarget.currentTime = 0;
+                                                    }}
+                                                    className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform"
+                                                />
+                                            ) : (
+                                                <img
+                                                    src={st.imageUrl}
+                                                    alt={st.authorName}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            )}
+                                            <span
+                                                style={{ color: '#FBF8F3' }}
+                                                className="absolute top-2 right-2 rounded-md bg-[#1C1917]/80 px-2 py-0.5 text-[10px] font-mono font-bold"
+                                            >
+                                                ▶ {st.videoDuration || '0:20'}
+                                            </span>
+                                        </div>
+                                        <div className="p-3 space-y-1">
+                                            <div className="flex items-center gap-2">
+                                                <img
+                                                    src={st.authorAvatar}
+                                                    alt={st.authorName}
+                                                    className="w-6 h-6 rounded-full object-cover border border-[#7C4225]"
+                                                />
+                                                <p className="text-xs font-bold text-[#1C1917] truncate">
+                                                    {st.authorName}
+                                                </p>
+                                            </div>
+                                            <p className="text-[11px] text-[#57534E] line-clamp-1">
+                                                {st.videoTitle || st.text}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     )}
