@@ -106,7 +106,7 @@ function getCategorizedMoreMenuInternal(
         items: [
           {
             id: "vibetok_trades",
-            label: "🎥 VibeTok Trade Video Masterclasses",
+            label: "🎥 Noctis Trade Video Masterclasses",
             desc: "Joinery, electrical rough-in & welding video hub",
             url: "https://vibetok-learning-hub.vercel.app",
             isExternal: true,
@@ -180,7 +180,7 @@ function getCategorizedMoreMenuInternal(
         items: [
           {
             id: "vibetok_auto",
-            label: "🎥 VibeTok Auto & Diesel Teardowns",
+            label: "🎥 Noctis Auto & Diesel Teardowns",
             desc: "PicoScope CAN-FD waveforms & 800V EV battery teardown videos",
             url: "https://vibetok-learning-hub.vercel.app",
             isExternal: true,
@@ -244,7 +244,7 @@ function getCategorizedMoreMenuInternal(
         items: [
           {
             id: "vibetok_agri",
-            label: "🎥 VibeTok Agriculture & Agronomy Hub",
+            label: "🎥 Noctis Agriculture & Agronomy Hub",
             desc: "Precision tractor guidance, queen bee rearing & soil science",
             url: "https://vibetok-learning-hub.vercel.app",
             isExternal: true,
@@ -273,7 +273,7 @@ function getCategorizedMoreMenuInternal(
           },
           {
             id: "vibetok_beauty",
-            label: "🎥 VibeTok Grooming & Fitness Masterclasses",
+            label: "🎥 Noctis Grooming & Fitness Masterclasses",
             desc: "Skin fades, draping bespoke suits & hypertrophy programming",
             url: "https://vibetok-learning-hub.vercel.app",
             isExternal: true,
@@ -311,7 +311,7 @@ function getCategorizedMoreMenuInternal(
           },
           {
             id: "vibetok_culinary",
-            label: "🎥 VibeTok Culinary & Hospitality Masterclasses",
+            label: "🎥 Noctis Culinary & Hospitality Masterclasses",
             desc: "Banquet scaling, wedding timing & hotel concierge masterclasses",
             url: "https://vibetok-learning-hub.vercel.app",
             isExternal: true,
@@ -379,7 +379,7 @@ function getCategorizedMoreMenuInternal(
         items: [
           {
             id: "vibetok_creative",
-            label: "🎥 VibeTok Creative Video & Acting Hub",
+            label: "🎥 Noctis Creative Video & Acting Hub",
             desc: "Cinematography teardowns, voice acting & screenwriting",
             url: "https://vibetok-learning-hub.vercel.app",
             isExternal: true,
@@ -417,7 +417,7 @@ function getCategorizedMoreMenuInternal(
         items: [
           {
             id: "vibetok_med",
-            label: "🎥 VibeTok Clinical & Surgical Grand Rounds",
+            label: "🎥 Noctis Clinical & Surgical Grand Rounds",
             desc: "Procedural surgery, nursing & emergency trauma streams",
             url: "https://vibetok-learning-hub.vercel.app",
             isExternal: true,
@@ -463,7 +463,7 @@ function getCategorizedMoreMenuInternal(
           },
           {
             id: "vibetok_edu",
-            label: "🎥 VibeTok Vocational & STEM Micro-Lessons",
+            label: "🎥 Noctis Vocational & STEM Micro-Lessons",
             desc: "Calculus proofs, trade theory & job interview coaching",
             url: "https://vibetok-learning-hub.vercel.app",
             isExternal: true,
@@ -501,7 +501,7 @@ function getCategorizedMoreMenuInternal(
           },
           {
             id: "vibetok_civic",
-            label: "🎥 VibeTok Veteran & Community Stories",
+            label: "🎥 Noctis Veteran & Community Stories",
             desc: "Transition stories, non-profit spotlights & disaster relief",
             url: "https://vibetok-learning-hub.vercel.app",
             isExternal: true,
@@ -756,7 +756,7 @@ function getCategorizedMoreMenuInternal(
         },
         {
           id: "vibetok_cyber",
-          label: "🎥 VibeTok Cyber Labs Video Hub",
+          label: "🎥 Noctis Cyber Labs Video Hub",
           desc: "Interactive breach teardowns & adversary simulation videos",
           url: "https://vibetok-learning-hub.vercel.app",
           isExternal: true,
@@ -816,7 +816,7 @@ export function getEnclaveModules(enclaveId?: string, isAdminUser: boolean = fal
         { id: "marketplace", label: "Tools & Lumber Marketplace", desc: "Festool, total stations & timber stock", icon: "🧰" },
         { id: "bazaar", label: "Bazaar Machinery Marketplace", desc: "Heavy trade tooling & hardware", icon: "🛍️", url: "https://bazaar-standalone.vercel.app", isExternal: true, badge: "COMMERCE" },
         { id: "procurement", label: "Subcontractor Bids & RFPs", desc: "Commercial framing, plumbing & finish buildouts", icon: "📋" },
-        { id: "vibetok_trades", label: "VibeTok Trade Masterclasses", desc: "Joinery & woodworking video lessons", icon: "🎥", url: "https://vibetok-learning-hub.vercel.app", isExternal: true, badge: "LIVE HUB" },
+        { id: "vibetok_trades", label: "Noctis Trade Masterclasses", desc: "Joinery & woodworking video lessons", icon: "🎥", url: "https://vibetok-learning-hub.vercel.app", isExternal: true, badge: "LIVE HUB" },
         { id: "pulserooms", label: "OSHA & Code Pulse", desc: "Live job-site safety roundtables", icon: "🦺" },
         { id: "learning", label: "Master Craftsman Academy", desc: "Joinery, CAD & OSHA 30 certifications", icon: "🎓" },
         ...(isAdminUser ? [{ id: "adminiam", label: "Admin & IAM Console", desc: "User enforcement & audit log", icon: "🛡️" }] : []),
@@ -830,7 +830,7 @@ export function getEnclaveModules(enclaveId?: string, isAdminUser: boolean = fal
         { id: "jobs", label: "Master Tech & Fleet Jobs", desc: "Dealership master diagnostics & heavy diesel", icon: "🔧" },
         { id: "marketplace", label: "Snap-on & Scope Marketplace", desc: "PicoScopes, scan tools & EV PPE", icon: "⚡" },
         { id: "procurement", label: "Commercial Fleet RFPs", desc: "Municipal & logistics fleet contracts", icon: "🚛" },
-        { id: "vibetok_auto", label: "VibeTok Auto Teardowns", desc: "Waveform teardowns & powertrain videos", icon: "🎥", url: "https://vibetok-learning-hub.vercel.app", isExternal: true, badge: "LIVE HUB" },
+        { id: "vibetok_auto", label: "Noctis Auto Teardowns", desc: "Waveform teardowns & powertrain videos", icon: "🎥", url: "https://vibetok-learning-hub.vercel.app", isExternal: true, badge: "LIVE HUB" },
         { id: "pulserooms", label: "NHTSA & TSB Pulse", desc: "Live master diagnostic case studies", icon: "📻" },
         { id: "learning", label: "ASE Master Tech Academy", desc: "A1–A8, L1 & L3 EV training modules", icon: "🎓" },
         ...(isAdminUser ? [{ id: "adminiam", label: "Admin & IAM Console", desc: "User enforcement & audit log", icon: "🛡️" }] : []),
@@ -844,7 +844,7 @@ export function getEnclaveModules(enclaveId?: string, isAdminUser: boolean = fal
         { id: "jobs", label: "Agri & Natural Resource Jobs", desc: "Ranch managers, agronomists & forestry roles", icon: "🌾" },
         { id: "marketplace", label: "Grain Futures & Livestock Desk", desc: "Real-time CBOT prices & cattle indexes", icon: "📈" },
         { id: "procurement", label: "Crop & Commodity RFPs", desc: "Grain contracts & bulk produce bids", icon: "📋" },
-        { id: "vibetok_agri", label: "VibeTok Agronomy Lessons", desc: "Tractor GPS & queen bee masterclasses", icon: "🎥", url: "https://vibetok-learning-hub.vercel.app", isExternal: true, badge: "LIVE HUB" },
+        { id: "vibetok_agri", label: "Noctis Agronomy Lessons", desc: "Tractor GPS & queen bee masterclasses", icon: "🎥", url: "https://vibetok-learning-hub.vercel.app", isExternal: true, badge: "LIVE HUB" },
         { id: "learning", label: "Sustainable Agriculture Hub", desc: "Soil NPK & aquaculture RAS simulations", icon: "🌱" },
         { id: "accountsecurity", label: "USDA Organic Credentials", desc: "Producer certifications & passkeys", icon: "🔐" }
       ]
@@ -854,7 +854,7 @@ export function getEnclaveModules(enclaveId?: string, isAdminUser: boolean = fal
         { id: "skillhands_craft", label: "SkillHands Stylists Network", desc: "Barbers, tailors & personal trainers", icon: "🛠️", url: "https://skillhands-client.vercel.app", isExternal: true, badge: "LIVE APP" },
         { id: "jobs", label: "Salon, Studio & Fitness Jobs", desc: "Master barber chairs, trainer & styling roles", icon: "✂️" },
         { id: "marketplace", label: "Shears, Rigs & Fitness Gear", desc: "Japanese steel shears & strength equipment", icon: "🛍️" },
-        { id: "vibetok_beauty", label: "VibeTok Grooming Masterclasses", desc: "Skin fades & periodization workout streams", icon: "🎥", url: "https://vibetok-learning-hub.vercel.app", isExternal: true, badge: "LIVE HUB" },
+        { id: "vibetok_beauty", label: "Noctis Grooming Masterclasses", desc: "Skin fades & periodization workout streams", icon: "🎥", url: "https://vibetok-learning-hub.vercel.app", isExternal: true, badge: "LIVE HUB" },
         { id: "pulserooms", label: "State Cosmetology & Board Pulse", desc: "Sanitation protocols & Barbicide standards", icon: "🧴" },
         { id: "learning", label: "Wellness Mastery Academy", desc: "Color chemistry & NSCA strength credentials", icon: "🎓" },
         { id: "accountsecurity", label: "State License Credentials", desc: "Verified practitioner passkeys", icon: "🔐" }
@@ -866,7 +866,7 @@ export function getEnclaveModules(enclaveId?: string, isAdminUser: boolean = fal
         { id: "jobs", label: "Hospitality & Event Roles", desc: "Catering chefs, event planners & hotel leads", icon: "🍽️" },
         { id: "marketplace", label: "Recipe Costing & Menu Sizer", desc: "Food cost percentages & allergen matrices", icon: "📋" },
         { id: "procurement", label: "Event & Catering RFPs", desc: "Gala banquets & corporate conference bids", icon: "🍷" },
-        { id: "vibetok_culinary", label: "VibeTok Culinary Masterclasses", desc: "Banquet food prep & event timelines", icon: "🎥", url: "https://vibetok-learning-hub.vercel.app", isExternal: true, badge: "LIVE HUB" },
+        { id: "vibetok_culinary", label: "Noctis Culinary Masterclasses", desc: "Banquet food prep & event timelines", icon: "🎥", url: "https://vibetok-learning-hub.vercel.app", isExternal: true, badge: "LIVE HUB" },
         { id: "pulserooms", label: "ServSafe & Health Standards", desc: "Inspection readiness & kitchen safety", icon: "🌿" },
         { id: "learning", label: "Run-of-Show & Timeline Lab", desc: "Minute-by-minute wedding & event cues", icon: "📅" },
         { id: "accountsecurity", label: "Health Permits & Passkeys", desc: "ServSafe certificates & venue security", icon: "🔐" }
@@ -887,8 +887,8 @@ export function getEnclaveModules(enclaveId?: string, isAdminUser: boolean = fal
     case 'creative_media_arts':
       return [
         { id: "careerorbit_creative", label: "CareerOrbit Creative Passport", desc: "Verified portfolios, acting reels & credits", icon: "🪐", url: "https://careerorbit-standalone.vercel.app", isExternal: true, badge: "LIVE ORBIT" },
-        { id: "vibetok_reels", label: "VibeTok 9:16 Reels Studio", desc: "Vertical HD studio, HTML5 player & 1-click MP4 export", icon: "🎬", url: "https://vibetok-learning-hub.vercel.app/reels", isExternal: true, badge: "REELS HD" },
-        { id: "vibetok_creative", label: "VibeTok Media Masterclasses", desc: "Filmmaking, lighting & audio mixing videos", icon: "🎥", url: "https://vibetok-learning-hub.vercel.app", isExternal: true, badge: "LIVE HUB" },
+        { id: "vibetok_reels", label: "Noctis 9:16 Reels Studio", desc: "Vertical HD studio, HTML5 player & 1-click MP4 export", icon: "🎬", url: "https://vibetok-learning-hub.vercel.app/reels", isExternal: true, badge: "REELS HD" },
+        { id: "vibetok_creative", label: "Noctis Media Masterclasses", desc: "Filmmaking, lighting & audio mixing videos", icon: "🎥", url: "https://vibetok-learning-hub.vercel.app", isExternal: true, badge: "LIVE HUB" },
         { id: "jobs", label: "Creative & Audition Roles", desc: "Commercial photo, voiceover & scoring gigs", icon: "🎭" },
         { id: "marketplace", label: "Audio Splits & Proof Galleries", desc: "Copyright split sheets & photo licenses", icon: "🎵" },
         { id: "procurement", label: "Media & Translation RFPs", desc: "Commercial scoring & conference ASL bids", icon: "🎬" },
@@ -900,7 +900,7 @@ export function getEnclaveModules(enclaveId?: string, isAdminUser: boolean = fal
     case 'healthcare_medicine':
       return [
         { id: "careerorbit_med", label: "CareerOrbit Clinical Passport", desc: "CME tracking & specialty board credentials", icon: "🪐", url: "https://careerorbit-standalone.vercel.app", isExternal: true, badge: "LIVE ORBIT" },
-        { id: "vibetok_med", label: "VibeTok Clinical Grand Rounds", desc: "Procedural surgery & nursing streams", icon: "🎥", url: "https://vibetok-learning-hub.vercel.app", isExternal: true, badge: "LIVE HUB" },
+        { id: "vibetok_med", label: "Noctis Clinical Grand Rounds", desc: "Procedural surgery & nursing streams", icon: "🎥", url: "https://vibetok-learning-hub.vercel.app", isExternal: true, badge: "LIVE HUB" },
         { id: "jobs", label: "Clinical & Dental Roles", desc: "Dentists, veterinarians, RNs & caregivers", icon: "🏥" },
         { id: "marketplace", label: "Dental CBCT & Medical Tools", desc: "3D dental radiograph DICOM analysis", icon: "🦷" },
         { id: "procurement", label: "Hospital Equipment RFPs", desc: "Medical device & implant tenders", icon: "📋" },
@@ -913,7 +913,7 @@ export function getEnclaveModules(enclaveId?: string, isAdminUser: boolean = fal
     case 'education_workforce':
       return [
         { id: "careerorbit_edu", label: "CareerOrbit Reskilling Matrix", desc: "Apprentice competency & career cross-walks", icon: "🪐", url: "https://careerorbit-standalone.vercel.app", isExternal: true, badge: "LIVE ORBIT" },
-        { id: "vibetok_edu", label: "VibeTok CTE Micro-Lessons", desc: "STEM problem solving & trade theory", icon: "🎥", url: "https://vibetok-learning-hub.vercel.app", isExternal: true, badge: "LIVE HUB" },
+        { id: "vibetok_edu", label: "Noctis CTE Micro-Lessons", desc: "STEM problem solving & trade theory", icon: "🎥", url: "https://vibetok-learning-hub.vercel.app", isExternal: true, badge: "LIVE HUB" },
         { id: "jobs", label: "Education & Apprentice Openings", desc: "Academic tutors, CTE instructors & trainees", icon: "🎓" },
         { id: "marketplace", label: "STEM Whiteboard & Rubrics", desc: "Interactive formula solvers & NCCER tasks", icon: "📐" },
         { id: "procurement", label: "School District Tutoring RFPs", desc: "Workforce development & literacy grants", icon: "📚" },
@@ -925,7 +925,7 @@ export function getEnclaveModules(enclaveId?: string, isAdminUser: boolean = fal
     case 'community_civic_security':
       return [
         { id: "careerorbit_vet", label: "CareerOrbit Military MOS Desk", desc: "Military skill translation & civilian paths", icon: "🪐", url: "https://careerorbit-standalone.vercel.app", isExternal: true, badge: "LIVE ORBIT" },
-        { id: "vibetok_civic", label: "VibeTok Veteran Stories", desc: "Service transition & community impact", icon: "🎥", url: "https://vibetok-learning-hub.vercel.app", isExternal: true, badge: "LIVE HUB" },
+        { id: "vibetok_civic", label: "Noctis Veteran Stories", desc: "Service transition & community impact", icon: "🎥", url: "https://vibetok-learning-hub.vercel.app", isExternal: true, badge: "LIVE HUB" },
         { id: "jobs", label: "Civic, Veteran & Security Jobs", desc: "Protective guards, non-profit & manufacturing", icon: "🎖️" },
         { id: "marketplace", label: "Guard Patrol & 5S Tools", desc: "NFC patrol scans & lean manufacturing takt", icon: "🛡️" },
         { id: "procurement", label: "Non-Profit & Security RFPs", desc: "Federal community grants & security tenders", icon: "🏛️" },
@@ -942,7 +942,7 @@ export function getEnclaveModules(enclaveId?: string, isAdminUser: boolean = fal
         { id: "api_sec", label: "12-API Security Platform", desc: "REST & GraphQL attack surface defense", icon: "⚡", url: "https://12-api-security-platform.vercel.app", isExternal: true, badge: "LIVE API" },
         { id: "integration", label: "18-Unified Integration Bus", desc: "SIEM/SOAR unified event bus", icon: "🌐", url: "https://18-unified-integration-layer.vercel.app", isExternal: true, badge: "LIVE BUS" },
         { id: "careerorbit", label: "CareerOrbit Skill Passport", desc: "Verified coding competencies & career matrix", icon: "🪐", url: "https://careerorbit-standalone.vercel.app", isExternal: true, badge: "LIVE ORBIT" },
-        { id: "vibetok_dev", label: "VibeTok Dev Masterclasses", desc: "Next.js 16, Rust microVMs & system design", icon: "🎥", url: "https://vibetok-learning-hub.vercel.app", isExternal: true, badge: "LIVE HUB" },
+        { id: "vibetok_dev", label: "Noctis Dev Masterclasses", desc: "Next.js 16, Rust microVMs & system design", icon: "🎥", url: "https://vibetok-learning-hub.vercel.app", isExternal: true, badge: "LIVE HUB" },
         { id: "jobs", label: "Engineering Roles", desc: "Distributed systems & Staff+ software openings", icon: "💼" },
         { id: "code", label: "ConnectIn Code", desc: "GitHub repo sync & recruit by code", icon: "🧑‍💻" },
         ...(isAdminUser ? [{ id: "adminiam", label: "Admin & IAM Console", desc: "User enforcement & audit log", icon: "🛡️" }] : []),
@@ -991,7 +991,7 @@ export function getEnclaveModules(enclaveId?: string, isAdminUser: boolean = fal
         { id: "cloud_sec", label: "19-Cloud Security CSPM", desc: "Multi-cloud CSPM & Kubernetes guardrails", icon: "☁️", url: "https://19-cloud-security-platform.vercel.app", isExternal: true, badge: "LIVE CSPM" },
         { id: "k8s_sec", label: "09-Kubernetes Security", desc: "K8s cluster posture & pod isolation", icon: "☸️", url: "https://09-k8s-security-platform.vercel.app", isExternal: true, badge: "LIVE K8S" },
         { id: "careerorbit_cyber", label: "CareerOrbit Cyber Passport", desc: "Offensive security skill passport", icon: "🪐", url: "https://careerorbit-standalone.vercel.app", isExternal: true, badge: "LIVE ORBIT" },
-        { id: "vibetok_cyber", label: "VibeTok Cyber Labs", desc: "Breach teardowns & red team video masterclasses", icon: "🎥", url: "https://vibetok-learning-hub.vercel.app", isExternal: true, badge: "LIVE HUB" },
+        { id: "vibetok_cyber", label: "Noctis Cyber Labs", desc: "Breach teardowns & red team video masterclasses", icon: "🎥", url: "https://vibetok-learning-hub.vercel.app", isExternal: true, badge: "LIVE HUB" },
         { id: "jobs", label: "Jobs Hub & Requisitions", desc: "Active cleared & enterprise tech roles", icon: "💼" },
         { id: "marketplace", label: "Enterprise Marketplace", desc: "Software, tools & cATO packs", icon: "🛍️" },
         { id: "bounties", label: "Enterprise Bounties", desc: "$15K–$50K hackathons in escrow", icon: "🏆" },

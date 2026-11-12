@@ -550,7 +550,7 @@ export interface InvitableFriend {
   role: string
   enclave: string
   device: string
-  status: "Available" | "In VibeChat" | "Mobile Online"
+  status: "Available" | "In NoctisChat" | "Mobile Online"
   ringState?: "idle" | "ringing" | "joined" | "waiting_room"
   avatarGradient: string
   email?: string
@@ -981,7 +981,7 @@ export function VibeVideoCallStudio({
       role: "Lead Electrical & Solar Microgrid Engineer",
       enclave: "⚡ Skilled Trades & Energy",
       device: "iOS iPhone 16 (CallKit Ready)",
-      status: "In VibeChat",
+      status: "In NoctisChat",
       ringState: "idle",
       avatarGradient: "from-emerald-600 to-cyan-700",
       sourceBadge: "1st Connection",
@@ -1003,7 +1003,7 @@ export function VibeVideoCallStudio({
       role: "Principal Cloud & Zero-Trust Architect",
       enclave: "🛡️ Cybersecurity & AI",
       device: "macOS Desktop App",
-      status: "In VibeChat",
+      status: "In NoctisChat",
       ringState: "idle",
       avatarGradient: "from-indigo-600 to-blue-800",
       email: "marcus.vance@defense-systems.com",
@@ -1172,7 +1172,7 @@ export function VibeVideoCallStudio({
               role: raw.headline || raw.role || "Verified ConnectLn Member",
               enclave: raw.enclave || "🌐 Global Verified Network",
               device: "Web / Mobile WebRTC Client",
-              status: idx % 3 === 0 ? "In VibeChat" : idx % 2 === 0 ? "Mobile Online" : "Available",
+              status: idx % 3 === 0 ? "In NoctisChat" : idx % 2 === 0 ? "Mobile Online" : "Available",
               ringState: "idle",
               avatarGradient: gradients[idx % gradients.length],
               email: raw.email,
@@ -3575,8 +3575,8 @@ export function VibeVideoCallStudio({
       ? window.location.origin
       : "https://www.connectln.app"
   const shareableMeetingUrl = `${baseOrigin}/connectin?tab=vibecomms&joinCall=${encodeURIComponent(callId)}`
-  const shareablePasscode = `VIBE-${String(sframeEpoch).padStart(2, "0")}-${callId.slice(-4).toUpperCase()}`
-  const shareableInvitationText = `Join my live E2EE VibeChat Video Meeting ("${conversationName}") on ConnectLn!\n🔗 Direct Join Link: ${shareableMeetingUrl}\n🔒 E2EE Room ID: ${callId} · Passcode: ${shareablePasscode}`
+  const shareablePasscode = `NOCTIS-${String(sframeEpoch).padStart(2, "0")}-${callId.slice(-4).toUpperCase()}`
+  const shareableInvitationText = `Join my live E2EE NoctisChat Video Meeting ("${conversationName}") on ConnectLn!\n🔗 Direct Join Link: ${shareableMeetingUrl}\n🔒 E2EE Room ID: ${callId} · Passcode: ${shareablePasscode}`
 
   const dispatchLiveCallNotification = useCallback(
     (target: { name: string; email?: string; phone?: string }) => {
@@ -4069,7 +4069,7 @@ export function VibeVideoCallStudio({
 
               <a
                 href={`mailto:?subject=${encodeURIComponent(
-                  `Join my Live VibeChat Video Meeting: ${conversationName}`
+                  `Join my Live NoctisChat Video Meeting: ${conversationName}`
                 )}&body=${encodeURIComponent(shareableInvitationText)}`}
                 className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold flex items-center gap-1"
               >
@@ -4082,7 +4082,7 @@ export function VibeVideoCallStudio({
                   onClick={() => {
                     navigator
                       .share({
-                        title: `VibeChat Live Meeting: ${conversationName}`,
+                        title: `NoctisChat Live Meeting: ${conversationName}`,
                         text: shareableInvitationText,
                         url: shareableMeetingUrl,
                       })
@@ -4348,7 +4348,7 @@ export function VibeVideoCallStudio({
 
               <div className="rounded-xl bg-slate-900/90 border border-emerald-500/30 p-2.5 space-y-1">
                 <div className="text-[10px] font-mono font-bold text-emerald-400">
-                  Direct Meeting Link (Auto-Opens VibeChat Call Studio):
+                  Direct Meeting Link (Auto-Opens NoctisChat Call Studio):
                 </div>
                 <div className="text-[10px] font-mono text-zinc-300 break-all select-all">
                   {shareableMeetingUrl}
@@ -5690,7 +5690,7 @@ export function VibeVideoCallStudio({
                     currentUserName,
                     `WebRTC Call #${callId.slice(0, 8)} Transcript`
                   )
-                  appendLog("Converted call meeting note into governed Vibe Workflow task.")
+                  appendLog("Converted call meeting note into governed Noctis Workflow task.")
                 }}
                 className="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer"
               >

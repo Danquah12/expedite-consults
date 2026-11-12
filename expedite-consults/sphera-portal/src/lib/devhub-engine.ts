@@ -477,7 +477,7 @@ export const INITIAL_DEVHUB_PROJECTS: DevHubProject[] = [
   },
   {
     id: 'proj_vibecomms_webrtc',
-    name: 'VibeComms Zero-Lag WebRTC & Twilio NTS Relay Studio',
+    name: 'NoctisComms Zero-Lag WebRTC & Twilio NTS Relay Studio',
     code: 'CLN-ENG-02',
     description: 'Sub-200ms P2P WebRTC video/audio huddles + Twilio Sync adaptive frame relay fallback across cellular/NAT.',
     status: 'Active',
@@ -872,7 +872,7 @@ export const INITIAL_DEVHUB_TEST_SUITES: DevHubTestSuite[] = [
   {
     id: 'suite_playwright_ui',
     project_id: 'proj_noctis_careertwin',
-    name: 'Cross-Browser UI & Mobile Viewport Regression (Home Feed, Jobs CareerTwin, Messaging, VibeComms)',
+    name: 'Cross-Browser UI & Mobile Viewport Regression (Home Feed, Jobs CareerTwin, Messaging, NoctisComms)',
     category: 'UI (Playwright)',
     framework: 'Playwright (Chromium, WebKit, Mobile Safari)',
     total_cases: 52,

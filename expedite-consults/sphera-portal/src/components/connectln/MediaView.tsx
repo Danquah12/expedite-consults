@@ -1144,7 +1144,7 @@ export function MediaView({
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="rounded-full bg-pink-500/20 px-3 py-0.5 text-xs font-bold text-pink-300 border border-pink-500/40 flex items-center gap-1.5">
                     <Film className="h-3.5 w-3.5 text-pink-400" />
-                    🎬 VibeTok Reels Studio &amp; Video Player
+                    🎬 Noctis Reels Studio &amp; Video Player
                   </span>
                   <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-mono text-zinc-300 border border-white/10">
                     9:16 Vertical HD
@@ -1195,7 +1195,7 @@ export function MediaView({
                   rel="noopener noreferrer"
                   className="rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold px-4 py-2 text-xs border border-white/20 flex items-center justify-center gap-1.5 transition-colors"
                 >
-                  <span>📱 Open VibeTok Inky App ↗</span>
+                  <span>📱 Open Noctis Inky App ↗</span>
                 </a>
                 <button
                   onClick={() => onNavigateTab('learning')}

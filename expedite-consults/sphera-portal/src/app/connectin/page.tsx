@@ -36,7 +36,7 @@ const VibeUnifiedCommunicationsView = dynamic(
     ssr: false,
     loading: () => (
       <div className="mx-auto max-w-7xl rounded-2xl border border-emerald-200 dark:border-emerald-900 bg-white dark:bg-zinc-900 p-10 text-center text-sm font-bold text-emerald-600">
-        Loading Vibe / DeskNote Next-Gen E2EE Unified Communications Platform...
+        Loading Noctis / DeskNote Next-Gen E2EE Unified Communications Platform...
       </div>
     )
   }
@@ -342,7 +342,7 @@ export default function ConnectLnPage() {
           id: `guest-${Date.now().toString().slice(-5)}`,
           name: guestName,
           avatar: generatePersonalSignatureAvatar({ name: guestName, email: "" }),
-          headline: "Live Meeting Participant · VibeChat E2EE"
+          headline: "Live Meeting Participant · NoctisChat E2EE"
         }
       }
     } catch {
@@ -585,7 +585,7 @@ export default function ConnectLnPage() {
             id: `guest-${Date.now().toString().slice(-5)}`,
             name: guestName,
             avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(guestName)}&backgroundColor=0a66c2`,
-            headline: "Live Meeting Participant · VibeChat E2EE",
+            headline: "Live Meeting Participant · NoctisChat E2EE",
           }
           setUserData(guestUser)
           setIsAuthenticated(true)

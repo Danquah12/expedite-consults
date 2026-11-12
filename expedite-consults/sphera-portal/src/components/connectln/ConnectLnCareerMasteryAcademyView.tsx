@@ -853,7 +853,7 @@ export function ConnectLnCareerMasteryAcademyView({
             {
               id: "business_and_builder",
               step: "Step 6",
-              label: "Business Ownership & Vibe Generator",
+              label: "Business Ownership & Noctis Generator",
               badge: "AI Builder",
               icon: Briefcase
             },

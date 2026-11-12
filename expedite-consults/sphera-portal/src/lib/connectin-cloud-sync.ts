@@ -798,7 +798,7 @@ const MULTI_USER_ENGAGEMENT_BASELINE: any[] = [
     actionType: "CALL_JOINED",
     actionLabel: "Joined Multi-Party Live Video Call",
     category: "network",
-    targetTitle: "Room call-9b0bbf68-live (VibeChat Studio)",
+    targetTitle: "Room call-9b0bbf68-live (NoctisChat Studio)",
     details: "Connected live video & bidirectional audio with Kwesi Asiedu, Yaw Asiedu, and Rhoda Asiedu",
     timestampIso: "2026-10-30T23:55:00Z"
   },
@@ -812,8 +812,8 @@ const MULTI_USER_ENGAGEMENT_BASELINE: any[] = [
     actionType: "CALL_JOINED",
     actionLabel: "Joined Multi-Party Live Video Call",
     category: "network",
-    targetTitle: "Room call-9b0bbf68-live (VibeChat Studio)",
-    details: "Connected live video & headset audio in 5-way VibeChat E2EE conference room",
+    targetTitle: "Room call-9b0bbf68-live (NoctisChat Studio)",
+    details: "Connected live video & headset audio in 5-way NoctisChat E2EE conference room",
     timestampIso: "2026-10-30T23:54:00Z"
   },
   {
@@ -826,7 +826,7 @@ const MULTI_USER_ENGAGEMENT_BASELINE: any[] = [
     actionType: "CALL_JOINED",
     actionLabel: "Joined Multi-Party Live Video Call",
     category: "network",
-    targetTitle: "Room call-9b0bbf68-live (VibeChat Studio)",
+    targetTitle: "Room call-9b0bbf68-live (NoctisChat Studio)",
     details: "Joined live multi-party video call as Master Carpenter · Timber Framing & Custom Joinery",
     timestampIso: "2026-10-30T23:52:00Z"
   },
@@ -840,7 +840,7 @@ const MULTI_USER_ENGAGEMENT_BASELINE: any[] = [
     actionType: "CALL_JOINED",
     actionLabel: "Joined Multi-Party Live Video Call",
     category: "network",
-    targetTitle: "Room call-9b0bbf68-live (VibeChat Studio)",
+    targetTitle: "Room call-9b0bbf68-live (NoctisChat Studio)",
     details: "Joined multi-party video call room call-9b0bbf68-live via direct meeting link",
     timestampIso: "2026-10-30T23:50:00Z"
   },
@@ -1129,7 +1129,7 @@ export async function pullCloudActivityLogs(existingTelemetry?: CloudTelemetrySt
         userAvatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(pName)}&backgroundColor=0f766e`,
         userRole: "PERSONAL",
         actionType: "CALL_JOINED",
-        actionLabel: `In Live Video/Audio Call (${part.call_id || "VibeChat"})`,
+        actionLabel: `In Live Video/Audio Call (${part.call_id || "NoctisChat"})`,
         category: "network",
         targetId: part.call_id,
         targetTitle: `Live Call Room: ${part.call_id || "call-9b0bbf68-live"}`,

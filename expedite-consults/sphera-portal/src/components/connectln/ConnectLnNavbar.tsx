@@ -366,7 +366,7 @@ export function ConnectLnNavbar({
     { id: "franchises", label: "ConnectLn Franchise Network", icon: "🏪", badge: "Franchises", desc: "Franchise directory, FDD opportunities, investors, suppliers & resale marketplace", url: undefined },
     { id: "careersuite", label: "Resume Prep & CareerSuite AI", icon: "📄", badge: "AI", desc: "Upload resume, ATS optimizer, salary intelligence, and interview simulator", url: undefined },
     { id: "messaging", label: "Encrypted Messaging", icon: "💬", badge: "Comms", desc: "Direct messages and end-to-end encrypted professional threads", url: undefined },
-    { id: "vibecomms", label: "VibeChat & Video Conferencing", icon: "📹", badge: "Live", desc: "HD video meetings, screen sharing, and team war rooms", url: undefined },
+    { id: "vibecomms", label: "NoctisChat & Video Conferencing", icon: "📹", badge: "Live", desc: "HD video meetings, screen sharing, and team war rooms", url: undefined },
     { id: "pulserooms", label: "Pulse Audio Rooms", icon: "🎙️", badge: "Live Audio", desc: "Live interactive audio stages, townhalls, and expert panels", url: undefined },
     { id: "marketplace", label: "Enterprise Marketplace & Bazaar", icon: "🛍️", badge: "Commerce", desc: "Hardware, SaaS licenses, consulting templates, and enterprise gear", url: undefined },
     { id: "learning", label: "Learning Academy & Certifications", icon: "🎓", badge: "CEU/CPE", desc: "Accredited courses, certifications, and hands-on skill tracks", url: undefined },
@@ -1342,7 +1342,7 @@ export function ConnectLnNavbar({
             { id: 'veterans', label: 'Veterans', icon: Award, badge: 0, kind: 'emerald' },
             { id: 'franchises', label: 'Franchise', icon: Store, badge: 0, kind: 'amber' },
             { id: 'wallet', label: 'Wallet', icon: DollarSign, badge: 0, kind: 'emerald' },
-            { id: 'vibecomms', label: 'VibeChat', icon: MessageSquare, badge: 0, kind: 'emerald' },
+            { id: 'vibecomms', label: 'NoctisChat', icon: MessageSquare, badge: 0, kind: 'emerald' },
             { id: 'company', label: 'Companies', icon: Building2, badge: 0, kind: 'blue' },
             { id: 'guilds', label: 'Guilds', icon: Shield, badge: 0, kind: 'amber' },
             { id: 'bounties', label: 'Bounties', icon: Flame, badge: 0, kind: 'orange' },
@@ -1887,7 +1887,7 @@ export function ConnectLnNavbar({
                     }}
                     className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 px-2.5 py-1 text-[11px] font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 cursor-pointer"
                   >
-                    💬 VibeChat
+                    💬 NoctisChat
                   </button>
                   <button
                     type="button"

@@ -131,7 +131,7 @@ interface ConversationThread {
 const INITIAL_CONVERSATIONS: ConversationThread[] = [
   {
     id: "9b0bbf68-20c8-4416-b82c-0f0e81b8df80",
-    name: "Vibe / DeskNote Core E2EE Architecture Room",
+    name: "Noctis / DeskNote Core E2EE Architecture Room",
     category: "work",
     subtitle: "Private Group · MLS Epoch #12 · Outbox + Cursor Sync",
     unread: 3,
@@ -220,7 +220,7 @@ const INITIAL_CONVERSATIONS: ConversationThread[] = [
         sender: "lina.chen@nordic-grid.io (VP Procurement)",
         role: "External Partner",
         time: "10:02 AM",
-        text: "Hello Vibe & DeskNote Team — we reviewed the Phase 2 Microgrid telemetry proposal. Once we approve the $148,000 milestone today, can our field engineers join a browser WebRTC session at 14:00 UTC?",
+        text: "Hello Noctis & DeskNote Team — we reviewed the Phase 2 Microgrid telemetry proposal. Once we approve the $148,000 milestone today, can our field engineers join a browser WebRTC session at 14:00 UTC?",
         state: "READ",
         reactions: ["💼 3"],
       },
@@ -228,7 +228,7 @@ const INITIAL_CONVERSATIONS: ConversationThread[] = [
   },
   {
     id: "conv-school-cohort",
-    name: "Vibe Study & OWASP MASVS Cohort #14",
+    name: "Noctis Study & OWASP MASVS Cohort #14",
     category: "school",
     subtitle: "Study Community · 128 Members · On-Device AI Notes",
     unread: 2,
@@ -275,7 +275,7 @@ const INITIAL_CONVERSATIONS: ConversationThread[] = [
         sender: "Rev. Samuel Mensah",
         role: "Community Admin",
         time: "08:00 AM",
-        text: "Saturday Youth Coding & Robotics Scholarship Workshop starts at 09:30 AM in Hall B and via Vibe Low-Bandwidth WebRTC Stream. 84 RSVPs confirmed!",
+        text: "Saturday Youth Coding & Robotics Scholarship Workshop starts at 09:30 AM in Hall B and via Noctis Low-Bandwidth WebRTC Stream. 84 RSVPs confirmed!",
         state: "READ",
         reactions: ["🙏 34", "❤️ 21"],
       },
@@ -342,7 +342,7 @@ const INITIAL_CONVERSATIONS: ConversationThread[] = [
 const EXPLICIT_ASSUMPTIONS = [
   {
     area: "Identity",
-    assumption: "Vibe's existing stable user ID (`user_id`) and authentication remain authoritative; no duplicate user directory.",
+    assumption: "Noctis's existing stable user ID (`user_id`) and authentication remain authoritative; no duplicate user directory.",
   },
   {
     area: "Backend",
@@ -366,7 +366,7 @@ const EXPLICIT_ASSUMPTIONS = [
   },
   {
     area: "AI Brain",
-    assumption: "Vibe's AI Brain assists only when permitted by the privacy model: on-device processing or explicit user-selected sharing.",
+    assumption: "Noctis's AI Brain assists only when permitted by the privacy model: on-device processing or explicit user-selected sharing.",
   },
   {
     area: "Existing users",
@@ -585,7 +585,7 @@ const PHASED_SCHEDULE = [
     phase: "Phase 1 (Weeks 4–9)",
     name: "Durable Messaging Foundation",
     goals: [
-      "Integrate existing Vibe `user_id` & device registry",
+      "Integrate existing Noctis `user_id` & device registry",
       "Implement `comm_messages` + `comm_outbox` persistence",
       "Add monotonic `server_sequence` & idempotency",
       "WebSocket delivery, cursor sync & 1:1 E2EE in test",
@@ -855,7 +855,7 @@ export function VibeUnifiedCommunicationsView({
     } else if (type === "tasks") {
       setAiOutputTitle(`Extracted Engineering Action Items · ${privacyTag}`)
       setAiOutputContent(
-        `1. [P0] Run existing Vibe infrastructure audit & reuse map (Phase 0, Weeks 1–3)\n2. [P0] Deploy \`comm_messages\` + \`comm_outbox\` with \`FOR UPDATE SKIP LOCKED\` publisher\n3. [P1] Validate client-encrypted media presigned upload & orphaned-blob cleanup`
+        `1. [P0] Run existing Noctis infrastructure audit & reuse map (Phase 0, Weeks 1–3)\n2. [P0] Deploy \`comm_messages\` + \`comm_outbox\` with \`FOR UPDATE SKIP LOCKED\` publisher\n3. [P1] Validate client-encrypted media presigned upload & orphaned-blob cleanup`
       )
     } else if (type === "translate") {
       const next =
@@ -872,9 +872,9 @@ export function VibeUnifiedCommunicationsView({
   }
 
   const engineeringDirectiveMarkdown = useMemo(() => {
-    return `# Vibe / Desk Note Communications Engineering Directive
+    return `# Noctis / Desk Note Communications Engineering Directive
 
-**Objective:** Build an integrated, customizable communications platform within the existing Vibe / Desk Note application supporting Web, Android, and iOS; private and group messaging; encrypted media; voice/video calls; multi-device synchronization; communities; and extensibility.
+**Objective:** Build an integrated, customizable communications platform within the existing Noctis / Desk Note application supporting Web, Android, and iOS; private and group messaging; encrypted media; voice/video calls; multi-device synchronization; communities; and extensibility.
 
 ## Finalized Architecture Decisions (Section 20)
 1. **Existing Stack & Reuse**: ${decStack}
@@ -927,17 +927,17 @@ export function VibeUnifiedCommunicationsView({
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 px-3 py-1 text-[11px] font-bold text-emerald-300">
                 <Lock className="h-3.5 w-3.5" />
-                Vibe / Desk Note Communications Platform · Full 20-Section Spec
+                Noctis / Desk Note Communications Platform · Full 20-Section Spec
               </span>
               <span className="inline-flex items-center gap-1 rounded-full bg-teal-500/20 border border-teal-400/30 px-2.5 py-0.5 text-[10px] font-mono text-teal-200">
                 libsignal + MLS RFC 9420 · Outbox Pattern · WebRTC TURN/SFU · OWASP MASVS
               </span>
             </div>
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-white">
-              Vibe / Desk Note Modular Real-Time Communications Subsystem
+              Noctis / Desk Note Modular Real-Time Communications Subsystem
             </h1>
             <p className="text-xs sm:text-sm text-emerald-100/85 leading-relaxed">
-              Built as an integrated, E2EE-first real-time subsystem inside your existing Vibe, Desk Note &amp; ConnectIn
+              Built as an integrated, E2EE-first real-time subsystem inside your existing Noctis, Desk Note &amp; ConnectIn
               infrastructure — reusing authoritative identity (`user_id`), PostgreSQL, Redis, and cloud services while
               enforcing strict cryptographic and operational boundaries across Web, Android, and iOS.
             </p>
@@ -1566,11 +1566,11 @@ export function VibeUnifiedCommunicationsView({
                 Section 2 · Suggested Deployment Shape
               </span>
               <h3 className="text-base font-extrabold text-white">
-                Modular Subsystem Inside Existing Vibe Backend
+                Modular Subsystem Inside Existing Noctis Backend
               </h3>
               <pre className="text-xs font-mono leading-relaxed bg-black/40 p-4 rounded-2xl border border-emerald-500/20 overflow-x-auto">
-{`Existing Vibe backend
-  ├── Identity adapter (Reuses Vibe user_id)
+{`Existing Noctis backend
+  ├── Identity adapter (Reuses Noctis user_id)
   ├── Conversation module
   └── REST API / WebSocket gateway
           ├── Messaging workers

@@ -618,7 +618,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
       latency: '< 1ms Keystroke Response',
       dataPrivacy: 'End-to-End Encrypted Notes & Zero-Trust Access'
     },
-    integrations: ['ConnectIn VibeComms', 'PDFAdore', 'PlanGrid', 'Procore', 'GitHub', 'Slack'],
+    integrations: ['ConnectIn NoctisComms', 'PDFAdore', 'PlanGrid', 'Procore', 'GitHub', 'Slack'],
     security: {
       compliance: ['SOC 2 Type II', 'HIPAA / GDPR Ready', 'End-to-End Encryption'],
       encryption: 'AES-256-GCM + TLS 1.3',
@@ -743,7 +743,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
   {
     id: 'prod_sphera_production_launchpad',
     name: 'Sphera Portal — Live Production Launchpad & Multi-Enclave Cloud OS',
-    tagline: 'Live Production Launchpad (sphera-portal.vercel.app) hosting ConnectLn, 137+ Sphera micro-apps, VibeComms E2EE & Marketplace',
+    tagline: 'Live Production Launchpad (sphera-portal.vercel.app) hosting ConnectLn, 137+ Sphera micro-apps, NoctisComms E2EE & Marketplace',
     category: 'Enterprise Solutions',
     subCategory: 'Production Launchpad & Cloud OS',
     icon: '🚀',
@@ -763,7 +763,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
       isVerified: true,
       isFellow: true
     },
-    overview: 'The Live Production Launchpad at https://sphera-portal.vercel.app is the unified cloud operating environment powering ConnectLn (12 profession enclaves), the Solutions & Tools Marketplace, VibeComms E2EE video/audio meetings, CareerOrbit, and 137+ Sphera enterprise micro-applications.',
+    overview: 'The Live Production Launchpad at https://sphera-portal.vercel.app is the unified cloud operating environment powering ConnectLn (12 profession enclaves), the Solutions & Tools Marketplace, NoctisComms E2EE video/audio meetings, CareerOrbit, and 137+ Sphera enterprise micro-applications.',
     features: [
       { title: 'Live Production Launchpad (sphera-portal.vercel.app)', desc: 'Instant access to the full production portal at https://sphera-portal.vercel.app.' },
       { title: '137+ Sphera Micro-Apps & ConnectLn Enclaves', desc: 'Unified single-sign-on across all 12 industry enclaves, Marketplace tools, and E2EE communications.' },
@@ -794,7 +794,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
         price: '$0',
         period: 'instant cloud launch',
         description: 'Open the Live Production Launchpad at https://sphera-portal.vercel.app.',
-        features: ['Live Production Launchpad (sphera-portal.vercel.app)', '137+ Sphera Micro-Apps', 'ConnectLn & VibeComms E2EE'],
+        features: ['Live Production Launchpad (sphera-portal.vercel.app)', '137+ Sphera Micro-Apps', 'ConnectLn & NoctisComms E2EE'],
         recommended: true,
         ctaText: 'Launch Sphera Portal'
       }
@@ -2463,7 +2463,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
   {
     id: 'prod_vibetok',
     professionEnclave: 'trades_construction',
-    name: 'VibeTok Learning Hub (Core Platform)',
+    name: 'Noctis Learning Hub (Core Platform)',
     tagline: 'Interactive MITRE ATT&CK sandbox, Agentic Swarm & GenAI flywheel & doctoral research',
     category: 'Training',
     subCategory: 'Autonomous Defense & GenAI Flywheel',
@@ -2481,7 +2481,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
       trialDays: 7
     },
     vendor: {
-      name: 'VibeTok Education Network',
+      name: 'Noctis Education Network',
       logo: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=100&auto=format&fit=crop&q=80',
       isVerified: true
     },
@@ -2503,7 +2503,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
       latency: '< 80ms interaction latency',
       dataPrivacy: 'FERPA & SOC-2 strict workspace isolation.'
     },
-    integrations: ['ConnectIn Profile', 'CareerOrbit', 'Google Classroom', 'MITRE ATT&CK Framework', 'VibeTok Reels Studio'],
+    integrations: ['ConnectIn Profile', 'CareerOrbit', 'Google Classroom', 'MITRE ATT&CK Framework', 'Noctis Reels Studio'],
     security: {
       compliance: ['FERPA Compliant', 'SOC 2 Type II', 'NIST 800-53'],
       encryption: 'DRM / TLS 1.3 End-to-End',
@@ -2543,7 +2543,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
   {
     id: 'prod_vibetok_reels_studio',
     professionEnclave: 'creative_media_arts',
-    name: 'VibeTok Reels Studio & Video Player (9:16 Vertical HD)',
+    name: 'Noctis Reels Studio & Video Player (9:16 Vertical HD)',
     tagline: 'High-definition 9:16 vertical video player, HTML5 scrub controls & 1-click social MP4 exporter',
     category: 'Software',
     subCategory: 'Video Editing & Social Content Creation',
@@ -2561,7 +2561,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
       trialDays: 14
     },
     vendor: {
-      name: 'VibeTok Creative Labs',
+      name: 'Noctis Creative Labs',
       logo: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=100&auto=format&fit=crop&q=80',
       isVerified: true
     },
@@ -2626,7 +2626,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
   {
     id: 'prod_vibetok_social_app',
     professionEnclave: 'creative_media_arts',
-    name: 'VibeTok App (Social & In-App Feed)',
+    name: 'Noctis App (Social & In-App Feed)',
     tagline: 'Mobile-first social feed, dynamic vertical reels stream & community engagement',
     category: 'Software',
     subCategory: 'Mobile Social Network & Creator Community',
@@ -2644,7 +2644,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
       trialDays: 30
     },
     vendor: {
-      name: 'VibeTok Technologies',
+      name: 'Noctis Technologies',
       logo: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=100&auto=format&fit=crop&q=80',
       isVerified: true
     },
@@ -2669,7 +2669,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
       latency: '< 50ms swipe latency',
       dataPrivacy: 'User privacy controls and sandboxed media storage.'
     },
-    integrations: ['ConnectIn Profile', 'SpheraNet Social Graph', 'VibeTok Learning Hub'],
+    integrations: ['ConnectIn Profile', 'SpheraNet Social Graph', 'Noctis Learning Hub'],
     security: {
       compliance: ['GDPR Compliant', 'CCPA Compliant'],
       encryption: 'TLS 1.3 Transport Security',

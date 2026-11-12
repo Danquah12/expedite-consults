@@ -1243,7 +1243,7 @@ export const PRIORITY_6_CAREER_PATHWAYS: PriorityCareerPathway[] = [
             lessonNumber: "Lesson 1.2",
             title: "The main components of an AI application",
             paragraphs: [
-              "This architecture is a useful starting point for Vibe's AI assistant. In production, retrieval is optional for some tasks, and security checks should apply throughout the request lifecycle—not only at the final response."
+              "This architecture is a useful starting point for Noctis's AI assistant. In production, retrieval is optional for some tasks, and security checks should apply throughout the request lifecycle—not only at the final response."
             ],
             table: {
               headers: ["Component", "Primary Function & Responsibility"],
@@ -1262,7 +1262,7 @@ export const PRIORITY_6_CAREER_PATHWAYS: PriorityCareerPathway[] = [
             title: "Retrieval-Augmented Generation (RAG)",
             paragraphs: [
               "RAG combines a language model with an external information retrieval system. A typical RAG pipeline works as follows:",
-              "Example: A learner asks Vibe, “What are the prerequisites for this cloud security course?” Instead of inventing an answer, the system retrieves the course's approved prerequisite document and answers from that material.",
+              "Example: A learner asks Noctis, “What are the prerequisites for this cloud security course?” Instead of inventing an answer, the system retrieves the course's approved prerequisite document and answers from that material.",
               "Retrieval improves access to relevant information, but it does not guarantee truth. Documents can be outdated, retrieval can miss important passages, and models can misinterpret source content."
             ],
             orderedSteps: [

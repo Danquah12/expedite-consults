@@ -23,7 +23,7 @@ export const CONNECTLN_TOPICS: KnowledgeTopic[] = [
     title: 'What is ConnectLn',
     keywords: ['what is connectln', 'what is connectin', 'about connectln', 'about connectin', 'connectln', 'connectin', 'platform', 'overview', 'what can i do'],
     answer: () =>
-      `**ConnectLn** is a professional network for every kind of worker — from cybersecurity engineers and doctors to electricians, farmers, barbers, drivers and artisans.\n\nCore areas: **Home feed, Network, Jobs, Messaging, Alerts, Marketplace, Learning, Media and Pulse Rooms**, plus Companies, Guilds, Bounties, Events, RFPs/Procurement, Launchpad, Resume Prep, Wallet and VibeChat in the **More** menu.\n\nYour profile's profession ("enclave") tailors your jobs, analytics, tools and suggestions.`,
+      `**ConnectLn** is a professional network for every kind of worker — from cybersecurity engineers and doctors to electricians, farmers, barbers, drivers and artisans.\n\nCore areas: **Home feed, Network, Jobs, Messaging, Alerts, Marketplace, Learning, Media and Pulse Rooms**, plus Companies, Guilds, Bounties, Events, RFPs/Procurement, Launchpad, Resume Prep, Wallet and NoctisChat in the **More** menu.\n\nYour profile's profession ("enclave") tailors your jobs, analytics, tools and suggestions.`,
     tab: 'home',
     tabLabel: 'Go to Home'
   },
@@ -32,7 +32,7 @@ export const CONNECTLN_TOPICS: KnowledgeTopic[] = [
     title: 'Navigation & menus',
     keywords: ['navigate', 'navigation', 'menu', 'tabs', 'top bar', 'nav', 'sidebar', 'more menu', 'where do i find', 'badge', 'badges'],
     answer: () =>
-      `**Top bar:** Home, Network, Jobs, Msgs, Alerts, Market, Learn, Media, Pulse. The active tab is underlined in blue; red badges clear once you open that tab.\n\n**More menu** (grid icon) holds the rest: Companies, Guilds, Bounties, Events, RFPs, Launchpad, Resume Prep, Wallet, VibeChat and admin tools.\n\n**Me menu** (your avatar) opens your profile, settings, security and sign-out.\n\n**Left sidebar** shows your profile card and role-specific shortcuts; each shortcut opens the closest matching tab.`
+      `**Top bar:** Home, Network, Jobs, Msgs, Alerts, Market, Learn, Media, Pulse. The active tab is underlined in blue; red badges clear once you open that tab.\n\n**More menu** (grid icon) holds the rest: Companies, Guilds, Bounties, Events, RFPs, Launchpad, Resume Prep, Wallet, NoctisChat and admin tools.\n\n**Me menu** (your avatar) opens your profile, settings, security and sign-out.\n\n**Left sidebar** shows your profile card and role-specific shortcuts; each shortcut opens the closest matching tab.`
   },
   {
     id: 'professions',
@@ -64,9 +64,9 @@ export const CONNECTLN_TOPICS: KnowledgeTopic[] = [
   {
     id: 'messaging',
     title: 'Messaging',
-    keywords: ['message', 'messages', 'messaging', 'dm', 'chat', 'inbox', 'compose', 'msgs', 'vibechat'],
+    keywords: ['message', 'messages', 'messaging', 'dm', 'chat', 'inbox', 'compose', 'msgs', 'noctischat', 'vibechat'],
     answer: () =>
-      `**Messaging** supports direct messages with real-time delivery between members and a floating **New Message** compose popup (ConnectLn-style). Unread incoming DMs pop up automatically. **VibeChat** (More menu) is the team/community chat space.`,
+      `**Messaging** supports direct messages with real-time delivery between members and a floating **New Message** compose popup (ConnectLn-style). Unread incoming DMs pop up automatically. **NoctisChat** (More menu) is the team/community chat space.`,
     tab: 'messaging',
     tabLabel: 'Open Messaging'
   },
@@ -174,7 +174,7 @@ export const CONNECTLN_TOPICS: KnowledgeTopic[] = [
     title: 'Noctis AI',
     keywords: ['noctis', 'ai', 'assistant', 'ask noctis', 'vibe', 'ai agents', 'q&a'],
     answer: () =>
-      `**Noctis** is the built-in AI assistant (Q&A, prediction desk and technical analysis). Ask it about ConnectLn features, your profession, jobs, resumes, compliance or technical topics. **AI Agents** and the **Vibe** studio offer deeper automation.`,
+      `**Noctis** is the built-in AI assistant (Q&A, prediction desk and technical analysis). Ask it about ConnectLn features, your profession, jobs, resumes, compliance or technical topics. **AI Agents** and the **Noctis** studio offer deeper automation.`,
     tab: 'aiagents',
     tabLabel: 'Open AI Agents'
   },

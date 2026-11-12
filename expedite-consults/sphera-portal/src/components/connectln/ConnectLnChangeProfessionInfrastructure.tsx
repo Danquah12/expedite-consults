@@ -1418,7 +1418,7 @@ ${activeVibeAnalysis.bulletPoints.join("\n\n")}
                   type="submit"
                   className="rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black px-3.5 py-2 text-xs shrink-0 cursor-pointer"
                 >
-                  Ask Vibe
+                  Ask Noctis
                 </button>
               </div>
             </form>

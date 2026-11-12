@@ -1390,7 +1390,7 @@ export function getEnclaveInteractiveLabs(enclaveId?: string): InteractiveLab[] 
       },
       {
         id: 'lab_vibetok_trades',
-        title: 'VibeTok Trade Video Masterclasses',
+        title: 'Noctis Trade Video Masterclasses',
         category: 'Cloud labs',
         difficulty: 'Intermediate',
         estimatedDuration: '30 mins',
@@ -1403,7 +1403,7 @@ export function getEnclaveInteractiveLabs(enclaveId?: string): InteractiveLab[] 
         ],
         recommendedMarketplaceTools: [
           {
-            name: 'VibeTok Learning Hub',
+            name: 'Noctis Learning Hub',
             icon: '🎥',
             tagline: 'Masterclass video learning.',
             actionText: 'Watch Masterclass'
@@ -1435,7 +1435,7 @@ export function getEnclaveInteractiveLabs(enclaveId?: string): InteractiveLab[] 
     return [
       {
         id: 'lab_vibetok_med',
-        title: 'VibeTok Clinical Grand Rounds Video Hub',
+        title: 'Noctis Clinical Grand Rounds Video Hub',
         category: 'Cloud labs',
         difficulty: 'Intermediate',
         estimatedDuration: '30 mins',
@@ -1513,7 +1513,7 @@ export function getEnclaveInteractiveLabs(enclaveId?: string): InteractiveLab[] 
       },
       {
         id: 'lab_vibetok_auto',
-        title: 'VibeTok Automotive Waveform Masterclasses',
+        title: 'Noctis Automotive Waveform Masterclasses',
         category: 'Cloud labs',
         difficulty: 'Intermediate',
         estimatedDuration: '30 mins',
@@ -1642,7 +1642,7 @@ export function getEnclaveInteractiveLabs(enclaveId?: string): InteractiveLab[] 
       },
       {
         id: 'lab_vibetok_dev_live',
-        title: 'VibeTok Developer Video Learning Hub',
+        title: 'Noctis Developer Video Learning Hub',
         category: 'Cloud labs',
         difficulty: 'Intermediate',
         estimatedDuration: '30 mins',
@@ -1809,7 +1809,7 @@ export function getEnclaveInteractiveLabs(enclaveId?: string): InteractiveLab[] 
     },
     {
       id: 'lab_vibetok_cyber_live',
-      title: 'VibeTok Cyber Labs & Adversary Teardowns',
+      title: 'Noctis Cyber Labs & Adversary Teardowns',
       category: 'Pentesting labs',
       difficulty: 'Intermediate',
       estimatedDuration: '30 mins',

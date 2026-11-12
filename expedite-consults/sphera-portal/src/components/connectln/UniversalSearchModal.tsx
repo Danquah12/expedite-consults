@@ -93,7 +93,7 @@ export function UniversalSearchModal({
     { id: "jobs", label: "Jobs & Talent Board", desc: "Cleared roles, enterprise positions, and AI-matched opportunities", icon: "💼", url: undefined, isExternal: false, badge: "CAREERS" },
     { id: "careersuite", label: "Expedite CareerSuite™ — Resume Preparation App", desc: "Embedded AI Resume Tailoring, ATS Fit Score, Corporate & USAJOBS Federal KSAs, and Profile Maximizer", icon: "📝", url: undefined, isExternal: false, badge: "RESUME AI" },
     { id: "messaging", label: "Encrypted Messaging", desc: "Direct messages and end-to-end encrypted professional threads", icon: "💬", url: undefined, isExternal: false, badge: "COMMS" },
-    { id: "vibecomms", label: "VibeChat & Video Conferencing", desc: "HD video meetings, screen sharing, and team war rooms", icon: "📹", url: undefined, isExternal: false, badge: "LIVE" },
+    { id: "vibecomms", label: "NoctisChat & Video Conferencing", desc: "HD video meetings, screen sharing, and team war rooms", icon: "📹", url: undefined, isExternal: false, badge: "LIVE" },
     { id: "pulserooms", label: "Pulse Audio Rooms", desc: "Live interactive audio stages, townhalls, and expert panels", icon: "🎙️", url: undefined, isExternal: false, badge: "AUDIO" },
     { id: "marketplace", label: "Enterprise Marketplace & Bazaar", desc: "Hardware, SaaS licenses, consulting templates, and enterprise gear", icon: "🛍️", url: undefined, isExternal: false, badge: "COMMERCE" },
     { id: "learning", label: "Learning Academy & Certifications", desc: "Accredited courses, certifications, and hands-on skill tracks", icon: "🎓", url: undefined, isExternal: false, badge: "CEU/CPE" },
