@@ -912,7 +912,7 @@ export function VibeUnifiedCommunicationsView({
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = "vibe-desknote-communications-engineering-directive.md"
+    a.download = "noctis-desknote-communications-engineering-directive.md"
     a.click()
     URL.revokeObjectURL(url)
   }

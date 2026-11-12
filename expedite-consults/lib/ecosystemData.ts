@@ -81,7 +81,7 @@ export const ECOSYSTEM_PILLARS: EcosystemPillar[] = [
     id: "sphera-ecosystem",
     title: "Sphera Social & Collaborative Studio",
     shortName: "Sphera Studio",
-    tagline: "15 simulation worlds, VibeTok short video streaming, verified practitioner social graph & FastAPI backend",
+    tagline: "15 simulation worlds, Noctis short video streaming, verified practitioner social graph & FastAPI backend",
     icon: "Layers",
     gradient: "from-purple-500 to-pink-500",
     borderGlow: "rgba(168, 85, 247, 0.4)",
@@ -111,7 +111,7 @@ export const ECOSYSTEM_PILLARS: EcosystemPillar[] = [
     id: "talent-commerce",
     title: "Talent, Commerce & Standalone Apps",
     shortName: "Talent & Commerce",
-    tagline: "CareerOrbit AI talent matcher, VibeTok Learning Hub, BAZAAR marketplace & Axiom encrypted mail suite",
+    tagline: "CareerOrbit AI talent matcher, Noctis Learning Hub, BAZAAR marketplace & Axiom encrypted mail suite",
     icon: "Sparkles",
     gradient: "from-rose-500 to-pink-600",
     borderGlow: "rgba(244, 63, 94, 0.4)",
@@ -1137,8 +1137,8 @@ export const ECOSYSTEM_APPS: EcosystemApp[] = [
   // ==========================================
     {
     id: "vibe-tok-platform",
-    name: "VibeTok Social & Short-Form Video Stream",
-    codeName: "VibeTok",
+    name: "Noctis Social & Short-Form Video Stream",
+    codeName: "Noctis",
     pillar: "sphera-ecosystem",
     categoryLabel: "Short-Form Video & Audio Simulation",
     description: "High-throughput vertical video and live audio streaming social platform with real-time comments, sound syncing, creator virtual gifting, and discovery algorithms.",
@@ -1420,8 +1420,8 @@ export const ECOSYSTEM_APPS: EcosystemApp[] = [
   // ==========================================
     {
     id: "vibetok-learning-hub",
-    name: "VibeTok Interactive Microlearning Hub",
-    codeName: "VibeTok Learn",
+    name: "Noctis Interactive Microlearning Hub",
+    codeName: "Noctis Learn",
     pillar: "talent-commerce",
     categoryLabel: "Bite-Sized Video Learning & Career Skills",
     description: "AI-curated short-form educational video stream teaching cloud security, software architecture, DevOps pipelines, and STEM concepts in 60-second interactive snippets.",

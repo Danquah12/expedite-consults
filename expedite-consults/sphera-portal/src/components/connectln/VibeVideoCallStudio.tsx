@@ -1756,7 +1756,7 @@ export function VibeVideoCallStudio({
       appendLog("Live Screen Share started (`getDisplayMedia`) — broadcasting to all connected participants!")
     } catch {
       const svgPresentationBoard = `data:image/svg+xml;utf8,${encodeURIComponent(
-        `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450"><rect width="800" height="450" fill="#061410"/><rect x="24" y="24" width="752" height="402" rx="18" fill="#0A211A" stroke="#10B981" stroke-width="2"/><text x="52" y="75" fill="#34D399" font-family="monospace" font-size="15" font-weight="bold">VIBE LIVE SHARED ARCHITECTURE BOARD · SFRAME EPOCH #${sframeEpoch}</text><text x="52" y="122" fill="#FFFFFF" font-family="sans-serif" font-size="24" font-weight="bold">Shared by ${localDisplayName} (${conversationName})</text><rect x="52" y="155" width="320" height="110" rx="12" fill="#061410" stroke="#14B8A6"/><text x="72" y="190" fill="#2DD4BF" font-family="monospace" font-size="14" font-weight="bold">1. E2EE Signaling &amp; WebRTC Mesh</text><text x="72" y="218" fill="#D1FAE5" font-family="sans-serif" font-size="13">PeerJS P2P + /api/v1/calls Live Room Sync</text><text x="72" y="242" fill="#A7F3D0" font-family="monospace" font-size="12">Status: CONNECTED · 100% Synced</text><rect x="402" y="155" width="340" height="110" rx="12" fill="#061410" stroke="#10B981"/><text x="422" y="190" fill="#34D399" font-family="monospace" font-size="14" font-weight="bold">2. Shared Presentation &amp; File Stage</text><text x="422" y="218" fill="#D1FAE5" font-family="sans-serif" font-size="13">Real-time screen &amp; document broadcast</text><text x="422" y="242" fill="#A7F3D0" font-family="monospace" font-size="12">Zero-Knowledge SFrame Media Pipeline</text><rect x="52" y="290" width="690" height="105" rx="12" fill="#042F2E" stroke="#2DD4BF"/><text x="72" y="325" fill="#5EEAD4" font-family="monospace" font-size="14" font-weight="bold">LIVE MEETING AGENDA &amp; SHARED WORKSPACE</text><text x="72" y="355" fill="#ECFDF5" font-family="sans-serif" font-size="13">All connected participants in room ${callId} are viewing this shared presentation board in real time.</text></svg>`
+        `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450"><rect width="800" height="450" fill="#061410"/><rect x="24" y="24" width="752" height="402" rx="18" fill="#0A211A" stroke="#10B981" stroke-width="2"/><text x="52" y="75" fill="#34D399" font-family="monospace" font-size="15" font-weight="bold">NOCTIS LIVE SHARED ARCHITECTURE BOARD · SFRAME EPOCH #${sframeEpoch}</text><text x="52" y="122" fill="#FFFFFF" font-family="sans-serif" font-size="24" font-weight="bold">Shared by ${localDisplayName} (${conversationName})</text><rect x="52" y="155" width="320" height="110" rx="12" fill="#061410" stroke="#14B8A6"/><text x="72" y="190" fill="#2DD4BF" font-family="monospace" font-size="14" font-weight="bold">1. E2EE Signaling &amp; WebRTC Mesh</text><text x="72" y="218" fill="#D1FAE5" font-family="sans-serif" font-size="13">PeerJS P2P + /api/v1/calls Live Room Sync</text><text x="72" y="242" fill="#A7F3D0" font-family="monospace" font-size="12">Status: CONNECTED · 100% Synced</text><rect x="402" y="155" width="340" height="110" rx="12" fill="#061410" stroke="#10B981"/><text x="422" y="190" fill="#34D399" font-family="monospace" font-size="14" font-weight="bold">2. Shared Presentation &amp; File Stage</text><text x="422" y="218" fill="#D1FAE5" font-family="sans-serif" font-size="13">Real-time screen &amp; document broadcast</text><text x="422" y="242" fill="#A7F3D0" font-family="monospace" font-size="12">Zero-Knowledge SFrame Media Pipeline</text><rect x="52" y="290" width="690" height="105" rx="12" fill="#042F2E" stroke="#2DD4BF"/><text x="72" y="325" fill="#5EEAD4" font-family="monospace" font-size="14" font-weight="bold">LIVE MEETING AGENDA &amp; SHARED WORKSPACE</text><text x="72" y="355" fill="#ECFDF5" font-family="sans-serif" font-size="13">All connected participants in room ${callId} are viewing this shared presentation board in real time.</text></svg>`
       )}`
       const stagePayload = {
         active: true,
@@ -4618,7 +4618,7 @@ export function VibeVideoCallStudio({
                 </button>
                 <a
                   href={snapshotDataUrl}
-                  download={`vibe-camera-snapshot-${Date.now()}.jpg`}
+                  download={`noctis-camera-snapshot-${Date.now()}.jpg`}
                   className="px-3 py-1.5 rounded-xl bg-emerald-500 text-slate-950 text-xs font-extrabold"
                 >
                   Download .jpg
@@ -4667,7 +4667,7 @@ export function VibeVideoCallStudio({
                       download={
                         remoteSharedStageItem?.title ||
                         localSharedStageItem?.title ||
-                        `vibe-shared-item-${Date.now()}.jpg`
+                        `noctis-shared-item-${Date.now()}.jpg`
                       }
                       className="px-2.5 py-1 rounded-lg bg-teal-500/20 hover:bg-teal-500/30 border border-teal-400/40 text-teal-200 text-[10px] font-extrabold flex items-center gap-1"
                     >
@@ -5616,7 +5616,7 @@ export function VibeVideoCallStudio({
                 {recordedDownloadUrl && (
                   <a
                     href={recordedDownloadUrl}
-                    download={`vibe-call-${callId.slice(0, 8)}.webm`}
+                    download={`noctis-call-${callId.slice(0, 8)}.webm`}
                     className="px-2.5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-extrabold flex items-center gap-1"
                   >
                     <Download className="h-3.5 w-3.5" />

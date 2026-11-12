@@ -397,8 +397,8 @@ async function pageFile(canvas: HTMLCanvasElement, fit: PaperFit) {
   const jpeg = await canvasBlob(canvas);
   const png = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
   const pdfBytes = pdfFromJpegs([{ jpeg, w: canvas.width, h: canvas.height }]);
-  const pdf = new File([pdfBytes], fit === "full" ? "vibetok-white-paper.pdf" : `vibetok-${fit}.pdf`, { type: "application/pdf" });
-  const images = png ? [new File([png], `vibetok-${fit}.png`, { type: "image/png" })] : [];
+  const pdf = new File([pdfBytes], fit === "full" ? "noctis-white-paper.pdf" : `noctis-${fit}.pdf`, { type: "application/pdf" });
+  const images = png ? [new File([png], `noctis-${fit}.png`, { type: "image/png" })] : [];
   return { pdf, images, pages: [{ jpeg, w: canvas.width, h: canvas.height }] };
 }
 
@@ -505,7 +505,7 @@ export async function renderVibePaper(input: PaperSheetInput) {
     const png = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
     if (png) pngPages.push(png);
   }
-  const pdf = new File([pdfFromJpegs(jpegs)], "vibetok-white-paper.pdf", { type: "application/pdf" });
-  const images = pngPages.map((blob, index) => new File([blob], `vibetok-white-paper-${index + 1}.png`, { type: "image/png" }));
+  const pdf = new File([pdfFromJpegs(jpegs)], "noctis-white-paper.pdf", { type: "application/pdf" });
+  const images = pngPages.map((blob, index) => new File([blob], `noctis-white-paper-${index + 1}.png`, { type: "image/png" }));
   return { pdf, images, caption: paperCaption({ ...input, fit }) };
 }

@@ -157,7 +157,7 @@ export function ReelImagine({ post, active }: { post: FeedPost; active: boolean 
         if (!inner.file) continue;
         const res = await fetch(inner.file);
         const blob = await res.blob();
-        files.push(new File([blob], `vibetok-reel-${index + 1}.mp4`, { type: inner.mime || "video/mp4" }));
+        files.push(new File([blob], `noctis-reel-${index + 1}.mp4`, { type: inner.mime || "video/mp4" }));
       } catch {
         /* try the next part */
       }

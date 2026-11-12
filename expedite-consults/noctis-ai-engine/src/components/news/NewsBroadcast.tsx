@@ -144,7 +144,7 @@ function NewsSend({
       x: "https://x.com/compose/post",
     };
     if (sites[where]) window.open(sites[where], "_blank", "noopener,noreferrer");
-    setNote(`${where} is open. Attach vibetok-white-paper.pdf. It has the story, the evidence, and the Noctis logo.`);
+    setNote(`${where} is open. Attach noctis-white-paper.pdf. It has the story, the evidence, and the Noctis logo.`);
   }
 
   const button = "min-h-11 rounded-full bg-elevated px-3 text-xs font-semibold disabled:opacity-50";

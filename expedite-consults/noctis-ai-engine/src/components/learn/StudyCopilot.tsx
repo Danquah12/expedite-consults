@@ -145,8 +145,8 @@ function PaperShare({ title, lede, source, steps }: { title: string; lede: strin
     const site = sites[where];
     const opened = site ? window.open(site, "_blank", "noopener,noreferrer") : null;
     const line = opened
-      ? `${where} is open. This browser has no share menu, so attach the downloaded vibetok-white-paper.pdf.`
-      : "The two-page paper downloaded. Attach vibetok-white-paper.pdf in the app you opened.";
+      ? `${where} is open. This browser has no share menu, so attach the downloaded noctis-white-paper.pdf.`
+      : "The two-page paper downloaded. Attach noctis-white-paper.pdf in the app you opened.";
     setNote(line);
     toast.success(line);
   }
@@ -170,7 +170,7 @@ function PaperShare({ title, lede, source, steps }: { title: string; lede: strin
         <img key={url} src={url} alt={`Noctis paper page ${index + 1}`} className="w-full rounded-2xl bg-[#0b1220] object-contain" />
       ))}
       {pdfUrl ? (
-        <a href={pdfUrl} download="vibetok-white-paper.pdf" className="inline-flex min-h-11 items-center rounded-full bg-primary px-3 text-xs font-semibold text-primary-fg">
+        <a href={pdfUrl} download="noctis-white-paper.pdf" className="inline-flex min-h-11 items-center rounded-full bg-primary px-3 text-xs font-semibold text-primary-fg">
           Download the two-page paper
         </a>
       ) : null}

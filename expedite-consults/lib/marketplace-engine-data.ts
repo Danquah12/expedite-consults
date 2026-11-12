@@ -1526,7 +1526,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
   {
     id: 'prod_vibetok',
     professionEnclave: 'trades_construction',
-    name: 'VibeTok Learning Hub (Core Platform)',
+    name: 'Noctis Learning Hub (Core Platform)',
     tagline: 'Interactive MITRE ATT&CK sandbox, Agentic Swarm & GenAI flywheel & doctoral research',
     category: 'Training',
     subCategory: 'Autonomous Defense & GenAI Flywheel',
@@ -1544,7 +1544,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
       trialDays: 7
     },
     vendor: {
-      name: 'VibeTok Education Network',
+      name: 'Noctis Education Network',
       logo: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=100&auto=format&fit=crop&q=80',
       isVerified: true
     },
@@ -1566,7 +1566,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
       latency: '< 80ms interaction latency',
       dataPrivacy: 'FERPA & SOC-2 strict workspace isolation.'
     },
-    integrations: ['ConnectIn Profile', 'CareerOrbit', 'Google Classroom', 'MITRE ATT&CK Framework', 'VibeTok Reels Studio'],
+    integrations: ['ConnectIn Profile', 'CareerOrbit', 'Google Classroom', 'MITRE ATT&CK Framework', 'Noctis Reels Studio'],
     security: {
       compliance: ['FERPA Compliant', 'SOC 2 Type II', 'NIST 800-53'],
       encryption: 'DRM / TLS 1.3 End-to-End',
@@ -1592,7 +1592,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
     ],
     reviews: [],
     documentation: {
-      quickstart: 'Access masterclasses at https://vibetok-learning-hub.vercel.app (Latest build: https://vibetok-learning-8ucn2v7ul-kwesi-asiedus-projects.vercel.app)',
+      quickstart: 'Access Noctis Learning Hub masterclasses and interactive sandboxes via the Live Demo button.',
       apiEndpoints: ['GET /api/courses', 'POST /api/progress/sync', 'POST /api/sandbox/exec'],
       sdkSupport: ['Web', 'iOS', 'Android']
     },
@@ -1606,7 +1606,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
   {
     id: 'prod_vibetok_reels_studio',
     professionEnclave: 'creative_media_arts',
-    name: 'VibeTok Reels Studio & Video Player (9:16 Vertical HD)',
+    name: 'Noctis Reels Studio & Video Player (9:16 Vertical HD)',
     tagline: 'High-definition 9:16 vertical video player, HTML5 scrub controls & 1-click social MP4 exporter',
     category: 'Software',
     subCategory: 'Video Editing & Social Content Creation',
@@ -1624,7 +1624,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
       trialDays: 14
     },
     vendor: {
-      name: 'VibeTok Creative Labs',
+      name: 'Noctis Creative Labs',
       logo: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=100&auto=format&fit=crop&q=80',
       isVerified: true
     },
@@ -1675,7 +1675,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
     ],
     reviews: [],
     documentation: {
-      quickstart: 'Launch Reels Studio at https://vibetok-learning-hub.vercel.app/reels (or https://vibetok-learning-hub.vercel.app/reels-studio)',
+      quickstart: 'Launch Noctis Reels Studio (9:16 Vertical HD) directly via the Live Demo button.',
       apiEndpoints: ['GET /api/reels', 'GET /api/reels/feed', 'POST /api/reels/export'],
       sdkSupport: ['Web', 'PWA', 'iOS Safari', 'Android Chrome']
     },
@@ -1689,7 +1689,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
   {
     id: 'prod_vibetok_social_app',
     professionEnclave: 'creative_media_arts',
-    name: 'VibeTok App (Social & In-App Feed)',
+    name: 'Noctis App (Social & In-App Feed)',
     tagline: 'Mobile-first social feed, dynamic vertical reels stream & community engagement',
     category: 'Software',
     subCategory: 'Mobile Social Network & Creator Community',
@@ -1707,7 +1707,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
       trialDays: 30
     },
     vendor: {
-      name: 'VibeTok Technologies',
+      name: 'Noctis Technologies',
       logo: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=100&auto=format&fit=crop&q=80',
       isVerified: true
     },
@@ -1732,7 +1732,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
       latency: '< 50ms swipe latency',
       dataPrivacy: 'User privacy controls and sandboxed media storage.'
     },
-    integrations: ['ConnectIn Profile', 'SpheraNet Social Graph', 'VibeTok Learning Hub'],
+    integrations: ['ConnectIn Profile', 'SpheraNet Social Graph', 'Noctis Learning Hub'],
     security: {
       compliance: ['GDPR Compliant', 'CCPA Compliant'],
       encryption: 'TLS 1.3 Transport Security',
@@ -1758,7 +1758,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
     ],
     reviews: [],
     documentation: {
-      quickstart: 'Launch the live web app at https://vibe-tok-inky.vercel.app (Native reels feed: https://vibe-tok-inky.vercel.app/reels)',
+      quickstart: 'Launch the live Noctis web app and native vertical reels feed directly via the Live Demo button.',
       apiEndpoints: ['GET /api/feed', 'GET /api/reels', 'POST /api/interactions'],
       sdkSupport: ['iOS Safari PWA', 'Android Chrome PWA', 'Desktop Web']
     },

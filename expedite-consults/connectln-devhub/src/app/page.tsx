@@ -596,7 +596,7 @@ const updatedProfile = await prisma.user.update({
                   </div>
                   <div className="text-base font-bold text-white mt-1">conectln.com / connectln.app</div>
                   <p className="text-xs text-slate-400 mt-1">
-                    Live professional networking application: Member profiles · Connections · Vouches · Tickets · E2EE Messaging · VibeComms · Noctis CareerTwin.
+                    Live professional networking application: Member profiles · Connections · Vouches · Tickets · E2EE Messaging · NoctisComms · Noctis CareerTwin.
                   </p>
                   <div className="mt-3 pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
                     <span className="text-slate-400">Database: `connectln_prod_isolated`</span>

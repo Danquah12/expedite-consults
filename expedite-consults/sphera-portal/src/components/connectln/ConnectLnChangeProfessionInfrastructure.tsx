@@ -637,7 +637,7 @@ ${activeVibeAnalysis.bulletPoints.join("\n\n")}
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = `vibe-career-${mobilityMode}-career-${targetCareerSpec.careerNumber}-dossier.md`
+    a.download = `noctis-career-${mobilityMode}-career-${targetCareerSpec.careerNumber}-dossier.md`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)

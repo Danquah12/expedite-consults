@@ -1580,7 +1580,7 @@ function Meet({
             <Circle className={`size-5 ${recording ? "fill-white" : ""}`} />
           </button>
           {recordingUrl ? (
-            <a href={recordingUrl} download="vibetok-meeting.webm" className="inline-flex h-10 shrink-0 items-center rounded-full bg-white px-3 text-xs font-semibold text-black">
+            <a href={recordingUrl} download="noctis-meeting.webm" className="inline-flex h-10 shrink-0 items-center rounded-full bg-white px-3 text-xs font-semibold text-black">
               Download
             </a>
           ) : null}

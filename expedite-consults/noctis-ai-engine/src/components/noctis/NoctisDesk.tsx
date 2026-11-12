@@ -432,7 +432,7 @@ async function senderCard(photo: string, byline: string, message: string) {
   ctx.font = "600 28px Georgia, serif";
   ctx.fillText("Noctis", 72, 1280);
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob((file) => resolve(file), "image/jpeg", 0.9));
-  return blob ? new File([blob], "vibetok-message.jpg", { type: "image/jpeg" }) : null;
+  return blob ? new File([blob], "noctis-message.jpg", { type: "image/jpeg" }) : null;
 }
 
 function shareBody(raw: string) {
@@ -907,7 +907,7 @@ function MadeShare({ words, picture, video, clips }: { words: string; picture: s
     if (!blob || blob.size < 800) return null;
     const mime = blob.type || (picture && src === picture ? "image/jpeg" : "video/mp4");
     const ext = mime.includes("png") ? "png" : mime.includes("webm") ? "webm" : mime.includes("jpeg") || mime.includes("jpg") ? "jpg" : "mp4";
-    return new File([blob], `vibetok-imagine${index ? `-${index + 1}` : ""}.${ext}`, { type: mime });
+    return new File([blob], `noctis-imagine${index ? `-${index + 1}` : ""}.${ext}`, { type: mime });
   }
   async function send() {
     const chosen = places.filter(([id]) => picked.includes(id));
@@ -1629,7 +1629,7 @@ function renderBlocks(source: string) {
         }
         const file = paragraph.match(/^\[([^\]]+)\]\((blob:[^)\s]+)\)$/);
         if (file) {
-          const name = /linkedin/i.test(file[1]) ? "vibetok-linkedin.pdf" : /facebook/i.test(file[1]) ? "vibetok-facebook.pdf" : /instagram/i.test(file[1]) ? "vibetok-instagram.pdf" : /whatsapp/i.test(file[1]) ? "vibetok-whatsapp.pdf" : "vibetok-lesson.pdf";
+          const name = /linkedin/i.test(file[1]) ? "noctis-linkedin.pdf" : /facebook/i.test(file[1]) ? "noctis-facebook.pdf" : /instagram/i.test(file[1]) ? "noctis-instagram.pdf" : /whatsapp/i.test(file[1]) ? "noctis-whatsapp.pdf" : "noctis-lesson.pdf";
           return (
             <a key={`${index}-${p}`} href={file[2]} download={name} className="inline-flex min-h-11 items-center rounded-full bg-[#e4b86a] px-4 text-sm font-semibold text-[#1a1408]">
               {file[1]}
@@ -2478,7 +2478,7 @@ export function NoctisDesk() {
       "CALSCALE:GREGORIAN",
       "METHOD:PUBLISH",
       "BEGIN:VEVENT",
-      `UID:${meetId}@vibetok`,
+      `UID:${meetId}@noctis`,
       `DTSTAMP:${stamp(new Date())}`,
       `DTSTART:${stamp(start)}`,
       `DTEND:${stamp(end)}`,
@@ -2493,7 +2493,7 @@ export function NoctisDesk() {
     const url = URL.createObjectURL(file);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "vibetok-meeting.ics";
+    a.download = "noctis-meeting.ics";
     a.click();
     URL.revokeObjectURL(url);
     setMeetNote("Calendar file saved. Open it to add the meeting.");
@@ -2542,7 +2542,7 @@ export function NoctisDesk() {
     try {
       const res = await fetch("/og.jpg");
       const blob = await res.blob();
-      const file = new File([blob], "vibetok-logo.jpg", { type: blob.type || "image/jpeg" });
+      const file = new File([blob], "noctis-logo.jpg", { type: blob.type || "image/jpeg" });
       if (typeof navigator.share === "function") {
         const data: ShareData = { files: [file], text, title: "Noctis" };
         if (typeof navigator.canShare !== "function" || navigator.canShare(data)) {
@@ -3608,7 +3608,7 @@ export function NoctisDesk() {
                   </div>
                 ) : null}
                 {recordingUrl ? (
-                  <a href={recordingUrl} download="vibetok-meeting.webm" className="flex h-8 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-black">
+                  <a href={recordingUrl} download="noctis-meeting.webm" className="flex h-8 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-black">
                     Download recording
                   </a>
                 ) : null}

@@ -496,7 +496,7 @@ export const INITIAL_DEVHUB_PROJECTS: DevHubProject[] = [
   },
   {
     id: 'proj_vibecomms_webrtc',
-    name: 'VibeComms Zero-Lag WebRTC & Twilio NTS Relay Studio',
+    name: 'NoctisComms Zero-Lag WebRTC & Twilio NTS Relay Studio',
     code: 'CLN-ENG-02',
     description: 'Sub-200ms P2P WebRTC video/audio huddles + Twilio Sync adaptive frame relay fallback across cellular/NAT.',
     status: 'Active',
@@ -905,7 +905,7 @@ export const INITIAL_DEVHUB_TEST_SUITES: DevHubTestSuite[] = [
   {
     id: 'suite_playwright_ui',
     project_id: 'proj_noctis_careertwin',
-    name: '5. UI Testing: Frontend Behavior (Home Stories, Jobs CareerTwin, Messaging, VibeComms)',
+    name: '5. UI Testing: Frontend Behavior (Home Stories, Jobs CareerTwin, Messaging, NoctisComms)',
     category: 'UI (Playwright)',
     framework: 'Playwright (Chromium, WebKit, Mobile Safari)',
     total_cases: 52,
@@ -1979,7 +1979,7 @@ export const DEVHUB_12_MANDATORY_DOCS: DevHubDeliveryDocument[] = [
     summary: 'Three-system architecture separating ConnectLn Production (connectln.app), ConnectLn DevHub Control Plane, and GitHub Source Control.',
     content: `# CONNECTLN_ARCHITECTURE.md
 ## Three-Tier Engineering & Production Separation
-1. **ConnectLn Production (\`connectln.app\` / \`conectln.com\`):** Live professional networking application serving member profiles, connections, peer vouches, work tickets, E2EE messaging, VibeComms WebRTC, and Noctis CareerTwin.
+1. **ConnectLn Production (\`connectln.app\` / \`conectln.com\`):** Live professional networking application serving member profiles, connections, peer vouches, work tickets, E2EE messaging, NoctisComms WebRTC, and Noctis CareerTwin.
 2. **ConnectLn DevHub (\`connectln-devhub.vercel.app\`):** Standalone Internal Developer Platform & Engineering Control Plane with 13 service boundaries (Identity, Portal, GitHub Sync, Projects, Environments, Builds, Testing, Security, Releases, Deployments, Monitoring, Audit, AI Assistant).
 3. **GitHub Source Control (\`Danquah12/expedite-consults\`):** Protected repositories, branch policies, pull requests, webhooks, and signed release tags.
 

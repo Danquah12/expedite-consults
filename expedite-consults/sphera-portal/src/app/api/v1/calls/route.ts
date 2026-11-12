@@ -812,7 +812,7 @@ export async function POST(req: NextRequest) {
           actionLabel: `Joined Live Video Call (${callId})`,
           category: "network",
           targetId: callId,
-          targetTitle: `VibeChat Studio Room (${callId})`,
+          targetTitle: `NoctisChat Studio Room (${callId})`,
           details: `${displayName} joined live multi-party E2EE video & audio call (${updatedParticipant.role})`,
           timestampIso: now
         }).catch(() => {})

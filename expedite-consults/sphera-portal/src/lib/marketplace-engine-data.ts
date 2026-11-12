@@ -2529,7 +2529,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
     ],
     reviews: [],
     documentation: {
-      quickstart: 'Access masterclasses at https://vibetok-learning-hub.vercel.app (Latest build: https://vibetok-learning-8ucn2v7ul-kwesi-asiedus-projects.vercel.app)',
+      quickstart: 'Access Noctis Learning Hub masterclasses and interactive sandboxes via the Live Demo button.',
       apiEndpoints: ['GET /api/courses', 'POST /api/progress/sync', 'POST /api/sandbox/exec'],
       sdkSupport: ['Web', 'iOS', 'Android']
     },
@@ -2612,7 +2612,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
     ],
     reviews: [],
     documentation: {
-      quickstart: 'Launch Reels Studio at https://vibetok-learning-hub.vercel.app/reels (or https://vibetok-learning-hub.vercel.app/reels-studio)',
+      quickstart: 'Launch Noctis Reels Studio (9:16 Vertical HD) directly via the Live Demo button.',
       apiEndpoints: ['GET /api/reels', 'GET /api/reels/feed', 'POST /api/reels/export'],
       sdkSupport: ['Web', 'PWA', 'iOS Safari', 'Android Chrome']
     },
@@ -2695,7 +2695,7 @@ export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
     ],
     reviews: [],
     documentation: {
-      quickstart: 'Launch the live web app at https://vibe-tok-inky.vercel.app (Native reels feed: https://vibe-tok-inky.vercel.app/reels)',
+      quickstart: 'Launch the live Noctis web app and native vertical reels feed directly via the Live Demo button.',
       apiEndpoints: ['GET /api/feed', 'GET /api/reels', 'POST /api/interactions'],
       sdkSupport: ['iOS Safari PWA', 'Android Chrome PWA', 'Desktop Web']
     },

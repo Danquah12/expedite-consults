@@ -129,7 +129,7 @@ export const VIBETOK_PRODUCTION_ROUTES: VibetokProductionRoute[] = [
   },
   {
     id: "social_inky",
-    label: "VibeTok App (In-App Feed)",
+    label: "Noctis App (In-App Feed)",
     shortLabel: "📱 Social Feed",
     badge: "LIVE APP",
     url: "https://vibe-tok-inky.vercel.app/reels",
@@ -280,7 +280,7 @@ export function LearningView({
             badge: "LIVE FIELD NOTEBOOK",
           },
           {
-            title: "VibeTok Trades Hub",
+            title: "Noctis Trades Hub",
             desc: "Bite-sized joinery videos, framing demos & tool restoration streams",
             url: "https://vibetok-learning-hub.vercel.app",
             badge: "LIVE VIDEO MASTERCLASSES",
@@ -301,7 +301,7 @@ export function LearningView({
             badge: "LIVE VOCATIONAL",
           },
           {
-            title: "VibeTok Waveform Academy",
+            title: "Noctis Waveform Academy",
             desc: "Bite-sized oscilloscope masterclasses & diagnostic walkthroughs",
             url: "https://vibetok-learning-hub.vercel.app",
             badge: "LIVE VIDEO MASTERCLASSES",
@@ -316,7 +316,7 @@ export function LearningView({
             badge: "LIVE CME PASSPORT",
           },
           {
-            title: "VibeTok Grand Rounds",
+            title: "Noctis Grand Rounds",
             desc: "Surgical video masterclasses, emergency procedures & clinical briefs",
             url: "https://vibetok-learning-hub.vercel.app",
             badge: "LIVE CLINICAL HUB",
@@ -325,7 +325,7 @@ export function LearningView({
       case 'tech_software':
         return [
           {
-            title: "VibeTok Dev & Cloud Academies",
+            title: "Noctis Dev & Cloud Academies",
             desc: "Fullstack system design, Next.js, microVM masterclasses & live workshops",
             url: "https://vibetok-learning-hub.vercel.app",
             badge: "LIVE ACADEMIES HUB",
@@ -346,7 +346,7 @@ export function LearningView({
       case 'law_gov_defense':
         return [
           {
-            title: "VibeTok Defense & Gov Academies",
+            title: "Noctis Defense & Gov Academies",
             desc: "cATO compliance video lectures, NIST SP 800-53 OSCAL & clearance guides",
             url: "https://vibetok-learning-hub.vercel.app",
             badge: "LIVE ACADEMIES HUB",
@@ -367,7 +367,7 @@ export function LearningView({
       case 'campus_students':
         return [
           {
-            title: "VibeTok Campus & STEM Hub",
+            title: "Noctis Campus & STEM Hub",
             desc: "Interactive student labs, CS foundational lectures & career workshops",
             url: "https://vibetok-learning-hub.vercel.app",
             badge: "LIVE ACADEMIES HUB",
@@ -389,7 +389,7 @@ export function LearningView({
       default:
         return [
           {
-            title: "VibeTok Cyber Labs & Academies",
+            title: "Noctis Cyber Labs & Academies",
             desc: "Red team teardowns, breach investigations & 118K learning assets",
             url: "https://vibetok-learning-hub.vercel.app",
             badge: "LIVE ACADEMIES HUB",
@@ -443,7 +443,7 @@ export function LearningView({
                 className="group inline-flex items-center gap-2 rounded-full bg-[#0A66C2] hover:bg-[#004182] px-4 py-2 text-xs font-semibold text-white shadow-xs transition-all cursor-pointer"
               >
                 <Sparkles className="h-3.5 w-3.5" />
-                <span>Explore VibeTOK Video Hub</span>
+                <span>Explore Noctis Video Hub</span>
                 <span className="rounded-full bg-white/20 px-2 py-0.2 text-[10px] font-mono">118,314 Assets</span>
                 <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
               </button>
@@ -527,7 +527,7 @@ export function LearningView({
               }`}
             >
               <Sparkles className="h-3.5 w-3.5" />
-              <span>VibeTOK Video Hub (118K+)</span>
+              <span>Noctis Video Hub (118K+)</span>
             </button>
             <button
               type="button"
@@ -1114,7 +1114,7 @@ export function LearningView({
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="rounded-full bg-rose-500/20 px-3 py-0.5 text-xs font-bold text-rose-300 border border-rose-500/30 flex items-center gap-1.5">
                   <Sparkles className="h-3.5 w-3.5 text-amber-300" />
-                  VibeTOK Enterprise Learning &amp; Defense Hub
+                  Noctis Enterprise Learning &amp; Defense Hub
                 </span>
                 <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-mono text-zinc-300 border border-white/10">
                   118,314 Catalog Items
@@ -1165,10 +1165,10 @@ export function LearningView({
             <div className="flex items-center justify-between gap-2 mb-2 px-1">
               <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
                 <Layers className="h-3.5 w-3.5 text-rose-500" />
-                Select VibeTok Production App / Route:
+                Select Noctis Production App / Route:
               </span>
               <span className="text-[11px] font-mono text-zinc-400 truncate max-w-xs hidden sm:inline">
-                {vibetokRoute}
+                {vibetokRoute.replace(/vibetok|vibe-tok/gi, "noctis")}
               </span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
@@ -1321,7 +1321,7 @@ export function LearningView({
                 <span className="h-3 w-3 rounded-full bg-red-500 inline-block shrink-0" />
                 <span className="h-3 w-3 rounded-full bg-amber-500 inline-block shrink-0" />
                 <span className="h-3 w-3 rounded-full bg-emerald-500 inline-block shrink-0" />
-                <span className="font-mono text-[11px] text-zinc-400 ml-2 truncate">{vibetokRoute}</span>
+                <span className="font-mono text-[11px] text-zinc-400 ml-2 truncate">{vibetokRoute.replace(/vibetok|vibe-tok/gi, "noctis")}</span>
               </div>
               <div className="flex items-center gap-3 shrink-0">
                 <span className="hidden sm:inline text-[11px] text-emerald-400 font-mono">● LIVE EMBED</span>
@@ -1340,7 +1340,7 @@ export function LearningView({
             <iframe
               key={`${vibetokKey}-${vibetokRoute}`}
               src={vibetokRoute}
-              title="VibeTOK Learning &amp; Defense Platform"
+              title="Noctis Learning &amp; Defense Platform"
               className={`w-full ${vibetokExpanded ? "h-[1100px]" : "h-[850px]"} border-0 transition-all bg-white`}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-modals"
@@ -1432,7 +1432,7 @@ export function LearningView({
                     className="rounded-full bg-gradient-to-r from-rose-600 to-purple-600 px-3.5 py-2 text-xs font-bold text-white hover:opacity-90 transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     <Sparkles className="h-3 w-3 text-amber-300" />
-                    <span>Open in VibeTOK Hub ↗</span>
+                    <span>Open in Noctis Hub ↗</span>
                   </a>
 
                   <button

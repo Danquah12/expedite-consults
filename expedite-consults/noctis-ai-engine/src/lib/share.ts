@@ -64,7 +64,7 @@ export function filmForShare(posts: FeedPost[], asked: { id: string; youtubeId: 
     if (same) return same;
     return {
       id: asked.id || `in-${asked.youtubeId}`,
-      author: { name: "Noctis", username: "vibetok", avatar: FACE.kwesi },
+      author: { name: "Noctis", username: "noctis", avatar: FACE.kwesi },
       caption: `Shared clip. Source · ${SOURCE}.`,
       lane: "learn",
       mediaType: "video",
@@ -127,7 +127,7 @@ export async function brandFiles(): Promise<File[] | undefined> {
     const res = await fetch(BRAND_MARK);
     if (!res.ok) return undefined;
     const blob = await res.blob();
-    const file = new File([blob], "vibetok-clinic.jpg", { type: blob.type || "image/jpeg" });
+    const file = new File([blob], "noctis-clinic.jpg", { type: blob.type || "image/jpeg" });
     return navigator.canShare({ files: [file] }) ? [file] : undefined;
   } catch {
     return undefined;

@@ -2091,7 +2091,7 @@ export function LearningView({
                 Select Noctis Production App / Route:
               </span>
               <span className="text-[11px] font-mono text-zinc-400 truncate max-w-xs hidden sm:inline">
-                {vibetokRoute}
+                {vibetokRoute.replace(/vibetok|vibe-tok/gi, "noctis")}
               </span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
@@ -2244,7 +2244,7 @@ export function LearningView({
                 <span className="h-3 w-3 rounded-full bg-red-500 inline-block shrink-0" />
                 <span className="h-3 w-3 rounded-full bg-amber-500 inline-block shrink-0" />
                 <span className="h-3 w-3 rounded-full bg-emerald-500 inline-block shrink-0" />
-                <span className="font-mono text-[11px] text-zinc-400 ml-2 truncate">{vibetokRoute}</span>
+                <span className="font-mono text-[11px] text-zinc-400 ml-2 truncate">{vibetokRoute.replace(/vibetok|vibe-tok/gi, "noctis")}</span>
               </div>
               <div className="flex items-center gap-3 shrink-0">
                 <span className="hidden sm:inline text-[11px] text-emerald-400 font-mono">● LIVE EMBED</span>
