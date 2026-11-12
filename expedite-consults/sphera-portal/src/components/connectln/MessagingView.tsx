@@ -107,6 +107,7 @@ export function MessagingView({
     });
     const [activeMailboxFolder, setActiveMailboxFolder] = useState<ConnectLnMailboxFolder>('inbox');
     const [showMoreFolders, setShowMoreFolders] = useState<boolean>(false);
+    const [showMailFoldersRail, setShowMailFoldersRail] = useState<boolean>(true);
     const [activeCustomLabel, setActiveCustomLabel] = useState<string | null>(null);
     const [starredIds, setStarredIds] = useState<string[]>(() => {
         if (typeof window === 'undefined') return ['thread_trade_people_gus'];
@@ -2081,19 +2082,29 @@ export function MessagingView({
                 </div>
             )}
 
-            {/* Clean, Streamlined Top Header Bar */}
-            <div className="bg-white border-b border-slate-200 px-4 py-2.5 flex flex-col gap-2">
+            {/* Clean, Streamlined Top Header Bar (Deduplicated: Mode switching lives in Left Rail) */}
+            <div className="bg-white border-b border-slate-200 px-4 py-2 flex flex-col gap-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500 online-dot-blink" />
-                            <span>ConnectLn Inbox</span>
-                        </span>
+                        {workspaceMode === 'chats' && (
+                            <button
+                                type="button"
+                                onClick={() => setShowMailFoldersRail((prev) => !prev)}
+                                title={showMailFoldersRail ? 'Hide mailbox folders rail' : 'Show mailbox folders rail'}
+                                className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#F7F2E8] hover:bg-[#EFE8DA] border border-[#D0C4AE] text-xs font-bold text-[#3D3730] transition-colors cursor-pointer"
+                            >
+                                <svg className="w-3.5 h-3.5 text-[#7C4225]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                                    <rect x="3" y="4" width="18" height="16" rx="2.5" />
+                                    <line x1="9" y1="4" x2="9" y2="20" />
+                                </svg>
+                                <span>{showMailFoldersRail ? 'Folders' : 'Show Folders'}</span>
+                            </button>
+                        )}
                         <button
                             type="button"
                             onClick={() => setShowEnclaveFilterBar((prev) => !prev)}
                             title="Filter inbox by profession enclave"
-                            className="text-xs font-bold text-[#0A66C2] bg-blue-50/80 hover:bg-blue-100/80 border border-blue-200 px-2.5 py-1 rounded-full flex items-center gap-1.5 transition-colors cursor-pointer"
+                            className="text-xs font-bold text-[#0A66C2] bg-blue-50/80 hover:bg-blue-100/80 border border-blue-200 px-3 py-1 rounded-full flex items-center gap-1.5 transition-colors cursor-pointer"
                         >
                             <span>
                                 {selectedEnclave === 'all'
@@ -2102,57 +2113,15 @@ export function MessagingView({
                             </span>
                             <span className="text-[10px] opacity-75">{showEnclaveFilterBar ? '▴' : '▾'}</span>
                         </button>
-                        {totalUnreadCount > 0 && (
-                            <span className="text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full">
-                                {totalUnreadCount} Unread
-                            </span>
-                        )}
                     </div>
 
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                        {/* Quick Mode Switcher Pills (Chats, Calls, Status, Communities, Archived) — ConnectLn Desk Note Symbols */}
-                        {(
-                            [
-                                { id: 'chats' as MessagingWorkspaceMode, symbol: '❖', label: 'Chats' },
-                                { id: 'calls' as MessagingWorkspaceMode, symbol: '◈', label: 'Calls' },
-                                { id: 'status' as MessagingWorkspaceMode, symbol: '✦', label: 'Status' },
-                                { id: 'communities' as MessagingWorkspaceMode, symbol: '⬡', label: 'Communities' },
-                                { id: 'archived' as MessagingWorkspaceMode, symbol: '▣', label: 'Archived' },
-                            ]
-                        ).map((m) => {
-                            const isAct = workspaceMode === m.id;
-                            return (
-                                <button
-                                    key={m.id}
-                                    type="button"
-                                    onClick={() => setWorkspaceMode(m.id)}
-                                    className={`px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border ${
-                                        isAct
-                                            ? 'bg-[#7C4225] border-[#5E3119] shadow-2xs'
-                                            : 'bg-[#F7F2E8] hover:bg-[#EFE8DA] text-[#3D3730] border-[#D0C4AE]'
-                                    }`}
-                                    style={isAct ? { color: '#FBF8F3' } : undefined}
-                                >
-                                    <span
-                                        className={`w-4 h-4 rounded-md flex items-center justify-center text-[10px] font-extrabold leading-none ${
-                                            isAct
-                                                ? 'bg-[#5E3119] text-[#FBF8F3]'
-                                                : 'bg-[#E5DBCA] text-[#5E3119]'
-                                        }`}
-                                    >
-                                        {m.symbol}
-                                    </span>
-                                    <span>{m.label}</span>
-                                </button>
-                            );
-                        })}
-
+                    <div className="flex items-center gap-2 flex-wrap">
                         <button
                             onClick={() => {
                                 setWorkspaceMode('chats');
                                 setShowNewMessageModal(true);
                             }}
-                            className="px-3 py-1.5 rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                            className="px-3.5 py-1.5 rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
                             style={{ color: '#FFFFFF' }}
                         >
                             <span>✒️</span> New Message
@@ -2162,7 +2131,7 @@ export function MessagingView({
                                 onClick={onNavigateVibeComms}
                                 className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
                             >
-                                <span>◉</span> Audio / Video Studio
+                                <span>◉</span> Live Studio
                             </button>
                         )}
                     </div>
@@ -2279,31 +2248,30 @@ export function MessagingView({
                     />
                 ) : (
                     <>
-                {/* Column 1: Customized ConnectLn Mailbox Navigation Rail (Horizontal strip on mobile < md, vertical rail on md+) */}
+                {/* Column 1: Streamlined ConnectLn Mailbox Folders Rail (Collapsible on desktop, horizontal strip on mobile) */}
+                {showMailFoldersRail && (
                 <div
-                    className={`w-full md:w-[218px] border-b md:border-b-0 md:border-r border-slate-200 bg-[#F7F2E8] flex-col shrink-0 py-2 md:py-3 px-2 md:overflow-y-auto select-none ${
+                    className={`w-full md:w-[168px] border-b md:border-b-0 md:border-r border-[#E0D6C5] bg-[#F7F2E8] flex-col shrink-0 py-2 md:py-3 px-2 md:overflow-y-auto select-none ${
                         mobileShowChat ? 'hidden md:flex' : 'flex'
                     }`}
                 >
-                    {/* ConnectLn Branded Mailbox Badge */}
-                    <div className="px-2 md:px-3 pb-2 md:pb-2.5 mb-1.5 border-b border-slate-200/80 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <img
-                                src="/brand/connectln-icon-256.png"
-                                alt="ConnectLn"
-                                className="h-5 w-5 rounded-md object-contain shadow-2xs"
-                            />
-                            <span className="text-xs font-black tracking-tight text-slate-900">
-                                ConnectLn Mail
-                            </span>
-                        </div>
-                        <span className="text-[9px] font-mono font-extrabold uppercase px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
-                            E2EE
+                    {/* Compact Folders Header (No duplicate ConnectLn Mail / E2EE badge) */}
+                    <div className="hidden md:flex items-center justify-between px-2.5 pb-2 mb-1.5 border-b border-[#E0D6C5]/80">
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#78716C]">
+                            Mailbox
                         </span>
+                        <button
+                            type="button"
+                            onClick={() => setShowMailFoldersRail(false)}
+                            title="Collapse folders panel"
+                            className="w-5 h-5 rounded-md hover:bg-[#E8D8C8] text-[#57534E] text-xs font-bold flex items-center justify-center cursor-pointer"
+                        >
+                            ‹
+                        </button>
                     </div>
 
-                    {/* Primary 7 ConnectLn Mailbox Menu Items (Clean & Uncluttered; Secondary folders inside More) */}
-                    <div className="flex md:flex-col items-center md:items-stretch gap-1 md:gap-0 md:space-y-0.5 overflow-x-auto md:overflow-x-visible no-scrollbar pb-1 md:pb-0">
+                    {/* Primary 6 ConnectLn Mailbox Menu Items (Secondary folders & Labels inside More & Labels) */}
+                    <div className="flex md:flex-col items-center md:items-stretch gap-1 md:gap-0.5 overflow-x-auto md:overflow-x-visible no-scrollbar pb-1 md:pb-0">
                         {(
                             [
                                 {
@@ -2366,16 +2334,6 @@ export function MessagingView({
                                         </svg>
                                     ),
                                 },
-                                {
-                                    id: 'snoozed' as ConnectLnMailboxFolder,
-                                    label: 'Snoozed',
-                                    icon: (
-                                        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                                            <circle cx="12" cy="12" r="9" />
-                                            <polyline points="12 7 12 12 15 15" />
-                                        </svg>
-                                    ),
-                                },
                             ]
                         ).map((item) => {
                             const isActive = activeMailboxFolder === item.id && !activeCustomLabel;
@@ -2385,15 +2343,15 @@ export function MessagingView({
                                     key={item.id}
                                     type="button"
                                     onClick={() => handleSelectMailboxFolder(item.id)}
-                                    className={`shrink-0 md:w-full flex items-center justify-between gap-1.5 md:gap-2 px-3 py-1.5 rounded-full text-xs transition-all cursor-pointer whitespace-nowrap ${
+                                    className={`shrink-0 md:w-full flex items-center justify-between gap-1.5 md:gap-2 px-2.5 py-1.5 rounded-xl text-xs transition-all cursor-pointer whitespace-nowrap ${
                                         isActive
                                             ? 'bg-[#E8D8C8] text-[#3B1E10] font-extrabold shadow-2xs'
                                             : item.boldCount && count > 0
-                                            ? 'text-slate-900 font-bold hover:bg-slate-200/70'
-                                            : 'text-slate-700 font-medium hover:bg-slate-200/70'
+                                            ? 'text-slate-900 font-bold hover:bg-[#EFE8DA]'
+                                            : 'text-slate-700 font-medium hover:bg-[#EFE8DA]'
                                     }`}
                                 >
-                                    <span className="flex items-center gap-1.5 md:gap-3 min-w-0 truncate">
+                                    <span className="flex items-center gap-1.5 md:gap-2.5 min-w-0 truncate">
                                         {item.icon}
                                         <span className="truncate">{item.label}</span>
                                     </span>
@@ -2414,11 +2372,11 @@ export function MessagingView({
                             );
                         })}
 
-                        {/* Expandable "More Folders" Section */}
+                        {/* Expandable "More & Labels" Section */}
                         <button
                             type="button"
                             onClick={() => setShowMoreFolders((prev) => !prev)}
-                            className="shrink-0 md:w-full flex items-center gap-1.5 md:gap-3 px-3 py-1.5 rounded-full text-xs font-medium text-slate-600 hover:bg-slate-200/70 transition-all cursor-pointer whitespace-nowrap"
+                            className="shrink-0 md:w-full flex items-center gap-1.5 md:gap-2.5 px-2.5 py-1.5 rounded-xl text-xs font-medium text-slate-600 hover:bg-[#EFE8DA] transition-all cursor-pointer whitespace-nowrap"
                         >
                             <svg
                                 className={`w-4 h-4 shrink-0 transition-transform ${
@@ -2431,13 +2389,14 @@ export function MessagingView({
                             >
                                 <polyline points="6 9 12 15 18 9" />
                             </svg>
-                            <span>{showMoreFolders ? 'Less' : 'More Folders'}</span>
+                            <span>{showMoreFolders ? 'Less' : 'More & Labels'}</span>
                         </button>
 
                         {showMoreFolders && (
-                            <div className="flex md:flex-col items-center md:items-stretch gap-1 md:gap-0 md:space-y-0.5 pl-1 animate-in fade-in">
+                            <div className="flex md:flex-col items-center md:items-stretch gap-1 md:gap-0.5 pl-1 animate-in fade-in">
                                 {(
                                     [
+                                        { id: 'snoozed' as ConnectLnMailboxFolder, label: 'Snoozed', icon: '🕒' },
                                         { id: 'purchases' as ConnectLnMailboxFolder, label: 'Purchases', icon: '🛍️' },
                                         { id: 'social' as ConnectLnMailboxFolder, label: 'Social', icon: '👥' },
                                         { id: 'updates' as ConnectLnMailboxFolder, label: 'Updates', icon: '🔔' },
@@ -2455,13 +2414,13 @@ export function MessagingView({
                                             key={sub.id}
                                             type="button"
                                             onClick={() => handleSelectMailboxFolder(sub.id)}
-                                            className={`shrink-0 md:w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-full text-xs transition-all cursor-pointer whitespace-nowrap ${
+                                            className={`shrink-0 md:w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-xs transition-all cursor-pointer whitespace-nowrap ${
                                                 isSubActive
                                                     ? 'bg-[#E8D8C8] text-[#3B1E10] font-extrabold'
-                                                    : 'text-slate-700 font-medium hover:bg-slate-200/70'
+                                                    : 'text-slate-700 font-medium hover:bg-[#EFE8DA]'
                                             }`}
                                         >
-                                            <span className="flex items-center gap-2 md:gap-3">
+                                            <span className="flex items-center gap-2">
                                                 <span>{sub.icon}</span>
                                                 <span>{sub.label}</span>
                                             </span>
@@ -2477,16 +2436,17 @@ export function MessagingView({
                         )}
                     </div>
 
-                    {/* ConnectLn Custom Labels Section ("Labels +") — Always visible on md+, collapsible via More & Labels on mobile */}
-                    <div className={`${showMoreFolders ? 'block' : 'hidden md:block'} mt-2 md:mt-4 pt-2 md:pt-3 border-t border-slate-200/90`}>
-                        <div className="flex items-center justify-between px-3 mb-1.5">
-                            <span className="text-xs font-bold text-slate-800 tracking-tight">
+                    {/* ConnectLn Custom Labels Section (Shown when "More & Labels" is expanded or when a label is active) */}
+                    {(showMoreFolders || Boolean(activeCustomLabel)) && (
+                    <div className="mt-2 pt-2 border-t border-[#E0D6C5]">
+                        <div className="flex items-center justify-between px-2.5 mb-1">
+                            <span className="text-[11px] font-bold text-slate-800 tracking-tight">
                                 Labels
                             </span>
                             <button
                                 type="button"
                                 onClick={() => setShowNewLabelInput((prev) => !prev)}
-                                className="h-6 w-6 rounded-full hover:bg-slate-200 flex items-center justify-center text-slate-700 font-bold text-base leading-none cursor-pointer"
+                                className="h-5 w-5 rounded-full hover:bg-[#E8D8C8] flex items-center justify-center text-slate-700 font-bold text-sm leading-none cursor-pointer"
                                 title="Create new ConnectLn label"
                             >
                                 +
@@ -2551,15 +2511,15 @@ export function MessagingView({
                                         key={lbl.id}
                                         type="button"
                                         onClick={() => handleSelectCustomLabel(lbl.id)}
-                                        className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-full text-xs transition-all cursor-pointer ${
+                                        className={`w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-xs transition-all cursor-pointer ${
                                             isSelected
                                                 ? 'bg-[#E8D8C8] text-[#3B1E10] font-extrabold shadow-2xs'
-                                                : 'text-slate-700 font-medium hover:bg-slate-200/70'
+                                                : 'text-slate-700 font-medium hover:bg-[#EFE8DA]'
                                         }`}
                                     >
-                                        <span className="flex items-center gap-2.5 truncate">
+                                        <span className="flex items-center gap-2 truncate">
                                             <span
-                                                className="h-2.5 w-2.5 rounded-full shrink-0"
+                                                className="h-2 w-2 rounded-full shrink-0"
                                                 style={{ backgroundColor: lbl.color }}
                                             />
                                             <span className="truncate">{lbl.name}</span>
@@ -2580,7 +2540,9 @@ export function MessagingView({
                             })}
                         </div>
                     </div>
+                    )}
                 </div>
+                )}
 
                 {/* When "Noctis" is selected in the left navigation rail: search unread emails & summarize them grouped by the dates they came in */}
                 {activeMailboxFolder === 'ai_inbox' && !activeCustomLabel ? (
@@ -2835,11 +2797,11 @@ export function MessagingView({
                     <>
                         {/* Column 2: Channels & Conversation Thread List */}
                         <div
-                            className={`w-full md:w-[340px] border-r border-slate-200 flex-col bg-white shrink-0 h-full ${
+                            className={`w-full md:w-[356px] border-r border-slate-200 flex-col bg-white shrink-0 h-full ${
                                 mobileShowChat ? 'hidden md:flex' : 'flex'
                             }`}
                         >
-                    {/* Sidebar Header */}
+                    {/* Sidebar Header (Deduplicated: No redundant thread count badge above filter pills) */}
                     <div className="p-3 bg-white border-b border-slate-200">
                         <div className="flex justify-between items-center mb-2">
                             <div className="min-w-0">
@@ -2887,9 +2849,6 @@ export function MessagingView({
                                     </p>
                                 )}
                             </div>
-                            <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full shrink-0">
-                                {filteredThreads.length}
-                            </span>
                         </div>
 
                         {/* Search Bar */}
@@ -2924,7 +2883,7 @@ export function MessagingView({
                             )}
                         </div>
 
-                        {/* Single-Row Channel Category Filter Pills */}
+                        {/* Single-Row Channel Category Filter Pills (Count shown only on active pill to avoid clutter) */}
                         <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-0.5">
                             {(
                                 [
@@ -2966,15 +2925,11 @@ export function MessagingView({
                                         style={isActive ? { color: '#FFFFFF' } : undefined}
                                     >
                                         <span>{tab.label}</span>
-                                        <span
-                                            className={`text-[10px] font-semibold ${
-                                                isActive
-                                                    ? 'text-white/90'
-                                                    : 'text-slate-400'
-                                            }`}
-                                        >
-                                            {count}
-                                        </span>
+                                        {isActive && (
+                                            <span className="text-[10px] font-semibold text-white/90">
+                                                {count}
+                                            </span>
+                                        )}
                                     </button>
                                 );
                             })}
@@ -3350,7 +3305,7 @@ export function MessagingView({
                         </div>
 
                         {/* Chat History Stream */}
-                        <div className="flex-1 p-4 sm:p-5 overflow-y-auto space-y-3.5 bg-slate-50/40">
+                        <div className="flex-1 p-4 sm:p-5 overflow-y-auto space-y-2.5 bg-slate-50/40">
                             {activeThread.messages.map((msg, idx) => {
                                 const isMe =
                                     msg.sender.id === 'me' ||
@@ -3359,6 +3314,15 @@ export function MessagingView({
                                         msg.sender.name,
                                         currentUser?.name || ''
                                     );
+                                const prevMsg = idx > 0 ? activeThread.messages[idx - 1] : null;
+                                const prevIsMe = prevMsg
+                                    ? prevMsg.sender.id === 'me' ||
+                                      prevMsg.sender.name === 'You' ||
+                                      doesDmParticipantMatch(
+                                          prevMsg.sender.name,
+                                          currentUser?.name || ''
+                                      )
+                                    : null;
                                 const myResolvedPic = resolveUserProfilePicture(
                                     currentUser,
                                     msg.sender.avatar
@@ -3368,12 +3332,16 @@ export function MessagingView({
                                     msg.timestamp
                                 );
                                 const msgDateHeading = formatMessageDateHeading(msg);
-                                const prevMsgDateHeading =
-                                    idx > 0
-                                        ? formatMessageDateHeading(activeThread.messages[idx - 1])
-                                        : null;
+                                const prevMsgDateHeading = prevMsg
+                                    ? formatMessageDateHeading(prevMsg)
+                                    : null;
                                 const showDateSeparator =
                                     Boolean(msgDateHeading) && msgDateHeading !== prevMsgDateHeading;
+                                const isConsecutiveFromSameSender =
+                                    Boolean(prevMsg) &&
+                                    !showDateSeparator &&
+                                    prevIsMe === isMe &&
+                                    (isMe || prevMsg?.sender.name === msg.sender.name);
 
                                 return (
                                     <React.Fragment key={msg.id}>
@@ -3391,36 +3359,49 @@ export function MessagingView({
                                                 isMe ? 'flex-row-reverse' : 'flex-row'
                                             }`}
                                         >
-                                            <img
-                                                src={isMe ? myResolvedPic : msg.sender.avatar}
-                                                alt={msg.sender.name}
-                                                onError={(e) => {
-                                                    e.currentTarget.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(isMe ? currentUser?.name || 'Member' : msg.sender.name)}&backgroundColor=0a66c2`;
-                                                }}
-                                                className="w-8 h-8 rounded-full object-cover shrink-0 mt-0.5 border border-slate-200 shadow-2xs"
-                                            />
+                                            {isConsecutiveFromSameSender ? (
+                                                <div className="w-8 shrink-0" />
+                                            ) : (
+                                                <img
+                                                    src={isMe ? myResolvedPic : msg.sender.avatar}
+                                                    alt={msg.sender.name}
+                                                    onError={(e) => {
+                                                        e.currentTarget.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(isMe ? currentUser?.name || 'Member' : msg.sender.name)}&backgroundColor=0a66c2`;
+                                                    }}
+                                                    className="w-8 h-8 rounded-full object-cover shrink-0 mt-0.5 border border-slate-200 shadow-2xs"
+                                                />
+                                            )}
                                             <div
                                                 className={`max-w-[76%] flex flex-col ${
                                                     isMe ? 'items-end' : 'items-start'
                                                 }`}
                                             >
-                                                <div className="flex items-baseline gap-1.5 mb-1 px-0.5 flex-wrap">
-                                                    <span className="text-xs font-bold text-slate-800">
-                                                        {isMe
-                                                            ? currentUser?.name || 'You'
-                                                            : msg.sender.name}
-                                                    </span>
+                                                {!isConsecutiveFromSameSender ? (
+                                                    <div className="flex items-baseline gap-1.5 mb-1 px-0.5 flex-wrap">
+                                                        {activeThread.channelType === 'Communities' && !isMe && (
+                                                            <span className="text-xs font-bold text-slate-800">
+                                                                {msg.sender.name}
+                                                            </span>
+                                                        )}
+                                                        <span
+                                                            className="text-[10px] font-medium text-slate-400"
+                                                            title={
+                                                                isMe
+                                                                    ? `Sent on ${msgFullSentDateTime}`
+                                                                    : `Received on ${msgFullSentDateTime}`
+                                                            }
+                                                        >
+                                                            {msgFullSentDateTime.split(' · ')[1] || msgFullSentDateTime}
+                                                        </span>
+                                                    </div>
+                                                ) : (
                                                     <span
-                                                        className="text-[10px] font-medium text-slate-400"
-                                                        title={
-                                                            isMe
-                                                                ? `Sent on ${msgFullSentDateTime}`
-                                                                : `Received on ${msgFullSentDateTime}`
-                                                        }
+                                                        className="text-[9px] font-medium text-slate-400 mb-0.5 px-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        title={msgFullSentDateTime}
                                                     >
                                                         {msgFullSentDateTime.split(' · ')[1] || msgFullSentDateTime}
                                                     </span>
-                                                </div>
+                                                )}
 
                                             {/* Clean, Presentable Message Bubble */}
                                             <div className="relative">

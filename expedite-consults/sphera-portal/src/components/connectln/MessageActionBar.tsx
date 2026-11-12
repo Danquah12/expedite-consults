@@ -274,7 +274,13 @@ export function MessageActionBar({
                 </div>
             )}
 
-            <div className="flex flex-wrap items-center gap-1 opacity-75 group-hover:opacity-100 transition-opacity">
+            <div
+                className={`flex flex-wrap items-center gap-1 transition-all duration-150 ${
+                    showComments || showShare || note || comments.length > 0
+                        ? 'opacity-100 mt-1'
+                        : 'opacity-0 max-h-0 overflow-hidden group-hover:opacity-100 group-hover:max-h-10 group-hover:mt-1 focus-within:opacity-100 focus-within:max-h-10'
+                }`}
+            >
                 {REACTIONS.map((r) => {
                     const list = msg.reactions?.[r.kind] || [];
                     const mine = list.includes(myKey);
