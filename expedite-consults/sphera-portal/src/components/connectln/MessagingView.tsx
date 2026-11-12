@@ -2110,7 +2110,7 @@ export function MessagingView({
                     </div>
 
                     <div className="flex items-center gap-1.5 flex-wrap">
-                        {/* Quick Mode Switcher Pills (Chats, Calls, Status, Communities, Archived) */}
+                        {/* Quick Mode Switcher Pills (Chats, Calls, Status, Communities, Archived) — Desk Note Editorial Palette */}
                         {(
                             [
                                 { id: 'chats' as MessagingWorkspaceMode, label: '💬 Chats' },
@@ -2128,9 +2128,10 @@ export function MessagingView({
                                     onClick={() => setWorkspaceMode(m.id)}
                                     className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all cursor-pointer border ${
                                         isAct
-                                            ? 'bg-[#D9FDD3] text-[#111B21] border-emerald-400 shadow-2xs'
-                                            : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                                            ? 'bg-[#7C4225] border-[#5E3119] shadow-2xs'
+                                            : 'bg-[#F7F2E8] hover:bg-[#EFE8DA] text-[#3D3730] border-[#D0C4AE]'
                                     }`}
+                                    style={isAct ? { color: '#FBF8F3' } : undefined}
                                 >
                                     {m.label}
                                 </button>
@@ -2271,7 +2272,7 @@ export function MessagingView({
                     <>
                 {/* Column 1: Customized ConnectLn Mailbox Navigation Rail (Horizontal strip on mobile < md, vertical rail on md+) */}
                 <div
-                    className={`w-full md:w-[218px] border-b md:border-b-0 md:border-r border-slate-200 bg-[#F6F8FC] flex-col shrink-0 py-2 md:py-3 px-2 md:overflow-y-auto select-none ${
+                    className={`w-full md:w-[218px] border-b md:border-b-0 md:border-r border-slate-200 bg-[#F7F2E8] flex-col shrink-0 py-2 md:py-3 px-2 md:overflow-y-auto select-none ${
                         mobileShowChat ? 'hidden md:flex' : 'flex'
                     }`}
                 >
@@ -2377,7 +2378,7 @@ export function MessagingView({
                                     onClick={() => handleSelectMailboxFolder(item.id)}
                                     className={`shrink-0 md:w-full flex items-center justify-between gap-1.5 md:gap-2 px-3 py-1.5 rounded-full text-xs transition-all cursor-pointer whitespace-nowrap ${
                                         isActive
-                                            ? 'bg-[#D3E3FD] text-[#041E49] font-extrabold shadow-2xs'
+                                            ? 'bg-[#E8D8C8] text-[#3B1E10] font-extrabold shadow-2xs'
                                             : item.boldCount && count > 0
                                             ? 'text-slate-900 font-bold hover:bg-slate-200/70'
                                             : 'text-slate-700 font-medium hover:bg-slate-200/70'
@@ -2391,7 +2392,7 @@ export function MessagingView({
                                         <span
                                             className={`text-[11px] shrink-0 ${
                                                 isActive
-                                                    ? 'font-extrabold text-[#041E49]'
+                                                    ? 'font-extrabold text-[#3B1E10]'
                                                     : item.boldCount
                                                     ? 'font-bold text-slate-700'
                                                     : 'font-semibold text-slate-500'
@@ -2447,7 +2448,7 @@ export function MessagingView({
                                             onClick={() => handleSelectMailboxFolder(sub.id)}
                                             className={`shrink-0 md:w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-full text-xs transition-all cursor-pointer whitespace-nowrap ${
                                                 isSubActive
-                                                    ? 'bg-[#D3E3FD] text-[#041E49] font-extrabold'
+                                                    ? 'bg-[#E8D8C8] text-[#3B1E10] font-extrabold'
                                                     : 'text-slate-700 font-medium hover:bg-slate-200/70'
                                             }`}
                                         >
@@ -2543,7 +2544,7 @@ export function MessagingView({
                                         onClick={() => handleSelectCustomLabel(lbl.id)}
                                         className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-full text-xs transition-all cursor-pointer ${
                                             isSelected
-                                                ? 'bg-[#D3E3FD] text-[#041E49] font-extrabold shadow-2xs'
+                                                ? 'bg-[#E8D8C8] text-[#3B1E10] font-extrabold shadow-2xs'
                                                 : 'text-slate-700 font-medium hover:bg-slate-200/70'
                                         }`}
                                     >
@@ -2558,7 +2559,7 @@ export function MessagingView({
                                             <span
                                                 className={`text-[10px] shrink-0 ${
                                                     isSelected
-                                                        ? 'font-extrabold text-[#041E49]'
+                                                        ? 'font-extrabold text-[#3B1E10]'
                                                         : 'font-semibold text-slate-500'
                                                 }`}
                                             >

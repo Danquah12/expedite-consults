@@ -87,7 +87,7 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         viewed: false,
         mediaType: 'text',
         text: '🚀 Live Cloud Security & Zero-Trust Lab cohort starts at 4:00 PM EST! Drop a message to join.',
-        bgColor: 'linear-gradient(135deg, #065f46 0%, #047857 50%, #0f766e 100%)',
+        bgColor: 'linear-gradient(135deg, #5e3119 0%, #7c4225 55%, #3d3730 100%)',
         professionTag: 'Cyber & IT Training',
     },
     {
@@ -109,7 +109,7 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         viewed: false,
         mediaType: 'text',
         text: 'On-site commissioning wrapped ahead of schedule. Grateful for the entire crew! ⚡',
-        bgColor: 'linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #0284c7 100%)',
+        bgColor: 'linear-gradient(135deg, #3b1e10 0%, #7c4225 100%)',
         professionTag: 'Systems Engineering',
     },
     {
@@ -120,7 +120,7 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         viewed: true,
         mediaType: 'text',
         text: 'Reviewing Q4 procurement tenders and supplier SLA renewals today.',
-        bgColor: 'linear-gradient(135deg, #312e81 0%, #4338ca 100%)',
+        bgColor: 'linear-gradient(135deg, #3d3730 0%, #524b42 100%)',
     },
     {
         id: 'st_mike_mukasa',
@@ -150,7 +150,7 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         viewed: true,
         mediaType: 'text',
         text: 'Blessed morning! Wishing everyone a productive Thursday.',
-        bgColor: 'linear-gradient(135deg, #831843 0%, #be185d 100%)',
+        bgColor: 'linear-gradient(135deg, #63331b 0%, #8a4b29 100%)',
     },
     {
         id: 'st_branding',
@@ -160,7 +160,7 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         viewed: true,
         mediaType: 'text',
         text: 'Updated brand identity assets uploaded to the shared project folder.',
-        bgColor: 'linear-gradient(135deg, #1f2937 0%, #374151 100%)',
+        bgColor: 'linear-gradient(135deg, #292521 0%, #524b42 100%)',
     },
     {
         id: 'st_ob',
@@ -170,7 +170,7 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         viewed: true,
         mediaType: 'text',
         text: 'Early shift diagnostics complete.',
-        bgColor: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+        bgColor: 'linear-gradient(135deg, #1c1917 0%, #3d3730 100%)',
     },
 ];
 
@@ -443,7 +443,7 @@ export function WhatsAppLeftIconRail({
     ];
 
     return (
-        <div className="w-full md:w-[56px] bg-[#F0F2F5] border-b md:border-b-0 md:border-r border-slate-200 flex md:flex-col items-center justify-between px-2 py-1.5 md:py-3 shrink-0 select-none">
+        <div className="w-full md:w-[56px] bg-[#F3EDE2] border-b md:border-b-0 md:border-r border-[#E0D6C5] flex md:flex-col items-center justify-between px-2 py-1.5 md:py-3 shrink-0 select-none">
             <div className="flex md:flex-col items-center gap-1.5 md:gap-2 overflow-x-auto no-scrollbar w-full md:w-auto">
                 {items.map((item) => {
                     const isActive = activeMode === item.id;
@@ -455,31 +455,35 @@ export function WhatsAppLeftIconRail({
                             title={item.label}
                             className={`relative flex items-center gap-1.5 md:justify-center px-2.5 md:px-0 h-9 md:h-10 md:w-10 rounded-full transition-all cursor-pointer shrink-0 ${
                                 isActive
-                                    ? 'bg-[#D9FDD3] text-[#111B21] font-bold shadow-2xs ring-1 ring-emerald-500/30'
-                                    : 'text-[#54656F] hover:bg-slate-200/80'
+                                    ? 'bg-[#7C4225] text-[#FBF8F3] font-bold shadow-2xs ring-1 ring-[#5E3119]/40'
+                                    : 'text-[#57534E] hover:bg-[#E8D8C8]/70 hover:text-[#1C1917]'
                             }`}
+                            style={isActive ? { color: '#FBF8F3' } : undefined}
                         >
                             {item.icon}
                             <span className="md:hidden text-[11px] font-bold">{item.label}</span>
                             {typeof item.badge === 'number' && item.badge > 0 && (
-                                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#25D366] text-white text-[10px] font-extrabold flex items-center justify-center shadow-2xs">
+                                <span
+                                    className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#7C4225] border border-[#FBF8F3] text-[10px] font-extrabold flex items-center justify-center shadow-2xs"
+                                    style={{ color: '#FBF8F3' }}
+                                >
                                     {item.badge}
                                 </span>
                             )}
                             {item.dot && !item.badge && (
-                                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#25D366] ring-2 ring-[#F0F2F5]" />
+                                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#7C4225] ring-2 ring-[#F3EDE2]" />
                             )}
                         </button>
                     );
                 })}
             </div>
 
-            <div className="hidden md:flex flex-col items-center gap-2.5 pt-3 border-t border-slate-200/80">
+            <div className="hidden md:flex flex-col items-center gap-2.5 pt-3 border-t border-[#E0D6C5]">
                 <button
                     type="button"
                     onClick={() => onSelectMode('status')}
                     title="My Status & Profile"
-                    className="w-8 h-8 rounded-full overflow-hidden border-2 border-emerald-500 shadow-2xs cursor-pointer"
+                    className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#7C4225] shadow-2xs cursor-pointer"
                 >
                     <img
                         src={currentUserAvatar || '/brand/kwesi-avatar.png'}
@@ -525,7 +529,7 @@ export function WhatsAppModeWorkspace({
         'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=900'
     );
     const [statusBgColor, setStatusBgColor] = useState(
-        'linear-gradient(135deg, #065f46 0%, #047857 50%, #0f766e 100%)'
+        'linear-gradient(135deg, #5e3119 0%, #7c4225 55%, #3d3730 100%)'
     );
     const [statusReplyText, setStatusReplyText] = useState('');
 
@@ -554,11 +558,11 @@ export function WhatsAppModeWorkspace({
     const [archivedReplyInput, setArchivedReplyInput] = useState('');
 
     // ---- CHANNELS STATE ----
-    const [channels, setChannels] = useState(INITIAL_CHANNELS);
+    const [channels] = useState(INITIAL_CHANNELS);
     const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
 
     // =========================================================================
-    // 1. STATUS VIEW (Matches Images 1 & 3)
+    // 1. STATUS VIEW (Desk Note Warm Parchment & Espresso Theme)
     // =========================================================================
     if (mode === 'status') {
         const recentStatuses = statusList.filter((s) => !s.viewed);
@@ -596,12 +600,12 @@ export function WhatsAppModeWorkspace({
         };
 
         return (
-            <div className="flex-1 flex flex-col md:flex-row h-full bg-white overflow-hidden">
+            <div className="flex-1 flex flex-col md:flex-row h-full bg-[#FBF8F3] overflow-hidden">
                 {/* Left Column: Status List */}
-                <div className="w-full md:w-[360px] border-r border-slate-200 flex flex-col h-full bg-white shrink-0">
+                <div className="w-full md:w-[360px] border-r border-[#E0D6C5] flex flex-col h-full bg-[#FBF8F3] shrink-0">
                     {/* Header */}
-                    <div className="px-4 py-3.5 flex items-center justify-between">
-                        <h2 className="text-xl font-bold text-[#111B21]">Status</h2>
+                    <div className="px-4 py-3.5 flex items-center justify-between border-b border-[#E0D6C5]/60">
+                        <h2 className="text-xl font-bold text-[#1C1917]">Status</h2>
                         <div className="flex items-center gap-1">
                             <button
                                 type="button"
@@ -610,7 +614,7 @@ export function WhatsAppModeWorkspace({
                                     setStatusComposerMode('text');
                                 }}
                                 title="Add status update"
-                                className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-[#54656F] cursor-pointer"
+                                className="w-8 h-8 rounded-full hover:bg-[#EFE8DA] flex items-center justify-center text-[#57534E] cursor-pointer"
                             >
                                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                                     <circle cx="12" cy="12" r="9" />
@@ -625,7 +629,7 @@ export function WhatsAppModeWorkspace({
                                     setStatusComposerMode(null);
                                 }}
                                 title="Status privacy & options"
-                                className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-[#54656F] cursor-pointer"
+                                className="w-8 h-8 rounded-full hover:bg-[#EFE8DA] flex items-center justify-center text-[#57534E] cursor-pointer"
                             >
                                 ⋮
                             </button>
@@ -633,27 +637,30 @@ export function WhatsAppModeWorkspace({
                     </div>
 
                     {/* My Status Row */}
-                    <div className="px-2 pb-2">
+                    <div className="px-2 py-2">
                         <div
                             onClick={() => {
                                 setActiveStatusId(null);
                                 setStatusComposerMode('text');
                             }}
-                            className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-100 cursor-pointer transition-colors"
+                            className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-[#EFE8DA]/70 cursor-pointer transition-colors"
                         >
                             <div className="relative shrink-0">
                                 <img
                                     src={userAvatar}
                                     alt={userName}
-                                    className="w-11 h-11 rounded-full object-cover border border-slate-200"
+                                    className="w-11 h-11 rounded-full object-cover border border-[#D0C4AE]"
                                 />
-                                <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#25D366] text-white text-xs font-bold flex items-center justify-center ring-2 ring-white">
+                                <span
+                                    className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#7C4225] text-xs font-bold flex items-center justify-center ring-2 ring-[#FBF8F3]"
+                                    style={{ color: '#FBF8F3' }}
+                                >
                                     +
                                 </span>
                             </div>
                             <div className="min-w-0">
-                                <p className="text-sm font-semibold text-[#111B21]">My status</p>
-                                <p className="text-xs text-[#667781]">Click to add status update</p>
+                                <p className="text-sm font-semibold text-[#1C1917]">My status</p>
+                                <p className="text-xs text-[#78716C]">Click to add status update</p>
                             </div>
                         </div>
                     </div>
@@ -662,7 +669,7 @@ export function WhatsAppModeWorkspace({
                     <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-4">
                         {recentStatuses.length > 0 && (
                             <div>
-                                <p className="px-2.5 py-1.5 text-xs font-semibold text-[#667781]">
+                                <p className="px-2.5 py-1.5 text-xs font-semibold text-[#78716C] uppercase tracking-wider">
                                     Recent
                                 </p>
                                 <div className="space-y-0.5">
@@ -672,11 +679,11 @@ export function WhatsAppModeWorkspace({
                                             onClick={() => handleOpenStatus(st)}
                                             className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition-colors ${
                                                 activeStatusId === st.id
-                                                    ? 'bg-[#F0F2F5]'
-                                                    : 'hover:bg-slate-50'
+                                                    ? 'bg-[#EFE8DA]'
+                                                    : 'hover:bg-[#F6F1E7]'
                                             }`}
                                         >
-                                            <div className="p-0.5 rounded-full border-2 border-[#25D366] shrink-0">
+                                            <div className="p-0.5 rounded-full border-2 border-[#7C4225] shrink-0">
                                                 <img
                                                     src={st.authorAvatar}
                                                     alt={st.authorName}
@@ -684,10 +691,10 @@ export function WhatsAppModeWorkspace({
                                                 />
                                             </div>
                                             <div className="min-w-0 flex-1">
-                                                <p className="text-sm font-medium text-[#111B21] truncate">
+                                                <p className="text-sm font-semibold text-[#1C1917] truncate">
                                                     {st.authorName}
                                                 </p>
-                                                <p className="text-xs text-[#667781]">
+                                                <p className="text-xs text-[#78716C]">
                                                     {st.timestampLabel}
                                                 </p>
                                             </div>
@@ -699,7 +706,7 @@ export function WhatsAppModeWorkspace({
 
                         {viewedStatuses.length > 0 && (
                             <div>
-                                <p className="px-2.5 py-1.5 text-xs font-semibold text-[#667781]">
+                                <p className="px-2.5 py-1.5 text-xs font-semibold text-[#78716C] uppercase tracking-wider">
                                     Viewed
                                 </p>
                                 <div className="space-y-0.5">
@@ -709,11 +716,11 @@ export function WhatsAppModeWorkspace({
                                             onClick={() => handleOpenStatus(st)}
                                             className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition-colors ${
                                                 activeStatusId === st.id
-                                                    ? 'bg-[#F0F2F5]'
-                                                    : 'hover:bg-slate-50'
+                                                    ? 'bg-[#EFE8DA]'
+                                                    : 'hover:bg-[#F6F1E7]'
                                             }`}
                                         >
-                                            <div className="p-0.5 rounded-full border-2 border-slate-300 shrink-0">
+                                            <div className="p-0.5 rounded-full border-2 border-[#D0C4AE] shrink-0">
                                                 <img
                                                     src={st.authorAvatar}
                                                     alt={st.authorName}
@@ -721,10 +728,10 @@ export function WhatsAppModeWorkspace({
                                                 />
                                             </div>
                                             <div className="min-w-0 flex-1">
-                                                <p className="text-sm font-medium text-[#111B21] truncate">
+                                                <p className="text-sm font-medium text-[#1C1917] truncate">
                                                     {st.authorName}
                                                 </p>
-                                                <p className="text-xs text-[#667781]">
+                                                <p className="text-xs text-[#78716C]">
                                                     {st.timestampLabel}
                                                 </p>
                                             </div>
@@ -737,11 +744,11 @@ export function WhatsAppModeWorkspace({
                 </div>
 
                 {/* Right Column: Share Statuses Canvas / Active Status Viewer / Composer */}
-                <div className="flex-1 bg-[#F7F5F3] flex flex-col items-center justify-center p-6 relative overflow-y-auto">
+                <div className="flex-1 bg-[#F3EDE2] flex flex-col items-center justify-center p-6 relative overflow-y-auto">
                     {statusComposerMode ? (
-                        <div className="w-full max-w-lg bg-white rounded-2xl shadow-lg border border-slate-200 p-6 animate-in fade-in">
+                        <div className="w-full max-w-lg bg-[#FBF8F3] rounded-2xl shadow-lg border border-[#E0D6C5] p-6 animate-in fade-in">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-base font-bold text-[#111B21]">
+                                <h3 className="text-base font-bold text-[#1C1917]">
                                     {statusComposerMode === 'text'
                                         ? '✏️ Create Text Status (24h)'
                                         : '📷 Share Photo & Video Status (24h)'}
@@ -749,7 +756,7 @@ export function WhatsAppModeWorkspace({
                                 <button
                                     type="button"
                                     onClick={() => setStatusComposerMode(null)}
-                                    className="text-slate-400 hover:text-slate-700 font-bold text-sm cursor-pointer"
+                                    className="text-[#78716C] hover:text-[#1C1917] font-bold text-sm cursor-pointer"
                                 >
                                     ✕
                                 </button>
@@ -771,21 +778,22 @@ export function WhatsAppModeWorkspace({
                                         onChange={(e) => setStatusDraftText(e.target.value)}
                                         placeholder="Type your 24-hour status update..."
                                         rows={3}
-                                        className="w-full bg-transparent text-white placeholder-white/75 text-center font-bold text-lg focus:outline-none resize-none"
+                                        className="w-full bg-transparent placeholder-white/75 text-center font-bold text-lg focus:outline-none resize-none"
+                                        style={{ color: '#FBF8F3' }}
                                     />
                                 </div>
 
                                 {statusComposerMode === 'text' ? (
                                     <div className="flex items-center gap-2">
-                                        <span className="text-xs font-semibold text-slate-600">
-                                            Background:
+                                        <span className="text-xs font-semibold text-[#57534E]">
+                                            Desk Note Theme:
                                         </span>
                                         {[
-                                            'linear-gradient(135deg, #065f46 0%, #0f766e 100%)',
-                                            'linear-gradient(135deg, #1e3a8a 0%, #0284c7 100%)',
-                                            'linear-gradient(135deg, #581c87 0%, #7e22ce 100%)',
-                                            'linear-gradient(135deg, #831843 0%, #be185d 100%)',
-                                            'linear-gradient(135deg, #111827 0%, #374151 100%)',
+                                            'linear-gradient(135deg, #5e3119 0%, #7c4225 55%, #3d3730 100%)',
+                                            'linear-gradient(135deg, #3b1e10 0%, #8a4b29 100%)',
+                                            'linear-gradient(135deg, #292521 0%, #524b42 100%)',
+                                            'linear-gradient(135deg, #4d6b53 0%, #2f4534 100%)',
+                                            'linear-gradient(135deg, #1c1917 0%, #3d3730 100%)',
                                         ].map((bg, idx) => (
                                             <button
                                                 key={idx}
@@ -793,8 +801,8 @@ export function WhatsAppModeWorkspace({
                                                 onClick={() => setStatusBgColor(bg)}
                                                 className={`w-6 h-6 rounded-full cursor-pointer border-2 ${
                                                     statusBgColor === bg
-                                                        ? 'border-slate-900 scale-110'
-                                                        : 'border-white'
+                                                        ? 'border-[#1C1917] scale-110'
+                                                        : 'border-[#FBF8F3]'
                                                 }`}
                                                 style={{ background: bg }}
                                             />
@@ -802,14 +810,14 @@ export function WhatsAppModeWorkspace({
                                     </div>
                                 ) : (
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-600 mb-1">
+                                        <label className="block text-xs font-semibold text-[#57534E] mb-1">
                                             Photo / Video URL or Preset:
                                         </label>
                                         <input
                                             type="text"
                                             value={statusDraftImage}
                                             onChange={(e) => setStatusDraftImage(e.target.value)}
-                                            className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-800"
+                                            className="w-full border border-[#D0C4AE] bg-[#F8F4EC] rounded-lg px-3 py-1.5 text-xs text-[#1C1917]"
                                         />
                                     </div>
                                 )}
@@ -818,13 +826,14 @@ export function WhatsAppModeWorkspace({
                                     <button
                                         type="button"
                                         onClick={() => setStatusComposerMode(null)}
-                                        className="px-4 py-2 rounded-full text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                                        className="px-4 py-2 rounded-full text-xs font-semibold text-[#57534E] hover:bg-[#EFE8DA] cursor-pointer"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         type="submit"
-                                        className="px-5 py-2 rounded-full bg-[#25D366] hover:bg-[#1da851] text-white text-xs font-bold shadow-sm cursor-pointer"
+                                        className="px-5 py-2 rounded-full bg-[#7C4225] hover:bg-[#5E3119] text-xs font-bold shadow-sm cursor-pointer"
+                                        style={{ color: '#FBF8F3' }}
                                     >
                                         Share Status
                                     </button>
@@ -832,18 +841,23 @@ export function WhatsAppModeWorkspace({
                             </form>
                         </div>
                     ) : activeStatus ? (
-                        <div className="w-full max-w-md bg-[#111B21] text-white rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in">
+                        <div className="w-full max-w-md bg-[#1C1917] rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-[#524B42] animate-in fade-in">
                             {/* Top Progress & Author Bar */}
-                            <div className="p-4 bg-black/40 flex items-center justify-between">
+                            <div className="p-4 bg-[#141210]/80 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <img
                                         src={activeStatus.authorAvatar}
                                         alt={activeStatus.authorName}
-                                        className="w-10 h-10 rounded-full object-cover border-2 border-[#25D366]"
+                                        className="w-10 h-10 rounded-full object-cover border-2 border-[#BC9675]"
                                     />
                                     <div>
-                                        <p className="text-sm font-bold">{activeStatus.authorName}</p>
-                                        <p className="text-[11px] text-white/70">
+                                        <p
+                                            className="text-sm font-bold"
+                                            style={{ color: '#FBF8F3' }}
+                                        >
+                                            {activeStatus.authorName}
+                                        </p>
+                                        <p className="text-[11px] text-[#D0C4AE]">
                                             {activeStatus.timestampLabel}
                                         </p>
                                     </div>
@@ -852,6 +866,7 @@ export function WhatsAppModeWorkspace({
                                     type="button"
                                     onClick={() => setActiveStatusId(null)}
                                     className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-sm font-bold cursor-pointer"
+                                    style={{ color: '#FBF8F3' }}
                                 >
                                     ✕
                                 </button>
@@ -863,7 +878,8 @@ export function WhatsAppModeWorkspace({
                                 style={{
                                     background:
                                         activeStatus.bgColor ||
-                                        'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                                        'linear-gradient(135deg, #292521 0%, #3d3730 100%)',
+                                    color: '#FBF8F3',
                                 }}
                             >
                                 {activeStatus.imageUrl && (
@@ -888,27 +904,29 @@ export function WhatsAppModeWorkspace({
                                     );
                                     setStatusReplyText('');
                                 }}
-                                className="p-3 bg-[#1F2C34] flex items-center gap-2"
+                                className="p-3 bg-[#292521] flex items-center gap-2"
                             >
                                 <input
                                     type="text"
                                     value={statusReplyText}
                                     onChange={(e) => setStatusReplyText(e.target.value)}
                                     placeholder={`Reply to ${activeStatus.authorName}...`}
-                                    className="flex-1 bg-[#2A3942] text-white placeholder-white/60 text-xs rounded-full px-4 py-2 focus:outline-none"
+                                    className="flex-1 bg-[#3D3730] placeholder-[#D0C4AE] text-xs rounded-full px-4 py-2 focus:outline-none"
+                                    style={{ color: '#FBF8F3' }}
                                 />
                                 <button
                                     type="submit"
-                                    className="px-3.5 py-1.5 rounded-full bg-[#25D366] text-white text-xs font-bold cursor-pointer"
+                                    className="px-3.5 py-1.5 rounded-full bg-[#7C4225] hover:bg-[#5E3119] text-xs font-bold cursor-pointer"
+                                    style={{ color: '#FBF8F3' }}
                                 >
                                     Send
                                 </button>
                             </form>
                         </div>
                     ) : (
-                        /* Exact Default "Share statuses" Screen from User Screenshot 1 & 3 */
+                        /* Default "Share statuses" Screen in Desk Note Editorial Palette */
                         <div className="text-center max-w-md flex flex-col items-center">
-                            <div className="w-16 h-16 mb-4 flex items-center justify-center text-[#A6A8AA]">
+                            <div className="w-16 h-16 mb-4 flex items-center justify-center text-[#9C8F7A]">
                                 <svg
                                     className="w-14 h-14"
                                     viewBox="0 0 24 24"
@@ -922,10 +940,10 @@ export function WhatsAppModeWorkspace({
                                     <path strokeLinecap="round" d="M4.21 16.5a9 9 0 0 1 0-9" />
                                 </svg>
                             </div>
-                            <h3 className="text-2xl font-normal text-[#111B21] mb-2">
+                            <h3 className="text-2xl font-normal text-[#1C1917] mb-2">
                                 Share statuses
                             </h3>
-                            <p className="text-sm text-[#667781] mb-7">
+                            <p className="text-sm text-[#57534E] mb-7">
                                 Share photos, videos and text that disappear after 24 hours.
                             </p>
                             <div className="flex items-center justify-center gap-8">
@@ -934,7 +952,7 @@ export function WhatsAppModeWorkspace({
                                     onClick={() => setStatusComposerMode('text')}
                                     className="flex flex-col items-center gap-2 group cursor-pointer"
                                 >
-                                    <span className="w-12 h-12 rounded-full bg-[#E9EDEF] group-hover:bg-[#D9DEE0] flex items-center justify-center text-[#111B21] transition-colors shadow-2xs">
+                                    <span className="w-12 h-12 rounded-full bg-[#EFE8DA] group-hover:bg-[#E2D9C8] border border-[#D0C4AE] flex items-center justify-center text-[#1C1917] transition-colors shadow-2xs">
                                         <svg
                                             className="w-5 h-5"
                                             viewBox="0 0 24 24"
@@ -949,7 +967,7 @@ export function WhatsAppModeWorkspace({
                                             />
                                         </svg>
                                     </span>
-                                    <span className="text-xs font-medium text-[#54656F]">
+                                    <span className="text-xs font-semibold text-[#57534E]">
                                         Text status
                                     </span>
                                 </button>
@@ -959,7 +977,7 @@ export function WhatsAppModeWorkspace({
                                     onClick={() => setStatusComposerMode('photo')}
                                     className="flex flex-col items-center gap-2 group cursor-pointer"
                                 >
-                                    <span className="w-12 h-12 rounded-full bg-[#E9EDEF] group-hover:bg-[#D9DEE0] flex items-center justify-center text-[#111B21] transition-colors shadow-2xs">
+                                    <span className="w-12 h-12 rounded-full bg-[#EFE8DA] group-hover:bg-[#E2D9C8] border border-[#D0C4AE] flex items-center justify-center text-[#1C1917] transition-colors shadow-2xs">
                                         <svg
                                             className="w-5 h-5"
                                             viewBox="0 0 24 24"
@@ -975,7 +993,7 @@ export function WhatsAppModeWorkspace({
                                             <circle cx="12" cy="13" r="4" />
                                         </svg>
                                     </span>
-                                    <span className="text-xs font-medium text-[#54656F]">
+                                    <span className="text-xs font-semibold text-[#57534E]">
                                         Photo and video
                                     </span>
                                 </button>
@@ -988,7 +1006,7 @@ export function WhatsAppModeWorkspace({
     }
 
     // =========================================================================
-    // 2. CALLS VIEW (Matches Image 2)
+    // 2. CALLS VIEW (Desk Note Warm Parchment & Espresso Theme)
     // =========================================================================
     if (mode === 'calls') {
         const filteredCalls = callLogs.filter(
@@ -1009,17 +1027,18 @@ export function WhatsAppModeWorkspace({
         };
 
         return (
-            <div className="flex-1 flex flex-col md:flex-row h-full bg-white overflow-hidden">
+            <div className="flex-1 flex flex-col md:flex-row h-full bg-[#FBF8F3] overflow-hidden">
                 {/* Left Column: Calls List */}
-                <div className="w-full md:w-[360px] border-r border-slate-200 flex flex-col h-full bg-white shrink-0">
+                <div className="w-full md:w-[360px] border-r border-[#E0D6C5] flex flex-col h-full bg-[#FBF8F3] shrink-0">
                     {/* Header */}
-                    <div className="px-4 pt-3.5 pb-2.5 flex items-center justify-between">
-                        <h2 className="text-xl font-bold text-[#111B21]">Calls</h2>
+                    <div className="px-4 pt-3.5 pb-2.5 flex items-center justify-between border-b border-[#E0D6C5]/60">
+                        <h2 className="text-xl font-bold text-[#1C1917]">Calls</h2>
                         <button
                             type="button"
                             onClick={() => onStartLiveCall('video')}
                             title="Start a new call"
-                            className="w-9 h-9 rounded-full bg-[#25D366] hover:bg-[#1da851] text-white flex items-center justify-center shadow-sm cursor-pointer"
+                            className="w-9 h-9 rounded-full bg-[#7C4225] hover:bg-[#5E3119] flex items-center justify-center shadow-sm cursor-pointer"
+                            style={{ color: '#FBF8F3' }}
                         >
                             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2}>
                                 <path
@@ -1032,17 +1051,17 @@ export function WhatsAppModeWorkspace({
                     </div>
 
                     {/* Search Bar */}
-                    <div className="px-3 pb-3">
+                    <div className="px-3 py-2.5">
                         <div className="relative">
                             <input
                                 type="text"
                                 value={callSearch}
                                 onChange={(e) => setCallSearch(e.target.value)}
                                 placeholder="Search name, number or @username"
-                                className="w-full bg-[#F0F2F5] rounded-full py-2 pl-9 pr-4 text-xs text-[#111B21] placeholder-[#667781] focus:outline-none focus:ring-1 focus:ring-[#25D366]"
+                                className="w-full bg-[#F3EDE2] border border-[#E0D6C5] rounded-full py-2 pl-9 pr-4 text-xs text-[#1C1917] placeholder-[#78716C] focus:outline-none focus:border-[#7C4225]"
                             />
                             <svg
-                                className="w-4 h-4 text-[#667781] absolute left-3 top-2"
+                                className="w-4 h-4 text-[#78716C] absolute left-3 top-2.5"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -1060,15 +1079,18 @@ export function WhatsAppModeWorkspace({
                     {/* Favorites & Recent Calls */}
                     <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-3">
                         <div>
-                            <p className="px-2.5 py-1 text-xs font-bold text-[#111B21]">
+                            <p className="px-2.5 py-1 text-xs font-bold text-[#57534E] uppercase tracking-wider">
                                 Favorites
                             </p>
                             <button
                                 type="button"
                                 onClick={() => setShowAddFavoriteModal((prev) => !prev)}
-                                className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors"
+                                className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-[#EFE8DA]/70 cursor-pointer transition-colors"
                             >
-                                <span className="w-10 h-10 rounded-full bg-[#25D366] text-white flex items-center justify-center shrink-0">
+                                <span
+                                    className="w-10 h-10 rounded-full bg-[#7C4225] flex items-center justify-center shrink-0 shadow-2xs"
+                                    style={{ color: '#FBF8F3' }}
+                                >
                                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                                         <circle cx="8.5" cy="7" r="4" />
@@ -1076,19 +1098,19 @@ export function WhatsAppModeWorkspace({
                                         <line x1="23" y1="11" x2="17" y2="11" />
                                     </svg>
                                 </span>
-                                <span className="text-sm font-medium text-[#111B21]">
+                                <span className="text-sm font-semibold text-[#1C1917]">
                                     Add favorite
                                 </span>
                             </button>
                             {showAddFavoriteModal && (
-                                <div className="mx-2 mt-1 p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700">
+                                <div className="mx-2 mt-1 p-2.5 rounded-xl bg-[#F3EDE2] border border-[#E0D6C5] text-xs text-[#57534E]">
                                     Click any recent contact below to start an instant call or pin them to Favorites.
                                 </div>
                             )}
                         </div>
 
                         <div>
-                            <p className="px-2.5 py-1 text-xs font-bold text-[#111B21]">
+                            <p className="px-2.5 py-1 text-xs font-bold text-[#57534E] uppercase tracking-wider">
                                 Recent
                             </p>
                             <div className="space-y-0.5">
@@ -1096,20 +1118,20 @@ export function WhatsAppModeWorkspace({
                                     <div
                                         key={call.id}
                                         onClick={() => onStartLiveCall(call.callType === 'video' ? 'video' : 'audio', call.name)}
-                                        className="flex items-center justify-between gap-3 p-2 rounded-xl hover:bg-slate-50 cursor-pointer group transition-colors"
+                                        className="flex items-center justify-between gap-3 p-2 rounded-xl hover:bg-[#EFE8DA]/70 cursor-pointer group transition-colors"
                                     >
                                         <div className="flex items-center gap-3 min-w-0">
                                             <img
                                                 src={call.avatar}
                                                 alt={call.name}
-                                                className="w-11 h-11 rounded-full object-cover shrink-0 border border-slate-200"
+                                                className="w-11 h-11 rounded-full object-cover shrink-0 border border-[#D0C4AE]"
                                             />
                                             <div className="min-w-0">
                                                 <p
                                                     className={`text-sm font-medium truncate ${
                                                         call.direction === 'missed'
-                                                            ? 'text-rose-600 font-semibold'
-                                                            : 'text-[#111B21]'
+                                                            ? 'text-[#8C3B32] font-semibold'
+                                                            : 'text-[#1C1917]'
                                                     }`}
                                                 >
                                                     {call.name}
@@ -1117,8 +1139,8 @@ export function WhatsAppModeWorkspace({
                                                 <p
                                                     className={`text-xs flex items-center gap-1 ${
                                                         call.direction === 'missed'
-                                                            ? 'text-rose-600 font-medium'
-                                                            : 'text-[#667781]'
+                                                            ? 'text-[#8C3B32] font-medium'
+                                                            : 'text-[#78716C]'
                                                     }`}
                                                 >
                                                     <span>
@@ -1131,7 +1153,7 @@ export function WhatsAppModeWorkspace({
                                                 </p>
                                             </div>
                                         </div>
-                                        <span className="text-[11px] text-[#667781] shrink-0">
+                                        <span className="text-[11px] text-[#78716C] shrink-0">
                                             {call.timeLabel}
                                         </span>
                                     </div>
@@ -1141,29 +1163,29 @@ export function WhatsAppModeWorkspace({
                     </div>
                 </div>
 
-                {/* Right Column: Exact "Voice and video calling" Card from User Screenshot 2 */}
-                <div className="flex-1 bg-[#F7F5F3] flex flex-col items-center justify-center p-6">
-                    <div className="bg-white rounded-2xl shadow-2xs border border-slate-200/70 px-8 py-7 max-w-md w-full text-center mb-6">
-                        {/* Laptop + Green Phone Illustration */}
+                {/* Right Column: "Voice and video calling" Card in Desk Note Palette */}
+                <div className="flex-1 bg-[#F3EDE2] flex flex-col items-center justify-center p-6">
+                    <div className="bg-[#FBF8F3] rounded-2xl shadow-2xs border border-[#E0D6C5] px-8 py-7 max-w-md w-full text-center mb-6">
+                        {/* Laptop + Espresso Phone Illustration */}
                         <div className="mx-auto mb-4 w-32 h-24 flex items-center justify-center">
-                            <div className="relative w-28 h-20 rounded-lg border-2 border-[#111B21] bg-[#E8F8EE] flex overflow-hidden shadow-2xs">
-                                <div className="w-1/2 bg-[#25D366] flex flex-col justify-center gap-1.5 px-2.5">
-                                    <div className="h-1 w-full bg-[#111B21]/60 rounded" />
-                                    <div className="h-1 w-3/4 bg-[#111B21]/60 rounded" />
-                                    <div className="h-1 w-5/6 bg-[#111B21]/60 rounded" />
+                            <div className="relative w-28 h-20 rounded-lg border-2 border-[#3D3730] bg-[#F3EAE1] flex overflow-hidden shadow-2xs">
+                                <div className="w-1/2 bg-[#7C4225] flex flex-col justify-center gap-1.5 px-2.5">
+                                    <div className="h-1 w-full bg-[#FBF8F3]/75 rounded" />
+                                    <div className="h-1 w-3/4 bg-[#FBF8F3]/75 rounded" />
+                                    <div className="h-1 w-5/6 bg-[#FBF8F3]/75 rounded" />
                                 </div>
-                                <div className="w-1/2 bg-[#D9FDD3] flex items-center justify-center text-[#111B21]">
-                                    <svg className="w-6 h-6 text-[#25D366]" viewBox="0 0 24 24" fill="currentColor">
+                                <div className="w-1/2 bg-[#E8D8C8] flex items-center justify-center text-[#1C1917]">
+                                    <svg className="w-6 h-6 text-[#7C4225]" viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z" />
                                     </svg>
                                 </div>
                             </div>
                         </div>
 
-                        <h3 className="text-lg font-semibold text-[#111B21] mb-1.5">
+                        <h3 className="text-lg font-semibold text-[#1C1917] mb-1.5">
                             Voice and video calling
                         </h3>
-                        <p className="text-xs text-[#667781] leading-relaxed">
+                        <p className="text-xs text-[#57534E] leading-relaxed">
                             Share your screen, react with emoji and more, with up to 32 people.
                         </p>
                     </div>
@@ -1175,7 +1197,10 @@ export function WhatsAppModeWorkspace({
                             onClick={() => onStartLiveCall('video')}
                             className="flex flex-col items-center gap-2 group cursor-pointer"
                         >
-                            <span className="w-12 h-12 rounded-full bg-[#25D366] group-hover:bg-[#1da851] text-white flex items-center justify-center shadow-sm transition-colors">
+                            <span
+                                className="w-12 h-12 rounded-full bg-[#7C4225] group-hover:bg-[#5E3119] flex items-center justify-center shadow-sm transition-colors"
+                                style={{ color: '#FBF8F3' }}
+                            >
                                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                                     <rect x="2" y="6" width="14" height="12" rx="2" />
                                     <polygon points="22 8 16 12 22 16 22 8" />
@@ -1183,7 +1208,7 @@ export function WhatsAppModeWorkspace({
                                     <line x1="6" y1="12" x2="12" y2="12" />
                                 </svg>
                             </span>
-                            <span className="text-xs font-medium text-[#54656F]">Start call</span>
+                            <span className="text-xs font-semibold text-[#57534E]">Start call</span>
                         </button>
 
                         <button
@@ -1191,13 +1216,13 @@ export function WhatsAppModeWorkspace({
                             onClick={handleCreateNewCallLink}
                             className="flex flex-col items-center gap-2 group cursor-pointer"
                         >
-                            <span className="w-12 h-12 rounded-full bg-[#E9EDEF] group-hover:bg-[#D9DEE0] text-[#111B21] flex items-center justify-center shadow-2xs transition-colors">
+                            <span className="w-12 h-12 rounded-full bg-[#EFE8DA] group-hover:bg-[#E2D9C8] border border-[#D0C4AE] text-[#1C1917] flex items-center justify-center shadow-2xs transition-colors">
                                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
                                 </svg>
                             </span>
-                            <span className="text-xs font-medium text-[#54656F]">New call link</span>
+                            <span className="text-xs font-semibold text-[#57534E]">New call link</span>
                         </button>
 
                         <button
@@ -1205,7 +1230,7 @@ export function WhatsAppModeWorkspace({
                             onClick={() => setShowDialPadModal((prev) => !prev)}
                             className="flex flex-col items-center gap-2 group cursor-pointer"
                         >
-                            <span className="w-12 h-12 rounded-full bg-[#E9EDEF] group-hover:bg-[#D9DEE0] text-[#111B21] flex items-center justify-center shadow-2xs transition-colors">
+                            <span className="w-12 h-12 rounded-full bg-[#EFE8DA] group-hover:bg-[#E2D9C8] border border-[#D0C4AE] text-[#1C1917] flex items-center justify-center shadow-2xs transition-colors">
                                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                                     <circle cx="6" cy="5" r="1.6" />
                                     <circle cx="12" cy="5" r="1.6" />
@@ -1218,7 +1243,7 @@ export function WhatsAppModeWorkspace({
                                     <circle cx="18" cy="17" r="1.6" />
                                 </svg>
                             </span>
-                            <span className="text-xs font-medium text-[#54656F]">Call a number</span>
+                            <span className="text-xs font-semibold text-[#57534E]">Call a number</span>
                         </button>
 
                         <button
@@ -1226,7 +1251,7 @@ export function WhatsAppModeWorkspace({
                             onClick={onOpenScheduleModal}
                             className="flex flex-col items-center gap-2 group cursor-pointer"
                         >
-                            <span className="w-12 h-12 rounded-full bg-[#E9EDEF] group-hover:bg-[#D9DEE0] text-[#111B21] flex items-center justify-center shadow-2xs transition-colors">
+                            <span className="w-12 h-12 rounded-full bg-[#EFE8DA] group-hover:bg-[#E2D9C8] border border-[#D0C4AE] text-[#1C1917] flex items-center justify-center shadow-2xs transition-colors">
                                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                                     <rect x="3" y="4" width="18" height="18" rx="2" />
                                     <line x1="16" y1="2" x2="16" y2="6" />
@@ -1234,19 +1259,20 @@ export function WhatsAppModeWorkspace({
                                     <line x1="3" y1="10" x2="21" y2="10" />
                                 </svg>
                             </span>
-                            <span className="text-xs font-medium text-[#54656F]">Schedule call</span>
+                            <span className="text-xs font-semibold text-[#57534E]">Schedule call</span>
                         </button>
                     </div>
 
                     {generatedCallLink && (
-                        <div className="mt-5 bg-white border border-emerald-300 rounded-xl px-4 py-2.5 flex items-center gap-3 shadow-sm">
-                            <span className="text-xs font-mono text-slate-700 truncate max-w-xs">
+                        <div className="mt-5 bg-[#FBF8F3] border border-[#D5BBA3] rounded-xl px-4 py-2.5 flex items-center gap-3 shadow-sm">
+                            <span className="text-xs font-mono text-[#292524] truncate max-w-xs">
                                 {generatedCallLink}
                             </span>
                             <button
                                 type="button"
                                 onClick={() => onStartLiveCall('video')}
-                                className="px-3 py-1 rounded-full bg-[#25D366] text-white text-xs font-bold cursor-pointer"
+                                className="px-3 py-1 rounded-full bg-[#7C4225] hover:bg-[#5E3119] text-xs font-bold cursor-pointer"
+                                style={{ color: '#FBF8F3' }}
                             >
                                 Join Now
                             </button>
@@ -1262,7 +1288,7 @@ export function WhatsAppModeWorkspace({
                                     {
                                         id: `call_dial_${Date.now()}`,
                                         name: dialInput.trim(),
-                                        avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(dialInput.trim())}&backgroundColor=25d366`,
+                                        avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(dialInput.trim())}&backgroundColor=7c4225`,
                                         direction: 'outgoing',
                                         timeLabel: 'Just now',
                                         callType: 'voice',
@@ -1273,18 +1299,19 @@ export function WhatsAppModeWorkspace({
                                 setDialInput('');
                                 setShowDialPadModal(false);
                             }}
-                            className="mt-5 bg-white border border-slate-200 rounded-2xl p-4 shadow-md flex items-center gap-2 max-w-sm w-full"
+                            className="mt-5 bg-[#FBF8F3] border border-[#E0D6C5] rounded-2xl p-4 shadow-md flex items-center gap-2 max-w-sm w-full"
                         >
                             <input
                                 type="text"
                                 value={dialInput}
                                 onChange={(e) => setDialInput(e.target.value)}
                                 placeholder="Enter phone number or @username..."
-                                className="flex-1 border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-[#25D366]"
+                                className="flex-1 border border-[#D0C4AE] bg-[#F8F4EC] rounded-lg px-3 py-1.5 text-xs text-[#1C1917] focus:outline-none focus:border-[#7C4225]"
                             />
                             <button
                                 type="submit"
-                                className="px-4 py-1.5 rounded-lg bg-[#25D366] text-white text-xs font-bold cursor-pointer"
+                                className="px-4 py-1.5 rounded-lg bg-[#7C4225] hover:bg-[#5E3119] text-xs font-bold cursor-pointer"
+                                style={{ color: '#FBF8F3' }}
                             >
                                 Call
                             </button>
@@ -1296,7 +1323,7 @@ export function WhatsAppModeWorkspace({
     }
 
     // =========================================================================
-    // 3. COMMUNITIES VIEW (Matches Image 4)
+    // 3. COMMUNITIES VIEW (Desk Note Warm Parchment & Espresso Theme)
     // =========================================================================
     if (mode === 'communities') {
         const activeCommObj = selectedCommunityGroup
@@ -1312,7 +1339,7 @@ export function WhatsAppModeWorkspace({
             const created: CommunityGroupItem = {
                 id: `comm_${Date.now()}`,
                 name: newCommName.trim(),
-                avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(newCommName.trim())}&backgroundColor=25d366`,
+                avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(newCommName.trim())}&backgroundColor=7c4225`,
                 subtitle: newCommDesc.trim() || 'Topic-based ConnectLn Community',
                 groups: [
                     {
@@ -1344,16 +1371,16 @@ export function WhatsAppModeWorkspace({
         };
 
         return (
-            <div className="flex-1 flex flex-col md:flex-row h-full bg-white overflow-hidden">
+            <div className="flex-1 flex flex-col md:flex-row h-full bg-[#FBF8F3] overflow-hidden">
                 {/* Left Column: Communities List */}
-                <div className="w-full md:w-[360px] border-r border-slate-200 flex flex-col h-full bg-white shrink-0">
-                    <div className="px-4 py-3.5 flex items-center justify-between">
-                        <h2 className="text-xl font-bold text-[#111B21]">Communities</h2>
+                <div className="w-full md:w-[360px] border-r border-[#E0D6C5] flex flex-col h-full bg-[#FBF8F3] shrink-0">
+                    <div className="px-4 py-3.5 flex items-center justify-between border-b border-[#E0D6C5]/60">
+                        <h2 className="text-xl font-bold text-[#1C1917]">Communities</h2>
                         <button
                             type="button"
                             onClick={() => setShowNewCommunityModal(true)}
                             title="New community"
-                            className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-[#54656F] cursor-pointer"
+                            className="w-8 h-8 rounded-full hover:bg-[#EFE8DA] flex items-center justify-center text-[#57534E] cursor-pointer"
                         >
                             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                                 <circle cx="12" cy="12" r="9" />
@@ -1363,14 +1390,17 @@ export function WhatsAppModeWorkspace({
                         </button>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-2">
+                    <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-2 pt-2">
                         {/* New community row */}
                         <button
                             type="button"
                             onClick={() => setShowNewCommunityModal(true)}
-                            className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors"
+                            className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-[#EFE8DA]/70 cursor-pointer transition-colors"
                         >
-                            <span className="w-11 h-11 rounded-xl bg-[#25D366] text-white flex items-center justify-center shrink-0 shadow-2xs">
+                            <span
+                                className="w-11 h-11 rounded-xl bg-[#7C4225] flex items-center justify-center shrink-0 shadow-2xs"
+                                style={{ color: '#FBF8F3' }}
+                            >
                                 <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                                     <circle cx="9" cy="7" r="4" />
@@ -1378,21 +1408,21 @@ export function WhatsAppModeWorkspace({
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M16 3.13a4 4 0 0 1 0 7.75" />
                                 </svg>
                             </span>
-                            <span className="text-sm font-medium text-[#111B21]">
+                            <span className="text-sm font-semibold text-[#1C1917]">
                                 New community
                             </span>
                         </button>
 
                         {/* Communities & Subgroups */}
                         {communities.map((comm) => (
-                            <div key={comm.id} className="pt-2 border-t border-slate-100">
+                            <div key={comm.id} className="pt-2 border-t border-[#E0D6C5]/70">
                                 <div className="flex items-center gap-3 p-2">
                                     <img
                                         src={comm.avatar}
                                         alt={comm.name}
-                                        className="w-11 h-11 rounded-xl object-cover border border-slate-200 shrink-0"
+                                        className="w-11 h-11 rounded-xl object-cover border border-[#D0C4AE] shrink-0"
                                     />
-                                    <span className="text-sm font-bold text-[#111B21]">
+                                    <span className="text-sm font-bold text-[#1C1917]">
                                         {comm.name}
                                     </span>
                                 </div>
@@ -1413,30 +1443,28 @@ export function WhatsAppModeWorkspace({
                                                     setShowNewCommunityModal(false);
                                                 }}
                                                 className={`flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-colors ${
-                                                    isSel ? 'bg-[#F0F2F5]' : 'hover:bg-slate-50'
+                                                    isSel ? 'bg-[#EFE8DA]' : 'hover:bg-[#F6F1E7]'
                                                 }`}
                                             >
                                                 <span
-                                                    className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                                                    className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
                                                         grp.isAnnouncement
-                                                            ? 'bg-[#FCE8D8] text-[#B45309]'
-                                                            : grp.name.includes('ICON')
-                                                            ? 'bg-[#DCFCE7] text-[#15803D]'
-                                                            : 'bg-[#FDE2D8] text-[#C2410C]'
+                                                            ? 'bg-[#F3EAE1] text-[#7C4225] border-[#D5BBA3]'
+                                                            : 'bg-[#EFE8DA] text-[#524B42] border-[#D0C4AE]'
                                                     }`}
                                                 >
                                                     {grp.isAnnouncement ? '📢' : '👥'}
                                                 </span>
                                                 <div className="min-w-0 flex-1">
                                                     <div className="flex items-center justify-between gap-2">
-                                                        <p className="text-sm font-medium text-[#111B21] truncate">
+                                                        <p className="text-sm font-semibold text-[#1C1917] truncate">
                                                             {grp.name}
                                                         </p>
-                                                        <span className="text-[11px] text-[#667781] shrink-0">
+                                                        <span className="text-[11px] text-[#78716C] shrink-0">
                                                             {grp.dateLabel}
                                                         </span>
                                                     </div>
-                                                    <p className="text-xs text-[#667781] truncate">
+                                                    <p className="text-xs text-[#78716C] truncate">
                                                         {grp.lastPreview}
                                                     </p>
                                                 </div>
@@ -1453,7 +1481,7 @@ export function WhatsAppModeWorkspace({
                                             groupId: comm.groups[0].id,
                                         })
                                     }
-                                    className="px-3 py-1.5 text-xs font-medium text-[#15803D] hover:underline cursor-pointer"
+                                    className="px-3 py-1.5 text-xs font-bold text-[#7C4225] hover:underline cursor-pointer"
                                 >
                                     View all
                                 </button>
@@ -1463,26 +1491,26 @@ export function WhatsAppModeWorkspace({
                 </div>
 
                 {/* Right Column: Create Communities Canvas or Selected Community Chat */}
-                <div className="flex-1 bg-[#F7F5F3] flex flex-col items-center justify-center p-6">
+                <div className="flex-1 bg-[#F3EDE2] flex flex-col items-center justify-center p-6">
                     {showNewCommunityModal ? (
                         <form
                             onSubmit={handleCreateCommunity}
-                            className="bg-white rounded-2xl shadow-md border border-slate-200 p-6 max-w-md w-full space-y-4 animate-in fade-in"
+                            className="bg-[#FBF8F3] rounded-2xl shadow-md border border-[#E0D6C5] p-6 max-w-md w-full space-y-4 animate-in fade-in"
                         >
                             <div className="flex items-center justify-between">
-                                <h3 className="text-base font-bold text-[#111B21]">
+                                <h3 className="text-base font-bold text-[#1C1917]">
                                     Create a New Community
                                 </h3>
                                 <button
                                     type="button"
                                     onClick={() => setShowNewCommunityModal(false)}
-                                    className="text-slate-400 hover:text-slate-700 font-bold cursor-pointer"
+                                    className="text-[#78716C] hover:text-[#1C1917] font-bold cursor-pointer"
                                 >
                                     ✕
                                 </button>
                             </div>
                             <div>
-                                <label className="block text-xs font-semibold text-slate-600 mb-1">
+                                <label className="block text-xs font-semibold text-[#57534E] mb-1">
                                     Community Name
                                 </label>
                                 <input
@@ -1490,11 +1518,11 @@ export function WhatsAppModeWorkspace({
                                     value={newCommName}
                                     onChange={(e) => setNewCommName(e.target.value)}
                                     placeholder="e.g. Master Builders Guild"
-                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-[#25D366]"
+                                    className="w-full border border-[#D0C4AE] bg-[#F8F4EC] rounded-lg px-3 py-2 text-xs text-[#1C1917] focus:outline-none focus:border-[#7C4225]"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-semibold text-slate-600 mb-1">
+                                <label className="block text-xs font-semibold text-[#57534E] mb-1">
                                     Description
                                 </label>
                                 <textarea
@@ -1502,38 +1530,39 @@ export function WhatsAppModeWorkspace({
                                     value={newCommDesc}
                                     onChange={(e) => setNewCommDesc(e.target.value)}
                                     placeholder="Bring members together in topic-based groups and send admin announcements..."
-                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-[#25D366]"
+                                    className="w-full border border-[#D0C4AE] bg-[#F8F4EC] rounded-lg px-3 py-2 text-xs text-[#1C1917] focus:outline-none focus:border-[#7C4225]"
                                 />
                             </div>
                             <div className="flex justify-end gap-2">
                                 <button
                                     type="button"
                                     onClick={() => setShowNewCommunityModal(false)}
-                                    className="px-4 py-1.5 rounded-full text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                                    className="px-4 py-1.5 rounded-full text-xs font-semibold text-[#57534E] hover:bg-[#EFE8DA] cursor-pointer"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-5 py-1.5 rounded-full bg-[#25D366] text-white text-xs font-bold cursor-pointer"
+                                    className="px-5 py-1.5 rounded-full bg-[#7C4225] hover:bg-[#5E3119] text-xs font-bold cursor-pointer"
+                                    style={{ color: '#FBF8F3' }}
                                 >
                                     Create Community
                                 </button>
                             </div>
                         </form>
                     ) : activeCommObj && activeGroupObj ? (
-                        <div className="w-full h-full flex flex-col bg-[#EFEAE2] rounded-xl overflow-hidden border border-slate-200">
-                            <div className="px-4 py-3 bg-[#F0F2F5] border-b border-slate-200 flex items-center justify-between">
+                        <div className="w-full h-full flex flex-col bg-[#F3EDE2] rounded-xl overflow-hidden border border-[#E0D6C5]">
+                            <div className="px-4 py-3 bg-[#FBF8F3] border-b border-[#E0D6C5] flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-bold text-[#111B21]">
+                                    <p className="text-sm font-bold text-[#1C1917]">
                                         {activeCommObj.name} · {activeGroupObj.name}
                                     </p>
-                                    <p className="text-xs text-[#667781]">{activeCommObj.subtitle}</p>
+                                    <p className="text-xs text-[#78716C]">{activeCommObj.subtitle}</p>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={() => setSelectedCommunityGroup(null)}
-                                    className="text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer"
+                                    className="text-xs font-semibold text-[#57534E] hover:text-[#1C1917] cursor-pointer"
                                 >
                                     ✕ Close
                                 </button>
@@ -1542,13 +1571,13 @@ export function WhatsAppModeWorkspace({
                                 {activeGroupObj.messages.map((m) => (
                                     <div
                                         key={m.id}
-                                        className="bg-[#D9FDD3] rounded-xl p-3 max-w-lg ml-auto shadow-2xs"
+                                        className="bg-[#E8D8C8] border border-[#D5BBA3] rounded-xl p-3 max-w-lg ml-auto shadow-2xs"
                                     >
-                                        <p className="text-[11px] font-bold text-emerald-900 mb-0.5">
+                                        <p className="text-[11px] font-bold text-[#5E3119] mb-0.5">
                                             {m.sender}
                                         </p>
-                                        <p className="text-xs text-[#111B21]">{m.text}</p>
-                                        <p className="text-[10px] text-[#667781] text-right mt-1">
+                                        <p className="text-xs text-[#1C1917]">{m.text}</p>
+                                        <p className="text-[10px] text-[#57534E] text-right mt-1">
                                             {m.time} ✓✓
                                         </p>
                                     </div>
@@ -1588,42 +1617,44 @@ export function WhatsAppModeWorkspace({
                                     );
                                     setCommMessageInput('');
                                 }}
-                                className="p-3 bg-[#F0F2F5] flex items-center gap-2"
+                                className="p-3 bg-[#FBF8F3] border-t border-[#E0D6C5] flex items-center gap-2"
                             >
                                 <input
                                     type="text"
                                     value={commMessageInput}
                                     onChange={(e) => setCommMessageInput(e.target.value)}
                                     placeholder={`Post announcement to ${activeGroupObj.name}...`}
-                                    className="flex-1 bg-white rounded-full px-4 py-2 text-xs text-[#111B21] focus:outline-none"
+                                    className="flex-1 bg-[#F8F4EC] border border-[#D0C4AE] rounded-full px-4 py-2 text-xs text-[#1C1917] focus:outline-none focus:border-[#7C4225]"
                                 />
                                 <button
                                     type="submit"
-                                    className="px-4 py-2 rounded-full bg-[#25D366] text-white text-xs font-bold cursor-pointer"
+                                    className="px-4 py-2 rounded-full bg-[#7C4225] hover:bg-[#5E3119] text-xs font-bold cursor-pointer"
+                                    style={{ color: '#FBF8F3' }}
                                 >
                                     Send
                                 </button>
                             </form>
                         </div>
                     ) : (
-                        /* Exact Default "Create communities" Screen from User Screenshot 4 */
+                        /* Default "Create communities" Screen in Desk Note Palette */
                         <div className="text-center max-w-md flex flex-col items-center">
-                            <div className="w-16 h-16 mb-3 flex items-center justify-center text-[#BDBDBD]">
+                            <div className="w-16 h-16 mb-3 flex items-center justify-center text-[#9C8F7A]">
                                 <svg className="w-14 h-14" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
                                 </svg>
                             </div>
-                            <h3 className="text-2xl font-normal text-[#111B21] mb-2">
+                            <h3 className="text-2xl font-normal text-[#1C1917] mb-2">
                                 Create communities
                             </h3>
-                            <p className="text-sm text-[#667781] mb-6 max-w-sm">
+                            <p className="text-sm text-[#57534E] mb-6 max-w-sm">
                                 Bring members together in topic-based groups and easily send them
                                 admin announcements.
                             </p>
                             <button
                                 type="button"
                                 onClick={() => setShowNewCommunityModal(true)}
-                                className="px-5 py-2 rounded-full bg-[#25D366] hover:bg-[#1da851] text-white text-xs font-bold shadow-sm cursor-pointer transition-colors"
+                                className="px-5 py-2 rounded-full bg-[#7C4225] hover:bg-[#5E3119] text-xs font-bold shadow-sm cursor-pointer transition-colors"
+                                style={{ color: '#FBF8F3' }}
                             >
                                 + New community
                             </button>
@@ -1635,7 +1666,7 @@ export function WhatsAppModeWorkspace({
     }
 
     // =========================================================================
-    // 4. ARCHIVED VIEW (Matches Image 5)
+    // 4. ARCHIVED VIEW (Desk Note Warm Parchment & Espresso Theme)
     // =========================================================================
     if (mode === 'archived') {
         const dynamicArchivedFromThreads: ArchivedChatEntry[] = threads
@@ -1654,15 +1685,15 @@ export function WhatsAppModeWorkspace({
         const selectedArch = allArchived.find((a) => a.id === selectedArchivedId) || null;
 
         return (
-            <div className="flex-1 flex flex-col md:flex-row h-full bg-white overflow-hidden">
+            <div className="flex-1 flex flex-col md:flex-row h-full bg-[#FBF8F3] overflow-hidden">
                 {/* Left Column: Archived Chats List */}
-                <div className="w-full md:w-[360px] border-r border-slate-200 flex flex-col h-full bg-white shrink-0">
+                <div className="w-full md:w-[360px] border-r border-[#E0D6C5] flex flex-col h-full bg-[#FBF8F3] shrink-0">
                     <div className="px-4 pt-3.5 pb-2">
-                        <h2 className="text-xl font-bold text-[#111B21] mb-2">Archived</h2>
-                        <p className="text-xs text-[#667781] leading-relaxed pb-3 border-b border-slate-200">
+                        <h2 className="text-xl font-bold text-[#1C1917] mb-2">Archived</h2>
+                        <p className="text-xs text-[#57534E] leading-relaxed pb-3 border-b border-[#E0D6C5]">
                             These chats stay archived when new messages are received. To change
                             this experience, go to{' '}
-                            <strong className="font-semibold text-[#111B21]">
+                            <strong className="font-semibold text-[#1C1917]">
                                 Settings &gt; Chats
                             </strong>{' '}
                             on your phone.
@@ -1677,24 +1708,24 @@ export function WhatsAppModeWorkspace({
                                     key={item.id}
                                     onClick={() => setSelectedArchivedId(item.id)}
                                     className={`flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-colors ${
-                                        isSel ? 'bg-[#F0F2F5]' : 'hover:bg-slate-50'
+                                        isSel ? 'bg-[#EFE8DA]' : 'hover:bg-[#F6F1E7]'
                                     }`}
                                 >
                                     <img
                                         src={item.avatar}
                                         alt={item.name}
-                                        className="w-12 h-12 rounded-full object-cover border border-slate-200 shrink-0"
+                                        className="w-12 h-12 rounded-full object-cover border border-[#D0C4AE] shrink-0"
                                     />
                                     <div className="min-w-0 flex-1">
                                         <div className="flex items-center justify-between gap-2">
-                                            <p className="text-sm font-medium text-[#111B21] truncate">
+                                            <p className="text-sm font-semibold text-[#1C1917] truncate">
                                                 {item.name}
                                             </p>
                                             <span
                                                 className={`text-[11px] shrink-0 ${
                                                     item.unreadCount > 0
-                                                        ? 'text-[#25D366] font-bold'
-                                                        : 'text-[#667781]'
+                                                        ? 'text-[#7C4225] font-bold'
+                                                        : 'text-[#78716C]'
                                                 }`}
                                             >
                                                 {item.dateLabel}
@@ -1704,14 +1735,17 @@ export function WhatsAppModeWorkspace({
                                             <p
                                                 className={`text-xs truncate ${
                                                     item.isBlocked
-                                                        ? 'italic text-[#667781]'
-                                                        : 'text-[#667781]'
+                                                        ? 'italic text-[#78716C]'
+                                                        : 'text-[#57534E]'
                                                 }`}
                                             >
                                                 {item.lastMessage}
                                             </p>
                                             {item.unreadCount > 0 && (
-                                                <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-[#25D366] text-white text-[11px] font-bold flex items-center justify-center shrink-0">
+                                                <span
+                                                    className="min-w-[20px] h-5 px-1.5 rounded-full bg-[#7C4225] text-[11px] font-bold flex items-center justify-center shrink-0"
+                                                    style={{ color: '#FBF8F3' }}
+                                                >
                                                     {item.unreadCount}
                                                 </span>
                                             )}
@@ -1724,21 +1758,21 @@ export function WhatsAppModeWorkspace({
                 </div>
 
                 {/* Right Column */}
-                <div className="flex-1 bg-[#F7F5F3] flex flex-col items-center justify-center p-6">
+                <div className="flex-1 bg-[#F3EDE2] flex flex-col items-center justify-center p-6">
                     {selectedArch ? (
-                        <div className="bg-white rounded-2xl shadow-md border border-slate-200 p-6 max-w-md w-full space-y-4">
+                        <div className="bg-[#FBF8F3] rounded-2xl shadow-md border border-[#E0D6C5] p-6 max-w-md w-full space-y-4">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <img
                                         src={selectedArch.avatar}
                                         alt={selectedArch.name}
-                                        className="w-12 h-12 rounded-full object-cover border border-slate-200"
+                                        className="w-12 h-12 rounded-full object-cover border border-[#D0C4AE]"
                                     />
                                     <div>
-                                        <h3 className="text-base font-bold text-[#111B21]">
+                                        <h3 className="text-base font-bold text-[#1C1917]">
                                             {selectedArch.name}
                                         </h3>
-                                        <p className="text-xs text-[#667781]">
+                                        <p className="text-xs text-[#78716C]">
                                             {selectedArch.subtitle || 'Archived Conversation'}
                                         </p>
                                     </div>
@@ -1746,14 +1780,14 @@ export function WhatsAppModeWorkspace({
                                 <button
                                     type="button"
                                     onClick={() => setSelectedArchivedId(null)}
-                                    className="text-slate-400 hover:text-slate-700 font-bold cursor-pointer"
+                                    className="text-[#78716C] hover:text-[#1C1917] font-bold cursor-pointer"
                                 >
                                     ✕
                                 </button>
                             </div>
 
-                            <div className="p-3.5 rounded-xl bg-[#F0F2F5] text-xs text-[#111B21]">
-                                <span className="font-semibold text-[#667781] block mb-1">
+                            <div className="p-3.5 rounded-xl bg-[#F3EDE2] border border-[#E0D6C5] text-xs text-[#1C1917]">
+                                <span className="font-semibold text-[#57534E] block mb-1">
                                     Last message ({selectedArch.dateLabel}):
                                 </span>
                                 {selectedArch.lastMessage}
@@ -1787,18 +1821,19 @@ export function WhatsAppModeWorkspace({
                                         value={archivedReplyInput}
                                         onChange={(e) => setArchivedReplyInput(e.target.value)}
                                         placeholder={`Message ${selectedArch.name}...`}
-                                        className="flex-1 border border-slate-300 rounded-full px-3.5 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-[#25D366]"
+                                        className="flex-1 border border-[#D0C4AE] bg-[#F8F4EC] rounded-full px-3.5 py-1.5 text-xs text-[#1C1917] focus:outline-none focus:border-[#7C4225]"
                                     />
                                     <button
                                         type="submit"
-                                        className="px-4 py-1.5 rounded-full bg-[#25D366] text-white text-xs font-bold cursor-pointer"
+                                        className="px-4 py-1.5 rounded-full bg-[#7C4225] hover:bg-[#5E3119] text-xs font-bold cursor-pointer"
+                                        style={{ color: '#FBF8F3' }}
                                     >
                                         Send
                                     </button>
                                 </form>
                             )}
 
-                            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                            <div className="flex items-center justify-between pt-2 border-t border-[#E0D6C5]">
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -1815,24 +1850,24 @@ export function WhatsAppModeWorkspace({
                                         }
                                         setSelectedArchivedId(null);
                                     }}
-                                    className="px-4 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-xs font-bold text-[#111B21] cursor-pointer"
+                                    className="px-4 py-1.5 rounded-full bg-[#EFE8DA] hover:bg-[#E2D9C8] border border-[#D0C4AE] text-xs font-bold text-[#1C1917] cursor-pointer"
                                 >
                                     📤 Unarchive to Chats
                                 </button>
                             </div>
                         </div>
                     ) : (
-                        /* Exact Default Right Canvas from User Screenshot 5 */
+                        /* Default Right Canvas in Desk Note Palette */
                         <div className="text-center max-w-md flex flex-col items-center">
-                            <div className="w-16 h-16 mb-3 flex items-center justify-center text-[#BDBDBD]">
+                            <div className="w-16 h-16 mb-3 flex items-center justify-center text-[#9C8F7A]">
                                 <svg className="w-14 h-14" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
                                 </svg>
                             </div>
-                            <h3 className="text-2xl font-normal text-[#111B21] mb-2">
+                            <h3 className="text-2xl font-normal text-[#1C1917] mb-2">
                                 Create communities
                             </h3>
-                            <p className="text-sm text-[#667781] max-w-sm">
+                            <p className="text-sm text-[#57534E] max-w-sm">
                                 Bring members together in topic-based groups and easily send them
                                 admin announcements.
                             </p>
@@ -1844,54 +1879,54 @@ export function WhatsAppModeWorkspace({
     }
 
     // =========================================================================
-    // 5. CHANNELS VIEW
+    // 5. CHANNELS VIEW (Desk Note Warm Parchment & Espresso Theme)
     // =========================================================================
     const activeChan = channels.find((c) => c.id === selectedChannelId) || null;
     return (
-        <div className="flex-1 flex flex-col md:flex-row h-full bg-white overflow-hidden">
-            <div className="w-full md:w-[360px] border-r border-slate-200 flex flex-col h-full bg-white shrink-0">
-                <div className="px-4 py-3.5 flex items-center justify-between">
-                    <h2 className="text-xl font-bold text-[#111B21]">Channels</h2>
+        <div className="flex-1 flex flex-col md:flex-row h-full bg-[#FBF8F3] overflow-hidden">
+            <div className="w-full md:w-[360px] border-r border-[#E0D6C5] flex flex-col h-full bg-[#FBF8F3] shrink-0">
+                <div className="px-4 py-3.5 flex items-center justify-between border-b border-[#E0D6C5]/60">
+                    <h2 className="text-xl font-bold text-[#1C1917]">Channels</h2>
                 </div>
-                <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-1">
+                <div className="flex-1 overflow-y-auto px-2 pb-4 pt-2 space-y-1">
                     {channels.map((ch) => (
                         <div
                             key={ch.id}
                             onClick={() => setSelectedChannelId(ch.id)}
                             className={`flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-colors ${
-                                selectedChannelId === ch.id ? 'bg-[#F0F2F5]' : 'hover:bg-slate-50'
+                                selectedChannelId === ch.id ? 'bg-[#EFE8DA]' : 'hover:bg-[#F6F1E7]'
                             }`}
                         >
                             <img
                                 src={ch.avatar}
                                 alt={ch.name}
-                                className="w-11 h-11 rounded-full object-cover border border-slate-200 shrink-0"
+                                className="w-11 h-11 rounded-full object-cover border border-[#D0C4AE] shrink-0"
                             />
                             <div className="min-w-0 flex-1">
-                                <p className="text-sm font-semibold text-[#111B21] truncate">
+                                <p className="text-sm font-semibold text-[#1C1917] truncate">
                                     {ch.name}
                                 </p>
-                                <p className="text-xs text-[#667781] truncate">{ch.lastUpdate}</p>
+                                <p className="text-xs text-[#78716C] truncate">{ch.lastUpdate}</p>
                             </div>
                         </div>
                     ))}
                 </div>
             </div>
-            <div className="flex-1 bg-[#F7F5F3] flex flex-col items-center justify-center p-6 text-center">
+            <div className="flex-1 bg-[#F3EDE2] flex flex-col items-center justify-center p-6 text-center">
                 {activeChan ? (
-                    <div className="bg-white rounded-2xl shadow-md border border-slate-200 p-6 max-w-md w-full space-y-3">
-                        <h3 className="text-base font-bold text-[#111B21]">{activeChan.name}</h3>
-                        <p className="text-xs text-[#667781]">{activeChan.followers}</p>
-                        <div className="p-3.5 rounded-xl bg-[#D9FDD3] text-xs text-[#111B21] text-left">
+                    <div className="bg-[#FBF8F3] rounded-2xl shadow-md border border-[#E0D6C5] p-6 max-w-md w-full space-y-3">
+                        <h3 className="text-base font-bold text-[#1C1917]">{activeChan.name}</h3>
+                        <p className="text-xs text-[#78716C]">{activeChan.followers}</p>
+                        <div className="p-3.5 rounded-xl bg-[#E8D8C8] border border-[#D5BBA3] text-xs text-[#1C1917] text-left">
                             {activeChan.lastUpdate}
                         </div>
                     </div>
                 ) : (
                     <div className="max-w-md">
-                        <h3 className="text-2xl font-normal text-[#111B21] mb-2">
+                        <h3 className="text-2xl font-normal text-[#1C1917] mb-2">
                             Stay updated on topics that matter
                         </h3>
-                        <p className="text-sm text-[#667781]">
+                        <p className="text-sm text-[#57534E]">
                             Select a channel on the left to read broadcast updates from verified
                             ConnectLn leaders and guilds.
                         </p>
