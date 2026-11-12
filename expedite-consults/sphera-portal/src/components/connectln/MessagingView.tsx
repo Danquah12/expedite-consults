@@ -358,6 +358,8 @@ export function MessagingView({
         }
     }, [showNewMessageModal, showScheduler]);
 
+    const [showEnclaveFilterBar, setShowEnclaveFilterBar] = useState(false);
+    const [showQuickRepliesBar, setShowQuickRepliesBar] = useState(false);
     const [activeCallMode, setActiveCallMode] = useState<'audio' | 'video' | null>(null);
     const [callSeconds, setCallSeconds] = useState(0);
     const [isMicMuted, setIsMicMuted] = useState(false);
@@ -2048,21 +2050,29 @@ export function MessagingView({
                 </div>
             )}
 
-            {/* 15-Profession Enclave Switcher Ribbon */}
-            <div className="bg-slate-50 border-b border-slate-200 px-4 py-2.5 flex flex-col gap-2">
+            {/* Clean, Streamlined Top Header Bar */}
+            <div className="bg-white border-b border-slate-200 px-4 py-2.5 flex flex-col gap-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-black uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                            Omni-Channel Profession Inbox:
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 online-dot-blink" />
+                            <span>ConnectLn Inbox</span>
                         </span>
-                        <span className="text-xs font-extrabold text-[#0A66C2] bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full">
-                            {selectedEnclave === 'all'
-                                ? '🌐 All 15 Professions (60+ Channels)'
-                                : `${currentEnclaveObj?.icon || '💼'} ${currentEnclaveObj?.name || 'Active Enclave'}`}
-                        </span>
+                        <button
+                            type="button"
+                            onClick={() => setShowEnclaveFilterBar((prev) => !prev)}
+                            title="Filter inbox by profession enclave"
+                            className="text-xs font-bold text-[#0A66C2] bg-blue-50/80 hover:bg-blue-100/80 border border-blue-200 px-2.5 py-1 rounded-full flex items-center gap-1.5 transition-colors cursor-pointer"
+                        >
+                            <span>
+                                {selectedEnclave === 'all'
+                                    ? '🌐 All Professions'
+                                    : `${currentEnclaveObj?.icon || '💼'} ${currentEnclaveObj?.shortName || currentEnclaveObj?.name || 'Active Enclave'}`}
+                            </span>
+                            <span className="text-[10px] opacity-75">{showEnclaveFilterBar ? '▴' : '▾'}</span>
+                        </button>
                         {totalUnreadCount > 0 && (
-                            <span className="text-[11px] font-black bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-full">
+                            <span className="text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full">
                                 {totalUnreadCount} Unread
                             </span>
                         )}
@@ -2071,87 +2081,88 @@ export function MessagingView({
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => setShowNewMessageModal(true)}
-                            className="px-3 py-1.5 rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-xs font-black flex items-center gap-1.5 shadow-sm transition-all"
+                            className="px-3 py-1.5 rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
                             style={{ color: '#FFFFFF' }}
                         >
-                            <span>➕</span> New Message
+                            <span>✉️</span> New Message
                         </button>
                         {onNavigateVibeComms && (
                             <button
                                 onClick={onNavigateVibeComms}
-                                className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-bold flex items-center gap-1.5 transition-all"
-                                style={{ color: '#FFFFFF' }}
+                                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
                             >
-                                <span>🎙️</span> Launch Audio / Video Studio
+                                <span>🎙️</span> Audio / Video Studio
                             </button>
                         )}
                     </div>
                 </div>
 
-                {/* Scrollable 15-Profession Pill Bar with Left / Right Scroll Controls */}
-                <div className="flex items-center gap-1.5">
-                    <button
-                        type="button"
-                        onClick={() => {
-                            enclaveScrollRef.current?.scrollBy({ left: -280, behavior: 'smooth' });
-                        }}
-                        title="Scroll professions left"
-                        className="shrink-0 w-7 h-7 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-black text-sm flex items-center justify-center shadow-2xs cursor-pointer"
-                    >
-                        ‹
-                    </button>
-                    <div
-                        ref={enclaveScrollRef}
-                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                        className="flex-1 flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar [&::-webkit-scrollbar]:hidden scroll-smooth"
-                    >
+                {/* Collapsible 15-Profession Pill Bar (Shown when user clicks the Profession pill) */}
+                {showEnclaveFilterBar && (
+                    <div className="flex items-center gap-1.5 pt-1 border-t border-slate-100 animate-in fade-in">
                         <button
                             type="button"
-                            onClick={(e) => {
-                                handleSelectEnclave('all', e.currentTarget);
+                            onClick={() => {
+                                enclaveScrollRef.current?.scrollBy({ left: -280, behavior: 'smooth' });
                             }}
-                            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all border cursor-pointer ${
-                                selectedEnclave === 'all'
-                                    ? 'bg-[#0A66C2] border-[#0A66C2] shadow-sm'
-                                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-                            }`}
-                            style={selectedEnclave === 'all' ? { color: '#FFFFFF' } : undefined}
+                            title="Scroll professions left"
+                            className="shrink-0 w-6 h-6 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center shadow-2xs cursor-pointer"
                         >
-                            🌐 All Professions
+                            ‹
                         </button>
-                        {PROFESSION_ENCLAVES.map((enc) => {
-                            const isSelected = selectedEnclave === enc.id;
-                            return (
-                                <button
-                                    key={enc.id}
-                                    type="button"
-                                    onClick={(e) => {
-                                        handleSelectEnclave(enc.id, e.currentTarget);
-                                    }}
-                                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all border flex items-center gap-1 cursor-pointer ${
-                                        isSelected
-                                            ? 'bg-[#0A66C2] border-[#0A66C2] shadow-sm'
-                                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-                                    }`}
-                                    style={isSelected ? { color: '#FFFFFF' } : undefined}
-                                >
-                                    <span>{enc.icon}</span>
-                                    <span>{enc.shortName}</span>
-                                </button>
-                            );
-                        })}
+                        <div
+                            ref={enclaveScrollRef}
+                            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                            className="flex-1 flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar [&::-webkit-scrollbar]:hidden scroll-smooth"
+                        >
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    handleSelectEnclave('all', e.currentTarget);
+                                }}
+                                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all border cursor-pointer ${
+                                    selectedEnclave === 'all'
+                                        ? 'bg-[#0A66C2] border-[#0A66C2] shadow-sm'
+                                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                                }`}
+                                style={selectedEnclave === 'all' ? { color: '#FFFFFF' } : undefined}
+                            >
+                                🌐 All Professions
+                            </button>
+                            {PROFESSION_ENCLAVES.map((enc) => {
+                                const isSelected = selectedEnclave === enc.id;
+                                return (
+                                    <button
+                                        key={enc.id}
+                                        type="button"
+                                        onClick={(e) => {
+                                            handleSelectEnclave(enc.id, e.currentTarget);
+                                        }}
+                                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all border flex items-center gap-1 cursor-pointer ${
+                                            isSelected
+                                                ? 'bg-[#0A66C2] border-[#0A66C2] shadow-sm'
+                                                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                                        }`}
+                                        style={isSelected ? { color: '#FFFFFF' } : undefined}
+                                    >
+                                        <span>{enc.icon}</span>
+                                        <span>{enc.shortName}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                enclaveScrollRef.current?.scrollBy({ left: 280, behavior: 'smooth' });
+                            }}
+                            title="Scroll professions right"
+                            className="shrink-0 w-6 h-6 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center shadow-2xs cursor-pointer"
+                        >
+                            ›
+                        </button>
                     </div>
-                    <button
-                        type="button"
-                        onClick={() => {
-                            enclaveScrollRef.current?.scrollBy({ left: 280, behavior: 'smooth' });
-                        }}
-                        title="Scroll professions right"
-                        className="shrink-0 w-7 h-7 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-black text-sm flex items-center justify-center shadow-2xs cursor-pointer"
-                    >
-                        ›
-                    </button>
-                </div>
+                )}
             </div>
 
             {/* Main Three-Column ConnectLn Mailbox Layout: (1) ConnectLn Mailbox Menu Rail, (2) Thread List, (3) Active Conversation */}
@@ -2179,7 +2190,7 @@ export function MessagingView({
                         </span>
                     </div>
 
-                    {/* Primary 12 ConnectLn Mailbox Menu Items (Horizontal scrollable pills on mobile, vertical rail on desktop) */}
+                    {/* Primary 7 ConnectLn Mailbox Menu Items (Clean & Uncluttered; Secondary folders inside More) */}
                     <div className="flex md:flex-col items-center md:items-stretch gap-1 md:gap-0 md:space-y-0.5 overflow-x-auto md:overflow-x-visible no-scrollbar pb-1 md:pb-0">
                         {(
                             [
@@ -2195,7 +2206,7 @@ export function MessagingView({
                                 },
                                 {
                                     id: 'ai_inbox' as ConnectLnMailboxFolder,
-                                    label: 'Noctis',
+                                    label: 'Noctis AI',
                                     boldCount: true,
                                     icon: (
                                         <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -2210,16 +2221,6 @@ export function MessagingView({
                                     icon: (
                                         <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                                             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                                        </svg>
-                                    ),
-                                },
-                                {
-                                    id: 'snoozed' as ConnectLnMailboxFolder,
-                                    label: 'Snoozed',
-                                    icon: (
-                                        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                                            <circle cx="12" cy="12" r="9" />
-                                            <polyline points="12 7 12 12 15 15" />
                                         </svg>
                                     ),
                                 },
@@ -2254,60 +2255,12 @@ export function MessagingView({
                                     ),
                                 },
                                 {
-                                    id: 'purchases' as ConnectLnMailboxFolder,
-                                    label: 'Purchases',
-                                    boldCount: true,
-                                    icon: (
-                                        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                                            <line x1="3" y1="6" x2="21" y2="6" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M16 10a4 4 0 0 1-8 0" />
-                                        </svg>
-                                    ),
-                                },
-                                {
-                                    id: 'social' as ConnectLnMailboxFolder,
-                                    label: 'Social',
-                                    boldCount: true,
-                                    icon: (
-                                        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                                            <circle cx="9" cy="7" r="4" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M16 3.13a4 4 0 0 1 0 7.75" />
-                                        </svg>
-                                    ),
-                                },
-                                {
-                                    id: 'updates' as ConnectLnMailboxFolder,
-                                    label: 'Updates',
-                                    boldCount: true,
+                                    id: 'snoozed' as ConnectLnMailboxFolder,
+                                    label: 'Snoozed',
                                     icon: (
                                         <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                                             <circle cx="12" cy="12" r="9" />
-                                            <line x1="12" y1="16" x2="12" y2="12" />
-                                            <line x1="12" y1="8" x2="12.01" y2="8" />
-                                        </svg>
-                                    ),
-                                },
-                                {
-                                    id: 'forums' as ConnectLnMailboxFolder,
-                                    label: 'Forums',
-                                    boldCount: true,
-                                    icon: (
-                                        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                                        </svg>
-                                    ),
-                                },
-                                {
-                                    id: 'promotions' as ConnectLnMailboxFolder,
-                                    label: 'Promotions',
-                                    boldCount: true,
-                                    icon: (
-                                        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
-                                            <line x1="7" y1="7" x2="7.01" y2="7" />
+                                            <polyline points="12 7 12 12 15 15" />
                                         </svg>
                                     ),
                                 },
@@ -2349,11 +2302,11 @@ export function MessagingView({
                             );
                         })}
 
-                        {/* Expandable "More" Section */}
+                        {/* Expandable "More Folders" Section */}
                         <button
                             type="button"
                             onClick={() => setShowMoreFolders((prev) => !prev)}
-                            className="shrink-0 md:w-full flex items-center gap-1.5 md:gap-3 px-3 py-1.5 rounded-full text-xs font-medium text-slate-700 hover:bg-slate-200/70 transition-all cursor-pointer whitespace-nowrap"
+                            className="shrink-0 md:w-full flex items-center gap-1.5 md:gap-3 px-3 py-1.5 rounded-full text-xs font-medium text-slate-600 hover:bg-slate-200/70 transition-all cursor-pointer whitespace-nowrap"
                         >
                             <svg
                                 className={`w-4 h-4 shrink-0 transition-transform ${
@@ -2366,45 +2319,48 @@ export function MessagingView({
                             >
                                 <polyline points="6 9 12 15 18 9" />
                             </svg>
-                            <span>{showMoreFolders ? 'Less' : 'More & Labels'}</span>
+                            <span>{showMoreFolders ? 'Less' : 'More Folders'}</span>
                         </button>
 
                         {showMoreFolders && (
                             <div className="flex md:flex-col items-center md:items-stretch gap-1 md:gap-0 md:space-y-0.5 pl-1 animate-in fade-in">
-                                <button
-                                    type="button"
-                                    onClick={() => handleSelectMailboxFolder('scheduled')}
-                                    className={`shrink-0 md:w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-full text-xs transition-all cursor-pointer whitespace-nowrap ${
-                                        activeMailboxFolder === 'scheduled' && !activeCustomLabel
-                                            ? 'bg-[#D3E3FD] text-[#041E49] font-extrabold'
-                                            : 'text-slate-700 font-medium hover:bg-slate-200/70'
-                                    }`}
-                                >
-                                    <span className="flex items-center gap-2 md:gap-3">
-                                        <span>📅</span>
-                                        <span>Scheduled</span>
-                                    </span>
-                                    <span className="text-[11px] text-slate-500">
-                                        {countByMailboxFolder('scheduled')}
-                                    </span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleSelectMailboxFolder('all_mail')}
-                                    className={`shrink-0 md:w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-full text-xs transition-all cursor-pointer whitespace-nowrap ${
-                                        activeMailboxFolder === 'all_mail' && !activeCustomLabel
-                                            ? 'bg-[#D3E3FD] text-[#041E49] font-extrabold'
-                                            : 'text-slate-700 font-medium hover:bg-slate-200/70'
-                                    }`}
-                                >
-                                    <span className="flex items-center gap-2 md:gap-3">
-                                        <span>📬</span>
-                                        <span>All Mail</span>
-                                    </span>
-                                    <span className="text-[11px] text-slate-500">
-                                        {threads.length}
-                                    </span>
-                                </button>
+                                {(
+                                    [
+                                        { id: 'purchases' as ConnectLnMailboxFolder, label: 'Purchases', icon: '🛍️' },
+                                        { id: 'social' as ConnectLnMailboxFolder, label: 'Social', icon: '👥' },
+                                        { id: 'updates' as ConnectLnMailboxFolder, label: 'Updates', icon: '🔔' },
+                                        { id: 'forums' as ConnectLnMailboxFolder, label: 'Forums', icon: '💬' },
+                                        { id: 'promotions' as ConnectLnMailboxFolder, label: 'Promotions', icon: '🏷️' },
+                                        { id: 'scheduled' as ConnectLnMailboxFolder, label: 'Scheduled', icon: '📅' },
+                                        { id: 'all_mail' as ConnectLnMailboxFolder, label: 'All Mail', icon: '📬' },
+                                    ]
+                                ).map((sub) => {
+                                    const subCount =
+                                        sub.id === 'all_mail' ? threads.length : countByMailboxFolder(sub.id);
+                                    const isSubActive = activeMailboxFolder === sub.id && !activeCustomLabel;
+                                    return (
+                                        <button
+                                            key={sub.id}
+                                            type="button"
+                                            onClick={() => handleSelectMailboxFolder(sub.id)}
+                                            className={`shrink-0 md:w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-full text-xs transition-all cursor-pointer whitespace-nowrap ${
+                                                isSubActive
+                                                    ? 'bg-[#D3E3FD] text-[#041E49] font-extrabold'
+                                                    : 'text-slate-700 font-medium hover:bg-slate-200/70'
+                                            }`}
+                                        >
+                                            <span className="flex items-center gap-2 md:gap-3">
+                                                <span>{sub.icon}</span>
+                                                <span>{sub.label}</span>
+                                            </span>
+                                            {subCount > 0 && (
+                                                <span className="text-[11px] text-slate-500">
+                                                    {subCount}
+                                                </span>
+                                            )}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
@@ -2767,81 +2723,74 @@ export function MessagingView({
                     <>
                         {/* Column 2: Channels & Conversation Thread List */}
                         <div
-                            className={`w-full md:w-[360px] border-r border-slate-200 flex-col bg-slate-50/60 shrink-0 h-full ${
+                            className={`w-full md:w-[340px] border-r border-slate-200 flex-col bg-white shrink-0 h-full ${
                                 mobileShowChat ? 'hidden md:flex' : 'flex'
                             }`}
                         >
                     {/* Sidebar Header */}
-                    <div className="p-3.5 bg-white border-b border-slate-200">
-                        <div className="flex justify-between items-center mb-2.5">
-                            <div>
-                                <h2 className="text-base font-black text-slate-900 tracking-tight flex items-center gap-2">
-                                    <span>💬</span> ConnectIn Messaging
+                    <div className="p-3 bg-white border-b border-slate-200">
+                        <div className="flex justify-between items-center mb-2">
+                            <div className="min-w-0">
+                                <h2 className="text-sm font-black text-slate-900 tracking-tight flex items-center gap-1.5">
+                                    <span>Messages</span>
                                     {isLoadingThreads && (
                                         <span className="text-[10px] font-bold text-slate-400 animate-pulse">
                                             Syncing...
                                         </span>
                                     )}
                                 </h2>
-                                <p className="text-[11px] text-slate-500 font-semibold flex items-center gap-1.5 flex-wrap">
-                                    {activeCustomLabel ? (
-                                        <>
-                                            <span className="text-[#0A66C2] font-extrabold">
-                                                🏷️ Label:{' '}
-                                                {customLabels.find((l) => l.id === activeCustomLabel)?.name ||
-                                                    activeCustomLabel}
-                                            </span>
-                                            <button
-                                                type="button"
-                                                onClick={() => setActiveCustomLabel(null)}
-                                                className="text-[10px] font-bold text-slate-500 hover:text-slate-900 bg-slate-100 px-1.5 py-0.2 rounded cursor-pointer"
-                                            >
-                                                ✕ Clear
-                                            </button>
-                                        </>
-                                    ) : activeMailboxFolder === 'drafts' ? (
-                                        '📝 Unsent Drafts • Click any draft to edit or send'
-                                    ) : activeMailboxFolder !== 'inbox' ? (
-                                        <>
-                                            <span className="text-[#0A66C2] font-extrabold capitalize">
-                                                📂 {activeMailboxFolder.replace('_', ' ')}
-                                            </span>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleSelectMailboxFolder('inbox')}
-                                                className="text-[10px] font-bold text-slate-500 hover:text-slate-900 bg-slate-100 px-1.5 py-0.2 rounded cursor-pointer"
-                                            >
-                                                ✕ Back to Inbox
-                                            </button>
-                                        </>
-                                    ) : (
-                                        'Direct Peers • Hiring Teams • Commercial Vendors • Guilds'
-                                    )}
-                                </p>
+                                {(activeCustomLabel || activeMailboxFolder !== 'inbox') && (
+                                    <p className="text-[11px] text-slate-500 font-semibold flex items-center gap-1.5 flex-wrap mt-0.5">
+                                        {activeCustomLabel ? (
+                                            <>
+                                                <span className="text-[#0A66C2] font-extrabold">
+                                                    🏷️{' '}
+                                                    {customLabels.find((l) => l.id === activeCustomLabel)?.name ||
+                                                        activeCustomLabel}
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setActiveCustomLabel(null)}
+                                                    className="text-[10px] font-bold text-slate-500 hover:text-slate-900 bg-slate-100 px-1.5 py-0.2 rounded cursor-pointer"
+                                                >
+                                                    ✕ Clear
+                                                </button>
+                                            </>
+                                        ) : activeMailboxFolder === 'drafts' ? (
+                                            '📝 Unsent Drafts'
+                                        ) : (
+                                            <>
+                                                <span className="text-[#0A66C2] font-extrabold capitalize">
+                                                    📂 {activeMailboxFolder.replace('_', ' ')}
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSelectMailboxFolder('inbox')}
+                                                    className="text-[10px] font-bold text-slate-500 hover:text-slate-900 bg-slate-100 px-1.5 py-0.2 rounded cursor-pointer"
+                                                >
+                                                    ✕ Inbox
+                                                </button>
+                                            </>
+                                        )}
+                                    </p>
+                                )}
                             </div>
-                            <span className="text-[11px] font-black text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md shrink-0">
-                                {filteredThreads.length}{' '}
-                                {activeMailboxFolder === 'drafts' && !activeCustomLabel
-                                    ? filteredThreads.length === 1
-                                        ? 'Draft'
-                                        : 'Drafts'
-                                    : filteredThreads.length === 1
-                                    ? 'Thread'
-                                    : 'Threads'}
+                            <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full shrink-0">
+                                {filteredThreads.length}
                             </span>
                         </div>
 
                         {/* Search Bar */}
-                        <div className="relative mb-2.5">
+                        <div className="relative mb-2">
                             <input
                                 type="text"
-                                placeholder="Search people, recruiters, vendors, specs..."
+                                placeholder="Search conversations..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full bg-slate-100 focus:bg-white border border-slate-200 focus:border-[#0A66C2] rounded-xl py-2 pl-9 pr-8 text-xs font-medium text-slate-900 focus:outline-none transition-all"
+                                className="w-full bg-slate-100 focus:bg-white border border-slate-200 focus:border-[#0A66C2] rounded-xl py-1.5 pl-8 pr-7 text-xs font-medium text-slate-900 focus:outline-none transition-all"
                             />
                             <svg
-                                className="w-4 h-4 text-slate-400 absolute left-3 top-2.5"
+                                className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -2856,22 +2805,22 @@ export function MessagingView({
                             {searchQuery && (
                                 <button
                                     onClick={() => setSearchQuery('')}
-                                    className="absolute right-2.5 top-2 text-xs text-slate-400 hover:text-slate-700 font-bold"
+                                    className="absolute right-2.5 top-1.5 text-xs text-slate-400 hover:text-slate-700 font-bold"
                                 >
                                     ✕
                                 </button>
                             )}
                         </div>
 
-                        {/* Channel Category Filter Pills */}
-                        <div className="flex flex-wrap gap-1.5">
+                        {/* Single-Row Channel Category Filter Pills */}
+                        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-0.5">
                             {(
                                 [
-                                    { id: 'All', label: '📥 All Inboxes' },
-                                    { id: 'People', label: '👤 Direct' },
-                                    { id: 'Companies', label: '🏢 Recruiters' },
-                                    { id: 'Products', label: '🛍️ Vendors' },
-                                    { id: 'Communities', label: '🌐 Guilds' },
+                                    { id: 'All', label: 'All' },
+                                    { id: 'People', label: 'Direct' },
+                                    { id: 'Companies', label: 'Recruiters' },
+                                    { id: 'Products', label: 'Vendors' },
+                                    { id: 'Communities', label: 'Guilds' },
                                 ] as const
                             ).map((tab) => {
                                 const isActive = activeChannel === tab.id;
@@ -2897,19 +2846,19 @@ export function MessagingView({
                                                 setSelectedThreadId(matching[0].id);
                                             }
                                         }}
-                                        className={`px-2 py-1 rounded-lg text-[11px] font-extrabold whitespace-nowrap transition-all flex items-center gap-1 border cursor-pointer ${
+                                        className={`px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition-all flex items-center gap-1 border cursor-pointer shrink-0 ${
                                             isActive
-                                                ? 'bg-slate-900 border-slate-900 shadow-sm'
-                                                : 'bg-slate-100 text-slate-700 border-slate-200/80 hover:bg-slate-200/70'
+                                                ? 'bg-[#0A66C2] border-[#0A66C2] shadow-2xs'
+                                                : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                                         }`}
                                         style={isActive ? { color: '#FFFFFF' } : undefined}
                                     >
                                         <span>{tab.label}</span>
                                         <span
-                                            className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                                            className={`text-[10px] font-semibold ${
                                                 isActive
-                                                    ? 'bg-white/20 text-white'
-                                                    : 'bg-white text-slate-600'
+                                                    ? 'text-white/90'
+                                                    : 'text-slate-400'
                                             }`}
                                         >
                                             {count}
@@ -3015,10 +2964,7 @@ export function MessagingView({
                                         {/* Content */}
                                         <div className="flex-1 min-w-0">
                                             <div className="flex justify-between items-baseline mb-0.5 gap-1.5">
-                                                <h4 className="font-extrabold text-sm text-slate-900 truncate flex items-center gap-1">
-                                                    {thread.badgeIcon && (
-                                                        <span>{thread.badgeIcon}</span>
-                                                    )}
+                                                <h4 className="font-bold text-sm text-slate-900 truncate flex items-center gap-1">
                                                     <span className="truncate">{thread.title}</span>
                                                     {thread.isVerified && (
                                                         <svg
@@ -3031,49 +2977,28 @@ export function MessagingView({
                                                     )}
                                                 </h4>
                                                 <span
-                                                    className="text-[10px] font-bold text-slate-500 shrink-0 whitespace-nowrap bg-slate-100/80 px-1.5 py-0.5 rounded border border-slate-200/70"
+                                                    className="text-[10px] font-medium text-slate-400 shrink-0 whitespace-nowrap"
                                                     title={`Last message date & time: ${formattedDateLabel}`}
                                                 >
-                                                    {formattedDateLabel}
+                                                    {formattedDateLabel.split(' · ')[0] || formattedDateLabel}
                                                 </span>
                                             </div>
 
-                                            {/* Channel Type & Role Badge */}
-                                            <div className="flex items-center gap-1.5 mb-1">
-                                                <span
-                                                    className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0 ${
-                                                        thread.channelType === 'Products'
-                                                            ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
-                                                            : thread.channelType === 'Companies'
-                                                            ? 'bg-amber-100 text-amber-900 border border-amber-200'
-                                                            : thread.channelType === 'Communities'
-                                                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                                                            : 'bg-slate-100 text-slate-700 border border-slate-200'
-                                                    }`}
-                                                >
-                                                    {thread.channelType === 'People'
-                                                        ? 'Direct'
-                                                        : thread.channelType === 'Companies'
-                                                        ? 'Recruiter'
-                                                        : thread.channelType === 'Products'
-                                                        ? 'Vendor Desk'
-                                                        : 'Guild'}
-                                                </span>
-                                                <p className="text-[11px] text-slate-500 font-semibold truncate">
-                                                    {thread.subtitle}
-                                                </p>
-                                            </div>
+                                            {/* Clean Subtitle */}
+                                            <p className="text-[11px] text-slate-500 font-medium truncate mb-0.5">
+                                                {thread.subtitle}
+                                            </p>
 
                                             <div className="flex items-center justify-between gap-2">
                                                 <p
                                                     className={`text-xs truncate ${
                                                         thread.unreadCount > 0
-                                                            ? 'font-extrabold text-slate-900'
-                                                            : 'text-slate-600 font-medium'
+                                                            ? 'font-bold text-slate-900'
+                                                            : 'text-slate-500 font-normal'
                                                     }`}
                                                 >
                                                     {showDraftPreview ? (
-                                                        <span className="text-rose-600 font-extrabold">
+                                                        <span className="text-rose-600 font-bold">
                                                             📝 [Draft] {effectiveDraft}
                                                         </span>
                                                     ) : (
@@ -3122,7 +3047,7 @@ export function MessagingView({
                                                     </button>
                                                     {thread.unreadCount > 0 && (
                                                         <span
-                                                            className="bg-[#0A66C2] text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center shrink-0 shadow-sm"
+                                                            className="bg-[#0A66C2] text-[10px] font-bold w-4.5 h-4.5 rounded-full flex items-center justify-center shrink-0"
                                                             style={{ color: '#FFFFFF' }}
                                                         >
                                                             {thread.unreadCount}
@@ -3176,111 +3101,84 @@ export function MessagingView({
                                         )}
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <h3 className="font-black text-sm sm:text-base text-slate-900 truncate flex items-center gap-1.5">
-                                                {activeThread.badgeIcon && (
-                                                    <span>{activeThread.badgeIcon}</span>
-                                                )}
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                            <h3 className="font-bold text-sm sm:text-base text-slate-900 truncate flex items-center gap-1.5">
                                                 <span className="truncate">{activeThread.title}</span>
                                             </h3>
                                             {activeThread.isVerified && (
-                                                <span className="bg-blue-50 text-[#0A66C2] text-[10px] font-black px-2 py-0.5 rounded-md border border-blue-200 inline-flex items-center gap-1 whitespace-nowrap shrink-0">
-                                                    ✓ Verified {activeThread.subType}
+                                                <span className="bg-blue-50 text-[#0A66C2] text-[10px] font-bold px-2 py-0.5 rounded-full border border-blue-200 inline-flex items-center gap-1 whitespace-nowrap shrink-0">
+                                                    ✓ Verified
                                                 </span>
                                             )}
+                                            <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full inline-flex items-center gap-1 whitespace-nowrap shrink-0">
+                                                🔒 E2EE
+                                            </span>
                                         </div>
-                                        <p className="text-xs text-slate-600 font-semibold truncate">
+                                        <p className="text-xs text-slate-500 font-medium truncate">
                                             {activeThread.subtitle}
                                         </p>
                                     </div>
                                 </div>
 
-                                {/* Action Buttons (Star, Important, Snooze, Audio Call, Video Huddle, Contextual Portal Links) */}
-                                <div className="flex flex-wrap items-center gap-1.5 shrink-0">
-                                    {/* Quick Mailbox Actions: Star, Important, Snooze */}
-                                    <div className="hidden sm:flex items-center gap-1 pr-1.5 border-r border-slate-200">
-                                        <button
-                                            type="button"
-                                            onClick={() => toggleStarThread(activeThread.id)}
-                                            title={isThreadStarredById(activeThread.id) ? 'Starred (click to unstar)' : 'Star conversation'}
-                                            className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm font-bold border transition-all cursor-pointer ${
-                                                isThreadStarredById(activeThread.id)
-                                                    ? 'bg-amber-50 text-amber-500 border-amber-300 shadow-sm'
-                                                    : 'bg-slate-50 text-slate-400 border-slate-200 hover:text-amber-500 hover:bg-amber-50/50'
-                                            }`}
-                                        >
-                                            {isThreadStarredById(activeThread.id) ? '★' : '☆'}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => toggleImportantThread(activeThread.id)}
-                                            title={importantIds.includes(activeThread.id) ? 'Marked Important' : 'Mark as Important'}
-                                            className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold border transition-all cursor-pointer ${
-                                                importantIds.includes(activeThread.id)
-                                                    ? 'bg-amber-50 text-amber-700 border-amber-300 shadow-sm'
-                                                    : 'bg-slate-50 text-slate-400 border-slate-200 hover:text-amber-600 hover:bg-amber-50/50'
-                                            }`}
-                                        >
-                                            🏷️
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => toggleSnoozeThread(activeThread.id)}
-                                            title={snoozedIds.includes(activeThread.id) ? 'Snoozed (click to unsnooze)' : 'Snooze conversation'}
-                                            className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold border transition-all cursor-pointer ${
-                                                snoozedIds.includes(activeThread.id)
-                                                    ? 'bg-blue-50 text-blue-700 border-blue-300 shadow-sm'
-                                                    : 'bg-slate-50 text-slate-400 border-slate-200 hover:text-blue-600 hover:bg-blue-50/50'
-                                            }`}
-                                        >
-                                            🕒
-                                        </button>
-                                    </div>
+                                {/* Action Buttons (Star, Audio Call, Video Huddle, Schedule) */}
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                    <button
+                                        type="button"
+                                        onClick={() => toggleStarThread(activeThread.id)}
+                                        title={isThreadStarredById(activeThread.id) ? 'Starred (click to unstar)' : 'Star conversation'}
+                                        className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold border transition-all cursor-pointer ${
+                                            isThreadStarredById(activeThread.id)
+                                                ? 'bg-amber-50 text-amber-500 border-amber-300 shadow-2xs'
+                                                : 'bg-slate-50 text-slate-400 border-slate-200 hover:text-amber-500 hover:bg-amber-50/50'
+                                        }`}
+                                    >
+                                        {isThreadStarredById(activeThread.id) ? '★' : '☆'}
+                                    </button>
                                     {activeThread.channelType === 'Companies' && onNavigateJobs && (
                                         <button
                                             onClick={onNavigateJobs}
-                                            className="px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-extrabold flex items-center gap-1 transition-all border border-amber-300 whitespace-nowrap cursor-pointer"
+                                            className="px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-bold flex items-center gap-1 transition-all border border-amber-300 whitespace-nowrap cursor-pointer"
                                             title="View Matching Jobs"
                                         >
                                             <span>💼</span>
-                                            <span>Open Jobs</span>
+                                            <span className="hidden lg:inline">Jobs</span>
                                         </button>
                                     )}
                                     {activeThread.channelType === 'Products' &&
                                         onNavigateMarketplace && (
                                             <button
                                                 onClick={onNavigateMarketplace}
-                                                className="px-2.5 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-900 text-xs font-extrabold flex items-center gap-1 transition-all border border-indigo-200 whitespace-nowrap cursor-pointer"
+                                                className="px-2.5 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-900 text-xs font-bold flex items-center gap-1 transition-all border border-indigo-200 whitespace-nowrap cursor-pointer"
                                                 title="Open Vendor Marketplace"
                                             >
                                                 <span>🛒</span>
-                                                <span>Marketplace</span>
+                                                <span className="hidden lg:inline">Market</span>
                                             </button>
                                         )}
                                     <button
                                         onClick={() => setActiveCallMode('audio')}
-                                        className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-extrabold flex items-center gap-1 transition-all border border-slate-200 whitespace-nowrap cursor-pointer"
+                                        className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1 transition-all border border-slate-200 whitespace-nowrap cursor-pointer"
                                         title="Start Voice Call"
                                     >
                                         <span>📞</span>
-                                        <span className="hidden sm:inline">Voice Call</span>
+                                        <span className="hidden xl:inline">Call</span>
                                     </button>
                                     <button
                                         onClick={() => setActiveCallMode('video')}
-                                        className="px-2.5 py-1.5 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-xs font-extrabold flex items-center gap-1 transition-all shadow-sm whitespace-nowrap cursor-pointer"
+                                        className="px-2.5 py-1.5 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-xs font-bold flex items-center gap-1 transition-all shadow-2xs whitespace-nowrap cursor-pointer"
                                         style={{ color: '#FFFFFF' }}
                                         title="Start Live Video Huddle"
                                     >
                                         <span>🎥</span>
-                                        <span className="hidden sm:inline">Video Huddle</span>
+                                        <span className="hidden sm:inline">Video</span>
                                     </button>
                                     <button
                                         onClick={() => setShowScheduler(true)}
-                                        className="px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 text-xs font-extrabold flex items-center gap-1 transition-all border border-emerald-300 whitespace-nowrap cursor-pointer"
+                                        className="px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 text-xs font-bold flex items-center gap-1 transition-all border border-emerald-300 whitespace-nowrap cursor-pointer"
                                         title="Schedule a meeting with your connections"
                                     >
                                         <span>📅</span>
-                                        <span className="hidden sm:inline">Schedule</span>
+                                        <span className="hidden xl:inline">Schedule</span>
                                     </button>
                                 </div>
                             </div>
@@ -3327,15 +3225,7 @@ export function MessagingView({
                         </div>
 
                         {/* Chat History Stream */}
-                        <div className="flex-1 p-5 overflow-y-auto space-y-4 bg-slate-50/50">
-                            {/* Security Banner */}
-                            <div className="text-center my-2">
-                                <span className="bg-slate-200/80 text-slate-700 text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider">
-                                    🔒 End-to-End Encrypted ConnectIn {activeThread.channelType}{' '}
-                                    Channel
-                                </span>
-                            </div>
-
+                        <div className="flex-1 p-4 sm:p-5 overflow-y-auto space-y-3.5 bg-slate-50/40">
                             {activeThread.messages.map((msg, idx) => {
                                 const isMe =
                                     msg.sender.id === 'me' ||
@@ -3363,17 +3253,16 @@ export function MessagingView({
                                 return (
                                     <React.Fragment key={msg.id}>
                                         {showDateSeparator && (
-                                            <div className="flex items-center justify-center my-3">
-                                                <div className="h-px bg-slate-200 flex-1 max-w-[100px]" />
-                                                <span className="mx-3 px-3 py-1 rounded-full bg-white border border-slate-200 text-[10px] font-extrabold text-slate-600 shadow-xs flex items-center gap-1.5">
-                                                    <span>📅</span>
-                                                    <span>{msgDateHeading}</span>
+                                            <div className="flex items-center justify-center my-2.5">
+                                                <div className="h-px bg-slate-200/80 flex-1 max-w-[80px]" />
+                                                <span className="mx-2.5 px-2.5 py-0.5 rounded-full bg-white border border-slate-200/90 text-[10px] font-bold text-slate-500">
+                                                    {msgDateHeading}
                                                 </span>
-                                                <div className="h-px bg-slate-200 flex-1 max-w-[100px]" />
+                                                <div className="h-px bg-slate-200/80 flex-1 max-w-[80px]" />
                                             </div>
                                         )}
                                         <div
-                                            className={`flex gap-3 ${
+                                            className={`group flex gap-2.5 ${
                                                 isMe ? 'flex-row-reverse' : 'flex-row'
                                             }`}
                                         >
@@ -3383,60 +3272,46 @@ export function MessagingView({
                                                 onError={(e) => {
                                                     e.currentTarget.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(isMe ? currentUser?.name || 'Member' : msg.sender.name)}&backgroundColor=0a66c2`;
                                                 }}
-                                                className="w-9 h-9 rounded-full object-cover shrink-0 mt-1 border border-slate-200 shadow-sm ring-2 ring-[#0066FF]"
+                                                className="w-8 h-8 rounded-full object-cover shrink-0 mt-0.5 border border-slate-200 shadow-2xs"
                                             />
                                             <div
-                                                className={`max-w-[75%] flex flex-col ${
+                                                className={`max-w-[76%] flex flex-col ${
                                                     isMe ? 'items-end' : 'items-start'
                                                 }`}
                                             >
-                                                <div className="flex items-baseline gap-2 mb-1 px-1 flex-wrap">
-                                                    <span className="text-xs font-extrabold text-slate-800">
+                                                <div className="flex items-baseline gap-1.5 mb-1 px-0.5 flex-wrap">
+                                                    <span className="text-xs font-bold text-slate-800">
                                                         {isMe
                                                             ? currentUser?.name || 'You'
                                                             : msg.sender.name}
                                                     </span>
                                                     <span
-                                                        className="text-[10px] font-bold text-slate-500 bg-white/90 px-1.5 py-0.5 rounded border border-slate-200/80"
+                                                        className="text-[10px] font-medium text-slate-400"
                                                         title={
                                                             isMe
                                                                 ? `Sent on ${msgFullSentDateTime}`
                                                                 : `Received on ${msgFullSentDateTime}`
                                                         }
                                                     >
-                                                        {isMe ? 'Sent · ' : 'Received · '}
-                                                        {msgFullSentDateTime}
+                                                        {msgFullSentDateTime.split(' · ')[1] || msgFullSentDateTime}
                                                     </span>
                                                 </div>
 
-                                            {/* High-Contrast Message Bubble (Outgoing messages & Meeting Invitations/RSVPs include Profile Picture + ConnectLn Logo Card) */}
+                                            {/* Clean, Presentable Message Bubble */}
                                             <div className="relative">
                                                 <ReactionBadges msg={msg} />
                                                 <div
-                                                    className={`overflow-hidden rounded-2xl text-sm leading-relaxed shadow-sm whitespace-pre-line ${
+                                                    className={`overflow-hidden rounded-2xl text-sm leading-relaxed shadow-2xs whitespace-pre-line ${
                                                         isMe
-                                                            ? 'rounded-tr-none font-semibold'
+                                                            ? 'p-3.5 bg-[#0A66C2] text-white rounded-tr-none font-normal'
                                                             : msg.text.includes('Meeting invitation from') || msg.text.includes('Meeting RSVP Response')
                                                             ? 'bg-white text-slate-800 border border-slate-300 rounded-tl-none font-medium'
-                                                            : 'p-3.5 bg-white text-slate-800 border border-slate-200 rounded-tl-none font-medium'
+                                                            : 'p-3.5 bg-white text-slate-800 border border-slate-200 rounded-tl-none font-normal'
                                                     }`}
-                                                    style={
-                                                        isMe
-                                                            ? {
-                                                                  backgroundColor: '#171513',
-                                                                  color: '#F5F0EB',
-                                                                  border: '1px solid #2C2825',
-                                                              }
-                                                            : undefined
-                                                    }
                                                 >
-                                                {(isMe || msg.text.includes('Meeting invitation from') || msg.text.includes('Meeting RSVP Response')) && (
+                                                {(msg.text.includes('Meeting invitation from') || msg.text.includes('Meeting RSVP Response')) && (
                                                     <div
-                                                        className="flex items-center justify-between gap-4 px-3.5 py-2 border-b"
-                                                        style={{
-                                                            backgroundColor: '#1F1C1A',
-                                                            borderColor: 'rgba(255,255,255,0.1)',
-                                                        }}
+                                                        className="flex items-center justify-between gap-4 px-3.5 py-2 border-b bg-slate-900 border-slate-800 text-white"
                                                     >
                                                         <div className="flex items-center gap-2 min-w-0">
                                                             <img
@@ -3445,12 +3320,9 @@ export function MessagingView({
                                                                 onError={(e) => {
                                                                     e.currentTarget.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(isMe ? currentUser?.name || 'Member' : msg.sender.name)}&backgroundColor=0a66c2`;
                                                                 }}
-                                                                className="h-7 w-7 rounded-full object-cover ring-2 ring-[#0066FF] shrink-0"
+                                                                className="h-6 w-6 rounded-full object-cover ring-1 ring-white/40 shrink-0"
                                                             />
-                                                            <span
-                                                                className="text-[11px] font-extrabold truncate"
-                                                                style={{ color: '#F5F0EB' }}
-                                                            >
+                                                            <span className="text-[11px] font-bold truncate text-white">
                                                                 {isMe ? currentUser?.name || 'You' : msg.sender.name}
                                                             </span>
                                                         </div>
@@ -3458,38 +3330,29 @@ export function MessagingView({
                                                             <img
                                                                 src="/brand/connectln-icon-256.png"
                                                                 alt="ConnectLn"
-                                                                className="h-5 w-5 rounded-sm object-contain"
+                                                                className="h-4 w-4 rounded-xs object-contain"
                                                             />
-                                                            <div className="inline-flex flex-col">
-                                                                <span
-                                                                    className="text-xs font-black tracking-tight leading-none"
-                                                                    style={{ color: '#F5F0EB' }}
-                                                                >
-                                                                    ConnectLn
-                                                                </span>
-                                                                <span
-                                                                    className="mt-0.5 h-0.5 w-4/5 rounded-full"
-                                                                    style={{ backgroundColor: '#A64532' }}
-                                                                />
-                                                            </div>
+                                                            <span className="text-[11px] font-bold tracking-tight text-white">
+                                                                ConnectLn Calendar
+                                                            </span>
                                                         </div>
                                                     </div>
                                                 )}
 
-                                                <div className={isMe || msg.text.includes('Meeting invitation from') || msg.text.includes('Meeting RSVP Response') ? 'p-3.5' : ''}>
-                                                    <p style={isMe ? { color: '#F5F0EB' } : undefined}>
+                                                <div className={msg.text.includes('Meeting invitation from') || msg.text.includes('Meeting RSVP Response') ? 'p-3.5' : ''}>
+                                                    <p className={isMe && !(msg.text.includes('Meeting invitation from') || msg.text.includes('Meeting RSVP Response')) ? 'text-white' : 'text-slate-800'}>
                                                         {msg.text}
                                                     </p>
 
                                                     {/* Attachments inside bubble */}
                                                     {msg.attachments && msg.attachments.length > 0 && (
-                                                        <div className="mt-2 pt-2 border-t border-white/20 flex flex-wrap gap-1.5">
+                                                        <div className={`mt-2 pt-2 border-t flex flex-wrap gap-1.5 ${isMe ? 'border-white/20' : 'border-slate-100'}`}>
                                                             {msg.attachments.map((att, i) => (
                                                                 <span
                                                                     key={i}
-                                                                    className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg ${
+                                                                    className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg ${
                                                                         isMe
-                                                                            ? 'bg-white/10 text-white'
+                                                                            ? 'bg-white/15 text-white'
                                                                             : 'bg-slate-100 text-[#0A66C2] border border-slate-200'
                                                                     }`}
                                                                 >
@@ -3610,25 +3473,30 @@ export function MessagingView({
                             <div ref={chatEndRef} />
                         </div>
 
-                        {/* Context-Aware Profession Quick Replies */}
-                        <div
-                            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                            className="px-4 py-2 bg-slate-100/90 border-t border-slate-200 flex items-center gap-2 overflow-x-auto no-scrollbar [&::-webkit-scrollbar]:hidden"
-                        >
-                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 shrink-0">
-                                ⚡ Instant Reply:
-                            </span>
-                            {quickReplies.map((replyText, idx) => (
-                                <button
-                                    key={idx}
-                                    type="button"
-                                    onClick={() => sendChatText(replyText)}
-                                    className="text-xs bg-white hover:bg-blue-50 text-[#0A66C2] border border-blue-200/90 px-3 py-1.5 rounded-full font-bold whitespace-nowrap shadow-sm transition-all hover:border-[#0A66C2]"
-                                >
-                                    {replyText}
-                                </button>
-                            ))}
-                        </div>
+                        {/* Collapsible Context-Aware Profession Quick Replies */}
+                        {showQuickRepliesBar && (
+                            <div
+                                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                                className="px-4 py-2 bg-slate-50 border-t border-slate-200 flex items-center gap-2 overflow-x-auto no-scrollbar [&::-webkit-scrollbar]:hidden animate-in fade-in"
+                            >
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 shrink-0">
+                                    ⚡ Quick Reply:
+                                </span>
+                                {quickReplies.map((replyText, idx) => (
+                                    <button
+                                        key={idx}
+                                        type="button"
+                                        onClick={() => {
+                                            sendChatText(replyText);
+                                            setShowQuickRepliesBar(false);
+                                        }}
+                                        className="text-xs bg-white hover:bg-blue-50 text-[#0A66C2] border border-blue-200/90 px-3 py-1 rounded-full font-semibold whitespace-nowrap shadow-2xs transition-all hover:border-[#0A66C2] cursor-pointer"
+                                    >
+                                        {replyText}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
 
                         {/* Pending Attachment Chip */}
                         {pendingAttachment && (
@@ -3761,7 +3629,7 @@ export function MessagingView({
                                     setShowEmojiBar((prev) => !prev);
                                     setShowAttachmentMenu(false);
                                 }}
-                                className={`p-2.5 rounded-xl border transition-all ${
+                                className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
                                     showEmojiBar
                                         ? 'bg-blue-50 border-[#0A66C2] text-[#0A66C2]'
                                         : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200'
@@ -3769,6 +3637,21 @@ export function MessagingView({
                                 title="Insert Emoji"
                             >
                                 😊
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowQuickRepliesBar((prev) => !prev);
+                                }}
+                                className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
+                                    showQuickRepliesBar
+                                        ? 'bg-blue-50 border-[#0A66C2] text-[#0A66C2]'
+                                        : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200'
+                                }`}
+                                title="Toggle Instant Smart Replies"
+                            >
+                                ⚡
                             </button>
 
                             <div className="flex-1 relative">

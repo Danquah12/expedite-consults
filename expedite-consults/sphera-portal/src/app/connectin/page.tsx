@@ -3319,15 +3319,17 @@ export default function ConnectLnPage() {
         </button>
       </div>
 
-      {/* Signature Persistent Floating Bottom-Right Messaging Dock */}
-      <FloatingMessagingDock
-        currentUser={userData}
-        onOpenFullMessaging={() => setActiveTab('messaging')}
-        onNavigateJobs={() => setActiveTab('jobs')}
-        composeRecipient={composeRecipient}
-        onCloseComposeRecipient={() => setComposeRecipient(null)}
-        suppressAutoOpen={activeTab === 'messaging' || !!inspectedMember}
-      />
+      {/* Signature Persistent Floating Bottom-Right Messaging Dock (Hidden when already on the full Messaging tab to avoid overlapping the message composer) */}
+      {activeTab !== 'messaging' && (
+        <FloatingMessagingDock
+          currentUser={userData}
+          onOpenFullMessaging={() => setActiveTab('messaging')}
+          onNavigateJobs={() => setActiveTab('jobs')}
+          composeRecipient={composeRecipient}
+          onCloseComposeRecipient={() => setComposeRecipient(null)}
+          suppressAutoOpen={!!inspectedMember}
+        />
+      )}
 
       {/* ConnectIn AI Global Platform Assistant Modal */}
       <ConnectInAIAssistant

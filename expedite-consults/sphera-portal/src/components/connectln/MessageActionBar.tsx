@@ -136,7 +136,7 @@ export function MessageActionBar({
     };
 
     const btn =
-        'inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-bold text-slate-700 hover:bg-slate-100 cursor-pointer';
+        'inline-flex items-center gap-1 rounded-full border border-slate-200/80 bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-slate-500 hover:text-slate-900 hover:bg-slate-100 hover:border-slate-300 cursor-pointer transition-colors';
 
     // Connections first, then every other registered member; matches as soon as one letter is typed.
     const q = shareQuery.trim().toLowerCase();
@@ -274,7 +274,7 @@ export function MessageActionBar({
                 </div>
             )}
 
-            <div className="flex flex-wrap items-center gap-1">
+            <div className="flex flex-wrap items-center gap-1 opacity-75 group-hover:opacity-100 transition-opacity">
                 {REACTIONS.map((r) => {
                     const list = msg.reactions?.[r.kind] || [];
                     const mine = list.includes(myKey);
