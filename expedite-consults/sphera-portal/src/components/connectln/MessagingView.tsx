@@ -2110,14 +2110,14 @@ export function MessagingView({
                     </div>
 
                     <div className="flex items-center gap-1.5 flex-wrap">
-                        {/* Quick Mode Switcher Pills (Chats, Calls, Status, Communities, Archived) — Desk Note Editorial Palette */}
+                        {/* Quick Mode Switcher Pills (Chats, Calls, Status, Communities, Archived) — ConnectLn Desk Note Symbols */}
                         {(
                             [
-                                { id: 'chats' as MessagingWorkspaceMode, label: '💬 Chats' },
-                                { id: 'calls' as MessagingWorkspaceMode, label: '📞 Calls' },
-                                { id: 'status' as MessagingWorkspaceMode, label: '🟢 Status' },
-                                { id: 'communities' as MessagingWorkspaceMode, label: '👥 Communities' },
-                                { id: 'archived' as MessagingWorkspaceMode, label: '📦 Archived' },
+                                { id: 'chats' as MessagingWorkspaceMode, symbol: '❖', label: 'Chats' },
+                                { id: 'calls' as MessagingWorkspaceMode, symbol: '◈', label: 'Calls' },
+                                { id: 'status' as MessagingWorkspaceMode, symbol: '✦', label: 'Status' },
+                                { id: 'communities' as MessagingWorkspaceMode, symbol: '⬡', label: 'Communities' },
+                                { id: 'archived' as MessagingWorkspaceMode, symbol: '▣', label: 'Archived' },
                             ]
                         ).map((m) => {
                             const isAct = workspaceMode === m.id;
@@ -2126,14 +2126,23 @@ export function MessagingView({
                                     key={m.id}
                                     type="button"
                                     onClick={() => setWorkspaceMode(m.id)}
-                                    className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all cursor-pointer border ${
+                                    className={`px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border ${
                                         isAct
                                             ? 'bg-[#7C4225] border-[#5E3119] shadow-2xs'
                                             : 'bg-[#F7F2E8] hover:bg-[#EFE8DA] text-[#3D3730] border-[#D0C4AE]'
                                     }`}
                                     style={isAct ? { color: '#FBF8F3' } : undefined}
                                 >
-                                    {m.label}
+                                    <span
+                                        className={`w-4 h-4 rounded-md flex items-center justify-center text-[10px] font-extrabold leading-none ${
+                                            isAct
+                                                ? 'bg-[#5E3119] text-[#FBF8F3]'
+                                                : 'bg-[#E5DBCA] text-[#5E3119]'
+                                        }`}
+                                    >
+                                        {m.symbol}
+                                    </span>
+                                    <span>{m.label}</span>
                                 </button>
                             );
                         })}
@@ -2146,14 +2155,14 @@ export function MessagingView({
                             className="px-3 py-1.5 rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
                             style={{ color: '#FFFFFF' }}
                         >
-                            <span>✉️</span> New Message
+                            <span>✒️</span> New Message
                         </button>
                         {onNavigateVibeComms && (
                             <button
                                 onClick={onNavigateVibeComms}
                                 className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
                             >
-                                <span>🎙️</span> Audio / Video Studio
+                                <span>◉</span> Audio / Video Studio
                             </button>
                         )}
                     </div>

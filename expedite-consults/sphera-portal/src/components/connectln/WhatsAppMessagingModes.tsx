@@ -363,88 +363,124 @@ export function WhatsAppLeftIconRail({
     const items: Array<{
         id: MessagingWorkspaceMode;
         label: string;
+        shortLabel: string;
         badge?: number;
         dot?: boolean;
         icon: React.ReactNode;
     }> = [
         {
             id: 'chats',
-            label: 'Chats & Mail',
+            label: 'ConnectLn Desk Notes & Mail',
+            shortLabel: 'Notes',
             badge: unreadChatsCount > 0 ? unreadChatsCount : undefined,
             icon: (
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H8l-4 3V7a2 2 0 0 1 2-2z" />
-                    <line x1="8" y1="10" x2="16" y2="10" />
-                    <line x1="8" y1="14" x2="13" y2="14" />
+                /* ConnectLn Bespoke Editorial Folio & Sealed Envelope Emblem */
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9}>
+                    <rect x="3" y="4" width="18" height="16" rx="3" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.5 7.5L12 13l8.5-5.5" />
+                    <polygon points="12 10.5 13.6 12.1 12 13.7 10.4 12.1" fill="currentColor" stroke="none" />
+                    <line x1="7" y1="16.5" x2="17" y2="16.5" strokeLinecap="round" />
                 </svg>
             ),
         },
         {
             id: 'calls',
-            label: 'Calls',
+            label: 'ConnectLn Studio Calls & Huddles',
+            shortLabel: 'Studio',
             icon: (
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"
-                    />
+                /* ConnectLn Bespoke Acoustic Wave & Studio Capsule Emblem (non-WhatsApp) */
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9}>
+                    <rect x="8.5" y="4" width="7" height="11" rx="3.5" />
+                    <path strokeLinecap="round" d="M5 10v1.5a7 7 0 0 0 14 0V10" />
+                    <line x1="12" y1="18.5" x2="12" y2="21" strokeLinecap="round" />
+                    <line x1="8.5" y1="21" x2="15.5" y2="21" strokeLinecap="round" />
+                    <line x1="3" y1="7.5" x2="3" y2="12.5" strokeLinecap="round" />
+                    <line x1="21" y1="7.5" x2="21" y2="12.5" strokeLinecap="round" />
                 </svg>
             ),
         },
         {
             id: 'status',
-            label: 'Status',
+            label: 'ConnectLn Status & 24h Chronicles',
+            shortLabel: 'Status',
             dot: true,
             icon: (
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                    <circle cx="12" cy="12" r="4" />
-                    <path strokeLinecap="round" d="M12 3a9 9 0 0 1 7.79 4.5" />
-                    <path strokeLinecap="round" d="M19.79 16.5A9 9 0 0 1 12 21" />
-                    <path strokeLinecap="round" d="M4.21 16.5a9 9 0 0 1 0-9" />
+                /* ConnectLn Bespoke 4-Pointed Starburst Compass Seal (replaces WhatsApp dashed circle) */
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.85}>
+                    <polygon
+                        points="12 2.5 14.4 9.6 21.5 12 14.4 14.4 12 21.5 9.6 14.4 2.5 12 9.6 9.6"
+                        strokeLinejoin="round"
+                    />
+                    <circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none" />
                 </svg>
             ),
         },
         {
             id: 'channels',
-            label: 'Channels',
+            label: 'ConnectLn Pulse Broadcasts',
+            shortLabel: 'Pulse',
             icon: (
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                    <circle cx="12" cy="12" r="9" />
-                    <path strokeLinecap="round" d="M8.5 12a3.5 3.5 0 0 1 7 0" />
-                    <circle cx="12" cy="12" r="1.2" fill="currentColor" />
+                /* ConnectLn Bespoke Broadcast Prism & Signal Beacon */
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9}>
+                    <polygon points="12 3 20 19 4 19" strokeLinejoin="round" />
+                    <circle cx="12" cy="13.5" r="1.8" fill="currentColor" stroke="none" />
+                    <path strokeLinecap="round" d="M8.5 7.5a5.5 5.5 0 0 1 7 0" />
                 </svg>
             ),
         },
         {
             id: 'communities',
-            label: 'Communities',
+            label: 'ConnectLn Guilds & Communities',
+            shortLabel: 'Guilds',
             icon: (
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 3.13a4 4 0 0 1 0 7.75" />
+                /* ConnectLn Bespoke Interlocking Hexagonal Guild Crest (replaces WhatsApp 3-person icon) */
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.85}>
+                    <polygon
+                        points="12 2.5 19.5 6.8 19.5 15.2 12 19.5 4.5 15.2 4.5 6.8"
+                        strokeLinejoin="round"
+                    />
+                    <polygon
+                        points="12 7 16 9.3 16 13.7 12 16 8 13.7 8 9.3"
+                        strokeLinejoin="round"
+                    />
+                    <circle cx="12" cy="11.5" r="1.5" fill="currentColor" stroke="none" />
                 </svg>
             ),
         },
         {
             id: 'archived',
-            label: 'Archived',
+            label: 'ConnectLn Vault & Archived Folios',
+            shortLabel: 'Vault',
             badge: unreadArchivedCount > 0 ? unreadArchivedCount : 1,
             icon: (
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                    <rect x="3" y="4" width="18" height="4" rx="1" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 8v11a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 12h4" />
+                /* ConnectLn Bespoke Editorial Vault Shield & Keyhole Folio */
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9}>
+                    <rect x="4" y="3.5" width="16" height="17" rx="2.5" />
+                    <line x1="8" y1="3.5" x2="8" y2="20.5" />
+                    <circle cx="14" cy="11" r="2" />
+                    <path strokeLinecap="round" d="M14 13v2.5" />
                 </svg>
             ),
         },
     ];
 
     return (
-        <div className="w-full md:w-[56px] bg-[#F3EDE2] border-b md:border-b-0 md:border-r border-[#E0D6C5] flex md:flex-col items-center justify-between px-2 py-1.5 md:py-3 shrink-0 select-none">
+        <div className="w-full md:w-[68px] bg-[#F3EDE2] border-b md:border-b-0 md:border-r border-[#E0D6C5] flex md:flex-col items-center justify-between px-2 py-1.5 md:py-3 shrink-0 select-none">
             <div className="flex md:flex-col items-center gap-1.5 md:gap-2 overflow-x-auto no-scrollbar w-full md:w-auto">
+                {/* ConnectLn Official Crest Seal at top of rail */}
+                <div
+                    className="hidden md:flex flex-col items-center pb-2 mb-0.5 border-b border-[#E0D6C5] w-full"
+                    title="ConnectLn Desk Note Suite"
+                >
+                    <div className="w-9 h-9 rounded-xl bg-[#292521] border border-[#7C4225] flex items-center justify-center shadow-2xs overflow-hidden">
+                        <img
+                            src="/brand/connectln-icon-256.png"
+                            alt="ConnectLn"
+                            className="w-6 h-6 object-contain"
+                        />
+                    </div>
+                </div>
+
                 {items.map((item) => {
                     const isActive = activeMode === item.id;
                     return (
@@ -453,37 +489,44 @@ export function WhatsAppLeftIconRail({
                             type="button"
                             onClick={() => onSelectMode(item.id)}
                             title={item.label}
-                            className={`relative flex items-center gap-1.5 md:justify-center px-2.5 md:px-0 h-9 md:h-10 md:w-10 rounded-full transition-all cursor-pointer shrink-0 ${
+                            className={`relative flex md:flex-col items-center justify-center gap-1 md:gap-0.5 px-2.5 md:px-1 h-9 md:h-12 md:w-13 rounded-xl transition-all cursor-pointer shrink-0 border ${
                                 isActive
-                                    ? 'bg-[#7C4225] text-[#FBF8F3] font-bold shadow-2xs ring-1 ring-[#5E3119]/40'
-                                    : 'text-[#57534E] hover:bg-[#E8D8C8]/70 hover:text-[#1C1917]'
+                                    ? 'bg-[#7C4225] border-[#5E3119] text-[#FBF8F3] font-bold shadow-2xs'
+                                    : 'bg-transparent border-transparent text-[#57534E] hover:bg-[#E8D8C8]/75 hover:border-[#D0C4AE] hover:text-[#1C1917]'
                             }`}
                             style={isActive ? { color: '#FBF8F3' } : undefined}
                         >
                             {item.icon}
-                            <span className="md:hidden text-[11px] font-bold">{item.label}</span>
+                            <span className="text-[10px] md:text-[9px] font-bold tracking-tight leading-none">
+                                {item.shortLabel}
+                            </span>
                             {typeof item.badge === 'number' && item.badge > 0 && (
                                 <span
-                                    className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#7C4225] border border-[#FBF8F3] text-[10px] font-extrabold flex items-center justify-center shadow-2xs"
+                                    className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 rounded-md bg-[#7C4225] border border-[#FBF8F3] text-[9px] font-extrabold flex items-center justify-center shadow-2xs"
                                     style={{ color: '#FBF8F3' }}
                                 >
                                     {item.badge}
                                 </span>
                             )}
                             {item.dot && !item.badge && (
-                                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#7C4225] ring-2 ring-[#F3EDE2]" />
+                                <span
+                                    className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-md bg-[#7C4225] border border-[#FBF8F3] text-[8px] flex items-center justify-center leading-none"
+                                    style={{ color: '#FBF8F3' }}
+                                >
+                                    ✦
+                                </span>
                             )}
                         </button>
                     );
                 })}
             </div>
 
-            <div className="hidden md:flex flex-col items-center gap-2.5 pt-3 border-t border-[#E0D6C5]">
+            <div className="hidden md:flex flex-col items-center gap-1.5 pt-3 border-t border-[#E0D6C5] w-full">
                 <button
                     type="button"
                     onClick={() => onSelectMode('status')}
                     title="My Status & Profile"
-                    className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#7C4225] shadow-2xs cursor-pointer"
+                    className="w-9 h-9 rounded-xl overflow-hidden border-2 border-[#7C4225] shadow-2xs cursor-pointer"
                 >
                     <img
                         src={currentUserAvatar || '/brand/kwesi-avatar.png'}
@@ -605,21 +648,28 @@ export function WhatsAppModeWorkspace({
                 <div className="w-full md:w-[360px] border-r border-[#E0D6C5] flex flex-col h-full bg-[#FBF8F3] shrink-0">
                     {/* Header */}
                     <div className="px-4 py-3.5 flex items-center justify-between border-b border-[#E0D6C5]/60">
-                        <h2 className="text-xl font-bold text-[#1C1917]">Status</h2>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-2">
+                            <span
+                                className="w-6 h-6 rounded-lg bg-[#7C4225] flex items-center justify-center text-[11px] font-bold shadow-2xs"
+                                style={{ color: '#FBF8F3' }}
+                            >
+                                ✦
+                            </span>
+                            <h2 className="text-xl font-bold text-[#1C1917]">Status</h2>
+                        </div>
+                        <div className="flex items-center gap-1.5">
                             <button
                                 type="button"
                                 onClick={() => {
                                     setActiveStatusId(null);
                                     setStatusComposerMode('text');
                                 }}
-                                title="Add status update"
-                                className="w-8 h-8 rounded-full hover:bg-[#EFE8DA] flex items-center justify-center text-[#57534E] cursor-pointer"
+                                title="Publish new ConnectLn Status"
+                                className="w-8 h-8 rounded-xl bg-[#EFE8DA] hover:bg-[#E2D9C8] border border-[#D0C4AE] flex items-center justify-center text-[#5E3119] cursor-pointer transition-colors"
                             >
-                                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                                    <circle cx="12" cy="12" r="9" />
-                                    <line x1="12" y1="8" x2="12" y2="16" />
-                                    <line x1="8" y1="12" x2="16" y2="12" />
+                                {/* ConnectLn Diamond Sparkle + Nib Seal */}
+                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                                    <polygon points="12 2.5 14.5 9.5 21.5 12 14.5 14.5 12 21.5 9.5 14.5 2.5 12 9.5 9.5" strokeLinejoin="round" />
                                 </svg>
                             </button>
                             <button
@@ -629,9 +679,13 @@ export function WhatsAppModeWorkspace({
                                     setStatusComposerMode(null);
                                 }}
                                 title="Status privacy & options"
-                                className="w-8 h-8 rounded-full hover:bg-[#EFE8DA] flex items-center justify-center text-[#57534E] cursor-pointer"
+                                className="w-8 h-8 rounded-xl bg-[#EFE8DA] hover:bg-[#E2D9C8] border border-[#D0C4AE] flex items-center justify-center text-[#57534E] cursor-pointer transition-colors"
                             >
-                                ⋮
+                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                                    <line x1="4" y1="7" x2="20" y2="7" strokeLinecap="round" />
+                                    <line x1="7" y1="12" x2="17" y2="12" strokeLinecap="round" />
+                                    <line x1="10" y1="17" x2="14" y2="17" strokeLinecap="round" />
+                                </svg>
                             </button>
                         </div>
                     </div>
@@ -649,13 +703,13 @@ export function WhatsAppModeWorkspace({
                                 <img
                                     src={userAvatar}
                                     alt={userName}
-                                    className="w-11 h-11 rounded-full object-cover border border-[#D0C4AE]"
+                                    className="w-11 h-11 rounded-2xl object-cover border-2 border-[#7C4225]"
                                 />
                                 <span
-                                    className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#7C4225] text-xs font-bold flex items-center justify-center ring-2 ring-[#FBF8F3]"
+                                    className="absolute -bottom-1 -right-1 w-4.5 h-4.5 rounded-md bg-[#7C4225] text-[10px] font-bold flex items-center justify-center ring-2 ring-[#FBF8F3]"
                                     style={{ color: '#FBF8F3' }}
                                 >
-                                    +
+                                    ✦
                                 </span>
                             </div>
                             <div className="min-w-0">
@@ -683,12 +737,18 @@ export function WhatsAppModeWorkspace({
                                                     : 'hover:bg-[#F6F1E7]'
                                             }`}
                                         >
-                                            <div className="p-0.5 rounded-full border-2 border-[#7C4225] shrink-0">
+                                            <div className="relative p-0.5 rounded-2xl border-2 border-[#7C4225] shrink-0">
                                                 <img
                                                     src={st.authorAvatar}
                                                     alt={st.authorName}
-                                                    className="w-10 h-10 rounded-full object-cover"
+                                                    className="w-10 h-10 rounded-xl object-cover"
                                                 />
+                                                <span
+                                                    className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-md bg-[#7C4225] border border-[#FBF8F3] text-[8px] flex items-center justify-center leading-none"
+                                                    style={{ color: '#FBF8F3' }}
+                                                >
+                                                    ✦
+                                                </span>
                                             </div>
                                             <div className="min-w-0 flex-1">
                                                 <p className="text-sm font-semibold text-[#1C1917] truncate">
@@ -720,11 +780,11 @@ export function WhatsAppModeWorkspace({
                                                     : 'hover:bg-[#F6F1E7]'
                                             }`}
                                         >
-                                            <div className="p-0.5 rounded-full border-2 border-[#D0C4AE] shrink-0">
+                                            <div className="p-0.5 rounded-2xl border-2 border-[#D0C4AE] shrink-0">
                                                 <img
                                                     src={st.authorAvatar}
                                                     alt={st.authorName}
-                                                    className="w-10 h-10 rounded-full object-cover"
+                                                    className="w-10 h-10 rounded-xl object-cover"
                                                 />
                                             </div>
                                             <div className="min-w-0 flex-1">
@@ -926,18 +986,23 @@ export function WhatsAppModeWorkspace({
                     ) : (
                         /* Default "Share statuses" Screen in Desk Note Editorial Palette */
                         <div className="text-center max-w-md flex flex-col items-center">
-                            <div className="w-16 h-16 mb-4 flex items-center justify-center text-[#9C8F7A]">
+                            <div className="w-20 h-20 mb-4 rounded-2xl bg-[#EFE8DA] border-2 border-[#D0C4AE] shadow-xs flex items-center justify-center text-[#7C4225]">
+                                {/* ConnectLn Bespoke 4-Pointed Editorial Compass & Starburst Crest */}
                                 <svg
-                                    className="w-14 h-14"
+                                    className="w-11 h-11"
                                     viewBox="0 0 24 24"
                                     fill="none"
                                     stroke="currentColor"
-                                    strokeWidth={1.8}
+                                    strokeWidth={1.7}
                                 >
-                                    <circle cx="12" cy="12" r="4.5" fill="currentColor" />
-                                    <path strokeLinecap="round" d="M12 3a9 9 0 0 1 7.79 4.5" />
-                                    <path strokeLinecap="round" d="M19.79 16.5A9 9 0 0 1 12 21" />
-                                    <path strokeLinecap="round" d="M4.21 16.5a9 9 0 0 1 0-9" />
+                                    <rect x="3.5" y="3.5" width="17" height="17" rx="3.5" strokeDasharray="3 2" />
+                                    <polygon
+                                        points="12 4.5 14.2 9.8 19.5 12 14.2 14.2 12 19.5 9.8 14.2 4.5 12 9.8 9.8"
+                                        fill="currentColor"
+                                        fillOpacity={0.18}
+                                        strokeLinejoin="round"
+                                    />
+                                    <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none" />
                                 </svg>
                             </div>
                             <h3 className="text-2xl font-normal text-[#1C1917] mb-2">
@@ -952,19 +1017,19 @@ export function WhatsAppModeWorkspace({
                                     onClick={() => setStatusComposerMode('text')}
                                     className="flex flex-col items-center gap-2 group cursor-pointer"
                                 >
-                                    <span className="w-12 h-12 rounded-full bg-[#EFE8DA] group-hover:bg-[#E2D9C8] border border-[#D0C4AE] flex items-center justify-center text-[#1C1917] transition-colors shadow-2xs">
+                                    <span className="w-12 h-12 rounded-2xl bg-[#EFE8DA] group-hover:bg-[#E2D9C8] border border-[#D0C4AE] flex items-center justify-center text-[#5E3119] transition-colors shadow-2xs">
+                                        {/* ConnectLn Editorial Fountain Nib Emblem */}
                                         <svg
                                             className="w-5 h-5"
                                             viewBox="0 0 24 24"
                                             fill="none"
                                             stroke="currentColor"
-                                            strokeWidth={2}
+                                            strokeWidth={1.9}
                                         >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"
-                                            />
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l7-7 3 3-7 7-3-3z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M2 2l7.586 7.586" />
+                                            <circle cx="11" cy="11" r="2" />
                                         </svg>
                                     </span>
                                     <span className="text-xs font-semibold text-[#57534E]">
@@ -977,20 +1042,18 @@ export function WhatsAppModeWorkspace({
                                     onClick={() => setStatusComposerMode('photo')}
                                     className="flex flex-col items-center gap-2 group cursor-pointer"
                                 >
-                                    <span className="w-12 h-12 rounded-full bg-[#EFE8DA] group-hover:bg-[#E2D9C8] border border-[#D0C4AE] flex items-center justify-center text-[#1C1917] transition-colors shadow-2xs">
+                                    <span className="w-12 h-12 rounded-2xl bg-[#EFE8DA] group-hover:bg-[#E2D9C8] border border-[#D0C4AE] flex items-center justify-center text-[#5E3119] transition-colors shadow-2xs">
+                                        {/* ConnectLn Studio Cinema Frame & Aperture Emblem */}
                                         <svg
                                             className="w-5 h-5"
                                             viewBox="0 0 24 24"
                                             fill="none"
                                             stroke="currentColor"
-                                            strokeWidth={2}
+                                            strokeWidth={1.9}
                                         >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
-                                            />
-                                            <circle cx="12" cy="13" r="4" />
+                                            <rect x="3" y="4" width="18" height="16" rx="3" />
+                                            <circle cx="8.5" cy="9.5" r="1.5" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 15l-4.5-4.5L7 20" />
                                         </svg>
                                     </span>
                                     <span className="text-xs font-semibold text-[#57534E]">
@@ -1032,20 +1095,27 @@ export function WhatsAppModeWorkspace({
                 <div className="w-full md:w-[360px] border-r border-[#E0D6C5] flex flex-col h-full bg-[#FBF8F3] shrink-0">
                     {/* Header */}
                     <div className="px-4 pt-3.5 pb-2.5 flex items-center justify-between border-b border-[#E0D6C5]/60">
-                        <h2 className="text-xl font-bold text-[#1C1917]">Calls</h2>
+                        <div className="flex items-center gap-2">
+                            <span
+                                className="w-6 h-6 rounded-lg bg-[#7C4225] flex items-center justify-center text-[11px] font-bold shadow-2xs"
+                                style={{ color: '#FBF8F3' }}
+                            >
+                                ◈
+                            </span>
+                            <h2 className="text-xl font-bold text-[#1C1917]">Calls</h2>
+                        </div>
                         <button
                             type="button"
                             onClick={() => onStartLiveCall('video')}
-                            title="Start a new call"
-                            className="w-9 h-9 rounded-full bg-[#7C4225] hover:bg-[#5E3119] flex items-center justify-center shadow-sm cursor-pointer"
+                            title="Launch ConnectLn Studio Call"
+                            className="w-9 h-9 rounded-xl bg-[#7C4225] hover:bg-[#5E3119] flex items-center justify-center shadow-sm cursor-pointer transition-colors"
                             style={{ color: '#FBF8F3' }}
                         >
-                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2}>
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"
-                                />
+                            {/* ConnectLn Studio Acoustic Capsule Icon */}
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                                <rect x="8.5" y="3.5" width="7" height="11" rx="3.5" />
+                                <path strokeLinecap="round" d="M5 10v1a7 7 0 0 0 14 0v-1" />
+                                <line x1="12" y1="18" x2="12" y2="21" strokeLinecap="round" />
                             </svg>
                         </button>
                     </div>
@@ -1088,14 +1158,12 @@ export function WhatsAppModeWorkspace({
                                 className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-[#EFE8DA]/70 cursor-pointer transition-colors"
                             >
                                 <span
-                                    className="w-10 h-10 rounded-full bg-[#7C4225] flex items-center justify-center shrink-0 shadow-2xs"
+                                    className="w-10 h-10 rounded-xl bg-[#7C4225] flex items-center justify-center shrink-0 shadow-2xs"
                                     style={{ color: '#FBF8F3' }}
                                 >
+                                    {/* ConnectLn Starred Seal Crest */}
                                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                                        <circle cx="8.5" cy="7" r="4" />
-                                        <line x1="20" y1="8" x2="20" y2="14" />
-                                        <line x1="23" y1="11" x2="17" y2="11" />
+                                        <polygon points="12 3 14.6 9.4 21 12 14.6 14.6 12 21 9.4 14.6 3 12 9.4 9.4" strokeLinejoin="round" />
                                     </svg>
                                 </span>
                                 <span className="text-sm font-semibold text-[#1C1917]">
@@ -1124,7 +1192,7 @@ export function WhatsAppModeWorkspace({
                                             <img
                                                 src={call.avatar}
                                                 alt={call.name}
-                                                className="w-11 h-11 rounded-full object-cover shrink-0 border border-[#D0C4AE]"
+                                                className="w-11 h-11 rounded-xl object-cover shrink-0 border border-[#D0C4AE]"
                                             />
                                             <div className="min-w-0">
                                                 <p
@@ -1145,10 +1213,10 @@ export function WhatsAppModeWorkspace({
                                                 >
                                                     <span>
                                                         {call.direction === 'missed'
-                                                            ? '↙ 📞 Missed'
+                                                            ? '↙ ◈ Missed'
                                                             : call.direction === 'incoming'
-                                                            ? '↙ 📞 Incoming'
-                                                            : `↗ 📞 Outgoing${call.count ? ` (${call.count})` : ''}`}
+                                                            ? '↙ ◈ Incoming'
+                                                            : `↗ ◈ Outgoing${call.count ? ` (${call.count})` : ''}`}
                                                     </span>
                                                 </p>
                                             </div>
@@ -1166,17 +1234,29 @@ export function WhatsAppModeWorkspace({
                 {/* Right Column: "Voice and video calling" Card in Desk Note Palette */}
                 <div className="flex-1 bg-[#F3EDE2] flex flex-col items-center justify-center p-6">
                     <div className="bg-[#FBF8F3] rounded-2xl shadow-2xs border border-[#E0D6C5] px-8 py-7 max-w-md w-full text-center mb-6">
-                        {/* Laptop + Espresso Phone Illustration */}
-                        <div className="mx-auto mb-4 w-32 h-24 flex items-center justify-center">
-                            <div className="relative w-28 h-20 rounded-lg border-2 border-[#3D3730] bg-[#F3EAE1] flex overflow-hidden shadow-2xs">
-                                <div className="w-1/2 bg-[#7C4225] flex flex-col justify-center gap-1.5 px-2.5">
-                                    <div className="h-1 w-full bg-[#FBF8F3]/75 rounded" />
-                                    <div className="h-1 w-3/4 bg-[#FBF8F3]/75 rounded" />
-                                    <div className="h-1 w-5/6 bg-[#FBF8F3]/75 rounded" />
+                        {/* ConnectLn Bespoke Studio Console & Acoustic Crest Illustration */}
+                        <div className="mx-auto mb-4 w-36 h-24 flex items-center justify-center">
+                            <div className="relative w-32 h-20 rounded-xl border-2 border-[#5E3119] bg-[#F3EAE1] flex overflow-hidden shadow-xs">
+                                <div className="w-1/2 bg-[#7C4225] flex flex-col items-center justify-center gap-1 px-2">
+                                    <span
+                                        className="text-sm font-extrabold tracking-widest"
+                                        style={{ color: '#FBF8F3' }}
+                                    >
+                                        ✦ E2EE
+                                    </span>
+                                    <div className="flex items-end gap-1 h-4">
+                                        <span className="w-1 h-2 bg-[#FBF8F3]/80 rounded-full" />
+                                        <span className="w-1 h-4 bg-[#FBF8F3] rounded-full" />
+                                        <span className="w-1 h-3 bg-[#FBF8F3]/90 rounded-full" />
+                                        <span className="w-1 h-4 bg-[#FBF8F3] rounded-full" />
+                                        <span className="w-1 h-2 bg-[#FBF8F3]/80 rounded-full" />
+                                    </div>
                                 </div>
-                                <div className="w-1/2 bg-[#E8D8C8] flex items-center justify-center text-[#1C1917]">
-                                    <svg className="w-6 h-6 text-[#7C4225]" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z" />
+                                <div className="w-1/2 bg-[#E8D8C8] flex items-center justify-center text-[#5E3119]">
+                                    <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                                        <rect x="8.5" y="3.5" width="7" height="11" rx="3.5" />
+                                        <path strokeLinecap="round" d="M5 10v1a7 7 0 0 0 14 0v-1" />
+                                        <line x1="12" y1="18" x2="12" y2="21" strokeLinecap="round" />
                                     </svg>
                                 </div>
                             </div>
@@ -1190,7 +1270,7 @@ export function WhatsAppModeWorkspace({
                         </p>
                     </div>
 
-                    {/* 4 Circular Action Buttons: Start call, New call link, Call a number, Schedule call */}
+                    {/* 4 ConnectLn Desk Note Tile Buttons: Start call, New call link, Call a number, Schedule call */}
                     <div className="flex flex-wrap items-center justify-center gap-6">
                         <button
                             type="button"
@@ -1198,14 +1278,14 @@ export function WhatsAppModeWorkspace({
                             className="flex flex-col items-center gap-2 group cursor-pointer"
                         >
                             <span
-                                className="w-12 h-12 rounded-full bg-[#7C4225] group-hover:bg-[#5E3119] flex items-center justify-center shadow-sm transition-colors"
+                                className="w-12 h-12 rounded-2xl bg-[#7C4225] group-hover:bg-[#5E3119] flex items-center justify-center shadow-sm transition-colors"
                                 style={{ color: '#FBF8F3' }}
                             >
+                                {/* ConnectLn Studio Aperture & Live Lens */}
                                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                                    <rect x="2" y="6" width="14" height="12" rx="2" />
-                                    <polygon points="22 8 16 12 22 16 22 8" />
-                                    <line x1="9" y1="9" x2="9" y2="15" />
-                                    <line x1="6" y1="12" x2="12" y2="12" />
+                                    <rect x="2.5" y="5.5" width="13.5" height="13" rx="2.5" />
+                                    <polygon points="22 7.5 16 12 22 16.5 22 7.5" strokeLinejoin="round" />
+                                    <circle cx="9.25" cy="12" r="2.2" />
                                 </svg>
                             </span>
                             <span className="text-xs font-semibold text-[#57534E]">Start call</span>
@@ -1216,10 +1296,11 @@ export function WhatsAppModeWorkspace({
                             onClick={handleCreateNewCallLink}
                             className="flex flex-col items-center gap-2 group cursor-pointer"
                         >
-                            <span className="w-12 h-12 rounded-full bg-[#EFE8DA] group-hover:bg-[#E2D9C8] border border-[#D0C4AE] text-[#1C1917] flex items-center justify-center shadow-2xs transition-colors">
+                            <span className="w-12 h-12 rounded-2xl bg-[#EFE8DA] group-hover:bg-[#E2D9C8] border border-[#D0C4AE] text-[#5E3119] flex items-center justify-center shadow-2xs transition-colors">
+                                {/* ConnectLn Interlocking Diamond Link Seal */}
                                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                                    <polygon points="9 6 15 12 9 18 3 12" strokeLinejoin="round" />
+                                    <polygon points="15 6 21 12 15 18 9 12" strokeLinejoin="round" />
                                 </svg>
                             </span>
                             <span className="text-xs font-semibold text-[#57534E]">New call link</span>
@@ -1230,17 +1311,18 @@ export function WhatsAppModeWorkspace({
                             onClick={() => setShowDialPadModal((prev) => !prev)}
                             className="flex flex-col items-center gap-2 group cursor-pointer"
                         >
-                            <span className="w-12 h-12 rounded-full bg-[#EFE8DA] group-hover:bg-[#E2D9C8] border border-[#D0C4AE] text-[#1C1917] flex items-center justify-center shadow-2xs transition-colors">
+                            <span className="w-12 h-12 rounded-2xl bg-[#EFE8DA] group-hover:bg-[#E2D9C8] border border-[#D0C4AE] text-[#5E3119] flex items-center justify-center shadow-2xs transition-colors">
+                                {/* ConnectLn Diamond Matrix Keypad */}
                                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                                    <circle cx="6" cy="5" r="1.6" />
-                                    <circle cx="12" cy="5" r="1.6" />
-                                    <circle cx="18" cy="5" r="1.6" />
-                                    <circle cx="6" cy="11" r="1.6" />
-                                    <circle cx="12" cy="11" r="1.6" />
-                                    <circle cx="18" cy="11" r="1.6" />
-                                    <circle cx="6" cy="17" r="1.6" />
-                                    <circle cx="12" cy="17" r="1.6" />
-                                    <circle cx="18" cy="17" r="1.6" />
+                                    <rect x="4.5" y="4.5" width="3" height="3" rx="0.8" />
+                                    <rect x="10.5" y="4.5" width="3" height="3" rx="0.8" />
+                                    <rect x="16.5" y="4.5" width="3" height="3" rx="0.8" />
+                                    <rect x="4.5" y="10.5" width="3" height="3" rx="0.8" />
+                                    <rect x="10.5" y="10.5" width="3" height="3" rx="0.8" />
+                                    <rect x="16.5" y="10.5" width="3" height="3" rx="0.8" />
+                                    <rect x="4.5" y="16.5" width="3" height="3" rx="0.8" />
+                                    <rect x="10.5" y="16.5" width="3" height="3" rx="0.8" />
+                                    <rect x="16.5" y="16.5" width="3" height="3" rx="0.8" />
                                 </svg>
                             </span>
                             <span className="text-xs font-semibold text-[#57534E]">Call a number</span>
@@ -1251,12 +1333,14 @@ export function WhatsAppModeWorkspace({
                             onClick={onOpenScheduleModal}
                             className="flex flex-col items-center gap-2 group cursor-pointer"
                         >
-                            <span className="w-12 h-12 rounded-full bg-[#EFE8DA] group-hover:bg-[#E2D9C8] border border-[#D0C4AE] text-[#1C1917] flex items-center justify-center shadow-2xs transition-colors">
+                            <span className="w-12 h-12 rounded-2xl bg-[#EFE8DA] group-hover:bg-[#E2D9C8] border border-[#D0C4AE] text-[#5E3119] flex items-center justify-center shadow-2xs transition-colors">
+                                {/* ConnectLn Editorial Folio Calendar */}
                                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                                    <rect x="3" y="4" width="18" height="18" rx="2" />
-                                    <line x1="16" y1="2" x2="16" y2="6" />
-                                    <line x1="8" y1="2" x2="8" y2="6" />
-                                    <line x1="3" y1="10" x2="21" y2="10" />
+                                    <rect x="3" y="4" width="18" height="17" rx="2.5" />
+                                    <line x1="16" y1="2.5" x2="16" y2="6" strokeLinecap="round" />
+                                    <line x1="8" y1="2.5" x2="8" y2="6" strokeLinecap="round" />
+                                    <line x1="3" y1="9.5" x2="21" y2="9.5" />
+                                    <polygon points="12 12.5 13.8 15 12 17.5 10.2 15" fill="currentColor" stroke="none" />
                                 </svg>
                             </span>
                             <span className="text-xs font-semibold text-[#57534E]">Schedule call</span>
@@ -1375,17 +1459,26 @@ export function WhatsAppModeWorkspace({
                 {/* Left Column: Communities List */}
                 <div className="w-full md:w-[360px] border-r border-[#E0D6C5] flex flex-col h-full bg-[#FBF8F3] shrink-0">
                     <div className="px-4 py-3.5 flex items-center justify-between border-b border-[#E0D6C5]/60">
-                        <h2 className="text-xl font-bold text-[#1C1917]">Communities</h2>
+                        <div className="flex items-center gap-2">
+                            <span
+                                className="w-6 h-6 rounded-lg bg-[#7C4225] flex items-center justify-center text-[11px] font-bold shadow-2xs"
+                                style={{ color: '#FBF8F3' }}
+                            >
+                                ⬡
+                            </span>
+                            <h2 className="text-xl font-bold text-[#1C1917]">Communities</h2>
+                        </div>
                         <button
                             type="button"
                             onClick={() => setShowNewCommunityModal(true)}
                             title="New community"
-                            className="w-8 h-8 rounded-full hover:bg-[#EFE8DA] flex items-center justify-center text-[#57534E] cursor-pointer"
+                            className="w-8 h-8 rounded-xl bg-[#EFE8DA] hover:bg-[#E2D9C8] border border-[#D0C4AE] flex items-center justify-center text-[#5E3119] cursor-pointer transition-colors"
                         >
-                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                                <circle cx="12" cy="12" r="9" />
-                                <line x1="12" y1="8" x2="12" y2="16" />
-                                <line x1="8" y1="12" x2="16" y2="12" />
+                            {/* ConnectLn Hexagonal Guild + Seal */}
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                                <polygon points="12 2.5 19.5 6.8 19.5 15.2 12 19.5 4.5 15.2 4.5 6.8" strokeLinejoin="round" />
+                                <line x1="12" y1="8" x2="12" y2="14" strokeLinecap="round" />
+                                <line x1="9" y1="11" x2="15" y2="11" strokeLinecap="round" />
                             </svg>
                         </button>
                     </div>
@@ -1401,11 +1494,17 @@ export function WhatsAppModeWorkspace({
                                 className="w-11 h-11 rounded-xl bg-[#7C4225] flex items-center justify-center shrink-0 shadow-2xs"
                                 style={{ color: '#FBF8F3' }}
                             >
-                                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                                    <circle cx="9" cy="7" r="4" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                {/* ConnectLn Bespoke Interlocking Hexagonal Guild Shield */}
+                                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9}>
+                                    <polygon
+                                        points="12 2.5 19.5 6.8 19.5 15.2 12 19.5 4.5 15.2 4.5 6.8"
+                                        strokeLinejoin="round"
+                                    />
+                                    <polygon
+                                        points="12 7 16 9.3 16 13.7 12 16 8 13.7 8 9.3"
+                                        strokeLinejoin="round"
+                                    />
+                                    <circle cx="12" cy="11.5" r="1.5" fill="currentColor" stroke="none" />
                                 </svg>
                             </span>
                             <span className="text-sm font-semibold text-[#1C1917]">
@@ -1453,7 +1552,17 @@ export function WhatsAppModeWorkspace({
                                                             : 'bg-[#EFE8DA] text-[#524B42] border-[#D0C4AE]'
                                                     }`}
                                                 >
-                                                    {grp.isAnnouncement ? '📢' : '👥'}
+                                                    {grp.isAnnouncement ? (
+                                                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                                                            <polygon points="12 3 20 19 4 19" strokeLinejoin="round" />
+                                                            <circle cx="12" cy="13.5" r="1.5" fill="currentColor" stroke="none" />
+                                                        </svg>
+                                                    ) : (
+                                                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                                                            <polygon points="12 3 19 7 19 15 12 19 5 15 5 7" strokeLinejoin="round" />
+                                                            <circle cx="12" cy="11" r="2" />
+                                                        </svg>
+                                                    )}
                                                 </span>
                                                 <div className="min-w-0 flex-1">
                                                     <div className="flex items-center justify-between gap-2">
@@ -1638,9 +1747,20 @@ export function WhatsAppModeWorkspace({
                     ) : (
                         /* Default "Create communities" Screen in Desk Note Palette */
                         <div className="text-center max-w-md flex flex-col items-center">
-                            <div className="w-16 h-16 mb-3 flex items-center justify-center text-[#9C8F7A]">
-                                <svg className="w-14 h-14" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
+                            <div className="w-20 h-20 mb-4 rounded-2xl bg-[#EFE8DA] border-2 border-[#D0C4AE] shadow-xs flex items-center justify-center text-[#7C4225]">
+                                {/* ConnectLn Bespoke Interlocking Hexagonal Guild Crest */}
+                                <svg className="w-11 h-11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+                                    <polygon
+                                        points="12 2.5 19.5 6.8 19.5 15.2 12 19.5 4.5 15.2 4.5 6.8"
+                                        strokeLinejoin="round"
+                                    />
+                                    <polygon
+                                        points="12 7 16 9.3 16 13.7 12 16 8 13.7 8 9.3"
+                                        fill="currentColor"
+                                        fillOpacity={0.18}
+                                        strokeLinejoin="round"
+                                    />
+                                    <circle cx="12" cy="11.5" r="1.8" fill="currentColor" stroke="none" />
                                 </svg>
                             </div>
                             <h3 className="text-2xl font-normal text-[#1C1917] mb-2">
@@ -1656,7 +1776,7 @@ export function WhatsAppModeWorkspace({
                                 className="px-5 py-2 rounded-full bg-[#7C4225] hover:bg-[#5E3119] text-xs font-bold shadow-sm cursor-pointer transition-colors"
                                 style={{ color: '#FBF8F3' }}
                             >
-                                + New community
+                                ⬡ New community
                             </button>
                         </div>
                     )}
@@ -1689,7 +1809,15 @@ export function WhatsAppModeWorkspace({
                 {/* Left Column: Archived Chats List */}
                 <div className="w-full md:w-[360px] border-r border-[#E0D6C5] flex flex-col h-full bg-[#FBF8F3] shrink-0">
                     <div className="px-4 pt-3.5 pb-2">
-                        <h2 className="text-xl font-bold text-[#1C1917] mb-2">Archived</h2>
+                        <div className="flex items-center gap-2 mb-2">
+                            <span
+                                className="w-6 h-6 rounded-lg bg-[#7C4225] flex items-center justify-center text-[11px] font-bold shadow-2xs"
+                                style={{ color: '#FBF8F3' }}
+                            >
+                                ▣
+                            </span>
+                            <h2 className="text-xl font-bold text-[#1C1917]">Archived</h2>
+                        </div>
                         <p className="text-xs text-[#57534E] leading-relaxed pb-3 border-b border-[#E0D6C5]">
                             These chats stay archived when new messages are received. To change
                             this experience, go to{' '}
@@ -1714,7 +1842,7 @@ export function WhatsAppModeWorkspace({
                                     <img
                                         src={item.avatar}
                                         alt={item.name}
-                                        className="w-12 h-12 rounded-full object-cover border border-[#D0C4AE] shrink-0"
+                                        className="w-12 h-12 rounded-xl object-cover border border-[#D0C4AE] shrink-0"
                                     />
                                     <div className="min-w-0 flex-1">
                                         <div className="flex items-center justify-between gap-2">
@@ -1743,7 +1871,7 @@ export function WhatsAppModeWorkspace({
                                             </p>
                                             {item.unreadCount > 0 && (
                                                 <span
-                                                    className="min-w-[20px] h-5 px-1.5 rounded-full bg-[#7C4225] text-[11px] font-bold flex items-center justify-center shrink-0"
+                                                    className="min-w-[20px] h-5 px-1.5 rounded-md bg-[#7C4225] text-[11px] font-bold flex items-center justify-center shrink-0"
                                                     style={{ color: '#FBF8F3' }}
                                                 >
                                                     {item.unreadCount}
@@ -1766,7 +1894,7 @@ export function WhatsAppModeWorkspace({
                                     <img
                                         src={selectedArch.avatar}
                                         alt={selectedArch.name}
-                                        className="w-12 h-12 rounded-full object-cover border border-[#D0C4AE]"
+                                        className="w-12 h-12 rounded-xl object-cover border border-[#D0C4AE]"
                                     />
                                     <div>
                                         <h3 className="text-base font-bold text-[#1C1917]">
@@ -1852,24 +1980,28 @@ export function WhatsAppModeWorkspace({
                                     }}
                                     className="px-4 py-1.5 rounded-full bg-[#EFE8DA] hover:bg-[#E2D9C8] border border-[#D0C4AE] text-xs font-bold text-[#1C1917] cursor-pointer"
                                 >
-                                    📤 Unarchive to Chats
+                                    ▣ Unarchive to Chats
                                 </button>
                             </div>
                         </div>
                     ) : (
                         /* Default Right Canvas in Desk Note Palette */
                         <div className="text-center max-w-md flex flex-col items-center">
-                            <div className="w-16 h-16 mb-3 flex items-center justify-center text-[#9C8F7A]">
-                                <svg className="w-14 h-14" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
+                            <div className="w-20 h-20 mb-4 rounded-2xl bg-[#EFE8DA] border-2 border-[#D0C4AE] shadow-xs flex items-center justify-center text-[#7C4225]">
+                                {/* ConnectLn Bespoke Editorial Vault Shield & Keyhole Folio */}
+                                <svg className="w-11 h-11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+                                    <rect x="4" y="3.5" width="16" height="17" rx="2.5" />
+                                    <line x1="8" y1="3.5" x2="8" y2="20.5" />
+                                    <circle cx="14" cy="11" r="2.2" fill="currentColor" fillOpacity={0.2} />
+                                    <path strokeLinecap="round" d="M14 13.2v2.8" />
                                 </svg>
                             </div>
                             <h3 className="text-2xl font-normal text-[#1C1917] mb-2">
-                                Create communities
+                                ConnectLn Archive Vault
                             </h3>
                             <p className="text-sm text-[#57534E] max-w-sm">
-                                Bring members together in topic-based groups and easily send them
-                                admin announcements.
+                                Select an archived folio on the left to review past transcripts or
+                                restore conversations to your active Desk Note inbox.
                             </p>
                         </div>
                     )}
@@ -1886,7 +2018,15 @@ export function WhatsAppModeWorkspace({
         <div className="flex-1 flex flex-col md:flex-row h-full bg-[#FBF8F3] overflow-hidden">
             <div className="w-full md:w-[360px] border-r border-[#E0D6C5] flex flex-col h-full bg-[#FBF8F3] shrink-0">
                 <div className="px-4 py-3.5 flex items-center justify-between border-b border-[#E0D6C5]/60">
-                    <h2 className="text-xl font-bold text-[#1C1917]">Channels</h2>
+                    <div className="flex items-center gap-2">
+                        <span
+                            className="w-6 h-6 rounded-lg bg-[#7C4225] flex items-center justify-center text-[11px] font-bold shadow-2xs"
+                            style={{ color: '#FBF8F3' }}
+                        >
+                            △
+                        </span>
+                        <h2 className="text-xl font-bold text-[#1C1917]">Channels</h2>
+                    </div>
                 </div>
                 <div className="flex-1 overflow-y-auto px-2 pb-4 pt-2 space-y-1">
                     {channels.map((ch) => (
@@ -1900,7 +2040,7 @@ export function WhatsAppModeWorkspace({
                             <img
                                 src={ch.avatar}
                                 alt={ch.name}
-                                className="w-11 h-11 rounded-full object-cover border border-[#D0C4AE] shrink-0"
+                                className="w-11 h-11 rounded-xl object-cover border border-[#D0C4AE] shrink-0"
                             />
                             <div className="min-w-0 flex-1">
                                 <p className="text-sm font-semibold text-[#1C1917] truncate">
@@ -1922,7 +2062,14 @@ export function WhatsAppModeWorkspace({
                         </div>
                     </div>
                 ) : (
-                    <div className="max-w-md">
+                    <div className="max-w-md flex flex-col items-center">
+                        <div className="w-20 h-20 mb-4 rounded-2xl bg-[#EFE8DA] border-2 border-[#D0C4AE] shadow-xs flex items-center justify-center text-[#7C4225]">
+                            <svg className="w-11 h-11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+                                <polygon points="12 3 20 19 4 19" strokeLinejoin="round" />
+                                <circle cx="12" cy="13.5" r="2" fill="currentColor" stroke="none" />
+                                <path strokeLinecap="round" d="M8.5 7.5a5.5 5.5 0 0 1 7 0" />
+                            </svg>
+                        </div>
                         <h3 className="text-2xl font-normal text-[#1C1917] mb-2">
                             Stay updated on topics that matter
                         </h3>
