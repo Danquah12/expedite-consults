@@ -73,7 +73,7 @@ export function LanguageSwitcher({
         <Globe className="h-3.5 w-3.5 text-[#0A66C2] dark:text-sky-400 shrink-0" />
         <span className="text-sm shrink-0 leading-none">{currentLanguage.flag}</span>
         {!compact && (
-          <span className="truncate max-w-[95px] hidden sm:inline-block">
+          <span className="truncate max-w-[82px] hidden lg:inline-block">
             {currentLanguage.localName}
           </span>
         )}

@@ -523,7 +523,7 @@ export function ConnectLnNavbar({
       {/* Top Header: Brand Logo, Adaptive Search, and Quick Actions */}
       <div className="mx-auto flex h-13 sm:h-14 max-w-[1720px] items-center justify-between px-2 sm:px-4 lg:px-6 gap-2 sm:gap-3">
         {/* Left Side: Brand Logo & Interactive Live Search */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 lg:flex-1 lg:min-w-0 max-w-sm sm:max-w-md lg:max-w-xs xl:max-w-sm 2xl:max-w-md relative">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 lg:flex-1 lg:min-w-0 max-w-sm sm:max-w-md lg:max-w-[230px] xl:max-w-[270px] 2xl:max-w-sm relative">
           <button
             onClick={() => onSelectTab('home')}
             className="flex items-center focus:outline-none group shrink-0"
@@ -1324,8 +1324,8 @@ export function ConnectLnNavbar({
             <ThemeColorSwitcher align="right" compact />
           </div>
 
-          {/* Desktop-only Global Multi-Language Switcher Popover (Visible on 2xl+; also inside Me menu) */}
-          <div className="hidden 2xl:block shrink-0">
+          {/* Global Multi-Language Switcher Popover — Always visible on top menu bar across Mac, Windows, and Mobile */}
+          <div className="block shrink-0">
             <LanguageSwitcher align="right" />
           </div>
         </div>
