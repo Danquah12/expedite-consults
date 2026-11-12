@@ -10,6 +10,11 @@ import {
 import { PROFESSION_ENCLAVES } from '@/lib/connectin-professions';
 import { ScheduleMeetingModal, MeetingInvitee } from './ScheduleMeetingModal';
 import { NoctisAIInboxView } from './NoctisAIInboxView';
+import {
+    WhatsAppLeftIconRail,
+    WhatsAppModeWorkspace,
+    MessagingWorkspaceMode,
+} from './WhatsAppMessagingModes';
 import { MessageActionBar, ReactionBadges, loadMembers, ShareTarget, MessageReactionKind } from './MessageActionBar';
 import { resolveUserProfilePicture, trackUserActivity } from '@/lib/connectin-storage';
 import {
@@ -90,6 +95,16 @@ export function MessagingView({
     const [isLoadingThreads, setIsLoadingThreads] = useState(false);
 
     // ConnectLn Mailbox Navigation Rail States (Inbox, AI Inbox, Starred, Snoozed, Important, Sent, Drafts, Purchases, Social, Updates, Forums, Promotions, Labels)
+    const [workspaceMode, setWorkspaceMode] = useState<MessagingWorkspaceMode>('chats');
+    const [archivedThreadIds, setArchivedThreadIds] = useState<string[]>(() => {
+        if (typeof window === 'undefined') return [];
+        try {
+            const raw = localStorage.getItem('connectln_archived_threads_v1');
+            return raw ? JSON.parse(raw) : [];
+        } catch {
+            return [];
+        }
+    });
     const [activeMailboxFolder, setActiveMailboxFolder] = useState<ConnectLnMailboxFolder>('inbox');
     const [showMoreFolders, setShowMoreFolders] = useState<boolean>(false);
     const [activeCustomLabel, setActiveCustomLabel] = useState<string | null>(null);
@@ -335,6 +350,22 @@ export function MessagingView({
                 next.includes(threadId)
                     ? '🕒 Thread snoozed to your Snoozed folder.'
                     : '✓ Thread restored to Inbox.'
+            );
+            return next;
+        });
+    };
+
+    const toggleArchiveThread = (threadId: string, e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        setArchivedThreadIds((prev) => {
+            const next = prev.includes(threadId) ? prev.filter((id) => id !== threadId) : [...prev, threadId];
+            try {
+                localStorage.setItem('connectln_archived_threads_v1', JSON.stringify(next));
+            } catch {}
+            triggerToast(
+                next.includes(threadId)
+                    ? '📦 Conversation archived to your Archived tab.'
+                    : '📬 Conversation restored to Chats.'
             );
             return next;
         });
@@ -2078,9 +2109,39 @@ export function MessagingView({
                         )}
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                        {/* Quick Mode Switcher Pills (Chats, Calls, Status, Communities, Archived) */}
+                        {(
+                            [
+                                { id: 'chats' as MessagingWorkspaceMode, label: '💬 Chats' },
+                                { id: 'calls' as MessagingWorkspaceMode, label: '📞 Calls' },
+                                { id: 'status' as MessagingWorkspaceMode, label: '🟢 Status' },
+                                { id: 'communities' as MessagingWorkspaceMode, label: '👥 Communities' },
+                                { id: 'archived' as MessagingWorkspaceMode, label: '📦 Archived' },
+                            ]
+                        ).map((m) => {
+                            const isAct = workspaceMode === m.id;
+                            return (
+                                <button
+                                    key={m.id}
+                                    type="button"
+                                    onClick={() => setWorkspaceMode(m.id)}
+                                    className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all cursor-pointer border ${
+                                        isAct
+                                            ? 'bg-[#D9FDD3] text-[#111B21] border-emerald-400 shadow-2xs'
+                                            : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                                    }`}
+                                >
+                                    {m.label}
+                                </button>
+                            );
+                        })}
+
                         <button
-                            onClick={() => setShowNewMessageModal(true)}
+                            onClick={() => {
+                                setWorkspaceMode('chats');
+                                setShowNewMessageModal(true);
+                            }}
                             className="px-3 py-1.5 rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
                             style={{ color: '#FFFFFF' }}
                         >
@@ -2165,8 +2226,49 @@ export function MessagingView({
                 )}
             </div>
 
-            {/* Main Three-Column ConnectLn Mailbox Layout: (1) ConnectLn Mailbox Menu Rail, (2) Thread List, (3) Active Conversation */}
+            {/* Main ConnectLn + WhatsApp Multi-Mode Workspace: (0) WhatsApp Left Icon Rail, then either WhatsAppModeWorkspace OR (1) ConnectLn Mailbox Menu Rail, (2) Thread List, (3) Active Conversation */}
             <div className="flex flex-col md:flex-row min-h-[680px] md:h-[calc(100vh-210px)]">
+                <WhatsAppLeftIconRail
+                    activeMode={workspaceMode}
+                    onSelectMode={(m) => {
+                        setWorkspaceMode(m);
+                        if (m === 'chats') {
+                            setMobileShowChat(false);
+                        }
+                    }}
+                    unreadChatsCount={totalUnreadCount}
+                    unreadArchivedCount={archivedThreadIds.length + 1}
+                    currentUserAvatar={currentUser?.avatar}
+                />
+
+                {workspaceMode !== 'chats' ? (
+                    <WhatsAppModeWorkspace
+                        mode={workspaceMode}
+                        currentUser={currentUser}
+                        threads={threads}
+                        archivedThreadIds={archivedThreadIds}
+                        onUnarchiveThread={(id) => toggleArchiveThread(id)}
+                        onSelectChatThread={(threadId) => {
+                            setSelectedThreadId(threadId);
+                            setWorkspaceMode('chats');
+                            setMobileShowChat(true);
+                        }}
+                        onStartLiveCall={(callType, targetName) => {
+                            if (targetName) {
+                                const matched = threads.find((t) =>
+                                    t.title.toLowerCase().includes(targetName.toLowerCase().slice(0, 6))
+                                );
+                                if (matched) {
+                                    setSelectedThreadId(matched.id);
+                                }
+                            }
+                            setActiveCallMode(callType);
+                        }}
+                        onOpenScheduleModal={() => setShowScheduler(true)}
+                        triggerToast={triggerToast}
+                    />
+                ) : (
+                    <>
                 {/* Column 1: Customized ConnectLn Mailbox Navigation Rail (Horizontal strip on mobile < md, vertical rail on md+) */}
                 <div
                     className={`w-full md:w-[218px] border-b md:border-b-0 md:border-r border-slate-200 bg-[#F6F8FC] flex-col shrink-0 py-2 md:py-3 px-2 md:overflow-y-auto select-none ${
@@ -3045,6 +3147,19 @@ export function MessagingView({
                                                     >
                                                         🕒
                                                     </button>
+                                                    {/* Archive Toggle */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => toggleArchiveThread(thread.id, e)}
+                                                        title={archivedThreadIds.includes(thread.id) ? 'Unarchive conversation' : 'Archive conversation'}
+                                                        className={`w-5 h-5 rounded flex items-center justify-center text-[11px] transition-all cursor-pointer ${
+                                                            archivedThreadIds.includes(thread.id)
+                                                                ? 'text-emerald-600 font-black'
+                                                                : 'text-slate-300 opacity-0 group-hover:opacity-100 hover:text-emerald-600'
+                                                        }`}
+                                                    >
+                                                        📦
+                                                    </button>
                                                     {thread.unreadCount > 0 && (
                                                         <span
                                                             className="bg-[#0A66C2] text-[10px] font-bold w-4.5 h-4.5 rounded-full flex items-center justify-center shrink-0"
@@ -3706,6 +3821,8 @@ export function MessagingView({
                             to start messaging.
                         </p>
                     </div>
+                )}
+                    </>
                 )}
                     </>
                 )}
