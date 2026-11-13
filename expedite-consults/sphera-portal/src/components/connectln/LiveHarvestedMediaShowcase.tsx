@@ -17,6 +17,13 @@ import {
   Sliders,
   ChevronDown,
   ChevronUp,
+  ThumbsUp,
+  MessageSquare,
+  Repeat2,
+  Share2,
+  Send,
+  Copy,
+  Check,
 } from "lucide-react"
 import {
   HarvestedMediaItem,
@@ -27,11 +34,18 @@ import {
   computeHarvesterTelemetry,
   HARVESTER_EVENT_NAME,
 } from "@/lib/connectin-media-harvester"
+import {
+  loadMembers,
+  sendSharedItemToConnectLnMember,
+  DEFAULT_CONNECTLN_SHARE_MEMBERS,
+  type ShareTarget,
+} from "./MessageActionBar"
 
 interface LiveHarvestedMediaShowcaseProps {
   destination: HarvesterDestination
   onOpenAdminBackend?: () => void
   onSelectForMediaStage?: (item: HarvestedMediaItem) => void
+  onShareItemToFeed?: (item: HarvestedMediaItem) => void
   compact?: boolean
 }
 
@@ -80,6 +94,7 @@ export function LiveHarvestedMediaShowcase({
   destination,
   onOpenAdminBackend,
   onSelectForMediaStage,
+  onShareItemToFeed,
   compact = false,
 }: LiveHarvestedMediaShowcaseProps) {
   const [items, setItems] = useState<HarvestedMediaItem[]>(() =>
@@ -95,6 +110,27 @@ export function LiveHarvestedMediaShowcase({
   const [isSyncingNow, setIsSyncingNow] = useState<boolean>(false)
   const [isExpanded, setIsExpanded] = useState<boolean>(true)
   const [appliedIds, setAppliedIds] = useState<string[]>([])
+  const [likedIds, setLikedIds] = useState<Record<string, boolean>>({})
+  const [repostedIds, setRepostedIds] = useState<Record<string, boolean>>({})
+  const [openCommentsId, setOpenCommentsId] = useState<string | null>(null)
+  const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({})
+  const [commentsByItem, setCommentsByItem] = useState<Record<string, { id: string; author: string; text: string; time: string }[]>>({})
+  const [openShareId, setOpenShareId] = useState<string | null>(null)
+  const [shareMemberQuery, setShareMemberQuery] = useState<string>("")
+  const [shareMembers, setShareMembers] = useState<ShareTarget[]>(DEFAULT_CONNECTLN_SHARE_MEMBERS)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [toastMsg, setToastMsg] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (openShareId) {
+      loadMembers().then(setShareMembers).catch(() => {})
+    }
+  }, [openShareId])
+
+  const flashToast = (msg: string) => {
+    setToastMsg(msg)
+    setTimeout(() => setToastMsg(null), 3000)
+  }
 
   const refreshFromStore = () => {
     const all = loadStoredHarvestedItems()
@@ -315,55 +351,369 @@ export function LiveHarvestedMediaShowcase({
                 </div>
 
                 {/* Contextual Footer Action */}
-                <div className="px-3 py-2 bg-[#FAF6EE]/70 dark:bg-zinc-900 border-t border-[#DFD4C0]/70 dark:border-zinc-800 flex items-center justify-between gap-2">
-                  <span className="text-[10px] text-zinc-500 truncate">
-                    {item.authorName}
-                  </span>
+                <div className="px-3 py-2 bg-[#FAF6EE]/70 dark:bg-zinc-900 border-t border-[#DFD4C0]/70 dark:border-zinc-800 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[10px] text-zinc-500 truncate">
+                      {item.authorName}
+                    </span>
 
-                  {destination === "jobs" ? (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setAppliedIds((prev) =>
-                          prev.includes(item.id) ? prev : [...prev, item.id]
-                        )
-                      }
-                      className={`rounded-lg px-2.5 py-1 text-[10px] font-bold cursor-pointer ${
-                        isApplied
-                          ? "bg-emerald-100 text-emerald-800"
-                          : "bg-[#3A2818] text-white hover:bg-[#523319]"
-                      }`}
-                    >
-                      {isApplied ? "✓ Applied" : "Video Apply"}
-                    </button>
-                  ) : destination === "market" && item.marketMeta ? (
-                    <a
-                      href={item.marketMeta.liveUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded-lg bg-[#3A2818] hover:bg-[#523319] px-2.5 py-1 text-[10px] font-bold text-white flex items-center gap-1"
-                    >
-                      <span>Launch</span>
-                      <ExternalLink className="h-2.5 w-2.5" />
-                    </a>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPlayingId(item.id)
-                        if (onSelectForMediaStage) {
-                          onSelectForMediaStage(item)
+                    {destination === "jobs" ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setAppliedIds((prev) =>
+                            prev.includes(item.id) ? prev : [...prev, item.id]
+                          )
                         }
-                      }}
-                      className="rounded-lg bg-[#EFE7D6] dark:bg-zinc-800 hover:bg-[#DFD4C0] px-2.5 py-1 text-[10px] font-bold text-[#3A2818] dark:text-zinc-200 cursor-pointer"
-                    >
-                      {item.kind === "video" ? "▶ Watch Video" : "Inspect Visual"}
-                    </button>
-                  )}
+                        className={`rounded-lg px-2.5 py-1 text-[10px] font-bold cursor-pointer ${
+                          isApplied
+                            ? "bg-emerald-100 text-emerald-800"
+                            : "bg-[#3A2818] text-white hover:bg-[#523319]"
+                        }`}
+                      >
+                        {isApplied ? "✓ Applied" : "Video Apply"}
+                      </button>
+                    ) : destination === "market" && item.marketMeta ? (
+                      <a
+                        href={item.marketMeta.liveUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-lg bg-[#3A2818] hover:bg-[#523319] px-2.5 py-1 text-[10px] font-bold text-white flex items-center gap-1"
+                      >
+                        <span>Launch</span>
+                        <ExternalLink className="h-2.5 w-2.5" />
+                      </a>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPlayingId(item.id)
+                          if (onSelectForMediaStage) {
+                            onSelectForMediaStage(item)
+                          }
+                        }}
+                        className="rounded-lg bg-[#EFE7D6] dark:bg-zinc-800 hover:bg-[#DFD4C0] px-2.5 py-1 text-[10px] font-bold text-[#3A2818] dark:text-zinc-200 cursor-pointer"
+                      >
+                        {item.kind === "video" ? "▶ Watch Video" : "Inspect Visual"}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Full Social Engagement & Multi-Platform Share Strip (Like, Comment, Post/Repost, Share) */}
+                  {(() => {
+                    const isLiked = Boolean(likedIds[item.id])
+                    const isReposted = Boolean(repostedIds[item.id])
+                    const itemComments = commentsByItem[item.id] || []
+                    const shareUrl = `https://www.conectln.com/connectin?tab=${destination}&media=${encodeURIComponent(item.id)}`
+                    const shareText = `📢 ${item.title} (${item.authorName}) on ConnectLn:\n\n"${item.summary}"\n\n🔗 ${shareUrl}`
+                    const filteredMembers = shareMembers
+                      .filter((m) => {
+                        const q = shareMemberQuery.trim().toLowerCase()
+                        if (!q) return true
+                        return (
+                          m.name.toLowerCase().includes(q) ||
+                          (m.subtitle || "").toLowerCase().includes(q)
+                        )
+                      })
+                      .slice(0, 5)
+
+                    return (
+                      <div className="pt-1.5 border-t border-[#DFD4C0]/60 dark:border-zinc-800 space-y-2">
+                        <div className="flex items-center justify-between gap-1 text-[10px] font-bold">
+                          {/* Like */}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setLikedIds((prev) => ({
+                                ...prev,
+                                [item.id]: !prev[item.id],
+                              }))
+                            }
+                            className={`flex items-center gap-1 rounded-md px-1.5 py-1 transition-colors cursor-pointer ${
+                              isLiked
+                                ? "bg-blue-50 text-[#0A66C2] dark:bg-blue-950/40 dark:text-sky-300"
+                                : "text-zinc-600 hover:bg-[#EFE7D6] dark:text-zinc-300 dark:hover:bg-zinc-800"
+                            }`}
+                          >
+                            <ThumbsUp className="h-3 w-3" />
+                            <span>{isLiked ? "Liked · 1" : "Like"}</span>
+                          </button>
+
+                          {/* Comment */}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setOpenCommentsId((prev) => (prev === item.id ? null : item.id))
+                            }
+                            className="flex items-center gap-1 rounded-md px-1.5 py-1 text-zinc-600 hover:bg-[#EFE7D6] dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                          >
+                            <MessageSquare className="h-3 w-3" />
+                            <span>
+                              Comment{itemComments.length > 0 ? ` (${itemComments.length})` : ""}
+                            </span>
+                          </button>
+
+                          {/* Post / Repost */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setRepostedIds((prev) => ({ ...prev, [item.id]: true }))
+                              if (onShareItemToFeed) {
+                                onShareItemToFeed(item)
+                              }
+                              flashToast(`✓ Reposted "${item.title.slice(0, 32)}..." to ConnectLn Feed`)
+                            }}
+                            className={`flex items-center gap-1 rounded-md px-1.5 py-1 transition-colors cursor-pointer ${
+                              isReposted
+                                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                                : "text-zinc-600 hover:bg-[#EFE7D6] dark:text-zinc-300 dark:hover:bg-zinc-800"
+                            }`}
+                          >
+                            <Repeat2 className="h-3 w-3" />
+                            <span>{isReposted ? "Reposted ✓" : "Repost"}</span>
+                          </button>
+
+                          {/* Share Popover Toggle */}
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setOpenShareId((prev) => (prev === item.id ? null : item.id))
+                              }
+                              className="flex items-center gap-1 rounded-md px-1.5 py-1 text-zinc-600 hover:bg-[#EFE7D6] dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                            >
+                              <Share2 className="h-3 w-3" />
+                              <span>Share</span>
+                            </button>
+
+                            {openShareId === item.id && (
+                              <>
+                                <div
+                                  className="fixed inset-0 z-30"
+                                  onClick={() => setOpenShareId(null)}
+                                />
+                                <div className="absolute right-0 bottom-full mb-1.5 z-40 w-68 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-2.5 shadow-2xl text-zinc-900 dark:text-zinc-100 space-y-2">
+                                  <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#0A66C2] dark:text-sky-400">
+                                    ↪ Share to ConnectLn Member:
+                                  </p>
+                                  <input
+                                    type="text"
+                                    value={shareMemberQuery}
+                                    onChange={(e) => setShareMemberQuery(e.target.value)}
+                                    placeholder="Search person on ConnectLn..."
+                                    className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-2 py-1 text-[11px] focus:outline-none focus:border-[#0A66C2]"
+                                  />
+                                  <div className="max-h-32 overflow-y-auto space-y-1">
+                                    {filteredMembers.map((member) => (
+                                      <button
+                                        key={member.id}
+                                        type="button"
+                                        onClick={async () => {
+                                          await sendSharedItemToConnectLnMember({
+                                            senderName: "Kwesi Asiedu",
+                                            target: member,
+                                            itemTitle: item.title,
+                                            itemText: item.summary,
+                                            shareUrl,
+                                            itemKindLabel:
+                                              item.kind === "video"
+                                                ? "ConnectLn Video"
+                                                : "ConnectLn Visual",
+                                          })
+                                          setOpenShareId(null)
+                                          flashToast(`✓ Shared with ${member.name} on ConnectLn`)
+                                        }}
+                                        className="flex w-full items-center justify-between gap-2 rounded-lg p-1 text-left hover:bg-sky-50 dark:hover:bg-sky-950/40 cursor-pointer"
+                                      >
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                          <img
+                                            src={
+                                              member.avatar ||
+                                              `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(member.name)}&backgroundColor=0a66c2`
+                                            }
+                                            alt={member.name}
+                                            className="h-5 w-5 rounded-full object-cover shrink-0"
+                                          />
+                                          <span className="text-[10px] font-bold truncate">
+                                            {member.name}
+                                          </span>
+                                        </div>
+                                        <span className="rounded-full bg-[#0A66C2] px-1.5 py-0.5 text-[9px] font-bold text-white shrink-0">
+                                          Send
+                                        </span>
+                                      </button>
+                                    ))}
+                                  </div>
+
+                                  <p className="text-[9px] font-extrabold uppercase tracking-wider text-zinc-400 pt-1 border-t border-zinc-100 dark:border-zinc-800">
+                                    Share Externally:
+                                  </p>
+                                  <div className="grid grid-cols-3 gap-1 text-[10px] font-bold">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        window.open(
+                                          `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
+                                          "_blank"
+                                        )
+                                        setOpenShareId(null)
+                                      }}
+                                      className="rounded-lg border border-zinc-200 dark:border-zinc-700 py-1 px-1.5 hover:bg-sky-50 text-[#0A66C2] cursor-pointer"
+                                    >
+                                      LinkedIn
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        window.open(
+                                          `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`,
+                                          "_blank"
+                                        )
+                                        setOpenShareId(null)
+                                      }}
+                                      className="rounded-lg border border-zinc-200 dark:border-zinc-700 py-1 px-1.5 hover:bg-blue-50 text-[#1877F2] cursor-pointer"
+                                    >
+                                      Facebook
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        navigator.clipboard?.writeText(shareText).catch(() => {})
+                                        window.open("https://www.instagram.com/", "_blank")
+                                        setOpenShareId(null)
+                                        flashToast("Copied caption & opened Instagram")
+                                      }}
+                                      className="rounded-lg border border-zinc-200 dark:border-zinc-700 py-1 px-1.5 hover:bg-pink-50 text-[#E1306C] cursor-pointer"
+                                    >
+                                      Instagram
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        window.open(
+                                          `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`,
+                                          "_blank"
+                                        )
+                                        setOpenShareId(null)
+                                      }}
+                                      className="rounded-lg border border-zinc-200 dark:border-zinc-700 py-1 px-1.5 hover:bg-emerald-50 text-[#25D366] cursor-pointer"
+                                    >
+                                      WhatsApp
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        window.open(
+                                          `https://twitter.com/intent/tweet?text=${encodeURIComponent(item.title)}&url=${encodeURIComponent(shareUrl)}`,
+                                          "_blank"
+                                        )
+                                        setOpenShareId(null)
+                                      }}
+                                      className="rounded-lg border border-zinc-200 dark:border-zinc-700 py-1 px-1.5 hover:bg-zinc-100 cursor-pointer"
+                                    >
+                                      Post 𝕏
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        navigator.clipboard?.writeText(shareUrl).catch(() => {})
+                                        setCopiedId(item.id)
+                                        setTimeout(() => setCopiedId(null), 2000)
+                                      }}
+                                      className="rounded-lg border border-zinc-200 dark:border-zinc-700 py-1 px-1.5 hover:bg-zinc-100 flex items-center justify-center gap-0.5 cursor-pointer"
+                                    >
+                                      {copiedId === item.id ? (
+                                        <Check className="h-3 w-3 text-emerald-600" />
+                                      ) : (
+                                        <Copy className="h-3 w-3" />
+                                      )}
+                                      <span>{copiedId === item.id ? "Copied" : "Copy"}</span>
+                                    </button>
+                                  </div>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Inline Comment Drawer */}
+                        {openCommentsId === item.id && (
+                          <div className="rounded-lg border border-[#DFD4C0] dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2 space-y-1.5 text-[11px]">
+                            {itemComments.length > 0 && (
+                              <div className="max-h-24 overflow-y-auto space-y-1">
+                                {itemComments.map((c) => (
+                                  <div key={c.id} className="rounded bg-zinc-50 dark:bg-zinc-900 px-2 py-1">
+                                    <span className="font-bold text-zinc-900 dark:text-zinc-100">
+                                      {c.author}
+                                    </span>{" "}
+                                    <span className="text-[9px] text-zinc-400">{c.time}</span>
+                                    <p className="text-zinc-700 dark:text-zinc-300">{c.text}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            <form
+                              onSubmit={(e) => {
+                                e.preventDefault()
+                                const text = (commentDrafts[item.id] || "").trim()
+                                if (!text) return
+                                setCommentsByItem((prev) => ({
+                                  ...prev,
+                                  [item.id]: [
+                                    ...(prev[item.id] || []),
+                                    {
+                                      id: `hc_${Date.now()}`,
+                                      author: "Kwesi Asiedu",
+                                      text,
+                                      time: "Just now",
+                                    },
+                                  ],
+                                }))
+                                setCommentDrafts((prev) => ({ ...prev, [item.id]: "" }))
+                              }}
+                              className="flex items-center gap-1"
+                            >
+                              <input
+                                type="text"
+                                value={commentDrafts[item.id] || ""}
+                                onChange={(e) =>
+                                  setCommentDrafts((prev) => ({
+                                    ...prev,
+                                    [item.id]: e.target.value,
+                                  }))
+                                }
+                                placeholder="Add a comment..."
+                                className="flex-1 rounded-md border border-zinc-300 dark:border-zinc-700 bg-transparent px-2 py-1 text-[11px] focus:outline-none focus:border-[#0A66C2]"
+                              />
+                              <button
+                                type="submit"
+                                className="rounded-md bg-[#0A66C2] px-2 py-1 text-[10px] font-bold text-white cursor-pointer"
+                              >
+                                Post
+                              </button>
+                            </form>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })()}
                 </div>
               </div>
             )
           })}
+        </div>
+      )}
+
+      {toastMsg && (
+        <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-3 py-2 text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center justify-between">
+          <span>{toastMsg}</span>
+          <button
+            type="button"
+            onClick={() => setToastMsg(null)}
+            className="text-[10px] hover:underline cursor-pointer"
+          >
+            Dismiss
+          </button>
         </div>
       )}
     </div>

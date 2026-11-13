@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import type { B2BMessageItem } from '@/lib/b2b-messaging-data';
+import { recordLocalBilateralDirectMessage } from '@/lib/direct-mailbox-sync';
 
 export interface ShareTarget {
     id: string;
@@ -9,6 +10,57 @@ export interface ShareTarget {
     avatar?: string;
     subtitle?: string;
 }
+
+export const DEFAULT_CONNECTLN_SHARE_MEMBERS: ShareTarget[] = [
+    {
+        id: 'member_gus_vandermeer',
+        name: 'Gus Vandermeer, PE',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+        subtitle: 'Cascade Structural Engineering · Timber Bent & Heavy Rigging',
+    },
+    {
+        id: 'member_patience_addo',
+        name: 'PATIENCE Addo',
+        avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=PATIENCE%20Addo&backgroundColor=0a66c2',
+        subtitle: 'Doctor of Veterinary Medicine (DVM) · Small Animal Surgery',
+    },
+    {
+        id: 'member_elena_rostova',
+        name: 'Dr. Elena Rostova, MD, FACS',
+        avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=200&auto=format&fit=crop&q=80',
+        subtitle: 'Attending Orthopedic Trauma Surgeon & Surgical Director',
+    },
+    {
+        id: 'member_markus_thorne',
+        name: 'Markus Thorne',
+        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
+        subtitle: 'Commercial Framing & Craft Superintendent · Turner Construction',
+    },
+    {
+        id: 'member_mike_mukasa',
+        name: 'Mike Mukasa',
+        avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&auto=format&fit=crop&q=80',
+        subtitle: 'Principal Infrastructure & Field Operations Lead',
+    },
+    {
+        id: 'member_suzzan_coldwell',
+        name: 'Suzzan Coldwell Banker',
+        avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80',
+        subtitle: 'Senior Commercial Real Estate & Portfolio Director',
+    },
+    {
+        id: 'member_sam_k',
+        name: 'Sam K',
+        avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&auto=format&fit=crop&q=80',
+        subtitle: 'Master Electrician & Industrial Controls Specialist',
+    },
+    {
+        id: 'member_boat',
+        name: 'Boat',
+        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&auto=format&fit=crop&q=80',
+        subtitle: 'Senior Systems & Cloud Security Practitioner',
+    },
+];
 
 export type MessageReactionKind = 'like' | 'up' | 'down' | 'rsvp_yes' | 'rsvp_no' | 'rsvp_maybe';
 
@@ -26,7 +78,7 @@ const RSVP_OPTIONS: { kind: 'rsvp_yes' | 'rsvp_no' | 'rsvp_maybe'; choice: 'yes'
 
 const compact = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
 
-// Registered members are loaded once and reused by every message.
+// Registered members are loaded once and merged with default verified ConnectLn professionals.
 let membersCache: ShareTarget[] | null = null;
 let membersPromise: Promise<ShareTarget[]> | null = null;
 export function loadMembers(): Promise<ShareTarget[]> {
@@ -35,21 +87,85 @@ export function loadMembers(): Promise<ShareTarget[]> {
         membersPromise = fetch('/api/connectin/users', { cache: 'no-store' })
             .then((r) => r.json())
             .then((d) => {
-                const list: ShareTarget[] = (d?.users || []).map((u: any) => ({
+                const apiList: ShareTarget[] = (d?.users || []).map((u: any) => ({
                     id: `member_${String(u.email || u.name).toLowerCase()}`,
                     name: String(u.name || ''),
                     avatar: u.avatar && !String(u.avatar).startsWith('data:') ? u.avatar : undefined,
-                    subtitle: u.headline || '',
+                    subtitle: u.headline || 'Verified ConnectLn Professional',
                 }));
-                membersCache = list.filter((m) => m.name);
+                const seen = new Set<string>();
+                const merged: ShareTarget[] = [];
+                for (const item of [...DEFAULT_CONNECTLN_SHARE_MEMBERS, ...apiList]) {
+                    const key = compact(item.name);
+                    if (!key || seen.has(key)) continue;
+                    seen.add(key);
+                    merged.push(item);
+                }
+                membersCache = merged;
                 return membersCache;
             })
             .catch(() => {
                 membersPromise = null;
-                return [] as ShareTarget[];
+                membersCache = DEFAULT_CONNECTLN_SHARE_MEMBERS;
+                return DEFAULT_CONNECTLN_SHARE_MEMBERS;
             });
     }
     return membersPromise;
+}
+
+/**
+ * Sends a shared post, video, photo, or message directly into another ConnectLn member's Inbox
+ * (both local bilateral DM store and server `/api/connectin/messages`).
+ */
+export async function sendSharedItemToConnectLnMember(params: {
+    senderName: string;
+    senderEmail?: string;
+    senderAvatar?: string;
+    senderHeadline?: string;
+    target: ShareTarget;
+    itemTitle: string;
+    itemText: string;
+    shareUrl: string;
+    itemKindLabel?: string;
+}): Promise<void> {
+    const senderName = params.senderName || 'Kwesi Asiedu';
+    const senderAvatar = params.senderAvatar || '/brand/kwesi-avatar.png';
+    const senderRole = params.senderHeadline || 'Verified ConnectLn Professional';
+    const kind = params.itemKindLabel || 'ConnectLn Post';
+    const dmBody = `↪ Shared ${kind} with you on ConnectLn:\n\n"${params.itemTitle}"\n${params.itemText ? `${params.itemText.slice(0, 260)}\n` : ''}\n🔗 Open on ConnectLn: ${params.shareUrl}`;
+
+    recordLocalBilateralDirectMessage({
+        senderName,
+        senderEmail: params.senderEmail,
+        senderAvatar,
+        senderRole,
+        recipientName: params.target.name,
+        recipientAvatar: params.target.avatar,
+        recipientSubtitle: params.target.subtitle,
+        subject: `Shared ${kind}: ${params.itemTitle.slice(0, 60)}`,
+        text: dmBody,
+        channelType: 'People',
+        subType: 'DM',
+    });
+
+    try {
+        await fetch('/api/connectin/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                senderName,
+                senderEmail: params.senderEmail,
+                senderAvatar,
+                senderRole,
+                recipientName: params.target.name,
+                recipientAvatar: params.target.avatar,
+                recipientRole: params.target.subtitle,
+                text: dmBody,
+            }),
+        });
+    } catch {
+        // Local bilateral message is already persisted
+    }
 }
 
 /** Small reaction chips shown on the top-right corner of a message bubble. */
@@ -170,7 +286,7 @@ export function MessageActionBar({
         text: shareText.slice(0, 420),
         sharedBy: myName || resolvedAuthor,
     });
-    const brandedShareUrl = `https://www.connectln.app/share/message?${cardParams.toString()}`;
+    const brandedShareUrl = `https://www.conectln.com/share/message?${cardParams.toString()}`;
     const formattedDispatch = `📢 ${resolvedAuthor} (${resolvedRole}) on ConnectLn:\n\n"${shareText}"\n\n🔗 View verified ConnectLn card: ${brandedShareUrl}`;
 
     const open = (url: string) => window.open(url, '_blank', 'noopener,noreferrer,width=680,height=620');
@@ -181,14 +297,27 @@ export function MessageActionBar({
             go: () => open(`https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(formattedDispatch)}`),
         },
         {
-            label: 'WhatsApp',
-            icon: '🟢',
-            go: () => open(`https://api.whatsapp.com/send?text=${encodeURIComponent(formattedDispatch)}`),
-        },
-        {
             label: 'Facebook',
             icon: '🟦',
             go: () => open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(brandedShareUrl)}&quote=${encodeURIComponent(formattedDispatch)}`),
+        },
+        {
+            label: 'Instagram',
+            icon: '📸',
+            go: () => {
+                try {
+                    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                        navigator.clipboard.writeText(formattedDispatch).catch(() => {});
+                    }
+                } catch {}
+                open('https://www.instagram.com/');
+                flash('Copied caption & opened Instagram');
+            },
+        },
+        {
+            label: 'WhatsApp',
+            icon: '🟢',
+            go: () => open(`https://api.whatsapp.com/send?text=${encodeURIComponent(formattedDispatch)}`),
         },
         {
             label: 'Email',
@@ -395,7 +524,7 @@ export function MessageActionBar({
                     </div>
 
                     <p className="px-1 pb-1 text-[11px] font-extrabold text-slate-500">Share card on</p>
-                    <div className="mb-2 grid grid-cols-4 gap-1">
+                    <div className="mb-2 grid grid-cols-5 gap-1">
                         {external.map((e) => (
                             <button
                                 key={e.label}

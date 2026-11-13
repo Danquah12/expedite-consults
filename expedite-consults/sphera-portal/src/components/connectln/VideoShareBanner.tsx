@@ -1,11 +1,17 @@
 "use client"
 
 import React, { useState, useRef, useEffect } from "react"
-import { Play, ShieldCheck, Share2, Copy, Check, Mail } from "lucide-react"
+import { Play, ShieldCheck, Share2, Copy, Check, Mail, Send } from "lucide-react"
 import { resolveUserProfilePicture, isDefaultPlaceholderAvatar, generatePersonalSignatureAvatar, isForeignPersonaAvatar } from "@/lib/connectin-storage"
 import { buildSharePreviewUrl, useSharePic } from "@/lib/connectin-share"
 import { ConnectLnStudioPlayer, CONNECTLN_VIDEO_PLAY_EVENT, notifyExclusiveVideoPlay } from "./ConnectLnStudioPlayer"
 import { NoctisVideoInterpreterPopup } from "./NoctisVideoInterpreterPopup"
+import {
+  loadMembers,
+  sendSharedItemToConnectLnMember,
+  DEFAULT_CONNECTLN_SHARE_MEMBERS,
+  type ShareTarget,
+} from "./MessageActionBar"
 
 export interface VideoShareBannerProps {
   /** Sharer's profile picture (circular on the left inside the ConnectLn Logo Card) */
@@ -70,9 +76,19 @@ export function VideoShareBanner({
   const [isPlayingInline, setIsPlayingInline] = useState(false)
   const [startedByScroll, setStartedByScroll] = useState(true)
   const [copiedLink, setCopiedLink] = useState(false)
+  const [showMemberPicker, setShowMemberPicker] = useState(false)
+  const [memberQuery, setMemberQuery] = useState("")
+  const [members, setMembers] = useState<ShareTarget[]>(DEFAULT_CONNECTLN_SHARE_MEMBERS)
+  const [sentNote, setSentNote] = useState<string | null>(null)
   const bannerPlayerIdRef = useRef<string>(`cln-banner-${Math.random().toString(36).slice(2, 10)}`)
   const videoStageRef = useRef<HTMLDivElement>(null)
   const userManuallyStoppedRef = useRef<boolean>(false)
+
+  useEffect(() => {
+    if (showMemberPicker) {
+      loadMembers().then(setMembers).catch(() => {})
+    }
+  }, [showMemberPicker])
 
   // Stop inline playback whenever any other video starts playing across ConnectLn
   useEffect(() => {
@@ -257,6 +273,45 @@ export function VideoShareBanner({
     setCopiedLink(true)
     setTimeout(() => setCopiedLink(false), 2500)
   }
+
+  const handleInstagramShare = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard) {
+        await navigator.clipboard.writeText(shareText)
+      }
+    } catch {}
+    window.open("https://www.instagram.com/", "_blank", "noopener,noreferrer")
+    setSentNote("Copied caption & opened Instagram")
+    setTimeout(() => setSentNote(null), 2800)
+  }
+
+  const handleSendToConnectLnMember = async (target: ShareTarget) => {
+    await sendSharedItemToConnectLnMember({
+      senderName: resolvedAuthor,
+      senderAvatar: resolvedAvatar,
+      senderHeadline: resolvedHeadline,
+      target,
+      itemTitle: videoTitle,
+      itemText: videoSubtitle || takeaways[0] || "",
+      shareUrl: resolvedShareUrl,
+      itemKindLabel: "ConnectLn Video",
+    })
+    setShowMemberPicker(false)
+    setSentNote(`✓ Sent to ${target.name} on ConnectLn`)
+    setTimeout(() => setSentNote(null), 3200)
+  }
+
+  const filteredMembers = members
+    .filter((m) => {
+      const q = memberQuery.trim().toLowerCase()
+      if (!q) return true
+      return (
+        m.name.toLowerCase().includes(q) ||
+        (m.subtitle || "").toLowerCase().includes(q)
+      )
+    })
+    .slice(0, 6)
 
   return (
     <div
@@ -622,6 +677,92 @@ export function VideoShareBanner({
               <span>Facebook</span>
             </button>
 
+            {/* Instagram */}
+            <button
+              type="button"
+              onClick={handleInstagramShare}
+              style={{ backgroundColor: "#E1306C", color: "#FFFFFF" }}
+              className="px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-2xs hover:opacity-90 transition-opacity cursor-pointer"
+              title="Share on Instagram"
+            >
+              <span>Instagram</span>
+            </button>
+
+            {/* Send to ConnectLn Member */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setShowMemberPicker((prev) => !prev)
+                }}
+                style={{ backgroundColor: "#6B4423", color: "#FFFFFF" }}
+                className="px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-2xs hover:opacity-90 transition-opacity cursor-pointer"
+                title="Send directly to another person on ConnectLn"
+              >
+                <Send className="h-2.5 w-2.5" />
+                <span>ConnectLn Member</span>
+              </button>
+
+              {showMemberPicker && (
+                <>
+                  <div
+                    className="fixed inset-0 z-30"
+                    onClick={() => setShowMemberPicker(false)}
+                  />
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute right-0 bottom-full mb-2 z-40 w-72 rounded-xl border border-zinc-200 bg-white p-2.5 shadow-2xl text-zinc-900 space-y-1.5"
+                  >
+                    <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#0A66C2]">
+                      ↪ Send Video to ConnectLn Member:
+                    </p>
+                    <input
+                      type="text"
+                      value={memberQuery}
+                      onChange={(e) => setMemberQuery(e.target.value)}
+                      placeholder="Search member name..."
+                      className="w-full rounded-lg border border-zinc-300 px-2.5 py-1 text-xs text-zinc-900 focus:outline-none focus:border-[#0A66C2]"
+                    />
+                    <div className="max-h-40 overflow-y-auto space-y-1">
+                      {filteredMembers.map((member) => (
+                        <button
+                          key={member.id}
+                          type="button"
+                          onClick={() => handleSendToConnectLnMember(member)}
+                          className="flex w-full items-center justify-between gap-2 rounded-lg p-1.5 text-left hover:bg-sky-50 cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <img
+                              src={
+                                member.avatar ||
+                                `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(member.name)}&backgroundColor=0a66c2`
+                              }
+                              alt={member.name}
+                              className="h-6 w-6 rounded-full object-cover shrink-0"
+                            />
+                            <div className="min-w-0">
+                              <p className="text-[11px] font-bold text-zinc-900 truncate">
+                                {member.name}
+                              </p>
+                              {member.subtitle && (
+                                <p className="text-[9px] text-zinc-500 truncate">
+                                  {member.subtitle}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <span className="rounded-full bg-[#0A66C2] px-2 py-0.5 text-[10px] font-bold text-white shrink-0">
+                            Send
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
             {/* Email */}
             <button
               type="button"
@@ -650,6 +791,12 @@ export function VideoShareBanner({
               <span>{copiedLink ? "Copied!" : "Copy Link"}</span>
             </button>
           </div>
+
+          {sentNote && (
+            <span className="text-[10px] font-bold text-emerald-400">
+              {sentNote}
+            </span>
+          )}
         </div>
       )}
     </div>

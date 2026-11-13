@@ -184,6 +184,11 @@ export interface Post {
     timestamp: string
     content: string
   }
+  repostedBy?: {
+    name: string
+    headline?: string
+    avatar?: string
+  }
   media?: {
     type: 'image' | 'article' | 'video'
     url: string

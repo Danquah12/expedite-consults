@@ -1677,6 +1677,90 @@ export default function ConnectLnPage() {
     })
   }
 
+  // Handle Repost & Quote Post to ConnectIn Network Feed
+  const handleRepostPost = (originalPost: Post, quoteText?: string) => {
+    // 1. Increment repost count on target post
+    setPosts(prev =>
+      prev.map(p => {
+        if (p.id !== originalPost.id) return p
+        return {
+          ...p,
+          stats: {
+            ...p.stats,
+            repostsCount: (p.stats.repostsCount || 0) + 1
+          }
+        }
+      })
+    )
+
+    // 2. Create newly reposted post
+    const newPostId = 'repost_' + Date.now()
+    const newPost: Post = {
+      id: newPostId,
+      isUserCreated: true,
+      professionId: userData.professionId,
+      professionEnclave: userData.professionEnclave || 'trades_construction',
+      feedCategory: 'for_you',
+      feedSubCategory: 'All',
+      author: {
+        id: 'usr_' + (userData.name || 'me').toLowerCase().replace(/\s+/g, '_'),
+        name: userData.name,
+        headline: userData.headline,
+        avatar: userData.avatar,
+        connectionDegree: 'You'
+      },
+      timestamp: 'Just now · 🌐',
+      visibility: 'Public',
+      content: quoteText ? quoteText : '',
+      postType: 'standard',
+      quotedPost: {
+        id: originalPost.id,
+        authorName: originalPost.author.name,
+        authorHeadline: originalPost.author.headline,
+        authorAvatar: originalPost.author.avatar,
+        timestamp: originalPost.timestamp,
+        content: originalPost.content
+      },
+      repostedBy: quoteText ? undefined : {
+        name: userData.name,
+        headline: userData.headline,
+        avatar: userData.avatar
+      },
+      stats: {
+        likesCount: 1,
+        commentsCount: 0,
+        repostsCount: 0,
+        reactionsBreakdown: { like: 1, celebrate: 0, support: 0, love: 0, insightful: 0, funny: 0 }
+      },
+      userReaction: 'like',
+      comments: []
+    }
+
+    setPosts(prev => {
+      const updated = [newPost, ...prev]
+      saveStoredPosts(updated)
+      return updated
+    })
+
+    recordLiveContentReach({
+      userName: userData.name,
+      title: quoteText
+        ? `Quoted post by ${originalPost.author.name}: "${quoteText.slice(0, 40)}..."`
+        : `Reposted ${originalPost.author.name}'s post to network feed`,
+      category: 'Feed Post',
+      actorName: userData.name
+    })
+
+    if (originalPost.author?.name && originalPost.author.name.toLowerCase() !== userData.name.toLowerCase()) {
+      recordLiveContentReach({
+        userName: originalPost.author.name,
+        title: `${userData.name} reposted your post to their network`,
+        category: 'Feed Post',
+        actorName: userData.name
+      })
+    }
+  }
+
   // Handle Connect / Follow Toggles — sends an invitation first (moves to My Connections when Accepted)
   const handleToggleConnect = (personId: string) => {
     const normInput = String(personId || "").toLowerCase().trim()
@@ -2313,6 +2397,7 @@ export default function ConnectLnPage() {
                       onVotePoll={handleVotePoll}
                       onSelectMember={handleInspectMember}
                       onDeletePost={handleDeletePost}
+                      onRepost={handleRepostPost}
                     />
                   ))}
                 </div>
@@ -2405,6 +2490,7 @@ export default function ConnectLnPage() {
                       onVotePoll={handleVotePoll}
                       onSelectMember={handleInspectMember}
                       onDeletePost={handleDeletePost}
+                      onRepost={handleRepostPost}
                     />
                   ))}
                 </div>
@@ -2786,6 +2872,18 @@ export default function ConnectLnPage() {
                 destination="home"
                 compact
                 onOpenAdminBackend={() => setActiveTab('adminiam')}
+                onShareItemToFeed={(item) =>
+                  handleShareWheelVideoToFeed({
+                    title: item.title,
+                    speaker: item.authorName,
+                    speakerTitle: item.authorRole,
+                    youtubeId: item.youtubeId,
+                    thumbnailUrl: item.imageUrl,
+                    duration: item.duration || "03:30",
+                    serialPlate: item.category,
+                    summary: item.summary,
+                  })
+                }
               />
 
               {/* 1. PRIMARY MULTI-STREAM FEED CATEGORY TABS */}
@@ -2929,6 +3027,7 @@ export default function ConnectLnPage() {
                     onVotePoll={handleVotePoll}
                     onSelectMember={handleInspectMember}
                     onDeletePost={handleDeletePost}
+                    onRepost={handleRepostPost}
                   />
                 ))}
 

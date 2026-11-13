@@ -48,6 +48,12 @@ import { resolveUserProfilePicture, generatePersonalSignatureAvatar, trackUserAc
 import { buildSharePreviewUrl, useSharePic } from "@/lib/connectin-share"
 import { VideoShareBanner } from "./VideoShareBanner"
 import { ConnectLnStudioPlayer } from "./ConnectLnStudioPlayer"
+import {
+  loadMembers,
+  sendSharedItemToConnectLnMember,
+  DEFAULT_CONNECTLN_SHARE_MEMBERS,
+  type ShareTarget,
+} from "./MessageActionBar"
 
 interface FeedPostCardProps {
   post: Post
@@ -59,6 +65,7 @@ interface FeedPostCardProps {
   onVotePoll?: (postId: string, optionId: string) => void
   onSelectMember?: (member: any) => void
   onDeletePost?: (postId: string) => void
+  onRepost?: (post: Post, quoteText?: string) => void
 }
 
 const reactionIcons: Record<ReactionType, { label: string; icon: string; color: string }> = {
@@ -79,7 +86,8 @@ export function FeedPostCard({
   onFollowToggle,
   onVotePoll,
   onSelectMember,
-  onDeletePost
+  onDeletePost,
+  onRepost
 }: FeedPostCardProps) {
   const { t, language } = useLanguage()
   const [isExpanded, setIsExpanded] = useState(false)
@@ -94,6 +102,12 @@ export function FeedPostCard({
   const [isFollowing, setIsFollowing] = useState(post.author.isFollowing ?? false)
   const [isReposted, setIsReposted] = useState(false)
   const [localRepostBonus, setLocalRepostBonus] = useState(0)
+  const [showRepostPopover, setShowRepostPopover] = useState(false)
+  const [repostQuoteDraft, setRepostQuoteDraft] = useState("")
+  const [likedCommentIds, setLikedCommentIds] = useState<Record<string, boolean>>({})
+  const [shareMemberQuery, setShareMemberQuery] = useState("")
+  const [shareMembers, setShareMembers] = useState<ShareTarget[]>(DEFAULT_CONNECTLN_SHARE_MEMBERS)
+  const [sharedFeedback, setSharedFeedback] = useState<string | null>(null)
 
   // Product Discovery Modal State
   const [activeProductModal, setActiveProductModal] = useState<'view' | 'demo' | 'docs' | 'pricing' | 'trial' | 'buy' | null>(null)
@@ -235,18 +249,72 @@ export function FeedPostCard({
     setReplyToId(null)
   }
 
-  const handleRepostClick = () => {
+  React.useEffect(() => {
+    if (showShareModal || showMenu) {
+      loadMembers().then(setShareMembers).catch(() => {})
+    }
+  }, [showShareModal, showMenu])
+
+  const filteredShareMembers = useMemo(() => {
+    const q = shareMemberQuery.trim().toLowerCase()
+    const myNorm = (currentUser?.name || "").toLowerCase().trim()
+    const list = shareMembers.filter(m => m.name.toLowerCase().trim() !== myNorm)
+    if (!q) return list.slice(0, 6)
+    return list.filter(m =>
+      m.name.toLowerCase().includes(q) ||
+      (m.subtitle || "").toLowerCase().includes(q)
+    ).slice(0, 6)
+  }, [shareMembers, shareMemberQuery, currentUser?.name])
+
+  const flashSharedFeedback = (msg: string) => {
+    setSharedFeedback(msg)
+    setTimeout(() => setSharedFeedback(null), 3200)
+  }
+
+  const handleRepostClick = (quoteText?: string) => {
     setIsReposted(true)
     setLocalRepostBonus(prev => prev + 1)
+    if (onRepost) {
+      onRepost(post, quoteText)
+    }
+    setShowRepostPopover(false)
+    setRepostQuoteDraft("")
+    flashSharedFeedback(quoteText ? "✓ Published Quote Repost to your Feed" : "✓ Reposted to your ConnectLn Feed")
     trackUserActivity({
       actionType: 'POST_REPOSTED',
-      actionLabel: 'Reposted to Network Feed',
+      actionLabel: quoteText ? 'Quote-Reposted to Network Feed' : 'Reposted to Network Feed',
       category: 'engagement',
       targetId: post.id,
       targetTitle: `Post by ${resolvedAuthorName}`,
       details: `Reposted "${postSnippet}..." to network feed`,
       user: currentUser
     })
+  }
+
+  const handleShareToConnectLnMember = async (target: ShareTarget) => {
+    const { postUrl, snippet } = getPostShareData()
+    await sendSharedItemToConnectLnMember({
+      senderName: currentUser?.name || "Kwesi Asiedu",
+      senderAvatar: resolvedUserPic,
+      senderHeadline: currentUser?.headline || "Verified ConnectLn Professional",
+      target,
+      itemTitle: post.media?.title || `Post by ${resolvedAuthorName}`,
+      itemText: snippet || post.content || "",
+      shareUrl: postUrl,
+      itemKindLabel: post.media?.type === "video" ? "ConnectLn Video" : "ConnectLn Post",
+    })
+    flashSharedFeedback(`✓ Shared with ${target.name} on ConnectLn`)
+    trackUserActivity({
+      actionType: 'POST_SHARED',
+      actionLabel: `Shared Post with ${target.name} on ConnectLn`,
+      category: 'engagement',
+      targetId: post.id,
+      targetTitle: `Post by ${resolvedAuthorName}`,
+      details: `Sent "${postSnippet}..." to ${target.name}'s ConnectLn Inbox`,
+      user: currentUser
+    })
+    setShowShareModal(false)
+    setShowMenu(false)
   }
 
   const sharerPic = useSharePic(resolveUserProfilePicture(currentUser))
@@ -588,6 +656,16 @@ export function FeedPostCard({
                   >
                     <Share2 className="h-3.5 w-3.5" />
                     <span>{copiedLink ? t("link_copied", "Link copied!") : t("copy_link", "Copy link")}</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowMenu(false)
+                      setShowShareModal(true)
+                    }}
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 font-semibold text-[#0A66C2] hover:bg-sky-50 dark:text-sky-300 dark:hover:bg-sky-950/30 cursor-pointer"
+                  >
+                    <Send className="h-3.5 w-3.5" />
+                    <span>Send to ConnectLn Member</span>
                   </button>
                 </div>
               </div>
@@ -1307,20 +1385,61 @@ export function FeedPostCard({
           <span>{t("comment", "Comment")}</span>
         </button>
 
-        {/* Repost Button */}
-        <button
-          onClick={handleRepostClick}
-          className={`flex items-center gap-1 sm:gap-1.5 rounded-md px-2 sm:px-3 py-2 text-[11px] sm:text-xs transition-colors cursor-pointer ${
-            isReposted
-              ? "text-emerald-600 dark:text-emerald-400 font-bold"
-              : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-          }`}
-        >
-          <Repeat2 className="h-4 w-4" />
-          <span>{isReposted ? "Reposted ✓" : t("repost", "Repost")}</span>
-        </button>
+        {/* Repost Button & Popover (Instant Repost or Quote Repost to Feed) */}
+        <div className="relative">
+          <button
+            onClick={() => setShowRepostPopover(!showRepostPopover)}
+            className={`flex items-center gap-1 sm:gap-1.5 rounded-md px-2 sm:px-3 py-2 text-[11px] sm:text-xs transition-colors cursor-pointer ${
+              isReposted
+                ? "text-emerald-600 dark:text-emerald-400 font-bold"
+                : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            }`}
+          >
+            <Repeat2 className="h-4 w-4" />
+            <span>{isReposted ? "Reposted ✓" : t("repost", "Repost")}</span>
+          </button>
 
-        {/* Multi-Social Share Button & Popover */}
+          {showRepostPopover && (
+            <>
+              <div className="fixed inset-0 z-20" onClick={() => setShowRepostPopover(false)} />
+              <div className="absolute left-0 bottom-full mb-2 z-30 w-72 rounded-xl border border-zinc-200 bg-white p-3 shadow-xl dark:border-zinc-800 dark:bg-zinc-900 text-xs space-y-2.5 animate-in fade-in zoom-in-95 duration-100">
+                <p className="font-extrabold text-[11px] uppercase tracking-wider text-zinc-500">
+                  Repost to ConnectLn Feed
+                </p>
+                <button
+                  type="button"
+                  onClick={() => handleRepostClick()}
+                  className="flex w-full items-center gap-2 rounded-lg bg-[#0A66C2] hover:bg-[#004182] px-3 py-2 text-white font-bold transition-colors cursor-pointer"
+                >
+                  <Repeat2 className="h-4 w-4 shrink-0" />
+                  <span>🔁 Instant Repost to My Feed</span>
+                </button>
+                <div className="space-y-1.5 pt-1 border-t border-zinc-100 dark:border-zinc-800">
+                  <p className="text-[11px] font-bold text-zinc-600 dark:text-zinc-300">
+                    ✍️ Or Repost with your thoughts:
+                  </p>
+                  <textarea
+                    rows={2}
+                    value={repostQuoteDraft}
+                    onChange={(e) => setRepostQuoteDraft(e.target.value)}
+                    placeholder={`Add your commentary on ${resolvedAuthorName}'s post...`}
+                    className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 p-2 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-[#0A66C2]"
+                  />
+                  <button
+                    type="button"
+                    disabled={!repostQuoteDraft.trim()}
+                    onClick={() => handleRepostClick(repostQuoteDraft.trim())}
+                    className="w-full rounded-lg bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 py-1.5 px-3 text-xs font-bold disabled:opacity-40 cursor-pointer"
+                  >
+                    Post Quote Repost
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Multi-Social Share Button & Popover (LinkedIn, Facebook, Instagram, WhatsApp, X, & ConnectLn Members) */}
         <div className="relative">
           <button
             onClick={() => setShowShareModal(!showShareModal)}
@@ -1333,7 +1452,7 @@ export function FeedPostCard({
           {showShareModal && (
             <>
               <div className="fixed inset-0 z-20" onClick={() => setShowShareModal(false)} />
-              <div className="absolute left-0 bottom-full mb-2 z-30 w-64 rounded-xl border border-zinc-200 bg-white p-2.5 shadow-xl dark:border-zinc-800 dark:bg-zinc-900 text-xs space-y-1.5 animate-in fade-in zoom-in-95 duration-100">
+              <div className="absolute right-0 sm:left-0 bottom-full mb-2 z-30 w-80 max-w-[92vw] rounded-xl border border-zinc-200 bg-white p-3 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 text-xs space-y-2 animate-in fade-in zoom-in-95 duration-100">
                 {/* Official ConnectLn Logo Card Preview with Profile Picture Inserted */}
                 <div
                   className="flex items-center gap-3 rounded-lg p-2.5 border border-zinc-800 shadow-sm"
@@ -1367,70 +1486,120 @@ export function FeedPostCard({
                   </div>
                 </div>
 
-                <span className="px-2 py-0.5 text-[10px] uppercase font-bold text-zinc-400 block border-b border-zinc-100 dark:border-zinc-800 pb-1">
-                  Share ConnectLn Card to:
+                {/* Section 1: Send to Another Person on ConnectLn */}
+                <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-800/50 p-2 space-y-1.5">
+                  <span className="text-[10px] uppercase font-extrabold tracking-wider text-[#0A66C2] dark:text-sky-400 block">
+                    ↪ Send to People on ConnectLn:
+                  </span>
+                  <input
+                    type="text"
+                    value={shareMemberQuery}
+                    onChange={(e) => setShareMemberQuery(e.target.value)}
+                    placeholder="Search ConnectLn member (e.g. Gus, Patience, Elena)..."
+                    className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-[#0A66C2]"
+                  />
+                  <div className="max-h-36 overflow-y-auto space-y-1 pr-0.5">
+                    {filteredShareMembers.map((member) => (
+                      <button
+                        key={member.id}
+                        type="button"
+                        onClick={() => handleShareToConnectLnMember(member)}
+                        className="flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-sky-50 dark:hover:bg-sky-950/40 transition-colors cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <img
+                            src={
+                              member.avatar ||
+                              `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(member.name)}&backgroundColor=0a66c2`
+                            }
+                            alt={member.name}
+                            className="h-6 w-6 rounded-full object-cover shrink-0"
+                          />
+                          <div className="min-w-0">
+                            <p className="font-bold text-zinc-900 dark:text-zinc-100 truncate text-[11px]">
+                              {member.name}
+                            </p>
+                            {member.subtitle && (
+                              <p className="text-[9px] text-zinc-500 dark:text-zinc-400 truncate">
+                                {member.subtitle}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <span className="shrink-0 rounded-full bg-[#0A66C2] px-2 py-0.5 text-[10px] font-bold text-white">
+                          Send
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Section 2: External Social Platforms */}
+                <span className="px-1 pt-0.5 text-[10px] uppercase font-bold text-zinc-400 block">
+                  Share to External Platforms:
                 </span>
-                
-                {/* 1. WhatsApp */}
-                <button
-                  onClick={handleShareWhatsApp}
-                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-zinc-700 hover:bg-emerald-50 hover:text-emerald-700 dark:text-zinc-200 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer"
-                >
-                  <svg className="h-4 w-4 fill-current text-[#25D366] shrink-0" viewBox="0 0 24 24">
-                    <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.303-.058.116-.087.188-.173.289l-.26.303c-.087.087-.177.181-.076.354.101.173.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.072.376-.043.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.043.072.043.419-.101.824z" />
-                    <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2.348 21.652l4.636-1.04A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.25c-1.63 0-3.14-.492-4.404-1.336l-.315-.21-2.753.618.63-2.683-.231-.328A8.212 8.212 0 013.75 12c0-4.549 3.701-8.25 8.25-8.25s8.25 3.701 8.25 8.25-3.701 8.25-8.25 8.25z" />
-                  </svg>
-                  <span className="font-semibold">WhatsApp</span>
-                </button>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {/* LinkedIn */}
+                  <button
+                    onClick={handleShareLinkedIn}
+                    className="flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 px-2 py-1.5 text-zinc-800 hover:bg-sky-50 hover:text-[#0A66C2] dark:text-zinc-200 dark:hover:bg-sky-950/40 transition-colors cursor-pointer"
+                  >
+                    <span className="text-[#0A66C2] font-black text-xs">in</span>
+                    <span className="font-bold text-[11px]">LinkedIn</span>
+                  </button>
 
-                {/* 2. Facebook */}
-                <button
-                  onClick={handleShareFacebook}
-                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-zinc-700 hover:bg-blue-50 hover:text-blue-700 dark:text-zinc-200 dark:hover:bg-blue-950/40 transition-colors cursor-pointer"
-                >
-                  <svg className="h-4 w-4 fill-current text-[#1877F2] shrink-0" viewBox="0 0 24 24">
-                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                  </svg>
-                  <span className="font-semibold">Facebook</span>
-                </button>
+                  {/* Facebook */}
+                  <button
+                    onClick={handleShareFacebook}
+                    className="flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 px-2 py-1.5 text-zinc-800 hover:bg-blue-50 hover:text-blue-700 dark:text-zinc-200 dark:hover:bg-blue-950/40 transition-colors cursor-pointer"
+                  >
+                    <svg className="h-3.5 w-3.5 fill-current text-[#1877F2] shrink-0" viewBox="0 0 24 24">
+                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                    </svg>
+                    <span className="font-bold text-[11px]">Facebook</span>
+                  </button>
 
-                {/* 3. X (Twitter) */}
-                <button
-                  onClick={handleShareTwitter}
-                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-zinc-700 hover:bg-zinc-100 hover:text-black dark:text-zinc-200 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                >
-                  <span className="font-black text-xs w-4 text-center">𝕏</span>
-                  <span className="font-semibold">Post on 𝕏</span>
-                </button>
+                  {/* Instagram */}
+                  <button
+                    onClick={handleShareInstagram}
+                    className="flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 px-2 py-1.5 text-zinc-800 hover:bg-pink-50 hover:text-[#E1306C] dark:text-zinc-200 dark:hover:bg-pink-950/40 transition-colors cursor-pointer"
+                  >
+                    <svg className="h-3.5 w-3.5 fill-current text-[#E1306C] shrink-0" viewBox="0 0 24 24">
+                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                    </svg>
+                    <span className="font-bold text-[11px]">Instagram</span>
+                  </button>
 
-                {/* 4. Instagram */}
-                <button
-                  onClick={handleShareInstagram}
-                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-zinc-700 hover:bg-pink-50 hover:text-[#E1306C] dark:text-zinc-200 dark:hover:bg-pink-950/40 transition-colors cursor-pointer"
-                >
-                  <svg className="h-4 w-4 fill-current text-[#E1306C] shrink-0" viewBox="0 0 24 24">
-                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-                  </svg>
-                  <span className="font-semibold">Instagram</span>
-                </button>
+                  {/* WhatsApp */}
+                  <button
+                    onClick={handleShareWhatsApp}
+                    className="flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 px-2 py-1.5 text-zinc-800 hover:bg-emerald-50 hover:text-emerald-700 dark:text-zinc-200 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer"
+                  >
+                    <svg className="h-3.5 w-3.5 fill-current text-[#25D366] shrink-0" viewBox="0 0 24 24">
+                      <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.303-.058.116-.087.188-.173.289l-.26.303c-.087.087-.177.181-.076.354.101.173.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.072.376-.043.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.043.072.043.419-.101.824z" />
+                      <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2.348 21.652l4.636-1.04A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.25c-1.63 0-3.14-.492-4.404-1.336l-.315-.21-2.753.618.63-2.683-.231-.328A8.212 8.212 0 013.75 12c0-4.549 3.701-8.25 8.25-8.25s8.25 3.701 8.25 8.25-3.701 8.25-8.25 8.25z" />
+                    </svg>
+                    <span className="font-bold text-[11px]">WhatsApp</span>
+                  </button>
 
-                {/* 5. LinkedIn */}
-                <button
-                  onClick={handleShareLinkedIn}
-                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-zinc-700 hover:bg-sky-50 hover:text-[#0A66C2] dark:text-zinc-200 dark:hover:bg-sky-950/40 transition-colors cursor-pointer"
-                >
-                  <span className="text-[#0A66C2] font-black text-xs w-4 text-center">in</span>
-                  <span className="font-semibold">LinkedIn</span>
-                </button>
+                  {/* X (Twitter) */}
+                  <button
+                    onClick={handleShareTwitter}
+                    className="flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 px-2 py-1.5 text-zinc-800 hover:bg-zinc-100 hover:text-black dark:text-zinc-200 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                  >
+                    <span className="font-black text-xs">𝕏</span>
+                    <span className="font-bold text-[11px]">Post 𝕏</span>
+                  </button>
 
-                {/* 6. Copy Link */}
-                <button
-                  onClick={handleCopyLink}
-                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800 transition-colors border-t border-zinc-100 dark:border-zinc-800 pt-1.5 cursor-pointer"
-                >
-                  {copiedLink ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4 text-zinc-500" />}
-                  <span className="font-semibold">{copiedLink ? "Link Copied!" : "Copy Link"}</span>
-                </button>
+                  {/* Copy Link */}
+                  <button
+                    onClick={handleCopyLink}
+                    className="flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 px-2 py-1.5 text-zinc-800 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                  >
+                    {copiedLink ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5 text-zinc-500" />}
+                    <span className="font-bold text-[11px]">{copiedLink ? "Copied!" : "Copy Link"}</span>
+                  </button>
+                </div>
               </div>
             </>
           )}
@@ -1449,6 +1618,19 @@ export function FeedPostCard({
           <span className="hidden sm:inline font-semibold">WhatsApp</span>
         </button>
       </div>
+
+      {sharedFeedback && (
+        <div className="mx-4 mb-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-3 py-1.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 flex items-center justify-between">
+          <span>{sharedFeedback}</span>
+          <button
+            type="button"
+            onClick={() => setSharedFeedback(null)}
+            className="text-emerald-600 hover:underline text-[10px] cursor-pointer"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* Expanded Comment Section */}
       {showComments && (
@@ -1509,13 +1691,26 @@ export function FeedPostCard({
                     </div>
 
                     <div className="flex items-center gap-3 px-2 pt-1 text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
-                      <button className="hover:text-[#0A66C2]">
-                        Like {comment.likesCount > 0 && `· ${comment.likesCount}`}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setLikedCommentIds((prev) => ({
+                            ...prev,
+                            [comment.id]: !prev[comment.id],
+                          }))
+                        }
+                        className={`cursor-pointer hover:text-[#0A66C2] ${
+                          likedCommentIds[comment.id] ? "text-[#0A66C2] font-bold" : ""
+                        }`}
+                      >
+                        {likedCommentIds[comment.id] ? "👍 Liked" : "Like"}{" "}
+                        {comment.likesCount + (likedCommentIds[comment.id] ? 1 : 0) > 0 &&
+                          `· ${comment.likesCount + (likedCommentIds[comment.id] ? 1 : 0)}`}
                       </button>
                       <span>·</span>
                       <button
                         onClick={() => setReplyToId(replyToId === comment.id ? null : comment.id)}
-                        className="hover:text-[#0A66C2]"
+                        className="hover:text-[#0A66C2] cursor-pointer"
                       >
                         Reply
                       </button>
