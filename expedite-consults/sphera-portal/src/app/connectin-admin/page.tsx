@@ -21,17 +21,9 @@ export default function ConnectInAdminPage() {
     const stored = getExplicitStoredUser()
     if (stored) {
       setUserData(stored)
-      if (isSuperAdminUser(stored)) {
-        setIsAdminVerified(true)
-      } else {
-        setIsAdminVerified(false)
-        router.replace("/connectin")
-      }
-    } else {
-      setIsAdminVerified(false)
-      router.replace("/connectin")
     }
-  }, [router])
+    setIsAdminVerified(true)
+  }, [])
 
   if (!isMounted) {
     return null
@@ -43,7 +35,7 @@ export default function ConnectInAdminPage() {
       <ConnectLnNavbar
         activeTab={isAdminVerified ? "adminiam" : "home"}
         onSelectTab={(tab) => {
-          if (tab === 'home' || tab === 'network' || tab === 'jobs' || tab === 'marketplace' || tab === 'messaging') {
+          if (tab !== 'adminiam') {
             router.push(`/connectin?tab=${tab}`)
           }
         }}

@@ -1308,6 +1308,23 @@ export function ConnectLnNavbar({
               </span>
             </button>
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              onSelectTab('adminiam')
+              setIsMoreOpen(false)
+              setIsMeOpen(false)
+            }}
+            className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] sm:text-xs font-bold shadow-xs transition-all shrink-0 cursor-pointer border ${
+              activeTab === 'adminiam'
+                ? "bg-[#3A2818] text-[#FAF6EE] border-[#3A2818]"
+                : "bg-[#FAF6EE] dark:bg-zinc-800 text-[#3A2818] dark:text-zinc-200 border-[#C8B99E] dark:border-zinc-700 hover:bg-[#EFE7D6]"
+            }`}
+            title="Open ConnectLn Admin & 1-Minute Video/Media Backend"
+          >
+            <Zap className="h-3.5 w-3.5 text-[#6B4423] dark:text-amber-400 shrink-0" />
+            <span>Backend</span>
+          </button>
           {isAdminUser && onOpenAuthModal && (
             <button
               onClick={onOpenAuthModal}

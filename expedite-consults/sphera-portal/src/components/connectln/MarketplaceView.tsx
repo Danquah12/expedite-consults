@@ -75,6 +75,7 @@ import {
   SpheraMicroApp
 } from "@/lib/nextgen-data"
 import { UserProfile } from "@/lib/connectln-data"
+import { LiveHarvestedMediaShowcase } from "./LiveHarvestedMediaShowcase"
 import {
   Dialog,
   DialogContent,
@@ -552,6 +553,12 @@ export function MarketplaceView({
             </button>
           </div>
         </div>
+
+        {/* Live 1-Minute Auto-Pulled Product Demo Videos & Solution Visuals */}
+        <LiveHarvestedMediaShowcase
+          destination="market"
+          onOpenAdminBackend={() => onNavigateTab && onNavigateTab('adminiam')}
+        />
 
         {/* NOCTIS AI MARKETING & SALES CONCIERGE HUB (In-App API Connection via /api/connectin/noctis) */}
         {showNoctisSalesHub && (

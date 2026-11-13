@@ -61,6 +61,7 @@ import { pulseRoomsData, PulseRoom } from "@/lib/nextgen-data"
 import { UserProfile } from "@/lib/connectln-data"
 import { resolveUserProfilePicture, generatePersonalSignatureAvatar } from "@/lib/connectin-storage"
 import { buildSharePreviewUrl, useSharePic } from "@/lib/connectin-share"
+import { LiveHarvestedMediaShowcase } from "./LiveHarvestedMediaShowcase"
 import {
   Dialog,
   DialogContent,
@@ -759,6 +760,14 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
               <span>Audio Rooms ({rooms.length})</span>
             </button>
           </div>
+        </div>
+
+        {/* Live 1-Minute Auto-Pulled Breaking Video & Photo Dispatches */}
+        <div className="mt-4">
+          <LiveHarvestedMediaShowcase
+            destination="pulse"
+            onOpenAdminBackend={() => onNavigateTab && onNavigateTab('adminiam')}
+          />
         </div>
 
         {/* Dynamic Category Filter Ribbon (Visible in News Feed) */}

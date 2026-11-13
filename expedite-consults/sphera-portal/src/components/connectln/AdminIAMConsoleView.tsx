@@ -90,7 +90,9 @@ import {
   loadStoredUserActivityLogs,
   UserActivityEvent
 } from "@/lib/connectin-storage"
+import { Film } from "lucide-react"
 import { AdminPulseSyncTab } from "./AdminPulseSyncTab"
+import { AdminMediaHarvesterTab } from "./AdminMediaHarvesterTab"
 
 interface AdminIAMConsoleViewProps {
   currentUser: UserProfile
@@ -104,6 +106,7 @@ export function AdminIAMConsoleView({
   // Navigation tabs
   const [activeAdminTab, setActiveAdminTab] = useState<
     | 'overview'
+    | 'media_harvester'
     | 'pulse_sync'
     | 'devhub'
     | 'user_activity'
@@ -119,7 +122,7 @@ export function AdminIAMConsoleView({
     | 'soc_alerts'
     | 'broadcasts'
     | 'four_eyes'
-  >('overview')
+  >('media_harvester')
 
   // Live state
   const [users, setUsers] = useState<AdminUserRecord[]>(() => loadStoredAdminUsers())
@@ -463,6 +466,7 @@ export function AdminIAMConsoleView({
     {
       title: "Core Operations",
       items: [
+        { id: 'media_harvester', label: '1-Min Video & Media Backend', icon: Film, badge: 'Every 60s', highlight: true },
         { id: 'overview', label: 'Dashboard & Metrics', icon: BarChart3, badge: 'Live' },
         { id: 'pulse_sync', label: 'Pulse Live Sync', icon: Radio, badge: 'Live Wire', highlight: true },
         { id: 'devhub', label: 'ConnectLn DevHub (IDP)', icon: Laptop, badge: 'v1.0', highlight: true },
@@ -556,6 +560,13 @@ export function AdminIAMConsoleView({
           </div>
 
           <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <button
+              onClick={() => setActiveAdminTab('media_harvester')}
+              className="rounded-full bg-[#6B4423] hover:bg-[#523319] px-4 py-2 text-xs font-bold text-white transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+            >
+              <Film className="h-3.5 w-3.5" />
+              <span>⚡ 1-Min Video &amp; Media Backend</span>
+            </button>
             <button
               onClick={() => setActiveAdminTab('devhub')}
               className="rounded-full bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-xs font-bold text-white transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
@@ -665,11 +676,19 @@ export function AdminIAMConsoleView({
 
         {/* Right Main Content Area */}
         <div className="md:col-span-8 lg:col-span-9 space-y-5">
+          {/* MODULE 0B: 1-MINUTE VIDEO & PICTURE HARVESTER BACKEND */}
+          {activeAdminTab === 'media_harvester' && (
+            <AdminMediaHarvesterTab
+              onShowNotice={showNotice}
+              onNavigateTab={(tab) => onNavigateTab(tab)}
+            />
+          )}
+
           {/* MODULE 0A: PULSE LIVE SYNC MONITOR */}
           {activeAdminTab === 'pulse_sync' && (
             <AdminPulseSyncTab
               onShowNotice={showNotice}
-              onNavigateToPulse={() => onNavigateTab('pulse')}
+              onNavigateToPulse={() => onNavigateTab('pulserooms')}
             />
           )}
 
@@ -940,6 +959,13 @@ export function AdminIAMConsoleView({
 
                   <div className="flex items-center gap-2 shrink-0 flex-wrap">
             <button
+              onClick={() => setActiveAdminTab('media_harvester')}
+              className="rounded-full bg-[#6B4423] hover:bg-[#523319] px-4 py-2 text-xs font-bold text-white transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+            >
+              <Film className="h-3.5 w-3.5" />
+              <span>⚡ 1-Min Video &amp; Media Backend</span>
+            </button>
+            <button
               onClick={() => setActiveAdminTab('devhub')}
               className="rounded-full bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-xs font-bold text-white transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
             >
@@ -1105,6 +1131,13 @@ export function AdminIAMConsoleView({
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <button
+              onClick={() => setActiveAdminTab('media_harvester')}
+              className="rounded-full bg-[#6B4423] hover:bg-[#523319] px-4 py-2 text-xs font-bold text-white transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+            >
+              <Film className="h-3.5 w-3.5" />
+              <span>⚡ 1-Min Video &amp; Media Backend</span>
+            </button>
             <button
               onClick={() => setActiveAdminTab('devhub')}
               className="rounded-full bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-xs font-bold text-white transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"

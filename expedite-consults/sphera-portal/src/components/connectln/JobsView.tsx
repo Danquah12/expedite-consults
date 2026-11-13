@@ -47,6 +47,7 @@ import { CareerTwinModal } from "./CareerTwinModal"
 import { UserProfile } from "@/lib/connectln-data"
 import { trackUserActivity } from "@/lib/connectin-storage"
 import { recordLocalBilateralDirectMessage } from "@/lib/direct-mailbox-sync"
+import { LiveHarvestedMediaShowcase } from "./LiveHarvestedMediaShowcase"
 
 interface JobsViewProps {
   currentUser?: UserProfile
@@ -1043,6 +1044,11 @@ export function JobsView({
               <span>+ Publish a Job</span>
             </button>
           </div>
+        </div>
+
+        {/* Live 1-Minute Auto-Pulled Employer Video Briefings & Workplace Visuals */}
+        <div className="mt-4">
+          <LiveHarvestedMediaShowcase destination="jobs" />
         </div>
 
         {/* Dynamic Profession Enclave Switcher + Worker Pillars + Country Ribbon (Visible in Find Jobs Mode) */}

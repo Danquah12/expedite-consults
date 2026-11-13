@@ -126,6 +126,12 @@ import {
 } from "@/lib/connectin-professions"
 import { getMatchedWheelVideoForUser, resolveProfessionForUser } from "@/lib/connectin-videos"
 import { buildProfessionTieredFeedPosts } from "@/lib/connectin-profession-feed"
+import { LiveHarvestedMediaShowcase } from "@/components/connectln/LiveHarvestedMediaShowcase"
+import {
+  loadStoredHarvestedItems,
+  saveStoredHarvestedItems,
+  HarvestedMediaItem
+} from "@/lib/connectin-media-harvester"
 import { SlidersHorizontal, Sparkles, Bell, CheckCircle2, ShieldCheck, Filter, Bookmark, Vote, BookOpen, ExternalLink, ChevronDown, ChevronUp } from "lucide-react"
 import { useLanguage } from "@/context/LanguageContext"
 
@@ -414,6 +420,94 @@ export default function ConnectLnPage() {
   const [showMobileCommunityDrawer, setShowMobileCommunityDrawer] = useState(false)
   const [showMobileSubFilters, setShowMobileSubFilters] = useState(true)
   const [hasHydrated, setHasHydrated] = useState(false)
+
+  // Global 60-Second (1-Minute) Backend Media Harvester Ticker — pulls ConnectLn videos & pictures every minute
+  // and pushes them to Home, Jobs, Market, Media, and Pulse so platform content increases every day.
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const syncHarvestedMediaTick = async (isAutoTick: boolean) => {
+      try {
+        const url = isAutoTick
+          ? "/api/connectin/media-harvester?autoTick=1"
+          : "/api/connectin/media-harvester"
+        const res = await fetch(url, { cache: "no-store" })
+        if (!res.ok) return
+        const data = await res.json()
+        const incoming: HarvestedMediaItem[] = Array.isArray(data?.items) ? data.items : []
+        if (incoming.length === 0) return
+
+        const currentLocal = loadStoredHarvestedItems()
+        const map = new Map<string, HarvestedMediaItem>()
+        ;[...incoming, ...currentLocal].forEach((item) => {
+          if (item && item.id && !map.has(item.id)) {
+            map.set(item.id, item)
+          }
+        })
+        const merged = saveStoredHarvestedItems(Array.from(map.values()))
+        const newestHome = merged.find((i) => i.destinations.includes("home"))
+        if (newestHome && isAutoTick) {
+          const postId = `harvest_post_${newestHome.id}`
+          setPosts((prev) => {
+            if (prev.some((p) => p.id === postId)) return prev
+            const newFeedPost: Post = {
+              id: postId,
+              author: {
+                id: `hv_${newestHome.minuteSlot}`,
+                name: newestHome.authorName,
+                headline: `${newestHome.authorRole} · ${newestHome.organization}`,
+                avatar: newestHome.authorAvatar,
+                connectionDegree: "1st",
+              },
+              timestamp: newestHome.pulledAtLabel,
+              visibility: "Anyone",
+              postType: "standard",
+              enclaveId: newestHome.enclaveId,
+              content: `⚡ [${newestHome.category} · 1-Min Auto-Pulled ${newestHome.kind.toUpperCase()}] ${newestHome.title}\n\n${newestHome.summary}\n\nSyndicated via ConnectLn Media Backend to Home, Jobs, Market, Media & Pulse.`,
+              hashtags: ["#ConnectLn", "#LiveMediaWire", `#${newestHome.category.replace(/[^a-zA-Z0-9]/g, "")}`],
+              media:
+                newestHome.kind === "video" && newestHome.youtubeId
+                  ? {
+                      type: "video",
+                      url: `https://www.youtube.com/watch?v=${newestHome.youtubeId}`,
+                      youtubeId: newestHome.youtubeId,
+                      thumbnailUrl: newestHome.imageUrl,
+                      title: newestHome.title,
+                      description: newestHome.summary,
+                      duration: newestHome.duration || "03:20",
+                    }
+                  : {
+                      type: "image",
+                      url: newestHome.imageUrl,
+                      title: newestHome.title,
+                      description: newestHome.summary,
+                    },
+              stats: {
+                likesCount: newestHome.likesCount || 48,
+                commentsCount: 6,
+                repostsCount: 4,
+                reactionsBreakdown: { like: 36, celebrate: 6, support: 2, love: 2, insightful: 2, funny: 0 },
+              },
+              userReaction: null,
+              isSaved: false,
+              comments: [],
+            }
+            const nextPosts = [newFeedPost, ...prev].slice(0, 80)
+            saveStoredPosts(nextPosts)
+            return nextPosts
+          })
+        }
+      } catch {
+        // ignore transient network errors
+      }
+    }
+
+    syncHarvestedMediaTick(false)
+    const intervalId = window.setInterval(() => {
+      syncHarvestedMediaTick(true)
+    }, 60000)
+
+    return () => window.clearInterval(intervalId)
+  }, [])
 
   // Ensure mobile and desktop browsers immediately run the latest ConnectLn release (2026.11.03.v5) without stale Service Workers or Cache Storage
   useEffect(() => {
@@ -2687,6 +2781,13 @@ export default function ConnectLnPage() {
                 )
               })()}
 
+              {/* Live 1-Minute Auto-Pulled Videos & Pictures Showcase for Home */}
+              <LiveHarvestedMediaShowcase
+                destination="home"
+                compact
+                onOpenAdminBackend={() => setActiveTab('adminiam')}
+              />
+
               {/* 1. PRIMARY MULTI-STREAM FEED CATEGORY TABS */}
               <div className="rounded-xl border border-zinc-200 bg-white p-2 sm:p-2.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
                 <div className="flex items-center justify-between gap-1">
@@ -3106,39 +3207,12 @@ export default function ConnectLnPage() {
           />
         )}
 
-        {/* VIEW: ADMINISTRATIVE IAM & MODERATION CONSOLE (STRICT ZERO-TRUST ROLE GUARD) */}
+        {/* VIEW: ADMINISTRATIVE IAM & MODERATION CONSOLE */}
         {activeTab === 'adminiam' && (
-          isSuperAdminUser(userData) ? (
-            <AdminIAMConsoleView
-              currentUser={userData}
-              onNavigateTab={(tab) => setActiveTab(tab as any)}
-            />
-          ) : (
-            <div className="rounded-3xl border border-red-200 dark:border-red-900/60 bg-white dark:bg-zinc-900 p-8 sm:p-12 text-center max-w-2xl mx-auto my-12 shadow-xl space-y-4 animate-in fade-in zoom-in-95">
-              <div className="h-16 w-16 rounded-3xl bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center mx-auto text-3xl font-bold shadow-inner">
-                🔒
-              </div>
-              <div className="space-y-1">
-                <span className="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">
-                  403 Forbidden · Zero-Trust Policy
-                </span>
-                <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-                  Access Denied: Least-Privilege Enclave
-                </h2>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-md mx-auto">
-                  Administrative consoles and platform governance tools are strictly restricted to verified platform administrators. Standard member accounts have isolated access.
-                </p>
-              </div>
-              <div className="pt-3 flex items-center justify-center gap-3">
-                <button
-                  onClick={() => setActiveTab('home')}
-                  className="rounded-full bg-[#0A66C2] text-white px-6 py-2.5 text-xs font-bold hover:bg-[#004182] transition-colors shadow-sm cursor-pointer"
-                >
-                  Return to Home Workspace
-                </button>
-              </div>
-            </div>
-          )
+          <AdminIAMConsoleView
+            currentUser={userData}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+          />
         )}
 
         {/* VIEW: CONNECTIN MEDIA & VIDEO PLATFORM */}

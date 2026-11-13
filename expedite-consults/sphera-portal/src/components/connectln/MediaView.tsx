@@ -60,6 +60,7 @@ import { UserProfile } from "@/lib/connectln-data"
 import { ConnectInVideoWheel } from "@/components/connectln/ConnectInVideoWheel"
 import { VideoShareBanner } from "@/components/connectln/VideoShareBanner"
 import { ConnectLnStudioPlayer, CONNECTLN_VIDEO_PLAY_EVENT, notifyExclusiveVideoPlay } from "@/components/connectln/ConnectLnStudioPlayer"
+import { LiveHarvestedMediaShowcase } from "@/components/connectln/LiveHarvestedMediaShowcase"
 
 interface MediaViewProps {
   currentUser: UserProfile
@@ -333,6 +334,12 @@ export function MediaView({
           ))}
         </div>
       </div>
+
+      {/* Live 1-Minute Auto-Pulled Videos & Visuals for Media Studio */}
+      <LiveHarvestedMediaShowcase
+        destination="media"
+        onOpenAdminBackend={() => onNavigateTab('adminiam')}
+      />
 
       {/* 1-Click Enclave & Profession Media Filter Pills */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[11px]">
