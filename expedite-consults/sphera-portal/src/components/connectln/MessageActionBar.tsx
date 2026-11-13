@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import type { B2BMessageItem } from '@/lib/b2b-messaging-data';
 import { recordLocalBilateralDirectMessage } from '@/lib/direct-mailbox-sync';
+import { triggerReactionSplash } from '@/lib/reaction-splash';
 
 export interface ShareTarget {
     id: string;
@@ -423,7 +424,10 @@ export function MessageActionBar({
                                     : r.label
                             }
                             aria-label={r.label}
-                            onClick={() => onReact(r.kind)}
+                            onClick={(e) => {
+                                triggerReactionSplash(r.kind, { clientX: e.clientX, clientY: e.clientY });
+                                onReact(r.kind);
+                            }}
                             className={`${btn} ${mine ? '!border-[#0A66C2] !bg-blue-50 !text-[#0A66C2]' : list.length > 0 ? '!border-emerald-300 !bg-emerald-50/70 !text-emerald-900' : ''}`}
                         >
                             <span>{r.emoji}</span>

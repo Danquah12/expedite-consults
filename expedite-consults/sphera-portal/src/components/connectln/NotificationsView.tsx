@@ -52,6 +52,7 @@ import {
   DEFAULT_CONNECTLN_SHARE_MEMBERS,
   type ShareTarget
 } from "./MessageActionBar"
+import { triggerReactionSplash } from "@/lib/reaction-splash"
 
 type AlertReactionType = 'like' | 'celebrate' | 'support' | 'love' | 'insightful' | 'funny'
 
@@ -357,6 +358,7 @@ function AlertSocialActionBar({
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation()
+                  triggerReactionSplash(r.key, { clientX: e.clientX, clientY: e.clientY })
                   handleToggleReaction(r.key)
                 }}
                 className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-extrabold transition-all cursor-pointer ${

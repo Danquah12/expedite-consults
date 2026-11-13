@@ -40,6 +40,7 @@ import {
   DEFAULT_CONNECTLN_SHARE_MEMBERS,
   type ShareTarget,
 } from "./MessageActionBar"
+import { triggerReactionSplash } from "@/lib/reaction-splash"
 
 interface LiveHarvestedMediaShowcaseProps {
   destination: HarvesterDestination
@@ -479,12 +480,13 @@ export function LiveHarvestedMediaShowcase({
                           {/* Like */}
                           <button
                             type="button"
-                            onClick={() =>
+                            onClick={(e) => {
+                              triggerReactionSplash("like", { clientX: e.clientX, clientY: e.clientY })
                               setLikedIds((prev) => ({
                                 ...prev,
                                 [item.id]: !prev[item.id],
                               }))
-                            }
+                            }}
                             className={`flex items-center gap-1 rounded-md px-1.5 py-1 transition-colors cursor-pointer ${
                               isLiked
                                 ? "bg-blue-50 text-[#0A66C2] dark:bg-blue-950/40 dark:text-sky-300"

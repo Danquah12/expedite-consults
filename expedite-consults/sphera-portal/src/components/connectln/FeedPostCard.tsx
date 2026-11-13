@@ -54,6 +54,7 @@ import {
   DEFAULT_CONNECTLN_SHARE_MEMBERS,
   type ShareTarget,
 } from "./MessageActionBar"
+import { triggerReactionSplash } from "@/lib/reaction-splash"
 
 interface FeedPostCardProps {
   post: Post
@@ -188,7 +189,11 @@ export function FeedPostCard({
 
   const postSnippet = (post.content || post.media?.title || "").slice(0, 90).replace(/\n/g, " ").trim()
 
-  const handleReactionSelect = (type: ReactionType) => {
+  const handleReactionSelect = (
+    type: ReactionType,
+    clickEvent?: { clientX?: number; clientY?: number } | null
+  ) => {
+    triggerReactionSplash(type, clickEvent)
     if (post.userReaction === type) {
       onToggleReaction(post.id, null)
       trackUserActivity({
@@ -1331,6 +1336,35 @@ export function FeedPostCard({
         </div>
       </div>
 
+      {/* Quick 6-Reaction Splash Strip (👍 Like, 👏 Celebrate, 🤝 Support, ❤️ Love, 💡 Insightful, 😂 Funny) */}
+      <div className="mx-4 flex flex-wrap items-center gap-1.5 border-b border-zinc-100 py-2 dark:border-zinc-800">
+        {(Object.entries(reactionIcons) as [ReactionType, { label: string; icon: string; color: string }][]).map(([key, config]) => {
+          const isSelected = post.userReaction === key
+          const baseCount = post.stats.reactionsBreakdown?.[key] || 0
+          const totalForKey = baseCount + (isSelected ? 1 : 0)
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={(e) => handleReactionSelect(key, { clientX: e.clientX, clientY: e.clientY })}
+              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-bold transition-all cursor-pointer ${
+                isSelected
+                  ? "border-[#6B4226] bg-[#F4EFE6] text-[#4A3525] shadow-2xs scale-[1.03] dark:border-amber-500 dark:bg-zinc-800 dark:text-amber-300"
+                  : "border-[#DFD5C0] bg-[#FAF7F2] text-[#4A3525] hover:bg-[#F0E9DC] dark:border-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-200 dark:hover:bg-zinc-700"
+              }`}
+            >
+              <span className="text-xs leading-none">{config.icon}</span>
+              <span>{config.label}</span>
+              {totalForKey > 0 && (
+                <span className="ml-0.5 rounded-full bg-black/8 dark:bg-white/10 px-1.5 py-0.2 text-[10px] font-black">
+                  {totalForKey}
+                </span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+
       {/* Interactive Action Bar (Like, Comment, Repost, Send) */}
       <div className="relative flex items-center justify-around px-1 sm:px-2 py-1 text-xs font-semibold text-zinc-600 dark:text-zinc-300">
         {/* Floating Reaction Bar on Hover / Long Press */}
@@ -1343,7 +1377,7 @@ export function FeedPostCard({
             {Object.entries(reactionIcons).map(([key, config]) => (
               <button
                 key={key}
-                onClick={() => handleReactionSelect(key as ReactionType)}
+                onClick={(e) => handleReactionSelect(key as ReactionType, { clientX: e.clientX, clientY: e.clientY })}
                 className="flex h-8 w-8 items-center justify-center rounded-full text-lg transition-transform hover:scale-135 hover:-translate-y-1"
                 title={config.label}
               >
@@ -1360,7 +1394,7 @@ export function FeedPostCard({
           onMouseLeave={() => setShowReactionPicker(false)}
         >
           <button
-            onClick={() => handleReactionSelect(post.userReaction || 'like')}
+            onClick={(e) => handleReactionSelect(post.userReaction || 'like', { clientX: e.clientX, clientY: e.clientY })}
             className={`flex items-center gap-1 sm:gap-1.5 rounded-md px-2 sm:px-3 py-2 text-[11px] sm:text-xs transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
               post.userReaction ? reactionIcons[post.userReaction].color : ""
             }`}
