@@ -46,6 +46,593 @@ import {
   markVouchAlertsRead,
   UserLiveTelemetryBundle
 } from "@/lib/connectin-analytics"
+import {
+  loadMembers,
+  sendSharedItemToConnectLnMember,
+  DEFAULT_CONNECTLN_SHARE_MEMBERS,
+  type ShareTarget
+} from "./MessageActionBar"
+
+type AlertReactionType = 'like' | 'celebrate' | 'support' | 'love' | 'insightful' | 'funny'
+
+const ALERT_REACTIONS_CONFIG: {
+  key: AlertReactionType
+  emoji: string
+  label: string
+  activeBg: string
+  activeBorder: string
+  activeText: string
+}[] = [
+  {
+    key: 'like',
+    emoji: '👍',
+    label: 'Like',
+    activeBg: 'bg-blue-50 dark:bg-blue-950/60',
+    activeBorder: 'border-[#0A66C2]',
+    activeText: 'text-[#0A66C2] dark:text-sky-300'
+  },
+  {
+    key: 'celebrate',
+    emoji: '👏',
+    label: 'Celebrate',
+    activeBg: 'bg-emerald-50 dark:bg-emerald-950/60',
+    activeBorder: 'border-emerald-600',
+    activeText: 'text-emerald-700 dark:text-emerald-300'
+  },
+  {
+    key: 'support',
+    emoji: '🤝',
+    label: 'Support',
+    activeBg: 'bg-teal-50 dark:bg-teal-950/60',
+    activeBorder: 'border-teal-600',
+    activeText: 'text-teal-700 dark:text-teal-300'
+  },
+  {
+    key: 'love',
+    emoji: '❤️',
+    label: 'Love',
+    activeBg: 'bg-rose-50 dark:bg-rose-950/60',
+    activeBorder: 'border-rose-500',
+    activeText: 'text-rose-600 dark:text-rose-300'
+  },
+  {
+    key: 'insightful',
+    emoji: '💡',
+    label: 'Insightful',
+    activeBg: 'bg-amber-50 dark:bg-amber-950/60',
+    activeBorder: 'border-amber-500',
+    activeText: 'text-amber-700 dark:text-amber-300'
+  },
+  {
+    key: 'funny',
+    emoji: '😂',
+    label: 'Funny',
+    activeBg: 'bg-orange-50 dark:bg-orange-950/60',
+    activeBorder: 'border-orange-500',
+    activeText: 'text-orange-700 dark:text-orange-300'
+  }
+]
+
+interface AlertCommentEntry {
+  id: string
+  authorName: string
+  authorProfession: string
+  text: string
+  createdAt: string
+}
+
+interface AlertSocialActionBarProps {
+  alertId: string
+  alertTitle: string
+  alertDescription: string
+  actorName: string
+  actorRole?: string
+  actorAvatar?: string
+  currentUserName: string
+  currentUserProfession: string
+  currentUserAvatar?: string
+  onPostToFeed?: (content: string, repostOf?: string) => void
+}
+
+function AlertSocialActionBar({
+  alertId,
+  alertTitle,
+  alertDescription,
+  actorName,
+  actorRole,
+  actorAvatar,
+  currentUserName,
+  currentUserProfession,
+  currentUserAvatar,
+  onPostToFeed
+}: AlertSocialActionBarProps) {
+  const [selectedReaction, setSelectedReaction] = useState<AlertReactionType | null>(null)
+  const [reactionCounts, setReactionCounts] = useState<Record<AlertReactionType, number>>({
+    like: 4,
+    celebrate: 2,
+    support: 2,
+    love: 1,
+    insightful: 3,
+    funny: 0
+  })
+  const [comments, setComments] = useState<AlertCommentEntry[]>([])
+  const [showComments, setShowComments] = useState(false)
+  const [commentDraft, setCommentDraft] = useState("")
+  const [showRepostPanel, setShowRepostPanel] = useState(false)
+  const [repostQuote, setRepostQuote] = useState("")
+  const [showSharePanel, setShowSharePanel] = useState(false)
+  const [shareQuery, setShareQuery] = useState("")
+  const [members, setMembers] = useState<ShareTarget[]>(DEFAULT_CONNECTLN_SHARE_MEMBERS)
+  const [sendingToId, setSendingToId] = useState<string | null>(null)
+  const [sentMemberIds, setSentMemberIds] = useState<Record<string, boolean>>({})
+  const [statusToast, setStatusToast] = useState<string | null>(null)
+
+  const storageReactionKey = `connectln_alert_react_v1_${alertId}`
+  const storageCommentsKey = `connectln_alert_comments_v1_${alertId}`
+
+  useEffect(() => {
+    try {
+      const savedReact = localStorage.getItem(storageReactionKey)
+      if (savedReact) {
+        const parsed = JSON.parse(savedReact)
+        if (parsed?.selected !== undefined) setSelectedReaction(parsed.selected)
+        if (parsed?.counts) setReactionCounts(parsed.counts)
+      }
+      const savedComments = localStorage.getItem(storageCommentsKey)
+      if (savedComments) {
+        const parsedComments = JSON.parse(savedComments)
+        if (Array.isArray(parsedComments)) setComments(parsedComments)
+      }
+    } catch {}
+  }, [storageReactionKey, storageCommentsKey])
+
+  useEffect(() => {
+    if (showSharePanel) {
+      loadMembers().then(setMembers).catch(() => {})
+    }
+  }, [showSharePanel])
+
+  const flashToast = (msg: string) => {
+    setStatusToast(msg)
+    setTimeout(() => setStatusToast(null), 3200)
+  }
+
+  const handleToggleReaction = (type: AlertReactionType) => {
+    const prevReaction = selectedReaction
+    const nextReaction = prevReaction === type ? null : type
+    const nextCounts = { ...reactionCounts }
+    if (prevReaction) {
+      nextCounts[prevReaction] = Math.max(0, (nextCounts[prevReaction] || 1) - 1)
+    }
+    if (nextReaction) {
+      nextCounts[nextReaction] = (nextCounts[nextReaction] || 0) + 1
+    }
+    setSelectedReaction(nextReaction)
+    setReactionCounts(nextCounts)
+    try {
+      localStorage.setItem(
+        storageReactionKey,
+        JSON.stringify({ selected: nextReaction, counts: nextCounts })
+      )
+    } catch {}
+  }
+
+  const handleAddComment = (e: React.FormEvent) => {
+    e.preventDefault()
+    const trimmed = commentDraft.trim()
+    if (!trimmed) return
+    const entry: AlertCommentEntry = {
+      id: `ac_${Date.now()}`,
+      authorName: currentUserName || "Kwesi Asiedu",
+      authorProfession: currentUserProfession || "Verified ConnectLn Professional",
+      text: trimmed,
+      createdAt: "Just now"
+    }
+    const updated = [entry, ...comments]
+    setComments(updated)
+    setCommentDraft("")
+    try {
+      localStorage.setItem(storageCommentsKey, JSON.stringify(updated))
+    } catch {}
+    flashToast("✓ Comment posted on this alert")
+  }
+
+  const shareCardUrl = (() => {
+    const params = new URLSearchParams({
+      author: actorName || "ConnectLn Alert Center",
+      role: actorRole || "ConnectLn Advisory & Operations",
+      avatar: actorAvatar && !actorAvatar.startsWith("data:") ? actorAvatar : "",
+      text: `${alertTitle}\n\n${alertDescription}`.slice(0, 420),
+      sharedBy: currentUserName || "Kwesi Asiedu"
+    })
+    return `https://www.conectln.com/share/message?${params.toString()}`
+  })()
+
+  const shareBodyText = `📢 ${alertTitle}\n\n${alertDescription}\n\n🔗 View on ConnectLn: ${shareCardUrl}`
+
+  const handlePublishToFeed = async (withCommentary: boolean) => {
+    const commentary = repostQuote.trim()
+    const postContent =
+      withCommentary && commentary
+        ? `${commentary}\n\n🔁 Reposted Alert from ${actorName || "ConnectLn Alerts"}:\n${alertTitle}\n${alertDescription}`
+        : `📢 ${alertTitle}\n\n${alertDescription}`
+
+    if (onPostToFeed) {
+      onPostToFeed(
+        `${alertTitle}\n\n${alertDescription}`,
+        withCommentary && commentary ? undefined : actorName || "ConnectLn Alerts"
+      )
+    }
+
+    try {
+      await fetch("/api/connectin/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          authorName: currentUserName || "Kwesi Asiedu",
+          authorRole: currentUserProfession || "Verified ConnectLn Professional",
+          authorAvatar: currentUserAvatar || "/brand/kwesi-avatar.png",
+          content: postContent,
+          tags: ["ConnectLnAlerts", "NoctisInvariant", "ProfessionalUpdate"]
+        })
+      })
+    } catch {}
+
+    setRepostQuote("")
+    setShowRepostPanel(false)
+    flashToast("✓ Posted to your ConnectLn Home Feed!")
+  }
+
+  const handleShareExternal = (platform: 'linkedin' | 'facebook' | 'instagram' | 'whatsapp' | 'email' | 'copy') => {
+    const openPopup = (url: string) =>
+      window.open(url, "_blank", "noopener,noreferrer,width=680,height=640")
+
+    if (platform === 'linkedin') {
+      openPopup(`https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(shareBodyText)}`)
+      flashToast("✓ Opened LinkedIn Share")
+    } else if (platform === 'facebook') {
+      openPopup(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareCardUrl)}&quote=${encodeURIComponent(shareBodyText)}`)
+      flashToast("✓ Opened Facebook Share")
+    } else if (platform === 'instagram') {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        navigator.clipboard.writeText(shareBodyText).catch(() => {})
+      }
+      openPopup("https://www.instagram.com/")
+      flashToast("✓ Copied alert caption & opened Instagram")
+    } else if (platform === 'whatsapp') {
+      openPopup(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareBodyText)}`)
+      flashToast("✓ Opened WhatsApp Share")
+    } else if (platform === 'email') {
+      window.location.href = `mailto:?subject=${encodeURIComponent(alertTitle)}&body=${encodeURIComponent(shareBodyText)}`
+    } else if (platform === 'copy') {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        navigator.clipboard.writeText(shareBodyText).catch(() => {})
+      }
+      flashToast("✓ Alert link & summary copied to clipboard")
+    }
+  }
+
+  const handleSendToConnectLnMember = async (target: ShareTarget) => {
+    setSendingToId(target.id)
+    try {
+      await sendSharedItemToConnectLnMember({
+        senderName: currentUserName || "Kwesi Asiedu",
+        senderAvatar: currentUserAvatar || "/brand/kwesi-avatar.png",
+        senderHeadline: currentUserProfession || "Verified ConnectLn Professional",
+        target,
+        itemTitle: alertTitle,
+        itemText: alertDescription,
+        shareUrl: shareCardUrl,
+        itemKindLabel: "ConnectLn Alert"
+      })
+      setSentMemberIds(prev => ({ ...prev, [target.id]: true }))
+      flashToast(`✓ Sent alert directly to ${target.name}'s ConnectLn Inbox`)
+    } finally {
+      setSendingToId(null)
+    }
+  }
+
+  const filteredMembers = members
+    .filter(m => m.name.toLowerCase() !== (currentUserName || "").toLowerCase())
+    .filter(m =>
+      !shareQuery.trim()
+        ? true
+        : m.name.toLowerCase().includes(shareQuery.trim().toLowerCase()) ||
+          (m.subtitle || "").toLowerCase().includes(shareQuery.trim().toLowerCase())
+    )
+    .slice(0, 6)
+
+  return (
+    <div className="pt-2.5 mt-1 border-t border-[#E6DEC8] dark:border-zinc-800 space-y-2.5">
+      {/* Row 1: All 6 ConnectLn Reactions (👍 Like, 👏 Celebrate, 🤝 Support, ❤️ Love, 💡 Insightful, 😂 Funny) + Comment, Post/Repost, Share */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        {/* 6 Reaction Pills */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {ALERT_REACTIONS_CONFIG.map((r) => {
+            const isActive = selectedReaction === r.key
+            const count = reactionCounts[r.key] || 0
+            return (
+              <button
+                key={r.key}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleToggleReaction(r.key)
+                }}
+                className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-extrabold transition-all cursor-pointer ${
+                  isActive
+                    ? `${r.activeBg} ${r.activeBorder} ${r.activeText} shadow-2xs scale-[1.02]`
+                    : "border-[#DFD5C0] dark:border-zinc-700 bg-[#FAF7F2] dark:bg-zinc-800/80 text-[#4A3525] dark:text-zinc-200 hover:bg-[#F0E9DC] dark:hover:bg-zinc-700"
+                }`}
+              >
+                <span className="text-xs leading-none">{r.emoji}</span>
+                <span>{r.label}</span>
+                {count > 0 && (
+                  <span className="ml-0.5 rounded-full bg-black/8 dark:bg-white/10 px-1.5 py-0.2 text-[10px] font-black">
+                    {count}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Comment, Post / Repost, and Share Actions */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              setShowComments(prev => !prev)
+              setShowRepostPanel(false)
+              setShowSharePanel(false)
+            }}
+            className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[11px] font-extrabold transition-all cursor-pointer ${
+              showComments
+                ? "border-[#0A66C2] bg-[#E8F0FE] text-[#0A66C2]"
+                : "border-[#DFD5C0] dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[#4A3525] dark:text-zinc-200 hover:bg-[#F4EFE6]"
+            }`}
+          >
+            <span>💬</span>
+            <span>Comment{comments.length > 0 ? ` (${comments.length})` : ""}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              setShowRepostPanel(prev => !prev)
+              setShowComments(false)
+              setShowSharePanel(false)
+            }}
+            className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[11px] font-extrabold transition-all cursor-pointer ${
+              showRepostPanel
+                ? "border-emerald-600 bg-emerald-50 text-emerald-800"
+                : "border-[#DFD5C0] dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[#4A3525] dark:text-zinc-200 hover:bg-[#F4EFE6]"
+            }`}
+          >
+            <span>🔁</span>
+            <span>Post / Repost</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              setShowSharePanel(prev => !prev)
+              setShowComments(false)
+              setShowRepostPanel(false)
+            }}
+            className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[11px] font-extrabold transition-all cursor-pointer ${
+              showSharePanel
+                ? "border-[#6B4226] bg-[#6B4226] text-white"
+                : "border-[#DFD5C0] dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[#4A3525] dark:text-zinc-200 hover:bg-[#F4EFE6]"
+            }`}
+          >
+            <span>📤</span>
+            <span>Share</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Status Confirmation Toast */}
+      {statusToast && (
+        <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-extrabold text-emerald-900 flex items-center justify-between">
+          <span>{statusToast}</span>
+          <button
+            type="button"
+            onClick={() => setStatusToast(null)}
+            className="text-[11px] underline ml-2 cursor-pointer"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* Inline Comment Drawer */}
+      {showComments && (
+        <div className="rounded-xl border border-[#DFD5C0] bg-[#FAF7F2] dark:bg-zinc-900/90 p-3 space-y-2.5">
+          <form onSubmit={handleAddComment} className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="text"
+              value={commentDraft}
+              onChange={(e) => setCommentDraft(e.target.value)}
+              placeholder={`Add a comment on "${alertTitle.slice(0, 44)}..."`}
+              className="flex-1 rounded-lg border border-[#D5C7AD] bg-white px-3 py-1.5 text-xs text-zinc-900 focus:border-[#6B4226] focus:outline-none"
+            />
+            <button
+              type="submit"
+              disabled={!commentDraft.trim()}
+              className="rounded-lg bg-[#6B4226] hover:bg-[#54331C] disabled:opacity-50 px-3.5 py-1.5 text-xs font-extrabold text-white cursor-pointer shrink-0"
+            >
+              Post Comment
+            </button>
+          </form>
+
+          {comments.length > 0 && (
+            <div className="space-y-1.5 pt-1">
+              {comments.map((c) => (
+                <div
+                  key={c.id}
+                  className="rounded-lg border border-[#E6DEC8] bg-white px-3 py-2 text-xs"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-extrabold text-[#292521]">{c.authorName}</span>
+                    <span className="text-[10px] font-mono text-zinc-400">{c.createdAt}</span>
+                  </div>
+                  <p className="text-zinc-700 mt-0.5 leading-relaxed">{c.text}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Inline Post / Repost to ConnectLn Feed Drawer */}
+      {showRepostPanel && (
+        <div className="rounded-xl border border-[#DFD5C0] bg-[#FAF7F2] dark:bg-zinc-900/90 p-3 space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-extrabold text-[#4A3525]">
+              🔁 Post or Repost Alert to ConnectLn Home Feed
+            </span>
+            <button
+              type="button"
+              onClick={() => handlePublishToFeed(false)}
+              className="rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-1 text-[11px] font-extrabold cursor-pointer"
+            >
+              ⚡ 1-Click Instant Repost
+            </button>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="text"
+              value={repostQuote}
+              onChange={(e) => setRepostQuote(e.target.value)}
+              placeholder="Add your thoughts or commentary before posting to the feed..."
+              className="flex-1 rounded-lg border border-[#D5C7AD] bg-white px-3 py-1.5 text-xs text-zinc-900 focus:border-[#6B4226] focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => handlePublishToFeed(true)}
+              className="rounded-lg bg-[#6B4226] hover:bg-[#54331C] px-3.5 py-1.5 text-xs font-extrabold text-white cursor-pointer shrink-0"
+            >
+              ✍️ Post with Commentary
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Inline Share Drawer (LinkedIn, Facebook, Instagram, WhatsApp, Email, Copy Link + ConnectLn Members) */}
+      {showSharePanel && (
+        <div className="rounded-xl border border-[#DFD5C0] bg-[#FAF7F2] dark:bg-zinc-900/90 p-3.5 space-y-3">
+          <div>
+            <div className="text-[11px] font-extrabold uppercase tracking-wider text-[#6B4226] mb-2">
+              🌐 Share Alert to Social Platforms
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => handleShareExternal('linkedin')}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#0A66C2]/40 bg-[#E8F0FE] hover:bg-[#D2E3FC] px-3 py-1.5 text-xs font-extrabold text-[#0A66C2] cursor-pointer"
+              >
+                <span>🔵</span>
+                <span>LinkedIn</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleShareExternal('facebook')}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-blue-400/40 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 text-xs font-extrabold text-blue-800 cursor-pointer"
+              >
+                <span>🟦</span>
+                <span>Facebook</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleShareExternal('instagram')}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-pink-400/40 bg-pink-50 hover:bg-pink-100 px-3 py-1.5 text-xs font-extrabold text-pink-800 cursor-pointer"
+              >
+                <span>📸</span>
+                <span>Instagram</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleShareExternal('whatsapp')}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-400/40 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 text-xs font-extrabold text-emerald-800 cursor-pointer"
+              >
+                <span>🟢</span>
+                <span>WhatsApp</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleShareExternal('email')}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white hover:bg-zinc-100 px-3 py-1.5 text-xs font-extrabold text-zinc-800 cursor-pointer"
+              >
+                <span>✉️</span>
+                <span>Email</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleShareExternal('copy')}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5C7AD] bg-white hover:bg-[#F4EFE6] px-3 py-1.5 text-xs font-extrabold text-[#4A3525] cursor-pointer"
+              >
+                <span>🔗</span>
+                <span>Copy Link</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="border-t border-[#E6DEC8] pt-2.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#4A3525]">
+                👥 Send Directly to People on ConnectLn
+              </span>
+              <input
+                type="text"
+                value={shareQuery}
+                onChange={(e) => setShareQuery(e.target.value)}
+                placeholder="Search ConnectLn professionals..."
+                className="rounded-lg border border-[#D5C7AD] bg-white px-2.5 py-1 text-xs text-zinc-900 focus:border-[#6B4226] focus:outline-none sm:w-64"
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+              {filteredMembers.map((member) => {
+                const isSent = !!sentMemberIds[member.id]
+                const isSending = sendingToId === member.id
+                return (
+                  <div
+                    key={member.id}
+                    className="flex items-center justify-between gap-2 rounded-lg border border-[#E2D9C5] bg-white p-2"
+                  >
+                    <div className="min-w-0">
+                      <div className="truncate text-xs font-extrabold text-zinc-900">
+                        {member.name}
+                      </div>
+                      <div className="truncate text-[10px] text-zinc-500">
+                        {member.subtitle || "Verified ConnectLn Professional"}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={isSending}
+                      onClick={() => handleSendToConnectLnMember(member)}
+                      className={`shrink-0 rounded-md px-2.5 py-1 text-[10px] font-extrabold transition-all cursor-pointer ${
+                        isSent
+                          ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                          : "bg-[#6B4226] hover:bg-[#54331C] text-white"
+                      }`}
+                    >
+                      {isSending ? "Sending..." : isSent ? "✓ Sent" : "Send →"}
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 interface NoctisAlertCardExplanation {
   alertId: string
@@ -59,6 +646,8 @@ interface NotificationsViewProps {
   onNavigateTab?: (tab: string) => void
   currentUserName?: string
   currentUserProfession?: string
+  currentUserAvatar?: string
+  onPostToFeed?: (content: string, repostOf?: string) => void
 }
 
 export interface SavedConnectLnJobAlert {
@@ -75,7 +664,9 @@ export interface SavedConnectLnJobAlert {
 export function NotificationsView({
   onNavigateTab,
   currentUserName = "Kwesi Asiedu",
-  currentUserProfession = ""
+  currentUserProfession = "",
+  currentUserAvatar = "/brand/kwesi-avatar.png",
+  onPostToFeed
 }: NotificationsViewProps) {
   const [selectedCategory, setSelectedCategory] = useState<'All' | 'Job Alerts' | 'Lookups & Vouches' | 'Security' | 'Career' | 'Marketplace' | 'Learning' | 'Social'>('All')
   const [jobAlertEnabled, setJobAlertEnabled] = useState<boolean>(true)
@@ -1397,6 +1988,19 @@ export function NotificationsView({
                 </div>
               )}
             </div>
+
+            {/* Social Reactions (👍 Like, 👏 Celebrate, 🤝 Support, ❤️ Love, 💡 Insightful, 😂 Funny), Comment, Post/Repost & Share Bar for Top Frontier Banner */}
+            <AlertSocialActionBar
+              alertId={`frontier_banner_${frontierBannerData.domain}`}
+              alertTitle={`[NOCTIS 6AM FRONTIER ALERT] Invariant Verified: ${frontierBannerData.domain}`}
+              alertDescription={`${frontierBannerData.question}\n\nVerdict: ${frontierBannerData.verdict}`}
+              actorName="Noctis Frontier & Benchmark Engine"
+              actorRole="Autonomous Invariant Engine"
+              currentUserName={currentUserName}
+              currentUserProfession={currentUserProfession}
+              currentUserAvatar={currentUserAvatar}
+              onPostToFeed={onPostToFeed}
+            />
           </div>
         </div>
 
@@ -1458,6 +2062,18 @@ export function NotificationsView({
                   Get started
                 </button>
               </div>
+
+              <AlertSocialActionBar
+                alertId="featured_job_alert_request"
+                alertTitle="ConnectLn Job Alert Request — Opportunity Radar"
+                alertDescription="Set up a job alert to get notified as soon as new jobs, contracts, or apprenticeships get posted at companies you like."
+                actorName="ConnectLn Opportunity Radar"
+                actorRole="Direct Job, Contract & Apprenticeship Alerts"
+                currentUserName={currentUserName}
+                currentUserProfession={currentUserProfession}
+                currentUserAvatar={currentUserAvatar}
+                onPostToFeed={onPostToFeed}
+              />
             </div>
           </div>
         </div>
@@ -2702,6 +3318,20 @@ export function NotificationsView({
                   </form>
                 </div>
               )}
+
+              {/* Social Reactions (👍 Like, 👏 Celebrate, 🤝 Support, ❤️ Love, 💡 Insightful, 😂 Funny), Comment, Post/Repost & Share Bar */}
+              <AlertSocialActionBar
+                alertId={notif.id}
+                alertTitle={notif.title}
+                alertDescription={notif.description}
+                actorName={notif.actor?.name || "ConnectLn Advisory"}
+                actorRole={notif.actor?.role || notif.subType}
+                actorAvatar={notif.actor?.avatar}
+                currentUserName={currentUserName}
+                currentUserProfession={currentUserProfession}
+                currentUserAvatar={currentUserAvatar}
+                onPostToFeed={onPostToFeed}
+              />
               </div>
             </div>
           )
