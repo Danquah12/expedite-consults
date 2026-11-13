@@ -735,6 +735,22 @@ export function getInitialDeterministicHarvestedItems(count: number = 14): Harve
   return items
 }
 
+export function sortHarvestedItemsNewestFirst(items: HarvestedMediaItem[]): HarvestedMediaItem[] {
+  return [...items].sort((a, b) => {
+    const aIsCustomOrManual =
+      a.id.startsWith("cln_custom_") || a.id.startsWith("cln_pull_") || a.id.startsWith("cln_auto_") ? 1 : 0
+    const bIsCustomOrManual =
+      b.id.startsWith("cln_custom_") || b.id.startsWith("cln_pull_") || b.id.startsWith("cln_auto_") ? 1 : 0
+    if (aIsCustomOrManual !== bIsCustomOrManual) {
+      return bIsCustomOrManual - aIsCustomOrManual
+    }
+    const timeA = Date.parse(a.pulledAtIso || "") || 0
+    const timeB = Date.parse(b.pulledAtIso || "") || 0
+    if (timeB !== timeA) return timeB - timeA
+    return (b.minuteSlot || 0) - (a.minuteSlot || 0)
+  })
+}
+
 export function loadStoredHarvestedItems(): HarvestedMediaItem[] {
   if (typeof window === "undefined") {
     return getInitialDeterministicHarvestedItems(14)
@@ -749,27 +765,27 @@ export function loadStoredHarvestedItems(): HarvestedMediaItem[] {
         map.set(item.id, item)
       }
     })
-    return Array.from(map.values()).slice(0, 60)
+    return sortHarvestedItemsNewestFirst(Array.from(map.values())).slice(0, 60)
   } catch {
     return getInitialDeterministicHarvestedItems(14)
   }
 }
 
 export function saveStoredHarvestedItems(items: HarvestedMediaItem[]): HarvestedMediaItem[] {
-  const trimmed = items.slice(0, 60)
+  const sorted = sortHarvestedItemsNewestFirst(items).slice(0, 60)
   if (typeof window !== "undefined") {
     try {
-      window.localStorage.setItem(HARVESTER_STORAGE_KEY, JSON.stringify(trimmed))
+      window.localStorage.setItem(HARVESTER_STORAGE_KEY, JSON.stringify(sorted))
       window.dispatchEvent(
         new CustomEvent(HARVESTER_EVENT_NAME, {
-          detail: { items: trimmed, timestamp: Date.now() },
+          detail: { items: sorted, timestamp: Date.now() },
         })
       )
     } catch {
       // ignore storage quota errors
     }
   }
-  return trimmed
+  return sorted
 }
 
 export function getStoredHarvestedItemsForDestination(

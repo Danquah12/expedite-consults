@@ -130,6 +130,7 @@ import { LiveHarvestedMediaShowcase } from "@/components/connectln/LiveHarvested
 import {
   loadStoredHarvestedItems,
   saveStoredHarvestedItems,
+  HARVESTER_EVENT_NAME,
   HarvestedMediaItem
 } from "@/lib/connectin-media-harvester"
 import { SlidersHorizontal, Sparkles, Bell, CheckCircle2, ShieldCheck, Filter, Bookmark, Vote, BookOpen, ExternalLink, ChevronDown, ChevronUp } from "lucide-react"
@@ -425,6 +426,90 @@ export default function ConnectLnPage() {
   // and pushes them to Home, Jobs, Market, Media, and Pulse so platform content increases every day.
   useEffect(() => {
     if (typeof window === "undefined") return
+
+    const buildFeedPostFromHarvestedItem = (item: HarvestedMediaItem): Post => {
+      const postId = `harvest_post_${item.id}`
+      return {
+        id: postId,
+        isUserCreated: true,
+        author: {
+          id: `hv_${item.minuteSlot}`,
+          name: item.authorName,
+          headline: `${item.authorRole} · ${item.organization}`,
+          avatar: item.authorAvatar,
+          connectionDegree: "1st",
+        },
+        timestamp: item.pulledAtLabel || "Synced just now from Admin Media Backend",
+        visibility: "Anyone",
+        postType: "standard",
+        enclaveId: item.enclaveId,
+        content: `⚡ [${item.category} · Synced from ConnectLn Admin Media Backend] ${item.title}\n\n${item.summary}\n\nSyndicated live across Home, Jobs, Market, Media & Pulse (${item.serialNumber}).`,
+        hashtags: ["#ConnectLn", "#AdminMediaSync", `#${item.category.replace(/[^a-zA-Z0-9]/g, "")}`],
+        media:
+          item.kind === "video"
+            ? {
+                type: "video",
+                url:
+                  item.videoUrl ||
+                  (item.youtubeId ? `https://www.youtube.com/watch?v=${item.youtubeId}` : "/status-videos/agentic_flywheel.mp4"),
+                youtubeId: item.youtubeId,
+                thumbnailUrl: item.imageUrl,
+                title: item.title,
+                description: item.summary,
+                duration: item.duration || "03:20",
+                serialPlate: item.serialNumber,
+              }
+            : {
+                type: "image",
+                url: item.imageUrl,
+                title: item.title,
+                description: item.summary,
+              },
+        stats: {
+          likesCount: item.likesCount || 48,
+          commentsCount: 6,
+          repostsCount: 4,
+          reactionsBreakdown: { like: 36, celebrate: 6, support: 2, love: 2, insightful: 2, funny: 0 },
+        },
+        userReaction: null,
+        isSaved: false,
+        comments: [],
+      }
+    }
+
+    const injectHarvestedHomeItemsIntoFeed = (allItems: HarvestedMediaItem[], onlyExplicitOrLatest: boolean) => {
+      const homeItems = allItems.filter((i) => Array.isArray(i.destinations) && i.destinations.includes("home"))
+      if (homeItems.length === 0) return
+
+      // Always inject any Admin-pushed / manually-pulled / auto-pulled items, plus the latest top 2 home items
+      const candidates = homeItems.filter(
+        (i, idx) =>
+          i.id.startsWith("cln_custom_") ||
+          i.id.startsWith("cln_pull_") ||
+          i.id.startsWith("cln_auto_") ||
+          (!onlyExplicitOrLatest && idx < 2) ||
+          idx === 0
+      ).slice(0, 6)
+
+      if (candidates.length === 0) return
+
+      setPosts((prev) => {
+        const existingIds = new Set(prev.map((p) => p.id))
+        const newlyBuilt: Post[] = []
+        for (const item of candidates) {
+          const postId = `harvest_post_${item.id}`
+          if (!existingIds.has(postId)) {
+            newlyBuilt.push(buildFeedPostFromHarvestedItem(item))
+            existingIds.add(postId)
+          }
+        }
+        if (newlyBuilt.length === 0) return prev
+        const nextPosts = [...newlyBuilt, ...prev].slice(0, 80)
+        saveStoredPosts(nextPosts)
+        return nextPosts
+      })
+    }
+
     const syncHarvestedMediaTick = async (isAutoTick: boolean) => {
       try {
         const url = isAutoTick
@@ -444,69 +529,37 @@ export default function ConnectLnPage() {
           }
         })
         const merged = saveStoredHarvestedItems(Array.from(map.values()))
-        const newestHome = merged.find((i) => i.destinations.includes("home"))
-        if (newestHome && isAutoTick) {
-          const postId = `harvest_post_${newestHome.id}`
-          setPosts((prev) => {
-            if (prev.some((p) => p.id === postId)) return prev
-            const newFeedPost: Post = {
-              id: postId,
-              author: {
-                id: `hv_${newestHome.minuteSlot}`,
-                name: newestHome.authorName,
-                headline: `${newestHome.authorRole} · ${newestHome.organization}`,
-                avatar: newestHome.authorAvatar,
-                connectionDegree: "1st",
-              },
-              timestamp: newestHome.pulledAtLabel,
-              visibility: "Anyone",
-              postType: "standard",
-              enclaveId: newestHome.enclaveId,
-              content: `⚡ [${newestHome.category} · 1-Min Auto-Pulled ${newestHome.kind.toUpperCase()}] ${newestHome.title}\n\n${newestHome.summary}\n\nSyndicated via ConnectLn Media Backend to Home, Jobs, Market, Media & Pulse.`,
-              hashtags: ["#ConnectLn", "#LiveMediaWire", `#${newestHome.category.replace(/[^a-zA-Z0-9]/g, "")}`],
-              media:
-                newestHome.kind === "video" && newestHome.youtubeId
-                  ? {
-                      type: "video",
-                      url: `https://www.youtube.com/watch?v=${newestHome.youtubeId}`,
-                      youtubeId: newestHome.youtubeId,
-                      thumbnailUrl: newestHome.imageUrl,
-                      title: newestHome.title,
-                      description: newestHome.summary,
-                      duration: newestHome.duration || "03:20",
-                    }
-                  : {
-                      type: "image",
-                      url: newestHome.imageUrl,
-                      title: newestHome.title,
-                      description: newestHome.summary,
-                    },
-              stats: {
-                likesCount: newestHome.likesCount || 48,
-                commentsCount: 6,
-                repostsCount: 4,
-                reactionsBreakdown: { like: 36, celebrate: 6, support: 2, love: 2, insightful: 2, funny: 0 },
-              },
-              userReaction: null,
-              isSaved: false,
-              comments: [],
-            }
-            const nextPosts = [newFeedPost, ...prev].slice(0, 80)
-            saveStoredPosts(nextPosts)
-            return nextPosts
-          })
-        }
+        injectHarvestedHomeItemsIntoFeed(merged, !isAutoTick)
       } catch {
         // ignore transient network errors
       }
     }
 
+    const handleHarvesterUpdatedEvent = () => {
+      const latest = loadStoredHarvestedItems()
+      injectHarvestedHomeItemsIntoFeed(latest, false)
+    }
+
+    const handleCrossTabStorage = (e: StorageEvent) => {
+      if (!e.key || e.key.includes("connectln_harvested_media")) {
+        const latest = loadStoredHarvestedItems()
+        injectHarvestedHomeItemsIntoFeed(latest, false)
+      }
+    }
+
     syncHarvestedMediaTick(false)
+    window.addEventListener(HARVESTER_EVENT_NAME, handleHarvesterUpdatedEvent)
+    window.addEventListener("storage", handleCrossTabStorage)
+
     const intervalId = window.setInterval(() => {
       syncHarvestedMediaTick(true)
     }, 60000)
 
-    return () => window.clearInterval(intervalId)
+    return () => {
+      window.clearInterval(intervalId)
+      window.removeEventListener(HARVESTER_EVENT_NAME, handleHarvesterUpdatedEvent)
+      window.removeEventListener("storage", handleCrossTabStorage)
+    }
   }, [])
 
   // Ensure mobile and desktop browsers immediately run the latest ConnectLn release (2026.11.03.v5) without stale Service Workers or Cache Storage
@@ -1966,10 +2019,12 @@ export default function ConnectLnPage() {
     const userCreatedPosts = posts.filter(
       (p) =>
         p &&
-        p.author?.connectionDegree === 'You' &&
-        !p.isProfessionTiered &&
-        p.id !== 'post_dstrike_wheel_masterclass' &&
-        !p.id.startsWith('post_prof_')
+        (p.isUserCreated ||
+          p.id?.startsWith('harvest_post_') ||
+          (p.author?.connectionDegree === 'You' &&
+            !p.isProfessionTiered &&
+            p.id !== 'post_dstrike_wheel_masterclass' &&
+            !p.id.startsWith('post_prof_')))
     )
     for (const p of [...userCreatedPosts, ...followedMemberSyntheticPosts, ...posts]) {
       if (!p || !p.id || seenIds.has(p.id)) continue
@@ -2010,7 +2065,11 @@ export default function ConnectLnPage() {
   const filteredPosts = combinedFeedPosts
     .filter(post => {
       // Respect post privacy: only public / Anyone posts (or 1st-degree connection posts) are eligible via following
-      const isUserOwnPost = post.author?.connectionDegree === 'You'
+      const isUserOwnPost = Boolean(
+        post.isUserCreated ||
+          post.id?.startsWith('harvest_post_') ||
+          post.author?.connectionDegree === 'You'
+      )
       const isFollowedAuthor = Boolean(
         post.author?.isFollowing ||
         followedNamesSet.has(normalizeFollowKey(post.author?.name))
@@ -2112,6 +2171,7 @@ export default function ConnectLnPage() {
     Boolean(
       p &&
         (p.isUserCreated ||
+          p.id?.startsWith('harvest_post_') ||
           p.id?.startsWith('user_post_') ||
           p.id?.startsWith('post_story_share_') ||
           (p.author?.connectionDegree === 'You' &&

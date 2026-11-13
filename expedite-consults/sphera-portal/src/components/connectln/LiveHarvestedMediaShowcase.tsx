@@ -109,6 +109,8 @@ export function LiveHarvestedMediaShowcase({
   const [playingId, setPlayingId] = useState<string | null>(null)
   const [isSyncingNow, setIsSyncingNow] = useState<boolean>(false)
   const [isExpanded, setIsExpanded] = useState<boolean>(true)
+  const [showAllItems, setShowAllItems] = useState<boolean>(false)
+  const [secondsToNextAutoPull, setSecondsToNextAutoPull] = useState<number>(60)
   const [appliedIds, setAppliedIds] = useState<string[]>([])
   const [likedIds, setLikedIds] = useState<Record<string, boolean>>({})
   const [repostedIds, setRepostedIds] = useState<Record<string, boolean>>({})
@@ -143,12 +145,39 @@ export function LiveHarvestedMediaShowcase({
 
   useEffect(() => {
     refreshFromStore()
+    // Also fetch latest from server on mount so any Admin push on the server immediately syncs
+    fetch("/api/connectin/media-harvester", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data?.items) && data.items.length > 0) {
+          const local = loadStoredHarvestedItems()
+          const map = new Map<string, HarvestedMediaItem>()
+          ;[...data.items, ...local].forEach((item) => {
+            if (item && item.id && !map.has(item.id)) {
+              map.set(item.id, item)
+            }
+          })
+          saveStoredHarvestedItems(Array.from(map.values()))
+          refreshFromStore()
+        }
+      })
+      .catch(() => {})
+
     const handleEvent = () => refreshFromStore()
+    const handleStorage = (e: StorageEvent) => {
+      if (!e.key || e.key.includes("connectln_harvested_media")) {
+        refreshFromStore()
+      }
+    }
     window.addEventListener(HARVESTER_EVENT_NAME, handleEvent)
-    return () => window.removeEventListener(HARVESTER_EVENT_NAME, handleEvent)
+    window.addEventListener("storage", handleStorage)
+    return () => {
+      window.removeEventListener(HARVESTER_EVENT_NAME, handleEvent)
+      window.removeEventListener("storage", handleStorage)
+    }
   }, [destination])
 
-  const handleManualPullForTab = async () => {
+  const handleManualPullForTab = async (isAutoTick: boolean = false) => {
     setIsSyncingNow(true)
     try {
       const res = await fetch("/api/connectin/media-harvester", {
@@ -172,6 +201,15 @@ export function LiveHarvestedMediaShowcase({
           })
           saveStoredHarvestedItems(Array.from(map.values()))
           refreshFromStore()
+          setSecondsToNextAutoPull(60)
+          const newestTitle = data?.pulledItems?.[0]?.title
+          if (newestTitle) {
+            flashToast(
+              isAutoTick
+                ? `⚡ 1-Min Admin Auto-Sync: Pulled "${newestTitle.slice(0, 48)}..." live!`
+                : `✓ Synced new video from Admin Backend: "${newestTitle.slice(0, 48)}..."`
+            )
+          }
         }
       }
     } finally {
@@ -179,9 +217,24 @@ export function LiveHarvestedMediaShowcase({
     }
   }
 
+  // Visible 60-second countdown that pulls & syncs a fresh video every minute right into the active tab
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSecondsToNextAutoPull((prev) => {
+        if (prev <= 1) {
+          handleManualPullForTab(true)
+          return 60
+        }
+        return prev - 1
+      })
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [destination])
+
   const cfg = HEADER_CONFIG[destination]
   const HeaderIcon = cfg.icon
-  const visibleItems = items.slice(0, compact ? 3 : 4)
+  const defaultLimit = compact ? 3 : 4
+  const visibleItems = showAllItems ? items.slice(0, 16) : items.slice(0, defaultLimit)
 
   if (visibleItems.length === 0) return null
 
@@ -198,6 +251,9 @@ export function LiveHarvestedMediaShowcase({
             <span className="rounded-full bg-[#EFE7D6] dark:bg-zinc-800 border border-[#D5C8B0] dark:border-zinc-700 px-2.5 py-0.5 text-[10px] font-mono font-bold text-[#3A2818] dark:text-zinc-200">
               {totalVideosCount.toLocaleString()} Platform Videos · +{pulledTodayCount.toLocaleString()} Today
             </span>
+            <span className="rounded-full bg-emerald-100 border border-emerald-400 px-2.5 py-0.5 text-[10px] font-mono font-extrabold text-emerald-900">
+              ⏱️ Next 1-Min Auto-Pull: {secondsToNextAutoPull}s
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <HeaderIcon className="h-4 w-4 text-[#6B4423] shrink-0" />
@@ -211,7 +267,7 @@ export function LiveHarvestedMediaShowcase({
         <div className="flex items-center gap-1.5 flex-wrap shrink-0">
           <button
             type="button"
-            onClick={handleManualPullForTab}
+            onClick={() => handleManualPullForTab(false)}
             disabled={isSyncingNow}
             className="rounded-xl bg-[#6B4423] hover:bg-[#523319] px-3 py-1.5 text-[11px] font-bold text-white flex items-center gap-1.5 shadow-2xs cursor-pointer disabled:opacity-60"
           >
@@ -701,6 +757,23 @@ export function LiveHarvestedMediaShowcase({
               </div>
             )
           })}
+        </div>
+      )}
+
+      {isExpanded && items.length > defaultLimit && (
+        <div className="flex items-center justify-between pt-1">
+          <span className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-400">
+            Showing {visibleItems.length} of {items.length} synced items for {destination.toUpperCase()}
+          </span>
+          <button
+            type="button"
+            onClick={() => setShowAllItems((prev) => !prev)}
+            className="rounded-full border border-[#6B4423]/40 bg-white hover:bg-[#EFE7D6] px-3.5 py-1 text-xs font-extrabold text-[#3A2818] cursor-pointer transition-all"
+          >
+            {showAllItems
+              ? "▲ Show Top Recent Videos"
+              : `▼ View All ${items.length} Synced Admin Videos & Visuals`}
+          </button>
         </div>
       )}
 
