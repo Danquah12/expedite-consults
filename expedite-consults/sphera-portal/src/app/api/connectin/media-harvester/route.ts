@@ -41,11 +41,13 @@ export async function GET(req: NextRequest) {
   const autoTick = searchParams.get("autoTick") === "1"
 
   if (autoTick) {
-    // Pull 1 fresh video + 1 fresh picture on the 60-second tick so the platform visibly grows every minute
-    const uniqueStep = Math.floor(Date.now() / 1000) + MANUAL_PULL_COUNTER++
+    // Pull 1 fresh video on the 60-second tick so the platform visibly grows every minute
+    const pullSeq = MANUAL_PULL_COUNTER++
+    const uniqueStep = Math.floor(Date.now() / 1000) + pullSeq
     const slot = getCurrentMinuteSlot() + uniqueStep
-    const item = buildHarvestedItemForSlot(slot, 0, Date.now())
-    item.id = `cln_auto_${Date.now()}_${MANUAL_PULL_COUNTER}`
+    const forcedTplIndex = (getCurrentMinuteSlot() + pullSeq) % 8
+    const item = buildHarvestedItemForSlot(slot, 0, Date.now(), forcedTplIndex)
+    item.id = `cln_auto_${Date.now()}_${pullSeq}`
     item.pulledAtIso = new Date().toISOString()
     item.pulledAtLabel = `Auto-pulled just now (${new Date().toLocaleTimeString("en-US", {
       hour: "numeric",
@@ -85,9 +87,11 @@ export async function POST(req: NextRequest) {
 
       const baseStep = Math.floor(Date.now() / 1000)
       for (let i = 0; i < count; i++) {
-        const slot = getCurrentMinuteSlot() + baseStep + i + MANUAL_PULL_COUNTER++
-        const built = buildHarvestedItemForSlot(slot, 0, Date.now() - i * 1000)
-        built.id = `cln_pull_${Date.now()}_${i}_${MANUAL_PULL_COUNTER}`
+        const pullSeq = MANUAL_PULL_COUNTER++
+        const slot = getCurrentMinuteSlot() + baseStep + i + pullSeq
+        const forcedTplIndex = i === 0 ? (getCurrentMinuteSlot() + pullSeq) % 8 : (getCurrentMinuteSlot() + pullSeq + i) % CONNECTLN_HARVESTER_TEMPLATES.length
+        const built = buildHarvestedItemForSlot(slot, 0, Date.now() - i * 1000, forcedTplIndex)
+        built.id = `cln_pull_${Date.now()}_${i}_${pullSeq}`
         built.destinations = requestedDestinations
         built.pulledAtIso = new Date(Date.now() - i * 1000).toISOString()
         built.pulledAtLabel = `Pulled & pushed at ${nowTimeStr}`

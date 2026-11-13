@@ -421,74 +421,78 @@ export default function ConnectLnPage() {
   const [showMobileCommunityDrawer, setShowMobileCommunityDrawer] = useState(false)
   const [showMobileSubFilters, setShowMobileSubFilters] = useState(true)
   const [hasHydrated, setHasHydrated] = useState(false)
+  const [harvestedHomeItems, setHarvestedHomeItems] = useState<HarvestedMediaItem[]>(() =>
+    loadStoredHarvestedItems().filter((i) => Array.isArray(i.destinations) && i.destinations.includes("home"))
+  )
+
+  const buildFeedPostFromHarvestedItem = (item: HarvestedMediaItem): Post => {
+    const postId = `harvest_post_${item.id}`
+    return {
+      id: postId,
+      isUserCreated: true,
+      author: {
+        id: `hv_${item.minuteSlot}`,
+        name: item.authorName,
+        headline: `${item.authorRole} · ${item.organization}`,
+        avatar: item.authorAvatar,
+        connectionDegree: "1st",
+      },
+      timestamp: item.pulledAtLabel || "Synced just now from Admin Media Backend",
+      visibility: "Anyone",
+      postType: "standard",
+      enclaveId: item.enclaveId,
+      content: `⚡ [${item.category} · Synced from ConnectLn Admin Media Backend] ${item.title}\n\n${item.summary}\n\nSyndicated live across Home, Jobs, Market, Media & Pulse (${item.serialNumber}).`,
+      hashtags: ["#ConnectLn", "#AdminMediaSync", `#${item.category.replace(/[^a-zA-Z0-9]/g, "")}`],
+      media:
+        item.kind === "video"
+          ? {
+              type: "video",
+              url:
+                item.videoUrl ||
+                (item.youtubeId ? `https://www.youtube.com/watch?v=${item.youtubeId}` : "/status-videos/agentic_flywheel.mp4"),
+              youtubeId: item.youtubeId,
+              thumbnailUrl: item.imageUrl,
+              title: item.title,
+              description: item.summary,
+              duration: item.duration || "03:20",
+              serialPlate: item.serialNumber,
+            }
+          : {
+              type: "image",
+              url: item.imageUrl,
+              title: item.title,
+              description: item.summary,
+            },
+      stats: {
+        likesCount: item.likesCount || 48,
+        commentsCount: 6,
+        repostsCount: 4,
+        reactionsBreakdown: { like: 36, celebrate: 6, support: 2, love: 2, insightful: 2, funny: 0 },
+      },
+      userReaction: null,
+      isSaved: false,
+      comments: [],
+    }
+  }
 
   // Global 60-Second (1-Minute) Backend Media Harvester Ticker — pulls ConnectLn videos & pictures every minute
   // and pushes them to Home, Jobs, Market, Media, and Pulse so platform content increases every day.
   useEffect(() => {
     if (typeof window === "undefined") return
 
-    const buildFeedPostFromHarvestedItem = (item: HarvestedMediaItem): Post => {
-      const postId = `harvest_post_${item.id}`
-      return {
-        id: postId,
-        isUserCreated: true,
-        author: {
-          id: `hv_${item.minuteSlot}`,
-          name: item.authorName,
-          headline: `${item.authorRole} · ${item.organization}`,
-          avatar: item.authorAvatar,
-          connectionDegree: "1st",
-        },
-        timestamp: item.pulledAtLabel || "Synced just now from Admin Media Backend",
-        visibility: "Anyone",
-        postType: "standard",
-        enclaveId: item.enclaveId,
-        content: `⚡ [${item.category} · Synced from ConnectLn Admin Media Backend] ${item.title}\n\n${item.summary}\n\nSyndicated live across Home, Jobs, Market, Media & Pulse (${item.serialNumber}).`,
-        hashtags: ["#ConnectLn", "#AdminMediaSync", `#${item.category.replace(/[^a-zA-Z0-9]/g, "")}`],
-        media:
-          item.kind === "video"
-            ? {
-                type: "video",
-                url:
-                  item.videoUrl ||
-                  (item.youtubeId ? `https://www.youtube.com/watch?v=${item.youtubeId}` : "/status-videos/agentic_flywheel.mp4"),
-                youtubeId: item.youtubeId,
-                thumbnailUrl: item.imageUrl,
-                title: item.title,
-                description: item.summary,
-                duration: item.duration || "03:20",
-                serialPlate: item.serialNumber,
-              }
-            : {
-                type: "image",
-                url: item.imageUrl,
-                title: item.title,
-                description: item.summary,
-              },
-        stats: {
-          likesCount: item.likesCount || 48,
-          commentsCount: 6,
-          repostsCount: 4,
-          reactionsBreakdown: { like: 36, celebrate: 6, support: 2, love: 2, insightful: 2, funny: 0 },
-        },
-        userReaction: null,
-        isSaved: false,
-        comments: [],
-      }
-    }
-
     const injectHarvestedHomeItemsIntoFeed = (allItems: HarvestedMediaItem[], onlyExplicitOrLatest: boolean) => {
       const homeItems = allItems.filter((i) => Array.isArray(i.destinations) && i.destinations.includes("home"))
+      setHarvestedHomeItems(homeItems)
       if (homeItems.length === 0) return
 
-      // Always inject any Admin-pushed / manually-pulled / auto-pulled items, plus the latest top 2 home items
+      // Always inject any Admin-pushed / manually-pulled / auto-pulled items, plus the latest top 3 home items
       const candidates = homeItems.filter(
         (i, idx) =>
           i.id.startsWith("cln_custom_") ||
           i.id.startsWith("cln_pull_") ||
           i.id.startsWith("cln_auto_") ||
-          (!onlyExplicitOrLatest && idx < 2) ||
-          idx === 0
+          (!onlyExplicitOrLatest && idx < 3) ||
+          idx < 3
       ).slice(0, 6)
 
       if (candidates.length === 0) return
@@ -2016,6 +2020,7 @@ export default function ConnectLnPage() {
   const combinedFeedPosts = React.useMemo(() => {
     const seenIds = new Set<string>()
     const merged: Post[] = []
+    const liveHarvestedPosts = harvestedHomeItems.slice(0, 4).map((item) => buildFeedPostFromHarvestedItem(item))
     const userCreatedPosts = posts.filter(
       (p) =>
         p &&
@@ -2026,7 +2031,7 @@ export default function ConnectLnPage() {
             p.id !== 'post_dstrike_wheel_masterclass' &&
             !p.id.startsWith('post_prof_')))
     )
-    for (const p of [...userCreatedPosts, ...followedMemberSyntheticPosts, ...posts]) {
+    for (const p of [...liveHarvestedPosts, ...userCreatedPosts, ...followedMemberSyntheticPosts, ...posts]) {
       if (!p || !p.id || seenIds.has(p.id)) continue
       seenIds.add(p.id)
       const authorKey = normalizeFollowKey(p.author?.name)
@@ -2044,7 +2049,7 @@ export default function ConnectLnPage() {
       )
     }
     return merged
-  }, [followedMemberSyntheticPosts, posts, followedNamesSet])
+  }, [harvestedHomeItems, followedMemberSyntheticPosts, posts, followedNamesSet])
 
   const handleSwitchActiveProfession = (profId: string) => {
     const prof = findProfessionById(profId)
@@ -2147,6 +2152,16 @@ export default function ConnectLnPage() {
     })
     .sort((a, b) => {
       const score = (p: Post) => {
+        if (
+          p.id?.startsWith('harvest_post_cln_custom_') ||
+          p.id?.startsWith('harvest_post_cln_pull_') ||
+          p.id?.startsWith('harvest_post_cln_auto_')
+        ) {
+          return 25
+        }
+        if (p.id?.startsWith('harvest_post_')) {
+          return 20
+        }
         if (
           p.isUserCreated ||
           p.id?.startsWith('user_post_') ||
@@ -2427,23 +2442,26 @@ export default function ConnectLnPage() {
               {/* LinkedIn-Style Top "Start a post" Box (Video, Photo, Write article — Matches Screenshot 1) */}
               <PostCreator user={userData} onAddPost={handleAddPost} />
 
-              {/* Skilled Trades: Learn by Doing — Videos Only Showcase on the Home Feed */}
-              <div id="home-skilled-trades-learn-by-doing" className="scroll-mt-20">
-                <SkilledTradesLearnByDoingSection
-                  user={userData}
-                  mode="home_videos_only"
-                  onOpenInLearnTab={(lessonId, category) => {
-                    setFocusedLearnLessonId(lessonId || null)
-                    setFocusedLearnCategory(category || null)
-                    setActiveTab('learning')
-                    if (typeof window !== 'undefined') {
-                      window.scrollTo({ top: 0, behavior: 'smooth' })
-                    }
-                  }}
-                />
-              </div>
+              {/* Live 1-Minute Auto-Pulled Videos & Pictures Showcase for Home (Positioned Above the Fold) */}
+              <LiveHarvestedMediaShowcase
+                destination="home"
+                compact
+                onOpenAdminBackend={() => setActiveTab('adminiam')}
+                onShareItemToFeed={(item) =>
+                  handleShareWheelVideoToFeed({
+                    title: item.title,
+                    speaker: item.authorName,
+                    speakerTitle: item.authorRole,
+                    youtubeId: item.youtubeId,
+                    thumbnailUrl: item.imageUrl,
+                    duration: item.duration || "03:30",
+                    serialPlate: item.category,
+                    summary: item.summary,
+                  })
+                }
+              />
 
-              {/* User's Own Newly Published Feed Posts (Celebrate, Video, Photo, Poll, Document, AI Post) — Shown Immediately Below Composer */}
+              {/* Admin-Synced Live Feed Video Posts & User's Own Newly Published Feed Posts — Shown Immediately Above Static Sections */}
               {myPublishedPosts.length > 0 && (
                 <div className="space-y-3">
                   {myPublishedPosts.map((post) => (
@@ -2462,6 +2480,22 @@ export default function ConnectLnPage() {
                   ))}
                 </div>
               )}
+
+              {/* Skilled Trades: Learn by Doing — Videos Only Showcase on the Home Feed */}
+              <div id="home-skilled-trades-learn-by-doing" className="scroll-mt-20">
+                <SkilledTradesLearnByDoingSection
+                  user={userData}
+                  mode="home_videos_only"
+                  onOpenInLearnTab={(lessonId, category) => {
+                    setFocusedLearnLessonId(lessonId || null)
+                    setFocusedLearnCategory(category || null)
+                    setActiveTab('learning')
+                    if (typeof window !== 'undefined') {
+                      window.scrollTo({ top: 0, behavior: 'smooth' })
+                    }
+                  }}
+                />
+              </div>
 
               {/* 4-Card Rounded LinkedIn Professional Stories, Framed Posters & Live Video Strip */}
               <LinkedInStoriesStrip
@@ -2926,25 +2960,6 @@ export default function ConnectLnPage() {
                   </>
                 )
               })()}
-
-              {/* Live 1-Minute Auto-Pulled Videos & Pictures Showcase for Home */}
-              <LiveHarvestedMediaShowcase
-                destination="home"
-                compact
-                onOpenAdminBackend={() => setActiveTab('adminiam')}
-                onShareItemToFeed={(item) =>
-                  handleShareWheelVideoToFeed({
-                    title: item.title,
-                    speaker: item.authorName,
-                    speakerTitle: item.authorRole,
-                    youtubeId: item.youtubeId,
-                    thumbnailUrl: item.imageUrl,
-                    duration: item.duration || "03:30",
-                    serialPlate: item.category,
-                    summary: item.summary,
-                  })
-                }
-              />
 
               {/* 1. PRIMARY MULTI-STREAM FEED CATEGORY TABS */}
               <div className="rounded-xl border border-zinc-200 bg-white p-2 sm:p-2.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">

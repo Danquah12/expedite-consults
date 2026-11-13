@@ -69,7 +69,7 @@ export interface HarvesterTelemetrySnapshot {
   items: HarvestedMediaItem[]
 }
 
-export const HARVESTER_STORAGE_KEY = "connectln_harvested_media_items_v1"
+export const HARVESTER_STORAGE_KEY = "connectln_harvested_media_items_v3"
 export const HARVESTER_AUTO_ENABLED_KEY = "connectln_harvester_auto_enabled_v1"
 export const HARVESTER_EVENT_NAME = "connectln-media-harvested"
 
@@ -113,6 +113,286 @@ interface SeedMediaTemplate {
 }
 
 export const CONNECTLN_HARVESTER_TEMPLATES: SeedMediaTemplate[] = [
+  {
+    kind: "video",
+    title: "High-Rise Elevator & Escalator Constructor (NEIEP / QEI): $106K–$195K Traction Hoist & Controller Commissioning",
+    summary:
+      "Inside an 80-story commercial hoistway inspecting gearless permanent-magnet synchronous traction motors, regenerative VFD drives, and ASME A17.1 overspeed governors.",
+    youtubeId: "Mw_EdvKBEc0",
+    imageUrl: "https://i.ytimg.com/vi/Mw_EdvKBEc0/hqdefault.jpg",
+    authorName: "Dante Rossi, QEI · IUEC Local 1",
+    authorRole: "Master Elevator Constructor & High-Rise Hoistway Inspector",
+    authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=240&auto=format&fit=crop&q=80",
+    organization: "National Elevator Constructors Guild",
+    enclaveId: "trades_construction",
+    category: "Elevator Constructors & MEP",
+    duration: "08:14",
+    sourceFeed: "Admin 1-Min Live Trade Video Wire",
+    jobMeta: {
+      roleTitle: "Licensed High-Rise Elevator & Escalator Constructor Mechanic (NEIEP / QEI)",
+      company: "Otis, TK Elevator & KONE High-Rise Division",
+      location: "New York, NY / Chicago / Nationwide",
+      salary: "$132,000 – $195,000",
+      employmentType: "Full-time · Union Master Trade",
+    },
+    marketMeta: {
+      productName: "ASME A17.1 Digital Hoistway & Governor Compliance Logbook",
+      vendor: "SkillHands Field Pro",
+      price: "$69/mo",
+      category: "Software",
+      liveUrl: "https://skillhands-client.vercel.app",
+    },
+    pulseMeta: {
+      severityOrTag: "ESSENTIAL TRADE SPOTLIGHT",
+      sourceName: "ConnectLn Essential Trades Wire",
+      takeaway: "Destination-dispatch regenerative elevator controllers reduce high-rise traction power consumption by 38% during peak morning up-peak traffic.",
+    },
+  },
+  {
+    kind: "video",
+    title: "Structural Union Ironworker & High-Steel Crane Erection: Bolt-Up, Spud Wrench Alignment & Rebar Post-Tensioning",
+    summary:
+      "Field walkthrough with structural ironworkers connecting W-shape steel columns at 400 feet, verifying slip-critical A325/A490 tension control bolts, and rigging tandem crane picks.",
+    youtubeId: "Nj0D_HVBlrk",
+    imageUrl: "https://i.ytimg.com/vi/Nj0D_HVBlrk/hqdefault.jpg",
+    authorName: "Marcus 'Highsteel' Vance · Ironworkers Local 40",
+    authorRole: "Structural Steel Raising Gang Foreman & Rigging Lead",
+    authorAvatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=240&auto=format&fit=crop&q=80",
+    organization: "Highsteel Structural Erection Enclave",
+    enclaveId: "trades_construction",
+    category: "Structural Ironwork & Rigging",
+    duration: "06:48",
+    sourceFeed: "Admin 1-Min Structural Field Wire",
+    jobMeta: {
+      roleTitle: "Journeyman Structural Ironworker & High-Steel Raising Gang Lead",
+      company: "American Bridge & Turner Structural Steel",
+      location: "Pittsburgh, PA / Nationwide Projects",
+      salary: "$118,000 – $164,000 + Per Diem",
+      employmentType: "Full-time · Structural Steel",
+    },
+    marketMeta: {
+      productName: "Structural Steel Crane Pick & AISC Bolt Torque Field Suite",
+      vendor: "DeskNote Field Engineering",
+      price: "$79/mo",
+      category: "Software",
+      liveUrl: "https://desk-note.app/",
+    },
+    pulseMeta: {
+      severityOrTag: "HIGH-STEEL FIELD BRIEF",
+      sourceName: "Ironworkers & Rigging Wire",
+      takeaway: "Tension-control twist-off spline bolts (ASTM F1852) guarantee verified slip-critical preload across seismic moment frames in half the inspection time.",
+    },
+  },
+  {
+    kind: "video",
+    title: "Commercial HVAC Sheet Metal Fabrication: CNC Plasma Duct Layout, Pittsburgh Lock Seams & Cleanroom Balancing",
+    summary:
+      "Inside an iTi sheet metal fabrication shop cutting 16-gauge galvanized spiral ductwork, forming Pittsburgh locks, and pressure-testing hospital negative-pressure isolation runs.",
+    youtubeId: "CJehmOQ5GL4",
+    imageUrl: "https://i.ytimg.com/vi/CJehmOQ5GL4/hqdefault.jpg",
+    authorName: "Liam O'Connor · SMART Sheet Metal Local 28",
+    authorRole: "Master HVAC Sheet Metal Fabricator & TAB Commissioning Lead",
+    authorAvatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=240&auto=format&fit=crop&q=80",
+    organization: "iTi Sheet Metal & Mechanical Guild",
+    enclaveId: "trades_construction",
+    category: "Sheet Metal & Industrial HVAC",
+    duration: "05:36",
+    sourceFeed: "Admin 1-Min Mechanical Trade Stream",
+    jobMeta: {
+      roleTitle: "Journeyman Commercial Sheet Metal & Cleanroom HVAC Fabricator",
+      company: "Apollo Mechanical & Cleanroom Systems",
+      location: "Phoenix, AZ / Semiconductor Corridor",
+      salary: "$112,000 – $152,000",
+      employmentType: "Full-time · Mechanical Trade",
+    },
+    marketMeta: {
+      productName: "SMACNA Duct Pressure & CAD/CAM Plasma Nesting Calculator",
+      vendor: "SkillHands Pro",
+      price: "$59/mo",
+      category: "Software",
+      liveUrl: "https://skillhands-client.vercel.app",
+    },
+    pulseMeta: {
+      severityOrTag: "MECHANICAL & FAB WIRE",
+      sourceName: "SMACNA & Sheet Metal Dispatch",
+      takeaway: "Automated laser-welded stainless exhaust ductwork cuts semiconductor fab sub-fab air leakage below 0.15 CFM per 100 sq ft.",
+    },
+  },
+  {
+    kind: "video",
+    title: "Automotive High-Voltage Electrician: CAN-FD Multiplex Bus Probing, ADAS Radar Calibration & EV Battery Pack Service",
+    summary:
+      "Hands-on diagnostic walkthrough isolating parasitic draw, decoding CAN-FD frames with a 4-channel oscilloscope, and servicing 400V/800V traction battery contactors.",
+    youtubeId: "O_VApkXslGA",
+    imageUrl: "https://i.ytimg.com/vi/O_VApkXslGA/hqdefault.jpg",
+    authorName: "Callum Reid, ASE L3 Master Auto Electrician",
+    authorRole: "Lead Automotive Electrical & EV High-Voltage Specialist",
+    authorAvatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=240&auto=format&fit=crop&q=80",
+    organization: "MTA Automotive Electrical Enclave",
+    enclaveId: "automotive_mechanics",
+    category: "Auto Electrical & EV Systems",
+    duration: "04:52",
+    sourceFeed: "Admin 1-Min Automotive & EV Wire",
+    jobMeta: {
+      roleTitle: "Master Automotive Electrician & EV High-Voltage Diagnostic Lead",
+      company: "Penske Fleet & Rivian Commercial Service",
+      location: "Dallas, TX / Nationwide",
+      salary: "$108,000 – $146,000",
+      employmentType: "Full-time · Automotive Master Tech",
+    },
+    marketMeta: {
+      productName: "CAN-FD Oscilloscope Waveform Library & EV Pinout Vault",
+      vendor: "Sphera Auto Diagnostics",
+      price: "$65/mo",
+      category: "Software",
+      liveUrl: "https://conectln.com",
+    },
+    pulseMeta: {
+      severityOrTag: "EV DIAGNOSTICS BRIEF",
+      sourceName: "ConnectLn Automotive Enclave",
+      takeaway: "Differential voltage drop testing across HV pyro-fuse junctions pinpoints high-resistance contactor wear before thermal derating occurs.",
+    },
+  },
+  {
+    kind: "video",
+    title: "Commercial Aviation & Flight Deck Operations: IFR Glass Cockpit Avionics, Turbine Pre-Flight & ATP Career Progression",
+    summary:
+      "Complete cockpit walkthrough from commercial instrument rating (IFR) and multi-engine turbine systems verification to Part 121 airline captain flight deck procedures.",
+    youtubeId: "D-nOuNU9LcQ",
+    imageUrl: "https://i.ytimg.com/vi/D-nOuNU9LcQ/hqdefault.jpg",
+    authorName: "Capt. Nathan Brooks, ATP, CFI-I",
+    authorRole: "Airline Transport Pilot (ATP) & Check Airman",
+    authorAvatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=240&auto=format&fit=crop&q=80",
+    organization: "Pilot Institute & ConnectLn Aviation Enclave",
+    enclaveId: "aviation_aerospace_maritime",
+    category: "Commercial Aviation & Flight Ops",
+    duration: "09:20",
+    sourceFeed: "Admin 1-Min Aviation & Aerospace Stream",
+    jobMeta: {
+      roleTitle: "First Officer & Captain — Part 121 / Part 135 Jet Operations (ATP)",
+      company: "Delta, United & NetJets Flight Operations",
+      location: "Atlanta, GA / Denver, CO / Nationwide Bases",
+      salary: "$165,000 – $340,000",
+      employmentType: "Full-time · Commercial Aviation",
+    },
+    marketMeta: {
+      productName: "FAA Part 121 IFR Flight Deck & Turbine Systems Simulator Pack",
+      vendor: "Orbital & Aviation Systems",
+      price: "$129/mo",
+      category: "Training",
+      liveUrl: "https://conectln.com",
+    },
+    pulseMeta: {
+      severityOrTag: "FLIGHT OPERATIONS DISPATCH",
+      sourceName: "Aviation & Aerospace Wire",
+      takeaway: "Required Navigation Performance (RNP AR) satellite approaches cut commercial jet fuel burn and terminal holding delays by 19%.",
+    },
+  },
+  {
+    kind: "video",
+    title: "High-Rise Architectural Glazier & Curtain Wall Installation: Vacuum Lifter Crane Rigging & Structural Silicone Glazing",
+    summary:
+      "On-site with commercial glaziers setting 1,200-lb triple-glazed low-E curtain wall units on a 55-story tower using remote-controlled vacuum glass manipulators.",
+    youtubeId: "THdNxgJo45A",
+    imageUrl: "https://i.ytimg.com/vi/THdNxgJo45A/hqdefault.jpg",
+    authorName: "Devon Vance · Architectural Glaziers Guild",
+    authorRole: "Lead Curtain Wall & Structural Glass Superintendent",
+    authorAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=240&auto=format&fit=crop&q=80",
+    organization: "Glazier Nation & High-Rise Facade Enclave",
+    enclaveId: "trades_construction",
+    category: "Architectural Glazing & Facades",
+    duration: "06:15",
+    sourceFeed: "Admin 1-Min Commercial Facade Wire",
+    jobMeta: {
+      roleTitle: "Journeyman High-Rise Curtain Wall Glazier & Rigging Lead",
+      company: "Harmon Facade & Permasteelisa North America",
+      location: "Boston, MA / New York, NY",
+      salary: "$106,000 – $148,000",
+      employmentType: "Full-time · Architectural Trade",
+    },
+    marketMeta: {
+      productName: "Curtain Wall Wind-Load & Thermal Curtain Takeoff Suite",
+      vendor: "DeskNote Field",
+      price: "$69/mo",
+      category: "Software",
+      liveUrl: "https://desk-note.app/",
+    },
+    pulseMeta: {
+      severityOrTag: "FACADE ENGINEERING",
+      sourceName: "Commercial Glazing Wire",
+      takeaway: "Unitized factory-glazed curtain wall panels with dual-circuit vacuum lifters enable 18-panel-per-shift installation in high-wind urban corridors.",
+    },
+  },
+  {
+    kind: "video",
+    title: "Heavy Civil Concrete Finisher & Highway Bridge Decking: Laser Screed Leveling, Superplasticizer Slump & Bull Float Mastery",
+    summary:
+      "Field crew pouring 800 cubic yards of DOT high-early-strength bridge deck concrete, verifying air entrainment and slump, and finishing with ride-on power trowels.",
+    youtubeId: "y2uEMYQQviE",
+    imageUrl: "https://i.ytimg.com/vi/y2uEMYQQviE/hqdefault.jpg",
+    authorName: "Joe Castellano · OPCMIA Cement Masons",
+    authorRole: "Master Heavy-Highway Concrete Finisher & Pour Superintendent",
+    authorAvatar: "https://images.unsplash.com/photo-1504593811423-6dd665756598?w=240&auto=format&fit=crop&q=80",
+    organization: "Heavy Civil & Infrastructure Guild",
+    enclaveId: "trades_construction",
+    category: "Heavy Civil & Concrete",
+    duration: "07:05",
+    sourceFeed: "Admin 1-Min Civil Infrastructure Wire",
+    jobMeta: {
+      roleTitle: "Lead Heavy-Civil Concrete Finisher & Bridge Deck Foreman (ACI)",
+      company: "Kiewit & Granite Infrastructure",
+      location: "Austin, TX / Midwest DOT Corridors",
+      salary: "$102,000 – $144,000 + Overtime",
+      employmentType: "Full-time · Heavy Civil",
+    },
+    marketMeta: {
+      productName: "ACI Concrete Mix Maturity, Slump & Yardage Field Calculator",
+      vendor: "SkillHands Pro",
+      price: "$49/mo",
+      category: "Software",
+      liveUrl: "https://skillhands-client.vercel.app",
+    },
+    pulseMeta: {
+      severityOrTag: "INFRASTRUCTURE POUR BRIEF",
+      sourceName: "Heavy Civil Construction Wire",
+      takeaway: "Embedded wireless concrete maturity sensors allow DOT bridge post-tensioning 36 hours earlier by tracking real-time hydration exothermic curves.",
+    },
+  },
+  {
+    kind: "video",
+    title: "Commercial Appliance & Sub-Zero Sealed System Technician: Inverter Compressor Diagnostics, EPA 608 & Control Board Repair",
+    summary:
+      "Step-by-step field repair of variable-capacity inverter compressors, Loki ring-lok braze-free sealed-system fittings, and relay board schematic tracing.",
+    youtubeId: "js_xjb65f_w",
+    imageUrl: "https://i.ytimg.com/vi/js_xjb65f_w/hqdefault.jpg",
+    authorName: "derek 'TechMaster' Cole, NASTeC, EPA 608",
+    authorRole: "Master Commercial Appliance & Refrigeration Service Engineer",
+    authorAvatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=240&auto=format&fit=crop&q=80",
+    organization: "National Appliance Service Technicians Enclave",
+    enclaveId: "trades_construction",
+    category: "Appliance & Sealed-System Tech",
+    duration: "07:45",
+    sourceFeed: "Admin 1-Min Service Tech Video Wire",
+    jobMeta: {
+      roleTitle: "Master Commercial & Luxury Appliance Sealed-System Technician (EPA 608)",
+      company: "Sub-Zero Wolf Authorized Service & Hobart Commercial",
+      location: "Seattle, WA / Nationwide",
+      salary: "$98,000 – $142,000",
+      employmentType: "Full-time · Field Service Tech",
+    },
+    marketMeta: {
+      productName: "Smart Appliance Board Schematic & Sealed-System Pressure App",
+      vendor: "SkillHands Field",
+      price: "$45/mo",
+      category: "Software",
+      liveUrl: "https://skillhands-client.vercel.app",
+    },
+    pulseMeta: {
+      severityOrTag: "FIELD SERVICE DISPATCH",
+      sourceName: "ConnectLn Service Tech Wire",
+      takeaway: "R-600a isobutane press-fit sealed-system Lokring couplings eliminate open-flame brazing hazards in residential and hospital kitchens.",
+    },
+  },
   {
     kind: "video",
     title: "eBPF Zero-Trust Kernel Packet Telemetry & Kubernetes Runtime Defense",
@@ -676,11 +956,14 @@ export function getMinutesElapsedToday(now: Date = new Date()): number {
 export function buildHarvestedItemForSlot(
   slot: number,
   offsetIndex: number = 0,
-  customTimestampMs?: number
+  customTimestampMs?: number,
+  forcedTemplateIndex?: number
 ): HarvestedMediaItem {
-  const templateIndex = Math.abs(slot + offsetIndex) % CONNECTLN_HARVESTER_TEMPLATES.length
+  const templateIndex =
+    typeof forcedTemplateIndex === "number"
+      ? Math.abs(forcedTemplateIndex) % CONNECTLN_HARVESTER_TEMPLATES.length
+      : Math.abs(slot + offsetIndex) % CONNECTLN_HARVESTER_TEMPLATES.length
   const tpl = CONNECTLN_HARVESTER_TEMPLATES[templateIndex]
-  const cycleNumber = Math.floor(Math.abs(slot + offsetIndex) / CONNECTLN_HARVESTER_TEMPLATES.length) + 1
   const itemTimeMs = customTimestampMs ?? Date.now() - offsetIndex * 60000
   const itemDate = new Date(itemTimeMs)
   const timeStr = itemDate.toLocaleTimeString("en-US", {
@@ -698,10 +981,10 @@ export function buildHarvestedItemForSlot(
       : `Pulled ${minsAgo} mins ago (${timeStr})`
 
   return {
-    id: `cln_hv_${slot}_${offsetIndex}_${tpl.kind}`,
+    id: `cln_hv_${slot}_${templateIndex}_${tpl.kind}`,
     serialNumber: `CLN-HV-${String((slot % 90000) + 10000)}`,
     kind: tpl.kind,
-    title: cycleNumber > 1 ? `${tpl.title} · Dispatch #${ (slot % 900) + 100 }` : tpl.title,
+    title: `${tpl.title} · [Sync #${(slot % 900) + 100}]`,
     summary: tpl.summary,
     videoUrl: tpl.videoUrl,
     youtubeId: tpl.youtubeId,
@@ -729,8 +1012,13 @@ export function buildHarvestedItemForSlot(
 export function getInitialDeterministicHarvestedItems(count: number = 14): HarvestedMediaItem[] {
   const currentSlot = getCurrentMinuteSlot()
   const items: HarvestedMediaItem[] = []
+  const newVideoPoolSize = 8 // First 8 templates are brand-new verified YouTube dispatches
   for (let i = 0; i < count; i++) {
-    items.push(buildHarvestedItemForSlot(currentSlot - i, 0, Date.now() - i * 60000))
+    const tplIdx =
+      i < newVideoPoolSize
+        ? (currentSlot + i) % newVideoPoolSize
+        : newVideoPoolSize + ((currentSlot + i) % (CONNECTLN_HARVESTER_TEMPLATES.length - newVideoPoolSize))
+    items.push(buildHarvestedItemForSlot(currentSlot - i, 0, Date.now() - i * 60000, tplIdx))
   }
   return items
 }
@@ -758,13 +1046,7 @@ export function loadStoredHarvestedItems(): HarvestedMediaItem[] {
   try {
     const raw = window.localStorage.getItem(HARVESTER_STORAGE_KEY)
     const parsed: HarvestedMediaItem[] = raw ? JSON.parse(raw) : []
-    // Filter out any legacy duplicate-template items where id had matching slot+offset
-    const cleanedParsed = parsed.filter((item) => {
-      if (!item || !item.id) return false
-      const m = item.id.match(/^cln_hv_(\d+)_(\d+)_/)
-      if (m && Number(m[2]) > 0) return false
-      return true
-    })
+    const cleanedParsed = parsed.filter((item) => Boolean(item && item.id))
     const deterministic = getInitialDeterministicHarvestedItems(14)
     const map = new Map<string, HarvestedMediaItem>()
     ;[...deterministic, ...cleanedParsed].forEach((item) => {

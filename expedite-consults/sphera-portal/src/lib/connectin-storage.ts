@@ -312,6 +312,7 @@ const USER_CREATED_POSTS_KEY = 'connectin_user_created_posts_v2'
 
 function isRealUserCreatedPost(p: Post): boolean {
   if (!p || !p.id) return false
+  if (p.id.startsWith('harvest_post_')) return false
   if (p.isUserCreated || p.id.startsWith('user_post_') || p.id.startsWith('post_story_share_')) return true
   if (
     p.author?.connectionDegree === 'You' &&
@@ -338,9 +339,13 @@ export function loadStoredPosts(explicitUser?: UserProfile | null): Post[] {
     const tieredPosts = buildProfessionTieredFeedPosts(activeUser)
     const tieredById = new Map(tieredPosts.map(tp => [tp.id, tp]))
 
-    // Collect all user-created posts (from dedicated key + any inside parsed), excluding stale 9mwE1Aih9uU slide shares
+    // Collect all user-created posts (from dedicated key + any inside parsed), excluding stale 9mwE1Aih9uU slide shares and old harvest_post_ items
     const isStaleFallProtectionPost = (post?: Post | null) =>
-      Boolean(post?.media?.youtubeId === '9mwE1Aih9uU' || (post?.id?.startsWith('post_story_share_') && post?.media?.youtubeId === '9mwE1Aih9uU'))
+      Boolean(
+        post?.id?.startsWith('harvest_post_') ||
+        post?.media?.youtubeId === '9mwE1Aih9uU' ||
+        (post?.id?.startsWith('post_story_share_') && post?.media?.youtubeId === '9mwE1Aih9uU')
+      )
 
     const userPostsMap = new Map<string, Post>()
     for (const up of savedUserPosts) {
@@ -373,7 +378,7 @@ export function loadStoredPosts(explicitUser?: UserProfile | null): Post[] {
 
     const combinedList = [...userCreatedList, ...tieredPosts, ...remainingPosts]
     return combinedList.map(p => {
-      if (p.author?.connectionDegree === 'You' || p.isUserCreated) {
+      if (!p.id.startsWith('harvest_post_') && (p.author?.connectionDegree === 'You' || p.isUserCreated)) {
         return {
           ...p,
           author: {

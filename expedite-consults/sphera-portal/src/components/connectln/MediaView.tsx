@@ -61,6 +61,47 @@ import { ConnectInVideoWheel } from "@/components/connectln/ConnectInVideoWheel"
 import { VideoShareBanner } from "@/components/connectln/VideoShareBanner"
 import { ConnectLnStudioPlayer, CONNECTLN_VIDEO_PLAY_EVENT, notifyExclusiveVideoPlay } from "@/components/connectln/ConnectLnStudioPlayer"
 import { LiveHarvestedMediaShowcase } from "@/components/connectln/LiveHarvestedMediaShowcase"
+import {
+  getStoredHarvestedItemsForDestination,
+  HARVESTER_EVENT_NAME,
+  HarvestedMediaItem,
+} from "@/lib/connectin-media-harvester"
+
+function convertHarvestedToMediaVideo(item: HarvestedMediaItem): MediaVideoItem {
+  return {
+    id: `hv_media_${item.id}`,
+    title: item.title,
+    channelName: item.authorName,
+    channelAvatar: item.authorAvatar,
+    channelRole: `${item.authorRole} · ${item.organization}`,
+    channelFollowers: "48.2K Followers",
+    isVerifiedChannel: true,
+    duration: item.duration || "06:15",
+    durationSeconds: 375,
+    views: `${(item.viewsCount || 1840).toLocaleString()} views`,
+    uploadTimeAgo: item.pulledAtLabel || "Synced just now",
+    category: "Technical Walkthrough",
+    thumbnail: item.imageUrl,
+    youtubeId: item.youtubeId || "Mw_EdvKBEc0",
+    visibility: "Public",
+    description: `${item.summary} (${item.serialNumber} · Synced from ConnectLn Admin Media Backend)`,
+    likesCount: item.likesCount || 215,
+    commentsCount: 28,
+    chapters: [
+      { timestamp: "00:00", seconds: 0, title: `Overview: ${item.category}` },
+      { timestamp: "02:15", seconds: 135, title: "Live Field & Technical Walkthrough" },
+      { timestamp: "04:30", seconds: 270, title: "Key Takeaways & Operational Standards" },
+    ],
+    transcript: [
+      {
+        timestamp: "00:15",
+        seconds: 15,
+        speaker: item.authorName,
+        text: item.summary,
+      },
+    ],
+  }
+}
 
 interface MediaViewProps {
   currentUser: UserProfile
@@ -112,6 +153,31 @@ export function MediaView({
       notifyExclusiveVideoPlay(mediaPlayerIdRef.current)
     }
   }, [isPlaying, selectedVideo?.id])
+
+  useEffect(() => {
+    const syncMediaVideosFromHarvester = (switchToNewest: boolean = false) => {
+      const encVideos = getEnclaveMediaVideos(enclaveId)
+      const harvestedVideos = getStoredHarvestedItemsForDestination("media")
+        .filter((i) => i.kind === "video")
+        .slice(0, 8)
+        .map(convertHarvestedToMediaVideo)
+      const mergedVideos = [...harvestedVideos, ...encVideos]
+      setVideos(mergedVideos)
+      if (switchToNewest && mergedVideos[0]) {
+        setSelectedVideo(mergedVideos[0])
+      } else {
+        setSelectedVideo((prev) => prev || mergedVideos[0] || null)
+      }
+    }
+    syncMediaVideosFromHarvester(true)
+    const timer = window.setTimeout(() => syncMediaVideosFromHarvester(true), 20)
+    const handleHarvesterEvent = () => syncMediaVideosFromHarvester(false)
+    window.addEventListener(HARVESTER_EVENT_NAME, handleHarvesterEvent)
+    return () => {
+      window.clearTimeout(timer)
+      window.removeEventListener(HARVESTER_EVENT_NAME, handleHarvesterEvent)
+    }
+  }, [enclaveId])
 
   useEffect(() => {
     const handleExclusivePlay = (e: Event) => {
@@ -339,6 +405,15 @@ export function MediaView({
       <LiveHarvestedMediaShowcase
         destination="media"
         onOpenAdminBackend={() => onNavigateTab('adminiam')}
+        onSelectForMediaStage={(item) => {
+          const mediaVid = convertHarvestedToMediaVideo(item)
+          setVideos((prev) => [mediaVid, ...prev.filter((v) => v.id !== mediaVid.id)])
+          setSelectedVideo(mediaVid)
+          setActiveMediaTab('for_you')
+          notifyExclusiveVideoPlay(mediaPlayerIdRef.current)
+          setIsPlaying(true)
+          mediaStageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }}
       />
 
       {/* 1-Click Enclave & Profession Media Filter Pills */}
