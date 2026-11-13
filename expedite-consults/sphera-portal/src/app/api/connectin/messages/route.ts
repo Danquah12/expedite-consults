@@ -449,17 +449,35 @@ export async function GET(request: Request) {
         // Proceed with in-memory store
     }
 
-    const threads = getThreadsForEnclaveMerged(enclave, viewerName, viewerEmail);
+    let threads: B2BConversationThread[] = [];
+    let degraded = false;
+    try {
+        threads = getThreadsForEnclaveMerged(enclave, viewerName, viewerEmail);
+    } catch (err) {
+        // Never 500 the inbox poll: log, then fall back to the static enclave threads (or an empty list).
+        degraded = true;
+        console.error('[messages GET] failed to build merged threads, using fallback:', err);
+        try {
+            threads = getEnclaveB2BThreads(enclave);
+        } catch (fallbackErr) {
+            console.error('[messages GET] fallback threads failed:', fallbackErr);
+            threads = [];
+        }
+    }
 
-    return NextResponse.json({
-        ok: true,
-        enclave,
-        viewerName,
-        totalThreads: threads.length,
-        unreadTotal: threads.reduce((acc, t) => acc + (t.unreadCount || 0), 0),
-        threads,
-        syncedAt: new Date().toISOString(),
-    });
+    return NextResponse.json(
+        {
+            ok: true,
+            degraded,
+            enclave,
+            viewerName,
+            totalThreads: threads.length,
+            unreadTotal: threads.reduce((acc, t) => acc + (t.unreadCount || 0), 0),
+            threads,
+            syncedAt: new Date().toISOString(),
+        },
+        { headers: { 'Cache-Control': 'no-store' } }
+    );
 }
 
 export async function POST(request: Request) {

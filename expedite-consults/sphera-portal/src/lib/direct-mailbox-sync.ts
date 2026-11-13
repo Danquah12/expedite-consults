@@ -1,5 +1,7 @@
-"use client"
-
+// NOTE: This is a plain shared module (NOT a "use client" boundary). The pure date/matching helpers are
+// imported by the server route `/api/connectin/messages`; a "use client" directive here makes those
+// calls throw on the server (HTTP 500). Only the localStorage helpers below require a browser and they
+// are only ever invoked from client components.
 import { B2BConversationThread, B2BMessageItem } from "./b2b-messaging-data"
 
 const SHARED_DM_STORAGE_KEY = "connectin_shared_bilateral_dms_v1"

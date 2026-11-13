@@ -28,6 +28,7 @@ import {
     formatMessageSentDateTime,
     formatMessageDateHeading,
 } from '@/lib/direct-mailbox-sync';
+import { startVisiblePoller } from '@/lib/visible-poller';
 import {
     startLiveVoiceChunkCapture,
     GaplessRemoteVoicePlayer,
@@ -906,7 +907,7 @@ export function MessagingView({
             );
         }
 
-        const fetchLiveThreads = async (showSpinner = false) => {
+        const fetchLiveThreads = async (showSpinner = false): Promise<boolean> => {
             if (showSpinner) setIsLoadingThreads(true);
             try {
                 const freshLocal = getLocalBilateralThreadsForViewer(vName, vEmail, selectedEnclave);
@@ -914,7 +915,7 @@ export function MessagingView({
                     `/api/connectin/messages?enclave=${encodeURIComponent(selectedEnclave)}&viewerName=${encodeURIComponent(vName)}&viewerEmail=${encodeURIComponent(vEmail)}`,
                     { cache: 'no-store' }
                 );
-                if (!res.ok) return;
+                if (!res.ok) return false;
                 const data = await res.json();
                 if (!cancelled && Array.isArray(data.threads) && data.threads.length > 0) {
                     const merged = mergeBilateralAndServerThreads(freshLocal, data.threads);
@@ -925,31 +926,28 @@ export function MessagingView({
                             : (selectedEnclave !== 'all' && data.threads[0]?.id) || merged[0].id
                     );
                 }
+                return true;
             } catch {
-                // Keep immediate fallback threads
+                // Keep immediate fallback threads; report failure so the poller backs off
+                return false;
             } finally {
                 if (!cancelled && showSpinner) setIsLoadingThreads(false);
             }
         };
 
         fetchLiveThreads(true);
-        const pollId = setInterval(() => fetchLiveThreads(false), 4000);
-        const handleSyncEvent = () => fetchLiveThreads(false);
+        // Backs off exponentially on failures and pauses while the tab is hidden
+        const stopPolling = startVisiblePoller(() => fetchLiveThreads(false), { baseMs: 6000, maxMs: 60000 });
+        const handleSyncEvent = () => { void fetchLiveThreads(false); };
         window.addEventListener('connectin_dm_updated', handleSyncEvent);
         window.addEventListener('storage', handleSyncEvent);
-        // Background tabs throttle timers, so also refresh as soon as the tab/window becomes active again
-        const handleVisible = () => {
-            if (document.visibilityState === 'visible') fetchLiveThreads(false);
-        };
-        document.addEventListener('visibilitychange', handleVisible);
         window.addEventListener('focus', handleSyncEvent);
 
         return () => {
             cancelled = true;
-            clearInterval(pollId);
+            stopPolling();
             window.removeEventListener('connectin_dm_updated', handleSyncEvent);
             window.removeEventListener('storage', handleSyncEvent);
-            document.removeEventListener('visibilitychange', handleVisible);
             window.removeEventListener('focus', handleSyncEvent);
         };
     }, [selectedEnclave, currentUser?.name, currentUser?.email]);

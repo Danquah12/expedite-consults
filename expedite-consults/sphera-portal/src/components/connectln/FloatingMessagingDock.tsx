@@ -26,6 +26,7 @@ import {
   normalizeDmName,
   formatMessageSentDateTime
 } from "@/lib/direct-mailbox-sync"
+import { startVisiblePoller } from "@/lib/visible-poller"
 
 export interface DirectMessageRecipient {
   id?: string
@@ -154,23 +155,31 @@ export function FloatingMessagingDock({
           return
         }
       }
+      if (!res.ok) {
+        setThreads(initialMerged)
+        return false
+      }
     } catch {
-      // Fallback to local merged threads
+      // Fallback to local merged threads; report failure so the poller backs off
+      setThreads(initialMerged)
+      return false
     }
 
     setThreads(initialMerged)
+    return true
   }, [enclaveId, viewerName, viewerEmail])
 
   useEffect(() => {
     syncMailbox()
-    const interval = setInterval(syncMailbox, 4000)
+    // Backs off on failures and pauses while the tab is hidden
+    const stopPolling = startVisiblePoller(syncMailbox, { baseMs: 6000, maxMs: 60000 })
     const handleStorageOrCustom = () => {
       syncMailbox()
     }
     window.addEventListener("connectin_dm_updated", handleStorageOrCustom)
     window.addEventListener("storage", handleStorageOrCustom)
     return () => {
-      clearInterval(interval)
+      stopPolling()
       window.removeEventListener("connectin_dm_updated", handleStorageOrCustom)
       window.removeEventListener("storage", handleStorageOrCustom)
     }
