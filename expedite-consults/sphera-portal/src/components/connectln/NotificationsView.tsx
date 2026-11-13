@@ -830,10 +830,10 @@ Standards: IETF RFC 2439 · RFC 7454 (BGP Operations and Security)
               Notifications &amp; Activity
             </span>
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 mt-1.5">
-              Updates, Weekly Lookups &amp; Peer Vouches
+              ConnectIn Alerts &amp; Operations Center
             </h1>
             <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-xl">
-              Track who was trying to look you up this week, who vouched for your skills, peer connections, and career signals.
+              Real-time security advisories, Noctis autonomous invariant alerts, job opportunities, and professional updates.
             </p>
           </div>
 
@@ -1405,7 +1405,17 @@ Standards: IETF RFC 2439 · RFC 7454 (BGP Operations and Security)
 
       {/* 1.25 WEEKLY DIRECTORY LOOKUPS & VERIFIED PEER VOUCHES ALERT HUB (Only shown in 'All' or 'Lookups & Vouches' so Career/Social/Learning/Solutions/Security show their cards immediately at the top!) */}
       {(selectedCategory === 'All' || selectedCategory === 'Lookups & Vouches') && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="space-y-3">
+          <div className="rounded-xl border border-amber-200/90 dark:border-amber-800/60 bg-gradient-to-r from-amber-50/90 via-orange-50/40 to-transparent dark:from-amber-950/30 dark:via-zinc-900 p-4">
+            <h2 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+              <span>🔍🤝</span>
+              <span>Updates, Weekly Lookups &amp; Peer Vouches</span>
+            </h2>
+            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-0.5">
+              Track who was trying to look you up this week, who vouched for your skills, peer connections, and career signals.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* LEFT CARD: WEEKLY DIRECTORY LOOKUPS & WHO WAS TRYING TO LOOKUP THE USER */}
           {(lookupVouchSubFilter === 'all' || lookupVouchSubFilter === 'lookups') && (
           <div className={`rounded-2xl border border-amber-300/80 dark:border-amber-800/70 bg-gradient-to-br from-amber-50/80 via-white to-orange-50/40 dark:from-zinc-900 dark:via-zinc-900 dark:to-amber-950/20 p-5 shadow-xs flex flex-col justify-between ${lookupVouchSubFilter === 'lookups' ? 'lg:col-span-2' : ''}`}>
@@ -1656,6 +1666,7 @@ Standards: IETF RFC 2439 · RFC 7454 (BGP Operations and Security)
           </div>
           )}
         </div>
+      </div>
       )}
 
       {/* 1.5 NOCTIS ALERTS INTELLIGENCE & SIGNAL EXPLANATION PANEL (Shown in 'All' view or when explicitly toggled) */}
