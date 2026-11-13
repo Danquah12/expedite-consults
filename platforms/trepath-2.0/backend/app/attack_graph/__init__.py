@@ -442,10 +442,36 @@ def build_attack_graph_intelligence_summary(
     }
 
 
+def _extract_finding_port(f: models.Finding) -> int:
+    fk = (f.finding_key or "").upper()
+    title = (f.title or "").lower()
+    import re
+    m_fk = re.search(r"(?:PORT-OPEN-|NMAP-PORT-|NMAP-SERVICE-|NMAP-NSE-)(\d+)", fk)
+    if m_fk:
+        return int(m_fk.group(1))
+    m_tcp = re.search(r"\b(\d{1,5})/tcp\b", title)
+    if m_tcp:
+        return int(m_tcp.group(1))
+    if fk.startswith("TOMCAT-MGR-") or "8080" in fk or "tomcat" in title:
+        return 8080
+    if fk.startswith("SMB-") or "445" in fk or "samba" in title or "smb" in title:
+        return 445
+    if "3306" in fk or "mysql" in title:
+        return 3306
+    if "5432" in fk or "postgresql" in title:
+        return 5432
+    if "21" in fk or "vsftpd" in title or "ftp" in title:
+        return 21
+    if "22" in fk or "openssh" in title or "ssh" in title:
+        return 22
+    return 80
+
+
 def classify_node_and_edge_evidence(node: models.Finding, prev_node: models.Finding | None = None) -> tuple[str, str]:
     """
     Determine the explicit TrePath 2.1 `edge_evidence_state` and `transition_rationale` for a step in an AttackPath.
-    Prevents independent co-located services (e.g. FTP + MySQL + phpMyAdmin) from being misrepresented as a proven pivot.
+    Prevents independent co-located services (e.g. FTP 21 + MySQL 3306 + phpMyAdmin 80 in PATH-00010, or
+    unencrypted HTTP + candidate id parameter + cookie flags in PATH-00011) from being misrepresented as a proven pivot (Gate GRAPH-006).
     """
     fk = (node.finding_key or "").upper()
     pf = _proof_str(node)
@@ -453,43 +479,50 @@ def classify_node_and_edge_evidence(node: models.Finding, prev_node: models.Find
     if prev_node is None:
         return "OBSERVED", f"Network/service reachability directly observed on target ({node.finding_key})."
 
-    if fk.startswith("TOMCAT-MGR-"):
+    prev_fk = (prev_node.finding_key or "").upper()
+    prev_port = _extract_finding_port(prev_node)
+    cur_port = _extract_finding_port(node)
+
+    # Gate GRAPH-006: Cross-port / cross-service transitions without a verified credential/session pivot artifact are INFERRED (Correlated Exposures)
+    if prev_port != cur_port:
         return (
-            "TECHNIQUE_VALIDATED",
-            "Authenticated HTTP 200 session to /manager/html confirmed using default credentials (tomcat:tomcat) -> CONFIRMED_ADMIN_AUTH.",
-        )
-    if fk.startswith("SMB-READ-"):
-        return (
-            "TECHNIQUE_VALIDATED",
-            "Anonymous SMB share connection and directory listing verified via SMB-READ-001 -> SHARE_READ_VERIFIED.",
-        )
-    if fk.startswith("SMB-LIST-"):
-        return (
-            "TECHNIQUE_VALIDATED",
-            "Anonymous SMB null-session established and share table enumerated via SMB-LIST-001 -> SHARE_ENUMERATION_VERIFIED.",
-        )
-    if fk.startswith("PHPINFO-"):
-        return (
-            "PRECONDITION_CONFIRMED",
-            "Publicly accessible /phpinfo.php confirmed allow_url_include=On and DOCUMENT_ROOT=/var/www precondition.",
-        )
-    if pf in ("IMPACT_VERIFIED", "RUNTIME_REPRODUCED", "CONFIRMED_ADMIN_AUTH"):
-        return (
-            "TECHNIQUE_VALIDATED",
-            f"Safe PoC probe verified runtime reproduction/impact on {node.finding_key}.",
+            "INFERRED",
+            f"Co-located services on different ports ({prev_node.finding_key} on {prev_port}/tcp -> {node.finding_key} on {cur_port}/tcp); no cross-service credential or session pivot was executed (CORRELATED_EXPOSURES).",
         )
 
-    # Check if prev_node and node share the exact same service/protocol or if transition is inferred across different services
-    prev_fk = (prev_node.finding_key or "").upper()
-    if ("HTTP" in prev_fk or "80" in prev_fk) and ("HTTP" in fk or "PHP" in fk or "WEB" in fk or "ZAP" in fk):
+    # Same-port transitions: only mark TECHNIQUE_VALIDATED when the entry socket directly hosts the bounded PoC on that exact port
+    if prev_fk.startswith(("PORT-OPEN-", "NMAP-PORT-")) and prev_port == cur_port:
+        if fk.startswith("TOMCAT-MGR-"):
+            return (
+                "TECHNIQUE_VALIDATED",
+                "Authenticated HTTP 200 session to /manager/html on 8080/tcp confirmed using default credentials (tomcat:tomcat) -> CONFIRMED_ADMIN_AUTH.",
+            )
+        if fk.startswith("SMB-READ-"):
+            return (
+                "TECHNIQUE_VALIDATED",
+                "Anonymous SMB share connection and directory listing verified on 445/tcp via SMB-READ-001 -> SHARE_READ_VERIFIED.",
+            )
+        if fk.startswith("SMB-LIST-"):
+            return (
+                "TECHNIQUE_VALIDATED",
+                "Anonymous SMB null-session established and share table enumerated on 445/tcp via SMB-LIST-001 -> SHARE_ENUMERATION_VERIFIED.",
+            )
+        if fk.startswith("PHPINFO-"):
+            return (
+                "PRECONDITION_CONFIRMED",
+                "Publicly accessible /phpinfo.php on 80/tcp confirmed allow_url_include=On and DOCUMENT_ROOT=/var/www precondition.",
+            )
+
+    # Gate GRAPH-006: Unencrypted HTTP + candidate BOLA parameter + cookie flags without demonstrated session hijacking or BOLA exploit are INFERRED
+    if "BOLA-IDOR" in fk or "BOLA-IDOR" in prev_fk or "COOKIE" in fk.upper() or "10054" in fk:
         return (
-            "PRECONDITION_CONFIRMED",
-            f"Same-origin HTTP transport/application control weakness confirmed on {node.finding_key}.",
+            "INFERRED",
+            f"Co-located HTTP surface observations ({prev_node.finding_key} -> {node.finding_key}); no session hijacking or unauthorized object access transition was proven (CORRELATED_EXPOSURES).",
         )
 
     return (
         "INFERRED",
-        f"Co-located weakness on target host ({prev_node.finding_key} -> {node.finding_key}); direct inter-service pivot was not actively executed.",
+        f"Co-located weakness on target host ({prev_node.finding_key} -> {node.finding_key}); direct causal transition was not actively executed.",
     )
 
 

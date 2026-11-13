@@ -16,7 +16,9 @@ import {
   synchronizeFindingWithEvidenceLedger,
   verifyEvidenceChainIndependently,
   reconcileAssessmentEndToEndV541,
+  computeCanonical12StateMilestoneSummary,
 } from "../lib/finding-evidence-ledger";
+import { buildCanonicalFindingV53Record } from "../lib/xtrike-v53-engine";
 import { runExternalBenchmarkAccuracySuite } from "../lib/controlled-verification-stage";
 import { summarizePatchVerificationPortfolio } from "../lib/patch-verification-engine";
 import { validateSourceProvenance } from "../lib/source-provenance";
@@ -1172,15 +1174,91 @@ if (
   process.exit(1);
 }
 
+// 6. November 13, 2026 Audit Verification (6 Specific Issues on XTRIKE-RPT-B104D2-2026):
+// Issue 1: Page 4 Six-Tier Table Tier 4 ("Functional test passed") must match Page 6 functionalRegressionPassedCount (4/4),
+// while Tier 5 ("Exploit blocked") and Tier 6 ("Remediation certified") match securityRegressionPassedCount (3/4).
+const csSixTier = computeSixTierRemediationBreakdownV60(csSynced);
+if (
+  csSixTier.tiers[3].count !== 4 ||
+  csSixTier.tiers[3].count !== csPrimaryPortfolio.functionalRegressionPassedCount ||
+  csSixTier.tiers[4].count !== 3 ||
+  csSixTier.tiers[4].count !== csPrimaryPortfolio.securityRegressionPassedCount ||
+  csSixTier.tiers[5].count !== 3
+) {
+  console.error("FAIL [B104D2-ISSUE-1]: Six-tier remediation counts contradict Page 6 portfolio counts:", {
+    tier4Functional: csSixTier.tiers[3].count,
+    page6Functional: csPrimaryPortfolio.functionalRegressionPassedCount,
+    tier5Security: csSixTier.tiers[4].count,
+    page6Security: csPrimaryPortfolio.securityRegressionPassedCount,
+  });
+  process.exit(1);
+}
+
+// Issue 2: Synthetic findings (RE-ENUM-001..010) must never be classified under DETECTED, STATIC_CONFIRMED, or PATH_FEASIBLE
+const csMilestone12 = computeCanonical12StateMilestoneSummary(csSynced);
+const detectedBucket = csMilestone12.find((b) => b.status === "DETECTED");
+const staticConfirmedBucket = csMilestone12.find((b) => b.status === "STATIC_CONFIRMED");
+const csBuckets = proofStateBuckets(csSynced);
+for (const sf of csSynthetic) {
+  const v53Rec = buildCanonicalFindingV53Record(sf);
+  const sfLifecycle = computeProofLifecycle(sf);
+  const sfDiscovered = sfLifecycle.stages.find((s) => s.stage === "DISCOVERED");
+  if (
+    sf.proofState !== "NEEDS_MANUAL_VALIDATION" ||
+    v53Rec.path_evidence_state === "PATH_FEASIBLE" ||
+    sfDiscovered?.status === "ACHIEVED" ||
+    detectedBucket?.syntheticTemplateIds.includes(sf.id) ||
+    staticConfirmedBucket?.syntheticTemplateIds.includes(sf.id) ||
+    csBuckets.PATH_FEASIBLE.includes(sf.id) ||
+    csBuckets.DETECTED_STATIC.includes(sf.id) ||
+    csBuckets.GUARD_ANALYZED.includes(sf.id)
+  ) {
+    console.error("FAIL [B104D2-ISSUE-2]: Synthetic finding still carries DETECTED, STATIC_CONFIRMED, or PATH_FEASIBLE:", {
+      id: sf.id,
+      proofState: sf.proofState,
+      v53PathEvidence: v53Rec.path_evidence_state,
+      discoveredStage: sfDiscovered,
+      detectedSynthIds: detectedBucket?.syntheticTemplateIds,
+      staticConfirmedSynthIds: staticConfirmedBucket?.syntheticTemplateIds,
+    });
+    process.exit(1);
+  }
+}
+
+// Issue 3: SAST-001 (CWE-798) proof-chain source must NEVER be `using System;` or any namespace/module import statement
+if (
+  /using\s+System|^\s*(?:using|import|package|namespace)\b/i.test(csSast001.source || "") ||
+  csSast001.taintPath.some((st) => /^\s*using\s+System/i.test(st))
+) {
+  console.error("FAIL [B104D2-ISSUE-3]: SAST-001 source or taintPath still references `using System;`:", {
+    source: csSast001.source,
+    taintPath: csSast001.taintPath,
+  });
+  process.exit(1);
+}
+
+// Issue 4: In-process evidence verifier must explicitly disclose INTERNAL_SELF_VERIFIED vs external third-party verification
+const csIndepAudit = verifyEvidenceChainIndependently(csSynced);
+const csTenPointVerifier = runIndependentEvidenceVerifierTenPointV60(csSynced);
+if (
+  !csIndepAudit.auditorEngineId.includes("INTERNAL_SELF_VERIFIED") ||
+  !csTenPointVerifier.checks[8].verificationDetail.includes("INTERNAL_SELF_VERIFIED")
+) {
+  console.error("FAIL [B104D2-ISSUE-4]: In-process verifier missing INTERNAL_SELF_VERIFIED qualification");
+  process.exit(1);
+}
+
 console.log("OWASP BenchmarkDotNet (XTRIKE-RPT-B104D2-2026) Audit Verification:", {
   authoritativeRiskScore: `${csWs.compositeRiskScore}/100 (Unified across Page 4 & Page 6)`,
-  residualRiskAfterHarness: `${csV55Risk.portfolioScores.postPatchProjectedResidualRiskIndex}/100 (Unified across Page 3 & Pages 4-5)`,
-  sast001Lifecycle: `${csSast001.proofState} -> ${csSast001.evidenceRecord?.patchVerification.status} (${csSast001.evidenceRecord?.patchVerification.currentLifecycleStage}, 7-stage REMEDIATION_VERIFIED=${csSast001RemMilestone?.verdict})`,
+  residualRiskAfterHarness: `${csV55Risk.portfolioScores.postPatchProjectedResidualRiskIndex}/100 (Unified across Page 3 & Pages 4-5; Active Production Risk Remains 42/100)`,
+  remediationTierReconciliation: `Tier 4 Functional = ${csSixTier.tiers[3].count}/4 (Page 6 = ${csPrimaryPortfolio.functionalRegressionPassedCount}/4) · Tier 5 Security = ${csSixTier.tiers[4].count}/4 (Page 6 = ${csPrimaryPortfolio.securityRegressionPassedCount}/4)`,
+  sast001SourceAndLifecycle: `Source='${csSast001.source}' · ${csSast001.proofState} -> ${csSast001.evidenceRecord?.patchVerification.status} (${csSast001.evidenceRecord?.patchVerification.currentLifecycleStage}, 7-stage REMEDIATION_VERIFIED=${csSast001RemMilestone?.verdict})`,
   primaryPortfolio: `${csPrimaryPortfolio.compiledSuccessfullyCount}/4 Compiled · ${csPrimaryPortfolio.remediationVerifiedCount}/4 Remediation Verified`,
   crossReportContamination: false,
-  syntheticHypothesesClean: `${csSynthetic.length}/10 labeled Illustrative Architectural Hypothesis (0 AST sink claims)`,
+  syntheticHypothesesClean: `${csSynthetic.length}/10 classified NEEDS_MANUAL_VALIDATION (0 in DETECTED, STATIC_CONFIRMED, or PATH_FEASIBLE)`,
+  verifierQualification: csIndepAudit.auditorEngineId,
   integrityIssues: csIntegrityIssues.length,
   attackPathsAligned: true,
 });
 
-console.log("ALL XTRIKE v5.5.0, v5.5.2 (60/60 REGRESSION TESTS), v5.5.3 (OWASP JUICE SHOP & OWASP BENCHMARKDOTNET B104D2 P0 AUDIT FIXES) & v6.0 GOVERNANCE CHECKS PASSED");
+console.log("ALL XTRIKE v5.5.0, v5.5.2 (60/60 REGRESSION TESTS), v5.5.3 (OWASP JUICE SHOP & OWASP BENCHMARKDOTNET B104D2 NOV-13 AUDIT FIXES) & v6.0 GOVERNANCE CHECKS PASSED");

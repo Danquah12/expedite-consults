@@ -703,10 +703,13 @@ class EvidenceCoreIntegration:
             )
 
         ev_dir = Path("evidence_vault") / f"scan_{job.scan_id}" / "eve"
+        canonical_ev_bytes = json.dumps(
+            ev_bundle, sort_keys=True, separators=(",", ":"), default=str
+        ).encode("utf-8")
         try:
             ev_dir.mkdir(parents=True, exist_ok=True)
             storage_file = ev_dir / f"{attempt.attempt_key}_{digest[:16]}.json"
-            storage_file.write_text(json.dumps(ev_bundle, indent=2, default=str), encoding="utf-8")
+            storage_file.write_bytes(canonical_ev_bytes)
             storage_path_str = str(storage_file)
         except Exception:
             storage_path_str = f"memory://evidence_vault/scan_{job.scan_id}/eve/{attempt.attempt_key}_{digest[:16]}.json"

@@ -286,7 +286,7 @@ export function certifyFindingV53(finding: SASTFinding): SixDimensionCertificati
             : "NEEDS_MANUAL_VALIDATION";
 
   const pathEvidence: PathEvidenceDimensionV53 = isSynthetic
-    ? "PATH_FEASIBLE"
+    ? "NOT_ESTABLISHED"
     : f.interprocedural?.status === "ESTABLISHED"
       ? f.interprocedural.crossesFunctions
         ? "INTER_PROCEDURAL"

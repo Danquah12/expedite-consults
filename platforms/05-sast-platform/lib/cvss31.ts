@@ -231,6 +231,7 @@ export function resolveTypedProofClassification(
     if (!isArchCandidate) return res;
     return {
       ...res,
+      proofState: "NEEDS_MANUAL_VALIDATION",
       evidenceHeading: `Synthetic Architectural Threat-Modeling Hypothesis (${res.evidenceType} — Template Only, File Not in Repository)`,
       modeledAssumptions:
         "Synthetic architectural threat-modeling template (file not present in scanned repository). Separated from Pass-1 primary scanned repository findings; no construct or sink was observed in the repository's AST.",
@@ -485,12 +486,12 @@ export function resolveTypedProofClassification(
     });
   }
 
-  // 8. Pass-2/3 Second-Order Architectural Candidates (RE-ENUM-*) -> PATH_FEASIBLE (never conflated with Pass-1 DATAFLOW_CONFIRMED)
+  // 8. Pass-2/3 Second-Order Architectural Candidates (RE-ENUM-*) -> NEEDS_MANUAL_VALIDATION (never conflated with Pass-1 DATAFLOW_CONFIRMED or PATH_FEASIBLE)
   if (isArchCandidate) {
     return qualifyArchCandidate({
-      proofState: "PATH_FEASIBLE",
+      proofState: "NEEDS_MANUAL_VALIDATION",
       evidenceType: "TAINT_DATAFLOW",
-      evidenceHeading: "Second-Order Architectural Candidate Feasibility Trace (Pass 2/3)",
+      evidenceHeading: "Second-Order Architectural Threat Hypothesis Template (Pass 2/3 — Non-Repository)",
       modeledAssumptions:
         "Synthetic architectural threat-modeling template (file not present in scanned repository). Separated from Pass-1 primary scanned repository findings; no construct or sink was observed in the repository's AST.",
       controlDominanceSummary: `Control Inspected: Architectural threat-modeling template for ${cwe} (${f.file}:${f.line} — file not present in repository) | Dominance: SYNTHETIC_TEMPLATE_ONLY | Effectiveness: NOT_OBSERVED_IN_REPOSITORY`,
@@ -924,8 +925,37 @@ public final class VerifiedTlsClientConfig {
     };
   }
 
+  // Self-heal any finding whose source or taintPath points to a benign namespace/module import statement (e.g., `using System;`, `import ...`, `package ...`)
+  const isInvalidImportSource = /^\s*(?:using\s+[A-Za-z0-9_.]+;|import\s+|package\s+|namespace\s+|from\s+[A-Za-z0-9_.]+\s+import\s+)/i.test(
+    f.source || ""
+  );
+  const isSecretCwe = f.cwe === "CWE-798" || f.cwe === "CWE-532" || f.cwe === "CWE-312";
+  const healedSource =
+    isSecretCwe || isInvalidImportSource
+      ? isSecretCwe
+        ? `Hardcoded Credential Constant in ${f.file.split("/").pop()}:${f.line}`
+        : f.sink || `AST Entry in ${f.file.split("/").pop()}:${f.line}`
+      : f.source;
+  const healedTaintPath =
+    Array.isArray(f.taintPath) &&
+    f.taintPath.some((step) =>
+      /^\s*(?:using\s+[A-Za-z0-9_.]+;|import\s+|package\s+|namespace\s+)/i.test(step)
+    )
+      ? isSecretCwe
+        ? [
+            `[CONSTANT CREDENTIAL DECLARATION] ${f.file.split("/").pop()}:${f.line} -> ${f.sink}`,
+            `[PROVENANCE SCOPE GATE] Verify whether embedded credential constant is an active deployed secret vs. benchmark/test fixture before key rotation`,
+          ]
+        : f.taintPath.filter(
+            (step) =>
+              !/^\s*(?:using\s+[A-Za-z0-9_.]+;|import\s+|package\s+|namespace\s+)/i.test(step)
+          )
+      : f.taintPath;
+
   const preTyped: SASTFinding = {
     ...f,
+    source: healedSource,
+    taintPath: healedTaintPath,
     cvss: exactCvss,
     severity: exactSeverity,
     cvssVector: vector,
@@ -1457,9 +1487,13 @@ export function runTenGateReportAcceptanceSuite(
       )
     );
 
-  // 4. IDOR ownership & cross-user check across all CWE-639 / CWE-862 findings
+  // 4. IDOR ownership & cross-user check across all primary repository CWE-639 / CWE-862 findings
   const idorFindings = findings.filter(
-    (f) => f.id === "F-003" || f.cwe === "CWE-639" || f.cwe === "CWE-862"
+    (f) =>
+      f.findingOrigin !== "ARCHITECTURAL_CANDIDATE_HYPOTHESIS" &&
+      f.sourceProvenance?.status !== "SYNTHETIC_TEMPLATE" &&
+      !f.id.startsWith("RE-ENUM-") &&
+      (f.id === "F-003" || f.cwe === "CWE-639" || f.cwe === "CWE-862")
   );
   const fIdor = idorFindings[0];
   const idorPass =

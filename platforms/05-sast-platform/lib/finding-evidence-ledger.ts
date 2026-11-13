@@ -623,35 +623,64 @@ export function buildFindingEvidenceRecord(
   };
 
   // Build Status Transition History (previousStatus -> newStatus + supporting evidence)
-  const statusTransitionHistory: StatusTransitionRecord[] = [
-    {
-      transitionOrder: 1,
-      previousStatus: "INITIAL",
-      newStatus: "DETECTED",
-      timestamp: evidenceTimestamp,
-      actor: "XTRIKE-AST-Scanner-v5.0",
-      supportingEvidence: isCandidate
-        ? `Modeled synthetic ${f.cwe} architectural threat hypothesis template for ${f.file}:${f.line} (SYNTHETIC_TEMPLATE — file not present in repository, excerpt=${sourceExcerptHash}).`
-        : `AST sink matched ${f.cwe} at ${f.file}:${f.line} (excerpt=${sourceExcerptHash}).`,
-      artifactHash: v1Hash,
-    },
-    {
-      transitionOrder: 2,
-      previousStatus: "DETECTED",
-      newStatus:
-        finalAuthoritativeProofState === "NEEDS_MANUAL_VALIDATION" ||
-        finalAuthoritativeProofState === "INCONCLUSIVE"
-          ? "NEEDS_MANUAL_VALIDATION"
-          : "STATIC_CONFIRMED",
-      timestamp: evidenceTimestamp,
-      actor: "XTRIKE-Dataflow-Solver-v5.0",
-      supportingEvidence:
-        finalAuthoritativeProofState === "NEEDS_MANUAL_VALIDATION"
-          ? `Taint status=${interproceduralTaintStatus} (${callGraphScope}); held at NEEDS_MANUAL_VALIDATION per P0 proof-consistency gate.`
-          : `Static dataflow & guard dominance solved: scope=${callGraphScope}, feasibility=${pathFeasibilityVerdict}.`,
-      artifactHash: v2Hash,
-    },
-  ];
+  // Synthetic architectural hypotheses (isCandidate) NEVER record repository-observation states (DETECTED, STATIC_CONFIRMED)
+  const statusTransitionHistory: StatusTransitionRecord[] = isCandidate
+    ? [
+        {
+          transitionOrder: 1,
+          previousStatus: "INITIAL",
+          newStatus: "NEEDS_MANUAL_VALIDATION",
+          timestamp: evidenceTimestamp,
+          actor: "XTRIKE-Threat-Modeler-v5.0",
+          supportingEvidence: `Modeled synthetic ${f.cwe} architectural threat hypothesis template for ${f.file}:${f.line} (SYNTHETIC_TEMPLATE — file not present in repository, excerpt=${sourceExcerptHash}).`,
+          artifactHash: v1Hash,
+        },
+        {
+          transitionOrder: 2,
+          previousStatus: "NEEDS_MANUAL_VALIDATION",
+          newStatus: "PATCH_GENERATED",
+          timestamp: evidenceTimestamp,
+          actor: "XTRIKE-Remediation-Synthesizer-v5.0",
+          supportingEvidence: `Generated illustrative ${f.language || "Java"} reference remediation template (${patchDiffHash}).`,
+          artifactHash: v4Hash,
+        },
+        {
+          transitionOrder: 3,
+          previousStatus: "PATCH_GENERATED",
+          newStatus: isStaticPatchValid ? "STATIC_VALIDATED" : "FAILED",
+          timestamp: evidenceTimestamp,
+          actor: "XTRIKE-Patch-Verifier-v5.0",
+          supportingEvidence: `Reference remediation template passed static syntax & guard checks (${patchDiffHash} -> ${patchVerification.status}; synthetic template not compiled against repository).`,
+          artifactHash: v4Hash,
+        },
+      ]
+    : [
+        {
+          transitionOrder: 1,
+          previousStatus: "INITIAL",
+          newStatus: "DETECTED",
+          timestamp: evidenceTimestamp,
+          actor: "XTRIKE-AST-Scanner-v5.0",
+          supportingEvidence: `AST sink matched ${f.cwe} at ${f.file}:${f.line} (excerpt=${sourceExcerptHash}).`,
+          artifactHash: v1Hash,
+        },
+        {
+          transitionOrder: 2,
+          previousStatus: "DETECTED",
+          newStatus:
+            finalAuthoritativeProofState === "NEEDS_MANUAL_VALIDATION" ||
+            finalAuthoritativeProofState === "INCONCLUSIVE"
+              ? "NEEDS_MANUAL_VALIDATION"
+              : "STATIC_CONFIRMED",
+          timestamp: evidenceTimestamp,
+          actor: "XTRIKE-Dataflow-Solver-v5.0",
+          supportingEvidence:
+            finalAuthoritativeProofState === "NEEDS_MANUAL_VALIDATION"
+              ? `Taint status=${interproceduralTaintStatus} (${callGraphScope}); held at NEEDS_MANUAL_VALIDATION per P0 proof-consistency gate.`
+              : `Static dataflow & guard dominance solved: scope=${callGraphScope}, feasibility=${pathFeasibilityVerdict}.`,
+          artifactHash: v2Hash,
+        },
+      ];
 
   if (!isCandidate && !isManualValidationOnly && runtimeRecord) {
     statusTransitionHistory.push(
@@ -728,17 +757,59 @@ export function buildFindingEvidenceRecord(
         artifactHash: verificationSignature,
       }
     );
-  } else if (finalAuthoritativeProofState === "NEEDS_MANUAL_VALIDATION") {
-    statusTransitionHistory.push({
-      transitionOrder: 3,
-      previousStatus: "NEEDS_MANUAL_VALIDATION",
-      newStatus: isStaticPatchValid ? "NEEDS_MANUAL_VALIDATION" : "FAILED",
-      timestamp: evidenceTimestamp,
-      actor: "XTRIKE-Patch-Verifier-v5.0",
-      supportingEvidence: `Defensive remediation patch statically validated (${patchDiffHash}) and compiled (${testExecutionId}), but canonical proof status remains NEEDS_MANUAL_VALIDATION until manual inter-procedural source-to-sink trace or controlled runtime reproduction is established.`,
-      artifactHash: v4Hash,
-    });
-  } else {
+  } else if (!isCandidate && finalAuthoritativeProofState === "NEEDS_MANUAL_VALIDATION") {
+    statusTransitionHistory.push(
+      {
+        transitionOrder: 3,
+        previousStatus: "NEEDS_MANUAL_VALIDATION",
+        newStatus: "PATCH_GENERATED",
+        timestamp: evidenceTimestamp,
+        actor: "XTRIKE-Remediation-Synthesizer-v5.0",
+        supportingEvidence: `Defensive remediation patch synthesized (${patchDiffHash}).`,
+        artifactHash: v4Hash,
+      },
+      {
+        transitionOrder: 4,
+        previousStatus: "PATCH_GENERATED",
+        newStatus: isStaticPatchValid ? "STATIC_VALIDATED" : "FAILED",
+        timestamp: evidenceTimestamp,
+        actor: "XTRIKE-Patch-Verifier-v5.0",
+        supportingEvidence: `Defensive remediation patch passed static AST & guard checks (${patchVerification.status}).`,
+        artifactHash: v4Hash,
+      },
+      ...(isPatchCompiled
+        ? [
+            {
+              transitionOrder: 5,
+              previousStatus: "STATIC_VALIDATED" as CanonicalStatus12,
+              newStatus: "BUILD_PASSED" as CanonicalStatus12,
+              timestamp: evidenceTimestamp,
+              actor: "XTRIKE-Polyglot-Build-Harness-v5.0",
+              supportingEvidence: `Patched unit compiled cleanly (${testExecutionId}, exitCode=0) and passed baseline functional regression.`,
+              artifactHash: patchRecord?.artifactSha256 || v4Hash,
+            },
+            {
+              transitionOrder: 6,
+              previousStatus: "BUILD_PASSED" as CanonicalStatus12,
+              newStatus: "FUNCTIONAL_REGRESSION_PASSED" as CanonicalStatus12,
+              timestamp: evidenceTimestamp,
+              actor: "XTRIKE-Functional-Regression-Runner-v5.0",
+              supportingEvidence: `Baseline functional regression test passed (${testExecutionId}); security exploit replay remains gated pending manual provenance validation.`,
+              artifactHash: patchRecord?.artifactSha256 || v4Hash,
+            },
+            {
+              transitionOrder: 7,
+              previousStatus: "FUNCTIONAL_REGRESSION_PASSED" as CanonicalStatus12,
+              newStatus: "NEEDS_MANUAL_VALIDATION" as CanonicalStatus12,
+              timestamp: evidenceTimestamp,
+              actor: "XTRIKE-Proof-Normalizer-v5.0",
+              supportingEvidence: `Terminal canonical proof status held at NEEDS_MANUAL_VALIDATION until manual provenance/sink validation completes.`,
+              artifactHash: v4Hash,
+            },
+          ]
+        : [])
+    );
+  } else if (!isCandidate) {
     statusTransitionHistory.push({
       transitionOrder: 3,
       previousStatus: "STATIC_CONFIRMED",
@@ -2111,7 +2182,8 @@ export function verifyEvidenceChainIndependently(
       allErrors.length === 0 &&
       findingAudits.length === findings.length &&
       oneToOneAssociationsVerifiedCount === findings.length,
-    auditorEngineId: "XTRIKE-Independent-Trust-Verifier-v5.4 (Ed25519 + SHA-256 Chain Auditor)",
+    auditorEngineId:
+      "XTRIKE-Deterministic-In-Process-Trust-Verifier-v5.4 [INTERNAL_SELF_VERIFIED — External Third-Party Offline CLI Verification Required via /api/v3/evidence/verify]",
     auditedAtIso: "2026-10-30T16:05:00Z",
     totalFindingsAudited: findings.length,
     primaryFindingsAudited,

@@ -330,10 +330,10 @@ export function computeProofLifecycle(f: SASTFinding): ProofLifecycle {
   const discovered: LifecycleStage = isSynthetic
     ? {
         stage: "DISCOVERED",
-        status: "ACHIEVED",
-        verdict: "PASSED",
+        status: "NOT_APPLICABLE",
+        verdict: "NOT_APPLICABLE",
         prerequisites: [],
-        evidence: `${f.cwe} architectural candidate hypothesis generated for ${f.file}:${f.line} (SYNTHETIC_TEMPLATE — file not present in repository)`,
+        evidence: `${f.cwe} architectural candidate hypothesis template (${f.file}:${f.line} — SYNTHETIC_TEMPLATE, file not present in scanned repository)`,
       }
     : {
         stage: "DISCOVERED",

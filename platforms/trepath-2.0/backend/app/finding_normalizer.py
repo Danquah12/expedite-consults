@@ -34,22 +34,22 @@ CVE_PRECONDITION_CATALOG: dict[str, dict[str, Any]] = {
         "applicability_note": "Banner-only version heuristic; ssh-agent forwarding and PKCS#11 preconditions were not observed.",
     },
     "CVE-2011-2523": {
-        "validation_state": "APPLICABILITY_VALIDATED",
+        "validation_state": "CVE_CANDIDATE",
         "preconditions_verified": False,
         "required_preconditions": [
             "Target vsFTPd 2.3.4 binary must originate from the compromised June 2011 master distribution archive",
             "TCP/6200 backdoor listener must open upon sending a ':)' username trigger",
         ],
-        "applicability_note": "Exact version 2.3.4 matched on TCP/21; backdoor listener trigger was not actively executed under read-only ROE.",
+        "applicability_note": "Version banner 2.3.4 matched on TCP/21, but version string alone cannot establish the backdoored distribution archive and TCP/6200 trigger was not executed under safe ROE -> classified as CVE_CANDIDATE.",
     },
     "CVE-2017-7494": {
-        "validation_state": "PRECONDITIONS_VALIDATED",
-        "preconditions_verified": True,
+        "validation_state": "CVE_CANDIDATE",
+        "preconditions_verified": False,
         "required_preconditions": [
             "Samba 3.5.0 through 4.6.4 or compatible daemon with an anonymously or authenticated writable share",
-            "Known server-side filesystem path to the writable share (e.g., /tmp)",
+            "Known server-side filesystem path to the writable share (e.g., /tmp) and ability to upload & load a shared library",
         ],
-        "applicability_note": "Anonymous SMB share 'tmp' enumerated on TCP/445; write-and-load payload execution intentionally not performed.",
+        "applicability_note": "Anonymous SMB share listing (SMB-LIST-001) confirmed share names (IPC$, ADMIN$, print$, tmp) on TCP/445, but writable-share upload and execution preconditions are not demonstrated by share listing alone (requires separate SMB-READ/WRITE verification) -> classified as CVE_CANDIDATE.",
     },
     "CVE-2020-1938": {
         "validation_state": "NOT_APPLICABLE_PRECONDITION_FAILED",
@@ -892,7 +892,36 @@ def build_consolidated_finding_intelligence(
         port_str = gkey.split(":")[0]
         resolved_port = int(port_str) if port_str.isdigit() else int(t_meta["target_port"] or 80)
         target_host = t_meta["target_host"]
-        effective_origin = t_meta["effective_origin"]
+        port_scheme_map = {
+            21: "ftp",
+            22: "ssh",
+            23: "telnet",
+            25: "smtp",
+            53: "dns",
+            80: "http",
+            111: "rpcbind",
+            139: "netbios-ssn",
+            443: "https",
+            445: "smb",
+            512: "rexec",
+            513: "rlogin",
+            514: "rsh",
+            1099: "rmi",
+            2049: "nfs",
+            2121: "ftp",
+            3306: "mysql",
+            5432: "postgresql",
+            8008: "http",
+            8009: "ajp13",
+            8080: "http",
+            8443: "https",
+        }
+        resolved_scheme = port_scheme_map.get(resolved_port, t_meta.get("scheme") or "tcp")
+        effective_origin = (
+            t_meta["effective_origin"]
+            if resolved_port == int(t_meta["target_port"] or 80)
+            else f"{resolved_scheme}://{target_host}:{resolved_port}"
+        )
         asset_id = t_meta["asset_id"]
         host_port = f"{target_host}:{resolved_port}"
         affected_eps = grp["affected_endpoints"]
@@ -1389,10 +1418,32 @@ def build_consolidated_finding_intelligence(
             "recommended_remediation": remediation_text,
         }
 
+        raw_cvss_val = float(norm_cvss if norm_cvss is not None else 5.0)
+        if raw_cvss_val >= 9.0:
+            cvss_base_sev = "critical"
+        elif raw_cvss_val >= 7.0:
+            cvss_base_sev = "high"
+        elif raw_cvss_val >= 4.0:
+            cvss_base_sev = "medium"
+        elif raw_cvss_val > 0.0:
+            cvss_base_sev = "low"
+        else:
+            cvss_base_sev = "info"
+
+        sev_adjustment_rationale = (
+            f"Matches NVD CVSS v3.1 base band ({raw_cvss_val:.1f} -> {cvss_base_sev.upper()})."
+            if norm_sev == cvss_base_sev
+            else (
+                f"NVD Base CVSS is {raw_cvss_val:.1f} ({cvss_base_sev.upper()}), adjusted to {norm_sev.upper()} "
+                f"because runtime proof state is {proof_category} :: {proof_substate} (unexploited banner/control observation without active RCE/auth-bypass proof)."
+            )
+        )
+
         entry = {
             "group_key": gkey,
             "root_cause_group_key": gkey,
             "port": resolved_port,
+            "service_protocol": resolved_scheme,
             "target_host": target_host,
             "host_port": host_port,
             "effective_origin": effective_origin,
@@ -1417,6 +1468,9 @@ def build_consolidated_finding_intelligence(
             "title": norm_title,
             "description": pf.description,
             "severity": norm_sev,
+            "cvss_base_severity": cvss_base_sev,
+            "analyst_adjusted_severity": norm_sev,
+            "severity_adjustment_rationale": sev_adjustment_rationale,
             "proof_state": pf_str,
             "proof_category": proof_category,
             "proof_substate": proof_substate,

@@ -574,7 +574,7 @@ const parsed = SafeFormulaSchema.parse(JSON.parse(req.body.formula));`,
     fortifyKingdom: "Security Features",
     fortifyAnalyzer: "Configuration",
     sinkPattern: /(?:(?:api[_-]?key|secret[_-]?key|password|passwd|jwt[_-]?secret|private[_-]?key|aws_secret_access_key|client_secret|stripe_secret|db_pass)\s*[:=]\s*["'][A-Za-z0-9_\-./+=!@#$%^&*]{8,}["']|(?:Password|Pwd)\s*=\s*[A-Za-z0-9_\-./+=!@#$%^&*]{8,}\s*;|AKIA[0-9A-Z]{16}|sk_live_[0-9a-zA-Z]{16,}|ghp_[0-9a-zA-Z]{20,}|-----BEGIN (?:RSA |EC )?PRIVATE KEY-----)/i,
-    sourceHints: /(?:const|let|var|using|SqlConnection|ConnectionString|String|final|private|public|export)/i,
+    sourceHints: /(?:api[_-]?key|secret[_-]?key|password|passwd|jwt[_-]?secret|private[_-]?key|aws_secret_access_key|client_secret|stripe_secret|db_pass|ConnectionString|SqlConnection|AKIA[0-9A-Z]{16}|sk_live_|ghp_)/i,
     sanitizerPattern: /(?:process\.env\.|os\.environ|System\.getenv|Vault|SecretsManager|GetConnectionString)/i,
     defaultSource: "Source Code Literal Constant",
     defaultSink: "Authentication / Signing Key Constant",
@@ -2647,8 +2647,22 @@ export function scanFilesWithEnterpriseEngines(params: {
         let detectedSourceLine = trimmed;
         let detectedSourceLineNum = lineNumber;
         for (let sIdx = Math.max(0, idx - 15); sIdx <= idx; sIdx++) {
+          const candidateSrc = rawLines[sIdx].trim();
+          // Never treat namespace/module import or package headers (e.g., `using System;`, `import ...`, `package ...`) as a taint or secret source
+          if (
+            !candidateSrc ||
+            candidateSrc.startsWith("//") ||
+            candidateSrc.startsWith("#") ||
+            candidateSrc.startsWith("/*") ||
+            candidateSrc.startsWith("*") ||
+            /^(?:using\s+[A-Za-z0-9_.]+;|import\s+|package\s+|namespace\s+|from\s+[A-Za-z0-9_.]+\s+import\s+)/i.test(
+              candidateSrc
+            )
+          ) {
+            continue;
+          }
           if (rule.sourceHints.test(rawLines[sIdx])) {
-            detectedSourceLine = rawLines[sIdx].trim();
+            detectedSourceLine = candidateSrc;
             detectedSourceLineNum = sIdx + 1;
             break;
           }
@@ -2745,8 +2759,13 @@ export function scanFilesWithEnterpriseEngines(params: {
           `[XTRIKE StructSCA]   [${fortifyAnalyzer} Analyzer] Kingdom="${fortifyKingdom}" Priority=${effectiveSeverity}`
         );
 
-        const taintPath =
-          detectedSourceLine !== sinkLineText
+        const isSecretProvenanceCwe = rule.cwe === "CWE-798" || rule.cwe === "CWE-532" || rule.cwe === "CWE-312";
+        const taintPath = isSecretProvenanceCwe
+          ? [
+              `[CONSTANT CREDENTIAL DECLARATION] ${fileObj.path.split("/").pop()}:${lineNumber} (${fnName}) -> ${sinkLineText}`,
+              `[PROVENANCE SCOPE GATE] Verify whether embedded credential constant is an active deployed secret vs. benchmark/test fixture before key rotation`,
+            ]
+          : detectedSourceLine !== sinkLineText
             ? [
                 detectedSourceLine,
                 propagationLineText,
@@ -2801,8 +2820,9 @@ export function scanFilesWithEnterpriseEngines(params: {
           advisoryApplicability: "FIRST_PARTY_CODE_WEAKNESS_NO_CVE",
           codeSnippet: surroundingLines.join("\n"),
           snippetStartLine: windowStart + 1,
-          source:
-            detectedSourceLine !== sinkLineText
+          source: isSecretProvenanceCwe
+            ? `Hardcoded Credential Constant in ${fileObj.path.split("/").pop()}:${lineNumber} (${fnName})`
+            : detectedSourceLine !== sinkLineText
               ? detectedSourceLine
               : isUnconfirmedNeedsValidation
                 ? `Not established by excerpt (trace fileObjects origin in ${fnName})`

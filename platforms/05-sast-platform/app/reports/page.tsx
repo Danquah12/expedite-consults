@@ -1900,11 +1900,13 @@ export default function ReportEnginePage() {
                       <div style={{ fontSize: 9.2, color: "#475569" }}>Empirical AST + Runtime + Patch proof</div>
                     </div>
                     <div style={{ padding: "7px 9px", borderRadius: 6, background: "#ffffff", border: "1px solid #cbd5e1" }}>
-                      <div style={{ fontSize: 9.5, fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>4. Residual Risk (Pre → Post)</div>
+                      <div style={{ fontSize: 9.5, fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>4. Residual Risk (Deployed → Harness Proj.)</div>
                       <div style={{ fontSize: 14, fontWeight: 800, color: "#9e2a2b", fontFamily: "monospace" }}>
-                        {v55ModernizedRisk.portfolioScores.preMergeRepositoryResidualRiskIndex}/100 → <span style={{ color: "#1b4332" }}>{v55ModernizedRisk.portfolioScores.postPatchProjectedResidualRiskIndex}/100</span>
+                        {v55ModernizedRisk.portfolioScores.preMergeRepositoryResidualRiskIndex}/100 → <span style={{ color: "#1b4332" }}>{v55ModernizedRisk.portfolioScores.postPatchProjectedResidualRiskIndex}/100 (PROJECTED HARNESS-ONLY)</span>
                       </div>
-                      <div style={{ fontSize: 9.2, color: "#475569" }}>Arch Hypotheses: {v55ModernizedRisk.portfolioScores.architecturalHypothesisExposureIndex}/100</div>
+                      <div style={{ fontSize: 9.2, color: "#9e2a2b", fontWeight: 700 }}>
+                        Active Production Risk: {riskScore}/100 (0/{riskWorksheet.primaryFindingsCount} Patches Merged) · Arch: {v55ModernizedRisk.portfolioScores.architecturalHypothesisExposureIndex}/100
+                      </div>
                     </div>
                     <div style={{ padding: "7px 9px", borderRadius: 6, background: "#ffffff", border: "1px solid #cbd5e1" }}>
                       <div style={{ fontSize: 9.5, fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>Threat-Feed Freshness (XTR-06)</div>
@@ -2018,8 +2020,11 @@ export default function ReportEnginePage() {
                   </div>
 
                   {/* 2. Six-Tier Remediation Assurance Separation (Issue 2 Fix) */}
-                  <div style={{ fontSize: 10.5, fontWeight: 800, color: "#1e293b", marginBottom: 6 }}>
-                    B. Six-Tier Remediation Assurance Breakdown (Separating Build/Unit-Test Pass from Exploit-Blocked Security Remediation)
+                  <div style={{ fontSize: 10.5, fontWeight: 800, color: "#1e293b", marginBottom: 4 }}>
+                    B. Six-Tier Remediation Assurance Breakdown (Separating Tier-4 Functional Regression [{v60SixTierRemediation.tiers[3].count}/{v60SixTierRemediation.totalPrimaryFindings}] from Tier-5 Exploit-Blocked Security Regression [{v60SixTierRemediation.tiers[4].count}/{v60SixTierRemediation.totalPrimaryFindings}])
+                  </div>
+                  <div style={{ fontSize: 9.6, color: "#334155", marginBottom: 6 }}>
+                    {v60SixTierRemediation.auditorSummaryNote}
                   </div>
                   <div style={{ overflowX: "auto", marginBottom: 12 }}>
                     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10.1, background: "#ffffff" }}>
@@ -2678,20 +2683,24 @@ export default function ReportEnginePage() {
                   {benchmarkRun.byLanguage.map((lg) => `${lg.language}: TP=${lg.confirmed.tp} FP=${lg.confirmed.fp} TN=${lg.confirmed.tn} FN=${lg.confirmed.fn}`).join(" · ")}.{" "}
                   <strong>3-Tier Benchmark Architecture:</strong>{" "}
                   {benchmarkRun.threeTierSuites.map((t) => `${t.tierName} (n=${t.sampleCount}: ${t.statusNote})`).join(" | ")}.{" "}
-                  <strong>Caveat:</strong> {benchmarkRun.disclosure} Sample sizes are small, so the intervals above are wide; a perfect point estimate is not evidence of 100% accuracy.
+                  <strong style={{ color: "#9e2a2b" }}>Mandatory Statistical &amp; Generalization Qualification (Audit Issue 5):</strong>{" "}
+                  {benchmarkRun.disclosure} Because sample sizes are small (<code>N={benchmarkRun.fixtureCount}</code> internal fixtures, <code>N={externalBenchmark.totalCases}</code> external calibration fixtures; Wilson 95% CI <code>[75.7%–100%]</code> on the 22-case held-out split) and internal fixtures were developed alongside the analyzer (creating coupled-fixture overfitting risk), a <code>100%</code> point estimate on these suites is an embedded regression baseline only and does <strong>NOT</strong> establish broad generalization to complex, unseen enterprise applications.
                 </div>
 
                 {/* Step 5 & Step 6: External Benchmark Accuracy Validation & Independent Evidence-Chain Cryptographic Audit */}
                 <div style={{ marginTop: 10, padding: "10px 12px", borderRadius: 8, background: "#eef6f1", border: "1.5px solid #2d6a4f", fontSize: 10.5, color: "#1f1b18" }}>
                   <div style={{ fontWeight: 900, color: "#1b4332", textTransform: "uppercase", marginBottom: 4 }}>
-                    Step 5 — External Benchmark Ground-Truth Calibration ({externalBenchmark.suiteVersion})
+                    Step 5 — External Benchmark Ground-Truth Calibration ({externalBenchmark.suiteVersion} · Sample Size &amp; Wilson 95% CI Qualified)
                   </div>
                   <div style={{ fontFamily: "monospace", marginBottom: 6 }}>
                     <strong>Fixtures Evaluated:</strong> {externalBenchmark.totalCases} ({externalBenchmark.vulnerableCases} Vulnerable True-Positive Cases · {externalBenchmark.safeDecoyCases} Safe/Sanitized Decoy Cases) &middot;{" "}
                     <strong>TP={externalBenchmark.truePositives} · FP={externalBenchmark.falsePositives} · TN={externalBenchmark.trueNegatives} · FN={externalBenchmark.falseNegatives}</strong> &middot;{" "}
                     <strong style={{ color: "#1b4332" }}>
-                      TPR/Recall={externalBenchmark.truePositiveRatePercent}% · FPR={externalBenchmark.falsePositiveRatePercent}% · Precision={externalBenchmark.precisionPercent}% · F1={externalBenchmark.f1ScorePercent}% · Youden&apos;s Index J={externalBenchmark.youdenIndexPercent}%
+                      TPR/Recall={externalBenchmark.truePositiveRatePercent}% (Wilson 95% CI: [{externalBenchmark.wilson95CiTpr?.[0] ?? 75.7}%–{externalBenchmark.wilson95CiTpr?.[1] ?? 100}%]) · FPR={externalBenchmark.falsePositiveRatePercent}% · Precision={externalBenchmark.precisionPercent}% · F1={externalBenchmark.f1ScorePercent}% · Youden&apos;s Index J={externalBenchmark.youdenIndexPercent}%
                     </strong>
+                  </div>
+                  <div style={{ fontSize: 9.8, color: "#6e4b11", marginBottom: 6, padding: "4px 8px", borderRadius: 4, background: "#fbf3e4", border: "1px solid #e2c08d" }}>
+                    <strong>Statistical Qualification:</strong> {externalBenchmark.sampleSizeQualificationNote}
                   </div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 8 }}>
                     {externalBenchmark.cases.map((ec) => (
@@ -2712,12 +2721,12 @@ export default function ReportEnginePage() {
                     ))}
                   </div>
                   <div style={{ fontWeight: 900, color: "#1b4332", textTransform: "uppercase", paddingTop: 6, borderTop: "1px dashed #95d5b2", marginBottom: 4 }}>
-                    Step 6 — Independent Evidence-Chain &amp; Execution-Record Cryptographic Verification ({independentChainAudit.auditorEngineId})
+                    Step 6 — Deterministic In-Process Evidence-Chain &amp; Execution-Record Cryptographic Self-Audit ({independentChainAudit.auditorEngineId})
                   </div>
                   <div style={{ fontFamily: "monospace" }}>
-                    <strong>Overall Chain Integrity:</strong>{" "}
+                    <strong>In-Process Self-Audit Status:</strong>{" "}
                     <span style={{ color: independentChainAudit.overallValid ? "#1b4332" : "#9e2a2b", fontWeight: 800 }}>
-                      {independentChainAudit.overallValid ? "VERIFIED (0 Tamper / 0 Contradiction)" : `FAILED (${independentChainAudit.errors.length} errors)`}
+                      {independentChainAudit.overallValid ? "INTERNAL_SELF_VERIFIED (0 Tamper / 0 Contradiction — External Third-Party Offline Verification Pending via /api/v3/evidence/verify)" : `FAILED (${independentChainAudit.errors.length} errors)`}
                     </span>{" "}
                     &middot; <strong>Ed25519 Signatures:</strong> {independentChainAudit.validSignaturesCount}/{independentChainAudit.totalFindingsAudited}{" "}
                     &middot; <strong>Append-Only v1..v4 Chains:</strong> {independentChainAudit.validEventChainsCount}/{independentChainAudit.totalFindingsAudited}{" "}
@@ -2725,14 +2734,14 @@ export default function ReportEnginePage() {
                     &middot; <strong>1-to-1 Finding-to-Artifact Associations:</strong> {independentChainAudit.oneToOneAssociationsVerifiedCount}/{independentChainAudit.totalFindingsAudited}
                   </div>
                   <div style={{ fontWeight: 900, color: "#6e4b11", textTransform: "uppercase", paddingTop: 6, marginTop: 6, borderTop: "1px dashed #95d5b2", marginBottom: 3 }}>
-                    Production Deployment Readiness &amp; Release-Gate Governance (Directive 4 &amp; Directive 6)
+                    Production Deployment Readiness &amp; Release-Gate Governance (Audit Issue 6 — Production Remains Blocked)
                   </div>
                   <div style={{ fontFamily: "monospace", color: "#4a4239" }}>
-                    <strong>Primary Repository Risk Population:</strong> {riskWorksheet.primaryFindingsCount} Primary Findings ({controlledVerifiedPrimaryCount}/{riskWorksheet.primaryFindingsCount} patches compiled, exploit-blocked &amp; regression-verified in isolated harness) &middot;{" "}
-                    <strong>Synthetic Hypothesis Population:</strong> {riskWorksheet.architecturalCandidateCount} Architectural Threat Hypotheses (segregated from Release Gate &amp; Primary Risk Index) &middot;{" "}
+                    <strong>Primary Repository Risk Population:</strong> {riskWorksheet.primaryFindingsCount} Primary Findings ({controlledVerifiedPrimaryCount}/{riskWorksheet.primaryFindingsCount} patches compiled, exploit-blocked &amp; security-regression-verified in isolated harness; {patchPortfolio.functionalRegressionPassedCount}/{riskWorksheet.primaryFindingsCount} functional regression passed) &middot;{" "}
+                    <strong>Current Deployed Production Risk:</strong> <span style={{ color: "#9e2a2b", fontWeight: 800 }}>{riskScore}/100 (0/{riskWorksheet.primaryFindingsCount} Patches Merged; Projected Harness Residual Risk {v60CanonicalRisk.residualRiskAfterVerifiedRemediation.score}/100 is Non-Gating)</span> &middot;{" "}
                     <strong>Production Deployment Gate:</strong>{" "}
                     <span style={{ color: "#9e2a2b", fontWeight: 800 }}>
-                      PATCHES_VERIFIED_IN_HARNESS_AWAITING_PR_MERGE_AND_STAGING_DEPLOY (Application Not Yet Certified Remediated in Production)
+                      BLOCKED_UNMERGED_PRODUCTION — PATCHES_VERIFIED_IN_HARNESS_AWAITING_PR_MERGE_AND_STAGING_DEPLOY
                     </span>
                   </div>
                 </div>
@@ -3858,9 +3867,24 @@ export default function ReportEnginePage() {
 
                       <div style={{ fontSize: 11.5, color: "#4a4239", lineHeight: 1.55, marginBottom: 8, wordBreak: "break-word", overflowWrap: "anywhere" }}>
                         <strong>{typedProof.evidenceHeading}: </strong>
-                        Origin <code style={{ fontFamily: "monospace", background: "#f3eee4", padding: "1px 5px", wordBreak: "break-all" }}>{finding.source}</code>{" "}
-                        &rarr; {finding.taintPath.join(" → ")} &rarr; Target{" "}
-                        <code style={{ fontFamily: "monospace", background: "#f3eee4", padding: "1px 5px", wordBreak: "break-all" }}>{finding.sink}</code>
+                        {typedProof.evidenceType === "SECRET_PROVENANCE" ? (
+                          <>
+                            Constant Declaration{" "}
+                            <code style={{ fontFamily: "monospace", background: "#f3eee4", padding: "1px 5px", wordBreak: "break-all" }}>
+                              {finding.source}
+                            </code>{" "}
+                            &rarr; {finding.taintPath.join(" → ")} &rarr; Credential Literal{" "}
+                            <code style={{ fontFamily: "monospace", background: "#f3eee4", padding: "1px 5px", wordBreak: "break-all" }}>
+                              {finding.sink}
+                            </code>
+                          </>
+                        ) : (
+                          <>
+                            Origin <code style={{ fontFamily: "monospace", background: "#f3eee4", padding: "1px 5px", wordBreak: "break-all" }}>{finding.source}</code>{" "}
+                            &rarr; {finding.taintPath.join(" → ")} &rarr; Target{" "}
+                            <code style={{ fontFamily: "monospace", background: "#f3eee4", padding: "1px 5px", wordBreak: "break-all" }}>{finding.sink}</code>
+                          </>
+                        )}
                       </div>
 
                        {finding.cwe === "CWE-1395" && (

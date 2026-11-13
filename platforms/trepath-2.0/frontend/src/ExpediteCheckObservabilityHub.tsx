@@ -150,7 +150,7 @@ export default function ExpediteCheckObservabilityHub({
         return `${window.location.origin}/api/v1`
       }
     }
-    return 'https://val-holland-prayers-nightlife.trycloudflare.com/api/v1'
+    return 'https://actively-commissioners-notre-leo.trycloudflare.com/api/v1'
   }, [apiBase])
 
   // Top-level interactive states
