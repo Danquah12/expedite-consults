@@ -1,5 +1,9 @@
 import type { Metadata } from "next"
 
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+export const fetchCache = "force-no-store"
+
 export const metadata: Metadata = {
   title: "ConnectLn — Tickets, vouches, and real work",
   description: "The zero-trust professional network for cloud, cybersecurity, trades, and enterprise architects.",
