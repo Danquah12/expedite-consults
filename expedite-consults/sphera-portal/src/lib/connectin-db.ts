@@ -665,6 +665,7 @@ class ConnectInDatabase {
       let otps: OTPRecord[] = []
       let posts: PostRecord[] = INITIAL_POSTS
       let activityLogs: any[] = []
+      let alerts: any[] = []
 
       for (const filePath of this.getReadableDbPaths()) {
         try {
@@ -681,6 +682,7 @@ class ConnectInDatabase {
             if (otps.length === 0 && Array.isArray(parsed.otps)) otps = parsed.otps
             if (Array.isArray(parsed.posts) && parsed.posts.length > 0) posts = parsed.posts
             if (activityLogs.length === 0 && Array.isArray(parsed.activityLogs)) activityLogs = parsed.activityLogs
+            if (Array.isArray(parsed.alerts)) alerts = parsed.alerts
           }
         } catch {}
       }
@@ -698,7 +700,8 @@ class ConnectInDatabase {
         sessions,
         otps,
         posts,
-        activityLogs
+        activityLogs,
+        alerts
       }
       return result
     } catch (e) {
@@ -746,6 +749,14 @@ class ConnectInDatabase {
                 if (l && l.id && !logMap.has(l.id)) logMap.set(l.id, l)
               })
               ;(this.data as any).activityLogs = Array.from(logMap.values()).slice(0, 500)
+            }
+            if (Array.isArray(parsed.alerts)) {
+              const existingAlerts = (this.data as any).alerts || []
+              const alertMap = new Map<string, any>()
+              ;[...parsed.alerts, ...existingAlerts].forEach((a: any) => {
+                if (a && a.id && !alertMap.has(a.id)) alertMap.set(a.id, a)
+              })
+              ;(this.data as any).alerts = Array.from(alertMap.values()).slice(0, 200)
             }
           }
         } catch {}
