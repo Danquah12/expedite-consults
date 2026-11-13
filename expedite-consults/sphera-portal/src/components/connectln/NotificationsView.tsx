@@ -189,6 +189,41 @@ export function NotificationsView({
     const timer = setInterval(fetchIncomingAlerts, 15000)
     return () => { isMounted = false; clearInterval(timer) }
   }, [])
+
+  const [frontierBannerData, setFrontierBannerData] = useState({
+    domain: "NUCLEAR_FISSION_SMR_GEN4",
+    question: "A lead-cooled fast reactor small modular reactor operates at 300 MWth. If the Doppler temperature coefficient is -3.2 pcm/C and keff reaches 1.0025 with period 3.2s, what passive safety mechanism and SCRAM timing are required?",
+    verdict: "Gravity-driven B4C control rod insertion SCRAM in < 1.8 seconds and passive RVACS natural circulation loop engagement certified under US NRC 10 CFR Part 50/52 & IAEA SSR-2/1.",
+    durationMs: 42.3,
+    status: "PASS",
+    isRunning: false
+  })
+
+  const handleRunNewChallengeTest = async () => {
+    setFrontierBannerData(prev => ({ ...prev, isRunning: true }))
+    try {
+      const res = await fetch("https://www.dstrike.app/api/noctis?daily_challenge=1")
+      if (res.ok) {
+        const data = await res.json()
+        if (data.challengeExecuted?.challenge) {
+          setFrontierBannerData({
+            domain: data.challengeExecuted.challenge.domain,
+            question: data.challengeExecuted.challenge.question,
+            verdict: data.challengeExecuted.challenge.expectedInvariant,
+            durationMs: data.challengeExecuted.executionDurationMs || 38.4,
+            status: data.challengeExecuted.invariantStatus || "PASS",
+            isRunning: false
+          })
+        } else {
+          setFrontierBannerData(prev => ({ ...prev, isRunning: false }))
+        }
+      } else {
+        setFrontierBannerData(prev => ({ ...prev, isRunning: false }))
+      }
+    } catch {
+      setFrontierBannerData(prev => ({ ...prev, isRunning: false }))
+    }
+  }
   const [followBundle, setFollowBundle] = useState<UserFollowBundle>(() =>
     loadUserFollowBundle(currentUserName)
   )
@@ -661,46 +696,63 @@ export function NotificationsView({
         </div>
 
         {/* Featured Noctis 6AM Frontier & Benchmark Invariant Alert Banner */}
-        <div className="mt-4 rounded-2xl border-2 border-red-500/40 bg-gradient-to-r from-red-950/20 via-slate-900 to-indigo-950 p-5 text-white shadow-lg">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
+        <div
+          className="mt-4 rounded-2xl border-2 border-red-500/50 p-5 shadow-xl transition-all"
+          style={{ backgroundColor: '#090d16', color: '#ffffff' }}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/15">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="rounded-full bg-red-600 px-2.5 py-0.5 text-[11px] font-black tracking-wider uppercase text-white shadow-xs">
+              <span className="rounded-full bg-red-600 px-3 py-1 text-[11px] font-black tracking-wider uppercase text-white shadow-md">
                 🔴 Noctis 6AM Frontier Alert
               </span>
-              <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[11px] font-bold text-emerald-300 border border-emerald-500/30">
-                Invariant 100% PASS
+              <span
+                className="rounded-full px-2.5 py-0.5 text-[11px] font-extrabold border"
+                style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', color: '#34d399', borderColor: 'rgba(52, 211, 153, 0.4)' }}
+              >
+                Invariant 100% {frontierBannerData.status}
               </span>
-              <span className="text-xs text-zinc-400">
-                Frontier &amp; Benchmark Autonomous Daemon · 42ms SLA
+              <span className="text-xs font-semibold" style={{ color: '#94a3b8' }}>
+                {frontierBannerData.domain} · {frontierBannerData.durationMs}ms SLA
               </span>
             </div>
-            <a
-              href="https://www.dstrike.app/api/noctis?daily_challenge=1"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1.5 text-xs font-bold text-white transition-all w-fit"
+            <button
+              type="button"
+              onClick={handleRunNewChallengeTest}
+              disabled={frontierBannerData.isRunning}
+              className="rounded-xl px-3.5 py-1.5 text-xs font-black transition-all cursor-pointer shadow-md disabled:opacity-50"
+              style={{ backgroundColor: '#2563eb', color: '#ffffff', border: '1px solid #60a5fa' }}
             >
-              🔄 Run New Challenge Test ↗
-            </a>
+              {frontierBannerData.isRunning ? "🔄 Evaluating Invariant..." : "🔄 Test Another Challenge Now"}
+            </button>
           </div>
 
-          <div className="mt-3.5 space-y-2.5">
+          <div className="mt-4 space-y-3">
             <div>
-              <span className="text-[11px] font-extrabold uppercase tracking-wider text-red-400 block mb-1">
+              <span className="text-xs font-extrabold uppercase tracking-wider block mb-1.5" style={{ color: '#f87171' }}>
                 Formulated Challenge Question:
               </span>
-              <p className="text-sm font-semibold text-zinc-100 bg-black/40 rounded-xl p-3 border border-white/10 leading-relaxed">
-                "A lead-cooled fast reactor small modular reactor operates at 300 MWth. If the Doppler temperature coefficient is -3.2 pcm/C and keff reaches 1.0025 with period 3.2s, what passive safety mechanism and SCRAM timing are required?"
+              <p
+                className="text-sm sm:text-base font-semibold rounded-xl p-3.5 border leading-relaxed"
+                style={{ backgroundColor: '#131b2e', color: '#ffffff', borderColor: 'rgba(255,255,255,0.15)' }}
+              >
+                "{frontierBannerData.question}"
               </p>
             </div>
 
             <div>
-              <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-400 block mb-1">
+              <span className="text-xs font-extrabold uppercase tracking-wider block mb-1.5" style={{ color: '#34d399' }}>
                 Evaluated Safety Mandate &amp; Invariant Verdict:
               </span>
-              <div className="text-xs text-zinc-200 bg-emerald-950/30 rounded-xl p-3 border border-emerald-500/30 leading-relaxed">
-                <strong>🚨 CRITICAL SAFETY VETO: PROMPT SUPERCRITICAL EXCURSION SCRAM</strong><br />
-                Gravity-driven B4C control rod insertion SCRAM in &lt; 1.8 seconds and passive RVACS natural circulation loop engagement certified under US NRC 10 CFR Part 50/52 &amp; IAEA SSR-2/1.
+              <div
+                className="text-xs sm:text-sm font-medium rounded-xl p-3.5 border leading-relaxed"
+                style={{ backgroundColor: '#062817', color: '#ecfdf5', borderColor: 'rgba(52, 211, 153, 0.4)' }}
+              >
+                <span className="font-extrabold" style={{ color: '#6ee7b7' }}>
+                  🚨 CRITICAL INVARIANT ENFORCEMENT &amp; SAFETY VETO:
+                </span>
+                <p className="mt-1" style={{ color: '#f0fdf4' }}>
+                  {frontierBannerData.verdict}
+                </p>
               </div>
             </div>
           </div>
