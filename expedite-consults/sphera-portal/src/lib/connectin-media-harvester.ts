@@ -730,7 +730,7 @@ export function getInitialDeterministicHarvestedItems(count: number = 14): Harve
   const currentSlot = getCurrentMinuteSlot()
   const items: HarvestedMediaItem[] = []
   for (let i = 0; i < count; i++) {
-    items.push(buildHarvestedItemForSlot(currentSlot - i, i, Date.now() - i * 60000))
+    items.push(buildHarvestedItemForSlot(currentSlot - i, 0, Date.now() - i * 60000))
   }
   return items
 }
@@ -758,9 +758,16 @@ export function loadStoredHarvestedItems(): HarvestedMediaItem[] {
   try {
     const raw = window.localStorage.getItem(HARVESTER_STORAGE_KEY)
     const parsed: HarvestedMediaItem[] = raw ? JSON.parse(raw) : []
+    // Filter out any legacy duplicate-template items where id had matching slot+offset
+    const cleanedParsed = parsed.filter((item) => {
+      if (!item || !item.id) return false
+      const m = item.id.match(/^cln_hv_(\d+)_(\d+)_/)
+      if (m && Number(m[2]) > 0) return false
+      return true
+    })
     const deterministic = getInitialDeterministicHarvestedItems(14)
     const map = new Map<string, HarvestedMediaItem>()
-    ;[...parsed, ...deterministic].forEach((item) => {
+    ;[...deterministic, ...cleanedParsed].forEach((item) => {
       if (item && item.id && !map.has(item.id)) {
         map.set(item.id, item)
       }

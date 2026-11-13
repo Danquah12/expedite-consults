@@ -42,9 +42,11 @@ export async function GET(req: NextRequest) {
 
   if (autoTick) {
     // Pull 1 fresh video + 1 fresh picture on the 60-second tick so the platform visibly grows every minute
-    const slot = getCurrentMinuteSlot() + MANUAL_PULL_COUNTER++
-    const item = buildHarvestedItemForSlot(slot, MANUAL_PULL_COUNTER, Date.now())
+    const uniqueStep = Math.floor(Date.now() / 1000) + MANUAL_PULL_COUNTER++
+    const slot = getCurrentMinuteSlot() + uniqueStep
+    const item = buildHarvestedItemForSlot(slot, 0, Date.now())
     item.id = `cln_auto_${Date.now()}_${MANUAL_PULL_COUNTER}`
+    item.pulledAtIso = new Date().toISOString()
     item.pulledAtLabel = `Auto-pulled just now (${new Date().toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
@@ -81,11 +83,13 @@ export async function POST(req: NextRequest) {
         second: "2-digit",
       })
 
+      const baseStep = Math.floor(Date.now() / 1000)
       for (let i = 0; i < count; i++) {
-        const slot = getCurrentMinuteSlot() + MANUAL_PULL_COUNTER++
-        const built = buildHarvestedItemForSlot(slot, i, Date.now())
+        const slot = getCurrentMinuteSlot() + baseStep + i + MANUAL_PULL_COUNTER++
+        const built = buildHarvestedItemForSlot(slot, 0, Date.now() - i * 1000)
         built.id = `cln_pull_${Date.now()}_${i}_${MANUAL_PULL_COUNTER}`
         built.destinations = requestedDestinations
+        built.pulledAtIso = new Date(Date.now() - i * 1000).toISOString()
         built.pulledAtLabel = `Pulled & pushed at ${nowTimeStr}`
         newlyPulled.push(built)
       }

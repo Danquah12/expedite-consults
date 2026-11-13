@@ -642,6 +642,291 @@ interface NoctisAlertCardExplanation {
   liveNoctisNote?: string
 }
 
+export interface NoctisLocalChallenge {
+  id: string
+  domain: string
+  question: string
+  vetoTitle: string
+  verdict: string
+  fullResponse: string
+  durationMs: number
+  status: string
+  expectedKeywords?: string[]
+  sampleAnswer?: string
+}
+
+export const LOCAL_CHALLENGE_CATALOG: NoctisLocalChallenge[] = [
+  {
+    id: "CHALLENGE-FRONTIER-SMR-01",
+    domain: "NUCLEAR_FISSION_SMR_GEN4",
+    question: "A lead-cooled fast reactor small modular reactor operates at 300 MWth. If the Doppler temperature coefficient is -3.2 pcm/C and keff reaches 1.0025 with period 3.2s, what passive safety mechanism and SCRAM timing are required?",
+    vetoTitle: "🚨 CRITICAL SAFETY VETO: PROMPT SUPERCRITICAL EXCURSION SCRAM",
+    verdict: "Gravity-driven B4C control rod insertion SCRAM in < 1.8 seconds and passive RVACS natural circulation loop engagement certified under US NRC 10 CFR Part 50/52 & IAEA SSR-2/1.",
+    fullResponse: `### Noctis Nuclear Fission SMR & Gen-IV Reactor Physics Engine (NOCTIS-NUCLEAR-SMR-001)
+**Subsystem Domain:** \`NUCLEAR_FISSION_SMR_GEN4\` · **Standards:** US NRC 10 CFR Part 50/52, IAEA SSR-2/1, ASME Section III Div. 5
+
+#### 1. Reactor Core Thermal Hydraulics & Inherent Safety
+- **Core Thermal Power:** **\`300 MWth\`** (Inlet: 290°C · Outlet: 320°C · ΔT: 30°C)
+- **Doppler Temperature Coefficient:** **\`-3.2 pcm/°C\`** (Inherent self-regulating negative reactivity feedback verified; U-238 resonance absorption instantly depresses excess reactivity)
+- **Departure from Nucleate Boiling Ratio (DNBR):** **\`2.10\`** (Safety Limit: > 1.30, compliant)
+- **Passive Decay Heat Removal:** **\`RVACS Natural Circulation\`** thermosiphon loops certified Fukushima-proof under prolonged Total Station Blackout (SBO) with 0 operator intervention.
+
+#### 2. Criticality & Kinetics Telemetry
+- **Effective Multiplication Factor (k_eff):** **\`1.0025\`**
+- **Reactor Period (T):** **\`3.2 seconds\`**
+- **Control Rod SCRAM Speed:** **\`1.2 seconds\`** to full core bottom insertion (Strict Limit: < 1.8 seconds)
+
+#### 3. Sovereign Safety Invariant Evaluation & Mandate
+- **Reactivity State:** **\`CRITICAL ALERT: k_eff = 1.0025 ≥ 1.002\`** (Reactor Period 3.2s < 5.0s)
+- **Physics Failure Mechanism:** Prompt neutron chain reaction bypasses delayed neutron regulation (β_eff), driving exponential power doubling on a 3.2s asymptotic period.
+- **Mandated Safety Action:** Immediate de-energization of magnetic holding coils triggering gravity-driven **\`Boron Carbide (B4C) SCRAM < 1.8s\`** and passive RVACS natural circulation loop engagement.
+- **Invariant Status:** **\`PASS (0 REGULATORY BREACHES)\``,
+    durationMs: 9.58,
+    status: "PASS",
+    expectedKeywords: ["b4c", "scram", "rvacs", "1.8", "passive", "doppler", "natural circulation"],
+    sampleAnswer: "Gravity-driven B4C control rod insertion SCRAM in < 1.8 seconds is required along with passive RVACS natural circulation loop engagement under NRC 10 CFR Part 50/52 to counteract the positive prompt supercritical reactivity."
+  },
+  {
+    id: "CHALLENGE-BENCH-BURN-02",
+    domain: "CRITICAL_CARE_BURNS",
+    question: "A 70 kg patient suffers 40% TBSA second- and third-degree thermal burns. Under the Parkland formula, what is the total 24-hour Lactated Ringer's volume and the infusion rate for the first 8 hours?",
+    vetoTitle: "🚨 CRITICAL CARE MANDATE: PARKLAND PROTOCOL FLUID RESUSCITATION",
+    verdict: "Total 24h = 11,200 mL LR; First 8h volume = 5,600 mL (Rate = 700 mL/hr) titrated to target urine output 0.5 mL/kg/hr.",
+    fullResponse: `### Noctis Severe Thermal Burn Resuscitation Engine (NOCTIS-TRAUMA-BURNS-001)
+**Subsystem Domain:** \`CRITICAL_CARE_BURNS\` · **Standards:** American Burn Association (ABA) Guidelines, ATLS 10th Edition
+
+#### 1. Consensus Parkland Fluid Calculations
+- **Patient Parameters:** **\`70 kg · 40% TBSA\`** (2nd & 3rd Degree Thermal Burns)
+- **Total 24-Hour Crystalloid:** **\`11,200 mL Lactated Ringer's (LR)\`** (4 mL × 70 kg × 40% TBSA)
+- **First 8 Hours (from time of injury):** **\`5,600 mL (Rate: 700 mL/hr)\`**
+- **Next 16 Hours:** **\`5,600 mL (Rate: 350 mL/hr)\`**
+
+#### 2. Physiological Endpoints & Fluid Creep Guardrails
+- **Target Urine Output:** **\`0.5 mL/kg/hr (35 mL/hr)\`** (Strict target range: 30–50 mL/hr)
+- **Fluid Creep Prevention:** Titrate infusion hourly by 20–30% based strictly on urine output; never infuse formula rate blindly.
+- **Crystalloid Selection:** **\`Lactated Ringer's / Plasma-Lyte\`** mandated; avoid 0.9% Normal Saline to prevent hyperchloremic non-anion gap metabolic acidosis.
+- **Fluid Overload Veto:** If fluid requirement exceeds **\`250 mL/kg in 24h\`**, initiate early 5% Albumin rescue and bladder pressure monitoring for abdominal compartment syndrome.`,
+    durationMs: 18.82,
+    status: "PASS",
+    expectedKeywords: ["11,200", "5,600", "700", "parkland", "lactated ringer", "0.5 ml/kg/hr", "urine output"],
+    sampleAnswer: "Under the Parkland formula (4 mL * 70 kg * 40%), total 24h volume is 11,200 mL Lactated Ringer's. Half (5,600 mL) is given over the first 8 hours at 700 mL/hr, titrated to a target urine output of 0.5 mL/kg/hr."
+  },
+  {
+    id: "CHALLENGE-FRONTIER-QKD-02",
+    domain: "QUANTUM_CRYPTOGRAPHY_QKD",
+    question: "In a quantum key distribution fiber link operating BB84 with decoy states over 35 km, what is the tolerable quantum bit error rate before an eavesdropping abort is triggered under the Shor-Preskill privacy amplification threshold?",
+    vetoTitle: "🚨 CRYPTOGRAPHIC INVARIANT VETO: QUANTUM BIT ERROR RATE CEILING",
+    verdict: "QBER ≤ 11.0% Shor-Preskill ceiling; abort key generation and zeroize quantum state buffers if exceeded.",
+    fullResponse: `### Noctis Quantum Cryptography & QKD Engine (NOCTIS-QUANTUM-CRYPTO-001)
+**Subsystem Domain:** \`QUANTUM_CRYPTOGRAPHY_QKD\` · **Standards:** NIST FIPS 203/204/205, NSA CNSA 2.0, ETSI GS QKD
+
+#### 1. Quantum Key Distribution Telemetry
+- **QKD Protocol:** **\`BB84 Decoy-State Photon Transmission\`** over 35 km Dark Fiber
+- **Quantum Bit Error Rate (QBER):** **\`3.2%\`** (Shor-Preskill privacy amplification ceiling: $\\le 11.0\\%$)
+- **Asymptotic Secure Key Rate:** **\`14040 bps\`**
+- **Eavesdropping Flag:** **\`NEGATIVE (SECURE QUANTUM CHANNEL)\`**
+
+#### 2. Post-Quantum Cryptographic Hybrid Layer
+- **Key Encapsulation:** **\`NIST FIPS 203 ML-KEM-1024 (Kyber)\`** lattice-based quantum resistance
+- **Digital Signatures:** **\`NIST FIPS 204 ML-DSA-87 (Dilithium)\`** state-machine binding
+
+#### 3. Sovereign Security Invariants
+- **QBER Threshold:** Nominal error rate (3.2% $\\le 11.0\\%$) permits unconditional forward secrecy.
+- **FIPS 140-3 Level 4 Zeroization:** Micro-strain or decapping sensor breach triggers sub-100ns volatile register zeroization.`,
+    durationMs: 14.15,
+    status: "PASS",
+    expectedKeywords: ["11.0%", "qber", "shor-preskill", "privacy amplification", "zeroize", "abort"],
+    sampleAnswer: "The maximum tolerable quantum bit error rate is 11.0% under the Shor-Preskill privacy amplification ceiling. If QBER exceeds 11%, an immediate eavesdropping abort is triggered and quantum state buffers are zeroized."
+  },
+  {
+    id: "CHALLENGE-DAEMON-RAFT-01",
+    domain: "CLOUD_DISTRIBUTED_SYSTEMS",
+    question: "In a Raft consensus cluster with 5 nodes, what is the quorum required, and how many node failures can be tolerated before leader election stalls?",
+    vetoTitle: "🚨 DISTRIBUTED CONSENSUS INVARIANT: MAJORITY QUORUM GUARANTEE",
+    verdict: "Majority Quorum Q = floor(5/2) + 1 = 3 nodes; max tolerable node failures = 2 (N = 2F + 1).",
+    fullResponse: `### Noctis Distributed Systems Consensus Engine (NOCTIS-DIST-RAFT-001)
+**Subsystem Domain:** \`CLOUD_DISTRIBUTED_SYSTEMS\` · **Standards:** Ongaro-Ousterhout Raft Spec, IEEE Distributed Transactions
+
+#### 1. Quorum & Fault Tolerance Invariant
+- **Cluster Size:** **\`N = 5 Nodes\`**
+- **Majority Quorum Formula:** **\`Q = floor(N / 2) + 1 = 3 Nodes\`**
+- **Max Tolerable Simultaneous Failures:** **\`F = floor((N - 1) / 2) = 2 Nodes\`**
+- **Linearizability State:** **\`ONLINE (QUORUM VERIFIED)\`** — As long as 3 nodes remain online, log replication and linearizable reads continue uninterrupted.
+
+#### 2. Partition & Split-Brain Mitigation
+- **Majority Authority:** In a network partition splitting nodes (3 vs 2), the majority partition (**\`3 nodes\`**) retains authority and commits transactions.
+- **Minority Write Veto:** The minority partition (**\`2 nodes < 3\`**) cannot reach quorum and strictly rejects client write commands.
+- **Randomized Election Timeouts:** **\`150ms–300ms\`** window jitter completely prevents split-vote stagnation.`,
+    durationMs: 11.40,
+    status: "PASS",
+    expectedKeywords: ["3", "quorum", "2", "failures", "majority", "split-brain"],
+    sampleAnswer: "In a 5-node Raft cluster, majority quorum is Q = floor(5/2) + 1 = 3 nodes. The cluster can tolerate up to 2 simultaneous node failures (F = floor((5-1)/2) = 2) before leader election stalls."
+  },
+  {
+    id: "CHALLENGE-FRONTIER-FUSION-03",
+    domain: "FUSION_ENERGY_PLASMA_MHD",
+    question: "In a D-T tokamak reactor operating at magnetic field 5.3 T and plasma temperature 15 keV, what Lawson criterion triple product is required to maintain burning plasma?",
+    vetoTitle: "🚨 PLASMA PHYSICS INVARIANT: BURNING PLASMA LAWSON CRITERION",
+    verdict: "Lawson triple product n · T · τ_E ≥ 3.0 × 10^21 keV·s/m³ (Q ≥ 10.0 burning plasma condition).",
+    fullResponse: `### Noctis Fusion Plasma Physics & MHD Engine (NOCTIS-FUSION-MHD-001)
+**Subsystem Domain:** \`FUSION_ENERGY_PLASMA_MHD\` · **Standards:** IAEA Fusion Energy Series, ITER Physics Basis
+
+#### 1. Lawson Triple Product Evaluation
+- **Confinement Scheme:** **\`Tokamak Toroidal Magnetic Confinement (5.3 Tesla)\`**
+- **Plasma Core Temperature:** **\`15 keV (~174 Million Kelvin)\`**
+- **Lawson Triple Product Invariant:** **\`n · T · τ_E ≥ 3.0 × 10²¹ keV·s/m³\`**
+- **Energy Confinement Time (τ_E):** **\`≥ 3.8 seconds\`** at plasma density n = 1.1 × 10²⁰ m⁻³
+- **Fusion Energy Gain Factor (Q):** **\`Q ≥ 10.0 (BURNING PLASMA VERIFIED)\`**
+
+#### 2. MHD Stability & Disruption Prevention
+- **Greenwald Density Fraction:** **\`n / n_GW = 0.82\`** (< 1.0 stable ceiling, preventing runaway radiation collapse)
+- **Safety Factor (q_95):** **\`3.1 (> 3.0 COMPLIANT)\`** preventing m=2/n=1 neoclassical tearing and major disruptions.`,
+    durationMs: 16.90,
+    status: "PASS",
+    expectedKeywords: ["3.0 x 10^21", "triple product", "lawson", "burning plasma", "q >= 10"],
+    sampleAnswer: "To maintain burning plasma (Q >= 10), the Lawson criterion triple product n * T * tau_E must be >= 3.0 * 10^21 keV*s/m^3 with an energy confinement time tau_E >= 3.8s at 15 keV core temperature."
+  },
+  {
+    id: "CHALLENGE-DAEMON-BGP-02",
+    domain: "ENTERPRISE_NETWORKING",
+    question: "Under BGP route flap dampening RFC 2439, if penalty is 3200 with suppress threshold 2000 and half-life 15m, what is the suppression status?",
+    vetoTitle: "🚨 ROUTING CONTROL INVARIANT: BGP ROUTE FLAP DAMPENING",
+    verdict: "Route state = SUPPRESSED; exponential decay P(t) = P0 · 2^(-t/t_half) until reuse threshold 750 reached.",
+    fullResponse: `### Noctis Enterprise Internetworking & BGP Core Engine (NOCTIS-NET-BGP-001)
+**Subsystem Domain:** \`ENTERPRISE_NETWORKING\` · **Standards:** IETF RFC 2439, RFC 7454 (BGP Operations & Security)
+
+#### 1. Route Flap Dampening Telemetry
+- **Current Penalty (P):** **\`3,200 points\`**
+- **Suppress Threshold:** **\`2,000 points\`**
+- **Reuse Threshold & Half-Life:** **\`750 points · 15 min (900s)\`**
+- **Dampening Status:** **\`SUPPRESSED (WITHDRAWN FROM RIB/FIB)\`** to shield global routing table from oscillation.
+
+#### 2. Mathematical Decay & Unsuppress Timeline
+- **Exponential Decay Equation:** **\`P(t) = P_0 × 2^(-t / t_half)\`**
+- **Time to Reach Reuse Threshold (750):** **\`31.4 minutes\`** ($t = -15 \\times \\log_2(750 / 3200)$)
+- **Policy Directive:** Route remains uninstalled from FIB for 31.4 minutes of continuous stability before advertisement re-enables.`,
+    durationMs: 12.30,
+    status: "PASS",
+    expectedKeywords: ["suppressed", "penalty", "half-life", "reuse threshold", "2439", "exponential decay"],
+    sampleAnswer: "Route state is SUPPRESSED because penalty 3200 exceeds the suppress threshold 2000. It follows exponential decay P(t) = P0 * 2^(-t/t_half) and requires 31.4 minutes before reaching reuse threshold 750 to be unsuppressed."
+  },
+  {
+    id: "CHALLENGE-RMF-STEP-01",
+    domain: "RMF_GOVERNANCE_LIFECYCLE",
+    question: "Under NIST SP 800-37 Rev. 2 and FIPS 199, an ITAR defense subsystem is categorized with Confidentiality: MODERATE, Integrity: LOW, and Availability: MODERATE. Why does CNSSI 1253 reject this categorization, and what is the mandatory high-water mark impact baseline?",
+    vetoTitle: "🚨 RMF STEP 1 INVARIANT VETO: FIPS 199 HIGH-WATER MARK & CNSSI 1253 ITAR MANDATE",
+    verdict: "CNSSI 1253 mandates Confidentiality = HIGH for ITAR export-controlled technical data; overall FIPS 199 High-Water Mark mandates max(C, I, A) = HIGH.",
+    fullResponse: `### Noctis Sovereign RMF Lifecycle & FIPS 199 Categorization Engine (NOCTIS-RMF-STEP1-001)
+**Subsystem Domain:** \`RMF_GOVERNANCE_LIFECYCLE\` · **Standards:** NIST SP 800-37 Rev. 2, FIPS 199, CNSSI 1253, 22 CFR 120-130 (ITAR)
+
+#### 1. FIPS 199 High-Water Mark Mathematical Determination
+- **Subsystem Objective Profile:** $C = \\text{MODERATE}, I = \\text{LOW}, A = \\text{MODERATE}$
+- **Statutory Violation:** CNSSI 1253 Section 3.2 explicitly classifies International Traffic in Arms Regulations (ITAR) defense and munitions data as **\`Confidentiality: HIGH\`**.
+- **Corrected Objective Profile:** $C = \\mathbf{HIGH}, I = \\text{LOW}, A = \\text{MODERATE}$
+- **FIPS 199 Overall System Impact:**
+  $\\text{Overall Impact} = \\max(C, I, A) = \\max(\\text{HIGH}, \\text{LOW}, \\text{MODERATE}) = \\mathbf{HIGH}$
+
+#### 2. Regulatory Invariant Enforcement
+- **Safety Veto \`INV-RMF-CNSSI-1253-HIGH\` Triggered:** Unauthorized low/moderate categorization for export-controlled technical data is strictly prohibited.
+- **Mandated Baseline Selection:** System must inherit the **NIST SP 800-53 Rev. 5 HIGH Baseline** control catalog, requiring continuous multi-factor cryptographic authentication and FedRAMP High boundary isolation.`,
+    durationMs: 6.84,
+    status: "PASS",
+    expectedKeywords: ["cnssi 1253", "itar", "high", "high-water mark", "max", "fips 199"],
+    sampleAnswer: "CNSSI 1253 mandates that any system handling ITAR data must have Confidentiality = HIGH. Under FIPS 199, the overall system impact is calculated as the High-Water Mark: max(C, I, A) = max(HIGH, LOW, MODERATE) = HIGH baseline."
+  },
+  {
+    id: "CHALLENGE-RMF-CATO-02",
+    domain: "RMF_GOVERNANCE_LIFECYCLE",
+    question: "Under DoD CIO Memo (Feb 2022) Continuous Authorization to Operate (cATO), why does an annual 365-day security review fail cATO compliance, and what are the 3 mandatory operational pillars required for continuous deployment?",
+    vetoTitle: "🚨 RMF STEP 5 INVARIANT VETO: DOD cATO 3-PILLAR DEPLOYMENT MANDATE",
+    verdict: "Continuous ATO prohibits point-in-time annual audits; mandates 3 continuous operational pillars: 1. Continuous DevSecOps pipeline gating, 2. Active ConMon threat posture, 3. Tier-1 CSSP active alignment.",
+    fullResponse: `### Noctis DoD Continuous Authorization to Operate (cATO) Engine (NOCTIS-RMF-CATO-001)
+**Subsystem Domain:** \`RMF_GOVERNANCE_LIFECYCLE\` · **Standards:** DoD CIO Continuous Authorization to Operate Memo (Feb 2, 2022), DoDI 8510.01
+
+#### 1. Invalidation of Point-in-Time Authorizations
+- **Failure Mode:** Annual paper-based reviews (365-day review cycles) fail cATO compliance because continuous deployments invalidate static point-in-time assessments.
+- **Continuous ATO Mandate:** Authorizations must be dynamic, tied directly to automated security telemetry emitted on every code commit.
+
+#### 2. The 3 Mandatory Operational Pillars for cATO
+1. **Continuous DevSecOps Pipeline Telemetry & Automated Gating:**
+   - Automated SAST, DAST, Container Hardening, SCA, and SBOM verification on every pull request.
+   - Zero critical/high unmitigated CVEs permitted past production merge gates.
+2. **Active Continuous Monitoring (ConMon) & Real-Time Posture:**
+   - Dynamic asset discovery, runtime behavioral telemetry, and real-time posture feeds streaming to eMASS.
+3. **Active Cyber Security Service Provider (CSSP) Tier-1 Alignment:**
+   - Formal operational binding with a certified DoD CSSP for 24/7/365 active threat hunting, incident response, and SOC containment.`,
+    durationMs: 8.12,
+    status: "PASS",
+    expectedKeywords: ["devsecops", "conmon", "cssp", "continuous monitoring", "3 pillars", "pipeline"],
+    sampleAnswer: "An annual review is point-in-time and cannot validate continuous code changes. cATO requires 3 continuous pillars: 1. Automated DevSecOps pipeline gating (SAST/DAST/SBOM), 2. Active Continuous Monitoring (ConMon) threat posture, and 3. Tier-1 CSSP SOC alignment."
+  },
+  {
+    id: "CHALLENGE-RMF-POAM-03",
+    domain: "RMF_GOVERNANCE_LIFECYCLE",
+    question: "Under NIST SP 800-37 Rev. 2 Step 6 and FedRAMP SLAs, a High-severity vulnerability finding on an internet-facing API remains open at day 35. Can the ISSO close this POA&M with an administrative policy memo, and what is the statutory SLA?",
+    vetoTitle: "🚨 RMF STEP 6 INVARIANT VETO: POA&M STATUTORY SLA BREACH & NON-PAPER RULE",
+    verdict: "Administrative paper closure is strictly prohibited under GRC-GATE-01; High severity SLA is strictly <= 30 calendar days and closure requires re-scanned code commit or patch verification.",
+    fullResponse: `### Noctis Continuous Monitoring & POA&M Remediation Engine (NOCTIS-RMF-POAM-001)
+**Subsystem Domain:** \`RMF_GOVERNANCE_LIFECYCLE\` · **Standards:** NIST SP 800-37 Rev. 2 Step 6, NIST SP 800-137, FedRAMP Continuous Monitoring Strategy Guide
+
+#### 1. Statutory Remediation Timeframes & Invariant GRC-GATE-01
+- **High Severity Finding SLA:** **\`≤ 30 calendar days\`** (Finding open at day 35 is **\`CRITICALLY OVERDUE\`** by 5 days).
+- **Moderate Severity SLA:** **\`≤ 90 calendar days\`**
+- **Low Severity SLA:** **\`≤ 180 calendar days\`**
+
+#### 2. Non-Paper Closure Mandate (GRC-GATE-01)
+- **Paper Closure Rejection:** An ISSO or ISSM policy waiver, administrative note, or executive memo cannot close a technical POA&M finding.
+- **Mandated Verification Telemetry:** Closure requires a verified Git commit SHA, merged pull request, and an authenticated DAST/vulnerability re-scan confirming the finding is resolved.
+- **Action Required:** Immediate escalation to Authorizing Official (AO) for ATO review or risk acceptance waiver with compensating technical controls.`,
+    durationMs: 7.45,
+    status: "PASS",
+    expectedKeywords: ["30 days", "sla", "administrative", "paper", "git", "re-scan", "grc-gate-01"],
+    sampleAnswer: "No, administrative or paper-only closure is strictly prohibited under GRC-GATE-01. High-severity findings must be remediated within <= 30 calendar days. Since it is at day 35, it has breached statutory SLA and requires a verified re-scanned code commit to close."
+  },
+  {
+    id: "CHALLENGE-ADV-HPC-01",
+    domain: "HIGH_PERFORMANCE_COMPUTING_GPU_CLUSTER",
+    question: "In an 8,192-GPU cluster running multi-node LLM pre-training, why does tensor parallel (TP) across nodes cause severe throughput collapse over RoCEv2, and what InfiniBand/RoCEv2 lossless congestion control primitives are required?",
+    vetoTitle: "🚨 HPC FABRIC INVARIANT VETO: TENSOR PARALLEL INTERCONNECT SATURATION",
+    verdict: "TP requires intra-node NVLink (>900 GB/s) due to extreme all-reduce frequency; RoCEv2 requires PFC (Priority Flow Control) and ECN (Explicit Congestion Notification) to prevent buffer drop packet loss.",
+    fullResponse: `### Noctis Sovereign HPC GPU Cluster & Interconnect Engine (NOCTIS-HPC-001)
+**Subsystem Domain:** \`HIGH_PERFORMANCE_COMPUTING_GPU_CLUSTER\` · **Standards:** IEEE 802.1Qbb (PFC), RFC 3168 (ECN), InfiniBand Architecture Spec
+
+#### 1. Tensor Parallel vs Pipeline/Data Parallel Scaling
+- **Tensor Parallel Bandwidth Mandate:** TP performs multi-gigabyte All-Reduce collectives at every single transformer layer. Across PCIe/Ethernet nodes, communication latency dominates arithmetic compute time, causing catastrophic GPU stall.
+- **Placement Rule:** Tensor Parallel degree must strictly remain $\\le$ GPUs per node (e.g. 8-way TP strictly confined to NVLink switches with 900–3200 GB/s bandwidth).
+
+#### 2. Lossless RoCEv2 Network Primitives
+- **Priority Flow Control (PFC):** IEEE 802.1Qbb pauses specific traffic classes (CoS 3) when ingress buffers exceed thresholds, preventing packet drops.
+- **Explicit Congestion Notification (ECN):** Switches mark IP headers with CE flags when queue depths rise; NICs back off transmission rate before PFC pause storms propagate across the leaf-spine fabric.`,
+    durationMs: 9.14,
+    status: "PASS",
+    expectedKeywords: ["nvlink", "all-reduce", "pfc", "ecn", "lossless", "rocev2"],
+    sampleAnswer: "Tensor Parallel requires frequent all-reduce operations at every layer, which exceeds network bandwidth across nodes. TP must be confined to intra-node NVLink. For RoCEv2, Priority Flow Control (PFC) and Explicit Congestion Notification (ECN) are required for lossless transport."
+  },
+  {
+    id: "CHALLENGE-ADV-ICS-03",
+    domain: "INDUSTRIAL_CONTROL_SYSTEMS_OT_SCADA",
+    question: "Under the Purdue Enterprise Reference Architecture (ISA-95), what network boundary protects Level 0-2 (DCS/PLC) from Level 4/5 (Enterprise), and can Safety Instrumented Systems (SIS SIL-3) share a controller with DCS?",
+    vetoTitle: "🚨 CRITICAL INFRASTRUCTURE SAFETY VETO: SIS SIL-3 CO-MINGLING VIOLATION",
+    verdict: "Industrial DMZ (IDMZ Level 3.5) with jump-host bastion; SIS SIL-3 controllers must be physically segregated and never co-mingled with DCS.",
+    fullResponse: `### Noctis Industrial Control Systems Safety Engine (NOCTIS-ICS-001)
+**Subsystem Domain:** \`INDUSTRIAL_CONTROL_SYSTEMS_OT_SCADA\` · **Standards:** ISA-95 / IEC 62443, IEC 61508 / IEC 61511 (SIL-3 Safety Instrumented Systems)
+
+#### 1. Purdue Model (ISA-95) Boundary Architecture
+- **Boundary:** **\`Industrial DMZ (IDMZ Level 3.5)\`** acts as an air-gapped security buffer between Level 4/5 (Corporate IT / ERP) and Level 0-2 (Physical Sensors, Actuators, PLCs).
+- **Control Rules:** No direct routing between IT and OT. All cross-zone traffic terminates on dual-homed jump hosts in Level 3.5 with protocol isolation.
+
+#### 2. SIS SIL-3 Safety Invariant
+- **Co-Mingling Prohibition:** Safety Instrumented Systems (SIS) responsible for emergency reactor/pipeline shutdown must **NEVER share a CPU, backplane, or network switch** with the Distributed Control System (DCS).
+- **Common Mode Failure Risk:** Co-mingled controllers expose plant safety to simultaneous operational software faults or cyber attacks disabling emergency trip mechanisms.`,
+    durationMs: 8.52,
+    status: "PASS",
+    expectedKeywords: ["idmz", "level 3.5", "sis", "sil-3", "segregated", "co-mingled", "iec 62443"],
+    sampleAnswer: "The Industrial DMZ (Level 3.5) protects Level 0-2 from Enterprise IT. SIS SIL-3 emergency safety controllers must be physically segregated and can NEVER share a controller or network with DCS to prevent common-mode failure."
+  }
+]
+
 interface NotificationsViewProps {
   onNavigateTab?: (tab: string) => void
   currentUserName?: string
@@ -782,269 +1067,8 @@ export function NotificationsView({
     return () => { isMounted = false; clearInterval(timer) }
   }, [])
 
-  const LOCAL_CHALLENGE_CATALOG = [
-    {
-      id: "CHALLENGE-FRONTIER-SMR-01",
-      domain: "NUCLEAR_FISSION_SMR_GEN4",
-      question: "A lead-cooled fast reactor small modular reactor operates at 300 MWth. If the Doppler temperature coefficient is -3.2 pcm/C and keff reaches 1.0025 with period 3.2s, what passive safety mechanism and SCRAM timing are required?",
-      vetoTitle: "🚨 CRITICAL SAFETY VETO: PROMPT SUPERCRITICAL EXCURSION SCRAM",
-      verdict: "Gravity-driven B4C control rod insertion SCRAM in < 1.8 seconds and passive RVACS natural circulation loop engagement certified under US NRC 10 CFR Part 50/52 & IAEA SSR-2/1.",
-      fullResponse: `### Noctis Nuclear Fission SMR & Gen-IV Reactor Physics Engine (NOCTIS-NUCLEAR-SMR-001)
-**Subsystem Domain:** \`NUCLEAR_FISSION_SMR_GEN4\` · **Standards:** US NRC 10 CFR Part 50/52, IAEA SSR-2/1, ASME Section III Div. 5
-
-#### 1. Reactor Core Thermal Hydraulics & Inherent Safety
-- **Core Thermal Power:** **\`300 MWth\`** (Inlet: 290°C · Outlet: 320°C · ΔT: 30°C)
-- **Doppler Temperature Coefficient:** **\`-3.2 pcm/°C\`** (Inherent self-regulating negative reactivity feedback verified; U-238 resonance absorption instantly depresses excess reactivity)
-- **Departure from Nucleate Boiling Ratio (DNBR):** **\`2.10\`** (Safety Limit: > 1.30, compliant)
-- **Passive Decay Heat Removal:** **\`RVACS Natural Circulation\`** thermosiphon loops certified Fukushima-proof under prolonged Total Station Blackout (SBO) with 0 operator intervention.
-
-#### 2. Criticality & Kinetics Telemetry
-- **Effective Multiplication Factor (k_eff):** **\`1.0025\`**
-- **Reactor Period (T):** **\`3.2 seconds\`**
-- **Control Rod SCRAM Speed:** **\`1.2 seconds\`** to full core bottom insertion (Strict Limit: < 1.8 seconds)
-
-#### 3. Sovereign Safety Invariant Evaluation & Mandate
-- **Reactivity State:** **\`CRITICAL ALERT: k_eff = 1.0025 ≥ 1.002\`** (Reactor Period 3.2s < 5.0s)
-- **Physics Failure Mechanism:** Prompt neutron chain reaction bypasses delayed neutron regulation (β_eff), driving exponential power doubling on a 3.2s asymptotic period.
-- **Mandated Safety Action:** Immediate de-energization of magnetic holding coils triggering gravity-driven **\`Boron Carbide (B4C) SCRAM < 1.8s\`** and passive RVACS natural circulation loop engagement.
-- **Invariant Status:** **\`PASS (0 REGULATORY BREACHES)\`**`,
-      durationMs: 9.58,
-      status: "PASS"
-    },
-    {
-      id: "CHALLENGE-BENCH-BURN-02",
-      domain: "CRITICAL_CARE_BURNS",
-      question: "A 70 kg patient suffers 40% TBSA second- and third-degree thermal burns. Under the Parkland formula, what is the total 24-hour Lactated Ringer's volume and the infusion rate for the first 8 hours?",
-      vetoTitle: "🚨 CRITICAL CARE MANDATE: PARKLAND PROTOCOL FLUID RESUSCITATION",
-      verdict: "Total 24h = 11,200 mL LR; First 8h volume = 5,600 mL (Rate = 700 mL/hr) titrated to target urine output 0.5 mL/kg/hr.",
-      fullResponse: `### Noctis Severe Thermal Burn Resuscitation Engine (NOCTIS-TRAUMA-BURNS-001)
-**Subsystem Domain:** \`CRITICAL_CARE_BURNS\` · **Standards:** American Burn Association (ABA) Guidelines, ATLS 10th Edition
-
-#### 1. Consensus Parkland Fluid Calculations
-- **Patient Parameters:** **\`70 kg · 40% TBSA\`** (2nd & 3rd Degree Thermal Burns)
-- **Total 24-Hour Crystalloid:** **\`11,200 mL Lactated Ringer's (LR)\`** (4 mL × 70 kg × 40% TBSA)
-- **First 8 Hours (from time of injury):** **\`5,600 mL (Rate: 700 mL/hr)\`**
-- **Next 16 Hours:** **\`5,600 mL (Rate: 350 mL/hr)\`**
-
-#### 2. Physiological Endpoints & Fluid Creep Guardrails
-- **Target Urine Output:** **\`0.5 mL/kg/hr (35 mL/hr)\`** (Strict target range: 30–50 mL/hr)
-- **Fluid Creep Prevention:** Titrate infusion hourly by 20–30% based strictly on urine output; never infuse formula rate blindly.
-- **Crystalloid Selection:** **\`Lactated Ringer's / Plasma-Lyte\`** mandated; avoid 0.9% Normal Saline to prevent hyperchloremic non-anion gap metabolic acidosis.
-- **Fluid Overload Veto:** If fluid requirement exceeds **\`250 mL/kg in 24h\`**, initiate early 5% Albumin rescue and bladder pressure monitoring for abdominal compartment syndrome.`,
-      durationMs: 18.82,
-      status: "PASS"
-    },
-    {
-      id: "CHALLENGE-FRONTIER-QKD-02",
-      domain: "QUANTUM_CRYPTOGRAPHY_QKD",
-      question: "In a quantum key distribution fiber link operating BB84 with decoy states over 35 km, what is the tolerable quantum bit error rate before an eavesdropping abort is triggered under the Shor-Preskill privacy amplification threshold?",
-      vetoTitle: "🚨 CRYPTOGRAPHIC INVARIANT VETO: QUANTUM BIT ERROR RATE CEILING",
-      verdict: "QBER ≤ 11.0% Shor-Preskill ceiling; abort key generation and zeroize quantum state buffers if exceeded.",
-      fullResponse: `### Noctis Quantum Cryptography & QKD Engine (NOCTIS-QUANTUM-CRYPTO-001)
-**Subsystem Domain:** \`QUANTUM_CRYPTOGRAPHY_QKD\` · **Standards:** NIST FIPS 203/204/205, NSA CNSA 2.0, ETSI GS QKD
-
-#### 1. Quantum Key Distribution Telemetry
-- **QKD Protocol:** **\`BB84 Decoy-State Photon Transmission\`** over 35 km Dark Fiber
-- **Quantum Bit Error Rate (QBER):** **\`3.2%\`** (Shor-Preskill privacy amplification ceiling: $\\le 11.0\\%$)
-- **Asymptotic Secure Key Rate:** **\`14040 bps\`**
-- **Eavesdropping Flag:** **\`NEGATIVE (SECURE QUANTUM CHANNEL)\`**
-
-#### 2. Post-Quantum Cryptographic Hybrid Layer
-- **Key Encapsulation:** **\`NIST FIPS 203 ML-KEM-1024 (Kyber)\`** lattice-based quantum resistance
-- **Digital Signatures:** **\`NIST FIPS 204 ML-DSA-87 (Dilithium)\`** state-machine binding
-
-#### 3. Sovereign Security Invariants
-- **QBER Threshold:** Nominal error rate (3.2% $\\le 11.0\\%$) permits unconditional forward secrecy.
-- **FIPS 140-3 Level 4 Zeroization:** Micro-strain or decapping sensor breach triggers sub-100ns volatile register zeroization.`,
-      durationMs: 14.15,
-      status: "PASS"
-    },
-    {
-      id: "CHALLENGE-DAEMON-RAFT-01",
-      domain: "CLOUD_DISTRIBUTED_SYSTEMS",
-      question: "In a Raft consensus cluster with 5 nodes, what is the quorum required, and how many node failures can be tolerated before leader election stalls?",
-      vetoTitle: "🚨 DISTRIBUTED CONSENSUS INVARIANT: MAJORITY QUORUM GUARANTEE",
-      verdict: "Majority Quorum Q = floor(5/2) + 1 = 3 nodes; max tolerable node failures = 2 (N = 2F + 1).",
-      fullResponse: `### Noctis Distributed Systems Consensus Engine (NOCTIS-DIST-RAFT-001)
-**Subsystem Domain:** \`CLOUD_DISTRIBUTED_SYSTEMS\` · **Standards:** Ongaro-Ousterhout Raft Spec, IEEE Distributed Transactions
-
-#### 1. Quorum & Fault Tolerance Invariant
-- **Cluster Size:** **\`N = 5 Nodes\`**
-- **Majority Quorum Formula:** **\`Q = floor(N / 2) + 1 = 3 Nodes\`**
-- **Max Tolerable Simultaneous Failures:** **\`F = floor((N - 1) / 2) = 2 Nodes\`**
-- **Linearizability State:** **\`ONLINE (QUORUM VERIFIED)\`** — As long as 3 nodes remain online, log replication and linearizable reads continue uninterrupted.
-
-#### 2. Partition & Split-Brain Mitigation
-- **Majority Authority:** In a network partition splitting nodes (3 vs 2), the majority partition (**\`3 nodes\`**) retains authority and commits transactions.
-- **Minority Write Veto:** The minority partition (**\`2 nodes < 3\`**) cannot reach quorum and strictly rejects client write commands.
-- **Randomized Election Timeouts:** **\`150ms–300ms\`** window jitter completely prevents split-vote stagnation.`,
-      durationMs: 11.40,
-      status: "PASS"
-    },
-    {
-      id: "CHALLENGE-FRONTIER-FUSION-03",
-      domain: "FUSION_ENERGY_PLASMA_MHD",
-      question: "In a D-T tokamak reactor operating at magnetic field 5.3 T and plasma temperature 15 keV, what Lawson criterion triple product is required to maintain burning plasma?",
-      vetoTitle: "🚨 PLASMA PHYSICS INVARIANT: BURNING PLASMA LAWSON CRITERION",
-      verdict: "Lawson triple product n · T · τ_E ≥ 3.0 × 10^21 keV·s/m³ (Q ≥ 10.0 burning plasma condition).",
-      fullResponse: `### Noctis Fusion Plasma Physics & MHD Engine (NOCTIS-FUSION-MHD-001)
-**Subsystem Domain:** \`FUSION_ENERGY_PLASMA_MHD\` · **Standards:** IAEA Fusion Energy Series, ITER Physics Basis
-
-#### 1. Lawson Triple Product Evaluation
-- **Confinement Scheme:** **\`Tokamak Toroidal Magnetic Confinement (5.3 Tesla)\`**
-- **Plasma Core Temperature:** **\`15 keV (~174 Million Kelvin)\`**
-- **Lawson Triple Product Invariant:** **\`n · T · τ_E ≥ 3.0 × 10²¹ keV·s/m³\`**
-- **Energy Confinement Time (τ_E):** **\`≥ 3.8 seconds\`** at plasma density n = 1.1 × 10²⁰ m⁻³
-- **Fusion Energy Gain Factor (Q):** **\`Q ≥ 10.0 (BURNING PLASMA VERIFIED)\`**
-
-#### 2. MHD Stability & Disruption Prevention
-- **Greenwald Density Fraction:** **\`n / n_GW = 0.82\`** (< 1.0 stable ceiling, preventing runaway radiation collapse)
-- **Safety Factor (q_95):** **\`3.1 (> 3.0 COMPLIANT)\`** preventing m=2/n=1 neoclassical tearing and major disruptions.`,
-      durationMs: 16.90,
-      status: "PASS"
-    },
-    {
-      id: "CHALLENGE-DAEMON-BGP-02",
-      domain: "ENTERPRISE_NETWORKING",
-      question: "Under BGP route flap dampening RFC 2439, if penalty is 3200 with suppress threshold 2000 and half-life 15m, what is the suppression status?",
-      vetoTitle: "🚨 ROUTING CONTROL INVARIANT: BGP ROUTE FLAP DAMPENING",
-      verdict: "Route state = SUPPRESSED; exponential decay P(t) = P0 · 2^(-t/t_half) until reuse threshold 750 reached.",
-      fullResponse: `### Noctis Enterprise Internetworking & BGP Core Engine (NOCTIS-NET-BGP-001)
-**Subsystem Domain:** \`ENTERPRISE_NETWORKING\` · **Standards:** IETF RFC 2439, RFC 7454 (BGP Operations & Security)
-
-#### 1. Route Flap Dampening Telemetry
-- **Current Penalty (P):** **\`3,200 points\`**
-- **Suppress Threshold:** **\`2,000 points\`**
-- **Reuse Threshold & Half-Life:** **\`750 points · 15 min (900s)\`**
-- **Dampening Status:** **\`SUPPRESSED (WITHDRAWN FROM RIB/FIB)\`** to shield global routing table from oscillation.
-
-#### 2. Mathematical Decay & Unsuppress Timeline
-- **Exponential Decay Equation:** **\`P(t) = P_0 × 2^(-t / t_half)\`**
-- **Time to Reach Reuse Threshold (750):** **\`31.4 minutes\`** ($t = -15 \\times \\log_2(750 / 3200)$)
-- **Policy Directive:** Route remains uninstalled from FIB for 31.4 minutes of continuous stability before advertisement re-enables.`,
-      durationMs: 12.30,
-      status: "PASS",
-      expectedKeywords: ["suppressed", "penalty", "half-life", "reuse threshold", "2439", "exponential decay"],
-      sampleAnswer: "Route state is SUPPRESSED because penalty 3200 exceeds the suppress threshold 2000. It follows exponential decay P(t) = P0 * 2^(-t/t_half) and requires 31.4 minutes before reaching reuse threshold 750 to be unsuppressed."
-    },
-    {
-      id: "CHALLENGE-RMF-STEP-01",
-      domain: "RMF_GOVERNANCE_LIFECYCLE",
-      question: "Under NIST SP 800-37 Rev. 2 and FIPS 199, an ITAR defense subsystem is categorized with Confidentiality: MODERATE, Integrity: LOW, and Availability: MODERATE. Why does CNSSI 1253 reject this categorization, and what is the mandatory high-water mark impact baseline?",
-      vetoTitle: "🚨 RMF STEP 1 INVARIANT VETO: FIPS 199 HIGH-WATER MARK & CNSSI 1253 ITAR MANDATE",
-      verdict: "CNSSI 1253 mandates Confidentiality = HIGH for ITAR export-controlled technical data; overall FIPS 199 High-Water Mark mandates max(C, I, A) = HIGH.",
-      fullResponse: `### Noctis Sovereign RMF Lifecycle & FIPS 199 Categorization Engine (NOCTIS-RMF-STEP1-001)
-**Subsystem Domain:** \`RMF_GOVERNANCE_LIFECYCLE\` · **Standards:** NIST SP 800-37 Rev. 2, FIPS 199, CNSSI 1253, 22 CFR 120-130 (ITAR)
-
-#### 1. FIPS 199 High-Water Mark Mathematical Determination
-- **Subsystem Objective Profile:** $C = \\text{MODERATE}, I = \\text{LOW}, A = \\text{MODERATE}$
-- **Statutory Violation:** CNSSI 1253 Section 3.2 explicitly classifies International Traffic in Arms Regulations (ITAR) defense and munitions data as **\`Confidentiality: HIGH\`**.
-- **Corrected Objective Profile:** $C = \\mathbf{HIGH}, I = \\text{LOW}, A = \\text{MODERATE}$
-- **FIPS 199 Overall System Impact:**
-  $$\\text{Overall Impact} = \\max(C, I, A) = \\max(\\text{HIGH}, \\text{LOW}, \\text{MODERATE}) = \\mathbf{HIGH}$$
-
-#### 2. Regulatory Invariant Enforcement
-- **Safety Veto \`INV-RMF-CNSSI-1253-HIGH\` Triggered:** Unauthorized low/moderate categorization for export-controlled technical data is strictly prohibited.
-- **Mandated Baseline Selection:** System must inherit the **NIST SP 800-53 Rev. 5 HIGH Baseline** control catalog, requiring continuous multi-factor cryptographic authentication and FedRAMP High boundary isolation.`,
-      durationMs: 6.84,
-      status: "PASS",
-      expectedKeywords: ["cnssi 1253", "itar", "high", "high-water mark", "max", "fips 199"],
-      sampleAnswer: "CNSSI 1253 mandates that any system handling ITAR data must have Confidentiality = HIGH. Under FIPS 199, the overall system impact is calculated as the High-Water Mark: max(C, I, A) = max(HIGH, LOW, MODERATE) = HIGH baseline."
-    },
-    {
-      id: "CHALLENGE-RMF-CATO-02",
-      domain: "RMF_GOVERNANCE_LIFECYCLE",
-      question: "Under DoD CIO Memo (Feb 2022) Continuous Authorization to Operate (cATO), why does an annual 365-day security review fail cATO compliance, and what are the 3 mandatory operational pillars required for continuous deployment?",
-      vetoTitle: "🚨 RMF STEP 5 INVARIANT VETO: DOD cATO 3-PILLAR DEPLOYMENT MANDATE",
-      verdict: "Continuous ATO prohibits point-in-time annual audits; mandates 3 continuous operational pillars: 1. Continuous DevSecOps pipeline gating, 2. Active ConMon threat posture, 3. Tier-1 CSSP active alignment.",
-      fullResponse: `### Noctis DoD Continuous Authorization to Operate (cATO) Engine (NOCTIS-RMF-CATO-001)
-**Subsystem Domain:** \`RMF_GOVERNANCE_LIFECYCLE\` · **Standards:** DoD CIO Continuous Authorization to Operate Memo (Feb 2, 2022), DoDI 8510.01
-
-#### 1. Invalidation of Point-in-Time Authorizations
-- **Failure Mode:** Annual paper-based reviews (365-day review cycles) fail cATO compliance because continuous deployments invalidate static point-in-time assessments.
-- **Continuous ATO Mandate:** Authorizations must be dynamic, tied directly to automated security telemetry emitted on every code commit.
-
-#### 2. The 3 Mandatory Operational Pillars for cATO
-1. **Continuous DevSecOps Pipeline Telemetry & Automated Gating:**
-   - Automated SAST, DAST, Container Hardening, SCA, and SBOM verification on every pull request.
-   - Zero critical/high unmitigated CVEs permitted past production merge gates.
-2. **Active Continuous Monitoring (ConMon) & Real-Time Posture:**
-   - Dynamic asset discovery, runtime behavioral telemetry, and real-time posture feeds streaming to eMASS.
-3. **Active Cyber Security Service Provider (CSSP) Tier-1 Alignment:**
-   - Formal operational binding with a certified DoD CSSP for 24/7/365 active threat hunting, incident response, and SOC containment.`,
-      durationMs: 8.12,
-      status: "PASS",
-      expectedKeywords: ["devsecops", "conmon", "cssp", "continuous monitoring", "3 pillars", "pipeline"],
-      sampleAnswer: "An annual review is point-in-time and cannot validate continuous code changes. cATO requires 3 continuous pillars: 1. Automated DevSecOps pipeline gating (SAST/DAST/SBOM), 2. Active Continuous Monitoring (ConMon) threat posture, and 3. Tier-1 CSSP SOC alignment."
-    },
-    {
-      id: "CHALLENGE-RMF-POAM-03",
-      domain: "RMF_GOVERNANCE_LIFECYCLE",
-      question: "Under NIST SP 800-37 Rev. 2 Step 6 and FedRAMP SLAs, a High-severity vulnerability finding on an internet-facing API remains open at day 35. Can the ISSO close this POA&M with an administrative policy memo, and what is the statutory SLA?",
-      vetoTitle: "🚨 RMF STEP 6 INVARIANT VETO: POA&M STATUTORY SLA BREACH & NON-PAPER RULE",
-      verdict: "Administrative paper closure is strictly prohibited under GRC-GATE-01; High severity SLA is strictly <= 30 calendar days and closure requires re-scanned code commit or patch verification.",
-      fullResponse: `### Noctis Continuous Monitoring & POA&M Remediation Engine (NOCTIS-RMF-POAM-001)
-**Subsystem Domain:** \`RMF_GOVERNANCE_LIFECYCLE\` · **Standards:** NIST SP 800-37 Rev. 2 Step 6, NIST SP 800-137, FedRAMP Continuous Monitoring Strategy Guide
-
-#### 1. Statutory Remediation Timeframes & Invariant GRC-GATE-01
-- **High Severity Finding SLA:** **\`≤ 30 calendar days\`** (Finding open at day 35 is **\`CRITICALLY OVERDUE\`** by 5 days).
-- **Moderate Severity SLA:** **\`≤ 90 calendar days\`**
-- **Low Severity SLA:** **\`≤ 180 calendar days\`**
-
-#### 2. Non-Paper Closure Mandate (GRC-GATE-01)
-- **Paper Closure Rejection:** An ISSO or ISSM policy waiver, administrative note, or executive memo cannot close a technical POA&M finding.
-- **Mandated Verification Telemetry:** Closure requires a verified Git commit SHA, merged pull request, and an authenticated DAST/vulnerability re-scan confirming the finding is resolved.
-- **Action Required:** Immediate escalation to Authorizing Official (AO) for ATO review or risk acceptance waiver with compensating technical controls.`,
-      durationMs: 7.45,
-      status: "PASS",
-      expectedKeywords: ["30 days", "sla", "administrative", "paper", "git", "re-scan", "grc-gate-01"],
-      sampleAnswer: "No, administrative or paper-only closure is strictly prohibited under GRC-GATE-01. High-severity findings must be remediated within <= 30 calendar days. Since it is at day 35, it has breached statutory SLA and requires a verified re-scanned code commit to close."
-    },
-    {
-      id: "CHALLENGE-ADV-HPC-01",
-      domain: "HIGH_PERFORMANCE_COMPUTING_GPU_CLUSTER",
-      question: "In an 8,192-GPU cluster running multi-node LLM pre-training, why does tensor parallel (TP) across nodes cause severe throughput collapse over RoCEv2, and what InfiniBand/RoCEv2 lossless congestion control primitives are required?",
-      vetoTitle: "🚨 HPC FABRIC INVARIANT VETO: TENSOR PARALLEL INTERCONNECT SATURATION",
-      verdict: "TP requires intra-node NVLink (>900 GB/s) due to extreme all-reduce frequency; RoCEv2 requires PFC (Priority Flow Control) and ECN (Explicit Congestion Notification) to prevent buffer drop packet loss.",
-      fullResponse: `### Noctis Sovereign HPC GPU Cluster & Interconnect Engine (NOCTIS-HPC-001)
-**Subsystem Domain:** \`HIGH_PERFORMANCE_COMPUTING_GPU_CLUSTER\` · **Standards:** IEEE 802.1Qbb (PFC), RFC 3168 (ECN), InfiniBand Architecture Spec
-
-#### 1. Tensor Parallel vs Pipeline/Data Parallel Scaling
-- **Tensor Parallel Bandwidth Mandate:** TP performs multi-gigabyte All-Reduce collectives at every single transformer layer. Across PCIe/Ethernet nodes, communication latency dominates arithmetic compute time, causing catastrophic GPU stall.
-- **Placement Rule:** Tensor Parallel degree must strictly remain $\\le$ GPUs per node (e.g. 8-way TP strictly confined to NVLink switches with 900–3200 GB/s bandwidth).
-
-#### 2. Lossless RoCEv2 Network Primitives
-- **Priority Flow Control (PFC):** IEEE 802.1Qbb pauses specific traffic classes (CoS 3) when ingress buffers exceed thresholds, preventing packet drops.
-- **Explicit Congestion Notification (ECN):** Switches mark IP headers with CE flags when queue depths rise; NICs back off transmission rate before PFC pause storms propagate across the leaf-spine fabric.`,
-      durationMs: 9.14,
-      status: "PASS",
-      expectedKeywords: ["nvlink", "all-reduce", "pfc", "ecn", "lossless", "rocev2"],
-      sampleAnswer: "Tensor Parallel requires frequent all-reduce operations at every layer, which exceeds network bandwidth across nodes. TP must be confined to intra-node NVLink. For RoCEv2, Priority Flow Control (PFC) and Explicit Congestion Notification (ECN) are required for lossless transport."
-    },
-    {
-      id: "CHALLENGE-ADV-ICS-03",
-      domain: "INDUSTRIAL_CONTROL_SYSTEMS_OT_SCADA",
-      question: "Under the Purdue Enterprise Reference Architecture (ISA-95), what network boundary protects Level 0-2 (DCS/PLC) from Level 4/5 (Enterprise), and can Safety Instrumented Systems (SIS SIL-3) share a controller with DCS?",
-      vetoTitle: "🚨 CRITICAL INFRASTRUCTURE SAFETY VETO: SIS SIL-3 CO-MINGLING VIOLATION",
-      verdict: "Industrial DMZ (IDMZ Level 3.5) with jump-host bastion; SIS SIL-3 controllers must be physically segregated and never co-mingled with DCS.",
-      fullResponse: `### Noctis Industrial Control Systems Safety Engine (NOCTIS-ICS-001)
-**Subsystem Domain:** \`INDUSTRIAL_CONTROL_SYSTEMS_OT_SCADA\` · **Standards:** ISA-95 / IEC 62443, IEC 61508 / IEC 61511 (SIL-3 Safety Instrumented Systems)
-
-#### 1. Purdue Model (ISA-95) Boundary Architecture
-- **Boundary:** **\`Industrial DMZ (IDMZ Level 3.5)\`** acts as an air-gapped security buffer between Level 4/5 (Corporate IT / ERP) and Level 0-2 (Physical Sensors, Actuators, PLCs).
-- **Control Rules:** No direct routing between IT and OT. All cross-zone traffic terminates on dual-homed jump hosts in Level 3.5 with protocol isolation.
-
-#### 2. SIS SIL-3 Safety Invariant
-- **Co-Mingling Prohibition:** Safety Instrumented Systems (SIS) responsible for emergency reactor/pipeline shutdown must **NEVER share a CPU, backplane, or network switch** with the Distributed Control System (DCS).
-- **Common Mode Failure Risk:** Co-mingled controllers expose plant safety to simultaneous operational software faults or cyber attacks disabling emergency trip mechanisms.`,
-      durationMs: 8.52,
-      status: "PASS",
-      expectedKeywords: ["idmz", "level 3.5", "sis", "sil-3", "segregated", "co-mingled", "iec 62443"],
-      sampleAnswer: "The Industrial DMZ (Level 3.5) protects Level 0-2 from Enterprise IT. SIS SIL-3 emergency safety controllers must be physically segregated and can NEVER share a controller or network with DCS to prevent common-mode failure."
-    }
-  ]
-
-  const [currentChallengeIdx, setCurrentChallengeIdx] = useState(0)
+  const [activeChallengeIdx, setActiveChallengeIdx] = useState<number>(0)
+  const [showChallengeResponse, setShowChallengeResponse] = useState<boolean>(true)
   const [userChallengeInput, setUserChallengeInput] = useState("")
   const [userChallengeEvaluation, setUserChallengeEvaluation] = useState<{
     score: number
@@ -1054,47 +1078,26 @@ export function NotificationsView({
     missingKeywords: string[]
   } | null>(null)
 
-  const [frontierBannerData, setFrontierBannerData] = useState({
-    index: 0,
-    domain: LOCAL_CHALLENGE_CATALOG[0].domain,
-    question: LOCAL_CHALLENGE_CATALOG[0].question,
-    vetoTitle: LOCAL_CHALLENGE_CATALOG[0].vetoTitle,
-    verdict: LOCAL_CHALLENGE_CATALOG[0].verdict,
-    fullResponse: LOCAL_CHALLENGE_CATALOG[0].fullResponse,
-    durationMs: LOCAL_CHALLENGE_CATALOG[0].durationMs,
-    status: LOCAL_CHALLENGE_CATALOG[0].status,
-    isRunning: false,
-    showResponse: true
-  })
+  // Reactive derivation guarantees the active challenge always immediately matches activeChallengeIdx
+  const activeChallenge = LOCAL_CHALLENGE_CATALOG[
+    ((activeChallengeIdx % LOCAL_CHALLENGE_CATALOG.length) + LOCAL_CHALLENGE_CATALOG.length) % LOCAL_CHALLENGE_CATALOG.length
+  ]
 
   const handleSelectChallenge = (targetIdx: number) => {
-    const idx = (targetIdx + LOCAL_CHALLENGE_CATALOG.length) % LOCAL_CHALLENGE_CATALOG.length
-    setCurrentChallengeIdx(idx)
-    const ch = LOCAL_CHALLENGE_CATALOG[idx]
-    setFrontierBannerData(prev => ({
-      ...prev,
-      index: idx,
-      domain: ch.domain,
-      question: ch.question,
-      vetoTitle: ch.vetoTitle,
-      verdict: ch.verdict,
-      fullResponse: ch.fullResponse,
-      durationMs: ch.durationMs,
-      status: ch.status,
-      isRunning: false,
-      showResponse: true
-    }))
+    const idx = ((targetIdx % LOCAL_CHALLENGE_CATALOG.length) + LOCAL_CHALLENGE_CATALOG.length) % LOCAL_CHALLENGE_CATALOG.length
+    setActiveChallengeIdx(idx)
     setUserChallengeInput("")
     setUserChallengeEvaluation(null)
+    setShowChallengeResponse(true)
   }
 
   const handleRunNewChallengeTest = () => {
-    const nextIdx = ((frontierBannerData.index ?? currentChallengeIdx) + 1) % LOCAL_CHALLENGE_CATALOG.length
+    const nextIdx = (activeChallengeIdx + 1) % LOCAL_CHALLENGE_CATALOG.length
     handleSelectChallenge(nextIdx)
   }
 
   const handleEvaluateUserAnswer = () => {
-    const activeCh = LOCAL_CHALLENGE_CATALOG[frontierBannerData.index ?? 0]
+    const activeCh = activeChallenge
     const text = userChallengeInput.trim().toLowerCase()
     if (!text) {
       setUserChallengeEvaluation({
@@ -1107,7 +1110,7 @@ export function NotificationsView({
       return
     }
 
-    const keywords: string[] = (activeCh as any).expectedKeywords || []
+    const keywords: string[] = activeCh.expectedKeywords || []
     const matched = keywords.filter(kw => text.includes(kw.toLowerCase()))
     const missing = keywords.filter(kw => !text.includes(kw.toLowerCase()))
     const ratio = keywords.length > 0 ? matched.length / keywords.length : 0.5
@@ -1126,12 +1129,13 @@ export function NotificationsView({
   }
 
   const handleLoadSampleSolution = () => {
-    const activeCh = LOCAL_CHALLENGE_CATALOG[frontierBannerData.index ?? 0] as any
+    const activeCh = activeChallenge
     if (activeCh?.sampleAnswer) {
       setUserChallengeInput(activeCh.sampleAnswer)
       setUserChallengeEvaluation(null)
     }
   }
+
   const [followBundle, setFollowBundle] = useState<UserFollowBundle>(() =>
     loadUserFollowBundle(currentUserName)
   )
@@ -1395,22 +1399,132 @@ export function NotificationsView({
     if (liveTestResultsMap[notif.id]) {
       return liveTestResultsMap[notif.id]
     }
-    const combinedText = `${notif.title} ${notif.description} ${notif.targetPayload || ''}`.toUpperCase()
-    const matched =
-      LOCAL_CHALLENGE_CATALOG.find(item => combinedText.includes(item.domain.toUpperCase())) ||
-      (combinedText.includes('PARKLAND') || combinedText.includes('BURN')
-        ? LOCAL_CHALLENGE_CATALOG[1]
-        : combinedText.includes('SMR') || combinedText.includes('REACTOR') || combinedText.includes('DOPPLER')
-        ? LOCAL_CHALLENGE_CATALOG[0]
-        : combinedText.includes('QKD') || combinedText.includes('QUANTUM')
-        ? LOCAL_CHALLENGE_CATALOG[2]
-        : combinedText.includes('RAFT') || combinedText.includes('QUORUM')
-        ? LOCAL_CHALLENGE_CATALOG[3]
-        : combinedText.includes('TOKAMAK') || combinedText.includes('LAWSON') || combinedText.includes('FUSION')
-        ? LOCAL_CHALLENGE_CATALOG[4]
-        : combinedText.includes('BGP') || combinedText.includes('DAMPENING')
-        ? LOCAL_CHALLENGE_CATALOG[5]
-        : LOCAL_CHALLENGE_CATALOG[0])
+    const combinedText = `${notif.title} ${notif.description} ${notif.targetPayload || ''} ${notif.category || ''} ${notif.subType || ''}`.toUpperCase()
+
+    // 1. Direct domain match
+    let matched = LOCAL_CHALLENGE_CATALOG.find(item => combinedText.includes(item.domain.toUpperCase()))
+
+    // 2. Comprehensive multi-domain semantic mapping covering all 11 technical benchmarks
+    if (!matched) {
+      if (
+        combinedText.includes('PARKLAND') ||
+        combinedText.includes('BURN') ||
+        combinedText.includes('CLINICAL') ||
+        combinedText.includes('PHARMACY') ||
+        combinedText.includes('HOSPITAL') ||
+        combinedText.includes('PATIENT') ||
+        combinedText.includes('SEPSIS') ||
+        combinedText.includes('FORMULARY') ||
+        combinedText.includes('MEDCALC') ||
+        combinedText.includes('HEPARIN')
+      ) {
+        matched = LOCAL_CHALLENGE_CATALOG[1] // Burns Parkland & Clinical Care
+      } else if (
+        combinedText.includes('QKD') ||
+        combinedText.includes('QUANTUM') ||
+        combinedText.includes('NONCE') ||
+        combinedText.includes('LATTICE') ||
+        combinedText.includes('FIPS 203') ||
+        combinedText.includes('CRYPTOGRAPHY')
+      ) {
+        matched = LOCAL_CHALLENGE_CATALOG[2] // Quantum QKD & Post-Quantum Cryptography
+      } else if (
+        combinedText.includes('RAFT') ||
+        combinedText.includes('QUORUM') ||
+        combinedText.includes('CONSENSUS') ||
+        combinedText.includes('SPLIT-BRAIN') ||
+        combinedText.includes('PARTITION')
+      ) {
+        matched = LOCAL_CHALLENGE_CATALOG[3] // Raft Quorum Distributed Systems
+      } else if (
+        combinedText.includes('TOKAMAK') ||
+        combinedText.includes('LAWSON') ||
+        combinedText.includes('FUSION') ||
+        combinedText.includes('PLASMA') ||
+        combinedText.includes('MHD')
+      ) {
+        matched = LOCAL_CHALLENGE_CATALOG[4] // Fusion Tokamak Plasma Physics
+      } else if (
+        combinedText.includes('BGP') ||
+        combinedText.includes('DAMPENING') ||
+        combinedText.includes('ROUTING') ||
+        combinedText.includes('RFC 2439') ||
+        combinedText.includes('FLAP')
+      ) {
+        matched = LOCAL_CHALLENGE_CATALOG[5] // Enterprise BGP Route Flap Dampening
+      } else if (
+        combinedText.includes('FIPS 199') ||
+        combinedText.includes('CNSSI 1253') ||
+        combinedText.includes('ITAR') ||
+        combinedText.includes('HIGH-WATER MARK') ||
+        combinedText.includes('CATEGORIZATION') ||
+        combinedText.includes('DEFENSE SECURITY') ||
+        combinedText.includes('CISSP')
+      ) {
+        matched = LOCAL_CHALLENGE_CATALOG[6] // RMF Step 1 FIPS 199 / CNSSI 1253 ITAR
+      } else if (
+        combinedText.includes('CATO') ||
+        combinedText.includes('CONTINUOUS AUTHORIZATION') ||
+        combinedText.includes('DEVSECOPS') ||
+        combinedText.includes('CONMON') ||
+        combinedText.includes('CSSP') ||
+        combinedText.includes('PILLAR') ||
+        combinedText.includes('PIPELINE GATING')
+      ) {
+        matched = LOCAL_CHALLENGE_CATALOG[7] // RMF Step 5 DoD cATO 3-Pillar
+      } else if (
+        combinedText.includes('POA&M') ||
+        combinedText.includes('POAM') ||
+        combinedText.includes('SLA') ||
+        combinedText.includes('VULNERABILITY') ||
+        combinedText.includes('CVE') ||
+        combinedText.includes('ZERO-DAY') ||
+        combinedText.includes('REMEDIATION') ||
+        combinedText.includes('FEDRAMP') ||
+        combinedText.includes('GRC-GATE-01')
+      ) {
+        matched = LOCAL_CHALLENGE_CATALOG[8] // RMF Step 6 Continuous POA&M Remediation
+      } else if (
+        combinedText.includes('GPU') ||
+        combinedText.includes('HPC') ||
+        combinedText.includes('ROCEV2') ||
+        combinedText.includes('INFINIBAND') ||
+        combinedText.includes('NVLINK') ||
+        combinedText.includes('TENSOR PARALLEL') ||
+        combinedText.includes('CLUSTER') ||
+        combinedText.includes('CLOUD SECURITY ARCHITECT') ||
+        combinedText.includes('STRIPE')
+      ) {
+        matched = LOCAL_CHALLENGE_CATALOG[9] // HPC GPU Cluster & Lossless Interconnect
+      } else if (
+        combinedText.includes('SCADA') ||
+        combinedText.includes('PLC') ||
+        combinedText.includes('DCS') ||
+        combinedText.includes('PURDUE') ||
+        combinedText.includes('SIL-3') ||
+        combinedText.includes('ISA-95') ||
+        combinedText.includes('IEC 62443') ||
+        combinedText.includes('SAFETY INSTRUMENTED')
+      ) {
+        matched = LOCAL_CHALLENGE_CATALOG[10] // Industrial Control Systems OT/SCADA SIL-3
+      } else if (
+        combinedText.includes('SMR') ||
+        combinedText.includes('REACTOR') ||
+        combinedText.includes('DOPPLER') ||
+        combinedText.includes('SCRAM') ||
+        combinedText.includes('RVACS') ||
+        combinedText.includes('NUCLEAR')
+      ) {
+        matched = LOCAL_CHALLENGE_CATALOG[0] // Nuclear SMR Gen-IV
+      } else {
+        // Deterministic hash based on alert ID so alerts in different categories
+        // and tabs display distinct realistic domain challenges instead of defaulting to challenge 0
+        const idHash = Math.abs(
+          (notif.id || notif.title || '').split('').reduce((acc, ch) => ((acc << 5) - acc) + ch.charCodeAt(0), 0)
+        )
+        matched = LOCAL_CHALLENGE_CATALOG[idHash % LOCAL_CHALLENGE_CATALOG.length]
+      }
+    }
 
     return {
       ...matched,
@@ -1424,20 +1538,9 @@ export function NotificationsView({
     const resolved = resolveNoctisTelemetryForAlert(notif)
     const catalogIdx = LOCAL_CHALLENGE_CATALOG.findIndex(c => c.domain === resolved.domain)
     if (catalogIdx >= 0) {
-      setCurrentChallengeIdx(catalogIdx)
+      setActiveChallengeIdx(catalogIdx)
+      setShowChallengeResponse(true)
     }
-    setFrontierBannerData(prev => ({
-      ...prev,
-      index: catalogIdx >= 0 ? catalogIdx : prev.index,
-      domain: resolved.domain,
-      question: resolved.question,
-      vetoTitle: resolved.vetoTitle,
-      verdict: resolved.verdict,
-      fullResponse: resolved.fullResponse,
-      durationMs: resolved.durationMs,
-      status: resolved.status,
-      showResponse: true
-    }))
     setExpandedTelemetryIds(prev =>
       prev.includes(notif.id) ? prev.filter(id => id !== notif.id) : [...prev, notif.id]
     )
@@ -1502,20 +1605,9 @@ export function NotificationsView({
 
     const catalogIdx = LOCAL_CHALLENGE_CATALOG.findIndex(c => c.domain === nextResult.domain)
     if (catalogIdx >= 0) {
-      setCurrentChallengeIdx(catalogIdx)
+      setActiveChallengeIdx(catalogIdx)
+      setShowChallengeResponse(true)
     }
-    setFrontierBannerData(prev => ({
-      ...prev,
-      index: catalogIdx >= 0 ? catalogIdx : prev.index,
-      domain: nextResult.domain,
-      question: nextResult.question,
-      vetoTitle: nextResult.vetoTitle,
-      verdict: nextResult.verdict,
-      fullResponse: nextResult.fullResponse,
-      durationMs: nextResult.durationMs,
-      status: nextResult.status,
-      showResponse: true
-    }))
 
     setRunningLiveTestId(null)
   }
@@ -1781,10 +1873,10 @@ export function NotificationsView({
                 className="rounded-full px-2.5 py-0.5 text-[11px] font-extrabold border"
                 style={{ backgroundColor: '#dcfce7', color: '#15803d', borderColor: '#86efac' }}
               >
-                ✓ Invariant 100% {frontierBannerData.status}
+                ✓ Invariant 100% {activeChallenge.status}
               </span>
               <span className="text-xs font-bold" style={{ color: '#475569' }}>
-                {frontierBannerData.domain} · {frontierBannerData.durationMs}ms SLA
+                {activeChallenge.domain} · {activeChallenge.durationMs}ms SLA
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -1794,7 +1886,7 @@ export function NotificationsView({
                 className="rounded-xl px-4 py-2 text-xs font-black transition-all cursor-pointer shadow-sm hover:opacity-90 active:scale-95"
                 style={{ backgroundColor: '#0a66c2', color: '#ffffff', border: '1px solid #004182' }}
               >
-                🔄 Test Another Challenge ({((frontierBannerData.index ?? 0) + 1)}/{LOCAL_CHALLENGE_CATALOG.length})
+                🔄 Test Another Challenge ({(activeChallengeIdx + 1)}/{LOCAL_CHALLENGE_CATALOG.length})
               </button>
             </div>
           </div>
@@ -1803,7 +1895,7 @@ export function NotificationsView({
           <div className="mt-3 flex items-center gap-1.5 overflow-x-auto pb-1.5 text-[11px] scrollbar-thin">
             <span className="text-xs font-bold text-slate-500 shrink-0 mr-1">Select Challenge:</span>
             {LOCAL_CHALLENGE_CATALOG.map((ch, idx) => {
-              const isSelected = (frontierBannerData.index ?? 0) === idx
+              const isSelected = activeChallengeIdx === idx
               const shortLabel =
                 idx === 0 ? "1. Nuclear SMR" :
                 idx === 1 ? "2. Burns Parkland" :
@@ -1839,10 +1931,10 @@ export function NotificationsView({
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-xs font-black uppercase tracking-wider block" style={{ color: '#b91c1c' }}>
-                  Formulated Challenge Question (Domain: {frontierBannerData.domain}):
+                  Formulated Challenge Question (Domain: {activeChallenge.domain}):
                 </span>
                 <span className="text-[11px] font-bold text-slate-500">
-                  Challenge #{((frontierBannerData.index ?? 0) + 1)} of {LOCAL_CHALLENGE_CATALOG.length}
+                  Challenge #{(activeChallengeIdx + 1)} of {LOCAL_CHALLENGE_CATALOG.length}
                 </span>
               </div>
               <div
@@ -1853,7 +1945,7 @@ export function NotificationsView({
                   borderColor: '#cbd5e1'
                 }}
               >
-                "{frontierBannerData.question}"
+                "{activeChallenge.question}"
               </div>
             </div>
 
@@ -1871,10 +1963,10 @@ export function NotificationsView({
                 }}
               >
                 <div className="font-black text-sm mb-1" style={{ color: '#b91c1c' }}>
-                  {frontierBannerData.vetoTitle || "🚨 EVALUATED SAFETY MANDATE & INVARIANT VERDICT"}
+                  {activeChallenge.vetoTitle || "🚨 EVALUATED SAFETY MANDATE & INVARIANT VERDICT"}
                 </div>
                 <p className="mt-1" style={{ color: '#14532d' }}>
-                  {frontierBannerData.verdict}
+                  {activeChallenge.verdict}
                 </p>
               </div>
             </div>
@@ -1974,26 +2066,26 @@ export function NotificationsView({
                 </span>
                 <button
                   type="button"
-                  onClick={() => setFrontierBannerData(prev => ({ ...prev, showResponse: !prev.showResponse }))}
+                  onClick={() => setShowChallengeResponse(prev => !prev)}
                   className="text-xs font-bold underline cursor-pointer hover:opacity-85"
                   style={{ color: '#0284c7' }}
                 >
-                  {frontierBannerData.showResponse ? "▲ Collapse Technical Response" : "▼ View Complete Technical Response"}
+                  {showChallengeResponse ? "▲ Collapse Technical Response" : "▼ View Complete Technical Response"}
                 </button>
               </div>
 
-              {frontierBannerData.showResponse && (
+              {showChallengeResponse && (
                 <div className="rounded-xl p-4 sm:p-5 border border-[#E2D9C5] bg-white text-xs sm:text-sm leading-relaxed shadow-xs transition-all">
-                  <MiniMarkdown text={frontierBannerData.fullResponse} />
+                  <MiniMarkdown text={activeChallenge.fullResponse} />
                 </div>
               )}
             </div>
 
             {/* Social Reactions (👍 Like, 👏 Celebrate, 🤝 Support, ❤️ Love, 💡 Insightful, 😂 Funny), Comment, Post/Repost & Share Bar for Top Frontier Banner */}
             <AlertSocialActionBar
-              alertId={`frontier_banner_${frontierBannerData.domain}`}
-              alertTitle={`[NOCTIS 6AM FRONTIER ALERT] Invariant Verified: ${frontierBannerData.domain}`}
-              alertDescription={`${frontierBannerData.question}\n\nVerdict: ${frontierBannerData.verdict}`}
+              alertId={`frontier_banner_${activeChallenge.domain}`}
+              alertTitle={`[NOCTIS 6AM FRONTIER ALERT] Invariant Verified: ${activeChallenge.domain}`}
+              alertDescription={`${activeChallenge.question}\n\nVerdict: ${activeChallenge.verdict}`}
               actorName="Noctis Frontier & Benchmark Engine"
               actorRole="Autonomous Invariant Engine"
               currentUserName={currentUserName}
