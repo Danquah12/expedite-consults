@@ -59,33 +59,33 @@ const HEADER_CONFIG: Record<
   }
 > = {
   home: {
-    badge: "HOME LIVE MEDIA WIRE · 1-MIN AUTO-PULL",
+    badge: "HOME LIVE MEDIA WIRE · 60-MIN AUTO-SYNC",
     title: "Live ConnectLn Videos & Visuals Pushed to Home",
-    subtitle: "Fresh domain videos and pictures pulled every 60 seconds from the ConnectLn Admin Backend.",
+    subtitle: "Fresh domain videos and pictures synced every 60 minutes from the ConnectLn Admin Backend.",
     icon: House,
   },
   jobs: {
-    badge: "JOBS VIDEO BRIEFINGS · 1-MIN AUTO-PULL",
+    badge: "JOBS VIDEO BRIEFINGS · 60-MIN AUTO-SYNC",
     title: "Live Employer Video Briefings & Jobsite Visuals",
-    subtitle: "Watch real workplace videos and technical role walk-throughs pushed every minute from the Admin Backend.",
+    subtitle: "Watch real workplace videos and technical role walk-throughs synced every 60 minutes from the Admin Backend.",
     icon: Briefcase,
   },
   market: {
-    badge: "MARKET DEMO STREAM · 1-MIN AUTO-PULL",
+    badge: "MARKET DEMO STREAM · 60-MIN AUTO-SYNC",
     title: "Live Product Demo Videos & Solution Architecture Visuals",
-    subtitle: "Interactive product demonstrations and enterprise solution visuals syndicated every 60 seconds.",
+    subtitle: "Interactive product demonstrations and enterprise solution visuals syndicated every 60 minutes.",
     icon: ShoppingBag,
   },
   media: {
-    badge: "STUDIO HARVESTER STREAM · 1-MIN AUTO-PULL",
+    badge: "STUDIO HARVESTER STREAM · 60-MIN AUTO-SYNC",
     title: "Newly Pulled ConnectLn Videos & Visual Dispatches",
-    subtitle: "Continuously growing video and visual catalog pulled every minute across all ConnectLn enclaves.",
+    subtitle: "Continuously growing video and visual catalog synced every 60 minutes across all ConnectLn enclaves.",
     icon: Tv,
   },
   pulse: {
-    badge: "PULSE VIDEO & PHOTO WIRE · 1-MIN AUTO-PULL",
+    badge: "PULSE VIDEO & PHOTO WIRE · 60-MIN AUTO-SYNC",
     title: "Breaking Video & Field Visual Intelligence Dispatches",
-    subtitle: "Real-time video briefings and field photography pushed every 60 seconds from the Admin Media Backend.",
+    subtitle: "Real-time video briefings and field photography synced every 60 minutes from the Admin Media Backend.",
     icon: Radio,
   },
 }
@@ -110,7 +110,7 @@ export function LiveHarvestedMediaShowcase({
   const [isSyncingNow, setIsSyncingNow] = useState<boolean>(false)
   const [isExpanded, setIsExpanded] = useState<boolean>(true)
   const [showAllItems, setShowAllItems] = useState<boolean>(false)
-  const [secondsToNextAutoPull, setSecondsToNextAutoPull] = useState<number>(60)
+  const [secondsToNextAutoPull, setSecondsToNextAutoPull] = useState<number>(3600)
   const [appliedIds, setAppliedIds] = useState<string[]>([])
   const [likedIds, setLikedIds] = useState<Record<string, boolean>>({})
   const [repostedIds, setRepostedIds] = useState<Record<string, boolean>>({})

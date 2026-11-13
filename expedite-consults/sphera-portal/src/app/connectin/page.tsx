@@ -587,7 +587,7 @@ export default function ConnectLnPage() {
     } catch {
       // ignore DOM icon errors
     }
-    const CURRENT_RELEASE_VERSION = "2026.11.11.gold-standard-5"
+    const CURRENT_RELEASE_VERSION = "2026.11.13.v7-noctis-rmf-11-domain-sync"
     try {
       const prevVersion = localStorage.getItem("connectln_release_version_v5")
       if (prevVersion !== CURRENT_RELEASE_VERSION) {

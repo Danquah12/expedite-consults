@@ -69,7 +69,7 @@ export interface HarvesterTelemetrySnapshot {
   items: HarvestedMediaItem[]
 }
 
-export const HARVESTER_STORAGE_KEY = "connectln_harvested_media_items_v3"
+export const HARVESTER_STORAGE_KEY = "connectln_harvested_media_items_v4"
 export const HARVESTER_AUTO_ENABLED_KEY = "connectln_harvester_auto_enabled_v1"
 export const HARVESTER_EVENT_NAME = "connectln-media-harvested"
 
@@ -842,28 +842,28 @@ export const CONNECTLN_HARVESTER_TEMPLATES: SeedMediaTemplate[] = [
   },
   {
     kind: "video",
-    title: "Precision Speed Square Layout & Structural Rafter Angle Verification",
+    title: "Commercial Drywall Finishing & Level-5 Architectural Skim Coat Mastery",
     summary:
-      "Step-by-step master carpentry demonstration of marking plumb cuts, birdsmouth notches, and hip rafter pitches on structural framing stock.",
-    youtubeId: "gNhWpuWvtEA",
-    imageUrl: "https://i.ytimg.com/vi/gNhWpuWvtEA/hqdefault.jpg",
-    authorName: "This Old House · ConnectLn Guild",
-    authorRole: "Master Carpentry & Structural Framing Instructor",
+      "Union drywall tapers and finishers operating automatic bazooka tapers, flat boxes, and laser-lit Level-5 skim coat inspections on commercial hospital corridors.",
+    youtubeId: "GUx4NwOXYzw",
+    imageUrl: "https://i.ytimg.com/vi/GUx4NwOXYzw/hqdefault.jpg",
+    authorName: "IUPAT Commercial Finishing Guild",
+    authorRole: "Master Drywall Taper & Level-5 Acoustic Finish Specialist",
     authorAvatar: "https://images.unsplash.com/photo-1504593811423-6dd665756598?w=240&auto=format&fit=crop&q=80",
-    organization: "ConnectLn Skilled Trades Academy",
+    organization: "International Union of Painters & Allied Trades",
     enclaveId: "trades_construction",
-    category: "Carpentry & Layout",
+    category: "Drywall & Interior Systems",
     duration: "05:12",
-    sourceFeed: "Skilled Trades Learn-by-Doing Wire",
+    sourceFeed: "Admin 1-Min Interior Systems Wire",
     jobMeta: {
-      roleTitle: "Lead Architectural Finish & Structural Framing Carpenter",
-      company: "Heritage Timber & Millwork Co.",
-      location: "Boston, MA · Field",
-      salary: "$112,000 – $142,000",
+      roleTitle: "Lead Commercial Drywall Finisher & Acoustic Ceiling Foreman",
+      company: "Performance Contracting & IUPAT Guild",
+      location: "Chicago, IL · Commercial Field",
+      salary: "$108,000 – $142,000",
       employmentType: "Full-time · Master Trade",
     },
     marketMeta: {
-      productName: "Pro Carpenter Takeoff & Rafter Angle Field Suite",
+      productName: "Commercial Drywall Takeoff & Level-5 QA Estimator",
       vendor: "SkillHands Pro",
       price: "$39/mo",
       category: "Training",
@@ -871,43 +871,43 @@ export const CONNECTLN_HARVESTER_TEMPLATES: SeedMediaTemplate[] = [
     },
     pulseMeta: {
       severityOrTag: "CRAFT MASTERY DISPATCH",
-      sourceName: "Skilled Trades Academy",
-      takeaway: "Precision speed-square layout verification prevents cumulative roof truss ridge drift across multi-span commercial roofs.",
+      sourceName: "Interior Finishing Wire",
+      takeaway: "Automated bazooka taping and pneumatic corner rollers increase commercial corridor Level-4/Level-5 output by 42%.",
     },
   },
   {
     kind: "video",
-    title: "MIG, TIG & Stick Structural Welding Process Comparison in Field Fabrication",
+    title: "Master Tile & Large-Format Porcelain Substrate Layout, Mortar Troweling & Lippage Control",
     summary:
-      "Live arc stability, penetration profile, and shielding gas comparison across GMAW, GTAW, and SMAW structural steel welding.",
-    youtubeId: "OWThL97tq3k",
-    imageUrl: "https://i.ytimg.com/vi/OWThL97tq3k/hqdefault.jpg",
-    authorName: "Miller Welders · ConnectLn Guild",
-    authorRole: "AWS Certified Structural Welding Inspector (CWI)",
+      "Step-by-step TCNA substrate flatness verification, directional 1/2-inch notch troweling, and mechanical lippage tuning for gauged porcelain panels.",
+    youtubeId: "NgmmTMUmdPY",
+    imageUrl: "https://i.ytimg.com/vi/NgmmTMUmdPY/hqdefault.jpg",
+    authorName: "Marco Bellini, CTI · Tile Setters Guild",
+    authorRole: "Certified Tile Installer (CTI) & Stone Masonry Lead",
     authorAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=240&auto=format&fit=crop&q=80",
-    organization: "American Structural Welding Enclave",
+    organization: "National Tile & Terrazzo Enclave",
     enclaveId: "trades_construction",
-    category: "Welding & Fabrication",
+    category: "Tile & Architectural Stone",
     duration: "06:40",
-    sourceFeed: "AWS Welding & Fabrication Video Wire",
+    sourceFeed: "Admin 1-Min Tile & Masonry Wire",
     jobMeta: {
-      roleTitle: "AWS D1.1 Certified Structural Combo Welder (TIG/Stick)",
-      company: "Apex Structural Steel & Rigging",
-      location: "Houston, TX · High-Per-Diem",
-      salary: "$125,000 – $162,000",
-      employmentType: "Full-time · Structural Steel",
+      roleTitle: "Certified Large-Format Porcelain & Architectural Stone Setter (CTI)",
+      company: "Artisan Stone & Commercial Terrazzo",
+      location: "Miami, FL / Las Vegas, NV",
+      salary: "$112,000 – $154,000",
+      employmentType: "Full-time · Architectural Craft",
     },
     marketMeta: {
-      productName: "WeldSpec WPS/PQR Digital Inspector & NDT Logbook",
+      productName: "TCNA Substrate Deflection & Thinset Coverage Calculator",
       vendor: "DeskNote Field",
-      price: "$69/mo",
+      price: "$49/mo",
       category: "Software",
       liveUrl: "https://desk-note.app/",
     },
     pulseMeta: {
-      severityOrTag: "METALLURGY & WELD BRIEF",
-      sourceName: "Structural Fabrication Wire",
-      takeaway: "Pulsed spray transfer MIG reduces heat-affected zone (HAZ) distortion by 31% on high-strength low-alloy structural plates.",
+      severityOrTag: "ARCHITECTURAL FINISH BRIEF",
+      sourceName: "Tile & Stone Guild Wire",
+      takeaway: "Back-buttering gauged porcelain slabs with parallel trowel ridges achieves >95% ANSI A108.5 mortar contact in wet commercial zones.",
     },
   },
   {
@@ -945,8 +945,10 @@ export const CONNECTLN_HARVESTER_TEMPLATES: SeedMediaTemplate[] = [
   },
 ]
 
+export const HARVESTER_SYNC_INTERVAL_MS = 60 * 60 * 1000 // 60 minutes (1 hour)
+
 export function getCurrentMinuteSlot(nowMs: number = Date.now()): number {
-  return Math.max(1, Math.floor((nowMs - PLATFORM_HARVESTER_EPOCH_MS) / 60000))
+  return Math.max(1, Math.floor((nowMs - PLATFORM_HARVESTER_EPOCH_MS) / HARVESTER_SYNC_INTERVAL_MS))
 }
 
 export function getMinutesElapsedToday(now: Date = new Date()): number {
@@ -964,27 +966,29 @@ export function buildHarvestedItemForSlot(
       ? Math.abs(forcedTemplateIndex) % CONNECTLN_HARVESTER_TEMPLATES.length
       : Math.abs(slot + offsetIndex) % CONNECTLN_HARVESTER_TEMPLATES.length
   const tpl = CONNECTLN_HARVESTER_TEMPLATES[templateIndex]
-  const itemTimeMs = customTimestampMs ?? Date.now() - offsetIndex * 60000
+  const itemTimeMs = customTimestampMs ?? Date.now() - offsetIndex * HARVESTER_SYNC_INTERVAL_MS
   const itemDate = new Date(itemTimeMs)
   const timeStr = itemDate.toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "2-digit",
-    second: "2-digit",
   })
 
   const minsAgo = Math.max(0, Math.round((Date.now() - itemTimeMs) / 60000))
+  const hoursAgo = Math.floor(minsAgo / 60)
   const pulledAtLabel =
-    minsAgo === 0
-      ? `Pulled just now (${timeStr})`
-      : minsAgo === 1
-      ? `Pulled 1 min ago (${timeStr})`
-      : `Pulled ${minsAgo} mins ago (${timeStr})`
+    minsAgo <= 1
+      ? `Synced just now (${timeStr})`
+      : minsAgo < 60
+      ? `Synced ${minsAgo} mins ago (${timeStr})`
+      : hoursAgo === 1
+      ? `Synced 1 hr ago (${timeStr})`
+      : `Synced ${hoursAgo} hrs ago (${timeStr})`
 
   return {
     id: `cln_hv_${slot}_${templateIndex}_${tpl.kind}`,
     serialNumber: `CLN-HV-${String((slot % 90000) + 10000)}`,
     kind: tpl.kind,
-    title: `${tpl.title} · [Sync #${(slot % 900) + 100}]`,
+    title: tpl.title,
     summary: tpl.summary,
     videoUrl: tpl.videoUrl,
     youtubeId: tpl.youtubeId,
@@ -1000,7 +1004,7 @@ export function buildHarvestedItemForSlot(
     pulledAtIso: itemDate.toISOString(),
     pulledAtLabel,
     minuteSlot: slot,
-    sourceFeed: tpl.sourceFeed,
+    sourceFeed: tpl.sourceFeed.replace("1-Min", "60-Min"),
     viewsCount: 1420 + ((slot * 37 + offsetIndex * 19) % 8400),
     likesCount: 94 + ((slot * 13 + offsetIndex * 7) % 620),
     jobMeta: tpl.jobMeta,
@@ -1012,19 +1016,25 @@ export function buildHarvestedItemForSlot(
 export function getInitialDeterministicHarvestedItems(count: number = 14): HarvestedMediaItem[] {
   const currentSlot = getCurrentMinuteSlot()
   const items: HarvestedMediaItem[] = []
-  const newVideoPoolSize = 8 // First 8 templates are brand-new verified YouTube dispatches
-  for (let i = 0; i < count; i++) {
-    const tplIdx =
-      i < newVideoPoolSize
-        ? (currentSlot + i) % newVideoPoolSize
-        : newVideoPoolSize + ((currentSlot + i) % (CONNECTLN_HARVESTER_TEMPLATES.length - newVideoPoolSize))
-    items.push(buildHarvestedItemForSlot(currentSlot - i, 0, Date.now() - i * 60000, tplIdx))
+  const totalTemplates = CONNECTLN_HARVESTER_TEMPLATES.length
+  const safeCount = Math.min(count, totalTemplates)
+  for (let i = 0; i < safeCount; i++) {
+    const tplIdx = (currentSlot + i) % totalTemplates
+    items.push(buildHarvestedItemForSlot(currentSlot - i, 0, Date.now() - i * HARVESTER_SYNC_INTERVAL_MS, tplIdx))
   }
   return items
 }
 
+export function getHarvestedMediaCanonicalKey(item: HarvestedMediaItem): string {
+  if (item.id?.startsWith("cln_custom_")) return item.id
+  if (item.youtubeId) return `yt:${item.youtubeId}`
+  if (item.videoUrl) return `vid:${item.videoUrl}`
+  if (item.imageUrl) return `img:${item.imageUrl}`
+  return `title:${item.title}`
+}
+
 export function sortHarvestedItemsNewestFirst(items: HarvestedMediaItem[]): HarvestedMediaItem[] {
-  return [...items].sort((a, b) => {
+  const sorted = [...items].sort((a, b) => {
     const aIsCustomOrManual =
       a.id.startsWith("cln_custom_") || a.id.startsWith("cln_pull_") || a.id.startsWith("cln_auto_") ? 1 : 0
     const bIsCustomOrManual =
@@ -1037,6 +1047,18 @@ export function sortHarvestedItemsNewestFirst(items: HarvestedMediaItem[]): Harv
     if (timeB !== timeA) return timeB - timeA
     return (b.minuteSlot || 0) - (a.minuteSlot || 0)
   })
+
+  // Deduplicate by canonical media URL / YouTube ID so the same video never repeats across minute slots
+  const seenMediaKeys = new Set<string>()
+  const unique: HarvestedMediaItem[] = []
+  for (const item of sorted) {
+    if (!item || !item.id) continue
+    const key = getHarvestedMediaCanonicalKey(item)
+    if (seenMediaKeys.has(key)) continue
+    seenMediaKeys.add(key)
+    unique.push(item)
+  }
+  return unique
 }
 
 export function loadStoredHarvestedItems(): HarvestedMediaItem[] {
@@ -1089,11 +1111,12 @@ export function computeHarvesterTelemetry(items: HarvestedMediaItem[]): Harveste
   const now = new Date()
   const currentSlot = getCurrentMinuteSlot(now.getTime())
   const minutesElapsedToday = getMinutesElapsedToday(now)
+  const hoursElapsedToday = Math.max(1, now.getHours() + 1)
 
-  // Base platform catalog + 1 new item per minute elapsed since epoch + custom items
-  const baseVideoInventory = 4820 + Math.floor(currentSlot * 0.65) + items.filter((i) => i.kind === "video").length
-  const basePictureInventory = 3190 + Math.floor(currentSlot * 0.35) + items.filter((i) => i.kind === "picture").length
-  const pulledTodayCount = minutesElapsedToday * 2 + items.length
+  // Base platform catalog + 1 new batch per 60-minute slot elapsed since epoch + custom items
+  const baseVideoInventory = 4820 + Math.floor(currentSlot * 2) + items.filter((i) => i.kind === "video").length
+  const basePictureInventory = 3190 + Math.floor(currentSlot * 1) + items.filter((i) => i.kind === "picture").length
+  const pulledTodayCount = hoursElapsedToday * 2 + items.length
 
   const destinationCounts: Record<HarvesterDestination, number> = {
     home: items.filter((i) => i.destinations.includes("home")).length,
@@ -1109,7 +1132,7 @@ export function computeHarvesterTelemetry(items: HarvestedMediaItem[]): Harveste
       name: "ConnectLn Field Video & MP4 Wire",
       category: "Skilled Trades, Robotics & Engineering",
       protocol: "HLS / MP4 Direct Stream",
-      cadence: "Every 60s (1 Min)",
+      cadence: "Every 60 Mins (1 Hr)",
       status: "ACTIVE",
       itemsPulledToday: Math.round(pulledTodayCount * 0.28),
       lastPulledTitle: items.find((i) => i.kind === "video")?.title || "Autonomous Quadruped Jobsite Robotics",
@@ -1119,7 +1142,7 @@ export function computeHarvesterTelemetry(items: HarvestedMediaItem[]): Harveste
       name: "DSTRIKE & Noctis Cyber/AI Video Feed",
       category: "Cybersecurity, eBPF, SAST & Agentic AI",
       protocol: "REST + Webhook Push",
-      cadence: "Every 60s (1 Min)",
+      cadence: "Every 60 Mins (1 Hr)",
       status: "ACTIVE",
       itemsPulledToday: Math.round(pulledTodayCount * 0.26),
       lastPulledTitle: "eBPF Zero-Trust Kernel Packet Telemetry & K8s Defense",
@@ -1129,7 +1152,7 @@ export function computeHarvesterTelemetry(items: HarvestedMediaItem[]): Harveste
       name: "Clinical Surgery, Solar & Aerospace Visuals",
       category: "Healthcare, 1500V Solar & Orbital Avionics",
       protocol: "DICOM / HD Media Pipe",
-      cadence: "Every 60s (1 Min)",
+      cadence: "Every 60 Mins (1 Hr)",
       status: "ACTIVE",
       itemsPulledToday: Math.round(pulledTodayCount * 0.24),
       lastPulledTitle: "Trauma Surgery & Intraoperative Clinical Telemetry",
@@ -1139,7 +1162,7 @@ export function computeHarvesterTelemetry(items: HarvestedMediaItem[]): Harveste
       name: "Marketplace Product Demos & Job Briefings",
       category: "B2B SaaS Demos, Employer Videos & Pictures",
       protocol: "GraphQL Media Syndication",
-      cadence: "Every 60s (1 Min)",
+      cadence: "Every 60 Mins (1 Hr)",
       status: "ACTIVE",
       itemsPulledToday: Math.round(pulledTodayCount * 0.22),
       lastPulledTitle: "05-SAST Sub-4ms Static Code & Pentest Engine",
@@ -1151,13 +1174,13 @@ export function computeHarvesterTelemetry(items: HarvestedMediaItem[]): Harveste
     totalVideosAllTime: baseVideoInventory,
     totalPicturesAllTime: basePictureInventory,
     pulledTodayCount,
-    dailyGrowthRate: 1440,
+    dailyGrowthRate: 48,
     minutesElapsedToday,
     currentMinuteSlot: currentSlot,
     lastPulledAtIso: latestItem?.pulledAtIso || now.toISOString(),
     lastPulledAtLabel:
       latestItem?.pulledAtLabel ||
-      now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit" }),
+      now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
     destinationCounts,
     connectors,
     items,
