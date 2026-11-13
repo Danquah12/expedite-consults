@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import {
   Bell,
   CheckCircle2,
@@ -38,6 +38,26 @@ export function NotificationsView({ onNavigateTab }: NotificationsViewProps) {
   const [selectedCategory, setSelectedCategory] = useState<'All' | 'Security' | 'Career' | 'Marketplace' | 'Learning' | 'Social'>('All')
   const [notifications, setNotifications] = useState<CategorizedNotificationItem[]>(INITIAL_CATEGORIZED_NOTIFICATIONS)
   const [unreadOnly, setUnreadOnly] = useState(false)
+
+  // Load live alerts from ConnectIn alerts API
+  useEffect(() => {
+    let isMounted = true
+    const fetchAlerts = async () => {
+      try {
+        const res = await fetch("/api/connectin/alerts")
+        if (res.ok) {
+          const data = await res.json()
+          if (data.success && Array.isArray(data.alerts) && data.alerts.length > 0 && isMounted) {
+            setNotifications(data.alerts)
+          }
+        }
+      } catch (e) {
+        // Fallback to local default state
+      }
+    }
+    fetchAlerts()
+    return () => { isMounted = false }
+  }, [])
 
   // Category counts
   const getCategoryCount = (cat: string) => {

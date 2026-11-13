@@ -131,6 +131,26 @@ export default function LinkedInPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedTagFilter, setSelectedTagFilter] = useState<string | null>(null)
   const [hasHydrated, setHasHydrated] = useState(false)
+  const [unreadAlertsCount, setUnreadAlertsCount] = useState<number>(3)
+
+  // Sync unread alerts count for the navbar Alerts bell
+  useEffect(() => {
+    let isMounted = true
+    const checkAlerts = async () => {
+      try {
+        const res = await fetch("/api/connectin/alerts")
+        if (res.ok) {
+          const data = await res.json()
+          if (data.success && typeof data.unreadCount === "number" && isMounted) {
+            setUnreadAlertsCount(data.unreadCount)
+          }
+        }
+      } catch {}
+    }
+    checkAlerts()
+    const timer = setInterval(checkAlerts, 30000)
+    return () => { isMounted = false; clearInterval(timer) }
+  }, [])
 
   // Authentication Lifecycle — optimistic-first, never redirects, shows modal only if truly needed
   useEffect(() => {
@@ -606,6 +626,7 @@ export default function LinkedInPage() {
         }}
         user={userData}
         unreadMessagesCount={1}
+        unreadNotificationsCount={unreadAlertsCount}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         suggestedPeople={suggestedPeople}
