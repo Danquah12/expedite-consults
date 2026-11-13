@@ -41,6 +41,28 @@ export interface CategorizedNotificationItem {
 }
 
 export const INITIAL_CATEGORIZED_NOTIFICATIONS: CategorizedNotificationItem[] = [
+  // 0. NOCTIS 6AM FRONTIER & BENCHMARK INVARIANT ALERT (PINNED TOP)
+  {
+    id: 'notif_noctis_daily_frontier',
+    category: 'Security',
+    subType: 'Security Advisory',
+    actor: {
+      name: 'Noctis Frontier & Benchmark Engine',
+      avatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80',
+      role: 'Autonomous Invariant Engine',
+      isVerified: true
+    },
+    title: '🔴 [NOCTIS 6AM FRONTIER ALERT] Invariant Verified: NUCLEAR_FISSION_SMR_GEN4',
+    description: 'Daily Challenge Invariant Evaluated: "A lead-cooled fast reactor small modular reactor operates at 300 MWth. If the Doppler temperature coefficient is -3.2 pcm/C and keff reaches 1.0025 with period 3.2s, what passive safety mechanism and SCRAM timing are required?"\n\nVerdict: Gravity-driven B4C rod insertion SCRAM < 1.8s and passive RVACS natural circulation loop engagement (Duration: 42.32ms, Invariant: PASS).',
+    timestamp: 'Just now',
+    unread: true,
+    actionText: 'Inspect Invariant Telemetry',
+    targetTab: 'pulserooms',
+    priority: 'critical',
+    externalUrl: 'https://www.dstrike.app/api/noctis?daily_challenge=1',
+    externalLabel: 'Run Live Challenge Test ↗'
+  },
+
   // 1. SECURITY & CLINICAL SAFETY ALERTS
   {
     id: 'notif_sec_1',

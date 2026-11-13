@@ -400,9 +400,13 @@ export function NotificationsView({
       ...liveFollowerNotificationItems
     ]
     const existingIds = new Set(dynamicItems.map(i => i.id))
+    const noctisAlerts = notifications.filter(n => n.id.startsWith('notif_noctis') || n.actor?.name?.includes('Noctis'))
+    const otherNotifications = notifications.filter(n => !n.id.startsWith('notif_noctis') && !n.actor?.name?.includes('Noctis') && !existingIds.has(n.id))
+
     return [
+      ...noctisAlerts,
       ...dynamicItems,
-      ...notifications.filter(n => !existingIds.has(n.id))
+      ...otherNotifications
     ]
   }, [liveLookupAlertItems, liveVouchAlertItems, tailoredCareerAlertItems, liveFollowerNotificationItems, notifications])
 
@@ -653,6 +657,52 @@ export function NotificationsView({
               <Check className="h-4 w-4 text-[#0A66C2]" />
               <span>Mark All as Read</span>
             </button>
+          </div>
+        </div>
+
+        {/* Featured Noctis 6AM Frontier & Benchmark Invariant Alert Banner */}
+        <div className="mt-4 rounded-2xl border-2 border-red-500/40 bg-gradient-to-r from-red-950/20 via-slate-900 to-indigo-950 p-5 text-white shadow-lg">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="rounded-full bg-red-600 px-2.5 py-0.5 text-[11px] font-black tracking-wider uppercase text-white shadow-xs">
+                🔴 Noctis 6AM Frontier Alert
+              </span>
+              <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[11px] font-bold text-emerald-300 border border-emerald-500/30">
+                Invariant 100% PASS
+              </span>
+              <span className="text-xs text-zinc-400">
+                Frontier &amp; Benchmark Autonomous Daemon · 42ms SLA
+              </span>
+            </div>
+            <a
+              href="https://www.dstrike.app/api/noctis?daily_challenge=1"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1.5 text-xs font-bold text-white transition-all w-fit"
+            >
+              🔄 Run New Challenge Test ↗
+            </a>
+          </div>
+
+          <div className="mt-3.5 space-y-2.5">
+            <div>
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-red-400 block mb-1">
+                Formulated Challenge Question:
+              </span>
+              <p className="text-sm font-semibold text-zinc-100 bg-black/40 rounded-xl p-3 border border-white/10 leading-relaxed">
+                "A lead-cooled fast reactor small modular reactor operates at 300 MWth. If the Doppler temperature coefficient is -3.2 pcm/C and keff reaches 1.0025 with period 3.2s, what passive safety mechanism and SCRAM timing are required?"
+              </p>
+            </div>
+
+            <div>
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-400 block mb-1">
+                Evaluated Safety Mandate &amp; Invariant Verdict:
+              </span>
+              <div className="text-xs text-zinc-200 bg-emerald-950/30 rounded-xl p-3 border border-emerald-500/30 leading-relaxed">
+                <strong>🚨 CRITICAL SAFETY VETO: PROMPT SUPERCRITICAL EXCURSION SCRAM</strong><br />
+                Gravity-driven B4C control rod insertion SCRAM in &lt; 1.8 seconds and passive RVACS natural circulation loop engagement certified under US NRC 10 CFR Part 50/52 &amp; IAEA SSR-2/1.
+              </div>
+            </div>
           </div>
         </div>
 
