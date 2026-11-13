@@ -83,14 +83,14 @@ const DESTINATION_META: {
 ]
 
 const QUICK_PRESET_VIDEOS = [
-  { label: "Cilium Kubernetes CNI & eBPF Defense (YouTube)", url: "https://www.youtube.com/watch?v=aLq3O3l2LF4", kind: "video" as const },
-  { label: "Boston Dynamics Spot Construction LiDAR (YouTube)", url: "https://www.youtube.com/watch?v=wND9goxDVrY", kind: "video" as const },
-  { label: "HV Substation Tan Delta Transformer Test (YouTube)", url: "https://www.youtube.com/watch?v=78U-D263bKE", kind: "video" as const },
-  { label: "Da Vinci Robotic Surgical System (YouTube)", url: "https://www.youtube.com/watch?v=tu_Cg6L1f7s", kind: "video" as const },
-  { label: "Solar Microgrid & LFP Battery Storage (YouTube)", url: "https://www.youtube.com/watch?v=hfH5RYeAYfw", kind: "video" as const },
-  { label: "Enterprise SOC SIEM & Threat Hunting (YouTube)", url: "https://www.youtube.com/watch?v=AVoqcPa-wVw", kind: "video" as const },
-  { label: "Commercial HVAC BACnet Controls (YouTube)", url: "https://www.youtube.com/watch?v=RqPTRQksFlw", kind: "video" as const },
-  { label: "JPL Spacecraft Avionics Telemetry (YouTube)", url: "https://www.youtube.com/watch?v=ZbYGVzktneY", kind: "video" as const },
+  { label: "eBPF Kernel Defense (MP4)", url: "/status-videos/k8s_ebpf.mp4", kind: "video" as const },
+  { label: "Autonomous Jobsite Spot Robot (MP4)", url: "/status-videos/spot.mp4", kind: "video" as const },
+  { label: "Agentic AI Flywheel (MP4)", url: "/status-videos/agentic_flywheel.mp4", kind: "video" as const },
+  { label: "Trauma Surgery & Clinical Telemetry (MP4)", url: "/status-videos/physician.mp4", kind: "video" as const },
+  { label: "SOC Red-Team Breach Drill (MP4)", url: "/status-videos/scenario_drill.mp4", kind: "video" as const },
+  { label: "Full-Stack Cloud IDE & SAST (MP4)", url: "/status-videos/developer.mp4", kind: "video" as const },
+  { label: "Commercial Real Estate Walkthrough (MP4)", url: "/status-videos/realtor.mp4", kind: "video" as const },
+  { label: "NASA Deep-Space Avionics (MP4)", url: "/status-videos/nasa_space.mp4", kind: "video" as const },
 ]
 
 export function AdminMediaHarvesterTab({
@@ -114,7 +114,7 @@ export function AdminMediaHarvesterTab({
   const [customKind, setCustomKind] = useState<"video" | "picture">("video")
   const [customTitle, setCustomTitle] = useState<string>("")
   const [customSummary, setCustomSummary] = useState<string>("")
-  const [customMediaUrl, setCustomMediaUrl] = useState<string>("https://www.youtube.com/watch?v=aLq3O3l2LF4")
+  const [customMediaUrl, setCustomMediaUrl] = useState<string>("/status-videos/agentic_flywheel.mp4")
   const [customCategory, setCustomCategory] = useState<string>("Cybersecurity & Agentic AI")
   const [customDestinations, setCustomDestinations] = useState<HarvesterDestination[]>([
     "home",
@@ -176,7 +176,7 @@ export function AdminMediaHarvesterTab({
     [mergeAndPersistItems, onShowNotice]
   )
 
-  // Initial load + listen for global 60-minute harvester events
+  // Initial load + listen for global 60-second harvester events
   useEffect(() => {
     fetch("/api/connectin/media-harvester", { cache: "no-store" })
       .then((r) => r.json())
@@ -196,7 +196,7 @@ export function AdminMediaHarvesterTab({
     return () => window.removeEventListener(HARVESTER_EVENT_NAME, handleGlobalHarvest)
   }, [mergeAndPersistItems])
 
-  // 60-Minute (3,600-Second) Auto-Pull Countdown Timer
+  // 60-Second (1-Minute) Auto-Pull Countdown Timer
   useEffect(() => {
     if (!isAutoPullEnabled) return
     const timer = setInterval(() => {
@@ -306,32 +306,32 @@ export function AdminMediaHarvesterTab({
 
   return (
     <div className="space-y-5">
-      {/* 1. MASTER 60-MINUTE AUTO-PULL BACKEND HEADER */}
+      {/* 1. MASTER 1-MINUTE AUTO-PULL BACKEND HEADER */}
       <div className="rounded-2xl border-2 border-[#C8B99E] dark:border-zinc-700 bg-[#FAF6EE] dark:bg-zinc-900 p-5 shadow-sm space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-[#3A2818] px-3 py-1 text-xs font-bold text-[#FAF6EE]">
                 <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-                ⚡ 60-MINUTE VIDEO &amp; PICTURE HARVESTER BACKEND
+                ⚡ 1-MINUTE VIDEO &amp; PICTURE HARVESTER BACKEND
               </span>
               <span className="rounded-full bg-[#EFE7D6] dark:bg-zinc-800 border border-[#D5C8B0] dark:border-zinc-700 px-3 py-1 text-xs font-mono font-bold text-[#3A2818] dark:text-zinc-200">
                 {isAutoPullEnabled
-                  ? `Next Auto-Sync in ${Math.floor(secondsToNextPull / 60)}m ${String(secondsToNextPull % 60).padStart(2, "0")}s (Every 60 Mins)`
-                  : "Auto-Sync Paused"}
+                  ? `Next Auto-Pull & Push in ${secondsToNextPull}s (Every 1 Min)`
+                  : "Auto-Pull Paused"}
               </span>
               <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300/70 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 dark:text-emerald-300">
-                +{telemetry.dailyGrowthRate.toLocaleString()} New Videos &amp; Pictures / Day
+                +{telemetry.dailyGrowthRate.toLocaleString()} Videos &amp; Pictures / Day
               </span>
             </div>
             <h2 className="text-xl sm:text-2xl font-bold text-zinc-950 dark:text-white">
-              ConnectLn Automated Video &amp; Visual Syndication Engine (60-Minute Cadence)
+              ConnectLn Automated Video &amp; Visual Syndication Engine
             </h2>
             <p className="text-xs text-zinc-600 dark:text-zinc-400 max-w-3xl leading-relaxed">
-              Automatically pulls brand-new ConnectLn-relevant professional videos and high-resolution pictures every{" "}
-              <strong>60 minutes (1 hour)</strong> and pushes them simultaneously to{" "}
+              Automatically pulls ConnectLn-relevant professional videos and high-resolution pictures every{" "}
+              <strong>60 seconds (1 minute)</strong> and pushes them simultaneously to{" "}
               <strong>Home</strong>, <strong>Jobs</strong>, <strong>Market</strong>, <strong>Media</strong>, and{" "}
-              <strong>Pulse</strong>—excluding any old videos already on Home, Jobs, Alerts, Learn, or Media.
+              <strong>Pulse</strong> so the platform’s video and visual inventory increases every minute of every day.
             </p>
           </div>
 
@@ -375,7 +375,7 @@ export function AdminMediaHarvesterTab({
               }`}
             >
               {isAutoPullEnabled ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
-              <span>{isAutoPullEnabled ? "60-Min Timer: ON" : "Resume 60-Min Timer"}</span>
+              <span>{isAutoPullEnabled ? "1-Min Timer: ON" : "Resume 1-Min Timer"}</span>
             </button>
           </div>
         </div>
@@ -391,7 +391,7 @@ export function AdminMediaHarvesterTab({
               {telemetry.totalVideosAllTime.toLocaleString()}
             </p>
             <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold mt-0.5">
-              ↑ Synced every 60 minutes (new only)
+              ↑ Growing every 60 seconds
             </p>
           </div>
 
@@ -410,20 +410,20 @@ export function AdminMediaHarvesterTab({
 
           <div className="rounded-xl bg-white dark:bg-zinc-950 border border-[#DFD4C0] dark:border-zinc-800 p-3">
             <div className="flex items-center justify-between text-[11px] font-bold text-zinc-500">
-              <span>PULLED TODAY (60-MIN SLOTS)</span>
+              <span>PULLED TODAY ({telemetry.minutesElapsedToday} MINS)</span>
               <TrendingUp className="h-3.5 w-3.5 text-emerald-600" />
             </div>
             <p className="text-xl font-black text-zinc-950 dark:text-white mt-1 font-mono">
               +{telemetry.pulledTodayCount.toLocaleString()}
             </p>
             <p className="text-[10px] text-zinc-500 mt-0.5">
-              Hourly Slot #{telemetry.currentMinuteSlot.toLocaleString()}
+              Minute Slot #{telemetry.currentMinuteSlot.toLocaleString()}
             </p>
           </div>
 
           <div className="rounded-xl bg-white dark:bg-zinc-950 border border-[#DFD4C0] dark:border-zinc-800 p-3">
             <div className="flex items-center justify-between text-[11px] font-bold text-zinc-500">
-              <span>NEXT 60-MIN SYNC COUNTDOWN</span>
+              <span>NEXT AUTO-PULL COUNTDOWN</span>
               <Clock className="h-3.5 w-3.5 text-[#6B4423]" />
             </div>
             <p className="text-xl font-black text-[#6B4423] dark:text-amber-300 mt-1 font-mono">

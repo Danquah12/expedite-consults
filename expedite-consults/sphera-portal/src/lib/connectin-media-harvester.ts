@@ -69,24 +69,9 @@ export interface HarvesterTelemetrySnapshot {
   items: HarvestedMediaItem[]
 }
 
-export const HARVESTER_STORAGE_KEY = "connectln_harvested_media_items_v5"
+export const HARVESTER_STORAGE_KEY = "connectln_harvested_media_items_v3"
 export const HARVESTER_AUTO_ENABLED_KEY = "connectln_harvester_auto_enabled_v1"
 export const HARVESTER_EVENT_NAME = "connectln-media-harvested"
-
-// Exclusive brand-new oEmbed-verified YouTube IDs reserved ONLY for the 60-Minute Admin Media Harvester
-// (Never used on Home static sections, Jobs, Alerts, Learn, Wheel, or Media static catalogs)
-export const EXCLUSIVE_NEW_HARVESTER_YOUTUBE_IDS = new Set<string>([
-  "aLq3O3l2LF4",
-  "wND9goxDVrY",
-  "78U-D263bKE",
-  "tu_Cg6L1f7s",
-  "hfH5RYeAYfw",
-  "AVoqcPa-wVw",
-  "RqPTRQksFlw",
-  "4ChaCgOkFI0",
-  "9ZgCmq1jXT8",
-  "ZbYGVzktneY",
-])
 
 // Reference epoch (Jan 1, 2026 00:00 UTC) so total platform video count grows every minute of every day
 const PLATFORM_HARVESTER_EPOCH_MS = Date.UTC(2026, 0, 1, 0, 0, 0)
@@ -130,19 +115,299 @@ interface SeedMediaTemplate {
 export const CONNECTLN_HARVESTER_TEMPLATES: SeedMediaTemplate[] = [
   {
     kind: "video",
-    title: "Cilium Kubernetes CNI & eBPF Kernel Packet Telemetry: Zero-Trust Cluster Networking & Runtime Defense",
+    title: "High-Rise Elevator & Escalator Constructor (NEIEP / QEI): $106K–$195K Traction Hoist & Controller Commissioning",
     summary:
-      "Technical walkthrough of eBPF kernel-space datapath routing, Cilium CNI cluster installation, and identity-aware network policy enforcement in production Kubernetes.",
-    youtubeId: "aLq3O3l2LF4",
-    imageUrl: "https://i.ytimg.com/vi/aLq3O3l2LF4/hqdefault.jpg",
-    authorName: "Dr. Marcus Vance · Cloud Native & eBPF Lab",
-    authorRole: "Principal eBPF & Kubernetes Runtime Security Architect",
+      "Inside an 80-story commercial hoistway inspecting gearless permanent-magnet synchronous traction motors, regenerative VFD drives, and ASME A17.1 overspeed governors.",
+    youtubeId: "Mw_EdvKBEc0",
+    imageUrl: "https://i.ytimg.com/vi/Mw_EdvKBEc0/hqdefault.jpg",
+    authorName: "Dante Rossi, QEI · IUEC Local 1",
+    authorRole: "Master Elevator Constructor & High-Rise Hoistway Inspector",
+    authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=240&auto=format&fit=crop&q=80",
+    organization: "National Elevator Constructors Guild",
+    enclaveId: "trades_construction",
+    category: "Elevator Constructors & MEP",
+    duration: "08:14",
+    sourceFeed: "Admin 1-Min Live Trade Video Wire",
+    jobMeta: {
+      roleTitle: "Licensed High-Rise Elevator & Escalator Constructor Mechanic (NEIEP / QEI)",
+      company: "Otis, TK Elevator & KONE High-Rise Division",
+      location: "New York, NY / Chicago / Nationwide",
+      salary: "$132,000 – $195,000",
+      employmentType: "Full-time · Union Master Trade",
+    },
+    marketMeta: {
+      productName: "ASME A17.1 Digital Hoistway & Governor Compliance Logbook",
+      vendor: "SkillHands Field Pro",
+      price: "$69/mo",
+      category: "Software",
+      liveUrl: "https://skillhands-client.vercel.app",
+    },
+    pulseMeta: {
+      severityOrTag: "ESSENTIAL TRADE SPOTLIGHT",
+      sourceName: "ConnectLn Essential Trades Wire",
+      takeaway: "Destination-dispatch regenerative elevator controllers reduce high-rise traction power consumption by 38% during peak morning up-peak traffic.",
+    },
+  },
+  {
+    kind: "video",
+    title: "Structural Union Ironworker & High-Steel Crane Erection: Bolt-Up, Spud Wrench Alignment & Rebar Post-Tensioning",
+    summary:
+      "Field walkthrough with structural ironworkers connecting W-shape steel columns at 400 feet, verifying slip-critical A325/A490 tension control bolts, and rigging tandem crane picks.",
+    youtubeId: "Nj0D_HVBlrk",
+    imageUrl: "https://i.ytimg.com/vi/Nj0D_HVBlrk/hqdefault.jpg",
+    authorName: "Marcus 'Highsteel' Vance · Ironworkers Local 40",
+    authorRole: "Structural Steel Raising Gang Foreman & Rigging Lead",
+    authorAvatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=240&auto=format&fit=crop&q=80",
+    organization: "Highsteel Structural Erection Enclave",
+    enclaveId: "trades_construction",
+    category: "Structural Ironwork & Rigging",
+    duration: "06:48",
+    sourceFeed: "Admin 1-Min Structural Field Wire",
+    jobMeta: {
+      roleTitle: "Journeyman Structural Ironworker & High-Steel Raising Gang Lead",
+      company: "American Bridge & Turner Structural Steel",
+      location: "Pittsburgh, PA / Nationwide Projects",
+      salary: "$118,000 – $164,000 + Per Diem",
+      employmentType: "Full-time · Structural Steel",
+    },
+    marketMeta: {
+      productName: "Structural Steel Crane Pick & AISC Bolt Torque Field Suite",
+      vendor: "DeskNote Field Engineering",
+      price: "$79/mo",
+      category: "Software",
+      liveUrl: "https://desk-note.app/",
+    },
+    pulseMeta: {
+      severityOrTag: "HIGH-STEEL FIELD BRIEF",
+      sourceName: "Ironworkers & Rigging Wire",
+      takeaway: "Tension-control twist-off spline bolts (ASTM F1852) guarantee verified slip-critical preload across seismic moment frames in half the inspection time.",
+    },
+  },
+  {
+    kind: "video",
+    title: "Commercial HVAC Sheet Metal Fabrication: CNC Plasma Duct Layout, Pittsburgh Lock Seams & Cleanroom Balancing",
+    summary:
+      "Inside an iTi sheet metal fabrication shop cutting 16-gauge galvanized spiral ductwork, forming Pittsburgh locks, and pressure-testing hospital negative-pressure isolation runs.",
+    youtubeId: "CJehmOQ5GL4",
+    imageUrl: "https://i.ytimg.com/vi/CJehmOQ5GL4/hqdefault.jpg",
+    authorName: "Liam O'Connor · SMART Sheet Metal Local 28",
+    authorRole: "Master HVAC Sheet Metal Fabricator & TAB Commissioning Lead",
+    authorAvatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=240&auto=format&fit=crop&q=80",
+    organization: "iTi Sheet Metal & Mechanical Guild",
+    enclaveId: "trades_construction",
+    category: "Sheet Metal & Industrial HVAC",
+    duration: "05:36",
+    sourceFeed: "Admin 1-Min Mechanical Trade Stream",
+    jobMeta: {
+      roleTitle: "Journeyman Commercial Sheet Metal & Cleanroom HVAC Fabricator",
+      company: "Apollo Mechanical & Cleanroom Systems",
+      location: "Phoenix, AZ / Semiconductor Corridor",
+      salary: "$112,000 – $152,000",
+      employmentType: "Full-time · Mechanical Trade",
+    },
+    marketMeta: {
+      productName: "SMACNA Duct Pressure & CAD/CAM Plasma Nesting Calculator",
+      vendor: "SkillHands Pro",
+      price: "$59/mo",
+      category: "Software",
+      liveUrl: "https://skillhands-client.vercel.app",
+    },
+    pulseMeta: {
+      severityOrTag: "MECHANICAL & FAB WIRE",
+      sourceName: "SMACNA & Sheet Metal Dispatch",
+      takeaway: "Automated laser-welded stainless exhaust ductwork cuts semiconductor fab sub-fab air leakage below 0.15 CFM per 100 sq ft.",
+    },
+  },
+  {
+    kind: "video",
+    title: "Automotive High-Voltage Electrician: CAN-FD Multiplex Bus Probing, ADAS Radar Calibration & EV Battery Pack Service",
+    summary:
+      "Hands-on diagnostic walkthrough isolating parasitic draw, decoding CAN-FD frames with a 4-channel oscilloscope, and servicing 400V/800V traction battery contactors.",
+    youtubeId: "O_VApkXslGA",
+    imageUrl: "https://i.ytimg.com/vi/O_VApkXslGA/hqdefault.jpg",
+    authorName: "Callum Reid, ASE L3 Master Auto Electrician",
+    authorRole: "Lead Automotive Electrical & EV High-Voltage Specialist",
+    authorAvatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=240&auto=format&fit=crop&q=80",
+    organization: "MTA Automotive Electrical Enclave",
+    enclaveId: "automotive_mechanics",
+    category: "Auto Electrical & EV Systems",
+    duration: "04:52",
+    sourceFeed: "Admin 1-Min Automotive & EV Wire",
+    jobMeta: {
+      roleTitle: "Master Automotive Electrician & EV High-Voltage Diagnostic Lead",
+      company: "Penske Fleet & Rivian Commercial Service",
+      location: "Dallas, TX / Nationwide",
+      salary: "$108,000 – $146,000",
+      employmentType: "Full-time · Automotive Master Tech",
+    },
+    marketMeta: {
+      productName: "CAN-FD Oscilloscope Waveform Library & EV Pinout Vault",
+      vendor: "Sphera Auto Diagnostics",
+      price: "$65/mo",
+      category: "Software",
+      liveUrl: "https://conectln.com",
+    },
+    pulseMeta: {
+      severityOrTag: "EV DIAGNOSTICS BRIEF",
+      sourceName: "ConnectLn Automotive Enclave",
+      takeaway: "Differential voltage drop testing across HV pyro-fuse junctions pinpoints high-resistance contactor wear before thermal derating occurs.",
+    },
+  },
+  {
+    kind: "video",
+    title: "Commercial Aviation & Flight Deck Operations: IFR Glass Cockpit Avionics, Turbine Pre-Flight & ATP Career Progression",
+    summary:
+      "Complete cockpit walkthrough from commercial instrument rating (IFR) and multi-engine turbine systems verification to Part 121 airline captain flight deck procedures.",
+    youtubeId: "D-nOuNU9LcQ",
+    imageUrl: "https://i.ytimg.com/vi/D-nOuNU9LcQ/hqdefault.jpg",
+    authorName: "Capt. Nathan Brooks, ATP, CFI-I",
+    authorRole: "Airline Transport Pilot (ATP) & Check Airman",
+    authorAvatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=240&auto=format&fit=crop&q=80",
+    organization: "Pilot Institute & ConnectLn Aviation Enclave",
+    enclaveId: "aviation_aerospace_maritime",
+    category: "Commercial Aviation & Flight Ops",
+    duration: "09:20",
+    sourceFeed: "Admin 1-Min Aviation & Aerospace Stream",
+    jobMeta: {
+      roleTitle: "First Officer & Captain — Part 121 / Part 135 Jet Operations (ATP)",
+      company: "Delta, United & NetJets Flight Operations",
+      location: "Atlanta, GA / Denver, CO / Nationwide Bases",
+      salary: "$165,000 – $340,000",
+      employmentType: "Full-time · Commercial Aviation",
+    },
+    marketMeta: {
+      productName: "FAA Part 121 IFR Flight Deck & Turbine Systems Simulator Pack",
+      vendor: "Orbital & Aviation Systems",
+      price: "$129/mo",
+      category: "Training",
+      liveUrl: "https://conectln.com",
+    },
+    pulseMeta: {
+      severityOrTag: "FLIGHT OPERATIONS DISPATCH",
+      sourceName: "Aviation & Aerospace Wire",
+      takeaway: "Required Navigation Performance (RNP AR) satellite approaches cut commercial jet fuel burn and terminal holding delays by 19%.",
+    },
+  },
+  {
+    kind: "video",
+    title: "High-Rise Architectural Glazier & Curtain Wall Installation: Vacuum Lifter Crane Rigging & Structural Silicone Glazing",
+    summary:
+      "On-site with commercial glaziers setting 1,200-lb triple-glazed low-E curtain wall units on a 55-story tower using remote-controlled vacuum glass manipulators.",
+    youtubeId: "THdNxgJo45A",
+    imageUrl: "https://i.ytimg.com/vi/THdNxgJo45A/hqdefault.jpg",
+    authorName: "Devon Vance · Architectural Glaziers Guild",
+    authorRole: "Lead Curtain Wall & Structural Glass Superintendent",
+    authorAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=240&auto=format&fit=crop&q=80",
+    organization: "Glazier Nation & High-Rise Facade Enclave",
+    enclaveId: "trades_construction",
+    category: "Architectural Glazing & Facades",
+    duration: "06:15",
+    sourceFeed: "Admin 1-Min Commercial Facade Wire",
+    jobMeta: {
+      roleTitle: "Journeyman High-Rise Curtain Wall Glazier & Rigging Lead",
+      company: "Harmon Facade & Permasteelisa North America",
+      location: "Boston, MA / New York, NY",
+      salary: "$106,000 – $148,000",
+      employmentType: "Full-time · Architectural Trade",
+    },
+    marketMeta: {
+      productName: "Curtain Wall Wind-Load & Thermal Curtain Takeoff Suite",
+      vendor: "DeskNote Field",
+      price: "$69/mo",
+      category: "Software",
+      liveUrl: "https://desk-note.app/",
+    },
+    pulseMeta: {
+      severityOrTag: "FACADE ENGINEERING",
+      sourceName: "Commercial Glazing Wire",
+      takeaway: "Unitized factory-glazed curtain wall panels with dual-circuit vacuum lifters enable 18-panel-per-shift installation in high-wind urban corridors.",
+    },
+  },
+  {
+    kind: "video",
+    title: "Heavy Civil Concrete Finisher & Highway Bridge Decking: Laser Screed Leveling, Superplasticizer Slump & Bull Float Mastery",
+    summary:
+      "Field crew pouring 800 cubic yards of DOT high-early-strength bridge deck concrete, verifying air entrainment and slump, and finishing with ride-on power trowels.",
+    youtubeId: "y2uEMYQQviE",
+    imageUrl: "https://i.ytimg.com/vi/y2uEMYQQviE/hqdefault.jpg",
+    authorName: "Joe Castellano · OPCMIA Cement Masons",
+    authorRole: "Master Heavy-Highway Concrete Finisher & Pour Superintendent",
+    authorAvatar: "https://images.unsplash.com/photo-1504593811423-6dd665756598?w=240&auto=format&fit=crop&q=80",
+    organization: "Heavy Civil & Infrastructure Guild",
+    enclaveId: "trades_construction",
+    category: "Heavy Civil & Concrete",
+    duration: "07:05",
+    sourceFeed: "Admin 1-Min Civil Infrastructure Wire",
+    jobMeta: {
+      roleTitle: "Lead Heavy-Civil Concrete Finisher & Bridge Deck Foreman (ACI)",
+      company: "Kiewit & Granite Infrastructure",
+      location: "Austin, TX / Midwest DOT Corridors",
+      salary: "$102,000 – $144,000 + Overtime",
+      employmentType: "Full-time · Heavy Civil",
+    },
+    marketMeta: {
+      productName: "ACI Concrete Mix Maturity, Slump & Yardage Field Calculator",
+      vendor: "SkillHands Pro",
+      price: "$49/mo",
+      category: "Software",
+      liveUrl: "https://skillhands-client.vercel.app",
+    },
+    pulseMeta: {
+      severityOrTag: "INFRASTRUCTURE POUR BRIEF",
+      sourceName: "Heavy Civil Construction Wire",
+      takeaway: "Embedded wireless concrete maturity sensors allow DOT bridge post-tensioning 36 hours earlier by tracking real-time hydration exothermic curves.",
+    },
+  },
+  {
+    kind: "video",
+    title: "Commercial Appliance & Sub-Zero Sealed System Technician: Inverter Compressor Diagnostics, EPA 608 & Control Board Repair",
+    summary:
+      "Step-by-step field repair of variable-capacity inverter compressors, Loki ring-lok braze-free sealed-system fittings, and relay board schematic tracing.",
+    youtubeId: "js_xjb65f_w",
+    imageUrl: "https://i.ytimg.com/vi/js_xjb65f_w/hqdefault.jpg",
+    authorName: "derek 'TechMaster' Cole, NASTeC, EPA 608",
+    authorRole: "Master Commercial Appliance & Refrigeration Service Engineer",
+    authorAvatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=240&auto=format&fit=crop&q=80",
+    organization: "National Appliance Service Technicians Enclave",
+    enclaveId: "trades_construction",
+    category: "Appliance & Sealed-System Tech",
+    duration: "07:45",
+    sourceFeed: "Admin 1-Min Service Tech Video Wire",
+    jobMeta: {
+      roleTitle: "Master Commercial & Luxury Appliance Sealed-System Technician (EPA 608)",
+      company: "Sub-Zero Wolf Authorized Service & Hobart Commercial",
+      location: "Seattle, WA / Nationwide",
+      salary: "$98,000 – $142,000",
+      employmentType: "Full-time · Field Service Tech",
+    },
+    marketMeta: {
+      productName: "Smart Appliance Board Schematic & Sealed-System Pressure App",
+      vendor: "SkillHands Field",
+      price: "$45/mo",
+      category: "Software",
+      liveUrl: "https://skillhands-client.vercel.app",
+    },
+    pulseMeta: {
+      severityOrTag: "FIELD SERVICE DISPATCH",
+      sourceName: "ConnectLn Service Tech Wire",
+      takeaway: "R-600a isobutane press-fit sealed-system Lokring couplings eliminate open-flame brazing hazards in residential and hospital kitchens.",
+    },
+  },
+  {
+    kind: "video",
+    title: "eBPF Zero-Trust Kernel Packet Telemetry & Kubernetes Runtime Defense",
+    summary:
+      "Live kernel-space eBPF socket inspection blocking lateral container movement in sub-millisecond production Kubernetes clusters.",
+    videoUrl: "/status-videos/k8s_ebpf.mp4",
+    imageUrl: "/images/connectln-studies/packet-soc-cover.jpg",
+    authorName: "Dr. Marcus Vance",
+    authorRole: "Principal eBPF & Cloud Security Architect",
     authorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240&auto=format&fit=crop&q=80",
     organization: "Expedite Strike Cyber Defense",
     enclaveId: "tech_cybersecurity",
     category: "Cybersecurity & eBPF",
-    duration: "14:22",
-    sourceFeed: "Admin 60-Min eBPF & Kernel Wire",
+    duration: "03:42",
+    sourceFeed: "DSTRIKE & Kernel Defense Video Wire",
     jobMeta: {
       roleTitle: "Principal eBPF & Kubernetes Runtime Security Engineer",
       company: "Expedite Consults · Zero-Trust Division",
@@ -165,19 +430,19 @@ export const CONNECTLN_HARVESTER_TEMPLATES: SeedMediaTemplate[] = [
   },
   {
     kind: "video",
-    title: "Boston Dynamics Spot Quadruped Robotics: Autonomous Jobsite LiDAR Scanning & BIM Progress Telemetry",
+    title: "Autonomous Quadruped Jobsite Robotics & LiDAR Structural Inspection",
     summary:
-      "Live field testing of Spot quadruped robotics navigating active multi-story construction sites to capture millimeter-accurate LiDAR point clouds and structural BIM progress.",
-    youtubeId: "wND9goxDVrY",
-    imageUrl: "https://i.ytimg.com/vi/wND9goxDVrY/hqdefault.jpg",
-    authorName: "Gus Vandermeer, PE · Field Robotics Lead",
-    authorRole: "Principal Structural & Autonomous Jobsite Engineer",
+      "Field deployment of autonomous robotics scanning 40-foot structural steel and heavy timber bents for millimeter-level BIM tolerance verification.",
+    videoUrl: "/status-videos/spot.mp4",
+    imageUrl: "/images/connectln-studies/robotics-plc-cover.jpg",
+    authorName: "Gus Vandermeer, PE",
+    authorRole: "Principal Structural & Robotics Field Engineer",
     authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=240&auto=format&fit=crop&q=80",
-    organization: "Cascade Structural & Robotics Guild",
+    organization: "Cascade Structural Engineering",
     enclaveId: "trades_construction",
-    category: "Jobsite Robotics & BIM",
-    duration: "03:48",
-    sourceFeed: "Admin 60-Min Jobsite Robotics Wire",
+    category: "Skilled Trades & Robotics",
+    duration: "02:55",
+    sourceFeed: "Skilled Trades & Jobsite Cam Wire",
     jobMeta: {
       roleTitle: "Autonomous Jobsite Robotics & BIM Field Superintendent",
       company: "Cascade Structural & Turner Construction",
@@ -199,111 +464,6 @@ export const CONNECTLN_HARVESTER_TEMPLATES: SeedMediaTemplate[] = [
     },
   },
   {
-    kind: "video",
-    title: "High-Voltage Substation Transformer Commissioning: Professional Tan Delta & Insulation Power Factor Testing",
-    summary:
-      "Step-by-step high-voltage substation field commissioning performing a Tan Delta dielectric dissipation factor test across HV/LV transformer bushings.",
-    youtubeId: "78U-D263bKE",
-    imageUrl: "https://i.ytimg.com/vi/78U-D263bKE/hqdefault.jpg",
-    authorName: "AM Electrical Concepts · NETA Level IV",
-    authorRole: "Chief High-Voltage Substation & Relay Testing Engineer",
-    authorAvatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=240&auto=format&fit=crop&q=80",
-    organization: "National High-Voltage Substation Enclave",
-    enclaveId: "energy_utilities_environment",
-    category: "High-Voltage Substation & Grid",
-    duration: "11:15",
-    sourceFeed: "Admin 60-Min High-Voltage Power Wire",
-    jobMeta: {
-      roleTitle: "NETA Level III/IV High-Voltage Substation Commissioning Engineer",
-      company: "Quanta Power & National Grid Services",
-      location: "Houston, TX / Nationwide Travel",
-      salary: "$145,000 – $192,000 + Per Diem",
-      employmentType: "Full-time · Utility Power",
-    },
-    marketMeta: {
-      productName: "NETA Substation Tan Delta & Relay Test Compliance Suite",
-      vendor: "SkillHands Field Pro",
-      price: "$79/mo",
-      category: "Software",
-      liveUrl: "https://skillhands-client.vercel.app",
-    },
-    pulseMeta: {
-      severityOrTag: "GRID COMMISSIONING BRIEF",
-      sourceName: "ConnectLn Power & Utilities Wire",
-      takeaway: "Automated 10kV Tan Delta bushing capacitance trending detects early moisture ingress 18 months before dielectric flashover.",
-    },
-  },
-  {
-    kind: "video",
-    title: "Da Vinci Robotic Surgical System: Intraoperative Clinical Telemetry, Wristed Articulation & Surgeon Console Ops",
-    summary:
-      "Inside the operating room examining Da Vinci robotic surgical console ergonomics, tremor filtration, 3D HD endoscopic vision, and clinical biomed maintenance.",
-    youtubeId: "tu_Cg6L1f7s",
-    imageUrl: "https://i.ytimg.com/vi/tu_Cg6L1f7s/hqdefault.jpg",
-    authorName: "Dr. Elena Rostova, MD, FACS",
-    authorRole: "Attending Robotic & Minimally Invasive Trauma Surgeon",
-    authorAvatar: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=240&auto=format&fit=crop&q=80",
-    organization: "Metro Level-1 Robotic Surgical Center",
-    enclaveId: "healthcare_medicine",
-    category: "Robotic Surgery & MedTech",
-    duration: "06:40",
-    sourceFeed: "Admin 60-Min Clinical MedTech Wire",
-    jobMeta: {
-      roleTitle: "Attending Robotic Surgeon & Clinical MedTech Director",
-      company: "Metro Level-1 Trauma & Surgical Center",
-      location: "Boston, MA · Clinical On-Site",
-      salary: "$480,000 – $620,000",
-      employmentType: "Full-time · Physician",
-    },
-    marketMeta: {
-      productName: "Clinical Triage & HIPAA Surgical Telemetry Hub",
-      vendor: "MedSphere Clinical Systems",
-      price: "$650/mo",
-      category: "Solutions",
-      liveUrl: "https://conectln.com",
-    },
-    pulseMeta: {
-      severityOrTag: "CLINICAL ADVANCEMENT",
-      sourceName: "ConnectLn Medical Enclave",
-      takeaway: "Robotic 7-degree-of-freedom EndoWrist instrumentation reduces post-operative ICU stay duration by 31%.",
-    },
-  },
-  {
-    kind: "video",
-    title: "Commercial Solar Microgrid & LFP Battery Energy Storage Commissioning: Peak Shaving & Islanding Telemetry",
-    summary:
-      "Real-world commercial solar PV and lithium-iron-phosphate (LFP) battery storage integration analyzing inverter load shifting, grid islanding, and ROI telemetry.",
-    youtubeId: "hfH5RYeAYfw",
-    imageUrl: "https://i.ytimg.com/vi/hfH5RYeAYfw/hqdefault.jpg",
-    authorName: "Carlos Mendez, NABCEP · McCaskie Energy",
-    authorRole: "Lead Commercial Solar & BESS Microgrid Engineer",
-    authorAvatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=240&auto=format&fit=crop&q=80",
-    organization: "SunGrid Commercial Microgrids",
-    enclaveId: "energy_utilities_environment",
-    category: "Solar & BESS Microgrids",
-    duration: "08:54",
-    sourceFeed: "Admin 60-Min Renewable Grid Wire",
-    jobMeta: {
-      roleTitle: "Lead Commercial Solar PV & BESS Microgrid Commissioning Engineer",
-      company: "SunGrid Utility Microgrids",
-      location: "Austin, TX · Regional Travel",
-      salary: "$135,000 – $168,000",
-      employmentType: "Full-time · Energy Infrastructure",
-    },
-    marketMeta: {
-      productName: "GridPulse SCADA & Solar Inverter Diagnostic Kit",
-      vendor: "SunGrid Engineering",
-      price: "$290/mo",
-      category: "Software",
-      liveUrl: "https://conectln.com",
-    },
-    pulseMeta: {
-      severityOrTag: "GRID INFRASTRUCTURE",
-      sourceName: "Energy & Utilities Wire",
-      takeaway: "Pairing commercial solar arrays with hybrid LFP battery banks increases on-site self-consumption from 38% to 84%.",
-    },
-  },
-  {
     kind: "picture",
     title: "Semiconductor Cleanroom Lithography & Sub-2nm Wafer Metrology Architecture",
     summary:
@@ -315,7 +475,7 @@ export const CONNECTLN_HARVESTER_TEMPLATES: SeedMediaTemplate[] = [
     organization: "Apex Silicon Fab Consortium",
     enclaveId: "manufacturing_industrial",
     category: "Semiconductor & Fab Ops",
-    sourceFeed: "Admin 60-Min Cleanroom Photo Wire",
+    sourceFeed: "Industrial & Cleanroom Photo Wire",
     jobMeta: {
       roleTitle: "Senior EUV Lithography & Cleanroom Process Engineer",
       company: "Apex Silicon Fab Consortium",
@@ -338,72 +498,72 @@ export const CONNECTLN_HARVESTER_TEMPLATES: SeedMediaTemplate[] = [
   },
   {
     kind: "video",
-    title: "Enterprise SOC Operations: SIEM Log Correlation, Active Threat Hunting & Incident Containment Playbooks",
+    title: "Agentic AI Flywheel & Multi-Agent MCP Enterprise Orchestration",
     summary:
-      "Inside Tier-3 Security Operations Center workflows covering SIEM correlation rules, EDR telemetry triage, MITRE ATT&CK threat hunting, and rapid host isolation.",
-    youtubeId: "AVoqcPa-wVw",
-    imageUrl: "https://i.ytimg.com/vi/AVoqcPa-wVw/hqdefault.jpg",
-    authorName: "Hannah Boateng, CISSP · HATKRS Cyber",
-    authorRole: "Principal SOC Commander & Threat Hunter",
-    authorAvatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=240&auto=format&fit=crop&q=80",
-    organization: "Aagiis Federal Compliance & SOC",
+      "Walkthrough of autonomous AI agents executing tool calls, DAST security verification, and zero-trust compliance checks across enterprise enclaves.",
+    videoUrl: "/status-videos/agentic_flywheel.mp4",
+    imageUrl: "/images/connectln-studies/agentic-mcp-cover.jpg",
+    authorName: "Kwesi Asiedu",
+    authorRole: "Chief AI & Cybersecurity Architect · ConnectLn",
+    authorAvatar: "/brand/kwesi-avatar.png",
+    organization: "Expedite Consults",
     enclaveId: "tech_cybersecurity",
-    category: "SOC & Threat Hunting",
-    duration: "12:18",
-    sourceFeed: "Admin 60-Min Federal SOC Video Wire",
+    category: "Agentic AI & MCP",
+    duration: "04:18",
+    sourceFeed: "Noctis AI & MCP Studio Feed",
     jobMeta: {
-      roleTitle: "Principal SOC Incident Commander & DoD RMF Lead",
-      company: "Aagiis Federal Solutions",
-      location: "Reston, VA / Hybrid Clearance",
-      salary: "$190,000 – $235,000",
-      employmentType: "Full-time · Federal Cyber",
+      roleTitle: "Staff Agentic AI & MCP Protocol Architect",
+      company: "Expedite Consults · Noctis AI",
+      location: "Remote / Maryland HQ",
+      salary: "$225,000 – $280,000",
+      employmentType: "Full-time · Executive Tech",
     },
     marketMeta: {
-      productName: "Aagiis Continuous ATO (cATO) & RMF Command Platform",
-      vendor: "Aagiis Federal",
-      price: "$890/mo",
-      category: "Cybersecurity",
-      liveUrl: "https://aagiis.com",
+      productName: "Noctis AI Threat Prediction & Agentic Engine",
+      vendor: "Expedite Consults",
+      price: "$399/mo",
+      category: "AI",
+      liveUrl: "https://www.dstrike.app/noctis",
     },
     pulseMeta: {
-      severityOrTag: "SOC THREAT HUNTING",
-      sourceName: "Aagiis Federal Threat Wire",
-      takeaway: "Automated SOAR identity token revocation isolates compromised federated sessions in under 4.2 seconds.",
+      severityOrTag: "AI ARCHITECTURE BRIEF",
+      sourceName: "Noctis Intelligence Wire",
+      takeaway: "Deterministic MCP tool sandboxes cut enterprise autonomous agent hallucination rates below 0.2% in production workflows.",
     },
   },
   {
     kind: "video",
-    title: "Commercial Building Automation & HVAC DDC Controls: Programmable vs. Configurable BACnet Controllers",
+    title: "Trauma Surgery & Intraoperative Clinical Telemetry Walkthrough",
     summary:
-      "Deep-dive engineering walkthrough of commercial HVAC building automation systems (BAS), BACnet/IP field controllers, chiller plant staging, and VAV airflow loops.",
-    youtubeId: "RqPTRQksFlw",
-    imageUrl: "https://i.ytimg.com/vi/RqPTRQksFlw/hqdefault.jpg",
-    authorName: "Tony Mormino, PE · HVAC TV",
-    authorRole: "Commercial HVAC Controls & MEP Automation Director",
-    authorAvatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=240&auto=format&fit=crop&q=80",
-    organization: "Commercial MEP & Controls Guild",
-    enclaveId: "trades_construction",
-    category: "Commercial HVAC & BAS Controls",
-    duration: "09:42",
-    sourceFeed: "Admin 60-Min MEP & Controls Wire",
+      "Attending surgical team demonstrating real-time hemodynamic monitoring, orthopedic fixation alignment, and rapid emergency triage workflows.",
+    videoUrl: "/status-videos/physician.mp4",
+    imageUrl: "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=900&auto=format&fit=crop&q=80",
+    authorName: "Dr. Elena Rostova, MD, FACS",
+    authorRole: "Attending Orthopedic Trauma Surgeon",
+    authorAvatar: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=240&auto=format&fit=crop&q=80",
+    organization: "Metro Level-1 Trauma & Surgical Center",
+    enclaveId: "healthcare_medicine",
+    category: "Healthcare & Surgery",
+    duration: "03:15",
+    sourceFeed: "Clinical & MedTech Visual Feed",
     jobMeta: {
-      roleTitle: "Senior Commercial HVAC Controls & BACnet Automation Engineer",
-      company: "Trane Technologies & Johnson Controls Commercial",
-      location: "Dallas, TX / Nationwide",
-      salary: "$128,000 – $172,000",
-      employmentType: "Full-time · MEP Controls",
+      roleTitle: "Attending Orthopedic Trauma Surgeon & Clinical Lead",
+      company: "Metro Level-1 Trauma Center",
+      location: "Boston, MA · Clinical On-Site",
+      salary: "$480,000 – $620,000",
+      employmentType: "Full-time · Physician",
     },
     marketMeta: {
-      productName: "Commercial BACnet/Modbus Commissioning & Psychrometric Suite",
-      vendor: "SkillHands Field Pro",
-      price: "$69/mo",
-      category: "Software",
-      liveUrl: "https://skillhands-client.vercel.app",
+      productName: "Clinical Triage & HIPAA Surgical Telemetry Hub",
+      vendor: "MedSphere Clinical Systems",
+      price: "$650/mo",
+      category: "Solutions",
+      liveUrl: "https://conectln.com",
     },
     pulseMeta: {
-      severityOrTag: "MEP AUTOMATION PULSE",
-      sourceName: "Commercial HVAC & Controls Index",
-      takeaway: "Freely programmable DDC chiller plant controllers cut Class-A commercial tower HVAC energy consumption by 24%.",
+      severityOrTag: "CLINICAL ADVANCEMENT",
+      sourceName: "ConnectLn Medical Enclave",
+      takeaway: "Intraoperative AI fluoroscopy guidance reduces pelvic reconstruction fixation time by 28 minutes per case.",
     },
   },
   {
@@ -418,7 +578,7 @@ export const CONNECTLN_HARVESTER_TEMPLATES: SeedMediaTemplate[] = [
     organization: "SunGrid Utility Microgrids",
     enclaveId: "energy_utilities_environment",
     category: "Solar & Grid Energy",
-    sourceFeed: "Admin 60-Min Renewable Grid Photo Wire",
+    sourceFeed: "Renewable Grid & Field Photo Wire",
     jobMeta: {
       roleTitle: "Lead 1500V Solar PV & Microgrid Commissioning Engineer",
       company: "SunGrid Utility Microgrids",
@@ -441,19 +601,87 @@ export const CONNECTLN_HARVESTER_TEMPLATES: SeedMediaTemplate[] = [
   },
   {
     kind: "video",
-    title: "Heavy Timber Frame Construction: Precision Mortise-and-Tenon Joinery, Oak Pegging & Structural Bent Raising",
+    title: "Live Red-Team Breach Drill & SOC Incident Containment Simulation",
     summary:
-      "On-site craft walkthrough assembling structural heavy timber bents, fitting precision mortise-and-tenon joints, and driving drawbore hardwood pegs.",
-    youtubeId: "4ChaCgOkFI0",
-    imageUrl: "https://i.ytimg.com/vi/4ChaCgOkFI0/hqdefault.jpg",
-    authorName: "Markus Thorne · WoodForge Timber Guild",
-    authorRole: "Master Heavy Timber Framer & Crane Rigging Superintendent",
+      "Inside an active Security Operations Center executing automated playbook containment against simulated zero-day credential harvesting.",
+    videoUrl: "/status-videos/scenario_drill.mp4",
+    imageUrl: "/images/connectln-studies/cyber-specialist-cover.jpg",
+    authorName: "Hannah Boateng, CISSP",
+    authorRole: "Principal SOC Commander & Threat Hunter",
+    authorAvatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=240&auto=format&fit=crop&q=80",
+    organization: "Aagiis Federal Compliance & SOC",
+    enclaveId: "tech_cybersecurity",
+    category: "SOC & Threat Hunting",
+    duration: "03:50",
+    sourceFeed: "Aagiis Federal SOC Video Wire",
+    jobMeta: {
+      roleTitle: "Principal SOC Incident Commander & DoD RMF Lead",
+      company: "Aagiis Federal Solutions",
+      location: "Reston, VA / Hybrid Clearance",
+      salary: "$190,000 – $235,000",
+      employmentType: "Full-time · Federal Cyber",
+    },
+    marketMeta: {
+      productName: "Aagiis Continuous ATO (cATO) & RMF Command Platform",
+      vendor: "Aagiis Federal",
+      price: "$890/mo",
+      category: "Cybersecurity",
+      liveUrl: "https://aagiis.com",
+    },
+    pulseMeta: {
+      severityOrTag: "ZERO-DAY DRILL ALERT",
+      sourceName: "Aagiis Federal Threat Wire",
+      takeaway: "Automated SOAR identity token revocation isolates compromised federated sessions in under 4.2 seconds.",
+    },
+  },
+  {
+    kind: "video",
+    title: "Commercial Real Estate Development & Luxury Architectural Walkthrough",
+    summary:
+      "On-site executive tour of mixed-use commercial construction, curtain-wall glazing installation, and smart building MEP automation.",
+    videoUrl: "/status-videos/realtor.mp4",
+    imageUrl: "/images/connectln-studies/business-capstone-cover.jpg",
+    authorName: "Suzzan Coldwell",
+    authorRole: "Senior Commercial Development & Brokerage Director",
+    authorAvatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=240&auto=format&fit=crop&q=80",
+    organization: "Coldwell Commercial Partners",
+    enclaveId: "trades_construction",
+    category: "Commercial Real Estate & MEP",
+    duration: "02:38",
+    sourceFeed: "Commercial Property & Build Wire",
+    jobMeta: {
+      roleTitle: "Senior Commercial Construction & Development Project Director",
+      company: "Coldwell Commercial Partners",
+      location: "New York, NY / Hybrid",
+      salary: "$165,000 – $210,000",
+      employmentType: "Full-time · Commercial Real Estate",
+    },
+    marketMeta: {
+      productName: "Commercial ProForma & Tenant Buildout Analyzer",
+      vendor: "Coldwell Digital Suite",
+      price: "$149/mo",
+      category: "Solutions",
+      liveUrl: "https://desk-note.app/",
+    },
+    pulseMeta: {
+      severityOrTag: "COMMERCIAL MARKET PULSE",
+      sourceName: "CRE & Construction Index",
+      takeaway: "Class-A commercial retrofits integrating automated HVAC heat-recovery chillers cut tenant operating expenses by 24%.",
+    },
+  },
+  {
+    kind: "picture",
+    title: "Heavy Timber Framing & Commercial Superintendent Blueprint Review",
+    summary:
+      "Master carpenters and site superintendents verifying mortise-and-tenon drawbore tolerances and structural crane pick rigging schedules.",
+    imageUrl: "/images/connectln-studies/trades-superintendent-cover.jpg",
+    authorName: "Markus Thorne",
+    authorRole: "Commercial Framing & Craft Superintendent",
     authorAvatar: "https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=240&auto=format&fit=crop&q=80",
     organization: "Turner & Cascade Timber Guild",
     enclaveId: "trades_construction",
-    category: "Heavy Timber & Structural Carpentry",
-    duration: "05:18",
-    sourceFeed: "Admin 60-Min Master Carpentry Wire",
+    category: "Heavy Timber & Rigging",
+    sourceFeed: "Master Tradesmen Photo Dispatch",
     jobMeta: {
       roleTitle: "Master Heavy Timber Framer & Crane Rigging Foreman",
       company: "Turner & Cascade Timber Guild",
@@ -475,53 +703,20 @@ export const CONNECTLN_HARVESTER_TEMPLATES: SeedMediaTemplate[] = [
     },
   },
   {
-    kind: "picture",
-    title: "Enterprise GRC Governance, NIST AI RMF & ISO 42001 Compliance Matrix",
-    summary:
-      "Executive compliance architecture mapping NIST 800-53 Rev 5, CMMC 2.0 Level 3, and ISO/IEC 42001 AI governance controls in real time.",
-    imageUrl: "/images/connectln-studies/grc-governance-cover.jpg",
-    authorName: "David Osei, CISM, CRISC",
-    authorRole: "VP of Federal GRC & Continuous Assurance",
-    authorAvatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=240&auto=format&fit=crop&q=80",
-    organization: "Aagiis Governance Enclave",
-    enclaveId: "tech_cybersecurity",
-    category: "GRC & Federal Compliance",
-    sourceFeed: "Admin 60-Min Compliance Visual Ledger",
-    jobMeta: {
-      roleTitle: "Director of Federal GRC, CMMC 2.0 & FedRAMP High",
-      company: "Aagiis Governance Enclave",
-      location: "Arlington, VA · Hybrid",
-      salary: "$180,000 – $225,000",
-      employmentType: "Full-time · Compliance Leadership",
-    },
-    marketMeta: {
-      productName: "Aagiis Automated FedRAMP & CMMC Evidence Vault",
-      vendor: "Aagiis Federal",
-      price: "$599/mo",
-      category: "Cybersecurity",
-      liveUrl: "https://aagiis.com",
-    },
-    pulseMeta: {
-      severityOrTag: "REGULATORY MANDATE",
-      sourceName: "Federal Compliance Wire",
-      takeaway: "Automated OSCAL control mapping reduces FedRAMP Rev 5 Continuous Monitoring package preparation time by 78%.",
-    },
-  },
-  {
     kind: "video",
-    title: "Automated DevSecOps CI/CD Pipeline: SAST Static Code Analysis, Container Image Signing & Secret Scanning",
+    title: "Full-Stack Cloud IDE, AST Static Code Analysis & Live DevSecOps Pipeline",
     summary:
-      "Live engineering build of an automated DevSecOps pipeline integrating static application security testing (SAST), SBOM attestation, and policy-as-code gates.",
-    youtubeId: "9ZgCmq1jXT8",
-    imageUrl: "https://i.ytimg.com/vi/9ZgCmq1jXT8/hqdefault.jpg",
-    authorName: "Michael Levan · 05-SAST & Cloud Security",
+      "Real-time demonstration of sub-4ms abstract syntax tree (AST) vulnerability scanning and automated pull-request remediation inside ConnectLn DevHub.",
+    videoUrl: "/status-videos/developer.mp4",
+    imageUrl: "/images/connectln-studies/mlops-data-cover.jpg",
+    authorName: "Alex Taylor",
     authorRole: "Principal DevSecOps & SAST Engine Architect",
-    authorAvatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=240&auto=format&fit=crop&q=80",
+    authorAvatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=240&auto=format&fit=crop&q=80",
     organization: "05-SAST & Trepath Security",
     enclaveId: "tech_cybersecurity",
     category: "DevSecOps & SAST",
-    duration: "07:34",
-    sourceFeed: "Admin 60-Min 05-SAST & DevHub Wire",
+    duration: "03:24",
+    sourceFeed: "05-SAST & DevHub Live Stream",
     jobMeta: {
       roleTitle: "Principal Application Security & AST Compiler Engineer",
       company: "05-SAST & Expedite Consults",
@@ -544,19 +739,19 @@ export const CONNECTLN_HARVESTER_TEMPLATES: SeedMediaTemplate[] = [
   },
   {
     kind: "video",
-    title: "JPL Spacecraft Avionics & Flight Telemetry: Autonomous Guidance, Altimeter Sensor Fusion & Mission Control",
+    title: "Aerospace Orbital Telemetry & Deep-Space Avionics Systems Briefing",
     summary:
-      "Inside spacecraft mission control telemetry verifying autonomous guidance loops, laser altimeter Kalman filtering, and radiation-hardened flight computer links.",
-    youtubeId: "ZbYGVzktneY",
-    imageUrl: "https://i.ytimg.com/vi/ZbYGVzktneY/hqdefault.jpg",
-    authorName: "Capt. Priya Patel · Orbital Avionics",
+      "Mission control avionics verification, radiation-hardened flight computer buses, and cryogenic propulsion valve diagnostics.",
+    videoUrl: "/status-videos/nasa_space.mp4",
+    imageUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=900&auto=format&fit=crop&q=80",
+    authorName: "Capt. Priya Patel",
     authorRole: "Lead Spacecraft Avionics & Flight Systems Director",
     authorAvatar: "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=240&auto=format&fit=crop&q=80",
     organization: "Orbital Dynamics & Defense",
     enclaveId: "aviation_aerospace_maritime",
     category: "Aerospace & Avionics",
-    duration: "04:45",
-    sourceFeed: "Admin 60-Min Aerospace Telemetry Wire",
+    duration: "03:10",
+    sourceFeed: "Aerospace & Avionics Video Wire",
     jobMeta: {
       roleTitle: "Lead Spacecraft Avionics & DO-178C Flight Software Architect",
       company: "Orbital Dynamics & Defense",
@@ -579,6 +774,144 @@ export const CONNECTLN_HARVESTER_TEMPLATES: SeedMediaTemplate[] = [
   },
   {
     kind: "picture",
+    title: "Enterprise GRC Governance, NIST AI RMF & ISO 42001 Compliance Matrix",
+    summary:
+      "Executive compliance architecture mapping NIST 800-53 Rev 5, CMMC 2.0 Level 3, and ISO/IEC 42001 AI governance controls in real time.",
+    imageUrl: "/images/connectln-studies/grc-governance-cover.jpg",
+    authorName: "David Osei, CISM, CRISC",
+    authorRole: "VP of Federal GRC & Continuous Assurance",
+    authorAvatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=240&auto=format&fit=crop&q=80",
+    organization: "Aagiis Governance Enclave",
+    enclaveId: "tech_cybersecurity",
+    category: "GRC & Federal Compliance",
+    sourceFeed: "Aagiis Compliance Visual Ledger",
+    jobMeta: {
+      roleTitle: "Director of Federal GRC, CMMC 2.0 & FedRAMP High",
+      company: "Aagiis Governance Enclave",
+      location: "Arlington, VA · Hybrid",
+      salary: "$180,000 – $225,000",
+      employmentType: "Full-time · Compliance Leadership",
+    },
+    marketMeta: {
+      productName: "Aagiis Automated FedRAMP & CMMC Evidence Vault",
+      vendor: "Aagiis Federal",
+      price: "$599/mo",
+      category: "Cybersecurity",
+      liveUrl: "https://aagiis.com",
+    },
+    pulseMeta: {
+      severityOrTag: "REGULATORY MANDATE",
+      sourceName: "Federal Compliance Wire",
+      takeaway: "Automated OSCAL control mapping reduces FedRAMP Rev 5 Continuous Monitoring package preparation time by 78%.",
+    },
+  },
+  {
+    kind: "video",
+    title: "Quantitative Financial Modeling, Compensation Benchmarking & Cap-Table Engine",
+    summary:
+      "Live actuarial breakdown of total direct compensation, equity refresh modeling, and B2B SaaS unit economics across global tiers.",
+    videoUrl: "/status-videos/calc.mp4",
+    imageUrl: "/images/connectln-studies/certifications-hub-cover.jpg",
+    authorName: "Michael Koomson, CFA",
+    authorRole: "Managing Partner · Quantitative FinOps & Valuation",
+    authorAvatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=240&auto=format&fit=crop&q=80",
+    organization: "Sphera Venture & FinOps",
+    enclaveId: "tech_cybersecurity",
+    category: "FinOps & Executive Strategy",
+    duration: "02:48",
+    sourceFeed: "Enterprise FinOps & Market Wire",
+    jobMeta: {
+      roleTitle: "VP of Cloud FinOps & Quantitative Revenue Operations",
+      company: "Sphera Venture & FinOps",
+      location: "New York, NY / Remote",
+      salary: "$195,000 – $245,000",
+      employmentType: "Full-time · Finance & Ops",
+    },
+    marketMeta: {
+      productName: "Sphera Cloud FinOps & Unit Economics Intelligence",
+      vendor: "Sphera Portal",
+      price: "$249/mo",
+      category: "Software",
+      liveUrl: "https://expediteconsults.com",
+    },
+    pulseMeta: {
+      severityOrTag: "MARKET & FINOPS BRIEF",
+      sourceName: "ConnectLn Executive Wire",
+      takeaway: "Dynamic GPU cluster spot-instance rightsizing saves enterprise AI teams an average of 41% on monthly inference spend.",
+    },
+  },
+  {
+    kind: "video",
+    title: "Precision Speed Square Layout & Structural Rafter Angle Verification",
+    summary:
+      "Step-by-step master carpentry demonstration of marking plumb cuts, birdsmouth notches, and hip rafter pitches on structural framing stock.",
+    youtubeId: "gNhWpuWvtEA",
+    imageUrl: "https://i.ytimg.com/vi/gNhWpuWvtEA/hqdefault.jpg",
+    authorName: "This Old House · ConnectLn Guild",
+    authorRole: "Master Carpentry & Structural Framing Instructor",
+    authorAvatar: "https://images.unsplash.com/photo-1504593811423-6dd665756598?w=240&auto=format&fit=crop&q=80",
+    organization: "ConnectLn Skilled Trades Academy",
+    enclaveId: "trades_construction",
+    category: "Carpentry & Layout",
+    duration: "05:12",
+    sourceFeed: "Skilled Trades Learn-by-Doing Wire",
+    jobMeta: {
+      roleTitle: "Lead Architectural Finish & Structural Framing Carpenter",
+      company: "Heritage Timber & Millwork Co.",
+      location: "Boston, MA · Field",
+      salary: "$112,000 – $142,000",
+      employmentType: "Full-time · Master Trade",
+    },
+    marketMeta: {
+      productName: "Pro Carpenter Takeoff & Rafter Angle Field Suite",
+      vendor: "SkillHands Pro",
+      price: "$39/mo",
+      category: "Training",
+      liveUrl: "https://skillhands-client.vercel.app",
+    },
+    pulseMeta: {
+      severityOrTag: "CRAFT MASTERY DISPATCH",
+      sourceName: "Skilled Trades Academy",
+      takeaway: "Precision speed-square layout verification prevents cumulative roof truss ridge drift across multi-span commercial roofs.",
+    },
+  },
+  {
+    kind: "video",
+    title: "MIG, TIG & Stick Structural Welding Process Comparison in Field Fabrication",
+    summary:
+      "Live arc stability, penetration profile, and shielding gas comparison across GMAW, GTAW, and SMAW structural steel welding.",
+    youtubeId: "OWThL97tq3k",
+    imageUrl: "https://i.ytimg.com/vi/OWThL97tq3k/hqdefault.jpg",
+    authorName: "Miller Welders · ConnectLn Guild",
+    authorRole: "AWS Certified Structural Welding Inspector (CWI)",
+    authorAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=240&auto=format&fit=crop&q=80",
+    organization: "American Structural Welding Enclave",
+    enclaveId: "trades_construction",
+    category: "Welding & Fabrication",
+    duration: "06:40",
+    sourceFeed: "AWS Welding & Fabrication Video Wire",
+    jobMeta: {
+      roleTitle: "AWS D1.1 Certified Structural Combo Welder (TIG/Stick)",
+      company: "Apex Structural Steel & Rigging",
+      location: "Houston, TX · High-Per-Diem",
+      salary: "$125,000 – $162,000",
+      employmentType: "Full-time · Structural Steel",
+    },
+    marketMeta: {
+      productName: "WeldSpec WPS/PQR Digital Inspector & NDT Logbook",
+      vendor: "DeskNote Field",
+      price: "$69/mo",
+      category: "Software",
+      liveUrl: "https://desk-note.app/",
+    },
+    pulseMeta: {
+      severityOrTag: "METALLURGY & WELD BRIEF",
+      sourceName: "Structural Fabrication Wire",
+      takeaway: "Pulsed spray transfer MIG reduces heat-affected zone (HAZ) distortion by 31% on high-strength low-alloy structural plates.",
+    },
+  },
+  {
+    kind: "picture",
     title: "Applied Neural Architecture & Enterprise Multimodal AI Systems Lab",
     summary:
       "Visual system topology of retrieval-augmented generation (RAG), vector HNSW indexing, and hardware-accelerated tensor inference.",
@@ -589,7 +922,7 @@ export const CONNECTLN_HARVESTER_TEMPLATES: SeedMediaTemplate[] = [
     organization: "Noctis AI Research Lab",
     enclaveId: "tech_cybersecurity",
     category: "Enterprise AI & RAG",
-    sourceFeed: "Admin 60-Min Noctis AI Visual Feed",
+    sourceFeed: "Noctis AI Visual Research Feed",
     jobMeta: {
       roleTitle: "Principal Multimodal LLM & Distributed Inference Engineer",
       company: "Noctis AI Research Lab",
@@ -612,10 +945,8 @@ export const CONNECTLN_HARVESTER_TEMPLATES: SeedMediaTemplate[] = [
   },
 ]
 
-export const HARVESTER_SYNC_INTERVAL_MS = 60 * 60 * 1000 // 60 minutes (1 hour)
-
 export function getCurrentMinuteSlot(nowMs: number = Date.now()): number {
-  return Math.max(1, Math.floor((nowMs - PLATFORM_HARVESTER_EPOCH_MS) / HARVESTER_SYNC_INTERVAL_MS))
+  return Math.max(1, Math.floor((nowMs - PLATFORM_HARVESTER_EPOCH_MS) / 3600000))
 }
 
 export function getMinutesElapsedToday(now: Date = new Date()): number {
@@ -633,29 +964,27 @@ export function buildHarvestedItemForSlot(
       ? Math.abs(forcedTemplateIndex) % CONNECTLN_HARVESTER_TEMPLATES.length
       : Math.abs(slot + offsetIndex) % CONNECTLN_HARVESTER_TEMPLATES.length
   const tpl = CONNECTLN_HARVESTER_TEMPLATES[templateIndex]
-  const itemTimeMs = customTimestampMs ?? Date.now() - offsetIndex * HARVESTER_SYNC_INTERVAL_MS
+  const itemTimeMs = customTimestampMs ?? Date.now() - offsetIndex * 60000
   const itemDate = new Date(itemTimeMs)
   const timeStr = itemDate.toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "2-digit",
+    second: "2-digit",
   })
 
   const minsAgo = Math.max(0, Math.round((Date.now() - itemTimeMs) / 60000))
-  const hoursAgo = Math.floor(minsAgo / 60)
   const pulledAtLabel =
-    minsAgo <= 1
-      ? `Synced just now (${timeStr})`
-      : minsAgo < 60
-      ? `Synced ${minsAgo} mins ago (${timeStr})`
-      : hoursAgo === 1
-      ? `Synced 1 hr ago (${timeStr})`
-      : `Synced ${hoursAgo} hrs ago (${timeStr})`
+    minsAgo === 0
+      ? `Pulled just now (${timeStr})`
+      : minsAgo === 1
+      ? `Pulled 1 min ago (${timeStr})`
+      : `Pulled ${minsAgo} mins ago (${timeStr})`
 
   return {
     id: `cln_hv_${slot}_${templateIndex}_${tpl.kind}`,
     serialNumber: `CLN-HV-${String((slot % 90000) + 10000)}`,
     kind: tpl.kind,
-    title: tpl.title,
+    title: `${tpl.title} · [Sync #${(slot % 900) + 100}]`,
     summary: tpl.summary,
     videoUrl: tpl.videoUrl,
     youtubeId: tpl.youtubeId,
@@ -671,7 +1000,7 @@ export function buildHarvestedItemForSlot(
     pulledAtIso: itemDate.toISOString(),
     pulledAtLabel,
     minuteSlot: slot,
-    sourceFeed: tpl.sourceFeed.replace("1-Min", "60-Min"),
+    sourceFeed: tpl.sourceFeed,
     viewsCount: 1420 + ((slot * 37 + offsetIndex * 19) % 8400),
     likesCount: 94 + ((slot * 13 + offsetIndex * 7) % 620),
     jobMeta: tpl.jobMeta,
@@ -683,25 +1012,19 @@ export function buildHarvestedItemForSlot(
 export function getInitialDeterministicHarvestedItems(count: number = 14): HarvestedMediaItem[] {
   const currentSlot = getCurrentMinuteSlot()
   const items: HarvestedMediaItem[] = []
-  const totalTemplates = CONNECTLN_HARVESTER_TEMPLATES.length
-  const safeCount = Math.min(count, totalTemplates)
-  for (let i = 0; i < safeCount; i++) {
-    const tplIdx = (currentSlot + i) % totalTemplates
-    items.push(buildHarvestedItemForSlot(currentSlot - i, 0, Date.now() - i * HARVESTER_SYNC_INTERVAL_MS, tplIdx))
+  const newVideoPoolSize = 8 // First 8 templates are brand-new verified YouTube dispatches
+  for (let i = 0; i < count; i++) {
+    const tplIdx =
+      i < newVideoPoolSize
+        ? (currentSlot + i) % newVideoPoolSize
+        : newVideoPoolSize + ((currentSlot + i) % (CONNECTLN_HARVESTER_TEMPLATES.length - newVideoPoolSize))
+    items.push(buildHarvestedItemForSlot(currentSlot - i, 0, Date.now() - i * 60000, tplIdx))
   }
   return items
 }
 
-export function getHarvestedMediaCanonicalKey(item: HarvestedMediaItem): string {
-  if (item.id?.startsWith("cln_custom_")) return item.id
-  if (item.youtubeId) return `yt:${item.youtubeId}`
-  if (item.videoUrl) return `vid:${item.videoUrl}`
-  if (item.imageUrl) return `img:${item.imageUrl}`
-  return `title:${item.title}`
-}
-
 export function sortHarvestedItemsNewestFirst(items: HarvestedMediaItem[]): HarvestedMediaItem[] {
-  const sorted = [...items].sort((a, b) => {
+  return [...items].sort((a, b) => {
     const aIsCustomOrManual =
       a.id.startsWith("cln_custom_") || a.id.startsWith("cln_pull_") || a.id.startsWith("cln_auto_") ? 1 : 0
     const bIsCustomOrManual =
@@ -714,22 +1037,6 @@ export function sortHarvestedItemsNewestFirst(items: HarvestedMediaItem[]): Harv
     if (timeB !== timeA) return timeB - timeA
     return (b.minuteSlot || 0) - (a.minuteSlot || 0)
   })
-
-  // Deduplicate by canonical media URL / YouTube ID and exclude any old platform videos already on Home, Jobs, Alerts, Learn, or Media
-  const seenMediaKeys = new Set<string>()
-  const unique: HarvestedMediaItem[] = []
-  for (const item of sorted) {
-    if (!item || !item.id) continue
-    if (item.kind === "video" && !item.id.startsWith("cln_custom_")) {
-      if (item.videoUrl && item.videoUrl.startsWith("/status-videos/")) continue
-      if (!item.youtubeId || !EXCLUSIVE_NEW_HARVESTER_YOUTUBE_IDS.has(item.youtubeId)) continue
-    }
-    const key = getHarvestedMediaCanonicalKey(item)
-    if (seenMediaKeys.has(key)) continue
-    seenMediaKeys.add(key)
-    unique.push(item)
-  }
-  return unique
 }
 
 export function loadStoredHarvestedItems(): HarvestedMediaItem[] {
@@ -782,12 +1089,11 @@ export function computeHarvesterTelemetry(items: HarvestedMediaItem[]): Harveste
   const now = new Date()
   const currentSlot = getCurrentMinuteSlot(now.getTime())
   const minutesElapsedToday = getMinutesElapsedToday(now)
-  const hoursElapsedToday = Math.max(1, now.getHours() + 1)
 
-  // Base platform catalog + 1 new batch per 60-minute slot elapsed since epoch + custom items
-  const baseVideoInventory = 4820 + Math.floor(currentSlot * 2) + items.filter((i) => i.kind === "video").length
-  const basePictureInventory = 3190 + Math.floor(currentSlot * 1) + items.filter((i) => i.kind === "picture").length
-  const pulledTodayCount = hoursElapsedToday * 2 + items.length
+  // Base platform catalog + 1 new item per minute elapsed since epoch + custom items
+  const baseVideoInventory = 4820 + Math.floor(currentSlot * 0.65) + items.filter((i) => i.kind === "video").length
+  const basePictureInventory = 3190 + Math.floor(currentSlot * 0.35) + items.filter((i) => i.kind === "picture").length
+  const pulledTodayCount = minutesElapsedToday * 2 + items.length
 
   const destinationCounts: Record<HarvesterDestination, number> = {
     home: items.filter((i) => i.destinations.includes("home")).length,
@@ -803,7 +1109,7 @@ export function computeHarvesterTelemetry(items: HarvestedMediaItem[]): Harveste
       name: "ConnectLn Field Video & MP4 Wire",
       category: "Skilled Trades, Robotics & Engineering",
       protocol: "HLS / MP4 Direct Stream",
-      cadence: "Every 60 Mins (1 Hr)",
+      cadence: "Every 60s (1 Min)",
       status: "ACTIVE",
       itemsPulledToday: Math.round(pulledTodayCount * 0.28),
       lastPulledTitle: items.find((i) => i.kind === "video")?.title || "Autonomous Quadruped Jobsite Robotics",
@@ -813,7 +1119,7 @@ export function computeHarvesterTelemetry(items: HarvestedMediaItem[]): Harveste
       name: "DSTRIKE & Noctis Cyber/AI Video Feed",
       category: "Cybersecurity, eBPF, SAST & Agentic AI",
       protocol: "REST + Webhook Push",
-      cadence: "Every 60 Mins (1 Hr)",
+      cadence: "Every 60s (1 Min)",
       status: "ACTIVE",
       itemsPulledToday: Math.round(pulledTodayCount * 0.26),
       lastPulledTitle: "eBPF Zero-Trust Kernel Packet Telemetry & K8s Defense",
@@ -823,7 +1129,7 @@ export function computeHarvesterTelemetry(items: HarvestedMediaItem[]): Harveste
       name: "Clinical Surgery, Solar & Aerospace Visuals",
       category: "Healthcare, 1500V Solar & Orbital Avionics",
       protocol: "DICOM / HD Media Pipe",
-      cadence: "Every 60 Mins (1 Hr)",
+      cadence: "Every 60s (1 Min)",
       status: "ACTIVE",
       itemsPulledToday: Math.round(pulledTodayCount * 0.24),
       lastPulledTitle: "Trauma Surgery & Intraoperative Clinical Telemetry",
@@ -833,7 +1139,7 @@ export function computeHarvesterTelemetry(items: HarvestedMediaItem[]): Harveste
       name: "Marketplace Product Demos & Job Briefings",
       category: "B2B SaaS Demos, Employer Videos & Pictures",
       protocol: "GraphQL Media Syndication",
-      cadence: "Every 60 Mins (1 Hr)",
+      cadence: "Every 60s (1 Min)",
       status: "ACTIVE",
       itemsPulledToday: Math.round(pulledTodayCount * 0.22),
       lastPulledTitle: "05-SAST Sub-4ms Static Code & Pentest Engine",
@@ -845,13 +1151,13 @@ export function computeHarvesterTelemetry(items: HarvestedMediaItem[]): Harveste
     totalVideosAllTime: baseVideoInventory,
     totalPicturesAllTime: basePictureInventory,
     pulledTodayCount,
-    dailyGrowthRate: 48,
+    dailyGrowthRate: 1440,
     minutesElapsedToday,
     currentMinuteSlot: currentSlot,
     lastPulledAtIso: latestItem?.pulledAtIso || now.toISOString(),
     lastPulledAtLabel:
       latestItem?.pulledAtLabel ||
-      now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
+      now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit" }),
     destinationCounts,
     connectors,
     items,

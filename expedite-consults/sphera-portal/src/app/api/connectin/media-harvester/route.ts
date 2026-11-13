@@ -6,15 +6,13 @@ import {
   buildHarvestedItemForSlot,
   getInitialDeterministicHarvestedItems,
   computeHarvesterTelemetry,
-  sortHarvestedItemsNewestFirst,
-  HARVESTER_SYNC_INTERVAL_MS,
   CONNECTLN_HARVESTER_TEMPLATES,
 } from "@/lib/connectin-media-harvester"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
-// In-memory store on the server instance that grows every 60 minutes + merges deterministic 60-min slots
+// In-memory store on the server instance that grows every minute + merges deterministic minute slots
 let SERVER_HARVESTED_ITEMS: HarvestedMediaItem[] = getInitialDeterministicHarvestedItems(14)
 let LAST_PROCESSED_MINUTE_SLOT: number = getCurrentMinuteSlot()
 let MANUAL_PULL_COUNTER = 1
@@ -26,10 +24,12 @@ function syncCurrentMinuteSlots() {
     const newlyPulled: HarvestedMediaItem[] = []
     for (let s = missedSlots - 1; s >= 0; s--) {
       const slotNum = currentSlot - s
-      const item = buildHarvestedItemForSlot(slotNum, 0, Date.now() - s * HARVESTER_SYNC_INTERVAL_MS)
+      const item = buildHarvestedItemForSlot(slotNum, 0, Date.now() - s * 60000)
       newlyPulled.push(item)
     }
-    SERVER_HARVESTED_ITEMS = sortHarvestedItemsNewestFirst([...newlyPulled, ...SERVER_HARVESTED_ITEMS]).slice(0, 60)
+    const existingIds = new Set(SERVER_HARVESTED_ITEMS.map((i) => i.id))
+    const filteredNew = newlyPulled.filter((i) => !existingIds.has(i.id))
+    SERVER_HARVESTED_ITEMS = [...filteredNew, ...SERVER_HARVESTED_ITEMS].slice(0, 60)
     LAST_PROCESSED_MINUTE_SLOT = currentSlot
   }
 }
@@ -41,19 +41,20 @@ export async function GET(req: NextRequest) {
   const autoTick = searchParams.get("autoTick") === "1"
 
   if (autoTick) {
-    // Pull 1 fresh video on the 60-minute tick so the platform grows cleanly every hour
+    // Pull 1 fresh video on the 60-second tick so the platform visibly grows every minute
     const pullSeq = MANUAL_PULL_COUNTER++
     const uniqueStep = Math.floor(Date.now() / 1000) + pullSeq
     const slot = getCurrentMinuteSlot() + uniqueStep
-    const forcedTplIndex = (getCurrentMinuteSlot() + pullSeq) % CONNECTLN_HARVESTER_TEMPLATES.length
+    const forcedTplIndex = (getCurrentMinuteSlot() + pullSeq) % 8
     const item = buildHarvestedItemForSlot(slot, 0, Date.now(), forcedTplIndex)
     item.id = `cln_auto_${Date.now()}_${pullSeq}`
     item.pulledAtIso = new Date().toISOString()
-    item.pulledAtLabel = `Auto-synced (${new Date().toLocaleTimeString("en-US", {
+    item.pulledAtLabel = `Auto-pulled just now (${new Date().toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
+      second: "2-digit",
     })})`
-    SERVER_HARVESTED_ITEMS = sortHarvestedItemsNewestFirst([item, ...SERVER_HARVESTED_ITEMS]).slice(0, 60)
+    SERVER_HARVESTED_ITEMS = [item, ...SERVER_HARVESTED_ITEMS].slice(0, 60)
   }
 
   const telemetry = computeHarvesterTelemetry(SERVER_HARVESTED_ITEMS)
@@ -81,22 +82,23 @@ export async function POST(req: NextRequest) {
       const nowTimeStr = new Date().toLocaleTimeString("en-US", {
         hour: "numeric",
         minute: "2-digit",
+        second: "2-digit",
       })
 
       const baseStep = Math.floor(Date.now() / 1000)
       for (let i = 0; i < count; i++) {
         const pullSeq = MANUAL_PULL_COUNTER++
         const slot = getCurrentMinuteSlot() + baseStep + i + pullSeq
-        const forcedTplIndex = (getCurrentMinuteSlot() + pullSeq + i) % CONNECTLN_HARVESTER_TEMPLATES.length
+        const forcedTplIndex = i === 0 ? (getCurrentMinuteSlot() + pullSeq) % 8 : (getCurrentMinuteSlot() + pullSeq + i) % CONNECTLN_HARVESTER_TEMPLATES.length
         const built = buildHarvestedItemForSlot(slot, 0, Date.now() - i * 1000, forcedTplIndex)
         built.id = `cln_pull_${Date.now()}_${i}_${pullSeq}`
         built.destinations = requestedDestinations
         built.pulledAtIso = new Date(Date.now() - i * 1000).toISOString()
-        built.pulledAtLabel = `Synced at ${nowTimeStr}`
+        built.pulledAtLabel = `Pulled & pushed at ${nowTimeStr}`
         newlyPulled.push(built)
       }
 
-      SERVER_HARVESTED_ITEMS = sortHarvestedItemsNewestFirst([...newlyPulled, ...SERVER_HARVESTED_ITEMS]).slice(0, 60)
+      SERVER_HARVESTED_ITEMS = [...newlyPulled, ...SERVER_HARVESTED_ITEMS].slice(0, 60)
       const telemetry = computeHarvesterTelemetry(SERVER_HARVESTED_ITEMS)
 
       return NextResponse.json({

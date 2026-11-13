@@ -59,33 +59,33 @@ const HEADER_CONFIG: Record<
   }
 > = {
   home: {
-    badge: "HOME LIVE MEDIA WIRE · 60-MIN AUTO-SYNC",
+    badge: "HOME LIVE MEDIA WIRE · 1-MIN AUTO-PULL",
     title: "Live ConnectLn Videos & Visuals Pushed to Home",
-    subtitle: "Fresh domain videos and pictures synced every 60 minutes from the ConnectLn Admin Backend.",
+    subtitle: "Fresh domain videos and pictures pulled every 60 seconds from the ConnectLn Admin Backend.",
     icon: House,
   },
   jobs: {
-    badge: "JOBS VIDEO BRIEFINGS · 60-MIN AUTO-SYNC",
+    badge: "JOBS VIDEO BRIEFINGS · 1-MIN AUTO-PULL",
     title: "Live Employer Video Briefings & Jobsite Visuals",
-    subtitle: "Watch real workplace videos and technical role walk-throughs synced every 60 minutes from the Admin Backend.",
+    subtitle: "Watch real workplace videos and technical role walk-throughs pushed every minute from the Admin Backend.",
     icon: Briefcase,
   },
   market: {
-    badge: "MARKET DEMO STREAM · 60-MIN AUTO-SYNC",
+    badge: "MARKET DEMO STREAM · 1-MIN AUTO-PULL",
     title: "Live Product Demo Videos & Solution Architecture Visuals",
-    subtitle: "Interactive product demonstrations and enterprise solution visuals syndicated every 60 minutes.",
+    subtitle: "Interactive product demonstrations and enterprise solution visuals syndicated every 60 seconds.",
     icon: ShoppingBag,
   },
   media: {
-    badge: "STUDIO HARVESTER STREAM · 60-MIN AUTO-SYNC",
+    badge: "STUDIO HARVESTER STREAM · 1-MIN AUTO-PULL",
     title: "Newly Pulled ConnectLn Videos & Visual Dispatches",
-    subtitle: "Continuously growing video and visual catalog synced every 60 minutes across all ConnectLn enclaves.",
+    subtitle: "Continuously growing video and visual catalog pulled every minute across all ConnectLn enclaves.",
     icon: Tv,
   },
   pulse: {
-    badge: "PULSE VIDEO & PHOTO WIRE · 60-MIN AUTO-SYNC",
+    badge: "PULSE VIDEO & PHOTO WIRE · 1-MIN AUTO-PULL",
     title: "Breaking Video & Field Visual Intelligence Dispatches",
-    subtitle: "Real-time video briefings and field photography synced every 60 minutes from the Admin Media Backend.",
+    subtitle: "Real-time video briefings and field photography pushed every 60 seconds from the Admin Media Backend.",
     icon: Radio,
   },
 }
@@ -206,7 +206,7 @@ export function LiveHarvestedMediaShowcase({
           if (newestTitle) {
             flashToast(
               isAutoTick
-                ? `⚡ 60-Min Admin Auto-Sync: Pulled "${newestTitle.slice(0, 48)}..." live!`
+                ? `⚡ 1-Min Admin Auto-Sync: Pulled "${newestTitle.slice(0, 48)}..." live!`
                 : `✓ Synced new video from Admin Backend: "${newestTitle.slice(0, 48)}..."`
             )
           }
@@ -217,7 +217,7 @@ export function LiveHarvestedMediaShowcase({
     }
   }
 
-  // Visible 60-minute (3600s) countdown that pulls & syncs a fresh video every 60 minutes right into the active tab
+  // Visible 60-second countdown that pulls & syncs a fresh video every minute right into the active tab
   useEffect(() => {
     const timer = setInterval(() => {
       setSecondsToNextAutoPull((prev) => {
@@ -252,7 +252,7 @@ export function LiveHarvestedMediaShowcase({
               {totalVideosCount.toLocaleString()} Platform Videos · +{pulledTodayCount.toLocaleString()} Today
             </span>
             <span className="rounded-full bg-emerald-100 border border-emerald-400 px-2.5 py-0.5 text-[10px] font-mono font-extrabold text-emerald-900">
-              ⏱️ Next 60-Min Auto-Sync: {Math.floor(secondsToNextAutoPull / 60)}m {String(secondsToNextAutoPull % 60).padStart(2, "0")}s
+              ⏱️ Next 60-Min Auto-Pull: {Math.floor(secondsToNextAutoPull / 60)}m {String(secondsToNextAutoPull % 60).padStart(2, "0")}s
             </span>
           </div>
           <div className="flex items-center gap-2">

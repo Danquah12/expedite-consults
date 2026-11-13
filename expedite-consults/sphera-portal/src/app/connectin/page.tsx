@@ -475,34 +475,40 @@ export default function ConnectLnPage() {
     }
   }
 
-  // Global 60-Minute (1-Hour) Backend Media Harvester Ticker — pulls brand-new ConnectLn videos & pictures every 60 minutes
-  // and pushes them to Home, Jobs, Market, Media, and Pulse without repeating old videos.
+  // Global 60-Second (1-Minute) Backend Media Harvester Ticker — pulls ConnectLn videos & pictures every minute
+  // and pushes them to Home, Jobs, Market, Media, and Pulse so platform content increases every day.
   useEffect(() => {
     if (typeof window === "undefined") return
 
-    const injectHarvestedHomeItemsIntoFeed = (allItems: HarvestedMediaItem[]) => {
+    const injectHarvestedHomeItemsIntoFeed = (allItems: HarvestedMediaItem[], onlyExplicitOrLatest: boolean) => {
       const homeItems = allItems.filter((i) => Array.isArray(i.destinations) && i.destinations.includes("home"))
       setHarvestedHomeItems(homeItems)
+      if (homeItems.length === 0) return
 
-      // Only inject custom Admin-pushed items into FeedPostCards; standard 60-min synced items are already rendered in <LiveHarvestedMediaShowcase destination="home" /> at the top of Home
-      const customCandidates = homeItems.filter((i) => i.id.startsWith("cln_custom_")).slice(0, 4)
+      // Always inject any Admin-pushed / manually-pulled / auto-pulled items, plus the latest top 3 home items
+      const candidates = homeItems.filter(
+        (i, idx) =>
+          i.id.startsWith("cln_custom_") ||
+          i.id.startsWith("cln_pull_") ||
+          i.id.startsWith("cln_auto_") ||
+          (!onlyExplicitOrLatest && idx < 3) ||
+          idx < 3
+      ).slice(0, 6)
+
+      if (candidates.length === 0) return
 
       setPosts((prev) => {
-        // Remove any previously auto-duplicated non-custom harvest_post_ items so videos don't repeat below LiveHarvestedMediaShowcase
-        const cleanedPrev = prev.filter(
-          (p) => !p.id?.startsWith("harvest_post_") || p.id.startsWith("harvest_post_cln_custom_")
-        )
-        const existingIds = new Set(cleanedPrev.map((p) => p.id))
+        const existingIds = new Set(prev.map((p) => p.id))
         const newlyBuilt: Post[] = []
-        for (const item of customCandidates) {
+        for (const item of candidates) {
           const postId = `harvest_post_${item.id}`
           if (!existingIds.has(postId)) {
             newlyBuilt.push(buildFeedPostFromHarvestedItem(item))
             existingIds.add(postId)
           }
         }
-        if (newlyBuilt.length === 0 && cleanedPrev.length === prev.length) return prev
-        const nextPosts = [...newlyBuilt, ...cleanedPrev].slice(0, 80)
+        if (newlyBuilt.length === 0) return prev
+        const nextPosts = [...newlyBuilt, ...prev].slice(0, 80)
         saveStoredPosts(nextPosts)
         return nextPosts
       })
@@ -527,7 +533,7 @@ export default function ConnectLnPage() {
           }
         })
         const merged = saveStoredHarvestedItems(Array.from(map.values()))
-        injectHarvestedHomeItemsIntoFeed(merged)
+        injectHarvestedHomeItemsIntoFeed(merged, !isAutoTick)
       } catch {
         // ignore transient network errors
       }
@@ -535,13 +541,13 @@ export default function ConnectLnPage() {
 
     const handleHarvesterUpdatedEvent = () => {
       const latest = loadStoredHarvestedItems()
-      injectHarvestedHomeItemsIntoFeed(latest)
+      injectHarvestedHomeItemsIntoFeed(latest, false)
     }
 
     const handleCrossTabStorage = (e: StorageEvent) => {
       if (!e.key || e.key.includes("connectln_harvested_media")) {
         const latest = loadStoredHarvestedItems()
-        injectHarvestedHomeItemsIntoFeed(latest)
+        injectHarvestedHomeItemsIntoFeed(latest, false)
       }
     }
 
@@ -551,7 +557,7 @@ export default function ConnectLnPage() {
 
     const intervalId = window.setInterval(() => {
       syncHarvestedMediaTick(true)
-    }, 60 * 60 * 1000)
+    }, 3600000)
 
     return () => {
       window.clearInterval(intervalId)
@@ -581,7 +587,7 @@ export default function ConnectLnPage() {
     } catch {
       // ignore DOM icon errors
     }
-    const CURRENT_RELEASE_VERSION = "2026.11.13.v8-atomic-keys"
+    const CURRENT_RELEASE_VERSION = "2026.11.11.gold-standard-5"
     try {
       const prevVersion = localStorage.getItem("connectln_release_version_v5")
       if (prevVersion !== CURRENT_RELEASE_VERSION) {
@@ -2013,41 +2019,21 @@ export default function ConnectLnPage() {
 
   const combinedFeedPosts = React.useMemo(() => {
     const seenIds = new Set<string>()
-    const seenMediaKeys = new Set<string>()
-    // Reserve media keys already displayed in <LiveHarvestedMediaShowcase destination="home" /> at the top of Home so they never repeat in FeedPostCards
-    harvestedHomeItems.slice(0, 4).forEach((item) => {
-      if (item.youtubeId) seenMediaKeys.add(`yt:${item.youtubeId}`)
-      if (item.videoUrl) seenMediaKeys.add(`url:${item.videoUrl}`)
-    })
     const merged: Post[] = []
-    const customHarvestedPosts = harvestedHomeItems
-      .filter((item) => item.id.startsWith('cln_custom_'))
-      .slice(0, 4)
-      .map((item) => buildFeedPostFromHarvestedItem(item))
+    const liveHarvestedPosts = harvestedHomeItems.slice(0, 4).map((item) => buildFeedPostFromHarvestedItem(item))
     const userCreatedPosts = posts.filter(
       (p) =>
         p &&
-        (!p.id?.startsWith('harvest_post_') || p.id.startsWith('harvest_post_cln_custom_')) &&
         (p.isUserCreated ||
-          p.id?.startsWith('harvest_post_cln_custom_') ||
+          p.id?.startsWith('harvest_post_') ||
           (p.author?.connectionDegree === 'You' &&
             !p.isProfessionTiered &&
             p.id !== 'post_dstrike_wheel_masterclass' &&
             !p.id.startsWith('post_prof_')))
     )
-    const nonDuplicatePosts = posts.filter(
-      (p) => !p.id?.startsWith('harvest_post_') || p.id.startsWith('harvest_post_cln_custom_')
-    )
-    for (const p of [...customHarvestedPosts, ...userCreatedPosts, ...followedMemberSyntheticPosts, ...nonDuplicatePosts]) {
+    for (const p of [...liveHarvestedPosts, ...userCreatedPosts, ...followedMemberSyntheticPosts, ...posts]) {
       if (!p || !p.id || seenIds.has(p.id)) continue
-      const mediaYt = p.media?.youtubeId ? `yt:${p.media.youtubeId}` : null
-      const mediaUrl = p.media?.type === 'video' && p.media?.url ? `url:${p.media.url}` : null
-      if ((mediaYt && seenMediaKeys.has(mediaYt)) || (mediaUrl && seenMediaKeys.has(mediaUrl))) {
-        continue
-      }
       seenIds.add(p.id)
-      if (mediaYt) seenMediaKeys.add(mediaYt)
-      if (mediaUrl) seenMediaKeys.add(mediaUrl)
       const authorKey = normalizeFollowKey(p.author?.name)
       const isFollowed = Boolean(authorKey && followedNamesSet.has(authorKey))
       merged.push(
