@@ -59,8 +59,7 @@ export const INITIAL_CATEGORIZED_NOTIFICATIONS: CategorizedNotificationItem[] = 
     actionText: 'Inspect Invariant Telemetry',
     targetTab: 'pulserooms',
     priority: 'critical',
-    externalUrl: 'https://www.dstrike.app/api/noctis?daily_challenge=1',
-    externalLabel: 'Run Live Challenge Test ↗'
+    externalLabel: 'Run Live Challenge Test'
   },
 
   // 1. SECURITY & CLINICAL SAFETY ALERTS
