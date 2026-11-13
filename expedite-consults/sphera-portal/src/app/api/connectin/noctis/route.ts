@@ -218,26 +218,27 @@ function buildProductSalesPitch(product: MarketplaceProduct, customQuestion?: st
       `  • Guaranteed SLA: ${product.support?.sla} | Channel: ${product.support?.channel} | Response: ${product.support?.responseHours}`
   } else {
     tailoredSalesNarrative =
-      `✨ Noctis AI Sales & Product Specialist — Executive Deep-Dive on ${product.name}\n` +
+      `### ${product.name} (${product.id.toUpperCase()})\n` +
+      `**Vendor:** \`${product.vendor.name}\` · **Category:** \`${product.category} (${product.subCategory})\`\n\n` +
       (customQuestion && !qLower.includes('give a full marketing and sales deep-dive')
-        ? `Inquiry: "${customQuestion}"\n\n`
-        : `\n`) +
-      `1. Why ${product.name} Stands Out:\n` +
-      `${product.tagline} Built and verified by ${product.vendor.name}, it gives your organization immediate operational capability in ${product.category} (${product.subCategory}).\n\n` +
-      `2. Deep-Dive: Everything ${product.name} Has & Does:\n` +
+        ? `> **Inquiry:** "${customQuestion}"\n\n`
+        : ``) +
+      `#### 1. Why ${product.name} Stands Out\n` +
+      `${product.tagline} Built and verified by **${product.vendor.name}**, it gives your organization immediate operational capability in **\`${product.category} (${product.subCategory})\`**.\n\n` +
+      `#### 2. Deep-Dive: Everything ${product.name} Has & Does\n` +
       `${product.overview}\n` +
-      (product.features || []).map((f) => `  • ${f.title}: ${f.desc}`).join('\n') +
-      `\n\n3. Architecture, Security & Compliance:\n` +
-      `  • Architecture: ${product.architecture?.title} — ${product.architecture?.summary} (${product.architecture?.latency})\n` +
-      `  • Compliance & Trust: ${complianceList.join(' · ') || 'Enterprise Verified'} | ${product.security?.encryption}\n` +
-      (product.integrations?.length ? `  • Integrations: ${product.integrations.join(', ')}\n` : '') +
-      `\n4. Proven ROI & Customer Outcomes:\n` +
-      caseStudyBullets.map((b) => `  • ${b}`).join('\n') +
-      `\n\n5. Commercial Pricing & How to Start Today:\n` +
-      `  • Starting Price: ${product.pricing.displayPrice} (${product.pricing.billingPeriod})${product.pricing.hasFreeTrial ? ` — includes a ${product.pricing.trialDays || 14}-Day Free Evaluation Trial` : ''}.\n` +
-      (product.pricingTiers || []).map((t) => `  • ${t.name} (${t.price} ${t.period}): ${t.description}`).join('\n') +
-      (safeLiveUrl ? `\n  • Live Production Portal: ${safeLiveUrl}` : '') +
-      (safeDemoUrl ? `\n  • Interactive Companion / Engine: ${safeDemoUrl}` : '')
+      (product.features || []).map((f) => `- **${f.title}:** ${f.desc}`).join('\n') +
+      `\n\n#### 3. Architecture, Security & Compliance\n` +
+      `- **Architecture:** **\`${product.architecture?.title}\`** — ${product.architecture?.summary} (**\`${product.architecture?.latency}\`**)\n` +
+      `- **Compliance & Trust:** **\`${complianceList.join(' · ') || 'Enterprise Verified'}\`** | ${product.security?.encryption}\n` +
+      (product.integrations?.length ? `- **Integrations:** ${product.integrations.join(', ')}\n` : '') +
+      `\n#### 4. Proven ROI & Customer Outcomes\n` +
+      caseStudyBullets.map((b) => `- ${b}`).join('\n') +
+      `\n\n#### 5. Commercial Pricing & How to Start Today\n` +
+      `- **Starting Price:** **\`${product.pricing.displayPrice}\`** (${product.pricing.billingPeriod})${product.pricing.hasFreeTrial ? ` — includes a **\`${product.pricing.trialDays || 14}-Day Free Trial\`**` : ''}.\n` +
+      (product.pricingTiers || []).map((t) => `- **${t.name} (${t.price} ${t.period}):** ${t.description}`).join('\n') +
+      (safeLiveUrl ? `\n- **Live Production Portal:** \`${safeLiveUrl}\`` : '') +
+      (safeDemoUrl ? `\n- **Interactive Companion / Engine:** \`${safeDemoUrl}\`` : '')
   }
 
   return {
@@ -486,6 +487,7 @@ function buildAlertsExecutiveBriefing(
   }
 
   const categoryLines: string[] = []
+  let secIdx = 1
   for (const [cat, items] of byCategory.entries()) {
     const unreadInCat = items.filter((i) => i.unread).length
     const icon =
@@ -499,19 +501,19 @@ function buildAlertsExecutiveBriefing(
         ? '🎓'
         : '💬'
     categoryLines.push(
-      `${icon} ${cat === 'Security' ? 'Account, Safety & Clinical Advisories' : cat} (${items.length} ${items.length === 1 ? 'alert' : 'alerts'}, ${unreadInCat} unread):\n` +
+      `#### ${secIdx++}. ${icon} ${cat === 'Security' ? 'Account, Safety & Clinical Advisories' : cat} (${items.length} ${items.length === 1 ? 'alert' : 'alerts'} · ${unreadInCat} unread)\n` +
         items
           .map((item) => {
             const exp = alertExplanations[item.id]
-            return `  • ${item.title} (${item.timestamp}${item.unread ? ' · UNREAD' : ''})\n    ↳ What it represents: ${exp.whatItRepresents}\n    ↳ Recommended Action: ${exp.recommendedActionPlan[0]}`
+            return `- **${item.title}:** **\`${item.timestamp}${item.unread ? ' · UNREAD' : ''}\`** — ${exp.whatItRepresents} **Action:** ${exp.recommendedActionPlan[0]}`
           })
           .join('\n')
     )
   }
 
   const headerLine = customQuestion
-    ? `Noctis Alert Intelligence Answer for ${firstName} ("${customQuestion}"):\n\n`
-    : `Noctis analyzed ${alerts.length} alerts${categoryFilter && categoryFilter !== 'All' ? ` in ${categoryFilter}` : ''} (${unreadAlerts.length} unread, ${criticalAlerts.length} high/critical priority) for ${firstName} and prepared a detailed breakdown of what each alert represents:\n\n`
+    ? `### Noctis Alert & Signal Intelligence Engine (NOCTIS-ALERTS-001)\n**Member:** \`${firstName}\` · **Query:** \`${customQuestion}\`\n\n`
+    : `### Noctis Alert & Signal Intelligence Engine (NOCTIS-ALERTS-001)\n**Subsystem Domain:** \`CONNECTLN_ALERTS_RADAR\` · **Telemetry:** **\`${alerts.length} Alerts (${unreadAlerts.length} Unread · ${criticalAlerts.length} Critical)\`**\n\n`
 
   return {
     fullText: headerLine + categoryLines.join('\n\n'),
@@ -566,17 +568,23 @@ function buildDateGroupedUnreadSummary(
       itemSummaries.join(' · ')
 
     dateSummaries[dateKey] = singleDateSummary
-    dateBlocks.push(`📅 ${dateKey} (${items.length} ${items.length === 1 ? 'Unread Email' : 'Unread Emails'}):\n` + items.map((t) => {
-      const attNote = t.attachments && t.attachments.length > 0 ? ` (📎 Attached: ${t.attachments.join(', ')})` : ''
-      return `  • ${t.title} (${t.subtitle || 'Verified Member'}) at ${t.lastMessageTime || dateKey}: "${(t.lastMessage || '').slice(0, 150)}"${attNote}`
-    }).join('\n'))
+    dateBlocks.push(
+      `#### 📅 ${dateKey} (${items.length} ${items.length === 1 ? 'Unread Email' : 'Unread Emails'})\n` +
+        items
+          .map((t) => {
+            const attNote =
+              t.attachments && t.attachments.length > 0 ? ` — **Attachments:** \`${t.attachments.join(', ')}\`` : ''
+            return `- **${t.title} (${t.subtitle || 'Verified Member'}):** **\`${t.lastMessageTime || dateKey}\`** — "${(t.lastMessage || '').slice(0, 150)}"${attNote}`
+          })
+          .join('\n')
+    )
   }
 
   if (customQuestion && customQuestion.trim()) {
     return {
       fullText:
-        `Noctis Unread Email Search & Date Summary for ${firstName} ("${customQuestion.trim()}"):\n\n` +
-        `Found ${targetList.length} unread/pending emails across ${byDate.size} ${byDate.size === 1 ? 'date' : 'dates'}:\n\n` +
+        `### Noctis Inbox & Unread Comms Engine (NOCTIS-INBOX-001)\n` +
+        `**Member:** \`${firstName}\` · **Search Query:** \`${customQuestion.trim()}\` · **Matched:** **\`${targetList.length} Unread across ${byDate.size} Dates\`**\n\n` +
         dateBlocks.join('\n\n'),
       dateSummaries,
     }
@@ -584,7 +592,8 @@ function buildDateGroupedUnreadSummary(
 
   return {
     fullText:
-      `Noctis searched your ConnectLn mailbox and found ${targetList.length} unread/pending emails across ${byDate.size} arrival ${byDate.size === 1 ? 'date' : 'dates'}, summarized chronologically below:\n\n` +
+      `### Noctis Inbox & Unread Comms Engine (NOCTIS-INBOX-001)\n` +
+      `**Subsystem Domain:** \`CONNECTLN_B2B_INBOX\` · **Telemetry:** **\`${targetList.length} Unread Emails across ${byDate.size} Dates\`**\n\n` +
       dateBlocks.join('\n\n'),
     dateSummaries,
   }

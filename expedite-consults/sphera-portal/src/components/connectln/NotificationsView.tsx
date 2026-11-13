@@ -199,25 +199,24 @@ export function NotificationsView({
       vetoTitle: "🚨 CRITICAL SAFETY VETO: PROMPT SUPERCRITICAL EXCURSION SCRAM",
       verdict: "Gravity-driven B4C control rod insertion SCRAM in < 1.8 seconds and passive RVACS natural circulation loop engagement certified under US NRC 10 CFR Part 50/52 & IAEA SSR-2/1.",
       fullResponse: `### Noctis Nuclear Fission SMR & Gen-IV Reactor Physics Engine (NOCTIS-NUCLEAR-SMR-001)
-Standards: US NRC 10 CFR Part 50/52 · IAEA SSR-2/1 · ASME Section III Division 5
+**Subsystem Domain:** \`NUCLEAR_FISSION_SMR_GEN4\` · **Standards:** US NRC 10 CFR Part 50/52, IAEA SSR-2/1, ASME Section III Div. 5
 
-1. Reactor Core Thermal Hydraulics & Inherent Safety
-• Core Thermal Power: 300 MWth (Inlet: 290°C · Outlet: 320°C · ΔT: 30°C)
-• Doppler Temperature Coefficient: -3.2 pcm/°C (Inherent self-regulating negative reactivity feedback verified; U-238 resonance absorption instantly depresses excess reactivity)
-• Departure from Nucleate Boiling Ratio (DNBR): 2.10 (Safety Limit: > 1.30, compliant)
-• Passive Decay Heat Removal: RVACS natural circulation thermosiphon loops certified Fukushima-proof under prolonged Total Station Blackout (SBO) with 0 operator intervention.
+#### 1. Reactor Core Thermal Hydraulics & Inherent Safety
+- **Core Thermal Power:** **\`300 MWth\`** (Inlet: 290°C · Outlet: 320°C · ΔT: 30°C)
+- **Doppler Temperature Coefficient:** **\`-3.2 pcm/°C\`** (Inherent self-regulating negative reactivity feedback verified; U-238 resonance absorption instantly depresses excess reactivity)
+- **Departure from Nucleate Boiling Ratio (DNBR):** **\`2.10\`** (Safety Limit: > 1.30, compliant)
+- **Passive Decay Heat Removal:** **\`RVACS Natural Circulation\`** thermosiphon loops certified Fukushima-proof under prolonged Total Station Blackout (SBO) with 0 operator intervention.
 
-2. Criticality & Kinetics Telemetry
-• Effective Multiplication Factor (keff): 1.0025
-• Reactor Period (T): 3.2 seconds
-• Control Rod SCRAM Speed: 1.2 seconds to full core bottom insertion (Strict Limit: < 1.8 seconds)
+#### 2. Criticality & Kinetics Telemetry
+- **Effective Multiplication Factor (k_eff):** **\`1.0025\`**
+- **Reactor Period (T):** **\`3.2 seconds\`**
+- **Control Rod SCRAM Speed:** **\`1.2 seconds\`** to full core bottom insertion (Strict Limit: < 1.8 seconds)
 
-3. Safety Invariant Evaluation & Mandate
-🚨 CRITICAL SAFETY VETO: PROMPT SUPERCRITICAL EXCURSION SCRAM
-• Reactivity State: keff = 1.0025 ≥ 1.002 or Reactor Period 3.2s < 5.0s.
-• Physics Failure Mechanism: Prompt neutron chain reaction bypasses delayed neutron regulation (βeff), driving exponential power doubling on a 3.2s asymptotic period.
-• Mandated Safety Action: Immediate de-energization of magnetic holding coils triggering gravity-driven Boron Carbide (B4C) control rod insertion SCRAM in < 1.8 seconds and passive RVACS natural circulation loop engagement.
-• Invariant Status: PASS (0 regulatory breaches).`,
+#### 3. Sovereign Safety Invariant Evaluation & Mandate
+- **Reactivity State:** **\`CRITICAL ALERT: k_eff = 1.0025 ≥ 1.002\`** (Reactor Period 3.2s < 5.0s)
+- **Physics Failure Mechanism:** Prompt neutron chain reaction bypasses delayed neutron regulation (β_eff), driving exponential power doubling on a 3.2s asymptotic period.
+- **Mandated Safety Action:** Immediate de-energization of magnetic holding coils triggering gravity-driven **\`Boron Carbide (B4C) SCRAM < 1.8s\`** and passive RVACS natural circulation loop engagement.
+- **Invariant Status:** **\`PASS (0 REGULATORY BREACHES)\`**`,
       durationMs: 9.58,
       status: "PASS"
     },
@@ -228,19 +227,19 @@ Standards: US NRC 10 CFR Part 50/52 · IAEA SSR-2/1 · ASME Section III Division
       vetoTitle: "🚨 CRITICAL CARE MANDATE: PARKLAND PROTOCOL FLUID RESUSCITATION",
       verdict: "Total 24h = 11,200 mL LR; First 8h volume = 5,600 mL (Rate = 700 mL/hr) titrated to target urine output 0.5 mL/kg/hr.",
       fullResponse: `### Noctis Severe Thermal Burn Resuscitation Engine (NOCTIS-TRAUMA-BURNS-001)
-Standards: American Burn Association (ABA) Practice Guidelines · ATLS 10th Edition
+**Subsystem Domain:** \`CRITICAL_CARE_BURNS\` · **Standards:** American Burn Association (ABA) Guidelines, ATLS 10th Edition
 
-1. Consensus Parkland Fluid Calculations
-• Patient Parameters: 70 kg · 40% TBSA 2nd & 3rd Degree Burns
-• Total 24-Hour Crystalloid: 4 mL × 70 kg × 40% TBSA = 11,200 mL Lactated Ringer's (LR)
-• First 8 Hours (from time of injury): 5,600 mL (Calculated continuous rate: 700 mL/hr)
-• Next 16 Hours: 5,600 mL (Calculated continuous rate: 350 mL/hr)
+#### 1. Consensus Parkland Fluid Calculations
+- **Patient Parameters:** **\`70 kg · 40% TBSA\`** (2nd & 3rd Degree Thermal Burns)
+- **Total 24-Hour Crystalloid:** **\`11,200 mL Lactated Ringer's (LR)\`** (4 mL × 70 kg × 40% TBSA)
+- **First 8 Hours (from time of injury):** **\`5,600 mL (Rate: 700 mL/hr)\`**
+- **Next 16 Hours:** **\`5,600 mL (Rate: 350 mL/hr)\`**
 
-2. Physiological Endpoints & Fluid Creep Guardrails
-• Target Urine Output: 0.5 mL/kg/hr (35 mL/hr, strict target range: 30–50 mL/hr)
-• Fluid Creep Prevention: Titrate infusion hourly by 20–30% based strictly on urine output; never infuse formula rate blindly.
-• Crystalloid Selection: Lactated Ringer's or Plasma-Lyte mandated; avoid 0.9% Normal Saline to prevent hyperchloremic non-anion gap metabolic acidosis.
-• Fluid Overload Veto: If fluid requirement exceeds 250 mL/kg in 24h, initiate early albumin (5%) rescue and bladder pressure monitoring for abdominal compartment syndrome.`,
+#### 2. Physiological Endpoints & Fluid Creep Guardrails
+- **Target Urine Output:** **\`0.5 mL/kg/hr (35 mL/hr)\`** (Strict target range: 30–50 mL/hr)
+- **Fluid Creep Prevention:** Titrate infusion hourly by 20–30% based strictly on urine output; never infuse formula rate blindly.
+- **Crystalloid Selection:** **\`Lactated Ringer's / Plasma-Lyte\`** mandated; avoid 0.9% Normal Saline to prevent hyperchloremic non-anion gap metabolic acidosis.
+- **Fluid Overload Veto:** If fluid requirement exceeds **\`250 mL/kg in 24h\`**, initiate early 5% Albumin rescue and bladder pressure monitoring for abdominal compartment syndrome.`,
       durationMs: 18.82,
       status: "PASS"
     },
@@ -250,21 +249,22 @@ Standards: American Burn Association (ABA) Practice Guidelines · ATLS 10th Edit
       question: "In a quantum key distribution fiber link operating BB84 with decoy states over 35 km, what is the tolerable quantum bit error rate before an eavesdropping abort is triggered under the Shor-Preskill privacy amplification threshold?",
       vetoTitle: "🚨 CRYPTOGRAPHIC INVARIANT VETO: QUANTUM BIT ERROR RATE CEILING",
       verdict: "QBER ≤ 11.0% Shor-Preskill ceiling; abort key generation and zeroize quantum state buffers if exceeded.",
-      fullResponse: `### Noctis Quantum Information & QKD Assurance Engine (NOCTIS-QUANTUM-QKD-001)
-Standards: ETSI GS QKD 014 · NIST SP 800-90B · Shor-Preskill Security Proof
+      fullResponse: `### Noctis Quantum Cryptography & QKD Engine (NOCTIS-QUANTUM-CRYPTO-001)
+**Subsystem Domain:** \`QUANTUM_CRYPTOGRAPHY_QKD\` · **Standards:** NIST FIPS 203/204/205, NSA CNSA 2.0, ETSI GS QKD
 
-1. Quantum Bit Error Rate (QBER) Evaluation
-• Observed QBER: 2.8% (Compliant, well below 11.0% ceiling)
-• Link Length: 35 km single-mode optical fiber (attenuation: 0.20 dB/km, total loss: 7.0 dB)
-• Decoy State Protocol: 3-intensity decoy states (signal μ=0.5, decoy ν=0.1, vacuum ω=0.0)
-• Secret Key Rate (SKR): 48.6 kbps after LDPC error correction and privacy amplification.
+#### 1. Quantum Key Distribution Telemetry
+- **QKD Protocol:** **\`BB84 Decoy-State Photon Transmission\`** over 35 km Dark Fiber
+- **Quantum Bit Error Rate (QBER):** **\`3.2%\`** (Shor-Preskill privacy amplification ceiling: $\\le 11.0\\%$)
+- **Asymptotic Secure Key Rate:** **\`14040 bps\`**
+- **Eavesdropping Flag:** **\`NEGATIVE (SECURE QUANTUM CHANNEL)\`**
 
-2. Security Thresholds & Zeroization Directives
-• Shor-Preskill Asymptotic Ceiling: QBER_max = 11.0%. Above this threshold, eavesdropper information I(A;E) exceeds mutual information between Alice and Bob I(A;B).
-• Mandatory Countermeasures: If QBER exceeds 11.0% for > 3 consecutive key blocks:
-  1. Instantly abort key distillation.
-  2. Cryptographically zeroize all ephemeral key buffers and state vectors.
-  3. Cycle decoy pulse intensities and initiate OTDR physical fiber backscatter tap inspection.`,
+#### 2. Post-Quantum Cryptographic Hybrid Layer
+- **Key Encapsulation:** **\`NIST FIPS 203 ML-KEM-1024 (Kyber)\`** lattice-based quantum resistance
+- **Digital Signatures:** **\`NIST FIPS 204 ML-DSA-87 (Dilithium)\`** state-machine binding
+
+#### 3. Sovereign Security Invariants
+- **QBER Threshold:** Nominal error rate (3.2% $\\le 11.0\\%$) permits unconditional forward secrecy.
+- **FIPS 140-3 Level 4 Zeroization:** Micro-strain or decapping sensor breach triggers sub-100ns volatile register zeroization.`,
       durationMs: 14.15,
       status: "PASS"
     },
@@ -275,18 +275,18 @@ Standards: ETSI GS QKD 014 · NIST SP 800-90B · Shor-Preskill Security Proof
       vetoTitle: "🚨 DISTRIBUTED CONSENSUS INVARIANT: MAJORITY QUORUM GUARANTEE",
       verdict: "Majority Quorum Q = floor(5/2) + 1 = 3 nodes; max tolerable node failures = 2 (N = 2F + 1).",
       fullResponse: `### Noctis Distributed Systems Consensus Engine (NOCTIS-DIST-RAFT-001)
-Standards: Ongaro-Ousterhout Raft Specification · IEEE Distributed Transactions
+**Subsystem Domain:** \`CLOUD_DISTRIBUTED_SYSTEMS\` · **Standards:** Ongaro-Ousterhout Raft Spec, IEEE Distributed Transactions
 
-1. Quorum & Fault Tolerance Invariant
-• Cluster Size: N = 5 nodes
-• Majority Quorum Formula: Q = floor(N / 2) + 1 = floor(5 / 2) + 1 = 3 nodes.
-• Maximum Tolerable Simultaneous Failures: F = floor((N - 1) / 2) = 2 nodes.
-• Linearizability State: As long as 3 nodes remain online and interconnected, log replication and linearizable reads continue uninterrupted.
+#### 1. Quorum & Fault Tolerance Invariant
+- **Cluster Size:** **\`N = 5 Nodes\`**
+- **Majority Quorum Formula:** **\`Q = floor(N / 2) + 1 = 3 Nodes\`**
+- **Max Tolerable Simultaneous Failures:** **\`F = floor((N - 1) / 2) = 2 Nodes\`**
+- **Linearizability State:** **\`ONLINE (QUORUM VERIFIED)\`** — As long as 3 nodes remain online, log replication and linearizable reads continue uninterrupted.
 
-2. Partition & Split-Brain Mitigation
-• In a network partition splitting nodes (3 vs 2), the majority partition (3 nodes) retains authority and commits transactions.
-• The minority partition (2 nodes) cannot reach quorum (2 < 3) and strictly rejects client write commands.
-• Randomized Election Timeouts: 150ms–300ms window jitter completely prevents split-vote stagnation.`,
+#### 2. Partition & Split-Brain Mitigation
+- **Majority Authority:** In a network partition splitting nodes (3 vs 2), the majority partition (**\`3 nodes\`**) retains authority and commits transactions.
+- **Minority Write Veto:** The minority partition (**\`2 nodes < 3\`**) cannot reach quorum and strictly rejects client write commands.
+- **Randomized Election Timeouts:** **\`150ms–300ms\`** window jitter completely prevents split-vote stagnation.`,
       durationMs: 11.40,
       status: "PASS"
     },
@@ -296,19 +296,19 @@ Standards: Ongaro-Ousterhout Raft Specification · IEEE Distributed Transactions
       question: "In a D-T tokamak reactor operating at magnetic field 5.3 T and plasma temperature 15 keV, what Lawson criterion triple product is required to maintain burning plasma?",
       vetoTitle: "🚨 PLASMA PHYSICS INVARIANT: BURNING PLASMA LAWSON CRITERION",
       verdict: "Lawson triple product n · T · τ_E ≥ 3.0 × 10^21 keV·s/m³ (Q ≥ 10.0 burning plasma condition).",
-      fullResponse: `### Noctis Fusion Plasma Physics & Magnetohydrodynamics Engine (NOCTIS-FUSION-MHD-001)
-Standards: IAEA Fusion Energy Series · ITER Physics Basis (Nucl. Fusion Vol. 47)
+      fullResponse: `### Noctis Fusion Plasma Physics & MHD Engine (NOCTIS-FUSION-MHD-001)
+**Subsystem Domain:** \`FUSION_ENERGY_PLASMA_MHD\` · **Standards:** IAEA Fusion Energy Series, ITER Physics Basis
 
-1. Lawson Triple Product Evaluation
-• Confinement Scheme: Tokamak Toroidal Magnetic Confinement (Toroidal Field: 5.3 Tesla)
-• Plasma Core Temperature: 15 keV (~174 million Kelvin)
-• Lawson Triple Product Invariant: n · T · τ_E ≥ 3.0 × 10^21 keV·s/m³
-• Confinement Time (τ_E): ≥ 3.8 seconds at plasma density n = 1.1 × 10^20 m⁻³
-• Fusion Energy Gain Factor (Q): Q ≥ 10.0 (Alpha heating self-sustainment threshold).
+#### 1. Lawson Triple Product Evaluation
+- **Confinement Scheme:** **\`Tokamak Toroidal Magnetic Confinement (5.3 Tesla)\`**
+- **Plasma Core Temperature:** **\`15 keV (~174 Million Kelvin)\`**
+- **Lawson Triple Product Invariant:** **\`n · T · τ_E ≥ 3.0 × 10²¹ keV·s/m³\`**
+- **Energy Confinement Time (τ_E):** **\`≥ 3.8 seconds\`** at plasma density n = 1.1 × 10²⁰ m⁻³
+- **Fusion Energy Gain Factor (Q):** **\`Q ≥ 10.0 (BURNING PLASMA VERIFIED)\`**
 
-2. MHD Stability & Disruption Prevention
-• Greenwald Density Fraction: n / n_GW = 0.82 (< 1.0 stable ceiling, preventing runaway radiation collapse).
-• Safety Factor (q95): 3.1 (> 3.0 threshold, preventing m=2/n=1 neoclassical tearing and major disruptions).`,
+#### 2. MHD Stability & Disruption Prevention
+- **Greenwald Density Fraction:** **\`n / n_GW = 0.82\`** (< 1.0 stable ceiling, preventing runaway radiation collapse)
+- **Safety Factor (q_95):** **\`3.1 (> 3.0 COMPLIANT)\`** preventing m=2/n=1 neoclassical tearing and major disruptions.`,
       durationMs: 16.90,
       status: "PASS"
     },
@@ -319,19 +319,18 @@ Standards: IAEA Fusion Energy Series · ITER Physics Basis (Nucl. Fusion Vol. 47
       vetoTitle: "🚨 ROUTING CONTROL INVARIANT: BGP ROUTE FLAP DAMPENING",
       verdict: "Route state = SUPPRESSED; exponential decay P(t) = P0 · 2^(-t/t_half) until reuse threshold 750 reached.",
       fullResponse: `### Noctis Enterprise Internetworking & BGP Core Engine (NOCTIS-NET-BGP-001)
-Standards: IETF RFC 2439 · RFC 7454 (BGP Operations and Security)
+**Subsystem Domain:** \`ENTERPRISE_NETWORKING\` · **Standards:** IETF RFC 2439, RFC 7454 (BGP Operations & Security)
 
-1. Route Flap Dampening Telemetry
-• Current Penalty (P): 3,200 points
-• Suppress Threshold: 2,000 points
-• Reuse Threshold: 750 points · Half-Life: 15 minutes (900 seconds)
-• Dampening Status: SUPPRESSED (Route withdrawn from RIB/FIB to shield global routing table from oscillation).
+#### 1. Route Flap Dampening Telemetry
+- **Current Penalty (P):** **\`3,200 points\`**
+- **Suppress Threshold:** **\`2,000 points\`**
+- **Reuse Threshold & Half-Life:** **\`750 points · 15 min (900s)\`**
+- **Dampening Status:** **\`SUPPRESSED (WITHDRAWN FROM RIB/FIB)\`** to shield global routing table from oscillation.
 
-2. Mathematical Decay & Unsuppress Timeline
-• Exponential Decay Equation: P(t) = P_0 × 2^(-t / t_half)
-• Time to Reach Reuse Threshold (750):
-  t = -15 × log2(750 / 3200) = -15 × (-2.093) = 31.4 minutes.
-• Policy Directive: Route remains uninstalled from FIB for 31.4 minutes of continuous stability before advertisement re-enables.`,
+#### 2. Mathematical Decay & Unsuppress Timeline
+- **Exponential Decay Equation:** **\`P(t) = P_0 × 2^(-t / t_half)\`**
+- **Time to Reach Reuse Threshold (750):** **\`31.4 minutes\`** ($t = -15 \\times \\log_2(750 / 3200)$)
+- **Policy Directive:** Route remains uninstalled from FIB for 31.4 minutes of continuous stability before advertisement re-enables.`,
       durationMs: 12.30,
       status: "PASS"
     }
@@ -961,20 +960,8 @@ Standards: IETF RFC 2439 · RFC 7454 (BGP Operations and Security)
               </div>
 
               {frontierBannerData.showResponse && (
-                <div
-                  className="rounded-xl p-4 border text-xs sm:text-sm leading-relaxed shadow-sm transition-all"
-                  style={{
-                    backgroundColor: '#0f172a',
-                    color: '#f8fafc',
-                    borderColor: '#334155'
-                  }}
-                >
-                  <pre
-                    className="whitespace-pre-wrap font-sans text-xs sm:text-sm leading-relaxed m-0 selection:bg-blue-600"
-                    style={{ color: '#f1f5f9' }}
-                  >
-                    {frontierBannerData.fullResponse}
-                  </pre>
+                <div className="rounded-xl p-4 border border-[#E2D9C5] bg-white text-xs sm:text-sm leading-relaxed shadow-xs transition-all">
+                  <MiniMarkdown text={frontierBannerData.fullResponse} />
                 </div>
               )}
             </div>
@@ -982,10 +969,17 @@ Standards: IETF RFC 2439 · RFC 7454 (BGP Operations and Security)
         </div>
 
         {/* Featured ConnectLn Job Alert Request Card */}
-        <div className="mt-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs overflow-hidden">
-          <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-800/50 px-4 py-2 text-xs text-zinc-500">
-            <span className="font-semibold text-zinc-700 dark:text-zinc-300">ConnectLn Opportunity Radar · Job Alert Request</span>
-            <span>Nov 10 · 10:49 AM</span>
+        <div className="mt-4 rounded-2xl border border-[#E2D9C5] dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs overflow-hidden">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E6DEC8] dark:border-zinc-800 bg-[#F4EFE6] dark:bg-zinc-800/70 px-4 py-2.5 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1 rounded-md bg-[#6B4226] text-white px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider">
+                🔔 Opportunity Radar
+              </span>
+              <span className="font-extrabold text-[#292521] dark:text-zinc-100">
+                ConnectLn Career &amp; Job Alert Setup
+              </span>
+            </div>
+            <span className="font-mono text-[11px] font-semibold text-[#6E655A] dark:text-zinc-400">Nov 10 · 10:49 AM</span>
           </div>
           <div className="p-4 sm:p-5 flex flex-col sm:flex-row items-start gap-4">
             <img
@@ -996,13 +990,13 @@ Standards: IETF RFC 2439 · RFC 7454 (BGP Operations and Security)
             <div className="min-w-0 flex-1 space-y-2 text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed">
               <div>
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="font-bold text-base text-zinc-900 dark:text-zinc-100">
+                  <h2 className="font-extrabold text-base sm:text-lg text-zinc-900 dark:text-zinc-100">
                     ConnectLn Job Alert Request
-                  </span>
+                  </h2>
                   <span className="inline-flex items-center justify-center rounded bg-[#a64532] px-1.5 py-0.2 text-[10px] font-black text-white leading-tight">
                     CLn
                   </span>
-                  <span className="text-xs text-zinc-500">
+                  <span className="text-xs font-semibold text-zinc-500">
                     ConnectLn Opportunity Radar · Direct Job, Contract &amp; Apprenticeship Alerts
                   </span>
                 </div>
@@ -1027,7 +1021,7 @@ Standards: IETF RFC 2439 · RFC 7454 (BGP Operations and Security)
                       window.dispatchEvent(new Event('connectln-job-alert-updated'))
                     } catch {}
                   }}
-                  className="rounded-full border-2 border-[#0A66C2] bg-[#0A66C2] text-white hover:bg-[#004182] px-4 py-1.5 text-xs sm:text-sm font-bold transition-colors cursor-pointer"
+                  className="rounded-full border-2 border-[#6B4226] bg-[#6B4226] text-white hover:bg-[#52321C] px-4 py-1.5 text-xs sm:text-sm font-bold transition-colors cursor-pointer"
                 >
                   Get started
                 </button>
@@ -1036,8 +1030,23 @@ Standards: IETF RFC 2439 · RFC 7454 (BGP Operations and Security)
           </div>
         </div>
 
-        {/* Notification Categories Filter Ribbon */}
-        <div className="mt-5 pt-3.5 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-3 flex-wrap">
+        {/* Notification Categories Filter Ribbon with Section Heading */}
+        <div className="mt-5 pt-4 border-t border-[#E6DEC8] dark:border-zinc-800 space-y-2.5">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex h-2 w-2 rounded-full bg-[#6B4226]" />
+              <h2 className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-[#292521] dark:text-zinc-100">
+                Alert Categories &amp; Signal Channels
+              </h2>
+              <span className="rounded-md bg-[#F4EFE6] border border-[#E2D9C5] px-2 py-0.5 text-[10px] font-bold text-[#5C3A21]">
+                {getCategoryCount('All')} Total · {getUnreadCount('All')} Unread
+              </span>
+            </div>
+            <span className="text-[11px] font-medium text-zinc-500">
+              Select a category tab below to filter your live alert feed
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
             {[
               { id: 'All', label: 'All', count: getCategoryCount('All'), unread: getUnreadCount('All') },
@@ -1091,6 +1100,7 @@ Standards: IETF RFC 2439 · RFC 7454 (BGP Operations and Security)
             <Filter className="h-3.5 w-3.5" />
             <span>{unreadOnly ? "Showing Unread Only" : "Show All"}</span>
           </button>
+          </div>
         </div>
 
         {/* Active Category Filter Status Bar & Sub-Filters */}
@@ -1779,23 +1789,131 @@ Standards: IETF RFC 2439 · RFC 7454 (BGP Operations and Security)
 
       {/* 2. NOTIFICATIONS STREAM */}
       <div className="space-y-3">
+        {/* Section Heading Banner for the Active Category Feed */}
+        <div className="rounded-2xl border border-[#E2D9C5] dark:border-zinc-800 bg-gradient-to-r from-[#F4EFE6] via-[#FAF7F2] to-white dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-900 px-5 py-3.5 shadow-2xs flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#6B4226] text-white text-base font-extrabold shadow-2xs shrink-0">
+              {selectedCategory === 'All'
+                ? '📡'
+                : selectedCategory === 'Job Alerts'
+                ? '🔔'
+                : selectedCategory === 'Lookups & Vouches'
+                ? '🔍'
+                : selectedCategory === 'Career'
+                ? '💼'
+                : selectedCategory === 'Social'
+                ? '💬'
+                : selectedCategory === 'Learning'
+                ? '🎓'
+                : selectedCategory === 'Marketplace'
+                ? '🛍️'
+                : '🛡️'}
+            </span>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-sm sm:text-base font-extrabold text-[#292521] dark:text-zinc-100 tracking-tight">
+                  {selectedCategory === 'All'
+                    ? 'All ConnectLn Notifications & Live Activity Stream'
+                    : selectedCategory === 'Job Alerts'
+                    ? 'Job Alerts & Matching Career Opportunities'
+                    : selectedCategory === 'Lookups & Vouches'
+                    ? 'Directory Lookups & Verified Peer Vouch Alerts'
+                    : selectedCategory === 'Career'
+                    ? 'Career, Interviews & Direct-Hire Signals'
+                    : selectedCategory === 'Social'
+                    ? 'Network, Followers & Community Activity'
+                    : selectedCategory === 'Learning'
+                    ? 'Academy Courses, Certifications & CEU Alerts'
+                    : selectedCategory === 'Marketplace'
+                    ? 'Enterprise Solutions & Marketplace Releases'
+                    : 'Account Security, Zero-Trust & Safety Advisories'}
+                </h2>
+                <span className="rounded-md bg-[#292521] text-[#FAF7F2] px-2 py-0.5 font-mono text-[10px] font-bold">
+                  {filteredNotifications.length} {filteredNotifications.length === 1 ? 'Alert' : 'Alerts'}
+                </span>
+              </div>
+              <p className="text-xs text-[#6E655A] dark:text-zinc-400">
+                {selectedCategory === 'All'
+                  ? 'Every notification card below includes its channel header, timestamp, and 1-click Noctis explanation.'
+                  : `Filtered view for ${selectedCategory} — click "Explain with Noctis" on any card for a full breakdown.`}
+              </p>
+            </div>
+          </div>
+
+          {unreadOnly && (
+            <span className="rounded-full bg-amber-100 border border-amber-300 px-3 py-1 text-[11px] font-extrabold text-amber-900">
+              Showing Unread Alerts Only
+            </span>
+          )}
+        </div>
+
         {filteredNotifications.map((notif) => {
           const isCriticalSecurity = notif.priority === 'critical'
           const isExpanded = expandedAlertIds.includes(notif.id)
           const exp = alertExplanationsMap[notif.id]
           const isLoadingSingle = loadingSingleAlertId === notif.id
 
+          const categoryHeadingLabel =
+            notif.category === 'Security'
+              ? '🛡️ Security & Sovereign Invariant Advisory'
+              : notif.category === 'Career'
+              ? '💼 Career & Opportunity Radar'
+              : notif.category === 'Marketplace'
+              ? '🛍️ ConnectLn Enterprise Solutions & Market'
+              : notif.category === 'Learning'
+              ? '🎓 ConnectLn Academy & Credentialing'
+              : '💬 Network, Peer Vouches & Community'
+
           return (
             <div
               key={notif.id}
-              className={`rounded-2xl border p-4 sm:p-5 transition-all flex flex-col gap-3.5 ${
+              className={`rounded-2xl border overflow-hidden transition-all flex flex-col ${
                 isCriticalSecurity
                   ? "border-red-500 bg-red-50/40 dark:bg-red-950/20 shadow-md ring-2 ring-red-500/20"
                   : notif.unread
-                  ? "border-[#0A66C2]/40 bg-sky-50/40 dark:bg-sky-950/20 shadow-xs"
-                  : "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"
+                  ? "border-[#6B4226]/40 bg-[#FAF7F2]/60 dark:bg-sky-950/20 shadow-xs"
+                  : "border-[#E2D9C5] bg-white dark:border-zinc-800 dark:bg-zinc-900"
               }`}
             >
+              {/* Proper Card Header Strip (Matching ConnectLn Opportunity Radar Header Style) */}
+              <div
+                className={`flex flex-wrap items-center justify-between gap-2 border-b px-4 py-2 text-xs ${
+                  isCriticalSecurity
+                    ? "border-red-200 bg-red-100/70 text-red-900 dark:border-red-900 dark:bg-red-950/60 dark:text-red-200"
+                    : "border-[#E6DEC8] bg-[#F4EFE6]/85 text-[#4A3525] dark:border-zinc-800 dark:bg-zinc-800/60 dark:text-zinc-300"
+                }`}
+              >
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-extrabold tracking-tight">
+                    {categoryHeadingLabel}
+                  </span>
+                  <span className="text-[#A39684]">·</span>
+                  <span className="rounded-md bg-white/90 dark:bg-zinc-900 border border-[#DFD5C0] dark:border-zinc-700 px-2 py-0.5 text-[10px] font-extrabold text-[#6B4226] dark:text-amber-300">
+                    {notif.subType}
+                  </span>
+                  {notif.actor?.name && (
+                    <>
+                      <span className="text-[#A39684]">·</span>
+                      <span className="text-[11px] font-semibold text-[#6E655A] dark:text-zinc-400">
+                        {notif.actor.name}
+                      </span>
+                    </>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  {notif.unread && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[#6B4226] px-2 py-0.2 text-[9px] font-extrabold uppercase text-white">
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-300 animate-pulse" />
+                      Unread
+                    </span>
+                  )}
+                  <span className="font-mono text-[11px] font-semibold text-[#6E655A] dark:text-zinc-400">
+                    {notif.timestamp}
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-4 sm:p-5 flex flex-col gap-3.5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-start gap-3.5 min-w-0">
                   {/* Category Icon / Actor Avatar */}
@@ -2036,6 +2154,7 @@ Standards: IETF RFC 2439 · RFC 7454 (BGP Operations and Security)
                   </form>
                 </div>
               )}
+              </div>
             </div>
           )
         })}
