@@ -466,7 +466,7 @@ export function AdminIAMConsoleView({
     {
       title: "Core Operations",
       items: [
-        { id: 'media_harvester', label: '1-Min Video & Media Backend', icon: Film, badge: 'Every 60s', highlight: true },
+        { id: 'media_harvester', label: '60-Min Video & Media Backend', icon: Film, badge: 'Every 60m', highlight: true },
         { id: 'overview', label: 'Dashboard & Metrics', icon: BarChart3, badge: 'Live' },
         { id: 'pulse_sync', label: 'Pulse Live Sync', icon: Radio, badge: 'Live Wire', highlight: true },
         { id: 'devhub', label: 'ConnectLn DevHub (IDP)', icon: Laptop, badge: 'v1.0', highlight: true },
@@ -565,7 +565,7 @@ export function AdminIAMConsoleView({
               className="rounded-full bg-[#6B4423] hover:bg-[#523319] px-4 py-2 text-xs font-bold text-white transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
             >
               <Film className="h-3.5 w-3.5" />
-              <span>⚡ 1-Min Video &amp; Media Backend</span>
+              <span>⚡ 60-Min Video &amp; Media Backend</span>
             </button>
             <button
               onClick={() => setActiveAdminTab('devhub')}
@@ -963,7 +963,7 @@ export function AdminIAMConsoleView({
               className="rounded-full bg-[#6B4423] hover:bg-[#523319] px-4 py-2 text-xs font-bold text-white transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
             >
               <Film className="h-3.5 w-3.5" />
-              <span>⚡ 1-Min Video &amp; Media Backend</span>
+              <span>⚡ 60-Min Video &amp; Media Backend</span>
             </button>
             <button
               onClick={() => setActiveAdminTab('devhub')}
@@ -1136,7 +1136,7 @@ export function AdminIAMConsoleView({
               className="rounded-full bg-[#6B4423] hover:bg-[#523319] px-4 py-2 text-xs font-bold text-white transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
             >
               <Film className="h-3.5 w-3.5" />
-              <span>⚡ 1-Min Video &amp; Media Backend</span>
+              <span>⚡ 60-Min Video &amp; Media Backend</span>
             </button>
             <button
               onClick={() => setActiveAdminTab('devhub')}

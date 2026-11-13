@@ -201,12 +201,12 @@ export function LiveHarvestedMediaShowcase({
           })
           saveStoredHarvestedItems(Array.from(map.values()))
           refreshFromStore()
-          setSecondsToNextAutoPull(60)
+          setSecondsToNextAutoPull(3600)
           const newestTitle = data?.pulledItems?.[0]?.title
           if (newestTitle) {
             flashToast(
               isAutoTick
-                ? `⚡ 1-Min Admin Auto-Sync: Pulled "${newestTitle.slice(0, 48)}..." live!`
+                ? `⚡ 60-Min Admin Auto-Sync: Pulled "${newestTitle.slice(0, 48)}..." live!`
                 : `✓ Synced new video from Admin Backend: "${newestTitle.slice(0, 48)}..."`
             )
           }
@@ -217,13 +217,13 @@ export function LiveHarvestedMediaShowcase({
     }
   }
 
-  // Visible 60-second countdown that pulls & syncs a fresh video every minute right into the active tab
+  // Visible 60-minute (3600s) countdown that pulls & syncs a fresh video every 60 minutes right into the active tab
   useEffect(() => {
     const timer = setInterval(() => {
       setSecondsToNextAutoPull((prev) => {
         if (prev <= 1) {
           handleManualPullForTab(true)
-          return 60
+          return 3600
         }
         return prev - 1
       })
@@ -252,7 +252,7 @@ export function LiveHarvestedMediaShowcase({
               {totalVideosCount.toLocaleString()} Platform Videos · +{pulledTodayCount.toLocaleString()} Today
             </span>
             <span className="rounded-full bg-emerald-100 border border-emerald-400 px-2.5 py-0.5 text-[10px] font-mono font-extrabold text-emerald-900">
-              ⏱️ Next 1-Min Auto-Pull: {secondsToNextAutoPull}s
+              ⏱️ Next 60-Min Auto-Sync: {Math.floor(secondsToNextAutoPull / 60)}m {String(secondsToNextAutoPull % 60).padStart(2, "0")}s
             </span>
           </div>
           <div className="flex items-center gap-2">

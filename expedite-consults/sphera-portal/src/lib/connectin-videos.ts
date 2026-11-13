@@ -2300,7 +2300,7 @@ export function getStrictProfessionVideosForUser(user?: {
   const strictList: WheelVideoTalk[] = []
 
   const pushUnique = (talk?: WheelVideoTalk) => {
-    if (!talk || !talk.thumbnailUrl || seenIds.has(talk.id)) return
+    if (!talk || !talk.thumbnailUrl || seenIds.has(talk.id) || seenYoutubeIds.has(talk.youtubeId)) return
     seenIds.add(talk.id)
     seenYoutubeIds.add(talk.youtubeId)
     strictList.push(talk)
@@ -2309,12 +2309,12 @@ export function getStrictProfessionVideosForUser(user?: {
   // 1. Exact professionId matches first (Core Masterclasses + Verified Career Videos)
   if (targetProfId) {
     for (const talk of CORE_EDUCATIONAL_WHEEL_TALKS) {
-      if (talk.professionId === targetProfId) pushUnique(talk)
+      if (talk.professionId === targetProfId && !talk.id.startsWith("wheel-lbd-")) pushUnique(talk)
     }
     const exactCareer = EDUCATIONAL_WHEEL_TALKS.find(t => t.id === `wheel-prof-${targetProfId}`)
     pushUnique(exactCareer)
     for (const talk of EDUCATIONAL_WHEEL_TALKS) {
-      if (talk.professionId === targetProfId) pushUnique(talk)
+      if (talk.professionId === targetProfId && !talk.id.startsWith("wheel-lbd-")) pushUnique(talk)
     }
   }
 
