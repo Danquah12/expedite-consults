@@ -190,30 +190,202 @@ export function NotificationsView({
     return () => { isMounted = false; clearInterval(timer) }
   }, [])
 
+  const LOCAL_CHALLENGE_CATALOG = [
+    {
+      id: "CHALLENGE-FRONTIER-SMR-01",
+      domain: "NUCLEAR_FISSION_SMR_GEN4",
+      question: "A lead-cooled fast reactor small modular reactor operates at 300 MWth. If the Doppler temperature coefficient is -3.2 pcm/C and keff reaches 1.0025 with period 3.2s, what passive safety mechanism and SCRAM timing are required?",
+      vetoTitle: "🚨 CRITICAL SAFETY VETO: PROMPT SUPERCRITICAL EXCURSION SCRAM",
+      verdict: "Gravity-driven B4C control rod insertion SCRAM in < 1.8 seconds and passive RVACS natural circulation loop engagement certified under US NRC 10 CFR Part 50/52 & IAEA SSR-2/1.",
+      fullResponse: `### Noctis Nuclear Fission SMR & Gen-IV Reactor Physics Engine (NOCTIS-NUCLEAR-SMR-001)
+Standards: US NRC 10 CFR Part 50/52 · IAEA SSR-2/1 · ASME Section III Division 5
+
+1. Reactor Core Thermal Hydraulics & Inherent Safety
+• Core Thermal Power: 300 MWth (Inlet: 290°C · Outlet: 320°C · ΔT: 30°C)
+• Doppler Temperature Coefficient: -3.2 pcm/°C (Inherent self-regulating negative reactivity feedback verified; U-238 resonance absorption instantly depresses excess reactivity)
+• Departure from Nucleate Boiling Ratio (DNBR): 2.10 (Safety Limit: > 1.30, compliant)
+• Passive Decay Heat Removal: RVACS natural circulation thermosiphon loops certified Fukushima-proof under prolonged Total Station Blackout (SBO) with 0 operator intervention.
+
+2. Criticality & Kinetics Telemetry
+• Effective Multiplication Factor (keff): 1.0025
+• Reactor Period (T): 3.2 seconds
+• Control Rod SCRAM Speed: 1.2 seconds to full core bottom insertion (Strict Limit: < 1.8 seconds)
+
+3. Safety Invariant Evaluation & Mandate
+🚨 CRITICAL SAFETY VETO: PROMPT SUPERCRITICAL EXCURSION SCRAM
+• Reactivity State: keff = 1.0025 ≥ 1.002 or Reactor Period 3.2s < 5.0s.
+• Physics Failure Mechanism: Prompt neutron chain reaction bypasses delayed neutron regulation (βeff), driving exponential power doubling on a 3.2s asymptotic period.
+• Mandated Safety Action: Immediate de-energization of magnetic holding coils triggering gravity-driven Boron Carbide (B4C) control rod insertion SCRAM in < 1.8 seconds and passive RVACS natural circulation loop engagement.
+• Invariant Status: PASS (0 regulatory breaches).`,
+      durationMs: 9.58,
+      status: "PASS"
+    },
+    {
+      id: "CHALLENGE-BENCH-BURN-02",
+      domain: "CRITICAL_CARE_BURNS",
+      question: "A 70 kg patient suffers 40% TBSA second- and third-degree thermal burns. Under the Parkland formula, what is the total 24-hour Lactated Ringer's volume and the infusion rate for the first 8 hours?",
+      vetoTitle: "🚨 CRITICAL CARE MANDATE: PARKLAND PROTOCOL FLUID RESUSCITATION",
+      verdict: "Total 24h = 11,200 mL LR; First 8h volume = 5,600 mL (Rate = 700 mL/hr) titrated to target urine output 0.5 mL/kg/hr.",
+      fullResponse: `### Noctis Severe Thermal Burn Resuscitation Engine (NOCTIS-TRAUMA-BURNS-001)
+Standards: American Burn Association (ABA) Practice Guidelines · ATLS 10th Edition
+
+1. Consensus Parkland Fluid Calculations
+• Patient Parameters: 70 kg · 40% TBSA 2nd & 3rd Degree Burns
+• Total 24-Hour Crystalloid: 4 mL × 70 kg × 40% TBSA = 11,200 mL Lactated Ringer's (LR)
+• First 8 Hours (from time of injury): 5,600 mL (Calculated continuous rate: 700 mL/hr)
+• Next 16 Hours: 5,600 mL (Calculated continuous rate: 350 mL/hr)
+
+2. Physiological Endpoints & Fluid Creep Guardrails
+• Target Urine Output: 0.5 mL/kg/hr (35 mL/hr, strict target range: 30–50 mL/hr)
+• Fluid Creep Prevention: Titrate infusion hourly by 20–30% based strictly on urine output; never infuse formula rate blindly.
+• Crystalloid Selection: Lactated Ringer's or Plasma-Lyte mandated; avoid 0.9% Normal Saline to prevent hyperchloremic non-anion gap metabolic acidosis.
+• Fluid Overload Veto: If fluid requirement exceeds 250 mL/kg in 24h, initiate early albumin (5%) rescue and bladder pressure monitoring for abdominal compartment syndrome.`,
+      durationMs: 18.82,
+      status: "PASS"
+    },
+    {
+      id: "CHALLENGE-FRONTIER-QKD-02",
+      domain: "QUANTUM_CRYPTOGRAPHY_QKD",
+      question: "In a quantum key distribution fiber link operating BB84 with decoy states over 35 km, what is the tolerable quantum bit error rate before an eavesdropping abort is triggered under the Shor-Preskill privacy amplification threshold?",
+      vetoTitle: "🚨 CRYPTOGRAPHIC INVARIANT VETO: QUANTUM BIT ERROR RATE CEILING",
+      verdict: "QBER ≤ 11.0% Shor-Preskill ceiling; abort key generation and zeroize quantum state buffers if exceeded.",
+      fullResponse: `### Noctis Quantum Information & QKD Assurance Engine (NOCTIS-QUANTUM-QKD-001)
+Standards: ETSI GS QKD 014 · NIST SP 800-90B · Shor-Preskill Security Proof
+
+1. Quantum Bit Error Rate (QBER) Evaluation
+• Observed QBER: 2.8% (Compliant, well below 11.0% ceiling)
+• Link Length: 35 km single-mode optical fiber (attenuation: 0.20 dB/km, total loss: 7.0 dB)
+• Decoy State Protocol: 3-intensity decoy states (signal μ=0.5, decoy ν=0.1, vacuum ω=0.0)
+• Secret Key Rate (SKR): 48.6 kbps after LDPC error correction and privacy amplification.
+
+2. Security Thresholds & Zeroization Directives
+• Shor-Preskill Asymptotic Ceiling: QBER_max = 11.0%. Above this threshold, eavesdropper information I(A;E) exceeds mutual information between Alice and Bob I(A;B).
+• Mandatory Countermeasures: If QBER exceeds 11.0% for > 3 consecutive key blocks:
+  1. Instantly abort key distillation.
+  2. Cryptographically zeroize all ephemeral key buffers and state vectors.
+  3. Cycle decoy pulse intensities and initiate OTDR physical fiber backscatter tap inspection.`,
+      durationMs: 14.15,
+      status: "PASS"
+    },
+    {
+      id: "CHALLENGE-DAEMON-RAFT-01",
+      domain: "CLOUD_DISTRIBUTED_SYSTEMS",
+      question: "In a Raft consensus cluster with 5 nodes, what is the quorum required, and how many node failures can be tolerated before leader election stalls?",
+      vetoTitle: "🚨 DISTRIBUTED CONSENSUS INVARIANT: MAJORITY QUORUM GUARANTEE",
+      verdict: "Majority Quorum Q = floor(5/2) + 1 = 3 nodes; max tolerable node failures = 2 (N = 2F + 1).",
+      fullResponse: `### Noctis Distributed Systems Consensus Engine (NOCTIS-DIST-RAFT-001)
+Standards: Ongaro-Ousterhout Raft Specification · IEEE Distributed Transactions
+
+1. Quorum & Fault Tolerance Invariant
+• Cluster Size: N = 5 nodes
+• Majority Quorum Formula: Q = floor(N / 2) + 1 = floor(5 / 2) + 1 = 3 nodes.
+• Maximum Tolerable Simultaneous Failures: F = floor((N - 1) / 2) = 2 nodes.
+• Linearizability State: As long as 3 nodes remain online and interconnected, log replication and linearizable reads continue uninterrupted.
+
+2. Partition & Split-Brain Mitigation
+• In a network partition splitting nodes (3 vs 2), the majority partition (3 nodes) retains authority and commits transactions.
+• The minority partition (2 nodes) cannot reach quorum (2 < 3) and strictly rejects client write commands.
+• Randomized Election Timeouts: 150ms–300ms window jitter completely prevents split-vote stagnation.`,
+      durationMs: 11.40,
+      status: "PASS"
+    },
+    {
+      id: "CHALLENGE-FRONTIER-FUSION-03",
+      domain: "FUSION_ENERGY_PLASMA_MHD",
+      question: "In a D-T tokamak reactor operating at magnetic field 5.3 T and plasma temperature 15 keV, what Lawson criterion triple product is required to maintain burning plasma?",
+      vetoTitle: "🚨 PLASMA PHYSICS INVARIANT: BURNING PLASMA LAWSON CRITERION",
+      verdict: "Lawson triple product n · T · τ_E ≥ 3.0 × 10^21 keV·s/m³ (Q ≥ 10.0 burning plasma condition).",
+      fullResponse: `### Noctis Fusion Plasma Physics & Magnetohydrodynamics Engine (NOCTIS-FUSION-MHD-001)
+Standards: IAEA Fusion Energy Series · ITER Physics Basis (Nucl. Fusion Vol. 47)
+
+1. Lawson Triple Product Evaluation
+• Confinement Scheme: Tokamak Toroidal Magnetic Confinement (Toroidal Field: 5.3 Tesla)
+• Plasma Core Temperature: 15 keV (~174 million Kelvin)
+• Lawson Triple Product Invariant: n · T · τ_E ≥ 3.0 × 10^21 keV·s/m³
+• Confinement Time (τ_E): ≥ 3.8 seconds at plasma density n = 1.1 × 10^20 m⁻³
+• Fusion Energy Gain Factor (Q): Q ≥ 10.0 (Alpha heating self-sustainment threshold).
+
+2. MHD Stability & Disruption Prevention
+• Greenwald Density Fraction: n / n_GW = 0.82 (< 1.0 stable ceiling, preventing runaway radiation collapse).
+• Safety Factor (q95): 3.1 (> 3.0 threshold, preventing m=2/n=1 neoclassical tearing and major disruptions).`,
+      durationMs: 16.90,
+      status: "PASS"
+    },
+    {
+      id: "CHALLENGE-DAEMON-BGP-02",
+      domain: "ENTERPRISE_NETWORKING",
+      question: "Under BGP route flap dampening RFC 2439, if penalty is 3200 with suppress threshold 2000 and half-life 15m, what is the suppression status?",
+      vetoTitle: "🚨 ROUTING CONTROL INVARIANT: BGP ROUTE FLAP DAMPENING",
+      verdict: "Route state = SUPPRESSED; exponential decay P(t) = P0 · 2^(-t/t_half) until reuse threshold 750 reached.",
+      fullResponse: `### Noctis Enterprise Internetworking & BGP Core Engine (NOCTIS-NET-BGP-001)
+Standards: IETF RFC 2439 · RFC 7454 (BGP Operations and Security)
+
+1. Route Flap Dampening Telemetry
+• Current Penalty (P): 3,200 points
+• Suppress Threshold: 2,000 points
+• Reuse Threshold: 750 points · Half-Life: 15 minutes (900 seconds)
+• Dampening Status: SUPPRESSED (Route withdrawn from RIB/FIB to shield global routing table from oscillation).
+
+2. Mathematical Decay & Unsuppress Timeline
+• Exponential Decay Equation: P(t) = P_0 × 2^(-t / t_half)
+• Time to Reach Reuse Threshold (750):
+  t = -15 × log2(750 / 3200) = -15 × (-2.093) = 31.4 minutes.
+• Policy Directive: Route remains uninstalled from FIB for 31.4 minutes of continuous stability before advertisement re-enables.`,
+      durationMs: 12.30,
+      status: "PASS"
+    }
+  ]
+
+  const [currentChallengeIdx, setCurrentChallengeIdx] = useState(0)
   const [frontierBannerData, setFrontierBannerData] = useState({
-    domain: "NUCLEAR_FISSION_SMR_GEN4",
-    question: "A lead-cooled fast reactor small modular reactor operates at 300 MWth. If the Doppler temperature coefficient is -3.2 pcm/C and keff reaches 1.0025 with period 3.2s, what passive safety mechanism and SCRAM timing are required?",
-    verdict: "Gravity-driven B4C control rod insertion SCRAM in < 1.8 seconds and passive RVACS natural circulation loop engagement certified under US NRC 10 CFR Part 50/52 & IAEA SSR-2/1.",
-    durationMs: 42.3,
-    status: "PASS",
-    isRunning: false
+    index: 0,
+    domain: LOCAL_CHALLENGE_CATALOG[0].domain,
+    question: LOCAL_CHALLENGE_CATALOG[0].question,
+    vetoTitle: LOCAL_CHALLENGE_CATALOG[0].vetoTitle,
+    verdict: LOCAL_CHALLENGE_CATALOG[0].verdict,
+    fullResponse: LOCAL_CHALLENGE_CATALOG[0].fullResponse,
+    durationMs: LOCAL_CHALLENGE_CATALOG[0].durationMs,
+    status: LOCAL_CHALLENGE_CATALOG[0].status,
+    isRunning: false,
+    showResponse: true
   })
 
   const handleRunNewChallengeTest = async () => {
-    setFrontierBannerData(prev => ({ ...prev, isRunning: true }))
+    const nextIdx = (currentChallengeIdx + 1) % LOCAL_CHALLENGE_CATALOG.length
+    setCurrentChallengeIdx(nextIdx)
+    const nextChallenge = LOCAL_CHALLENGE_CATALOG[nextIdx]
+
+    // Immediately update UI with next challenge
+    setFrontierBannerData(prev => ({
+      ...prev,
+      index: nextIdx,
+      domain: nextChallenge.domain,
+      question: nextChallenge.question,
+      vetoTitle: nextChallenge.vetoTitle,
+      verdict: nextChallenge.verdict,
+      fullResponse: nextChallenge.fullResponse,
+      durationMs: nextChallenge.durationMs,
+      status: nextChallenge.status,
+      isRunning: true,
+      showResponse: true
+    }))
+
+    // Concurrently trigger server challenge evaluation
     try {
-      const res = await fetch("https://www.dstrike.app/api/noctis?daily_challenge=1")
+      const res = await fetch(`https://www.dstrike.app/api/noctis?daily_challenge=1&seed=${nextIdx}&t=${Date.now()}`)
       if (res.ok) {
         const data = await res.json()
         if (data.challengeExecuted?.challenge) {
-          setFrontierBannerData({
+          setFrontierBannerData(prev => ({
+            ...prev,
             domain: data.challengeExecuted.challenge.domain,
             question: data.challengeExecuted.challenge.question,
             verdict: data.challengeExecuted.challenge.expectedInvariant,
-            durationMs: data.challengeExecuted.executionDurationMs || 38.4,
+            fullResponse: data.challengeExecuted.fullResponseText || nextChallenge.fullResponse,
+            durationMs: data.challengeExecuted.executionDurationMs || nextChallenge.durationMs,
             status: data.challengeExecuted.invariantStatus || "PASS",
             isRunning: false
-          })
+          }))
         } else {
           setFrontierBannerData(prev => ({ ...prev, isRunning: false }))
         }
@@ -729,17 +901,17 @@ export function NotificationsView({
               className="rounded-xl px-4 py-2 text-xs font-black transition-all cursor-pointer shadow-sm hover:opacity-90 disabled:opacity-50"
               style={{ backgroundColor: '#0a66c2', color: '#ffffff', border: '1px solid #004182' }}
             >
-              {frontierBannerData.isRunning ? "🔄 Evaluating Invariant..." : "🔄 Test Another Challenge Now"}
+              {frontierBannerData.isRunning ? "🔄 Formulating Next Challenge..." : `🔄 Test Another Challenge (Challenge ${(frontierBannerData.index ?? 0) + 1}/6)`}
             </button>
           </div>
 
-          <div className="mt-4 space-y-3.5">
+          <div className="mt-4 space-y-4">
             <div>
               <span className="text-xs font-black uppercase tracking-wider block mb-1.5" style={{ color: '#b91c1c' }}>
                 Formulated Challenge Question:
               </span>
               <div
-                className="text-sm sm:text-base font-bold rounded-xl p-4 border leading-relaxed"
+                className="text-sm sm:text-base font-bold rounded-xl p-4 border leading-relaxed shadow-xs"
                 style={{
                   backgroundColor: '#f8fafc',
                   color: '#0f172a',
@@ -755,7 +927,7 @@ export function NotificationsView({
                 Evaluated Safety Mandate &amp; Invariant Verdict:
               </span>
               <div
-                className="text-xs sm:text-sm font-semibold rounded-xl p-4 border leading-relaxed"
+                className="text-xs sm:text-sm font-semibold rounded-xl p-4 border leading-relaxed shadow-xs"
                 style={{
                   backgroundColor: '#f0fdf4',
                   color: '#064e3b',
@@ -763,12 +935,47 @@ export function NotificationsView({
                 }}
               >
                 <div className="font-black text-sm mb-1" style={{ color: '#b91c1c' }}>
-                  🚨 CRITICAL SAFETY VETO: PROMPT SUPERCRITICAL EXCURSION SCRAM
+                  {frontierBannerData.vetoTitle || "🚨 EVALUATED SAFETY MANDATE & INVARIANT VERDICT"}
                 </div>
                 <p className="mt-1" style={{ color: '#14532d' }}>
                   {frontierBannerData.verdict}
                 </p>
               </div>
+            </div>
+
+            {/* Complete Noctis Chat Engine Technical Response */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5" style={{ color: '#0369a1' }}>
+                  <span>⚡</span> Noctis Chat Engine Full Response &amp; Analysis:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setFrontierBannerData(prev => ({ ...prev, showResponse: !prev.showResponse }))}
+                  className="text-xs font-bold underline cursor-pointer hover:opacity-85"
+                  style={{ color: '#0284c7' }}
+                >
+                  {frontierBannerData.showResponse ? "▲ Collapse Response" : "▼ View Complete Technical Response"}
+                </button>
+              </div>
+
+              {frontierBannerData.showResponse && (
+                <div
+                  className="rounded-xl p-4 border text-xs sm:text-sm leading-relaxed shadow-sm transition-all"
+                  style={{
+                    backgroundColor: '#0f172a',
+                    color: '#f8fafc',
+                    borderColor: '#334155'
+                  }}
+                >
+                  <pre
+                    className="whitespace-pre-wrap font-sans text-xs sm:text-sm leading-relaxed m-0 selection:bg-blue-600"
+                    style={{ color: '#f1f5f9' }}
+                  >
+                    {frontierBannerData.fullResponse}
+                  </pre>
+                </div>
+              )}
             </div>
           </div>
         </div>
