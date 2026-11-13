@@ -113,6 +113,8 @@ export interface NoctisVideoInterpreterProps {
   isPlaying?: boolean
   onMuteOriginalVideo?: (duckAudio: boolean) => void
   onRequestPlayVideo?: () => void
+  /** When true, docks the Noctis Audio & Live Subtitle strip cleanly below the video canvas so the video screen is 100% unclouded */
+  dockedBelow?: boolean
 }
 
 const EXCLUSIVE_INTERPRETER_EVENT = "connectln:exclusive-interpreter-active"
@@ -1141,6 +1143,7 @@ export function NoctisVideoInterpreterPopup({
   isPlaying = false,
   onMuteOriginalVideo,
   onRequestPlayVideo,
+  dockedBelow = false,
 }: NoctisVideoInterpreterProps) {
   const { language, setLanguage, languages } = useLanguage()
   const normalizedSourceLang = (sourceLanguage || "en").toLowerCase() as LanguageCode
@@ -2053,98 +2056,75 @@ export function NoctisVideoInterpreterPopup({
 
   return (
     <div onClick={(e) => e.stopPropagation()} data-no-translate="true" translate="no" className="notranslate">
-      {/* 1. COMPACT TRIGGER PILL ON THE VIDEO PLAYER (Top-Right Corner) */}
-      <div className="absolute top-10 sm:top-12 right-2 sm:right-3 z-30 flex items-center gap-1.5">
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation()
-            userManuallyPausedDubRef.current = false
-            const nextOpen = !isPopupOpen
-            if (typeof window !== "undefined") {
-              ;(window as any).__lastOpenedNoctisPopupTitle = nextOpen ? title : ""
-              ;(window as any).__noctisPopupOpenGlobal = nextOpen
-            }
-            if (!isPlaying && onRequestPlayVideo) {
-              if (typeof window !== "undefined") {
-                ;(window as any).__noctisPopupOpenGlobal = true
-              }
-              setIsPopupOpen(true)
-              onRequestPlayVideo()
-              return
-            }
-            setIsPopupOpen(nextOpen)
-            if (nextOpen && !isSpeakingRef.current) {
-              setForceSpeakEvenIfSameLang(true)
-              forceSpeakRef.current = true
-              startContinuousInterpretation(activeSentenceIdxRef.current)
-            }
-          }}
-          style={{
-            backgroundColor: isPopupOpen || isSpeaking || isInterpretingNeeded ? "#0A66C2" : "rgba(15, 23, 42, 0.92)",
-            color: "#FFFFFF",
-            borderColor: "#60A5FA",
-          }}
-          className="inline-flex items-center gap-1 sm:gap-1.5 rounded-full px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-extrabold shadow-xl border-2 transition-all cursor-pointer hover:brightness-110"
-          title="Open Noctis Multilingual Video Audio Interpreter"
-        >
-          {isSpeaking ? (
-            <Radio className="h-3.5 w-3.5 text-emerald-300 animate-pulse shrink-0" />
-          ) : (
-            <Sparkles className="h-3.5 w-3.5 text-amber-300 shrink-0" />
-          )}
-          <span style={{ color: "#FFFFFF" }}>Noctis Audio</span>
-          <span
-            style={{ backgroundColor: "#0F172A", color: "#FDE68A" }}
-            className="rounded px-1.5 py-0.5 text-[10px] font-mono font-black border border-white/25"
-          >
-            {sourceLanguageMeta.flag} {sourceLanguageMeta.code.toUpperCase()} → 🔊 {targetAudioLanguageMeta.flag}{" "}
-            {targetAudioLanguageMeta.code.toUpperCase()}
-          </span>
-        </button>
-      </div>
-
-      {/* 2. SLIM, HIGH-VISIBILITY SUBTITLE BAR AT VERY BOTTOM EDGE */}
-      {(isInterpretingNeeded || isSpeaking || normalizedSourceLang !== "en") && showSubtitlesStrip && (
+      {dockedBelow ? (
+        /* DOCKED STUDIO INTERPRETER & SUBTITLE BAR (Sits cleanly below the 16:9 video canvas so the video is 100% unclouded!) */
         <div
-          onClick={(e) => {
-            e.stopPropagation()
-            userManuallyPausedDubRef.current = false
-            if (typeof window !== "undefined") {
-              ;(window as any).__lastOpenedNoctisPopupTitle = title
-              ;(window as any).__noctisPopupOpenGlobal = true
-            }
-            if (!isPlaying && onRequestPlayVideo) {
-              onRequestPlayVideo()
-            }
-            setIsPopupOpen(true)
-            if (!isSpeaking) {
-              setForceSpeakEvenIfSameLang(true)
-              forceSpeakRef.current = true
-              startContinuousInterpretation(activeSentenceIdxRef.current)
-            }
-          }}
           style={{
-            backgroundColor: "rgba(9, 13, 22, 0.92)",
+            backgroundColor: "#0B1120",
             color: "#FFFFFF",
-            borderColor: "#38BDF8",
+            borderColor: "rgba(56, 189, 248, 0.35)",
           }}
-          className="absolute inset-x-4 bottom-11 z-20 mx-auto max-w-xl rounded-xl border-2 px-3.5 py-1.5 text-center shadow-2xl cursor-pointer transition-all"
+          className="w-full border-t px-3 sm:px-4 py-2 transition-all"
         >
-          <div className="flex items-center justify-between gap-2 text-[11px] font-extrabold mb-0.5">
-            <span style={{ color: "#7DD3FC" }} className="inline-flex items-center gap-1.5 truncate">
-              {isSpeaking ? (
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
-              ) : (
-                <Sparkles className="h-3 w-3 shrink-0 text-amber-300" />
-              )}
-              <span className="truncate">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            {/* Left: Noctis Audio Companion Trigger Button + Language Direction Badge */}
+            <div className="flex items-center gap-2 min-w-0">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  userManuallyPausedDubRef.current = false
+                  const nextOpen = !isPopupOpen
+                  if (typeof window !== "undefined") {
+                    ;(window as any).__lastOpenedNoctisPopupTitle = nextOpen ? title : ""
+                    ;(window as any).__noctisPopupOpenGlobal = nextOpen
+                  }
+                  if (!isPlaying && onRequestPlayVideo) {
+                    if (typeof window !== "undefined") {
+                      ;(window as any).__noctisPopupOpenGlobal = true
+                    }
+                    setIsPopupOpen(true)
+                    onRequestPlayVideo()
+                    return
+                  }
+                  setIsPopupOpen(nextOpen)
+                  if (nextOpen && !isSpeakingRef.current) {
+                    setForceSpeakEvenIfSameLang(true)
+                    forceSpeakRef.current = true
+                    startContinuousInterpretation(activeSentenceIdxRef.current)
+                  }
+                }}
+                style={{
+                  backgroundColor: isPopupOpen || isSpeaking || isInterpretingNeeded ? "#0A66C2" : "#1E293B",
+                  color: "#FFFFFF",
+                  borderColor: "#60A5FA",
+                }}
+                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-extrabold border transition-all cursor-pointer hover:brightness-110 shrink-0"
+                title="Open Noctis Multilingual Video Audio Interpreter"
+              >
+                {isSpeaking ? (
+                  <Radio className="h-3.5 w-3.5 text-emerald-300 animate-pulse shrink-0" />
+                ) : (
+                  <Sparkles className="h-3.5 w-3.5 text-amber-300 shrink-0" />
+                )}
+                <span style={{ color: "#FFFFFF" }}>Noctis Audio</span>
+                <span
+                  style={{ backgroundColor: "#0F172A", color: "#FDE68A" }}
+                  className="rounded px-1.5 py-0.2 text-[10px] font-mono font-black border border-white/20"
+                >
+                  {sourceLanguageMeta.flag} {sourceLanguageMeta.code.toUpperCase()} → 🔊 {targetAudioLanguageMeta.flag}{" "}
+                  {targetAudioLanguageMeta.code.toUpperCase()}
+                </span>
+              </button>
+
+              <span style={{ color: "#7DD3FC" }} className="hidden md:inline-flex items-center gap-1 text-[11px] font-bold truncate">
                 {sourceLanguageMeta.flag} {sourceLanguageMeta.localName} → 🔊 {targetAudioLanguageMeta.flag}{" "}
                 {targetAudioLanguageMeta.localName}
               </span>
-            </span>
+            </div>
 
-            <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+            {/* Right: Language Dropdown + Listen/Pause Dubbing Button + CC Toggle */}
+            <div className="flex items-center gap-1.5 flex-wrap shrink-0" onClick={(e) => e.stopPropagation()}>
               <select
                 value={audioLang}
                 onChange={(e) => {
@@ -2157,7 +2137,7 @@ export function NoctisVideoInterpreterPopup({
                   color: "#FDE68A",
                   borderColor: "#475569",
                 }}
-                className="rounded-md border px-1.5 py-0.5 text-[10px] font-extrabold cursor-pointer focus:outline-none"
+                className="rounded-md border px-2 py-0.5 text-[10px] sm:text-[11px] font-extrabold cursor-pointer focus:outline-none"
                 title="Choose which language to hear this video in"
               >
                 {languages.map((l) => (
@@ -2181,15 +2161,199 @@ export function NoctisVideoInterpreterPopup({
                   {isSpeaking ? labels.stopVoiceDub : labels.listenVoiceDub}
                 </span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => setShowSubtitlesStrip((prev) => !prev)}
+                style={{
+                  backgroundColor: showSubtitlesStrip ? "#065F46" : "#334155",
+                  color: "#FFFFFF",
+                }}
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-extrabold cursor-pointer shrink-0"
+                title="Toggle live translated subtitles"
+              >
+                <Subtitles className="h-3 w-3" />
+                <span style={{ color: "#FFFFFF" }}>CC</span>
+              </button>
             </div>
           </div>
-          <p
-            style={{ color: "#FFFFFF" }}
-            className="text-xs sm:text-sm font-bold leading-snug line-clamp-2 drop-shadow-sm"
-          >
-            {isLoadingTranslation ? labels.translating : activeSubtitleLine}
-          </p>
+
+          {/* Live Translated Subtitle Strip (Docked cleanly below the video, never covering the video image!) */}
+          {(isInterpretingNeeded || isSpeaking || normalizedSourceLang !== "en") && showSubtitlesStrip && (
+            <div
+              onClick={(e) => {
+                e.stopPropagation()
+                userManuallyPausedDubRef.current = false
+                if (typeof window !== "undefined") {
+                  ;(window as any).__lastOpenedNoctisPopupTitle = title
+                  ;(window as any).__noctisPopupOpenGlobal = true
+                }
+                if (!isPlaying && onRequestPlayVideo) {
+                  onRequestPlayVideo()
+                }
+                setIsPopupOpen(true)
+                if (!isSpeaking) {
+                  setForceSpeakEvenIfSameLang(true)
+                  forceSpeakRef.current = true
+                  startContinuousInterpretation(activeSentenceIdxRef.current)
+                }
+              }}
+              style={{
+                backgroundColor: "rgba(15, 23, 42, 0.95)",
+                borderColor: "rgba(56, 189, 248, 0.45)",
+              }}
+              className="mt-1.5 w-full rounded-lg border px-3 py-1.5 text-center cursor-pointer hover:border-sky-400 transition-colors"
+            >
+              <p
+                style={{ color: "#FFFFFF" }}
+                className="text-xs sm:text-[13px] font-bold leading-snug"
+              >
+                {isLoadingTranslation ? labels.translating : activeSubtitleLine}
+              </p>
+            </div>
+          )}
         </div>
+      ) : (
+        <>
+          {/* 1. COMPACT TRIGGER PILL ON THE VIDEO PLAYER (Top-Right Corner) */}
+          <div className="absolute top-10 sm:top-12 right-2 sm:right-3 z-30 flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                userManuallyPausedDubRef.current = false
+                const nextOpen = !isPopupOpen
+                if (typeof window !== "undefined") {
+                  ;(window as any).__lastOpenedNoctisPopupTitle = nextOpen ? title : ""
+                  ;(window as any).__noctisPopupOpenGlobal = nextOpen
+                }
+                if (!isPlaying && onRequestPlayVideo) {
+                  if (typeof window !== "undefined") {
+                    ;(window as any).__noctisPopupOpenGlobal = true
+                  }
+                  setIsPopupOpen(true)
+                  onRequestPlayVideo()
+                  return
+                }
+                setIsPopupOpen(nextOpen)
+                if (nextOpen && !isSpeakingRef.current) {
+                  setForceSpeakEvenIfSameLang(true)
+                  forceSpeakRef.current = true
+                  startContinuousInterpretation(activeSentenceIdxRef.current)
+                }
+              }}
+              style={{
+                backgroundColor: isPopupOpen || isSpeaking || isInterpretingNeeded ? "#0A66C2" : "rgba(15, 23, 42, 0.92)",
+                color: "#FFFFFF",
+                borderColor: "#60A5FA",
+              }}
+              className="inline-flex items-center gap-1 sm:gap-1.5 rounded-full px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-extrabold shadow-xl border-2 transition-all cursor-pointer hover:brightness-110"
+              title="Open Noctis Multilingual Video Audio Interpreter"
+            >
+              {isSpeaking ? (
+                <Radio className="h-3.5 w-3.5 text-emerald-300 animate-pulse shrink-0" />
+              ) : (
+                <Sparkles className="h-3.5 w-3.5 text-amber-300 shrink-0" />
+              )}
+              <span style={{ color: "#FFFFFF" }}>Noctis Audio</span>
+              <span
+                style={{ backgroundColor: "#0F172A", color: "#FDE68A" }}
+                className="rounded px-1.5 py-0.5 text-[10px] font-mono font-black border border-white/25"
+              >
+                {sourceLanguageMeta.flag} {sourceLanguageMeta.code.toUpperCase()} → 🔊 {targetAudioLanguageMeta.flag}{" "}
+                {targetAudioLanguageMeta.code.toUpperCase()}
+              </span>
+            </button>
+          </div>
+
+          {/* 2. SLIM, HIGH-VISIBILITY SUBTITLE BAR AT VERY BOTTOM EDGE */}
+          {(isInterpretingNeeded || isSpeaking || normalizedSourceLang !== "en") && showSubtitlesStrip && (
+            <div
+              onClick={(e) => {
+                e.stopPropagation()
+                userManuallyPausedDubRef.current = false
+                if (typeof window !== "undefined") {
+                  ;(window as any).__lastOpenedNoctisPopupTitle = title
+                  ;(window as any).__noctisPopupOpenGlobal = true
+                }
+                if (!isPlaying && onRequestPlayVideo) {
+                  onRequestPlayVideo()
+                }
+                setIsPopupOpen(true)
+                if (!isSpeaking) {
+                  setForceSpeakEvenIfSameLang(true)
+                  forceSpeakRef.current = true
+                  startContinuousInterpretation(activeSentenceIdxRef.current)
+                }
+              }}
+              style={{
+                backgroundColor: "rgba(9, 13, 22, 0.92)",
+                color: "#FFFFFF",
+                borderColor: "#38BDF8",
+              }}
+              className="absolute inset-x-4 bottom-11 z-20 mx-auto max-w-xl rounded-xl border-2 px-3.5 py-1.5 text-center shadow-2xl cursor-pointer transition-all"
+            >
+              <div className="flex items-center justify-between gap-2 text-[11px] font-extrabold mb-0.5">
+                <span style={{ color: "#7DD3FC" }} className="inline-flex items-center gap-1.5 truncate">
+                  {isSpeaking ? (
+                    <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
+                  ) : (
+                    <Sparkles className="h-3 w-3 shrink-0 text-amber-300" />
+                  )}
+                  <span className="truncate">
+                    {sourceLanguageMeta.flag} {sourceLanguageMeta.localName} → 🔊 {targetAudioLanguageMeta.flag}{" "}
+                    {targetAudioLanguageMeta.localName}
+                  </span>
+                </span>
+
+                <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                  <select
+                    value={audioLang}
+                    onChange={(e) => {
+                      const newTarget = e.target.value as LanguageCode
+                      selectSpokenAudioLanguage(newTarget, false)
+                    }}
+                    aria-label="Select target audio language"
+                    style={{
+                      backgroundColor: "#1E293B",
+                      color: "#FDE68A",
+                      borderColor: "#475569",
+                    }}
+                    className="rounded-md border px-1.5 py-0.5 text-[10px] font-extrabold cursor-pointer focus:outline-none"
+                    title="Choose which language to hear this video in"
+                  >
+                    {languages.map((l) => (
+                      <option key={l.code} value={l.code} style={{ backgroundColor: "#0F172A", color: "#FFFFFF" }}>
+                        🔊 {l.flag} {l.localName} ({l.code.toUpperCase()})
+                      </option>
+                    ))}
+                  </select>
+
+                  <button
+                    type="button"
+                    onClick={handleToggleVoiceDub}
+                    style={{
+                      backgroundColor: isSpeaking ? "#059669" : "#0A66C2",
+                      color: "#FFFFFF",
+                    }}
+                    className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-extrabold shrink-0 cursor-pointer shadow-sm"
+                  >
+                    {isSpeaking ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
+                    <span style={{ color: "#FFFFFF" }}>
+                      {isSpeaking ? labels.stopVoiceDub : labels.listenVoiceDub}
+                    </span>
+                  </button>
+                </div>
+              </div>
+              <p
+                style={{ color: "#FFFFFF" }}
+                className="text-xs sm:text-sm font-bold leading-snug line-clamp-2 drop-shadow-sm"
+              >
+                {isLoadingTranslation ? labels.translating : activeSubtitleLine}
+              </p>
+            </div>
+          )}
+        </>
       )}
 
       {/* 3. DOCKED SIDE / MOBILE SHEET COMPANION POP-UP (Responsive on Mobile & Desktop!) */}

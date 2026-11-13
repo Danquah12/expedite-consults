@@ -318,11 +318,11 @@ export function VideoShareBanner({
       className="relative w-full overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-md transition-all hover:shadow-lg"
       style={{ backgroundColor: "#171513", color: "#F5F0EB" }}
     >
-      {/* FULL-WIDTH 16:9 LINKEDIN-STYLE INLINE VIDEO STAGE (Auto-plays when scrolled into view on the Home Feed) */}
+      {/* FULL-WIDTH 16:9 LINKEDIN-STYLE INLINE VIDEO STAGE (100% Unclouded Video Canvas + Docked Noctis Interpreter Strip Below) */}
       {(resolvedYtId || videoUrl || resolvedThumb) && (
         <div
           ref={videoStageRef}
-          className="relative aspect-video w-full overflow-hidden bg-black border-b border-white/10"
+          className="relative w-full overflow-hidden bg-black border-b border-white/10 group/stage"
         >
           {isPlayingInline && (resolvedYtId || videoUrl) ? (
             <>
@@ -339,18 +339,20 @@ export function VideoShareBanner({
                   initialMuted={false}
                   playerId={bannerPlayerIdRef.current}
                   onExclusiveStop={() => setIsPlayingInline(false)}
-                  className="h-full w-full"
+                  className="w-full"
                 />
               ) : (
-                <video
-                  src={videoUrl}
-                  data-connectln-player-id={bannerPlayerIdRef.current}
-                  controls
-                  autoPlay
-                  playsInline
-                  loop
-                  className="h-full w-full object-contain bg-black"
-                />
+                <div className="aspect-video w-full bg-black">
+                  <video
+                    src={videoUrl}
+                    data-connectln-player-id={bannerPlayerIdRef.current}
+                    controls
+                    autoPlay
+                    playsInline
+                    loop
+                    className="h-full w-full object-contain bg-black"
+                  />
+                </div>
               )}
               <button
                 type="button"
@@ -358,18 +360,56 @@ export function VideoShareBanner({
                   userManuallyStoppedRef.current = true
                   setIsPlayingInline(false)
                 }}
-                style={{ backgroundColor: "rgba(0,0,0,0.85)", color: "#FFFFFF" }}
-                className="absolute top-3 right-3 z-20 rounded-full px-3 py-1 text-[11px] font-bold border border-white/20 cursor-pointer hover:bg-black"
+                style={{ backgroundColor: "rgba(0,0,0,0.82)", color: "#FFFFFF" }}
+                className="absolute top-2.5 right-2.5 z-20 rounded-full px-2.5 py-1 text-[10px] font-bold border border-white/20 cursor-pointer opacity-0 group-hover/stage:opacity-100 transition-opacity hover:bg-black"
               >
                 ✕ Close Player
               </button>
             </>
           ) : (
-            <div
-              onClick={handlePlayTrigger}
-              className="relative h-full w-full cursor-pointer group overflow-hidden"
-            >
+            <div className="flex flex-col w-full bg-black">
+              {/* Clean, Unclouded 16:9 Thumbnail Stage (Full title & details live in the ConnectLn Card below so the image is never covered!) */}
+              <div
+                onClick={handlePlayTrigger}
+                className="relative aspect-video w-full cursor-pointer group overflow-hidden bg-black"
+              >
+                {resolvedThumb && (
+                  <img
+                    src={resolvedThumb}
+                    alt={videoTitle}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-black/20 pointer-events-none" />
+
+                {/* Compact Top-Left Serial Plate & Duration Pill */}
+                <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 pointer-events-none">
+                  {serialPlate && (
+                    <span
+                      className="rounded px-2 py-0.5 font-mono text-[10px] font-extrabold uppercase tracking-wider shadow-sm"
+                      style={{ backgroundColor: "#A64532", color: "#FFFFFF" }}
+                    >
+                      {serialPlate}
+                    </span>
+                  )}
+                  {duration && (
+                    <span className="rounded bg-black/75 backdrop-blur-xs px-2 py-0.5 font-mono text-[10px] font-bold text-white border border-white/15">
+                      ⏱ {duration}
+                    </span>
+                  )}
+                </div>
+
+                {/* Center Play Button */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-[#0A66C2]/95 text-white shadow-2xl ring-4 ring-white/30 transition-transform duration-200 group-hover:scale-110">
+                    <Play className="h-6 w-6 sm:h-7 sm:w-7 fill-current ml-0.5" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Docked Noctis Audio & Live Subtitle Bar (Sits cleanly below the video canvas!) */}
               <NoctisVideoInterpreterPopup
+                dockedBelow={true}
                 title={videoTitle}
                 speaker={resolvedAuthor}
                 speakerRole={resolvedHeadline}
@@ -383,218 +423,101 @@ export function VideoShareBanner({
                   setIsPlayingInline(true)
                 }}
               />
-              {resolvedThumb && (
-                <img
-                  src={resolvedThumb}
-                  alt={videoTitle}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/30" />
-
-              {/* Top-left Verified Profession Stream Badge */}
-              <div className="absolute top-3 left-3 flex items-center gap-2">
-                {serialPlate && (
-                  <span
-                    className="rounded-md px-2 py-0.5 font-mono text-[10px] font-extrabold uppercase tracking-wider shadow-sm"
-                    style={{ backgroundColor: "#A64532", color: "#FFFFFF" }}
-                  >
-                    {serialPlate}
-                  </span>
-                )}
-                <span className="rounded-md bg-black/70 backdrop-blur-xs px-2.5 py-0.5 text-[10px] font-bold text-white border border-white/15">
-                  🎥 Verified Profession Field Stream
-                </span>
-              </div>
-
-              {/* Center Play Button (LinkedIn Video Player Style) */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-[#0A66C2]/95 text-white shadow-2xl ring-4 ring-white/30 transition-transform duration-200 group-hover:scale-110">
-                  <Play className="h-7 w-7 sm:h-8 sm:w-8 fill-current ml-1" />
-                </div>
-              </div>
-
-              {/* Bottom Title & Duration Overlay */}
-              <div className="absolute inset-x-0 bottom-0 p-3.5 sm:p-4 flex items-end justify-between gap-3">
-                <div className="min-w-0">
-                  <h3 className="text-sm sm:text-base font-extrabold text-white leading-snug line-clamp-2 drop-shadow-sm">
-                    {videoTitle}
-                  </h3>
-                  {videoSubtitle && (
-                    <p className="mt-0.5 text-[11px] sm:text-xs text-zinc-200 line-clamp-1">
-                      {videoSubtitle}
-                    </p>
-                  )}
-                </div>
-                {duration && (
-                  <span className="shrink-0 rounded bg-black/85 px-2 py-0.5 font-mono text-[11px] font-bold text-white border border-white/15">
-                    {duration}
-                  </span>
-                )}
-              </div>
             </div>
           )}
         </div>
       )}
 
-      {/* OFFICIAL CONNECTLN LOGO CARD WITH USER PROFILE PICTURE INSERTED INSIDE */}
+      {/* OFFICIAL CONNECTLN LOGO CARD WITH USER PROFILE PICTURE & FULL-WIDTH DETAILS (Zero Information Lost, Half the Clutter!) */}
       <div
         onClick={handlePlayTrigger}
         className={`${
-          compact ? "p-3 sm:p-3.5" : "p-3.5 sm:p-4"
-        } flex flex-col sm:flex-row items-center gap-3.5 sm:gap-5 cursor-pointer group w-full`}
+          compact ? "p-2.5 sm:p-3" : "p-3 sm:p-3.5"
+        } flex flex-col gap-2.5 cursor-pointer group w-full`}
         style={{
           background:
             "radial-gradient(circle at 50% 50%, #221F1D 0%, #171513 100%)"
         }}
       >
-        {/* LEFT: Circular Profile Picture Inserted Inside ConnectLn Logo Card (Full Name & Headline Always Visible) */}
-        <div className="flex flex-col items-center shrink-0 sm:w-44">
-          <div
-            className={`relative rounded-full p-1 bg-gradient-to-tr from-[#0066FF] via-[#38BDF8] to-[#0A66C2] shadow-xl ${
-              compact
-                ? "h-20 w-20 sm:h-24 sm:w-24"
-                : "h-28 w-28 sm:h-32 sm:w-32"
-            }`}
-          >
+        {/* TOP ROW: Left = Circular Author Avatar + Full Name & Headline | Right = Official ConnectLn Brand + Watch/Close Action */}
+        <div className="flex flex-wrap items-center justify-between gap-3 w-full">
+          {/* LEFT: Circular Profile Picture + Author Name & Headline */}
+          <div className="flex items-center gap-3 min-w-0 flex-1">
             <div
-              className="h-full w-full rounded-full overflow-hidden border-2"
-              style={{ borderColor: "#171513", backgroundColor: "#221F1D" }}
+              className={`relative rounded-full p-0.5 bg-gradient-to-tr from-[#0066FF] via-[#38BDF8] to-[#0A66C2] shadow-lg shrink-0 ${
+                compact ? "h-11 w-11 sm:h-12 sm:w-12" : "h-12 w-12 sm:h-14 sm:w-14"
+              }`}
             >
-              <img
-                src={resolvedAvatar}
-                alt={resolvedAuthor}
-                onError={(e) => {
-                  e.currentTarget.src = generatePersonalSignatureAvatar({ name: resolvedAuthor })
-                }}
-                className="h-full w-full object-cover object-center"
-              />
-            </div>
-            <span
-              className="absolute bottom-0.5 right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#0066FF] text-white ring-2 ring-[#171513] shadow-sm"
-              title={`Shared by ${resolvedAuthor}`}
-            >
-              <ShieldCheck className="h-3 w-3" />
-            </span>
-          </div>
-
-          <div className="mt-2 text-center w-full px-1">
-            <p
-              className="text-xs sm:text-sm font-extrabold leading-snug break-words"
-              style={{ color: "#F5F0EB" }}
-            >
-              {resolvedAuthor}
-            </p>
-            {resolvedHeadline && (
-              <p
-                className="text-[10px] font-medium leading-snug break-words mt-0.5"
-                style={{ color: "#9E9891" }}
+              <div
+                className="h-full w-full rounded-full overflow-hidden border-2"
+                style={{ borderColor: "#171513", backgroundColor: "#221F1D" }}
               >
-                {resolvedHeadline}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* RIGHT: Official ConnectLn Emblem ("C" Squircle) + ConnectLn Wordmark + Terracotta Underline + Full Video Details */}
-        <div className="flex flex-col items-center sm:items-start text-center sm:text-left min-w-0 flex-1 w-full">
-          <div className="flex items-center gap-3">
-            {/* Official ConnectLn "C" Squircle Icon */}
-            <img
-              src="/brand/connectln-icon-256.png"
-              alt="ConnectLn Emblem"
-              className={`${
-                compact ? "h-12 w-12 sm:h-14 sm:w-14" : "h-14 w-14 sm:h-16 sm:w-16"
-              } rounded-2xl object-contain shadow-md shrink-0`}
-            />
-
-            <div className="text-left">
-              {/* Official ConnectLn Wordmark with Terracotta Underline */}
-              <div className="inline-flex flex-col items-start">
-                <span
-                  className={`${
-                    compact ? "text-xl sm:text-2xl" : "text-2xl sm:text-3xl"
-                  } font-black tracking-tight leading-none`}
-                  style={{ color: "#F5F0EB" }}
-                >
-                  ConnectLn
-                </span>
-                <span
-                  className="mt-1 h-1.5 w-[78%] rounded-full"
-                  style={{ backgroundColor: "#A64532" }}
+                <img
+                  src={resolvedAvatar}
+                  alt={resolvedAuthor}
+                  onError={(e) => {
+                    e.currentTarget.src = generatePersonalSignatureAvatar({ name: resolvedAuthor })
+                  }}
+                  className="h-full w-full object-cover object-center"
                 />
               </div>
-
-              <p
-                className="mt-1 text-xs font-medium"
-                style={{ color: "#9E9891" }}
+              <span
+                className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#0066FF] text-white ring-2 ring-[#171513] shadow-sm"
+                title={`Shared by ${resolvedAuthor}`}
               >
-                Tickets, vouches, and real work
+                <ShieldCheck className="h-2.5 w-2.5" />
+              </span>
+            </div>
+
+            <div className="min-w-0 flex-1 text-left">
+              <p
+                className="text-xs sm:text-sm font-extrabold leading-snug break-words"
+                style={{ color: "#F5F0EB" }}
+              >
+                {resolvedAuthor}
               </p>
+              {resolvedHeadline && (
+                <p
+                  className="text-[11px] font-medium leading-snug break-words mt-0.5"
+                  style={{ color: "#9E9891" }}
+                >
+                  {resolvedHeadline}
+                </p>
+              )}
             </div>
           </div>
 
-          {/* Shared Video / Content Title & Play Bar Inside ConnectLn Card — Never Clipped or Truncated */}
-          <div
-            className="mt-3 w-full rounded-xl p-2.5 sm:p-3 border flex flex-col sm:flex-row sm:items-center justify-between gap-2.5"
-            style={{
-              backgroundColor: "rgba(255,255,255,0.04)",
-              borderColor: "rgba(255,255,255,0.12)"
-            }}
-          >
-            <div className="flex items-start sm:items-center gap-2.5 min-w-0 flex-1">
-              {resolvedThumb && (
-                <div className="relative h-11 w-16 sm:h-12 sm:w-20 rounded-lg overflow-hidden shrink-0 border border-white/15 bg-black">
-                  <img
-                    src={resolvedThumb}
-                    alt={videoTitle}
-                    className="h-full w-full object-cover opacity-90 group-hover:scale-105 transition-transform"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                    <Play className="h-3.5 w-3.5 text-white fill-current" />
-                  </div>
-                </div>
-              )}
-
-              <div className="min-w-0 flex-1 text-left">
-                <div className="flex items-center gap-1.5 flex-wrap mb-1">
-                  {serialPlate && (
-                    <span
-                      className="rounded px-1.5 py-0.5 font-mono text-[10px] font-bold"
-                      style={{
-                        backgroundColor: "#A64532",
-                        color: "#F5F0EB"
-                      }}
-                    >
-                      {serialPlate}
-                    </span>
-                  )}
-                  {duration && (
-                    <span
-                      className="rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold"
-                      style={{
-                        backgroundColor: "rgba(255,255,255,0.08)",
-                        color: "#D6D1C7"
-                      }}
-                    >
-                      ⏱ {duration}
-                    </span>
-                  )}
-                </div>
-                <h4
-                  className="text-xs sm:text-sm font-bold leading-snug break-words"
-                  style={{ color: "#F5F0EB" }}
-                >
-                  {videoTitle}
-                </h4>
-                {(videoSubtitle || takeaways[0]) && (
-                  <p
-                    className="text-[11px] leading-snug break-words mt-0.5"
-                    style={{ color: "#9E9891" }}
+          {/* RIGHT: Official ConnectLn Emblem ("C" Squircle) + Wordmark + Watch / Close Button */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            <div className="flex items-center gap-2">
+              <img
+                src="/brand/connectln-icon-256.png"
+                alt="ConnectLn Emblem"
+                className={`${
+                  compact ? "h-8 w-8 sm:h-9 sm:w-9" : "h-9 w-9 sm:h-10 sm:w-10"
+                } rounded-xl object-contain shadow-sm shrink-0`}
+              />
+              <div className="text-left">
+                <div className="inline-flex flex-col items-start">
+                  <span
+                    className={`${
+                      compact ? "text-base sm:text-lg" : "text-lg sm:text-xl"
+                    } font-black tracking-tight leading-none`}
+                    style={{ color: "#F5F0EB" }}
                   >
-                    {videoSubtitle || takeaways[0]}
-                  </p>
-                )}
+                    ConnectLn
+                  </span>
+                  <span
+                    className="mt-0.5 h-1 w-[78%] rounded-full"
+                    style={{ backgroundColor: "#A64532" }}
+                  />
+                </div>
+                <p
+                  className="mt-0.5 text-[10px] font-medium leading-none"
+                  style={{ color: "#9E9891" }}
+                >
+                  Tickets, vouches, and real work
+                </p>
               </div>
             </div>
 
@@ -602,12 +525,71 @@ export function VideoShareBanner({
               type="button"
               onClick={handlePlayTrigger}
               style={{ backgroundColor: "#A64532", color: "#FFFFFF" }}
-              className="self-end sm:self-center shrink-0 inline-flex items-center gap-1.5 rounded-full hover:opacity-95 px-3.5 py-1.5 text-xs font-bold shadow-sm transition-all cursor-pointer"
+              className="shrink-0 inline-flex items-center gap-1.5 rounded-full hover:opacity-95 px-3 py-1.5 text-[11px] sm:text-xs font-bold shadow-sm transition-all cursor-pointer"
             >
-              <Play className="h-3.5 w-3.5 fill-current" />
-              <span>{isPlayingInline ? "Playing" : "Watch"}</span>
+              <Play className="h-3 w-3 fill-current" />
+              <span>{isPlayingInline ? "Close Player" : "Watch"}</span>
             </button>
           </div>
+        </div>
+
+        {/* BOTTOM ROW: Full-Width Shared Video Title, Badges & Description (Spans 100% width so text never wraps into narrow columns!) */}
+        <div
+          className="w-full rounded-xl px-3 py-2 border text-left"
+          style={{
+            backgroundColor: "rgba(255,255,255,0.04)",
+            borderColor: "rgba(255,255,255,0.12)"
+          }}
+        >
+          <div className="flex items-center gap-1.5 flex-wrap mb-1">
+            {serialPlate && (
+              <span
+                className="rounded px-1.5 py-0.5 font-mono text-[10px] font-bold"
+                style={{
+                  backgroundColor: "#A64532",
+                  color: "#F5F0EB"
+                }}
+              >
+                {serialPlate}
+              </span>
+            )}
+            {duration && (
+              <span
+                className="rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold"
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.08)",
+                  color: "#D6D1C7"
+                }}
+              >
+                ⏱ {duration}
+              </span>
+            )}
+            <span
+              className="rounded px-1.5 py-0.5 text-[10px] font-semibold"
+              style={{
+                backgroundColor: "rgba(255,255,255,0.06)",
+                color: "#9E9891"
+              }}
+            >
+              🎥 Verified Profession Field Stream
+            </span>
+          </div>
+
+          <h4
+            className="text-xs sm:text-sm font-bold leading-snug break-words"
+            style={{ color: "#F5F0EB" }}
+          >
+            {videoTitle}
+          </h4>
+
+          {(videoSubtitle || takeaways[0]) && (
+            <p
+              className="text-[11px] leading-snug break-words mt-0.5"
+              style={{ color: "#9E9891" }}
+            >
+              {videoSubtitle || takeaways[0]}
+            </p>
+          )}
         </div>
       </div>
 

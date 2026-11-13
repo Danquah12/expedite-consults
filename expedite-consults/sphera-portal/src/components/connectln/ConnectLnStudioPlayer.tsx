@@ -129,7 +129,7 @@ export function ConnectLnStudioPlayer({
     return 120
   })
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false)
-  const [showControls, setShowControls] = useState<boolean>(true)
+  const [showControls, setShowControls] = useState<boolean>(!autoPlay)
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const sendPlayerCommand = useCallback((func: string, args: any[] = []) => {
@@ -372,7 +372,7 @@ export function ConnectLnStudioPlayer({
     if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
     hideTimerRef.current = setTimeout(() => {
       if (isPlaying) setShowControls(false)
-    }, 2800)
+    }, 1400)
   }
 
   const togglePlay = (e?: React.MouseEvent) => {
@@ -497,48 +497,197 @@ export function ConnectLnStudioPlayer({
   return (
     <div
       ref={containerRef}
-      onMouseMove={triggerControlsVisibility}
-      onClick={togglePlay}
-      className={`relative overflow-hidden bg-black select-none group cursor-pointer ${className}`}
+      className={`flex flex-col w-full bg-black overflow-hidden ${className}`}
     >
-      {/* Cropped Video Surface — hides native top title & bottom watermark; unmounts iframe if stopped by another video */}
-      <div className="absolute inset-x-0 -top-[62px] -bottom-[62px] pointer-events-none">
-        {isStoppedByOther ? (
+      {/* 100% Unclouded 16:9 Video Canvas (Controls auto-hide while playing and appear only on hover/pause) */}
+      <div
+        onMouseMove={triggerControlsVisibility}
+        onClick={togglePlay}
+        className="relative flex-1 min-h-[200px] aspect-video w-full overflow-hidden bg-black select-none group cursor-pointer"
+      >
+        {/* Cropped Video Surface — hides native top title & bottom watermark; unmounts iframe if stopped by another video */}
+        <div className="absolute inset-x-0 -top-[62px] -bottom-[62px] pointer-events-none">
+          {isStoppedByOther ? (
+            <img
+              src={posterImageUrl || `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`}
+              alt={title}
+              className="h-full w-full object-cover opacity-75"
+            />
+          ) : (
+            <iframe
+              ref={iframeRef}
+              key={youtubeId}
+              src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=${autoPlay ? 1 : 0}&mute=1&loop=1&playlist=${youtubeId}&controls=0&rel=0&modestbranding=1&iv_load_policy=3&cc_load_policy=${initialLangRef.current !== normalizedSourceLang ? 1 : 0}&cc_lang_pref=${initialLangRef.current}&hl=${initialLangRef.current}&disablekb=1&fs=0&playsinline=1&enablejsapi=1`}
+              title={title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              onLoad={() => {
+                const win = iframeRef.current?.contentWindow
+                if (win) {
+                  win.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), "*")
+                }
+              }}
+              className="h-full w-full border-0 pointer-events-none"
+            />
+          )}
+        </div>
+
+        {/* Instant Thumbnail Preview Overlay while YouTube stream initializes (Prevents initial black screen!) */}
+        {!hasVideoStarted && !isStoppedByOther && (
           <img
             src={posterImageUrl || `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`}
             alt={title}
-            className="h-full w-full object-cover opacity-75"
-          />
-        ) : (
-          <iframe
-            ref={iframeRef}
-            key={youtubeId}
-            src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=${autoPlay ? 1 : 0}&mute=1&loop=1&playlist=${youtubeId}&controls=0&rel=0&modestbranding=1&iv_load_policy=3&cc_load_policy=${initialLangRef.current !== normalizedSourceLang ? 1 : 0}&cc_lang_pref=${initialLangRef.current}&hl=${initialLangRef.current}&disablekb=1&fs=0&playsinline=1&enablejsapi=1`}
-            title={title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            onLoad={() => {
-              const win = iframeRef.current?.contentWindow
-              if (win) {
-                win.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), "*")
-              }
-            }}
-            className="h-full w-full border-0 pointer-events-none"
+            className="absolute inset-0 z-[5] h-full w-full object-cover pointer-events-none transition-opacity duration-200"
           />
         )}
+
+        {/* Floating Unmute Badge when Auto-Playing Muted on Scroll */}
+        {isPlaying && isMuted && !isStoppedByOther && language === normalizedSourceLang && !isVoiceDuckingRef.current && (
+          <button
+            type="button"
+            onClick={toggleMute}
+            style={{ color: "#FFFFFF" }}
+            className="absolute top-3 left-3 z-30 inline-flex items-center gap-1 sm:gap-1.5 rounded-full bg-black/85 hover:bg-[#0A66C2] border border-white/25 px-2.5 sm:px-3 py-1 text-[10px] sm:text-[11px] font-extrabold shadow-lg backdrop-blur-xs transition-all cursor-pointer"
+          >
+            <VolumeX className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-amber-400" />
+            <span style={{ color: "#FFFFFF" }}>Tap for Sound 🔊</span>
+          </button>
+        )}
+
+        {/* Top ConnectLn Studio Header Overlay (Auto-hides during playback so video is 100% clear) */}
+        <div
+          style={{ color: "#FFFFFF" }}
+          className={`absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-black/80 via-black/35 to-transparent px-2.5 sm:px-4 py-1.5 sm:py-2 flex items-center justify-between gap-2 sm:gap-3 transition-opacity duration-300 pointer-events-none ${
+            showControls || !isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          }`}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            {speakerAvatarUrl ? (
+              <img
+                src={speakerAvatarUrl}
+                alt={speaker}
+                className="h-6 w-6 rounded-full object-cover border border-amber-400/80 shrink-0 shadow-sm"
+              />
+            ) : (
+              <div className="h-6 w-6 rounded-md bg-[#171513] border border-white/15 flex items-center justify-center shrink-0 shadow-sm">
+                <span style={{ color: "#FFFFFF" }} className="font-black text-[11px] tracking-tighter">C</span>
+              </div>
+            )}
+            <div className="min-w-0">
+              <p style={{ color: "#FFFFFF" }} className="text-[11px] sm:text-xs font-bold truncate drop-shadow-xs">{title}</p>
+            </div>
+          </div>
+
+          <span style={{ color: "#FCD34D" }} className="rounded-md bg-black/75 border border-white/15 px-2 py-0.5 text-[10px] font-mono font-bold shrink-0">
+            {serialPlate}
+          </span>
+        </div>
+
+        {/* Center Play / Pause Indicator (Only visible when paused or hovered) */}
+        <div
+          className={`absolute inset-0 z-10 flex items-center justify-center pointer-events-none transition-opacity duration-200 ${
+            !isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-85"
+          }`}
+        >
+          <div style={{ color: "#FFFFFF" }} className="h-13 w-13 rounded-full bg-black/65 border border-white/25 flex items-center justify-center shadow-2xl backdrop-blur-xs">
+            {isPlaying ? <Pause className="h-5 w-5 fill-white" /> : <Play className="h-5 w-5 fill-white ml-0.5" />}
+          </div>
+        </div>
+
+        {/* Bottom ConnectLn Studio Control Bar (Auto-hides while playing so video is 100% clear) */}
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{ color: "#FFFFFF" }}
+          className={`absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/90 via-black/65 to-transparent px-3.5 pt-4 pb-2 space-y-1 transition-opacity duration-300 ${
+            showControls || !isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          }`}
+        >
+          {/* Interactive Timeline Scrubber */}
+          <div className="relative flex items-center w-full">
+            <div className="w-full h-1.5 rounded-full bg-white/25 overflow-hidden">
+              <div
+                style={{ width: `${progressPercent}%` }}
+                className="h-full bg-[#A64532] rounded-full transition-all duration-150"
+              />
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={Math.max(1, duration)}
+              step={0.5}
+              value={currentTime}
+              onChange={handleSeek}
+              aria-label="Seek video timeline"
+              className="absolute inset-0 w-full h-3 opacity-0 cursor-pointer"
+            />
+          </div>
+
+          {/* Controls & ConnectLn Studio Watermark Row */}
+          <div style={{ color: "#FFFFFF" }} className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={togglePlay}
+                style={{ color: "#FFFFFF" }}
+                className="p-1 rounded-lg hover:bg-white/15 transition-colors cursor-pointer"
+                title={isPlaying ? "Pause" : "Play"}
+              >
+                {isPlaying ? <Pause className="h-4 w-4 fill-white" /> : <Play className="h-4 w-4 fill-white" />}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleRestart}
+                style={{ color: "#FFFFFF" }}
+                className="p-1 rounded-lg hover:bg-white/15 transition-colors cursor-pointer"
+                title="Restart briefing"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={toggleMute}
+                style={{ color: "#FFFFFF" }}
+                className="p-1 rounded-lg hover:bg-white/15 transition-colors cursor-pointer"
+                title={isMuted ? "Unmute" : "Mute"}
+              >
+                {isMuted ? <VolumeX className="h-4 w-4 text-rose-400" /> : <Volume2 className="h-4 w-4" />}
+              </button>
+
+              <span style={{ color: "#F4F4F5" }} className="text-[11px] font-mono font-semibold">
+                {formatTime(currentTime)} <span style={{ color: "#A1A1AA" }}>/ {formatTime(duration)}</span>
+              </span>
+            </div>
+
+            {/* Right side: ConnectLn Studio Brand Pill + Fullscreen */}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 rounded-md bg-[#171513]/90 border border-white/15 px-2 py-0.5 shadow-xs">
+                <span style={{ color: "#FFFFFF" }} className="inline-flex h-3.5 w-3.5 items-center justify-center rounded bg-[#A64532] text-[9px] font-black">
+                  C
+                </span>
+                <span style={{ color: "#FFFFFF" }} className="text-[10px] font-extrabold tracking-tight">
+                  ConnectLn
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={toggleFullscreen}
+                style={{ color: "#FFFFFF" }}
+                className="p-1 rounded-lg hover:bg-white/15 transition-colors cursor-pointer"
+                title="Toggle fullscreen"
+              >
+                {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Instant Thumbnail Preview Overlay while YouTube stream initializes (Prevents initial black screen!) */}
-      {!hasVideoStarted && !isStoppedByOther && (
-        <img
-          src={posterImageUrl || `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`}
-          alt={title}
-          className="absolute inset-0 z-[5] h-full w-full object-cover pointer-events-none transition-opacity duration-200"
-        />
-      )}
-
-      {/* Noctis AI Live Video Language Interpreter & Voice Dubbing Pop-up */}
+      {/* DOCKED NOCTIS LIVE VIDEO LANGUAGE INTERPRETER & VOICE DUBBING BAR (Sits cleanly below the video canvas!) */}
       {!isStoppedByOther && (
         <NoctisVideoInterpreterPopup
+          dockedBelow={true}
           youtubeId={youtubeId}
           title={title}
           speaker={speaker}
@@ -568,153 +717,6 @@ export function ConnectLnStudioPlayer({
           }}
         />
       )}
-
-      {/* Floating Unmute Badge when Auto-Playing Muted on Scroll */}
-      {isPlaying && isMuted && !isStoppedByOther && language === normalizedSourceLang && !isVoiceDuckingRef.current && (
-        <button
-          type="button"
-          onClick={toggleMute}
-          style={{ color: "#FFFFFF" }}
-          className="absolute top-10 sm:top-12 left-2 sm:left-3 z-30 inline-flex items-center gap-1 sm:gap-1.5 rounded-full bg-black/85 hover:bg-[#0A66C2] border border-white/25 px-2.5 sm:px-3 py-1 text-[10px] sm:text-[11px] font-extrabold shadow-lg backdrop-blur-xs transition-all cursor-pointer"
-        >
-          <VolumeX className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-amber-400" />
-          <span style={{ color: "#FFFFFF" }}>Tap for Sound 🔊</span>
-        </button>
-      )}
-
-      {/* Top ConnectLn Studio Header Overlay */}
-      <div
-        style={{ color: "#FFFFFF" }}
-        className={`absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-black/85 via-black/45 to-transparent px-2.5 sm:px-4 py-1.5 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-3 transition-opacity duration-300 ${
-          showControls || !isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-        }`}
-      >
-        <div className="flex items-center gap-2.5 min-w-0">
-          {/* Instructor Human Face Avatar or Official ConnectLn Squircle Badge */}
-          {speakerAvatarUrl ? (
-            <img
-              src={speakerAvatarUrl}
-              alt={speaker}
-              className="h-7 w-7 rounded-full object-cover border border-amber-400/80 shrink-0 shadow-sm"
-            />
-          ) : (
-            <div className="h-7 w-7 rounded-lg bg-[#171513] border border-white/15 flex items-center justify-center shrink-0 shadow-sm">
-              <span style={{ color: "#FFFFFF" }} className="font-black text-xs tracking-tighter">C</span>
-            </div>
-          )}
-          <div className="min-w-0">
-            <p style={{ color: "#FFFFFF" }} className="text-xs font-bold truncate drop-shadow-xs">{title}</p>
-            <p style={{ color: "#E4E4E7" }} className="text-[10px] truncate">
-              {speaker}{speakerRole ? ` · ${speakerRole}` : ""} · {serialPlate}
-            </p>
-          </div>
-        </div>
-
-        <span style={{ color: "#FCD34D" }} className="rounded-md bg-black/75 border border-white/15 px-2 py-0.5 text-[10px] font-mono font-bold shrink-0">
-          {serialPlate}
-        </span>
-      </div>
-
-      {/* Center Play / Pause Indicator */}
-      <div
-        className={`absolute inset-0 z-10 flex items-center justify-center pointer-events-none transition-opacity duration-200 ${
-          !isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-90"
-        }`}
-      >
-        <div style={{ color: "#FFFFFF" }} className="h-14 w-14 rounded-full bg-black/70 border border-white/25 flex items-center justify-center shadow-2xl backdrop-blur-xs">
-          {isPlaying ? <Pause className="h-6 w-6 fill-white" /> : <Play className="h-6 w-6 fill-white ml-0.5" />}
-        </div>
-      </div>
-
-      {/* Bottom ConnectLn Studio Control Bar (Replaces YouTube Bar & Logo) */}
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{ color: "#FFFFFF" }}
-        className={`absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/95 via-black/75 to-transparent px-4 pt-5 pb-2.5 space-y-1.5 transition-opacity duration-300 ${
-          showControls || !isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-        }`}
-      >
-        {/* Interactive Timeline Scrubber */}
-        <div className="relative flex items-center w-full">
-          <div className="w-full h-1.5 rounded-full bg-white/25 overflow-hidden">
-            <div
-              style={{ width: `${progressPercent}%` }}
-              className="h-full bg-[#A64532] rounded-full transition-all duration-150"
-            />
-          </div>
-          <input
-            type="range"
-            min={0}
-            max={Math.max(1, duration)}
-            step={0.5}
-            value={currentTime}
-            onChange={handleSeek}
-            aria-label="Seek video timeline"
-            className="absolute inset-0 w-full h-3 opacity-0 cursor-pointer"
-          />
-        </div>
-
-        {/* Controls & ConnectLn Studio Watermark Row */}
-        <div style={{ color: "#FFFFFF" }} className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <button
-              type="button"
-              onClick={togglePlay}
-              style={{ color: "#FFFFFF" }}
-              className="p-1 rounded-lg hover:bg-white/15 transition-colors cursor-pointer"
-              title={isPlaying ? "Pause" : "Play"}
-            >
-              {isPlaying ? <Pause className="h-4 w-4 fill-white" /> : <Play className="h-4 w-4 fill-white" />}
-            </button>
-
-            <button
-              type="button"
-              onClick={handleRestart}
-              style={{ color: "#FFFFFF" }}
-              className="p-1 rounded-lg hover:bg-white/15 transition-colors cursor-pointer"
-              title="Restart briefing"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-            </button>
-
-            <button
-              type="button"
-              onClick={toggleMute}
-              style={{ color: "#FFFFFF" }}
-              className="p-1 rounded-lg hover:bg-white/15 transition-colors cursor-pointer"
-              title={isMuted ? "Unmute" : "Mute"}
-            >
-              {isMuted ? <VolumeX className="h-4 w-4 text-rose-400" /> : <Volume2 className="h-4 w-4" />}
-            </button>
-
-            <span style={{ color: "#F4F4F5" }} className="text-[11px] font-mono font-semibold">
-              {formatTime(currentTime)} <span style={{ color: "#A1A1AA" }}>/ {formatTime(duration)}</span>
-            </span>
-          </div>
-
-          {/* Right side: ConnectLn Studio Brand Pill + Fullscreen (Where YouTube watermark used to be) */}
-          <div className="flex items-center gap-2.5">
-            <div className="flex items-center gap-1.5 rounded-md bg-[#171513]/90 border border-white/15 px-2.5 py-1 shadow-xs">
-              <span style={{ color: "#FFFFFF" }} className="inline-flex h-4 w-4 items-center justify-center rounded bg-[#A64532] text-[10px] font-black">
-                C
-              </span>
-              <span style={{ color: "#FFFFFF" }} className="text-[11px] font-extrabold tracking-tight">
-                ConnectLn
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={toggleFullscreen}
-              style={{ color: "#FFFFFF" }}
-              className="p-1 rounded-lg hover:bg-white/15 transition-colors cursor-pointer"
-              title="Toggle fullscreen"
-            >
-              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }

@@ -1095,7 +1095,7 @@ export function FeedPostCard({
           )}
 
           {watchCompanionVideo && post.media.youtubeId ? (
-            <div className="aspect-video w-full bg-black">
+            <div className="w-full bg-black">
               <ConnectLnStudioPlayer
                 youtubeId={post.media.youtubeId}
                 title={post.media.title || "ConnectLn Video Briefing"}
@@ -1103,7 +1103,7 @@ export function FeedPostCard({
                 speaker={resolvedAuthorName}
                 durationLabel={post.media.duration || "3:45"}
                 onExclusiveStop={() => setWatchCompanionVideo(false)}
-                className="h-full w-full"
+                className="w-full"
               />
             </div>
           ) : post.media.visualStyle === 'poster_frame' ? (
