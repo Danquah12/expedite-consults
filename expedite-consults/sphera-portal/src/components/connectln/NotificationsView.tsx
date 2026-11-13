@@ -170,6 +170,25 @@ export function NotificationsView({
   const [notifications, setNotifications] = useState<CategorizedNotificationItem[]>(INITIAL_CATEGORIZED_NOTIFICATIONS)
   const [unreadOnly, setUnreadOnly] = useState(false)
   const [readDynamicAlertIds, setReadDynamicAlertIds] = useState<string[]>([])
+
+  // Live Sync with Noctis Daily Challenge & Alert Engine via /api/connectin/alerts
+  useEffect(() => {
+    let isMounted = true
+    const fetchIncomingAlerts = async () => {
+      try {
+        const res = await fetch("/api/connectin/alerts")
+        if (res.ok) {
+          const data = await res.json()
+          if (data.success && Array.isArray(data.alerts) && data.alerts.length > 0 && isMounted) {
+            setNotifications(data.alerts)
+          }
+        }
+      } catch {}
+    }
+    fetchIncomingAlerts()
+    const timer = setInterval(fetchIncomingAlerts, 15000)
+    return () => { isMounted = false; clearInterval(timer) }
+  }, [])
   const [followBundle, setFollowBundle] = useState<UserFollowBundle>(() =>
     loadUserFollowBundle(currentUserName)
   )
