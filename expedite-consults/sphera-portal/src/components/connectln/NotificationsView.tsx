@@ -697,21 +697,28 @@ export function NotificationsView({
 
         {/* Featured Noctis 6AM Frontier & Benchmark Invariant Alert Banner */}
         <div
-          className="mt-4 rounded-2xl border-2 border-red-500/50 p-5 shadow-xl transition-all"
-          style={{ backgroundColor: '#090d16', color: '#ffffff' }}
+          className="mt-4 rounded-2xl p-5 shadow-md transition-all"
+          style={{
+            backgroundColor: '#ffffff',
+            border: '2px solid #dc2626',
+            color: '#0f172a'
+          }}
         >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/15">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b" style={{ borderColor: '#e2e8f0' }}>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="rounded-full bg-red-600 px-3 py-1 text-[11px] font-black tracking-wider uppercase text-white shadow-md">
+              <span
+                className="rounded-full px-3 py-1 text-[11px] font-black tracking-wider uppercase shadow-xs"
+                style={{ backgroundColor: '#dc2626', color: '#ffffff' }}
+              >
                 🔴 Noctis 6AM Frontier Alert
               </span>
               <span
                 className="rounded-full px-2.5 py-0.5 text-[11px] font-extrabold border"
-                style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', color: '#34d399', borderColor: 'rgba(52, 211, 153, 0.4)' }}
+                style={{ backgroundColor: '#dcfce7', color: '#15803d', borderColor: '#86efac' }}
               >
-                Invariant 100% {frontierBannerData.status}
+                ✓ Invariant 100% {frontierBannerData.status}
               </span>
-              <span className="text-xs font-semibold" style={{ color: '#94a3b8' }}>
+              <span className="text-xs font-bold" style={{ color: '#475569' }}>
                 {frontierBannerData.domain} · {frontierBannerData.durationMs}ms SLA
               </span>
             </div>
@@ -719,38 +726,46 @@ export function NotificationsView({
               type="button"
               onClick={handleRunNewChallengeTest}
               disabled={frontierBannerData.isRunning}
-              className="rounded-xl px-3.5 py-1.5 text-xs font-black transition-all cursor-pointer shadow-md disabled:opacity-50"
-              style={{ backgroundColor: '#2563eb', color: '#ffffff', border: '1px solid #60a5fa' }}
+              className="rounded-xl px-4 py-2 text-xs font-black transition-all cursor-pointer shadow-sm hover:opacity-90 disabled:opacity-50"
+              style={{ backgroundColor: '#0a66c2', color: '#ffffff', border: '1px solid #004182' }}
             >
               {frontierBannerData.isRunning ? "🔄 Evaluating Invariant..." : "🔄 Test Another Challenge Now"}
             </button>
           </div>
 
-          <div className="mt-4 space-y-3">
+          <div className="mt-4 space-y-3.5">
             <div>
-              <span className="text-xs font-extrabold uppercase tracking-wider block mb-1.5" style={{ color: '#f87171' }}>
+              <span className="text-xs font-black uppercase tracking-wider block mb-1.5" style={{ color: '#b91c1c' }}>
                 Formulated Challenge Question:
               </span>
-              <p
-                className="text-sm sm:text-base font-semibold rounded-xl p-3.5 border leading-relaxed"
-                style={{ backgroundColor: '#131b2e', color: '#ffffff', borderColor: 'rgba(255,255,255,0.15)' }}
+              <div
+                className="text-sm sm:text-base font-bold rounded-xl p-4 border leading-relaxed"
+                style={{
+                  backgroundColor: '#f8fafc',
+                  color: '#0f172a',
+                  borderColor: '#cbd5e1'
+                }}
               >
                 "{frontierBannerData.question}"
-              </p>
+              </div>
             </div>
 
             <div>
-              <span className="text-xs font-extrabold uppercase tracking-wider block mb-1.5" style={{ color: '#34d399' }}>
+              <span className="text-xs font-black uppercase tracking-wider block mb-1.5" style={{ color: '#15803d' }}>
                 Evaluated Safety Mandate &amp; Invariant Verdict:
               </span>
               <div
-                className="text-xs sm:text-sm font-medium rounded-xl p-3.5 border leading-relaxed"
-                style={{ backgroundColor: '#062817', color: '#ecfdf5', borderColor: 'rgba(52, 211, 153, 0.4)' }}
+                className="text-xs sm:text-sm font-semibold rounded-xl p-4 border leading-relaxed"
+                style={{
+                  backgroundColor: '#f0fdf4',
+                  color: '#064e3b',
+                  borderColor: '#86efac'
+                }}
               >
-                <span className="font-extrabold" style={{ color: '#6ee7b7' }}>
-                  🚨 CRITICAL INVARIANT ENFORCEMENT &amp; SAFETY VETO:
-                </span>
-                <p className="mt-1" style={{ color: '#f0fdf4' }}>
+                <div className="font-black text-sm mb-1" style={{ color: '#b91c1c' }}>
+                  🚨 CRITICAL SAFETY VETO: PROMPT SUPERCRITICAL EXCURSION SCRAM
+                </div>
+                <p className="mt-1" style={{ color: '#14532d' }}>
                   {frontierBannerData.verdict}
                 </p>
               </div>
