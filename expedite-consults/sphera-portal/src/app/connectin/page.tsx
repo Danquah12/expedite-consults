@@ -3461,6 +3461,21 @@ export default function ConnectLnPage() {
             onNavigateTab={(tab) => setActiveTab(tab as any)}
             currentUserName={userData.name}
             currentUserProfession={userData.headline}
+            currentUserAvatar={userData.avatar}
+            onPostToFeed={(content, repostOf) =>
+              handleAddPost({
+                author: {
+                  id: userData.id,
+                  name: userData.name,
+                  headline: userData.headline,
+                  avatar: userData.avatar,
+                  connectionDegree: 'You',
+                },
+                visibility: 'Public',
+                content: repostOf ? `🔁 Reposted Alert from ${repostOf}:\n\n${content}` : content,
+                postType: 'standard',
+              } as Omit<Post, 'id' | 'timestamp' | 'stats' | 'comments'>)
+            }
           />
         )}
 

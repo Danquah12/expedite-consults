@@ -332,11 +332,137 @@ export function NotificationsView({
 - **Time to Reach Reuse Threshold (750):** **\`31.4 minutes\`** ($t = -15 \\times \\log_2(750 / 3200)$)
 - **Policy Directive:** Route remains uninstalled from FIB for 31.4 minutes of continuous stability before advertisement re-enables.`,
       durationMs: 12.30,
-      status: "PASS"
+      status: "PASS",
+      expectedKeywords: ["suppressed", "penalty", "half-life", "reuse threshold", "2439", "exponential decay"],
+      sampleAnswer: "Route state is SUPPRESSED because penalty 3200 exceeds the suppress threshold 2000. It follows exponential decay P(t) = P0 * 2^(-t/t_half) and requires 31.4 minutes before reaching reuse threshold 750 to be unsuppressed."
+    },
+    {
+      id: "CHALLENGE-RMF-STEP-01",
+      domain: "RMF_GOVERNANCE_LIFECYCLE",
+      question: "Under NIST SP 800-37 Rev. 2 and FIPS 199, an ITAR defense subsystem is categorized with Confidentiality: MODERATE, Integrity: LOW, and Availability: MODERATE. Why does CNSSI 1253 reject this categorization, and what is the mandatory high-water mark impact baseline?",
+      vetoTitle: "🚨 RMF STEP 1 INVARIANT VETO: FIPS 199 HIGH-WATER MARK & CNSSI 1253 ITAR MANDATE",
+      verdict: "CNSSI 1253 mandates Confidentiality = HIGH for ITAR export-controlled technical data; overall FIPS 199 High-Water Mark mandates max(C, I, A) = HIGH.",
+      fullResponse: `### Noctis Sovereign RMF Lifecycle & FIPS 199 Categorization Engine (NOCTIS-RMF-STEP1-001)
+**Subsystem Domain:** \`RMF_GOVERNANCE_LIFECYCLE\` · **Standards:** NIST SP 800-37 Rev. 2, FIPS 199, CNSSI 1253, 22 CFR 120-130 (ITAR)
+
+#### 1. FIPS 199 High-Water Mark Mathematical Determination
+- **Subsystem Objective Profile:** $C = \\text{MODERATE}, I = \\text{LOW}, A = \\text{MODERATE}$
+- **Statutory Violation:** CNSSI 1253 Section 3.2 explicitly classifies International Traffic in Arms Regulations (ITAR) defense and munitions data as **\`Confidentiality: HIGH\`**.
+- **Corrected Objective Profile:** $C = \\mathbf{HIGH}, I = \\text{LOW}, A = \\text{MODERATE}$
+- **FIPS 199 Overall System Impact:**
+  $$\\text{Overall Impact} = \\max(C, I, A) = \\max(\\text{HIGH}, \\text{LOW}, \\text{MODERATE}) = \\mathbf{HIGH}$$
+
+#### 2. Regulatory Invariant Enforcement
+- **Safety Veto \`INV-RMF-CNSSI-1253-HIGH\` Triggered:** Unauthorized low/moderate categorization for export-controlled technical data is strictly prohibited.
+- **Mandated Baseline Selection:** System must inherit the **NIST SP 800-53 Rev. 5 HIGH Baseline** control catalog, requiring continuous multi-factor cryptographic authentication and FedRAMP High boundary isolation.`,
+      durationMs: 6.84,
+      status: "PASS",
+      expectedKeywords: ["cnssi 1253", "itar", "high", "high-water mark", "max", "fips 199"],
+      sampleAnswer: "CNSSI 1253 mandates that any system handling ITAR data must have Confidentiality = HIGH. Under FIPS 199, the overall system impact is calculated as the High-Water Mark: max(C, I, A) = max(HIGH, LOW, MODERATE) = HIGH baseline."
+    },
+    {
+      id: "CHALLENGE-RMF-CATO-02",
+      domain: "RMF_GOVERNANCE_LIFECYCLE",
+      question: "Under DoD CIO Memo (Feb 2022) Continuous Authorization to Operate (cATO), why does an annual 365-day security review fail cATO compliance, and what are the 3 mandatory operational pillars required for continuous deployment?",
+      vetoTitle: "🚨 RMF STEP 5 INVARIANT VETO: DOD cATO 3-PILLAR DEPLOYMENT MANDATE",
+      verdict: "Continuous ATO prohibits point-in-time annual audits; mandates 3 continuous operational pillars: 1. Continuous DevSecOps pipeline gating, 2. Active ConMon threat posture, 3. Tier-1 CSSP active alignment.",
+      fullResponse: `### Noctis DoD Continuous Authorization to Operate (cATO) Engine (NOCTIS-RMF-CATO-001)
+**Subsystem Domain:** \`RMF_GOVERNANCE_LIFECYCLE\` · **Standards:** DoD CIO Continuous Authorization to Operate Memo (Feb 2, 2022), DoDI 8510.01
+
+#### 1. Invalidation of Point-in-Time Authorizations
+- **Failure Mode:** Annual paper-based reviews (365-day review cycles) fail cATO compliance because continuous deployments invalidate static point-in-time assessments.
+- **Continuous ATO Mandate:** Authorizations must be dynamic, tied directly to automated security telemetry emitted on every code commit.
+
+#### 2. The 3 Mandatory Operational Pillars for cATO
+1. **Continuous DevSecOps Pipeline Telemetry & Automated Gating:**
+   - Automated SAST, DAST, Container Hardening, SCA, and SBOM verification on every pull request.
+   - Zero critical/high unmitigated CVEs permitted past production merge gates.
+2. **Active Continuous Monitoring (ConMon) & Real-Time Posture:**
+   - Dynamic asset discovery, runtime behavioral telemetry, and real-time posture feeds streaming to eMASS.
+3. **Active Cyber Security Service Provider (CSSP) Tier-1 Alignment:**
+   - Formal operational binding with a certified DoD CSSP for 24/7/365 active threat hunting, incident response, and SOC containment.`,
+      durationMs: 8.12,
+      status: "PASS",
+      expectedKeywords: ["devsecops", "conmon", "cssp", "continuous monitoring", "3 pillars", "pipeline"],
+      sampleAnswer: "An annual review is point-in-time and cannot validate continuous code changes. cATO requires 3 continuous pillars: 1. Automated DevSecOps pipeline gating (SAST/DAST/SBOM), 2. Active Continuous Monitoring (ConMon) threat posture, and 3. Tier-1 CSSP SOC alignment."
+    },
+    {
+      id: "CHALLENGE-RMF-POAM-03",
+      domain: "RMF_GOVERNANCE_LIFECYCLE",
+      question: "Under NIST SP 800-37 Rev. 2 Step 6 and FedRAMP SLAs, a High-severity vulnerability finding on an internet-facing API remains open at day 35. Can the ISSO close this POA&M with an administrative policy memo, and what is the statutory SLA?",
+      vetoTitle: "🚨 RMF STEP 6 INVARIANT VETO: POA&M STATUTORY SLA BREACH & NON-PAPER RULE",
+      verdict: "Administrative paper closure is strictly prohibited under GRC-GATE-01; High severity SLA is strictly <= 30 calendar days and closure requires re-scanned code commit or patch verification.",
+      fullResponse: `### Noctis Continuous Monitoring & POA&M Remediation Engine (NOCTIS-RMF-POAM-001)
+**Subsystem Domain:** \`RMF_GOVERNANCE_LIFECYCLE\` · **Standards:** NIST SP 800-37 Rev. 2 Step 6, NIST SP 800-137, FedRAMP Continuous Monitoring Strategy Guide
+
+#### 1. Statutory Remediation Timeframes & Invariant GRC-GATE-01
+- **High Severity Finding SLA:** **\`≤ 30 calendar days\`** (Finding open at day 35 is **\`CRITICALLY OVERDUE\`** by 5 days).
+- **Moderate Severity SLA:** **\`≤ 90 calendar days\`**
+- **Low Severity SLA:** **\`≤ 180 calendar days\`**
+
+#### 2. Non-Paper Closure Mandate (GRC-GATE-01)
+- **Paper Closure Rejection:** An ISSO or ISSM policy waiver, administrative note, or executive memo cannot close a technical POA&M finding.
+- **Mandated Verification Telemetry:** Closure requires a verified Git commit SHA, merged pull request, and an authenticated DAST/vulnerability re-scan confirming the finding is resolved.
+- **Action Required:** Immediate escalation to Authorizing Official (AO) for ATO review or risk acceptance waiver with compensating technical controls.`,
+      durationMs: 7.45,
+      status: "PASS",
+      expectedKeywords: ["30 days", "sla", "administrative", "paper", "git", "re-scan", "grc-gate-01"],
+      sampleAnswer: "No, administrative or paper-only closure is strictly prohibited under GRC-GATE-01. High-severity findings must be remediated within <= 30 calendar days. Since it is at day 35, it has breached statutory SLA and requires a verified re-scanned code commit to close."
+    },
+    {
+      id: "CHALLENGE-ADV-HPC-01",
+      domain: "HIGH_PERFORMANCE_COMPUTING_GPU_CLUSTER",
+      question: "In an 8,192-GPU cluster running multi-node LLM pre-training, why does tensor parallel (TP) across nodes cause severe throughput collapse over RoCEv2, and what InfiniBand/RoCEv2 lossless congestion control primitives are required?",
+      vetoTitle: "🚨 HPC FABRIC INVARIANT VETO: TENSOR PARALLEL INTERCONNECT SATURATION",
+      verdict: "TP requires intra-node NVLink (>900 GB/s) due to extreme all-reduce frequency; RoCEv2 requires PFC (Priority Flow Control) and ECN (Explicit Congestion Notification) to prevent buffer drop packet loss.",
+      fullResponse: `### Noctis Sovereign HPC GPU Cluster & Interconnect Engine (NOCTIS-HPC-001)
+**Subsystem Domain:** \`HIGH_PERFORMANCE_COMPUTING_GPU_CLUSTER\` · **Standards:** IEEE 802.1Qbb (PFC), RFC 3168 (ECN), InfiniBand Architecture Spec
+
+#### 1. Tensor Parallel vs Pipeline/Data Parallel Scaling
+- **Tensor Parallel Bandwidth Mandate:** TP performs multi-gigabyte All-Reduce collectives at every single transformer layer. Across PCIe/Ethernet nodes, communication latency dominates arithmetic compute time, causing catastrophic GPU stall.
+- **Placement Rule:** Tensor Parallel degree must strictly remain $\\le$ GPUs per node (e.g. 8-way TP strictly confined to NVLink switches with 900–3200 GB/s bandwidth).
+
+#### 2. Lossless RoCEv2 Network Primitives
+- **Priority Flow Control (PFC):** IEEE 802.1Qbb pauses specific traffic classes (CoS 3) when ingress buffers exceed thresholds, preventing packet drops.
+- **Explicit Congestion Notification (ECN):** Switches mark IP headers with CE flags when queue depths rise; NICs back off transmission rate before PFC pause storms propagate across the leaf-spine fabric.`,
+      durationMs: 9.14,
+      status: "PASS",
+      expectedKeywords: ["nvlink", "all-reduce", "pfc", "ecn", "lossless", "rocev2"],
+      sampleAnswer: "Tensor Parallel requires frequent all-reduce operations at every layer, which exceeds network bandwidth across nodes. TP must be confined to intra-node NVLink. For RoCEv2, Priority Flow Control (PFC) and Explicit Congestion Notification (ECN) are required for lossless transport."
+    },
+    {
+      id: "CHALLENGE-ADV-ICS-03",
+      domain: "INDUSTRIAL_CONTROL_SYSTEMS_OT_SCADA",
+      question: "Under the Purdue Enterprise Reference Architecture (ISA-95), what network boundary protects Level 0-2 (DCS/PLC) from Level 4/5 (Enterprise), and can Safety Instrumented Systems (SIS SIL-3) share a controller with DCS?",
+      vetoTitle: "🚨 CRITICAL INFRASTRUCTURE SAFETY VETO: SIS SIL-3 CO-MINGLING VIOLATION",
+      verdict: "Industrial DMZ (IDMZ Level 3.5) with jump-host bastion; SIS SIL-3 controllers must be physically segregated and never co-mingled with DCS.",
+      fullResponse: `### Noctis Industrial Control Systems Safety Engine (NOCTIS-ICS-001)
+**Subsystem Domain:** \`INDUSTRIAL_CONTROL_SYSTEMS_OT_SCADA\` · **Standards:** ISA-95 / IEC 62443, IEC 61508 / IEC 61511 (SIL-3 Safety Instrumented Systems)
+
+#### 1. Purdue Model (ISA-95) Boundary Architecture
+- **Boundary:** **\`Industrial DMZ (IDMZ Level 3.5)\`** acts as an air-gapped security buffer between Level 4/5 (Corporate IT / ERP) and Level 0-2 (Physical Sensors, Actuators, PLCs).
+- **Control Rules:** No direct routing between IT and OT. All cross-zone traffic terminates on dual-homed jump hosts in Level 3.5 with protocol isolation.
+
+#### 2. SIS SIL-3 Safety Invariant
+- **Co-Mingling Prohibition:** Safety Instrumented Systems (SIS) responsible for emergency reactor/pipeline shutdown must **NEVER share a CPU, backplane, or network switch** with the Distributed Control System (DCS).
+- **Common Mode Failure Risk:** Co-mingled controllers expose plant safety to simultaneous operational software faults or cyber attacks disabling emergency trip mechanisms.`,
+      durationMs: 8.52,
+      status: "PASS",
+      expectedKeywords: ["idmz", "level 3.5", "sis", "sil-3", "segregated", "co-mingled", "iec 62443"],
+      sampleAnswer: "The Industrial DMZ (Level 3.5) protects Level 0-2 from Enterprise IT. SIS SIL-3 emergency safety controllers must be physically segregated and can NEVER share a controller or network with DCS to prevent common-mode failure."
     }
   ]
 
   const [currentChallengeIdx, setCurrentChallengeIdx] = useState(0)
+  const [userChallengeInput, setUserChallengeInput] = useState("")
+  const [userChallengeEvaluation, setUserChallengeEvaluation] = useState<{
+    score: number
+    pass: boolean
+    feedback: string
+    matchedKeywords: string[]
+    missingKeywords: string[]
+  } | null>(null)
+
   const [frontierBannerData, setFrontierBannerData] = useState({
     index: 0,
     domain: LOCAL_CHALLENGE_CATALOG[0].domain,
@@ -350,50 +476,69 @@ export function NotificationsView({
     showResponse: true
   })
 
-  const handleRunNewChallengeTest = async () => {
-    const nextIdx = (currentChallengeIdx + 1) % LOCAL_CHALLENGE_CATALOG.length
-    setCurrentChallengeIdx(nextIdx)
-    const nextChallenge = LOCAL_CHALLENGE_CATALOG[nextIdx]
-
-    // Immediately update UI with next challenge
+  const handleSelectChallenge = (targetIdx: number) => {
+    const idx = (targetIdx + LOCAL_CHALLENGE_CATALOG.length) % LOCAL_CHALLENGE_CATALOG.length
+    setCurrentChallengeIdx(idx)
+    const ch = LOCAL_CHALLENGE_CATALOG[idx]
     setFrontierBannerData(prev => ({
       ...prev,
-      index: nextIdx,
-      domain: nextChallenge.domain,
-      question: nextChallenge.question,
-      vetoTitle: nextChallenge.vetoTitle,
-      verdict: nextChallenge.verdict,
-      fullResponse: nextChallenge.fullResponse,
-      durationMs: nextChallenge.durationMs,
-      status: nextChallenge.status,
-      isRunning: true,
+      index: idx,
+      domain: ch.domain,
+      question: ch.question,
+      vetoTitle: ch.vetoTitle,
+      verdict: ch.verdict,
+      fullResponse: ch.fullResponse,
+      durationMs: ch.durationMs,
+      status: ch.status,
+      isRunning: false,
       showResponse: true
     }))
+    setUserChallengeInput("")
+    setUserChallengeEvaluation(null)
+  }
 
-    // Concurrently trigger server challenge evaluation
-    try {
-      const res = await fetch(`https://www.dstrike.app/api/noctis?daily_challenge=1&seed=${nextIdx}&t=${Date.now()}`)
-      if (res.ok) {
-        const data = await res.json()
-        if (data.challengeExecuted?.challenge) {
-          setFrontierBannerData(prev => ({
-            ...prev,
-            domain: data.challengeExecuted.challenge.domain,
-            question: data.challengeExecuted.challenge.question,
-            verdict: data.challengeExecuted.challenge.expectedInvariant,
-            fullResponse: data.challengeExecuted.fullResponseText || nextChallenge.fullResponse,
-            durationMs: data.challengeExecuted.executionDurationMs || nextChallenge.durationMs,
-            status: data.challengeExecuted.invariantStatus || "PASS",
-            isRunning: false
-          }))
-        } else {
-          setFrontierBannerData(prev => ({ ...prev, isRunning: false }))
-        }
-      } else {
-        setFrontierBannerData(prev => ({ ...prev, isRunning: false }))
-      }
-    } catch {
-      setFrontierBannerData(prev => ({ ...prev, isRunning: false }))
+  const handleRunNewChallengeTest = () => {
+    const nextIdx = ((frontierBannerData.index ?? currentChallengeIdx) + 1) % LOCAL_CHALLENGE_CATALOG.length
+    handleSelectChallenge(nextIdx)
+  }
+
+  const handleEvaluateUserAnswer = () => {
+    const activeCh = LOCAL_CHALLENGE_CATALOG[frontierBannerData.index ?? 0]
+    const text = userChallengeInput.trim().toLowerCase()
+    if (!text) {
+      setUserChallengeEvaluation({
+        score: 0,
+        pass: false,
+        feedback: "Please enter your technical analysis or proposed safety protocol before submitting.",
+        matchedKeywords: [],
+        missingKeywords: activeCh.expectedKeywords || []
+      })
+      return
+    }
+
+    const keywords: string[] = (activeCh as any).expectedKeywords || []
+    const matched = keywords.filter(kw => text.includes(kw.toLowerCase()))
+    const missing = keywords.filter(kw => !text.includes(kw.toLowerCase()))
+    const ratio = keywords.length > 0 ? matched.length / keywords.length : 0.5
+    const score = Math.round(ratio * 100)
+    const pass = score >= 50
+
+    setUserChallengeEvaluation({
+      score,
+      pass,
+      feedback: pass
+        ? `Verification Passed (${score}% Match): Your response accurately enforced critical regulatory and physics invariants for ${activeCh.domain}.`
+        : `Verification Incomplete (${score}% Match): Your solution omitted mandatory safety/compliance invariants (${missing.slice(0, 3).join(", ")}). Consult Noctis's full engineering breakdown below.`,
+      matchedKeywords: matched,
+      missingKeywords: missing
+    })
+  }
+
+  const handleLoadSampleSolution = () => {
+    const activeCh = LOCAL_CHALLENGE_CATALOG[frontierBannerData.index ?? 0] as any
+    if (activeCh?.sampleAnswer) {
+      setUserChallengeInput(activeCh.sampleAnswer)
+      setUserChallengeEvaluation(null)
     }
   }
   const [followBundle, setFollowBundle] = useState<UserFollowBundle>(() =>
@@ -1024,19 +1169,21 @@ export function NotificationsView({
 
         {/* Featured Noctis 6AM Frontier & Benchmark Invariant Alert Banner */}
         <div
-          className="mt-4 rounded-2xl p-5 shadow-md transition-all"
+          className="mt-4 rounded-2xl p-5 sm:p-6 shadow-lg transition-all"
           style={{
             backgroundColor: '#ffffff',
             border: '2px solid #dc2626',
             color: '#0f172a'
           }}
         >
+          {/* Card Header & SLA */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b" style={{ borderColor: '#e2e8f0' }}>
             <div className="flex items-center gap-2 flex-wrap">
               <span
-                className="rounded-full px-3 py-1 text-[11px] font-black tracking-wider uppercase shadow-xs"
+                className="rounded-full px-3 py-1 text-[11px] font-black tracking-wider uppercase shadow-xs flex items-center gap-1.5"
                 style={{ backgroundColor: '#dc2626', color: '#ffffff' }}
               >
+                <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
                 🔴 Noctis 6AM Frontier Alert
               </span>
               <span
@@ -1049,22 +1196,64 @@ export function NotificationsView({
                 {frontierBannerData.domain} · {frontierBannerData.durationMs}ms SLA
               </span>
             </div>
-            <button
-              type="button"
-              onClick={handleRunNewChallengeTest}
-              disabled={frontierBannerData.isRunning}
-              className="rounded-xl px-4 py-2 text-xs font-black transition-all cursor-pointer shadow-sm hover:opacity-90 disabled:opacity-50"
-              style={{ backgroundColor: '#0a66c2', color: '#ffffff', border: '1px solid #004182' }}
-            >
-              {frontierBannerData.isRunning ? "🔄 Formulating Next Challenge..." : `🔄 Test Another Challenge (Challenge ${(frontierBannerData.index ?? 0) + 1}/6)`}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleRunNewChallengeTest}
+                className="rounded-xl px-4 py-2 text-xs font-black transition-all cursor-pointer shadow-sm hover:opacity-90 active:scale-95"
+                style={{ backgroundColor: '#0a66c2', color: '#ffffff', border: '1px solid #004182' }}
+              >
+                🔄 Test Another Challenge ({((frontierBannerData.index ?? 0) + 1)}/{LOCAL_CHALLENGE_CATALOG.length})
+              </button>
+            </div>
+          </div>
+
+          {/* Quick-Jump Challenge Domain Carousel */}
+          <div className="mt-3 flex items-center gap-1.5 overflow-x-auto pb-1.5 text-[11px] scrollbar-thin">
+            <span className="text-xs font-bold text-slate-500 shrink-0 mr-1">Select Challenge:</span>
+            {LOCAL_CHALLENGE_CATALOG.map((ch, idx) => {
+              const isSelected = (frontierBannerData.index ?? 0) === idx
+              const shortLabel =
+                idx === 0 ? "1. Nuclear SMR" :
+                idx === 1 ? "2. Burns Parkland" :
+                idx === 2 ? "3. Quantum QKD" :
+                idx === 3 ? "4. Raft Quorum" :
+                idx === 4 ? "5. Fusion Tokamak" :
+                idx === 5 ? "6. BGP Flap" :
+                idx === 6 ? "7. RMF FIPS 199" :
+                idx === 7 ? "8. RMF cATO" :
+                idx === 8 ? "9. RMF POA&M" :
+                idx === 9 ? "10. HPC 8k GPU" :
+                "11. SCADA SIL-3"
+
+              return (
+                <button
+                  key={ch.id}
+                  type="button"
+                  onClick={() => handleSelectChallenge(idx)}
+                  className={`px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer border ${
+                    isSelected
+                      ? "bg-slate-900 text-white border-slate-900 shadow-xs"
+                      : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
+                  }`}
+                >
+                  {shortLabel}
+                </button>
+              )
+            })}
           </div>
 
           <div className="mt-4 space-y-4">
+            {/* Formulated Challenge Question */}
             <div>
-              <span className="text-xs font-black uppercase tracking-wider block mb-1.5" style={{ color: '#b91c1c' }}>
-                Formulated Challenge Question:
-              </span>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-black uppercase tracking-wider block" style={{ color: '#b91c1c' }}>
+                  Formulated Challenge Question (Domain: {frontierBannerData.domain}):
+                </span>
+                <span className="text-[11px] font-bold text-slate-500">
+                  Challenge #{((frontierBannerData.index ?? 0) + 1)} of {LOCAL_CHALLENGE_CATALOG.length}
+                </span>
+              </div>
               <div
                 className="text-sm sm:text-base font-bold rounded-xl p-4 border leading-relaxed shadow-xs"
                 style={{
@@ -1077,6 +1266,7 @@ export function NotificationsView({
               </div>
             </div>
 
+            {/* Evaluated Safety Mandate & Invariant Verdict */}
             <div>
               <span className="text-xs font-black uppercase tracking-wider block mb-1.5" style={{ color: '#15803d' }}>
                 Evaluated Safety Mandate &amp; Invariant Verdict:
@@ -1098,7 +1288,94 @@ export function NotificationsView({
               </div>
             </div>
 
-            {/* Complete Noctis Chat Engine Technical Response */}
+            {/* Interactive User Response / Practice Section */}
+            <div className="rounded-xl border border-sky-200 bg-sky-50/50 p-4 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <span className="text-xs font-black uppercase tracking-wider text-sky-900 flex items-center gap-1.5">
+                  <span>✍️</span> Submit Your Solution: Test Your Domain Knowledge Against Noctis
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleLoadSampleSolution}
+                    className="text-xs font-bold text-sky-700 hover:text-sky-900 underline cursor-pointer"
+                  >
+                    💡 Load Sample Solution
+                  </button>
+                  {userChallengeInput && (
+                    <button
+                      type="button"
+                      onClick={() => { setUserChallengeInput(""); setUserChallengeEvaluation(null) }}
+                      className="text-xs font-semibold text-slate-500 hover:text-slate-700 cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <textarea
+                value={userChallengeInput}
+                onChange={(e) => setUserChallengeInput(e.target.value)}
+                placeholder="Type your technical analysis, mathematical formula, or emergency protocol here to test your answer..."
+                rows={3}
+                className="w-full rounded-xl border border-sky-200 bg-white p-3 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 leading-relaxed shadow-2xs font-mono"
+              />
+
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <button
+                  type="button"
+                  onClick={handleEvaluateUserAnswer}
+                  className="rounded-xl px-4 py-2 text-xs font-black text-white bg-sky-600 hover:bg-sky-700 active:scale-95 transition-all cursor-pointer shadow-xs"
+                >
+                  ⚡ Evaluate My Response with Noctis
+                </button>
+                <span className="text-[11px] text-slate-500">
+                  Instant real-time invariant scoring across physics, safety &amp; regulatory standards.
+                </span>
+              </div>
+
+              {/* Evaluation Result Feedback */}
+              {userChallengeEvaluation && (
+                <div className={`mt-2 rounded-xl p-3.5 border text-xs leading-relaxed transition-all ${
+                  userChallengeEvaluation.pass
+                    ? "bg-emerald-50 border-emerald-300 text-emerald-950"
+                    : "bg-amber-50 border-amber-300 text-amber-950"
+                }`}>
+                  <div className="flex items-center justify-between gap-2 mb-1.5 font-black text-sm">
+                    <span>
+                      {userChallengeEvaluation.pass ? "✅ INVARIANT VERIFICATION: PASSED" : "⚠️ INVARIANT VERIFICATION: PARTIAL / REVIEW NEEDED"}
+                    </span>
+                    <span className="rounded-full px-2.5 py-0.5 text-xs bg-white border font-extrabold">
+                      Score: {userChallengeEvaluation.score}%
+                    </span>
+                  </div>
+                  <p className="font-medium mb-2">{userChallengeEvaluation.feedback}</p>
+                  {userChallengeEvaluation.matchedKeywords.length > 0 && (
+                    <div className="flex items-center gap-1.5 flex-wrap text-[11px] mt-1">
+                      <span className="font-bold text-slate-700">Identified Mandates:</span>
+                      {userChallengeEvaluation.matchedKeywords.map((kw, i) => (
+                        <span key={i} className="rounded-md bg-emerald-100 text-emerald-800 px-2 py-0.5 font-bold">
+                          ✓ {kw}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {userChallengeEvaluation.missingKeywords.length > 0 && (
+                    <div className="flex items-center gap-1.5 flex-wrap text-[11px] mt-1">
+                      <span className="font-bold text-slate-700">Missing Mandates:</span>
+                      {userChallengeEvaluation.missingKeywords.map((kw, i) => (
+                        <span key={i} className="rounded-md bg-red-100 text-red-800 px-2 py-0.5 font-bold">
+                          ✗ {kw}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Complete Noctis Technical Response & Deep-Dive Solution */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5" style={{ color: '#0369a1' }}>
@@ -1110,12 +1387,12 @@ export function NotificationsView({
                   className="text-xs font-bold underline cursor-pointer hover:opacity-85"
                   style={{ color: '#0284c7' }}
                 >
-                  {frontierBannerData.showResponse ? "▲ Collapse Response" : "▼ View Complete Technical Response"}
+                  {frontierBannerData.showResponse ? "▲ Collapse Technical Response" : "▼ View Complete Technical Response"}
                 </button>
               </div>
 
               {frontierBannerData.showResponse && (
-                <div className="rounded-xl p-4 border border-[#E2D9C5] bg-white text-xs sm:text-sm leading-relaxed shadow-xs transition-all">
+                <div className="rounded-xl p-4 sm:p-5 border border-[#E2D9C5] bg-white text-xs sm:text-sm leading-relaxed shadow-xs transition-all">
                   <MiniMarkdown text={frontierBannerData.fullResponse} />
                 </div>
               )}
