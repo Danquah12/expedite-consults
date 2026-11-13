@@ -74,6 +74,24 @@ export interface NoctisProductSalesPitch {
   liveNoctisSalesResponse?: string
 }
 
+function normalizeNoctisMarkdownOutput(rawText: string): string {
+  if (!rawText) return ''
+  return rawText
+    .replace(/\r\n/g, '\n')
+    .replace(/```noctis-dashboard[\s\S]*?```/gi, '')
+    .replace(/https?:\/\/(?:www\.)?dstrike\.app\/noctis/gi, 'ConnectLn In-App Noctis Concierge')
+    .replace(/\\(?:le|leq)\b/g, '≤')
+    .replace(/\\(?:ge|geq)\b/g, '≥')
+    .replace(/\\(?:ne|neq)\b/g, '≠')
+    .replace(/\\approx\b/g, '≈')
+    .replace(/\\times\b/g, '×')
+    .replace(/\\pm\b/g, '±')
+    .replace(/\\(?:to|rightarrow)\b/g, '→')
+    .replace(/\\%/g, '%')
+    .replace(/\$([^$\n]+)\$/g, (_, expr) => expr.trim())
+    .trim()
+}
+
 function isNoctisResponseRelevantAndClean(rawText: string, requiredKeywords: string[] = []): string | null {
   if (!rawText || !rawText.trim()) return null
 
@@ -94,12 +112,7 @@ function isNoctisResponseRelevantAndClean(rawText: string, requiredKeywords: str
     }
   }
 
-  const cleaned = rawText
-    .replace(/```noctis-dashboard[\s\S]*?```/gi, '')
-    .replace(/https?:\/\/(?:www\.)?dstrike\.app\/noctis/gi, 'ConnectLn In-App Noctis Concierge')
-    .replace(/\*\*/g, '')
-    .replace(/^#{1,4}\s+/gm, '')
-    .trim()
+  const cleaned = normalizeNoctisMarkdownOutput(rawText)
 
   if (!cleaned) return null
 
@@ -973,7 +986,8 @@ export async function POST(req: Request) {
     if (!res.ok) return NextResponse.json({ error: `Noctis returned ${res.status}` }, { status: 502 })
     const data = (await res.json()) as { text?: string; error?: string }
     if (!data?.text) return NextResponse.json({ error: data?.error || 'Noctis gave no answer.' }, { status: 502 })
-    return NextResponse.json({ text: data.text, source: 'noctis' }, { headers: { 'cache-control': 'no-store' } })
+    const formattedText = normalizeNoctisMarkdownOutput(data.text)
+    return NextResponse.json({ text: formattedText || data.text, source: 'noctis' }, { headers: { 'cache-control': 'no-store' } })
   } catch {
     return NextResponse.json({ error: 'Noctis is unreachable right now.' }, { status: 504 })
   } finally {

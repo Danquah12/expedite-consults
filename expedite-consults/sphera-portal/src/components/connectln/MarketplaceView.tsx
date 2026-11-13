@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
+import { MiniMarkdown } from "./MiniMarkdown"
 import {
   ShoppingBag,
   Sparkles,
@@ -711,12 +712,13 @@ export function MarketplaceView({
             )}
 
             {/* Live Noctis Sales Narrative Box */}
-            <div className="rounded-xl bg-white border border-[#E6DEC8] p-4 text-xs sm:text-sm text-[#292521] leading-relaxed whitespace-pre-line break-words overflow-x-hidden font-medium max-h-64 overflow-y-auto">
-              {(noctisSalesText ||
-                `Hi ${currentUser?.name?.split(' ')[0] || 'there'}! I am Noctis, your AI Marketing & Enterprise Solutions Sales Agent inside the ConnectLn Market. I know every feature, architecture spec, compliance standard, and pricing tier across all ${MASTER_MARKETPLACE_PRODUCTS.length} products. Ask me to pitch any platform or click "Ask Noctis" on any product card below!`)
-                .replace(/```noctis-dashboard[\s\S]*?```/gi, '')
-                .replace(/\*\*/g, '')
-                .replace(/^#{1,4}\s+/gm, '')}
+            <div className="rounded-xl bg-white border border-[#E6DEC8] p-4 text-xs sm:text-sm text-[#292521] leading-relaxed break-words overflow-x-hidden font-medium max-h-64 overflow-y-auto">
+              <MiniMarkdown
+                text={
+                  noctisSalesText ||
+                  `Hi ${currentUser?.name?.split(' ')[0] || 'there'}! I am **Noctis**, your AI Marketing & Enterprise Solutions Sales Agent inside the ConnectLn Market. I know every feature, architecture spec, compliance standard, and pricing tier across all **\`${MASTER_MARKETPLACE_PRODUCTS.length} products\`**. Ask me to pitch any platform or click **"Ask Noctis"** on any product card below!`
+                }
+              />
             </div>
 
             {/* Interactive Ask Noctis Marketing & Sales Input Bar */}
@@ -2503,27 +2505,30 @@ export function MarketplaceView({
                     </div>
                   </div>
 
-                  {/* Clean Formatted Noctis Sales Response Box (no horizontal scrollbar, no raw markdown clutter) */}
-                  <div className="rounded-xl bg-white border border-blue-100 p-4 text-xs sm:text-sm text-slate-800 whitespace-pre-line break-words overflow-x-hidden leading-relaxed max-h-72 overflow-y-auto">
-                    {isNoctisSalesLoading
-                      ? `✨ Noctis is preparing your customized executive sales & technical deep-dive for ${selectedProduct.name}...`
-                      : (noctisActivePitch?.productId === selectedProduct.id &&
-                        noctisActivePitch.liveNoctisSalesResponse
-                          ? noctisActivePitch.liveNoctisSalesResponse
-                          : `✨ Noctis AI Sales & Product Specialist — Executive Deep-Dive on ${selectedProduct.name}\n\n` +
-                            `1. Why ${selectedProduct.name} Stands Out:\n` +
-                            `${selectedProduct.tagline} Built by ${selectedProduct.vendor.name} for ${selectedProduct.category} (${selectedProduct.subCategory}).\n\n` +
-                            `2. Everything ${selectedProduct.name} Has & Does:\n` +
-                            `${selectedProduct.overview}\n` +
-                            selectedProduct.features.map((f) => `  • ${f.title}: ${f.desc}`).join('\n') +
-                            `\n\n3. Architecture, Security & Pricing:\n` +
-                            `  • Architecture: ${selectedProduct.architecture.title} (${selectedProduct.architecture.latency})\n` +
-                            `  • Compliance: ${(selectedProduct.security.compliance || []).join(' · ') || 'Enterprise Grade'}\n` +
-                            `  • Pricing: ${selectedProduct.pricing.displayPrice} (${selectedProduct.pricing.billingPeriod})`
-                        )
-                          .replace(/```noctis-dashboard[\s\S]*?```/gi, '')
-                          .replace(/\*\*/g, '')
-                          .replace(/^#{1,4}\s+/gm, '')}
+                  {/* Clean Formatted Noctis Sales Response Box (no horizontal scrollbar, rich MiniMarkdown formatting) */}
+                  <div className="rounded-xl bg-white border border-blue-100 p-4 text-xs sm:text-sm text-slate-800 break-words overflow-x-hidden leading-relaxed max-h-72 overflow-y-auto">
+                    {isNoctisSalesLoading ? (
+                      <p>✨ Noctis is preparing your customized executive sales &amp; technical deep-dive for {selectedProduct.name}...</p>
+                    ) : (
+                      <MiniMarkdown
+                        text={
+                          noctisActivePitch?.productId === selectedProduct.id &&
+                          noctisActivePitch.liveNoctisSalesResponse
+                            ? noctisActivePitch.liveNoctisSalesResponse
+                            : `### ${selectedProduct.name} (${selectedProduct.id.toUpperCase()})\n` +
+                              `**Vendor:** \`${selectedProduct.vendor.name}\` · **Category:** \`${selectedProduct.category} (${selectedProduct.subCategory})\`\n\n` +
+                              `#### 1. Why ${selectedProduct.name} Stands Out\n` +
+                              `${selectedProduct.tagline}\n\n` +
+                              `#### 2. Platform Capabilities & Specifications\n` +
+                              `${selectedProduct.overview}\n` +
+                              selectedProduct.features.map((f) => `- **${f.title}:** ${f.desc}`).join('\n') +
+                              `\n\n#### 3. Architecture, Security & Pricing\n` +
+                              `- **Architecture:** **\`${selectedProduct.architecture.title}\`** (${selectedProduct.architecture.latency})\n` +
+                              `- **Compliance:** **\`${(selectedProduct.security.compliance || []).join(' · ') || 'Enterprise Grade'}\`**\n` +
+                              `- **Pricing:** **\`${selectedProduct.pricing.displayPrice}\`** (${selectedProduct.pricing.billingPeriod})`
+                        }
+                      />
+                    )}
                   </div>
 
                   {/* Interactive Question Input for THIS Product */}

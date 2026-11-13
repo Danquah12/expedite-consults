@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import type { B2BConversationThread } from '@/lib/connectin-b2b-comms'
+import { MiniMarkdown } from './MiniMarkdown'
 
 export interface NoctisTodoItem {
   thread: B2BConversationThread
@@ -292,9 +293,9 @@ export function NoctisAIInboxView({
                 Dismiss ✕
               </button>
             </div>
-            <p className="text-xs sm:text-sm text-slate-800 whitespace-pre-line leading-relaxed">
-              {noctisCustomAnswer}
-            </p>
+            <div className="text-xs sm:text-sm text-slate-800 leading-relaxed">
+              <MiniMarkdown text={noctisCustomAnswer} />
+            </div>
           </div>
         )}
 
@@ -342,17 +343,21 @@ export function NoctisAIInboxView({
                 Close ✕
               </button>
             </div>
-            <div className="text-xs text-slate-800 whitespace-pre-line leading-relaxed bg-white rounded-xl border border-blue-100 p-3">
-              {noctisBriefingText ||
-                dateGroups
-                  .map(
-                    (g) =>
-                      `📅 ${g.dateKey} (${g.items.length} unread):\n` +
-                      g.items
-                        .map((i) => `• ${i.thread.title} (${i.timeOnly}): "${i.thread.lastMessage}"`)
-                        .join('\n')
-                  )
-                  .join('\n\n')}
+            <div className="text-xs text-slate-800 leading-relaxed bg-white rounded-xl border border-blue-100 p-3">
+              <MiniMarkdown
+                text={
+                  noctisBriefingText ||
+                  dateGroups
+                    .map(
+                      (g) =>
+                        `#### 📅 ${g.dateKey} (${g.items.length} unread)\n` +
+                        g.items
+                          .map((i) => `- **${i.thread.title}** (${i.timeOnly}): "${i.thread.lastMessage}"`)
+                          .join('\n')
+                    )
+                    .join('\n\n')
+                }
+              />
             </div>
           </div>
         )}

@@ -29,6 +29,7 @@ import {
   CategorizedNotificationItem,
   INITIAL_CATEGORIZED_NOTIFICATIONS
 } from "@/lib/notifications-engine-data"
+import { MiniMarkdown } from "./MiniMarkdown"
 import {
   loadUserFollowBundle,
   syncUserFollowBundleFromCloud,
@@ -1698,9 +1699,13 @@ Standards: IETF RFC 2439 · RFC 7454 (BGP Operations and Security)
             </button>
           </div>
 
-          <div className="rounded-xl bg-white border border-blue-100 p-4 mb-3.5 text-xs sm:text-sm text-slate-800 leading-relaxed whitespace-pre-line font-medium max-h-72 overflow-y-auto">
-            {noctisOverviewText ||
-              `Noctis is analyzing ${filteredNotifications.length} alerts (${filteredNotifications.filter(n => n.unread).length} unread) across your ConnectLn feed to explain what each signal represents and what actions to take...`}
+          <div className="rounded-xl bg-white border border-blue-100 p-4 mb-3.5 text-xs sm:text-sm text-slate-800 leading-relaxed font-medium max-h-72 overflow-y-auto">
+            <MiniMarkdown
+              text={
+                noctisOverviewText ||
+                `Noctis is analyzing ${filteredNotifications.length} alerts (${filteredNotifications.filter(n => n.unread).length} unread) across your ConnectLn feed to explain what each signal represents and what actions to take...`
+              }
+            />
           </div>
 
           {noctisCustomAnswer && (
@@ -1717,9 +1722,9 @@ Standards: IETF RFC 2439 · RFC 7454 (BGP Operations and Security)
                   Dismiss ✕
                 </button>
               </div>
-              <p className="text-xs sm:text-sm text-slate-800 whitespace-pre-line leading-relaxed">
-                {noctisCustomAnswer}
-              </p>
+              <div className="text-xs sm:text-sm text-slate-800 leading-relaxed">
+                <MiniMarkdown text={noctisCustomAnswer} />
+              </div>
             </div>
           )}
 
@@ -1991,11 +1996,11 @@ Standards: IETF RFC 2439 · RFC 7454 (BGP Operations and Security)
                   )}
 
                   {exp?.liveNoctisNote && (
-                    <div className="rounded-xl bg-white border border-blue-200 p-3 text-xs text-slate-800 whitespace-pre-line leading-relaxed">
+                    <div className="rounded-xl bg-white border border-blue-200 p-3 text-xs text-slate-800 leading-relaxed">
                       <span className="font-extrabold text-[#1967D2] block mb-1">
                         ✨ Noctis Deep-Dive Response:
                       </span>
-                      {exp.liveNoctisNote}
+                      <MiniMarkdown text={exp.liveNoctisNote} />
                     </div>
                   )}
 
