@@ -1311,6 +1311,20 @@ class ConnectInDatabase {
     return (this.data as any).activityLogs || []
   }
 
+  public getAlerts(): any[] {
+    this.refreshFromDisk()
+    const alerts = (this.data as any).alerts || []
+    return alerts
+  }
+
+  public addAlert(alert: any): any {
+    this.refreshFromDisk()
+    const alerts = (this.data as any).alerts || []
+    ;(this.data as any).alerts = [alert, ...alerts.filter((a: any) => a.id !== alert.id)].slice(0, 200)
+    this.saveData()
+    return alert
+  }
+
   public getAllUsersWithProfiles() {
     this.refreshFromDisk()
     return this.data.users.map(user => {
