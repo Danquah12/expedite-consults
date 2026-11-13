@@ -151,7 +151,7 @@ export async function middleware(request: NextRequest) {
   res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
   res.headers.set("Pragma", "no-cache");
   res.headers.set("Expires", "0");
-  res.headers.set("X-ConnectLn-Version", "2026.11.13.v7");
+  res.headers.set("X-ConnectLn-Version", "2026.11.13.v8");
   res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
   res.headers.set("Pragma", "no-cache");
   res.headers.set("Expires", "0");

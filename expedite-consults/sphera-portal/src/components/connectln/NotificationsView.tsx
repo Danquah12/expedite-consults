@@ -1852,6 +1852,7 @@ export function NotificationsView({
 
         {/* Featured Noctis 6AM Frontier & Benchmark Invariant Alert Banner */}
         <div
+          key={`frontier_banner_${activeChallenge.id}_${activeChallengeIdx}`}
           className="mt-4 rounded-2xl p-5 sm:p-6 shadow-lg transition-all"
           style={{
             backgroundColor: '#ffffff',
@@ -1876,7 +1877,7 @@ export function NotificationsView({
                 ✓ Invariant 100% {activeChallenge.status}
               </span>
               <span className="text-xs font-bold" style={{ color: '#475569' }}>
-                {activeChallenge.domain} · {activeChallenge.durationMs}ms SLA
+                {`${activeChallenge.domain} · ${activeChallenge.durationMs}ms SLA`}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -1928,13 +1929,13 @@ export function NotificationsView({
 
           <div className="mt-4 space-y-4">
             {/* Formulated Challenge Question */}
-            <div>
+            <div key={`question_box_${activeChallenge.id}_${activeChallengeIdx}`}>
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-xs font-black uppercase tracking-wider block" style={{ color: '#b91c1c' }}>
-                  Formulated Challenge Question (Domain: {activeChallenge.domain}):
+                  {`Formulated Challenge Question (Domain: ${activeChallenge.domain}):`}
                 </span>
                 <span className="text-[11px] font-bold text-slate-500">
-                  Challenge #{(activeChallengeIdx + 1)} of {LOCAL_CHALLENGE_CATALOG.length}
+                  {`Challenge #${activeChallengeIdx + 1} of ${LOCAL_CHALLENGE_CATALOG.length}`}
                 </span>
               </div>
               <div
@@ -1945,12 +1946,12 @@ export function NotificationsView({
                   borderColor: '#cbd5e1'
                 }}
               >
-                "{activeChallenge.question}"
+                {`"${activeChallenge.question}"`}
               </div>
             </div>
 
             {/* Evaluated Safety Mandate & Invariant Verdict */}
-            <div>
+            <div key={`verdict_box_${activeChallenge.id}_${activeChallengeIdx}`}>
               <span className="text-xs font-black uppercase tracking-wider block mb-1.5" style={{ color: '#15803d' }}>
                 Evaluated Safety Mandate &amp; Invariant Verdict:
               </span>
@@ -2059,7 +2060,7 @@ export function NotificationsView({
             </div>
 
             {/* Complete Noctis Technical Response & Deep-Dive Solution */}
-            <div>
+            <div key={`full_resp_${activeChallenge.id}_${activeChallengeIdx}`}>
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5" style={{ color: '#0369a1' }}>
                   <span>⚡</span> Noctis Chat Engine Full Response &amp; Analysis:
