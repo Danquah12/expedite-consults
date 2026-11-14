@@ -32,6 +32,22 @@ import { findEnclaveById, ALL_PROFESSIONS, ProfessionDefinition } from "@/lib/co
 import { useLanguage } from "@/context/LanguageContext"
 import { TradeEnclaveWidgets } from "@/components/connectln/TradeEnclaveWidgets"
 import { getProfileTailoredAnalytics, syncLiveUserTelemetryFromCloud } from "@/lib/connectin-analytics"
+import { Settings as SettingsGearIcon } from "lucide-react"
+import { SettingsModal, SettingsShortcut } from "@/components/connectln/SettingsModal"
+
+/**
+ * Items that live in the Settings modal instead of the crowded sidebar:
+ *  - account/identity, billing/payouts and privileged admin items (by id)
+ *  - every external "live app" (any shortcut that opens a url) -> Connected Apps
+ */
+const SETTINGS_ACCOUNT_IDS = new Set(['auth_gate', 'accountsecurity'])
+const SETTINGS_BILLING_IDS = new Set(['wallet'])
+const SETTINGS_ADMIN_IDS = new Set(['adminiam'])
+const isSettingsOnlyShortcut = (s: any) =>
+  !!s.url ||
+  SETTINGS_ACCOUNT_IDS.has(s.id) ||
+  SETTINGS_BILLING_IDS.has(s.id) ||
+  SETTINGS_ADMIN_IDS.has(s.id)
 
 const VALID_SIDEBAR_TABS = new Set([
   'accountsecurity','adminiam','advisory','aiagents','bounties','careersuite','code','collaboration',
@@ -75,6 +91,7 @@ export function LeftSidebarProfile({
 }: LeftSidebarProfileProps) {
   const [isRecentExpanded, setIsRecentExpanded] = useState(true)
   const [isAllToolsExpanded, setIsAllToolsExpanded] = useState(false)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isCustomizingCenter, setIsCustomizingCenter] = useState(false)
   const [customProfessionId, setCustomProfessionId] = useState<string>("")
   const [pinnedIds, setPinnedIds] = useState<string[]>([])
@@ -445,6 +462,34 @@ export function LeftSidebarProfile({
 
   const allEnclaveShortcuts = getShortcutsForEnclave()
 
+  // Items surfaced in the Settings modal (moved out of the sidebar to keep it uncluttered)
+  const toSettingsItem = (s: any): SettingsShortcut => ({
+    id: s.id,
+    label: s.label,
+    badge: s.badge,
+    url: s.url,
+    description: s.description,
+  })
+  const settingsAccountItems = allEnclaveShortcuts.filter((s: any) => SETTINGS_ACCOUNT_IDS.has(s.id)).map(toSettingsItem)
+  const settingsBillingItems = allEnclaveShortcuts.filter((s: any) => SETTINGS_BILLING_IDS.has(s.id)).map(toSettingsItem)
+  const settingsAdminItems = allEnclaveShortcuts.filter((s: any) => SETTINGS_ADMIN_IDS.has(s.id)).map(toSettingsItem)
+  const settingsConnectedApps = allEnclaveShortcuts.filter((s: any) => !!s.url).map(toSettingsItem)
+
+  /** Single place that knows how to open any shortcut (sidebar rows and Settings rows share it). */
+  const activateShortcut = (ws: { id: string; url?: string; targetTab?: string }) => {
+    if (ws.url) {
+      window.open(ws.url, '_blank', 'noopener,noreferrer')
+    } else if (ws.id === 'auth_gate' && onOpenAuthModal) {
+      onOpenAuthModal()
+    } else if (ws.id === 'inbound_bounty' && onOpenInboundBountiesModal) {
+      onOpenInboundBountiesModal()
+    } else if (onNavigateTab) {
+      onNavigateTab(resolveSidebarTab(ws.targetTab || ws.id))
+    } else {
+      onViewProfile()
+    }
+  }
+
   // Build individual profession-specific tools from matchedProfession.tools + enclave shortcuts
   const { primaryShortcuts, extraShortcuts, allCustomizableShortcuts } = useMemo(() => {
     const roleTools = (matchedProfession?.tools || []).map((tool, idx) => ({
@@ -457,8 +502,9 @@ export function LeftSidebarProfile({
     }))
 
     // Merge role-specific tools at the top (after any Super Admin shortcuts), avoiding duplicates
-    const adminItems = allEnclaveShortcuts.filter((s: any) => s.id === 'adminiam' || s.id === 'auth_gate')
-    const nonAdminEnclaveItems = allEnclaveShortcuts.filter((s: any) => s.id !== 'adminiam' && s.id !== 'auth_gate')
+    // Account, billing, admin and external-app shortcuts now live in the Settings modal,
+    // so the sidebar only carries day-to-day workspace tools.
+    const nonAdminEnclaveItems = allEnclaveShortcuts.filter((s: any) => !isSettingsOnlyShortcut(s))
 
     // Pick the most relevant enclave items for this specific profession
     const profKeywords = `${matchedProfession?.title || ''} ${(matchedProfession?.typicalSkills || []).join(' ')}`.toLowerCase()
@@ -468,7 +514,7 @@ export function LeftSidebarProfile({
       return bMatch - aMatch
     })
 
-    const combined = [...adminItems, ...roleTools, ...scoredEnclaveItems]
+    const combined = [...roleTools, ...scoredEnclaveItems]
 
     // If user has custom pinned tool IDs, show those first
     if (pinnedIds.length > 0) {
@@ -892,19 +938,30 @@ export function LeftSidebarProfile({
             <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 truncate">
               {t("personal_command_center", "Quick Shortcuts")}
             </span>
-            <button
-              type="button"
-              onClick={() => setIsCustomizingCenter(!isCustomizingCenter)}
-              className={`rounded-md px-1.5 py-0.5 text-[10px] font-semibold flex items-center gap-1 transition-colors cursor-pointer shrink-0 ${
-                isCustomizingCenter
-                  ? "bg-[#0A66C2] text-white"
-                  : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
-              }`}
-              title="Customize shortcuts for your profession"
-            >
-              <SlidersHorizontal className="h-3 w-3" />
-              <span>{isCustomizingCenter ? "Done" : "Edit"}</span>
-            </button>
+            <div className="flex items-center gap-0.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsSettingsOpen(true)}
+                className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold flex items-center gap-1 text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors cursor-pointer"
+                title="Settings: account, connected apps, billing & payouts"
+              >
+                <SettingsGearIcon className="h-3 w-3" />
+                <span>Settings</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsCustomizingCenter(!isCustomizingCenter)}
+                className={`rounded-md px-1.5 py-0.5 text-[10px] font-semibold flex items-center gap-1 transition-colors cursor-pointer shrink-0 ${
+                  isCustomizingCenter
+                    ? "bg-[#0A66C2] text-white"
+                    : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+                }`}
+                title="Customize shortcuts for your profession"
+              >
+                <SlidersHorizontal className="h-3 w-3" />
+                <span>{isCustomizingCenter ? "Done" : "Edit"}</span>
+              </button>
+            </div>
           </div>
 
           {/* Inline Profession & Tool Pin Customizer Drawer */}
@@ -990,19 +1047,7 @@ export function LeftSidebarProfile({
             {visibleShortcuts.map((ws: any) => (
               <button
                 key={ws.id + ws.label}
-                onClick={() => {
-                  if (ws.url) {
-                    window.open(ws.url, '_blank', 'noopener,noreferrer')
-                  } else if (ws.id === 'auth_gate' && onOpenAuthModal) {
-                    onOpenAuthModal()
-                  } else if (ws.id === 'inbound_bounty' && onOpenInboundBountiesModal) {
-                    onOpenInboundBountiesModal()
-                  } else if (onNavigateTab) {
-                    onNavigateTab(resolveSidebarTab(ws.targetTab || ws.id))
-                  } else {
-                    onViewProfile()
-                  }
-                }}
+                onClick={() => activateShortcut(ws)}
                 title={ws.description || ws.label}
                 className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left text-zinc-700 hover:bg-white hover:shadow-xs dark:text-zinc-300 dark:hover:bg-zinc-800 transition-all group cursor-pointer"
               >
@@ -1073,6 +1118,19 @@ export function LeftSidebarProfile({
           </div>
         )}
       </div>
+
+      <SettingsModal
+        open={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        user={user}
+        isAdmin={isAdminUser}
+        connectedApps={settingsConnectedApps}
+        accountItems={settingsAccountItems}
+        billingItems={settingsBillingItems}
+        adminItems={settingsAdminItems}
+        onActivate={activateShortcut}
+        onOpenIDModal={onOpenIDModal}
+      />
     </aside>
   )
 }
