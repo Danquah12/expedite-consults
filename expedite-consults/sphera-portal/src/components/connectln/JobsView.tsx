@@ -412,7 +412,14 @@ export function JobsView({
     } catch {}
     return ""
   })
-  const [jobs, setJobs] = useState<GlobalJobItem[]>([])
+  // Seed with the instant local catalog so the page never opens empty while the live API (several MB) loads
+  const [jobs, setJobs] = useState<GlobalJobItem[]>(() => {
+    try {
+      return getLocalizedJobsForCountryAndEnclave('US', 'all')
+    } catch {
+      return []
+    }
+  })
   const [liveSyncCount, setLiveSyncCount] = useState<number>(0)
   const [lastSyncedAt, setLastSyncedAt] = useState<string>("Just now")
   const [selectedJob, setSelectedJob] = useState<GlobalJobItem | null>(null)
@@ -482,7 +489,8 @@ export function JobsView({
   const [appliedJobIds, setAppliedJobIds] = useState<string[]>([])
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false)
   const [applyStep, setApplyStep] = useState<'form' | 'success'>('form')
-  const [isLoadingJobs, setIsLoadingJobs] = useState(false)
+  // Starts true: the first live fetch fires on mount, so show "syncing" instead of a misleading "0 active roles"
+  const [isLoadingJobs, setIsLoadingJobs] = useState(true)
 
   // Recruiter Direct Outreach Modal State
   const [outreachCandidate, setOutreachCandidate] = useState<CandidateProfile | null>(null)
@@ -957,7 +965,10 @@ export function JobsView({
               </span>
               <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60 flex items-center gap-1">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                {currentCountry.flag} {currentCountry.name} · {jobs.length} active roles ({lastSyncedAt})
+                {currentCountry.flag} {currentCountry.name} ·{' '}
+                {isLoadingJobs
+                  ? `${jobs.length > 0 ? `${jobs.length}+ roles · ` : ''}syncing live roles…`
+                  : `${jobs.length.toLocaleString()} active roles (${lastSyncedAt})`}
               </span>
               <button
                 type="button"
