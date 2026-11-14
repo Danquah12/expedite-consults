@@ -87,7 +87,7 @@ export function MeetingReminders({ onOpenMessaging }: { onOpenMessaging?: () => 
     if (toasts.length === 0) return null;
 
     return (
-        <div className="fixed bottom-4 right-4 z-[200] flex w-[min(92vw,360px)] flex-col gap-2">
+        <div className="fixed bottom-14 right-4 z-[200] flex w-[min(92vw,360px)] flex-col gap-2">
             {toasts.map((t) => (
                 <div key={t.key} className="rounded-xl border border-amber-300 bg-white p-3 shadow-2xl text-slate-900">
                     <div className="flex items-start justify-between gap-2">

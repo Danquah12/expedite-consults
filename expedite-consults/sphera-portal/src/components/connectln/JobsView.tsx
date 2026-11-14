@@ -48,6 +48,7 @@ import { UserProfile } from "@/lib/connectln-data"
 import { trackUserActivity } from "@/lib/connectin-storage"
 import { recordLocalBilateralDirectMessage } from "@/lib/direct-mailbox-sync"
 import { LiveHarvestedMediaShowcase } from "./LiveHarvestedMediaShowcase"
+import { ResumePrepStudioEmbed } from "./ResumePrepStudioEmbed"
 
 interface JobsViewProps {
   currentUser?: UserProfile
@@ -2296,20 +2297,14 @@ export function JobsView({
             )}
           </div>
 
-          {/* Embedded Live Resume Preparation App (https://tuhousing.vercel.app/) */}
-          <div
-            className={`rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-lg bg-white dark:bg-zinc-900 ${
-              isResumeFullscreen ? "flex-1 min-h-[75vh]" : "h-[840px]"
-            }`}
-          >
-            <iframe
-              key={resumeIframeKey}
-              src="https://tuhousing.vercel.app/"
-              title="Expedite CareerSuite — AI-Powered Resume Preparation & Tailoring App"
-              className="w-full h-full border-0"
-              allow="camera; microphone; clipboard-write; clipboard-read; downloads"
-            />
-          </div>
+          {/* In-App ATS Resume Tailor + CSP-Sandboxed External Studio */}
+          <ResumePrepStudioEmbed
+            currentUser={currentUser}
+            targetJob={tailorTargetJob}
+            iframeKey={resumeIframeKey}
+            onReloadIframe={() => setResumeIframeKey((prev) => prev + 1)}
+            isFullscreen={isResumeFullscreen}
+          />
         </div>
       )}
 

@@ -325,37 +325,19 @@ export function loadLocalBilateralConversations(): Record<string, LocalBilateral
   try {
     const raw = localStorage.getItem(SHARED_DM_STORAGE_KEY)
     const parsed: Record<string, LocalBilateralConversation> = raw ? JSON.parse(raw) : {}
-    const seed = getDefaultSeedConversation()
     let mutated = false
 
-    if (!parsed[seed.pairKey]) {
-      parsed[seed.pairKey] = seed
-      mutated = true
-    } else {
-      // Normalize any legacy cached seed message that had "Just now" or today's date back to Oct 26, 2026
-      const existingConvo = parsed[seed.pairKey]
-      if (existingConvo && Array.isArray(existingConvo.messages)) {
-        existingConvo.messages = existingConvo.messages.map(m => {
-          if (m.id === "dm_seed_kwesi_patience_1") {
-            mutated = true
-            return {
-              ...m,
-              createdAtIso: SEED_PATIENCE_CREATED_AT_ISO,
-              timestamp: formatMessageSentDateTime({
-                ...m,
-                id: "dm_seed_kwesi_patience_1",
-                createdAtIso: SEED_PATIENCE_CREATED_AT_ISO
-              })
-            }
-          }
-          return m
-        })
-        const lastIso =
-          existingConvo.messages[existingConvo.messages.length - 1]?.createdAtIso ||
-          SEED_PATIENCE_CREATED_AT_ISO
-        if (existingConvo.updatedAtIso !== lastIso) {
-          existingConvo.updatedAtIso = lastIso
-          mutated = true
+    for (const key of Object.keys(parsed)) {
+      const convo = parsed[key]
+      if (!convo || !Array.isArray(convo.messages)) continue
+      const filtered = convo.messages.filter(m => m?.id !== "dm_seed_kwesi_patience_1")
+      if (filtered.length !== convo.messages.length) {
+        mutated = true
+        if (filtered.length === 0) {
+          delete parsed[key]
+        } else {
+          convo.messages = filtered
+          convo.updatedAtIso = filtered[filtered.length - 1]?.createdAtIso || convo.updatedAtIso
         }
       }
     }
@@ -365,8 +347,7 @@ export function loadLocalBilateralConversations(): Record<string, LocalBilateral
     }
     return parsed
   } catch {
-    const seed = getDefaultSeedConversation()
-    return { [seed.pairKey]: seed }
+    return {}
   }
 }
 

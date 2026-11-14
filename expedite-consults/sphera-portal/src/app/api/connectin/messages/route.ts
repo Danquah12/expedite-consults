@@ -31,43 +31,6 @@ const readThreadIds = new Set<string>();
 // Bilateral user-to-user direct message store (synced with Twilio Cloud Sync Map `connectin_dm_conversations_v1`)
 const bilateralConversationsByPairKey: Record<string, CloudDirectConversation> = {};
 
-// Pre-seed the live message from Kwesi Asiedu -> PATIENCE Addo so PATIENCE Addo immediately receives it in her inbox
-const INITIAL_PAIR_KEY = makeDmPairKey('Kwesi Asiedu', 'PATIENCE Addo');
-bilateralConversationsByPairKey[INITIAL_PAIR_KEY] = {
-    pairKey: INITIAL_PAIR_KEY,
-    participantA: {
-        name: 'Kwesi Asiedu',
-        email: 'kwesi.asiedu@connectin.app',
-        avatar: '/brand/kwesi-avatar.png',
-        headline: 'Principal Cloud & AI Security Architect · ConnectLn Founder',
-    },
-    participantB: {
-        name: 'PATIENCE Addo',
-        email: 'patience.addo@connectin.app',
-        avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=PATIENCE%20Addo&backgroundColor=0a66c2',
-        headline: 'Doctor of Veterinary Medicine (DVM) · Small Animal Surgery, Pharmacology & Preventive Care',
-    },
-    messages: [
-        {
-            id: 'dm_seed_kwesi_patience_1',
-            senderName: 'Kwesi Asiedu',
-            senderEmail: 'kwesi.asiedu@connectin.app',
-            senderAvatar: '/brand/kwesi-avatar.png',
-            senderRole: 'Principal Cloud & AI Security Architect · ConnectLn Founder',
-            recipientName: 'PATIENCE Addo',
-            subject: 'neeed you for a job',
-            text: 'Subject: neeed you for a job\nneed to connect with you for a job\n📎 Attached: noctis-report-2026-10-26.doc',
-            attachment: 'noctis-report-2026-10-26.doc',
-            timestamp: 'Oct 26, 2026 · 10:30 AM',
-            createdAtIso: SEED_PATIENCE_CREATED_AT_ISO,
-            readBy: ['kwesi asiedu'],
-        },
-    ],
-    updatedAtIso: SEED_PATIENCE_CREATED_AT_ISO,
-};
-
-let hasPushedInitialSeedToCloud = false;
-
 function doesParticipantMatch(candidateName: string, viewerName: string, candidateEmail?: string, viewerEmail?: string): boolean {
     const cName = normalizeParticipantKey(candidateName);
     const vName = normalizeParticipantKey(viewerName);
@@ -435,12 +398,8 @@ export async function GET(request: Request) {
     const viewerName = searchParams.get('viewerName') || '';
     const viewerEmail = searchParams.get('viewerEmail') || '';
 
-    // Ensure initial seed is pushed to cloud once and pull latest cloud DMs
+    // Pull latest cloud DMs into memory
     try {
-        if (!hasPushedInitialSeedToCloud) {
-            hasPushedInitialSeedToCloud = true;
-            await upsertCloudDirectConversation(bilateralConversationsByPairKey[INITIAL_PAIR_KEY]);
-        }
         const cloudConvos = await pullCloudDirectConversations();
         if (cloudConvos.length > 0) {
             mergeCloudConversationsIntoMemory(cloudConvos);

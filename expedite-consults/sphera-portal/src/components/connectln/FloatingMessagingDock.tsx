@@ -11,7 +11,9 @@ import {
   Maximize2,
   Minimize2,
   Image as ImageIcon,
-  Paperclip
+  Paperclip,
+  Bell,
+  Sparkles
 } from "lucide-react"
 import { UserProfile } from "@/lib/connectln-data"
 import { getEnclaveB2BThreads, B2BConversationThread, B2BMessageItem } from "@/lib/b2b-messaging-data"
@@ -40,6 +42,7 @@ interface FloatingMessagingDockProps {
   currentUser: UserProfile
   onOpenFullMessaging?: () => void
   onNavigateJobs?: () => void
+  onOpenAIAssistant?: () => void
   composeRecipient?: DirectMessageRecipient | null
   onCloseComposeRecipient?: () => void
   /** When true (e.g. the full Messaging page is open) incoming messages do not auto-open this popup. */
@@ -53,6 +56,7 @@ export function FloatingMessagingDock({
   currentUser,
   onOpenFullMessaging,
   onNavigateJobs,
+  onOpenAIAssistant,
   composeRecipient,
   onCloseComposeRecipient,
   suppressAutoOpen = false,
@@ -65,8 +69,8 @@ export function FloatingMessagingDock({
   const viewerFirstName = (currentUser?.name || "Kwesi").split(" ")[0]
 
   const [isDockOpen, setIsDockOpen] = useState(false)
-  const [isMelissaOfferOpen, setIsMelissaOfferOpen] = useState(true)
-  const [isMelissaMinimized, setIsMelissaMinimized] = useState(true)
+  const [isMelissaOfferOpen, setIsMelissaOfferOpen] = useState(false)
+  const [isMelissaMinimized, setIsMelissaMinimized] = useState(false)
   const [melissaResponseState, setMelissaResponseState] = useState<'pending' | 'get_started' | 'not_today' | 'not_interested'>('pending')
   const [melissaAlertEnabled, setMelissaAlertEnabled] = useState(true)
   const [melissaTargetRole, setMelissaTargetRole] = useState(
@@ -93,6 +97,7 @@ export function FloatingMessagingDock({
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const autoOpenedMsgIdsRef = useRef<Set<string>>(new Set())
+  const hasSeededInitialUnreadRef = useRef(false)
   // Always points at the conversation currently open, so background syncs never hijack it
   const activeChatThreadRef = useRef<B2BConversationThread | null>(null)
   activeChatThreadRef.current = activeChatThread
@@ -131,7 +136,22 @@ export function FloatingMessagingDock({
               : prev
           })
 
-          // If the current user has a new unread direct message (dm_pair__...), pop open the message box automatically!
+          // Seed pre-existing unread DM IDs on initial page load so old/seeded messages stay docked as a badge
+          // instead of popping a modal over main content; only newly arriving messages after load auto-open.
+          if (!hasSeededInitialUnreadRef.current) {
+            hasSeededInitialUnreadRef.current = true
+            for (const t of finalMerged) {
+              if (t.id.startsWith("dm_pair__") && (t.unreadCount || 0) > 0) {
+                const latestMsg = t.messages[t.messages.length - 1]
+                autoOpenedMsgIdsRef.current.add(
+                  `${viewerName}__${t.id}__${latestMsg?.id || "init"}`
+                )
+              }
+            }
+            return
+          }
+
+          // If the current user receives a brand-new unread direct message (dm_pair__...) while browsing, pop open the message box
           const unreadDirectThread = finalMerged.find(
             (t) => t.id.startsWith("dm_pair__") && (t.unreadCount || 0) > 0
           )
@@ -452,34 +472,16 @@ export function FloatingMessagingDock({
         }}
       />
 
-      {/* 0. ConnectLn Job Alert Request (Positioned right beside the Messaging box) */}
-      {isMelissaOfferOpen && !activeChatThread && (
-        isMelissaMinimized ? (
-          <button
-            type="button"
-            onClick={() => setIsMelissaMinimized(false)}
-            className="pointer-events-auto flex items-center gap-2.5 rounded-t-xl border border-zinc-300 bg-white px-3.5 py-2.5 shadow-2xl hover:bg-zinc-50 transition-colors cursor-pointer"
-          >
-            <img
-              src="/brand/connectln-icon.png"
-              alt="ConnectLn"
-              className="h-7 w-7 rounded-lg object-contain bg-[#1a1917] shrink-0"
-            />
-            <div className="text-left">
-              <p className="text-xs font-bold text-zinc-900 leading-none">ConnectLn Job Alert Request</p>
-              <p className="text-[10px] text-zinc-500 mt-0.5">Instant Job &amp; Project Match Radar</p>
-            </div>
-            <ChevronUp className="h-4 w-4 text-zinc-500 ml-1" />
-          </button>
-        ) : (
-          <div className="pointer-events-auto flex flex-col w-[92vw] sm:w-[390px] max-h-[545px] rounded-t-xl border border-zinc-300 bg-white text-zinc-900 shadow-[0_8px_36px_rgba(0,0,0,0.22)] overflow-hidden animate-in slide-in-from-bottom-4">
-            {/* Top Bar: ConnectLn Job Alert Request + ... + Minimize + X */}
+      {/* 0. ConnectLn Job Alert Request (Docked inside Messaging by default; opens cleanly on demand) */}
+      {isMelissaOfferOpen && !isMelissaMinimized && !activeChatThread && (
+          <div className="pointer-events-auto flex flex-col w-[92vw] sm:w-[360px] max-h-[520px] rounded-t-xl border border-zinc-300 bg-white text-zinc-900 shadow-[0_8px_36px_rgba(0,0,0,0.22)] overflow-hidden animate-in slide-in-from-bottom-4">
+            {/* Top Bar: ConnectLn Job Alert Request + Minimize + X */}
             <div className="flex items-center justify-between border-b border-zinc-200 bg-white px-3.5 py-2.5 shrink-0">
               <button
                 type="button"
-                onClick={() => setIsMelissaMinimized(true)}
+                onClick={() => setIsMelissaOfferOpen(false)}
                 className="flex items-center gap-2.5 min-w-0 flex-1 text-left cursor-pointer"
-                title="Minimize ConnectLn Job Alert Request"
+                title="Dock Job Alert back into Messaging"
               >
                 <img
                   src="/brand/connectln-icon.png"
@@ -493,17 +495,9 @@ export function FloatingMessagingDock({
               <div className="flex items-center gap-1 text-zinc-600">
                 <button
                   type="button"
-                  onClick={() => setIsMelissaMinimized(true)}
+                  onClick={() => setIsMelissaOfferOpen(false)}
                   className="rounded-full p-1.5 hover:bg-zinc-100 hover:text-zinc-900 transition-colors cursor-pointer"
-                  title="More options"
-                >
-                  <span className="text-sm font-bold leading-none px-0.5">•••</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsMelissaMinimized(true)}
-                  className="rounded-full p-1.5 hover:bg-zinc-100 hover:text-zinc-900 transition-colors cursor-pointer"
-                  title="Minimize"
+                  title="Minimize to Messaging dock"
                 >
                   <Minimize2 className="h-4 w-4" />
                 </button>
@@ -618,7 +612,8 @@ export function FloatingMessagingDock({
                         )
                         window.dispatchEvent(new Event('connectln-job-alert-updated'))
                       } catch {}
-                      setIsMelissaMinimized(true)
+                      setIsMelissaOfferOpen(false)
+                      setIsMelissaMinimized(false)
                       if (onNavigateJobs) {
                         onNavigateJobs()
                       }
@@ -673,7 +668,6 @@ export function FloatingMessagingDock({
               )}
             </div>
           </div>
-        )
       )}
 
       {/* 1. ConnectLn Style "New message" User Compose Pop-up Box */}
@@ -1030,15 +1024,21 @@ export function FloatingMessagingDock({
         </div>
       )}
 
-      {/* 2. Collapsible Messaging Dock Drawer (Desktop Right Corner) */}
-      <div className="hidden sm:block pointer-events-auto w-72 rounded-t-xl border border-zinc-300 bg-white shadow-2xl overflow-hidden">
+      {/* 2. Unified Collapsible Bottom-Right Dock (Messaging + Job Alerts + Ask Noctis in one compact bar) */}
+      <div
+        className={`${
+          activeChatThread || (isMelissaOfferOpen && !isMelissaMinimized)
+            ? "hidden xl:block"
+            : "hidden md:block"
+        } pointer-events-auto w-64 rounded-t-xl border border-zinc-300 bg-white shadow-2xl overflow-hidden`}
+      >
         {/* Dock Header Bar */}
         <div
           onClick={() => setIsDockOpen(!isDockOpen)}
-          className="flex items-center justify-between px-3.5 py-2.5 bg-white cursor-pointer border-b border-zinc-200 hover:bg-zinc-50"
+          className="flex items-center justify-between px-3 py-2 bg-white cursor-pointer border-b border-zinc-200 hover:bg-zinc-50"
         >
-          <div className="flex items-center gap-2">
-            <div className="relative">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="relative shrink-0">
               <img
                 src={currentUser.avatar}
                 alt="Me"
@@ -1046,10 +1046,10 @@ export function FloatingMessagingDock({
               />
               <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-1 ring-white online-dot-blink" />
             </div>
-            <span className="font-bold text-xs text-zinc-900">Messaging</span>
+            <span className="font-bold text-xs text-zinc-900 truncate">Messaging</span>
             {totalUnread > 0 && (
               <span
-                className="rounded-full bg-[#0A66C2] px-1.5 py-0.2 text-[10px] font-bold"
+                className="rounded-full bg-[#0A66C2] px-1.5 py-0.2 text-[10px] font-bold shrink-0"
                 style={{ color: "#FFFFFF" }}
               >
                 {totalUnread}
@@ -1057,7 +1057,36 @@ export function FloatingMessagingDock({
             )}
           </div>
 
-          <div className="flex items-center gap-1 text-zinc-500">
+          <div className="flex items-center gap-0.5 text-zinc-500 shrink-0">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                setActiveChatThread(null)
+                setIsMelissaMinimized(false)
+                setIsMelissaOfferOpen((prev) => !prev)
+                setIsDockOpen(false)
+              }}
+              className={`p-1 rounded hover:bg-zinc-100 cursor-pointer ${
+                isMelissaOfferOpen ? "text-[#0A66C2]" : "hover:text-[#0A66C2]"
+              }`}
+              title="Job Alerts Radar"
+            >
+              <Bell className="h-3.5 w-3.5" />
+            </button>
+            {onOpenAIAssistant && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onOpenAIAssistant()
+                }}
+                className="p-1 rounded hover:bg-amber-50 text-[#C88A24] hover:text-[#9A650E] cursor-pointer"
+                title="Ask Noctis Q&A"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+              </button>
+            )}
             {onOpenFullMessaging && (
               <button
                 type="button"
@@ -1065,7 +1094,7 @@ export function FloatingMessagingDock({
                   e.stopPropagation()
                   onOpenFullMessaging()
                 }}
-                className="p-1 hover:text-[#0A66C2]"
+                className="p-1 rounded hover:bg-zinc-100 hover:text-[#0A66C2] cursor-pointer"
                 title="Open Full Messaging Tab"
               >
                 <Maximize2 className="h-3.5 w-3.5" />
@@ -1075,9 +1104,11 @@ export function FloatingMessagingDock({
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
+                setIsMelissaOfferOpen(false)
+                setIsDockOpen(false)
                 setActiveChatThread(threads[0] || null)
               }}
-              className="p-1 hover:text-[#0A66C2]"
+              className="p-1 rounded hover:bg-zinc-100 hover:text-[#0A66C2] cursor-pointer"
               title="New message"
             >
               <Edit3 className="h-3.5 w-3.5" />

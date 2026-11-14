@@ -837,11 +837,40 @@ export function VibeUnifiedCommunicationsView({
     )
   }
 
-  const runVibeAiAction = (type: "summarize" | "decision" | "tasks" | "translate" | "studynotes") => {
+  const runVibeAiAction = async (type: "summarize" | "decision" | "tasks" | "translate" | "studynotes") => {
     const privacyTag =
       aiConsentMode === "on_device"
-        ? "🔒 On-Device Local Processing (Zero Server Plaintext)"
-        : "📤 Explicit User-Consented Message Share"
+        ? "🔒 Local Preview · Demo Simulation"
+        : "📤 Live Noctis AI (Explicit Share)"
+
+    if (aiConsentMode === "explicit_share" && type !== "translate") {
+      const transcript = selectedConversation.messages
+        .slice(-8)
+        .map((m) => `${m.sender}: ${m.text}`)
+        .join("\n")
+      const promptByType: Record<string, string> = {
+        summarize: `Summarize this NoctisChat thread concisely in 3 bullets:\n\n${transcript}`,
+        decision: `Identify the key engineering or operational decision made in this thread:\n\n${transcript}`,
+        tasks: `Extract concrete action items with priority tags from this thread:\n\n${transcript}`,
+        studynotes: `Create brief architecture/study takeaways from this thread:\n\n${transcript}`,
+      }
+      setAiOutputTitle(`${type.toUpperCase()} · Querying Live Noctis AI...`)
+      try {
+        const res = await fetch("/api/connectin/noctis", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: promptByType[type] }),
+        })
+        const data = await res.json().catch(() => null)
+        if (res.ok && data?.text) {
+          setAiOutputTitle(`${type.toUpperCase()} · ✨ Live Noctis AI`)
+          setAiOutputContent(data.text)
+          return
+        }
+      } catch {
+        // Fall back to deterministic demo preview below
+      }
+    }
     if (type === "summarize") {
       setAiOutputTitle(`Summary · ${privacyTag}`)
       setAiOutputContent(
@@ -1432,11 +1461,14 @@ export function VibeUnifiedCommunicationsView({
                       <Sparkles className="h-4 w-4" />
                     </div>
                     <div>
-                      <h3 className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100">
-                        Noctis Brain (Section 6.5 Boundary)
+                      <h3 className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
+                        <span>Noctis Brain (Section 6.5 Boundary)</span>
+                        <span className="rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300/60 px-1.5 py-0.2 text-[9px] font-bold">
+                          {aiConsentMode === "on_device" ? "Demo Preview" : "Live Model"}
+                        </span>
                       </h3>
                       <p className="text-[10px] text-zinc-500">
-                        Never claims server-side AI over private E2EE plaintext
+                        Switch to Explicit Share for live Noctis AI, or keep On-Device for local demo preview
                       </p>
                     </div>
                   </div>

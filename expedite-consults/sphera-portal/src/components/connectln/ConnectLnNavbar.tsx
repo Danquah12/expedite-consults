@@ -43,6 +43,7 @@ import {
   Key,
   ExternalLink,
   ChevronRight,
+  ChevronLeft,
   Settings,
   HelpCircle,
   Globe,
@@ -193,6 +194,38 @@ export function ConnectLnNavbar({
   // Mobile tab strip reference (always starts cleanly at Home on the left, matching laptop order)
   const tabStripRef = useRef<HTMLDivElement>(null)
 
+  // Tablet/mobile tab strip: show scroll hints so tabs past the edge (RFPs, Launchpad, Resume Prep...) are discoverable
+  const [stripCanScrollLeft, setStripCanScrollLeft] = useState(false)
+  const [stripCanScrollRight, setStripCanScrollRight] = useState(false)
+  useEffect(() => {
+    const el = tabStripRef.current
+    if (!el) return
+    const update = () => {
+      setStripCanScrollLeft(el.scrollLeft > 4)
+      setStripCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4)
+    }
+    update()
+    el.addEventListener("scroll", update, { passive: true })
+    window.addEventListener("resize", update)
+    return () => {
+      el.removeEventListener("scroll", update)
+      window.removeEventListener("resize", update)
+    }
+  }, [])
+  const scrollTabStrip = (direction: 1 | -1) => {
+    tabStripRef.current?.scrollBy({ left: direction * 240, behavior: "smooth" })
+  }
+  // Keep the active tab in view in the strip (e.g. after opening RFPs from the More menu)
+  useEffect(() => {
+    const el = tabStripRef.current
+    if (!el || !activeTab) return
+    const btn = el.querySelector<HTMLElement>(`[data-nav-id="${activeTab}"]`)
+    if (btn && btn.offsetParent !== null) {
+      const target = btn.offsetLeft - el.clientWidth / 2 + btn.clientWidth / 2
+      el.scrollTo({ left: Math.max(0, target), behavior: "smooth" })
+    }
+  }, [activeTab])
+
   // Streamlined Clean Primary Navigation with Responsive Priority Levels
   const [visitedBadgeTabs, setVisitedBadgeTabs] = React.useState<Record<string, boolean>>({})
   React.useEffect(() => {
@@ -320,11 +353,11 @@ export function ConnectLnNavbar({
     },
     {
       id: "usr_elena",
-      name: "Dr. Elena Rostova",
-      headline: "Chief AI Research Scientist | Stanford AI Lab Fellow",
-      avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80",
-      capabilities: ["AI Security", "Deterministic Sandboxing"],
-      role: "AI Fellow"
+      name: "Elena Rostova, RN, CCRN",
+      headline: "Lead Trauma Clinical Nurse Specialist (BSN, CCRN, TNCC) · Johns Hopkins Hospital",
+      avatar: "https://images.unsplash.com/photo-1594824813571-638f02614d3f?w=400&auto=format&fit=crop&q=80",
+      capabilities: ["Level 1 Trauma Triage", "CCRN Critical Care", "TNCC Protocol"],
+      role: "Trauma Nurse Lead"
     }
   ]
 
@@ -898,7 +931,7 @@ export function ConnectLnNavbar({
         </div>
 
         {/* Center Primary Navigation Tabs (Visible on lg: screens and above) */}
-        <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1 2xl:gap-1.5 shrink-0 py-1">
+        <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1 2xl:gap-1.5 min-w-0 overflow-x-auto no-scrollbar py-1">
           {primaryNavItems.map((item) => {
             const Icon = item.icon
             const isActive = activeTab === item.id
@@ -1308,23 +1341,25 @@ export function ConnectLnNavbar({
               </span>
             </button>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              onSelectTab('adminiam')
-              setIsMoreOpen(false)
-              setIsMeOpen(false)
-            }}
-            className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] sm:text-xs font-bold shadow-xs transition-all shrink-0 cursor-pointer border ${
-              activeTab === 'adminiam'
-                ? "bg-[#3A2818] text-[#FAF6EE] border-[#3A2818]"
-                : "bg-[#FAF6EE] dark:bg-zinc-800 text-[#3A2818] dark:text-zinc-200 border-[#C8B99E] dark:border-zinc-700 hover:bg-[#EFE7D6]"
-            }`}
-            title="Open ConnectLn Admin & 1-Minute Video/Media Backend"
-          >
-            <Zap className="h-3.5 w-3.5 text-[#6B4423] dark:text-amber-400 shrink-0" />
-            <span>Backend</span>
-          </button>
+          {isAdminUser && (
+            <button
+              type="button"
+              onClick={() => {
+                onSelectTab('adminiam')
+                setIsMoreOpen(false)
+                setIsMeOpen(false)
+              }}
+              className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] sm:text-xs font-bold shadow-xs transition-all shrink-0 cursor-pointer border ${
+                activeTab === 'adminiam'
+                  ? "bg-[#3A2818] text-[#FAF6EE] border-[#3A2818]"
+                  : "bg-[#FAF6EE] dark:bg-zinc-800 text-[#3A2818] dark:text-zinc-200 border-[#C8B99E] dark:border-zinc-700 hover:bg-[#EFE7D6]"
+              }`}
+              title="Open ConnectLn Admin & 1-Minute Video/Media Backend"
+            >
+              <Zap className="h-3.5 w-3.5 text-[#6B4423] dark:text-amber-400 shrink-0" />
+              <span>Backend</span>
+            </button>
+          )}
           {isAdminUser && onOpenAuthModal && (
             <button
               onClick={onOpenAuthModal}
@@ -1349,13 +1384,14 @@ export function ConnectLnNavbar({
       </div>
 
       {/* Mobile & Tablet: unified top navigation strip starting cleanly at Home, Network, Jobs, Msgs, Alerts, Market, Learn, Media, Pulse (matching laptop) */}
-      <nav className="lg:hidden border-t border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-950">
+      <nav className="relative lg:hidden border-t border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-950">
         <div
           ref={tabStripRef}
           className="flex items-center overflow-x-auto no-scrollbar px-1 whitespace-nowrap scroll-smooth"
         >
           {[
             ...primaryNavItems.map((i) => ({ id: i.id, label: i.shortLabel || i.label, icon: i.icon, badge: i.badge, kind: i.isMarketplace ? 'purple' : i.id === 'learning' ? 'blue' : i.id === 'media' ? 'rose' : i.id === 'pulserooms' ? 'emerald' : 'default' })),
+            { id: '__more', label: 'More', icon: ChevronDown, badge: 0, kind: 'default' },
             { id: 'veterans', label: 'Veterans', icon: Award, badge: 0, kind: 'emerald' },
             { id: 'franchises', label: 'Franchise', icon: Store, badge: 0, kind: 'amber' },
             { id: 'wallet', label: 'Wallet', icon: DollarSign, badge: 0, kind: 'emerald' },
@@ -1387,6 +1423,7 @@ export function ConnectLnNavbar({
               <button
                 key={item.id}
                 type="button"
+                data-nav-id={item.id}
                 onClick={() => {
                   if (isMore) {
                     setIsMoreOpen(!isMoreOpen)
@@ -1414,6 +1451,28 @@ export function ConnectLnNavbar({
             )
           })}
         </div>
+
+        {/* Scroll hints: fade + arrow on whichever side still has hidden tabs (RFPs, Launchpad, Resume Prep ...) */}
+        {stripCanScrollLeft && (
+          <button
+            type="button"
+            aria-label="Scroll tabs left"
+            onClick={() => scrollTabStrip(-1)}
+            className="absolute left-0 top-0 bottom-0 z-10 flex w-9 items-center justify-start bg-gradient-to-r from-white via-white/90 to-transparent pl-0.5 text-zinc-500 dark:from-zinc-950 dark:via-zinc-950/90 cursor-pointer"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+        )}
+        {stripCanScrollRight && (
+          <button
+            type="button"
+            aria-label="Scroll tabs right to see more (RFPs, Launchpad, Resume Prep...)"
+            onClick={() => scrollTabStrip(1)}
+            className="absolute right-0 top-0 bottom-0 z-10 flex w-9 items-center justify-end bg-gradient-to-l from-white via-white/90 to-transparent pr-0.5 text-zinc-500 dark:from-zinc-950 dark:via-zinc-950/90 cursor-pointer"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        )}
       </nav>
 
       {/* Legacy bottom bar — hidden; tabs now live at the top like desktop */}
@@ -1905,6 +1964,26 @@ export function ConnectLnNavbar({
                     className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 px-2.5 py-1 text-[11px] font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 cursor-pointer"
                   >
                     💬 NoctisChat
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('procurement')
+                      setIsMoreOpen(false)
+                    }}
+                    className="rounded-lg border border-teal-200 dark:border-teal-800 bg-teal-50/70 dark:bg-teal-950/40 px-2.5 py-1 text-[11px] font-bold text-teal-800 dark:text-teal-300 hover:bg-teal-100 cursor-pointer"
+                  >
+                    📋 RFPs
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectTab('launchpad')
+                      setIsMoreOpen(false)
+                    }}
+                    className="rounded-lg border border-purple-200 dark:border-purple-800 bg-purple-50/70 dark:bg-purple-950/40 px-2.5 py-1 text-[11px] font-bold text-purple-800 dark:text-purple-300 hover:bg-purple-100 cursor-pointer"
+                  >
+                    🚀 Launchpad
                   </button>
                   <button
                     type="button"

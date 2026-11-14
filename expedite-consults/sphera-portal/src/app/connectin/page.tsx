@@ -11,74 +11,59 @@ import { PostCreator } from "@/components/connectln/PostCreator"
 import { FeedPostCard } from "@/components/connectln/FeedPostCard"
 import { LinkedInStoriesStrip } from "@/components/connectln/LinkedInStoriesStrip"
 import { RightSidebarNews } from "@/components/connectln/RightSidebarNews"
-import { ProfileView } from "@/components/connectln/ProfileView"
-import { NetworkView } from "@/components/connectln/NetworkView"
-import { JobsView } from "@/components/connectln/JobsView"
-import { MessagingView } from "@/components/connectln/MessagingView"
-import { NotificationsView } from "@/components/connectln/NotificationsView"
 import { FloatingMessagingDock, DirectMessageRecipient } from "@/components/connectln/FloatingMessagingDock"
 
-const LearningView = dynamic(
-  () => import("@/components/connectln/LearningView").then((m) => m.LearningView),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="mx-auto max-w-7xl rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-10 text-center text-sm font-bold text-zinc-500">
-        Loading ConnectLn Learning &amp; Career Mastery Academy...
-      </div>
-    )
-  }
+const tabLoadingFallback = (label: string) => () => (
+  <div className="mx-auto max-w-7xl rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-10 text-center text-sm font-bold text-zinc-500">
+    Loading {label}...
+  </div>
 )
 
-const VibeUnifiedCommunicationsView = dynamic(
-  () => import("@/components/connectln/VibeUnifiedCommunicationsView").then((m) => m.VibeUnifiedCommunicationsView),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="mx-auto max-w-7xl rounded-2xl border border-emerald-200 dark:border-emerald-900 bg-white dark:bg-zinc-900 p-10 text-center text-sm font-bold text-emerald-600">
-        Loading Noctis / DeskNote Next-Gen E2EE Unified Communications Platform...
-      </div>
-    )
-  }
-)
-import { PulseRoomsView } from "@/components/connectln/PulseRoomsView"
-import { PeerReviewView } from "@/components/connectln/PeerReviewView"
-import { CompensationCalculator } from "@/components/connectln/CompensationCalculator"
-import { ProductLaunchLeaderboard } from "@/components/connectln/ProductLaunchLeaderboard"
-import { WatercoolerBlindView } from "@/components/connectln/WatercoolerBlindView"
-import { AdvisoryMarketplaceView } from "@/components/connectln/AdvisoryMarketplaceView"
-import { StartupVentureView } from "@/components/connectln/StartupVentureView"
-import { CareerSuiteView } from "@/components/connectln/CareerSuiteView"
-import { MarketplaceView } from "@/components/connectln/MarketplaceView"
-import { EcosystemView } from "@/components/connectln/EcosystemView"
-import { CompanyPageView } from "@/components/connectln/CompanyPageView"
-import { SellerCenterView } from "@/components/connectln/SellerCenterView"
-import { TrustCenterView } from "@/components/connectln/TrustCenterView"
-import { EventsView } from "@/components/connectln/EventsView"
-import { ConnectInAIAssistant } from "@/components/connectln/ConnectInAIAssistant"
-import { ProfessionalMissionsView } from "@/components/connectln/ProfessionalMissionsView"
-import { ProcurementRFPView } from "@/components/connectln/ProcurementRFPView"
-import { CollaborationIdeasView } from "@/components/connectln/CollaborationIdeasView"
-import { MentorshipCreatorView } from "@/components/connectln/MentorshipCreatorView"
-import { LabsView } from "@/components/connectln/LabsView"
-import { UniversalSearchModal } from "@/components/connectln/UniversalSearchModal"
-import { MediaView } from "@/components/connectln/MediaView"
-import { AIAgentsStorefrontView } from "@/components/connectln/AIAgentsStorefrontView"
-import { DeveloperCodeView } from "@/components/connectln/DeveloperCodeView"
-import { WalletInvoicingView } from "@/components/connectln/WalletInvoicingView"
-import { ProfessionalIDModal } from "@/components/connectln/ProfessionalIDModal"
-import { GatedGuildsView } from "@/components/connectln/GatedGuildsView"
-import { BountiesHackathonsView } from "@/components/connectln/BountiesHackathonsView"
-import { InboundBountiesModal } from "@/components/connectln/InboundBountiesModal"
-import { AccountSecurityView } from "@/components/connectln/AccountSecurityView"
-import { AdminIAMConsoleView } from "@/components/connectln/AdminIAMConsoleView"
-import { ConnectInAuthModal } from "@/components/connectln/ConnectInAuthModal"
-import { ConnectInAnalyticsModal } from "@/components/connectln/ConnectInAnalyticsModal"
+const ProfileView = dynamic(() => import("@/components/connectln/ProfileView").then((m) => m.ProfileView), { ssr: false, loading: tabLoadingFallback("Profile Workspace") })
+const NetworkView = dynamic(() => import("@/components/connectln/NetworkView").then((m) => m.NetworkView), { ssr: false, loading: tabLoadingFallback("My Network") })
+const JobsView = dynamic(() => import("@/components/connectln/JobsView").then((m) => m.JobsView), { ssr: false, loading: tabLoadingFallback("Verified Jobs & Opportunities") })
+const MessagingView = dynamic(() => import("@/components/connectln/MessagingView").then((m) => m.MessagingView), { ssr: false, loading: tabLoadingFallback("Direct Messaging") })
+const NotificationsView = dynamic(() => import("@/components/connectln/NotificationsView").then((m) => m.NotificationsView), { ssr: false, loading: tabLoadingFallback("Live Alerts") })
+const LearningView = dynamic(() => import("@/components/connectln/LearningView").then((m) => m.LearningView), { ssr: false, loading: tabLoadingFallback("ConnectLn Learning & Career Mastery Academy") })
+const VibeUnifiedCommunicationsView = dynamic(() => import("@/components/connectln/VibeUnifiedCommunicationsView").then((m) => m.VibeUnifiedCommunicationsView), { ssr: false, loading: tabLoadingFallback("Noctis Unified Communications") })
+const PulseRoomsView = dynamic(() => import("@/components/connectln/PulseRoomsView").then((m) => m.PulseRoomsView), { ssr: false, loading: tabLoadingFallback("Pulse Audio Rooms") })
+const PeerReviewView = dynamic(() => import("@/components/connectln/PeerReviewView").then((m) => m.PeerReviewView), { ssr: false, loading: tabLoadingFallback("Peer Review Exchange") })
+const CompensationCalculator = dynamic(() => import("@/components/connectln/CompensationCalculator").then((m) => m.CompensationCalculator), { ssr: false, loading: tabLoadingFallback("Compensation Intelligence") })
+const ProductLaunchLeaderboard = dynamic(() => import("@/components/connectln/ProductLaunchLeaderboard").then((m) => m.ProductLaunchLeaderboard), { ssr: false, loading: tabLoadingFallback("Launchpad") })
+const WatercoolerBlindView = dynamic(() => import("@/components/connectln/WatercoolerBlindView").then((m) => m.WatercoolerBlindView), { ssr: false, loading: tabLoadingFallback("Watercooler") })
+const AdvisoryMarketplaceView = dynamic(() => import("@/components/connectln/AdvisoryMarketplaceView").then((m) => m.AdvisoryMarketplaceView), { ssr: false, loading: tabLoadingFallback("Advisory Marketplace") })
+const StartupVentureView = dynamic(() => import("@/components/connectln/StartupVentureView").then((m) => m.StartupVentureView), { ssr: false, loading: tabLoadingFallback("Venture Hub") })
+const CareerSuiteView = dynamic(() => import("@/components/connectln/CareerSuiteView").then((m) => m.CareerSuiteView), { ssr: false, loading: tabLoadingFallback("Resume Prep & CareerSuite") })
+const MarketplaceView = dynamic(() => import("@/components/connectln/MarketplaceView").then((m) => m.MarketplaceView), { ssr: false, loading: tabLoadingFallback("Marketplace") })
+const EcosystemView = dynamic(() => import("@/components/connectln/EcosystemView").then((m) => m.EcosystemView), { ssr: false, loading: tabLoadingFallback("Ecosystem") })
+const CompanyPageView = dynamic(() => import("@/components/connectln/CompanyPageView").then((m) => m.CompanyPageView), { ssr: false, loading: tabLoadingFallback("Company Directory") })
+const SellerCenterView = dynamic(() => import("@/components/connectln/SellerCenterView").then((m) => m.SellerCenterView), { ssr: false, loading: tabLoadingFallback("Seller Center") })
+const TrustCenterView = dynamic(() => import("@/components/connectln/TrustCenterView").then((m) => m.TrustCenterView), { ssr: false, loading: tabLoadingFallback("Trust Center") })
+const EventsView = dynamic(() => import("@/components/connectln/EventsView").then((m) => m.EventsView), { ssr: false, loading: tabLoadingFallback("Events & Live Demos") })
+const ConnectInAIAssistant = dynamic(() => import("@/components/connectln/ConnectInAIAssistant").then((m) => m.ConnectInAIAssistant), { ssr: false })
+const ProfessionalMissionsView = dynamic(() => import("@/components/connectln/ProfessionalMissionsView").then((m) => m.ProfessionalMissionsView), { ssr: false, loading: tabLoadingFallback("Career Missions") })
+const ProcurementRFPView = dynamic(() => import("@/components/connectln/ProcurementRFPView").then((m) => m.ProcurementRFPView), { ssr: false, loading: tabLoadingFallback("Procurement & RFPs") })
+const CollaborationIdeasView = dynamic(() => import("@/components/connectln/CollaborationIdeasView").then((m) => m.CollaborationIdeasView), { ssr: false, loading: tabLoadingFallback("Collaboration Hub") })
+const MentorshipCreatorView = dynamic(() => import("@/components/connectln/MentorshipCreatorView").then((m) => m.MentorshipCreatorView), { ssr: false, loading: tabLoadingFallback("Mentorship") })
+const LabsView = dynamic(() => import("@/components/connectln/LabsView").then((m) => m.LabsView), { ssr: false, loading: tabLoadingFallback("Labs") })
+const UniversalSearchModal = dynamic(() => import("@/components/connectln/UniversalSearchModal").then((m) => m.UniversalSearchModal), { ssr: false })
+const MediaView = dynamic(() => import("@/components/connectln/MediaView").then((m) => m.MediaView), { ssr: false, loading: tabLoadingFallback("Media Studio") })
+const AIAgentsStorefrontView = dynamic(() => import("@/components/connectln/AIAgentsStorefrontView").then((m) => m.AIAgentsStorefrontView), { ssr: false, loading: tabLoadingFallback("AI Agents Storefront") })
+const DeveloperCodeView = dynamic(() => import("@/components/connectln/DeveloperCodeView").then((m) => m.DeveloperCodeView), { ssr: false, loading: tabLoadingFallback("Developer Code") })
+const WalletInvoicingView = dynamic(() => import("@/components/connectln/WalletInvoicingView").then((m) => m.WalletInvoicingView), { ssr: false, loading: tabLoadingFallback("Wallet & Escrow") })
+const ProfessionalIDModal = dynamic(() => import("@/components/connectln/ProfessionalIDModal").then((m) => m.ProfessionalIDModal), { ssr: false })
+const GatedGuildsView = dynamic(() => import("@/components/connectln/GatedGuildsView").then((m) => m.GatedGuildsView), { ssr: false, loading: tabLoadingFallback("Guilds & Enclaves") })
+const BountiesHackathonsView = dynamic(() => import("@/components/connectln/BountiesHackathonsView").then((m) => m.BountiesHackathonsView), { ssr: false, loading: tabLoadingFallback("Bounties") })
+const InboundBountiesModal = dynamic(() => import("@/components/connectln/InboundBountiesModal").then((m) => m.InboundBountiesModal), { ssr: false })
+const AccountSecurityView = dynamic(() => import("@/components/connectln/AccountSecurityView").then((m) => m.AccountSecurityView), { ssr: false, loading: tabLoadingFallback("Account & Security") })
+const AdminIAMConsoleView = dynamic(() => import("@/components/connectln/AdminIAMConsoleView").then((m) => m.AdminIAMConsoleView), { ssr: false, loading: tabLoadingFallback("Admin & Media Console") })
+const ConnectInAuthModal = dynamic(() => import("@/components/connectln/ConnectInAuthModal").then((m) => m.ConnectInAuthModal), { ssr: false })
+const ConnectInAnalyticsModal = dynamic(() => import("@/components/connectln/ConnectInAnalyticsModal").then((m) => m.ConnectInAnalyticsModal), { ssr: false })
 import { ConnectInVideoWheel } from "@/components/connectln/ConnectInVideoWheel"
 import { SkilledTradesLearnByDoingSection } from "@/components/connectln/SkilledTradesLearnByDoingSection"
-import { ConnectInVideoGuideModal } from "@/components/connectln/ConnectInVideoGuideModal"
-import { VeteransAndFranchiseNetworksView } from "@/components/connectln/VeteransAndFranchiseNetworksView"
-import { WorkAndBusinessHubView } from "@/components/connectln/WorkAndBusinessHubView"
+const ConnectInVideoGuideModal = dynamic(() => import("@/components/connectln/ConnectInVideoGuideModal").then((m) => m.ConnectInVideoGuideModal), { ssr: false })
+const VeteransAndFranchiseNetworksView = dynamic(() => import("@/components/connectln/VeteransAndFranchiseNetworksView").then((m) => m.VeteransAndFranchiseNetworksView), { ssr: false, loading: tabLoadingFallback("Veterans & Franchise Network") })
+const WorkAndBusinessHubView = dynamic(() => import("@/components/connectln/WorkAndBusinessHubView").then((m) => m.WorkAndBusinessHubView), { ssr: false, loading: tabLoadingFallback("Work & Business Hub") })
 import { WorkBusinessItemId } from "@/lib/work-business-data"
 import {
   currentUser as initialCurrentUser,
@@ -417,7 +402,9 @@ export default function ConnectLnPage() {
   const [isMultiEnclaveMode, setIsMultiEnclaveMode] = useState<boolean>(true)
   const [isVideoGuideOpen, setIsVideoGuideOpen] = useState(false)
   const [showFeedWheel, setShowFeedWheel] = useState(true)
-  const [showMobileWheel, setShowMobileWheel] = useState(true)
+  const [visibleMyPostsCount, setVisibleMyPostsCount] = useState(4)
+  const [visibleStreamCount, setVisibleStreamCount] = useState(6)
+  const feedLoadMoreRef = React.useRef<HTMLDivElement | null>(null)
   const [showMobileCommunityDrawer, setShowMobileCommunityDrawer] = useState(false)
   const [showMobileSubFilters, setShowMobileSubFilters] = useState(true)
   const [hasHydrated, setHasHydrated] = useState(false)
@@ -1940,7 +1927,7 @@ export default function ConnectLnPage() {
       title: certTitle,
       issuer: 'ConnectIn Learning',
       issuerLogo: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=100&auto=format&fit=crop&q=80',
-      issueDate: 'Issued Aug 2026',
+      issueDate: `Issued ${new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`,
       credentialId: 'CIN-LEARN-' + Math.floor(100000 + Math.random() * 900000),
       credentialUrl: 'https://connectin.expedite.com/verify'
     }
@@ -2198,6 +2185,27 @@ export default function ConnectLnPage() {
 
   const myPublishedPosts = filteredPosts.filter(isUserCreatedFeedPost)
   const communityFeedPosts = filteredPosts.filter(p => !isUserCreatedFeedPost(p))
+  const remainingStreamPosts = communityFeedPosts.slice(3)
+
+  useEffect(() => {
+    setVisibleStreamCount(6)
+  }, [activeFeedCategory, activeFeedSubCategory, feedTypeFilter, selectedTagFilter, searchQuery, selectedEnclaves])
+
+  useEffect(() => {
+    if (activeTab !== 'home') return
+    const node = feedLoadMoreRef.current
+    if (!node || remainingStreamPosts.length <= visibleStreamCount || typeof IntersectionObserver === 'undefined') return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisibleStreamCount((prev) => Math.min(remainingStreamPosts.length, prev + 8))
+        }
+      },
+      { rootMargin: '400px' }
+    )
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [activeTab, remainingStreamPosts.length, visibleStreamCount])
 
   if (!hasHydrated) {
     return (
@@ -2446,7 +2454,7 @@ export default function ConnectLnPage() {
               <LiveHarvestedMediaShowcase
                 destination="home"
                 compact
-                onOpenAdminBackend={() => setActiveTab('adminiam')}
+                onOpenAdminBackend={isSuperAdminUser(userData) ? () => setActiveTab('adminiam') : undefined}
                 onShareItemToFeed={(item) =>
                   handleShareWheelVideoToFeed({
                     title: item.title,
@@ -2464,7 +2472,7 @@ export default function ConnectLnPage() {
               {/* Admin-Synced Live Feed Video Posts & User's Own Newly Published Feed Posts — Shown Immediately Above Static Sections */}
               {myPublishedPosts.length > 0 && (
                 <div className="space-y-3">
-                  {myPublishedPosts.map((post) => (
+                  {myPublishedPosts.slice(0, visibleMyPostsCount).map((post) => (
                     <FeedPostCard
                       key={post.id}
                       post={post}
@@ -2478,6 +2486,17 @@ export default function ConnectLnPage() {
                       onRepost={handleRepostPost}
                     />
                   ))}
+                  {myPublishedPosts.length > visibleMyPostsCount && (
+                    <div className="flex justify-center">
+                      <button
+                        type="button"
+                        onClick={() => setVisibleMyPostsCount((prev) => prev + 6)}
+                        className="rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 px-4 py-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-200 shadow-2xs cursor-pointer"
+                      >
+                        Show more synced &amp; published posts ({myPublishedPosts.length - visibleMyPostsCount} more)
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -2590,9 +2609,26 @@ export default function ConnectLnPage() {
                 </div>
               )}
 
-              {/* Desktop Educational Masterclass Wheel */}
-              <div className="hidden sm:block">
-                {showFeedWheel ? (
+              {/* Unified Single-Instance Educational Masterclass Wheel (Responsive across mobile & desktop; avoids duplicate DOM trees) */}
+              <div className="space-y-2">
+                {!showFeedWheel ? (
+                  <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20 border border-amber-200/80 dark:border-amber-900/40 shadow-2xs">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-base shrink-0">🎡</span>
+                      <div className="min-w-0">
+                        <p className="font-bold text-amber-950 dark:text-amber-200 text-xs truncate">The Wheel — Multi-Profession Masterclasses</p>
+                        <p className="text-[10px] text-amber-800/80 dark:text-amber-400/80 truncate">Masterclasses across {ALL_PROFESSIONS.length} Professions</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowFeedWheel(true)}
+                      className="shrink-0 ml-2 px-3 py-1 text-[11px] font-bold rounded-full bg-amber-600 hover:bg-amber-700 text-white shadow-2xs transition-colors cursor-pointer"
+                    >
+                      Show &ldquo;The Wheel&rdquo; ▾
+                    </button>
+                  </div>
+                ) : (
                   <div className="space-y-1">
                     <ConnectInVideoWheel
                       activeEnclaveId={selectedEnclaves[0] || userData?.professionEnclave || 'trades_construction'}
@@ -2615,48 +2651,6 @@ export default function ConnectLnPage() {
                         Hide The Wheel
                       </button>
                     </div>
-                  </div>
-                ) : (
-                  <div className="flex justify-end pb-1">
-                    <button
-                      type="button"
-                      onClick={() => setShowFeedWheel(true)}
-                      className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 hover:underline flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 shadow-2xs cursor-pointer"
-                    >
-                      <span>🎡 Show "The Wheel" Video Talks</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Mobile Masterclass Wheel (< sm) — Open by default to match laptop */}
-              <div className="sm:hidden space-y-2">
-                <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20 border border-amber-200/80 dark:border-amber-900/40 shadow-2xs">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-base shrink-0">🎡</span>
-                    <div className="min-w-0">
-                      <p className="font-bold text-amber-950 dark:text-amber-200 text-xs truncate">The Wheel — Multi-Profession Masterclasses</p>
-                      <p className="text-[10px] text-amber-800/80 dark:text-amber-400/80 truncate">524+ Masterclasses across 483 Professions</p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowMobileWheel(!showMobileWheel)}
-                    className="shrink-0 ml-2 px-2.5 py-1 text-[11px] font-bold rounded-lg bg-amber-600 hover:bg-amber-700 text-white shadow-2xs transition-colors cursor-pointer"
-                  >
-                    {showMobileWheel ? "Hide ▴" : "Watch ▾"}
-                  </button>
-                </div>
-                {showMobileWheel && (
-                  <div className="rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-xs">
-                    <ConnectInVideoWheel
-                      activeEnclaveId={selectedEnclaves[0] || userData?.professionEnclave || 'trades_construction'}
-                      user={userData}
-                      title="The Wheel — Multi-Profession Masterclasses & Briefings"
-                      subtitle="Curated trade apprenticeship standards, software architecture, clinical medicine, and verified field briefings."
-                      onOpenVideoGuide={() => setIsVideoGuideOpen(true)}
-                      onShareVideoToFeed={handleShareWheelVideoToFeed}
-                    />
                   </div>
                 )}
               </div>
@@ -3089,9 +3083,9 @@ export default function ConnectLnPage() {
                 </div>
               </div>
 
-              {/* Feed Posts (Remaining Stream) */}
+              {/* Feed Posts (Windowed Progressive Stream) */}
               <div className="space-y-3">
-                {communityFeedPosts.slice(3).map((post) => (
+                {remainingStreamPosts.slice(0, visibleStreamCount).map((post) => (
                   <FeedPostCard
                     key={post.id}
                     post={post}
@@ -3105,6 +3099,18 @@ export default function ConnectLnPage() {
                     onRepost={handleRepostPost}
                   />
                 ))}
+
+                {remainingStreamPosts.length > visibleStreamCount && (
+                  <div ref={feedLoadMoreRef} className="flex justify-center py-2">
+                    <button
+                      type="button"
+                      onClick={() => setVisibleStreamCount((prev) => prev + 8)}
+                      className="rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 px-5 py-2 text-xs font-bold text-zinc-700 dark:text-zinc-200 shadow-2xs transition-colors cursor-pointer"
+                    >
+                      Show more posts ({remainingStreamPosts.length - visibleStreamCount} remaining)
+                    </button>
+                  </div>
+                )}
 
                 {filteredPosts.length === 0 && (
                   <div className="rounded-xl border border-zinc-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-900">
@@ -3382,7 +3388,7 @@ export default function ConnectLnPage() {
         )}
 
         {/* VIEW: ADMINISTRATIVE IAM & MODERATION CONSOLE */}
-        {activeTab === 'adminiam' && (
+        {activeTab === 'adminiam' && isSuperAdminUser(userData) && (
           <AdminIAMConsoleView
             currentUser={userData}
             onNavigateTab={(tab) => setActiveTab(tab as any)}
@@ -3564,30 +3570,13 @@ export default function ConnectLnPage() {
         )}
       </main>
 
-      {/* Floating "Ask Noctis" Quick Launcher Pill: shown on mobile/tablet; hidden on lg+ desktop where Ask Noctis is in the top bar & right rail */}
-      <div className="fixed bottom-4 left-4 z-40 lg:hidden">
-        <button
-          type="button"
-          onClick={() => setIsAIAssistantOpen(true)}
-          className="flex items-center gap-2.5 rounded-full bg-white dark:bg-[#1B1F23] text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700 shadow-lg hover:shadow-xl hover:border-[#0A66C2] px-4 py-2.5 text-xs font-semibold transition-all cursor-pointer group"
-          title="Ask Noctis"
-        >
-          <div className="h-6 w-6 rounded-full bg-[#FBF5E9] dark:bg-amber-950/40 flex items-center justify-center text-[#C88A24] dark:text-amber-300 border border-[#C88A24]/30">
-            <Sparkles className="h-3.5 w-3.5" />
-          </div>
-          <span className="font-semibold tracking-tight">Ask Noctis</span>
-          <span className="hidden sm:inline text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
-            Q&amp;A
-          </span>
-        </button>
-      </div>
-
-      {/* Signature Persistent Floating Bottom-Right Messaging Dock (Hidden when already on the full Messaging tab to avoid overlapping the message composer) */}
+      {/* Unified Persistent Bottom-Right Dock (Messaging + Job Alerts + Ask Noctis; hidden on the full Messaging tab) */}
       {activeTab !== 'messaging' && (
         <FloatingMessagingDock
           currentUser={userData}
           onOpenFullMessaging={() => setActiveTab('messaging')}
           onNavigateJobs={() => setActiveTab('jobs')}
+          onOpenAIAssistant={() => setIsAIAssistantOpen(true)}
           composeRecipient={composeRecipient}
           onCloseComposeRecipient={() => setComposeRecipient(null)}
           suppressAutoOpen={!!inspectedMember}
@@ -3595,89 +3584,103 @@ export default function ConnectLnPage() {
       )}
 
       {/* ConnectIn AI Global Platform Assistant Modal */}
-      <ConnectInAIAssistant
-        isOpen={isAIAssistantOpen}
-        onClose={() => setIsAIAssistantOpen(false)}
-        currentUser={userData}
-        onNavigateTab={(tab) => setActiveTab(tab as any)}
-      />
+      {isAIAssistantOpen && (
+        <ConnectInAIAssistant
+          isOpen={isAIAssistantOpen}
+          onClose={() => setIsAIAssistantOpen(false)}
+          currentUser={userData}
+          onNavigateTab={(tab) => setActiveTab(tab as any)}
+        />
+      )}
 
       {/* ConnectIn Universal Omnisearch Modal */}
-      <UniversalSearchModal
-        isOpen={isUniversalSearchOpen}
-        onClose={() => setIsUniversalSearchOpen(false)}
-        initialQuery={searchQuery}
-        currentUser={userData}
-        onNavigateTab={(tab) => setActiveTab(tab as any)}
-        onSelectMember={handleInspectMember}
-      />
+      {isUniversalSearchOpen && (
+        <UniversalSearchModal
+          isOpen={isUniversalSearchOpen}
+          onClose={() => setIsUniversalSearchOpen(false)}
+          initialQuery={searchQuery}
+          currentUser={userData}
+          onNavigateTab={(tab) => setActiveTab(tab as any)}
+          onSelectMember={handleInspectMember}
+        />
+      )}
 
       {/* ConnectIn Portable Professional ID Modal */}
-      <ProfessionalIDModal
-        isOpen={isIDModalOpen}
-        onClose={() => setIsIDModalOpen(false)}
-        currentUser={userData}
-      />
+      {isIDModalOpen && (
+        <ProfessionalIDModal
+          isOpen={isIDModalOpen}
+          onClose={() => setIsIDModalOpen(false)}
+          currentUser={userData}
+        />
+      )}
 
       {/* ConnectIn $250 Paid Inbound Recruiter Bounties Modal */}
-      <InboundBountiesModal
-        isOpen={isInboundBountiesModalOpen}
-        onClose={() => setIsInboundBountiesModalOpen(false)}
-        currentUser={userData}
-        onNavigateTab={(tab) => setActiveTab(tab as any)}
-      />
+      {isInboundBountiesModalOpen && (
+        <InboundBountiesModal
+          isOpen={isInboundBountiesModalOpen}
+          onClose={() => setIsInboundBountiesModalOpen(false)}
+          currentUser={userData}
+          onNavigateTab={(tab) => setActiveTab(tab as any)}
+        />
+      )}
 
       {/* ConnectIn Role-Aware Identity & Auth Portal Gate Modal */}
-      <ConnectInAuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-        onLoginSuccess={(authenticatedUser, targetTab, targetWorkspace) => {
-          setUserData(authenticatedUser)
-          setActiveWorkspace(targetWorkspace)
-          setActiveTab(targetTab as any)
-          setIsAuthenticated(true)
-          setIsAuthModalOpen(false)
-        }}
-      />
+      {isAuthModalOpen && (
+        <ConnectInAuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          onLoginSuccess={(authenticatedUser, targetTab, targetWorkspace) => {
+            setUserData(authenticatedUser)
+            setActiveWorkspace(targetWorkspace)
+            setActiveTab(targetTab as any)
+            setIsAuthenticated(true)
+            setIsAuthModalOpen(false)
+          }}
+        />
+      )}
 
       {/* ConnectIn Analytics & Network Intelligence Modal (Profile Viewers, Content Reach, Directory Discoveries) */}
-      <ConnectInAnalyticsModal
-        isOpen={isAnalyticsModalOpen}
-        onClose={() => setIsAnalyticsModalOpen(false)}
-        initialTab={analyticsModalTab}
-        currentUser={userData}
-        onNavigateMessaging={(personName) => {
-          setIsAnalyticsModalOpen(false)
-          handleOpenDirectMessage(personName)
-        }}
-        onNavigateTab={(tab) => setActiveTab(tab as any)}
-      />
+      {isAnalyticsModalOpen && (
+        <ConnectInAnalyticsModal
+          isOpen={isAnalyticsModalOpen}
+          onClose={() => setIsAnalyticsModalOpen(false)}
+          initialTab={analyticsModalTab}
+          currentUser={userData}
+          onNavigateMessaging={(personName) => {
+            setIsAnalyticsModalOpen(false)
+            handleOpenDirectMessage(personName)
+          }}
+          onNavigateTab={(tab) => setActiveTab(tab as any)}
+        />
+      )}
 
       {/* Interactive Platform Video Guide & Masterclasses Modal */}
-      <ConnectInVideoGuideModal
-        isOpen={isVideoGuideOpen}
-        onClose={() => setIsVideoGuideOpen(false)}
-        onNavigateTab={(tab) => {
-          setActiveTab(tab as any)
-          setIsVideoGuideOpen(false)
-        }}
-        onOpenResumeBuilder={() => {
-          setIsVideoGuideOpen(false)
-          setActiveTab('profile')
-        }}
-        onOpenAIAssistant={() => {
-          setIsVideoGuideOpen(false)
-          setIsAIAssistantOpen(true)
-        }}
-        onSelectWorkspace={(ws) => {
-          setActiveWorkspace(ws)
-          if (ws === 'personal') setActiveTab('home')
-          else if (ws === 'enterprise') setActiveTab('procurement')
-          else if (ws === 'creator') setActiveTab('media')
-          else if (ws === 'seller') setActiveTab('sellercenter')
-          setIsVideoGuideOpen(false)
-        }}
-      />
+      {isVideoGuideOpen && (
+        <ConnectInVideoGuideModal
+          isOpen={isVideoGuideOpen}
+          onClose={() => setIsVideoGuideOpen(false)}
+          onNavigateTab={(tab) => {
+            setActiveTab(tab as any)
+            setIsVideoGuideOpen(false)
+          }}
+          onOpenResumeBuilder={() => {
+            setIsVideoGuideOpen(false)
+            setActiveTab('profile')
+          }}
+          onOpenAIAssistant={() => {
+            setIsVideoGuideOpen(false)
+            setIsAIAssistantOpen(true)
+          }}
+          onSelectWorkspace={(ws) => {
+            setActiveWorkspace(ws)
+            if (ws === 'personal') setActiveTab('home')
+            else if (ws === 'enterprise') setActiveTab('procurement')
+            else if (ws === 'creator') setActiveTab('media')
+            else if (ws === 'seller') setActiveTab('sellercenter')
+            setIsVideoGuideOpen(false)
+          }}
+        />
+      )}
 
       {/* Invitation Acceptance & Personal Profile Claim Modal (Ensures Invitee Joins as Their Own Identity, Never the Inviter) */}
       {inviteClaimModal?.isOpen && (

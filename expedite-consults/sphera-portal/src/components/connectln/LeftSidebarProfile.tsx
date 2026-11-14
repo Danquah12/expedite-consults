@@ -27,8 +27,8 @@ import {
   Check
 } from "lucide-react"
 import { UserProfile } from "@/lib/connectln-data"
-import { isSuperAdminUser } from "@/lib/connectin-profile"
-import { findEnclaveById, ALL_PROFESSIONS, ProfessionDefinition } from "@/lib/connectin-professions"
+import { isSuperAdminUser, computeProfileStrength } from "@/lib/connectin-profile"
+import { findEnclaveById, findProfessionById, ALL_PROFESSIONS, ProfessionDefinition } from "@/lib/connectin-professions"
 import { useLanguage } from "@/context/LanguageContext"
 import { TradeEnclaveWidgets } from "@/components/connectln/TradeEnclaveWidgets"
 import { getProfileTailoredAnalytics, syncLiveUserTelemetryFromCloud } from "@/lib/connectin-analytics"
@@ -163,8 +163,12 @@ export function LeftSidebarProfile({
   // Match the logged-in user's individual profession to a specific ProfessionDefinition
   const matchedProfession: ProfessionDefinition | undefined = useMemo(() => {
     if (customProfessionId) {
-      const found = ALL_PROFESSIONS.find(p => p.id === customProfessionId)
+      const found = findProfessionById(customProfessionId)
       if (found) return found
+    }
+    if (user.professionId) {
+      const byId = findProfessionById(user.professionId)
+      if (byId) return byId
     }
     const rawProf = (user.profession || "").trim().toLowerCase()
     const rawHeadline = (user.headline || "").trim().toLowerCase()
@@ -868,7 +872,9 @@ export function LeftSidebarProfile({
         {/* Compact 3-Column Analytics Strip + Slim Profile Strength Bar */}
         {(() => {
           const sidebarAnalytics = getProfileTailoredAnalytics(user)
-          const strength = isAdminUser ? Math.min(100, Math.max(10, user.profileStrength ?? 92)) : 0
+          const strength = isAdminUser
+            ? Math.min(100, Math.max(92, user.profileStrength || computeProfileStrength(user)))
+            : Math.min(100, user.profileStrength && user.profileStrength > 0 ? user.profileStrength : computeProfileStrength(user))
           return (
             <div className="border-t border-zinc-100 dark:border-zinc-800/80 px-3.5 py-2.5 space-y-2">
               <div className="grid grid-cols-3 divide-x divide-zinc-100 dark:divide-zinc-800 text-center">
@@ -1119,18 +1125,20 @@ export function LeftSidebarProfile({
         )}
       </div>
 
-      <SettingsModal
-        open={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        user={user}
-        isAdmin={isAdminUser}
-        connectedApps={settingsConnectedApps}
-        accountItems={settingsAccountItems}
-        billingItems={settingsBillingItems}
-        adminItems={settingsAdminItems}
-        onActivate={activateShortcut}
-        onOpenIDModal={onOpenIDModal}
-      />
+      {isSettingsOpen && (
+        <SettingsModal
+          open={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+          user={user}
+          isAdmin={isAdminUser}
+          connectedApps={settingsConnectedApps}
+          accountItems={settingsAccountItems}
+          billingItems={settingsBillingItems}
+          adminItems={settingsAdminItems}
+          onActivate={activateShortcut}
+          onOpenIDModal={onOpenIDModal}
+        />
+      )}
     </aside>
   )
 }

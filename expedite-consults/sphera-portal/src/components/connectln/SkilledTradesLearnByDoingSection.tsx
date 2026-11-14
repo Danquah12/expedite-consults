@@ -46,6 +46,7 @@ import { UserProfile } from "@/lib/connectln-data"
 import { useLanguage } from "@/context/LanguageContext"
 import { ConnectLnStudioPlayer, notifyExclusiveVideoPlay } from "./ConnectLnStudioPlayer"
 import { NoctisVideoInterpreterPopup } from "./NoctisVideoInterpreterPopup"
+import { useAutoplayVideosPref } from "@/lib/connectln-settings"
 
 interface SkilledTradesLearnByDoingSectionProps {
   user?: UserProfile | null
@@ -74,6 +75,11 @@ export function SkilledTradesLearnByDoingSection({
   onClaimCertificate
 }: SkilledTradesLearnByDoingSectionProps) {
   const { currentLanguage } = useLanguage()
+  // Home feed autoplay is OFF by default (Settings -> Behavior). In the Learn tab the academy keeps its own behavior.
+  const [autoplayPref] = useAutoplayVideosPref()
+  const isHomeVideos = mode === 'home_videos_only'
+  const autoplayPrefRef = useRef(autoplayPref)
+  autoplayPrefRef.current = autoplayPref
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>(
     initialCategory || 'All'
   )
@@ -81,12 +87,22 @@ export function SkilledTradesLearnByDoingSection({
     loadAllLearnByDoingTelemetry()
   )
   const [activeVideoLessonId, setActiveVideoLessonId] = useState<string | null>(
-    initialLessonId || SKILLED_TRADES_LEARN_BY_DOING_LESSONS[0]?.id || null
+    initialLessonId ||
+      (mode === 'home_videos_only' && !autoplayPref ? null : SKILLED_TRADES_LEARN_BY_DOING_LESSONS[0]?.id) ||
+      null
   )
-  const [autoPlayRequested, setAutoPlayRequested] = useState<boolean>(true)
+  const [autoPlayRequested, setAutoPlayRequestedRaw] = useState<boolean>(true)
+  // True while the active video was started automatically on scroll (it then starts muted with "Tap for Sound")
+  const [autoPlayMuted, setAutoPlayMuted] = useState<boolean>(false)
+  // Any explicit play request by the user (Watch / card click) plays with sound as before
+  const setAutoPlayRequested = (value: boolean) => {
+    setAutoPlayRequestedRaw(value)
+    setAutoPlayMuted(false)
+  }
   const [expandedLessonId, setExpandedLessonId] = useState<string | null>(
     initialLessonId || SKILLED_TRADES_LEARN_BY_DOING_LESSONS[0]?.id || null
   )
+  const [homeVisibleLimit, setHomeVisibleLimit] = useState<number>(3)
 
   useEffect(() => {
     if (initialCategory) {
@@ -166,10 +182,13 @@ export function SkilledTradesLearnByDoingSection({
       }
 
       if (bestLessonId) {
+        // Home feed: only auto-start a video on scroll when the user enabled autoplay in Settings
+        if (mode === 'home_videos_only' && !autoplayPrefRef.current) return
         setActiveVideoLessonId(prev => {
           if (prev !== bestLessonId) {
             notifyExclusiveVideoPlay(`${playerPrefix}${bestLessonId}`)
-            setAutoPlayRequested(true)
+            setAutoPlayRequestedRaw(true)
+            setAutoPlayMuted(true)
             return bestLessonId
           }
           return prev
@@ -219,6 +238,13 @@ export function SkilledTradesLearnByDoingSection({
       observer?.disconnect()
     }
   }, [mode, selectedCategory])
+
+  // If autoplay is switched off in Settings, stop a Home video that was started automatically
+  useEffect(() => {
+    if (isHomeVideos && !autoplayPref && autoPlayMuted) {
+      setActiveVideoLessonId(null)
+    }
+  }, [isHomeVideos, autoplayPref, autoPlayMuted])
 
   // Load persisted telemetry on mount
   useEffect(() => {
@@ -510,7 +536,7 @@ export function SkilledTradesLearnByDoingSection({
         }
       case 'lbd_painting_prep_5':
         return {
-          instructorName: 'Elena Rostova',
+          instructorName: 'Claire Beaumont',
           role: 'Master Architectural Painter · Sherwin-Williams',
           avatarUrl:
             'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=256&h=256&fit=crop&crop=faces&auto=format&q=85',
@@ -740,6 +766,11 @@ export function SkilledTradesLearnByDoingSection({
                   type="button"
                   onClick={() => {
                     setSelectedCategory(tab.id)
+                    setHomeVisibleLimit(3)
+                    if (!autoplayPrefRef.current) {
+                      setActiveVideoLessonId(null)
+                      return
+                    }
                     const firstMatch =
                       tab.id === 'All'
                         ? SKILLED_TRADES_LEARN_BY_DOING_LESSONS[0]
@@ -751,7 +782,8 @@ export function SkilledTradesLearnByDoingSection({
                     if (firstMatch) {
                       notifyExclusiveVideoPlay(`lbd-home-player-${firstMatch.id}`)
                       setActiveVideoLessonId(firstMatch.id)
-                      setAutoPlayRequested(true)
+                      setAutoPlayRequestedRaw(true)
+                      setAutoPlayMuted(true)
                     }
                   }}
                   style={
@@ -784,9 +816,9 @@ export function SkilledTradesLearnByDoingSection({
           )}
         </div>
 
-        {/* Vertical Stack of Native LinkedIn Feed Video Post Cards (Auto-Play as You Scroll) */}
+        {/* Vertical Stack of Native LinkedIn Feed Video Post Cards (Windowed on Home to prevent DOM bloat) */}
         <div className="space-y-3">
-          {visibleHomeLessons.map(lesson => {
+          {visibleHomeLessons.slice(0, homeVisibleLimit).map(lesson => {
             const isLesson6 =
               lesson.id === 'lbd_painting_brush_roller_6' && Boolean(lesson.companionVariant)
             const activeVariant =
@@ -999,7 +1031,7 @@ export function SkilledTradesLearnByDoingSection({
                       sourceLanguageLabel={lesson.sourceLanguageLabel}
                       durationLabel=""
                       autoPlay={autoPlayRequested}
-                      initialMuted={false}
+                      initialMuted={autoPlayMuted}
                       playerId={`lbd-home-player-${lesson.id}`}
                       onExclusiveStop={() => setActiveVideoLessonId(null)}
                       className="h-full w-full"
@@ -1279,6 +1311,26 @@ export function SkilledTradesLearnByDoingSection({
               </article>
             )
           })}
+          {visibleHomeLessons.length > homeVisibleLimit && (
+            <div className="flex items-center justify-center gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setHomeVisibleLimit((prev) => prev + 6)}
+                className="rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 px-4 py-2 text-xs font-bold text-zinc-800 dark:text-zinc-200 shadow-2xs transition-colors cursor-pointer"
+              >
+                Show more trade video lessons ({visibleHomeLessons.length - homeVisibleLimit} remaining)
+              </button>
+              {onOpenInLearnTab && (
+                <button
+                  type="button"
+                  onClick={() => onOpenInLearnTab(activeLesson?.id, activeLesson?.category)}
+                  className="rounded-full bg-[#0A66C2]/10 hover:bg-[#0A66C2]/20 border border-[#0A66C2]/30 px-3.5 py-2 text-xs font-bold text-[#0A66C2] dark:text-sky-300 transition-colors cursor-pointer"
+                >
+                  Open All in Learn Tab →
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </section>
     )
@@ -1648,7 +1700,7 @@ export function SkilledTradesLearnByDoingSection({
                             sourceLanguageLabel={lesson.sourceLanguageLabel}
                             durationLabel={displayDuration || ""}
                             autoPlay={autoPlayRequested}
-                            initialMuted={false}
+                            initialMuted={autoPlayMuted}
                             playerId={`lbd-player-${lesson.id}`}
                             onExclusiveStop={() => setActiveVideoLessonId(null)}
                             className="h-full w-full"

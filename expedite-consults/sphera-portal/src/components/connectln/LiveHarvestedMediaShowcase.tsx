@@ -43,6 +43,7 @@ import {
 import { triggerReactionSplash } from "@/lib/reaction-splash"
 import { ConnectLnStudioPlayer } from "./ConnectLnStudioPlayer"
 import { NoctisVideoInterpreterPopup } from "./NoctisVideoInterpreterPopup"
+import { loadStoredUser, isSuperAdminUser } from "@/lib/connectin-storage"
 
 /** Direct-file (mp4) player with the same Noctis language / dubbing bar docked underneath. */
 function HarvestedMp4Player({ item }: { item: HarvestedMediaItem }) {
@@ -163,6 +164,11 @@ export function LiveHarvestedMediaShowcase({
   const [likedIds, setLikedIds] = useState<Record<string, boolean>>({})
   const [repostedIds, setRepostedIds] = useState<Record<string, boolean>>({})
   const [openCommentsId, setOpenCommentsId] = useState<string | null>(null)
+  const [canAccessAdminBackend, setCanAccessAdminBackend] = useState<boolean>(false)
+
+  useEffect(() => {
+    setCanAccessAdminBackend(isSuperAdminUser(loadStoredUser()))
+  }, [])
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({})
   const [commentsByItem, setCommentsByItem] = useState<Record<string, { id: string; author: string; text: string; time: string }[]>>({})
   const [openShareId, setOpenShareId] = useState<string | null>(null)
@@ -323,7 +329,7 @@ export function LiveHarvestedMediaShowcase({
             <span>{isSyncingNow ? "Pulling..." : "Pull New Video Now"}</span>
           </button>
 
-          {onOpenAdminBackend && (
+          {onOpenAdminBackend && canAccessAdminBackend && (
             <button
               type="button"
               onClick={onOpenAdminBackend}

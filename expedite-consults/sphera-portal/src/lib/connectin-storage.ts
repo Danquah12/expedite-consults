@@ -5,6 +5,7 @@ import { AdminUserRecord, ADMIN_USERS_DIRECTORY } from "./connectin-iam-data"
 import { buildProfessionTieredFeedPosts } from "./connectin-profession-feed"
 import {
   createUniqueUserProfile,
+  computeProfileStrength,
   generatePersonalSignatureAvatar,
   getKnownDemoPersonaAvatar,
   isForeignPersonaAvatar,
@@ -12,6 +13,7 @@ import {
   isSuperAdminUser,
   isDedicatedAdminAccount
 } from "./connectin-profile"
+import { findProfessionById } from "./connectin-professions"
 import { KWESI_ASIEDU_PARSED_DATA } from "./resume-parser"
 
 export { generatePersonalSignatureAvatar, getKnownDemoPersonaAvatar, isForeignPersonaAvatar, isSuperAdminUser, isDedicatedAdminAccount }
@@ -507,8 +509,18 @@ export function getExplicitStoredUser(): UserProfile | null {
         ? ((merged as any).roles || ['SUPER_ADMIN'])
         : ['NORMAL_USER']
 
-      return {
+      const resolvedProfDef = merged.professionId ? findProfessionById(merged.professionId) : undefined
+      const repairedProfession =
+        resolvedProfDef &&
+        merged.professionEnclave &&
+        merged.professionEnclave !== 'trades_construction' &&
+        String(merged.profession || '').includes('Master Carpenter')
+          ? resolvedProfDef.title
+          : merged.profession
+
+      const hydratedProfile = {
         ...merged,
+        profession: repairedProfession,
         email,
         id: resolvedId,
         sessionId: resolvedSessionId,
@@ -526,9 +538,12 @@ export function getExplicitStoredUser(): UserProfile | null {
         ...(isAdmin ? {} : {
           connectionsCount: 0,
           followersCount: 0,
-          profileStrength: 0
         })
       } as UserProfile
+      hydratedProfile.profileStrength = isAdmin
+        ? Math.max(92, computeProfileStrength(hydratedProfile))
+        : computeProfileStrength(hydratedProfile)
+      return hydratedProfile
     }
     return null
   } catch (e) {

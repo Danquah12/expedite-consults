@@ -23,6 +23,7 @@ import {
   ArrowRight
 } from "lucide-react"
 import { UserProfile } from "@/lib/connectln-data"
+import { ResumePrepStudioEmbed } from "./ResumePrepStudioEmbed"
 
 interface CareerSuiteViewProps {
   currentUser: UserProfile
@@ -82,20 +83,13 @@ export function CareerSuiteView({ currentUser }: CareerSuiteViewProps) {
         </div>
       </div>
 
-      {/* Embedded Live Resume Preparation App (https://tuhousing.vercel.app/) */}
-      <div
-        className={`rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-lg bg-white dark:bg-zinc-900 ${
-          isFullscreen ? "flex-1 min-h-[78vh]" : "h-[840px]"
-        }`}
-      >
-        <iframe
-          key={iframeKey}
-          src="https://tuhousing.vercel.app/"
-          title="Expedite CareerSuite — AI-Powered Resume Preparation & Tailoring App (https://tuhousing.vercel.app/)"
-          className="w-full h-full border-0"
-          allow="camera; microphone; clipboard-write; clipboard-read; downloads"
-        />
-      </div>
+      {/* In-App ATS Resume Tailor + CSP-Sandboxed External Studio */}
+      <ResumePrepStudioEmbed
+        currentUser={currentUser}
+        iframeKey={iframeKey}
+        onReloadIframe={() => setIframeKey((prev) => prev + 1)}
+        isFullscreen={isFullscreen}
+      />
     </div>
   )
 }

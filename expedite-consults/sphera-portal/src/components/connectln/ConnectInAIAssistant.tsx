@@ -77,6 +77,7 @@ interface ChatMessage {
   id: string
   sender: 'user' | 'assistant'
   text: string
+  source?: 'live' | 'demo'
   suggestedCards?: {
     title: string
     category: string
@@ -1150,7 +1151,7 @@ ConnectIn AI analyzed the graph for mutual clearance levels, shared publications
 
 1. **Dr. Sarah Jenkins** (Senior Fellow, Former Federal CISO) — Mutual interest in FedRAMP cATO & OSCAL standards.
 2. **Marcus Vance** (VP of Security Architecture @ Defense Contractor) — Actively hiring 3 Principal Cloud Architects.
-3. **Elena Rostova** (AppSec Fellow & OpenOSCAL Founder) — Seeking a co-founder for an AI-BOM validation project.`,
+3. **Nadia Lindholm** (AppSec Fellow & OpenOSCAL Founder) — Seeking a co-founder for an AI-BOM validation project.`,
             suggestedCards: [
               {
                 title: "Connect with Dr. Sarah Jenkins (Senior Fellow)",
@@ -1160,7 +1161,7 @@ ConnectIn AI analyzed the graph for mutual clearance levels, shared publications
                 matchPercent: "99% Synergy"
               },
               {
-                title: "Inspect Elena's Co-Founder Pitch",
+                title: "Inspect Nadia's Co-Founder Pitch",
                 category: "Collaboration & Ideas",
                 actionText: "Open Pitch",
                 targetTab: "collaboration",
@@ -1262,6 +1263,7 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
         }
       }
 
+      reply.source = 'demo'
       setMessages(prev => [...prev, reply])
       setIsTyping(false)
     }
@@ -1297,6 +1299,7 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
         const noctisReply: ChatMessage = {
           id: `ai_${Date.now()}`,
           sender: 'assistant',
+          source: 'live',
           text: data.text,
           suggestedCards: careerCards(data.text) ?? (kbForCard?.tab
             ? [{ title: kbForCard.title, category: 'ConnectLn Guide', actionText: kbForCard.tabLabel || 'Open', targetTab: kbForCard.tab, matchPercent: 'Platform Help' }]
@@ -1535,6 +1538,20 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
                         : "bg-zinc-50 text-zinc-800 dark:bg-zinc-800/80 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700/80"
                     }`}
                   >
+                    {msg.sender === 'assistant' && (
+                      <div className="mb-1.5 flex items-center gap-1.5">
+                        {msg.source === 'live' ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                            Live Noctis AI
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+                            Local Copilot · Demo Preview
+                          </span>
+                        )}
+                      </div>
+                    )}
                     {msg.sender === 'assistant'
                       ? <MiniMarkdown text={msg.text} />
                       : <div className="whitespace-pre-line">{msg.text}</div>}

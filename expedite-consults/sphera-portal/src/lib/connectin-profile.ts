@@ -101,7 +101,7 @@ export function createFreshInvitedUserProfile(params: UserInitParams & { inviter
     profDef?.defaultHeadline ||
     `${professionTitle}${params.inviterName ? ` · Connected with ${params.inviterName}` : " · Verified ConnectLn Member"}`
 
-  return {
+  const freshProfileDraft: UserProfile = {
     id: userId,
     name: cleanName,
     email: cleanEmail,
@@ -140,6 +140,30 @@ export function createFreshInvitedUserProfile(params: UserInitParams & { inviter
     })),
     recommendations: []
   } as unknown as UserProfile
+  freshProfileDraft.profileStrength = computeProfileStrength(freshProfileDraft)
+  return freshProfileDraft
+}
+
+export function computeProfileStrength(user?: Partial<UserProfile> | null): number {
+  if (!user) return 0
+  let score = 0
+  if (user.name && user.name.trim().length >= 2) score += 12
+  if (user.avatar && !user.avatar.includes('placeholder')) score += 10
+  if (user.headline && user.headline.trim().length >= 8) score += 16
+  if (user.profession && user.profession.trim().length >= 3) score += 10
+  if (user.location && user.location.trim().length >= 3) score += 6
+  if (user.about && user.about.trim().length >= 40) score += 14
+  else if (user.about && user.about.trim().length >= 10) score += 7
+  if (Array.isArray(user.experience) && user.experience.length > 0) score += 14
+  if (Array.isArray(user.skills) && user.skills.length >= 3) score += 10
+  else if (Array.isArray(user.skills) && user.skills.length > 0) score += 5
+  if (
+    (Array.isArray(user.education) && user.education.length > 0) ||
+    (Array.isArray(user.certifications) && user.certifications.length > 0)
+  ) {
+    score += 8
+  }
+  return Math.min(100, Math.max(score, user.name ? 20 : 0))
 }
 
 export function getKnownDemoPersonaAvatar(user?: { name?: string; email?: string } | null): string | null {
@@ -471,8 +495,15 @@ export function createUniqueUserProfile(params: UserInitParams): UserProfile {
   }
 
   const enclaveInfo = findEnclaveById(enclaveId)
-  const professionTitle = params.profession || profDef?.title || "Master Carpenter (Heavy Timber & Joinery)"
-  const professionCategory = params.professionCategory || profDef?.categoryName || enclaveInfo?.name || "Skilled Trades & Construction"
+  const professionTitle =
+    params.profession ||
+    profDef?.title ||
+    (enclaveId === "trades_construction"
+      ? "Master Carpenter (Heavy Timber & Joinery)"
+      : enclaveInfo
+      ? `${enclaveInfo.shortName} Specialist`
+      : "Verified ConnectLn Professional")
+  const professionCategory = params.professionCategory || profDef?.categoryName || enclaveInfo?.name || "Professional Network"
   const clearanceLevel = isAdmin 
     ? "TS/SCI Polygraph (Level 5 Top Secret Enclave)" 
     : (enclaveInfo?.securityClearanceTier || "Standard Verified Identity (Level 2)")
@@ -1051,5 +1082,6 @@ export function createUniqueUserProfile(params: UserInitParams): UserProfile {
     recommendations: []
   }
 
+  profile.profileStrength = isAdmin ? Math.max(92, computeProfileStrength(profile)) : computeProfileStrength(profile)
   return profile
 }

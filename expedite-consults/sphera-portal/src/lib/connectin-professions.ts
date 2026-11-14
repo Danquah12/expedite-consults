@@ -3091,8 +3091,34 @@ export function findEnclaveById(enclaveId: string): ProfessionEnclave | undefine
   return PROFESSION_ENCLAVES.find(e => e.id === enclaveId)
 }
 
+const PROFESSION_ID_ALIASES: Record<string, string> = {
+  er_trauma_nurse: 'critical_care_er_nurse',
+  nurse: 'registered_nurse',
+  nursing: 'registered_nurse',
+  rn: 'registered_nurse',
+  bsn: 'registered_nurse',
+  lpn: 'licensed_practical_nurse',
+  np: 'nurse_practitioner_pa',
+  doctor: 'physician',
+  md: 'physician',
+  surgeon: 'surgeon_specialist_md',
+  orthopedic_trauma_surgeon: 'surgeon_specialist_md',
+  ase_master_auto_tech: 'mechanic',
+  diesel_fleet_mechanic: 'diesel_mechanic',
+  ev_powertrain_technician: 'ev_technician',
+  red_team_lead: 'penetration_tester',
+  red_team_operator: 'penetration_tester',
+  scada_ics_security: 'cybersecurity_architect',
+  malware_reverse_engineer: 'incident_responder',
+  hvac_refrigeration_tech: 'hvac_technician',
+}
+
 export function findProfessionById(professionId: string): ProfessionDefinition | undefined {
-  return ALL_PROFESSIONS.find(p => p.id === professionId)
+  if (!professionId) return undefined
+  const direct = ALL_PROFESSIONS.find(p => p.id === professionId)
+  if (direct) return direct
+  const aliased = PROFESSION_ID_ALIASES[professionId.toLowerCase().trim()]
+  return aliased ? ALL_PROFESSIONS.find(p => p.id === aliased) : undefined
 }
 
 export function getEnclaveForProfession(professionId: string): ProfessionEnclave {

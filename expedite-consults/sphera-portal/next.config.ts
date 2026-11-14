@@ -22,7 +22,18 @@ const nextConfig: NextConfig = {
     },
   },
   async headers() {
+    const frameCsp =
+      "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://tuhousing.vercel.app https://dstrike.app https://*.dstrike.app;"
     return [
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: frameCsp,
+          },
+        ],
+      },
       {
         source: "/",
         headers: [

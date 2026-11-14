@@ -43,6 +43,7 @@ import { resolveUserProfilePicture, isKwesiAccount } from "@/lib/connectin-stora
 import { buildSharePreviewUrl } from "@/lib/connectin-share"
 import { VideoShareBanner } from "./VideoShareBanner"
 import { ConnectLnStudioPlayer, CONNECTLN_VIDEO_PLAY_EVENT, notifyExclusiveVideoPlay } from "./ConnectLnStudioPlayer"
+import { useAutoplayVideosPref } from "@/lib/connectln-settings"
 
 interface ConnectInVideoWheelProps {
   className?: string
@@ -157,7 +158,11 @@ export function ConnectInVideoWheel({
     [tieredUserVideos, user]
   )
   const [isPlayingHeroInline, setIsPlayingHeroInline] = useState(false)
-  const [heroStartedByScroll, setHeroStartedByScroll] = useState(true)
+  const [heroStartedByScroll, setHeroStartedByScroll] = useState(false)
+  const [autoplayPref] = useAutoplayVideosPref()
+  const autoplayPrefRef = useRef(autoplayPref)
+  autoplayPrefRef.current = autoplayPref
+  const [visibleWheelCardsLimit, setVisibleWheelCardsLimit] = useState(12)
   const heroUserManuallyStoppedRef = useRef<boolean>(false)
   const wheelHeroPlayerIdRef = useRef<string>(`wheel-hero-${Math.random().toString(36).slice(2, 10)}`)
   const wheelModalPlayerIdRef = useRef<string>(`wheel-modal-${Math.random().toString(36).slice(2, 10)}`)
@@ -244,7 +249,7 @@ export function ConnectInVideoWheel({
     [selectedStageVideo, filteredTalks, defaultAssignedUserVideo]
   )
 
-  // Auto-play the Hero Stage video when scrolled into view, and pause when scrolled out
+  // Auto-play the Hero Stage video when scrolled into view ONLY when user enabled Autoplay in Settings -> Behavior
   useEffect(() => {
     const node = heroStageRef.current
     if (!node || !assignedUserVideo?.youtubeId || typeof IntersectionObserver === "undefined") return
@@ -253,7 +258,7 @@ export function ConnectInVideoWheel({
         const entry = entries[0]
         if (!entry) return
         if (entry.isIntersecting && entry.intersectionRatio >= 0.4) {
-          if (!heroUserManuallyStoppedRef.current && !activeVideo) {
+          if (autoplayPrefRef.current && !heroUserManuallyStoppedRef.current && !activeVideo) {
             setHeroStartedByScroll(true)
             notifyExclusiveVideoPlay(wheelHeroPlayerIdRef.current)
             setIsPlayingHeroInline(true)
@@ -268,6 +273,10 @@ export function ConnectInVideoWheel({
     observer.observe(node)
     return () => observer.disconnect()
   }, [assignedUserVideo?.youtubeId, activeVideo])
+
+  useEffect(() => {
+    setVisibleWheelCardsLimit(12)
+  }, [selectedFilter, selectedProfessionId, professionSearchQuery])
 
   // Smooth scroll left / right
   const scrollWheel = (direction: 'left' | 'right') => {
@@ -663,9 +672,13 @@ export function ConnectInVideoWheel({
                   setSelectedProfessionId("all")
                   setSelectedStageVideo(null)
                   heroUserManuallyStoppedRef.current = false
-                  setHeroStartedByScroll(false)
-                  notifyExclusiveVideoPlay(wheelHeroPlayerIdRef.current)
-                  setIsPlayingHeroInline(true)
+                  if (autoplayPrefRef.current) {
+                    setHeroStartedByScroll(true)
+                    notifyExclusiveVideoPlay(wheelHeroPlayerIdRef.current)
+                    setIsPlayingHeroInline(true)
+                  } else {
+                    setIsPlayingHeroInline(false)
+                  }
                 }}
                 className={`px-3 py-1 rounded-full text-[11px] font-semibold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
                   selectedFilter === chip.id
@@ -693,9 +706,13 @@ export function ConnectInVideoWheel({
               setSelectedProfessionId(e.target.value)
               setSelectedStageVideo(null)
               heroUserManuallyStoppedRef.current = false
-              setHeroStartedByScroll(false)
-              notifyExclusiveVideoPlay(wheelHeroPlayerIdRef.current)
-              setIsPlayingHeroInline(true)
+              if (autoplayPrefRef.current) {
+                setHeroStartedByScroll(true)
+                notifyExclusiveVideoPlay(wheelHeroPlayerIdRef.current)
+                setIsPlayingHeroInline(true)
+              } else {
+                setIsPlayingHeroInline(false)
+              }
             }}
             className="rounded-xl bg-[#25211D] border border-amber-500/30 px-3 py-1.5 text-[11px] font-semibold text-white focus:border-amber-400 focus:outline-none max-w-xs sm:max-w-sm cursor-pointer"
           >
@@ -726,9 +743,13 @@ export function ConnectInVideoWheel({
                 setProfessionSearchQuery("")
                 setSelectedStageVideo(null)
                 heroUserManuallyStoppedRef.current = false
-                setHeroStartedByScroll(false)
-                notifyExclusiveVideoPlay(wheelHeroPlayerIdRef.current)
-                setIsPlayingHeroInline(true)
+                if (autoplayPrefRef.current) {
+                  setHeroStartedByScroll(true)
+                  notifyExclusiveVideoPlay(wheelHeroPlayerIdRef.current)
+                  setIsPlayingHeroInline(true)
+                } else {
+                  setIsPlayingHeroInline(false)
+                }
               }}
               className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/15 text-[11px] font-semibold text-amber-300 cursor-pointer"
             >
@@ -779,6 +800,7 @@ export function ConnectInVideoWheel({
                     setIsPlayingHeroInline(false)
                   } else {
                     setActiveVideo(null)
+                    setHeroStartedByScroll(false)
                     notifyExclusiveVideoPlay(wheelHeroPlayerIdRef.current)
                     setIsPlayingHeroInline(true)
                   }
@@ -813,7 +835,7 @@ export function ConnectInVideoWheel({
                 serialPlate={assignedUserVideo.serialPlate}
                 speaker={assignedUserVideo.speaker}
                 durationLabel={assignedUserVideo.duration || ""}
-                initialMuted={false}
+                initialMuted={heroStartedByScroll}
                 playerId={wheelHeroPlayerIdRef.current}
                 onExclusiveStop={() => setIsPlayingHeroInline(false)}
                 className="h-full w-full"
@@ -822,6 +844,7 @@ export function ConnectInVideoWheel({
               <div
                 onClick={() => {
                   setActiveVideo(null)
+                  setHeroStartedByScroll(false)
                   notifyExclusiveVideoPlay(wheelHeroPlayerIdRef.current)
                   setIsPlayingHeroInline(true)
                 }}
@@ -885,7 +908,8 @@ export function ConnectInVideoWheel({
             </button>
           </div>
         ) : (
-          filteredTalks.map((talk) => {
+          <>
+          {filteredTalks.slice(0, visibleWheelCardsLimit).map((talk) => {
             const talkEnclave = talk.enclaveId ? findEnclaveById(talk.enclaveId) : null
             const isAssignedToUser = assignedUserVideo?.id === talk.id
             return (
@@ -894,6 +918,7 @@ export function ConnectInVideoWheel({
                 onClick={() => {
                   setActiveVideo(null)
                   setSelectedStageVideo(talk)
+                  setHeroStartedByScroll(false)
                   notifyExclusiveVideoPlay(wheelHeroPlayerIdRef.current)
                   setIsPlayingHeroInline(true)
                   heroStageRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" })
@@ -1025,7 +1050,25 @@ export function ConnectInVideoWheel({
                 </div>
               </div>
             )
-          })
+          })}
+          {filteredTalks.length > visibleWheelCardsLimit && (
+            <button
+              type="button"
+              onClick={() => setVisibleWheelCardsLimit((prev) => prev + 24)}
+              className="h-[20.5rem] w-[12rem] shrink-0 snap-center rounded-2xl border border-dashed border-amber-500/40 bg-[#25211D]/80 hover:bg-[#25211D] hover:border-amber-400 p-4 flex flex-col items-center justify-center gap-2 text-center transition-all cursor-pointer"
+            >
+              <span className="h-10 w-10 rounded-full bg-amber-500/20 text-amber-300 flex items-center justify-center font-bold text-lg">
+                +
+              </span>
+              <span className="text-xs font-bold text-white">
+                Load More Briefings
+              </span>
+              <span className="text-[11px] text-[#EFE8DC]/70">
+                {filteredTalks.length - visibleWheelCardsLimit} more in this filter
+              </span>
+            </button>
+          )}
+          </>
         )}
       </div>
 
