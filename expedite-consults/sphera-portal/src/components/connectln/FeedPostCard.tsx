@@ -55,6 +55,7 @@ import {
   type ShareTarget,
 } from "./MessageActionBar"
 import { triggerReactionSplash } from "@/lib/reaction-splash"
+import { useAutoplayVideosPref } from "@/lib/connectln-settings"
 
 interface FeedPostCardProps {
   post: Post
@@ -99,6 +100,7 @@ export function FeedPostCard({
   const [replyText, setReplyText] = useState("")
   const [showReactionPicker, setShowReactionPicker] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
+  const [autoplayVideos, setAutoplayVideos] = useAutoplayVideosPref()
   const [copiedLink, setCopiedLink] = useState(false)
   const [isFollowing, setIsFollowing] = useState(post.author.isFollowing ?? false)
   const [isReposted, setIsReposted] = useState(false)
@@ -1285,6 +1287,24 @@ export function FeedPostCard({
       {/* LinkedIn-Style Full-Width 16:9 Inline Video + ConnectLn Share Card */}
       {post.media && post.media.type === 'video' && (
         <div className="my-2 w-full">
+          {/* Label so it's clear where this video comes from, with a one-click autoplay switch */}
+          {post.id?.startsWith('harvest_post_') && (
+            <div className="mx-4 mb-1.5 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-emerald-200 bg-emerald-50/70 px-2.5 py-1 text-[11px] dark:border-emerald-900/60 dark:bg-emerald-950/30">
+              <span className="font-semibold text-emerald-800 dark:text-emerald-300">
+                📡 Latest synced video · from the Admin Media Backend
+                {post.media.serialPlate ? ` · ${post.media.serialPlate}` : ''}
+              </span>
+              <button
+                type="button"
+                onClick={() => setAutoplayVideos(!autoplayVideos)}
+                title="Autoplay starts videos silently when they scroll into view. Change it any time in Settings."
+                className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-white px-2 py-0.5 font-bold text-emerald-800 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-zinc-900 dark:text-emerald-300 cursor-pointer"
+              >
+                <span className={`h-1.5 w-1.5 rounded-full ${autoplayVideos ? 'bg-emerald-500' : 'bg-zinc-400'}`} />
+                Autoplay: {autoplayVideos ? 'On (muted)' : 'Off'}
+              </button>
+            </div>
+          )}
           <VideoShareBanner
             avatarUrl={resolvedPostAuthorPic}
             userAvatar={resolvedPostAuthorPic}

@@ -12,8 +12,10 @@ import {
   ExternalLink,
   ChevronRight,
   BadgeCheck,
+  SlidersHorizontal,
 } from "lucide-react"
 import { UserProfile } from "@/lib/connectln-data"
+import { useAutoplayVideosPref } from "@/lib/connectln-settings"
 
 export interface SettingsShortcut {
   id: string
@@ -23,7 +25,7 @@ export interface SettingsShortcut {
   description?: string
 }
 
-type SectionId = "account" | "apps" | "billing" | "admin"
+type SectionId = "account" | "behavior" | "apps" | "billing" | "admin"
 
 interface SettingsModalProps {
   open: boolean
@@ -65,6 +67,7 @@ export function SettingsModal({
   const [section, setSection] = useState<SectionId>(initialSection)
   const [query, setQuery] = useState("")
   const [mounted, setMounted] = useState(false)
+  const [autoplayVideos, setAutoplayVideos] = useAutoplayVideosPref()
 
   useEffect(() => setMounted(true), [])
 
@@ -92,6 +95,7 @@ export function SettingsModal({
   const sections = useMemo(() => {
     const list: { id: SectionId; label: string; icon: React.ComponentType<{ className?: string }>; count: number }[] = [
       { id: "account", label: "Account", icon: UserCircle2, count: accountItems.length },
+      { id: "behavior", label: "Behavior", icon: SlidersHorizontal, count: 1 },
       { id: "apps", label: "Connected Apps", icon: Plug, count: connectedApps.length },
       { id: "billing", label: "Billing & Payouts", icon: CreditCard, count: billingItems.length },
     ]
@@ -176,20 +180,58 @@ export function SettingsModal({
 
   const activeSection = sections.find((s) => s.id === section) || sections[0]
 
+  // Behavior: autoplay switch (off by default; when on, videos start muted with "Tap for Sound")
+  const autoplayRow = (
+    <div className="flex items-center justify-between gap-4 px-4 py-3">
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Autoplay videos on Home</p>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          Start feed videos by themselves when they scroll into view. They play muted — tap “Tap for Sound” to hear them.
+          Off by default.
+        </p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={autoplayVideos}
+        aria-label="Autoplay videos on Home"
+        onClick={() => setAutoplayVideos(!autoplayVideos)}
+        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors cursor-pointer ${
+          autoplayVideos ? "bg-emerald-600" : "bg-zinc-300 dark:bg-zinc-700"
+        }`}
+      >
+        <span
+          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${
+            autoplayVideos ? "left-[22px]" : "left-0.5"
+          }`}
+        />
+      </button>
+    </div>
+  )
+
   const renderBody = () => {
     if (q) {
-      return searchResults.length === 0 ? (
-        <Empty text={`No settings match "${query}".`} />
-      ) : (
-        <Group title={`${searchResults.length} result${searchResults.length === 1 ? "" : "s"}`}>
-          {searchResults.map(({ section: s, item }) => (
-            <Row key={`${s}-${item.id}-${item.label}`} item={item} hint={s} />
-          ))}
-        </Group>
+      const showBehavior = /autoplay|auto-play|video|behavior|behaviour|play|mute|sound/.test(q)
+      if (!showBehavior && searchResults.length === 0) {
+        return <Empty text={`No settings match "${query}".`} />
+      }
+      return (
+        <div className="space-y-5">
+          {showBehavior && <Group title="Behavior">{autoplayRow}</Group>}
+          {searchResults.length > 0 && (
+            <Group title={`${searchResults.length} result${searchResults.length === 1 ? "" : "s"}`}>
+              {searchResults.map(({ section: s, item }) => (
+                <Row key={`${s}-${item.id}-${item.label}`} item={item} hint={s} />
+              ))}
+            </Group>
+          )}
+        </div>
       )
     }
 
     switch (activeSection.id) {
+      case "behavior":
+        return <Group title="Videos">{autoplayRow}</Group>
       case "account":
         return (
           <div className="space-y-5">

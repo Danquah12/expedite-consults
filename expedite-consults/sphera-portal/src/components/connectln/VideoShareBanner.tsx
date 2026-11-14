@@ -6,6 +6,7 @@ import { resolveUserProfilePicture, isDefaultPlaceholderAvatar, generatePersonal
 import { buildSharePreviewUrl, useSharePic } from "@/lib/connectin-share"
 import { ConnectLnStudioPlayer, CONNECTLN_VIDEO_PLAY_EVENT, notifyExclusiveVideoPlay } from "./ConnectLnStudioPlayer"
 import { NoctisVideoInterpreterPopup } from "./NoctisVideoInterpreterPopup"
+import { useAutoplayVideosPref } from "@/lib/connectln-settings"
 import {
   loadMembers,
   sendSharedItemToConnectLnMember,
@@ -74,6 +75,11 @@ export function VideoShareBanner({
   autoPlayOnScroll = true
 }: VideoShareBannerProps) {
   const [isPlayingInline, setIsPlayingInline] = useState(false)
+  // Autoplay is OFF unless the user turns it on in Settings -> Behavior
+  const [autoplayPref] = useAutoplayVideosPref()
+  const autoplayAllowed = autoPlayOnScroll && autoplayPref
+  const autoplayAllowedRef = useRef(autoplayAllowed)
+  autoplayAllowedRef.current = autoplayAllowed
   const [startedByScroll, setStartedByScroll] = useState(true)
   const [copiedLink, setCopiedLink] = useState(false)
   const [showMemberPicker, setShowMemberPicker] = useState(false)
@@ -174,7 +180,8 @@ export function VideoShareBanner({
         const entry = entries[0]
         if (!entry) return
         if (entry.isIntersecting && entry.intersectionRatio >= 0.45) {
-          if (!userManuallyStoppedRef.current) {
+          // Only START on scroll when the user enabled autoplay in Settings; manual plays are unaffected
+          if (autoplayAllowedRef.current && !userManuallyStoppedRef.current) {
             setStartedByScroll(true)
             notifyExclusiveVideoPlay(bannerPlayerIdRef.current)
             setIsPlayingInline(true)
@@ -190,6 +197,13 @@ export function VideoShareBanner({
     observer.observe(node)
     return () => observer.disconnect()
   }, [autoPlayOnScroll, resolvedPlayHandler, resolvedYtId, videoUrl])
+
+  // If the user switches autoplay off in Settings, stop any video that was started by scrolling
+  useEffect(() => {
+    if (!autoplayAllowed && startedByScroll) {
+      setIsPlayingInline(false)
+    }
+  }, [autoplayAllowed, startedByScroll])
 
   // ConnectLn OpenGraph URL so WhatsApp, LinkedIn, X, Facebook, and messages render the ConnectLn Logo + Profile Picture Card
   const resolvedShareUrl = buildSharePreviewUrl({
@@ -336,7 +350,7 @@ export function VideoShareBanner({
                   description={videoSubtitle}
                   takeaways={takeaways}
                   durationLabel={duration}
-                  initialMuted={false}
+                  initialMuted={startedByScroll}
                   playerId={bannerPlayerIdRef.current}
                   onExclusiveStop={() => setIsPlayingInline(false)}
                   className="w-full"
