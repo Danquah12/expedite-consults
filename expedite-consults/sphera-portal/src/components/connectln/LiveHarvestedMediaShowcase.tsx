@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import {
   Film,
   Image as ImageIcon,
@@ -41,6 +41,53 @@ import {
   type ShareTarget,
 } from "./MessageActionBar"
 import { triggerReactionSplash } from "@/lib/reaction-splash"
+import { ConnectLnStudioPlayer } from "./ConnectLnStudioPlayer"
+import { NoctisVideoInterpreterPopup } from "./NoctisVideoInterpreterPopup"
+
+/** Direct-file (mp4) player with the same Noctis language / dubbing bar docked underneath. */
+function HarvestedMp4Player({ item }: { item: HarvestedMediaItem }) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(120)
+  const [isPlaying, setIsPlaying] = useState(true)
+
+  return (
+    <div className="bg-black">
+      <div className="aspect-video w-full">
+        <video
+          ref={videoRef}
+          src={item.videoUrl}
+          controls
+          autoPlay
+          playsInline
+          onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+          onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || 120)}
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
+          className="h-full w-full object-cover"
+        />
+      </div>
+      <NoctisVideoInterpreterPopup
+        dockedBelow={true}
+        title={item.title}
+        speaker={item.authorName}
+        speakerRole={item.authorRole}
+        serialPlate={item.serialNumber}
+        description={item.summary}
+        currentTime={currentTime}
+        duration={duration}
+        isPlaying={isPlaying}
+        onRequestPlayVideo={() => {
+          videoRef.current?.play().catch(() => {})
+        }}
+        onMuteOriginalVideo={(duck) => {
+          // Mute the original audio while Noctis is speaking so two voices never overlap
+          if (videoRef.current) videoRef.current.muted = duck
+        }}
+      />
+    </div>
+  )
+}
 
 interface LiveHarvestedMediaShowcaseProps {
   destination: HarvesterDestination
@@ -314,26 +361,28 @@ export function LiveHarvestedMediaShowcase({
                 className="rounded-xl border border-[#DFD4C0] dark:border-zinc-800 bg-white dark:bg-zinc-950 overflow-hidden flex flex-col justify-between shadow-2xs hover:border-[#6B4423]/60 transition-all"
               >
                 <div>
-                  <div className="relative aspect-video bg-zinc-900 overflow-hidden">
-                    {item.kind === "video" && isPlaying ? (
-                      item.videoUrl ? (
-                        <video
-                          src={item.videoUrl}
-                          controls
-                          autoPlay
-                          playsInline
-                          className="h-full w-full object-cover"
-                        />
-                      ) : item.youtubeId ? (
-                        <iframe
-                          src={`https://www.youtube.com/embed/${item.youtubeId}?autoplay=1&rel=0`}
-                          title={item.title}
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                          className="h-full w-full border-0"
-                        />
-                      ) : null
+                  {item.kind === "video" && isPlaying && (item.videoUrl || item.youtubeId) ? (
+                    item.videoUrl ? (
+                      <HarvestedMp4Player item={item} />
                     ) : (
+                      /* Same studio player as the Home feed: Noctis Audio, language picker, voice dubbing & live subtitles */
+                      <ConnectLnStudioPlayer
+                        youtubeId={item.youtubeId as string}
+                        title={item.title}
+                        serialPlate={item.serialNumber}
+                        speaker={item.authorName}
+                        speakerRole={item.authorRole}
+                        description={item.summary}
+                        durationLabel={item.duration}
+                        initialMuted={false}
+                        playerId={`harvest-${destination}-${item.id}`}
+                        onExclusiveStop={() => setPlayingId((prev) => (prev === item.id ? null : prev))}
+                        className="w-full"
+                      />
+                    )
+                  ) : (
+                  <div className="relative aspect-video bg-zinc-900 overflow-hidden">
+                    {(
                       <>
                         <img
                           src={item.imageUrl}
@@ -373,6 +422,7 @@ export function LiveHarvestedMediaShowcase({
                       </span>
                     </div>
                   </div>
+                  )}
 
                   <div className="p-3 space-y-1.5">
                     <p className="text-xs font-bold text-zinc-950 dark:text-white line-clamp-2 leading-snug">
