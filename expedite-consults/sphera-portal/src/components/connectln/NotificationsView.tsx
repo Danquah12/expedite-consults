@@ -1079,6 +1079,8 @@ export function NotificationsView({
     matchedKeywords: string[]
     missingKeywords: string[]
   } | null>(null)
+  const [isAutonomousTrainingActive, setIsAutonomousTrainingActive] = useState<boolean>(false)
+  const [autonomousCountdown, setAutonomousCountdown] = useState<number>(3)
 
   // Reactive derivation guarantees the active challenge always immediately matches activeChallengeIdx
   const activeChallenge = LOCAL_CHALLENGE_CATALOG[
@@ -1098,21 +1100,20 @@ export function NotificationsView({
     handleSelectChallenge(nextIdx)
   }
 
-  const handleEvaluateUserAnswer = () => {
-    const activeCh = activeChallenge
-    const text = userChallengeInput.trim().toLowerCase()
+  const evaluateAnswerText = (textToEval: string, targetChallenge = activeChallenge) => {
+    const text = textToEval.trim().toLowerCase()
     if (!text) {
       setUserChallengeEvaluation({
         score: 0,
         pass: false,
         feedback: "Please enter your technical analysis or proposed safety protocol before submitting.",
         matchedKeywords: [],
-        missingKeywords: activeCh.expectedKeywords || []
+        missingKeywords: targetChallenge.expectedKeywords || []
       })
       return
     }
 
-    const keywords: string[] = activeCh.expectedKeywords || []
+    const keywords: string[] = targetChallenge.expectedKeywords || []
     const matched = keywords.filter(kw => text.includes(kw.toLowerCase()))
     const missing = keywords.filter(kw => !text.includes(kw.toLowerCase()))
     const ratio = keywords.length > 0 ? matched.length / keywords.length : 0.5
@@ -1123,11 +1124,23 @@ export function NotificationsView({
       score,
       pass,
       feedback: pass
-        ? `Verification Passed (${score}% Match): Your response accurately enforced critical regulatory and physics invariants for ${activeCh.domain}.`
-        : `Verification Incomplete (${score}% Match): Your solution omitted mandatory safety/compliance invariants (${missing.slice(0, 3).join(", ")}). Consult Noctis's full engineering breakdown below.`,
+        ? `Autonomous Invariant Verification PASSED (${score}% Match): Adherence confirmed across all critical safety and regulatory invariants for ${targetChallenge.domain}.`
+        : `Verification Incomplete (${score}% Match): Solution omitted mandatory safety/compliance invariants (${missing.slice(0, 3).join(", ")}). Consult Noctis's full engineering breakdown below.`,
       matchedKeywords: matched,
       missingKeywords: missing
     })
+  }
+
+  const handleEvaluateUserAnswer = () => {
+    evaluateAnswerText(userChallengeInput, activeChallenge)
+  }
+
+  const handleInstantAutoEvaluate = () => {
+    const activeCh = activeChallenge
+    if (activeCh?.sampleAnswer) {
+      setUserChallengeInput(activeCh.sampleAnswer)
+      evaluateAnswerText(activeCh.sampleAnswer, activeCh)
+    }
   }
 
   const handleLoadSampleSolution = () => {
@@ -1137,6 +1150,36 @@ export function NotificationsView({
       setUserChallengeEvaluation(null)
     }
   }
+
+  // Autonomous Continuous Training Hands-Free Loop
+  useEffect(() => {
+    if (!isAutonomousTrainingActive) return
+
+    // Immediately evaluate active challenge if not already evaluated
+    const currentCh = activeChallenge
+    if (currentCh?.sampleAnswer && (!userChallengeEvaluation || userChallengeInput !== currentCh.sampleAnswer)) {
+      setUserChallengeInput(currentCh.sampleAnswer)
+      evaluateAnswerText(currentCh.sampleAnswer, currentCh)
+    }
+
+    setAutonomousCountdown(3)
+    const timer = setInterval(() => {
+      setAutonomousCountdown((prev) => {
+        if (prev <= 1) {
+          const nextIdx = (activeChallengeIdx + 1) % LOCAL_CHALLENGE_CATALOG.length
+          const nextCh = LOCAL_CHALLENGE_CATALOG[nextIdx]
+          setActiveChallengeIdx(nextIdx)
+          setUserChallengeInput(nextCh.sampleAnswer || "")
+          setShowChallengeResponse(true)
+          evaluateAnswerText(nextCh.sampleAnswer || "", nextCh)
+          return 3
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [isAutonomousTrainingActive, activeChallengeIdx])
 
   const [followBundle, setFollowBundle] = useState<UserFollowBundle>(() =>
     loadUserFollowBundle(currentUserName)
@@ -1882,14 +1925,25 @@ export function NotificationsView({
                 {`${activeChallenge.domain} · ${activeChallenge.durationMs}ms SLA`}
               </span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setIsAutonomousTrainingActive(prev => !prev)}
+                className={`rounded-xl px-3.5 py-2 text-xs font-black transition-all cursor-pointer shadow-sm active:scale-95 flex items-center gap-1.5 ${
+                  isAutonomousTrainingActive
+                    ? "bg-amber-600 hover:bg-amber-700 text-white animate-pulse"
+                    : "bg-emerald-700 hover:bg-emerald-800 text-white"
+                }`}
+              >
+                {isAutonomousTrainingActive ? `⏸ Pause Auto-Train (${autonomousCountdown}s)` : "🤖 Auto-Train All 11 (Zero-Touch)"}
+              </button>
               <button
                 type="button"
                 onClick={handleRunNewChallengeTest}
                 className="rounded-xl px-4 py-2 text-xs font-black transition-all cursor-pointer shadow-sm hover:opacity-90 active:scale-95"
                 style={{ backgroundColor: '#0a66c2', color: '#ffffff', border: '1px solid #004182' }}
               >
-                🔄 Test Another Challenge ({(activeChallengeIdx + 1)}/{LOCAL_CHALLENGE_CATALOG.length})
+                🔄 Next Challenge ({(activeChallengeIdx + 1)}/{LOCAL_CHALLENGE_CATALOG.length})
               </button>
             </div>
           </div>
@@ -1980,13 +2034,20 @@ export function NotificationsView({
                 <span className="text-xs font-black uppercase tracking-wider text-sky-900 flex items-center gap-1.5">
                   <span>✍️</span> Submit Your Solution: Test Your Domain Knowledge Against Noctis
                 </span>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={handleInstantAutoEvaluate}
+                    className="text-xs font-bold text-emerald-800 hover:text-emerald-950 bg-emerald-100 hover:bg-emerald-200 px-2.5 py-1 rounded-lg transition-colors cursor-pointer border border-emerald-300"
+                  >
+                    ⚡ Auto-Evaluate Sample
+                  </button>
                   <button
                     type="button"
                     onClick={handleLoadSampleSolution}
                     className="text-xs font-bold text-sky-700 hover:text-sky-900 underline cursor-pointer"
                   >
-                    💡 Load Sample Solution
+                    💡 Load Sample
                   </button>
                   {userChallengeInput && (
                     <button
@@ -2009,15 +2070,29 @@ export function NotificationsView({
               />
 
               <div className="flex items-center justify-between gap-3 flex-wrap">
-                <button
-                  type="button"
-                  onClick={handleEvaluateUserAnswer}
-                  className="rounded-xl px-4 py-2 text-xs font-black text-white bg-sky-600 hover:bg-sky-700 active:scale-95 transition-all cursor-pointer shadow-xs"
-                >
-                  ⚡ Evaluate My Response with Noctis
-                </button>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={handleInstantAutoEvaluate}
+                    className="rounded-xl px-4 py-2 text-xs font-black text-white bg-emerald-700 hover:bg-emerald-800 active:scale-95 transition-all cursor-pointer shadow-xs"
+                  >
+                    ⚡ Auto-Evaluate Against Invariants
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleEvaluateUserAnswer}
+                    className="rounded-xl px-4 py-2 text-xs font-black text-white bg-sky-600 hover:bg-sky-700 active:scale-95 transition-all cursor-pointer shadow-xs"
+                  >
+                    Evaluate My Input
+                  </button>
+                </div>
+                {isAutonomousTrainingActive && (
+                  <span className="text-[11px] font-black text-amber-800 bg-amber-100 border border-amber-300 rounded-lg px-2.5 py-1 animate-pulse">
+                    🤖 Autonomous Training Loop Active · Advancing in {autonomousCountdown}s...
+                  </span>
+                )}
                 <span className="text-[11px] text-slate-500">
-                  Instant real-time invariant scoring across physics, safety &amp; regulatory standards.
+                  Zero-touch automated invariant verification &amp; real-time compliance scoring.
                 </span>
               </div>
 
