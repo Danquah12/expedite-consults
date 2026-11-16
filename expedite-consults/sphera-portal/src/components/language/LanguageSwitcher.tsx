@@ -7,12 +7,14 @@ import { LanguageCode } from "@/lib/translations";
 
 interface LanguageSwitcherProps {
   compact?: boolean;
+  navItem?: boolean;
   align?: "left" | "right";
   className?: string;
 }
 
 export function LanguageSwitcher({
   compact = false,
+  navItem = false,
   align = "right",
   className = ""
 }: LanguageSwitcherProps) {
@@ -58,34 +60,57 @@ export function LanguageSwitcher({
       className={`notranslate relative inline-block text-left ${className}`}
     >
       {/* Trigger Button */}
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-1.5 rounded-lg border transition-all cursor-pointer ${
-          isOpen
-            ? "border-[#0A66C2] bg-blue-50/70 text-[#0A66C2] dark:border-sky-500 dark:bg-sky-950/40 dark:text-sky-300"
-            : "border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800 dark:text-zinc-200"
-        } ${compact ? "px-2 py-1 text-xs" : "px-2.5 py-1.5 text-xs font-semibold shadow-2xs"}`}
-        title={t("language_select", "Select Language")}
-        aria-label="Select Language"
-        aria-expanded={isOpen}
-      >
-        <Globe className="h-3.5 w-3.5 text-[#0A66C2] dark:text-sky-400 shrink-0" />
-        <span className="text-sm shrink-0 leading-none">{currentLanguage.flag}</span>
-        {!compact && (
-          <span className="truncate max-w-[82px] hidden lg:inline-block">
-            {currentLanguage.localName}
-          </span>
-        )}
-        <span className="font-mono text-[10px] uppercase font-bold text-zinc-500 dark:text-zinc-400">
-          {currentLanguage.code}
-        </span>
-        <ChevronDown
-          className={`h-3 w-3 text-zinc-400 transition-transform duration-200 ${
-            isOpen ? "rotate-180 text-[#0A66C2]" : ""
+      {navItem ? (
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className={`flex h-[52px] min-w-[38px] xl:min-w-[44px] flex-col items-center justify-center px-1 border-b-2 transition-colors cursor-pointer shrink-0 ${
+            isOpen
+              ? "text-[#191919] dark:text-white border-[#191919] dark:border-white"
+              : "text-[#666666] hover:text-[#191919] dark:text-zinc-400 dark:hover:text-white border-transparent"
           }`}
-        />
-      </button>
+          title={t("language_select", "Select Language")}
+          aria-label="Select Language"
+          aria-expanded={isOpen}
+        >
+          <Globe strokeWidth={1.75} className="h-[20px] w-[20px]" />
+          <span
+            style={{ fontWeight: 400 }}
+            className="flex items-center gap-0.5 text-[12px] leading-[1.33333] mt-0.5 uppercase whitespace-nowrap"
+          >
+            {currentLanguage.code}
+            <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+          </span>
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className={`flex items-center gap-1.5 rounded-lg border transition-all cursor-pointer ${
+            isOpen
+              ? "border-[#0A66C2] bg-blue-50/70 text-[#0A66C2] dark:border-sky-500 dark:bg-sky-950/40 dark:text-sky-300"
+              : "border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800 dark:text-zinc-200"
+          } ${compact ? "px-2 py-1 text-xs" : "px-2.5 py-1.5 text-xs font-semibold shadow-2xs"}`}
+          title={t("language_select", "Select Language")}
+          aria-label="Select Language"
+          aria-expanded={isOpen}
+        >
+          <Globe className="h-3.5 w-3.5 text-[#0A66C2] dark:text-sky-400 shrink-0" />
+          {!compact && (
+            <span className="truncate max-w-[82px] hidden lg:inline-block">
+              {currentLanguage.localName}
+            </span>
+          )}
+          <span className="text-[11px] uppercase font-semibold text-zinc-600 dark:text-zinc-300">
+            {currentLanguage.code}
+          </span>
+          <ChevronDown
+            className={`h-3 w-3 text-zinc-400 transition-transform duration-200 ${
+              isOpen ? "rotate-180 text-[#0A66C2]" : ""
+            }`}
+          />
+        </button>
+      )}
 
       {/* Popover Dropdown */}
       {isOpen && (

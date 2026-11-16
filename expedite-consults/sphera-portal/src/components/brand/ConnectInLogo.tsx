@@ -58,17 +58,19 @@ export function ConnectInLogo({
         <div className="flex flex-col leading-none shrink-0">
           <div className="relative flex items-center shrink-0">
             <span
-              className={`font-black tracking-tight text-zinc-900 dark:text-zinc-100 font-sans ${titleSizes[size]}`}
+              className={`font-semibold tracking-tight text-[#191919] dark:text-zinc-100 font-sans ${titleSizes[size]}`}
               style={{ letterSpacing: "-0.02em" }}
             >
-              Connect<span className="text-zinc-900 dark:text-zinc-100">L</span>n
+              Connect<span className="text-[#191919] dark:text-zinc-100">L</span>n
             </span>
 
-            {/* Official Terracotta Underline beneath 'Connect' */}
-            <span
-              className="absolute -bottom-1 left-0 h-[2px] rounded-full bg-[#a64532]"
-              style={{ width: "70%" }}
-            />
+            {/* Official Terracotta Underline only shown on full hero/subtitle lockups */}
+            {showSubtitle && (
+              <span
+                className="absolute -bottom-1 left-0 h-[2px] rounded-full bg-[#a64532]"
+                style={{ width: "70%" }}
+              />
+            )}
           </div>
 
           {showSubtitle && (

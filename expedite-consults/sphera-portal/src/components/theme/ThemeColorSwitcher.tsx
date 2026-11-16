@@ -6,12 +6,14 @@ import { useTheme, THEME_OPTIONS, Theme } from "@/context/ThemeContext"
 
 interface ThemeColorSwitcherProps {
   compact?: boolean
+  navItem?: boolean
   className?: string
   align?: "left" | "right"
 }
 
 export function ThemeColorSwitcher({
   compact = false,
+  navItem = false,
   className = "",
   align = "right"
 }: ThemeColorSwitcherProps) {
@@ -33,30 +35,57 @@ export function ThemeColorSwitcher({
   return (
     <div ref={popoverRef} className={`relative inline-block text-left ${className}`}>
       {/* Trigger Button */}
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-1.5 rounded-full transition-all cursor-pointer border ${
-          compact
-            ? "px-2.5 py-1 text-xs bg-white/80 dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700"
-            : "px-2.5 py-1.5 text-xs bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-750 text-zinc-700 dark:text-zinc-200 hover:border-[#0A66C2] shadow-2xs"
-        }`}
-        title={`Switch Background Color & Theme (Current: ${themeLabel})`}
-        aria-label="Theme & Background Color Switcher"
-      >
-        {/* Active Theme Color Swatch Circle */}
-        <span
-          className="h-3.5 w-3.5 rounded-full border border-black/20 dark:border-white/30 shrink-0 shadow-xs"
-          style={{ backgroundColor: themeOption.bgHex }}
-        />
-        <span className="text-xs shrink-0">{themeOption.icon}</span>
-        {!compact && (
-          <span className="hidden lg:inline text-[11px] font-semibold truncate max-w-[85px]">
-            {themeOption.shortLabel}
+      {navItem ? (
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className={`flex h-[52px] min-w-[38px] xl:min-w-[44px] flex-col items-center justify-center px-1 border-b-2 transition-colors cursor-pointer shrink-0 ${
+            isOpen
+              ? "text-[#191919] dark:text-white border-[#191919] dark:border-white"
+              : "text-[#666666] hover:text-[#191919] dark:text-zinc-400 dark:hover:text-white border-transparent"
+          }`}
+          title={`Theme Palette (Current: ${themeLabel})`}
+          aria-label="Theme & Background Color Switcher"
+        >
+          <div className="relative flex items-center justify-center">
+            <Palette strokeWidth={1.75} className="h-[20px] w-[20px]" />
+            <span
+              className="absolute -right-1 -bottom-0.5 h-2.5 w-2.5 rounded-full border border-black/30 dark:border-white/40"
+              style={{ backgroundColor: themeOption.bgHex }}
+            />
+          </div>
+          <span
+            style={{ fontWeight: 400 }}
+            className="hidden xl:inline-block text-[12px] leading-[1.33333] mt-0.5 whitespace-nowrap"
+          >
+            Theme
           </span>
-        )}
-        <Palette className="h-3 w-3 text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-200" />
-      </button>
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className={`flex items-center gap-1.5 rounded-full transition-all cursor-pointer border ${
+            compact
+              ? "px-2.5 py-1 text-xs bg-white/80 dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700"
+              : "px-2.5 py-1.5 text-xs bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-750 text-zinc-700 dark:text-zinc-200 hover:border-[#0A66C2] shadow-2xs"
+          }`}
+          title={`Switch Background Color & Theme (Current: ${themeLabel})`}
+          aria-label="Theme & Background Color Switcher"
+        >
+          {/* Active Theme Color Swatch Circle */}
+          <span
+            className="h-3.5 w-3.5 rounded-full border border-black/20 dark:border-white/30 shrink-0 shadow-xs"
+            style={{ backgroundColor: themeOption.bgHex }}
+          />
+          {!compact && (
+            <span className="hidden lg:inline text-[11px] font-semibold truncate max-w-[85px]">
+              {themeOption.shortLabel}
+            </span>
+          )}
+          <Palette className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-300" />
+        </button>
+      )}
 
       {/* Popover Color Palette Menu */}
       {isOpen && (

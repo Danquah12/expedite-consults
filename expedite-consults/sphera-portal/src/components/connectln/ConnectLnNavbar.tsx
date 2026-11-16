@@ -232,14 +232,14 @@ export function ConnectLnNavbar({
     if (activeTab) setVisitedBadgeTabs((p) => (p[activeTab] ? p : { ...p, [activeTab]: true }))
   }, [activeTab])
   const primaryNavItemsRaw = [
-    { id: "home", label: t("nav_home", "Home"), shortLabel: t("nav_home_short", "Home"), icon: House, badge: 2, priority: "always" },
-    { id: "network", label: t("nav_network", "Network"), shortLabel: t("nav_network_short", "Network"), icon: Users, badge: 0, priority: "always" },
+    { id: "home", label: t("nav_home", "Home"), shortLabel: t("nav_home_short", "Home"), icon: House, badge: 0, priority: "always" },
+    { id: "network", label: t("nav_network", "My Network"), shortLabel: t("nav_network_short", "My Network"), icon: Users, badge: 0, priority: "always" },
     { id: "jobs", label: t("nav_jobs", "Jobs"), shortLabel: t("nav_jobs_short", "Jobs"), icon: Briefcase, badge: 0, priority: "always" },
-    { id: "messaging", label: t("nav_messages", "Messaging"), shortLabel: t("nav_messages_short", "Msgs"), icon: MessageSquare, badge: unreadMessagesCount || 1, priority: "always" },
-    { id: "notifications", label: t("nav_alerts", "Notifications"), shortLabel: t("nav_alerts_short", "Alerts"), icon: Bell, badge: unreadNotificationsCount || 3, priority: "always" },
+    { id: "messaging", label: t("nav_messages", "Messaging"), shortLabel: t("nav_messages_short", "Messaging"), icon: MessageSquare, badge: unreadMessagesCount || 0, priority: "always" },
+    { id: "notifications", label: t("nav_alerts", "Notifications"), shortLabel: t("nav_alerts_short", "Notifications"), icon: Bell, badge: unreadNotificationsCount || 3, priority: "always" },
     { id: "marketplace", label: t("nav_marketplace", "Marketplace"), shortLabel: t("nav_marketplace_short", "Market"), icon: ShoppingBag, badge: 0, isMarketplace: true, priority: "always" },
-    { id: "learning", label: t("nav_learning", "Learning"), shortLabel: t("nav_learning_short", "Learn"), icon: GraduationCap, badge: 1, priority: "always" },
-    { id: "media", label: t("nav_media", "Media"), shortLabel: t("nav_media_short", "Media"), icon: Tv, badge: 1, priority: "always" },
+    { id: "learning", label: t("nav_learning", "Learning"), shortLabel: t("nav_learning_short", "Learning"), icon: GraduationCap, badge: 0, priority: "always" },
+    { id: "media", label: t("nav_media", "Media"), shortLabel: t("nav_media_short", "Media"), icon: Tv, badge: 0, priority: "always" },
     { id: "pulserooms", label: t("nav_pulse", "Pulse"), shortLabel: t("nav_pulse_short", "Pulse"), icon: Radio, badge: 0, priority: "always" },
   ]
   const primaryNavItems = primaryNavItemsRaw.map((i) => ({ ...i, badge: visitedBadgeTabs[i.id] ? 0 : i.badge }))
@@ -566,7 +566,7 @@ export function ConnectLnNavbar({
           </button>
 
           {/* Interactive Search Pill — LinkedIn 34px height, 14px regular font, subtle border */}
-          <div className="hidden lg:block relative w-[155px] xl:w-[190px] 2xl:w-[270px] transition-all duration-200">
+          <div className="hidden lg:block relative w-[155px] xl:w-[175px] 2xl:w-[225px] transition-all duration-200">
             <div
               className={`flex h-[34px] items-center gap-2 rounded-full bg-white px-3.5 transition-all dark:bg-zinc-900 border ${
                 isSearchFocused
@@ -933,9 +933,9 @@ export function ConnectLnNavbar({
           )}
         </div>
 
-        {/* Center-Right LinkedIn-Style Primary Navigation Tabs (Uniform Monochrome #666666 -> #191919, 12px Regular) */}
-        <div className="flex items-center gap-1 ml-auto min-w-0">
-          <nav className="hidden lg:flex items-center h-[52px] gap-0 2xl:gap-1 min-w-0 overflow-x-auto no-scrollbar">
+        {/* Center-Right LinkedIn-Style Primary Navigation Tabs — Never Clipped or Horizontally Scrolled on Desktop */}
+        <div className="flex items-center gap-0.5 2xl:gap-1 ml-auto shrink-0">
+          <nav className="hidden lg:flex items-center h-[52px] gap-0 2xl:gap-0.5 shrink-0">
             {primaryNavItems.map((item) => {
               const Icon = item.icon
               const isActive = activeTab === item.id
@@ -944,7 +944,7 @@ export function ConnectLnNavbar({
                 <button
                   key={item.id}
                   onClick={() => onSelectTab(item.id)}
-                  className={`relative flex h-[52px] min-w-[40px] xl:min-w-[46px] 2xl:min-w-[62px] flex-col items-center justify-center px-1 xl:px-1.5 border-b-2 transition-colors group shrink-0 cursor-pointer ${
+                  className={`relative flex h-[52px] min-w-[38px] xl:min-w-[44px] 2xl:min-w-[54px] flex-col items-center justify-center px-1 xl:px-1.5 2xl:px-2 border-b-2 transition-colors group shrink-0 cursor-pointer ${
                     isActive
                       ? "text-[#191919] dark:text-white border-[#191919] dark:border-white"
                       : "text-[#666666] hover:text-[#191919] dark:text-zinc-400 dark:hover:text-white border-transparent"
@@ -981,7 +981,7 @@ export function ConnectLnNavbar({
               onClick={() => {
                 if (onOpenAIAssistant) onOpenAIAssistant()
               }}
-              className="relative flex h-[52px] min-w-[40px] xl:min-w-[50px] 2xl:min-w-[64px] flex-col items-center justify-center px-1 xl:px-1.5 border-b-2 border-transparent text-[#666666] hover:text-[#191919] dark:text-zinc-400 dark:hover:text-white transition-colors group shrink-0 cursor-pointer"
+              className="relative flex h-[52px] min-w-[38px] xl:min-w-[48px] 2xl:min-w-[58px] flex-col items-center justify-center px-1 xl:px-1.5 2xl:px-2 border-b-2 border-transparent text-[#666666] hover:text-[#191919] dark:text-zinc-400 dark:hover:text-white transition-colors group shrink-0 cursor-pointer"
               title="Ask Noctis AI"
             >
               <Sparkles strokeWidth={1.75} className="h-[20px] w-[20px]" />
@@ -1324,7 +1324,7 @@ export function ConnectLnNavbar({
           </div>
 
           {/* LinkedIn Vertical Divider between "Me ▾" and "More ▾" */}
-          <div className="h-9 w-px bg-zinc-200 dark:bg-zinc-800 mx-0.5 shrink-0" />
+          <div className="h-9 w-px bg-zinc-200 dark:bg-zinc-800 mx-1 shrink-0" />
 
           {/* "More ▾" Dropdown Menu Trigger — Matching LinkedIn's "For Business ▾" 3x3 Grid Item */}
           <div ref={desktopMoreBtnRef} className="relative shrink-0">
@@ -1334,7 +1334,7 @@ export function ConnectLnNavbar({
                 setIsMoreOpen(!isMoreOpen)
                 setIsMeOpen(false)
               }}
-              className={`flex h-[52px] min-w-[40px] sm:min-w-[46px] flex-col items-center justify-center px-1 border-b-2 transition-colors cursor-pointer shrink-0 ${
+              className={`flex h-[52px] min-w-[40px] xl:min-w-[46px] flex-col items-center justify-center px-1 border-b-2 transition-colors cursor-pointer shrink-0 ${
                 isMoreOpen
                   ? "text-[#191919] dark:text-white border-[#191919] dark:border-white"
                   : "text-[#666666] hover:text-[#191919] dark:text-zinc-400 dark:hover:text-white border-transparent"
@@ -1353,41 +1353,56 @@ export function ConnectLnNavbar({
           {isAdminUser && (
             <button
               type="button"
+              data-no-translate="true"
+              translate="no"
               onClick={() => {
                 onSelectTab('adminiam')
                 setIsMoreOpen(false)
                 setIsMeOpen(false)
               }}
-              className={`flex items-center gap-1 rounded-full px-2 py-1 text-[12px] font-semibold transition-all shrink-0 cursor-pointer border ${
+              className={`notranslate flex h-[52px] min-w-[38px] xl:min-w-[48px] flex-col items-center justify-center px-1 border-b-2 transition-colors shrink-0 cursor-pointer ${
                 activeTab === 'adminiam'
-                  ? "bg-[#191919] text-white border-[#191919]"
-                  : "bg-white dark:bg-zinc-800 text-[#191919] dark:text-zinc-200 border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100"
+                  ? "text-[#191919] dark:text-white border-[#191919] dark:border-white"
+                  : "text-[#666666] hover:text-[#191919] dark:text-zinc-400 dark:hover:text-white border-transparent"
               }`}
               title="Open ConnectLn Admin & Media Backend"
             >
-              <Zap className="h-3.5 w-3.5 text-[#666666] dark:text-amber-400 shrink-0" />
-              <span>Backend</span>
+              <SlidersHorizontal strokeWidth={activeTab === 'adminiam' ? 2.2 : 1.75} className="h-[20px] w-[20px]" />
+              <span
+                style={{ fontWeight: 400 }}
+                className="hidden xl:inline-block text-[12px] leading-[1.33333] mt-0.5 whitespace-nowrap"
+              >
+                Backend
+              </span>
             </button>
           )}
           {isAdminUser && onOpenAuthModal && (
             <button
+              type="button"
+              data-no-translate="true"
+              translate="no"
               onClick={onOpenAuthModal}
-              className="flex items-center gap-1 rounded-full px-2 py-1 text-[12px] font-semibold border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[#191919] dark:text-zinc-100 hover:bg-zinc-100 transition-all shrink-0 cursor-pointer"
+              className="notranslate flex h-[52px] min-w-[36px] xl:min-w-[40px] flex-col items-center justify-center px-1 border-b-2 border-transparent text-[#666666] hover:text-[#191919] dark:text-zinc-400 dark:hover:text-white transition-colors shrink-0 cursor-pointer"
               title="Access Role Gate & Persona Switcher"
             >
-              <Key className="h-3.5 w-3.5 text-[#666666] dark:text-amber-400 shrink-0" />
-              <span>{t("nav_gate", "Gate")}</span>
+              <Key strokeWidth={1.75} className="h-[20px] w-[20px]" />
+              <span
+                style={{ fontWeight: 400 }}
+                className="hidden xl:inline-block text-[12px] leading-[1.33333] mt-0.5 whitespace-nowrap"
+              >
+                {t("nav_gate", "Gate")}
+              </span>
             </button>
           )}
 
-          {/* Theme & Background Color Switcher — compact */}
+          {/* Theme & Background Color Switcher — Uniform LinkedIn Icon-Over-Label Item */}
           <div className="block shrink-0">
-            <ThemeColorSwitcher align="right" compact />
+            <ThemeColorSwitcher align="right" navItem />
           </div>
 
-          {/* Global Multi-Language Switcher Popover — compact so primary nav tabs have full room */}
+          {/* Global Multi-Language Switcher — Uniform LinkedIn Icon-Over-Label Item (no broken Windows flag glyph) */}
           <div className="block shrink-0">
-            <LanguageSwitcher align="right" compact />
+            <LanguageSwitcher align="right" navItem />
           </div>
         </div>
       </div>
