@@ -90,9 +90,9 @@ export function ThemeColorSwitcher({
       {/* Popover Color Palette Menu */}
       {isOpen && (
         <div
-          className={`absolute ${
-            align === "right" ? "right-0" : "left-0"
-          } top-full mt-2 z-50 w-72 sm:w-80 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-3 shadow-2xl animate-in fade-in zoom-in-95 duration-150`}
+          className={`fixed inset-x-2.5 top-14 sm:absolute sm:inset-x-auto ${
+            align === "right" ? "sm:right-0" : "sm:left-0"
+          } sm:top-full sm:mt-2 z-50 w-auto sm:w-80 max-w-[calc(100vw-20px)] rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-3 shadow-2xl animate-in fade-in zoom-in-95 duration-150`}
         >
           {/* Header */}
           <div className="flex items-center justify-between pb-2 border-b border-zinc-100 dark:border-zinc-800">

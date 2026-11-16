@@ -2335,7 +2335,7 @@ export default function ConnectLnPage() {
         {activeTab === 'home' && (
           <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
             {/* Left Rail (Profile summary & communities on desktop/tablet) */}
-            <div className="hidden md:block md:col-span-4 lg:col-span-3">
+            <div className="hidden md:block md:col-span-4 lg:col-span-3 min-w-0">
               <LeftSidebarProfile
                 user={userData}
                 onViewProfile={() => {
@@ -2370,7 +2370,7 @@ export default function ConnectLnPage() {
             </div>
 
             {/* Center Rail (Post Creator & Post Feed) */}
-            <div className="md:col-span-8 lg:col-span-6 space-y-3">
+            <div className="md:col-span-8 lg:col-span-6 min-w-0 space-y-3">
               {/* Mobile Quick Profile Header Card (< md) */}
               <div className="md:hidden flex items-center justify-between rounded-2xl border border-zinc-200/90 bg-white p-3 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
                 <button
@@ -3177,7 +3177,7 @@ export default function ConnectLnPage() {
             </div>
 
             {/* Right Rail (ConnectIn News & Follow Suggestions) */}
-            <div className="hidden lg:block lg:col-span-3">
+            <div className="hidden lg:block lg:col-span-3 min-w-0">
               <RightSidebarNews
                 news={trendingNews}
                 suggestedPeople={suggestedPeople}

@@ -554,15 +554,37 @@ export function ConnectLnNavbar({
       )}
 
       {/* Top Header: LinkedIn-Clean Brand Logo, Search Pill, and Uniform Monochrome Navigation */}
-      <div className="mx-auto flex h-[52px] max-w-[1400px] items-center justify-between px-3 sm:px-4 gap-2">
-        {/* Left Side: Brand Logo & LinkedIn-Style Search Input */}
-        <div className="flex items-center gap-2 shrink-0">
+      <div className="mx-auto flex h-[52px] max-w-[1400px] items-center justify-between px-2.5 sm:px-4 gap-1.5 sm:gap-2">
+        {/* Left Side: Brand Logo & LinkedIn-Style Search Input (Desktop + Mobile Pill) */}
+        <div className="flex items-center gap-2 min-w-0 flex-1 lg:flex-initial lg:shrink-0">
           <button
             onClick={() => onSelectTab('home')}
             className="flex items-center focus:outline-none group shrink-0 cursor-pointer"
             title="ConnectLn Home"
           >
-            <ConnectInLogo size="sm" showSubtitle={false} className="shrink-0" />
+            <ConnectInLogo size="sm" showSubtitle={false} compactOnMobile className="shrink-0" />
+          </button>
+
+          {/* Mobile & Tablet Search Pill (< lg) — LinkedIn Mobile 34px Rounded Pill */}
+          <button
+            type="button"
+            onClick={() => {
+              if (onOpenUniversalSearch) {
+                onOpenUniversalSearch()
+              } else {
+                setIsMobileSearchOpen(true)
+              }
+            }}
+            className="lg:hidden flex h-[34px] flex-1 min-w-0 max-w-[300px] items-center gap-2 rounded-full bg-white dark:bg-zinc-900 border border-[#666666]/50 dark:border-zinc-700 px-3 text-left transition-colors cursor-pointer"
+            title={t("search_placeholder", "I'm looking for...")}
+          >
+            <Search className="h-4 w-4 text-[#666666] dark:text-zinc-400 shrink-0" />
+            <span
+              style={{ fontWeight: 400 }}
+              className="text-[13.5px] leading-5 text-[#666666] dark:text-zinc-400 truncate"
+            >
+              {searchQuery || t("search_placeholder", "I'm looking for...")}
+            </span>
           </button>
 
           {/* Interactive Search Pill — LinkedIn 34px height, 14px regular font, subtle border */}
@@ -994,34 +1016,20 @@ export function ConnectLnNavbar({
             </button>
           </nav>
 
-          {/* Mobile Search & Mobile Ask Noctis Triggers (< lg) */}
-          <button
-            type="button"
-            onClick={() => {
-              if (onOpenUniversalSearch) {
-                onOpenUniversalSearch()
-              } else {
-                setIsMobileSearchOpen(true)
-              }
-            }}
-            className="lg:hidden p-1.5 rounded-full text-[#666666] hover:text-[#191919] dark:text-zinc-300 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shrink-0 cursor-pointer"
-            title={t("search_placeholder", "Search...")}
-            aria-label="Search"
-          >
-            <Search className="h-4 w-4" />
-          </button>
-
+          {/* Mobile Ask Noctis Trigger (< lg) — Compact Monochrome Icon Matching Top Bar */}
           <button
             type="button"
             onClick={() => {
               if (onOpenAIAssistant) onOpenAIAssistant()
             }}
-            className="lg:hidden flex items-center gap-1 rounded-full border border-zinc-300 dark:border-zinc-700 px-2.5 py-1 text-[12px] text-[#191919] dark:text-zinc-200 shrink-0 cursor-pointer"
-            style={{ fontWeight: 400 }}
-            title="Ask Noctis"
+            className="lg:hidden flex h-[52px] min-w-[34px] flex-col items-center justify-center px-1 text-[#666666] hover:text-[#191919] dark:text-zinc-300 dark:hover:text-white shrink-0 cursor-pointer"
+            title="Ask Noctis AI"
+            aria-label="Ask Noctis AI"
           >
-            <Sparkles className="h-3.5 w-3.5 shrink-0" />
-            <span>Ask Noctis</span>
+            <Sparkles strokeWidth={1.75} className="h-[20px] w-[20px]" />
+            <span style={{ fontWeight: 400 }} className="hidden sm:inline-block text-[11px] leading-none mt-1">
+              Noctis
+            </span>
           </button>
 
           {/* "Me" Profile Menu Dropdown — LinkedIn 24px Avatar + "Me ▾" in 12px Regular */}
@@ -1191,6 +1199,39 @@ export function ConnectLnNavbar({
                           <LanguageSwitcher align="right" />
                         </div>
                       </div>
+                      {/* Mobile Quick Admin & Gate Row (< md) */}
+                      {isAdminUser && (
+                        <div className="md:hidden grid grid-cols-2 gap-1.5 px-1 pt-1">
+                          <button
+                            type="button"
+                            data-no-translate="true"
+                            translate="no"
+                            onClick={() => {
+                              onSelectTab('adminiam')
+                              setIsMeOpen(false)
+                            }}
+                            className="notranslate flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-2.5 py-2 text-xs font-semibold text-[#191919] dark:text-zinc-100 cursor-pointer"
+                          >
+                            <SlidersHorizontal className="h-3.5 w-3.5" />
+                            <span>Backend</span>
+                          </button>
+                          {onOpenAuthModal && (
+                            <button
+                              type="button"
+                              data-no-translate="true"
+                              translate="no"
+                              onClick={() => {
+                                onOpenAuthModal()
+                                setIsMeOpen(false)
+                              }}
+                              className="notranslate flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-2.5 py-2 text-xs font-semibold text-[#191919] dark:text-zinc-100 cursor-pointer"
+                            >
+                              <Key className="h-3.5 w-3.5" />
+                              <span>Gate</span>
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     {/* Collapsible Workspace & Admin Controls */}
@@ -1324,7 +1365,7 @@ export function ConnectLnNavbar({
           </div>
 
           {/* LinkedIn Vertical Divider between "Me ▾" and "More ▾" */}
-          <div className="h-9 w-px bg-zinc-200 dark:bg-zinc-800 mx-1 shrink-0" />
+          <div className="hidden sm:block h-9 w-px bg-zinc-200 dark:bg-zinc-800 mx-1 shrink-0" />
 
           {/* "More ▾" Dropdown Menu Trigger — Matching LinkedIn's "For Business ▾" 3x3 Grid Item */}
           <div ref={desktopMoreBtnRef} className="relative shrink-0">
@@ -1334,7 +1375,7 @@ export function ConnectLnNavbar({
                 setIsMoreOpen(!isMoreOpen)
                 setIsMeOpen(false)
               }}
-              className={`flex h-[52px] min-w-[40px] xl:min-w-[46px] flex-col items-center justify-center px-1 border-b-2 transition-colors cursor-pointer shrink-0 ${
+              className={`flex h-[52px] min-w-[38px] xl:min-w-[46px] flex-col items-center justify-center px-1 border-b-2 transition-colors cursor-pointer shrink-0 ${
                 isMoreOpen
                   ? "text-[#191919] dark:text-white border-[#191919] dark:border-white"
                   : "text-[#666666] hover:text-[#191919] dark:text-zinc-400 dark:hover:text-white border-transparent"
@@ -1360,7 +1401,7 @@ export function ConnectLnNavbar({
                 setIsMoreOpen(false)
                 setIsMeOpen(false)
               }}
-              className={`notranslate flex h-[52px] min-w-[38px] xl:min-w-[48px] flex-col items-center justify-center px-1 border-b-2 transition-colors shrink-0 cursor-pointer ${
+              className={`notranslate hidden md:flex h-[52px] min-w-[38px] xl:min-w-[48px] flex-col items-center justify-center px-1 border-b-2 transition-colors shrink-0 cursor-pointer ${
                 activeTab === 'adminiam'
                   ? "text-[#191919] dark:text-white border-[#191919] dark:border-white"
                   : "text-[#666666] hover:text-[#191919] dark:text-zinc-400 dark:hover:text-white border-transparent"
@@ -1382,7 +1423,7 @@ export function ConnectLnNavbar({
               data-no-translate="true"
               translate="no"
               onClick={onOpenAuthModal}
-              className="notranslate flex h-[52px] min-w-[36px] xl:min-w-[40px] flex-col items-center justify-center px-1 border-b-2 border-transparent text-[#666666] hover:text-[#191919] dark:text-zinc-400 dark:hover:text-white transition-colors shrink-0 cursor-pointer"
+              className="notranslate hidden md:flex h-[52px] min-w-[36px] xl:min-w-[40px] flex-col items-center justify-center px-1 border-b-2 border-transparent text-[#666666] hover:text-[#191919] dark:text-zinc-400 dark:hover:text-white transition-colors shrink-0 cursor-pointer"
               title="Access Role Gate & Persona Switcher"
             >
               <Key strokeWidth={1.75} className="h-[20px] w-[20px]" />
@@ -1395,12 +1436,12 @@ export function ConnectLnNavbar({
             </button>
           )}
 
-          {/* Theme & Background Color Switcher — Uniform LinkedIn Icon-Over-Label Item */}
-          <div className="block shrink-0">
+          {/* Theme & Background Color Switcher — Uniform LinkedIn Icon-Over-Label Item (accessible via Me menu on < sm phones) */}
+          <div className="hidden sm:block shrink-0">
             <ThemeColorSwitcher align="right" navItem />
           </div>
 
-          {/* Global Multi-Language Switcher — Uniform LinkedIn Icon-Over-Label Item (no broken Windows flag glyph) */}
+          {/* Global Multi-Language Switcher — Always accessible on Mobile & Desktop */}
           <div className="block shrink-0">
             <LanguageSwitcher align="right" navItem />
           </div>

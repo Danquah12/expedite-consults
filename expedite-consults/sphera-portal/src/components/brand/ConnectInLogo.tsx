@@ -7,13 +7,15 @@ interface ConnectInLogoProps {
   showSubtitle?: boolean
   className?: string
   variant?: "full" | "icon-only"
+  compactOnMobile?: boolean
 }
 
 export function ConnectInLogo({
   size = "md",
   showSubtitle = true,
   className = "",
-  variant = "full"
+  variant = "full",
+  compactOnMobile = false
 }: ConnectInLogoProps) {
   const iconSizes = {
     xs: "h-6 w-6",
@@ -55,7 +57,7 @@ export function ConnectInLogo({
 
       {/* ─── Typography & Subtitle ─── */}
       {variant !== "icon-only" && (
-        <div className="flex flex-col leading-none shrink-0">
+        <div className={`${compactOnMobile ? "hidden sm:flex" : "flex"} flex-col leading-none shrink-0`}>
           <div className="relative flex items-center shrink-0">
             <span
               className={`font-semibold tracking-tight text-[#191919] dark:text-zinc-100 font-sans ${titleSizes[size]}`}

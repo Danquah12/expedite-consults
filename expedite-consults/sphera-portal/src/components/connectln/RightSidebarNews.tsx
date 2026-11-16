@@ -204,7 +204,7 @@ export function RightSidebarNews({
       {/* 2. CONNECTLN NEWS — Matching LinkedIn News Typography (20px Semibold Title, 14px Semibold Headlines, 12px Regular Readers) */}
       <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex items-center justify-between pb-1">
-          <h3 className="font-semibold text-[20px] leading-[1.35] text-[#191919] dark:text-zinc-100">
+          <h3 className="font-semibold text-[18px] leading-[1.3] text-[#191919] dark:text-zinc-100">
             {t("news_and_pulse", "ConnectLn News")}
           </h3>
           <Info className="h-4 w-4 text-[#191919] dark:text-zinc-400 cursor-pointer" />

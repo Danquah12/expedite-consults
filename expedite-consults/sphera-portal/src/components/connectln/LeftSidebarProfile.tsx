@@ -795,7 +795,7 @@ export function LeftSidebarProfile({
             className="group block w-full text-left focus:outline-none"
           >
             <div className="flex items-center gap-1.5">
-              <h2 className="font-semibold text-[#191919] text-[20px] leading-[1.25] group-hover:underline dark:text-zinc-100">
+              <h2 className="font-semibold text-[#191919] text-[18px] leading-[1.25] group-hover:underline dark:text-zinc-100">
                 {user.name}
               </h2>
               <ShieldCheck className="h-4 w-4 text-[#666666] dark:text-zinc-300 shrink-0" />

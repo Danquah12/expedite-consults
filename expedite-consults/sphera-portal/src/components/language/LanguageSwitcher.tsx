@@ -120,8 +120,8 @@ export function LanguageSwitcher({
             onClick={() => setIsOpen(false)}
           />
           <div
-            className={`absolute z-50 mt-1.5 w-72 rounded-xl border border-zinc-200 bg-white p-1.5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 ${
-              align === "right" ? "right-0" : "left-0"
+            className={`fixed inset-x-2.5 top-14 sm:absolute sm:inset-x-auto z-50 sm:mt-1.5 w-auto sm:w-72 max-w-[calc(100vw-20px)] rounded-xl border border-zinc-200 bg-white p-1.5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 ${
+              align === "right" ? "sm:right-0" : "sm:left-0"
             }`}
           >
             {/* Popover Header */}

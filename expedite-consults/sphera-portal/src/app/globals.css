@@ -432,10 +432,18 @@ b {
   font-weight: 600 !important;
 }
 
+/* Prevent CSS Grid tracks across tables, cards, and sidebars from blowing out horizontally */
+.grid > * {
+  min-width: 0;
+}
+
+html {
+  font-size: 14.5px;
+}
+
 html, body {
   background-color: var(--bg-core) !important;
   color: var(--text-pure) !important;
-  font-size: 16px;
   line-height: 1.42857;
   letter-spacing: normal;
   min-height: 100vh;

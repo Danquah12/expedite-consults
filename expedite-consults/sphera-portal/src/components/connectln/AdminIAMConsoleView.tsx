@@ -613,7 +613,7 @@ export function AdminIAMConsoleView({
       {/* Main Admin Grid Layout */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
         {/* Left Rail Navigation */}
-        <div className="md:col-span-4 lg:col-span-3 space-y-4">
+        <div className="md:col-span-4 lg:col-span-3 min-w-0 space-y-4">
           <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
             {adminNavSections.map((section, idx) => (
               <div key={idx} className="space-y-1">
@@ -675,7 +675,7 @@ export function AdminIAMConsoleView({
         </div>
 
         {/* Right Main Content Area */}
-        <div className="md:col-span-8 lg:col-span-9 space-y-5">
+        <div className="md:col-span-8 lg:col-span-9 min-w-0 space-y-5">
           {/* MODULE 0B: 1-MINUTE VIDEO & PICTURE HARVESTER BACKEND */}
           {activeAdminTab === 'media_harvester' && (
             <AdminMediaHarvesterTab
@@ -832,16 +832,16 @@ export function AdminIAMConsoleView({
 
                 {/* Embedded Live Standalone ConnectLn DevHub Portal */}
                 <div className="rounded-2xl overflow-hidden border-2 border-slate-800 bg-[#070B14] shadow-xl">
-                  <div className="bg-[#0A0F1D] px-4 py-2.5 border-b border-slate-800 flex items-center justify-between text-xs text-slate-300">
-                    <div className="flex items-center gap-2">
-                      <span className="h-2.5 w-2.5 rounded-full bg-emerald-400"></span>
-                      <span className="font-mono font-bold text-white">LIVE CONTROL PLANE VIEWPORT: https://connectln-devhub.vercel.app</span>
+                  <div className="bg-[#0A0F1D] px-3 sm:px-4 py-2.5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-300">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 shrink-0"></span>
+                      <span className="font-semibold text-white truncate">LIVE CONTROL PLANE VIEWPORT: https://connectln-devhub.vercel.app</span>
                     </div>
                     <a
                       href="https://connectln-devhub.vercel.app"
                       target="_blank"
                       rel="noreferrer"
-                      className="text-indigo-400 hover:underline font-semibold flex items-center gap-1"
+                      className="text-indigo-400 hover:underline font-semibold flex items-center gap-1 shrink-0"
                     >
                       Pop Out to Dedicated Browser Tab <ExternalLink className="h-3 w-3" />
                     </a>
@@ -849,7 +849,9 @@ export function AdminIAMConsoleView({
                   <iframe
                     src="https://connectln-devhub.vercel.app"
                     title="ConnectLn DevHub Standalone Engineering Control Plane"
-                    className="w-full h-[820px] border-0"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allow="clipboard-read; clipboard-write; fullscreen"
+                    className="w-full h-[540px] sm:h-[700px] lg:h-[820px] border-0 bg-white"
                   />
                 </div>
               </div>
@@ -1506,15 +1508,15 @@ export function AdminIAMConsoleView({
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 overflow-hidden">
+              <div className="rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-zinc-50 dark:bg-zinc-800/60 border-b border-zinc-200 dark:border-zinc-800 text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+                  <table className="w-full table-fixed min-w-[680px] text-left text-[12px]">
+                    <thead className="bg-zinc-50 dark:bg-zinc-800/60 border-b border-zinc-200 dark:border-zinc-800 text-[11px] font-semibold uppercase tracking-wide text-[#666666] dark:text-zinc-400">
                       <tr>
-                        <th className="py-3 px-4">User</th>
-                        <th className="py-3 px-3">Action Performed</th>
-                        <th className="py-3 px-3">Target &amp; Details</th>
-                        <th className="py-3 px-4 text-right">Timestamp</th>
+                        <th className="py-2.5 px-3.5 w-[26%]">User</th>
+                        <th className="py-2.5 px-2.5 w-[22%]">Action Performed</th>
+                        <th className="py-2.5 px-2.5 w-[35%]">Target &amp; Details</th>
+                        <th className="py-2.5 px-3.5 w-[17%] text-right">Timestamp</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -1541,50 +1543,66 @@ export function AdminIAMConsoleView({
                           )
                         })
                         .map((ev) => (
-                          <tr key={ev.id} className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40 transition-colors">
-                            <td className="py-3 px-4">
-                              <div className="flex items-center gap-2.5">
+                          <tr key={ev.id} className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40 transition-colors align-top">
+                            <td className="py-3 px-3.5">
+                              <div className="flex items-start gap-2.5 min-w-0">
                                 <img
                                   src={ev.userAvatar}
                                   alt={ev.userName}
-                                  className="h-9 w-9 rounded-full object-cover border border-zinc-200 dark:border-zinc-700 shrink-0"
+                                  className="h-8 w-8 rounded-full object-cover border border-zinc-200 dark:border-zinc-700 shrink-0 mt-0.5"
                                 />
-                                <div>
-                                  <p className="font-bold text-zinc-900 dark:text-zinc-100">{ev.userName}</p>
-                                  <p className="text-[11px] font-mono text-zinc-400">{ev.userEmail}</p>
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-semibold text-[13px] text-[#191919] dark:text-zinc-100 leading-snug line-clamp-2" title={ev.userName}>
+                                    {ev.userName}
+                                  </p>
+                                  <p
+                                    style={{ fontWeight: 400 }}
+                                    className="text-[11.5px] text-[#666666] dark:text-zinc-400 truncate mt-0.5"
+                                    title={ev.userEmail}
+                                  >
+                                    {ev.userEmail}
+                                  </p>
                                 </div>
                               </div>
                             </td>
-                            <td className="py-3 px-3">
+                            <td className="py-3 px-2.5">
                               <span
-                                className={`inline-block rounded-full px-2.5 py-1 text-[10px] font-bold ${
+                                title={ev.actionLabel}
+                                className={`inline-block rounded-md px-2 py-1 text-[11px] font-semibold leading-snug line-clamp-2 max-w-full ${
                                   ev.actionType === 'POST_LIKED'
-                                    ? "bg-blue-100 text-[#0A66C2] dark:bg-blue-950/60 dark:text-sky-300"
+                                    ? "bg-blue-50 text-[#0A66C2] border border-blue-200/70 dark:bg-blue-950/60 dark:text-sky-300"
                                     : ev.actionType === 'POST_COMMENTED' || ev.actionType === 'COMMENT_REPLIED'
-                                    ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+                                    ? "bg-emerald-50 text-emerald-800 border border-emerald-200/70 dark:bg-emerald-950/60 dark:text-emerald-300"
                                     : ev.actionType === 'POST_REPOSTED' || ev.actionType === 'POST_SHARED'
-                                    ? "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
+                                    ? "bg-amber-50 text-amber-800 border border-amber-200/70 dark:bg-amber-950/60 dark:text-amber-300"
                                     : ev.category === 'auth'
-                                    ? "bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300"
-                                    : "bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200"
+                                    ? "bg-purple-50 text-purple-800 border border-purple-200/70 dark:bg-purple-950/60 dark:text-purple-300"
+                                    : "bg-zinc-100 text-[#404040] border border-zinc-200/80 dark:bg-zinc-800 dark:text-zinc-200"
                                 }`}
                               >
                                 {ev.actionLabel}
                               </span>
                             </td>
-                            <td className="py-3 px-3 max-w-md">
+                            <td className="py-3 px-2.5">
                               {ev.targetTitle && (
-                                <p className="font-bold text-zinc-800 dark:text-zinc-200 text-xs">
+                                <p className="font-semibold text-[#191919] dark:text-zinc-200 text-[13px] leading-snug line-clamp-2" title={ev.targetTitle}>
                                   {ev.targetTitle}
                                 </p>
                               )}
                               {ev.details && (
-                                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-snug">
+                                <p
+                                  style={{ fontWeight: 400 }}
+                                  className="text-[12px] text-[#666666] dark:text-zinc-400 mt-0.5 leading-[1.35] line-clamp-2"
+                                  title={ev.details}
+                                >
                                   {ev.details}
                                 </p>
                               )}
                             </td>
-                            <td className="py-3 px-4 text-right font-mono text-[11px] text-zinc-400 whitespace-nowrap">
+                            <td
+                              style={{ fontWeight: 400 }}
+                              className="py-3 px-3.5 text-right text-[11.5px] text-[#666666] dark:text-zinc-400 leading-snug break-words"
+                            >
                               {ev.timestampDisplay || (ev as any).timestamp || "Just Now"}
                             </td>
                           </tr>
@@ -1708,29 +1726,35 @@ export function AdminIAMConsoleView({
                                   : "hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30"
                               }`}
                             >
-                              <td className="py-3 px-4">
-                                <div className="flex items-center gap-3">
-                                  <img src={u.avatar} alt={u.name} className="h-9 w-9 rounded-full object-cover border border-zinc-200 dark:border-zinc-700" />
-                                  <div>
+                              <td className="py-3 px-3.5 max-w-[260px]">
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <img src={u.avatar} alt={u.name} className="h-8 w-8 rounded-full object-cover border border-zinc-200 dark:border-zinc-700 shrink-0" />
+                                  <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-1.5 flex-wrap">
-                                      <h5 className="font-bold text-zinc-900 dark:text-zinc-100">{u.name}</h5>
+                                      <h5 className="font-semibold text-[13px] text-[#191919] dark:text-zinc-100">{u.name}</h5>
                                       {isNew && (
-                                        <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white">
+                                        <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-white">
                                           NEW USER · LOGGED IN
                                         </span>
                                       )}
                                       {(u.mfaStatus?.includes("Google SSO") || u.lastLogin?.includes("Google SSO")) && (
-                                        <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white">
+                                        <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-white">
                                           GOOGLE SSO ✓
                                         </span>
                                       )}
                                       {(u.mfaStatus?.includes("Microsoft SSO") || u.lastLogin?.includes("Microsoft")) && (
-                                        <span className="rounded-full bg-sky-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white">
+                                        <span className="rounded-full bg-sky-600 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-white">
                                           MICROSOFT SSO ✓
                                         </span>
                                       )}
                                     </div>
-                                    <p className="text-[11px] text-zinc-400 font-mono">{u.email} · {u.id}</p>
+                                    <p
+                                      style={{ fontWeight: 400 }}
+                                      className="text-[11.5px] text-[#666666] dark:text-zinc-400 truncate"
+                                      title={`${u.email} · ${u.id}`}
+                                    >
+                                      {u.email} · {u.id}
+                                    </p>
                                   </div>
                                 </div>
                               </td>
