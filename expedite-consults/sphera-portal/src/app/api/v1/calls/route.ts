@@ -20,6 +20,7 @@ export interface CommCallParticipant {
   is_video_on?: boolean
   is_speaking?: boolean
   is_screen_sharing?: boolean
+  webrtc_connected?: boolean
   virtual_bg_id?: string
   virtual_bg_badge?: string
   live_frame?: string | null
@@ -44,6 +45,7 @@ export interface SharedStageRecord {
   mode: "screen" | "file" | "snapshot" | "presentation"
   title: string
   mime_type?: string
+  use_webrtc_stream?: boolean
   frame_or_data_url: string | null
   updated_at_ms: number
 }
@@ -169,6 +171,42 @@ function makeCloudAudioKey(callId: string, userId: string): string {
   return `a__${cleanCall}__${cleanUser}`
 }
 
+function makeCloudStageKey(callId: string): string {
+  const cleanCall = String(callId || "room").replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 48)
+  return `s__${cleanCall}`
+}
+
+const lastCloudStagePushMap = new Map<string, number>()
+
+async function pushCloudSharedStage(callId: string, stage: SharedStageRecord | null, force = false): Promise<void> {
+  const auth = getTwilioCallsAuthHeader()
+  if (!auth) return
+  const stageKey = makeCloudStageKey(callId)
+  const nowMs = Date.now()
+  const lastPush = lastCloudStagePushMap.get(stageKey) || 0
+  if (!force && nowMs - lastPush < 700) return
+  lastCloudStagePushMap.set(stageKey, nowMs)
+
+  const compactFrame =
+    stage?.frame_or_data_url && stage.frame_or_data_url.length < 12800
+      ? stage.frame_or_data_url
+      : null
+  const payload = JSON.stringify({
+    kind: "stage",
+    call_id: callId,
+    active: Boolean(stage?.active),
+    sharer_user_id: stage?.sharer_user_id || "",
+    sharer_name: stage?.sharer_name || "",
+    mode: stage?.mode || "screen",
+    title: stage?.title || "",
+    mime_type: stage?.mime_type,
+    use_webrtc_stream: Boolean(stage?.use_webrtc_stream),
+    frame_or_data_url: compactFrame,
+    updated_at_ms: stage?.updated_at_ms || nowMs,
+  })
+  await upsertTwilioSyncItem(auth, stageKey, payload)
+}
+
 async function upsertTwilioSyncItem(auth: string, key: string, serialized: string): Promise<void> {
   const baseUrl = `https://sync.twilio.com/v1/Services/default/Maps/${CALLS_SYNC_MAP_NAME}`
   const controller = new AbortController()
@@ -223,10 +261,10 @@ async function pushCloudCallParticipant(callId: string, participant: CommCallPar
   const nowMs = Date.now()
   const pendingWrites: Promise<void>[] = []
 
-  // 1. Always push new voice audio chunks immediately to their dedicated 16KB item key (`a__call__user`) so voice is never throttled or dropped by video frames
+  // 1. Push fallback voice audio chunks ONLY when WebRTC native Opus audio is not connected
   const latestSeq = participant.live_audio_chunk?.seq || 0
   const lastPushedSeq = lastCloudAudioSeqMap.get(audioKey) || 0
-  if (participant.is_muted) {
+  if (participant.is_muted || participant.webrtc_connected) {
     if (lastPushedSeq !== -1) {
       lastCloudAudioSeqMap.set(audioKey, -1)
       pendingWrites.push(
@@ -237,7 +275,7 @@ async function pushCloudCallParticipant(callId: string, participant: CommCallPar
             kind: "audio",
             call_id: callId,
             user_id: participant.user_id,
-            is_muted: true,
+            is_muted: Boolean(participant.is_muted),
             last_seen_ms: nowMs,
             live_audio_chunk: null,
             recent_audio_chunks: [],
@@ -276,18 +314,22 @@ async function pushCloudCallParticipant(callId: string, participant: CommCallPar
     pendingWrites.push(upsertTwilioSyncItem(auth, audioKey, audioPayload))
   }
 
-  // 2. Push participant metadata + live video frame (`p__call__user`) every 140ms
+  // 2. Push participant metadata + fallback video frame (`p__call__user`), throttled gently when WebRTC is live
   const lastPush = lastCloudParticipantPushMap.get(key) || 0
-  if (force || nowMs - lastPush >= 140) {
+  const minPushIntervalMs = participant.webrtc_connected ? 1800 : 450
+  if (force || nowMs - lastPush >= minPushIntervalMs) {
     lastCloudParticipantPushMap.set(key, nowMs)
     const compactParticipant = {
       ...participant,
       call_id: callId,
       live_frame:
-        participant.live_frame && participant.live_frame.length < 13500
+        !participant.webrtc_connected &&
+        participant.live_frame &&
+        participant.live_frame.length < 13500
           ? participant.live_frame
           : null,
       live_audio_chunk:
+        !participant.webrtc_connected &&
         participant.live_audio_chunk &&
         typeof participant.live_audio_chunk.data_url === "string" &&
         participant.live_audio_chunk.data_url.length < 2800
@@ -307,7 +349,7 @@ async function pullCloudCallParticipants(excludeUserId?: string): Promise<void> 
   const auth = getTwilioCallsAuthHeader()
   if (!auth) return
   const nowMs = Date.now()
-  if (nowMs - lastCloudPullMs < 120) return
+  if (nowMs - lastCloudPullMs < 500) return
   lastCloudPullMs = nowMs
 
   try {
@@ -327,11 +369,33 @@ async function pullCloudCallParticipants(excludeUserId?: string): Promise<void> 
     const json = await res.json()
     const items = Array.isArray(json.items) ? json.items : []
 
-    // First pass: merge participant records (`p__`)
+    // First pass: merge participant records (`p__`) and shared stage items (`s__`)
     const audioItems: any[] = []
     for (const item of items) {
       const data = item?.data
-      if (!data || !data.call_id || !data.user_id) continue
+      if (!data || !data.call_id) continue
+      if (data.kind === "stage" || String(item?.key || "").startsWith("s__")) {
+        const record = ACTIVE_CALLS_STORE.get(data.call_id)
+        if (record && record.state !== "ENDED") {
+          const remoteTs = Number(data.updated_at_ms) || 0
+          const localTs = record.shared_stage?.updated_at_ms || 0
+          if (remoteTs > localTs && nowMs - remoteTs < 60000) {
+            record.shared_stage = {
+              active: Boolean(data.active),
+              sharer_user_id: data.sharer_user_id || "",
+              sharer_name: data.sharer_name || "",
+              mode: data.mode || "screen",
+              title: data.title || "",
+              mime_type: data.mime_type,
+              use_webrtc_stream: Boolean(data.use_webrtc_stream),
+              frame_or_data_url: data.frame_or_data_url || record.shared_stage?.frame_or_data_url || null,
+              updated_at_ms: remoteTs,
+            }
+          }
+        }
+        continue
+      }
+      if (!data.user_id) continue
       if (excludeUserId && data.user_id === excludeUserId) continue
       if (data.kind === "audio" || String(item?.key || "").startsWith("a__")) {
         audioItems.push(data)
@@ -603,6 +667,7 @@ export async function POST(req: NextRequest) {
         }
         if (existing.shared_stage && existing.shared_stage.sharer_user_id === body.user_id) {
           existing.shared_stage = null
+          pushCloudSharedStage(body.call_id, null, true).catch(() => {})
         }
         existing.state_version += 1
         ACTIVE_CALLS_STORE.set(body.call_id, existing)
@@ -626,6 +691,7 @@ export async function POST(req: NextRequest) {
             true
           ).catch(() => {})
         }
+        pushCloudSharedStage(body.call_id, null, true).catch(() => {})
         existing.state = "ENDED"
         existing.ended_at = now
         existing.participants = []
@@ -651,7 +717,7 @@ export async function POST(req: NextRequest) {
 
       const record = ensureCallRoom(callId, userId, displayName, conversationId)
 
-      // If this call room was recently ended (< 15s ago) and a client is only sending a periodic heartbeat (not explicitly creating/joining a new call),
+      // If this call room was recently ended (< 15s ago) and a client is only sending a periodic heartbeat (not explicitly creating/joining/reopening a call),
       // return the ENDED state immediately so all remaining screens close/clear frozen participants!
       if (record.state === "ENDED") {
         const endedMs = record.ended_at ? new Date(record.ended_at).getTime() : 0
@@ -664,7 +730,7 @@ export async function POST(req: NextRequest) {
             call: record,
           })
         }
-        // Otherwise, a new call is being started in this room — reopen cleanly
+        // Otherwise, a call is being started or handed off into this room — reopen cleanly
         record.state = "CONNECTED"
         record.ended_at = null
         record.participants = []
@@ -673,7 +739,9 @@ export async function POST(req: NextRequest) {
       }
 
       // Update shared presentation stage if provided
+      let stageChanged = false
       if (body.shared_stage !== undefined) {
+        stageChanged = true
         if (body.shared_stage === null || body.shared_stage.active === false) {
           record.shared_stage = {
             active: false,
@@ -681,6 +749,7 @@ export async function POST(req: NextRequest) {
             sharer_name: displayName,
             mode: "screen",
             title: "",
+            use_webrtc_stream: false,
             frame_or_data_url: null,
             updated_at_ms: nowMs,
           }
@@ -692,6 +761,7 @@ export async function POST(req: NextRequest) {
             mode: body.shared_stage.mode || "screen",
             title: body.shared_stage.title || "Live Shared Content",
             mime_type: body.shared_stage.mime_type,
+            use_webrtc_stream: Boolean(body.shared_stage.use_webrtc_stream),
             frame_or_data_url: body.shared_stage.frame_or_data_url || null,
             updated_at_ms: nowMs,
           }
@@ -722,6 +792,9 @@ export async function POST(req: NextRequest) {
 
       // Upsert this participant into the shared call room
       const existingIdx = record.participants.findIndex((p) => p.user_id === userId)
+      const isWebRtcConnected = Boolean(body.webrtc_connected)
+      const isVideoOn = typeof body.is_video_on === "boolean" ? body.is_video_on : true
+      const isMuted = typeof body.is_muted === "boolean" ? body.is_muted : false
       const updatedParticipant: CommCallParticipant = {
         call_id: callId,
         user_id: userId,
@@ -733,10 +806,11 @@ export async function POST(req: NextRequest) {
         joined_at: existingIdx >= 0 ? record.participants[existingIdx].joined_at : now,
         last_seen_ms: nowMs,
         left_at: null,
-        is_muted: typeof body.is_muted === "boolean" ? body.is_muted : false,
-        is_video_on: typeof body.is_video_on === "boolean" ? body.is_video_on : true,
+        is_muted: isMuted,
+        is_video_on: isVideoOn,
         is_speaking: typeof body.is_speaking === "boolean" ? body.is_speaking : true,
         is_screen_sharing: typeof body.is_screen_sharing === "boolean" ? body.is_screen_sharing : false,
+        webrtc_connected: isWebRtcConnected,
         virtual_bg_id:
           body.virtual_bg_id !== undefined
             ? body.virtual_bg_id
@@ -750,15 +824,17 @@ export async function POST(req: NextRequest) {
             ? record.participants[existingIdx].virtual_bg_badge
             : undefined,
         live_frame:
-          typeof body.live_frame === "string" &&
-          body.live_frame.startsWith("data:image/") &&
-          body.live_frame.length > 800
+          isWebRtcConnected || !isVideoOn
+            ? null
+            : typeof body.live_frame === "string" &&
+              body.live_frame.startsWith("data:image/") &&
+              body.live_frame.length > 800
             ? body.live_frame
             : existingIdx >= 0
             ? record.participants[existingIdx].live_frame
             : null,
         live_audio_chunk:
-          body.is_muted === true
+          isMuted || isWebRtcConnected
             ? null
             : body.live_audio_chunk &&
               typeof body.live_audio_chunk.data_url === "string" &&
@@ -772,7 +848,7 @@ export async function POST(req: NextRequest) {
             ? record.participants[existingIdx].live_audio_chunk
             : null,
         recent_audio_chunks:
-          body.is_muted === true
+          isMuted || isWebRtcConnected
             ? null
             : Array.isArray(body.recent_audio_chunks) && body.recent_audio_chunks.length > 0
             ? body.recent_audio_chunks
@@ -820,7 +896,10 @@ export async function POST(req: NextRequest) {
 
       // Run cloud push and pull IN PARALLEL so heartbeat round-trip latency is cut in half (~220ms instead of ~850ms)
       await Promise.all([
-        pushCloudCallParticipant(callId, updatedParticipant, existingIdx < 0).catch(() => {}),
+        pushCloudCallParticipant(callId, updatedParticipant, existingIdx < 0 || action === "join" || action === "create").catch(() => {}),
+        stageChanged
+          ? pushCloudSharedStage(callId, record.shared_stage || null, action === "share_stage").catch(() => {})
+          : Promise.resolve(),
         pullCloudCallParticipants(userId).catch(() => {}),
       ])
 

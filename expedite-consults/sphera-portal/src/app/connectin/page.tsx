@@ -178,6 +178,48 @@ export default function ConnectLnPage() {
   const [networkInitialSubTab, setNetworkInitialSubTab] = useState<'connections' | 'invitations' | 'sent' | 'profile_viewers' | 'followers' | 'following' | 'pymk'>('connections')
   const [networkResetTrigger, setNetworkResetTrigger] = useState(0)
   const [activeWorkspace, setActiveWorkspace] = useState<'personal' | 'enterprise' | 'creator' | 'seller'>('personal')
+  const [studioHandoff, setStudioHandoff] = useState<{
+    callId: string
+    conversationId: string
+    conversationName: string
+    mode: 'audio' | 'video' | 'screenshare'
+    avatar?: string
+    subtitle?: string
+    returnToMessaging?: boolean
+  } | null>(null)
+  const [messagingResumeCall, setMessagingResumeCall] = useState<{
+    threadId: string
+    mode: 'audio' | 'video'
+    isScreenSharing?: boolean
+    nonce: number
+  } | null>(null)
+
+  const handleReturnFromStudioToMessaging = (opts?: {
+    keepCallActive?: boolean
+    mode?: 'audio' | 'video' | 'screenshare'
+  }) => {
+    let resolvedHandoff = studioHandoff
+    if (typeof window !== 'undefined') {
+      if (!resolvedHandoff) {
+        try {
+          const raw = sessionStorage.getItem('connectln_studio_handoff_v1')
+          if (raw) resolvedHandoff = JSON.parse(raw)
+        } catch {}
+      }
+      sessionStorage.removeItem('connectln_studio_handoff_v1')
+      window.history.replaceState(null, '', '/connectin')
+    }
+    if (opts?.keepCallActive && resolvedHandoff) {
+      setMessagingResumeCall({
+        threadId: resolvedHandoff.conversationId || resolvedHandoff.callId,
+        mode: opts.mode === 'audio' ? 'audio' : 'video',
+        isScreenSharing: opts.mode === 'screenshare',
+        nonce: Date.now(),
+      })
+    }
+    setStudioHandoff(null)
+    setActiveTab('messaging')
+  }
 
   const COMMON_SURNAMES_LIST = [
     "asiedu", "mensah", "appiah", "owusu", "boateng", "osei", "amoah", "agyemang", "acheampong", "opoku",
@@ -3360,6 +3402,8 @@ export default function ConnectLnPage() {
             currentUser={userData}
             onNavigateTab={(tab) => setActiveTab(tab as any)}
             onOpenVibeCampus={() => setIsAIAssistantOpen(true)}
+            studioHandoff={studioHandoff}
+            onReturnToMessaging={handleReturnFromStudioToMessaging}
           />
         )}
 
@@ -3532,7 +3576,25 @@ export default function ConnectLnPage() {
             }
             onNavigateMarketplace={() => setActiveTab('marketplace')}
             onNavigateJobs={() => setActiveTab('jobs')}
-            onNavigateVibeComms={() => setActiveTab('vibecomms')}
+            resumeCallSession={messagingResumeCall}
+            onConsumeResumeCall={() => setMessagingResumeCall(null)}
+            onNavigateVibeComms={(handoff) => {
+              if (handoff) {
+                const payload = { ...handoff, returnToMessaging: true, ts: Date.now() }
+                if (typeof window !== 'undefined') {
+                  try {
+                    sessionStorage.setItem('connectln_studio_handoff_v1', JSON.stringify(payload))
+                    window.history.replaceState(
+                      null,
+                      '',
+                      `/connectin?tab=vibecomms&joinCall=${encodeURIComponent(handoff.callId)}`
+                    )
+                  } catch {}
+                }
+                setStudioHandoff(payload)
+              }
+              setActiveTab('vibecomms')
+            }}
           />
         )}
 
@@ -3566,6 +3628,8 @@ export default function ConnectLnPage() {
             currentUser={userData}
             onNavigateTab={(tab) => setActiveTab(tab as any)}
             onOpenVibeCampus={() => setIsAIAssistantOpen(true)}
+            studioHandoff={studioHandoff}
+            onReturnToMessaging={handleReturnFromStudioToMessaging}
           />
         )}
       </main>

@@ -225,6 +225,134 @@ function RemoteLiveFrameOverlay({
   )
 }
 
+// Zero-re-render stage frame bus so fallback screen-share / shared-file frames NEVER re-render the 5,800-line studio
+const remoteStageFrameCache = new Map<string, string>()
+const remoteStageFrameListeners = new Map<string, Set<(frameUrl: string) => void>>()
+
+function publishRemoteStageFrame(callId: string, frameUrl: string | null | undefined) {
+  if (!callId || !frameUrl || typeof frameUrl !== "string") return
+  if (remoteStageFrameCache.get(callId) === frameUrl) return
+  remoteStageFrameCache.set(callId, frameUrl)
+  const subs = remoteStageFrameListeners.get(callId)
+  if (subs) {
+    subs.forEach((cb) => cb(frameUrl))
+  }
+}
+
+function RemoteSharedStageFrameImg({
+  callId,
+  initialSrc,
+  alt,
+}: {
+  callId: string
+  initialSrc?: string | null
+  alt: string
+}) {
+  const imgRef = useRef<HTMLImageElement | null>(null)
+  const startSrc = initialSrc || remoteStageFrameCache.get(callId) || ""
+
+  useEffect(() => {
+    const onFrame = (nextUrl: string) => {
+      if (imgRef.current && nextUrl) {
+        imgRef.current.src = nextUrl
+      }
+    }
+    const cached = remoteStageFrameCache.get(callId)
+    if (cached && !initialSrc) {
+      onFrame(cached)
+    }
+    let subs = remoteStageFrameListeners.get(callId)
+    if (!subs) {
+      subs = new Set()
+      remoteStageFrameListeners.set(callId, subs)
+    }
+    subs.add(onFrame)
+    return () => {
+      remoteStageFrameListeners.get(callId)?.delete(onFrame)
+    }
+  }, [callId, initialSrc])
+
+  useEffect(() => {
+    if (imgRef.current && initialSrc) {
+      imgRef.current.src = initialSrc
+    }
+  }, [initialSrc])
+
+  return (
+    <img
+      ref={imgRef}
+      src={startSrc || undefined}
+      alt={alt}
+      style={{
+        width: "100%",
+        maxHeight: "360px",
+        objectFit: "contain",
+        borderRadius: "10px",
+      }}
+    />
+  )
+}
+
+function RemoteStageWebRtcVideo({ stream }: { stream: MediaStream }) {
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+
+  useEffect(() => {
+    const el = videoRef.current
+    if (!el || !stream) return
+    if (el.srcObject !== stream) {
+      el.srcObject = stream
+    }
+    el.muted = true
+    el.play().catch(() => {})
+  }, [stream])
+
+  return (
+    <video
+      ref={videoRef}
+      autoPlay
+      playsInline
+      muted
+      onLoadedMetadata={(e) => {
+        e.currentTarget.muted = true
+        e.currentTarget.play().catch(() => {})
+      }}
+      style={{
+        width: "100%",
+        height: "360px",
+        objectFit: "contain",
+        backgroundColor: "#000000",
+      }}
+    />
+  )
+}
+
+function StudioCallDurationBadge({
+  isActive,
+  resetNonce,
+}: {
+  isActive: boolean
+  resetNonce: number
+}) {
+  const [sec, setSec] = useState(0)
+  useEffect(() => {
+    setSec(0)
+  }, [resetNonce])
+  useEffect(() => {
+    if (!isActive) return
+    const timer = window.setInterval(() => {
+      setSec((s) => s + 1)
+    }, 1000)
+    return () => window.clearInterval(timer)
+  }, [isActive])
+  const mins = Math.floor(sec / 60)
+  const rem = sec % 60
+  return (
+    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-white/10 text-zinc-200">
+      ⏱ {String(mins).padStart(2, "0")}:{String(rem).padStart(2, "0")}
+    </span>
+  )
+}
+
 function RemotePeerVideoElement({ stream, isVideoOn = true }: { stream: MediaStream; isVideoOn?: boolean }) {
   const ref = useRef<HTMLVideoElement | null>(null)
   const [hasLiveVideoFrames, setHasLiveVideoFrames] = useState(false)
@@ -540,6 +668,8 @@ export interface VibeVideoCallStudioProps {
   callTriggerNonce?: number
   currentUserName?: string
   initialCallRoomId?: string | null
+  canReturnToMessaging?: boolean
+  onReturnToMessagingHuddle?: (activeMode: "audio" | "video" | "screenshare") => void
   onCreateWorkflowFromCall?: (title: string, owner: string, evidence: string) => void
   onCloseStudio?: () => void
 }
@@ -689,18 +819,24 @@ export function VibeVideoCallStudio({
   callTriggerNonce = 0,
   currentUserName = "You (Verified Device)",
   initialCallRoomId = null,
+  canReturnToMessaging = false,
+  onReturnToMessagingHuddle,
   onCreateWorkflowFromCall,
   onCloseStudio,
 }: VibeVideoCallStudioProps) {
-  // Determine if the user arrived via an invited meeting link (?joinCall=...)
+  // Determine if the user arrived via an invited meeting link (?joinCall=...) or handoff room
   const [urlJoinedRoomId] = useState<string | null>(() => {
+    if (initialCallRoomId) return initialCallRoomId
     if (typeof window !== "undefined") {
       const p = new URLSearchParams(window.location.search).get("joinCall")
       if (p) return p
     }
-    return initialCallRoomId || null
+    return null
   })
-  const isInvitedGuestLink = Boolean(urlJoinedRoomId)
+  const isInvitedGuestLink = Boolean(urlJoinedRoomId && !canReturnToMessaging)
+  const isHandingOffRef = useRef<boolean>(false)
+  const liveStreamPeersCountRef = useRef<number>(0)
+  const studioMountedAtMsRef = useRef<number>(Date.now())
 
   // Unique per-tab participant ID so Host and Friend on different devices or tabs never collide
   const [localParticipantId] = useState<string>(() => {
@@ -740,10 +876,15 @@ export function VibeVideoCallStudio({
   const [callState, setCallState] = useState<
     "CREATED" | "RINGING" | "NEGOTIATING" | "CONNECTED" | "RECONNECTING" | "ENDED"
   >("CONNECTED")
-  const [callId, setCallId] = useState<string>(urlJoinedRoomId || initialCallRoomId || "call-9b0bbf68-live")
+  const [callId, setCallId] = useState<string>(initialCallRoomId || urlJoinedRoomId || "call-9b0bbf68-live")
+  useEffect(() => {
+    if (initialCallRoomId && initialCallRoomId !== callId) {
+      setCallId(initialCallRoomId)
+    }
+  }, [initialCallRoomId, callId])
+
   const [callStateVersion, setCallStateVersion] = useState<number>(3)
   const [sframeEpoch, setSframeEpoch] = useState<number>(12)
-  const [callDurationSec, setCallDurationSec] = useState<number>(0)
 
   // Live remote WebRTC MediaStreams & connected friend state
   const [remoteStreams, setRemoteStreams] = useState<Record<string, MediaStream>>({})
@@ -784,6 +925,7 @@ export function VibeVideoCallStudio({
     mode: "screen" | "file" | "snapshot" | "presentation"
     title: string
     mime_type?: string
+    use_webrtc_stream?: boolean
     frame_or_data_url: string | null
     updated_at_ms: number
   } | null>(null)
@@ -795,6 +937,7 @@ export function VibeVideoCallStudio({
     mode: "screen" | "file" | "snapshot" | "presentation"
     title: string
     mime_type?: string
+    use_webrtc_stream?: boolean
     frame_or_data_url: string | null
     updated_at_ms: number
   } | null>(null)
@@ -1517,7 +1660,7 @@ export function VibeVideoCallStudio({
       }
       renderSelfView()
 
-      const cStream = canvas.captureStream(24)
+      const cStream = canvas.captureStream(18)
       if (existingAudioTrack) {
         cStream.addTrack(existingAudioTrack)
       }
@@ -1549,13 +1692,23 @@ export function VibeVideoCallStudio({
 
       if (typeof navigator !== "undefined" && navigator.mediaDevices?.getUserMedia) {
         try {
-          // Attempt 1: Both Video + Audio (or Audio only if requested)
+          // Attempt 1: Low-latency hardware-friendly 640x360@24fps Video + Echo-Cancelled Audio
           stream = await navigator.mediaDevices.getUserMedia({
             video: audioOnly
               ? false
               : preferredVideoDeviceId
-              ? { deviceId: { exact: preferredVideoDeviceId }, width: { ideal: 1280 }, height: { ideal: 720 } }
-              : { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
+              ? {
+                  deviceId: { exact: preferredVideoDeviceId },
+                  width: { ideal: 640, max: 1280 },
+                  height: { ideal: 360, max: 720 },
+                  frameRate: { ideal: 24, max: 24 },
+                }
+              : {
+                  width: { ideal: 640, max: 1280 },
+                  height: { ideal: 360, max: 720 },
+                  frameRate: { ideal: 24, max: 24 },
+                  facingMode: "user",
+                },
             audio: preferredAudioDeviceId
               ? {
                   deviceId: { exact: preferredAudioDeviceId },
@@ -1714,46 +1867,147 @@ export function VibeVideoCallStudio({
     [selectedAudioDeviceId, startHardwareCameraAndMic]
   )
 
-  // Start screen sharing (`getDisplayMedia`)
+  // REAL-TIME AI PERSON-SEGMENTATION, SCREEN SHARE & WEBRTC TRACK COMPOSITING ENGINE
+  const activeMediaCallsRef = useRef<Map<string, any>>(new Map())
+  const dialRemotePeerNowRef = useRef<((targetPeerId: string) => void) | null>(null)
+  const knownRemotePeerIdsRef = useRef<Set<string>>(new Set())
+  const selfieSegmenterRef = useRef<any>(null)
+  const latestSegMaskRef = useRef<any>(null)
+  const isSegmentingFrameRef = useRef<boolean>(false)
+
+  // Replace the outgoing WebRTC video track on all active PeerJS calls whenever Screen Share or Virtual Background toggles!
+  const syncWebRtcOutgoingVideoTrack = useCallback((useCanvasStream: boolean, explicitScreenStream?: MediaStream | null) => {
+    try {
+      let targetVideoTrack: MediaStreamTrack | undefined
+      let isScreenMode = false
+
+      const activeScreen = explicitScreenStream !== undefined ? explicitScreenStream : screenStreamRef.current
+      const liveScreenTrack = activeScreen?.getVideoTracks().find((t) => t.readyState === "live")
+
+      if (liveScreenTrack) {
+        targetVideoTrack = liveScreenTrack
+        isScreenMode = true
+      } else if (
+        useCanvasStream &&
+        virtualBgCanvasRef.current &&
+        typeof virtualBgCanvasRef.current.captureStream === "function"
+      ) {
+        const canvasStream = virtualBgCanvasRef.current.captureStream(18)
+        targetVideoTrack = canvasStream.getVideoTracks()[0]
+      } else if (localStreamRef.current) {
+        targetVideoTrack = localStreamRef.current.getVideoTracks()[0]
+      }
+      if (!targetVideoTrack) return
+
+      activeMediaCallsRef.current.forEach((mediaCall, peerId) => {
+        const pc: RTCPeerConnection | undefined = mediaCall?.peerConnection
+        if (!pc || typeof pc.getSenders !== "function") return
+        const videoSender = pc.getSenders().find((s) => s.track && s.track.kind === "video")
+        if (videoSender && typeof videoSender.replaceTrack === "function") {
+          videoSender.replaceTrack(targetVideoTrack!).catch(() => {})
+          try {
+            const params = videoSender.getParameters()
+            if (params.encodings && params.encodings.length > 0) {
+              params.encodings[0].maxBitrate = isScreenMode ? 1_250_000 : 700_000
+              params.encodings[0].maxFramerate = isScreenMode ? 20 : 24
+              videoSender.setParameters(params).catch(() => {})
+            }
+          } catch {}
+        } else {
+          // Audio-only peer connection upgraded to screen/video: redial with video track!
+          dialRemotePeerNowRef.current?.(peerId)
+        }
+      })
+    } catch {
+      // fallback handled by liveFrame sync
+    }
+  }, [])
+
+  // Start screen sharing (`getDisplayMedia` streamed directly over native WebRTC — zero main-thread JPEG lag!)
   const startScreenShare = useCallback(async () => {
     try {
       const displayStream = await navigator.mediaDevices.getDisplayMedia({
-        video: true,
+        video: {
+          width: { ideal: 1280, max: 1920 },
+          height: { ideal: 720, max: 1080 },
+          frameRate: { ideal: 15, max: 20 },
+        },
         audio: false,
       })
+      const screenTrack = displayStream.getVideoTracks()[0]
+      if (screenTrack && "contentHint" in screenTrack) {
+        try {
+          screenTrack.contentHint = "detail"
+        } catch {}
+      }
       screenStreamRef.current = displayStream
       setScreenStreamState(displayStream)
       bindStreamToVideoElement(screenVideoRef.current, displayStream)
 
-      displayStream.getVideoTracks()[0].onended = () => {
-        setIsScreenSharing(false)
-        setScreenStreamState(null)
-        setLocalSharedStageItem(null)
-        setCallMode("video")
-        appendLog("Screen share ended by user.")
-        fetch("/api/v1/calls", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "share_stage",
-            call_id: callId,
-            shared_stage: {
-              active: false,
-              sharer_user_id: localParticipantId,
-              sharer_name: localDisplayName,
-              mode: "screen",
-              title: "Screen Share Ended",
-              frame_or_data_url: null,
-              updated_at_ms: Date.now(),
-            },
-          }),
-        }).catch(() => {})
+      // Immediately push the crisp hardware screen track over WebRTC to all connected peers!
+      syncWebRtcOutgoingVideoTrack(false, displayStream)
+      knownRemotePeerIdsRef.current.forEach((pid) => {
+        if (!activeMediaCallsRef.current.has(pid)) {
+          dialRemotePeerNowRef.current?.(pid)
+        }
+      })
+
+      if (screenTrack) {
+        screenTrack.onended = () => {
+          screenStreamRef.current = null
+          setIsScreenSharing(false)
+          setScreenStreamState(null)
+          setLocalSharedStageItem(null)
+          setCallMode("video")
+          syncWebRtcOutgoingVideoTrack(selectedVirtualBgId !== "none", null)
+          appendLog("Screen share ended by user — restored webcam video track.")
+          fetch("/api/v1/calls", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "share_stage",
+              call_id: callId,
+              user_id: localParticipantId,
+              display_name: localDisplayName,
+              shared_stage: {
+                active: false,
+                sharer_user_id: localParticipantId,
+                sharer_name: localDisplayName,
+                mode: "screen",
+                title: "Screen Share Ended",
+                use_webrtc_stream: false,
+                frame_or_data_url: null,
+                updated_at_ms: Date.now(),
+              },
+            }),
+          }).catch(() => {})
+        }
       }
       setIsScreenSharing(true)
       setCallMode("screenshare")
       setLayoutMode("presentation")
       setRemoteSharedStageItem(null)
-      appendLog("Live Screen Share started (`getDisplayMedia`) — broadcasting to all connected participants!")
+      fetch("/api/v1/calls", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "share_stage",
+          call_id: callId,
+          user_id: localParticipantId,
+          display_name: localDisplayName,
+          shared_stage: {
+            active: true,
+            sharer_user_id: localParticipantId,
+            sharer_name: localDisplayName,
+            mode: "screen",
+            title: `${localDisplayName}'s Live Shared Screen`,
+            use_webrtc_stream: true,
+            frame_or_data_url: null,
+            updated_at_ms: Date.now(),
+          },
+        }),
+      }).catch(() => {})
+      appendLog("Live Screen Share started (`getDisplayMedia` @ 720p/1080p WebRTC) — streaming directly to all participants!")
     } catch {
       const svgPresentationBoard = `data:image/svg+xml;utf8,${encodeURIComponent(
         `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450"><rect width="800" height="450" fill="#061410"/><rect x="24" y="24" width="752" height="402" rx="18" fill="#0A211A" stroke="#10B981" stroke-width="2"/><text x="52" y="75" fill="#34D399" font-family="monospace" font-size="15" font-weight="bold">NOCTIS LIVE SHARED ARCHITECTURE BOARD · SFRAME EPOCH #${sframeEpoch}</text><text x="52" y="122" fill="#FFFFFF" font-family="sans-serif" font-size="24" font-weight="bold">Shared by ${localDisplayName} (${conversationName})</text><rect x="52" y="155" width="320" height="110" rx="12" fill="#061410" stroke="#14B8A6"/><text x="72" y="190" fill="#2DD4BF" font-family="monospace" font-size="14" font-weight="bold">1. E2EE Signaling &amp; WebRTC Mesh</text><text x="72" y="218" fill="#D1FAE5" font-family="sans-serif" font-size="13">PeerJS P2P + /api/v1/calls Live Room Sync</text><text x="72" y="242" fill="#A7F3D0" font-family="monospace" font-size="12">Status: CONNECTED · 100% Synced</text><rect x="402" y="155" width="340" height="110" rx="12" fill="#061410" stroke="#10B981"/><text x="422" y="190" fill="#34D399" font-family="monospace" font-size="14" font-weight="bold">2. Shared Presentation &amp; File Stage</text><text x="422" y="218" fill="#D1FAE5" font-family="sans-serif" font-size="13">Real-time screen &amp; document broadcast</text><text x="422" y="242" fill="#A7F3D0" font-family="monospace" font-size="12">Zero-Knowledge SFrame Media Pipeline</text><rect x="52" y="290" width="690" height="105" rx="12" fill="#042F2E" stroke="#2DD4BF"/><text x="72" y="325" fill="#5EEAD4" font-family="monospace" font-size="14" font-weight="bold">LIVE MEETING AGENDA &amp; SHARED WORKSPACE</text><text x="72" y="355" fill="#ECFDF5" font-family="sans-serif" font-size="13">All connected participants in room ${callId} are viewing this shared presentation board in real time.</text></svg>`
@@ -1784,7 +2038,7 @@ export function VibeVideoCallStudio({
       }).catch(() => {})
       appendLog("Live Presentation Board shared with all connected meeting participants.")
     }
-  }, [appendLog, bindStreamToVideoElement, sframeEpoch, callId, localParticipantId, localDisplayName, conversationName])
+  }, [appendLog, bindStreamToVideoElement, sframeEpoch, callId, localParticipantId, localDisplayName, conversationName, selectedVirtualBgId, syncWebRtcOutgoingVideoTrack])
 
   // AUTO-START COMPUTER CAMERA & MICROPHONE IMMEDIATELY WHEN STUDIO OPENS OR USER CLICKS CALL BUTTON!
   useEffect(() => {
@@ -1800,40 +2054,6 @@ export function VibeVideoCallStudio({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialMode, callTriggerNonce])
-
-  // REAL-TIME AI PERSON-SEGMENTATION & VIRTUAL BACKGROUND COMPOSITING ENGINE
-  // Uses `@mediapipe/selfie_segmentation` (`destination-over` compositing) so the virtual background
-  // is drawn strictly BEHIND your body/face (never in front of you!) and streams the composited video
-  // to all connected meeting participants via WebRTC `replaceTrack` + live frame sync!
-  const activeMediaCallsRef = useRef<Map<string, any>>(new Map())
-  const selfieSegmenterRef = useRef<any>(null)
-  const latestSegMaskRef = useRef<any>(null)
-  const isSegmentingFrameRef = useRef<boolean>(false)
-
-  // Replace the outgoing WebRTC video track on all active PeerJS calls whenever Virtual Background toggles
-  const syncWebRtcOutgoingVideoTrack = useCallback((useCanvasStream: boolean) => {
-    try {
-      let targetVideoTrack: MediaStreamTrack | undefined
-      if (useCanvasStream && virtualBgCanvasRef.current && typeof virtualBgCanvasRef.current.captureStream === "function") {
-        const canvasStream = virtualBgCanvasRef.current.captureStream(24)
-        targetVideoTrack = canvasStream.getVideoTracks()[0]
-      } else if (localStreamRef.current) {
-        targetVideoTrack = localStreamRef.current.getVideoTracks()[0]
-      }
-      if (!targetVideoTrack) return
-
-      activeMediaCallsRef.current.forEach((mediaCall) => {
-        const pc: RTCPeerConnection | undefined = mediaCall?.peerConnection
-        if (!pc || typeof pc.getSenders !== "function") return
-        const videoSender = pc.getSenders().find((s) => s.track && s.track.kind === "video")
-        if (videoSender && typeof videoSender.replaceTrack === "function") {
-          videoSender.replaceTrack(targetVideoTrack!).catch(() => {})
-        }
-      })
-    } catch {
-      // fallback handled by liveFrame sync
-    }
-  }, [])
 
   const presetBgImagesRef = useRef<Map<string, HTMLImageElement>>(new Map())
   const warmupMaskCanvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -2149,14 +2369,19 @@ export function VibeVideoCallStudio({
     }
   }, [])
 
-  // Throttle frame encoding to 200ms (~5 FPS) and avoid repeated GPU getImageData readbacks once camera is verified live
+  // Throttle fallback frame encoding and skip completely once WebRTC media streams are connected!
   const lastFrameCaptureAtMsRef = useRef<number>(0)
   const hasVerifiedCameraNonBlackRef = useRef<boolean>(false)
+  const lastStageCaptureAtMsRef = useRef<number>(0)
+  const lastStageScreenFrameRef = useRef<string | null>(null)
 
-  // Capture a compact 208x138 JPEG frame using a single persistent offscreen canvas (prevents GPU context exhaustion!)
+  // Capture a compact 208x138 JPEG fallback frame ONLY before WebRTC video connects (zero main-thread lag during calls!)
   const captureCompactLiveFrame = useCallback((): string | null => {
+    if (liveStreamPeersCountRef.current > 0) {
+      return null
+    }
     const now = Date.now()
-    if (now - lastFrameCaptureAtMsRef.current < 200 && lastValidLocalFrameRef.current) {
+    if (now - lastFrameCaptureAtMsRef.current < 450 && lastValidLocalFrameRef.current) {
       return isCameraOn ? lastValidLocalFrameRef.current : null
     }
     if (
@@ -2168,7 +2393,7 @@ export function VibeVideoCallStudio({
       try {
         const bgCanvas = virtualBgCanvasRef.current
         if (bgCanvas.width > 0) {
-          const encodedBg = bgCanvas.toDataURL("image/jpeg", 0.50)
+          const encodedBg = bgCanvas.toDataURL("image/jpeg", 0.45)
           if (encodedBg && encodedBg.length > 800) {
             lastFrameCaptureAtMsRef.current = now
             lastValidLocalFrameRef.current = encodedBg
@@ -2209,7 +2434,7 @@ export function VibeVideoCallStudio({
         }
         hasVerifiedCameraNonBlackRef.current = true
       }
-      const encoded = canvas.toDataURL("image/jpeg", 0.50)
+      const encoded = canvas.toDataURL("image/jpeg", 0.45)
       if (encoded && encoded.length > 800) {
         lastFrameCaptureAtMsRef.current = now
         lastValidLocalFrameRef.current = encoded
@@ -2221,35 +2446,76 @@ export function VibeVideoCallStudio({
     }
   }, [selectedVirtualBgId, isHardwareCameraActive, isCameraOn, isCanvasFrameNonBlack])
 
-  // Capture a crisp 640x360 JPEG frame from active Screen Share (`screenVideoRef`) using a single reusable canvas
+  // Sync Shared Stage metadata: uses zero-CPU native WebRTC stream when peers are connected, with throttled fallback pre-ICE
   const captureActiveSharedStagePayload = useCallback(() => {
-    if (isScreenSharing && screenVideoRef.current && screenVideoRef.current.readyState >= 2) {
-      try {
-        const videoEl = screenVideoRef.current
-        let canvas = stageCaptureCanvasRef.current
-        if (!canvas) {
-          canvas = document.createElement("canvas")
-          canvas.width = 640
-          canvas.height = 360
-          stageCaptureCanvasRef.current = canvas
+    if (isScreenSharing) {
+      if (liveStreamPeersCountRef.current > 0) {
+        return {
+          active: true,
+          sharer_user_id: localParticipantId,
+          sharer_name: localDisplayName,
+          mode: "screen" as const,
+          title: `${localDisplayName}'s Live Shared Screen`,
+          use_webrtc_stream: true,
+          frame_or_data_url: null,
+          updated_at_ms: Date.now(),
         }
-        const ctx = canvas.getContext("2d")
-        if (ctx) {
-          ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height)
-          const screenFrameUrl = canvas.toDataURL("image/jpeg", 0.6)
+      }
+      if (screenVideoRef.current && screenVideoRef.current.readyState >= 2) {
+        const now = Date.now()
+        if (now - lastStageCaptureAtMsRef.current < 750 && lastStageScreenFrameRef.current) {
           return {
             active: true,
             sharer_user_id: localParticipantId,
             sharer_name: localDisplayName,
             mode: "screen" as const,
             title: `${localDisplayName}'s Live Shared Screen`,
+            use_webrtc_stream: true,
             mime_type: "image/jpeg",
-            frame_or_data_url: screenFrameUrl,
-            updated_at_ms: Date.now(),
+            frame_or_data_url: lastStageScreenFrameRef.current,
+            updated_at_ms: now,
           }
         }
-      } catch {
-        // fallback below
+        try {
+          const videoEl = screenVideoRef.current
+          let canvas = stageCaptureCanvasRef.current
+          if (!canvas) {
+            canvas = document.createElement("canvas")
+            canvas.width = 560
+            canvas.height = 315
+            stageCaptureCanvasRef.current = canvas
+          }
+          const ctx = canvas.getContext("2d")
+          if (ctx) {
+            ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height)
+            const screenFrameUrl = canvas.toDataURL("image/jpeg", 0.45)
+            lastStageCaptureAtMsRef.current = now
+            lastStageScreenFrameRef.current = screenFrameUrl
+            return {
+              active: true,
+              sharer_user_id: localParticipantId,
+              sharer_name: localDisplayName,
+              mode: "screen" as const,
+              title: `${localDisplayName}'s Live Shared Screen`,
+              use_webrtc_stream: true,
+              mime_type: "image/jpeg",
+              frame_or_data_url: screenFrameUrl,
+              updated_at_ms: now,
+            }
+          }
+        } catch {
+          // fallback below
+        }
+      }
+      return {
+        active: true,
+        sharer_user_id: localParticipantId,
+        sharer_name: localDisplayName,
+        mode: "screen" as const,
+        title: `${localDisplayName}'s Live Shared Screen`,
+        use_webrtc_stream: true,
+        frame_or_data_url: null,
+        updated_at_ms: Date.now(),
       }
     }
     if (localSharedStageItem && localSharedStageItem.active) {
@@ -2262,8 +2528,6 @@ export function VibeVideoCallStudio({
     }
     return null
   }, [isScreenSharing, localSharedStageItem, localParticipantId, localDisplayName])
-
-  const knownRemotePeerIdsRef = useRef<Set<string>>(new Set())
 
   // Upsert a real connected participant into the multi-party call grid (supports 12+ simultaneous real participants!)
   const upsertRemoteFriendTile = useCallback(
@@ -2524,10 +2788,11 @@ export function VibeVideoCallStudio({
     }
   }, [])
 
-  // Rolling 480ms universal WAV PCM voice capture from local microphone (no per-chunk React state updates)
+  // Rolling 480ms universal WAV PCM voice capture ONLY before WebRTC audio connects (zero main-thread ScriptProcessor overhead during calls!)
+  const hasActiveWebRtcPeers = Object.keys(remoteStreams).length > 0
   useEffect(() => {
     if (typeof window === "undefined") return
-    if (!localStreamState || callState === "ENDED") {
+    if (!localStreamState || callState === "ENDED" || hasActiveWebRtcPeers) {
       latestLocalAudioChunkRef.current = undefined
       recentLocalAudioChunksRef.current = []
       return
@@ -2544,7 +2809,51 @@ export function VibeVideoCallStudio({
     return () => {
       stopCapture()
     }
-  }, [localStreamState, isMicMuted, callState])
+  }, [localStreamState, isMicMuted, callState, hasActiveWebRtcPeers])
+
+  // Apply incoming Shared Stage updates without re-rendering the 5,800-line studio on frame-only updates!
+  const applyIncomingRemoteStage = useCallback(
+    (incomingStage: any) => {
+      if (!incomingStage || incomingStage.sharer_user_id === localParticipantId) return
+      if (incomingStage.active && (incomingStage.use_webrtc_stream || incomingStage.frame_or_data_url)) {
+        if (typeof incomingStage.frame_or_data_url === "string" && incomingStage.frame_or_data_url.length > 64) {
+          publishRemoteStageFrame(callId, incomingStage.frame_or_data_url)
+        }
+        setRemoteSharedStageItem((prev) => {
+          if (
+            prev &&
+            prev.active === true &&
+            prev.sharer_user_id === incomingStage.sharer_user_id &&
+            prev.sharer_name === incomingStage.sharer_name &&
+            prev.mode === incomingStage.mode &&
+            prev.title === incomingStage.title &&
+            Boolean(prev.use_webrtc_stream) === Boolean(incomingStage.use_webrtc_stream) &&
+            Boolean(prev.frame_or_data_url) === Boolean(incomingStage.frame_or_data_url)
+          ) {
+            return prev
+          }
+          return {
+            active: true,
+            sharer_user_id: incomingStage.sharer_user_id,
+            sharer_name: incomingStage.sharer_name || "Connected Participant",
+            mode: incomingStage.mode || "screen",
+            title: incomingStage.title || "Shared Meeting Stage",
+            mime_type: incomingStage.mime_type,
+            use_webrtc_stream: Boolean(incomingStage.use_webrtc_stream),
+            frame_or_data_url: incomingStage.frame_or_data_url || null,
+            updated_at_ms: incomingStage.updated_at_ms || Date.now(),
+          }
+        })
+      } else if (incomingStage.active === false) {
+        setRemoteSharedStageItem((prev) =>
+          prev && (!incomingStage.sharer_user_id || prev.sharer_user_id === incomingStage.sharer_user_id)
+            ? null
+            : prev
+        )
+      }
+    },
+    [callId, localParticipantId]
+  )
 
   // Keep latest sync getters in a ref so the PeerJS connection is NEVER torn down when camera/mic/background state updates
   const peerSyncStateRef = useRef({
@@ -2552,12 +2861,14 @@ export function VibeVideoCallStudio({
     activeCameraLabel,
     isMicMuted,
     isCameraOn,
+    isScreenSharing,
     selectedVirtualBgId,
     activeVirtualBgOption,
     captureCompactLiveFrame,
     captureActiveSharedStagePayload,
     upsertRemoteFriendTile,
     playRemoteAudioChunk,
+    applyIncomingRemoteStage,
     appendLog,
   })
   useEffect(() => {
@@ -2566,12 +2877,14 @@ export function VibeVideoCallStudio({
       activeCameraLabel,
       isMicMuted,
       isCameraOn,
+      isScreenSharing,
       selectedVirtualBgId,
       activeVirtualBgOption,
       captureCompactLiveFrame,
       captureActiveSharedStagePayload,
       upsertRemoteFriendTile,
       playRemoteAudioChunk,
+      applyIncomingRemoteStage,
       appendLog,
     }
   }, [
@@ -2579,22 +2892,27 @@ export function VibeVideoCallStudio({
     activeCameraLabel,
     isMicMuted,
     isCameraOn,
+    isScreenSharing,
     selectedVirtualBgId,
     activeVirtualBgOption,
     captureCompactLiveFrame,
     captureActiveSharedStagePayload,
     upsertRemoteFriendTile,
     playRemoteAudioChunk,
+    applyIncomingRemoteStage,
     appendLog,
   ])
 
-  const dialRemotePeerNowRef = useRef<((targetPeerId: string) => void) | null>(null)
-
   // Whenever localStreamState updates (e.g., after getUserMedia finishes), push tracks to any existing WebRTC calls
-  // and immediately dial any known remote peer that doesn't yet have our outgoing video+audio stream!
+  // without overwriting an active Screen Share track, and dial any known remote peer missing our outgoing stream!
   useEffect(() => {
     if (!localStreamState) return
-    const vTrack = localStreamState.getVideoTracks()[0]
+    const hasLiveScreenTrack = Boolean(
+      screenStreamRef.current?.getVideoTracks().some((t) => t.readyState === "live")
+    )
+    const vTrack = hasLiveScreenTrack
+      ? screenStreamRef.current?.getVideoTracks()[0]
+      : localStreamState.getVideoTracks()[0]
     const aTrack = localStreamState.getAudioTracks()[0]
     activeMediaCallsRef.current.forEach((mediaCall, peerId) => {
       const pc: RTCPeerConnection | undefined = mediaCall?.peerConnection
@@ -2625,12 +2943,13 @@ export function VibeVideoCallStudio({
     let isCancelled = false
     let peerInstance: any = null
     let syncTimer: ReturnType<typeof setInterval> | null = null
-    let fastDataTimer: ReturnType<typeof setInterval> | null = null
+    let fastDataTimer: ReturnType<typeof setTimeout> | null = null
     const activeMediaCalls = activeMediaCallsRef.current
     const activeDataConns = new Map<string, any>()
     const pendingDataConnAtMs = new Map<string, number>()
     const liveStreamPeers = new Set<string>()
     const lastCallAttemptMs = new Map<string, number>()
+    liveStreamPeersCountRef.current = 0
 
     const cleanRoomKey =
       callId.replace(/[^a-zA-Z0-9]/g, "").toLowerCase().slice(0, 20) || "viberoom9b0bbf68"
@@ -2642,8 +2961,19 @@ export function VibeVideoCallStudio({
     // Put guaranteedUniquePeerId FIRST so PeerJS registers on 0.peerjs.com in <150ms without ever colliding with a refreshed tab!
     const slotOrder = [guaranteedUniquePeerId, ...allSlots]
 
-    // Helper: builds outgoing MediaStream using Virtual Background canvas video track (when active) + microphone audio track
+    // Helper: prioritizes active Screen Share track -> Virtual Background canvas track -> Hardware Camera + Mic audio
     const getOutgoingCallMediaStream = (): MediaStream | null => {
+      const liveScreenTrack = screenStreamRef.current
+        ?.getVideoTracks()
+        .find((t) => t.readyState === "live")
+      if (liveScreenTrack) {
+        const combinedScreen = new MediaStream([liveScreenTrack])
+        if (localStreamRef.current) {
+          localStreamRef.current.getAudioTracks().forEach((a) => combinedScreen.addTrack(a))
+        }
+        return combinedScreen
+      }
+
       const st = peerSyncStateRef.current
       if (
         st.selectedVirtualBgId !== "none" &&
@@ -2651,7 +2981,7 @@ export function VibeVideoCallStudio({
         typeof virtualBgCanvasRef.current.captureStream === "function"
       ) {
         try {
-          const canvasStream = virtualBgCanvasRef.current.captureStream(24)
+          const canvasStream = virtualBgCanvasRef.current.captureStream(18)
           const vTrack = canvasStream.getVideoTracks()[0]
           if (vTrack) {
             const combined = new MediaStream([vTrack])
@@ -2667,15 +2997,37 @@ export function VibeVideoCallStudio({
       return localStreamRef.current
     }
 
+    const tuneCallSenderBitrate = (mediaCall: any) => {
+      try {
+        const pc: RTCPeerConnection | undefined = mediaCall?.peerConnection
+        if (!pc || typeof pc.getSenders !== "function") return
+        const isScreenMode = Boolean(
+          screenStreamRef.current?.getVideoTracks().some((t) => t.readyState === "live")
+        )
+        const vSender = pc.getSenders().find((s) => s.track && s.track.kind === "video")
+        if (vSender && typeof vSender.getParameters === "function") {
+          const params = vSender.getParameters()
+          if (params.encodings && params.encodings.length > 0) {
+            params.encodings[0].maxBitrate = isScreenMode ? 1_250_000 : 700_000
+            params.encodings[0].maxFramerate = isScreenMode ? 20 : 24
+            vSender.setParameters(params).catch(() => {})
+          }
+        }
+      } catch {}
+    }
+
     const bindMediaCall = (mediaCall: any) => {
       if (!mediaCall || !mediaCall.peer) return
       knownRemotePeerIdsRef.current.add(mediaCall.peer)
       activeMediaCalls.set(mediaCall.peer, mediaCall)
+      tuneCallSenderBitrate(mediaCall)
       mediaCall.on("stream", (remoteStream: MediaStream) => {
         if (isCancelled) return
         liveStreamPeers.add(mediaCall.peer)
+        liveStreamPeersCountRef.current = liveStreamPeers.size
+        tuneCallSenderBitrate(mediaCall)
         setRemoteStreams((prev) => ({ ...prev, [mediaCall.peer]: remoteStream }))
-        // Ensure the participant tile has remotePeerId set to mediaCall.peer so the 30fps WebRTC <video> mounts immediately
+        // Ensure the participant tile has remotePeerId set to mediaCall.peer so the WebRTC <video> mounts immediately
         if (mediaCall.metadata?.participantId) {
           peerSyncStateRef.current.upsertRemoteFriendTile({
             participantId: mediaCall.metadata.participantId,
@@ -2696,6 +3048,7 @@ export function VibeVideoCallStudio({
       })
       mediaCall.on("close", () => {
         liveStreamPeers.delete(mediaCall.peer)
+        liveStreamPeersCountRef.current = liveStreamPeers.size
         activeMediaCalls.delete(mediaCall.peer)
         setRemoteStreams((prev) => {
           const next = { ...prev }
@@ -2705,6 +3058,7 @@ export function VibeVideoCallStudio({
       })
       mediaCall.on("error", () => {
         liveStreamPeers.delete(mediaCall.peer)
+        liveStreamPeersCountRef.current = liveStreamPeers.size
         activeMediaCalls.delete(mediaCall.peer)
       })
     }
@@ -2717,6 +3071,7 @@ export function VibeVideoCallStudio({
         pendingDataConnAtMs.delete(conn.peer)
         activeDataConns.set(conn.peer, conn)
         const st = peerSyncStateRef.current
+        const hasWebRtcMedia = liveStreamPeers.size > 0
         try {
           conn.send({
             type: "VIBE_PEER_SYNC",
@@ -2727,12 +3082,13 @@ export function VibeVideoCallStudio({
             role: isInvitedGuestLink ? "Invited Friend · Live Video" : "Host · Local Camera & Mic",
             device: st.activeCameraLabel,
             isMuted: st.isMicMuted,
-            isVideoOn: st.isCameraOn,
+            isVideoOn: st.isCameraOn || st.isScreenSharing,
+            isScreenSharing: st.isScreenSharing,
             virtualBgId: st.selectedVirtualBgId,
             virtualBgBadge: st.selectedVirtualBgId !== "none" ? st.activeVirtualBgOption.badgeText : undefined,
-            liveFrame: st.captureCompactLiveFrame(),
-            liveAudioChunk: !st.isMicMuted ? latestLocalAudioChunkRef.current : undefined,
-            recentAudioChunks: !st.isMicMuted ? recentLocalAudioChunksRef.current : undefined,
+            liveFrame: hasWebRtcMedia ? null : st.captureCompactLiveFrame(),
+            liveAudioChunk: !hasWebRtcMedia && !st.isMicMuted ? latestLocalAudioChunkRef.current : undefined,
+            recentAudioChunks: !hasWebRtcMedia && !st.isMicMuted ? recentLocalAudioChunksRef.current : undefined,
             sharedStage: st.captureActiveSharedStagePayload(),
           })
         } catch {
@@ -2772,14 +3128,19 @@ export function VibeVideoCallStudio({
             data.recentAudioChunks
           )
         }
-        if (data.sharedStage && data.sharedStage.sharer_user_id !== localParticipantId) {
-          if (data.sharedStage.active && data.sharedStage.frame_or_data_url) {
-            setRemoteSharedStageItem(data.sharedStage)
-          } else if (data.sharedStage.active === false) {
-            setRemoteSharedStageItem((prev) =>
-              prev && prev.sharer_user_id === data.sharedStage.sharer_user_id ? null : prev
-            )
-          }
+        if (data.sharedStage) {
+          peerSyncStateRef.current.applyIncomingRemoteStage(data.sharedStage)
+        } else if (data.isScreenSharing && data.participantId && data.participantId !== localParticipantId) {
+          peerSyncStateRef.current.applyIncomingRemoteStage({
+            active: true,
+            sharer_user_id: data.participantId,
+            sharer_name: data.name || "Connected Participant",
+            mode: "screen",
+            title: `${data.name || "Participant"}'s Live Shared Screen`,
+            use_webrtc_stream: true,
+            frame_or_data_url: null,
+            updated_at_ms: Date.now(),
+          })
         }
       })
       conn.on("close", () => {
@@ -2830,7 +3191,7 @@ export function VibeVideoCallStudio({
         outStream &&
         (outStream.getVideoTracks().length > 0 || outStream.getAudioTracks().length > 0) &&
         needsMediaCall &&
-        nowMs - lastTry > 9500
+        nowMs - lastTry > 6500
       ) {
         lastCallAttemptMs.set(targetSlot, nowMs)
         try {
@@ -2905,39 +3266,46 @@ export function VibeVideoCallStudio({
             }
           })
 
-          // Fast 220ms P2P DataChannel frame & audio relay for open DataConnections (zero React re-renders!)
-          fastDataTimer = setInterval(() => {
-            if (isCancelled || !peerInstance || peerInstance.destroyed || activeDataConns.size === 0) return
-            const st = peerSyncStateRef.current
-            const syncPayload = {
-              type: "VIBE_PEER_SYNC",
-              participantId: localParticipantId,
-              peerId: openedId,
-              knownPeerIds: [openedId, ...Array.from(knownRemotePeerIdsRef.current)],
-              name: st.localDisplayName,
-              role: isInvitedGuestLink ? "Invited Friend · Live Video" : "Host · Local Camera & Mic",
-              device: st.activeCameraLabel,
-              isMuted: st.isMicMuted,
-              isVideoOn: st.isCameraOn,
-              virtualBgId: st.selectedVirtualBgId,
-              virtualBgBadge: st.selectedVirtualBgId !== "none" ? st.activeVirtualBgOption.badgeText : undefined,
-              liveFrame: st.captureCompactLiveFrame(),
-              liveAudioChunk: !st.isMicMuted ? latestLocalAudioChunkRef.current : undefined,
-              recentAudioChunks: !st.isMicMuted ? recentLocalAudioChunksRef.current : undefined,
-              sharedStage: st.captureActiveSharedStagePayload(),
-            }
-            activeDataConns.forEach((conn) => {
-              if (conn && conn.open) {
-                try {
-                  conn.send(syncPayload)
-                } catch {
-                  // ignore
-                }
+          // Adaptive P2P DataChannel metadata sync: lightweight 1600ms keepalive once WebRTC streams are live (420ms pre-ICE)
+          const runDataChannelSync = () => {
+            if (isCancelled || !peerInstance || peerInstance.destroyed) return
+            if (activeDataConns.size > 0) {
+              const st = peerSyncStateRef.current
+              const hasWebRtcMedia = liveStreamPeers.size > 0
+              const syncPayload = {
+                type: "VIBE_PEER_SYNC",
+                participantId: localParticipantId,
+                peerId: openedId,
+                knownPeerIds: [openedId, ...Array.from(knownRemotePeerIdsRef.current)],
+                name: st.localDisplayName,
+                role: isInvitedGuestLink ? "Invited Friend · Live Video" : "Host · Local Camera & Mic",
+                device: st.activeCameraLabel,
+                isMuted: st.isMicMuted,
+                isVideoOn: st.isCameraOn || st.isScreenSharing,
+                isScreenSharing: st.isScreenSharing,
+                virtualBgId: st.selectedVirtualBgId,
+                virtualBgBadge: st.selectedVirtualBgId !== "none" ? st.activeVirtualBgOption.badgeText : undefined,
+                liveFrame: hasWebRtcMedia ? null : st.captureCompactLiveFrame(),
+                liveAudioChunk: !hasWebRtcMedia && !st.isMicMuted ? latestLocalAudioChunkRef.current : undefined,
+                recentAudioChunks: !hasWebRtcMedia && !st.isMicMuted ? recentLocalAudioChunksRef.current : undefined,
+                sharedStage: st.captureActiveSharedStagePayload(),
               }
-            })
-          }, 220)
+              activeDataConns.forEach((conn) => {
+                if (conn && conn.open) {
+                  try {
+                    conn.send(syncPayload)
+                  } catch {
+                    // ignore
+                  }
+                }
+              })
+            }
+            const nextDelay = liveStreamPeers.size > 0 ? 1600 : 420
+            fastDataTimer = setTimeout(runDataChannelSync, nextDelay)
+          }
+          fastDataTimer = setTimeout(runDataChannelSync, 420)
 
-          // Connect & maintain WebRTC MediaStream with discovered active peers every 900ms
+          // Connect & maintain WebRTC MediaStream with discovered active peers
           syncTimer = setInterval(() => {
             if (isCancelled || !peerInstance || peerInstance.destroyed) return
             const discoveredPeers = Array.from(knownRemotePeerIdsRef.current).filter(
@@ -2951,7 +3319,7 @@ export function VibeVideoCallStudio({
             for (const targetSlot of targetPeerIds) {
               dialRemotePeerNow(targetSlot)
             }
-          }, 900)
+          }, 1200)
         })
 
         peer.on("connection", (incomingConn: any) => {
@@ -2988,8 +3356,9 @@ export function VibeVideoCallStudio({
     return () => {
       isCancelled = true
       dialRemotePeerNowRef.current = null
+      liveStreamPeersCountRef.current = 0
       if (syncTimer) clearInterval(syncTimer)
-      if (fastDataTimer) clearInterval(fastDataTimer)
+      if (fastDataTimer) clearTimeout(fastDataTimer)
       if (peerInstance) {
         try {
           peerInstance.destroy()
@@ -3005,17 +3374,30 @@ export function VibeVideoCallStudio({
 
   useEffect(() => {
     isFirstStudioHeartbeatRef.current = true
+    studioMountedAtMsRef.current = Date.now()
   }, [callId])
 
-  // LAYER 2: Authoritative `/api/v1/calls` Room Heartbeat Sync (Preserves exact `callId` & syncs across networks)
+  // LAYER 2: Adaptive `/api/v1/calls` Room Heartbeat Sync (2200ms lightweight presence once WebRTC connects; 520ms pre-ICE)
   useEffect(() => {
     if (callState === "ENDED") return
     let mounted = true
+    let heartbeatTimer: ReturnType<typeof setTimeout> | null = null
+
+    const scheduleNextHeartbeat = () => {
+      if (!mounted) return
+      const delayMs = liveStreamPeersCountRef.current > 0 ? 2200 : 520
+      heartbeatTimer = setTimeout(sendHeartbeat, delayMs)
+    }
 
     const sendHeartbeat = () => {
-      if (!mounted || inFlightHeartbeatRef.current) return
+      if (!mounted) return
+      if (inFlightHeartbeatRef.current) {
+        scheduleNextHeartbeat()
+        return
+      }
       const st = peerSyncStateRef.current
-      const liveFrame = st.captureCompactLiveFrame()
+      const hasWebRtcPeers = liveStreamPeersCountRef.current > 0
+      const liveFrame = hasWebRtcPeers ? null : st.captureCompactLiveFrame()
       const activeStage = st.captureActiveSharedStagePayload()
       const shouldReopen = isFirstStudioHeartbeatRef.current
       isFirstStudioHeartbeatRef.current = false
@@ -3039,12 +3421,14 @@ export function VibeVideoCallStudio({
           role: isInvitedGuestLink ? "Invited Friend · Live Video" : "Host · Local Camera & Mic",
           device_label: st.activeCameraLabel,
           is_muted: st.isMicMuted,
-          is_video_on: st.isCameraOn,
+          is_video_on: st.isCameraOn || st.isScreenSharing,
+          is_screen_sharing: st.isScreenSharing,
+          webrtc_connected: hasWebRtcPeers,
           virtual_bg_id: st.selectedVirtualBgId,
           virtual_bg_badge: st.selectedVirtualBgId !== "none" ? st.activeVirtualBgOption.badgeText : undefined,
           live_frame: liveFrame,
-          live_audio_chunk: !st.isMicMuted ? latestLocalAudioChunkRef.current : undefined,
-          recent_audio_chunks: !st.isMicMuted ? recentLocalAudioChunksRef.current : undefined,
+          live_audio_chunk: !hasWebRtcPeers && !st.isMicMuted ? latestLocalAudioChunkRef.current : undefined,
+          recent_audio_chunks: !hasWebRtcPeers && !st.isMicMuted ? recentLocalAudioChunksRef.current : undefined,
           shared_stage: activeStage || undefined,
         }),
       })
@@ -3052,6 +3436,9 @@ export function VibeVideoCallStudio({
         .then((data) => {
           if (!mounted || !data?.call) return
           if (data.call.state === "ENDED" || data.event_type === "call.ended") {
+            if (shouldReopen || Date.now() - studioMountedAtMsRef.current < 2500) {
+              return
+            }
             releaseAllMediaDevices()
             setRemoteStreams({})
             setRemoteSharedStageItem(null)
@@ -3073,6 +3460,7 @@ export function VibeVideoCallStudio({
           if (data.call.turn_credentials) {
             setTurnCredentials((prev) => prev || data.call.turn_credentials)
           }
+          let remoteScreenSharerFromParticipants: any = null
           if (Array.isArray(data.call.participants)) {
             const activeRemoteUserIds = new Set<string>()
             const activeRemotePeerIds = new Set<string>()
@@ -3092,6 +3480,9 @@ export function VibeVideoCallStudio({
                 }
                 if (typeof p.display_name === "string" && p.display_name.trim()) {
                   activeRemoteNames.add(p.display_name.trim().toLowerCase())
+                }
+                if (p.is_screen_sharing) {
+                  remoteScreenSharerFromParticipants = p
                 }
                 st.upsertRemoteFriendTile({
                   participantId: p.user_id,
@@ -3134,26 +3525,32 @@ export function VibeVideoCallStudio({
           }
           const remoteStage = data.call.shared_stage
           if (remoteStage && remoteStage.sharer_user_id !== localParticipantId) {
-            if (remoteStage.active && remoteStage.frame_or_data_url) {
-              setRemoteSharedStageItem(remoteStage)
-            } else {
-              setRemoteSharedStageItem(null)
-            }
-          } else if (remoteStage && !remoteStage.active && remoteStage.sharer_user_id !== localParticipantId) {
-            setRemoteSharedStageItem(null)
+            st.applyIncomingRemoteStage(remoteStage)
+          } else if (remoteScreenSharerFromParticipants) {
+            st.applyIncomingRemoteStage({
+              active: true,
+              sharer_user_id: remoteScreenSharerFromParticipants.user_id,
+              sharer_name: remoteScreenSharerFromParticipants.display_name || "Connected Participant",
+              mode: "screen",
+              title: `${remoteScreenSharerFromParticipants.display_name || "Participant"}'s Live Shared Screen`,
+              use_webrtc_stream: true,
+              frame_or_data_url: null,
+              updated_at_ms: Date.now(),
+            })
           }
         })
         .catch(() => {})
         .finally(() => {
           clearTimeout(abortTimer)
           inFlightHeartbeatRef.current = false
+          scheduleNextHeartbeat()
         })
     }
 
     sendHeartbeat()
-    const interval = setInterval(sendHeartbeat, 380)
 
     const handleBeforeUnload = () => {
+      if (isHandingOffRef.current) return
       fetch("/api/v1/calls", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -3172,26 +3569,18 @@ export function VibeVideoCallStudio({
     return () => {
       mounted = false
       inFlightHeartbeatRef.current = false
-      clearInterval(interval)
+      if (heartbeatTimer) clearTimeout(heartbeatTimer)
       if (typeof window !== "undefined") {
         window.removeEventListener("beforeunload", handleBeforeUnload)
       }
     }
   }, [callId, localParticipantId, myPeerId, conversationId, initialMode, isInvitedGuestLink, callState, releaseAllMediaDevices, onCloseStudio])
 
-  // Call duration timer
-  useEffect(() => {
-    if (callState !== "CONNECTED" && callState !== "RECONNECTING") return
-    const timer = setInterval(() => {
-      setCallDurationSec((s) => s + 1)
-    }, 1000)
-    return () => clearInterval(timer)
-  }, [callState])
-
-  // Release hardware & notify server when component unmounts
+  // Release hardware & notify server when component unmounts (unless handing off back to Messaging Huddle!)
   useEffect(() => {
     return () => {
       releaseAllMediaDevices()
+      if (isHandingOffRef.current) return
       fetch("/api/v1/calls", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -3225,24 +3614,28 @@ export function VibeVideoCallStudio({
     setLocalSharedStageItem(null)
     setCallMode("video")
     setLayoutMode("grid")
+    syncWebRtcOutgoingVideoTrack(selectedVirtualBgId !== "none", null)
     fetch("/api/v1/calls", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         action: "share_stage",
         call_id: callId,
+        user_id: localParticipantId,
+        display_name: localDisplayName,
         shared_stage: {
           active: false,
           sharer_user_id: localParticipantId,
           sharer_name: localDisplayName,
           mode: "screen",
           title: "Stopped Sharing",
+          use_webrtc_stream: false,
           frame_or_data_url: null,
           updated_at_ms: Date.now(),
         },
       }),
     }).catch(() => {})
-    appendLog("Stopped sharing to meeting stage.")
+    appendLog("Stopped sharing to meeting stage — restored webcam video stream.")
   }
 
   const handleToggleScreenShare = async () => {
@@ -3854,7 +4247,7 @@ export function VibeVideoCallStudio({
 
   const handleRestartCall = async () => {
     isFirstStudioHeartbeatRef.current = true
-    setCallDurationSec(0)
+    studioMountedAtMsRef.current = Date.now()
     setCallState("CONNECTED")
     setCallStateVersion((v) => v + 1)
     setParticipants((prev) =>
@@ -3869,6 +4262,27 @@ export function VibeVideoCallStudio({
     const secs = totalSec % 60
     return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`
   }
+
+  // Resolve live WebRTC MediaStream for remote screen sharing so receivers view crisp 720p/1080p @ 20fps with zero JPEG lag
+  const remoteStageWebRtcStream: MediaStream | undefined = (() => {
+    if (!remoteSharedStageItem?.active || remoteSharedStageItem.mode !== "screen") return undefined
+    const sharerTile = participants.find(
+      (p) =>
+        !p.isLocal &&
+        (p.id === remoteSharedStageItem.sharer_user_id ||
+          (remoteSharedStageItem.sharer_name &&
+            p.name.trim().toLowerCase() === remoteSharedStageItem.sharer_name.trim().toLowerCase()))
+    )
+    if (sharerTile?.remotePeerId && remoteStreams[sharerTile.remotePeerId]) {
+      const candidate = remoteStreams[sharerTile.remotePeerId]
+      if (candidate.getVideoTracks().some((t) => t.readyState === "live")) {
+        return candidate
+      }
+    }
+    return Object.values(remoteStreams).find((s) =>
+      s.getVideoTracks().some((t) => t.readyState === "live")
+    )
+  })()
 
   const liveCaptionTranslations: Record<typeof captionLanguage, string> = {
     English:
@@ -3912,9 +4326,10 @@ export function VibeVideoCallStudio({
               <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-white/10 text-zinc-100 font-bold">
                 👥 {participants.length} Connected
               </span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-white/10 text-zinc-200">
-                ⏱ {formatTime(callDurationSec)}
-              </span>
+              <StudioCallDurationBadge
+                isActive={callState === "CONNECTED" || callState === "RECONNECTING"}
+                resetNonce={callStateVersion}
+              />
               {isRecording && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-extrabold bg-red-600 text-white animate-pulse">
                   ● REC
@@ -3942,8 +4357,25 @@ export function VibeVideoCallStudio({
           </div>
         </div>
 
-        {/* Right: Organized Header Actions (Layout | Invite & Link | Notes & Security) */}
+        {/* Right: Organized Header Actions (Compact Chat Return | Layout | Invite & Link | Notes & Security) */}
         <div className="flex flex-wrap items-center gap-2">
+          {canReturnToMessaging && onReturnToMessagingHuddle && (
+            <button
+              type="button"
+              onClick={() => {
+                isHandingOffRef.current = true
+                releaseAllMediaDevices()
+                onReturnToMessagingHuddle(
+                  isScreenSharing ? "screenshare" : callMode === "audio" ? "audio" : "video"
+                )
+              }}
+              className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/35 border border-emerald-400/50 text-emerald-200 text-xs font-extrabold flex items-center gap-1.5 cursor-pointer shadow-sm"
+              title="Return to compact Messaging huddle while keeping this live meeting active"
+            >
+              <span>💬 Compact Chat View</span>
+            </button>
+          )}
+
           {/* Segmented Layout Switcher */}
           <div className="inline-flex items-center rounded-xl bg-black/50 p-1 border border-white/10">
             {(
@@ -4698,41 +5130,67 @@ export function VibeVideoCallStudio({
                 }}
                 style={{
                   width: "100%",
-                  height: "320px",
+                  height: "360px",
                   objectFit: "contain",
                   backgroundColor: "#000000",
                   display: screenStreamState ? "block" : "none",
                 }}
               />
 
-              {/* 2. Remote Shared Screen / File / Image / Snapshot OR Local Shared File / Presentation Board */}
+              {/* 2A. Remote Live WebRTC Screen Share Stream (Crisp 720p/1080p @ 20fps — Zero JPEG Lag!) */}
               {!screenStreamState &&
-                (remoteSharedStageItem?.frame_or_data_url || localSharedStageItem?.frame_or_data_url) && (
+                remoteSharedStageItem?.active &&
+                remoteSharedStageItem.mode === "screen" &&
+                remoteStageWebRtcStream && (
+                  <div className="bg-black flex flex-col items-center justify-center">
+                    <RemoteStageWebRtcVideo stream={remoteStageWebRtcStream} />
+                  </div>
+                )}
+
+              {/* 2B. Remote/Local Shared File, Image, Snapshot, Board OR Pre-ICE Fallback Frame */}
+              {!screenStreamState &&
+                !(
+                  remoteSharedStageItem?.active &&
+                  remoteSharedStageItem.mode === "screen" &&
+                  remoteStageWebRtcStream
+                ) &&
+                (localSharedStageItem?.frame_or_data_url ||
+                  remoteSharedStageItem?.frame_or_data_url ||
+                  Boolean(remoteSharedStageItem?.active && remoteStageFrameCache.get(callId))) && (
                   <div className="bg-black/95 flex flex-col items-center justify-center p-2">
-                    <img
-                      src={
-                        (remoteSharedStageItem?.frame_or_data_url ||
-                          localSharedStageItem?.frame_or_data_url) ??
-                        ""
+                    <RemoteSharedStageFrameImg
+                      callId={callId}
+                      initialSrc={
+                        localSharedStageItem?.frame_or_data_url ||
+                        remoteSharedStageItem?.frame_or_data_url
                       }
                       alt={
                         remoteSharedStageItem?.title ||
                         localSharedStageItem?.title ||
                         "Shared Meeting Stage"
                       }
-                      style={{
-                        width: "100%",
-                        maxHeight: "340px",
-                        objectFit: "contain",
-                        borderRadius: "10px",
-                      }}
                     />
+                  </div>
+                )}
+
+              {/* 2C. Connecting indicator while WebRTC screen track negotiates (<1s) */}
+              {!screenStreamState &&
+                remoteSharedStageItem?.active &&
+                remoteSharedStageItem.mode === "screen" &&
+                !remoteStageWebRtcStream &&
+                !remoteSharedStageItem.frame_or_data_url &&
+                !remoteStageFrameCache.get(callId) && (
+                  <div className="p-6 bg-black/95 h-[220px] flex flex-col items-center justify-center text-center space-y-2">
+                    <span className="h-3 w-3 rounded-full bg-teal-400 animate-ping" />
+                    <p className="text-xs font-extrabold text-teal-200">
+                      Connecting live HD screen stream from {remoteSharedStageItem.sharer_name}...
+                    </p>
                   </div>
                 )}
 
               {/* 3. Fallback prompt when user opened Presentation layout before selecting a screen or file */}
               {!screenStreamState &&
-                !remoteSharedStageItem?.frame_or_data_url &&
+                !remoteSharedStageItem?.active &&
                 !localSharedStageItem?.frame_or_data_url && (
                   <div className="p-5 bg-gradient-to-br from-slate-900 via-emerald-950/40 to-slate-900 h-[190px] flex flex-col justify-between">
                     <div className="space-y-1.5">
@@ -4916,18 +5374,20 @@ export function VibeVideoCallStudio({
                     <RemoteParticipantStudioFeed participant={part} />
                   )}
 
-                  {/* LAYER 2 (zIndex 5 or 7): ZERO-RE-RENDER LIVE REMOTE CAMERA FRAME RELAY (HTTP / PeerJS DataChannel) */}
-                  {!isLocalTile && part.isVideoOn && (
-                    <RemoteLiveFrameOverlay
-                      participantId={part.id}
-                      remotePeerId={part.remotePeerId}
-                      initialFrame={part.liveFrame}
-                      altName={part.name}
-                      zIndex={part.virtualBgId && part.virtualBgId !== "none" ? 7 : 5}
-                    />
-                  )}
+                  {/* LAYER 2 (zIndex 5): PRE-ICE FALLBACK CAMERA FRAME RELAY — UNMOUNTED IMMEDIATELY ONCE WEBRTC STREAM CONNECTS */}
+                  {!isLocalTile &&
+                    part.isVideoOn &&
+                    !(remoteStream && remoteStream.getVideoTracks().some((t) => t.readyState === "live")) && (
+                      <RemoteLiveFrameOverlay
+                        participantId={part.id}
+                        remotePeerId={part.remotePeerId}
+                        initialFrame={part.liveFrame}
+                        altName={part.name}
+                        zIndex={5}
+                      />
+                    )}
 
-                  {/* LAYER 3 (zIndex 6): LIVE REMOTE WEBRTC MEDIASTREAM (Always mounted when stream exists so 30fps video & audio play) */}
+                  {/* LAYER 3 (zIndex 6): LIVE REMOTE WEBRTC MEDIASTREAM (Hardware-decoded video & audio with zero React re-renders) */}
                   {!isLocalTile && remoteStream && (
                     <RemotePeerVideoElement stream={remoteStream} isVideoOn={part.isVideoOn} />
                   )}
@@ -5638,15 +6098,34 @@ export function VibeVideoCallStudio({
                 </button>
               </div>
 
-              {/* ZONE 4: END MEETING */}
-              <button
-                type="button"
-                onClick={handleEndCall}
-                className="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-extrabold flex items-center gap-1.5 cursor-pointer shadow-lg shrink-0"
-              >
-                <PhoneOff className="h-4 w-4" />
-                <span>End Meeting</span>
-              </button>
+              {/* ZONE 4: COMPACT CHAT HANDOFF & END MEETING */}
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                {canReturnToMessaging && onReturnToMessagingHuddle && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      isHandingOffRef.current = true
+                      releaseAllMediaDevices()
+                      onReturnToMessagingHuddle(
+                        isScreenSharing ? "screenshare" : callMode === "audio" ? "audio" : "video"
+                      )
+                    }}
+                    className="px-3.5 py-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/35 border border-emerald-400/50 text-emerald-200 text-xs font-extrabold flex items-center gap-1.5 cursor-pointer shadow-md"
+                    title="Switch back to compact Messaging huddle without ending the call"
+                  >
+                    <span>💬 Chat View</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleEndCall}
+                  className="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-extrabold flex items-center gap-1.5 cursor-pointer shadow-lg shrink-0"
+                >
+                  <PhoneOff className="h-4 w-4" />
+                  <span>End Meeting</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

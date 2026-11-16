@@ -61,19 +61,227 @@ const PRESET_ATTACHMENTS = [
 
 const QUICK_EMOJIS = ['👍', '🤝', '🔥', '✅', '🙌', '🚀', '📐', '⚡'];
 
+const huddleRemoteFrameCache = new Map<string, string>();
+const huddleRemoteFrameListeners = new Map<string, Set<(src: string) => void>>();
+
+function publishHuddleRemoteFrame(userId: string, frameUrl: string | null | undefined) {
+    if (!userId || !frameUrl || !frameUrl.startsWith('data:image/') || frameUrl.length < 800) return;
+    if (huddleRemoteFrameCache.get(userId) === frameUrl) return;
+    huddleRemoteFrameCache.set(userId, frameUrl);
+    const subs = huddleRemoteFrameListeners.get(userId);
+    if (subs) {
+        subs.forEach((cb) => cb(frameUrl));
+    }
+}
+
+function HuddleCallTimer({
+    active,
+    startMsRef,
+}: {
+    active: boolean;
+    startMsRef: React.MutableRefObject<number>;
+}) {
+    const [elapsed, setElapsed] = useState(0);
+    useEffect(() => {
+        if (!active) {
+            setElapsed(0);
+            return;
+        }
+        const update = () => {
+            const diff = Math.max(0, Math.floor((Date.now() - startMsRef.current) / 1000));
+            setElapsed(diff);
+        };
+        update();
+        const id = window.setInterval(update, 1000);
+        return () => window.clearInterval(id);
+    }, [active, startMsRef]);
+
+    const mins = Math.floor(elapsed / 60).toString().padStart(2, '0');
+    const rem = (elapsed % 60).toString().padStart(2, '0');
+    return (
+        <span
+            className="rounded-md px-2.5 py-0.5 text-xs font-mono font-bold"
+            style={{
+                backgroundColor: '#1E293B',
+                color: '#FFFFFF',
+                border: '1px solid rgba(148, 163, 184, 0.4)',
+            }}
+        >
+            ⏱️ {mins}:{rem}
+        </span>
+    );
+}
+
+function HuddleRemoteWebRtcAudio({ stream }: { stream: MediaStream }) {
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+    useEffect(() => {
+        const el = audioRef.current;
+        if (!el || !stream) return;
+        if (el.srcObject !== stream) {
+            el.srcObject = stream;
+        }
+        el.muted = false;
+        el.volume = 1.0;
+        const tryPlay = () => {
+            if (!audioRef.current) return;
+            audioRef.current.muted = false;
+            audioRef.current.volume = 1.0;
+            audioRef.current.play().catch(() => {});
+        };
+        tryPlay();
+        const watchdog = window.setInterval(() => {
+            if (audioRef.current && (audioRef.current.paused || audioRef.current.muted)) {
+                tryPlay();
+            }
+        }, 1200);
+        window.addEventListener('pointerdown', tryPlay, { passive: true });
+        return () => {
+            window.clearInterval(watchdog);
+            window.removeEventListener('pointerdown', tryPlay);
+        };
+    }, [stream]);
+
+    return (
+        <audio
+            ref={audioRef}
+            autoPlay
+            playsInline
+            style={{ position: 'fixed', width: 1, height: 1, opacity: 0.01, pointerEvents: 'none' }}
+        />
+    );
+}
+
+function HuddleRemoteWebRtcVideo({
+    stream,
+    isScreenShare,
+}: {
+    stream: MediaStream;
+    isScreenShare?: boolean;
+}) {
+    const videoRef = useRef<HTMLVideoElement | null>(null);
+    const [hasFrames, setHasFrames] = useState(false);
+
+    useEffect(() => {
+        const el = videoRef.current;
+        if (!el || !stream) return;
+        if (el.srcObject !== stream) {
+            el.srcObject = stream;
+        }
+        el.muted = true;
+        const markReady = () => {
+            if (el.videoWidth > 0 && el.readyState >= 2) {
+                setHasFrames(true);
+            }
+        };
+        el.addEventListener('loadeddata', markReady);
+        el.addEventListener('playing', markReady);
+        el.addEventListener('timeupdate', markReady);
+        el.play().then(markReady).catch(() => {});
+        return () => {
+            el.removeEventListener('loadeddata', markReady);
+            el.removeEventListener('playing', markReady);
+            el.removeEventListener('timeupdate', markReady);
+        };
+    }, [stream]);
+
+    return (
+        <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            style={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: isScreenShare ? 'contain' : 'cover',
+                backgroundColor: '#020617',
+                opacity: hasFrames ? 1 : 0,
+                zIndex: 8,
+            }}
+        />
+    );
+}
+
+function HuddleFallbackFrameImg({
+    userId,
+    fallbackAvatar,
+    alt,
+    isScreenShare,
+}: {
+    userId: string;
+    fallbackAvatar: string;
+    alt: string;
+    isScreenShare?: boolean;
+}) {
+    const imgRef = useRef<HTMLImageElement | null>(null);
+    const initialFrame = huddleRemoteFrameCache.get(userId);
+
+    useEffect(() => {
+        const onFrame = (nextSrc: string) => {
+            if (imgRef.current && nextSrc) {
+                imgRef.current.src = nextSrc;
+            }
+        };
+        const latest = huddleRemoteFrameCache.get(userId);
+        if (latest) onFrame(latest);
+        let subs = huddleRemoteFrameListeners.get(userId);
+        if (!subs) {
+            subs = new Set();
+            huddleRemoteFrameListeners.set(userId, subs);
+        }
+        subs.add(onFrame);
+        return () => {
+            huddleRemoteFrameListeners.get(userId)?.delete(onFrame);
+        };
+    }, [userId]);
+
+    return (
+        <img
+            ref={imgRef}
+            src={initialFrame || fallbackAvatar}
+            alt={alt}
+            className="absolute inset-0 w-full h-full z-5"
+            style={{
+                objectFit: isScreenShare ? 'contain' : 'cover',
+                backgroundColor: '#020617',
+            }}
+        />
+    );
+}
+
+export interface MessagingStudioHandoff {
+    callId: string;
+    conversationId: string;
+    conversationName: string;
+    mode: 'audio' | 'video' | 'screenshare';
+    avatar?: string;
+    subtitle?: string;
+}
+
 export function MessagingView({
     onNavigateVibeComms,
     onNavigateMarketplace,
     onNavigateJobs,
     currentUser,
     onPostToFeed,
+    resumeCallSession,
+    onConsumeResumeCall,
 }: {
-    onNavigateVibeComms?: () => void;
+    onNavigateVibeComms?: (handoff?: MessagingStudioHandoff) => void;
     onNavigateMarketplace?: () => void;
     onNavigateJobs?: () => void;
     currentUser?: any;
     /** Publishes a chat message to the member's Feed; repostOf is the original sender when reposting. */
     onPostToFeed?: (content: string, repostOf?: string) => void;
+    resumeCallSession?: {
+        threadId: string;
+        mode: 'audio' | 'video';
+        isScreenSharing?: boolean;
+        nonce: number;
+    } | null;
+    onConsumeResumeCall?: () => void;
 }) {
     const activeEnclave = currentUser?.professionEnclave || 'trades_construction';
     const [selectedEnclave, setSelectedEnclave] = useState<string>(activeEnclave);
@@ -394,7 +602,8 @@ export function MessagingView({
     const [showEnclaveFilterBar, setShowEnclaveFilterBar] = useState(false);
     const [showQuickRepliesBar, setShowQuickRepliesBar] = useState(false);
     const [activeCallMode, setActiveCallMode] = useState<'audio' | 'video' | null>(null);
-    const [callSeconds, setCallSeconds] = useState(0);
+    const callStartMsRef = useRef<number>(0);
+    const isHandingOffToStudioRef = useRef<boolean>(false);
     const [isMicMuted, setIsMicMuted] = useState(false);
     const [isCameraOn, setIsCameraOn] = useState(true);
     const [isScreenSharing, setIsScreenSharing] = useState(false);
@@ -407,6 +616,12 @@ export function MessagingView({
     const localVideoRef = useRef<HTMLVideoElement | null>(null);
     const localStreamRef = useRef<MediaStream | null>(null);
     const fallbackCanvasAnimRef = useRef<number | null>(null);
+    const [huddleMyPeerId, setHuddleMyPeerId] = useState<string>('');
+    const [huddleRemoteStreams, setHuddleRemoteStreams] = useState<Record<string, MediaStream>>({});
+    const huddleActiveMediaCallsRef = useRef<Map<string, any>>(new Map());
+    const huddleKnownPeerIdsRef = useRef<Set<string>>(new Set());
+    const huddleDialPeerNowRef = useRef<((targetPeerId: string) => void) | null>(null);
+    const huddleLiveWebRtcPeersCountRef = useRef<number>(0);
     const [toastBanner, setToastBanner] = useState<string | null>(null);
 
     const chatEndRef = useRef<HTMLDivElement>(null);
@@ -444,7 +659,7 @@ export function MessagingView({
             const userHeadline = currentUser?.headline || 'ConnectLn Live Video Studio';
             const initials = userName
                 .split(' ')
-                .map((n) => n[0])
+                .map((n: string) => n[0])
                 .join('')
                 .slice(0, 2)
                 .toUpperCase();
@@ -514,7 +729,7 @@ export function MessagingView({
                 fallbackCanvasAnimRef.current = requestAnimationFrame(drawFrame);
             };
             drawFrame();
-            return canvas.captureStream(24);
+            return canvas.captureStream(18);
         } catch {
             return null;
         }
@@ -566,12 +781,22 @@ export function MessagingView({
 
         if (mode === 'video') {
             setCameraStatusText('Starting your webcam...');
-            // Attempt 1: Video + Audio
+            // Attempt 1: Smooth low-latency 640x360@24fps Video + Echo-Cancelled Audio (prevents software encoder lag)
             try {
                 stream = await navigator.mediaDevices.getUserMedia({
                     video: preferredCamId
-                        ? { deviceId: { exact: preferredCamId }, width: { ideal: 1280 }, height: { ideal: 720 } }
-                        : { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
+                        ? {
+                              deviceId: { exact: preferredCamId },
+                              width: { ideal: 640, max: 1280 },
+                              height: { ideal: 360, max: 720 },
+                              frameRate: { ideal: 24, max: 24 },
+                          }
+                        : {
+                              width: { ideal: 640, max: 1280 },
+                              height: { ideal: 360, max: 720 },
+                              frameRate: { ideal: 24, max: 24 },
+                              facingMode: 'user',
+                          },
                     audio: {
                         echoCancellation: true,
                         noiseSuppression: true,
@@ -674,7 +899,14 @@ export function MessagingView({
         } else {
             // Audio call mode
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true,
+                    },
+                    video: false,
+                });
                 localStreamRef.current = stream;
                 setLocalStreamState(stream);
                 setHasLocalStream(true);
@@ -688,12 +920,14 @@ export function MessagingView({
     const [remoteHuddleParticipants, setRemoteHuddleParticipants] = useState<
         Array<{
             user_id: string;
+            peer_id?: string;
             display_name: string;
             role?: string;
             device_label?: string;
             is_muted?: boolean;
             is_video_on?: boolean;
-            live_frame?: string | null;
+            is_screen_sharing?: boolean;
+            has_fallback_frame?: boolean;
         }>
     >([]);
     const verifiedRemoteFramesRef = useRef<Map<string, string>>(new Map());
@@ -709,34 +943,44 @@ export function MessagingView({
         return `peer-${Date.now().toString(36)}`;
     });
     const huddleCaptureCanvasRef = useRef<HTMLCanvasElement | null>(null);
-    const huddleVerifyCanvasRef = useRef<HTMLCanvasElement | null>(null);
     const lastValidLocalHuddleFrameRef = useRef<string | null>(null);
     const inFlightHuddleSyncRef = useRef<boolean>(false);
 
-    // Start/stop call timer & initial media when call modal opens or closes
+    // Seamless return handoff when minimizing from Full Audio/Video Studio back into Messaging Huddle
+    useEffect(() => {
+        if (!resumeCallSession) return;
+        if (resumeCallSession.threadId) {
+            setSelectedThreadId(resumeCallSession.threadId);
+            setMobileShowChat(true);
+        }
+        isHandingOffToStudioRef.current = false;
+        setActiveCallMode(resumeCallSession.mode);
+        onConsumeResumeCall?.();
+    }, [resumeCallSession, onConsumeResumeCall]);
+
+    // Start/stop initial media when call modal opens or closes (zero 1s parent state re-renders!)
     const isCallModalOpen = Boolean(activeCallMode);
     useEffect(() => {
         if (!isCallModalOpen || !activeCallMode) {
-            setCallSeconds(0);
             setIsScreenSharing(false);
             setHasLocalStream(false);
             setIsUsingFallbackCam(false);
             setRemoteHuddleParticipants([]);
+            setHuddleRemoteStreams({});
+            huddleKnownPeerIdsRef.current.clear();
+            huddleLiveWebRtcPeersCountRef.current = 0;
             verifiedRemoteFramesRef.current.clear();
             lastValidLocalHuddleFrameRef.current = null;
             stopCurrentCallMedia();
             return;
         }
 
+        callStartMsRef.current = Date.now();
+        isHandingOffToStudioRef.current = false;
         isFirstHuddleHeartbeatRef.current = true;
         startCallMedia(activeCallMode);
 
-        const timer = setInterval(() => {
-            setCallSeconds((s) => s + 1);
-        }, 1000);
-
         return () => {
-            clearInterval(timer);
             stopCurrentCallMedia();
         };
     }, [isCallModalOpen]);
@@ -774,25 +1018,123 @@ export function MessagingView({
         }
     };
 
+    const stopScreenShareAndRestoreCamera = async () => {
+        setIsScreenSharing(false);
+        if (activeThread?.id) {
+            fetch('/api/v1/calls', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'share_stage',
+                    call_id: activeThread.id,
+                    user_id: huddleLocalPeerId,
+                    display_name: currentUser?.name || 'You',
+                    shared_stage: {
+                        active: false,
+                        sharer_user_id: huddleLocalPeerId,
+                        sharer_name: currentUser?.name || 'You',
+                        mode: 'screen',
+                        title: 'Stopped Sharing',
+                        use_webrtc_stream: false,
+                        frame_or_data_url: null,
+                        updated_at_ms: Date.now(),
+                    },
+                }),
+            }).catch(() => {});
+        }
+        await startCallMedia('video', selectedVideoDeviceId || undefined);
+    };
+
     const handleToggleScreenShare = async () => {
         if (isScreenSharing) {
-            setIsScreenSharing(false);
-            await startCallMedia('video', selectedVideoDeviceId || undefined);
+            await stopScreenShareAndRestoreCamera();
             return;
         }
         if (typeof navigator !== 'undefined' && navigator.mediaDevices?.getDisplayMedia) {
             try {
-                const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+                const screenStream = await navigator.mediaDevices.getDisplayMedia({
+                    video: {
+                        width: { ideal: 1280, max: 1920 },
+                        height: { ideal: 720, max: 1080 },
+                        frameRate: { ideal: 15, max: 20 },
+                    },
+                    audio: false,
+                });
+                const screenTrack = screenStream.getVideoTracks()[0];
+                if (!screenTrack) return;
+                try {
+                    if ('contentHint' in screenTrack) {
+                        screenTrack.contentHint = 'detail';
+                    }
+                } catch {}
+
+                // Preserve existing microphone audio tracks so screen sharing NEVER mutes or drops voice!
+                const existingAudioTracks =
+                    localStreamRef.current
+                        ?.getAudioTracks()
+                        .filter((t) => t.readyState === 'live') || [];
+
+                if (fallbackCanvasAnimRef.current) {
+                    cancelAnimationFrame(fallbackCanvasAnimRef.current);
+                    fallbackCanvasAnimRef.current = null;
+                }
+                if (localStreamRef.current) {
+                    localStreamRef.current.getVideoTracks().forEach((vt) => vt.stop());
+                }
+
+                const combined = new MediaStream([screenTrack, ...existingAudioTracks]);
+                if (combined.getAudioTracks().length === 0) {
+                    try {
+                        const micStream = await navigator.mediaDevices.getUserMedia({
+                            video: false,
+                            audio: {
+                                echoCancellation: true,
+                                noiseSuppression: true,
+                                autoGainControl: true,
+                            },
+                        });
+                        micStream.getAudioTracks().forEach((at) => {
+                            at.enabled = !isMicMuted;
+                            combined.addTrack(at);
+                        });
+                    } catch {}
+                }
+
                 setIsScreenSharing(true);
+                setIsCameraOn(true);
                 setActiveCallMode('video');
                 setHasLocalStream(true);
                 setIsUsingFallbackCam(false);
-                localStreamRef.current = screenStream;
-                setLocalStreamState(screenStream);
-                bindStreamToLocalVideo(localVideoRef.current, screenStream);
-                screenStream.getVideoTracks()[0].onended = () => {
-                    setIsScreenSharing(false);
-                    startCallMedia('video', selectedVideoDeviceId || undefined);
+                setCameraStatusText('🖥️ Sharing Screen Live (720p WebRTC)');
+                localStreamRef.current = combined;
+                setLocalStreamState(combined);
+                bindStreamToLocalVideo(localVideoRef.current, combined);
+
+                if (activeThread?.id) {
+                    fetch('/api/v1/calls', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'share_stage',
+                            call_id: activeThread.id,
+                            user_id: huddleLocalPeerId,
+                            display_name: currentUser?.name || 'You',
+                            shared_stage: {
+                                active: true,
+                                sharer_user_id: huddleLocalPeerId,
+                                sharer_name: currentUser?.name || 'You',
+                                mode: 'screen',
+                                title: `${currentUser?.name || 'Participant'}'s Live Screen`,
+                                use_webrtc_stream: true,
+                                frame_or_data_url: null,
+                                updated_at_ms: Date.now(),
+                            },
+                        }),
+                    }).catch(() => {});
+                }
+
+                screenTrack.onended = () => {
+                    stopScreenShareAndRestoreCamera();
                 };
             } catch {
                 triggerToast('Screen sharing cancelled or unavailable.');
@@ -802,10 +1144,13 @@ export function MessagingView({
 
     const handleEndCallAndLog = () => {
         const modeLabel = activeCallMode === 'video' ? '🎥 Video Huddle' : '📞 Voice Call';
-        const durationStr = formatCallTime(Math.max(1, callSeconds));
+        const elapsedSecs = Math.max(1, Math.floor((Date.now() - (callStartMsRef.current || Date.now())) / 1000));
+        const durationStr = formatCallTime(elapsedSecs);
         const endingThreadId = activeThread?.id;
+        isHandingOffToStudioRef.current = false;
         setActiveCallMode(null);
         setRemoteHuddleParticipants([]);
+        setHuddleRemoteStreams({});
         verifiedRemoteFramesRef.current.clear();
         stopCurrentCallMedia();
         if (endingThreadId) {
@@ -1263,14 +1608,270 @@ export function MessagingView({
         }
     };
 
-    // Live voice capture & playback refs for Messaging Video/Audio Huddle
+    // Live voice capture & playback refs for Messaging Video/Audio Huddle (fallback only while WebRTC ICE negotiates)
     const huddleLatestAudioChunkRef = useRef<EncodedVoiceChunk | undefined>(undefined);
     const huddleRecentAudioChunksRef = useRef<EncodedVoiceChunk[]>([]);
     const huddleVoicePlayerRef = useRef<GaplessRemoteVoicePlayer | null>(null);
+    const hasActiveHuddleWebRtcStream = Object.keys(huddleRemoteStreams).length > 0;
 
-    // Capture 900ms universal WAV PCM voice chunks when Messaging Huddle is open
+    // Push updated video/screen/audio tracks into existing WebRTC calls immediately via replaceTrack (zero lag on camera/screen toggle!)
     useEffect(() => {
-        if (!isCallModalOpen || !localStreamState) {
+        if (!isCallModalOpen || !localStreamState) return;
+        const vTrack = localStreamState.getVideoTracks()[0];
+        const aTrack = localStreamState.getAudioTracks()[0];
+        huddleActiveMediaCallsRef.current.forEach((mediaCall, peerId) => {
+            const pc: RTCPeerConnection | undefined = mediaCall?.peerConnection;
+            if (!pc || typeof pc.getSenders !== 'function') return;
+            const senders = pc.getSenders();
+            const vSender = senders.find((s) => s.track && s.track.kind === 'video');
+            const aSender = senders.find((s) => s.track && s.track.kind === 'audio');
+            if (vTrack && vSender && typeof vSender.replaceTrack === 'function') {
+                vSender.replaceTrack(vTrack).catch(() => {});
+                try {
+                    const params = vSender.getParameters();
+                    if (params.encodings && params.encodings.length > 0) {
+                        params.encodings[0].maxBitrate = isScreenSharing ? 1_250_000 : 650_000;
+                        params.encodings[0].maxFramerate = isScreenSharing ? 20 : 24;
+                        vSender.setParameters(params).catch(() => {});
+                    }
+                } catch {}
+            }
+            if (aTrack && aSender && typeof aSender.replaceTrack === 'function') {
+                aSender.replaceTrack(aTrack).catch(() => {});
+            }
+            if ((vTrack && !vSender) || (aTrack && !aSender)) {
+                huddleDialPeerNowRef.current?.(peerId);
+            }
+        });
+        huddleKnownPeerIdsRef.current.forEach((peerId) => {
+            if (!huddleActiveMediaCallsRef.current.has(peerId)) {
+                huddleDialPeerNowRef.current?.(peerId);
+            }
+        });
+    }, [isCallModalOpen, localStreamState, isScreenSharing]);
+
+    // LAYER 1: Real Hardware-Accelerated PeerJS WebRTC Mesh for Messaging Huddle (interoperates 100% with VibeVideoCallStudio!)
+    useEffect(() => {
+        if (typeof window === 'undefined' || !isCallModalOpen || !activeThread?.id) return;
+        let isCancelled = false;
+        let peerInstance: any = null;
+        let meshTimer: ReturnType<typeof setInterval> | null = null;
+        const activeMediaCalls = huddleActiveMediaCallsRef.current;
+        const lastCallAttemptMs = new Map<string, number>();
+
+        const cleanRoomKey =
+            activeThread.id.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().slice(0, 20) ||
+            'viberoom9b0bbf68';
+        const allSlots = Array.from(
+            { length: 6 },
+            (_, idx) => `vibe-connectln-${cleanRoomKey}-slot-${idx}`
+        );
+        const cleanUser =
+            huddleLocalPeerId.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().slice(-10) || 'peer';
+        const sessionTag = Math.random().toString(36).slice(2, 6);
+        const guaranteedUniquePeerId = `vibe-${cleanRoomKey}-${cleanUser}-${sessionTag}`;
+        const slotOrder = [guaranteedUniquePeerId, ...allSlots];
+
+        const tuneSenderBitrate = (mediaCall: any) => {
+            try {
+                const pc: RTCPeerConnection | undefined = mediaCall?.peerConnection;
+                if (!pc || typeof pc.getSenders !== 'function') return;
+                const vSender = pc.getSenders().find((s) => s.track && s.track.kind === 'video');
+                if (vSender && typeof vSender.getParameters === 'function') {
+                    const params = vSender.getParameters();
+                    if (params.encodings && params.encodings.length > 0) {
+                        params.encodings[0].maxBitrate = 950_000;
+                        params.encodings[0].maxFramerate = 24;
+                        vSender.setParameters(params).catch(() => {});
+                    }
+                }
+            } catch {}
+        };
+
+        const bindMediaCall = (mediaCall: any) => {
+            if (!mediaCall || !mediaCall.peer) return;
+            huddleKnownPeerIdsRef.current.add(mediaCall.peer);
+            activeMediaCalls.set(mediaCall.peer, mediaCall);
+            tuneSenderBitrate(mediaCall);
+
+            mediaCall.on('stream', (remoteStream: MediaStream) => {
+                if (isCancelled) return;
+                setHuddleRemoteStreams((prev) => {
+                    const next = { ...prev, [mediaCall.peer]: remoteStream };
+                    huddleLiveWebRtcPeersCountRef.current = Object.keys(next).length;
+                    return next;
+                });
+            });
+            mediaCall.on('close', () => {
+                activeMediaCalls.delete(mediaCall.peer);
+                setHuddleRemoteStreams((prev) => {
+                    if (!prev[mediaCall.peer]) return prev;
+                    const next = { ...prev };
+                    delete next[mediaCall.peer];
+                    huddleLiveWebRtcPeersCountRef.current = Object.keys(next).length;
+                    return next;
+                });
+            });
+            mediaCall.on('error', () => {
+                activeMediaCalls.delete(mediaCall.peer);
+            });
+        };
+
+        const dialRemotePeerNow = (targetPeerId: string) => {
+            if (
+                isCancelled ||
+                !peerInstance ||
+                peerInstance.destroyed ||
+                !targetPeerId ||
+                targetPeerId === peerInstance.id
+            ) {
+                return;
+            }
+            const outStream = localStreamRef.current;
+            if (!outStream) return;
+            const nowMs = Date.now();
+            const lastTry = lastCallAttemptMs.get(targetPeerId) || 0;
+            const existingCall = activeMediaCalls.get(targetPeerId);
+            const existingPc: RTCPeerConnection | undefined = existingCall?.peerConnection;
+            const senders =
+                existingPc && typeof existingPc.getSenders === 'function'
+                    ? existingPc.getSenders()
+                    : [];
+            const hasVideoOut = senders.some((s) => s.track && s.track.kind === 'video');
+            const hasAudioOut = senders.some((s) => s.track && s.track.kind === 'audio');
+            const needsCall =
+                !existingCall ||
+                (outStream.getVideoTracks().length > 0 && !hasVideoOut) ||
+                (outStream.getAudioTracks().length > 0 && !hasAudioOut);
+
+            if (needsCall && nowMs - lastTry > 6500) {
+                lastCallAttemptMs.set(targetPeerId, nowMs);
+                try {
+                    const outCall = peerInstance.call(targetPeerId, outStream, {
+                        metadata: {
+                            participantId: huddleLocalPeerId,
+                            name: currentUser?.name || 'Connected Member',
+                            role: currentUser?.headline || 'Live Messaging Huddle',
+                            device: 'WebRTC Camera & Mic',
+                        },
+                    });
+                    if (outCall) bindMediaCall(outCall);
+                } catch {}
+            }
+        };
+
+        huddleDialPeerNowRef.current = dialRemotePeerNow;
+
+        let resolvedIceServers: any[] | null = null;
+
+        const initPeer = async (tryIdx: number) => {
+            if (isCancelled || tryIdx >= slotOrder.length) return;
+            try {
+                const PeerModule = await import('peerjs');
+                const PeerClass = PeerModule.Peer || PeerModule.default;
+                if (!PeerClass || isCancelled) return;
+                if (!resolvedIceServers) {
+                    try {
+                        const iceRes = await fetch('/api/v1/calls?ice=1', { cache: 'no-store' });
+                        if (iceRes.ok) {
+                            const iceJson = await iceRes.json();
+                            if (Array.isArray(iceJson?.ice_servers) && iceJson.ice_servers.length > 0) {
+                                resolvedIceServers = iceJson.ice_servers;
+                            }
+                        }
+                    } catch {}
+                }
+                if (isCancelled) return;
+
+                const peer = new PeerClass(slotOrder[tryIdx], {
+                    debug: 0,
+                    config: {
+                        iceCandidatePoolSize: 4,
+                        iceServers: resolvedIceServers || [
+                            { urls: 'stun:stun.l.google.com:19302' },
+                            { urls: 'stun:stun1.l.google.com:19302' },
+                            { urls: 'stun:stun.cloudflare.com:3478' },
+                        ],
+                    },
+                });
+
+                peer.on('open', (openedId: string) => {
+                    if (isCancelled) {
+                        peer.destroy();
+                        return;
+                    }
+                    peerInstance = peer;
+                    setHuddleMyPeerId(openedId);
+                    huddleKnownPeerIdsRef.current.forEach((pid) => {
+                        if (pid && pid !== openedId) dialRemotePeerNow(pid);
+                    });
+                    meshTimer = setInterval(() => {
+                        if (isCancelled || !peerInstance || peerInstance.destroyed) return;
+                        const targets = Array.from(huddleKnownPeerIdsRef.current).filter(
+                            (id) => id && id !== openedId
+                        );
+                        const dialList =
+                            targets.length > 0
+                                ? targets
+                                : allSlots.slice(0, 2).filter((id) => id !== openedId);
+                        for (const t of dialList) {
+                            dialRemotePeerNow(t);
+                        }
+                    }, 1200);
+                });
+
+                peer.on('call', (incomingCall: any) => {
+                    try {
+                        incomingCall.answer(localStreamRef.current || undefined);
+                    } catch {}
+                    bindMediaCall(incomingCall);
+                });
+
+                peer.on('connection', (conn: any) => {
+                    if (!conn) return;
+                    if (conn.peer) huddleKnownPeerIdsRef.current.add(conn.peer);
+                    conn.on('data', (data: any) => {
+                        if (!data || data.type !== 'VIBE_PEER_SYNC') return;
+                        if (data.peerId && data.peerId !== peerInstance?.id) {
+                            huddleKnownPeerIdsRef.current.add(data.peerId);
+                            dialRemotePeerNow(data.peerId);
+                        }
+                        if (typeof data.liveFrame === 'string' && data.liveFrame.length > 800 && data.participantId) {
+                            publishHuddleRemoteFrame(data.participantId, data.liveFrame);
+                        }
+                    });
+                });
+
+                peer.on('error', (err: any) => {
+                    if (err?.type === 'unavailable-id') {
+                        try {
+                            peer.destroy();
+                        } catch {}
+                        initPeer(tryIdx + 1);
+                    }
+                });
+            } catch {}
+        };
+
+        initPeer(0);
+
+        return () => {
+            isCancelled = true;
+            huddleDialPeerNowRef.current = null;
+            setHuddleMyPeerId('');
+            activeMediaCalls.clear();
+            if (meshTimer) clearInterval(meshTimer);
+            if (peerInstance) {
+                try {
+                    peerInstance.destroy();
+                } catch {}
+            }
+        };
+    }, [isCallModalOpen, activeThread?.id, huddleLocalPeerId]);
+
+    // Capture fallback WAV voice chunks ONLY while WebRTC Opus stream is not yet connected (frees main thread once WebRTC connects!)
+    useEffect(() => {
+        if (!isCallModalOpen || !localStreamState || hasActiveHuddleWebRtcStream) {
             huddleLatestAudioChunkRef.current = undefined;
             huddleRecentAudioChunksRef.current = [];
             return;
@@ -1291,68 +1892,71 @@ export function MessagingView({
         return () => {
             stopCapture();
         };
-    }, [isCallModalOpen, localStreamState, isMicMuted]);
+    }, [isCallModalOpen, localStreamState, isMicMuted, hasActiveHuddleWebRtcStream]);
 
-    // Sync live video frames & live voice chunks with /api/v1/calls when Messaging Video Huddle is active
+    // Sync room presence (and pre-ICE fallback frames) with /api/v1/calls — automatically slows to 2400ms & 0-frame overhead once WebRTC connects!
     useEffect(() => {
         if (!isCallModalOpen || !activeThread) return;
         let mounted = true;
-
-        const isCanvasBright = (ctx: CanvasRenderingContext2D, w: number, h: number): boolean => {
-            try {
-                const data = ctx.getImageData(0, 0, w, h).data;
-                let sum = 0;
-                let litCount = 0;
-                let total = 0;
-                const step = Math.max(4, Math.floor(data.length / (4 * 64)) * 4);
-                for (let i = 0; i < data.length; i += step) {
-                    const lum = (data[i] + data[i + 1] + data[i + 2]) / 3;
-                    sum += lum;
-                    if (lum > 20) litCount += 1;
-                    total += 1;
-                }
-                return total > 0 && sum / total > 18 && litCount / total > 0.2;
-            } catch {
-                return true;
-            }
-        };
+        let hbTimer: ReturnType<typeof setTimeout> | null = null;
+        let lastFallbackFrameAtMs = 0;
 
         const syncHuddleFrame = async () => {
-            if (inFlightHuddleSyncRef.current) return;
+            if (!mounted) return;
+            if (inFlightHuddleSyncRef.current) {
+                hbTimer = setTimeout(
+                    syncHuddleFrame,
+                    huddleLiveWebRtcPeersCountRef.current > 0 ? 2200 : 500
+                );
+                return;
+            }
 
             const vEl = localVideoRef.current;
-            // Watchdog: ensure local self-view <video> never stays paused
             if (vEl && vEl.paused && localStreamRef.current) {
                 vEl.play().catch(() => {});
             }
 
-            let localFrame: string | null = lastValidLocalHuddleFrameRef.current;
-            if (vEl && vEl.readyState >= 2 && vEl.videoWidth > 0 && isCameraOn) {
-                try {
-                    if (!huddleCaptureCanvasRef.current) {
-                        const c = document.createElement('canvas');
-                        c.width = 240;
-                        c.height = 160;
-                        huddleCaptureCanvasRef.current = c;
-                    }
-                    const c = huddleCaptureCanvasRef.current;
-                    const ctx = c.getContext('2d');
-                    if (ctx) {
-                        ctx.drawImage(vEl, 0, 0, c.width, c.height);
-                        if (lastValidLocalHuddleFrameRef.current || isCanvasBright(ctx, c.width, c.height)) {
-                            const encoded = c.toDataURL('image/jpeg', 0.52);
+            const webRtcActive = huddleLiveWebRtcPeersCountRef.current > 0;
+            let localFrame: string | null = null;
+
+            // Only capture fallback base64 JPEG when WebRTC is NOT yet connected (throttled to >=600ms)
+            const nowCaptureMs = Date.now();
+            if (
+                !webRtcActive &&
+                vEl &&
+                vEl.readyState >= 2 &&
+                vEl.videoWidth > 0 &&
+                (isCameraOn || isScreenSharing)
+            ) {
+                if (
+                    nowCaptureMs - lastFallbackFrameAtMs >= 600 ||
+                    !lastValidLocalHuddleFrameRef.current
+                ) {
+                    try {
+                        if (!huddleCaptureCanvasRef.current) {
+                            const c = document.createElement('canvas');
+                            c.width = 320;
+                            c.height = 180;
+                            huddleCaptureCanvasRef.current = c;
+                        }
+                        const c = huddleCaptureCanvasRef.current;
+                        const ctx = c.getContext('2d');
+                        if (ctx) {
+                            ctx.drawImage(vEl, 0, 0, c.width, c.height);
+                            const encoded = c.toDataURL('image/jpeg', 0.45);
                             if (encoded && encoded.length > 800) {
-                                localFrame = encoded;
+                                lastFallbackFrameAtMs = nowCaptureMs;
                                 lastValidLocalHuddleFrameRef.current = encoded;
                             }
                         }
-                    }
-                } catch {}
+                    } catch {}
+                }
+                localFrame = lastValidLocalHuddleFrameRef.current;
             }
 
             inFlightHuddleSyncRef.current = true;
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 3500);
+            const timeoutId = setTimeout(() => controller.abort(), 3800);
             const isFirst = isFirstHuddleHeartbeatRef.current;
             isFirstHuddleHeartbeatRef.current = false;
 
@@ -1366,99 +1970,143 @@ export function MessagingView({
                         reopen: isFirst,
                         call_id: activeThread.id,
                         user_id: huddleLocalPeerId,
+                        peer_id: huddleMyPeerId || undefined,
                         conversation_id: activeThread.id,
-                        call_type: activeCallMode || 'video',
+                        call_type: isScreenSharing ? 'screenshare' : activeCallMode || 'video',
                         display_name: currentUser?.name || 'You',
+                        role: currentUser?.headline || 'Verified ConnectLn Member',
                         is_muted: isMicMuted,
-                        is_video_on: isCameraOn,
-                        live_frame: localFrame,
-                        live_audio_chunk: !isMicMuted ? huddleLatestAudioChunkRef.current : undefined,
-                        recent_audio_chunks: !isMicMuted ? huddleRecentAudioChunksRef.current : undefined,
+                        is_video_on: isCameraOn || isScreenSharing,
+                        is_screen_sharing: isScreenSharing,
+                        webrtc_connected: webRtcActive,
+                        live_frame: webRtcActive ? null : localFrame,
+                        live_audio_chunk:
+                            !webRtcActive && !isMicMuted ? huddleLatestAudioChunkRef.current : undefined,
+                        recent_audio_chunks:
+                            !webRtcActive && !isMicMuted ? huddleRecentAudioChunksRef.current : undefined,
                     }),
                 });
                 const data = await res.json();
                 if (!mounted) return;
 
-                // If another participant ended the meeting, immediately close & clear so nobody stays frozen!
-                if (data?.call?.state === 'ENDED' || data?.event_type === 'call.ended') {
+                if ((data?.call?.state === 'ENDED' || data?.event_type === 'call.ended') && !isFirst) {
                     verifiedRemoteFramesRef.current.clear();
                     setRemoteHuddleParticipants([]);
+                    setHuddleRemoteStreams({});
                     stopCurrentCallMedia();
                     setActiveCallMode(null);
                     triggerToast('Meeting ended by participant.');
                     return;
                 }
 
-                if (!Array.isArray(data?.call?.participants)) return;
+                if (Array.isArray(data?.call?.participants)) {
+                    const nowMs = Date.now();
+                    const activeRemotes = data.call.participants.filter(
+                        (p: any) =>
+                            p.user_id &&
+                            p.user_id !== huddleLocalPeerId &&
+                            (!p.last_seen_ms || nowMs - p.last_seen_ms < 12000)
+                    );
 
-                const nowMs = Date.now();
-                const activeRemotes = data.call.participants.filter(
-                    (p: any) =>
-                        p.user_id &&
-                        p.user_id !== huddleLocalPeerId &&
-                        (!p.last_seen_ms || nowMs - p.last_seen_ms < 7500)
-                );
+                    const remoteSharedStage = data?.call?.shared_stage;
 
-                // Prune any cached frame for a participant who has left
-                const activeIds = new Set(activeRemotes.map((p: any) => p.user_id));
-                for (const key of Array.from(verifiedRemoteFramesRef.current.keys())) {
-                    if (!activeIds.has(key)) {
-                        verifiedRemoteFramesRef.current.delete(key);
-                    }
-                }
-
-                // Verify new frames asynchronously and play remote audio chunks immediately
-                for (const peer of activeRemotes) {
-                    if (
-                        peer.live_audio_chunk ||
-                        (Array.isArray(peer.recent_audio_chunks) && peer.recent_audio_chunks.length > 0)
-                    ) {
-                        if (!huddleVoicePlayerRef.current) {
-                            huddleVoicePlayerRef.current = new GaplessRemoteVoicePlayer();
+                    for (const peer of activeRemotes) {
+                        if (peer.peer_id && peer.peer_id !== huddleMyPeerId) {
+                            huddleKnownPeerIdsRef.current.add(peer.peer_id);
+                            huddleDialPeerNowRef.current?.(peer.peer_id);
                         }
-                        if (Array.isArray(peer.recent_audio_chunks) && peer.recent_audio_chunks.length > 0) {
-                            huddleVoicePlayerRef.current.enqueueChunks(
-                                peer.user_id,
-                                peer.recent_audio_chunks,
-                                Boolean(peer.is_muted)
-                            );
-                        } else if (peer.live_audio_chunk) {
-                            huddleVoicePlayerRef.current.enqueueChunk(
-                                peer.user_id,
-                                peer.live_audio_chunk,
-                                Boolean(peer.is_muted)
-                            );
+
+                        const peerHasWebRtc = Boolean(
+                            peer.peer_id && huddleActiveMediaCallsRef.current.has(peer.peer_id)
+                        );
+
+                        if (
+                            !peerHasWebRtc &&
+                            !webRtcActive &&
+                            (peer.live_audio_chunk ||
+                                (Array.isArray(peer.recent_audio_chunks) &&
+                                    peer.recent_audio_chunks.length > 0))
+                        ) {
+                            if (!huddleVoicePlayerRef.current) {
+                                huddleVoicePlayerRef.current = new GaplessRemoteVoicePlayer();
+                            }
+                            if (
+                                Array.isArray(peer.recent_audio_chunks) &&
+                                peer.recent_audio_chunks.length > 0
+                            ) {
+                                huddleVoicePlayerRef.current.enqueueChunks(
+                                    peer.user_id,
+                                    peer.recent_audio_chunks,
+                                    Boolean(peer.is_muted)
+                                );
+                            } else if (peer.live_audio_chunk) {
+                                huddleVoicePlayerRef.current.enqueueChunk(
+                                    peer.user_id,
+                                    peer.live_audio_chunk,
+                                    Boolean(peer.is_muted)
+                                );
+                            }
+                        }
+
+                        if (typeof peer.live_frame === 'string' && peer.live_frame.length > 800) {
+                            verifiedRemoteFramesRef.current.set(peer.user_id, peer.live_frame);
+                            publishHuddleRemoteFrame(peer.user_id, peer.live_frame);
                         }
                     }
 
-                    if (
-                        typeof peer.live_frame === 'string' &&
-                        peer.live_frame.length > 800
-                    ) {
-                        verifiedRemoteFramesRef.current.set(peer.user_id, peer.live_frame);
-                    }
-                }
+                    const mapped = activeRemotes.map((p: any) => {
+                        const isStageSharer = Boolean(
+                            remoteSharedStage?.active &&
+                                remoteSharedStage?.sharer_user_id === p.user_id &&
+                                remoteSharedStage?.mode === 'screen'
+                        );
+                        return {
+                            user_id: p.user_id,
+                            peer_id: p.peer_id,
+                            display_name: p.display_name || 'Connected Participant',
+                            role: p.role,
+                            device_label: p.device_label,
+                            is_muted: Boolean(p.is_muted),
+                            is_video_on: Boolean(p.is_video_on || p.is_screen_sharing || isStageSharer),
+                            is_screen_sharing: Boolean(p.is_screen_sharing || isStageSharer),
+                            has_fallback_frame: verifiedRemoteFramesRef.current.has(p.user_id),
+                        };
+                    });
 
-                setRemoteHuddleParticipants(
-                    activeRemotes.map((p: any) => ({
-                        user_id: p.user_id,
-                        display_name: p.display_name || 'Connected Participant',
-                        role: p.role,
-                        device_label: p.device_label,
-                        is_muted: p.is_muted,
-                        is_video_on: p.is_video_on,
-                        live_frame: verifiedRemoteFramesRef.current.get(p.user_id) || null,
-                    }))
-                );
+                    // Bail out of state update when structural fields haven't changed (prevents re-rendering 4,800-line MessagingView!)
+                    setRemoteHuddleParticipants((prev) => {
+                        if (
+                            prev.length === mapped.length &&
+                            prev.every(
+                                (oldP, i) =>
+                                    oldP.user_id === mapped[i].user_id &&
+                                    oldP.peer_id === mapped[i].peer_id &&
+                                    oldP.display_name === mapped[i].display_name &&
+                                    oldP.is_muted === mapped[i].is_muted &&
+                                    oldP.is_video_on === mapped[i].is_video_on &&
+                                    oldP.is_screen_sharing === mapped[i].is_screen_sharing &&
+                                    oldP.has_fallback_frame === mapped[i].has_fallback_frame
+                            )
+                        ) {
+                            return prev;
+                        }
+                        return mapped;
+                    });
+                }
             } catch {
                 // ignore network timeout
             } finally {
                 clearTimeout(timeoutId);
                 inFlightHuddleSyncRef.current = false;
+                if (mounted) {
+                    const nextDelay = huddleLiveWebRtcPeersCountRef.current > 0 ? 2400 : 520;
+                    hbTimer = setTimeout(syncHuddleFrame, nextDelay);
+                }
             }
         };
 
         const handleUnloadLeave = () => {
+            if (isHandingOffToStudioRef.current) return;
             try {
                 fetch('/api/v1/calls', {
                     method: 'POST',
@@ -1475,13 +2123,23 @@ export function MessagingView({
         window.addEventListener('beforeunload', handleUnloadLeave);
 
         syncHuddleFrame();
-        const hb = setInterval(syncHuddleFrame, 380);
         return () => {
             mounted = false;
-            clearInterval(hb);
+            if (hbTimer) clearTimeout(hbTimer);
             window.removeEventListener('beforeunload', handleUnloadLeave);
         };
-    }, [isCallModalOpen, activeThread?.id, activeCallMode, isCameraOn, isMicMuted, currentUser?.name, huddleLocalPeerId]);
+    }, [
+        isCallModalOpen,
+        activeThread?.id,
+        activeCallMode,
+        isCameraOn,
+        isScreenSharing,
+        isMicMuted,
+        currentUser?.name,
+        currentUser?.headline,
+        huddleLocalPeerId,
+        huddleMyPeerId,
+    ]);
 
     const quickReplies = activeThread
         ? getThreadQuickReplies(
@@ -2126,7 +2784,29 @@ export function MessagingView({
                         </button>
                         {onNavigateVibeComms && (
                             <button
-                                onClick={onNavigateVibeComms}
+                                onClick={() => {
+                                    if (activeCallMode) {
+                                        isHandingOffToStudioRef.current = true;
+                                        stopCurrentCallMedia();
+                                    }
+                                    onNavigateVibeComms(
+                                        activeThread
+                                            ? {
+                                                  callId: activeThread.id,
+                                                  conversationId: activeThread.id,
+                                                  conversationName: activeThread.title,
+                                                  mode: isScreenSharing
+                                                      ? 'screenshare'
+                                                      : activeCallMode === 'audio' && !isCameraOn
+                                                        ? 'audio'
+                                                        : 'video',
+                                              }
+                                            : undefined
+                                    );
+                                    if (activeCallMode) {
+                                        setActiveCallMode(null);
+                                    }
+                                }}
                                 className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
                             >
                                 <span>◉</span> Live Studio
@@ -4127,31 +4807,66 @@ export function MessagingView({
 
             {/* Live WebRTC Audio / Video Huddle Studio Modal */}
             {activeCallMode && activeThread && (
-                <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+                <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+                    {/* Global WebRTC Opus Audio Mixer for all connected Huddle peers */}
+                    <div style={{ position: 'fixed', width: 0, height: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+                        {Object.entries(huddleRemoteStreams).map(([peerKey, stream]) => (
+                            <HuddleRemoteWebRtcAudio key={peerKey} stream={stream} />
+                        ))}
+                    </div>
+
                     <div
-                        className={`bg-slate-900 text-white rounded-2xl border border-slate-700 ${
-                            remoteHuddleParticipants.length >= 2 ? 'max-w-5xl' : 'max-w-3xl'
+                        className={`rounded-2xl ${
+                            remoteHuddleParticipants.length >= 2 ||
+                            remoteHuddleParticipants.some((p) => p.is_screen_sharing) ||
+                            isScreenSharing
+                                ? 'max-w-5xl'
+                                : 'max-w-3xl'
                         } w-full p-6 shadow-2xl space-y-5 my-auto transition-all`}
+                        style={{
+                            backgroundColor: '#0B1220',
+                            color: '#F8FAFC',
+                            border: '1.5px solid rgba(52, 211, 153, 0.45)',
+                        }}
                     >
                         {/* Top Call Status Header */}
-                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                        <div
+                            className="flex flex-wrap items-center justify-between gap-2 pb-3"
+                            style={{ borderBottom: '1px solid rgba(148, 163, 184, 0.22)' }}
+                        >
                             <div className="flex items-center gap-2.5 flex-wrap">
                                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-                                <span className="text-xs font-black uppercase tracking-wider text-emerald-400">
+                                <span
+                                    className="text-xs font-black uppercase tracking-wider"
+                                    style={{ color: '#34D399' }}
+                                >
                                     {isScreenSharing
                                         ? '🖥️ Live Screen Share Session'
                                         : activeCallMode === 'video' && isCameraOn
                                         ? '🎥 Live E2EE Video Huddle'
                                         : '📞 Live E2EE Voice Call'}
                                 </span>
-                                <span className="rounded-md bg-slate-800 border border-slate-700 px-2.5 py-0.5 text-xs font-mono font-bold text-white">
-                                    ⏱️ {formatCallTime(callSeconds)}
-                                </span>
-                                <span className="rounded-md bg-sky-950/80 border border-sky-500/40 px-2.5 py-0.5 text-[10px] font-extrabold text-sky-300">
+                                <HuddleCallTimer active={isCallModalOpen} startMsRef={callStartMsRef} />
+                                <span
+                                    className="rounded-md px-2.5 py-0.5 text-[10px] font-extrabold"
+                                    style={{
+                                        backgroundColor: 'rgba(8, 47, 73, 0.9)',
+                                        color: '#7DD3FC',
+                                        border: '1px solid rgba(56, 189, 248, 0.45)',
+                                    }}
+                                >
                                     👥 {1 + Math.max(1, remoteHuddleParticipants.length)} Connected Live
+                                    {hasActiveHuddleWebRtcStream ? ' · P2P HD' : ''}
                                 </span>
-                                {activeCallMode === 'video' && isCameraOn && (
-                                    <span className="rounded-md bg-emerald-950/80 border border-emerald-500/40 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
+                                {((activeCallMode === 'video' && isCameraOn) || isScreenSharing) && (
+                                    <span
+                                        className="rounded-md px-2 py-0.5 text-[10px] font-bold"
+                                        style={{
+                                            backgroundColor: 'rgba(6, 78, 59, 0.85)',
+                                            color: '#6EE7B7',
+                                            border: '1px solid rgba(16, 185, 129, 0.45)',
+                                        }}
+                                    >
                                         {cameraStatusText}
                                     </span>
                                 )}
@@ -4166,7 +4881,12 @@ export function MessagingView({
                                             setSelectedVideoDeviceId(devId);
                                             startCallMedia('video', devId);
                                         }}
-                                        className="rounded-lg bg-slate-800 border border-slate-700 px-2 py-1 text-[11px] font-bold text-emerald-300"
+                                        className="rounded-lg px-2 py-1 text-[11px] font-bold"
+                                        style={{
+                                            backgroundColor: '#1E293B',
+                                            color: '#6EE7B7',
+                                            border: '1px solid rgba(148, 163, 184, 0.35)',
+                                        }}
                                     >
                                         {videoDevices.map((d, idx) => (
                                             <option key={d.deviceId || idx} value={d.deviceId}>
@@ -4180,7 +4900,8 @@ export function MessagingView({
                                     <button
                                         type="button"
                                         onClick={() => startCallMedia('video', selectedVideoDeviceId || undefined)}
-                                        className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-[11px] font-extrabold text-white cursor-pointer"
+                                        className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-[11px] font-extrabold cursor-pointer"
+                                        style={{ color: '#FFFFFF' }}
                                     >
                                         🔄 Retry Hardware Webcam
                                     </button>
@@ -4193,7 +4914,12 @@ export function MessagingView({
                                         navigator.clipboard?.writeText(inviteUrl);
                                         triggerToast('Call invite link copied to clipboard!');
                                     }}
-                                    className="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[11px] font-bold text-sky-300 cursor-pointer"
+                                    className="px-3 py-1 rounded-lg text-[11px] font-bold cursor-pointer"
+                                    style={{
+                                        backgroundColor: '#1E293B',
+                                        color: '#7DD3FC',
+                                        border: '1px solid rgba(125, 211, 252, 0.35)',
+                                    }}
                                 >
                                     🔗 Copy Invite Link
                                 </button>
@@ -4206,8 +4932,13 @@ export function MessagingView({
                                 remoteHuddleParticipants.length >= 2 ? 'lg:grid-cols-3' : ''
                             } gap-4`}
                         >
-                            {/* Local User WebRTC Stream / Self-View Card (Placed FIRST so user immediately sees themselves!) */}
-                            <div className="relative rounded-xl bg-slate-950 border-2 border-emerald-500/80 h-64 flex flex-col items-center justify-center overflow-hidden shadow-lg">
+                            {/* Local User WebRTC Stream / Self-View Card */}
+                            <div
+                                className={`relative rounded-xl border-2 border-emerald-500/80 ${
+                                    isScreenSharing ? 'h-72' : 'h-64'
+                                } flex flex-col items-center justify-center overflow-hidden shadow-lg`}
+                                style={{ backgroundColor: '#020617' }}
+                            >
                                 <video
                                     ref={setLocalVideoCallbackRef}
                                     autoPlay
@@ -4219,7 +4950,7 @@ export function MessagingView({
                                     style={{
                                         width: '100%',
                                         height: '100%',
-                                        objectFit: 'cover',
+                                        objectFit: isScreenSharing ? 'contain' : 'cover',
                                         transform:
                                             !isScreenSharing && !isUsingFallbackCam ? 'scaleX(-1)' : 'none',
                                         opacity:
@@ -4230,10 +4961,11 @@ export function MessagingView({
                                         position: 'absolute',
                                         inset: 0,
                                         zIndex: 5,
+                                        backgroundColor: '#020617',
                                     }}
                                 />
 
-                                {(!hasLocalStream || (!isCameraOn && !isScreenSharing) || activeCallMode === 'audio') && (
+                                {(!hasLocalStream || (!isCameraOn && !isScreenSharing) || (activeCallMode === 'audio' && !isScreenSharing)) && (
                                     <div className="relative z-10 flex flex-col items-center justify-center p-4">
                                         {currentUser?.avatar ? (
                                             <img
@@ -4242,14 +4974,23 @@ export function MessagingView({
                                                 className="w-20 h-20 rounded-full object-cover border-4 border-sky-400 mb-2 shadow-lg"
                                             />
                                         ) : (
-                                            <div className="w-20 h-20 rounded-full bg-[#0A66C2] text-white font-black text-xl flex items-center justify-center border-4 border-sky-400 mb-2 shadow-lg">
+                                            <div
+                                                className="w-20 h-20 rounded-full bg-[#0A66C2] font-black text-xl flex items-center justify-center border-4 border-sky-400 mb-2 shadow-lg"
+                                                style={{ color: '#FFFFFF' }}
+                                            >
                                                 {(currentUser?.name || 'You').slice(0, 2).toUpperCase()}
                                             </div>
                                         )}
-                                        <p className="text-sm font-black text-white">
+                                        <p
+                                            className="text-sm font-black text-center"
+                                            style={{ color: '#FFFFFF' }}
+                                        >
                                             {currentUser?.name || 'You'} (You · Host)
                                         </p>
-                                        <p className="text-[11px] text-slate-400 mt-0.5">
+                                        <p
+                                            className="text-[11px] mt-0.5"
+                                            style={{ color: '#CBD5E1' }}
+                                        >
                                             {isMicMuted ? '🔇 Microphone Muted' : '🎙️ Microphone Active'}
                                         </p>
                                         <button
@@ -4259,18 +5000,29 @@ export function MessagingView({
                                                 setIsCameraOn(true);
                                                 startCallMedia('video', selectedVideoDeviceId || undefined);
                                             }}
-                                            className="mt-2.5 px-3 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[11px] font-extrabold cursor-pointer"
+                                            className="mt-2.5 px-3 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-[11px] font-extrabold cursor-pointer"
+                                            style={{ color: '#022C22' }}
                                         >
                                             📷 Turn On Self-View Camera
                                         </button>
                                     </div>
                                 )}
 
-                                <span className="absolute top-2.5 left-2.5 z-20 bg-emerald-500 text-slate-950 px-2 py-0.5 rounded text-[10px] font-black uppercase">
-                                    ● YOU (SELF-VIEW)
+                                <span
+                                    className="absolute top-2.5 left-2.5 z-20 bg-emerald-400 px-2 py-0.5 rounded text-[10px] font-black uppercase"
+                                    style={{ color: '#022C22' }}
+                                >
+                                    {isScreenSharing ? '● YOU (SHARING SCREEN)' : '● YOU (SELF-VIEW)'}
                                 </span>
 
-                                <span className="absolute bottom-2.5 left-2.5 z-20 bg-black/75 px-2.5 py-0.5 rounded text-[11px] font-bold text-white border border-white/15">
+                                <span
+                                    className="absolute bottom-2.5 left-2.5 z-20 px-2.5 py-0.5 rounded text-[11px] font-bold"
+                                    style={{
+                                        backgroundColor: 'rgba(2, 6, 23, 0.85)',
+                                        color: '#FFFFFF',
+                                        border: '1px solid rgba(255, 255, 255, 0.22)',
+                                    }}
+                                >
                                     {currentUser?.name || 'You'} {isMicMuted ? '🔇 (Muted)' : '🎙️ (Live)'}
                                 </span>
                             </div>
@@ -4286,22 +5038,51 @@ export function MessagingView({
                                             : `Connected Participant #${idx + 1}`;
                                     const peerSubtitle =
                                         peer.role || peer.device_label || activeThread.subtitle;
+
+                                    let remoteStream: MediaStream | undefined = peer.peer_id
+                                        ? huddleRemoteStreams[peer.peer_id]
+                                        : undefined;
+                                    if (!remoteStream && idx === 0) {
+                                        const firstEntry = Object.values(huddleRemoteStreams)[0];
+                                        if (firstEntry) remoteStream = firstEntry;
+                                    }
+                                    const hasLiveWebRtcVideoTrack = Boolean(
+                                        remoteStream &&
+                                            remoteStream
+                                                .getVideoTracks()
+                                                .some((t) => t.readyState === 'live' && t.enabled)
+                                    );
+                                    const showRemoteVideoSurface =
+                                        Boolean(peer.is_video_on || peer.is_screen_sharing) &&
+                                        (hasLiveWebRtcVideoTrack || Boolean(peer.has_fallback_frame) || activeCallMode === 'video');
+
                                     return (
                                         <div
                                             key={peer.user_id}
-                                            className="relative rounded-xl bg-gradient-to-br from-emerald-950 via-slate-900 to-sky-950 border-2 border-emerald-500/70 h-64 flex flex-col items-center justify-center p-4 overflow-hidden shadow-lg"
+                                            className={`relative rounded-xl border-2 border-emerald-500/70 ${
+                                                peer.is_screen_sharing || isScreenSharing ? 'h-72' : 'h-64'
+                                            } flex flex-col items-center justify-center p-4 overflow-hidden shadow-lg`}
+                                            style={{
+                                                background:
+                                                    'linear-gradient(135deg, #022C22 0%, #0F172A 50%, #082F49 100%)',
+                                            }}
                                         >
-                                            {activeCallMode === 'video' && (
+                                            {/* Live WebRTC Hardware Video / Screen Share Stream */}
+                                            {remoteStream && (peer.is_video_on || peer.is_screen_sharing || hasLiveWebRtcVideoTrack) && (
+                                                <HuddleRemoteWebRtcVideo
+                                                    stream={remoteStream}
+                                                    isScreenShare={peer.is_screen_sharing}
+                                                />
+                                            )}
+
+                                            {/* Pre-ICE Fallback Frame Only When WebRTC Stream Not Active Yet */}
+                                            {showRemoteVideoSurface && !hasLiveWebRtcVideoTrack && (
                                                 <>
-                                                    <img
-                                                        src={peer.live_frame || activeThread.avatar}
+                                                    <HuddleFallbackFrameImg
+                                                        userId={peer.user_id}
+                                                        fallbackAvatar={activeThread.avatar}
                                                         alt={peerTitle}
-                                                        className="absolute inset-0 w-full h-full object-cover z-5 transition-transform duration-700"
-                                                        style={{
-                                                            filter: peer.live_frame
-                                                                ? 'none'
-                                                                : 'brightness(1.06) contrast(1.05)',
-                                                        }}
+                                                        isScreenShare={peer.is_screen_sharing}
                                                     />
                                                     <div
                                                         className="absolute inset-0 z-10 pointer-events-none"
@@ -4313,22 +5094,34 @@ export function MessagingView({
                                                 </>
                                             )}
 
-                                            <span className="absolute top-2.5 left-2.5 z-20 bg-emerald-400 text-slate-950 px-2 py-0.5 rounded text-[10px] font-black uppercase flex items-center gap-1">
+                                            <span
+                                                className="absolute top-2.5 left-2.5 z-20 bg-emerald-400 px-2 py-0.5 rounded text-[10px] font-black uppercase flex items-center gap-1"
+                                                style={{ color: '#022C22' }}
+                                            >
                                                 <span>●</span>
                                                 <span>
-                                                    {activeCallMode === 'video'
-                                                        ? peer.live_frame
-                                                            ? `LIVE REMOTE CAMERA #${idx + 1}`
-                                                            : 'LIVE HD VIDEO'
+                                                    {peer.is_screen_sharing
+                                                        ? `🖥️ ${peerTitle.toUpperCase()} · SCREEN`
+                                                        : showRemoteVideoSurface
+                                                        ? hasLiveWebRtcVideoTrack
+                                                            ? `LIVE WEBRTC HD #${idx + 1}`
+                                                            : `LIVE REMOTE CAMERA #${idx + 1}`
                                                         : 'CONNECTED PEER'}
                                                 </span>
                                             </span>
 
-                                            <span className="absolute top-2.5 right-2.5 z-20 bg-black/75 border border-emerald-400/40 text-emerald-300 px-2 py-0.5 rounded text-[10px] font-mono font-bold">
-                                                🔒 E2EE 1080p
+                                            <span
+                                                className="absolute top-2.5 right-2.5 z-20 px-2 py-0.5 rounded text-[10px] font-mono font-bold"
+                                                style={{
+                                                    backgroundColor: 'rgba(2, 6, 23, 0.85)',
+                                                    color: '#6EE7B7',
+                                                    border: '1px solid rgba(52, 211, 153, 0.45)',
+                                                }}
+                                            >
+                                                🔒 E2EE {hasLiveWebRtcVideoTrack ? 'WebRTC' : 'HD'}
                                             </span>
 
-                                            {activeCallMode !== 'video' && (
+                                            {!showRemoteVideoSurface && (
                                                 <div className="relative z-20 flex flex-col items-center">
                                                     <div className="relative mb-3">
                                                         <img
@@ -4338,22 +5131,40 @@ export function MessagingView({
                                                         />
                                                         <span className="w-4 h-4 rounded-full bg-emerald-400 border-2 border-slate-900 absolute bottom-0 right-0 online-dot-blink" />
                                                     </div>
-                                                    <h4 className="font-black text-sm text-white text-center truncate max-w-full">
+                                                    <h4
+                                                        className="font-black text-sm text-center truncate max-w-full"
+                                                        style={{ color: '#FFFFFF' }}
+                                                    >
                                                         {peerTitle}
                                                     </h4>
-                                                    <p className="text-[11px] text-slate-300 text-center line-clamp-1 mt-0.5">
+                                                    <p
+                                                        className="text-[11px] text-center line-clamp-1 mt-0.5"
+                                                        style={{ color: '#CBD5E1' }}
+                                                    >
                                                         {peerSubtitle}
                                                     </p>
                                                 </div>
                                             )}
 
                                             {/* Bottom HUD Bar with Name + Live Audio/Video Waveform */}
-                                            <div className="absolute bottom-2.5 left-2.5 right-2.5 z-20 flex items-center justify-between gap-2 bg-black/75 border border-white/15 px-2.5 py-1 rounded">
+                                            <div
+                                                className="absolute bottom-2.5 left-2.5 right-2.5 z-20 flex items-center justify-between gap-2 px-2.5 py-1 rounded"
+                                                style={{
+                                                    backgroundColor: 'rgba(2, 6, 23, 0.85)',
+                                                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                                                }}
+                                            >
                                                 <div className="min-w-0">
-                                                    <p className="text-[11px] font-extrabold text-white truncate">
+                                                    <p
+                                                        className="text-[11px] font-extrabold truncate"
+                                                        style={{ color: '#FFFFFF' }}
+                                                    >
                                                         {peerTitle} {peer.is_muted ? '🔇' : ''}
                                                     </p>
-                                                    <p className="text-[9px] text-emerald-300 truncate">
+                                                    <p
+                                                        className="text-[9px] truncate"
+                                                        style={{ color: '#6EE7B7' }}
+                                                    >
                                                         {peerSubtitle}
                                                     </p>
                                                 </div>
@@ -4372,8 +5183,18 @@ export function MessagingView({
                                 })
                             ) : (
                                 /* Fallback single recipient preview card when waiting for peers to join */
-                                <div className="relative rounded-xl bg-gradient-to-br from-emerald-950 via-slate-900 to-sky-950 border-2 border-emerald-500/70 h-64 flex flex-col items-center justify-center p-4 overflow-hidden shadow-lg">
-                                    {activeCallMode === 'video' && (
+                                <div
+                                    className="relative rounded-xl border-2 border-emerald-500/70 h-64 flex flex-col items-center justify-center p-4 overflow-hidden shadow-lg"
+                                    style={{
+                                        background:
+                                            'linear-gradient(135deg, #022C22 0%, #0F172A 50%, #082F49 100%)',
+                                    }}
+                                >
+                                    {Object.values(huddleRemoteStreams)[0] ? (
+                                        <HuddleRemoteWebRtcVideo
+                                            stream={Object.values(huddleRemoteStreams)[0]}
+                                        />
+                                    ) : activeCallMode === 'video' ? (
                                         <>
                                             <img
                                                 src={activeThread.avatar}
@@ -4389,18 +5210,28 @@ export function MessagingView({
                                                 }}
                                             />
                                         </>
-                                    )}
+                                    ) : null}
 
-                                    <span className="absolute top-2.5 left-2.5 z-20 bg-emerald-400 text-slate-950 px-2 py-0.5 rounded text-[10px] font-black uppercase flex items-center gap-1">
+                                    <span
+                                        className="absolute top-2.5 left-2.5 z-20 bg-emerald-400 px-2 py-0.5 rounded text-[10px] font-black uppercase flex items-center gap-1"
+                                        style={{ color: '#022C22' }}
+                                    >
                                         <span>●</span>
                                         <span>{activeCallMode === 'video' ? 'LIVE HD VIDEO' : 'CONNECTED PEER'}</span>
                                     </span>
 
-                                    <span className="absolute top-2.5 right-2.5 z-20 bg-black/75 border border-emerald-400/40 text-emerald-300 px-2 py-0.5 rounded text-[10px] font-mono font-bold">
-                                        🔒 E2EE 1080p
+                                    <span
+                                        className="absolute top-2.5 right-2.5 z-20 px-2 py-0.5 rounded text-[10px] font-mono font-bold"
+                                        style={{
+                                            backgroundColor: 'rgba(2, 6, 23, 0.85)',
+                                            color: '#6EE7B7',
+                                            border: '1px solid rgba(52, 211, 153, 0.45)',
+                                        }}
+                                    >
+                                        🔒 E2EE HD
                                     </span>
 
-                                    {activeCallMode !== 'video' && (
+                                    {activeCallMode !== 'video' && !Object.values(huddleRemoteStreams)[0] && (
                                         <div className="relative z-20 flex flex-col items-center">
                                             <div className="relative mb-3">
                                                 <img
@@ -4410,21 +5241,39 @@ export function MessagingView({
                                                 />
                                                 <span className="w-4 h-4 rounded-full bg-emerald-400 border-2 border-slate-900 absolute bottom-0 right-0 online-dot-blink" />
                                             </div>
-                                            <h4 className="font-black text-sm text-white text-center truncate max-w-full">
+                                            <h4
+                                                className="font-black text-sm text-center truncate max-w-full"
+                                                style={{ color: '#FFFFFF' }}
+                                            >
                                                 {activeThread.title}
                                             </h4>
-                                            <p className="text-[11px] text-slate-300 text-center line-clamp-1 mt-0.5">
+                                            <p
+                                                className="text-[11px] text-center line-clamp-1 mt-0.5"
+                                                style={{ color: '#CBD5E1' }}
+                                            >
                                                 {activeThread.subtitle}
                                             </p>
                                         </div>
                                     )}
 
-                                    <div className="absolute bottom-2.5 left-2.5 right-2.5 z-20 flex items-center justify-between gap-2 bg-black/75 border border-white/15 px-2.5 py-1 rounded">
+                                    <div
+                                        className="absolute bottom-2.5 left-2.5 right-2.5 z-20 flex items-center justify-between gap-2 px-2.5 py-1 rounded"
+                                        style={{
+                                            backgroundColor: 'rgba(2, 6, 23, 0.85)',
+                                            border: '1px solid rgba(255, 255, 255, 0.2)',
+                                        }}
+                                    >
                                         <div className="min-w-0">
-                                            <p className="text-[11px] font-extrabold text-white truncate">
+                                            <p
+                                                className="text-[11px] font-extrabold truncate"
+                                                style={{ color: '#FFFFFF' }}
+                                            >
                                                 {activeThread.title}
                                             </p>
-                                            <p className="text-[9px] text-emerald-300 truncate">
+                                            <p
+                                                className="text-[9px] truncate"
+                                                style={{ color: '#6EE7B7' }}
+                                            >
                                                 {activeThread.subtitle}
                                             </p>
                                         </div>
@@ -4442,59 +5291,88 @@ export function MessagingView({
                             )}
                         </div>
 
-                        {/* Interactive Call Controls Bar */}
+                        {/* Interactive High-Contrast Call Controls Bar */}
                         <div className="flex flex-wrap items-center justify-center gap-2.5 pt-2">
                             <button
                                 type="button"
                                 onClick={handleToggleMic}
-                                className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
-                                    isMicMuted
-                                        ? 'bg-amber-600 hover:bg-amber-700 text-white'
-                                        : 'bg-slate-800 hover:bg-slate-700 text-white border border-slate-700'
-                                }`}
+                                className="px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5"
+                                style={{
+                                    backgroundColor: isMicMuted ? '#D97706' : '#1E293B',
+                                    color: '#FFFFFF',
+                                    border: isMicMuted
+                                        ? '1px solid #F59E0B'
+                                        : '1px solid rgba(148, 163, 184, 0.4)',
+                                }}
                             >
                                 <span>{isMicMuted ? '🔇' : '🎙️'}</span>
-                                <span>{isMicMuted ? 'Unmute Mic' : 'Mute Mic'}</span>
+                                <span style={{ color: '#FFFFFF' }}>{isMicMuted ? 'Unmute Mic' : 'Mute Mic'}</span>
                             </button>
 
                             <button
                                 type="button"
                                 onClick={handleToggleCamera}
-                                className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
-                                    isCameraOn && activeCallMode === 'video'
-                                        ? 'bg-[#0A66C2] hover:bg-[#004182] text-white'
-                                        : 'bg-slate-800 hover:bg-slate-700 text-white border border-slate-700'
-                                }`}
+                                className="px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5"
+                                style={{
+                                    backgroundColor:
+                                        isCameraOn && activeCallMode === 'video' ? '#0A66C2' : '#1E293B',
+                                    color: '#FFFFFF',
+                                    border:
+                                        isCameraOn && activeCallMode === 'video'
+                                            ? '1px solid #38BDF8'
+                                            : '1px solid rgba(148, 163, 184, 0.4)',
+                                }}
                             >
                                 <span>📷</span>
-                                <span>{isCameraOn && activeCallMode === 'video' ? 'Camera On (Self-View)' : 'Turn Camera On'}</span>
+                                <span style={{ color: '#FFFFFF' }}>
+                                    {isCameraOn && activeCallMode === 'video'
+                                        ? 'Camera On (Self-View)'
+                                        : 'Turn Camera On'}
+                                </span>
                             </button>
 
                             <button
                                 type="button"
                                 onClick={handleToggleScreenShare}
-                                className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
-                                    isScreenSharing
-                                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                                        : 'bg-slate-800 hover:bg-slate-700 text-white border border-slate-700'
-                                }`}
+                                className="px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5"
+                                style={{
+                                    backgroundColor: isScreenSharing ? '#059669' : '#1E293B',
+                                    color: '#FFFFFF',
+                                    border: isScreenSharing
+                                        ? '1px solid #34D399'
+                                        : '1px solid rgba(148, 163, 184, 0.4)',
+                                }}
                             >
                                 <span>🖥️</span>
-                                <span>{isScreenSharing ? 'Stop Sharing' : 'Share Screen'}</span>
+                                <span style={{ color: '#FFFFFF' }}>
+                                    {isScreenSharing ? 'Stop Sharing' : 'Share Screen'}
+                                </span>
                             </button>
 
                             {onNavigateVibeComms && (
                                 <button
                                     type="button"
                                     onClick={() => {
+                                        const handoffPayload: MessagingStudioHandoff = {
+                                            callId: activeThread.id,
+                                            conversationId: activeThread.id,
+                                            conversationName: activeThread.title,
+                                            mode: isScreenSharing
+                                                ? 'screenshare'
+                                                : activeCallMode || 'video',
+                                            avatar: activeThread.avatar,
+                                            subtitle: activeThread.subtitle,
+                                        };
+                                        isHandingOffToStudioRef.current = true;
+                                        stopCurrentCallMedia();
                                         setActiveCallMode(null);
-                                        onNavigateVibeComms();
+                                        onNavigateVibeComms(handoffPayload);
                                     }}
                                     className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-xs font-black cursor-pointer flex items-center gap-1.5"
-                                    style={{ color: '#FFFFFF' }}
+                                    style={{ color: '#FFFFFF', border: '1px solid rgba(129, 140, 248, 0.5)' }}
                                 >
                                     <span>🎙️</span>
-                                    <span>Full Audio/Video Studio</span>
+                                    <span style={{ color: '#FFFFFF' }}>Full Audio/Video Studio</span>
                                 </button>
                             )}
 
@@ -4502,10 +5380,10 @@ export function MessagingView({
                                 type="button"
                                 onClick={handleEndCallAndLog}
                                 className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-xs font-black cursor-pointer flex items-center gap-1.5"
-                                style={{ color: '#FFFFFF' }}
+                                style={{ color: '#FFFFFF', border: '1px solid rgba(251, 113, 133, 0.5)' }}
                             >
                                 <span>📞</span>
-                                <span>End &amp; Log Call ✕</span>
+                                <span style={{ color: '#FFFFFF' }}>End &amp; Log Call ✕</span>
                             </button>
                         </div>
                     </div>

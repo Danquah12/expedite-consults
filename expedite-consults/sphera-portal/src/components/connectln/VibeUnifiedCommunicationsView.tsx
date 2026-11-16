@@ -48,6 +48,16 @@ import {
 } from "lucide-react"
 import { VibeVideoCallStudio } from "./VibeVideoCallStudio"
 
+export interface StudioCallHandoffPayload {
+  callId: string
+  conversationId: string
+  conversationName: string
+  mode: "audio" | "video" | "screenshare"
+  avatar?: string
+  subtitle?: string
+  returnToMessaging?: boolean
+}
+
 export interface VibeUnifiedCommunicationsViewProps {
   currentUser?: {
     name?: string
@@ -57,6 +67,11 @@ export interface VibeUnifiedCommunicationsViewProps {
   }
   onNavigateTab?: (tab: string) => void
   onOpenVibeCampus?: () => void
+  studioHandoff?: StudioCallHandoffPayload | null
+  onReturnToMessaging?: (opts?: {
+    keepCallActive?: boolean
+    mode?: "audio" | "video" | "screenshare"
+  }) => void
 }
 
 type MainSectionTab =
@@ -674,12 +689,43 @@ const MANDATORY_E2E_SCENARIOS = [
 export function VibeUnifiedCommunicationsView({
   currentUser,
   onOpenVibeCampus,
+  studioHandoff,
+  onReturnToMessaging,
 }: VibeUnifiedCommunicationsViewProps) {
-  const [activeMainTab, setActiveMainTab] = useState<MainSectionTab>("video_call_studio")
-  const [joinedCallRoomId, setJoinedCallRoomId] = useState<string | null>(null)
+  const [storedHandoff] = useState<StudioCallHandoffPayload | null>(() => {
+    if (studioHandoff) return studioHandoff
+    if (typeof window === "undefined") return null
+    try {
+      const raw = sessionStorage.getItem("connectln_studio_handoff_v1")
+      if (!raw) return null
+      const parsed = JSON.parse(raw)
+      if (parsed && parsed.callId && (!parsed.ts || Date.now() - Number(parsed.ts) < 15 * 60 * 1000)) {
+        return parsed as StudioCallHandoffPayload
+      }
+    } catch {}
+    return null
+  })
 
-  // If a friend clicks a Direct Meeting Link (?tab=vibecomms&joinCall=...), auto-launch the Live Video & Call Studio!
+  const effectiveHandoff = studioHandoff || storedHandoff
+
+  const [activeMainTab, setActiveMainTab] = useState<MainSectionTab>("video_call_studio")
+  const [joinedCallRoomId, setJoinedCallRoomId] = useState<string | null>(() => {
+    if (effectiveHandoff?.callId) return effectiveHandoff.callId
+    if (typeof window !== "undefined") {
+      const joinCallParam = new URLSearchParams(window.location.search).get("joinCall")
+      if (joinCallParam) return joinCallParam
+    }
+    return null
+  })
+
+  // Keep room ID & active tab synced if studioHandoff or ?joinCall=... updates
   useEffect(() => {
+    if (studioHandoff?.callId) {
+      setJoinedCallRoomId(studioHandoff.callId)
+      setCallMode(studioHandoff.mode || "video")
+      setActiveMainTab("video_call_studio")
+      return
+    }
     if (typeof window === "undefined") return
     const params = new URLSearchParams(window.location.search)
     const joinCallParam = params.get("joinCall")
@@ -687,7 +733,7 @@ export function VibeUnifiedCommunicationsView({
       setJoinedCallRoomId(joinCallParam)
       setActiveMainTab("video_call_studio")
     }
-  }, [])
+  }, [studioHandoff])
 
   // Live Workspace state
   const [chatCategory, setChatCategory] = useState<ChatCategoryMode>("all")
@@ -703,7 +749,9 @@ export function VibeUnifiedCommunicationsView({
   const [callState, setCallState] = useState<
     "IDLE" | "CREATED" | "RINGING" | "NEGOTIATING" | "CONNECTED" | "RECONNECTING"
   >("IDLE")
-  const [callMode, setCallMode] = useState<"audio" | "video" | "screenshare">("video")
+  const [callMode, setCallMode] = useState<"audio" | "video" | "screenshare">(
+    effectiveHandoff?.mode || "video"
+  )
   const [lowBandwidthMode, setLowBandwidthMode] = useState(false)
   const [noiseSuppression, setNoiseSuppression] = useState(true)
   const [liveCaptions, setLiveCaptions] = useState(true)
@@ -1076,11 +1124,18 @@ export function VibeUnifiedCommunicationsView({
          ===================================================================== */}
       {activeMainTab === "video_call_studio" && (
         <VibeVideoCallStudio
-          conversationId={selectedConversation.id}
-          conversationName={selectedConversation.name}
-          initialMode={callMode}
+          key={effectiveHandoff?.callId || joinedCallRoomId || "default-studio-room"}
+          conversationId={effectiveHandoff?.conversationId || joinedCallRoomId || selectedConversation.id}
+          conversationName={effectiveHandoff?.conversationName || selectedConversation.name}
+          initialMode={effectiveHandoff?.mode || callMode}
           currentUserName={currentUser?.name || "You (Verified Device)"}
-          initialCallRoomId={joinedCallRoomId}
+          initialCallRoomId={effectiveHandoff?.callId || joinedCallRoomId}
+          canReturnToMessaging={Boolean(effectiveHandoff?.returnToMessaging && onReturnToMessaging)}
+          onReturnToMessagingHuddle={
+            effectiveHandoff?.returnToMessaging && onReturnToMessaging
+              ? (activeMode) => onReturnToMessaging({ keepCallActive: true, mode: activeMode })
+              : undefined
+          }
           onCreateWorkflowFromCall={(title, owner, evidence) => {
             setWorkflows((prev) => [
               {
@@ -1091,12 +1146,18 @@ export function VibeUnifiedCommunicationsView({
                 deadline: "In 48 Hours",
                 evidence,
                 status: "Task Created",
-                targetRecord: `${selectedConversation.name} · Call Action Ledger`,
+                targetRecord: `${effectiveHandoff?.conversationName || selectedConversation.name} · Call Action Ledger`,
               },
               ...prev,
             ])
           }}
-          onCloseStudio={() => setActiveMainTab("workspace")}
+          onCloseStudio={() => {
+            if (effectiveHandoff?.returnToMessaging && onReturnToMessaging) {
+              onReturnToMessaging({ keepCallActive: false })
+            } else {
+              setActiveMainTab("workspace")
+            }
+          }}
         />
       )}
 
