@@ -251,6 +251,85 @@ function HuddleFallbackFrameImg({
     );
 }
 
+interface HuddleBackgroundPreset {
+    id: string;
+    name: string;
+    badge: string;
+    mode: 'none' | 'scene' | 'blur';
+    imageUrl?: string;
+    isBrand?: boolean;
+    blurPx?: number;
+    colors: [string, string, string];
+}
+
+const HUDDLE_BACKGROUND_OPTIONS: HuddleBackgroundPreset[] = [
+    {
+        id: 'none',
+        name: 'Original Room',
+        badge: 'RAW CAM',
+        mode: 'none',
+        colors: ['#090D16', '#111827', '#1F2937'],
+    },
+    {
+        id: 'expedite-cyber',
+        name: 'Expedite Consults · Cyber',
+        badge: 'EXPEDITE TECH',
+        mode: 'scene',
+        imageUrl: '/brand/bg-expedite-cyber.jpg',
+        isBrand: true,
+        colors: ['#030E24', '#061A3A', '#020917'],
+    },
+    {
+        id: 'expedite-crest',
+        name: 'Expedite Consults · Crest',
+        badge: 'EXPEDITE SEC',
+        mode: 'scene',
+        imageUrl: '/brand/bg-expedite-crest.png',
+        isBrand: true,
+        colors: ['#030C1D', '#071633', '#020814'],
+    },
+    {
+        id: 'alpine-mirror-lake',
+        name: 'Alpine Mirror Lake',
+        badge: 'ALPINE LAKE',
+        mode: 'scene',
+        imageUrl: '/brand/bg-alpine-lake.jpg',
+        colors: ['#0C4A6E', '#1E3A8A', '#0F172A'],
+    },
+    {
+        id: 'misty-hilltop-castle',
+        name: 'Misty Hilltop Castle',
+        badge: 'CASTLE VALLEY',
+        mode: 'scene',
+        imageUrl: '/brand/bg-hilltop-castle.jpg',
+        colors: ['#14532D', '#1E293B', '#0F172A'],
+    },
+    {
+        id: 'golden-canyon-boulders',
+        name: 'Golden Canyon Boulders',
+        badge: 'DESERT ROCKS',
+        mode: 'scene',
+        imageUrl: '/brand/bg-canyon-boulders.jpg',
+        colors: ['#78350F', '#0369A1', '#1C1917'],
+    },
+    {
+        id: 'blur-soft',
+        name: 'Soft Bokeh Blur',
+        badge: 'SOFT BLUR',
+        mode: 'blur',
+        blurPx: 11,
+        colors: ['#064E3B', '#0F172A', '#134E4A'],
+    },
+    {
+        id: 'blur-privacy',
+        name: 'Deep Privacy Blur',
+        badge: 'MAX PRIVACY',
+        mode: 'blur',
+        blurPx: 22,
+        colors: ['#115E59', '#090D16', '#064E3B'],
+    },
+];
+
 export interface MessagingStudioHandoff {
     callId: string;
     conversationId: string;
@@ -622,6 +701,22 @@ export function MessagingView({
     const huddleKnownPeerIdsRef = useRef<Set<string>>(new Set());
     const huddleDialPeerNowRef = useRef<((targetPeerId: string) => void) | null>(null);
     const huddleLiveWebRtcPeersCountRef = useRef<number>(0);
+    const [huddleVirtualBgId, setHuddleVirtualBgId] = useState<string>(() => {
+        if (typeof window !== 'undefined') {
+            const saved = sessionStorage.getItem('vibe_call_virtual_bg');
+            if (saved && HUDDLE_BACKGROUND_OPTIONS.some((o) => o.id === saved)) {
+                return saved;
+            }
+        }
+        return 'none';
+    });
+    const [showHuddleBgPicker, setShowHuddleBgPicker] = useState<boolean>(false);
+    const huddleVirtualBgCanvasRef = useRef<HTMLCanvasElement | null>(null);
+    const huddleSmoothMaskCanvasRef = useRef<HTMLCanvasElement | null>(null);
+    const huddleBgImagesRef = useRef<Map<string, HTMLImageElement>>(new Map());
+    const huddleSegmenterRef = useRef<any>(null);
+    const huddleIsSegmentingRef = useRef<boolean>(false);
+    const huddleLatestSegMaskRef = useRef<any>(null);
     const [toastBanner, setToastBanner] = useState<string | null>(null);
 
     const chatEndRef = useRef<HTMLDivElement>(null);
@@ -953,6 +1048,12 @@ export function MessagingView({
             setSelectedThreadId(resumeCallSession.threadId);
             setMobileShowChat(true);
         }
+        if (typeof window !== 'undefined') {
+            const savedBg = sessionStorage.getItem('vibe_call_virtual_bg');
+            if (savedBg && HUDDLE_BACKGROUND_OPTIONS.some((o) => o.id === savedBg)) {
+                setHuddleVirtualBgId(savedBg);
+            }
+        }
         isHandingOffToStudioRef.current = false;
         setActiveCallMode(resumeCallSession.mode);
         onConsumeResumeCall?.();
@@ -963,6 +1064,7 @@ export function MessagingView({
     useEffect(() => {
         if (!isCallModalOpen || !activeCallMode) {
             setIsScreenSharing(false);
+            setShowHuddleBgPicker(false);
             setHasLocalStream(false);
             setIsUsingFallbackCam(false);
             setRemoteHuddleParticipants([]);
@@ -1614,11 +1716,305 @@ export function MessagingView({
     const huddleVoicePlayerRef = useRef<GaplessRemoteVoicePlayer | null>(null);
     const hasActiveHuddleWebRtcStream = Object.keys(huddleRemoteStreams).length > 0;
 
-    // Push updated video/screen/audio tracks into existing WebRTC calls immediately via replaceTrack (zero lag on camera/screen toggle!)
+    const activeHuddleBgPreset =
+        HUDDLE_BACKGROUND_OPTIONS.find((o) => o.id === huddleVirtualBgId) ||
+        HUDDLE_BACKGROUND_OPTIONS[0];
+
+    const getHuddleOutgoingStream = (): MediaStream | null => {
+        if (
+            !isScreenSharing &&
+            huddleVirtualBgId !== 'none' &&
+            activeCallMode === 'video' &&
+            isCameraOn &&
+            huddleVirtualBgCanvasRef.current &&
+            typeof huddleVirtualBgCanvasRef.current.captureStream === 'function'
+        ) {
+            try {
+                const canvasStream = huddleVirtualBgCanvasRef.current.captureStream(18);
+                const cvTrack = canvasStream.getVideoTracks()[0];
+                if (cvTrack) {
+                    const combined = new MediaStream([cvTrack]);
+                    localStreamRef.current?.getAudioTracks().forEach((at) => combined.addTrack(at));
+                    return combined;
+                }
+            } catch {}
+        }
+        return localStreamRef.current;
+    };
+
+    // Preload background images when Call Modal opens so switching backgrounds is instantaneous
+    useEffect(() => {
+        if (typeof window === 'undefined' || !isCallModalOpen) return;
+        HUDDLE_BACKGROUND_OPTIONS.forEach((opt) => {
+            if (opt.imageUrl && !huddleBgImagesRef.current.has(opt.id)) {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    huddleBgImagesRef.current.set(opt.id, img);
+                };
+                img.src = opt.imageUrl;
+            }
+        });
+    }, [isCallModalOpen]);
+
+    // Real-Time 18fps AI Person-Segmentation Virtual Background Compositor inside Messaging Call Modal
+    useEffect(() => {
+        if (
+            typeof window === 'undefined' ||
+            !isCallModalOpen ||
+            !hasLocalStream ||
+            activeCallMode !== 'video' ||
+            !isCameraOn ||
+            isScreenSharing ||
+            huddleVirtualBgId === 'none'
+        ) {
+            return;
+        }
+
+        let isRunning = true;
+        let animId: number | null = null;
+        let pushedCanvasTrack = false;
+
+        const ensureMaskSvgFilter = () => {
+            if (document.getElementById('vibe-tight-person-mask-svg')) return;
+            const svgNS = 'http://www.w3.org/2000/svg';
+            const svg = document.createElementNS(svgNS, 'svg');
+            svg.setAttribute('id', 'vibe-tight-person-mask-svg');
+            svg.setAttribute('width', '0');
+            svg.setAttribute('height', '0');
+            svg.style.position = 'fixed';
+            svg.style.pointerEvents = 'none';
+            svg.style.opacity = '0';
+            svg.innerHTML = `
+                <defs>
+                  <filter id="vibe-tight-person-mask" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="2.0" result="smoothed" />
+                    <feComponentTransfer in="smoothed" result="thresholded">
+                      <feFuncA type="linear" slope="7.8" intercept="-3.55" />
+                    </feComponentTransfer>
+                    <feMorphology in="thresholded" operator="erode" radius="1.5" result="trimmed" />
+                    <feGaussianBlur in="trimmed" stdDeviation="1.2" />
+                  </filter>
+                </defs>
+            `;
+            document.body.appendChild(svg);
+        };
+        ensureMaskSvgFilter();
+
+        const drawCoverImg = (
+            ctx: CanvasRenderingContext2D,
+            img: HTMLImageElement,
+            w: number,
+            h: number
+        ) => {
+            const iw = img.naturalWidth || w;
+            const ih = img.naturalHeight || h;
+            const scale = Math.max(w / iw, h / ih);
+            const dw = iw * scale;
+            const dh = ih * scale;
+            ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
+        };
+
+        const renderComposite = (
+            personImage: CanvasImageSource,
+            rawMask: CanvasImageSource | null,
+            isMirrored: boolean
+        ) => {
+            const canvas = huddleVirtualBgCanvasRef.current;
+            if (!canvas) return;
+            const w = 480;
+            const h = 270;
+            if (canvas.width !== w) canvas.width = w;
+            if (canvas.height !== h) canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            let maskCanvas = huddleSmoothMaskCanvasRef.current;
+            if (!maskCanvas) {
+                maskCanvas = document.createElement('canvas');
+                maskCanvas.width = w;
+                maskCanvas.height = h;
+                huddleSmoothMaskCanvasRef.current = maskCanvas;
+            }
+            const mCtx = maskCanvas.getContext('2d');
+            if (mCtx && rawMask) {
+                mCtx.save();
+                mCtx.globalCompositeOperation = 'destination-in';
+                mCtx.fillStyle = 'rgba(0,0,0,0.32)';
+                mCtx.fillRect(0, 0, w, h);
+                mCtx.globalCompositeOperation = 'source-over';
+                mCtx.globalAlpha = 0.68;
+                mCtx.drawImage(rawMask, 0, 0, w, h);
+                mCtx.restore();
+            }
+
+            ctx.save();
+            ctx.clearRect(0, 0, w, h);
+            if (rawMask && maskCanvas) {
+                ctx.save();
+                ctx.filter = 'url(#vibe-tight-person-mask)';
+                ctx.drawImage(maskCanvas, 0, 0, w, h);
+                ctx.restore();
+
+                ctx.globalCompositeOperation = 'source-in';
+                ctx.save();
+                if (!isMirrored) {
+                    ctx.translate(w, 0);
+                    ctx.scale(-1, 1);
+                }
+                ctx.drawImage(personImage, 0, 0, w, h);
+                ctx.restore();
+
+                ctx.globalCompositeOperation = 'destination-over';
+                if (activeHuddleBgPreset.mode === 'blur') {
+                    ctx.save();
+                    ctx.filter = `blur(${activeHuddleBgPreset.blurPx || 12}px) brightness(0.94)`;
+                    if (!isMirrored) {
+                        ctx.translate(w, 0);
+                        ctx.scale(-1, 1);
+                    }
+                    ctx.drawImage(personImage, -16, -16, w + 32, h + 32);
+                    ctx.restore();
+                } else {
+                    const bgImg = huddleBgImagesRef.current.get(activeHuddleBgPreset.id);
+                    if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
+                        drawCoverImg(ctx, bgImg, w, h);
+                    } else {
+                        const grad = ctx.createLinearGradient(0, 0, w, h);
+                        grad.addColorStop(0, activeHuddleBgPreset.colors[0]);
+                        grad.addColorStop(0.55, activeHuddleBgPreset.colors[1]);
+                        grad.addColorStop(1, activeHuddleBgPreset.colors[2]);
+                        ctx.fillStyle = grad;
+                        ctx.fillRect(0, 0, w, h);
+                    }
+                }
+            } else {
+                ctx.save();
+                if (!isMirrored) {
+                    ctx.translate(w, 0);
+                    ctx.scale(-1, 1);
+                }
+                ctx.drawImage(personImage, 0, 0, w, h);
+                ctx.restore();
+            }
+            ctx.restore();
+
+            if (!pushedCanvasTrack && typeof canvas.captureStream === 'function') {
+                pushedCanvasTrack = true;
+                try {
+                    const cvTrack = canvas.captureStream(18).getVideoTracks()[0];
+                    if (cvTrack) {
+                        huddleActiveMediaCallsRef.current.forEach((mc) => {
+                            const pc: RTCPeerConnection | undefined = mc?.peerConnection;
+                            const vs = pc?.getSenders?.().find((s) => s.track && s.track.kind === 'video');
+                            vs?.replaceTrack?.(cvTrack).catch(() => {});
+                        });
+                    }
+                } catch {}
+            }
+        };
+
+        const onSegResults = (results: any) => {
+            if (!isRunning) return;
+            if (results?.segmentationMask) {
+                huddleLatestSegMaskRef.current = results.segmentationMask;
+                const srcImg = results.image || localVideoRef.current;
+                if (srcImg) {
+                    renderComposite(srcImg, results.segmentationMask, Boolean(results.image));
+                }
+            }
+        };
+
+        const ensureSegmenter = async () => {
+            if (huddleSegmenterRef.current) {
+                huddleSegmenterRef.current.onResults(onSegResults);
+                return;
+            }
+            try {
+                let SegClass = (window as any).SelfieSegmentation;
+                if (!SegClass) {
+                    SegClass = await new Promise<any>((resolve) => {
+                        const existing = document.querySelector(
+                            'script[data-mediapipe-selfie="true"]'
+                        ) as HTMLScriptElement | null;
+                        if (existing) {
+                            existing.addEventListener(
+                                'load',
+                                () => resolve((window as any).SelfieSegmentation),
+                                { once: true }
+                            );
+                            existing.addEventListener('error', () => resolve(null), { once: true });
+                            return;
+                        }
+                        const script = document.createElement('script');
+                        script.src = '/mediapipe/selfie_segmentation/selfie_segmentation.js';
+                        script.async = true;
+                        script.setAttribute('data-mediapipe-selfie', 'true');
+                        script.onload = () => resolve((window as any).SelfieSegmentation || null);
+                        script.onerror = () => resolve(null);
+                        document.head.appendChild(script);
+                    });
+                }
+                if (!SegClass || !isRunning) return;
+                const seg = new SegClass({
+                    locateFile: (file: string) => `/mediapipe/selfie_segmentation/${file}`,
+                });
+                seg.setOptions({ modelSelection: 1, selfieMode: true });
+                seg.onResults(onSegResults);
+                if (typeof seg.initialize === 'function') {
+                    await seg.initialize();
+                }
+                huddleSegmenterRef.current = seg;
+            } catch {}
+        };
+        ensureSegmenter();
+
+        let lastTs = 0;
+        const loop = (nowTs: number) => {
+            if (!isRunning) return;
+            if (nowTs - lastTs >= 54) {
+                const videoEl = localVideoRef.current;
+                if (videoEl && videoEl.readyState >= 2 && videoEl.videoWidth > 0) {
+                    lastTs = nowTs;
+                    if (huddleSegmenterRef.current) {
+                        if (!huddleIsSegmentingRef.current) {
+                            huddleIsSegmentingRef.current = true;
+                            huddleSegmenterRef.current
+                                .send({ image: videoEl })
+                                .catch(() => {})
+                                .finally(() => {
+                                    huddleIsSegmentingRef.current = false;
+                                });
+                        }
+                    } else {
+                        renderComposite(videoEl, huddleLatestSegMaskRef.current, false);
+                    }
+                }
+            }
+            animId = requestAnimationFrame(loop);
+        };
+        animId = requestAnimationFrame(loop);
+
+        return () => {
+            isRunning = false;
+            if (animId) cancelAnimationFrame(animId);
+        };
+    }, [
+        isCallModalOpen,
+        hasLocalStream,
+        activeCallMode,
+        isCameraOn,
+        isScreenSharing,
+        huddleVirtualBgId,
+        activeHuddleBgPreset,
+    ]);
+
+    // Push updated video/screen/audio tracks into existing WebRTC calls immediately via replaceTrack (zero lag on camera/screen/bg toggle!)
     useEffect(() => {
         if (!isCallModalOpen || !localStreamState) return;
-        const vTrack = localStreamState.getVideoTracks()[0];
-        const aTrack = localStreamState.getAudioTracks()[0];
+        const outgoing = getHuddleOutgoingStream() || localStreamState;
+        const vTrack = outgoing.getVideoTracks()[0];
+        const aTrack = outgoing.getAudioTracks()[0];
         huddleActiveMediaCallsRef.current.forEach((mediaCall, peerId) => {
             const pc: RTCPeerConnection | undefined = mediaCall?.peerConnection;
             if (!pc || typeof pc.getSenders !== 'function') return;
@@ -1648,7 +2044,7 @@ export function MessagingView({
                 huddleDialPeerNowRef.current?.(peerId);
             }
         });
-    }, [isCallModalOpen, localStreamState, isScreenSharing]);
+    }, [isCallModalOpen, localStreamState, isScreenSharing, huddleVirtualBgId]);
 
     // LAYER 1: Real Hardware-Accelerated PeerJS WebRTC Mesh for Messaging Huddle (interoperates 100% with VibeVideoCallStudio!)
     useEffect(() => {
@@ -1727,7 +2123,7 @@ export function MessagingView({
             ) {
                 return;
             }
-            const outStream = localStreamRef.current;
+            const outStream = getHuddleOutgoingStream();
             if (!outStream) return;
             const nowMs = Date.now();
             const lastTry = lastCallAttemptMs.get(targetPeerId) || 0;
@@ -1822,7 +2218,7 @@ export function MessagingView({
 
                 peer.on('call', (incomingCall: any) => {
                     try {
-                        incomingCall.answer(localStreamRef.current || undefined);
+                        incomingCall.answer(getHuddleOutgoingStream() || undefined);
                     } catch {}
                     bindMediaCall(incomingCall);
                 });
@@ -4937,7 +5333,15 @@ export function MessagingView({
                                 className={`relative rounded-xl border-2 border-emerald-500/80 ${
                                     isScreenSharing ? 'h-72' : 'h-64'
                                 } flex flex-col items-center justify-center overflow-hidden shadow-lg`}
-                                style={{ backgroundColor: '#020617' }}
+                                style={{
+                                    backgroundColor: '#020617',
+                                    backgroundImage:
+                                        !isScreenSharing && activeHuddleBgPreset.imageUrl
+                                            ? `linear-gradient(to top, rgba(2, 6, 23, 0.72), rgba(2, 6, 23, 0.18)), url(${activeHuddleBgPreset.imageUrl})`
+                                            : undefined,
+                                    backgroundSize: 'cover',
+                                    backgroundPosition: activeHuddleBgPreset.isBrand ? 'center top' : 'center',
+                                }}
                             >
                                 <video
                                     ref={setLocalVideoCallbackRef}
@@ -4962,6 +5366,27 @@ export function MessagingView({
                                         inset: 0,
                                         zIndex: 5,
                                         backgroundColor: '#020617',
+                                    }}
+                                />
+
+                                {/* Live Virtual Background Compositing Canvas Overlay */}
+                                <canvas
+                                    ref={huddleVirtualBgCanvasRef}
+                                    style={{
+                                        position: 'absolute',
+                                        inset: 0,
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: 'cover',
+                                        zIndex: 6,
+                                        display:
+                                            !isScreenSharing &&
+                                            activeCallMode === 'video' &&
+                                            isCameraOn &&
+                                            hasLocalStream &&
+                                            huddleVirtualBgId !== 'none'
+                                                ? 'block'
+                                                : 'none',
                                     }}
                                 />
 
@@ -5291,6 +5716,114 @@ export function MessagingView({
                             )}
                         </div>
 
+                        {/* Visual Call Background Selector Drawer (Expedite Consults + Scenic + Blur) */}
+                        {showHuddleBgPicker && (
+                            <div
+                                className="rounded-xl p-3.5 space-y-2.5"
+                                style={{
+                                    backgroundColor: '#06131F',
+                                    border: '1px solid rgba(45, 212, 191, 0.5)',
+                                }}
+                            >
+                                <div className="flex items-center justify-between gap-2">
+                                    <span
+                                        className="text-xs font-extrabold flex items-center gap-1.5"
+                                        style={{ color: '#5EEAD4' }}
+                                    >
+                                        <span>✨ Select Call Background</span>
+                                        <span
+                                            className="text-[10px] font-medium"
+                                            style={{ color: '#94A3B8' }}
+                                        >
+                                            (Synced live to your self-view &amp; connected call peers)
+                                        </span>
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowHuddleBgPicker(false)}
+                                        className="px-2.5 py-0.5 rounded-md text-[11px] font-bold cursor-pointer"
+                                        style={{
+                                            backgroundColor: '#1E293B',
+                                            color: '#E2E8F0',
+                                            border: '1px solid rgba(148, 163, 184, 0.35)',
+                                        }}
+                                    >
+                                        ✕ Close
+                                    </button>
+                                </div>
+
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                    {HUDDLE_BACKGROUND_OPTIONS.map((opt) => {
+                                        const isSelected = huddleVirtualBgId === opt.id;
+                                        return (
+                                            <button
+                                                key={opt.id}
+                                                type="button"
+                                                onClick={async () => {
+                                                    setHuddleVirtualBgId(opt.id);
+                                                    if (typeof window !== 'undefined') {
+                                                        sessionStorage.setItem('vibe_call_virtual_bg', opt.id);
+                                                    }
+                                                    if (opt.id !== 'none' && (!isCameraOn || activeCallMode !== 'video')) {
+                                                        setActiveCallMode('video');
+                                                        setIsCameraOn(true);
+                                                        await startCallMedia('video', selectedVideoDeviceId || undefined);
+                                                    }
+                                                }}
+                                                className="rounded-xl overflow-hidden text-left transition-all cursor-pointer flex flex-col justify-between h-20 p-2 relative"
+                                                style={{
+                                                    backgroundImage: opt.imageUrl
+                                                        ? opt.isBrand
+                                                            ? `linear-gradient(to top, rgba(2, 8, 22, 0.88) 0%, rgba(2, 8, 22, 0.08) 42%, transparent 100%), url(${opt.imageUrl})`
+                                                            : `linear-gradient(to top, rgba(2, 10, 18, 0.84) 0%, rgba(2, 10, 18, 0.18) 50%, transparent 100%), url(${opt.imageUrl})`
+                                                        : `linear-gradient(135deg, ${opt.colors[0]} 0%, ${opt.colors[1]} 55%, ${opt.colors[2]} 100%)`,
+                                                    backgroundSize: 'cover',
+                                                    backgroundPosition: opt.isBrand ? 'center top' : 'center',
+                                                    border: isSelected
+                                                        ? '2px solid #2DD4BF'
+                                                        : '1.5px solid rgba(148, 163, 184, 0.3)',
+                                                    boxShadow: isSelected
+                                                        ? '0 0 14px rgba(45, 212, 191, 0.35)'
+                                                        : 'none',
+                                                }}
+                                            >
+                                                <div className="flex items-center justify-between gap-1">
+                                                    <span
+                                                        className="px-1.5 py-0.5 rounded text-[8px] font-mono font-extrabold"
+                                                        style={{
+                                                            backgroundColor: isSelected
+                                                                ? '#2DD4BF'
+                                                                : 'rgba(2, 6, 23, 0.82)',
+                                                            color: isSelected ? '#042F2E' : '#5EEAD4',
+                                                        }}
+                                                    >
+                                                        {opt.badge}
+                                                    </span>
+                                                    {isSelected && (
+                                                        <span
+                                                            className="text-[10px] font-black"
+                                                            style={{ color: '#2DD4BF' }}
+                                                        >
+                                                            ✓
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p
+                                                    className="text-[10px] font-extrabold truncate"
+                                                    style={{
+                                                        color: '#FFFFFF',
+                                                        textShadow: '0 1px 3px rgba(0,0,0,0.95)',
+                                                    }}
+                                                >
+                                                    {opt.name}
+                                                </p>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Interactive High-Contrast Call Controls Bar */}
                         <div className="flex flex-wrap items-center justify-center gap-2.5 pt-2">
                             <button
@@ -5347,6 +5880,26 @@ export function MessagingView({
                                 <span style={{ color: '#FFFFFF' }}>
                                     {isScreenSharing ? 'Stop Sharing' : 'Share Screen'}
                                 </span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => setShowHuddleBgPicker((prev) => !prev)}
+                                className="px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5"
+                                style={{
+                                    backgroundColor:
+                                        showHuddleBgPicker || huddleVirtualBgId !== 'none'
+                                            ? '#0D9488'
+                                            : '#1E293B',
+                                    color: '#FFFFFF',
+                                    border:
+                                        showHuddleBgPicker || huddleVirtualBgId !== 'none'
+                                            ? '1px solid #2DD4BF'
+                                            : '1px solid rgba(148, 163, 184, 0.4)',
+                                }}
+                            >
+                                <span>✨</span>
+                                <span style={{ color: '#FFFFFF' }}>Backgrounds</span>
                             </button>
 
                             {onNavigateVibeComms && (

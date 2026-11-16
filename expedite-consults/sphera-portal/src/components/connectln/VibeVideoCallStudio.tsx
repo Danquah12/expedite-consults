@@ -692,7 +692,7 @@ export interface VirtualBackgroundOption {
   id: string
   name: string
   subtitle: string
-  category: "None" | "Blur" | "Office" | "Studio" | "Nature" | "Custom"
+  category: "None" | "Brand" | "Nature" | "Scenic" | "Blur" | "Custom"
   mode: "none" | "blur" | "scene" | "custom"
   blurPx?: number
   imageUrl?: string
@@ -713,6 +713,66 @@ const VIRTUAL_BACKGROUND_OPTIONS: VirtualBackgroundOption[] = [
     sceneColors: ["#090D16", "#111827", "#1F2937"],
     accentColor: "#10B981",
     badgeText: "RAW CAM",
+  },
+  {
+    id: "expedite-cyber",
+    name: "Expedite Consults · Cyber",
+    subtitle: "Digital circuit chevron corporate wall",
+    category: "Brand",
+    mode: "scene",
+    imageUrl: "/brand/bg-expedite-cyber.jpg",
+    previewGradient: "from-sky-900 via-slate-950 to-blue-950",
+    sceneColors: ["#030E24", "#061A3A", "#020917"],
+    accentColor: "#38BDF8",
+    badgeText: "EXPEDITE TECH",
+  },
+  {
+    id: "expedite-crest",
+    name: "Expedite Consults · Crest",
+    subtitle: "Security padlock corporate backdrop",
+    category: "Brand",
+    mode: "scene",
+    imageUrl: "/brand/bg-expedite-crest.png",
+    previewGradient: "from-blue-900 via-slate-950 to-indigo-950",
+    sceneColors: ["#030C1D", "#071633", "#020814"],
+    accentColor: "#60A5FA",
+    badgeText: "EXPEDITE SEC",
+  },
+  {
+    id: "alpine-mirror-lake",
+    name: "Alpine Mirror Lake",
+    subtitle: "Crystal mountain reflection & snow peaks",
+    category: "Nature",
+    mode: "scene",
+    imageUrl: "/brand/bg-alpine-lake.jpg",
+    previewGradient: "from-sky-700/80 via-blue-900 to-slate-950",
+    sceneColors: ["#0C4A6E", "#1E3A8A", "#0F172A"],
+    accentColor: "#38BDF8",
+    badgeText: "ALPINE LAKE",
+  },
+  {
+    id: "misty-hilltop-castle",
+    name: "Misty Hilltop Castle",
+    subtitle: "Historic castle over emerald forest mist",
+    category: "Scenic",
+    mode: "scene",
+    imageUrl: "/brand/bg-hilltop-castle.jpg",
+    previewGradient: "from-emerald-800/80 via-slate-800 to-stone-950",
+    sceneColors: ["#14532D", "#1E293B", "#0F172A"],
+    accentColor: "#34D399",
+    badgeText: "CASTLE VALLEY",
+  },
+  {
+    id: "golden-canyon-boulders",
+    name: "Golden Canyon Boulders",
+    subtitle: "Sunlit granite boulders & clear blue sky",
+    category: "Nature",
+    mode: "scene",
+    imageUrl: "/brand/bg-canyon-boulders.jpg",
+    previewGradient: "from-amber-700/80 via-sky-900 to-stone-950",
+    sceneColors: ["#78350F", "#0369A1", "#1C1917"],
+    accentColor: "#FBBF24",
+    badgeText: "DESERT ROCKS",
   },
   {
     id: "blur-soft",
@@ -737,78 +797,6 @@ const VIRTUAL_BACKGROUND_OPTIONS: VirtualBackgroundOption[] = [
     sceneColors: ["#115E59", "#090D16", "#064E3B"],
     accentColor: "#2DD4BF",
     badgeText: "MAX PRIVACY",
-  },
-  {
-    id: "exec-boardroom",
-    name: "Executive Penthouse",
-    subtitle: "Warm walnut & skyline glass office",
-    category: "Office",
-    mode: "scene",
-    imageUrl: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=960&q=80",
-    previewGradient: "from-amber-900/80 via-slate-900 to-stone-950",
-    sceneColors: ["#1C1917", "#292524", "#0C0A09"],
-    accentColor: "#F59E0B",
-    badgeText: "BOARDROOM",
-  },
-  {
-    id: "accra-skyline",
-    name: "Accra Tech Hub",
-    subtitle: "Golden hour African innovation lounge",
-    category: "Office",
-    mode: "scene",
-    imageUrl: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=960&q=80",
-    previewGradient: "from-orange-700/80 via-amber-900 to-emerald-950",
-    sceneColors: ["#1E293B", "#334155", "#0F172A"],
-    accentColor: "#FBBF24",
-    badgeText: "ACCRA HUB",
-  },
-  {
-    id: "cyber-soc",
-    name: "Zero-Trust Cyber SOC",
-    subtitle: "Emerald E2EE command center",
-    category: "Studio",
-    mode: "scene",
-    imageUrl: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=960&q=80",
-    previewGradient: "from-emerald-600/80 via-teal-950 to-slate-950",
-    sceneColors: ["#022C22", "#064E3B", "#042F2E"],
-    accentColor: "#10B981",
-    badgeText: "CYBER SOC",
-  },
-  {
-    id: "architect-library",
-    name: "Warm Architect Loft",
-    subtitle: "Bookcase, plants & warm studio lamp",
-    category: "Studio",
-    mode: "scene",
-    imageUrl: "https://images.unsplash.com/photo-1507842229356-51c61504d3ab?auto=format&fit=crop&w=960&q=80",
-    previewGradient: "from-amber-800/70 via-emerald-950 to-stone-900",
-    sceneColors: ["#271C19", "#14281D", "#1C1917"],
-    accentColor: "#A7F3D0",
-    badgeText: "WARM LOFT",
-  },
-  {
-    id: "tropical-sanctuary",
-    name: "Ocean Breeze Villa",
-    subtitle: "Calm turquoise coast & palm terrace",
-    category: "Nature",
-    mode: "scene",
-    imageUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=960&q=80",
-    previewGradient: "from-cyan-600/80 via-teal-800 to-slate-900",
-    sceneColors: ["#083344", "#115E59", "#0F172A"],
-    accentColor: "#22D3EE",
-    badgeText: "OCEAN VILLA",
-  },
-  {
-    id: "aurora-studio",
-    name: "Nordic Aurora Dome",
-    subtitle: "Starlight glass igloo & emerald aurora",
-    category: "Nature",
-    mode: "scene",
-    imageUrl: "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?auto=format&fit=crop&w=960&q=80",
-    previewGradient: "from-indigo-900 via-emerald-800/80 to-slate-950",
-    sceneColors: ["#1E1B4B", "#065F46", "#090D16"],
-    accentColor: "#6EE7B7",
-    badgeText: "AURORA",
   },
 ]
 
@@ -947,12 +935,20 @@ export function VibeVideoCallStudio({
   const virtualBgCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const customBgImgRef = useRef<HTMLImageElement | null>(null)
 
-  // Virtual Background Studio State
-  const [selectedVirtualBgId, setSelectedVirtualBgId] = useState<string>("none")
+  // Virtual Background Studio State (persisted across Messaging <-> Studio handoff via sessionStorage)
+  const [selectedVirtualBgId, setSelectedVirtualBgId] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem("vibe_call_virtual_bg")
+      if (saved && VIRTUAL_BACKGROUND_OPTIONS.some((o) => o.id === saved)) {
+        return saved
+      }
+    }
+    return "none"
+  })
   const [showVirtualBgPicker, setShowVirtualBgPicker] = useState<boolean>(false)
   const [customBgDataUrl, setCustomBgDataUrl] = useState<string | null>(null)
   const [virtualBgFilterCategory, setVirtualBgFilterCategory] = useState<
-    "All" | "Blur" | "Office" | "Studio" | "Nature"
+    "All" | "Brand" | "Nature" | "Scenic" | "Blur"
   >("All")
 
   const activeVirtualBgOption =
@@ -2085,6 +2081,22 @@ export function VibeVideoCallStudio({
     let isRunning = true
     let switchedWebRtcTrack = false
 
+    const drawCoverImage = (
+      ctx: CanvasRenderingContext2D,
+      img: HTMLImageElement,
+      w: number,
+      h: number
+    ) => {
+      const imgW = img.naturalWidth || w
+      const imgH = img.naturalHeight || h
+      const scale = Math.max(w / imgW, h / imgH)
+      const drawW = imgW * scale
+      const drawH = imgH * scale
+      const offsetX = (w - drawW) / 2
+      const offsetY = (h - drawH) / 2
+      ctx.drawImage(img, offsetX, offsetY, drawW, drawH)
+    }
+
     const drawSceneBackdrop = (
       ctx: CanvasRenderingContext2D,
       w: number,
@@ -2094,12 +2106,14 @@ export function VibeVideoCallStudio({
       const presetImg = presetBgImagesRef.current.get(opt.id)
       if (presetImg && presetImg.complete && presetImg.naturalWidth > 0) {
         ctx.save()
-        ctx.drawImage(presetImg, 0, 0, w, h)
-        const vig = ctx.createRadialGradient(w * 0.5, h * 0.5, w * 0.28, w * 0.5, h * 0.5, w * 0.78)
-        vig.addColorStop(0, "rgba(0,0,0,0.03)")
-        vig.addColorStop(1, "rgba(0,0,0,0.32)")
-        ctx.fillStyle = vig
-        ctx.fillRect(0, 0, w, h)
+        drawCoverImage(ctx, presetImg, w, h)
+        if (opt.category !== "Brand") {
+          const vig = ctx.createRadialGradient(w * 0.5, h * 0.5, w * 0.32, w * 0.5, h * 0.5, w * 0.82)
+          vig.addColorStop(0, "rgba(0,0,0,0.02)")
+          vig.addColorStop(1, "rgba(0,0,0,0.24)")
+          ctx.fillStyle = vig
+          ctx.fillRect(0, 0, w, h)
+        }
         ctx.restore()
         return
       }
@@ -2158,7 +2172,7 @@ export function VibeVideoCallStudio({
       const canvas = virtualBgCanvasRef.current
       if (!canvas) return
       const w = 480
-      const h = 300
+      const h = 270
       if (canvas.width !== w) canvas.width = w
       if (canvas.height !== h) canvas.height = h
 
@@ -2221,7 +2235,7 @@ export function VibeVideoCallStudio({
           ctx.drawImage(personImage, -16, -16, w + 32, h + 32)
           ctx.restore()
         } else if (activeVirtualBgOption.mode === "custom" && customBgImgRef.current) {
-          ctx.drawImage(customBgImgRef.current, 0, 0, w, h)
+          drawCoverImage(ctx, customBgImgRef.current, w, h)
         } else {
           drawSceneBackdrop(ctx, w, h, activeVirtualBgOption)
         }
@@ -2313,23 +2327,27 @@ export function VibeVideoCallStudio({
 
     ensureSegmenter()
 
-    const renderLoop = () => {
+    let lastSegFrameAtMs = 0
+    const renderLoop = (nowTs: number) => {
       if (!isRunning) return
-      const videoEl = tileLocalVideoRef.current || heroLocalVideoRef.current
-      if (videoEl && videoEl.readyState >= 2 && videoEl.videoWidth > 0) {
-        if (selfieSegmenterRef.current) {
-          if (!isSegmentingFrameRef.current) {
-            isSegmentingFrameRef.current = true
-            selfieSegmenterRef.current
-              .send({ image: videoEl })
-              .catch(() => {})
-              .finally(() => {
-                isSegmentingFrameRef.current = false
-              })
+      if (nowTs - lastSegFrameAtMs >= 54) {
+        const videoEl = tileLocalVideoRef.current || heroLocalVideoRef.current
+        if (videoEl && videoEl.readyState >= 2 && videoEl.videoWidth > 0) {
+          lastSegFrameAtMs = nowTs
+          if (selfieSegmenterRef.current) {
+            if (!isSegmentingFrameRef.current) {
+              isSegmentingFrameRef.current = true
+              selfieSegmenterRef.current
+                .send({ image: videoEl })
+                .catch(() => {})
+                .finally(() => {
+                  isSegmentingFrameRef.current = false
+                })
+            }
+          } else {
+            // Before MediaPipe finishes loading, draw using latestSegMaskRef if available or clean camera feed
+            renderSynchronizedComposite(videoEl, latestSegMaskRef.current, false)
           }
-        } else {
-          // Before MediaPipe finishes loading, draw using latestSegMaskRef if available or clean camera feed
-          renderSynchronizedComposite(videoEl, latestSegMaskRef.current, false)
         }
       }
       animId = requestAnimationFrame(renderLoop)
@@ -4902,7 +4920,7 @@ export function VibeVideoCallStudio({
 
               {/* Category Filter Pills */}
               <div className="flex flex-wrap items-center gap-1.5">
-                {(["All", "Blur", "Office", "Studio", "Nature"] as const).map((cat) => {
+                {(["All", "Brand", "Nature", "Scenic", "Blur"] as const).map((cat) => {
                   const activeCat = virtualBgFilterCategory === cat
                   return (
                     <button
@@ -4916,7 +4934,11 @@ export function VibeVideoCallStudio({
                       }}
                       className="px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer transition-all"
                     >
-                      {cat === "All" ? "All Backdrops (9)" : cat}
+                      {cat === "All"
+                        ? `All Backdrops (${VIRTUAL_BACKGROUND_OPTIONS.length})`
+                        : cat === "Brand"
+                        ? "🏢 Expedite Consults"
+                        : cat}
                     </button>
                   )
                 })}
@@ -4936,7 +4958,7 @@ export function VibeVideoCallStudio({
               </div>
 
               {/* Visual Virtual Background Cards Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
                 {VIRTUAL_BACKGROUND_OPTIONS.filter(
                   (opt) =>
                     virtualBgFilterCategory === "All" ||
@@ -4944,12 +4966,16 @@ export function VibeVideoCallStudio({
                     opt.category === virtualBgFilterCategory
                 ).map((opt) => {
                   const isSelected = selectedVirtualBgId === opt.id
+                  const isBrandCard = opt.category === "Brand"
                   return (
                     <button
                       key={opt.id}
                       type="button"
                       onClick={() => {
                         setSelectedVirtualBgId(opt.id)
+                        if (typeof window !== "undefined") {
+                          sessionStorage.setItem("vibe_call_virtual_bg", opt.id)
+                        }
                         if (!isCameraOn) {
                           setIsCameraOn(true)
                         }
@@ -4968,13 +4994,15 @@ export function VibeVideoCallStudio({
                       }}
                       style={{
                         backgroundImage: opt.imageUrl
-                          ? `linear-gradient(to top, rgba(2, 12, 9, 0.92) 0%, rgba(2, 12, 9, 0.45) 55%, rgba(2, 12, 9, 0.25) 100%), url(${opt.imageUrl})`
+                          ? isBrandCard
+                            ? `linear-gradient(to top, rgba(2, 8, 22, 0.88) 0%, rgba(2, 8, 22, 0.08) 38%, transparent 100%), url(${opt.imageUrl})`
+                            : `linear-gradient(to top, rgba(2, 12, 9, 0.85) 0%, rgba(2, 12, 9, 0.22) 48%, rgba(2, 12, 9, 0.1) 100%), url(${opt.imageUrl})`
                           : `linear-gradient(135deg, ${opt.sceneColors[0]} 0%, ${opt.sceneColors[1]} 55%, ${opt.sceneColors[2]} 100%)`,
                         backgroundSize: "cover",
-                        backgroundPosition: "center",
+                        backgroundPosition: isBrandCard ? "center top" : "center",
                         borderColor: isSelected ? "#2DD4BF" : "rgba(255,255,255,0.2)",
                       }}
-                      className={`group rounded-xl overflow-hidden border-2 text-left transition-all cursor-pointer flex flex-col justify-between h-24 p-2.5 relative ${
+                      className={`group rounded-xl overflow-hidden border-2 text-left transition-all cursor-pointer flex flex-col justify-between h-28 p-2.5 relative ${
                         isSelected ? "ring-2 ring-teal-400/60 shadow-lg scale-[1.02]" : "hover:border-teal-400/70"
                       }`}
                     >
