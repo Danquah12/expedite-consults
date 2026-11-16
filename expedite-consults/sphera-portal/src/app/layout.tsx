@@ -84,7 +84,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.className} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="icon" type="image/png" sizes="256x256" href="/brand/connectln-icon-256.png?v=5" />
         <link rel="icon" type="image/png" sizes="114x114" href="/brand/connectln-icon.png?v=5" />

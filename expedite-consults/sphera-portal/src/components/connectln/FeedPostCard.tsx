@@ -533,14 +533,14 @@ export function FeedPostCard({
                     avatar: resolvedPostAuthorPic
                   })
                 }
-                className="font-bold text-sm text-zinc-900 hover:underline hover:text-[#0A66C2] cursor-pointer dark:text-zinc-100 inline-flex items-center gap-1"
+                className="font-semibold text-[14px] leading-[1.4] text-[#191919] hover:underline hover:text-[#0A66C2] cursor-pointer dark:text-zinc-100 inline-flex items-center gap-1"
                 title={`Open ${resolvedAuthorName}'s Workspace`}
               >
                 <span>{resolvedAuthorName}</span>
-                <ShieldCheck className="h-3.5 w-3.5 text-zinc-600 dark:text-zinc-300 shrink-0" />
+                <ShieldCheck className="h-3.5 w-3.5 text-[#666666] dark:text-zinc-300 shrink-0" />
               </span>
               {post.author.connectionDegree !== 'You' && (
-                <span className="text-xs text-zinc-400 font-normal">
+                <span style={{ fontWeight: 400 }} className="text-[14px] text-[#666666] dark:text-zinc-400">
                   · {post.author.connectionDegree}
                 </span>
               )}
@@ -550,7 +550,7 @@ export function FeedPostCard({
                     setIsFollowing(!isFollowing)
                     onFollowToggle(post.author.id)
                   }}
-                  className="flex items-center gap-1 text-xs font-bold text-[#0A66C2] hover:bg-sky-50 px-2.5 py-0.5 rounded-full dark:hover:bg-sky-950/30 ml-1"
+                  className="flex items-center gap-1 text-[14px] font-semibold text-[#0A66C2] hover:bg-sky-50 px-2 py-0.5 rounded-full dark:hover:bg-sky-950/30 ml-1"
                 >
                   {isFollowing ? (
                     <>
@@ -564,16 +564,16 @@ export function FeedPostCard({
                 </button>
               )}
             </div>
-            <p className="text-xs text-zinc-500 truncate dark:text-zinc-400 mt-0.5">
+            <p style={{ fontWeight: 400 }} className="text-[12px] leading-[1.33333] text-[#666666] truncate dark:text-zinc-400">
               {resolvedAuthorHeadline}
             </p>
-            <div className="flex items-center gap-1 text-[11px] text-zinc-400 mt-0.5">
+            <div style={{ fontWeight: 400 }} className="flex items-center gap-1 text-[12px] leading-[1.33333] text-[#666666] dark:text-zinc-400">
               <span>{post.timestamp}</span>
               <span>·</span>
               {post.visibility === 'Public' ? (
-                <Globe className="h-3 w-3 text-zinc-400" />
+                <Globe className="h-3 w-3 text-[#666666] dark:text-zinc-400" />
               ) : (
-                <Lock className="h-3 w-3 text-zinc-400" />
+                <Lock className="h-3 w-3 text-[#666666] dark:text-zinc-400" />
               )}
             </div>
           </div>
@@ -681,15 +681,19 @@ export function FeedPostCard({
         </div>
       </div>
 
-      {/* Post Text Content */}
-      <div className="px-4 py-2 text-xs sm:text-sm text-zinc-800 leading-relaxed dark:text-zinc-200 whitespace-pre-line">
+      {/* Post Text Content — LinkedIn 14px Regular #191919 */}
+      <div
+        style={{ fontWeight: 400 }}
+        className="px-4 py-2 text-[14px] leading-[1.42857] text-[#191919] dark:text-zinc-100 whitespace-pre-line"
+      >
         {displayedContent}
         {isLongText && !isExpanded && (
           <button
             onClick={() => setIsExpanded(true)}
-            className="ml-1 font-semibold text-zinc-500 hover:text-[#0A66C2] focus:outline-none"
+            style={{ fontWeight: 400 }}
+            className="ml-1 text-[#666666] hover:text-[#0A66C2] hover:underline focus:outline-none cursor-pointer"
           >
-            {t("see_more", "...see more")}
+            {t("see_more", "...more")}
           </button>
         )}
 

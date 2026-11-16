@@ -553,27 +553,29 @@ export function ConnectLnNavbar({
         </div>
       )}
 
-      {/* Top Header: Brand Logo, Adaptive Search, and Quick Actions */}
-      <div className="mx-auto flex h-13 sm:h-14 max-w-[1720px] items-center justify-between px-2 sm:px-4 lg:px-6 gap-2 sm:gap-2.5">
-        {/* Left Side: Brand Logo & Interactive Live Search */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 lg:flex-1 lg:min-w-0 max-w-sm sm:max-w-md lg:max-w-[260px] xl:max-w-[315px] 2xl:max-w-[380px] relative">
+      {/* Top Header: LinkedIn-Clean Brand Logo, Search Pill, and Uniform Monochrome Navigation */}
+      <div className="mx-auto flex h-[52px] max-w-[1400px] items-center justify-between px-3 sm:px-4 gap-2">
+        {/* Left Side: Brand Logo & LinkedIn-Style Search Input */}
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => onSelectTab('home')}
-            className="flex items-center focus:outline-none group shrink-0"
+            className="flex items-center focus:outline-none group shrink-0 cursor-pointer"
             title="ConnectLn Home"
           >
             <ConnectInLogo size="sm" showSubtitle={false} className="shrink-0" />
           </button>
 
-          {/* Interactive Search Box - Fluid on Desktop, Hidden on Mobile */}
-          <div className="hidden lg:block relative flex-1 min-w-[165px] max-w-full transition-all duration-200">
+          {/* Interactive Search Pill — LinkedIn 34px height, 14px regular font, subtle border */}
+          <div className="hidden lg:block relative w-[155px] xl:w-[190px] 2xl:w-[270px] transition-all duration-200">
             <div
-              className={`flex items-center gap-1.5 rounded-full bg-[#EDF3F8] px-3 py-1.5 transition-all dark:bg-zinc-800/90 border border-zinc-200/60 dark:border-zinc-700/50 ${
-                isSearchFocused ? "ring-2 ring-[#0A66C2] bg-white border-[#0A66C2] shadow-md dark:bg-zinc-900" : "hover:bg-[#E2ECF3] dark:hover:bg-zinc-800"
+              className={`flex h-[34px] items-center gap-2 rounded-full bg-white px-3.5 transition-all dark:bg-zinc-900 border ${
+                isSearchFocused
+                  ? "ring-1 ring-[#191919] border-[#191919] shadow-xs dark:border-zinc-300"
+                  : "border-[#666666]/55 hover:border-[#191919]/80 dark:border-zinc-700"
               }`}
             >
               <Search
-                className="h-3.5 w-3.5 text-zinc-500 shrink-0 cursor-pointer"
+                className="h-4 w-4 text-[#666666] dark:text-zinc-400 shrink-0 cursor-pointer"
                 onClick={() => {
                   onOpenUniversalSearch && onOpenUniversalSearch()
                   setIsSearchFocused(false)
@@ -581,7 +583,7 @@ export function ConnectLnNavbar({
               />
               <input
                 type="text"
-                placeholder={t("search_placeholder", "Search members, jobs, skills...")}
+                placeholder={t("search_placeholder", "I'm looking for...")}
                 value={searchQuery}
                 onChange={(e) => {
                   onSearchChange(e.target.value)
@@ -594,7 +596,8 @@ export function ConnectLnNavbar({
                     setIsSearchFocused(false)
                   }
                 }}
-                className="w-full bg-transparent text-xs leading-4 text-zinc-900 placeholder:text-zinc-500 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-400 font-medium truncate"
+                style={{ fontWeight: 400 }}
+                className="w-full bg-transparent text-[14px] leading-5 text-[#191919] placeholder:text-[#666666] focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-400 truncate"
               />
               {searchQuery && (
                 <button
@@ -930,62 +933,68 @@ export function ConnectLnNavbar({
           )}
         </div>
 
-        {/* Center Primary Navigation Tabs (Visible on lg: screens and above) */}
-        <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1 2xl:gap-1.5 min-w-0 overflow-x-auto no-scrollbar py-1">
-          {primaryNavItems.map((item) => {
-            const Icon = item.icon
-            const isActive = activeTab === item.id
+        {/* Center-Right LinkedIn-Style Primary Navigation Tabs (Uniform Monochrome #666666 -> #191919, 12px Regular) */}
+        <div className="flex items-center gap-1 ml-auto min-w-0">
+          <nav className="hidden lg:flex items-center h-[52px] gap-0 2xl:gap-1 min-w-0 overflow-x-auto no-scrollbar">
+            {primaryNavItems.map((item) => {
+              const Icon = item.icon
+              const isActive = activeTab === item.id
 
-            return (
-              <button
-                key={item.id}
-                onClick={() => onSelectTab(item.id)}
-                className={`relative flex min-w-[44px] xl:min-w-[52px] 2xl:min-w-[58px] flex-col items-center justify-center py-1 px-1 text-xs transition-all group shrink-0 cursor-pointer ${
-                  isActive
-                    ? "text-[#0A66C2] font-semibold border-b-2 border-[#0A66C2]"
-                    : item.isMarketplace
-                    ? "text-purple-600 dark:text-purple-400 font-bold hover:text-purple-700"
-                    : item.id === 'learning'
-                    ? "text-blue-600 dark:text-blue-400 hover:text-blue-700"
-                    : item.id === 'media'
-                    ? "text-rose-600 dark:text-rose-400 hover:text-rose-700"
-                    : item.id === 'pulserooms'
-                    ? "text-emerald-600 dark:text-emerald-400 hover:text-emerald-700"
-                    : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-                }`}
-                title={item.label}
-              >
-                <div className="relative">
-                  <Icon className={`h-4.5 w-4.5 xl:h-5 xl:w-5 transition-transform group-hover:scale-110 ${
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => onSelectTab(item.id)}
+                  className={`relative flex h-[52px] min-w-[40px] xl:min-w-[46px] 2xl:min-w-[62px] flex-col items-center justify-center px-1 xl:px-1.5 border-b-2 transition-colors group shrink-0 cursor-pointer ${
                     isActive
-                      ? "text-[#0A66C2]"
-                      : item.isMarketplace
-                      ? "text-purple-600 dark:text-purple-400"
-                      : item.id === 'learning'
-                      ? "text-blue-600 dark:text-blue-400"
-                      : item.id === 'media'
-                      ? "text-rose-600 dark:text-rose-400"
-                      : item.id === 'pulserooms'
-                      ? "text-emerald-600 dark:text-emerald-400"
-                      : ""
-                  }`} />
-                  {item.badge > 0 && (
-                    <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white shadow-xs">
-                      {item.badge}
-                    </span>
-                  )}
-                </div>
-                <span className="hidden xl:inline-block text-[11px] font-semibold leading-tight mt-0.5 truncate max-w-[68px]">
-                  {item.shortLabel || item.label}
-                </span>
-              </button>
-            )
-          })}
-        </nav>
+                      ? "text-[#191919] dark:text-white border-[#191919] dark:border-white"
+                      : "text-[#666666] hover:text-[#191919] dark:text-zinc-400 dark:hover:text-white border-transparent"
+                  }`}
+                  title={item.label}
+                >
+                  <div className="relative flex items-center justify-center">
+                    <Icon
+                      strokeWidth={isActive ? 2.2 : 1.75}
+                      className="h-[20px] w-[20px] transition-colors"
+                    />
+                    {item.badge > 0 && (
+                      <span
+                        style={{ backgroundColor: "#CB112D", color: "#FFFFFF", fontWeight: 600 }}
+                        className="absolute -right-2.5 -top-1.5 flex h-[16px] min-w-[16px] items-center justify-center rounded-full px-1 text-[10.5px] leading-none text-white shadow-2xs"
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                  </div>
+                  <span
+                    style={{ fontWeight: 400 }}
+                    className="hidden xl:inline-block text-[12px] leading-[1.33333] mt-0.5 whitespace-nowrap"
+                  >
+                    {item.shortLabel || item.label}
+                  </span>
+                </button>
+              )
+            })}
 
-        {/* Right Side Controls (Mobile Search + AI Assistant + Me Profile + More Hubs + Theme) */}
-        <div className="flex items-center gap-1 sm:gap-1.5 lg:gap-2 shrink-0">
-          {/* Mobile Search Button (Compact icon, opens search overlay) */}
+            {/* Ask Noctis — Uniform LinkedIn Icon-Over-Label Nav Item */}
+            <button
+              type="button"
+              onClick={() => {
+                if (onOpenAIAssistant) onOpenAIAssistant()
+              }}
+              className="relative flex h-[52px] min-w-[40px] xl:min-w-[50px] 2xl:min-w-[64px] flex-col items-center justify-center px-1 xl:px-1.5 border-b-2 border-transparent text-[#666666] hover:text-[#191919] dark:text-zinc-400 dark:hover:text-white transition-colors group shrink-0 cursor-pointer"
+              title="Ask Noctis AI"
+            >
+              <Sparkles strokeWidth={1.75} className="h-[20px] w-[20px]" />
+              <span
+                style={{ fontWeight: 400 }}
+                className="hidden xl:inline-block text-[12px] leading-[1.33333] mt-0.5 whitespace-nowrap"
+              >
+                {t("nav_ask_noctis", "Ask Noctis")}
+              </span>
+            </button>
+          </nav>
+
+          {/* Mobile Search & Mobile Ask Noctis Triggers (< lg) */}
           <button
             type="button"
             onClick={() => {
@@ -995,54 +1004,51 @@ export function ConnectLnNavbar({
                 setIsMobileSearchOpen(true)
               }
             }}
-            className="lg:hidden p-1.5 rounded-full text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shrink-0 cursor-pointer"
+            className="lg:hidden p-1.5 rounded-full text-[#666666] hover:text-[#191919] dark:text-zinc-300 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shrink-0 cursor-pointer"
             title={t("search_placeholder", "Search...")}
             aria-label="Search"
           >
             <Search className="h-4 w-4" />
           </button>
 
-          {/* Subtle Divider for desktop */}
-          <div className="hidden lg:block h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-0.5" />
-
-          {/* Ask Noctis: opens the in-app Noctis chat (answers come from the Noctis API without leaving ConnectLn) */}
           <button
             type="button"
             onClick={() => {
               if (onOpenAIAssistant) onOpenAIAssistant()
             }}
-            className="group flex items-center gap-1 sm:gap-1.5 rounded-full bg-[#FBF5E9] hover:bg-[#F5EAD2] dark:bg-amber-950/30 dark:hover:bg-amber-950/50 text-[#7A4B00] dark:text-amber-200 border border-[#C88A24]/40 dark:border-amber-700/50 px-2 sm:px-2.5 py-1 text-xs font-semibold shadow-2xs transition-all shrink-0 cursor-pointer"
+            className="lg:hidden flex items-center gap-1 rounded-full border border-zinc-300 dark:border-zinc-700 px-2.5 py-1 text-[12px] text-[#191919] dark:text-zinc-200 shrink-0 cursor-pointer"
+            style={{ fontWeight: 400 }}
             title="Ask Noctis"
           >
-            <Sparkles className="h-3.5 w-3.5 text-[#C88A24] dark:text-amber-300 transition-transform group-hover:scale-110 shrink-0" />
-            <span className="text-[11px] sm:text-xs font-semibold">{t("nav_ask_noctis", "Ask Noctis")}</span>
-            <span className="hidden xl:inline rounded bg-amber-200/60 dark:bg-amber-900/60 px-1.5 py-0.2 text-[9px] font-bold text-[#5C3800] dark:text-amber-100">
-              Q&amp;A
-            </span>
+            <Sparkles className="h-3.5 w-3.5 shrink-0" />
+            <span>Ask Noctis</span>
           </button>
 
-          {/* "Me" Profile Menu Dropdown — Always Visible with Label */}
+          {/* "Me" Profile Menu Dropdown — LinkedIn 24px Avatar + "Me ▾" in 12px Regular */}
           <div ref={meMenuRef} className="relative shrink-0">
             <button
               onClick={() => {
                 setIsMeOpen(!isMeOpen)
                 setIsMoreOpen(false)
               }}
-              className={`flex min-w-[34px] sm:min-w-[42px] flex-col items-center justify-center py-1 text-xs transition-colors cursor-pointer shrink-0 ${
+              className={`flex h-[52px] min-w-[40px] sm:min-w-[48px] flex-col items-center justify-center px-1 border-b-2 transition-colors cursor-pointer shrink-0 ${
                 activeTab === 'profile' || isMeOpen
-                  ? "text-[#0A66C2] font-semibold"
-                  : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                  ? "text-[#191919] dark:text-white border-[#191919] dark:border-white"
+                  : "text-[#666666] hover:text-[#191919] dark:text-zinc-400 dark:hover:text-white border-transparent"
               }`}
               title={`${user.name} (${t("nav_me", "Me")})`}
             >
-              <div className="relative h-6 w-6 sm:h-6 sm:w-6 rounded-full overflow-hidden border border-zinc-300 dark:border-zinc-700 shrink-0 ring-1 ring-[#0A66C2]/30">
+              <div className="relative h-6 w-6 rounded-full overflow-hidden border border-zinc-300 dark:border-zinc-700 shrink-0">
                 <img
                   src={user.avatar}
                   alt={user.name}
                   className="h-full w-full object-cover"
                 />
               </div>
-              <span className="flex items-center gap-0.5 text-[11px] leading-tight mt-0.5 font-semibold">
+              <span
+                style={{ fontWeight: 400 }}
+                className="flex items-center gap-0.5 text-[12px] leading-[1.33333] mt-0.5 whitespace-nowrap"
+              >
                 {t("nav_me", "Me")} <ChevronDown className="h-3 w-3" />
               </span>
             </button>
@@ -1317,10 +1323,10 @@ export function ConnectLnNavbar({
             )}
           </div>
 
-          {/* Subtle Divider before More */}
-          <div className="h-5 w-px bg-zinc-200 dark:bg-zinc-800 mx-0.5 shrink-0" />
+          {/* LinkedIn Vertical Divider between "Me ▾" and "More ▾" */}
+          <div className="h-9 w-px bg-zinc-200 dark:bg-zinc-800 mx-0.5 shrink-0" />
 
-          {/* "More ▾" Dropdown Menu Trigger — Always Visible on Mobile and Desktop */}
+          {/* "More ▾" Dropdown Menu Trigger — Matching LinkedIn's "For Business ▾" 3x3 Grid Item */}
           <div ref={desktopMoreBtnRef} className="relative shrink-0">
             <button
               type="button"
@@ -1328,15 +1334,18 @@ export function ConnectLnNavbar({
                 setIsMoreOpen(!isMoreOpen)
                 setIsMeOpen(false)
               }}
-              className={`flex min-w-[36px] sm:min-w-[44px] flex-col items-center justify-center py-1 text-xs transition-colors cursor-pointer shrink-0 ${
+              className={`flex h-[52px] min-w-[40px] sm:min-w-[46px] flex-col items-center justify-center px-1 border-b-2 transition-colors cursor-pointer shrink-0 ${
                 isMoreOpen
-                  ? "text-[#0A66C2] font-bold"
-                  : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                  ? "text-[#191919] dark:text-white border-[#191919] dark:border-white"
+                  : "text-[#666666] hover:text-[#191919] dark:text-zinc-400 dark:hover:text-white border-transparent"
               }`}
-              title="More Modules & Hubs"
+              title="For Business & More Modules"
             >
-              <Grid3X3 className="h-4.5 w-4.5" />
-              <span className="flex items-center gap-0.5 text-[11px] leading-tight mt-0.5 font-semibold">
+              <Grid3X3 strokeWidth={1.75} className="h-[20px] w-[20px]" />
+              <span
+                style={{ fontWeight: 400 }}
+                className="flex items-center gap-0.5 text-[12px] leading-[1.33333] mt-0.5 whitespace-nowrap"
+              >
                 {t("nav_more", "More")} <ChevronDown className="h-3 w-3" />
               </span>
             </button>
@@ -1349,37 +1358,36 @@ export function ConnectLnNavbar({
                 setIsMoreOpen(false)
                 setIsMeOpen(false)
               }}
-              className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold shadow-xs transition-all shrink-0 cursor-pointer border ${
+              className={`flex items-center gap-1 rounded-full px-2 py-1 text-[12px] font-semibold transition-all shrink-0 cursor-pointer border ${
                 activeTab === 'adminiam'
-                  ? "bg-[#3A2818] text-[#FAF6EE] border-[#3A2818]"
-                  : "bg-[#FAF6EE] dark:bg-zinc-800 text-[#3A2818] dark:text-zinc-200 border-[#C8B99E] dark:border-zinc-700 hover:bg-[#EFE7D6]"
+                  ? "bg-[#191919] text-white border-[#191919]"
+                  : "bg-white dark:bg-zinc-800 text-[#191919] dark:text-zinc-200 border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100"
               }`}
-              title="Open ConnectLn Admin & 1-Minute Video/Media Backend"
+              title="Open ConnectLn Admin & Media Backend"
             >
-              <Zap className="h-3.5 w-3.5 text-[#6B4423] dark:text-amber-400 shrink-0" />
-              <span className="capitalize">Backend</span>
+              <Zap className="h-3.5 w-3.5 text-[#666666] dark:text-amber-400 shrink-0" />
+              <span>Backend</span>
             </button>
           )}
           {isAdminUser && onOpenAuthModal && (
             <button
               onClick={onOpenAuthModal}
-              className="flex items-center gap-1.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 px-2.5 py-1 text-xs font-bold shadow-xs hover:opacity-90 transition-all shrink-0 cursor-pointer"
-              style={{ backgroundColor: '#1C1917', color: '#FAF6EE' }}
+              className="flex items-center gap-1 rounded-full px-2 py-1 text-[12px] font-semibold border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[#191919] dark:text-zinc-100 hover:bg-zinc-100 transition-all shrink-0 cursor-pointer"
               title="Access Role Gate & Persona Switcher"
             >
-              <Key className="h-3.5 w-3.5 text-amber-300 shrink-0" />
-              <span style={{ color: '#FAF6EE' }}>{t("nav_gate", "Gate")}</span>
+              <Key className="h-3.5 w-3.5 text-[#666666] dark:text-amber-400 shrink-0" />
+              <span>{t("nav_gate", "Gate")}</span>
             </button>
           )}
 
-          {/* Theme & Background Color Switcher — visible on all screen sizes (compact on mobile) */}
+          {/* Theme & Background Color Switcher — compact */}
           <div className="block shrink-0">
             <ThemeColorSwitcher align="right" compact />
           </div>
 
-          {/* Global Multi-Language Switcher Popover — Always visible on top menu bar across Mac, Windows, and Mobile */}
+          {/* Global Multi-Language Switcher Popover — compact so primary nav tabs have full room */}
           <div className="block shrink-0">
-            <LanguageSwitcher align="right" />
+            <LanguageSwitcher align="right" compact />
           </div>
         </div>
       </div>
@@ -1435,19 +1443,26 @@ export function ConnectLnNavbar({
                     setIsMeOpen(false)
                   }
                 }}
-                className={`relative shrink-0 min-w-[60px] flex flex-col items-center justify-center py-1.5 px-2 cursor-pointer border-b-2 ${
-                  isActive ? "text-[#0A66C2] font-semibold border-[#0A66C2]" : `${colors[item.kind]} border-transparent`
+                className={`relative shrink-0 min-w-[64px] flex flex-col items-center justify-center py-1.5 px-2 cursor-pointer border-b-2 transition-colors ${
+                  isActive
+                    ? "text-[#191919] dark:text-white border-[#191919] dark:border-white"
+                    : "text-[#666666] hover:text-[#191919] dark:text-zinc-400 dark:hover:text-white border-transparent"
                 }`}
               >
                 <div className="relative">
-                  <Icon className="h-5 w-5" />
+                  <Icon strokeWidth={isActive ? 2.1 : 1.75} className="h-5 w-5" />
                   {item.badge > 0 && (
-                    <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
+                    <span
+                      style={{ backgroundColor: "#CB112D", color: "#FFFFFF", fontWeight: 600 }}
+                      className="absolute -right-2.5 -top-1.5 flex h-[16px] min-w-[16px] items-center justify-center rounded-full px-1 text-[10.5px] leading-none text-white"
+                    >
                       {item.badge}
                     </span>
                   )}
                 </div>
-                <span className="text-[10px] mt-0.5 leading-none">{item.label}</span>
+                <span style={{ fontWeight: 400 }} className="text-[12px] mt-0.5 leading-[1.33333]">
+                  {item.label}
+                </span>
               </button>
             )
           })}

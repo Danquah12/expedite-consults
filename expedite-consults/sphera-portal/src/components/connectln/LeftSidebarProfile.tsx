@@ -748,14 +748,14 @@ export function LeftSidebarProfile({
           />
         </div>
 
-        {/* Avatar & User Details */}
-        <div className="relative px-4 pb-3 pt-0 text-center">
-          <div className="-mt-10 mb-3 flex justify-center">
+        {/* Avatar & User Details — LinkedIn Left-Aligned Identity Layout & Typography */}
+        <div className="relative px-4 pb-3.5 pt-0 text-left">
+          <div className="-mt-9 mb-2.5 flex items-end justify-between gap-2">
             <div
               onClick={onViewProfile}
-              className={`relative h-20 w-20 cursor-pointer rounded-full bg-white shadow-md transition-transform hover:scale-105 ${
+              className={`relative h-[72px] w-[72px] shrink-0 cursor-pointer rounded-full bg-white shadow-sm transition-transform hover:scale-[1.02] ${
                 availabilityStatus !== 'Booked'
-                  ? 'ring-3 ring-emerald-500 border-2 border-white dark:border-zinc-900'
+                  ? 'ring-2 ring-emerald-600 border-2 border-white dark:border-zinc-900'
                   : 'border-2 border-white dark:border-zinc-900'
               }`}
             >
@@ -766,100 +766,87 @@ export function LeftSidebarProfile({
               />
               <span
                 title={`${user.name} · Online`}
-                className="absolute top-0.5 right-0.5 h-3.5 w-3.5 rounded-full flex items-center justify-center"
+                className="absolute bottom-0.5 right-0.5 h-3.5 w-3.5 rounded-full flex items-center justify-center"
               >
-                <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
                 <span className="relative h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-zinc-900 online-dot-blink" />
               </span>
-              {/* ConnectLn "Looking for a Job" Badge on Avatar */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  cycleAvailabilityStatus()
-                }}
-                title="Click to cycle your Looking for a Job badge status"
-                style={{
-                  backgroundColor: availabilityStatus === 'Booked' ? '#92400E' : '#047857',
-                  color: '#FFFFFF',
-                }}
-                className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[9.5px] font-extrabold tracking-tight shadow-md border border-white/80 transition-all cursor-pointer"
-              >
-                {availabilityStatus === 'Booked' ? '⏳ Booked' : `● ${availabilityStatus}`}
-              </button>
             </div>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                cycleAvailabilityStatus()
+              }}
+              title="Click to cycle availability status"
+              style={{
+                backgroundColor: availabilityStatus === 'Booked' ? '#92400E' : '#057642',
+                color: '#FFFFFF',
+                fontWeight: 600,
+              }}
+              className="rounded-full px-2.5 py-0.5 text-[11px] leading-4 shadow-2xs transition-opacity hover:opacity-95 cursor-pointer"
+            >
+              {availabilityStatus === 'Booked' ? 'Booked' : availabilityStatus}
+            </button>
           </div>
 
           <button
             onClick={onViewProfile}
-            className="group block w-full focus:outline-none pt-0.5"
+            className="group block w-full text-left focus:outline-none"
           >
-            <div className="flex items-center justify-center gap-1">
-              <h2 className="font-extrabold text-zinc-900 text-[15px] leading-tight group-hover:underline dark:text-zinc-100">
+            <div className="flex items-center gap-1.5">
+              <h2 className="font-semibold text-[#191919] text-[20px] leading-[1.25] group-hover:underline dark:text-zinc-100">
                 {user.name}
               </h2>
-              <ShieldCheck className="h-4 w-4 text-[#0A66C2] shrink-0" />
+              <ShieldCheck className="h-4 w-4 text-[#666666] dark:text-zinc-300 shrink-0" />
             </div>
-            <p className="mt-1 text-xs font-medium text-zinc-600 leading-snug line-clamp-2 dark:text-zinc-400">
+            <p
+              style={{ fontWeight: 400 }}
+              className="mt-1 text-[12px] text-[#191919] leading-[1.35] line-clamp-2 dark:text-zinc-200"
+            >
               {user.headline}
             </p>
+            {user.location && (
+              <p
+                style={{ fontWeight: 400 }}
+                className="mt-1 text-[12px] text-[#666666] leading-[1.33] truncate dark:text-zinc-400"
+              >
+                {user.location}
+              </p>
+            )}
           </button>
 
-          {/* Dedicated "Looking for a Job" Card */}
+          {/* Clean Role & Job Card */}
           <div className="pt-2.5 text-left">
-            <div className="rounded-xl border border-emerald-300/80 dark:border-emerald-800/70 bg-gradient-to-br from-emerald-50/90 via-white to-teal-50/60 dark:from-emerald-950/35 dark:via-zinc-900 dark:to-teal-950/25 p-2.5 shadow-2xs space-y-1.5">
+            <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/60 p-2.5 space-y-1">
               <div className="flex items-center justify-between gap-1.5">
-                <button
-                  type="button"
-                  onClick={cycleAvailabilityStatus}
-                  title="Click to switch status (Looking for a Job / Looking for Projects / Available for Hire / Booked)"
-                  style={
-                    availabilityStatus === 'Booked'
-                      ? undefined
-                      : { backgroundColor: '#047857', color: '#FFFFFF' }
-                  }
-                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold border shrink-0 cursor-pointer transition-all ${
-                    availabilityStatus === 'Booked'
-                      ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-300 dark:border-amber-800'
-                      : 'bg-emerald-600 text-white border-emerald-600 shadow-2xs hover:opacity-95'
-                  }`}
-                >
-                  <span className={`h-1.5 w-1.5 rounded-full ${availabilityStatus === 'Booked' ? 'bg-amber-500' : 'bg-white animate-pulse'}`} />
-                  <span style={availabilityStatus === 'Booked' ? undefined : { color: '#FFFFFF' }}>{availabilityStatus}</span>
-                </button>
+                <p className="text-[12px] font-semibold text-[#191919] dark:text-zinc-100 flex items-center gap-1.5 truncate">
+                  <span className="shrink-0">{enclaveInfo?.icon || '🔨'}</span>
+                  <span className="truncate">{displayProfessionTitle}</span>
+                </p>
                 {onOpenIDModal && (
                   <button
                     type="button"
                     onClick={onOpenIDModal}
-                    className="text-[11px] font-bold text-[#0A66C2] dark:text-sky-400 hover:underline shrink-0 cursor-pointer"
+                    className="text-[11px] font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline shrink-0 cursor-pointer"
                   >
-                    🪪 ID Verified
+                    ID Verified
                   </button>
                 )}
               </div>
 
-              <div className="space-y-0.5">
-                <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5 truncate">
-                  <span className="shrink-0">{enclaveInfo?.icon || '🔨'}</span>
-                  <span className="truncate">{displayProfessionTitle}</span>
-                </p>
-                <p className="text-[11px] text-zinc-600 dark:text-zinc-400 truncate">
-                  Full-time · Contract Projects · {user.location || 'Immediate Start'}
-                </p>
-              </div>
-
-              <div className="pt-1.5 border-t border-emerald-200/60 dark:border-emerald-900/50 flex items-center justify-between text-[11px]">
+              <div className="pt-1 border-t border-zinc-200/80 dark:border-zinc-800 flex items-center justify-between text-[12px]">
                 <button
                   type="button"
                   onClick={onViewProfile}
-                  className="font-bold text-emerald-700 dark:text-emerald-300 hover:underline cursor-pointer"
+                  className="font-semibold text-[#666666] hover:text-[#191919] dark:text-zinc-400 hover:underline cursor-pointer"
                 >
                   Edit Job Card
                 </button>
                 <button
                   type="button"
                   onClick={() => onNavigateTab && onNavigateTab('jobs')}
-                  className="font-bold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer"
+                  className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer"
                 >
                   Matching Jobs →
                 </button>
@@ -868,69 +855,67 @@ export function LeftSidebarProfile({
           </div>
         </div>
 
-        {/* Compact 3-Column Analytics Strip + Slim Profile Strength Bar */}
+        {/* LinkedIn-Style Analytics Rows (12px Semibold Label on Left, Accent Count on Right) */}
         {(() => {
           const sidebarAnalytics = getProfileTailoredAnalytics(user)
           const strength = isAdminUser
             ? Math.min(100, Math.max(92, user.profileStrength || computeProfileStrength(user)))
             : Math.min(100, user.profileStrength && user.profileStrength > 0 ? user.profileStrength : computeProfileStrength(user))
           return (
-            <div className="border-t border-zinc-100 dark:border-zinc-800/80 px-3 py-2.5 space-y-2">
-              <div className="grid grid-cols-3 divide-x divide-zinc-100 dark:divide-zinc-800 text-center">
-                <button
-                  type="button"
-                  onClick={() => onOpenAnalytics ? onOpenAnalytics('viewers') : onViewProfile()}
-                  className="px-1 py-0.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-l-lg transition-colors cursor-pointer group"
-                  title="Who viewed your profile and credentials"
-                >
-                  <p className="text-[13px] font-extrabold text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2]">
-                    {sidebarAnalytics.effectiveProfileViews.toLocaleString()}
-                  </p>
-                  <p className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 truncate">
-                    {t("profile_viewers", "Profile views")}
-                  </p>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onOpenAnalytics ? onOpenAnalytics('reach') : onViewProfile()}
-                  className="px-1 py-0.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer group"
-                  title="Inspect multi-channel post broadcast reach"
-                >
-                  <p className="text-[13px] font-extrabold text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2]">
-                    {sidebarAnalytics.effectiveTotalReach.toLocaleString()}
-                  </p>
-                  <p className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 truncate">
-                    {t("content_reach", "Post reach")}
-                  </p>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onOpenAnalytics ? onOpenAnalytics('discoveries') : onViewProfile()}
-                  className="px-1 py-0.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-r-lg transition-colors cursor-pointer group"
-                  title="Inspect talent directory search appearances"
-                >
-                  <p className="text-[13px] font-extrabold text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2]">
-                    {sidebarAnalytics.effectiveDiscoveries.toLocaleString()}
-                  </p>
-                  <p className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 truncate">
-                    {t("directory_discoveries", "Search hits")}
-                  </p>
-                </button>
-              </div>
+            <div className="border-t border-zinc-200/80 dark:border-zinc-800/80 px-4 py-2.5 space-y-1.5">
+              <button
+                type="button"
+                onClick={() => onOpenAnalytics ? onOpenAnalytics('viewers') : onViewProfile()}
+                className="flex w-full items-center justify-between py-0.5 text-[12px] hover:underline cursor-pointer"
+                title="Who viewed your profile"
+              >
+                <span className="font-semibold text-[#666666] dark:text-zinc-400">
+                  {t("profile_viewers", "Profile viewers")}
+                </span>
+                <span className="font-semibold text-[#0A66C2] dark:text-sky-400">
+                  {sidebarAnalytics.effectiveProfileViews.toLocaleString()}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onOpenAnalytics ? onOpenAnalytics('reach') : onViewProfile()}
+                className="flex w-full items-center justify-between py-0.5 text-[12px] hover:underline cursor-pointer"
+                title="Post impressions & reach"
+              >
+                <span className="font-semibold text-[#666666] dark:text-zinc-400">
+                  {t("content_reach", "Post impressions")}
+                </span>
+                <span className="font-semibold text-[#0A66C2] dark:text-sky-400">
+                  {sidebarAnalytics.effectiveTotalReach.toLocaleString()}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onOpenAnalytics ? onOpenAnalytics('discoveries') : onViewProfile()}
+                className="flex w-full items-center justify-between py-0.5 text-[12px] hover:underline cursor-pointer"
+                title="Directory search appearances"
+              >
+                <span className="font-semibold text-[#666666] dark:text-zinc-400">
+                  {t("directory_discoveries", "Search appearances")}
+                </span>
+                <span className="font-semibold text-[#0A66C2] dark:text-sky-400">
+                  {sidebarAnalytics.effectiveDiscoveries.toLocaleString()}
+                </span>
+              </button>
 
               <div
                 onClick={() => onNavigateTab && onNavigateTab('missions')}
-                className="flex items-center justify-between gap-2 pt-0.5 cursor-pointer group"
+                className="flex items-center justify-between gap-2 pt-1 cursor-pointer group"
                 title="View Career Progression & Profile Strength"
               >
-                <div className="flex-1 h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                <div className="flex-1 h-1.5 rounded-full bg-zinc-200/80 dark:bg-zinc-800 overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-[#0A66C2] to-emerald-500 transition-all duration-500"
+                    className="h-full rounded-full bg-[#0A66C2] transition-all duration-500"
                     style={{ width: `${strength}%` }}
                   />
                 </div>
-                <span className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400 group-hover:text-[#0A66C2] shrink-0">
-                  {strength}% {t("profile_strength", "Profile Strength")}
+                <span className="text-[12px] font-semibold text-[#666666] dark:text-zinc-400 group-hover:text-[#191919] shrink-0">
+                  {strength}%
                 </span>
               </div>
             </div>

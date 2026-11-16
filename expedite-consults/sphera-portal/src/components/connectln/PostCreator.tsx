@@ -498,13 +498,13 @@ export function PostCreator({ user, onAddPost }: PostCreatorProps) {
         onChange={handleDocFileUpload}
       />
 
-      {/* Quick Creator Box */}
-      <div className="rounded-xl border border-zinc-200 bg-white p-3.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+      {/* Quick Creator Box — LinkedIn Typography & Proportions */}
+      <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex items-center gap-3">
           <img
             src={user.avatar}
             alt={user.name}
-            className="h-11 w-11 rounded-full object-cover ring-2 ring-[#0066FF] shrink-0"
+            className="h-12 w-12 rounded-full object-cover border border-zinc-200 dark:border-zinc-700 shrink-0"
           />
           <button
             type="button"
@@ -513,14 +513,14 @@ export function PostCreator({ user, onAddPost }: PostCreatorProps) {
               setShowMediaInput(false)
               setIsOpen(true)
             }}
-            className="flex-1 rounded-full border border-zinc-300 bg-zinc-50/70 px-4 py-2.5 text-left text-xs sm:text-sm font-medium text-zinc-500 hover:bg-zinc-100 transition-colors dark:border-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-400 dark:hover:bg-zinc-800 cursor-pointer"
+            className="flex-1 h-12 rounded-full border border-[#666666]/55 bg-white px-4 text-left text-[14px] font-semibold text-[#404040] hover:bg-zinc-100/80 transition-colors dark:border-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-800 cursor-pointer"
           >
-            {t("start_post_placeholder", "Start a post, share insights or milestones...")}
+            {t("start_post_placeholder", "Start a post")}
           </button>
         </div>
 
-        {/* 6 Primary Action Buttons (Share Video, Media, Poll, Celebrate, Document, Write with AI) */}
-        <div className="mt-3 flex items-center justify-between border-t border-zinc-100 pt-2.5 text-xs font-semibold text-zinc-600 dark:border-zinc-800/80 dark:text-zinc-400 flex-wrap gap-1">
+        {/* Primary Action Buttons — Clean LinkedIn 14px Semibold Neutral Text */}
+        <div className="mt-2.5 flex items-center justify-between pt-1 text-[13.5px] font-semibold text-[#5E5E5E] dark:text-zinc-300 flex-wrap gap-1">
           {/* 1. Share Video */}
           <button
             type="button"
@@ -530,13 +530,13 @@ export function PostCreator({ user, onAddPost }: PostCreatorProps) {
               setShowMediaInput(true)
               setIsOpen(true)
             }}
-            className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 hover:bg-blue-50 transition-colors text-[#0A66C2] dark:hover:bg-zinc-800 font-bold cursor-pointer shrink-0"
+            className="flex items-center gap-2 rounded-lg px-2.5 py-2 hover:bg-zinc-100 transition-colors text-[#404040] dark:text-zinc-200 dark:hover:bg-zinc-800 cursor-pointer shrink-0"
           >
-            <Video className="h-4 w-4 shrink-0" />
-            <span>Share Video</span>
+            <Video className="h-5 w-5 text-[#378FE9] shrink-0" />
+            <span>Video</span>
           </button>
 
-          {/* 2. Media (Photos & Visual Poster Cards) */}
+          {/* 2. Photo / Media */}
           <button
             type="button"
             onClick={() => {
@@ -545,10 +545,10 @@ export function PostCreator({ user, onAddPost }: PostCreatorProps) {
               setShowMediaInput(true)
               setIsOpen(true)
             }}
-            className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 hover:bg-zinc-100 transition-colors text-amber-800 dark:text-amber-300 dark:hover:bg-zinc-800 cursor-pointer shrink-0"
+            className="flex items-center gap-2 rounded-lg px-2.5 py-2 hover:bg-zinc-100 transition-colors text-[#404040] dark:text-zinc-200 dark:hover:bg-zinc-800 cursor-pointer shrink-0"
           >
-            <ImageIcon className="h-4 w-4 shrink-0" />
-            <span>{t("action_media", "Media")}</span>
+            <ImageIcon className="h-5 w-5 text-[#5F9B41] shrink-0" />
+            <span>{t("action_media", "Photo")}</span>
           </button>
 
           {/* 3. Poll */}
@@ -568,27 +568,13 @@ export function PostCreator({ user, onAddPost }: PostCreatorProps) {
               }
               setIsOpen(true)
             }}
-            className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 hover:bg-zinc-100 transition-colors text-stone-700 dark:text-stone-300 dark:hover:bg-zinc-800 cursor-pointer shrink-0"
+            className="flex items-center gap-2 rounded-lg px-2.5 py-2 hover:bg-zinc-100 transition-colors text-[#404040] dark:text-zinc-200 dark:hover:bg-zinc-800 cursor-pointer shrink-0"
           >
-            <Vote className="h-4 w-4 shrink-0" />
+            <Vote className="h-5 w-5 text-[#C37D16] shrink-0" />
             <span>{t("action_poll", "Poll")}</span>
           </button>
 
-          {/* 4. Celebrate */}
-          <button
-            type="button"
-            onClick={() => {
-              setActiveMode('celebrate')
-              setShowMediaInput(false)
-              setIsOpen(true)
-            }}
-            className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 hover:bg-emerald-50/70 transition-colors text-emerald-700 dark:text-emerald-400 dark:hover:bg-zinc-800 cursor-pointer shrink-0"
-          >
-            <Sparkles className="h-4 w-4 shrink-0" />
-            <span>{t("action_celebrate", "Celebrate")}</span>
-          </button>
-
-          {/* 5. Document */}
+          {/* 4. Document / Write article */}
           <button
             type="button"
             onClick={() => {
@@ -596,19 +582,19 @@ export function PostCreator({ user, onAddPost }: PostCreatorProps) {
               setShowMediaInput(false)
               setIsOpen(true)
             }}
-            className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 hover:bg-amber-50/70 transition-colors text-amber-900 dark:text-amber-300 dark:hover:bg-zinc-800 cursor-pointer shrink-0"
+            className="flex items-center gap-2 rounded-lg px-2.5 py-2 hover:bg-zinc-100 transition-colors text-[#404040] dark:text-zinc-200 dark:hover:bg-zinc-800 cursor-pointer shrink-0"
           >
-            <BookOpen className="h-4 w-4 shrink-0" />
-            <span>{t("action_document", "Document")}</span>
+            <BookOpen className="h-5 w-5 text-[#E06847] shrink-0" />
+            <span>{t("action_document", "Write article")}</span>
           </button>
 
-          {/* 6. Write with AI */}
+          {/* 5. Write with AI */}
           <button
             type="button"
             onClick={() => setIsAIOpen(true)}
-            className="flex items-center gap-1.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border border-amber-300/80 dark:border-amber-700/80 hover:bg-amber-100 dark:hover:bg-amber-900/50 px-2.5 py-1 text-xs font-bold shadow-2xs transition-all cursor-pointer shrink-0"
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 hover:bg-zinc-100 transition-colors text-[#404040] dark:text-zinc-200 dark:hover:bg-zinc-800 cursor-pointer shrink-0"
           >
-            <Sparkles className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+            <Sparkles className="h-4.5 w-4.5 text-[#0A66C2] shrink-0" />
             <span>{t("action_ai", "Write with AI")}</span>
           </button>
         </div>

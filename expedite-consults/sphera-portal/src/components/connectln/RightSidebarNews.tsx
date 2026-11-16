@@ -135,15 +135,18 @@ export function RightSidebarNews({
               <Sparkles className="h-4 w-4" />
             </div>
             <div className="min-w-0">
-              <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2] flex items-center gap-1.5 transition-colors leading-tight">
+              <h3 className="font-semibold text-[16px] leading-[1.35] text-[#191919] dark:text-zinc-100 group-hover:text-[#0A66C2] flex items-center gap-1.5 transition-colors">
                 <span>{t("ask_vibe_ai", "Ask Noctis")}</span>
               </h3>
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
-                {t("vibe_ai_desc", "Career, Trade & Technical AI")}
+              <p
+                style={{ fontWeight: 400 }}
+                className="text-[12px] leading-[1.33333] text-[#666666] dark:text-zinc-400 truncate mt-0.5"
+              >
+                {t("vibe_ai_desc", "AI Career & Trade Assistant")}
               </p>
             </div>
           </button>
-          <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 text-[10.5px] font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-200/70 dark:border-emerald-800/70 flex items-center gap-1 shrink-0">
+          <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-200/70 dark:border-emerald-800/70 flex items-center gap-1 shrink-0">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
             <span>{t("vibe_online", "Online")}</span>
           </span>
@@ -161,20 +164,21 @@ export function RightSidebarNews({
                 handleSidebarAskNoctis(sidebarQuery)
               }
             }}
-            className="flex-1 min-w-0 bg-transparent px-2 py-1 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:outline-none truncate"
+            style={{ fontWeight: 400 }}
+            className="flex-1 min-w-0 bg-transparent px-2 py-1 text-[12px] text-[#191919] dark:text-zinc-100 placeholder:text-[#666666] focus:outline-none truncate"
           />
           <button
             type="button"
             onClick={() => handleSidebarAskNoctis(sidebarQuery)}
             style={{ color: "#FFFFFF" }}
-            className="rounded-md bg-[#0A66C2] hover:bg-[#004182] px-3 py-1 text-xs font-bold text-white transition-colors shrink-0 cursor-pointer"
+            className="rounded-md bg-[#0A66C2] hover:bg-[#004182] px-3 py-1 text-[12px] font-semibold text-white transition-colors shrink-0 cursor-pointer"
           >
             {t("search_button", "Search")}
           </button>
         </div>
 
         {noctisAudioToast && (
-          <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 px-2.5 py-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-200">
+          <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 px-2.5 py-1.5 text-xs font-semibold text-emerald-800 dark:text-emerald-200">
             {noctisAudioToast}
           </div>
         )}
@@ -183,13 +187,13 @@ export function RightSidebarNews({
         <div className="flex items-center gap-1.5">
           {[
             { label: "✨ Resume Review", q: "Resume optimization tips" },
-            { label: "🎯 Career & Pay Guide", q: "Top roles and compensation guide" },
+            { label: "🎯 Pay Guide", q: "Top roles and compensation guide" },
           ].map((chip, idx) => (
             <button
               key={idx}
               type="button"
               onClick={() => onOpenAIAssistant && onOpenAIAssistant(chip.q)}
-              className="flex-1 text-[11px] font-semibold rounded-lg bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 py-1.5 transition-colors border border-zinc-200/70 dark:border-zinc-700/60 truncate cursor-pointer"
+              className="flex-1 text-[12px] font-semibold rounded-lg bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:hover:bg-zinc-800 text-[#404040] dark:text-zinc-300 px-2 py-1.5 transition-colors border border-zinc-200/70 dark:border-zinc-700/60 whitespace-nowrap cursor-pointer"
             >
               {chip.label}
             </button>
@@ -197,57 +201,57 @@ export function RightSidebarNews({
         </div>
       </div>
 
-      {/* 2. CONNECTLN NEWS & RESEARCH INTELLIGENCE */}
-      <div className="rounded-xl border border-zinc-200 bg-white p-3.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex items-center justify-between pb-1.5">
-          <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
-            {t("news_and_pulse", "ConnectLn News & Pulse")}
+      {/* 2. CONNECTLN NEWS — Matching LinkedIn News Typography (20px Semibold Title, 14px Semibold Headlines, 12px Regular Readers) */}
+      <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="flex items-center justify-between pb-1">
+          <h3 className="font-semibold text-[20px] leading-[1.35] text-[#191919] dark:text-zinc-100">
+            {t("news_and_pulse", "ConnectLn News")}
           </h3>
-          <Info className="h-4 w-4 text-zinc-400 cursor-pointer hover:text-zinc-600" />
+          <Info className="h-4 w-4 text-[#191919] dark:text-zinc-400 cursor-pointer" />
         </div>
 
-        <p className="text-xs font-semibold text-zinc-500 mb-2.5 dark:text-zinc-400">
-          {t("top_stories", "Top stories & industry intelligence")}
+        <p className="text-[14px] font-semibold text-[#666666] mb-2.5 dark:text-zinc-400">
+          {t("top_stories", "Top stories")}
         </p>
 
-        <div className="space-y-2.5">
+        <div className="space-y-3">
           {displayedNews.map((item) => (
             <div
               key={item.id}
               onClick={() => onNewsClick && onNewsClick(item.headline)}
-              className="group cursor-pointer"
+              className="group cursor-pointer -mx-2 px-2 py-1 rounded-md hover:bg-zinc-100/80 dark:hover:bg-zinc-800/60 transition-colors"
             >
-              <div className="flex items-start gap-2">
-                <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-zinc-400 group-hover:bg-[#0A66C2] transition-colors shrink-0" />
-                <div>
-                  <h4 className="text-[13px] font-semibold text-zinc-800 group-hover:text-[#0A66C2] group-hover:underline dark:text-zinc-200 leading-snug">
-                    {item.headline}
-                  </h4>
-                  <p className="mt-0.5 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
-                    {item.timeAgo} · {item.readersCount}
-                  </p>
-                </div>
-              </div>
+              <h4 className="text-[14px] font-semibold text-[#191919] group-hover:text-[#0A66C2] dark:text-zinc-100 leading-[1.4]">
+                {item.headline}
+              </h4>
+              <p
+                style={{ fontWeight: 400 }}
+                className="mt-0.5 text-[12px] leading-[1.33333] text-[#666666] dark:text-zinc-400"
+              >
+                {item.timeAgo} · {item.readersCount}
+              </p>
             </div>
           ))}
         </div>
 
         <button
           onClick={() => setShowAllNews(!showAllNews)}
-          className="mt-2.5 flex items-center gap-1 text-xs font-semibold text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 focus:outline-none cursor-pointer"
+          className="mt-2.5 flex items-center gap-1 text-[14px] font-semibold text-[#404040] hover:text-[#191919] dark:text-zinc-300 dark:hover:text-white focus:outline-none cursor-pointer"
         >
-          <span>{showAllNews ? t("show_less", "Show less") : t("show_more", "Show more")}</span>
-          {showAllNews ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+          <span>{showAllNews ? t("show_less", "Show less") : t("show_more", "Show all news")}</span>
+          {showAllNews ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </button>
       </div>
 
       {/* 3. VERIFIED FELLOWS & PEOPLE TO FOLLOW */}
-      <div className="rounded-xl border border-zinc-200 bg-white p-3.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-2.5">
+      <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-2.5">
         <div className="flex items-center justify-between pb-1">
-          <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
+          <h3 className="font-semibold text-[16px] leading-[1.35] text-[#191919] dark:text-zinc-100">
             {t("verified_fellows", "Verified Fellows to Follow")}
           </h3>
-          <Info className="h-4 w-4 text-zinc-400" title="Following is one-way: receive public updates in your feed without sending a connection invitation." />
+          <span title="Following is one-way: receive public updates in your feed without sending a connection invitation.">
+            <Info className="h-4 w-4 text-[#666666] dark:text-zinc-400" />
+          </span>
         </div>
 
         {/* Live Followers & Following Counter Strip */}
@@ -305,21 +309,27 @@ export function RightSidebarNews({
                   <div className="flex items-center gap-1">
                     <p
                       onClick={() => onSelectMember?.(person)}
-                      className="font-bold text-[13px] text-zinc-900 hover:underline hover:text-[#0A66C2] cursor-pointer truncate dark:text-zinc-100"
+                      className="font-semibold text-[14px] leading-[1.4] text-[#191919] hover:underline hover:text-[#0A66C2] cursor-pointer truncate dark:text-zinc-100"
                       title={`Open ${person.name}'s Workspace`}
                     >
                       {person.name}
                     </p>
-                    <ShieldCheck className="h-3.5 w-3.5 text-[#0A66C2] shrink-0" title="Verified identity badge (independent of follow status)" />
+                    <span className="shrink-0 inline-flex" title="Verified identity badge (independent of follow status)">
+                      <ShieldCheck className="h-3.5 w-3.5 text-[#0A66C2]" />
+                    </span>
                   </div>
                   <p
                     onClick={() => onSelectMember?.(person)}
-                    className="text-xs text-zinc-500 line-clamp-2 dark:text-zinc-400 leading-snug cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-300"
+                    style={{ fontWeight: 400 }}
+                    className="text-[12px] leading-[1.33333] text-[#666666] line-clamp-2 dark:text-zinc-400 cursor-pointer hover:text-[#191919] dark:hover:text-zinc-300"
                   >
                     {person.headline}
                   </p>
                   {targetFollowBundle.followers.length > 0 && (
-                    <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">
+                    <p
+                      style={{ fontWeight: 400 }}
+                      className="text-[12px] leading-[1.33333] text-[#666666] dark:text-zinc-400 mt-0.5"
+                    >
                       {targetFollowBundle.followers.length} {targetFollowBundle.followers.length === 1 ? 'follower' : 'followers'}
                       {rel.followsYou ? ' · Follows you' : ''}
                     </p>
@@ -361,16 +371,16 @@ export function RightSidebarNews({
                         }
                         setTimeout(() => setFollowFeedback(null), 3500)
                       }}
-                      className={`flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold transition-all cursor-pointer ${
+                      className={`flex items-center gap-1 rounded-full border px-3.5 py-1 text-[14px] font-semibold leading-5 transition-all cursor-pointer ${
                         rel.isFollowing
                           ? "border-emerald-600 bg-emerald-50 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-700 dark:bg-emerald-950/40 dark:text-emerald-300"
                           : rel.followsYou
                           ? "border-[#0A66C2] bg-blue-50 text-[#0A66C2] hover:bg-[#0A66C2] hover:text-white dark:bg-blue-950/40 dark:text-sky-300"
-                          : "border-zinc-400 text-zinc-700 hover:bg-zinc-100 hover:border-zinc-600 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                          : "border-[#191919]/70 text-[#191919] hover:bg-zinc-100 hover:border-[#191919] dark:border-zinc-500 dark:text-zinc-200 dark:hover:bg-zinc-800"
                       }`}
                       title={rel.isFollowing ? `Click to unfollow ${person.name}` : `Follow ${person.name} to receive their public updates in your feed`}
                     >
-                      {rel.isFollowing ? <Check className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+                      {rel.isFollowing ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                       <span>
                         {rel.isFollowing
                           ? t("following", "Following")
