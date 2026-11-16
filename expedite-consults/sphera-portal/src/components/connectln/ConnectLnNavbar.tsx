@@ -554,26 +554,26 @@ export function ConnectLnNavbar({
       )}
 
       {/* Top Header: Brand Logo, Adaptive Search, and Quick Actions */}
-      <div className="mx-auto flex h-13 sm:h-14 max-w-[1720px] items-center justify-between px-2 sm:px-4 lg:px-6 gap-2 sm:gap-3">
+      <div className="mx-auto flex h-13 sm:h-14 max-w-[1720px] items-center justify-between px-2 sm:px-4 lg:px-6 gap-2 sm:gap-2.5">
         {/* Left Side: Brand Logo & Interactive Live Search */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 lg:flex-1 lg:min-w-0 max-w-sm sm:max-w-md lg:max-w-[230px] xl:max-w-[270px] 2xl:max-w-sm relative">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 lg:flex-1 lg:min-w-0 max-w-sm sm:max-w-md lg:max-w-[260px] xl:max-w-[315px] 2xl:max-w-[380px] relative">
           <button
             onClick={() => onSelectTab('home')}
             className="flex items-center focus:outline-none group shrink-0"
-            title="ConnectIn Home"
+            title="ConnectLn Home"
           >
             <ConnectInLogo size="sm" showSubtitle={false} className="shrink-0" />
           </button>
 
           {/* Interactive Search Box - Fluid on Desktop, Hidden on Mobile */}
-          <div className="hidden lg:block relative flex-1 min-w-[140px] max-w-full transition-all duration-200">
+          <div className="hidden lg:block relative flex-1 min-w-[165px] max-w-full transition-all duration-200">
             <div
-              className={`flex items-center gap-1.5 sm:gap-2 rounded-full bg-[#EDF3F8] px-2.5 sm:px-3 py-1 sm:py-1.5 transition-all dark:bg-zinc-800/90 border border-zinc-200/50 dark:border-zinc-700/50 ${
+              className={`flex items-center gap-1.5 rounded-full bg-[#EDF3F8] px-3 py-1.5 transition-all dark:bg-zinc-800/90 border border-zinc-200/60 dark:border-zinc-700/50 ${
                 isSearchFocused ? "ring-2 ring-[#0A66C2] bg-white border-[#0A66C2] shadow-md dark:bg-zinc-900" : "hover:bg-[#E2ECF3] dark:hover:bg-zinc-800"
               }`}
             >
               <Search
-                className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-zinc-500 shrink-0 cursor-pointer"
+                className="h-3.5 w-3.5 text-zinc-500 shrink-0 cursor-pointer"
                 onClick={() => {
                   onOpenUniversalSearch && onOpenUniversalSearch()
                   setIsSearchFocused(false)
@@ -581,7 +581,7 @@ export function ConnectLnNavbar({
               />
               <input
                 type="text"
-                placeholder={t("search_placeholder", "Search members, modules, skills...")}
+                placeholder={t("search_placeholder", "Search members, jobs, skills...")}
                 value={searchQuery}
                 onChange={(e) => {
                   onSearchChange(e.target.value)
@@ -594,7 +594,7 @@ export function ConnectLnNavbar({
                     setIsSearchFocused(false)
                   }
                 }}
-                className="w-full bg-transparent text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-500 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-400 font-medium truncate"
+                className="w-full bg-transparent text-xs leading-4 text-zinc-900 placeholder:text-zinc-500 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-400 font-medium truncate"
               />
               {searchQuery && (
                 <button
@@ -975,7 +975,7 @@ export function ConnectLnNavbar({
                     </span>
                   )}
                 </div>
-                <span className="hidden xl:inline-block text-[10px] xl:text-[11px] mt-0.5 truncate max-w-[68px]">
+                <span className="hidden xl:inline-block text-[11px] font-semibold leading-tight mt-0.5 truncate max-w-[68px]">
                   {item.shortLabel || item.label}
                 </span>
               </button>
@@ -1042,7 +1042,7 @@ export function ConnectLnNavbar({
                   className="h-full w-full object-cover"
                 />
               </div>
-              <span className="flex items-center gap-0.5 text-[10px] mt-0.5 font-medium">
+              <span className="flex items-center gap-0.5 text-[11px] leading-tight mt-0.5 font-semibold">
                 {t("nav_me", "Me")} <ChevronDown className="h-3 w-3" />
               </span>
             </button>
@@ -1336,7 +1336,7 @@ export function ConnectLnNavbar({
               title="More Modules & Hubs"
             >
               <Grid3X3 className="h-4.5 w-4.5" />
-              <span className="flex items-center gap-0.5 text-[10px] xl:text-[11px] mt-0.5 font-medium">
+              <span className="flex items-center gap-0.5 text-[11px] leading-tight mt-0.5 font-semibold">
                 {t("nav_more", "More")} <ChevronDown className="h-3 w-3" />
               </span>
             </button>
@@ -1349,7 +1349,7 @@ export function ConnectLnNavbar({
                 setIsMoreOpen(false)
                 setIsMeOpen(false)
               }}
-              className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] sm:text-xs font-bold shadow-xs transition-all shrink-0 cursor-pointer border ${
+              className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold shadow-xs transition-all shrink-0 cursor-pointer border ${
                 activeTab === 'adminiam'
                   ? "bg-[#3A2818] text-[#FAF6EE] border-[#3A2818]"
                   : "bg-[#FAF6EE] dark:bg-zinc-800 text-[#3A2818] dark:text-zinc-200 border-[#C8B99E] dark:border-zinc-700 hover:bg-[#EFE7D6]"
@@ -1357,17 +1357,18 @@ export function ConnectLnNavbar({
               title="Open ConnectLn Admin & 1-Minute Video/Media Backend"
             >
               <Zap className="h-3.5 w-3.5 text-[#6B4423] dark:text-amber-400 shrink-0" />
-              <span>Backend</span>
+              <span className="capitalize">Backend</span>
             </button>
           )}
           {isAdminUser && onOpenAuthModal && (
             <button
               onClick={onOpenAuthModal}
-              className="flex items-center gap-1 sm:gap-1.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs font-bold shadow-xs hover:opacity-90 transition-all shrink-0 cursor-pointer"
+              className="flex items-center gap-1.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 px-2.5 py-1 text-xs font-bold shadow-xs hover:opacity-90 transition-all shrink-0 cursor-pointer"
+              style={{ backgroundColor: '#1C1917', color: '#FAF6EE' }}
               title="Access Role Gate & Persona Switcher"
             >
-              <Key className="h-3.5 w-3.5 text-amber-300 dark:text-amber-500 shrink-0" />
-              <span>{t("nav_gate", "Gate")}</span>
+              <Key className="h-3.5 w-3.5 text-amber-300 shrink-0" />
+              <span style={{ color: '#FAF6EE' }}>{t("nav_gate", "Gate")}</span>
             </button>
           )}
 

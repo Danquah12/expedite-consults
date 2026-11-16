@@ -108,9 +108,9 @@ const HEADER_CONFIG: Record<
   }
 > = {
   home: {
-    badge: "HOME LIVE MEDIA WIRE · 1-MIN AUTO-PULL",
-    title: "Live ConnectLn Videos & Visuals Pushed to Home",
-    subtitle: "Fresh domain videos and pictures pulled every 60 seconds from the ConnectLn Admin Backend.",
+    badge: "HOME LIVE MEDIA WIRE",
+    title: "Live ConnectLn Videos & Visuals",
+    subtitle: "Fresh domain videos and visuals synced automatically from the ConnectLn Admin Backend.",
     icon: House,
   },
   jobs: {
@@ -294,60 +294,69 @@ export function LiveHarvestedMediaShowcase({
 
   return (
     <div className="rounded-2xl border border-[#DFD4C0] dark:border-zinc-800 bg-[#FAF6EE] dark:bg-zinc-900 p-4 sm:p-5 shadow-2xs space-y-3.5">
-      {/* Header Strip */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#3A2818] px-2.5 py-0.5 text-[10px] font-bold text-[#FAF6EE]">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
-              {cfg.badge}
-            </span>
-            <span className="rounded-full bg-[#EFE7D6] dark:bg-zinc-800 border border-[#D5C8B0] dark:border-zinc-700 px-2.5 py-0.5 text-[10px] font-mono font-bold text-[#3A2818] dark:text-zinc-200">
-              {totalVideosCount.toLocaleString()} Platform Videos · +{pulledTodayCount.toLocaleString()} Today
-            </span>
-            <span className="rounded-full bg-emerald-100 border border-emerald-400 px-2.5 py-0.5 text-[10px] font-mono font-extrabold text-emerald-900">
-              ⏱️ Next 60-Min Auto-Pull: {Math.floor(secondsToNextAutoPull / 60)}m {String(secondsToNextAutoPull % 60).padStart(2, "0")}s
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <HeaderIcon className="h-4 w-4 text-[#6B4423] shrink-0" />
-            <h3 className="text-sm sm:text-base font-bold text-zinc-950 dark:text-white">
-              {cfg.title}
-            </h3>
-          </div>
-          <p className="text-xs text-zinc-600 dark:text-zinc-400">{cfg.subtitle}</p>
-        </div>
-
-        <div className="flex items-center gap-1.5 flex-wrap shrink-0">
-          <button
-            type="button"
-            onClick={() => handleManualPullForTab(false)}
-            disabled={isSyncingNow}
-            className="rounded-xl bg-[#6B4423] hover:bg-[#523319] px-3 py-1.5 text-[11px] font-bold text-white flex items-center gap-1.5 shadow-2xs cursor-pointer disabled:opacity-60"
-          >
-            <RefreshCw className={`h-3 w-3 ${isSyncingNow ? "animate-spin" : ""}`} />
-            <span>{isSyncingNow ? "Pulling..." : "Pull New Video Now"}</span>
-          </button>
-
-          {onOpenAdminBackend && canAccessAdminBackend && (
-            <button
-              type="button"
-              onClick={onOpenAdminBackend}
-              className="rounded-xl border border-[#C8B99E] dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-[#EFE7D6] px-3 py-1.5 text-[11px] font-bold text-[#3A2818] dark:text-zinc-200 flex items-center gap-1 cursor-pointer"
+      {/* Header Strip — Clean Full-Width Typography Hierarchy (Zero Crushed Multi-Line Wrapping) */}
+      <div className="space-y-2.5">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span
+              style={{ backgroundColor: "#3A2818", color: "#FAF6EE" }}
+              className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[10.5px] font-bold tracking-wide"
             >
-              <Sliders className="h-3 w-3 text-[#6B4423]" />
-              <span>Admin Media Backend</span>
-            </button>
-          )}
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
+              <span style={{ color: "#FAF6EE" }}>{cfg.badge}</span>
+            </span>
+            <span className="whitespace-nowrap rounded-full bg-[#EFE7D6] dark:bg-zinc-800 border border-[#D5C8B0] dark:border-zinc-700 px-2.5 py-0.5 text-[10.5px] font-semibold text-[#3A2818] dark:text-zinc-200">
+              {totalVideosCount.toLocaleString()} Videos · +{pulledTodayCount.toLocaleString()} Today
+            </span>
+            <span className="whitespace-nowrap rounded-full bg-emerald-100 border border-emerald-400 px-2.5 py-0.5 text-[10.5px] font-bold text-emerald-900">
+              ⏱️ Auto-Pull: {Math.floor(secondsToNextAutoPull / 60)}m {String(secondsToNextAutoPull % 60).padStart(2, "0")}s
+            </span>
+          </div>
 
           <button
             type="button"
             onClick={() => setIsExpanded((prev) => !prev)}
-            className="rounded-xl border border-[#DFD4C0] dark:border-zinc-700 bg-white/80 dark:bg-zinc-800 p-1.5 text-zinc-600 dark:text-zinc-300 hover:bg-[#EFE7D6] cursor-pointer"
+            className="rounded-lg border border-[#DFD4C0] dark:border-zinc-700 bg-white/90 dark:bg-zinc-800 p-1.5 text-zinc-600 dark:text-zinc-300 hover:bg-[#EFE7D6] cursor-pointer shrink-0"
             title={isExpanded ? "Collapse" : "Expand"}
           >
             {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
           </button>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-2.5">
+          <div className="min-w-0 flex-1 space-y-0.5">
+            <div className="flex items-center gap-2">
+              <HeaderIcon className="h-4 w-4 text-[#6B4423] shrink-0" />
+              <h3 className="text-[15px] font-extrabold text-zinc-950 dark:text-white leading-snug">
+                {cfg.title}
+              </h3>
+            </div>
+            <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">{cfg.subtitle}</p>
+          </div>
+
+          <div className="flex items-center gap-1.5 flex-wrap shrink-0">
+            <button
+              type="button"
+              onClick={() => handleManualPullForTab(false)}
+              disabled={isSyncingNow}
+              style={{ backgroundColor: "#6B4423", color: "#FFFFFF" }}
+              className="rounded-xl hover:opacity-95 px-3 py-1.5 text-xs font-bold text-white flex items-center gap-1.5 shadow-2xs cursor-pointer disabled:opacity-60"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${isSyncingNow ? "animate-spin" : ""}`} style={{ color: "#FFFFFF" }} />
+              <span style={{ color: "#FFFFFF" }}>{isSyncingNow ? "Pulling..." : "Pull New Video"}</span>
+            </button>
+
+            {onOpenAdminBackend && canAccessAdminBackend && (
+              <button
+                type="button"
+                onClick={onOpenAdminBackend}
+                className="rounded-xl border border-[#C8B99E] dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-[#EFE7D6] px-3 py-1.5 text-xs font-bold text-[#3A2818] dark:text-zinc-200 flex items-center gap-1.5 cursor-pointer"
+              >
+                <Sliders className="h-3.5 w-3.5 text-[#6B4423]" />
+                <span>Admin Backend</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -431,7 +440,7 @@ export function LiveHarvestedMediaShowcase({
                   )}
 
                   <div className="p-3 space-y-1.5">
-                    <p className="text-xs font-bold text-zinc-950 dark:text-white line-clamp-2 leading-snug">
+                    <p className="text-[13px] font-bold text-zinc-950 dark:text-white line-clamp-2 leading-snug">
                       {destination === "jobs" && item.jobMeta
                         ? item.jobMeta.roleTitle
                         : destination === "market" && item.marketMeta
@@ -439,7 +448,7 @@ export function LiveHarvestedMediaShowcase({
                         : item.title}
                     </p>
 
-                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-relaxed">
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-relaxed">
                       {destination === "pulse" && item.pulseMeta
                         ? item.pulseMeta.takeaway
                         : item.summary}

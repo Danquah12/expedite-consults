@@ -129,23 +129,23 @@ export function RightSidebarNews({
           <button
             type="button"
             onClick={() => onOpenAIAssistant && onOpenAIAssistant()}
-            className="flex items-center gap-2 group min-w-0 text-left cursor-pointer"
+            className="flex items-center gap-2.5 group min-w-0 text-left cursor-pointer"
           >
-            <div className="h-7 w-7 rounded-lg bg-[#0A66C2]/10 dark:bg-[#0A66C2]/20 flex items-center justify-center text-[#0A66C2] dark:text-[#70B5F9] shrink-0 group-hover:bg-[#0A66C2] group-hover:text-white transition-colors">
-              <Sparkles className="h-3.5 w-3.5" />
+            <div className="h-8 w-8 rounded-lg bg-[#0A66C2]/10 dark:bg-[#0A66C2]/20 flex items-center justify-center text-[#0A66C2] dark:text-[#70B5F9] shrink-0 group-hover:bg-[#0A66C2] group-hover:text-white transition-colors">
+              <Sparkles className="h-4 w-4" />
             </div>
             <div className="min-w-0">
-              <h3 className="font-bold text-xs text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2] flex items-center gap-1.5 transition-colors">
+              <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2] flex items-center gap-1.5 transition-colors leading-tight">
                 <span>{t("ask_vibe_ai", "Ask Noctis")}</span>
               </h3>
-              <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
-                {t("vibe_ai_desc", "Career, Trade & Technical Intelligence")}
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
+                {t("vibe_ai_desc", "Career, Trade & Technical AI")}
               </p>
             </div>
           </button>
-          <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 text-[9px] font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-200/70 dark:border-emerald-800/70 flex items-center gap-1 shrink-0">
+          <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 text-[10.5px] font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-200/70 dark:border-emerald-800/70 flex items-center gap-1 shrink-0">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            <span>{t("vibe_online", "Ready")}</span>
+            <span>{t("vibe_online", "Online")}</span>
           </span>
         </div>
 
@@ -153,7 +153,7 @@ export function RightSidebarNews({
         <div className="flex items-center gap-1.5 bg-zinc-50 dark:bg-zinc-800/80 rounded-lg p-1 border border-zinc-200/90 dark:border-zinc-700/80 focus-within:border-[#0A66C2] transition-all">
           <input
             type="text"
-            placeholder={t("ask_noctis_placeholder", 'Ask Noctis or say "Play this video in Chinese"...')}
+            placeholder={t("ask_noctis_placeholder", 'Ask Noctis or "Play in Spanish"...')}
             value={sidebarQuery}
             onChange={(e) => setSidebarQuery(e.target.value)}
             onKeyDown={(e) => {
@@ -161,19 +161,20 @@ export function RightSidebarNews({
                 handleSidebarAskNoctis(sidebarQuery)
               }
             }}
-            className="flex-1 bg-transparent px-2 py-1 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none"
+            className="flex-1 min-w-0 bg-transparent px-2 py-1 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:outline-none truncate"
           />
           <button
             type="button"
             onClick={() => handleSidebarAskNoctis(sidebarQuery)}
-            className="rounded-md bg-[#0A66C2] hover:bg-[#004182] px-2.5 py-1 text-[11px] font-semibold text-white transition-colors shrink-0 cursor-pointer"
+            style={{ color: "#FFFFFF" }}
+            className="rounded-md bg-[#0A66C2] hover:bg-[#004182] px-3 py-1 text-xs font-bold text-white transition-colors shrink-0 cursor-pointer"
           >
-            {t("search_button", "Ask")}
+            {t("search_button", "Search")}
           </button>
         </div>
 
         {noctisAudioToast && (
-          <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 px-2.5 py-1.5 text-[11px] font-bold text-emerald-800 dark:text-emerald-200">
+          <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 px-2.5 py-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-200">
             {noctisAudioToast}
           </div>
         )}
@@ -188,7 +189,7 @@ export function RightSidebarNews({
               key={idx}
               type="button"
               onClick={() => onOpenAIAssistant && onOpenAIAssistant(chip.q)}
-              className="flex-1 text-[10px] font-medium rounded-lg bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 px-2 py-1 transition-colors border border-zinc-200/70 dark:border-zinc-700/60 truncate cursor-pointer"
+              className="flex-1 text-[11px] font-semibold rounded-lg bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 py-1.5 transition-colors border border-zinc-200/70 dark:border-zinc-700/60 truncate cursor-pointer"
             >
               {chip.label}
             </button>
@@ -196,17 +197,17 @@ export function RightSidebarNews({
         </div>
       </div>
 
-      {/* 2. CONNECTIN NEWS & RESEARCH INTELLIGENCE */}
+      {/* 2. CONNECTLN NEWS & RESEARCH INTELLIGENCE */}
       <div className="rounded-xl border border-zinc-200 bg-white p-3.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex items-center justify-between pb-2">
+        <div className="flex items-center justify-between pb-1.5">
           <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
-            {t("news_and_pulse", "ConnectIn News & Pulse")}
+            {t("news_and_pulse", "ConnectLn News & Pulse")}
           </h3>
           <Info className="h-4 w-4 text-zinc-400 cursor-pointer hover:text-zinc-600" />
         </div>
 
-        <p className="text-xs font-semibold text-zinc-500 mb-2 dark:text-zinc-400">
-          {t("top_stories", "Top stories & cyber intelligence")}
+        <p className="text-xs font-semibold text-zinc-500 mb-2.5 dark:text-zinc-400">
+          {t("top_stories", "Top stories & industry intelligence")}
         </p>
 
         <div className="space-y-2.5">
@@ -219,10 +220,10 @@ export function RightSidebarNews({
               <div className="flex items-start gap-2">
                 <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-zinc-400 group-hover:bg-[#0A66C2] transition-colors shrink-0" />
                 <div>
-                  <h4 className="text-xs font-semibold text-zinc-800 group-hover:text-[#0A66C2] group-hover:underline dark:text-zinc-200 leading-snug">
+                  <h4 className="text-[13px] font-semibold text-zinc-800 group-hover:text-[#0A66C2] group-hover:underline dark:text-zinc-200 leading-snug">
                     {item.headline}
                   </h4>
-                  <p className="mt-0.5 text-[10px] text-zinc-400">
+                  <p className="mt-0.5 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
                     {item.timeAgo} · {item.readersCount}
                   </p>
                 </div>
@@ -233,14 +234,14 @@ export function RightSidebarNews({
 
         <button
           onClick={() => setShowAllNews(!showAllNews)}
-          className="mt-2.5 flex items-center gap-1 text-xs font-semibold text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 focus:outline-none cursor-pointer"
+          className="mt-2.5 flex items-center gap-1 text-xs font-semibold text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 focus:outline-none cursor-pointer"
         >
           <span>{showAllNews ? t("show_less", "Show less") : t("show_more", "Show more")}</span>
           {showAllNews ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
         </button>
       </div>
 
-      {/* 3. VERIFIED FELLOWS & PEOPLE TO FOLLOW (ONE-WAY FOLLOW GRAPH, SEPARATE FROM CONNECTIONS) */}
+      {/* 3. VERIFIED FELLOWS & PEOPLE TO FOLLOW */}
       <div className="rounded-xl border border-zinc-200 bg-white p-3.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-2.5">
         <div className="flex items-center justify-between pb-1">
           <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
@@ -260,10 +261,10 @@ export function RightSidebarNews({
             className="hover:bg-white dark:hover:bg-zinc-900 rounded-md py-1 transition-colors cursor-pointer"
             title="View people you follow"
           >
-            <p className="text-xs font-extrabold text-[#0A66C2] dark:text-sky-400">
+            <p className="text-sm font-extrabold text-[#0A66C2] dark:text-sky-400">
               {userFollowBundle.following.length}
             </p>
-            <p className="text-[10px] font-semibold text-zinc-500 dark:text-zinc-400">Following</p>
+            <p className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-400">Following</p>
           </button>
           <button
             type="button"
@@ -274,15 +275,15 @@ export function RightSidebarNews({
             className="hover:bg-white dark:hover:bg-zinc-900 rounded-md py-1 transition-colors cursor-pointer"
             title="View people following you"
           >
-            <p className="text-xs font-extrabold text-emerald-700 dark:text-emerald-400">
+            <p className="text-sm font-extrabold text-emerald-700 dark:text-emerald-400">
               {userFollowBundle.followers.length}
             </p>
-            <p className="text-[10px] font-semibold text-zinc-500 dark:text-zinc-400">Followers</p>
+            <p className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-400">Followers</p>
           </button>
         </div>
 
         {followFeedback && (
-          <div className="rounded-lg bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 px-2.5 py-1.5 text-[11px] font-semibold text-[#0A66C2] dark:text-sky-300">
+          <div className="rounded-lg bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 px-2.5 py-1.5 text-xs font-semibold text-[#0A66C2] dark:text-sky-300">
             {followFeedback}
           </div>
         )}
@@ -304,7 +305,7 @@ export function RightSidebarNews({
                   <div className="flex items-center gap-1">
                     <p
                       onClick={() => onSelectMember?.(person)}
-                      className="font-bold text-xs text-zinc-900 hover:underline hover:text-[#0A66C2] cursor-pointer truncate dark:text-zinc-100"
+                      className="font-bold text-[13px] text-zinc-900 hover:underline hover:text-[#0A66C2] cursor-pointer truncate dark:text-zinc-100"
                       title={`Open ${person.name}'s Workspace`}
                     >
                       {person.name}
@@ -313,12 +314,12 @@ export function RightSidebarNews({
                   </div>
                   <p
                     onClick={() => onSelectMember?.(person)}
-                    className="text-[11px] text-zinc-500 line-clamp-2 dark:text-zinc-400 leading-tight cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-300"
+                    className="text-xs text-zinc-500 line-clamp-2 dark:text-zinc-400 leading-snug cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-300"
                   >
                     {person.headline}
                   </p>
                   {targetFollowBundle.followers.length > 0 && (
-                    <p className="text-[10px] text-zinc-400 font-medium mt-0.5">
+                    <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">
                       {targetFollowBundle.followers.length} {targetFollowBundle.followers.length === 1 ? 'follower' : 'followers'}
                       {rel.followsYou ? ' · Follows you' : ''}
                     </p>

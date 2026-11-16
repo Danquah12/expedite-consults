@@ -519,8 +519,8 @@ export function PostCreator({ user, onAddPost }: PostCreatorProps) {
           </button>
         </div>
 
-        {/* 6 Primary Action Buttons (Share Video, Media, Create a Poll, Celebrate, Document, Write with AI) */}
-        <div className="mt-3 flex items-center justify-between border-t border-zinc-100 pt-2.5 text-xs font-semibold text-zinc-600 dark:border-zinc-800/80 dark:text-zinc-400 flex-wrap gap-1.5">
+        {/* 6 Primary Action Buttons (Share Video, Media, Poll, Celebrate, Document, Write with AI) */}
+        <div className="mt-3 flex items-center justify-between border-t border-zinc-100 pt-2.5 text-xs font-semibold text-zinc-600 dark:border-zinc-800/80 dark:text-zinc-400 flex-wrap gap-1">
           {/* 1. Share Video */}
           <button
             type="button"
@@ -530,7 +530,7 @@ export function PostCreator({ user, onAddPost }: PostCreatorProps) {
               setShowMediaInput(true)
               setIsOpen(true)
             }}
-            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-blue-50 transition-colors text-[#0066FF] dark:hover:bg-zinc-800 font-bold cursor-pointer"
+            className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 hover:bg-blue-50 transition-colors text-[#0A66C2] dark:hover:bg-zinc-800 font-bold cursor-pointer shrink-0"
           >
             <Video className="h-4 w-4 shrink-0" />
             <span>Share Video</span>
@@ -545,13 +545,13 @@ export function PostCreator({ user, onAddPost }: PostCreatorProps) {
               setShowMediaInput(true)
               setIsOpen(true)
             }}
-            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-zinc-100 transition-colors text-amber-800 dark:text-amber-300 dark:hover:bg-zinc-800 cursor-pointer"
+            className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 hover:bg-zinc-100 transition-colors text-amber-800 dark:text-amber-300 dark:hover:bg-zinc-800 cursor-pointer shrink-0"
           >
             <ImageIcon className="h-4 w-4 shrink-0" />
             <span>{t("action_media", "Media")}</span>
           </button>
 
-          {/* 3. Create a Poll */}
+          {/* 3. Poll */}
           <button
             type="button"
             onClick={() => {
@@ -568,10 +568,10 @@ export function PostCreator({ user, onAddPost }: PostCreatorProps) {
               }
               setIsOpen(true)
             }}
-            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-zinc-100 transition-colors text-stone-700 dark:text-stone-300 dark:hover:bg-zinc-800 cursor-pointer"
+            className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 hover:bg-zinc-100 transition-colors text-stone-700 dark:text-stone-300 dark:hover:bg-zinc-800 cursor-pointer shrink-0"
           >
             <Vote className="h-4 w-4 shrink-0" />
-            <span>{t("action_poll", "Create a Poll")}</span>
+            <span>{t("action_poll", "Poll")}</span>
           </button>
 
           {/* 4. Celebrate */}
@@ -582,7 +582,7 @@ export function PostCreator({ user, onAddPost }: PostCreatorProps) {
               setShowMediaInput(false)
               setIsOpen(true)
             }}
-            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-emerald-50/70 transition-colors text-emerald-700 dark:text-emerald-400 dark:hover:bg-zinc-800 cursor-pointer"
+            className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 hover:bg-emerald-50/70 transition-colors text-emerald-700 dark:text-emerald-400 dark:hover:bg-zinc-800 cursor-pointer shrink-0"
           >
             <Sparkles className="h-4 w-4 shrink-0" />
             <span>{t("action_celebrate", "Celebrate")}</span>
@@ -596,7 +596,7 @@ export function PostCreator({ user, onAddPost }: PostCreatorProps) {
               setShowMediaInput(false)
               setIsOpen(true)
             }}
-            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-amber-50/70 transition-colors text-amber-900 dark:text-amber-300 dark:hover:bg-zinc-800 cursor-pointer"
+            className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 hover:bg-amber-50/70 transition-colors text-amber-900 dark:text-amber-300 dark:hover:bg-zinc-800 cursor-pointer shrink-0"
           >
             <BookOpen className="h-4 w-4 shrink-0" />
             <span>{t("action_document", "Document")}</span>
@@ -606,7 +606,7 @@ export function PostCreator({ user, onAddPost }: PostCreatorProps) {
           <button
             type="button"
             onClick={() => setIsAIOpen(true)}
-            className="flex items-center gap-1.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border border-amber-300/80 dark:border-amber-700/80 hover:bg-amber-100 dark:hover:bg-amber-900/50 px-3 py-1.5 text-xs font-bold shadow-2xs transition-all cursor-pointer"
+            className="flex items-center gap-1.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border border-amber-300/80 dark:border-amber-700/80 hover:bg-amber-100 dark:hover:bg-amber-900/50 px-2.5 py-1 text-xs font-bold shadow-2xs transition-all cursor-pointer shrink-0"
           >
             <Sparkles className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
             <span>{t("action_ai", "Write with AI")}</span>

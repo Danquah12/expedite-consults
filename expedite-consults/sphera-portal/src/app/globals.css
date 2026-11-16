@@ -333,26 +333,48 @@ body {
   border-color: #e2d9c8 !important;
 }
 
-/* ConnectIn's hardcoded blue (#0A66C2 / #004182) becomes warm Desk Note espresso (#7c4225) with cream text */
+/* ConnectIn's hardcoded accent fills become warm Desk Note espresso / forest tones with guaranteed crisp cream text */
 [data-theme="vibe"] [class~="bg-[#0A66C2]"],
 [data-theme="vibe"] [class~="bg-blue-600"],
+[data-theme="vibe"] [class~="bg-amber-500"],
 [data-theme="vibe"] [class~="bg-amber-600"],
 [data-theme="vibe"] [class~="bg-orange-600"],
 [data-theme="vibe"] [class~="bg-purple-600"],
-[data-theme="vibe"] [class~="bg-indigo-600"] {
+[data-theme="vibe"] [class~="bg-indigo-600"],
+[data-theme="vibe"] [class~="bg-[#6B4423]"],
+[data-theme="vibe"] [class~="bg-[#3A2818]"] {
   background-color: #7c4225 !important;
+  color: #fbf8f3 !important;
+}
+[data-theme="vibe"] [class~="bg-[#3A2818]"] {
+  background-color: #3a2818 !important;
+}
+[data-theme="vibe"] [class~="bg-emerald-500"],
+[data-theme="vibe"] [class~="bg-emerald-600"],
+[data-theme="vibe"] [class~="bg-emerald-700"],
+[data-theme="vibe"] [class~="bg-teal-500"],
+[data-theme="vibe"] [class~="bg-teal-600"] {
   color: #fbf8f3 !important;
 }
 [data-theme="vibe"] [class~="bg-[#0A66C2]"] *,
 [data-theme="vibe"] [class~="bg-blue-600"] *,
+[data-theme="vibe"] [class~="bg-amber-500"] *,
 [data-theme="vibe"] [class~="bg-amber-600"] *,
 [data-theme="vibe"] [class~="bg-orange-600"] *,
 [data-theme="vibe"] [class~="bg-purple-600"] *,
-[data-theme="vibe"] [class~="bg-indigo-600"] * {
+[data-theme="vibe"] [class~="bg-indigo-600"] *,
+[data-theme="vibe"] [class~="bg-[#6B4423]"] *,
+[data-theme="vibe"] [class~="bg-[#3A2818]"] *,
+[data-theme="vibe"] [class~="bg-emerald-500"] *,
+[data-theme="vibe"] [class~="bg-emerald-600"] *,
+[data-theme="vibe"] [class~="bg-emerald-700"] *,
+[data-theme="vibe"] [class~="bg-teal-500"] *,
+[data-theme="vibe"] [class~="bg-teal-600"] * {
   color: #fbf8f3 !important;
 }
 [data-theme="vibe"] [class~="hover:bg-[#004182]"]:hover,
 [data-theme="vibe"] [class~="hover:bg-blue-700"]:hover,
+[data-theme="vibe"] [class~="hover:bg-amber-400"]:hover,
 [data-theme="vibe"] [class~="hover:bg-amber-700"]:hover,
 [data-theme="vibe"] [class~="hover:bg-orange-700"]:hover {
   background-color: #63331b !important;
@@ -371,34 +393,25 @@ body {
 /* Header & top strip match warm editorial parchment with clean stone border */
 [data-theme="vibe"] header { background-color: #fbf8f3 !important; border-color: #e2d9c8 !important; }
 
-/* Neutralize loud dark-only gradient banners inside light Desk Note mode */
-[data-theme="vibe"] [class*="from-zinc-900"],
-[data-theme="vibe"] [class*="from-slate-900"],
-[data-theme="vibe"] [class*="from-indigo-950"],
-[data-theme="vibe"] [class*="from-purple-950"],
-[data-theme="vibe"] [class*="from-blue-950"],
-[data-theme="vibe"] [class*="bg-zinc-900"]:not(button),
-[data-theme="vibe"] [class*="bg-slate-900"]:not(button) {
+/* Neutralize explicit dark-only gradient banners in light Desk Note mode (using exact ~= token match so dark:bg-zinc-900 is NEVER hit!) */
+[data-theme="vibe"] [class~="from-zinc-900"],
+[data-theme="vibe"] [class~="from-slate-900"],
+[data-theme="vibe"] [class~="from-indigo-950"],
+[data-theme="vibe"] [class~="from-purple-950"],
+[data-theme="vibe"] [class~="from-blue-950"],
+[data-theme="vibe"] [class~="bg-zinc-900"]:not(button):not(.aspect-video),
+[data-theme="vibe"] [class~="bg-slate-900"]:not(button):not(.aspect-video) {
   background-image: linear-gradient(145deg, #fbf8f3, #f3ede2) !important;
   background-color: #fbf8f3 !important;
   color: #1c1917 !important;
   border-color: #e2d9c8 !important;
 }
-[data-theme="vibe"] [class*="from-zinc-900"] [class~="text-white"],
-[data-theme="vibe"] [class*="from-slate-900"] [class~="text-white"],
-[data-theme="vibe"] [class*="from-indigo-950"] [class~="text-white"],
-[data-theme="vibe"] [class*="from-purple-950"] [class~="text-white"],
-[data-theme="vibe"] [class*="from-blue-950"] [class~="text-white"],
-[data-theme="vibe"] [class*="bg-zinc-900"]:not(button) [class~="text-white"],
-[data-theme="vibe"] [class*="bg-slate-900"]:not(button) [class~="text-white"] {
+[data-theme="vibe"] [class~="from-zinc-900"] [class~="text-white"]:not(button):not(a),
+[data-theme="vibe"] [class~="from-slate-900"] [class~="text-white"]:not(button):not(a),
+[data-theme="vibe"] [class~="from-indigo-950"] [class~="text-white"]:not(button):not(a),
+[data-theme="vibe"] [class~="from-purple-950"] [class~="text-white"]:not(button):not(a),
+[data-theme="vibe"] [class~="from-blue-950"] [class~="text-white"]:not(button):not(a) {
   color: #1c1917 !important;
-}
-[data-theme="vibe"] [class*="from-zinc-900"] [class*="text-zinc-"],
-[data-theme="vibe"] [class*="from-slate-900"] [class*="text-slate-"],
-[data-theme="vibe"] [class*="from-indigo-950"] [class*="text-indigo-"],
-[data-theme="vibe"] [class*="from-purple-950"] [class*="text-purple-"],
-[data-theme="vibe"] [class*="bg-zinc-900"]:not(button) [class*="text-zinc-"] {
-  color: #57534e !important;
 }
 
 * {

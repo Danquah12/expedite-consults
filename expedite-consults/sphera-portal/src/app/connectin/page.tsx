@@ -2405,11 +2405,11 @@ export default function ConnectLnPage() {
               </div>
 
               {/* Active Logged-In Profession Switcher & Feed Indicator */}
-              <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 shadow-xs space-y-2">
+              <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3.5 shadow-xs space-y-2.5">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500 shrink-0" />
-                    <span className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100 truncate">
+                    <span className="text-[13px] font-extrabold text-zinc-900 dark:text-zinc-100 truncate">
                       Logged-In Profession Feed:{" "}
                       <span className="text-[#0A66C2] dark:text-sky-400">
                         {resolvedUserProf?.title || userData.profession || "Master Carpenter"}
@@ -2419,7 +2419,7 @@ export default function ConnectLnPage() {
                   <select
                     value={activeProfId || "carpenter"}
                     onChange={(e) => handleSwitchActiveProfession(e.target.value)}
-                    className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-2.5 py-1 text-[11px] font-bold text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2] max-w-[230px] cursor-pointer"
+                    className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-2.5 py-1 text-xs font-semibold text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2] max-w-[230px] cursor-pointer"
                     title="Switch logged-in profession to see its videos and stories"
                   >
                     {ALL_PROFESSIONS.map((p) => (
@@ -2432,7 +2432,7 @@ export default function ConnectLnPage() {
 
                 {/* Quick Profession Pills (Carpenter, Nurse, Doctor, Electrician, Mechanic, Cybersecurity, Software) */}
                 <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 shrink-0 mr-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 shrink-0 mr-1">
                     Quick View:
                   </span>
                   {[
@@ -2454,7 +2454,7 @@ export default function ConnectLnPage() {
                         key={item.id}
                         type="button"
                         onClick={() => handleSwitchActiveProfession(item.id)}
-                        className={`px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition-all cursor-pointer shrink-0 ${
+                        className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer shrink-0 ${
                           isActive
                             ? "bg-[#0A66C2] text-white shadow-xs"
                             : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"
@@ -2467,22 +2467,24 @@ export default function ConnectLnPage() {
                 </div>
 
                 {/* Direct 1-Click Jump Bar to All 13 Skilled Trades Videos & Learning Academy */}
-                <div className="pt-1.5 border-t border-zinc-100 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2">
+                <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2">
                   <button
                     type="button"
                     onClick={() => {
                       const el = document.getElementById("home-skilled-trades-learn-by-doing")
                       if (el) el.scrollIntoView({ behavior: "smooth", block: "start" })
                     }}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 px-3 py-1.5 text-[11px] font-extrabold shadow-2xs transition-colors cursor-pointer"
+                    title="Carpentry, Plumbing, Electrical, Welding, HVAC, Auto & Painting"
+                    style={{ color: "#FFFFFF" }}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-white px-3 py-1.5 text-xs font-bold shadow-2xs transition-colors cursor-pointer"
                   >
                     <span>🛠️</span>
-                    <span>View All 13 Skilled Trades Video Lessons (Carpentry, Plumbing, Electrical, Welding, HVAC, Auto, Painting) ↓</span>
+                    <span style={{ color: "#FFFFFF" }}>View All 13 Skilled Trades Video Lessons ↓</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setActiveTab('learning')}
-                    className="inline-flex items-center gap-1 rounded-lg bg-[#0A66C2]/10 hover:bg-[#0A66C2]/20 text-[#0A66C2] dark:text-sky-300 border border-[#0A66C2]/30 px-2.5 py-1 text-[11px] font-bold transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1 rounded-lg bg-[#0A66C2]/10 hover:bg-[#0A66C2]/20 text-[#0A66C2] dark:text-sky-300 border border-[#0A66C2]/30 px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer"
                   >
                     <span>🎓 Open Full Learning Tab →</span>
                   </button>

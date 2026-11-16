@@ -771,7 +771,7 @@ export function LeftSidebarProfile({
                 <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
                 <span className="relative h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-zinc-900 online-dot-blink" />
               </span>
-              {/* ConnectLn "Looking for a Job" Badge on Avatar (replaces LinkedIn #OPENTOWORK) */}
+              {/* ConnectLn "Looking for a Job" Badge on Avatar */}
               <button
                 type="button"
                 onClick={(e) => {
@@ -779,39 +779,33 @@ export function LeftSidebarProfile({
                   cycleAvailabilityStatus()
                 }}
                 title="Click to cycle your Looking for a Job badge status"
-                className={`absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-2 py-0.5 text-[8.5px] font-extrabold uppercase tracking-wider shadow-md border transition-all cursor-pointer ${
-                  availabilityStatus === 'Booked'
-                    ? 'bg-amber-600 text-white border-amber-300'
-                    : 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 text-white border-emerald-200'
-                }`}
+                style={{
+                  backgroundColor: availabilityStatus === 'Booked' ? '#92400E' : '#047857',
+                  color: '#FFFFFF',
+                }}
+                className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[9.5px] font-extrabold tracking-tight shadow-md border border-white/80 transition-all cursor-pointer"
               >
-                {availabilityStatus === 'Looking for a Job'
-                  ? '💼 Looking for a Job'
-                  : availabilityStatus === 'Looking for Projects'
-                  ? '🔨 Looking for Projects'
-                  : availabilityStatus === 'Available for Hire'
-                  ? '✅ Available for Hire'
-                  : '⏳ Booked'}
+                {availabilityStatus === 'Booked' ? '⏳ Booked' : `● ${availabilityStatus}`}
               </button>
             </div>
           </div>
 
           <button
             onClick={onViewProfile}
-            className="group block w-full focus:outline-none"
+            className="group block w-full focus:outline-none pt-0.5"
           >
             <div className="flex items-center justify-center gap-1">
-              <h2 className="font-bold text-zinc-900 text-sm group-hover:underline dark:text-zinc-100">
+              <h2 className="font-extrabold text-zinc-900 text-[15px] leading-tight group-hover:underline dark:text-zinc-100">
                 {user.name}
               </h2>
-              <ShieldCheck className="h-4 w-4 text-[#0A66C2]" />
+              <ShieldCheck className="h-4 w-4 text-[#0A66C2] shrink-0" />
             </div>
-            <p className="mt-1 text-xs text-zinc-500 leading-snug line-clamp-2 dark:text-zinc-400">
+            <p className="mt-1 text-xs font-medium text-zinc-600 leading-snug line-clamp-2 dark:text-zinc-400">
               {user.headline}
             </p>
           </button>
 
-          {/* Dedicated "Looking for a Job" Card (Clean ConnectLn Card instead of LinkedIn's generic Open to Work) */}
+          {/* Dedicated "Looking for a Job" Card */}
           <div className="pt-2.5 text-left">
             <div className="rounded-xl border border-emerald-300/80 dark:border-emerald-800/70 bg-gradient-to-br from-emerald-50/90 via-white to-teal-50/60 dark:from-emerald-950/35 dark:via-zinc-900 dark:to-teal-950/25 p-2.5 shadow-2xs space-y-1.5">
               <div className="flex items-center justify-between gap-1.5">
@@ -819,20 +813,25 @@ export function LeftSidebarProfile({
                   type="button"
                   onClick={cycleAvailabilityStatus}
                   title="Click to switch status (Looking for a Job / Looking for Projects / Available for Hire / Booked)"
-                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-extrabold border shrink-0 cursor-pointer transition-all ${
+                  style={
+                    availabilityStatus === 'Booked'
+                      ? undefined
+                      : { backgroundColor: '#047857', color: '#FFFFFF' }
+                  }
+                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold border shrink-0 cursor-pointer transition-all ${
                     availabilityStatus === 'Booked'
                       ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-300 dark:border-amber-800'
-                      : 'bg-emerald-600 text-white border-emerald-500 shadow-2xs hover:bg-emerald-700'
+                      : 'bg-emerald-600 text-white border-emerald-600 shadow-2xs hover:opacity-95'
                   }`}
                 >
                   <span className={`h-1.5 w-1.5 rounded-full ${availabilityStatus === 'Booked' ? 'bg-amber-500' : 'bg-white animate-pulse'}`} />
-                  <span>{availabilityStatus}</span>
+                  <span style={availabilityStatus === 'Booked' ? undefined : { color: '#FFFFFF' }}>{availabilityStatus}</span>
                 </button>
                 {onOpenIDModal && (
                   <button
                     type="button"
                     onClick={onOpenIDModal}
-                    className="text-[10px] font-bold text-[#0A66C2] dark:text-sky-400 hover:underline shrink-0 cursor-pointer"
+                    className="text-[11px] font-bold text-[#0A66C2] dark:text-sky-400 hover:underline shrink-0 cursor-pointer"
                   >
                     🪪 ID Verified
                   </button>
@@ -840,16 +839,16 @@ export function LeftSidebarProfile({
               </div>
 
               <div className="space-y-0.5">
-                <p className="text-[11px] font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-1 truncate">
+                <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5 truncate">
                   <span className="shrink-0">{enclaveInfo?.icon || '🔨'}</span>
                   <span className="truncate">{displayProfessionTitle}</span>
                 </p>
-                <p className="text-[10px] text-zinc-600 dark:text-zinc-400 truncate">
+                <p className="text-[11px] text-zinc-600 dark:text-zinc-400 truncate">
                   Full-time · Contract Projects · {user.location || 'Immediate Start'}
                 </p>
               </div>
 
-              <div className="pt-1 border-t border-emerald-200/60 dark:border-emerald-900/50 flex items-center justify-between text-[10px]">
+              <div className="pt-1.5 border-t border-emerald-200/60 dark:border-emerald-900/50 flex items-center justify-between text-[11px]">
                 <button
                   type="button"
                   onClick={onViewProfile}
@@ -876,7 +875,7 @@ export function LeftSidebarProfile({
             ? Math.min(100, Math.max(92, user.profileStrength || computeProfileStrength(user)))
             : Math.min(100, user.profileStrength && user.profileStrength > 0 ? user.profileStrength : computeProfileStrength(user))
           return (
-            <div className="border-t border-zinc-100 dark:border-zinc-800/80 px-3.5 py-2.5 space-y-2">
+            <div className="border-t border-zinc-100 dark:border-zinc-800/80 px-3 py-2.5 space-y-2">
               <div className="grid grid-cols-3 divide-x divide-zinc-100 dark:divide-zinc-800 text-center">
                 <button
                   type="button"
@@ -884,11 +883,11 @@ export function LeftSidebarProfile({
                   className="px-1 py-0.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-l-lg transition-colors cursor-pointer group"
                   title="Who viewed your profile and credentials"
                 >
-                  <p className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2]">
+                  <p className="text-[13px] font-extrabold text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2]">
                     {sidebarAnalytics.effectiveProfileViews.toLocaleString()}
                   </p>
-                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
-                    {t("profile_viewers", "Viewers")}
+                  <p className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 truncate">
+                    {t("profile_viewers", "Profile views")}
                   </p>
                 </button>
                 <button
@@ -897,11 +896,11 @@ export function LeftSidebarProfile({
                   className="px-1 py-0.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer group"
                   title="Inspect multi-channel post broadcast reach"
                 >
-                  <p className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2]">
+                  <p className="text-[13px] font-extrabold text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2]">
                     {sidebarAnalytics.effectiveTotalReach.toLocaleString()}
                   </p>
-                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
-                    {t("content_reach", "Reach")}
+                  <p className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 truncate">
+                    {t("content_reach", "Post reach")}
                   </p>
                 </button>
                 <button
@@ -910,11 +909,11 @@ export function LeftSidebarProfile({
                   className="px-1 py-0.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-r-lg transition-colors cursor-pointer group"
                   title="Inspect talent directory search appearances"
                 >
-                  <p className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2]">
+                  <p className="text-[13px] font-extrabold text-zinc-900 dark:text-zinc-100 group-hover:text-[#0A66C2]">
                     {sidebarAnalytics.effectiveDiscoveries.toLocaleString()}
                   </p>
-                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
-                    {t("directory_discoveries", "Searches")}
+                  <p className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 truncate">
+                    {t("directory_discoveries", "Search hits")}
                   </p>
                 </button>
               </div>
@@ -930,8 +929,8 @@ export function LeftSidebarProfile({
                     style={{ width: `${strength}%` }}
                   />
                 </div>
-                <span className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 group-hover:text-[#0A66C2] shrink-0">
-                  {strength}% {t("profile_strength", "Strength")}
+                <span className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400 group-hover:text-[#0A66C2] shrink-0">
+                  {strength}% {t("profile_strength", "Profile Strength")}
                 </span>
               </div>
             </div>
@@ -940,15 +939,15 @@ export function LeftSidebarProfile({
 
         {/* Streamlined Workspace Shortcuts (Top 3 + Expandable Drawer) */}
         <div className="border-t border-zinc-100 p-2.5 text-xs dark:border-zinc-800/80 bg-zinc-50/40 dark:bg-zinc-900/40 space-y-1.5">
-          <div className="flex items-center justify-between px-1.5">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 truncate">
-              {t("personal_command_center", "Quick Shortcuts")}
+          <div className="flex items-center justify-between gap-1 px-1.5">
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 truncate">
+              {t("personal_command_center", "Command Center")}
             </span>
             <div className="flex items-center gap-0.5 shrink-0">
               <button
                 type="button"
                 onClick={() => setIsSettingsOpen(true)}
-                className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold flex items-center gap-1 text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors cursor-pointer"
+                className="rounded-md px-1.5 py-0.5 text-[11px] font-semibold flex items-center gap-1 text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors cursor-pointer"
                 title="Settings: account, connected apps, billing & payouts"
               >
                 <SettingsGearIcon className="h-3 w-3" />
@@ -957,7 +956,7 @@ export function LeftSidebarProfile({
               <button
                 type="button"
                 onClick={() => setIsCustomizingCenter(!isCustomizingCenter)}
-                className={`rounded-md px-1.5 py-0.5 text-[10px] font-semibold flex items-center gap-1 transition-colors cursor-pointer shrink-0 ${
+                className={`rounded-md px-1.5 py-0.5 text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer shrink-0 ${
                   isCustomizingCenter
                     ? "bg-[#0A66C2] text-white"
                     : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
@@ -1055,15 +1054,15 @@ export function LeftSidebarProfile({
                 key={ws.id + ws.label}
                 onClick={() => activateShortcut(ws)}
                 title={ws.description || ws.label}
-                className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left text-zinc-700 hover:bg-white hover:shadow-xs dark:text-zinc-300 dark:hover:bg-zinc-800 transition-all group cursor-pointer"
+                className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left text-xs text-zinc-700 hover:bg-white hover:shadow-xs dark:text-zinc-300 dark:hover:bg-zinc-800 transition-all group cursor-pointer"
               >
                 <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                  <span className="font-medium truncate group-hover:text-[#0A66C2]">{ws.label}</span>
+                  <span className="font-semibold truncate group-hover:text-[#0A66C2]">{ws.label}</span>
                 </div>
                 {ws.url ? (
                   <ExternalLink className="h-3 w-3 text-zinc-400 group-hover:text-[#0A66C2] shrink-0" />
                 ) : (
-                  <span className="text-[10px] text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">→</span>
+                  <span className="text-[11px] text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">→</span>
                 )}
               </button>
             ))}
@@ -1074,7 +1073,7 @@ export function LeftSidebarProfile({
             <button
               type="button"
               onClick={() => setIsAllToolsExpanded(!isAllToolsExpanded)}
-              className="mt-1 flex w-full items-center justify-center gap-1 rounded-lg py-1 text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 hover:text-[#0A66C2] transition-colors cursor-pointer"
+              className="mt-1 flex w-full items-center justify-center gap-1 rounded-lg py-1 text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:text-[#0A66C2] transition-colors cursor-pointer"
             >
               {isAllToolsExpanded ? (
                 <>
@@ -1095,8 +1094,8 @@ export function LeftSidebarProfile({
       {/* Discover & Recent Groups */}
       <div className="hidden md:block sticky top-18 rounded-xl border border-zinc-200 bg-white p-3 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex items-center justify-between pb-1.5">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-            {t("recent_followed", "Communities & Topics")}
+          <p className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+            {t("recent_followed", "Recent & Followed")}
           </p>
           <button
             onClick={() => setIsRecentExpanded(!isRecentExpanded)}
@@ -1114,7 +1113,7 @@ export function LeftSidebarProfile({
                 <button
                   key={idx}
                   onClick={() => onSelectTag && onSelectTag(item.name)}
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
                 >
                   <Icon className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
                   <span className="truncate">{item.name}</span>
