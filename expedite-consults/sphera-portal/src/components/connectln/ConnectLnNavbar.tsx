@@ -236,7 +236,7 @@ export function ConnectLnNavbar({
     { id: "network", label: t("nav_network", "My Network"), shortLabel: t("nav_network_short", "My Network"), icon: Users, badge: 0, priority: "always" },
     { id: "jobs", label: t("nav_jobs", "Jobs"), shortLabel: t("nav_jobs_short", "Jobs"), icon: Briefcase, badge: 0, priority: "always" },
     { id: "messaging", label: t("nav_messages", "Messaging"), shortLabel: t("nav_messages_short", "Messaging"), icon: MessageSquare, badge: unreadMessagesCount || 0, priority: "always" },
-    { id: "notifications", label: t("nav_alerts", "Notifications"), shortLabel: t("nav_alerts_short", "Notifications"), icon: Bell, badge: unreadNotificationsCount || 3, priority: "always" },
+    { id: "notifications", label: t("nav_alerts", "Alerts"), shortLabel: t("nav_alerts_short", "Alerts"), icon: Bell, badge: unreadNotificationsCount || 3, priority: "always" },
     { id: "marketplace", label: t("nav_marketplace", "Marketplace"), shortLabel: t("nav_marketplace_short", "Market"), icon: ShoppingBag, badge: 0, isMarketplace: true, priority: "always" },
     { id: "learning", label: t("nav_learning", "Learning"), shortLabel: t("nav_learning_short", "Learning"), icon: GraduationCap, badge: 0, priority: "always" },
     { id: "media", label: t("nav_media", "Media"), shortLabel: t("nav_media_short", "Media"), icon: Tv, badge: 0, priority: "always" },
