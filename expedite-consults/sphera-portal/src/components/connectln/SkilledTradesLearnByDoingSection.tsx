@@ -900,53 +900,45 @@ export function SkilledTradesLearnByDoingSection({
                 data-lbd-lesson-id={lesson.id}
                 className="rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-xs transition-all"
               >
-                {/* 1. LINKEDIN AUTHOR HEADER WITH AI HUMAN FACE AVATAR */}
-                <div className="px-4 pt-3.5 pb-2 flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-3 min-w-0">
-                    <div className="relative shrink-0">
-                      <img
-                        src={instructorProfile.avatarUrl}
-                        alt={instructorProfile.instructorName}
-                        style={{ borderColor: instructorProfile.ringColor }}
-                        className="h-12 w-12 rounded-full object-cover border-2 shadow-xs bg-zinc-200 dark:bg-zinc-800"
-                      />
-                      <span
-                        title="Verified ConnectLn Master Instructor · Online"
-                        className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full flex items-center justify-center"
-                      >
-                        <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
-                        <span className="relative h-4 w-4 rounded-full bg-emerald-500 border-2 border-white dark:border-zinc-900 flex items-center justify-center online-dot-blink">
-                          <Check className="h-2.5 w-2.5 text-white stroke-[3]" />
-                        </span>
-                      </span>
-                    </div>
+                {/* 1. CLEAN WSJ / LINKEDIN EDITORIAL AUTHOR HEADER */}
+                <div className="px-4 pt-3.5 pb-1.5 flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-2.5 min-w-0">
+                    <img
+                      src={instructorProfile.avatarUrl}
+                      alt={instructorProfile.instructorName}
+                      className="h-11 w-11 rounded-full object-cover border border-zinc-200 dark:border-zinc-700 shrink-0 bg-zinc-100 dark:bg-zinc-800"
+                    />
                     <div className="min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <h3 className="text-[15px] font-bold text-zinc-900 dark:text-zinc-100 truncate leading-snug">
-                          {instructorProfile.instructorName} · {cardCreator}
+                      <div className="flex items-center gap-1 flex-wrap">
+                        <h3 className="text-[14.5px] font-semibold text-[#191919] dark:text-zinc-100 truncate leading-[1.3]">
+                          {cardCreator}
                         </h3>
+                        <ShieldCheck className="h-3.5 w-3.5 text-[#666666] dark:text-zinc-300 shrink-0" />
                       </div>
-                      <p className="text-xs text-zinc-600 dark:text-zinc-400 truncate leading-tight">
-                        {instructorProfile.role}
+                      <p className="text-[12px] text-[#666666] dark:text-zinc-400 truncate leading-[1.3]">
+                        {instructorProfile.instructorName} · {lesson.category}
                       </p>
-                      <p className="text-[11px] text-zinc-500 dark:text-zinc-400 flex items-center gap-1 mt-0.5">
+                      <p className="text-[12px] text-[#666666] dark:text-zinc-400 flex items-center gap-1 mt-0.5 leading-[1.3]">
                         <span>{lesson.lessonNumber}h</span>
                         <span>•</span>
-                        <Globe className="h-3 w-3 inline text-zinc-500 dark:text-zinc-400" />
+                        <Globe className="h-3 w-3 inline text-[#666666] dark:text-zinc-400" />
                       </p>
                     </div>
                   </div>
 
-                  {/* Right Header Icons: Verification Shield + ••• (Save) + ✕ (Dismiss) */}
-                  <div className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400 shrink-0">
-                    <span title="Verified ConnectLn Trade Educator" className="p-1">
-                      <ShieldCheck className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
-                    </span>
+                  {/* Right Header Icons: ••• (Save / Open Notes) + ✕ (Dismiss) */}
+                  <div className="flex items-center gap-0.5 text-[#666666] dark:text-zinc-400 shrink-0">
                     <button
                       type="button"
-                      onClick={() => handleToggleSave(lesson.id)}
-                      title={isSaved ? 'Saved to Learning Journey' : 'Save video lesson'}
-                      className="p-1 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                      onClick={() => {
+                        if (onOpenInLearnTab) {
+                          onOpenInLearnTab(lesson.id, lesson.category)
+                        } else {
+                          handleToggleSave(lesson.id)
+                        }
+                      }}
+                      title={onOpenInLearnTab ? 'Open Lesson Notes & Practice' : isSaved ? 'Saved to Learning Journey' : 'Save video lesson'}
+                      className="p-1.5 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                     >
                       <MoreHorizontal className="h-4 w-4" />
                     </button>
@@ -956,67 +948,63 @@ export function SkilledTradesLearnByDoingSection({
                         setDismissedLessonMap(prev => ({ ...prev, [lesson.id]: true }))
                       }
                       title="Hide post from feed"
-                      className="p-1 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                      className="p-1.5 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                     >
                       <X className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
 
-                {/* 2. LINKEDIN POST CAPTION ABOVE VIDEO (Matches Screenshot 2: [DIALOGUES] Description.... more) */}
-                <div className="px-4 pb-3 text-[14px] text-zinc-900 dark:text-zinc-100 leading-relaxed">
-                  {lesson.sourceLanguageLabel && (
-                    <div className="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-sky-50 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-800 px-2.5 py-0.5 text-[11px] font-bold text-[#0A66C2] dark:text-sky-300">
-                      <Globe className="h-3 w-3 shrink-0" />
-                      <span>{lesson.sourceLanguageLabel} → {currentLanguage.flag} {currentLanguage.localName} · Source: {lesson.creatorDomain}</span>
-                    </div>
-                  )}
+                {/* 2. CLEAN EDITORIAL CAPTION ABOVE VIDEO (3 Lines + ... more — Zero Bracket Clutter) */}
+                <div className="px-4 pb-2.5 text-[14px] text-[#191919] dark:text-zinc-100 leading-[1.42857]">
                   {!isCaptionExpanded ? (
                     <p>
-                      <span className="font-semibold">
-                        [{lesson.category.toUpperCase()} · {cardVideoLabel.toUpperCase()}]
-                      </span>{' '}
-                      {lesson.description}{' '}
+                      {lesson.description.length > 195
+                        ? `${lesson.description.slice(0, 195).trimEnd()}...`
+                        : lesson.description}{' '}
                       <button
                         type="button"
                         onClick={() =>
                           setExpandedCaptionMap(prev => ({ ...prev, [lesson.id]: true }))
                         }
-                        className="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium cursor-pointer"
+                        className="text-[#666666] hover:text-[#0A66C2] hover:underline dark:text-zinc-400 font-normal cursor-pointer"
                       >
-                        .... more
+                        more
                       </button>
                     </p>
                   ) : (
                     <div className="space-y-2">
-                      <p>
-                        <span className="font-semibold">
-                          [{lesson.category.toUpperCase()} · {cardVideoLabel.toUpperCase()}]
-                        </span>{' '}
-                        {lesson.description}
-                      </p>
-                      <div className="pl-3 border-l-2 border-amber-500/60 space-y-1 text-xs text-zinc-700 dark:text-zinc-300">
-                        <p className="font-bold text-zinc-900 dark:text-zinc-100">
-                          Key Skills Covered in This Video:
-                        </p>
+                      <p>{lesson.description}</p>
+                      <div className="pl-3 border-l-2 border-zinc-300 dark:border-zinc-700 space-y-1 text-xs text-zinc-700 dark:text-zinc-300">
                         {lesson.skillsCovered.map((sk, idx) => (
                           <p key={idx}>• {sk}</p>
                         ))}
                       </div>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setExpandedCaptionMap(prev => ({ ...prev, [lesson.id]: false }))
-                        }
-                        className="text-xs text-zinc-500 hover:underline cursor-pointer"
-                      >
-                        Show less
-                      </button>
+                      <div className="flex items-center justify-between pt-0.5">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExpandedCaptionMap(prev => ({ ...prev, [lesson.id]: false }))
+                          }
+                          className="text-xs text-[#666666] hover:underline cursor-pointer"
+                        >
+                          Show less
+                        </button>
+                        {onOpenInLearnTab && (
+                          <button
+                            type="button"
+                            onClick={() => onOpenInLearnTab(lesson.id, lesson.category)}
+                            className="text-xs font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer"
+                          >
+                            Open Lesson Notes &amp; Practice →
+                          </button>
+                        )}
+                      </div>
                     </div>
                   )}
 
                   {/* Optional Lesson 6 Switcher (Sherwin-Williams vs FrogTape) */}
-                  {isLesson6 && lesson.companionVariant && (
+                  {isLesson6 && lesson.companionVariant && isCaptionExpanded && (
                     <div className="mt-2 flex items-center gap-1.5 flex-wrap">
                       <span className="text-[11px] font-semibold text-zinc-500">Topic:</span>
                       <button
@@ -1024,7 +1012,7 @@ export function SkilledTradesLearnByDoingSection({
                         onClick={() => setLesson6Variant('primary')}
                         className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold cursor-pointer ${
                           lesson6Variant === 'primary'
-                            ? 'bg-emerald-700 text-white'
+                            ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
                             : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300'
                         }`}
                       >
@@ -1035,7 +1023,7 @@ export function SkilledTradesLearnByDoingSection({
                         onClick={() => setLesson6Variant('companion')}
                         className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold cursor-pointer ${
                           lesson6Variant === 'companion'
-                            ? 'bg-emerald-700 text-white'
+                            ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
                             : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300'
                         }`}
                       >
@@ -1045,8 +1033,8 @@ export function SkilledTradesLearnByDoingSection({
                   )}
                 </div>
 
-                {/* 3. FULL-BLEED EDGE-TO-EDGE VIDEO (Matches Screenshot 2: Zero Side Margins, Plays Automatically on Scroll) */}
-                <div className="relative aspect-video w-full bg-black">
+                {/* 3. FULL-BLEED UNCLOUDED WSJ-FORMAT VIDEO STAGE (Zero Top Clutter, Crisp Serif Bottom Headline + Monogram) */}
+                <div className="relative w-full bg-black border-y border-zinc-100 dark:border-zinc-800">
                   {isActiveCard && cardYoutubeId ? (
                     <ConnectLnStudioPlayer
                       key={`home-card-${lesson.id}-${cardYoutubeId}-${lesson6Variant}`}
@@ -1065,7 +1053,7 @@ export function SkilledTradesLearnByDoingSection({
                       initialMuted={autoPlayMuted}
                       playerId={`lbd-home-player-${lesson.id}`}
                       onExclusiveStop={() => setActiveVideoLessonId(null)}
-                      className="h-full w-full"
+                      className="w-full"
                     />
                   ) : (
                     <div
@@ -1087,118 +1075,51 @@ export function SkilledTradesLearnByDoingSection({
                           handleWatchAction(lesson)
                         }
                       }}
-                      className="relative h-full w-full overflow-hidden cursor-pointer group"
+                      className="relative aspect-[16/10] sm:aspect-video w-full overflow-hidden cursor-pointer group bg-zinc-950"
                     >
-                      <NoctisVideoInterpreterPopup
-                        youtubeId={cardYoutubeId}
-                        title={cardTitle}
-                        speaker={instructorProfile.instructorName}
-                        speakerRole={cardCreator}
-                        serialPlate={serialPlate}
-                        description={lesson.description}
-                        takeaways={lesson.skillsCovered}
-                        sourceLanguage={lesson.sourceLanguage}
-                        sourceLanguageLabel={lesson.sourceLanguageLabel}
-                        onRequestPlayVideo={() => {
-                          notifyExclusiveVideoPlay(`lbd-home-player-${lesson.id}`)
-                          setAutoPlayRequested(true)
-                          setActiveVideoLessonId(lesson.id)
-                          handleWatchAction(lesson)
-                        }}
-                      />
                       <img
                         src={cardThumbUrl}
                         alt={cardTitle}
-                        className="h-full w-full object-cover group-hover:scale-[1.01] transition-transform duration-300"
+                        className="h-full w-full object-cover group-hover:scale-[1.015] transition-transform duration-500"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-black/60" />
+                      <div className="absolute inset-x-0 bottom-0 h-[48%] bg-gradient-to-t from-black/85 via-black/35 to-transparent pointer-events-none" />
 
-                      {/* Top Studio Bar with AI Human Instructor Face */}
-                      <div
-                        style={{ color: '#FFFFFF' }}
-                        className="absolute inset-x-0 top-0 px-4 py-2.5 flex items-center justify-between gap-3"
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <img
-                            src={instructorProfile.avatarUrl}
-                            alt={instructorProfile.instructorName}
-                            className="h-7 w-7 rounded-full object-cover border border-amber-400/80 shrink-0 shadow-sm"
-                          />
-                          <div className="min-w-0">
-                            <p style={{ color: '#FFFFFF' }} className="text-xs font-bold truncate">
-                              {cardTitle}
-                            </p>
-                            <p style={{ color: '#E4E4E7' }} className="text-[10px] truncate">
-                              {instructorProfile.instructorName} · {cardCreator} · {serialPlate}
-                            </p>
-                          </div>
-                        </div>
-                        <span
-                          style={{ color: '#FCD34D' }}
-                          className="rounded-md bg-black/75 border border-white/15 px-2 py-0.5 text-[10px] font-mono font-bold shrink-0"
-                        >
-                          {serialPlate}
-                        </span>
-                      </div>
-
-                      {/* Center Play Button */}
-                      <div className="absolute inset-0 flex items-center justify-center">
+                      {/* Subtle Center Play Button */}
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div
                           style={{ color: '#FFFFFF' }}
-                          className="h-14 w-14 rounded-full bg-black/75 border border-white/30 flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform"
+                          className="h-13 w-13 sm:h-14 sm:w-14 rounded-full bg-black/60 border border-white/30 flex items-center justify-center shadow-xl backdrop-blur-xs group-hover:scale-105 transition-transform"
                         >
-                          <Play className="h-6 w-6 fill-white ml-0.5" />
+                          <Play className="h-5 w-5 sm:h-6 sm:w-6 fill-white ml-0.5" />
                         </div>
                       </div>
 
-                      {/* Lower-Third Green/Gold Broadcast Banner (Matches Screenshot 2's DOCTORAL DIALOGUE lower-third!) */}
-                      <div className="absolute inset-x-0 bottom-0 flex items-stretch h-11 overflow-hidden">
-                        <div
-                          style={{ backgroundColor: 'rgba(6, 78, 59, 0.92)', color: '#FFFFFF' }}
-                          className="flex-1 px-4 flex items-center justify-between min-w-0"
+                      {/* WSJ Editorial Lower-Third Serif Headline & Monogram */}
+                      <div className="absolute inset-x-0 bottom-0 px-4 sm:px-5 pb-4 pt-8 flex items-end justify-between gap-4 pointer-events-none">
+                        <h4
+                          style={{
+                            fontFamily: "Georgia, 'Times New Roman', Times, serif",
+                            color: '#FFFFFF',
+                          }}
+                          className="text-lg sm:text-2xl font-bold leading-[1.15] tracking-tight line-clamp-2 max-w-[84%] drop-shadow-md text-left"
                         >
-                          <span
-                            style={{ color: '#FFFFFF' }}
-                            className="text-xs sm:text-sm font-medium truncate"
-                          >
-                            {cardTitle}
-                          </span>
-                        </div>
-                        <div
-                          style={{ backgroundColor: '#FACC15', color: '#064E3B' }}
-                          className="px-3.5 flex flex-col justify-center items-center shrink-0 font-black uppercase leading-none text-[10px] sm:text-[11px] tracking-tight"
+                          {cardTitle}
+                        </h4>
+                        <span
+                          style={{
+                            fontFamily: "Georgia, 'Times New Roman', Times, serif",
+                            color: 'rgba(255,255,255,0.92)',
+                          }}
+                          className="text-sm sm:text-base font-bold tracking-tight shrink-0 select-none"
                         >
-                          <span>{lesson.category.split(' ')[0]}</span>
-                          <span>MASTERCLASS</span>
-                        </div>
+                          CLN
+                        </span>
                       </div>
                     </div>
                   )}
                 </div>
 
-                {/* 4. SUBTLE GRAY-BLUE TITLE STRIP + FULL-WIDTH CENTERED CTA (Matches Screenshot 3: Title + "35 submits" + "✏️ Sign Up") */}
-                <div className="bg-[#F3F6F8] dark:bg-zinc-800/70 px-4 py-2.5 border-t border-zinc-200/80 dark:border-zinc-800">
-                  <h4 className="text-[14px] font-bold text-zinc-900 dark:text-zinc-100 leading-snug">
-                    {cardTitle} — {cardCreator}
-                  </h4>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                    {submitsCount} submits · {lesson.skillsCovered.length}{' '}
-                    <span>Skills Covered &amp; Practice Workbench</span>
-                  </p>
-                </div>
-
-                {onOpenInLearnTab && (
-                  <button
-                    type="button"
-                    onClick={() => onOpenInLearnTab(lesson.id, lesson.category)}
-                    className="w-full py-2.5 px-4 bg-white hover:bg-zinc-50 dark:bg-zinc-900 dark:hover:bg-zinc-800/80 border-t border-zinc-200/80 dark:border-zinc-800 flex items-center justify-center gap-2 text-[#0A66C2] dark:text-sky-400 font-semibold text-[14px] transition-colors cursor-pointer"
-                  >
-                    <SquarePen className="h-4 w-4" />
-                    <span>Study Detailed Notes &amp; Practice in Learn Tab</span>
-                  </button>
-                )}
-
-                {/* 5. LINKEDIN SOCIAL REACTIONS & ENGAGEMENT BAR (Matches Screenshots 1, 2 & 3: 👍 14  💬 1  🔁 1  ✈️ + 👍❤️💡 on right) */}
+                {/* 4. CLEAN SINGLE-ROW LINKEDIN SOCIAL REACTIONS & ENGAGEMENT BAR */}
                 <div className="px-4 py-2.5 border-t border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center justify-between">
                   <div className="flex items-center gap-5 text-zinc-600 dark:text-zinc-400">
                     {/* Like */}

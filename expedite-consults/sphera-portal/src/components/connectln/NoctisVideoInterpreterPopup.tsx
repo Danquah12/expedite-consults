@@ -2248,7 +2248,45 @@ export function NoctisVideoInterpreterPopup({
   return (
     <div onClick={(e) => e.stopPropagation()} data-no-translate="true" translate="no" className="notranslate">
       {dockedBelow ? (
-        /* DOCKED STUDIO INTERPRETER & SUBTITLE BAR (Sits cleanly below the 16:9 video canvas so the video is 100% unclouded!) */
+        /* DOCKED INTERPRETER BAR — Ultra-minimal single line by default; expands only when translating or dubbing! */
+        !isInterpretingNeeded && !isSpeaking && !isPopupOpen && normalizedSourceLang === "en" ? (
+          <div className="w-full bg-zinc-950 border-t border-white/10 px-3.5 py-1.5 flex items-center justify-between gap-2 text-[11px] text-zinc-300">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                setIsPopupOpen(true)
+              }}
+              className="inline-flex items-center gap-1.5 text-zinc-300 hover:text-white transition-colors cursor-pointer"
+              title="Translate or dub video audio with Noctis"
+            >
+              <Globe className="h-3 w-3 text-zinc-400" />
+              <span className="font-medium">Audio &amp; Subtitles</span>
+            </button>
+            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+              <select
+                value={audioLang}
+                onChange={(e) => {
+                  const newTarget = e.target.value as LanguageCode
+                  selectSpokenAudioLanguage(newTarget, false)
+                }}
+                aria-label="Select target audio language"
+                style={{
+                  backgroundColor: "#18181B",
+                  color: "#E4E4E7",
+                  borderColor: "#3F3F46",
+                }}
+                className="rounded border px-2 py-0.5 text-[10.5px] font-medium cursor-pointer focus:outline-none"
+              >
+                {languages.map((l) => (
+                  <option key={l.code} value={l.code} style={{ backgroundColor: "#09090B", color: "#FFFFFF" }}>
+                    {l.localName} ({l.code.toUpperCase()})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        ) : (
         <div
           style={{
             backgroundColor: "#0B1120",
@@ -2402,6 +2440,7 @@ export function NoctisVideoInterpreterPopup({
             </div>
           )}
         </div>
+        )
       ) : (
         <>
           {/* 1. COMPACT TRIGGER PILL ON THE VIDEO PLAYER (Top-Right Corner) */}

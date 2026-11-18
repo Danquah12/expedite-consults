@@ -1039,29 +1039,46 @@ export function sortHarvestedItemsNewestFirst(items: HarvestedMediaItem[]): Harv
   })
 }
 
+export function dedupeHarvestedItems(items: HarvestedMediaItem[]): HarvestedMediaItem[] {
+  const sorted = sortHarvestedItemsNewestFirst(items)
+  const seenContentKeys = new Set<string>()
+  const unique: HarvestedMediaItem[] = []
+
+  for (const item of sorted) {
+    if (!item || !item.id) continue
+    const normTitle = (item.title || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim()
+    const mediaSig = (item.youtubeId || item.videoUrl || item.imageUrl || "")
+      .trim()
+      .toLowerCase()
+    const contentKey = `${item.kind}::${item.youtubeId ? `yt:${item.youtubeId}` : normTitle || mediaSig}`
+    if (seenContentKeys.has(contentKey)) continue
+    seenContentKeys.add(contentKey)
+    unique.push(item)
+  }
+
+  return unique
+}
+
 export function loadStoredHarvestedItems(): HarvestedMediaItem[] {
   if (typeof window === "undefined") {
-    return getInitialDeterministicHarvestedItems(14)
+    return dedupeHarvestedItems(getInitialDeterministicHarvestedItems(14))
   }
   try {
     const raw = window.localStorage.getItem(HARVESTER_STORAGE_KEY)
     const parsed: HarvestedMediaItem[] = raw ? JSON.parse(raw) : []
     const cleanedParsed = parsed.filter((item) => Boolean(item && item.id))
     const deterministic = getInitialDeterministicHarvestedItems(14)
-    const map = new Map<string, HarvestedMediaItem>()
-    ;[...deterministic, ...cleanedParsed].forEach((item) => {
-      if (item && item.id && !map.has(item.id)) {
-        map.set(item.id, item)
-      }
-    })
-    return sortHarvestedItemsNewestFirst(Array.from(map.values())).slice(0, 60)
+    return dedupeHarvestedItems([...cleanedParsed, ...deterministic]).slice(0, 40)
   } catch {
-    return getInitialDeterministicHarvestedItems(14)
+    return dedupeHarvestedItems(getInitialDeterministicHarvestedItems(14))
   }
 }
 
 export function saveStoredHarvestedItems(items: HarvestedMediaItem[]): HarvestedMediaItem[] {
-  const sorted = sortHarvestedItemsNewestFirst(items).slice(0, 60)
+  const sorted = dedupeHarvestedItems(items).slice(0, 40)
   if (typeof window !== "undefined") {
     try {
       window.localStorage.setItem(HARVESTER_STORAGE_KEY, JSON.stringify(sorted))

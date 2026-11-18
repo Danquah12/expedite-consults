@@ -25,6 +25,7 @@ import {
   Copy,
   Check,
   VolumeX,
+  ShieldCheck,
 } from "lucide-react"
 import {
   HarvestedMediaItem,
@@ -32,6 +33,7 @@ import {
   getStoredHarvestedItemsForDestination,
   loadStoredHarvestedItems,
   saveStoredHarvestedItems,
+  dedupeHarvestedItems,
   computeHarvesterTelemetry,
   HARVESTER_EVENT_NAME,
 } from "@/lib/connectin-media-harvester"
@@ -247,13 +249,7 @@ export function LiveHarvestedMediaShowcase({
       .then((data) => {
         if (Array.isArray(data?.items) && data.items.length > 0) {
           const local = loadStoredHarvestedItems()
-          const map = new Map<string, HarvestedMediaItem>()
-          ;[...data.items, ...local].forEach((item) => {
-            if (item && item.id && !map.has(item.id)) {
-              map.set(item.id, item)
-            }
-          })
-          saveStoredHarvestedItems(Array.from(map.values()))
+          saveStoredHarvestedItems(dedupeHarvestedItems([...data.items, ...local]))
           refreshFromStore()
         }
       })
@@ -289,13 +285,7 @@ export function LiveHarvestedMediaShowcase({
         const data = await res.json()
         if (Array.isArray(data?.telemetry?.items)) {
           const local = loadStoredHarvestedItems()
-          const map = new Map<string, HarvestedMediaItem>()
-          ;[...data.telemetry.items, ...local].forEach((item) => {
-            if (item && item.id && !map.has(item.id)) {
-              map.set(item.id, item)
-            }
-          })
-          saveStoredHarvestedItems(Array.from(map.values()))
+          saveStoredHarvestedItems(dedupeHarvestedItems([...data.telemetry.items, ...local]))
           refreshFromStore()
           setSecondsToNextAutoPull(3600)
           const newestTitle = data?.pulledItems?.[0]?.title
@@ -384,84 +374,73 @@ export function LiveHarvestedMediaShowcase({
   if (visibleItems.length === 0) return null
 
   return (
-    <div className="rounded-2xl border border-[#DFD4C0] dark:border-zinc-800 bg-[#FAF6EE] dark:bg-zinc-900 p-4 sm:p-5 shadow-2xs space-y-3.5">
-      {/* Header Strip — Clean Full-Width Typography Hierarchy (Zero Crushed Multi-Line Wrapping) */}
-      <div className="space-y-2.5">
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span
-              style={{ backgroundColor: "#3A2818", color: "#FAF6EE" }}
-              className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[10.5px] font-bold tracking-wide"
+    <div className="rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-xs space-y-3">
+      {/* Clean Editorial Section Header — Zero Cluttered Telemetry Pills */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5">
+        <div className="min-w-0 flex-1 flex items-center gap-2">
+          <HeaderIcon className="h-4 w-4 text-zinc-700 dark:text-zinc-300 shrink-0" />
+          <h3 className="text-[14.5px] font-bold text-[#191919] dark:text-white truncate">
+            {cfg.title}
+          </h3>
+        </div>
+
+        <div className="flex items-center gap-1.5 flex-wrap shrink-0">
+          {canAccessAdminBackend && (
+            <button
+              type="button"
+              onClick={() => handleManualPullForTab(false)}
+              disabled={isSyncingNow}
+              className="rounded-full border border-zinc-300 dark:border-zinc-700 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 px-3 py-1 text-xs font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
             >
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
-              <span style={{ color: "#FAF6EE" }}>{cfg.badge}</span>
-            </span>
-            <span className="whitespace-nowrap rounded-full bg-[#EFE7D6] dark:bg-zinc-800 border border-[#D5C8B0] dark:border-zinc-700 px-2.5 py-0.5 text-[10.5px] font-semibold text-[#3A2818] dark:text-zinc-200">
-              {totalVideosCount.toLocaleString()} Videos · +{pulledTodayCount.toLocaleString()} Today
-            </span>
-            <span className="whitespace-nowrap rounded-full bg-emerald-100 border border-emerald-400 px-2.5 py-0.5 text-[10.5px] font-bold text-emerald-900">
-              ⏱️ Auto-Pull: {Math.floor(secondsToNextAutoPull / 60)}m {String(secondsToNextAutoPull % 60).padStart(2, "0")}s
-            </span>
-          </div>
+              <RefreshCw className={`h-3 w-3 ${isSyncingNow ? "animate-spin" : ""}`} />
+              <span>{isSyncingNow ? "Syncing..." : "Sync Video"}</span>
+            </button>
+          )}
+
+          {onOpenAdminBackend && canAccessAdminBackend && (
+            <button
+              type="button"
+              onClick={onOpenAdminBackend}
+              className="rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-700 dark:text-zinc-200 flex items-center gap-1.5 cursor-pointer"
+            >
+              <Sliders className="h-3 w-3" />
+              <span>Backend</span>
+            </button>
+          )}
 
           <button
             type="button"
             onClick={() => setIsExpanded((prev) => !prev)}
-            className="rounded-lg border border-[#DFD4C0] dark:border-zinc-700 bg-white/90 dark:bg-zinc-800 p-1.5 text-zinc-600 dark:text-zinc-300 hover:bg-[#EFE7D6] cursor-pointer shrink-0"
+            className="rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 p-1.5 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 cursor-pointer shrink-0"
             title={isExpanded ? "Collapse" : "Expand"}
           >
             {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
           </button>
         </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-2.5">
-          <div className="min-w-0 flex-1 space-y-0.5">
-            <div className="flex items-center gap-2">
-              <HeaderIcon className="h-4 w-4 text-[#6B4423] shrink-0" />
-              <h3 className="text-[15px] font-extrabold text-zinc-950 dark:text-white leading-snug">
-                {cfg.title}
-              </h3>
-            </div>
-            <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">{cfg.subtitle}</p>
-          </div>
-
-          <div className="flex items-center gap-1.5 flex-wrap shrink-0">
-            <button
-              type="button"
-              onClick={() => handleManualPullForTab(false)}
-              disabled={isSyncingNow}
-              style={{ backgroundColor: "#6B4423", color: "#FFFFFF" }}
-              className="rounded-xl hover:opacity-95 px-3 py-1.5 text-xs font-bold text-white flex items-center gap-1.5 shadow-2xs cursor-pointer disabled:opacity-60"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${isSyncingNow ? "animate-spin" : ""}`} style={{ color: "#FFFFFF" }} />
-              <span style={{ color: "#FFFFFF" }}>{isSyncingNow ? "Pulling..." : "Pull New Video"}</span>
-            </button>
-
-            {onOpenAdminBackend && canAccessAdminBackend && (
-              <button
-                type="button"
-                onClick={onOpenAdminBackend}
-                className="rounded-xl border border-[#C8B99E] dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-[#EFE7D6] px-3 py-1.5 text-xs font-bold text-[#3A2818] dark:text-zinc-200 flex items-center gap-1.5 cursor-pointer"
-              >
-                <Sliders className="h-3.5 w-3.5 text-[#6B4423]" />
-                <span>Admin Backend</span>
-              </button>
-            )}
-          </div>
-        </div>
       </div>
 
-      {/* Cards Grid */}
+      {/* Clean WSJ-Format Editorial Cards Grid */}
       {isExpanded && (
         <div
           className={`grid grid-cols-1 ${
-            compact ? "md:grid-cols-3" : "sm:grid-cols-2 lg:grid-cols-4"
-          } gap-3`}
+            compact ? "md:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3"
+          } gap-3.5`}
         >
           {visibleItems.map((item) => {
             const isPlaying = playingId === item.id
             const isApplied = appliedIds.includes(item.id)
             const slotPlayerId = `harvest-${destination}-${item.id}`
+            const displayHeadline =
+              destination === "jobs" && item.jobMeta
+                ? item.jobMeta.roleTitle
+                : destination === "market" && item.marketMeta
+                ? item.marketMeta.productName
+                : item.title
+            const displaySummary =
+              destination === "pulse" && item.pulseMeta
+                ? item.pulseMeta.takeaway
+                : item.summary
+
             return (
               <div
                 key={item.id}
@@ -469,9 +448,40 @@ export function LiveHarvestedMediaShowcase({
                   if (el) cardRefs.current[item.id] = el
                   else delete cardRefs.current[item.id]
                 }}
-                className="rounded-xl border border-[#DFD4C0] dark:border-zinc-800 bg-white dark:bg-zinc-950 overflow-hidden flex flex-col justify-between shadow-2xs hover:border-[#6B4423]/60 transition-all"
+                className="rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-950 overflow-hidden flex flex-col justify-between shadow-xs hover:border-zinc-300 transition-all"
               >
                 <div>
+                  {/* 1. Clean WSJ Author Header */}
+                  <div className="px-3.5 pt-3 pb-1.5 flex items-center gap-2.5">
+                    <img
+                      src={
+                        item.authorAvatar ||
+                        `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(item.authorName)}&backgroundColor=191919`
+                      }
+                      alt={item.authorName}
+                      className="h-9 w-9 rounded-full object-cover border border-zinc-200 dark:border-zinc-700 shrink-0"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1">
+                        <p className="text-[13.5px] font-semibold text-[#191919] dark:text-zinc-100 truncate leading-tight">
+                          {item.organization || item.authorName}
+                        </p>
+                        <ShieldCheck className="h-3.5 w-3.5 text-[#666666] dark:text-zinc-400 shrink-0" />
+                      </div>
+                      <p className="text-[11.5px] text-[#666666] dark:text-zinc-400 truncate leading-tight">
+                        {item.authorName} · {item.category}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 2. Clean 2-Line Editorial Copy Above Media */}
+                  <div className="px-3.5 pb-2.5">
+                    <p className="text-[13px] text-[#191919] dark:text-zinc-200 line-clamp-2 leading-[1.42]">
+                      {displaySummary}
+                    </p>
+                  </div>
+
+                  {/* 3. Full-Bleed Unclouded WSJ Media Stage (Editorial Serif Headline on Bottom-Left) */}
                   {item.kind === "video" && isPlaying && (item.videoUrl || item.youtubeId) ? (
                     item.videoUrl ? (
                       <HarvestedMp4Player
@@ -480,10 +490,9 @@ export function LiveHarvestedMediaShowcase({
                         playerId={slotPlayerId}
                       />
                     ) : (
-                      /* Same studio player as the Home feed: Noctis Audio, language picker, voice dubbing & live subtitles */
                       <ConnectLnStudioPlayer
                         youtubeId={item.youtubeId as string}
-                        title={item.title}
+                        title={displayHeadline}
                         serialPlate={item.serialNumber}
                         speaker={item.authorName}
                         speakerRole={item.authorRole}
@@ -496,136 +505,103 @@ export function LiveHarvestedMediaShowcase({
                       />
                     )
                   ) : (
-                  <div className="relative aspect-video bg-zinc-900 overflow-hidden">
-                    {(
-                      <>
-                        <img
-                          src={item.imageUrl}
-                          alt={item.title}
-                          className="h-full w-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
-                        {item.kind === "video" && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setStartedByScroll(false)
-                              notifyManualVideoOverride(slotPlayerId, cardRefs.current[item.id])
-                              notifyExclusiveVideoPlay(slotPlayerId)
-                              setPlayingId(item.id)
-                              if (onSelectForMediaStage) {
-                                onSelectForMediaStage(item)
-                              }
-                            }}
-                            className="absolute inset-0 flex items-center justify-center group cursor-pointer"
-                          >
-                            <div className="h-10 w-10 rounded-full bg-[#6B4423]/95 group-hover:bg-[#3A2818] text-white flex items-center justify-center shadow-lg ring-2 ring-white/80 transition-transform group-hover:scale-105">
-                              <Play className="h-4 w-4 fill-current ml-0.5" />
-                            </div>
-                          </button>
-                        )}
-                      </>
-                    )}
+                    <div
+                      onClick={() => {
+                        if (item.kind !== "video") return
+                        setStartedByScroll(false)
+                        notifyManualVideoOverride(slotPlayerId, cardRefs.current[item.id])
+                        notifyExclusiveVideoPlay(slotPlayerId)
+                        setPlayingId(item.id)
+                        if (onSelectForMediaStage) {
+                          onSelectForMediaStage(item)
+                        }
+                      }}
+                      className={`relative aspect-[16/10] bg-zinc-950 overflow-hidden border-y border-zinc-100 dark:border-zinc-800 ${
+                        item.kind === "video" ? "cursor-pointer group" : ""
+                      }`}
+                    >
+                      <img
+                        src={item.imageUrl}
+                        alt={displayHeadline}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                      />
+                      <div className="absolute inset-x-0 bottom-0 h-[52%] bg-gradient-to-t from-black/85 via-black/35 to-transparent pointer-events-none" />
 
-                    <div className="absolute top-2 left-2 flex items-center gap-1 pointer-events-none">
-                      <span className="rounded-md bg-[#3A2818]/90 px-2 py-0.5 text-[9px] font-bold text-[#FAF6EE]">
-                        {item.kind === "video" ? `🎬 ${item.duration || "03:15"}` : "🖼️ PHOTO"}
-                      </span>
-                    </div>
+                      {item.kind === "video" && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                          <div className="h-11 w-11 rounded-full bg-black/60 border border-white/30 text-white flex items-center justify-center shadow-lg backdrop-blur-xs transition-transform group-hover:scale-105">
+                            <Play className="h-4.5 w-4.5 fill-current ml-0.5" />
+                          </div>
+                        </div>
+                      )}
 
-                    <div className="absolute bottom-1.5 left-2 right-2 flex items-center justify-between text-[9px] text-white/90 pointer-events-none">
-                      <span className="truncate font-semibold">{item.category}</span>
-                      <span className="font-mono bg-black/60 px-1.5 py-0.5 rounded shrink-0">
-                        {item.pulledAtLabel.replace("Pulled ", "")}
-                      </span>
-                    </div>
-                  </div>
-                  )}
-
-                  <div className="p-3 space-y-1.5">
-                    <p className="text-[13px] font-bold text-zinc-950 dark:text-white line-clamp-2 leading-snug">
-                      {destination === "jobs" && item.jobMeta
-                        ? item.jobMeta.roleTitle
-                        : destination === "market" && item.marketMeta
-                        ? item.marketMeta.productName
-                        : item.title}
-                    </p>
-
-                    <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-relaxed">
-                      {destination === "pulse" && item.pulseMeta
-                        ? item.pulseMeta.takeaway
-                        : item.summary}
-                    </p>
-
-                    {destination === "jobs" && item.jobMeta && (
-                      <div className="pt-1 flex flex-wrap items-center justify-between gap-1 text-[10px] font-semibold text-[#6B4423] dark:text-amber-300">
-                        <span>{item.jobMeta.company}</span>
-                        <span className="font-mono">{item.jobMeta.salary}</span>
-                      </div>
-                    )}
-
-                    {destination === "market" && item.marketMeta && (
-                      <div className="pt-1 flex items-center justify-between text-[10px] font-semibold text-[#6B4423] dark:text-amber-300">
-                        <span>{item.marketMeta.vendor}</span>
-                        <span className="font-mono bg-[#EFE7D6] dark:bg-zinc-800 px-1.5 py-0.5 rounded text-[#3A2818] dark:text-zinc-200">
-                          {item.marketMeta.price}
+                      <div className="absolute inset-x-0 bottom-0 px-3.5 pb-3 pt-6 flex items-end justify-between gap-3 pointer-events-none">
+                        <h4
+                          style={{
+                            fontFamily: "Georgia, 'Times New Roman', Times, serif",
+                            color: "#FFFFFF",
+                          }}
+                          className="text-[15px] sm:text-[17px] font-bold leading-[1.18] line-clamp-2 max-w-[85%] drop-shadow-md"
+                        >
+                          {displayHeadline}
+                        </h4>
+                        <span
+                          style={{
+                            fontFamily: "Georgia, 'Times New Roman', Times, serif",
+                            color: "rgba(255,255,255,0.9)",
+                          }}
+                          className="text-xs font-bold tracking-tight shrink-0"
+                        >
+                          CLN
                         </span>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* Contextual Footer Action */}
-                <div className="px-3 py-2 bg-[#FAF6EE]/70 dark:bg-zinc-900 border-t border-[#DFD4C0]/70 dark:border-zinc-800 space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] text-zinc-500 truncate">
-                      {item.authorName}
-                    </span>
-
-                    {destination === "jobs" ? (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setAppliedIds((prev) =>
-                            prev.includes(item.id) ? prev : [...prev, item.id]
-                          )
-                        }
-                        className={`rounded-lg px-2.5 py-1 text-[10px] font-bold cursor-pointer ${
-                          isApplied
-                            ? "bg-emerald-100 text-emerald-800"
-                            : "bg-[#3A2818] text-white hover:bg-[#523319]"
-                        }`}
-                      >
-                        {isApplied ? "✓ Applied" : "Video Apply"}
-                      </button>
-                    ) : destination === "market" && item.marketMeta ? (
-                      <a
-                        href={item.marketMeta.liveUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="rounded-lg bg-[#3A2818] hover:bg-[#523319] px-2.5 py-1 text-[10px] font-bold text-white flex items-center gap-1"
-                      >
-                        <span>Launch</span>
-                        <ExternalLink className="h-2.5 w-2.5" />
-                      </a>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setStartedByScroll(false)
-                          notifyManualVideoOverride(slotPlayerId, cardRefs.current[item.id])
-                          notifyExclusiveVideoPlay(slotPlayerId)
-                          setPlayingId(item.id)
-                          if (onSelectForMediaStage) {
-                            onSelectForMediaStage(item)
-                          }
-                        }}
-                        className="rounded-lg bg-[#EFE7D6] dark:bg-zinc-800 hover:bg-[#DFD4C0] px-2.5 py-1 text-[10px] font-bold text-[#3A2818] dark:text-zinc-200 cursor-pointer"
-                      >
-                        {item.kind === "video" ? "▶ Watch Video" : "Inspect Visual"}
-                      </button>
-                    )}
-                  </div>
+                {/* Contextual Footer Action (Only Jobs/Market CTAs + Single Clean Social Row — Zero Repeated Title or Watch Button!) */}
+                <div className="px-3.5 py-2 bg-white dark:bg-zinc-950 space-y-1.5">
+                  {(destination === "jobs" && item.jobMeta) || (destination === "market" && item.marketMeta) ? (
+                    <div className="flex items-center justify-between gap-2 pb-1 border-b border-zinc-100 dark:border-zinc-800">
+                      {destination === "jobs" && item.jobMeta ? (
+                        <>
+                          <span className="text-[11px] font-medium text-zinc-600 dark:text-zinc-400 truncate">
+                            {item.jobMeta.company} · {item.jobMeta.salary}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setAppliedIds((prev) =>
+                                prev.includes(item.id) ? prev : [...prev, item.id]
+                              )
+                            }
+                            className={`rounded-full px-3 py-0.5 text-[10.5px] font-semibold cursor-pointer ${
+                              isApplied
+                                ? "bg-emerald-100 text-emerald-800"
+                                : "bg-[#0A66C2] text-white hover:bg-[#004182]"
+                            }`}
+                          >
+                            {isApplied ? "✓ Applied" : "Apply"}
+                          </button>
+                        </>
+                      ) : destination === "market" && item.marketMeta ? (
+                        <>
+                          <span className="text-[11px] font-medium text-zinc-600 dark:text-zinc-400 truncate">
+                            {item.marketMeta.vendor} · {item.marketMeta.price}
+                          </span>
+                          <a
+                            href={item.marketMeta.liveUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-full bg-[#0A66C2] hover:bg-[#004182] px-3 py-0.5 text-[10.5px] font-semibold text-white flex items-center gap-1"
+                          >
+                            <span>Open</span>
+                            <ExternalLink className="h-2.5 w-2.5" />
+                          </a>
+                        </>
+                      ) : null}
+                    </div>
+                  ) : null}
 
                   {/* Full Social Engagement & Multi-Platform Share Strip (Like, Comment, Post/Repost, Share) */}
                   {(() => {

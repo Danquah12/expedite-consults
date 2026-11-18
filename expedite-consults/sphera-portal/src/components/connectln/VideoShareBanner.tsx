@@ -53,6 +53,8 @@ export interface VideoShareBannerProps {
   compact?: boolean
   /** Hide the bottom share bar when embedded in a modal that already has a share bar */
   hideShareBar?: boolean
+  /** Clean full-bleed WSJ editorial feed mode — hides duplicate author card, serial plates, and duplicate share bar */
+  editorialFeedMode?: boolean
   /** Automatically play inline when scrolled into viewport on the Home Feed */
   autoPlayOnScroll?: boolean
 }
@@ -76,6 +78,7 @@ export function VideoShareBanner({
   onWatchClick,
   compact = false,
   hideShareBar = false,
+  editorialFeedMode = false,
   autoPlayOnScroll = true
 }: VideoShareBannerProps) {
   const [isPlayingInline, setIsPlayingInline] = useState(false)
@@ -317,21 +320,27 @@ export function VideoShareBanner({
 
   return (
     <div
-      className="relative w-full overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-md transition-all hover:shadow-lg"
-      style={{ backgroundColor: "#171513", color: "#F5F0EB" }}
+      className={
+        editorialFeedMode
+          ? "relative w-full overflow-hidden border-y border-zinc-100 dark:border-zinc-800 bg-black"
+          : "relative w-full overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-md transition-all hover:shadow-lg"
+      }
+      style={editorialFeedMode ? undefined : { backgroundColor: "#171513", color: "#F5F0EB" }}
     >
-      {/* FULL-WIDTH 16:9 LINKEDIN-STYLE INLINE VIDEO STAGE (100% Unclouded Video Canvas + Docked Noctis Interpreter Strip Below) */}
+      {/* FULL-WIDTH WSJ / LINKEDIN EDITORIAL INLINE VIDEO STAGE (100% Unclouded Canvas) */}
       {(resolvedYtId || videoUrl || resolvedThumb) && (
         <div
           ref={videoStageRef}
-          className="relative w-full overflow-hidden bg-black border-b border-white/10 group/stage"
+          className={`relative w-full overflow-hidden bg-black group/stage ${
+            editorialFeedMode ? "" : "border-b border-white/10"
+          }`}
         >
           {isPlayingInline && (resolvedYtId || videoUrl) ? (
             <>
               {resolvedYtId ? (
                 <ConnectLnStudioPlayer
                   youtubeId={resolvedYtId}
-                  title={videoTitle}
+                  title={cleanTitle}
                   serialPlate={serialPlate || "CLN-VID"}
                   speaker={resolvedAuthor}
                   speakerRole={resolvedHeadline}
@@ -355,7 +364,7 @@ export function VideoShareBanner({
                     playsInline
                     loop
                     onVolumeChange={(e) => setIsDirectMuted(e.currentTarget.muted)}
-                    className="h-full w-full object-contain bg-black"
+                    className="h-full w-full object-cover bg-black"
                   />
                   {isDirectMuted && (
                     <button
@@ -369,89 +378,69 @@ export function VideoShareBanner({
                         setIsDirectMuted(false)
                       }}
                       style={{ color: "#FFFFFF" }}
-                      className="absolute top-3 left-3 z-20 inline-flex items-center gap-1.5 rounded-full bg-black/85 hover:bg-[#0A66C2] border border-white/25 px-3 py-1 text-[11px] font-semibold shadow-lg cursor-pointer"
+                      className="absolute top-3 right-3 z-20 inline-flex items-center gap-1.5 rounded-full bg-black/75 hover:bg-black/90 border border-white/20 px-3 py-1 text-[11px] font-semibold shadow-md cursor-pointer"
                     >
-                      <VolumeX className="h-3.5 w-3.5 text-amber-400" />
-                      <span style={{ color: "#FFFFFF" }}>Tap for Sound 🔊</span>
+                      <VolumeX className="h-3.5 w-3.5 text-white" />
+                      <span style={{ color: "#FFFFFF" }}>Tap for sound</span>
                     </button>
                   )}
                 </div>
               )}
-              <button
-                type="button"
-                onClick={() => {
-                  userManuallyStoppedRef.current = true
-                  setIsPlayingInline(false)
-                }}
-                style={{ backgroundColor: "rgba(0,0,0,0.82)", color: "#FFFFFF" }}
-                className="absolute top-2.5 right-2.5 z-20 rounded-full px-2.5 py-1 text-[10px] font-bold border border-white/20 cursor-pointer opacity-0 group-hover/stage:opacity-100 transition-opacity hover:bg-black"
-              >
-                ✕ Close Player
-              </button>
             </>
           ) : (
             <div className="flex flex-col w-full bg-black">
-              {/* Clean, Unclouded 16:9 Thumbnail Stage (Full title & details live in the ConnectLn Card below so the image is never covered!) */}
+              {/* Clean WSJ-Format Full-Bleed Poster Stage (Zero Top Clutter, Editorial Serif Bottom Headline + Monogram) */}
               <div
                 onClick={handlePlayTrigger}
-                className="relative aspect-video w-full cursor-pointer group overflow-hidden bg-black"
+                className={`relative w-full cursor-pointer group overflow-hidden bg-zinc-950 ${
+                  editorialFeedMode ? "aspect-[16/10] sm:aspect-video" : "aspect-video"
+                }`}
               >
                 {resolvedThumb && (
                   <img
                     src={resolvedThumb}
-                    alt={videoTitle}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    alt={cleanTitle}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.015]"
                   />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-black/20 pointer-events-none" />
+                <div className="absolute inset-x-0 bottom-0 h-[48%] bg-gradient-to-t from-black/85 via-black/35 to-transparent pointer-events-none" />
 
-                {/* Compact Top-Left Serial Plate & Duration Pill */}
-                <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 pointer-events-none">
-                  {serialPlate && (
-                    <span
-                      className="rounded px-2 py-0.5 font-mono text-[10px] font-extrabold uppercase tracking-wider shadow-sm"
-                      style={{ backgroundColor: "#A64532", color: "#FFFFFF" }}
-                    >
-                      {serialPlate}
-                    </span>
-                  )}
-                  {duration && (
-                    <span className="rounded bg-black/75 backdrop-blur-xs px-2 py-0.5 font-mono text-[10px] font-bold text-white border border-white/15">
-                      ⏱ {duration}
-                    </span>
-                  )}
-                </div>
-
-                {/* Center Play Button */}
+                {/* Subtle Center Play Button */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-[#0A66C2]/95 text-white shadow-2xl ring-4 ring-white/30 transition-transform duration-200 group-hover:scale-110">
-                    <Play className="h-6 w-6 sm:h-7 sm:w-7 fill-current ml-0.5" />
+                  <div className="flex h-13 w-13 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-black/60 border border-white/30 text-white shadow-xl backdrop-blur-xs transition-transform duration-200 group-hover:scale-105">
+                    <Play className="h-5 w-5 sm:h-6 sm:w-6 fill-current ml-0.5" />
                   </div>
                 </div>
-              </div>
 
-              {/* Docked Noctis Audio & Live Subtitle Bar (Sits cleanly below the video canvas!) */}
-              <NoctisVideoInterpreterPopup
-                dockedBelow={true}
-                title={videoTitle}
-                speaker={resolvedAuthor}
-                speakerRole={resolvedHeadline}
-                serialPlate={serialPlate || "CLN-VID"}
-                description={videoSubtitle}
-                takeaways={takeaways}
-                onRequestPlayVideo={() => {
-                  userManuallyStoppedRef.current = false
-                  setStartedByScroll(false)
-                  notifyExclusiveVideoPlay(bannerPlayerIdRef.current)
-                  setIsPlayingInline(true)
-                }}
-              />
+                {/* WSJ Editorial Lower-Third Headline & Monogram Watermark */}
+                <div className="absolute inset-x-0 bottom-0 px-4 sm:px-5 pb-4 pt-8 flex items-end justify-between gap-4 pointer-events-none">
+                  <h4
+                    style={{
+                      fontFamily: "Georgia, 'Times New Roman', Times, serif",
+                      color: "#FFFFFF",
+                    }}
+                    className="text-lg sm:text-2xl font-bold leading-[1.15] tracking-tight line-clamp-2 max-w-[84%] drop-shadow-md text-left"
+                  >
+                    {cleanTitle}
+                  </h4>
+                  <span
+                    style={{
+                      fontFamily: "Georgia, 'Times New Roman', Times, serif",
+                      color: "rgba(255,255,255,0.92)",
+                    }}
+                    className="text-sm sm:text-base font-bold tracking-tight shrink-0 select-none"
+                  >
+                    CLN
+                  </span>
+                </div>
+              </div>
             </div>
           )}
         </div>
       )}
 
-      {/* OFFICIAL CONNECTLN LOGO CARD WITH USER PROFILE PICTURE & FULL-WIDTH DETAILS (Zero Information Lost, Half the Clutter!) */}
+      {/* Standalone Card Details (Hidden in Feed Mode since FeedPostCard already displays Author, Caption & Social Actions!) */}
+      {!editorialFeedMode && (
       <div
         onClick={handlePlayTrigger}
         className={`${
@@ -615,9 +604,10 @@ export function VideoShareBanner({
           )}
         </div>
       </div>
+      )}
 
       {/* Multi-Platform Direct Sharing Bar (WhatsApp, LinkedIn, X, Facebook, Email, Copy Link) */}
-      {!hideShareBar && (
+      {!hideShareBar && !editorialFeedMode && (
         <div
           className="px-3.5 py-2 border-t flex flex-wrap items-center justify-between gap-2"
           style={{

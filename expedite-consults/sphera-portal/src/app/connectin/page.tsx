@@ -454,6 +454,25 @@ export default function ConnectLnPage() {
     loadStoredHarvestedItems().filter((i) => Array.isArray(i.destinations) && i.destinations.includes("home"))
   )
 
+  const getPostMediaDedupeSignature = (p: Post): string => {
+    const yt = (p.media?.youtubeId || "").trim().toLowerCase()
+    if (yt) return `yt:${yt}`
+    const mTitle = (p.media?.title || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim()
+    if (mTitle && mTitle.length >= 12) return `mtitle:${mTitle}`
+    const mUrl = (p.media?.url || "").trim().toLowerCase()
+    if (mUrl && !mUrl.includes("agentic_flywheel.mp4")) return `murl:${mUrl}`
+    const bodyNorm = (p.content || "")
+      .replace(/^⚡\s*\[[^\]]+\]\s*/u, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim()
+      .slice(0, 90)
+    return bodyNorm ? `body:${bodyNorm}` : `id:${p.id}`
+  }
+
   const buildFeedPostFromHarvestedItem = (item: HarvestedMediaItem): Post => {
     const postId = `harvest_post_${item.id}`
     return {
@@ -461,17 +480,17 @@ export default function ConnectLnPage() {
       isUserCreated: true,
       author: {
         id: `hv_${item.minuteSlot}`,
-        name: item.authorName,
-        headline: `${item.authorRole} · ${item.organization}`,
+        name: item.organization || item.authorName,
+        headline: `${item.authorName} · ${item.authorRole}`,
         avatar: item.authorAvatar,
         connectionDegree: "1st",
       },
-      timestamp: item.pulledAtLabel || "Synced just now from Admin Media Backend",
-      visibility: "Anyone",
+      timestamp: item.pulledAtLabel ? item.pulledAtLabel.replace(/^Pulled\s+/i, "") : "1h",
+      visibility: "Public",
       postType: "standard",
-      enclaveId: item.enclaveId,
-      content: `⚡ [${item.category} · Synced from ConnectLn Admin Media Backend] ${item.title}\n\n${item.summary}\n\nSyndicated live across Home, Jobs, Market, Media & Pulse (${item.serialNumber}).`,
-      hashtags: ["#ConnectLn", "#AdminMediaSync", `#${item.category.replace(/[^a-zA-Z0-9]/g, "")}`],
+      professionEnclave: item.enclaveId,
+      content: item.summary,
+      hashtags: [`#${item.category.replace(/[^a-zA-Z0-9]/g, "")}`],
       media:
         item.kind === "video"
           ? {
@@ -489,6 +508,10 @@ export default function ConnectLnPage() {
           : {
               type: "image",
               url: item.imageUrl,
+              visualStyle: "editorial_podium",
+              overlayTitle: item.title,
+              overlaySubtitle: item.category,
+              mastheadText: "CLN",
               title: item.title,
               description: item.summary,
             },
@@ -504,8 +527,7 @@ export default function ConnectLnPage() {
     }
   }
 
-  // Global 60-Second (1-Minute) Backend Media Harvester Ticker — pulls ConnectLn videos & pictures every minute
-  // and pushes them to Home, Jobs, Market, Media, and Pulse so platform content increases every day.
+  // Global Backend Media Harvester Ticker — syncs unique ConnectLn videos & editorial visuals without duplicates
   useEffect(() => {
     if (typeof window === "undefined") return
 
@@ -514,30 +536,42 @@ export default function ConnectLnPage() {
       setHarvestedHomeItems(homeItems)
       if (homeItems.length === 0) return
 
-      // Always inject any Admin-pushed / manually-pulled / auto-pulled items, plus the latest top 3 home items
       const candidates = homeItems.filter(
         (i, idx) =>
           i.id.startsWith("cln_custom_") ||
           i.id.startsWith("cln_pull_") ||
           i.id.startsWith("cln_auto_") ||
-          (!onlyExplicitOrLatest && idx < 3) ||
-          idx < 3
-      ).slice(0, 6)
-
-      if (candidates.length === 0) return
+          (!onlyExplicitOrLatest && idx < 2) ||
+          idx < 2
+      ).slice(0, 3)
 
       setPosts((prev) => {
-        const existingIds = new Set(prev.map((p) => p.id))
+        // First prune any duplicate harvest_post_* entries already saved in localStorage
+        const seenSigs = new Set<string>()
+        const seenIds = new Set<string>()
+        const dedupedPrev: Post[] = []
+        for (const p of prev) {
+          if (!p || !p.id || seenIds.has(p.id)) continue
+          const sig = getPostMediaDedupeSignature(p)
+          if (p.id.startsWith("harvest_post_") && seenSigs.has(sig)) continue
+          seenIds.add(p.id)
+          seenSigs.add(sig)
+          dedupedPrev.push(p)
+        }
+
         const newlyBuilt: Post[] = []
         for (const item of candidates) {
-          const postId = `harvest_post_${item.id}`
-          if (!existingIds.has(postId)) {
-            newlyBuilt.push(buildFeedPostFromHarvestedItem(item))
-            existingIds.add(postId)
+          const candidatePost = buildFeedPostFromHarvestedItem(item)
+          const sig = getPostMediaDedupeSignature(candidatePost)
+          if (!seenIds.has(candidatePost.id) && !seenSigs.has(sig)) {
+            newlyBuilt.push(candidatePost)
+            seenIds.add(candidatePost.id)
+            seenSigs.add(sig)
           }
         }
-        if (newlyBuilt.length === 0) return prev
-        const nextPosts = [...newlyBuilt, ...prev].slice(0, 80)
+
+        if (newlyBuilt.length === 0 && dedupedPrev.length === prev.length) return prev
+        const nextPosts = [...newlyBuilt, ...dedupedPrev].slice(0, 60)
         saveStoredPosts(nextPosts)
         return nextPosts
       })
@@ -2048,8 +2082,9 @@ export default function ConnectLnPage() {
 
   const combinedFeedPosts = React.useMemo(() => {
     const seenIds = new Set<string>()
+    const seenMediaSigs = new Set<string>()
     const merged: Post[] = []
-    const liveHarvestedPosts = harvestedHomeItems.slice(0, 4).map((item) => buildFeedPostFromHarvestedItem(item))
+    const liveHarvestedPosts = harvestedHomeItems.slice(0, 2).map((item) => buildFeedPostFromHarvestedItem(item))
     const userCreatedPosts = posts.filter(
       (p) =>
         p &&
@@ -2062,7 +2097,10 @@ export default function ConnectLnPage() {
     )
     for (const p of [...liveHarvestedPosts, ...userCreatedPosts, ...followedMemberSyntheticPosts, ...posts]) {
       if (!p || !p.id || seenIds.has(p.id)) continue
+      const mediaSig = getPostMediaDedupeSignature(p)
+      if (seenMediaSigs.has(mediaSig)) continue
       seenIds.add(p.id)
+      seenMediaSigs.add(mediaSig)
       const authorKey = normalizeFollowKey(p.author?.name)
       const isFollowed = Boolean(authorKey && followedNamesSet.has(authorKey))
       merged.push(
@@ -2466,54 +2504,32 @@ export default function ConnectLnPage() {
                   })}
                 </div>
 
-                {/* Direct 1-Click Jump Bar to All 13 Skilled Trades Videos & Learning Academy */}
-                <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2">
+                {/* Clean Subtle Links to Skilled Trades Videos & Learning Academy */}
+                <div className="pt-1.5 border-t border-zinc-100 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2 text-xs">
                   <button
                     type="button"
                     onClick={() => {
                       const el = document.getElementById("home-skilled-trades-learn-by-doing")
                       if (el) el.scrollIntoView({ behavior: "smooth", block: "start" })
                     }}
-                    title="Carpentry, Plumbing, Electrical, Welding, HVAC, Auto & Painting"
-                    style={{ color: "#FFFFFF" }}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-white px-3 py-1.5 text-xs font-bold shadow-2xs transition-colors cursor-pointer"
+                    className="font-semibold text-zinc-700 dark:text-zinc-300 hover:text-[#0A66C2] transition-colors cursor-pointer"
                   >
-                    <span>🛠️</span>
-                    <span style={{ color: "#FFFFFF" }}>View All 13 Skilled Trades Video Lessons ↓</span>
+                    Trade Video Lessons ↓
                   </button>
                   <button
                     type="button"
                     onClick={() => setActiveTab('learning')}
-                    className="inline-flex items-center gap-1 rounded-lg bg-[#0A66C2]/10 hover:bg-[#0A66C2]/20 text-[#0A66C2] dark:text-sky-300 border border-[#0A66C2]/30 px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer"
+                    className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline transition-colors cursor-pointer"
                   >
-                    <span>🎓 Open Full Learning Tab →</span>
+                    Open Learning Tab →
                   </button>
                 </div>
               </div>
 
-              {/* LinkedIn-Style Top "Start a post" Box (Video, Photo, Write article — Matches Screenshot 1) */}
+              {/* LinkedIn-Style Top "Start a post" Box */}
               <PostCreator user={userData} onAddPost={handleAddPost} />
 
-              {/* Live 1-Minute Auto-Pulled Videos & Pictures Showcase for Home (Positioned Above the Fold) */}
-              <LiveHarvestedMediaShowcase
-                destination="home"
-                compact
-                onOpenAdminBackend={isSuperAdminUser(userData) ? () => setActiveTab('adminiam') : undefined}
-                onShareItemToFeed={(item) =>
-                  handleShareWheelVideoToFeed({
-                    title: item.title,
-                    speaker: item.authorName,
-                    speakerTitle: item.authorRole,
-                    youtubeId: item.youtubeId,
-                    thumbnailUrl: item.imageUrl,
-                    duration: item.duration || "03:30",
-                    serialPlate: item.category,
-                    summary: item.summary,
-                  })
-                }
-              />
-
-              {/* Admin-Synced Live Feed Video Posts & User's Own Newly Published Feed Posts — Shown Immediately Above Static Sections */}
+              {/* Clean Full-Bleed WSJ-Format Feed Video & Editorial Posts (Zero Duplicate 3-Card Widget Above!) */}
               {myPublishedPosts.length > 0 && (
                 <div className="space-y-3">
                   {myPublishedPosts.slice(0, visibleMyPostsCount).map((post) => (
@@ -2760,134 +2776,8 @@ export default function ConnectLnPage() {
 
                 return (
                   <>
-                    {/* Desktop Need-to-Know Enclave Segregation Banner (sm+) */}
-                    <div className="hidden sm:block rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-2.5 shadow-xs transition-all">
-                      <div className="flex items-center justify-between gap-2.5">
-                        <div className="flex items-center gap-3">
-                          <span className="text-2xl p-2 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-[#0A66C2] dark:text-sky-300 border border-blue-100 dark:border-blue-900/50 shadow-2xs shrink-0">
-                            {bannerIcon}
-                          </span>
-                          <div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h2 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-zinc-100">
-                                {bannerTitle}
-                              </h2>
-                              <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 dark:bg-blue-950/60 px-2.5 py-0.5 text-[10px] font-semibold text-[#0A66C2] dark:text-sky-300 border border-blue-200/50 dark:border-blue-800/50">
-                                <ShieldCheck className="h-3 w-3" />
-                                Verified Community
-                              </span>
-                              {activeEncs.length > 1 && (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-800/50">
-                                  {isAllSelected ? "All 12 Highlighted" : `${activeEncs.length} Highlighted`}
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-xs text-zinc-600 dark:text-zinc-400 font-medium">
-                              {bannerSubtitle}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Community Posts Count Tag */}
-                        <div className="shrink-0 text-right">
-                          <span className="text-[11px] font-semibold text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-full border border-zinc-200 dark:border-zinc-700">
-                            {filteredPosts.length} {t("enclave_posts", "Community Posts")}
-                          </span>
-                        </div>
-                      </div>
-
-                      <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                        ✨ <strong>Community Focus:</strong> Discussions, trade updates, blueprints, and opportunities are tailored to your professional craft. Explore conversations across any industry anytime.
-                      </p>
-
-                      {/* Community Feed Tags */}
-                      <div className="flex items-center gap-1.5 overflow-x-auto pt-0.5">
-                        <span className="text-[10px] uppercase font-bold text-zinc-400 shrink-0">Tags:</span>
-                        {aggregatedFeedTags.map((tag) => (
-                          <button
-                            key={tag}
-                            type="button"
-                            onClick={() => setSelectedTagFilter(tag)}
-                            className="text-[11px] font-medium bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-2.5 py-0.5 rounded-full border border-zinc-200/70 dark:border-zinc-700/70 shrink-0 cursor-pointer transition-colors"
-                          >
-                            {tag}
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Community Switcher */}
-                      {isAdmin && (
-                        <div className="mt-2 pt-2.5 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
-                          <div className="flex items-center justify-between gap-2 flex-wrap">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-1">
-                                🌐 Switch Industry Community:
-                              </span>
-                              <span className="text-[10px] text-zinc-500 font-medium">
-                                (Tap to filter posts)
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1.5 text-xs">
-                              <button
-                                type="button"
-                                onClick={() => setSelectedEnclaves(PROFESSION_ENCLAVES.map(e => e.id))}
-                                className="font-semibold text-[#0A66C2] hover:underline cursor-pointer"
-                              >
-                                Show All 12
-                              </button>
-                              <span className="text-zinc-300 dark:text-zinc-700">·</span>
-                              <button
-                                type="button"
-                                onClick={() => setSelectedEnclaves([userData.professionEnclave || 'trades_construction'])}
-                                className="text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:underline cursor-pointer"
-                              >
-                                Reset
-                              </button>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-                            {PROFESSION_ENCLAVES.map(e => {
-                              const isSelected = isAllSelected || selectedEnclaves.includes(e.id)
-                              return (
-                                <button
-                                  key={e.id}
-                                  type="button"
-                                  onClick={() => handleToggleEnclave(e.id)}
-                                  title={`Toggle ${e.name}`}
-                                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
-                                    isSelected
-                                      ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
-                                      : "bg-zinc-100 hover:bg-zinc-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200/70 dark:border-zinc-700/70"
-                                  }`}
-                                >
-                                  <span>{e.icon}</span>
-                                  <span>{e.shortName}</span>
-                                  {isSelected && <span className="text-[10px]">✓</span>}
-                                </button>
-                              )
-                            })}
-                            <button
-                              type="button"
-                              onClick={() => handleToggleEnclave('all')}
-                              title="View all 12 communities"
-                              className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
-                                isAllSelected
-                                  ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
-                                  : "bg-zinc-100 hover:bg-zinc-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200/70 dark:border-zinc-700/70"
-                              }`}
-                            >
-                              <span>🌐</span>
-                              <span>{t("all_enclaves", "All Communities")}</span>
-                              {isAllSelected && <span className="text-[10px]">✓</span>}
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Mobile Streamlined Community Bar (< sm) */}
-                    <div className="sm:hidden rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-2.5 shadow-xs">
+                    {/* Unified Streamlined Community Bar (Collapsible across Desktop & Mobile — Zero Duplicate DOM) */}
+                    <div className="rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3.5 py-2.5 shadow-xs">
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                           <span className="text-xl p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-[#0A66C2] dark:text-sky-300 border border-blue-100 dark:border-blue-900/50 shrink-0">

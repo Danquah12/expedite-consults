@@ -33,7 +33,8 @@ import {
   Copy,
   Zap,
   Info,
-  Eye
+  Eye,
+  X
 } from "lucide-react"
 import { Post, ReactionType, Comment, UserProfile, PollData } from "@/lib/connectln-data"
 import {
@@ -100,7 +101,7 @@ export function FeedPostCard({
   const [replyText, setReplyText] = useState("")
   const [showReactionPicker, setShowReactionPicker] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
-  const [autoplayVideos, setAutoplayVideos] = useAutoplayVideosPref()
+  const [isDismissed, setIsDismissed] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
   const [isFollowing, setIsFollowing] = useState(post.author.isFollowing ?? false)
   const [isReposted, setIsReposted] = useState(false)
@@ -131,9 +132,22 @@ export function FeedPostCard({
     return translatePostText(post.content, language)
   }, [post.content, language])
 
-  const activeContent = (showTranslation && translationResult.isTranslated) ? translationResult.text : post.content
-  const isLongText = activeContent.length > 240
-  const displayedContent = isExpanded || !isLongText ? activeContent : activeContent.slice(0, 240) + "..."
+  const rawActiveContent = (showTranslation && translationResult.isTranslated) ? translationResult.text : post.content
+  // Strip legacy robotic sync tags & syndicated boilerplate so all feed posts read like clean WSJ editorial copy
+  const activeContent = useMemo(() => {
+    let cleaned = rawActiveContent
+      .replace(/^⚡\s*\[[^\]]+\]\s*/u, "")
+      .replace(/\n*Syndicated live across Home, Jobs, Market, Media & Pulse[^.\n]*\.?/gi, "")
+      .trim()
+    // If the first line duplicates media.title verbatim followed by double newline, show the clean summary prose
+    if (post.media?.title && cleaned.startsWith(post.media.title)) {
+      const rest = cleaned.slice(post.media.title.length).trim()
+      if (rest.length > 35) cleaned = rest
+    }
+    return cleaned
+  }, [rawActiveContent, post.media?.title])
+  const isLongText = activeContent.length > 205
+  const displayedContent = isExpanded || !isLongText ? activeContent : activeContent.slice(0, 205).trimEnd() + "..."
 
   const [showShareModal, setShowShareModal] = useState(false)
   const [downloadedGuide, setDownloadedGuide] = useState(false)
@@ -478,10 +492,12 @@ export function FeedPostCard({
     if (onVotePoll) onVotePoll(post.id, optionId)
   }
 
+  if (isDismissed) return null
+
   return (
     <article
       id={`connectln-post-${post.id}`}
-      className="overflow-visible rounded-xl border border-zinc-200 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-900 transition-all"
+      className="overflow-visible rounded-xl border border-zinc-200/90 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-900 transition-all"
     >
       {/* Celebration Banner Header if milestone */}
       {post.celebration && (
@@ -491,9 +507,9 @@ export function FeedPostCard({
         </div>
       )}
 
-      {/* Post Header */}
-      <div className="flex items-start justify-between p-4 pb-2">
-        <div className="flex items-start gap-3 min-w-0">
+      {/* Post Header — Clean WSJ / LinkedIn Editorial Header */}
+      <div className="flex items-start justify-between px-4 pt-3.5 pb-1.5">
+        <div className="flex items-start gap-2.5 min-w-0">
           <div
             onClick={() =>
               onSelectMember?.({
@@ -503,7 +519,7 @@ export function FeedPostCard({
                 avatar: resolvedPostAuthorPic
               })
             }
-            className="relative h-12 w-12 shrink-0 cursor-pointer group"
+            className="relative h-11 w-11 shrink-0 cursor-pointer group"
             title={`Open ${resolvedAuthorName}'s Workspace`}
           >
             <img
@@ -512,15 +528,8 @@ export function FeedPostCard({
               onError={(e) => {
                 e.currentTarget.src = generatePersonalSignatureAvatar({ name: resolvedAuthorName })
               }}
-              className="h-12 w-12 rounded-full object-cover ring-2 ring-[#0066FF] group-hover:ring-[#0A66C2] transition-all"
+              className="h-11 w-11 rounded-full object-cover border border-zinc-200 dark:border-zinc-700 transition-opacity group-hover:opacity-90"
             />
-            <span
-              title={`${resolvedAuthorName} · Online`}
-              className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full flex items-center justify-center"
-            >
-              <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
-              <span className="relative h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-zinc-900 online-dot-blink" />
-            </span>
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
@@ -533,24 +542,19 @@ export function FeedPostCard({
                     avatar: resolvedPostAuthorPic
                   })
                 }
-                className="font-semibold text-[14px] leading-[1.4] text-[#191919] hover:underline hover:text-[#0A66C2] cursor-pointer dark:text-zinc-100 inline-flex items-center gap-1"
+                className="font-semibold text-[14.5px] leading-[1.3] text-[#191919] hover:underline hover:text-[#0A66C2] cursor-pointer dark:text-zinc-100 inline-flex items-center gap-1"
                 title={`Open ${resolvedAuthorName}'s Workspace`}
               >
                 <span>{resolvedAuthorName}</span>
                 <ShieldCheck className="h-3.5 w-3.5 text-[#666666] dark:text-zinc-300 shrink-0" />
               </span>
-              {post.author.connectionDegree !== 'You' && (
-                <span style={{ fontWeight: 400 }} className="text-[14px] text-[#666666] dark:text-zinc-400">
-                  · {post.author.connectionDegree}
-                </span>
-              )}
               {post.author.connectionDegree !== 'You' && onFollowToggle && (
                 <button
                   onClick={() => {
                     setIsFollowing(!isFollowing)
                     onFollowToggle(post.author.id)
                   }}
-                  className="flex items-center gap-1 text-[14px] font-semibold text-[#0A66C2] hover:bg-sky-50 px-2 py-0.5 rounded-full dark:hover:bg-sky-950/30 ml-1"
+                  className="flex items-center gap-1 text-[13px] font-semibold text-[#0A66C2] hover:bg-sky-50 px-2 py-0.5 rounded-full dark:hover:bg-sky-950/30 ml-0.5 cursor-pointer"
                 >
                   {isFollowing ? (
                     <>
@@ -564,28 +568,45 @@ export function FeedPostCard({
                 </button>
               )}
             </div>
-            <p style={{ fontWeight: 400 }} className="text-[12px] leading-[1.33333] text-[#666666] truncate dark:text-zinc-400">
-              {resolvedAuthorHeadline}
-            </p>
-            <div style={{ fontWeight: 400 }} className="flex items-center gap-1 text-[12px] leading-[1.33333] text-[#666666] dark:text-zinc-400">
-              <span>{post.timestamp}</span>
-              <span>·</span>
-              {post.visibility === 'Public' ? (
-                <Globe className="h-3 w-3 text-[#666666] dark:text-zinc-400" />
-              ) : (
+            {resolvedAuthorHeadline && (
+              <p style={{ fontWeight: 400 }} className="text-[12px] leading-[1.3] text-[#666666] truncate dark:text-zinc-400">
+                {resolvedAuthorHeadline}
+              </p>
+            )}
+            <div style={{ fontWeight: 400 }} className="flex items-center gap-1 text-[12px] leading-[1.3] text-[#666666] dark:text-zinc-400 mt-0.5">
+              <span>{post.timestamp.replace(/\s*·\s*🌐\s*$/u, "").replace(/^Pulled\s+/i, "")}</span>
+              <span>•</span>
+              {post.visibility === 'Connections' ? (
                 <Lock className="h-3 w-3 text-[#666666] dark:text-zinc-400" />
+              ) : (
+                <Globe className="h-3 w-3 text-[#666666] dark:text-zinc-400" />
               )}
             </div>
           </div>
         </div>
 
-        {/* 3-Dots Action Menu */}
-        <div className="relative">
+        {/* Right Controls: 3-Dots Action Menu + Dismiss (✕) */}
+        <div className="relative flex items-center gap-0.5 shrink-0">
           <button
             onClick={() => setShowMenu(!showMenu)}
-            className="rounded-full p-1.5 text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            className="rounded-full p-1.5 text-[#666666] hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 cursor-pointer"
+            title="More options"
           >
             <MoreHorizontal className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (isCurrentUserPost && onDeletePost) {
+                setIsDismissed(true)
+              } else {
+                setIsDismissed(true)
+              }
+            }}
+            className="rounded-full p-1.5 text-[#666666] hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 cursor-pointer"
+            title="Hide post"
+          >
+            <X className="h-4 w-4" />
           </button>
 
           {showMenu && (
@@ -718,14 +739,16 @@ export function FeedPostCard({
         )}
       </div>
 
-      {/* Hashtags */}
-      {post.hashtags && post.hashtags.length > 0 && (
+      {/* Hashtags (Shown cleanly when expanded or on text-only posts so video posts stay clean like WSJ) */}
+      {post.hashtags && post.hashtags.length > 0 && (isExpanded || !post.media) && (
         <div className="flex flex-wrap gap-1.5 px-4 pb-2 text-xs font-semibold text-[#0A66C2]">
-          {post.hashtags.map((tag, idx) => (
-            <span key={idx} className="hover:underline cursor-pointer">
-              {tag}
-            </span>
-          ))}
+          {post.hashtags
+            .filter((tag) => tag.toLowerCase() !== "#adminmediasync")
+            .map((tag, idx) => (
+              <span key={idx} className="hover:underline cursor-pointer">
+                {tag}
+              </span>
+            ))}
         </div>
       )}
 
@@ -1288,34 +1311,16 @@ export function FeedPostCard({
         </div>
       )}
 
-      {/* LinkedIn-Style Full-Width 16:9 Inline Video + ConnectLn Share Card */}
+      {/* WSJ / LinkedIn Full-Bleed Edge-to-Edge Video Stage (Zero Duplicate Banners or Repeated Author Cards) */}
       {post.media && post.media.type === 'video' && (
-        <div className="my-2 w-full">
-          {/* Label so it's clear where this video comes from, with a one-click autoplay switch */}
-          {post.id?.startsWith('harvest_post_') && (
-            <div className="mx-4 mb-1.5 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-emerald-200 bg-emerald-50/70 px-2.5 py-1 text-[11px] dark:border-emerald-900/60 dark:bg-emerald-950/30">
-              <span className="font-semibold text-emerald-800 dark:text-emerald-300">
-                📡 Latest synced video · from the Admin Media Backend
-                {post.media.serialPlate ? ` · ${post.media.serialPlate}` : ''}
-              </span>
-              <button
-                type="button"
-                onClick={() => setAutoplayVideos(!autoplayVideos)}
-                title="Autoplay starts videos silently when they scroll into view. Change it any time in Settings."
-                className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-white px-2 py-0.5 font-bold text-emerald-800 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-zinc-900 dark:text-emerald-300 cursor-pointer"
-              >
-                <span className={`h-1.5 w-1.5 rounded-full ${autoplayVideos ? 'bg-emerald-500' : 'bg-zinc-400'}`} />
-                Autoplay: {autoplayVideos ? 'On (muted)' : 'Off'}
-              </button>
-            </div>
-          )}
+        <div className="mt-1 w-full">
           <VideoShareBanner
             avatarUrl={resolvedPostAuthorPic}
             userAvatar={resolvedPostAuthorPic}
             authorName={resolvedAuthorName}
             authorHeadline={resolvedAuthorHeadline}
             brandName="ConnectLn"
-            videoTitle={post.media.title || "ConnectLn Masterclass & Technical Briefing"}
+            videoTitle={post.media.title || "ConnectLn Briefing"}
             videoSubtitle={post.media.description || resolvedAuthorHeadline}
             youtubeId={post.media.youtubeId}
             thumbnailUrl={post.media.thumbnailUrl}
@@ -1323,12 +1328,14 @@ export function FeedPostCard({
             duration={post.media.duration || "5:00"}
             serialPlate={post.media.serialPlate}
             takeaways={post.media.takeaways}
+            editorialFeedMode={true}
+            hideShareBar={true}
           />
         </div>
       )}
 
       {/* Post Stats (Social Proof) */}
-      <div className="mx-4 flex items-center justify-between border-b border-zinc-100 py-2.5 text-[11px] sm:text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+      <div className="mx-4 flex items-center justify-between border-b border-zinc-100 py-2 text-[11.5px] text-[#666666] dark:border-zinc-800 dark:text-zinc-400">
         <div className="flex items-center gap-1.5">
           <div className="flex -space-x-1">
             <span className="flex h-4.5 w-4.5 items-center justify-center rounded-full bg-[#0A66C2] text-[10px] text-white shadow-xs">
@@ -1349,7 +1356,7 @@ export function FeedPostCard({
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowComments(!showComments)}
-            className="hover:underline hover:text-[#0A66C2]"
+            className="hover:underline hover:text-[#0A66C2] cursor-pointer"
           >
             {post.comments.length} {t("comments_count", "comments")}
           </button>
@@ -1360,36 +1367,7 @@ export function FeedPostCard({
         </div>
       </div>
 
-      {/* Quick 6-Reaction Splash Strip (👍 Like, 👏 Celebrate, 🤝 Support, ❤️ Love, 💡 Insightful, 😂 Funny) */}
-      <div className="mx-4 flex flex-wrap items-center gap-1.5 border-b border-zinc-100 py-2 dark:border-zinc-800">
-        {(Object.entries(reactionIcons) as [ReactionType, { label: string; icon: string; color: string }][]).map(([key, config]) => {
-          const isSelected = post.userReaction === key
-          const baseCount = post.stats.reactionsBreakdown?.[key] || 0
-          const totalForKey = baseCount + (isSelected ? 1 : 0)
-          return (
-            <button
-              key={key}
-              type="button"
-              onClick={(e) => handleReactionSelect(key, { clientX: e.clientX, clientY: e.clientY })}
-              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-bold transition-all cursor-pointer ${
-                isSelected
-                  ? "border-[#6B4226] bg-[#F4EFE6] text-[#4A3525] shadow-2xs scale-[1.03] dark:border-amber-500 dark:bg-zinc-800 dark:text-amber-300"
-                  : "border-[#DFD5C0] bg-[#FAF7F2] text-[#4A3525] hover:bg-[#F0E9DC] dark:border-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-200 dark:hover:bg-zinc-700"
-              }`}
-            >
-              <span className="text-xs leading-none">{config.icon}</span>
-              <span>{config.label}</span>
-              {totalForKey > 0 && (
-                <span className="ml-0.5 rounded-full bg-black/8 dark:bg-white/10 px-1.5 py-0.2 text-[10px] font-black">
-                  {totalForKey}
-                </span>
-              )}
-            </button>
-          )
-        })}
-      </div>
-
-      {/* Interactive Action Bar (Like, Comment, Repost, Send) */}
+      {/* Interactive Action Bar (Like, Comment, Repost, Share — Single Clean Row, Reaction Picker on Hover) */}
       <div className="relative flex items-center justify-around px-1 sm:px-2 py-1 text-xs font-semibold text-zinc-600 dark:text-zinc-300">
         {/* Floating Reaction Bar on Hover / Long Press */}
         {showReactionPicker && (
