@@ -76,10 +76,12 @@ export function LanguageSwitcher({
           <Globe strokeWidth={1.75} className="h-[20px] w-[20px]" />
           <span
             style={{ fontWeight: 400 }}
-            className="flex items-center gap-0.5 text-[12px] leading-[1.33333] mt-0.5 uppercase whitespace-nowrap"
+            className="flex items-center gap-0.5 text-[12px] leading-[1.33333] mt-0.5 whitespace-nowrap"
           >
-            {currentLanguage.code}
-            <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+            <span className="max-w-[64px] truncate">
+              {language === "en" ? "EN" : currentLanguage.localName.split(" ")[0]}
+            </span>
+            <ChevronDown className={`h-3 w-3 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
           </span>
         </button>
       ) : (
@@ -166,7 +168,9 @@ export function LanguageSwitcher({
                     }`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-base shrink-0 leading-none">{item.flag}</span>
+                      <span className="inline-flex h-5 min-w-[26px] items-center justify-center rounded bg-zinc-100 dark:bg-zinc-800 px-1 text-[10px] font-semibold uppercase text-zinc-600 dark:text-zinc-300 shrink-0">
+                        {item.code}
+                      </span>
                       <div className="min-w-0">
                         <p className="truncate font-semibold leading-tight">
                           {item.localName}

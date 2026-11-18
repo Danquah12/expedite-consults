@@ -667,6 +667,9 @@ const UI_LABELS: Partial<
       askBtn: string
       translating: string
       liveInterpretingBadge: string
+      noctisAudioBtn?: string
+      videoLabel?: string
+      hearAudioInLabel?: string
     }
   >
 > = {
@@ -929,6 +932,137 @@ const UI_LABELS: Partial<
     askBtn: "Отправить",
     translating: "Noctis дословно переводит речь на русский язык...",
     liveInterpretingBadge: "Живой голос (Русский) · Оригинальный звук выключен",
+    noctisAudioBtn: "Аудио Noctis",
+    videoLabel: "🎬 Видео:",
+    hearAudioInLabel: "🔊 Слушать на:",
+  },
+  th: {
+    triggerBtn: "เสียงพากย์ Noctis",
+    popupTitle: "ล่ามแปลเสียงพากย์สด Noctis (ไทย)",
+    popupSubtitle: "เสียงมนุษย์ธรรมชาติ 100% · แปลคำต่อคำครบทุกประโยค",
+    listenVoiceDub: "🔊 ฟังเสียงพากย์ภาษาไทย",
+    stopVoiceDub: "⏸ หยุดเสียงภาษาไทยชั่วคราว",
+    summaryHeading: "บริบทของวิดีโอ (ไทย)",
+    stepsHeading: "บทพูดแปลคำต่อคำ (ภาษาไทย)",
+    askPlaceholder: "บอก Noctis เช่น “เล่นวิดีโอนี้เป็นภาษาไทย / จีน / สเปน...” หรือถามคำถาม",
+    askBtn: "ส่ง",
+    translating: "Noctis กำลังแปลเสียงพูดคำต่อคำเป็นภาษาไทย...",
+    liveInterpretingBadge: "เสียงพากย์มนุษย์ภาษาไทย · ปิดเสียงต้นฉบับแล้ว",
+    noctisAudioBtn: "เสียงพากย์ Noctis",
+    videoLabel: "🎬 วิดีโอ:",
+    hearAudioInLabel: "🔊 ฟังเสียงเป็น:",
+  },
+  ko: {
+    triggerBtn: "Noctis 음성 통역",
+    popupTitle: "Noctis 실시간 육성 동시통역 (한국어)",
+    popupSubtitle: "100% 스튜디오 육성 · 문장별 직역 통역",
+    listenVoiceDub: "🔊 한국어 음성 듣기",
+    stopVoiceDub: "⏸ 한국어 음성 일시정지",
+    summaryHeading: "비디오 맥락 (한국어)",
+    stepsHeading: "실시간 문장별 대본 (한국어)",
+    askPlaceholder: "Noctis에게 “한국어 / 중국어 / 스페인어로 재생” 지시 또는 질문...",
+    askBtn: "보내기",
+    translating: "Noctis가 음성을 한국어로 직역하고 있습니다...",
+    liveInterpretingBadge: "한국어 실시간 육성 통역 · 원본 오디오 음소거",
+    noctisAudioBtn: "Noctis 오디오",
+    videoLabel: "🎬 영상:",
+    hearAudioInLabel: "🔊 음성 언어:",
+  },
+  id: {
+    triggerBtn: "Suara Noctis",
+    popupTitle: "Penerjemah Suara Manusia Noctis (Bahasa Indonesia)",
+    popupSubtitle: "100% Suara Manusia Studio · Terjemahan Kata demi Kata",
+    listenVoiceDub: "🔊 Dengarkan Bahasa Indonesia",
+    stopVoiceDub: "⏸ Jeda Audio Indonesia",
+    summaryHeading: "Konteks Video (Indonesia)",
+    stepsHeading: "Transkrip Ucapan Kata demi Kata (Indonesia)",
+    askPlaceholder: "Katakan ke Noctis: “Putar video ini dalam Bahasa Indonesia...”",
+    askBtn: "Kirim",
+    translating: "Noctis sedang menerjemahkan ke Bahasa Indonesia...",
+    liveInterpretingBadge: "Suara Manusia Indonesia · Audio asli dibisukan",
+    noctisAudioBtn: "Audio Noctis",
+    videoLabel: "🎬 Video:",
+    hearAudioInLabel: "🔊 Dengarkan dalam:",
+  },
+  ms: {
+    triggerBtn: "Suara Noctis",
+    popupTitle: "Jurubahasa Suara Manusia Noctis (Bahasa Melayu)",
+    popupSubtitle: "100% Suara Manusia Studio · Terjemahan Kata demi Kata",
+    listenVoiceDub: "🔊 Dengar Bahasa Melayu",
+    stopVoiceDub: "⏸ Jeda Audio Melayu",
+    summaryHeading: "Konteks Video (Melayu)",
+    stepsHeading: "Transkrip Pertuturan Kata demi Kata (Melayu)",
+    askPlaceholder: "Beritahu Noctis: “Mainkan video ini dalam Bahasa Melayu...”",
+    askBtn: "Hantar",
+    translating: "Noctis sedang menterjemah ke Bahasa Melayu...",
+    liveInterpretingBadge: "Suara Manusia Melayu · Audio asal disenyapkan",
+    noctisAudioBtn: "Audio Noctis",
+    videoLabel: "🎬 Video:",
+    hearAudioInLabel: "🔊 Dengar dalam:",
+  },
+  tl: {
+    triggerBtn: "Boses ng Noctis",
+    popupTitle: "Tagapagsalin ng Boses Noctis (Filipino)",
+    popupSubtitle: "100% Natural na Boses · Salita-sa-Salitang Pagsasalin",
+    listenVoiceDub: "🔊 Pakinggan sa Filipino",
+    stopVoiceDub: "⏸ I-pause ang Filipino Audio",
+    summaryHeading: "Konteksto ng Video (Filipino)",
+    stepsHeading: "Salita-sa-Salitang Transcript (Filipino)",
+    askPlaceholder: "Sabihin kay Noctis: “I-play sa Filipino / Espanyol / Tsino...”",
+    askBtn: "Ipadala",
+    translating: "Isinasalin ni Noctis sa Filipino...",
+    liveInterpretingBadge: "Boses sa Filipino · Naka-mute ang orihinal",
+    noctisAudioBtn: "Noctis Audio",
+    videoLabel: "🎬 Video:",
+    hearAudioInLabel: "🔊 Pakinggan sa:",
+  },
+  tr: {
+    triggerBtn: "Noctis Sesli Çeviri",
+    popupTitle: "Noctis İnsan Sesiyle Simültane Çevirmen (Türkçe)",
+    popupSubtitle: "%100 Stüdyo İnsan Sesi · Kelimesi Kelimesine Çeviri",
+    listenVoiceDub: "🔊 Türkçe Sesli Dinle",
+    stopVoiceDub: "⏸ Türkçe Sesi Duraklat",
+    summaryHeading: "Video Bağlamı (Türkçe)",
+    stepsHeading: "Kelimesi Kelimesine Konuşma Metni (Türkçe)",
+    askPlaceholder: "Noctis'e söyleyin: “Bu videoyu Türkçe / İspanyolca oynat...”",
+    askBtn: "Gönder",
+    translating: "Noctis konuşmayı Türkçeye çeviriyor...",
+    liveInterpretingBadge: "Türkçe İnsan Sesi · Orijinal ses kapalı",
+    noctisAudioBtn: "Noctis Ses",
+    videoLabel: "🎬 Video:",
+    hearAudioInLabel: "🔊 Dinleme Dili:",
+  },
+  nl: {
+    triggerBtn: "Noctis Stem",
+    popupTitle: "Noctis Menselijke Stem Tolk (Nederlands)",
+    popupSubtitle: "100% Studio Menselijke Stem · Woord-voor-Woord",
+    listenVoiceDub: "🔊 Luister in het Nederlands",
+    stopVoiceDub: "⏸ Pauzeer Nederlands",
+    summaryHeading: "Videocontext (Nederlands)",
+    stepsHeading: "Woord-voor-Woord Uitgeschreven Tekst (Nederlands)",
+    askPlaceholder: "Zeg tegen Noctis: “Speel deze video in het Nederlands...”",
+    askBtn: "Verzenden",
+    translating: "Noctis vertaalt woord voor woord naar het Nederlands...",
+    liveInterpretingBadge: "Menselijke Stem (Nederlands) · Origineel gedempt",
+    noctisAudioBtn: "Noctis Audio",
+    videoLabel: "🎬 Video:",
+    hearAudioInLabel: "🔊 Luister in:",
+  },
+  uk: {
+    triggerBtn: "Голос Noctis",
+    popupTitle: "Синхронний перекладач Noctis (Українська)",
+    popupSubtitle: "100% живий голос · Дослівний переклад",
+    listenVoiceDub: "🔊 Слухати українською",
+    stopVoiceDub: "⏸ Пауза",
+    summaryHeading: "Контекст відео (Українська)",
+    stepsHeading: "Дослівний текст промови (Українська)",
+    askPlaceholder: "Скажіть Noctis: «Відтворити українською / іспанською...»",
+    askBtn: "Надіслати",
+    translating: "Noctis перекладає українською...",
+    liveInterpretingBadge: "Живий голос (Українська) · Оригінал вимкнено",
+    noctisAudioBtn: "Аудіо Noctis",
+    videoLabel: "🎬 Відео:",
+    hearAudioInLabel: "🔊 Слухати мовою:",
   },
 }
 
@@ -1264,30 +1398,87 @@ export function NoctisVideoInterpreterPopup({
     } catch {}
   }, [])
 
+  const [dynamicUiByLang, setDynamicUiByLang] = useState<Record<string, NonNullable<(typeof UI_LABELS)["en"]>>>({})
+
+  useEffect(() => {
+    if (audioLang === "en" || UI_LABELS[audioLang] || dynamicUiByLang[audioLang]) return
+    let cancelled = false
+    const targetName = targetAudioLanguageMeta.localName
+    const sourceLines = [
+      `Noctis · ${targetName}`,
+      `Noctis Live Voice Interpreter (${targetName})`,
+      `Studio Human Voice · Word-for-Word`,
+      `Listen in ${targetName}`,
+      `Pause ${targetName} Audio`,
+      `Video Context (${targetName})`,
+      `Verbatim Spoken Transcript (${targetName})`,
+      `Tell Noctis: "Play this video in ${targetName}..." or ask a question`,
+      `Send`,
+      `Noctis is translating speech into ${targetName}...`,
+      `Live Human Voice`,
+      `Noctis Audio`,
+      `Video:`,
+      `Hear Audio In:`,
+    ]
+    translateLinesLive(sourceLines, audioLang)
+      .then((res) => {
+        if (cancelled || !Array.isArray(res) || res.length < 14) return
+        setDynamicUiByLang((prev) => ({
+          ...prev,
+          [audioLang]: {
+            triggerBtn: res[0],
+            popupTitle: res[1],
+            popupSubtitle: res[2],
+            listenVoiceDub: `🔊 ${res[3]}`,
+            stopVoiceDub: `⏸ ${res[4]}`,
+            summaryHeading: res[5],
+            stepsHeading: res[6],
+            askPlaceholder: res[7],
+            askBtn: res[8],
+            translating: res[9],
+            liveInterpretingBadge: res[10],
+            noctisAudioBtn: res[11],
+            videoLabel: `🎬 ${res[12]}`,
+            hearAudioInLabel: `🔊 ${res[13]}`,
+          },
+        }))
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [audioLang, targetAudioLanguageMeta.localName, dynamicUiByLang])
+
   const labels = useMemo(() => {
-    const pairLabel = `${sourceLanguageMeta.flag} ${sourceLanguageMeta.localName} → ${targetAudioLanguageMeta.flag} ${targetAudioLanguageMeta.localName}`
-    if (UI_LABELS[audioLang]) {
-      const base = UI_LABELS[audioLang]!
+    const pairLabel = `${sourceLanguageMeta.localName} → ${targetAudioLanguageMeta.localName}`
+    const base = UI_LABELS[audioLang] || dynamicUiByLang[audioLang]
+    if (base) {
       return {
         ...base,
-        popupSubtitle: `${pairLabel} · Studio Human Voice`,
-        liveInterpretingBadge: `${pairLabel} · Verbatim Human Voice`,
+        noctisAudioBtn: base.noctisAudioBtn || (audioLang === "en" ? "Noctis Audio" : base.triggerBtn),
+        videoLabel: base.videoLabel || "🎬 Video:",
+        hearAudioInLabel: base.hearAudioInLabel || "🔊 Audio:",
+        popupSubtitle: `${pairLabel} · ${base.popupSubtitle}`,
+        liveInterpretingBadge: `${pairLabel} · ${base.liveInterpretingBadge}`,
       }
     }
     return {
       triggerBtn: `Noctis · ${targetAudioLanguageMeta.localName}`,
-      popupTitle: `Noctis Verbatim Interpreter (${targetAudioLanguageMeta.localName})`,
-      popupSubtitle: `${pairLabel} · Studio Human Voice`,
-      listenVoiceDub: `🔊 Listen in ${targetAudioLanguageMeta.localName}`,
-      stopVoiceDub: `⏸ Pause ${targetAudioLanguageMeta.localName} Audio`,
-      summaryHeading: `Lesson Context (${targetAudioLanguageMeta.localName})`,
-      stepsHeading: `Verbatim Spoken Transcript (${targetAudioLanguageMeta.localName})`,
-      askPlaceholder: `Tell Noctis: “Play this video in Chinese / Spanish / Polish...”`,
-      askBtn: "Send",
-      translating: `Noctis is translating verbatim speech from ${sourceLanguageMeta.localName} into ${targetAudioLanguageMeta.localName}...`,
-      liveInterpretingBadge: `${pairLabel} · Verbatim Human Voice`,
+      popupTitle: `Noctis (${targetAudioLanguageMeta.localName})`,
+      popupSubtitle: pairLabel,
+      listenVoiceDub: `🔊 ${targetAudioLanguageMeta.localName}`,
+      stopVoiceDub: `⏸ ${targetAudioLanguageMeta.localName}`,
+      summaryHeading: targetAudioLanguageMeta.localName,
+      stepsHeading: targetAudioLanguageMeta.localName,
+      askPlaceholder: `${targetAudioLanguageMeta.localName}...`,
+      askBtn: "→",
+      translating: `${sourceLanguageMeta.localName} → ${targetAudioLanguageMeta.localName}...`,
+      liveInterpretingBadge: pairLabel,
+      noctisAudioBtn: `Noctis · ${targetAudioLanguageMeta.code.toUpperCase()}`,
+      videoLabel: "🎬",
+      hearAudioInLabel: "🔊",
     }
-  }, [audioLang, sourceLanguageMeta, targetAudioLanguageMeta])
+  }, [audioLang, sourceLanguageMeta, targetAudioLanguageMeta, dynamicUiByLang])
 
   const takeawaysKey = useMemo(() => (takeaways || []).join("||"), [takeaways])
 
@@ -2107,19 +2298,17 @@ export function NoctisVideoInterpreterPopup({
                 ) : (
                   <Sparkles className="h-3.5 w-3.5 text-amber-300 shrink-0" />
                 )}
-                <span style={{ color: "#FFFFFF" }}>Noctis Audio</span>
+                <span style={{ color: "#FFFFFF" }}>{labels.noctisAudioBtn}</span>
                 <span
                   style={{ backgroundColor: "#0F172A", color: "#FDE68A" }}
                   className="rounded px-1.5 py-0.2 text-[10px] font-mono font-black border border-white/20"
                 >
-                  {sourceLanguageMeta.flag} {sourceLanguageMeta.code.toUpperCase()} → 🔊 {targetAudioLanguageMeta.flag}{" "}
-                  {targetAudioLanguageMeta.code.toUpperCase()}
+                  {sourceLanguageMeta.code.toUpperCase()} → 🔊 {targetAudioLanguageMeta.code.toUpperCase()}
                 </span>
               </button>
 
               <span style={{ color: "#7DD3FC" }} className="hidden md:inline-flex items-center gap-1 text-[11px] font-bold truncate">
-                {sourceLanguageMeta.flag} {sourceLanguageMeta.localName} → 🔊 {targetAudioLanguageMeta.flag}{" "}
-                {targetAudioLanguageMeta.localName}
+                {sourceLanguageMeta.localName} → 🔊 {targetAudioLanguageMeta.localName}
               </span>
             </div>
 
@@ -2142,7 +2331,7 @@ export function NoctisVideoInterpreterPopup({
               >
                 {languages.map((l) => (
                   <option key={l.code} value={l.code} style={{ backgroundColor: "#0F172A", color: "#FFFFFF" }}>
-                    🔊 {l.flag} {l.localName} ({l.code.toUpperCase()})
+                    🔊 {l.localName} ({l.code.toUpperCase()})
                   </option>
                 ))}
               </select>
@@ -2384,8 +2573,7 @@ export function NoctisVideoInterpreterPopup({
                   {labels.popupTitle}
                 </p>
                 <p style={{ color: "#BAE6FD" }} className="text-[11px] font-semibold truncate">
-                  {sourceLanguageMeta.flag} {sourceLanguageMeta.localName} → 🔊 {targetAudioLanguageMeta.flag}{" "}
-                  {targetAudioLanguageMeta.localName}
+                  {sourceLanguageMeta.localName} → 🔊 {targetAudioLanguageMeta.localName}
                 </p>
               </div>
             </div>
@@ -2414,16 +2602,16 @@ export function NoctisVideoInterpreterPopup({
           >
             <div className="flex items-center justify-between gap-2 text-[11px] font-extrabold text-slate-700">
               <span className="inline-flex items-center gap-1">
-                <span>🎬 Video:</span>
+                <span>{labels.videoLabel}</span>
                 <span className="rounded bg-slate-200 px-1.5 py-0.5 text-slate-900">
-                  {sourceLanguageMeta.flag} {sourceLanguageMeta.localName}
+                  {sourceLanguageMeta.localName}
                 </span>
               </span>
               <span>→</span>
               <span className="inline-flex items-center gap-1 text-[#0A66C2]">
-                <span>🔊 Hear Audio In:</span>
+                <span>{labels.hearAudioInLabel}</span>
                 <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[#0A66C2]">
-                  {targetAudioLanguageMeta.flag} {targetAudioLanguageMeta.localName}
+                  {targetAudioLanguageMeta.localName}
                 </span>
               </span>
             </div>
@@ -2450,7 +2638,7 @@ export function NoctisVideoInterpreterPopup({
                     value={l.code}
                     style={{ backgroundColor: "#FFFFFF", color: "#0F172A" }}
                   >
-                    {l.flag} {l.localName} — {l.name} ({l.code.toUpperCase()})
+                    {l.localName} — {l.name} ({l.code.toUpperCase()})
                   </option>
                 ))}
               </select>
@@ -2474,7 +2662,7 @@ export function NoctisVideoInterpreterPopup({
                     className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-extrabold shrink-0 cursor-pointer transition-colors"
                     title={`Hear this ${sourceLanguageMeta.name} video in ${meta.name}`}
                   >
-                    <span>{meta.flag}</span>
+                    <span className="opacity-70 uppercase font-mono text-[9px]">{meta.code}</span>
                     <span>{meta.localName}</span>
                   </button>
                 )

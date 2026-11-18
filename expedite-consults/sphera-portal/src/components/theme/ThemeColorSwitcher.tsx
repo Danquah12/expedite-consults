@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react"
 import { Palette, Check, Sun, Moon, Sparkles, ChevronDown } from "lucide-react"
 import { useTheme, THEME_OPTIONS, Theme } from "@/context/ThemeContext"
+import { useLanguage } from "@/context/LanguageContext"
 
 interface ThemeColorSwitcherProps {
   compact?: boolean
@@ -18,6 +19,7 @@ export function ThemeColorSwitcher({
   align = "right"
 }: ThemeColorSwitcherProps) {
   const { theme, setTheme, toggleTheme, themeLabel, isDark, themeOption } = useTheme()
+  const { t } = useLanguage()
   const [isOpen, setIsOpen] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
 
@@ -58,7 +60,7 @@ export function ThemeColorSwitcher({
             style={{ fontWeight: 400 }}
             className="hidden xl:inline-block text-[12px] leading-[1.33333] mt-0.5 whitespace-nowrap"
           >
-            Theme
+            {t("nav_theme", "Theme")}
           </span>
         </button>
       ) : (

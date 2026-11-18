@@ -1204,30 +1204,26 @@ export function ConnectLnNavbar({
                         <div className="md:hidden grid grid-cols-2 gap-1.5 px-1 pt-1">
                           <button
                             type="button"
-                            data-no-translate="true"
-                            translate="no"
                             onClick={() => {
                               onSelectTab('adminiam')
                               setIsMeOpen(false)
                             }}
-                            className="notranslate flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-2.5 py-2 text-xs font-semibold text-[#191919] dark:text-zinc-100 cursor-pointer"
+                            className="flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-2.5 py-2 text-xs font-semibold text-[#191919] dark:text-zinc-100 cursor-pointer"
                           >
                             <SlidersHorizontal className="h-3.5 w-3.5" />
-                            <span>Backend</span>
+                            <span>{t("nav_backend", "Backend")}</span>
                           </button>
                           {onOpenAuthModal && (
                             <button
                               type="button"
-                              data-no-translate="true"
-                              translate="no"
                               onClick={() => {
                                 onOpenAuthModal()
                                 setIsMeOpen(false)
                               }}
-                              className="notranslate flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-2.5 py-2 text-xs font-semibold text-[#191919] dark:text-zinc-100 cursor-pointer"
+                              className="flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-2.5 py-2 text-xs font-semibold text-[#191919] dark:text-zinc-100 cursor-pointer"
                             >
                               <Key className="h-3.5 w-3.5" />
-                              <span>Gate</span>
+                              <span>{t("nav_gate", "Gate")}</span>
                             </button>
                           )}
                         </div>
@@ -1394,14 +1390,12 @@ export function ConnectLnNavbar({
           {isAdminUser && (
             <button
               type="button"
-              data-no-translate="true"
-              translate="no"
               onClick={() => {
                 onSelectTab('adminiam')
                 setIsMoreOpen(false)
                 setIsMeOpen(false)
               }}
-              className={`notranslate hidden md:flex h-[52px] min-w-[38px] xl:min-w-[48px] flex-col items-center justify-center px-1 border-b-2 transition-colors shrink-0 cursor-pointer ${
+              className={`hidden md:flex h-[52px] min-w-[38px] xl:min-w-[48px] flex-col items-center justify-center px-1 border-b-2 transition-colors shrink-0 cursor-pointer ${
                 activeTab === 'adminiam'
                   ? "text-[#191919] dark:text-white border-[#191919] dark:border-white"
                   : "text-[#666666] hover:text-[#191919] dark:text-zinc-400 dark:hover:text-white border-transparent"
@@ -1413,17 +1407,15 @@ export function ConnectLnNavbar({
                 style={{ fontWeight: 400 }}
                 className="hidden xl:inline-block text-[12px] leading-[1.33333] mt-0.5 whitespace-nowrap"
               >
-                Backend
+                {t("nav_backend", "Backend")}
               </span>
             </button>
           )}
           {isAdminUser && onOpenAuthModal && (
             <button
               type="button"
-              data-no-translate="true"
-              translate="no"
               onClick={onOpenAuthModal}
-              className="notranslate hidden md:flex h-[52px] min-w-[36px] xl:min-w-[40px] flex-col items-center justify-center px-1 border-b-2 border-transparent text-[#666666] hover:text-[#191919] dark:text-zinc-400 dark:hover:text-white transition-colors shrink-0 cursor-pointer"
+              className="hidden md:flex h-[52px] min-w-[36px] xl:min-w-[40px] flex-col items-center justify-center px-1 border-b-2 border-transparent text-[#666666] hover:text-[#191919] dark:text-zinc-400 dark:hover:text-white transition-colors shrink-0 cursor-pointer"
               title="Access Role Gate & Persona Switcher"
             >
               <Key strokeWidth={1.75} className="h-[20px] w-[20px]" />

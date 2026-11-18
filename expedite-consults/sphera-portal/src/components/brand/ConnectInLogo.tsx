@@ -58,9 +58,9 @@ export function ConnectInLogo({
       {/* ─── Typography & Subtitle ─── */}
       {variant !== "icon-only" && (
         <div className={`${compactOnMobile ? "hidden sm:flex" : "flex"} flex-col leading-none shrink-0`}>
-          <div className="relative flex items-center shrink-0">
+          <div className="relative flex items-center shrink-0" data-no-translate="true" translate="no">
             <span
-              className={`font-semibold tracking-tight text-[#191919] dark:text-zinc-100 font-sans ${titleSizes[size]}`}
+              className={`notranslate font-semibold tracking-tight text-[#191919] dark:text-zinc-100 font-sans ${titleSizes[size]}`}
               style={{ letterSpacing: "-0.02em" }}
             >
               Connect<span className="text-[#191919] dark:text-zinc-100">L</span>n
