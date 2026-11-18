@@ -12,8 +12,7 @@ import { formatE164Phone } from "./connectin-sms"
 const DEFAULT_FROM_EMAIL = "auth@expediteconsults.com"
 const OPEN_MESSAGING_URL = "https://conectln.com/connectin?tab=messaging"
 
-const lastNotifiedAt = new Map<string, number>()
-const COOLDOWN_MS = 2 * 60 * 1000
+const dispatchedMessageIds = new Set<string>()
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -100,6 +99,7 @@ async function sendEmail(params: {
       </div>`
     : ""
 
+  const subjectPreview = clip(body, 44)
   const resolvedSubject = customSubject?.trim()
     ? customSubject.trim()
     : isMeetingInvite
@@ -107,8 +107,8 @@ async function sendEmail(params: {
     : isRsvpResponse
     ? `📅 Meeting RSVP Response from ${senderName}`
     : isExternalRecipient
-    ? `${senderName} sent you a direct message via ConnectLn`
-    : `New ConnectLn message from ${senderName}`
+    ? `${senderName} via ConnectLn: "${subjectPreview}"`
+    : `New ConnectLn message from ${senderName}: "${subjectPreview}"`
 
   const openInboxUrl = `${OPEN_MESSAGING_URL}&invitedName=${encodeURIComponent(recipientName || cleanTo.split("@")[0])}&invitedEmail=${encodeURIComponent(cleanTo)}&inviter=${encodeURIComponent(senderName)}`
 
@@ -134,11 +134,13 @@ async function sendEmail(params: {
     </div>
   </div>`
 
+  const entityRefHeader = { "X-Entity-Ref-ID": messageId || `connectln-dm-${Date.now()}-${Math.random().toString(36).slice(2, 7)}` }
   const resend = new Resend(apiKey)
   let { error } = await resend.emails.send({
     from: fromPrimary,
     to: [cleanTo],
     ...(validReplyTo ? { replyTo: validReplyTo } : {}),
+    headers: entityRefHeader,
     subject: resolvedSubject,
     text: plainText,
     html,
@@ -150,6 +152,7 @@ async function sendEmail(params: {
       from: fallbackFrom,
       to: [cleanTo],
       ...(validReplyTo ? { replyTo: validReplyTo } : {}),
+      headers: entityRefHeader,
       subject: resolvedSubject,
       text: plainText,
       html,
@@ -224,13 +227,19 @@ export async function notifyDmRecipient(params: {
     bypassCooldown = false,
   } = params
 
-  const isMeetingOrRsvp = text.includes("Meeting invitation from") || text.includes("Meeting RSVP Response")
-  const key = `${senderName.toLowerCase()}>${(recipientEmail || recipientName).toLowerCase()}`
-  const now = Date.now()
-  if (!bypassCooldown && !isExternalRecipient && !isMeetingOrRsvp && now - (lastNotifiedAt.get(key) || 0) < COOLDOWN_MS) {
-    return { email: false, sms: false, skipped: "cooldown" }
+  // Deduplicate only exact duplicate retries of the same messageId — NEVER drop a 2nd/3rd follow-up message!
+  if (messageId) {
+    const dedupeKey = `${messageId}>${(recipientEmail || recipientName).toLowerCase()}`
+    if (dispatchedMessageIds.has(dedupeKey)) {
+      return { email: false, sms: false, skipped: "duplicate_message_id" }
+    }
+    dispatchedMessageIds.add(dedupeKey)
+    if (dispatchedMessageIds.size > 2000) {
+      const oldest = dispatchedMessageIds.values().next().value
+      if (oldest) dispatchedMessageIds.delete(oldest)
+    }
   }
-  lastNotifiedAt.set(key, now)
+  void bypassCooldown
 
   const wantEmail = process.env.DM_NOTIFY_EMAIL !== "0"
   const wantSms = process.env.DM_NOTIFY_SMS !== "0"

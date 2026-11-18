@@ -2595,6 +2595,38 @@ export function MessagingView({
         }
     };
 
+    const extractEmailsFromText = (raw: string): string[] => {
+        if (!raw) return [];
+        const matches = raw.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || [];
+        return Array.from(new Set(matches.map((m) => m.trim().toLowerCase())));
+    };
+
+    const detectEmailProviderBadge = (email: string): string => {
+        const domain = (email.split('@')[1] || '').toLowerCase().trim();
+        if (!domain) return 'Email';
+        if (domain === 'gmail.com' || domain === 'googlemail.com') return 'Gmail';
+        if (domain.startsWith('yahoo.') || domain === 'ymail.com' || domain === 'rocketmail.com') return 'Yahoo Mail';
+        if (domain === 'outlook.com' || domain === 'hotmail.com' || domain === 'live.com' || domain === 'msn.com') return 'Outlook';
+        if (domain === 'icloud.com' || domain === 'me.com' || domain === 'mac.com') return 'iCloud Mail';
+        if (domain === 'aol.com') return 'AOL Mail';
+        if (domain === 'proton.me' || domain === 'protonmail.com') return 'Proton Mail';
+        return domain;
+    };
+
+    const deriveNameFromEmailAddress = (email: string): string => {
+        const local = (email.split('@')[0] || '').trim();
+        if (!local) return email;
+        const cleaned = local
+            .replace(/[._+-]+/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+        if (!cleaned) return email;
+        return cleaned
+            .split(' ')
+            .map((part) => (part ? part.charAt(0).toUpperCase() + part.slice(1) : ''))
+            .join(' ');
+    };
+
     const sendChatText = async (rawText: string) => {
         const trimmed = rawText.trim();
         if ((!trimmed && !pendingAttachment) || !activeThread || isSending) return;
@@ -2629,10 +2661,18 @@ export function MessagingView({
         const targetThreadId = activeThread.id;
         const targetEntityName = activeThread.title;
 
-        // Persist immediately in bilateral local mailbox so People DMs and Recruiting threads keep all messages across reloads
+        const resolvedFollowUpEmail =
+            activeThread.recipientEmail ||
+            extractEmailsFromText(
+                `${activeThread.subtitle || ''} ${activeThread.verifiedBadge || ''} ${activeThread.title || ''}`
+            )[0] ||
+            undefined;
+
+        // Persist immediately in bilateral local mailbox so People DMs, Recruiting threads, and External Email threads keep all messages + email across reloads
         if (
             activeThread.channelType === 'People' ||
             activeThread.channelType === 'Companies' ||
+            Boolean(resolvedFollowUpEmail) ||
             targetThreadId.startsWith('dm_pair__')
         ) {
             recordLocalBilateralDirectMessage({
@@ -2641,6 +2681,7 @@ export function MessagingView({
                 senderAvatar,
                 senderRole,
                 recipientName: activeThread.title,
+                recipientEmail: resolvedFollowUpEmail,
                 recipientAvatar: activeThread.avatar,
                 recipientSubtitle: activeThread.subtitle,
                 text: finalText,
@@ -2713,7 +2754,7 @@ export function MessagingView({
                     senderAvatar,
                     senderRole,
                     recipientName: activeThread.title,
-                    recipientEmail: activeThread.recipientEmail || undefined,
+                    recipientEmail: resolvedFollowUpEmail,
                     recipientSubtitle: activeThread.subtitle,
                     recipientAvatar: activeThread.avatar,
                     channelType: activeThread.channelType,
@@ -2721,7 +2762,7 @@ export function MessagingView({
             });
 
             const data = await res.json();
-            if (data?.ok && data.recipientIsExternalEmail && data.emailDispatched && data.deliveredToEmail) {
+            if (data?.ok && data.emailDispatched && data.deliveredToEmail) {
                 triggerToast(`✓ Message emailed to ${data.deliveredToEmail} & synced to thread.`);
             }
 
@@ -2931,38 +2972,6 @@ export function MessagingView({
     const handleSendMessage = (e: React.FormEvent) => {
         e.preventDefault();
         sendChatText(messageInput);
-    };
-
-    const extractEmailsFromText = (raw: string): string[] => {
-        if (!raw) return [];
-        const matches = raw.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || [];
-        return Array.from(new Set(matches.map((m) => m.trim().toLowerCase())));
-    };
-
-    const detectEmailProviderBadge = (email: string): string => {
-        const domain = (email.split('@')[1] || '').toLowerCase().trim();
-        if (!domain) return 'Email';
-        if (domain === 'gmail.com' || domain === 'googlemail.com') return 'Gmail';
-        if (domain.startsWith('yahoo.') || domain === 'ymail.com' || domain === 'rocketmail.com') return 'Yahoo Mail';
-        if (domain === 'outlook.com' || domain === 'hotmail.com' || domain === 'live.com' || domain === 'msn.com') return 'Outlook';
-        if (domain === 'icloud.com' || domain === 'me.com' || domain === 'mac.com') return 'iCloud Mail';
-        if (domain === 'aol.com') return 'AOL Mail';
-        if (domain === 'proton.me' || domain === 'protonmail.com') return 'Proton Mail';
-        return domain;
-    };
-
-    const deriveNameFromEmailAddress = (email: string): string => {
-        const local = (email.split('@')[0] || '').trim();
-        if (!local) return email;
-        const cleaned = local
-            .replace(/[._+-]+/g, ' ')
-            .replace(/\s+/g, ' ')
-            .trim();
-        if (!cleaned) return email;
-        return cleaned
-            .split(' ')
-            .map((part) => (part ? part.charAt(0).toUpperCase() + part.slice(1) : ''))
-            .join(' ');
     };
 
     const handleCreateNewThread = async (e: React.FormEvent) => {

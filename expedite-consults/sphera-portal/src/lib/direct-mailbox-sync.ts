@@ -419,6 +419,11 @@ export function recordLocalBilateralDirectMessage(params: {
           ...existing,
           channelType: params.channelType || existing.channelType || "People",
           subType: params.subType || existing.subType || "DM",
+          participantB: {
+            ...existing.participantB,
+            email: params.recipientEmail || existing.participantB.email,
+            headline: params.recipientSubtitle || existing.participantB.headline
+          },
           messages: [...existing.messages, ...appendedMsgs],
           updatedAtIso: nowIso
         }
@@ -684,6 +689,30 @@ export function getLocalBilateralThreadsForViewer(
       convo.subType || (resolvedChannel === "Companies" ? "Recruiter" : "DM")
     const resolvedSubType = (rawSubType === "Guild" ? "Community Chat" : rawSubType) as any
 
+    const fallbackMsgEmail = (convo.messages || [])
+      .map(m =>
+        doesDmParticipantMatch(m.senderName, viewerName || "", m.senderEmail, viewerEmail)
+          ? m.recipientEmail
+          : m.senderEmail
+      )
+      .find(Boolean)
+    const headlineEmailMatch = (partner.headline || "").match(
+      /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/
+    )
+    const partnerEmailClean = (
+      partner.email ||
+      fallbackMsgEmail ||
+      headlineEmailMatch?.[0] ||
+      ""
+    )
+      .trim()
+      .toLowerCase()
+    const isExternalPartnerEmail =
+      Boolean(partnerEmailClean) &&
+      !partnerEmailClean.endsWith("@connectin.app") &&
+      !partnerEmailClean.endsWith("@connectln.com") &&
+      (partner.headline || "").toLowerCase().includes("external")
+
     results.push({
       id: convo.pairKey,
       professionEnclave: enclave,
@@ -698,12 +727,15 @@ export function getLocalBilateralThreadsForViewer(
       avatar:
         partner.avatar ||
         `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(partner.name)}&backgroundColor=0a66c2`,
-      isVerified: true,
-      verifiedBadge:
-        resolvedChannel === "Companies"
-          ? "✓ Recruiting & Interview Thread"
-          : "✓ Direct Member Message",
-      onlineStatus: "online",
+      isVerified: !isExternalPartnerEmail,
+      verifiedBadge: isExternalPartnerEmail
+        ? `📧 External Email · ${partnerEmailClean}`
+        : resolvedChannel === "Companies"
+        ? "✓ Recruiting & Interview Thread"
+        : "✓ Direct Member Message",
+      recipientEmail: partnerEmailClean || undefined,
+      isExternalEmail: isExternalPartnerEmail,
+      onlineStatus: isExternalPartnerEmail ? "away" : "online",
       unreadCount,
       lastMessage: lastMsg ? lastMsg.text.replace(/\n/g, " · ") : "New conversation",
       lastMessageTime: lastMsg
@@ -851,10 +883,24 @@ export function mergeBilateralAndServerThreads(
     }
     const sortedMsgs = sortMessagesChronologically(combinedMsgs)
     const lastMsg = sortedMsgs[sortedMsgs.length - 1]
+    const mergedRecipientEmail = existing.recipientEmail || lt.recipientEmail
+    const mergedIsExternal = Boolean(existing.isExternalEmail || lt.isExternalEmail)
     mergedByPartner.set(normTitle, {
       ...existing,
       ...lt,
       id: existing.id.startsWith("dm_pair__") ? existing.id : lt.id,
+      recipientEmail: mergedRecipientEmail,
+      isExternalEmail: mergedIsExternal,
+      isVerified: mergedIsExternal ? false : (existing.isVerified ?? lt.isVerified),
+      verifiedBadge: existing.isExternalEmail
+        ? existing.verifiedBadge
+        : lt.isExternalEmail
+        ? lt.verifiedBadge
+        : existing.verifiedBadge || lt.verifiedBadge,
+      subtitle:
+        existing.isExternalEmail && existing.subtitle
+          ? existing.subtitle
+          : lt.subtitle || existing.subtitle,
       messages: sortedMsgs,
       lastMessage: lastMsg ? lastMsg.text.replace(/\n/g, " · ") : existing.lastMessage,
       lastMessageTime: lastMsg ? formatMessageSentDateTime(lastMsg, lastMsg.timestamp) : existing.lastMessageTime,

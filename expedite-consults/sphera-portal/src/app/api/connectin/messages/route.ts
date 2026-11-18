@@ -766,6 +766,8 @@ export async function POST(request: Request) {
             new Set([
                 ...extractEmailsFromInput(recipientEmail),
                 ...extractEmailsFromInput(rawRecipientInput),
+                ...extractEmailsFromInput(recipientSubtitle),
+                ...extractEmailsFromInput(subtitle),
             ])
         );
         const primaryParsedEmail = parsedRecipientEmails[0] || '';
@@ -800,25 +802,63 @@ export async function POST(request: Request) {
                     Boolean(bilateralConversationsByPairKey[threadId])));
 
         if (isBilateralDm && text) {
-            await pullCloudUsersIntoDb().catch(() => {});
+            await Promise.all([
+                pullCloudUsersIntoDb().catch(() => {}),
+                pullCloudDirectConversations()
+                    .then((convos) => {
+                        if (convos.length > 0) mergeCloudConversationsIntoMemory(convos);
+                    })
+                    .catch(() => {}),
+            ]);
 
-            // Resolve counterparty name & stored email if only threadId was passed on a follow-up message
+            // Resolve counterparty name & stored email from Cloud Sync even on fresh serverless instances
             let resolvedRecipientName = effectiveRecipientName;
             let storedPartnerEmail = '';
-            if (threadId && bilateralConversationsByPairKey[threadId]) {
-                const existing = bilateralConversationsByPairKey[threadId];
+            let matchedExistingConvo: CloudDirectConversation | undefined =
+                threadId && bilateralConversationsByPairKey[threadId]
+                    ? bilateralConversationsByPairKey[threadId]
+                    : undefined;
+
+            if (!matchedExistingConvo && resolvedRecipientName) {
+                matchedExistingConvo = Object.values(bilateralConversationsByPairKey).find((c) => {
+                    const aMatchesSender = doesParticipantMatch(c.participantA.name, senderName, c.participantA.email, senderEmail);
+                    const bMatchesSender = doesParticipantMatch(c.participantB.name, senderName, c.participantB.email, senderEmail);
+                    if (!aMatchesSender && !bMatchesSender) return false;
+                    const partnerCandidate = aMatchesSender ? c.participantB : c.participantA;
+                    return doesParticipantMatch(
+                        partnerCandidate.name,
+                        resolvedRecipientName,
+                        partnerCandidate.email,
+                        primaryParsedEmail
+                    );
+                });
+            }
+
+            if (matchedExistingConvo) {
                 const senderIsA = doesParticipantMatch(
-                    existing.participantA.name,
+                    matchedExistingConvo.participantA.name,
                     senderName,
-                    existing.participantA.email,
+                    matchedExistingConvo.participantA.email,
                     senderEmail
                 );
-                const partnerObj = senderIsA ? existing.participantB : existing.participantA;
+                const partnerObj = senderIsA ? matchedExistingConvo.participantB : matchedExistingConvo.participantA;
                 if (!resolvedRecipientName) {
                     resolvedRecipientName = partnerObj.name;
                 }
-                if (partnerObj.email) {
-                    storedPartnerEmail = partnerObj.email.trim().toLowerCase();
+                const fallbackFromMsgs = (matchedExistingConvo.messages || [])
+                    .map((m) =>
+                        doesParticipantMatch(m.senderName, senderName, m.senderEmail, senderEmail)
+                            ? m.recipientEmail
+                            : m.senderEmail
+                    )
+                    .find((em) => Boolean(em && em.includes('@') && !em.endsWith('@connectin.app')));
+                const candidateStored =
+                    partnerObj.email ||
+                    fallbackFromMsgs ||
+                    extractEmailsFromInput(partnerObj.headline)[0] ||
+                    '';
+                if (candidateStored) {
+                    storedPartnerEmail = candidateStored.trim().toLowerCase();
                 }
             }
 
@@ -835,22 +875,24 @@ export async function POST(request: Request) {
                     deriveDisplayNameFromEmail(primaryParsedEmail);
                 const effectiveRecipientEmail = (
                     primaryParsedEmail ||
-                    recipientReg?.email ||
                     storedPartnerEmail ||
+                    recipientReg?.email ||
                     ''
                 )
                     .trim()
                     .toLowerCase();
 
-                const pairKey = makeDmPairKey(
-                    canonSenderName,
-                    recipientReg ? canonRecipientName : effectiveRecipientEmail || canonRecipientName
-                );
+                const pairKey =
+                    matchedExistingConvo?.pairKey ||
+                    makeDmPairKey(
+                        canonSenderName,
+                        recipientReg ? canonRecipientName : effectiveRecipientEmail || canonRecipientName
+                    );
                 const nowIso = new Date().toISOString();
                 const nowLabel = formatMessageSentDateTime(nowIso);
                 const senderKey = normalizeParticipantKey(senderName);
 
-                const existingConvo = bilateralConversationsByPairKey[pairKey];
+                const existingConvo = bilateralConversationsByPairKey[pairKey] || matchedExistingConvo;
                 const newMsgId = `dm_msg_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 
                 const newCloudMsg: CloudDirectMessage = {
@@ -972,14 +1014,22 @@ export async function POST(request: Request) {
                     timestampIso: nowIso,
                 }).catch(() => {});
 
-                // Dispatch real email (and SMS if member has phone) to BOTH internal ConnectLn members AND external Gmail/Yahoo/Outlook users!
+                // Dispatch real email (and SMS if member has phone) on EVERY message (1st, 2nd, 3rd...) to external Gmail/Yahoo/Outlook users AND internal members!
                 let notified: { email: boolean; emailError?: string; sms: boolean; skipped?: string; smsNote?: string } | null = null;
-                const allTargetEmails =
+                const allTargetEmails = (
                     parsedRecipientEmails.length > 0
                         ? parsedRecipientEmails
                         : effectiveRecipientEmail
                         ? [effectiveRecipientEmail]
-                        : [];
+                        : []
+                ).filter((e) => Boolean(e) && !e.endsWith('@connectin.app'));
+
+                const isExplicitEmailThread = Boolean(primaryParsedEmail || storedPartnerEmail);
+                const isSamePersonWithoutExplicitEmail =
+                    !isExplicitEmailThread &&
+                    doesParticipantMatch(canonSenderName, canonRecipientName, senderEmail, effectiveRecipientEmail) &&
+                    (!effectiveRecipientEmail ||
+                        effectiveRecipientEmail === (senderEmail || senderReg?.email || '').trim().toLowerCase());
 
                 if (recipientHasRealExternalEmail && allTargetEmails.length > 0) {
                     const dispatchResults = await Promise.all(
@@ -1002,10 +1052,7 @@ export async function POST(request: Request) {
                         )
                     );
                     notified = dispatchResults[0] || null;
-                } else if (
-                    recipientIsRegisteredHuman &&
-                    !doesParticipantMatch(canonSenderName, canonRecipientName, senderEmail, effectiveRecipientEmail)
-                ) {
+                } else if ((recipientIsRegisteredHuman || allTargetEmails.length > 0) && !isSamePersonWithoutExplicitEmail) {
                     try {
                         const rec =
                             recipientReg ||
@@ -1014,10 +1061,11 @@ export async function POST(request: Request) {
                                 .find((u) =>
                                     doesParticipantMatch(u.name, canonRecipientName, u.email, effectiveRecipientEmail)
                                 );
-                        if (rec || effectiveRecipientEmail) {
+                        const targetMemberEmail = allTargetEmails[0] || rec?.email || effectiveRecipientEmail;
+                        if (rec || targetMemberEmail) {
                             notified = await notifyDmRecipient({
                                 recipientName: rec?.name || canonRecipientName,
-                                recipientEmail: rec?.email || effectiveRecipientEmail,
+                                recipientEmail: targetMemberEmail || undefined,
                                 recipientPhone: rec?.phone,
                                 senderName: canonSenderName,
                                 senderEmail: senderEmail || senderReg?.email || undefined,
@@ -1025,8 +1073,8 @@ export async function POST(request: Request) {
                                 subject: subject || undefined,
                                 text,
                                 messageId: newMsgId,
-                                isExternalRecipient: false,
-                                bypassCooldown: Boolean(body?.isNewThread),
+                                isExternalRecipient: isExplicitEmailThread && !rec,
+                                bypassCooldown: true,
                             });
                         }
                     } catch (e) {
