@@ -8,6 +8,7 @@ import { triggerReactionSplash } from '@/lib/reaction-splash';
 export interface ShareTarget {
     id: string;
     name: string;
+    email?: string;
     avatar?: string;
     subtitle?: string;
 }
@@ -91,6 +92,7 @@ export function loadMembers(): Promise<ShareTarget[]> {
                 const apiList: ShareTarget[] = (d?.users || []).map((u: any) => ({
                     id: `member_${String(u.email || u.name).toLowerCase()}`,
                     name: String(u.name || ''),
+                    email: u.email ? String(u.email).trim().toLowerCase() : undefined,
                     avatar: u.avatar && !String(u.avatar).startsWith('data:') ? u.avatar : undefined,
                     subtitle: u.headline || 'Verified ConnectLn Professional',
                 }));

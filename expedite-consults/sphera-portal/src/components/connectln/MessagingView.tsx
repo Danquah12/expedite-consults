@@ -662,9 +662,12 @@ export function MessagingView({
 
     // Modals & Interactive States
     const [showNewMessageModal, setShowNewMessageModal] = useState(false);
+    const [newDeliveryTargetMode, setNewDeliveryTargetMode] = useState<'internal' | 'external'>('internal');
     const [newRecipientName, setNewRecipientName] = useState('');
+    const [newRecipientEmail, setNewRecipientEmail] = useState('');
     const [newRecipientRole, setNewRecipientRole] = useState('');
     const [newRecipientAvatar, setNewRecipientAvatar] = useState('');
+    const [isDispatchingNewThread, setIsDispatchingNewThread] = useState(false);
     const [showRecipientSuggestions, setShowRecipientSuggestions] = useState(false);
     const [allPlatformMembers, setAllPlatformMembers] = useState<ShareTarget[]>([]);
     const [newRecipientChannel, setNewRecipientChannel] = useState<
@@ -1776,10 +1779,10 @@ export function MessagingView({
         let pushedCanvasTrack = false;
 
         const ensureMaskSvgFilter = () => {
-            if (document.getElementById('vibe-tight-person-mask-svg')) return;
+            if (document.getElementById('vibe-hd-person-matte-svg-v2')) return;
             const svgNS = 'http://www.w3.org/2000/svg';
             const svg = document.createElementNS(svgNS, 'svg');
-            svg.setAttribute('id', 'vibe-tight-person-mask-svg');
+            svg.setAttribute('id', 'vibe-hd-person-matte-svg-v2');
             svg.setAttribute('width', '0');
             svg.setAttribute('height', '0');
             svg.style.position = 'fixed';
@@ -1787,19 +1790,19 @@ export function MessagingView({
             svg.style.opacity = '0';
             svg.innerHTML = `
                 <defs>
-                  <filter id="vibe-tight-person-mask" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
-                    <feGaussianBlur in="SourceGraphic" stdDeviation="2.0" result="smoothed" />
-                    <feComponentTransfer in="smoothed" result="thresholded">
-                      <feFuncA type="linear" slope="7.8" intercept="-3.55" />
+                  <filter id="vibe-hd-person-matte-v2" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="2.2" result="smoothed" />
+                    <feComponentTransfer in="smoothed" result="matte">
+                      <feFuncA type="linear" slope="14.5" intercept="-8.5" />
                     </feComponentTransfer>
-                    <feMorphology in="thresholded" operator="erode" radius="1.5" result="trimmed" />
-                    <feGaussianBlur in="trimmed" stdDeviation="1.2" />
+                    <feGaussianBlur in="matte" stdDeviation="0.65" />
                   </filter>
                 </defs>
             `;
             document.body.appendChild(svg);
         };
         ensureMaskSvgFilter();
+        let huddleHasMaskHistory = false;
 
         const drawCoverImg = (
             ctx: CanvasRenderingContext2D,
@@ -1822,12 +1825,14 @@ export function MessagingView({
         ) => {
             const canvas = huddleVirtualBgCanvasRef.current;
             if (!canvas) return;
-            const w = 480;
-            const h = 270;
+            const w = 768;
+            const h = 432;
             if (canvas.width !== w) canvas.width = w;
             if (canvas.height !== h) canvas.height = h;
             const ctx = canvas.getContext('2d');
             if (!ctx) return;
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
 
             let maskCanvas = huddleSmoothMaskCanvasRef.current;
             if (!maskCanvas) {
@@ -1835,16 +1840,31 @@ export function MessagingView({
                 maskCanvas.width = w;
                 maskCanvas.height = h;
                 huddleSmoothMaskCanvasRef.current = maskCanvas;
+                huddleHasMaskHistory = false;
+            } else if (maskCanvas.width !== w || maskCanvas.height !== h) {
+                maskCanvas.width = w;
+                maskCanvas.height = h;
+                huddleHasMaskHistory = false;
             }
             const mCtx = maskCanvas.getContext('2d');
             if (mCtx && rawMask) {
+                mCtx.imageSmoothingEnabled = true;
+                mCtx.imageSmoothingQuality = 'high';
                 mCtx.save();
-                mCtx.globalCompositeOperation = 'destination-in';
-                mCtx.fillStyle = 'rgba(0,0,0,0.32)';
-                mCtx.fillRect(0, 0, w, h);
-                mCtx.globalCompositeOperation = 'source-over';
-                mCtx.globalAlpha = 0.68;
-                mCtx.drawImage(rawMask, 0, 0, w, h);
+                if (!huddleHasMaskHistory) {
+                    mCtx.clearRect(0, 0, w, h);
+                    mCtx.globalCompositeOperation = 'source-over';
+                    mCtx.globalAlpha = 1;
+                    mCtx.drawImage(rawMask, 0, 0, w, h);
+                    huddleHasMaskHistory = true;
+                } else {
+                    mCtx.globalCompositeOperation = 'destination-in';
+                    mCtx.fillStyle = 'rgba(0,0,0,0.24)';
+                    mCtx.fillRect(0, 0, w, h);
+                    mCtx.globalCompositeOperation = 'lighter';
+                    mCtx.globalAlpha = 0.76;
+                    mCtx.drawImage(rawMask, 0, 0, w, h);
+                }
                 mCtx.restore();
             }
 
@@ -1852,7 +1872,7 @@ export function MessagingView({
             ctx.clearRect(0, 0, w, h);
             if (rawMask && maskCanvas) {
                 ctx.save();
-                ctx.filter = 'url(#vibe-tight-person-mask)';
+                ctx.filter = 'url(#vibe-hd-person-matte-v2)';
                 ctx.drawImage(maskCanvas, 0, 0, w, h);
                 ctx.restore();
 
@@ -1959,7 +1979,7 @@ export function MessagingView({
                 const seg = new SegClass({
                     locateFile: (file: string) => `/mediapipe/selfie_segmentation/${file}`,
                 });
-                seg.setOptions({ modelSelection: 1, selfieMode: true });
+                seg.setOptions({ modelSelection: 0, selfieMode: true });
                 seg.onResults(onSegResults);
                 if (typeof seg.initialize === 'function') {
                     await seg.initialize();
@@ -2693,6 +2713,7 @@ export function MessagingView({
                     senderAvatar,
                     senderRole,
                     recipientName: activeThread.title,
+                    recipientEmail: activeThread.recipientEmail || undefined,
                     recipientSubtitle: activeThread.subtitle,
                     recipientAvatar: activeThread.avatar,
                     channelType: activeThread.channelType,
@@ -2700,6 +2721,9 @@ export function MessagingView({
             });
 
             const data = await res.json();
+            if (data?.ok && data.recipientIsExternalEmail && data.emailDispatched && data.deliveredToEmail) {
+                triggerToast(`✓ Message emailed to ${data.deliveredToEmail} & synced to thread.`);
+            }
 
             setTimeout(() => {
                 setTypingEntity(null);
@@ -2909,33 +2933,98 @@ export function MessagingView({
         sendChatText(messageInput);
     };
 
+    const extractEmailsFromText = (raw: string): string[] => {
+        if (!raw) return [];
+        const matches = raw.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || [];
+        return Array.from(new Set(matches.map((m) => m.trim().toLowerCase())));
+    };
+
+    const detectEmailProviderBadge = (email: string): string => {
+        const domain = (email.split('@')[1] || '').toLowerCase().trim();
+        if (!domain) return 'Email';
+        if (domain === 'gmail.com' || domain === 'googlemail.com') return 'Gmail';
+        if (domain.startsWith('yahoo.') || domain === 'ymail.com' || domain === 'rocketmail.com') return 'Yahoo Mail';
+        if (domain === 'outlook.com' || domain === 'hotmail.com' || domain === 'live.com' || domain === 'msn.com') return 'Outlook';
+        if (domain === 'icloud.com' || domain === 'me.com' || domain === 'mac.com') return 'iCloud Mail';
+        if (domain === 'aol.com') return 'AOL Mail';
+        if (domain === 'proton.me' || domain === 'protonmail.com') return 'Proton Mail';
+        return domain;
+    };
+
+    const deriveNameFromEmailAddress = (email: string): string => {
+        const local = (email.split('@')[0] || '').trim();
+        if (!local) return email;
+        const cleaned = local
+            .replace(/[._+-]+/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+        if (!cleaned) return email;
+        return cleaned
+            .split(' ')
+            .map((part) => (part ? part.charAt(0).toUpperCase() + part.slice(1) : ''))
+            .join(' ');
+    };
+
     const handleCreateNewThread = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newRecipientName.trim() || !newInitialMessage.trim()) return;
+        if (isDispatchingNewThread) return;
+        const rawNameInput = newRecipientName.trim();
+        const rawEmailInput = newRecipientEmail.trim();
+        if ((!rawNameInput && !rawEmailInput) || !newInitialMessage.trim()) return;
+
+        const parsedEmails = extractEmailsFromText(`${rawEmailInput} ${rawNameInput}`);
+        const resolvedEmail = parsedEmails[0] || '';
+        const matchedInternalMember = allPlatformMembers.find((m) => {
+            const mEmail = (m.email || '').trim().toLowerCase();
+            if (resolvedEmail && mEmail && mEmail === resolvedEmail) return true;
+            return rawNameInput && m.name.trim().toLowerCase() === rawNameInput.toLowerCase();
+        });
+        const finalRecipientEmail = resolvedEmail || (matchedInternalMember?.email || '').trim().toLowerCase();
+        const isExternalRecipient =
+            Boolean(finalRecipientEmail) &&
+            !matchedInternalMember &&
+            !finalRecipientEmail.endsWith('@connectin.app') &&
+            !finalRecipientEmail.endsWith('@connectln.com');
 
         const senderName = currentUser?.name || 'You';
         const senderEmail = currentUser?.email || '';
         const senderAvatar =
             currentUser?.avatar ||
             'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150';
-        const senderRole = currentUser?.headline || 'Verified ConnectIn Professional';
-        const recipientTitle = newRecipientName.trim();
-        const recipientSub =
-            newRecipientRole.trim() ||
-            `Verified ${newRecipientChannel} Partner • ConnectIn Direct`;
+        const senderRole = currentUser?.headline || 'Verified ConnectLn Professional';
+        const cleanRawNameWithoutOnlyEmail =
+            rawNameInput && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawNameInput)
+                ? rawNameInput.replace(/<[^>]+>/g, '').trim()
+                : '';
+        const recipientTitle =
+            cleanRawNameWithoutOnlyEmail ||
+            matchedInternalMember?.name ||
+            (finalRecipientEmail ? deriveNameFromEmailAddress(finalRecipientEmail) : rawNameInput);
+        const providerBadge = finalRecipientEmail ? detectEmailProviderBadge(finalRecipientEmail) : '';
+        const recipientSub = isExternalRecipient
+            ? newRecipientRole.trim()
+                ? `${newRecipientRole.trim()} • ${providerBadge} (${finalRecipientEmail})`
+                : `External ${providerBadge} Contact • ${finalRecipientEmail}`
+            : newRecipientRole.trim() ||
+              matchedInternalMember?.subtitle ||
+              `Verified ${newRecipientChannel} Partner • ConnectLn Direct`;
         const recipientAvatarUrl =
             newRecipientAvatar ||
+            matchedInternalMember?.avatar ||
             `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(recipientTitle)}&backgroundColor=0a66c2`;
         const initialText = newInitialMessage.trim();
+        const customEmailSubject =
+            isExternalRecipient && newRecipientRole.trim() ? newRecipientRole.trim() : undefined;
         const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-        if (newRecipientChannel === 'People') {
+        if (newRecipientChannel === 'People' || Boolean(finalRecipientEmail)) {
             recordLocalBilateralDirectMessage({
                 senderName,
                 senderEmail,
                 senderAvatar,
                 senderRole,
                 recipientName: recipientTitle,
+                recipientEmail: finalRecipientEmail || undefined,
                 recipientAvatar: recipientAvatarUrl,
                 recipientSubtitle: recipientSub,
                 text: initialText,
@@ -2951,21 +3040,27 @@ export function MessagingView({
                     : newRecipientChannel === 'Products'
                     ? 'Vendor'
                     : newRecipientChannel === 'Communities'
-                    ? 'Guild'
+                    ? 'Community Chat'
                     : 'DM',
             title: recipientTitle,
             subtitle: recipientSub,
             avatar: recipientAvatarUrl,
-            onlineStatus: 'online',
-            isVerified: true,
-            badgeIcon:
-                newRecipientChannel === 'Companies'
-                    ? '🏢'
-                    : newRecipientChannel === 'Products'
-                    ? '🛍️'
-                    : newRecipientChannel === 'Communities'
-                    ? '🌐'
-                    : '🤝',
+            onlineStatus: isExternalRecipient ? 'away' : 'online',
+            isVerified: !isExternalRecipient,
+            verifiedBadge: isExternalRecipient
+                ? `📧 ${providerBadge} · ${finalRecipientEmail}`
+                : undefined,
+            recipientEmail: finalRecipientEmail || undefined,
+            isExternalEmail: isExternalRecipient,
+            badgeIcon: isExternalRecipient
+                ? '📧'
+                : newRecipientChannel === 'Companies'
+                ? '🏢'
+                : newRecipientChannel === 'Products'
+                ? '🛍️'
+                : newRecipientChannel === 'Communities'
+                ? '🌐'
+                : '🤝',
             unreadCount: 0,
             lastMessage: initialText,
             lastMessageTime: 'Just now',
@@ -2984,6 +3079,7 @@ export function MessagingView({
             ],
         };
 
+        setIsDispatchingNewThread(true);
         // Immediately add & select thread
         setThreads((prev) => [optimisticThread, ...prev]);
         setActiveChannel('All');
@@ -2991,17 +3087,27 @@ export function MessagingView({
         setMobileShowChat(true);
         setShowNewMessageModal(false);
         setNewRecipientName('');
+        setNewRecipientEmail('');
         setNewRecipientRole('');
         setNewRecipientAvatar('');
+        setNewDeliveryTargetMode('internal');
         setShowRecipientSuggestions(false);
         setNewInitialMessage('');
-        triggerToast(`New conversation started with ${recipientTitle}!`);
+        triggerToast(
+            isExternalRecipient
+                ? `📨 Dispatching message to ${finalRecipientEmail} (${providerBadge})...`
+                : `New conversation started with ${recipientTitle}!`
+        );
         trackUserActivity({
             actionType: 'MESSAGE_SENT',
-            actionLabel: `Started New Message Thread with ${recipientTitle}`,
+            actionLabel: isExternalRecipient
+                ? `Sent External Email (${providerBadge}) to ${finalRecipientEmail}`
+                : `Started New Message Thread with ${recipientTitle}`,
             category: 'network',
             targetId: optimisticThread.id,
-            targetTitle: `${newRecipientChannel} · ${recipientTitle}`,
+            targetTitle: isExternalRecipient
+                ? `External Email · ${recipientTitle} (${finalRecipientEmail})`
+                : `${newRecipientChannel} · ${recipientTitle}`,
             details: initialText.slice(0, 140),
         });
 
@@ -3010,10 +3116,16 @@ export function MessagingView({
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    action: newRecipientChannel === 'People' ? 'send_message' : 'create_thread',
+                    action:
+                        newRecipientChannel === 'People' || Boolean(finalRecipientEmail)
+                            ? 'send_message'
+                            : 'create_thread',
+                    isNewThread: true,
                     enclave: selectedEnclave === 'all' ? activeEnclave : selectedEnclave,
                     title: recipientTitle,
                     recipientName: recipientTitle,
+                    recipientEmail: parsedEmails.length > 1 ? parsedEmails.join(', ') : finalRecipientEmail || undefined,
+                    subject: customEmailSubject,
                     subtitle: recipientSub,
                     recipientSubtitle: recipientSub,
                     avatar: recipientAvatarUrl,
@@ -3036,18 +3148,38 @@ export function MessagingView({
                 );
                 setSelectedThreadId(data.thread.id);
             }
+            if (data?.ok && data.emailDispatched && data.deliveredToEmail) {
+                triggerToast(
+                    data.recipientIsExternalEmail
+                        ? `✓ External email delivered to ${data.deliveredToEmail} & thread synced!`
+                        : `✓ Delivered to ${recipientTitle}'s ConnectLn Inbox & notified (${data.deliveredToEmail})!`
+                );
+            } else if (data?.ok && data.recipientIsRealMember) {
+                triggerToast(`✓ Delivered directly to ${data.deliveredToRecipient || recipientTitle}'s ConnectLn Inbox!`);
+            }
         } catch {
             // Keep optimisticThread in state
+        } finally {
+            setIsDispatchingNewThread(false);
         }
     };
 
     const handleSaveNewModalAsDraft = () => {
-        const recipientTitle = newRecipientName.trim() || 'New ConnectLn Contact';
+        const parsedDraftEmails = extractEmailsFromText(`${newRecipientEmail} ${newRecipientName}`);
+        const draftEmail = parsedDraftEmails[0] || '';
+        const recipientTitle =
+            (newRecipientName.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newRecipientName.trim())
+                ? newRecipientName.trim()
+                : draftEmail
+                ? deriveNameFromEmailAddress(draftEmail)
+                : '') || 'New ConnectLn Contact';
         const draftBody =
             newInitialMessage.trim() ||
             `Hi ${recipientTitle.split(',')[0]}, reaching out via ConnectLn regarding upcoming project specs and availability.`;
         const existing = threads.find(
-            (t) => t.title.toLowerCase() === recipientTitle.toLowerCase()
+            (t) =>
+                t.title.toLowerCase() === recipientTitle.toLowerCase() ||
+                (draftEmail && (t.recipientEmail || '').toLowerCase() === draftEmail)
         );
         if (existing) {
             saveDraftForThread(existing.id, draftBody, true);
@@ -3057,9 +3189,10 @@ export function MessagingView({
             setActiveCustomLabel(null);
             setActiveChannel('All');
         } else {
-            const recipientSub =
-                newRecipientRole.trim() ||
-                `Verified ${newRecipientChannel} Partner • ConnectIn Direct`;
+            const recipientSub = draftEmail
+                ? `External ${detectEmailProviderBadge(draftEmail)} Contact • ${draftEmail}`
+                : newRecipientRole.trim() ||
+                  `Verified ${newRecipientChannel} Partner • ConnectLn Direct`;
             const recipientAvatarUrl =
                 newRecipientAvatar ||
                 `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(recipientTitle)}&backgroundColor=0a66c2`;
@@ -3078,16 +3211,19 @@ export function MessagingView({
                 title: recipientTitle,
                 subtitle: recipientSub,
                 avatar: recipientAvatarUrl,
-                onlineStatus: 'online',
-                isVerified: true,
-                badgeIcon:
-                    newRecipientChannel === 'Companies'
-                        ? '🏢'
-                        : newRecipientChannel === 'Products'
-                        ? '🛍️'
-                        : newRecipientChannel === 'Communities'
-                        ? '🌐'
-                        : '🤝',
+                onlineStatus: draftEmail ? 'away' : 'online',
+                isVerified: !draftEmail,
+                recipientEmail: draftEmail || undefined,
+                isExternalEmail: Boolean(draftEmail),
+                badgeIcon: draftEmail
+                    ? '📧'
+                    : newRecipientChannel === 'Companies'
+                    ? '🏢'
+                    : newRecipientChannel === 'Products'
+                    ? '🛍️'
+                    : newRecipientChannel === 'Communities'
+                    ? '🌐'
+                    : '🤝',
                 unreadCount: 0,
                 lastMessage: `[Draft] ${draftBody}`,
                 lastMessageTime: formatMessageSentDateTime(new Date().toISOString()),
@@ -3103,8 +3239,10 @@ export function MessagingView({
         }
         setShowNewMessageModal(false);
         setNewRecipientName('');
+        setNewRecipientEmail('');
         setNewRecipientRole('');
         setNewRecipientAvatar('');
+        setNewDeliveryTargetMode('internal');
         setShowRecipientSuggestions(false);
         setNewInitialMessage('');
     };
@@ -4264,6 +4402,11 @@ export function MessagingView({
                                                     ✓ Verified
                                                 </span>
                                             )}
+                                            {activeThread.isExternalEmail && activeThread.recipientEmail && (
+                                                <span className="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-indigo-200 inline-flex items-center gap-1 whitespace-nowrap shrink-0">
+                                                    {activeThread.verifiedBadge || `📧 External Email · ${activeThread.recipientEmail}`}
+                                                </span>
+                                            )}
                                             <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full inline-flex items-center gap-1 whitespace-nowrap shrink-0">
                                                 🔒 E2EE
                                             </span>
@@ -4895,14 +5038,15 @@ export function MessagingView({
 
             {/* New Message Modal */}
             {showNewMessageModal && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-                    {/* Quick Contacts Selector */}
-                    <div className="bg-white rounded-2xl border border-slate-200 max-w-lg w-full p-6 shadow-2xl">
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto">
+                    {/* Quick Contacts & External Email Gateway Selector */}
+                    <div className="bg-white rounded-2xl border border-slate-200 max-w-lg w-full p-5 sm:p-6 shadow-2xl my-auto">
                         <div className="flex justify-between items-center mb-3">
                             <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
-                                <span>✉️</span> Start New ConnectIn Conversation
+                                <span>✉️</span> Start New ConnectLn Conversation
                             </h3>
                             <button
+                                type="button"
                                 onClick={() => setShowNewMessageModal(false)}
                                 className="text-slate-400 hover:text-slate-700 font-black cursor-pointer"
                             >
@@ -4910,92 +5054,157 @@ export function MessagingView({
                             </button>
                         </div>
 
-                        <div className="mb-3">
-                            <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5">
-                                ⚡ 1-Click Quick Contacts:
-                            </p>
-                            <div className="flex flex-wrap gap-1.5">
-                                {[
-                                    { name: 'Elena Vance, PE', role: 'Senior Commercial Superintendent • Turner Builds', channel: 'People' as const },
-                                    { name: 'Talent Acquisition Desk', role: 'Verified Hiring Team • Direct Interview Track', channel: 'Companies' as const },
-                                    { name: 'Commercial Tooling & Fleet Desk', role: 'Enterprise Equipment & Spec Quotes', channel: 'Products' as const },
-                                    { name: 'Master Practitioners Guild', role: 'Regional Licensing & Project Exchange', channel: 'Communities' as const },
-                                ].map((preset) => (
-                                    <button
-                                        key={preset.name}
-                                        type="button"
-                                        onClick={() => {
-                                            setNewRecipientName(preset.name);
-                                            setNewRecipientRole(preset.role);
-                                            setNewRecipientChannel(preset.channel);
-                                            if (!newInitialMessage) {
-                                                setNewInitialMessage(`Hi ${preset.name.split(',')[0]}, reaching out via ConnectLn regarding upcoming project specs and availability.`);
-                                            }
-                                        }}
-                                        className="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#0A66C2] border border-blue-200 text-[11px] font-bold transition-all cursor-pointer"
-                                    >
-                                        + {preset.name}
-                                    </button>
-                                ))}
-                            </div>
+                        {/* Recipient Delivery Mode Switcher: Internal ConnectLn Members vs External Email */}
+                        <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-slate-100 border border-slate-200 mb-3">
+                            <button
+                                type="button"
+                                onClick={() => setNewDeliveryTargetMode('internal')}
+                                className={`py-1.5 px-2.5 rounded-lg text-[11.5px] font-extrabold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                                    newDeliveryTargetMode === 'internal'
+                                        ? 'bg-white text-[#0A66C2] shadow-xs border border-slate-200/80'
+                                        : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                            >
+                                <span>🔗</span> Internal ConnectLn Member
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setNewDeliveryTargetMode('external');
+                                    setNewRecipientChannel('People');
+                                }}
+                                className={`py-1.5 px-2.5 rounded-lg text-[11.5px] font-extrabold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                                    newDeliveryTargetMode === 'external'
+                                        ? 'bg-white text-[#0A66C2] shadow-xs border border-slate-200/80'
+                                        : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                            >
+                                <span>📧</span> External Email (Gmail, Yahoo…)
+                            </button>
                         </div>
 
-                        <form onSubmit={handleCreateNewThread} className="space-y-3.5">
-                            <div>
-                                <label className="block text-xs font-extrabold text-slate-700 mb-1">
-                                    Channel Category
-                                </label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {(
-                                        [
-                                            { id: 'People', label: '👤 Direct Peer' },
-                                            { id: 'Companies', label: '🏢 Recruiter / HR' },
-                                            { id: 'Products', label: '🛍️ Vendor Desk' },
-                                            { id: 'Communities', label: '🌐 Guild / Group' },
-                                        ] as const
-                                    ).map((ch) => (
+                        {newDeliveryTargetMode === 'internal' ? (
+                            <div className="mb-3">
+                                <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5">
+                                    ⚡ 1-Click Quick Contacts:
+                                </p>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {[
+                                        { name: 'Elena Vance, PE', role: 'Senior Commercial Superintendent • Turner Builds', channel: 'People' as const },
+                                        { name: 'Talent Acquisition Desk', role: 'Verified Hiring Team • Direct Interview Track', channel: 'Companies' as const },
+                                        { name: 'Commercial Tooling & Fleet Desk', role: 'Enterprise Equipment & Spec Quotes', channel: 'Products' as const },
+                                        { name: 'Master Practitioners Guild', role: 'Regional Licensing & Project Exchange', channel: 'Communities' as const },
+                                    ].map((preset) => (
                                         <button
-                                            key={ch.id}
+                                            key={preset.name}
                                             type="button"
-                                            onClick={() => setNewRecipientChannel(ch.id)}
-                                            className={`py-2 px-3 rounded-xl text-xs font-bold border text-left transition-all cursor-pointer ${
-                                                newRecipientChannel === ch.id
-                                                    ? 'bg-[#0A66C2] border-[#0A66C2]'
-                                                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                                            }`}
-                                            style={
-                                                newRecipientChannel === ch.id
-                                                    ? { color: '#FFFFFF' }
-                                                    : undefined
-                                            }
+                                            onClick={() => {
+                                                setNewRecipientName(preset.name);
+                                                setNewRecipientEmail('');
+                                                setNewRecipientRole(preset.role);
+                                                setNewRecipientChannel(preset.channel);
+                                                if (!newInitialMessage) {
+                                                    setNewInitialMessage(`Hi ${preset.name.split(',')[0]}, reaching out via ConnectLn regarding upcoming project specs and availability.`);
+                                                }
+                                            }}
+                                            className="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#0A66C2] border border-blue-200 text-[11px] font-bold transition-all cursor-pointer"
                                         >
-                                            {ch.label}
+                                            + {preset.name}
                                         </button>
                                     ))}
                                 </div>
                             </div>
+                        ) : (
+                            <div className="mb-3 rounded-xl bg-blue-50/70 border border-blue-200/80 px-3 py-2">
+                                <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                                    <span className="text-[10.5px] font-extrabold uppercase tracking-wider text-[#0A66C2]">
+                                        🌐 Direct External Email Gateway:
+                                    </span>
+                                    {['Gmail', 'Yahoo', 'Outlook', 'iCloud', 'AOL', 'Work Domain'].map((prov) => (
+                                        <span
+                                            key={prov}
+                                            className="px-1.5 py-0.5 rounded-md bg-white border border-blue-200 text-[10px] font-bold text-slate-700"
+                                        >
+                                            {prov}
+                                        </span>
+                                    ))}
+                                </div>
+                                <p className="text-[11px] text-slate-600 leading-snug">
+                                    Delivers directly to external inboxes with your Reply-To address and opens a synced ConnectLn thread with a 1-click reply link.
+                                </p>
+                            </div>
+                        )}
+
+                        <form onSubmit={handleCreateNewThread} className="space-y-3">
+                            {newDeliveryTargetMode === 'internal' && (
+                                <div>
+                                    <label className="block text-xs font-extrabold text-slate-700 mb-1">
+                                        Channel Category
+                                    </label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {(
+                                            [
+                                                { id: 'People', label: '👤 Direct Peer' },
+                                                { id: 'Companies', label: '🏢 Recruiter / HR' },
+                                                { id: 'Products', label: '🛍️ Vendor Desk' },
+                                                { id: 'Communities', label: '🌐 Guild / Group' },
+                                            ] as const
+                                        ).map((ch) => (
+                                            <button
+                                                key={ch.id}
+                                                type="button"
+                                                onClick={() => setNewRecipientChannel(ch.id)}
+                                                className={`py-2 px-3 rounded-xl text-xs font-bold border text-left transition-all cursor-pointer ${
+                                                    newRecipientChannel === ch.id
+                                                        ? 'bg-[#0A66C2] border-[#0A66C2]'
+                                                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                                                }`}
+                                                style={
+                                                    newRecipientChannel === ch.id
+                                                        ? { color: '#FFFFFF' }
+                                                        : undefined
+                                                }
+                                            >
+                                                {ch.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="relative">
                                 <label className="block text-xs font-extrabold text-slate-700 mb-1">
-                                    Recipient Name / Organization *
+                                    {newDeliveryTargetMode === 'external'
+                                        ? 'Recipient Name (Optional — or enter email below)'
+                                        : 'Recipient Name, Member, or Email *'}
                                 </label>
                                 <input
                                     type="text"
-                                    required
+                                    required={newDeliveryTargetMode === 'internal' && !newRecipientEmail.trim()}
                                     autoComplete="off"
                                     value={newRecipientName}
                                     onFocus={() => setShowRecipientSuggestions(true)}
                                     onChange={(e) => {
-                                        setNewRecipientName(e.target.value);
+                                        const val = e.target.value;
+                                        setNewRecipientName(val);
                                         setNewRecipientAvatar('');
                                         setShowRecipientSuggestions(true);
+                                        const typedEmails = extractEmailsFromText(val);
+                                        if (typedEmails[0] && !newRecipientEmail.trim()) {
+                                            // Keep suggestions open showing 1-click External Email dispatch option
+                                        }
                                     }}
-                                    placeholder="Type any letter (e.g., J, V, Y, K) to search members..."
-                                    className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:outline-none focus:border-[#0A66C2]"
+                                    placeholder={
+                                        newDeliveryTargetMode === 'external'
+                                            ? 'e.g., John Mensah (optional — derived from email if blank)'
+                                            : 'Search ConnectLn members or paste any email (gmail, yahoo…)'
+                                    }
+                                    className="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-sm font-medium text-slate-900 focus:outline-none focus:border-[#0A66C2]"
                                 />
                                 {showRecipientSuggestions && newRecipientName.trim().length > 0 && (() => {
                                     const q = newRecipientName.trim().toLowerCase();
                                     const qc = q.replace(/[^a-z0-9]/g, '');
+                                    const typedEmailInName = extractEmailsFromText(newRecipientName)[0] || '';
                                     const myCompact = (currentUser?.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
                                     const seen = new Set<string>(myCompact ? [myCompact] : []);
                                     const candidates: ShareTarget[] = [];
@@ -5006,6 +5215,7 @@ export function MessagingView({
                                             name: t.title,
                                             avatar: t.avatar,
                                             subtitle: t.subtitle,
+                                            email: t.recipientEmail,
                                         })),
                                         { id: 'preset_elena', name: 'Elena Vance, PE', subtitle: 'Senior Commercial Superintendent • Turner Builds' },
                                         { id: 'preset_ta', name: 'Talent Acquisition Desk', subtitle: 'Verified Hiring Team • Direct Interview Track' },
@@ -5017,13 +5227,44 @@ export function MessagingView({
                                         if (!key || seen.has(key)) continue;
                                         seen.add(key);
                                         const lower = item.name.toLowerCase();
-                                        if (lower.includes(q) || (qc && key.includes(qc))) {
+                                        const subLower = (item.subtitle || '').toLowerCase();
+                                        const emailLower = (item.email || '').toLowerCase();
+                                        if (
+                                            lower.includes(q) ||
+                                            emailLower.includes(q) ||
+                                            subLower.includes(q) ||
+                                            (qc && key.includes(qc))
+                                        ) {
                                             candidates.push(item);
                                         }
                                     }
-                                    if (candidates.length === 0) return null;
+                                    if (candidates.length === 0 && !typedEmailInName) return null;
                                     return (
-                                        <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-52 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
+                                        <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-56 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
+                                            {typedEmailInName && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setNewRecipientEmail(typedEmailInName);
+                                                        setNewRecipientName(deriveNameFromEmailAddress(typedEmailInName));
+                                                        setNewDeliveryTargetMode('external');
+                                                        setShowRecipientSuggestions(false);
+                                                    }}
+                                                    className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 mb-1 text-left bg-blue-50/80 hover:bg-blue-100 border border-blue-200 transition-colors cursor-pointer"
+                                                >
+                                                    <span className="h-8 w-8 shrink-0 rounded-full bg-[#0A66C2] text-white flex items-center justify-center text-xs font-black">
+                                                        📧
+                                                    </span>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="truncate text-xs font-extrabold text-[#0A66C2]">
+                                                            Send External Email to {typedEmailInName}
+                                                        </p>
+                                                        <p className="truncate text-[11px] text-slate-600">
+                                                            {detectEmailProviderBadge(typedEmailInName)} • Direct Inbox Delivery + Synced Thread
+                                                        </p>
+                                                    </div>
+                                                </button>
+                                            )}
                                             {candidates.slice(0, 8).map((c) => {
                                                 const avatarSrc =
                                                     c.avatar ||
@@ -5034,6 +5275,7 @@ export function MessagingView({
                                                         type="button"
                                                         onClick={() => {
                                                             setNewRecipientName(c.name);
+                                                            setNewRecipientEmail(c.email || '');
                                                             if (c.subtitle) setNewRecipientRole(c.subtitle);
                                                             setNewRecipientAvatar(avatarSrc);
                                                             setShowRecipientSuggestions(false);
@@ -5047,14 +5289,17 @@ export function MessagingView({
                                                             className="h-8 w-8 shrink-0 rounded-full object-cover border border-slate-200"
                                                         />
                                                         <div className="min-w-0 flex-1">
-                                                            <p className="truncate text-xs font-extrabold text-slate-900">
-                                                                {c.name}
-                                                            </p>
-                                                            {c.subtitle && (
-                                                                <p className="truncate text-[11px] text-slate-500">
-                                                                    {c.subtitle}
+                                                            <div className="flex items-center gap-1.5">
+                                                                <p className="truncate text-xs font-extrabold text-slate-900">
+                                                                    {c.name}
                                                                 </p>
-                                                            )}
+                                                                <span className="shrink-0 px-1.5 py-0.2 rounded-full bg-emerald-50 border border-emerald-200 text-[9.5px] font-bold text-emerald-700">
+                                                                    ConnectLn
+                                                                </span>
+                                                            </div>
+                                                            <p className="truncate text-[11px] text-slate-500">
+                                                                {c.subtitle || c.email || 'Verified ConnectLn Member'}
+                                                            </p>
                                                         </div>
                                                     </button>
                                                 );
@@ -5064,16 +5309,65 @@ export function MessagingView({
                                 })()}
                             </div>
 
+                            {/* Dedicated Email Input (External Gmail/Yahoo/Outlook/Work or CC Internal Member Email) */}
+                            <div>
+                                <div className="flex items-center justify-between gap-2 mb-1">
+                                    <label className="block text-xs font-extrabold text-slate-700">
+                                        {newDeliveryTargetMode === 'external'
+                                            ? 'Recipient Email Address (Gmail, Yahoo, Outlook, etc.) *'
+                                            : 'External / Direct Email Copy (Optional — Gmail, Yahoo, Outlook…)'}
+                                    </label>
+                                    {(() => {
+                                        const activeEmail = extractEmailsFromText(`${newRecipientEmail} ${newRecipientName}`)[0];
+                                        if (!activeEmail) return null;
+                                        const isInternal = allPlatformMembers.some(
+                                            (m) => (m.email || '').toLowerCase() === activeEmail
+                                        );
+                                        return (
+                                            <span
+                                                className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold border ${
+                                                    isInternal
+                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                        : 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                                                }`}
+                                            >
+                                                {isInternal
+                                                    ? '✓ ConnectLn Member + Email'
+                                                    : `📧 ${detectEmailProviderBadge(activeEmail)}`}
+                                            </span>
+                                        );
+                                    })()}
+                                </div>
+                                <input
+                                    type="text"
+                                    required={
+                                        newDeliveryTargetMode === 'external' &&
+                                        extractEmailsFromText(newRecipientName).length === 0
+                                    }
+                                    autoComplete="email"
+                                    value={newRecipientEmail}
+                                    onChange={(e) => setNewRecipientEmail(e.target.value)}
+                                    placeholder="e.g., colleague@gmail.com, partner@yahoo.com, client@outlook.com"
+                                    className="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-sm font-medium text-slate-900 focus:outline-none focus:border-[#0A66C2]"
+                                />
+                            </div>
+
                             <div>
                                 <label className="block text-xs font-extrabold text-slate-700 mb-1">
-                                    Role / Specialty Tagline
+                                    {newDeliveryTargetMode === 'external' || Boolean(newRecipientEmail.trim())
+                                        ? 'Email Subject / Context Line (Optional)'
+                                        : 'Role / Specialty Tagline'}
                                 </label>
                                 <input
                                     type="text"
                                     value={newRecipientRole}
                                     onChange={(e) => setNewRecipientRole(e.target.value)}
-                                    placeholder="e.g., Senior Project Superintendent • Commercial Builds"
-                                    className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:outline-none focus:border-[#0A66C2]"
+                                    placeholder={
+                                        newDeliveryTargetMode === 'external' || Boolean(newRecipientEmail.trim())
+                                            ? 'e.g., Project Collaboration & Proposal Follow-Up'
+                                            : 'e.g., Senior Project Superintendent • Commercial Builds'
+                                    }
+                                    className="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-sm font-medium text-slate-900 focus:outline-none focus:border-[#0A66C2]"
                                 />
                             </div>
 
@@ -5086,12 +5380,16 @@ export function MessagingView({
                                     rows={3}
                                     value={newInitialMessage}
                                     onChange={(e) => setNewInitialMessage(e.target.value)}
-                                    placeholder="Write your opening message, quote request, or hiring inquiry..."
+                                    placeholder={
+                                        newDeliveryTargetMode === 'external'
+                                            ? 'Write your message — delivered to their email inbox and synced in ConnectLn Messaging...'
+                                            : 'Write your opening message, quote request, or hiring inquiry...'
+                                    }
                                     className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:outline-none focus:border-[#0A66C2]"
                                 />
                             </div>
 
-                            <div className="flex flex-wrap justify-end gap-2 pt-2">
+                            <div className="flex flex-wrap justify-end gap-2 pt-1.5">
                                 <button
                                     type="button"
                                     onClick={() => setShowNewMessageModal(false)}
@@ -5108,10 +5406,15 @@ export function MessagingView({
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-5 py-2 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-xs font-black shadow-sm cursor-pointer"
+                                    disabled={isDispatchingNewThread}
+                                    className="px-5 py-2 rounded-xl bg-[#0A66C2] hover:bg-[#004182] disabled:opacity-60 text-xs font-black shadow-sm cursor-pointer"
                                     style={{ color: '#FFFFFF' }}
                                 >
-                                    Send &amp; Open Thread ➤
+                                    {isDispatchingNewThread
+                                        ? 'Sending…'
+                                        : newDeliveryTargetMode === 'external' || Boolean(newRecipientEmail.trim())
+                                        ? 'Send Email & Open Thread ➤'
+                                        : 'Send & Open Thread ➤'}
                                 </button>
                             </div>
                         </form>

@@ -60,6 +60,11 @@ export interface B2BConversationThread {
     membersCount: number
     topic: string
   }
+  /** Counterparty email address (for external Gmail/Yahoo/Outlook threads or registered members) */
+  recipientEmail?: string
+  /** True when the counterparty is an external email recipient outside ConnectLn */
+  isExternalEmail?: boolean
+  verifiedBadge?: string
   messages: B2BMessageItem[]
 }
 

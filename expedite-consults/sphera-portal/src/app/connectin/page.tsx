@@ -3809,7 +3809,11 @@ export default function ConnectLnPage() {
                 connectWithInviterInStorage(inviteClaimModal.inviterName, inviteClaimModal.inviterHeadline)
                 setUserData(claimedUser)
                 setInviteClaimModal(null)
-                setActiveTab("network")
+                const requestedUrlTab =
+                  typeof window !== "undefined"
+                    ? new URLSearchParams(window.location.search).get("tab")
+                    : null
+                setActiveTab(requestedUrlTab === "messaging" ? "messaging" : "network")
 
                 if (typeof window !== "undefined") {
                   localStorage.setItem("connectin_verified", "true")

@@ -31,6 +31,37 @@ const readThreadIds = new Set<string>();
 // Bilateral user-to-user direct message store (synced with Twilio Cloud Sync Map `connectin_dm_conversations_v1`)
 const bilateralConversationsByPairKey: Record<string, CloudDirectConversation> = {};
 
+const SIMPLE_EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+
+function extractEmailsFromInput(raw?: string): string[] {
+    if (!raw) return [];
+    const matches = String(raw).match(SIMPLE_EMAIL_RE) || [];
+    return Array.from(new Set(matches.map((m) => m.trim().toLowerCase())));
+}
+
+function formatEmailProviderLabel(email?: string): string {
+    const domain = (email || '').split('@')[1]?.toLowerCase() || '';
+    if (!domain) return 'External Email';
+    if (domain.includes('gmail.com') || domain.includes('googlemail.com')) return 'Gmail';
+    if (domain.includes('yahoo.')) return 'Yahoo Mail';
+    if (domain.includes('outlook.') || domain.includes('hotmail.') || domain.includes('live.') || domain.includes('msn.')) return 'Outlook';
+    if (domain.includes('icloud.') || domain.includes('me.com') || domain.includes('mac.com')) return 'iCloud Mail';
+    if (domain.includes('aol.')) return 'AOL Mail';
+    if (domain.includes('proton')) return 'Proton Mail';
+    return domain;
+}
+
+function deriveDisplayNameFromEmail(email: string): string {
+    const local = (email.split('@')[0] || 'Contact').replace(/[._+-]+/g, ' ').trim();
+    return (
+        local
+            .split(/\s+/)
+            .filter(Boolean)
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ') || email
+    );
+}
+
 function doesParticipantMatch(candidateName: string, viewerName: string, candidateEmail?: string, viewerEmail?: string): boolean {
     const cName = normalizeParticipantKey(candidateName);
     const vName = normalizeParticipantKey(viewerName);
@@ -45,11 +76,20 @@ function doesParticipantMatch(candidateName: string, viewerName: string, candida
         const cEmail = normalizeParticipantKey(candidateEmail);
         const vEmail = normalizeParticipantKey(viewerEmail);
         if (cEmail && vEmail && cEmail === vEmail) {
-            // A shared email only counts when the names are also related, so different people
-            // who happen to use the same address are never merged into one inbox.
+            // A shared email counts when names are related OR when the thread recipient name was
+            // originally derived as an external email handle placeholder before the user claimed a profile.
+            const emailLocalCompact = (cEmail.split('@')[0] || '').replace(/[^a-z0-9]/g, '');
             const cTok = cName.split(' ').filter((t) => t.length >= 3);
             const vTok = vName.split(' ').filter((t) => t.length >= 3);
-            if (!cName || !vName || cCompact === vCompact || cTok.some((t) => vTok.includes(t))) return true;
+            if (
+                !cName ||
+                !vName ||
+                cCompact === vCompact ||
+                (emailLocalCompact.length >= 2 && cCompact === emailLocalCompact) ||
+                cTok.some((t) => vTok.includes(t))
+            ) {
+                return true;
+            }
         }
     }
 
@@ -226,6 +266,11 @@ function buildViewerBilateralThreads(
         }).length;
 
         const lastMsg = mappedMessages[mappedMessages.length - 1];
+        const partnerEmailClean = (partner.email || '').trim().toLowerCase();
+        const partnerIsExternal =
+            Boolean(partnerEmailClean) &&
+            !partnerEmailClean.endsWith('@connectin.app') &&
+            !isRealRegisteredMember(partner.name);
 
         results.push({
             id: convo.pairKey,
@@ -235,12 +280,18 @@ function buildViewerBilateralThreads(
             title: partner.name,
             subtitle:
                 partner.headline ||
-                'Verified ConnectLn Professional · Direct Member Channel',
+                (partnerIsExternal
+                    ? `External Email · ${formatEmailProviderLabel(partnerEmailClean)} (${partnerEmailClean})`
+                    : 'Verified ConnectLn Professional · Direct Member Channel'),
             avatar:
                 partner.avatar ||
                 `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(partner.name)}&backgroundColor=0a66c2`,
-            isVerified: true,
-            verifiedBadge: '✓ Direct Member Message',
+            isVerified: !partnerIsExternal,
+            verifiedBadge: partnerIsExternal
+                ? `📧 ${formatEmailProviderLabel(partnerEmailClean)} · ${partnerEmailClean}`
+                : '✓ Direct Member Message',
+            recipientEmail: partnerEmailClean || undefined,
+            isExternalEmail: partnerIsExternal,
             onlineStatus: 'online',
             unreadCount: readThreadIds.has(`${convo.pairKey}__${viewerKey}`) ? 0 : unreadForViewer,
             lastMessage: lastMsg ? lastMsg.text.replace(/\n/g, ' · ') : 'New conversation',
@@ -377,11 +428,16 @@ function generateAutoReply(thread: B2BConversationThread, userText: string): str
 }
 
 /** Finds the registered member for a name/email so conversations always use their real account name and email. */
-function findRegisteredUser(name: string, email?: string): { name: string; email: string } | null {
+function findRegisteredUser(
+    name: string,
+    email?: string
+): { name: string; email: string; headline?: string; phone?: string } | null {
     if (!name && !email) return null;
     const allUsers = connectinDb.getAllUsersWithProfiles();
     const hit = allUsers.find((u) => doesParticipantMatch(u.name, name, u.email, email));
-    return hit ? { name: hit.name, email: hit.email || '' } : null;
+    return hit
+        ? { name: hit.name, email: hit.email || '', headline: hit.headline, phone: hit.phone }
+        : null;
 }
 
 function isRealRegisteredMember(recipientName: string): boolean {
@@ -705,18 +761,38 @@ export async function POST(request: Request) {
             });
         }
 
-        const effectiveRecipientName = (recipientName || title || '').trim();
+        const rawRecipientInput = (recipientName || title || '').trim();
+        const parsedRecipientEmails = Array.from(
+            new Set([
+                ...extractEmailsFromInput(recipientEmail),
+                ...extractEmailsFromInput(rawRecipientInput),
+            ])
+        );
+        const primaryParsedEmail = parsedRecipientEmails[0] || '';
+        const strippedNameWithoutAngleEmail = rawRecipientInput
+            .replace(/<[^>]+>/g, '')
+            .trim();
+        const effectiveRecipientName =
+            strippedNameWithoutAngleEmail && !strippedNameWithoutAngleEmail.includes('@')
+                ? strippedNameWithoutAngleEmail
+                : primaryParsedEmail
+                ? deriveDisplayNameFromEmail(primaryParsedEmail)
+                : rawRecipientInput;
+
         const effectiveRecipientSubtitle =
             recipientSubtitle ||
             subtitle ||
-            'Verified ConnectLn Professional · Direct Member Channel';
+            (primaryParsedEmail
+                ? `External Email · ${formatEmailProviderLabel(primaryParsedEmail)} (${primaryParsedEmail})`
+                : 'Verified ConnectLn Professional · Direct Member Channel');
         const effectiveRecipientAvatar =
             recipientAvatar ||
             avatar ||
-            `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(effectiveRecipientName || 'Member')}&backgroundColor=0a66c2`;
+            `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(effectiveRecipientName || primaryParsedEmail || 'Member')}&backgroundColor=0a66c2`;
 
-        // If this is a Direct Message to a named recipient OR an existing bilateral thread (`dm_pair__...` or `dm_...`)
+        // Route ALL direct member DMs AND external email threads (Gmail, Yahoo, Outlook, etc.) through bilateral cloud + Resend
         const isBilateralDm =
+            Boolean(primaryParsedEmail) ||
             (channelType === 'People' && Boolean(effectiveRecipientName)) ||
             (typeof threadId === 'string' &&
                 (threadId.startsWith('dm_pair__') ||
@@ -726,9 +802,10 @@ export async function POST(request: Request) {
         if (isBilateralDm && text) {
             await pullCloudUsersIntoDb().catch(() => {});
 
-            // Resolve counterparty name if only threadId was passed
+            // Resolve counterparty name & stored email if only threadId was passed on a follow-up message
             let resolvedRecipientName = effectiveRecipientName;
-            if (!resolvedRecipientName && threadId && bilateralConversationsByPairKey[threadId]) {
+            let storedPartnerEmail = '';
+            if (threadId && bilateralConversationsByPairKey[threadId]) {
                 const existing = bilateralConversationsByPairKey[threadId];
                 const senderIsA = doesParticipantMatch(
                     existing.participantA.name,
@@ -736,19 +813,39 @@ export async function POST(request: Request) {
                     existing.participantA.email,
                     senderEmail
                 );
-                resolvedRecipientName = senderIsA
-                    ? existing.participantB.name
-                    : existing.participantA.name;
+                const partnerObj = senderIsA ? existing.participantB : existing.participantA;
+                if (!resolvedRecipientName) {
+                    resolvedRecipientName = partnerObj.name;
+                }
+                if (partnerObj.email) {
+                    storedPartnerEmail = partnerObj.email.trim().toLowerCase();
+                }
             }
 
-            if (resolvedRecipientName) {
-                // Use each member's registered account name/email so both sides share one conversation
+            if (resolvedRecipientName || primaryParsedEmail) {
                 const senderReg = findRegisteredUser(senderName, senderEmail);
-                const recipientReg = findRegisteredUser(resolvedRecipientName, recipientEmail);
+                const recipientReg = findRegisteredUser(
+                    resolvedRecipientName,
+                    primaryParsedEmail || storedPartnerEmail
+                );
                 const canonSenderName = senderReg?.name || senderName;
-                const canonRecipientName = recipientReg?.name || resolvedRecipientName;
-                const effectiveRecipientEmail = recipientEmail || recipientReg?.email || '';
-                const pairKey = makeDmPairKey(canonSenderName, canonRecipientName);
+                const canonRecipientName =
+                    recipientReg?.name ||
+                    resolvedRecipientName ||
+                    deriveDisplayNameFromEmail(primaryParsedEmail);
+                const effectiveRecipientEmail = (
+                    primaryParsedEmail ||
+                    recipientReg?.email ||
+                    storedPartnerEmail ||
+                    ''
+                )
+                    .trim()
+                    .toLowerCase();
+
+                const pairKey = makeDmPairKey(
+                    canonSenderName,
+                    recipientReg ? canonRecipientName : effectiveRecipientEmail || canonRecipientName
+                );
                 const nowIso = new Date().toISOString();
                 const nowLabel = formatMessageSentDateTime(nowIso);
                 const senderKey = normalizeParticipantKey(senderName);
@@ -758,11 +855,11 @@ export async function POST(request: Request) {
 
                 const newCloudMsg: CloudDirectMessage = {
                     id: newMsgId,
-                    senderName,
-                    senderEmail,
+                    senderName: canonSenderName,
+                    senderEmail: senderEmail || senderReg?.email || '',
                     senderAvatar,
                     senderRole,
-                    recipientName: resolvedRecipientName,
+                    recipientName: canonRecipientName,
                     recipientEmail: effectiveRecipientEmail,
                     subject: subject || undefined,
                     text,
@@ -775,14 +872,18 @@ export async function POST(request: Request) {
                 const updatedConvo: CloudDirectConversation = existingConvo
                     ? {
                           ...existingConvo,
+                          participantB: {
+                              ...existingConvo.participantB,
+                              email: effectiveRecipientEmail || existingConvo.participantB.email,
+                          },
                           messages: [...existingConvo.messages, newCloudMsg],
                           updatedAtIso: nowIso,
                       }
                     : {
                           pairKey,
                           participantA: {
-                              name: senderName,
-                              email: senderEmail,
+                              name: canonSenderName,
+                              email: senderEmail || senderReg?.email || '',
                               avatar: senderAvatar,
                               headline: senderRole,
                           },
@@ -790,26 +891,31 @@ export async function POST(request: Request) {
                               name: canonRecipientName,
                               email: effectiveRecipientEmail,
                               avatar: effectiveRecipientAvatar,
-                              headline: effectiveRecipientSubtitle,
+                              headline: recipientReg?.headline || effectiveRecipientSubtitle,
                           },
                           messages: [newCloudMsg],
                           updatedAtIso: nowIso,
                       };
 
                 bilateralConversationsByPairKey[pairKey] = updatedConvo;
-                // Clear read flag for recipient so recipient sees unread badge immediately
-                const recipientKey = normalizeParticipantKey(resolvedRecipientName);
+                const recipientKey = normalizeParticipantKey(canonRecipientName);
                 readThreadIds.delete(`${pairKey}__${recipientKey}`);
 
-                // Only generate simulated auto-reply if the recipient is NOT a real registered user account
+                // Only generate simulated auto-reply for offline demo personas (NEVER for real registered members OR real external email addresses!)
                 let autoReplyMsg: B2BMessageItem | null = null;
-                const recipientIsRegisteredHuman = isRealRegisteredMember(resolvedRecipientName);
+                const recipientIsRegisteredHuman =
+                    Boolean(recipientReg) || isRealRegisteredMember(canonRecipientName);
+                const recipientHasRealExternalEmail =
+                    Boolean(effectiveRecipientEmail) &&
+                    !effectiveRecipientEmail.endsWith('@connectin.app') &&
+                    !recipientIsRegisteredHuman;
 
-                if (!recipientIsRegisteredHuman) {
+                if (!recipientIsRegisteredHuman && !recipientHasRealExternalEmail) {
                     const dummyThread: B2BConversationThread = {
                         id: pairKey,
                         channelType: 'People',
-                        title: resolvedRecipientName,
+                        subType: 'DM',
+                        title: canonRecipientName,
                         subtitle: effectiveRecipientSubtitle,
                         avatar: effectiveRecipientAvatar,
                         onlineStatus: 'online',
@@ -822,10 +928,10 @@ export async function POST(request: Request) {
                     const replyId = `dm_reply_${Date.now()}`;
                     const cloudReply: CloudDirectMessage = {
                         id: replyId,
-                        senderName: resolvedRecipientName,
+                        senderName: canonRecipientName,
                         senderAvatar: effectiveRecipientAvatar,
                         senderRole: effectiveRecipientSubtitle,
-                        recipientName: senderName,
+                        recipientName: canonSenderName,
                         text: replyText,
                         timestamp: 'Just now',
                         createdAtIso: new Date().toISOString(),
@@ -837,7 +943,7 @@ export async function POST(request: Request) {
                         id: replyId,
                         sender: {
                             id: `partner_${recipientKey.replace(/\s+/g, '_')}`,
-                            name: resolvedRecipientName,
+                            name: canonRecipientName,
                             avatar: effectiveRecipientAvatar,
                             role: effectiveRecipientSubtitle,
                             isVerified: true,
@@ -854,29 +960,73 @@ export async function POST(request: Request) {
                     userEmail: senderEmail || senderReg?.email || `${canonSenderName.toLowerCase().replace(/\s+/g, '.')}@connectin.app`,
                     userAvatar: senderAvatar,
                     actionType: 'MESSAGE_SENT',
-                    actionLabel: `Sent Direct Message to ${canonRecipientName}`,
+                    actionLabel: recipientHasRealExternalEmail
+                        ? `Sent External Email (${formatEmailProviderLabel(effectiveRecipientEmail)}) to ${effectiveRecipientEmail}`
+                        : `Sent Direct Message to ${canonRecipientName}`,
                     category: 'network',
                     targetId: pairKey,
-                    targetTitle: `Direct Message → ${canonRecipientName}`,
+                    targetTitle: recipientHasRealExternalEmail
+                        ? `External Email → ${canonRecipientName} (${effectiveRecipientEmail})`
+                        : `Direct Message → ${canonRecipientName}`,
                     details: `${String(text).replace(/\n+/g, ' ').slice(0, 140)}${attachment ? ` (📎 ${attachment})` : ''}`,
                     timestampIso: nowIso,
                 }).catch(() => {});
 
-                // Also tell the recipient outside the app: email + text to the contact details they registered with
-                let notified: { email: boolean; sms: boolean; skipped?: string; smsNote?: string } | null = null;
-                if (recipientIsRegisteredHuman && !doesParticipantMatch(canonSenderName, canonRecipientName, senderEmail, effectiveRecipientEmail)) {
-                    try {
-                        const rec = connectinDb
-                            .getAllUsersWithProfiles()
-                            .find((u) => doesParticipantMatch(u.name, canonRecipientName, u.email, effectiveRecipientEmail));
-                        if (rec) {
-                            notified = await notifyDmRecipient({
-                                recipientName: rec.name,
-                                recipientEmail: rec.email,
-                                recipientPhone: rec.phone,
+                // Dispatch real email (and SMS if member has phone) to BOTH internal ConnectLn members AND external Gmail/Yahoo/Outlook users!
+                let notified: { email: boolean; emailError?: string; sms: boolean; skipped?: string; smsNote?: string } | null = null;
+                const allTargetEmails =
+                    parsedRecipientEmails.length > 0
+                        ? parsedRecipientEmails
+                        : effectiveRecipientEmail
+                        ? [effectiveRecipientEmail]
+                        : [];
+
+                if (recipientHasRealExternalEmail && allTargetEmails.length > 0) {
+                    const dispatchResults = await Promise.all(
+                        allTargetEmails.map((targetAddr) =>
+                            notifyDmRecipient({
+                                recipientName:
+                                    allTargetEmails.length === 1
+                                        ? canonRecipientName
+                                        : deriveDisplayNameFromEmail(targetAddr),
+                                recipientEmail: targetAddr,
                                 senderName: canonSenderName,
+                                senderEmail: senderEmail || senderReg?.email || undefined,
+                                senderHeadline: senderRole,
+                                subject: subject || undefined,
                                 text,
                                 messageId: newMsgId,
+                                isExternalRecipient: true,
+                                bypassCooldown: true,
+                            })
+                        )
+                    );
+                    notified = dispatchResults[0] || null;
+                } else if (
+                    recipientIsRegisteredHuman &&
+                    !doesParticipantMatch(canonSenderName, canonRecipientName, senderEmail, effectiveRecipientEmail)
+                ) {
+                    try {
+                        const rec =
+                            recipientReg ||
+                            connectinDb
+                                .getAllUsersWithProfiles()
+                                .find((u) =>
+                                    doesParticipantMatch(u.name, canonRecipientName, u.email, effectiveRecipientEmail)
+                                );
+                        if (rec || effectiveRecipientEmail) {
+                            notified = await notifyDmRecipient({
+                                recipientName: rec?.name || canonRecipientName,
+                                recipientEmail: rec?.email || effectiveRecipientEmail,
+                                recipientPhone: rec?.phone,
+                                senderName: canonSenderName,
+                                senderEmail: senderEmail || senderReg?.email || undefined,
+                                senderHeadline: senderRole,
+                                subject: subject || undefined,
+                                text,
+                                messageId: newMsgId,
+                                isExternalRecipient: false,
+                                bypassCooldown: Boolean(body?.isNewThread),
                             });
                         }
                     } catch (e) {
@@ -884,21 +1034,26 @@ export async function POST(request: Request) {
                     }
                 }
 
-                const viewerThreads = buildViewerBilateralThreads(senderName, senderEmail, enclave);
+                const viewerThreads = buildViewerBilateralThreads(canonSenderName, senderEmail || senderReg?.email || '', enclave);
                 const updatedThreadForSender = viewerThreads.find((t) => t.id === pairKey);
 
                 return NextResponse.json({
                     ok: true,
                     threadId: pairKey,
-                    deliveredToRecipient: resolvedRecipientName,
+                    deliveredToRecipient: canonRecipientName,
+                    deliveredToEmail: effectiveRecipientEmail || undefined,
+                    deliveredToEmails: allTargetEmails,
                     recipientIsRegisteredHuman,
+                    recipientIsExternalEmail: recipientHasRealExternalEmail,
+                    emailDispatched: Boolean(notified?.email),
+                    emailError: notified?.emailError,
                     notified,
                     thread: updatedThreadForSender,
                     userMessage: {
                         id: newMsgId,
                         sender: {
                             id: 'me',
-                            name: senderName,
+                            name: canonSenderName,
                             avatar: senderAvatar,
                             role: senderRole,
                         },
