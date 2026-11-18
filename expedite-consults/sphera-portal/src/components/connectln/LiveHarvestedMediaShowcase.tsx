@@ -24,6 +24,7 @@ import {
   Send,
   Copy,
   Check,
+  VolumeX,
 } from "lucide-react"
 import {
   HarvestedMediaItem,
@@ -41,32 +42,71 @@ import {
   type ShareTarget,
 } from "./MessageActionBar"
 import { triggerReactionSplash } from "@/lib/reaction-splash"
-import { ConnectLnStudioPlayer } from "./ConnectLnStudioPlayer"
+import {
+  ConnectLnStudioPlayer,
+  CONNECTLN_VIDEO_PLAY_EVENT,
+  notifyExclusiveVideoPlay,
+} from "./ConnectLnStudioPlayer"
 import { NoctisVideoInterpreterPopup } from "./NoctisVideoInterpreterPopup"
 import { loadStoredUser, isSuperAdminUser } from "@/lib/connectin-storage"
+import {
+  registerViewportVideoSlot,
+  notifyManualVideoOverride,
+  requestViewportAutoplayEvaluation,
+} from "@/lib/connectln-settings"
 
 /** Direct-file (mp4) player with the same Noctis language / dubbing bar docked underneath. */
-function HarvestedMp4Player({ item }: { item: HarvestedMediaItem }) {
+function HarvestedMp4Player({
+  item,
+  initialMuted = false,
+  playerId,
+}: {
+  item: HarvestedMediaItem
+  initialMuted?: boolean
+  playerId?: string
+}) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(120)
   const [isPlaying, setIsPlaying] = useState(true)
+  const [isMuted, setIsMuted] = useState(initialMuted)
 
   return (
     <div className="bg-black">
-      <div className="aspect-video w-full">
+      <div className="relative aspect-video w-full">
         <video
           ref={videoRef}
           src={item.videoUrl}
+          data-connectln-player-id={playerId}
           controls
           autoPlay
+          muted={isMuted}
           playsInline
           onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
           onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || 120)}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
+          onVolumeChange={(e) => setIsMuted(e.currentTarget.muted)}
           className="h-full w-full object-cover"
         />
+        {isPlaying && isMuted && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              if (videoRef.current) {
+                videoRef.current.muted = false
+                videoRef.current.volume = 1
+              }
+              setIsMuted(false)
+            }}
+            style={{ color: "#FFFFFF" }}
+            className="absolute top-2.5 left-2.5 z-20 inline-flex items-center gap-1 rounded-full bg-black/85 hover:bg-[#0A66C2] border border-white/25 px-2.5 py-1 text-[10px] font-semibold shadow-lg cursor-pointer"
+          >
+            <VolumeX className="h-3 w-3 text-amber-400" />
+            <span style={{ color: "#FFFFFF" }}>Tap for Sound 🔊</span>
+          </button>
+        )}
       </div>
       <NoctisVideoInterpreterPopup
         dockedBelow={true}
@@ -156,6 +196,8 @@ export function LiveHarvestedMediaShowcase({
     computeHarvesterTelemetry(loadStoredHarvestedItems()).pulledTodayCount
   )
   const [playingId, setPlayingId] = useState<string | null>(null)
+  const [startedByScroll, setStartedByScroll] = useState<boolean>(true)
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const [isSyncingNow, setIsSyncingNow] = useState<boolean>(false)
   const [isExpanded, setIsExpanded] = useState<boolean>(true)
   const [showAllItems, setShowAllItems] = useState<boolean>(false)
@@ -289,6 +331,55 @@ export function LiveHarvestedMediaShowcase({
   const HeaderIcon = cfg.icon
   const defaultLimit = compact ? 3 : 4
   const visibleItems = showAllItems ? items.slice(0, 16) : items.slice(0, defaultLimit)
+  const visibleVideoKey = visibleItems
+    .filter((i) => i.kind === "video" && (i.videoUrl || i.youtubeId))
+    .map((i) => i.id)
+    .join("|")
+
+  // Stop playback whenever another video player across ConnectLn takes exclusive focus
+  useEffect(() => {
+    const handleExclusivePlay = (e: Event) => {
+      const customEvent = e as CustomEvent<{ playerId?: string }>
+      const activeId = customEvent.detail?.playerId
+      if (!activeId) return
+      setPlayingId((prev) => {
+        if (!prev) return null
+        const myPlayerId = `harvest-${destination}-${prev}`
+        return activeId === myPlayerId ? prev : null
+      })
+    }
+    window.addEventListener(CONNECTLN_VIDEO_PLAY_EVENT, handleExclusivePlay)
+    return () => window.removeEventListener(CONNECTLN_VIDEO_PLAY_EVENT, handleExclusivePlay)
+  }, [destination])
+
+  // Auto-play videos on the Home page when scrolled into view (muted with Tap for Sound)
+  useEffect(() => {
+    if (destination !== "home" || !isExpanded) return
+    const cleanups: Array<() => void> = []
+
+    visibleItems.forEach((item) => {
+      if (item.kind !== "video" || (!item.videoUrl && !item.youtubeId)) return
+      const slotPlayerId = `harvest-${destination}-${item.id}`
+      cleanups.push(
+        registerViewportVideoSlot({
+          id: slotPlayerId,
+          getElement: () => cardRefs.current[item.id] || null,
+          startAutoplay: () => {
+            setStartedByScroll(true)
+            setPlayingId(item.id)
+          },
+          stopAutoplay: () => {
+            setPlayingId((prev) => (prev === item.id ? null : prev))
+          },
+        })
+      )
+    })
+
+    requestViewportAutoplayEvaluation()
+    return () => {
+      cleanups.forEach((fn) => fn())
+    }
+  }, [destination, isExpanded, visibleVideoKey])
 
   if (visibleItems.length === 0) return null
 
@@ -370,15 +461,24 @@ export function LiveHarvestedMediaShowcase({
           {visibleItems.map((item) => {
             const isPlaying = playingId === item.id
             const isApplied = appliedIds.includes(item.id)
+            const slotPlayerId = `harvest-${destination}-${item.id}`
             return (
               <div
                 key={item.id}
+                ref={(el) => {
+                  if (el) cardRefs.current[item.id] = el
+                  else delete cardRefs.current[item.id]
+                }}
                 className="rounded-xl border border-[#DFD4C0] dark:border-zinc-800 bg-white dark:bg-zinc-950 overflow-hidden flex flex-col justify-between shadow-2xs hover:border-[#6B4423]/60 transition-all"
               >
                 <div>
                   {item.kind === "video" && isPlaying && (item.videoUrl || item.youtubeId) ? (
                     item.videoUrl ? (
-                      <HarvestedMp4Player item={item} />
+                      <HarvestedMp4Player
+                        item={item}
+                        initialMuted={startedByScroll}
+                        playerId={slotPlayerId}
+                      />
                     ) : (
                       /* Same studio player as the Home feed: Noctis Audio, language picker, voice dubbing & live subtitles */
                       <ConnectLnStudioPlayer
@@ -389,8 +489,8 @@ export function LiveHarvestedMediaShowcase({
                         speakerRole={item.authorRole}
                         description={item.summary}
                         durationLabel={item.duration}
-                        initialMuted={false}
-                        playerId={`harvest-${destination}-${item.id}`}
+                        initialMuted={startedByScroll}
+                        playerId={slotPlayerId}
                         onExclusiveStop={() => setPlayingId((prev) => (prev === item.id ? null : prev))}
                         className="w-full"
                       />
@@ -409,6 +509,9 @@ export function LiveHarvestedMediaShowcase({
                           <button
                             type="button"
                             onClick={() => {
+                              setStartedByScroll(false)
+                              notifyManualVideoOverride(slotPlayerId, cardRefs.current[item.id])
+                              notifyExclusiveVideoPlay(slotPlayerId)
                               setPlayingId(item.id)
                               if (onSelectForMediaStage) {
                                 onSelectForMediaStage(item)
@@ -509,6 +612,9 @@ export function LiveHarvestedMediaShowcase({
                       <button
                         type="button"
                         onClick={() => {
+                          setStartedByScroll(false)
+                          notifyManualVideoOverride(slotPlayerId, cardRefs.current[item.id])
+                          notifyExclusiveVideoPlay(slotPlayerId)
                           setPlayingId(item.id)
                           if (onSelectForMediaStage) {
                             onSelectForMediaStage(item)

@@ -46,7 +46,12 @@ import { UserProfile } from "@/lib/connectln-data"
 import { useLanguage } from "@/context/LanguageContext"
 import { ConnectLnStudioPlayer, notifyExclusiveVideoPlay } from "./ConnectLnStudioPlayer"
 import { NoctisVideoInterpreterPopup } from "./NoctisVideoInterpreterPopup"
-import { useAutoplayVideosPref } from "@/lib/connectln-settings"
+import {
+  useAutoplayVideosPref,
+  registerViewportVideoSlot,
+  notifyManualVideoOverride,
+  requestViewportAutoplayEvaluation,
+} from "@/lib/connectln-settings"
 
 interface SkilledTradesLearnByDoingSectionProps {
   user?: UserProfile | null
@@ -88,7 +93,7 @@ export function SkilledTradesLearnByDoingSection({
   )
   const [activeVideoLessonId, setActiveVideoLessonId] = useState<string | null>(
     initialLessonId ||
-      (mode === 'home_videos_only' && !autoplayPref ? null : SKILLED_TRADES_LEARN_BY_DOING_LESSONS[0]?.id) ||
+      (mode === 'home_videos_only' ? null : SKILLED_TRADES_LEARN_BY_DOING_LESSONS[0]?.id) ||
       null
   )
   const [autoPlayRequested, setAutoPlayRequestedRaw] = useState<boolean>(true)
@@ -153,7 +158,35 @@ export function SkilledTradesLearnByDoingSection({
       return
     }
 
-    const playerPrefix = mode === 'home_videos_only' ? 'lbd-home-player-' : 'lbd-player-'
+    // On the Home Feed, coordinate cleanly with LiveHarvestedMediaShowcase & FeedPostCard via the central Viewport Arbiter
+    if (mode === 'home_videos_only') {
+      const cleanups: Array<() => void> = []
+      for (const lesson of SKILLED_TRADES_LEARN_BY_DOING_LESSONS) {
+        if (!lesson.embedAvailable || !lesson.youtubeId) continue
+        const slotId = `lbd-home-player-${lesson.id}`
+        cleanups.push(
+          registerViewportVideoSlot({
+            id: slotId,
+            getElement: () => homeCardRefs.current[lesson.id] || null,
+            startAutoplay: () => {
+              if (!autoplayPrefRef.current) return
+              setAutoPlayRequestedRaw(true)
+              setAutoPlayMuted(true)
+              setActiveVideoLessonId(lesson.id)
+            },
+            stopAutoplay: () => {
+              setActiveVideoLessonId((prev) => (prev === lesson.id ? null : prev))
+            },
+          })
+        )
+      }
+      requestViewportAutoplayEvaluation()
+      return () => {
+        cleanups.forEach((fn) => fn())
+      }
+    }
+
+    const playerPrefix = 'lbd-player-'
 
     const pickBestVisibleLesson = () => {
       const vh = window.innerHeight || document.documentElement.clientHeight || 800
@@ -182,8 +215,6 @@ export function SkilledTradesLearnByDoingSection({
       }
 
       if (bestLessonId) {
-        // Home feed: only auto-start a video on scroll when the user enabled autoplay in Settings
-        if (mode === 'home_videos_only' && !autoplayPrefRef.current) return
         setActiveVideoLessonId(prev => {
           if (prev !== bestLessonId) {
             notifyExclusiveVideoPlay(`${playerPrefix}${bestLessonId}`)
@@ -237,7 +268,7 @@ export function SkilledTradesLearnByDoingSection({
       window.cancelAnimationFrame(initRaf)
       observer?.disconnect()
     }
-  }, [mode, selectedCategory])
+  }, [mode, selectedCategory, homeVisibleLimit])
 
   // If autoplay is switched off in Settings, stop a Home video that was started automatically
   useEffect(() => {
@@ -1041,6 +1072,7 @@ export function SkilledTradesLearnByDoingSection({
                       role="button"
                       tabIndex={0}
                       onClick={() => {
+                        notifyManualVideoOverride(`lbd-home-player-${lesson.id}`, homeCardRefs.current[lesson.id])
                         notifyExclusiveVideoPlay(`lbd-home-player-${lesson.id}`)
                         setAutoPlayRequested(true)
                         setActiveVideoLessonId(lesson.id)

@@ -1,12 +1,16 @@
 "use client"
 
 import React, { useState, useRef, useEffect } from "react"
-import { Play, ShieldCheck, Share2, Copy, Check, Mail, Send } from "lucide-react"
+import { Play, ShieldCheck, Share2, Copy, Check, Mail, Send, VolumeX } from "lucide-react"
 import { resolveUserProfilePicture, isDefaultPlaceholderAvatar, generatePersonalSignatureAvatar, isForeignPersonaAvatar } from "@/lib/connectin-storage"
 import { buildSharePreviewUrl, useSharePic } from "@/lib/connectin-share"
 import { ConnectLnStudioPlayer, CONNECTLN_VIDEO_PLAY_EVENT, notifyExclusiveVideoPlay } from "./ConnectLnStudioPlayer"
 import { NoctisVideoInterpreterPopup } from "./NoctisVideoInterpreterPopup"
-import { useAutoplayVideosPref } from "@/lib/connectln-settings"
+import {
+  useAutoplayVideosPref,
+  registerViewportVideoSlot,
+  notifyManualVideoOverride,
+} from "@/lib/connectln-settings"
 import {
   loadMembers,
   sendSharedItemToConnectLnMember,
@@ -81,6 +85,8 @@ export function VideoShareBanner({
   const autoplayAllowedRef = useRef(autoplayAllowed)
   autoplayAllowedRef.current = autoplayAllowed
   const [startedByScroll, setStartedByScroll] = useState(true)
+  const [isDirectMuted, setIsDirectMuted] = useState(true)
+  const directVideoRef = useRef<HTMLVideoElement>(null)
   const [copiedLink, setCopiedLink] = useState(false)
   const [showMemberPicker, setShowMemberPicker] = useState(false)
   const [memberQuery, setMemberQuery] = useState("")
@@ -127,19 +133,16 @@ export function VideoShareBanner({
       resolvedPlayHandler()
       return
     }
-    if (
-      youtubeId ||
-      (videoUrl &&
-        (videoUrl.includes("youtube.com") ||
-          videoUrl.includes("youtu.be") ||
-          videoUrl.endsWith(".mp4")))
-    ) {
+    if (resolvedYtId || videoUrl) {
       if (isPlayingInline) {
         userManuallyStoppedRef.current = true
+        notifyManualVideoOverride(null)
         setIsPlayingInline(false)
       } else {
         userManuallyStoppedRef.current = false
         setStartedByScroll(false)
+        setIsDirectMuted(false)
+        notifyManualVideoOverride(bannerPlayerIdRef.current, videoStageRef.current)
         notifyExclusiveVideoPlay(bannerPlayerIdRef.current)
         setIsPlayingInline(true)
       }
@@ -161,41 +164,26 @@ export function VideoShareBanner({
       return m ? m[1] : null
     })()
 
-  // Auto-play inline when scrolled into viewport on the Home Page, and pause when scrolled out of view
+  // Auto-play inline when scrolled into viewport on the Home Page, coordinated across all Home video sections
   useEffect(() => {
     if (!autoPlayOnScroll || resolvedPlayHandler) return
-    const playable = Boolean(
-      resolvedYtId ||
-      (videoUrl &&
-        (videoUrl.includes("youtube.com") ||
-          videoUrl.includes("youtu.be") ||
-          videoUrl.endsWith(".mp4")))
-    )
+    const playable = Boolean(resolvedYtId || videoUrl)
     if (!playable) return
-    const node = videoStageRef.current
-    if (!node || typeof IntersectionObserver === "undefined") return
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0]
-        if (!entry) return
-        if (entry.isIntersecting && entry.intersectionRatio >= 0.45) {
-          // Only START on scroll when the user enabled autoplay in Settings; manual plays are unaffected
-          if (autoplayAllowedRef.current && !userManuallyStoppedRef.current) {
-            setStartedByScroll(true)
-            notifyExclusiveVideoPlay(bannerPlayerIdRef.current)
-            setIsPlayingInline(true)
-          }
-        } else if (!entry.isIntersecting || entry.intersectionRatio < 0.15) {
-          userManuallyStoppedRef.current = false
-          setIsPlayingInline(false)
-        }
+    return registerViewportVideoSlot({
+      id: bannerPlayerIdRef.current,
+      getElement: () => videoStageRef.current,
+      startAutoplay: () => {
+        if (!autoplayAllowedRef.current || userManuallyStoppedRef.current) return
+        setStartedByScroll(true)
+        setIsDirectMuted(true)
+        setIsPlayingInline(true)
       },
-      { threshold: [0, 0.15, 0.45, 0.75] }
-    )
-
-    observer.observe(node)
-    return () => observer.disconnect()
+      stopAutoplay: () => {
+        userManuallyStoppedRef.current = false
+        setIsPlayingInline(false)
+      },
+    })
   }, [autoPlayOnScroll, resolvedPlayHandler, resolvedYtId, videoUrl])
 
   // If the user switches autoplay off in Settings, stop any video that was started by scrolling
@@ -356,16 +344,37 @@ export function VideoShareBanner({
                   className="w-full"
                 />
               ) : (
-                <div className="aspect-video w-full bg-black">
+                <div className="relative aspect-video w-full bg-black">
                   <video
+                    ref={directVideoRef}
                     src={videoUrl}
                     data-connectln-player-id={bannerPlayerIdRef.current}
                     controls
                     autoPlay
+                    muted={isDirectMuted}
                     playsInline
                     loop
+                    onVolumeChange={(e) => setIsDirectMuted(e.currentTarget.muted)}
                     className="h-full w-full object-contain bg-black"
                   />
+                  {isDirectMuted && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (directVideoRef.current) {
+                          directVideoRef.current.muted = false
+                          directVideoRef.current.volume = 1
+                        }
+                        setIsDirectMuted(false)
+                      }}
+                      style={{ color: "#FFFFFF" }}
+                      className="absolute top-3 left-3 z-20 inline-flex items-center gap-1.5 rounded-full bg-black/85 hover:bg-[#0A66C2] border border-white/25 px-3 py-1 text-[11px] font-semibold shadow-lg cursor-pointer"
+                    >
+                      <VolumeX className="h-3.5 w-3.5 text-amber-400" />
+                      <span style={{ color: "#FFFFFF" }}>Tap for Sound 🔊</span>
+                    </button>
+                  )}
                 </div>
               )}
               <button
