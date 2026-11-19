@@ -3,21 +3,16 @@
 import React, { useState, useEffect, useRef, useCallback } from "react"
 import {
   Phone,
-  PhoneOff,
   PhoneCall,
-  Mic,
-  MicOff,
   Video,
   MessageSquare,
-  Hash,
   X,
   CheckCircle2,
-  AlertCircle,
   Smartphone,
-  RotateCcw,
   QrCode,
   Copy,
-  UserPlus,
+  Share2,
+  Globe,
 } from "lucide-react"
 import {
   GLOBAL_COUNTRY_DIAL_CODES,
@@ -78,21 +73,6 @@ export function saveContactPhoneLocal(phone: string, name?: string, email?: stri
   } catch {}
 }
 
-type SoftphonePhase =
-  | "resolving"
-  | "needs_number"
-  | "connecting"
-  | "ringing"
-  | "in_call"
-  | "ended"
-  | "error"
-
-function formatDurationClock(sec: number): string {
-  const mins = Math.floor(sec / 60)
-  const rem = sec % 60
-  return `${String(mins).padStart(2, "0")}:${String(rem).padStart(2, "0")}`
-}
-
 export interface ConnectLnCellPhoneSoftphoneModalProps {
   open: boolean
   onClose: () => void
@@ -107,8 +87,10 @@ export interface ConnectLnCellPhoneSoftphoneModalProps {
 }
 
 /**
- * Full Live Browser-to-Cell-Phone Softphone Console (`@twilio/voice-sdk`).
- * Rings any US or international mobile phone directly on the carrier network with live two-way voice audio.
+ * 100% Internet Call & User-Borne SIM/SMS Handoff Console ($0.00 Twilio Voice / SMS Cost).
+ * - Rings registered ConnectLn members free over Wi-Fi / 4G / 5G (WebRTC + Web Push).
+ * - Lets callers send a Free Internet Call Link via their own SMS (`sms:`) or WhatsApp (`wa.me`),
+ *   or dial via their own mobile SIM plan (`tel:`) so ConnectLn bears $0.00 carrier charges.
  */
 export function ConnectLnCellPhoneSoftphoneModal({
   open,
@@ -117,71 +99,18 @@ export function ConnectLnCellPhoneSoftphoneModal({
   targetPhone,
   targetEmail,
   targetAvatar,
-  callerName = "Kwesi Asiedu",
+  callerName = "ConnectLn Member",
   callerEmail,
   roomJoinUrl,
   onUpgradeToVideoHuddle,
 }: ConnectLnCellPhoneSoftphoneModalProps) {
-  const [phase, setPhase] = useState<SoftphonePhase>("resolving")
   const [softphoneCountryCode, setSoftphoneCountryCode] = useState<string>("+1")
   const [phoneInput, setPhoneInput] = useState<string>("")
-  const [activeDialedPhone, setActiveDialedPhone] = useState<string>("")
-  const [displayName, setDisplayName] = useState<string>(targetLabel || "Mobile Call")
-  const [callerIdDisplay, setCallerIdDisplay] = useState<string>("+1 (240) 262-3543")
-  const [isMuted, setIsMuted] = useState<boolean>(false)
-  const [showKeypad, setShowKeypad] = useState<boolean>(false)
-  const [dtmfSent, setDtmfSent] = useState<string>("")
-  const [elapsedSec, setElapsedSec] = useState<number>(0)
-  const [errorMsg, setErrorMsg] = useState<string>("")
-  const [smsStatusNote, setSmsStatusNote] = useState<string>("")
-  const [isSendingSms, setIsSendingSms] = useState<boolean>(false)
-  const [showAddPersonPanel, setShowAddPersonPanel] = useState<boolean>(false)
-  const [addPersonInput, setAddPersonInput] = useState<string>("")
-  const [isAddingPerson, setIsAddingPerson] = useState<boolean>(false)
-  const [extraLegs, setExtraLegs] = useState<
-    Array<{ callSid: string; name: string; phone: string; status: string }>
-  >([])
-  const extraLegsRef = useRef<Array<{ callSid: string; name: string; phone: string; status: string }>>([])
-  useEffect(() => {
-    extraLegsRef.current = extraLegs
-  }, [extraLegs])
-  const [softphoneConfRoom] = useState<string>(
-    () => `conf_sp_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`
-  )
-  const primaryLegSidRef = useRef<string>("")
-
-  const deviceRef = useRef<any>(null)
-  const activeCallRef = useRef<any>(null)
-  const cachedTokenRef = useRef<string>("")
-
-  const cleanupActiveCall = useCallback(() => {
-    const allSids = [
-      primaryLegSidRef.current,
-      ...extraLegsRef.current.map((l) => l.callSid),
-    ].filter(Boolean)
-    if (allSids.length > 0) {
-      fetch("/api/connectin/voice/conference-add", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        keepalive: true,
-        body: JSON.stringify({ action: "end_all", callSids: allSids }),
-      }).catch(() => {})
-      primaryLegSidRef.current = ""
-      setExtraLegs([])
-    }
-    try {
-      if (activeCallRef.current) {
-        activeCallRef.current.disconnect?.()
-        activeCallRef.current = null
-      }
-    } catch {}
-    try {
-      if (deviceRef.current) {
-        deviceRef.current.destroy?.()
-        deviceRef.current = null
-      }
-    } catch {}
-  }, [])
+  const [resolvedPhone, setResolvedPhone] = useState<string>("")
+  const [displayName, setDisplayName] = useState<string>(targetLabel || "ConnectLn Call")
+  const [statusNote, setStatusNote] = useState<string>("")
+  const [isRingingInternet, setIsRingingInternet] = useState<boolean>(false)
+  const [callLinkUrl, setCallLinkUrl] = useState<string>("")
 
   useEffect(() => {
     if (!open || typeof window === "undefined") return
@@ -197,286 +126,105 @@ export function ConnectLnCellPhoneSoftphoneModal({
     }
   }, [open])
 
-  // Call duration timer once answered
-  useEffect(() => {
-    if (phase !== "in_call") return
-    const timer = window.setInterval(() => {
-      setElapsedSec((prev) => prev + 1)
-    }, 1000)
-    return () => window.clearInterval(timer)
-  }, [phase])
-
-  const startCellularCall = useCallback(
-    async (rawPhoneToDial: string, providedToken?: string) => {
-      const cleanPhone = normalizeClientPhone(rawPhoneToDial)
-      if (!looksLikeClientPhone(cleanPhone)) {
-        setPhase("needs_number")
-        setErrorMsg("Enter a 10-digit mobile number (e.g. 240-260-7898) or +country code.")
-        return
-      }
-
-      cleanupActiveCall()
-      setErrorMsg("")
-      setIsMuted(false)
-      setElapsedSec(0)
-      setDtmfSent("")
-      setActiveDialedPhone(cleanPhone)
-      setPhoneInput(cleanPhone)
-      setPhase("connecting")
-
-      // Save mapping locally & in Cloud Sync if associated with a named contact
-      if (targetLabel && !looksLikeClientPhone(targetLabel)) {
-        saveContactPhoneLocal(cleanPhone, targetLabel, targetEmail)
-        fetch("/api/connectin/voice/token", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "save_contact_phone",
-            contactName: targetLabel,
-            contactEmail: targetEmail,
-            phone: cleanPhone,
-            identity: callerEmail || callerName,
-          }),
-        }).catch(() => {})
-      }
-
-      try {
-        let jwt = providedToken || cachedTokenRef.current
-        if (!jwt) {
-          const qs = new URLSearchParams({
-            identity: callerEmail || callerName || "connectln_caller",
-            targetPhone: cleanPhone,
-          })
-          const res = await fetch(`/api/connectin/voice/token?${qs.toString()}`, {
-            cache: "no-store",
-          })
-          const data = await res.json()
-          if (!res.ok || !data?.ok || !data?.token) {
-            throw new Error(data?.error || "Unable to initialize ConnectLn carrier voice token.")
-          }
-          jwt = data.token
-          cachedTokenRef.current = jwt
-          if (data.callerId) {
-            setCallerIdDisplay(prettyClientPhone(data.callerId))
-          }
-        }
-
-        const { Device } = await import("@twilio/voice-sdk")
-        const device = new Device(jwt, {
-          codecPreferences: ["opus", "pcmu"] as any,
-          enableImprovedSignalingErrorPrecision: true,
-        })
-        deviceRef.current = device
-
-        device.on("error", (twErr: any) => {
-          console.error("[ConnectLn Softphone Device Error]", twErr)
-          setErrorMsg(twErr?.message || "Carrier signaling error. Check microphone permission and retry.")
-          setPhase("error")
-        })
-
-        const call = await device.connect({
-          params: {
-            ConferenceRoom: softphoneConfRoom,
-            CallerName: callerName,
-          },
-        })
-        activeCallRef.current = call
-        setPhase("ringing")
-
-        // Dial the first cell phone into the shared conference bridge so more people can be merged anytime!
-        const confRes = await fetch("/api/connectin/voice/conference-add", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "add",
-            callId: softphoneConfRoom,
-            conferenceName: softphoneConfRoom,
-            callMode: "audio",
-            callerName,
-            callerEmail,
-            targetPhone: cleanPhone,
-            targetName: targetLabel,
-            targetEmail,
-            forceCellSim: true,
-          }),
-        }).then((r) => r.json())
-
-        if (confRes?.cellCallSid) {
-          primaryLegSidRef.current = confRes.cellCallSid
-        } else if (confRes?.cellDialError) {
-          throw new Error(confRes.cellDialError)
-        }
-
-        call.on("accept", () => {
-          setElapsedSec(0)
-          setPhase("in_call")
-        })
-
-        call.on("disconnect", () => {
-          activeCallRef.current = null
-          setPhase("ended")
-        })
-
-        call.on("cancel", () => {
-          activeCallRef.current = null
-          setPhase("ended")
-        })
-
-        call.on("reject", () => {
-          activeCallRef.current = null
-          setPhase("ended")
-        })
-
-        call.on("error", (callErr: any) => {
-          console.error("[ConnectLn Softphone Call Error]", callErr)
-          setErrorMsg(callErr?.message || "Call could not be completed.")
-          setPhase("error")
-        })
-      } catch (err: any) {
-        console.error("[startCellularCall] error:", err)
-        setErrorMsg(
-          err?.message ||
-            "Microphone permission is required in your browser to talk on a live cell phone call."
-        )
-        setPhase("error")
-      }
-    },
-    [callerEmail, callerName, cleanupActiveCall, targetEmail, targetLabel]
-  )
-
-  // Resolve target's phone number & auto-dial on open
   useEffect(() => {
     if (!open) {
-      cleanupActiveCall()
-      cachedTokenRef.current = ""
-      setSmsStatusNote("")
+      setStatusNote("")
       return
     }
-
-    let cancelled = false
     setDisplayName(
-      looksLikeClientPhone(targetLabel) ? prettyClientPhone(targetLabel) : targetLabel || "Mobile Call"
+      looksLikeClientPhone(targetLabel) ? prettyClientPhone(targetLabel) : targetLabel || "ConnectLn Call"
     )
-    setErrorMsg("")
-    setSmsStatusNote("")
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://conectln.com"
+    const generatedRoom =
+      roomJoinUrl ||
+      `${origin}/connectin?waCall=${encodeURIComponent(
+        `wa_${Date.now().toString(36)}`
+      )}&mode=video&callerName=${encodeURIComponent(callerName)}&autoAnswer=1`
+    setCallLinkUrl(generatedRoom)
 
-    const immediatePhone =
+    const immediate =
       (looksLikeClientPhone(targetPhone) && normalizeClientPhone(targetPhone!)) ||
       (looksLikeClientPhone(targetLabel) && normalizeClientPhone(targetLabel)) ||
       getSavedContactPhoneLocal(targetLabel, targetEmail)
 
-    if (immediatePhone) {
-      setPhoneInput(immediatePhone)
-      startCellularCall(immediatePhone)
-      return () => {
-        cancelled = true
-        cleanupActiveCall()
-      }
+    if (immediate) {
+      setResolvedPhone(immediate)
+      setPhoneInput(immediate)
+      return
     }
 
-    // Query backend user directory + Cloud Sync for this ConnectLn member's cell number
-    setPhase("resolving")
     const qs = new URLSearchParams({
-      identity: callerEmail || callerName || "connectln_caller",
       targetName: targetLabel || "",
       targetEmail: targetEmail || "",
     })
     fetch(`/api/connectin/voice/token?${qs.toString()}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((data) => {
-        if (cancelled) return
-        if (data?.token) cachedTokenRef.current = data.token
-        if (data?.callerId) setCallerIdDisplay(prettyClientPhone(data.callerId))
         if (data?.matchedMemberName && !looksLikeClientPhone(targetLabel)) {
           setDisplayName(data.matchedMemberName)
         }
         if (data?.resolvedPhone && looksLikeClientPhone(data.resolvedPhone)) {
+          setResolvedPhone(data.resolvedPhone)
           setPhoneInput(data.resolvedPhone)
-          startCellularCall(data.resolvedPhone, data.token)
-        } else {
-          setPhase("needs_number")
         }
       })
-      .catch(() => {
-        if (!cancelled) setPhase("needs_number")
-      })
+      .catch(() => {})
+  }, [open, targetLabel, targetPhone, targetEmail, callerName, roomJoinUrl])
 
-    return () => {
-      cancelled = true
-      cleanupActiveCall()
+  const effectiveE164 = (() => {
+    const raw = phoneInput.trim() || resolvedPhone
+    if (!raw) return ""
+    const candidate = raw.startsWith("+")
+      ? normalizeClientPhone(raw)
+      : buildGlobalE164Phone(softphoneCountryCode, raw)
+    return looksLikeClientPhone(candidate) ? candidate : ""
+  })()
+
+  const digits = effectiveE164.replace(/[^\d]/g, "")
+  const shareBody = `📹 ${callerName} is calling you on ConnectLn (Free Internet Voice & Video)! Tap to answer over Wi-Fi/Data: ${callLinkUrl}`
+  const nativeSmsHref = effectiveE164
+    ? `sms:${effectiveE164}?&body=${encodeURIComponent(shareBody)}`
+    : `sms:?&body=${encodeURIComponent(shareBody)}`
+  const whatsappHref = digits
+    ? `https://wa.me/${digits}?text=${encodeURIComponent(shareBody)}`
+    : `https://wa.me/?text=${encodeURIComponent(shareBody)}`
+  const nativeTelHref = effectiveE164 ? `tel:${effectiveE164}` : ""
+
+  const handleRingFreeInternet = async () => {
+    setIsRingingInternet(true)
+    setStatusNote("Ringing over ConnectLn Internet (100% Free Wi-Fi / Data)...")
+    if (effectiveE164 && targetLabel && !looksLikeClientPhone(targetLabel)) {
+      saveContactPhoneLocal(effectiveE164, targetLabel, targetEmail)
     }
-  }, [
-    open,
-    targetLabel,
-    targetPhone,
-    targetEmail,
-    callerName,
-    callerEmail,
-    cleanupActiveCall,
-    startCellularCall,
-  ])
-
-  const handleToggleMute = () => {
-    const next = !isMuted
-    setIsMuted(next)
     try {
-      activeCallRef.current?.mute?.(next)
-    } catch {}
-  }
-
-  const handleHangup = () => {
-    cleanupActiveCall()
-    setPhase("ended")
-  }
-
-  const handlePressDigit = (digit: string) => {
-    if (phase === "in_call" || phase === "ringing") {
-      try {
-        activeCallRef.current?.sendDigits?.(digit)
-        setDtmfSent((prev) => `${prev}${digit}`)
-      } catch {}
-    } else {
-      setPhoneInput((prev) => `${prev}${digit}`)
-    }
-  }
-
-  const handleSendSmsJoinLink = async () => {
-    const targetNum = activeDialedPhone || phoneInput
-    if (!looksLikeClientPhone(targetNum)) {
-      setSmsStatusNote("Enter a valid mobile phone number first.")
-      return
-    }
-    setIsSendingSms(true)
-    setSmsStatusNote("")
-    try {
-      const joinUrl =
-        roomJoinUrl ||
-        `https://conectln.com/connectin?tab=vibecomms&joinCall=${encodeURIComponent(
-          `call_${Date.now().toString(36)}`
-        )}`
-      const res = await fetch("/api/connectin/voice/ring-cell", {
+      const res = await fetch("/api/connectin/calls/whatsapp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          toPhone: targetNum,
-          targetName: displayName,
-          callerName,
+          action: "start_call",
           callMode: "video",
-          joinUrl,
-          placeAlertCall: false,
+          callerName,
+          callerEmail,
+          targetPhone: effectiveE164 || undefined,
+          targetName: displayName,
+          targetEmail,
         }),
       })
       const data = await res.json()
-      if (data?.ok && data?.smsSent) {
-        setSmsStatusNote(`✓ Texted live join link to ${prettyClientPhone(targetNum)}`)
-      } else {
-        setSmsStatusNote(data?.smsError || "Copied call link — paste in SMS if carrier blocks links")
-        navigator.clipboard?.writeText(joinUrl).catch(() => {})
+      if (data?.joinUrl) setCallLinkUrl(data.joinUrl)
+      if (onUpgradeToVideoHuddle) {
+        onUpgradeToVideoHuddle(effectiveE164 || displayName)
+        return
       }
+      setStatusNote(
+        data?.isRegisteredOnConnectLn
+          ? `✓ Ringing ${displayName} free over ConnectLn Internet!`
+          : `✓ Free internet room ready! Send the link below via your SMS or WhatsApp so ${displayName} joins free.`
+      )
     } catch {
-      setSmsStatusNote("Could not send SMS right now.")
+      setStatusNote("✓ Free internet call link ready below!")
     } finally {
-      setIsSendingSms(false)
+      setIsRingingInternet(false)
     }
   }
 
@@ -490,384 +238,129 @@ export function ConnectLnCellPhoneSoftphoneModal({
 
   return (
     <div className="fixed inset-0 z-[75] bg-black/75 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="w-full max-w-md rounded-3xl border border-[#7C4225]/60 bg-[#181411] text-[#FBF8F3] shadow-2xl overflow-hidden">
-        {/* Top Carrier Status Ribbon */}
+      <div className="w-full max-w-md rounded-3xl border border-emerald-500/40 bg-[#181411] text-[#FBF8F3] shadow-2xl overflow-hidden">
         <div className="px-5 py-3.5 bg-[#241E19] border-b border-white/10 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <span
-              className={`h-2.5 w-2.5 rounded-full shrink-0 ${
-                phase === "in_call"
-                  ? "bg-emerald-400 animate-pulse"
-                  : phase === "ringing" || phase === "connecting" || phase === "resolving"
-                  ? "bg-amber-400 animate-ping"
-                  : phase === "error"
-                  ? "bg-rose-500"
-                  : "bg-zinc-400"
-              }`}
-            />
-            <span className="text-xs font-bold tracking-wide uppercase text-[#E7D8C5] truncate">
-              {phase === "resolving" && "Looking up mobile number..."}
-              {phase === "needs_number" && "ConnectLn Mobile Phone Bridge"}
-              {phase === "connecting" && "Connecting Carrier Voice Line..."}
-              {phase === "ringing" && "Ringing Cell Phone..."}
-              {phase === "in_call" && `Connected Live · ${formatDurationClock(elapsedSec)}`}
-              {phase === "ended" && "Call Ended"}
-              {phase === "error" && "Call Connection Notice"}
+            <Globe className="h-4 w-4 text-emerald-400 shrink-0" />
+            <span className="text-xs font-bold tracking-wide uppercase text-emerald-300 truncate">
+              100% Free Internet Call &amp; My SIM Handoff
             </span>
           </div>
           <button
             type="button"
-            onClick={() => {
-              cleanupActiveCall()
-              onClose()
-            }}
+            onClick={onClose}
             className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white cursor-pointer"
-            title="Close Softphone"
+            title="Close"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Center Contact / Number Stage */}
         <div className="px-6 py-6 text-center space-y-4">
           <div className="relative mx-auto w-20 h-20">
-            {(phase === "ringing" || phase === "in_call") && (
-              <span className="absolute inset-0 rounded-full border-2 border-emerald-400/60 animate-ping" />
-            )}
             <img
               src={avatarSrc}
               alt={displayName}
-              className="relative w-20 h-20 rounded-full object-cover border-2 border-[#BC9675] shadow-lg mx-auto"
+              className="relative w-20 h-20 rounded-full object-cover border-2 border-emerald-400 shadow-lg mx-auto"
             />
-            <span className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-[#7C4225] border-2 border-[#181411] flex items-center justify-center">
-              <Smartphone className="h-3.5 w-3.5 text-white" />
+            <span className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-emerald-600 border-2 border-[#181411] flex items-center justify-center">
+              <Globe className="h-3.5 w-3.5 text-white" />
             </span>
           </div>
 
           <div className="space-y-1">
             <h3 className="text-xl font-bold text-white leading-tight">{displayName}</h3>
-            {activeDialedPhone && (
+            {effectiveE164 && (
               <p className="text-sm font-mono text-emerald-300 font-semibold">
-                {prettyClientPhone(activeDialedPhone)}
+                {prettyClientPhone(effectiveE164)}
               </p>
             )}
             <p className="text-[11px] text-[#C8B9A6]">
-              Outbound Caller ID: <span className="font-mono">{callerIdDisplay}</span>
+              ConnectLn Internet Calls are <strong>100% Free</strong> over Wi-Fi / Data. Offline SIM/SMS uses your own phone plan.
             </p>
           </div>
 
-          {/* Live Voice Waveform When Ringing or In Call */}
-          {(phase === "ringing" || phase === "in_call") && (
-            <div className="flex items-center justify-center gap-1.5 h-7 py-1">
-              {[35, 75, 55, 100, 65, 90, 45, 80, 50].map((h, idx) => (
-                <span
-                  key={idx}
-                  className={`w-1.5 rounded-full ${
-                    phase === "in_call" ? "bg-emerald-400 animate-pulse" : "bg-amber-300 animate-pulse"
-                  }`}
-                  style={{ height: `${h}%`, animationDelay: `${idx * 110}ms` }}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Prompt to enter or edit cell phone number when calling a contact without a saved number, or after call ends */}
-          {(phase === "needs_number" || phase === "ended" || phase === "error") && (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault()
-                const resolved =
-                  phoneInput.trim().startsWith("+") || /[a-zA-Z]/.test(phoneInput.trim())
-                    ? phoneInput.trim()
-                    : buildGlobalE164Phone(softphoneCountryCode, phoneInput.trim())
-                startCellularCall(resolved)
-              }}
-              className="space-y-2.5 text-left bg-[#241E19] border border-white/10 rounded-2xl p-3.5"
-            >
-              <label className="block text-[11px] font-bold text-[#E7D8C5]">
-                {phase === "needs_number"
-                  ? `Select country & enter ${displayName}'s mobile number:`
-                  : "Select country & dial or redial mobile number:"}
-              </label>
-              <div className="flex flex-wrap items-center gap-2">
-                <select
-                  value={softphoneCountryCode}
-                  onChange={(e) => setSoftphoneCountryCode(e.target.value)}
-                  className="max-w-[155px] rounded-xl bg-[#14110E] border border-[#7C4225] px-2.5 py-2 text-xs font-semibold text-white focus:outline-none focus:border-emerald-400"
-                  title="International Country Code"
-                >
-                  {GLOBAL_COUNTRY_DIAL_CODES.map((c) => (
-                    <option key={`${c.iso}-${c.code}`} value={c.code}>
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="tel"
-                  value={phoneInput}
-                  onChange={(e) => setPhoneInput(e.target.value)}
-                  placeholder="Mobile number (any country)"
-                  className="flex-1 min-w-[140px] rounded-xl bg-[#14110E] border border-[#7C4225] px-3.5 py-2 text-sm font-mono text-white placeholder:text-zinc-500 focus:outline-none focus:border-emerald-400"
-                  autoFocus
-                />
-                <button
-                  type="submit"
-                  style={{ color: "#FFFFFF" }}
-                  className="rounded-xl bg-emerald-600 hover:bg-emerald-500 px-4 py-2 text-xs font-extrabold flex items-center gap-1.5 shadow-md cursor-pointer shrink-0"
-                >
-                  <PhoneCall className="h-3.5 w-3.5" />
-                  <span>{phase === "ended" ? "Redial" : "Ring Cell"}</span>
-                </button>
-              </div>
-              <p className="text-[10.5px] text-[#B8A998]">
-                Rings any mobile phone in 215+ countries worldwide with live two-way voice audio.
-              </p>
-            </form>
-          )}
-
-          {errorMsg && (
-            <div className="rounded-xl bg-rose-950/70 border border-rose-500/40 px-3.5 py-2.5 text-xs text-rose-200 flex items-start gap-2 text-left">
-              <AlertCircle className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
-              <span>{errorMsg}</span>
-            </div>
-          )}
-
-          {dtmfSent && (
-            <p className="text-xs font-mono text-amber-300">Keypad tones sent: {dtmfSent}</p>
-          )}
-
-          {/* Optional 12-Button DTMF Touch-Tone Keypad */}
-          {showKeypad && (
-            <div className="grid grid-cols-3 gap-2 max-w-[230px] mx-auto pt-1">
-              {["1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"].map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  onClick={() => handlePressDigit(d)}
-                  className="h-10 rounded-xl bg-[#29221C] hover:bg-[#3A3028] border border-white/10 text-sm font-mono font-bold text-white cursor-pointer active:scale-95 transition-transform"
-                >
-                  {d}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {smsStatusNote && (
-            <div className="rounded-xl bg-emerald-950/60 border border-emerald-500/40 px-3 py-2 text-xs text-emerald-200 flex items-center justify-center gap-1.5">
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-              <span>{smsStatusNote}</span>
-            </div>
-          )}
-
-          {/* Extra Conferenced Cell Participants List */}
-          {extraLegs.length > 0 && (
-            <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
-              {extraLegs.map((leg) => (
-                <span
-                  key={leg.callSid}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-emerald-950/80 border border-emerald-500/40 px-3 py-1 text-[11px] font-bold text-emerald-200"
-                >
-                  <span>🟢 {leg.name}</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setExtraLegs((prev) => prev.filter((x) => x.callSid !== leg.callSid))
-                      fetch("/api/connectin/voice/conference-add", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          action: "hangup_participant",
-                          callSid: leg.callSid,
-                        }),
-                      }).catch(() => {})
-                    }}
-                    className="text-rose-300 hover:text-white ml-0.5 cursor-pointer"
-                    title="Remove from call"
-                  >
-                    ✕
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Inline `➕ Add Another Person / Number` Conference Panel */}
-          {showAddPersonPanel && (
-            <form
-              onSubmit={async (e) => {
-                e.preventDefault()
-                if (!addPersonInput.trim()) return
-                setIsAddingPerson(true)
-                const rawTyped = addPersonInput.trim()
-                const rawTarget =
-                  rawTyped.startsWith("+") || /[a-zA-Z@]/.test(rawTyped)
-                    ? rawTyped
-                    : buildGlobalE164Phone(softphoneCountryCode, rawTyped)
-                setAddPersonInput("")
-                try {
-                  const res = await fetch("/api/connectin/voice/conference-add", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      action: "add",
-                      callId: softphoneConfRoom,
-                      conferenceName: softphoneConfRoom,
-                      callMode: "audio",
-                      callerName,
-                      callerEmail,
-                      targetPhone: looksLikeClientPhone(rawTarget) ? rawTarget : undefined,
-                      targetName: rawTarget,
-                      forceCellSim: true,
-                    }),
-                  })
-                  const d = await res.json()
-                  if (d?.cellCallSid) {
-                    const label =
-                      d.recipient?.name || prettyClientPhone(d.recipient?.phone || rawTarget)
-                    setExtraLegs((prev) => [
-                      ...prev,
-                      {
-                        callSid: d.cellCallSid,
-                        name: label,
-                        phone: d.recipient?.phone || rawTarget,
-                        status: "ringing",
-                      },
-                    ])
-                    setSmsStatusNote(`✓ Ringing & merging ${label} into your call!`)
-                  } else {
-                    setSmsStatusNote(d?.cellDialError || d?.error || "Invited participant on ConnectLn!")
-                  }
-                } catch {
-                  setSmsStatusNote("Could not add participant right now.")
-                } finally {
-                  setIsAddingPerson(false)
-                }
-              }}
-              className="flex flex-wrap items-center gap-2 bg-[#241E19] border border-emerald-500/40 rounded-2xl p-2.5"
-            >
+          <div className="space-y-2 text-left bg-[#241E19] border border-white/10 rounded-2xl p-3.5">
+            <label className="block text-[11px] font-bold text-[#E7D8C5]">
+              Recipient Mobile Number (215+ Countries):
+            </label>
+            <div className="flex flex-wrap items-center gap-2">
               <select
                 value={softphoneCountryCode}
                 onChange={(e) => setSoftphoneCountryCode(e.target.value)}
-                className="max-w-[135px] rounded-xl bg-[#14110E] border border-[#7C4225] px-2 py-1.5 text-xs font-semibold text-white focus:outline-none focus:border-emerald-400"
-                title="International Country Code"
+                className="max-w-[145px] rounded-xl bg-[#14110E] border border-[#7C4225] px-2.5 py-2 text-xs font-semibold text-white focus:outline-none focus:border-emerald-400"
               >
                 {GLOBAL_COUNTRY_DIAL_CODES.map((c) => (
-                  <option key={`add-${c.iso}-${c.code}`} value={c.code}>
+                  <option key={`${c.iso}-${c.code}`} value={c.code}>
                     {c.label}
                   </option>
                 ))}
               </select>
               <input
                 type="tel"
-                value={addPersonInput}
-                onChange={(e) => setAddPersonInput(e.target.value)}
-                placeholder="Phone # or @name to merge in..."
-                className="flex-1 min-w-[130px] rounded-xl bg-[#14110E] border border-[#7C4225] px-3 py-1.5 text-xs font-mono text-white placeholder:text-zinc-500 focus:outline-none focus:border-emerald-400"
+                value={phoneInput}
+                onChange={(e) => setPhoneInput(e.target.value)}
+                placeholder="Mobile number"
+                className="flex-1 min-w-[130px] rounded-xl bg-[#14110E] border border-[#7C4225] px-3 py-2 text-sm font-mono text-white placeholder:text-zinc-500 focus:outline-none focus:border-emerald-400"
               />
-              <button
-                type="submit"
-                disabled={isAddingPerson}
-                style={{ color: "#FFFFFF" }}
-                className="rounded-xl bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 text-xs font-extrabold cursor-pointer shrink-0 disabled:opacity-50"
-              >
-                {isAddingPerson ? "Ringing..." : "+ Merge"}
-              </button>
-            </form>
-          )}
-        </div>
+            </div>
+          </div>
 
-        {/* Bottom Softphone Action Bar */}
-        <div className="px-5 py-4 bg-[#241E19] border-t border-white/10 flex flex-wrap items-center justify-center gap-2.5">
-          {(phase === "connecting" || phase === "ringing" || phase === "in_call") && (
-            <>
-              <button
-                type="button"
-                onClick={handleToggleMute}
-                className={`rounded-full px-3.5 py-2 text-xs font-bold flex items-center gap-1.5 cursor-pointer border ${
-                  isMuted
-                    ? "bg-amber-600 border-amber-400 text-white"
-                    : "bg-white/10 hover:bg-white/15 border-white/15 text-white"
-                }`}
-              >
-                {isMuted ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
-                <span>{isMuted ? "Unmute" : "Mute"}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowAddPersonPanel((v) => !v)}
-                style={{ color: "#FFFFFF" }}
-                className={`rounded-full px-3.5 py-2 text-xs font-extrabold flex items-center gap-1.5 cursor-pointer border ${
-                  showAddPersonPanel
-                    ? "bg-emerald-600 border-emerald-400"
-                    : "bg-emerald-700/80 hover:bg-emerald-600 border-emerald-400/50"
-                }`}
-                title="Add another person or phone number into this call"
-              >
-                <UserPlus className="h-3.5 w-3.5" />
-                <span>Add Person</span>
-              </button>
-            </>
+          {statusNote && (
+            <div className="rounded-xl bg-emerald-950/60 border border-emerald-500/40 px-3 py-2 text-xs text-emerald-200 flex items-center justify-center gap-1.5">
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+              <span>{statusNote}</span>
+            </div>
           )}
 
-          <button
-            type="button"
-            onClick={() => setShowKeypad((prev) => !prev)}
-            className={`rounded-full px-3.5 py-2 text-xs font-bold flex items-center gap-1.5 cursor-pointer border ${
-              showKeypad
-                ? "bg-[#7C4225] border-[#BC9675] text-white"
-                : "bg-white/10 hover:bg-white/15 border-white/15 text-white"
-            }`}
-          >
-            <Hash className="h-3.5 w-3.5" />
-            <span>Keypad</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleSendSmsJoinLink}
-            disabled={isSendingSms}
-            className="rounded-full bg-white/10 hover:bg-white/15 border border-white/15 px-3.5 py-2 text-xs font-bold text-sky-200 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-            title="Send a 1-tap video room link to their cell phone via SMS"
-          >
-            <MessageSquare className="h-3.5 w-3.5" />
-            <span>{isSendingSms ? "Texting..." : "Text Video Link"}</span>
-          </button>
-
-          {onUpgradeToVideoHuddle && (
+          <div className="grid grid-cols-1 gap-2 pt-1">
             <button
               type="button"
-              onClick={() => {
-                onUpgradeToVideoHuddle(displayName)
-              }}
-              className="rounded-full bg-[#0A66C2] hover:bg-[#004182] px-3.5 py-2 text-xs font-bold text-white flex items-center gap-1.5 cursor-pointer"
-            >
-              <Video className="h-3.5 w-3.5" />
-              <span>Video Room</span>
-            </button>
-          )}
-
-          {phase === "connecting" || phase === "ringing" || phase === "in_call" ? (
-            <button
-              type="button"
-              onClick={handleHangup}
+              disabled={isRingingInternet}
+              onClick={handleRingFreeInternet}
               style={{ color: "#FFFFFF" }}
-              className="rounded-full bg-rose-600 hover:bg-rose-500 px-5 py-2 text-xs font-extrabold flex items-center gap-1.5 shadow-lg cursor-pointer"
+              className="w-full rounded-xl bg-emerald-600 hover:bg-emerald-500 py-2.5 px-4 text-xs font-extrabold flex items-center justify-center gap-2 shadow-md cursor-pointer"
             >
-              <PhoneOff className="h-4 w-4" />
-              <span>End Call</span>
+              <Video className="h-4 w-4" />
+              <span>
+                {isRingingInternet
+                  ? "Starting Free Internet Call..."
+                  : "Start Free ConnectLn Internet Call (Wi-Fi / Data)"}
+              </span>
             </button>
-          ) : activeDialedPhone ? (
-            <button
-              type="button"
-              onClick={() => startCellularCall(activeDialedPhone)}
-              style={{ color: "#FFFFFF" }}
-              className="rounded-full bg-emerald-600 hover:bg-emerald-500 px-4 py-2 text-xs font-extrabold flex items-center gap-1.5 shadow-md cursor-pointer"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-              <span>Call Again</span>
-            </button>
-          ) : null}
+
+            <div className="grid grid-cols-2 gap-2">
+              <a
+                href={nativeSmsHref}
+                className="rounded-xl bg-sky-700 hover:bg-sky-600 py-2.5 px-3 text-xs font-bold text-white flex items-center justify-center gap-1.5 no-underline"
+                title="Sends the free internet call link from your own device SMS"
+              >
+                <MessageSquare className="h-3.5 w-3.5" />
+                <span>Send Link (My SMS)</span>
+              </a>
+
+              <a
+                href={whatsappHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-xl bg-emerald-800 hover:bg-emerald-700 py-2.5 px-3 text-xs font-bold text-white flex items-center justify-center gap-1.5 no-underline"
+              >
+                <Share2 className="h-3.5 w-3.5" />
+                <span>Invite on WhatsApp</span>
+              </a>
+            </div>
+
+            {nativeTelHref && (
+              <a
+                href={nativeTelHref}
+                className="w-full rounded-xl bg-[#7C4225] hover:bg-[#5E3119] py-2.5 px-4 text-xs font-extrabold text-white flex items-center justify-center gap-2 no-underline"
+                title="Uses your own mobile carrier SIM plan — $0 ConnectLn fee"
+              >
+                <PhoneCall className="h-4 w-4" />
+                <span>Dial Using My Own Carrier SIM ({prettyClientPhone(effectiveE164)})</span>
+              </a>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -875,16 +368,15 @@ export function ConnectLnCellPhoneSoftphoneModal({
 }
 
 /**
- * Compact Live Cell Phone Bridge Bar embedded inside Messaging Huddle & Live Video Studio
- * so any voice or video call can simultaneously ring & bridge the recipient's physical cell phone!
+ * Compact Internet Call Invite & User-SIM Handoff Bar embedded inside Messaging Huddle & Live Video Studio.
+ * Zero Twilio PSTN voice minutes and zero Twilio server SMS ($0.00 platform cost).
  */
 export function ConnectLnInlineCellBridgeBar({
   targetName,
   targetEmail,
-  callerName = "Kwesi Asiedu",
+  callerName = "ConnectLn Member",
   callerEmail,
   roomJoinUrl,
-  autoDialOnMount = false,
   videoCallMode = true,
 }: {
   targetName: string
@@ -898,22 +390,8 @@ export function ConnectLnInlineCellBridgeBar({
   const [phoneInput, setPhoneInput] = useState<string>(() =>
     getSavedContactPhoneLocal(targetName, targetEmail)
   )
-  const [phase, setPhase] = useState<"idle" | "connecting" | "ringing" | "in_call" | "ended" | "error">("idle")
-  const [elapsedSec, setElapsedSec] = useState<number>(0)
   const [statusNote, setStatusNote] = useState<string>("")
   const [showQrModal, setShowQrModal] = useState<boolean>(false)
-  const [bridgedLegs, setBridgedLegs] = useState<
-    Array<{ callSid: string; label: string; phone: string }>
-  >([])
-  const bridgedLegsRef = useRef<Array<{ callSid: string; label: string; phone: string }>>([])
-  useEffect(() => {
-    bridgedLegsRef.current = bridgedLegs
-  }, [bridgedLegs])
-  const [inlineConfName] = useState<string>(
-    () => `conf_inline_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`
-  )
-  const deviceRef = useRef<any>(null)
-  const callRef = useRef<any>(null)
   const autoPushedTargetRef = useRef<string>("")
 
   const effectiveJoinUrl = (() => {
@@ -928,37 +406,8 @@ export function ConnectLnInlineCellBridgeBar({
     return base
   })()
 
-  const hangupCell = useCallback(() => {
-    if (bridgedLegsRef.current.length > 0) {
-      fetch("/api/connectin/voice/conference-add", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        keepalive: true,
-        body: JSON.stringify({
-          action: "end_all",
-          callSids: bridgedLegsRef.current.map((b) => b.callSid),
-        }),
-      }).catch(() => {})
-      setBridgedLegs([])
-    }
-    try {
-      callRef.current?.disconnect?.()
-      callRef.current = null
-    } catch {}
-    try {
-      deviceRef.current?.destroy?.()
-      deviceRef.current = null
-    } catch {}
-  }, [])
-
-  useEffect(() => {
-    if (phase !== "in_call") return
-    const id = window.setInterval(() => setElapsedSec((s) => s + 1), 1000)
-    return () => window.clearInterval(id)
-  }, [phase])
-
-  const dispatchCameraInvitePush = useCallback(
-    async (phoneCandidate?: string, alsoPlaceAlertCall = false) => {
+  const dispatchFreeInternetEmailAlert = useCallback(
+    async (phoneCandidate?: string) => {
       try {
         const res = await fetch("/api/connectin/voice/ring-cell", {
           method: "POST",
@@ -971,7 +420,6 @@ export function ConnectLnInlineCellBridgeBar({
             callerEmail,
             callMode: videoCallMode ? "video" : "audio",
             joinUrl: effectiveJoinUrl,
-            placeAlertCall: alsoPlaceAlertCall,
           }),
         })
         const data = await res.json()
@@ -986,103 +434,9 @@ export function ConnectLnInlineCellBridgeBar({
     [callerEmail, callerName, effectiveJoinUrl, targetEmail, targetName, videoCallMode]
   )
 
-  const dialCellNow = useCallback(
-    async (numToDial: string) => {
-      const clean = normalizeClientPhone(numToDial)
-      if (!looksLikeClientPhone(clean)) {
-        setStatusNote("Enter a 10-digit mobile number (e.g. 240-260-7898) first.")
-        return
-      }
-      setPhase((prev) => (prev === "in_call" ? "in_call" : "connecting"))
-      setStatusNote(
-        `Ringing & merging ${prettyClientPhone(clean)} into this call${
-          videoCallMode ? " + sending Camera Link" : ""
-        }...`
-      )
-      saveContactPhoneLocal(clean, targetName, targetEmail)
-
-      try {
-        // Ensure host browser is connected once to `inlineConfName` so unlimited numbers can be merged in!
-        if (!callRef.current) {
-          const res = await fetch("/api/connectin/voice/token", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              action: "save_contact_phone",
-              contactName: targetName,
-              contactEmail: targetEmail,
-              phone: clean,
-              identity: callerEmail || callerName,
-            }),
-          })
-          const data = await res.json()
-          if (!res.ok || !data?.token) {
-            throw new Error(data?.error || "Could not initialize carrier call.")
-          }
-          const { Device } = await import("@twilio/voice-sdk")
-          const device = new Device(data.token, { codecPreferences: ["opus", "pcmu"] as any })
-          deviceRef.current = device
-          const call = await device.connect({
-            params: { ConferenceRoom: inlineConfName, CallerName: callerName },
-          })
-          callRef.current = call
-          call.on("accept", () => {
-            setElapsedSec(0)
-            setPhase("in_call")
-          })
-          call.on("disconnect", () => {
-            callRef.current = null
-            setPhase("ended")
-            setStatusNote("Cell phone conference ended.")
-          })
-          call.on("error", (e: any) => {
-            setPhase("error")
-            setStatusNote(e?.message || "Carrier call failed.")
-          })
-        }
-
-        const addRes = await fetch("/api/connectin/voice/conference-add", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "add",
-            callId: inlineConfName,
-            conferenceName: inlineConfName,
-            callMode: videoCallMode ? "video" : "audio",
-            callerName,
-            callerEmail,
-            targetPhone: clean,
-            targetName: bridgedLegsRef.current.length === 0 ? targetName : clean,
-            forceCellSim: true,
-          }),
-        }).then((r) => r.json())
-
-        if (addRes?.cellCallSid) {
-          const legLabel = addRes.recipient?.name || prettyClientPhone(clean)
-          setBridgedLegs((prev) => [
-            ...prev.filter((p) => p.phone !== clean),
-            { callSid: addRes.cellCallSid, label: legLabel, phone: clean },
-          ])
-          setPhoneInput("")
-          setPhase("in_call")
-          setStatusNote(
-            `🟢 Merged ${prettyClientPhone(clean)}! Enter another number & click "+ Add Person" to add more people.`
-          )
-        } else {
-          setStatusNote(addRes?.cellDialError || "Invited participant on ConnectLn!")
-        }
-      } catch (err: any) {
-        setPhase("error")
-        setStatusNote(err?.message || "Allow microphone access to ring cell phone.")
-      }
-    },
-    [callerEmail, callerName, inlineConfName, targetEmail, targetName, videoCallMode]
-  )
-
   useEffect(() => {
     let cancelled = false
     const qs = new URLSearchParams({
-      identity: callerEmail || callerName || "connectln_caller",
       targetName: targetName || "",
       targetEmail: targetEmail || "",
     })
@@ -1097,71 +451,36 @@ export function ConnectLnInlineCellBridgeBar({
         if (foundPhone) {
           setPhoneInput((prev) => prev || foundPhone)
         }
-
-        // Automatically dispatch instant mobile Camera Invite Push once when opening a Video Call!
         const pushKey = `${targetName}__${targetEmail || ""}__${effectiveJoinUrl}`
-        if (videoCallMode && autoPushedTargetRef.current !== pushKey) {
+        if (autoPushedTargetRef.current !== pushKey) {
           autoPushedTargetRef.current = pushKey
-          const pushRes = await dispatchCameraInvitePush(foundPhone || undefined, false)
+          const pushRes = await dispatchFreeInternetEmailAlert(foundPhone || undefined)
           if (!cancelled && pushRes?.emailSent) {
             setStatusNote(
-              `✓ Sent instant 1-tap Camera Link to ${pushRes.recipientEmail || targetName}'s phone!`
+              `✓ Sent free Internet Call Link to ${pushRes.recipientEmail || targetName}!`
             )
           }
-        }
-
-        if (foundPhone && (autoDialOnMount || (!videoCallMode && looksLikeClientPhone(targetName)))) {
-          dialCellNow(foundPhone)
         }
       })
       .catch(() => {})
 
     return () => {
       cancelled = true
-      hangupCell()
     }
-  }, [
-    targetName,
-    targetEmail,
-    callerName,
-    callerEmail,
-    autoDialOnMount,
-    videoCallMode,
-    effectiveJoinUrl,
-    dispatchCameraInvitePush,
-    dialCellNow,
-    hangupCell,
-  ])
+  }, [targetName, targetEmail, effectiveJoinUrl, dispatchFreeInternetEmailAlert])
 
-  const handlePushCameraLink = async () => {
-    const clean = looksLikeClientPhone(phoneInput) ? normalizeClientPhone(phoneInput) : ""
-    if (clean) saveContactPhoneLocal(clean, targetName, targetEmail)
-    setStatusNote(`Sending 1-tap Camera Link to ${targetName || "recipient"}...`)
-    const data = await dispatchCameraInvitePush(clean || undefined, false)
-    if (data?.ok) {
-      const channels: string[] = []
-      if (data.emailSent) channels.push(`Email (${data.recipientEmail})`)
-      if (data.smsSent) channels.push("SMS")
-      navigator.clipboard?.writeText(effectiveJoinUrl).catch(() => {})
-      setStatusNote(
-        channels.length > 0
-          ? `✓ Sent Camera Link via ${channels.join(" + ")} (also copied to clipboard!)`
-          : `✓ Camera Link copied! Tap WhatsApp or SMS App to send directly to their phone.`
-      )
-    } else {
-      navigator.clipboard?.writeText(effectiveJoinUrl).catch(() => {})
-      setStatusNote("✓ Copied Camera Link! Tap WhatsApp or SMS App to send to their phone.")
-    }
-  }
-
-  const cleanDigits = normalizeClientPhone(phoneInput).replace(/[^\d]/g, "")
-  const shareBody = `📹 Live Video Call from ${callerName} on ConnectLn! Tap to turn on your camera & join live: ${effectiveJoinUrl}`
+  const normalizedPhone = looksLikeClientPhone(phoneInput) ? normalizeClientPhone(phoneInput) : ""
+  const cleanDigits = normalizedPhone.replace(/[^\d]/g, "")
+  const shareBody = `${
+    videoCallMode ? "📹" : "📞"
+  } Free Internet ${videoCallMode ? "Video" : "Voice"} Call from ${callerName} on ConnectLn! Tap to join over Wi-Fi/Data: ${effectiveJoinUrl}`
   const whatsappHref = cleanDigits
     ? `https://wa.me/${cleanDigits}?text=${encodeURIComponent(shareBody)}`
     : `https://wa.me/?text=${encodeURIComponent(shareBody)}`
-  const nativeSmsHref = cleanDigits
-    ? `sms:+${cleanDigits}?&body=${encodeURIComponent(shareBody)}`
+  const nativeSmsHref = normalizedPhone
+    ? `sms:${normalizedPhone}?&body=${encodeURIComponent(shareBody)}`
     : `sms:?&body=${encodeURIComponent(shareBody)}`
+  const nativeTelHref = normalizedPhone ? `tel:${normalizedPhone}` : ""
 
   return (
     <div
@@ -1176,16 +495,11 @@ export function ConnectLnInlineCellBridgeBar({
           <Smartphone className="h-4 w-4 text-emerald-400 shrink-0" />
           <div className="min-w-0">
             <p className="text-xs font-extrabold text-white truncate">
-              {videoCallMode
-                ? "Ring Cell Phone + Bring Up Recipient's Mobile Camera"
-                : "Ring Recipient's Cell Phone Live"}
-              {phase === "in_call" ? ` · ${formatDurationClock(elapsedSec)}` : ""}
+              100% Free Internet Call · Share Link or Dial via Your Own SIM
             </p>
             <p className="text-[10.5px] text-emerald-300 truncate">
               {statusNote ||
-                (videoCallMode
-                  ? "Phone calls carry voice only — recipient taps the Camera Link on their phone to stream live video!"
-                  : "Dial their mobile number for live two-way cell audio")}
+                "Zero server carrier charges — invite via your SMS/WhatsApp for free Wi-Fi/Data calling or dial via your SIM."}
             </p>
           </div>
         </div>
@@ -1195,118 +509,63 @@ export function ConnectLnInlineCellBridgeBar({
             type="tel"
             value={phoneInput}
             onChange={(e) => setPhoneInput(e.target.value)}
-            placeholder={
-              bridgedLegs.length > 0
-                ? "Add another # (e.g. 410-841-8358)"
-                : "Cell # (e.g. 410-841-8358)"
-            }
-            className="w-42 rounded-lg bg-slate-950 border border-slate-700 px-2.5 py-1 text-xs font-mono text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-400"
+            placeholder="Mobile # (+country code)"
+            className="w-40 rounded-lg bg-slate-950 border border-slate-700 px-2.5 py-1 text-xs font-mono text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-400"
           />
 
-          <button
-            type="button"
-            onClick={() => dialCellNow(phoneInput)}
-            style={{ color: "#FFFFFF" }}
-            className="rounded-lg bg-emerald-600 hover:bg-emerald-500 px-2.5 py-1.5 text-[11px] font-extrabold flex items-center gap-1 cursor-pointer"
+          <a
+            href={nativeSmsHref}
+            onClick={() => {
+              if (normalizedPhone) saveContactPhoneLocal(normalizedPhone, targetName, targetEmail)
+            }}
+            className="rounded-lg bg-sky-700 hover:bg-sky-600 px-2.5 py-1.5 text-[11px] font-extrabold text-white no-underline"
+            title="Send free internet call link from your own device SMS"
           >
-            {bridgedLegs.length > 0 ? (
-              <>
-                <UserPlus className="h-3.5 w-3.5" />
-                <span>+ Add Person</span>
-              </>
-            ) : (
-              <>
-                <Phone className="h-3.5 w-3.5" />
-                <span>{videoCallMode ? "Ring Cell + Link" : "Ring Cell Live"}</span>
-              </>
-            )}
-          </button>
-
-          {(phase === "connecting" || phase === "ringing" || phase === "in_call") && (
-            <button
-              type="button"
-              onClick={() => {
-                hangupCell()
-                setPhase("ended")
-                setStatusNote("All cell phone lines disconnected.")
-              }}
-              style={{ color: "#FFFFFF" }}
-              className="rounded-lg bg-rose-600 hover:bg-rose-500 px-2.5 py-1.5 text-[11px] font-extrabold flex items-center gap-1 cursor-pointer"
-            >
-              <PhoneOff className="h-3.5 w-3.5" />
-              <span>End Cell ({bridgedLegs.length || 1})</span>
-            </button>
-          )}
-
-          <button
-            type="button"
-            onClick={handlePushCameraLink}
-            className="rounded-lg bg-sky-900/80 hover:bg-sky-800 border border-sky-400/40 px-2.5 py-1.5 text-[11px] font-bold text-sky-200 cursor-pointer"
-            title="Push 1-tap Camera Link to their Email & SMS + Copy Link"
-          >
-            📲 Push Camera Link
-          </button>
+            💬 My SMS Link
+          </a>
 
           <a
             href={whatsappHref}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-lg bg-emerald-950 hover:bg-emerald-900 border border-emerald-400/40 px-2.5 py-1.5 text-[11px] font-bold text-emerald-200 cursor-pointer no-underline"
-            title="Send 1-tap Camera Link via WhatsApp"
+            className="rounded-lg bg-emerald-800 hover:bg-emerald-700 border border-emerald-400/40 px-2.5 py-1.5 text-[11px] font-bold text-emerald-100 no-underline"
           >
             🟢 WhatsApp
           </a>
 
-          <a
-            href={nativeSmsHref}
-            className="rounded-lg bg-indigo-950 hover:bg-indigo-900 border border-indigo-400/40 px-2.5 py-1.5 text-[11px] font-bold text-indigo-200 cursor-pointer no-underline"
-            title="Open device SMS app with 1-tap Camera Link pre-filled"
+          {nativeTelHref && (
+            <a
+              href={nativeTelHref}
+              className="rounded-lg bg-[#7C4225] hover:bg-[#5E3119] px-2.5 py-1.5 text-[11px] font-extrabold text-white flex items-center gap-1 no-underline"
+              title="Dial using your own phone SIM plan ($0 ConnectLn charge)"
+            >
+              <Phone className="h-3.5 w-3.5" />
+              <span>My SIM</span>
+            </a>
+          )}
+
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard?.writeText(effectiveJoinUrl).catch(() => {})
+              setStatusNote("✓ Copied free internet call link!")
+            }}
+            className="rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 px-2.5 py-1.5 text-[11px] font-bold text-white flex items-center gap-1 cursor-pointer"
           >
-            💬 SMS App
-          </a>
+            <Copy className="h-3 w-3" />
+            <span>Copy Link</span>
+          </button>
 
           <button
             type="button"
             onClick={() => setShowQrModal((prev) => !prev)}
             className="rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 px-2 py-1.5 text-[11px] font-bold text-white flex items-center gap-1 cursor-pointer"
-            title="Show scannable QR code to open camera on any phone"
           >
             <QrCode className="h-3.5 w-3.5" />
             <span>QR</span>
           </button>
         </div>
       </div>
-
-      {bridgedLegs.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-          {bridgedLegs.map((leg) => (
-            <span
-              key={leg.callSid}
-              className="inline-flex items-center gap-1.5 rounded-full bg-emerald-950/80 border border-emerald-400/40 px-2.5 py-0.5 text-[10.5px] font-bold text-emerald-200"
-            >
-              <span>🟢 {leg.label} ({prettyClientPhone(leg.phone)})</span>
-              <button
-                type="button"
-                onClick={() => {
-                  setBridgedLegs((prev) => prev.filter((x) => x.callSid !== leg.callSid))
-                  fetch("/api/connectin/voice/conference-add", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      action: "hangup_participant",
-                      callSid: leg.callSid,
-                    }),
-                  }).catch(() => {})
-                }}
-                className="text-rose-300 hover:text-white cursor-pointer"
-                title="Remove this phone from call"
-              >
-                ✕
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
 
       {showQrModal && (
         <div className="rounded-xl bg-slate-950/95 border border-emerald-500/40 p-3 flex flex-col sm:flex-row items-center justify-between gap-3">
@@ -1320,20 +579,9 @@ export function ConnectLnInlineCellBridgeBar({
             />
             <div className="space-y-1">
               <p className="text-xs font-extrabold text-white">
-                Scan with Phone Camera or Share Link to Enable Recipient Video:
+                Scan with Phone Camera to Join Free Internet Video Call:
               </p>
               <p className="text-[11px] text-slate-300 font-mono break-all">{effectiveJoinUrl}</p>
-              <button
-                type="button"
-                onClick={() => {
-                  navigator.clipboard?.writeText(effectiveJoinUrl).catch(() => {})
-                  setStatusNote("✓ Copied direct mobile camera link!")
-                }}
-                className="rounded-md bg-emerald-600 hover:bg-emerald-500 px-2.5 py-1 text-[11px] font-bold text-white inline-flex items-center gap-1 cursor-pointer"
-              >
-                <Copy className="h-3 w-3" />
-                <span>Copy Camera Link</span>
-              </button>
             </div>
           </div>
           <button

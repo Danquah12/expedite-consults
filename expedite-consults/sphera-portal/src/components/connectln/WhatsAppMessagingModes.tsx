@@ -775,26 +775,8 @@ export function WhatsAppModeWorkspace({
         if (!ensureVerifiedCallerBeforeCalling()) return;
         const clean = resolveDialTarget(rawTarget);
         if (!clean) return;
-        const isNum = looksLikeClientPhone(clean);
-        try {
-            const qs = new URLSearchParams(
-                isNum ? { phone: clean } : { name: clean }
-            );
-            const res = await fetch(`/api/connectin/calls/whatsapp?${qs.toString()}`, {
-                cache: 'no-store',
-            });
-            const data = await res.json();
-            if (data?.lookup?.isRegisteredOnConnectLn) {
-                launchWhatsAppDirectCall(
-                    data.lookup.member?.name || clean,
-                    'audio',
-                    data.lookup.member?.avatar || avatarOverride
-                );
-                return;
-            }
-        } catch {}
-        // Automatic Hybrid Fallback: if number is not registered on ConnectLn yet, ring their carrier SIM directly!
-        launchCellPhoneCall(clean, avatarOverride);
+        // 100% Free Internet Voice Call ($0.00 Twilio cost) + User-Borne SIM/SMS Handoff inside the call screen
+        launchWhatsAppDirectCall(clean, 'audio', avatarOverride);
     };
 
     const launchCellPhoneCall = (rawTarget: string, avatarOverride?: string) => {

@@ -12,7 +12,6 @@ import {
   normalizeDialablePhone,
   looksLikePhoneNumber,
   formatPrettyPhoneDisplay,
-  mintTwilioVoiceAccessToken,
 } from "@/lib/connectin-twilio-voice"
 import { connectinDb } from "@/lib/connectin-db"
 import { upsertCloudUser } from "@/lib/connectin-cloud-sync"
@@ -449,10 +448,10 @@ export async function POST(req: NextRequest) {
         callerPhone
       )}&invitedName=${encodeURIComponent(recipientName)}&autoAnswer=1`
 
-      // 1. Wake up recipient's phone immediately via Web Push (`public/sw.js`),
-      // 2. Await instant mobile Email/SMS Camera Link push (so Vercel never freezes before delivery),
-      // 3. Mint carrier voice token in parallel so physical cell phone SIM rings immediately if Web Push isn't enabled on their phone yet!
-      const [pushRes, ringCellData, voiceTokenData] = await Promise.all([
+      // 100% Pure Internet Call Signaling ($0.00 Twilio Voice & $0.00 Twilio SMS):
+      // Wake up recipient's ConnectLn devices via Web Push (`public/sw.js`) + free Email alert,
+      // and return `sms:`, `tel:`, and `wa.me` URIs for user-borne SIM/SMS handoff if recipient is offline!
+      const [pushRes, ringCellData] = await Promise.all([
         recipientLookup.member
           ? sendIncomingCallWebPush({
               member: recipientLookup.member,
@@ -475,14 +474,10 @@ export async function POST(req: NextRequest) {
             callerEmail: callerEmail || undefined,
             callMode,
             joinUrl,
-            placeAlertCall: false,
           }),
         })
           .then((r) => r.json())
           .catch(() => null),
-        recipientPhone
-          ? mintTwilioVoiceAccessToken(callerEmail || callerName || "connectln_caller").catch(() => null)
-          : Promise.resolve(null),
       ])
 
       const pushDeliveredCount = pushRes.deliveredCount
@@ -491,10 +486,14 @@ export async function POST(req: NextRequest) {
       const digits = recipientPhone.replace(/[^\d]/g, "")
       const shareText = `${
         callMode === "video" ? "📹" : "📞"
-      } ${callerName} is calling you on ConnectLn! Tap to answer live: ${joinUrl}`
+      } ${callerName} is calling you on ConnectLn (Free Internet ${
+        callMode === "video" ? "Video" : "Voice"
+      } Call)! Tap to answer live: ${joinUrl}`
 
       return NextResponse.json({
         ok: true,
+        internetOnly: true,
+        userBorneCarrierHandoff: true,
         callId,
         callMode,
         joinUrl,
@@ -503,8 +502,7 @@ export async function POST(req: NextRequest) {
         mobilePushDeliveredCount: pushRes.mobileDeliveredCount,
         pushAttemptedCount,
         emailAlertSent: Boolean(ringCellData?.emailSent),
-        smsAlertSent: Boolean(ringCellData?.smsSent),
-        carrierVoiceToken: voiceTokenData?.token || undefined,
+        smsAlertSent: false,
         recipient: {
           name: recipientName,
           phone: recipientPhone,
@@ -515,9 +513,10 @@ export async function POST(req: NextRequest) {
         whatsappShareUrl: digits
           ? `https://wa.me/${digits}?text=${encodeURIComponent(shareText)}`
           : `https://wa.me/?text=${encodeURIComponent(shareText)}`,
-        nativeSmsHref: digits
-          ? `sms:+${digits}?&body=${encodeURIComponent(shareText)}`
+        nativeSmsHref: recipientPhone
+          ? `sms:${recipientPhone}?&body=${encodeURIComponent(shareText)}`
           : `sms:?&body=${encodeURIComponent(shareText)}`,
+        nativeTelHref: recipientPhone ? `tel:${recipientPhone}` : "",
       })
     }
 

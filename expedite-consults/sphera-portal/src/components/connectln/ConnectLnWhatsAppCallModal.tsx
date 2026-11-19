@@ -695,6 +695,7 @@ export function ConnectLnWhatsAppCallModal({
   const [joinLinkUrl, setJoinLinkUrl] = useState<string>("")
   const [whatsappShareUrl, setWhatsappShareUrl] = useState<string>("")
   const [nativeSmsHref, setNativeSmsHref] = useState<string>("")
+  const [nativeTelHref, setNativeTelHref] = useState<string>("")
   const [pushBannerNote, setPushBannerNote] = useState<string>("")
 
   const [localPeerUid] = useState<string>(() => {
@@ -765,24 +766,7 @@ export function ConnectLnWhatsAppCallModal({
     setIsVideoOn(initialMode === "video")
   }, [initialMode, open])
 
-  const hangupBrowserConferenceConnection = useCallback(() => {
-    try {
-      if (pstnConferenceCallRef.current) {
-        pstnConferenceCallRef.current.disconnect?.()
-        pstnConferenceCallRef.current = null
-      }
-    } catch {}
-    try {
-      if (pstnDeviceRef.current) {
-        pstnDeviceRef.current.destroy?.()
-        pstnDeviceRef.current = null
-      }
-    } catch {}
-    isJoiningConfRef.current = false
-  }, [])
-
   const stopAllMedia = useCallback(() => {
-    hangupBrowserConferenceConnection()
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((t) => t.stop())
       localStreamRef.current = null
@@ -801,61 +785,7 @@ export function ConnectLnWhatsAppCallModal({
       } catch {}
       peerRef.current = null
     }
-  }, [hangupBrowserConferenceConnection])
-
-  const ensureBrowserJoinedTwilioConference = useCallback(
-    async (conferenceName: string, providedJwt?: string) => {
-      if (pstnConferenceCallRef.current || isJoiningConfRef.current) return
-      isJoiningConfRef.current = true
-      try {
-        let jwt = providedJwt || cachedVoiceTokenRef.current
-        if (!jwt) {
-          const qs = new URLSearchParams({
-            identity: callerEmail || callerName || "connectln_host",
-          })
-          const r = await fetch(`/api/connectin/voice/token?${qs.toString()}`, {
-            cache: "no-store",
-          })
-          const d = await r.json()
-          jwt = d?.token || ""
-        }
-        if (!jwt) {
-          isJoiningConfRef.current = false
-          return
-        }
-        cachedVoiceTokenRef.current = jwt
-
-        const { Device } = await import("@twilio/voice-sdk")
-        const device = new Device(jwt, {
-          codecPreferences: ["opus", "pcmu"] as any,
-          enableImprovedSignalingErrorPrecision: true,
-        })
-        pstnDeviceRef.current = device
-
-        const confCall = await device.connect({
-          params: {
-            ConferenceRoom: conferenceName,
-            CallerName: callerName,
-          },
-        })
-        pstnConferenceCallRef.current = confCall
-        if (isMicMuted) {
-          try {
-            confCall.mute?.(true)
-          } catch {}
-        }
-        confCall.on("disconnect", () => {
-          pstnConferenceCallRef.current = null
-          isJoiningConfRef.current = false
-        })
-      } catch (err: any) {
-        console.warn("[ConnectLn Conference Audio] notice:", err?.message)
-      } finally {
-        isJoiningConfRef.current = false
-      }
-    },
-    [callerEmail, callerName, isMicMuted]
-  )
+  }, [])
 
   const addPersonToActiveCall = useCallback(
     async (params: {
@@ -885,7 +815,6 @@ export function ConnectLnWhatsAppCallModal({
             targetName: params.targetName,
             targetEmail: params.targetEmail,
             targetAvatar: params.targetAvatar,
-            forceCellSim: params.forceCellSim,
           }),
         })
         const data = await res.json()
@@ -894,12 +823,10 @@ export function ConnectLnWhatsAppCallModal({
           return data
         }
 
-        if (data.carrierVoiceToken) {
-          cachedVoiceTokenRef.current = data.carrierVoiceToken
-        }
         if (data.joinUrl) setJoinLinkUrl(data.joinUrl)
         if (data.whatsappShareUrl) setWhatsappShareUrl(data.whatsappShareUrl)
         if (data.nativeSmsHref) setNativeSmsHref(data.nativeSmsHref)
+        if (data.nativeTelHref) setNativeTelHref(data.nativeTelHref)
 
         const addedName = data.recipient?.name || params.targetName || "Participant"
         const addedPhone = data.recipient?.phone || params.targetPhone || ""
@@ -911,124 +838,52 @@ export function ConnectLnWhatsAppCallModal({
           name: addedName,
         })
 
-        if (data.cellCallSid && data.conferenceName) {
-          // Connect our browser mic/speaker into the shared Twilio `<Conference>` room and track this cell leg!
-          void ensureBrowserJoinedTwilioConference(data.conferenceName, data.carrierVoiceToken)
-
-          setCellLegs((prev) => {
-            const filtered = prev.filter(
-              (l) => l.id !== legKey && (!addedPhone || l.phone !== addedPhone) && l.callSid !== data.cellCallSid
-            )
-            return [
-              ...filtered,
-              {
-                id: legKey,
-                callSid: data.cellCallSid,
-                name: addedName,
-                phone: addedPhone,
-                email: addedEmail,
-                avatar: addedAvatar,
-                status: "ringing",
-              },
-            ]
-          })
-          setCallStatus((prev) => (prev === "connected" ? "connected" : "ringing"))
-          setPushBannerNote(
-            isVideoOn
-              ? `📱 Ringing ${addedName} (${prettyClientPhone(addedPhone)}) + sent Camera Link!`
-              : `📱 Ringing ${addedName} (${prettyClientPhone(addedPhone)})...`
-          )
-          setAddFeedbackMsg(
-            `✓ Ringing ${addedName}'s phone (${prettyClientPhone(addedPhone)})${
-              isVideoOn ? " & sent Camera Link!" : "!"
-            }`
-          )
-        } else {
-          // Keep invited ConnectLn / video-ringing participant visible in the group grid!
-          setCellLegs((prev) => {
-            const existing = prev.find((l) => l.id === legKey || (addedPhone && l.phone === addedPhone))
-            if (existing && (existing.status === "ringing" || existing.status === "in-progress")) {
-              return prev
-            }
-            const filtered = prev.filter((l) => l.id !== legKey && (!addedPhone || l.phone !== addedPhone))
-            return [
-              ...filtered,
-              {
-                id: legKey,
-                name: addedName,
-                phone: addedPhone,
-                email: addedEmail,
-                avatar: addedAvatar,
-                status: "invited",
-              },
-            ]
-          })
-          setCallStatus((prev) => (prev === "connected" ? "connected" : "ringing"))
-          setPushBannerNote(
-            isVideoOn
-              ? `📹 Ringing ${addedName}'s ConnectLn Camera...`
-              : `🔔 Ringing ${addedName} on ConnectLn...`
-          )
-          setAddFeedbackMsg(
-            data.mobilePushDeliveredCount > 0 || data.emailAlertSent
-              ? `✓ Ringing ${addedName} on ConnectLn Video & sent mobile Camera Link!`
-              : `✓ Ringing ${addedName} on ConnectLn!`
-          )
-
-          // Smart 6s Video Call Escalation: give ConnectLn Camera Ringing 6 seconds first so GSM voice doesn't hijack their camera;
-          // if they still haven't answered with camera after 6s (e.g. phone locked without ConnectLn open), ring their cell SIM too!
-          const normAdded = addedPhone ? normalizeClientPhone(addedPhone) : ""
-          const isDemo555 = /^\+1\d{3}555\d{4}$/.test(normAdded)
-          if (
-            isVideoOn &&
-            !params.forceCellSim &&
-            normAdded &&
-            looksLikeClientPhone(normAdded) &&
-            !isDemo555 &&
-            Number(data.mobilePushDeliveredCount || 0) === 0
-          ) {
-            window.setTimeout(() => {
-              const joinedOnVideo = remoteWebRtcPeersRef.current.some((mp) => {
-                const mpDigits = (mp.phone || "").replace(/[^\d]/g, "")
-                const legDigits = normAdded.replace(/[^\d]/g, "")
-                if (mpDigits.length >= 7 && legDigits.length >= 7 && mpDigits.slice(-10) === legDigits.slice(-10)) {
-                  return true
-                }
-                return mp.name.trim().toLowerCase() === addedName.trim().toLowerCase() &&
-                  addedName.trim().toLowerCase() !== callerName.trim().toLowerCase()
-              })
-              const stillWaiting = cellLegsRef.current.some(
-                (l) => l.id === legKey && !l.callSid && l.status === "invited"
-              )
-              if (!joinedOnVideo && stillWaiting) {
-                void addPersonToActiveCall({
-                  targetPhone: normAdded,
-                  targetName: addedName,
-                  targetEmail: addedEmail || undefined,
-                  targetAvatar: addedAvatar || undefined,
-                  forceCellSim: true,
-                })
-              }
-            }, 6000)
+        // Keep invited ConnectLn internet participant visible in the group grid ($0.00 WebRTC Internet Call)!
+        setCellLegs((prev) => {
+          const existing = prev.find((l) => l.id === legKey || (addedPhone && l.phone === addedPhone))
+          if (existing && (existing.status === "ringing" || existing.status === "in-progress")) {
+            return prev
           }
+          const filtered = prev.filter((l) => l.id !== legKey && (!addedPhone || l.phone !== addedPhone))
+          return [
+            ...filtered,
+            {
+              id: legKey,
+              name: addedName,
+              phone: addedPhone,
+              email: addedEmail,
+              avatar: addedAvatar,
+              status: "invited",
+            },
+          ]
+        })
+        setCallStatus((prev) => (prev === "connected" ? "connected" : "ringing"))
+
+        if (data.isRegisteredOnConnectLn) {
+          setPushBannerNote(
+            isVideoOn
+              ? `📹 Ringing ${addedName} over ConnectLn Internet (100% Free Wi-Fi / Data)...`
+              : `🔔 Ringing ${addedName} over ConnectLn Internet (100% Free Wi-Fi / Data)...`
+          )
+          setAddFeedbackMsg(`✓ Ringing ${addedName} free over ConnectLn Internet!`)
+        } else {
+          setPushBannerNote(
+            `🌐 ${addedName} isn't online on ConnectLn yet — send the Free Internet Call Link from your phone or dial via your own SIM below.`
+          )
+          setAddFeedbackMsg(
+            `✓ Internet room ready! Send the free call link to ${addedName} via your SMS/WhatsApp or dial using your own SIM.`
+          )
         }
+
         return data
       } catch {
-        setAddFeedbackMsg("Network error while adding participant.")
+        setAddFeedbackMsg("Network error while ringing participant over internet.")
         return null
       } finally {
         setIsAddingPerson(false)
       }
     },
-    [
-      callId,
-      callerAvatar,
-      callerEmail,
-      callerName,
-      ensureBrowserJoinedTwilioConference,
-      isVideoOn,
-      localPeerUid,
-    ]
+    [callId, callerAvatar, callerEmail, callerName, isVideoOn, localPeerUid]
   )
 
   const removeCellLegParticipant = useCallback(
@@ -1242,107 +1097,6 @@ export function ConnectLnWhatsAppCallModal({
       stopAllMedia()
     }
   }, [open, callId])
-
-  // Poll live Twilio `<Conference>` cell leg statuses (`ringing` -> `in-progress` -> `unanswered`, NEVER silently deleting tiles!)
-  useEffect(() => {
-    if (!open || cellLegs.length === 0) return
-    const activeSids = cellLegs
-      .filter(
-        (l) =>
-          l.callSid &&
-          (l.status === "dialing" || l.status === "ringing" || l.status === "in-progress")
-      )
-      .map((l) => l.callSid!)
-    if (activeSids.length === 0) return
-
-    const pollCellStatuses = async () => {
-      try {
-        const res = await fetch("/api/connectin/voice/conference-add", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "status", callSids: activeSids }),
-        })
-        const data = await res.json()
-        const statuses = data?.statuses || {}
-        const rosterSyncUpdates: any[] = []
-
-        setCellLegs((prev) => {
-          const next: ConferenceCellLeg[] = []
-          for (const leg of prev) {
-            const st = leg.callSid ? statuses[leg.callSid]?.status : undefined
-            if (
-              st === "completed" ||
-              st === "canceled" ||
-              st === "busy" ||
-              st === "no-answer" ||
-              st === "failed"
-            ) {
-              // NEVER vanish silently! Keep participant tile visible with 1-tap `Redial`!
-              const updatedLeg: ConferenceCellLeg = {
-                ...leg,
-                callSid: undefined,
-                status: "unanswered",
-              }
-              rosterSyncUpdates.push({
-                id: leg.id,
-                name: leg.name,
-                phone: leg.phone,
-                email: leg.email,
-                avatar: leg.avatar,
-                status: "unanswered",
-                callSid: "",
-                updated_at_ms: Date.now(),
-              })
-              next.push(updatedLeg)
-              continue
-            }
-            if (st === "in-progress") {
-              setCallStatus("connected")
-              if (leg.status !== "in-progress") {
-                rosterSyncUpdates.push({
-                  id: leg.id,
-                  name: leg.name,
-                  phone: leg.phone,
-                  email: leg.email,
-                  avatar: leg.avatar,
-                  status: "in-progress",
-                  callSid: leg.callSid,
-                  updated_at_ms: Date.now(),
-                })
-              }
-              next.push({ ...leg, status: "in-progress" })
-            } else {
-              next.push(leg)
-            }
-          }
-          const anyActiveSim = next.some(
-            (l) => l.status === "dialing" || l.status === "ringing" || l.status === "in-progress"
-          )
-          if (!anyActiveSim) {
-            hangupBrowserConferenceConnection()
-          }
-          return next
-        })
-
-        if (rosterSyncUpdates.length > 0) {
-          fetch("/api/v1/calls", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              action: "upsert_invitee",
-              call_id: callId,
-              user_id: localPeerUid,
-              display_name: callerName,
-              invited_roster_updates: rosterSyncUpdates,
-            }),
-          }).catch(() => {})
-        }
-      } catch {}
-    }
-
-    const interval = window.setInterval(pollCellStatuses, 2600)
-    return () => window.clearInterval(interval)
-  }, [open, cellLegs, callId, callerName, localPeerUid, hangupBrowserConferenceConnection])
 
   // Duration clock once connected
   useEffect(() => {
@@ -1807,25 +1561,11 @@ export function ConnectLnWhatsAppCallModal({
       localStreamRef.current?.getAudioTracks().forEach((t) => {
         t.enabled = !next
       })
-      try {
-        pstnConferenceCallRef.current?.mute?.(next)
-      } catch {}
       return next
     })
   }
 
   const handleHangup = () => {
-    const activeCellSids = cellLegsRef.current
-      .map((l) => l.callSid)
-      .filter((s): s is string => Boolean(s))
-    if (activeCellSids.length > 0) {
-      fetch("/api/connectin/voice/conference-add", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        keepalive: true,
-        body: JSON.stringify({ action: "end_all", callSids: activeCellSids }),
-      }).catch(() => {})
-    }
     fetch("/api/v1/calls", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1980,7 +1720,7 @@ export function ConnectLnWhatsAppCallModal({
               )
             })}
 
-            {/* Bridged Physical Cell Phone & Invited ConnectLn Participant Tiles */}
+            {/* Invited ConnectLn Internet Participant Tiles (+ User-Borne SIM/SMS Handoff) */}
             {cellLegs.map((leg) => {
               const legDigits = (leg.phone || "").replace(/[^\d]/g, "")
               const legCamLink =
@@ -1990,11 +1730,18 @@ export function ConnectLnWhatsAppCallModal({
                 }/connectin?waCall=${encodeURIComponent(callId)}&mode=${
                   isVideoOn ? "video" : "audio"
                 }&invitedName=${encodeURIComponent(leg.name)}&autoAnswer=1`
+              const legInviteBody = `${
+                isVideoOn ? "📹" : "📞"
+              } ${callerName} is calling you on ConnectLn (Free Internet ${
+                isVideoOn ? "Video" : "Voice"
+              } Call)! Tap to join live: ${legCamLink}`
               const legSmsHref = legDigits
-                ? `sms:+${legDigits}?&body=${encodeURIComponent(
-                    `📹 ${callerName} is in a live ConnectLn video call with you! Tap to turn on your camera: ${legCamLink}`
-                  )}`
+                ? `sms:+${legDigits}?&body=${encodeURIComponent(legInviteBody)}`
                 : ""
+              const legWaHref = legDigits
+                ? `https://wa.me/${legDigits}?text=${encodeURIComponent(legInviteBody)}`
+                : ""
+              const legTelHref = legDigits ? `tel:+${legDigits}` : ""
 
               return (
                 <div
@@ -2039,38 +1786,57 @@ export function ConnectLnWhatsAppCallModal({
                         : "bg-amber-500/20 text-amber-200 border border-amber-400/40"
                     }`}
                   >
-                    {leg.status === "in-progress" && "🟢 Cell Phone Connected"}
-                    {(leg.status === "ringing" || leg.status === "dialing") && "📱 Ringing Cell..."}
-                    {leg.status === "invited" && "🔔 Ringing on ConnectLn"}
-                    {leg.status === "unanswered" && "📞 Unanswered · Tap Redial"}
+                    {leg.status === "in-progress" && "🟢 Connected (Free Internet)"}
+                    {(leg.status === "ringing" || leg.status === "dialing" || leg.status === "invited") &&
+                      "🔔 Ringing on ConnectLn Internet"}
+                    {leg.status === "unanswered" && "🔔 Waiting to Join"}
                   </span>
 
                   <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5 z-20">
-                    {(leg.status === "unanswered" || (leg.status === "invited" && leg.phone)) && (
-                      <button
-                        type="button"
-                        disabled={isAddingPerson}
-                        onClick={() =>
-                          addPersonToActiveCall({
-                            targetPhone: leg.phone || undefined,
-                            targetName: leg.name,
-                            targetEmail: leg.email || undefined,
-                            targetAvatar: leg.avatar || undefined,
-                            forceCellSim: Boolean(leg.phone),
-                          })
-                        }
-                        style={{ color: "#FFFFFF" }}
-                        className="rounded-lg bg-emerald-600 hover:bg-emerald-500 px-2.5 py-1 text-[10.5px] font-extrabold cursor-pointer"
-                      >
-                        {leg.status === "unanswered" ? "🔄 Redial" : "📞 Ring Cell"}
-                      </button>
-                    )}
-                    {isVideoOn && legSmsHref && (
+                    <button
+                      type="button"
+                      disabled={isAddingPerson}
+                      onClick={() =>
+                        addPersonToActiveCall({
+                          targetPhone: leg.phone || undefined,
+                          targetName: leg.name,
+                          targetEmail: leg.email || undefined,
+                          targetAvatar: leg.avatar || undefined,
+                        })
+                      }
+                      style={{ color: "#FFFFFF" }}
+                      className="rounded-lg bg-emerald-600 hover:bg-emerald-500 px-2.5 py-1 text-[10.5px] font-extrabold cursor-pointer"
+                      title="Ring again over ConnectLn Internet ($0.00)"
+                    >
+                      🔄 Ring Again
+                    </button>
+                    {legSmsHref && (
                       <a
                         href={legSmsHref}
                         className="rounded-lg bg-sky-700 hover:bg-sky-600 px-2.5 py-1 text-[10.5px] font-extrabold text-white no-underline"
+                        title="Send free internet call link using your own phone SMS"
                       >
-                        📲 Camera Link
+                        💬 My SMS Link
+                      </a>
+                    )}
+                    {legWaHref && (
+                      <a
+                        href={legWaHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-lg bg-emerald-800 hover:bg-emerald-700 px-2.5 py-1 text-[10.5px] font-extrabold text-white no-underline"
+                        title="Invite via WhatsApp ($0.00)"
+                      >
+                        🟢 WhatsApp
+                      </a>
+                    )}
+                    {legTelHref && (
+                      <a
+                        href={legTelHref}
+                        className="rounded-lg bg-[#7C4225] hover:bg-[#5E3119] px-2.5 py-1 text-[10.5px] font-extrabold text-white no-underline"
+                        title="Dial via your own device SIM plan ($0 ConnectLn fee)"
+                      >
+                        📞 My SIM
                       </a>
                     )}
                   </div>
@@ -2080,7 +1846,7 @@ export function ConnectLnWhatsAppCallModal({
           </div>
         </div>
       ) : (
-        /* STAGE B: CLASSIC 1-ON-1 FULL-SCREEN WHATSAPP VIEW */
+        /* STAGE B: CLASSIC 1-ON-1 FULL-SCREEN WHATSAPP INTERNET CALL VIEW */
         <div className="absolute inset-0 bg-gradient-to-b from-[#071E1A] via-[#0B141A] to-[#060B0E]">
           {callStatus === "connected" && primaryPeer?.isVideoOn && primaryPeer.liveFrame && (
             <img
@@ -2118,12 +1884,9 @@ export function ConnectLnWhatsAppCallModal({
                 </p>
               )}
               <p className="mt-2 text-sm text-slate-300 font-medium">
-                {callStatus === "calling" && "Calling on ConnectLn..."}
-                {callStatus === "ringing" && "Ringing..."}
-                {callStatus === "connected" &&
-                  (remoteWebRtcPeers.length === 0 && cellLegs[0]?.status === "in-progress" && isVideoOn
-                    ? `${mins}:${secs} · Cell Voice Connected — Send Camera Link below to turn on their camera`
-                    : `${mins}:${secs} · Connected`)}
+                {callStatus === "calling" && "Calling over ConnectLn Internet (Free Wi-Fi / Data)..."}
+                {callStatus === "ringing" && "Ringing over ConnectLn Internet (Free)..."}
+                {callStatus === "connected" && `${mins}:${secs} · Connected (Free Internet E2EE)`}
                 {callStatus === "ended" && "Call Ended"}
               </p>
               {pushBannerNote && (
@@ -2132,47 +1895,50 @@ export function ConnectLnWhatsAppCallModal({
                 </p>
               )}
 
-              {/* Quick 1-Tap Camera Link & Ring Cell Actions when recipient hasn't opened ConnectLn Video yet */}
+              {/* User-Borne SIM & Native SMS/WhatsApp Free Link Handoff ($0.00 ConnectLn Cost) */}
               {!isIncomingAnswer && remoteWebRtcPeers.length === 0 && (
-                <div className="mt-4 flex flex-wrap items-center justify-center gap-2 max-w-md">
-                  {isVideoOn && nativeSmsHref && (
+                <div className="mt-4 flex flex-wrap items-center justify-center gap-2 max-w-lg">
+                  {nativeSmsHref && (
                     <a
                       href={nativeSmsHref}
                       className="rounded-xl bg-sky-700 hover:bg-sky-600 px-3.5 py-2 text-xs font-extrabold text-white no-underline shadow-md"
+                      title="Sends the free internet call link from your own phone's SMS app"
                     >
-                      💬 Text Camera Link
+                      💬 Send Free Call Link (My SMS)
                     </a>
                   )}
-                  {isVideoOn && whatsappShareUrl && (
+                  {whatsappShareUrl && (
                     <a
                       href={whatsappShareUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="rounded-xl bg-emerald-700 hover:bg-emerald-600 px-3.5 py-2 text-xs font-extrabold text-white no-underline shadow-md"
                     >
-                      🟢 Send Camera Link on WhatsApp
+                      🟢 Invite on WhatsApp
                     </a>
                   )}
-                  {recipientPhone &&
-                    (cellLegs[0]?.status === "invited" || cellLegs[0]?.status === "unanswered") && (
-                      <button
-                        type="button"
-                        disabled={isAddingPerson}
-                        onClick={() =>
-                          addPersonToActiveCall({
-                            targetPhone: recipientPhone,
-                            targetName: primaryName,
-                            targetEmail,
-                            targetAvatar: recipientAvatar,
-                            forceCellSim: true,
-                          })
-                        }
-                        style={{ color: "#FFFFFF" }}
-                        className="rounded-xl bg-[#7C4225] hover:bg-[#5E3119] px-3.5 py-2 text-xs font-extrabold cursor-pointer shadow-md"
-                      >
-                        {cellLegs[0]?.status === "unanswered" ? "🔄 Redial Cell Phone" : "📞 Ring Cell Voice Now"}
-                      </button>
-                    )}
+                  {joinLinkUrl && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard?.writeText(joinLinkUrl).catch(() => {})
+                        setPushBannerNote("✓ Copied free internet call link! Paste anywhere for instant Wi-Fi/Data calling.")
+                      }}
+                      className="rounded-xl bg-slate-800 hover:bg-slate-700 border border-white/15 px-3.5 py-2 text-xs font-extrabold text-white cursor-pointer shadow-md flex items-center gap-1"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                      <span>Copy Call Link</span>
+                    </button>
+                  )}
+                  {(nativeTelHref || recipientPhone) && (
+                    <a
+                      href={nativeTelHref || `tel:${normalizeClientPhone(recipientPhone)}`}
+                      className="rounded-xl bg-[#7C4225] hover:bg-[#5E3119] px-3.5 py-2 text-xs font-extrabold text-white no-underline shadow-md"
+                      title="Dials directly using your own mobile carrier SIM plan ($0 ConnectLn charge)"
+                    >
+                      📞 Dial Using My Own SIM
+                    </a>
+                  )}
                 </div>
               )}
             </div>
@@ -2280,7 +2046,6 @@ export function ConnectLnWhatsAppCallModal({
               await addPersonToActiveCall({
                 targetPhone: looksLikeClientPhone(dialTarget) ? dialTarget : undefined,
                 targetName: dialTarget,
-                forceCellSim: !isVideoOn && looksLikeClientPhone(dialTarget),
               })
             }}
             className="flex flex-wrap items-center gap-1.5 bg-[#0B141A] border border-white/15 rounded-2xl p-2"
@@ -2405,12 +2170,12 @@ export function ConnectLnWhatsAppCallModal({
         </div>
       )}
 
-      {/* OPTIONAL INVITE / HYBRID CARRIER FALLBACK DRAWER */}
+      {/* OPTIONAL INVITE / USER-BORNE CARRIER SIM HANDOFF DRAWER */}
       {showShareSheet && (
         <div className="fixed inset-x-0 bottom-22 z-40 mx-auto w-[92vw] max-w-md rounded-2xl bg-[#111B21]/95 border border-emerald-500/40 p-3.5 shadow-2xl space-y-2.5">
           <div className="flex items-center justify-between">
             <p className="text-xs font-extrabold text-emerald-300">
-              Share Group Call Link or Bridge Carrier SIM
+              Free Internet Call Link &amp; My SIM Handoff
             </p>
             <button
               type="button"
@@ -2436,7 +2201,7 @@ export function ConnectLnWhatsAppCallModal({
                 href={nativeSmsHref}
                 className="rounded-xl bg-sky-700 hover:bg-sky-600 px-3 py-2 text-xs font-bold text-white no-underline"
               >
-                💬 Send via SMS
+                💬 Send via My SMS
               </a>
             )}
             {joinLinkUrl && (
@@ -2444,7 +2209,7 @@ export function ConnectLnWhatsAppCallModal({
                 type="button"
                 onClick={() => {
                   navigator.clipboard?.writeText(joinLinkUrl).catch(() => {})
-                  setPushBannerNote("✓ Copied direct video call link!")
+                  setPushBannerNote("✓ Copied free internet call link!")
                   setShowShareSheet(false)
                 }}
                 className="rounded-xl bg-slate-800 hover:bg-slate-700 border border-white/15 px-3 py-2 text-xs font-bold text-white flex items-center gap-1 cursor-pointer"
@@ -2453,19 +2218,15 @@ export function ConnectLnWhatsAppCallModal({
                 <span>Copy Link</span>
               </button>
             )}
-            {onBridgeCarrierFallback && (
-              <button
-                type="button"
-                onClick={() => {
-                  const target = recipientPhone || targetLabel
-                  handleHangup()
-                  onBridgeCarrierFallback(target)
-                }}
-                className="rounded-xl bg-[#7C4225] hover:bg-[#5E3119] px-3 py-2 text-xs font-bold text-white flex items-center gap-1 cursor-pointer"
+            {(nativeTelHref || recipientPhone) && (
+              <a
+                href={nativeTelHref || `tel:${normalizeClientPhone(recipientPhone)}`}
+                className="rounded-xl bg-[#7C4225] hover:bg-[#5E3119] px-3 py-2 text-xs font-bold text-white flex items-center gap-1 no-underline"
+                title="Uses your own mobile carrier SIM plan ($0 ConnectLn charge)"
               >
                 <Phone className="h-3.5 w-3.5" />
-                <span>Open Keypad Dialer</span>
-              </button>
+                <span>Dial via My SIM</span>
+              </a>
             )}
           </div>
         </div>

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
 import {
-  mintTwilioVoiceAccessToken,
   resolveRecipientCellPhone,
   saveContactPhoneMapping,
   formatPrettyPhoneDisplay,
@@ -9,26 +8,28 @@ import {
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
+/**
+ * Contact Phone Lookup & Mapping Endpoint (100% Internet Calling Mode — Zero Twilio PSTN Voice Tokens).
+ */
 export async function GET(req: NextRequest) {
   try {
     const sp = req.nextUrl.searchParams
-    const callerIdentity = sp.get("identity") || "connectln_caller"
     const targetPhone = sp.get("targetPhone") || ""
     const targetName = sp.get("targetName") || ""
     const targetEmail = sp.get("targetEmail") || ""
 
-    const [tokenInfo, recipientInfo] = await Promise.all([
-      mintTwilioVoiceAccessToken(callerIdentity),
-      resolveRecipientCellPhone({ targetPhone, targetName, targetEmail }),
-    ])
+    const recipientInfo = await resolveRecipientCellPhone({
+      targetPhone,
+      targetName,
+      targetEmail,
+    })
 
     return NextResponse.json(
       {
         ok: true,
-        token: tokenInfo.token,
-        identity: tokenInfo.identity,
-        callerId: tokenInfo.callerId,
-        twimlAppSid: tokenInfo.twimlAppSid,
+        internetOnly: true,
+        userBorneCarrierHandoff: true,
+        token: null,
         resolvedPhone: recipientInfo.resolvedPhone,
         prettyPhone: recipientInfo.resolvedPhone
           ? formatPrettyPhoneDisplay(recipientInfo.resolvedPhone)
@@ -40,7 +41,7 @@ export async function GET(req: NextRequest) {
   } catch (err: any) {
     console.error("[voice/token GET] error:", err)
     return NextResponse.json(
-      { ok: false, error: err?.message || "Failed to mint Twilio Voice Softphone token" },
+      { ok: false, error: err?.message || "Failed to resolve contact phone" },
       { status: 500 }
     )
   }
@@ -49,7 +50,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}))
-    const action = body?.action || "mint_token"
+    const action = body?.action || "resolve_phone"
 
     if (action === "save_contact_phone") {
       const savedPhone = await saveContactPhoneMapping({
@@ -63,31 +64,27 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         )
       }
-      const tokenInfo = await mintTwilioVoiceAccessToken(body?.identity || "connectln_caller")
       return NextResponse.json({
         ok: true,
+        internetOnly: true,
+        userBorneCarrierHandoff: true,
         savedPhone,
         prettyPhone: formatPrettyPhoneDisplay(savedPhone),
-        token: tokenInfo.token,
-        identity: tokenInfo.identity,
-        callerId: tokenInfo.callerId,
+        token: null,
       })
     }
 
-    const [tokenInfo, recipientInfo] = await Promise.all([
-      mintTwilioVoiceAccessToken(body?.identity || "connectln_caller"),
-      resolveRecipientCellPhone({
-        targetPhone: body?.targetPhone,
-        targetName: body?.targetName,
-        targetEmail: body?.targetEmail,
-      }),
-    ])
+    const recipientInfo = await resolveRecipientCellPhone({
+      targetPhone: body?.targetPhone,
+      targetName: body?.targetName,
+      targetEmail: body?.targetEmail,
+    })
 
     return NextResponse.json({
       ok: true,
-      token: tokenInfo.token,
-      identity: tokenInfo.identity,
-      callerId: tokenInfo.callerId,
+      internetOnly: true,
+      userBorneCarrierHandoff: true,
+      token: null,
       resolvedPhone: recipientInfo.resolvedPhone,
       prettyPhone: recipientInfo.resolvedPhone
         ? formatPrettyPhoneDisplay(recipientInfo.resolvedPhone)
@@ -97,7 +94,7 @@ export async function POST(req: NextRequest) {
   } catch (err: any) {
     console.error("[voice/token POST] error:", err)
     return NextResponse.json(
-      { ok: false, error: err?.message || "Voice token request failed" },
+      { ok: false, error: err?.message || "Contact phone lookup failed" },
       { status: 500 }
     )
   }

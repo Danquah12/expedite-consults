@@ -133,53 +133,13 @@ function getTwilioCallsAuthHeader(): string | null {
 }
 
 async function getCachedTwilioIceServers(): Promise<any[]> {
-  const fallbackStun = [
+  // 100% Free Internet WebRTC STUN Discovery ($0.00 TURN relay fees — never calls Twilio paid Tokens.json)
+  return [
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
+    { urls: "stun:stun2.l.google.com:19302" },
     { urls: "stun:stun.cloudflare.com:3478" },
   ]
-  const nowMs = Date.now()
-  if (
-    globalForCalls.__vibeTwilioIceCache &&
-    nowMs - globalForCalls.__vibeTwilioIceCache.fetchedAtMs < 25 * 60 * 1000
-  ) {
-    return globalForCalls.__vibeTwilioIceCache.iceServers
-  }
-  const sid = process.env.TWILIO_ACCOUNT_SID || ""
-  const auth = getTwilioCallsAuthHeader()
-  if (!sid || !auth) return fallbackStun
-
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), 1400)
-  try {
-    const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Tokens.json`, {
-      method: "POST",
-      headers: {
-        Authorization: auth,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({ Ttl: "3600" }).toString(),
-      signal: controller.signal,
-    })
-    if (res.ok) {
-      const data = await res.json()
-      if (Array.isArray(data?.ice_servers) && data.ice_servers.length > 0) {
-        const normalized = data.ice_servers.map((s: any) => ({
-          urls: s.urls || s.url,
-          ...(s.username ? { username: s.username } : {}),
-          ...(s.credential ? { credential: s.credential } : {}),
-        }))
-        const combined = [...fallbackStun, ...normalized]
-        globalForCalls.__vibeTwilioIceCache = { iceServers: combined, fetchedAtMs: nowMs }
-        return combined
-      }
-    }
-  } catch {
-    // ignore timeout
-  } finally {
-    clearTimeout(timer)
-  }
-  return fallbackStun
 }
 
 function makeCloudParticipantKey(callId: string, userId: string): string {
