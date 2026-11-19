@@ -1823,6 +1823,29 @@ export function ConnectLnWhatsAppCallModal({
     })
   }
 
+  // WhatsApp-style: outgoing call that nobody answers ends automatically after 60s
+  // (prevents a forgotten tab from ringing the recipient for hours).
+  const remotePeerCountRef = useRef(0)
+  remotePeerCountRef.current = remoteWebRtcPeers.length
+  useEffect(() => {
+    if (!open || isIncomingAnswer) return
+    const t = window.setTimeout(() => {
+      if (remotePeerCountRef.current > 0) return
+      fetch("/api/v1/calls", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        keepalive: true,
+        body: JSON.stringify({ action: "end", call_id: callId, user_id: localPeerUid }),
+      }).catch(() => {})
+      setCallStatus("ended")
+      setPushBannerNote("No answer. Call ended after 60 seconds.")
+      stopAllMedia()
+      window.setTimeout(() => onClose(), 2500)
+    }, 60000)
+    return () => window.clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, isIncomingAnswer, callId])
+
   const handleHangup = () => {
     fetch("/api/v1/calls", {
       method: "POST",

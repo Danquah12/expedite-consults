@@ -2389,12 +2389,15 @@ export default function ConnectLnPage() {
       {/* Meeting reminders (15 / 30 min before scheduled meetings) */}
       <MeetingReminders onOpenMessaging={() => setActiveTab('messaging' as any)} />
       {/* Mandatory phone + 2FA for every account (incl. Google / Microsoft Entra ID SSO) */}
-      <ConnectLnPhoneVerificationGate
-        viewerName={userData?.name}
-        viewerEmail={userData?.email}
-        onSignOut={handleSignOut}
-      />
-      {/* Live Incoming Voice & Video Call Ringing Banner */}
+      {isAuthenticated === true && !isAuthModalOpen && (
+        <ConnectLnPhoneVerificationGate
+          viewerName={userData?.name}
+          viewerEmail={userData?.email}
+          onSignOut={handleSignOut}
+        />
+      )}
+      {/* Live Incoming Voice & Video Call Ringing Banner (signed-in users only) */}
+      {isAuthenticated === true && !isAuthModalOpen && (
       <ConnectLnIncomingCallBanner
         viewerName={userData?.name}
         viewerEmail={userData?.email}
@@ -2408,6 +2411,7 @@ export default function ConnectLnPage() {
           })
         }}
       />
+      )}
       {/* Global Full-Screen WhatsApp-Style Direct Voice & Video Call Modal */}
       {activeGlobalWhatsAppCall && (
         <ConnectLnWhatsAppCallModal
