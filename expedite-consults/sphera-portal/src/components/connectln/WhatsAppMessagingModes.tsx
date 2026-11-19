@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { PulseChannelFeed, fetchPulseChannelPosts, PulseChannelSource } from './PulseChannelFeed';
 import { B2BConversationThread } from '@/lib/b2b-messaging-data';
 import {
     ConnectLnCellPhoneSoftphoneModal,
@@ -425,18 +426,20 @@ const INITIAL_CHANNELS = [
     {
         id: 'chan_noctis_brief',
         name: 'Noctis Global Engineering & Trades Pulse',
-        followers: '148K followers',
+        followers: 'Live industry & security news',
         avatar: '/brand/connectln-icon-256.png',
-        lastUpdate: '🔔 New OSHA & ISO 2026 Automated Field Checklist released for all 15 enclaves.',
-        time: 'Today, 1:15 PM',
+        lastUpdate: 'Loading latest news…',
+        time: '',
+        source: 'news' as PulseChannelSource,
     },
     {
         id: 'chan_connectln_jobs',
         name: 'ConnectLn Verified High-Priority Bounties',
-        followers: '92K followers',
+        followers: 'Live jobs & contracts',
         avatar: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=150',
-        lastUpdate: '⚡ 14 new urgent enterprise & trade contracts posted this afternoon.',
-        time: 'Today, 11:40 AM',
+        lastUpdate: 'Loading latest bounties…',
+        time: '',
+        source: 'jobs' as PulseChannelSource,
     },
 ];
 
@@ -828,7 +831,30 @@ export function WhatsAppModeWorkspace({
     const [archivedReplyInput, setArchivedReplyInput] = useState('');
 
     // ---- CHANNELS STATE ----
-    const [channels] = useState(INITIAL_CHANNELS);
+    const [channels, setChannels] = useState(INITIAL_CHANNELS);
+    // Live previews: show each channel's newest real post in the list
+    useEffect(() => {
+        if (mode !== 'channels') return;
+        let cancelled = false;
+        INITIAL_CHANNELS.forEach((ch) => {
+            fetchPulseChannelPosts(ch.source)
+                .then((posts) => {
+                    if (cancelled || posts.length === 0) return;
+                    setChannels((prev) =>
+                        prev.map((c) => (c.id === ch.id ? { ...c, lastUpdate: posts[0].title } : c))
+                    );
+                })
+                .catch(() => {
+                    if (cancelled) return;
+                    setChannels((prev) =>
+                        prev.map((c) => (c.id === ch.id ? { ...c, lastUpdate: 'Tap to retry loading updates' } : c))
+                    );
+                });
+        });
+        return () => {
+            cancelled = true;
+        };
+    }, [mode]);
     const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
 
     // =========================================================================
@@ -2600,7 +2626,7 @@ export function WhatsAppModeWorkspace({
                         >
                             △
                         </span>
-                        <h2 className="text-xl font-bold text-[#1C1917]">Channels</h2>
+                        <h2 className="text-xl font-bold text-[#1C1917]">Pulse</h2>
                     </div>
                 </div>
                 <div className="flex-1 overflow-y-auto px-2 pb-4 pt-2 space-y-1">
@@ -2627,17 +2653,18 @@ export function WhatsAppModeWorkspace({
                     ))}
                 </div>
             </div>
-            <div className="flex-1 bg-[#F3EDE2] flex flex-col items-center justify-center p-6 text-center">
+            <div className="flex-1 bg-[#F3EDE2] flex flex-col items-center justify-center text-center min-w-0">
                 {activeChan ? (
-                    <div className="bg-[#FBF8F3] rounded-2xl shadow-md border border-[#E0D6C5] p-6 max-w-md w-full space-y-3">
-                        <h3 className="text-base font-bold text-[#1C1917]">{activeChan.name}</h3>
-                        <p className="text-xs text-[#78716C]">{activeChan.followers}</p>
-                        <div className="p-3.5 rounded-xl bg-[#E8D8C8] border border-[#D5BBA3] text-xs text-[#1C1917] text-left">
-                            {activeChan.lastUpdate}
-                        </div>
-                    </div>
+                    <PulseChannelFeed
+                        key={activeChan.id}
+                        channelId={activeChan.id}
+                        name={activeChan.name}
+                        followers={activeChan.followers}
+                        avatar={activeChan.avatar}
+                        source={activeChan.source}
+                    />
                 ) : (
-                    <div className="max-w-md flex flex-col items-center">
+                    <div className="max-w-md flex flex-col items-center p-6">
                         <div className="w-20 h-20 mb-4 rounded-2xl bg-[#EFE8DA] border-2 border-[#D0C4AE] shadow-xs flex items-center justify-center text-[#7C4225]">
                             <svg className="w-11 h-11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
                                 <polygon points="12 3 20 19 4 19" strokeLinejoin="round" />
