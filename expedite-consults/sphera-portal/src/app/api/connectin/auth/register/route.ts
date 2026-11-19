@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { connectinDb } from "@/lib/connectin-db"
-import { sendConnectInOTPEmail } from "@/lib/connectin-email"
 import { sendConnectInSMS, formatE164Phone } from "@/lib/connectin-sms"
 import { createDynamicOTP } from "@/lib/connectin-otp"
 import { findProfessionById, findEnclaveById } from "@/lib/connectin-professions"
 import { resolveRequestGeoLocation, upsertCloudUser, recordGlobalUserActivity } from "@/lib/connectin-cloud-sync"
+import { checkPhoneOwnershipConflict } from "@/lib/connectin-whatsapp-directory"
+import { looksLikeInternationalPhone, formatInternationalPhonePretty } from "@/lib/connectin-international-phones"
 import crypto from "crypto"
 
 export async function POST(req: NextRequest) {
@@ -21,19 +22,20 @@ export async function POST(req: NextRequest) {
       profession: incomingProfession,
       professionCategory: incomingCategory,
       professionEnclave: incomingEnclave,
-      twoFactorChannel = "email",
+      twoFactorChannel = "sms",
+      isDemoPersona,
       clientTimezone
     } = body
 
     if (!email || !firstName) {
-      return NextResponse.json({ error: "First name and email are required." }, { status: 400 })
+      return NextResponse.json({ error: "First name, email, and mobile phone number are required." }, { status: 400 })
     }
 
     const geo = resolveRequestGeoLocation(req, clientTimezone, body.location)
     const cleanEmail = email.toLowerCase().trim()
     const fullName = `${firstName} ${lastName || ""}`.trim()
     let rawPhone = phone ? String(phone).trim() : ""
-    if (!rawPhone && (cleanEmail.includes("kasiedu") || cleanEmail.includes("asiedu"))) {
+    if (!rawPhone && (cleanEmail === "kasiedu@expedite-consults.com" || cleanEmail === "kasiedu@expediteconsults.com" || cleanEmail === "asiedudanquah@gmail.com")) {
       rawPhone = "+12402607898"
     }
 
@@ -42,12 +44,38 @@ export async function POST(req: NextRequest) {
       formattedPhone = "+12402607898"
     }
 
-    if ((twoFactorChannel === "call" || twoFactorChannel === "sms") && !formattedPhone) {
+    // Mandatory Mobile Phone Requirement on Registration!
+    if (!isDemoPersona && (!formattedPhone || !looksLikeInternationalPhone(formattedPhone))) {
       return NextResponse.json(
-        { error: `Please enter your mobile phone number to receive the 2FA ${twoFactorChannel === "call" ? "voice call" : "SMS text"}.` },
+        {
+          error:
+            "A valid mobile phone number is mandatory to register on ConnectLn and must be verified via 2FA.",
+        },
         { status: 400 }
       )
     }
+
+    // Anti-Impersonation Check: Reject if this phone number is already verified & owned by another ConnectLn user!
+    if (formattedPhone && !isDemoPersona) {
+      const ownership = await checkPhoneOwnershipConflict({
+        phone: formattedPhone,
+        claimantEmail: cleanEmail,
+        claimantName: fullName,
+      })
+      if (ownership.conflict) {
+        return NextResponse.json(
+          {
+            error:
+              ownership.reason ||
+              "This mobile phone number is already verified by another ConnectLn member.",
+          },
+          { status: 409 }
+        )
+      }
+    }
+
+    // Force Phone 2FA (`sms` or `call`) during Registration so the registrant proves ownership of this exact mobile number!
+    const effectivePhoneChannel: "sms" | "call" = twoFactorChannel === "call" ? "call" : "sms"
 
     // 1. Resolve profession definition and enclave
     const profDef = professionId ? findProfessionById(professionId) : undefined
@@ -61,14 +89,10 @@ export async function POST(req: NextRequest) {
     const finalHeadline = profDef?.defaultHeadline || `${finalProfessionTitle} · Verified ConnectIn Member`
     const finalSkills = profDef?.typicalSkills || []
 
-    // 2. Generate brand new, dynamic random OTP & HMAC signed challenge
-    const otpTarget = (twoFactorChannel === "sms" || twoFactorChannel === "call") && formattedPhone
-      ? formattedPhone
-      : cleanEmail
-
+    // 2. Generate brand new, dynamic random OTP & HMAC signed challenge bound to the mandatory phone number
+    const otpTarget = formattedPhone || cleanEmail
     const { code: otpCode, challengeToken } = createDynamicOTP(otpTarget, 15)
 
-    // Register OTP for email and all phone variations
     connectinDb.setOTP(cleanEmail, otpCode, 15)
     if (formattedPhone) {
       connectinDb.setOTP(formattedPhone, otpCode, 15)
@@ -76,11 +100,10 @@ export async function POST(req: NextRequest) {
       if (digits) {
         connectinDb.setOTP(digits, otpCode, 15)
         connectinDb.setOTP(digits.slice(-10), otpCode, 15)
-        connectinDb.setOTP(`+1${digits.slice(-10)}`, otpCode, 15)
       }
     }
 
-    // 3. If user with this email AND name doesn't exist yet, create a fresh user & profile in DB
+    // 3. If user with this email AND name doesn't exist yet, create user record (phoneVerified becomes true upon verify-otp!)
     const matchingEmailUsers = connectinDb.getUsers().filter(u => u.email.toLowerCase().trim() === cleanEmail)
     const existingUser = matchingEmailUsers.find(u => {
       const p = connectinDb.findProfileByUserId(u.id)
@@ -90,12 +113,12 @@ export async function POST(req: NextRequest) {
       const created = connectinDb.createUser(
         {
           email: cleanEmail,
-          phone: phone || "",
+          phone: formattedPhone || "",
           passwordHash: password ? crypto.createHash("sha256").update(password).digest("hex") : undefined,
           role: role || (finalEnclaveId === 'tech_software' ? 'developer' : 'personal'),
           status: "Active",
           mfaEnabled: true,
-          mfaChannel: twoFactorChannel === "sms" ? "sms" : "email"
+          mfaChannel: "sms"
         },
         {
           name: fullName,
@@ -162,6 +185,9 @@ export async function POST(req: NextRequest) {
         timestampIso: created.user.createdAt
       })
     } else {
+      if (formattedPhone) {
+        existingUser.phone = formattedPhone
+      }
       const existingProfile = connectinDb.findProfileByUserId(existingUser.id)
       if (existingProfile) {
         existingProfile.profession = finalProfessionTitle
@@ -175,49 +201,32 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 4. Dispatch Code via Selected 2FA Channel
-    const isCall = twoFactorChannel === "call"
-    const isSms = twoFactorChannel === "sms"
-    let emailDispatchResult: { success: boolean; error?: string; id?: string } = { success: true }
-
-    if ((isSms || isCall) && formattedPhone) {
+    // 4. Dispatch 6-Digit 2FA Code to Mandatory Mobile Phone (`sms` or `call`) to verify phone ownership
+    const isCall = effectivePhoneChannel === "call"
+    if (!isDemoPersona && formattedPhone) {
       await sendConnectInSMS({
         toPhone: formattedPhone,
         code: otpCode,
         fullName,
         channel: isCall ? "call" : "sms"
       })
-    } else {
-      emailDispatchResult = await sendConnectInOTPEmail({
-        toEmail: cleanEmail,
-        fullName,
-        code: otpCode,
-        action: "registration"
-      })
     }
 
-    const emailSent = (isSms || isCall) ? true : emailDispatchResult.success
-
+    const prettyTarget = formattedPhone ? formatInternationalPhonePretty(formattedPhone) : cleanEmail
     const message = isCall
-      ? `📞 Automated voice call initiated to ${formattedPhone || phone}. Please answer your phone to receive your code.`
-      : isSms
-      ? `💬 Security verification code sent securely via SMS text to ${formattedPhone || phone}.`
-      : emailDispatchResult.success
-        ? `Security verification code sent securely to ${cleanEmail}. Please check your inbox and spam folder.`
-        : `Email delivery notice: ${emailDispatchResult.error || "Unable to send verification email"}. You may use demo code 123456 to verify.`
+      ? `📞 Placing automated 2FA verification call to ${prettyTarget}. Answer your phone and enter the 6-digit code.`
+      : `💬 Sent 6-digit 2FA verification code via SMS to ${prettyTarget}. Enter it below to verify your phone & complete registration.`
 
     const res = NextResponse.json({
       success: true,
       message,
-      channel: twoFactorChannel,
-      target: (isSms || isCall) && formattedPhone ? formattedPhone : cleanEmail,
-      phone: formattedPhone || phone || "",
+      channel: effectivePhoneChannel,
+      target: formattedPhone || cleanEmail,
+      prettyPhone: prettyTarget,
+      phone: formattedPhone || "",
       email: cleanEmail,
       otpChallengeToken: challengeToken,
-      emailDispatched: emailSent,
-      emailError: emailDispatchResult.error,
-      code: otpCode,
-      fallbackCode: "123456",
+      emailDispatched: true,
       profession: finalProfessionTitle,
       professionId: finalProfessionId,
       professionEnclave: finalEnclaveId

@@ -3,28 +3,51 @@ import { connectinDb } from "@/lib/connectin-db"
 import { sendConnectInOTPEmail } from "@/lib/connectin-email"
 import { sendConnectInSMS, formatE164Phone } from "@/lib/connectin-sms"
 import { createDynamicOTP } from "@/lib/connectin-otp"
-import { resolveRequestGeoLocation, upsertCloudUser, appendCloudTelemetry } from "@/lib/connectin-cloud-sync"
+import {
+  resolveRequestGeoLocation,
+  upsertCloudUser,
+  appendCloudTelemetry,
+  pullCloudUsersIntoDb,
+} from "@/lib/connectin-cloud-sync"
 import { findProfessionById } from "@/lib/connectin-professions"
+import {
+  checkPhoneOwnershipConflict,
+  refreshWhatsAppDirectoryCache,
+  isSamePhoneOwnerEmail,
+} from "@/lib/connectin-whatsapp-directory"
+import {
+  looksLikeInternationalPhone,
+  formatInternationalPhonePretty,
+} from "@/lib/connectin-international-phones"
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { email, password, channel = "email", clientTimezone } = body
+    const { email, password, channel = "sms", clientTimezone } = body
 
     if (!email && !body.phone) {
-      return NextResponse.json({ error: "Email or phone number is required." }, { status: 400 })
+      return NextResponse.json({ error: "Email and mobile phone number are required." }, { status: 400 })
     }
 
+    await pullCloudUsersIntoDb().catch(() => {})
     const geo = resolveRequestGeoLocation(req, clientTimezone, body.location)
     const cleanTarget = (email || body.phone || "").toLowerCase().trim()
     const isPhoneInput = !cleanTarget.includes("@") && /^[+\d\s().-]+$/.test(cleanTarget)
-    const effectiveChannel: "email" | "sms" | "call" = channel === "call" ? "call" : (channel === "sms" || isPhoneInput ? "sms" : "email")
+    const requestedChannel: "email" | "sms" | "call" =
+      channel === "call" ? "call" : channel === "email" && !isPhoneInput ? "email" : "sms"
     const incomingName = typeof body.name === "string" ? body.name.trim() : ""
     const profDef = body.professionId && body.professionId !== "auto_detect" ? findProfessionById(body.professionId) : undefined
 
+    const normInputPhone = isPhoneInput ? formatE164Phone(cleanTarget) : ""
     const candidateUsers = isPhoneInput
-      ? connectinDb.getUsers().filter(u => u.phone === cleanTarget || u.email.toLowerCase().trim() === cleanTarget)
-      : connectinDb.getUsers().filter(u => u.email.toLowerCase().trim() === cleanTarget)
+      ? connectinDb
+          .getUsers()
+          .filter(
+            (u) =>
+              (u.phone && formatE164Phone(u.phone) === normInputPhone) ||
+              u.email.toLowerCase().trim() === cleanTarget
+          )
+      : connectinDb.getUsers().filter((u) => u.email.toLowerCase().trim() === cleanTarget)
 
     let user = candidateUsers.find(u => {
       const p = connectinDb.findProfileByUserId(u.id)
@@ -43,11 +66,11 @@ export async function POST(req: NextRequest) {
       const created = connectinDb.createUser(
         {
           email: isPhoneInput ? `${cleanTarget.replace(/[^\d]/g, "")}@connectin.phone` : cleanTarget,
-          phone: isPhoneInput ? cleanTarget : (body.phone || ""),
+          phone: "",
           role: "personal",
           status: "Active",
           mfaEnabled: true,
-          mfaChannel: effectiveChannel === "call" ? "sms" : effectiveChannel
+          mfaChannel: "sms"
         },
         {
           name: defaultName,
@@ -74,6 +97,69 @@ export async function POST(req: NextRequest) {
       user = created.user
     }
 
+    if (user.status === "Suspended" || user.status === "Banned") {
+      return NextResponse.json({ error: "This account is suspended. Contact security administrator." }, { status: 403 })
+    }
+
+    const dirCache = await refreshWhatsAppDirectoryCache().catch(() => new Map())
+    let existingAccountPhone = user.phone && looksLikeInternationalPhone(user.phone) ? formatE164Phone(user.phone) : ""
+    if (!existingAccountPhone && user.email) {
+      for (const m of dirCache.values()) {
+        if (m.email && isSamePhoneOwnerEmail(m.email, user.email)) {
+          existingAccountPhone = m.phone
+          break
+        }
+      }
+    }
+    if (
+      !existingAccountPhone &&
+      isSamePhoneOwnerEmail(user.email || cleanTarget, "kasiedu@expedite-consults.com")
+    ) {
+      existingAccountPhone = "+12402607898"
+    }
+
+    const submittedRawPhone = body.phone ? String(body.phone).trim() : isPhoneInput ? cleanTarget : ""
+    let dispatchPhone = existingAccountPhone || (submittedRawPhone ? formatE164Phone(submittedRawPhone) : "")
+    if (dispatchPhone === "+12402623543") {
+      dispatchPhone = "+12402607898"
+    }
+
+    if (!dispatchPhone || !looksLikeInternationalPhone(dispatchPhone)) {
+      return NextResponse.json(
+        {
+          error:
+            "A verified mobile phone number is mandatory for 2FA login and ConnectLn calling. Please enter your mobile phone number.",
+          requiresPhone: true,
+        },
+        { status: 400 }
+      )
+    }
+
+    // Anti-Impersonation Check: Ensure no other verified user owns this phone number!
+    const ownership = await checkPhoneOwnershipConflict({
+      phone: dispatchPhone,
+      claimantEmail: user.email || cleanTarget,
+      claimantName: incomingName,
+    })
+    if (ownership.conflict) {
+      return NextResponse.json(
+        {
+          error:
+            ownership.reason ||
+            "This mobile phone number belongs to another verified ConnectLn member.",
+        },
+        { status: 409 }
+      )
+    }
+
+    // If the phone is not yet verified on this account, force Phone 2FA (`sms` or `call`) to verify phone ownership!
+    const phoneAlreadyVerifiedOnAccount = Boolean(existingAccountPhone && existingAccountPhone === dispatchPhone)
+    const effectiveChannel: "email" | "sms" | "call" = !phoneAlreadyVerifiedOnAccount
+      ? requestedChannel === "call"
+        ? "call"
+        : "sms"
+      : requestedChannel
+
     const activeProfile = connectinDb.findProfileByUserId(user.id)
     if (activeProfile) {
       connectinDb.touchUserLogin(user.id, `${effectiveChannel.toUpperCase()} 2FA`)
@@ -83,7 +169,7 @@ export async function POST(req: NextRequest) {
         upsertCloudUser({
           id: user.id,
           email: user.email,
-          phone: user.phone || "",
+          phone: existingAccountPhone || user.phone || "",
           name: activeProfile.name,
           role: user.role,
           status: user.status,
@@ -143,34 +229,6 @@ export async function POST(req: NextRequest) {
       ])
     }
 
-    if (user.status === "Suspended" || user.status === "Banned") {
-      return NextResponse.json({ error: "This account is suspended. Contact security administrator." }, { status: 403 })
-    }
-
-    let rawPhone = body.phone || user.phone || (isPhoneInput ? cleanTarget : "")
-    if (!rawPhone && (cleanTarget.includes("kasiedu") || cleanTarget.includes("asiedu") || user.email?.includes("kasiedu") || user.email?.includes("asiedu"))) {
-      rawPhone = "+12402607898"
-    }
-
-    let dispatchPhone = rawPhone ? formatE164Phone(rawPhone) : ""
-    if (dispatchPhone === "+12402623543") {
-      dispatchPhone = "+12402607898"
-    }
-
-    if ((effectiveChannel === "call" || effectiveChannel === "sms") && !dispatchPhone) {
-      return NextResponse.json(
-        { error: `Please enter your mobile phone number to receive the 2FA ${effectiveChannel === "call" ? "voice call" : "SMS text"}.` },
-        { status: 400 }
-      )
-    }
-
-    if (dispatchPhone && user.id) {
-      user.phone = dispatchPhone
-      if (typeof connectinDb.updateUser === "function") {
-        connectinDb.updateUser(user.id, { phone: dispatchPhone })
-      }
-    }
-
     const profile = connectinDb.findProfileByUserId(user.id)
     const fullName = profile?.name || (isPhoneInput ? "Member" : cleanTarget.split("@")[0])
 
@@ -181,7 +239,7 @@ export async function POST(req: NextRequest) {
 
     const { code: otpCode, challengeToken } = createDynamicOTP(otpTarget, 15)
 
-    // Register OTP across all potential verification identifiers
+    // Register OTP across verification identifiers
     connectinDb.setOTP(cleanTarget, otpCode, 15)
     if (user.email) {
       connectinDb.setOTP(user.email.toLowerCase().trim(), otpCode, 15)
@@ -192,7 +250,6 @@ export async function POST(req: NextRequest) {
       if (digits) {
         connectinDb.setOTP(digits, otpCode, 15)
         connectinDb.setOTP(digits.slice(-10), otpCode, 15)
-        connectinDb.setOTP(`+1${digits.slice(-10)}`, otpCode, 15)
       }
     }
 
@@ -225,27 +282,27 @@ export async function POST(req: NextRequest) {
     }
 
     const emailSent = isSms || isVoiceCall ? true : emailDispatchResult.success
+    const prettyPhone = formatInternationalPhonePretty(dispatchPhone)
 
     const message = isVoiceCall
-      ? `📞 Automated voice call initiated to ${dispatchPhone || user.phone}. Please answer your phone to hear your 6-digit code.`
+      ? `📞 Placing automated 2FA voice call to ${prettyPhone}. Answer your phone to hear your 6-digit code.`
       : isSms
-      ? `💬 2FA security code dispatched via SMS text to ${dispatchPhone || user.phone}. Please check your messages.`
+      ? `💬 Sent 6-digit 2FA security code via SMS to ${prettyPhone}. Enter it below to sign in.`
       : emailDispatchResult.success
-        ? `2FA security code sent to ${user.email || cleanTarget}. Please check your inbox and spam folder.`
-        : `Email delivery notice: ${emailDispatchResult.error || "Unable to send 2FA email"}. You may use demo code 123456 to continue.`
+        ? `✉️ Sent 6-digit 2FA security code to ${user.email || cleanTarget} (verified calling number: ${prettyPhone}).`
+        : `Email delivery notice: ${emailDispatchResult.error || "Unable to send 2FA email"}. Please resend via SMS or Phone Call.`
 
     const res = NextResponse.json({
       success: true,
       requires2FA: true,
       channel: effectiveChannel,
       target: (isSms || isVoiceCall) && dispatchPhone ? dispatchPhone : (user.email || cleanTarget),
-      phone: dispatchPhone || user.phone || "",
+      prettyPhone,
+      phone: dispatchPhone,
       email: user.email || cleanTarget,
       otpChallengeToken: challengeToken,
       emailDispatched: emailSent,
       emailError: emailDispatchResult.error,
-      code: otpCode,
-      fallbackCode: "123456",
       message
     })
 

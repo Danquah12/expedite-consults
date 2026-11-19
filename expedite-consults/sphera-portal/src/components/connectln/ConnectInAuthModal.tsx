@@ -24,6 +24,13 @@ import { signIn } from "next-auth/react"
 import { useLanguage } from "@/context/LanguageContext"
 import { GoogleAuthModal } from "@/components/auth/GoogleAuthModal"
 import { MicrosoftAuthModal } from "@/components/auth/MicrosoftAuthModal"
+import {
+  GLOBAL_COUNTRY_DIAL_CODES,
+  buildGlobalE164Phone,
+  looksLikeInternationalPhone,
+  formatInternationalPhonePretty,
+} from "@/lib/connectin-international-phones"
+import { MY_LINKED_PHONE_STORAGE_KEY } from "@/components/connectln/ConnectLnWhatsAppCallModal"
 
 export interface AuthPersona {
   id: string
@@ -223,10 +230,11 @@ export function ConnectInAuthModal({
   // Sign In State
   const [signInName, setSignInName] = useState("")
   const [signInEmail, setSignInEmail] = useState("")
+  const [signInCountryCode, setSignInCountryCode] = useState("+1")
   const [signInPhone, setSignInPhone] = useState("")
   const [signInPassword, setSignInPassword] = useState("")
   const [signInProfessionId, setSignInProfessionId] = useState<string>("auto_detect")
-  const [signInChannel, setSignInChannel] = useState<'email' | 'sms' | 'call'>('email')
+  const [signInChannel, setSignInChannel] = useState<'email' | 'sms' | 'call'>('sms')
   const [signInStep, setSignInStep] = useState<'credentials' | '2fa'>('credentials')
   const [signIn2FACode, setSignIn2FACode] = useState("")
   const [activeTargetDisplay, setActiveTargetDisplay] = useState("")
@@ -235,18 +243,17 @@ export function ConnectInAuthModal({
   const [joinFirstName, setJoinFirstName] = useState("")
   const [joinLastName, setJoinLastName] = useState("")
   const [joinEmail, setJoinEmail] = useState("")
+  const [joinCountryCode, setJoinCountryCode] = useState("+1")
   const [joinPhone, setJoinPhone] = useState("")
   const [joinPassword, setJoinPassword] = useState("")
   const [joinRole, setJoinRole] = useState<'personal' | 'enterprise' | 'creator' | 'seller' | 'developer'>('personal')
   const [joinProfessionId, setJoinProfessionId] = useState<string>("carpenter")
-  const [joinChannel, setJoinChannel] = useState<'email' | 'sms' | 'call'>('email')
+  const [joinChannel, setJoinChannel] = useState<'sms' | 'call'>('sms')
   const [joinStep, setJoinStep] = useState<'form' | '2fa'>('form')
   const [join2FACode, setJoin2FACode] = useState("")
 
   // Challenge token for stateless OTP verification across serverless lambdas
   const [otpChallengeToken, setOtpChallengeToken] = useState<string | null>(null)
-  const [dispatchedOtpCode, setDispatchedOtpCode] = useState<string | null>(null)
-  const [fallbackDemoCode, setFallbackDemoCode] = useState<string>("123456")
 
   // Feedback & Loading
   const [isLoading, setIsLoading] = useState(false)
@@ -271,21 +278,6 @@ export function ConnectInAuthModal({
     setIsMicrosoftModalOpen(true)
   }
 
-  // Studio Human Voice Call Engine (Speaks 6-digit code using real human voice actor)
-  const playVoiceCallAudio = (codeToSpeak?: string) => {
-    if (typeof window === "undefined") return
-    try {
-      if ("speechSynthesis" in window) window.speechSynthesis.cancel()
-      const codeDigits = (codeToSpeak || dispatchedOtpCode || fallbackDemoCode || "123456").split("").join(", ")
-      const text = `Hello! This is ConnectIn Security by Expedite Consults. Your one-time verification code is: ${codeDigits}. I repeat: ${codeDigits}. Thank you for using ConnectIn.`
-      const audio = new Audio(`/api/connectin/tts?v=human3&lang=en&text=${encodeURIComponent(text)}`)
-      audio.volume = 1.0
-      audio.play().catch(() => {})
-    } catch (e) {
-      console.warn("[Voice Call Audio notice]", e)
-    }
-  }
-
   // 1. Sign In Dispatch
   const handleSignInSubmit = async (e?: React.FormEvent, channelOverride?: 'email' | 'sms' | 'call') => {
     if (e) e.preventDefault()
@@ -294,15 +286,23 @@ export function ConnectInAuthModal({
     const effectiveChannel = channelOverride || signInChannel
     if (channelOverride) setSignInChannel(channelOverride)
 
-    let effectivePhone = signInPhone
-    if (!effectivePhone && isExactKwesiUser({ name: signInName, email: signInEmail })) {
-      effectivePhone = "+1 (240) 260-7898"
-      setSignInPhone(effectivePhone)
+    let rawPhone = signInPhone.trim()
+    if (!rawPhone && isExactKwesiUser({ name: signInName, email: signInEmail })) {
+      rawPhone = "+12402607898"
+      setSignInPhone("240-260-7898")
+    }
+    const effectivePhone = rawPhone
+      ? buildGlobalE164Phone(signInCountryCode, rawPhone) || rawPhone
+      : ""
+
+    if ((effectiveChannel === 'sms' || effectiveChannel === 'call') && effectivePhone && !looksLikeInternationalPhone(effectivePhone)) {
+      setErrorMessage("Please select your country code and enter a valid mobile phone number for 2FA verification.")
+      return
     }
 
     setIsLoading(true)
     setErrorMessage(null)
-    setSuccessMessage(`Dispatching verification code via ${effectiveChannel.toUpperCase()}...`)
+    setSuccessMessage(`Dispatching 2FA verification code via ${effectiveChannel.toUpperCase()}...`)
 
     try {
       const res = await fetch("/api/connectin/auth/login", {
@@ -327,27 +327,20 @@ export function ConnectInAuthModal({
       if (data.otpChallengeToken) {
         setOtpChallengeToken(data.otpChallengeToken)
       }
-      if (data.code) {
-        setDispatchedOtpCode(data.code)
-      }
-      if (data.fallbackCode) {
-        setFallbackDemoCode(data.fallbackCode)
-      }
-      setActiveTargetDisplay(data.target || (effectiveChannel === 'email' ? signInEmail : (effectivePhone || signInEmail)))
+      const resolvedChannel: 'email' | 'sms' | 'call' = data.channel || effectiveChannel
+      setSignInChannel(resolvedChannel)
+      setActiveTargetDisplay(data.target || (resolvedChannel === 'email' ? signInEmail : (effectivePhone || signInEmail)))
       setSignInStep('2fa')
-      
-      if (effectiveChannel === 'call') {
-        const spoken = data.code || data.fallbackCode || '123456'
-        setSuccessMessage(`📞 Automated voice call placed to ${data.target || effectivePhone || signInEmail}... Please answer your phone to hear your code.`)
-        setTimeout(() => playVoiceCallAudio(spoken), 350)
-      } else if (effectiveChannel === 'sms') {
-        setSuccessMessage(`💬 Text message sent to ${data.target || effectivePhone || signInEmail}. Please enter the 6-digit code.`)
-      } else if (data.emailError) {
-        setSuccessMessage(`✉️ Email notice: ${data.emailError}. You may use code ${data.code || data.fallbackCode || '123456'} below.`)
+
+      if (resolvedChannel === 'call') {
+        setSuccessMessage(`📞 Automated 2FA voice call placed to ${formatInternationalPhonePretty(data.target || effectivePhone)}. Answer your phone to hear your 6-digit code.`)
+      } else if (resolvedChannel === 'sms') {
+        setSuccessMessage(`💬 2FA text message sent to ${formatInternationalPhonePretty(data.target || effectivePhone)}. Enter the 6-digit code from your phone.`)
       } else {
-        setSuccessMessage(`✉️ Verification code sent to ${data.target || signInEmail}. Please check your inbox and Spam/Junk folder (sent from auth@expediteconsults.com).`)
+        setSuccessMessage(`✉️ Verification code sent to ${data.target || signInEmail}. Check your inbox and Spam/Junk folder.`)
       }
     } catch (err: any) {
+      setSuccessMessage(null)
       setErrorMessage(err.message || "Failed to dispatch 2FA code")
     } finally {
       setIsLoading(false)
@@ -360,11 +353,14 @@ export function ConnectInAuthModal({
 
     setIsLoading(true)
     setErrorMessage(null)
-    setSuccessMessage("Verifying security code...")
+    setSuccessMessage("Verifying 2FA security code...")
 
     try {
       const resolvedName = resolveDisplayName(signInName, signInEmail)
-      const verifyTarget = activeTargetDisplay || (signInChannel === 'email' ? signInEmail : (signInPhone || signInEmail))
+      const normalizedSignInPhone = signInPhone.trim()
+        ? buildGlobalE164Phone(signInCountryCode, signInPhone) || signInPhone.trim()
+        : ""
+      const verifyTarget = activeTargetDisplay || (signInChannel === 'email' ? signInEmail : (normalizedSignInPhone || signInEmail))
       const vaultProfile = getVaultProfileForUser({ email: signInEmail, name: signInName.trim() || resolvedName })
       const finalName = signInName.trim() || vaultProfile?.name || resolvedName
       const explicitProf = signInProfessionId !== "auto_detect" ? findProfessionById(signInProfessionId) : null
@@ -381,7 +377,7 @@ export function ConnectInAuthModal({
         body: JSON.stringify({
           target: verifyTarget,
           email: signInEmail,
-          phone: signInPhone,
+          phone: normalizedSignInPhone,
           code,
           name: finalName,
           professionId: selectedProf?.id || vaultProfile?.professionId,
@@ -397,6 +393,13 @@ export function ConnectInAuthModal({
       if (!res.ok) {
         throw new Error(data.error || "Invalid verification code.")
       }
+
+      const verifiedPhone =
+        data.user?.phone ||
+        data.profile?.phone ||
+        (looksLikeInternationalPhone(verifyTarget)
+          ? buildGlobalE164Phone(signInCountryCode, verifyTarget)
+          : "")
 
       const effectiveProfessionId = selectedProf?.id || vaultProfile?.professionId || data.profile?.professionId
       const effectiveEnclave = selectedProf?.enclaveId || vaultProfile?.professionEnclave || data.profile?.professionEnclave
@@ -431,12 +434,14 @@ export function ConnectInAuthModal({
         professionId: signInProfessionId
       })
 
-      // Always inject email, explicit name, and isolated avatar
+      // Always inject email, explicit name, verified 2FA phone, and isolated avatar
       const profileToSave = {
         ...baseProfile,
         ...(vaultProfile || {}),
         name: finalName,
         email: signInEmail,
+        phone: verifiedPhone || (vaultProfile as any)?.phone || undefined,
+        phoneVerified: Boolean(verifiedPhone || (vaultProfile as any)?.phoneVerified),
         avatar: safeAvatar,
         role: isAdminUser ? "admin" : "personal",
         roles: isAdminUser ? ["SUPER_ADMIN"] : ["NORMAL_USER"],
@@ -462,12 +467,17 @@ export function ConnectInAuthModal({
       if (typeof window !== "undefined") {
         localStorage.removeItem("connectin_posts_v1")
         localStorage.removeItem("connectin_is_signed_out")
+        if (verifiedPhone) {
+          localStorage.setItem(MY_LINKED_PHONE_STORAGE_KEY, verifiedPhone)
+        } else {
+          localStorage.removeItem(MY_LINKED_PHONE_STORAGE_KEY)
+        }
       }
 
       setSuccessMessage(
         shouldOpenAdminPortal
           ? `✓ Authenticated as Administrator! Opening Control Center...`
-          : `✓ Authenticated! Welcome, ${profileToSave.name}`
+          : `✓ 2FA Verified! Welcome, ${profileToSave.name}`
       )
       setTimeout(() => {
         onLoginSuccess(profileToSave, targetTab, 'personal')
@@ -481,21 +491,25 @@ export function ConnectInAuthModal({
     }
   }
 
-  // 2. Join Now (Register -> 2FA -> Direct Login)
-  const handleJoinSubmit = async (e?: React.FormEvent, channelOverride?: 'email' | 'sms' | 'call') => {
+  // 2. Join Now (Mandatory Mobile Phone -> 2FA Phone Verification -> Direct Login & Locked Calling Number)
+  const handleJoinSubmit = async (e?: React.FormEvent, channelOverride?: 'sms' | 'call') => {
     if (e) e.preventDefault()
     if (!joinFirstName || !joinEmail) return
 
-    const effectiveChannel = channelOverride || joinChannel
+    const normalizedJoinPhone = buildGlobalE164Phone(joinCountryCode, joinPhone)
+    if (!normalizedJoinPhone || !looksLikeInternationalPhone(normalizedJoinPhone)) {
+      setErrorMessage("A valid mobile phone number is mandatory to register on ConnectLn and must be verified via 2FA.")
+      return
+    }
+
+    const effectiveChannel: 'sms' | 'call' = channelOverride || joinChannel
     if (channelOverride) setJoinChannel(channelOverride)
 
     setIsLoading(true)
     setErrorMessage(null)
-    setSuccessMessage(`Dispatching verification code via ${effectiveChannel.toUpperCase()}...`)
+    setSuccessMessage(`Dispatching 2FA verification code to ${formatInternationalPhonePretty(normalizedJoinPhone)} via ${effectiveChannel.toUpperCase()}...`)
 
     try {
-      const fullName = `${joinFirstName} ${joinLastName}`.trim()
-      const resolvedName = resolveDisplayName(fullName, joinEmail)
       const selectedProf = findProfessionById(joinProfessionId)
 
       const res = await fetch("/api/connectin/auth/register", {
@@ -505,7 +519,7 @@ export function ConnectInAuthModal({
           firstName: joinFirstName,
           lastName: joinLastName,
           email: joinEmail,
-          phone: joinPhone,
+          phone: normalizedJoinPhone,
           password: joinPassword,
           role: joinRole,
           professionId: joinProfessionId,
@@ -524,25 +538,15 @@ export function ConnectInAuthModal({
       if (data.otpChallengeToken) {
         setOtpChallengeToken(data.otpChallengeToken)
       }
-      if (data.code) {
-        setDispatchedOtpCode(data.code)
-      }
-      if (data.fallbackCode) {
-        setFallbackDemoCode(data.fallbackCode)
-      }
+      setActiveTargetDisplay(data.target || normalizedJoinPhone)
       setJoinStep('2fa')
       if (effectiveChannel === 'call') {
-        const spoken = data.code || data.fallbackCode || '123456'
-        setSuccessMessage(`📞 Automated voice call placed to ${data.target || joinPhone || joinEmail}... Please answer your phone to hear your code.`)
-        setTimeout(() => playVoiceCallAudio(spoken), 350)
-      } else if (effectiveChannel === 'sms') {
-        setSuccessMessage(`💬 Verification text message sent to ${joinPhone || joinEmail}.`)
-      } else if (data.emailError) {
-        setSuccessMessage(`✉️ Email notice: ${data.emailError}. You may use code ${data.code || data.fallbackCode || '123456'} below.`)
+        setSuccessMessage(`📞 Automated 2FA voice call placed to ${formatInternationalPhonePretty(data.target || normalizedJoinPhone)}. Answer your phone to hear your 6-digit code.`)
       } else {
-        setSuccessMessage(`✉️ Verification code sent to ${joinEmail}. Please check your inbox and Spam/Junk folder (sent from auth@expediteconsults.com).`)
+        setSuccessMessage(`💬 2FA verification text sent to ${formatInternationalPhonePretty(data.target || normalizedJoinPhone)}. Enter the 6-digit code below.`)
       }
     } catch (err: any) {
+      setSuccessMessage(null)
       setErrorMessage(err.message || "Registration failed.")
     } finally {
       setIsLoading(false)
@@ -555,12 +559,13 @@ export function ConnectInAuthModal({
 
     setIsLoading(true)
     setErrorMessage(null)
-    setSuccessMessage("Verifying security code...")
+    setSuccessMessage("Verifying 2FA security code & locking your calling number...")
 
     try {
       const fullName = `${joinFirstName} ${joinLastName}`.trim()
       const resolvedName = resolveDisplayName(fullName, joinEmail)
-      const verifyTarget = joinChannel === 'email' ? joinEmail : (joinPhone || joinEmail)
+      const normalizedJoinPhone = buildGlobalE164Phone(joinCountryCode, joinPhone)
+      const verifyTarget = activeTargetDisplay || normalizedJoinPhone
       const selectedProf = findProfessionById(joinProfessionId)
 
       const res = await fetch("/api/connectin/auth/verify-otp", {
@@ -569,7 +574,7 @@ export function ConnectInAuthModal({
         body: JSON.stringify({
           target: verifyTarget,
           email: joinEmail,
-          phone: joinPhone,
+          phone: normalizedJoinPhone,
           code,
           name: resolvedName,
           role: joinRole,
@@ -586,6 +591,8 @@ export function ConnectInAuthModal({
         throw new Error(data.error || "Invalid verification code.")
       }
 
+      const verifiedPhone = data.user?.phone || data.profile?.phone || normalizedJoinPhone
+
       const targetTab =
         joinRole === 'enterprise' ? 'procurement' :
         joinRole === 'creator' ? 'media' :
@@ -597,7 +604,7 @@ export function ConnectInAuthModal({
         joinRole === 'creator' ? 'creator' :
         joinRole === 'seller' ? 'seller' : 'personal'
 
-      // Always inject email, explicit name, and isolated avatar
+      // Always inject email, explicit name, verified 2FA phone, and isolated avatar
       const freshJoinProfile = createUniqueUserProfile({
         name: resolvedName,
         email: joinEmail,
@@ -614,8 +621,10 @@ export function ConnectInAuthModal({
         ...(data.profile || freshJoinProfile),
         name: resolvedName,
         email: joinEmail,
+        phone: verifiedPhone,
+        phoneVerified: true,
         avatar: safeJoinAvatar,
-        role: (joinRole === 'admin' ? 'personal' : joinRole) as any,
+        role: joinRole as any,
         roles: ["NORMAL_USER"],
         id: data.profile?.userId || data.user?.id || data.profile?.id || freshJoinProfile.id,
         profession: data.profile?.profession || selectedProf?.title || 'Master Carpenter (Framing & Finish Joinery)',
@@ -629,9 +638,12 @@ export function ConnectInAuthModal({
       if (typeof window !== "undefined") {
         localStorage.removeItem("connectin_posts_v1")
         localStorage.removeItem("connectin_is_signed_out")
+        if (verifiedPhone) {
+          localStorage.setItem(MY_LINKED_PHONE_STORAGE_KEY, verifiedPhone)
+        }
       }
 
-      setSuccessMessage(`✓ Account verified! Welcome, ${profileToSave.name}`)
+      setSuccessMessage(`✓ 2FA Phone Verified! Calling number ${formatInternationalPhonePretty(verifiedPhone)} linked & defaulted.`)
       setTimeout(() => {
         onLoginSuccess(profileToSave, targetTab, targetWorkspace)
         onClose()
@@ -678,7 +690,8 @@ export function ConnectInAuthModal({
           lastName: cleanName.split(" ").slice(1).join(" "),
           email: persona.email,
           role: persona.role,
-          twoFactorChannel: "email"
+          twoFactorChannel: "email",
+          isDemoPersona: true
         })
       }).catch(() => {})
 
@@ -792,27 +805,47 @@ export function ConnectInAuthModal({
                   />
                 </div>
 
+                {/* Mobile Phone Number (Verified via 2FA & Defaulted for Calling) */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                      {t("phone_number", "Mobile Phone Number (2FA & Calling Identity)")}
+                    </label>
+                    <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">🔒 Anti-Impersonation</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <select
+                      aria-label="Country Dial Code"
+                      value={signInCountryCode}
+                      onChange={(e) => setSignInCountryCode(e.target.value)}
+                      className="w-[132px] shrink-0 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-2 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                    >
+                      {GLOBAL_COUNTRY_DIAL_CODES.map((c) => (
+                        <option key={`${c.iso}-${c.code}`} value={c.code}>
+                          {c.flag} {c.code} ({c.name})
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="tel"
+                      value={signInPhone}
+                      onChange={(e) => setSignInPhone(e.target.value)}
+                      placeholder="240-260-7898 (or saved 2FA number)"
+                      className="flex-1 min-w-0 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
+                    />
+                  </div>
+                </div>
+
                 {/* 2FA Delivery Channel Selector */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{t("deliver_2fa_via", "Send 2FA Security Code Via")}</label>
                   <div className="grid grid-cols-3 gap-1.5 p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-xl text-xs font-semibold">
                     <button
                       type="button"
-                      onClick={() => setSignInChannel('email')}
-                      className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation ${
-                        signInChannel === 'email'
-                          ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
-                          : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-                      }`}
-                    >
-                      <span>{t("send_code_via_email", "✉️ Email")}</span>
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => {
                         setSignInChannel('sms')
                         if (!signInPhone && isExactKwesiUser({ name: signInName, email: signInEmail })) {
-                          setSignInPhone('+1 (240) 260-7898')
+                          setSignInPhone('240-260-7898')
                         }
                       }}
                       className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation ${
@@ -828,7 +861,7 @@ export function ConnectInAuthModal({
                       onClick={() => {
                         setSignInChannel('call')
                         if (!signInPhone && isExactKwesiUser({ name: signInName, email: signInEmail })) {
-                          setSignInPhone('+1 (240) 260-7898')
+                          setSignInPhone('240-260-7898')
                         }
                       }}
                       className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation ${
@@ -839,24 +872,19 @@ export function ConnectInAuthModal({
                     >
                       <span>{t("send_code_via_call", "📞 Call")}</span>
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => setSignInChannel('email')}
+                      className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation ${
+                        signInChannel === 'email'
+                          ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
+                          : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                      }`}
+                    >
+                      <span>{t("send_code_via_email", "✉️ Email")}</span>
+                    </button>
                   </div>
                 </div>
-
-                {/* Phone Number Input (if SMS or Call selected) */}
-                {(signInChannel === 'sms' || signInChannel === 'call') && (
-                  <div className="space-y-1 animate-in fade-in duration-150">
-                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                      {t("phone_number", "Mobile Phone Number")} {signInChannel === 'call' ? 'for Voice Call' : 'for SMS'}
-                    </label>
-                    <input
-                      type="tel"
-                      value={signInPhone}
-                      onChange={(e) => setSignInPhone(e.target.value)}
-                      placeholder="+1 (240) 555-0192"
-                      className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
-                    />
-                  </div>
-                )}
 
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
@@ -934,80 +962,12 @@ export function ConnectInAuthModal({
                   <div className="h-10 w-10 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-[#0A66C2] dark:text-sky-400 flex items-center justify-center mx-auto text-lg font-bold">
                     🔒
                   </div>
-                  <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100">{t("two_step_verification", "Enter Security Code")}</h3>
+                  <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100">{t("two_step_verification", "2FA Phone & Identity Verification")}</h3>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    {t("enter_code_delivered_to", "Enter the 6-digit code delivered to")} <strong className="text-zinc-900 dark:text-zinc-200">{activeTargetDisplay || signInEmail}</strong>
+                    {t("enter_code_delivered_to", "Enter the 6-digit code delivered to")}{" "}
+                    <strong className="text-zinc-900 dark:text-zinc-200">{formatInternationalPhonePretty(activeTargetDisplay || signInEmail)}</strong>
                   </p>
                 </div>
-
-                {(dispatchedOtpCode || signInChannel === 'call' || fallbackDemoCode) && (
-                  <div className={`rounded-xl border p-3 text-center space-y-2 animate-in fade-in duration-200 ${
-                    signInChannel === 'call'
-                      ? "border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/40"
-                      : signInChannel === 'sms'
-                      ? "border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40"
-                      : "border-sky-300 dark:border-sky-800 bg-sky-50 dark:bg-sky-950/40"
-                  }`}>
-                    <div className="flex items-center justify-between text-xs px-1">
-                      <span className={`font-semibold flex items-center gap-1.5 ${
-                        signInChannel === 'call'
-                          ? "text-purple-900 dark:text-purple-200"
-                          : signInChannel === 'sms'
-                          ? "text-emerald-900 dark:text-emerald-200"
-                          : "text-sky-900 dark:text-sky-200"
-                      }`}>
-                        <span>{signInChannel === 'call' ? '📞' : signInChannel === 'sms' ? '💬' : '✉️'}</span>
-                        <span>{signInChannel === 'call' ? t("dispatched_voice_code", "Voice Call Dispatched Code:") : signInChannel === 'sms' ? t("dispatched_sms_code", "SMS Text Dispatched Code:") : t("dispatched_email_code", "Email Dispatched Code:")}</span>
-                      </span>
-                      <span className={`font-mono text-base font-black tracking-[3px] ${
-                        signInChannel === 'call'
-                          ? "text-purple-700 dark:text-purple-300"
-                          : signInChannel === 'sms'
-                          ? "text-emerald-700 dark:text-emerald-300"
-                          : "text-[#0A66C2] dark:text-sky-300"
-                      }`}>{dispatchedOtpCode || fallbackDemoCode || "123456"}</span>
-                    </div>
-
-                    {signInChannel === 'call' ? (
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          type="button"
-                          onClick={() => playVoiceCallAudio(dispatchedOtpCode || fallbackDemoCode || "123456")}
-                          className="rounded-lg bg-purple-600 hover:bg-purple-700 text-white py-1.5 px-2.5 text-xs font-bold transition-colors flex items-center justify-center gap-1 cursor-pointer shadow-xs"
-                        >
-                          <span>{t("hear_call_again", "🔊 Hear Call Again")}</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const c = dispatchedOtpCode || fallbackDemoCode || "123456"
-                            setSignIn2FACode(c)
-                            handleVerifySignIn2FA(c)
-                          }}
-                          className="rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-white py-1.5 px-2.5 text-xs font-bold shadow-xs transition-colors flex items-center justify-center gap-1 cursor-pointer"
-                        >
-                          <span>{t("autofill_enter", "⚡ Auto-Fill & Enter")}</span>
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const c = dispatchedOtpCode || fallbackDemoCode || "123456"
-                          setSignIn2FACode(c)
-                          handleVerifySignIn2FA(c)
-                        }}
-                        className={`w-full rounded-lg text-white py-1.5 text-xs font-bold shadow-xs transition-colors flex items-center justify-center gap-1 cursor-pointer ${
-                          signInChannel === 'sms'
-                            ? "bg-emerald-600 hover:bg-emerald-700"
-                            : "bg-[#0A66C2] hover:bg-[#004182]"
-                        }`}
-                      >
-                        <span>{t("autofill_enter", "⚡ 1-Click Auto-Fill & Enter")} ({dispatchedOtpCode || fallbackDemoCode || "123456"})</span>
-                      </button>
-                    )}
-                  </div>
-                )}
 
                 <div className="space-y-3">
                   <input
@@ -1033,14 +993,6 @@ export function ConnectInAuthModal({
                     <div className="flex items-center justify-center gap-2 flex-wrap">
                       <button
                         type="button"
-                        onClick={() => handleSignInSubmit(undefined, 'email')}
-                        disabled={isLoading}
-                        className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md"
-                      >
-                        {t("send_code_via_email", "✉️ Email")}
-                      </button>
-                      <button
-                        type="button"
                         onClick={() => handleSignInSubmit(undefined, 'sms')}
                         disabled={isLoading}
                         className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md"
@@ -1055,35 +1007,21 @@ export function ConnectInAuthModal({
                       >
                         {t("send_code_via_call", "📞 Phone Call")}
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSignInSubmit(undefined, 'email')}
+                        disabled={isLoading}
+                        className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md"
+                      >
+                        {t("send_code_via_email", "✉️ Email")}
+                      </button>
                     </div>
                   </div>
 
-                  {/* Spam Folder Notice & Instant Verification Helper */}
-                  <div className="rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 p-3 text-left space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
-                        <span>✉️ Check Spam &amp; Junk Folders</span>
-                      </span>
-                      <span className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400">auth@expediteconsults.com</span>
-                    </div>
-                    <p className="text-[11px] text-zinc-600 dark:text-zinc-300 leading-normal">
-                      Security emails from automated transactional gateways are often filtered by Gmail, Outlook, or corporate firewalls into <strong>Spam</strong> or <strong>Promotions</strong>.
+                  <div className="rounded-xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 p-2.5 text-left">
+                    <p className="text-[11px] text-emerald-900 dark:text-emerald-200 leading-snug">
+                      🔒 <strong>Anti-Impersonation Lock:</strong> Once verified via 2FA, your mobile number is automatically defaulted &amp; locked on <strong>Link &amp; Enable Ringing</strong> so no other user can call using your number.
                     </p>
-                    <div className="pt-1.5 border-t border-amber-300/40 dark:border-amber-700/40 flex items-center justify-between gap-2">
-                      <span className="text-[10px] text-zinc-500 dark:text-zinc-400">Delayed or filtered?</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const codeToFill = dispatchedOtpCode || fallbackDemoCode || "123456"
-                          setSignIn2FACode(codeToFill)
-                          handleVerifySignIn2FA(codeToFill)
-                        }}
-                        className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] shadow-xs transition-colors flex items-center gap-1 cursor-pointer"
-                      >
-                        <Sparkles className="h-3 w-3" />
-                        <span>Instant Auto-Fill ({dispatchedOtpCode || fallbackDemoCode || "123456"})</span>
-                      </button>
-                    </div>
                   </div>
 
                   <div className="flex items-center gap-2 pt-2">
@@ -1100,7 +1038,7 @@ export function ConnectInAuthModal({
                       className="flex-1 rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white py-2.5 min-h-[44px] text-xs font-bold cursor-pointer disabled:opacity-50 touch-manipulation active:scale-[0.98]"
                     >
                       {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
-                      <span>{t("verify_and_sign_in", "Verify & Sign in")}</span>
+                      <span>{t("verify_and_sign_in", "Verify 2FA & Sign in")}</span>
                     </button>
                   </div>
 
@@ -1211,61 +1149,70 @@ export function ConnectInAuthModal({
                     />
                   </div>
 
-                  {/* 2FA Delivery Channel Selector */}
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{t("deliver_2fa_via", "Deliver 2FA Code Via")}</label>
-                    <div className="grid grid-cols-3 gap-1.5 p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-xl text-xs font-semibold">
-                      <button
-                        type="button"
-                        onClick={() => setJoinChannel('email')}
-                        className={`py-1.5 px-1 rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer touch-manipulation ${
-                          joinChannel === 'email'
-                            ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
-                            : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-                        }`}
-                      >
-                        <span>✉️ Email</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setJoinChannel('sms')}
-                        className={`py-1.5 px-1 rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer touch-manipulation ${
-                          joinChannel === 'sms'
-                            ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
-                            : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-                        }`}
-                      >
-                        <span>💬 SMS</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setJoinChannel('call')}
-                        className={`py-1.5 px-1 rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer touch-manipulation ${
-                          joinChannel === 'call'
-                            ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
-                            : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-                        }`}
-                      >
-                        <span>📞 Call</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Phone Number Input (if SMS or Call selected) */}
-                  {(joinChannel === 'sms' || joinChannel === 'call') && (
-                    <div className="space-y-1 animate-in fade-in duration-150">
-                      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                        {t("phone_number", "Mobile Phone Number")} {joinChannel === 'call' ? '(Voice Call)' : '(SMS Text)'}
+                  {/* Mandatory Mobile Phone Number + 2FA Verification (Defaulted & Locked on Link & Enable Ringing) */}
+                  <div className="space-y-1.5 rounded-xl border border-emerald-200/80 dark:border-emerald-800/60 bg-emerald-50/40 dark:bg-emerald-950/20 p-2.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
+                        {t("phone_number", "Mobile Phone Number")} <span className="text-red-500">*</span>
                       </label>
+                      <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
+                        🔒 Required · 2FA Verified
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <select
+                        aria-label="Country Dial Code"
+                        value={joinCountryCode}
+                        onChange={(e) => setJoinCountryCode(e.target.value)}
+                        className="w-[132px] shrink-0 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                      >
+                      {GLOBAL_COUNTRY_DIAL_CODES.map((c) => (
+                        <option key={`${c.iso}-${c.code}`} value={c.code}>
+                          {c.flag} {c.code} ({c.name})
+                        </option>
+                      ))}
+                      </select>
                       <input
                         type="tel"
+                        required
                         value={joinPhone}
                         onChange={(e) => setJoinPhone(e.target.value)}
-                        placeholder="+1 (240) 555-0192"
-                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-base sm:text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
+                        placeholder="240-555-0192"
+                        className="flex-1 min-w-0 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-base sm:text-xs focus:outline-none focus:ring-2 focus:ring-[#0A66C2] touch-manipulation"
                       />
                     </div>
-                  )}
+                    <p className="text-[10px] text-zinc-600 dark:text-zinc-400 leading-snug">
+                      Verified via 2FA &amp; automatically defaulted on <strong>Link &amp; Enable Ringing</strong> so no user can impersonate another user&apos;s number.
+                    </p>
+
+                    <div className="pt-1">
+                      <label className="text-[11px] font-semibold text-zinc-700 dark:text-zinc-300">{t("deliver_2fa_via", "Verify Phone Ownership Via 2FA")}</label>
+                      <div className="grid grid-cols-2 gap-1.5 p-1 mt-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-xl text-xs font-semibold">
+                        <button
+                          type="button"
+                          onClick={() => setJoinChannel('sms')}
+                          className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer touch-manipulation ${
+                            joinChannel === 'sms'
+                              ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
+                              : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                          }`}
+                        >
+                          <span>💬 SMS Text</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setJoinChannel('call')}
+                          className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer touch-manipulation ${
+                            joinChannel === 'call'
+                              ? "bg-white dark:bg-zinc-900 text-[#0A66C2] dark:text-sky-400 shadow-xs"
+                              : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                          }`}
+                        >
+                          <span>📞 Phone Call</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
 
                   <div>
                     <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{t("password", "Password")} (6+ chars)</label>
@@ -1282,9 +1229,10 @@ export function ConnectInAuthModal({
 
                   <div>
                     <ProfessionSearchPopout
-                      value={joinProfessionId}
-                      onChange={(profId) => setJoinProfessionId(profId)}
+                      selectedProfessionId={joinProfessionId}
+                      onSelectProfession={(profId) => setJoinProfessionId(profId)}
                       label="Your Profession (Assigns Your Enclave & Video)"
+                      showAutoDetectOption={false}
                       compact
                     />
                   </div>
@@ -1318,80 +1266,17 @@ export function ConnectInAuthModal({
               /* Join 2FA -> Direct Launch */
               <form onSubmit={(e) => { e.preventDefault(); handleVerifyJoin2FA(); }} className="space-y-4 text-center">
                 <div className="space-y-1">
-                  <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100">{t("confirm_verification_code", "Confirm Your Code")}</h3>
+                  <div className="h-10 w-10 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto text-lg font-bold">
+                    📱
+                  </div>
+                  <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100">{t("confirm_verification_code", "Verify Your Mobile Phone (2FA)")}</h3>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    {t("enter_code_delivered_to", "Enter the 6-digit code sent to")} <strong className="text-zinc-900 dark:text-zinc-200">{joinPhone || joinEmail}</strong>
+                    {t("enter_code_delivered_to", "Enter the 6-digit code sent to")}{" "}
+                    <strong className="text-zinc-900 dark:text-zinc-200">
+                      {formatInternationalPhonePretty(activeTargetDisplay || buildGlobalE164Phone(joinCountryCode, joinPhone))}
+                    </strong>
                   </p>
                 </div>
-
-                {(dispatchedOtpCode || joinChannel === 'call' || fallbackDemoCode) && (
-                  <div className={`rounded-xl border p-3 text-center space-y-2 animate-in fade-in duration-200 ${
-                    joinChannel === 'call'
-                      ? "border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/40"
-                      : joinChannel === 'sms'
-                      ? "border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40"
-                      : "border-sky-300 dark:border-sky-800 bg-sky-50 dark:bg-sky-950/40"
-                  }`}>
-                    <div className="flex items-center justify-between text-xs px-1">
-                      <span className={`font-semibold flex items-center gap-1.5 ${
-                        joinChannel === 'call'
-                          ? "text-purple-900 dark:text-purple-200"
-                          : joinChannel === 'sms'
-                          ? "text-emerald-900 dark:text-emerald-200"
-                          : "text-sky-900 dark:text-sky-200"
-                      }`}>
-                        <span>{joinChannel === 'call' ? '📞' : joinChannel === 'sms' ? '💬' : '✉️'}</span>
-                        <span>{joinChannel === 'call' ? t("dispatched_voice_code", "Voice Call Dispatched Code:") : joinChannel === 'sms' ? t("dispatched_sms_code", "SMS Text Dispatched Code:") : t("dispatched_email_code", "Email Dispatched Code:")}</span>
-                      </span>
-                      <span className={`font-mono text-base font-black tracking-[3px] ${
-                        joinChannel === 'call'
-                          ? "text-purple-700 dark:text-purple-300"
-                          : joinChannel === 'sms'
-                          ? "text-emerald-700 dark:text-emerald-300"
-                          : "text-sky-600 dark:text-sky-300"
-                      }`}>{dispatchedOtpCode || fallbackDemoCode || "123456"}</span>
-                    </div>
-
-                    {joinChannel === 'call' ? (
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          type="button"
-                          onClick={() => playVoiceCallAudio(dispatchedOtpCode || fallbackDemoCode || "123456")}
-                          className="rounded-lg bg-purple-600 hover:bg-purple-700 text-white py-1.5 px-2.5 text-xs font-bold transition-colors flex items-center justify-center gap-1 cursor-pointer shadow-xs"
-                        >
-                          <span>{t("hear_call_again", "🔊 Hear Call Again")}</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const c = dispatchedOtpCode || fallbackDemoCode || "123456"
-                            setJoin2FACode(c)
-                            handleVerifyJoin2FA(c)
-                          }}
-                          className="rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-white py-1.5 px-2.5 text-xs font-bold shadow-xs transition-colors flex items-center justify-center gap-1 cursor-pointer"
-                        >
-                          <span>{t("autofill_enter", "⚡ Auto-Fill & Enter")}</span>
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const c = dispatchedOtpCode || fallbackDemoCode || "123456"
-                          setJoin2FACode(c)
-                          handleVerifyJoin2FA(c)
-                        }}
-                        className={`w-full rounded-lg text-white py-1.5 text-xs font-bold shadow-xs transition-colors flex items-center justify-center gap-1 cursor-pointer ${
-                          joinChannel === 'sms'
-                            ? "bg-emerald-600 hover:bg-emerald-700"
-                            : "bg-[#0A66C2] hover:bg-[#004182]"
-                        }`}
-                      >
-                        <span>{t("autofill_enter", "⚡ 1-Click Auto-Fill & Enter")} ({dispatchedOtpCode || fallbackDemoCode || "123456"})</span>
-                      </button>
-                    )}
-                  </div>
-                )}
 
                 <div className="space-y-3">
                   <input
@@ -1412,16 +1297,8 @@ export function ConnectInAuthModal({
                   />
 
                   <div className="text-xs text-zinc-500 space-y-1.5 pt-1">
-                    <p className="text-[11px] text-zinc-400">{t("didnt_receive_code", "Didn't receive the code? Resend via:")}</p>
+                    <p className="text-[11px] text-zinc-400">{t("didnt_receive_code", "Didn't receive the code? Resend to your phone via:")}</p>
                     <div className="flex items-center justify-center gap-2 flex-wrap">
-                      <button
-                        type="button"
-                        onClick={() => handleJoinSubmit(undefined, 'email')}
-                        disabled={isLoading}
-                        className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md touch-manipulation"
-                      >
-                        {t("send_code_via_email", "✉️ Email")}
-                      </button>
                       <button
                         type="button"
                         onClick={() => handleJoinSubmit(undefined, 'sms')}
@@ -1441,32 +1318,10 @@ export function ConnectInAuthModal({
                     </div>
                   </div>
 
-                  {/* Spam Folder Notice & Instant Verification Helper */}
-                  <div className="rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 p-3 text-left space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
-                        <span>{t("check_spam_folders", "✉️ Check Spam & Junk Folders")}</span>
-                      </span>
-                      <span className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400">auth@expediteconsults.com</span>
-                    </div>
-                    <p className="text-[11px] text-zinc-600 dark:text-zinc-300 leading-normal">
-                      {t("spam_notice_desc", "Security emails from automated transactional gateways are often filtered by Gmail, Outlook, or corporate firewalls into Spam or Promotions.")}
+                  <div className="rounded-xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 p-2.5 text-left">
+                    <p className="text-[11px] text-emerald-900 dark:text-emerald-200 leading-snug">
+                      🔒 <strong>Verified Calling Identity:</strong> Once verified, this exact phone number is automatically defaulted &amp; locked on <strong>Link &amp; Enable Ringing</strong> so no user can impersonate another user&apos;s number.
                     </p>
-                    <div className="pt-1.5 border-t border-amber-300/40 dark:border-amber-700/40 flex items-center justify-between gap-2">
-                      <span className="text-[10px] text-zinc-500 dark:text-zinc-400">{t("delayed_or_filtered", "Delayed or filtered?")}</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const codeToFill = dispatchedOtpCode || fallbackDemoCode || "123456"
-                          setJoin2FACode(codeToFill)
-                          handleVerifyJoin2FA(codeToFill)
-                        }}
-                        className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] shadow-xs transition-colors flex items-center gap-1 cursor-pointer touch-manipulation active:scale-[0.98]"
-                      >
-                        <Sparkles className="h-3 w-3" />
-                        <span>{t("instant_access_label", "Instant Auto-Fill")} ({dispatchedOtpCode || fallbackDemoCode || "123456"})</span>
-                      </button>
-                    </div>
                   </div>
 
                   <div className="flex items-center gap-2 pt-1">
@@ -1483,7 +1338,7 @@ export function ConnectInAuthModal({
                       className="flex-1 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 min-h-[44px] text-xs font-bold cursor-pointer disabled:opacity-50 touch-manipulation active:scale-[0.98]"
                     >
                       {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
-                      <span>{t("confirm_and_join", "Confirm & Join")}</span>
+                      <span>{t("confirm_and_join", "Verify 2FA & Join")}</span>
                     </button>
                   </div>
 

@@ -14,6 +14,14 @@ import {
   isForeignPersonaAvatar
 } from "@/lib/connectin-profile"
 import { findProfessionById, findEnclaveById } from "@/lib/connectin-professions"
+import {
+  looksLikeInternationalPhone,
+  normalizeInternationalPhone,
+} from "@/lib/connectin-international-phones"
+import {
+  checkPhoneOwnershipConflict,
+  registerWhatsAppMemberNumber,
+} from "@/lib/connectin-whatsapp-directory"
 
 export async function POST(req: NextRequest) {
   try {
@@ -41,15 +49,22 @@ export async function POST(req: NextRequest) {
     const challengeToken = incomingChallengeToken || cookieChallenge
 
     // 1. Verify OTP using signed cryptographic challenge, Twilio Verify API, and DB checks
-    const phoneDigits = (body.phone ? String(body.phone) : cleanTarget).replace(/[^\d]/g, "")
+    const normIncomingPhone =
+      body.phone && looksLikeInternationalPhone(body.phone)
+        ? normalizeInternationalPhone(String(body.phone))
+        : !cleanTarget.includes("@") && looksLikeInternationalPhone(cleanTarget)
+        ? normalizeInternationalPhone(cleanTarget)
+        : ""
+
+    const phoneDigits = (normIncomingPhone || (body.phone ? String(body.phone) : cleanTarget)).replace(/[^\d]/g, "")
     const targetsToCheck = Array.from(new Set([
       cleanTarget,
+      normIncomingPhone || null,
       body.phone ? String(body.phone).trim() : null,
       body.email ? String(body.email).toLowerCase().trim() : null,
       cleanTarget.replace(/[^\d+]/g, ""),
-      phoneDigits ? `+1${phoneDigits.slice(-10)}` : null,
+      phoneDigits ? `+${phoneDigits}` : null,
       phoneDigits ? phoneDigits.slice(-10) : null,
-      phoneDigits ? `+${phoneDigits}` : null
     ].filter(Boolean) as string[]))
 
     let isValid = false
@@ -225,10 +240,49 @@ export async function POST(req: NextRequest) {
     })
 
     const effectiveRole = isSuperAdmin ? "admin" : (user.role === "admin" ? "personal" : user.role)
+    const resolvedVerifiedPhone =
+      normIncomingPhone ||
+      (user.phone && looksLikeInternationalPhone(user.phone)
+        ? normalizeInternationalPhone(user.phone)
+        : "")
+
+    if (resolvedVerifiedPhone) {
+      const ownership = await checkPhoneOwnershipConflict({
+        phone: resolvedVerifiedPhone,
+        claimantEmail: user.email || cleanEmail,
+        claimantName: profile.name,
+      })
+      if (ownership.conflict) {
+        return NextResponse.json(
+          {
+            error:
+              ownership.reason ||
+              "This mobile phone number is already verified by another ConnectLn member.",
+          },
+          { status: 409 }
+        )
+      }
+      user.phone = resolvedVerifiedPhone
+      ;(user as any).phoneVerified = true
+      if (typeof connectinDb.updateUser === "function") {
+        connectinDb.updateUser(user.id, { phone: resolvedVerifiedPhone })
+      }
+    }
+
     const nowIso = new Date().toISOString()
     const timeStr = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
 
     await Promise.all([
+      resolvedVerifiedPhone
+        ? registerWhatsAppMemberNumber({
+            phone: resolvedVerifiedPhone,
+            name: profile.name,
+            email: user.email,
+            avatar: profile.avatar,
+            headline: profile.headline,
+            verifiedBy2FA: true,
+          }).catch(() => null)
+        : Promise.resolve(null),
       upsertCloudUser({
         id: user.id,
         email: user.email,
@@ -310,7 +364,8 @@ export async function POST(req: NextRequest) {
       user: {
         id: user.id,
         email: user.email,
-        phone: user.phone,
+        phone: user.phone || "",
+        phoneVerified: Boolean(user.phone),
         role: effectiveRole,
         status: user.status,
         location: profile.location,
@@ -322,6 +377,8 @@ export async function POST(req: NextRequest) {
       profile: {
         ...profile,
         email: user.email,
+        phone: user.phone || "",
+        phoneVerified: Boolean(user.phone),
         location: profile.location,
         role: effectiveRole,
         roles: isSuperAdmin ? ["SUPER_ADMIN", "Platform IAM Architect", "Root Authority"] : ["NORMAL_USER"],

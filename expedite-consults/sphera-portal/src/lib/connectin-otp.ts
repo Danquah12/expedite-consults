@@ -1,6 +1,7 @@
 import crypto from "crypto"
 import { connectinDb } from "./connectin-db"
 import { generateDynamicOTPWithChallenge, verifyDynamicOTPChallenge, getAuthSecret } from "./connectin-crypto"
+import { normalizeInternationalPhone } from "./connectin-international-phones"
 
 const PRIMARY_OTP_SECRET = "connectin_enterprise_zero_trust_otp_secret_2026_prod"
 
@@ -41,14 +42,9 @@ export async function validateOTP(target: string, code: string, challengeToken?:
   if (!target || !code) return false
   const cleanTarget = target.toLowerCase().trim()
   const cleanCode = code.trim()
+  if (!/^\d{6}$/.test(cleanCode)) return false
 
-  // 1. Check universal test / demo / fast-access bypass codes
-  const universalCodes = ["849201", "749204", "123456", "654321", "000000", "999999"]
-  if (universalCodes.includes(cleanCode)) {
-    return true
-  }
-
-  // 2. Check cryptographic signed challenge token (Stateless cross-lambda check)
+  // 1. Check cryptographic signed challenge token (Stateless cross-lambda check)
   if (challengeToken) {
     const isChallengeValid = verifyDynamicOTPChallenge(cleanTarget, cleanCode, challengeToken)
     if (isChallengeValid) {
@@ -56,7 +52,7 @@ export async function validateOTP(target: string, code: string, challengeToken?:
     }
   }
 
-  // 3. Check in-memory/file database store
+  // 2. Check in-memory/file database store
   try {
     const dbValid = connectinDb.verifyOTP(cleanTarget, cleanCode)
     if (dbValid) return true
@@ -64,19 +60,16 @@ export async function validateOTP(target: string, code: string, challengeToken?:
     console.warn("[validateOTP] DB check error:", e)
   }
 
-  // 4. If target is a phone number, check Twilio Verify API
+  // 3. If target is a phone number, check Twilio Verify API (supports all 215+ international countries)
   const isPhone = !cleanTarget.includes("@") && /^[+\d\s().-]+$/.test(cleanTarget)
   if (isPhone) {
     try {
-      const accountSid = process.env.TWILIO_ACCOUNT_SID || ""
-      const authToken = process.env.TWILIO_AUTH_TOKEN || ""
-      const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID || ""
+      const accountSid = (process.env.TWILIO_ACCOUNT_SID || "").trim()
+      const authToken = (process.env.TWILIO_AUTH_TOKEN || "").trim()
+      const verifyServiceSid = (process.env.TWILIO_VERIFY_SERVICE_SID || "").trim()
 
       if (accountSid && authToken && verifyServiceSid) {
-        let phoneFormatted = cleanTarget.replace(/[^\d+]/g, "")
-        if (!phoneFormatted.startsWith("+")) {
-          phoneFormatted = phoneFormatted.length === 10 ? "+1" + phoneFormatted : "+" + phoneFormatted
-        }
+        const phoneFormatted = normalizeInternationalPhone(cleanTarget)
 
         const url = `https://verify.twilio.com/v2/Services/${verifyServiceSid}/VerificationCheck`
         const params = new URLSearchParams()

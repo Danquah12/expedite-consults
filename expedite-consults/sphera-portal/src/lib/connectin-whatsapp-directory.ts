@@ -27,9 +27,25 @@ export interface WhatsAppDirectoryMember {
   email?: string
   avatar?: string
   headline?: string
+  verifiedBy2FA?: boolean
   pushSubscriptions: StoredPushSubscription[]
   registeredAtIso: string
   updatedAtIso: string
+}
+
+const FOUNDER_EMAIL_ALIASES = new Set([
+  "kasiedu@expedite-consults.com",
+  "kasiedu@expediteconsults.com",
+  "asiedudanquah@gmail.com",
+])
+
+export function isSamePhoneOwnerEmail(emailA?: string, emailB?: string): boolean {
+  const a = String(emailA || "").trim().toLowerCase()
+  const b = String(emailB || "").trim().toLowerCase()
+  if (!a || !b) return false
+  if (a === b) return true
+  if (FOUNDER_EMAIL_ALIASES.has(a) && FOUNDER_EMAIL_ALIASES.has(b)) return true
+  return false
 }
 
 interface VapidKeyPair {
@@ -245,17 +261,98 @@ export async function refreshWhatsAppDirectoryCache(force = false): Promise<Map<
   return cache
 }
 
+export async function checkPhoneOwnershipConflict(params: {
+  phone: string
+  claimantEmail?: string
+  claimantName?: string
+}): Promise<{ conflict: boolean; reason?: string }> {
+  if (!looksLikePhoneNumber(params.phone)) return { conflict: false }
+  const normPhone = normalizeDialablePhone(params.phone)
+  if (/^\+1\d{3}555\d{4}$/.test(normPhone)) return { conflict: false }
+
+  const claimantEmail = String(params.claimantEmail || "").trim().toLowerCase()
+  const claimantName = String(params.claimantName || "").trim().toLowerCase()
+  const cache = await refreshWhatsAppDirectoryCache()
+
+  const dirOwner = cache.get(normPhone)
+  if (dirOwner?.email && dirOwner.verifiedBy2FA) {
+    const ownerEmail = dirOwner.email.trim().toLowerCase()
+    if (
+      !ownerEmail.endsWith("@connectin.app") &&
+      !ownerEmail.endsWith("@connectin.phone") &&
+      claimantEmail &&
+      !isSamePhoneOwnerEmail(ownerEmail, claimantEmail)
+    ) {
+      return {
+        conflict: true,
+        reason:
+          "This phone number is already verified and linked to another ConnectLn account. Impersonating another user's phone number is blocked.",
+      }
+    }
+  }
+
+  try {
+    const users = connectinDb.getAllUsersWithProfiles()
+    for (const u of users) {
+      if (!u.phone || !looksLikePhoneNumber(u.phone)) continue
+      const uNorm = normalizeDialablePhone(u.phone)
+      if (uNorm !== normPhone) continue
+      const uEmail = String(u.email || "").trim().toLowerCase()
+      if (
+        !uEmail ||
+        uEmail.endsWith("@connectin.app") ||
+        uEmail.endsWith("@connectin.phone")
+      ) {
+        continue
+      }
+      if (claimantEmail && !isSamePhoneOwnerEmail(uEmail, claimantEmail)) {
+        // Check if it's only a seeded demo account vs a real verified user
+        if ((u as any).phoneVerified || dirOwner?.verifiedBy2FA) {
+          return {
+            conflict: true,
+            reason:
+              "This mobile number is already 2FA-verified on another ConnectLn account. You cannot register or call with another member's number.",
+          }
+        }
+      } else if (!claimantEmail && claimantName && u.name) {
+        if (
+          ((u as any).phoneVerified || dirOwner?.verifiedBy2FA) &&
+          u.name.trim().toLowerCase() !== claimantName
+        ) {
+          return {
+            conflict: true,
+            reason: "This mobile number belongs to another verified ConnectLn member.",
+          }
+        }
+      }
+    }
+  } catch {}
+
+  return { conflict: false }
+}
+
 export async function registerWhatsAppMemberNumber(params: {
   phone: string
   name: string
   email?: string
   avatar?: string
   headline?: string
+  verifiedBy2FA?: boolean
   pushSubscription?: StoredPushSubscription | null
   deviceLabel?: string
 }): Promise<WhatsAppDirectoryMember | null> {
   if (!looksLikePhoneNumber(params.phone)) return null
   const normPhone = normalizeDialablePhone(params.phone)
+
+  const ownership = await checkPhoneOwnershipConflict({
+    phone: normPhone,
+    claimantEmail: params.email,
+    claimantName: params.name,
+  })
+  if (ownership.conflict) {
+    throw new Error(ownership.reason || "Phone number belongs to another verified member.")
+  }
+
   const cache = await refreshWhatsAppDirectoryCache()
   const existing = cache.get(normPhone)
   const nowIso = new Date().toISOString()
@@ -294,6 +391,7 @@ export async function registerWhatsAppMemberNumber(params: {
     email: params.email?.trim().toLowerCase() || existing?.email,
     avatar: params.avatar || existing?.avatar,
     headline: params.headline || existing?.headline,
+    verifiedBy2FA: Boolean(params.verifiedBy2FA || existing?.verifiedBy2FA),
     pushSubscriptions: subs,
     registeredAtIso: existing?.registeredAtIso || nowIso,
     updatedAtIso: nowIso,

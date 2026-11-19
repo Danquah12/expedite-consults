@@ -55,35 +55,58 @@ export function buildInternationalPhone(countryCode: string, localDigitsRaw: str
 }
 
 /**
- * Top card inside `Messaging -> Studio (Calls)` allowing any user in any country
- * to link their mobile number & enable background Web Push incoming call ringing (just like WhatsApp!).
+ * Top card inside `Messaging -> Studio (Calls)`:
+ * - Automatically defaults & locks to the user's 2FA-verified login/registration phone number!
+ * - Prevents phone number impersonation: no unverified phone number can ever be linked or used to call.
  */
 export function ConnectLnMyPhoneNumberCard({
   userName,
   userEmail,
   userAvatar,
   userHeadline,
+  verifiedUserPhone,
+  onVerifiedPhoneReady,
 }: {
   userName: string
   userEmail?: string
   userAvatar?: string
   userHeadline?: string
+  verifiedUserPhone?: string
+  onVerifiedPhoneReady?: (e164Phone: string) => void
 }) {
   const [countryCode, setCountryCode] = useState<string>("+1")
   const [localNum, setLocalNum] = useState<string>("")
-  const [linkedPhone, setLinkedPhone] = useState<string>("")
+  const [linkedPhone, setLinkedPhone] = useState<string>(() =>
+    verifiedUserPhone && looksLikeClientPhone(verifiedUserPhone)
+      ? normalizeClientPhone(verifiedUserPhone)
+      : ""
+  )
   const [pushEnabled, setPushEnabled] = useState<boolean>(false)
   const [isSaving, setIsSaving] = useState<boolean>(false)
   const [statusMsg, setStatusMsg] = useState<string>("")
+  const [errorMsg, setErrorMsg] = useState<string>("")
   const [deferredInstallPrompt, setDeferredInstallPrompt] = useState<any>(null)
-  const [showEdit, setShowEdit] = useState<boolean>(false)
+
+  // Strict 2FA verification flow if legacy/SSO user has no verified phone yet or switches personal SIM
+  const [show2FAVerifyPanel, setShow2FAVerifyPanel] = useState<boolean>(false)
+  const [otpStep, setOtpStep] = useState<"input" | "code">("input")
+  const [pendingPhone, setPendingPhone] = useState<string>("")
+  const [otpChallengeToken, setOtpChallengeToken] = useState<string>("")
+  const [otpCode, setOtpCode] = useState<string>("")
 
   useEffect(() => {
-    const saved = getMyLinkedConnectLnPhone()
-    if (saved) {
-      setLinkedPhone(saved)
+    if (verifiedUserPhone && looksLikeClientPhone(verifiedUserPhone)) {
+      const norm = normalizeClientPhone(verifiedUserPhone)
+      setLinkedPhone(norm)
+      onVerifiedPhoneReady?.(norm)
+      try {
+        window.localStorage.setItem(MY_LINKED_PHONE_STORAGE_KEY, norm)
+        window.dispatchEvent(new Event("connectln_phone_linked"))
+      } catch {}
     }
+  }, [verifiedUserPhone, onVerifiedPhoneReady])
 
+  useEffect(() => {
     const onBeforeInstall = (e: Event) => {
       e.preventDefault()
       setDeferredInstallPrompt(e)
@@ -100,45 +123,72 @@ export function ConnectLnMyPhoneNumberCard({
         .catch(() => {})
     }
 
-    const qs = new URLSearchParams()
-    if (saved) qs.set("viewerPhone", saved)
-    else if (userEmail) qs.set("email", userEmail)
-    else if (userName) qs.set("name", userName)
+    // Hydrate user's 2FA-verified phone from `/api/connectin/auth/me` + `/api/connectin/calls/whatsapp`
+    ;(async () => {
+      try {
+        let authPhone =
+          verifiedUserPhone && looksLikeClientPhone(verifiedUserPhone)
+            ? normalizeClientPhone(verifiedUserPhone)
+            : ""
 
-    fetch(`/api/connectin/calls/whatsapp?${qs.toString()}`, { cache: "no-store" })
-      .then((r) => r.json())
-      .then((data) => {
-        const foundPhone =
-          data?.myRegistration?.phone || data?.lookup?.member?.phone || ""
-        if (foundPhone && !saved) {
-          setLinkedPhone(foundPhone)
+        if (!authPhone) {
+          const meRes = await fetch("/api/connectin/auth/me", { cache: "no-store" }).catch(() => null)
+          if (meRes?.ok) {
+            const meData = await meRes.json()
+            const candidate = meData?.user?.phone || meData?.profile?.phone || ""
+            if (candidate && looksLikeClientPhone(candidate)) {
+              authPhone = normalizeClientPhone(candidate)
+            }
+          }
+        }
+
+        const qs = new URLSearchParams()
+        if (userEmail) qs.set("viewerEmail", userEmail)
+        if (userName) qs.set("viewerName", userName)
+        if (authPhone) qs.set("viewerPhone", authPhone)
+
+        const dirRes = await fetch(`/api/connectin/calls/whatsapp?${qs.toString()}`, {
+          cache: "no-store",
+        })
+        const data = await dirRes.json()
+        const resolvedVerified =
+          data?.verifiedAccountPhone ||
+          data?.myRegistration?.phone ||
+          authPhone ||
+          ""
+
+        if (resolvedVerified && looksLikeClientPhone(resolvedVerified)) {
+          const norm = normalizeClientPhone(resolvedVerified)
+          setLinkedPhone(norm)
+          onVerifiedPhoneReady?.(norm)
           try {
-            window.localStorage.setItem(MY_LINKED_PHONE_STORAGE_KEY, foundPhone)
+            window.localStorage.setItem(MY_LINKED_PHONE_STORAGE_KEY, norm)
+            window.dispatchEvent(new Event("connectln_phone_linked"))
+          } catch {}
+        } else {
+          // Clear any stale localStorage phone that does not belong to this authenticated user!
+          try {
+            window.localStorage.removeItem(MY_LINKED_PHONE_STORAGE_KEY)
           } catch {}
         }
-        if (data?.myRegistration?.pushDevicesCount > 0 || data?.lookup?.member?.hasPushEnabled) {
+
+        if (data?.myRegistration?.pushDevicesCount > 0) {
           setPushEnabled(true)
         }
-      })
-      .catch(() => {})
+      } catch {}
+    })()
 
     return () => {
       window.removeEventListener("beforeinstallprompt", onBeforeInstall)
     }
-  }, [userEmail, userName])
+  }, [userEmail, userName, verifiedUserPhone, onVerifiedPhoneReady])
 
-  const handleLinkNumberAndEnablePush = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const fullE164 = localNum.trim()
-      ? buildInternationalPhone(countryCode, localNum)
-      : linkedPhone
-    if (!looksLikeClientPhone(fullE164)) {
-      setStatusMsg("Enter your mobile number (e.g. 240-260-7898 or 20-555-0412).")
-      return
-    }
-
+  // 1-Click `Link & Enable Ringing` for the user's ALREADY 2FA-verified account phone!
+  const handleEnableRingingOnVerifiedPhone = async () => {
+    if (!linkedPhone || !looksLikeClientPhone(linkedPhone)) return
     setIsSaving(true)
-    setStatusMsg("Linking number & activating incoming call ringing...")
+    setErrorMsg("")
+    setStatusMsg("Activating incoming voice & video call ringing for your 2FA-verified number...")
     try {
       const cfgRes = await fetch("/api/connectin/calls/whatsapp", { cache: "no-store" })
       const cfgData = await cfgRes.json()
@@ -153,7 +203,7 @@ export function ConnectLnMyPhoneNumberCard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "register",
-          phone: fullE164,
+          phone: linkedPhone,
           name: userName,
           email: userEmail,
           avatar: userAvatar,
@@ -167,25 +217,125 @@ export function ConnectLnMyPhoneNumberCard({
       })
       const saveData = await saveRes.json()
       if (!saveRes.ok || !saveData?.ok) {
-        throw new Error(saveData?.error || "Could not link number.")
+        if (saveData?.requires2FA) {
+          setShow2FAVerifyPanel(true)
+        }
+        throw new Error(saveData?.error || "Could not activate ringing.")
       }
 
       const confirmed = saveData.member.phone
       setLinkedPhone(confirmed)
-      setPushEnabled(Boolean(pushSub) || saveData.member.pushDevicesCount > 0)
-      setLocalNum("")
-      setShowEdit(false)
+      onVerifiedPhoneReady?.(confirmed)
+      setPushEnabled(true)
       try {
         window.localStorage.setItem(MY_LINKED_PHONE_STORAGE_KEY, confirmed)
         window.dispatchEvent(new Event("connectln_phone_linked"))
       } catch {}
       setStatusMsg(
-        pushSub
-          ? `✓ Linked ${prettyClientPhone(confirmed)} — Phone push ringing is ACTIVE!`
-          : `✓ Linked ${prettyClientPhone(confirmed)} for ConnectLn direct voice & video calls!`
+        `✓ ${prettyClientPhone(confirmed)} linked & incoming call ringing is ACTIVE!`
       )
     } catch (err: any) {
-      setStatusMsg(err?.message || "Failed to link mobile number.")
+      setStatusMsg("")
+      setErrorMsg(err?.message || "Failed to activate ringing.")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  // Send 6-digit 2FA OTP to verify ownership of a phone number (anti-impersonation)
+  const handleSendPhone2FA = async (channel: "sms" | "call") => {
+    const fullE164 = buildInternationalPhone(countryCode, localNum)
+    if (!looksLikeClientPhone(fullE164)) {
+      setErrorMsg("Select your country and enter a valid mobile number.")
+      return
+    }
+    setIsSaving(true)
+    setErrorMsg("")
+    setStatusMsg(`Sending 6-digit 2FA verification code via ${channel === "call" ? "Phone Call" : "SMS"}...`)
+    try {
+      const res = await fetch("/api/connectin/calls/whatsapp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "send_phone_2fa",
+          phone: fullE164,
+          name: userName,
+          email: userEmail,
+          channel,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data?.ok) {
+        throw new Error(data?.error || "Could not send 2FA verification code.")
+      }
+      setPendingPhone(data.phone || fullE164)
+      setOtpChallengeToken(data.otpChallengeToken || "")
+      setOtpStep("code")
+      setStatusMsg(data.message || `Enter the 6-digit code sent to ${prettyClientPhone(fullE164)}.`)
+    } catch (err: any) {
+      setStatusMsg("")
+      setErrorMsg(err?.message || "Could not send 2FA code.")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  // Confirm 6-digit 2FA OTP & lock verified number + activate ringing
+  const handleVerifyPhone2FACode = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!pendingPhone || otpCode.trim().length < 6) return
+    setIsSaving(true)
+    setErrorMsg("")
+    setStatusMsg("Verifying 6-digit 2FA code & locking your calling identity...")
+    try {
+      const cfgRes = await fetch("/api/connectin/calls/whatsapp", { cache: "no-store" })
+      const cfgData = await cfgRes.json()
+      const pushSub = cfgData?.vapidPublicKey
+        ? await registerConnectLnPushSubscription(cfgData.vapidPublicKey)
+        : null
+
+      const res = await fetch("/api/connectin/calls/whatsapp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "verify_phone_2fa",
+          phone: pendingPhone,
+          code: otpCode.trim(),
+          otpChallengeToken,
+          name: userName,
+          email: userEmail,
+          avatar: userAvatar,
+          headline: userHeadline,
+          pushSubscription: pushSub,
+          deviceLabel:
+            typeof navigator !== "undefined" && /iPhone|Android|Mobile/i.test(navigator.userAgent)
+              ? "Mobile Phone"
+              : "Desktop Browser",
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data?.ok || !data?.member?.phone) {
+        throw new Error(data?.error || "Invalid 6-digit 2FA code.")
+      }
+
+      const confirmed = data.member.phone
+      setLinkedPhone(confirmed)
+      onVerifiedPhoneReady?.(confirmed)
+      setPushEnabled(true)
+      setShow2FAVerifyPanel(false)
+      setOtpStep("input")
+      setOtpCode("")
+      setLocalNum("")
+      try {
+        window.localStorage.setItem(MY_LINKED_PHONE_STORAGE_KEY, confirmed)
+        window.dispatchEvent(new Event("connectln_phone_linked"))
+      } catch {}
+      setStatusMsg(
+        `✓ 2FA Verified! ${prettyClientPhone(confirmed)} is locked as your ConnectLn Calling & Ringing number.`
+      )
+    } catch (err: any) {
+      setStatusMsg("")
+      setErrorMsg(err?.message || "Verification failed.")
     } finally {
       setIsSaving(false)
     }
@@ -194,37 +344,49 @@ export function ConnectLnMyPhoneNumberCard({
   return (
     <div className="w-full max-w-lg mb-5 rounded-2xl bg-[#FBF8F3] border border-[#D5BBA3] px-4 py-3.5 shadow-2xs text-left">
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="h-8 w-8 rounded-xl bg-[#7C4225] text-white flex items-center justify-center shrink-0">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className="h-9 w-9 rounded-xl bg-[#7C4225] text-white flex items-center justify-center shrink-0">
             <Smartphone className="h-4 w-4" />
           </span>
           <div className="min-w-0">
-            <p className="text-xs font-extrabold text-[#1C1917] truncate">
-              {linkedPhone
-                ? `My ConnectLn Number: ${prettyClientPhone(linkedPhone)}`
-                : "Link Your Phone Number (WhatsApp-Style Direct Calling)"}
-            </p>
-            <p className="text-[11px] text-[#57534E] truncate">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <p className="text-xs font-extrabold text-[#1C1917] truncate">
+                {linkedPhone
+                  ? `My Calling Number: ${prettyClientPhone(linkedPhone)}`
+                  : "Verify Your Mobile Number (2FA Required to Call)"}
+              </p>
+              {linkedPhone && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 border border-emerald-300 px-2 py-0.5 text-[10px] font-extrabold text-emerald-800">
+                  <Lock className="h-2.5 w-2.5" />
+                  <span>2FA Verified</span>
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-[#57534E] truncate mt-0.5">
               {linkedPhone
                 ? pushEnabled
-                  ? "🟢 Incoming voice & video call push ringing active across countries"
-                  : "Linked! Click 'Enable Ringing' so your phone rings when closed"
-                : "Anyone on ConnectLn can voice or video call your number directly over Wi-Fi/5G"}
+                  ? "🟢 Defaulted from your 2FA login · Incoming call ringing is ACTIVE"
+                  : "Defaulted from your 2FA login · Click 'Link & Enable Ringing' to activate ringing"
+                : "Anti-impersonation security: verify your own number via 2FA to enable calling"}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
-          {linkedPhone && !pushEnabled && (
+          {linkedPhone && (
             <button
               type="button"
-              onClick={handleLinkNumberAndEnablePush}
+              onClick={handleEnableRingingOnVerifiedPhone}
               disabled={isSaving}
               style={{ color: "#FFFFFF" }}
-              className="rounded-lg bg-emerald-600 hover:bg-emerald-500 px-2.5 py-1.5 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+              className={`rounded-lg px-3 py-1.5 text-[11px] font-extrabold flex items-center gap-1.5 cursor-pointer ${
+                pushEnabled
+                  ? "bg-emerald-700 hover:bg-emerald-600"
+                  : "bg-[#7C4225] hover:bg-[#5E3119]"
+              }`}
             >
               <Bell className="h-3 w-3" />
-              <span>Enable Ringing</span>
+              <span>{pushEnabled ? "Ringing Enabled ✓" : "Link & Enable Ringing"}</span>
             </button>
           )}
           {deferredInstallPrompt && (
@@ -246,47 +408,104 @@ export function ConnectLnMyPhoneNumberCard({
           {linkedPhone && (
             <button
               type="button"
-              onClick={() => setShowEdit((v) => !v)}
-              className="rounded-lg bg-[#EFE8DA] hover:bg-[#E2D9C8] px-2.5 py-1 text-[11px] font-semibold text-[#5E3119] cursor-pointer"
+              onClick={() => {
+                setShow2FAVerifyPanel((v) => !v)
+                setOtpStep("input")
+                setErrorMsg("")
+              }}
+              className="rounded-lg bg-[#EFE8DA] hover:bg-[#E2D9C8] px-2 py-1 text-[10.5px] font-semibold text-[#5E3119] cursor-pointer"
+              title="Switching SIM? Requires 2FA code verification"
             >
-              {showEdit ? "Cancel" : "Change"}
+              {show2FAVerifyPanel ? "Cancel" : "Verify New SIM (2FA)"}
             </button>
           )}
         </div>
       </div>
 
-      {(!linkedPhone || showEdit) && (
-        <form onSubmit={handleLinkNumberAndEnablePush} className="mt-3 flex flex-wrap items-center gap-2">
-          <select
-            value={countryCode}
-            onChange={(e) => setCountryCode(e.target.value)}
-            className="max-w-[175px] rounded-lg border border-[#D0C4AE] bg-[#F8F4EC] px-2 py-1.5 text-xs font-semibold text-[#1C1917] focus:outline-none focus:border-[#7C4225]"
-          >
-            {COUNTRY_DIAL_CODES.map((c) => (
-              <option key={`${c.iso}-${c.code}`} value={c.code}>
-                {c.label}
-              </option>
-            ))}
-          </select>
-          <input
-            type="tel"
-            value={localNum}
-            onChange={(e) => setLocalNum(e.target.value)}
-            placeholder="Mobile number (e.g. 240-260-7898)"
-            className="flex-1 min-w-[160px] rounded-lg border border-[#D0C4AE] bg-[#F8F4EC] px-3 py-1.5 text-xs font-mono text-[#1C1917] focus:outline-none focus:border-[#7C4225]"
-          />
-          <button
-            type="submit"
-            disabled={isSaving}
-            style={{ color: "#FFFFFF" }}
-            className="rounded-lg bg-[#7C4225] hover:bg-[#5E3119] px-3.5 py-1.5 text-xs font-bold cursor-pointer disabled:opacity-50"
-          >
-            {isSaving ? "Linking..." : "Link & Enable Ringing"}
-          </button>
-        </form>
+      {/* 2FA Verification Panel (Shown ONLY if user has no verified phone yet or explicitly verifies a new SIM with 2FA) */}
+      {(!linkedPhone || show2FAVerifyPanel) && (
+        <div className="mt-3 pt-3 border-t border-[#E0D6C5] space-y-2.5">
+          {otpStep === "input" ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={countryCode}
+                onChange={(e) => setCountryCode(e.target.value)}
+                className="max-w-[175px] rounded-lg border border-[#D0C4AE] bg-[#F8F4EC] px-2 py-1.5 text-xs font-semibold text-[#1C1917] focus:outline-none focus:border-[#7C4225]"
+              >
+                {COUNTRY_DIAL_CODES.map((c) => (
+                  <option key={`${c.iso}-${c.code}`} value={c.code}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="tel"
+                value={localNum}
+                onChange={(e) => setLocalNum(e.target.value)}
+                placeholder="Your mobile number (2FA verified)"
+                className="flex-1 min-w-[155px] rounded-lg border border-[#D0C4AE] bg-[#F8F4EC] px-3 py-1.5 text-xs font-mono text-[#1C1917] focus:outline-none focus:border-[#7C4225]"
+              />
+              <button
+                type="button"
+                disabled={isSaving}
+                onClick={() => handleSendPhone2FA("sms")}
+                style={{ color: "#FFFFFF" }}
+                className="rounded-lg bg-[#7C4225] hover:bg-[#5E3119] px-3 py-1.5 text-xs font-bold cursor-pointer disabled:opacity-50"
+              >
+                {isSaving ? "Sending..." : "💬 Send 2FA SMS"}
+              </button>
+              <button
+                type="button"
+                disabled={isSaving}
+                onClick={() => handleSendPhone2FA("call")}
+                className="rounded-lg bg-[#EFE8DA] hover:bg-[#E2D9C8] border border-[#D0C4AE] px-2.5 py-1.5 text-xs font-bold text-[#5E3119] cursor-pointer disabled:opacity-50"
+              >
+                📞 Call Me
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleVerifyPhone2FACode} className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-bold text-[#5E3119]">
+                6-digit code sent to {prettyClientPhone(pendingPhone)}:
+              </span>
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                value={otpCode}
+                onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
+                placeholder="000000"
+                className="w-28 text-center rounded-lg border border-[#7C4225] bg-white px-2.5 py-1.5 text-sm font-mono font-extrabold tracking-widest text-[#1C1917]"
+                autoFocus
+              />
+              <button
+                type="submit"
+                disabled={isSaving || otpCode.length < 6}
+                style={{ color: "#FFFFFF" }}
+                className="rounded-lg bg-emerald-600 hover:bg-emerald-500 px-3.5 py-1.5 text-xs font-extrabold cursor-pointer disabled:opacity-50"
+              >
+                {isSaving ? "Verifying..." : "Verify 2FA & Enable Ringing"}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSendPhone2FA("call")}
+                disabled={isSaving}
+                className="rounded-lg bg-[#EFE8DA] px-2.5 py-1.5 text-[11px] font-bold text-[#5E3119] cursor-pointer"
+              >
+                📞 Resend via Call
+              </button>
+            </form>
+          )}
+        </div>
       )}
 
-      {statusMsg && (
+      {errorMsg && (
+        <p className="mt-2 text-[11px] font-semibold text-rose-700">
+          ⚠️ {errorMsg}
+        </p>
+      )}
+
+      {statusMsg && !errorMsg && (
         <p className="mt-2 text-[11px] font-semibold text-emerald-700 flex items-center gap-1">
           <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
           <span>{statusMsg}</span>

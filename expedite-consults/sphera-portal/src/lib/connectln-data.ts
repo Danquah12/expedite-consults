@@ -1,5 +1,7 @@
 export interface UserProfile {
   email?: string
+  phone?: string
+  phoneVerified?: boolean
   userId?: string
   role?: string
   roles?: string[]

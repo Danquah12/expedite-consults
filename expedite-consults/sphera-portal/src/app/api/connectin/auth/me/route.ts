@@ -29,12 +29,15 @@ export async function GET(req: NextRequest) {
             user: {
               id: user.id,
               email: user.email,
-              phone: user.phone,
+              phone: user.phone || "",
+              phoneVerified: Boolean(user.phone),
               role: effectiveRole,
               status: user.status
             },
             profile: profile ? {
               ...profile,
+              phone: user.phone || (profile as any).phone || "",
+              phoneVerified: Boolean(user.phone),
               role: effectiveRole,
               roles: isSuperAdmin ? ["SUPER_ADMIN", "Platform IAM Architect", "Root Authority"] : ["NORMAL_USER"]
             } : profile,

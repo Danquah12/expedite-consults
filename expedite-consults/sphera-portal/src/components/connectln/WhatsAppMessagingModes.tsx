@@ -706,6 +706,27 @@ export function WhatsAppModeWorkspace({
         } catch {}
     }, [callLogs]);
 
+    const [myVerifiedCallerPhone, setMyVerifiedCallerPhone] = useState<string>(
+        () => ((currentUser as any)?.phone ? String((currentUser as any).phone) : '')
+    );
+
+    const ensureVerifiedCallerBeforeCalling = (): boolean => {
+        const storedLinked =
+            typeof window !== 'undefined'
+                ? window.localStorage.getItem('connectln_my_whatsapp_phone_v1') || ''
+                : '';
+        const hasVerified = Boolean(
+            myVerifiedCallerPhone || (currentUser as any)?.phone || storedLinked
+        );
+        if (!hasVerified) {
+            triggerToast(
+                '🔒 Please verify your mobile number via 2FA at the top card to enable calling on ConnectLn.'
+            );
+            return false;
+        }
+        return true;
+    };
+
     const resolveDialTarget = (raw: string): string => {
         const clean = raw.trim();
         if (!clean) return '';
@@ -720,6 +741,7 @@ export function WhatsAppModeWorkspace({
         callMode: 'audio' | 'video',
         avatarOverride?: string
     ) => {
+        if (!ensureVerifiedCallerBeforeCalling()) return;
         const clean = resolveDialTarget(rawTarget);
         if (!clean) return;
         const isNum = looksLikeClientPhone(clean);
@@ -750,6 +772,7 @@ export function WhatsAppModeWorkspace({
     };
 
     const launchSmartVoiceCall = async (rawTarget: string, avatarOverride?: string) => {
+        if (!ensureVerifiedCallerBeforeCalling()) return;
         const clean = resolveDialTarget(rawTarget);
         if (!clean) return;
         const isNum = looksLikeClientPhone(clean);
@@ -775,6 +798,7 @@ export function WhatsAppModeWorkspace({
     };
 
     const launchCellPhoneCall = (rawTarget: string, avatarOverride?: string) => {
+        if (!ensureVerifiedCallerBeforeCalling()) return;
         const clean = rawTarget.trim();
         if (!clean) return;
         const isNum = looksLikeClientPhone(clean);
@@ -1724,6 +1748,8 @@ export function WhatsAppModeWorkspace({
                         userEmail={currentUser?.email}
                         userAvatar={userAvatar}
                         userHeadline={currentUser?.headline}
+                        verifiedUserPhone={(currentUser as any)?.phone}
+                        onVerifiedPhoneReady={(ph) => setMyVerifiedCallerPhone(ph)}
                     />
                     <div className="bg-[#FBF8F3] rounded-2xl shadow-2xs border border-[#E0D6C5] px-8 py-7 max-w-md w-full text-center mb-6">
                         {/* ConnectLn Bespoke Studio Console & Acoustic Crest Illustration */}
