@@ -2393,6 +2393,8 @@ export default function ConnectLnPage() {
         <ConnectLnPhoneVerificationGate
           viewerName={userData?.name}
           viewerEmail={userData?.email}
+          viewerPhone={userData?.phone}
+          viewerId={userData?.id}
           onSignOut={handleSignOut}
         />
       )}

@@ -17,10 +17,14 @@ import { MY_LINKED_PHONE_STORAGE_KEY } from "./ConnectLnWhatsAppCallModal"
 export function ConnectLnPhoneVerificationGate({
   viewerName,
   viewerEmail,
+  viewerPhone,
+  viewerId,
   onSignOut,
 }: {
   viewerName?: string
   viewerEmail?: string
+  viewerPhone?: string
+  viewerId?: string
   onSignOut: () => void
 }) {
   const [needsPhone, setNeedsPhone] = useState(false)
@@ -37,16 +41,28 @@ export function ConnectLnPhoneVerificationGate({
 
   useEffect(() => {
     if (typeof window === "undefined") return
-    const email = (viewerEmail || "").trim()
-    if (!email || email.endsWith("@connectin.app") || email.endsWith("@connectin.phone")) return
     // Never block guests joining a call from a shared link
     const sp = new URLSearchParams(window.location.search)
     if (sp.get("waCall") || sp.get("joinCall") || sp.get("call")) return
+    if (String(viewerId || "").startsWith("guest-")) return
+
+    const rawEmail = (viewerEmail || "").trim()
+    const isRealEmail =
+      Boolean(rawEmail) && !rawEmail.endsWith("@connectin.app") && !rawEmail.endsWith("@connectin.phone")
+    const phone = (viewerPhone || "").trim()
+
+    // No real email AND no phone on the profile -> nothing to look up: must add a phone.
+    if (!isRealEmail && !phone) {
+      setNeedsPhone(true)
+      return
+    }
 
     let cancelled = false
     ;(async () => {
       try {
-        const qs = new URLSearchParams({ viewerEmail: email, viewerName: viewerName || "" })
+        const qs = new URLSearchParams({ viewerName: viewerName || "" })
+        if (isRealEmail) qs.set("viewerEmail", rawEmail)
+        if (phone) qs.set("viewerPhone", phone)
         const res = await fetch(`/api/connectin/calls/whatsapp?${qs.toString()}`, { cache: "no-store" })
         if (!res.ok || cancelled) return
         const data = await res.json()
@@ -57,7 +73,7 @@ export function ConnectLnPhoneVerificationGate({
     return () => {
       cancelled = true
     }
-  }, [viewerEmail, viewerName])
+  }, [viewerEmail, viewerName, viewerPhone, viewerId])
 
   if (!needsPhone) return null
 
