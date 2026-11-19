@@ -172,8 +172,39 @@ export function ConnectLnMyPhoneNumberCard({
           } catch {}
         }
 
-        if (data?.myRegistration?.pushDevicesCount > 0) {
-          setPushEnabled(true)
+        // IMPORTANT: Only mark `pushEnabled = true` if THIS specific device/phone has an active Web Push subscription!
+        // Never assume this phone can ring just because the user's Desktop Browser subscribed earlier.
+        if (
+          resolvedVerified &&
+          looksLikeClientPhone(resolvedVerified) &&
+          typeof Notification !== "undefined" &&
+          Notification.permission === "granted" &&
+          data?.vapidPublicKey
+        ) {
+          const existingOrNewSub = await registerConnectLnPushSubscription(data.vapidPublicKey).catch(
+            () => null
+          )
+          if (existingOrNewSub) {
+            setPushEnabled(true)
+            fetch("/api/connectin/calls/whatsapp", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                action: "register",
+                phone: normalizeClientPhone(resolvedVerified),
+                name: userName,
+                email: userEmail,
+                avatar: userAvatar,
+                headline: userHeadline,
+                pushSubscription: existingOrNewSub,
+                deviceLabel:
+                  typeof navigator !== "undefined" &&
+                  /iPhone|Android|Mobile/i.test(navigator.userAgent)
+                    ? "Mobile Phone"
+                    : "Desktop Browser",
+              }),
+            }).catch(() => {})
+          }
         }
       } catch {}
     })()
@@ -386,7 +417,9 @@ export function ConnectLnMyPhoneNumberCard({
               }`}
             >
               <Bell className="h-3 w-3" />
-              <span>{pushEnabled ? "Ringing Enabled ✓" : "Link & Enable Ringing"}</span>
+              <span>
+                {pushEnabled ? "Ringing Active on This Device ✓" : "Enable Ringing on This Device"}
+              </span>
             </button>
           )}
           {deferredInstallPrompt && (

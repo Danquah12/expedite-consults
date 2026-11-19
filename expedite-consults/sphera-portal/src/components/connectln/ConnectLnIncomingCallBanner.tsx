@@ -1,10 +1,16 @@
 "use client"
 
 import React, { useEffect, useRef, useState } from "react"
-import { Video, Phone, PhoneOff } from "lucide-react"
-import { getMyLinkedConnectLnPhone } from "./ConnectLnWhatsAppCallModal"
-import { prettyClientPhone } from "./ConnectLnCellPhoneSoftphone"
-import { reportIncomingCallToNativeOS } from "@/lib/connectin-native-callkit-bridge"
+import { Video, Phone, PhoneOff, Bell, X } from "lucide-react"
+import {
+  getMyLinkedConnectLnPhone,
+  MY_LINKED_PHONE_STORAGE_KEY,
+} from "./ConnectLnWhatsAppCallModal"
+import { prettyClientPhone, looksLikeClientPhone, normalizeClientPhone } from "./ConnectLnCellPhoneSoftphone"
+import {
+  reportIncomingCallToNativeOS,
+  registerConnectLnPushSubscription,
+} from "@/lib/connectin-native-callkit-bridge"
 
 interface IncomingCallSummary {
   id: string
@@ -47,6 +53,10 @@ export function ConnectLnIncomingCallBanner({
   const [incomingCall, setIncomingCall] = useState<IncomingCallSummary | null>(null)
   const [myPhone, setMyPhone] = useState<string>("")
   const [hasOpenModal, setHasOpenModal] = useState<boolean>(false)
+  const [showMobileRingPrompt, setShowMobileRingPrompt] = useState<boolean>(false)
+  const [isIosBrowserTab, setIsIosBrowserTab] = useState<boolean>(false)
+  const [vapidKey, setVapidKey] = useState<string>("")
+  const [isEnablingPush, setIsEnablingPush] = useState<boolean>(false)
   const declinedIdsRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
@@ -62,7 +72,6 @@ export function ConnectLnIncomingCallBanner({
     window.addEventListener("storage", syncPhone)
     window.addEventListener("connectln_call_modal_change", syncModalOpen)
 
-    // Listen for instant Service Worker push messages (`public/sw.js`) so ringing starts in <50ms!
     const onSwMessage = (ev: MessageEvent) => {
       const msg = ev?.data
       if (!msg) return
@@ -110,6 +119,91 @@ export function ConnectLnIncomingCallBanner({
     }
   }, [onAcceptIncomingCall])
 
+  // Auto-hydrate verified phone on mobile & detect if THIS phone still needs 1-tap incoming call ringing enabled
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const ua = navigator.userAgent || ""
+    const isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(ua)
+    const isIos = /iPhone|iPad|iPod/i.test(ua)
+    const isStandalone =
+      window.matchMedia?.("(display-mode: standalone)")?.matches ||
+      Boolean((navigator as any).standalone)
+    setIsIosBrowserTab(isIos && !isStandalone)
+
+    ;(async () => {
+      try {
+        const qs = new URLSearchParams()
+        if (viewerEmail) qs.set("viewerEmail", viewerEmail)
+        if (viewerName) qs.set("viewerName", viewerName)
+        const res = await fetch(`/api/connectin/calls/whatsapp?${qs.toString()}`, {
+          cache: "no-store",
+        })
+        if (!res.ok) return
+        const data = await res.json()
+        if (data?.vapidPublicKey) setVapidKey(data.vapidPublicKey)
+
+        const verified =
+          data?.verifiedAccountPhone || data?.myRegistration?.phone || getMyLinkedConnectLnPhone()
+        if (verified && looksLikeClientPhone(verified)) {
+          const norm = normalizeClientPhone(verified)
+          setMyPhone(norm)
+          try {
+            window.localStorage.setItem(MY_LINKED_PHONE_STORAGE_KEY, norm)
+          } catch {}
+
+          if ("serviceWorker" in navigator) {
+            const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => null)
+            const existingSub = await reg?.pushManager?.getSubscription?.().catch(() => null)
+            if (existingSub) {
+              // Ensure this device's push endpoint is synced to the server directory
+              fetch("/api/connectin/calls/whatsapp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  action: "register",
+                  phone: norm,
+                  name: viewerName || "ConnectLn Member",
+                  email: viewerEmail,
+                  pushSubscription: existingSub.toJSON(),
+                  deviceLabel: isMobile ? "Mobile Phone" : "Desktop Browser",
+                }),
+              }).catch(() => {})
+              setShowMobileRingPrompt(false)
+            } else if (isMobile && sessionStorage.getItem("connectln_hide_ring_prompt") !== "1") {
+              setShowMobileRingPrompt(true)
+            }
+          } else if (isIos && !isStandalone && sessionStorage.getItem("connectln_hide_ring_prompt") !== "1") {
+            setShowMobileRingPrompt(true)
+          }
+        }
+      } catch {}
+    })()
+  }, [viewerEmail, viewerName])
+
+  const handleEnableMobileRingingNow = async () => {
+    if (!myPhone) return
+    setIsEnablingPush(true)
+    try {
+      const sub = vapidKey ? await registerConnectLnPushSubscription(vapidKey) : null
+      if (sub) {
+        await fetch("/api/connectin/calls/whatsapp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "register",
+            phone: myPhone,
+            name: viewerName || "ConnectLn Member",
+            email: viewerEmail,
+            pushSubscription: sub,
+            deviceLabel: "Mobile Phone",
+          }),
+        })
+        setShowMobileRingPrompt(false)
+      }
+    } catch {}
+    setIsEnablingPush(false)
+  }
+
   useEffect(() => {
     const cleanName = (viewerName || "").trim()
     const cleanEmail = (viewerEmail || "").trim()
@@ -121,7 +215,7 @@ export function ConnectLnIncomingCallBanner({
 
     let cancelled = false
     const checkIncoming = async () => {
-      if (cancelled || document.visibilityState === "hidden" || isLocalTabHostingOpenCall()) return
+      if (cancelled || isLocalTabHostingOpenCall()) return
       try {
         const localPeerId = sessionStorage.getItem("vibe_call_participant_id") || ""
         const qs = new URLSearchParams({
@@ -139,13 +233,18 @@ export function ConnectLnIncomingCallBanner({
           : []
         const active = list.find((c) => c?.id && !declinedIdsRef.current.has(c.id)) || null
         setIncomingCall(active)
+        if (active) {
+          try {
+            navigator.vibrate?.([400, 200, 400])
+          } catch {}
+        }
       } catch {
         // ignore transient network errors
       }
     }
 
     checkIncoming()
-    const timer = window.setInterval(checkIncoming, 2500)
+    const timer = window.setInterval(checkIncoming, 2200)
     return () => {
       cancelled = true
       window.clearInterval(timer)
@@ -187,7 +286,49 @@ export function ConnectLnIncomingCallBanner({
     }
   }, [incomingCall?.id])
 
-  if (!incomingCall || hasOpenModal) return null
+  if (hasOpenModal) return null
+
+  if (!incomingCall) {
+    if (!showMobileRingPrompt || !myPhone) return null
+    return (
+      <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[90] w-[94vw] max-w-md rounded-2xl bg-[#181411] border border-emerald-400/60 shadow-2xl px-3.5 py-2.5 text-[#FBF8F3] flex items-center justify-between gap-2.5">
+        <div className="min-w-0">
+          <p className="text-xs font-extrabold text-emerald-300 truncate">
+            📱 Enable Incoming Call Ringing on This Phone
+          </p>
+          <p className="text-[11px] text-zinc-300 leading-snug">
+            {isIosBrowserTab
+              ? "iPhone tip: Keep ConnectLn open to receive internet calls, or tap Share (⬆️) → Add to Home Screen for lock-screen ringing."
+              : `Tap Enable so internet calls to ${prettyClientPhone(myPhone)} ring this phone.`}
+          </p>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {!isIosBrowserTab && (
+            <button
+              type="button"
+              disabled={isEnablingPush}
+              onClick={handleEnableMobileRingingNow}
+              style={{ color: "#FFFFFF" }}
+              className="rounded-xl bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 text-xs font-extrabold flex items-center gap-1 cursor-pointer"
+            >
+              <Bell className="h-3.5 w-3.5" />
+              <span>{isEnablingPush ? "..." : "Enable"}</span>
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              sessionStorage.setItem("connectln_hide_ring_prompt", "1")
+              setShowMobileRingPrompt(false)
+            }}
+            className="h-7 w-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white cursor-pointer"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   const callerName =
     incomingCall.participants?.[0]?.display_name ||
