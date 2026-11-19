@@ -13,6 +13,9 @@ export interface CommCallParticipant {
   display_name: string
   role: string
   device_label?: string
+  target_recipient_name?: string
+  target_recipient_email?: string
+  call_type?: "audio" | "video" | "screenshare"
   joined_at: string
   last_seen_ms?: number
   left_at: string | null
@@ -64,6 +67,9 @@ export interface CommCallRecord {
   id: string
   conversation_id: string
   initiator_user_id: string
+  initiator_name?: string
+  target_recipient_name?: string
+  target_recipient_email?: string
   call_type: "audio" | "video" | "screenshare"
   topology: "P2P_E2EE" | "SFU_E2EE_SFRAME"
   state: "CREATED" | "RINGING" | "NEGOTIATING" | "CONNECTED" | "RECONNECTING" | "ENDED"
@@ -316,14 +322,14 @@ async function pushCloudCallParticipant(callId: string, participant: CommCallPar
 
   // 2. Push participant metadata + fallback video frame (`p__call__user`), throttled gently when WebRTC is live
   const lastPush = lastCloudParticipantPushMap.get(key) || 0
-  const minPushIntervalMs = participant.webrtc_connected ? 1800 : 450
+  const minPushIntervalMs = participant.webrtc_connected ? 1400 : 450
   if (force || nowMs - lastPush >= minPushIntervalMs) {
     lastCloudParticipantPushMap.set(key, nowMs)
     const compactParticipant = {
       ...participant,
       call_id: callId,
       live_frame:
-        !participant.webrtc_connected &&
+        participant.is_video_on !== false &&
         participant.live_frame &&
         participant.live_frame.length < 13500
           ? participant.live_frame
@@ -404,8 +410,26 @@ async function pullCloudCallParticipants(excludeUserId?: string): Promise<void> 
       if (data.participant_state === "LEFT" || !data.last_seen_ms || nowMs - data.last_seen_ms >= PARTICIPANT_TTL_MS) {
         continue
       }
-      const record = ACTIVE_CALLS_STORE.get(data.call_id)
-      if (!record || record.state === "ENDED") continue
+      let record = ACTIVE_CALLS_STORE.get(data.call_id)
+      if (!record) {
+        record = ensureCallRoom(
+          data.call_id,
+          data.user_id,
+          data.display_name || "Meeting Participant",
+          data.call_id
+        )
+      }
+      if (record.state === "ENDED") continue
+      if (data.call_type) record.call_type = data.call_type
+      if (data.target_recipient_name && !record.target_recipient_name) {
+        record.target_recipient_name = data.target_recipient_name
+      }
+      if (data.target_recipient_email && !record.target_recipient_email) {
+        record.target_recipient_email = data.target_recipient_email
+      }
+      if (!record.initiator_name && data.display_name) {
+        record.initiator_name = data.display_name
+      }
       const existingIdx = record.participants.findIndex((p) => p.user_id === data.user_id)
       if (existingIdx < 0) {
         record.participants.push(data as CommCallParticipant)
@@ -614,6 +638,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ice_servers: iceServers })
   }
   loadPersistedCalls()
+  await pullCloudCallParticipants().catch(() => {})
+  const nowMs = Date.now()
   const callId = req.nextUrl.searchParams.get("call_id")
   if (callId) {
     const call = ACTIVE_CALLS_STORE.get(callId)
@@ -622,7 +648,52 @@ export async function GET(req: NextRequest) {
       call: call || null,
     })
   }
-  const calls = Array.from(ACTIVE_CALLS_STORE.values())
+
+  const incomingForName = (req.nextUrl.searchParams.get("incoming_for") || "").trim().toLowerCase()
+  const incomingEmail = (req.nextUrl.searchParams.get("incoming_email") || "").trim().toLowerCase()
+  const viewerPeerId = (req.nextUrl.searchParams.get("viewer_peer_id") || "").trim()
+
+  const calls = Array.from(ACTIVE_CALLS_STORE.values()).filter((c) => {
+    if (c.state === "ENDED") return false
+    const liveParts = (c.participants || []).filter(
+      (p) => p.last_seen_ms && nowMs - p.last_seen_ms < PARTICIPANT_TTL_MS
+    )
+    c.participants = liveParts
+    return liveParts.length > 0
+  })
+
+  if (incomingForName || incomingEmail) {
+    const nameSlug = incomingForName.replace(/[^a-z0-9]+/g, "_")
+    const incomingCalls = calls.filter((c) => {
+      // Skip if viewer is already inside this call
+      if (
+        c.participants.some(
+          (p) =>
+            (viewerPeerId && p.user_id === viewerPeerId) ||
+            (incomingForName && p.display_name?.trim().toLowerCase() === incomingForName)
+        )
+      ) {
+        return false
+      }
+      const targetName = (c.target_recipient_name || "").trim().toLowerCase()
+      const targetEmail = (c.target_recipient_email || "").trim().toLowerCase()
+      const cidLower = c.id.toLowerCase()
+      return Boolean(
+        (incomingEmail && targetEmail && targetEmail === incomingEmail) ||
+          (incomingForName &&
+            targetName &&
+            (targetName === incomingForName ||
+              targetName.includes(incomingForName) ||
+              incomingForName.includes(targetName))) ||
+          (nameSlug.length >= 4 && cidLower.includes(nameSlug))
+      )
+    })
+    return NextResponse.json({
+      protocol_version: 1,
+      incoming_calls: incomingCalls,
+    })
+  }
+
   return NextResponse.json({
     protocol_version: 1,
     active_calls_count: calls.length,
@@ -795,6 +866,18 @@ export async function POST(req: NextRequest) {
       const isWebRtcConnected = Boolean(body.webrtc_connected)
       const isVideoOn = typeof body.is_video_on === "boolean" ? body.is_video_on : true
       const isMuted = typeof body.is_muted === "boolean" ? body.is_muted : false
+      if (body.call_type === "audio" || body.call_type === "video" || body.call_type === "screenshare") {
+        record.call_type = body.call_type
+      }
+      if (typeof body.target_recipient_name === "string" && body.target_recipient_name.trim()) {
+        record.target_recipient_name = body.target_recipient_name.trim()
+      }
+      if (typeof body.target_recipient_email === "string" && body.target_recipient_email.trim()) {
+        record.target_recipient_email = body.target_recipient_email.trim().toLowerCase()
+      }
+      if (!record.initiator_name && displayName) {
+        record.initiator_name = displayName
+      }
       const updatedParticipant: CommCallParticipant = {
         call_id: callId,
         user_id: userId,
@@ -803,6 +886,9 @@ export async function POST(req: NextRequest) {
         display_name: displayName,
         role: body.role || (existingIdx === 0 ? "Host · Local Camera & Mic" : "Invited Friend · Live Video"),
         device_label: body.device_label || "Live WebRTC Camera",
+        target_recipient_name: record.target_recipient_name,
+        target_recipient_email: record.target_recipient_email,
+        call_type: record.call_type,
         joined_at: existingIdx >= 0 ? record.participants[existingIdx].joined_at : now,
         last_seen_ms: nowMs,
         left_at: null,
@@ -824,7 +910,7 @@ export async function POST(req: NextRequest) {
             ? record.participants[existingIdx].virtual_bg_badge
             : undefined,
         live_frame:
-          isWebRtcConnected || !isVideoOn
+          !isVideoOn
             ? null
             : typeof body.live_frame === "string" &&
               body.live_frame.startsWith("data:image/") &&

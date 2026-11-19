@@ -15,6 +15,8 @@ import {
   AlertCircle,
   Smartphone,
   RotateCcw,
+  QrCode,
+  Copy,
 } from "lucide-react"
 
 const LOCAL_PHONEBOOK_KEY = "connectln_contact_phonebook_v1"
@@ -675,6 +677,7 @@ export function ConnectLnInlineCellBridgeBar({
   callerEmail,
   roomJoinUrl,
   autoDialOnMount = false,
+  videoCallMode = true,
 }: {
   targetName: string
   targetEmail?: string
@@ -682,6 +685,7 @@ export function ConnectLnInlineCellBridgeBar({
   callerEmail?: string
   roomJoinUrl?: string
   autoDialOnMount?: boolean
+  videoCallMode?: boolean
 }) {
   const [phoneInput, setPhoneInput] = useState<string>(() =>
     getSavedContactPhoneLocal(targetName, targetEmail)
@@ -689,8 +693,22 @@ export function ConnectLnInlineCellBridgeBar({
   const [phase, setPhase] = useState<"idle" | "connecting" | "ringing" | "in_call" | "ended" | "error">("idle")
   const [elapsedSec, setElapsedSec] = useState<number>(0)
   const [statusNote, setStatusNote] = useState<string>("")
+  const [showQrModal, setShowQrModal] = useState<boolean>(false)
   const deviceRef = useRef<any>(null)
   const callRef = useRef<any>(null)
+  const autoPushedTargetRef = useRef<string>("")
+
+  const effectiveJoinUrl = (() => {
+    const base =
+      roomJoinUrl ||
+      (typeof window !== "undefined"
+        ? `${window.location.origin}/connectin?tab=vibecomms`
+        : "https://conectln.com/connectin?tab=vibecomms")
+    if (targetName && !looksLikeClientPhone(targetName) && !base.includes("invitedName=")) {
+      return `${base}${base.includes("?") ? "&" : "?"}invitedName=${encodeURIComponent(targetName)}`
+    }
+    return base
+  })()
 
   const hangupCell = useCallback(() => {
     try {
@@ -709,6 +727,35 @@ export function ConnectLnInlineCellBridgeBar({
     return () => window.clearInterval(id)
   }, [phase])
 
+  const dispatchCameraInvitePush = useCallback(
+    async (phoneCandidate?: string, alsoPlaceAlertCall = false) => {
+      try {
+        const res = await fetch("/api/connectin/voice/ring-cell", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            toPhone: phoneCandidate || undefined,
+            targetName,
+            targetEmail,
+            callerName,
+            callerEmail,
+            callMode: videoCallMode ? "video" : "audio",
+            joinUrl: effectiveJoinUrl,
+            placeAlertCall: alsoPlaceAlertCall,
+          }),
+        })
+        const data = await res.json()
+        if (data?.toPhone && looksLikeClientPhone(data.toPhone)) {
+          setPhoneInput((prev) => prev || data.toPhone)
+        }
+        return data
+      } catch {
+        return null
+      }
+    },
+    [callerEmail, callerName, effectiveJoinUrl, targetEmail, targetName, videoCallMode]
+  )
+
   const dialCellNow = useCallback(
     async (numToDial: string) => {
       const clean = normalizeClientPhone(numToDial)
@@ -718,8 +765,17 @@ export function ConnectLnInlineCellBridgeBar({
       }
       hangupCell()
       setPhase("connecting")
-      setStatusNote(`Dialing ${prettyClientPhone(clean)}...`)
+      setStatusNote(
+        videoCallMode
+          ? `Dialing ${prettyClientPhone(clean)} & sending 1-tap Camera Link to their phone...`
+          : `Dialing ${prettyClientPhone(clean)}...`
+      )
       saveContactPhoneLocal(clean, targetName, targetEmail)
+
+      // In Video Call mode, simultaneously push the 1-tap Camera Link to their phone (Email push + SMS)!
+      if (videoCallMode) {
+        void dispatchCameraInvitePush(clean, false)
+      }
 
       try {
         const res = await fetch("/api/connectin/voice/token", {
@@ -746,17 +802,25 @@ export function ConnectLnInlineCellBridgeBar({
         callRef.current = call
         call.on("ringing", () => {
           setPhase("ringing")
-          setStatusNote(`📱 Ringing ${prettyClientPhone(clean)} on cell network...`)
+          setStatusNote(
+            videoCallMode
+              ? `📱 Ringing ${prettyClientPhone(clean)} + Camera Link sent! Tell them to tap the link to turn on camera.`
+              : `📱 Ringing ${prettyClientPhone(clean)} on cell network...`
+          )
         })
         call.on("accept", () => {
           setElapsedSec(0)
           setPhase("in_call")
-          setStatusNote(`🟢 Cell Phone Bridged Live (${prettyClientPhone(clean)})`)
+          setStatusNote(
+            videoCallMode
+              ? `🟢 Voice live! Have ${targetName} tap the Camera Link (Email/WhatsApp/SMS) to turn on their camera.`
+              : `🟢 Cell Phone Bridged Live (${prettyClientPhone(clean)})`
+          )
         })
         call.on("disconnect", () => {
           callRef.current = null
           setPhase("ended")
-          setStatusNote("Cell phone call ended.")
+          setStatusNote("Cell phone voice line ended.")
         })
         call.on("error", (e: any) => {
           setPhase("error")
@@ -767,7 +831,7 @@ export function ConnectLnInlineCellBridgeBar({
         setStatusNote(err?.message || "Allow microphone access to ring cell phone.")
       }
     },
-    [callerEmail, callerName, hangupCell, targetEmail, targetName]
+    [callerEmail, callerName, dispatchCameraInvitePush, hangupCell, targetEmail, targetName, videoCallMode]
   )
 
   useEffect(() => {
@@ -779,13 +843,30 @@ export function ConnectLnInlineCellBridgeBar({
     })
     fetch(`/api/connectin/voice/token?${qs.toString()}`, { cache: "no-store" })
       .then((r) => r.json())
-      .then((data) => {
+      .then(async (data) => {
         if (cancelled) return
-        if (data?.resolvedPhone && looksLikeClientPhone(data.resolvedPhone)) {
-          setPhoneInput((prev) => prev || data.resolvedPhone)
-          if (autoDialOnMount || looksLikeClientPhone(targetName)) {
-            dialCellNow(data.resolvedPhone)
+        const foundPhone =
+          data?.resolvedPhone && looksLikeClientPhone(data.resolvedPhone)
+            ? data.resolvedPhone
+            : ""
+        if (foundPhone) {
+          setPhoneInput((prev) => prev || foundPhone)
+        }
+
+        // Automatically dispatch instant mobile Camera Invite Push once when opening a Video Call!
+        const pushKey = `${targetName}__${targetEmail || ""}__${effectiveJoinUrl}`
+        if (videoCallMode && autoPushedTargetRef.current !== pushKey) {
+          autoPushedTargetRef.current = pushKey
+          const pushRes = await dispatchCameraInvitePush(foundPhone || undefined, false)
+          if (!cancelled && pushRes?.emailSent) {
+            setStatusNote(
+              `✓ Sent instant 1-tap Camera Link to ${pushRes.recipientEmail || targetName}'s phone!`
+            )
           }
+        }
+
+        if (foundPhone && (autoDialOnMount || (!videoCallMode && looksLikeClientPhone(targetName)))) {
+          dialCellNow(foundPhone)
         }
       })
       .catch(() => {})
@@ -794,109 +875,187 @@ export function ConnectLnInlineCellBridgeBar({
       cancelled = true
       hangupCell()
     }
-  }, [targetName, targetEmail, callerName, callerEmail, autoDialOnMount, dialCellNow, hangupCell])
+  }, [
+    targetName,
+    targetEmail,
+    callerName,
+    callerEmail,
+    autoDialOnMount,
+    videoCallMode,
+    effectiveJoinUrl,
+    dispatchCameraInvitePush,
+    dialCellNow,
+    hangupCell,
+  ])
 
-  const handleTextAndAlertCell = async () => {
-    const clean = normalizeClientPhone(phoneInput)
-    if (!looksLikeClientPhone(clean)) {
-      setStatusNote("Enter their mobile number first to text/ring their cell phone.")
-      return
-    }
-    saveContactPhoneLocal(clean, targetName, targetEmail)
-    setStatusNote(`Sending join link & ringing ${prettyClientPhone(clean)}...`)
-    try {
-      const res = await fetch("/api/connectin/voice/ring-cell", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          toPhone: clean,
-          targetName,
-          callerName,
-          callMode: "video",
-          joinUrl: roomJoinUrl,
-          placeAlertCall: phase === "idle" || phase === "ended",
-        }),
-      })
-      const data = await res.json()
-      if (data?.ok) {
-        setStatusNote(
-          data.smsSent
-            ? `✓ Texted video link${data.voiceAlertSid ? " & rang" : " to"} ${prettyClientPhone(clean)}`
-            : `✓ Rang ${prettyClientPhone(clean)} with incoming call alert`
-        )
-      } else {
-        setStatusNote(data?.error || "Could not alert cell phone.")
-      }
-    } catch {
-      setStatusNote("Network error alerting cell phone.")
+  const handlePushCameraLink = async () => {
+    const clean = looksLikeClientPhone(phoneInput) ? normalizeClientPhone(phoneInput) : ""
+    if (clean) saveContactPhoneLocal(clean, targetName, targetEmail)
+    setStatusNote(`Sending 1-tap Camera Link to ${targetName || "recipient"}...`)
+    const data = await dispatchCameraInvitePush(clean || undefined, false)
+    if (data?.ok) {
+      const channels: string[] = []
+      if (data.emailSent) channels.push(`Email (${data.recipientEmail})`)
+      if (data.smsSent) channels.push("SMS")
+      navigator.clipboard?.writeText(effectiveJoinUrl).catch(() => {})
+      setStatusNote(
+        channels.length > 0
+          ? `✓ Sent Camera Link via ${channels.join(" + ")} (also copied to clipboard!)`
+          : `✓ Camera Link copied! Tap WhatsApp or SMS App to send directly to their phone.`
+      )
+    } else {
+      navigator.clipboard?.writeText(effectiveJoinUrl).catch(() => {})
+      setStatusNote("✓ Copied Camera Link! Tap WhatsApp or SMS App to send to their phone.")
     }
   }
 
+  const cleanDigits = normalizeClientPhone(phoneInput).replace(/[^\d]/g, "")
+  const shareBody = `📹 Live Video Call from ${callerName} on ConnectLn! Tap to turn on your camera & join live: ${effectiveJoinUrl}`
+  const whatsappHref = cleanDigits
+    ? `https://wa.me/${cleanDigits}?text=${encodeURIComponent(shareBody)}`
+    : `https://wa.me/?text=${encodeURIComponent(shareBody)}`
+  const nativeSmsHref = cleanDigits
+    ? `sms:+${cleanDigits}?&body=${encodeURIComponent(shareBody)}`
+    : `sms:?&body=${encodeURIComponent(shareBody)}`
+
   return (
     <div
-      className="rounded-xl px-3.5 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5"
+      className="rounded-xl px-3.5 py-2.5 flex flex-col gap-2"
       style={{
-        backgroundColor: "rgba(15, 23, 42, 0.92)",
-        border: "1px solid rgba(52, 211, 153, 0.38)",
+        backgroundColor: "rgba(15, 23, 42, 0.94)",
+        border: "1px solid rgba(52, 211, 153, 0.42)",
       }}
     >
-      <div className="flex items-center gap-2 min-w-0">
-        <Smartphone className="h-4 w-4 text-emerald-400 shrink-0" />
-        <div className="min-w-0">
-          <p className="text-xs font-extrabold text-white truncate">
-            Ring Recipient&apos;s Cell Phone Live
-            {phase === "in_call" ? ` · ${formatDurationClock(elapsedSec)}` : ""}
-          </p>
-          <p className="text-[10.5px] text-emerald-300 truncate">
-            {statusNote || "Dial their mobile number for live two-way cell audio or text them this room link"}
-          </p>
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
+        <div className="flex items-center gap-2 min-w-0">
+          <Smartphone className="h-4 w-4 text-emerald-400 shrink-0" />
+          <div className="min-w-0">
+            <p className="text-xs font-extrabold text-white truncate">
+              {videoCallMode
+                ? "Ring Cell Phone + Bring Up Recipient's Mobile Camera"
+                : "Ring Recipient's Cell Phone Live"}
+              {phase === "in_call" ? ` · ${formatDurationClock(elapsedSec)}` : ""}
+            </p>
+            <p className="text-[10.5px] text-emerald-300 truncate">
+              {statusNote ||
+                (videoCallMode
+                  ? "Phone calls carry voice only — recipient taps the Camera Link on their phone to stream live video!"
+                  : "Dial their mobile number for live two-way cell audio")}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1.5 flex-wrap shrink-0">
+          <input
+            type="tel"
+            value={phoneInput}
+            onChange={(e) => setPhoneInput(e.target.value)}
+            placeholder="Cell # (e.g. 410-841-8358)"
+            className="w-38 rounded-lg bg-slate-950 border border-slate-700 px-2.5 py-1 text-xs font-mono text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-400"
+          />
+
+          {phase === "connecting" || phase === "ringing" || phase === "in_call" ? (
+            <button
+              type="button"
+              onClick={() => {
+                hangupCell()
+                setPhase("ended")
+                setStatusNote("Cell phone voice line disconnected.")
+              }}
+              style={{ color: "#FFFFFF" }}
+              className="rounded-lg bg-rose-600 hover:bg-rose-500 px-2.5 py-1.5 text-[11px] font-extrabold flex items-center gap-1 cursor-pointer"
+            >
+              <PhoneOff className="h-3.5 w-3.5" />
+              <span>Hang Up Cell</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => dialCellNow(phoneInput)}
+              style={{ color: "#FFFFFF" }}
+              className="rounded-lg bg-emerald-600 hover:bg-emerald-500 px-2.5 py-1.5 text-[11px] font-extrabold flex items-center gap-1 cursor-pointer"
+            >
+              <Phone className="h-3.5 w-3.5" />
+              <span>{videoCallMode ? "Ring Cell + Link" : "Ring Cell Live"}</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={handlePushCameraLink}
+            className="rounded-lg bg-sky-900/80 hover:bg-sky-800 border border-sky-400/40 px-2.5 py-1.5 text-[11px] font-bold text-sky-200 cursor-pointer"
+            title="Push 1-tap Camera Link to their Email & SMS + Copy Link"
+          >
+            📲 Push Camera Link
+          </button>
+
+          <a
+            href={whatsappHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-lg bg-emerald-950 hover:bg-emerald-900 border border-emerald-400/40 px-2.5 py-1.5 text-[11px] font-bold text-emerald-200 cursor-pointer no-underline"
+            title="Send 1-tap Camera Link via WhatsApp"
+          >
+            🟢 WhatsApp
+          </a>
+
+          <a
+            href={nativeSmsHref}
+            className="rounded-lg bg-indigo-950 hover:bg-indigo-900 border border-indigo-400/40 px-2.5 py-1.5 text-[11px] font-bold text-indigo-200 cursor-pointer no-underline"
+            title="Open device SMS app with 1-tap Camera Link pre-filled"
+          >
+            💬 SMS App
+          </a>
+
+          <button
+            type="button"
+            onClick={() => setShowQrModal((prev) => !prev)}
+            className="rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 px-2 py-1.5 text-[11px] font-bold text-white flex items-center gap-1 cursor-pointer"
+            title="Show scannable QR code to open camera on any phone"
+          >
+            <QrCode className="h-3.5 w-3.5" />
+            <span>QR</span>
+          </button>
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5 flex-wrap shrink-0">
-        <input
-          type="tel"
-          value={phoneInput}
-          onChange={(e) => setPhoneInput(e.target.value)}
-          placeholder="Cell # (e.g. 240-260-7898)"
-          className="w-40 rounded-lg bg-slate-950 border border-slate-700 px-2.5 py-1 text-xs font-mono text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-400"
-        />
-
-        {phase === "connecting" || phase === "ringing" || phase === "in_call" ? (
+      {showQrModal && (
+        <div className="rounded-xl bg-slate-950/95 border border-emerald-500/40 p-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(
+                effectiveJoinUrl
+              )}`}
+              alt="Scan with Phone Camera"
+              className="w-24 h-24 rounded-lg bg-white p-1.5 shrink-0"
+            />
+            <div className="space-y-1">
+              <p className="text-xs font-extrabold text-white">
+                Scan with Phone Camera or Share Link to Enable Recipient Video:
+              </p>
+              <p className="text-[11px] text-slate-300 font-mono break-all">{effectiveJoinUrl}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard?.writeText(effectiveJoinUrl).catch(() => {})
+                  setStatusNote("✓ Copied direct mobile camera link!")
+                }}
+                className="rounded-md bg-emerald-600 hover:bg-emerald-500 px-2.5 py-1 text-[11px] font-bold text-white inline-flex items-center gap-1 cursor-pointer"
+              >
+                <Copy className="h-3 w-3" />
+                <span>Copy Camera Link</span>
+              </button>
+            </div>
+          </div>
           <button
             type="button"
-            onClick={() => {
-              hangupCell()
-              setPhase("ended")
-              setStatusNote("Cell phone disconnected.")
-            }}
-            style={{ color: "#FFFFFF" }}
-            className="rounded-lg bg-rose-600 hover:bg-rose-500 px-3 py-1.5 text-[11px] font-extrabold flex items-center gap-1 cursor-pointer"
+            onClick={() => setShowQrModal(false)}
+            className="text-xs text-slate-400 hover:text-white px-2 py-1 cursor-pointer"
           >
-            <PhoneOff className="h-3.5 w-3.5" />
-            <span>Hang Up Cell</span>
+            Close
           </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => dialCellNow(phoneInput)}
-            style={{ color: "#FFFFFF" }}
-            className="rounded-lg bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 text-[11px] font-extrabold flex items-center gap-1 cursor-pointer"
-          >
-            <Phone className="h-3.5 w-3.5" />
-            <span>Ring Cell Live</span>
-          </button>
-        )}
-
-        <button
-          type="button"
-          onClick={handleTextAndAlertCell}
-          className="rounded-lg bg-sky-900/80 hover:bg-sky-800 border border-sky-400/40 px-2.5 py-1.5 text-[11px] font-bold text-sky-200 cursor-pointer"
-          title="Send SMS video join link & ring alert to their cell phone"
-        >
-          📲 Text Link
-        </button>
-      </div>
+        </div>
+      )}
     </div>
   )
 }

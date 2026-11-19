@@ -707,7 +707,7 @@ export function MessagingView({
     const [huddleRemoteStreams, setHuddleRemoteStreams] = useState<Record<string, MediaStream>>({});
     const huddleActiveMediaCallsRef = useRef<Map<string, any>>(new Map());
     const huddleKnownPeerIdsRef = useRef<Set<string>>(new Set());
-    const huddleDialPeerNowRef = useRef<((targetPeerId: string) => void) | null>(null);
+    const huddleDialPeerNowRef = useRef<((targetPeerId: string, force?: boolean) => void) | null>(null);
     const huddleLiveWebRtcPeersCountRef = useRef<number>(0);
     const [huddleVirtualBgId, setHuddleVirtualBgId] = useState<string>(() => {
         if (typeof window !== 'undefined') {
@@ -892,12 +892,12 @@ export function MessagingView({
                               deviceId: { exact: preferredCamId },
                               width: { ideal: 640, max: 1280 },
                               height: { ideal: 360, max: 720 },
-                              frameRate: { ideal: 24, max: 24 },
+                              frameRate: { ideal: 24, max: 30 },
                           }
                         : {
                               width: { ideal: 640, max: 1280 },
                               height: { ideal: 360, max: 720 },
-                              frameRate: { ideal: 24, max: 24 },
+                              frameRate: { ideal: 24, max: 30 },
                               facingMode: 'user',
                           },
                     audio: {
@@ -910,24 +910,41 @@ export function MessagingView({
                 // Attempt 2: Simpler Video + Audio
                 try {
                     stream = await navigator.mediaDevices.getUserMedia({
-                        video: preferredCamId ? { deviceId: { exact: preferredCamId } } : true,
+                        video: preferredCamId ? { deviceId: { exact: preferredCamId } } : { facingMode: 'user' },
                         audio: true,
                     });
                 } catch {
-                    // Attempt 3: Try any available videoinput device on the computer
+                    // Attempt 2b: Video-only (critical on mobile when phone microphone is in use by a live cellular call!)
                     try {
-                        const allDevs = await navigator.mediaDevices.enumerateDevices();
-                        const cams = allDevs.filter((d) => d.kind === 'videoinput' && d.deviceId);
-                        for (const cam of cams) {
+                        stream = await navigator.mediaDevices.getUserMedia({
+                            video: preferredCamId
+                                ? { deviceId: { exact: preferredCamId } }
+                                : { facingMode: 'user' },
+                            audio: false,
+                        });
+                    } catch {
+                        // Attempt 3: Try any available videoinput device on the computer/phone
+                        try {
+                            stream = await navigator.mediaDevices.getUserMedia({
+                                video: true,
+                                audio: false,
+                            });
+                        } catch {
                             try {
-                                stream = await navigator.mediaDevices.getUserMedia({
-                                    video: { deviceId: { exact: cam.deviceId } },
-                                    audio: false,
-                                });
-                                if (stream && stream.getVideoTracks().length > 0) break;
+                                const allDevs = await navigator.mediaDevices.enumerateDevices();
+                                const cams = allDevs.filter((d) => d.kind === 'videoinput' && d.deviceId);
+                                for (const cam of cams) {
+                                    try {
+                                        stream = await navigator.mediaDevices.getUserMedia({
+                                            video: { deviceId: { exact: cam.deviceId } },
+                                            audio: false,
+                                        });
+                                        if (stream && stream.getVideoTracks().length > 0) break;
+                                    } catch {}
+                                }
                             } catch {}
                         }
-                    } catch {}
+                    }
                 }
             }
 
@@ -2061,12 +2078,12 @@ export function MessagingView({
                 aSender.replaceTrack(aTrack).catch(() => {});
             }
             if ((vTrack && !vSender) || (aTrack && !aSender)) {
-                huddleDialPeerNowRef.current?.(peerId);
+                huddleDialPeerNowRef.current?.(peerId, true);
             }
         });
         huddleKnownPeerIdsRef.current.forEach((peerId) => {
             if (!huddleActiveMediaCallsRef.current.has(peerId)) {
-                huddleDialPeerNowRef.current?.(peerId);
+                huddleDialPeerNowRef.current?.(peerId, true);
             }
         });
     }, [isCallModalOpen, localStreamState, isScreenSharing, huddleVirtualBgId]);
@@ -2109,6 +2126,11 @@ export function MessagingView({
             } catch {}
         };
 
+        const countVideoStreams = (streamsMap: Record<string, MediaStream>) =>
+            Object.values(streamsMap).filter((s) =>
+                s.getVideoTracks().some((t) => t.readyState === 'live' && t.enabled)
+            ).length;
+
         const bindMediaCall = (mediaCall: any) => {
             if (!mediaCall || !mediaCall.peer) return;
             huddleKnownPeerIdsRef.current.add(mediaCall.peer);
@@ -2117,28 +2139,42 @@ export function MessagingView({
 
             mediaCall.on('stream', (remoteStream: MediaStream) => {
                 if (isCancelled) return;
+                activeMediaCalls.set(mediaCall.peer, mediaCall);
                 setHuddleRemoteStreams((prev) => {
+                    const prevStream = prev[mediaCall.peer];
+                    const prevHasVideo = Boolean(
+                        prevStream && prevStream.getVideoTracks().some((t) => t.readyState === 'live')
+                    );
+                    const nextHasVideo = remoteStream
+                        .getVideoTracks()
+                        .some((t) => t.readyState === 'live');
+                    if (prevHasVideo && !nextHasVideo) {
+                        return prev;
+                    }
                     const next = { ...prev, [mediaCall.peer]: remoteStream };
-                    huddleLiveWebRtcPeersCountRef.current = Object.keys(next).length;
+                    huddleLiveWebRtcPeersCountRef.current = countVideoStreams(next);
                     return next;
                 });
             });
             mediaCall.on('close', () => {
+                if (activeMediaCalls.get(mediaCall.peer) !== mediaCall) return;
                 activeMediaCalls.delete(mediaCall.peer);
                 setHuddleRemoteStreams((prev) => {
                     if (!prev[mediaCall.peer]) return prev;
                     const next = { ...prev };
                     delete next[mediaCall.peer];
-                    huddleLiveWebRtcPeersCountRef.current = Object.keys(next).length;
+                    huddleLiveWebRtcPeersCountRef.current = countVideoStreams(next);
                     return next;
                 });
             });
             mediaCall.on('error', () => {
-                activeMediaCalls.delete(mediaCall.peer);
+                if (activeMediaCalls.get(mediaCall.peer) === mediaCall) {
+                    activeMediaCalls.delete(mediaCall.peer);
+                }
             });
         };
 
-        const dialRemotePeerNow = (targetPeerId: string) => {
+        const dialRemotePeerNow = (targetPeerId: string, force = false) => {
             if (
                 isCancelled ||
                 !peerInstance ||
@@ -2165,7 +2201,7 @@ export function MessagingView({
                 (outStream.getVideoTracks().length > 0 && !hasVideoOut) ||
                 (outStream.getAudioTracks().length > 0 && !hasAudioOut);
 
-            if (needsCall && nowMs - lastTry > 6500) {
+            if (needsCall && (force || nowMs - lastTry > 4500)) {
                 lastCallAttemptMs.set(targetPeerId, nowMs);
                 try {
                     const outCall = peerInstance.call(targetPeerId, outStream, {
@@ -2340,17 +2376,17 @@ export function MessagingView({
             const webRtcActive = huddleLiveWebRtcPeersCountRef.current > 0;
             let localFrame: string | null = null;
 
-            // Only capture fallback base64 JPEG when WebRTC is NOT yet connected (throttled to >=600ms)
+            // Capture compact JPEG frame (~550ms pre-WebRTC, ~1500ms NAT failover backup once WebRTC connects)
             const nowCaptureMs = Date.now();
+            const frameThrottleMs = webRtcActive ? 1500 : 550;
             if (
-                !webRtcActive &&
                 vEl &&
                 vEl.readyState >= 2 &&
                 vEl.videoWidth > 0 &&
                 (isCameraOn || isScreenSharing)
             ) {
                 if (
-                    nowCaptureMs - lastFallbackFrameAtMs >= 600 ||
+                    nowCaptureMs - lastFallbackFrameAtMs >= frameThrottleMs ||
                     !lastValidLocalHuddleFrameRef.current
                 ) {
                     try {
@@ -2394,13 +2430,15 @@ export function MessagingView({
                         peer_id: huddleMyPeerId || undefined,
                         conversation_id: activeThread.id,
                         call_type: isScreenSharing ? 'screenshare' : activeCallMode || 'video',
+                        target_recipient_name: activeThread.title,
+                        target_recipient_email: activeThread.recipientEmail,
                         display_name: currentUser?.name || 'You',
                         role: currentUser?.headline || 'Verified ConnectLn Member',
                         is_muted: isMicMuted,
                         is_video_on: isCameraOn || isScreenSharing,
                         is_screen_sharing: isScreenSharing,
                         webrtc_connected: webRtcActive,
-                        live_frame: webRtcActive ? null : localFrame,
+                        live_frame: localFrame,
                         live_audio_chunk:
                             !webRtcActive && !isMicMuted ? huddleLatestAudioChunkRef.current : undefined,
                         recent_audio_chunks:
@@ -5678,6 +5716,7 @@ export function MessagingView({
                             autoDialOnMount={
                                 activeCallMode === 'audio' && looksLikeClientPhone(activeThread.title)
                             }
+                            videoCallMode={activeCallMode === 'video'}
                         />
 
                         {/* Multi-Participant Stage (Local Self-View + All Connected Remote Peers) */}
@@ -5858,8 +5897,8 @@ export function MessagingView({
                                                 />
                                             )}
 
-                                            {/* Pre-ICE Fallback Frame Only When WebRTC Stream Not Active Yet */}
-                                            {showRemoteVideoSurface && !hasLiveWebRtcVideoTrack && (
+                                            {/* Fallback Camera Frame Layer (zIndex 5) stays mounted underneath WebRTC <video> (zIndex 8, opacity 1 once videoWidth > 0) so there is never a blank gap! */}
+                                            {showRemoteVideoSurface && (
                                                 <>
                                                     <HuddleFallbackFrameImg
                                                         userId={peer.user_id}

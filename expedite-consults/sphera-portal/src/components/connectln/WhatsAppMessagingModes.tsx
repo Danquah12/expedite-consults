@@ -1679,7 +1679,15 @@ export function WhatsAppModeWorkspace({
                     <div className="flex flex-wrap items-center justify-center gap-6">
                         <button
                             type="button"
-                            onClick={() => onStartLiveCall('video')}
+                            onClick={() => {
+                                const typedTarget = dialInput.trim() || callSearch.trim();
+                                if (typedTarget) {
+                                    setDialInput('');
+                                    onStartLiveCall('video', typedTarget);
+                                } else {
+                                    onStartLiveCall('video');
+                                }
+                            }}
                             className="flex flex-col items-center gap-2 group cursor-pointer"
                         >
                             <span
@@ -1795,10 +1803,27 @@ export function WhatsAppModeWorkspace({
                             />
                             <button
                                 type="submit"
-                                className="px-4 py-1.5 rounded-lg bg-[#7C4225] hover:bg-[#5E3119] text-xs font-bold cursor-pointer"
+                                className="px-3.5 py-1.5 rounded-lg bg-[#7C4225] hover:bg-[#5E3119] text-xs font-bold cursor-pointer"
                                 style={{ color: '#FBF8F3' }}
                             >
                                 Call
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const rawVal = dialInput.trim();
+                                    if (!rawVal) {
+                                        onStartLiveCall('video');
+                                        return;
+                                    }
+                                    setDialInput('');
+                                    onStartLiveCall('video', rawVal);
+                                }}
+                                className="px-3 py-1.5 rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-xs font-bold cursor-pointer"
+                                style={{ color: '#FFFFFF' }}
+                                title="Start Live Video Call + Send 1-Tap Camera Link to Their Phone"
+                            >
+                                🎥 Video
                             </button>
                         </form>
                     )}
