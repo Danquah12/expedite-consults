@@ -7,6 +7,7 @@ import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 import { ConnectLnNavbar } from "@/components/connectln/ConnectLnNavbar"
 import { MeetingReminders } from "@/components/connectln/MeetingReminders"
 import { ConnectLnIncomingCallBanner } from "@/components/connectln/ConnectLnIncomingCallBanner"
+import { ConnectLnPhoneVerificationGate } from "@/components/connectln/ConnectLnPhoneVerificationGate"
 import { ConnectLnWhatsAppCallModal } from "@/components/connectln/ConnectLnWhatsAppCallModal"
 import { LeftSidebarProfile } from "@/components/connectln/LeftSidebarProfile"
 import { PostCreator } from "@/components/connectln/PostCreator"
@@ -2387,6 +2388,12 @@ export default function ConnectLnPage() {
     <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[var(--bg-core,#f3f2f0)] text-[var(--text-pure,#18181b)] antialiased transition-colors duration-300 selection:bg-[#0A66C2] selection:text-white">
       {/* Meeting reminders (15 / 30 min before scheduled meetings) */}
       <MeetingReminders onOpenMessaging={() => setActiveTab('messaging' as any)} />
+      {/* Mandatory phone + 2FA for every account (incl. Google / Microsoft Entra ID SSO) */}
+      <ConnectLnPhoneVerificationGate
+        viewerName={userData?.name}
+        viewerEmail={userData?.email}
+        onSignOut={handleSignOut}
+      />
       {/* Live Incoming Voice & Video Call Ringing Banner */}
       <ConnectLnIncomingCallBanner
         viewerName={userData?.name}
