@@ -2391,7 +2391,7 @@ export default function ConnectLnPage() {
       <ConnectLnIncomingCallBanner
         viewerName={userData?.name}
         viewerEmail={userData?.email}
-        isAlreadyInCallStudio={activeTab === 'vibecomms' || Boolean(activeGlobalWhatsAppCall)}
+        isAlreadyInCallStudio={Boolean(activeGlobalWhatsAppCall)}
         onAcceptIncomingCall={(callId, callerName, mode, callerPhone) => {
           setActiveGlobalWhatsAppCall({
             callId,
