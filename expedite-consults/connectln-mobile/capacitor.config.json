@@ -1,0 +1,15 @@
+{
+  "appId": "com.conectln.app",
+  "appName": "ConnectLn",
+  "webDir": "www",
+  "server": {
+    "url": "https://conectln.com/connectin",
+    "cleartext": false,
+    "allowNavigation": ["conectln.com", "*.conectln.com"]
+  },
+  "plugins": {
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    }
+  }
+}

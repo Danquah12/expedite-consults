@@ -59,6 +59,55 @@ export function urlBase64ToUint8Array(base64String: string): Uint8Array {
 let armListenerInstalled = false
 
 /**
+ * Inside the native ConnectLn Android app: asks Android for notification permission (one system
+ * prompt on first launch, like WhatsApp), registers for FCM, and links this phone's token to the
+ * signed-in member's verified number so incoming calls ring full-screen even when the app is closed.
+ */
+let nativeFcmListenersAttached = false
+export async function registerNativeFcmForCalls(identity: {
+  phone: string
+  name?: string
+  email?: string
+}): Promise<boolean> {
+  if (!isRunningInNativeCapacitorShell()) return false
+  try {
+    const push = (window as any).Capacitor?.Plugins?.PushNotifications
+    if (!push || !identity.phone) return false
+
+    const postToken = async (token: string) => {
+      await fetch("/api/connectin/calls/whatsapp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "register",
+          phone: identity.phone,
+          name: identity.name || "ConnectLn Member",
+          email: identity.email,
+          fcmToken: token,
+          deviceLabel: "Mobile Phone (ConnectLn App)",
+        }),
+      }).catch(() => {})
+    }
+
+    if (!nativeFcmListenersAttached) {
+      nativeFcmListenersAttached = true
+      await push.addListener("registration", (t: { value: string }) => {
+        if (t?.value) void postToken(t.value)
+      })
+      await push.addListener("registrationError", () => {})
+    }
+
+    let perm = await push.checkPermissions()
+    if (perm?.receive !== "granted") perm = await push.requestPermissions()
+    if (perm?.receive !== "granted") return false
+    await push.register()
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
  * Zero-step call arming: piggybacks on the FIRST click anywhere on login / registration / app
  * (browsers only allow permission prompts inside a user gesture). Once granted, every later
  * visit auto-registers this device for call push, so calls pop up with no "Activate" step.

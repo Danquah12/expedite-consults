@@ -29,6 +29,7 @@ export interface WhatsAppDirectoryMember {
   headline?: string
   verifiedBy2FA?: boolean
   pushSubscriptions: StoredPushSubscription[]
+  fcmTokens?: string[] // Native Android app FCM tokens (full-screen ringing even when app is closed)
   registeredAtIso: string
   updatedAtIso: string
 }
@@ -380,6 +381,7 @@ export async function registerWhatsAppMemberNumber(params: {
   headline?: string
   verifiedBy2FA?: boolean
   pushSubscription?: StoredPushSubscription | null
+  fcmToken?: string
   deviceLabel?: string
 }): Promise<WhatsAppDirectoryMember | null> {
   if (!looksLikePhoneNumber(params.phone)) return null
@@ -425,10 +427,17 @@ export async function registerWhatsAppMemberNumber(params: {
     }
   }
 
+  let fcmTokens: string[] = Array.isArray(existing?.fcmTokens) ? [...existing!.fcmTokens!] : []
+  const newFcm = String(params.fcmToken || "").trim()
+  if (newFcm && newFcm.length > 20 && !fcmTokens.includes(newFcm)) {
+    fcmTokens = [newFcm, ...fcmTokens].slice(0, 6)
+  }
+
   const record: WhatsAppDirectoryMember = {
     phone: normPhone,
     prettyPhone: formatPrettyPhoneDisplay(normPhone),
     name: params.name?.trim() || existing?.name || formatPrettyPhoneDisplay(normPhone),
+    fcmTokens,
     email: params.email?.trim().toLowerCase() || existing?.email,
     avatar: params.avatar || existing?.avatar,
     headline: params.headline || existing?.headline,
@@ -537,8 +546,46 @@ export async function lookupWhatsAppRecipient(params: {
 const recentCallPushDedupeMap = new Map<string, number>()
 
 /**
+ * Sends high-priority FCM *data* messages to the member's native ConnectLn Android app(s).
+ * The app's ConnectLnMessagingService turns these into a full-screen WhatsApp-style ringing
+ * screen, even when the app is closed and the phone is locked. Requires env
+ * FIREBASE_SERVICE_ACCOUNT_JSON (service-account JSON string). No-op when not configured.
+ */
+async function sendIncomingCallFcm(
+  member: WhatsAppDirectoryMember,
+  payload: Record<string, string>
+): Promise<{ sent: number; deadTokens: string[] }> {
+  const tokens = member.fcmTokens || []
+  const raw = (process.env.FIREBASE_SERVICE_ACCOUNT_JSON || "").trim()
+  if (tokens.length === 0 || !raw) return { sent: 0, deadTokens: [] }
+  try {
+    const { initializeApp, getApps, cert } = await import("firebase-admin/app")
+    const { getMessaging } = await import("firebase-admin/messaging")
+    const app =
+      getApps().length > 0 ? getApps()[0]! : initializeApp({ credential: cert(JSON.parse(raw)) })
+    const res = await getMessaging(app).sendEachForMulticast({
+      tokens,
+      data: payload,
+      android: { priority: "high", ttl: 45000 },
+    })
+    const dead: string[] = []
+    res.responses.forEach((r, i) => {
+      const code = r.error?.code || ""
+      if (!r.success && /registration-token-not-registered|invalid-registration-token|invalid-argument/.test(code)) {
+        dead.push(tokens[i])
+      }
+    })
+    return { sent: res.successCount, deadTokens: dead }
+  } catch (err) {
+    console.warn("[ConnectLn FCM] send failed:", (err as any)?.message)
+    return { sent: 0, deadTokens: [] }
+  }
+}
+
+/**
  * Sends a high-priority RFC 8291 Web Push notification to all subscribed phones/browsers
  * of the target ConnectLn member so their phone/desktop wakes up & rings even when minimized or closed.
+ * Also fans out to the native Android app via FCM.
  */
 export async function sendIncomingCallWebPush(params: {
   member: WhatsAppDirectoryMember
@@ -550,7 +597,8 @@ export async function sendIncomingCallWebPush(params: {
   joinUrl: string
 }): Promise<{ deliveredCount: number; mobileDeliveredCount: number; attemptedCount: number }> {
   const subs = params.member.pushSubscriptions || []
-  if (subs.length === 0) {
+  const fcmCount = (params.member.fcmTokens || []).length
+  if (subs.length === 0 && fcmCount === 0) {
     return { deliveredCount: 0, mobileDeliveredCount: 0, attemptedCount: 0 }
   }
 
@@ -559,7 +607,11 @@ export async function sendIncomingCallWebPush(params: {
   const prevSentMs = recentCallPushDedupeMap.get(dedupeKey) || 0
   if (nowMs - prevSentMs < 25000) {
     const mobCount = subs.filter((s) => /mobile|phone|iphone|android/i.test(s.deviceLabel || "")).length
-    return { deliveredCount: subs.length, mobileDeliveredCount: mobCount, attemptedCount: subs.length }
+    return {
+      deliveredCount: subs.length + fcmCount,
+      mobileDeliveredCount: mobCount + fcmCount,
+      attemptedCount: subs.length + fcmCount,
+    }
   }
   recentCallPushDedupeMap.set(dedupeKey, nowMs)
   if (recentCallPushDedupeMap.size > 400) {
@@ -567,6 +619,15 @@ export async function sendIncomingCallWebPush(params: {
       if (nowMs - ts > 60000) recentCallPushDedupeMap.delete(k)
     }
   }
+
+  const fcmPromise = sendIncomingCallFcm(params.member, {
+    type: "INCOMING_CALL",
+    callId: params.callId,
+    callMode: params.callMode,
+    callerName: params.callerName,
+    callerPhone: params.callerPhone ? formatPrettyPhoneDisplay(params.callerPhone) : "",
+    joinUrl: params.joinUrl,
+  })
 
   const vapid = await getOrCreateConnectLnVapidKeys()
   webPush.setVapidDetails(
@@ -614,11 +675,17 @@ export async function sendIncomingCallWebPush(params: {
     })
   )
 
-  if (prunedAny) {
+  const fcmResult = await fcmPromise
+  deliveredCount += fcmResult.sent
+  mobileDeliveredCount += fcmResult.sent
+  const liveFcm = (params.member.fcmTokens || []).filter((t) => !fcmResult.deadTokens.includes(t))
+
+  if (prunedAny || fcmResult.deadTokens.length > 0) {
     const auth = getTwilioAuthHeader()
     const updated: WhatsAppDirectoryMember = {
       ...params.member,
       pushSubscriptions: validSubs,
+      fcmTokens: liveFcm,
       updatedAtIso: new Date().toISOString(),
     }
     globalForWhatsAppDir.__connectlnWhatsAppPhoneCache?.set(params.member.phone, updated)
@@ -627,5 +694,5 @@ export async function sendIncomingCallWebPush(params: {
     }
   }
 
-  return { deliveredCount, mobileDeliveredCount, attemptedCount: subs.length }
+  return { deliveredCount, mobileDeliveredCount, attemptedCount: subs.length + fcmCount }
 }

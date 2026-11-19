@@ -44,6 +44,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "effect": "^3.22.1",
+    "firebase-admin": "^14.5.1",
     "framer-motion": "^13.4.1",
     "lucide-react": "^1.38.0",
     "mammoth": "^1.13.0",

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ConnectLn</string>
+    <string name="title_activity_main">ConnectLn</string>
+    <string name="package_name">com.conectln.app</string>
+    <string name="custom_url_scheme">com.conectln.app</string>
+</resources>

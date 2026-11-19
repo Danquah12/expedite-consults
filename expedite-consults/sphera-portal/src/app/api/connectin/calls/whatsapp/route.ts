@@ -389,6 +389,7 @@ export async function POST(req: NextRequest) {
         headline: body?.headline,
         verifiedBy2FA: true,
         pushSubscription: body?.pushSubscription || null,
+        fcmToken: typeof body?.fcmToken === "string" ? body.fcmToken : undefined,
         deviceLabel: body?.deviceLabel,
       })
 
@@ -407,7 +408,7 @@ export async function POST(req: NextRequest) {
           name: record.name,
           email: record.email,
           verifiedBy2FA: true,
-          pushDevicesCount: record.pushSubscriptions.length,
+          pushDevicesCount: record.pushSubscriptions.length + (record.fcmTokens?.length || 0),
         },
       })
     }

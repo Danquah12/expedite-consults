@@ -14,6 +14,7 @@ import {
 import {
   reportIncomingCallToNativeOS,
   registerConnectLnPushSubscription,
+  registerNativeFcmForCalls,
 } from "@/lib/connectin-native-callkit-bridge"
 import {
   unlockBackgroundRingingSession,
@@ -336,6 +337,9 @@ export function ConnectLnIncomingCallBanner({
           const permGranted =
             typeof Notification !== "undefined" && Notification.permission === "granted"
           setNotifGranted(permGranted)
+
+          // Native ConnectLn Android app: auto-register FCM (no Activate step, rings full-screen when closed)
+          void registerNativeFcmForCalls({ phone: norm, name: viewerName, email: viewerEmail })
 
           if ("serviceWorker" in navigator && permGranted && data?.vapidPublicKey) {
             const sub = await registerConnectLnPushSubscription(data.vapidPublicKey).catch(
