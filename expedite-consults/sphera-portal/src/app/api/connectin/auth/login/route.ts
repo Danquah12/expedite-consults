@@ -58,6 +58,59 @@ export async function POST(req: NextRequest) {
       return true
     })
 
+    const dirCache = await refreshWhatsAppDirectoryCache().catch(() => new Map())
+    let existingAccountPhone =
+      user?.phone && looksLikeInternationalPhone(user.phone) ? formatE164Phone(user.phone) : ""
+    const candidateEmail = user?.email || (!isPhoneInput ? cleanTarget : "")
+    if (!existingAccountPhone && candidateEmail) {
+      for (const m of dirCache.values()) {
+        if (m.email && isSamePhoneOwnerEmail(m.email, candidateEmail)) {
+          existingAccountPhone = m.phone
+          break
+        }
+      }
+    }
+    if (
+      !existingAccountPhone &&
+      isSamePhoneOwnerEmail(candidateEmail, "kasiedu@expedite-consults.com")
+    ) {
+      existingAccountPhone = "+12402607898"
+    }
+
+    const submittedRawPhone = body.phone ? String(body.phone).trim() : isPhoneInput ? cleanTarget : ""
+    let dispatchPhone = existingAccountPhone || (submittedRawPhone ? formatE164Phone(submittedRawPhone) : "")
+    if (dispatchPhone === "+12402623543") {
+      dispatchPhone = "+12402607898"
+    }
+
+    if (!dispatchPhone || !looksLikeInternationalPhone(dispatchPhone)) {
+      return NextResponse.json(
+        {
+          error:
+            "A verified mobile phone number is mandatory for 2FA login and ConnectLn calling. Please enter your mobile phone number.",
+          requiresPhone: true,
+        },
+        { status: 400 }
+      )
+    }
+
+    // Anti-Impersonation Check BEFORE creating any account stub: Ensure no other verified user owns this phone number!
+    const ownership = await checkPhoneOwnershipConflict({
+      phone: dispatchPhone,
+      claimantEmail: candidateEmail,
+      claimantName: incomingName,
+    })
+    if (ownership.conflict) {
+      return NextResponse.json(
+        {
+          error:
+            ownership.reason ||
+            "This mobile phone number belongs to another verified ConnectLn member.",
+        },
+        { status: 409 }
+      )
+    }
+
     if (!user) {
       const defaultName = incomingName || (isPhoneInput
         ? "ConnectIn Member"
@@ -99,57 +152,6 @@ export async function POST(req: NextRequest) {
 
     if (user.status === "Suspended" || user.status === "Banned") {
       return NextResponse.json({ error: "This account is suspended. Contact security administrator." }, { status: 403 })
-    }
-
-    const dirCache = await refreshWhatsAppDirectoryCache().catch(() => new Map())
-    let existingAccountPhone = user.phone && looksLikeInternationalPhone(user.phone) ? formatE164Phone(user.phone) : ""
-    if (!existingAccountPhone && user.email) {
-      for (const m of dirCache.values()) {
-        if (m.email && isSamePhoneOwnerEmail(m.email, user.email)) {
-          existingAccountPhone = m.phone
-          break
-        }
-      }
-    }
-    if (
-      !existingAccountPhone &&
-      isSamePhoneOwnerEmail(user.email || cleanTarget, "kasiedu@expedite-consults.com")
-    ) {
-      existingAccountPhone = "+12402607898"
-    }
-
-    const submittedRawPhone = body.phone ? String(body.phone).trim() : isPhoneInput ? cleanTarget : ""
-    let dispatchPhone = existingAccountPhone || (submittedRawPhone ? formatE164Phone(submittedRawPhone) : "")
-    if (dispatchPhone === "+12402623543") {
-      dispatchPhone = "+12402607898"
-    }
-
-    if (!dispatchPhone || !looksLikeInternationalPhone(dispatchPhone)) {
-      return NextResponse.json(
-        {
-          error:
-            "A verified mobile phone number is mandatory for 2FA login and ConnectLn calling. Please enter your mobile phone number.",
-          requiresPhone: true,
-        },
-        { status: 400 }
-      )
-    }
-
-    // Anti-Impersonation Check: Ensure no other verified user owns this phone number!
-    const ownership = await checkPhoneOwnershipConflict({
-      phone: dispatchPhone,
-      claimantEmail: user.email || cleanTarget,
-      claimantName: incomingName,
-    })
-    if (ownership.conflict) {
-      return NextResponse.json(
-        {
-          error:
-            ownership.reason ||
-            "This mobile phone number belongs to another verified ConnectLn member.",
-        },
-        { status: 409 }
-      )
     }
 
     // If the phone is not yet verified on this account, force Phone 2FA (`sms` or `call`) to verify phone ownership!

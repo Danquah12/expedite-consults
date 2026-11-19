@@ -113,7 +113,8 @@ export async function POST(req: NextRequest) {
       const created = connectinDb.createUser(
         {
           email: cleanEmail,
-          phone: formattedPhone || "",
+          // Security: Do NOT bind phone ownership until 2FA OTP is verified in /verify-otp!
+          phone: isDemoPersona ? formattedPhone || "" : "",
           passwordHash: password ? crypto.createHash("sha256").update(password).digest("hex") : undefined,
           role: role || (finalEnclaveId === 'tech_software' ? 'developer' : 'personal'),
           status: "Active",
@@ -149,7 +150,7 @@ export async function POST(req: NextRequest) {
       await upsertCloudUser({
         id: created.user.id,
         email: created.user.email,
-        phone: created.user.phone || "",
+        phone: isDemoPersona ? created.user.phone || "" : "",
         name: created.profile.name,
         role: created.user.role,
         status: created.user.status,
