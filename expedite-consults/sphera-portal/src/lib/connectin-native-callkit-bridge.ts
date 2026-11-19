@@ -2,10 +2,9 @@
  * ConnectLn Native CallKit (iOS PushKit) & Android Telecom ConnectionService Bridge
  * ---------------------------------------------------------------------------------
  * - On Web / Installed PWA (`https://conectln.com`): Uses `public/sw.js` + RFC 8291 VAPID Web Push
- *   to wake up the phone and display Answer / Decline call notifications.
- * - When packaged as a native iOS/Android app via Capacitor (`capacitor.config.json`),
- *   automatically bridges incoming/outgoing call events to native CallKit (iOS) and
- *   ConnectionService (Android) for full-screen lock-screen slide-to-answer UI.
+ *   to wake up the phone/desktop and display Answer / Decline call notifications even when minimized.
+ * - IMPORTANT: `Notification.requestPermission()` is invoked SYNCHRONOUSLY before any `await`
+ *   so Chrome, Edge, Android, and iOS never drop the transient user-gesture activation token.
  */
 
 export interface NativeIncomingCallPayload {
@@ -21,7 +20,9 @@ export function isRunningInNativeCapacitorShell(): boolean {
   return Boolean(w.Capacitor?.isNativePlatform?.())
 }
 
-export async function reportIncomingCallToNativeOS(payload: NativeIncomingCallPayload): Promise<boolean> {
+export async function reportIncomingCallToNativeOS(
+  payload: NativeIncomingCallPayload
+): Promise<boolean> {
   if (!isRunningInNativeCapacitorShell()) return false
   try {
     const w = window as any
@@ -44,7 +45,10 @@ export async function reportIncomingCallToNativeOS(payload: NativeIncomingCallPa
 export function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4)
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/")
-  const rawData = typeof window !== "undefined" ? window.atob(base64) : Buffer.from(base64, "base64").toString("binary")
+  const rawData =
+    typeof window !== "undefined"
+      ? window.atob(base64)
+      : Buffer.from(base64, "base64").toString("binary")
   const outputArray = new Uint8Array(rawData.length)
   for (let i = 0; i < rawData.length; ++i) {
     outputArray[i] = rawData.charCodeAt(i)
@@ -52,34 +56,58 @@ export function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return outputArray
 }
 
-export async function registerConnectLnPushSubscription(vapidPublicKey: string): Promise<PushSubscriptionJSON | null> {
-  if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
-    return null
-  }
+export async function registerConnectLnPushSubscription(
+  vapidPublicKey: string
+): Promise<PushSubscriptionJSON | null> {
+  if (typeof window === "undefined") return null
+
   try {
+    // CRITICAL: Request Notification permission SYNCHRONOUSLY FIRST before ANY `await`
+    // so mobile Chrome, Edge, and Safari preserve the user-gesture activation token!
+    if ("Notification" in window) {
+      let permission = Notification.permission
+      if (permission === "default") {
+        permission = await Notification.requestPermission()
+      }
+      if (permission !== "granted") {
+        return null
+      }
+    } else {
+      return null
+    }
+
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+      return null
+    }
+
     const registration = await navigator.serviceWorker.register("/sw.js", { scope: "/" })
-    await navigator.serviceWorker.ready
+    const readyReg = await navigator.serviceWorker.ready
 
-    if (!("PushManager" in window) || !("Notification" in window)) {
-      return null
+    let existing = await readyReg.pushManager.getSubscription()
+    if (existing && vapidPublicKey) {
+      // Verify the existing subscription's VAPID key matches our current server VAPID key
+      const expectedKey = urlBase64ToUint8Array(vapidPublicKey)
+      const currentKeyBuf = existing.options?.applicationServerKey
+      if (currentKeyBuf) {
+        const currentKey = new Uint8Array(currentKeyBuf)
+        const mismatch =
+          currentKey.length !== expectedKey.length ||
+          currentKey.some((b, idx) => b !== expectedKey[idx])
+        if (mismatch) {
+          await existing.unsubscribe().catch(() => {})
+          existing = null
+        }
+      }
     }
 
-    let permission = Notification.permission
-    if (permission === "default") {
-      permission = await Notification.requestPermission()
-    }
-    if (permission !== "granted") {
-      return null
-    }
-
-    let existing = await registration.pushManager.getSubscription()
     if (!existing && vapidPublicKey) {
       const appServerKey = urlBase64ToUint8Array(vapidPublicKey)
-      existing = await registration.pushManager.subscribe({
+      existing = await (readyReg || registration).pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: appServerKey.buffer as ArrayBuffer,
       })
     }
+
     return existing ? existing.toJSON() : null
   } catch (err) {
     console.warn("[ConnectLn Push] Service worker / Push registration notice:", err)

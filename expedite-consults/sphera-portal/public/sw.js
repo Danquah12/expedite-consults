@@ -1,4 +1,4 @@
-/* ConnectLn Service Worker — Background & Minimized Incoming Video & Voice Call Ringing (WhatsApp-Style PWA Push) */
+/* ConnectLn Service Worker — Background & Minimized Incoming Video & Voice Call Ringing + Pop-Up Call Window */
 self.addEventListener("install", (event) => {
   event.waitUntil(self.skipWaiting());
 });
@@ -19,9 +19,7 @@ function buildCallNotificationSpec(payload) {
   const title = isVideo
     ? `📹 Incoming Video Call · ${callerName}`
     : `📞 Incoming Voice Call · ${callerName}`;
-  const body = `Calling${callerPhone} on ConnectLn — Tap to answer with ${
-    isVideo ? "camera & audio" : "live voice"
-  }`;
+  const body = `Calling${callerPhone} on ConnectLn — Click Answer to open call screen`;
 
   const options = {
     body,
@@ -30,6 +28,7 @@ function buildCallNotificationSpec(payload) {
     tag: `connectln-call-${callId}`,
     renotify: true,
     requireInteraction: true,
+    silent: false,
     vibrate: [600, 220, 600, 220, 800, 250, 800],
     data: {
       callId,
@@ -60,12 +59,12 @@ self.addEventListener("push", (event) => {
   } catch {
     payload = { title: "ConnectLn Incoming Call", body: event.data ? event.data.text() : "" };
   }
+  if (payload && payload.ignore) return;
 
   const spec = buildCallNotificationSpec(payload);
 
   event.waitUntil(
     (async () => {
-      // Wake any minimized/background ConnectLn tabs immediately so loud audio ringtone starts in <50ms!
       const allClients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
       for (const client of allClients) {
         try {
@@ -85,14 +84,6 @@ self.addEventListener("push", (event) => {
       await self.registration.showNotification(spec.title, spec.options);
     })()
   );
-});
-
-// Allow minimized ConnectLn tabs (via Web Worker poll) to pop up an OS-level Answer/Decline notification!
-self.addEventListener("message", (event) => {
-  const msg = event && event.data;
-  if (!msg || msg.type !== "SHOW_LOCAL_CALL_NOTIFICATION" || !msg.payload) return;
-  const spec = buildCallNotificationSpec(msg.payload);
-  event.waitUntil(self.registration.showNotification(spec.title, spec.options));
 });
 
 self.addEventListener("notificationclick", (event) => {
@@ -139,34 +130,25 @@ self.addEventListener("notificationclick", (event) => {
         type: "window",
         includeUncontrolled: true,
       });
-      // Prefer focusing an already-open minimized ConnectLn window for instant (<100ms) answer without page reload!
       for (const client of windowClients) {
         if ("focus" in client && String(client.url || "").includes("/connectin")) {
-          await client.focus();
-          client.postMessage({
-            type: "CONNECTLN_ANSWER_CALL_FROM_NOTIFICATION",
-            payload: {
-              callId,
-              callMode: data.callMode || "video",
-              callerName: data.callerName || "ConnectLn Caller",
-              callerPhone: data.callerPhone || "",
-              joinUrl: targetUrl,
-            },
-          });
-          return;
+          try {
+            await client.focus();
+            client.postMessage({
+              type: "CONNECTLN_ANSWER_CALL_FROM_NOTIFICATION",
+              payload: {
+                callId,
+                callMode: data.callMode || "video",
+                callerName: data.callerName || "ConnectLn Caller",
+                callerPhone: data.callerPhone || "",
+                joinUrl: targetUrl,
+              },
+            });
+            return;
+          } catch {}
         }
       }
-      for (const client of windowClients) {
-        if ("focus" in client) {
-          await client.focus();
-          if ("navigate" in client) {
-            try {
-              await client.navigate(targetUrl);
-            } catch {}
-          }
-          return;
-        }
-      }
+      // If minimized window could not be focused by OS, open a brand-new foreground Call Window!
       if (self.clients.openWindow) {
         await self.clients.openWindow(targetUrl);
       }

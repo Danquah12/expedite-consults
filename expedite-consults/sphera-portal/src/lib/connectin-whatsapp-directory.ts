@@ -534,9 +534,11 @@ export async function lookupWhatsAppRecipient(params: {
   }
 }
 
+const recentCallPushDedupeMap = new Map<string, number>()
+
 /**
  * Sends a high-priority RFC 8291 Web Push notification to all subscribed phones/browsers
- * of the target ConnectLn member so their phone wakes up & rings even when the browser is closed.
+ * of the target ConnectLn member so their phone/desktop wakes up & rings even when minimized or closed.
  */
 export async function sendIncomingCallWebPush(params: {
   member: WhatsAppDirectoryMember
@@ -550,6 +552,20 @@ export async function sendIncomingCallWebPush(params: {
   const subs = params.member.pushSubscriptions || []
   if (subs.length === 0) {
     return { deliveredCount: 0, mobileDeliveredCount: 0, attemptedCount: 0 }
+  }
+
+  const nowMs = Date.now()
+  const dedupeKey = `${params.callId}::${params.member.phone}`
+  const prevSentMs = recentCallPushDedupeMap.get(dedupeKey) || 0
+  if (nowMs - prevSentMs < 25000) {
+    const mobCount = subs.filter((s) => /mobile|phone|iphone|android/i.test(s.deviceLabel || "")).length
+    return { deliveredCount: subs.length, mobileDeliveredCount: mobCount, attemptedCount: subs.length }
+  }
+  recentCallPushDedupeMap.set(dedupeKey, nowMs)
+  if (recentCallPushDedupeMap.size > 400) {
+    for (const [k, ts] of recentCallPushDedupeMap.entries()) {
+      if (nowMs - ts > 60000) recentCallPushDedupeMap.delete(k)
+    }
   }
 
   const vapid = await getOrCreateConnectLnVapidKeys()

@@ -4,6 +4,46 @@ import fs from "fs"
 import path from "path"
 import os from "os"
 import { recordGlobalUserActivity } from "@/lib/connectin-cloud-sync"
+import {
+  lookupWhatsAppRecipient,
+  sendIncomingCallWebPush,
+} from "@/lib/connectin-whatsapp-directory"
+
+async function dispatchMinimizedWakeupPushForTargets(params: {
+  callId: string
+  callMode: "audio" | "video"
+  callerName: string
+  callerPhone?: string
+  targets: Array<{ phone?: string; email?: string; name?: string }>
+}): Promise<void> {
+  if (!params.targets.length) return
+  const joinUrl = `https://conectln.com/connectin?waCall=${encodeURIComponent(
+    params.callId
+  )}&mode=${params.callMode}&callerName=${encodeURIComponent(params.callerName)}&autoAnswer=1`
+  await Promise.race([
+    Promise.all(
+      params.targets.map(async (t) => {
+        if (!t.phone && !t.email && !t.name) return
+        const found = await lookupWhatsAppRecipient({
+          targetPhone: t.phone,
+          targetEmail: t.email,
+          targetName: t.name,
+        }).catch(() => null)
+        if (found?.member) {
+          await sendIncomingCallWebPush({
+            member: found.member,
+            callId: params.callId,
+            callMode: params.callMode,
+            callerName: params.callerName,
+            callerPhone: params.callerPhone,
+            joinUrl,
+          }).catch(() => {})
+        }
+      })
+    ),
+    new Promise((resolve) => setTimeout(resolve, 1500)),
+  ])
+}
 
 export interface CommCallParticipant {
   call_id: string
@@ -973,6 +1013,13 @@ export async function POST(req: NextRequest) {
       if (changed) {
         record.state_version += 1
         await pushCloudInvitedRoster(callId, record.invited_roster, true).catch(() => {})
+        await dispatchMinimizedWakeupPushForTargets({
+          callId,
+          callMode: record.call_type === "audio" ? "audio" : "video",
+          callerName: record.initiator_name || displayName,
+          callerPhone: record.initiator_phone,
+          targets: updates.map((u) => ({ phone: u?.phone, email: u?.email, name: u?.name })),
+        }).catch(() => {})
       }
       ACTIVE_CALLS_STORE.set(callId, record)
       savePersistedCalls(true)
@@ -1228,6 +1275,31 @@ export async function POST(req: NextRequest) {
 
       ACTIVE_CALLS_STORE.set(callId, record)
       savePersistedCalls()
+
+      if (action === "create") {
+        const pushTargets: Array<{ phone?: string; email?: string; name?: string }> = []
+        if (record.target_recipient_phone || record.target_recipient_email || record.target_recipient_name) {
+          pushTargets.push({
+            phone: record.target_recipient_phone,
+            email: record.target_recipient_email,
+            name: record.target_recipient_name,
+          })
+        }
+        for (const inv of inlineRosterUpdates) {
+          if (inv?.phone || inv?.email || inv?.name) {
+            pushTargets.push({ phone: inv.phone, email: inv.email, name: inv.name })
+          }
+        }
+        if (pushTargets.length > 0) {
+          await dispatchMinimizedWakeupPushForTargets({
+            callId,
+            callMode: record.call_type === "audio" ? "audio" : "video",
+            callerName: record.initiator_name || displayName,
+            callerPhone: record.initiator_phone,
+            targets: pushTargets,
+          }).catch(() => {})
+        }
+      }
 
       return NextResponse.json({
         protocol_version: 1,

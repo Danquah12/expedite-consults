@@ -28,6 +28,11 @@ import {
 } from "./ConnectLnCellPhoneSoftphone"
 import { registerConnectLnPushSubscription } from "@/lib/connectin-native-callkit-bridge"
 import {
+  unlockBackgroundRingingSession,
+  isDocumentPipSupported,
+  openAlwaysOnTopCallStandbyPiP,
+} from "@/lib/connectin-background-ring"
+import {
   GLOBAL_COUNTRY_DIAL_CODES,
   buildGlobalE164Phone,
 } from "@/lib/connectin-international-phones"
@@ -220,7 +225,26 @@ export function ConnectLnMyPhoneNumberCard({
     setIsSaving(true)
     setErrorMsg("")
     setStatusMsg("Activating incoming voice & video call ringing for your 2FA-verified number...")
+
+    // CRITICAL: Synchronously unlock audio, Notification permission, and Always-On-Top Call Receiver BEFORE any `await fetch`!
+    unlockBackgroundRingingSession()
+    const permPromise =
+      typeof window !== "undefined" && "Notification" in window && Notification.permission === "default"
+        ? Notification.requestPermission().catch(() => "default" as NotificationPermission)
+        : Promise.resolve(
+            typeof window !== "undefined" && "Notification" in window
+              ? Notification.permission
+              : ("default" as NotificationPermission)
+          )
+    const pipPromise =
+      isDocumentPipSupported() &&
+      typeof navigator !== "undefined" &&
+      !/iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent || "")
+        ? openAlwaysOnTopCallStandbyPiP().catch(() => false)
+        : Promise.resolve(false)
+
     try {
+      await Promise.all([permPromise, pipPromise])
       const cfgRes = await fetch("/api/connectin/calls/whatsapp", { cache: "no-store" })
       const cfgData = await cfgRes.json()
       const vapidPublicKey = cfgData?.vapidPublicKey || ""
@@ -318,7 +342,13 @@ export function ConnectLnMyPhoneNumberCard({
     setIsSaving(true)
     setErrorMsg("")
     setStatusMsg("Verifying 6-digit 2FA code & locking your calling identity...")
+    unlockBackgroundRingingSession()
+    const permPromise =
+      typeof window !== "undefined" && "Notification" in window && Notification.permission === "default"
+        ? Notification.requestPermission().catch(() => "default" as NotificationPermission)
+        : Promise.resolve("default" as NotificationPermission)
     try {
+      await permPromise
       const cfgRes = await fetch("/api/connectin/calls/whatsapp", { cache: "no-store" })
       const cfgData = await cfgRes.json()
       const pushSub = cfgData?.vapidPublicKey

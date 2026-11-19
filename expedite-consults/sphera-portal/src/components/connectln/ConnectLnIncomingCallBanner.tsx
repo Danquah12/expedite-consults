@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useEffect, useRef, useState } from "react"
-import { Video, Phone, PhoneOff, Bell, X } from "lucide-react"
+import { Video, Phone, PhoneOff, Bell, X, PictureInPicture2 } from "lucide-react"
 import {
   getMyLinkedConnectLnPhone,
   MY_LINKED_PHONE_STORAGE_KEY,
@@ -22,6 +22,10 @@ import {
   startTitleCallFlash,
   stopTitleCallFlash,
   triggerSystemIncomingCallAlert,
+  dismissFloatingCallPopups,
+  isDocumentPipSupported,
+  isAlwaysOnTopReceiverOpen,
+  openAlwaysOnTopCallStandbyPiP,
   createUnthrottledCallPollWorker,
 } from "@/lib/connectin-background-ring"
 
@@ -66,10 +70,14 @@ export function ConnectLnIncomingCallBanner({
   const [incomingCall, setIncomingCall] = useState<IncomingCallSummary | null>(null)
   const [myPhone, setMyPhone] = useState<string>("")
   const [hasOpenModal, setHasOpenModal] = useState<boolean>(false)
-  const [showMobileRingPrompt, setShowMobileRingPrompt] = useState<boolean>(false)
+  const [showRingSetupBar, setShowRingSetupBar] = useState<boolean>(false)
+  const [notifGranted, setNotifGranted] = useState<boolean>(false)
+  const [supportsDocPip, setSupportsDocPip] = useState<boolean>(false)
+  const [pipReceiverActive, setPipReceiverActive] = useState<boolean>(false)
   const [isIosBrowserTab, setIsIosBrowserTab] = useState<boolean>(false)
   const [vapidKey, setVapidKey] = useState<string>("")
   const [isEnablingPush, setIsEnablingPush] = useState<boolean>(false)
+
   const declinedIdsRef = useRef<Set<string>>(new Set())
   const vapidKeyRef = useRef<string>("")
   const myPhoneRef = useRef<string>("")
@@ -83,39 +91,54 @@ export function ConnectLnIncomingCallBanner({
     myPhoneRef.current = myPhone
   }, [myPhone])
 
-  // 1. Unlock Always-On Background Audio Keep-Alive + Loud Ringtone on first user interaction,
-  //    AND auto-subscribe Web Push if notification permission is granted or requested on first gesture!
+  // 1. Unlock Continuous Background Audio Stream + Synchronous First-Click Notification & Push Registration!
   useEffect(() => {
-    unlockBackgroundRingingSession(() => {
+    unlockBackgroundRingingSession()
+    setSupportsDocPip(isDocumentPipSupported())
+    if (typeof Notification !== "undefined") {
+      setNotifGranted(Notification.permission === "granted")
+    }
+
+    const onFirstUserClick = () => {
+      unlockBackgroundRingingSession()
       if (
         !autoPushAttemptedRef.current &&
-        myPhoneRef.current &&
-        vapidKeyRef.current &&
         typeof Notification !== "undefined" &&
         Notification.permission === "default"
       ) {
         autoPushAttemptedRef.current = true
-        registerConnectLnPushSubscription(vapidKeyRef.current)
-          .then((sub) => {
-            if (!sub || !myPhoneRef.current) return
-            const isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent || "")
-            fetch("/api/connectin/calls/whatsapp", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                action: "register",
-                phone: myPhoneRef.current,
-                name: viewerName || "ConnectLn Member",
-                email: viewerEmail,
-                pushSubscription: sub,
-                deviceLabel: isMobile ? "Mobile Phone" : "Desktop Browser",
-              }),
-            }).catch(() => {})
-            setShowMobileRingPrompt(false)
+        // SYNCHRONOUS call inside user click preserves gesture activation in Edge/Chrome/Mobile!
+        Notification.requestPermission()
+          .then(async (perm) => {
+            setNotifGranted(perm === "granted")
+            if (perm === "granted" && vapidKeyRef.current && myPhoneRef.current) {
+              const sub = await registerConnectLnPushSubscription(vapidKeyRef.current)
+              if (sub) {
+                const isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent || "")
+                await fetch("/api/connectin/calls/whatsapp", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    action: "register",
+                    phone: myPhoneRef.current,
+                    name: viewerName || "ConnectLn Member",
+                    email: viewerEmail,
+                    pushSubscription: sub,
+                    deviceLabel: isMobile ? "Mobile Phone" : "Desktop Browser",
+                  }),
+                }).catch(() => {})
+                setShowRingSetupBar(false)
+              }
+            }
           })
           .catch(() => {})
       }
-    })
+    }
+
+    window.addEventListener("click", onFirstUserClick, { capture: true })
+    return () => {
+      window.removeEventListener("click", onFirstUserClick, { capture: true })
+    }
   }, [viewerEmail, viewerName])
 
   useEffect(() => {
@@ -127,6 +150,7 @@ export function ConnectLnIncomingCallBanner({
         setIncomingCall(null)
         stopLoudPhoneRingtone()
         stopTitleCallFlash()
+        dismissFloatingCallPopups()
       }
     }
     syncPhone()
@@ -161,6 +185,7 @@ export function ConnectLnIncomingCallBanner({
         const p = msg.payload
         stopLoudPhoneRingtone()
         stopTitleCallFlash()
+        dismissFloatingCallPopups()
         setIncomingCall(null)
         onAcceptIncomingCall(
           p.callId,
@@ -172,6 +197,7 @@ export function ConnectLnIncomingCallBanner({
         declinedIdsRef.current.add(msg.payload.callId)
         stopLoudPhoneRingtone()
         stopTitleCallFlash()
+        dismissFloatingCallPopups()
         setIncomingCall(null)
       }
     }
@@ -191,7 +217,7 @@ export function ConnectLnIncomingCallBanner({
     }
   }, [onAcceptIncomingCall])
 
-  // Auto-hydrate verified phone & sync push subscription for this device
+  // Auto-hydrate verified phone & check whether this device (Desktop OR Phone) needs background ringing/popup setup
   useEffect(() => {
     if (typeof window === "undefined") return
     const ua = navigator.userAgent || ""
@@ -223,15 +249,14 @@ export function ConnectLnIncomingCallBanner({
             window.localStorage.setItem(MY_LINKED_PHONE_STORAGE_KEY, norm)
           } catch {}
 
+          const permGranted =
+            typeof Notification !== "undefined" && Notification.permission === "granted"
+          setNotifGranted(permGranted)
+
           if ("serviceWorker" in navigator) {
             const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => null)
             let existingSub = await reg?.pushManager?.getSubscription?.().catch(() => null)
-            if (
-              !existingSub &&
-              data?.vapidPublicKey &&
-              typeof Notification !== "undefined" &&
-              Notification.permission === "granted"
-            ) {
+            if (!existingSub && data?.vapidPublicKey && permGranted) {
               const autoSub = await registerConnectLnPushSubscription(data.vapidPublicKey).catch(
                 () => null
               )
@@ -252,25 +277,39 @@ export function ConnectLnIncomingCallBanner({
                   deviceLabel: isMobile ? "Mobile Phone" : "Desktop Browser",
                 }),
               }).catch(() => {})
-              setShowMobileRingPrompt(false)
-            } else if (isMobile && sessionStorage.getItem("connectln_hide_ring_prompt") !== "1") {
-              setShowMobileRingPrompt(true)
+            }
+            if (
+              (!existingSub || !permGranted || (isDocumentPipSupported() && !isMobile)) &&
+              sessionStorage.getItem("connectln_hide_ring_prompt") !== "1"
+            ) {
+              setShowRingSetupBar(true)
             }
           } else if (isIos && !isStandalone && sessionStorage.getItem("connectln_hide_ring_prompt") !== "1") {
-            setShowMobileRingPrompt(true)
+            setShowRingSetupBar(true)
           }
         }
       } catch {}
     })()
   }, [viewerEmail, viewerName])
 
-  const handleEnableMobileRingingNow = async () => {
-    if (!myPhone) return
+  const handleEnableMinimizedRingingAndPopup = async () => {
     setIsEnablingPush(true)
+    // 1. Synchronously unlock continuous audio + notification permission BEFORE any `await`!
     unlockBackgroundRingingSession()
+    const pushPromise = vapidKey ? registerConnectLnPushSubscription(vapidKey) : Promise.resolve(null)
+
+    // 2. On Desktop Edge/Chrome, also open the Always-On-Top Call Standby PiP so a real Pop-Up Call Screen floats above minimized windows!
+    if (isDocumentPipSupported() && !/iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent || "")) {
+      const openedPip = await openAlwaysOnTopCallStandbyPiP()
+      setPipReceiverActive(openedPip)
+    }
+
     try {
-      const sub = vapidKey ? await registerConnectLnPushSubscription(vapidKey) : null
-      if (sub) {
+      const sub = await pushPromise
+      if (typeof Notification !== "undefined") {
+        setNotifGranted(Notification.permission === "granted")
+      }
+      if (sub && myPhone) {
         await fetch("/api/connectin/calls/whatsapp", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -285,13 +324,13 @@ export function ConnectLnIncomingCallBanner({
               : "Desktop Browser",
           }),
         })
-        setShowMobileRingPrompt(false)
       }
+      setShowRingSetupBar(false)
     } catch {}
     setIsEnablingPush(false)
   }
 
-  // 2. Unthrottled Web Worker Polling (runs every 1.6s EVEN WHEN MINIMIZED OR IN BACKGROUND TAB!)
+  // 2. Unthrottled Web Worker Polling (runs every 1.4s EVEN WHEN MINIMIZED OR IN BACKGROUND!)
   useEffect(() => {
     const cleanName = (viewerName || "").trim()
     const cleanEmail = (viewerEmail || "").trim()
@@ -300,6 +339,7 @@ export function ConnectLnIncomingCallBanner({
       setIncomingCall(null)
       stopLoudPhoneRingtone()
       stopTitleCallFlash()
+      dismissFloatingCallPopups()
       return
     }
 
@@ -330,6 +370,7 @@ export function ConnectLnIncomingCallBanner({
         if (!active) {
           stopLoudPhoneRingtone()
           stopTitleCallFlash()
+          dismissFloatingCallPopups()
         }
       } catch {
         // ignore transient network errors
@@ -339,8 +380,9 @@ export function ConnectLnIncomingCallBanner({
     }
 
     checkIncoming()
-    const stopWorker = createUnthrottledCallPollWorker(1600, checkIncoming)
+    const stopWorker = createUnthrottledCallPollWorker(1400, checkIncoming)
     const onVisOrFocus = () => {
+      setPipReceiverActive(isAlwaysOnTopReceiverOpen())
       void checkIncoming()
     }
     document.addEventListener("visibilitychange", onVisOrFocus)
@@ -354,11 +396,12 @@ export function ConnectLnIncomingCallBanner({
     }
   }, [viewerName, viewerEmail, myPhone, isAlreadyInCallStudio, hasOpenModal])
 
-  // 3. Loud Background-Safe Ringtone + Taskbar Flash + OS Notification Popup when call arrives (Minimized OR Visible!)
+  // 3. Loud Live-Stream Ringtone + Real Floating Pop-Up Call Screen + OS Notification when call arrives!
   useEffect(() => {
     if (!incomingCall || hasOpenModal) {
       stopLoudPhoneRingtone()
       stopTitleCallFlash()
+      dismissFloatingCallPopups()
       return
     }
 
@@ -374,20 +417,35 @@ export function ConnectLnIncomingCallBanner({
     startLoudPhoneRingtone()
     startTitleCallFlash(cName)
 
-    // Pop up OS-level notification whenever minimized, unfocused, or in another tab so user can click to pick up immediately!
-    if (typeof document !== "undefined" && (document.hidden || !document.hasFocus())) {
+    const handleAnswerFromPopup = () => {
+      const targetId = incomingCall.id
+      stopLoudPhoneRingtone()
+      stopTitleCallFlash()
+      dismissFloatingCallPopups()
+      setIncomingCall(null)
+      onAcceptIncomingCall(targetId, cName, mode, incomingCall.initiator_phone)
+    }
+
+    const handleDeclineFromPopup = () => {
+      declinedIdsRef.current.add(incomingCall.id)
+      stopLoudPhoneRingtone()
+      stopTitleCallFlash()
+      dismissFloatingCallPopups()
+      setIncomingCall(null)
+    }
+
+    // Whenever ConnectLn is minimized, unfocused, OR Always-On-Top Call Receiver is active, pop up the Call Screen!
+    if (
+      typeof document !== "undefined" &&
+      (document.hidden || !document.hasFocus() || isAlwaysOnTopReceiverOpen())
+    ) {
       void triggerSystemIncomingCallAlert({
         callId: incomingCall.id,
         callerName: cName,
         callerPhone: cPhone,
         callMode: mode,
-        onAnswerClick: () => {
-          const targetId = incomingCall.id
-          stopLoudPhoneRingtone()
-          stopTitleCallFlash()
-          setIncomingCall(null)
-          onAcceptIncomingCall(targetId, cName, mode, incomingCall.initiator_phone)
-        },
+        onAnswer: handleAnswerFromPopup,
+        onDecline: handleDeclineFromPopup,
       })
     }
 
@@ -400,17 +458,22 @@ export function ConnectLnIncomingCallBanner({
   if (hasOpenModal) return null
 
   if (!incomingCall) {
-    if (!showMobileRingPrompt || !myPhone) return null
+    if (!showRingSetupBar || !myPhone || (notifGranted && (!supportsDocPip || pipReceiverActive))) {
+      return null
+    }
     return (
-      <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[90] w-[94vw] max-w-md rounded-2xl bg-[#181411] border border-emerald-400/60 shadow-2xl px-3.5 py-2.5 text-[#FBF8F3] flex items-center justify-between gap-2.5">
+      <div className="fixed bottom-4 right-4 z-[90] w-[92vw] max-w-sm rounded-2xl bg-[#111B21] border-2 border-emerald-400/70 shadow-2xl px-4 py-3 text-[#FBF8F3] flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-extrabold text-emerald-300 truncate">
-            📱 Enable Background Ringing on This Phone
+          <p className="text-xs font-extrabold text-emerald-300 flex items-center gap-1.5">
+            <PictureInPicture2 className="h-3.5 w-3.5 shrink-0" />
+            <span>Keep Call Pop-Up Active When Minimized</span>
           </p>
-          <p className="text-[11px] text-zinc-300 leading-snug">
+          <p className="text-[11px] text-zinc-300 leading-snug mt-0.5">
             {isIosBrowserTab
-              ? "iPhone tip: Tap Share (⬆️) → Add to Home Screen so ConnectLn rings even when minimized or locked."
-              : `Tap Enable so calls to ${prettyClientPhone(myPhone)} ring even when ConnectLn is minimized.`}
+              ? "iPhone: Tap Share (⬆️) → Add to Home Screen so calls ring & pop up when minimized."
+              : supportsDocPip
+              ? "Click Activate so a live Pop-Up Call Screen & ringtone appear on top even when this browser is minimized."
+              : `Tap Activate so calls to ${prettyClientPhone(myPhone)} ring & pop up when minimized.`}
           </p>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
@@ -418,19 +481,19 @@ export function ConnectLnIncomingCallBanner({
             <button
               type="button"
               disabled={isEnablingPush}
-              onClick={handleEnableMobileRingingNow}
+              onClick={handleEnableMinimizedRingingAndPopup}
               style={{ color: "#FFFFFF" }}
-              className="rounded-xl bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 text-xs font-extrabold flex items-center gap-1 cursor-pointer"
+              className="rounded-xl bg-emerald-600 hover:bg-emerald-500 px-3 py-2 text-xs font-extrabold flex items-center gap-1 cursor-pointer shadow-md"
             >
               <Bell className="h-3.5 w-3.5" />
-              <span>{isEnablingPush ? "..." : "Enable"}</span>
+              <span>{isEnablingPush ? "..." : "Activate"}</span>
             </button>
           )}
           <button
             type="button"
             onClick={() => {
               sessionStorage.setItem("connectln_hide_ring_prompt", "1")
-              setShowMobileRingPrompt(false)
+              setShowRingSetupBar(false)
             }}
             className="h-7 w-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white cursor-pointer"
           >
@@ -482,6 +545,7 @@ export function ConnectLnIncomingCallBanner({
               declinedIdsRef.current.add(incomingCall.id)
               stopLoudPhoneRingtone()
               stopTitleCallFlash()
+              dismissFloatingCallPopups()
               setIncomingCall(null)
             }}
             style={{ color: "#FFFFFF" }}
@@ -496,6 +560,7 @@ export function ConnectLnIncomingCallBanner({
               const targetId = incomingCall.id
               stopLoudPhoneRingtone()
               stopTitleCallFlash()
+              dismissFloatingCallPopups()
               setIncomingCall(null)
               onAcceptIncomingCall(
                 targetId,
