@@ -550,7 +550,9 @@ export function ConnectLnMyPhoneNumberCard({
 
 function RemoteStreamVideoRenderer({ stream }: { stream: MediaStream }) {
   const videoRef = useRef<HTMLVideoElement | null>(null)
-  const [hasFrames, setHasFrames] = useState(false)
+  const [hasFrames, setHasFrames] = useState(
+    () => stream?.getVideoTracks?.().length > 0
+  )
 
   useEffect(() => {
     const el = videoRef.current
@@ -560,18 +562,18 @@ function RemoteStreamVideoRenderer({ stream }: { stream: MediaStream }) {
     }
     el.muted = true
     const checkReady = () => {
-      if (el.videoWidth > 0 && el.readyState >= 2) {
+      if (el.videoWidth > 0 || el.readyState >= 2 || stream.getVideoTracks().length > 0) {
         setHasFrames(true)
       }
     }
+    el.addEventListener("loadedmetadata", checkReady)
     el.addEventListener("loadeddata", checkReady)
     el.addEventListener("playing", checkReady)
-    el.addEventListener("timeupdate", checkReady)
     el.play().then(checkReady).catch(() => {})
     return () => {
+      el.removeEventListener("loadedmetadata", checkReady)
       el.removeEventListener("loadeddata", checkReady)
       el.removeEventListener("playing", checkReady)
-      el.removeEventListener("timeupdate", checkReady)
     }
   }, [stream])
 
@@ -582,7 +584,12 @@ function RemoteStreamVideoRenderer({ stream }: { stream: MediaStream }) {
       playsInline
       muted
       className="absolute inset-0 w-full h-full object-cover"
-      style={{ opacity: hasFrames ? 1 : 0, zIndex: 8, backgroundColor: "#090D16" }}
+      style={{
+        opacity: hasFrames ? 1 : 0,
+        zIndex: 8,
+        backgroundColor: "#090D16",
+        transform: "translateZ(0)",
+      }}
     />
   )
 }
@@ -979,9 +986,9 @@ export function ConnectLnWhatsAppCallModal({
           stream = await navigator.mediaDevices.getUserMedia({
             video: {
               facingMode: { ideal: facing },
-              width: { ideal: 640, max: 1280 },
-              height: { ideal: 480, max: 720 },
-              frameRate: { ideal: 24, max: 30 },
+              width: { ideal: 640, max: 960 },
+              height: { ideal: 480, max: 540 },
+              frameRate: { ideal: 30, max: 30 },
             },
             audio: {
               echoCancellation: true,
@@ -1026,6 +1033,11 @@ export function ConnectLnWhatsAppCallModal({
         return
       }
       const liveVid = stream.getVideoTracks().some((t) => t.readyState === "live")
+      stream.getVideoTracks().forEach((vt) => {
+        try {
+          if ("contentHint" in vt) (vt as any).contentHint = "motion"
+        } catch {}
+      })
       setHasLocalVideoTrack(liveVid)
 
       stream.getAudioTracks().forEach((t) => {
@@ -1145,33 +1157,57 @@ export function ConnectLnWhatsAppCallModal({
     return () => window.clearInterval(t)
   }, [open, callStatus])
 
-  // Multi-Peer PeerJS WebRTC Mesh (with Twilio TURN/STUN)
+  // Multi-Peer PeerJS WebRTC Mesh (Free STUN + OpenRelay Global TURN · Smooth 30 FPS RTP)
   useEffect(() => {
     if (!open || typeof window === "undefined") return
     let cancelled = false
     let peerInstance: any = null
     let meshInterval: ReturnType<typeof setInterval> | null = null
     const lastAttemptMap = new Map<string, number>()
+    const firstSeenMap = new Map<string, number>()
+    const streamingPeersSet = new Set<string>()
 
     const cleanKey = callId.replace(/[^a-zA-Z0-9]/g, "").toLowerCase().slice(0, 20) || "waroom"
     const cleanUid = localPeerUid.replace(/[^a-zA-Z0-9]/g, "").toLowerCase().slice(-8) || "u"
     const myUniquePeerId = `vibe-${cleanKey}-${cleanUid}-${Math.random().toString(36).slice(2, 6)}`
 
+    const tunePeerConnectionForSmooth30Fps = (pc?: RTCPeerConnection) => {
+      if (!pc || typeof pc.getSenders !== "function") return
+      try {
+        for (const sender of pc.getSenders()) {
+          if (sender.track?.kind === "video" && typeof sender.getParameters === "function") {
+            const params = sender.getParameters()
+            ;(params as any).degradationPreference = "maintain-framerate"
+            if (Array.isArray(params.encodings) && params.encodings.length > 0) {
+              params.encodings[0].maxBitrate = 950_000
+              params.encodings[0].maxFramerate = 30
+            }
+            sender.setParameters(params).catch(() => {})
+          }
+        }
+      } catch {}
+    }
+
     const bindMediaCall = (mc: any) => {
       if (!mc?.peer) return
       knownRemotePeerIdsRef.current.add(mc.peer)
-      activeMediaCallsRef.current.set(mc.peer, mc)
+      // Never overwrite a MediaConnection that is already actively streaming RTP video/audio!
+      if (!streamingPeersSet.has(mc.peer) || !activeMediaCallsRef.current.has(mc.peer)) {
+        activeMediaCallsRef.current.set(mc.peer, mc)
+      }
+      tunePeerConnectionForSmooth30Fps(mc.peerConnection)
 
       mc.on("stream", (rStream: MediaStream) => {
         if (cancelled) return
+        streamingPeersSet.add(mc.peer)
         activeMediaCallsRef.current.set(mc.peer, mc)
-        const hasVid = rStream.getVideoTracks().some((t) => t.readyState === "live" && t.enabled)
+        tunePeerConnectionForSmooth30Fps(mc.peerConnection)
+        const hasVid = rStream.getVideoTracks().length > 0
         if (hasVid) hasLiveRemoteVideoRef.current = true
         setRemoteStreamsMap((prev) => {
           const existing = prev[mc.peer]
-          const prevVid = Boolean(
-            existing && existing.getVideoTracks().some((t) => t.readyState === "live")
-          )
+          if (existing === rStream) return prev
+          const prevVid = Boolean(existing && existing.getVideoTracks().length > 0)
           if (prevVid && !hasVid) return prev
           return { ...prev, [mc.peer]: rStream }
         })
@@ -1180,12 +1216,13 @@ export function ConnectLnWhatsAppCallModal({
 
       mc.on("close", () => {
         if (activeMediaCallsRef.current.get(mc.peer) !== mc) return
+        streamingPeersSet.delete(mc.peer)
         activeMediaCallsRef.current.delete(mc.peer)
         setRemoteStreamsMap((prev) => {
           const next = { ...prev }
           delete next[mc.peer]
-          hasLiveRemoteVideoRef.current = Object.values(next).some((s) =>
-            s.getVideoTracks().some((t) => t.readyState === "live" && t.enabled)
+          hasLiveRemoteVideoRef.current = Object.values(next).some(
+            (s) => s.getVideoTracks().length > 0
           )
           return next
         })
@@ -1193,24 +1230,42 @@ export function ConnectLnWhatsAppCallModal({
     }
 
     const dialPeerNow = (targetPid: string, force = false) => {
-      if (cancelled || !peerInstance || peerInstance.destroyed || !targetPid || targetPid === peerInstance.id) {
+      if (
+        cancelled ||
+        !peerInstance ||
+        peerInstance.destroyed ||
+        !targetPid ||
+        targetPid === peerInstance.id
+      ) {
         return
       }
+      // Once RTP stream is live with this peer, do not re-dial or reset the connection!
+      if (streamingPeersSet.has(targetPid) && !force) return
+
       const stream = localStreamRef.current
       if (!stream) return
       const now = Date.now()
+      if (!firstSeenMap.has(targetPid)) firstSeenMap.set(targetPid, now)
+      const seenAge = now - (firstSeenMap.get(targetPid) || now)
+
+      // Deterministic glare-prevention: smaller peerId initiates immediately; larger peerId waits 3.2s as backup
+      const isPrimaryInitiator = peerInstance.id < targetPid
+      if (!force && !isPrimaryInitiator && seenAge < 3200) {
+        return
+      }
+
       const last = lastAttemptMap.get(targetPid) || 0
       const existing = activeMediaCallsRef.current.get(targetPid)
       const pc: RTCPeerConnection | undefined = existing?.peerConnection
-      const senders = pc && typeof pc.getSenders === "function" ? pc.getSenders() : []
-      const hasV = senders.some((s) => s.track && s.track.kind === "video")
-      const hasA = senders.some((s) => s.track && s.track.kind === "audio")
-      const needs =
-        !existing ||
-        (stream.getVideoTracks().length > 0 && !hasV) ||
-        (stream.getAudioTracks().length > 0 && !hasA)
+      const iceState = pc?.iceConnectionState
+      const connHealthy =
+        existing &&
+        (streamingPeersSet.has(targetPid) ||
+          iceState === "checking" ||
+          iceState === "connected" ||
+          iceState === "completed")
 
-      if (needs && (force || now - last > 4000)) {
+      if ((!connHealthy || force) && (force || now - last > 4500)) {
         lastAttemptMap.set(targetPid, now)
         try {
           const out = peerInstance.call(targetPid, stream, {
@@ -1222,6 +1277,32 @@ export function ConnectLnWhatsAppCallModal({
     }
 
     dialPeerNowRef.current = dialPeerNow
+
+    const defaultFreeIce = [
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun1.l.google.com:19302" },
+      { urls: "stun:stun.cloudflare.com:3478" },
+      {
+        urls: "turn:openrelay.metered.ca:80",
+        username: "openrelayproject",
+        credential: "openrelayproject",
+      },
+      {
+        urls: "turn:openrelay.metered.ca:443",
+        username: "openrelayproject",
+        credential: "openrelayproject",
+      },
+      {
+        urls: "turn:openrelay.metered.ca:443?transport=tcp",
+        username: "openrelayproject",
+        credential: "openrelayproject",
+      },
+      {
+        urls: "turns:openrelay.metered.ca:443?transport=tcp",
+        username: "openrelayproject",
+        credential: "openrelayproject",
+      },
+    ]
 
     ;(async () => {
       try {
@@ -1241,11 +1322,8 @@ export function ConnectLnWhatsAppCallModal({
         const peer = new PeerClass(myUniquePeerId, {
           debug: 0,
           config: {
-            iceCandidatePoolSize: 4,
-            iceServers: iceServers || [
-              { urls: "stun:stun.l.google.com:19302" },
-              { urls: "stun:stun.cloudflare.com:3478" },
-            ],
+            iceCandidatePoolSize: 6,
+            iceServers: iceServers || defaultFreeIce,
           },
         })
 
@@ -1257,13 +1335,19 @@ export function ConnectLnWhatsAppCallModal({
           peerInstance = peer
           peerRef.current = peer
           myPeerIdRef.current = id
-          knownRemotePeerIdsRef.current.forEach((pid) => dialPeerNow(pid, true))
+          knownRemotePeerIdsRef.current.forEach((pid) => dialPeerNow(pid, false))
           meshInterval = setInterval(() => {
             knownRemotePeerIdsRef.current.forEach((pid) => dialPeerNow(pid, false))
-          }, 1500)
+          }, 1600)
         })
 
-        peer.on("call", (inc: any) => {
+        peer.on("call", async (inc: any) => {
+          // Wait briefly if local camera/mic is still opening so our 30fps video track is included in the initial answer!
+          let waitCount = 0
+          while (!localStreamRef.current && waitCount < 18 && !cancelled) {
+            await new Promise((r) => setTimeout(r, 100))
+            waitCount++
+          }
           try {
             inc.answer(localStreamRef.current || undefined)
           } catch {}
@@ -1309,7 +1393,7 @@ export function ConnectLnWhatsAppCallModal({
     return () => stop()
   }, [open, localStreamState, isMicMuted, hasAnyWebRtcStream])
 
-  // Room presence + multi-participant camera frame sync (`/api/v1/calls`)
+  // Room presence + fallback preview sync (`/api/v1/calls`) — stops CPU/bandwidth frame encoding once 30fps WebRTC connects!
   useEffect(() => {
     if (!open) return
     let mounted = true
@@ -1320,30 +1404,36 @@ export function ConnectLnWhatsAppCallModal({
     const syncBeat = async () => {
       if (!mounted) return
       const now = Date.now()
-      const vidEl =
-        [localVideoRef.current, gridLocalVideoRef.current, offscreenVideoRef.current].find(
-          (v) => v && v.readyState >= 2 && v.videoWidth > 0
-        ) || null
+      const webrtcActiveNow = hasLiveRemoteVideoRef.current || Object.keys(remoteStreamsMap).length > 0
 
-      const throttleMs = hasLiveRemoteVideoRef.current ? 1400 : 500
-      if (isVideoOn && vidEl && (now - lastCapMs >= throttleMs || !lastCapturedFrameRef.current)) {
-        try {
-          if (!captureCanvasRef.current) {
-            const c = document.createElement("canvas")
-            c.width = 280
-            c.height = 200
-            captureCanvasRef.current = c
-          }
-          const ctx = captureCanvasRef.current.getContext("2d")
-          if (ctx) {
-            ctx.drawImage(vidEl, 0, 0, 280, 200)
-            const jpeg = captureCanvasRef.current.toDataURL("image/jpeg", 0.45)
-            if (jpeg && jpeg.length > 800) {
-              lastCapMs = now
-              lastCapturedFrameRef.current = jpeg
+      if (webrtcActiveNow) {
+        // Zero CPU/network contention: native 30fps WebRTC video is live, so skip canvas encoding completely!
+        lastCapturedFrameRef.current = null
+      } else {
+        const vidEl =
+          [localVideoRef.current, gridLocalVideoRef.current, offscreenVideoRef.current].find(
+            (v) => v && v.readyState >= 2 && v.videoWidth > 0
+          ) || null
+
+        if (isVideoOn && vidEl && (now - lastCapMs >= 280 || !lastCapturedFrameRef.current)) {
+          try {
+            if (!captureCanvasRef.current) {
+              const c = document.createElement("canvas")
+              c.width = 224
+              c.height = 160
+              captureCanvasRef.current = c
             }
-          }
-        } catch {}
+            const ctx = captureCanvasRef.current.getContext("2d")
+            if (ctx) {
+              ctx.drawImage(vidEl, 0, 0, 224, 160)
+              const webpOrJpeg = captureCanvasRef.current.toDataURL("image/webp", 0.42)
+              if (webpOrJpeg && webpOrJpeg.length > 400) {
+                lastCapMs = now
+                lastCapturedFrameRef.current = webpOrJpeg
+              }
+            }
+          } catch {}
+        }
       }
 
       const reopenFlag = isFirst
@@ -1369,10 +1459,13 @@ export function ConnectLnWhatsAppCallModal({
             display_name: callerName,
             is_muted: isMicMuted,
             is_video_on: isVideoOn && hasLocalVideoTrack,
-            webrtc_connected: hasLiveRemoteVideoRef.current,
-            live_frame: isVideoOn && hasLocalVideoTrack ? lastCapturedFrameRef.current : null,
-            live_audio_chunk: !hasAnyWebRtcStream && !isMicMuted ? latestAudioChunkRef.current : undefined,
-            recent_audio_chunks: !hasAnyWebRtcStream && !isMicMuted ? recentAudioChunksRef.current : undefined,
+            webrtc_connected: webrtcActiveNow,
+            live_frame:
+              !webrtcActiveNow && isVideoOn && hasLocalVideoTrack
+                ? lastCapturedFrameRef.current
+                : null,
+            live_audio_chunk: !webrtcActiveNow && !isMicMuted ? latestAudioChunkRef.current : undefined,
+            recent_audio_chunks: !webrtcActiveNow && !isMicMuted ? recentAudioChunksRef.current : undefined,
           }),
         })
         const data = await res.json()
@@ -1466,6 +1559,17 @@ export function ConnectLnWhatsAppCallModal({
           const mpName = mp.name.trim().toLowerCase()
           const lName = String(legName || "").trim().toLowerCase()
           if (!mpName || !lName) return false
+          // If intentionally calling your own phone from desktop, match your answered mobile peer against your own ringing tile!
+          if (
+            isIntentionalSelfCall &&
+            mpName === callerNameLower &&
+            (lName === callerNameLower ||
+              (myPhoneDigits.length >= 7 &&
+                lDigits.length >= 7 &&
+                myPhoneDigits.slice(-10) === lDigits.slice(-10)))
+          ) {
+            return true
+          }
           if (
             lName === hostNameLower &&
             myPhoneDigits.length >= 7 &&
@@ -1606,7 +1710,8 @@ export function ConnectLnWhatsAppCallModal({
       } catch {}
 
       if (mounted) {
-        timer = setTimeout(syncBeat, hasLiveRemoteVideoRef.current ? 1400 : 520)
+        const fastWebRtc = hasLiveRemoteVideoRef.current || Object.keys(remoteStreamsMap).length > 0
+        timer = setTimeout(syncBeat, fastWebRtc ? 2400 : 320)
       }
     }
 
@@ -1803,7 +1908,7 @@ export function ConnectLnWhatsAppCallModal({
                   key={rp.userId}
                   className="relative rounded-2xl overflow-hidden bg-[#111B21] border border-emerald-500/50 min-h-[200px] flex items-center justify-center"
                 >
-                  {rp.isVideoOn && rp.liveFrame && (
+                  {!st && rp.isVideoOn && rp.liveFrame && (
                     <img
                       src={rp.liveFrame}
                       alt={rp.name}
@@ -1962,7 +2067,7 @@ export function ConnectLnWhatsAppCallModal({
       ) : (
         /* STAGE B: CLASSIC 1-ON-1 FULL-SCREEN WHATSAPP INTERNET CALL VIEW */
         <div className="absolute inset-0 bg-gradient-to-b from-[#071E1A] via-[#0B141A] to-[#060B0E]">
-          {callStatus === "connected" && primaryPeer?.isVideoOn && primaryPeer.liveFrame && (
+          {!primaryStream && callStatus === "connected" && primaryPeer?.isVideoOn && primaryPeer.liveFrame && (
             <img
               src={primaryPeer.liveFrame}
               alt={primaryName}

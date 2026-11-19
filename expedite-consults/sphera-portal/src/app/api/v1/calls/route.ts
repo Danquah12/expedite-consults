@@ -133,12 +133,31 @@ function getTwilioCallsAuthHeader(): string | null {
 }
 
 async function getCachedTwilioIceServers(): Promise<any[]> {
-  // 100% Free Internet WebRTC STUN Discovery ($0.00 TURN relay fees — never calls Twilio paid Tokens.json)
+  // 100% Free Internet WebRTC STUN + OpenRelay Global TURN ($0.00 Twilio fees — enables smooth 30fps RTP across 5G/Symmetric NAT)
   return [
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
-    { urls: "stun:stun2.l.google.com:19302" },
     { urls: "stun:stun.cloudflare.com:3478" },
+    {
+      urls: "turn:openrelay.metered.ca:80",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443?transport=tcp",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turns:openrelay.metered.ca:443?transport=tcp",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
   ]
 }
 
@@ -1120,11 +1139,11 @@ export async function POST(req: NextRequest) {
             ? record.participants[existingIdx].virtual_bg_badge
             : undefined,
         live_frame:
-          !isVideoOn
+          !isVideoOn || isWebRtcConnected || body.live_frame === null
             ? null
             : typeof body.live_frame === "string" &&
               body.live_frame.startsWith("data:image/") &&
-              body.live_frame.length > 800
+              body.live_frame.length > 400
             ? body.live_frame
             : existingIdx >= 0
             ? record.participants[existingIdx].live_frame
