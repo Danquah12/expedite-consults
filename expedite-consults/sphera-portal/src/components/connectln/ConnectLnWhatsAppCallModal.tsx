@@ -758,18 +758,18 @@ export function ConnectLnWhatsAppCallModal({
           if (data.nativeSmsHref) setNativeSmsHref(data.nativeSmsHref)
           setCallStatus((prev) => (prev === "connected" ? "connected" : "ringing"))
 
-          if (data.pushDeliveredCount > 0) {
-            setPushBannerNote(`Ringing ${data.recipient?.name || "recipient"}'s ConnectLn app...`)
-            // If they don't answer the Web Push within 10s, automatically ring their physical cell SIM as backup!
+          if (data.mobilePushDeliveredCount > 0) {
+            setPushBannerNote(`Ringing ${data.recipient?.name || "recipient"}'s mobile ConnectLn app...`)
+            // If they don't answer the mobile Web Push within 5s, automatically ring their physical cell SIM as backup!
             if (resolvedNum) {
               pstnFallbackTimerRef.current = setTimeout(() => {
                 if (!cancelled && !hasWebRtcPeerJoinedRef.current) {
                   void ringPhysicalCellPhoneLeg(resolvedNum, data.carrierVoiceToken)
                 }
-              }, 10000)
+              }, 5000)
             }
           } else if (resolvedNum) {
-            // Recipient's phone hasn't enabled Web Push yet -> IMMEDIATELY ring their physical cell phone SIM + deliver 1-tap Camera Link!
+            // No Mobile Phone Web Push subscription yet (even if Desktop subscribed) -> IMMEDIATELY ring their physical cell phone SIM!
             setPushBannerNote(
               `Dialing ${prettyClientPhone(resolvedNum)} on cell network${
                 initialMode === "video" ? " + sent Camera Link to phone" : ""

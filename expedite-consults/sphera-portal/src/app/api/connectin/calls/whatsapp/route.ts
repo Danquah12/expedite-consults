@@ -188,8 +188,8 @@ export async function POST(req: NextRequest) {
               callerPhone,
               callerAvatar,
               joinUrl,
-            }).catch(() => ({ deliveredCount: 0, attemptedCount: 0 }))
-          : Promise.resolve({ deliveredCount: 0, attemptedCount: 0 }),
+            }).catch(() => ({ deliveredCount: 0, mobileDeliveredCount: 0, attemptedCount: 0 }))
+          : Promise.resolve({ deliveredCount: 0, mobileDeliveredCount: 0, attemptedCount: 0 }),
         fetch(`${origin}/api/connectin/voice/ring-cell`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -226,6 +226,7 @@ export async function POST(req: NextRequest) {
         joinUrl,
         isRegisteredOnConnectLn: recipientLookup.isRegisteredOnConnectLn,
         pushDeliveredCount,
+        mobilePushDeliveredCount: pushRes.mobileDeliveredCount,
         pushAttemptedCount,
         emailAlertSent: Boolean(ringCellData?.emailSent),
         smsAlertSent: Boolean(ringCellData?.smsSent),

@@ -407,10 +407,10 @@ export async function sendIncomingCallWebPush(params: {
   callerPhone?: string
   callerAvatar?: string
   joinUrl: string
-}): Promise<{ deliveredCount: number; attemptedCount: number }> {
+}): Promise<{ deliveredCount: number; mobileDeliveredCount: number; attemptedCount: number }> {
   const subs = params.member.pushSubscriptions || []
   if (subs.length === 0) {
-    return { deliveredCount: 0, attemptedCount: 0 }
+    return { deliveredCount: 0, mobileDeliveredCount: 0, attemptedCount: 0 }
   }
 
   const vapid = await getOrCreateConnectLnVapidKeys()
@@ -432,6 +432,7 @@ export async function sendIncomingCallWebPush(params: {
   })
 
   let deliveredCount = 0
+  let mobileDeliveredCount = 0
   const validSubs: StoredPushSubscription[] = []
   let prunedAny = false
 
@@ -443,6 +444,9 @@ export async function sendIncomingCallWebPush(params: {
           urgency: "high",
         })
         deliveredCount += 1
+        if (/mobile|phone|iphone|android/i.test(sub.deviceLabel || "")) {
+          mobileDeliveredCount += 1
+        }
         validSubs.push(sub)
       } catch (err: any) {
         const code = Number(err?.statusCode || 0)
@@ -468,5 +472,5 @@ export async function sendIncomingCallWebPush(params: {
     }
   }
 
-  return { deliveredCount, attemptedCount: subs.length }
+  return { deliveredCount, mobileDeliveredCount, attemptedCount: subs.length }
 }
