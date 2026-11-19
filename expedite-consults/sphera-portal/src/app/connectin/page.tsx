@@ -2402,23 +2402,26 @@ export default function ConnectLnPage() {
         }}
       />
       {/* Global Full-Screen WhatsApp-Style Direct Voice & Video Call Modal */}
-      <ConnectLnWhatsAppCallModal
-        open={Boolean(activeGlobalWhatsAppCall)}
-        onClose={() => {
-          setActiveGlobalWhatsAppCall(null)
-          if (typeof window !== 'undefined' && window.location.search.includes('waCall=')) {
-            window.history.replaceState(null, '', '/connectin')
-          }
-        }}
-        initialCallId={activeGlobalWhatsAppCall?.callId}
-        initialMode={activeGlobalWhatsAppCall?.mode || 'video'}
-        isIncomingAnswer={true}
-        targetLabel={activeGlobalWhatsAppCall?.callerName || 'ConnectLn Caller'}
-        targetPhone={activeGlobalWhatsAppCall?.callerPhone}
-        callerName={userData?.name || 'ConnectLn Member'}
-        callerEmail={userData?.email}
-        callerAvatar={userData?.avatar}
-      />
+      {activeGlobalWhatsAppCall && (
+        <ConnectLnWhatsAppCallModal
+          key={activeGlobalWhatsAppCall.callId}
+          open={true}
+          onClose={() => {
+            setActiveGlobalWhatsAppCall(null)
+            if (typeof window !== 'undefined' && window.location.search.includes('waCall=')) {
+              window.history.replaceState(null, '', '/connectin')
+            }
+          }}
+          initialCallId={activeGlobalWhatsAppCall.callId}
+          initialMode={activeGlobalWhatsAppCall.mode || 'video'}
+          isIncomingAnswer={true}
+          targetLabel={activeGlobalWhatsAppCall.callerName || 'ConnectLn Caller'}
+          targetPhone={activeGlobalWhatsAppCall.callerPhone}
+          callerName={userData?.name || 'ConnectLn Member'}
+          callerEmail={userData?.email}
+          callerAvatar={userData?.avatar}
+        />
+      )}
       {/* Top Sticky Navigation */}
       <ConnectLnNavbar
         activeTab={activeTab}

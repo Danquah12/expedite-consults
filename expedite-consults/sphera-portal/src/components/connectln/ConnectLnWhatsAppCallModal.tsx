@@ -758,9 +758,16 @@ export function ConnectLnWhatsAppCallModal({
     }
   }, [open])
 
+  const wasOpenRef = useRef<boolean>(open)
   useEffect(() => {
-    if (initialCallId) setCallId(initialCallId)
-  }, [initialCallId])
+    if (initialCallId) {
+      setCallId(initialCallId)
+    } else if (open && !wasOpenRef.current) {
+      // Guarantee every new outbound call gets its own fresh room ID (never pulling old tiles from previous calls!)
+      setCallId(`wa_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`)
+    }
+    wasOpenRef.current = open
+  }, [initialCallId, open])
 
   useEffect(() => {
     setIsVideoOn(initialMode === "video")
@@ -1345,80 +1352,151 @@ export function ConnectLnWhatsAppCallModal({
           return
         }
 
-        const remotes = (data?.call?.participants || []).filter(
-          (p: any) => p.user_id && p.user_id !== localPeerUid
+        const myPhoneDigits = myLinkedPhone.replace(/[^\d]/g, "")
+        const callerNameLower = callerName.trim().toLowerCase()
+        const initialTargetDigits = String(targetPhone || targetLabel || "").replace(/[^\d]/g, "")
+        const initialTargetNameLower = String(targetLabel || "").trim().toLowerCase()
+        const isIntentionalSelfCall =
+          !isIncomingAnswer &&
+          Boolean(
+            (myPhoneDigits.length >= 7 &&
+              initialTargetDigits.length >= 7 &&
+              myPhoneDigits.slice(-10) === initialTargetDigits.slice(-10)) ||
+              (!initialTargetDigits &&
+                callerNameLower &&
+                initialTargetNameLower &&
+                initialTargetNameLower === callerNameLower)
+          )
+
+        const rawRemotes = (data?.call?.participants || []).filter((p: any) => {
+          if (!p?.user_id || p.user_id === localPeerUid) return false
+          // Unless intentionally calling your own phone to test, exclude ghost/other open browser tabs of yourself!
+          if (!isIntentionalSelfCall) {
+            const pDigits = String(p.phone || p.display_name || "").replace(/[^\d]/g, "")
+            const pNameLower = String(p.display_name || "").trim().toLowerCase()
+            if (
+              myPhoneDigits.length >= 7 &&
+              pDigits.length >= 7 &&
+              myPhoneDigits.slice(-10) === pDigits.slice(-10)
+            ) {
+              return false
+            }
+            if (!pDigits && callerNameLower && pNameLower === callerNameLower) {
+              return false
+            }
+          }
+          return true
+        })
+
+        // Deduplicate multiple tabs/reconnects of the same remote person so one person = one box!
+        const dedupedPeersMap = new Map<string, { raw: any; mapped: RemoteWebRtcParticipant }>()
+        for (const rp of rawRemotes) {
+          const mapped: RemoteWebRtcParticipant = {
+            userId: rp.user_id,
+            peerId: rp.peer_id,
+            name: rp.display_name || "Connected Participant",
+            phone: rp.phone || undefined,
+            isVideoOn: Boolean(rp.is_video_on),
+            isMuted: Boolean(rp.is_muted),
+            liveFrame:
+              typeof rp.live_frame === "string" && rp.live_frame.length > 800
+                ? rp.live_frame
+                : null,
+          }
+          const rpDigits = String(mapped.phone || mapped.name || "").replace(/[^\d]/g, "")
+          const identityKey =
+            rpDigits.length >= 7
+              ? `ph_${rpDigits.slice(-10)}`
+              : `nm_${mapped.name.trim().toLowerCase() || mapped.userId}`
+          const prevEntry = dedupedPeersMap.get(identityKey)
+          if (
+            !prevEntry ||
+            (mapped.liveFrame && !prevEntry.mapped.liveFrame) ||
+            (mapped.isVideoOn && !prevEntry.mapped.isVideoOn)
+          ) {
+            dedupedPeersMap.set(identityKey, { raw: rp, mapped })
+          }
+        }
+
+        const remotes = Array.from(dedupedPeersMap.values()).map((x) => x.raw)
+        const mappedPeers: RemoteWebRtcParticipant[] = Array.from(dedupedPeersMap.values()).map(
+          (x) => x.mapped
         )
-        const mappedPeers: RemoteWebRtcParticipant[] = remotes.map((rp: any) => ({
-          userId: rp.user_id,
-          peerId: rp.peer_id,
-          name: rp.display_name || "Connected Participant",
-          phone: rp.phone || undefined,
-          isVideoOn: Boolean(rp.is_video_on),
-          isMuted: Boolean(rp.is_muted),
-          liveFrame:
-            typeof rp.live_frame === "string" && rp.live_frame.length > 800
-              ? rp.live_frame
-              : null,
-        }))
 
         const hostNameLower = String(data?.call?.initiator_name || "").trim().toLowerCase()
-        const myPhoneDigits = myLinkedPhone.replace(/[^\d]/g, "")
         const peerMatchesLeg = (mp: RemoteWebRtcParticipant, legName: string, legPhone?: string) => {
-          const mpDigits = String(mp.phone || "").replace(/[^\d]/g, "")
-          const lDigits = String(legPhone || "").replace(/[^\d]/g, "")
+          const mpDigits = String(mp.phone || mp.name || "").replace(/[^\d]/g, "")
+          const lDigits = String(legPhone || legName || "").replace(/[^\d]/g, "")
           if (mpDigits.length >= 7 && lDigits.length >= 7) {
             return mpDigits === lDigits || mpDigits.slice(-10) === lDigits.slice(-10)
           }
           const mpName = mp.name.trim().toLowerCase()
           const lName = String(legName || "").trim().toLowerCase()
           if (!mpName || !lName) return false
-          // Never falsely match a host's WebRTC tab against an invited contact unless names match a non-host invitee
-          if (lName === hostNameLower && myPhoneDigits.length >= 7 && lDigits.length >= 7 && myPhoneDigits.slice(-10) !== lDigits.slice(-10)) {
+          if (
+            lName === hostNameLower &&
+            myPhoneDigits.length >= 7 &&
+            lDigits.length >= 7 &&
+            myPhoneDigits.slice(-10) !== lDigits.slice(-10)
+          ) {
             return false
           }
-          return mpName === lName && lName !== callerName.trim().toLowerCase()
+          return mpName === lName && lName !== callerNameLower
         }
 
-        // Sync `invited_roster` across ALL devices so answering an incoming call NEVER loses the 4+ invited people!
+        // Sync `invited_roster` across devices while filtering out self-duplicates & already-connected WebRTC peers!
         const serverRoster: any[] = Array.isArray(data?.call?.invited_roster)
           ? data.call.invited_roster
           : []
-        if (serverRoster.length > 0) {
+        const activeNonRemovedRoster = serverRoster.filter((r) => r && r.status !== "removed")
+
+        if (serverRoster.length > 0 || mappedPeers.length > 0) {
           setCellLegs((prev) => {
             const prevById = new Map<string, ConferenceCellLeg>()
             for (const p of prev) prevById.set(p.id, p)
 
             const mergedById = new Map<string, ConferenceCellLeg>()
-            // Start with local legs that weren't removed on server
             for (const p of prev) {
               const srv = serverRoster.find((r) => r?.id === p.id)
               if (srv?.status === "removed") continue
+              const pDigits = String(p.phone || p.name || "").replace(/[^\d]/g, "")
+              if (!isIntentionalSelfCall) {
+                if (
+                  myPhoneDigits.length >= 7 &&
+                  pDigits.length >= 7 &&
+                  myPhoneDigits.slice(-10) === pDigits.slice(-10)
+                ) {
+                  continue
+                }
+                if (!pDigits && callerNameLower && p.name.trim().toLowerCase() === callerNameLower) {
+                  continue
+                }
+              }
               mergedById.set(p.id, p)
             }
 
             for (const inv of serverRoster) {
               if (!inv || inv.status === "removed") continue
               const key = makeClientInviteeKey(inv)
-              const invDigits = String(inv.phone || "").replace(/[^\d]/g, "")
+              const invDigits = String(inv.phone || inv.name || "").replace(/[^\d]/g, "")
+              const invNameLower = String(inv.name || "").trim().toLowerCase()
 
-              // If THIS answering viewer (`isIncomingAnswer`) is the exact invitee on WebRTC, don't show a duplicate tile for "You"
-              if (isIncomingAnswer && inv.status !== "in-progress") {
-                const isSelfByPhone =
-                  myPhoneDigits.length >= 7 &&
-                  invDigits.length >= 7 &&
-                  myPhoneDigits.slice(-10) === invDigits.slice(-10)
-                const isSelfByName =
-                  !myPhoneDigits &&
-                  String(inv.name || "").trim().toLowerCase() === callerName.trim().toLowerCase()
-                if (isSelfByPhone || isSelfByName) {
-                  mergedById.delete(key)
-                  continue
-                }
+              // Never show a duplicate box for "You" (either as caller calling someone else, or as incoming recipient)
+              const isSelfByPhone =
+                myPhoneDigits.length >= 7 &&
+                invDigits.length >= 7 &&
+                myPhoneDigits.slice(-10) === invDigits.slice(-10)
+              const isSelfByName = !invDigits && callerNameLower && invNameLower === callerNameLower
+              if ((isIncomingAnswer || !isIntentionalSelfCall) && (isSelfByPhone || isSelfByName)) {
+                mergedById.delete(key)
+                continue
               }
 
-              // Hide invitee tile ONLY if that exact person is already live on WebRTC (and not actively bridged on a separate PSTN call)
+              // Hide invitee placeholder once that person is live on WebRTC (or in a 1-on-1 call when the sole invitee connects)
+              const isOneOnOneSoleInviteeConnected =
+                activeNonRemovedRoster.length <= 1 && prev.length <= 1 && mappedPeers.length === 1
               if (
-                inv.status !== "in-progress" &&
+                isOneOnOneSoleInviteeConnected ||
                 mappedPeers.some((mp) => peerMatchesLeg(mp, inv.name, inv.phone))
               ) {
                 mergedById.delete(key)
@@ -1429,8 +1507,6 @@ export function ConnectLnWhatsAppCallModal({
               const resolvedStatus: ConferenceCellLeg["status"] =
                 localExisting?.status === "in-progress" || inv.status === "in-progress"
                   ? "in-progress"
-                  : localExisting?.callSid && localExisting.status === "ringing"
-                  ? "ringing"
                   : inv.status === "ringing" || inv.status === "unanswered" || inv.status === "invited"
                   ? inv.status
                   : "invited"
@@ -1444,6 +1520,11 @@ export function ConnectLnWhatsAppCallModal({
                 avatar: inv.avatar || localExisting?.avatar || "",
                 status: resolvedStatus,
               })
+            }
+
+            // Also ensure local-only 1-on-1 placeholder clears once the 1-on-1 WebRTC peer connects
+            if (activeNonRemovedRoster.length <= 1 && mergedById.size === 1 && mappedPeers.length === 1) {
+              mergedById.clear()
             }
 
             return Array.from(mergedById.values())

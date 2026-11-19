@@ -693,6 +693,7 @@ export function WhatsAppModeWorkspace({
         avatar?: string;
     } | null>(null);
     const [activeWhatsAppCall, setActiveWhatsAppCall] = useState<{
+        callId: string;
         label: string;
         phone?: string;
         avatar?: string;
@@ -764,6 +765,7 @@ export function WhatsAppModeWorkspace({
         ]);
 
         setActiveWhatsAppCall({
+            callId: `wa_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`,
             label: displayLabel,
             phone: isNum ? clean : undefined,
             avatar,
@@ -1938,22 +1940,26 @@ export function WhatsAppModeWorkspace({
                         </form>
                     )}
 
-                    {/* WhatsApp-Style Direct WebRTC + Push Ringing Voice & Video Call Modal */}
-                    <ConnectLnWhatsAppCallModal
-                        open={Boolean(activeWhatsAppCall)}
-                        onClose={() => setActiveWhatsAppCall(null)}
-                        initialMode={activeWhatsAppCall?.mode || 'video'}
-                        targetLabel={activeWhatsAppCall?.label || ''}
-                        targetPhone={activeWhatsAppCall?.phone}
-                        targetAvatar={activeWhatsAppCall?.avatar}
-                        callerName={userName}
-                        callerEmail={currentUser?.email}
-                        callerAvatar={userAvatar}
-                        onBridgeCarrierFallback={(phoneOrName) => {
-                            setActiveWhatsAppCall(null);
-                            launchCellPhoneCall(phoneOrName);
-                        }}
-                    />
+                    {/* WhatsApp-Style Direct WebRTC + Push Ringing Voice & Video Call Modal (fresh callId & state per call) */}
+                    {activeWhatsAppCall && (
+                        <ConnectLnWhatsAppCallModal
+                            key={activeWhatsAppCall.callId}
+                            open={true}
+                            onClose={() => setActiveWhatsAppCall(null)}
+                            initialCallId={activeWhatsAppCall.callId}
+                            initialMode={activeWhatsAppCall.mode}
+                            targetLabel={activeWhatsAppCall.label}
+                            targetPhone={activeWhatsAppCall.phone}
+                            targetAvatar={activeWhatsAppCall.avatar}
+                            callerName={userName}
+                            callerEmail={currentUser?.email}
+                            callerAvatar={userAvatar}
+                            onBridgeCarrierFallback={(phoneOrName) => {
+                                setActiveWhatsAppCall(null);
+                                launchCellPhoneCall(phoneOrName);
+                            }}
+                        />
+                    )}
 
                     {/* Live Carrier Browser-to-Cell-Phone Softphone Console */}
                     <ConnectLnCellPhoneSoftphoneModal
