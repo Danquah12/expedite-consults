@@ -31,19 +31,34 @@ export function looksLikeClientPhone(raw?: string | null): boolean {
 }
 
 export function normalizeClientPhone(raw: string): string {
-  const compact = String(raw || "").trim().replace(/[^\d+]/g, "")
+  let compact = String(raw || "").trim().replace(/[^\d+]/g, "")
   if (!compact) return ""
-  if (compact.startsWith("00") && compact.length > 9) return `+${compact.slice(2)}`
-  if (compact.startsWith("+")) return compact
-  if (compact.length === 10) return `+1${compact}`
-  if (compact.length === 11 && compact.startsWith("1")) return `+${compact}`
-  return `+${compact}`
+  if (compact.startsWith("00") && compact.length > 9) {
+    compact = `+${compact.slice(2)}`
+  } else if (!compact.startsWith("+")) {
+    if (compact.length === 10 && /^[2-9]/.test(compact)) {
+      compact = `+1${compact}`
+    } else if (compact.length === 10 && /^0[25]\d{8}$/.test(compact)) {
+      compact = `+233${compact.slice(1)}`
+    } else if (compact.length === 11 && compact.startsWith("1")) {
+      compact = `+${compact}`
+    } else {
+      compact = `+${compact}`
+    }
+  }
+  compact = compact.replace(
+    /^\+(233|234|254|27|44|33|49|61|225|221|228|250|256|255)0(\d{7,10})$/,
+    "+$1$2"
+  )
+  return compact
 }
 
 export function prettyClientPhone(raw: string): string {
   const e164 = normalizeClientPhone(raw)
   const m = e164.match(/^\+1(\d{3})(\d{3})(\d{4})$/)
   if (m) return `+1 (${m[1]}) ${m[2]}-${m[3]}`
+  const gh = e164.match(/^\+233(\d{2})(\d{3})(\d{4})$/)
+  if (gh) return `+233 ${gh[1]} ${gh[2]} ${gh[3]}`
   return e164 || raw
 }
 
@@ -187,6 +202,20 @@ export function ConnectLnCellPhoneSoftphoneModal({
       }
     } catch {}
   }, [])
+
+  useEffect(() => {
+    if (!open || typeof window === "undefined") return
+    ;(window as any).__connectlnOpenCallModalCount =
+      Number((window as any).__connectlnOpenCallModalCount || 0) + 1
+    window.dispatchEvent(new Event("connectln_call_modal_change"))
+    return () => {
+      ;(window as any).__connectlnOpenCallModalCount = Math.max(
+        0,
+        Number((window as any).__connectlnOpenCallModalCount || 1) - 1
+      )
+      window.dispatchEvent(new Event("connectln_call_modal_change"))
+    }
+  }, [open])
 
   // Call duration timer once answered
   useEffect(() => {

@@ -13,6 +13,7 @@ export interface CommCallParticipant {
   display_name: string
   role: string
   device_label?: string
+  phone?: string
   target_recipient_name?: string
   target_recipient_email?: string
   target_recipient_phone?: string
@@ -65,6 +66,17 @@ export interface SharedCallChatMessage {
   sent_at: string
 }
 
+export interface CommInvitedMember {
+  id: string
+  name: string
+  phone?: string
+  email?: string
+  avatar?: string
+  status: "ringing" | "in-progress" | "invited" | "unanswered" | "removed"
+  callSid?: string
+  updated_at_ms: number
+}
+
 export interface CommCallRecord {
   id: string
   conversation_id: string
@@ -90,6 +102,7 @@ export interface CommCallRecord {
     relay_policy: "all" | "relay"
   }
   participants: CommCallParticipant[]
+  invited_roster?: CommInvitedMember[]
   shared_stage?: SharedStageRecord | null
   shared_messages?: SharedCallChatMessage[]
 }
@@ -186,7 +199,116 @@ function makeCloudStageKey(callId: string): string {
   return `s__${cleanCall}`
 }
 
+function makeCloudRosterKey(callId: string): string {
+  const cleanCall = String(callId || "room").replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 48)
+  return `r__${cleanCall}`
+}
+
+export function makeInvitedMemberKey(entry: { id?: string; phone?: string; email?: string; name?: string }): string {
+  const phoneDigits = String(entry.phone || "").replace(/[^\d]/g, "")
+  if (phoneDigits.length >= 7) return `tel_${phoneDigits}`
+  if (entry.id && String(entry.id).trim()) return String(entry.id).trim().slice(0, 64)
+  const emailClean = String(entry.email || "").trim().toLowerCase()
+  if (emailClean) return `em_${emailClean.replace(/[^a-z0-9@._-]/g, "_")}`
+  return `nm_${String(entry.name || "guest")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .slice(0, 48)}`
+}
+
+function mergeInvitedEntriesIntoRecord(
+  record: CommCallRecord,
+  rawEntries: any[],
+  nowMs: number
+): boolean {
+  if (!Array.isArray(rawEntries) || rawEntries.length === 0) return false
+  if (!Array.isArray(record.invited_roster)) record.invited_roster = []
+  const byId = new Map<string, CommInvitedMember>()
+  for (const existing of record.invited_roster) {
+    if (existing?.id) byId.set(existing.id, existing)
+  }
+
+  let changed = false
+  for (const raw of rawEntries) {
+    if (!raw || typeof raw !== "object") continue
+    const key = makeInvitedMemberKey(raw)
+    if (!key) continue
+    const incomingTs = Number(raw.updated_at_ms) || nowMs
+    const prev = byId.get(key)
+    if (prev && (prev.updated_at_ms || 0) > incomingTs) continue
+
+    const validStatus: CommInvitedMember["status"] =
+      raw.status === "in-progress" ||
+      raw.status === "invited" ||
+      raw.status === "unanswered" ||
+      raw.status === "removed"
+        ? raw.status
+        : "ringing"
+
+    const avatarVal =
+      typeof raw.avatar === "string" && raw.avatar.length < 400
+        ? raw.avatar
+        : prev?.avatar
+
+    byId.set(key, {
+      id: key,
+      name: String(raw.name || prev?.name || "Invited Participant").trim(),
+      phone: raw.phone !== undefined ? String(raw.phone || "").trim() : prev?.phone,
+      email: raw.email !== undefined ? String(raw.email || "").trim().toLowerCase() : prev?.email,
+      avatar: avatarVal,
+      status: validStatus,
+      callSid:
+        raw.callSid !== undefined
+          ? raw.callSid
+            ? String(raw.callSid)
+            : undefined
+          : prev?.callSid,
+      updated_at_ms: incomingTs,
+    })
+    changed = true
+  }
+
+  if (changed) {
+    record.invited_roster = Array.from(byId.values()).slice(-24)
+  }
+  return changed
+}
+
 const lastCloudStagePushMap = new Map<string, number>()
+const lastCloudRosterPushMap = new Map<string, number>()
+
+async function pushCloudInvitedRoster(
+  callId: string,
+  roster: CommInvitedMember[] | undefined,
+  force = false
+): Promise<void> {
+  const auth = getTwilioCallsAuthHeader()
+  if (!auth) return
+  const rosterKey = makeCloudRosterKey(callId)
+  const nowMs = Date.now()
+  const lastPush = lastCloudRosterPushMap.get(rosterKey) || 0
+  if (!force && nowMs - lastPush < 600) return
+  lastCloudRosterPushMap.set(rosterKey, nowMs)
+
+  const compactRoster = (roster || []).slice(-24).map((m) => ({
+    id: m.id,
+    name: m.name,
+    phone: m.phone || "",
+    email: m.email || "",
+    avatar: m.avatar && m.avatar.length < 320 ? m.avatar : undefined,
+    status: m.status,
+    callSid: m.callSid,
+    updated_at_ms: m.updated_at_ms || nowMs,
+  }))
+  const payload = JSON.stringify({
+    kind: "roster",
+    call_id: callId,
+    invited_roster: compactRoster,
+    updated_at_ms: nowMs,
+  })
+  await upsertTwilioSyncItem(auth, rosterKey, payload, "300")
+}
 
 async function pushCloudSharedStage(callId: string, stage: SharedStageRecord | null, force = false): Promise<void> {
   const auth = getTwilioCallsAuthHeader()
@@ -217,7 +339,7 @@ async function pushCloudSharedStage(callId: string, stage: SharedStageRecord | n
   await upsertTwilioSyncItem(auth, stageKey, payload)
 }
 
-async function upsertTwilioSyncItem(auth: string, key: string, serialized: string): Promise<void> {
+async function upsertTwilioSyncItem(auth: string, key: string, serialized: string, ttlSec = "60"): Promise<void> {
   const baseUrl = `https://sync.twilio.com/v1/Services/default/Maps/${CALLS_SYNC_MAP_NAME}`
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), 1100)
@@ -228,7 +350,7 @@ async function upsertTwilioSyncItem(auth: string, key: string, serialized: strin
         Authorization: auth,
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: new URLSearchParams({ Data: serialized, Ttl: "60" }).toString(),
+      body: new URLSearchParams({ Data: serialized, Ttl: ttlSec }).toString(),
       signal: controller.signal,
     })
     if (updateRes.ok) return
@@ -252,7 +374,7 @@ async function upsertTwilioSyncItem(auth: string, key: string, serialized: strin
         body: new URLSearchParams({
           Key: key,
           Data: serialized,
-          Ttl: "60",
+          Ttl: ttlSec,
         }).toString(),
       }).catch(() => {})
     }
@@ -379,11 +501,16 @@ async function pullCloudCallParticipants(excludeUserId?: string): Promise<void> 
     const json = await res.json()
     const items = Array.isArray(json.items) ? json.items : []
 
-    // First pass: merge participant records (`p__`) and shared stage items (`s__`)
+    // First pass: merge participant records (`p__`) and collect shared stage (`s__`), roster (`r__`), and audio (`a__`)
     const audioItems: any[] = []
+    const rosterItems: any[] = []
     for (const item of items) {
       const data = item?.data
       if (!data || !data.call_id) continue
+      if (data.kind === "roster" || String(item?.key || "").startsWith("r__")) {
+        rosterItems.push(data)
+        continue
+      }
       if (data.kind === "stage" || String(item?.key || "").startsWith("s__")) {
         const record = ACTIVE_CALLS_STORE.get(data.call_id)
         if (record && record.state !== "ENDED") {
@@ -485,54 +612,71 @@ async function pullCloudCallParticipants(excludeUserId?: string): Promise<void> 
               bySeq.set(c.seq, c)
             }
           }
-          localP.recent_audio_chunks = Array.from(bySeq.values())
-            .sort((a, b) => a.seq - b.seq)
-            .slice(-3)
+            localP.recent_audio_chunks = Array.from(bySeq.values())
+              .sort((a, b) => a.seq - b.seq)
+              .slice(-3)
+          }
         }
       }
-    }
-  } catch {
-    // non-fatal
-  }
-}
 
-function loadPersistedCalls(): Map<string, CommCallRecord> {
-  const nowMs = Date.now()
-  if (ACTIVE_CALLS_STORE.size > 0 && nowMs - lastDiskLoadMs < 2000) {
-    return ACTIVE_CALLS_STORE
+      // Third pass: merge invited_roster items (`r__`) so every caller and answering phone sees all invited people!
+      for (const rData of rosterItems) {
+        const remoteTs = Number(rData.updated_at_ms) || 0
+        if (nowMs - remoteTs > 300000) continue
+        let record = ACTIVE_CALLS_STORE.get(rData.call_id)
+        if (!record && Array.isArray(rData.invited_roster) && rData.invited_roster.length > 0) {
+          record = ensureCallRoom(rData.call_id, "host", "ConnectLn Call", rData.call_id)
+        }
+        if (record && record.state !== "ENDED" && Array.isArray(rData.invited_roster)) {
+          mergeInvitedEntriesIntoRecord(record, rData.invited_roster, remoteTs || nowMs)
+        }
+      }
+    } catch {
+      // non-fatal
+    }
   }
-  lastDiskLoadMs = nowMs
-  try {
-    if (fs.existsSync(TMP_CALLS_FILE)) {
-      const raw = fs.readFileSync(TMP_CALLS_FILE, "utf-8")
-      const parsed = JSON.parse(raw) as Record<string, CommCallRecord>
-      for (const [k, v] of Object.entries(parsed)) {
-        if (!ACTIVE_CALLS_STORE.has(k)) {
-          ACTIVE_CALLS_STORE.set(k, v)
-        } else {
-          const mem = ACTIVE_CALLS_STORE.get(k)!
-          if (v.state === "ENDED" && (v.state_version || 0) >= (mem.state_version || 0)) {
-            mem.state = "ENDED"
-            mem.ended_at = v.ended_at
-            mem.participants = []
-            mem.shared_stage = null
-            mem.state_version = v.state_version
-          } else if (mem.state !== "ENDED") {
-            const mergedMap = new Map<string, CommCallParticipant>()
-            for (const p of mem.participants) {
-              if (p.last_seen_ms && nowMs - p.last_seen_ms < PARTICIPANT_TTL_MS) {
-                mergedMap.set(p.user_id, p)
+
+  function loadPersistedCalls(): Map<string, CommCallRecord> {
+    const nowMs = Date.now()
+    if (ACTIVE_CALLS_STORE.size > 0 && nowMs - lastDiskLoadMs < 2000) {
+      return ACTIVE_CALLS_STORE
+    }
+    lastDiskLoadMs = nowMs
+    try {
+      if (fs.existsSync(TMP_CALLS_FILE)) {
+        const raw = fs.readFileSync(TMP_CALLS_FILE, "utf-8")
+        const parsed = JSON.parse(raw) as Record<string, CommCallRecord>
+        for (const [k, v] of Object.entries(parsed)) {
+          if (!ACTIVE_CALLS_STORE.has(k)) {
+            ACTIVE_CALLS_STORE.set(k, v)
+          } else {
+            const mem = ACTIVE_CALLS_STORE.get(k)!
+            if (v.state === "ENDED" && (v.state_version || 0) >= (mem.state_version || 0)) {
+              mem.state = "ENDED"
+              mem.ended_at = v.ended_at
+              mem.participants = []
+              mem.invited_roster = []
+              mem.shared_stage = null
+              mem.state_version = v.state_version
+            } else if (mem.state !== "ENDED") {
+              const mergedMap = new Map<string, CommCallParticipant>()
+              for (const p of mem.participants) {
+                if (p.last_seen_ms && nowMs - p.last_seen_ms < PARTICIPANT_TTL_MS) {
+                  mergedMap.set(p.user_id, p)
+                }
+              }
+              for (const p of v.participants || []) {
+                if (!p.last_seen_ms || nowMs - p.last_seen_ms >= PARTICIPANT_TTL_MS) continue
+                const existing = mergedMap.get(p.user_id)
+                if (!existing || (p.last_seen_ms || 0) >= (existing.last_seen_ms || 0)) {
+                  mergedMap.set(p.user_id, p)
+                }
+              }
+              mem.participants = Array.from(mergedMap.values())
+              if (Array.isArray(v.invited_roster) && v.invited_roster.length > 0) {
+                mergeInvitedEntriesIntoRecord(mem, v.invited_roster, nowMs)
               }
             }
-            for (const p of v.participants || []) {
-              if (!p.last_seen_ms || nowMs - p.last_seen_ms >= PARTICIPANT_TTL_MS) continue
-              const existing = mergedMap.get(p.user_id)
-              if (!existing || (p.last_seen_ms || 0) >= (existing.last_seen_ms || 0)) {
-                mergedMap.set(p.user_id, p)
-              }
-            }
-            mem.participants = Array.from(mergedMap.values())
-          }
 
           // Merge shared_stage if disk version is newer
           if (
@@ -569,7 +713,7 @@ function savePersistedCalls(force = false) {
       if (v.state === "ENDED") {
         const endedMs = v.ended_at ? new Date(v.ended_at).getTime() : 0
         if (nowMs - endedMs < 20000) {
-          obj[k] = { ...v, participants: [] }
+          obj[k] = { ...v, participants: [], invited_roster: [] }
         } else {
           ACTIVE_CALLS_STORE.delete(k)
         }
@@ -578,7 +722,10 @@ function savePersistedCalls(force = false) {
       const activeParts = (v.participants || []).filter(
         (p) => p.last_seen_ms && nowMs - p.last_seen_ms < PARTICIPANT_TTL_MS
       )
-      if (activeParts.length > 0) {
+      const recentInvite = (v.invited_roster || []).some(
+        (m) => m.updated_at_ms && nowMs - m.updated_at_ms < 45000
+      )
+      if (activeParts.length > 0 || recentInvite) {
         obj[k] = { ...v, participants: activeParts }
       } else {
         ACTIVE_CALLS_STORE.delete(k)
@@ -633,6 +780,7 @@ function ensureCallRoom(callId: string, initiatorId: string, displayName: string
       ended_at: null,
       turn_credentials: generateScopedTurnCredentials(initiatorId),
       participants: [],
+      invited_roster: [],
       shared_stage: null,
       shared_messages: [],
     }
@@ -675,16 +823,10 @@ export async function GET(req: NextRequest) {
 
   if (incomingForName || incomingEmail || incomingPhoneDigits) {
     const nameSlug = incomingForName.replace(/[^a-z0-9]+/g, "_")
-    const incomingCalls = calls.filter((c) => {
-      // Skip ONLY if this exact browser/mobile tab (`viewerPeerId`) is already a participant in the call.
-      // Never skip on `display_name === incomingForName` so calling your own phone from desktop still rings on your phone!
-      if (viewerPeerId && c.participants.some((p) => p.user_id === viewerPeerId)) {
-        return false
-      }
-      const targetName = (c.target_recipient_name || "").trim().toLowerCase()
-      const targetEmail = (c.target_recipient_email || "").trim().toLowerCase()
-      const targetPhoneDigits = (c.target_recipient_phone || c.target_recipient_name || "").replace(/[^\d]/g, "")
-      const cidLower = c.id.toLowerCase()
+    const matchesTarget = (tNameRaw?: string, tEmailRaw?: string, tPhoneRaw?: string) => {
+      const targetName = (tNameRaw || "").trim().toLowerCase()
+      const targetEmail = (tEmailRaw || "").trim().toLowerCase()
+      const targetPhoneDigits = (tPhoneRaw || tNameRaw || "").replace(/[^\d]/g, "")
       const phoneTailMatch = Boolean(
         incomingPhoneDigits.length >= 7 &&
           targetPhoneDigits.length >= 7 &&
@@ -698,9 +840,26 @@ export async function GET(req: NextRequest) {
             targetName &&
             (targetName === incomingForName ||
               targetName.includes(incomingForName) ||
-              incomingForName.includes(targetName))) ||
-          (nameSlug.length >= 4 && cidLower.includes(nameSlug))
+              incomingForName.includes(targetName)))
       )
+    }
+
+    const incomingCalls = calls.filter((c) => {
+      // Skip ONLY if this exact browser/mobile tab (`viewerPeerId`) is already a participant in the call.
+      // Never skip on `display_name === incomingForName` so calling your own phone from desktop still rings on your phone!
+      if (viewerPeerId && c.participants.some((p) => p.user_id === viewerPeerId)) {
+        return false
+      }
+      const cidLower = c.id.toLowerCase()
+      const primaryMatch = matchesTarget(
+        c.target_recipient_name,
+        c.target_recipient_email,
+        c.target_recipient_phone
+      )
+      const rosterMatch = (c.invited_roster || []).some(
+        (inv) => inv.status !== "removed" && matchesTarget(inv.name, inv.email, inv.phone)
+      )
+      return Boolean(primaryMatch || rosterMatch || (nameSlug.length >= 4 && cidLower.includes(nameSlug)))
     })
     return NextResponse.json({
       protocol_version: 1,
@@ -777,9 +936,11 @@ export async function POST(req: NextRequest) {
           ).catch(() => {})
         }
         pushCloudSharedStage(body.call_id, null, true).catch(() => {})
+        pushCloudInvitedRoster(body.call_id, [], true).catch(() => {})
         existing.state = "ENDED"
         existing.ended_at = now
         existing.participants = []
+        existing.invited_roster = []
         existing.shared_stage = null
         existing.state_version += 1
         ACTIVE_CALLS_STORE.set(body.call_id, existing)
@@ -790,6 +951,57 @@ export async function POST(req: NextRequest) {
         event_type: "call.ended",
         occurred_at: now,
         call: existing || null,
+      })
+    }
+
+    if (action === "upsert_invitee" && body.call_id) {
+      const callId = String(body.call_id).trim()
+      const userId = body.user_id || `host_${nowMs.toString().slice(-6)}`
+      const displayName = body.display_name || "ConnectLn Host"
+      await pullCloudCallParticipants().catch(() => {})
+      const record = ensureCallRoom(callId, userId, displayName, callId)
+      if (record.state === "ENDED") {
+        record.state = "CONNECTED"
+        record.ended_at = null
+        record.participants = []
+        record.invited_roster = []
+        record.shared_stage = null
+        record.state_version += 1
+      }
+      if (body.call_type === "audio" || body.call_type === "video") {
+        record.call_type = body.call_type
+      }
+      if (typeof body.target_recipient_name === "string" && body.target_recipient_name.trim()) {
+        record.target_recipient_name = body.target_recipient_name.trim()
+      }
+      if (typeof body.target_recipient_email === "string" && body.target_recipient_email.trim()) {
+        record.target_recipient_email = body.target_recipient_email.trim().toLowerCase()
+      }
+      if (typeof body.target_recipient_phone === "string" && body.target_recipient_phone.trim()) {
+        record.target_recipient_phone = body.target_recipient_phone.trim()
+      }
+      if (typeof body.initiator_phone === "string" && body.initiator_phone.trim()) {
+        record.initiator_phone = body.initiator_phone.trim()
+      }
+      if (!record.initiator_name && displayName) {
+        record.initiator_name = displayName
+      }
+
+      const updates: any[] = []
+      if (body.invited_member) updates.push(body.invited_member)
+      if (Array.isArray(body.invited_roster_updates)) updates.push(...body.invited_roster_updates)
+      const changed = mergeInvitedEntriesIntoRecord(record, updates, nowMs)
+      if (changed) {
+        record.state_version += 1
+        await pushCloudInvitedRoster(callId, record.invited_roster, true).catch(() => {})
+      }
+      ACTIVE_CALLS_STORE.set(callId, record)
+      savePersistedCalls(true)
+      return NextResponse.json({
+        protocol_version: 1,
+        event_type: "call.roster_updated",
+        occurred_at: now,
+        call: record,
       })
     }
 
@@ -898,6 +1110,16 @@ export async function POST(req: NextRequest) {
       if (!record.initiator_name && displayName) {
         record.initiator_name = displayName
       }
+      let rosterChanged = false
+      const inlineRosterUpdates: any[] = []
+      if (body.invited_member) inlineRosterUpdates.push(body.invited_member)
+      if (Array.isArray(body.invited_roster_updates)) {
+        inlineRosterUpdates.push(...body.invited_roster_updates)
+      }
+      if (inlineRosterUpdates.length > 0) {
+        rosterChanged = mergeInvitedEntriesIntoRecord(record, inlineRosterUpdates, nowMs)
+      }
+
       const updatedParticipant: CommCallParticipant = {
         call_id: callId,
         user_id: userId,
@@ -906,6 +1128,12 @@ export async function POST(req: NextRequest) {
         display_name: displayName,
         role: body.role || (existingIdx === 0 ? "Host · Local Camera & Mic" : "Invited Friend · Live Video"),
         device_label: body.device_label || "Live WebRTC Camera",
+        phone:
+          typeof body.participant_phone === "string" && body.participant_phone.trim()
+            ? body.participant_phone.trim()
+            : existingIdx >= 0
+            ? record.participants[existingIdx].phone
+            : undefined,
         target_recipient_name: record.target_recipient_name,
         target_recipient_email: record.target_recipient_email,
         target_recipient_phone: record.target_recipient_phone,
@@ -1007,6 +1235,9 @@ export async function POST(req: NextRequest) {
         pushCloudCallParticipant(callId, updatedParticipant, existingIdx < 0 || action === "join" || action === "create").catch(() => {}),
         stageChanged
           ? pushCloudSharedStage(callId, record.shared_stage || null, action === "share_stage").catch(() => {})
+          : Promise.resolve(),
+        rosterChanged
+          ? pushCloudInvitedRoster(callId, record.invited_roster, true).catch(() => {})
           : Promise.resolve(),
         pullCloudCallParticipants(userId).catch(() => {}),
       ])

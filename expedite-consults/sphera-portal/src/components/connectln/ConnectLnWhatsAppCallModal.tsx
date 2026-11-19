@@ -389,6 +389,7 @@ interface RemoteWebRtcParticipant {
   userId: string
   peerId?: string
   name: string
+  phone?: string
   isVideoOn: boolean
   isMuted: boolean
   liveFrame?: string | null
@@ -399,8 +400,22 @@ interface ConferenceCellLeg {
   callSid?: string
   name: string
   phone: string
+  email?: string
   avatar?: string
-  status: "dialing" | "ringing" | "in-progress" | "ended"
+  status: "dialing" | "ringing" | "in-progress" | "invited" | "unanswered"
+}
+
+function makeClientInviteeKey(entry: { id?: string; phone?: string; email?: string; name?: string }): string {
+  const digits = String(entry.phone || "").replace(/[^\d]/g, "")
+  if (digits.length >= 7) return `tel_${digits}`
+  if (entry.id && String(entry.id).trim()) return String(entry.id).trim()
+  const em = String(entry.email || "").trim().toLowerCase()
+  if (em) return `em_${em.replace(/[^a-z0-9@._-]/g, "_")}`
+  return `nm_${String(entry.name || "guest")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .slice(0, 48)}`
 }
 
 interface DirectoryContactOption {
@@ -497,6 +512,7 @@ export function ConnectLnWhatsAppCallModal({
   const offscreenVideoRef = useRef<HTMLVideoElement | null>(null)
   const localStreamRef = useRef<MediaStream | null>(null)
   const [localStreamState, setLocalStreamState] = useState<MediaStream | null>(null)
+  const [hasLocalVideoTrack, setHasLocalVideoTrack] = useState<boolean>(false)
   const peerRef = useRef<any>(null)
   const myPeerIdRef = useRef<string>("")
   const activeMediaCallsRef = useRef<Map<string, any>>(new Map())
@@ -515,10 +531,30 @@ export function ConnectLnWhatsAppCallModal({
   const isJoiningConfRef = useRef<boolean>(false)
   const cachedVoiceTokenRef = useRef<string>("")
   const cellLegsRef = useRef<ConferenceCellLeg[]>([])
+  const remoteWebRtcPeersRef = useRef<RemoteWebRtcParticipant[]>([])
 
   useEffect(() => {
     cellLegsRef.current = cellLegs
   }, [cellLegs])
+
+  useEffect(() => {
+    remoteWebRtcPeersRef.current = remoteWebRtcPeers
+  }, [remoteWebRtcPeers])
+
+  // Register open call modal on `window` so `<ConnectLnIncomingCallBanner />` never overlaps an active call on this tab!
+  useEffect(() => {
+    if (!open || typeof window === "undefined") return
+    ;(window as any).__connectlnOpenCallModalCount =
+      Number((window as any).__connectlnOpenCallModalCount || 0) + 1
+    window.dispatchEvent(new Event("connectln_call_modal_change"))
+    return () => {
+      ;(window as any).__connectlnOpenCallModalCount = Math.max(
+        0,
+        Number((window as any).__connectlnOpenCallModalCount || 1) - 1
+      )
+      window.dispatchEvent(new Event("connectln_call_modal_change"))
+    }
+  }, [open])
 
   useEffect(() => {
     if (initialCallId) setCallId(initialCallId)
@@ -551,6 +587,7 @@ export function ConnectLnWhatsAppCallModal({
       localStreamRef.current = null
     }
     setLocalStreamState(null)
+    setHasLocalVideoTrack(false)
     activeMediaCallsRef.current.forEach((c) => {
       try {
         c.close?.()
@@ -646,6 +683,7 @@ export function ConnectLnWhatsAppCallModal({
             targetPhone: params.targetPhone,
             targetName: params.targetName,
             targetEmail: params.targetEmail,
+            targetAvatar: params.targetAvatar,
             forceCellSim: params.forceCellSim,
           }),
         })
@@ -664,21 +702,30 @@ export function ConnectLnWhatsAppCallModal({
 
         const addedName = data.recipient?.name || params.targetName || "Participant"
         const addedPhone = data.recipient?.phone || params.targetPhone || ""
+        const addedEmail = data.recipient?.email || params.targetEmail || ""
         const addedAvatar = data.recipient?.avatar || params.targetAvatar || ""
+        const legKey = makeClientInviteeKey({
+          phone: addedPhone,
+          email: addedEmail,
+          name: addedName,
+        })
 
         if (data.cellCallSid && data.conferenceName) {
           // Connect our browser mic/speaker into the shared Twilio `<Conference>` room and track this cell leg!
           void ensureBrowserJoinedTwilioConference(data.conferenceName, data.carrierVoiceToken)
 
           setCellLegs((prev) => {
-            const filtered = prev.filter((l) => l.phone !== addedPhone && l.callSid !== data.cellCallSid)
+            const filtered = prev.filter(
+              (l) => l.id !== legKey && (!addedPhone || l.phone !== addedPhone) && l.callSid !== data.cellCallSid
+            )
             return [
               ...filtered,
               {
-                id: data.cellCallSid,
+                id: legKey,
                 callSid: data.cellCallSid,
                 name: addedName,
                 phone: addedPhone,
+                email: addedEmail,
                 avatar: addedAvatar,
                 status: "ringing",
               },
@@ -686,19 +733,83 @@ export function ConnectLnWhatsAppCallModal({
           })
           setCallStatus((prev) => (prev === "connected" ? "connected" : "ringing"))
           setPushBannerNote(
-            `📱 Ringing ${addedName} (${prettyClientPhone(addedPhone)}) + sent Camera Link!`
+            isVideoOn
+              ? `📱 Ringing ${addedName} (${prettyClientPhone(addedPhone)}) + sent Camera Link!`
+              : `📱 Ringing ${addedName} (${prettyClientPhone(addedPhone)})...`
           )
           setAddFeedbackMsg(
-            `✓ Ringing ${addedName}'s cell phone (${prettyClientPhone(addedPhone)}) & sent Camera Link!`
+            `✓ Ringing ${addedName}'s phone (${prettyClientPhone(addedPhone)})${
+              isVideoOn ? " & sent Camera Link!" : "!"
+            }`
           )
         } else {
+          // Keep invited ConnectLn / video-ringing participant visible in the group grid!
+          setCellLegs((prev) => {
+            const existing = prev.find((l) => l.id === legKey || (addedPhone && l.phone === addedPhone))
+            if (existing && (existing.status === "ringing" || existing.status === "in-progress")) {
+              return prev
+            }
+            const filtered = prev.filter((l) => l.id !== legKey && (!addedPhone || l.phone !== addedPhone))
+            return [
+              ...filtered,
+              {
+                id: legKey,
+                name: addedName,
+                phone: addedPhone,
+                email: addedEmail,
+                avatar: addedAvatar,
+                status: "invited",
+              },
+            ]
+          })
           setCallStatus((prev) => (prev === "connected" ? "connected" : "ringing"))
-          setPushBannerNote(`Ringing ${addedName} on ConnectLn...`)
+          setPushBannerNote(
+            isVideoOn
+              ? `📹 Ringing ${addedName}'s ConnectLn Camera...`
+              : `🔔 Ringing ${addedName} on ConnectLn...`
+          )
           setAddFeedbackMsg(
             data.mobilePushDeliveredCount > 0 || data.emailAlertSent
-              ? `✓ Ringing ${addedName} on ConnectLn & sent instant mobile invite!`
-              : `✓ Invited ${addedName} — share link below if they aren't online yet.`
+              ? `✓ Ringing ${addedName} on ConnectLn Video & sent mobile Camera Link!`
+              : `✓ Ringing ${addedName} on ConnectLn!`
           )
+
+          // Smart 6s Video Call Escalation: give ConnectLn Camera Ringing 6 seconds first so GSM voice doesn't hijack their camera;
+          // if they still haven't answered with camera after 6s (e.g. phone locked without ConnectLn open), ring their cell SIM too!
+          const normAdded = addedPhone ? normalizeClientPhone(addedPhone) : ""
+          const isDemo555 = /^\+1\d{3}555\d{4}$/.test(normAdded)
+          if (
+            isVideoOn &&
+            !params.forceCellSim &&
+            normAdded &&
+            looksLikeClientPhone(normAdded) &&
+            !isDemo555 &&
+            Number(data.mobilePushDeliveredCount || 0) === 0
+          ) {
+            window.setTimeout(() => {
+              const joinedOnVideo = remoteWebRtcPeersRef.current.some((mp) => {
+                const mpDigits = (mp.phone || "").replace(/[^\d]/g, "")
+                const legDigits = normAdded.replace(/[^\d]/g, "")
+                if (mpDigits.length >= 7 && legDigits.length >= 7 && mpDigits.slice(-10) === legDigits.slice(-10)) {
+                  return true
+                }
+                return mp.name.trim().toLowerCase() === addedName.trim().toLowerCase() &&
+                  addedName.trim().toLowerCase() !== callerName.trim().toLowerCase()
+              })
+              const stillWaiting = cellLegsRef.current.some(
+                (l) => l.id === legKey && !l.callSid && l.status === "invited"
+              )
+              if (!joinedOnVideo && stillWaiting) {
+                void addPersonToActiveCall({
+                  targetPhone: normAdded,
+                  targetName: addedName,
+                  targetEmail: addedEmail || undefined,
+                  targetAvatar: addedAvatar || undefined,
+                  forceCellSim: true,
+                })
+              }
+            }, 6000)
+          }
         }
         return data
       } catch {
@@ -720,7 +831,7 @@ export function ConnectLnWhatsAppCallModal({
   )
 
   const removeCellLegParticipant = useCallback(
-    async (leg: ConferenceCellLeg) => {
+    async (leg: ConferenceCellLeg, syncRemoveToRoom = true) => {
       setCellLegs((prev) => prev.filter((l) => l.id !== leg.id))
       if (leg.callSid) {
         await fetch("/api/connectin/voice/conference-add", {
@@ -732,8 +843,29 @@ export function ConnectLnWhatsAppCallModal({
           }),
         }).catch(() => {})
       }
+      if (syncRemoveToRoom) {
+        await fetch("/api/v1/calls", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "upsert_invitee",
+            call_id: callId,
+            user_id: localPeerUid,
+            display_name: callerName,
+            invited_member: {
+              id: leg.id,
+              name: leg.name,
+              phone: leg.phone || undefined,
+              email: leg.email || undefined,
+              status: "removed",
+              callSid: "",
+              updated_at_ms: Date.now(),
+            },
+          }),
+        }).catch(() => {})
+      }
     },
-    []
+    [callId, callerName, localPeerUid]
   )
 
   const acquireCameraAndMic = useCallback(
@@ -793,7 +925,13 @@ export function ConnectLnWhatsAppCallModal({
         } catch {}
       }
 
-      if (!stream) return
+      if (!stream) {
+        setHasLocalVideoTrack(false)
+        return
+      }
+      const liveVid = stream.getVideoTracks().some((t) => t.readyState === "live")
+      setHasLocalVideoTrack(liveVid)
+
       stream.getAudioTracks().forEach((t) => {
         t.enabled = !isMicMuted
       })
@@ -904,11 +1042,15 @@ export function ConnectLnWhatsAppCallModal({
     }
   }, [open, callId])
 
-  // Poll live Twilio `<Conference>` cell leg statuses (`ringing` -> `in-progress` -> `completed`)
+  // Poll live Twilio `<Conference>` cell leg statuses (`ringing` -> `in-progress` -> `unanswered`, NEVER silently deleting tiles!)
   useEffect(() => {
     if (!open || cellLegs.length === 0) return
     const activeSids = cellLegs
-      .filter((l) => l.callSid && l.status !== "ended")
+      .filter(
+        (l) =>
+          l.callSid &&
+          (l.status === "dialing" || l.status === "ringing" || l.status === "in-progress")
+      )
       .map((l) => l.callSid!)
     if (activeSids.length === 0) return
 
@@ -921,6 +1063,8 @@ export function ConnectLnWhatsAppCallModal({
         })
         const data = await res.json()
         const statuses = data?.statuses || {}
+        const rosterSyncUpdates: any[] = []
+
         setCellLegs((prev) => {
           const next: ConferenceCellLeg[] = []
           for (const leg of prev) {
@@ -932,26 +1076,72 @@ export function ConnectLnWhatsAppCallModal({
               st === "no-answer" ||
               st === "failed"
             ) {
+              // NEVER vanish silently! Keep participant tile visible with 1-tap `Redial`!
+              const updatedLeg: ConferenceCellLeg = {
+                ...leg,
+                callSid: undefined,
+                status: "unanswered",
+              }
+              rosterSyncUpdates.push({
+                id: leg.id,
+                name: leg.name,
+                phone: leg.phone,
+                email: leg.email,
+                avatar: leg.avatar,
+                status: "unanswered",
+                callSid: "",
+                updated_at_ms: Date.now(),
+              })
+              next.push(updatedLeg)
               continue
             }
             if (st === "in-progress") {
               setCallStatus("connected")
+              if (leg.status !== "in-progress") {
+                rosterSyncUpdates.push({
+                  id: leg.id,
+                  name: leg.name,
+                  phone: leg.phone,
+                  email: leg.email,
+                  avatar: leg.avatar,
+                  status: "in-progress",
+                  callSid: leg.callSid,
+                  updated_at_ms: Date.now(),
+                })
+              }
               next.push({ ...leg, status: "in-progress" })
             } else {
               next.push(leg)
             }
           }
-          if (next.length === 0 && prev.length > 0) {
+          const anyActiveSim = next.some(
+            (l) => l.status === "dialing" || l.status === "ringing" || l.status === "in-progress"
+          )
+          if (!anyActiveSim) {
             hangupBrowserConferenceConnection()
           }
           return next
         })
+
+        if (rosterSyncUpdates.length > 0) {
+          fetch("/api/v1/calls", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "upsert_invitee",
+              call_id: callId,
+              user_id: localPeerUid,
+              display_name: callerName,
+              invited_roster_updates: rosterSyncUpdates,
+            }),
+          }).catch(() => {})
+        }
       } catch {}
     }
 
     const interval = window.setInterval(pollCellStatuses, 2600)
     return () => window.clearInterval(interval)
-  }, [open, cellLegs, hangupBrowserConferenceConnection])
+  }, [open, cellLegs, callId, callerName, localPeerUid, hangupBrowserConferenceConnection])
 
   // Duration clock once connected
   useEffect(() => {
@@ -1164,6 +1354,7 @@ export function ConnectLnWhatsAppCallModal({
       const reopenFlag = isFirst
       isFirst = false
       try {
+        const myLinkedPhone = getMyLinkedConnectLnPhone()
         const res = await fetch("/api/v1/calls", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1178,12 +1369,13 @@ export function ConnectLnWhatsAppCallModal({
             target_recipient_name: !isIncomingAnswer ? recipientName : undefined,
             target_recipient_email: !isIncomingAnswer ? targetEmail : undefined,
             target_recipient_phone: !isIncomingAnswer ? recipientPhone : undefined,
-            initiator_phone: getMyLinkedConnectLnPhone() || undefined,
+            initiator_phone: !isIncomingAnswer ? myLinkedPhone || undefined : undefined,
+            participant_phone: myLinkedPhone || undefined,
             display_name: callerName,
             is_muted: isMicMuted,
-            is_video_on: isVideoOn,
+            is_video_on: isVideoOn && hasLocalVideoTrack,
             webrtc_connected: hasLiveRemoteVideoRef.current,
-            live_frame: isVideoOn ? lastCapturedFrameRef.current : null,
+            live_frame: isVideoOn && hasLocalVideoTrack ? lastCapturedFrameRef.current : null,
             live_audio_chunk: !hasAnyWebRtcStream && !isMicMuted ? latestAudioChunkRef.current : undefined,
             recent_audio_chunks: !hasAnyWebRtcStream && !isMicMuted ? recentAudioChunksRef.current : undefined,
           }),
@@ -1201,34 +1393,123 @@ export function ConnectLnWhatsAppCallModal({
         const remotes = (data?.call?.participants || []).filter(
           (p: any) => p.user_id && p.user_id !== localPeerUid
         )
+        const mappedPeers: RemoteWebRtcParticipant[] = remotes.map((rp: any) => ({
+          userId: rp.user_id,
+          peerId: rp.peer_id,
+          name: rp.display_name || "Connected Participant",
+          phone: rp.phone || undefined,
+          isVideoOn: Boolean(rp.is_video_on),
+          isMuted: Boolean(rp.is_muted),
+          liveFrame:
+            typeof rp.live_frame === "string" && rp.live_frame.length > 800
+              ? rp.live_frame
+              : null,
+        }))
+
+        const hostNameLower = String(data?.call?.initiator_name || "").trim().toLowerCase()
+        const myPhoneDigits = myLinkedPhone.replace(/[^\d]/g, "")
+        const peerMatchesLeg = (mp: RemoteWebRtcParticipant, legName: string, legPhone?: string) => {
+          const mpDigits = String(mp.phone || "").replace(/[^\d]/g, "")
+          const lDigits = String(legPhone || "").replace(/[^\d]/g, "")
+          if (mpDigits.length >= 7 && lDigits.length >= 7) {
+            return mpDigits === lDigits || mpDigits.slice(-10) === lDigits.slice(-10)
+          }
+          const mpName = mp.name.trim().toLowerCase()
+          const lName = String(legName || "").trim().toLowerCase()
+          if (!mpName || !lName) return false
+          // Never falsely match a host's WebRTC tab against an invited contact unless names match a non-host invitee
+          if (lName === hostNameLower && myPhoneDigits.length >= 7 && lDigits.length >= 7 && myPhoneDigits.slice(-10) !== lDigits.slice(-10)) {
+            return false
+          }
+          return mpName === lName && lName !== callerName.trim().toLowerCase()
+        }
+
+        // Sync `invited_roster` across ALL devices so answering an incoming call NEVER loses the 4+ invited people!
+        const serverRoster: any[] = Array.isArray(data?.call?.invited_roster)
+          ? data.call.invited_roster
+          : []
+        if (serverRoster.length > 0) {
+          setCellLegs((prev) => {
+            const prevById = new Map<string, ConferenceCellLeg>()
+            for (const p of prev) prevById.set(p.id, p)
+
+            const mergedById = new Map<string, ConferenceCellLeg>()
+            // Start with local legs that weren't removed on server
+            for (const p of prev) {
+              const srv = serverRoster.find((r) => r?.id === p.id)
+              if (srv?.status === "removed") continue
+              mergedById.set(p.id, p)
+            }
+
+            for (const inv of serverRoster) {
+              if (!inv || inv.status === "removed") continue
+              const key = makeClientInviteeKey(inv)
+              const invDigits = String(inv.phone || "").replace(/[^\d]/g, "")
+
+              // If THIS answering viewer (`isIncomingAnswer`) is the exact invitee on WebRTC, don't show a duplicate tile for "You"
+              if (isIncomingAnswer && inv.status !== "in-progress") {
+                const isSelfByPhone =
+                  myPhoneDigits.length >= 7 &&
+                  invDigits.length >= 7 &&
+                  myPhoneDigits.slice(-10) === invDigits.slice(-10)
+                const isSelfByName =
+                  !myPhoneDigits &&
+                  String(inv.name || "").trim().toLowerCase() === callerName.trim().toLowerCase()
+                if (isSelfByPhone || isSelfByName) {
+                  mergedById.delete(key)
+                  continue
+                }
+              }
+
+              // Hide invitee tile ONLY if that exact person is already live on WebRTC (and not actively bridged on a separate PSTN call)
+              if (
+                inv.status !== "in-progress" &&
+                mappedPeers.some((mp) => peerMatchesLeg(mp, inv.name, inv.phone))
+              ) {
+                mergedById.delete(key)
+                continue
+              }
+
+              const localExisting = prevById.get(key)
+              const resolvedStatus: ConferenceCellLeg["status"] =
+                localExisting?.status === "in-progress" || inv.status === "in-progress"
+                  ? "in-progress"
+                  : localExisting?.callSid && localExisting.status === "ringing"
+                  ? "ringing"
+                  : inv.status === "ringing" || inv.status === "unanswered" || inv.status === "invited"
+                  ? inv.status
+                  : "invited"
+
+              mergedById.set(key, {
+                id: key,
+                callSid: localExisting?.callSid || inv.callSid || undefined,
+                name: inv.name || localExisting?.name || "Invited Participant",
+                phone: inv.phone || localExisting?.phone || "",
+                email: inv.email || localExisting?.email || "",
+                avatar: inv.avatar || localExisting?.avatar || "",
+                status: resolvedStatus,
+              })
+            }
+
+            return Array.from(mergedById.values())
+          })
+        }
+
         if (remotes.length > 0) {
           setCallStatus("connected")
           setPushBannerNote("")
-
-          const mappedPeers: RemoteWebRtcParticipant[] = remotes.map((rp: any) => ({
-            userId: rp.user_id,
-            peerId: rp.peer_id,
-            name: rp.display_name || "Connected Participant",
-            isVideoOn: Boolean(rp.is_video_on),
-            isMuted: Boolean(rp.is_muted),
-            liveFrame:
-              typeof rp.live_frame === "string" && rp.live_frame.length > 800
-                ? rp.live_frame
-                : null,
-          }))
           setRemoteWebRtcPeers(mappedPeers)
 
-          // If any cell-phone participant opened their Camera Link on WebRTC, drop ONLY their duplicate cell SIM leg so there is zero echo!
+          // If a ringing (NOT already answered `in-progress`!) cell leg just opened their Camera Link on WebRTC, drop ONLY that exact person's ringing SIM leg
           const currentCellLegs = cellLegsRef.current
           if (currentCellLegs.length > 0) {
             for (const leg of currentCellLegs) {
-              const matchedWebRtc = mappedPeers.some(
-                (mp) =>
-                  mp.name.trim().toLowerCase() === leg.name.trim().toLowerCase() ||
-                  (currentCellLegs.length === 1 && mappedPeers.length === 1)
+              if (leg.status === "in-progress") continue
+              const matchedWebRtc = mappedPeers.some((mp) =>
+                peerMatchesLeg(mp, leg.name, leg.phone)
               )
               if (matchedWebRtc) {
-                void removeCellLegParticipant(leg)
+                void removeCellLegParticipant(leg, false)
               }
             }
           }
@@ -1270,6 +1551,7 @@ export function ConnectLnWhatsAppCallModal({
     callId,
     localPeerUid,
     isVideoOn,
+    hasLocalVideoTrack,
     isMicMuted,
     callerName,
     recipientName,
@@ -1295,7 +1577,7 @@ export function ConnectLnWhatsAppCallModal({
         el.play().catch(() => {})
       }
     }
-  }, [localStreamState, isVideoOn, isGroupGridMode])
+  }, [localStreamState, isVideoOn, hasLocalVideoTrack, isGroupGridMode])
 
   const handleFlipCamera = async () => {
     const nextFacing = cameraFacing === "user" ? "environment" : "user"
@@ -1314,6 +1596,7 @@ export function ConnectLnWhatsAppCallModal({
         t.enabled = false
         t.stop()
       })
+      setHasLocalVideoTrack(false)
     }
   }
 
@@ -1389,6 +1672,27 @@ export function ConnectLnWhatsAppCallModal({
         <RemoteStreamAudioPlayer key={pid} stream={st} />
       ))}
 
+      {/* GUARANTEED MOBILE RECIPIENT CAMERA ACTIVATION PILL (If mobile Safari/Chrome deferred camera until user tap!) */}
+      {isVideoOn && !hasLocalVideoTrack && (
+        <div
+          className="fixed top-18 left-1/2 -translate-x-1/2 px-4 w-full max-w-sm flex justify-center"
+          style={{ zIndex: 45 }}
+        >
+          <button
+            type="button"
+            onClick={async () => {
+              voicePlayerRef.current?.unlock()
+              await acquireCameraAndMic(true, cameraFacing)
+            }}
+            style={{ color: "#FFFFFF" }}
+            className="w-full rounded-2xl bg-emerald-600 hover:bg-emerald-500 border-2 border-emerald-300 px-4 py-3 text-sm font-extrabold shadow-2xl flex items-center justify-center gap-2 cursor-pointer animate-pulse"
+          >
+            <Video className="h-5 w-5 shrink-0" />
+            <span>Tap to Turn On Your Camera</span>
+          </button>
+        </div>
+      )}
+
       {/* STAGE A: MULTI-PERSON WHATSAPP GROUP CALL SPLIT GRID (2+ Remote Participants) */}
       {isGroupGridMode ? (
         <div className="flex-1 pt-16 pb-24 px-3 sm:px-5 overflow-y-auto">
@@ -1401,7 +1705,7 @@ export function ConnectLnWhatsAppCallModal({
           >
             {/* Local Self Tile */}
             <div className="relative rounded-2xl overflow-hidden bg-[#111B21] border border-emerald-500/40 min-h-[200px] flex items-center justify-center">
-              {isVideoOn ? (
+              {isVideoOn && hasLocalVideoTrack ? (
                 <video
                   ref={gridLocalVideoRef}
                   autoPlay
@@ -1411,10 +1715,21 @@ export function ConnectLnWhatsAppCallModal({
                   style={{ transform: cameraFacing === "user" ? "scaleX(-1)" : "none" }}
                 />
               ) : (
-                <div className="flex flex-col items-center gap-2">
+                <div className="flex flex-col items-center gap-2.5 p-3 text-center">
                   <div className="w-16 h-16 rounded-full bg-emerald-700 flex items-center justify-center text-xl font-extrabold">
                     {callerName.slice(0, 2).toUpperCase()}
                   </div>
+                  {isVideoOn && !hasLocalVideoTrack && (
+                    <button
+                      type="button"
+                      onClick={() => acquireCameraAndMic(true, cameraFacing)}
+                      style={{ color: "#FFFFFF" }}
+                      className="rounded-xl bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 text-xs font-extrabold flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Video className="h-3.5 w-3.5" />
+                      <span>Turn On Camera</span>
+                    </button>
+                  )}
                 </div>
               )}
               <div className="absolute bottom-2.5 left-2.5 right-2.5 z-20 flex items-center justify-between bg-black/65 px-2.5 py-1 rounded-lg">
@@ -1464,50 +1779,103 @@ export function ConnectLnWhatsAppCallModal({
               )
             })}
 
-            {/* Bridged Physical Cell Phone Participant Tiles */}
-            {cellLegs.map((leg) => (
-              <div
-                key={leg.id}
-                className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[#0F2922] to-[#111B21] border border-emerald-400/50 min-h-[200px] flex flex-col items-center justify-center p-4 text-center"
-              >
-                <button
-                  type="button"
-                  onClick={() => removeCellLegParticipant(leg)}
-                  className="absolute top-2.5 right-2.5 z-20 h-7 w-7 rounded-full bg-black/50 hover:bg-rose-600 text-white flex items-center justify-center text-xs cursor-pointer"
-                  title="Remove from call"
+            {/* Bridged Physical Cell Phone & Invited ConnectLn Participant Tiles */}
+            {cellLegs.map((leg) => {
+              const legDigits = (leg.phone || "").replace(/[^\d]/g, "")
+              const legCamLink =
+                joinLinkUrl ||
+                `${
+                  typeof window !== "undefined" ? window.location.origin : "https://conectln.com"
+                }/connectin?waCall=${encodeURIComponent(callId)}&mode=${
+                  isVideoOn ? "video" : "audio"
+                }&invitedName=${encodeURIComponent(leg.name)}&autoAnswer=1`
+              const legSmsHref = legDigits
+                ? `sms:+${legDigits}?&body=${encodeURIComponent(
+                    `📹 ${callerName} is in a live ConnectLn video call with you! Tap to turn on your camera: ${legCamLink}`
+                  )}`
+                : ""
+
+              return (
+                <div
+                  key={leg.id}
+                  className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[#0F2922] to-[#111B21] border border-emerald-400/50 min-h-[200px] flex flex-col items-center justify-center p-4 text-center"
                 >
-                  ✕
-                </button>
-                <div className="relative mb-2.5">
-                  {leg.status === "ringing" && (
-                    <span className="absolute -inset-2 rounded-full border-2 border-amber-400/60 animate-ping" />
+                  <button
+                    type="button"
+                    onClick={() => removeCellLegParticipant(leg, true)}
+                    className="absolute top-2.5 right-2.5 z-20 h-7 w-7 rounded-full bg-black/50 hover:bg-rose-600 text-white flex items-center justify-center text-xs cursor-pointer"
+                    title="Remove from call"
+                  >
+                    ✕
+                  </button>
+                  <div className="relative mb-2">
+                    {(leg.status === "ringing" || leg.status === "invited") && (
+                      <span className="absolute -inset-2 rounded-full border-2 border-amber-400/60 animate-ping" />
+                    )}
+                    <img
+                      src={
+                        leg.avatar ||
+                        `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                          leg.name
+                        )}&backgroundColor=7c4225`
+                      }
+                      alt={leg.name}
+                      className="relative w-15 h-15 rounded-full object-cover border-2 border-emerald-400"
+                    />
+                  </div>
+                  <p className="text-sm font-extrabold text-white truncate max-w-full">{leg.name}</p>
+                  {leg.phone && (
+                    <p className="text-xs font-mono text-emerald-300">
+                      {prettyClientPhone(leg.phone)}
+                    </p>
                   )}
-                  <img
-                    src={
-                      leg.avatar ||
-                      `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
-                        leg.name
-                      )}&backgroundColor=7c4225`
-                    }
-                    alt={leg.name}
-                    className="relative w-16 h-16 rounded-full object-cover border-2 border-emerald-400"
-                  />
+                  <span
+                    className={`mt-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-extrabold ${
+                      leg.status === "in-progress"
+                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/40"
+                        : leg.status === "unanswered"
+                        ? "bg-rose-500/20 text-rose-200 border border-rose-400/40"
+                        : "bg-amber-500/20 text-amber-200 border border-amber-400/40"
+                    }`}
+                  >
+                    {leg.status === "in-progress" && "🟢 Cell Phone Connected"}
+                    {(leg.status === "ringing" || leg.status === "dialing") && "📱 Ringing Cell..."}
+                    {leg.status === "invited" && "🔔 Ringing on ConnectLn"}
+                    {leg.status === "unanswered" && "📞 Unanswered · Tap Redial"}
+                  </span>
+
+                  <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5 z-20">
+                    {(leg.status === "unanswered" || (leg.status === "invited" && leg.phone)) && (
+                      <button
+                        type="button"
+                        disabled={isAddingPerson}
+                        onClick={() =>
+                          addPersonToActiveCall({
+                            targetPhone: leg.phone || undefined,
+                            targetName: leg.name,
+                            targetEmail: leg.email || undefined,
+                            targetAvatar: leg.avatar || undefined,
+                            forceCellSim: Boolean(leg.phone),
+                          })
+                        }
+                        style={{ color: "#FFFFFF" }}
+                        className="rounded-lg bg-emerald-600 hover:bg-emerald-500 px-2.5 py-1 text-[10.5px] font-extrabold cursor-pointer"
+                      >
+                        {leg.status === "unanswered" ? "🔄 Redial" : "📞 Ring Cell"}
+                      </button>
+                    )}
+                    {isVideoOn && legSmsHref && (
+                      <a
+                        href={legSmsHref}
+                        className="rounded-lg bg-sky-700 hover:bg-sky-600 px-2.5 py-1 text-[10.5px] font-extrabold text-white no-underline"
+                      >
+                        📲 Camera Link
+                      </a>
+                    )}
+                  </div>
                 </div>
-                <p className="text-sm font-extrabold text-white truncate max-w-full">{leg.name}</p>
-                <p className="text-xs font-mono text-emerald-300">
-                  {prettyClientPhone(leg.phone)}
-                </p>
-                <span
-                  className={`mt-2 rounded-full px-2.5 py-0.5 text-[10px] font-extrabold ${
-                    leg.status === "in-progress"
-                      ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/40"
-                      : "bg-amber-500/20 text-amber-200 border border-amber-400/40"
-                  }`}
-                >
-                  {leg.status === "in-progress" ? "🟢 Cell Phone Bridged" : "📱 Ringing Cell..."}
-                </span>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       ) : (
@@ -1551,13 +1919,60 @@ export function ConnectLnWhatsAppCallModal({
               <p className="mt-2 text-sm text-slate-300 font-medium">
                 {callStatus === "calling" && "Calling on ConnectLn..."}
                 {callStatus === "ringing" && "Ringing..."}
-                {callStatus === "connected" && `${mins}:${secs} · Connected`}
+                {callStatus === "connected" &&
+                  (remoteWebRtcPeers.length === 0 && cellLegs[0]?.status === "in-progress" && isVideoOn
+                    ? `${mins}:${secs} · Cell Voice Connected — Send Camera Link below to turn on their camera`
+                    : `${mins}:${secs} · Connected`)}
                 {callStatus === "ended" && "Call Ended"}
               </p>
               {pushBannerNote && (
                 <p className="mt-3 max-w-sm text-xs text-emerald-200/90 bg-emerald-950/60 border border-emerald-500/30 rounded-xl px-3.5 py-2">
                   {pushBannerNote}
                 </p>
+              )}
+
+              {/* Quick 1-Tap Camera Link & Ring Cell Actions when recipient hasn't opened ConnectLn Video yet */}
+              {!isIncomingAnswer && remoteWebRtcPeers.length === 0 && (
+                <div className="mt-4 flex flex-wrap items-center justify-center gap-2 max-w-md">
+                  {isVideoOn && nativeSmsHref && (
+                    <a
+                      href={nativeSmsHref}
+                      className="rounded-xl bg-sky-700 hover:bg-sky-600 px-3.5 py-2 text-xs font-extrabold text-white no-underline shadow-md"
+                    >
+                      💬 Text Camera Link
+                    </a>
+                  )}
+                  {isVideoOn && whatsappShareUrl && (
+                    <a
+                      href={whatsappShareUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-xl bg-emerald-700 hover:bg-emerald-600 px-3.5 py-2 text-xs font-extrabold text-white no-underline shadow-md"
+                    >
+                      🟢 Send Camera Link on WhatsApp
+                    </a>
+                  )}
+                  {recipientPhone &&
+                    (cellLegs[0]?.status === "invited" || cellLegs[0]?.status === "unanswered") && (
+                      <button
+                        type="button"
+                        disabled={isAddingPerson}
+                        onClick={() =>
+                          addPersonToActiveCall({
+                            targetPhone: recipientPhone,
+                            targetName: primaryName,
+                            targetEmail,
+                            targetAvatar: recipientAvatar,
+                            forceCellSim: true,
+                          })
+                        }
+                        style={{ color: "#FFFFFF" }}
+                        className="rounded-xl bg-[#7C4225] hover:bg-[#5E3119] px-3.5 py-2 text-xs font-extrabold cursor-pointer shadow-md"
+                      >
+                        {cellLegs[0]?.status === "unanswered" ? "🔄 Redial Cell Phone" : "📞 Ring Cell Voice Now"}
+                      </button>
+                    )}
+                </div>
               )}
             </div>
           )}
@@ -1607,8 +2022,11 @@ export function ConnectLnWhatsAppCallModal({
       </div>
 
       {/* FLOATING PICTURE-IN-PICTURE LOCAL SELF-VIEW (1-on-1 Mode Only) */}
-      {!isGroupGridMode && isVideoOn && (
-        <div className="fixed top-16 right-4 sm:right-6 z-25 w-28 h-40 sm:w-36 sm:h-48 rounded-2xl overflow-hidden border-2 border-white/30 bg-black shadow-2xl">
+      {!isGroupGridMode && isVideoOn && hasLocalVideoTrack && (
+        <div
+          className="fixed top-16 right-4 sm:right-6 z-30 w-28 h-40 sm:w-36 sm:h-48 rounded-2xl overflow-hidden border-2 border-white/30 bg-black shadow-2xl"
+          style={{ zIndex: 35 }}
+        >
           <video
             ref={localVideoRef}
             autoPlay

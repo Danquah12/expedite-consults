@@ -177,40 +177,35 @@ export async function POST(req: NextRequest) {
       mintTwilioVoiceAccessToken(callerEmail || callerName || "connectln_host").catch(() => null),
     ])
 
-    // Also register target in /api/v1/calls so if they have ConnectLn open in a browser/phone tab, their Incoming Call Banner rings immediately!
-    await fetch(`${origin}/api/v1/calls`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "heartbeat",
-        call_id: callId,
-        user_id: body?.hostUserId || `host_${Date.now()}`,
-        display_name: callerName,
-        call_type: callMode,
-        target_recipient_name: recipientName,
-        target_recipient_email: recipientEmail || undefined,
-        target_recipient_phone: recipientPhone || undefined,
-        initiator_phone: callerPhone || undefined,
-        is_video_on: callMode === "video",
-      }),
-    }).catch(() => {})
-
-    // Dial recipient's physical cell phone directly into the shared Twilio `<Conference>` bridge
-    // whenever their mobile phone doesn't have Web Push enabled yet (or when `forceCellSim` is requested)!
+    // Dial recipient's physical cell phone directly into the shared Twilio `<Conference>` bridge:
+    // - For Audio calls: dial immediately whenever mobile Web Push isn't active (`mobileDeliveredCount === 0`)
+    // - For Video calls: ring ConnectLn Video + Push + Email Camera Link FIRST (so GSM voice never hijacks their camera!),
+    //   and dial cell SIM only when `forceCellSim` is requested (6s auto-escalation or 1-tap `Ring Cell`)!
     let cellCallSid = ""
     let cellDialError = ""
+    const isDemoPlaceholderPhone = /^\+1\d{3}555\d{4}$/.test(
+      recipientPhone ? normalizeDialablePhone(recipientPhone) : ""
+    )
     const shouldDialCellSim =
-      Boolean(recipientPhone) && (forceCellSim || pushRes.mobileDeliveredCount === 0)
+      Boolean(recipientPhone) &&
+      !isDemoPlaceholderPhone &&
+      (forceCellSim || (callMode === "audio" && pushRes.mobileDeliveredCount === 0))
 
     if (shouldDialCellSim && looksLikePhoneNumber(recipientPhone)) {
       const cleanTo = normalizeDialablePhone(recipientPhone)
       const fromCaller =
         cleanTo === twilio.primaryFrom ? twilio.backupTollFree : twilio.primaryFrom
-      const confTwiml = `<?xml version="1.0" encoding="UTF-8"?><Response><Dial><Conference startConferenceOnEnter="true" endConferenceOnExit="false" beep="false">${escapeXml(
+      const videoIntroXml =
+        callMode === "video"
+          ? `<Say voice="Polly.Joanna">ConnectLn video call from ${escapeXml(
+              callerName
+            )}. Open ConnectLn or tap the video link sent to your phone to turn on your camera. Connecting voice now.</Say>`
+          : ""
+      const confTwiml = `<?xml version="1.0" encoding="UTF-8"?><Response>${videoIntroXml}<Dial><Conference startConferenceOnEnter="true" endConferenceOnExit="false" beep="false">${escapeXml(
         conferenceName
       )}</Conference></Dial></Response>`
 
-      try {
+      const placeTwilioCall = async () => {
         const callRes = await fetch(
           `https://api.twilio.com/2010-04-01/Accounts/${twilio.accountSid}/Calls.json`,
           {
@@ -228,15 +223,79 @@ export async function POST(req: NextRequest) {
           }
         )
         const callJson: any = await callRes.json()
-        if (callRes.ok && callJson?.sid) {
-          cellCallSid = callJson.sid
+        return { ok: callRes.ok, json: callJson }
+      }
+
+      try {
+        let attempt = await placeTwilioCall()
+        // Auto-enable international Voice Dialing Geo-Permissions if Twilio returns 21215 for a new country!
+        if (!attempt.ok && Number(attempt.json?.code) === 21215) {
+          try {
+            const look = await fetch(
+              `https://lookups.twilio.com/v2/PhoneNumbers/${encodeURIComponent(cleanTo)}`,
+              { headers: { Authorization: twilio.authHeader } }
+            ).then((r) => r.json())
+            if (look?.country_code && look.country_code !== "CA") {
+              await fetch("https://voice.twilio.com/v1/DialingPermissions/BulkCountryUpdates", {
+                method: "POST",
+                headers: {
+                  Authorization: twilio.authHeader,
+                  "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: new URLSearchParams({
+                  UpdateRequest: JSON.stringify([
+                    {
+                      iso_code: look.country_code,
+                      low_risk_numbers_enabled: true,
+                      high_risk_special_numbers_enabled: true,
+                      high_risk_tollfraud_numbers_enabled: false,
+                    },
+                  ]),
+                }).toString(),
+              })
+              await new Promise((r) => setTimeout(r, 1500))
+              attempt = await placeTwilioCall()
+            }
+          } catch {}
+        }
+
+        if (attempt.ok && attempt.json?.sid) {
+          cellCallSid = attempt.json.sid
         } else {
-          cellDialError = callJson?.message || "Carrier could not dial this number."
+          cellDialError = attempt.json?.message || "Carrier could not dial this number."
         }
       } catch (e: any) {
         cellDialError = e?.message || "Failed to place outbound conference call."
       }
     }
+
+    // Persist added participant in `/api/v1/calls` (`invited_roster` + Twilio Sync Map)
+    // so BOTH the caller and any answering phone see ALL invited participants immediately and none vanish!
+    const resolvedAvatar = lookup.member?.avatar || String(body?.targetAvatar || "").trim()
+    await fetch(`${origin}/api/v1/calls`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "upsert_invitee",
+        call_id: callId,
+        user_id: body?.hostUserId || `host_${Date.now()}`,
+        display_name: callerName,
+        call_type: callMode,
+        target_recipient_name: recipientName,
+        target_recipient_email: recipientEmail || undefined,
+        target_recipient_phone: recipientPhone || undefined,
+        initiator_phone: callerPhone || undefined,
+        invited_member: {
+          name: recipientName,
+          phone: recipientPhone || undefined,
+          email: recipientEmail || undefined,
+          avatar: resolvedAvatar || undefined,
+          status: cellCallSid ? "ringing" : "invited",
+          callSid: cellCallSid || undefined,
+          updated_at_ms: Date.now(),
+        },
+      }),
+    }).catch(() => {})
 
     const digits = recipientPhone.replace(/[^\d]/g, "")
     const shareText = `${

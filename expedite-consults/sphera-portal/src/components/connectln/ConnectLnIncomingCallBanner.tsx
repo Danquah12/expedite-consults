@@ -11,11 +11,21 @@ interface IncomingCallSummary {
   call_type: "audio" | "video" | "screenshare"
   initiator_name?: string
   initiator_phone?: string
+  invited_roster?: Array<{
+    id: string
+    name: string
+    status: string
+  }>
   participants?: Array<{
     user_id: string
     display_name: string
     is_video_on?: boolean
   }>
+}
+
+function isLocalTabHostingOpenCall(): boolean {
+  if (typeof window === "undefined") return false
+  return Number((window as any).__connectlnOpenCallModalCount || 0) > 0
 }
 
 export function ConnectLnIncomingCallBanner({
@@ -36,18 +46,27 @@ export function ConnectLnIncomingCallBanner({
 }) {
   const [incomingCall, setIncomingCall] = useState<IncomingCallSummary | null>(null)
   const [myPhone, setMyPhone] = useState<string>("")
+  const [hasOpenModal, setHasOpenModal] = useState<boolean>(false)
   const declinedIdsRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
     const syncPhone = () => setMyPhone(getMyLinkedConnectLnPhone())
+    const syncModalOpen = () => {
+      const openNow = isLocalTabHostingOpenCall()
+      setHasOpenModal(openNow)
+      if (openNow) setIncomingCall(null)
+    }
     syncPhone()
+    syncModalOpen()
     window.addEventListener("connectln_phone_linked", syncPhone)
     window.addEventListener("storage", syncPhone)
+    window.addEventListener("connectln_call_modal_change", syncModalOpen)
 
     // Listen for instant Service Worker push messages (`public/sw.js`) so ringing starts in <50ms!
     const onSwMessage = (ev: MessageEvent) => {
       const msg = ev?.data
       if (!msg) return
+      if (isLocalTabHostingOpenCall()) return
       if (msg.type === "CONNECTLN_PUSH_INCOMING_CALL" && msg.payload?.callId) {
         const p = msg.payload
         if (!declinedIdsRef.current.has(p.callId)) {
@@ -84,6 +103,7 @@ export function ConnectLnIncomingCallBanner({
     return () => {
       window.removeEventListener("connectln_phone_linked", syncPhone)
       window.removeEventListener("storage", syncPhone)
+      window.removeEventListener("connectln_call_modal_change", syncModalOpen)
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.removeEventListener("message", onSwMessage)
       }
@@ -94,14 +114,14 @@ export function ConnectLnIncomingCallBanner({
     const cleanName = (viewerName || "").trim()
     const cleanEmail = (viewerEmail || "").trim()
     const cleanPhone = (myPhone || "").trim()
-    if ((!cleanName && !cleanEmail && !cleanPhone) || isAlreadyInCallStudio) {
+    if ((!cleanName && !cleanEmail && !cleanPhone) || isAlreadyInCallStudio || hasOpenModal) {
       setIncomingCall(null)
       return
     }
 
     let cancelled = false
     const checkIncoming = async () => {
-      if (cancelled || document.visibilityState === "hidden") return
+      if (cancelled || document.visibilityState === "hidden" || isLocalTabHostingOpenCall()) return
       try {
         const localPeerId = sessionStorage.getItem("vibe_call_participant_id") || ""
         const qs = new URLSearchParams({
@@ -113,7 +133,7 @@ export function ConnectLnIncomingCallBanner({
         const res = await fetch(`/api/v1/calls?${qs.toString()}`, { cache: "no-store" })
         if (!res.ok) return
         const data = await res.json()
-        if (cancelled) return
+        if (cancelled || isLocalTabHostingOpenCall()) return
         const list: IncomingCallSummary[] = Array.isArray(data?.incoming_calls)
           ? data.incoming_calls
           : []
@@ -125,12 +145,12 @@ export function ConnectLnIncomingCallBanner({
     }
 
     checkIncoming()
-    const timer = window.setInterval(checkIncoming, 3000)
+    const timer = window.setInterval(checkIncoming, 2500)
     return () => {
       cancelled = true
       window.clearInterval(timer)
     }
-  }, [viewerName, viewerEmail, myPhone, isAlreadyInCallStudio])
+  }, [viewerName, viewerEmail, myPhone, isAlreadyInCallStudio, hasOpenModal])
 
   // WhatsApp-style pleasant dual-tone incoming call chime via WebAudio API
   useEffect(() => {
@@ -167,7 +187,7 @@ export function ConnectLnIncomingCallBanner({
     }
   }, [incomingCall?.id])
 
-  if (!incomingCall) return null
+  if (!incomingCall || hasOpenModal) return null
 
   const callerName =
     incomingCall.participants?.[0]?.display_name ||
@@ -177,6 +197,9 @@ export function ConnectLnIncomingCallBanner({
     ? prettyClientPhone(incomingCall.initiator_phone)
     : ""
   const isVideo = incomingCall.call_type !== "audio"
+  const activeInvitesCount = (incomingCall.invited_roster || []).filter(
+    (m) => m.status !== "removed"
+  ).length
 
   return (
     <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[95] w-[94vw] max-w-md rounded-3xl bg-[#111B21] border-2 border-emerald-400 shadow-2xl px-4 py-4 text-[#FBF8F3]">
@@ -191,10 +214,11 @@ export function ConnectLnIncomingCallBanner({
           <div className="min-w-0">
             <p className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-300">
               ● ConnectLn {isVideo ? "Video" : "Voice"} Call
+              {activeInvitesCount >= 2 ? ` · Group (${activeInvitesCount + 1})` : ""}
             </p>
             <p className="text-base font-extrabold text-white truncate">{callerName}</p>
             <p className="text-[11px] text-emerald-200/90 font-mono truncate">
-              {callerPhone || (isVideo ? "Incoming camera & voice call" : "Incoming voice call")}
+              {callerPhone || (isVideo ? "Tap Answer Video to turn on camera" : "Incoming voice call")}
             </p>
           </div>
         </div>
@@ -228,7 +252,7 @@ export function ConnectLnIncomingCallBanner({
             className="rounded-full bg-emerald-600 hover:bg-emerald-500 px-4 py-2.5 text-xs font-extrabold flex items-center gap-1.5 shadow-lg cursor-pointer"
           >
             {isVideo ? <Video className="h-4 w-4" /> : <Phone className="h-4 w-4" />}
-            <span>{isVideo ? "Answer" : "Answer"}</span>
+            <span>{isVideo ? "Answer Video" : "Answer"}</span>
           </button>
         </div>
       </div>
