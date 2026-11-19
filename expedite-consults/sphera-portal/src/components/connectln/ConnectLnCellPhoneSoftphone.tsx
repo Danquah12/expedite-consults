@@ -19,47 +19,26 @@ import {
   Copy,
   UserPlus,
 } from "lucide-react"
+import {
+  GLOBAL_COUNTRY_DIAL_CODES,
+  looksLikeInternationalPhone,
+  normalizeInternationalPhone,
+  formatInternationalPhonePretty,
+  buildGlobalE164Phone,
+} from "@/lib/connectin-international-phones"
 
 const LOCAL_PHONEBOOK_KEY = "connectln_contact_phonebook_v1"
 
 export function looksLikeClientPhone(raw?: string | null): boolean {
-  if (!raw) return false
-  const trimmed = String(raw).trim()
-  if (!trimmed || trimmed.includes("@")) return false
-  const compact = trimmed.replace(/[\s().\-]/g, "")
-  return /^\+?\d{7,15}$/.test(compact)
+  return looksLikeInternationalPhone(raw)
 }
 
-export function normalizeClientPhone(raw: string): string {
-  let compact = String(raw || "").trim().replace(/[^\d+]/g, "")
-  if (!compact) return ""
-  if (compact.startsWith("00") && compact.length > 9) {
-    compact = `+${compact.slice(2)}`
-  } else if (!compact.startsWith("+")) {
-    if (compact.length === 10 && /^[2-9]/.test(compact)) {
-      compact = `+1${compact}`
-    } else if (compact.length === 10 && /^0[25]\d{8}$/.test(compact)) {
-      compact = `+233${compact.slice(1)}`
-    } else if (compact.length === 11 && compact.startsWith("1")) {
-      compact = `+${compact}`
-    } else {
-      compact = `+${compact}`
-    }
-  }
-  compact = compact.replace(
-    /^\+(233|234|254|27|44|33|49|61|225|221|228|250|256|255)0(\d{7,10})$/,
-    "+$1$2"
-  )
-  return compact
+export function normalizeClientPhone(raw: string, defaultCountryCode = "+1"): string {
+  return normalizeInternationalPhone(raw, defaultCountryCode)
 }
 
 export function prettyClientPhone(raw: string): string {
-  const e164 = normalizeClientPhone(raw)
-  const m = e164.match(/^\+1(\d{3})(\d{3})(\d{4})$/)
-  if (m) return `+1 (${m[1]}) ${m[2]}-${m[3]}`
-  const gh = e164.match(/^\+233(\d{2})(\d{3})(\d{4})$/)
-  if (gh) return `+233 ${gh[1]} ${gh[2]} ${gh[3]}`
-  return e164 || raw
+  return formatInternationalPhonePretty(raw)
 }
 
 function makeLocalContactKey(raw?: string): string {
@@ -144,6 +123,7 @@ export function ConnectLnCellPhoneSoftphoneModal({
   onUpgradeToVideoHuddle,
 }: ConnectLnCellPhoneSoftphoneModalProps) {
   const [phase, setPhase] = useState<SoftphonePhase>("resolving")
+  const [softphoneCountryCode, setSoftphoneCountryCode] = useState<string>("+1")
   const [phoneInput, setPhoneInput] = useState<string>("")
   const [activeDialedPhone, setActiveDialedPhone] = useState<string>("")
   const [displayName, setDisplayName] = useState<string>(targetLabel || "Mobile Call")
@@ -596,22 +576,38 @@ export function ConnectLnCellPhoneSoftphoneModal({
             <form
               onSubmit={(e) => {
                 e.preventDefault()
-                startCellularCall(phoneInput)
+                const resolved =
+                  phoneInput.trim().startsWith("+") || /[a-zA-Z]/.test(phoneInput.trim())
+                    ? phoneInput.trim()
+                    : buildGlobalE164Phone(softphoneCountryCode, phoneInput.trim())
+                startCellularCall(resolved)
               }}
               className="space-y-2.5 text-left bg-[#241E19] border border-white/10 rounded-2xl p-3.5"
             >
               <label className="block text-[11px] font-bold text-[#E7D8C5]">
                 {phase === "needs_number"
-                  ? `Enter ${displayName}'s cell phone number to ring their mobile directly:`
-                  : "Dial or redial mobile phone number:"}
+                  ? `Select country & enter ${displayName}'s mobile number:`
+                  : "Select country & dial or redial mobile number:"}
               </label>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  value={softphoneCountryCode}
+                  onChange={(e) => setSoftphoneCountryCode(e.target.value)}
+                  className="max-w-[155px] rounded-xl bg-[#14110E] border border-[#7C4225] px-2.5 py-2 text-xs font-semibold text-white focus:outline-none focus:border-emerald-400"
+                  title="International Country Code"
+                >
+                  {GLOBAL_COUNTRY_DIAL_CODES.map((c) => (
+                    <option key={`${c.iso}-${c.code}`} value={c.code}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
                 <input
                   type="tel"
                   value={phoneInput}
                   onChange={(e) => setPhoneInput(e.target.value)}
-                  placeholder="e.g. 240-260-7898 or +12402607898"
-                  className="flex-1 rounded-xl bg-[#14110E] border border-[#7C4225] px-3.5 py-2 text-sm font-mono text-white placeholder:text-zinc-500 focus:outline-none focus:border-emerald-400"
+                  placeholder="Mobile number (any country)"
+                  className="flex-1 min-w-[140px] rounded-xl bg-[#14110E] border border-[#7C4225] px-3.5 py-2 text-sm font-mono text-white placeholder:text-zinc-500 focus:outline-none focus:border-emerald-400"
                   autoFocus
                 />
                 <button
@@ -624,7 +620,7 @@ export function ConnectLnCellPhoneSoftphoneModal({
                 </button>
               </div>
               <p className="text-[10.5px] text-[#B8A998]">
-                Rings their real cell phone on any US or international carrier with live two-way voice audio.
+                Rings any mobile phone in 215+ countries worldwide with live two-way voice audio.
               </p>
             </form>
           )}
@@ -702,7 +698,11 @@ export function ConnectLnCellPhoneSoftphoneModal({
                 e.preventDefault()
                 if (!addPersonInput.trim()) return
                 setIsAddingPerson(true)
-                const rawTarget = addPersonInput.trim()
+                const rawTyped = addPersonInput.trim()
+                const rawTarget =
+                  rawTyped.startsWith("+") || /[a-zA-Z@]/.test(rawTyped)
+                    ? rawTyped
+                    : buildGlobalE164Phone(softphoneCountryCode, rawTyped)
                 setAddPersonInput("")
                 try {
                   const res = await fetch("/api/connectin/voice/conference-add", {
@@ -743,14 +743,26 @@ export function ConnectLnCellPhoneSoftphoneModal({
                   setIsAddingPerson(false)
                 }
               }}
-              className="flex items-center gap-2 bg-[#241E19] border border-emerald-500/40 rounded-2xl p-2.5"
+              className="flex flex-wrap items-center gap-2 bg-[#241E19] border border-emerald-500/40 rounded-2xl p-2.5"
             >
+              <select
+                value={softphoneCountryCode}
+                onChange={(e) => setSoftphoneCountryCode(e.target.value)}
+                className="max-w-[135px] rounded-xl bg-[#14110E] border border-[#7C4225] px-2 py-1.5 text-xs font-semibold text-white focus:outline-none focus:border-emerald-400"
+                title="International Country Code"
+              >
+                {GLOBAL_COUNTRY_DIAL_CODES.map((c) => (
+                  <option key={`add-${c.iso}-${c.code}`} value={c.code}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
               <input
                 type="tel"
                 value={addPersonInput}
                 onChange={(e) => setAddPersonInput(e.target.value)}
                 placeholder="Phone # or @name to merge in..."
-                className="flex-1 rounded-xl bg-[#14110E] border border-[#7C4225] px-3 py-1.5 text-xs font-mono text-white placeholder:text-zinc-500 focus:outline-none focus:border-emerald-400"
+                className="flex-1 min-w-[130px] rounded-xl bg-[#14110E] border border-[#7C4225] px-3 py-1.5 text-xs font-mono text-white placeholder:text-zinc-500 focus:outline-none focus:border-emerald-400"
               />
               <button
                 type="submit"

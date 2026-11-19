@@ -2,6 +2,11 @@ import crypto from "crypto"
 import { connectinDb } from "./connectin-db"
 import { pullCloudUsersIntoDb } from "./connectin-cloud-sync"
 import { formatE164Phone } from "./connectin-sms"
+import {
+  looksLikeInternationalPhone,
+  normalizeInternationalPhone,
+  formatInternationalPhonePretty,
+} from "./connectin-international-phones"
 
 const VOICE_CONFIG_MAP_NAME = "connectln_voice_config_map_v1"
 const VOICE_CREDS_ITEM_KEY = "softphone_creds_v1"
@@ -49,51 +54,15 @@ function base64UrlEncode(input: string | Buffer): string {
 }
 
 export function looksLikePhoneNumber(raw: string | undefined | null): boolean {
-  if (!raw) return false
-  const trimmed = String(raw).trim()
-  if (!trimmed || trimmed.includes("@")) return false
-  // Strip common phone separators
-  const compact = trimmed.replace(/[\s().\-]/g, "")
-  return /^\+?\d{7,15}$/.test(compact)
+  return looksLikeInternationalPhone(raw)
 }
 
-export function normalizeDialablePhone(raw: string): string {
-  const trimmed = String(raw || "").trim()
-  let compact = trimmed.replace(/[^\d+]/g, "")
-  if (!compact) return ""
-  if (compact.startsWith("00") && compact.length > 9) {
-    compact = `+${compact.slice(2)}`
-  } else if (!compact.startsWith("+")) {
-    if (compact.length === 10 && /^[2-9]/.test(compact)) {
-      compact = `+1${compact}`
-    } else if (compact.length === 10 && /^0[25]\d{8}$/.test(compact)) {
-      // Local Ghana 10-digit mobile format (e.g. 054 434 1837 -> +233544341837)
-      compact = `+233${compact.slice(1)}`
-    } else if (compact.length === 11 && compact.startsWith("1")) {
-      compact = `+${compact}`
-    } else {
-      compact = `+${compact}`
-    }
-  }
-  // Strip accidental domestic trunk '0' after international country code (e.g. +2330544341837 -> +233544341837)
-  compact = compact.replace(
-    /^\+(233|234|254|27|44|33|49|61|225|221|228|250|256|255)0(\d{7,10})$/,
-    "+$1$2"
-  )
-  return compact
+export function normalizeDialablePhone(raw: string, defaultCountryCode = "+1"): string {
+  return normalizeInternationalPhone(raw, defaultCountryCode)
 }
 
 export function formatPrettyPhoneDisplay(raw: string): string {
-  const e164 = normalizeDialablePhone(raw)
-  const us = e164.match(/^\+1(\d{3})(\d{3})(\d{4})$/)
-  if (us) {
-    return `+1 (${us[1]}) ${us[2]}-${us[3]}`
-  }
-  const gh = e164.match(/^\+233(\d{2})(\d{3})(\d{4})$/)
-  if (gh) {
-    return `+233 ${gh[1]} ${gh[2]} ${gh[3]}`
-  }
-  return e164 || raw
+  return formatInternationalPhonePretty(raw)
 }
 
 async function ensureSyncMap(authHeader: string, mapName: string): Promise<void> {

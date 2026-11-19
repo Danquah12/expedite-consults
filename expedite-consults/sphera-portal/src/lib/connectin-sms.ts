@@ -3,6 +3,8 @@
  * Supports Twilio API with E.164 phone formatting for phone-based 2FA authentication
  */
 
+import { normalizeInternationalPhone } from "./connectin-international-phones"
+
 interface SendSMSParams {
   toPhone: string
   code: string
@@ -11,17 +13,7 @@ interface SendSMSParams {
 }
 
 export function formatE164Phone(phone: string): string {
-  let cleaned = phone.replace(/[^\d+]/g, "").trim()
-  if (!cleaned.startsWith("+")) {
-    if (cleaned.length === 10) {
-      cleaned = "+1" + cleaned
-    } else if (cleaned.length === 11 && cleaned.startsWith("1")) {
-      cleaned = "+" + cleaned
-    } else {
-      cleaned = "+" + cleaned
-    }
-  }
-  return cleaned
+  return normalizeInternationalPhone(phone)
 }
 
 export async function sendConnectInSMS({

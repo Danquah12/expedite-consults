@@ -28,6 +28,10 @@ import {
 } from "./ConnectLnCellPhoneSoftphone"
 import { registerConnectLnPushSubscription } from "@/lib/connectin-native-callkit-bridge"
 import {
+  GLOBAL_COUNTRY_DIAL_CODES,
+  buildGlobalE164Phone,
+} from "@/lib/connectin-international-phones"
+import {
   startLiveVoiceChunkCapture,
   GaplessRemoteVoicePlayer,
   EncodedVoiceChunk,
@@ -35,20 +39,7 @@ import {
 
 export const MY_LINKED_PHONE_STORAGE_KEY = "connectln_my_whatsapp_phone_v1"
 
-export const COUNTRY_DIAL_CODES = [
-  { code: "+1", label: "🇺🇸/🇨🇦 +1 (US/CA)" },
-  { code: "+233", label: "🇬🇭 +233 (Ghana)" },
-  { code: "+44", label: "🇬🇧 +44 (UK)" },
-  { code: "+234", label: "🇳🇬 +234 (Nigeria)" },
-  { code: "+27", label: "🇿🇦 +27 (S. Africa)" },
-  { code: "+254", label: "🇰🇪 +254 (Kenya)" },
-  { code: "+91", label: "🇮🇳 +91 (India)" },
-  { code: "+49", label: "🇩🇪 +49 (Germany)" },
-  { code: "+33", label: "🇫🇷 +33 (France)" },
-  { code: "+971", label: "🇦🇪 +971 (UAE)" },
-  { code: "+61", label: "🇦🇺 +61 (Australia)" },
-  { code: "+55", label: "🇧🇷 +55 (Brazil)" },
-]
+export const COUNTRY_DIAL_CODES = GLOBAL_COUNTRY_DIAL_CODES
 
 export function getMyLinkedConnectLnPhone(): string {
   if (typeof window === "undefined") return ""
@@ -60,16 +51,7 @@ export function getMyLinkedConnectLnPhone(): string {
 }
 
 export function buildInternationalPhone(countryCode: string, localDigitsRaw: string): string {
-  const trimmed = String(localDigitsRaw || "").trim()
-  if (!trimmed) return ""
-  if (trimmed.startsWith("+")) return normalizeClientPhone(trimmed)
-  const digits = trimmed.replace(/[^\d]/g, "").replace(/^0+/, "")
-  if (!digits) return ""
-  const ccDigits = countryCode.replace(/[^\d]/g, "") || "1"
-  if (ccDigits === "1" && digits.length === 11 && digits.startsWith("1")) {
-    return `+${digits}`
-  }
-  return `+${ccDigits}${digits}`
+  return buildGlobalE164Phone(countryCode, localDigitsRaw)
 }
 
 /**
@@ -278,10 +260,10 @@ export function ConnectLnMyPhoneNumberCard({
           <select
             value={countryCode}
             onChange={(e) => setCountryCode(e.target.value)}
-            className="rounded-lg border border-[#D0C4AE] bg-[#F8F4EC] px-2 py-1.5 text-xs font-semibold text-[#1C1917] focus:outline-none focus:border-[#7C4225]"
+            className="max-w-[175px] rounded-lg border border-[#D0C4AE] bg-[#F8F4EC] px-2 py-1.5 text-xs font-semibold text-[#1C1917] focus:outline-none focus:border-[#7C4225]"
           >
             {COUNTRY_DIAL_CODES.map((c) => (
-              <option key={c.label} value={c.code}>
+              <option key={`${c.iso}-${c.code}`} value={c.code}>
                 {c.label}
               </option>
             ))}
@@ -2079,7 +2061,7 @@ export function ConnectLnWhatsAppCallModal({
               await addPersonToActiveCall({
                 targetPhone: looksLikeClientPhone(dialTarget) ? dialTarget : undefined,
                 targetName: dialTarget,
-                forceCellSim: looksLikeClientPhone(dialTarget),
+                forceCellSim: !isVideoOn && looksLikeClientPhone(dialTarget),
               })
             }}
             className="flex flex-wrap items-center gap-1.5 bg-[#0B141A] border border-white/15 rounded-2xl p-2"
@@ -2087,10 +2069,10 @@ export function ConnectLnWhatsAppCallModal({
             <select
               value={addCountryCode}
               onChange={(e) => setAddCountryCode(e.target.value)}
-              className="rounded-xl bg-[#1F2C34] border border-white/15 px-2 py-2 text-xs font-semibold text-white focus:outline-none"
+              className="max-w-[165px] rounded-xl bg-[#1F2C34] border border-white/15 px-2 py-2 text-xs font-semibold text-white focus:outline-none"
             >
               {COUNTRY_DIAL_CODES.map((c) => (
-                <option key={c.label} value={c.code}>
+                <option key={`add-${c.iso}-${c.code}`} value={c.code}>
                   {c.label}
                 </option>
               ))}

@@ -709,7 +709,7 @@ export function WhatsAppModeWorkspace({
     const resolveDialTarget = (raw: string): string => {
         const clean = raw.trim();
         if (!clean) return '';
-        if (clean.startsWith('+') || clean.startsWith('@') || /[a-zA-Z]/.test(clean)) {
+        if (clean.startsWith('@') || /[a-zA-Z]/.test(clean)) {
             return clean;
         }
         return buildInternationalPhone(dialCountryCode, clean) || clean;
@@ -1568,7 +1568,7 @@ export function WhatsAppModeWorkspace({
                             onSubmit={(e) => {
                                 e.preventDefault();
                                 if (callSearch.trim()) {
-                                    launchCellPhoneCall(callSearch.trim());
+                                    void launchSmartVoiceCall(callSearch.trim());
                                 }
                             }}
                             className="relative flex items-center gap-1.5"
@@ -1886,11 +1886,11 @@ export function WhatsAppModeWorkspace({
                             <select
                                 value={dialCountryCode}
                                 onChange={(e) => setDialCountryCode(e.target.value)}
-                                className="border border-[#D0C4AE] bg-[#F8F4EC] rounded-lg px-2 py-1.5 text-xs font-semibold text-[#1C1917] focus:outline-none focus:border-[#7C4225]"
-                                title="Country Code"
+                                className="max-w-[175px] border border-[#D0C4AE] bg-[#F8F4EC] rounded-lg px-2 py-1.5 text-xs font-semibold text-[#1C1917] focus:outline-none focus:border-[#7C4225]"
+                                title="International Country Code (215+ Countries)"
                             >
                                 {COUNTRY_DIAL_CODES.map((c) => (
-                                    <option key={c.label} value={c.code}>
+                                    <option key={`dial-${c.iso}-${c.code}`} value={c.code}>
                                         {c.label}
                                     </option>
                                 ))}
