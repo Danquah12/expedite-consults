@@ -240,7 +240,7 @@ export function ConnectLnMyPhoneNumberCard({
       isDocumentPipSupported() &&
       typeof navigator !== "undefined" &&
       !/iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent || "")
-        ? openAlwaysOnTopCallStandbyPiP().catch(() => false)
+        ? openAlwaysOnTopCallStandbyPiP(true).catch(() => false)
         : Promise.resolve(false)
 
     try {
