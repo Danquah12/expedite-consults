@@ -17,6 +17,7 @@ import {
   RotateCcw,
   QrCode,
   Copy,
+  UserPlus,
 } from "lucide-react"
 
 const LOCAL_PHONEBOOK_KEY = "connectln_contact_phonebook_v1"
@@ -139,12 +140,40 @@ export function ConnectLnCellPhoneSoftphoneModal({
   const [errorMsg, setErrorMsg] = useState<string>("")
   const [smsStatusNote, setSmsStatusNote] = useState<string>("")
   const [isSendingSms, setIsSendingSms] = useState<boolean>(false)
+  const [showAddPersonPanel, setShowAddPersonPanel] = useState<boolean>(false)
+  const [addPersonInput, setAddPersonInput] = useState<string>("")
+  const [isAddingPerson, setIsAddingPerson] = useState<boolean>(false)
+  const [extraLegs, setExtraLegs] = useState<
+    Array<{ callSid: string; name: string; phone: string; status: string }>
+  >([])
+  const extraLegsRef = useRef<Array<{ callSid: string; name: string; phone: string; status: string }>>([])
+  useEffect(() => {
+    extraLegsRef.current = extraLegs
+  }, [extraLegs])
+  const [softphoneConfRoom] = useState<string>(
+    () => `conf_sp_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`
+  )
+  const primaryLegSidRef = useRef<string>("")
 
   const deviceRef = useRef<any>(null)
   const activeCallRef = useRef<any>(null)
   const cachedTokenRef = useRef<string>("")
 
   const cleanupActiveCall = useCallback(() => {
+    const allSids = [
+      primaryLegSidRef.current,
+      ...extraLegsRef.current.map((l) => l.callSid),
+    ].filter(Boolean)
+    if (allSids.length > 0) {
+      fetch("/api/connectin/voice/conference-add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        keepalive: true,
+        body: JSON.stringify({ action: "end_all", callSids: allSids }),
+      }).catch(() => {})
+      primaryLegSidRef.current = ""
+      setExtraLegs([])
+    }
     try {
       if (activeCallRef.current) {
         activeCallRef.current.disconnect?.()
@@ -238,15 +267,36 @@ export function ConnectLnCellPhoneSoftphoneModal({
 
         const call = await device.connect({
           params: {
-            To: cleanPhone,
+            ConferenceRoom: softphoneConfRoom,
             CallerName: callerName,
           },
         })
         activeCallRef.current = call
+        setPhase("ringing")
 
-        call.on("ringing", () => {
-          setPhase("ringing")
-        })
+        // Dial the first cell phone into the shared conference bridge so more people can be merged anytime!
+        const confRes = await fetch("/api/connectin/voice/conference-add", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "add",
+            callId: softphoneConfRoom,
+            conferenceName: softphoneConfRoom,
+            callMode: "audio",
+            callerName,
+            callerEmail,
+            targetPhone: cleanPhone,
+            targetName: targetLabel,
+            targetEmail,
+            forceCellSim: true,
+          }),
+        }).then((r) => r.json())
+
+        if (confRes?.cellCallSid) {
+          primaryLegSidRef.current = confRes.cellCallSid
+        } else if (confRes?.cellDialError) {
+          throw new Error(confRes.cellDialError)
+        }
 
         call.on("accept", () => {
           setElapsedSec(0)
@@ -583,23 +633,140 @@ export function ConnectLnCellPhoneSoftphoneModal({
               <span>{smsStatusNote}</span>
             </div>
           )}
+
+          {/* Extra Conferenced Cell Participants List */}
+          {extraLegs.length > 0 && (
+            <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
+              {extraLegs.map((leg) => (
+                <span
+                  key={leg.callSid}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-emerald-950/80 border border-emerald-500/40 px-3 py-1 text-[11px] font-bold text-emerald-200"
+                >
+                  <span>🟢 {leg.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setExtraLegs((prev) => prev.filter((x) => x.callSid !== leg.callSid))
+                      fetch("/api/connectin/voice/conference-add", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          action: "hangup_participant",
+                          callSid: leg.callSid,
+                        }),
+                      }).catch(() => {})
+                    }}
+                    className="text-rose-300 hover:text-white ml-0.5 cursor-pointer"
+                    title="Remove from call"
+                  >
+                    ✕
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Inline `➕ Add Another Person / Number` Conference Panel */}
+          {showAddPersonPanel && (
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault()
+                if (!addPersonInput.trim()) return
+                setIsAddingPerson(true)
+                const rawTarget = addPersonInput.trim()
+                setAddPersonInput("")
+                try {
+                  const res = await fetch("/api/connectin/voice/conference-add", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      action: "add",
+                      callId: softphoneConfRoom,
+                      conferenceName: softphoneConfRoom,
+                      callMode: "audio",
+                      callerName,
+                      callerEmail,
+                      targetPhone: looksLikeClientPhone(rawTarget) ? rawTarget : undefined,
+                      targetName: rawTarget,
+                      forceCellSim: true,
+                    }),
+                  })
+                  const d = await res.json()
+                  if (d?.cellCallSid) {
+                    const label =
+                      d.recipient?.name || prettyClientPhone(d.recipient?.phone || rawTarget)
+                    setExtraLegs((prev) => [
+                      ...prev,
+                      {
+                        callSid: d.cellCallSid,
+                        name: label,
+                        phone: d.recipient?.phone || rawTarget,
+                        status: "ringing",
+                      },
+                    ])
+                    setSmsStatusNote(`✓ Ringing & merging ${label} into your call!`)
+                  } else {
+                    setSmsStatusNote(d?.cellDialError || d?.error || "Invited participant on ConnectLn!")
+                  }
+                } catch {
+                  setSmsStatusNote("Could not add participant right now.")
+                } finally {
+                  setIsAddingPerson(false)
+                }
+              }}
+              className="flex items-center gap-2 bg-[#241E19] border border-emerald-500/40 rounded-2xl p-2.5"
+            >
+              <input
+                type="tel"
+                value={addPersonInput}
+                onChange={(e) => setAddPersonInput(e.target.value)}
+                placeholder="Phone # or @name to merge in..."
+                className="flex-1 rounded-xl bg-[#14110E] border border-[#7C4225] px-3 py-1.5 text-xs font-mono text-white placeholder:text-zinc-500 focus:outline-none focus:border-emerald-400"
+              />
+              <button
+                type="submit"
+                disabled={isAddingPerson}
+                style={{ color: "#FFFFFF" }}
+                className="rounded-xl bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 text-xs font-extrabold cursor-pointer shrink-0 disabled:opacity-50"
+              >
+                {isAddingPerson ? "Ringing..." : "+ Merge"}
+              </button>
+            </form>
+          )}
         </div>
 
         {/* Bottom Softphone Action Bar */}
         <div className="px-5 py-4 bg-[#241E19] border-t border-white/10 flex flex-wrap items-center justify-center gap-2.5">
           {(phase === "connecting" || phase === "ringing" || phase === "in_call") && (
-            <button
-              type="button"
-              onClick={handleToggleMute}
-              className={`rounded-full px-3.5 py-2 text-xs font-bold flex items-center gap-1.5 cursor-pointer border ${
-                isMuted
-                  ? "bg-amber-600 border-amber-400 text-white"
-                  : "bg-white/10 hover:bg-white/15 border-white/15 text-white"
-              }`}
-            >
-              {isMuted ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
-              <span>{isMuted ? "Unmute" : "Mute"}</span>
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={handleToggleMute}
+                className={`rounded-full px-3.5 py-2 text-xs font-bold flex items-center gap-1.5 cursor-pointer border ${
+                  isMuted
+                    ? "bg-amber-600 border-amber-400 text-white"
+                    : "bg-white/10 hover:bg-white/15 border-white/15 text-white"
+                }`}
+              >
+                {isMuted ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
+                <span>{isMuted ? "Unmute" : "Mute"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowAddPersonPanel((v) => !v)}
+                style={{ color: "#FFFFFF" }}
+                className={`rounded-full px-3.5 py-2 text-xs font-extrabold flex items-center gap-1.5 cursor-pointer border ${
+                  showAddPersonPanel
+                    ? "bg-emerald-600 border-emerald-400"
+                    : "bg-emerald-700/80 hover:bg-emerald-600 border-emerald-400/50"
+                }`}
+                title="Add another person or phone number into this call"
+              >
+                <UserPlus className="h-3.5 w-3.5" />
+                <span>Add Person</span>
+              </button>
+            </>
           )}
 
           <button
@@ -694,6 +861,16 @@ export function ConnectLnInlineCellBridgeBar({
   const [elapsedSec, setElapsedSec] = useState<number>(0)
   const [statusNote, setStatusNote] = useState<string>("")
   const [showQrModal, setShowQrModal] = useState<boolean>(false)
+  const [bridgedLegs, setBridgedLegs] = useState<
+    Array<{ callSid: string; label: string; phone: string }>
+  >([])
+  const bridgedLegsRef = useRef<Array<{ callSid: string; label: string; phone: string }>>([])
+  useEffect(() => {
+    bridgedLegsRef.current = bridgedLegs
+  }, [bridgedLegs])
+  const [inlineConfName] = useState<string>(
+    () => `conf_inline_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`
+  )
   const deviceRef = useRef<any>(null)
   const callRef = useRef<any>(null)
   const autoPushedTargetRef = useRef<string>("")
@@ -711,6 +888,18 @@ export function ConnectLnInlineCellBridgeBar({
   })()
 
   const hangupCell = useCallback(() => {
+    if (bridgedLegsRef.current.length > 0) {
+      fetch("/api/connectin/voice/conference-add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        keepalive: true,
+        body: JSON.stringify({
+          action: "end_all",
+          callSids: bridgedLegsRef.current.map((b) => b.callSid),
+        }),
+      }).catch(() => {})
+      setBridgedLegs([])
+    }
     try {
       callRef.current?.disconnect?.()
       callRef.current = null
@@ -763,75 +952,90 @@ export function ConnectLnInlineCellBridgeBar({
         setStatusNote("Enter a 10-digit mobile number (e.g. 240-260-7898) first.")
         return
       }
-      hangupCell()
-      setPhase("connecting")
+      setPhase((prev) => (prev === "in_call" ? "in_call" : "connecting"))
       setStatusNote(
-        videoCallMode
-          ? `Dialing ${prettyClientPhone(clean)} & sending 1-tap Camera Link to their phone...`
-          : `Dialing ${prettyClientPhone(clean)}...`
+        `Ringing & merging ${prettyClientPhone(clean)} into this call${
+          videoCallMode ? " + sending Camera Link" : ""
+        }...`
       )
       saveContactPhoneLocal(clean, targetName, targetEmail)
 
-      // In Video Call mode, simultaneously push the 1-tap Camera Link to their phone (Email push + SMS)!
-      if (videoCallMode) {
-        void dispatchCameraInvitePush(clean, false)
-      }
-
       try {
-        const res = await fetch("/api/connectin/voice/token", {
+        // Ensure host browser is connected once to `inlineConfName` so unlimited numbers can be merged in!
+        if (!callRef.current) {
+          const res = await fetch("/api/connectin/voice/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "save_contact_phone",
+              contactName: targetName,
+              contactEmail: targetEmail,
+              phone: clean,
+              identity: callerEmail || callerName,
+            }),
+          })
+          const data = await res.json()
+          if (!res.ok || !data?.token) {
+            throw new Error(data?.error || "Could not initialize carrier call.")
+          }
+          const { Device } = await import("@twilio/voice-sdk")
+          const device = new Device(data.token, { codecPreferences: ["opus", "pcmu"] as any })
+          deviceRef.current = device
+          const call = await device.connect({
+            params: { ConferenceRoom: inlineConfName, CallerName: callerName },
+          })
+          callRef.current = call
+          call.on("accept", () => {
+            setElapsedSec(0)
+            setPhase("in_call")
+          })
+          call.on("disconnect", () => {
+            callRef.current = null
+            setPhase("ended")
+            setStatusNote("Cell phone conference ended.")
+          })
+          call.on("error", (e: any) => {
+            setPhase("error")
+            setStatusNote(e?.message || "Carrier call failed.")
+          })
+        }
+
+        const addRes = await fetch("/api/connectin/voice/conference-add", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            action: "save_contact_phone",
-            contactName: targetName,
-            contactEmail: targetEmail,
-            phone: clean,
-            identity: callerEmail || callerName,
+            action: "add",
+            callId: inlineConfName,
+            conferenceName: inlineConfName,
+            callMode: videoCallMode ? "video" : "audio",
+            callerName,
+            callerEmail,
+            targetPhone: clean,
+            targetName: bridgedLegsRef.current.length === 0 ? targetName : clean,
+            forceCellSim: true,
           }),
-        })
-        const data = await res.json()
-        if (!res.ok || !data?.token) {
-          throw new Error(data?.error || "Could not initialize carrier call.")
-        }
-        const { Device } = await import("@twilio/voice-sdk")
-        const device = new Device(data.token, { codecPreferences: ["opus", "pcmu"] as any })
-        deviceRef.current = device
-        const call = await device.connect({
-          params: { To: clean, CallerName: callerName },
-        })
-        callRef.current = call
-        call.on("ringing", () => {
-          setPhase("ringing")
-          setStatusNote(
-            videoCallMode
-              ? `📱 Ringing ${prettyClientPhone(clean)} + Camera Link sent! Tell them to tap the link to turn on camera.`
-              : `📱 Ringing ${prettyClientPhone(clean)} on cell network...`
-          )
-        })
-        call.on("accept", () => {
-          setElapsedSec(0)
+        }).then((r) => r.json())
+
+        if (addRes?.cellCallSid) {
+          const legLabel = addRes.recipient?.name || prettyClientPhone(clean)
+          setBridgedLegs((prev) => [
+            ...prev.filter((p) => p.phone !== clean),
+            { callSid: addRes.cellCallSid, label: legLabel, phone: clean },
+          ])
+          setPhoneInput("")
           setPhase("in_call")
           setStatusNote(
-            videoCallMode
-              ? `🟢 Voice live! Have ${targetName} tap the Camera Link (Email/WhatsApp/SMS) to turn on their camera.`
-              : `🟢 Cell Phone Bridged Live (${prettyClientPhone(clean)})`
+            `🟢 Merged ${prettyClientPhone(clean)}! Enter another number & click "+ Add Person" to add more people.`
           )
-        })
-        call.on("disconnect", () => {
-          callRef.current = null
-          setPhase("ended")
-          setStatusNote("Cell phone voice line ended.")
-        })
-        call.on("error", (e: any) => {
-          setPhase("error")
-          setStatusNote(e?.message || "Carrier call failed.")
-        })
+        } else {
+          setStatusNote(addRes?.cellDialError || "Invited participant on ConnectLn!")
+        }
       } catch (err: any) {
         setPhase("error")
         setStatusNote(err?.message || "Allow microphone access to ring cell phone.")
       }
     },
-    [callerEmail, callerName, dispatchCameraInvitePush, hangupCell, targetEmail, targetName, videoCallMode]
+    [callerEmail, callerName, inlineConfName, targetEmail, targetName, videoCallMode]
   )
 
   useEffect(() => {
@@ -950,33 +1154,46 @@ export function ConnectLnInlineCellBridgeBar({
             type="tel"
             value={phoneInput}
             onChange={(e) => setPhoneInput(e.target.value)}
-            placeholder="Cell # (e.g. 410-841-8358)"
-            className="w-38 rounded-lg bg-slate-950 border border-slate-700 px-2.5 py-1 text-xs font-mono text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-400"
+            placeholder={
+              bridgedLegs.length > 0
+                ? "Add another # (e.g. 410-841-8358)"
+                : "Cell # (e.g. 410-841-8358)"
+            }
+            className="w-42 rounded-lg bg-slate-950 border border-slate-700 px-2.5 py-1 text-xs font-mono text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-400"
           />
 
-          {phase === "connecting" || phase === "ringing" || phase === "in_call" ? (
+          <button
+            type="button"
+            onClick={() => dialCellNow(phoneInput)}
+            style={{ color: "#FFFFFF" }}
+            className="rounded-lg bg-emerald-600 hover:bg-emerald-500 px-2.5 py-1.5 text-[11px] font-extrabold flex items-center gap-1 cursor-pointer"
+          >
+            {bridgedLegs.length > 0 ? (
+              <>
+                <UserPlus className="h-3.5 w-3.5" />
+                <span>+ Add Person</span>
+              </>
+            ) : (
+              <>
+                <Phone className="h-3.5 w-3.5" />
+                <span>{videoCallMode ? "Ring Cell + Link" : "Ring Cell Live"}</span>
+              </>
+            )}
+          </button>
+
+          {(phase === "connecting" || phase === "ringing" || phase === "in_call") && (
             <button
               type="button"
               onClick={() => {
                 hangupCell()
                 setPhase("ended")
-                setStatusNote("Cell phone voice line disconnected.")
+                setStatusNote("All cell phone lines disconnected.")
               }}
               style={{ color: "#FFFFFF" }}
               className="rounded-lg bg-rose-600 hover:bg-rose-500 px-2.5 py-1.5 text-[11px] font-extrabold flex items-center gap-1 cursor-pointer"
             >
               <PhoneOff className="h-3.5 w-3.5" />
-              <span>Hang Up Cell</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => dialCellNow(phoneInput)}
-              style={{ color: "#FFFFFF" }}
-              className="rounded-lg bg-emerald-600 hover:bg-emerald-500 px-2.5 py-1.5 text-[11px] font-extrabold flex items-center gap-1 cursor-pointer"
-            >
-              <Phone className="h-3.5 w-3.5" />
-              <span>{videoCallMode ? "Ring Cell + Link" : "Ring Cell Live"}</span>
+              <span>End Cell ({bridgedLegs.length || 1})</span>
             </button>
           )}
 
@@ -1018,6 +1235,37 @@ export function ConnectLnInlineCellBridgeBar({
           </button>
         </div>
       </div>
+
+      {bridgedLegs.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+          {bridgedLegs.map((leg) => (
+            <span
+              key={leg.callSid}
+              className="inline-flex items-center gap-1.5 rounded-full bg-emerald-950/80 border border-emerald-400/40 px-2.5 py-0.5 text-[10.5px] font-bold text-emerald-200"
+            >
+              <span>🟢 {leg.label} ({prettyClientPhone(leg.phone)})</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setBridgedLegs((prev) => prev.filter((x) => x.callSid !== leg.callSid))
+                  fetch("/api/connectin/voice/conference-add", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      action: "hangup_participant",
+                      callSid: leg.callSid,
+                    }),
+                  }).catch(() => {})
+                }}
+                className="text-rose-300 hover:text-white cursor-pointer"
+                title="Remove this phone from call"
+              >
+                ✕
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
 
       {showQrModal && (
         <div className="rounded-xl bg-slate-950/95 border border-emerald-500/40 p-3 flex flex-col sm:flex-row items-center justify-between gap-3">

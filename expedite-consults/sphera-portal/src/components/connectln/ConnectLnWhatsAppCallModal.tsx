@@ -16,6 +16,9 @@ import {
   CheckCircle2,
   Download,
   Copy,
+  UserPlus,
+  Users,
+  Search,
   X,
 } from "lucide-react"
 import {
@@ -105,7 +108,6 @@ export function ConnectLnMyPhoneNumberCard({
     }
     window.addEventListener("beforeinstallprompt", onBeforeInstall)
 
-    // Register service worker quietly & check registration status
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
         .register("/sw.js", { scope: "/" })
@@ -383,6 +385,33 @@ function RemoteStreamAudioPlayer({ stream }: { stream: MediaStream }) {
   )
 }
 
+interface RemoteWebRtcParticipant {
+  userId: string
+  peerId?: string
+  name: string
+  isVideoOn: boolean
+  isMuted: boolean
+  liveFrame?: string | null
+}
+
+interface ConferenceCellLeg {
+  id: string
+  callSid?: string
+  name: string
+  phone: string
+  avatar?: string
+  status: "dialing" | "ringing" | "in-progress" | "ended"
+}
+
+interface DirectoryContactOption {
+  name: string
+  phone: string
+  prettyPhone: string
+  email?: string
+  avatar?: string
+  headline?: string
+}
+
 export interface ConnectLnWhatsAppCallModalProps {
   open: boolean
   onClose: () => void
@@ -400,11 +429,10 @@ export interface ConnectLnWhatsAppCallModalProps {
 }
 
 /**
- * Full-Screen WhatsApp-Style Direct Voice & Video Call Experience:
- * - Routes calls by phone number (+1, +233, +44, etc.) over WebRTC + Twilio TURN
- * - Full-screen remote camera + floating PiP self-view
- * - Front / Back camera flip (`user` <-> `environment`), 1-tap Voice <-> Video toggle,
- *   automatic Web Push wake-up, and seamless hybrid carrier fallback.
+ * Full-Screen Multi-Person WhatsApp-Style Direct & Group Voice/Video Call Experience:
+ * - Supports 1-on-1 AND Multi-Person Group Calls (`➕ Add Person` mid-call!)
+ * - Bridges unlimited WebRTC video/voice peers AND multiple physical cell phones via Twilio `<Conference>`
+ * - Seamless handoff: if a cell participant taps their Camera Link, their duplicate SIM leg drops & upgrades to HD Video!
  */
 export function ConnectLnWhatsAppCallModal({
   open,
@@ -432,9 +460,21 @@ export function ConnectLnWhatsAppCallModal({
   const [recipientAvatar, setRecipientAvatar] = useState<string>(targetAvatar || "")
   const [callStatus, setCallStatus] = useState<"calling" | "ringing" | "connected" | "ended">("calling")
   const [elapsedSec, setElapsedSec] = useState<number>(0)
-  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null)
-  const [remoteFallbackFrame, setRemoteFallbackFrame] = useState<string>("")
-  const [remoteIsVideoOn, setRemoteIsVideoOn] = useState<boolean>(true)
+
+  // Multi-peer WebRTC streams + Multi-leg Cell Phone Conference participants
+  const [remoteStreamsMap, setRemoteStreamsMap] = useState<Record<string, MediaStream>>({})
+  const [remoteWebRtcPeers, setRemoteWebRtcPeers] = useState<RemoteWebRtcParticipant[]>([])
+  const [cellLegs, setCellLegs] = useState<ConferenceCellLeg[]>([])
+
+  // Add People Drawer state
+  const [showAddPeopleDrawer, setShowAddPeopleDrawer] = useState<boolean>(false)
+  const [addCountryCode, setAddCountryCode] = useState<string>("+1")
+  const [addPhoneInput, setAddPhoneInput] = useState<string>("")
+  const [contactSearch, setContactSearch] = useState<string>("")
+  const [directoryContacts, setDirectoryContacts] = useState<DirectoryContactOption[]>([])
+  const [isAddingPerson, setIsAddingPerson] = useState<boolean>(false)
+  const [addFeedbackMsg, setAddFeedbackMsg] = useState<string>("")
+
   const [showShareSheet, setShowShareSheet] = useState<boolean>(false)
   const [joinLinkUrl, setJoinLinkUrl] = useState<string>("")
   const [whatsappShareUrl, setWhatsappShareUrl] = useState<string>("")
@@ -453,6 +493,7 @@ export function ConnectLnWhatsAppCallModal({
   })
 
   const localVideoRef = useRef<HTMLVideoElement | null>(null)
+  const gridLocalVideoRef = useRef<HTMLVideoElement | null>(null)
   const offscreenVideoRef = useRef<HTMLVideoElement | null>(null)
   const localStreamRef = useRef<MediaStream | null>(null)
   const [localStreamState, setLocalStreamState] = useState<MediaStream | null>(null)
@@ -467,10 +508,17 @@ export function ConnectLnWhatsAppCallModal({
   const latestAudioChunkRef = useRef<EncodedVoiceChunk | undefined>(undefined)
   const recentAudioChunksRef = useRef<EncodedVoiceChunk[]>([])
   const voicePlayerRef = useRef<GaplessRemoteVoicePlayer | null>(null)
+
+  // Twilio Browser Conference Host Connection (`ConferenceRoom = conf_<callId>`)
   const pstnDeviceRef = useRef<any>(null)
-  const pstnCallRef = useRef<any>(null)
-  const pstnFallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const hasWebRtcPeerJoinedRef = useRef<boolean>(false)
+  const pstnConferenceCallRef = useRef<any>(null)
+  const isJoiningConfRef = useRef<boolean>(false)
+  const cachedVoiceTokenRef = useRef<string>("")
+  const cellLegsRef = useRef<ConferenceCellLeg[]>([])
+
+  useEffect(() => {
+    cellLegsRef.current = cellLegs
+  }, [cellLegs])
 
   useEffect(() => {
     if (initialCallId) setCallId(initialCallId)
@@ -480,15 +528,11 @@ export function ConnectLnWhatsAppCallModal({
     setIsVideoOn(initialMode === "video")
   }, [initialMode, open])
 
-  const hangupPstnLegOnly = useCallback(() => {
-    if (pstnFallbackTimerRef.current) {
-      clearTimeout(pstnFallbackTimerRef.current)
-      pstnFallbackTimerRef.current = null
-    }
+  const hangupBrowserConferenceConnection = useCallback(() => {
     try {
-      if (pstnCallRef.current) {
-        pstnCallRef.current.disconnect?.()
-        pstnCallRef.current = null
+      if (pstnConferenceCallRef.current) {
+        pstnConferenceCallRef.current.disconnect?.()
+        pstnConferenceCallRef.current = null
       }
     } catch {}
     try {
@@ -497,10 +541,11 @@ export function ConnectLnWhatsAppCallModal({
         pstnDeviceRef.current = null
       }
     } catch {}
+    isJoiningConfRef.current = false
   }, [])
 
   const stopAllMedia = useCallback(() => {
-    hangupPstnLegOnly()
+    hangupBrowserConferenceConnection()
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((t) => t.stop())
       localStreamRef.current = null
@@ -518,13 +563,183 @@ export function ConnectLnWhatsAppCallModal({
       } catch {}
       peerRef.current = null
     }
-  }, [])
+  }, [hangupBrowserConferenceConnection])
+
+  const ensureBrowserJoinedTwilioConference = useCallback(
+    async (conferenceName: string, providedJwt?: string) => {
+      if (pstnConferenceCallRef.current || isJoiningConfRef.current) return
+      isJoiningConfRef.current = true
+      try {
+        let jwt = providedJwt || cachedVoiceTokenRef.current
+        if (!jwt) {
+          const qs = new URLSearchParams({
+            identity: callerEmail || callerName || "connectln_host",
+          })
+          const r = await fetch(`/api/connectin/voice/token?${qs.toString()}`, {
+            cache: "no-store",
+          })
+          const d = await r.json()
+          jwt = d?.token || ""
+        }
+        if (!jwt) {
+          isJoiningConfRef.current = false
+          return
+        }
+        cachedVoiceTokenRef.current = jwt
+
+        const { Device } = await import("@twilio/voice-sdk")
+        const device = new Device(jwt, {
+          codecPreferences: ["opus", "pcmu"] as any,
+          enableImprovedSignalingErrorPrecision: true,
+        })
+        pstnDeviceRef.current = device
+
+        const confCall = await device.connect({
+          params: {
+            ConferenceRoom: conferenceName,
+            CallerName: callerName,
+          },
+        })
+        pstnConferenceCallRef.current = confCall
+        if (isMicMuted) {
+          try {
+            confCall.mute?.(true)
+          } catch {}
+        }
+        confCall.on("disconnect", () => {
+          pstnConferenceCallRef.current = null
+          isJoiningConfRef.current = false
+        })
+      } catch (err: any) {
+        console.warn("[ConnectLn Conference Audio] notice:", err?.message)
+      } finally {
+        isJoiningConfRef.current = false
+      }
+    },
+    [callerEmail, callerName, isMicMuted]
+  )
+
+  const addPersonToActiveCall = useCallback(
+    async (params: {
+      targetPhone?: string
+      targetName?: string
+      targetEmail?: string
+      targetAvatar?: string
+      forceCellSim?: boolean
+    }) => {
+      setIsAddingPerson(true)
+      setAddFeedbackMsg("")
+      try {
+        const myPhone = getMyLinkedConnectLnPhone()
+        const res = await fetch("/api/connectin/voice/conference-add", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "add",
+            callId,
+            callMode: isVideoOn ? "video" : "audio",
+            hostUserId: localPeerUid,
+            callerName,
+            callerPhone: myPhone || undefined,
+            callerEmail,
+            callerAvatar,
+            targetPhone: params.targetPhone,
+            targetName: params.targetName,
+            targetEmail: params.targetEmail,
+            forceCellSim: params.forceCellSim,
+          }),
+        })
+        const data = await res.json()
+        if (!res.ok || !data?.ok) {
+          setAddFeedbackMsg(data?.error || "Could not ring participant.")
+          return data
+        }
+
+        if (data.carrierVoiceToken) {
+          cachedVoiceTokenRef.current = data.carrierVoiceToken
+        }
+        if (data.joinUrl) setJoinLinkUrl(data.joinUrl)
+        if (data.whatsappShareUrl) setWhatsappShareUrl(data.whatsappShareUrl)
+        if (data.nativeSmsHref) setNativeSmsHref(data.nativeSmsHref)
+
+        const addedName = data.recipient?.name || params.targetName || "Participant"
+        const addedPhone = data.recipient?.phone || params.targetPhone || ""
+        const addedAvatar = data.recipient?.avatar || params.targetAvatar || ""
+
+        if (data.cellCallSid && data.conferenceName) {
+          // Connect our browser mic/speaker into the shared Twilio `<Conference>` room and track this cell leg!
+          void ensureBrowserJoinedTwilioConference(data.conferenceName, data.carrierVoiceToken)
+
+          setCellLegs((prev) => {
+            const filtered = prev.filter((l) => l.phone !== addedPhone && l.callSid !== data.cellCallSid)
+            return [
+              ...filtered,
+              {
+                id: data.cellCallSid,
+                callSid: data.cellCallSid,
+                name: addedName,
+                phone: addedPhone,
+                avatar: addedAvatar,
+                status: "ringing",
+              },
+            ]
+          })
+          setCallStatus((prev) => (prev === "connected" ? "connected" : "ringing"))
+          setPushBannerNote(
+            `📱 Ringing ${addedName} (${prettyClientPhone(addedPhone)}) + sent Camera Link!`
+          )
+          setAddFeedbackMsg(
+            `✓ Ringing ${addedName}'s cell phone (${prettyClientPhone(addedPhone)}) & sent Camera Link!`
+          )
+        } else {
+          setCallStatus((prev) => (prev === "connected" ? "connected" : "ringing"))
+          setPushBannerNote(`Ringing ${addedName} on ConnectLn...`)
+          setAddFeedbackMsg(
+            data.mobilePushDeliveredCount > 0 || data.emailAlertSent
+              ? `✓ Ringing ${addedName} on ConnectLn & sent instant mobile invite!`
+              : `✓ Invited ${addedName} — share link below if they aren't online yet.`
+          )
+        }
+        return data
+      } catch {
+        setAddFeedbackMsg("Network error while adding participant.")
+        return null
+      } finally {
+        setIsAddingPerson(false)
+      }
+    },
+    [
+      callId,
+      callerAvatar,
+      callerEmail,
+      callerName,
+      ensureBrowserJoinedTwilioConference,
+      isVideoOn,
+      localPeerUid,
+    ]
+  )
+
+  const removeCellLegParticipant = useCallback(
+    async (leg: ConferenceCellLeg) => {
+      setCellLegs((prev) => prev.filter((l) => l.id !== leg.id))
+      if (leg.callSid) {
+        await fetch("/api/connectin/voice/conference-add", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "hangup_participant",
+            callSid: leg.callSid,
+          }),
+        }).catch(() => {})
+      }
+    },
+    []
+  )
 
   const acquireCameraAndMic = useCallback(
     async (wantVideo: boolean, facing: "user" | "environment") => {
       if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) return
 
-      // Stop old video tracks before flipping front/back camera
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach((t) => t.stop())
         localStreamRef.current = null
@@ -547,7 +762,6 @@ export function ConnectLnWhatsAppCallModal({
             },
           })
         } catch {
-          // Video-only fallback if mobile OS holds mic on another call, then attach mic if available
           try {
             stream = await navigator.mediaDevices.getUserMedia({
               video: { facingMode: facing },
@@ -586,10 +800,12 @@ export function ConnectLnWhatsAppCallModal({
       localStreamRef.current = stream
       setLocalStreamState(stream)
 
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream
-        localVideoRef.current.muted = true
-        localVideoRef.current.play().catch(() => {})
+      for (const el of [localVideoRef.current, gridLocalVideoRef.current]) {
+        if (el) {
+          el.srcObject = stream
+          el.muted = true
+          el.play().catch(() => {})
+        }
       }
       if (typeof document !== "undefined") {
         if (!offscreenVideoRef.current) {
@@ -604,7 +820,6 @@ export function ConnectLnWhatsAppCallModal({
         offscreenVideoRef.current.play().catch(() => {})
       }
 
-      // Push updated tracks immediately to active WebRTC calls (zero-drop camera flip / video upgrade!)
       const vTrack = stream.getVideoTracks()[0]
       const aTrack = stream.getAudioTracks()[0]
       activeMediaCallsRef.current.forEach((mc, pid) => {
@@ -613,12 +828,8 @@ export function ConnectLnWhatsAppCallModal({
         const senders = pc.getSenders()
         const vSender = senders.find((s) => s.track && s.track.kind === "video")
         const aSender = senders.find((s) => s.track && s.track.kind === "audio")
-        if (vTrack && vSender) {
-          vSender.replaceTrack(vTrack).catch(() => {})
-        }
-        if (aTrack && aSender) {
-          aSender.replaceTrack(aTrack).catch(() => {})
-        }
+        if (vTrack && vSender) vSender.replaceTrack(vTrack).catch(() => {})
+        if (aTrack && aSender) aSender.replaceTrack(aTrack).catch(() => {})
         if ((vTrack && !vSender) || (aTrack && !aSender)) {
           dialPeerNowRef.current?.(pid, true)
         }
@@ -632,93 +843,35 @@ export function ConnectLnWhatsAppCallModal({
     [isMicMuted]
   )
 
-  const ringPhysicalCellPhoneLeg = useCallback(
-    async (phoneToRing: string, preMintedJwt?: string) => {
-      if (!looksLikeClientPhone(phoneToRing) || hasWebRtcPeerJoinedRef.current) return
-      const cleanPhone = normalizeClientPhone(phoneToRing)
-      hangupPstnLegOnly()
-      try {
-        let jwt = preMintedJwt || ""
-        if (!jwt) {
-          const qs = new URLSearchParams({
-            identity: callerEmail || callerName || "connectln_caller",
-            targetPhone: cleanPhone,
-          })
-          const r = await fetch(`/api/connectin/voice/token?${qs.toString()}`, {
-            cache: "no-store",
-          })
-          const d = await r.json()
-          jwt = d?.token || ""
+  // Load ConnectLn directory contacts when `Add People` drawer opens
+  useEffect(() => {
+    if (!open || !showAddPeopleDrawer) return
+    fetch("/api/connectin/calls/whatsapp?list=1", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data?.directoryMembers)) {
+          setDirectoryContacts(data.directoryMembers)
         }
-        if (!jwt || hasWebRtcPeerJoinedRef.current) return
+      })
+      .catch(() => {})
+  }, [open, showAddPeopleDrawer])
 
-        const { Device } = await import("@twilio/voice-sdk")
-        const device = new Device(jwt, {
-          codecPreferences: ["opus", "pcmu"] as any,
-          enableImprovedSignalingErrorPrecision: true,
-        })
-        pstnDeviceRef.current = device
-
-        const call = await device.connect({
-          params: {
-            To: cleanPhone,
-            CallerName: callerName,
-          },
-        })
-        pstnCallRef.current = call
-
-        call.on("ringing", () => {
-          if (!hasWebRtcPeerJoinedRef.current) {
-            setCallStatus((prev) => (prev === "connected" ? "connected" : "ringing"))
-            setPushBannerNote(
-              initialMode === "video"
-                ? `📱 Ringing ${prettyClientPhone(cleanPhone)} + sent 1-tap Camera Link to phone!`
-                : `📱 Ringing ${prettyClientPhone(cleanPhone)} on mobile network...`
-            )
-          }
-        })
-
-        call.on("accept", () => {
-          if (!hasWebRtcPeerJoinedRef.current) {
-            setCallStatus("connected")
-            setPushBannerNote(
-              initialMode === "video"
-                ? `🟢 Cell phone answered! Tap the Camera Link on the phone (Email/SMS/ConnectLn) to turn on video.`
-                : `🟢 Connected live to ${prettyClientPhone(cleanPhone)}`
-            )
-          }
-        })
-
-        call.on("disconnect", () => {
-          pstnCallRef.current = null
-          if (!hasWebRtcPeerJoinedRef.current) {
-            setCallStatus("ended")
-            stopAllMedia()
-            setTimeout(() => onClose(), 600)
-          }
-        })
-      } catch (err: any) {
-        console.warn("[WhatsApp Hybrid Cell Ring] notice:", err?.message)
-      }
-    },
-    [callerEmail, callerName, hangupPstnLegOnly, initialMode, onClose, stopAllMedia]
-  )
-
-  // Initialize call session, wake up recipient's phone via Web Push, and auto-ring physical cell phone if Web Push isn't enabled on their phone yet!
+  // Initialize initial call recipient on open
   useEffect(() => {
     if (!open) {
-      hasWebRtcPeerJoinedRef.current = false
       stopAllMedia()
-      setRemoteStream(null)
-      setRemoteFallbackFrame("")
+      setRemoteStreamsMap({})
+      setRemoteWebRtcPeers([])
+      setCellLegs([])
+      setShowAddPeopleDrawer(false)
       setElapsedSec(0)
       setCallStatus("calling")
       setPushBannerNote("")
+      setAddFeedbackMsg("")
       return
     }
 
     let cancelled = false
-    hasWebRtcPeerJoinedRef.current = false
     setRecipientName(
       looksLikeClientPhone(targetLabel) ? prettyClientPhone(targetLabel) : targetLabel || "ConnectLn Call"
     )
@@ -729,58 +882,17 @@ export function ConnectLnWhatsAppCallModal({
     acquireCameraAndMic(initialMode === "video", "user")
 
     if (!isIncomingAnswer) {
-      const myPhone = getMyLinkedConnectLnPhone()
-      fetch("/api/connectin/calls/whatsapp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "start_call",
-          callId,
-          callMode: initialMode,
-          callerName,
-          callerPhone: myPhone || undefined,
-          callerEmail,
-          callerAvatar,
-          targetPhone: targetPhone || (looksLikeClientPhone(targetLabel) ? targetLabel : undefined),
-          targetName: targetLabel,
-          targetEmail,
-        }),
+      addPersonToActiveCall({
+        targetPhone: targetPhone || (looksLikeClientPhone(targetLabel) ? targetLabel : undefined),
+        targetName: targetLabel,
+        targetEmail,
+        targetAvatar,
+      }).then((data) => {
+        if (cancelled || !data?.ok) return
+        if (data.recipient?.name) setRecipientName(data.recipient.name)
+        if (data.recipient?.phone) setRecipientPhone(data.recipient.phone)
+        if (data.recipient?.avatar) setRecipientAvatar(data.recipient.avatar)
       })
-        .then((r) => r.json())
-        .then((data) => {
-          if (cancelled || !data?.ok) return
-          const resolvedNum = data.recipient?.phone || ""
-          if (data.recipient?.name) setRecipientName(data.recipient.name)
-          if (resolvedNum) setRecipientPhone(resolvedNum)
-          if (data.recipient?.avatar) setRecipientAvatar(data.recipient.avatar)
-          if (data.joinUrl) setJoinLinkUrl(data.joinUrl)
-          if (data.whatsappShareUrl) setWhatsappShareUrl(data.whatsappShareUrl)
-          if (data.nativeSmsHref) setNativeSmsHref(data.nativeSmsHref)
-          setCallStatus((prev) => (prev === "connected" ? "connected" : "ringing"))
-
-          if (data.mobilePushDeliveredCount > 0) {
-            setPushBannerNote(`Ringing ${data.recipient?.name || "recipient"}'s mobile ConnectLn app...`)
-            // If they don't answer the mobile Web Push within 5s, automatically ring their physical cell SIM as backup!
-            if (resolvedNum) {
-              pstnFallbackTimerRef.current = setTimeout(() => {
-                if (!cancelled && !hasWebRtcPeerJoinedRef.current) {
-                  void ringPhysicalCellPhoneLeg(resolvedNum, data.carrierVoiceToken)
-                }
-              }, 5000)
-            }
-          } else if (resolvedNum) {
-            // No Mobile Phone Web Push subscription yet (even if Desktop subscribed) -> IMMEDIATELY ring their physical cell phone SIM!
-            setPushBannerNote(
-              `Dialing ${prettyClientPhone(resolvedNum)} on cell network${
-                initialMode === "video" ? " + sent Camera Link to phone" : ""
-              }...`
-            )
-            void ringPhysicalCellPhoneLeg(resolvedNum, data.carrierVoiceToken)
-          } else {
-            setPushBannerNote("Ringing on ConnectLn — tap Share below to send a direct link or dial a phone number")
-          }
-        })
-        .catch(() => {})
     } else {
       const origin = typeof window !== "undefined" ? window.location.origin : "https://conectln.com"
       setJoinLinkUrl(`${origin}/connectin?waCall=${encodeURIComponent(callId)}&mode=${initialMode}&autoAnswer=1`)
@@ -792,6 +904,55 @@ export function ConnectLnWhatsAppCallModal({
     }
   }, [open, callId])
 
+  // Poll live Twilio `<Conference>` cell leg statuses (`ringing` -> `in-progress` -> `completed`)
+  useEffect(() => {
+    if (!open || cellLegs.length === 0) return
+    const activeSids = cellLegs
+      .filter((l) => l.callSid && l.status !== "ended")
+      .map((l) => l.callSid!)
+    if (activeSids.length === 0) return
+
+    const pollCellStatuses = async () => {
+      try {
+        const res = await fetch("/api/connectin/voice/conference-add", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "status", callSids: activeSids }),
+        })
+        const data = await res.json()
+        const statuses = data?.statuses || {}
+        setCellLegs((prev) => {
+          const next: ConferenceCellLeg[] = []
+          for (const leg of prev) {
+            const st = leg.callSid ? statuses[leg.callSid]?.status : undefined
+            if (
+              st === "completed" ||
+              st === "canceled" ||
+              st === "busy" ||
+              st === "no-answer" ||
+              st === "failed"
+            ) {
+              continue
+            }
+            if (st === "in-progress") {
+              setCallStatus("connected")
+              next.push({ ...leg, status: "in-progress" })
+            } else {
+              next.push(leg)
+            }
+          }
+          if (next.length === 0 && prev.length > 0) {
+            hangupBrowserConferenceConnection()
+          }
+          return next
+        })
+      } catch {}
+    }
+
+    const interval = window.setInterval(pollCellStatuses, 2600)
+    return () => window.clearInterval(interval)
+  }, [open, cellLegs, hangupBrowserConferenceConnection])
+
   // Duration clock once connected
   useEffect(() => {
     if (!open || callStatus !== "connected") return
@@ -799,7 +960,7 @@ export function ConnectLnWhatsAppCallModal({
     return () => window.clearInterval(t)
   }, [open, callStatus])
 
-  // PeerJS WebRTC Mesh (with Twilio TURN/STUN)
+  // Multi-Peer PeerJS WebRTC Mesh (with Twilio TURN/STUN)
   useEffect(() => {
     if (!open || typeof window === "undefined") return
     let cancelled = false
@@ -818,16 +979,16 @@ export function ConnectLnWhatsAppCallModal({
 
       mc.on("stream", (rStream: MediaStream) => {
         if (cancelled) return
-        hasWebRtcPeerJoinedRef.current = true
-        hangupPstnLegOnly()
-        setPushBannerNote("")
         activeMediaCallsRef.current.set(mc.peer, mc)
         const hasVid = rStream.getVideoTracks().some((t) => t.readyState === "live" && t.enabled)
         if (hasVid) hasLiveRemoteVideoRef.current = true
-        setRemoteStream((prev) => {
-          const prevVid = Boolean(prev && prev.getVideoTracks().some((t) => t.readyState === "live"))
+        setRemoteStreamsMap((prev) => {
+          const existing = prev[mc.peer]
+          const prevVid = Boolean(
+            existing && existing.getVideoTracks().some((t) => t.readyState === "live")
+          )
           if (prevVid && !hasVid) return prev
-          return rStream
+          return { ...prev, [mc.peer]: rStream }
         })
         setCallStatus("connected")
       })
@@ -835,8 +996,14 @@ export function ConnectLnWhatsAppCallModal({
       mc.on("close", () => {
         if (activeMediaCallsRef.current.get(mc.peer) !== mc) return
         activeMediaCallsRef.current.delete(mc.peer)
-        hasLiveRemoteVideoRef.current = false
-        setRemoteStream(null)
+        setRemoteStreamsMap((prev) => {
+          const next = { ...prev }
+          delete next[mc.peer]
+          hasLiveRemoteVideoRef.current = Object.values(next).some((s) =>
+            s.getVideoTracks().some((t) => t.readyState === "live" && t.enabled)
+          )
+          return next
+        })
       })
     }
 
@@ -932,9 +1099,11 @@ export function ConnectLnWhatsAppCallModal({
     }
   }, [open, callId, localPeerUid, callerName])
 
+  const hasAnyWebRtcStream = Object.keys(remoteStreamsMap).length > 0
+
   // Fallback voice chunk capture while WebRTC stream is negotiating
   useEffect(() => {
-    if (!open || !localStreamState || Boolean(remoteStream)) {
+    if (!open || !localStreamState || hasAnyWebRtcStream) {
       latestAudioChunkRef.current = undefined
       recentAudioChunksRef.current = []
       return
@@ -953,9 +1122,9 @@ export function ConnectLnWhatsAppCallModal({
       480
     )
     return () => stop()
-  }, [open, localStreamState, isMicMuted, remoteStream])
+  }, [open, localStreamState, isMicMuted, hasAnyWebRtcStream])
 
-  // Room presence + continuous fallback camera frame sync (`/api/v1/calls`)
+  // Room presence + multi-participant camera frame sync (`/api/v1/calls`)
   useEffect(() => {
     if (!open) return
     let mounted = true
@@ -967,7 +1136,7 @@ export function ConnectLnWhatsAppCallModal({
       if (!mounted) return
       const now = Date.now()
       const vidEl =
-        [localVideoRef.current, offscreenVideoRef.current].find(
+        [localVideoRef.current, gridLocalVideoRef.current, offscreenVideoRef.current].find(
           (v) => v && v.readyState >= 2 && v.videoWidth > 0
         ) || null
 
@@ -1015,8 +1184,8 @@ export function ConnectLnWhatsAppCallModal({
             is_video_on: isVideoOn,
             webrtc_connected: hasLiveRemoteVideoRef.current,
             live_frame: isVideoOn ? lastCapturedFrameRef.current : null,
-            live_audio_chunk: !remoteStream && !isMicMuted ? latestAudioChunkRef.current : undefined,
-            recent_audio_chunks: !remoteStream && !isMicMuted ? recentAudioChunksRef.current : undefined,
+            live_audio_chunk: !hasAnyWebRtcStream && !isMicMuted ? latestAudioChunkRef.current : undefined,
+            recent_audio_chunks: !hasAnyWebRtcStream && !isMicMuted ? recentAudioChunksRef.current : undefined,
           }),
         })
         const data = await res.json()
@@ -1033,27 +1202,44 @@ export function ConnectLnWhatsAppCallModal({
           (p: any) => p.user_id && p.user_id !== localPeerUid
         )
         if (remotes.length > 0) {
-          // Recipient opened ConnectLn video/voice room on their phone! Hand off cleanly from PSTN carrier leg to pure WebRTC!
-          if (!hasWebRtcPeerJoinedRef.current) {
-            hasWebRtcPeerJoinedRef.current = true
-            hangupPstnLegOnly()
-            setPushBannerNote("")
-          }
           setCallStatus("connected")
-          const primary = remotes[0]
-          if (primary.display_name && primary.display_name !== callerName) {
-            setRecipientName(primary.display_name)
+          setPushBannerNote("")
+
+          const mappedPeers: RemoteWebRtcParticipant[] = remotes.map((rp: any) => ({
+            userId: rp.user_id,
+            peerId: rp.peer_id,
+            name: rp.display_name || "Connected Participant",
+            isVideoOn: Boolean(rp.is_video_on),
+            isMuted: Boolean(rp.is_muted),
+            liveFrame:
+              typeof rp.live_frame === "string" && rp.live_frame.length > 800
+                ? rp.live_frame
+                : null,
+          }))
+          setRemoteWebRtcPeers(mappedPeers)
+
+          // If any cell-phone participant opened their Camera Link on WebRTC, drop ONLY their duplicate cell SIM leg so there is zero echo!
+          const currentCellLegs = cellLegsRef.current
+          if (currentCellLegs.length > 0) {
+            for (const leg of currentCellLegs) {
+              const matchedWebRtc = mappedPeers.some(
+                (mp) =>
+                  mp.name.trim().toLowerCase() === leg.name.trim().toLowerCase() ||
+                  (currentCellLegs.length === 1 && mappedPeers.length === 1)
+              )
+              if (matchedWebRtc) {
+                void removeCellLegParticipant(leg)
+              }
+            }
           }
-          setRemoteIsVideoOn(Boolean(primary.is_video_on))
-          if (typeof primary.live_frame === "string" && primary.live_frame.length > 800) {
-            setRemoteFallbackFrame(primary.live_frame)
-          }
+
           for (const rp of remotes) {
             if (rp.peer_id && rp.peer_id !== myPeerIdRef.current) {
               knownRemotePeerIdsRef.current.add(rp.peer_id)
               dialPeerNowRef.current?.(rp.peer_id, false)
             }
-            if (!remoteStream && (rp.recent_audio_chunks?.length || rp.live_audio_chunk)) {
+            const peerStream = rp.peer_id ? remoteStreamsMap[rp.peer_id] : undefined
+            if (!peerStream && (rp.recent_audio_chunks?.length || rp.live_audio_chunk)) {
               if (!voicePlayerRef.current) {
                 voicePlayerRef.current = new GaplessRemoteVoicePlayer()
               }
@@ -1064,6 +1250,8 @@ export function ConnectLnWhatsAppCallModal({
               }
             }
           }
+        } else {
+          setRemoteWebRtcPeers([])
         }
       } catch {}
 
@@ -1088,19 +1276,26 @@ export function ConnectLnWhatsAppCallModal({
     recipientPhone,
     targetEmail,
     isIncomingAnswer,
-    remoteStream,
+    hasAnyWebRtcStream,
+    remoteStreamsMap,
+    removeCellLegParticipant,
     onClose,
     stopAllMedia,
   ])
 
-  // Bind localVideoRef whenever localStreamState changes
+  const totalRemoteCount = remoteWebRtcPeers.length + cellLegs.length
+  const isGroupGridMode = totalRemoteCount >= 2
+
+  // Bind local video refs whenever stream or layout changes
   useEffect(() => {
-    if (localVideoRef.current && localStreamState) {
-      localVideoRef.current.srcObject = localStreamState
-      localVideoRef.current.muted = true
-      localVideoRef.current.play().catch(() => {})
+    for (const el of [localVideoRef.current, gridLocalVideoRef.current]) {
+      if (el && localStreamState) {
+        if (el.srcObject !== localStreamState) el.srcObject = localStreamState
+        el.muted = true
+        el.play().catch(() => {})
+      }
     }
-  }, [localStreamState, isVideoOn])
+  }, [localStreamState, isVideoOn, isGroupGridMode])
 
   const handleFlipCamera = async () => {
     const nextFacing = cameraFacing === "user" ? "environment" : "user"
@@ -1129,13 +1324,24 @@ export function ConnectLnWhatsAppCallModal({
         t.enabled = !next
       })
       try {
-        pstnCallRef.current?.mute?.(next)
+        pstnConferenceCallRef.current?.mute?.(next)
       } catch {}
       return next
     })
   }
 
   const handleHangup = () => {
+    const activeCellSids = cellLegsRef.current
+      .map((l) => l.callSid)
+      .filter((s): s is string => Boolean(s))
+    if (activeCellSids.length > 0) {
+      fetch("/api/connectin/voice/conference-add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        keepalive: true,
+        body: JSON.stringify({ action: "end_all", callSids: activeCellSids }),
+      }).catch(() => {})
+    }
     fetch("/api/v1/calls", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1154,97 +1360,255 @@ export function ConnectLnWhatsAppCallModal({
 
   const mins = String(Math.floor(elapsedSec / 60)).padStart(2, "0")
   const secs = String(elapsedSec % 60).padStart(2, "0")
-  const fallbackAvatarSrc =
+  const primaryPeer = remoteWebRtcPeers[0]
+  const primaryStream =
+    (primaryPeer?.peerId ? remoteStreamsMap[primaryPeer.peerId] : undefined) ||
+    Object.values(remoteStreamsMap)[0]
+  const primaryName =
+    primaryPeer?.name || cellLegs[0]?.name || recipientName || "ConnectLn Call"
+  const primaryAvatarSrc =
     recipientAvatar ||
     `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
-      recipientName || "CL"
+      primaryName || "CL"
     )}&backgroundColor=075e54`
+
+  const filteredContacts = directoryContacts.filter((c) => {
+    if (!contactSearch.trim()) return true
+    const q = contactSearch.toLowerCase()
+    return (
+      c.name.toLowerCase().includes(q) ||
+      c.phone.includes(q) ||
+      c.prettyPhone.toLowerCase().includes(q)
+    )
+  })
 
   return (
     <div className="fixed inset-0 z-[90] bg-[#0B141A] text-white flex flex-col justify-between overflow-hidden select-none">
-      {/* Remote Opus WebRTC Audio Output */}
-      {remoteStream && <RemoteStreamAudioPlayer stream={remoteStream} />}
+      {/* Global Opus WebRTC Audio Output for ALL Connected Peers */}
+      {Object.entries(remoteStreamsMap).map(([pid, st]) => (
+        <RemoteStreamAudioPlayer key={pid} stream={st} />
+      ))}
 
-      {/* FULL-SCREEN REMOTE VIDEO / AVATAR STAGE (WhatsApp Layout) */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#071E1A] via-[#0B141A] to-[#060B0E]">
-        {callStatus === "connected" && remoteIsVideoOn && remoteFallbackFrame && (
-          <img
-            src={remoteFallbackFrame}
-            alt={recipientName}
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ zIndex: 5 }}
-          />
-        )}
-
-        {remoteStream && remoteIsVideoOn && <RemoteStreamVideoRenderer stream={remoteStream} />}
-
-        {/* Centered Avatar Stage When Ringing or Audio-Only */}
-        {(callStatus !== "connected" || (!remoteStream && !remoteFallbackFrame) || !remoteIsVideoOn) && (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center px-6 text-center">
-            <div className="relative mb-5">
-              {callStatus !== "connected" && (
-                <span className="absolute -inset-3 rounded-full border-2 border-emerald-400/45 animate-ping" />
+      {/* STAGE A: MULTI-PERSON WHATSAPP GROUP CALL SPLIT GRID (2+ Remote Participants) */}
+      {isGroupGridMode ? (
+        <div className="flex-1 pt-16 pb-24 px-3 sm:px-5 overflow-y-auto">
+          <div
+            className={`h-full min-h-[70vh] grid gap-3 ${
+              totalRemoteCount + 1 <= 4
+                ? "grid-cols-1 sm:grid-cols-2"
+                : "grid-cols-2 lg:grid-cols-3"
+            }`}
+          >
+            {/* Local Self Tile */}
+            <div className="relative rounded-2xl overflow-hidden bg-[#111B21] border border-emerald-500/40 min-h-[200px] flex items-center justify-center">
+              {isVideoOn ? (
+                <video
+                  ref={gridLocalVideoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="absolute inset-0 w-full h-full object-cover"
+                  style={{ transform: cameraFacing === "user" ? "scaleX(-1)" : "none" }}
+                />
+              ) : (
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-16 h-16 rounded-full bg-emerald-700 flex items-center justify-center text-xl font-extrabold">
+                    {callerName.slice(0, 2).toUpperCase()}
+                  </div>
+                </div>
               )}
-              <img
-                src={fallbackAvatarSrc}
-                alt={recipientName}
-                className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-emerald-500/70 shadow-2xl"
-              />
+              <div className="absolute bottom-2.5 left-2.5 right-2.5 z-20 flex items-center justify-between bg-black/65 px-2.5 py-1 rounded-lg">
+                <span className="text-xs font-bold truncate">You ({callerName})</span>
+                <span className="text-[11px]">{isMicMuted ? "🔇" : "🎙️"}</span>
+              </div>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              {recipientName}
-            </h2>
-            {recipientPhone && (
-              <p className="mt-1 text-sm font-mono text-emerald-300 font-semibold">
-                {prettyClientPhone(recipientPhone)}
-              </p>
-            )}
-            <p className="mt-2 text-sm text-slate-300 font-medium">
-              {callStatus === "calling" && "Calling on ConnectLn..."}
-              {callStatus === "ringing" && "Ringing..."}
-              {callStatus === "connected" && `${mins}:${secs} · Voice Connected`}
-              {callStatus === "ended" && "Call Ended"}
-            </p>
-            {pushBannerNote && callStatus !== "connected" && (
-              <p className="mt-3 max-w-sm text-xs text-emerald-200/90 bg-emerald-950/60 border border-emerald-500/30 rounded-xl px-3.5 py-2">
-                {pushBannerNote}
-              </p>
-            )}
-          </div>
-        )}
-      </div>
 
-      {/* TOP WHATSAPP E2EE HEADER */}
-      <div className="relative z-20 pt-4 px-4 sm:px-6 flex items-start justify-between pointer-events-auto bg-gradient-to-b from-black/70 to-transparent pb-6">
-        <div>
-          <div className="flex items-center gap-1.5 text-[11px] text-emerald-300 font-semibold">
-            <Lock className="h-3 w-3" />
-            <span>End-to-end encrypted · ConnectLn Direct</span>
+            {/* WebRTC Video/Voice Participant Tiles */}
+            {remoteWebRtcPeers.map((rp, idx) => {
+              const st =
+                (rp.peerId ? remoteStreamsMap[rp.peerId] : undefined) ||
+                (idx === 0 ? Object.values(remoteStreamsMap)[0] : undefined)
+              return (
+                <div
+                  key={rp.userId}
+                  className="relative rounded-2xl overflow-hidden bg-[#111B21] border border-emerald-500/50 min-h-[200px] flex items-center justify-center"
+                >
+                  {rp.isVideoOn && rp.liveFrame && (
+                    <img
+                      src={rp.liveFrame}
+                      alt={rp.name}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      style={{ zIndex: 5 }}
+                    />
+                  )}
+                  {st && rp.isVideoOn && <RemoteStreamVideoRenderer stream={st} />}
+                  {(!rp.isVideoOn || (!st && !rp.liveFrame)) && (
+                    <div className="relative z-10 flex flex-col items-center gap-2 p-4 text-center">
+                      <img
+                        src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                          rp.name
+                        )}&backgroundColor=075e54`}
+                        alt={rp.name}
+                        className="w-18 h-18 rounded-full border-2 border-emerald-400"
+                      />
+                      <p className="text-sm font-bold text-white">{rp.name}</p>
+                    </div>
+                  )}
+                  <div className="absolute bottom-2.5 left-2.5 right-2.5 z-20 flex items-center justify-between bg-black/65 px-2.5 py-1 rounded-lg">
+                    <span className="text-xs font-bold truncate">{rp.name}</span>
+                    <span className="text-[11px] text-emerald-300">
+                      {rp.isMuted ? "🔇 Muted" : "🟢 Live"}
+                    </span>
+                  </div>
+                </div>
+              )
+            })}
+
+            {/* Bridged Physical Cell Phone Participant Tiles */}
+            {cellLegs.map((leg) => (
+              <div
+                key={leg.id}
+                className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[#0F2922] to-[#111B21] border border-emerald-400/50 min-h-[200px] flex flex-col items-center justify-center p-4 text-center"
+              >
+                <button
+                  type="button"
+                  onClick={() => removeCellLegParticipant(leg)}
+                  className="absolute top-2.5 right-2.5 z-20 h-7 w-7 rounded-full bg-black/50 hover:bg-rose-600 text-white flex items-center justify-center text-xs cursor-pointer"
+                  title="Remove from call"
+                >
+                  ✕
+                </button>
+                <div className="relative mb-2.5">
+                  {leg.status === "ringing" && (
+                    <span className="absolute -inset-2 rounded-full border-2 border-amber-400/60 animate-ping" />
+                  )}
+                  <img
+                    src={
+                      leg.avatar ||
+                      `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                        leg.name
+                      )}&backgroundColor=7c4225`
+                    }
+                    alt={leg.name}
+                    className="relative w-16 h-16 rounded-full object-cover border-2 border-emerald-400"
+                  />
+                </div>
+                <p className="text-sm font-extrabold text-white truncate max-w-full">{leg.name}</p>
+                <p className="text-xs font-mono text-emerald-300">
+                  {prettyClientPhone(leg.phone)}
+                </p>
+                <span
+                  className={`mt-2 rounded-full px-2.5 py-0.5 text-[10px] font-extrabold ${
+                    leg.status === "in-progress"
+                      ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/40"
+                      : "bg-amber-500/20 text-amber-200 border border-amber-400/40"
+                  }`}
+                >
+                  {leg.status === "in-progress" ? "🟢 Cell Phone Bridged" : "📱 Ringing Cell..."}
+                </span>
+              </div>
+            ))}
           </div>
-          {callStatus === "connected" && (
-            <div className="mt-1">
-              <p className="text-base font-extrabold text-white leading-tight">{recipientName}</p>
-              <p className="text-xs font-mono text-emerald-300">
-                {mins}:{secs}
-                {recipientPhone ? ` · ${prettyClientPhone(recipientPhone)}` : ""}
+        </div>
+      ) : (
+        /* STAGE B: CLASSIC 1-ON-1 FULL-SCREEN WHATSAPP VIEW */
+        <div className="absolute inset-0 bg-gradient-to-b from-[#071E1A] via-[#0B141A] to-[#060B0E]">
+          {callStatus === "connected" && primaryPeer?.isVideoOn && primaryPeer.liveFrame && (
+            <img
+              src={primaryPeer.liveFrame}
+              alt={primaryName}
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{ zIndex: 5 }}
+            />
+          )}
+
+          {primaryStream && (primaryPeer?.isVideoOn ?? true) && (
+            <RemoteStreamVideoRenderer stream={primaryStream} />
+          )}
+
+          {(callStatus !== "connected" ||
+            (!primaryStream && !primaryPeer?.liveFrame) ||
+            primaryPeer?.isVideoOn === false) && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center px-6 text-center">
+              <div className="relative mb-5">
+                {callStatus !== "connected" && (
+                  <span className="absolute -inset-3 rounded-full border-2 border-emerald-400/45 animate-ping" />
+                )}
+                <img
+                  src={primaryAvatarSrc}
+                  alt={primaryName}
+                  className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-emerald-500/70 shadow-2xl"
+                />
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                {primaryName}
+              </h2>
+              {recipientPhone && (
+                <p className="mt-1 text-sm font-mono text-emerald-300 font-semibold">
+                  {prettyClientPhone(recipientPhone)}
+                </p>
+              )}
+              <p className="mt-2 text-sm text-slate-300 font-medium">
+                {callStatus === "calling" && "Calling on ConnectLn..."}
+                {callStatus === "ringing" && "Ringing..."}
+                {callStatus === "connected" && `${mins}:${secs} · Connected`}
+                {callStatus === "ended" && "Call Ended"}
               </p>
+              {pushBannerNote && (
+                <p className="mt-3 max-w-sm text-xs text-emerald-200/90 bg-emerald-950/60 border border-emerald-500/30 rounded-xl px-3.5 py-2">
+                  {pushBannerNote}
+                </p>
+              )}
             </div>
           )}
         </div>
+      )}
 
-        <button
-          type="button"
-          onClick={handleHangup}
-          className="h-9 w-9 rounded-full bg-black/45 hover:bg-black/70 border border-white/15 flex items-center justify-center text-white cursor-pointer"
-          title="Close Call"
-        >
-          <X className="h-4 w-4" />
-        </button>
+      {/* TOP WHATSAPP E2EE HEADER WITH `➕ ADD PERSON` BUTTON */}
+      <div className="fixed top-0 left-0 right-0 z-30 pt-3.5 px-4 sm:px-6 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent pb-5">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5 text-[11px] text-emerald-300 font-semibold">
+            <Lock className="h-3 w-3 shrink-0" />
+            <span className="truncate">
+              End-to-end encrypted · {totalRemoteCount + 1} in call
+            </span>
+          </div>
+          {callStatus === "connected" && (
+            <p className="text-xs font-mono text-white/90 mt-0.5">
+              {mins}:{secs} · {isGroupGridMode ? "Group Call Live" : primaryName}
+            </p>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              setShowAddPeopleDrawer((v) => !v)
+              setShowShareSheet(false)
+            }}
+            style={{ color: "#FFFFFF" }}
+            className="rounded-full bg-emerald-600 hover:bg-emerald-500 px-3.5 py-2 text-xs font-extrabold flex items-center gap-1.5 shadow-lg cursor-pointer"
+            title="Add more people or phone numbers to this call"
+          >
+            <UserPlus className="h-4 w-4" />
+            <span>Add Person</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleHangup}
+            className="h-9 w-9 rounded-full bg-black/50 hover:bg-black/75 border border-white/15 flex items-center justify-center text-white cursor-pointer"
+            title="Close Call"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
-      {/* FLOATING PICTURE-IN-PICTURE LOCAL SELF-VIEW (Top-Right, WhatsApp Style) */}
-      {isVideoOn && (
-        <div className="fixed top-16 right-4 sm:right-6 z-30 w-28 h-40 sm:w-36 sm:h-48 rounded-2xl overflow-hidden border-2 border-white/30 bg-black shadow-2xl">
+      {/* FLOATING PICTURE-IN-PICTURE LOCAL SELF-VIEW (1-on-1 Mode Only) */}
+      {!isGroupGridMode && isVideoOn && (
+        <div className="fixed top-16 right-4 sm:right-6 z-25 w-28 h-40 sm:w-36 sm:h-48 rounded-2xl overflow-hidden border-2 border-white/30 bg-black shadow-2xl">
           <video
             ref={localVideoRef}
             autoPlay
@@ -1264,12 +1628,170 @@ export function ConnectLnWhatsAppCallModal({
         </div>
       )}
 
+      {/* SLIDE-OVER `➕ ADD PEOPLE TO CALL` DRAWER (Call Continues Live Behind!) */}
+      {showAddPeopleDrawer && (
+        <div className="fixed inset-x-0 bottom-22 z-40 mx-auto w-[94vw] max-w-lg rounded-3xl bg-[#111B21]/98 border-2 border-emerald-500/50 p-4 shadow-2xl max-h-[68vh] flex flex-col gap-3">
+          <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-emerald-400" />
+              <h3 className="text-sm font-extrabold text-white">
+                Add People to This Call ({totalRemoteCount + 1} Active)
+              </h3>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowAddPeopleDrawer(false)}
+              className="h-7 w-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-xs text-white cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* 1. Dial & Merge Any Phone Number (Any Country Code) */}
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault()
+              if (!addPhoneInput.trim()) return
+              const raw = addPhoneInput.trim()
+              const dialTarget =
+                raw.startsWith("+") || /[a-zA-Z]/.test(raw)
+                  ? raw
+                  : buildInternationalPhone(addCountryCode, raw)
+              setAddPhoneInput("")
+              await addPersonToActiveCall({
+                targetPhone: looksLikeClientPhone(dialTarget) ? dialTarget : undefined,
+                targetName: dialTarget,
+                forceCellSim: looksLikeClientPhone(dialTarget),
+              })
+            }}
+            className="flex flex-wrap items-center gap-1.5 bg-[#0B141A] border border-white/15 rounded-2xl p-2"
+          >
+            <select
+              value={addCountryCode}
+              onChange={(e) => setAddCountryCode(e.target.value)}
+              className="rounded-xl bg-[#1F2C34] border border-white/15 px-2 py-2 text-xs font-semibold text-white focus:outline-none"
+            >
+              {COUNTRY_DIAL_CODES.map((c) => (
+                <option key={c.label} value={c.code}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+            <input
+              type="tel"
+              value={addPhoneInput}
+              onChange={(e) => setAddPhoneInput(e.target.value)}
+              placeholder="Phone # or @name to merge in..."
+              className="flex-1 min-w-[140px] rounded-xl bg-[#1F2C34] border border-white/15 px-3 py-2 text-xs font-mono text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-400"
+            />
+            <button
+              type="submit"
+              disabled={isAddingPerson}
+              style={{ color: "#FFFFFF" }}
+              className="rounded-xl bg-emerald-600 hover:bg-emerald-500 px-3.5 py-2 text-xs font-extrabold flex items-center gap-1 cursor-pointer disabled:opacity-50"
+            >
+              <UserPlus className="h-3.5 w-3.5" />
+              <span>{isAddingPerson ? "Ringing..." : "Ring & Add"}</span>
+            </button>
+          </form>
+
+          {addFeedbackMsg && (
+            <p className="text-xs font-semibold text-emerald-300 bg-emerald-950/60 border border-emerald-500/30 rounded-xl px-3 py-1.5">
+              {addFeedbackMsg}
+            </p>
+          )}
+
+          {/* 2. Search & 1-Tap Add From ConnectLn Contacts */}
+          <div className="relative">
+            <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-2.5" />
+            <input
+              type="text"
+              value={contactSearch}
+              onChange={(e) => setContactSearch(e.target.value)}
+              placeholder="Search ConnectLn contacts to add..."
+              className="w-full rounded-xl bg-[#1F2C34] border border-white/10 pl-8 pr-3 py-1.5 text-xs text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-400"
+            />
+          </div>
+
+          <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 max-h-48">
+            {filteredContacts.map((c) => {
+              const alreadyInCall =
+                cellLegs.some((l) => l.phone === c.phone) ||
+                remoteWebRtcPeers.some((p) => p.name.toLowerCase() === c.name.toLowerCase())
+              return (
+                <div
+                  key={c.phone + c.name}
+                  className="flex items-center justify-between gap-2 rounded-xl bg-[#1F2C34]/75 hover:bg-[#1F2C34] px-3 py-2 border border-white/5"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <img
+                      src={
+                        c.avatar ||
+                        `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                          c.name
+                        )}&backgroundColor=075e54`
+                      }
+                      alt={c.name}
+                      className="w-8 h-8 rounded-full object-cover shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-white truncate">{c.name}</p>
+                      <p className="text-[10.5px] font-mono text-emerald-300 truncate">
+                        {c.prettyPhone}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={isAddingPerson || alreadyInCall}
+                    onClick={() =>
+                      addPersonToActiveCall({
+                        targetPhone: c.phone,
+                        targetName: c.name,
+                        targetEmail: c.email,
+                        targetAvatar: c.avatar,
+                      })
+                    }
+                    style={{ color: "#FFFFFF" }}
+                    className={`rounded-lg px-3 py-1.5 text-[11px] font-extrabold shrink-0 cursor-pointer ${
+                      alreadyInCall
+                        ? "bg-slate-700 text-slate-300 cursor-default"
+                        : "bg-emerald-600 hover:bg-emerald-500"
+                    }`}
+                  >
+                    {alreadyInCall ? "In Call" : "+ Add"}
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* 3. Quick Copy Group Invite Link */}
+          {joinLinkUrl && (
+            <div className="pt-1 border-t border-white/10 flex items-center justify-between gap-2">
+              <span className="text-[11px] text-slate-300 truncate font-mono">{joinLinkUrl}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard?.writeText(joinLinkUrl).catch(() => {})
+                  setAddFeedbackMsg("✓ Copied group call link! Anyone who taps it joins live.")
+                }}
+                className="rounded-lg bg-white/15 hover:bg-white/25 px-2.5 py-1 text-[11px] font-bold text-white shrink-0 flex items-center gap-1 cursor-pointer"
+              >
+                <Copy className="h-3 w-3" />
+                <span>Copy Group Link</span>
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* OPTIONAL INVITE / HYBRID CARRIER FALLBACK DRAWER */}
       {showShareSheet && (
-        <div className="relative z-30 mx-auto w-[92vw] max-w-md mb-2 rounded-2xl bg-[#111B21]/95 border border-emerald-500/40 p-3.5 shadow-2xl space-y-2.5">
+        <div className="fixed inset-x-0 bottom-22 z-40 mx-auto w-[92vw] max-w-md rounded-2xl bg-[#111B21]/95 border border-emerald-500/40 p-3.5 shadow-2xl space-y-2.5">
           <div className="flex items-center justify-between">
             <p className="text-xs font-extrabold text-emerald-300">
-              Invite or Bridge Offline Phone Number
+              Share Group Call Link or Bridge Carrier SIM
             </p>
             <button
               type="button"
@@ -1323,7 +1845,7 @@ export function ConnectLnWhatsAppCallModal({
                 className="rounded-xl bg-[#7C4225] hover:bg-[#5E3119] px-3 py-2 text-xs font-bold text-white flex items-center gap-1 cursor-pointer"
               >
                 <Phone className="h-3.5 w-3.5" />
-                <span>Dial Carrier SIM Voice</span>
+                <span>Open Keypad Dialer</span>
               </button>
             )}
           </div>
@@ -1331,12 +1853,28 @@ export function ConnectLnWhatsAppCallModal({
       )}
 
       {/* BOTTOM WHATSAPP FLOATING CALL CONTROLS PILL */}
-      <div className="relative z-20 pb-7 pt-4 px-4 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-center">
-        <div className="rounded-full bg-[#1F2C34]/95 border border-white/15 px-5 py-3 shadow-2xl flex items-center gap-3.5 sm:gap-5">
+      <div className="fixed bottom-0 left-0 right-0 z-30 pb-6 pt-4 px-4 bg-gradient-to-t from-black/85 to-transparent flex items-center justify-center">
+        <div className="rounded-full bg-[#1F2C34]/95 border border-white/15 px-4 sm:px-5 py-2.5 shadow-2xl flex items-center gap-2.5 sm:gap-4">
+          <button
+            type="button"
+            onClick={() => {
+              setShowAddPeopleDrawer((v) => !v)
+              setShowShareSheet(false)
+            }}
+            className={`h-11 w-11 rounded-full flex items-center justify-center cursor-pointer transition-colors ${
+              showAddPeopleDrawer
+                ? "bg-emerald-600 text-white"
+                : "bg-emerald-600/25 hover:bg-emerald-600/45 text-emerald-300 border border-emerald-400/40"
+            }`}
+            title="Add Person to Call"
+          >
+            <UserPlus className="h-5 w-5" />
+          </button>
+
           <button
             type="button"
             onClick={handleFlipCamera}
-            className="h-12 w-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white cursor-pointer transition-colors"
+            className="h-11 w-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white cursor-pointer transition-colors"
             title="Flip Front / Rear Camera"
           >
             <RefreshCw className="h-5 w-5" />
@@ -1345,7 +1883,7 @@ export function ConnectLnWhatsAppCallModal({
           <button
             type="button"
             onClick={handleToggleVideo}
-            className={`h-12 w-12 rounded-full flex items-center justify-center cursor-pointer transition-colors ${
+            className={`h-11 w-11 rounded-full flex items-center justify-center cursor-pointer transition-colors ${
               isVideoOn ? "bg-white/15 hover:bg-white/25 text-white" : "bg-white text-slate-950"
             }`}
             title={isVideoOn ? "Turn Off Camera" : "Turn On Camera"}
@@ -1356,7 +1894,7 @@ export function ConnectLnWhatsAppCallModal({
           <button
             type="button"
             onClick={handleToggleMute}
-            className={`h-12 w-12 rounded-full flex items-center justify-center cursor-pointer transition-colors ${
+            className={`h-11 w-11 rounded-full flex items-center justify-center cursor-pointer transition-colors ${
               isMicMuted ? "bg-white text-slate-950" : "bg-white/15 hover:bg-white/25 text-white"
             }`}
             title={isMicMuted ? "Unmute Microphone" : "Mute Microphone"}
@@ -1366,11 +1904,14 @@ export function ConnectLnWhatsAppCallModal({
 
           <button
             type="button"
-            onClick={() => setShowShareSheet((v) => !v)}
-            className={`h-12 w-12 rounded-full flex items-center justify-center cursor-pointer transition-colors ${
+            onClick={() => {
+              setShowShareSheet((v) => !v)
+              setShowAddPeopleDrawer(false)
+            }}
+            className={`h-11 w-11 rounded-full flex items-center justify-center cursor-pointer transition-colors ${
               showShareSheet ? "bg-emerald-600 text-white" : "bg-white/10 hover:bg-white/20 text-white"
             }`}
-            title="Share Link or Dial Offline Carrier SIM"
+            title="Share Group Call Link"
           >
             <Share2 className="h-5 w-5" />
           </button>
@@ -1379,8 +1920,8 @@ export function ConnectLnWhatsAppCallModal({
             type="button"
             onClick={handleHangup}
             style={{ color: "#FFFFFF" }}
-            className="h-12 w-14 rounded-full bg-rose-600 hover:bg-rose-500 flex items-center justify-center shadow-lg cursor-pointer transition-transform active:scale-95"
-            title="End Call"
+            className="h-11 w-13 rounded-full bg-rose-600 hover:bg-rose-500 flex items-center justify-center shadow-lg cursor-pointer transition-transform active:scale-95"
+            title="End Call for All"
           >
             <PhoneOff className="h-5 w-5" />
           </button>

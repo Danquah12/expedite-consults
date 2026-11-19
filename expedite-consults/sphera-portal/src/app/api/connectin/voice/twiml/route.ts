@@ -31,11 +31,30 @@ async function buildTwimlResponse(req: NextRequest): Promise<NextResponse> {
 
   const rawTo = (params.To || params.to || "").trim()
   const rawFrom = (params.From || params.from || "").trim()
+  const rawConferenceRoom = (params.ConferenceRoom || params.conferenceRoom || "").trim()
   const primaryCallerId = normalizeDialablePhone(
     process.env.TWILIO_PHONE_NUMBER || "+12402623543"
   )
   const backupTollFreeCallerId = "+18333022830"
   const statusUrl = "https://conectln.com/api/connectin/voice/status"
+
+  // Case 0: Multi-Party Group Call Conference Bridge (`ConferenceRoom` passed from ConnectLn Browser Softphone)
+  if (rawConferenceRoom) {
+    const cleanConf = rawConferenceRoom.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 64)
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Dial>
+    <Conference startConferenceOnEnter="true" endConferenceOnExit="true" beep="false">${escapeXml(cleanConf)}</Conference>
+  </Dial>
+</Response>`
+    return new NextResponse(xml, {
+      status: 200,
+      headers: {
+        "Content-Type": "text/xml; charset=utf-8",
+        "Cache-Control": "no-store, max-age=0",
+      },
+    })
+  }
 
   // Case 1: Outbound PSTN Cell Phone Call initiated from ConnectLn Browser Softphone (`From` starts with `client:`)
   if (rawTo && looksLikePhoneNumber(rawTo)) {

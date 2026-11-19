@@ -69,11 +69,26 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    const wantList = sp.get("list") === "1"
+    const directoryMembers = wantList
+      ? Array.from(cache.values())
+          .slice(0, 35)
+          .map((m) => ({
+            phone: m.phone,
+            prettyPhone: m.prettyPhone,
+            name: m.name,
+            email: m.email,
+            avatar: m.avatar,
+            headline: m.headline,
+          }))
+      : undefined
+
     return NextResponse.json({
       ok: true,
       vapidPublicKey: vapid.publicKey,
       myRegistration,
       lookup,
+      directoryMembers,
       registeredMembersCount: cache.size,
     })
   } catch (err: any) {
