@@ -878,7 +878,33 @@ export async function GET(req: NextRequest) {
       const rosterMatch = (c.invited_roster || []).some(
         (inv) => inv.status !== "removed" && matchesTarget(inv.name, inv.email, inv.phone)
       )
-      return Boolean(primaryMatch || rosterMatch || (nameSlug.length >= 4 && cidLower.includes(nameSlug)))
+
+      // Is the viewer the CALLER (already in this call from another tab/device)?
+      // Then never ring them for their own outgoing call (e.g. DM call ids contain both names).
+      const initiatorDigits = String(c.initiator_phone || "").replace(/[^\d]/g, "")
+      const viewerIsCaller =
+        c.participants.some(
+          (p) => incomingForName && String(p.display_name || "").trim().toLowerCase() === incomingForName
+        ) ||
+        Boolean(
+          incomingPhoneDigits.length >= 7 &&
+            initiatorDigits.length >= 7 &&
+            initiatorDigits.slice(-10) === incomingPhoneDigits.slice(-10)
+        )
+      // Exception: explicitly dialing your OWN number (self-test) may still ring your other devices.
+      const targetDigits = String(c.target_recipient_phone || "").replace(/[^\d]/g, "")
+      const dialedOwnNumber = Boolean(
+        incomingPhoneDigits.length >= 7 &&
+          targetDigits.length >= 7 &&
+          targetDigits.slice(-10) === incomingPhoneDigits.slice(-10)
+      )
+      if (viewerIsCaller && !dialedOwnNumber) return false
+
+      return Boolean(
+        primaryMatch ||
+          rosterMatch ||
+          (!viewerIsCaller && nameSlug.length >= 4 && cidLower.includes(nameSlug))
+      )
     })
     return NextResponse.json({
       protocol_version: 1,

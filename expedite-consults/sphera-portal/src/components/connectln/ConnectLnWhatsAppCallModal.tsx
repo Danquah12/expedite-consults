@@ -1846,6 +1846,52 @@ export function ConnectLnWhatsAppCallModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, isIncomingAnswer, callId])
 
+  // Standard ringback tone for the CALLER while waiting for an answer (440+480 Hz, 2s on / 4s off),
+  // so outgoing calls sound like a normal ringing phone, not a busy signal.
+  const isWaitingForAnswer =
+    open &&
+    !isIncomingAnswer &&
+    (callStatus === "calling" || callStatus === "ringing") &&
+    remoteWebRtcPeers.length === 0 &&
+    (cellLegs.length === 0 || cellLegs.some((l) => l.reachable !== false))
+  useEffect(() => {
+    if (!isWaitingForAnswer || typeof window === "undefined") return
+    const Ctx = window.AudioContext || (window as any).webkitAudioContext
+    if (!Ctx) return
+    const ctx: AudioContext = new Ctx()
+    const master = ctx.createGain()
+    master.gain.value = 0.12
+    master.connect(ctx.destination)
+    const playBurst = () => {
+      try {
+        if (ctx.state === "suspended") void ctx.resume()
+        const t0 = ctx.currentTime + 0.02
+        const env = ctx.createGain()
+        env.gain.setValueAtTime(0, t0)
+        env.gain.linearRampToValueAtTime(1, t0 + 0.03)
+        env.gain.setValueAtTime(1, t0 + 1.97)
+        env.gain.linearRampToValueAtTime(0, t0 + 2.0)
+        env.connect(master)
+        for (const f of [440, 480]) {
+          const o = ctx.createOscillator()
+          o.type = "sine"
+          o.frequency.value = f
+          o.connect(env)
+          o.start(t0)
+          o.stop(t0 + 2.02)
+        }
+      } catch {}
+    }
+    playBurst()
+    const iv = window.setInterval(playBurst, 6000)
+    return () => {
+      window.clearInterval(iv)
+      try {
+        void ctx.close()
+      } catch {}
+    }
+  }, [isWaitingForAnswer])
+
   const handleHangup = () => {
     fetch("/api/v1/calls", {
       method: "POST",
