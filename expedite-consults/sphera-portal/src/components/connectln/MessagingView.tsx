@@ -15,6 +15,11 @@ import {
     WhatsAppModeWorkspace,
     MessagingWorkspaceMode,
 } from './WhatsAppMessagingModes';
+import {
+    ConnectLnInlineCellBridgeBar,
+    looksLikeClientPhone,
+    prettyClientPhone,
+} from './ConnectLnCellPhoneSoftphone';
 import { MessageActionBar, ReactionBadges, loadMembers, ShareTarget, MessageReactionKind } from './MessageActionBar';
 import { resolveUserProfilePicture, trackUserActivity } from '@/lib/connectin-storage';
 import {
@@ -3455,13 +3460,40 @@ export function MessagingView({
                         }}
                         onStartLiveCall={(callType, targetName) => {
                             if (targetName) {
-                                const matched = threads.find((t) =>
-                                    t.title.toLowerCase().includes(targetName.toLowerCase().slice(0, 6))
+                                const cleanTarget = targetName.trim();
+                                const matched = threads.find(
+                                    (t) =>
+                                        t.title.toLowerCase() === cleanTarget.toLowerCase() ||
+                                        t.title.toLowerCase().includes(cleanTarget.toLowerCase().slice(0, 6))
                                 );
                                 if (matched) {
                                     setSelectedThreadId(matched.id);
+                                } else {
+                                    const isPhone = looksLikeClientPhone(cleanTarget);
+                                    const prettyTitle = isPhone ? prettyClientPhone(cleanTarget) : cleanTarget;
+                                    const newCallThread: B2BConversationThread = {
+                                        id: `call_thread_${cleanTarget.replace(/[^a-zA-Z0-9]/g, '').slice(0, 18)}`,
+                                        channelType: 'People',
+                                        subType: 'DM',
+                                        title: prettyTitle,
+                                        subtitle: isPhone
+                                            ? 'Live Mobile Carrier & Video Bridge'
+                                            : 'ConnectLn Direct Call',
+                                        avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                                            prettyTitle
+                                        )}&backgroundColor=7c4225`,
+                                        onlineStatus: 'online',
+                                        unreadCount: 0,
+                                        lastMessage: `Started ${callType} call with ${prettyTitle}`,
+                                        lastMessageTime: 'Just now',
+                                        isVerified: true,
+                                        messages: [],
+                                    };
+                                    setThreads((prev) => [newCallThread, ...prev]);
+                                    setSelectedThreadId(newCallThread.id);
                                 }
                             }
+                            setIsCameraOn(callType === 'video');
                             setActiveCallMode(callType);
                         }}
                         onOpenScheduleModal={() => setShowScheduler(true)}
@@ -5633,6 +5665,20 @@ export function MessagingView({
                                 </button>
                             </div>
                         </div>
+
+                        {/* Live Carrier Cell Phone Bridge — Ring Recipient's Mobile Phone Directly or Text 1-Tap Video Link */}
+                        <ConnectLnInlineCellBridgeBar
+                            targetName={activeThread.title}
+                            targetEmail={activeThread.recipientEmail}
+                            callerName={currentUser?.name || 'Kwesi Asiedu'}
+                            callerEmail={currentUser?.email}
+                            roomJoinUrl={`${
+                                typeof window !== 'undefined' ? window.location.origin : 'https://conectln.com'
+                            }/connectin?tab=vibecomms&joinCall=${encodeURIComponent(activeThread.id)}`}
+                            autoDialOnMount={
+                                activeCallMode === 'audio' && looksLikeClientPhone(activeThread.title)
+                            }
+                        />
 
                         {/* Multi-Participant Stage (Local Self-View + All Connected Remote Peers) */}
                         <div

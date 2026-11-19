@@ -41,6 +41,7 @@ import {
   GaplessRemoteVoicePlayer,
   EncodedVoiceChunk,
 } from "@/lib/vibe-voice-codec"
+import { ConnectLnInlineCellBridgeBar } from "./ConnectLnCellPhoneSoftphone"
 
 export interface CallParticipantTile {
   id: string
@@ -816,7 +817,8 @@ export function VibeVideoCallStudio({
   const [urlJoinedRoomId] = useState<string | null>(() => {
     if (initialCallRoomId) return initialCallRoomId
     if (typeof window !== "undefined") {
-      const p = new URLSearchParams(window.location.search).get("joinCall")
+      const sp = new URLSearchParams(window.location.search)
+      const p = sp.get("joinCall") || sp.get("call")
       if (p) return p
     }
     return null
@@ -4562,6 +4564,13 @@ export function VibeVideoCallStudio({
               )}
             </div>
           </div>
+
+          {/* Live Carrier Cell Phone Dialer Inside Studio Invite Panel */}
+          <ConnectLnInlineCellBridgeBar
+            targetName={customInviteName || conversationName}
+            callerName={currentUserName}
+            roomJoinUrl={shareableMeetingUrl}
+          />
 
           {inviteDispatchStatus && (
             <div className="rounded-xl bg-emerald-500/20 border border-emerald-400/50 px-3.5 py-2 text-xs font-extrabold text-emerald-200 flex items-center justify-between gap-2">

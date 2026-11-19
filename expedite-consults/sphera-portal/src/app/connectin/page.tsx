@@ -345,7 +345,7 @@ export default function ConnectLnPage() {
       const inviterParam = (urlParams.get("inviter") || "").trim()
       const refParam = (urlParams.get("ref") || "").trim()
       const cidParam = (urlParams.get("cid") || "").trim()
-      const joinCallParam = urlParams.get("joinCall")
+      const joinCallParam = urlParams.get("joinCall") || urlParams.get("call")
 
       const isInviteUrl = Boolean(
         inviteParam === "accept" ||
@@ -755,7 +755,7 @@ export default function ConnectLnPage() {
       const postIdParam = (urlParams.get("postId") || "").trim()
       const postTitleParam = (urlParams.get("postTitle") || "").trim()
       const postAuthorParam = (urlParams.get("postAuthor") || "").trim()
-      const joinCallParam = urlParams.get("joinCall")
+      const joinCallParam = urlParams.get("joinCall") || urlParams.get("call")
       const inviteParam = urlParams.get("invite")
       const invitedEmailParam = (urlParams.get("invitedEmail") || "").trim()
       const invitedNameParam = (urlParams.get("invitedName") || "").trim()

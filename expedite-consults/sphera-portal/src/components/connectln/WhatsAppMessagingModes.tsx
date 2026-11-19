@@ -1,7 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { B2BConversationThread } from '@/lib/b2b-messaging-data';
+import {
+    ConnectLnCellPhoneSoftphoneModal,
+    looksLikeClientPhone,
+    prettyClientPhone,
+} from './ConnectLnCellPhoneSoftphone';
 
 export type MessagingWorkspaceMode =
     | 'chats'
@@ -660,12 +665,62 @@ export function WhatsAppModeWorkspace({
     const [statusReplyText, setStatusReplyText] = useState('');
 
     // ---- CALLS STATE ----
-    const [callLogs, setCallLogs] = useState<CallLogEntry[]>(INITIAL_CALL_LOGS);
+    const [callLogs, setCallLogs] = useState<CallLogEntry[]>(() => {
+        if (typeof window === 'undefined') return INITIAL_CALL_LOGS;
+        try {
+            const raw = window.localStorage.getItem('connectln_studio_call_logs_v1');
+            const parsed = raw ? JSON.parse(raw) : null;
+            return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_CALL_LOGS;
+        } catch {
+            return INITIAL_CALL_LOGS;
+        }
+    });
     const [callSearch, setCallSearch] = useState('');
-    const [showDialPadModal, setShowDialPadModal] = useState(false);
+    const [showDialPadModal, setShowDialPadModal] = useState(true);
     const [dialInput, setDialInput] = useState('');
     const [generatedCallLink, setGeneratedCallLink] = useState<string | null>(null);
     const [showAddFavoriteModal, setShowAddFavoriteModal] = useState(false);
+    const [activeSoftphoneTarget, setActiveSoftphoneTarget] = useState<{
+        label: string;
+        phone?: string;
+        avatar?: string;
+    } | null>(null);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        try {
+            window.localStorage.setItem('connectln_studio_call_logs_v1', JSON.stringify(callLogs.slice(0, 40)));
+        } catch {}
+    }, [callLogs]);
+
+    const launchCellPhoneCall = (rawTarget: string, avatarOverride?: string) => {
+        const clean = rawTarget.trim();
+        if (!clean) return;
+        const isNum = looksLikeClientPhone(clean);
+        const displayLabel = isNum ? prettyClientPhone(clean) : clean;
+        const avatar =
+            avatarOverride ||
+            `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(clean)}&backgroundColor=7c4225`;
+
+        setCallLogs((prev) => [
+            {
+                id: `call_dial_${Date.now()}`,
+                name: displayLabel,
+                avatar,
+                direction: 'outgoing',
+                timeLabel: 'Just now',
+                callType: 'voice',
+                subtitle: isNum ? 'Mobile Carrier Call' : 'ConnectLn & Mobile Bridge',
+            },
+            ...prev.filter((c) => c.name !== displayLabel),
+        ]);
+
+        setActiveSoftphoneTarget({
+            label: displayLabel,
+            phone: isNum ? clean : undefined,
+            avatar,
+        });
+    };
 
     // ---- COMMUNITIES STATE ----
     const [communities, setCommunities] = useState<CommunityGroupItem[]>(INITIAL_COMMUNITIES);
@@ -1392,7 +1447,7 @@ export function WhatsAppModeWorkspace({
             if (typeof navigator !== 'undefined' && navigator.clipboard) {
                 navigator.clipboard.writeText(url).catch(() => {});
             }
-            triggerToast('🔗 E2EE Call link copied to clipboard!');
+            triggerToast('🔗 E2EE Call link copied! Share via SMS or email to join on any cell phone.');
         };
 
         return (
@@ -1426,30 +1481,50 @@ export function WhatsAppModeWorkspace({
                         </button>
                     </div>
 
-                    {/* Search Bar */}
+                    {/* Search / Quick Dial Bar */}
                     <div className="px-3 py-2.5">
-                        <div className="relative">
-                            <input
-                                type="text"
-                                value={callSearch}
-                                onChange={(e) => setCallSearch(e.target.value)}
-                                placeholder="Search name, number or @username"
-                                className="w-full bg-[#F3EDE2] border border-[#E0D6C5] rounded-full py-2 pl-9 pr-4 text-xs text-[#1C1917] placeholder-[#78716C] focus:outline-none focus:border-[#7C4225]"
-                            />
-                            <svg
-                                className="w-4 h-4 text-[#78716C] absolute left-3 top-2.5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                if (callSearch.trim()) {
+                                    launchCellPhoneCall(callSearch.trim());
+                                }
+                            }}
+                            className="relative flex items-center gap-1.5"
+                        >
+                            <div className="relative flex-1">
+                                <input
+                                    type="text"
+                                    value={callSearch}
+                                    onChange={(e) => setCallSearch(e.target.value)}
+                                    placeholder="Search name, number or @username"
+                                    className="w-full bg-[#F3EDE2] border border-[#E0D6C5] rounded-full py-2 pl-9 pr-4 text-xs text-[#1C1917] placeholder-[#78716C] focus:outline-none focus:border-[#7C4225]"
                                 />
-                            </svg>
-                        </div>
+                                <svg
+                                    className="w-4 h-4 text-[#78716C] absolute left-3 top-2.5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                    />
+                                </svg>
+                            </div>
+                            {callSearch.trim() && (
+                                <button
+                                    type="submit"
+                                    style={{ color: '#FBF8F3' }}
+                                    className="rounded-full bg-[#7C4225] hover:bg-[#5E3119] px-3 py-1.5 text-[11px] font-bold cursor-pointer shrink-0"
+                                    title="Ring on Cell Phone"
+                                >
+                                    📞 Dial
+                                </button>
+                            )}
+                        </form>
                     </div>
 
                     {/* Favorites & Recent Calls */}
@@ -1491,8 +1566,8 @@ export function WhatsAppModeWorkspace({
                                 {filteredCalls.map((call) => (
                                     <div
                                         key={call.id}
-                                        onClick={() => onStartLiveCall(call.callType === 'video' ? 'video' : 'audio', call.name)}
-                                        className="flex items-center justify-between gap-3 p-2 rounded-xl hover:bg-[#EFE8DA]/70 cursor-pointer group transition-colors"
+                                        onClick={() => launchCellPhoneCall(call.name, call.avatar)}
+                                        className="flex items-center justify-between gap-2 p-2 rounded-xl hover:bg-[#EFE8DA]/70 cursor-pointer group transition-colors"
                                     >
                                         <div className="flex items-center gap-3 min-w-0">
                                             <img
@@ -1527,9 +1602,33 @@ export function WhatsAppModeWorkspace({
                                                 </p>
                                             </div>
                                         </div>
-                                        <span className="text-[11px] text-[#78716C] shrink-0">
-                                            {call.timeLabel}
-                                        </span>
+                                        <div className="flex items-center gap-1.5 shrink-0">
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    launchCellPhoneCall(call.name, call.avatar);
+                                                }}
+                                                title="Ring Cell Phone"
+                                                className="w-7 h-7 rounded-lg bg-[#EFE8DA] hover:bg-[#7C4225] text-[#5E3119] hover:text-white flex items-center justify-center text-xs transition-colors cursor-pointer"
+                                            >
+                                                📞
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onStartLiveCall('video', call.name);
+                                                }}
+                                                title="Start Video Call"
+                                                className="w-7 h-7 rounded-lg bg-[#EFE8DA] hover:bg-[#7C4225] text-[#5E3119] hover:text-white flex items-center justify-center text-xs transition-colors cursor-pointer"
+                                            >
+                                                🎥
+                                            </button>
+                                            <span className="text-[11px] text-[#78716C] ml-0.5">
+                                                {call.timeLabel}
+                                            </span>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -1660,7 +1759,14 @@ export function WhatsAppModeWorkspace({
                             </span>
                             <button
                                 type="button"
-                                onClick={() => onStartLiveCall('video')}
+                                onClick={() => {
+                                    const codeMatch = generatedCallLink.match(/[?&](?:call|joinCall)=([^&]+)/);
+                                    if (codeMatch?.[1] && typeof window !== 'undefined') {
+                                        window.location.href = `/connectin?tab=vibecomms&joinCall=${encodeURIComponent(codeMatch[1])}`;
+                                    } else {
+                                        onStartLiveCall('video');
+                                    }
+                                }}
                                 className="px-3 py-1 rounded-full bg-[#7C4225] hover:bg-[#5E3119] text-xs font-bold cursor-pointer"
                                 style={{ color: '#FBF8F3' }}
                             >
@@ -1674,25 +1780,14 @@ export function WhatsAppModeWorkspace({
                             onSubmit={(e) => {
                                 e.preventDefault();
                                 if (!dialInput.trim()) return;
-                                setCallLogs((prev) => [
-                                    {
-                                        id: `call_dial_${Date.now()}`,
-                                        name: dialInput.trim(),
-                                        avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(dialInput.trim())}&backgroundColor=7c4225`,
-                                        direction: 'outgoing',
-                                        timeLabel: 'Just now',
-                                        callType: 'voice',
-                                    },
-                                    ...prev,
-                                ]);
-                                onStartLiveCall('audio', dialInput.trim());
+                                const rawVal = dialInput.trim();
                                 setDialInput('');
-                                setShowDialPadModal(false);
+                                launchCellPhoneCall(rawVal);
                             }}
                             className="mt-5 bg-[#FBF8F3] border border-[#E0D6C5] rounded-2xl p-4 shadow-md flex items-center gap-2 max-w-sm w-full"
                         >
                             <input
-                                type="text"
+                                type="tel"
                                 value={dialInput}
                                 onChange={(e) => setDialInput(e.target.value)}
                                 placeholder="Enter phone number or @username..."
@@ -1707,6 +1802,22 @@ export function WhatsAppModeWorkspace({
                             </button>
                         </form>
                     )}
+
+                    {/* Live Carrier Browser-to-Cell-Phone Softphone Console */}
+                    <ConnectLnCellPhoneSoftphoneModal
+                        open={Boolean(activeSoftphoneTarget)}
+                        onClose={() => setActiveSoftphoneTarget(null)}
+                        targetLabel={activeSoftphoneTarget?.label || ''}
+                        targetPhone={activeSoftphoneTarget?.phone}
+                        targetAvatar={activeSoftphoneTarget?.avatar}
+                        callerName={userName}
+                        callerEmail={currentUser?.email}
+                        roomJoinUrl={generatedCallLink || undefined}
+                        onUpgradeToVideoHuddle={(label) => {
+                            setActiveSoftphoneTarget(null);
+                            onStartLiveCall('video', label);
+                        }}
+                    />
                 </div>
             </div>
         );
