@@ -674,6 +674,8 @@ interface ConferenceCellLeg {
   email?: string
   avatar?: string
   status: "dialing" | "ringing" | "in-progress" | "invited" | "unanswered"
+  // false = not a ConnectLn member / no registered device: nothing can ring, user must send link or use own SIM
+  reachable?: boolean
 }
 
 function makeClientInviteeKey(entry: { id?: string; phone?: string; email?: string; name?: string }): string {
@@ -931,6 +933,7 @@ export function ConnectLnWhatsAppCallModal({
               email: addedEmail,
               avatar: addedAvatar,
               status: "invited",
+              reachable: Boolean(data.isRegisteredOnConnectLn && Number(data.pushDeliveredCount || 0) > 0),
             },
           ]
         })
@@ -2036,14 +2039,16 @@ export function ConnectLnWhatsAppCallModal({
                     className={`mt-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-extrabold ${
                       leg.status === "in-progress"
                         ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/40"
-                        : leg.status === "unanswered"
+                        : leg.status === "unanswered" || leg.reachable === false
                         ? "bg-rose-500/20 text-rose-200 border border-rose-400/40"
                         : "bg-amber-500/20 text-amber-200 border border-amber-400/40"
                     }`}
                   >
                     {leg.status === "in-progress" && "🟢 Connected (Free Internet)"}
                     {(leg.status === "ringing" || leg.status === "dialing" || leg.status === "invited") &&
-                      "🔔 Ringing on ConnectLn Internet"}
+                      (leg.reachable === false
+                        ? "⚠️ Not on ConnectLn — send link or use My SIM"
+                        : "🔔 Ringing on ConnectLn Internet")}
                     {leg.status === "unanswered" && "🔔 Waiting to Join"}
                   </span>
 
