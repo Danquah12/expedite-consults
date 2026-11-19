@@ -1,4 +1,4 @@
-import webPush from "web-push"
+import * as webPush from "web-push"
 import { connectinDb } from "./connectin-db"
 import { pullCloudUsersIntoDb } from "./connectin-cloud-sync"
 import {
