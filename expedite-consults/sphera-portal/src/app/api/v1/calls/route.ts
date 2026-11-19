@@ -4,6 +4,7 @@ import fs from "fs"
 import path from "path"
 import os from "os"
 import { recordGlobalUserActivity } from "@/lib/connectin-cloud-sync"
+import { publishToPhones } from "@/lib/connectin-realtime"
 import {
   lookupWhatsAppRecipient,
   sendIncomingCallWebPush,
@@ -172,12 +173,52 @@ function getTwilioCallsAuthHeader(): string | null {
   return `Basic ${Buffer.from(`${sid}:${token}`).toString("base64")}`
 }
 
+let cloudflareIceCache: { servers: any[]; expiresAtMs: number } | null = null
+
+/**
+ * Dedicated relay: Cloudflare Realtime TURN (free tier 1,000 GB/month) when
+ * CLOUDFLARE_TURN_KEY_ID + CLOUDFLARE_TURN_API_TOKEN are set. Short-lived credentials
+ * minted server-side and cached for 12h. Returns [] when not configured or on failure.
+ */
+async function getCloudflareTurnServers(): Promise<any[]> {
+  const keyId = String(process.env.CLOUDFLARE_TURN_KEY_ID || "").trim()
+  const token = String(process.env.CLOUDFLARE_TURN_API_TOKEN || "").trim()
+  if (!keyId || !token) return []
+  if (cloudflareIceCache && cloudflareIceCache.expiresAtMs > Date.now()) return cloudflareIceCache.servers
+  try {
+    const res = await fetch(
+      `https://rtc.live.cloudflare.com/v1/turn/keys/${encodeURIComponent(keyId)}/credentials/generate-ice-servers`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ ttl: 86400 }),
+        cache: "no-store",
+      }
+    )
+    if (!res.ok) return []
+    const data: any = await res.json()
+    const raw = data?.iceServers
+    const servers = Array.isArray(raw) ? raw : raw ? [raw] : []
+    if (servers.length > 0) {
+      cloudflareIceCache = { servers, expiresAtMs: Date.now() + 12 * 60 * 60 * 1000 }
+    }
+    return servers
+  } catch {
+    return []
+  }
+}
+
 async function getCachedTwilioIceServers(): Promise<any[]> {
-  // 100% Free Internet WebRTC STUN + OpenRelay Global TURN ($0.00 Twilio fees — enables smooth 30fps RTP across 5G/Symmetric NAT)
-  return [
+  const stun = [
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
     { urls: "stun:stun.cloudflare.com:3478" },
+  ]
+  const dedicated = await getCloudflareTurnServers()
+  if (dedicated.length > 0) return [...dedicated, ...stun]
+  // Fallback: free public OpenRelay TURN (shared, best-effort)
+  return [
+    ...stun,
     {
       urls: "turn:openrelay.metered.ca:80",
       username: "openrelayproject",
@@ -973,6 +1014,12 @@ export async function POST(req: NextRequest) {
     if (action === "end" && body.call_id) {
       const existing = ACTIVE_CALLS_STORE.get(body.call_id)
       if (existing) {
+        // Instantly stop ringing on every invitee's open tabs/apps
+        await publishToPhones(
+          [existing.target_recipient_phone, ...(existing.invited_roster || []).map((m) => m.phone)],
+          "call-ended",
+          { callId: body.call_id }
+        ).catch(() => {})
         for (const p of existing.participants || []) {
           pushCloudCallParticipant(
             body.call_id,

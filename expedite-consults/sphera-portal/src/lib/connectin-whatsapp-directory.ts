@@ -1,5 +1,6 @@
 import * as webPush from "web-push"
 import { connectinDb } from "./connectin-db"
+import { publishToPhones } from "./connectin-realtime"
 import { pullCloudUsersIntoDb } from "./connectin-cloud-sync"
 import {
   normalizeDialablePhone,
@@ -596,6 +597,14 @@ export async function sendIncomingCallWebPush(params: {
   callerAvatar?: string
   joinUrl: string
 }): Promise<{ deliveredCount: number; mobileDeliveredCount: number; attemptedCount: number }> {
+  // Instant real-time ring to any open ConnectLn tab/app of this member (no polling delay)
+  await publishToPhones([params.member.phone], "incoming-call", {
+    callId: params.callId,
+    callMode: params.callMode,
+    callerName: params.callerName,
+    callerPhone: params.callerPhone || "",
+  }).catch(() => {})
+
   const subs = params.member.pushSubscriptions || []
   const fcmCount = (params.member.fcmTokens || []).length
   if (subs.length === 0 && fcmCount === 0) {

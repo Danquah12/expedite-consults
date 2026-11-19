@@ -86,6 +86,7 @@ export function ConnectLnIncomingCallBanner({
   const [isEnablingPush, setIsEnablingPush] = useState<boolean>(false)
 
   const declinedIdsRef = useRef<Set<string>>(new Set())
+  const realtimeRingRef = useRef<{ call: IncomingCallSummary; untilMs: number } | null>(null)
   const vapidKeyRef = useRef<string>("")
   const myPhoneRef = useRef<string>("")
   const viewerNameRef = useRef<string>(viewerName || "")
@@ -430,7 +431,12 @@ export function ConnectLnIncomingCallBanner({
         const list: IncomingCallSummary[] = Array.isArray(data?.incoming_calls)
           ? data.incoming_calls
           : []
-        const active = list.find((c) => c?.id && !declinedIdsRef.current.has(c.id)) || null
+        let active = list.find((c) => c?.id && !declinedIdsRef.current.has(c.id)) || null
+        // A real-time ring may arrive before this server instance sees the call: keep ringing for it.
+        const rt = realtimeRingRef.current
+        if (!active && rt && rt.untilMs > Date.now() && !declinedIdsRef.current.has(rt.call.id)) {
+          active = rt.call
+        }
         setIncomingCall(active)
 
         if (!active) {
@@ -445,6 +451,40 @@ export function ConnectLnIncomingCallBanner({
       }
     }
 
+    // Real-time push (Pusher): ring instantly / stop instantly. Polling stays as a safety net.
+    let rtClient: any = null
+    if (cleanPhone) {
+      ;(async () => {
+        try {
+          const cfg = await fetch("/api/connectin/realtime", { cache: "no-store" }).then((r) => r.json())
+          if (cancelled || !cfg?.enabled) return
+          const PusherJs = (await import("pusher-js")).default
+          rtClient = new PusherJs(cfg.key, {
+            cluster: cfg.cluster,
+            channelAuthorization: { endpoint: "/api/connectin/realtime", transport: "ajax" },
+          })
+          const ch = rtClient.subscribe(`private-ring-${cleanPhone.replace(/[^\d]/g, "")}`)
+          ch.bind("incoming-call", (d: any) => {
+            if (!d?.callId || declinedIdsRef.current.has(d.callId) || isLocalTabHostingOpenCall()) return
+            const call: IncomingCallSummary = {
+              id: String(d.callId),
+              call_type: d.callMode === "audio" ? "audio" : "video",
+              initiator_name: d.callerName || "ConnectLn Caller",
+              initiator_phone: d.callerPhone || "",
+            }
+            realtimeRingRef.current = { call, untilMs: Date.now() + 60000 }
+            setIncomingCall((prev) => prev || call)
+            void checkIncoming()
+          })
+          ch.bind("call-ended", (d: any) => {
+            if (realtimeRingRef.current?.call.id === d?.callId) realtimeRingRef.current = null
+            setIncomingCall((prev) => (prev && prev.id === d?.callId ? null : prev))
+            void checkIncoming()
+          })
+        } catch {}
+      })()
+    }
+
     checkIncoming()
     setForegroundCallPollCallback(checkIncoming)
     const stopWorker = createUnthrottledCallPollWorker(1200, checkIncoming)
@@ -457,6 +497,9 @@ export function ConnectLnIncomingCallBanner({
 
     return () => {
       cancelled = true
+      try {
+        rtClient?.disconnect()
+      } catch {}
       setForegroundCallPollCallback(null)
       stopWorker()
       document.removeEventListener("visibilitychange", onVisOrFocus)
