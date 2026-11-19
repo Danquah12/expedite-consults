@@ -69,7 +69,7 @@ export interface HarvesterTelemetrySnapshot {
   items: HarvestedMediaItem[]
 }
 
-export const HARVESTER_STORAGE_KEY = "connectln_harvested_media_items_v3"
+export const HARVESTER_STORAGE_KEY = "connectln_harvested_media_items_v4"
 export const HARVESTER_AUTO_ENABLED_KEY = "connectln_harvester_auto_enabled_v1"
 export const HARVESTER_EVENT_NAME = "connectln-media-harvested"
 
@@ -984,7 +984,7 @@ export function buildHarvestedItemForSlot(
     id: `cln_hv_${slot}_${templateIndex}_${tpl.kind}`,
     serialNumber: `CLN-HV-${String((slot % 90000) + 10000)}`,
     kind: tpl.kind,
-    title: `${tpl.title} · [Sync #${(slot % 900) + 100}]`,
+    title: tpl.title,
     summary: tpl.summary,
     videoUrl: tpl.videoUrl,
     youtubeId: tpl.youtubeId,
@@ -1024,16 +1024,16 @@ export function getInitialDeterministicHarvestedItems(count: number = 14): Harve
 }
 
 export function sortHarvestedItemsNewestFirst(items: HarvestedMediaItem[]): HarvestedMediaItem[] {
+  const nowMs = Date.now()
   return [...items].sort((a, b) => {
-    const aIsCustomOrManual =
-      a.id.startsWith("cln_custom_") || a.id.startsWith("cln_pull_") || a.id.startsWith("cln_auto_") ? 1 : 0
-    const bIsCustomOrManual =
-      b.id.startsWith("cln_custom_") || b.id.startsWith("cln_pull_") || b.id.startsWith("cln_auto_") ? 1 : 0
-    if (aIsCustomOrManual !== bIsCustomOrManual) {
-      return bIsCustomOrManual - aIsCustomOrManual
-    }
     const timeA = Date.parse(a.pulledAtIso || "") || 0
     const timeB = Date.parse(b.pulledAtIso || "") || 0
+    // Only boost explicit Admin custom pushes from the last 12 hours; sort all live RSS & pulled videos strictly newest-first!
+    const aRecentAdmin = a.id.startsWith("cln_custom_") && nowMs - timeA < 12 * 3600 * 1000 ? 1 : 0
+    const bRecentAdmin = b.id.startsWith("cln_custom_") && nowMs - timeB < 12 * 3600 * 1000 ? 1 : 0
+    if (aRecentAdmin !== bRecentAdmin) {
+      return bRecentAdmin - aRecentAdmin
+    }
     if (timeB !== timeA) return timeB - timeA
     return (b.minuteSlot || 0) - (a.minuteSlot || 0)
   })

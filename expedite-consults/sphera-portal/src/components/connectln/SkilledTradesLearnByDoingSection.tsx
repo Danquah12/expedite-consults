@@ -27,7 +27,8 @@ import {
   MoreHorizontal,
   Globe,
   ShieldCheck,
-  SquarePen
+  SquarePen,
+  RefreshCw
 } from "lucide-react"
 import {
   SkilledTradesCategory,
@@ -108,6 +109,13 @@ export function SkilledTradesLearnByDoingSection({
     initialLessonId || SKILLED_TRADES_LEARN_BY_DOING_LESSONS[0]?.id || null
   )
   const [homeVisibleLimit, setHomeVisibleLimit] = useState<number>(3)
+  const [homeRotationOffset, setHomeRotationOffset] = useState<number>(0)
+
+  // Rotate default Home trade lessons automatically every 15 minutes so the same 3 lessons don't repeat endlessly
+  useEffect(() => {
+    if (mode !== 'home_videos_only' || typeof window === 'undefined') return
+    setHomeRotationOffset((Math.floor(Date.now() / 900000) * 3) % SKILLED_TRADES_LEARN_BY_DOING_LESSONS.length)
+  }, [mode])
 
   useEffect(() => {
     if (initialCategory) {
@@ -767,7 +775,16 @@ export function SkilledTradesLearnByDoingSection({
       filteredLessons[0] ||
       SKILLED_TRADES_LEARN_BY_DOING_LESSONS[0]
 
-    const visibleHomeLessons = filteredLessons.filter(l => !dismissedLessonMap[l.id])
+    const baseVisibleHomeLessons = filteredLessons.filter(l => !dismissedLessonMap[l.id])
+    const effectiveOffset =
+      baseVisibleHomeLessons.length > 0 ? homeRotationOffset % baseVisibleHomeLessons.length : 0
+    const visibleHomeLessons =
+      effectiveOffset > 0
+        ? [
+            ...baseVisibleHomeLessons.slice(effectiveOffset),
+            ...baseVisibleHomeLessons.slice(0, effectiveOffset)
+          ]
+        : baseVisibleHomeLessons
 
     return (
       <section
@@ -834,17 +851,31 @@ export function SkilledTradesLearnByDoingSection({
             })}
           </div>
 
-          {onOpenInLearnTab && (
+          <div className="flex items-center gap-2 shrink-0 pl-1">
             <button
               type="button"
-              onClick={() => onOpenInLearnTab(activeLesson?.id, activeLesson?.category)}
-              className="shrink-0 text-xs font-bold text-[#0A66C2] dark:text-sky-400 hover:underline inline-flex items-center gap-1 cursor-pointer pl-1"
+              onClick={() => {
+                setHomeRotationOffset(prev => prev + 3)
+                requestViewportAutoplayEvaluation()
+              }}
+              className="rounded-full border border-zinc-300 dark:border-zinc-700 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 text-xs font-semibold text-zinc-700 dark:text-zinc-200 inline-flex items-center gap-1 cursor-pointer"
+              title="Rotate in the next set of trade video lessons"
             >
-              <BookOpen className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Notes &amp; Quizzes</span>
-              <span>→</span>
+              <RefreshCw className="h-3 w-3" />
+              <span className="hidden sm:inline">Next Set</span>
             </button>
-          )}
+            {onOpenInLearnTab && (
+              <button
+                type="button"
+                onClick={() => onOpenInLearnTab(activeLesson?.id, activeLesson?.category)}
+                className="text-xs font-bold text-[#0A66C2] dark:text-sky-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
+              >
+                <BookOpen className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Notes &amp; Quizzes</span>
+                <span>→</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Vertical Stack of Native LinkedIn Feed Video Post Cards (Windowed on Home to prevent DOM bloat) */}

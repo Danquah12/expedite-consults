@@ -203,7 +203,7 @@ export function LiveHarvestedMediaShowcase({
   const [isSyncingNow, setIsSyncingNow] = useState<boolean>(false)
   const [isExpanded, setIsExpanded] = useState<boolean>(true)
   const [showAllItems, setShowAllItems] = useState<boolean>(false)
-  const [secondsToNextAutoPull, setSecondsToNextAutoPull] = useState<number>(3600)
+  const [secondsToNextAutoPull, setSecondsToNextAutoPull] = useState<number>(900)
   const [appliedIds, setAppliedIds] = useState<string[]>([])
   const [likedIds, setLikedIds] = useState<Record<string, boolean>>({})
   const [repostedIds, setRepostedIds] = useState<Record<string, boolean>>({})
@@ -287,13 +287,13 @@ export function LiveHarvestedMediaShowcase({
           const local = loadStoredHarvestedItems()
           saveStoredHarvestedItems(dedupeHarvestedItems([...data.telemetry.items, ...local]))
           refreshFromStore()
-          setSecondsToNextAutoPull(3600)
+          setSecondsToNextAutoPull(900)
           const newestTitle = data?.pulledItems?.[0]?.title
           if (newestTitle) {
             flashToast(
               isAutoTick
-                ? `⚡ 1-Min Admin Auto-Sync: Pulled "${newestTitle.slice(0, 48)}..." live!`
-                : `✓ Synced new video from Admin Backend: "${newestTitle.slice(0, 48)}..."`
+                ? `⚡ Live 15-Min Auto-Sync: "${newestTitle.slice(0, 52)}..."`
+                : `✓ Synced fresh live video: "${newestTitle.slice(0, 52)}..."`
             )
           }
         }
@@ -303,13 +303,13 @@ export function LiveHarvestedMediaShowcase({
     }
   }
 
-  // Visible 60-second countdown that pulls & syncs a fresh video every minute right into the active tab
+  // 15-minute live RSS sync countdown across Jobs, Market, Media & Pulse
   useEffect(() => {
     const timer = setInterval(() => {
       setSecondsToNextAutoPull((prev) => {
         if (prev <= 1) {
           handleManualPullForTab(true)
-          return 3600
+          return 900
         }
         return prev - 1
       })

@@ -118,7 +118,7 @@ import {
   HARVESTER_EVENT_NAME,
   HarvestedMediaItem
 } from "@/lib/connectin-media-harvester"
-import { SlidersHorizontal, Sparkles, Bell, CheckCircle2, ShieldCheck, Filter, Bookmark, Vote, BookOpen, ExternalLink, ChevronDown, ChevronUp } from "lucide-react"
+import { SlidersHorizontal, Sparkles, Bell, CheckCircle2, ShieldCheck, Filter, Bookmark, Vote, BookOpen, ExternalLink, ChevronDown, ChevronUp, RefreshCw } from "lucide-react"
 import { useLanguage } from "@/context/LanguageContext"
 
 export default function ConnectLnPage() {
@@ -453,6 +453,9 @@ export default function ConnectLnPage() {
   const [harvestedHomeItems, setHarvestedHomeItems] = useState<HarvestedMediaItem[]>(() =>
     loadStoredHarvestedItems().filter((i) => Array.isArray(i.destinations) && i.destinations.includes("home"))
   )
+  const [isSyncingFeedVideos, setIsSyncingFeedVideos] = useState(false)
+  const [lastFeedVideoSyncNote, setLastFeedVideoSyncNote] = useState<string>("Auto-syncs every 15m")
+  const lastLiveVideoSyncMsRef = React.useRef<number>(0)
 
   const getPostMediaDedupeSignature = (p: Post): string => {
     const yt = (p.media?.youtubeId || "").trim().toLowerCase()
@@ -527,60 +530,109 @@ export default function ConnectLnPage() {
     }
   }
 
-  // Global Backend Media Harvester Ticker — syncs unique ConnectLn videos & editorial visuals without duplicates
+  const handleSyncFreshFeedVideos = async () => {
+    if (isSyncingFeedVideos) return
+    setIsSyncingFeedVideos(true)
+    try {
+      const currentTopYtIds = harvestedHomeItems
+        .slice(0, 4)
+        .map((i) => i.youtubeId)
+        .filter(Boolean)
+      const res = await fetch("/api/connectin/media-harvester", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "pull_now",
+          count: 6,
+          destinations: ["home", "jobs", "market", "media", "pulse"],
+          excludeYoutubeIds: currentTopYtIds,
+        }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        const pulled: HarvestedMediaItem[] = Array.isArray(data?.pulledItems) ? data.pulledItems : []
+        const allServer: HarvestedMediaItem[] = Array.isArray(data?.telemetry?.items) ? data.telemetry.items : []
+        const merged = saveStoredHarvestedItems([...pulled, ...allServer])
+        const homeOnly = merged.filter((i) => Array.isArray(i.destinations) && i.destinations.includes("home"))
+        setHarvestedHomeItems(homeOnly)
+        lastLiveVideoSyncMsRef.current = Date.now()
+        const timeLabel = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+        setLastFeedVideoSyncNote(`✓ Synced ${pulled.length || homeOnly.slice(0, 5).length} live videos (${timeLabel})`)
+        setVisibleMyPostsCount((prev) => Math.max(prev, 5))
+      }
+    } catch {
+      setLastFeedVideoSyncNote("Auto-syncs every 15m")
+    } finally {
+      setIsSyncingFeedVideos(false)
+    }
+  }
+
+  // Global Backend Media Harvester Ticker — syncs live YouTube RSS videos every 15 minutes and purges stale seed copies
   useEffect(() => {
     if (typeof window === "undefined") return
 
-    const injectHarvestedHomeItemsIntoFeed = (allItems: HarvestedMediaItem[], onlyExplicitOrLatest: boolean) => {
+    const injectHarvestedHomeItemsIntoFeed = (allItems: HarvestedMediaItem[]) => {
       const homeItems = allItems.filter((i) => Array.isArray(i.destinations) && i.destinations.includes("home"))
       setHarvestedHomeItems(homeItems)
       if (homeItems.length === 0) return
 
-      const candidates = homeItems.filter(
-        (i, idx) =>
-          i.id.startsWith("cln_custom_") ||
-          i.id.startsWith("cln_pull_") ||
-          i.id.startsWith("cln_auto_") ||
-          (!onlyExplicitOrLatest && idx < 2) ||
-          idx < 2
-      ).slice(0, 3)
+      const candidates = homeItems
+        .filter((i) => i.id.startsWith("cln_live_") || i.id.startsWith("cln_custom_"))
+        .slice(0, 6)
 
       setPosts((prev) => {
-        // First prune any duplicate harvest_post_* entries already saved in localStorage
+        // Purge old static seed harvest_post_cln_hv_ / cln_auto_ / cln_pull_ items so stale videos never stay pinned!
         const seenSigs = new Set<string>()
         const seenIds = new Set<string>()
-        const dedupedPrev: Post[] = []
+        const cleanedPrev: Post[] = []
         for (const p of prev) {
           if (!p || !p.id || seenIds.has(p.id)) continue
+          if (
+            p.id.startsWith("harvest_post_cln_hv_") ||
+            p.id.startsWith("harvest_post_cln_auto_") ||
+            p.id.startsWith("harvest_post_cln_pull_")
+          ) {
+            continue
+          }
           const sig = getPostMediaDedupeSignature(p)
           if (p.id.startsWith("harvest_post_") && seenSigs.has(sig)) continue
           seenIds.add(p.id)
           seenSigs.add(sig)
-          dedupedPrev.push(p)
+          cleanedPrev.push(p)
         }
 
-        const newlyBuilt: Post[] = []
+        const freshLivePosts: Post[] = []
         for (const item of candidates) {
           const candidatePost = buildFeedPostFromHarvestedItem(item)
           const sig = getPostMediaDedupeSignature(candidatePost)
           if (!seenIds.has(candidatePost.id) && !seenSigs.has(sig)) {
-            newlyBuilt.push(candidatePost)
+            freshLivePosts.push(candidatePost)
             seenIds.add(candidatePost.id)
             seenSigs.add(sig)
           }
         }
 
-        if (newlyBuilt.length === 0 && dedupedPrev.length === prev.length) return prev
-        const nextPosts = [...newlyBuilt, ...dedupedPrev].slice(0, 60)
+        // Remove older harvest_post_cln_live_ items beyond the latest 8 so fresh syncs rotate cleanly
+        let liveKept = 0
+        const nextPosts = [...freshLivePosts, ...cleanedPrev]
+          .filter((p) => {
+            if (p.id.startsWith("harvest_post_cln_live_")) {
+              liveKept += 1
+              return liveKept <= 8
+            }
+            return true
+          })
+          .slice(0, 60)
+
         saveStoredPosts(nextPosts)
         return nextPosts
       })
     }
 
-    const syncHarvestedMediaTick = async (isAutoTick: boolean) => {
+    const syncHarvestedMediaTick = async (forceRefresh: boolean) => {
       try {
-        const url = isAutoTick
-          ? "/api/connectin/media-harvester?autoTick=1"
+        const url = forceRefresh
+          ? "/api/connectin/media-harvester?force=1"
           : "/api/connectin/media-harvester"
         const res = await fetch(url, { cache: "no-store" })
         if (!res.ok) return
@@ -588,15 +640,15 @@ export default function ConnectLnPage() {
         const incoming: HarvestedMediaItem[] = Array.isArray(data?.items) ? data.items : []
         if (incoming.length === 0) return
 
-        const currentLocal = loadStoredHarvestedItems()
-        const map = new Map<string, HarvestedMediaItem>()
-        ;[...incoming, ...currentLocal].forEach((item) => {
-          if (item && item.id && !map.has(item.id)) {
-            map.set(item.id, item)
-          }
-        })
-        const merged = saveStoredHarvestedItems(Array.from(map.values()))
-        injectHarvestedHomeItemsIntoFeed(merged, !isAutoTick)
+        // Keep only live RSS + explicit custom admin items so old deterministic templates don't crowd live videos
+        const currentLocal = loadStoredHarvestedItems().filter(
+          (i) => i.id.startsWith("cln_live_") || i.id.startsWith("cln_custom_")
+        )
+        const merged = saveStoredHarvestedItems([...incoming, ...currentLocal])
+        injectHarvestedHomeItemsIntoFeed(merged)
+        lastLiveVideoSyncMsRef.current = Date.now()
+        const timeLabel = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+        setLastFeedVideoSyncNote(`Live synced ${timeLabel} · every 15m`)
       } catch {
         // ignore transient network errors
       }
@@ -604,28 +656,37 @@ export default function ConnectLnPage() {
 
     const handleHarvesterUpdatedEvent = () => {
       const latest = loadStoredHarvestedItems()
-      injectHarvestedHomeItemsIntoFeed(latest, false)
+      injectHarvestedHomeItemsIntoFeed(latest)
     }
 
     const handleCrossTabStorage = (e: StorageEvent) => {
       if (!e.key || e.key.includes("connectln_harvested_media")) {
         const latest = loadStoredHarvestedItems()
-        injectHarvestedHomeItemsIntoFeed(latest, false)
+        injectHarvestedHomeItemsIntoFeed(latest)
       }
     }
 
-    syncHarvestedMediaTick(false)
+    const handleWindowFocus = () => {
+      if (Date.now() - lastLiveVideoSyncMsRef.current > 10 * 60 * 1000) {
+        syncHarvestedMediaTick(true)
+      }
+    }
+
+    syncHarvestedMediaTick(true)
     window.addEventListener(HARVESTER_EVENT_NAME, handleHarvesterUpdatedEvent)
     window.addEventListener("storage", handleCrossTabStorage)
+    window.addEventListener("focus", handleWindowFocus)
 
+    // Auto-sync fresh live videos every 15 minutes (900,000 ms)
     const intervalId = window.setInterval(() => {
       syncHarvestedMediaTick(true)
-    }, 3600000)
+    }, 900000)
 
     return () => {
       window.clearInterval(intervalId)
       window.removeEventListener(HARVESTER_EVENT_NAME, handleHarvesterUpdatedEvent)
       window.removeEventListener("storage", handleCrossTabStorage)
+      window.removeEventListener("focus", handleWindowFocus)
     }
   }, [])
 
@@ -2084,10 +2145,20 @@ export default function ConnectLnPage() {
     const seenIds = new Set<string>()
     const seenMediaSigs = new Set<string>()
     const merged: Post[] = []
-    const liveHarvestedPosts = harvestedHomeItems.slice(0, 2).map((item) => buildFeedPostFromHarvestedItem(item))
+    const activeEnclavePref = userData?.professionEnclave || "trades_construction"
+    const orderedLiveHomeItems = [
+      ...harvestedHomeItems.filter((i) => i.enclaveId === activeEnclavePref),
+      ...harvestedHomeItems.filter((i) => i.enclaveId !== activeEnclavePref),
+    ]
+    const liveHarvestedPosts = orderedLiveHomeItems
+      .slice(0, 6)
+      .map((item) => buildFeedPostFromHarvestedItem(item))
     const userCreatedPosts = posts.filter(
       (p) =>
         p &&
+        !p.id?.startsWith('harvest_post_cln_hv_') &&
+        !p.id?.startsWith('harvest_post_cln_auto_') &&
+        !p.id?.startsWith('harvest_post_cln_pull_') &&
         (p.isUserCreated ||
           p.id?.startsWith('harvest_post_') ||
           (p.author?.connectionDegree === 'You' &&
@@ -2219,12 +2290,8 @@ export default function ConnectLnPage() {
     })
     .sort((a, b) => {
       const score = (p: Post) => {
-        if (
-          p.id?.startsWith('harvest_post_cln_custom_') ||
-          p.id?.startsWith('harvest_post_cln_pull_') ||
-          p.id?.startsWith('harvest_post_cln_auto_')
-        ) {
-          return 25
+        if (p.id?.startsWith('harvest_post_cln_custom_') || p.id?.startsWith('harvest_post_cln_live_')) {
+          return 30
         }
         if (p.id?.startsWith('harvest_post_')) {
           return 20
@@ -2504,25 +2571,42 @@ export default function ConnectLnPage() {
                   })}
                 </div>
 
-                {/* Clean Subtle Links to Skilled Trades Videos & Learning Academy */}
+                {/* Live Video Sync Control + Subtle Links to Trade Lessons & Learning Academy */}
                 <div className="pt-1.5 border-t border-zinc-100 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2 text-xs">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const el = document.getElementById("home-skilled-trades-learn-by-doing")
-                      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" })
-                    }}
-                    className="font-semibold text-zinc-700 dark:text-zinc-300 hover:text-[#0A66C2] transition-colors cursor-pointer"
-                  >
-                    Trade Video Lessons ↓
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('learning')}
-                    className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline transition-colors cursor-pointer"
-                  >
-                    Open Learning Tab →
-                  </button>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={handleSyncFreshFeedVideos}
+                      disabled={isSyncingFeedVideos}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-zinc-300 dark:border-zinc-700 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 px-3 py-1 text-xs font-semibold text-[#191919] dark:text-zinc-100 transition-colors cursor-pointer disabled:opacity-60"
+                      title="Pull fresh live videos from WSJ, This Old House, The B1M, Electrician U, Bloomberg, IBM & more"
+                    >
+                      <RefreshCw className={`h-3 w-3 ${isSyncingFeedVideos ? "animate-spin text-[#0A66C2]" : "text-zinc-600 dark:text-zinc-300"}`} />
+                      <span>{isSyncingFeedVideos ? "Syncing..." : "Sync New Videos"}</span>
+                    </button>
+                    <span className="text-[11px] text-[#666666] dark:text-zinc-400">
+                      {lastFeedVideoSyncNote}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const el = document.getElementById("home-skilled-trades-learn-by-doing")
+                        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" })
+                      }}
+                      className="font-semibold text-zinc-700 dark:text-zinc-300 hover:text-[#0A66C2] transition-colors cursor-pointer"
+                    >
+                      Trade Lessons ↓
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('learning')}
+                      className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline transition-colors cursor-pointer"
+                    >
+                      Learning Tab →
+                    </button>
+                  </div>
                 </div>
               </div>
 
