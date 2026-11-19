@@ -166,115 +166,31 @@ export function SkilledTradesLearnByDoingSection({
       return
     }
 
-    // On the Home Feed, coordinate cleanly with LiveHarvestedMediaShowcase & FeedPostCard via the central Viewport Arbiter
-    if (mode === 'home_videos_only') {
-      const cleanups: Array<() => void> = []
-      for (const lesson of SKILLED_TRADES_LEARN_BY_DOING_LESSONS) {
-        if (!lesson.embedAvailable || !lesson.youtubeId) continue
-        const slotId = `lbd-home-player-${lesson.id}`
-        cleanups.push(
-          registerViewportVideoSlot({
-            id: slotId,
-            getElement: () => homeCardRefs.current[lesson.id] || null,
-            startAutoplay: () => {
-              if (!autoplayPrefRef.current) return
-              setAutoPlayRequestedRaw(true)
-              setAutoPlayMuted(true)
-              setActiveVideoLessonId(lesson.id)
-            },
-            stopAutoplay: () => {
-              setActiveVideoLessonId((prev) => (prev === lesson.id ? null : prev))
-            },
-          })
-        )
-      }
-      requestViewportAutoplayEvaluation()
-      return () => {
-        cleanups.forEach((fn) => fn())
-      }
-    }
-
-    const playerPrefix = 'lbd-player-'
-
-    const pickBestVisibleLesson = () => {
-      const vh = window.innerHeight || document.documentElement.clientHeight || 800
-      const viewportCenter = vh / 2
-      let bestLessonId: string | null = null
-      let bestScore = -Infinity
-
-      for (const [lid, el] of Object.entries(homeCardRefs.current)) {
-        if (!el) continue
-        const rect = el.getBoundingClientRect()
-        if (rect.height <= 0) continue
-        const visibleTop = Math.max(0, rect.top)
-        const visibleBottom = Math.min(vh, rect.bottom)
-        const visibleHeight = Math.max(0, visibleBottom - visibleTop)
-        const visibleRatio = visibleHeight / Math.min(rect.height, vh)
-
-        if (visibleRatio >= 0.38) {
-          const cardCenter = rect.top + rect.height / 2
-          const distanceFromCenter = Math.abs(cardCenter - viewportCenter)
-          const score = visibleRatio * 1000 - distanceFromCenter
-          if (score > bestScore) {
-            bestScore = score
-            bestLessonId = lid
-          }
-        }
-      }
-
-      if (bestLessonId) {
-        setActiveVideoLessonId(prev => {
-          if (prev !== bestLessonId) {
-            notifyExclusiveVideoPlay(`${playerPrefix}${bestLessonId}`)
+    // Coordinate cleanly across BOTH Home Feed and Learning Academy via the central Viewport Arbiter & unmute speaker when in view!
+    const cleanups: Array<() => void> = []
+    const playerPrefix = mode === 'home_videos_only' ? 'lbd-home-player-' : 'lbd-player-'
+    for (const lesson of SKILLED_TRADES_LEARN_BY_DOING_LESSONS) {
+      if (!lesson.embedAvailable || !lesson.youtubeId) continue
+      const slotId = `${playerPrefix}${lesson.id}`
+      cleanups.push(
+        registerViewportVideoSlot({
+          id: slotId,
+          getElement: () => homeCardRefs.current[lesson.id] || null,
+          startAutoplay: () => {
+            if (!autoplayPrefRef.current) return
             setAutoPlayRequestedRaw(true)
-            setAutoPlayMuted(true)
-            return bestLessonId
-          }
-          return prev
+            setAutoPlayMuted(false)
+            setActiveVideoLessonId(lesson.id)
+          },
+          stopAutoplay: () => {
+            setActiveVideoLessonId((prev) => (prev === lesson.id ? null : prev))
+          },
         })
-      }
-    }
-
-    let rafId: number | null = null
-    const handleScroll = () => {
-      if (rafId !== null) return
-      rafId = window.requestAnimationFrame(() => {
-        rafId = null
-        pickBestVisibleLesson()
-      })
-    }
-
-    window.addEventListener('scroll', handleScroll, { passive: true })
-
-    let observer: IntersectionObserver | null = null
-    if ('IntersectionObserver' in window) {
-      observer = new IntersectionObserver(
-        () => {
-          pickBestVisibleLesson()
-        },
-        {
-          root: null,
-          rootMargin: '-6% 0px -6% 0px',
-          threshold: [0.25, 0.38, 0.6, 0.75]
-        }
       )
-      Object.values(homeCardRefs.current).forEach(el => {
-        if (el) observer?.observe(el)
-      })
     }
-
-    const initRaf = window.requestAnimationFrame(() => {
-      Object.values(homeCardRefs.current).forEach(el => {
-        if (el) observer?.observe(el)
-      })
-      pickBestVisibleLesson()
-    })
-
+    requestViewportAutoplayEvaluation()
     return () => {
-      window.removeEventListener('scroll', handleScroll)
-      if (rafId !== null) window.cancelAnimationFrame(rafId)
-      window.cancelAnimationFrame(initRaf)
-      observer?.disconnect()
+      cleanups.forEach((fn) => fn())
     }
   }, [mode, selectedCategory, homeVisibleLimit])
 
@@ -1081,7 +997,7 @@ export function SkilledTradesLearnByDoingSection({
                       sourceLanguageLabel={lesson.sourceLanguageLabel}
                       durationLabel=""
                       autoPlay={autoPlayRequested}
-                      initialMuted={autoPlayMuted}
+                      initialMuted={false}
                       playerId={`lbd-home-player-${lesson.id}`}
                       onExclusiveStop={() => setActiveVideoLessonId(null)}
                       className="w-full"
@@ -1684,7 +1600,7 @@ export function SkilledTradesLearnByDoingSection({
                             sourceLanguageLabel={lesson.sourceLanguageLabel}
                             durationLabel={displayDuration || ""}
                             autoPlay={autoPlayRequested}
-                            initialMuted={autoPlayMuted}
+                            initialMuted={false}
                             playerId={`lbd-player-${lesson.id}`}
                             onExclusiveStop={() => setActiveVideoLessonId(null)}
                             className="h-full w-full"

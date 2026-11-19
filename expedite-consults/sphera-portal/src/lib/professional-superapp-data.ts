@@ -1,3 +1,9 @@
+import {
+  getAccumulatedDailyRfps,
+  getAccumulatedDailyBounties,
+  getAccumulatedDailyGuilds,
+} from "./connectin-daily-platform-growth"
+
 export interface CareerMissionTask {
   id: string
   title: string
@@ -122,6 +128,7 @@ export interface RFPQuoteRequest {
 }
 
 export const RFP_MARKETPLACE_DATA: RFPQuoteRequest[] = [
+  ...getAccumulatedDailyRfps(),
   {
     id: 'rfp_pentest_2000',
     title: 'RFP-2026-08: 2,000-Host External & Cloud Micro-Segmentation Penetration Test',
@@ -505,6 +512,7 @@ export interface GatedGuild {
 }
 
 export const GATED_GUILDS_DATA: GatedGuild[] = [
+  ...getAccumulatedDailyGuilds(),
   {
     id: 'guild_ciso_cleared',
     name: 'TS/SCI Cleared Defense CISOs Enclave',
@@ -557,6 +565,7 @@ export interface EnterpriseBounty {
 }
 
 export const ENTERPRISE_BOUNTIES_DATA: EnterpriseBounty[] = [
+  ...getAccumulatedDailyBounties(),
   {
     id: 'bounty_1',
     title: 'Zero-Day Jailbreak Defense on Model Context Protocol (MCP) Gateways',

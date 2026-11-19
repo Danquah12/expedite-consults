@@ -1,3 +1,8 @@
+import {
+  getAccumulatedDailyMediaVideos,
+  getAccumulatedDailyMediaClips,
+} from './connectin-daily-platform-growth'
+
 export interface VideoChapter {
   timestamp: string
   seconds: number
@@ -159,6 +164,7 @@ export interface PodcastShow {
 }
 
 export const FEATURED_VIDEOS_DATA: MediaVideoItem[] = [
+  ...getAccumulatedDailyMediaVideos(),
   {
     id: 'vid_axiom_demo',
     title: 'AXIOM 4.0 Deep Dive: Autonomous Zero-Trust Micro-Segmentation & Continuous cATO',
@@ -393,6 +399,7 @@ export const FEATURED_VIDEOS_DATA: MediaVideoItem[] = [
 ]
 
 export const MEDIA_CLIPS_DATA: MediaClipItem[] = [
+  ...getAccumulatedDailyMediaClips(),
   {
     id: 'clip_cyber_redteam_soc',
     title: '60-Second Cyber Defense: Stopping Kerberoasting & Ransomware Lateral Movement with eBPF & BloodHound',

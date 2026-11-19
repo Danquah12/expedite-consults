@@ -1,5 +1,6 @@
 import { EXPANSION_COUNTRIES, EXPANSION_SALARY_MULTIPLIERS } from "./global-regions-expansion"
 import { ALL_PROFESSIONS, ProfessionDefinition } from "@/lib/connectin-professions"
+import { getAccumulatedDailyJobs } from "./connectin-daily-platform-growth"
 
 export interface CountryConfig {
   code: string
@@ -5212,9 +5213,26 @@ export function getLocalizedJobsForCountryAndEnclave(
     orderedPool = interleaved
   }
 
+  // Prepend 24h additive scheduled jobs (localized to country when non-US) without removing any existing jobs
+  const dailyScheduledJobs = getAccumulatedDailyJobs()
+    .filter(j => !enclaveId || enclaveId === 'all' || j.professionEnclave === enclaveId)
+    .map((j, idx) =>
+      countryCode === 'US'
+        ? j
+        : {
+            ...j,
+            id: `${countryCode.toLowerCase()}_${j.id}`,
+            countryCode: country.code,
+            countryName: country.name,
+            location: `${realHubs[idx % Math.max(1, realHubs.length)] || country.name} (${j.workplaceType})`,
+            hub: realHubs[idx % Math.max(1, realHubs.length)] || country.name,
+            salaryRange: convertUsdSalaryToCountry(j.salaryRange, country),
+          }
+    )
+
   const seenIds = new Set<string>()
   const merged: GlobalJobItem[] = []
-  for (const item of orderedPool) {
+  for (const item of [...dailyScheduledJobs, ...orderedPool]) {
     if (!seenIds.has(item.id)) {
       merged.push(item)
       seenIds.add(item.id)

@@ -3414,6 +3414,31 @@ export function ConnectLnCareerMasteryAcademyView({
                               src={selectedVideo.videoUrl}
                               poster={selectedVideo.thumbnailUrl}
                               controls
+                              playsInline
+                              ref={(el) => {
+                                if (!el || (el as any).__clnObs) return
+                                ;(el as any).__clnObs = true
+                                if (typeof IntersectionObserver !== "undefined") {
+                                  const obs = new IntersectionObserver(
+                                    (entries) => {
+                                      const entry = entries[0]
+                                      if (!entry) return
+                                      if (entry.isIntersecting && entry.intersectionRatio >= 0.4) {
+                                        el.muted = false
+                                        el.volume = 1
+                                        el.play().catch(() => {
+                                          el.muted = true
+                                          el.play().catch(() => {})
+                                        })
+                                      } else if (!entry.isIntersecting || entry.intersectionRatio < 0.15) {
+                                        if (!el.paused) el.pause()
+                                      }
+                                    },
+                                    { threshold: [0, 0.15, 0.4] }
+                                  )
+                                  obs.observe(el)
+                                }
+                              }}
                               onPlay={() => handleVideoPlayTelemetry(selectedVideo)}
                               onTimeUpdate={(e) =>
                                 handleVideoTimeUpdateTelemetry(
@@ -3885,6 +3910,31 @@ export function ConnectLnCareerMasteryAcademyView({
                         src={vid.videoUrl}
                         poster={vid.thumbnailUrl}
                         controls
+                        playsInline
+                        ref={(el) => {
+                          if (!el || (el as any).__clnObs) return
+                          ;(el as any).__clnObs = true
+                          if (typeof IntersectionObserver !== "undefined") {
+                            const obs = new IntersectionObserver(
+                              (entries) => {
+                                const entry = entries[0]
+                                if (!entry) return
+                                if (entry.isIntersecting && entry.intersectionRatio >= 0.45) {
+                                  el.muted = false
+                                  el.volume = 1
+                                  el.play().catch(() => {
+                                    el.muted = true
+                                    el.play().catch(() => {})
+                                  })
+                                } else if (!entry.isIntersecting || entry.intersectionRatio < 0.15) {
+                                  if (!el.paused) el.pause()
+                                }
+                              },
+                              { threshold: [0, 0.15, 0.45] }
+                            )
+                            obs.observe(el)
+                          }
+                        }}
                         onPlay={() => handleVideoPlayTelemetry(vid)}
                         onTimeUpdate={(e) =>
                           handleVideoTimeUpdateTelemetry(

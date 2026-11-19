@@ -1,3 +1,9 @@
+import {
+  getAccumulatedDailyPulseRooms,
+  getAccumulatedDailyLaunchpad,
+  getAccumulatedDailyWatercooler,
+} from "./connectin-daily-platform-growth"
+
 export interface PulseRoom {
   id: string
   title: string
@@ -122,6 +128,7 @@ export interface StartupJobItem {
 }
 
 export const pulseRoomsData: PulseRoom[] = [
+  ...getAccumulatedDailyPulseRooms(),
   {
     id: 'room_1',
     title: '🎙️ LIVE: Multi-Agent AI Containment & Sandboxing Architecture Teardown',
@@ -190,6 +197,7 @@ export const compensationCitiesData: CompensationCity[] = [
 ]
 
 export const productLaunchesData: ProductLaunchItem[] = [
+  ...getAccumulatedDailyLaunchpad(),
   {
     id: 'launch_0',
     title: 'ConnectIn Next-Gen Ecosystem',
@@ -244,6 +252,7 @@ export const productLaunchesData: ProductLaunchItem[] = [
 ]
 
 export const watercoolerThreadsData: WatercoolerThread[] = [
+  ...getAccumulatedDailyWatercooler(),
   {
     id: 'wc_1',
     companyTag: 'Expedite Consults',

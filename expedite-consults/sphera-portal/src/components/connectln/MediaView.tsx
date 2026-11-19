@@ -60,6 +60,7 @@ import { UserProfile } from "@/lib/connectln-data"
 import { ConnectInVideoWheel } from "@/components/connectln/ConnectInVideoWheel"
 import { VideoShareBanner } from "@/components/connectln/VideoShareBanner"
 import { ConnectLnStudioPlayer, CONNECTLN_VIDEO_PLAY_EVENT, notifyExclusiveVideoPlay } from "@/components/connectln/ConnectLnStudioPlayer"
+import { registerViewportVideoSlot } from "@/lib/connectln-settings"
 import { LiveHarvestedMediaShowcase } from "@/components/connectln/LiveHarvestedMediaShowcase"
 import {
   getStoredHarvestedItemsForDestination,
@@ -129,23 +130,17 @@ export function MediaView({
   const mediaStageRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const node = mediaStageRef.current
-    if (!node || !selectedVideo?.youtubeId || typeof IntersectionObserver === "undefined") return
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0]
-        if (!entry) return
-        if (entry.isIntersecting && entry.intersectionRatio >= 0.4) {
-          notifyExclusiveVideoPlay(mediaPlayerIdRef.current)
-          setIsPlaying(true)
-        } else if (!entry.isIntersecting || entry.intersectionRatio < 0.15) {
-          setIsPlaying(false)
-        }
+    if (!selectedVideo?.youtubeId) return
+    return registerViewportVideoSlot({
+      id: mediaPlayerIdRef.current,
+      getElement: () => mediaStageRef.current,
+      startAutoplay: () => {
+        setIsPlaying(true)
       },
-      { threshold: [0, 0.15, 0.4, 0.75] }
-    )
-    observer.observe(node)
-    return () => observer.disconnect()
+      stopAutoplay: () => {
+        setIsPlaying(false)
+      },
+    })
   }, [selectedVideo?.id, selectedVideo?.youtubeId, activeMediaTab])
 
   useEffect(() => {
@@ -1344,9 +1339,22 @@ export function MediaView({
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Live Stream Stage (8 Cols) */}
             <div className="lg:col-span-8 rounded-2xl border border-zinc-200 bg-white overflow-hidden shadow-md dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
-              <div className="relative aspect-video w-full bg-slate-950 flex items-center justify-center">
-                <img src={LIVE_STREAMS_DATA[0].hostAvatar} alt="" className="h-full w-full object-cover opacity-60" />
-                <div className="absolute top-3 left-3 rounded-full bg-red-600 px-3 py-0.5 text-xs font-black text-white animate-pulse flex items-center gap-1.5">
+              <div className="relative aspect-video w-full bg-slate-950 overflow-hidden">
+                {LIVE_STREAMS_DATA[0].youtubeId ? (
+                  <ConnectLnStudioPlayer
+                    youtubeId={LIVE_STREAMS_DATA[0].youtubeId}
+                    title={LIVE_STREAMS_DATA[0].title}
+                    serialPlate="CLN-LIVE-01"
+                    speaker={LIVE_STREAMS_DATA[0].hostName}
+                    speakerRole={LIVE_STREAMS_DATA[0].hostRole}
+                    autoPlay={true}
+                    initialMuted={false}
+                    className="h-full w-full"
+                  />
+                ) : (
+                  <img src={LIVE_STREAMS_DATA[0].hostAvatar} alt="" className="h-full w-full object-cover opacity-60" />
+                )}
+                <div className="absolute top-3 left-3 z-20 pointer-events-none rounded-full bg-red-600 px-3 py-0.5 text-xs font-black text-white animate-pulse flex items-center gap-1.5">
                   <Radio className="h-3.5 w-3.5" />
                   <span>LIVE NOW · {LIVE_STREAMS_DATA[0].liveViewersCount} Viewers</span>
                 </div>

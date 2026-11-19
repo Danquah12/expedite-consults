@@ -88,7 +88,7 @@ export function VideoShareBanner({
   const autoplayAllowedRef = useRef(autoplayAllowed)
   autoplayAllowedRef.current = autoplayAllowed
   const [startedByScroll, setStartedByScroll] = useState(true)
-  const [isDirectMuted, setIsDirectMuted] = useState(true)
+  const [isDirectMuted, setIsDirectMuted] = useState(false)
   const directVideoRef = useRef<HTMLVideoElement>(null)
   const [copiedLink, setCopiedLink] = useState(false)
   const [showMemberPicker, setShowMemberPicker] = useState(false)
@@ -167,7 +167,7 @@ export function VideoShareBanner({
       return m ? m[1] : null
     })()
 
-  // Auto-play inline when scrolled into viewport on the Home Page, coordinated across all Home video sections
+  // Auto-play inline AND unmute speaker when scrolled into viewport across all ConnectLn feeds
   useEffect(() => {
     if (!autoPlayOnScroll || resolvedPlayHandler) return
     const playable = Boolean(resolvedYtId || videoUrl)
@@ -179,7 +179,7 @@ export function VideoShareBanner({
       startAutoplay: () => {
         if (!autoplayAllowedRef.current || userManuallyStoppedRef.current) return
         setStartedByScroll(true)
-        setIsDirectMuted(true)
+        setIsDirectMuted(false)
         setIsPlayingInline(true)
       },
       stopAutoplay: () => {
@@ -188,6 +188,33 @@ export function VideoShareBanner({
       },
     })
   }, [autoPlayOnScroll, resolvedPlayHandler, resolvedYtId, videoUrl])
+
+  // Ensure direct HTML5 <video> unmutes when in view (falling back to muted only on cold browser block, then auto-unmuting on first gesture)
+  useEffect(() => {
+    if (!isPlayingInline || resolvedYtId) return
+    const vid = directVideoRef.current
+    if (!vid) return
+    vid.muted = false
+    vid.volume = 1
+    vid.play().catch(() => {
+      vid.muted = true
+      setIsDirectMuted(true)
+      vid.play().catch(() => {})
+    })
+    const unlockDirect = () => {
+      if (directVideoRef.current && !directVideoRef.current.paused) {
+        directVideoRef.current.muted = false
+        directVideoRef.current.volume = 1
+        setIsDirectMuted(false)
+      }
+    }
+    window.addEventListener("pointerdown", unlockDirect, { passive: true })
+    window.addEventListener("keydown", unlockDirect, { passive: true })
+    return () => {
+      window.removeEventListener("pointerdown", unlockDirect)
+      window.removeEventListener("keydown", unlockDirect)
+    }
+  }, [isPlayingInline, resolvedYtId])
 
   // If the user switches autoplay off in Settings, stop any video that was started by scrolling
   useEffect(() => {
@@ -347,7 +374,7 @@ export function VideoShareBanner({
                   description={videoSubtitle}
                   takeaways={takeaways}
                   durationLabel={duration}
-                  initialMuted={startedByScroll}
+                  initialMuted={false}
                   playerId={bannerPlayerIdRef.current}
                   onExclusiveStop={() => setIsPlayingInline(false)}
                   className="w-full"

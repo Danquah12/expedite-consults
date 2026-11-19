@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/connectin/cron/daily-video-sync",
+      "schedule": "0 6 * * *"
+    }
+  ]
+}

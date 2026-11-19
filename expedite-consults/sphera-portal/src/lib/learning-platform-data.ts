@@ -2,6 +2,10 @@ import {
   SKILLED_TRADES_LEARN_BY_DOING_LESSONS,
   normalizeSourceVideoKey
 } from './skilled-trades-learn-by-doing-data'
+import {
+  getAccumulatedDailyLearningCourses,
+  getAccumulatedDailyLabs,
+} from './connectin-daily-platform-growth'
 
 export interface LearningCourse {
   id: string
@@ -128,6 +132,7 @@ export interface CareerLearningPath {
 }
 
 export const LEARNING_COURSES_DATA: LearningCourse[] = [
+  ...getAccumulatedDailyLearningCourses(),
   {
     id: 'crs_zt_arch',
     title: 'Zero Trust Cloud Architecture & NIST SP 800-207 Defense',
@@ -1042,8 +1047,10 @@ function deduplicateCoursesBySourceVideo(courses: LearningCourse[]): LearningCou
 }
 
 export function getEnclaveLearningCourses(enclaveId?: string): LearningCourse[] {
+  const dailyCourses = getAccumulatedDailyLearningCourses()
   if (enclaveId === 'trades_construction') {
     return deduplicateCoursesBySourceVideo([
+      ...dailyCourses,
       ...SKILLED_TRADES_LEARN_BY_DOING_COURSES,
       {
         id: 'crs_timber_1',
@@ -1338,8 +1345,10 @@ export function getEnclaveLearningCourses(enclaveId?: string): LearningCourse[] 
 }
 
 export function getEnclaveInteractiveLabs(enclaveId?: string): InteractiveLab[] {
+  const dailyLabs = getAccumulatedDailyLabs()
   if (enclaveId === 'trades_construction') {
     return [
+      ...dailyLabs,
       {
         id: 'lab_skillhands_trades',
         title: 'SkillHands Vocational Trade Master Network',
@@ -1725,6 +1734,7 @@ export function getEnclaveInteractiveLabs(enclaveId?: string): InteractiveLab[] 
 
   // tech_cybersecurity or default
   return [
+    ...getAccumulatedDailyLabs(),
     {
       id: 'lab_11_dast_live',
       title: '11-DAST Automated Dynamic Pentesting Live Sandbox',

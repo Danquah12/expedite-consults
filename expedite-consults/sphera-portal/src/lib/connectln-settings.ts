@@ -161,8 +161,21 @@ function ensureGlobalListeners() {
   if (listenersAttached || typeof window === "undefined") return
   listenersAttached = true
 
-  window.addEventListener("scroll", requestViewportAutoplayEvaluation, { passive: true })
+  // Capture-phase scroll catches both window scrolling AND inner scrollable containers across all tabs
+  window.addEventListener("scroll", requestViewportAutoplayEvaluation, {
+    capture: true,
+    passive: true,
+  })
   window.addEventListener("resize", requestViewportAutoplayEvaluation, { passive: true })
+  window.addEventListener("popstate", requestViewportAutoplayEvaluation, { passive: true })
+  window.addEventListener(
+    "click",
+    () => {
+      window.setTimeout(requestViewportAutoplayEvaluation, 140)
+      window.setTimeout(requestViewportAutoplayEvaluation, 400)
+    },
+    { passive: true }
+  )
 
   if ("IntersectionObserver" in window) {
     sharedObserver = new IntersectionObserver(

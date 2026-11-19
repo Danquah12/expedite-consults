@@ -1,3 +1,5 @@
+import { getAccumulatedDailyEvents } from "./connectin-daily-platform-growth"
+
 export interface CompanyProfileData {
   id: string
   name: string
@@ -266,6 +268,7 @@ export interface ConnectInEvent {
 }
 
 export const PLATFORM_EVENTS_DATA: ConnectInEvent[] = [
+  ...getAccumulatedDailyEvents(),
   {
     id: 'evt_1',
     title: 'AXIOM Enterprise Security Demo: Autonomous Zero-Trust Defense',

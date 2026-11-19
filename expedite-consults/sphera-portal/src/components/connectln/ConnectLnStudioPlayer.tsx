@@ -28,9 +28,29 @@ export function notifyExclusiveVideoPlay(activePlayerId: string) {
   }
 }
 
-// Global capture-phase listener so native <video> elements also enforce single-video playback
+// Global capture-phase listener so native <video> elements also enforce single-video playback,
+// plus session-wide audio unlock tracker so videos scrolled into view unmute speaker automatically!
+function hasSessionAudioActivation(): boolean {
+  if (typeof window === "undefined") return false
+  if ((window as any).__connectlnAudioUnlocked) return true
+  const ua = (navigator as any)?.userActivation
+  if (ua && (ua.hasBeenActive || ua.isActive)) {
+    ;(window as any).__connectlnAudioUnlocked = true
+    return true
+  }
+  return false
+}
+
 if (typeof window !== "undefined" && !(window as any).__connectlnGlobalVideoGuardInstalled) {
   ;(window as any).__connectlnGlobalVideoGuardInstalled = true
+  const markAudioUnlocked = () => {
+    ;(window as any).__connectlnAudioUnlocked = true
+  }
+  window.addEventListener("pointerdown", markAudioUnlocked, { capture: true, passive: true })
+  window.addEventListener("touchstart", markAudioUnlocked, { capture: true, passive: true })
+  window.addEventListener("keydown", markAudioUnlocked, { capture: true, passive: true })
+  window.addEventListener("click", markAudioUnlocked, { capture: true, passive: true })
+
   document.addEventListener(
     "play",
     (e) => {
@@ -312,6 +332,20 @@ export function ConnectLnStudioPlayer({
             JSON.stringify({ event: "command", func: "mute", args: [] }),
             "*"
           )
+        } else if (
+          ytPlayerStateRef.current === 1 &&
+          !userManuallyMutedRef.current &&
+          !initialMuted &&
+          !shouldMuteForTranslation() &&
+          hasSessionAudioActivation() &&
+          unmuteBlockedByBrowserRef.current
+        ) {
+          unmuteBlockedByBrowserRef.current = false
+          hasUnmutedOnceRef.current = true
+          lastUnmuteSentAtRef.current = Date.now()
+          win.postMessage(JSON.stringify({ event: "command", func: "unMute", args: [] }), "*")
+          win.postMessage(JSON.stringify({ event: "command", func: "setVolume", args: [100] }), "*")
+          setIsMuted(false)
         }
         // Only kick playVideo if YouTube is paused (2) or cued (5) — never while -1 (loading) or 3 (buffering)
         if (
@@ -320,7 +354,9 @@ export function ConnectLnStudioPlayer({
           Date.now() - lastRecoveryAtRef.current > 1200
         ) {
           lastRecoveryAtRef.current = Date.now()
-          win.postMessage(JSON.stringify({ event: "command", func: "mute", args: [] }), "*")
+          if (!hasSessionAudioActivation() || unmuteBlockedByBrowserRef.current) {
+            win.postMessage(JSON.stringify({ event: "command", func: "mute", args: [] }), "*")
+          }
           win.postMessage(JSON.stringify({ event: "command", func: "playVideo", args: [] }), "*")
         }
       }
@@ -332,12 +368,47 @@ export function ConnectLnStudioPlayer({
     }
   }, [youtubeId, autoPlay, initialMuted, effectivePlayerId, shouldMuteForTranslation])
 
-  // On mobile devices (iOS Safari / Android Chrome), automatically unmute active video on first user touch/tap if browser initially forced muted autoplay
+  // Automatically unmute speaker when player is in view & pause/mute when scrolled out of view!
+  useEffect(() => {
+    const node = containerRef.current
+    if (!node || typeof window === "undefined" || typeof IntersectionObserver === "undefined") return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0]
+        if (!entry) return
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.35) {
+          if (isStoppedByOther || userPausedManuallyRef.current) return
+          sendPlayerCommand("playVideo")
+          setIsPlaying(true)
+          if (!userManuallyMutedRef.current && !shouldMuteForTranslation()) {
+            unmuteBlockedByBrowserRef.current = false
+            hasUnmutedOnceRef.current = true
+            lastUnmuteSentAtRef.current = Date.now()
+            sendPlayerCommand("unMute")
+            sendPlayerCommand("setVolume", [100])
+            setIsMuted(false)
+          }
+        } else if (!entry.isIntersecting || entry.intersectionRatio < 0.12) {
+          if (ytPlayerStateRef.current === 1) {
+            sendPlayerCommand("mute")
+            sendPlayerCommand("pauseVideo")
+            setIsPlaying(false)
+          }
+        }
+      },
+      { threshold: [0, 0.12, 0.35, 0.7] }
+    )
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [isStoppedByOther, sendPlayerCommand, shouldMuteForTranslation])
+
+  // Automatically unmute active in-view video on first user touch/click/keypress if browser initially gated cold-load audio
   useEffect(() => {
     if (typeof window === "undefined") return
-    const handleFirstMobileTouch = () => {
+    const handleFirstActivation = () => {
+      ;(window as any).__connectlnAudioUnlocked = true
       if (
-        unmuteBlockedByBrowserRef.current &&
+        !isStoppedByOther &&
         !userManuallyMutedRef.current &&
         !shouldMuteForTranslation() &&
         ytPlayerStateRef.current === 1
@@ -350,13 +421,15 @@ export function ConnectLnStudioPlayer({
         setIsMuted(false)
       }
     }
-    window.addEventListener("touchstart", handleFirstMobileTouch, { passive: true })
-    window.addEventListener("click", handleFirstMobileTouch, { passive: true })
+    window.addEventListener("touchstart", handleFirstActivation, { passive: true })
+    window.addEventListener("click", handleFirstActivation, { passive: true })
+    window.addEventListener("keydown", handleFirstActivation, { passive: true })
     return () => {
-      window.removeEventListener("touchstart", handleFirstMobileTouch)
-      window.removeEventListener("click", handleFirstMobileTouch)
+      window.removeEventListener("touchstart", handleFirstActivation)
+      window.removeEventListener("click", handleFirstActivation)
+      window.removeEventListener("keydown", handleFirstActivation)
     }
-  }, [sendPlayerCommand, shouldMuteForTranslation])
+  }, [isStoppedByOther, sendPlayerCommand, shouldMuteForTranslation])
 
   // Fallback timer so scrubber progresses smoothly and loops when reaching duration
   useEffect(() => {
@@ -517,7 +590,7 @@ export function ConnectLnStudioPlayer({
             <iframe
               ref={iframeRef}
               key={youtubeId}
-              src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=${autoPlay ? 1 : 0}&mute=1&loop=1&playlist=${youtubeId}&controls=0&rel=0&modestbranding=1&iv_load_policy=3&cc_load_policy=${initialLangRef.current !== normalizedSourceLang ? 1 : 0}&cc_lang_pref=${initialLangRef.current}&hl=${initialLangRef.current}&disablekb=1&fs=0&playsinline=1&enablejsapi=1`}
+              src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=${autoPlay ? 1 : 0}&mute=${initialMuted || shouldMuteForTranslation() ? 1 : hasSessionAudioActivation() ? 0 : 1}&loop=1&playlist=${youtubeId}&controls=0&rel=0&modestbranding=1&iv_load_policy=3&cc_load_policy=${initialLangRef.current !== normalizedSourceLang ? 1 : 0}&cc_lang_pref=${initialLangRef.current}&hl=${initialLangRef.current}&disablekb=1&fs=0&playsinline=1&enablejsapi=1`}
               title={title}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               onLoad={() => {

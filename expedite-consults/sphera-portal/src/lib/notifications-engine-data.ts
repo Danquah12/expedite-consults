@@ -1,3 +1,5 @@
+import { getAccumulatedDailyAlerts } from "./connectin-daily-platform-growth"
+
 export interface CategorizedNotificationItem {
   id: string
   category: 'Social' | 'Career' | 'Marketplace' | 'Learning' | 'Security'
@@ -61,6 +63,9 @@ export const INITIAL_CATEGORIZED_NOTIFICATIONS: CategorizedNotificationItem[] = 
     priority: 'critical',
     externalLabel: 'Run Live Challenge Test'
   },
+
+  // 0.5. 24-HOUR SCHEDULED ADDITIVE ALERTS (PRESERVES ALL EXISTING ALERTS)
+  ...getAccumulatedDailyAlerts(),
 
   // 1. SECURITY & CLINICAL SAFETY ALERTS
   {

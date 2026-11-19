@@ -9,6 +9,12 @@
  *  - Real Activity & Business Insights (Profile visits, Content reach, Directory discovery, Service activity, Hiring activity)
  */
 
+import {
+  getAccumulatedDailyWorkOpportunities,
+  getAccumulatedDailyServiceListings,
+  mergeAdditiveById,
+} from "./connectin-daily-platform-growth"
+
 export type WorkBusinessItemId =
   | 'my_work_applications'
   | 'my_services_inquiries'
@@ -209,6 +215,7 @@ export interface ServiceInquiry {
 }
 
 export const INITIAL_SERVICE_LISTINGS: ServiceListing[] = [
+  ...getAccumulatedDailyServiceListings(),
   {
     id: 'srv_laurel_painter',
     providerName: 'Carlos Mendez',
@@ -392,6 +399,7 @@ export interface TrackedWorkSubmission {
 }
 
 export const INITIAL_WORK_OPPORTUNITIES: WorkOpportunityItem[] = [
+  ...getAccumulatedDailyWorkOpportunities(),
   {
     id: 'opp_emp_carpenter',
     kind: 'employment',
@@ -806,9 +814,15 @@ export function loadWorkBusinessState() {
   }
 
   return {
-    services: readJson(STORAGE_KEYS.SERVICES, INITIAL_SERVICE_LISTINGS),
+    services: mergeAdditiveById(
+      getAccumulatedDailyServiceListings(),
+      readJson(STORAGE_KEYS.SERVICES, INITIAL_SERVICE_LISTINGS)
+    ),
     inquiries: readJson(STORAGE_KEYS.INQUIRIES, INITIAL_SERVICE_INQUIRIES),
-    opportunities: readJson(STORAGE_KEYS.OPPORTUNITIES, INITIAL_WORK_OPPORTUNITIES),
+    opportunities: mergeAdditiveById(
+      getAccumulatedDailyWorkOpportunities(),
+      readJson(STORAGE_KEYS.OPPORTUNITIES, INITIAL_WORK_OPPORTUNITIES)
+    ),
     submissions: readJson(STORAGE_KEYS.SUBMISSIONS, INITIAL_TRACKED_SUBMISSIONS),
     communities: readJson(STORAGE_KEYS.COMMUNITIES, INITIAL_WORK_COMMUNITIES),
     businessPages: readJson(STORAGE_KEYS.BUSINESS_PAGES, INITIAL_BUSINESS_PAGES),

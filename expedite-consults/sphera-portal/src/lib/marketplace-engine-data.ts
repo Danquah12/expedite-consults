@@ -1,3 +1,5 @@
+import { getAccumulatedDailyMarketProducts } from "./connectin-daily-platform-growth"
+
 export interface MarketplaceProduct {
   id: string
   name: string
@@ -104,6 +106,8 @@ export const MARKETPLACE_CATEGORIES_CONFIG = [
 ]
 
 export const MASTER_MARKETPLACE_PRODUCTS: MarketplaceProduct[] = [
+  // ================= 24-HOUR ADDITIVE SCHEDULED MARKET DROPS =================
+  ...getAccumulatedDailyMarketProducts(),
   // ================= FEATURED CLOUD PLATFORMS & UTILITIES =================
   {
     id: 'prod_expedite_ecosystem_launchpad',

@@ -557,17 +557,17 @@ export default function ConnectLnPage() {
         setHarvestedHomeItems(homeOnly)
         lastLiveVideoSyncMsRef.current = Date.now()
         const timeLabel = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
-        setLastFeedVideoSyncNote(`✓ Synced ${pulled.length || homeOnly.slice(0, 5).length} live videos (${timeLabel})`)
+        setLastFeedVideoSyncNote(`✓ Added ${pulled.length || homeOnly.slice(0, 5).length} new videos (${timeLabel}) · All videos kept`)
         setVisibleMyPostsCount((prev) => Math.max(prev, 5))
       }
     } catch {
-      setLastFeedVideoSyncNote("Auto-syncs every 15m")
+      setLastFeedVideoSyncNote("Scheduled every 24h · All videos preserved")
     } finally {
       setIsSyncingFeedVideos(false)
     }
   }
 
-  // Global Backend Media Harvester Ticker — syncs live YouTube RSS videos every 15 minutes and purges stale seed copies
+  // Global 24-Hour Additive Media Scheduler — adds new videos every 24 hours and preserves all existing videos
   useEffect(() => {
     if (typeof window === "undefined") return
 
@@ -576,58 +576,41 @@ export default function ConnectLnPage() {
       setHarvestedHomeItems(homeItems)
       if (homeItems.length === 0) return
 
-      const candidates = homeItems
-        .filter((i) => i.id.startsWith("cln_live_") || i.id.startsWith("cln_custom_"))
-        .slice(0, 6)
+      const candidates = homeItems.slice(0, 24)
 
       setPosts((prev) => {
-        // Purge old static seed harvest_post_cln_hv_ / cln_auto_ / cln_pull_ items so stale videos never stay pinned!
+        // Strictly additive: preserve all existing unique posts and never delete old videos!
         const seenSigs = new Set<string>()
         const seenIds = new Set<string>()
-        const cleanedPrev: Post[] = []
+        const preservedPrev: Post[] = []
         for (const p of prev) {
           if (!p || !p.id || seenIds.has(p.id)) continue
-          if (
-            p.id.startsWith("harvest_post_cln_hv_") ||
-            p.id.startsWith("harvest_post_cln_auto_") ||
-            p.id.startsWith("harvest_post_cln_pull_")
-          ) {
-            continue
-          }
           const sig = getPostMediaDedupeSignature(p)
           if (p.id.startsWith("harvest_post_") && seenSigs.has(sig)) continue
           seenIds.add(p.id)
           seenSigs.add(sig)
-          cleanedPrev.push(p)
+          preservedPrev.push(p)
         }
 
-        const freshLivePosts: Post[] = []
+        const freshAdditivePosts: Post[] = []
         for (const item of candidates) {
           const candidatePost = buildFeedPostFromHarvestedItem(item)
           const sig = getPostMediaDedupeSignature(candidatePost)
           if (!seenIds.has(candidatePost.id) && !seenSigs.has(sig)) {
-            freshLivePosts.push(candidatePost)
+            freshAdditivePosts.push(candidatePost)
             seenIds.add(candidatePost.id)
             seenSigs.add(sig)
           }
         }
 
-        // Remove older harvest_post_cln_live_ items beyond the latest 8 so fresh syncs rotate cleanly
-        let liveKept = 0
-        const nextPosts = [...freshLivePosts, ...cleanedPrev]
-          .filter((p) => {
-            if (p.id.startsWith("harvest_post_cln_live_")) {
-              liveKept += 1
-              return liveKept <= 8
-            }
-            return true
-          })
-          .slice(0, 60)
-
+        const nextPosts = [...freshAdditivePosts, ...preservedPrev].slice(0, 500)
         saveStoredPosts(nextPosts)
         return nextPosts
       })
     }
+
+    const LAST_24H_SYNC_KEY = "connectln_last_24h_sync_ms"
+    const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000
 
     const syncHarvestedMediaTick = async (forceRefresh: boolean) => {
       try {
@@ -640,15 +623,17 @@ export default function ConnectLnPage() {
         const incoming: HarvestedMediaItem[] = Array.isArray(data?.items) ? data.items : []
         if (incoming.length === 0) return
 
-        // Keep only live RSS + explicit custom admin items so old deterministic templates don't crowd live videos
-        const currentLocal = loadStoredHarvestedItems().filter(
-          (i) => i.id.startsWith("cln_live_") || i.id.startsWith("cln_custom_")
-        )
+        // Additive merge: preserve every existing video while adding newly published videos on top
+        const currentLocal = loadStoredHarvestedItems()
         const merged = saveStoredHarvestedItems([...incoming, ...currentLocal])
         injectHarvestedHomeItemsIntoFeed(merged)
-        lastLiveVideoSyncMsRef.current = Date.now()
+        const nowMs = Date.now()
+        lastLiveVideoSyncMsRef.current = nowMs
+        try {
+          window.localStorage.setItem(LAST_24H_SYNC_KEY, String(nowMs))
+        } catch {}
         const timeLabel = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
-        setLastFeedVideoSyncNote(`Live synced ${timeLabel} · every 15m`)
+        setLastFeedVideoSyncNote(`24h schedule active (${timeLabel}) · All videos preserved`)
       } catch {
         // ignore transient network errors
       }
@@ -667,20 +652,24 @@ export default function ConnectLnPage() {
     }
 
     const handleWindowFocus = () => {
-      if (Date.now() - lastLiveVideoSyncMsRef.current > 10 * 60 * 1000) {
+      const lastStored = Number(window.localStorage.getItem(LAST_24H_SYNC_KEY) || "0")
+      if (Date.now() - Math.max(lastLiveVideoSyncMsRef.current, lastStored) >= TWENTY_FOUR_HOURS_MS) {
         syncHarvestedMediaTick(true)
       }
     }
 
-    syncHarvestedMediaTick(true)
+    const lastStoredSync = Number(window.localStorage.getItem(LAST_24H_SYNC_KEY) || "0")
+    const dueFor24hForce = Date.now() - lastStoredSync >= TWENTY_FOUR_HOURS_MS
+    syncHarvestedMediaTick(dueFor24hForce)
+
     window.addEventListener(HARVESTER_EVENT_NAME, handleHarvesterUpdatedEvent)
     window.addEventListener("storage", handleCrossTabStorage)
     window.addEventListener("focus", handleWindowFocus)
 
-    // Auto-sync fresh live videos every 15 minutes (900,000 ms)
+    // Scheduled additive check every 24 hours (86,400,000 ms)
     const intervalId = window.setInterval(() => {
       syncHarvestedMediaTick(true)
-    }, 900000)
+    }, TWENTY_FOUR_HOURS_MS)
 
     return () => {
       window.clearInterval(intervalId)

@@ -43,7 +43,11 @@ import { resolveUserProfilePicture, isKwesiAccount } from "@/lib/connectin-stora
 import { buildSharePreviewUrl } from "@/lib/connectin-share"
 import { VideoShareBanner } from "./VideoShareBanner"
 import { ConnectLnStudioPlayer, CONNECTLN_VIDEO_PLAY_EVENT, notifyExclusiveVideoPlay } from "./ConnectLnStudioPlayer"
-import { useAutoplayVideosPref } from "@/lib/connectln-settings"
+import {
+  useAutoplayVideosPref,
+  registerViewportVideoSlot,
+  notifyManualVideoOverride,
+} from "@/lib/connectln-settings"
 
 interface ConnectInVideoWheelProps {
   className?: string
@@ -249,29 +253,22 @@ export function ConnectInVideoWheel({
     [selectedStageVideo, filteredTalks, defaultAssignedUserVideo]
   )
 
-  // Auto-play the Hero Stage video when scrolled into view ONLY when user enabled Autoplay in Settings -> Behavior
+  // Register Hero Stage video with the global Viewport Autoplay Coordinator & unmute speaker when in view
   useEffect(() => {
-    const node = heroStageRef.current
-    if (!node || !assignedUserVideo?.youtubeId || typeof IntersectionObserver === "undefined") return
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0]
-        if (!entry) return
-        if (entry.isIntersecting && entry.intersectionRatio >= 0.4) {
-          if (autoplayPrefRef.current && !heroUserManuallyStoppedRef.current && !activeVideo) {
-            setHeroStartedByScroll(true)
-            notifyExclusiveVideoPlay(wheelHeroPlayerIdRef.current)
-            setIsPlayingHeroInline(true)
-          }
-        } else if (!entry.isIntersecting || entry.intersectionRatio < 0.15) {
-          heroUserManuallyStoppedRef.current = false
-          setIsPlayingHeroInline(false)
-        }
+    if (!assignedUserVideo?.youtubeId) return
+    return registerViewportVideoSlot({
+      id: wheelHeroPlayerIdRef.current,
+      getElement: () => heroStageRef.current,
+      startAutoplay: () => {
+        if (!autoplayPrefRef.current || heroUserManuallyStoppedRef.current || activeVideo) return
+        setHeroStartedByScroll(true)
+        setIsPlayingHeroInline(true)
       },
-      { threshold: [0, 0.15, 0.4, 0.75] }
-    )
-    observer.observe(node)
-    return () => observer.disconnect()
+      stopAutoplay: () => {
+        heroUserManuallyStoppedRef.current = false
+        setIsPlayingHeroInline(false)
+      },
+    })
   }, [assignedUserVideo?.youtubeId, activeVideo])
 
   useEffect(() => {
@@ -835,7 +832,7 @@ export function ConnectInVideoWheel({
                 serialPlate={assignedUserVideo.serialPlate}
                 speaker={assignedUserVideo.speaker}
                 durationLabel={assignedUserVideo.duration || ""}
-                initialMuted={heroStartedByScroll}
+                initialMuted={false}
                 playerId={wheelHeroPlayerIdRef.current}
                 onExclusiveStop={() => setIsPlayingHeroInline(false)}
                 className="h-full w-full"

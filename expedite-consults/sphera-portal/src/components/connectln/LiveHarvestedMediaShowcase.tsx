@@ -73,6 +73,32 @@ function HarvestedMp4Player({
   const [isPlaying, setIsPlaying] = useState(true)
   const [isMuted, setIsMuted] = useState(initialMuted)
 
+  // Start unmuted when in view; if cold-load browser policy temporarily blocks unmuted HTML5 audio, fall back cleanly and auto-unmute on first gesture
+  useEffect(() => {
+    const vid = videoRef.current
+    if (!vid) return
+    vid.muted = initialMuted
+    if (!initialMuted) vid.volume = 1
+    vid.play().catch(() => {
+      vid.muted = true
+      setIsMuted(true)
+      vid.play().catch(() => {})
+    })
+    const unlockMp4 = () => {
+      if (videoRef.current && !videoRef.current.paused && !initialMuted) {
+        videoRef.current.muted = false
+        videoRef.current.volume = 1
+        setIsMuted(false)
+      }
+    }
+    window.addEventListener("pointerdown", unlockMp4, { passive: true })
+    window.addEventListener("keydown", unlockMp4, { passive: true })
+    return () => {
+      window.removeEventListener("pointerdown", unlockMp4)
+      window.removeEventListener("keydown", unlockMp4)
+    }
+  }, [initialMuted])
+
   return (
     <div className="bg-black">
       <div className="relative aspect-video w-full">
@@ -203,7 +229,7 @@ export function LiveHarvestedMediaShowcase({
   const [isSyncingNow, setIsSyncingNow] = useState<boolean>(false)
   const [isExpanded, setIsExpanded] = useState<boolean>(true)
   const [showAllItems, setShowAllItems] = useState<boolean>(false)
-  const [secondsToNextAutoPull, setSecondsToNextAutoPull] = useState<number>(900)
+  const [secondsToNextAutoPull, setSecondsToNextAutoPull] = useState<number>(86400)
   const [appliedIds, setAppliedIds] = useState<string[]>([])
   const [likedIds, setLikedIds] = useState<Record<string, boolean>>({})
   const [repostedIds, setRepostedIds] = useState<Record<string, boolean>>({})
@@ -287,13 +313,13 @@ export function LiveHarvestedMediaShowcase({
           const local = loadStoredHarvestedItems()
           saveStoredHarvestedItems(dedupeHarvestedItems([...data.telemetry.items, ...local]))
           refreshFromStore()
-          setSecondsToNextAutoPull(900)
+          setSecondsToNextAutoPull(86400)
           const newestTitle = data?.pulledItems?.[0]?.title
           if (newestTitle) {
             flashToast(
               isAutoTick
-                ? `⚡ Live 15-Min Auto-Sync: "${newestTitle.slice(0, 52)}..."`
-                : `✓ Synced fresh live video: "${newestTitle.slice(0, 52)}..."`
+                ? `⚡ 24h Scheduled Video Added: "${newestTitle.slice(0, 52)}..."`
+                : `✓ Added fresh video (all old videos kept): "${newestTitle.slice(0, 52)}..."`
             )
           }
         }
@@ -303,13 +329,13 @@ export function LiveHarvestedMediaShowcase({
     }
   }
 
-  // 15-minute live RSS sync countdown across Jobs, Market, Media & Pulse
+  // 24-hour additive live RSS sync schedule across Home, Jobs, Market, Media & Pulse
   useEffect(() => {
     const timer = setInterval(() => {
       setSecondsToNextAutoPull((prev) => {
         if (prev <= 1) {
           handleManualPullForTab(true)
-          return 900
+          return 86400
         }
         return prev - 1
       })
@@ -320,7 +346,7 @@ export function LiveHarvestedMediaShowcase({
   const cfg = HEADER_CONFIG[destination]
   const HeaderIcon = cfg.icon
   const defaultLimit = compact ? 3 : 4
-  const visibleItems = showAllItems ? items.slice(0, 16) : items.slice(0, defaultLimit)
+  const visibleItems = showAllItems ? items : items.slice(0, defaultLimit)
   const visibleVideoKey = visibleItems
     .filter((i) => i.kind === "video" && (i.videoUrl || i.youtubeId))
     .map((i) => i.id)
@@ -342,9 +368,9 @@ export function LiveHarvestedMediaShowcase({
     return () => window.removeEventListener(CONNECTLN_VIDEO_PLAY_EVENT, handleExclusivePlay)
   }, [destination])
 
-  // Auto-play videos on the Home page when scrolled into view (muted with Tap for Sound)
+  // Auto-play AND unmute videos across ALL tabs (Home, Jobs, Market, Media, Pulse) when scrolled into view!
   useEffect(() => {
-    if (destination !== "home" || !isExpanded) return
+    if (!isExpanded) return
     const cleanups: Array<() => void> = []
 
     visibleItems.forEach((item) => {
@@ -486,7 +512,7 @@ export function LiveHarvestedMediaShowcase({
                     item.videoUrl ? (
                       <HarvestedMp4Player
                         item={item}
-                        initialMuted={startedByScroll}
+                        initialMuted={false}
                         playerId={slotPlayerId}
                       />
                     ) : (
@@ -498,7 +524,7 @@ export function LiveHarvestedMediaShowcase({
                         speakerRole={item.authorRole}
                         description={item.summary}
                         durationLabel={item.duration}
-                        initialMuted={startedByScroll}
+                        initialMuted={false}
                         playerId={slotPlayerId}
                         onExclusiveStop={() => setPlayingId((prev) => (prev === item.id ? null : prev))}
                         className="w-full"

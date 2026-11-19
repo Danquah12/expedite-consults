@@ -1068,17 +1068,32 @@ export function loadStoredHarvestedItems(): HarvestedMediaItem[] {
   }
   try {
     const raw = window.localStorage.getItem(HARVESTER_STORAGE_KEY)
+    const legacyRaw = window.localStorage.getItem("connectln_harvested_media_items_v3")
     const parsed: HarvestedMediaItem[] = raw ? JSON.parse(raw) : []
-    const cleanedParsed = parsed.filter((item) => Boolean(item && item.id))
+    const legacyParsed: HarvestedMediaItem[] = legacyRaw ? JSON.parse(legacyRaw) : []
+    const cleanedParsed = [...parsed, ...legacyParsed].filter((item) => Boolean(item && item.id))
     const deterministic = getInitialDeterministicHarvestedItems(14)
-    return dedupeHarvestedItems([...cleanedParsed, ...deterministic]).slice(0, 40)
+    return dedupeHarvestedItems([...cleanedParsed, ...deterministic]).slice(0, 500)
   } catch {
     return dedupeHarvestedItems(getInitialDeterministicHarvestedItems(14))
   }
 }
 
 export function saveStoredHarvestedItems(items: HarvestedMediaItem[]): HarvestedMediaItem[] {
-  const sorted = dedupeHarvestedItems(items).slice(0, 40)
+  let existing: HarvestedMediaItem[] = []
+  if (typeof window !== "undefined") {
+    try {
+      const raw = window.localStorage.getItem(HARVESTER_STORAGE_KEY)
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (Array.isArray(parsed)) existing = parsed
+      }
+    } catch {
+      // ignore
+    }
+  }
+  // Strictly additive: merge incoming items with all previously stored items (never deleting old videos)
+  const sorted = dedupeHarvestedItems([...items, ...existing]).slice(0, 500)
   if (typeof window !== "undefined") {
     try {
       window.localStorage.setItem(HARVESTER_STORAGE_KEY, JSON.stringify(sorted))

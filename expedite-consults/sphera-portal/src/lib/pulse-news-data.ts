@@ -1,3 +1,8 @@
+import {
+  getAccumulatedDailyPulseArticles,
+  getAccumulatedDailyPulseRooms,
+} from "./connectin-daily-platform-growth"
+
 export interface PulseArticle {
   id: string
   title: string
@@ -236,6 +241,7 @@ export function getEnclaveDomainAdvisories(enclaveId?: string): CyberThreatAdvis
 }
 
 export const PULSE_ARTICLES_DATA: PulseArticle[] = [
+  ...getAccumulatedDailyPulseArticles(),
   {
     id: 'art_1',
     title: 'Autonomous Pentesting & ASPM Platforms Replace 500-Page Security PDF Noise with Auto-PRs',
@@ -997,12 +1003,13 @@ Plugging a 4-channel automotive scope into DLC pin 6 and 14 provides immediate p
 ]
 
 export function getEnclavePulseArticles(enclaveId?: string): PulseArticle[] {
+  const dailyArticles = getAccumulatedDailyPulseArticles()
   const globalMustInclude = PULSE_ARTICLES_DATA.filter(
     a => a.category === 'Professions LinkedIn Ignored' || a.category === 'Veterans & SkillBridge' || a.category === 'Cybersecurity'
   )
-  if (enclaveId === 'trades_construction') return [...TRADES_PULSE_ARTICLES, ...globalMustInclude]
-  if (enclaveId === 'healthcare_medicine') return [...HEALTHCARE_PULSE_ARTICLES, ...globalMustInclude]
-  if (enclaveId === 'automotive_mechanics') return [...AUTOMOTIVE_PULSE_ARTICLES, ...globalMustInclude]
+  if (enclaveId === 'trades_construction') return [...dailyArticles, ...TRADES_PULSE_ARTICLES, ...globalMustInclude.filter(a => !a.id.startsWith('daily_pulse_art_'))]
+  if (enclaveId === 'healthcare_medicine') return [...dailyArticles, ...HEALTHCARE_PULSE_ARTICLES, ...globalMustInclude.filter(a => !a.id.startsWith('daily_pulse_art_'))]
+  if (enclaveId === 'automotive_mechanics') return [...dailyArticles, ...AUTOMOTIVE_PULSE_ARTICLES, ...globalMustInclude.filter(a => !a.id.startsWith('daily_pulse_art_'))]
   return PULSE_ARTICLES_DATA
 }
 
@@ -1419,8 +1426,9 @@ export const IGNORED_AND_VETERANS_PULSE_ROOMS: PulseRoom[] = [
 ]
 
 export function getEnclavePulseRooms(enclaveId?: string): PulseRoom[] {
-  if (enclaveId === 'trades_construction') return [...TRADES_PULSE_ROOMS, ...IGNORED_AND_VETERANS_PULSE_ROOMS]
-  if (enclaveId === 'healthcare_medicine') return [...HEALTHCARE_PULSE_ROOMS, ...IGNORED_AND_VETERANS_PULSE_ROOMS]
-  if (enclaveId === 'automotive_mechanics') return [...AUTOMOTIVE_PULSE_ROOMS, ...IGNORED_AND_VETERANS_PULSE_ROOMS]
-  return [...IGNORED_AND_VETERANS_PULSE_ROOMS, ...pulseRoomsData]
+  const dailyRooms = getAccumulatedDailyPulseRooms()
+  if (enclaveId === 'trades_construction') return [...dailyRooms, ...TRADES_PULSE_ROOMS, ...IGNORED_AND_VETERANS_PULSE_ROOMS]
+  if (enclaveId === 'healthcare_medicine') return [...dailyRooms, ...HEALTHCARE_PULSE_ROOMS, ...IGNORED_AND_VETERANS_PULSE_ROOMS]
+  if (enclaveId === 'automotive_mechanics') return [...dailyRooms, ...AUTOMOTIVE_PULSE_ROOMS, ...IGNORED_AND_VETERANS_PULSE_ROOMS]
+  return [...dailyRooms, ...IGNORED_AND_VETERANS_PULSE_ROOMS, ...pulseRoomsData.filter(r => !r.id.startsWith('daily_pulse_room_'))]
 }
