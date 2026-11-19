@@ -676,14 +676,9 @@ export async function GET(req: NextRequest) {
   if (incomingForName || incomingEmail || incomingPhoneDigits) {
     const nameSlug = incomingForName.replace(/[^a-z0-9]+/g, "_")
     const incomingCalls = calls.filter((c) => {
-      // Skip if viewer is already inside this call
-      if (
-        c.participants.some(
-          (p) =>
-            (viewerPeerId && p.user_id === viewerPeerId) ||
-            (incomingForName && p.display_name?.trim().toLowerCase() === incomingForName)
-        )
-      ) {
+      // Skip ONLY if this exact browser/mobile tab (`viewerPeerId`) is already a participant in the call.
+      // Never skip on `display_name === incomingForName` so calling your own phone from desktop still rings on your phone!
+      if (viewerPeerId && c.participants.some((p) => p.user_id === viewerPeerId)) {
         return false
       }
       const targetName = (c.target_recipient_name || "").trim().toLowerCase()

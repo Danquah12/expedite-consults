@@ -10,6 +10,7 @@ import {
   normalizeDialablePhone,
   looksLikePhoneNumber,
   formatPrettyPhoneDisplay,
+  mintTwilioVoiceAccessToken,
 } from "@/lib/connectin-twilio-voice"
 
 export const dynamic = "force-dynamic"
@@ -157,7 +158,9 @@ export async function POST(req: NextRequest) {
 
       const recipientPhone = recipientLookup.dialablePhone || ""
       const recipientEmail =
-        recipientLookup.member?.email || String(body?.targetEmail || "").trim()
+        recipientLookup.member?.email ||
+        String(body?.targetEmail || "").trim() ||
+        (recipientName.toLowerCase() === callerName.toLowerCase() ? callerEmail : "")
 
       const origin =
         req.nextUrl.origin && !req.nextUrl.origin.includes("localhost")
@@ -172,38 +175,44 @@ export async function POST(req: NextRequest) {
         callerPhone
       )}&invitedName=${encodeURIComponent(recipientName)}&autoAnswer=1`
 
-      // 1. Wake up recipient's phone immediately via Web Push (`public/sw.js`) if subscribed!
-      let pushDeliveredCount = 0
-      let pushAttemptedCount = 0
-      if (recipientLookup.member) {
-        const pushRes = await sendIncomingCallWebPush({
-          member: recipientLookup.member,
-          callId,
-          callMode,
-          callerName,
-          callerPhone,
-          callerAvatar,
-          joinUrl,
+      // 1. Wake up recipient's phone immediately via Web Push (`public/sw.js`),
+      // 2. Await instant mobile Email/SMS Camera Link push (so Vercel never freezes before delivery),
+      // 3. Mint carrier voice token in parallel so physical cell phone SIM rings immediately if Web Push isn't enabled on their phone yet!
+      const [pushRes, ringCellData, voiceTokenData] = await Promise.all([
+        recipientLookup.member
+          ? sendIncomingCallWebPush({
+              member: recipientLookup.member,
+              callId,
+              callMode,
+              callerName,
+              callerPhone,
+              callerAvatar,
+              joinUrl,
+            }).catch(() => ({ deliveredCount: 0, attemptedCount: 0 }))
+          : Promise.resolve({ deliveredCount: 0, attemptedCount: 0 }),
+        fetch(`${origin}/api/connectin/voice/ring-cell`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            toPhone: recipientPhone || undefined,
+            targetName: recipientName,
+            targetEmail: recipientEmail || undefined,
+            callerName,
+            callerEmail: callerEmail || undefined,
+            callMode,
+            joinUrl,
+            placeAlertCall: false,
+          }),
         })
-        pushDeliveredCount = pushRes.deliveredCount
-        pushAttemptedCount = pushRes.attemptedCount
-      }
+          .then((r) => r.json())
+          .catch(() => null),
+        recipientPhone
+          ? mintTwilioVoiceAccessToken(callerEmail || callerName || "connectln_caller").catch(() => null)
+          : Promise.resolve(null),
+      ])
 
-      // 2. Also fire instant mobile Email/SMS invite push in parallel as universal wake-up backup
-      fetch(`${origin}/api/connectin/voice/ring-cell`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          toPhone: recipientPhone || undefined,
-          targetName: recipientName,
-          targetEmail: recipientEmail || undefined,
-          callerName,
-          callerEmail: callerEmail || undefined,
-          callMode,
-          joinUrl,
-          placeAlertCall: false,
-        }),
-      }).catch(() => {})
+      const pushDeliveredCount = pushRes.deliveredCount
+      const pushAttemptedCount = pushRes.attemptedCount
 
       const digits = recipientPhone.replace(/[^\d]/g, "")
       const shareText = `${
@@ -218,6 +227,9 @@ export async function POST(req: NextRequest) {
         isRegisteredOnConnectLn: recipientLookup.isRegisteredOnConnectLn,
         pushDeliveredCount,
         pushAttemptedCount,
+        emailAlertSent: Boolean(ringCellData?.emailSent),
+        smsAlertSent: Boolean(ringCellData?.smsSent),
+        carrierVoiceToken: voiceTokenData?.token || undefined,
         recipient: {
           name: recipientName,
           phone: recipientPhone,

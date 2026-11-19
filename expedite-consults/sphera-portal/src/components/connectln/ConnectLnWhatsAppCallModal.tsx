@@ -467,6 +467,10 @@ export function ConnectLnWhatsAppCallModal({
   const latestAudioChunkRef = useRef<EncodedVoiceChunk | undefined>(undefined)
   const recentAudioChunksRef = useRef<EncodedVoiceChunk[]>([])
   const voicePlayerRef = useRef<GaplessRemoteVoicePlayer | null>(null)
+  const pstnDeviceRef = useRef<any>(null)
+  const pstnCallRef = useRef<any>(null)
+  const pstnFallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hasWebRtcPeerJoinedRef = useRef<boolean>(false)
 
   useEffect(() => {
     if (initialCallId) setCallId(initialCallId)
@@ -476,7 +480,27 @@ export function ConnectLnWhatsAppCallModal({
     setIsVideoOn(initialMode === "video")
   }, [initialMode, open])
 
+  const hangupPstnLegOnly = useCallback(() => {
+    if (pstnFallbackTimerRef.current) {
+      clearTimeout(pstnFallbackTimerRef.current)
+      pstnFallbackTimerRef.current = null
+    }
+    try {
+      if (pstnCallRef.current) {
+        pstnCallRef.current.disconnect?.()
+        pstnCallRef.current = null
+      }
+    } catch {}
+    try {
+      if (pstnDeviceRef.current) {
+        pstnDeviceRef.current.destroy?.()
+        pstnDeviceRef.current = null
+      }
+    } catch {}
+  }, [])
+
   const stopAllMedia = useCallback(() => {
+    hangupPstnLegOnly()
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((t) => t.stop())
       localStreamRef.current = null
@@ -608,9 +632,82 @@ export function ConnectLnWhatsAppCallModal({
     [isMicMuted]
   )
 
-  // Initialize call session, wake up recipient's phone via Web Push, and open camera/mic
+  const ringPhysicalCellPhoneLeg = useCallback(
+    async (phoneToRing: string, preMintedJwt?: string) => {
+      if (!looksLikeClientPhone(phoneToRing) || hasWebRtcPeerJoinedRef.current) return
+      const cleanPhone = normalizeClientPhone(phoneToRing)
+      hangupPstnLegOnly()
+      try {
+        let jwt = preMintedJwt || ""
+        if (!jwt) {
+          const qs = new URLSearchParams({
+            identity: callerEmail || callerName || "connectln_caller",
+            targetPhone: cleanPhone,
+          })
+          const r = await fetch(`/api/connectin/voice/token?${qs.toString()}`, {
+            cache: "no-store",
+          })
+          const d = await r.json()
+          jwt = d?.token || ""
+        }
+        if (!jwt || hasWebRtcPeerJoinedRef.current) return
+
+        const { Device } = await import("@twilio/voice-sdk")
+        const device = new Device(jwt, {
+          codecPreferences: ["opus", "pcmu"] as any,
+          enableImprovedSignalingErrorPrecision: true,
+        })
+        pstnDeviceRef.current = device
+
+        const call = await device.connect({
+          params: {
+            To: cleanPhone,
+            CallerName: callerName,
+          },
+        })
+        pstnCallRef.current = call
+
+        call.on("ringing", () => {
+          if (!hasWebRtcPeerJoinedRef.current) {
+            setCallStatus((prev) => (prev === "connected" ? "connected" : "ringing"))
+            setPushBannerNote(
+              initialMode === "video"
+                ? `📱 Ringing ${prettyClientPhone(cleanPhone)} + sent 1-tap Camera Link to phone!`
+                : `📱 Ringing ${prettyClientPhone(cleanPhone)} on mobile network...`
+            )
+          }
+        })
+
+        call.on("accept", () => {
+          if (!hasWebRtcPeerJoinedRef.current) {
+            setCallStatus("connected")
+            setPushBannerNote(
+              initialMode === "video"
+                ? `🟢 Cell phone answered! Tap the Camera Link on the phone (Email/SMS/ConnectLn) to turn on video.`
+                : `🟢 Connected live to ${prettyClientPhone(cleanPhone)}`
+            )
+          }
+        })
+
+        call.on("disconnect", () => {
+          pstnCallRef.current = null
+          if (!hasWebRtcPeerJoinedRef.current) {
+            setCallStatus("ended")
+            stopAllMedia()
+            setTimeout(() => onClose(), 600)
+          }
+        })
+      } catch (err: any) {
+        console.warn("[WhatsApp Hybrid Cell Ring] notice:", err?.message)
+      }
+    },
+    [callerEmail, callerName, hangupPstnLegOnly, initialMode, onClose, stopAllMedia]
+  )
+
+  // Initialize call session, wake up recipient's phone via Web Push, and auto-ring physical cell phone if Web Push isn't enabled on their phone yet!
   useEffect(() => {
     if (!open) {
+      hasWebRtcPeerJoinedRef.current = false
       stopAllMedia()
       setRemoteStream(null)
       setRemoteFallbackFrame("")
@@ -621,6 +718,7 @@ export function ConnectLnWhatsAppCallModal({
     }
 
     let cancelled = false
+    hasWebRtcPeerJoinedRef.current = false
     setRecipientName(
       looksLikeClientPhone(targetLabel) ? prettyClientPhone(targetLabel) : targetLabel || "ConnectLn Call"
     )
@@ -651,19 +749,35 @@ export function ConnectLnWhatsAppCallModal({
         .then((r) => r.json())
         .then((data) => {
           if (cancelled || !data?.ok) return
+          const resolvedNum = data.recipient?.phone || ""
           if (data.recipient?.name) setRecipientName(data.recipient.name)
-          if (data.recipient?.phone) setRecipientPhone(data.recipient.phone)
+          if (resolvedNum) setRecipientPhone(resolvedNum)
           if (data.recipient?.avatar) setRecipientAvatar(data.recipient.avatar)
           if (data.joinUrl) setJoinLinkUrl(data.joinUrl)
           if (data.whatsappShareUrl) setWhatsappShareUrl(data.whatsappShareUrl)
           if (data.nativeSmsHref) setNativeSmsHref(data.nativeSmsHref)
           setCallStatus((prev) => (prev === "connected" ? "connected" : "ringing"))
+
           if (data.pushDeliveredCount > 0) {
-            setPushBannerNote(`Ringing ${data.recipient?.name || "recipient"}'s phone on ConnectLn...`)
-          } else if (data.isRegisteredOnConnectLn) {
-            setPushBannerNote(`Ringing ${data.recipient?.name || "recipient"} on ConnectLn + sent instant mobile alert`)
+            setPushBannerNote(`Ringing ${data.recipient?.name || "recipient"}'s ConnectLn app...`)
+            // If they don't answer the Web Push within 10s, automatically ring their physical cell SIM as backup!
+            if (resolvedNum) {
+              pstnFallbackTimerRef.current = setTimeout(() => {
+                if (!cancelled && !hasWebRtcPeerJoinedRef.current) {
+                  void ringPhysicalCellPhoneLeg(resolvedNum, data.carrierVoiceToken)
+                }
+              }, 10000)
+            }
+          } else if (resolvedNum) {
+            // Recipient's phone hasn't enabled Web Push yet -> IMMEDIATELY ring their physical cell phone SIM + deliver 1-tap Camera Link!
+            setPushBannerNote(
+              `Dialing ${prettyClientPhone(resolvedNum)} on cell network${
+                initialMode === "video" ? " + sent Camera Link to phone" : ""
+              }...`
+            )
+            void ringPhysicalCellPhoneLeg(resolvedNum, data.carrierVoiceToken)
           } else {
-            setPushBannerNote("Number not registered on ConnectLn yet — tap Share/Carrier below to ring their SIM or text link")
+            setPushBannerNote("Ringing on ConnectLn — tap Share below to send a direct link or dial a phone number")
           }
         })
         .catch(() => {})
@@ -704,6 +818,9 @@ export function ConnectLnWhatsAppCallModal({
 
       mc.on("stream", (rStream: MediaStream) => {
         if (cancelled) return
+        hasWebRtcPeerJoinedRef.current = true
+        hangupPstnLegOnly()
+        setPushBannerNote("")
         activeMediaCallsRef.current.set(mc.peer, mc)
         const hasVid = rStream.getVideoTracks().some((t) => t.readyState === "live" && t.enabled)
         if (hasVid) hasLiveRemoteVideoRef.current = true
@@ -916,6 +1033,12 @@ export function ConnectLnWhatsAppCallModal({
           (p: any) => p.user_id && p.user_id !== localPeerUid
         )
         if (remotes.length > 0) {
+          // Recipient opened ConnectLn video/voice room on their phone! Hand off cleanly from PSTN carrier leg to pure WebRTC!
+          if (!hasWebRtcPeerJoinedRef.current) {
+            hasWebRtcPeerJoinedRef.current = true
+            hangupPstnLegOnly()
+            setPushBannerNote("")
+          }
           setCallStatus("connected")
           const primary = remotes[0]
           if (primary.display_name && primary.display_name !== callerName) {
@@ -1005,6 +1128,9 @@ export function ConnectLnWhatsAppCallModal({
       localStreamRef.current?.getAudioTracks().forEach((t) => {
         t.enabled = !next
       })
+      try {
+        pstnCallRef.current?.mute?.(next)
+      } catch {}
       return next
     })
   }
