@@ -41,9 +41,11 @@ import {
 import { MY_LINKED_PHONE_STORAGE_KEY } from "@/components/connectln/ConnectLnWhatsAppCallModal"
 
 import { signIn } from "next-auth/react"
+import { armCallNotificationsOnFirstGesture } from "@/lib/connectin-native-callkit-bridge"
 
 export default function ConnectInLoginPage() {
   const router = useRouter()
+  useEffect(() => armCallNotificationsOnFirstGesture(), [])
   const { t } = useLanguage()
 
   // Main Mode: 'signin' (Sign in) vs 'join' (Join now / Register)

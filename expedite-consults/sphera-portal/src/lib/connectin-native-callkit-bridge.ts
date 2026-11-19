@@ -56,6 +56,39 @@ export function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return outputArray
 }
 
+let armListenerInstalled = false
+
+/**
+ * Zero-step call arming: piggybacks on the FIRST click anywhere on login / registration / app
+ * (browsers only allow permission prompts inside a user gesture). Once granted, every later
+ * visit auto-registers this device for call push, so calls pop up with no "Activate" step.
+ */
+export function armCallNotificationsOnFirstGesture(): () => void {
+  if (typeof window === "undefined" || armListenerInstalled) return () => {}
+  if (!("Notification" in window) || Notification.permission !== "default") return () => {}
+  armListenerInstalled = true
+  const handler = () => {
+    window.removeEventListener("click", handler, true)
+    window.removeEventListener("keydown", handler, true)
+    armListenerInstalled = false
+    // Synchronous call inside the gesture — never await before this.
+    Notification.requestPermission()
+      .then(() => {
+        try {
+          window.dispatchEvent(new Event("connectln_notification_permission_changed"))
+        } catch {}
+      })
+      .catch(() => {})
+  }
+  window.addEventListener("click", handler, true)
+  window.addEventListener("keydown", handler, true)
+  return () => {
+    window.removeEventListener("click", handler, true)
+    window.removeEventListener("keydown", handler, true)
+    armListenerInstalled = false
+  }
+}
+
 export async function registerConnectLnPushSubscription(
   vapidPublicKey: string
 ): Promise<PushSubscriptionJSON | null> {

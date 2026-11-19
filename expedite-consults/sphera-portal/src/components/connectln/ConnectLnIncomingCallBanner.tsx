@@ -189,6 +189,7 @@ export function ConnectLnIncomingCallBanner({
         isDocumentPipSupported() &&
         !isAlwaysOnTopReceiverOpen() &&
         !isStartingOutgoingCallClick &&
+        (typeof Notification === "undefined" || Notification.permission !== "granted") &&
         sessionStorage.getItem("connectln_pip_dismissed") !== "1"
       ) {
         openAlwaysOnTopCallStandbyPiP(false)
@@ -521,9 +522,7 @@ export function ConnectLnIncomingCallBanner({
   if (hasOpenModal || isAlreadyInCallStudio) return null
 
   if (!incomingCall) {
-    const isFullyArmed = supportsDocPip
-      ? pipReceiverActive && audioUnlocked
-      : audioUnlocked && (notifGranted || isIosBrowserTab)
+    const isFullyArmed = audioUnlocked && (notifGranted || isIosBrowserTab)
 
     if (hideSetupBanner || isFullyArmed || (!myPhone && !viewerName && !viewerEmail)) {
       return null
