@@ -7,6 +7,7 @@ import { ConnectInLogo } from "@/components/brand/ConnectInLogo"
 import { ConnectLnNavbar } from "@/components/connectln/ConnectLnNavbar"
 import { MeetingReminders } from "@/components/connectln/MeetingReminders"
 import { ConnectLnIncomingCallBanner } from "@/components/connectln/ConnectLnIncomingCallBanner"
+import { ConnectLnWhatsAppCallModal } from "@/components/connectln/ConnectLnWhatsAppCallModal"
 import { LeftSidebarProfile } from "@/components/connectln/LeftSidebarProfile"
 import { PostCreator } from "@/components/connectln/PostCreator"
 import { FeedPostCard } from "@/components/connectln/FeedPostCard"
@@ -179,6 +180,12 @@ export default function ConnectLnPage() {
   const [networkInitialSubTab, setNetworkInitialSubTab] = useState<'connections' | 'invitations' | 'sent' | 'profile_viewers' | 'followers' | 'following' | 'pymk'>('connections')
   const [networkResetTrigger, setNetworkResetTrigger] = useState(0)
   const [activeWorkspace, setActiveWorkspace] = useState<'personal' | 'enterprise' | 'creator' | 'seller'>('personal')
+  const [activeGlobalWhatsAppCall, setActiveGlobalWhatsAppCall] = useState<{
+    callId: string
+    callerName: string
+    callerPhone?: string
+    mode: 'audio' | 'video'
+  } | null>(null)
   const [studioHandoff, setStudioHandoff] = useState<{
     callId: string
     conversationId: string
@@ -346,16 +353,17 @@ export default function ConnectLnPage() {
       const inviterParam = (urlParams.get("inviter") || "").trim()
       const refParam = (urlParams.get("ref") || "").trim()
       const cidParam = (urlParams.get("cid") || "").trim()
-      const joinCallParam = urlParams.get("joinCall") || urlParams.get("call")
+      const joinCallParam = urlParams.get("joinCall") || urlParams.get("call") || urlParams.get("waCall")
 
       const isInviteUrl = Boolean(
-        inviteParam === "accept" ||
+        !joinCallParam &&
+        (inviteParam === "accept" ||
         invitedEmailParam ||
         invitedNameParam ||
         invitedPhoneParam ||
         inviterParam ||
         refParam ||
-        cidParam
+        cidParam)
       )
 
       if (isInviteUrl) {
@@ -756,6 +764,10 @@ export default function ConnectLnPage() {
       const postIdParam = (urlParams.get("postId") || "").trim()
       const postTitleParam = (urlParams.get("postTitle") || "").trim()
       const postAuthorParam = (urlParams.get("postAuthor") || "").trim()
+      const waCallParam = (urlParams.get("waCall") || "").trim()
+      const waCallModeParam = urlParams.get("mode") === "audio" ? "audio" : "video"
+      const waCallerNameParam = (urlParams.get("callerName") || "ConnectLn Caller").trim()
+      const waCallerPhoneParam = (urlParams.get("callerPhone") || "").trim()
       const joinCallParam = urlParams.get("joinCall") || urlParams.get("call")
       const inviteParam = urlParams.get("invite")
       const invitedEmailParam = (urlParams.get("invitedEmail") || "").trim()
@@ -815,7 +827,7 @@ export default function ConnectLnPage() {
 
       // When a user clicks an invitation link from an email/SMS, force them to authenticate on /connectin-login with a fresh profile!
       // NEVER log them in using the inviter's credentials or session.
-      if (isInvitationLink && !joinCallParam && !hasSharedContentLink) {
+      if (isInvitationLink && !joinCallParam && !waCallParam && !hasSharedContentLink) {
         try {
           localStorage.removeItem("connectin_user_profile")
           localStorage.removeItem("connectin_user_v1")
@@ -829,6 +841,15 @@ export default function ConnectLnPage() {
         return
       }
 
+      if (waCallParam && isMounted) {
+        setActiveGlobalWhatsAppCall({
+          callId: waCallParam,
+          callerName: waCallerNameParam,
+          callerPhone: waCallerPhoneParam || undefined,
+          mode: waCallModeParam,
+        })
+      }
+
       if (resolvedUrlTab) {
         setActiveTab(resolvedUrlTab as any)
       }
@@ -840,9 +861,9 @@ export default function ConnectLnPage() {
       // Check if user has previously verified (persistent across sessions)
       const hasVerified = localStorage.getItem("connectin_verified") === "true"
 
-      // If an invited friend clicks a live meeting link (?joinCall=...) and has no stored account yet (or was signed out),
-      // admit them directly into the meeting room without blocking with a login modal!
-      if (joinCallParam && (!explicitUser || isSignedOut)) {
+      // If an invited friend clicks a live meeting or WhatsApp call link (?joinCall=... or ?waCall=...) and has no stored account yet,
+      // admit them directly into the call without blocking with a login modal!
+      if ((joinCallParam || waCallParam) && (!explicitUser || isSignedOut)) {
         if (isMounted) {
           const guestName = invitedNameParam || deriveHumanNameFromEmailClient(invitedEmailParam) || "Live Call Participant"
           const guestUser = {
@@ -850,12 +871,14 @@ export default function ConnectLnPage() {
             id: `guest-${Date.now().toString().slice(-5)}`,
             name: guestName,
             avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(guestName)}&backgroundColor=0a66c2`,
-            headline: "Live Meeting Participant · NoctisChat E2EE",
+            headline: "Live Call Participant · ConnectLn E2EE",
           }
           setUserData(guestUser)
           setIsAuthenticated(true)
           setIsAuthModalOpen(false)
-          setActiveTab("vibecomms")
+          if (joinCallParam && !waCallParam) {
+            setActiveTab("vibecomms")
+          }
           setHasHydrated(true)
         }
         return
@@ -2368,27 +2391,33 @@ export default function ConnectLnPage() {
       <ConnectLnIncomingCallBanner
         viewerName={userData?.name}
         viewerEmail={userData?.email}
-        isAlreadyInCallStudio={activeTab === 'vibecomms'}
-        onAcceptIncomingCall={(callId, callerName, mode) => {
-          const payload = {
+        isAlreadyInCallStudio={activeTab === 'vibecomms' || Boolean(activeGlobalWhatsAppCall)}
+        onAcceptIncomingCall={(callId, callerName, mode, callerPhone) => {
+          setActiveGlobalWhatsAppCall({
             callId,
-            conversationId: callId,
-            conversationName: callerName,
+            callerName,
+            callerPhone,
             mode,
-            returnToMessaging: false,
-            ts: Date.now(),
-          }
-          try {
-            sessionStorage.setItem('connectln_studio_handoff_v1', JSON.stringify(payload))
-            window.history.replaceState(
-              null,
-              '',
-              `/connectin?tab=vibecomms&joinCall=${encodeURIComponent(callId)}`
-            )
-          } catch {}
-          setStudioHandoff(payload as any)
-          setActiveTab('vibecomms')
+          })
         }}
+      />
+      {/* Global Full-Screen WhatsApp-Style Direct Voice & Video Call Modal */}
+      <ConnectLnWhatsAppCallModal
+        open={Boolean(activeGlobalWhatsAppCall)}
+        onClose={() => {
+          setActiveGlobalWhatsAppCall(null)
+          if (typeof window !== 'undefined' && window.location.search.includes('waCall=')) {
+            window.history.replaceState(null, '', '/connectin')
+          }
+        }}
+        initialCallId={activeGlobalWhatsAppCall?.callId}
+        initialMode={activeGlobalWhatsAppCall?.mode || 'video'}
+        isIncomingAnswer={true}
+        targetLabel={activeGlobalWhatsAppCall?.callerName || 'ConnectLn Caller'}
+        targetPhone={activeGlobalWhatsAppCall?.callerPhone}
+        callerName={userData?.name || 'ConnectLn Member'}
+        callerEmail={userData?.email}
+        callerAvatar={userData?.avatar}
       />
       {/* Top Sticky Navigation */}
       <ConnectLnNavbar

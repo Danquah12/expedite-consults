@@ -15,6 +15,8 @@ export interface CommCallParticipant {
   device_label?: string
   target_recipient_name?: string
   target_recipient_email?: string
+  target_recipient_phone?: string
+  initiator_phone?: string
   call_type?: "audio" | "video" | "screenshare"
   joined_at: string
   last_seen_ms?: number
@@ -68,8 +70,10 @@ export interface CommCallRecord {
   conversation_id: string
   initiator_user_id: string
   initiator_name?: string
+  initiator_phone?: string
   target_recipient_name?: string
   target_recipient_email?: string
+  target_recipient_phone?: string
   call_type: "audio" | "video" | "screenshare"
   topology: "P2P_E2EE" | "SFU_E2EE_SFRAME"
   state: "CREATED" | "RINGING" | "NEGOTIATING" | "CONNECTED" | "RECONNECTING" | "ENDED"
@@ -427,6 +431,12 @@ async function pullCloudCallParticipants(excludeUserId?: string): Promise<void> 
       if (data.target_recipient_email && !record.target_recipient_email) {
         record.target_recipient_email = data.target_recipient_email
       }
+      if (data.target_recipient_phone && !record.target_recipient_phone) {
+        record.target_recipient_phone = data.target_recipient_phone
+      }
+      if (data.initiator_phone && !record.initiator_phone) {
+        record.initiator_phone = data.initiator_phone
+      }
       if (!record.initiator_name && data.display_name) {
         record.initiator_name = data.display_name
       }
@@ -651,6 +661,7 @@ export async function GET(req: NextRequest) {
 
   const incomingForName = (req.nextUrl.searchParams.get("incoming_for") || "").trim().toLowerCase()
   const incomingEmail = (req.nextUrl.searchParams.get("incoming_email") || "").trim().toLowerCase()
+  const incomingPhoneDigits = (req.nextUrl.searchParams.get("incoming_phone") || "").replace(/[^\d]/g, "")
   const viewerPeerId = (req.nextUrl.searchParams.get("viewer_peer_id") || "").trim()
 
   const calls = Array.from(ACTIVE_CALLS_STORE.values()).filter((c) => {
@@ -662,7 +673,7 @@ export async function GET(req: NextRequest) {
     return liveParts.length > 0
   })
 
-  if (incomingForName || incomingEmail) {
+  if (incomingForName || incomingEmail || incomingPhoneDigits) {
     const nameSlug = incomingForName.replace(/[^a-z0-9]+/g, "_")
     const incomingCalls = calls.filter((c) => {
       // Skip if viewer is already inside this call
@@ -677,9 +688,17 @@ export async function GET(req: NextRequest) {
       }
       const targetName = (c.target_recipient_name || "").trim().toLowerCase()
       const targetEmail = (c.target_recipient_email || "").trim().toLowerCase()
+      const targetPhoneDigits = (c.target_recipient_phone || c.target_recipient_name || "").replace(/[^\d]/g, "")
       const cidLower = c.id.toLowerCase()
+      const phoneTailMatch = Boolean(
+        incomingPhoneDigits.length >= 7 &&
+          targetPhoneDigits.length >= 7 &&
+          (incomingPhoneDigits === targetPhoneDigits ||
+            incomingPhoneDigits.slice(-10) === targetPhoneDigits.slice(-10))
+      )
       return Boolean(
-        (incomingEmail && targetEmail && targetEmail === incomingEmail) ||
+        phoneTailMatch ||
+          (incomingEmail && targetEmail && targetEmail === incomingEmail) ||
           (incomingForName &&
             targetName &&
             (targetName === incomingForName ||
@@ -875,6 +894,12 @@ export async function POST(req: NextRequest) {
       if (typeof body.target_recipient_email === "string" && body.target_recipient_email.trim()) {
         record.target_recipient_email = body.target_recipient_email.trim().toLowerCase()
       }
+      if (typeof body.target_recipient_phone === "string" && body.target_recipient_phone.trim()) {
+        record.target_recipient_phone = body.target_recipient_phone.trim()
+      }
+      if (typeof body.initiator_phone === "string" && body.initiator_phone.trim()) {
+        record.initiator_phone = body.initiator_phone.trim()
+      }
       if (!record.initiator_name && displayName) {
         record.initiator_name = displayName
       }
@@ -888,6 +913,8 @@ export async function POST(req: NextRequest) {
         device_label: body.device_label || "Live WebRTC Camera",
         target_recipient_name: record.target_recipient_name,
         target_recipient_email: record.target_recipient_email,
+        target_recipient_phone: record.target_recipient_phone,
+        initiator_phone: record.initiator_phone,
         call_type: record.call_type,
         joined_at: existingIdx >= 0 ? record.participants[existingIdx].joined_at : now,
         last_seen_ms: nowMs,

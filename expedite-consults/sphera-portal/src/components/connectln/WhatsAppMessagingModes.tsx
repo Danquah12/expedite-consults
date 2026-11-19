@@ -7,6 +7,12 @@ import {
     looksLikeClientPhone,
     prettyClientPhone,
 } from './ConnectLnCellPhoneSoftphone';
+import {
+    ConnectLnMyPhoneNumberCard,
+    ConnectLnWhatsAppCallModal,
+    COUNTRY_DIAL_CODES,
+    buildInternationalPhone,
+} from './ConnectLnWhatsAppCallModal';
 
 export type MessagingWorkspaceMode =
     | 'chats'
@@ -677,6 +683,7 @@ export function WhatsAppModeWorkspace({
     });
     const [callSearch, setCallSearch] = useState('');
     const [showDialPadModal, setShowDialPadModal] = useState(true);
+    const [dialCountryCode, setDialCountryCode] = useState('+1');
     const [dialInput, setDialInput] = useState('');
     const [generatedCallLink, setGeneratedCallLink] = useState<string | null>(null);
     const [showAddFavoriteModal, setShowAddFavoriteModal] = useState(false);
@@ -685,6 +692,12 @@ export function WhatsAppModeWorkspace({
         phone?: string;
         avatar?: string;
     } | null>(null);
+    const [activeWhatsAppCall, setActiveWhatsAppCall] = useState<{
+        label: string;
+        phone?: string;
+        avatar?: string;
+        mode: 'audio' | 'video';
+    } | null>(null);
 
     useEffect(() => {
         if (typeof window === 'undefined') return;
@@ -692,6 +705,74 @@ export function WhatsAppModeWorkspace({
             window.localStorage.setItem('connectln_studio_call_logs_v1', JSON.stringify(callLogs.slice(0, 40)));
         } catch {}
     }, [callLogs]);
+
+    const resolveDialTarget = (raw: string): string => {
+        const clean = raw.trim();
+        if (!clean) return '';
+        if (clean.startsWith('+') || clean.startsWith('@') || /[a-zA-Z]/.test(clean)) {
+            return clean;
+        }
+        return buildInternationalPhone(dialCountryCode, clean) || clean;
+    };
+
+    const launchWhatsAppDirectCall = (
+        rawTarget: string,
+        callMode: 'audio' | 'video',
+        avatarOverride?: string
+    ) => {
+        const clean = resolveDialTarget(rawTarget);
+        if (!clean) return;
+        const isNum = looksLikeClientPhone(clean);
+        const displayLabel = isNum ? prettyClientPhone(clean) : clean;
+        const avatar =
+            avatarOverride ||
+            `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(clean)}&backgroundColor=7c4225`;
+
+        setCallLogs((prev) => [
+            {
+                id: `call_wa_${Date.now()}`,
+                name: displayLabel,
+                avatar,
+                direction: 'outgoing',
+                timeLabel: 'Just now',
+                callType: callMode === 'video' ? 'video' : 'voice',
+                subtitle: isNum ? 'ConnectLn Direct E2EE Call' : 'ConnectLn Direct Voice/Video',
+            },
+            ...prev.filter((c) => c.name !== displayLabel),
+        ]);
+
+        setActiveWhatsAppCall({
+            label: displayLabel,
+            phone: isNum ? clean : undefined,
+            avatar,
+            mode: callMode,
+        });
+    };
+
+    const launchSmartVoiceCall = async (rawTarget: string, avatarOverride?: string) => {
+        const clean = resolveDialTarget(rawTarget);
+        if (!clean) return;
+        const isNum = looksLikeClientPhone(clean);
+        try {
+            const qs = new URLSearchParams(
+                isNum ? { phone: clean } : { name: clean }
+            );
+            const res = await fetch(`/api/connectin/calls/whatsapp?${qs.toString()}`, {
+                cache: 'no-store',
+            });
+            const data = await res.json();
+            if (data?.lookup?.isRegisteredOnConnectLn) {
+                launchWhatsAppDirectCall(
+                    data.lookup.member?.name || clean,
+                    'audio',
+                    data.lookup.member?.avatar || avatarOverride
+                );
+                return;
+            }
+        } catch {}
+        // Automatic Hybrid Fallback: if number is not registered on ConnectLn yet, ring their carrier SIM directly!
+        launchCellPhoneCall(clean, avatarOverride);
+    };
 
     const launchCellPhoneCall = (rawTarget: string, avatarOverride?: string) => {
         const clean = rawTarget.trim();
@@ -1607,9 +1688,9 @@ export function WhatsAppModeWorkspace({
                                                 type="button"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    launchCellPhoneCall(call.name, call.avatar);
+                                                    void launchSmartVoiceCall(call.name, call.avatar);
                                                 }}
-                                                title="Ring Cell Phone"
+                                                title="Direct ConnectLn Voice Call (auto-bridges SIM if offline)"
                                                 className="w-7 h-7 rounded-lg bg-[#EFE8DA] hover:bg-[#7C4225] text-[#5E3119] hover:text-white flex items-center justify-center text-xs transition-colors cursor-pointer"
                                             >
                                                 📞
@@ -1618,9 +1699,9 @@ export function WhatsAppModeWorkspace({
                                                 type="button"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    onStartLiveCall('video', call.name);
+                                                    launchWhatsAppDirectCall(call.name, 'video', call.avatar);
                                                 }}
-                                                title="Start Video Call"
+                                                title="Start WhatsApp-Style Video Call"
                                                 className="w-7 h-7 rounded-lg bg-[#EFE8DA] hover:bg-[#7C4225] text-[#5E3119] hover:text-white flex items-center justify-center text-xs transition-colors cursor-pointer"
                                             >
                                                 🎥
@@ -1637,7 +1718,13 @@ export function WhatsAppModeWorkspace({
                 </div>
 
                 {/* Right Column: "Voice and video calling" Card in Desk Note Palette */}
-                <div className="flex-1 bg-[#F3EDE2] flex flex-col items-center justify-center p-6">
+                <div className="flex-1 bg-[#F3EDE2] flex flex-col items-center justify-center p-6 overflow-y-auto">
+                    <ConnectLnMyPhoneNumberCard
+                        userName={userName}
+                        userEmail={currentUser?.email}
+                        userAvatar={userAvatar}
+                        userHeadline={currentUser?.headline}
+                    />
                     <div className="bg-[#FBF8F3] rounded-2xl shadow-2xs border border-[#E0D6C5] px-8 py-7 max-w-md w-full text-center mb-6">
                         {/* ConnectLn Bespoke Studio Console & Acoustic Crest Illustration */}
                         <div className="mx-auto mb-4 w-36 h-24 flex items-center justify-center">
@@ -1683,7 +1770,9 @@ export function WhatsAppModeWorkspace({
                                 const typedTarget = dialInput.trim() || callSearch.trim();
                                 if (typedTarget) {
                                     setDialInput('');
-                                    onStartLiveCall('video', typedTarget);
+                                    launchWhatsAppDirectCall(typedTarget, 'video');
+                                } else if (callLogs[0]?.name) {
+                                    launchWhatsAppDirectCall(callLogs[0].name, 'video', callLogs[0].avatar);
                                 } else {
                                     onStartLiveCall('video');
                                 }
@@ -1790,43 +1879,73 @@ export function WhatsAppModeWorkspace({
                                 if (!dialInput.trim()) return;
                                 const rawVal = dialInput.trim();
                                 setDialInput('');
-                                launchCellPhoneCall(rawVal);
+                                void launchSmartVoiceCall(rawVal);
                             }}
-                            className="mt-5 bg-[#FBF8F3] border border-[#E0D6C5] rounded-2xl p-4 shadow-md flex items-center gap-2 max-w-sm w-full"
+                            className="mt-5 bg-[#FBF8F3] border border-[#E0D6C5] rounded-2xl p-3.5 shadow-md flex flex-wrap items-center gap-2 max-w-lg w-full"
                         >
+                            <select
+                                value={dialCountryCode}
+                                onChange={(e) => setDialCountryCode(e.target.value)}
+                                className="border border-[#D0C4AE] bg-[#F8F4EC] rounded-lg px-2 py-1.5 text-xs font-semibold text-[#1C1917] focus:outline-none focus:border-[#7C4225]"
+                                title="Country Code"
+                            >
+                                {COUNTRY_DIAL_CODES.map((c) => (
+                                    <option key={c.label} value={c.code}>
+                                        {c.label}
+                                    </option>
+                                ))}
+                            </select>
                             <input
                                 type="tel"
                                 value={dialInput}
                                 onChange={(e) => setDialInput(e.target.value)}
-                                placeholder="Enter phone number or @username..."
-                                className="flex-1 border border-[#D0C4AE] bg-[#F8F4EC] rounded-lg px-3 py-1.5 text-xs text-[#1C1917] focus:outline-none focus:border-[#7C4225]"
+                                placeholder="Phone number or @username..."
+                                className="flex-1 min-w-[150px] border border-[#D0C4AE] bg-[#F8F4EC] rounded-lg px-3 py-1.5 text-xs text-[#1C1917] focus:outline-none focus:border-[#7C4225]"
                             />
                             <button
                                 type="submit"
-                                className="px-3.5 py-1.5 rounded-lg bg-[#7C4225] hover:bg-[#5E3119] text-xs font-bold cursor-pointer"
+                                className="px-3 py-1.5 rounded-lg bg-[#7C4225] hover:bg-[#5E3119] text-xs font-bold cursor-pointer"
                                 style={{ color: '#FBF8F3' }}
+                                title="Direct ConnectLn Voice Call (auto-bridges carrier SIM if offline)"
                             >
-                                Call
+                                📞 Call
                             </button>
                             <button
                                 type="button"
                                 onClick={() => {
-                                    const rawVal = dialInput.trim();
+                                    const rawVal = dialInput.trim() || callLogs[0]?.name || '';
                                     if (!rawVal) {
                                         onStartLiveCall('video');
                                         return;
                                     }
                                     setDialInput('');
-                                    onStartLiveCall('video', rawVal);
+                                    launchWhatsAppDirectCall(rawVal, 'video');
                                 }}
                                 className="px-3 py-1.5 rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-xs font-bold cursor-pointer"
                                 style={{ color: '#FFFFFF' }}
-                                title="Start Live Video Call + Send 1-Tap Camera Link to Their Phone"
+                                title="Direct WhatsApp-Style Video Call (Full-Screen Camera + Push Ringing)"
                             >
                                 🎥 Video
                             </button>
                         </form>
                     )}
+
+                    {/* WhatsApp-Style Direct WebRTC + Push Ringing Voice & Video Call Modal */}
+                    <ConnectLnWhatsAppCallModal
+                        open={Boolean(activeWhatsAppCall)}
+                        onClose={() => setActiveWhatsAppCall(null)}
+                        initialMode={activeWhatsAppCall?.mode || 'video'}
+                        targetLabel={activeWhatsAppCall?.label || ''}
+                        targetPhone={activeWhatsAppCall?.phone}
+                        targetAvatar={activeWhatsAppCall?.avatar}
+                        callerName={userName}
+                        callerEmail={currentUser?.email}
+                        callerAvatar={userAvatar}
+                        onBridgeCarrierFallback={(phoneOrName) => {
+                            setActiveWhatsAppCall(null);
+                            launchCellPhoneCall(phoneOrName);
+                        }}
+                    />
 
                     {/* Live Carrier Browser-to-Cell-Phone Softphone Console */}
                     <ConnectLnCellPhoneSoftphoneModal
