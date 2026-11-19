@@ -96,6 +96,9 @@ export async function GET(req: NextRequest) {
       const ownerMatches =
         !found?.email || !viewerEmail || isSamePhoneOwnerEmail(found.email, viewerEmail)
       if (found && ownerMatches) {
+        const mobileCount = found.pushSubscriptions.filter((s) =>
+          /mobile|phone|iphone|android/i.test(s.deviceLabel || "")
+        ).length
         myRegistration = {
           phone: found.phone,
           prettyPhone: found.prettyPhone,
@@ -103,6 +106,7 @@ export async function GET(req: NextRequest) {
           email: found.email,
           verifiedBy2FA: Boolean(found.verifiedBy2FA || verifiedAccountPhone === found.phone),
           pushDevicesCount: found.pushSubscriptions.length,
+          mobilePushDevicesCount: mobileCount,
         }
       } else if (verifiedAccountPhone) {
         myRegistration = {
@@ -112,6 +116,7 @@ export async function GET(req: NextRequest) {
           email: viewerEmail,
           verifiedBy2FA: true,
           pushDevicesCount: 0,
+          mobilePushDevicesCount: 0,
         }
       }
     }
@@ -356,9 +361,12 @@ export async function POST(req: NextRequest) {
         (verifiedSessionPhone && verifiedSessionPhone === normPhone) ||
         Boolean(
           existingDir?.verifiedBy2FA &&
-            existingDir.email &&
-            email &&
-            isSamePhoneOwnerEmail(existingDir.email, email)
+            ((existingDir.email && email && isSamePhoneOwnerEmail(existingDir.email, email)) ||
+              (Boolean(body?.pushSubscription?.endpoint) &&
+                !email &&
+                existingDir.name &&
+                name &&
+                existingDir.name.trim().toLowerCase() === name.trim().toLowerCase()))
         )
 
       if (!isAlreadyVerifiedForThisUser) {

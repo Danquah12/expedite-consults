@@ -937,11 +937,17 @@ export function ConnectLnWhatsAppCallModal({
         setCallStatus((prev) => (prev === "connected" ? "connected" : "ringing"))
 
         if (data.isRegisteredOnConnectLn) {
-          setPushBannerNote(
-            isVideoOn
-              ? `📹 Ringing ${addedName} over ConnectLn Internet (100% Free Wi-Fi / Data)...`
-              : `🔔 Ringing ${addedName} over ConnectLn Internet (100% Free Wi-Fi / Data)...`
-          )
+          if (Number(data.mobilePushDeliveredCount || 0) > 0) {
+            setPushBannerNote(
+              isVideoOn
+                ? `📱 Ringing ${addedName}'s Phone & ConnectLn over Internet (100% Free Wi-Fi / Data)...`
+                : `📱 Ringing ${addedName}'s Phone & ConnectLn over Internet (100% Free Wi-Fi / Data)...`
+            )
+          } else {
+            setPushBannerNote(
+              `🔔 Ringing ${addedName} on open ConnectLn tabs — if their phone browser is closed, open conectln.com/connectin on the phone once & tap Activate/Install App (or send the Free Call Link via SMS/WhatsApp below).`
+            )
+          }
           setAddFeedbackMsg(`✓ Ringing ${addedName} free over ConnectLn Internet!`)
         } else {
           setPushBannerNote(

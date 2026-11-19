@@ -1,47 +1,57 @@
 {
-  "name": "ConnectLn — Tickets, vouches, and real work",
+  "id": "/connectin",
+  "name": "ConnectLn — Voice, Video & Professional Network",
   "short_name": "ConnectLn",
-  "description": "ConnectLn: The zero-trust professional network. Verified tickets, vouches, and real work across cloud, cybersecurity, trades, and enterprise teams.",
+  "description": "ConnectLn: Free E2EE Internet Voice & Video Calling, Messaging, and Zero-Trust Professional Network.",
+  "scope": "/",
   "start_url": "/connectin",
   "display": "standalone",
-  "background_color": "#1C1916",
-  "theme_color": "#7C4323",
+  "background_color": "#0B141A",
+  "theme_color": "#071E1A",
   "orientation": "portrait",
-  "categories": ["business", "productivity", "education", "social"],
+  "categories": ["communication", "business", "productivity", "social"],
   "icons": [
     {
-      "src": "/brand/connectln-icon.png",
-      "sizes": "114x114",
+      "src": "/brand/connectln-icon-192.png",
+      "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/brand/connectln-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/brand/connectln-icon-256.png",
       "sizes": "256x256",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/brand/connectln-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/brand/connectln-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "shortcuts": [
     {
-      "name": "Home Feed",
-      "url": "/feed",
-      "description": "View latest posts and stories"
+      "name": "ConnectLn Calls & Chat",
+      "url": "/connectin?tab=messaging",
+      "description": "Start or answer voice and video calls"
     },
     {
-      "name": "SpheraChat",
-      "url": "/messages",
-      "description": "Encrypted direct messages"
-    },
-    {
-      "name": "Reels & Shorts",
-      "url": "/reels",
-      "description": "Vertical cinema video stream"
-    },
-    {
-      "name": "Bazaar",
-      "url": "/bazaar",
-      "description": "Local peer-to-peer marketplace"
+      "name": "ConnectLn Home",
+      "url": "/connectin",
+      "description": "Open ConnectLn feed and network"
     }
   ]
 }
