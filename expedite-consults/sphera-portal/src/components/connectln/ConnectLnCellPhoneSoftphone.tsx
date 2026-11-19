@@ -188,7 +188,7 @@ export function ConnectLnCellPhoneSoftphoneModal({
   const whatsappHref = digits
     ? `https://wa.me/${digits}?text=${encodeURIComponent(shareBody)}`
     : `https://wa.me/?text=${encodeURIComponent(shareBody)}`
-  const nativeTelHref = effectiveE164 ? `tel:${effectiveE164}` : ""
+  const nativeTelHref = "" // Internet-only: no carrier/SIM dialing
 
   const handleRingFreeInternet = async () => {
     setIsRingingInternet(true)
@@ -243,7 +243,7 @@ export function ConnectLnCellPhoneSoftphoneModal({
           <div className="flex items-center gap-2 min-w-0">
             <Globe className="h-4 w-4 text-emerald-400 shrink-0" />
             <span className="text-xs font-bold tracking-wide uppercase text-emerald-300 truncate">
-              100% Free Internet Call &amp; My SIM Handoff
+              100% Free Internet Call
             </span>
           </div>
           <button
@@ -480,7 +480,7 @@ export function ConnectLnInlineCellBridgeBar({
   const nativeSmsHref = normalizedPhone
     ? `sms:${normalizedPhone}?&body=${encodeURIComponent(shareBody)}`
     : `sms:?&body=${encodeURIComponent(shareBody)}`
-  const nativeTelHref = normalizedPhone ? `tel:${normalizedPhone}` : ""
+  const nativeTelHref = "" // Internet-only: no carrier/SIM dialing
 
   return (
     <div
@@ -495,7 +495,7 @@ export function ConnectLnInlineCellBridgeBar({
           <Smartphone className="h-4 w-4 text-emerald-400 shrink-0" />
           <div className="min-w-0">
             <p className="text-xs font-extrabold text-white truncate">
-              100% Free Internet Call · Share Link or Dial via Your Own SIM
+              100% Free Internet Call · Share the Call Link
             </p>
             <p className="text-[10.5px] text-emerald-300 truncate">
               {statusNote ||

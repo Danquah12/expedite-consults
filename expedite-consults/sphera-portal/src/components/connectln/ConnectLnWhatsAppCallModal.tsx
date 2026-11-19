@@ -954,10 +954,10 @@ export function ConnectLnWhatsAppCallModal({
           setAddFeedbackMsg(`✓ Ringing ${addedName} free over ConnectLn Internet!`)
         } else {
           setPushBannerNote(
-            `🌐 ${addedName} isn't online on ConnectLn yet — send the Free Internet Call Link from your phone or dial via your own SIM below.`
+            `🌐 ${addedName} isn't online on ConnectLn yet — send the Free Internet Call Link from your phone.`
           )
           setAddFeedbackMsg(
-            `✓ Internet room ready! Send the free call link to ${addedName} via your SMS/WhatsApp or dial using your own SIM.`
+            `✓ Internet room ready! Send the free call link to ${addedName} via your SMS/WhatsApp.`
           )
         }
 
@@ -2022,7 +2022,7 @@ export function ConnectLnWhatsAppCallModal({
               const legWaHref = legDigits
                 ? `https://wa.me/${legDigits}?text=${encodeURIComponent(legInviteBody)}`
                 : ""
-              const legTelHref = legDigits ? `tel:+${legDigits}` : ""
+              const legTelHref = "" // Internet-only: no carrier/SIM dialing
 
               return (
                 <div
@@ -2070,7 +2070,7 @@ export function ConnectLnWhatsAppCallModal({
                     {leg.status === "in-progress" && "🟢 Connected (Free Internet)"}
                     {(leg.status === "ringing" || leg.status === "dialing" || leg.status === "invited") &&
                       (leg.reachable === false
-                        ? "⚠️ Not on ConnectLn — send link or use My SIM"
+                        ? "⚠️ Not on ConnectLn — send them the free call link"
                         : "🔔 Ringing on ConnectLn Internet")}
                     {leg.status === "unanswered" && "🔔 Waiting to Join"}
                   </span>
@@ -2213,7 +2213,7 @@ export function ConnectLnWhatsAppCallModal({
                       <span>Copy Call Link</span>
                     </button>
                   )}
-                  {(nativeTelHref || recipientPhone) && (
+                  {false && (nativeTelHref || recipientPhone) && (
                     <a
                       href={nativeTelHref || `tel:${normalizeClientPhone(recipientPhone)}`}
                       className="rounded-xl bg-[#7C4225] hover:bg-[#5E3119] px-3.5 py-2 text-xs font-extrabold text-white no-underline shadow-md"
@@ -2458,7 +2458,7 @@ export function ConnectLnWhatsAppCallModal({
         <div className="fixed inset-x-0 bottom-22 z-40 mx-auto w-[92vw] max-w-md rounded-2xl bg-[#111B21]/95 border border-emerald-500/40 p-3.5 shadow-2xl space-y-2.5">
           <div className="flex items-center justify-between">
             <p className="text-xs font-extrabold text-emerald-300">
-              Free Internet Call Link &amp; My SIM Handoff
+              Free Internet Call Link
             </p>
             <button
               type="button"
@@ -2501,7 +2501,7 @@ export function ConnectLnWhatsAppCallModal({
                 <span>Copy Link</span>
               </button>
             )}
-            {(nativeTelHref || recipientPhone) && (
+            {false && (nativeTelHref || recipientPhone) && (
               <a
                 href={nativeTelHref || `tel:${normalizeClientPhone(recipientPhone)}`}
                 className="rounded-xl bg-[#7C4225] hover:bg-[#5E3119] px-3 py-2 text-xs font-bold text-white flex items-center gap-1 no-underline"

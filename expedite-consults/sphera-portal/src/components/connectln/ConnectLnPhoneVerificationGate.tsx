@@ -192,7 +192,7 @@ export function ConnectLnPhoneVerificationGate({
               />
             </div>
             <div className="flex gap-2 text-[11px] font-bold">
-              {(["sms", "call"] as const).map((ch) => (
+              {(["sms"] as const).map((ch) => (
                 <button
                   key={ch}
                   type="button"
@@ -201,7 +201,7 @@ export function ConnectLnPhoneVerificationGate({
                     channel === ch ? "bg-[#7C4225] text-white border-[#7C4225]" : "bg-white border-[#D0C4AE]"
                   }`}
                 >
-                  {ch === "sms" ? "Send code via SMS" : "Automated call"}
+                  Code will be sent by SMS
                 </button>
               ))}
             </div>
