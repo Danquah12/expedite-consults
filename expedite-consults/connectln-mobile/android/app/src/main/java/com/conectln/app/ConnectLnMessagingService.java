@@ -46,7 +46,7 @@ public class ConnectLnMessagingService extends MessagingService {
                     CALL_CHANNEL_ID, "Incoming ConnectLn calls", NotificationManager.IMPORTANCE_HIGH);
             ch.setSound(ringtone, new AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIC).build());
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
             ch.enableVibration(true);
             ch.setVibrationPattern(new long[]{0, 700, 400, 700, 400, 900});
             ch.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
