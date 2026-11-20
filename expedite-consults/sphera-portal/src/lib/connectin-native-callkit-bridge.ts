@@ -64,37 +64,57 @@ let armListenerInstalled = false
  * signed-in member's verified number so incoming calls ring full-screen even when the app is closed.
  */
 let nativeFcmListenersAttached = false
+let cachedNativeFcmToken = ""
+let latestNativeIdentity: { phone: string; name?: string; email?: string } | null = null
+
+export function getCachedNativeFcmToken(): string {
+  return cachedNativeFcmToken
+}
+
+async function flushNativeFcmTokenToServer(): Promise<void> {
+  if (!cachedNativeFcmToken || !latestNativeIdentity?.phone) return
+  try {
+    await fetch("/api/connectin/calls/whatsapp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "register",
+        phone: latestNativeIdentity.phone,
+        name: latestNativeIdentity.name || "ConnectLn Member",
+        email: latestNativeIdentity.email,
+        fcmToken: cachedNativeFcmToken,
+        deviceLabel: "Mobile Phone (ConnectLn App)",
+      }),
+    })
+  } catch {}
+}
+
 export async function registerNativeFcmForCalls(identity: {
   phone: string
   name?: string
   email?: string
 }): Promise<boolean> {
+  if (identity.phone) {
+    latestNativeIdentity = identity
+  }
   if (!isRunningInNativeCapacitorShell()) return false
   try {
     const push = (window as any).Capacitor?.Plugins?.PushNotifications
-    if (!push || !identity.phone) return false
-
-    const postToken = async (token: string) => {
-      await fetch("/api/connectin/calls/whatsapp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "register",
-          phone: identity.phone,
-          name: identity.name || "ConnectLn Member",
-          email: identity.email,
-          fcmToken: token,
-          deviceLabel: "Mobile Phone (ConnectLn App)",
-        }),
-      }).catch(() => {})
-    }
+    if (!push) return false
 
     if (!nativeFcmListenersAttached) {
       nativeFcmListenersAttached = true
       await push.addListener("registration", (t: { value: string }) => {
-        if (t?.value) void postToken(t.value)
+        if (t?.value) {
+          cachedNativeFcmToken = t.value
+          void flushNativeFcmTokenToServer()
+        }
       })
       await push.addListener("registrationError", () => {})
+    }
+
+    if (cachedNativeFcmToken && latestNativeIdentity?.phone) {
+      void flushNativeFcmTokenToServer()
     }
 
     let perm = await push.checkPermissions()

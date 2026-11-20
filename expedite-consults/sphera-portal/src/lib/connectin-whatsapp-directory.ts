@@ -313,18 +313,37 @@ export async function checkPhoneOwnershipConflict(params: {
   const normPhone = normalizeDialablePhone(params.phone)
   if (/^\+1\d{3}555\d{4}$/.test(normPhone)) return { conflict: false }
 
-  const claimantEmail = String(params.claimantEmail || "").trim().toLowerCase()
+  const rawClaimantEmail = String(params.claimantEmail || "").trim().toLowerCase()
+  const isSyntheticOrPhoneOnlyClaimant =
+    !rawClaimantEmail ||
+    !rawClaimantEmail.includes("@") ||
+    rawClaimantEmail.endsWith("@connectin.app") ||
+    rawClaimantEmail.endsWith("@connectin.phone")
+  const claimantEmail = isSyntheticOrPhoneOnlyClaimant ? "" : rawClaimantEmail
   const claimantName = String(params.claimantName || "").trim().toLowerCase()
   const cache = await refreshWhatsAppDirectoryCache()
 
   const dirOwner = cache.get(normPhone)
+  const dirOwnerName = String(dirOwner?.name || "").trim().toLowerCase()
+  const claimantNameMatchesOwner =
+    !claimantName ||
+    claimantName === "connectln member" ||
+    claimantName === "connectin member" ||
+    !dirOwnerName ||
+    dirOwnerName === claimantName
+
   if (dirOwner?.email) {
     const ownerEmail = dirOwner.email.trim().toLowerCase()
     if (
       !ownerEmail.endsWith("@connectin.app") &&
       !ownerEmail.endsWith("@connectin.phone")
     ) {
-      if (!claimantEmail || !isSamePhoneOwnerEmail(ownerEmail, claimantEmail)) {
+      // Conflict ONLY if claimant provided a real email that belongs to a different person,
+      // OR provided no email alongside a different person's name.
+      if (
+        (claimantEmail && !isSamePhoneOwnerEmail(ownerEmail, claimantEmail)) ||
+        (!claimantEmail && !claimantNameMatchesOwner)
+      ) {
         return {
           conflict: true,
           reason:
@@ -348,7 +367,17 @@ export async function checkPhoneOwnershipConflict(params: {
       ) {
         continue
       }
-      if (!claimantEmail || !isSamePhoneOwnerEmail(uEmail, claimantEmail)) {
+      const uName = String((u as any).profile?.name || "").trim().toLowerCase()
+      const nameMatchesDbOwner =
+        !claimantName ||
+        claimantName === "connectln member" ||
+        claimantName === "connectin member" ||
+        !uName ||
+        uName === claimantName
+      if (
+        (claimantEmail && !isSamePhoneOwnerEmail(uEmail, claimantEmail)) ||
+        (!claimantEmail && !nameMatchesDbOwner)
+      ) {
         return {
           conflict: true,
           reason:

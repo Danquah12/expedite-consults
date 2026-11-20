@@ -319,6 +319,8 @@ export function ConnectLnIncomingCallBanner({
         const qs = new URLSearchParams()
         if (viewerEmail) qs.set("viewerEmail", viewerEmail)
         if (viewerName) qs.set("viewerName", viewerName)
+        const storedLocalPhone = myPhone || getMyLinkedConnectLnPhone()
+        if (storedLocalPhone) qs.set("viewerPhone", storedLocalPhone)
         const res = await fetch(`/api/connectin/calls/whatsapp?${qs.toString()}`, {
           cache: "no-store",
         })
@@ -327,10 +329,10 @@ export function ConnectLnIncomingCallBanner({
         if (data?.vapidPublicKey) setVapidKey(data.vapidPublicKey)
 
         const verified =
-          data?.verifiedAccountPhone || data?.myRegistration?.phone || getMyLinkedConnectLnPhone()
+          storedLocalPhone || data?.verifiedAccountPhone || data?.myRegistration?.phone || getMyLinkedConnectLnPhone()
         if (verified && looksLikeClientPhone(verified)) {
           const norm = normalizeClientPhone(verified)
-          setMyPhone(norm)
+          if (norm !== myPhone) setMyPhone(norm)
           try {
             window.localStorage.setItem(MY_LINKED_PHONE_STORAGE_KEY, norm)
           } catch {}
@@ -364,7 +366,7 @@ export function ConnectLnIncomingCallBanner({
         }
       } catch {}
     })()
-  }, [viewerEmail, viewerName])
+  }, [viewerEmail, viewerName, myPhone])
 
   const handleManualActivateClick = async () => {
     setIsEnablingPush(true)

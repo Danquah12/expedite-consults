@@ -911,40 +911,44 @@ export async function GET(req: NextRequest) {
         return false
       }
       const cidLower = c.id.toLowerCase()
-      const primaryMatch = matchesTarget(
-        c.target_recipient_name,
-        c.target_recipient_email,
-        c.target_recipient_phone
-      )
-      const rosterMatch = (c.invited_roster || []).some(
-        (inv) => inv.status !== "removed" && matchesTarget(inv.name, inv.email, inv.phone)
+      const targetDigits = String(c.target_recipient_phone || "").replace(/[^\d]/g, "")
+      const hasExplicitTargetPhone = targetDigits.length >= 7
+      const phoneMatchesTarget = Boolean(
+        hasExplicitTargetPhone &&
+          incomingPhoneDigits.length >= 7 &&
+          (incomingPhoneDigits === targetDigits ||
+            incomingPhoneDigits.slice(-10) === targetDigits.slice(-10))
       )
 
-      // Is the viewer the CALLER (already in this call from another tab/device)?
-      // Then never ring them for their own outgoing call (e.g. DM call ids contain both names).
-      const initiatorDigits = String(c.initiator_phone || "").replace(/[^\d]/g, "")
-      const viewerIsCaller =
-        c.participants.some(
-          (p) => incomingForName && String(p.display_name || "").trim().toLowerCase() === incomingForName
-        ) ||
-        Boolean(
-          incomingPhoneDigits.length >= 7 &&
-            initiatorDigits.length >= 7 &&
-            initiatorDigits.slice(-10) === incomingPhoneDigits.slice(-10)
-        )
-      // Exception: explicitly dialing your OWN number (self-test) may still ring your other devices.
-      const targetDigits = String(c.target_recipient_phone || "").replace(/[^\d]/g, "")
-      const dialedOwnNumber = Boolean(
-        incomingPhoneDigits.length >= 7 &&
-          targetDigits.length >= 7 &&
-          targetDigits.slice(-10) === incomingPhoneDigits.slice(-10)
+      // When a call dials a specific phone number (`target_recipient_phone`), match primarily by phone number
+      // so two devices sharing a default profile name (e.g. "Kwesi Asiedu" on two different numbers) don't collide.
+      const primaryMatch = hasExplicitTargetPhone
+        ? phoneMatchesTarget ||
+          Boolean(incomingEmail && c.target_recipient_email && c.target_recipient_email.toLowerCase() === incomingEmail)
+        : matchesTarget(c.target_recipient_name, c.target_recipient_email, c.target_recipient_phone)
+
+      const rosterMatch = (c.invited_roster || []).some((inv) => {
+        if (inv.status === "removed") return false
+        const invDigits = String(inv.phone || "").replace(/[^\d]/g, "")
+        if (invDigits.length >= 7 && incomingPhoneDigits.length >= 7) {
+          return invDigits === incomingPhoneDigits || invDigits.slice(-10) === incomingPhoneDigits.slice(-10)
+        }
+        return matchesTarget(inv.name, inv.email, inv.phone)
+      })
+
+      // For DM calls without an explicit target_recipient_name/phone (where callId contains both caller & callee names),
+      // don't match the caller's own name via `cidLower.includes(nameSlug)`.
+      const viewerSharesCallerName = c.participants.some(
+        (p) => incomingForName && String(p.display_name || "").trim().toLowerCase() === incomingForName
       )
-      if (viewerIsCaller && !dialedOwnNumber) return false
+      const hasAnyExplicitTarget = Boolean(
+        c.target_recipient_name || c.target_recipient_email || c.target_recipient_phone
+      )
 
       return Boolean(
         primaryMatch ||
           rosterMatch ||
-          (!viewerIsCaller && nameSlug.length >= 4 && cidLower.includes(nameSlug))
+          (!hasAnyExplicitTarget && !viewerSharesCallerName && nameSlug.length >= 4 && cidLower.includes(nameSlug))
       )
     })
     return NextResponse.json({

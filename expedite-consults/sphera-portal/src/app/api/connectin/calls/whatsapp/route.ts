@@ -74,8 +74,22 @@ export async function GET(req: NextRequest) {
       refreshWhatsAppDirectoryCache(),
     ])
 
-    // Resolve the authenticated user's 2FA-verified account phone first!
-    let verifiedAccountPhone = resolveSessionUserPhone(req, viewerEmail, viewerName)
+    // If the device passed an explicit `viewerPhone` that is already 2FA-verified in the directory,
+    // respect that device's verified phone first (so a second phone verified as +12403608139 is never overwritten by +12402607898).
+    const normViewerPhone =
+      viewerPhone && looksLikePhoneNumber(viewerPhone) ? normalizeDialablePhone(viewerPhone) : ""
+    const viewerPhoneDirEntry = normViewerPhone ? cache.get(normViewerPhone) : undefined
+    const deviceHasOwnVerifiedPhone = Boolean(
+      normViewerPhone &&
+        viewerPhoneDirEntry?.verifiedBy2FA &&
+        (!viewerPhoneDirEntry.email ||
+          !viewerEmail ||
+          isSamePhoneOwnerEmail(viewerPhoneDirEntry.email, viewerEmail))
+    )
+
+    let verifiedAccountPhone = deviceHasOwnVerifiedPhone
+      ? normViewerPhone
+      : resolveSessionUserPhone(req, viewerEmail, viewerName)
     if (!verifiedAccountPhone && viewerEmail) {
       for (const m of cache.values()) {
         if (m.email && isSamePhoneOwnerEmail(m.email, viewerEmail)) {
@@ -85,9 +99,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const effectiveViewerPhone =
-      verifiedAccountPhone ||
-      (viewerPhone && looksLikePhoneNumber(viewerPhone) ? normalizeDialablePhone(viewerPhone) : "")
+    const effectiveViewerPhone = verifiedAccountPhone || normViewerPhone
 
     let myRegistration = null
     if (effectiveViewerPhone) {
@@ -96,16 +108,17 @@ export async function GET(req: NextRequest) {
       const ownerMatches =
         !found?.email || !viewerEmail || isSamePhoneOwnerEmail(found.email, viewerEmail)
       if (found && ownerMatches) {
-        const mobileCount = found.pushSubscriptions.filter((s) =>
+      const mobileCount =
+        found.pushSubscriptions.filter((s) =>
           /mobile|phone|iphone|android/i.test(s.deviceLabel || "")
-        ).length
+        ).length + (found.fcmTokens?.length || 0)
         myRegistration = {
           phone: found.phone,
           prettyPhone: found.prettyPhone,
           name: found.name,
           email: found.email,
           verifiedBy2FA: Boolean(found.verifiedBy2FA || verifiedAccountPhone === found.phone),
-          pushDevicesCount: found.pushSubscriptions.length,
+          pushDevicesCount: found.pushSubscriptions.length + (found.fcmTokens?.length || 0),
           mobilePushDevicesCount: mobileCount,
         }
       } else if (verifiedAccountPhone) {
@@ -197,18 +210,8 @@ export async function POST(req: NextRequest) {
       }
 
       const normPhone = normalizeDialablePhone(rawPhone)
-      const ownership = await checkPhoneOwnershipConflict({
-        phone: normPhone,
-        claimantEmail: email,
-        claimantName: name,
-      })
-      if (ownership.conflict) {
-        return NextResponse.json(
-          { ok: false, error: ownership.reason || "This phone number belongs to another verified user." },
-          { status: 409 }
-        )
-      }
-
+      // Do NOT block sending a 6-digit SMS code to the phone number: the SMS is delivered
+      // strictly to the physical SIM owner, allowing an existing member to verify their own number on a new device.
       const { code: otpCode, challengeToken } = createDynamicOTP(normPhone, 15)
       connectinDb.setOTP(normPhone, otpCode, 15)
       await sendConnectInSMS({
@@ -247,18 +250,6 @@ export async function POST(req: NextRequest) {
       }
 
       const normPhone = normalizeDialablePhone(rawPhone)
-      const ownership = await checkPhoneOwnershipConflict({
-        phone: normPhone,
-        claimantEmail: email,
-        claimantName: name,
-      })
-      if (ownership.conflict) {
-        return NextResponse.json(
-          { ok: false, error: ownership.reason || "This phone number belongs to another verified user." },
-          { status: 409 }
-        )
-      }
-
       const isValid = await validateOTP(normPhone, code, challengeToken)
       if (!isValid) {
         return NextResponse.json(
@@ -267,11 +258,22 @@ export async function POST(req: NextRequest) {
         )
       }
 
+      // The user has cryptographically proven physical ownership of `normPhone` via the 6-digit SMS code!
+      // If `normPhone` already exists in the directory, preserve its owner email so multi-device login works seamlessly.
+      const cache = await refreshWhatsAppDirectoryCache()
+      const existingDir = cache.get(normPhone)
+      const effectiveEmail = email || existingDir?.email || ""
+      const effectiveName =
+        (name && name !== "ConnectLn Member" ? name : "") ||
+        existingDir?.name ||
+        name ||
+        "ConnectLn Member"
+
       // Bind verified phone to the authenticated user in DB + Cloud Sync
-      if (email) {
+      if (effectiveEmail) {
         const matchedUser = connectinDb
           .getUsers()
-          .find((u) => isSamePhoneOwnerEmail(u.email, email))
+          .find((u) => isSamePhoneOwnerEmail(u.email, effectiveEmail))
         if (matchedUser) {
           matchedUser.phone = normPhone
           ;(matchedUser as any).phoneVerified = true
@@ -285,7 +287,7 @@ export async function POST(req: NextRequest) {
               id: matchedUser.id,
               email: matchedUser.email,
               phone: normPhone,
-              name: prof.name || name,
+              name: prof.name || effectiveName,
               role: matchedUser.role,
               status: matchedUser.status,
               headline: prof.headline || body?.headline || "Verified ConnectLn Member",
@@ -301,12 +303,13 @@ export async function POST(req: NextRequest) {
 
       const record = await registerWhatsAppMemberNumber({
         phone: normPhone,
-        name,
-        email,
+        name: effectiveName,
+        email: effectiveEmail || undefined,
         avatar: body?.avatar,
         headline: body?.headline,
         verifiedBy2FA: true,
         pushSubscription: body?.pushSubscription || null,
+        fcmToken: typeof body?.fcmToken === "string" ? body.fcmToken : undefined,
         deviceLabel: body?.deviceLabel,
       })
 
@@ -320,7 +323,7 @@ export async function POST(req: NextRequest) {
               name: record.name,
               email: record.email,
               verifiedBy2FA: true,
-              pushDevicesCount: record.pushSubscriptions.length,
+              pushDevicesCount: record.pushSubscriptions.length + (record.fcmTokens?.length || 0),
             }
           : null,
       })
@@ -341,12 +344,24 @@ export async function POST(req: NextRequest) {
       }
 
       const normPhone = normalizeDialablePhone(rawPhone)
+      const cache = await refreshWhatsAppDirectoryCache()
+      const existingDir = cache.get(normPhone)
+      const isAttachingDevicePushToVerifiedPhone = Boolean(
+        existingDir?.verifiedBy2FA &&
+          Boolean(body?.pushSubscription?.endpoint || body?.fcmToken) &&
+          (!email ||
+            !existingDir.email ||
+            isSamePhoneOwnerEmail(existingDir.email, email))
+      )
+      const effectiveEmail =
+        email || (isAttachingDevicePushToVerifiedPhone ? existingDir?.email || "" : "")
+
       const ownership = await checkPhoneOwnershipConflict({
         phone: normPhone,
-        claimantEmail: email,
-        claimantName: name,
+        claimantEmail: effectiveEmail,
+        claimantName: name || existingDir?.name,
       })
-      if (ownership.conflict) {
+      if (ownership.conflict && !isAttachingDevicePushToVerifiedPhone) {
         return NextResponse.json(
           { ok: false, error: ownership.reason || "This phone number belongs to another verified user." },
           { status: 409 }
@@ -354,19 +369,15 @@ export async function POST(req: NextRequest) {
       }
 
       // Anti-Impersonation Enforcement: Only allow direct `Link & Enable Ringing` for the user's OWN 2FA-verified account phone!
-      const verifiedSessionPhone = resolveSessionUserPhone(req, email, name)
-      const cache = await refreshWhatsAppDirectoryCache()
-      const existingDir = cache.get(normPhone)
+      const verifiedSessionPhone = resolveSessionUserPhone(req, effectiveEmail, name)
       const isAlreadyVerifiedForThisUser =
+        isAttachingDevicePushToVerifiedPhone ||
         (verifiedSessionPhone && verifiedSessionPhone === normPhone) ||
         Boolean(
           existingDir?.verifiedBy2FA &&
-            ((existingDir.email && email && isSamePhoneOwnerEmail(existingDir.email, email)) ||
-              (Boolean(body?.pushSubscription?.endpoint) &&
-                !email &&
-                existingDir.name &&
-                name &&
-                existingDir.name.trim().toLowerCase() === name.trim().toLowerCase()))
+            existingDir.email &&
+            effectiveEmail &&
+            isSamePhoneOwnerEmail(existingDir.email, effectiveEmail)
         )
 
       if (!isAlreadyVerifiedForThisUser) {
@@ -383,8 +394,8 @@ export async function POST(req: NextRequest) {
 
       const record = await registerWhatsAppMemberNumber({
         phone: normPhone,
-        name,
-        email: body?.email,
+        name: name || existingDir?.name || "ConnectLn Member",
+        email: effectiveEmail || body?.email,
         avatar: body?.avatar,
         headline: body?.headline,
         verifiedBy2FA: true,

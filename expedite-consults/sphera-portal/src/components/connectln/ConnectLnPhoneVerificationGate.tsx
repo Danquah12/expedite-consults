@@ -6,7 +6,15 @@ import {
   GLOBAL_COUNTRY_DIAL_CODES,
   buildGlobalE164Phone,
 } from "@/lib/connectin-international-phones"
-import { MY_LINKED_PHONE_STORAGE_KEY } from "./ConnectLnWhatsAppCallModal"
+import {
+  MY_LINKED_PHONE_STORAGE_KEY,
+  getMyLinkedConnectLnPhone,
+} from "./ConnectLnWhatsAppCallModal"
+import {
+  registerNativeFcmForCalls,
+  getCachedNativeFcmToken,
+  registerConnectLnPushSubscription,
+} from "@/lib/connectin-native-callkit-bridge"
 
 /**
  * Mandatory phone + 2FA gate for every signed-in ConnectLn account (including
@@ -49,9 +57,12 @@ export function ConnectLnPhoneVerificationGate({
     const rawEmail = (viewerEmail || "").trim()
     const isRealEmail =
       Boolean(rawEmail) && !rawEmail.endsWith("@connectin.app") && !rawEmail.endsWith("@connectin.phone")
-    const phone = (viewerPhone || "").trim()
+    const phone = (viewerPhone || getMyLinkedConnectLnPhone() || "").trim()
 
-    // No real email AND no phone on the profile -> nothing to look up: must add a phone.
+    // Pre-arm native Android FCM token even before phone verification finishes
+    void registerNativeFcmForCalls({ phone: phone || "", name: viewerName, email: viewerEmail })
+
+    // No real email AND no phone on the profile or device -> must verify a phone.
     if (!isRealEmail && !phone) {
       setNeedsPhone(true)
       return
@@ -132,6 +143,11 @@ export function ConnectLnPhoneVerificationGate({
           otpChallengeToken: challenge,
           name: viewerName,
           email: viewerEmail,
+          fcmToken: getCachedNativeFcmToken() || undefined,
+          deviceLabel:
+            typeof navigator !== "undefined" && /iPhone|Android|Mobile/i.test(navigator.userAgent)
+              ? "Mobile Phone"
+              : "Desktop Browser",
         }),
       })
       const data = await res.json()
@@ -141,6 +157,8 @@ export function ConnectLnPhoneVerificationGate({
         window.localStorage.setItem(MY_LINKED_PHONE_STORAGE_KEY, confirmed)
         window.dispatchEvent(new Event("connectln_phone_linked"))
       } catch {}
+      // Immediately register Native Android FCM + Web Push for the newly verified phone!
+      void registerNativeFcmForCalls({ phone: confirmed, name: viewerName, email: viewerEmail })
       setNeedsPhone(false)
     } catch (err: any) {
       setError(err?.message || "Verification failed.")
