@@ -181,6 +181,8 @@ export async function refreshWhatsAppDirectoryCache(force = false): Promise<Map<
   const baselineSeeds: Array<{ phone: string; name: string; email: string }> = [
     { phone: "+12402607898", name: "Kwesi Asiedu", email: "kasiedu@expedite-consults.com" },
     { phone: "+12403608139", name: "Kwesi Asiedu", email: "kasiedu@expedite-consults.com" },
+    { phone: "+14108418358", name: "Esther Boa Asiedu", email: "esther.asiedu@connectin.com" },
+    { phone: "+12405550821", name: "Patience Addo", email: "patience.addo@connectin.com" },
     { phone: "+233205550412", name: "Isaac Boye", email: "isaac.boye@connectin.com" },
     { phone: "+447534700899", name: "Adwoa larbi", email: "adwoa.appong@nhs.net" },
   ]

@@ -61,7 +61,7 @@ async function pullAllMapsFromFirebase(force = false): Promise<Record<string, Kv
   if (
     !force &&
     globalForFbKv.__connectlnFbLastFetchMs &&
-    now - globalForFbKv.__connectlnFbLastFetchMs < 450 &&
+    now - globalForFbKv.__connectlnFbLastFetchMs < 2400 &&
     globalForFbKv.__connectlnFbMapsCache
   ) {
     return globalForFbKv.__connectlnFbMapsCache
@@ -148,8 +148,14 @@ export async function firebaseKvSetItem(
   if (!auth) return false
 
   const runWrite = async (): Promise<boolean> => {
-    const maps = await pullAllMapsFromFirebase(true)
     const now = Date.now()
+    const hasFreshCache =
+      globalForFbKv.__connectlnFbMapsCache &&
+      globalForFbKv.__connectlnFbLastFetchMs &&
+      now - globalForFbKv.__connectlnFbLastFetchMs < 8000
+    const maps = hasFreshCache
+      ? globalForFbKv.__connectlnFbMapsCache!
+      : await pullAllMapsFromFirebase(true)
     const currentMap = pruneExpiredFromMap(maps[mapName] || {}, now)
 
     currentMap[key] = {

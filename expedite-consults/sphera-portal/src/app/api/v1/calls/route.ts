@@ -413,8 +413,9 @@ async function pushCloudCallParticipant(callId: string, participant: CommCallPar
   const nowMs = Date.now()
 
   // Push participant metadata (`p__call__user`) to Firebase KV so all serverless instances share active calls
+  // Immediate on create/join/leave/end (force=true); every 10s on routine heartbeat to stay well below Firebase 60/min quota.
   const lastPush = lastCloudParticipantPushMap.get(key) || 0
-  const minPushIntervalMs = participant.webrtc_connected ? 1800 : 800
+  const minPushIntervalMs = 10000
   if (force || nowMs - lastPush >= minPushIntervalMs) {
     lastCloudParticipantPushMap.set(key, nowMs)
     const compactParticipant = {
@@ -1210,7 +1211,11 @@ export async function POST(req: NextRequest) {
 
       // Run cloud push and pull IN PARALLEL so heartbeat round-trip latency is cut in half (~220ms instead of ~850ms)
       await Promise.all([
-        pushCloudCallParticipant(callId, updatedParticipant, existingIdx < 0 || action === "join" || action === "create").catch(() => {}),
+        pushCloudCallParticipant(
+          callId,
+          updatedParticipant,
+          existingIdx < 0 || action === "join" || action === "create" || rosterChanged
+        ).catch(() => {}),
         stageChanged
           ? pushCloudSharedStage(callId, record.shared_stage || null, action === "share_stage").catch(() => {})
           : Promise.resolve(),
