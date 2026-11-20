@@ -131,7 +131,7 @@ export function AdminIAMConsoleView({
   const [activityUserFilter, setActivityUserFilter] = useState<string>('all')
   const [activitySearch, setActivitySearch] = useState("")
   const [isLoadingUsers, setIsLoadingUsers] = useState(false)
-  const [userFilter, setUserFilter] = useState<'all' | 'new_and_logged_in' | 'admins'>('all')
+  const [userFilter, setUserFilter] = useState<'all' | 'new_and_logged_in' | 'with_phone' | 'admins'>('all')
   const [contentItems, setContentItems] = useState<AdminContentRecord[]>(ADMIN_CONTENT_DIRECTORY)
   const [cases, setCases] = useState<ModerationCase[]>(MODERATION_CASES_DATA)
   const [companies, setCompanies] = useState<AdminCompanyRecord[]>(ADMIN_COMPANIES_DIRECTORY)
@@ -1676,6 +1676,16 @@ export function AdminIAMConsoleView({
                     <span>New &amp; Logged-In Users ({users.filter(isNewOrLoggedInUser).length})</span>
                   </button>
                   <button
+                    onClick={() => setUserFilter('with_phone')}
+                    className={`rounded-full px-3.5 py-1 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      userFilter === 'with_phone'
+                        ? "bg-teal-600 text-white shadow-xs"
+                        : "bg-teal-50 dark:bg-teal-950/50 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800 hover:bg-teal-100"
+                    }`}
+                  >
+                    <span>📞 Registered Phone Numbers ({users.filter(u => Boolean((u as any).phone)).length})</span>
+                  </button>
+                  <button
                     onClick={() => setUserFilter('admins')}
                     className={`rounded-full px-3.5 py-1 text-xs font-bold transition-all cursor-pointer ${
                       userFilter === 'admins'
@@ -1694,6 +1704,7 @@ export function AdminIAMConsoleView({
                     <thead className="bg-zinc-50 dark:bg-zinc-800/60 border-b border-zinc-200 dark:border-zinc-800 text-[11px] font-bold uppercase tracking-wider text-zinc-400">
                       <tr>
                         <th className="py-3 px-4">Member Identity</th>
+                        <th className="py-3 px-3">Registered Phone &amp; Ringing</th>
                         <th className="py-3 px-3">Roles</th>
                         <th className="py-3 px-3">Last Login / Joined</th>
                         <th className="py-3 px-3">Status</th>
@@ -1705,6 +1716,7 @@ export function AdminIAMConsoleView({
                       {users
                         .filter(u => {
                           if (userFilter === 'new_and_logged_in') return isNewOrLoggedInUser(u)
+                          if (userFilter === 'with_phone') return Boolean((u as any).phone)
                           if (userFilter === 'admins') return u.roles.some(r => r.includes("ADMIN"))
                           return true
                         })
@@ -1712,6 +1724,7 @@ export function AdminIAMConsoleView({
                           !searchQuery ||
                           u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          String((u as any).phone || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
                           u.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           u.organization.toLowerCase().includes(searchQuery.toLowerCase())
                         )
@@ -1757,6 +1770,29 @@ export function AdminIAMConsoleView({
                                     </p>
                                   </div>
                                 </div>
+                              </td>
+                              <td className="py-3 px-3">
+                                {(u as any).phone ? (
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <span className="font-mono font-bold text-xs text-zinc-900 dark:text-zinc-100">
+                                        {(u as any).phone}
+                                      </span>
+                                      {(u as any).verifiedBy2FA && (
+                                        <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-800 px-1.5 py-0.5 text-[9px] font-extrabold text-emerald-800 dark:text-emerald-300">
+                                          🔒 2FA Verified
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                                      {Number((u as any).pushDevicesCount || 0) > 0
+                                        ? `🟢 ${(u as any).pushDevicesCount} Ringing Device(s) Active`
+                                        : "⚪ 0 Ringing Devices Linked"}
+                                    </p>
+                                  </div>
+                                ) : (
+                                  <span className="text-[11px] text-zinc-400 italic">No phone linked</span>
+                                )}
                               </td>
                               <td className="py-3 px-3">
                                 <div className="flex flex-wrap gap-1">

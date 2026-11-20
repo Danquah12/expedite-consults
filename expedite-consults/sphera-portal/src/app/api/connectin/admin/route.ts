@@ -6,6 +6,11 @@ import {
   pullCloudActivityLogs
 } from "@/lib/connectin-cloud-sync"
 import {
+  refreshWhatsAppDirectoryCache,
+  isSamePhoneOwnerEmail,
+} from "@/lib/connectin-whatsapp-directory"
+import { formatPrettyPhoneDisplay } from "@/lib/connectin-twilio-voice"
+import {
   EXECUTIVE_ANALYTICS_DATA,
   ADMIN_USERS_DIRECTORY,
   ADMIN_CONTENT_DIRECTORY,
@@ -24,10 +29,11 @@ import {
 
 export async function GET(req: NextRequest) {
   try {
-    // 1. Pull all globally logged-in users & telemetry across all countries/lambdas from Twilio Cloud Sync
-    const [, cloudTelemetry] = await Promise.all([
+    // 1. Pull all globally logged-in users, telemetry, and registered calling phone numbers
+    const [, cloudTelemetry, phoneDirCache] = await Promise.all([
       pullCloudUsersIntoDb(),
-      fetchCloudTelemetry()
+      fetchCloudTelemetry(),
+      refreshWhatsAppDirectoryCache(),
     ])
 
     // Sort db users so most recently logged-in or updated users appear first
@@ -74,10 +80,30 @@ export async function GET(req: NextRequest) {
           ? ` · ${(u as any).countryName}`
           : ""
 
+      // Match any registered phone(s) in the calling directory for this user
+      const matchedPhones = Array.from(phoneDirCache.values()).filter(
+        (m) =>
+          (m.email && u.email && isSamePhoneOwnerEmail(m.email, u.email)) ||
+          (u.phone && m.phone === u.phone) ||
+          m.name.toLowerCase().trim() === resolvedName.toLowerCase().trim()
+      )
+      const primaryPhoneEntry = matchedPhones[0]
+      const phoneStr = primaryPhoneEntry?.phone || u.phone || ""
+      const prettyPhoneStr =
+        primaryPhoneEntry?.prettyPhone || (phoneStr ? formatPrettyPhoneDisplay(phoneStr) : "")
+      const allPrettyPhones = matchedPhones.map((m) => m.prettyPhone).join(", ") || prettyPhoneStr
+      const pushCount = matchedPhones.reduce(
+        (acc, m) => acc + (m.pushSubscriptions?.length || 0) + (m.fcmTokens?.length || 0),
+        0
+      )
+
       return {
         id: u.id,
         name: resolvedName,
         email: u.email,
+        phone: allPrettyPhones || undefined,
+        verifiedBy2FA: Boolean(primaryPhoneEntry?.verifiedBy2FA || (u as any).phoneVerified),
+        pushDevicesCount: pushCount,
         avatar: p?.avatar || existingInAdmin?.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.email)}`,
         headline: p?.headline || existingInAdmin?.headline || `${u.role.toUpperCase()} Professional · ConnectIn Member`,
         roles: existingInAdmin?.roles || [u.role.toUpperCase()],
@@ -100,15 +126,57 @@ export async function GET(req: NextRequest) {
     const getKey = (item: AdminUserRecord) =>
       `${String(item.name || "").toLowerCase().trim()}::${String(item.email || "").toLowerCase().trim()}`
 
-    // Put live dbUsers FIRST so new registrations & global sign-ins appear at the top
-    ;[...dbUsers, ...ADMIN_USERS_DIRECTORY].forEach(item => {
+    // Also ensure every member in the phone directory appears in the Admin User Directory with their phone attached
+    const phoneOnlyAdminUsers: AdminUserRecord[] = Array.from(phoneDirCache.values()).map((m, idx) => ({
+      id: `TEL-${m.phone.replace(/[^\d]/g, "").slice(-6) || idx}`,
+      name: m.name || m.prettyPhone,
+      email: m.email || `${m.phone.replace(/[^\d]/g, "")}@connectin.phone`,
+      phone: m.prettyPhone,
+      verifiedBy2FA: Boolean(m.verifiedBy2FA),
+      pushDevicesCount: (m.pushSubscriptions?.length || 0) + (m.fcmTokens?.length || 0),
+      avatar:
+        m.avatar ||
+        `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(m.name || m.phone)}`,
+      headline: m.headline || "2FA-Verified ConnectLn Calling Member",
+      roles: ["NORMAL_USER"],
+      enforcementStatus: "Active" as any,
+      verificationLevel: (m.verifiedBy2FA ? "Government ID Verified" : "Email Verified") as any,
+      mfaStatus: "SMS 2FA ✓" as any,
+      riskLevel: "Low" as any,
+      organization: "ConnectLn Calling Network",
+      location: "Verified Calling Directory",
+      connectionsCount: 1,
+      lastLogin: `Phone Linked (${m.prettyPhone})`,
+      registeredAt: m.registeredAtIso ? new Date(m.registeredAtIso).toLocaleDateString() : "Verified",
+      reportsCount: 0,
+    }))
+
+    // Put live dbUsers and phone-registered users FIRST so all registered phone numbers appear at the top
+    ;[...dbUsers, ...phoneOnlyAdminUsers, ...ADMIN_USERS_DIRECTORY].forEach(item => {
       const key = getKey(item)
       if (!deduped.has(key)) {
         deduped.set(key, item)
+      } else {
+        const prev = deduped.get(key)! as any
+        if (!prev.phone && (item as any).phone) {
+          prev.phone = (item as any).phone
+          prev.verifiedBy2FA = (item as any).verifiedBy2FA
+          prev.pushDevicesCount = (item as any).pushDevicesCount
+        }
       }
     })
 
     const combinedUsers = Array.from(deduped.values())
+    const registeredPhones = Array.from(phoneDirCache.values()).map((m) => ({
+      phone: m.phone,
+      prettyPhone: m.prettyPhone,
+      name: m.name,
+      email: m.email || "",
+      verifiedBy2FA: Boolean(m.verifiedBy2FA),
+      pushDevicesCount: (m.pushSubscriptions?.length || 0) + (m.fcmTokens?.length || 0),
+      fcmDevicesCount: m.fcmTokens?.length || 0,
+      updatedAtIso: m.updatedAtIso,
+    }))
 
     // Merge local activity logs with global cloud activity logs, DM threads, call rooms, and all user accounts
     const allActivityLogs = await pullCloudActivityLogs(cloudTelemetry)
@@ -131,6 +199,7 @@ export async function GET(req: NextRequest) {
       timestamp: new Date().toISOString(),
       analytics: EXECUTIVE_ANALYTICS_DATA,
       users: combinedUsers,
+      registeredPhones,
       content: ADMIN_CONTENT_DIRECTORY,
       cases: MODERATION_CASES_DATA,
       companies: ADMIN_COMPANIES_DIRECTORY,
