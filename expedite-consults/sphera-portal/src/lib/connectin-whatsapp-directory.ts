@@ -1,6 +1,11 @@
 import * as webPush from "web-push"
 import { connectinDb } from "./connectin-db"
 import { publishToPhones } from "./connectin-realtime"
+import {
+  firebaseKvGetItem,
+  firebaseKvSetItem,
+  firebaseKvListItems,
+} from "./connectin-firebase-kv"
 import { pullCloudUsersIntoDb } from "./connectin-cloud-sync"
 import {
   normalizeDialablePhone,
@@ -69,10 +74,7 @@ if (!globalForWhatsAppDir.__connectlnWhatsAppPhoneCache) {
 }
 
 function getTwilioAuthHeader(): string | null {
-  const sid = (process.env.TWILIO_ACCOUNT_SID || "").trim()
-  const token = (process.env.TWILIO_AUTH_TOKEN || "").trim()
-  if (!sid || !token) return null
-  return `Basic ${Buffer.from(`${sid}:${token}`).toString("base64")}`
+  return "firebase-kv"
 }
 
 function makePhoneItemKey(e164: string): string {
@@ -80,73 +82,12 @@ function makePhoneItemKey(e164: string): string {
   return `phone__${digits}`
 }
 
-async function ensureSyncMap(authHeader: string): Promise<void> {
-  try {
-    const check = await fetch(
-      `https://sync.twilio.com/v1/Services/default/Maps/${WHATSAPP_DIR_MAP}`,
-      { headers: { Authorization: authHeader }, cache: "no-store" }
-    )
-    if (check.ok) return
-    if (check.status === 404) {
-      await fetch("https://sync.twilio.com/v1/Services/default/Maps", {
-        method: "POST",
-        headers: {
-          Authorization: authHeader,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({ UniqueName: WHATSAPP_DIR_MAP }).toString(),
-      })
-    }
-  } catch {
-    // non-fatal
-  }
+async function readDirItem<T = any>(_authHeader: string | null, key: string): Promise<T | null> {
+  return await firebaseKvGetItem<T>(WHATSAPP_DIR_MAP, key)
 }
 
-async function readDirItem<T = any>(authHeader: string, key: string): Promise<T | null> {
-  try {
-    const res = await fetch(
-      `https://sync.twilio.com/v1/Services/default/Maps/${WHATSAPP_DIR_MAP}/Items/${encodeURIComponent(
-        key
-      )}`,
-      { headers: { Authorization: authHeader }, cache: "no-store" }
-    )
-    if (!res.ok) return null
-    const json: any = await res.json()
-    return (json?.data as T) || null
-  } catch {
-    return null
-  }
-}
-
-async function writeDirItem(authHeader: string, key: string, dataObj: any): Promise<boolean> {
-  await ensureSyncMap(authHeader)
-  const serialized = JSON.stringify(dataObj)
-  const baseUrl = `https://sync.twilio.com/v1/Services/default/Maps/${WHATSAPP_DIR_MAP}`
-  try {
-    const updateRes = await fetch(`${baseUrl}/Items/${encodeURIComponent(key)}`, {
-      method: "POST",
-      headers: {
-        Authorization: authHeader,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({ Data: serialized }).toString(),
-    })
-    if (updateRes.ok) return true
-    if (updateRes.status === 404) {
-      const createRes = await fetch(`${baseUrl}/Items`, {
-        method: "POST",
-        headers: {
-          Authorization: authHeader,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({ Key: key, Data: serialized }).toString(),
-      })
-      return createRes.ok
-    }
-    return false
-  } catch {
-    return false
-  }
+async function writeDirItem(_authHeader: string | null, key: string, dataObj: any): Promise<boolean> {
+  return await firebaseKvSetItem(WHATSAPP_DIR_MAP, key, dataObj)
 }
 
 /**
@@ -236,69 +177,87 @@ export async function refreshWhatsAppDirectoryCache(force = false): Promise<Map<
     // non-fatal
   }
 
-  // 2. Pull cloud WhatsApp directory items (`phone__*`) including Web Push subscriptions
-  const auth = getTwilioAuthHeader()
-  if (auth) {
-    try {
-      const res = await fetch(
-        `https://sync.twilio.com/v1/Services/default/Maps/${WHATSAPP_DIR_MAP}/Items?PageSize=100`,
-        { headers: { Authorization: auth }, cache: "no-store" }
-      )
-      if (res.ok) {
-        const json: any = await res.json()
-        const items = Array.isArray(json?.items) ? json.items : []
-        for (const item of items) {
-          const key = String(item?.key || "")
-          if (!key.startsWith("phone__")) continue
-          const data = item?.data as WhatsAppDirectoryMember | undefined
-          if (data?.phone && looksLikePhoneNumber(data.phone)) {
-            const norm = normalizeDialablePhone(data.phone)
-            const existing = cache.get(norm)
-            const realDataEmail =
-              data.email &&
-              !data.email.endsWith("@connectin.app") &&
-              !data.email.endsWith("@connectin.phone")
-                ? data.email
-                : ""
-            const realExistingEmail =
-              existing?.email &&
-              !existing.email.endsWith("@connectin.app") &&
-              !existing.email.endsWith("@connectin.phone")
-                ? existing.email
-                : ""
-            const mergedEmail =
-              realDataEmail ||
-              realExistingEmail ||
-              (norm === "+12402607898" ? "kasiedu@expedite-consults.com" : "") ||
-              data.email ||
-              existing?.email
-            const isSyntheticEmail =
-              !mergedEmail ||
-              mergedEmail.endsWith("@connectin.app") ||
-              mergedEmail.endsWith("@connectin.phone")
-            const isDemo555 = /^\+1\d{3}555\d{4}$/.test(norm)
-            cache.set(norm, {
-              ...existing,
-              ...data,
-              phone: norm,
-              prettyPhone: formatPrettyPhoneDisplay(norm),
-              name: data.name || existing?.name || norm,
-              email: mergedEmail,
-              verifiedBy2FA: Boolean(
-                data.verifiedBy2FA ??
-                  existing?.verifiedBy2FA ??
-                  (!isSyntheticEmail && !isDemo555)
-              ),
-              pushSubscriptions: Array.isArray(data.pushSubscriptions)
-                ? data.pushSubscriptions
-                : existing?.pushSubscriptions || [],
-            })
-          }
-        }
+  // 1b. Ensure known verified numbers (+12402607898 and +12403608139) are always seeded as verified
+  const baselineSeeds: Array<{ phone: string; name: string; email: string }> = [
+    { phone: "+12402607898", name: "Kwesi Asiedu", email: "kasiedu@expedite-consults.com" },
+    { phone: "+12403608139", name: "Kwesi Asiedu", email: "kasiedu@expedite-consults.com" },
+    { phone: "+233205550412", name: "Isaac Boye", email: "isaac.boye@connectin.com" },
+    { phone: "+447534700899", name: "Adwoa larbi", email: "adwoa.appong@nhs.net" },
+  ]
+  const seedNowIso = new Date().toISOString()
+  for (const s of baselineSeeds) {
+    const ex = cache.get(s.phone)
+    cache.set(s.phone, {
+      phone: s.phone,
+      prettyPhone: formatPrettyPhoneDisplay(s.phone),
+      name: ex?.name || s.name,
+      email: ex?.email || s.email,
+      avatar: ex?.avatar,
+      headline: ex?.headline,
+      verifiedBy2FA: true,
+      pushSubscriptions: ex?.pushSubscriptions || [],
+      fcmTokens: ex?.fcmTokens || [],
+      registeredAtIso: ex?.registeredAtIso || seedNowIso,
+      updatedAtIso: ex?.updatedAtIso || seedNowIso,
+    })
+  }
+
+  // 2. Pull cloud WhatsApp directory items (`phone__*`) from Firebase KV including Web Push & FCM tokens
+  try {
+    const items = await firebaseKvListItems<WhatsAppDirectoryMember>(WHATSAPP_DIR_MAP, force)
+    for (const item of items) {
+      const key = String(item?.key || "")
+      if (!key.startsWith("phone__")) continue
+      const data = item?.data as WhatsAppDirectoryMember | undefined
+      if (data?.phone && looksLikePhoneNumber(data.phone)) {
+        const norm = normalizeDialablePhone(data.phone)
+        const existing = cache.get(norm)
+        const realDataEmail =
+          data.email &&
+          !data.email.endsWith("@connectin.app") &&
+          !data.email.endsWith("@connectin.phone")
+            ? data.email
+            : ""
+        const realExistingEmail =
+          existing?.email &&
+          !existing.email.endsWith("@connectin.app") &&
+          !existing.email.endsWith("@connectin.phone")
+            ? existing.email
+            : ""
+        const mergedEmail =
+          realDataEmail ||
+          realExistingEmail ||
+          (norm === "+12402607898" || norm === "+12403608139" ? "kasiedu@expedite-consults.com" : "") ||
+          data.email ||
+          existing?.email
+        const isSyntheticEmail =
+          !mergedEmail ||
+          mergedEmail.endsWith("@connectin.app") ||
+          mergedEmail.endsWith("@connectin.phone")
+        const isDemo555 = /^\+1\d{3}555\d{4}$/.test(norm)
+        cache.set(norm, {
+          ...existing,
+          ...data,
+          phone: norm,
+          prettyPhone: formatPrettyPhoneDisplay(norm),
+          name: data.name || existing?.name || norm,
+          email: mergedEmail,
+          verifiedBy2FA: Boolean(
+            data.verifiedBy2FA ??
+              existing?.verifiedBy2FA ??
+              (!isSyntheticEmail && !isDemo555)
+          ),
+          pushSubscriptions: Array.isArray(data.pushSubscriptions)
+            ? data.pushSubscriptions
+            : existing?.pushSubscriptions || [],
+          fcmTokens: Array.isArray(data.fcmTokens)
+            ? data.fcmTokens
+            : existing?.fcmTokens || [],
+        })
       }
-    } catch {
-      // non-fatal
     }
+  } catch {
+    // non-fatal
   }
 
   return cache

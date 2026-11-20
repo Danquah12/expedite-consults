@@ -5,6 +5,7 @@ import path from "path"
 import os from "os"
 import { recordGlobalUserActivity } from "@/lib/connectin-cloud-sync"
 import { publishToPhones } from "@/lib/connectin-realtime"
+import { firebaseKvSetItem, firebaseKvListItems } from "@/lib/connectin-firebase-kv"
 import {
   lookupWhatsAppRecipient,
   sendIncomingCallWebPush,
@@ -167,10 +168,7 @@ const lastCloudParticipantPushMap = new Map<string, number>()
 const lastCloudAudioSeqMap = new Map<string, number>()
 
 function getTwilioCallsAuthHeader(): string | null {
-  const sid = process.env.TWILIO_ACCOUNT_SID || ""
-  const token = process.env.TWILIO_AUTH_TOKEN || ""
-  if (!sid || !token) return null
-  return `Basic ${Buffer.from(`${sid}:${token}`).toString("base64")}`
+  return "firebase-kv"
 }
 
 let cloudflareIceCache: { servers: any[]; expiresAtMs: number } | null = null
@@ -399,49 +397,12 @@ async function pushCloudSharedStage(callId: string, stage: SharedStageRecord | n
   await upsertTwilioSyncItem(auth, stageKey, payload)
 }
 
-async function upsertTwilioSyncItem(auth: string, key: string, serialized: string, ttlSec = "60"): Promise<void> {
-  const baseUrl = `https://sync.twilio.com/v1/Services/default/Maps/${CALLS_SYNC_MAP_NAME}`
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), 1100)
+async function upsertTwilioSyncItem(_auth: string, key: string, serialized: string, ttlSec = "60"): Promise<void> {
   try {
-    const updateRes = await fetch(`${baseUrl}/Items/${encodeURIComponent(key)}`, {
-      method: "POST",
-      headers: {
-        Authorization: auth,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({ Data: serialized, Ttl: ttlSec }).toString(),
-      signal: controller.signal,
-    })
-    if (updateRes.ok) return
-
-    if (updateRes.status === 404) {
-      await fetch("https://sync.twilio.com/v1/Services/default/Maps", {
-        method: "POST",
-        headers: {
-          Authorization: auth,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({ UniqueName: CALLS_SYNC_MAP_NAME }).toString(),
-      }).catch(() => {})
-
-      await fetch(`${baseUrl}/Items`, {
-        method: "POST",
-        headers: {
-          Authorization: auth,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          Key: key,
-          Data: serialized,
-          Ttl: ttlSec,
-        }).toString(),
-      }).catch(() => {})
-    }
+    const parsed = JSON.parse(serialized)
+    await firebaseKvSetItem(CALLS_SYNC_MAP_NAME, key, parsed, Number(ttlSec) || 60)
   } catch {
-    // non-fatal timeout
-  } finally {
-    clearTimeout(timer)
+    // non-fatal
   }
 }
 
@@ -449,117 +410,31 @@ async function pushCloudCallParticipant(callId: string, participant: CommCallPar
   const auth = getTwilioCallsAuthHeader()
   if (!auth) return
   const key = makeCloudParticipantKey(callId, participant.user_id)
-  const audioKey = makeCloudAudioKey(callId, participant.user_id)
   const nowMs = Date.now()
-  const pendingWrites: Promise<void>[] = []
 
-  // 1. Push fallback voice audio chunks ONLY when WebRTC native Opus audio is not connected
-  const latestSeq = participant.live_audio_chunk?.seq || 0
-  const lastPushedSeq = lastCloudAudioSeqMap.get(audioKey) || 0
-  if (participant.is_muted || participant.webrtc_connected) {
-    if (lastPushedSeq !== -1) {
-      lastCloudAudioSeqMap.set(audioKey, -1)
-      pendingWrites.push(
-        upsertTwilioSyncItem(
-          auth,
-          audioKey,
-          JSON.stringify({
-            kind: "audio",
-            call_id: callId,
-            user_id: participant.user_id,
-            is_muted: Boolean(participant.is_muted),
-            last_seen_ms: nowMs,
-            live_audio_chunk: null,
-            recent_audio_chunks: [],
-          })
-        )
-      )
-    }
-  } else if (latestSeq > lastPushedSeq && participant.live_audio_chunk?.data_url) {
-    lastCloudAudioSeqMap.set(audioKey, latestSeq)
-    const compactChunks = (participant.recent_audio_chunks || [participant.live_audio_chunk])
-      .filter((c) => c && typeof c.data_url === "string" && c.data_url.length < 13500)
-      .slice(-2)
-    let audioPayload = JSON.stringify({
-      kind: "audio",
-      call_id: callId,
-      user_id: participant.user_id,
-      is_muted: false,
-      last_seen_ms: nowMs,
-      live_audio_chunk:
-        participant.live_audio_chunk.data_url.length < 13500 ? participant.live_audio_chunk : null,
-      recent_audio_chunks: compactChunks,
-    })
-    // Ensure under Twilio Sync 16KB limit even with 2 chunks
-    if (audioPayload.length > 15200) {
-      audioPayload = JSON.stringify({
-        kind: "audio",
-        call_id: callId,
-        user_id: participant.user_id,
-        is_muted: false,
-        last_seen_ms: nowMs,
-        live_audio_chunk:
-          participant.live_audio_chunk.data_url.length < 14000 ? participant.live_audio_chunk : null,
-        recent_audio_chunks: compactChunks.slice(-1),
-      })
-    }
-    pendingWrites.push(upsertTwilioSyncItem(auth, audioKey, audioPayload))
-  }
-
-  // 2. Push participant metadata + fallback video frame (`p__call__user`), throttled gently when WebRTC is live
+  // Push participant metadata (`p__call__user`) to Firebase KV so all serverless instances share active calls
   const lastPush = lastCloudParticipantPushMap.get(key) || 0
-  const minPushIntervalMs = participant.webrtc_connected ? 1400 : 450
+  const minPushIntervalMs = participant.webrtc_connected ? 1800 : 800
   if (force || nowMs - lastPush >= minPushIntervalMs) {
     lastCloudParticipantPushMap.set(key, nowMs)
     const compactParticipant = {
       ...participant,
       call_id: callId,
-      live_frame:
-        participant.is_video_on !== false &&
-        participant.live_frame &&
-        participant.live_frame.length < 13500
-          ? participant.live_frame
-          : null,
-      live_audio_chunk:
-        !participant.webrtc_connected &&
-        participant.live_audio_chunk &&
-        typeof participant.live_audio_chunk.data_url === "string" &&
-        participant.live_audio_chunk.data_url.length < 2800
-          ? participant.live_audio_chunk
-          : null,
+      live_frame: null,
+      live_audio_chunk: null,
       recent_audio_chunks: undefined,
     }
-    pendingWrites.push(upsertTwilioSyncItem(auth, key, JSON.stringify(compactParticipant)))
-  }
-
-  if (pendingWrites.length > 0) {
-    await Promise.all(pendingWrites).catch(() => {})
+    await upsertTwilioSyncItem(auth, key, JSON.stringify(compactParticipant), "60").catch(() => {})
   }
 }
 
 async function pullCloudCallParticipants(excludeUserId?: string): Promise<void> {
-  const auth = getTwilioCallsAuthHeader()
-  if (!auth) return
   const nowMs = Date.now()
-  if (nowMs - lastCloudPullMs < 500) return
+  if (nowMs - lastCloudPullMs < 450) return
   lastCloudPullMs = nowMs
 
   try {
-    const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), 1200)
-    const res = await fetch(
-      `https://sync.twilio.com/v1/Services/default/Maps/${CALLS_SYNC_MAP_NAME}/Items?PageSize=100`,
-      {
-        method: "GET",
-        headers: { Authorization: auth },
-        cache: "no-store",
-        signal: controller.signal,
-      }
-    )
-    clearTimeout(timer)
-    if (!res.ok) return
-    const json = await res.json()
-    const items = Array.isArray(json.items) ? json.items : []
+    const items = await firebaseKvListItems<any>(CALLS_SYNC_MAP_NAME)
 
     // First pass: merge participant records (`p__`) and collect shared stage (`s__`), roster (`r__`), and audio (`a__`)
     const audioItems: any[] = []
