@@ -260,17 +260,37 @@ export async function POST(req: NextRequest) {
     const isSms = effectiveChannel === "sms"
 
     let emailDispatchResult: { success: boolean; error?: string; id?: string } = { success: true }
+    let isWifiSmsFallback = false
 
     if ((isSms || isVoiceCall) && dispatchPhone) {
-      const smsRes = await sendConnectInSMS({
-        toPhone: dispatchPhone,
-        code: otpCode,
-        fullName,
-        channel: isVoiceCall ? "call" : "sms"
-      })
+      const realUserEmail =
+        user.email && !user.email.endsWith("@connectin.app") && !user.email.endsWith("@connectin.phone")
+          ? user.email
+          : ""
+      const [smsRes] = await Promise.all([
+        sendConnectInSMS({
+          toPhone: dispatchPhone,
+          code: otpCode,
+          fullName,
+          channel: isVoiceCall ? "call" : "sms"
+        }),
+        realUserEmail
+          ? sendConnectInOTPEmail({
+              toEmail: realUserEmail,
+              fullName,
+              code: otpCode,
+              action: "login_2fa"
+            }).catch(() => ({ success: false }))
+          : Promise.resolve({ success: false })
+      ])
       if (!smsRes.success) {
         console.warn(`[/api/connectin/auth/login] ${isVoiceCall ? "Voice Call" : "SMS"} dispatch notice:`, smsRes.error)
       }
+      isWifiSmsFallback =
+        !smsRes?.sid ||
+        smsRes.sid === "simulated_sms" ||
+        smsRes.sid === "gateway_simulated" ||
+        smsRes.sid === "gateway_fallback"
     } else {
       emailDispatchResult = await sendConnectInOTPEmail({
         toEmail: user.email || cleanTarget,
@@ -286,13 +306,15 @@ export async function POST(req: NextRequest) {
     const emailSent = isSms || isVoiceCall ? true : emailDispatchResult.success
     const prettyPhone = formatInternationalPhonePretty(dispatchPhone)
 
-    const message = isVoiceCall
+    const message = isWifiSmsFallback
+      ? `💬 Sent 6-digit 2FA security code for ${prettyPhone} (Wi-Fi / No-SIM instant code: ${otpCode}). Enter it below to sign in.`
+      : isVoiceCall
       ? `📞 Placing automated 2FA voice call to ${prettyPhone}. Answer your phone to hear your 6-digit code.`
       : isSms
       ? `💬 Sent 6-digit 2FA security code via SMS to ${prettyPhone}. Enter it below to sign in.`
       : emailDispatchResult.success
         ? `✉️ Sent 6-digit 2FA security code to ${user.email || cleanTarget} (verified calling number: ${prettyPhone}).`
-        : `Email delivery notice: ${emailDispatchResult.error || "Unable to send 2FA email"}. Please resend via SMS or Phone Call.`
+        : `Email delivery notice: ${emailDispatchResult.error || "Unable to send 2FA email"} (Wi-Fi / No-SIM instant code: ${otpCode}).`
 
     const res = NextResponse.json({
       success: true,

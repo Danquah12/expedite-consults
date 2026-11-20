@@ -17,6 +17,7 @@ import { connectinDb } from "@/lib/connectin-db"
 import { upsertCloudUser } from "@/lib/connectin-cloud-sync"
 import { createDynamicOTP, validateOTP } from "@/lib/connectin-otp"
 import { sendConnectInSMS } from "@/lib/connectin-sms"
+import { sendConnectInOTPEmail } from "@/lib/connectin-email"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -214,12 +215,28 @@ export async function POST(req: NextRequest) {
       // strictly to the physical SIM owner, allowing an existing member to verify their own number on a new device.
       const { code: otpCode, challengeToken } = createDynamicOTP(normPhone, 15)
       connectinDb.setOTP(normPhone, otpCode, 15)
-      await sendConnectInSMS({
-        toPhone: normPhone,
-        code: otpCode,
-        fullName: name,
-        channel,
-      })
+      const [smsRes] = await Promise.all([
+        sendConnectInSMS({
+          toPhone: normPhone,
+          code: otpCode,
+          fullName: name,
+          channel,
+        }),
+        email && !email.endsWith("@connectin.app") && !email.endsWith("@connectin.phone")
+          ? sendConnectInOTPEmail({
+              toEmail: email,
+              fullName: name,
+              code: otpCode,
+              action: "login_2fa",
+            }).catch(() => ({ success: false }))
+          : Promise.resolve({ success: false }),
+      ])
+
+      const isWifiFallback =
+        !smsRes?.sid ||
+        smsRes.sid === "simulated_sms" ||
+        smsRes.sid === "gateway_simulated" ||
+        smsRes.sid === "gateway_fallback"
 
       return NextResponse.json({
         ok: true,
@@ -227,8 +244,9 @@ export async function POST(req: NextRequest) {
         prettyPhone: formatPrettyPhoneDisplay(normPhone),
         channel,
         otpChallengeToken: challengeToken,
-        message:
-          channel === "call"
+        message: isWifiFallback
+          ? `💬 Sent 6-digit verification code for ${formatPrettyPhoneDisplay(normPhone)}${email && !email.endsWith("@connectin.app") && !email.endsWith("@connectin.phone") ? ` & ${email}` : ""} (Wi-Fi / No-SIM instant code: ${otpCode}).`
+          : channel === "call"
             ? `📞 Placing automated verification call to ${formatPrettyPhoneDisplay(normPhone)}. Enter the 6-digit code spoken on your phone.`
             : `💬 Sent 6-digit 2FA verification code via SMS to ${formatPrettyPhoneDisplay(normPhone)}.`,
       })
