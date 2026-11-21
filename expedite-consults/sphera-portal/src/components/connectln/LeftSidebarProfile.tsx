@@ -802,7 +802,7 @@ export function LeftSidebarProfile({
                 e.stopPropagation()
                 cycleAvailabilityStatus()
               }}
-              title="Click to switch your friendly status badge (#READY, #TEAMING, #MENTOR, #FOCUSED)"
+              title={`${availabilityStatus} — Click to switch (#READY, #TEAMING, #MENTOR, #FOCUSED)`}
               style={{
                 backgroundColor: availabilityStatus.startsWith('#FOCUSED')
                   ? '#3F3F46'
@@ -816,18 +816,18 @@ export function LeftSidebarProfile({
               }}
               className="rounded-full px-2.5 py-0.5 text-[10.5px] leading-4 shadow-2xs transition-opacity hover:opacity-95 cursor-pointer"
             >
-              {availabilityStatus}
+              {availabilityStatus.split(' · ')[0]}
             </button>
           </div>
 
           <div className="block w-full text-left">
-            <div className="flex items-center gap-1.5 flex-wrap">
+            <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={onViewProfile}
-                className="group inline-flex items-center gap-1.5 text-left focus:outline-none cursor-pointer"
+                className="group inline-flex items-center gap-1.5 text-left focus:outline-none cursor-pointer min-w-0"
               >
-                <h2 className="font-semibold text-[#191919] text-[18px] leading-[1.25] group-hover:underline dark:text-zinc-100">
+                <h2 className="font-semibold text-[#191919] text-[18px] leading-[1.25] group-hover:underline dark:text-zinc-100 truncate">
                   {user.name}
                 </h2>
                 <ShieldCheck className="h-4 w-4 text-[#666666] dark:text-zinc-300 shrink-0" />
@@ -850,25 +850,10 @@ export function LeftSidebarProfile({
                     } catch {}
                   }
                 }}
-                className="inline-flex items-center gap-0.5 rounded-full bg-blue-50 hover:bg-[#0A66C2] hover:text-white dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 px-1.5 py-0.5 text-[10px] font-extrabold text-[#0A66C2] dark:text-sky-300 transition-colors cursor-pointer"
-                title={`Play VOICE-TAG Name Pronunciation for ${user.name}`}
+                className="h-5 w-5 rounded-full hover:bg-blue-50 dark:hover:bg-blue-950/60 inline-flex items-center justify-center text-[#0A66C2] dark:text-sky-400 transition-colors cursor-pointer shrink-0"
+                title={`VOICE-TAG — Hear ${user.name}'s name pronunciation`}
               >
-                <Volume2 className="h-3 w-3 shrink-0" />
-                <span>VOICE-TAG</span>
-              </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  if (typeof window !== 'undefined') {
-                    window.dispatchEvent(new Event('connectln-open-pinboard'))
-                  }
-                }}
-                className="inline-flex items-center gap-0.5 rounded-full bg-zinc-100 hover:bg-[#0A66C2] hover:text-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-1.5 py-0.5 text-[10px] font-extrabold text-zinc-700 dark:text-zinc-200 transition-colors cursor-pointer"
-                title="Open your PIN-BOARD Featured Work Showcase"
-              >
-                <Pin className="h-2.5 w-2.5 shrink-0" />
-                <span>PIN-BOARD</span>
+                <Volume2 className="h-3.5 w-3.5" />
               </button>
             </div>
             <button
@@ -893,42 +878,24 @@ export function LeftSidebarProfile({
             </button>
           </div>
 
-          {/* Clean Role & Job Card */}
-          <div className="pt-2.5 text-left">
-            <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/60 p-2.5 space-y-1">
-              <div className="flex items-center justify-between gap-1.5">
-                <p className="text-[12px] font-semibold text-[#191919] dark:text-zinc-100 flex items-center gap-1.5 truncate">
-                  <span className="shrink-0">{enclaveInfo?.icon || '🔨'}</span>
-                  <span className="truncate">{displayProfessionTitle}</span>
-                </p>
-                {onOpenIDModal && (
-                  <button
-                    type="button"
-                    onClick={onOpenIDModal}
-                    className="text-[11px] font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline shrink-0 cursor-pointer"
-                  >
-                    ID Verified
-                  </button>
-                )}
-              </div>
-
-              <div className="pt-1 border-t border-zinc-200/80 dark:border-zinc-800 flex items-center justify-between text-[12px]">
-                <button
-                  type="button"
-                  onClick={onViewProfile}
-                  className="font-semibold text-[#666666] hover:text-[#191919] dark:text-zinc-400 hover:underline cursor-pointer"
-                >
-                  Edit Job Card
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onNavigateTab && onNavigateTab('jobs')}
-                  className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer"
-                >
-                  Matching Jobs →
-                </button>
-              </div>
-            </div>
+          {/* Ultra-Clean 1-Line Role & Matching Jobs Row */}
+          <div className="mt-2.5 pt-2 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between gap-2 text-[11.5px]">
+            <button
+              type="button"
+              onClick={onViewProfile}
+              className="font-semibold text-[#191919] dark:text-zinc-200 hover:underline flex items-center gap-1 truncate cursor-pointer"
+              title={displayProfessionTitle}
+            >
+              <span className="shrink-0">{enclaveInfo?.icon || '🔨'}</span>
+              <span className="truncate">{displayProfessionTitle}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onNavigateTab && onNavigateTab('jobs')}
+              className="font-semibold text-[#0A66C2] dark:text-sky-400 hover:underline shrink-0 cursor-pointer"
+            >
+              Jobs →
+            </button>
           </div>
         </div>
 

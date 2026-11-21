@@ -343,31 +343,17 @@ export function ConnectLnSovereignSuiteHub({
 
   return (
     <>
-      {/* SINGLE ULTRA-CLEAN 1-LINE PILL BAR (Zero Feed Clutter!) */}
-      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3.5 py-2 shadow-2xs flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+      {/* SINGLE ULTRA-CLEAN 1-LINE PILL BAR (Strictly 1 Row — Zero Feed Clutter!) */}
+      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-1.5 shadow-2xs flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-1.5 flex-nowrap shrink-0">
           <button
             type="button"
             onClick={cycleHalo}
-            className={`rounded-full px-2.5 py-0.5 text-[11px] font-extrabold shadow-2xs transition-opacity hover:opacity-95 cursor-pointer ${haloMeta.pillBg}`}
-            title="Click to switch your friendly photo ring (#READY, #TEAMING, #MENTOR, #FOCUSED)"
+            className={`rounded-full px-2.5 py-0.5 text-[10.5px] font-extrabold shadow-2xs transition-opacity hover:opacity-95 cursor-pointer whitespace-nowrap ${haloMeta.pillBg}`}
+            title={`${haloMeta.badgeLabel} — Click to switch (#READY, #TEAMING, #MENTOR, #FOCUSED)`}
           >
-            {haloMeta.badgeLabel}
+            {haloMeta.friendlyCode}
           </button>
-
-          {hasGoldVoice && (
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab("stories_wisdom")
-                setIsConsoleOpen(true)
-              }}
-              className="rounded-full bg-amber-100 dark:bg-amber-950/70 border border-amber-300 dark:border-amber-800 px-2.5 py-0.5 text-[10.5px] font-extrabold text-amber-900 dark:text-amber-300 cursor-pointer"
-              title="You earned the ConnectLn GOLD-VOICE community badge!"
-            >
-              🌟 GOLD-VOICE
-            </button>
-          )}
 
           <button
             type="button"
@@ -375,7 +361,7 @@ export function ConnectLnSovereignSuiteHub({
               setActiveTab("kudos_spotlight")
               setIsConsoleOpen(true)
             }}
-            className="rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 px-2.5 py-0.5 text-[10.5px] font-bold text-zinc-700 dark:text-zinc-200 cursor-pointer"
+            className="rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 px-2.5 py-0.5 text-[10.5px] font-bold text-zinc-700 dark:text-zinc-200 cursor-pointer whitespace-nowrap"
           >
             👏 {totalPvrVouches || 93} KUDOS
           </button>
@@ -383,54 +369,22 @@ export function ConnectLnSovereignSuiteHub({
           <button
             type="button"
             onClick={() => {
-              setActiveTab("cheers_brain")
-              setIsConsoleOpen(true)
-            }}
-            className="rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 px-2.5 py-0.5 text-[10.5px] font-bold text-zinc-700 dark:text-zinc-200 cursor-pointer"
-          >
-            🧠 DAILY-BRAIN ({myStreak}d)
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
               setActiveTab("circle_identity")
               setIsConsoleOpen(true)
             }}
-            className="rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 px-2.5 py-0.5 text-[10.5px] font-bold text-zinc-700 dark:text-zinc-200 cursor-pointer hidden sm:inline-flex items-center gap-1"
-          >
-            <QrCode className="h-3 w-3 text-[#0A66C2]" />
-            <span>SNAP-BADGE &amp; PDF</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handlePlayVoiceTag()}
-            className="rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 px-2.5 py-0.5 text-[10.5px] font-bold text-zinc-700 dark:text-zinc-200 cursor-pointer inline-flex items-center gap-1"
-            title="Play your VOICE-TAG Name Pronunciation"
-          >
-            <span>🔊 VOICE-TAG</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab("circle_identity")
-              setIsConsoleOpen(true)
-            }}
-            className="rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 px-2.5 py-0.5 text-[10.5px] font-bold text-zinc-700 dark:text-zinc-200 cursor-pointer inline-flex items-center gap-1"
+            className="rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 px-2.5 py-0.5 text-[10.5px] font-bold text-zinc-700 dark:text-zinc-200 cursor-pointer whitespace-nowrap"
             title="Open your PIN-BOARD Featured Work Showcase"
           >
-            <span>📌 PIN-BOARD</span>
+            📌 PIN-BOARD
           </button>
         </div>
 
         <button
           type="button"
           onClick={() => setIsConsoleOpen(true)}
-          className="rounded-full bg-blue-50 dark:bg-blue-950/50 hover:bg-[#0A66C2] hover:text-white border border-blue-200 dark:border-blue-800 px-3 py-1 text-[11px] font-extrabold text-[#0A66C2] dark:text-sky-300 transition-colors cursor-pointer shrink-0"
+          className="rounded-full bg-blue-50 dark:bg-blue-950/50 hover:bg-[#0A66C2] hover:text-white border border-blue-200 dark:border-blue-800 px-2.5 py-0.5 text-[10.5px] font-extrabold text-[#0A66C2] dark:text-sky-300 transition-colors cursor-pointer whitespace-nowrap shrink-0"
         >
-          ✨ Career &amp; Circle Hub (23 Tools) →
+          ✨ Career &amp; Circle Hub →
         </button>
       </div>
 
