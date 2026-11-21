@@ -23,21 +23,22 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "ConnectLn",
+    title: "NexaCircle",
   },
   formatDetection: {
     telephone: false,
   },
   title: {
-    default: "ConnectLn — Tickets, vouches, and real work",
-    template: "%s | ConnectLn",
+    default: "NexaCircle — Your Circle for Real Work, Calls & Growth",
+    template: "%s | NexaCircle",
   },
   description:
-    "ConnectLn: The zero-trust professional network. Verified tickets, vouches, and real work across cloud, cybersecurity, trades, and enterprise teams.",
+    "NexaCircle: Your Circle for Real Work, Free Internet Voice/Video Calls, Peer Vouches, and Career Growth.",
   keywords: [
+    "NexaCircle",
+    "Nexa",
     "ConnectLn",
-    "ConnectIn",
-    "Tickets vouches real work",
+    "Your Circle for Real Work Calls and Growth",
     "zero-trust professional network",
     "Expedite Consults",
     "ASPM",
@@ -57,23 +58,23 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://conectln.com",
-    siteName: "ConnectLn",
-    title: "ConnectLn — Tickets, vouches, and real work",
-    description: "ConnectLn: The zero-trust professional network. Verified tickets, vouches, and real work across cloud, cybersecurity, trades, and enterprise teams.",
+    siteName: "NexaCircle",
+    title: "NexaCircle — Your Circle for Real Work, Calls & Growth",
+    description: "NexaCircle: Your Circle for Real Work, Free Internet Voice/Video Calls, Peer Vouches, and Career Growth.",
     images: [
       {
-        url: "https://conectln.com/api/connectin/share-card?t=ConnectLn+%E2%80%94+Tickets%2C+vouches%2C+and+real+work",
+        url: "https://conectln.com/api/connectin/share-card?t=NexaCircle+%E2%80%94+Your+Circle+for+Real+Work%2C+Calls+%26+Growth",
         width: 1200,
         height: 630,
-        alt: "ConnectLn — Tickets, vouches, and real work",
+        alt: "NexaCircle — Your Circle for Real Work, Calls & Growth",
       }
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "ConnectLn — Tickets, vouches, and real work",
-    description: "ConnectLn: The zero-trust professional network. Verified tickets, vouches, and real work.",
-    images: ["https://conectln.com/api/connectin/share-card?t=ConnectLn+%E2%80%94+Tickets%2C+vouches%2C+and+real+work"],
+    title: "NexaCircle — Your Circle for Real Work, Calls & Growth",
+    description: "NexaCircle: Your Circle for Real Work, Free Internet Voice/Video Calls, Peer Vouches, and Career Growth.",
+    images: ["https://conectln.com/api/connectin/share-card?t=NexaCircle+%E2%80%94+Your+Circle+for+Real+Work%2C+Calls+%26+Growth"],
   },
   manifest: "/manifest.json",
 };

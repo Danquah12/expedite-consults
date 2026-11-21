@@ -208,19 +208,19 @@ export function ConnectLnSovereignSuiteHub({
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-[#0A66C2] text-white text-xs font-black shrink-0">
-              CLN
+              NXC
             </span>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100">
-                  Sovereign Operator Telemetry &amp; Execution Suite
+                  NexaCircle Sovereign Operator &amp; Execution Suite
                 </span>
                 <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-800 px-2 py-0.5 text-[10px] font-extrabold text-emerald-800 dark:text-emerald-300">
                   TVR-L1 · 16 SBNs
                 </span>
               </div>
               <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
-                Proprietary ConnectLn stack: TVR Graph · #AFT/#SCO Halo · PVR Vouches · WCD Citations · PRT Radar · FTT/TOR Pipeline · ESH Hubs · BDP Decks · BEX
+                NexaCircle Stack: TVR Graph · #AFT/#SCO Halo · PVR Vouches · WCD Citations · PRT Radar · FTT/TOR Pipeline · ESH Hubs · BDP Decks · BEX
               </p>
             </div>
           </div>
@@ -392,14 +392,14 @@ export function ConnectLnSovereignSuiteHub({
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="rounded-md bg-white/15 px-2 py-0.5 text-[10px] font-mono font-black uppercase">
-                    CONNECTLN SOVEREIGN SUITE · CLOUD KV SYNCED
+                    NEXACIRCLE SOVEREIGN SUITE · CLOUD KV SYNCED
                   </span>
                   <span className="rounded-full bg-emerald-500/25 border border-emerald-300/40 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-200">
                     {haloMeta.badgeLabel}
                   </span>
                 </div>
                 <h2 className="text-lg sm:text-xl font-black mt-1">
-                  ConnectLn Sovereign Intelligence &amp; Execution Architecture
+                  NexaCircle Intelligence, Vouches &amp; Execution Suite
                 </h2>
               </div>
               <button
