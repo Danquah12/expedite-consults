@@ -1542,6 +1542,7 @@ export function NoctisVideoInterpreterPopup({
   // NEVER invokes `window.speechSynthesis` so robotic browser AI voices can never speak or overlap!
   const speakSentenceAtIndex = useCallback((idx: number) => {
     if (typeof window === "undefined") return
+    if ((window as any).__connectlnCallSilenceActive) return
     if (!isSpeakingRef.current) return
     const win = window as any
     if (win.__activeNoctisInterpreterId !== instanceIdRef.current) return

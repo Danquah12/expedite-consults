@@ -132,6 +132,9 @@ export function ConnectLnStudioPlayer({
   const [hasVideoStarted, setHasVideoStarted] = useState<boolean>(false)
   const [isStoppedByOther, setIsStoppedByOther] = useState<boolean>(false)
   const userPausedManuallyRef = useRef<boolean>(false)
+  const wasPlayingBeforeCallRef = useRef<boolean>(false)
+  const isPlayingStateRef = useRef<boolean>(autoPlay)
+  isPlayingStateRef.current = isPlaying
   const unmuteBlockedByBrowserRef = useRef<boolean>(false)
   const hasUnmutedOnceRef = useRef<boolean>(false)
   const ytPlayerStateRef = useRef<number>(-1)
@@ -210,27 +213,58 @@ export function ConnectLnStudioPlayer({
     [sendPlayerCommand, shouldMuteForTranslation]
   )
 
-  // Listen for any other video starting on the page and immediately stop this one
+  // Listen for any other video starting on the page (or an incoming/active ConnectLn call) and immediately pause this one
   useEffect(() => {
     const handleExclusivePlay = (e: Event) => {
       const customEvent = e as CustomEvent<{ playerId?: string }>
       const activeId = customEvent.detail?.playerId
       if (activeId && activeId !== effectivePlayerId) {
+        if (activeId === "__connectln_call_silence__" && isPlayingStateRef.current) {
+          wasPlayingBeforeCallRef.current = true
+        }
+        sendPlayerCommand("mute")
         sendPlayerCommand("pauseVideo")
-        sendPlayerCommand("stopVideo")
+        if (activeId !== "__connectln_call_silence__") {
+          sendPlayerCommand("stopVideo")
+        }
         setIsPlaying(false)
         setIsStoppedByOther(true)
         setShowControls(true)
-        if (onExclusiveStopRef.current) {
+        if (onExclusiveStopRef.current && activeId !== "__connectln_call_silence__") {
           onExclusiveStopRef.current()
         }
       }
     }
+    const handleCallSilenceChange = (e: Event) => {
+      const customEvent = e as CustomEvent<{ active?: boolean }>
+      const callActive = Boolean(customEvent.detail?.active)
+      if (callActive) {
+        if (isPlayingStateRef.current) {
+          wasPlayingBeforeCallRef.current = true
+        }
+        sendPlayerCommand("mute")
+        sendPlayerCommand("pauseVideo")
+        setIsPlaying(false)
+        setShowControls(true)
+      } else if (wasPlayingBeforeCallRef.current && !userPausedManuallyRef.current) {
+        wasPlayingBeforeCallRef.current = false
+        setIsStoppedByOther(false)
+        sendPlayerCommand("playVideo")
+        setIsPlaying(true)
+        if (!userManuallyMutedRef.current && !shouldMuteForTranslation()) {
+          sendPlayerCommand("unMute")
+          sendPlayerCommand("setVolume", [100])
+          setIsMuted(false)
+        }
+      }
+    }
     window.addEventListener(CONNECTLN_VIDEO_PLAY_EVENT, handleExclusivePlay)
+    window.addEventListener("connectln:call-silence-change", handleCallSilenceChange)
     return () => {
       window.removeEventListener(CONNECTLN_VIDEO_PLAY_EVENT, handleExclusivePlay)
+      window.removeEventListener("connectln:call-silence-change", handleCallSilenceChange)
     }
-  }, [effectivePlayerId, sendPlayerCommand])
+  }, [effectivePlayerId, sendPlayerCommand, shouldMuteForTranslation])
 
   // Subscribe to YouTube iframe state/time events via postMessage
   useEffect(() => {
@@ -266,6 +300,15 @@ export function ConnectLnStudioPlayer({
           if (typeof data.info.playerState === "number") {
             const pState = data.info.playerState
             ytPlayerStateRef.current = pState
+
+            if ((window as any).__connectlnCallSilenceActive) {
+              if (pState === 1) {
+                win.postMessage(JSON.stringify({ event: "command", func: "mute", args: [] }), "*")
+                win.postMessage(JSON.stringify({ event: "command", func: "pauseVideo", args: [] }), "*")
+              }
+              setIsPlaying(false)
+              return
+            }
 
             // 1 = playing, 2 = paused, 0 = ended (never interrupt -1 unstarted or 3 buffering!)
             if (pState === 1) {
@@ -322,6 +365,13 @@ export function ConnectLnStudioPlayer({
     const interval = setInterval(() => {
       const win = iframeRef.current?.contentWindow
       if (win) {
+        if ((window as any).__connectlnCallSilenceActive) {
+          if (ytPlayerStateRef.current === 1) {
+            win.postMessage(JSON.stringify({ event: "command", func: "mute", args: [] }), "*")
+            win.postMessage(JSON.stringify({ event: "command", func: "pauseVideo", args: [] }), "*")
+          }
+          return
+        }
         win.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), "*")
         if (shouldMuteForTranslation() && ytPlayerStateRef.current === 1) {
           win.postMessage(
@@ -377,7 +427,7 @@ export function ConnectLnStudioPlayer({
         const entry = entries[0]
         if (!entry) return
         if (entry.isIntersecting && entry.intersectionRatio >= 0.35) {
-          if (isStoppedByOther || userPausedManuallyRef.current) return
+          if (isStoppedByOther || userPausedManuallyRef.current || (window as any).__connectlnCallSilenceActive) return
           sendPlayerCommand("playVideo")
           setIsPlaying(true)
           if (!userManuallyMutedRef.current && !shouldMuteForTranslation()) {
@@ -408,6 +458,7 @@ export function ConnectLnStudioPlayer({
     const handleFirstActivation = () => {
       ;(window as any).__connectlnAudioUnlocked = true
       if (
+        !(window as any).__connectlnCallSilenceActive &&
         !isStoppedByOther &&
         !userManuallyMutedRef.current &&
         !shouldMuteForTranslation() &&

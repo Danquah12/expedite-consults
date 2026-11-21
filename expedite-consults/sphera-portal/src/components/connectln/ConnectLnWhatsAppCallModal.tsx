@@ -31,6 +31,7 @@ import {
   unlockBackgroundRingingSession,
   isDocumentPipSupported,
   openAlwaysOnTopCallStandbyPiP,
+  setCallMediaSilenceActive,
 } from "@/lib/connectin-background-ring"
 import {
   GLOBAL_COUNTRY_DIAL_CODES,
@@ -649,6 +650,7 @@ function RemoteStreamAudioPlayer({ stream }: { stream: MediaStream }) {
   return (
     <audio
       ref={audioRef}
+      data-connectln-call-audio="true"
       autoPlay
       playsInline
       style={{ position: "fixed", width: 1, height: 1, opacity: 0.01, pointerEvents: "none" }}
@@ -815,13 +817,19 @@ export function ConnectLnWhatsAppCallModal({
     remoteWebRtcPeersRef.current = remoteWebRtcPeers
   }, [remoteWebRtcPeers])
 
-  // Register open call modal on `window` so `<ConnectLnIncomingCallBanner />` never overlaps an active call on this tab!
+  // Register open call modal on `window` so `<ConnectLnIncomingCallBanner />` never overlaps an active call on this tab,
+  // and pause/mute all background page media (videos, YouTube embeds, Noctis TTS, music) until the call is completed!
   useEffect(() => {
-    if (!open || typeof window === "undefined") return
+    if (!open || typeof window === "undefined") {
+      setCallMediaSilenceActive(false, "whatsapp-call-modal")
+      return
+    }
+    setCallMediaSilenceActive(true, "whatsapp-call-modal")
     ;(window as any).__connectlnOpenCallModalCount =
       Number((window as any).__connectlnOpenCallModalCount || 0) + 1
     window.dispatchEvent(new Event("connectln_call_modal_change"))
     return () => {
+      setCallMediaSilenceActive(false, "whatsapp-call-modal")
       ;(window as any).__connectlnOpenCallModalCount = Math.max(
         0,
         Number((window as any).__connectlnOpenCallModalCount || 1) - 1

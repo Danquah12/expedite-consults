@@ -32,6 +32,7 @@ import {
   openAlwaysOnTopCallStandbyPiP,
   setForegroundCallPollCallback,
   createUnthrottledCallPollWorker,
+  setCallMediaSilenceActive,
 } from "@/lib/connectin-background-ring"
 
 interface IncomingCallSummary {
@@ -269,6 +270,8 @@ export function ConnectLnIncomingCallBanner({
         }
       } else if (msg.type === "CONNECTLN_ANSWER_CALL_FROM_NOTIFICATION" && msg.payload?.callId) {
         const p = msg.payload
+        setCallMediaSilenceActive(true, "whatsapp-call-modal")
+        setCallMediaSilenceActive(false, "incoming-call-banner")
         stopLoudPhoneRingtone()
         stopTitleCallFlash()
         closeStandbyPipForLocalCall()
@@ -281,6 +284,7 @@ export function ConnectLnIncomingCallBanner({
         )
       } else if (msg.type === "CONNECTLN_DECLINE_CALL_FROM_NOTIFICATION" && msg.payload?.callId) {
         declinedIdsRef.current.add(msg.payload.callId)
+        setCallMediaSilenceActive(false, "incoming-call-banner")
         stopLoudPhoneRingtone()
         stopTitleCallFlash()
         dismissFloatingCallPopups()
@@ -512,11 +516,14 @@ export function ConnectLnIncomingCallBanner({
   // 3. Hardware-Thread Ringtone + Always-On-Top Pop-Up Call Screen + OS Notification when call arrives!
   useEffect(() => {
     if (!incomingCall || hasOpenModal) {
+      setCallMediaSilenceActive(false, "incoming-call-banner")
       stopLoudPhoneRingtone()
       stopTitleCallFlash()
       dismissFloatingCallPopups()
       return
     }
+
+    setCallMediaSilenceActive(true, "incoming-call-banner")
 
     const cName =
       incomingCall.participants?.[0]?.display_name ||
@@ -532,6 +539,8 @@ export function ConnectLnIncomingCallBanner({
 
     const handleAnswerFromPopup = () => {
       const targetId = incomingCall.id
+      setCallMediaSilenceActive(true, "whatsapp-call-modal")
+      setCallMediaSilenceActive(false, "incoming-call-banner")
       stopLoudPhoneRingtone()
       stopTitleCallFlash()
       closeStandbyPipForLocalCall()
@@ -541,6 +550,7 @@ export function ConnectLnIncomingCallBanner({
 
     const handleDeclineFromPopup = () => {
       declinedIdsRef.current.add(incomingCall.id)
+      setCallMediaSilenceActive(false, "incoming-call-banner")
       stopLoudPhoneRingtone()
       stopTitleCallFlash()
       dismissFloatingCallPopups()
@@ -658,6 +668,7 @@ export function ConnectLnIncomingCallBanner({
             type="button"
             onClick={() => {
               declinedIdsRef.current.add(incomingCall.id)
+              setCallMediaSilenceActive(false, "incoming-call-banner")
               stopLoudPhoneRingtone()
               stopTitleCallFlash()
               dismissFloatingCallPopups()
@@ -673,6 +684,8 @@ export function ConnectLnIncomingCallBanner({
             type="button"
             onClick={() => {
               const targetId = incomingCall.id
+              setCallMediaSilenceActive(true, "whatsapp-call-modal")
+              setCallMediaSilenceActive(false, "incoming-call-banner")
               stopLoudPhoneRingtone()
               stopTitleCallFlash()
               closeStandbyPipForLocalCall()

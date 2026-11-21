@@ -80,7 +80,8 @@ function evaluateViewportAutoplayNow() {
   if (typeof window === "undefined") return
   const vh = window.innerHeight || document.documentElement.clientHeight || 800
 
-  if (!getAutoplayVideosPref()) {
+  // Pause all viewport autoplay while an incoming or active ConnectLn call is in progress
+  if (!getAutoplayVideosPref() || (window as any).__connectlnCallSilenceActive) {
     if (currentAutoActiveId) {
       const prev = registeredSlots.get(currentAutoActiveId)
       currentAutoActiveId = null
@@ -168,6 +169,7 @@ function ensureGlobalListeners() {
   })
   window.addEventListener("resize", requestViewportAutoplayEvaluation, { passive: true })
   window.addEventListener("popstate", requestViewportAutoplayEvaluation, { passive: true })
+  window.addEventListener("connectln:call-silence-change", requestViewportAutoplayEvaluation)
   window.addEventListener(
     "click",
     () => {

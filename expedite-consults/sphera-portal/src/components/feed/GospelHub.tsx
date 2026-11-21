@@ -144,7 +144,24 @@ export function GospelHub({ onShareToFeed, initialSubTab = "devotional" }: Gospe
       htmlAudioRef.current = audio;
     }
 
+    const onCallSilence = (e: Event) => {
+      const active = Boolean((e as CustomEvent<{ active?: boolean }>).detail?.active);
+      if (active) {
+        stopSyntheticWorshipPad();
+        if (htmlAudioRef.current && !htmlAudioRef.current.paused) {
+          htmlAudioRef.current.pause();
+        }
+        setIsPlaying(false);
+      }
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("connectln:call-silence-change", onCallSilence);
+    }
+
     return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("connectln:call-silence-change", onCallSilence);
+      }
       stopSyntheticWorshipPad();
       if (htmlAudioRef.current) {
         htmlAudioRef.current.pause();

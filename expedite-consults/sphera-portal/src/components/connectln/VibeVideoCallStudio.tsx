@@ -42,6 +42,7 @@ import {
   EncodedVoiceChunk,
 } from "@/lib/vibe-voice-codec"
 import { ConnectLnInlineCellBridgeBar } from "./ConnectLnCellPhoneSoftphone"
+import { setCallMediaSilenceActive } from "@/lib/connectin-background-ring"
 
 export interface CallParticipantTile {
   id: string
@@ -126,6 +127,7 @@ function RemotePeerAudioTrackPlayer({
   return (
     <audio
       ref={audioRef}
+      data-connectln-call-audio="true"
       autoPlay
       playsInline
       onLoadedMetadata={(e) => {
@@ -866,6 +868,13 @@ export function VibeVideoCallStudio({
   const [callState, setCallState] = useState<
     "CREATED" | "RINGING" | "NEGOTIATING" | "CONNECTED" | "RECONNECTING" | "ENDED"
   >("CONNECTED")
+  useEffect(() => {
+    const isActive = callState !== "ENDED"
+    setCallMediaSilenceActive(isActive, "vibe-video-call-studio")
+    return () => {
+      setCallMediaSilenceActive(false, "vibe-video-call-studio")
+    }
+  }, [callState])
   const [callId, setCallId] = useState<string>(initialCallRoomId || urlJoinedRoomId || "call-9b0bbf68-live")
   useEffect(() => {
     if (initialCallRoomId && initialCallRoomId !== callId) {

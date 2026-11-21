@@ -253,6 +253,7 @@ function setupMediaSessionAndAutoPip(): void {
           ...aDest.stream.getAudioTracks(),
         ])
         autoPipVideoEl = document.createElement("video")
+        autoPipVideoEl.dataset.connectlnCallAudio = "true"
         autoPipVideoEl.srcObject = combined
         autoPipVideoEl.autoplay = true
         autoPipVideoEl.playsInline = true
@@ -309,6 +310,7 @@ function ensureLiveAudioPipelineStarted(): void {
     // Also attach a real `<audio loop>` element in `document.body` so OS MediaSession / mobile Safari keeps tab alive!
     if (!keepAliveHtmlAudio && typeof document !== "undefined") {
       keepAliveHtmlAudio = document.createElement("audio")
+      keepAliveHtmlAudio.dataset.connectlnCallAudio = "true"
       keepAliveHtmlAudio.src = getSubSonicKeepAliveWavUri()
       keepAliveHtmlAudio.loop = true
       keepAliveHtmlAudio.autoplay = true
@@ -339,6 +341,7 @@ function ensureLiveAudioPipelineStarted(): void {
 
     if (!fallbackWavRingAudio) {
       fallbackWavRingAudio = new Audio(getPhoneRingtoneWavUri())
+      fallbackWavRingAudio.dataset.connectlnCallAudio = "true"
       fallbackWavRingAudio.loop = true
       fallbackWavRingAudio.volume = 1.0
       fallbackWavRingAudio.preload = "auto"
@@ -380,6 +383,7 @@ export function unlockBackgroundRingingSession(): void {
 
 export function startLoudPhoneRingtone(): void {
   if (typeof window === "undefined") return
+  setCallMediaSilenceActive(true, "incoming-call-ringtone")
   ensureLiveAudioPipelineStarted()
 
   // 1. Hardware-thread C++ looping `AudioBufferSourceNode` (`loop = true`) — ZERO JS `setInterval` dependency!
@@ -449,6 +453,7 @@ export function stopLoudPhoneRingtone(): void {
   try {
     navigator.vibrate?.(0)
   } catch {}
+  setCallMediaSilenceActive(false, "incoming-call-ringtone")
 }
 
 export function startTitleCallFlash(callerName: string): void {
@@ -852,5 +857,230 @@ export function createUnthrottledCallPollWorker(
       clearInterval(fallbackTimer)
       fallbackTimer = null
     }
+  }
+}
+
+export const CONNECTLN_CALL_SILENCE_EVENT = "connectln:call-silence-change"
+
+function isCallAudioExemptElement(el: HTMLMediaElement): boolean {
+  if (!el) return true
+  if (el === keepAliveHtmlAudio || el === fallbackWavRingAudio || el === autoPipVideoEl) {
+    return true
+  }
+  if (el.dataset?.connectlnCallAudio === "true") return true
+  if (el.srcObject) return true
+  return false
+}
+
+function getTrackedMediaElements(): Set<HTMLMediaElement> {
+  if (typeof window === "undefined") return new Set()
+  const win = window as any
+  if (!win.__connectlnTrackedMediaElements) {
+    win.__connectlnTrackedMediaElements = new Set<HTMLMediaElement>()
+  }
+  return win.__connectlnTrackedMediaElements as Set<HTMLMediaElement>
+}
+
+function installGlobalCallSilenceMediaGuard(): void {
+  if (typeof window === "undefined" || typeof document === "undefined") return
+  const win = window as any
+  if (win.__connectlnCallSilenceGuardInstalled) return
+  win.__connectlnCallSilenceGuardInstalled = true
+
+  // 1. Hook HTMLMediaElement.prototype.play so even detached `new Audio()` instances
+  //    (e.g. TTS, GospelHub, XTrendingSidebar) are tracked and paused during calls!
+  try {
+    const proto = typeof HTMLMediaElement !== "undefined" ? HTMLMediaElement.prototype : null
+    if (proto && typeof proto.play === "function" && !(proto as any).__connectlnPlayHooked) {
+      const origPlay = proto.play
+      ;(proto as any).__connectlnPlayHooked = true
+      proto.play = function (this: HTMLMediaElement) {
+        try {
+          getTrackedMediaElements().add(this)
+          if (win.__connectlnCallSilenceActive && !isCallAudioExemptElement(this)) {
+            this.dataset.pausedByConnectlnCall = "true"
+            if (!this.dataset.preCallMutedSaved) {
+              this.dataset.preCallMutedSaved = "true"
+              this.dataset.preCallMuted = this.muted ? "1" : "0"
+            }
+            this.muted = true
+            try {
+              this.pause()
+            } catch {}
+            return Promise.resolve()
+          }
+        } catch {}
+        return origPlay.apply(this)
+      }
+    }
+  } catch {}
+
+  // 2. Capture-phase 'play' event listener on document for any DOM `<video>` or `<audio>`
+  document.addEventListener(
+    "play",
+    (e) => {
+      const target = e.target
+      if (target instanceof HTMLMediaElement) {
+        getTrackedMediaElements().add(target)
+        if (win.__connectlnCallSilenceActive && !isCallAudioExemptElement(target)) {
+          target.dataset.pausedByConnectlnCall = "true"
+          if (!target.dataset.preCallMutedSaved) {
+            target.dataset.preCallMutedSaved = "true"
+            target.dataset.preCallMuted = target.muted ? "1" : "0"
+          }
+          target.muted = true
+          try {
+            target.pause()
+          } catch {}
+        }
+      }
+    },
+    true
+  )
+}
+
+if (typeof window !== "undefined") {
+  installGlobalCallSilenceMediaGuard()
+}
+
+export function isCallMediaSilenceActive(): boolean {
+  if (typeof window === "undefined") return false
+  return Boolean((window as any).__connectlnCallSilenceActive)
+}
+
+export function pauseAllNonCallMediaNow(): void {
+  if (typeof window === "undefined" || typeof document === "undefined") return
+  installGlobalCallSilenceMediaGuard()
+  const win = window as any
+
+  // 1. Pause & mute all DOM `<video>` and `<audio>` elements + tracked detached `new Audio()` elements
+  try {
+    const allMedia = new Set<HTMLMediaElement>()
+    document.querySelectorAll("video, audio").forEach((el) => {
+      if (el instanceof HTMLMediaElement) allMedia.add(el)
+    })
+    getTrackedMediaElements().forEach((el) => allMedia.add(el))
+    if (win.__noctisSharedAudioEl instanceof HTMLMediaElement) {
+      allMedia.add(win.__noctisSharedAudioEl)
+    }
+    if (win.__noctisSharedPreloadAudioEl instanceof HTMLMediaElement) {
+      allMedia.add(win.__noctisSharedPreloadAudioEl)
+    }
+
+    allMedia.forEach((el) => {
+      if (isCallAudioExemptElement(el)) return
+      if (!el.dataset.preCallMutedSaved) {
+        el.dataset.preCallMutedSaved = "true"
+        el.dataset.preCallMuted = el.muted ? "1" : "0"
+      }
+      el.muted = true
+      if (!el.paused) {
+        el.dataset.pausedByConnectlnCall = "true"
+        try {
+          el.pause()
+        } catch {}
+      }
+    })
+  } catch {}
+
+  // 2. Stop Noctis Voice Interpreter sequence & browser speechSynthesis
+  try {
+    win.__noctisAudioPlaySeq = (win.__noctisAudioPlaySeq || 0) + 1
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel()
+    }
+    window.dispatchEvent(
+      new CustomEvent("connectln:exclusive-noctis-interpreter", {
+        detail: { instanceId: "__connectln_call_silence__" },
+      })
+    )
+  } catch {}
+
+  // 3. Pause & mute all YouTube / embed iframes and notify exclusive video coordinator
+  try {
+    win.__connectlnActiveVideoPlayerId = "__connectln_call_silence__"
+    window.dispatchEvent(
+      new CustomEvent("connectln:exclusive-video-play", {
+        detail: { playerId: "__connectln_call_silence__" },
+      })
+    )
+    const iframes = document.querySelectorAll("iframe")
+    iframes.forEach((frame) => {
+      const cw = frame.contentWindow
+      if (!cw) return
+      try {
+        cw.postMessage(JSON.stringify({ event: "command", func: "mute", args: [] }), "*")
+        cw.postMessage(JSON.stringify({ event: "command", func: "setVolume", args: [0] }), "*")
+        cw.postMessage(JSON.stringify({ event: "command", func: "pauseVideo", args: [] }), "*")
+        cw.postMessage(JSON.stringify({ method: "pause" }), "*")
+      } catch {}
+    })
+  } catch {}
+}
+
+function restorePausedMediaAfterCall(): void {
+  if (typeof window === "undefined" || typeof document === "undefined") return
+  try {
+    const allMedia = new Set<HTMLMediaElement>()
+    document.querySelectorAll("video, audio").forEach((el) => {
+      if (el instanceof HTMLMediaElement) allMedia.add(el)
+    })
+    getTrackedMediaElements().forEach((el) => allMedia.add(el))
+
+    allMedia.forEach((el) => {
+      if (isCallAudioExemptElement(el)) return
+      if (el.dataset.preCallMutedSaved === "true") {
+        el.muted = el.dataset.preCallMuted === "1"
+        delete el.dataset.preCallMutedSaved
+        delete el.dataset.preCallMuted
+      }
+      if (el.dataset.pausedByConnectlnCall === "true") {
+        delete el.dataset.pausedByConnectlnCall
+        // Only auto-resume DOM-connected media that was actively playing when the call arrived
+        if (el.isConnected) {
+          el.play().catch(() => {})
+        }
+      }
+    })
+  } catch {}
+}
+
+/**
+ * Acquires or releases a global call-audio silence lock.
+ * While ANY source (incoming ringtone, incoming call banner, or active call modal/studio)
+ * holds a lock, ALL other page sounds (videos, YouTube embeds, Noctis voice interpreter,
+ * music, TTS) remain paused & muted until the call is completed.
+ */
+export function setCallMediaSilenceActive(active: boolean, sourceId: string): void {
+  if (typeof window === "undefined") return
+  installGlobalCallSilenceMediaGuard()
+  const win = window as any
+  if (!win.__connectlnCallSilenceSources) {
+    win.__connectlnCallSilenceSources = new Set<string>()
+  }
+  const sources: Set<string> = win.__connectlnCallSilenceSources
+  const wasActive = Boolean(win.__connectlnCallSilenceActive)
+
+  if (active) {
+    sources.add(sourceId)
+  } else {
+    sources.delete(sourceId)
+  }
+
+  const nowActive = sources.size > 0
+  win.__connectlnCallSilenceActive = nowActive
+
+  if (nowActive) {
+    pauseAllNonCallMediaNow()
+  } else if (wasActive && !nowActive) {
+    restorePausedMediaAfterCall()
+  }
+
+  if (wasActive !== nowActive) {
+    window.dispatchEvent(
+      new CustomEvent(CONNECTLN_CALL_SILENCE_EVENT, {
+        detail: { active: nowActive },
+      })
+    )
   }
 }

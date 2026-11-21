@@ -39,6 +39,7 @@ import {
     GaplessRemoteVoicePlayer,
     EncodedVoiceChunk,
 } from '@/lib/vibe-voice-codec';
+import { setCallMediaSilenceActive } from '@/lib/connectin-background-ring';
 
 type ChannelFilterType = 'All' | 'People' | 'Companies' | 'Products' | 'Communities';
 type ConnectLnMailboxFolder =
@@ -149,6 +150,7 @@ function HuddleRemoteWebRtcAudio({ stream }: { stream: MediaStream }) {
     return (
         <audio
             ref={audioRef}
+            data-connectln-call-audio="true"
             autoPlay
             playsInline
             style={{ position: 'fixed', width: 1, height: 1, opacity: 0.01, pointerEvents: 'none' }}
@@ -689,6 +691,12 @@ export function MessagingView({
     const [showEnclaveFilterBar, setShowEnclaveFilterBar] = useState(false);
     const [showQuickRepliesBar, setShowQuickRepliesBar] = useState(false);
     const [activeCallMode, setActiveCallMode] = useState<'audio' | 'video' | null>(null);
+    useEffect(() => {
+        setCallMediaSilenceActive(Boolean(activeCallMode), 'messaging-huddle-call');
+        return () => {
+            setCallMediaSilenceActive(false, 'messaging-huddle-call');
+        };
+    }, [activeCallMode]);
     const callStartMsRef = useRef<number>(0);
     const isHandingOffToStudioRef = useRef<boolean>(false);
     const [isMicMuted, setIsMicMuted] = useState(false);
