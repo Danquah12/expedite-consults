@@ -97,7 +97,7 @@ export function LeftSidebarProfile({
   const [pinnedIds, setPinnedIds] = useState<string[]>([])
   const [professionFilterQuery, setProfessionFilterQuery] = useState("")
   const [telemetryTick, setTelemetryTick] = useState(0)
-  const [availabilityStatus, setAvailabilityStatus] = useState<'#AFT · Active For Tickets' | '#SCO · Seeking Operators' | '#FAC · Fractional Advisory' | '#LOCK · Mission Locked'>('#AFT · Active For Tickets')
+  const [availabilityStatus, setAvailabilityStatus] = useState<'#READY · Open for Work' | '#TEAMING · Building a Team' | '#MENTOR · Open to Advise' | '#FOCUSED · On a Project'>('#READY · Open for Work')
   const { t } = useLanguage()
 
   useEffect(() => {
@@ -105,32 +105,34 @@ export function LeftSidebarProfile({
     try {
       const savedStatus = localStorage.getItem(`connectin_availability_v1__${(user.name || 'default').toLowerCase()}`)
       if (
-        savedStatus === '#AFT · Active For Tickets' ||
-        savedStatus === '#SCO · Seeking Operators' ||
-        savedStatus === '#FAC · Fractional Advisory' ||
-        savedStatus === '#LOCK · Mission Locked'
+        savedStatus === '#READY · Open for Work' ||
+        savedStatus === '#TEAMING · Building a Team' ||
+        savedStatus === '#MENTOR · Open to Advise' ||
+        savedStatus === '#FOCUSED · On a Project'
       ) {
         setAvailabilityStatus(savedStatus)
-      } else if (savedStatus === 'Booked') {
-        setAvailabilityStatus('#LOCK · Mission Locked')
-      } else if (savedStatus === 'Looking for Projects') {
-        setAvailabilityStatus('#FAC · Fractional Advisory')
+      } else if (savedStatus?.startsWith('#SCO')) {
+        setAvailabilityStatus('#TEAMING · Building a Team')
+      } else if (savedStatus?.startsWith('#FAC') || savedStatus === 'Looking for Projects') {
+        setAvailabilityStatus('#MENTOR · Open to Advise')
+      } else if (savedStatus?.startsWith('#LOCK') || savedStatus === 'Booked') {
+        setAvailabilityStatus('#FOCUSED · On a Project')
       } else {
-        setAvailabilityStatus('#AFT · Active For Tickets')
+        setAvailabilityStatus('#READY · Open for Work')
       }
     } catch {}
   }, [user?.name])
 
   const cycleAvailabilityStatus = () => {
-    const order: Array<'#AFT · Active For Tickets' | '#SCO · Seeking Operators' | '#FAC · Fractional Advisory' | '#LOCK · Mission Locked'> = [
-      '#AFT · Active For Tickets',
-      '#SCO · Seeking Operators',
-      '#FAC · Fractional Advisory',
-      '#LOCK · Mission Locked'
+    const order: Array<'#READY · Open for Work' | '#TEAMING · Building a Team' | '#MENTOR · Open to Advise' | '#FOCUSED · On a Project'> = [
+      '#READY · Open for Work',
+      '#TEAMING · Building a Team',
+      '#MENTOR · Open to Advise',
+      '#FOCUSED · On a Project'
     ]
     const next = order[(order.indexOf(availabilityStatus) + 1) % order.length]
     setAvailabilityStatus(next)
-    const haloCode = next.startsWith('#SCO') ? 'SCO' : next.startsWith('#FAC') ? 'FAC' : next.startsWith('#LOCK') ? 'LOCK' : 'AFT'
+    const haloCode = next.startsWith('#TEAMING') ? 'SCO' : next.startsWith('#MENTOR') ? 'FAC' : next.startsWith('#FOCUSED') ? 'LOCK' : 'AFT'
     try {
       localStorage.setItem(`connectin_availability_v1__${(user.name || 'default').toLowerCase()}`, next)
       localStorage.setItem(`connectln_halo_v1__${(user.name || 'default').toLowerCase()}`, haloCode)
@@ -771,11 +773,11 @@ export function LeftSidebarProfile({
             <div
               onClick={onViewProfile}
               className={`relative h-[72px] w-[72px] shrink-0 cursor-pointer rounded-full bg-white shadow-sm transition-transform hover:scale-[1.02] ${
-                availabilityStatus.startsWith('#SCO')
+                availabilityStatus.startsWith('#TEAMING')
                   ? 'ring-3 ring-amber-500 border-2 border-white dark:border-zinc-900'
-                  : availabilityStatus.startsWith('#FAC')
+                  : availabilityStatus.startsWith('#MENTOR')
                   ? 'ring-3 ring-indigo-500 border-2 border-white dark:border-zinc-900'
-                  : availabilityStatus.startsWith('#AFT')
+                  : availabilityStatus.startsWith('#READY')
                   ? 'ring-3 ring-emerald-600 border-2 border-white dark:border-zinc-900'
                   : 'ring-2 ring-zinc-500 border-2 border-white dark:border-zinc-900'
               }`}
@@ -799,13 +801,13 @@ export function LeftSidebarProfile({
                 e.stopPropagation()
                 cycleAvailabilityStatus()
               }}
-              title="Click to cycle Sovereign Halo Status (#AFT, #SCO, #FAC, #LOCK)"
+              title="Click to switch your friendly status badge (#READY, #TEAMING, #MENTOR, #FOCUSED)"
               style={{
-                backgroundColor: availabilityStatus.startsWith('#LOCK')
+                backgroundColor: availabilityStatus.startsWith('#FOCUSED')
                   ? '#3F3F46'
-                  : availabilityStatus.startsWith('#SCO')
+                  : availabilityStatus.startsWith('#TEAMING')
                   ? '#D97706'
-                  : availabilityStatus.startsWith('#FAC')
+                  : availabilityStatus.startsWith('#MENTOR')
                   ? '#4F46E5'
                   : '#057642',
                 color: '#FFFFFF',
@@ -894,10 +896,10 @@ export function LeftSidebarProfile({
                 type="button"
                 onClick={() => onOpenAnalytics ? onOpenAnalytics('viewers') : onViewProfile()}
                 className="flex w-full items-center justify-between py-0.5 text-[12px] hover:underline cursor-pointer"
-                title="PRT — Profile Radar Telemetry (Who inspected your dossier)"
+                title="SPOTLIGHT — People who visited your profile"
               >
                 <span className="font-semibold text-[#666666] dark:text-zinc-400">
-                  PRT · Profile Radar
+                  SPOTLIGHT · Profile Visitors
                 </span>
                 <span className="font-semibold text-[#0A66C2] dark:text-sky-400">
                   {sidebarAnalytics.effectiveProfileViews.toLocaleString()}
@@ -907,10 +909,10 @@ export function LeftSidebarProfile({
                 type="button"
                 onClick={() => onOpenAnalytics ? onOpenAnalytics('reach') : onViewProfile()}
                 className="flex w-full items-center justify-between py-0.5 text-[12px] hover:underline cursor-pointer"
-                title="BDP & Pulse Broadcast Reach"
+                title="SPARK — Story & Post Reach"
               >
                 <span className="font-semibold text-[#666666] dark:text-zinc-400">
-                  BDP &amp; Dispatch Reach
+                  SPARK · Story &amp; Post Reach
                 </span>
                 <span className="font-semibold text-[#0A66C2] dark:text-sky-400">
                   {sidebarAnalytics.effectiveTotalReach.toLocaleString()}
@@ -920,10 +922,10 @@ export function LeftSidebarProfile({
                 type="button"
                 onClick={() => onOpenAnalytics ? onOpenAnalytics('discoveries') : onViewProfile()}
                 className="flex w-full items-center justify-between py-0.5 text-[12px] hover:underline cursor-pointer"
-                title="TOT & TVR Enclave Radar Hits"
+                title="CIRCLE — Times you appeared in member searches"
               >
                 <span className="font-semibold text-[#666666] dark:text-zinc-400">
-                  TOT · Enclave Radar Hits
+                  CIRCLE · Search Matches
                 </span>
                 <span className="font-semibold text-[#0A66C2] dark:text-sky-400">
                   {sidebarAnalytics.effectiveDiscoveries.toLocaleString()}
