@@ -24,6 +24,7 @@ import type {
   ConnectLnBusinessCloudState,
   BusinessProfileTenant,
   BusinessMemberRole,
+  BusinessLeadAndInquiry,
 } from "@/app/api/connectin/business/route"
 
 export type BusinessWorkspaceTabId =
@@ -206,6 +207,137 @@ export function ConnectLnBusinessWorkspace({
     (l) => l.invoiceStatus === "Paid" || l.invoiceStatus === "Escrow Funded"
   ).length
 
+  const publicStorefrontPath = `/connectin/business/${encodeURIComponent(activeBiz.slug)}`
+  const publicStorefrontFullUrl = `https://conectln.com${publicStorefrontPath}`
+
+  const handleCopyPublicStorefrontUrl = () => {
+    if (typeof window !== "undefined") {
+      navigator.clipboard?.writeText(publicStorefrontFullUrl).catch(() => {})
+    }
+    notify(`✓ Copied Public Storefront URL: ${publicStorefrontFullUrl}`)
+  }
+
+  const handleOpenPublicStorefront = () => {
+    if (typeof window !== "undefined") {
+      window.open(publicStorefrontPath, "_blank", "noopener,noreferrer")
+    }
+  }
+
+  const escHtml = (val: unknown): string =>
+    String(val ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+
+  const handleExportLeadPdf = (lead: BusinessLeadAndInquiry, docKind: "QUOTE" | "INVOICE") => {
+    if (typeof window === "undefined") return
+    const w = window.open("", "_blank", "width=820,height=960")
+    if (!w) {
+      notify("Allow pop-ups to print or save your ConnectLn PDF document.")
+      return
+    }
+    const isInvoice = docKind === "INVOICE"
+    const docTitle = isInvoice ? "OFFICIAL TAX INVOICE & ESCROW RECEIPT" : "OFFICIAL SERVICE QUOTE"
+    const totalAmount = lead.quoteAmount || lead.estimatedBudget || "Estimate Pending"
+    const latestAuditHash = tenantAuditLogs[0]?.eventHash || "9f84c2e1b7a04d31"
+    const issuedDate = new Date(lead.updatedAtIso || Date.now()).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+
+    w.document.write(`<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>${escHtml(activeBiz.name)} — ${escHtml(docTitle)} (${escHtml(lead.id.toUpperCase())})</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; padding: 36px; color: #0f172a; max-width: 760px; margin: 0 auto; line-height: 1.5; }
+      .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #0A66C2; padding-bottom: 16px; margin-bottom: 24px; gap: 16px; }
+      .brand { font-size: 20px; font-weight: 900; color: #0A66C2; margin: 0 0 4px 0; }
+      .tag { display: inline-block; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+      .doc-box { text-align: right; }
+      .doc-title { font-size: 14px; font-weight: 900; color: #0f172a; margin: 0; }
+      .meta { font-size: 12px; color: #475569; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 22px; }
+      .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; font-size: 12.5px; }
+      .card h3 { margin: 0 0 6px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; }
+      table { width: 100%; border-collapse: collapse; margin-bottom: 22px; font-size: 13px; }
+      th { background: #0A66C2; color: #fff; text-align: left; padding: 10px 12px; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; }
+      td { border-bottom: 1px solid #e2e8f0; padding: 12px; vertical-align: top; }
+      .total-row td { font-weight: 900; font-size: 15px; background: #f1f5f9; border-top: 2px solid #0f172a; }
+      .footer { border-top: 1px solid #cbd5e1; padding-top: 14px; font-size: 11px; color: #475569; display: flex; justify-content: space-between; gap: 12px; }
+      @media print { body { padding: 20px; } }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div>
+        <h1 class="brand">${escHtml(activeBiz.name)}</h1>
+        <div class="meta">${escHtml(activeBiz.tagline)}</div>
+        <div class="meta">📍 ${escHtml(activeBiz.location)}</div>
+        <div style="margin-top:6px;"><span class="tag">${escHtml(activeBiz.verificationStatus)} · ${escHtml(activeBiz.verificationLicenseRef)}</span></div>
+      </div>
+      <div class="doc-box">
+        <p class="doc-title">${escHtml(docTitle)}</p>
+        <div class="meta"><strong>Ref:</strong> ${escHtml(lead.id.toUpperCase())}</div>
+        <div class="meta"><strong>Date:</strong> ${escHtml(issuedDate)}</div>
+        <div class="meta"><strong>Payment Status:</strong> ${escHtml(lead.invoiceStatus)}</div>
+        <div class="meta"><strong>Stage:</strong> ${escHtml(lead.crmStage)}</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Prepared For (Customer)</h3>
+        <div><strong>${escHtml(lead.customerName)}</strong></div>
+        <div>${escHtml(lead.customerEmail)}</div>
+        <div>📍 ${escHtml(lead.customerLocation)}</div>
+      </div>
+      <div class="card">
+        <h3>Prepared By (ConnectLn Business)</h3>
+        <div><strong>${escHtml(lead.assignedStaffName || activeBiz.ownerName)}</strong></div>
+        <div>Storefront: https://conectln.com${escHtml(publicStorefrontPath)}</div>
+        <div>Preferred Slot: ${escHtml(lead.appointmentSlot || lead.preferredDate)}</div>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 32%;">Service Line Item</th>
+          <th style="width: 46%;">Scope &amp; Operator Notes</th>
+          <th style="width: 22%; text-align: right;">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>${escHtml(lead.serviceTitle)}</strong></td>
+          <td>
+            <div>${escHtml(lead.projectScope)}</div>
+            ${lead.staffReply ? `<div style="margin-top:6px;color:#047857;"><strong>Operator Note:</strong> ${escHtml(lead.staffReply)}</div>` : ""}
+          </td>
+          <td style="text-align: right;"><strong>${escHtml(totalAmount)}</strong></td>
+        </tr>
+        <tr class="total-row">
+          <td colspan="2" style="text-align: right;">Total ${isInvoice ? "Invoice / Escrow Amount" : "Estimated Quote"}</td>
+          <td style="text-align: right;">${escHtml(totalAmount)}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="footer">
+      <div><strong>ConnectLn Business Audit Hash (SEC-01):</strong> <code>${escHtml(latestAuditHash)}</code></div>
+      <div>Generated via ConnectLn Business Workspace · https://conectln.com</div>
+    </div>
+    <script>window.onload = function() { window.print(); };</script>
+  </body>
+</html>`)
+    w.document.close()
+    notify(`📄 Opened PDF ${isInvoice ? "Invoice" : "Quote"} for ${lead.customerName}!`)
+  }
+
   return (
     <div className="space-y-4">
       {/* Toast Notification */}
@@ -253,6 +385,23 @@ export function ConnectLnBusinessWorkspace({
 
           {/* Workspace Switcher: Personal <-> Business & Public Storefront Toggle */}
           <div className="flex items-center gap-2 flex-wrap shrink-0">
+            <button
+              type="button"
+              onClick={handleCopyPublicStorefrontUrl}
+              className="rounded-xl bg-white/15 hover:bg-white/25 border border-white/25 px-3 py-1.5 text-xs font-extrabold text-white cursor-pointer"
+              title={publicStorefrontFullUrl}
+            >
+              🔗 Copy Storefront URL
+            </button>
+
+            <button
+              type="button"
+              onClick={handleOpenPublicStorefront}
+              className="rounded-xl bg-emerald-500/25 hover:bg-emerald-500/40 border border-emerald-300/40 px-3 py-1.5 text-xs font-extrabold text-emerald-100 cursor-pointer"
+            >
+              ↗ Open Live Storefront
+            </button>
+
             <button
               type="button"
               onClick={() => setStorefrontPreviewMode(!storefrontPreviewMode)}
@@ -339,16 +488,32 @@ export function ConnectLnBusinessWorkspace({
                 {activeBiz.verificationLicenseRef})
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                setStorefrontPreviewMode(false)
-                setActiveTab("marketplace")
-              }}
-              className="rounded-xl bg-[#0A66C2] text-white px-4 py-2 text-xs font-extrabold cursor-pointer"
-            >
-              📋 Request Service Estimate (MKT-02)
-            </button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={handleCopyPublicStorefrontUrl}
+                className="rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 px-3 py-2 text-xs font-extrabold cursor-pointer"
+              >
+                🔗 Copy Public Storefront URL
+              </button>
+              <button
+                type="button"
+                onClick={handleOpenPublicStorefront}
+                className="rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 text-xs font-extrabold cursor-pointer"
+              >
+                ↗ Open Live Storefront Page
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setStorefrontPreviewMode(false)
+                  setActiveTab("marketplace")
+                }}
+                className="rounded-xl bg-[#0A66C2] text-white px-4 py-2 text-xs font-extrabold cursor-pointer"
+              >
+                📋 Request Service Estimate (MKT-02)
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1100,6 +1265,13 @@ export function ConnectLnBusinessWorkspace({
                           📍 {lead.customerLocation} · Preferred Slot: {lead.preferredDate}
                         </p>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => handleExportLeadPdf(lead, "QUOTE")}
+                        className="rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/50 hover:bg-[#0A66C2] hover:text-white px-3 py-1.5 text-xs font-extrabold text-[#0A66C2] dark:text-sky-300 transition-colors cursor-pointer shrink-0"
+                      >
+                        📄 Export PDF Quote
+                      </button>
                     </div>
 
                     <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 p-3 text-xs">
@@ -1457,7 +1629,14 @@ export function ConnectLnBusinessWorkspace({
                           </p>
                           <p className="text-[11px] text-zinc-500">Status: {lead.invoiceStatus}</p>
                         </div>
-                        <div className="flex gap-1">
+                        <div className="flex flex-wrap gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleExportLeadPdf(lead, "INVOICE")}
+                            className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/50 text-[#0A66C2] dark:text-sky-300 px-2.5 py-1 text-[10.5px] font-bold cursor-pointer"
+                          >
+                            📄 Export PDF Invoice / Receipt
+                          </button>
                           <button
                             type="button"
                             onClick={() =>
