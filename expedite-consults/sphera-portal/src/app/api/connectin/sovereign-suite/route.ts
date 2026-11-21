@@ -202,6 +202,7 @@ export interface SovereignSuiteCloudState {
   spotBoosts: SpotBoostCampaign[]
   instantPingByUser: Record<string, { dms: boolean; kudos: boolean; matches: boolean }>
   voiceTagByUser?: Record<string, string>
+  voiceTagAudioByUser?: Record<string, string>
   pinBoardItems?: PinBoardHighlightItem[]
   hiddenCitationIds?: string[]
 }
@@ -1085,6 +1086,17 @@ export async function POST(req: NextRequest) {
       if (phrase) {
         if (!state.voiceTagByUser) state.voiceTagByUser = {}
         state.voiceTagByUser[actorKey] = phrase
+        await saveSovereignState(state)
+      }
+      return NextResponse.json({ ok: true, state })
+    }
+
+    // 16b. VOICE-TAG REAL HUMAN AUDIO: Save live microphone recording (up to 350 KB)
+    if (action === "save_voice_tag_audio") {
+      const audioDataUrl = String(body?.audioDataUrl || "").trim()
+      if (audioDataUrl.startsWith("data:audio/") && audioDataUrl.length <= 360000) {
+        if (!state.voiceTagAudioByUser) state.voiceTagAudioByUser = {}
+        state.voiceTagAudioByUser[actorKey] = audioDataUrl
         await saveSovereignState(state)
       }
       return NextResponse.json({ ok: true, state })

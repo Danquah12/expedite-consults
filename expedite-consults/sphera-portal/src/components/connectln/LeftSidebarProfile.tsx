@@ -25,9 +25,11 @@ import {
   SlidersHorizontal,
   Pin,
   Check,
-  Volume2
+  Volume2,
+  Mic
 } from "lucide-react"
 import { UserProfile } from "@/lib/connectln-data"
+import { playHumanVoiceTag, recordRealHumanVoiceTag } from "@/lib/connectin-voice-tag"
 import { isSuperAdminUser, computeProfileStrength } from "@/lib/connectin-profile"
 import { findEnclaveById, findProfessionById, ALL_PROFESSIONS, ProfessionDefinition } from "@/lib/connectin-professions"
 import { useLanguage } from "@/context/LanguageContext"
@@ -98,6 +100,7 @@ export function LeftSidebarProfile({
   const [pinnedIds, setPinnedIds] = useState<string[]>([])
   const [professionFilterQuery, setProfessionFilterQuery] = useState("")
   const [telemetryTick, setTelemetryTick] = useState(0)
+  const [isRecordingVoiceTag, setIsRecordingVoiceTag] = useState(false)
   const [availabilityStatus, setAvailabilityStatus] = useState<'#READY · Open for Work' | '#TEAMING · Building a Team' | '#MENTOR · Open to Advise' | '#FOCUSED · On a Project'>('#READY · Open for Work')
   const { t } = useLanguage()
 
@@ -836,24 +839,37 @@ export function LeftSidebarProfile({
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation()
-                  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-                    try {
-                      window.speechSynthesis.cancel()
-                      const savedPhrase = localStorage.getItem(
-                        `connectln_voicetag_v1__${(user.name || '').toLowerCase()}`
-                      )
-                      const u = new SpeechSynthesisUtterance(
-                        savedPhrase || `${user.name} — ${user.headline || 'Verified ConnectLn Member'}`
-                      )
-                      u.rate = 0.96
-                      window.speechSynthesis.speak(u)
-                    } catch {}
-                  }
+                  void playHumanVoiceTag({
+                    userName: user.name || 'Kwesi Asiedu',
+                    userHeadline: user.headline,
+                  })
                 }}
                 className="h-5 w-5 rounded-full hover:bg-blue-50 dark:hover:bg-blue-950/60 inline-flex items-center justify-center text-[#0A66C2] dark:text-sky-400 transition-colors cursor-pointer shrink-0"
-                title={`VOICE-TAG — Hear ${user.name}'s name pronunciation`}
+                title={`VOICE-TAG (Human Voice) — Hear ${user.name}'s name pronunciation`}
               >
                 <Volume2 className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                disabled={isRecordingVoiceTag}
+                onClick={async (e) => {
+                  e.stopPropagation()
+                  setIsRecordingVoiceTag(true)
+                  await recordRealHumanVoiceTag(user.name || 'Kwesi Asiedu', 4000)
+                  setIsRecordingVoiceTag(false)
+                }}
+                className={`h-5 w-5 rounded-full inline-flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
+                  isRecordingVoiceTag
+                    ? 'bg-rose-600 text-white animate-pulse'
+                    : 'hover:bg-emerald-50 dark:hover:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400'
+                }`}
+                title={
+                  isRecordingVoiceTag
+                    ? 'Recording your real voice now (4s)...'
+                    : 'Record your own real human voice (4s)'
+                }
+              >
+                <Mic className="h-3 w-3" />
               </button>
             </div>
             <button

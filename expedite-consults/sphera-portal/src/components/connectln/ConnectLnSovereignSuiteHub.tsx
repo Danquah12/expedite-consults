@@ -29,6 +29,11 @@ import type {
   HaloStatusCode,
   SovereignSuiteCloudState,
 } from "@/app/api/connectin/sovereign-suite/route"
+import {
+  playHumanVoiceTag,
+  recordRealHumanVoiceTag,
+  getVoiceTagStorageKey,
+} from "@/lib/connectin-voice-tag"
 
 export const HALO_STATUS_META: Record<
   HaloStatusCode,
@@ -160,25 +165,28 @@ export function ConnectLnSovereignSuiteHub({
 
   // Zero-clutter additions: VOICE-TAG & PIN-BOARD
   const [voiceTagPhrase, setVoiceTagPhrase] = useState<string>("")
+  const [isRecordingHubVoiceTag, setIsRecordingHubVoiceTag] = useState<boolean>(false)
   const [pinTitle, setPinTitle] = useState<string>("")
   const [pinSummary, setPinSummary] = useState<string>("")
 
-  const handlePlayVoiceTag = (customPhrase?: string) => {
+  const handlePlayVoiceTag = async (customPhrase?: string) => {
     const phraseToSpeak =
       (customPhrase ||
         voiceTagPhrase ||
         state?.voiceTagByUser?.[userName.toLowerCase()] ||
         `${userName} — ${userHeadline}`).trim()
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      try {
-        window.speechSynthesis.cancel()
-        const u = new SpeechSynthesisUtterance(phraseToSpeak)
-        u.rate = 0.96
-        u.pitch = 1.0
-        window.speechSynthesis.speak(u)
-      } catch {}
-    }
-    showToast(`🔊 Playing VOICE-TAG: "${phraseToSpeak}"`)
+    const cloudAudio = state?.voiceTagAudioByUser?.[userName.toLowerCase()]
+    const mode = await playHumanVoiceTag({
+      userName,
+      userHeadline,
+      customPhrase: phraseToSpeak,
+      audioDataUrl: cloudAudio,
+    })
+    showToast(
+      mode === "recorded_human"
+        ? `🎙️ Playing your recorded human VOICE-TAG for ${userName}`
+        : `🔊 Playing Natural Studio Human Voice for ${userName}`
+    )
   }
 
   const showToast = (msg: string) => {
@@ -206,6 +214,12 @@ export function ConnectLnSovereignSuiteHub({
               data.myHalo
             )
             window.dispatchEvent(new Event("connectln-halo-updated"))
+          } catch {}
+        }
+        const cloudAudio = data.state?.voiceTagAudioByUser?.[userName.toLowerCase()]
+        if (cloudAudio && cloudAudio.startsWith("data:audio/")) {
+          try {
+            localStorage.setItem(getVoiceTagStorageKey(userName), cloudAudio)
           } catch {}
         }
         setMyStealthCloak(Boolean(data.myStealthCloak))
@@ -632,13 +646,38 @@ export function ConnectLnSovereignSuiteHub({
                         </button>
                         <button
                           type="button"
-                          onClick={() => handlePlayVoiceTag()}
+                          onClick={() => void handlePlayVoiceTag()}
                           className="rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1.5 text-[10.5px] font-extrabold cursor-pointer"
-                          title="Play your VOICE-TAG Name Pronunciation"
+                          title="Play Human VOICE-TAG Pronunciation"
                         >
-                          🔊 VOICE-TAG
+                          🔊 Play Voice
                         </button>
                       </div>
+                      <button
+                        type="button"
+                        disabled={isRecordingHubVoiceTag}
+                        onClick={async () => {
+                          setIsRecordingHubVoiceTag(true)
+                          const recorded = await recordRealHumanVoiceTag(
+                            userName,
+                            4000,
+                            (statusLabel) => showToast(statusLabel)
+                          )
+                          setIsRecordingHubVoiceTag(false)
+                          if (recorded) {
+                            void fetchSuiteState()
+                          }
+                        }}
+                        className={`w-full rounded-xl py-1.5 text-[10.5px] font-extrabold cursor-pointer transition-all ${
+                          isRecordingHubVoiceTag
+                            ? "bg-rose-600 text-white animate-pulse"
+                            : "bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800"
+                        }`}
+                      >
+                        {isRecordingHubVoiceTag
+                          ? "⏺️ Recording Your Real Voice (4s)..."
+                          : "🎙️ Record My Real Voice (4s)"}
+                      </button>
                       <div className="w-full flex gap-1">
                         <input
                           type="text"

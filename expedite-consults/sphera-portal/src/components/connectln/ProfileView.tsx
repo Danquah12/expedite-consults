@@ -84,6 +84,7 @@ import {
   formatProfileViewDateTime
 } from "@/lib/connectin-analytics"
 import { getQualifiedJobsForSkills, SkillQualifiedJob } from "@/lib/skill-qualified-jobs"
+import { playHumanVoiceTag, recordRealHumanVoiceTag } from "@/lib/connectin-voice-tag"
 
 interface ProfileViewProps {
   user: UserProfile
@@ -120,6 +121,7 @@ export function ProfileView({
   const [isExpFormModalOpen, setIsExpFormModalOpen] = useState(false)
   const [editingExperience, setEditingExperience] = useState<ParsedExperience | null>(null)
   const [resumeSuccessBanner, setResumeSuccessBanner] = useState<string | null>(null)
+  const [isRecordingProfileVoiceTag, setIsRecordingProfileVoiceTag] = useState(false)
 
   const syncPublicProfileToCloud = (profileToSync: UserProfile) => {
     if (isViewingOtherMember || typeof window === 'undefined') return
@@ -1390,22 +1392,39 @@ export function ProfileView({
                       <button
                         type="button"
                         onClick={() => {
-                          if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-                            try {
-                              window.speechSynthesis.cancel()
-                              const u = new SpeechSynthesisUtterance(
-                                `${user.name} — ${user.headline || 'Verified ConnectLn Member'}`
-                              )
-                              u.rate = 0.96
-                              window.speechSynthesis.speak(u)
-                            } catch {}
-                          }
+                          void playHumanVoiceTag({
+                            userName: user.name || 'Kwesi Asiedu',
+                            userHeadline: user.headline,
+                          })
                         }}
                         className="h-7 w-7 rounded-full bg-zinc-100 hover:bg-blue-50 dark:bg-zinc-800 dark:hover:bg-blue-950/60 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-xs cursor-pointer transition-transform hover:scale-105"
-                        title={`Play VOICE-TAG Name Pronunciation for ${user.name}`}
+                        title={`VOICE-TAG (Human Voice) — Hear ${user.name}'s name pronunciation`}
                       >
                         🔊
                       </button>
+                      {!isViewingOtherMember && (
+                        <button
+                          type="button"
+                          disabled={isRecordingProfileVoiceTag}
+                          onClick={async () => {
+                            setIsRecordingProfileVoiceTag(true)
+                            await recordRealHumanVoiceTag(user.name || 'Kwesi Asiedu', 4000)
+                            setIsRecordingProfileVoiceTag(false)
+                          }}
+                          className={`h-7 px-2 rounded-full border flex items-center justify-center text-[11px] font-bold cursor-pointer transition-all ${
+                            isRecordingProfileVoiceTag
+                              ? 'bg-rose-600 text-white border-rose-500 animate-pulse'
+                              : 'bg-zinc-100 hover:bg-emerald-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-emerald-700 dark:text-emerald-300'
+                          }`}
+                          title={
+                            isRecordingProfileVoiceTag
+                              ? 'Recording your real human voice (4s)...'
+                              : 'Record your own real human voice (4s)'
+                          }
+                        >
+                          {isRecordingProfileVoiceTag ? '⏺️ Rec...' : '🎙️'}
+                        </button>
+                      )}
                       <span
                         onClick={() => !isViewingOtherMember && setIsEditingJobCard(!isEditingJobCard)}
                         className={`rounded-full px-3 py-0.5 text-xs font-extrabold border flex items-center gap-1.5 shadow-2xs cursor-pointer ${
