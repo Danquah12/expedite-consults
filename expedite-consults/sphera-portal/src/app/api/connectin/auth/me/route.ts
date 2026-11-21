@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { connectinDb } from "@/lib/connectin-db"
+import { pullCloudUsersIntoDb } from "@/lib/connectin-cloud-sync"
 import { auth } from "@/auth"
 import { isSuperAdminUser } from "@/lib/connectin-profile"
 
 export async function GET(req: NextRequest) {
   try {
+    await pullCloudUsersIntoDb().catch(() => {})
     // 1. Check custom connectin_session token cookie or Authorization Bearer header
     let token = req.cookies.get("connectin_session")?.value
     if (!token) {

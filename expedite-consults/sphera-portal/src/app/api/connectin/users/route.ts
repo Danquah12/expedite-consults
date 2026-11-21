@@ -72,11 +72,11 @@ export async function PUT(req: NextRequest) {
       : undefined
 
     const cleanAvatar =
-      avatar && typeof avatar === "string" && !avatar.startsWith("data:")
+      avatar && typeof avatar === "string" && avatar.length < 250000
         ? avatar
         : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name || "Member")}&backgroundColor=0a66c2`
     const cleanCoverImage =
-      coverImage && typeof coverImage === "string" && !coverImage.startsWith("data:")
+      coverImage && typeof coverImage === "string" && coverImage.length < 250000
         ? coverImage
         : undefined
 

@@ -648,8 +648,8 @@ export function ProfileView({
     const activeSrc = pendingAvatarSrc || user.avatar
     const trimmedDataUrl = await renderTrimmedImageToDataUrl(
       activeSrc,
-      560,
-      560,
+      360,
+      360,
       avatarZoom,
       avatarOffsetX,
       avatarOffsetY,
@@ -684,8 +684,8 @@ export function ProfileView({
     const activeSrc = pendingCoverSrc || user.coverImage || "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1200&auto=format&fit=crop&q=80"
     const trimmedDataUrl = await renderTrimmedImageToDataUrl(
       activeSrc,
-      1400,
-      460,
+      1000,
+      340,
       coverZoom,
       coverOffsetX,
       coverOffsetY,
@@ -699,14 +699,25 @@ export function ProfileView({
   const handleAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const dataUrl = await compressImageFile(file, 900, 900, 0.9)
+    const dataUrl = await compressImageFile(file, 360, 360, 0.82)
     if (dataUrl) {
-      // Load into interactive Trim & Fit editor so user can adjust zoom/position before saving
+      // Load into interactive Trim & Fit editor AND immediately persist so refreshing never loses the uploaded photo!
       setPendingAvatarSrc(dataUrl)
-      setAvatarZoom(0.9)
+      setAvatarZoom(1)
       setAvatarOffsetX(0)
-      setAvatarOffsetY(8)
+      setAvatarOffsetY(0)
       setAvatarRotate(0)
+      savePersistentAvatar(dataUrl, user)
+      const updated: UserProfile = { ...user, avatar: dataUrl }
+      if (!isViewingOtherMember) {
+        saveStoredUser(updated)
+        syncPublicProfileToCloud(updated)
+      }
+      if (onUpdateUser) {
+        onUpdateUser(updated)
+      }
+      setEditAvatar(dataUrl)
+      setPhotoSuccessMsg("✓ Profile picture uploaded & saved! Adjust zoom/fit below or close anytime.")
     }
     e.target.value = ""
   }
@@ -714,12 +725,23 @@ export function ProfileView({
   const handleCoverFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const dataUrl = await compressImageFile(file, 1600, 700, 0.88)
+    const dataUrl = await compressImageFile(file, 1000, 340, 0.80)
     if (dataUrl) {
       setPendingCoverSrc(dataUrl)
       setCoverZoom(1)
       setCoverOffsetX(0)
       setCoverOffsetY(0)
+      savePersistentCover(dataUrl, user)
+      const updated: UserProfile = { ...user, coverImage: dataUrl }
+      if (!isViewingOtherMember) {
+        saveStoredUser(updated)
+        syncPublicProfileToCloud(updated)
+      }
+      if (onUpdateUser) {
+        onUpdateUser(updated)
+      }
+      setEditCover(dataUrl)
+      setPhotoSuccessMsg("✓ Cover banner uploaded & saved! Adjust zoom/fit below or close anytime.")
     }
     e.target.value = ""
   }
@@ -727,20 +749,36 @@ export function ProfileView({
   const handleEditAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const dataUrl = await compressImageFile(file, 900, 900, 0.9)
+    const dataUrl = await compressImageFile(file, 360, 360, 0.82)
     if (dataUrl) {
       setEditAvatar(dataUrl)
       savePersistentAvatar(dataUrl, user)
+      const updated: UserProfile = { ...user, avatar: dataUrl }
+      if (!isViewingOtherMember) {
+        saveStoredUser(updated)
+        syncPublicProfileToCloud(updated)
+      }
+      if (onUpdateUser) {
+        onUpdateUser(updated)
+      }
     }
   }
 
   const handleEditCoverFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const dataUrl = await compressImageFile(file, 1400, 500, 0.85)
+    const dataUrl = await compressImageFile(file, 1000, 340, 0.80)
     if (dataUrl) {
       setEditCover(dataUrl)
       savePersistentCover(dataUrl, user)
+      const updated: UserProfile = { ...user, coverImage: dataUrl }
+      if (!isViewingOtherMember) {
+        saveStoredUser(updated)
+        syncPublicProfileToCloud(updated)
+      }
+      if (onUpdateUser) {
+        onUpdateUser(updated)
+      }
     }
   }
 
@@ -4722,7 +4760,17 @@ export function ProfileView({
                     type="button"
                     onClick={() => {
                       if (customAvatarUrl.trim()) {
-                        setPendingAvatarSrc(customAvatarUrl.trim())
+                        const url = customAvatarUrl.trim()
+                        setPendingAvatarSrc(url)
+                        savePersistentAvatar(url, user)
+                        const updated: UserProfile = { ...user, avatar: url }
+                        if (!isViewingOtherMember) {
+                          saveStoredUser(updated)
+                          syncPublicProfileToCloud(updated)
+                        }
+                        if (onUpdateUser) {
+                          onUpdateUser(updated)
+                        }
                         setCustomAvatarUrl("")
                       }
                     }}

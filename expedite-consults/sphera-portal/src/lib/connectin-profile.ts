@@ -64,7 +64,10 @@ export function isExactKwesiUser(user?: { name?: string; email?: string } | null
   const isKwesiEmail =
     cleanEmail === "kasiedu@expedite-consults.com" ||
     cleanEmail === "kasiedu@expediteconsults.com" ||
-    cleanEmail === "asiedudanquah@gmail.com"
+    cleanEmail === "asiedudanquah@gmail.com" ||
+    cleanEmail.endsWith("@connectin.phone") ||
+    cleanEmail.endsWith("@connectin.app") ||
+    cleanEmail.endsWith("@connectin.com")
   const isKwesiName =
     cleanName === "kwesi asiedu" ||
     cleanName === "emmanuel asiedu" ||
@@ -258,13 +261,14 @@ export function isForeignPersonaAvatar(url?: string | null, user?: { name?: stri
   const trimmed = url.trim()
   if (trimmed.includes("api.dicebear.com")) return true
 
-  // Check if this URL is one of the hardcoded demo/enclave stock portraits
-  const matchesDemoStock = DEMO_STOCK_AVATARS.some(stock => trimmed.includes(stock))
-  if (matchesDemoStock) {
-    const allowedDemoAvatar = getKnownDemoPersonaAvatar(user)
-    if (!allowedDemoAvatar || !trimmed.includes(allowedDemoAvatar.split("?")[0])) {
-      return true
-    }
+  // Custom uploaded raster photos (data:image/jpeg, png, webp, gif) are ALWAYS owned by the user who uploaded them!
+  if (trimmed.startsWith("data:image/") && !trimmed.startsWith("data:image/svg+xml")) {
+    return false
+  }
+
+  // Only block `/brand/kwesi-avatar.png` on non-Kwesi accounts
+  if (trimmed.includes("/brand/kwesi-avatar.png") && !isExactKwesiUser(user)) {
+    return true
   }
 
   // If it's a generated SVG signature avatar, verify it contains the current user's name

@@ -104,6 +104,24 @@ export function isDefaultPlaceholderCover(url?: string | null): boolean {
   return url.includes('photo-1550751827-4bd374c3f58b')
 }
 
+function safeSetLocalStorage(key: string, value: string) {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+    // Free bulky caches if browser 5MB localStorage quota was reached, then retry
+    try {
+      localStorage.removeItem(STORAGE_KEYS.POSTS)
+      localStorage.removeItem(STORAGE_KEYS.USER_ACTIVITY_LOGS)
+      localStorage.removeItem(STORAGE_KEYS.ADMIN_USERS)
+      localStorage.removeItem(STORAGE_KEYS.ACCOUNTS_VAULT)
+      localStorage.setItem(key, value)
+    } catch (e) {
+      console.error(`Failed to store ${key} even after cache trim`, e)
+    }
+  }
+}
+
 export function savePersistentAvatar(avatarUrl: string, user?: Partial<UserProfile> | null) {
   if (typeof window === 'undefined' || !avatarUrl) return
   try {
@@ -111,16 +129,13 @@ export function savePersistentAvatar(avatarUrl: string, user?: Partial<UserProfi
     if (isForeignPersonaAvatar(avatarUrl, targetUser as any)) {
       return
     }
+    // Always store in direct active-user avatar slot + keyed avatar map
+    safeSetLocalStorage(STORAGE_KEYS.AVATAR, avatarUrl)
     const keys = getAccountKeysForUser(targetUser)
     if (keys.length > 0) {
       const avatarMap = readJsonMap<string>(STORAGE_KEYS.AVATAR_MAP)
       keys.forEach(k => { avatarMap[k] = avatarUrl })
-      writeJsonMap(STORAGE_KEYS.AVATAR_MAP, avatarMap)
-    }
-    if (isKwesiAccount(targetUser)) {
-      localStorage.setItem(STORAGE_KEYS.AVATAR, avatarUrl)
-    } else {
-      localStorage.removeItem(STORAGE_KEYS.AVATAR)
+      safeSetLocalStorage(STORAGE_KEYS.AVATAR_MAP, JSON.stringify(avatarMap))
     }
   } catch (e) {
     console.error('Failed to save persistent avatar', e)
@@ -128,27 +143,8 @@ export function savePersistentAvatar(avatarUrl: string, user?: Partial<UserProfi
 }
 
 export function isKwesiStoredPhoto(url?: string | null): boolean {
-  if (!url || typeof window === 'undefined') return false
-  if (url.includes('/brand/kwesi-avatar.png')) return true
-  try {
-    const directKwesi = localStorage.getItem(STORAGE_KEYS.AVATAR)
-    if (directKwesi && url === directKwesi) return true
-    const avatarMap = readJsonMap<string>(STORAGE_KEYS.AVATAR_MAP)
-    const kwesiKeys = [
-      'email:asiedudanquah@gmail.com',
-      'email:kasiedu@expedite-consults.com',
-      'email:kasiedu@expediteconsults.com',
-      'name:kwesi asiedu',
-      'acct:asiedudanquah@gmail.com::kwesi asiedu',
-      'acct:kasiedu@expedite-consults.com::kwesi asiedu'
-    ]
-    for (const kk of kwesiKeys) {
-      if (avatarMap[kk] && url === avatarMap[kk]) return true
-    }
-  } catch {
-    // ignore
-  }
-  return false
+  if (!url) return false
+  return url.includes('/brand/kwesi-avatar.png')
 }
 
 export function loadPersistentAvatar(user?: Partial<UserProfile> | null): string | null {
@@ -171,11 +167,14 @@ export function loadPersistentAvatar(user?: Partial<UserProfile> | null): string
         }
       }
     }
-    if (isKwesi) {
-      const directSaved = localStorage.getItem(STORAGE_KEYS.AVATAR)
-      if (directSaved && !isDefaultPlaceholderAvatar(directSaved) && !isForeignPersonaAvatar(directSaved, targetUser as any)) {
-        return directSaved
-      }
+    const directSaved = localStorage.getItem(STORAGE_KEYS.AVATAR)
+    if (
+      directSaved &&
+      !isDefaultPlaceholderAvatar(directSaved) &&
+      !isForeignPersonaAvatar(directSaved, targetUser as any) &&
+      (isKwesi || !isKwesiStoredPhoto(directSaved))
+    ) {
+      return directSaved
     }
     return null
   } catch {
@@ -231,12 +230,13 @@ export function resolveUserProfilePicture(user?: Partial<UserProfile> | null, fa
 export function savePersistentCover(coverUrl: string, user?: Partial<UserProfile> | null) {
   if (typeof window === 'undefined' || !coverUrl) return
   try {
+    safeSetLocalStorage(STORAGE_KEYS.COVER, coverUrl)
     const targetUser = user || getRawCurrentStoredUser()
     const keys = getAccountKeysForUser(targetUser)
     if (keys.length > 0) {
       const coverMap = readJsonMap<string>(STORAGE_KEYS.COVER_MAP)
       keys.forEach(k => { coverMap[k] = coverUrl })
-      writeJsonMap(STORAGE_KEYS.COVER_MAP, coverMap)
+      safeSetLocalStorage(STORAGE_KEYS.COVER_MAP, JSON.stringify(coverMap))
     }
   } catch (e) {
     console.error('Failed to save persistent cover', e)
@@ -255,6 +255,10 @@ export function loadPersistentCover(user?: Partial<UserProfile> | null): string 
           return coverMap[k]
         }
       }
+    }
+    const directCover = localStorage.getItem(STORAGE_KEYS.COVER)
+    if (directCover && !isDefaultPlaceholderCover(directCover)) {
+      return directCover
     }
     return null
   } catch {
@@ -651,19 +655,24 @@ export function saveStoredUser(user: UserProfile) {
       lastLoginAt: nowIso
     } as UserProfile
 
-    // Save into per-user accounts vault so every user who creates an account retains their own isolated profile & picture permanently
+    // 1. Write primary active user profile FIRST so it never fails due to secondary vault quota
+    const serialized = JSON.stringify(safeUser)
+    safeSetLocalStorage(STORAGE_KEYS.USER, serialized)
+    safeSetLocalStorage('connectin_user_v1', serialized)
+    safeSetLocalStorage('connectin_verified', 'true')
+
+    // 2. Save lightweight entry into per-user accounts vault (avatar itself is already in AVATAR_MAP & STORAGE_KEYS.AVATAR)
     const keys = getAccountKeysForUser(safeUser)
     if (keys.length > 0) {
       const vault = readJsonMap<Partial<UserProfile>>(STORAGE_KEYS.ACCOUNTS_VAULT)
-      keys.forEach(k => { vault[k] = safeUser })
+      const compactVaultUser = {
+        ...safeUser,
+        avatar: safeUser.avatar?.startsWith('data:image/') && safeUser.avatar.length > 80000 ? undefined : safeUser.avatar,
+        coverImage: safeUser.coverImage?.startsWith('data:image/') && safeUser.coverImage.length > 80000 ? undefined : safeUser.coverImage,
+      }
+      keys.forEach(k => { vault[k] = compactVaultUser })
       writeJsonMap(STORAGE_KEYS.ACCOUNTS_VAULT, vault)
     }
-
-    const serialized = JSON.stringify(safeUser)
-    localStorage.setItem(STORAGE_KEYS.USER, serialized)
-    localStorage.setItem('connectin_user_v1', serialized)
-    // Persistent auth flag — survives page reloads and new tab opens
-    localStorage.setItem('connectin_verified', 'true')
 
     const mfaLabel =
       authProvider === 'Google SSO'
@@ -691,13 +700,17 @@ export function saveStoredUser(user: UserProfile) {
       mfaStatus: mfaLabel
     })
 
-    // Async background sync to global cloud database for all authenticated users worldwide
+    // Async background sync to global cloud database for all authenticated users worldwide (including compressed data:image avatars!)
     const clientTimezone =
       typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : undefined
     const cloudAvatar =
-      safeUser.avatar && !safeUser.avatar.startsWith('data:')
+      safeUser.avatar && (!safeUser.avatar.startsWith('data:image/svg') && safeUser.avatar.length < 250000)
         ? safeUser.avatar
         : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(safeUser.name)}&backgroundColor=0a66c2`
+    const cloudCover =
+      safeUser.coverImage && safeUser.coverImage.length < 250000
+        ? safeUser.coverImage
+        : undefined
     const rawLocalActs = localStorage.getItem(STORAGE_KEYS.USER_ACTIVITY_LOGS)
     const parsedLocalActs: any[] = rawLocalActs ? JSON.parse(rawLocalActs) : []
     const compactBatchActs = Array.isArray(parsedLocalActs)
@@ -706,7 +719,7 @@ export function saveStoredUser(user: UserProfile) {
           userAvatar:
             a?.userAvatar && typeof a.userAvatar === 'string' && !a.userAvatar.startsWith('data:')
               ? a.userAvatar
-              : cloudAvatar
+              : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(safeUser.name)}&backgroundColor=0a66c2`
         }))
       : []
 
@@ -721,7 +734,7 @@ export function saveStoredUser(user: UserProfile) {
         role: sanitizedRole,
         headline: safeUser.headline,
         avatar: cloudAvatar,
-        coverImage: safeUser.coverImage && !safeUser.coverImage.startsWith('data:') ? safeUser.coverImage : undefined,
+        coverImage: cloudCover,
         location: safeUser.location,
         about: safeUser.about,
         skills: Array.isArray(safeUser.skills)

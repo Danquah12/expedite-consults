@@ -89,6 +89,7 @@ import {
   loadStoredConnections,
   saveStoredConnections,
   loadStoredSessionRoute,
+  loadPersistentAvatar,
   resolveUserProfilePicture,
   trackUserActivity,
   loadStoredAdminUsers,
@@ -947,6 +948,17 @@ export default function ConnectLnPage() {
                 (!explicitEmail || !serverEmail || explicitEmail === serverEmail)
               ) {
                 const isAdmin = isSuperAdminUser({ name: latestExplicit.name || meData.profile.name, email: explicitEmail || serverEmail })
+                const persistentCustomAvatar = loadPersistentAvatar({
+                  id: (latestExplicit as any)?.id || meData.profile.userId || meData.user?.id || explicitUser.id,
+                  email: explicitEmail || serverEmail,
+                  name: latestExplicit.name || meData.profile.name,
+                })
+                const preferredAvatar =
+                  persistentCustomAvatar ||
+                  (latestExplicit.avatar && !latestExplicit.avatar.includes("api.dicebear.com") ? latestExplicit.avatar : "") ||
+                  (meData.profile.avatar && !meData.profile.avatar.includes("api.dicebear.com") ? meData.profile.avatar : "") ||
+                  latestExplicit.avatar ||
+                  meData.profile.avatar
                 const refreshed: UserProfile = {
                   ...meData.profile,
                   ...latestExplicit,
@@ -955,7 +967,7 @@ export default function ConnectLnPage() {
                   id: (latestExplicit as any)?.id || meData.profile.userId || meData.user?.id || explicitUser.id,
                   role: isAdmin ? "admin" : "personal",
                   roles: isAdmin ? ["SUPER_ADMIN"] : ["NORMAL_USER"],
-                  avatar: latestExplicit.avatar || meData.profile.avatar,
+                  avatar: preferredAvatar,
                   coverImage:
                     latestExplicit.coverImage && !latestExplicit.coverImage.includes("photo-1550751827-4bd374c3f58b")
                       ? latestExplicit.coverImage
@@ -985,11 +997,21 @@ export default function ConnectLnPage() {
             const meData = await meRes.json()
             if (meData.authenticated && meData.profile) {
               const latestExplicit = getExplicitStoredUser()
+              const persistentCustomAvatar = loadPersistentAvatar({
+                id: meData.profile.userId || meData.user?.id,
+                email: meData.profile.email || meData.user?.email || "",
+                name: latestExplicit?.name || meData.profile.name,
+              })
               const profile = {
                 ...meData.profile,
                 ...(latestExplicit || {}),
                 email: meData.profile.email || meData.user?.email || "",
                 id: meData.profile.userId || meData.user?.id,
+                avatar:
+                  persistentCustomAvatar ||
+                  (latestExplicit?.avatar && !latestExplicit.avatar.includes("api.dicebear.com") ? latestExplicit.avatar : "") ||
+                  meData.profile.avatar ||
+                  latestExplicit?.avatar,
               }
               saveStoredUser(profile)
               setUserData(getExplicitStoredUser() || profile)
@@ -1015,11 +1037,21 @@ export default function ConnectLnPage() {
           if (meData.authenticated && meData.profile) {
             localStorage.removeItem("connectin_is_signed_out")
             const latestExplicit = getExplicitStoredUser()
+            const persistentCustomAvatar = loadPersistentAvatar({
+              id: meData.profile.userId || meData.user?.id,
+              email: meData.profile.email || meData.user?.email || "",
+              name: latestExplicit?.name || meData.profile.name,
+            })
             const profile = {
               ...meData.profile,
               ...(latestExplicit || {}),
               email: meData.profile.email || meData.user?.email || "",
               id: meData.profile.userId || meData.user?.id,
+              avatar:
+                persistentCustomAvatar ||
+                (latestExplicit?.avatar && !latestExplicit.avatar.includes("api.dicebear.com") ? latestExplicit.avatar : "") ||
+                meData.profile.avatar ||
+                latestExplicit?.avatar,
             }
             saveStoredUser(profile)
             const storedAfterSave = getExplicitStoredUser() || profile
