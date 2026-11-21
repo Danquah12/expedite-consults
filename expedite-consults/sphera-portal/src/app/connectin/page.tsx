@@ -10,6 +10,7 @@ import { ConnectLnIncomingCallBanner } from "@/components/connectln/ConnectLnInc
 import { ConnectLnPhoneVerificationGate } from "@/components/connectln/ConnectLnPhoneVerificationGate"
 import { ConnectLnWhatsAppCallModal } from "@/components/connectln/ConnectLnWhatsAppCallModal"
 import { LeftSidebarProfile } from "@/components/connectln/LeftSidebarProfile"
+import { ConnectLnSovereignSuiteHub } from "@/components/connectln/ConnectLnSovereignSuiteHub"
 import { PostCreator } from "@/components/connectln/PostCreator"
 import { FeedPostCard } from "@/components/connectln/FeedPostCard"
 import { LinkedInStoriesStrip } from "@/components/connectln/LinkedInStoriesStrip"
@@ -2673,6 +2674,13 @@ export default function ConnectLnPage() {
 
               {/* LinkedIn-Style Top "Start a post" Box */}
               <PostCreator user={userData} onAddPost={handleAddPost} />
+
+              {/* ConnectLn Sovereign Operator Suite (TVR, #AFT/#SCO, PVR, WCD, PRT, FTT/TOR, ESH, BDP, EDW, BEX) */}
+              <ConnectLnSovereignSuiteHub
+                userName={userData?.name}
+                userHeadline={userData?.headline}
+                userPhone={userData?.phone}
+              />
 
               {/* Clean Full-Bleed WSJ-Format Feed Video & Editorial Posts (Zero Duplicate 3-Card Widget Above!) */}
               {myPublishedPosts.length > 0 && (

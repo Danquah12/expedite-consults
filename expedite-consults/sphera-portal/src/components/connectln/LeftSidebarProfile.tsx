@@ -97,33 +97,50 @@ export function LeftSidebarProfile({
   const [pinnedIds, setPinnedIds] = useState<string[]>([])
   const [professionFilterQuery, setProfessionFilterQuery] = useState("")
   const [telemetryTick, setTelemetryTick] = useState(0)
-  const [availabilityStatus, setAvailabilityStatus] = useState<'Looking for a Job' | 'Looking for Projects' | 'Available for Hire' | 'Booked'>('Looking for a Job')
+  const [availabilityStatus, setAvailabilityStatus] = useState<'#AFT · Active For Tickets' | '#SCO · Seeking Operators' | '#FAC · Fractional Advisory' | '#LOCK · Mission Locked'>('#AFT · Active For Tickets')
   const { t } = useLanguage()
 
   useEffect(() => {
     if (typeof window === "undefined") return
     try {
       const savedStatus = localStorage.getItem(`connectin_availability_v1__${(user.name || 'default').toLowerCase()}`)
-      if (savedStatus === 'Looking for a Job' || savedStatus === 'Looking for Projects' || savedStatus === 'Available for Hire' || savedStatus === 'Booked') {
+      if (
+        savedStatus === '#AFT · Active For Tickets' ||
+        savedStatus === '#SCO · Seeking Operators' ||
+        savedStatus === '#FAC · Fractional Advisory' ||
+        savedStatus === '#LOCK · Mission Locked'
+      ) {
         setAvailabilityStatus(savedStatus)
-      } else if (savedStatus === 'Open' || savedStatus === 'Open to Shifts') {
-        setAvailabilityStatus('Looking for a Job')
+      } else if (savedStatus === 'Booked') {
+        setAvailabilityStatus('#LOCK · Mission Locked')
+      } else if (savedStatus === 'Looking for Projects') {
+        setAvailabilityStatus('#FAC · Fractional Advisory')
+      } else {
+        setAvailabilityStatus('#AFT · Active For Tickets')
       }
     } catch {}
   }, [user?.name])
 
   const cycleAvailabilityStatus = () => {
-    const order: Array<'Looking for a Job' | 'Looking for Projects' | 'Available for Hire' | 'Booked'> = [
-      'Looking for a Job',
-      'Looking for Projects',
-      'Available for Hire',
-      'Booked'
+    const order: Array<'#AFT · Active For Tickets' | '#SCO · Seeking Operators' | '#FAC · Fractional Advisory' | '#LOCK · Mission Locked'> = [
+      '#AFT · Active For Tickets',
+      '#SCO · Seeking Operators',
+      '#FAC · Fractional Advisory',
+      '#LOCK · Mission Locked'
     ]
     const next = order[(order.indexOf(availabilityStatus) + 1) % order.length]
     setAvailabilityStatus(next)
+    const haloCode = next.startsWith('#SCO') ? 'SCO' : next.startsWith('#FAC') ? 'FAC' : next.startsWith('#LOCK') ? 'LOCK' : 'AFT'
     try {
       localStorage.setItem(`connectin_availability_v1__${(user.name || 'default').toLowerCase()}`, next)
+      localStorage.setItem(`connectln_halo_v1__${(user.name || 'default').toLowerCase()}`, haloCode)
       window.dispatchEvent(new Event("connectln-job-status-updated"))
+      window.dispatchEvent(new Event("connectln-halo-updated"))
+      fetch('/api/connectin/sovereign-suite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'set_halo', actorName: user.name, halo: haloCode }),
+      }).catch(() => {})
     } catch {}
   }
 
@@ -754,9 +771,13 @@ export function LeftSidebarProfile({
             <div
               onClick={onViewProfile}
               className={`relative h-[72px] w-[72px] shrink-0 cursor-pointer rounded-full bg-white shadow-sm transition-transform hover:scale-[1.02] ${
-                availabilityStatus !== 'Booked'
-                  ? 'ring-2 ring-emerald-600 border-2 border-white dark:border-zinc-900'
-                  : 'border-2 border-white dark:border-zinc-900'
+                availabilityStatus.startsWith('#SCO')
+                  ? 'ring-3 ring-amber-500 border-2 border-white dark:border-zinc-900'
+                  : availabilityStatus.startsWith('#FAC')
+                  ? 'ring-3 ring-indigo-500 border-2 border-white dark:border-zinc-900'
+                  : availabilityStatus.startsWith('#AFT')
+                  ? 'ring-3 ring-emerald-600 border-2 border-white dark:border-zinc-900'
+                  : 'ring-2 ring-zinc-500 border-2 border-white dark:border-zinc-900'
               }`}
             >
               <img
@@ -778,15 +799,21 @@ export function LeftSidebarProfile({
                 e.stopPropagation()
                 cycleAvailabilityStatus()
               }}
-              title="Click to cycle availability status"
+              title="Click to cycle Sovereign Halo Status (#AFT, #SCO, #FAC, #LOCK)"
               style={{
-                backgroundColor: availabilityStatus === 'Booked' ? '#92400E' : '#057642',
+                backgroundColor: availabilityStatus.startsWith('#LOCK')
+                  ? '#3F3F46'
+                  : availabilityStatus.startsWith('#SCO')
+                  ? '#D97706'
+                  : availabilityStatus.startsWith('#FAC')
+                  ? '#4F46E5'
+                  : '#057642',
                 color: '#FFFFFF',
-                fontWeight: 600,
+                fontWeight: 700,
               }}
-              className="rounded-full px-2.5 py-0.5 text-[11px] leading-4 shadow-2xs transition-opacity hover:opacity-95 cursor-pointer"
+              className="rounded-full px-2.5 py-0.5 text-[10.5px] leading-4 shadow-2xs transition-opacity hover:opacity-95 cursor-pointer"
             >
-              {availabilityStatus === 'Booked' ? 'Booked' : availabilityStatus}
+              {availabilityStatus}
             </button>
           </div>
 
@@ -867,10 +894,10 @@ export function LeftSidebarProfile({
                 type="button"
                 onClick={() => onOpenAnalytics ? onOpenAnalytics('viewers') : onViewProfile()}
                 className="flex w-full items-center justify-between py-0.5 text-[12px] hover:underline cursor-pointer"
-                title="Who viewed your profile"
+                title="PRT — Profile Radar Telemetry (Who inspected your dossier)"
               >
                 <span className="font-semibold text-[#666666] dark:text-zinc-400">
-                  {t("profile_viewers", "Profile viewers")}
+                  PRT · Profile Radar
                 </span>
                 <span className="font-semibold text-[#0A66C2] dark:text-sky-400">
                   {sidebarAnalytics.effectiveProfileViews.toLocaleString()}
@@ -880,10 +907,10 @@ export function LeftSidebarProfile({
                 type="button"
                 onClick={() => onOpenAnalytics ? onOpenAnalytics('reach') : onViewProfile()}
                 className="flex w-full items-center justify-between py-0.5 text-[12px] hover:underline cursor-pointer"
-                title="Post impressions & reach"
+                title="BDP & Pulse Broadcast Reach"
               >
                 <span className="font-semibold text-[#666666] dark:text-zinc-400">
-                  {t("content_reach", "Post impressions")}
+                  BDP &amp; Dispatch Reach
                 </span>
                 <span className="font-semibold text-[#0A66C2] dark:text-sky-400">
                   {sidebarAnalytics.effectiveTotalReach.toLocaleString()}
@@ -893,10 +920,10 @@ export function LeftSidebarProfile({
                 type="button"
                 onClick={() => onOpenAnalytics ? onOpenAnalytics('discoveries') : onViewProfile()}
                 className="flex w-full items-center justify-between py-0.5 text-[12px] hover:underline cursor-pointer"
-                title="Directory search appearances"
+                title="TOT & TVR Enclave Radar Hits"
               >
                 <span className="font-semibold text-[#666666] dark:text-zinc-400">
-                  {t("directory_discoveries", "Search appearances")}
+                  TOT · Enclave Radar Hits
                 </span>
                 <span className="font-semibold text-[#0A66C2] dark:text-sky-400">
                   {sidebarAnalytics.effectiveDiscoveries.toLocaleString()}
