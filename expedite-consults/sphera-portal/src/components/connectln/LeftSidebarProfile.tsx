@@ -24,7 +24,8 @@ import {
   ExternalLink,
   SlidersHorizontal,
   Pin,
-  Check
+  Check,
+  Volume2
 } from "lucide-react"
 import { UserProfile } from "@/lib/connectln-data"
 import { isSuperAdminUser, computeProfileStrength } from "@/lib/connectin-profile"
@@ -819,31 +820,64 @@ export function LeftSidebarProfile({
             </button>
           </div>
 
-          <button
-            onClick={onViewProfile}
-            className="group block w-full text-left focus:outline-none"
-          >
-            <div className="flex items-center gap-1.5">
-              <h2 className="font-semibold text-[#191919] text-[18px] leading-[1.25] group-hover:underline dark:text-zinc-100">
-                {user.name}
-              </h2>
-              <ShieldCheck className="h-4 w-4 text-[#666666] dark:text-zinc-300 shrink-0" />
+          <div className="block w-full text-left">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <button
+                type="button"
+                onClick={onViewProfile}
+                className="group inline-flex items-center gap-1.5 text-left focus:outline-none cursor-pointer"
+              >
+                <h2 className="font-semibold text-[#191919] text-[18px] leading-[1.25] group-hover:underline dark:text-zinc-100">
+                  {user.name}
+                </h2>
+                <ShieldCheck className="h-4 w-4 text-[#666666] dark:text-zinc-300 shrink-0" />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+                    try {
+                      window.speechSynthesis.cancel()
+                      const savedPhrase = localStorage.getItem(
+                        `connectln_voicetag_v1__${(user.name || '').toLowerCase()}`
+                      )
+                      const u = new SpeechSynthesisUtterance(
+                        savedPhrase || `${user.name} — ${user.headline || 'Verified ConnectLn Member'}`
+                      )
+                      u.rate = 0.96
+                      window.speechSynthesis.speak(u)
+                    } catch {}
+                  }
+                }}
+                className="inline-flex items-center gap-0.5 rounded-full bg-blue-50 hover:bg-[#0A66C2] hover:text-white dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 px-1.5 py-0.5 text-[10px] font-extrabold text-[#0A66C2] dark:text-sky-300 transition-colors cursor-pointer"
+                title={`Play VOICE-TAG Name Pronunciation for ${user.name}`}
+              >
+                <Volume2 className="h-3 w-3 shrink-0" />
+                <span>VOICE-TAG</span>
+              </button>
             </div>
-            <p
-              style={{ fontWeight: 400 }}
-              className="mt-1 text-[12px] text-[#191919] leading-[1.35] line-clamp-2 dark:text-zinc-200"
+            <button
+              type="button"
+              onClick={onViewProfile}
+              className="block w-full text-left focus:outline-none cursor-pointer"
             >
-              {user.headline}
-            </p>
-            {user.location && (
               <p
                 style={{ fontWeight: 400 }}
-                className="mt-1 text-[12px] text-[#666666] leading-[1.33] truncate dark:text-zinc-400"
+                className="mt-1 text-[12px] text-[#191919] leading-[1.35] line-clamp-2 dark:text-zinc-200"
               >
-                {user.location}
+                {user.headline}
               </p>
-            )}
-          </button>
+              {user.location && (
+                <p
+                  style={{ fontWeight: 400 }}
+                  className="mt-1 text-[12px] text-[#666666] leading-[1.33] truncate dark:text-zinc-400"
+                >
+                  {user.location}
+                </p>
+              )}
+            </button>
+          </div>
 
           {/* Clean Role & Job Card */}
           <div className="pt-2.5 text-left">

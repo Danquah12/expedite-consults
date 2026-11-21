@@ -394,6 +394,15 @@ export function ConnectLnSovereignSuiteHub({
             <QrCode className="h-3 w-3 text-[#0A66C2]" />
             <span>SNAP-BADGE &amp; PDF</span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => handlePlayVoiceTag()}
+            className="rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 px-2.5 py-0.5 text-[10.5px] font-bold text-zinc-700 dark:text-zinc-200 cursor-pointer inline-flex items-center gap-1"
+            title="Play your VOICE-TAG Name Pronunciation"
+          >
+            <span>🔊 VOICE-TAG</span>
+          </button>
         </div>
 
         <button
@@ -401,7 +410,7 @@ export function ConnectLnSovereignSuiteHub({
           onClick={() => setIsConsoleOpen(true)}
           className="rounded-full bg-blue-50 dark:bg-blue-950/50 hover:bg-[#0A66C2] hover:text-white border border-blue-200 dark:border-blue-800 px-3 py-1 text-[11px] font-extrabold text-[#0A66C2] dark:text-sky-300 transition-colors cursor-pointer shrink-0"
         >
-          ✨ Career &amp; Circle Hub (17 Tools) →
+          ✨ Career &amp; Circle Hub (23 Tools) →
         </button>
       </div>
 
@@ -595,6 +604,12 @@ export function ConnectLnSovereignSuiteHub({
                           type="button"
                           onClick={() => {
                             const phrase = voiceTagPhrase.trim() || `${userName} — ${userHeadline}`
+                            try {
+                              localStorage.setItem(
+                                `connectln_voicetag_v1__${userName.toLowerCase()}`,
+                                phrase
+                              )
+                            } catch {}
                             void dispatchAction(
                               { action: "save_voice_tag", phrase },
                               `🔊 Saved your VOICE-TAG pronunciation!`
