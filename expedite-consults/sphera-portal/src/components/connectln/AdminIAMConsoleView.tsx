@@ -263,12 +263,12 @@ export function AdminIAMConsoleView({
           const getKey = (item: AdminUserRecord) =>
             `${String(item.name || "").toLowerCase().trim()}::${String(item.email || "").toLowerCase().trim()}`
 
-          // Put live global server users & logged-in users FIRST before static demo directory
+          // Put live global server users & logged-in users FIRST before local cache and static demo directory
           const liveServerUsers = (data.users as AdminUserRecord[]).filter(isNewOrLoggedInUser)
           ;[
             ...liveServerUsers,
-            ...localUsers.filter(isNewOrLoggedInUser),
             ...data.users,
+            ...localUsers.filter(isNewOrLoggedInUser),
             ...localUsers,
             ...ADMIN_USERS_DIRECTORY
           ].forEach(item => {
@@ -376,6 +376,40 @@ export function AdminIAMConsoleView({
     }
     appendAudit('USER_SUSPENDED', `User ID: ${userId}`, reason || `Status changed to ${newStatus}`)
     showNotice(`✓ User ${userId} status updated to ${newStatus}. Logged to Immutable Audit Ledger.`)
+  }
+
+  const handleDeleteUserPhone = async (u: AdminUserRecord, specificPhone?: string) => {
+    const phoneToDelete = specificPhone || String((u as any).phone || "").trim()
+    if (!phoneToDelete) return
+
+    showNotice(`Deleting phone number ${phoneToDelete} for ${u.name}...`)
+    try {
+      const res = await fetch("/api/connectin/admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "DELETE_USER_PHONE",
+          adminEmail: currentUser.email || "kasiedu@expedite-consults.com",
+          payload: {
+            phone: phoneToDelete,
+            email: u.email,
+            name: u.name,
+            targetEntity: `${u.name} (${phoneToDelete})`,
+            reason: "Admin unlinked phone number to reset connection testing",
+          },
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data?.success) {
+        showNotice(`Could not delete phone ${phoneToDelete}: ${data?.error || "Server error"}`)
+        return
+      }
+      appendAudit("SETTINGS_UPDATED", `${u.name} (${phoneToDelete})`, "Admin deleted registered phone number for connection testing")
+      showNotice(`✓ Deleted phone ${phoneToDelete} for ${u.name}. You can now re-verify and test this number!`)
+      await fetchLiveAdminData()
+    } catch (err: any) {
+      showNotice(`Failed to delete phone: ${err?.message || "Network error"}`)
+    }
   }
 
   // 2. Impersonation Action
@@ -1773,17 +1807,48 @@ export function AdminIAMConsoleView({
                               </td>
                               <td className="py-3 px-3">
                                 {(u as any).phone ? (
-                                  <div className="space-y-1">
-                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                      <span className="font-mono font-bold text-xs text-zinc-900 dark:text-zinc-100">
-                                        {(u as any).phone}
-                                      </span>
-                                      {(u as any).verifiedBy2FA && (
-                                        <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-800 px-1.5 py-0.5 text-[9px] font-extrabold text-emerald-800 dark:text-emerald-300">
-                                          🔒 2FA Verified
+                                  <div className="space-y-1.5">
+                                    {Array.isArray((u as any).phoneList) && (u as any).phoneList.length > 0 ? (
+                                      (u as any).phoneList.map((pItem: any) => (
+                                        <div key={pItem.phone} className="flex items-center gap-1.5 flex-wrap">
+                                          <span className="font-mono font-bold text-xs text-zinc-900 dark:text-zinc-100">
+                                            {pItem.prettyPhone || pItem.phone}
+                                          </span>
+                                          {pItem.verifiedBy2FA && (
+                                            <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-800 px-1.5 py-0.5 text-[9px] font-extrabold text-emerald-800 dark:text-emerald-300">
+                                              🔒 2FA
+                                            </span>
+                                          )}
+                                          <button
+                                            type="button"
+                                            onClick={() => handleDeleteUserPhone(u, pItem.phone)}
+                                            className="rounded-md border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/40 hover:bg-red-600 hover:text-white text-red-700 dark:text-red-300 px-1.5 py-0.5 text-[10px] font-bold transition-colors cursor-pointer"
+                                            title={`Delete ${pItem.prettyPhone || pItem.phone} to test connection again`}
+                                          >
+                                            🗑️ Delete
+                                          </button>
+                                        </div>
+                                      ))
+                                    ) : (
+                                      <div className="flex items-center gap-1.5 flex-wrap">
+                                        <span className="font-mono font-bold text-xs text-zinc-900 dark:text-zinc-100">
+                                          {(u as any).phone}
                                         </span>
-                                      )}
-                                    </div>
+                                        {(u as any).verifiedBy2FA && (
+                                          <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-800 px-1.5 py-0.5 text-[9px] font-extrabold text-emerald-800 dark:text-emerald-300">
+                                            🔒 2FA Verified
+                                          </span>
+                                        )}
+                                        <button
+                                          type="button"
+                                          onClick={() => handleDeleteUserPhone(u)}
+                                          className="rounded-md border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/40 hover:bg-red-600 hover:text-white text-red-700 dark:text-red-300 px-1.5 py-0.5 text-[10px] font-bold transition-colors cursor-pointer"
+                                          title={`Delete ${(u as any).phone} to test connection again`}
+                                        >
+                                          🗑️ Delete
+                                        </button>
+                                      </div>
+                                    )}
                                     <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
                                       {Number((u as any).pushDevicesCount || 0) > 0
                                         ? `🟢 ${(u as any).pushDevicesCount} Ringing Device(s) Active`

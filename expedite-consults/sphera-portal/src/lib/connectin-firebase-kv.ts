@@ -202,3 +202,54 @@ export async function firebaseKvSetItem(
   await nextLock
   return result
 }
+
+export async function firebaseKvDeleteItem(mapName: string, key: string): Promise<boolean> {
+  const auth = await getFirebaseAccessToken()
+  if (!auth) return false
+
+  const runDelete = async (): Promise<boolean> => {
+    const now = Date.now()
+    const maps = await pullAllMapsFromFirebase(true)
+    const currentMap = pruneExpiredFromMap(maps[mapName] || {}, now)
+    if (key in currentMap) {
+      delete currentMap[key]
+    }
+    maps[mapName] = currentMap
+
+    const parameters: Record<string, { defaultValue: { value: string } }> = {}
+    for (const [mKey, mDict] of Object.entries(maps)) {
+      parameters[mKey] = {
+        defaultValue: { value: JSON.stringify(pruneExpiredFromMap(mDict, now)) },
+      }
+    }
+
+    const url = `https://firebaseremoteconfig.googleapis.com/v1/projects/${auth.projectId}/remoteConfig`
+    const putRes = await fetch(url, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+        "Content-Type": "application/json",
+        "If-Match": "*",
+      },
+      body: JSON.stringify({ parameters }),
+      cache: "no-store",
+    })
+    if (putRes.ok) {
+      globalForFbKv.__connectlnFbEtag = putRes.headers.get("etag") || "*"
+      globalForFbKv.__connectlnFbLastFetchMs = Date.now()
+      return true
+    }
+    return false
+  }
+
+  const prevLock = globalForFbKv.__connectlnFbWriteLock || Promise.resolve()
+  let result = false
+  const nextLock = prevLock
+    .then(async () => {
+      result = await runDelete()
+    })
+    .catch(() => {})
+  globalForFbKv.__connectlnFbWriteLock = nextLock
+  await nextLock
+  return result
+}

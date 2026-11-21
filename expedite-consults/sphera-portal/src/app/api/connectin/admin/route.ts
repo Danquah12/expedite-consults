@@ -3,13 +3,19 @@ import { connectinDb } from "@/lib/connectin-db"
 import {
   pullCloudUsersIntoDb,
   fetchCloudTelemetry,
-  pullCloudActivityLogs
+  pullCloudActivityLogs,
+  appendCloudTelemetry,
 } from "@/lib/connectin-cloud-sync"
 import {
   refreshWhatsAppDirectoryCache,
   isSamePhoneOwnerEmail,
+  deleteWhatsAppMemberNumber,
 } from "@/lib/connectin-whatsapp-directory"
-import { formatPrettyPhoneDisplay } from "@/lib/connectin-twilio-voice"
+import {
+  formatPrettyPhoneDisplay,
+  normalizeDialablePhone,
+  looksLikePhoneNumber,
+} from "@/lib/connectin-twilio-voice"
 import {
   EXECUTIVE_ANALYTICS_DATA,
   ADMIN_USERS_DIRECTORY,
@@ -88,7 +94,11 @@ export async function GET(req: NextRequest) {
           m.name.toLowerCase().trim() === resolvedName.toLowerCase().trim()
       )
       const primaryPhoneEntry = matchedPhones[0]
-      const phoneStr = primaryPhoneEntry?.phone || u.phone || ""
+      const fallbackActivePhone =
+        u.phone && looksLikePhoneNumber(u.phone) && phoneDirCache.has(normalizeDialablePhone(u.phone))
+          ? normalizeDialablePhone(u.phone)
+          : ""
+      const phoneStr = primaryPhoneEntry?.phone || fallbackActivePhone || ""
       const prettyPhoneStr =
         primaryPhoneEntry?.prettyPhone || (phoneStr ? formatPrettyPhoneDisplay(phoneStr) : "")
       const allPrettyPhones = matchedPhones.map((m) => m.prettyPhone).join(", ") || prettyPhoneStr
@@ -102,7 +112,13 @@ export async function GET(req: NextRequest) {
         name: resolvedName,
         email: u.email,
         phone: allPrettyPhones || undefined,
-        verifiedBy2FA: Boolean(primaryPhoneEntry?.verifiedBy2FA || (u as any).phoneVerified),
+        phoneList: matchedPhones.map((m) => ({
+          phone: m.phone,
+          prettyPhone: m.prettyPhone,
+          verifiedBy2FA: Boolean(m.verifiedBy2FA),
+          pushDevicesCount: (m.pushSubscriptions?.length || 0) + (m.fcmTokens?.length || 0),
+        })),
+        verifiedBy2FA: Boolean(primaryPhoneEntry?.verifiedBy2FA || (phoneStr && (u as any).phoneVerified)),
         pushDevicesCount: pushCount,
         avatar: p?.avatar || existingInAdmin?.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.email)}`,
         headline: p?.headline || existingInAdmin?.headline || `${u.role.toUpperCase()} Professional · ConnectIn Member`,
@@ -132,6 +148,14 @@ export async function GET(req: NextRequest) {
       name: m.name || m.prettyPhone,
       email: m.email || `${m.phone.replace(/[^\d]/g, "")}@connectin.phone`,
       phone: m.prettyPhone,
+      phoneList: [
+        {
+          phone: m.phone,
+          prettyPhone: m.prettyPhone,
+          verifiedBy2FA: Boolean(m.verifiedBy2FA),
+          pushDevicesCount: (m.pushSubscriptions?.length || 0) + (m.fcmTokens?.length || 0),
+        },
+      ],
       verifiedBy2FA: Boolean(m.verifiedBy2FA),
       pushDevicesCount: (m.pushSubscriptions?.length || 0) + (m.fcmTokens?.length || 0),
       avatar:
@@ -160,6 +184,7 @@ export async function GET(req: NextRequest) {
         const prev = deduped.get(key)! as any
         if (!prev.phone && (item as any).phone) {
           prev.phone = (item as any).phone
+          prev.phoneList = (item as any).phoneList
           prev.verifiedBy2FA = (item as any).verifiedBy2FA
           prev.pushDevicesCount = (item as any).pushDevicesCount
         }
@@ -237,11 +262,27 @@ export async function POST(req: NextRequest) {
       id: `LOG-${Date.now()}`,
       adminEmail,
       action: action,
-      targetEntity: payload?.targetEntity || payload?.targetId || 'System Resource',
+      targetEntity: payload?.targetEntity || payload?.targetId || payload?.phone || 'System Resource',
       reason: payload?.reason || 'Administrative action processed via Control Center',
       ipAddress: '198.51.100.42 (Internal Admin Enclave)',
       timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + ' EST',
       status: 'Success' as const
+    }
+
+    if (action === "DELETE_USER_PHONE") {
+      const delRes = await deleteWhatsAppMemberNumber({
+        phone: payload?.phone,
+        email: payload?.email,
+        name: payload?.name,
+      })
+      await appendCloudTelemetry({ auditLog: auditEntry }).catch(() => {})
+      return NextResponse.json({
+        success: true,
+        deletedPhones: delRes.deletedPhones,
+        message: `Unlinked and deleted phone number(s) ${delRes.deletedPhones.join(", ") || payload?.phone || ""} from calling directory.`,
+        auditLogged: auditEntry,
+        payload,
+      })
     }
 
     // In-memory response with simulated mutation confirmation

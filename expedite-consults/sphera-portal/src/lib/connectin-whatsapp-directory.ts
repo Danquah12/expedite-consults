@@ -5,8 +5,9 @@ import {
   firebaseKvGetItem,
   firebaseKvSetItem,
   firebaseKvListItems,
+  firebaseKvDeleteItem,
 } from "./connectin-firebase-kv"
-import { pullCloudUsersIntoDb } from "./connectin-cloud-sync"
+import { pullCloudUsersIntoDb, upsertCloudUser } from "./connectin-cloud-sync"
 import {
   normalizeDialablePhone,
   looksLikePhoneNumber,
@@ -66,11 +67,15 @@ const VAPID_ITEM_KEY = "vapid_keys_v1"
 const globalForWhatsAppDir = globalThis as unknown as {
   __connectlnVapidKeys?: VapidKeyPair
   __connectlnWhatsAppPhoneCache?: Map<string, WhatsAppDirectoryMember>
+  __connectlnWhatsAppDeletedPhones?: Set<string>
   __connectlnWhatsAppCacheLoadedAt?: number
 }
 
 if (!globalForWhatsAppDir.__connectlnWhatsAppPhoneCache) {
   globalForWhatsAppDir.__connectlnWhatsAppPhoneCache = new Map<string, WhatsAppDirectoryMember>()
+}
+if (!globalForWhatsAppDir.__connectlnWhatsAppDeletedPhones) {
+  globalForWhatsAppDir.__connectlnWhatsAppDeletedPhones = new Set<string>()
 }
 
 function getTwilioAuthHeader(): string | null {
@@ -80,6 +85,11 @@ function getTwilioAuthHeader(): string | null {
 function makePhoneItemKey(e164: string): string {
   const digits = String(e164 || "").replace(/[^\d]/g, "")
   return `phone__${digits}`
+}
+
+function makeDeletedPhoneKey(e164: string): string {
+  const digits = String(e164 || "").replace(/[^\d]/g, "")
+  return `deleted__${digits}`
 }
 
 async function readDirItem<T = any>(_authHeader: string | null, key: string): Promise<T | null> {
@@ -130,6 +140,7 @@ export async function getOrCreateConnectLnVapidKeys(): Promise<VapidKeyPair> {
 
 export async function refreshWhatsAppDirectoryCache(force = false): Promise<Map<string, WhatsAppDirectoryMember>> {
   const cache = globalForWhatsAppDir.__connectlnWhatsAppPhoneCache!
+  const deletedPhones = globalForWhatsAppDir.__connectlnWhatsAppDeletedPhones!
   const nowMs = Date.now()
   if (
     !force &&
@@ -141,6 +152,23 @@ export async function refreshWhatsAppDirectoryCache(force = false): Promise<Map<
   }
   globalForWhatsAppDir.__connectlnWhatsAppCacheLoadedAt = nowMs
 
+  // 0. Pull cloud WhatsApp directory items + deleted tombstones (`deleted__*`) from Firebase KV first
+  let kvItems: Array<{ key: string; data: any; updatedAtMs: number }> = []
+  try {
+    kvItems = await firebaseKvListItems<any>(WHATSAPP_DIR_MAP, force)
+    for (const item of kvItems) {
+      const key = String(item?.key || "")
+      if (key.startsWith("deleted__")) {
+        const rawPhone = item?.data?.phone || `+${key.replace(/^deleted__/, "")}`
+        if (looksLikePhoneNumber(rawPhone)) {
+          const norm = normalizeDialablePhone(rawPhone)
+          deletedPhones.add(norm)
+          cache.delete(norm)
+        }
+      }
+    }
+  } catch {}
+
   // 1. Seed registered ConnectLn users who have phones in DB / Cloud Users
   try {
     await pullCloudUsersIntoDb()
@@ -148,6 +176,7 @@ export async function refreshWhatsAppDirectoryCache(force = false): Promise<Map<
     for (const u of users) {
       if (u.phone && looksLikePhoneNumber(u.phone)) {
         const norm = normalizeDialablePhone(u.phone)
+        if (deletedPhones.has(norm)) continue
         const existing = cache.get(norm)
         const isSyntheticEmail =
           !u.email ||
@@ -177,7 +206,7 @@ export async function refreshWhatsAppDirectoryCache(force = false): Promise<Map<
     // non-fatal
   }
 
-  // 1b. Ensure known verified numbers (+12402607898 and +12403608139) are always seeded as verified
+  // 1b. Ensure known verified numbers (+12402607898 and +12403608139) are always seeded as verified (unless admin deleted them for testing)
   const baselineSeeds: Array<{ phone: string; name: string; email: string }> = [
     { phone: "+12402607898", name: "Kwesi Asiedu", email: "kasiedu@expedite-consults.com" },
     { phone: "+12403608139", name: "Kwesi Asiedu", email: "kasiedu@expedite-consults.com" },
@@ -188,6 +217,7 @@ export async function refreshWhatsAppDirectoryCache(force = false): Promise<Map<
   ]
   const seedNowIso = new Date().toISOString()
   for (const s of baselineSeeds) {
+    if (deletedPhones.has(s.phone)) continue
     const ex = cache.get(s.phone)
     cache.set(s.phone, {
       phone: s.phone,
@@ -206,13 +236,13 @@ export async function refreshWhatsAppDirectoryCache(force = false): Promise<Map<
 
   // 2. Pull cloud WhatsApp directory items (`phone__*`) from Firebase KV including Web Push & FCM tokens
   try {
-    const items = await firebaseKvListItems<WhatsAppDirectoryMember>(WHATSAPP_DIR_MAP, force)
-    for (const item of items) {
+    for (const item of kvItems) {
       const key = String(item?.key || "")
       if (!key.startsWith("phone__")) continue
       const data = item?.data as WhatsAppDirectoryMember | undefined
       if (data?.phone && looksLikePhoneNumber(data.phone)) {
         const norm = normalizeDialablePhone(data.phone)
+        if (deletedPhones.has(norm)) continue
         const existing = cache.get(norm)
         const realDataEmail =
           data.email &&
@@ -438,6 +468,12 @@ export async function registerWhatsAppMemberNumber(params: {
     updatedAtIso: nowIso,
   }
 
+  const deletedPhones = globalForWhatsAppDir.__connectlnWhatsAppDeletedPhones!
+  if (deletedPhones.has(normPhone)) {
+    deletedPhones.delete(normPhone)
+    await firebaseKvDeleteItem(WHATSAPP_DIR_MAP, makeDeletedPhoneKey(normPhone)).catch(() => {})
+  }
+
   cache.set(normPhone, record)
 
   // Also persist in member contact phonebook so voice/SMS fallback resolves this number & name globally
@@ -453,6 +489,84 @@ export async function registerWhatsAppMemberNumber(params: {
   }
 
   return record
+}
+
+export async function deleteWhatsAppMemberNumber(params: {
+  phone?: string
+  email?: string
+  name?: string
+}): Promise<{ deletedPhones: string[] }> {
+  const cache = await refreshWhatsAppDirectoryCache(true)
+  const deletedPhones = globalForWhatsAppDir.__connectlnWhatsAppDeletedPhones!
+  const targets = new Set<string>()
+
+  const rawPhoneInput = String(params.phone || "").trim()
+  if (rawPhoneInput) {
+    for (const part of rawPhoneInput.split(/[,;]/)) {
+      const trimmed = part.trim()
+      if (looksLikePhoneNumber(trimmed)) {
+        targets.add(normalizeDialablePhone(trimmed))
+      }
+    }
+  }
+
+  const targetEmail = String(params.email || "").trim().toLowerCase()
+  const targetName = String(params.name || "").trim().toLowerCase()
+  if (targets.size === 0 && (targetEmail || targetName)) {
+    for (const [norm, member] of cache.entries()) {
+      if (targetEmail && member.email && isSamePhoneOwnerEmail(member.email, targetEmail)) {
+        targets.add(norm)
+      } else if (targetName && member.name.trim().toLowerCase() === targetName) {
+        targets.add(norm)
+      }
+    }
+  }
+
+  const nowIso = new Date().toISOString()
+  for (const norm of targets) {
+    cache.delete(norm)
+    deletedPhones.add(norm)
+    await firebaseKvDeleteItem(WHATSAPP_DIR_MAP, makePhoneItemKey(norm)).catch(() => {})
+    await firebaseKvSetItem(WHATSAPP_DIR_MAP, makeDeletedPhoneKey(norm), {
+      phone: norm,
+      deletedAtIso: nowIso,
+    }).catch(() => {})
+  }
+
+  // Also unlink from in-memory connectinDb users + cloud users
+  try {
+    const users = connectinDb.getUsers()
+    for (const u of users) {
+      const uNorm = u.phone && looksLikePhoneNumber(u.phone) ? normalizeDialablePhone(u.phone) : ""
+      const emailMatched = targetEmail && isSamePhoneOwnerEmail(u.email, targetEmail)
+      if ((uNorm && targets.has(uNorm)) || (emailMatched && targets.size > 0 && (!uNorm || targets.has(uNorm)))) {
+        u.phone = ""
+        ;(u as any).phoneVerified = false
+        if (typeof connectinDb.updateUser === "function") {
+          connectinDb.updateUser(u.id, { phone: "" })
+        }
+        const prof = connectinDb.findProfileByUserId(u.id)
+        if (prof) {
+          await upsertCloudUser({
+            id: u.id,
+            email: u.email,
+            phone: "",
+            name: prof.name,
+            role: u.role,
+            status: u.status,
+            headline: prof.headline,
+            avatar: prof.avatar,
+            location: prof.location,
+            lastLoginAt: nowIso,
+            createdAt: u.createdAt || nowIso,
+            updatedAt: nowIso,
+          }).catch(() => {})
+        }
+      }
+    }
+  } catch {}
+
+  return { deletedPhones: Array.from(targets) }
 }
 
 export async function lookupWhatsAppRecipient(params: {
