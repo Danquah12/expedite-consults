@@ -42,7 +42,11 @@ import {
   EncodedVoiceChunk,
 } from "@/lib/vibe-voice-codec"
 import { ConnectLnInlineCellBridgeBar } from "./ConnectLnCellPhoneSoftphone"
-import { setCallMediaSilenceActive } from "@/lib/connectin-background-ring"
+import {
+  setCallMediaSilenceActive,
+  startOutgoingCallerRingbackTone,
+  stopOutgoingCallerRingbackTone,
+} from "@/lib/connectin-background-ring"
 
 export interface CallParticipantTile {
   id: string
@@ -890,6 +894,21 @@ export function VibeVideoCallStudio({
   const [myPeerId, setMyPeerId] = useState<string>("")
   const [connectedFriendsCount, setConnectedFriendsCount] = useState<number>(0)
   const [lastJoinedFriendName, setLastJoinedFriendName] = useState<string | null>(null)
+
+  useEffect(() => {
+    const waitingForPeer =
+      callState !== "ENDED" &&
+      connectedFriendsCount === 0 &&
+      Object.keys(remoteStreams).length === 0
+    if (waitingForPeer) {
+      startOutgoingCallerRingbackTone()
+    } else {
+      stopOutgoingCallerRingbackTone()
+    }
+    return () => {
+      stopOutgoingCallerRingbackTone()
+    }
+  }, [callState, connectedFriendsCount, remoteStreams])
 
   // Media hardware & stream state
   const [callMode, setCallMode] = useState<"audio" | "video" | "screenshare">(initialMode)

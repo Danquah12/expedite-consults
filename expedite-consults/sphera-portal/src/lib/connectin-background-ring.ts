@@ -33,6 +33,12 @@ let activeRingGain: GainNode | null = null
 
 let keepAliveHtmlAudio: HTMLAudioElement | null = null
 let fallbackWavRingAudio: HTMLAudioElement | null = null
+let outgoingRingbackAudio: HTMLAudioElement | null = null
+let outgoingRingbackBuffer: AudioBuffer | null = null
+let activeOutgoingRingbackSource: AudioBufferSourceNode | null = null
+let activeOutgoingRingbackGain: GainNode | null = null
+let isIncomingRingtoneActive = false
+let isOutgoingRingbackActive = false
 let autoPipVideoEl: HTMLVideoElement | null = null
 let autoPipCanvasTimer: ReturnType<typeof setInterval> | null = null
 
@@ -151,6 +157,39 @@ function getPhoneRingtoneWavUri(): string {
   return cachedRingtoneUri
 }
 
+let cachedOutgoingRingbackUri: string | null = null
+function getOutgoingRingbackWavUri(): string {
+  if (cachedOutgoingRingbackUri) return cachedOutgoingRingbackUri
+  const sampleRate = 16000
+  const durationSec = 4.0 // Classic telephone ringback cadence: two dual-tone rings (0-0.65s, 0.85-1.5s) + 2.5s pause
+  const totalSamples = Math.floor(sampleRate * durationSec)
+  const samples = new Int16Array(totalSamples)
+
+  for (let i = 0; i < totalSamples; i++) {
+    const t = i / sampleRate
+    const inPulse1 = t >= 0.0 && t <= 0.65
+    const inPulse2 = t >= 0.85 && t <= 1.5
+    if (!inPulse1 && !inPulse2) {
+      samples[i] = 0
+      continue
+    }
+    const localT = inPulse1 ? t : t - 0.85
+    const pulseLen = 0.65
+    const attack = Math.min(1, localT / 0.025)
+    const release = Math.min(1, (pulseLen - localT) / 0.04)
+    const env = Math.max(0, Math.min(attack, release))
+    // Standard 440 Hz + 480 Hz North American / International ringback chord with warm harmonic overtone
+    const wave =
+      0.46 * Math.sin(2 * Math.PI * 440 * t) +
+      0.46 * Math.sin(2 * Math.PI * 480 * t) +
+      0.08 * Math.sin(2 * Math.PI * 880 * t)
+    samples[i] = Math.round(wave * env * 19000)
+  }
+
+  cachedOutgoingRingbackUri = encodeMonoPcm16WavDataUri(samples, sampleRate)
+  return cachedOutgoingRingbackUri
+}
+
 function buildAudioBuffers(ctx: AudioContext): void {
   if (!keepAliveBuffer) {
     const sr = ctx.sampleRate
@@ -190,6 +229,34 @@ function buildAudioBuffers(ctx: AudioContext): void {
       ch[i] = wave * warble * env * 0.82
     }
     ringtoneBuffer = buf
+  }
+
+  if (!outgoingRingbackBuffer) {
+    const sr = ctx.sampleRate
+    const durationSec = 4.0
+    const len = Math.floor(sr * durationSec)
+    const buf = ctx.createBuffer(1, len, sr)
+    const ch = buf.getChannelData(0)
+    for (let i = 0; i < len; i++) {
+      const t = i / sr
+      const inPulse1 = t >= 0.0 && t <= 0.65
+      const inPulse2 = t >= 0.85 && t <= 1.5
+      if (!inPulse1 && !inPulse2) {
+        ch[i] = 0
+        continue
+      }
+      const localT = inPulse1 ? t : t - 0.85
+      const pulseLen = 0.65
+      const attack = Math.min(1, localT / 0.025)
+      const release = Math.min(1, (pulseLen - localT) / 0.04)
+      const env = Math.max(0, Math.min(attack, release))
+      const wave =
+        0.46 * Math.sin(2 * Math.PI * 440 * t) +
+        0.46 * Math.sin(2 * Math.PI * 480 * t) +
+        0.08 * Math.sin(2 * Math.PI * 880 * t)
+      ch[i] = wave * env * 0.55
+    }
+    outgoingRingbackBuffer = buf
   }
 }
 
@@ -346,6 +413,37 @@ function ensureLiveAudioPipelineStarted(): void {
       fallbackWavRingAudio.volume = 1.0
       fallbackWavRingAudio.preload = "auto"
       fallbackWavRingAudio.setAttribute("playsinline", "true")
+      fallbackWavRingAudio.style.cssText =
+        "position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0.01;pointer-events:none;"
+      if (typeof document !== "undefined" && document.body) {
+        document.body.appendChild(fallbackWavRingAudio)
+      }
+    } else if (
+      typeof document !== "undefined" &&
+      document.body &&
+      !fallbackWavRingAudio.isConnected
+    ) {
+      document.body.appendChild(fallbackWavRingAudio)
+    }
+
+    if (!outgoingRingbackAudio) {
+      outgoingRingbackAudio = new Audio(getOutgoingRingbackWavUri())
+      outgoingRingbackAudio.dataset.connectlnCallAudio = "true"
+      outgoingRingbackAudio.loop = true
+      outgoingRingbackAudio.volume = 0.65
+      outgoingRingbackAudio.preload = "auto"
+      outgoingRingbackAudio.setAttribute("playsinline", "true")
+      outgoingRingbackAudio.style.cssText =
+        "position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0.01;pointer-events:none;"
+      if (typeof document !== "undefined" && document.body) {
+        document.body.appendChild(outgoingRingbackAudio)
+      }
+    } else if (
+      typeof document !== "undefined" &&
+      document.body &&
+      !outgoingRingbackAudio.isConnected
+    ) {
+      document.body.appendChild(outgoingRingbackAudio)
     }
   } catch {}
 }
@@ -383,6 +481,7 @@ export function unlockBackgroundRingingSession(): void {
 
 export function startLoudPhoneRingtone(): void {
   if (typeof window === "undefined") return
+  isIncomingRingtoneActive = true
   setCallMediaSilenceActive(true, "incoming-call-ringtone")
   ensureLiveAudioPipelineStarted()
 
@@ -405,7 +504,7 @@ export function startLoudPhoneRingtone(): void {
     } catch {}
   }
 
-  // 2. Redundant HTML5 `<audio loop>` element for iOS Safari / Android Chrome
+  // 2. Redundant HTML5 `<audio loop>` element for iOS Safari / Android Chrome / Desktop
   if (fallbackWavRingAudio) {
     fallbackWavRingAudio.muted = false
     fallbackWavRingAudio.volume = 1.0
@@ -413,6 +512,23 @@ export function startLoudPhoneRingtone(): void {
       fallbackWavRingAudio.play().catch(() => {})
     }
   }
+
+  // 3. If browser initially deferred audio before a user interaction, auto-resume ringtone on any pointer/touch/focus event!
+  const resumeRingOnInteraction = () => {
+    if (!isIncomingRingtoneActive) return
+    if (liveAudioCtx && liveAudioCtx.state === "suspended") {
+      liveAudioCtx.resume().catch(() => {})
+    }
+    if (fallbackWavRingAudio && fallbackWavRingAudio.paused) {
+      fallbackWavRingAudio.muted = false
+      fallbackWavRingAudio.volume = 1.0
+      fallbackWavRingAudio.play().catch(() => {})
+    }
+  }
+  window.addEventListener("pointerdown", resumeRingOnInteraction, { passive: true })
+  window.addEventListener("touchstart", resumeRingOnInteraction, { passive: true })
+  window.addEventListener("mousemove", resumeRingOnInteraction, { passive: true, once: true })
+  window.addEventListener("focus", resumeRingOnInteraction, { passive: true })
 
   if (!ringVibrateTimer) {
     try {
@@ -427,6 +543,7 @@ export function startLoudPhoneRingtone(): void {
 }
 
 export function stopLoudPhoneRingtone(): void {
+  isIncomingRingtoneActive = false
   if (activeRingSource) {
     try {
       activeRingSource.stop()
@@ -454,6 +571,66 @@ export function stopLoudPhoneRingtone(): void {
     navigator.vibrate?.(0)
   } catch {}
   setCallMediaSilenceActive(false, "incoming-call-ringtone")
+}
+
+/**
+ * Plays the classic outgoing telephone ringback tone (`ring... ring...`) for the caller
+ * while waiting for the recipient to answer. Uses BOTH Web Audio (`AudioBufferSourceNode`)
+ * AND a DOM-attached `<audio loop>` WAV element so it works reliably on every desktop & mobile browser.
+ */
+export function startOutgoingCallerRingbackTone(): void {
+  if (typeof window === "undefined") return
+  isOutgoingRingbackActive = true
+  ensureLiveAudioPipelineStarted()
+
+  if (liveAudioCtx && outgoingRingbackBuffer && !activeOutgoingRingbackSource) {
+    try {
+      if (liveAudioCtx.state === "suspended") {
+        liveAudioCtx.resume().catch(() => {})
+      }
+      const gain = liveAudioCtx.createGain()
+      gain.gain.value = 0.55
+      const src = liveAudioCtx.createBufferSource()
+      src.buffer = outgoingRingbackBuffer
+      src.loop = true
+      src.connect(gain)
+      gain.connect(liveAudioCtx.destination)
+      src.start(0)
+      activeOutgoingRingbackSource = src
+      activeOutgoingRingbackGain = gain
+    } catch {}
+  }
+
+  if (outgoingRingbackAudio) {
+    outgoingRingbackAudio.muted = false
+    outgoingRingbackAudio.volume = 0.65
+    if (outgoingRingbackAudio.paused) {
+      outgoingRingbackAudio.play().catch(() => {})
+    }
+  }
+}
+
+export function stopOutgoingCallerRingbackTone(): void {
+  isOutgoingRingbackActive = false
+  if (activeOutgoingRingbackSource) {
+    try {
+      activeOutgoingRingbackSource.stop()
+      activeOutgoingRingbackSource.disconnect()
+    } catch {}
+    activeOutgoingRingbackSource = null
+  }
+  if (activeOutgoingRingbackGain) {
+    try {
+      activeOutgoingRingbackGain.disconnect()
+    } catch {}
+    activeOutgoingRingbackGain = null
+  }
+  if (outgoingRingbackAudio) {
+    try {
+      outgoingRingbackAudio.pause()
+      outgoingRingbackAudio.currentTime = 0
+    } catch {}
+  }
 }
 
 export function startTitleCallFlash(callerName: string): void {
@@ -864,7 +1041,12 @@ export const CONNECTLN_CALL_SILENCE_EVENT = "connectln:call-silence-change"
 
 function isCallAudioExemptElement(el: HTMLMediaElement): boolean {
   if (!el) return true
-  if (el === keepAliveHtmlAudio || el === fallbackWavRingAudio || el === autoPipVideoEl) {
+  if (
+    el === keepAliveHtmlAudio ||
+    el === fallbackWavRingAudio ||
+    el === outgoingRingbackAudio ||
+    el === autoPipVideoEl
+  ) {
     return true
   }
   if (el.dataset?.connectlnCallAudio === "true") return true

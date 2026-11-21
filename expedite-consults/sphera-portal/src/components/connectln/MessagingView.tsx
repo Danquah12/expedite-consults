@@ -39,7 +39,11 @@ import {
     GaplessRemoteVoicePlayer,
     EncodedVoiceChunk,
 } from '@/lib/vibe-voice-codec';
-import { setCallMediaSilenceActive } from '@/lib/connectin-background-ring';
+import {
+    setCallMediaSilenceActive,
+    startOutgoingCallerRingbackTone,
+    stopOutgoingCallerRingbackTone,
+} from '@/lib/connectin-background-ring';
 
 type ChannelFilterType = 'All' | 'People' | 'Companies' | 'Products' | 'Communities';
 type ConnectLnMailboxFolder =
@@ -713,6 +717,18 @@ export function MessagingView({
     const fallbackCanvasAnimRef = useRef<number | null>(null);
     const [huddleMyPeerId, setHuddleMyPeerId] = useState<string>('');
     const [huddleRemoteStreams, setHuddleRemoteStreams] = useState<Record<string, MediaStream>>({});
+    useEffect(() => {
+        const waitingForRemote =
+            Boolean(activeCallMode) && Object.keys(huddleRemoteStreams).length === 0;
+        if (waitingForRemote) {
+            startOutgoingCallerRingbackTone();
+        } else {
+            stopOutgoingCallerRingbackTone();
+        }
+        return () => {
+            stopOutgoingCallerRingbackTone();
+        };
+    }, [activeCallMode, huddleRemoteStreams]);
     const huddleActiveMediaCallsRef = useRef<Map<string, any>>(new Map());
     const huddleKnownPeerIdsRef = useRef<Set<string>>(new Set());
     const huddleDialPeerNowRef = useRef<((targetPeerId: string, force?: boolean) => void) | null>(null);
