@@ -15,6 +15,15 @@ import {
   Eye,
   X,
   Network,
+  QrCode,
+  FileDown,
+  Sparkles,
+  Brain,
+  Bell,
+  Rocket,
+  CalendarClock,
+  PartyPopper,
+  GraduationCap,
 } from "lucide-react"
 import type {
   HaloStatusCode,
@@ -77,14 +86,33 @@ function formatFriendlyCircle(tvr: string): string {
   return "3rd CIRCLE · Community"
 }
 
-type SovereignTabId =
-  | "tvr_halo"
-  | "pvr_wcd"
-  | "prt_radar"
-  | "ftt_tor"
-  | "esh_hubs"
-  | "bdp_edw"
-  | "bex_exchange"
+type HubCategoryTabId =
+  | "circle_identity"
+  | "kudos_spotlight"
+  | "stories_wisdom"
+  | "cheers_brain"
+  | "jobs_teams_boost"
+
+const DAILY_BRAIN_QUESTIONS = [
+  {
+    q: "In NEC electrical & commercial framing rough-ins, when must a 16-gauge steel nail plate be installed over a bored stud?",
+    options: [
+      "When the edge of the hole is less than 1.25 inches from the nearest edge of the wood stud",
+      "Only on exterior masonry walls",
+      "Only when running low-voltage Cat6 cables",
+    ],
+    correctIdx: 0,
+    explanation:
+      "Correct! NEC 300.4(A)(1) requires a 1/16-inch (16-gauge) steel plate whenever the edge of a bored hole is less than 1.25 inches from the stud edge.",
+  },
+  {
+    q: "In WebRTC internet voice/video calling across symmetric NAT firewalls, what server relays encrypted media packets when direct STUN P2P is blocked?",
+    options: ["TURN Server (Traversal Using Relays around NAT)", "DNS MX Record", "SMTP Relay"],
+    correctIdx: 0,
+    explanation:
+      "Correct! A TURN relay (like ConnectLn's Cloudflare TURN + OpenRelay fabric) guarantees audio/video delivery across strict firewalls.",
+  },
+]
 
 export function ConnectLnSovereignSuiteHub({
   userName = "Kwesi Asiedu",
@@ -99,7 +127,7 @@ export function ConnectLnSovereignSuiteHub({
   const [myHalo, setMyHalo] = useState<HaloStatusCode>("AFT")
   const [myStealthCloak, setMyStealthCloak] = useState<boolean>(false)
   const [isConsoleOpen, setIsConsoleOpen] = useState<boolean>(false)
-  const [activeTab, setActiveTab] = useState<SovereignTabId>("tvr_halo")
+  const [activeTab, setActiveTab] = useState<HubCategoryTabId>("circle_identity")
   const [deckIndex, setDeckIndex] = useState<number>(0)
   const [slideIndex, setSlideIndex] = useState<number>(0)
   const [toastMsg, setToastMsg] = useState<string>("")
@@ -117,6 +145,18 @@ export function ConnectLnSovereignSuiteHub({
   const [rfpScopeByExpert, setRfpScopeByExpert] = useState<Record<string, string>>({})
   const [totFilterTvr, setTotFilterTvr] = useState<string>("ALL")
   const [totFilterHalo, setTotFilterHalo] = useState<string>("ALL")
+
+  // New 7 features states
+  const [cohortSearch, setCohortSearch] = useState<string>("")
+  const [wisdomTipByNote, setWisdomTipByNote] = useState<Record<string, string>>({})
+  const [laterPostContent, setLaterPostContent] = useState<string>("")
+  const [laterPostWhen, setLaterPostWhen] = useState<string>("Tomorrow · 9:00 AM")
+  const [brainQuestionIdx, setBrainQuestionIdx] = useState<number>(0)
+  const [selectedBrainOption, setSelectedBrainOption] = useState<number | null>(null)
+  const [boostTitle, setBoostTitle] = useState<string>("")
+  const [boostProfession, setBoostProfession] = useState<string>("Skilled Trades, Healthcare & Cloud")
+  const [boostCity, setBoostCity] = useState<string>("Maryland, London & Accra")
+  const [boostBudget, setBoostBudget] = useState<string>("$25/day")
 
   const showToast = (msg: string) => {
     setToastMsg(msg)
@@ -200,6 +240,53 @@ export function ConnectLnSovereignSuiteHub({
     )
   }
 
+  const handlePrintPdfBio = () => {
+    const w = window.open("", "_blank", "width=760,height=900")
+    if (!w) {
+      showToast("Allow pop-ups to save your PDF-BIO Resume Sheet.")
+      return
+    }
+    const skillsHtml = (state?.pvrSkills || [])
+      .map((s) => `<li><strong>${s.skill}</strong> — ${s.vouchCount} KUDOS Vouches</li>`)
+      .join("")
+    const proofsHtml = (state?.wcdCitations || [])
+      .map(
+        (c) =>
+          `<div style="margin-bottom:10px;padding:10px;border-left:3px solid #0A66C2;background:#f8fafc;">
+            <div><strong>${c.verifiedDeliverable}</strong></div>
+            <div style="font-style:italic;margin:4px 0;">"${c.citationText}"</div>
+            <div style="font-size:12px;color:#475569;">— ${c.authorName} (${c.authorHeadline})</div>
+          </div>`
+      )
+      .join("")
+    w.document.write(`
+      <!doctype html>
+      <html>
+        <head>
+          <title>${userName} — ConnectLn PDF-BIO Resume</title>
+          <style>
+            body { font-family: system-ui, -apple-system, sans-serif; padding: 36px; color: #0f172a; max-width: 720px; margin: 0 auto; }
+            h1 { margin: 0 0 4px 0; font-size: 26px; }
+            .sub { color: #0A66C2; font-weight: 700; font-size: 14px; margin-bottom: 16px; }
+            h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; margin-top: 24px; }
+          </style>
+        </head>
+        <body>
+          <h1>${userName}</h1>
+          <div class="sub">${userHeadline} · Verified Phone: ${userPhone} · ${HALO_STATUS_META[myHalo].badgeLabel}</div>
+          <p>Verified ConnectLn Member · 1st CIRCLE Network · 🌟 GOLD-VOICE Contributor</p>
+          <h2>KUDOS — Peer-Vouched Skills</h2>
+          <ul>${skillsHtml}</ul>
+          <h2>PROOF — Real-Work Peer Notes</h2>
+          ${proofsHtml}
+          <script>window.onload = () => { window.print(); }</script>
+        </body>
+      </html>
+    `)
+    w.document.close()
+    showToast("✓ Generated your PDF-BIO Resume Sheet!")
+  }
+
   const decks = state?.bdpDecks || []
   const currentDeck = decks[deckIndex % Math.max(1, decks.length)]
   const slides = currentDeck?.slides || []
@@ -207,179 +294,90 @@ export function ConnectLnSovereignSuiteHub({
 
   const haloMeta = HALO_STATUS_META[myHalo] || HALO_STATUS_META.AFT
   const totalPvrVouches = (state?.pvrSkills || []).reduce((acc, s) => acc + s.vouchCount, 0)
+  const myStreak = state?.dailyBrainStreaks?.[userName.toLowerCase()] || 7
+  const hasGoldVoice = (state?.goldVoiceMembers || []).some(
+    (m) => m.toLowerCase() === userName.toLowerCase()
+  )
+  const myPingPrefs = state?.instantPingByUser?.[userName.toLowerCase()] || {
+    dms: true,
+    kudos: true,
+    matches: true,
+  }
+  const profileShareUrl = `https://conectln.com/connectin?member=${encodeURIComponent(userName)}`
+  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(
+    profileShareUrl
+  )}`
 
   return (
-    <div className="space-y-3">
-      {/* 1. FRIENDLY CONNECTLN ACRONYM BAR (Warm, Human, Self-Explanatory Acronyms) */}
-      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3.5 shadow-xs space-y-2.5">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-[#0A66C2] text-white text-xs font-black shrink-0">
-              CLN
-            </span>
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100">
-                  ConnectLn Career, Kudos &amp; Circle Hub
-                </span>
-                <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-800 px-2 py-0.5 text-[10px] font-extrabold text-emerald-800 dark:text-emerald-300">
-                  1st CIRCLE · 16 Warm Bridges
-                </span>
-              </div>
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
-                Friendly ConnectLn Features: CIRCLE &amp; BRIDGES · #READY/#TEAMING Rings · KUDOS &amp; PROOF · SPOTLIGHT · QUICK-PITCH · TEAM-HUBS · SLIDE-STORIES · HIRE-A-PRO
-              </p>
-            </div>
-          </div>
+    <>
+      {/* SINGLE ULTRA-CLEAN 1-LINE PILL BAR (Zero Feed Clutter!) */}
+      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3.5 py-2 shadow-2xs flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+          <button
+            type="button"
+            onClick={cycleHalo}
+            className={`rounded-full px-2.5 py-0.5 text-[11px] font-extrabold shadow-2xs transition-opacity hover:opacity-95 cursor-pointer ${haloMeta.pillBg}`}
+            title="Click to switch your friendly photo ring (#READY, #TEAMING, #MENTOR, #FOCUSED)"
+          >
+            {haloMeta.badgeLabel}
+          </button>
 
-          <div className="flex items-center gap-1.5 shrink-0">
+          {hasGoldVoice && (
             <button
-              type="button"
-              onClick={cycleHalo}
-              className={`rounded-full px-3 py-1 text-[11px] font-extrabold shadow-2xs transition-opacity hover:opacity-95 cursor-pointer ${haloMeta.pillBg}`}
-              title="Click to switch your friendly photo ring (#READY, #TEAMING, #MENTOR, #FOCUSED)"
-            >
-              {haloMeta.badgeLabel}
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsConsoleOpen(true)}
-              className="rounded-full border border-[#0A66C2] bg-blue-50/80 dark:bg-blue-950/40 hover:bg-[#0A66C2] hover:text-white px-3 py-1 text-[11px] font-extrabold text-[#0A66C2] dark:text-sky-300 transition-colors cursor-pointer"
-            >
-              Explore All Features →
-            </button>
-          </div>
-        </div>
-
-        {/* Friendly Acronym Quick-Launch Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {[
-            {
-              id: "tvr_halo" as SovereignTabId,
-              acronym: "CIRCLE + BRIDGES",
-              label: "Trusted Friends & Photo Rings",
-              badge: haloMeta.friendlyCode,
-            },
-            {
-              id: "pvr_wcd" as SovereignTabId,
-              acronym: "KUDOS + PROOF",
-              label: "Skill Kudos & Work Proof Notes",
-              badge: `${totalPvrVouches || 93} Kudos`,
-            },
-            {
-              id: "prt_radar" as SovereignTabId,
-              acronym: "SPOTLIGHT + COZY",
-              label: "Who Visited Your Profile",
-              badge: myStealthCloak ? "Cozy Mode" : `${state?.prtRadarEvents.length || 4} Visitors`,
-            },
-            {
-              id: "ftt_tor" as SovereignTabId,
-              acronym: "QUICK-PITCH + MATCH",
-              label: "1-Tap Apply & Hiring Board",
-              badge: `${state?.torPipeline.length || 4} Matches`,
-            },
-            {
-              id: "esh_hubs" as SovereignTabId,
-              acronym: "TEAM-HUBS + FIND-PROS",
-              label: "Company Hubs & Talent Finder",
-              badge: `${state?.eshEnterprises.length || 3} Teams`,
-            },
-            {
-              id: "bdp_edw" as SovereignTabId,
-              acronym: "SLIDE-STORIES + SPARK",
-              label: "Swipable Guides & Weekly Spark",
-              badge: `${decks.length || 2} Guides`,
-            },
-            {
-              id: "bex_exchange" as SovereignTabId,
-              acronym: "HIRE-A-PRO",
-              label: "Direct Project & Helper Desk",
-              badge: `${state?.bexExperts.length || 3} Pros`,
-            },
-          ].map((pill) => (
-            <button
-              key={pill.id}
               type="button"
               onClick={() => {
-                setActiveTab(pill.id)
+                setActiveTab("stories_wisdom")
                 setIsConsoleOpen(true)
               }}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800/80 dark:hover:bg-zinc-700 px-2.5 py-1.5 text-xs font-bold text-zinc-800 dark:text-zinc-100 shrink-0 cursor-pointer transition-colors"
+              className="rounded-full bg-amber-100 dark:bg-amber-950/70 border border-amber-300 dark:border-amber-800 px-2.5 py-0.5 text-[10.5px] font-extrabold text-amber-900 dark:text-amber-300 cursor-pointer"
+              title="You earned the ConnectLn GOLD-VOICE community badge!"
             >
-              <span className="font-mono font-black text-[#0A66C2] dark:text-sky-400">
-                {pill.acronym}
-              </span>
-              <span className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-300">
-                {pill.label}
-              </span>
-              <span className="rounded bg-zinc-200/80 dark:bg-zinc-700 px-1.5 py-0.2 text-[10px] font-extrabold text-zinc-800 dark:text-zinc-200">
-                {pill.badge}
-              </span>
+              🌟 GOLD-VOICE
             </button>
-          ))}
+          )}
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("kudos_spotlight")
+              setIsConsoleOpen(true)
+            }}
+            className="rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 px-2.5 py-0.5 text-[10.5px] font-bold text-zinc-700 dark:text-zinc-200 cursor-pointer"
+          >
+            👏 {totalPvrVouches || 93} KUDOS
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("cheers_brain")
+              setIsConsoleOpen(true)
+            }}
+            className="rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 px-2.5 py-0.5 text-[10.5px] font-bold text-zinc-700 dark:text-zinc-200 cursor-pointer"
+          >
+            🧠 DAILY-BRAIN ({myStreak}d)
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("circle_identity")
+              setIsConsoleOpen(true)
+            }}
+            className="rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 px-2.5 py-0.5 text-[10.5px] font-bold text-zinc-700 dark:text-zinc-200 cursor-pointer hidden sm:inline-flex items-center gap-1"
+          >
+            <QrCode className="h-3 w-3 text-[#0A66C2]" />
+            <span>SNAP-BADGE &amp; PDF</span>
+          </button>
         </div>
 
-        {/* Inline Interactive SLIDE-STORIES Carousel Preview */}
-        {currentDeck && currentSlide && (
-          <div className="rounded-xl border border-indigo-500/30 bg-gradient-to-r from-slate-900 via-[#0E1726] to-slate-900 p-3.5 text-white space-y-2">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="rounded-md bg-indigo-600 px-2 py-0.5 text-[10px] font-mono font-black uppercase tracking-wider">
-                  SLIDE-STORY · Visual Guide
-                </span>
-                <span className="text-xs font-extrabold truncate">{currentDeck.title}</span>
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <span className="text-[10.5px] font-mono text-indigo-300">
-                  Card {slideIndex + 1}/{slides.length}
-                </span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setSlideIndex((prev) => (prev - 1 + slides.length) % slides.length)
-                  }
-                  className="h-6 w-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center cursor-pointer"
-                  title="Previous Card"
-                >
-                  <ChevronLeft className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSlideIndex((prev) => (prev + 1) % slides.length)}
-                  className="h-6 w-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center cursor-pointer"
-                  title="Next Card"
-                >
-                  <ChevronRight className="h-3.5 w-3.5" />
-                </button>
-                {decks.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDeckIndex((prev) => (prev + 1) % decks.length)
-                      setSlideIndex(0)
-                    }}
-                    className="rounded-md bg-white/10 hover:bg-white/20 px-2 py-0.5 text-[10px] font-bold cursor-pointer"
-                  >
-                    Next Story ({(deckIndex + 1) % decks.length + 1}/{decks.length})
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <div className="rounded-lg bg-white/5 border border-white/10 p-3 space-y-1">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-extrabold text-emerald-300">{currentSlide.heading}</p>
-                <span className="rounded-full bg-emerald-500/20 border border-emerald-400/40 px-2 py-0.5 text-[10px] font-extrabold text-emerald-200">
-                  {currentSlide.metricBadge}
-                </span>
-              </div>
-              <p className="text-xs text-slate-200 leading-relaxed">{currentSlide.body}</p>
-              <p className="text-[10.5px] font-mono text-indigo-300 pt-0.5">
-                Takeaway: {currentSlide.keySpec}
-              </p>
-            </div>
-          </div>
-        )}
+        <button
+          type="button"
+          onClick={() => setIsConsoleOpen(true)}
+          className="rounded-full bg-blue-50 dark:bg-blue-950/50 hover:bg-[#0A66C2] hover:text-white border border-blue-200 dark:border-blue-800 px-3 py-1 text-[11px] font-extrabold text-[#0A66C2] dark:text-sky-300 transition-colors cursor-pointer shrink-0"
+        >
+          ✨ Career &amp; Circle Hub (17 Tools) →
+        </button>
       </div>
 
       {/* Floating Toast Notification */}
@@ -390,44 +388,67 @@ export function ConnectLnSovereignSuiteHub({
         </div>
       )}
 
-      {/* 2. FULL INTERACTIVE CONNECTLN CAREER, KUDOS & CIRCLE HUB MODAL */}
+      {/* UNIFIED 5-TAB MODAL (Holds All 17 Friendly Features With Zero Page Clutter) */}
       {isConsoleOpen && state && (
         <div className="fixed inset-0 z-[85] bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5">
           <div className="w-full max-w-5xl max-h-[90vh] rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-2xl flex flex-col overflow-hidden">
             {/* Modal Header */}
-            <div className="px-5 py-4 bg-gradient-to-r from-[#0A66C2] via-indigo-700 to-slate-900 text-white flex items-center justify-between gap-3">
+            <div className="px-5 py-3.5 bg-gradient-to-r from-[#0A66C2] via-indigo-700 to-slate-900 text-white flex items-center justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="rounded-md bg-white/15 px-2 py-0.5 text-[10px] font-mono font-black uppercase">
-                    CONNECTLN CAREER &amp; COMMUNITY HUB · CLOUD SYNCED
+                    CONNECTLN CAREER &amp; CIRCLE HUB · ALL 17 TOOLS
                   </span>
                   <span className="rounded-full bg-emerald-500/25 border border-emerald-300/40 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-200">
                     {haloMeta.badgeLabel}
                   </span>
+                  {hasGoldVoice && (
+                    <span className="rounded-full bg-amber-400/25 border border-amber-300/50 px-2.5 py-0.5 text-[10px] font-extrabold text-amber-200">
+                      🌟 GOLD-VOICE Contributor
+                    </span>
+                  )}
                 </div>
-                <h2 className="text-lg sm:text-xl font-black mt-1">
-                  ConnectLn Circle, Kudos, Spotlight &amp; Quick-Pitch Hub
+                <h2 className="text-base sm:text-lg font-black mt-0.5">
+                  Your Circle, Kudos, Spotlight, Slide-Stories, Daily-Brain &amp; Quick-Pitch Hub
                 </h2>
               </div>
               <button
                 type="button"
                 onClick={() => setIsConsoleOpen(false)}
-                className="h-9 w-9 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white cursor-pointer"
+                className="h-8 w-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            {/* Sub-Navigation Friendly Tabs */}
-            <div className="px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800/70 border-b border-zinc-200 dark:border-zinc-800 flex items-center gap-1.5 overflow-x-auto">
+            {/* 5 Clean Category Tabs */}
+            <div className="px-4 py-2 bg-zinc-50 dark:bg-zinc-800/70 border-b border-zinc-200 dark:border-zinc-800 flex items-center gap-1.5 overflow-x-auto">
               {[
-                { id: "tvr_halo", label: "1. CIRCLE & #READY Rings", icon: Network },
-                { id: "pvr_wcd", label: "2. KUDOS & PROOF Notes", icon: Award },
-                { id: "prt_radar", label: "3. SPOTLIGHT & COZY Mode", icon: Radar },
-                { id: "ftt_tor", label: "4. QUICK-PITCH & MATCH-BOARD", icon: Kanban },
-                { id: "esh_hubs", label: "5. TEAM-HUBS & FIND-PROS", icon: Building2 },
-                { id: "bdp_edw", label: "6. SLIDE-STORIES & WEEKLY-SPARK", icon: Layers },
-                { id: "bex_exchange", label: "7. HIRE-A-PRO Helper Desk", icon: Briefcase },
+                {
+                  id: "circle_identity",
+                  label: "1. CIRCLE · #READY · SNAP-BADGE · COHORTS",
+                  icon: Network,
+                },
+                {
+                  id: "kudos_spotlight",
+                  label: "2. KUDOS · PROOF · SPOTLIGHT · INSTANT-PING",
+                  icon: Award,
+                },
+                {
+                  id: "stories_wisdom",
+                  label: "3. SLIDE-STORIES · WEEKLY-SPARK · WISDOM-NOTES",
+                  icon: Layers,
+                },
+                {
+                  id: "cheers_brain",
+                  label: "4. CHEERS · LATER-POST · DAILY-BRAIN",
+                  icon: Brain,
+                },
+                {
+                  id: "jobs_teams_boost",
+                  label: "5. QUICK-PITCH · TEAM-HUBS · HIRE-A-PRO · SPOT-BOOST",
+                  icon: Rocket,
+                },
               ].map((t) => {
                 const Icon = t.icon
                 const active = activeTab === t.id
@@ -435,7 +456,7 @@ export function ConnectLnSovereignSuiteHub({
                   <button
                     key={t.id}
                     type="button"
-                    onClick={() => setActiveTab(t.id as SovereignTabId)}
+                    onClick={() => setActiveTab(t.id as HubCategoryTabId)}
                     className={`rounded-xl px-3 py-2 text-xs font-extrabold flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors ${
                       active
                         ? "bg-[#0A66C2] text-white shadow-xs"
@@ -449,658 +470,640 @@ export function ConnectLnSovereignSuiteHub({
               })}
             </div>
 
-            {/* Tab Content Body */}
+            {/* Modal Content Area */}
             <div className="flex-1 overflow-y-auto p-5 space-y-5">
-              {/* TAB 1: CIRCLE, BRIDGES & #READY/#TEAMING/#MENTOR/#FOCUSED Photo Rings */}
-              {activeTab === "tvr_halo" && (
+              {/* TAB 1: CIRCLE, #READY Rings, SNAP-BADGE QR + PDF-BIO, & COHORT-FINDER */}
+              {activeTab === "circle_identity" && (
                 <div className="space-y-4">
-                  <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-800/40 p-4 space-y-3">
-                    <h3 className="text-sm font-black text-zinc-900 dark:text-white">
-                      Friendly Profile Photo Rings (`#READY` · `#TEAMING` · `#MENTOR` · `#FOCUSED`)
-                    </h3>
-                    <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                      Pick the friendly status ring around your profile photo so your circle knows how to collaborate with you:
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-                      {(["AFT", "SCO", "FAC", "LOCK"] as HaloStatusCode[]).map((code) => {
-                        const meta = HALO_STATUS_META[code]
-                        const selected = myHalo === code
-                        return (
-                          <button
-                            key={code}
-                            type="button"
-                            onClick={() => {
-                              setMyHalo(code)
-                              void dispatchAction(
-                                { action: "set_halo", halo: code },
-                                `✓ Activated ${meta.badgeLabel}`
-                              )
-                            }}
-                            className={`rounded-2xl border p-3.5 text-left transition-all cursor-pointer ${
-                              selected
-                                ? "border-[#0A66C2] bg-blue-50/70 dark:bg-blue-950/40 shadow-sm"
-                                : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-zinc-400"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className={`rounded-full px-2.5 py-0.5 text-[10.5px] font-extrabold ${meta.pillBg}`}>
-                                {meta.badgeLabel}
-                              </span>
-                              {selected && <CheckCircle2 className="h-4 w-4 text-[#0A66C2]" />}
-                            </div>
-                            <p className="text-xs font-bold mt-2 text-zinc-900 dark:text-zinc-100">
-                              {meta.fullName}
-                            </p>
-                            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">
-                              {meta.description}
-                            </p>
-                          </button>
-                        )
-                      })}
+                  {/* Top Row: #READY Photo Rings + SNAP-BADGE QR & PDF-BIO */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div className="lg:col-span-2 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-800/40 p-4 space-y-2.5">
+                      <h3 className="text-sm font-black">
+                        Friendly Profile Photo Rings (`#READY` · `#TEAMING` · `#MENTOR` · `#FOCUSED`)
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {(["AFT", "SCO", "FAC", "LOCK"] as HaloStatusCode[]).map((code) => {
+                          const meta = HALO_STATUS_META[code]
+                          const selected = myHalo === code
+                          return (
+                            <button
+                              key={code}
+                              type="button"
+                              onClick={() => {
+                                setMyHalo(code)
+                                void dispatchAction(
+                                  { action: "set_halo", halo: code },
+                                  `✓ Activated ${meta.badgeLabel}`
+                                )
+                              }}
+                              className={`rounded-xl border p-3 text-left transition-all cursor-pointer ${
+                                selected
+                                  ? "border-[#0A66C2] bg-blue-50/70 dark:bg-blue-950/40"
+                                  : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span
+                                  className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold ${meta.pillBg}`}
+                                >
+                                  {meta.badgeLabel}
+                                </span>
+                                {selected && <CheckCircle2 className="h-4 w-4 text-[#0A66C2]" />}
+                              </div>
+                              <p className="text-[11px] text-zinc-500 mt-1.5">{meta.description}</p>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+
+                    {/* SNAP-BADGE QR & PDF-BIO Export */}
+                    <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 flex flex-col items-center justify-between text-center space-y-2.5">
+                      <div>
+                        <span className="rounded bg-blue-100 dark:bg-blue-950/70 px-2 py-0.5 text-[10px] font-mono font-black text-[#0A66C2]">
+                          SNAP-BADGE &amp; PDF-BIO
+                        </span>
+                        <h4 className="text-xs font-black mt-1">In-Person QR Badge &amp; PDF Resume</h4>
+                      </div>
+                      <img
+                        src={qrImageUrl}
+                        alt="ConnectLn SNAP-BADGE QR"
+                        className="h-28 w-28 rounded-xl border border-zinc-200 p-1.5 bg-white"
+                      />
+                      <div className="w-full flex gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard?.writeText(profileShareUrl).catch(() => {})
+                            showToast("✓ Copied your SNAP-BADGE Direct Profile Link!")
+                          }}
+                          className="flex-1 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 py-1.5 text-[11px] font-extrabold cursor-pointer"
+                        >
+                          Copy QR Link
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handlePrintPdfBio}
+                          className="flex-1 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white py-1.5 text-[11px] font-extrabold flex items-center justify-center gap-1 cursor-pointer"
+                        >
+                          <FileDown className="h-3.5 w-3.5" />
+                          <span>Save PDF-BIO</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
 
-                  {/* CIRCLE & BRIDGES Trusted Friends Graph */}
-                  <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-3">
-                    <div>
+                  {/* CIRCLE & BRIDGES + COHORT-FINDER */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-2.5">
                       <h3 className="text-sm font-black">
-                        CIRCLE (1st / 2nd / 3rd Circle) &amp; BRIDGES (Shared Friends Who Can Introduce You)
+                        CIRCLE (1st / 2nd / 3rd Circle) &amp; BRIDGES (Shared Friends)
                       </h3>
-                      <p className="text-xs text-zinc-500">
-                        Shows how closely you are connected to each member and which shared friends (`BRIDGES`) can make a warm introduction.
-                      </p>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {[
-                        {
-                          name: "Esther Boa Asiedu",
-                          role: "Principal Healthcare Operations Lead",
-                          circle: "1st CIRCLE · Direct Friend",
-                          bridges: "14 BRIDGES (Patience Addo, Isaac Boye + 12 shared friends)",
-                          halo: state.haloByUser["esther boa asiedu"] || "AFT",
-                        },
-                        {
-                          name: "Patience Addo",
-                          role: "Director of Enterprise Procurement & Escrow",
-                          circle: "1st CIRCLE · Direct Friend",
-                          bridges: "12 BRIDGES (Esther Boa Asiedu, Adwoa larbi + 10 shared friends)",
-                          halo: state.haloByUser["patience addo"] || "FAC",
-                        },
-                        {
-                          name: "Isaac Boye",
-                          role: "Senior Field Engineering & Infrastructure Lead",
-                          circle: "1st CIRCLE · Direct Friend",
-                          bridges: "11 BRIDGES (Kwesi Asiedu, Marcus Vance + 9 shared friends)",
-                          halo: state.haloByUser["isaac boye"] || "AFT",
-                        },
-                        {
-                          name: "Adwoa larbi",
-                          role: "NHS Acute Care Clinical Specialist",
-                          circle: "1st CIRCLE · Direct Friend",
-                          bridges: "8 BRIDGES (Esther Boa Asiedu, Patience Addo + 6 shared friends)",
-                          halo: state.haloByUser["adwoa larbi"] || "AFT",
-                        },
-                      ].map((op) => {
-                        const hMeta = HALO_STATUS_META[op.halo] || HALO_STATUS_META.AFT
-                        return (
-                          <div
-                            key={op.name}
-                            className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3 flex items-start justify-between gap-3"
-                          >
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-1.5 flex-wrap">
+                      <div className="space-y-2">
+                        {[
+                          {
+                            name: "Esther Boa Asiedu",
+                            role: "Principal Healthcare Operations Lead",
+                            circle: "1st CIRCLE · Direct Friend",
+                            bridges: "14 BRIDGES (Patience Addo, Isaac Boye + 12 others)",
+                            halo: state.haloByUser["esther boa asiedu"] || "AFT",
+                          },
+                          {
+                            name: "Patience Addo",
+                            role: "Director of Enterprise Procurement & Escrow",
+                            circle: "1st CIRCLE · Direct Friend",
+                            bridges: "12 BRIDGES (Esther Boa Asiedu, Adwoa larbi + 10 others)",
+                            halo: state.haloByUser["patience addo"] || "FAC",
+                          },
+                          {
+                            name: "Isaac Boye",
+                            role: "Senior Field Engineering Lead",
+                            circle: "1st CIRCLE · Direct Friend",
+                            bridges: "11 BRIDGES (Kwesi Asiedu, Marcus Vance + 9 others)",
+                            halo: state.haloByUser["isaac boye"] || "AFT",
+                          },
+                        ].map((op) => {
+                          const hMeta = HALO_STATUS_META[op.halo] || HALO_STATUS_META.AFT
+                          return (
+                            <div
+                              key={op.name}
+                              className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-2.5 space-y-1"
+                            >
+                              <div className="flex items-center justify-between">
                                 <span className="font-extrabold text-xs">{op.name}</span>
-                                <span className={`rounded-full px-2 py-0.2 text-[9.5px] font-extrabold ${hMeta.pillBg}`}>
+                                <span
+                                  className={`rounded-full px-2 py-0.2 text-[9.5px] font-extrabold ${hMeta.pillBg}`}
+                                >
                                   {hMeta.badgeLabel}
                                 </span>
                               </div>
-                              <p className="text-[11px] text-zinc-600 dark:text-zinc-400">{op.role}</p>
-                              <div className="flex items-center gap-2 flex-wrap pt-0.5">
-                                <span className="rounded bg-emerald-100 dark:bg-emerald-950/70 px-1.5 py-0.5 text-[10px] font-mono font-bold text-emerald-800 dark:text-emerald-300">
-                                  {op.circle}
-                                </span>
-                                <span className="text-[10.5px] font-semibold text-[#0A66C2] dark:text-sky-400">
-                                  🤝 {op.bridges}
-                                </span>
+                              <p className="text-[11px] text-zinc-500">{op.role}</p>
+                              <p className="text-[10.5px] font-semibold text-[#0A66C2]">
+                                {op.circle} · 🤝 {op.bridges}
+                              </p>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+
+                    {/* COHORT-FINDER (School, Bootcamp & Trade Union Classmates) */}
+                    <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="text-sm font-black flex items-center gap-1.5">
+                          <GraduationCap className="h-4 w-4 text-[#0A66C2]" />
+                          <span>COHORT-FINDER — School &amp; Trade Classmates</span>
+                        </h3>
+                      </div>
+                      <input
+                        type="text"
+                        value={cohortSearch}
+                        onChange={(e) => setCohortSearch(e.target.value)}
+                        placeholder="Filter by school, trade guild, year (2025/2026), or city..."
+                        className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-1.5 text-xs"
+                      />
+                      <div className="space-y-2 max-h-56 overflow-y-auto">
+                        {(state.cohortAlumni || [])
+                          .filter((a) => {
+                            if (!cohortSearch.trim()) return true
+                            const q = cohortSearch.toLowerCase()
+                            return (
+                              a.name.toLowerCase().includes(q) ||
+                              a.program.toLowerCase().includes(q) ||
+                              a.city.toLowerCase().includes(q) ||
+                              a.classYear.includes(q)
+                            )
+                          })
+                          .map((alum) => (
+                            <div
+                              key={alum.id}
+                              className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-2.5 flex items-center justify-between gap-2"
+                            >
+                              <div>
+                                <p className="text-xs font-extrabold">
+                                  {alum.name} · <span className="text-[#0A66C2]">Class of {alum.classYear}</span>
+                                </p>
+                                <p className="text-[11px] text-zinc-500">
+                                  {alum.program} · 📍 {alum.city}
+                                </p>
                               </div>
+                              <span className="rounded-lg bg-emerald-50 dark:bg-emerald-950/60 px-2 py-1 text-[10px] font-extrabold text-emerald-700">
+                                {alum.currentRole}
+                              </span>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 2: KUDOS, PROOF, SPOTLIGHT & INSTANT-PING */}
+              {activeTab === "kudos_spotlight" && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* KUDOS */}
+                    <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-3">
+                      <h3 className="text-sm font-black">KUDOS — Skill Kudos &amp; Vouches</h3>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={newSkillText}
+                          onChange={(e) => setNewSkillText(e.target.value)}
+                          placeholder="Add a skill to receive KUDOS..."
+                          className="flex-1 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-1.5 text-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!newSkillText.trim()) return
+                            void dispatchAction(
+                              { action: "vouch_pvr_skill", customSkill: newSkillText.trim() },
+                              `✓ Added "${newSkillText.trim()}" to KUDOS!`
+                            )
+                            setNewSkillText("")
+                          }}
+                          className="rounded-xl bg-[#0A66C2] text-white px-3 py-1.5 text-xs font-extrabold cursor-pointer"
+                        >
+                          + Add Skill
+                        </button>
+                      </div>
+                      <div className="space-y-2">
+                        {state.pvrSkills.map((sk) => (
+                          <div
+                            key={sk.id}
+                            className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-2.5 flex items-center justify-between gap-2"
+                          >
+                            <div className="min-w-0">
+                              <p className="text-xs font-extrabold">{sk.skill}</p>
+                              <p className="text-[10.5px] text-zinc-500">
+                                Kudos from {sk.vouchers.slice(0, 3).join(", ")}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                void dispatchAction(
+                                  { action: "vouch_pvr_skill", skillId: sk.id },
+                                  `✓ Sent +1 KUDOS for "${sk.skill}"!`
+                                )
+                              }
+                              className="rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 text-xs font-extrabold shrink-0 cursor-pointer"
+                            >
+                              👏 Give Kudos ({sk.vouchCount})
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* PROOF */}
+                    <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-3">
+                      <h3 className="text-sm font-black">PROOF — Real-Work Proof Notes</h3>
+                      <div className="space-y-2 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 p-3 border border-zinc-200 dark:border-zinc-700">
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            type="text"
+                            value={wcdTarget}
+                            onChange={(e) => setWcdTarget(e.target.value)}
+                            placeholder="Teammate's Name"
+                            className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs"
+                          />
+                          <input
+                            type="text"
+                            value={wcdDeliverable}
+                            onChange={(e) => setWcdDeliverable(e.target.value)}
+                            placeholder="Project Delivered Together"
+                            className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs"
+                          />
+                        </div>
+                        <textarea
+                          rows={2}
+                          value={wcdCitation}
+                          onChange={(e) => setWcdCitation(e.target.value)}
+                          placeholder="Write a warm PROOF note..."
+                          className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!wcdDeliverable.trim() || !wcdCitation.trim()) return
+                            void dispatchAction(
+                              {
+                                action: "file_wcd_citation",
+                                targetMember: wcdTarget,
+                                verifiedDeliverable: wcdDeliverable,
+                                citationText: wcdCitation,
+                              },
+                              `✓ Shared a PROOF Note for ${wcdTarget}!`
+                            )
+                            setWcdDeliverable("")
+                            setWcdCitation("")
+                          }}
+                          className="rounded-xl bg-[#0A66C2] text-white px-3.5 py-1.5 text-xs font-extrabold cursor-pointer"
+                        >
+                          Share PROOF Note
+                        </button>
+                      </div>
+                      <div className="space-y-2 max-h-44 overflow-y-auto">
+                        {state.wcdCitations.map((c) => (
+                          <div
+                            key={c.id}
+                            className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-2.5 space-y-1"
+                          >
+                            <p className="text-xs font-extrabold">
+                              {c.verifiedDeliverable} · <span className="text-emerald-700">For {c.targetMember}</span>
+                            </p>
+                            <p className="text-xs text-zinc-600 dark:text-zinc-300 italic">
+                              &ldquo;{c.citationText}&rdquo; — <strong>{c.authorName}</strong>
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SPOTLIGHT + COZY Mode & INSTANT-PING Push Alerts */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="text-sm font-black">SPOTLIGHT Visitors &amp; COZY Mode</h3>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void dispatchAction(
+                              { action: "toggle_stealth_cloak" },
+                              !myStealthCloak ? "✓ COZY Private Mode ON" : "✓ COZY Private Mode OFF"
+                            )
+                          }
+                          className={`rounded-xl px-3 py-1 text-[11px] font-extrabold flex items-center gap-1 cursor-pointer ${
+                            myStealthCloak ? "bg-purple-700 text-white" : "bg-zinc-200 dark:bg-zinc-800"
+                          }`}
+                        >
+                          {myStealthCloak ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                          <span>{myStealthCloak ? "COZY Mode: ON" : "COZY Mode: OFF"}</span>
+                        </button>
+                      </div>
+                      <div className="space-y-1.5">
+                        {state.prtRadarEvents.slice(0, 3).map((ev) => (
+                          <div
+                            key={ev.id}
+                            className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-2.5 flex items-center justify-between text-xs"
+                          >
+                            <div>
+                              <p className="font-extrabold">{ev.viewerName}</p>
+                              <p className="text-[11px] text-zinc-500">{ev.viewerOrg}</p>
+                            </div>
+                            <span className="text-[10.5px] font-mono text-[#0A66C2]">
+                              {ev.timestampLabel}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* INSTANT-PING Mobile & Desktop Push Notification Control */}
+                    <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-black flex items-center gap-1.5">
+                          <Bell className="h-4 w-4 text-[#0A66C2]" />
+                          <span>INSTANT-PING — Real-Time Push Alerts</span>
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (typeof Notification !== "undefined") {
+                              if (Notification.permission === "default") {
+                                await Notification.requestPermission().catch(() => {})
+                              }
+                              if (Notification.permission === "granted") {
+                                new Notification("ConnectLn INSTANT-PING ✓", {
+                                  body: `Real-time push alerts for DMs, KUDOS & Job Matches are active for ${userName}!`,
+                                  icon: "/brand/connectln-icon-192.png",
+                                })
+                              }
+                            }
+                            showToast("🔔 Dispatched live INSTANT-PING notification!")
+                          }}
+                          className="rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 text-[11px] font-extrabold cursor-pointer"
+                        >
+                          🔔 Send Test Ping
+                        </button>
+                      </div>
+                      <p className="text-xs text-zinc-500">
+                        Choose which events wake up your phone &amp; browser in addition to incoming voice/video calls:
+                      </p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {(
+                          [
+                            { id: "dms", label: "💬 New DMs" },
+                            { id: "kudos", label: "👏 New KUDOS" },
+                            { id: "matches", label: "⚡ Job Matches" },
+                          ] as const
+                        ).map((item) => {
+                          const on = myPingPrefs[item.id]
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() =>
+                                void dispatchAction(
+                                  { action: "update_instant_ping", field: item.id },
+                                  `✓ Updated INSTANT-PING for ${item.label}`
+                                )
+                              }
+                              className={`rounded-xl border p-2.5 text-xs font-extrabold cursor-pointer ${
+                                on
+                                  ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300"
+                                  : "border-zinc-200 dark:border-zinc-700 text-zinc-500"
+                              }`}
+                            >
+                              {item.label}: {on ? "ON" : "OFF"}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 3: SLIDE-STORIES, WEEKLY-SPARK & WISDOM-NOTES (GOLD-VOICE) */}
+              {activeTab === "stories_wisdom" && (
+                <div className="space-y-4">
+                  {/* SLIDE-STORIES Swipable Visual Guide Viewer */}
+                  {currentDeck && currentSlide && (
+                    <div className="rounded-2xl border border-indigo-500/30 bg-gradient-to-r from-slate-900 via-[#0E1726] to-slate-900 p-4 text-white space-y-2.5">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="rounded-md bg-indigo-600 px-2 py-0.5 text-[10px] font-mono font-black uppercase">
+                            SLIDE-STORIES
+                          </span>
+                          <span className="text-xs font-extrabold">{currentDeck.title}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[11px] font-mono text-indigo-300">
+                            Card {slideIndex + 1}/{slides.length}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSlideIndex((prev) => (prev - 1 + slides.length) % slides.length)
+                            }
+                            className="h-7 w-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center cursor-pointer"
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSlideIndex((prev) => (prev + 1) % slides.length)}
+                            className="h-7 w-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center cursor-pointer"
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </button>
+                          {decks.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDeckIndex((prev) => (prev + 1) % decks.length)
+                                setSlideIndex(0)
+                              }}
+                              className="rounded-lg bg-white/10 hover:bg-white/20 px-2.5 py-1 text-[10.5px] font-bold cursor-pointer"
+                            >
+                              Switch Deck ({(deckIndex + 1) % decks.length + 1}/{decks.length})
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="rounded-xl bg-white/5 border border-white/10 p-3.5 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-extrabold text-emerald-300">
+                            {currentSlide.heading}
+                          </p>
+                          <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-extrabold text-emerald-200">
+                            {currentSlide.metricBadge}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-200">{currentSlide.body}</p>
+                        <p className="text-[10.5px] font-mono text-indigo-300">
+                          Takeaway: {currentSlide.keySpec}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* WISDOM-NOTES (Collaborative Community Guides + GOLD-VOICE Badge) */}
+                  <div className="rounded-2xl border border-amber-300/70 dark:border-amber-800/60 bg-amber-50/30 dark:bg-amber-950/15 p-4 space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <h3 className="text-sm font-black flex items-center gap-1.5">
+                          <Sparkles className="h-4 w-4 text-amber-600" />
+                          <span>
+                            WISDOM-NOTES — Collaborative Field Guides (Add a Tip to Earn 🌟 GOLD-VOICE)
+                          </span>
+                        </h3>
+                        <p className="text-xs text-zinc-500">
+                          Share your real-world experience on community topics below to automatically unlock the 🌟 GOLD-VOICE badge on your profile.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {(state.wisdomNotes || []).map((note) => {
+                        const draft = wisdomTipByNote[note.id] || ""
+                        return (
+                          <div
+                            key={note.id}
+                            className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3.5 space-y-2"
+                          >
+                            <span className="rounded bg-amber-100 dark:bg-amber-950/70 px-2 py-0.5 text-[10px] font-extrabold text-amber-900 dark:text-amber-300">
+                              WISDOM-NOTE · {note.topic}
+                            </span>
+                            <p className="text-xs font-black">{note.promptQuestion}</p>
+                            <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                              {note.contributions.map((c) => (
+                                <div
+                                  key={c.id}
+                                  className="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 p-2 text-[11px]"
+                                >
+                                  <strong>{c.authorName}</strong> ({c.authorRole}): &ldquo;{c.tipText}&rdquo;
+                                </div>
+                              ))}
+                            </div>
+                            <div className="flex gap-1.5 pt-1">
+                              <input
+                                type="text"
+                                value={draft}
+                                onChange={(e) =>
+                                  setWisdomTipByNote((prev) => ({
+                                    ...prev,
+                                    [note.id]: e.target.value,
+                                  }))
+                                }
+                                placeholder="Add your tip to earn 🌟 GOLD-VOICE..."
+                                className="flex-1 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-2.5 py-1 text-xs"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (!draft.trim()) return
+                                  void dispatchAction(
+                                    {
+                                      action: "add_wisdom_note",
+                                      noteId: note.id,
+                                      tipText: draft.trim(),
+                                    },
+                                    "🌟 Published your WISDOM-NOTE & unlocked the GOLD-VOICE Badge!"
+                                  )
+                                  setWisdomTipByNote((prev) => ({ ...prev, [note.id]: "" }))
+                                }}
+                                className="rounded-lg bg-amber-600 hover:bg-amber-500 text-white px-3 py-1 text-xs font-extrabold cursor-pointer"
+                              >
+                                + Add Tip
+                              </button>
                             </div>
                           </div>
                         )
                       })}
                     </div>
                   </div>
-                </div>
-              )}
 
-              {/* TAB 2: KUDOS (Skill Kudos) & PROOF (Real-Work Proof Notes) */}
-              {activeTab === "pvr_wcd" && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {/* KUDOS Skill Vouches */}
-                  <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-3">
-                    <h3 className="text-sm font-black">
-                      KUDOS — Skill Kudos &amp; Vouches (`+ Give Kudos`)
-                    </h3>
-                    <div className="flex gap-2">
+                  {/* Create SLIDE-STORY & Subscribe to WEEKLY-SPARK */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-2.5">
+                      <h3 className="text-sm font-black">Create a SLIDE-STORY Guide</h3>
                       <input
                         type="text"
-                        value={newSkillText}
-                        onChange={(e) => setNewSkillText(e.target.value)}
-                        placeholder="Add a skill to receive KUDOS on..."
-                        className="flex-1 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-1.5 text-xs"
+                        value={bdpTitle}
+                        onChange={(e) => setBdpTitle(e.target.value)}
+                        placeholder="Slide Story Title..."
+                        className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-1.5 text-xs"
+                      />
+                      <input
+                        type="text"
+                        value={bdpSlide1}
+                        onChange={(e) => setBdpSlide1(e.target.value)}
+                        placeholder="Card 1 Key Insight..."
+                        className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-1.5 text-xs"
+                      />
+                      <input
+                        type="text"
+                        value={bdpSlide2}
+                        onChange={(e) => setBdpSlide2(e.target.value)}
+                        placeholder="Card 2 Action Takeaway..."
+                        className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-1.5 text-xs"
                       />
                       <button
                         type="button"
                         onClick={() => {
-                          if (!newSkillText.trim()) return
-                          void dispatchAction(
-                            { action: "vouch_pvr_skill", customSkill: newSkillText.trim() },
-                            `✓ Added "${newSkillText.trim()}" to your KUDOS Skill List`
-                          )
-                          setNewSkillText("")
-                        }}
-                        className="rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white px-3 py-1.5 text-xs font-extrabold cursor-pointer"
-                      >
-                        + Add Skill
-                      </button>
-                    </div>
-
-                    <div className="space-y-2">
-                      {state.pvrSkills.map((sk) => (
-                        <div
-                          key={sk.id}
-                          className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3 flex items-center justify-between gap-2"
-                        >
-                          <div className="min-w-0">
-                            <p className="text-xs font-extrabold text-zinc-900 dark:text-zinc-100">
-                              {sk.skill}
-                            </p>
-                            <p className="text-[10.5px] text-zinc-500">
-                              {sk.category} · Kudos from {sk.vouchers.slice(0, 3).join(", ")}
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              void dispatchAction(
-                                { action: "vouch_pvr_skill", skillId: sk.id },
-                                `✓ Sent +1 KUDOS for "${sk.skill}"!`
-                              )
-                            }
-                            className="rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 text-xs font-extrabold shrink-0 cursor-pointer"
-                          >
-                            👏 Give Kudos ({sk.vouchCount})
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* PROOF Real-Work Notes */}
-                  <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-3">
-                    <h3 className="text-sm font-black">
-                      PROOF — Real-Work Proof Notes (Written Peer Appreciation)
-                    </h3>
-                    <div className="space-y-2 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 p-3 border border-zinc-200 dark:border-zinc-700">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <input
-                          type="text"
-                          value={wcdTarget}
-                          onChange={(e) => setWcdTarget(e.target.value)}
-                          placeholder="Teammate's Name"
-                          className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs"
-                        />
-                        <input
-                          type="text"
-                          value={wcdDeliverable}
-                          onChange={(e) => setWcdDeliverable(e.target.value)}
-                          placeholder="Project or Great Work Delivered Together"
-                          className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs"
-                        />
-                      </div>
-                      <textarea
-                        rows={2}
-                        value={wcdCitation}
-                        onChange={(e) => setWcdCitation(e.target.value)}
-                        placeholder="Write a warm PROOF note sharing what it was like working together..."
-                        className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (!wcdDeliverable.trim() || !wcdCitation.trim()) return
+                          if (!bdpTitle.trim() || !bdpSlide1.trim()) return
                           void dispatchAction(
                             {
-                              action: "file_wcd_citation",
-                              targetMember: wcdTarget,
-                              verifiedDeliverable: wcdDeliverable,
-                              citationText: wcdCitation,
+                              action: "publish_bdp_deck",
+                              title: bdpTitle,
+                              slide1: bdpSlide1,
+                              slide2: bdpSlide2,
                             },
-                            `✓ Shared a PROOF Note for ${wcdTarget}!`
+                            `✓ Published SLIDE-STORY "${bdpTitle}"!`
                           )
-                          setWcdDeliverable("")
-                          setWcdCitation("")
+                          setBdpTitle("")
+                          setBdpSlide1("")
+                          setBdpSlide2("")
                         }}
-                        className="rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white px-3.5 py-1.5 text-xs font-extrabold cursor-pointer"
+                        className="rounded-xl bg-indigo-600 text-white px-4 py-1.5 text-xs font-extrabold cursor-pointer"
                       >
-                        Share PROOF Note
+                        + Publish SLIDE-STORY
                       </button>
                     </div>
 
-                    <div className="space-y-2 max-h-64 overflow-y-auto">
-                      {state.wcdCitations.map((c) => (
-                        <div
-                          key={c.id}
-                          className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3 space-y-1"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="font-mono text-[10px] font-black text-[#0A66C2] dark:text-sky-400">
-                              PROOF #{c.ticketRef.slice(-4)} · {formatFriendlyCircle(c.authorTvRadius)}
-                            </span>
-                            <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
-                              For: {c.targetMember}
-                            </span>
-                          </div>
-                          <p className="text-xs font-extrabold">{c.verifiedDeliverable}</p>
-                          <p className="text-xs text-zinc-600 dark:text-zinc-300 italic">
-                            &ldquo;{c.citationText}&rdquo;
-                          </p>
-                          <p className="text-[10.5px] text-zinc-500">
-                            Written by <strong>{c.authorName}</strong> ({c.authorHeadline})
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 3: SPOTLIGHT (Who Visited Your Profile) & COZY Mode (Quiet Browsing) */}
-              {activeTab === "prt_radar" && (
-                <div className="space-y-4">
-                  <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-800/40 p-4 flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <h3 className="text-sm font-black">
-                        SPOTLIGHT — Who Visited Your Profile &amp; COZY Mode (Browse Quietly)
-                      </h3>
-                      <p className="text-xs text-zinc-500">
-                        See the friendly faces and teams who checked out your profile, or turn on COZY Mode whenever you want to browse privately.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        void dispatchAction(
-                          { action: "toggle_stealth_cloak" },
-                          !myStealthCloak
-                            ? "✓ COZY Mode Turned On (You can now browse profiles privately)"
-                            : "✓ COZY Mode Turned Off (Visitors can see when you say hello)"
-                        )
-                      }
-                      className={`rounded-xl px-3.5 py-2 text-xs font-extrabold flex items-center gap-1.5 cursor-pointer ${
-                        myStealthCloak
-                          ? "bg-purple-700 text-white"
-                          : "bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200"
-                      }`}
-                    >
-                      {myStealthCloak ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      <span>
-                        {myStealthCloak ? "COZY Private Mode: ON" : "Turn On COZY Private Mode"}
-                      </span>
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {state.prtRadarEvents.map((ev) => (
-                      <div
-                        key={ev.id}
-                        className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3.5 space-y-1.5"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="rounded bg-blue-100 dark:bg-blue-950/70 px-2 py-0.5 text-[10px] font-mono font-extrabold text-[#0A66C2] dark:text-sky-300">
-                            Found you via: {ev.entryVector.replace("TVR Graph Bridge", "Shared Friend Bridge")}
-                          </span>
-                          <span className="text-[10.5px] font-mono text-zinc-400">
-                            {ev.timestampLabel}
-                          </span>
-                        </div>
-                        <p className="text-xs font-extrabold">{ev.viewerName}</p>
-                        <p className="text-[11px] text-zinc-500">{ev.viewerHeadline}</p>
-                        <div className="flex items-center justify-between pt-1 text-[10.5px] font-bold text-emerald-700 dark:text-emerald-400">
-                          <span>{ev.viewerOrg}</span>
-                          <span>
-                            {formatFriendlyCircle(ev.tvrLevel)} · {ev.sharedBridgeNodes} Bridges
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 4: QUICK-PITCH (1-Tap Apply) & MATCH-BOARD (Friendly Hiring Progress Board) */}
-              {activeTab === "ftt_tor" && (
-                <div className="space-y-4">
-                  <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-800/40 p-4 space-y-2.5">
-                    <h3 className="text-sm font-black">
-                      QUICK-PITCH (1-Tap Apply) &amp; MATCH-BOARD (Live Hiring Progress)
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      <input
-                        type="text"
-                        value={fttTitle}
-                        onChange={(e) => setFttTitle(e.target.value)}
-                        placeholder="Role or Project You Want to Pitch For..."
-                        className="flex-1 min-w-[220px] rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs"
-                      />
-                      <input
-                        type="text"
-                        value={fttEnterprise}
-                        onChange={(e) => setFttEnterprise(e.target.value)}
-                        placeholder="Team or Company Name"
-                        className="w-60 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          void dispatchAction(
-                            {
-                              action: "file_ftt_ticket",
-                              ticketTitle: fttTitle || "Principal Cloud & Systems Lead",
-                              enterpriseName: fttEnterprise,
-                            },
-                            "✓ Sent 1-Tap QUICK-PITCH with your Profile, KUDOS & Verified Phone!"
-                          )
-                          setFttTitle("")
-                        }}
-                        className="rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-1.5 text-xs font-extrabold cursor-pointer"
-                      >
-                        ⚡ 1-Tap QUICK-PITCH
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* 4-Stage Friendly MATCH-BOARD */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    {(
-                      [
-                        { raw: "Ticket Filed", label: "1. Pitched 👋" },
-                        { raw: "Dossier Vetted", label: "2. Reviewed ✨" },
-                        { raw: "Technical Trial", label: "3. Team Chat 💬" },
-                        { raw: "Ticket Awarded", label: "4. Welcomed / Hired 🎉" },
-                      ] as const
-                    ).map((stageObj) => {
-                      const items = state.torPipeline.filter((c) => c.stage === stageObj.raw)
-                      return (
-                        <div
-                          key={stageObj.raw}
-                          className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/30 p-3 space-y-2.5"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-black tracking-wide">
-                              {stageObj.label}
-                            </span>
-                            <span className="rounded-full bg-[#0A66C2] text-white px-2 py-0.2 text-[10px] font-black">
-                              {items.length}
-                            </span>
-                          </div>
-                          {items.map((item) => (
-                            <div
-                              key={item.id}
-                              className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-3 space-y-1.5 shadow-2xs"
-                            >
-                              <div className="flex items-center justify-between">
-                                <span className="font-mono text-[10px] font-black text-[#0A66C2]">
-                                  Match {item.pvrScore}% · KUDOS Verified
-                                </span>
-                                <span className="text-[10px] font-bold text-emerald-700">
-                                  1st Circle
-                                </span>
-                              </div>
-                              <p className="text-xs font-extrabold">{item.ticketTitle}</p>
-                              <p className="text-[11px] text-zinc-500">{item.enterpriseName}</p>
-                              <p className="text-[11px] font-bold text-zinc-800 dark:text-zinc-200">
-                                👤 {item.candidateName} ({item.candidatePhone})
-                              </p>
-                              <p className="text-[10.5px] font-semibold text-emerald-700 dark:text-emerald-400">
-                                {item.CompensationBand}
-                              </p>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  void dispatchAction(
-                                    { action: "advance_tor_stage", candidateId: item.id },
-                                    `✓ Moved ${item.candidateName} forward on the MATCH-BOARD!`
-                                  )
-                                }
-                                className="w-full rounded-lg bg-zinc-100 hover:bg-[#0A66C2] hover:text-white dark:bg-zinc-800 px-2.5 py-1 text-[10.5px] font-extrabold transition-colors cursor-pointer"
-                              >
-                                Move to Next Step →
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 5: TEAM-HUBS (Company Pages) & FIND-PROS (Smart People Filter) */}
-              {activeTab === "esh_hubs" && (
-                <div className="space-y-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-800/40 p-3.5">
-                    <div>
-                      <h3 className="text-sm font-black">
-                        TEAM-HUBS (Company &amp; Community Hubs) &amp; FIND-PROS Filter
-                      </h3>
-                      <p className="text-xs text-zinc-500">
-                        Explore verified teams, see people who work there, and filter members by Circle or Photo Ring.
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <select
-                        value={totFilterTvr}
-                        onChange={(e) => setTotFilterTvr(e.target.value)}
-                        className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs font-bold"
-                      >
-                        <option value="ALL">All Circles</option>
-                        <option value="TVR-L1">1st Circle (Direct Friends)</option>
-                        <option value="TVR-L2">2nd Circle (Warm Intro)</option>
-                      </select>
-                      <select
-                        value={totFilterHalo}
-                        onChange={(e) => setTotFilterHalo(e.target.value)}
-                        className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs font-bold"
-                      >
-                        <option value="ALL">All Photo Rings</option>
-                        <option value="AFT">#READY (Open for Work)</option>
-                        <option value="SCO">#TEAMING (Hiring)</option>
-                        <option value="FAC">#MENTOR (Advising)</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-                    {state.eshEnterprises.map((hub) => {
-                      const isSub = hub.subscribers.includes(userName)
-                      const filteredOps = hub.featuredOperators.filter(
-                        (op) =>
-                          (totFilterTvr === "ALL" || op.tvr === totFilterTvr) &&
-                          (totFilterHalo === "ALL" || op.halo === totFilterHalo)
-                      )
-                      return (
-                        <div
-                          key={hub.id}
-                          className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-2.5 flex flex-col justify-between"
-                        >
-                          <div className="space-y-1.5">
-                            <div className="flex items-center justify-between">
-                              <span className="rounded bg-indigo-100 dark:bg-indigo-950/70 px-2 py-0.5 text-[10px] font-mono font-black text-indigo-800 dark:text-indigo-300">
-                                TEAM-HUB
-                              </span>
-                              <span className="text-[11px] font-extrabold text-emerald-700">
-                                Community Rating: {hub.trustIndexScore}%
-                              </span>
-                            </div>
-                            <h4 className="text-sm font-black">{hub.name}</h4>
-                            <p className="text-[11px] text-zinc-500">{hub.sector}</p>
-                            <p className="text-xs text-zinc-700 dark:text-zinc-300 italic">
-                              {hub.tagline}
-                            </p>
-                            <div className="pt-1 flex items-center gap-3 text-[11px] font-bold text-[#0A66C2]">
-                              <span>👥 {hub.verifiedOperatorsCount} Members</span>
-                              <span>⚡ {hub.openFttTicketsCount} Open Roles</span>
-                            </div>
-
-                            <div className="pt-2 space-y-1 border-t border-zinc-100 dark:border-zinc-800">
-                              <p className="text-[10px] font-extrabold uppercase text-zinc-400">
-                                FIND-PROS Matches ({filteredOps.length}):
-                              </p>
-                              {filteredOps.map((op) => {
-                                const hMeta = HALO_STATUS_META[op.halo] || HALO_STATUS_META.AFT
-                                return (
-                                  <div
-                                    key={op.name}
-                                    className="flex items-center justify-between text-[11px]"
-                                  >
-                                    <span className="font-bold">
-                                      {op.name} · {op.role}
-                                    </span>
-                                    <span className="font-mono text-[10px] text-emerald-700">
-                                      {hMeta.friendlyCode}
-                                    </span>
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              void dispatchAction(
-                                { action: "toggle_esh_subscribe", eshId: hub.id },
-                                isSub
-                                  ? `Unfollowed ${hub.name}`
-                                  : `✓ Joined ${hub.name} TEAM-HUB!`
-                              )
-                            }
-                            className={`w-full rounded-xl py-2 text-xs font-extrabold cursor-pointer ${
-                              isSub
-                                ? "bg-emerald-600 text-white"
-                                : "bg-[#0A66C2] hover:bg-[#004182] text-white"
-                            }`}
-                          >
-                            {isSub
-                              ? `✓ Following Team (${hub.subscribers.length})`
-                              : `+ Follow TEAM-HUB (${hub.subscribers.length})`}
-                          </button>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 6: SLIDE-STORIES (Swipable Carousels) & WEEKLY-SPARK (Creator Newsletters) */}
-              {activeTab === "bdp_edw" && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {/* SLIDE-STORIES Publisher */}
-                  <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-3">
-                    <h3 className="text-sm font-black">
-                      SLIDE-STORIES — Create a Swipable Visual Guide
-                    </h3>
-                    <input
-                      type="text"
-                      value={bdpTitle}
-                      onChange={(e) => setBdpTitle(e.target.value)}
-                      placeholder="Slide Story Title (e.g., 3 Steps to Faster Field Estimates)..."
-                      className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-1.5 text-xs"
-                    />
-                    <textarea
-                      rows={2}
-                      value={bdpSlide1}
-                      onChange={(e) => setBdpSlide1(e.target.value)}
-                      placeholder="Card 1 Tip or Key Insight..."
-                      className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-1.5 text-xs"
-                    />
-                    <textarea
-                      rows={2}
-                      value={bdpSlide2}
-                      onChange={(e) => setBdpSlide2(e.target.value)}
-                      placeholder="Card 2 Action Step or Takeaway..."
-                      className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-1.5 text-xs"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!bdpTitle.trim() || !bdpSlide1.trim()) return
-                        void dispatchAction(
-                          {
-                            action: "publish_bdp_deck",
-                            title: bdpTitle,
-                            slide1: bdpSlide1,
-                            slide2: bdpSlide2,
-                          },
-                          `✓ Published SLIDE-STORY "${bdpTitle}" to the Home Feed!`
-                        )
-                        setBdpTitle("")
-                        setBdpSlide1("")
-                        setBdpSlide2("")
-                        setDeckIndex(0)
-                        setSlideIndex(0)
-                      }}
-                      className="rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 text-xs font-extrabold cursor-pointer"
-                    >
-                      + Publish SLIDE-STORY
-                    </button>
-                  </div>
-
-                  {/* WEEKLY-SPARK Digest Subscriptions */}
-                  <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-3">
-                    <h3 className="text-sm font-black">
-                      WEEKLY-SPARK — Friendly Creator Digests &amp; Series
-                    </h3>
-                    <div className="space-y-2.5">
+                    <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-2.5">
+                      <h3 className="text-sm font-black">WEEKLY-SPARK Creator Digests</h3>
                       {state.edwDispatches.map((wire) => {
                         const isSub = wire.subscribedBy.includes(userName)
                         return (
                           <div
                             key={wire.id}
-                            className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3.5 space-y-1.5"
+                            className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3 flex items-center justify-between gap-2"
                           >
-                            <div className="flex items-center justify-between">
-                              <span className="font-mono text-[10px] font-black text-[#0A66C2]">
-                                WEEKLY-SPARK · {wire.cadence}
-                              </span>
-                              <span className="text-[10.5px] font-bold text-zinc-500">
-                                {wire.subscribersCount.toLocaleString()} Readers
-                              </span>
+                            <div className="min-w-0">
+                              <p className="text-xs font-black truncate">{wire.title}</p>
+                              <p className="text-[11px] text-zinc-500">
+                                {wire.cadence} · {wire.subscribersCount.toLocaleString()} Readers
+                              </p>
                             </div>
-                            <h4 className="text-xs font-black">{wire.title}</h4>
-                            <p className="text-[11px] text-zinc-600 dark:text-zinc-300">
-                              {wire.summary}
-                            </p>
-                            <p className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
-                              ✨ {wire.latestIssueHeadline} ({wire.publishedAtLabel})
-                            </p>
                             <button
                               type="button"
                               onClick={() =>
                                 void dispatchAction(
                                   { action: "toggle_edw_subscribe", edwId: wire.id },
-                                  isSub
-                                    ? `Unsubscribed from ${wire.title}`
-                                    : `✓ Subscribed to WEEKLY-SPARK: ${wire.title}!`
+                                  isSub ? "Unsubscribed" : `✓ Subscribed to ${wire.title}!`
                                 )
                               }
-                              className={`rounded-lg px-3 py-1 text-[11px] font-extrabold cursor-pointer ${
-                                isSub
-                                  ? "bg-emerald-600 text-white"
-                                  : "bg-[#0A66C2] text-white"
+                              className={`rounded-xl px-3 py-1.5 text-[11px] font-extrabold shrink-0 cursor-pointer ${
+                                isSub ? "bg-emerald-600 text-white" : "bg-[#0A66C2] text-white"
                               }`}
                             >
-                              {isSub ? "✓ Subscribed to SPARK" : "+ Subscribe to WEEKLY-SPARK"}
+                              {isSub ? "✓ Subscribed" : "+ Subscribe"}
                             </button>
                           </div>
                         )
@@ -1110,92 +1113,361 @@ export function ConnectLnSovereignSuiteHub({
                 </div>
               )}
 
-              {/* TAB 7: HIRE-A-PRO (Direct Project & Helper Desk) */}
-              {activeTab === "bex_exchange" && (
-                <div className="space-y-3">
-                  <div>
-                    <h3 className="text-sm font-black">
-                      HIRE-A-PRO — Direct Project &amp; Expert Helper Desk
-                    </h3>
-                    <p className="text-xs text-zinc-500">
-                      Book verified ConnectLn pros directly for projects, consultations, or hands-on help.
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-                    {state.bexExperts.map((ex) => {
-                      const hMeta = HALO_STATUS_META[ex.halo] || HALO_STATUS_META.AFT
-                      const scopeText = rfpScopeByExpert[ex.id] || ""
-                      return (
-                        <div
-                          key={ex.id}
-                          className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-2.5 flex flex-col justify-between"
-                        >
-                          <div className="space-y-1.5">
-                            <div className="flex items-center justify-between">
-                              <span className="font-mono text-[10px] font-black text-[#0A66C2]">
-                                PRO · {formatFriendlyCircle(ex.tvrLevel)}
+              {/* TAB 4: CHEERS Milestones, LATER-POST Scheduler & DAILY-BRAIN 60s Challenge */}
+              {activeTab === "cheers_brain" && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* CHEERS Milestone Celebrations */}
+                    <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-3">
+                      <h3 className="text-sm font-black flex items-center gap-1.5">
+                        <PartyPopper className="h-4 w-4 text-amber-500" />
+                        <span>CHEERS — Celebrate Circle Milestones &amp; Work Wins</span>
+                      </h3>
+                      <div className="space-y-2">
+                        {(state.cheersMilestones || []).map((ch) => (
+                          <div
+                            key={ch.id}
+                            className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3 flex items-center justify-between gap-2"
+                          >
+                            <div>
+                              <span className="rounded bg-amber-100 dark:bg-amber-950/70 px-2 py-0.5 text-[10px] font-extrabold text-amber-800 dark:text-amber-300">
+                                {ch.milestoneType}
                               </span>
-                              <span className={`rounded-full px-2 py-0.2 text-[9.5px] font-extrabold ${hMeta.pillBg}`}>
-                                {hMeta.badgeLabel}
-                              </span>
+                              <p className="text-xs font-extrabold mt-1">{ch.memberName}</p>
+                              <p className="text-[11px] text-zinc-600 dark:text-zinc-300">
+                                {ch.title}
+                              </p>
                             </div>
-                            <h4 className="text-sm font-black">{ex.expertName}</h4>
-                            <p className="text-[11px] text-zinc-500">{ex.expertHeadline}</p>
-                            <p className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
-                              {ex.specialty}
-                            </p>
-                            <p className="text-[11px] font-extrabold text-emerald-700 dark:text-emerald-400">
-                              {ex.rateBand}
-                            </p>
-                            <p className="text-[10.5px] text-zinc-500">
-                              ✓ {ex.completedTickets} Projects Completed · {ex.pvrVouches} KUDOS ·{" "}
-                              {ex.sharedBridgeNodes} Shared Friends
-                            </p>
-                            {ex.rfpInquiries.length > 0 && (
-                              <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-2 text-[10.5px]">
-                                <strong>Latest Project Request:</strong>{" "}
-                                {ex.rfpInquiries[0].projectScope} (from {ex.rfpInquiries[0].clientName})
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="space-y-1.5 pt-2 border-t border-zinc-100 dark:border-zinc-800">
-                            <input
-                              type="text"
-                              value={scopeText}
-                              onChange={(e) =>
-                                setRfpScopeByExpert((prev) => ({
-                                  ...prev,
-                                  [ex.id]: e.target.value,
-                                }))
-                              }
-                              placeholder="Describe how they can help..."
-                              className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-2.5 py-1.5 text-xs"
-                            />
                             <button
                               type="button"
-                              onClick={() => {
-                                const scope =
-                                  scopeText.trim() ||
-                                  `Project & Consultation Request for ${ex.expertName}`
+                              onClick={() =>
+                                void dispatchAction(
+                                  { action: "send_cheers", cheersId: ch.id },
+                                  `🎉 Sent CHEERS to ${ch.memberName}!`
+                                )
+                              }
+                              className="rounded-xl bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 text-xs font-extrabold shrink-0 cursor-pointer"
+                            >
+                              🎉 Cheers ({ch.cheersCount})
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* LATER-POST Scheduler */}
+                    <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-3">
+                      <h3 className="text-sm font-black flex items-center gap-1.5">
+                        <CalendarClock className="h-4 w-4 text-[#0A66C2]" />
+                        <span>LATER-POST — Schedule Posts Ahead of Time</span>
+                      </h3>
+                      <textarea
+                        rows={2}
+                        value={laterPostContent}
+                        onChange={(e) => setLaterPostContent(e.target.value)}
+                        placeholder="Write a post or update to schedule for later..."
+                        className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-1.5 text-xs"
+                      />
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={laterPostWhen}
+                          onChange={(e) => setLaterPostWhen(e.target.value)}
+                          placeholder="When (e.g., Tomorrow · 9:00 AM)"
+                          className="flex-1 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-1.5 text-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!laterPostContent.trim()) return
+                            void dispatchAction(
+                              {
+                                action: "schedule_later_post",
+                                content: laterPostContent.trim(),
+                                scheduledForLabel: laterPostWhen,
+                              },
+                              `✓ Scheduled LATER-POST for ${laterPostWhen}!`
+                            )
+                            setLaterPostContent("")
+                          }}
+                          className="rounded-xl bg-[#0A66C2] text-white px-4 py-1.5 text-xs font-extrabold cursor-pointer"
+                        >
+                          Schedule Post
+                        </button>
+                      </div>
+                      <div className="space-y-1.5">
+                        {(state.laterPosts || []).map((lp) => (
+                          <div
+                            key={lp.id}
+                            className="rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 p-2.5 text-xs"
+                          >
+                            <div className="flex items-center justify-between font-bold text-[#0A66C2]">
+                              <span>⏰ {lp.scheduledForLabel}</span>
+                              <span>{lp.status}</span>
+                            </div>
+                            <p className="text-zinc-700 dark:text-zinc-300 mt-1">{lp.content}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* DAILY-BRAIN 60-Second Trivia & Circle Streak Leaderboard */}
+                  <div className="rounded-2xl border border-emerald-500/40 bg-emerald-50/30 dark:bg-emerald-950/15 p-4 space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h3 className="text-sm font-black flex items-center gap-1.5">
+                        <Brain className="h-4 w-4 text-emerald-600" />
+                        <span>
+                          DAILY-BRAIN — 60-Second Skill &amp; Logic Challenge (🔥 {myStreak}-Day Streak)
+                        </span>
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBrainQuestionIdx((prev) => (prev + 1) % DAILY_BRAIN_QUESTIONS.length)
+                          setSelectedBrainOption(null)
+                        }}
+                        className="rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2.5 py-1 text-[11px] font-bold cursor-pointer"
+                      >
+                        Next Question →
+                      </button>
+                    </div>
+
+                    {(() => {
+                      const qObj = DAILY_BRAIN_QUESTIONS[brainQuestionIdx]
+                      return (
+                        <div className="space-y-2">
+                          <p className="text-xs font-extrabold">{qObj.q}</p>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            {qObj.options.map((opt, idx) => {
+                              const picked = selectedBrainOption === idx
+                              const isCorrect = idx === qObj.correctIdx
+                              return (
+                                <button
+                                  key={opt}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedBrainOption(idx)
+                                    if (isCorrect) {
+                                      void dispatchAction(
+                                        { action: "solve_daily_brain" },
+                                        `🧠 Correct! Your DAILY-BRAIN streak is now ${myStreak + 1} days!`
+                                      )
+                                    }
+                                  }}
+                                  className={`rounded-xl border p-2.5 text-left text-xs font-bold cursor-pointer transition-all ${
+                                    picked
+                                      ? isCorrect
+                                        ? "border-emerald-600 bg-emerald-600 text-white"
+                                        : "border-rose-500 bg-rose-50 text-rose-800"
+                                      : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-[#0A66C2]"
+                                  }`}
+                                >
+                                  {opt}
+                                </button>
+                              )
+                            })}
+                          </div>
+                          {selectedBrainOption !== null && (
+                            <p className="text-xs font-bold text-emerald-800 dark:text-emerald-300 pt-1">
+                              {qObj.explanation}
+                            </p>
+                          )}
+                        </div>
+                      )
+                    })()}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 5: QUICK-PITCH, MATCH-BOARD, TEAM-HUBS, HIRE-A-PRO & SPOT-BOOST */}
+              {activeTab === "jobs_teams_boost" && (
+                <div className="space-y-5">
+                  {/* QUICK-PITCH & MATCH-BOARD */}
+                  <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h3 className="text-sm font-black">
+                        QUICK-PITCH (1-Tap Apply) &amp; MATCH-BOARD
+                      </h3>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={fttTitle}
+                          onChange={(e) => setFttTitle(e.target.value)}
+                          placeholder="Role to Quick-Pitch..."
+                          className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-1 text-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void dispatchAction(
+                              {
+                                action: "file_ftt_ticket",
+                                ticketTitle: fttTitle || "Principal Cloud & Systems Lead",
+                                enterpriseName: fttEnterprise,
+                              },
+                              "✓ Sent 1-Tap QUICK-PITCH!"
+                            )
+                            setFttTitle("")
+                          }}
+                          className="rounded-xl bg-emerald-600 text-white px-3.5 py-1 text-xs font-extrabold cursor-pointer"
+                        >
+                          ⚡ 1-Tap QUICK-PITCH
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                      {(
+                        [
+                          { raw: "Ticket Filed", label: "1. Pitched 👋" },
+                          { raw: "Dossier Vetted", label: "2. Reviewed ✨" },
+                          { raw: "Technical Trial", label: "3. Team Chat 💬" },
+                          { raw: "Ticket Awarded", label: "4. Hired 🎉" },
+                        ] as const
+                      ).map((stageObj) => {
+                        const items = state.torPipeline.filter((c) => c.stage === stageObj.raw)
+                        return (
+                          <div
+                            key={stageObj.raw}
+                            className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/30 p-2.5 space-y-2"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-black">{stageObj.label}</span>
+                              <span className="rounded-full bg-[#0A66C2] text-white px-2 text-[10px] font-black">
+                                {items.length}
+                              </span>
+                            </div>
+                            {items.map((item) => (
+                              <div
+                                key={item.id}
+                                className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-2.5 space-y-1"
+                              >
+                                <p className="text-xs font-extrabold">{item.ticketTitle}</p>
+                                <p className="text-[11px] text-zinc-500">
+                                  👤 {item.candidateName} · {item.CompensationBand}
+                                </p>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    void dispatchAction(
+                                      { action: "advance_tor_stage", candidateId: item.id },
+                                      `✓ Moved ${item.candidateName} to next step!`
+                                    )
+                                  }
+                                  className="w-full rounded bg-zinc-100 hover:bg-[#0A66C2] hover:text-white dark:bg-zinc-800 py-1 text-[10px] font-extrabold cursor-pointer"
+                                >
+                                  Next Step →
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* TEAM-HUBS, HIRE-A-PRO & SPOT-BOOST */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* HIRE-A-PRO */}
+                    <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-2.5">
+                      <h3 className="text-sm font-black">HIRE-A-PRO — Direct Project Helper Desk</h3>
+                      <div className="space-y-2">
+                        {state.bexExperts.slice(0, 2).map((ex) => (
+                          <div
+                            key={ex.id}
+                            className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3 flex items-center justify-between gap-2"
+                          >
+                            <div>
+                              <p className="text-xs font-extrabold">{ex.expertName}</p>
+                              <p className="text-[11px] text-zinc-500">
+                                {ex.specialty} · <strong className="text-emerald-700">{ex.rateBand}</strong>
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() =>
                                 void dispatchAction(
                                   {
                                     action: "commission_bex_expert",
                                     bexId: ex.id,
-                                    projectScope: scope,
+                                    projectScope: `Direct Project Request for ${ex.expertName}`,
                                   },
                                   `✓ Sent HIRE-A-PRO Request to ${ex.expertName}!`
                                 )
-                                setRfpScopeByExpert((prev) => ({ ...prev, [ex.id]: "" }))
-                              }}
-                              className="w-full rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white py-1.5 text-xs font-extrabold cursor-pointer"
+                              }
+                              className="rounded-xl bg-[#0A66C2] text-white px-3 py-1.5 text-xs font-extrabold shrink-0 cursor-pointer"
                             >
-                              🤝 Request Help from {ex.expertName.split(" ")[0]}
+                              🤝 Request Help
                             </button>
                           </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* SPOT-BOOST (Promote a Post or Job by Profession & City) */}
+                    <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-2.5">
+                      <h3 className="text-sm font-black flex items-center gap-1.5">
+                        <Rocket className="h-4 w-4 text-[#0A66C2]" />
+                        <span>SPOT-BOOST — Promote a Post or Job to Target Cities</span>
+                      </h3>
+                      <input
+                        type="text"
+                        value={boostTitle}
+                        onChange={(e) => setBoostTitle(e.target.value)}
+                        placeholder="Post or Job Title to Boost..."
+                        className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-1.5 text-xs"
+                      />
+                      <div className="grid grid-cols-3 gap-2">
+                        <input
+                          type="text"
+                          value={boostProfession}
+                          onChange={(e) => setBoostProfession(e.target.value)}
+                          placeholder="Professions"
+                          className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-2 py-1 text-xs"
+                        />
+                        <input
+                          type="text"
+                          value={boostCity}
+                          onChange={(e) => setBoostCity(e.target.value)}
+                          placeholder="Target Cities"
+                          className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-2 py-1 text-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void dispatchAction(
+                              {
+                                action: "create_spot_boost",
+                                title: boostTitle || "Featured ConnectLn Team Opportunity",
+                                targetProfession: boostProfession,
+                                targetCity: boostCity,
+                                dailyBudget: boostBudget,
+                              },
+                              "🚀 Launched SPOT-BOOST Campaign!"
+                            )
+                            setBoostTitle("")
+                          }}
+                          className="rounded-lg bg-emerald-600 text-white px-2 py-1 text-xs font-extrabold cursor-pointer"
+                        >
+                          🚀 Launch Boost
+                        </button>
+                      </div>
+                      {(state.spotBoosts || []).slice(0, 2).map((sb) => (
+                        <div
+                          key={sb.id}
+                          className="rounded-xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 p-2.5 text-xs"
+                        >
+                          <div className="flex items-center justify-between font-extrabold">
+                            <span>🚀 {sb.title}</span>
+                            <span className="text-emerald-700">{sb.dailyBudget}</span>
+                          </div>
+                          <p className="text-[11px] text-zinc-500">
+                            Target: {sb.targetProfession} · 📍 {sb.targetCity} ({sb.estimatedReach})
+                          </p>
                         </div>
-                      )
-                    })}
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
@@ -1203,6 +1475,6 @@ export function ConnectLnSovereignSuiteHub({
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }

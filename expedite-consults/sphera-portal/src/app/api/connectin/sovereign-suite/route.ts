@@ -122,6 +122,58 @@ export interface BountyExpertExchangeItem {
   }>
 }
 
+export interface WisdomNoteItem {
+  id: string
+  topic: string
+  promptQuestion: string
+  contributions: Array<{
+    id: string
+    authorName: string
+    authorRole: string
+    tipText: string
+    helpfulCount: number
+  }>
+}
+
+export interface CheersMilestoneItem {
+  id: string
+  memberName: string
+  memberHeadline: string
+  milestoneType: "Work Anniversary" | "New Certification" | "Project Launch" | "New Team Role"
+  title: string
+  cheersCount: number
+  cheeredBy: string[]
+}
+
+export interface LaterPostItem {
+  id: string
+  authorName: string
+  content: string
+  scheduledForLabel: string
+  status: "Scheduled" | "Published"
+}
+
+export interface CohortAlumniItem {
+  id: string
+  name: string
+  program: string
+  classYear: string
+  city: string
+  currentRole: string
+  halo: HaloStatusCode
+}
+
+export interface SpotBoostCampaign {
+  id: string
+  ownerName: string
+  title: string
+  targetProfession: string
+  targetCity: string
+  dailyBudget: string
+  estimatedReach: string
+  status: "Active Boost"
+}
+
 export interface SovereignSuiteCloudState {
   haloByUser: Record<string, HaloStatusCode>
   stealthCloakByUser: Record<string, boolean>
@@ -133,6 +185,14 @@ export interface SovereignSuiteCloudState {
   bdpDecks: BlueprintDeckCarouselItem[]
   edwDispatches: ExecutiveDispatchWireItem[]
   bexExperts: BountyExpertExchangeItem[]
+  wisdomNotes: WisdomNoteItem[]
+  goldVoiceMembers: string[]
+  cheersMilestones: CheersMilestoneItem[]
+  laterPosts: LaterPostItem[]
+  cohortAlumni: CohortAlumniItem[]
+  dailyBrainStreaks: Record<string, number>
+  spotBoosts: SpotBoostCampaign[]
+  instantPingByUser: Record<string, { dms: boolean; kudos: boolean; matches: boolean }>
 }
 
 const DEFAULT_STATE: SovereignSuiteCloudState = {
@@ -488,6 +548,140 @@ const DEFAULT_STATE: SovereignSuiteCloudState = {
       rfpInquiries: [],
     },
   ],
+  wisdomNotes: [
+    {
+      id: "wn-1",
+      topic: "Zero-Rework Field & Cloud Handoffs",
+      promptQuestion: "What is your #1 rule for keeping multi-team projects on schedule without costly rework?",
+      contributions: [
+        {
+          id: "wnc-1",
+          authorName: "Kwesi Asiedu",
+          authorRole: "Chief Architect",
+          tipText: "Verify every dependency and mobile contact point upfront with a live 2-minute video check before work starts.",
+          helpfulCount: 34,
+        },
+        {
+          id: "wnc-2",
+          authorName: "Isaac Boye",
+          authorRole: "Senior Field Engineering Lead",
+          tipText: "Always benchmark laser elevations and snap photos of rough-in clearances before closing any wall or trench.",
+          helpfulCount: 27,
+        },
+      ],
+    },
+    {
+      id: "wn-2",
+      topic: "Rapid Clinical & Shift Handoff Excellence",
+      promptQuestion: "How do you prevent critical details from being lost during busy shift transitions?",
+      contributions: [
+        {
+          id: "wnc-3",
+          authorName: "Esther Boa Asiedu",
+          authorRole: "Principal Healthcare Operations Lead",
+          tipText: "Use a structured 3-point SBAR voice summary paired with an instant read-receipt checklist.",
+          helpfulCount: 29,
+        },
+      ],
+    },
+  ],
+  goldVoiceMembers: ["Kwesi Asiedu", "Esther Boa Asiedu", "Isaac Boye"],
+  cheersMilestones: [
+    {
+      id: "ch-1",
+      memberName: "Esther Boa Asiedu",
+      memberHeadline: "Principal Healthcare Operations Lead",
+      milestoneType: "Project Launch",
+      title: "Launched Cross-Atlantic Clinical Triage & Direct Calling Hub",
+      cheersCount: 42,
+      cheeredBy: ["Kwesi Asiedu", "Patience Addo", "Adwoa larbi"],
+    },
+    {
+      id: "ch-2",
+      memberName: "Isaac Boye",
+      memberHeadline: "Senior Field Engineering Lead",
+      milestoneType: "New Certification",
+      title: "Completed Master NEC 2026 & Commercial Grid Commissioning Certification",
+      cheersCount: 31,
+      cheeredBy: ["Kwesi Asiedu", "Esther Boa Asiedu"],
+    },
+    {
+      id: "ch-3",
+      memberName: "Patience Addo",
+      memberHeadline: "Director of Enterprise Procurement & Escrow",
+      milestoneType: "Work Anniversary",
+      title: "Celebrating 5 Years Leading High-Trust Enterprise Procurement",
+      cheersCount: 38,
+      cheeredBy: ["Kwesi Asiedu", "Isaac Boye"],
+    },
+  ],
+  laterPosts: [
+    {
+      id: "lp-1",
+      authorName: "Kwesi Asiedu",
+      content: "Weekly Blueprint & Calling Network Digest: 100% Free Wi-Fi Calling is now live across all enclaves.",
+      scheduledForLabel: "Tomorrow · 9:00 AM EST",
+      status: "Scheduled",
+    },
+  ],
+  cohortAlumni: [
+    {
+      id: "coh-1",
+      name: "Kwesi Asiedu",
+      program: "ConnectLn Cloud & Cybersecurity Mastery",
+      classYear: "2026",
+      city: "Maryland / DC Metro",
+      currentRole: "Founder & Chief Architect",
+      halo: "SCO",
+    },
+    {
+      id: "coh-2",
+      name: "Esther Boa Asiedu",
+      program: "Johns Hopkins / Clinical Leadership Cohort",
+      classYear: "2025",
+      city: "Baltimore, MD",
+      currentRole: "Principal Healthcare Operations Lead",
+      halo: "AFT",
+    },
+    {
+      id: "coh-3",
+      name: "Isaac Boye",
+      program: "Master Builders & Electrical Guild",
+      classYear: "2025",
+      city: "Accra / Helsinki",
+      currentRole: "Senior Field Engineering Lead",
+      halo: "AFT",
+    },
+    {
+      id: "coh-4",
+      name: "Adwoa larbi",
+      program: "UK NHS Acute Care Fellowship",
+      classYear: "2025",
+      city: "London, UK",
+      currentRole: "NHS Clinical Specialist",
+      halo: "AFT",
+    },
+  ],
+  dailyBrainStreaks: {
+    "kwesi asiedu": 7,
+    "esther boa asiedu": 5,
+    "isaac boye": 6,
+  },
+  spotBoosts: [
+    {
+      id: "sb-1",
+      ownerName: "Kwesi Asiedu",
+      title: "Hiring Master Trades, Clinical Leads & Cloud Engineers",
+      targetProfession: "All Skilled Trades, Healthcare & Cloud",
+      targetCity: "Maryland, London & Accra",
+      dailyBudget: "$25/day",
+      estimatedReach: "4,800 – 9,200 Verified Pros/day",
+      status: "Active Boost",
+    },
+  ],
+  instantPingByUser: {
+    "kwesi asiedu": { dms: true, kudos: true, matches: true },
+  },
 }
 
 const globalForSovereign = globalThis as unknown as {
@@ -751,6 +945,106 @@ export async function POST(req: NextRequest) {
         })
         await saveSovereignState(state)
       }
+      return NextResponse.json({ ok: true, state })
+    }
+
+    // 10. WISDOM-NOTES & GOLD-VOICE Badge: Contribute a tip
+    if (action === "add_wisdom_note") {
+      const noteId = String(body?.noteId || "wn-1")
+      const tipText = String(body?.tipText || "").trim()
+      const target = (state.wisdomNotes || []).find((n) => n.id === noteId)
+      if (target && tipText) {
+        target.contributions.unshift({
+          id: `wnc-${Date.now()}`,
+          authorName: actorName,
+          authorRole: String(body?.actorHeadline || "Verified ConnectLn Pro"),
+          tipText,
+          helpfulCount: 1,
+        })
+        if (!state.goldVoiceMembers) state.goldVoiceMembers = []
+        if (!state.goldVoiceMembers.includes(actorName)) {
+          state.goldVoiceMembers.push(actorName)
+        }
+        await saveSovereignState(state)
+      }
+      return NextResponse.json({ ok: true, state })
+    }
+
+    // 11. CHEERS Milestone Celebration: Send 1-Tap Cheers
+    if (action === "send_cheers") {
+      const cheersId = String(body?.cheersId || "")
+      const item = (state.cheersMilestones || []).find((c) => c.id === cheersId)
+      if (item) {
+        if (!item.cheeredBy.includes(actorName)) {
+          item.cheeredBy.push(actorName)
+        }
+        item.cheersCount += 1
+        await saveSovereignState(state)
+      }
+      return NextResponse.json({ ok: true, state })
+    }
+
+    // 12. LATER-POST: Schedule a post
+    if (action === "schedule_later_post") {
+      const content = String(body?.content || "").trim()
+      const scheduledForLabel = String(body?.scheduledForLabel || "Tomorrow · 9:00 AM").trim()
+      if (content) {
+        if (!state.laterPosts) state.laterPosts = []
+        state.laterPosts.unshift({
+          id: `lp-${Date.now()}`,
+          authorName: actorName,
+          content,
+          scheduledForLabel,
+          status: "Scheduled",
+        })
+        await saveSovereignState(state)
+      }
+      return NextResponse.json({ ok: true, state })
+    }
+
+    // 13. DAILY-BRAIN: Record a solved daily challenge & increment streak
+    if (action === "solve_daily_brain") {
+      if (!state.dailyBrainStreaks) state.dailyBrainStreaks = {}
+      state.dailyBrainStreaks[actorKey] = (state.dailyBrainStreaks[actorKey] || 1) + 1
+      await saveSovereignState(state)
+      return NextResponse.json({
+        ok: true,
+        myStreak: state.dailyBrainStreaks[actorKey],
+        state,
+      })
+    }
+
+    // 14. SPOT-BOOST: Launch a promoted post or job boost
+    if (action === "create_spot_boost") {
+      const title = String(body?.title || "").trim()
+      const targetProfession = String(body?.targetProfession || "Skilled Trades & Engineering").trim()
+      const targetCity = String(body?.targetCity || "Global / Metro").trim()
+      const dailyBudget = String(body?.dailyBudget || "$20/day").trim()
+      if (title) {
+        if (!state.spotBoosts) state.spotBoosts = []
+        state.spotBoosts.unshift({
+          id: `sb-${Date.now()}`,
+          ownerName: actorName,
+          title,
+          targetProfession,
+          targetCity,
+          dailyBudget,
+          estimatedReach: "3,500 – 7,800 Verified Pros/day",
+          status: "Active Boost",
+        })
+        await saveSovereignState(state)
+      }
+      return NextResponse.json({ ok: true, state })
+    }
+
+    // 15. INSTANT-PING: Toggle push preferences for DMs, Kudos & Matches
+    if (action === "update_instant_ping") {
+      if (!state.instantPingByUser) state.instantPingByUser = {}
+      const cur = state.instantPingByUser[actorKey] || { dms: true, kudos: true, matches: true }
+      const field = String(body?.field || "dms") as "dms" | "kudos" | "matches"
+      cur[field] = !cur[field]
+      state.instantPingByUser[actorKey] = cur
+      await saveSovereignState(state)
       return NextResponse.json({ ok: true, state })
     }
 
