@@ -176,13 +176,13 @@ export function ConnectLnPhoneVerificationGate({
           </span>
           <div>
             <h2 className="text-base font-extrabold">Verify your mobile number</h2>
-            <p className="text-[11.5px] text-[#57534E]">Required for every NexaCircle account</p>
+            <p className="text-[11.5px] text-[#57534E]">Required for every ConnectLn account</p>
           </div>
         </div>
 
         <p className="mt-3 text-xs text-[#44403C] leading-relaxed">
-          Your verified number is your NexaCircle calling identity. People call you on it over free
-          Wi-Fi / Internet, and it prevents anyone from impersonating your number.
+          Your verified number is your ConnectLn calling identity. People call you on it, and it
+          prevents anyone from impersonating your number.
         </p>
 
         {step === "input" ? (

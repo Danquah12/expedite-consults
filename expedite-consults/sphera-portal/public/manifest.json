@@ -1,8 +1,8 @@
 {
   "id": "/connectin",
-  "name": "NexaCircle — Your Circle for Real Work, Calls & Growth",
-  "short_name": "NexaCircle",
-  "description": "NexaCircle: Free E2EE Internet Voice & Video Calling, Messaging, Peer Vouches, and Career Growth Network.",
+  "name": "ConnectLn — Voice, Video & Professional Network",
+  "short_name": "ConnectLn",
+  "description": "ConnectLn: Free E2EE Internet Voice & Video Calling, Messaging, and Zero-Trust Professional Network.",
   "scope": "/",
   "start_url": "/connectin",
   "display": "standalone",

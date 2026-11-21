@@ -60,10 +60,10 @@ export function ConnectInLogo({
         <div className={`${compactOnMobile ? "hidden sm:flex" : "flex"} flex-col leading-none shrink-0`}>
           <div className="relative flex items-center shrink-0" data-no-translate="true" translate="no">
             <span
-              className={`notranslate font-bold tracking-tight text-[#191919] dark:text-zinc-100 font-sans ${titleSizes[size]}`}
+              className={`notranslate font-semibold tracking-tight text-[#191919] dark:text-zinc-100 font-sans ${titleSizes[size]}`}
               style={{ letterSpacing: "-0.02em" }}
             >
-              Nexa<span className="text-[#0A66C2] dark:text-sky-400">Circle</span>
+              Connect<span className="text-[#191919] dark:text-zinc-100">L</span>n
             </span>
 
             {/* Official Terracotta Underline only shown on full hero/subtitle lockups */}
@@ -79,7 +79,7 @@ export function ConnectInLogo({
             <span
               className={`font-medium text-zinc-500 dark:text-zinc-400 mt-1.5 whitespace-nowrap tracking-normal hidden min-[440px]:inline ${subtitleSizes[size]}`}
             >
-              Your Circle for Real Work, Calls &amp; Growth
+              Tickets, vouches, and real work
             </span>
           )}
         </div>
