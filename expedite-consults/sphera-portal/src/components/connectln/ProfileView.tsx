@@ -1387,6 +1387,25 @@ export function ProfileView({
                       <h2 className="text-2xl font-black text-zinc-900 dark:text-zinc-100">
                         {user.name}
                       </h2>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+                            try {
+                              window.speechSynthesis.cancel()
+                              const u = new SpeechSynthesisUtterance(
+                                `${user.name} — ${user.headline || 'Verified ConnectLn Member'}`
+                              )
+                              u.rate = 0.96
+                              window.speechSynthesis.speak(u)
+                            } catch {}
+                          }
+                        }}
+                        className="h-7 w-7 rounded-full bg-zinc-100 hover:bg-blue-50 dark:bg-zinc-800 dark:hover:bg-blue-950/60 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-xs cursor-pointer transition-transform hover:scale-105"
+                        title={`Play VOICE-TAG Name Pronunciation for ${user.name}`}
+                      >
+                        🔊
+                      </button>
                       <span
                         onClick={() => !isViewingOtherMember && setIsEditingJobCard(!isEditingJobCard)}
                         className={`rounded-full px-3 py-0.5 text-xs font-extrabold border flex items-center gap-1.5 shadow-2xs cursor-pointer ${

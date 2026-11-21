@@ -1548,14 +1548,41 @@ export function PostCreator({ user, onAddPost }: PostCreatorProps) {
                 </button>
               </div>
 
-              <button
-                type="submit"
-                disabled={!canSubmit}
-                className="flex items-center gap-1.5 rounded-full bg-[#0066FF] px-5 py-2 text-xs sm:text-sm font-bold text-white transition-opacity hover:bg-[#0052CC] disabled:opacity-40 disabled:cursor-not-allowed shadow-xs cursor-pointer"
-              >
-                <Send className="h-3.5 w-3.5" />
-                <span>Post to ConnectLn</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const raw = content.trim()
+                    if (!raw) {
+                      setContent(
+                        `Key takeaway from today's ${user.profession || "ConnectLn"} field execution:\n• Delivered on spec with zero rework\n• Open to #TEAMING and sharing best practices with my ConnectLn circle.`
+                      )
+                      return
+                    }
+                    if (!raw.includes("•")) {
+                      setContent(
+                        `✨ Executive Summary:\n${raw}\n\n• Verified in production on ConnectLn\n• Open to peer insights & #TEAMING`
+                      )
+                    } else {
+                      setContent(raw.replace(/^✨ Executive Summary:\n/, ""))
+                    }
+                  }}
+                  className="flex items-center gap-1 rounded-full border border-indigo-200 dark:border-indigo-800 bg-indigo-50/80 dark:bg-indigo-950/50 hover:bg-indigo-100 px-3 py-1.5 text-xs font-extrabold text-indigo-700 dark:text-indigo-300 transition-colors cursor-pointer"
+                  title="SPARK-WRITER — 1-Click AI Draft Polish"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>SPARK-WRITER</span>
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={!canSubmit}
+                  className="flex items-center gap-1.5 rounded-full bg-[#0066FF] px-5 py-2 text-xs sm:text-sm font-bold text-white transition-opacity hover:bg-[#0052CC] disabled:opacity-40 disabled:cursor-not-allowed shadow-xs cursor-pointer"
+                >
+                  <Send className="h-3.5 w-3.5" />
+                  <span>Post to ConnectLn</span>
+                </button>
+              </div>
             </div>
           </form>
         </DialogContent>

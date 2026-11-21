@@ -158,6 +158,29 @@ export function ConnectLnSovereignSuiteHub({
   const [boostCity, setBoostCity] = useState<string>("Maryland, London & Accra")
   const [boostBudget, setBoostBudget] = useState<string>("$25/day")
 
+  // Zero-clutter additions: VOICE-TAG & PIN-BOARD
+  const [voiceTagPhrase, setVoiceTagPhrase] = useState<string>("")
+  const [pinTitle, setPinTitle] = useState<string>("")
+  const [pinSummary, setPinSummary] = useState<string>("")
+
+  const handlePlayVoiceTag = (customPhrase?: string) => {
+    const phraseToSpeak =
+      (customPhrase ||
+        voiceTagPhrase ||
+        state?.voiceTagByUser?.[userName.toLowerCase()] ||
+        `${userName} — ${userHeadline}`).trim()
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      try {
+        window.speechSynthesis.cancel()
+        const u = new SpeechSynthesisUtterance(phraseToSpeak)
+        u.rate = 0.96
+        u.pitch = 1.0
+        window.speechSynthesis.speak(u)
+      } catch {}
+    }
+    showToast(`🔊 Playing VOICE-TAG: "${phraseToSpeak}"`)
+  }
+
   const showToast = (msg: string) => {
     setToastMsg(msg)
     window.setTimeout(() => {
@@ -249,7 +272,9 @@ export function ConnectLnSovereignSuiteHub({
     const skillsHtml = (state?.pvrSkills || [])
       .map((s) => `<li><strong>${s.skill}</strong> — ${s.vouchCount} KUDOS Vouches</li>`)
       .join("")
+    const hiddenSet = new Set(state?.hiddenCitationIds || [])
     const proofsHtml = (state?.wcdCitations || [])
+      .filter((c) => !hiddenSet.has(c.id))
       .map(
         (c) =>
           `<div style="margin-bottom:10px;padding:10px;border-left:3px solid #0A66C2;background:#f8fafc;">
@@ -517,18 +542,18 @@ export function ConnectLnSovereignSuiteHub({
                       </div>
                     </div>
 
-                    {/* SNAP-BADGE QR & PDF-BIO Export */}
-                    <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 flex flex-col items-center justify-between text-center space-y-2.5">
+                    {/* SNAP-BADGE QR, PDF-BIO & VOICE-TAG Name Audio */}
+                    <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 flex flex-col items-center justify-between text-center space-y-2">
                       <div>
                         <span className="rounded bg-blue-100 dark:bg-blue-950/70 px-2 py-0.5 text-[10px] font-mono font-black text-[#0A66C2]">
-                          SNAP-BADGE &amp; PDF-BIO
+                          SNAP-BADGE · PDF-BIO · VOICE-TAG
                         </span>
-                        <h4 className="text-xs font-black mt-1">In-Person QR Badge &amp; PDF Resume</h4>
+                        <h4 className="text-xs font-black mt-1">QR Badge, PDF Resume &amp; Name Audio</h4>
                       </div>
                       <img
                         src={qrImageUrl}
                         alt="ConnectLn SNAP-BADGE QR"
-                        className="h-28 w-28 rounded-xl border border-zinc-200 p-1.5 bg-white"
+                        className="h-24 w-24 rounded-xl border border-zinc-200 p-1.5 bg-white"
                       />
                       <div className="w-full flex gap-1.5">
                         <button
@@ -537,19 +562,123 @@ export function ConnectLnSovereignSuiteHub({
                             navigator.clipboard?.writeText(profileShareUrl).catch(() => {})
                             showToast("✓ Copied your SNAP-BADGE Direct Profile Link!")
                           }}
-                          className="flex-1 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 py-1.5 text-[11px] font-extrabold cursor-pointer"
+                          className="flex-1 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 py-1.5 text-[10.5px] font-extrabold cursor-pointer"
                         >
                           Copy QR Link
                         </button>
                         <button
                           type="button"
                           onClick={handlePrintPdfBio}
-                          className="flex-1 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white py-1.5 text-[11px] font-extrabold flex items-center justify-center gap-1 cursor-pointer"
+                          className="flex-1 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white py-1.5 text-[10.5px] font-extrabold flex items-center justify-center gap-1 cursor-pointer"
                         >
-                          <FileDown className="h-3.5 w-3.5" />
-                          <span>Save PDF-BIO</span>
+                          <FileDown className="h-3 w-3" />
+                          <span>PDF-BIO</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handlePlayVoiceTag()}
+                          className="rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1.5 text-[10.5px] font-extrabold cursor-pointer"
+                          title="Play your VOICE-TAG Name Pronunciation"
+                        >
+                          🔊 VOICE-TAG
                         </button>
                       </div>
+                      <div className="w-full flex gap-1">
+                        <input
+                          type="text"
+                          value={voiceTagPhrase}
+                          onChange={(e) => setVoiceTagPhrase(e.target.value)}
+                          placeholder={`Custom pronunciation for ${userName}...`}
+                          className="flex-1 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-2 py-1 text-[10.5px]"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const phrase = voiceTagPhrase.trim() || `${userName} — ${userHeadline}`
+                            void dispatchAction(
+                              { action: "save_voice_tag", phrase },
+                              `🔊 Saved your VOICE-TAG pronunciation!`
+                            )
+                            handlePlayVoiceTag(phrase)
+                          }}
+                          className="rounded-lg bg-zinc-900 dark:bg-zinc-700 text-white px-2 py-1 text-[10px] font-extrabold cursor-pointer"
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* PIN-BOARD — Featured Work Showcase (Top 3 Highlights) */}
+                  <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/40 dark:bg-zinc-800/30 p-3.5 space-y-2.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h3 className="text-xs sm:text-sm font-black">
+                        📌 PIN-BOARD — Featured Work Showcase (Pin Your Top Highlights)
+                      </h3>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <input
+                          type="text"
+                          value={pinTitle}
+                          onChange={(e) => setPinTitle(e.target.value)}
+                          placeholder="Highlight title..."
+                          className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1 text-xs"
+                        />
+                        <input
+                          type="text"
+                          value={pinSummary}
+                          onChange={(e) => setPinSummary(e.target.value)}
+                          placeholder="Link or 1-line summary..."
+                          className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1 text-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!pinTitle.trim()) return
+                            void dispatchAction(
+                              {
+                                action: "pin_board_add",
+                                title: pinTitle.trim(),
+                                linkOrSummary: pinSummary.trim(),
+                              },
+                              `📌 Pinned "${pinTitle.trim()}" to your PIN-BOARD!`
+                            )
+                            setPinTitle("")
+                            setPinSummary("")
+                          }}
+                          className="rounded-lg bg-[#0A66C2] text-white px-2.5 py-1 text-xs font-extrabold cursor-pointer"
+                        >
+                          + Pin Work
+                        </button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {(state.pinBoardItems || []).slice(0, 3).map((pin) => (
+                        <div
+                          key={pin.id}
+                          className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-2.5 flex flex-col justify-between gap-1"
+                        >
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="rounded bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 text-[9.5px] font-extrabold text-[#0A66C2]">
+                              📌 {pin.badge}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                void dispatchAction(
+                                  { action: "pin_board_remove", pinId: pin.id },
+                                  "Removed from PIN-BOARD"
+                                )
+                              }
+                              className="text-[10px] text-zinc-400 hover:text-rose-600 cursor-pointer"
+                              title="Unpin"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                          <p className="text-xs font-extrabold">{pin.title}</p>
+                          <p className="text-[10.5px] text-zinc-500 truncate">{pin.linkOrSummary}</p>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
@@ -717,9 +846,11 @@ export function ConnectLnSovereignSuiteHub({
                       </div>
                     </div>
 
-                    {/* PROOF */}
+                    {/* PROOF & VOUCH-NOTES */}
                     <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-3">
-                      <h3 className="text-sm font-black">PROOF — Real-Work Proof Notes</h3>
+                      <h3 className="text-sm font-black">
+                        PROOF &amp; VOUCH-NOTES — Peer Testimonials (With Show/Hide Control)
+                      </h3>
                       <div className="space-y-2 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 p-3 border border-zinc-200 dark:border-zinc-700">
                         <div className="grid grid-cols-2 gap-2">
                           <input
@@ -741,7 +872,7 @@ export function ConnectLnSovereignSuiteHub({
                           rows={2}
                           value={wcdCitation}
                           onChange={(e) => setWcdCitation(e.target.value)}
-                          placeholder="Write a warm PROOF note..."
+                          placeholder="Write a warm PROOF / VOUCH-NOTE testimonial..."
                           className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs"
                         />
                         <button
@@ -755,30 +886,56 @@ export function ConnectLnSovereignSuiteHub({
                                 verifiedDeliverable: wcdDeliverable,
                                 citationText: wcdCitation,
                               },
-                              `✓ Shared a PROOF Note for ${wcdTarget}!`
+                              `✓ Shared a VOUCH-NOTE for ${wcdTarget}!`
                             )
                             setWcdDeliverable("")
                             setWcdCitation("")
                           }}
                           className="rounded-xl bg-[#0A66C2] text-white px-3.5 py-1.5 text-xs font-extrabold cursor-pointer"
                         >
-                          Share PROOF Note
+                          Share VOUCH-NOTE
                         </button>
                       </div>
                       <div className="space-y-2 max-h-44 overflow-y-auto">
-                        {state.wcdCitations.map((c) => (
-                          <div
-                            key={c.id}
-                            className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-2.5 space-y-1"
-                          >
-                            <p className="text-xs font-extrabold">
-                              {c.verifiedDeliverable} · <span className="text-emerald-700">For {c.targetMember}</span>
-                            </p>
-                            <p className="text-xs text-zinc-600 dark:text-zinc-300 italic">
-                              &ldquo;{c.citationText}&rdquo; — <strong>{c.authorName}</strong>
-                            </p>
-                          </div>
-                        ))}
+                        {state.wcdCitations.map((c) => {
+                          const isHidden = (state.hiddenCitationIds || []).includes(c.id)
+                          return (
+                            <div
+                              key={c.id}
+                              className={`rounded-xl border border-zinc-200 dark:border-zinc-800 p-2.5 space-y-1 ${
+                                isHidden ? "opacity-50" : ""
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-xs font-extrabold">
+                                  {c.verifiedDeliverable} ·{" "}
+                                  <span className="text-emerald-700">For {c.targetMember}</span>
+                                </p>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    void dispatchAction(
+                                      { action: "toggle_wcd_visibility", citationId: c.id },
+                                      isHidden
+                                        ? "✓ VOUCH-NOTE shown on Profile & PDF-BIO"
+                                        : "✓ VOUCH-NOTE hidden from Profile"
+                                    )
+                                  }
+                                  className={`rounded-full px-2 py-0.5 text-[9.5px] font-extrabold cursor-pointer ${
+                                    isHidden
+                                      ? "bg-zinc-200 text-zinc-600 dark:bg-zinc-800"
+                                      : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+                                  }`}
+                                >
+                                  {isHidden ? "Hidden" : "✓ Shown on Profile"}
+                                </button>
+                              </div>
+                              <p className="text-xs text-zinc-600 dark:text-zinc-300 italic">
+                                &ldquo;{c.citationText}&rdquo; — <strong>{c.authorName}</strong>
+                              </p>
+                            </div>
+                          )
+                        })}
                       </div>
                     </div>
                   </div>
@@ -1283,18 +1440,23 @@ export function ConnectLnSovereignSuiteHub({
               {/* TAB 5: QUICK-PITCH, MATCH-BOARD, TEAM-HUBS, HIRE-A-PRO & SPOT-BOOST */}
               {activeTab === "jobs_teams_boost" && (
                 <div className="space-y-5">
-                  {/* QUICK-PITCH & MATCH-BOARD */}
+                  {/* ONE-TAP APPLY · QUICK-PITCH · MY-TRACKER */}
                   <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <h3 className="text-sm font-black">
-                        QUICK-PITCH (1-Tap Apply) &amp; MATCH-BOARD
-                      </h3>
+                      <div>
+                        <h3 className="text-sm font-black">
+                          ONE-TAP APPLY · QUICK-PITCH · MY-TRACKER (MATCH-BOARD)
+                        </h3>
+                        <p className="text-[11px] text-zinc-500">
+                          Auto-attaches your saved PDF-BIO &amp; KUDOS in 1 tap and tracks every role from Pitched → Hired.
+                        </p>
+                      </div>
                       <div className="flex gap-2">
                         <input
                           type="text"
                           value={fttTitle}
                           onChange={(e) => setFttTitle(e.target.value)}
-                          placeholder="Role to Quick-Pitch..."
+                          placeholder="Role for ONE-TAP APPLY..."
                           className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-1 text-xs"
                         />
                         <button
@@ -1306,13 +1468,13 @@ export function ConnectLnSovereignSuiteHub({
                                 ticketTitle: fttTitle || "Principal Cloud & Systems Lead",
                                 enterpriseName: fttEnterprise,
                               },
-                              "✓ Sent 1-Tap QUICK-PITCH!"
+                              "⚡ Sent ONE-TAP APPLY with your PDF-BIO & QUICK-PITCH!"
                             )
                             setFttTitle("")
                           }}
                           className="rounded-xl bg-emerald-600 text-white px-3.5 py-1 text-xs font-extrabold cursor-pointer"
                         >
-                          ⚡ 1-Tap QUICK-PITCH
+                          ⚡ ONE-TAP APPLY
                         </button>
                       </div>
                     </div>
@@ -1343,21 +1505,29 @@ export function ConnectLnSovereignSuiteHub({
                                 key={item.id}
                                 className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-2.5 space-y-1"
                               >
-                                <p className="text-xs font-extrabold">{item.ticketTitle}</p>
+                                <div className="flex items-center justify-between gap-1">
+                                  <p className="text-xs font-extrabold truncate">{item.ticketTitle}</p>
+                                  <span className="rounded bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 text-[9.5px] font-extrabold text-emerald-700 shrink-0">
+                                    {item.pvrScore || 97}% Fit
+                                  </span>
+                                </div>
                                 <p className="text-[11px] text-zinc-500">
                                   👤 {item.candidateName} · {item.CompensationBand}
+                                </p>
+                                <p className="text-[10px] font-semibold text-[#0A66C2]">
+                                  ✓ PDF-BIO + QUICK-PITCH Attached
                                 </p>
                                 <button
                                   type="button"
                                   onClick={() =>
                                     void dispatchAction(
                                       { action: "advance_tor_stage", candidateId: item.id },
-                                      `✓ Moved ${item.candidateName} to next step!`
+                                      `✓ Moved ${item.candidateName} to next MY-TRACKER step!`
                                     )
                                   }
                                   className="w-full rounded bg-zinc-100 hover:bg-[#0A66C2] hover:text-white dark:bg-zinc-800 py-1 text-[10px] font-extrabold cursor-pointer"
                                 >
-                                  Next Step →
+                                  Advance in MY-TRACKER →
                                 </button>
                               </div>
                             ))}

@@ -5075,9 +5075,24 @@ export function MessagingView({
                                         ? 'bg-blue-50 border-[#0A66C2] text-[#0A66C2]'
                                         : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200'
                                 }`}
-                                title="Toggle Instant Smart Replies"
+                                title="QUICK-REPLY — Toggle Instant Smart Replies"
                             >
                                 ⚡
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const memoNote = messageInput.trim()
+                                        ? `🎙️ VOICE-CLIP (0:15): "${messageInput.trim()}"`
+                                        : `🎙️ VOICE-CLIP (0:15): Hey ${activeThread.title.split(' ')[0]}, sending a quick 15-second ConnectLn voice note — let's connect when you're free!`;
+                                    setMessageInput('');
+                                    void sendChatText(memoNote);
+                                }}
+                                className="p-2.5 rounded-xl border bg-slate-100 border-slate-200 text-slate-600 hover:bg-emerald-50 hover:border-emerald-400 hover:text-emerald-700 transition-all cursor-pointer"
+                                title="VOICE-CLIP — Send 15-Second Voice Memo Note"
+                            >
+                                🎙️
                             </button>
 
                             <div className="flex-1 relative">

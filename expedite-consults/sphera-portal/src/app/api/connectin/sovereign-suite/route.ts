@@ -174,6 +174,14 @@ export interface SpotBoostCampaign {
   status: "Active Boost"
 }
 
+export interface PinBoardHighlightItem {
+  id: string
+  ownerName: string
+  title: string
+  badge: string
+  linkOrSummary: string
+}
+
 export interface SovereignSuiteCloudState {
   haloByUser: Record<string, HaloStatusCode>
   stealthCloakByUser: Record<string, boolean>
@@ -193,6 +201,9 @@ export interface SovereignSuiteCloudState {
   dailyBrainStreaks: Record<string, number>
   spotBoosts: SpotBoostCampaign[]
   instantPingByUser: Record<string, { dms: boolean; kudos: boolean; matches: boolean }>
+  voiceTagByUser?: Record<string, string>
+  pinBoardItems?: PinBoardHighlightItem[]
+  hiddenCitationIds?: string[]
 }
 
 const DEFAULT_STATE: SovereignSuiteCloudState = {
@@ -682,6 +693,26 @@ const DEFAULT_STATE: SovereignSuiteCloudState = {
   instantPingByUser: {
     "kwesi asiedu": { dms: true, kudos: true, matches: true },
   },
+  voiceTagByUser: {
+    "kwesi asiedu": "Kwesi Asiedu — Welcome to ConnectLn Global Professional Network",
+  },
+  pinBoardItems: [
+    {
+      id: "pin-1",
+      ownerName: "Kwesi Asiedu",
+      title: "ConnectLn Global WebRTC & Wi-Fi 2FA Calling Platform",
+      badge: "Featured Project",
+      linkOrSummary: "https://conectln.com/connectin — 100% Internet HD Voice & Video Calling with $0 carrier cost",
+    },
+    {
+      id: "pin-2",
+      ownerName: "Kwesi Asiedu",
+      title: "Zero-Trust Cloud & Enterprise Procurement Blueprint (2026)",
+      badge: "Featured Deck",
+      linkOrSummary: "Verified multi-region cloud architecture & direct escrow governance specification",
+    },
+  ],
+  hiddenCitationIds: [],
 }
 
 const globalForSovereign = globalThis as unknown as {
@@ -1045,6 +1076,61 @@ export async function POST(req: NextRequest) {
       cur[field] = !cur[field]
       state.instantPingByUser[actorKey] = cur
       await saveSovereignState(state)
+      return NextResponse.json({ ok: true, state })
+    }
+
+    // 16. VOICE-TAG: Save custom name pronunciation / audio greeting phrase
+    if (action === "save_voice_tag") {
+      const phrase = String(body?.phrase || "").trim()
+      if (phrase) {
+        if (!state.voiceTagByUser) state.voiceTagByUser = {}
+        state.voiceTagByUser[actorKey] = phrase
+        await saveSovereignState(state)
+      }
+      return NextResponse.json({ ok: true, state })
+    }
+
+    // 17. PIN-BOARD: Pin or remove featured highlight cards (up to 3)
+    if (action === "pin_board_add") {
+      const title = String(body?.title || "").trim()
+      const badge = String(body?.badge || "Featured Highlight").trim()
+      const linkOrSummary = String(body?.linkOrSummary || "").trim()
+      if (title) {
+        if (!state.pinBoardItems) state.pinBoardItems = []
+        state.pinBoardItems.unshift({
+          id: `pin-${Date.now()}`,
+          ownerName: actorName,
+          title,
+          badge,
+          linkOrSummary: linkOrSummary || "Pinned highlight on ConnectLn PIN-BOARD",
+        })
+        state.pinBoardItems = state.pinBoardItems.slice(0, 6)
+        await saveSovereignState(state)
+      }
+      return NextResponse.json({ ok: true, state })
+    }
+
+    if (action === "pin_board_remove") {
+      const pinId = String(body?.pinId || "")
+      if (state.pinBoardItems) {
+        state.pinBoardItems = state.pinBoardItems.filter((p) => p.id !== pinId)
+        await saveSovereignState(state)
+      }
+      return NextResponse.json({ ok: true, state })
+    }
+
+    // 18. VOUCH-NOTES Visibility: Show or hide a peer testimonial on profile & PDF-BIO
+    if (action === "toggle_wcd_visibility") {
+      const citationId = String(body?.citationId || "")
+      if (citationId) {
+        if (!state.hiddenCitationIds) state.hiddenCitationIds = []
+        if (state.hiddenCitationIds.includes(citationId)) {
+          state.hiddenCitationIds = state.hiddenCitationIds.filter((id) => id !== citationId)
+        } else {
+          state.hiddenCitationIds.push(citationId)
+        }
+        await saveSovereignState(state)
+      }
       return NextResponse.json({ ok: true, state })
     }
 
