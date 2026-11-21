@@ -216,8 +216,16 @@ export function ConnectLnSovereignSuiteHub({
   useEffect(() => {
     void fetchSuiteState()
     const onHaloSync = () => void fetchSuiteState()
+    const onOpenPinBoard = () => {
+      setActiveTab("circle_identity")
+      setIsConsoleOpen(true)
+    }
     window.addEventListener("connectln-halo-updated", onHaloSync)
-    return () => window.removeEventListener("connectln-halo-updated", onHaloSync)
+    window.addEventListener("connectln-open-pinboard", onOpenPinBoard)
+    return () => {
+      window.removeEventListener("connectln-halo-updated", onHaloSync)
+      window.removeEventListener("connectln-open-pinboard", onOpenPinBoard)
+    }
   }, [userName])
 
   const dispatchAction = async (payload: Record<string, any>, successNotice?: string) => {
@@ -403,6 +411,18 @@ export function ConnectLnSovereignSuiteHub({
           >
             <span>🔊 VOICE-TAG</span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("circle_identity")
+              setIsConsoleOpen(true)
+            }}
+            className="rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 px-2.5 py-0.5 text-[10.5px] font-bold text-zinc-700 dark:text-zinc-200 cursor-pointer inline-flex items-center gap-1"
+            title="Open your PIN-BOARD Featured Work Showcase"
+          >
+            <span>📌 PIN-BOARD</span>
+          </button>
         </div>
 
         <button
@@ -460,7 +480,7 @@ export function ConnectLnSovereignSuiteHub({
               {[
                 {
                   id: "circle_identity",
-                  label: "1. CIRCLE · #READY · SNAP-BADGE · COHORTS",
+                  label: "1. PIN-BOARD · CIRCLE · #READY · SNAP-BADGE · COHORTS",
                   icon: Network,
                 },
                 {
@@ -506,9 +526,82 @@ export function ConnectLnSovereignSuiteHub({
 
             {/* Modal Content Area */}
             <div className="flex-1 overflow-y-auto p-5 space-y-5">
-              {/* TAB 1: CIRCLE, #READY Rings, SNAP-BADGE QR + PDF-BIO, & COHORT-FINDER */}
+              {/* TAB 1: PIN-BOARD, CIRCLE, #READY Rings, SNAP-BADGE QR + PDF-BIO, & COHORT-FINDER */}
               {activeTab === "circle_identity" && (
                 <div className="space-y-4">
+                  {/* PIN-BOARD — Featured Work Showcase (Top 3 Highlights) */}
+                  <div className="rounded-2xl border border-blue-300 dark:border-blue-800 bg-blue-50/40 dark:bg-blue-950/20 p-3.5 space-y-2.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h3 className="text-xs sm:text-sm font-black text-[#0A66C2] dark:text-sky-300">
+                        📌 PIN-BOARD — Featured Work Showcase (Pin Your Top Highlights)
+                      </h3>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <input
+                          type="text"
+                          value={pinTitle}
+                          onChange={(e) => setPinTitle(e.target.value)}
+                          placeholder="Highlight title..."
+                          className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1 text-xs"
+                        />
+                        <input
+                          type="text"
+                          value={pinSummary}
+                          onChange={(e) => setPinSummary(e.target.value)}
+                          placeholder="Link or 1-line summary..."
+                          className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1 text-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!pinTitle.trim()) return
+                            void dispatchAction(
+                              {
+                                action: "pin_board_add",
+                                title: pinTitle.trim(),
+                                linkOrSummary: pinSummary.trim(),
+                              },
+                              `📌 Pinned "${pinTitle.trim()}" to your PIN-BOARD!`
+                            )
+                            setPinTitle("")
+                            setPinSummary("")
+                          }}
+                          className="rounded-lg bg-[#0A66C2] text-white px-2.5 py-1 text-xs font-extrabold cursor-pointer"
+                        >
+                          + Pin Work
+                        </button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {(state.pinBoardItems || []).slice(0, 3).map((pin) => (
+                        <div
+                          key={pin.id}
+                          className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-2.5 flex flex-col justify-between gap-1"
+                        >
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="rounded bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 text-[9.5px] font-extrabold text-[#0A66C2]">
+                              📌 {pin.badge}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                void dispatchAction(
+                                  { action: "pin_board_remove", pinId: pin.id },
+                                  "Removed from PIN-BOARD"
+                                )
+                              }
+                              className="text-[10px] text-zinc-400 hover:text-rose-600 cursor-pointer"
+                              title="Unpin"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                          <p className="text-xs font-extrabold">{pin.title}</p>
+                          <p className="text-[10.5px] text-zinc-500 truncate">{pin.linkOrSummary}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Top Row: #READY Photo Rings + SNAP-BADGE QR & PDF-BIO */}
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <div className="lg:col-span-2 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-800/40 p-4 space-y-2.5">
@@ -621,79 +714,6 @@ export function ConnectLnSovereignSuiteHub({
                           Save
                         </button>
                       </div>
-                    </div>
-                  </div>
-
-                  {/* PIN-BOARD — Featured Work Showcase (Top 3 Highlights) */}
-                  <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/40 dark:bg-zinc-800/30 p-3.5 space-y-2.5">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <h3 className="text-xs sm:text-sm font-black">
-                        📌 PIN-BOARD — Featured Work Showcase (Pin Your Top Highlights)
-                      </h3>
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <input
-                          type="text"
-                          value={pinTitle}
-                          onChange={(e) => setPinTitle(e.target.value)}
-                          placeholder="Highlight title..."
-                          className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1 text-xs"
-                        />
-                        <input
-                          type="text"
-                          value={pinSummary}
-                          onChange={(e) => setPinSummary(e.target.value)}
-                          placeholder="Link or 1-line summary..."
-                          className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1 text-xs"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (!pinTitle.trim()) return
-                            void dispatchAction(
-                              {
-                                action: "pin_board_add",
-                                title: pinTitle.trim(),
-                                linkOrSummary: pinSummary.trim(),
-                              },
-                              `📌 Pinned "${pinTitle.trim()}" to your PIN-BOARD!`
-                            )
-                            setPinTitle("")
-                            setPinSummary("")
-                          }}
-                          className="rounded-lg bg-[#0A66C2] text-white px-2.5 py-1 text-xs font-extrabold cursor-pointer"
-                        >
-                          + Pin Work
-                        </button>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                      {(state.pinBoardItems || []).slice(0, 3).map((pin) => (
-                        <div
-                          key={pin.id}
-                          className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-2.5 flex flex-col justify-between gap-1"
-                        >
-                          <div className="flex items-center justify-between gap-1">
-                            <span className="rounded bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 text-[9.5px] font-extrabold text-[#0A66C2]">
-                              📌 {pin.badge}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                void dispatchAction(
-                                  { action: "pin_board_remove", pinId: pin.id },
-                                  "Removed from PIN-BOARD"
-                                )
-                              }
-                              className="text-[10px] text-zinc-400 hover:text-rose-600 cursor-pointer"
-                              title="Unpin"
-                            >
-                              ✕
-                            </button>
-                          </div>
-                          <p className="text-xs font-extrabold">{pin.title}</p>
-                          <p className="text-[10.5px] text-zinc-500 truncate">{pin.linkOrSummary}</p>
-                        </div>
-                      ))}
                     </div>
                   </div>
 

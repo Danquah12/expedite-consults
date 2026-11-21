@@ -856,6 +856,20 @@ export function LeftSidebarProfile({
                 <Volume2 className="h-3 w-3 shrink-0" />
                 <span>VOICE-TAG</span>
               </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new Event('connectln-open-pinboard'))
+                  }
+                }}
+                className="inline-flex items-center gap-0.5 rounded-full bg-zinc-100 hover:bg-[#0A66C2] hover:text-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-1.5 py-0.5 text-[10px] font-extrabold text-zinc-700 dark:text-zinc-200 transition-colors cursor-pointer"
+                title="Open your PIN-BOARD Featured Work Showcase"
+              >
+                <Pin className="h-2.5 w-2.5 shrink-0" />
+                <span>PIN-BOARD</span>
+              </button>
             </div>
             <button
               type="button"
