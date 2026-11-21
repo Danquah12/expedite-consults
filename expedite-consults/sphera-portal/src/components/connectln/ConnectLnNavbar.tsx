@@ -1363,7 +1363,7 @@ export function ConnectLnNavbar({
           {/* LinkedIn Vertical Divider between "Me ▾" and "More ▾" */}
           <div className="hidden sm:block h-9 w-px bg-zinc-200 dark:bg-zinc-800 mx-1 shrink-0" />
 
-          {/* "More ▾" Dropdown Menu Trigger — Matching LinkedIn's "For Business ▾" 3x3 Grid Item */}
+          {/* "For Business ▾" Dropdown Menu Trigger — Matching LinkedIn's "For Business ▾" 3x3 Grid Item */}
           <div ref={desktopMoreBtnRef} className="relative shrink-0">
             <button
               type="button"
@@ -1371,19 +1371,19 @@ export function ConnectLnNavbar({
                 setIsMoreOpen(!isMoreOpen)
                 setIsMeOpen(false)
               }}
-              className={`flex h-[52px] min-w-[38px] xl:min-w-[46px] flex-col items-center justify-center px-1 border-b-2 transition-colors cursor-pointer shrink-0 ${
-                isMoreOpen
+              className={`flex h-[52px] min-w-[38px] xl:min-w-[68px] flex-col items-center justify-center px-1 border-b-2 transition-colors cursor-pointer shrink-0 ${
+                isMoreOpen || activeTab === "workbusiness"
                   ? "text-[#191919] dark:text-white border-[#191919] dark:border-white"
                   : "text-[#666666] hover:text-[#191919] dark:text-zinc-400 dark:hover:text-white border-transparent"
               }`}
-              title="For Business & More Modules"
+              title="ConnectLn For Business — Workspace, Storefronts, Services, CRM & Hiring"
             >
               <Grid3X3 strokeWidth={1.75} className="h-[20px] w-[20px]" />
               <span
                 style={{ fontWeight: 400 }}
                 className="flex items-center gap-0.5 text-[12px] leading-[1.33333] mt-0.5 whitespace-nowrap"
               >
-                {t("nav_more", "More")} <ChevronDown className="h-3 w-3" />
+                {t("nav_for_business", "For Business")} <ChevronDown className="h-3 w-3" />
               </span>
             </button>
           </div>
@@ -1766,15 +1766,29 @@ export function ConnectLnNavbar({
             ref={moreDropdownRef}
             className="fixed z-[60] inset-x-2 sm:inset-x-auto sm:right-4 lg:right-6 top-[4.5rem] sm:top-[4.25rem] bottom-20 sm:bottom-auto max-h-[86vh] sm:w-[680px] max-w-[700px] rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in zoom-in-95 flex flex-col overflow-hidden"
           >
-            {/* Top Bar — "ConnectLn — Work & Business" matching Screenshot 3 */}
+            {/* Top Bar — "ConnectLn — For Business" matching LinkedIn Business */}
             <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 px-5 py-3 bg-zinc-50/70 dark:bg-zinc-900/90 shrink-0">
               <div className="flex items-center gap-2">
-                <Grid3X3 className="h-4 w-4 text-zinc-700 dark:text-zinc-300" />
+                <Grid3X3 className="h-4 w-4 text-[#0A66C2]" />
                 <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
-                  ConnectLn — Work &amp; Business
+                  ConnectLn — For Business
                 </span>
               </div>
               <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onSelectWorkBusinessItem) {
+                      onSelectWorkBusinessItem("my_business_pages")
+                    } else {
+                      onSelectTab("workbusiness")
+                    }
+                    setIsMoreOpen(false)
+                  }}
+                  className="inline-flex items-center gap-1 rounded-lg bg-[#0A66C2] hover:bg-[#004182] px-3 py-1 text-[11px] font-extrabold text-white transition-colors cursor-pointer"
+                >
+                  <span>🏢 Open Business Workspace →</span>
+                </button>
                 <a
                   href="https://desk-note.app/"
                   target="_blank"

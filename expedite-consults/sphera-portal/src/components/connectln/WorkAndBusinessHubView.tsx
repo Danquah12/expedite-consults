@@ -53,6 +53,10 @@ import {
   recordLiveContentReach,
   recordLiveDirectoryDiscovery
 } from "@/lib/connectin-analytics"
+import {
+  ConnectLnBusinessWorkspace,
+  BusinessWorkspaceTabId
+} from "@/components/connectln/ConnectLnBusinessWorkspace"
 
 interface WorkAndBusinessHubViewProps {
   currentUser: UserProfile
@@ -520,8 +524,32 @@ export function WorkAndBusinessHubView({
   const workspaceItems = WORK_BUSINESS_MENU_ITEMS.filter((i) => i.column === 'workspace')
   const growItems = WORK_BUSINESS_MENU_ITEMS.filter((i) => i.column === 'grow')
 
+  const mappedBizTab: BusinessWorkspaceTabId =
+    activeSection === 'create_business_page'
+      ? 'profiles'
+      : activeSection === 'offer_services'
+      ? 'services_portfolio'
+      : activeSection === 'find_professional'
+      ? 'marketplace'
+      : activeSection === 'my_services_inquiries'
+      ? 'inbox'
+      : activeSection === 'post_job_project' || activeSection === 'find_work' || activeSection === 'my_work_applications'
+      ? 'hiring'
+      : activeSection === 'billing_settings'
+      ? 'billing_team_audit'
+      : 'overview'
+
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-24">
+      {/* INTEGRATED CONNECTLN BUSINESS WORKSPACE (SRS v1.0 — Option A Shared Auth & Separate Business Dashboard) */}
+      <ConnectLnBusinessWorkspace
+        userName={currentUser.name || "Kwesi Asiedu"}
+        userEmail={(currentUser as any).email || "kwesi@expediteconsults.com"}
+        userHeadline={currentUser.headline || "Verified ConnectLn Operator"}
+        initialTab={mappedBizTab}
+        onSwitchToPersonal={() => onNavigateTab('home')}
+      />
+
       {/* TOP PERSONALIZATION & ROLE INTERESTS BAR */}
       <div className="rounded-2xl border border-zinc-200/90 bg-white p-4 sm:p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
