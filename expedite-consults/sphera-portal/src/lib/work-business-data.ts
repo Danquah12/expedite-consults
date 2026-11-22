@@ -14,6 +14,10 @@ import {
   getAccumulatedDailyServiceListings,
   mergeAdditiveById,
 } from "./connectin-daily-platform-growth"
+import {
+  HANDYMAN_250_WORK_OPPORTUNITIES,
+  HANDYMAN_250_SERVICE_LISTINGS,
+} from "./connectin-handyman-250-professions"
 
 export type WorkBusinessItemId =
   | 'my_work_applications'
@@ -216,6 +220,7 @@ export interface ServiceInquiry {
 
 export const INITIAL_SERVICE_LISTINGS: ServiceListing[] = [
   ...getAccumulatedDailyServiceListings(),
+  ...HANDYMAN_250_SERVICE_LISTINGS,
   {
     id: 'srv_laurel_painter',
     providerName: 'Carlos Mendez',
@@ -400,6 +405,7 @@ export interface TrackedWorkSubmission {
 
 export const INITIAL_WORK_OPPORTUNITIES: WorkOpportunityItem[] = [
   ...getAccumulatedDailyWorkOpportunities(),
+  ...HANDYMAN_250_WORK_OPPORTUNITIES,
   {
     id: 'opp_emp_carpenter',
     kind: 'employment',
@@ -815,12 +821,12 @@ export function loadWorkBusinessState() {
 
   return {
     services: mergeAdditiveById(
-      getAccumulatedDailyServiceListings(),
+      [...getAccumulatedDailyServiceListings(), ...HANDYMAN_250_SERVICE_LISTINGS],
       readJson(STORAGE_KEYS.SERVICES, INITIAL_SERVICE_LISTINGS)
     ),
     inquiries: readJson(STORAGE_KEYS.INQUIRIES, INITIAL_SERVICE_INQUIRIES),
     opportunities: mergeAdditiveById(
-      getAccumulatedDailyWorkOpportunities(),
+      [...getAccumulatedDailyWorkOpportunities(), ...HANDYMAN_250_WORK_OPPORTUNITIES],
       readJson(STORAGE_KEYS.OPPORTUNITIES, INITIAL_WORK_OPPORTUNITIES)
     ),
     submissions: readJson(STORAGE_KEYS.SUBMISSIONS, INITIAL_TRACKED_SUBMISSIONS),

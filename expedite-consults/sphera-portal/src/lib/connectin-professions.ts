@@ -1,4 +1,5 @@
 import { EXPANSION_PROFESSIONS } from './connectin-professions-expansion'
+import { HANDYMAN_250_PROFESSIONS } from './connectin-handyman-250-professions'
 export interface ProfessionTool {
   name: string
   icon: string
@@ -3078,7 +3079,7 @@ const EXTRA_SPECIALIZED_PROFESSIONS: ProfessionDefinition[] = [
 ]
 
 // Automatically attach all specialized professions to their parent enclaves
-for (const extraProf of [...EXTRA_SPECIALIZED_PROFESSIONS, ...EXPANSION_PROFESSIONS]) {
+for (const extraProf of [...EXTRA_SPECIALIZED_PROFESSIONS, ...EXPANSION_PROFESSIONS, ...HANDYMAN_250_PROFESSIONS]) {
   const targetEnclave = PROFESSION_ENCLAVES.find(e => e.id === extraProf.enclaveId)
   if (targetEnclave && !targetEnclave.professions.some(p => p.id === extraProf.id)) {
     targetEnclave.professions.push(extraProf)

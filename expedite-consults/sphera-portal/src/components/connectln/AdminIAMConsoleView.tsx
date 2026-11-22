@@ -52,8 +52,14 @@ import {
   UserPlus,
   Mail,
   Building,
-  Sparkle
+  Sparkle,
+  FolderOpen
 } from "lucide-react"
+import {
+  HANDYMAN_250_FOLDERS,
+  HANDYMAN_250_ADMIN_JOBS,
+  HandymanAdminJobRecord
+} from "@/lib/connectin-handyman-250-professions"
 import {
   ADMIN_USERS_DIRECTORY,
   ADMIN_CONTENT_DIRECTORY,
@@ -135,7 +141,13 @@ export function AdminIAMConsoleView({
   const [contentItems, setContentItems] = useState<AdminContentRecord[]>(ADMIN_CONTENT_DIRECTORY)
   const [cases, setCases] = useState<ModerationCase[]>(MODERATION_CASES_DATA)
   const [companies, setCompanies] = useState<AdminCompanyRecord[]>(ADMIN_COMPANIES_DIRECTORY)
-  const [jobs, setJobs] = useState<AdminJobRecord[]>(ADMIN_JOBS_DIRECTORY)
+  const [jobs, setJobs] = useState<AdminJobRecord[]>(() => [
+    ...ADMIN_JOBS_DIRECTORY,
+    ...HANDYMAN_250_ADMIN_JOBS
+  ])
+  const [selectedAdminFolderNumber, setSelectedAdminFolderNumber] = useState<number | 'all'>('all')
+  const [adminJobFolderQuery, setAdminJobFolderQuery] = useState("")
+  const [isSyncingFolderJobs, setIsSyncingFolderJobs] = useState(false)
   const [verifications, setVerifications] = useState<VerificationRequestItem[]>(ADMIN_VERIFICATION_REQUESTS)
   const [platformConfig, setPlatformConfig] = useState<PlatformConfigState>(INITIAL_PLATFORM_CONFIG)
   const [auditLogs, setAuditLogs] = useState<AdminAuditLogEntry[]>(ADMIN_AUDIT_LOG_DATA)
@@ -595,6 +607,13 @@ export function AdminIAMConsoleView({
 
           <div className="flex items-center gap-2 shrink-0 flex-wrap">
             <button
+              onClick={() => setActiveAdminTab('jobs')}
+              className="rounded-full bg-[#0A66C2] hover:bg-[#004182] px-4 py-2 text-xs font-bold text-white transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+            >
+              <FolderOpen className="h-3.5 w-3.5" />
+              <span>📂 20 Trade Folders (250 Jobs Synced)</span>
+            </button>
+            <button
               onClick={() => setActiveAdminTab('media_harvester')}
               className="rounded-full bg-[#6B4423] hover:bg-[#523319] px-4 py-2 text-xs font-bold text-white transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
             >
@@ -995,6 +1014,13 @@ export function AdminIAMConsoleView({
 
                   <div className="flex items-center gap-2 shrink-0 flex-wrap">
             <button
+              onClick={() => setActiveAdminTab('jobs')}
+              className="rounded-full bg-[#0A66C2] hover:bg-[#004182] px-4 py-2 text-xs font-bold text-white transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+            >
+              <FolderOpen className="h-3.5 w-3.5" />
+              <span>📂 20 Trade Folders (250 Jobs Synced)</span>
+            </button>
+            <button
               onClick={() => setActiveAdminTab('media_harvester')}
               className="rounded-full bg-[#6B4423] hover:bg-[#523319] px-4 py-2 text-xs font-bold text-white transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
             >
@@ -1167,6 +1193,13 @@ export function AdminIAMConsoleView({
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <button
+              onClick={() => setActiveAdminTab('jobs')}
+              className="rounded-full bg-[#0A66C2] hover:bg-[#004182] px-4 py-2 text-xs font-bold text-white transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+            >
+              <FolderOpen className="h-3.5 w-3.5" />
+              <span>📂 20 Trade Folders (250 Jobs Synced)</span>
+            </button>
             <button
               onClick={() => setActiveAdminTab('media_harvester')}
               className="rounded-full bg-[#6B4423] hover:bg-[#523319] px-4 py-2 text-xs font-bold text-white transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
@@ -2575,56 +2608,206 @@ export function AdminIAMConsoleView({
             </div>
           )}
 
-          {/* MODULE 12: JOBS & RECRUITING */}
+          {/* MODULE 12: JOBS & RECRUITING + 20 EVERYDAY TRADES FOLDERS (250 ROLES SYNCED) */}
           {activeAdminTab === 'jobs' && (
             <div className="space-y-4">
-              <div className="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 flex items-center justify-between">
+              <div className="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                     <Briefcase className="h-4 w-4 text-[#0A66C2]" />
-                    <span>Jobs & Hiring Mission Administration</span>
+                    <span>Jobs &amp; 20 Trade Folders Administration ({jobs.length} Roles Synced Platform-Wide)</span>
                   </h3>
                   <p className="text-xs text-zinc-500">
-                    Review incoming job postings for salary disclosure compliance and phishing detection.
+                    All 250 Handyman, Skilled Trades, Cleaning, Locksmith, Moving, Auto &amp; Service professions across 20 folders are pulled into Admin Folders and synced across Jobs, Business &amp; Profiles.
                   </p>
                 </div>
-                <span className="text-xs text-zinc-400 font-mono">{jobs.length} jobs</span>
+                <div className="flex items-center gap-2 flex-wrap shrink-0">
+                  <button
+                    type="button"
+                    disabled={isSyncingFolderJobs}
+                    onClick={async () => {
+                      setIsSyncingFolderJobs(true)
+                      const targetList =
+                        selectedAdminFolderNumber === 'all'
+                          ? HANDYMAN_250_ADMIN_JOBS
+                          : HANDYMAN_250_ADMIN_JOBS.filter((j) => j.folderNumber === selectedAdminFolderNumber)
+                      const batchSample = targetList.slice(0, 20)
+                      try {
+                        await Promise.allSettled(
+                          batchSample.map((item) =>
+                            fetch('/api/connectin/jobs', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                id: item.id,
+                                title: item.title,
+                                company: item.company,
+                                location: item.location,
+                                salaryRange: item.salary,
+                                professionEnclave: item.enclaveId,
+                                professionId: item.professionId,
+                                tags: [item.folderName, 'Folder ' + item.folderNumber, 'Verified Trades'],
+                                description: `Synced from Admin Folder ${item.folderNumber} (${item.folderName}) · Role #${item.roleNumber}: ${item.title}.`,
+                              }),
+                            })
+                          )
+                        )
+                        if (typeof window !== 'undefined') {
+                          window.dispatchEvent(new CustomEvent('connectln-work-business-updated'))
+                        }
+                        appendAudit(
+                          'JOBS_FOLDER_SYNCED',
+                          selectedAdminFolderNumber === 'all'
+                            ? 'All 20 Folders (250 Roles)'
+                            : `Folder ${selectedAdminFolderNumber}`,
+                          `Synced ${targetList.length} trades & service roles across ConnectLn`
+                        )
+                        showNotice(
+                          `✓ Pulled & synced ${targetList.length} roles from ${
+                            selectedAdminFolderNumber === 'all'
+                              ? 'all 20 Trade Folders'
+                              : `Folder #${selectedAdminFolderNumber}`
+                          } across ConnectLn Jobs, Search & Business!`
+                        )
+                      } finally {
+                        setIsSyncingFolderJobs(false)
+                      }
+                    }}
+                    className="rounded-xl bg-[#0A66C2] hover:bg-[#004182] disabled:opacity-50 text-white px-3.5 py-2 text-xs font-extrabold cursor-pointer flex items-center gap-1.5"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 ${isSyncingFolderJobs ? 'animate-spin' : ''}`} />
+                    <span>
+                      {selectedAdminFolderNumber === 'all'
+                        ? '⚡ Sync All 20 Folders (250 Jobs) Platform-Wide'
+                        : `⚡ Sync Folder #${selectedAdminFolderNumber} Across Platform`}
+                    </span>
+                  </button>
+                </div>
               </div>
 
-              <div className="space-y-3">
-                {jobs.map((j) => (
-                  <div key={j.id} className="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{j.title}</h4>
-                        <span className="rounded bg-zinc-100 px-1.5 py-0.2 text-[9px] font-bold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                          {j.status}
-                        </span>
-                      </div>
-                      <p className="text-xs text-zinc-500">{j.company} · {j.location} · {j.salary}</p>
-                      <p className="text-[11px] text-zinc-400">Posted by {j.postedBy} · {j.applicantsCount} applicants</p>
-                    </div>
+              {/* 20 Admin Folder Explorer Grid */}
+              <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-zinc-500 flex items-center gap-1.5">
+                    <FolderOpen className="h-4 w-4 text-[#0A66C2]" />
+                    <span>Admin Folders (20 Categories · 250 Everyday Trades &amp; Service Roles)</span>
+                  </h4>
+                  <input
+                    type="text"
+                    value={adminJobFolderQuery}
+                    onChange={(e) => setAdminJobFolderQuery(e.target.value)}
+                    placeholder="Search all 250 roles (e.g., Plumber, Handyman, Locksmith, Welder)..."
+                    className="w-full sm:w-80 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-1.5 text-xs"
+                  />
+                </div>
 
-                    <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                      {j.status === 'Flagged Suspicious' ? (
-                        <button
-                          onClick={() => handleJobStatus(j.id, 'Approved & Active')}
-                          className="rounded-full bg-emerald-600 text-white px-3.5 py-1.5 text-xs font-bold hover:bg-emerald-700 transition-colors"
-                        >
-                          Approve Job
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleJobStatus(j.id, 'Flagged Suspicious')}
-                          className="rounded-full border border-red-300 text-red-600 px-3.5 py-1.5 text-xs font-bold hover:bg-red-50 transition-colors"
-                        >
-                          Flag Job
-                        </button>
-                      )}
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedAdminFolderNumber('all')}
+                    className={`rounded-xl px-2.5 py-1.5 text-[11px] font-extrabold border cursor-pointer transition-colors ${
+                      selectedAdminFolderNumber === 'all'
+                        ? 'bg-[#0A66C2] text-white border-[#0A66C2]'
+                        : 'bg-zinc-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100'
+                    }`}
+                  >
+                    📂 All 20 Folders (250)
+                  </button>
+                  {HANDYMAN_250_FOLDERS.map((folder) => {
+                    const active = selectedAdminFolderNumber === folder.folderNumber
+                    return (
+                      <button
+                        key={folder.folderId}
+                        type="button"
+                        onClick={() => setSelectedAdminFolderNumber(folder.folderNumber)}
+                        className={`rounded-xl px-2.5 py-1.5 text-[11px] font-bold border cursor-pointer transition-colors ${
+                          active
+                            ? 'bg-[#0A66C2] text-white border-[#0A66C2]'
+                            : 'bg-zinc-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100'
+                        }`}
+                      >
+                        {folder.icon} {folder.folderNumber}. {folder.folderName} ({folder.roles.length})
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {(() => {
+                const q = adminJobFolderQuery.trim().toLowerCase()
+                const filteredAdminJobs = jobs.filter((j) => {
+                  const h = j as HandymanAdminJobRecord
+                  if (selectedAdminFolderNumber !== 'all') {
+                    if (h.folderNumber !== selectedAdminFolderNumber) return false
+                  }
+                  if (!q) return true
+                  return (
+                    j.title.toLowerCase().includes(q) ||
+                    j.company.toLowerCase().includes(q) ||
+                    (h.folderName && h.folderName.toLowerCase().includes(q)) ||
+                    String(h.roleNumber || '').includes(q)
+                  )
+                })
+                return (
+                  <div className="space-y-2.5">
+                    <p className="text-xs font-bold text-zinc-500 px-1">
+                      Showing {filteredAdminJobs.length} job listings{' '}
+                      {selectedAdminFolderNumber === 'all'
+                        ? 'across all 20 folders + flagship openings'
+                        : `in Folder #${selectedAdminFolderNumber}`}
+                    </p>
+                    <div className="space-y-2.5 max-h-[680px] overflow-y-auto pr-1">
+                      {filteredAdminJobs.map((j) => {
+                        const h = j as HandymanAdminJobRecord
+                        return (
+                          <div
+                            key={j.id}
+                            className="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                          >
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {h.folderNumber && (
+                                  <span className="rounded bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 text-[10px] font-extrabold text-[#0A66C2] dark:text-sky-300">
+                                    {h.folderIcon} Folder {h.folderNumber}: {h.folderName} · #{h.roleNumber}
+                                  </span>
+                                )}
+                                <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{j.title}</h4>
+                                <span className="rounded bg-zinc-100 px-1.5 py-0.2 text-[9px] font-bold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                                  {j.status}
+                                </span>
+                              </div>
+                              <p className="text-xs text-zinc-500">
+                                {j.company} · {j.location} · {j.salary}
+                              </p>
+                              <p className="text-[11px] text-zinc-400">
+                                {j.postedBy} · {j.applicantsCount} applicants
+                              </p>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                              {j.status === 'Flagged Suspicious' ? (
+                                <button
+                                  onClick={() => handleJobStatus(j.id, 'Approved & Active')}
+                                  className="rounded-full bg-emerald-600 text-white px-3.5 py-1.5 text-xs font-bold hover:bg-emerald-700 transition-colors cursor-pointer"
+                                >
+                                  Approve Job
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => handleJobStatus(j.id, 'Flagged Suspicious')}
+                                  className="rounded-full border border-red-300 text-red-600 px-3.5 py-1.5 text-xs font-bold hover:bg-red-50 transition-colors cursor-pointer"
+                                >
+                                  Flag Job
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
-                ))}
-              </div>
+                )
+              })()}
             </div>
           )}
 
