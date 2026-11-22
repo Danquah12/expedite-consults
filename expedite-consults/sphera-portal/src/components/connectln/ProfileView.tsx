@@ -147,6 +147,34 @@ export function ProfileView({
     [user.id, user.email, user.name]
   )
 
+  const stableWorkspaceNameKey = React.useMemo(
+    () =>
+      String(user.name || user.email || user.id || 'default')
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '_'),
+    [user.name, user.email, user.id]
+  )
+
+  const safeSetWorkspaceLocalStorage = React.useCallback((key: string, value: string) => {
+    if (typeof window === 'undefined') return
+    try {
+      localStorage.setItem(key, value)
+    } catch {
+      // Free bulky caches if browser 5MB localStorage quota is full, then retry
+      try {
+        localStorage.removeItem('connectin_posts_v1')
+        localStorage.removeItem('connectln_harvested_media_v1')
+        localStorage.removeItem('connectin_user_activity_logs_v1')
+        localStorage.removeItem('connectin_admin_users_v1')
+        localStorage.removeItem('connectin_accounts_vault_v1')
+        localStorage.setItem(key, value)
+      } catch (err) {
+        console.error(`Failed to persist ${key}`, err)
+      }
+    }
+  }, [])
+
   // Resume & Experience Builder State
   const [isResumeModalOpen, setIsResumeModalOpen] = useState(false)
   const [isExpFormModalOpen, setIsExpFormModalOpen] = useState(false)
@@ -936,7 +964,9 @@ export function ProfileView({
   const [editWebsiteLicense, setEditWebsiteLicense] = useState("")
   const [editWebsiteAbout, setEditWebsiteAbout] = useState("")
   const [editWebsiteMission, setEditWebsiteMission] = useState("")
+  const [editWebsiteOfferingsDraft, setEditWebsiteOfferingsDraft] = useState<BusinessWebsiteOffering[]>([])
   const [websiteSavedSuccess, setWebsiteSavedSuccess] = useState(false)
+  const hydratedWorkspaceKeyRef = useRef<string | null>(null)
 
   // Business Website Booking / Request Quote State
   const [quoteClientName, setQuoteClientName] = useState("")
@@ -988,28 +1018,53 @@ export function ProfileView({
     [managedOfferings]
   )
 
-  const persistManagedOfferings = (nextOfferings: BusinessWebsiteOffering[]) => {
-    setManagedOfferings(nextOfferings)
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem(
-          `connectin_managed_offerings_v1_${userWorkspaceStorageKey}`,
-          JSON.stringify(nextOfferings)
-        )
-      } catch {}
-    }
+  const writeOfferingsToStorage = React.useCallback(
+    (nextOfferings: BusinessWebsiteOffering[]) => {
+      const serialized = JSON.stringify(nextOfferings)
+      safeSetWorkspaceLocalStorage(`connectin_managed_offerings_v2_${stableWorkspaceNameKey}`, serialized)
+      safeSetWorkspaceLocalStorage(`connectin_managed_offerings_v1_${userWorkspaceStorageKey}`, serialized)
+    },
+    [safeSetWorkspaceLocalStorage, stableWorkspaceNameKey, userWorkspaceStorageKey]
+  )
+
+  const writeWebsiteOverridesToStorage = React.useCallback(
+    (nextOverrides: Partial<PersonalBusinessWebsiteData>) => {
+      const serialized = JSON.stringify(nextOverrides)
+      safeSetWorkspaceLocalStorage(`connectin_business_website_v2_${stableWorkspaceNameKey}`, serialized)
+      safeSetWorkspaceLocalStorage(`connectin_business_website_v1_${userWorkspaceStorageKey}`, serialized)
+    },
+    [safeSetWorkspaceLocalStorage, stableWorkspaceNameKey, userWorkspaceStorageKey]
+  )
+
+  const persistManagedOfferings = (
+    updater:
+      | BusinessWebsiteOffering[]
+      | ((prev: BusinessWebsiteOffering[]) => BusinessWebsiteOffering[])
+  ) => {
+    setManagedOfferings((prev) => {
+      const nextOfferings = typeof updater === 'function' ? updater(prev) : updater
+      writeOfferingsToStorage(nextOfferings)
+      return nextOfferings
+    })
   }
 
   useEffect(() => {
+    if (hydratedWorkspaceKeyRef.current === stableWorkspaceNameKey) {
+      return
+    }
+    hydratedWorkspaceKeyRef.current = stableWorkspaceNameKey
+
     let loadedOfferings: BusinessWebsiteOffering[] | null = null
     let loadedLegacyCustom: VendorProductItem[] = []
     let loadedSiteOverrides: Partial<PersonalBusinessWebsiteData> = {}
     if (typeof window !== 'undefined') {
       try {
-        const rawManaged = localStorage.getItem(`connectin_managed_offerings_v1_${userWorkspaceStorageKey}`)
+        const rawManaged =
+          localStorage.getItem(`connectin_managed_offerings_v2_${stableWorkspaceNameKey}`) ||
+          localStorage.getItem(`connectin_managed_offerings_v1_${userWorkspaceStorageKey}`)
         if (rawManaged) {
           const parsed = JSON.parse(rawManaged)
-          if (Array.isArray(parsed) && parsed.length > 0) loadedOfferings = parsed
+          if (Array.isArray(parsed)) loadedOfferings = parsed
         }
       } catch {}
       if (!loadedOfferings) {
@@ -1022,7 +1077,9 @@ export function ProfileView({
         } catch {}
       }
       try {
-        const rawSite = localStorage.getItem(`connectin_business_website_v1_${userWorkspaceStorageKey}`)
+        const rawSite =
+          localStorage.getItem(`connectin_business_website_v2_${stableWorkspaceNameKey}`) ||
+          localStorage.getItem(`connectin_business_website_v1_${userWorkspaceStorageKey}`)
         if (rawSite) {
           const parsed = JSON.parse(rawSite)
           if (parsed && typeof parsed === 'object') loadedSiteOverrides = parsed
@@ -1068,7 +1125,7 @@ export function ProfileView({
     setBusinessCategoryFilter('All')
     setQuoteSubmittedReceipt(null)
     setIsBusinessPreviewMode(false)
-  }, [userWorkspaceStorageKey, tailoredWorkspaceProfile, user.name])
+  }, [stableWorkspaceNameKey, userWorkspaceStorageKey, tailoredWorkspaceProfile, user.name])
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault()
@@ -1268,8 +1325,8 @@ export function ProfileView({
     setNewProductName(offering.title)
     setNewProductCategory(offering.productCategory || 'Services')
     setNewProductPrice(offering.price)
-    setNewProductBillingUnit(offering.billingUnit || 'Flat Rate / Package')
-    setNewProductTurnaround(offering.turnaround || 'Available Now')
+    setNewProductBillingUnit(offering.billingUnit ?? '')
+    setNewProductTurnaround(offering.turnaround ?? '')
     setNewProductDescription(offering.description || '')
     setNewProductDeliverables((offering.deliverables || []).join('\n'))
     setProductAddedSuccess(false)
@@ -1277,10 +1334,9 @@ export function ProfileView({
   }
 
   const handleDeleteProductOffering = (offeringId: string) => {
-    const nextOfferings = managedOfferings.filter((o) => o.id !== offeringId)
-    persistManagedOfferings(nextOfferings)
+    persistManagedOfferings((prev) => prev.filter((o) => o.id !== offeringId))
     setPhotoSuccessMsg('✓ Listing removed from your Business Page & Marketplace catalog.')
-    setTimeout(() => setPhotoSuccessMsg(null), 3500)
+    setTimeout(() => setPhotoSuccessMsg(null), 4000)
   }
 
   const handleResetDefaultCatalog = () => {
@@ -1288,6 +1344,8 @@ export function ProfileView({
     persistManagedOfferings(tailoredWorkspaceProfile.business.offerings)
     if (typeof window !== 'undefined') {
       try {
+        localStorage.removeItem(`connectin_business_website_v2_${stableWorkspaceNameKey}`)
+        localStorage.removeItem(`connectin_managed_offerings_v2_${stableWorkspaceNameKey}`)
         localStorage.removeItem(`connectin_business_website_v1_${userWorkspaceStorageKey}`)
         localStorage.removeItem(`connectin_managed_offerings_v1_${userWorkspaceStorageKey}`)
         localStorage.removeItem(`connectin_custom_products_v1_${userWorkspaceStorageKey}`)
@@ -1299,7 +1357,8 @@ export function ProfileView({
 
   const handleCreateProductListing = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newProductName.trim()) return
+    const trimmedTitle = newProductName.trim()
+    if (!trimmedTitle) return
 
     const parsedDeliverables = newProductDeliverables
       .split(/\r?\n|,/)
@@ -1326,31 +1385,41 @@ export function ProfileView({
         : '⚡'
 
     if (editingOfferingId) {
-      const nextOfferings = managedOfferings.map((item) =>
-        item.id === editingOfferingId
-          ? {
-              ...item,
-              title: newProductName.trim(),
-              category: newProductCategory,
-              productCategory: newProductCategory,
-              icon: iconForCategory,
-              price: newProductPrice.trim() || item.price,
-              billingUnit: newProductBillingUnit.trim() || item.billingUnit,
-              turnaround: newProductTurnaround.trim() || item.turnaround,
-              description:
-                newProductDescription.trim() ||
-                `Direct service & marketplace offering by ${businessWebsite.businessName}.`,
-              deliverables: parsedDeliverables.length > 0 ? parsedDeliverables : fallbackDeliverables,
-              revenueLabel: newProductPrice.trim() || item.revenueLabel
-            }
-          : item
+      const targetId = editingOfferingId
+      const trimmedPrice = newProductPrice.trim()
+      const trimmedBilling = newProductBillingUnit.trim()
+      const trimmedTurnaround = newProductTurnaround.trim()
+      const trimmedDesc = newProductDescription.trim()
+
+      persistManagedOfferings((prev) =>
+        prev.map((item) => {
+          if (item.id !== targetId) return item
+          const editedCategoryChanged = newProductCategory !== item.productCategory
+          return {
+            ...item,
+            title: trimmedTitle,
+            category: editedCategoryChanged ? newProductCategory : (item.category || newProductCategory),
+            productCategory: newProductCategory,
+            icon: editedCategoryChanged ? iconForCategory : item.icon,
+            price: trimmedPrice || item.price,
+            billingUnit: trimmedBilling,
+            turnaround: trimmedTurnaround,
+            description:
+              trimmedDesc ||
+              `Direct service & marketplace offering by ${businessWebsite.businessName}.`,
+            deliverables: parsedDeliverables.length > 0 ? parsedDeliverables : fallbackDeliverables,
+            revenueLabel: trimmedPrice || item.revenueLabel
+          }
+        })
       )
-      persistManagedOfferings(nextOfferings)
+      setQuoteSelectedOffering(trimmedTitle)
+      setPhotoSuccessMsg(`✓ Updated "${trimmedTitle}" live on your Business Page!`)
+      setTimeout(() => setPhotoSuccessMsg(null), 4500)
     } else {
       const priceStr = newProductPrice.trim() || '$299'
       const newOffering: BusinessWebsiteOffering = {
         id: 'prod_' + Date.now(),
-        title: newProductName.trim(),
+        title: trimmedTitle,
         category: newProductCategory,
         productCategory: newProductCategory,
         price: priceStr,
@@ -1371,20 +1440,20 @@ export function ProfileView({
         revenueLabel: `${priceStr} Listed`,
         leadsCount: 1
       }
-      persistManagedOfferings([newOffering, ...managedOfferings])
+      persistManagedOfferings((prev) => [newOffering, ...prev])
+      setBusinessCategoryFilter('All')
       setQuoteSelectedOffering(newOffering.title)
+      setPhotoSuccessMsg(`✓ Published "${newOffering.title}" live on your Business Page & Marketplace!`)
+      setTimeout(() => setPhotoSuccessMsg(null), 4500)
     }
 
-    setProductAddedSuccess(true)
-    setTimeout(() => {
-      setIsAddProductModalOpen(false)
-      setProductAddedSuccess(false)
-      setEditingOfferingId(null)
-      setNewProductName("")
-      setNewProductPrice("")
-      setNewProductDescription("")
-      setNewProductDeliverables("")
-    }, 1000)
+    setIsAddProductModalOpen(false)
+    setProductAddedSuccess(false)
+    setEditingOfferingId(null)
+    setNewProductName("")
+    setNewProductPrice("")
+    setNewProductDescription("")
+    setNewProductDeliverables("")
   }
 
   const handleOpenEditWebsiteModal = () => {
@@ -1402,6 +1471,7 @@ export function ProfileView({
     setEditWebsiteLicense(businessWebsite.licenseNumber)
     setEditWebsiteAbout(businessWebsite.aboutStory)
     setEditWebsiteMission(businessWebsite.missionStatement)
+    setEditWebsiteOfferingsDraft(managedOfferings.map((o) => ({ ...o })))
     setWebsiteSavedSuccess(false)
     setIsEditWebsiteModalOpen(true)
   }
@@ -1434,19 +1504,32 @@ export function ProfileView({
       missionStatement: editWebsiteMission.trim() || tailoredWorkspaceProfile.business.missionStatement
     }
     setBusinessOverrides(nextOverrides)
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem(
-          `connectin_business_website_v1_${userWorkspaceStorageKey}`,
-          JSON.stringify(nextOverrides)
-        )
-      } catch {}
+    writeWebsiteOverridesToStorage(nextOverrides)
+
+    if (editWebsiteOfferingsDraft.length > 0) {
+      const draftById = new Map(editWebsiteOfferingsDraft.map((d) => [d.id, d]))
+      persistManagedOfferings((prev) =>
+        prev.map((item) => {
+          const draft = draftById.get(item.id)
+          if (!draft) return item
+          const nextTitle = draft.title.trim() || item.title
+          const nextPrice = draft.price.trim() || item.price
+          return {
+            ...item,
+            title: nextTitle,
+            price: nextPrice,
+            billingUnit: draft.billingUnit.trim(),
+            turnaround: draft.turnaround.trim(),
+            revenueLabel: nextPrice !== item.price ? nextPrice : item.revenueLabel
+          }
+        })
+      )
     }
-    setWebsiteSavedSuccess(true)
-    setTimeout(() => {
-      setWebsiteSavedSuccess(false)
-      setIsEditWebsiteModalOpen(false)
-    }, 900)
+
+    setWebsiteSavedSuccess(false)
+    setIsEditWebsiteModalOpen(false)
+    setPhotoSuccessMsg('✓ Business Website & Product Pricing saved live on your page!')
+    setTimeout(() => setPhotoSuccessMsg(null), 4500)
   }
 
   const handleCopyWebsiteUrl = async () => {
@@ -1665,21 +1748,27 @@ export function ProfileView({
         </div>
       </div>
 
+      {photoSuccessMsg && (
+        <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-400 dark:border-emerald-700 p-3.5 text-emerald-900 dark:text-emerald-100 text-sm font-bold flex items-center justify-between shadow-sm animate-in fade-in">
+          <span className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <span>{photoSuccessMsg}</span>
+          </span>
+          <button
+            type="button"
+            onClick={() => setPhotoSuccessMsg(null)}
+            className="text-emerald-700 dark:text-emerald-300 hover:text-emerald-900 cursor-pointer font-bold px-1.5"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* ========================================================================= */}
       {/* 1. PROFILE IDENTITY VIEW */}
       {/* ========================================================================= */}
       {workspaceSection === 'profile' && (
         <div className="space-y-5">
-          {photoSuccessMsg && (
-            <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 p-3 text-emerald-800 dark:text-emerald-200 text-xs font-semibold flex items-center justify-between shadow-xs animate-in fade-in">
-              <span className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                <span>{photoSuccessMsg}</span>
-              </span>
-              <button onClick={() => setPhotoSuccessMsg(null)} className="text-emerald-500 hover:text-emerald-700 cursor-pointer">✕</button>
-            </div>
-          )}
-
           <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
             {/* Banner Cover */}
             <div className="relative h-44 w-full bg-gradient-to-r from-[#0A66C2] via-indigo-700 to-purple-800 overflow-hidden group">
@@ -5018,16 +5107,47 @@ export function ProfileView({
                       </p>
                     </div>
 
-                    <div className="rounded-xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-300/80 dark:border-zinc-700 p-3.5 flex flex-wrap items-baseline justify-between gap-2">
-                      <div>
+                    <div
+                      role={showOwnerControls ? 'button' : undefined}
+                      tabIndex={showOwnerControls ? 0 : undefined}
+                      onClick={showOwnerControls ? () => handleOpenEditProductModal(off) : undefined}
+                      onKeyDown={
+                        showOwnerControls
+                          ? (e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault()
+                                handleOpenEditProductModal(off)
+                              }
+                            }
+                          : undefined
+                      }
+                      title={showOwnerControls ? 'Click to edit price, billing unit, or turnaround live' : undefined}
+                      className={`rounded-xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-300/80 dark:border-zinc-700 p-3.5 flex flex-wrap items-baseline justify-between gap-2 ${
+                        showOwnerControls
+                          ? 'cursor-pointer hover:border-[#0A66C2] hover:ring-2 hover:ring-[#0A66C2]/20 transition-all group/price'
+                          : ''
+                      }`}
+                    >
+                      <div className="flex items-baseline flex-wrap gap-x-1.5">
                         <span className={`text-2xl sm:text-3xl font-black ${activeTheme.accentText}`}>{off.price}</span>
-                        <span className="ml-1.5 text-xs sm:text-sm font-bold text-zinc-700 dark:text-zinc-300">
-                          {off.billingUnit}
-                        </span>
+                        {off.billingUnit && (
+                          <span className="text-xs sm:text-sm font-bold text-zinc-700 dark:text-zinc-300">
+                            {off.billingUnit}
+                          </span>
+                        )}
                       </div>
-                      <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-900 px-2.5 py-1 rounded-md border border-zinc-300 dark:border-zinc-700">
-                        ⏱️ {off.turnaround}
-                      </span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {off.turnaround && (
+                          <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-900 px-2.5 py-1 rounded-md border border-zinc-300 dark:border-zinc-700">
+                            ⏱️ {off.turnaround}
+                          </span>
+                        )}
+                        {showOwnerControls && (
+                          <span className="text-[11px] font-extrabold text-[#0A66C2] dark:text-sky-400 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 px-2 py-0.5 rounded-md opacity-85 group-hover/price:opacity-100">
+                            ✎ Edit Price
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <ul className="space-y-2 pt-1">
@@ -5109,7 +5229,7 @@ export function ProfileView({
                       className="rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 px-4 py-2.5 text-sm font-black text-white shadow-md flex items-center gap-1.5 shrink-0 cursor-pointer"
                     >
                       <Plus className="h-4 w-4" />
-                      <span>+ List New Product / Service</span>
+                      <span>List New Product / Service</span>
                     </button>
                   )}
                 </div>
@@ -5763,6 +5883,102 @@ export function ProfileView({
                   className="w-full rounded-lg border border-zinc-300 p-2.5 text-sm font-medium text-zinc-950 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                 />
               </div>
+
+              {/* Inline Products & Pricing Editor right inside Edit Page modal */}
+              {editWebsiteOfferingsDraft.length > 0 && (
+                <div className="space-y-2.5 pt-2 border-t border-zinc-200 dark:border-zinc-800">
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="font-extrabold text-zinc-950 dark:text-white flex items-center gap-1.5">
+                      <ShoppingBag className="h-4 w-4 text-purple-600" />
+                      <span>Products &amp; Pricing on Your Page ({editWebsiteOfferingsDraft.length})</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditWebsiteModalOpen(false)
+                        handleOpenAddProductModal()
+                      }}
+                      className="text-xs font-extrabold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer"
+                    >
+                      + Add New Product
+                    </button>
+                  </div>
+                  <div className="space-y-2.5">
+                    {editWebsiteOfferingsDraft.map((draft, idx) => (
+                      <div
+                        key={draft.id}
+                        className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 p-3 space-y-2"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-extrabold text-zinc-700 dark:text-zinc-300">
+                            {draft.icon} Item #{idx + 1}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsEditWebsiteModalOpen(false)
+                              handleOpenEditProductModal(draft)
+                            }}
+                            className="text-xs font-bold text-[#0A66C2] dark:text-sky-400 hover:underline cursor-pointer"
+                          >
+                            Full Item Details →
+                          </button>
+                        </div>
+                        <input
+                          type="text"
+                          value={draft.title}
+                          onChange={(e) => {
+                            const val = e.target.value
+                            setEditWebsiteOfferingsDraft((prev) =>
+                              prev.map((item) => (item.id === draft.id ? { ...item, title: val } : item))
+                            )
+                          }}
+                          placeholder="Product or service title"
+                          className="w-full rounded-lg border border-zinc-300 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-sm font-bold text-zinc-950 dark:border-zinc-700 dark:text-zinc-100"
+                        />
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          <input
+                            type="text"
+                            value={draft.price}
+                            onChange={(e) => {
+                              const val = e.target.value
+                              setEditWebsiteOfferingsDraft((prev) =>
+                                prev.map((item) => (item.id === draft.id ? { ...item, price: val } : item))
+                              )
+                            }}
+                            placeholder="Price (e.g. $499 / mo)"
+                            className="rounded-lg border border-zinc-300 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs font-black text-emerald-700 dark:text-emerald-400 dark:border-zinc-700"
+                          />
+                          <input
+                            type="text"
+                            value={draft.billingUnit}
+                            onChange={(e) => {
+                              const val = e.target.value
+                              setEditWebsiteOfferingsDraft((prev) =>
+                                prev.map((item) => (item.id === draft.id ? { ...item, billingUnit: val } : item))
+                              )
+                            }}
+                            placeholder="Billing unit"
+                            className="rounded-lg border border-zinc-300 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs font-semibold text-zinc-900 dark:text-zinc-100 dark:border-zinc-700"
+                          />
+                          <input
+                            type="text"
+                            value={draft.turnaround}
+                            onChange={(e) => {
+                              const val = e.target.value
+                              setEditWebsiteOfferingsDraft((prev) =>
+                                prev.map((item) => (item.id === draft.id ? { ...item, turnaround: val } : item))
+                              )
+                            }}
+                            placeholder="Turnaround / Timing"
+                            className="rounded-lg border border-zinc-300 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs font-semibold text-zinc-900 dark:text-zinc-100 dark:border-zinc-700"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="pt-2 flex justify-end gap-2">
                 <button
