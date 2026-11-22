@@ -25,6 +25,7 @@ import {
 } from "lucide-react"
 import {
   COUNTRIES_CONFIG,
+  CountryConfig,
   GlobalJobItem,
   GLOBAL_JOBS_CATALOG,
   initialUserApplications,
@@ -34,7 +35,9 @@ import {
   getJobFlywheelRecommendation,
   getEnclaveSearchPlaceholder,
   getLocalizedJobsForCountryAndEnclave,
-  getCountryShortLabel
+  getCountryShortLabel,
+  convertUsdSalaryToCountry,
+  formatJobSalaryForCountry
 } from "@/lib/global-jobs-data"
 import { PROFESSION_ENCLAVES, CONNECTIN_WORKER_PILLARS, ALL_PROFESSIONS } from "@/lib/connectin-professions"
 import {
@@ -351,30 +354,33 @@ const TRADE_ENCLAVE_LOGO: Record<string, string> = {
   community_civic_security: 'https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=100&auto=format&fit=crop&q=80'
 }
 
-function mapAdminFolderJobToGlobalJob(item: HandymanAdminJobRecord, countryName: string, countryCode: string, primaryLang: string): GlobalJobItem {
+function mapAdminFolderJobToGlobalJob(item: HandymanAdminJobRecord, country: CountryConfig): GlobalJobItem {
   const folderMeta = HANDYMAN_250_FOLDERS.find((f) => f.folderNumber === item.folderNumber)
+  const realHubs = country.hubs.filter((h) => h !== 'All Hubs')
+  const assignedHub = realHubs.length > 0 ? realHubs[item.roleNumber % realHubs.length] : country.name
+  const localizedLocation = country.code === 'US' ? item.location : `${assignedHub} (${country.name})`
   return {
-    id: `folder_sync_${countryCode.toLowerCase()}_${item.id}`,
-    countryCode,
-    countryName,
+    id: `folder_sync_${country.code.toLowerCase()}_${item.id}`,
+    countryCode: country.code,
+    countryName: country.name,
     professionEnclave: item.enclaveId,
     professionId: item.professionId,
     domainCategory: `${item.folderNumber}. ${item.folderName}`,
     title: item.title,
     company: item.company,
     companyLogo: TRADE_ENCLAVE_LOGO[item.enclaveId] || TRADE_ENCLAVE_LOGO.trades_construction,
-    location: countryCode === 'US' ? item.location : `${countryName} (Local & Regional Service)`,
-    hub: 'All Hubs',
+    location: localizedLocation,
+    hub: country.code === 'US' ? 'All Hubs' : assignedHub,
     workplaceType: 'On-site',
     employmentType: 'Full-time',
     postedTime: `Synced from Admin Folder ${item.folderNumber}`,
     applicantsCount: item.applicantsCount,
-    salaryRange: item.salary,
+    salaryRange: convertUsdSalaryToCountry(item.salary, country, localizedLocation),
     easyApply: true,
     isLiveFeed: true,
     description: `Synced directly from ConnectLn Admin Folder #${item.folderNumber} (${item.folderName}) · Role #${item.roleNumber}: ${item.title}. ${folderMeta?.toolName ? `Includes workflow support for ${folderMeta.toolName}.` : ''}`,
     requirements: folderMeta ? folderMeta.typicalSkills.map((s) => `Verified practical experience in ${s}`) : [`Verified ${item.title} experience`],
-    languageRequirement: primaryLang || 'English',
+    languageRequirement: country.primaryLanguage || 'English',
     applyUrl: 'https://conectln.com/connectin',
     source: `Admin Folder ${item.folderNumber}: ${item.folderName}`,
     tags: [
@@ -552,6 +558,7 @@ export function JobsView({
     setNewJobEnclave(selectedEnclave === 'all' ? 'trades_construction' : selectedEnclave)
     const countryObj = COUNTRIES_CONFIG.find(c => c.code === selectedCountryCode) || COUNTRIES_CONFIG[0]
     setNewJobLocation(`${countryObj.hubs[1] || countryObj.name} (${countryObj.name})`)
+    setNewJobSalary(convertUsdSalaryToCountry("$145,000 - $185,000 / yr", countryObj))
     setPostJobSuccess(false)
     setIsPostJobOpen(true)
   }
@@ -743,7 +750,78 @@ export function JobsView({
   const currentEnclaveObj = PROFESSION_ENCLAVES.find(e => e.id === selectedEnclave)
   const currentProfessionObj = ALL_PROFESSIONS.find(p => p.id === selectedProfessionId)
 
-  // Fetch live jobs from /api/connectin/jobs backend with instant local fallback
+  // Fetch live jobs from /api/connectin/jobs backend with instant local localization
+  const fetchSeqRef = React.useRef(0)
+
+  const buildLocalFilteredJobs = (
+    enclave: string,
+    countryCode: string,
+    hub: string = 'All Hubs',
+    query: string = '',
+    domain: string = 'All',
+    pillar: string = 'all',
+    professionId: string = 'all'
+  ): GlobalJobItem[] => {
+    const targetCountryObj = COUNTRIES_CONFIG.find(c => c.code === countryCode) || COUNTRIES_CONFIG[0]
+    let list = getLocalizedJobsForCountryAndEnclave(countryCode, enclave)
+
+    if (professionId && professionId !== 'all') {
+      const targetProf = ALL_PROFESSIONS.find(p => p.id === professionId)
+      const profFiltered = list.filter(j => {
+        if (j.professionId === professionId) return true
+        if (targetProf) {
+          const titleWords = targetProf.title.toLowerCase().split(/[\s/&,-]+/).filter(w => w.length > 3)
+          return titleWords.some(w => j.title.toLowerCase().includes(w) || j.tags.some(t => t.toLowerCase().includes(w)))
+        }
+        return false
+      })
+      if (profFiltered.length > 0) list = profFiltered
+    }
+
+    if (pillar && pillar !== 'all' && enclave === 'all') {
+      const matchedPillar = CONNECTIN_WORKER_PILLARS.find(p => p.id === pillar)
+      if (matchedPillar) {
+        list = list.filter(j => j.professionEnclave && matchedPillar.enclaveIds.includes(j.professionEnclave))
+      }
+    }
+
+    if (hub && hub !== 'All Hubs') {
+      const hubFiltered = list.filter(j => j.hub === hub || j.location.includes(hub.split(' ')[0]))
+      if (hubFiltered.length > 0) list = hubFiltered
+    }
+
+    if (domain && domain !== 'All') {
+      list = list.filter(j => {
+        if (domain === 'Remote') return j.workplaceType === 'Remote' || j.tags.includes('Remote')
+        if (domain === 'Contract') return j.employmentType === 'Contract' || j.tags.includes('Contract')
+        if (domain === 'Full-time') return j.employmentType === 'Full-time'
+        if (domain === 'Recommended') return j.domainCategory === 'Recommended' || j.tags.includes('Recommended')
+        return (
+          j.domainCategory === domain ||
+          j.tags.some(t => t.toLowerCase().includes(domain.toLowerCase())) ||
+          j.title.toLowerCase().includes(domain.toLowerCase()) ||
+          j.description.toLowerCase().includes(domain.toLowerCase())
+        )
+      })
+    }
+
+    if (query.trim()) {
+      const q = query.toLowerCase()
+      list = list.filter(
+        j =>
+          j.title.toLowerCase().includes(q) ||
+          j.company.toLowerCase().includes(q) ||
+          j.description.toLowerCase().includes(q) ||
+          j.tags.some(t => t.toLowerCase().includes(q))
+      )
+    }
+
+    return list.map(j => ({
+      ...j,
+      salaryRange: formatJobSalaryForCountry(j.salaryRange, targetCountryObj, j.location)
+    }))
+  }
+
   const fetchJobs = async (
     enclave: string,
     countryCode: string,
@@ -753,13 +831,24 @@ export function JobsView({
     pillar: string = 'all',
     professionId: string = 'all'
   ) => {
+    const reqSeq = ++fetchSeqRef.current
+    const targetCountryObj = COUNTRIES_CONFIG.find(c => c.code === countryCode) || COUNTRIES_CONFIG[0]
     setIsLoadingJobs(true)
+
     const localPublished = filterPublishedJobsForView(
       loadPublishedJobsFromStorage(),
       countryCode,
       enclave,
       query
     )
+
+    // Immediately swap visible jobs to the newly selected country's localized catalog (0ms lag)
+    try {
+      const instantLocal = buildLocalFilteredJobs(enclave, countryCode, hub, query, domain, pillar, professionId)
+      const instantIds = new Set(instantLocal.map(j => j.id))
+      setJobs([...localPublished.filter(j => !instantIds.has(j.id)), ...instantLocal])
+    } catch {}
+
     try {
       const params = new URLSearchParams({
         enclave,
@@ -771,11 +860,17 @@ export function JobsView({
         q: query
       })
       const res = await fetch(`/api/connectin/jobs?${params.toString()}`)
+      if (reqSeq !== fetchSeqRef.current) return
       if (res.ok) {
         const data = await res.json()
+        if (reqSeq !== fetchSeqRef.current) return
         if (Array.isArray(data.jobs)) {
-          const apiIds = new Set(data.jobs.map((j: GlobalJobItem) => j.id))
-          const merged = [...localPublished.filter(j => !apiIds.has(j.id)), ...data.jobs]
+          const localizedApiJobs = (data.jobs as GlobalJobItem[]).map(j => ({
+            ...j,
+            salaryRange: formatJobSalaryForCountry(j.salaryRange, targetCountryObj, j.location)
+          }))
+          const apiIds = new Set(localizedApiJobs.map(j => j.id))
+          const merged = [...localPublished.filter(j => !apiIds.has(j.id)), ...localizedApiJobs]
           setJobs(merged)
           setLiveSyncCount(data.liveExternalCount || 0)
           setLastSyncedAt(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
@@ -787,64 +882,7 @@ export function JobsView({
       console.warn("Backend job sync fallback triggered:", err)
     }
 
-    // Local fallback if offline — strictly localized to the selected country & profession
-    try {
-      let list = getLocalizedJobsForCountryAndEnclave(countryCode, enclave)
-
-      if (professionId && professionId !== 'all') {
-        const targetProf = ALL_PROFESSIONS.find(p => p.id === professionId)
-        const profFiltered = list.filter(j => {
-          if (j.professionId === professionId) return true
-          if (targetProf) {
-            const titleWords = targetProf.title.toLowerCase().split(/[\s/&,-]+/).filter(w => w.length > 3)
-            return titleWords.some(w => j.title.toLowerCase().includes(w) || j.tags.some(t => t.toLowerCase().includes(w)))
-          }
-          return false
-        })
-        if (profFiltered.length > 0) list = profFiltered
-      }
-
-      if (pillar && pillar !== 'all' && enclave === 'all') {
-        const matchedPillar = CONNECTIN_WORKER_PILLARS.find(p => p.id === pillar)
-        if (matchedPillar) {
-          list = list.filter(j => matchedPillar.enclaveIds.includes(j.professionEnclave))
-        }
-      }
-
-      if (hub && hub !== 'All Hubs') {
-        const hubFiltered = list.filter(j => j.hub === hub || j.location.includes(hub.split(' ')[0]))
-        if (hubFiltered.length > 0) list = hubFiltered
-      }
-
-      if (domain && domain !== 'All') {
-        list = list.filter(j => {
-          if (domain === 'Remote') return j.workplaceType === 'Remote' || j.tags.includes('Remote')
-          if (domain === 'Contract') return j.employmentType === 'Contract' || j.tags.includes('Contract')
-          if (domain === 'Full-time') return j.employmentType === 'Full-time'
-          if (domain === 'Recommended') return j.domainCategory === 'Recommended' || j.tags.includes('Recommended')
-          return (
-            j.domainCategory === domain ||
-            j.tags.some(t => t.toLowerCase().includes(domain.toLowerCase())) ||
-            j.title.toLowerCase().includes(domain.toLowerCase()) ||
-            j.description.toLowerCase().includes(domain.toLowerCase())
-          )
-        })
-      }
-
-      if (query.trim()) {
-        const q = query.toLowerCase()
-        list = list.filter(
-          j =>
-            j.title.toLowerCase().includes(q) ||
-            j.company.toLowerCase().includes(q) ||
-            j.description.toLowerCase().includes(q) ||
-            j.tags.some(t => t.toLowerCase().includes(q))
-        )
-      }
-
-      const existingIds = new Set(list.map(j => j.id))
-      setJobs([...localPublished.filter(j => !existingIds.has(j.id)), ...list])
-    } finally {
+    if (reqSeq === fetchSeqRef.current) {
       setIsLoadingJobs(false)
     }
   }
@@ -895,13 +933,13 @@ export function JobsView({
   const displayedJobs = React.useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
     const folderAdminJobsAll = HANDYMAN_250_ADMIN_JOBS.map((item) =>
-      mapAdminFolderJobToGlobalJob(
-        item,
-        currentCountry.name,
-        currentCountry.code,
-        currentCountry.primaryLanguage
-      )
+      mapAdminFolderJobToGlobalJob(item, currentCountry)
     )
+    const ensureLocalizedCurrency = (list: GlobalJobItem[]) =>
+      list.map((j) => ({
+        ...j,
+        salaryRange: formatJobSalaryForCountry(j.salaryRange, currentCountry, j.location)
+      }))
 
     if (selectedTradeFolderNumber !== 'all' && activeTradeFolderObj) {
       const roleIds = new Set(activeTradeFolderObj.roles.map((r) => r.id))
@@ -920,17 +958,19 @@ export function JobsView({
       })
       const combined = [...folderMapped, ...existingMatches]
       const seen = new Set<string>()
-      return combined.filter((j) => {
-        if (seen.has(j.id)) return false
-        seen.add(j.id)
-        if (!q) return true
-        return (
-          j.title.toLowerCase().includes(q) ||
-          j.company.toLowerCase().includes(q) ||
-          j.description.toLowerCase().includes(q) ||
-          j.tags.some((t) => t.toLowerCase().includes(q))
-        )
-      })
+      return ensureLocalizedCurrency(
+        combined.filter((j) => {
+          if (seen.has(j.id)) return false
+          seen.add(j.id)
+          if (!q) return true
+          return (
+            j.title.toLowerCase().includes(q) ||
+            j.company.toLowerCase().includes(q) ||
+            j.description.toLowerCase().includes(q) ||
+            j.tags.some((t) => t.toLowerCase().includes(q))
+          )
+        })
+      )
     }
 
     // When viewing all enclaves with admin sync active (or browsing all), surface the synced 20 Trade Folders alongside the main catalog
@@ -970,7 +1010,7 @@ export function JobsView({
             merged.push(item)
           }
         }
-        return merged
+        return ensureLocalizedCurrency(merged)
       }
       const seen = new Set<string>()
       const merged: GlobalJobItem[] = []
@@ -980,10 +1020,10 @@ export function JobsView({
           merged.push(item)
         }
       }
-      return merged
+      return ensureLocalizedCurrency(merged)
     }
 
-    return jobs
+    return ensureLocalizedCurrency(jobs)
   }, [
     jobs,
     searchQuery,
@@ -1828,9 +1868,9 @@ export function JobsView({
 
             {/* Regional Centers */}
             <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-2">
-              <h4 className="font-bold text-xs text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
+              <h4 key={currentCountry.code} className="font-bold text-xs text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
                 <MapPin className="h-3.5 w-3.5 text-[#0A66C2]" />
-                {currentCountry.name} Hubs
+                <span>{currentCountry.name} Hubs</span>
               </h4>
               <div className="space-y-1 pt-1">
                 {currentCountry.hubs.map((hub) => {
@@ -1979,7 +2019,7 @@ export function JobsView({
                 </button>
               </form>
 
-              <div className="flex items-center justify-between pt-1 border-t border-zinc-100 dark:border-zinc-800 text-xs text-zinc-500 flex-wrap gap-2">
+              <div key={currentCountry.code} className="flex items-center justify-between pt-1 border-t border-zinc-100 dark:border-zinc-800 text-xs text-zinc-500 flex-wrap gap-2">
                 <span>
                   Region: <strong>{currentCountry.flag} {currentCountry.name}</strong> ·{' '}
                   {activeTradeFolderObj ? (
@@ -2092,7 +2132,7 @@ export function JobsView({
                               </span>
                               {job.salaryRange && (
                                 <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                                  {job.salaryRange}
+                                  {formatJobSalaryForCountry(job.salaryRange, currentCountry, job.location)}
                                 </span>
                               )}
                               <span>{job.postedTime}</span>
@@ -2750,7 +2790,7 @@ export function JobsView({
               <div className="space-y-4 pt-2 text-xs sm:text-sm">
                 <div className="flex items-center gap-3 flex-wrap">
                   <span className="rounded-full bg-emerald-50 dark:bg-emerald-950 px-3 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                    💰 {selectedJob.salaryRange}
+                    💰 {formatJobSalaryForCountry(selectedJob.salaryRange, currentCountry, selectedJob.location)}
                   </span>
                   <span className="rounded-full bg-zinc-100 dark:bg-zinc-800 px-3 py-1 text-xs font-medium text-zinc-700 dark:text-zinc-300">
                     📍 {selectedJob.workplaceType} · {selectedJob.employmentType}
@@ -2869,6 +2909,7 @@ export function JobsView({
                       const cObj = COUNTRIES_CONFIG.find(c => c.code === code)
                       if (cObj) {
                         setNewJobLocation(`${cObj.hubs[1] || cObj.name} (${cObj.name})`)
+                        setNewJobSalary(convertUsdSalaryToCountry("$145,000 - $185,000 / yr", cObj))
                       }
                     }}
                     className="w-full rounded-lg border border-zinc-300 p-2.5 dark:bg-zinc-800 dark:border-zinc-700"

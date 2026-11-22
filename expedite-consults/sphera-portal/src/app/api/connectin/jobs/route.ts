@@ -3,7 +3,9 @@ import {
   GLOBAL_JOBS_CATALOG,
   GlobalJobItem,
   COUNTRIES_CONFIG,
-  getLocalizedJobsForCountryAndEnclave
+  getLocalizedJobsForCountryAndEnclave,
+  convertUsdSalaryToCountry,
+  formatJobSalaryForCountry
 } from "@/lib/global-jobs-data"
 import { ALL_PROFESSIONS, CONNECTIN_WORKER_PILLARS, PROFESSION_ENCLAVES } from "@/lib/connectin-professions"
 
@@ -207,6 +209,7 @@ async function fetchLiveExternalFeeds(): Promise<GlobalJobItem[]> {
             const levelNames = Array.isArray(mj.levels) ? mj.levels.map((l: any) => l.name || "") : []
             const locName = Array.isArray(mj.locations) && mj.locations[0]?.name ? mj.locations[0].name : "United States"
             const detected = detectCountryFromLocation(locName)
+            const detectedCountry = COUNTRIES_CONFIG.find((c) => c.code === detected.code) || COUNTRIES_CONFIG[0]
             const enclave = classifyProfessionEnclave(mj.name || "", catNames, levelNames)
             const cleanDesc = stripHtml(mj.contents || "").slice(0, 360) + "..."
             const isRemote = /remote|flexible/i.test(locName)
@@ -226,7 +229,7 @@ async function fetchLiveExternalFeeds(): Promise<GlobalJobItem[]> {
               employmentType: "Full-time",
               postedTime: "Live · Just synced",
               applicantsCount: Math.floor(Math.random() * 19) + 3,
-              salaryRange: "$105,000 - $162,000 / yr (Est.)",
+              salaryRange: convertUsdSalaryToCountry("$105,000 - $162,000 / yr", detectedCountry, locName),
               easyApply: true,
               description: cleanDesc || `Live opening for ${mj.name} at ${mj.company?.name} in ${locName}.`,
               requirements: [
@@ -271,11 +274,13 @@ async function fetchLiveExternalFeeds(): Promise<GlobalJobItem[]> {
             const enclave = classifyProfessionEnclave(jj.jobTitle || "", ind, [jj.jobType || ""])
             const rawLoc = String(jj.jobGeo || "United States")
             const detected = detectCountryFromLocation(rawLoc)
+            const detectedCountry = COUNTRIES_CONFIG.find((c) => c.code === detected.code) || COUNTRIES_CONFIG[0]
             const cleanDesc = stripHtml(jj.jobExcerpt || jj.jobDescription || "").slice(0, 360) + "..."
-            const sal =
+            const rawSal =
               jj.annualSalaryMin && jj.annualSalaryMax
                 ? `${jj.salaryCurrency || "$"}${Number(jj.annualSalaryMin).toLocaleString()} - ${jj.salaryCurrency || "$"}${Number(jj.annualSalaryMax).toLocaleString()} / yr`
-                : "$112,000 - $158,000 / yr (Est.)"
+                : "$112,000 - $158,000 / yr"
+            const sal = formatJobSalaryForCountry(rawSal, detectedCountry, rawLoc)
 
             liveItems.push({
               id: `jobicy_${jj.id}`,
@@ -337,6 +342,7 @@ async function fetchLiveExternalFeeds(): Promise<GlobalJobItem[]> {
               for (const gj of ghJobs) {
                 const rawLoc = gj.location?.name || "United States"
                 const detected = detectCountryFromLocation(rawLoc)
+                const detectedCountry = COUNTRIES_CONFIG.find((c) => c.code === detected.code) || COUNTRIES_CONFIG[0]
                 const classified = classifyProfessionEnclave(gj.title || "", b.company, [])
                 const enclave = classified === "tech_software" && b.defaultEnclave !== "tech_software" ? b.defaultEnclave : classified
                 const isRemote = /remote|distributed/i.test(rawLoc)
@@ -356,7 +362,7 @@ async function fetchLiveExternalFeeds(): Promise<GlobalJobItem[]> {
                   employmentType: "Full-time",
                   postedTime: "Live · Greenhouse ATS",
                   applicantsCount: Math.floor(Math.random() * 20) + 4,
-                  salaryRange: "$128,000 - $185,000 / yr",
+                  salaryRange: convertUsdSalaryToCountry("$128,000 - $185,000 / yr", detectedCountry, rawLoc),
                   easyApply: true,
                   description: `Live verified opening for ${gj.title} at ${b.company} in ${rawLoc}. Synced directly from ${b.company}'s live Greenhouse ATS board.`,
                   requirements: [
@@ -403,6 +409,7 @@ async function fetchLiveExternalFeeds(): Promise<GlobalJobItem[]> {
             )
             const rawLoc = (rj.candidate_required_location || "Remote").trim()
             const detected = detectCountryFromLocation(rawLoc)
+            const detectedCountry = COUNTRIES_CONFIG.find((c) => c.code === detected.code) || COUNTRIES_CONFIG[0]
 
             liveItems.push({
               id: `remotive_${rj.id}`,
@@ -421,7 +428,10 @@ async function fetchLiveExternalFeeds(): Promise<GlobalJobItem[]> {
               employmentType: rj.job_type === "contract" ? "Contract" : "Full-time",
               postedTime: "Live · Just synced",
               applicantsCount: Math.floor(Math.random() * 18) + 4,
-              salaryRange: rj.salary && rj.salary.trim().length > 0 ? rj.salary : "$115,000 - $165,000 / yr (Est.)",
+              salaryRange:
+                rj.salary && rj.salary.trim().length > 0
+                  ? formatJobSalaryForCountry(rj.salary, detectedCountry, rawLoc)
+                  : convertUsdSalaryToCountry("$115,000 - $165,000 / yr", detectedCountry, rawLoc),
               easyApply: true,
               description: cleanDesc || `Live opening for ${rj.title} at ${rj.company_name}. Apply directly on the employer's live portal.`,
               requirements: [
@@ -473,6 +483,7 @@ async function fetchLiveExternalFeeds(): Promise<GlobalJobItem[]> {
             )
             const loc = aj.location || "Berlin / Remote"
             const detected = detectCountryFromLocation(loc)
+            const detectedCountry = COUNTRIES_CONFIG.find((c) => c.code === detected.code) || COUNTRIES_CONFIG[0]
 
             liveItems.push({
               id: `arbeitnow_${aj.slug || Math.random().toString(36).slice(2, 9)}`,
@@ -490,9 +501,7 @@ async function fetchLiveExternalFeeds(): Promise<GlobalJobItem[]> {
               employmentType: "Full-time",
               postedTime: "Live · Just synced",
               applicantsCount: Math.floor(Math.random() * 15) + 3,
-              salaryRange: detected.code === "DE" || detected.code === "FR" || detected.code === "NL"
-                ? "€85,000 - €120,000 / yr (Est.)"
-                : "$110,000 - $155,000 / yr (Est.)",
+              salaryRange: convertUsdSalaryToCountry("$110,000 - $155,000 / yr", detectedCountry, loc),
               easyApply: true,
               description: cleanDesc,
               requirements: [
@@ -610,6 +619,13 @@ export async function GET(request: Request) {
       )
     }
 
+    // Ensure every returned opening displays the selected region's localized currency symbol
+    const selectedCountryObj = COUNTRIES_CONFIG.find((c) => c.code === country) || COUNTRIES_CONFIG[0]
+    list = list.map((j) => ({
+      ...j,
+      salaryRange: formatJobSalaryForCountry(j.salaryRange, selectedCountryObj, j.location)
+    }))
+
     return NextResponse.json({
       success: true,
       total: list.length,
@@ -665,7 +681,7 @@ export async function POST(request: Request) {
       employmentType: body.employmentType || "Full-time",
       postedTime: "Just published · Synced live",
       applicantsCount: 1,
-      salaryRange: body.salaryRange || "Competitive",
+      salaryRange: body.salaryRange || convertUsdSalaryToCountry("$125,000 - $175,000 / yr", targetCountry),
       easyApply: true,
       description:
         body.description || "Verified role published via ConnectLn Live Recruiting Hub.",

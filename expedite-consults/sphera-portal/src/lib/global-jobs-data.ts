@@ -92,13 +92,31 @@ const BASE_COUNTRIES_CONFIG: CountryConfig[] = [
     hubs: ['All Hubs', 'New York, NY', 'San Francisco, CA', 'Washington, DC / MD / VA', 'Austin, TX', 'Seattle, WA', 'Boston, MA', 'US Remote']
   },
   {
-    code: 'AF',
-    name: 'Africa',
+    code: 'GH',
+    name: 'Ghana',
+    flag: '🇬🇭',
+    languages: ['English (Official)', 'Twi (Akan)', 'Ga', 'Ewe', 'Dagbani'],
+    primaryLanguage: 'English',
+    currency: 'GHS',
+    currencySymbol: 'GH₵ ',
+    hubs: [
+      'All Hubs',
+      'Accra (Airport City / East Legon)',
+      'Kumasi (Ashanti Industrial)',
+      'Tema (Port & Free Zones)',
+      'Takoradi (Oil, Gas & Mining)',
+      'Tamale',
+      'Remote Ghana'
+    ]
+  },
+  {
+    code: 'AFR',
+    name: 'Africa (Pan-African Hubs)',
     flag: '🌍',
     languages: ['English (Official)', 'French', 'Swahili', 'Arabic', 'Portuguese', 'Twi', 'Yoruba'],
     primaryLanguage: 'English / Pan-African',
-    currency: 'USD',
-    currencySymbol: '$',
+    currency: 'GHS / NGN / KES / ZAR',
+    currencySymbol: 'GH₵ ',
     hubs: [
       'All Hubs',
       'Accra, Ghana',
@@ -209,7 +227,7 @@ const BASE_COUNTRIES_CONFIG: CountryConfig[] = [
     languages: ['English', 'isiZulu', 'isiXhosa', 'Afrikaans'],
     primaryLanguage: 'English',
     currency: 'ZAR',
-    currencySymbol: 'R',
+    currencySymbol: 'R ',
     hubs: ['All Hubs', 'Cape Town (Silicon Cape)', 'Johannesburg (Sandton)', 'Pretoria / Tshwane', 'Durban', 'Remote South Africa']
   },
   {
@@ -354,8 +372,10 @@ const BASE_COUNTRIES_CONFIG: CountryConfig[] = [
   }
 ]
 
-/** All supported world regions: the 26 core markets plus the expansion regions (see global-regions-expansion.ts). */
-export const COUNTRIES_CONFIG: CountryConfig[] = [...BASE_COUNTRIES_CONFIG, ...EXPANSION_COUNTRIES]
+/** All supported world regions: the core markets plus the expansion regions (see global-regions-expansion.ts), deduplicated by ISO/region code. */
+export const COUNTRIES_CONFIG: CountryConfig[] = Array.from(
+  new Map([...BASE_COUNTRIES_CONFIG, ...EXPANSION_COUNTRIES].map((c) => [c.code, c])).values()
+)
 
 export const GLOBAL_JOBS_CATALOG: GlobalJobItem[] = [
   // =========================================================================
@@ -4762,7 +4782,7 @@ const REGIONAL_EMPLOYERS_BY_COUNTRY: Record<string, Record<string, RegionalEmplo
       { company: 'Royal Bank of Canada (RBC) & Desjardins Cooperative', applyUrl: 'https://jobs.rbc.com/', source: 'RBC Careers' }
     ]
   },
-  AF: {
+  AFR: {
     trades_construction: [
       { company: 'WBHO Pan-Africa, Julius Berger & Consar Construction (Accra / Lagos / Johannesburg)', applyUrl: 'https://www.wbho.co.za/careers/', source: 'WBHO & Julius Berger Africa' },
       { company: 'Orascom Construction, CPS Africa & Devtraco MEP Engineering', applyUrl: 'https://orascom.com/careers/', source: 'Orascom & Devtraco Africa' }
@@ -4781,7 +4801,7 @@ const REGIONAL_EMPLOYERS_BY_COUNTRY: Record<string, Record<string, RegionalEmplo
       { company: 'Noguchi Memorial Institute (Accra), KEMRI (Nairobi) & Africa CDC Laboratories', applyUrl: 'https://noguchi.ug.edu.gh/', source: 'Noguchi, KEMRI & Africa CDC' }
     ],
     healthcare_medicine: [
-      { company: 'Nyaho Medical Centre,UGMC Accra, Netcare South Africa & Aga Khan University Hospital Nairobi', applyUrl: 'https://nyahomedical.com/careers/', source: 'Pan-African Hospital Network' },
+      { company: 'Nyaho Medical Centre, UGMC Accra, Netcare South Africa & Aga Khan University Hospital Nairobi', applyUrl: 'https://nyahomedical.com/careers/', source: 'Pan-African Hospital Network' },
       { company: 'Korle-Bu Teaching Hospital, Lagos University Teaching Hospital & Groote Schuur Cape Town', applyUrl: 'https://ugmc.ug.edu.gh/', source: 'African Teaching Hospitals' }
     ],
     automotive_mechanics: [
@@ -4820,7 +4840,8 @@ const REGIONAL_EMPLOYERS_BY_COUNTRY: Record<string, Record<string, RegionalEmplo
 }
 
 const DEFAULT_COUNTRY_CORPORATIONS: Record<string, { prefix: string; url: string }> = {
-  AF: { prefix: 'MTN Group / Dangote / Safaricom / WBHO / Ethiopian Airlines / Ecobank Pan-Africa', url: 'https://www.mtn.com/careers/' },
+  AFR: { prefix: 'MTN Group / Dangote / Safaricom / WBHO / Ethiopian Airlines / Ecobank Pan-Africa', url: 'https://www.mtn.com/careers/' },
+  GH: { prefix: 'MTN Ghana / VRA / Nyaho Medical / Devtraco / Tema Port Ghana', url: 'https://nyahomedical.com/careers/' },
   JP: { prefix: 'Mitsubishi / Sony / Kajima Corporation Japan', url: 'https://www.sony.com/en/SonyInfo/Careers/' },
   NG: { prefix: 'Dangote Group / Julius Berger / NLNG / Flutterwave Nigeria', url: 'https://flutterwave.com/careers' },
   AU: { prefix: 'Lendlease / BHP Mining / Qantas Engineering / Ramsay Health Australia', url: 'https://www.lendlease.com/au/careers/' },
@@ -4843,48 +4864,108 @@ const DEFAULT_COUNTRY_CORPORATIONS: Record<string, { prefix: string; url: string
   EG: { prefix: 'Orascom Construction / Suez Canal Authority / Elsewedy Electric Egypt', url: 'https://orascom.com/careers/' }
 }
 
-function convertUsdSalaryToCountry(usdRange: string, country: CountryConfig): string {
-  if (country.code === 'US') return usdRange
+const BASE_SALARY_MULTIPLIERS: Record<string, number> = {
+  US: 1,
+  FR: 0.78, // EUR France scale
+  DE: 0.84, // EUR Germany scale
+  NL: 0.85, // EUR Netherlands scale
+  ES: 0.74, // EUR Spain scale
+  IT: 0.75, // EUR Italy scale
+  IE: 0.86, // EUR Ireland scale
+  GB: 0.72, // GBP UK scale
+  CA: 1.22, // CAD scale
+  AU: 1.38, // AUD scale
+  SG: 1.25, // SGD scale
+  CH: 1.05, // CHF Switzerland scale
+  SE: 7.8,  // SEK Sweden scale
+  PL: 2.9,  // PLN Poland scale
+  GH: 3.1,  // GHS local executive band
+  NG: 320,  // NGN local band
+  ZA: 9.5,  // ZAR local band
+  KE: 38,   // KES local band
+  EG: 14,   // EGP local band
+  IN: 28,   // INR local band
+  AE: 3.2,  // AED annual tax-free band
+  SA: 3.3,  // SAR annual tax-free band
+  JP: 95,   // JPY scale
+  KR: 920,  // KRW scale
+  BR: 2.8,  // BRL scale
+  MX: 9.2   // MXN scale
+}
+
+function resolveEffectiveCountryForLocation(
+  country: CountryConfig,
+  hubOrLocation?: string
+): CountryConfig {
+  if (country.code !== 'AFR') return country
+  const text = (hubOrLocation || '').toLowerCase()
+  const pickCode =
+    text.includes('lagos') || text.includes('abuja') || text.includes('nigeria') || text.includes('ibadan')
+      ? 'NG'
+      : text.includes('nairobi') || text.includes('mombasa') || text.includes('kenya')
+      ? 'KE'
+      : text.includes('johannesburg') || text.includes('cape town') || text.includes('south africa') || text.includes('durban') || text.includes('pretoria')
+      ? 'ZA'
+      : text.includes('cairo') || text.includes('alexandria') || text.includes('egypt')
+      ? 'EG'
+      : text.includes('casablanca') || text.includes('rabat') || text.includes('morocco')
+      ? 'MA'
+      : text.includes('kigali') || text.includes('rwanda')
+      ? 'RW'
+      : text.includes('addis ababa') || text.includes('ethiopia')
+      ? 'ET'
+      : 'GH'
+  return COUNTRIES_CONFIG.find((c) => c.code === pickCode) || country
+}
+
+function formatCurrencySymbolPrefix(rawSymbol: string): string {
+  const trimmed = (rawSymbol || '$').trim()
+  if (rawSymbol.endsWith(' ')) return rawSymbol
+  return /[A-Za-z]$/.test(trimmed) ? `${trimmed} ` : trimmed
+}
+
+export function convertUsdSalaryToCountry(
+  usdRange: string,
+  country: CountryConfig,
+  hubOrLocation?: string
+): string {
+  const effective = resolveEffectiveCountryForLocation(country, hubOrLocation)
+  if (effective.code === 'US' || effective.currency === 'USD') return usdRange
+  const sym = formatCurrencySymbolPrefix(effective.currencySymbol)
+  const trimmedRange = (usdRange || '').trim()
+  if (trimmedRange.startsWith(sym.trim())) return usdRange
+
   const matches = usdRange.match(/\d[\d,]*/g)
   if (!matches || matches.length === 0) {
-    return `${country.currencySymbol}85,000 - ${country.currencySymbol}125,000 / yr`
+    return `${sym}85,000 - ${sym}125,000 / yr`
   }
   const nums = matches.map(m => parseInt(m.replace(/,/g, ''), 10)).filter(n => !isNaN(n))
   const lowBase = nums[0] && nums[0] > 1000 ? nums[0] : 95000
   const highBase = nums[1] && nums[1] > 1000 ? nums[1] : Math.round(lowBase * 1.35)
 
-  const multipliers: Record<string, number> = {
-    FR: 0.78, // EUR France scale
-    DE: 0.84, // EUR Germany scale
-    NL: 0.85, // EUR Netherlands scale
-    ES: 0.74, // EUR Spain scale
-    IT: 0.75, // EUR Italy scale
-    IE: 0.86, // EUR Ireland scale
-    GB: 0.72, // GBP UK scale
-    CA: 1.22, // CAD scale
-    AU: 1.38, // AUD scale
-    SG: 1.25, // SGD scale
-    CH: 1.05, // CHF Switzerland scale
-    SE: 7.8,  // SEK Sweden scale
-    PL: 2.9,  // PLN Poland scale
-    GH: 3.1,  // GHS local executive band
-    NG: 320,  // NGN local band
-    ZA: 9.5,  // ZAR local band
-    KE: 38,   // KES local band
-    EG: 14,   // EGP local band
-    IN: 28,   // INR local band
-    AE: 3.2,  // AED annual tax-free band
-    SA: 3.3,  // SAR annual tax-free band
-    JP: 95,   // JPY scale
-    KR: 920,  // KRW scale
-    BR: 2.8,  // BRL scale
-    MX: 9.2   // MXN scale
-  }
-  const mult = multipliers[country.code] ?? EXPANSION_SALARY_MULTIPLIERS[country.code] ?? 1
-  const low = Math.round((lowBase * mult) / 1000) * 1000
-  const high = Math.round((highBase * mult) / 1000) * 1000
+  const mult = BASE_SALARY_MULTIPLIERS[effective.code] ?? EXPANSION_SALARY_MULTIPLIERS[effective.code] ?? 1
+  const roundUnit = mult >= 50 ? 10000 : 1000
+  const low = Math.max(roundUnit, Math.round((lowBase * mult) / roundUnit) * roundUnit)
+  const high = Math.max(low + roundUnit, Math.round((highBase * mult) / roundUnit) * roundUnit)
 
-  return `${country.currencySymbol}${low.toLocaleString()} - ${country.currencySymbol}${high.toLocaleString()} / yr`
+  return `${sym}${low.toLocaleString()} - ${sym}${high.toLocaleString()} / yr`
+}
+
+export function formatJobSalaryForCountry(
+  salaryRange: string,
+  country: CountryConfig,
+  hubOrLocation?: string
+): string {
+  const effective = resolveEffectiveCountryForLocation(country, hubOrLocation)
+  if (!salaryRange || !salaryRange.trim()) {
+    return convertUsdSalaryToCountry('$95,000 - $135,000 / yr', effective, hubOrLocation)
+  }
+  if (effective.code === 'US' || effective.currency === 'USD') return salaryRange
+  const trimmed = salaryRange.trim()
+  if (trimmed.startsWith('$')) {
+    return convertUsdSalaryToCountry(salaryRange, effective, hubOrLocation)
+  }
+  return salaryRange
 }
 
 const ENCLAVE_AVATAR_MAP: Record<string, string> = {
@@ -5056,7 +5137,7 @@ function buildJobsForProfessionInCountry(
       employmentType: tier.employmentType,
       postedTime: tier.postedLabel,
       applicantsCount: ((combinedIdx * 5) % 26) + 2,
-      salaryRange: convertUsdSalaryToCountry(tier.usdBand, country),
+      salaryRange: convertUsdSalaryToCountry(tier.usdBand, country, hub),
       easyApply: true,
       isLiveFeed: tierIdx === 0 || tierIdx === 2,
       requiredProductExperience: [
@@ -5095,25 +5176,29 @@ export function getLocalizedJobsForCountryAndEnclave(
   enclaveId: string = 'all',
   extraJobs: GlobalJobItem[] = []
 ): GlobalJobItem[] {
-  const normalizedCode = countryCode === 'GH' ? 'AF' : countryCode
-  const country = COUNTRIES_CONFIG.find(c => c.code === normalizedCode) || COUNTRIES_CONFIG[0]
+  const country = COUNTRIES_CONFIG.find(c => c.code === countryCode) || COUNTRIES_CONFIG[0]
   const realHubs = country.hubs.filter(h => h !== 'All Hubs')
 
   const allExplicit = [...extraJobs, ...GLOBAL_JOBS_CATALOG]
 
   // 1. Direct explicit matches for this exact country & enclave
-  const directCountryMatches = allExplicit.filter(j => {
-    const countryMatch =
-      normalizedCode === 'AF'
-        ? ['AF', 'GH', 'NG', 'KE', 'ZA', 'EG'].includes(j.countryCode)
-        : j.countryCode === normalizedCode
-    const enclaveMatch = !enclaveId || enclaveId === 'all' || j.professionEnclave === enclaveId
-    return countryMatch && enclaveMatch
-  })
+  const directCountryMatches = allExplicit
+    .filter(j => {
+      const countryMatch =
+        country.code === 'AFR'
+          ? ['AFR', 'AF', 'GH', 'NG', 'KE', 'ZA', 'EG'].includes(j.countryCode)
+          : j.countryCode === country.code
+      const enclaveMatch = !enclaveId || enclaveId === 'all' || j.professionEnclave === enclaveId
+      return countryMatch && enclaveMatch
+    })
+    .map(j => ({
+      ...j,
+      salaryRange: formatJobSalaryForCountry(j.salaryRange, country, j.location)
+    }))
 
   // 2. For non-US countries, localize all curated GLOBAL_JOBS_CATALOG US templates
   let localizedFromTemplates: GlobalJobItem[] = []
-  if (countryCode !== 'US') {
+  if (country.code !== 'US') {
     const baseTemplates = GLOBAL_JOBS_CATALOG.filter(j => {
       if (j.countryCode !== 'US') return false
       if (!enclaveId || enclaveId === 'all') return true
@@ -5122,13 +5207,13 @@ export function getLocalizedJobsForCountryAndEnclave(
 
     localizedFromTemplates = baseTemplates.map((tmpl, idx) => {
       const enc = tmpl.professionEnclave || 'trades_construction'
-      const countryEmployerList = REGIONAL_EMPLOYERS_BY_COUNTRY[countryCode]?.[enc]
+      const countryEmployerList = REGIONAL_EMPLOYERS_BY_COUNTRY[country.code]?.[enc]
       const chosenEmployer =
         countryEmployerList && countryEmployerList.length > 0
           ? countryEmployerList[idx % countryEmployerList.length]
           : null
 
-      const fallbackCorp = DEFAULT_COUNTRY_CORPORATIONS[countryCode]
+      const fallbackCorp = DEFAULT_COUNTRY_CORPORATIONS[country.code]
       const hub = realHubs.length > 0 ? realHubs[idx % realHubs.length] : country.name
       const isRemoteHub = hub.toLowerCase().includes('remote')
       const workplace: 'Remote' | 'Hybrid' | 'On-site' = isRemoteHub ? 'Remote' : tmpl.workplaceType
@@ -5151,14 +5236,14 @@ export function getLocalizedJobsForCountryAndEnclave(
 
       return {
         ...tmpl,
-        id: `${countryCode.toLowerCase()}_${tmpl.id}`,
+        id: `${country.code.toLowerCase()}_${tmpl.id}`,
         countryCode: country.code,
         countryName: country.name,
         company: companyName,
         location: `${hub} (${workplace})`,
         hub,
         workplaceType: workplace,
-        salaryRange: convertUsdSalaryToCountry(tmpl.salaryRange, country),
+        salaryRange: convertUsdSalaryToCountry(tmpl.salaryRange, country, hub),
         languageRequirement:
           country.languages.length > 1
             ? `${country.languages[0]} & ${country.languages[1]}`
@@ -5216,19 +5301,20 @@ export function getLocalizedJobsForCountryAndEnclave(
   // Prepend 24h additive scheduled jobs (localized to country when non-US) without removing any existing jobs
   const dailyScheduledJobs = getAccumulatedDailyJobs()
     .filter(j => !enclaveId || enclaveId === 'all' || j.professionEnclave === enclaveId)
-    .map((j, idx) =>
-      countryCode === 'US'
+    .map((j, idx) => {
+      const assignedHub = realHubs[idx % Math.max(1, realHubs.length)] || country.name
+      return country.code === 'US'
         ? j
         : {
             ...j,
-            id: `${countryCode.toLowerCase()}_${j.id}`,
+            id: `${country.code.toLowerCase()}_${j.id}`,
             countryCode: country.code,
             countryName: country.name,
-            location: `${realHubs[idx % Math.max(1, realHubs.length)] || country.name} (${j.workplaceType})`,
-            hub: realHubs[idx % Math.max(1, realHubs.length)] || country.name,
-            salaryRange: convertUsdSalaryToCountry(j.salaryRange, country),
+            location: `${assignedHub} (${j.workplaceType})`,
+            hub: assignedHub,
+            salaryRange: convertUsdSalaryToCountry(j.salaryRange, country, assignedHub),
           }
-    )
+    })
 
   const seenIds = new Set<string>()
   const merged: GlobalJobItem[] = []
