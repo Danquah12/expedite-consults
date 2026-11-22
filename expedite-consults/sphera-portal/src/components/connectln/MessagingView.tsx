@@ -32,6 +32,7 @@ import {
     doesDmParticipantMatch,
     formatMessageSentDateTime,
     formatMessageDateHeading,
+    resolveValidMessagingAvatarUrl,
 } from '@/lib/direct-mailbox-sync';
 import { startVisiblePoller } from '@/lib/visible-poller';
 import {
@@ -4116,8 +4117,12 @@ export function MessagingView({
                                         {/* Avatar */}
                                         <div className="relative shrink-0">
                                             <img
-                                                src={thread.avatar}
+                                                src={resolveValidMessagingAvatarUrl(thread.avatar, thread.title)}
                                                 alt={thread.title}
+                                                onError={(e) => {
+                                                    e.currentTarget.onerror = null;
+                                                    e.currentTarget.src = resolveValidMessagingAvatarUrl('', thread.title);
+                                                }}
                                                 className={`w-12 h-12 object-cover border border-slate-200 shadow-sm ${
                                                     thread.channelType === 'People'
                                                         ? 'rounded-full'
@@ -4243,8 +4248,12 @@ export function MessagingView({
                                     </button>
                                     <div className="relative shrink-0">
                                         <img
-                                            src={activeThread.avatar}
+                                            src={resolveValidMessagingAvatarUrl(activeThread.avatar, activeThread.title)}
                                             alt={activeThread.title}
+                                            onError={(e) => {
+                                                e.currentTarget.onerror = null;
+                                                e.currentTarget.src = resolveValidMessagingAvatarUrl('', activeThread.title);
+                                            }}
                                             className={`w-11 h-11 object-cover border border-slate-200 shadow-sm ${
                                                 activeThread.channelType === 'People'
                                                     ? 'rounded-full'
@@ -4446,10 +4455,17 @@ export function MessagingView({
                                                 <div className="w-8 shrink-0" />
                                             ) : (
                                                 <img
-                                                    src={isMe ? myResolvedPic : msg.sender.avatar}
+                                                    src={resolveValidMessagingAvatarUrl(
+                                                        isMe ? myResolvedPic : msg.sender.avatar,
+                                                        isMe ? currentUser?.name || 'Member' : msg.sender.name
+                                                    )}
                                                     alt={msg.sender.name}
                                                     onError={(e) => {
-                                                        e.currentTarget.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(isMe ? currentUser?.name || 'Member' : msg.sender.name)}&backgroundColor=0a66c2`;
+                                                        e.currentTarget.onerror = null;
+                                                        e.currentTarget.src = resolveValidMessagingAvatarUrl(
+                                                            '',
+                                                            isMe ? currentUser?.name || 'Member' : msg.sender.name
+                                                        );
                                                     }}
                                                     className="w-8 h-8 rounded-full object-cover shrink-0 mt-0.5 border border-slate-200 shadow-2xs"
                                                 />

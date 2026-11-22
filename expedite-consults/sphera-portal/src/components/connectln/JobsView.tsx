@@ -58,7 +58,7 @@ import { CareerTwinModal } from "./CareerTwinModal"
 
 import { UserProfile } from "@/lib/connectln-data"
 import { trackUserActivity } from "@/lib/connectin-storage"
-import { recordLocalBilateralDirectMessage } from "@/lib/direct-mailbox-sync"
+import { recordLocalBilateralDirectMessage, resolveValidMessagingAvatarUrl } from "@/lib/direct-mailbox-sync"
 import { LiveHarvestedMediaShowcase } from "./LiveHarvestedMediaShowcase"
 import { ResumePrepStudioEmbed } from "./ResumePrepStudioEmbed"
 
@@ -356,7 +356,7 @@ const TRADE_ENCLAVE_LOGO: Record<string, string> = {
   community_civic_security: 'https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=100&auto=format&fit=crop&q=80'
 }
 
-function resolveJobLogoUrl(logo?: string, enclaveId?: string): string {
+function resolveJobLogoUrl(logo?: string, enclaveId?: string, companyName?: string): string {
   const clean = (logo || '').trim()
   if (
     clean.startsWith('https://') ||
@@ -365,6 +365,10 @@ function resolveJobLogoUrl(logo?: string, enclaveId?: string): string {
     clean.startsWith('data:image/')
   ) {
     return clean
+  }
+  const keywordResolved = resolveValidMessagingAvatarUrl(clean, companyName)
+  if (!keywordResolved.includes('api.dicebear.com')) {
+    return keywordResolved
   }
   return TRADE_ENCLAVE_LOGO[enclaveId || 'trades_construction'] || TRADE_ENCLAVE_LOGO.trades_construction
 }
@@ -560,13 +564,25 @@ export function JobsView({
     try {
       const raw = localStorage.getItem(userAppsStorageKey)
       const parsedApps: JobApplicationItem[] = raw ? JSON.parse(raw) : []
-      setApplications(Array.isArray(parsedApps) ? parsedApps : [])
+      let healedLogos = false
+      const sanitizedApps = (Array.isArray(parsedApps) ? parsedApps : []).map((app) => {
+        const cleanLogo = resolveJobLogoUrl(app.companyLogo, undefined, app.company)
+        if (cleanLogo !== app.companyLogo) {
+          healedLogos = true
+          return { ...app, companyLogo: cleanLogo }
+        }
+        return app
+      })
+      if (healedLogos) {
+        localStorage.setItem(userAppsStorageKey, JSON.stringify(sanitizedApps))
+      }
+      setApplications(sanitizedApps)
       const rawAppliedIds = localStorage.getItem(appliedIdsStorageKey)
       const parsedIds: string[] = rawAppliedIds ? JSON.parse(rawAppliedIds) : []
       const mergedIds = Array.from(
         new Set([
           ...(Array.isArray(parsedIds) ? parsedIds : []),
-          ...((Array.isArray(parsedApps) ? parsedApps : []).map((a) => a.jobId).filter(Boolean) as string[]),
+          ...(sanitizedApps.map((a) => a.jobId).filter(Boolean) as string[]),
         ])
       )
       setAppliedJobIds(mergedIds)
@@ -575,6 +591,16 @@ export function JobsView({
       setAppliedJobIds([])
     }
   }, [userAppsStorageKey, appliedIdsStorageKey])
+
+  const handleUpdateApplicationStage = (appId: string, nextStage: JobApplicationItem['stage']) => {
+    setApplications((prev) => {
+      const next = prev.map((a) => (a.id === appId ? { ...a, stage: nextStage } : a))
+      try {
+        localStorage.setItem(userAppsStorageKey, JSON.stringify(next))
+      } catch {}
+      return next
+    })
+  }
 
   useEffect(() => {
     if ((currentUser as any)?.email) {
@@ -592,6 +618,7 @@ export function JobsView({
   // Recruiting State
   const [candidates] = useState<CandidateProfile[]>(initialCandidatesData)
   const [selectedRecruitingFilter, setSelectedRecruitingFilter] = useState<string>('All')
+  const [recruitingSearchQuery, setRecruitingSearchQuery] = useState<string>('')
   const [isPostJobOpen, setIsPostJobOpen] = useState(false)
   const [postJobSuccess, setPostJobSuccess] = useState(false)
 
@@ -1313,6 +1340,12 @@ export function JobsView({
       minute: '2-digit'
     })
 
+    const resolvedCompanyLogo = resolveJobLogoUrl(
+      selectedJob.companyLogo,
+      selectedJob.professionEnclave,
+      selectedJob.company
+    )
+
     const newApp: JobApplicationItem = {
       id: 'app_' + Date.now(),
       jobId: selectedJob.id,
@@ -1330,7 +1363,7 @@ export function JobsView({
       emailConfirmationSent,
       jobTitle: selectedJob.title,
       company: selectedJob.company,
-      companyLogo: selectedJob.companyLogo,
+      companyLogo: resolvedCompanyLogo,
       location: selectedJob.location,
       salary: selectedJob.salaryRange,
       stage: 'applied',
@@ -1384,7 +1417,7 @@ export function JobsView({
       senderAvatar: applicantAvatar,
       senderRole: applicantHeadline,
       recipientName: threadTitle,
-      recipientAvatar: selectedJob.companyLogo,
+      recipientAvatar: resolvedCompanyLogo,
       recipientSubtitle: `${deliveryMode === 'direct_connectln_ats' ? 'Direct ConnectLn ATS Desk' : 'Noctis™ Application Handoff'} · #${confirmationId}`,
       subject: `Application Receipt (${confirmationId}) — ${selectedJob.title}`,
       text: outboundPacketMsg,
@@ -1403,8 +1436,8 @@ export function JobsView({
         recipientName: threadTitle,
         subtitle: `${deliveryMode === 'direct_connectln_ats' ? 'Direct ConnectLn ATS Desk' : 'Noctis™ Application Handoff'} · #${confirmationId}`,
         recipientSubtitle: `${deliveryMode === 'direct_connectln_ats' ? 'Direct ConnectLn ATS Desk' : 'Noctis™ Application Handoff'} · #${confirmationId}`,
-        avatar: selectedJob.companyLogo,
-        recipientAvatar: selectedJob.companyLogo,
+        avatar: resolvedCompanyLogo,
+        recipientAvatar: resolvedCompanyLogo,
         channelType: 'Companies',
         text: `${outboundPacketMsg}\n\n${employerResponse}`,
         senderName: applicantName,
@@ -1543,10 +1576,26 @@ export function JobsView({
   })
 
   const filteredCandidates = candidates.filter(c => {
-    if (selectedRecruitingFilter === 'All') return true
-    if (selectedRecruitingFilter === 'ProductVerified') return c.verifiedProducts && c.verifiedProducts.length > 0
-    if (selectedRecruitingFilter === 'Clearance') return c.clearance && c.clearance.length > 0
-    return true
+    const matchesPill =
+      selectedRecruitingFilter === 'All'
+        ? true
+        : selectedRecruitingFilter === 'ProductVerified'
+        ? Boolean(c.verifiedProducts && c.verifiedProducts.length > 0)
+        : selectedRecruitingFilter === 'Clearance'
+        ? Boolean(c.clearance && c.clearance.length > 0)
+        : true
+    if (!matchesPill) return false
+    const q = recruitingSearchQuery.trim().toLowerCase()
+    if (!q) return true
+    return (
+      c.name.toLowerCase().includes(q) ||
+      c.headline.toLowerCase().includes(q) ||
+      c.location.toLowerCase().includes(q) ||
+      (c.clearance || '').toLowerCase().includes(q) ||
+      c.certifications.some(cert => cert.toLowerCase().includes(q)) ||
+      c.capabilities.some(cap => cap.toLowerCase().includes(q)) ||
+      c.verifiedProducts.some(vp => vp.toLowerCase().includes(q))
+    )
   })
 
   return (
@@ -1592,7 +1641,13 @@ export function JobsView({
             </div>
 
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-              {activeTradeFolderObj
+              {masterMode === 'resumeprep'
+                ? '✨ Expedite CareerSuite™ — AI Resume Preparation & Tailoring Studio'
+                : masterMode === 'applications'
+                ? `📋 My Applications Tracking Pipeline & Noctis™ Receipts (${applications.length})`
+                : masterMode === 'recruiting'
+                ? `👥 Recruiter Command Center & AI Candidate Matching (${candidates.length} Verified Candidates)`
+                : activeTradeFolderObj
                 ? `${activeTradeFolderObj.icon} Folder ${activeTradeFolderObj.folderNumber}: ${activeTradeFolderObj.folderName} (${activeTradeFolderObj.roles.length} Roles in ${currentCountry.name})`
                 : selectedEnclave === 'all'
                 ? `Explore Live Jobs in ${currentCountry.name} Across All 20 Industry Enclaves (${ALL_PROFESSIONS.length} Professions)`
@@ -1601,19 +1656,27 @@ export function JobsView({
                 : `${currentEnclaveObj?.icon || '💼'} ${currentEnclaveObj?.name || 'Verified'} — ${currentCountry.name} Openings`}
             </h1>
             <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-3xl leading-relaxed">
-              Built for hands-on trades, field technicians, independent service earners, clinical &amp; lab specialists, and STARs (Skilled Through Alternative Routes — no 4-year degree gatekeeping) across {COUNTRIES_CONFIG.length} global regions.
+              {masterMode === 'resumeprep'
+                ? 'Tailor your ATS resume, cover letter, USAJOBS federal KSAs, and application tracker directly inside ConnectLn.'
+                : masterMode === 'applications'
+                ? 'Review SHA-256 confirmed Noctis™ Easy Apply submissions, track interview & offer stages, download official receipts, and open employer responses.'
+                : masterMode === 'recruiting'
+                ? `Source vetted specialists across ${PROFESSION_ENCLAVES.length} industry enclaves with verified licenses, credentials, and direct messaging outreach.`
+                : `Built for hands-on trades, field technicians, independent service earners, clinical & lab specialists, and STARs (Skilled Through Alternative Routes — no 4-year degree gatekeeping) across ${COUNTRIES_CONFIG.length} global regions.`}
             </p>
           </div>
 
           {/* Mode Switcher Buttons */}
-          <div className="flex items-center gap-1.5 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-full border border-zinc-200 dark:border-zinc-700 shrink-0 flex-wrap">
+          <div className="flex items-center gap-1.5 bg-zinc-100 dark:bg-zinc-800 p-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 shrink-0 flex-wrap">
             <button
               type="button"
+              aria-pressed={masterMode === 'find'}
               onClick={() => setMasterMode('find')}
+              style={masterMode === 'find' ? { color: '#FFFFFF' } : undefined}
               className={`px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
                 masterMode === 'find'
-                  ? "bg-[#0A66C2] text-white shadow-xs"
-                  : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white"
+                  ? "bg-[#0A66C2] text-white shadow-sm ring-2 ring-[#0A66C2]/25"
+                  : "bg-transparent text-zinc-700 dark:text-zinc-200 hover:bg-white dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white"
               }`}
             >
               <Search className="h-3.5 w-3.5" />
@@ -1622,24 +1685,28 @@ export function JobsView({
 
             <button
               type="button"
+              aria-pressed={masterMode === 'resumeprep'}
               onClick={() => setMasterMode('resumeprep')}
+              style={masterMode === 'resumeprep' ? { color: '#FFFFFF' } : undefined}
               className={`px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
                 masterMode === 'resumeprep'
-                  ? "bg-emerald-600 text-white shadow-xs"
-                  : "text-emerald-700 dark:text-emerald-300 bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60"
+                  ? "bg-[#0A66C2] text-white shadow-sm ring-2 ring-[#0A66C2]/25"
+                  : "bg-transparent text-zinc-700 dark:text-zinc-200 hover:bg-white dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white"
               }`}
             >
-              <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+              <Sparkles className={`h-3.5 w-3.5 ${masterMode === 'resumeprep' ? 'text-amber-300' : 'text-amber-500'}`} />
               <span>Resume Prep App</span>
             </button>
 
             <button
               type="button"
+              aria-pressed={masterMode === 'applications'}
               onClick={() => setMasterMode('applications')}
+              style={masterMode === 'applications' ? { color: '#FFFFFF' } : undefined}
               className={`px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
                 masterMode === 'applications'
-                  ? "bg-[#0A66C2] text-white shadow-xs"
-                  : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white"
+                  ? "bg-[#0A66C2] text-white shadow-sm ring-2 ring-[#0A66C2]/25"
+                  : "bg-transparent text-zinc-700 dark:text-zinc-200 hover:bg-white dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white"
               }`}
             >
               <FileText className="h-3.5 w-3.5" />
@@ -1648,11 +1715,13 @@ export function JobsView({
 
             <button
               type="button"
+              aria-pressed={masterMode === 'recruiting'}
               onClick={() => setMasterMode('recruiting')}
+              style={masterMode === 'recruiting' ? { color: '#FFFFFF' } : undefined}
               className={`px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
                 masterMode === 'recruiting'
-                  ? "bg-purple-600 text-white shadow-xs"
-                  : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white"
+                  ? "bg-[#0A66C2] text-white shadow-sm ring-2 ring-[#0A66C2]/25"
+                  : "bg-transparent text-zinc-700 dark:text-zinc-200 hover:bg-white dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white"
               }`}
             >
               <Users className="h-3.5 w-3.5" />
@@ -1662,7 +1731,8 @@ export function JobsView({
             <button
               type="button"
               onClick={handleOpenPostJobModal}
-              className="px-3.5 py-1.5 text-xs font-bold rounded-full transition-all flex items-center gap-1.5 cursor-pointer bg-[#0A66C2] hover:bg-[#004182] text-white shadow-xs"
+              style={{ color: '#FFFFFF' }}
+              className="px-3.5 py-1.5 text-xs font-bold rounded-full transition-all flex items-center gap-1.5 cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
             >
               <PlusCircle className="h-3.5 w-3.5" />
               <span>+ Publish a Job</span>
@@ -1670,10 +1740,12 @@ export function JobsView({
           </div>
         </div>
 
-        {/* Live 1-Minute Auto-Pulled Employer Video Briefings & Workplace Visuals */}
-        <div className="mt-4">
-          <LiveHarvestedMediaShowcase destination="jobs" />
-        </div>
+        {/* Live 1-Minute Auto-Pulled Employer Video Briefings & Workplace Visuals (Find Jobs view only so switched sub-tabs appear immediately at top) */}
+        {masterMode === 'find' && (
+          <div className="mt-4">
+            <LiveHarvestedMediaShowcase destination="jobs" />
+          </div>
+        )}
 
         {/* Organized Structured Job Explorer Filter Bar */}
         {masterMode === 'find' && (
@@ -2739,130 +2811,239 @@ export function JobsView({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredApplications.map((app) => (
-              <div
-                key={app.id}
-                className="rounded-xl border border-zinc-200 bg-white p-4 shadow-2xs hover:shadow-md transition-all dark:border-zinc-800 dark:bg-zinc-900 flex flex-col justify-between space-y-3"
-              >
-                <div className="space-y-2.5">
-                  {/* Stage Badge Header */}
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span
-                        className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                          app.stage === 'offer'
-                            ? "bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300"
-                            : app.stage === 'interview'
-                            ? "bg-purple-100 text-purple-800 border border-purple-300 dark:bg-purple-950 dark:text-purple-300"
-                            : app.stage === 'rejected'
-                            ? "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
-                            : "bg-sky-100 text-sky-800 border border-sky-300 dark:bg-sky-950 dark:text-sky-300"
-                        }`}
-                      >
-                        {app.stage === 'interview' ? '🎙️ Interview Stage' : app.stage === 'offer' ? '🎉 Offer Received' : app.stage === 'rejected' ? 'Archived' : '📤 Applied'}
-                      </span>
-                      {app.submittedByNoctis && (
-                        <span className="rounded-full bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 px-2 py-0.5 text-[10px] font-bold text-indigo-700 dark:text-indigo-300">
-                          {app.deliveryMode === 'direct_connectln_ats'
-                            ? '🤖 Tier 1 · Direct ConnectLn ATS'
-                            : '🚀 Tier 2 · Noctis Packet & Portal Handoff'}
-                        </span>
-                      )}
-                      {app.confirmationId && (
-                        <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-300">
-                          #{app.confirmationId}
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-[10px] text-zinc-400 font-mono">{app.appliedDate}</span>
-                  </div>
-
-                  {/* Company & Role */}
-                  <div className="flex items-start gap-3">
-                    <img
-                      src={resolveJobLogoUrl(app.companyLogo)}
-                      alt={app.company}
-                      onError={(e) => {
-                        e.currentTarget.onerror = null
-                        e.currentTarget.src = TRADE_ENCLAVE_LOGO.trades_construction
-                      }}
-                      className="h-10 w-10 rounded-lg object-cover border border-zinc-200 shrink-0"
-                    />
-                    <div>
-                      <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 leading-snug">
-                        {app.jobTitle}
-                      </h4>
-                      <p className="text-xs text-zinc-500 font-medium">{app.company} · {app.location}</p>
-                    </div>
-                  </div>
-
-                  <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                    {app.salary}
-                  </p>
-
-                  {/* Official Employer Response & Audit Proof */}
-                  <div className="rounded-lg bg-zinc-50 p-2.5 text-xs dark:bg-zinc-800/60 space-y-1.5 border border-zinc-200/70 dark:border-zinc-700/70">
-                    <p className="font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-1">
-                      <Clock className="h-3.5 w-3.5 text-amber-500" />
-                      {app.employerResponse
-                        ? app.deliveryMode === 'direct_connectln_ats'
-                          ? 'Direct ConnectLn ATS Confirmation:'
-                          : 'Noctis™ Packet & External Handoff Status:'
-                        : 'Next Step:'}
-                    </p>
-                    <p className="text-[11px] text-zinc-700 dark:text-zinc-300 leading-relaxed">
-                      {app.employerResponse || app.nextStep}
-                    </p>
-                    {app.auditHashSha256 && (
-                      <p className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 pt-0.5 truncate">
-                        SHA-256 Proof: {app.auditHashSha256.slice(0, 24)}…
-                      </p>
-                    )}
-                    {app.offerDetails && (
-                      <p className="text-[11px] font-bold text-emerald-600 pt-1">
-                        📦 Package: {app.offerDetails}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Bottom Actions */}
-                <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2 flex-wrap">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <button
-                      onClick={() => {
-                        setCareerTwinJob({
-                          title: app.jobTitle,
-                          company: app.company,
-                          location: app.location,
-                          salaryRange: app.salary,
-                          description: `Interview preparation for ${app.jobTitle} at ${app.company}.`
-                        })
-                        setIsCareerTwinOpen(true)
-                      }}
-                      className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700 hover:bg-purple-100 dark:bg-purple-950/40 dark:text-purple-300 flex items-center gap-1 cursor-pointer"
-                    >
-                      <Sparkles className="h-3 w-3 text-amber-500" />
-                      <span>Noctis™ Interview Prep</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleDownloadApplicationReceipt(app)}
-                      className="rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-[11px] font-bold text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300 cursor-pointer"
-                    >
-                      📄 Download Receipt
-                    </button>
-                  </div>
-
-                  <span className="text-[11px] text-zinc-400">
-                    {app.recruiterName || 'Talent Ops'}
-                  </span>
-                </div>
+          {filteredApplications.length === 0 ? (
+            <div className="rounded-2xl border border-zinc-200 bg-white p-8 text-center shadow-2xs dark:border-zinc-800 dark:bg-zinc-900 space-y-3">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-sky-50 text-[#0A66C2] border border-sky-200 dark:bg-sky-950/40 dark:border-sky-800">
+                <FileText className="h-6 w-6" />
               </div>
-            ))}
-          </div>
+              <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100">
+                {applications.length === 0
+                  ? 'No Applications Submitted Yet'
+                  : `No Applications in "${appStageFilter === 'rejected' ? 'Archived' : appStageFilter}" Stage`}
+              </h3>
+              <p className="text-xs text-zinc-500 max-w-md mx-auto leading-relaxed">
+                {applications.length === 0
+                  ? 'Use Noctis™ Easy Apply on any opening in Find Jobs to submit directly to the employer inbox or launch your prepared packet, receive an email receipt, and track every stage here.'
+                  : 'Switch stage filters or return to all applications to manage your interview pipeline.'}
+              </p>
+              <div className="flex items-center justify-center gap-2 pt-1 flex-wrap">
+                {applications.length > 0 && appStageFilter !== 'all' && (
+                  <button
+                    type="button"
+                    onClick={() => setAppStageFilter('all')}
+                    className="rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 px-4 py-2 text-xs font-bold text-zinc-800 dark:text-zinc-200 cursor-pointer"
+                  >
+                    View All ({applications.length}) Applications
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setMasterMode('find')}
+                  style={{ color: '#FFFFFF' }}
+                  className="rounded-full bg-[#0A66C2] hover:bg-[#004182] px-5 py-2 text-xs font-bold text-white shadow-xs cursor-pointer flex items-center gap-1.5"
+                >
+                  <Search className="h-3.5 w-3.5" />
+                  <span>Browse Open Roles &amp; Apply with Noctis™</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredApplications.map((app) => (
+                <div
+                  key={app.id}
+                  className="rounded-xl border border-zinc-200 bg-white p-4 shadow-2xs hover:shadow-md transition-all dark:border-zinc-800 dark:bg-zinc-900 flex flex-col justify-between space-y-3"
+                >
+                  <div className="space-y-2.5">
+                    {/* Stage Badge Header */}
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span
+                          className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                            app.stage === 'offer'
+                              ? "bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300"
+                              : app.stage === 'interview'
+                              ? "bg-purple-100 text-purple-800 border border-purple-300 dark:bg-purple-950 dark:text-purple-300"
+                              : app.stage === 'rejected'
+                              ? "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                              : "bg-sky-100 text-sky-800 border border-sky-300 dark:bg-sky-950 dark:text-sky-300"
+                          }`}
+                        >
+                          {app.stage === 'interview' ? '🎙️ Interview Stage' : app.stage === 'offer' ? '🎉 Offer Received' : app.stage === 'rejected' ? 'Archived' : '📤 Applied'}
+                        </span>
+                        {app.submittedByNoctis && (
+                          <span className="rounded-full bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 px-2 py-0.5 text-[10px] font-bold text-indigo-700 dark:text-indigo-300">
+                            {app.deliveryMode === 'direct_connectln_ats'
+                              ? '🤖 Tier 1 · Direct ConnectLn ATS'
+                              : '🚀 Tier 2 · Noctis Packet & Portal Handoff'}
+                          </span>
+                        )}
+                        {app.confirmationId && (
+                          <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-300">
+                            #{app.confirmationId}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-zinc-400 font-mono">{app.appliedDate}</span>
+                    </div>
+
+                    {/* Company & Role */}
+                    <div className="flex items-start gap-3">
+                      <img
+                        src={resolveJobLogoUrl(app.companyLogo, undefined, app.company)}
+                        alt={app.company}
+                        onError={(e) => {
+                          e.currentTarget.onerror = null
+                          e.currentTarget.src = TRADE_ENCLAVE_LOGO.trades_construction
+                        }}
+                        className="h-10 w-10 rounded-lg object-cover border border-zinc-200 shrink-0"
+                      />
+                      <div>
+                        <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 leading-snug">
+                          {app.jobTitle}
+                        </h4>
+                        <p className="text-xs text-zinc-500 font-medium">{app.company} · {app.location}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                        {app.salary}
+                      </p>
+                      <select
+                        aria-label={`Update pipeline stage for ${app.jobTitle}`}
+                        value={app.stage}
+                        onChange={(e) => handleUpdateApplicationStage(app.id, e.target.value as JobApplicationItem['stage'])}
+                        className="rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-0.5 text-[11px] font-bold text-zinc-700 dark:text-zinc-200 cursor-pointer"
+                      >
+                        <option value="applied">Stage: Applied</option>
+                        <option value="interview">Stage: Interview</option>
+                        <option value="offer">Stage: Offer</option>
+                        <option value="rejected">Stage: Archived</option>
+                      </select>
+                    </div>
+
+                    {/* Official Employer Response & Audit Proof */}
+                    <div className="rounded-lg bg-zinc-50 p-2.5 text-xs dark:bg-zinc-800/60 space-y-1.5 border border-zinc-200/70 dark:border-zinc-700/70">
+                      <p className="font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5 text-amber-500" />
+                        {app.employerResponse
+                          ? app.deliveryMode === 'direct_connectln_ats'
+                            ? 'Direct ConnectLn ATS Confirmation:'
+                            : 'Noctis™ Packet & External Handoff Status:'
+                          : 'Next Step:'}
+                      </p>
+                      <p className="text-[11px] text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                        {app.employerResponse || app.nextStep}
+                      </p>
+                      {app.auditHashSha256 && (
+                        <p className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 pt-0.5 truncate">
+                          SHA-256 Proof: {app.auditHashSha256.slice(0, 24)}…
+                        </p>
+                      )}
+                      {app.offerDetails && (
+                        <p className="text-[11px] font-bold text-emerald-600 pt-1">
+                          📦 Package: {app.offerDetails}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Bottom Actions */}
+                  <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCareerTwinJob({
+                            title: app.jobTitle,
+                            company: app.company,
+                            location: app.location,
+                            salaryRange: app.salary,
+                            description: `Interview preparation for ${app.jobTitle} at ${app.company}.`
+                          })
+                          setIsCareerTwinOpen(true)
+                        }}
+                        className="rounded-full bg-purple-50 px-2.5 py-1 text-[11px] font-bold text-purple-700 hover:bg-purple-100 dark:bg-purple-950/40 dark:text-purple-300 flex items-center gap-1 cursor-pointer"
+                      >
+                        <Sparkles className="h-3 w-3 text-amber-500" />
+                        <span>Interview Prep</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleTailorResumeForJob({
+                            id: app.jobId || app.id,
+                            countryCode: selectedCountryCode,
+                            countryName: currentCountry.name,
+                            professionEnclave: 'trades_construction',
+                            domainCategory: 'Recommended',
+                            title: app.jobTitle,
+                            company: app.company,
+                            companyLogo: resolveJobLogoUrl(app.companyLogo, undefined, app.company),
+                            location: app.location,
+                            hub: currentCountry.hubs[1] || 'All Hubs',
+                            workplaceType: 'Hybrid',
+                            employmentType: 'Full-time',
+                            postedTime: app.appliedDate,
+                            applicantsCount: 1,
+                            salaryRange: app.salary,
+                            easyApply: true,
+                            description: app.noctisCoverBrief || `Application for ${app.jobTitle} at ${app.company}.`,
+                            requirements: app.productVerifiedMatch ? [app.productVerifiedMatch] : [],
+                            languageRequirement: 'English',
+                            applyUrl: '',
+                            source: 'My Applications',
+                            tags: app.productVerifiedMatch ? [app.productVerifiedMatch] : []
+                          })
+                        }}
+                        className="rounded-full bg-sky-50 border border-sky-200 px-2.5 py-1 text-[11px] font-bold text-[#0A66C2] hover:bg-sky-100 cursor-pointer"
+                      >
+                        ✨ Tailor Resume
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadApplicationReceipt(app)}
+                        className="rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-[11px] font-bold text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300 cursor-pointer"
+                      >
+                        📄 Receipt
+                      </button>
+
+                      {onNavigateMessaging && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            try {
+                              sessionStorage.setItem(
+                                'connectln_open_messaging_target_v1',
+                                JSON.stringify({
+                                  threadTitle:
+                                    app.deliveryMode === 'direct_connectln_ats'
+                                      ? `${app.company} Talent Acquisition`
+                                      : `${app.company} · Noctis™ Handoff`,
+                                  channel: 'Companies'
+                                })
+                              )
+                            } catch {}
+                            onNavigateMessaging()
+                          }}
+                          className="rounded-full bg-indigo-50 border border-indigo-200 px-2.5 py-1 text-[11px] font-bold text-indigo-700 hover:bg-indigo-100 cursor-pointer"
+                        >
+                          💬 View in Messaging
+                        </button>
+                      )}
+                    </div>
+
+                    <span className="text-[11px] text-zinc-400">
+                      {app.recruiterName || 'Talent Ops'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -2878,44 +3059,82 @@ export function JobsView({
                 <span>Recruiter Command Center &amp; AI Candidate Matching</span>
               </h2>
               <p className="text-xs text-zinc-500">
-                Find talent across all 15 professions with verified licenses, certifications, and high skill-match rankings.
+                Find talent across all {PROFESSION_ENCLAVES.length} industry enclaves with verified licenses, certifications, and high skill-match rankings.
               </p>
             </div>
 
-            <button
-              onClick={() => setIsPostJobOpen(true)}
-              className="rounded-xl bg-[#0A66C2] px-4 py-2 text-xs sm:text-sm font-bold text-white hover:bg-[#004182] transition-colors flex items-center gap-1.5 shadow-md shrink-0 cursor-pointer"
-            >
-              <PlusCircle className="h-4 w-4" />
-              <span>Post New Job Opening</span>
-            </button>
+            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setMasterMode('find')}
+                className="rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 px-3.5 py-2 text-xs font-bold text-zinc-700 dark:text-zinc-200 cursor-pointer"
+              >
+                ← Back to Find Jobs
+              </button>
+              <button
+                type="button"
+                onClick={handleOpenPostJobModal}
+                style={{ color: '#FFFFFF' }}
+                className="rounded-xl bg-[#0A66C2] px-4 py-2 text-xs sm:text-sm font-bold text-white hover:bg-[#004182] transition-colors flex items-center gap-1.5 shadow-md shrink-0 cursor-pointer"
+              >
+                <PlusCircle className="h-4 w-4" />
+                <span>Post New Job Opening</span>
+              </button>
+            </div>
           </div>
 
-          {/* Candidate Filter Ribbon */}
-          <div className="flex items-center gap-2 overflow-x-auto text-xs">
-            <span className="font-bold text-zinc-400 uppercase text-[10px] shrink-0">Filter Talent:</span>
-            {[
-              { id: 'All', label: 'All Verified Candidates' },
-              { id: 'ProductVerified', label: '⚡ License & Tool Verified' },
-              { id: 'Clearance', label: '🛡️ Active Clearance / Board Certified' }
-            ].map((f) => (
-              <button
-                key={f.id}
-                onClick={() => setSelectedRecruitingFilter(f.id)}
-                className={`rounded-full px-3 py-1 font-bold transition-all whitespace-nowrap cursor-pointer ${
-                  selectedRecruitingFilter === f.id
-                    ? "bg-[#0A66C2] text-white shadow-2xs"
-                    : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300"
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
+          {/* Candidate Filter Ribbon & Search */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+            <div className="flex items-center gap-2 overflow-x-auto">
+              <span className="font-bold text-zinc-400 uppercase text-[10px] shrink-0">Filter Talent:</span>
+              {[
+                { id: 'All', label: `All Verified Candidates (${candidates.length})` },
+                { id: 'ProductVerified', label: '⚡ License & Tool Verified' },
+                { id: 'Clearance', label: '🛡️ Active Clearance / Board Certified' }
+              ].map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => setSelectedRecruitingFilter(f.id)}
+                  className={`rounded-full px-3 py-1 font-bold transition-all whitespace-nowrap cursor-pointer ${
+                    selectedRecruitingFilter === f.id
+                      ? "bg-[#0A66C2] text-white shadow-2xs"
+                      : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+            <input
+              type="text"
+              value={recruitingSearchQuery}
+              onChange={(e) => setRecruitingSearchQuery(e.target.value)}
+              placeholder="Search candidates by skill, license, city..."
+              className="rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3.5 py-1.5 text-xs text-zinc-800 dark:text-zinc-200 sm:w-64"
+            />
           </div>
 
           {/* AI Candidate Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredCandidates.map((cand) => (
+          {filteredCandidates.length === 0 ? (
+            <div className="rounded-xl border border-zinc-200 bg-white p-6 text-center dark:border-zinc-800 dark:bg-zinc-900 space-y-2">
+              <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200">
+                No verified candidates matched your current filter or search.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedRecruitingFilter('All')
+                  setRecruitingSearchQuery('')
+                }}
+                className="rounded-full bg-[#0A66C2] px-4 py-1.5 text-xs font-bold text-white cursor-pointer"
+                style={{ color: '#FFFFFF' }}
+              >
+                Reset Recruiting Filters
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredCandidates.map((cand) => (
               <div
                 key={cand.id}
                 className="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs hover:border-purple-500/50 hover:shadow-lg transition-all dark:border-zinc-800 dark:bg-zinc-900 flex flex-col justify-between space-y-3"
@@ -3011,8 +3230,9 @@ export function JobsView({
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -3066,6 +3286,17 @@ export function JobsView({
                     </option>
                   ))}
                 </select>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsResumeFullscreen(false)
+                    setMasterMode('find')
+                  }}
+                  className="rounded-full bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
+                >
+                  ← Back to Find Jobs
+                </button>
 
                 <button
                   type="button"

@@ -52,6 +52,48 @@ export function normalizeDmName(nameOrEmail?: string): string {
     .replace(/\s+/g, " ")
 }
 
+const VALID_AVATAR_URL_RE = /^(https?:\/\/|\/|data:image\/)/i
+
+export function resolveValidMessagingAvatarUrl(rawAvatar?: string, partnerName?: string): string {
+  const clean = String(rawAvatar || "").trim()
+  if (VALID_AVATAR_URL_RE.test(clean)) {
+    return clean
+  }
+  const hint = `${clean} ${partnerName || ""}`
+  if (/expedite|govcloud|soc|cyber|security|defense|🛡️/i.test(hint)) {
+    return "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=150&auto=format&fit=crop&q=80"
+  }
+  if (/quanta|rosendin|grid|electrical|hvac|lineman|mep|⚡/i.test(hint)) {
+    return "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=150&auto=format&fit=crop&q=80"
+  }
+  if (/hopkins|mayo|nurse|medical|clinical|surgeon|health|❤️|🩺|💊/i.test(hint)) {
+    return "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=150&auto=format&fit=crop&q=80"
+  }
+  if (/dental|oral|🦷/i.test(hint)) {
+    return "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=150&auto=format&fit=crop&q=80"
+  }
+  if (/sunrun|solar|microgrid|☀️/i.test(hint)) {
+    return "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=150&auto=format&fit=crop&q=80"
+  }
+  if (/penske|fleet|cdl|diesel|freight|🚛/i.test(hint)) {
+    return "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=150&auto=format&fit=crop&q=80"
+  }
+  if (/kirkland|legal|judge|attorney|⚖️/i.test(hint)) {
+    return "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=150&auto=format&fit=crop&q=80"
+  }
+  if (/gaia|herbal|botanical|🌿/i.test(hint)) {
+    return "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=150&auto=format&fit=crop&q=80"
+  }
+  if (/directv|satellite|av|📡/i.test(hint)) {
+    return "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=150&auto=format&fit=crop&q=80"
+  }
+  if (/neighborly|franchise|real estate|commercial|🏪/i.test(hint)) {
+    return "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=150&auto=format&fit=crop&q=80"
+  }
+  const seed = encodeURIComponent((partnerName || "ConnectLn Member").trim())
+  return `https://api.dicebear.com/7.x/initials/svg?seed=${seed}&backgroundColor=7c4225`
+}
+
 export function computeClientPairKey(userA: string, userB: string): string {
   const normA = normalizeDmName(userA).replace(/[^a-z0-9]/g, "_") || "user_a"
   const normB = normalizeDmName(userB).replace(/[^a-z0-9]/g, "_") || "user_b"
@@ -335,11 +377,35 @@ export function loadLocalBilateralConversations(): Record<string, LocalBilateral
         mutated = true
         if (filtered.length === 0) {
           delete parsed[key]
+          continue
         } else {
           convo.messages = filtered
           convo.updatedAtIso = filtered[filtered.length - 1]?.createdAtIso || convo.updatedAtIso
         }
       }
+
+      if (convo.participantA) {
+        const healedA = resolveValidMessagingAvatarUrl(convo.participantA.avatar, convo.participantA.name)
+        if (convo.participantA.avatar !== healedA) {
+          convo.participantA.avatar = healedA
+          mutated = true
+        }
+      }
+      if (convo.participantB) {
+        const healedB = resolveValidMessagingAvatarUrl(convo.participantB.avatar, convo.participantB.name)
+        if (convo.participantB.avatar !== healedB) {
+          convo.participantB.avatar = healedB
+          mutated = true
+        }
+      }
+      convo.messages = convo.messages.map((m) => {
+        const healedSenderAvatar = resolveValidMessagingAvatarUrl(m.senderAvatar, m.senderName)
+        if (m.senderAvatar !== healedSenderAvatar) {
+          mutated = true
+          return { ...m, senderAvatar: healedSenderAvatar }
+        }
+        return m
+      })
     }
 
     if (mutated) {
@@ -375,12 +441,14 @@ export function recordLocalBilateralDirectMessage(params: {
     const nowLabel = formatMessageSentDateTime(nowIso)
     const senderNorm = normalizeDmName(params.senderName)
     const recipientNorm = normalizeDmName(params.recipientName)
+    const cleanSenderAvatar = resolveValidMessagingAvatarUrl(params.senderAvatar || "/brand/kwesi-avatar.png", params.senderName)
+    const cleanRecipientAvatar = resolveValidMessagingAvatarUrl(params.recipientAvatar, params.recipientName)
 
     const newMsg: LocalBilateralMessage = {
       id: `local_dm_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       senderName: params.senderName,
       senderEmail: params.senderEmail,
-      senderAvatar: params.senderAvatar || "/brand/kwesi-avatar.png",
+      senderAvatar: cleanSenderAvatar,
       senderRole: params.senderRole || "Verified ConnectLn Professional",
       recipientName: params.recipientName,
       recipientEmail: params.recipientEmail,
@@ -399,9 +467,7 @@ export function recordLocalBilateralDirectMessage(params: {
         id: `local_dm_${Date.now() + 1}_reply`,
         senderName: params.recipientName,
         senderEmail: params.recipientEmail,
-        senderAvatar:
-          params.recipientAvatar ||
-          `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(params.recipientName)}&backgroundColor=0a66c2`,
+        senderAvatar: cleanRecipientAvatar,
         senderRole:
           params.recipientSubtitle || "Verified ConnectLn Candidate · Recruiting Hub",
         recipientName: params.senderName,
@@ -422,6 +488,10 @@ export function recordLocalBilateralDirectMessage(params: {
           participantB: {
             ...existing.participantB,
             email: params.recipientEmail || existing.participantB.email,
+            avatar: resolveValidMessagingAvatarUrl(
+              params.recipientAvatar || existing.participantB.avatar,
+              existing.participantB.name || params.recipientName
+            ),
             headline: params.recipientSubtitle || existing.participantB.headline
           },
           messages: [...existing.messages, ...appendedMsgs],
@@ -434,15 +504,13 @@ export function recordLocalBilateralDirectMessage(params: {
           participantA: {
             name: params.senderName,
             email: params.senderEmail,
-            avatar: params.senderAvatar || "/brand/kwesi-avatar.png",
+            avatar: cleanSenderAvatar,
             headline: params.senderRole || "Verified ConnectLn Professional"
           },
           participantB: {
             name: params.recipientName,
             email: params.recipientEmail,
-            avatar:
-              params.recipientAvatar ||
-              `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(params.recipientName)}&backgroundColor=0a66c2`,
+            avatar: cleanRecipientAvatar,
             headline:
               params.recipientSubtitle ||
               "Verified ConnectLn Professional · Direct Member Channel"
@@ -650,9 +718,7 @@ export function getLocalBilateralThreadsForViewer(
         sender: {
           id: sentByViewer ? "me" : `partner_${normalizeDmName(m.senderName).replace(/\s+/g, "_")}`,
           name: m.senderName,
-          avatar:
-            m.senderAvatar ||
-            `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(m.senderName)}&backgroundColor=0a66c2`,
+          avatar: resolveValidMessagingAvatarUrl(m.senderAvatar, m.senderName),
           role: m.senderRole || "Verified ConnectLn Member",
           isVerified: true
         },
@@ -662,9 +728,7 @@ export function getLocalBilateralThreadsForViewer(
         reactions: m.reactions,
         comments: m.comments?.map(c => ({
           ...c,
-          avatar:
-            c.avatar ||
-            `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(c.author)}&backgroundColor=0a66c2`
+          avatar: resolveValidMessagingAvatarUrl(c.avatar, c.author)
         })),
         attachments: m.attachment ? [{ name: m.attachment, type: "Document" }] : undefined
       }
@@ -724,9 +788,7 @@ export function getLocalBilateralThreadsForViewer(
         (resolvedChannel === "Companies"
           ? "Verified ConnectLn Recruiting Thread · Direct Hiring Channel"
           : "Verified ConnectLn Professional · Direct Member Channel"),
-      avatar:
-        partner.avatar ||
-        `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(partner.name)}&backgroundColor=0a66c2`,
+      avatar: resolveValidMessagingAvatarUrl(partner.avatar, partner.name),
       isVerified: !isExternalPartnerEmail,
       verifiedBadge: isExternalPartnerEmail
         ? `📧 External Email · ${partnerEmailClean}`
@@ -799,6 +861,12 @@ export function mergeBilateralAndServerThreads(
         const resolvedIso = resolveMessageIsoDate(m) || m.createdAtIso
         return {
           ...m,
+          sender: m.sender
+            ? {
+                ...m.sender,
+                avatar: resolveValidMessagingAvatarUrl(m.sender.avatar, m.sender.name)
+              }
+            : m.sender,
           createdAtIso: resolvedIso,
           timestamp: formatMessageSentDateTime({ ...m, createdAtIso: resolvedIso }, m.timestamp)
         }
@@ -807,6 +875,7 @@ export function mergeBilateralAndServerThreads(
     const last = normalizedMsgs[normalizedMsgs.length - 1]
     return {
       ...thread,
+      avatar: resolveValidMessagingAvatarUrl(thread.avatar, thread.title),
       messages: normalizedMsgs,
       lastMessageTime: last
         ? formatMessageSentDateTime(last, last.timestamp)

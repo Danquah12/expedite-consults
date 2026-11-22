@@ -28,14 +28,28 @@ export interface StatusUpdateItem {
     authorAvatar: string;
     timestampLabel: string;
     viewed: boolean;
-    mediaType: 'text' | 'photo' | 'video';
+    mediaType: 'text' | 'photo' | 'video' | 'info';
+    title?: string;
     text: string;
+    infoDetails?: string;
+    infoBadge?: string;
+    attachmentName?: string;
+    attachmentUrl?: string;
     bgColor?: string;
     imageUrl?: string;
     videoUrl?: string;
     videoDuration?: string;
     videoTitle?: string;
     professionTag?: string;
+}
+
+export interface UserStatusBox {
+    userId: string;
+    authorName: string;
+    authorAvatar: string;
+    professionTag?: string;
+    isCurrentUser?: boolean;
+    slides: StatusUpdateItem[];
 }
 
 export interface CallLogEntry {
@@ -114,6 +128,25 @@ const STATUS_VIDEO_PRESETS = [
     },
 ];
 
+const STATUS_PHOTO_PRESETS = [
+    {
+        label: 'Structural Site Corridor',
+        imageUrl: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=900',
+    },
+    {
+        label: 'Cloud & Security Ops Desk',
+        imageUrl: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=900',
+    },
+    {
+        label: 'Executive Interior Suite',
+        imageUrl: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=900',
+    },
+    {
+        label: 'Solar Microgrid Array',
+        imageUrl: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=900',
+    },
+];
+
 const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
     {
         id: 'st_boat',
@@ -128,6 +161,34 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         text: 'New site delivery & structural blueprint inspection complete — ready for phase 2 commissioning.',
         imageUrl: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=900',
         bgColor: 'linear-gradient(135deg, #292521 0%, #3d3730 100%)',
+        professionTag: 'Field Operations',
+    },
+    {
+        id: 'st_boat_photo',
+        authorName: 'Boat',
+        authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+        timestampLabel: 'Today at 1:15 PM',
+        viewed: false,
+        mediaType: 'photo',
+        title: 'Steel Truss & Rigging Inspection Shot',
+        imageUrl: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=900',
+        text: 'North bay structural beams verified and torque-checked ahead of concrete pour.',
+        bgColor: 'linear-gradient(135deg, #292521 0%, #3d3730 100%)',
+        professionTag: 'Field Operations',
+    },
+    {
+        id: 'st_boat_info',
+        authorName: 'Boat',
+        authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+        timestampLabel: 'Today at 12:40 PM',
+        viewed: false,
+        mediaType: 'info',
+        infoBadge: 'Site Dispatch Notice',
+        title: 'Phase 2 Commissioning Window & Gate Access Info',
+        text: 'Electrical and rigging subcontractors can clear Gate B starting 6:30 AM tomorrow.',
+        infoDetails: 'Supervisor on duty: Boat · Radio Channel 4 · PPE Level B & OSHA 30 badge required.',
+        attachmentName: 'Phase2_Rigging_Signoff_Checklist.pdf',
+        bgColor: 'linear-gradient(135deg, #3b1e10 0%, #5e3119 100%)',
         professionTag: 'Field Operations',
     },
     {
@@ -146,6 +207,21 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         professionTag: 'Cyber & IT Training',
     },
     {
+        id: 'st_it_guru_info',
+        authorName: 'IT-Guru GURU Trainer',
+        authorAvatar: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=150',
+        timestampLabel: 'Today at 11:30 AM',
+        viewed: false,
+        mediaType: 'info',
+        infoBadge: 'Training Cohort Info',
+        title: 'SOC & Kubernetes eBPF Hands-On Lab Syllabus',
+        text: 'Open seats remaining for evening lab covering runtime threat containment, Zero-Trust policies, and incident response drills.',
+        infoDetails: 'Schedule: 4:00 PM – 6:30 PM EST · Lab VMs provisioned automatically for registered members.',
+        attachmentName: 'ZeroTrust_eBPF_Lab_Guide_v4.pdf',
+        bgColor: 'linear-gradient(135deg, #292521 0%, #524b42 100%)',
+        professionTag: 'Cyber & IT Training',
+    },
+    {
         id: 'st_ashley',
         authorName: 'Ashley Furniture Homestore JA',
         authorAvatar: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=150',
@@ -157,6 +233,19 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         videoTitle: 'Commercial Interior & Executive Suite Walkthrough',
         text: 'Commercial interior & executive office collection now in stock for regional contractors and design teams.',
         imageUrl: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=900',
+        bgColor: 'linear-gradient(135deg, #3b1e10 0%, #5e3119 100%)',
+        professionTag: 'Commercial Furnishings',
+    },
+    {
+        id: 'st_ashley_photo',
+        authorName: 'Ashley Furniture Homestore JA',
+        authorAvatar: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=150',
+        timestampLabel: 'Today at 7:40 AM',
+        viewed: false,
+        mediaType: 'photo',
+        title: 'Executive Lounge & Conference Inventory',
+        imageUrl: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=900',
+        text: 'Same-week white-glove staging available for hospitality and corporate suites.',
         bgColor: 'linear-gradient(135deg, #3b1e10 0%, #5e3119 100%)',
         professionTag: 'Commercial Furnishings',
     },
@@ -176,6 +265,19 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         professionTag: 'Systems Engineering',
     },
     {
+        id: 'st_sam_k_photo',
+        authorName: 'Sam K',
+        authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+        timestampLabel: 'Today at 1:45 PM',
+        viewed: false,
+        mediaType: 'photo',
+        title: 'PLC Telemetry Bench Verification',
+        imageUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=900',
+        text: 'All Modbus & OPC-UA SCADA endpoints passed 24-hour soak testing with zero packet drop.',
+        bgColor: 'linear-gradient(135deg, #3b1e10 0%, #7c4225 100%)',
+        professionTag: 'Systems Engineering',
+    },
+    {
         id: 'st_murchisson',
         authorName: 'Murchisson',
         authorAvatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150',
@@ -187,6 +289,21 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         videoTitle: 'Q4 Engineering Cost & Tender Modeling',
         text: 'Reviewing Q4 procurement tenders, structural load calculations, and supplier SLA renewals today.',
         imageUrl: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=900',
+        bgColor: 'linear-gradient(135deg, #3d3730 0%, #524b42 100%)',
+        professionTag: 'Procurement & Estimation',
+    },
+    {
+        id: 'st_murchisson_info',
+        authorName: 'Murchisson',
+        authorAvatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150',
+        timestampLabel: 'Today at 10:12 AM',
+        viewed: true,
+        mediaType: 'info',
+        infoBadge: 'Procurement Notice',
+        title: 'Q4 Vendor Bid Cut-Off Schedule',
+        text: 'All structural steel, MEP switchgear, and commercial HVAC BOM bids must be submitted by Friday 5:00 PM.',
+        infoDetails: 'Contact Murchisson for addendum drawings and bonded surety requirements.',
+        attachmentName: 'Q4_Master_Tender_Schedule.xlsx',
         bgColor: 'linear-gradient(135deg, #3d3730 0%, #524b42 100%)',
         professionTag: 'Procurement & Estimation',
     },
@@ -206,6 +323,34 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         professionTag: 'Workshop Operations',
     },
     {
+        id: 'st_mike_mukasa_photo',
+        authorName: 'Mike Mukasa',
+        authorAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
+        timestampLabel: 'Today at 9:10 AM',
+        viewed: true,
+        mediaType: 'photo',
+        title: 'Central Workshop CNC & Fabrication Floor',
+        imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=900',
+        text: 'Precision calibration bay prepped for incoming turbine housing fabrication run.',
+        bgColor: 'linear-gradient(135deg, #292521 0%, #443c34 100%)',
+        professionTag: 'Workshop Operations',
+    },
+    {
+        id: 'st_mike_mukasa_info',
+        authorName: 'Mike Mukasa',
+        authorAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
+        timestampLabel: 'Today at 8:55 AM',
+        viewed: true,
+        mediaType: 'info',
+        infoBadge: 'Workshop Shift Update',
+        title: 'Safety & Tooling Readiness Summary',
+        text: 'All overhead cranes, diagnostic rigs, and torque benches passed morning shift certification.',
+        infoDetails: 'Shift hours: 7:00 AM – 6:00 PM · Visitors check in with Workshop Desk.',
+        attachmentName: 'Workshop_Readiness_Log_Today.pdf',
+        bgColor: 'linear-gradient(135deg, #4d6b53 0%, #2f4534 100%)',
+        professionTag: 'Workshop Operations',
+    },
+    {
         id: 'st_suzzan',
         authorName: 'Suzzan Coldwell Banker',
         authorAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
@@ -221,6 +366,19 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         professionTag: 'Commercial Real Estate',
     },
     {
+        id: 'st_suzzan_photo',
+        authorName: 'Suzzan Coldwell Banker',
+        authorAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
+        timestampLabel: 'Today at 8:40 AM',
+        viewed: true,
+        mediaType: 'photo',
+        title: 'Waterfront Mixed-Use Tower Tour',
+        imageUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=900',
+        text: '42,000 sq ft turnkey flagship floorplate available for immediate medical or tech fit-out.',
+        bgColor: 'linear-gradient(135deg, #292521 0%, #5e3119 100%)',
+        professionTag: 'Commercial Real Estate',
+    },
+    {
         id: 'st_naana',
         authorName: 'Naana L',
         authorAvatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150',
@@ -230,7 +388,7 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         videoUrl: '/status-videos/hallelujah_choir.mp4',
         videoDuration: '0:28',
         videoTitle: 'Morning Inspiration & Harmony Session',
-        text: 'Blessed morning! Wishing everyone an uplifting and productive Thursday.',
+        text: 'Blessed morning! Wishing everyone an uplifting and productive workday.',
         imageUrl: 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=900',
         bgColor: 'linear-gradient(135deg, #63331b 0%, #8a4b29 100%)',
         professionTag: 'Community & Culture',
@@ -266,6 +424,42 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         professionTag: 'Field Diagnostics',
     },
 ];
+
+function groupSlidesToUserBoxes(slides: StatusUpdateItem[], ownerName: string, ownerAvatar: string): UserStatusBox[] {
+    const map = new Map<string, UserStatusBox>();
+    const ownerSlug = ownerName.toLowerCase().trim();
+
+    // Ensure "My Status" always has its own dedicated Status Box
+    map.set('__me__', {
+        userId: '__me__',
+        authorName: ownerName,
+        authorAvatar: ownerAvatar,
+        professionTag: 'My Status Box',
+        isCurrentUser: true,
+        slides: [],
+    });
+
+    for (const s of slides) {
+        const cleanAuthor = s.authorName.replace(/\s*\(My Status\)\s*$/i, '').trim();
+        const isOwner = s.id.startsWith('st_me_') || cleanAuthor.toLowerCase() === ownerSlug;
+        const boxKey = isOwner ? '__me__' : cleanAuthor.toLowerCase();
+        const existing = map.get(boxKey);
+        if (existing) {
+            existing.slides.push({ ...s, authorName: isOwner ? ownerName : cleanAuthor });
+        } else {
+            map.set(boxKey, {
+                userId: `user_box_${cleanAuthor.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`,
+                authorName: cleanAuthor,
+                authorAvatar: s.authorAvatar,
+                professionTag: s.professionTag,
+                isCurrentUser: isOwner,
+                slides: [{ ...s, authorName: cleanAuthor }],
+            });
+        }
+    }
+
+    return Array.from(map.values());
+}
 
 const INITIAL_CALL_LOGS: CallLogEntry[] = [
     {
@@ -626,15 +820,80 @@ export function WhatsAppModeWorkspace({
     const userAvatar = currentUser?.avatar || '/brand/kwesi-avatar.png';
     const userName = currentUser?.name || 'Kwesi Asiedu';
 
-    // ---- STATUS STATE ----
-    const [statusList, setStatusList] = useState<StatusUpdateItem[]>(INITIAL_STATUS_UPDATES);
-    const [activeStatusId, setActiveStatusId] = useState<string | null>('st_boat');
-    const [statusComposerMode, setStatusComposerMode] = useState<'text' | 'photo' | null>(null);
+    // ---- STATUS STATE (Per-User Multi-Item Status Boxes) ----
+    const statusStorageKey = `connectln_user_status_boxes_v2__${userName.toLowerCase().trim()}`;
+    const [statusBoxes, setStatusBoxes] = useState<UserStatusBox[]>(() => {
+        const seeded = groupSlidesToUserBoxes(INITIAL_STATUS_UPDATES, userName, userAvatar);
+        if (typeof window === 'undefined') return seeded;
+        try {
+            const raw = window.localStorage.getItem(statusStorageKey);
+            if (!raw) return seeded;
+            const parsed = JSON.parse(raw);
+            if (!Array.isArray(parsed)) return seeded;
+            return seeded.map((box) => {
+                const savedBox = parsed.find((b: any) => b?.userId === box.userId);
+                if (!savedBox) return box;
+                if (box.isCurrentUser && Array.isArray(savedBox.slides)) {
+                    return {
+                        ...box,
+                        authorName: userName,
+                        authorAvatar: userAvatar,
+                        slides: savedBox.slides.filter(
+                            (sl: any) =>
+                                sl &&
+                                typeof sl.id === 'string' &&
+                                !String(sl.videoUrl || '').startsWith('blob:')
+                        ),
+                    };
+                }
+                const viewedIds = new Set(Array.isArray(savedBox.viewedIds) ? savedBox.viewedIds : []);
+                return {
+                    ...box,
+                    slides: box.slides.map((sl) =>
+                        viewedIds.has(sl.id) ? { ...sl, viewed: true } : sl
+                    ),
+                };
+            });
+        } catch {
+            return seeded;
+        }
+    });
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        try {
+            const serializable = statusBoxes.map((box) =>
+                box.isCurrentUser
+                    ? {
+                          userId: box.userId,
+                          slides: box.slides.filter((sl) => !String(sl.videoUrl || '').startsWith('blob:')),
+                      }
+                    : {
+                          userId: box.userId,
+                          viewedIds: box.slides.filter((sl) => sl.viewed).map((sl) => sl.id),
+                      }
+            );
+            window.localStorage.setItem(statusStorageKey, JSON.stringify(serializable));
+        } catch {
+            // Ignore localStorage quota exceeded for large inline uploads
+        }
+    }, [statusBoxes, statusStorageKey]);
+
+    const [activeStatusUserId, setActiveStatusUserId] = useState<string | null>('user_box_boat');
+    const [activeStatusSlideIndex, setActiveStatusSlideIndex] = useState<number>(0);
+    const [statusComposerMode, setStatusComposerMode] = useState<'video' | 'photo' | 'info' | null>(null);
+    const [statusDraftTitle, setStatusDraftTitle] = useState('');
     const [statusDraftText, setStatusDraftText] = useState('');
+    const [statusDraftInfoBadge, setStatusDraftInfoBadge] = useState('Project Update');
+    const [statusDraftInfoDetails, setStatusDraftInfoDetails] = useState('');
+    const [statusDraftAttachmentName, setStatusDraftAttachmentName] = useState('');
+    const [statusDraftAttachmentUrl, setStatusDraftAttachmentUrl] = useState('');
     const [statusDraftImage, setStatusDraftImage] = useState(
         'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=900'
     );
     const [statusDraftVideo, setStatusDraftVideo] = useState('/status-videos/physician.mp4');
+    const [queuedPhotoUploads, setQueuedPhotoUploads] = useState<Array<{ id: string; name: string; dataUrl: string }>>([]);
+    const [queuedVideoUploads, setQueuedVideoUploads] = useState<Array<{ id: string; name: string; url: string }>>([]);
     const [statusBgColor, setStatusBgColor] = useState(
         'linear-gradient(135deg, #5e3119 0%, #7c4225 55%, #3d3730 100%)'
     );
@@ -826,77 +1085,268 @@ export function WhatsAppModeWorkspace({
     // 1. STATUS VIEW (Desk Note Warm Parchment & Espresso Theme)
     // =========================================================================
     if (mode === 'status') {
-        const recentStatuses = statusList.filter((s) => !s.viewed);
-        const viewedStatuses = statusList.filter((s) => s.viewed);
-        const activeStatus = statusList.find((s) => s.id === activeStatusId) || null;
-        const activeIndex = activeStatus
-            ? statusList.findIndex((s) => s.id === activeStatus.id)
-            : -1;
+        const myStatusBox = statusBoxes.find((b) => b.isCurrentUser) || statusBoxes[0];
+        const otherBoxes = statusBoxes.filter((b) => !b.isCurrentUser);
+        const recentBoxes = otherBoxes.filter((b) => b.slides.some((sl) => !sl.viewed));
+        const viewedBoxes = otherBoxes.filter((b) => b.slides.length > 0 && b.slides.every((sl) => sl.viewed));
+        const activeUserBox = statusBoxes.find((b) => b.userId === activeStatusUserId) || null;
+        const activeUserSlides = activeUserBox?.slides || [];
+        const safeSlideIndex =
+            activeUserSlides.length > 0
+                ? Math.min(Math.max(activeStatusSlideIndex, 0), activeUserSlides.length - 1)
+                : 0;
+        const activeSlide = activeUserSlides[safeSlideIndex] || null;
+        const totalUploadedItems = statusBoxes.reduce((acc, b) => acc + b.slides.length, 0);
 
-        const handleOpenStatus = (item: StatusUpdateItem) => {
-            setActiveStatusId(item.id);
+        const handleOpenUserStatusBox = (box: UserStatusBox, startSlideIdx = 0) => {
+            setActiveStatusUserId(box.userId);
+            setActiveStatusSlideIndex(startSlideIdx);
             setStatusComposerMode(null);
-            setStatusList((prev) =>
-                prev.map((s) => (s.id === item.id ? { ...s, viewed: true } : s))
+            setStatusBoxes((prev) =>
+                prev.map((b) =>
+                    b.userId === box.userId
+                        ? { ...b, slides: b.slides.map((sl) => ({ ...sl, viewed: true })) }
+                        : b
+                )
             );
         };
 
-        const handleStepStatus = (delta: number) => {
-            if (!statusList.length) return;
+        const handleStepWithinUserBox = (delta: number) => {
+            if (!activeUserBox || activeUserBox.slides.length <= 1) return;
             const nextIdx =
-                activeIndex >= 0
-                    ? (activeIndex + delta + statusList.length) % statusList.length
-                    : 0;
-            handleOpenStatus(statusList[nextIdx]);
+                (safeSlideIndex + delta + activeUserBox.slides.length) % activeUserBox.slides.length;
+            setActiveStatusSlideIndex(nextIdx);
+        };
+
+        const handleSelectSlideInUserBox = (idx: number) => {
+            if (!activeUserBox || idx < 0 || idx >= activeUserBox.slides.length) return;
+            setActiveStatusSlideIndex(idx);
+        };
+
+        const handleDeleteMySlide = (slideId: string) => {
+            setStatusBoxes((prev) =>
+                prev.map((b) =>
+                    b.isCurrentUser ? { ...b, slides: b.slides.filter((sl) => sl.id !== slideId) } : b
+                )
+            );
+            setActiveStatusSlideIndex(0);
+            triggerToast('🗑️ Removed status item from My Status Box.');
+        };
+
+        const readCompactImageDataUrl = (file: File): Promise<string> =>
+            new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const rawResult = String(reader.result || '');
+                    if (!rawResult || typeof window === 'undefined') {
+                        resolve(rawResult);
+                        return;
+                    }
+                    const img = new Image();
+                    img.onload = () => {
+                        const maxDim = 1100;
+                        const scale = Math.min(1, maxDim / Math.max(img.width || 1, img.height || 1));
+                        const w = Math.max(1, Math.round(img.width * scale));
+                        const h = Math.max(1, Math.round(img.height * scale));
+                        const canvas = document.createElement('canvas');
+                        canvas.width = w;
+                        canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        if (!ctx) {
+                            resolve(rawResult);
+                            return;
+                        }
+                        ctx.drawImage(img, 0, 0, w, h);
+                        resolve(canvas.toDataURL('image/jpeg', 0.84));
+                    };
+                    img.onerror = () => resolve(rawResult);
+                    img.src = rawResult;
+                };
+                reader.onerror = () => resolve('');
+                reader.readAsDataURL(file);
+            });
+
+        const handlePhotoFilesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+            const files = Array.from(e.target.files || []);
+            if (!files.length) return;
+            const converted = await Promise.all(
+                files.map(async (f, idx) => ({
+                    id: `q_img_${Date.now()}_${idx}`,
+                    name: f.name,
+                    dataUrl: await readCompactImageDataUrl(f),
+                }))
+            );
+            setQueuedPhotoUploads((prev) => [...prev, ...converted.filter((x) => Boolean(x.dataUrl))]);
+            e.target.value = '';
+        };
+
+        const handleVideoFilesUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const files = Array.from(e.target.files || []);
+            if (!files.length) return;
+            const uploaded = files.map((f, idx) => ({
+                id: `q_vid_${Date.now()}_${idx}`,
+                name: f.name,
+                url: URL.createObjectURL(f),
+            }));
+            setQueuedVideoUploads((prev) => [...prev, ...uploaded]);
+            e.target.value = '';
+        };
+
+        const handleAttachmentFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            setStatusDraftAttachmentName(file.name);
+            const reader = new FileReader();
+            reader.onload = () => {
+                if (typeof reader.result === 'string') {
+                    setStatusDraftAttachmentUrl(reader.result);
+                }
+            };
+            reader.readAsDataURL(file);
+            e.target.value = '';
         };
 
         const handlePublishStatus = (e: React.FormEvent) => {
             e.preventDefault();
-            if (!statusDraftText.trim() && statusComposerMode !== 'photo') return;
-            const isVideoDraft =
-                statusComposerMode === 'photo' &&
-                Boolean(
-                    statusDraftVideo &&
-                        (statusDraftVideo.endsWith('.mp4') || statusDraftVideo.endsWith('.webm'))
-                );
-            const newStatus: StatusUpdateItem = {
-                id: `st_me_${Date.now()}`,
-                authorName: `${userName} (My Status)`,
-                authorAvatar: userAvatar,
-                timestampLabel: 'Just now',
-                viewed: false,
-                mediaType:
-                    statusComposerMode === 'photo'
-                        ? isVideoDraft
-                            ? 'video'
-                            : 'photo'
-                        : 'text',
-                text:
-                    statusDraftText.trim() ||
-                    'New 24-hour ConnectLn video status update.',
-                bgColor: statusBgColor,
-                imageUrl: statusComposerMode === 'photo' ? statusDraftImage : undefined,
-                videoUrl: isVideoDraft ? statusDraftVideo : undefined,
-                videoDuration: isVideoDraft ? '0:22' : undefined,
-                videoTitle: isVideoDraft ? 'My 24h Video Status' : undefined,
-                professionTag: 'Verified Status Update',
-            };
-            setStatusList((prev) => [newStatus, ...prev]);
+            const nowStamp = `Today at ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+            const createdSlides: StatusUpdateItem[] = [];
+
+            if (statusComposerMode === 'video') {
+                if (queuedVideoUploads.length > 0) {
+                    queuedVideoUploads.forEach((v, idx) => {
+                        createdSlides.push({
+                            id: `st_me_${Date.now()}_${idx}`,
+                            authorName: userName,
+                            authorAvatar: userAvatar,
+                            timestampLabel: nowStamp,
+                            viewed: false,
+                            mediaType: 'video',
+                            title: statusDraftTitle.trim() || v.name.replace(/\.[^/.]+$/, ''),
+                            videoTitle: statusDraftTitle.trim() || v.name,
+                            videoUrl: v.url,
+                            videoDuration: 'Uploaded',
+                            text: statusDraftText.trim() || `Uploaded video status: ${v.name}`,
+                            bgColor: statusBgColor,
+                            professionTag: 'My Uploaded Video',
+                        });
+                    });
+                } else if (statusDraftVideo.trim()) {
+                    createdSlides.push({
+                        id: `st_me_${Date.now()}`,
+                        authorName: userName,
+                        authorAvatar: userAvatar,
+                        timestampLabel: nowStamp,
+                        viewed: false,
+                        mediaType: 'video',
+                        title: statusDraftTitle.trim() || '24h Video Status Update',
+                        videoTitle: statusDraftTitle.trim() || '24h Video Status Update',
+                        videoUrl: statusDraftVideo.trim(),
+                        imageUrl: statusDraftImage || undefined,
+                        videoDuration: '0:22',
+                        text: statusDraftText.trim() || 'New 24-hour ConnectLn video status update.',
+                        bgColor: statusBgColor,
+                        professionTag: 'My Uploaded Video',
+                    });
+                }
+            } else if (statusComposerMode === 'photo') {
+                if (queuedPhotoUploads.length > 0) {
+                    queuedPhotoUploads.forEach((imgItem, idx) => {
+                        createdSlides.push({
+                            id: `st_me_${Date.now()}_${idx}`,
+                            authorName: userName,
+                            authorAvatar: userAvatar,
+                            timestampLabel: nowStamp,
+                            viewed: false,
+                            mediaType: 'photo',
+                            title: statusDraftTitle.trim() || imgItem.name.replace(/\.[^/.]+$/, ''),
+                            imageUrl: imgItem.dataUrl,
+                            text: statusDraftText.trim() || `Uploaded photo update (${imgItem.name})`,
+                            bgColor: statusBgColor,
+                            professionTag: 'My Uploaded Picture',
+                        });
+                    });
+                } else if (statusDraftImage.trim()) {
+                    createdSlides.push({
+                        id: `st_me_${Date.now()}`,
+                        authorName: userName,
+                        authorAvatar: userAvatar,
+                        timestampLabel: nowStamp,
+                        viewed: false,
+                        mediaType: 'photo',
+                        title: statusDraftTitle.trim() || '24h Picture Update',
+                        imageUrl: statusDraftImage.trim(),
+                        text: statusDraftText.trim() || 'New 24-hour ConnectLn picture status update.',
+                        bgColor: statusBgColor,
+                        professionTag: 'My Uploaded Picture',
+                    });
+                }
+            } else if (statusComposerMode === 'info') {
+                if (!statusDraftText.trim() && !statusDraftTitle.trim() && !statusDraftInfoDetails.trim()) {
+                    return;
+                }
+                createdSlides.push({
+                    id: `st_me_${Date.now()}`,
+                    authorName: userName,
+                    authorAvatar: userAvatar,
+                    timestampLabel: nowStamp,
+                    viewed: false,
+                    mediaType: 'info',
+                    infoBadge: statusDraftInfoBadge || 'Status Information',
+                    title: statusDraftTitle.trim() || 'Member Status Information Update',
+                    text: statusDraftText.trim() || statusDraftInfoDetails.trim(),
+                    infoDetails: statusDraftInfoDetails.trim() || undefined,
+                    attachmentName: statusDraftAttachmentName || undefined,
+                    attachmentUrl: statusDraftAttachmentUrl || undefined,
+                    imageUrl: queuedPhotoUploads[0]?.dataUrl || undefined,
+                    bgColor: statusBgColor,
+                    professionTag: statusDraftInfoBadge || 'Status Information',
+                });
+            }
+
+            if (createdSlides.length === 0) return;
+
+            setStatusBoxes((prev) =>
+                prev.map((box) =>
+                    box.isCurrentUser
+                        ? { ...box, slides: [...createdSlides, ...box.slides] }
+                        : box
+                )
+            );
+            setQueuedPhotoUploads([]);
+            setQueuedVideoUploads([]);
+            setStatusDraftTitle('');
             setStatusDraftText('');
+            setStatusDraftInfoDetails('');
+            setStatusDraftAttachmentName('');
+            setStatusDraftAttachmentUrl('');
             setStatusComposerMode(null);
-            setActiveStatusId(newStatus.id);
-            triggerToast('✅ Status shared! Visible to your connections for 24 hours.');
+            setActiveStatusUserId('__me__');
+            setActiveStatusSlideIndex(0);
+            triggerToast(
+                `✅ Uploaded ${createdSlides.length} item${createdSlides.length > 1 ? 's' : ''} into YOUR dedicated Status Box!`
+            );
+        };
+
+        const renderUserSlideSummaryIcons = (slides: StatusUpdateItem[]) => {
+            const videos = slides.filter((s) => s.mediaType === 'video').length;
+            const photos = slides.filter((s) => s.mediaType === 'photo').length;
+            const infos = slides.filter((s) => s.mediaType === 'info' || s.mediaType === 'text').length;
+            const parts: string[] = [];
+            if (videos > 0) parts.push(`🎬 ${videos}`);
+            if (photos > 0) parts.push(`🖼️ ${photos}`);
+            if (infos > 0) parts.push(`📋 ${infos}`);
+            return parts.join(' · ') || '0 items';
         };
 
         return (
             <div className="flex-1 flex flex-col md:flex-row h-full bg-[#FBF8F3] overflow-hidden">
-                {/* Left Column: Status List */}
+                {/* Left Column: Per-User Status Boxes List */}
                 <div className="w-full md:w-[360px] border-r border-[#E0D6C5] flex flex-col h-full bg-[#FBF8F3] shrink-0 overflow-hidden">
-                    {/* Header (shrink-0 prevents overlap) */}
+                    {/* Header */}
                     <div className="px-4 py-3.5 flex items-center justify-between border-b border-[#E0D6C5]/60 shrink-0 bg-[#FBF8F3]">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
                             <span
-                                className="w-6 h-6 rounded-lg bg-[#7C4225] flex items-center justify-center text-[11px] font-bold shadow-2xs"
+                                className="w-6 h-6 rounded-lg bg-[#7C4225] flex items-center justify-center text-[11px] font-bold shadow-2xs shrink-0"
                                 style={{ color: '#FBF8F3' }}
                             >
                                 ✦
@@ -904,297 +1354,545 @@ export function WhatsAppModeWorkspace({
                             <h2 className="text-xl font-bold text-[#1C1917]" translate="no">
                                 Status
                             </h2>
-                            <span className="rounded-md bg-[#EFE8DA] border border-[#D8CEBE] px-2 py-0.5 text-[10px] font-bold text-[#5E3119]">
-                                {statusList.length} Videos
+                            <span className="rounded-md bg-[#EFE8DA] border border-[#D8CEBE] px-2 py-0.5 text-[10px] font-bold text-[#5E3119] truncate">
+                                {totalUploadedItems} Items
                             </span>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setActiveStatusId(null);
-                                    setStatusComposerMode('photo');
-                                }}
-                                title="Publish new ConnectLn Video or Text Status"
-                                className="w-8 h-8 rounded-xl bg-[#EFE8DA] hover:bg-[#E2D9C8] border border-[#D0C4AE] flex items-center justify-center text-[#5E3119] cursor-pointer transition-colors"
-                            >
-                                {/* ConnectLn Diamond Sparkle + Nib Seal */}
-                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                                    <polygon points="12 2.5 14.5 9.5 21.5 12 14.5 14.5 12 21.5 9.5 14.5 2.5 12 9.5 9.5" strokeLinejoin="round" />
-                                </svg>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setActiveStatusId(null);
-                                    setStatusComposerMode(null);
-                                }}
-                                title="View all 24h Status Video Reels"
-                                className="w-8 h-8 rounded-xl bg-[#EFE8DA] hover:bg-[#E2D9C8] border border-[#D0C4AE] flex items-center justify-center text-[#57534E] cursor-pointer transition-colors"
-                            >
-                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                                    <line x1="4" y1="7" x2="20" y2="7" strokeLinecap="round" />
-                                    <line x1="7" y1="12" x2="17" y2="12" strokeLinecap="round" />
-                                    <line x1="10" y1="17" x2="14" y2="17" strokeLinecap="round" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* My Status Row (shrink-0 prevents scroll list from clipping under My status) */}
-                    <div className="px-2 py-2 border-b border-[#E0D6C5]/50 shrink-0 bg-[#FBF8F3]">
-                        <div
+                        <button
+                            type="button"
                             onClick={() => {
-                                setActiveStatusId(null);
-                                setStatusComposerMode('photo');
+                                setStatusComposerMode('info');
                             }}
-                            className="flex items-center gap-3 p-2 rounded-xl hover:bg-[#EFE8DA]/70 cursor-pointer transition-colors"
+                            style={{ color: '#FBF8F3' }}
+                            title="Upload Video, Pictures, or Status Information to Your Status Box"
+                            className="px-2.5 py-1.5 rounded-xl bg-[#7C4225] hover:bg-[#5E3119] text-[11px] font-bold cursor-pointer transition-colors shrink-0 shadow-2xs"
                         >
-                            <div className="relative shrink-0">
-                                <img
-                                    src={userAvatar}
-                                    alt={userName}
-                                    className="w-11 h-11 rounded-2xl object-cover border-2 border-[#7C4225]"
-                                />
-                                <span
-                                    className="absolute -bottom-1 -right-1 w-4.5 h-4.5 rounded-md bg-[#7C4225] text-[10px] font-bold flex items-center justify-center ring-2 ring-[#FBF8F3]"
-                                    style={{ color: '#FBF8F3' }}
-                                >
-                                    ✦
-                                </span>
-                            </div>
-                            <div className="min-w-0 flex-1">
-                                <p className="text-sm font-semibold text-[#1C1917]">My status</p>
-                                <p className="text-xs text-[#78716C] truncate">
-                                    Click to share a 24h video or text status
-                                </p>
-                            </div>
-                        </div>
+                            + Upload Status
+                        </button>
                     </div>
 
-                    {/* Scrollable Recent & Viewed Lists */}
+                    {/* My Own Dedicated Status Box Row */}
+                    {myStatusBox && (
+                        <div className="px-2 py-2 border-b border-[#E0D6C5]/50 shrink-0 bg-[#FBF8F3]">
+                            <div
+                                className={`flex items-center gap-3 p-2 rounded-xl transition-colors ${
+                                    activeStatusUserId === '__me__' && !statusComposerMode
+                                        ? 'bg-[#EFE8DA] border border-[#D8CEBE]'
+                                        : 'hover:bg-[#EFE8DA]/70 border border-transparent'
+                                }`}
+                            >
+                                <div
+                                    onClick={() => {
+                                        if (myStatusBox.slides.length > 0) {
+                                            handleOpenUserStatusBox(myStatusBox, 0);
+                                        } else {
+                                            setStatusComposerMode('info');
+                                        }
+                                    }}
+                                    className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer"
+                                >
+                                    <div className="relative shrink-0">
+                                        <img
+                                            src={userAvatar}
+                                            alt={userName}
+                                            className="w-11 h-11 rounded-2xl object-cover border-2 border-[#7C4225]"
+                                        />
+                                        <span
+                                            className="absolute -bottom-1 -right-1 w-4.5 h-4.5 rounded-md bg-[#7C4225] text-[10px] font-bold flex items-center justify-center ring-2 ring-[#FBF8F3]"
+                                            style={{ color: '#FBF8F3' }}
+                                        >
+                                            ✦
+                                        </span>
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-center gap-1.5">
+                                            <p className="text-sm font-semibold text-[#1C1917] truncate">
+                                                My status
+                                            </p>
+                                            {myStatusBox.slides.length > 0 && (
+                                                <span className="rounded bg-[#EFE8DA] border border-[#D8CEBE] px-1.5 py-0.5 text-[9px] font-bold text-[#5E3119] shrink-0">
+                                                    {myStatusBox.slides.length} items
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-[#78716C] truncate">
+                                            {myStatusBox.slides.length > 0
+                                                ? `${renderUserSlideSummaryIcons(myStatusBox.slides)} · Click to open your Status Box`
+                                                : 'Upload your own videos, pictures & info'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setStatusComposerMode('photo')}
+                                    className="px-2.5 py-1 rounded-lg bg-[#EFE8DA] hover:bg-[#E2D9C8] border border-[#D0C4AE] text-[10px] font-bold text-[#5E3119] cursor-pointer shrink-0"
+                                    title="Add videos, pictures or status information"
+                                >
+                                    + Add
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Scrollable Per-User Status Boxes (Each row = 1 dedicated user with their own multi-item Status Box) */}
                     <div className="flex-1 min-h-0 overflow-y-auto px-2 py-2.5 space-y-4">
-                        {recentStatuses.length > 0 && (
+                        {recentBoxes.length > 0 && (
                             <div>
                                 <p className="px-2.5 py-1 text-[11px] font-bold text-[#78716C] uppercase tracking-wider">
-                                    Recent ({recentStatuses.length})
+                                    Recent Users ({recentBoxes.length})
                                 </p>
                                 <div className="space-y-1">
-                                    {recentStatuses.map((st) => (
-                                        <div
-                                            key={st.id}
-                                            onClick={() => handleOpenStatus(st)}
-                                            className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition-colors ${
-                                                activeStatusId === st.id
-                                                    ? 'bg-[#EFE8DA] border border-[#D8CEBE]'
-                                                    : 'hover:bg-[#F6F1E7] border border-transparent'
-                                            }`}
-                                        >
-                                            <div className="relative p-0.5 rounded-2xl border-2 border-[#7C4225] shrink-0">
-                                                <img
-                                                    src={st.authorAvatar}
-                                                    alt={st.authorName}
-                                                    className="w-10 h-10 rounded-xl object-cover"
-                                                />
-                                                <span
-                                                    className="absolute -top-1 -right-1 w-4 h-4 rounded-md bg-[#7C4225] border border-[#FBF8F3] text-[8px] flex items-center justify-center leading-none"
-                                                    style={{ color: '#FBF8F3' }}
-                                                >
-                                                    ▶
-                                                </span>
-                                            </div>
-                                            <div className="min-w-0 flex-1">
-                                                <div className="flex items-center justify-between gap-1">
-                                                    <p className="text-sm font-semibold text-[#1C1917] truncate">
-                                                        {st.authorName}
-                                                    </p>
-                                                    {st.videoDuration && (
-                                                        <span className="rounded bg-[#EFE8DA] border border-[#D8CEBE] px-1.5 py-0.5 text-[9px] font-mono font-bold text-[#5E3119] shrink-0">
-                                                            ▶ {st.videoDuration}
-                                                        </span>
-                                                    )}
+                                    {recentBoxes.map((box) => {
+                                        const latestSlide = box.slides[0];
+                                        return (
+                                            <div
+                                                key={box.userId}
+                                                onClick={() => handleOpenUserStatusBox(box, 0)}
+                                                className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition-colors ${
+                                                    activeStatusUserId === box.userId && !statusComposerMode
+                                                        ? 'bg-[#EFE8DA] border border-[#D8CEBE]'
+                                                        : 'hover:bg-[#F6F1E7] border border-transparent'
+                                                }`}
+                                            >
+                                                <div className="relative p-0.5 rounded-2xl border-2 border-[#7C4225] shrink-0">
+                                                    <img
+                                                        src={box.authorAvatar}
+                                                        alt={box.authorName}
+                                                        className="w-10 h-10 rounded-xl object-cover"
+                                                    />
+                                                    <span
+                                                        className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-md bg-[#7C4225] border border-[#FBF8F3] text-[9px] font-bold flex items-center justify-center leading-none"
+                                                        style={{ color: '#FBF8F3' }}
+                                                    >
+                                                        {box.slides.length}
+                                                    </span>
                                                 </div>
-                                                <p className="text-[11px] text-[#57534E] truncate">
-                                                    {st.videoTitle || st.text}
-                                                </p>
-                                                <p className="text-[10px] text-[#78716C]">
-                                                    {st.timestampLabel}
-                                                </p>
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex items-center justify-between gap-1">
+                                                        <p className="text-sm font-semibold text-[#1C1917] truncate">
+                                                            {box.authorName}
+                                                        </p>
+                                                        <span className="rounded bg-[#EFE8DA] border border-[#D8CEBE] px-1.5 py-0.5 text-[9px] font-bold text-[#5E3119] shrink-0">
+                                                            {renderUserSlideSummaryIcons(box.slides)}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-[11px] text-[#57534E] truncate">
+                                                        {latestSlide?.title || latestSlide?.videoTitle || latestSlide?.text}
+                                                    </p>
+                                                    <p className="text-[10px] text-[#78716C]">
+                                                        {latestSlide?.timestampLabel} · {box.slides.length} items in box
+                                                    </p>
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
 
-                        {viewedStatuses.length > 0 && (
+                        {viewedBoxes.length > 0 && (
                             <div>
                                 <p className="px-2.5 py-1 text-[11px] font-bold text-[#78716C] uppercase tracking-wider">
-                                    Viewed ({viewedStatuses.length})
+                                    Viewed Users ({viewedBoxes.length})
                                 </p>
                                 <div className="space-y-1">
-                                    {viewedStatuses.map((st) => (
-                                        <div
-                                            key={st.id}
-                                            onClick={() => handleOpenStatus(st)}
-                                            className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition-colors ${
-                                                activeStatusId === st.id
-                                                    ? 'bg-[#EFE8DA] border border-[#D8CEBE]'
-                                                    : 'hover:bg-[#F6F1E7] border border-transparent'
-                                            }`}
-                                        >
-                                            <div className="relative p-0.5 rounded-2xl border-2 border-[#D0C4AE] shrink-0">
-                                                <img
-                                                    src={st.authorAvatar}
-                                                    alt={st.authorName}
-                                                    className="w-10 h-10 rounded-xl object-cover"
-                                                />
-                                                {st.videoUrl && (
+                                    {viewedBoxes.map((box) => {
+                                        const latestSlide = box.slides[0];
+                                        return (
+                                            <div
+                                                key={box.userId}
+                                                onClick={() => handleOpenUserStatusBox(box, 0)}
+                                                className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition-colors ${
+                                                    activeStatusUserId === box.userId && !statusComposerMode
+                                                        ? 'bg-[#EFE8DA] border border-[#D8CEBE]'
+                                                        : 'hover:bg-[#F6F1E7] border border-transparent'
+                                                }`}
+                                            >
+                                                <div className="relative p-0.5 rounded-2xl border-2 border-[#D0C4AE] shrink-0">
+                                                    <img
+                                                        src={box.authorAvatar}
+                                                        alt={box.authorName}
+                                                        className="w-10 h-10 rounded-xl object-cover"
+                                                    />
                                                     <span
-                                                        className="absolute -bottom-1 -right-1 w-4 h-4 rounded-md bg-[#57534E] border border-[#FBF8F3] text-[8px] flex items-center justify-center leading-none"
+                                                        className="absolute -bottom-1 -right-1 min-w-[16px] h-4 px-1 rounded-md bg-[#57534E] border border-[#FBF8F3] text-[9px] font-bold flex items-center justify-center leading-none"
                                                         style={{ color: '#FBF8F3' }}
                                                     >
-                                                        ▶
+                                                        {box.slides.length}
                                                     </span>
-                                                )}
-                                            </div>
-                                            <div className="min-w-0 flex-1">
-                                                <div className="flex items-center justify-between gap-1">
-                                                    <p className="text-sm font-medium text-[#1C1917] truncate">
-                                                        {st.authorName}
-                                                    </p>
-                                                    {st.videoDuration && (
-                                                        <span className="rounded bg-[#F3EDE2] border border-[#DDD3C2] px-1.5 py-0.5 text-[9px] font-mono font-semibold text-[#57534E] shrink-0">
-                                                            ▶ {st.videoDuration}
-                                                        </span>
-                                                    )}
                                                 </div>
-                                                <p className="text-[11px] text-[#57534E] truncate">
-                                                    {st.videoTitle || st.text}
-                                                </p>
-                                                <p className="text-[10px] text-[#78716C]">
-                                                    {st.timestampLabel}
-                                                </p>
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex items-center justify-between gap-1">
+                                                        <p className="text-sm font-medium text-[#1C1917] truncate">
+                                                            {box.authorName}
+                                                        </p>
+                                                        <span className="rounded bg-[#F3EDE2] border border-[#DDD3C2] px-1.5 py-0.5 text-[9px] font-semibold text-[#57534E] shrink-0">
+                                                            {renderUserSlideSummaryIcons(box.slides)}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-[11px] text-[#57534E] truncate">
+                                                        {latestSlide?.title || latestSlide?.videoTitle || latestSlide?.text}
+                                                    </p>
+                                                    <p className="text-[10px] text-[#78716C]">
+                                                        {latestSlide?.timestampLabel} · {box.slides.length} items in box
+                                                    </p>
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
                     </div>
                 </div>
 
-                {/* Right Column: Share Statuses Canvas / Active Video Status Viewer / Composer */}
+                {/* Right Column: Upload Status Composer OR Dedicated Single-User Multi-Item Status Box */}
                 <div className="flex-1 bg-[#F3EDE2] flex flex-col items-center justify-between p-4 sm:p-6 relative overflow-y-auto">
                     {statusComposerMode ? (
-                        <div className="w-full max-w-xl bg-[#FBF8F3] rounded-2xl shadow-lg border border-[#E0D6C5] p-6 my-auto animate-in fade-in">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-base font-bold text-[#1C1917]">
-                                    {statusComposerMode === 'text'
-                                        ? 'Create Text Status (24h)'
-                                        : 'Share Video & Photo Status (24h)'}
-                                </h3>
+                        <div className="w-full max-w-2xl bg-[#FBF8F3] rounded-2xl shadow-lg border border-[#E0D6C5] p-5 sm:p-6 my-auto animate-in fade-in space-y-4">
+                            <div className="flex items-center justify-between gap-2">
+                                <div>
+                                    <h3 className="text-base font-bold text-[#1C1917]">
+                                        Upload to Your Dedicated Status Box ({userName})
+                                    </h3>
+                                    <p className="text-xs text-[#57534E]">
+                                        Upload multiple videos, pictures, or structured status information slides into your own Status Box.
+                                    </p>
+                                </div>
                                 <button
                                     type="button"
                                     onClick={() => setStatusComposerMode(null)}
-                                    className="text-[#78716C] hover:text-[#1C1917] font-bold text-sm cursor-pointer"
+                                    className="w-8 h-8 rounded-full bg-[#EFE8DA] hover:bg-[#E2D9C8] text-[#57534E] hover:text-[#1C1917] font-bold text-sm cursor-pointer shrink-0"
                                 >
                                     ✕
                                 </button>
                             </div>
-                            <form onSubmit={handlePublishStatus} className="space-y-4">
-                                <div
-                                    className="rounded-2xl p-5 min-h-[220px] flex flex-col items-center justify-center text-center shadow-inner relative overflow-hidden"
-                                    style={{ background: statusBgColor }}
-                                >
-                                    {statusComposerMode === 'photo' && statusDraftVideo && (
-                                        <video
-                                            key={statusDraftVideo}
-                                            src={statusDraftVideo}
-                                            poster={statusDraftImage}
-                                            autoPlay
-                                            muted
-                                            loop
-                                            playsInline
-                                            controls
-                                            className="w-full max-h-52 object-cover rounded-xl mb-3 border border-white/20 bg-black"
-                                        />
-                                    )}
-                                    <textarea
-                                        value={statusDraftText}
-                                        onChange={(e) => setStatusDraftText(e.target.value)}
-                                        placeholder="Add a caption to your 24-hour status update..."
-                                        rows={2}
-                                        className="w-full bg-transparent placeholder-white/75 text-center font-bold text-base focus:outline-none resize-none"
-                                        style={{ color: '#FBF8F3' }}
-                                    />
-                                </div>
 
-                                {statusComposerMode === 'text' ? (
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs font-semibold text-[#57534E]">
-                                            Desk Note Theme:
-                                        </span>
-                                        {[
-                                            'linear-gradient(135deg, #5e3119 0%, #7c4225 55%, #3d3730 100%)',
-                                            'linear-gradient(135deg, #3b1e10 0%, #8a4b29 100%)',
-                                            'linear-gradient(135deg, #292521 0%, #524b42 100%)',
-                                            'linear-gradient(135deg, #4d6b53 0%, #2f4534 100%)',
-                                            'linear-gradient(135deg, #1c1917 0%, #3d3730 100%)',
-                                        ].map((bg, idx) => (
-                                            <button
-                                                key={idx}
-                                                type="button"
-                                                onClick={() => setStatusBgColor(bg)}
-                                                className={`w-6 h-6 rounded-full cursor-pointer border-2 ${
-                                                    statusBgColor === bg
-                                                        ? 'border-[#1C1917] scale-110'
-                                                        : 'border-[#FBF8F3]'
-                                                }`}
-                                                style={{ background: bg }}
-                                            />
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="space-y-2.5">
-                                        <label className="block text-xs font-semibold text-[#57534E]">
-                                            Select a Curated Status Video Reel (or paste MP4 URL):
-                                        </label>
-                                        <div className="flex flex-wrap gap-1.5">
-                                            {STATUS_VIDEO_PRESETS.map((preset) => (
-                                                <button
-                                                    key={preset.videoUrl}
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setStatusDraftVideo(preset.videoUrl);
-                                                        setStatusDraftImage(preset.posterUrl);
-                                                    }}
-                                                    style={
-                                                        statusDraftVideo === preset.videoUrl
-                                                            ? { color: '#FBF8F3' }
-                                                            : undefined
-                                                    }
-                                                    className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border transition-colors cursor-pointer ${
-                                                        statusDraftVideo === preset.videoUrl
-                                                            ? 'bg-[#7C4225] border-[#5E3119] text-[#FBF8F3]'
-                                                            : 'bg-[#EFE8DA] hover:bg-[#E5DEC9] border-[#DDD3C2] text-[#5E3119]'
-                                                    }`}
+                            {/* 3-Mode Upload Type Switcher */}
+                            <div className="grid grid-cols-3 gap-2 p-1 rounded-xl bg-[#EFE8DA] border border-[#DDD3C2]">
+                                {[
+                                    { id: 'info' as const, label: '📋 Status Information' },
+                                    { id: 'photo' as const, label: '🖼️ Upload Pictures' },
+                                    { id: 'video' as const, label: '🎬 Upload Videos' },
+                                ].map((tab) => (
+                                    <button
+                                        key={tab.id}
+                                        type="button"
+                                        onClick={() => setStatusComposerMode(tab.id)}
+                                        style={statusComposerMode === tab.id ? { color: '#FBF8F3' } : undefined}
+                                        className={`py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                            statusComposerMode === tab.id
+                                                ? 'bg-[#7C4225] text-[#FBF8F3] shadow-xs'
+                                                : 'text-[#5E3119] hover:bg-[#FBF8F3]/70'
+                                        }`}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <form onSubmit={handlePublishStatus} className="space-y-4">
+                                {/* Mode A: Upload Structured Status Information */}
+                                {statusComposerMode === 'info' && (
+                                    <div className="space-y-3">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div className="space-y-1">
+                                                <label className="block text-xs font-bold text-[#57534E]">
+                                                    Information Category
+                                                </label>
+                                                <select
+                                                    value={statusDraftInfoBadge}
+                                                    onChange={(e) => setStatusDraftInfoBadge(e.target.value)}
+                                                    className="w-full border border-[#D0C4AE] bg-[#F8F4EC] rounded-lg px-3 py-2 text-xs font-semibold text-[#1C1917]"
                                                 >
-                                                    ▶ {preset.label}
-                                                </button>
-                                            ))}
+                                                    <option value="Project Update">📋 Project Update</option>
+                                                    <option value="Availability & Rates">📅 Availability &amp; Rates</option>
+                                                    <option value="Site Briefing">📍 Site Briefing</option>
+                                                    <option value="Safety & Compliance">🛡️ Safety &amp; Compliance</option>
+                                                    <option value="Credentials & Licenses">🎖️ Credentials &amp; Licenses</option>
+                                                    <option value="General Announcement">📣 General Announcement</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="block text-xs font-bold text-[#57534E]">
+                                                    Information Headline / Title
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    value={statusDraftTitle}
+                                                    onChange={(e) => setStatusDraftTitle(e.target.value)}
+                                                    placeholder="e.g. Q4 Structural Steel Capacity & Site Dispatch Info"
+                                                    className="w-full border border-[#D0C4AE] bg-[#F8F4EC] rounded-lg px-3 py-2 text-xs text-[#1C1917]"
+                                                />
+                                            </div>
                                         </div>
-                                        <input
-                                            type="text"
-                                            value={statusDraftVideo}
-                                            onChange={(e) => setStatusDraftVideo(e.target.value)}
-                                            placeholder="/status-videos/physician.mp4"
-                                            className="w-full border border-[#D0C4AE] bg-[#F8F4EC] rounded-lg px-3 py-1.5 text-xs text-[#1C1917]"
-                                        />
+
+                                        <div
+                                            className="rounded-2xl p-4 space-y-2 shadow-inner"
+                                            style={{ background: statusBgColor, color: '#FBF8F3' }}
+                                        >
+                                            <span className="inline-block rounded-md bg-white/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                                                {statusDraftInfoBadge}
+                                            </span>
+                                            <textarea
+                                                required
+                                                value={statusDraftText}
+                                                onChange={(e) => setStatusDraftText(e.target.value)}
+                                                placeholder="Enter your status information, updates, schedules, instructions, or details..."
+                                                rows={3}
+                                                className="w-full bg-transparent placeholder-white/75 text-sm font-semibold focus:outline-none resize-none"
+                                                style={{ color: '#FBF8F3' }}
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1">
+                                            <label className="block text-xs font-bold text-[#57534E]">
+                                                Additional Notes / Schedule / Contact Details (Optional)
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={statusDraftInfoDetails}
+                                                onChange={(e) => setStatusDraftInfoDetails(e.target.value)}
+                                                placeholder="e.g. Mon–Fri 7:00 AM–5:00 PM · Contact (555) 234-8910 · Gate B check-in"
+                                                className="w-full border border-[#D0C4AE] bg-[#F8F4EC] rounded-lg px-3 py-2 text-xs text-[#1C1917]"
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                                            <div className="space-y-1">
+                                                <label className="block text-xs font-bold text-[#57534E]">
+                                                    Attach Supporting File / Document (Optional)
+                                                </label>
+                                                <label className="flex items-center justify-between gap-2 rounded-lg border border-dashed border-[#BC9675] bg-[#F8F4EC] px-3 py-2 text-xs font-semibold text-[#5E3119] cursor-pointer hover:bg-[#EFE8DA]">
+                                                    <span className="truncate">
+                                                        {statusDraftAttachmentName ? `📎 ${statusDraftAttachmentName}` : '+ Choose PDF, Doc, Sheet, or Image'}
+                                                    </span>
+                                                    <input
+                                                        type="file"
+                                                        accept=".pdf,.doc,.docx,.txt,.csv,.xlsx,.ppt,.pptx,image/*"
+                                                        className="hidden"
+                                                        onChange={handleAttachmentFileUpload}
+                                                    />
+                                                </label>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <span className="block text-xs font-bold text-[#57534E]">
+                                                    Card Color Theme
+                                                </span>
+                                                <div className="flex items-center gap-2 pt-1">
+                                                    {[
+                                                        'linear-gradient(135deg, #5e3119 0%, #7c4225 55%, #3d3730 100%)',
+                                                        'linear-gradient(135deg, #3b1e10 0%, #8a4b29 100%)',
+                                                        'linear-gradient(135deg, #292521 0%, #524b42 100%)',
+                                                        'linear-gradient(135deg, #4d6b53 0%, #2f4534 100%)',
+                                                        'linear-gradient(135deg, #1c1917 0%, #3d3730 100%)',
+                                                    ].map((bg, idx) => (
+                                                        <button
+                                                            key={idx}
+                                                            type="button"
+                                                            onClick={() => setStatusBgColor(bg)}
+                                                            className={`w-6 h-6 rounded-full cursor-pointer border-2 ${
+                                                                statusBgColor === bg
+                                                                    ? 'border-[#1C1917] scale-110'
+                                                                    : 'border-[#FBF8F3]'
+                                                            }`}
+                                                            style={{ background: bg }}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
 
-                                <div className="flex justify-end gap-2 pt-2">
+                                {/* Mode B: Upload One or Many Pictures */}
+                                {statusComposerMode === 'photo' && (
+                                    <div className="space-y-3">
+                                        <div className="rounded-xl border-2 border-dashed border-[#BC9675] bg-[#F8F4EC] p-4 text-center space-y-2">
+                                            <p className="text-xs font-bold text-[#5E3119]">
+                                                Select one or multiple pictures from your device (all will be added to YOUR Status Box)
+                                            </p>
+                                            <label
+                                                style={{ color: '#FBF8F3' }}
+                                                className="inline-flex items-center gap-2 rounded-xl bg-[#7C4225] hover:bg-[#5E3119] px-4 py-2 text-xs font-bold cursor-pointer"
+                                            >
+                                                <span>🖼️ Choose Pictures (Multi-Select Supported)</span>
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    multiple
+                                                    className="hidden"
+                                                    onChange={handlePhotoFilesUpload}
+                                                />
+                                            </label>
+                                            {queuedPhotoUploads.length > 0 && (
+                                                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 pt-2">
+                                                    {queuedPhotoUploads.map((item) => (
+                                                        <div key={item.id} className="relative rounded-lg overflow-hidden border border-[#D0C4AE] bg-white">
+                                                            <img src={item.dataUrl} alt={item.name} className="w-full h-20 object-cover" />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    setQueuedPhotoUploads((prev) => prev.filter((p) => p.id !== item.id))
+                                                                }
+                                                                className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/70 text-white text-[10px] font-bold flex items-center justify-center cursor-pointer"
+                                                            >
+                                                                ✕
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="block text-xs font-bold text-[#57534E]">
+                                                Or pick a quick preset photo / paste an Image URL:
+                                            </label>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {STATUS_PHOTO_PRESETS.map((p) => (
+                                                    <button
+                                                        key={p.imageUrl}
+                                                        type="button"
+                                                        onClick={() => setStatusDraftImage(p.imageUrl)}
+                                                        style={statusDraftImage === p.imageUrl ? { color: '#FBF8F3' } : undefined}
+                                                        className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border cursor-pointer ${
+                                                            statusDraftImage === p.imageUrl
+                                                                ? 'bg-[#7C4225] border-[#5E3119] text-[#FBF8F3]'
+                                                                : 'bg-[#EFE8DA] border-[#DDD3C2] text-[#5E3119]'
+                                                        }`}
+                                                    >
+                                                        🖼️ {p.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <input
+                                                type="text"
+                                                value={statusDraftImage}
+                                                onChange={(e) => setStatusDraftImage(e.target.value)}
+                                                placeholder="https://images.unsplash.com/..."
+                                                className="w-full border border-[#D0C4AE] bg-[#F8F4EC] rounded-lg px-3 py-1.5 text-xs text-[#1C1917]"
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <input
+                                                type="text"
+                                                value={statusDraftTitle}
+                                                onChange={(e) => setStatusDraftTitle(e.target.value)}
+                                                placeholder="Picture title (optional)"
+                                                className="w-full border border-[#D0C4AE] bg-[#F8F4EC] rounded-lg px-3 py-2 text-xs text-[#1C1917]"
+                                            />
+                                            <input
+                                                type="text"
+                                                value={statusDraftText}
+                                                onChange={(e) => setStatusDraftText(e.target.value)}
+                                                placeholder="Caption for your picture(s)..."
+                                                className="w-full border border-[#D0C4AE] bg-[#F8F4EC] rounded-lg px-3 py-2 text-xs text-[#1C1917]"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Mode C: Upload One or Many Videos */}
+                                {statusComposerMode === 'video' && (
+                                    <div className="space-y-3">
+                                        <div className="rounded-xl border-2 border-dashed border-[#BC9675] bg-[#F8F4EC] p-4 text-center space-y-2">
+                                            <p className="text-xs font-bold text-[#5E3119]">
+                                                Upload MP4 / WebM / MOV videos from your device into YOUR Status Box
+                                            </p>
+                                            <label
+                                                style={{ color: '#FBF8F3' }}
+                                                className="inline-flex items-center gap-2 rounded-xl bg-[#7C4225] hover:bg-[#5E3119] px-4 py-2 text-xs font-bold cursor-pointer"
+                                            >
+                                                <span>🎬 Choose Video File(s)</span>
+                                                <input
+                                                    type="file"
+                                                    accept="video/*"
+                                                    multiple
+                                                    className="hidden"
+                                                    onChange={handleVideoFilesUpload}
+                                                />
+                                            </label>
+                                            {queuedVideoUploads.length > 0 && (
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 text-left">
+                                                    {queuedVideoUploads.map((v) => (
+                                                        <div key={v.id} className="relative rounded-lg overflow-hidden border border-[#D0C4AE] bg-black p-1.5">
+                                                            <video src={v.url} controls muted className="w-full h-24 object-cover rounded" />
+                                                            <p className="text-[10px] font-semibold text-white truncate pt-1 px-1">{v.name}</p>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    setQueuedVideoUploads((prev) => prev.filter((item) => item.id !== v.id))
+                                                                }
+                                                                className="absolute top-2 right-2 w-5 h-5 rounded-full bg-black/80 text-white text-[10px] font-bold flex items-center justify-center cursor-pointer"
+                                                            >
+                                                                ✕
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="block text-xs font-bold text-[#57534E]">
+                                                Or select a video preset / enter an MP4 URL:
+                                            </label>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {STATUS_VIDEO_PRESETS.map((preset) => (
+                                                    <button
+                                                        key={preset.videoUrl}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setStatusDraftVideo(preset.videoUrl);
+                                                            setStatusDraftImage(preset.posterUrl);
+                                                        }}
+                                                        style={
+                                                            statusDraftVideo === preset.videoUrl
+                                                                ? { color: '#FBF8F3' }
+                                                                : undefined
+                                                        }
+                                                        className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border transition-colors cursor-pointer ${
+                                                            statusDraftVideo === preset.videoUrl
+                                                                ? 'bg-[#7C4225] border-[#5E3119] text-[#FBF8F3]'
+                                                                : 'bg-[#EFE8DA] hover:bg-[#E5DEC9] border-[#DDD3C2] text-[#5E3119]'
+                                                        }`}
+                                                    >
+                                                        ▶ {preset.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <input
+                                                type="text"
+                                                value={statusDraftVideo}
+                                                onChange={(e) => setStatusDraftVideo(e.target.value)}
+                                                placeholder="/status-videos/physician.mp4"
+                                                className="w-full border border-[#D0C4AE] bg-[#F8F4EC] rounded-lg px-3 py-1.5 text-xs text-[#1C1917]"
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <input
+                                                type="text"
+                                                value={statusDraftTitle}
+                                                onChange={(e) => setStatusDraftTitle(e.target.value)}
+                                                placeholder="Video title (optional)"
+                                                className="w-full border border-[#D0C4AE] bg-[#F8F4EC] rounded-lg px-3 py-2 text-xs text-[#1C1917]"
+                                            />
+                                            <input
+                                                type="text"
+                                                value={statusDraftText}
+                                                onChange={(e) => setStatusDraftText(e.target.value)}
+                                                placeholder="Video description / caption..."
+                                                className="w-full border border-[#D0C4AE] bg-[#F8F4EC] rounded-lg px-3 py-2 text-xs text-[#1C1917]"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="flex justify-end gap-2 pt-2 border-t border-[#E0D6C5]">
                                     <button
                                         type="button"
                                         onClick={() => setStatusComposerMode(null)}
@@ -1207,39 +1905,53 @@ export function WhatsAppModeWorkspace({
                                         className="px-5 py-2 rounded-full bg-[#7C4225] hover:bg-[#5E3119] text-xs font-bold shadow-sm cursor-pointer"
                                         style={{ color: '#FBF8F3' }}
                                     >
-                                        Share Status
+                                        {statusComposerMode === 'photo'
+                                            ? `Upload ${queuedPhotoUploads.length > 1 ? `${queuedPhotoUploads.length} Pictures` : 'Picture'} to My Status Box`
+                                            : statusComposerMode === 'video'
+                                            ? `Upload ${queuedVideoUploads.length > 1 ? `${queuedVideoUploads.length} Videos` : 'Video'} to My Status Box`
+                                            : 'Publish Information to My Status Box'}
                                     </button>
                                 </div>
                             </form>
                         </div>
-                    ) : activeStatus ? (
+                    ) : activeUserBox && activeSlide ? (
                         <div className="w-full max-w-2xl my-auto space-y-3 animate-in fade-in">
                             <div className="w-full bg-[#1C1917] rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-[#524B42]">
-                                {/* Segmented Status Progress Strip */}
-                                <div className="px-4 pt-3 flex items-center gap-1 bg-[#141210]">
-                                    {statusList.map((st, idx) => (
-                                        <button
-                                            key={st.id}
-                                            type="button"
-                                            onClick={() => handleOpenStatus(st)}
-                                            title={st.authorName}
-                                            className={`h-1.5 flex-1 rounded-full transition-all cursor-pointer ${
-                                                st.id === activeStatus.id
-                                                    ? 'bg-[#D69E6B]'
-                                                    : idx < activeIndex
-                                                    ? 'bg-[#7C4225]'
-                                                    : 'bg-white/20 hover:bg-white/40'
-                                            }`}
-                                        />
-                                    ))}
+                                {/* Dedicated User Identity Strip + Segmented Progress ONLY for THIS User's Slides */}
+                                <div className="px-4 pt-3 space-y-2 bg-[#141210]">
+                                    <div className="flex items-center justify-between text-[11px] text-[#D0C4AE]">
+                                        <span className="font-bold text-[#FBF8F3]">
+                                            {activeUserBox.authorName}&apos;s Dedicated Status Box
+                                        </span>
+                                        <span className="font-mono">
+                                            Item {safeSlideIndex + 1} of {activeUserBox.slides.length}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        {activeUserBox.slides.map((sl, idx) => (
+                                            <button
+                                                key={sl.id}
+                                                type="button"
+                                                onClick={() => handleSelectSlideInUserBox(idx)}
+                                                title={sl.title || sl.videoTitle || `Item ${idx + 1}`}
+                                                className={`h-1.5 flex-1 rounded-full transition-all cursor-pointer ${
+                                                    idx === safeSlideIndex
+                                                        ? 'bg-[#D69E6B]'
+                                                        : idx < safeSlideIndex
+                                                        ? 'bg-[#7C4225]'
+                                                        : 'bg-white/20 hover:bg-white/40'
+                                                }`}
+                                            />
+                                        ))}
+                                    </div>
                                 </div>
 
-                                {/* Top Author & Navigation Bar */}
-                                <div className="px-4 py-3 bg-[#141210] flex items-center justify-between gap-2">
+                                {/* Top Author & Navigation Bar (Steps ONLY inside this user's box) */}
+                                <div className="px-4 py-3 bg-[#141210] flex items-center justify-between gap-2 flex-wrap">
                                     <div className="flex items-center gap-3 min-w-0">
                                         <img
-                                            src={activeStatus.authorAvatar}
-                                            alt={activeStatus.authorName}
+                                            src={activeUserBox.authorAvatar}
+                                            alt={activeUserBox.authorName}
                                             className="w-10 h-10 rounded-full object-cover border-2 border-[#BC9675] shrink-0"
                                         />
                                         <div className="min-w-0">
@@ -1248,70 +1960,93 @@ export function WhatsAppModeWorkspace({
                                                     className="text-sm font-bold truncate"
                                                     style={{ color: '#FBF8F3' }}
                                                 >
-                                                    {activeStatus.authorName}
+                                                    {activeUserBox.authorName}
                                                 </p>
-                                                {activeStatus.professionTag && (
+                                                {(activeSlide.infoBadge || activeSlide.professionTag || activeUserBox.professionTag) && (
                                                     <span className="rounded-md bg-[#7C4225]/40 border border-[#BC9675]/40 px-2 py-0.5 text-[10px] font-bold text-[#FBF8F3]">
-                                                        {activeStatus.professionTag}
+                                                        {activeSlide.infoBadge || activeSlide.professionTag || activeUserBox.professionTag}
                                                     </span>
                                                 )}
                                             </div>
-                                            <p className="text-[11px] text-[#D0C4AE]">
-                                                {activeStatus.timestampLabel}
-                                                {activeStatus.videoTitle
-                                                    ? ` • ${activeStatus.videoTitle}`
+                                            <p className="text-[11px] text-[#D0C4AE] truncate">
+                                                {activeSlide.timestampLabel}
+                                                {(activeSlide.title || activeSlide.videoTitle)
+                                                    ? ` • ${activeSlide.title || activeSlide.videoTitle}`
                                                     : ''}
                                             </p>
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-1.5 shrink-0">
+                                    <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+                                        {activeUserBox.isCurrentUser && (
+                                            <>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setStatusComposerMode('info')}
+                                                    className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-xs font-bold cursor-pointer"
+                                                    style={{ color: '#FFFFFF' }}
+                                                >
+                                                    + Upload More
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleDeleteMySlide(activeSlide.id)}
+                                                    className="px-2 py-1 rounded-lg bg-white/10 hover:bg-red-600/80 text-xs font-bold cursor-pointer"
+                                                    style={{ color: '#FBF8F3' }}
+                                                    title="Remove this item from My Status Box"
+                                                >
+                                                    🗑️
+                                                </button>
+                                            </>
+                                        )}
                                         <button
                                             type="button"
-                                            onClick={() => handleStepStatus(-1)}
-                                            className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold cursor-pointer"
+                                            disabled={activeUserBox.slides.length <= 1}
+                                            onClick={() => handleStepWithinUserBox(-1)}
+                                            className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-40 text-xs font-bold cursor-pointer"
                                             style={{ color: '#FBF8F3' }}
-                                            title="Previous Status Video"
+                                            title="Previous Item in This User's Status Box"
                                         >
                                             ← Prev
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={() => handleStepStatus(1)}
-                                            className="px-2.5 py-1 rounded-lg bg-[#7C4225] hover:bg-[#5E3119] text-xs font-bold cursor-pointer"
+                                            disabled={activeUserBox.slides.length <= 1}
+                                            onClick={() => handleStepWithinUserBox(1)}
+                                            className="px-2.5 py-1 rounded-lg bg-[#7C4225] hover:bg-[#5E3119] disabled:opacity-40 text-xs font-bold cursor-pointer"
                                             style={{ color: '#FBF8F3' }}
-                                            title="Next Status Video"
+                                            title="Next Item in This User's Status Box"
                                         >
                                             Next →
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={() => setActiveStatusId(null)}
+                                            onClick={() => setActiveStatusUserId(null)}
                                             className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-sm font-bold cursor-pointer ml-1"
                                             style={{ color: '#FBF8F3' }}
-                                            title="Back to All Status Video Reels"
+                                            title="Close Status Box"
                                         >
                                             ✕
                                         </button>
                                     </div>
                                 </div>
 
-                                {/* Story Video / Media Body */}
+                                {/* Slide Media Body: Video, Picture, OR Structured Status Information */}
                                 <div
-                                    className="p-4 sm:p-5 flex flex-col items-center justify-center text-center space-y-3"
+                                    className="p-4 sm:p-5 flex flex-col items-center justify-center text-center space-y-3 min-h-[300px]"
                                     style={{
                                         background:
-                                            activeStatus.bgColor ||
+                                            activeSlide.bgColor ||
                                             'linear-gradient(135deg, #292521 0%, #3d3730 100%)',
                                         color: '#FBF8F3',
                                     }}
                                 >
-                                    {activeStatus.videoUrl ? (
+                                    {activeSlide.mediaType === 'video' && activeSlide.videoUrl ? (
                                         <div className="w-full rounded-xl overflow-hidden border border-white/15 bg-black shadow-xl">
                                             <video
-                                                key={activeStatus.id}
-                                                src={activeStatus.videoUrl}
-                                                poster={activeStatus.imageUrl}
+                                                key={activeSlide.id}
+                                                src={activeSlide.videoUrl}
+                                                poster={activeSlide.imageUrl}
                                                 autoPlay
                                                 loop
                                                 playsInline
@@ -1319,26 +2054,114 @@ export function WhatsAppModeWorkspace({
                                                 className="w-full h-[260px] sm:h-[310px] object-cover bg-black"
                                             />
                                         </div>
-                                    ) : activeStatus.imageUrl ? (
-                                        <img
-                                            src={activeStatus.imageUrl}
-                                            alt={activeStatus.authorName}
-                                            className="w-full max-h-64 object-cover rounded-xl shadow-md"
-                                        />
-                                    ) : null}
+                                    ) : activeSlide.mediaType === 'photo' && activeSlide.imageUrl ? (
+                                        <div className="w-full rounded-xl overflow-hidden border border-white/15 bg-black/50 shadow-xl flex items-center justify-center">
+                                            <img
+                                                src={activeSlide.imageUrl}
+                                                alt={activeSlide.title || activeUserBox.authorName}
+                                                className="w-full max-h-[320px] object-contain"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="w-full max-w-xl rounded-2xl bg-black/25 border border-white/15 p-5 text-left space-y-3 shadow-inner">
+                                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                <span className="rounded-md bg-[#D69E6B]/25 border border-[#D69E6B]/50 px-2.5 py-0.5 text-[11px] font-bold text-[#FBF8F3]">
+                                                    📋 {activeSlide.infoBadge || 'Status Information'}
+                                                </span>
+                                                <span className="text-[11px] text-[#D0C4AE]">
+                                                    {activeSlide.timestampLabel}
+                                                </span>
+                                            </div>
+                                            {activeSlide.title && (
+                                                <h4 className="text-base sm:text-lg font-bold text-[#FBF8F3]">
+                                                    {activeSlide.title}
+                                                </h4>
+                                            )}
+                                            <p className="text-sm text-[#FBF8F3]/95 leading-relaxed whitespace-pre-line">
+                                                {activeSlide.text}
+                                            </p>
+                                            {activeSlide.infoDetails && (
+                                                <div className="rounded-xl bg-white/10 border border-white/15 px-3.5 py-2.5 text-xs text-[#F3EDE2]">
+                                                    {activeSlide.infoDetails}
+                                                </div>
+                                            )}
+                                            {activeSlide.attachmentName && (
+                                                <div className="flex items-center justify-between gap-2 rounded-lg bg-white/10 border border-white/20 px-3 py-2 text-xs">
+                                                    <span className="truncate font-semibold">
+                                                        📎 {activeSlide.attachmentName}
+                                                    </span>
+                                                    {activeSlide.attachmentUrl && (
+                                                        <a
+                                                            href={activeSlide.attachmentUrl}
+                                                            download={activeSlide.attachmentName}
+                                                            className="rounded bg-[#7C4225] px-2.5 py-1 text-[10px] font-bold text-white shrink-0"
+                                                        >
+                                                            Download
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
 
-                                    <p className="text-sm sm:text-base font-semibold leading-relaxed max-w-xl px-2">
-                                        {activeStatus.text}
-                                    </p>
+                                    {(activeSlide.mediaType === 'video' || activeSlide.mediaType === 'photo') && (
+                                        <div className="space-y-1 max-w-xl px-2">
+                                            {activeSlide.title && (
+                                                <p className="text-xs font-bold uppercase tracking-wider text-[#D69E6B]">
+                                                    {activeSlide.title}
+                                                </p>
+                                            )}
+                                            <p className="text-sm sm:text-base font-semibold leading-relaxed">
+                                                {activeSlide.text}
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
 
-                                {/* Reply to Status Bar */}
+                                {/* Per-User Uploaded Items Strip (Click any Video / Picture / Info item uploaded by THIS user) */}
+                                <div className="px-4 py-2.5 bg-[#1B1815] border-t border-white/10 space-y-1.5">
+                                    <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-[#D0C4AE]">
+                                        <span>
+                                            Uploaded Items in {activeUserBox.authorName}&apos;s Status Box ({activeUserBox.slides.length})
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => setStatusComposerMode('photo')}
+                                            className="text-[#D69E6B] hover:underline cursor-pointer"
+                                        >
+                                            + Upload to My Status
+                                        </button>
+                                    </div>
+                                    <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                                        {activeUserBox.slides.map((sl, idx) => (
+                                            <button
+                                                key={sl.id}
+                                                type="button"
+                                                onClick={() => handleSelectSlideInUserBox(idx)}
+                                                className={`px-2.5 py-1.5 rounded-lg border text-left text-[11px] flex items-center gap-1.5 shrink-0 cursor-pointer transition-all ${
+                                                    idx === safeSlideIndex
+                                                        ? 'bg-[#7C4225] border-[#D69E6B] text-[#FBF8F3] font-bold'
+                                                        : 'bg-white/5 border-white/10 text-[#D0C4AE] hover:bg-white/15'
+                                                }`}
+                                            >
+                                                <span>
+                                                    {sl.mediaType === 'video' ? '🎬' : sl.mediaType === 'photo' ? '🖼️' : '📋'}
+                                                </span>
+                                                <span className="max-w-[140px] truncate">
+                                                    {sl.title || sl.videoTitle || sl.infoBadge || `Item ${idx + 1}`}
+                                                </span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Reply to THIS User's Status Bar */}
                                 <form
                                     onSubmit={(e) => {
                                         e.preventDefault();
                                         if (!statusReplyText.trim()) return;
                                         triggerToast(
-                                            `💬 Replied to ${activeStatus.authorName}'s status: "${statusReplyText}"`
+                                            `💬 Replied to ${activeUserBox.authorName}'s Status Box: "${statusReplyText}"`
                                         );
                                         setStatusReplyText('');
                                     }}
@@ -1348,7 +2171,7 @@ export function WhatsAppModeWorkspace({
                                         type="text"
                                         value={statusReplyText}
                                         onChange={(e) => setStatusReplyText(e.target.value)}
-                                        placeholder={`Reply to ${activeStatus.authorName}...`}
+                                        placeholder={`Reply to ${activeUserBox.authorName}...`}
                                         className="flex-1 bg-[#3D3730] placeholder-[#D0C4AE] text-xs rounded-full px-4 py-2 focus:outline-none"
                                         style={{ color: '#FBF8F3' }}
                                     />
@@ -1363,7 +2186,6 @@ export function WhatsAppModeWorkspace({
                             </div>
                         </div>
                     ) : (
-                        /* Single Clean Right Canvas for Sharing a 24h Status (no duplicate grid of left column list) */
                         <div className="w-full max-w-xl my-auto">
                             <div className="bg-[#FBF8F3] border border-[#DDD3C2] rounded-2xl p-6 flex flex-col items-center text-center gap-4 shadow-2xs">
                                 <div className="w-14 h-14 rounded-2xl bg-[#EFE8DA] border border-[#D0C4AE] flex items-center justify-center text-[#7C4225] shrink-0">
@@ -1383,27 +2205,36 @@ export function WhatsAppModeWorkspace({
                                 </div>
                                 <div className="space-y-1">
                                     <h3 className="text-lg font-bold text-[#1C1917]">
-                                        24-Hour Member Status Updates
+                                        {activeUserBox && activeUserBox.isCurrentUser
+                                            ? 'Your Dedicated Status Box is Ready'
+                                            : 'Dedicated Per-User 24h Status Boxes'}
                                     </h3>
                                     <p className="text-xs text-[#57534E] max-w-md">
-                                        Select any member status on the left to watch or reply, or publish your own 24-hour text, photo, or video status.
+                                        Every member has their own private collection box for multiple videos, pictures, and information cards. Select any user on the left or upload directly to your own Status Box below.
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-2.5 flex-wrap justify-center">
                                     <button
                                         type="button"
-                                        onClick={() => setStatusComposerMode('text')}
+                                        onClick={() => setStatusComposerMode('info')}
                                         className="rounded-xl bg-[#EFE8DA] hover:bg-[#E2D9C8] border border-[#D0C4AE] text-[#5E3119] px-4 py-2 text-xs font-bold cursor-pointer transition-colors"
                                     >
-                                        Text Status
+                                        📋 Upload Status Information
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setStatusComposerMode('photo')}
+                                        className="rounded-xl bg-[#EFE8DA] hover:bg-[#E2D9C8] border border-[#D0C4AE] text-[#5E3119] px-4 py-2 text-xs font-bold cursor-pointer transition-colors"
+                                    >
+                                        🖼️ Upload Pictures
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setStatusComposerMode('video')}
                                         style={{ color: '#FBF8F3' }}
                                         className="rounded-xl bg-[#7C4225] hover:bg-[#5E3119] text-[#FBF8F3] px-4 py-2 text-xs font-bold cursor-pointer transition-colors"
                                     >
-                                        + Share Video Status
+                                        🎬 + Upload Video Status
                                     </button>
                                 </div>
                             </div>

@@ -21,6 +21,7 @@ import {
     SEED_PATIENCE_CREATED_AT_ISO,
     resolveMessageIsoDate,
     formatMessageSentDateTime,
+    resolveValidMessagingAvatarUrl,
 } from '@/lib/direct-mailbox-sync';
 
 // Server-side in-memory store for dynamic replies and custom conversations
@@ -172,12 +173,18 @@ function mergeCloudConversationsIntoMemory(cloudConvos: CloudDirectConversation[
             participantA: {
                 ...local.participantA,
                 ...cloud.participantA,
-                avatar: cloud.participantA?.avatar || local.participantA?.avatar,
+                avatar: resolveValidMessagingAvatarUrl(
+                    cloud.participantA?.avatar || local.participantA?.avatar,
+                    cloud.participantA?.name || local.participantA?.name
+                ),
             },
             participantB: {
                 ...local.participantB,
                 ...cloud.participantB,
-                avatar: cloud.participantB?.avatar || local.participantB?.avatar,
+                avatar: resolveValidMessagingAvatarUrl(
+                    cloud.participantB?.avatar || local.participantB?.avatar,
+                    cloud.participantB?.name || local.participantB?.name
+                ),
             },
             messages: mergedMessages,
             updatedAtIso: latestMsgIso,
@@ -236,9 +243,7 @@ function buildViewerBilateralThreads(
                 sender: {
                     id: sentByViewer ? 'me' : `partner_${normalizeParticipantKey(m.senderName).replace(/\s+/g, '_')}`,
                     name: m.senderName,
-                    avatar:
-                        m.senderAvatar ||
-                        `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(m.senderName)}&backgroundColor=0a66c2`,
+                    avatar: resolveValidMessagingAvatarUrl(m.senderAvatar, m.senderName),
                     role: m.senderRole || 'Verified ConnectLn Member',
                     isVerified: true,
                 },
@@ -283,9 +288,7 @@ function buildViewerBilateralThreads(
                 (partnerIsExternal
                     ? `External Email · ${formatEmailProviderLabel(partnerEmailClean)} (${partnerEmailClean})`
                     : 'Verified ConnectLn Professional · Direct Member Channel'),
-            avatar:
-                partner.avatar ||
-                `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(partner.name)}&backgroundColor=0a66c2`,
+            avatar: resolveValidMessagingAvatarUrl(partner.avatar, partner.name),
             isVerified: !partnerIsExternal,
             verifiedBadge: partnerIsExternal
                 ? `📧 ${formatEmailProviderLabel(partnerEmailClean)} · ${partnerEmailClean}`
@@ -352,6 +355,7 @@ function getThreadsForEnclaveMerged(
             const latestMsg = fullHistory[fullHistory.length - 1];
             return {
                 ...thread,
+                avatar: resolveValidMessagingAvatarUrl(thread.avatar, thread.title),
                 messages: fullHistory,
                 lastMessage: latestMsg ? latestMsg.text : thread.lastMessage,
                 lastMessageTime: latestMsg ? latestMsg.timestamp : thread.lastMessageTime,
@@ -787,10 +791,10 @@ export async function POST(request: Request) {
             (primaryParsedEmail
                 ? `External Email · ${formatEmailProviderLabel(primaryParsedEmail)} (${primaryParsedEmail})`
                 : 'Verified ConnectLn Professional · Direct Member Channel');
-        const effectiveRecipientAvatar =
-            recipientAvatar ||
-            avatar ||
-            `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(effectiveRecipientName || primaryParsedEmail || 'Member')}&backgroundColor=0a66c2`;
+        const effectiveRecipientAvatar = resolveValidMessagingAvatarUrl(
+            recipientAvatar || avatar,
+            effectiveRecipientName || primaryParsedEmail || 'Member'
+        );
 
         // Route ALL direct member DMs AND external email threads (Gmail, Yahoo, Outlook, etc.) through bilateral cloud + Resend
         const isBilateralDm =
@@ -917,6 +921,10 @@ export async function POST(request: Request) {
                           participantB: {
                               ...existingConvo.participantB,
                               email: effectiveRecipientEmail || existingConvo.participantB.email,
+                              avatar: resolveValidMessagingAvatarUrl(
+                                  recipientAvatar || avatar || existingConvo.participantB.avatar,
+                                  existingConvo.participantB.name || canonRecipientName
+                              ),
                           },
                           messages: [...existingConvo.messages, newCloudMsg],
                           updatedAtIso: nowIso,
