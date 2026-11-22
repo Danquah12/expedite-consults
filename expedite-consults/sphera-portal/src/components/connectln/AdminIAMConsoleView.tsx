@@ -2631,8 +2631,37 @@ export function AdminIAMConsoleView({
                         selectedAdminFolderNumber === 'all'
                           ? HANDYMAN_250_ADMIN_JOBS
                           : HANDYMAN_250_ADMIN_JOBS.filter((j) => j.folderNumber === selectedAdminFolderNumber)
-                      const batchSample = targetList.slice(0, 20)
+                      const batchSample =
+                        selectedAdminFolderNumber === 'all'
+                          ? HANDYMAN_250_FOLDERS.map((f) =>
+                              HANDYMAN_250_ADMIN_JOBS.find((j) => j.folderNumber === f.folderNumber)
+                            ).filter((x): x is HandymanAdminJobRecord => Boolean(x))
+                          : targetList.slice(0, 20)
+                      const syncedAtIso = new Date().toISOString()
                       try {
+                        if (typeof window !== 'undefined') {
+                          try {
+                            window.localStorage.setItem(
+                              'connectln_20_trade_folders_synced_v1',
+                              JSON.stringify({
+                                syncedAt: syncedAtIso,
+                                folder: selectedAdminFolderNumber,
+                                totalRoles: targetList.length,
+                              })
+                            )
+                          } catch {}
+                          if (typeof BroadcastChannel !== 'undefined') {
+                            try {
+                              const bc = new BroadcastChannel('connectin_jobs_sync')
+                              bc.postMessage({
+                                type: 'TRADE_FOLDERS_SYNCED',
+                                folderNumber: selectedAdminFolderNumber,
+                                syncedAt: syncedAtIso,
+                              })
+                              bc.close()
+                            } catch {}
+                          }
+                        }
                         await Promise.allSettled(
                           batchSample.map((item) =>
                             fetch('/api/connectin/jobs', {
@@ -2667,7 +2696,7 @@ export function AdminIAMConsoleView({
                             selectedAdminFolderNumber === 'all'
                               ? 'all 20 Trade Folders'
                               : `Folder #${selectedAdminFolderNumber}`
-                          } across ConnectLn Jobs, Search & Business!`
+                          } across ConnectLn Jobs, Home Feed Search & For Business!`
                         )
                       } finally {
                         setIsSyncingFolderJobs(false)

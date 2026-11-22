@@ -57,6 +57,7 @@ import {
   ConnectLnBusinessWorkspace,
   BusinessWorkspaceTabId
 } from "@/components/connectln/ConnectLnBusinessWorkspace"
+import { HANDYMAN_250_FOLDERS } from "@/lib/connectin-handyman-250-professions"
 
 interface WorkAndBusinessHubViewProps {
   currentUser: UserProfile
@@ -95,6 +96,7 @@ export function WorkAndBusinessHubView({
 
   // Filters & interactive form states
   const [workTypeFilter, setWorkTypeFilter] = useState<'all' | OpportunityKind>('all')
+  const [selectedWbFolderNumber, setSelectedWbFolderNumber] = useState<number | 'all'>('all')
   const [workSearchQuery, setWorkSearchQuery] = useState("")
   const [savedOpportunityIds, setSavedOpportunityIds] = useState<string[]>(['opp_proj_painting'])
 
@@ -162,15 +164,22 @@ export function WorkAndBusinessHubView({
   }, [initialSection])
 
   useEffect(() => {
-    const loaded = loadWorkBusinessState()
-    setServices(loaded.services)
-    setInquiries(loaded.inquiries)
-    setOpportunities(loaded.opportunities)
-    setSubmissions(loaded.submissions)
-    setCommunities(loaded.communities)
-    setBusinessPages(loaded.businessPages)
-    setInterests(loaded.interests)
-    setSavedLessons(loaded.savedLessons)
+    const syncState = () => {
+      const loaded = loadWorkBusinessState()
+      setServices(loaded.services)
+      setInquiries(loaded.inquiries)
+      setOpportunities(loaded.opportunities)
+      setSubmissions(loaded.submissions)
+      setCommunities(loaded.communities)
+      setBusinessPages(loaded.businessPages)
+      setInterests(loaded.interests)
+      setSavedLessons(loaded.savedLessons)
+    }
+    syncState()
+    if (typeof window !== 'undefined') {
+      window.addEventListener('connectln-work-business-updated', syncState)
+      return () => window.removeEventListener('connectln-work-business-updated', syncState)
+    }
   }, [])
 
   const activeMenuEntry =
@@ -850,11 +859,58 @@ export function WorkAndBusinessHubView({
                 </div>
               </div>
 
+              {/* Browse by 20 Synced Trade Folders (250 Roles) */}
+              <div className="rounded-xl border border-sky-200/80 dark:border-sky-800/60 bg-sky-50/40 dark:bg-sky-950/20 p-3 space-y-2">
+                <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#1E4E8C] dark:text-sky-300">
+                  📂 Browse by 20 Synced Trade Folders (250 Roles)
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedWbFolderNumber('all')}
+                    className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border cursor-pointer ${
+                      selectedWbFolderNumber === 'all'
+                        ? 'bg-[#1E4E8C] text-white border-[#1E4E8C]'
+                        : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700'
+                    }`}
+                  >
+                    📂 All 20 Folders (250)
+                  </button>
+                  {HANDYMAN_250_FOLDERS.map((folder) => {
+                    const active = selectedWbFolderNumber === folder.folderNumber
+                    return (
+                      <button
+                        key={folder.folderId}
+                        type="button"
+                        onClick={() => setSelectedWbFolderNumber(active ? 'all' : folder.folderNumber)}
+                        className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border cursor-pointer ${
+                          active
+                            ? 'bg-[#1E4E8C] text-white border-[#1E4E8C]'
+                            : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700 hover:bg-sky-50'
+                        }`}
+                      >
+                        {folder.icon} {folder.folderNumber}. {folder.folderName} ({folder.roles.length})
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
               {/* Opportunities List */}
               <div className="space-y-3">
                 {opportunities
                   .filter((opp) => {
                     if (workTypeFilter !== 'all' && opp.kind !== workTypeFilter) return false
+                    if (selectedWbFolderNumber !== 'all') {
+                      const folder = HANDYMAN_250_FOLDERS.find((f) => f.folderNumber === selectedWbFolderNumber)
+                      if (folder) {
+                        const matchFolder =
+                          opp.id === `opp_folder_${folder.folderNumber}` ||
+                          opp.tradeCategory.toLowerCase().includes(folder.folderName.toLowerCase()) ||
+                          folder.roles.some((r) => opp.title.toLowerCase().includes(r.title.toLowerCase()))
+                        if (!matchFolder) return false
+                      }
+                    }
                     if (!workSearchQuery.trim()) return true
                     const q = workSearchQuery.toLowerCase()
                     return (
@@ -1628,6 +1684,43 @@ export function WorkAndBusinessHubView({
                 />
               </div>
 
+              {/* Browse by 20 Synced Trade Folders (250 Roles) */}
+              <div className="rounded-xl border border-sky-200/80 dark:border-sky-800/60 bg-sky-50/40 dark:bg-sky-950/20 p-3 space-y-2">
+                <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#1E4E8C] dark:text-sky-300">
+                  📂 Browse by 20 Synced Trade Folders (250 Services)
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedWbFolderNumber('all')}
+                    className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border cursor-pointer ${
+                      selectedWbFolderNumber === 'all'
+                        ? 'bg-[#1E4E8C] text-white border-[#1E4E8C]'
+                        : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700'
+                    }`}
+                  >
+                    📂 All 20 Folders (250)
+                  </button>
+                  {HANDYMAN_250_FOLDERS.map((folder) => {
+                    const active = selectedWbFolderNumber === folder.folderNumber
+                    return (
+                      <button
+                        key={folder.folderId}
+                        type="button"
+                        onClick={() => setSelectedWbFolderNumber(active ? 'all' : folder.folderNumber)}
+                        className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border cursor-pointer ${
+                          active
+                            ? 'bg-[#1E4E8C] text-white border-[#1E4E8C]'
+                            : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700 hover:bg-sky-50'
+                        }`}
+                      >
+                        {folder.icon} {folder.folderNumber}. {folder.folderName} ({folder.roles.length})
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
               {inqSentNotice && (
                 <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-xs font-bold text-emerald-800">
                   ✓ {inqSentNotice}
@@ -1637,6 +1730,16 @@ export function WorkAndBusinessHubView({
               <div className="space-y-4">
                 {services
                   .filter((srv) => {
+                    if (selectedWbFolderNumber !== 'all') {
+                      const folder = HANDYMAN_250_FOLDERS.find((f) => f.folderNumber === selectedWbFolderNumber)
+                      if (folder) {
+                        const matchFolder =
+                          srv.id === `srv_folder_${folder.folderNumber}` ||
+                          srv.category.toLowerCase().includes(folder.folderName.toLowerCase()) ||
+                          srv.tradeOrService.toLowerCase().includes(folder.folderName.toLowerCase())
+                        if (!matchFolder) return false
+                      }
+                    }
                     if (!proSearchQuery.trim()) return true
                     const q = proSearchQuery.toLowerCase()
                     return (

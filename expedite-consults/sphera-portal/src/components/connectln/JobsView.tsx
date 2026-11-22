@@ -20,7 +20,8 @@ import {
   PlusCircle,
   Users,
   Target,
-  Clock
+  Clock,
+  FolderOpen
 } from "lucide-react"
 import {
   COUNTRIES_CONFIG,
@@ -36,6 +37,12 @@ import {
   getCountryShortLabel
 } from "@/lib/global-jobs-data"
 import { PROFESSION_ENCLAVES, CONNECTIN_WORKER_PILLARS, ALL_PROFESSIONS } from "@/lib/connectin-professions"
+import {
+  HANDYMAN_250_FOLDERS,
+  HANDYMAN_250_PROFESSIONS,
+  HANDYMAN_250_ADMIN_JOBS,
+  type HandymanAdminJobRecord
+} from "@/lib/connectin-handyman-250-professions"
 import {
   Dialog,
   DialogContent,
@@ -322,6 +329,62 @@ function getEnclaveJobCategories(enclaveId?: string) {
 }
 
 const PUBLISHED_JOBS_STORAGE_KEY = 'connectin_published_jobs_v1'
+export const TRADE_FOLDERS_SYNC_STORAGE_KEY = 'connectln_20_trade_folders_synced_v1'
+
+const TRADE_FOLDER_ROLE_META = new Map<string, { folderNumber: number; folderName: string; folderIcon: string; roleNumber: number }>()
+for (const folder of HANDYMAN_250_FOLDERS) {
+  for (const role of folder.roles) {
+    TRADE_FOLDER_ROLE_META.set(role.id, {
+      folderNumber: folder.folderNumber,
+      folderName: folder.folderName,
+      folderIcon: folder.icon,
+      roleNumber: role.num
+    })
+  }
+}
+
+const TRADE_ENCLAVE_LOGO: Record<string, string> = {
+  trades_construction: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=100&auto=format&fit=crop&q=80',
+  automotive_mechanics: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=100&auto=format&fit=crop&q=80',
+  agriculture_natural_resources: 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=100&auto=format&fit=crop&q=80',
+  commerce_small_business: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=100&auto=format&fit=crop&q=80',
+  community_civic_security: 'https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=100&auto=format&fit=crop&q=80'
+}
+
+function mapAdminFolderJobToGlobalJob(item: HandymanAdminJobRecord, countryName: string, countryCode: string, primaryLang: string): GlobalJobItem {
+  const folderMeta = HANDYMAN_250_FOLDERS.find((f) => f.folderNumber === item.folderNumber)
+  return {
+    id: `folder_sync_${countryCode.toLowerCase()}_${item.id}`,
+    countryCode,
+    countryName,
+    professionEnclave: item.enclaveId,
+    professionId: item.professionId,
+    domainCategory: `${item.folderNumber}. ${item.folderName}`,
+    title: item.title,
+    company: item.company,
+    companyLogo: TRADE_ENCLAVE_LOGO[item.enclaveId] || TRADE_ENCLAVE_LOGO.trades_construction,
+    location: countryCode === 'US' ? item.location : `${countryName} (Local & Regional Service)`,
+    hub: 'All Hubs',
+    workplaceType: 'On-site',
+    employmentType: 'Full-time',
+    postedTime: `Synced from Admin Folder ${item.folderNumber}`,
+    applicantsCount: item.applicantsCount,
+    salaryRange: item.salary,
+    easyApply: true,
+    isLiveFeed: true,
+    description: `Synced directly from ConnectLn Admin Folder #${item.folderNumber} (${item.folderName}) · Role #${item.roleNumber}: ${item.title}. ${folderMeta?.toolName ? `Includes workflow support for ${folderMeta.toolName}.` : ''}`,
+    requirements: folderMeta ? folderMeta.typicalSkills.map((s) => `Verified practical experience in ${s}`) : [`Verified ${item.title} experience`],
+    languageRequirement: primaryLang || 'English',
+    applyUrl: 'https://conectln.com/connectin',
+    source: `Admin Folder ${item.folderNumber}: ${item.folderName}`,
+    tags: [
+      `Folder ${item.folderNumber}`,
+      item.folderName,
+      `Role #${item.roleNumber}`,
+      ...(folderMeta?.typicalSkills.slice(0, 2) || [])
+    ]
+  }
+}
 
 function loadPublishedJobsFromStorage(): GlobalJobItem[] {
   if (typeof window === 'undefined') return []
@@ -404,6 +467,28 @@ export function JobsView({
   const [selectedDomain, setSelectedDomain] = useState<string>("All")
   const [selectedPillar, setSelectedPillar] = useState<string>("all")
   const [selectedProfessionId, setSelectedProfessionId] = useState<string>("all")
+  const [selectedTradeFolderNumber, setSelectedTradeFolderNumber] = useState<number | 'all'>(() => {
+    if (typeof window === "undefined") return "all"
+    try {
+      const preFolder = window.sessionStorage.getItem("connectln_jobs_trade_folder")
+      if (preFolder) {
+        window.sessionStorage.removeItem("connectln_jobs_trade_folder")
+        const parsed = Number(preFolder)
+        if (!Number.isNaN(parsed) && parsed >= 1 && parsed <= 20) return parsed
+      }
+    } catch {}
+    return "all"
+  })
+  const [isTradeFoldersDrawerOpen, setIsTradeFoldersDrawerOpen] = useState<boolean>(true)
+  const [adminFolderSyncInfo, setAdminFolderSyncInfo] = useState<{ syncedAt?: string; folder?: number | 'all'; totalRoles?: number } | null>(() => {
+    if (typeof window === "undefined") return null
+    try {
+      const raw = window.localStorage.getItem(TRADE_FOLDERS_SYNC_STORAGE_KEY)
+      return raw ? JSON.parse(raw) : null
+    } catch {
+      return null
+    }
+  })
   const [isDirectoryOpen, setIsDirectoryOpen] = useState<boolean>(false)
   const [searchQuery, setSearchQuery] = useState(() => {
     if (typeof window === "undefined") return ""
@@ -470,18 +555,40 @@ export function JobsView({
     setIsPostJobOpen(true)
   }
 
-  // Listen for cross-tab job publish events so all open ConnectLn tabs sync immediately
+  // Listen for cross-tab job publish & admin 20-folder sync events so all open ConnectLn tabs sync immediately
   useEffect(() => {
-    if (typeof window === 'undefined' || typeof BroadcastChannel === 'undefined') return
-    const channel = new BroadcastChannel('connectin_jobs_sync')
-    channel.onmessage = (event) => {
-      const publishedJob = event.data?.job as GlobalJobItem | undefined
-      if (publishedJob) {
-        setJobs(prev => [publishedJob, ...prev.filter(j => j.id !== publishedJob.id)])
-        setLastSyncedAt('Just published · Synced live')
+    if (typeof window === 'undefined') return
+    const handleWorkSync = () => {
+      try {
+        const raw = window.localStorage.getItem(TRADE_FOLDERS_SYNC_STORAGE_KEY)
+        if (raw) setAdminFolderSyncInfo(JSON.parse(raw))
+      } catch {}
+    }
+    window.addEventListener('connectln-work-business-updated', handleWorkSync)
+
+    let channel: BroadcastChannel | null = null
+    if (typeof BroadcastChannel !== 'undefined') {
+      channel = new BroadcastChannel('connectin_jobs_sync')
+      channel.onmessage = (event) => {
+        if (event.data?.type === 'TRADE_FOLDERS_SYNCED') {
+          setAdminFolderSyncInfo({
+            syncedAt: event.data.syncedAt,
+            folder: event.data.folderNumber ?? 'all',
+            totalRoles: 250
+          })
+          setLastSyncedAt('Synced from Admin 20 Trade Folders')
+        }
+        const publishedJob = event.data?.job as GlobalJobItem | undefined
+        if (publishedJob) {
+          setJobs(prev => [publishedJob, ...prev.filter(j => j.id !== publishedJob.id)])
+          setLastSyncedAt('Just published · Synced live')
+        }
       }
     }
-    return () => channel.close()
+    return () => {
+      window.removeEventListener('connectln-work-business-updated', handleWorkSync)
+      channel?.close()
+    }
   }, [])
 
   // Modals
@@ -756,6 +863,7 @@ export function JobsView({
     setSelectedEnclave(newEnclave)
     setSelectedProfessionId("all")
     setSelectedDomain("All")
+    setSelectedTradeFolderNumber("all")
   }
 
   const handlePillarChange = (pillarId: string) => {
@@ -763,7 +871,130 @@ export function JobsView({
     setSelectedEnclave("all")
     setSelectedProfessionId("all")
     setSelectedDomain("All")
+    setSelectedTradeFolderNumber("all")
   }
+
+  const handleSelectTradeFolder = (folderNum: number | 'all') => {
+    setSelectedTradeFolderNumber(folderNum)
+    setSelectedEnclave("all")
+    setSelectedPillar("all")
+    setSelectedProfessionId("all")
+    setSelectedDomain("All")
+    setVisibleJobsCount(50)
+  }
+
+  const activeTradeFolderObj = React.useMemo(
+    () =>
+      selectedTradeFolderNumber === 'all'
+        ? null
+        : HANDYMAN_250_FOLDERS.find((f) => f.folderNumber === selectedTradeFolderNumber) || null,
+    [selectedTradeFolderNumber]
+  )
+
+  const displayedJobs = React.useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    const folderAdminJobsAll = HANDYMAN_250_ADMIN_JOBS.map((item) =>
+      mapAdminFolderJobToGlobalJob(
+        item,
+        currentCountry.name,
+        currentCountry.code,
+        currentCountry.primaryLanguage
+      )
+    )
+
+    if (selectedTradeFolderNumber !== 'all' && activeTradeFolderObj) {
+      const roleIds = new Set(activeTradeFolderObj.roles.map((r) => r.id))
+      const folderMapped = folderAdminJobsAll.filter((_, idx) => {
+        const raw = HANDYMAN_250_ADMIN_JOBS[idx]
+        if (raw.folderNumber !== selectedTradeFolderNumber) return false
+        if (selectedProfessionId !== 'all' && raw.professionId !== selectedProfessionId) return false
+        return true
+      })
+      const existingMatches = jobs.filter((j) => {
+        if (selectedProfessionId !== 'all') return j.professionId === selectedProfessionId
+        return Boolean(
+          (j.professionId && roleIds.has(j.professionId)) ||
+          j.tags?.some((t) => t === `Folder ${selectedTradeFolderNumber}` || t === activeTradeFolderObj.folderName)
+        )
+      })
+      const combined = [...folderMapped, ...existingMatches]
+      const seen = new Set<string>()
+      return combined.filter((j) => {
+        if (seen.has(j.id)) return false
+        seen.add(j.id)
+        if (!q) return true
+        return (
+          j.title.toLowerCase().includes(q) ||
+          j.company.toLowerCase().includes(q) ||
+          j.description.toLowerCase().includes(q) ||
+          j.tags.some((t) => t.toLowerCase().includes(q))
+        )
+      })
+    }
+
+    // When viewing all enclaves with admin sync active (or browsing all), surface the synced 20 Trade Folders alongside the main catalog
+    if (selectedEnclave === 'all' && selectedPillar === 'all' && selectedProfessionId === 'all' && selectedDomain === 'All') {
+      const matchingSyncedFolderJobs = folderAdminJobsAll.filter((j) => {
+        if (!q) return true
+        return (
+          j.title.toLowerCase().includes(q) ||
+          j.company.toLowerCase().includes(q) ||
+          j.description.toLowerCase().includes(q) ||
+          j.tags.some((t) => t.toLowerCase().includes(q))
+        )
+      })
+      if (adminFolderSyncInfo) {
+        // Admin explicitly synced folders: interleave across all 20 folders so every folder shows up right at the top!
+        const byFolder = new Map<number, GlobalJobItem[]>()
+        for (const item of matchingSyncedFolderJobs) {
+          const meta = item.professionId ? TRADE_FOLDER_ROLE_META.get(item.professionId) : undefined
+          const fNum = meta?.folderNumber || 1
+          const arr = byFolder.get(fNum) || []
+          arr.push(item)
+          byFolder.set(fNum, arr)
+        }
+        const queues = Array.from(byFolder.values())
+        const interleavedFolders: GlobalJobItem[] = []
+        const maxQ = Math.max(0, ...queues.map((x) => x.length))
+        for (let i = 0; i < maxQ; i++) {
+          for (const qList of queues) {
+            if (i < qList.length) interleavedFolders.push(qList[i])
+          }
+        }
+        const seen = new Set<string>()
+        const merged: GlobalJobItem[] = []
+        for (const item of [...interleavedFolders, ...jobs]) {
+          if (!seen.has(item.id)) {
+            seen.add(item.id)
+            merged.push(item)
+          }
+        }
+        return merged
+      }
+      const seen = new Set<string>()
+      const merged: GlobalJobItem[] = []
+      for (const item of [...jobs, ...matchingSyncedFolderJobs]) {
+        if (!seen.has(item.id)) {
+          seen.add(item.id)
+          merged.push(item)
+        }
+      }
+      return merged
+    }
+
+    return jobs
+  }, [
+    jobs,
+    searchQuery,
+    selectedTradeFolderNumber,
+    activeTradeFolderObj,
+    selectedProfessionId,
+    selectedEnclave,
+    selectedPillar,
+    selectedDomain,
+    adminFolderSyncInfo,
+    currentCountry
+  ])
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -967,10 +1198,24 @@ export function JobsView({
               <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60 flex items-center gap-1">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 {currentCountry.flag} {currentCountry.name} ·{' '}
-                {isLoadingJobs
-                  ? `${jobs.length > 0 ? `${jobs.length}+ roles · ` : ''}syncing live roles…`
-                  : `${jobs.length.toLocaleString()} active roles (${lastSyncedAt})`}
+                {isLoadingJobs && displayedJobs.length === 0
+                  ? 'syncing live roles…'
+                  : `${displayedJobs.length.toLocaleString()} active roles (${lastSyncedAt})`}
               </span>
+              <button
+                type="button"
+                onClick={() => setIsTradeFoldersDrawerOpen(prev => !prev)}
+                className={`rounded-full px-3 py-0.5 text-xs font-bold border flex items-center gap-1.5 transition-colors cursor-pointer ${
+                  isTradeFoldersDrawerOpen || selectedTradeFolderNumber !== 'all'
+                    ? 'bg-[#0A66C2] text-white border-[#0A66C2] shadow-xs'
+                    : 'bg-sky-50 dark:bg-sky-950/50 hover:bg-sky-100 text-[#0A66C2] dark:text-sky-300 border-sky-200/80 dark:border-sky-800/60'
+                }`}
+              >
+                <FolderOpen className="h-3.5 w-3.5" />
+                <span>
+                  📂 20 Trade Folders (250 Synced Jobs{adminFolderSyncInfo ? ' ✓' : ''})
+                </span>
+              </button>
               <button
                 type="button"
                 onClick={() => setIsDirectoryOpen(prev => !prev)}
@@ -982,7 +1227,9 @@ export function JobsView({
             </div>
 
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-              {selectedEnclave === 'all'
+              {activeTradeFolderObj
+                ? `${activeTradeFolderObj.icon} Folder ${activeTradeFolderObj.folderNumber}: ${activeTradeFolderObj.folderName} (${activeTradeFolderObj.roles.length} Roles in ${currentCountry.name})`
+                : selectedEnclave === 'all'
                 ? `Explore Live Jobs in ${currentCountry.name} Across All 20 Industry Enclaves (${ALL_PROFESSIONS.length} Professions)`
                 : currentProfessionObj
                 ? `${currentEnclaveObj?.icon || '💼'} ${currentProfessionObj.title} — ${currentCountry.name} Openings`
@@ -1063,9 +1310,106 @@ export function JobsView({
           <LiveHarvestedMediaShowcase destination="jobs" />
         </div>
 
-        {/* Dynamic Profession Enclave Switcher + Worker Pillars + Country Ribbon (Visible in Find Jobs Mode) */}
+        {/* Dynamic Profession Enclave Switcher + 20 Trade Folders + Worker Pillars + Country Ribbon */}
         {masterMode === 'find' && (
           <div className="mt-4 pt-3.5 border-t border-zinc-100 dark:border-zinc-800 space-y-3">
+            {/* SYNCED 20 TRADE & SERVICE FOLDERS BAR (250 ROLES) */}
+            {isTradeFoldersDrawerOpen && (
+              <div className="rounded-xl border border-sky-200/90 dark:border-sky-800/60 bg-sky-50/50 dark:bg-sky-950/25 p-3 space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[11px] font-black uppercase tracking-wider text-[#0A66C2] dark:text-sky-300 flex items-center gap-1.5">
+                      <FolderOpen className="h-3.5 w-3.5" />
+                      <span>20 Synced Trade &amp; Service Folders (250 Everyday Professions)</span>
+                    </span>
+                    {adminFolderSyncInfo && (
+                      <span className="rounded-full bg-emerald-600 text-white px-2 py-0.5 text-[10px] font-extrabold">
+                        ✓ Synced Platform-Wide
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsTradeFoldersDrawerOpen(false)}
+                    className="text-[11px] font-semibold text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 cursor-pointer"
+                  >
+                    Hide Folders ×
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => handleSelectTradeFolder('all')}
+                    className={`rounded-lg px-2.5 py-1 text-[11px] font-extrabold border transition-all cursor-pointer ${
+                      selectedTradeFolderNumber === 'all'
+                        ? "bg-[#0A66C2] text-white border-[#0A66C2] shadow-2xs"
+                        : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100"
+                    }`}
+                  >
+                    📂 All 20 Folders (250 Roles)
+                  </button>
+                  {HANDYMAN_250_FOLDERS.map((folder) => {
+                    const active = selectedTradeFolderNumber === folder.folderNumber
+                    return (
+                      <button
+                        key={folder.folderId}
+                        type="button"
+                        onClick={() => handleSelectTradeFolder(folder.folderNumber)}
+                        className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border transition-all cursor-pointer ${
+                          active
+                            ? "bg-[#0A66C2] text-white border-[#0A66C2] shadow-2xs"
+                            : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700 hover:bg-sky-50 dark:hover:bg-zinc-800"
+                        }`}
+                      >
+                        {folder.icon} {folder.folderNumber}. {folder.folderName} ({folder.roles.length})
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {activeTradeFolderObj && (
+                  <div className="pt-2 border-t border-sky-200/70 dark:border-sky-800/50 space-y-1.5">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <span className="text-[11px] font-bold text-zinc-700 dark:text-zinc-200">
+                        Inside Folder #{activeTradeFolderObj.folderNumber} ({activeTradeFolderObj.folderName} · {activeTradeFolderObj.roles.length} Roles):
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedProfessionId('all')}
+                        className={`rounded-md px-2 py-0.5 text-[10px] font-bold cursor-pointer ${
+                          selectedProfessionId === 'all'
+                            ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900'
+                            : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700'
+                        }`}
+                      >
+                        Show All {activeTradeFolderObj.roles.length} Folder Roles
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {activeTradeFolderObj.roles.map((r) => {
+                        const isRoleActive = selectedProfessionId === r.id
+                        return (
+                          <button
+                            key={r.id}
+                            type="button"
+                            onClick={() => setSelectedProfessionId(isRoleActive ? 'all' : r.id)}
+                            className={`rounded-md px-2 py-0.5 text-[10.5px] font-semibold transition-colors cursor-pointer ${
+                              isRoleActive
+                                ? 'bg-amber-600 text-white font-bold shadow-2xs'
+                                : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-amber-50'
+                            }`}
+                          >
+                            #{r.num} {r.title}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* 3 CORE WORKER PILLARS BAR */}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
               <span className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 shrink-0 mr-1">
@@ -1576,23 +1920,29 @@ export function JobsView({
 
               <div className="flex items-center justify-between pt-1 border-t border-zinc-100 dark:border-zinc-800 text-xs text-zinc-500 flex-wrap gap-2">
                 <span>
-                  Region: <strong>{currentCountry.flag} {currentCountry.name}</strong> · Profession: <strong>{currentProfessionObj ? currentProfessionObj.title : currentEnclaveObj ? currentEnclaveObj.name : `All 20 Enclaves (${ALL_PROFESSIONS.length} Professions)`}</strong> · Hub: <strong>{selectedHub}</strong>
+                  Region: <strong>{currentCountry.flag} {currentCountry.name}</strong> ·{' '}
+                  {activeTradeFolderObj ? (
+                    <>Folder: <strong>{activeTradeFolderObj.icon} Folder {activeTradeFolderObj.folderNumber}: {activeTradeFolderObj.folderName}</strong></>
+                  ) : (
+                    <>Profession: <strong>{currentProfessionObj ? currentProfessionObj.title : currentEnclaveObj ? currentEnclaveObj.name : `All 20 Enclaves (${ALL_PROFESSIONS.length} Professions)`}</strong></>
+                  )}{' '}
+                  · Hub: <strong>{selectedHub}</strong>
                 </span>
                 <span className="font-semibold text-zinc-700 dark:text-zinc-300">
-                  {jobs.length.toLocaleString()} real openings in {currentCountry.name}
+                  {displayedJobs.length.toLocaleString()} real openings in {currentCountry.name}
                 </span>
               </div>
             </div>
 
             {/* Jobs List */}
             <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
-              {jobs.length === 0 ? (
+              {displayedJobs.length === 0 ? (
                 <div className="py-12 text-center space-y-2">
                   <p className="text-base font-bold text-zinc-800 dark:text-zinc-200">
                     No openings found for this filter in {currentCountry.name}
                   </p>
                   <p className="text-xs text-zinc-500">
-                    Try viewing All 15 Professions or resetting your category filters.
+                    Try viewing all 20 Trade Folders / Enclaves or resetting your category filters.
                   </p>
                   <div className="flex items-center justify-center gap-2 pt-2">
                     <button
@@ -1600,6 +1950,7 @@ export function JobsView({
                         setSelectedDomain("All")
                         setSelectedHub("All Hubs")
                         setSearchQuery("")
+                        setSelectedTradeFolderNumber("all")
                       }}
                       className="rounded-full bg-[#0A66C2] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#004182] cursor-pointer"
                     >
@@ -1608,22 +1959,24 @@ export function JobsView({
                     <button
                       onClick={() => {
                         setSelectedEnclave("all")
+                        setSelectedTradeFolderNumber("all")
                         setSelectedDomain("All")
                         setSelectedHub("All Hubs")
                         setSearchQuery("")
                       }}
                       className="rounded-full bg-zinc-100 dark:bg-zinc-800 px-4 py-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-200 cursor-pointer"
                     >
-                      Show All 15 Professions
+                      Show All Professions &amp; Folders
                     </button>
                   </div>
                 </div>
               ) : (
                 <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                  {jobs.slice(0, visibleJobsCount).map((job) => {
+                  {displayedJobs.slice(0, visibleJobsCount).map((job) => {
                     const isApplied = appliedJobIds.includes(job.id)
                     const flywheel = getJobFlywheelRecommendation(job)
                     const jobEnclaveObj = PROFESSION_ENCLAVES.find(e => e.id === job.professionEnclave)
+                    const tradeFolderMeta = job.professionId ? TRADE_FOLDER_ROLE_META.get(job.professionId) : undefined
 
                     return (
                       <div
@@ -1645,6 +1998,11 @@ export function JobsView({
                               >
                                 {job.title}
                               </h4>
+                              {tradeFolderMeta && (
+                                <span className="rounded-md bg-sky-100/80 dark:bg-sky-950/70 px-2 py-0.5 text-[10px] font-extrabold text-[#0A66C2] dark:text-sky-300 border border-sky-300/70 dark:border-sky-700">
+                                  {tradeFolderMeta.folderIcon} Folder {tradeFolderMeta.folderNumber}: {tradeFolderMeta.folderName} · #{tradeFolderMeta.roleNumber}
+                                </span>
+                              )}
                               {jobEnclaveObj && (
                                 <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-[#0A66C2] border border-blue-200 dark:bg-blue-950/60 dark:border-blue-800 dark:text-sky-300">
                                   {jobEnclaveObj.icon} {jobEnclaveObj.shortName}
@@ -1806,17 +2164,22 @@ export function JobsView({
                       </div>
                     )
                   })}
-                  {jobs.length > visibleJobsCount && (
+                  {displayedJobs.length > visibleJobsCount && (
                     <div className="pt-5 pb-2 flex flex-col items-center justify-center gap-2 text-center">
                       <p className="text-xs text-zinc-500">
-                        Showing <strong>{visibleJobsCount.toLocaleString()}</strong> of <strong>{jobs.length.toLocaleString()}</strong> verified real openings across {selectedEnclave === 'all' ? `all 20 enclaves & ${ALL_PROFESSIONS.length} professions` : currentEnclaveObj?.name || 'this profession'}
+                        Showing <strong>{visibleJobsCount.toLocaleString()}</strong> of <strong>{displayedJobs.length.toLocaleString()}</strong> verified real openings across{' '}
+                        {activeTradeFolderObj
+                          ? `Folder ${activeTradeFolderObj.folderNumber}: ${activeTradeFolderObj.folderName}`
+                          : selectedEnclave === 'all'
+                          ? `all 20 Trade Folders, 20 enclaves & ${ALL_PROFESSIONS.length} professions`
+                          : currentEnclaveObj?.name || 'this profession'}
                       </p>
                       <button
                         type="button"
                         onClick={() => setVisibleJobsCount((prev) => prev + 60)}
                         className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-6 py-2 text-xs font-bold shadow-xs transition-colors cursor-pointer"
                       >
-                        Load 60 More Real Openings ({(jobs.length - visibleJobsCount).toLocaleString()} remaining) →
+                        Load 60 More Real Openings ({(displayedJobs.length - visibleJobsCount).toLocaleString()} remaining) →
                       </button>
                     </div>
                   )}

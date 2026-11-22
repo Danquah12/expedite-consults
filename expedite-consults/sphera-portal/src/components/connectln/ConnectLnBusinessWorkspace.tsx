@@ -18,8 +18,14 @@ import {
   Search,
   Star,
   ArrowLeftRight,
-  FileText
+  FileText,
+  FolderOpen
 } from "lucide-react"
+import {
+  HANDYMAN_250_FOLDERS,
+  HANDYMAN_250_SERVICE_LISTINGS,
+  HANDYMAN_250_ADMIN_JOBS
+} from "@/lib/connectin-handyman-250-professions"
 import type {
   ConnectLnBusinessCloudState,
   BusinessProfileTenant,
@@ -86,6 +92,7 @@ export function ConnectLnBusinessWorkspace({
   // Forms: MKT-01 & MKT-02 Marketplace Search & Quote Request
   const [mktSearch, setMktSearch] = useState("")
   const [mktCategoryFilter, setMktCategoryFilter] = useState("ALL")
+  const [hiringFolderNumber, setHiringFolderNumber] = useState<number | "all">(1)
   const [quoteScopeByService, setQuoteScopeByService] = useState<Record<string, string>>({})
   const [quoteDateByService, setQuoteDateByService] = useState<Record<string, string>>({})
   const [quoteBudgetByService, setQuoteBudgetByService] = useState<Record<string, string>>({})
@@ -1015,31 +1022,88 @@ export function ConnectLnBusinessWorkspace({
           {/* 4. PUBLIC BUSINESS MARKETPLACE & QUOTE REQUESTS (MKT-01 & MKT-02) */}
           {activeTab === "marketplace" && (
             <div className="space-y-4">
-              <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 flex flex-col sm:flex-row items-center gap-2.5">
-                <div className="relative flex-1 w-full">
-                  <Search className="h-4 w-4 text-zinc-400 absolute left-3 top-2.5" />
-                  <input
-                    type="text"
-                    value={mktSearch}
-                    onChange={(e) => setMktSearch(e.target.value)}
-                    placeholder="Search businesses & services by trade, category, city, or keyword (MKT-01)..."
-                    className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 pl-9 pr-3 py-2 text-xs"
-                  />
+              <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
+                <div className="flex flex-col sm:flex-row items-center gap-2.5">
+                  <div className="relative flex-1 w-full">
+                    <Search className="h-4 w-4 text-zinc-400 absolute left-3 top-2.5" />
+                    <input
+                      type="text"
+                      value={mktSearch}
+                      onChange={(e) => setMktSearch(e.target.value)}
+                      placeholder="Search businesses & all 250 synced trade services by category, city, or keyword (MKT-01)..."
+                      className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 pl-9 pr-3 py-2 text-xs"
+                    />
+                  </div>
+                  <select
+                    value={mktCategoryFilter}
+                    onChange={(e) => setMktCategoryFilter(e.target.value)}
+                    className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-xs max-w-xs"
+                  >
+                    <option value="ALL">All Categories &amp; 20 Synced Trade Folders</option>
+                    <option value="Carpentry">Carpentry &amp; Joinery</option>
+                    <option value="Cybersecurity">Cybersecurity &amp; Cloud</option>
+                    <option value="Painting">Painting &amp; Decorating</option>
+                    <optgroup label="📂 20 Synced Trade Folders (250 Roles)">
+                      {HANDYMAN_250_FOLDERS.map((folder) => (
+                        <option key={folder.folderId} value={folder.folderName}>
+                          {folder.icon} Folder {folder.folderNumber}: {folder.folderName} ({folder.roles.length})
+                        </option>
+                      ))}
+                    </optgroup>
+                  </select>
                 </div>
-                <select
-                  value={mktCategoryFilter}
-                  onChange={(e) => setMktCategoryFilter(e.target.value)}
-                  className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-xs"
-                >
-                  <option value="ALL">All Categories</option>
-                  <option value="Carpentry">Carpentry &amp; Joinery</option>
-                  <option value="Cybersecurity">Cybersecurity &amp; Cloud</option>
-                  <option value="Painting">Painting &amp; Decorating</option>
-                </select>
+
+                {/* Quick 20 Synced Trade Folders Filter Strip */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                  <button
+                    type="button"
+                    onClick={() => setMktCategoryFilter("ALL")}
+                    className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border shrink-0 cursor-pointer ${
+                      mktCategoryFilter === "ALL"
+                        ? "bg-[#0A66C2] text-white border-[#0A66C2]"
+                        : "bg-zinc-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700"
+                    }`}
+                  >
+                    📂 All 20 Folders (250 Services)
+                  </button>
+                  {HANDYMAN_250_FOLDERS.map((folder) => {
+                    const active = mktCategoryFilter === folder.folderName
+                    return (
+                      <button
+                        key={folder.folderId}
+                        type="button"
+                        onClick={() => setMktCategoryFilter(active ? "ALL" : folder.folderName)}
+                        className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border shrink-0 cursor-pointer ${
+                          active
+                            ? "bg-[#0A66C2] text-white border-[#0A66C2]"
+                            : "bg-zinc-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-sky-50"
+                        }`}
+                      >
+                        {folder.icon} {folder.folderNumber}. {folder.folderName}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                {state.services
+                {[
+                  ...state.services.map((s) => ({ ...s, syncedProviderName: undefined as string | undefined })),
+                  ...HANDYMAN_250_SERVICE_LISTINGS.map((ls) => ({
+                    id: ls.id,
+                    businessId: activeBiz.id,
+                    title: ls.tradeOrService,
+                    category: ls.category,
+                    description: ls.description,
+                    pricingModel: "Request Estimate" as const,
+                    priceDisplay: ls.rateDisplay,
+                    serviceArea: ls.serviceArea,
+                    status: "Active" as const,
+                    portfolioMedia: [],
+                    createdAtIso: "",
+                    syncedProviderName: ls.providerName,
+                  })),
+                ]
                   .filter((s) => s.status === "Active")
                   .filter((s) => {
                     if (
@@ -1059,6 +1123,7 @@ export function ConnectLnBusinessWorkspace({
                   })
                   .map((srv) => {
                     const biz = state.businesses.find((b) => b.id === srv.businessId)
+                    const displayBizName = srv.syncedProviderName || biz?.name || "Verified Business"
                     return (
                       <div
                         key={srv.id}
@@ -1067,10 +1132,10 @@ export function ConnectLnBusinessWorkspace({
                         <div className="space-y-1.5">
                           <div className="flex items-center justify-between gap-2">
                             <span className="rounded bg-blue-50 text-[#0A66C2] px-2 py-0.5 text-[10px] font-extrabold">
-                              🏢 {biz?.name || "Verified Business"}
+                              🏢 {displayBizName}
                             </span>
                             <span className="text-[10.5px] font-bold text-emerald-700">
-                              {biz?.verificationStatus}
+                              {biz?.verificationStatus || "Independently Checked ✓"}
                             </span>
                           </div>
                           <h4 className="text-sm font-black">{srv.title}</h4>
@@ -1514,6 +1579,72 @@ export function ConnectLnBusinessWorkspace({
                       Post
                     </button>
                   </div>
+                </div>
+              </div>
+
+              {/* Synced 20 Trade Folders (250 Roles) Quick-Hire Browser */}
+              <div className="rounded-2xl border border-sky-200/80 dark:border-sky-800/60 bg-sky-50/40 dark:bg-sky-950/20 p-4 space-y-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-[#0A66C2] dark:text-sky-300 flex items-center gap-1.5">
+                    <FolderOpen className="h-4 w-4" />
+                    <span>20 Synced Trade Folders (250 Everyday Trades &amp; Service Roles) — 1-Click Hire</span>
+                  </h4>
+                  <span className="text-[11px] text-zinc-500">
+                    Click any synced role to prefill or post to {activeBiz.name}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {HANDYMAN_250_FOLDERS.map((folder) => (
+                    <button
+                      key={folder.folderId}
+                      type="button"
+                      onClick={() => setHiringFolderNumber(folder.folderNumber)}
+                      className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border cursor-pointer ${
+                        hiringFolderNumber === folder.folderNumber
+                          ? "bg-[#0A66C2] text-white border-[#0A66C2]"
+                          : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700"
+                      }`}
+                    >
+                      {folder.icon} {folder.folderNumber}. {folder.folderName} ({folder.roles.length})
+                    </button>
+                  ))}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 pt-1">
+                  {HANDYMAN_250_ADMIN_JOBS.filter(
+                    (r) => hiringFolderNumber === "all" || r.folderNumber === hiringFolderNumber
+                  ).map((roleJob) => (
+                    <div
+                      key={roleJob.id}
+                      className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-2.5 flex items-center justify-between gap-2"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold truncate">
+                          #{roleJob.roleNumber} {roleJob.title}
+                        </p>
+                        <p className="text-[10.5px] text-emerald-700 font-semibold truncate">
+                          {roleJob.salary}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void dispatchBizAction(
+                            {
+                              action: "post_business_job",
+                              businessId: activeBiz.id,
+                              title: roleJob.title,
+                              kind: "Employment",
+                              compensation: roleJob.salary,
+                            },
+                            `✓ Synced & posted "${roleJob.title}" to ${activeBiz.name}!`
+                          )
+                        }
+                        className="rounded-lg bg-sky-50 hover:bg-[#0A66C2] hover:text-white text-[#0A66C2] border border-sky-200 px-2.5 py-1 text-[10.5px] font-extrabold shrink-0 cursor-pointer"
+                      >
+                        + Hire Role
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
 

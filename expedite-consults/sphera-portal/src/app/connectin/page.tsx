@@ -114,6 +114,10 @@ import {
   findEnclaveById,
   findProfessionById
 } from "@/lib/connectin-professions"
+import {
+  HANDYMAN_250_FOLDERS,
+  HANDYMAN_250_PROFESSIONS
+} from "@/lib/connectin-handyman-250-professions"
 import { getMatchedWheelVideoForUser, resolveProfessionForUser } from "@/lib/connectin-videos"
 import { buildProfessionTieredFeedPosts } from "@/lib/connectin-profession-feed"
 import { LiveHarvestedMediaShowcase } from "@/components/connectln/LiveHarvestedMediaShowcase"
@@ -456,6 +460,8 @@ export default function ConnectLnPage() {
   const [isMultiEnclaveMode, setIsMultiEnclaveMode] = useState<boolean>(true)
   const [isVideoGuideOpen, setIsVideoGuideOpen] = useState(false)
   const [showFeedWheel, setShowFeedWheel] = useState(true)
+  const [showHomeTradeFolders, setShowHomeTradeFolders] = useState(false)
+  const [selectedHomeTradeFolder, setSelectedHomeTradeFolder] = useState<number>(1)
   const [visibleMyPostsCount, setVisibleMyPostsCount] = useState(4)
   const [visibleStreamCount, setVisibleStreamCount] = useState(6)
   const feedLoadMoreRef = React.useRef<HTMLDivElement | null>(null)
@@ -2618,22 +2624,49 @@ export default function ConnectLnPage() {
                   <select
                     value={activeProfId || "carpenter"}
                     onChange={(e) => handleSwitchActiveProfession(e.target.value)}
-                    className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-2.5 py-1 text-xs font-semibold text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2] max-w-[230px] cursor-pointer"
-                    title="Switch logged-in profession to see its videos and stories"
+                    className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-2.5 py-1 text-xs font-semibold text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A66C2] max-w-[240px] cursor-pointer"
+                    title="Switch logged-in profession across 20 Trade Folders & all platform roles"
                   >
-                    {ALL_PROFESSIONS.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.title}
-                      </option>
+                    {HANDYMAN_250_FOLDERS.map((folder) => (
+                      <optgroup
+                        key={folder.folderId}
+                        label={`📂 Folder ${folder.folderNumber}: ${folder.folderName} (${folder.roles.length})`}
+                      >
+                        {folder.roles.map((r) => (
+                          <option key={r.id} value={r.id}>
+                            #{r.num} {r.title}
+                          </option>
+                        ))}
+                      </optgroup>
                     ))}
+                    <optgroup label="🌐 All Other Platform Professions">
+                      {ALL_PROFESSIONS.filter(
+                        (p) => !HANDYMAN_250_PROFESSIONS.some((h) => h.id === p.id)
+                      ).map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.title}
+                        </option>
+                      ))}
+                    </optgroup>
                   </select>
                 </div>
 
-                {/* Quick Profession Pills (Carpenter, Nurse, Doctor, Electrician, Mechanic, Cybersecurity, Software) */}
+                {/* Quick Profession Pills (with 20 Trade Folders Drawer Toggle) */}
                 <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 shrink-0 mr-1">
                     Quick View:
                   </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowHomeTradeFolders((prev) => !prev)}
+                    className={`px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer shrink-0 border ${
+                      showHomeTradeFolders
+                        ? "bg-[#0A66C2] text-white border-[#0A66C2] shadow-xs"
+                        : "bg-sky-50 dark:bg-sky-950/50 text-[#0A66C2] dark:text-sky-300 border-sky-200 dark:border-sky-800 hover:bg-sky-100"
+                    }`}
+                  >
+                    📂 20 Trade Folders (250) {showHomeTradeFolders ? "▴" : "▾"}
+                  </button>
                   {[
                     { id: "carpenter", label: "🔨 Carpenter" },
                     { id: "plumber", label: "🔧 Plumber" },
@@ -2664,6 +2697,73 @@ export default function ConnectLnPage() {
                     )
                   })}
                 </div>
+
+                {/* Expandable Compact 20 Trade Folders Explorer */}
+                {showHomeTradeFolders && (
+                  <div className="rounded-xl border border-sky-200/80 dark:border-sky-800/60 bg-sky-50/40 dark:bg-sky-950/20 p-3 space-y-2.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-[11px] font-extrabold text-[#0A66C2] dark:text-sky-300">
+                        📂 Synced 20 Trade &amp; Service Folders (250 Roles) — Click a folder to switch feed or open in Jobs:
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          try {
+                            window.sessionStorage.setItem("connectln_jobs_trade_folder", String(selectedHomeTradeFolder))
+                          } catch {}
+                          setActiveTab("jobs")
+                        }}
+                        className="rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-white px-2.5 py-1 text-[10.5px] font-bold cursor-pointer"
+                      >
+                        Open Folder #{selectedHomeTradeFolder} in Jobs Tab →
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {HANDYMAN_250_FOLDERS.map((folder) => {
+                        const active = selectedHomeTradeFolder === folder.folderNumber
+                        return (
+                          <button
+                            key={folder.folderId}
+                            type="button"
+                            onClick={() => setSelectedHomeTradeFolder(folder.folderNumber)}
+                            className={`rounded-lg px-2 py-1 text-[10.5px] font-bold border transition-colors cursor-pointer ${
+                              active
+                                ? "bg-[#0A66C2] text-white border-[#0A66C2]"
+                                : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700 hover:bg-sky-50"
+                            }`}
+                          >
+                            {folder.icon} {folder.folderNumber}. {folder.folderName} ({folder.roles.length})
+                          </button>
+                        )
+                      })}
+                    </div>
+                    {(() => {
+                      const activeFolder = HANDYMAN_250_FOLDERS.find((f) => f.folderNumber === selectedHomeTradeFolder)
+                      if (!activeFolder) return null
+                      return (
+                        <div className="flex flex-wrap gap-1 pt-1.5 border-t border-sky-200/60 dark:border-sky-800/50">
+                          {activeFolder.roles.map((r) => (
+                            <button
+                              key={r.id}
+                              type="button"
+                              onClick={() => {
+                                handleSwitchActiveProfession(r.id)
+                                setShowHomeTradeFolders(false)
+                              }}
+                              className={`rounded-md px-2 py-0.5 text-[10.5px] font-semibold cursor-pointer ${
+                                activeProfId === r.id
+                                  ? "bg-amber-600 text-white font-bold"
+                                  : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-amber-50"
+                              }`}
+                            >
+                              #{r.num} {r.title}
+                            </button>
+                          ))}
+                        </div>
+                      )
+                    })()}
+                  </div>
+                )}
 
                 {/* Live Video Sync Control + Subtle Links to Trade Lessons & Learning Academy */}
                 <div className="pt-1.5 border-t border-zinc-100 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2 text-xs">
