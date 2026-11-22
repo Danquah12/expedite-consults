@@ -5494,3 +5494,103 @@ export function resolveExternalJobApplyUrl(job: {
   return `https://www.linkedin.com/jobs/search/?${queryParts.join('&')}`
 }
 
+const DOMAIN_CATEGORY_STOP_WORDS = new Set(['and', 'the', 'for', 'ops', 'roles', 'only', 'all'])
+
+/**
+ * Matches a job list against a sidebar Job Category (`domain`) with exact enclave/category priority
+ * and multi-token keyword fallback so no category card yields an empty list.
+ */
+export function filterJobsByDomainCategory(list: GlobalJobItem[], domain: string): GlobalJobItem[] {
+  if (!domain || domain === 'All') return list
+  if (domain === 'Remote') {
+    return list.filter((j) => j.workplaceType === 'Remote' || (j.tags || []).includes('Remote'))
+  }
+  if (domain === 'Contract') {
+    return list.filter((j) => j.employmentType === 'Contract' || (j.tags || []).includes('Contract'))
+  }
+  if (domain === 'Full-time') {
+    return list.filter((j) => j.employmentType === 'Full-time')
+  }
+  if (domain === 'Recommended') {
+    return list.filter((j) => j.domainCategory === 'Recommended' || (j.tags || []).includes('Recommended'))
+  }
+
+  const dLower = domain.toLowerCase()
+  const tier1Scored: Array<{ job: GlobalJobItem; priority: number }> = []
+
+  for (const j of list) {
+    const catLower = (j.domainCategory || '').toLowerCase()
+    const titleLower = (j.title || '').toLowerCase()
+    const descLower = (j.description || '').toLowerCase()
+    const tagsLower = (j.tags || []).map((t) => t.toLowerCase())
+
+    let priority = 0
+    if (
+      domain === 'Veterans & Military Transition' &&
+      (j.professionEnclave === 'veterans_military' ||
+        catLower.includes('veteran') ||
+        catLower.includes('skillbridge') ||
+        catLower.includes('sdvosb') ||
+        catLower.includes('armed forces'))
+    ) {
+      priority = 4
+    } else if (
+      domain === 'Multi-Unit Franchise Ownership' &&
+      (j.professionEnclave === 'franchise_networks' || catLower.includes('franchise'))
+    ) {
+      priority = 4
+    } else if (
+      domain === 'Cybersecurity' &&
+      (j.professionEnclave === 'tech_cybersecurity' || catLower.includes('cyber'))
+    ) {
+      priority = 4
+    } else if (
+      domain === 'Professions LinkedIn Ignored' &&
+      (j.professionEnclave === 'essential_skilled_careers' || catLower.includes('professions linkedin ignored'))
+    ) {
+      priority = 4
+    } else if (catLower === dLower || catLower.includes(dLower)) {
+      priority = 3
+    } else if (tagsLower.some((t) => t.includes(dLower))) {
+      priority = 2
+    } else if (titleLower.includes(dLower) || descLower.includes(dLower)) {
+      priority = 1
+    }
+
+    if (priority > 0) {
+      tier1Scored.push({ job: j, priority })
+    }
+  }
+
+  if (tier1Scored.length > 0) {
+    tier1Scored.sort((a, b) => b.priority - a.priority)
+    return tier1Scored.map((item) => item.job)
+  }
+
+  const tokens = dLower
+    .split(/[\s/&,()-]+/)
+    .map((w) => w.trim())
+    .filter((w) => w.length >= 3 && !DOMAIN_CATEGORY_STOP_WORDS.has(w))
+
+  if (tokens.length === 0) return []
+
+  const tier2Scored: Array<{ job: GlobalJobItem; score: number }> = []
+  for (const j of list) {
+    const catLower = (j.domainCategory || '').toLowerCase()
+    const titleLower = (j.title || '').toLowerCase()
+    const descLower = (j.description || '').toLowerCase()
+    const tagsStr = (j.tags || []).join(' ').toLowerCase()
+    let score = 0
+    for (const tok of tokens) {
+      if (catLower.includes(tok)) score += 3
+      if (titleLower.includes(tok) || tagsStr.includes(tok)) score += 2
+      if (descLower.includes(tok)) score += 1
+    }
+    if (score > 0) {
+      tier2Scored.push({ job: j, score })
+    }
+  }
+  tier2Scored.sort((a, b) => b.score - a.score)
+  return tier2Scored.map((item) => item.job)
+}
+

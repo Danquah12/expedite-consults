@@ -5,7 +5,8 @@ import {
   COUNTRIES_CONFIG,
   getLocalizedJobsForCountryAndEnclave,
   convertUsdSalaryToCountry,
-  formatJobSalaryForCountry
+  formatJobSalaryForCountry,
+  filterJobsByDomainCategory
 } from "@/lib/global-jobs-data"
 import { ALL_PROFESSIONS, CONNECTIN_WORKER_PILLARS, PROFESSION_ENCLAVES } from "@/lib/connectin-professions"
 
@@ -602,18 +603,7 @@ export async function GET(request: Request) {
 
     // Filter by Domain / Category
     if (domain && domain !== "All") {
-      list = list.filter((j) => {
-        if (domain === "Remote") return j.workplaceType === "Remote" || j.tags.includes("Remote")
-        if (domain === "Contract") return j.employmentType === "Contract" || j.tags.includes("Contract")
-        if (domain === "Full-time") return j.employmentType === "Full-time"
-        if (domain === "Recommended") return j.domainCategory === "Recommended" || j.tags.includes("Recommended")
-        return (
-          j.domainCategory === domain ||
-          j.tags.some((t) => t.toLowerCase().includes(domain.toLowerCase())) ||
-          j.title.toLowerCase().includes(domain.toLowerCase()) ||
-          j.description.toLowerCase().includes(domain.toLowerCase())
-        )
-      })
+      list = filterJobsByDomainCategory(list, domain)
     }
 
     // Filter by Search Query

@@ -38,7 +38,8 @@ import {
   getCountryShortLabel,
   convertUsdSalaryToCountry,
   formatJobSalaryForCountry,
-  resolveExternalJobApplyUrl
+  resolveExternalJobApplyUrl,
+  filterJobsByDomainCategory
 } from "@/lib/global-jobs-data"
 import { PROFESSION_ENCLAVES, CONNECTIN_WORKER_PILLARS, ALL_PROFESSIONS } from "@/lib/connectin-professions"
 import {
@@ -797,18 +798,7 @@ export function JobsView({
     }
 
     if (domain && domain !== 'All') {
-      list = list.filter(j => {
-        if (domain === 'Remote') return j.workplaceType === 'Remote' || j.tags.includes('Remote')
-        if (domain === 'Contract') return j.employmentType === 'Contract' || j.tags.includes('Contract')
-        if (domain === 'Full-time') return j.employmentType === 'Full-time'
-        if (domain === 'Recommended') return j.domainCategory === 'Recommended' || j.tags.includes('Recommended')
-        return (
-          j.domainCategory === domain ||
-          j.tags.some(t => t.toLowerCase().includes(domain.toLowerCase())) ||
-          j.title.toLowerCase().includes(domain.toLowerCase()) ||
-          j.description.toLowerCase().includes(domain.toLowerCase())
-        )
-      })
+      list = filterJobsByDomainCategory(list, domain)
     }
 
     if (query.trim()) {
@@ -928,12 +918,28 @@ export function JobsView({
     setVisibleJobsCount(50)
   }
 
+  const handleDomainCategorySelect = (domainId: string) => {
+    setSelectedDomain(domainId)
+    setSelectedTradeFolderNumber("all")
+    setSelectedProfessionId("all")
+    if (selectedEnclave === "all" && domainId !== "All") {
+      setSelectedPillar("all")
+    }
+    setSearchQuery("")
+    setVisibleJobsCount(50)
+  }
+
   const activeTradeFolderObj = React.useMemo(
     () =>
       selectedTradeFolderNumber === 'all'
         ? null
         : HANDYMAN_250_FOLDERS.find((f) => f.folderNumber === selectedTradeFolderNumber) || null,
     [selectedTradeFolderNumber]
+  )
+
+  const activeDomainCategoryObj = React.useMemo(
+    () => (selectedDomain !== 'All' ? DOMAIN_CATEGORIES.find((d) => d.id === selectedDomain) || null : null),
+    [selectedDomain, DOMAIN_CATEGORIES]
   )
 
   const displayedJobs = React.useMemo(() => {
@@ -1029,7 +1035,9 @@ export function JobsView({
       return ensureLocalizedCurrency(merged)
     }
 
-    return ensureLocalizedCurrency(jobs)
+    return ensureLocalizedCurrency(
+      selectedDomain !== 'All' ? filterJobsByDomainCategory(jobs, selectedDomain) : jobs
+    )
   }, [
     jobs,
     searchQuery,
@@ -1860,7 +1868,8 @@ export function JobsView({
                   return (
                     <button
                       key={dom.id}
-                      onClick={() => setSelectedDomain(dom.id)}
+                      type="button"
+                      onClick={() => handleDomainCategorySelect(dom.id)}
                       className={`flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left font-semibold transition-all cursor-pointer ${
                         isSelected
                           ? "bg-[#0A66C2] text-white shadow-2xs"
@@ -1929,6 +1938,8 @@ export function JobsView({
                         ? `"${searchQuery}"`
                         : activeTradeFolderObj
                         ? activeTradeFolderObj.folderName
+                        : activeDomainCategoryObj
+                        ? activeDomainCategoryObj.label
                         : currentProfessionObj
                         ? currentProfessionObj.title
                         : currentEnclaveObj?.name || 'All 20 Industry Enclaves & Verified Roles'}
@@ -2036,6 +2047,8 @@ export function JobsView({
                   Region: <strong>{currentCountry.flag} {currentCountry.name}</strong> ·{' '}
                   {activeTradeFolderObj ? (
                     <>Folder: <strong>{activeTradeFolderObj.icon} Folder {activeTradeFolderObj.folderNumber}: {activeTradeFolderObj.folderName}</strong></>
+                  ) : activeDomainCategoryObj ? (
+                    <>Category: <strong>{activeDomainCategoryObj.icon} {activeDomainCategoryObj.label}</strong></>
                   ) : (
                     <>Profession: <strong>{currentProfessionObj ? currentProfessionObj.title : currentEnclaveObj ? currentEnclaveObj.name : `All 20 Enclaves (${ALL_PROFESSIONS.length} Professions)`}</strong></>
                   )}{' '}
