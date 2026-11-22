@@ -50,6 +50,17 @@ export interface GlobalJobItem {
 
 export interface JobApplicationItem {
   id: string
+  jobId?: string
+  confirmationId?: string
+  auditHashSha256?: string
+  submittedAtIso?: string
+  targetAtsHost?: string
+  submittedByNoctis?: boolean
+  noctisCoverBrief?: string
+  employerResponse?: string
+  resumeFileName?: string
+  applicantEmail?: string
+  emailConfirmationSent?: boolean
   jobTitle: string
   company: string
   companyLogo: string
