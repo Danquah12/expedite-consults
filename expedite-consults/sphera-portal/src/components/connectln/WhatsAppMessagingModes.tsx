@@ -13,7 +13,6 @@ import {
     ConnectLnWhatsAppCallModal,
     buildInternationalPhone,
 } from './ConnectLnWhatsAppCallModal';
-import { CveIntelStreamBanner } from './CveIntelStreamModal';
 
 export type MessagingWorkspaceMode =
     | 'chats'
@@ -36,7 +35,7 @@ export interface StatusUpdateItem {
     authorAvatar: string;
     timestampLabel: string;
     viewed: boolean;
-    mediaType: 'text' | 'photo' | 'video' | 'info';
+    mediaType: 'text' | 'photo' | 'video' | 'audio' | 'info';
     title?: string;
     text: string;
     infoDetails?: string;
@@ -46,6 +45,8 @@ export interface StatusUpdateItem {
     bgColor?: string;
     imageUrl?: string;
     videoUrl?: string;
+    audioUrl?: string;
+    musicSegmentsCount?: number;
     videoDuration?: string;
     videoTitle?: string;
     professionTag?: string;
@@ -63,6 +64,12 @@ function formatSecondsToMmSs(sec: number): string {
     return `${mins}:${rem.toString().padStart(2, '0')}`;
 }
 
+function isAudioFileOrUrl(nameOrUrl?: string, mimeType?: string): boolean {
+    if (String(mimeType || '').toLowerCase().startsWith('audio/')) return true;
+    const clean = String(nameOrUrl || '').trim().toLowerCase().split('?')[0];
+    return clean.startsWith('data:audio/') || /\.(mp3|wav|m4a|aac|ogg|flac|opus|wma)$/i.test(clean);
+}
+
 function detectMediaFormatLabel(raw?: string, fallback = 'MP4'): string {
     const clean = String(raw || '').trim().toLowerCase().split('?')[0];
     const extMatch = clean.match(/\.([a-z0-9]{2,5})$/);
@@ -71,9 +78,9 @@ function detectMediaFormatLabel(raw?: string, fallback = 'MP4'): string {
         const mime = clean.slice(11).split(';')[0];
         return mime.toUpperCase().replace('JPEG', 'JPG');
     }
-    if (clean.startsWith('data:video/')) {
+    if (clean.startsWith('data:video/') || clean.startsWith('data:audio/')) {
         const mime = clean.slice(11).split(';')[0];
-        return mime.toUpperCase();
+        return mime.toUpperCase().replace('MPEG', 'MP3');
     }
     return fallback;
 }
@@ -159,31 +166,49 @@ const STATUS_VIDEO_PRESETS = [
         label: 'City & Site Architecture Reel',
         videoUrl: '/status-videos/spot.mp4',
         posterUrl: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=900',
+        mediaType: 'video' as const,
     },
     {
         label: 'Executive Property Walkthrough',
         videoUrl: '/status-videos/realtor.mp4',
         posterUrl: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=900',
+        mediaType: 'video' as const,
     },
     {
         label: 'Clinical & Biomedical Bench Reel',
         videoUrl: '/status-videos/physician.mp4',
         posterUrl: 'https://images.unsplash.com/photo-1579154204601-01588f351e67?w=900',
+        mediaType: 'video' as const,
     },
     {
         label: 'Systems & Software Build Clip',
         videoUrl: '/status-videos/developer.mp4',
         posterUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=900',
+        mediaType: 'video' as const,
+    },
+    {
+        label: 'THE CHURCH OF CHRIST — Choir Music Video',
+        videoUrl: '/status-videos/hallelujah_choir.mp4',
+        posterUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=900',
+        mediaType: 'video' as const,
+    },
+    {
+        label: 'Hot Swing Full Instrumental Music (2:11 MP3)',
+        videoUrl: '/status-videos/hot-swing.mp3',
+        posterUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=900',
+        mediaType: 'audio' as const,
     },
     {
         label: 'AI Agentic Flywheel Telemetry',
         videoUrl: '/status-videos/agentic_flywheel.mp4',
         posterUrl: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=900',
+        mediaType: 'video' as const,
     },
     {
         label: 'Aerospace & Orbital Telemetry',
         videoUrl: '/status-videos/nasa_space.mp4',
         posterUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=900',
+        mediaType: 'video' as const,
     },
 ];
 
@@ -364,11 +389,49 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         seriesLabel: 'Part 3 of 3',
     },
     {
+        id: 'st_sam_k_choir',
+        authorName: 'Sam K',
+        authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+        timestampLabel: 'Today at 5:23 AM',
+        viewed: false,
+        mediaType: 'video',
+        videoUrl: '/status-videos/hallelujah_choir.mp4',
+        musicSegmentsCount: 5,
+        videoDuration: '0:30',
+        videoTitle: 'THE CHURCH OF CHRIST — Full Choir Music Worship',
+        text: 'Full multi-segment choir worship & music performance — plays continuously through all segments until the very end.',
+        imageUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=900',
+        bgColor: 'linear-gradient(135deg, #09090b 0%, #18181b 100%)',
+        professionTag: 'Music & Worship Series',
+        sourcePlatform: 'Facebook',
+        mediaFormat: 'MP4',
+        externalSourceUrl: 'https://www.facebook.com',
+        seriesLabel: 'Part 1 of 5',
+    },
+    {
+        id: 'st_sam_k_music',
+        authorName: 'Sam K',
+        authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+        timestampLabel: 'Today at 5:18 AM',
+        viewed: false,
+        mediaType: 'audio',
+        audioUrl: '/status-videos/hot-swing.mp3',
+        videoDuration: '2:11',
+        title: 'Hot Swing — Full Studio Instrumental Track',
+        text: 'Complete full-length studio music upload (2:11) — plays continuously from start to finish without cutting off.',
+        imageUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=900',
+        bgColor: 'linear-gradient(135deg, #18181b 0%, #3b1e10 100%)',
+        professionTag: 'Full Music Audio',
+        sourcePlatform: 'WhatsApp',
+        mediaFormat: 'MP3',
+        seriesLabel: 'Part 2 of 5',
+    },
+    {
         id: 'st_sam_k',
         authorName: 'Sam K',
         authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
         timestampLabel: 'Today at 2:10 PM',
-        viewed: false,
+        viewed: true,
         mediaType: 'video',
         videoUrl: '/status-videos/developer.mp4',
         videoDuration: '0:16',
@@ -379,14 +442,14 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         professionTag: 'Systems Engineering Training',
         sourcePlatform: 'TikTok',
         mediaFormat: 'MP4',
-        seriesLabel: 'Part 1 of 3',
+        seriesLabel: 'Part 3 of 5',
     },
     {
         id: 'st_sam_k_photo',
         authorName: 'Sam K',
         authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
         timestampLabel: 'Today at 1:45 PM',
-        viewed: false,
+        viewed: true,
         mediaType: 'photo',
         title: 'PLC Telemetry Bench Verification Schematic',
         imageUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=900',
@@ -395,14 +458,14 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         professionTag: 'Systems Engineering Training',
         sourcePlatform: 'WhatsApp',
         mediaFormat: 'WEBP',
-        seriesLabel: 'Part 2 of 3',
+        seriesLabel: 'Part 4 of 5',
     },
     {
         id: 'st_sam_k_info',
         authorName: 'Sam K',
         authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
         timestampLabel: 'Today at 1:10 PM',
-        viewed: false,
+        viewed: true,
         mediaType: 'info',
         infoBadge: 'Commissioning SOP',
         title: 'Plant Automation Cutover & Failover Sign-Off Training',
@@ -413,7 +476,7 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         professionTag: 'Systems Engineering Training',
         sourcePlatform: 'ConnectLn',
         mediaFormat: 'PDF',
-        seriesLabel: 'Part 3 of 3',
+        seriesLabel: 'Part 5 of 5',
     },
     {
         id: 'st_murchisson',
@@ -1124,7 +1187,7 @@ export function WhatsAppModeWorkspace({
     const userName = currentUser?.name || 'Kwesi Asiedu';
 
     // ---- STATUS STATE (Per-User Multi-Item Status Boxes) ----
-    const statusStorageKey = `connectln_user_status_boxes_v2__${userName.toLowerCase().trim()}`;
+    const statusStorageKey = `connectln_user_status_boxes_v4__${userName.toLowerCase().trim()}`;
     const [statusBoxes, setStatusBoxes] = useState<UserStatusBox[]>(() => {
         const seeded = groupSlidesToUserBoxes(INITIAL_STATUS_UPDATES, userName, userAvatar);
         if (typeof window === 'undefined') return seeded;
@@ -1145,7 +1208,8 @@ export function WhatsAppModeWorkspace({
                             (sl: any) =>
                                 sl &&
                                 typeof sl.id === 'string' &&
-                                !String(sl.videoUrl || '').startsWith('blob:')
+                                !String(sl.videoUrl || '').startsWith('blob:') &&
+                                !String(sl.audioUrl || '').startsWith('blob:')
                         ),
                     };
                 }
@@ -1169,7 +1233,11 @@ export function WhatsAppModeWorkspace({
                 box.isCurrentUser
                     ? {
                           userId: box.userId,
-                          slides: box.slides.filter((sl) => !String(sl.videoUrl || '').startsWith('blob:')),
+                          slides: box.slides.filter(
+                              (sl) =>
+                                  !String(sl.videoUrl || '').startsWith('blob:') &&
+                                  !String(sl.audioUrl || '').startsWith('blob:')
+                          ),
                       }
                     : {
                           userId: box.userId,
@@ -1186,6 +1254,8 @@ export function WhatsAppModeWorkspace({
     const [activeStatusSlideIndex, setActiveStatusSlideIndex] = useState<number>(0);
     const [statusComposerMode, setStatusComposerMode] = useState<'series' | 'video' | 'photo' | 'info' | null>(null);
     const [isStatusAutoPlaying, setIsStatusAutoPlaying] = useState<boolean>(true);
+    const [isStatusMuted, setIsStatusMuted] = useState<boolean>(false);
+    const [activeClipPassIndex, setActiveClipPassIndex] = useState<number>(0);
     const [statusSlideProgress, setStatusSlideProgress] = useState<number>(0);
     const [isStatusCompletedForUser, setIsStatusCompletedForUser] = useState<boolean>(false);
     const [isStatusReplyFocused, setIsStatusReplyFocused] = useState<boolean>(false);
@@ -1195,12 +1265,13 @@ export function WhatsAppModeWorkspace({
         durationSec: 0,
     });
     const activeStatusVideoRef = React.useRef<HTMLVideoElement | null>(null);
+    const activeStatusAudioRef = React.useRef<HTMLAudioElement | null>(null);
     const [statusSourcePlatform, setStatusSourcePlatform] = useState<StatusSourcePlatform>('WhatsApp');
     const [seriesBatchUrlsText, setSeriesBatchUrlsText] = useState('');
     const [queuedSeriesItems, setQueuedSeriesItems] = useState<
         Array<{
             id: string;
-            mediaType: 'video' | 'photo';
+            mediaType: 'video' | 'audio' | 'photo';
             name: string;
             title: string;
             caption?: string;
@@ -1225,7 +1296,7 @@ export function WhatsAppModeWorkspace({
         Array<{ id: string; name: string; dataUrl: string; mediaFormat: string }>
     >([]);
     const [queuedVideoUploads, setQueuedVideoUploads] = useState<
-        Array<{ id: string; name: string; url: string; mediaFormat: string }>
+        Array<{ id: string; name: string; url: string; mediaFormat: string; mediaType: 'video' | 'audio' }>
     >([]);
     const [statusBgColor, setStatusBgColor] = useState(
         'linear-gradient(135deg, #5e3119 0%, #7c4225 55%, #3d3730 100%)'
@@ -1246,13 +1317,15 @@ export function WhatsAppModeWorkspace({
     const topActiveSlideId = topActiveSlide?.id || '';
     const topActiveSlideMediaType = topActiveSlide?.mediaType || '';
     const topActiveSlideVideoUrl = topActiveSlide?.videoUrl || '';
+    const topActiveSlideAudioUrl = topActiveSlide?.audioUrl || '';
     const topActiveSlideCount = topActiveSlides.length;
 
     useEffect(() => {
         setActiveVideoTiming({ currentSec: 0, durationSec: 0 });
+        setActiveClipPassIndex(0);
     }, [topActiveStatusBox?.userId, topActiveSlideId, statusReplayNonce]);
 
-    // Effect 1: Auto-advance Picture (10s) & Info (12s) status slides so users can read & enjoy comfortably (videos still play full duration until onEnded)
+    // Effect 1: Auto-advance Picture (10s) & Info (12s) status slides so users can read & enjoy comfortably (videos & music ALWAYS play full duration until onEnded)
     useEffect(() => {
         if (
             mode !== 'status' ||
@@ -1265,7 +1338,10 @@ export function WhatsAppModeWorkspace({
         ) {
             return;
         }
-        if (topActiveSlideMediaType === 'video' && topActiveSlideVideoUrl) {
+        if (
+            (topActiveSlideMediaType === 'video' && topActiveSlideVideoUrl) ||
+            (topActiveSlideMediaType === 'audio' && topActiveSlideAudioUrl)
+        ) {
             return;
         }
 
@@ -1300,6 +1376,7 @@ export function WhatsAppModeWorkspace({
         topActiveSlideId,
         topActiveSlideMediaType,
         topActiveSlideVideoUrl,
+        topActiveSlideAudioUrl,
         topSafeSlideIndex,
         topActiveSlideCount,
         isStatusAutoPlaying,
@@ -1307,22 +1384,31 @@ export function WhatsAppModeWorkspace({
         isStatusCompletedForUser,
     ]);
 
-    // Effect 2: Control active <video> play / pause / autoplay-fallback
+    // Effect 2: Control active <video> and <audio> play / pause / mute / autoplay-fallback
     useEffect(() => {
         if (mode !== 'status' || statusComposerMode) return;
-        const videoEl = activeStatusVideoRef.current;
-        if (!videoEl || topActiveSlideMediaType !== 'video' || !topActiveSlideVideoUrl) return;
+        const mediaEl: HTMLMediaElement | null =
+            topActiveSlideMediaType === 'audio'
+                ? activeStatusAudioRef.current
+                : activeStatusVideoRef.current;
+        if (!mediaEl) return;
+        if (topActiveSlideMediaType === 'video' && !topActiveSlideVideoUrl) return;
+        if (topActiveSlideMediaType === 'audio' && !topActiveSlideAudioUrl) return;
+        if (topActiveSlideMediaType !== 'video' && topActiveSlideMediaType !== 'audio') return;
+
+        mediaEl.muted = isStatusMuted;
 
         if (isStatusAutoPlaying && !isStatusReplyFocused && !isStatusCompletedForUser) {
-            const playPromise = videoEl.play();
+            const playPromise = mediaEl.play();
             if (playPromise && typeof playPromise.catch === 'function') {
                 playPromise.catch(() => {
-                    videoEl.muted = true;
-                    videoEl.play().catch(() => {});
+                    mediaEl.muted = true;
+                    setIsStatusMuted(true);
+                    mediaEl.play().catch(() => {});
                 });
             }
         } else {
-            videoEl.pause();
+            mediaEl.pause();
         }
     }, [
         mode,
@@ -1331,7 +1417,9 @@ export function WhatsAppModeWorkspace({
         topActiveSlideId,
         topActiveSlideMediaType,
         topActiveSlideVideoUrl,
+        topActiveSlideAudioUrl,
         isStatusAutoPlaying,
+        isStatusMuted,
         isStatusReplyFocused,
         isStatusCompletedForUser,
         statusReplayNonce,
@@ -1539,6 +1627,7 @@ export function WhatsAppModeWorkspace({
         const handleOpenUserStatusBox = (box: UserStatusBox, startSlideIdx = 0) => {
             setActiveStatusUserId(box.userId);
             setActiveStatusSlideIndex(startSlideIdx);
+            setActiveClipPassIndex(0);
             setStatusSlideProgress(0);
             setIsStatusCompletedForUser(false);
             setIsStatusAutoPlaying(true);
@@ -1558,6 +1647,7 @@ export function WhatsAppModeWorkspace({
             const nextIdx = safeSlideIndex + delta;
             if (nextIdx < 0 || nextIdx >= activeUserBox.slides.length) return;
             setActiveStatusSlideIndex(nextIdx);
+            setActiveClipPassIndex(0);
             setStatusSlideProgress(0);
             setIsStatusCompletedForUser(false);
             setIsStatusAutoPlaying(true);
@@ -1566,6 +1656,7 @@ export function WhatsAppModeWorkspace({
         const handleSelectSlideInUserBox = (idx: number) => {
             if (!activeUserBox || idx < 0 || idx >= activeUserBox.slides.length) return;
             setActiveStatusSlideIndex(idx);
+            setActiveClipPassIndex(0);
             setStatusSlideProgress(0);
             setIsStatusCompletedForUser(false);
             setIsStatusAutoPlaying(true);
@@ -1575,6 +1666,7 @@ export function WhatsAppModeWorkspace({
         const handleReplayUserBox = () => {
             if (!activeUserBox || activeUserBox.slides.length === 0) return;
             setActiveStatusSlideIndex(0);
+            setActiveClipPassIndex(0);
             setStatusSlideProgress(0);
             setIsStatusCompletedForUser(false);
             setIsStatusAutoPlaying(true);
@@ -1642,12 +1734,16 @@ export function WhatsAppModeWorkspace({
         const handleVideoFilesUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
             const files = Array.from(e.target.files || []);
             if (!files.length) return;
-            const uploaded = files.map((f, idx) => ({
-                id: `q_vid_${Date.now()}_${idx}`,
-                name: f.name,
-                url: URL.createObjectURL(f),
-                mediaFormat: detectMediaFormatLabel(f.name || f.type, 'MP4'),
-            }));
+            const uploaded = files.map((f, idx) => {
+                const isAudio = isAudioFileOrUrl(f.name, f.type);
+                return {
+                    id: `q_vid_${Date.now()}_${idx}`,
+                    name: f.name,
+                    url: URL.createObjectURL(f),
+                    mediaType: (isAudio ? 'audio' : 'video') as 'video' | 'audio',
+                    mediaFormat: detectMediaFormatLabel(f.name || f.type, isAudio ? 'MP3' : 'MP4'),
+                };
+            });
             setQueuedVideoUploads((prev) => [...prev, ...uploaded]);
             e.target.value = '';
         };
@@ -1658,15 +1754,27 @@ export function WhatsAppModeWorkspace({
             const nextItems: typeof queuedSeriesItems = [];
             for (let idx = 0; idx < files.length; idx++) {
                 const f = files[idx];
+                const isAudioFile = isAudioFileOrUrl(f.name, f.type);
                 const isVideoFile =
-                    f.type.startsWith('video/') ||
-                    /\.(mp4|mov|webm|mkv|avi|m4v|3gp|3g2|mpeg|mpg|ogv|flv|wmv)$/i.test(f.name);
+                    !isAudioFile &&
+                    (f.type.startsWith('video/') ||
+                        /\.(mp4|mov|webm|mkv|avi|m4v|3gp|3g2|mpeg|mpg|ogv|flv|wmv)$/i.test(f.name));
                 const inferredPlatform = inferPlatformFromHint(f.name, statusSourcePlatform);
                 const formatLabel = detectMediaFormatLabel(
                     f.name || f.type,
-                    isVideoFile ? 'MP4' : 'JPG'
+                    isAudioFile ? 'MP3' : isVideoFile ? 'MP4' : 'JPG'
                 );
-                if (isVideoFile) {
+                if (isAudioFile) {
+                    nextItems.push({
+                        id: `q_ser_${Date.now()}_${idx}`,
+                        mediaType: 'audio',
+                        name: f.name,
+                        title: f.name.replace(/\.[^/.]+$/, ''),
+                        url: URL.createObjectURL(f),
+                        sourcePlatform: inferredPlatform,
+                        mediaFormat: formatLabel,
+                    });
+                } else if (isVideoFile) {
                     nextItems.push({
                         id: `q_ser_${Date.now()}_${idx}`,
                         mediaType: 'video',
@@ -1693,7 +1801,7 @@ export function WhatsAppModeWorkspace({
             }
             if (nextItems.length > 0) {
                 setQueuedSeriesItems((prev) => [...prev, ...nextItems]);
-                triggerToast(`🎞️ Added ${nextItems.length} file${nextItems.length > 1 ? 's' : ''} to your training series queue.`);
+                triggerToast(`🎞️ Added ${nextItems.length} file${nextItems.length > 1 ? 's' : ''} to your training/music queue.`);
             }
             e.target.value = '';
         };
@@ -1706,12 +1814,15 @@ export function WhatsAppModeWorkspace({
             if (!lines.length) return;
             const imported: typeof queuedSeriesItems = lines.map((rawUrl, idx) => {
                 const detectedPlatform = inferPlatformFromHint(rawUrl, statusSourcePlatform);
+                const isAudio = isAudioFileOrUrl(rawUrl);
                 const isImageExt = /\.(jpg|jpeg|png|webp|gif|avif|heic|heif|bmp|svg|jfif)(\?|$)/i.test(rawUrl);
                 const isExplicitVideoExt = /\.(mp4|mov|webm|mkv|avi|m4v|3gp|mpeg|mpg|ogv|flv|wmv)(\?|$)/i.test(rawUrl);
-                const isPhoto = isImageExt && !isExplicitVideoExt;
+                const isPhoto = !isAudio && isImageExt && !isExplicitVideoExt;
                 const fallbackVideoPreset = STATUS_VIDEO_PRESETS[idx % STATUS_VIDEO_PRESETS.length];
                 const fallbackPhotoPreset = STATUS_PHOTO_PRESETS[idx % STATUS_PHOTO_PRESETS.length];
-                const formatLabel = isPhoto
+                const formatLabel = isAudio
+                    ? detectMediaFormatLabel(rawUrl, 'MP3')
+                    : isPhoto
                     ? detectMediaFormatLabel(rawUrl, 'WEBP')
                     : detectedPlatform === 'TikTok'
                     ? detectMediaFormatLabel(rawUrl, 'MP4 (9:16)')
@@ -1721,11 +1832,13 @@ export function WhatsAppModeWorkspace({
 
                 return {
                     id: `q_url_${Date.now()}_${idx}`,
-                    mediaType: isPhoto ? 'photo' : 'video',
-                    name: `${detectedPlatform} Training Import #${idx + 1}`,
-                    title: `${detectedPlatform} Professional Training ${isPhoto ? 'Reference' : 'Module'} #${idx + 1}`,
-                    caption: `Imported ${detectedPlatform} training ${isPhoto ? 'visual reference' : 'clip'} (${formatLabel})`,
-                    url: isPhoto
+                    mediaType: isAudio ? 'audio' : isPhoto ? 'photo' : 'video',
+                    name: `${detectedPlatform} ${isAudio ? 'Music' : 'Training'} Import #${idx + 1}`,
+                    title: `${detectedPlatform} ${isAudio ? 'Full Music Track' : `Professional Training ${isPhoto ? 'Reference' : 'Module'}`} #${idx + 1}`,
+                    caption: `Imported ${detectedPlatform} ${isAudio ? 'full-length music track' : `training ${isPhoto ? 'visual reference' : 'clip'}`} (${formatLabel})`,
+                    url: isAudio
+                        ? rawUrl
+                        : isPhoto
                         ? isImageExt
                             ? rawUrl
                             : fallbackPhotoPreset.imageUrl
@@ -1905,16 +2018,22 @@ export function WhatsAppModeWorkspace({
                         viewed: false,
                         mediaType: item.mediaType,
                         title: item.title || statusDraftTitle.trim() || item.name,
-                        videoTitle: item.mediaType === 'video' ? (item.title || item.name) : undefined,
+                        videoTitle: item.mediaType !== 'photo' ? (item.title || item.name) : undefined,
                         videoUrl: item.mediaType === 'video' ? item.url : undefined,
+                        audioUrl: item.mediaType === 'audio' ? item.url : undefined,
                         imageUrl: item.mediaType === 'photo' ? item.url : item.posterUrl,
-                        videoDuration: item.mediaType === 'video' ? 'Full Clip' : undefined,
+                        videoDuration:
+                            item.mediaType === 'video'
+                                ? 'Full Clip'
+                                : item.mediaType === 'audio'
+                                ? 'Full Song'
+                                : undefined,
                         text:
                             statusDraftText.trim() ||
                             item.caption ||
-                            `${item.sourcePlatform} Training ${item.mediaType === 'video' ? 'Video' : 'Picture'} (${item.mediaFormat})`,
+                            `${item.sourcePlatform} ${item.mediaType === 'audio' ? 'Full Music Track' : item.mediaType === 'video' ? 'Training Video' : 'Training Picture'} (${item.mediaFormat})`,
                         bgColor: statusBgColor,
-                        professionTag: `${item.sourcePlatform} Training Series`,
+                        professionTag: `${item.sourcePlatform} ${item.mediaType === 'audio' ? 'Music' : 'Training Series'}`,
                         sourcePlatform: item.sourcePlatform,
                         mediaFormat: item.mediaFormat,
                         externalSourceUrl: item.externalSourceUrl,
@@ -1925,43 +2044,58 @@ export function WhatsAppModeWorkspace({
                 if (queuedVideoUploads.length > 0) {
                     const total = queuedVideoUploads.length;
                     queuedVideoUploads.forEach((v, idx) => {
+                        const isAudio = v.mediaType === 'audio' || isAudioFileOrUrl(v.name);
                         createdSlides.push({
                             id: `st_me_${Date.now()}_${idx}`,
                             authorName: userName,
                             authorAvatar: userAvatar,
                             timestampLabel: nowStamp,
                             viewed: false,
-                            mediaType: 'video',
+                            mediaType: isAudio ? 'audio' : 'video',
                             title: statusDraftTitle.trim() || v.name.replace(/\.[^/.]+$/, ''),
                             videoTitle: statusDraftTitle.trim() || v.name,
-                            videoUrl: v.url,
-                            videoDuration: 'Full Clip',
-                            text: statusDraftText.trim() || `Uploaded training video (${v.mediaFormat}): ${v.name}`,
+                            videoUrl: !isAudio ? v.url : undefined,
+                            audioUrl: isAudio ? v.url : undefined,
+                            videoDuration: isAudio ? 'Full Song' : 'Full Clip',
+                            text:
+                                statusDraftText.trim() ||
+                                `Uploaded ${isAudio ? 'full music track' : 'training video'} (${v.mediaFormat}): ${v.name}`,
                             bgColor: statusBgColor,
-                            professionTag: `${statusSourcePlatform} Training Video`,
+                            professionTag: `${statusSourcePlatform} ${isAudio ? 'Music Track' : 'Training Video'}`,
                             sourcePlatform: inferPlatformFromHint(v.name, statusSourcePlatform),
                             mediaFormat: v.mediaFormat,
                             seriesLabel: total > 1 ? `Part ${idx + 1} of ${total}` : undefined,
                         });
                     });
                 } else if (statusDraftVideo.trim()) {
-                    const inferredPlatform = inferPlatformFromHint(statusDraftVideo, statusSourcePlatform);
-                    const formatLabel = detectMediaFormatLabel(statusDraftVideo, 'MP4');
+                    const urlTrimmed = statusDraftVideo.trim();
+                    const isAudio = isAudioFileOrUrl(urlTrimmed);
+                    const inferredPlatform = inferPlatformFromHint(urlTrimmed, statusSourcePlatform);
+                    const formatLabel = detectMediaFormatLabel(urlTrimmed, isAudio ? 'MP3' : 'MP4');
                     createdSlides.push({
                         id: `st_me_${Date.now()}`,
                         authorName: userName,
                         authorAvatar: userAvatar,
                         timestampLabel: nowStamp,
                         viewed: false,
-                        mediaType: 'video',
-                        title: statusDraftTitle.trim() || 'Professional Training Video Update',
-                        videoTitle: statusDraftTitle.trim() || 'Professional Training Video Update',
-                        videoUrl: statusDraftVideo.trim(),
+                        mediaType: isAudio ? 'audio' : 'video',
+                        title:
+                            statusDraftTitle.trim() ||
+                            (isAudio ? 'Full Music Track Status' : 'Professional Training Video Update'),
+                        videoTitle:
+                            statusDraftTitle.trim() ||
+                            (isAudio ? 'Full Music Track Status' : 'Professional Training Video Update'),
+                        videoUrl: !isAudio ? urlTrimmed : undefined,
+                        audioUrl: isAudio ? urlTrimmed : undefined,
                         imageUrl: statusDraftImage || undefined,
-                        videoDuration: 'Full Clip',
-                        text: statusDraftText.trim() || 'New 24-hour ConnectLn professional training video update.',
+                        videoDuration: isAudio ? 'Full Song' : 'Full Clip',
+                        text:
+                            statusDraftText.trim() ||
+                            (isAudio
+                                ? 'Full-length music status — plays continuously until finished.'
+                                : 'New 24-hour ConnectLn professional training video update.'),
                         bgColor: statusBgColor,
-                        professionTag: `${inferredPlatform} Training Video`,
+                        professionTag: `${inferredPlatform} ${isAudio ? 'Music Track' : 'Training Video'}`,
                         sourcePlatform: inferredPlatform,
                         mediaFormat: formatLabel,
                     });
@@ -2066,10 +2200,12 @@ export function WhatsAppModeWorkspace({
 
         const renderUserSlideSummaryIcons = (slides: StatusUpdateItem[]) => {
             const videos = slides.filter((s) => s.mediaType === 'video').length;
+            const audios = slides.filter((s) => s.mediaType === 'audio').length;
             const photos = slides.filter((s) => s.mediaType === 'photo').length;
             const infos = slides.filter((s) => s.mediaType === 'info' || s.mediaType === 'text').length;
             const parts: string[] = [];
             if (videos > 0) parts.push(`🎬 ${videos}`);
+            if (audios > 0) parts.push(`🎵 ${audios}`);
             if (photos > 0) parts.push(`🖼️ ${photos}`);
             if (infos > 0) parts.push(`📋 ${infos}`);
             return parts.join(' · ') || '0 items';
@@ -2285,9 +2421,6 @@ export function WhatsAppModeWorkspace({
 
                 {/* Right Column: Upload Status Composer OR Dedicated Single-User Multi-Item Status Box */}
                 <div className="flex-1 bg-[#F3EDE2] flex flex-col items-center justify-between p-4 sm:p-6 relative overflow-y-auto">
-                    <div className="w-full max-w-2xl mb-3 shrink-0">
-                        <CveIntelStreamBanner compact />
-                    </div>
                     {statusComposerMode ? (
                         <div className="w-full max-w-2xl bg-[#FBF8F3] rounded-2xl shadow-lg border border-[#E0D6C5] p-5 sm:p-6 my-auto animate-in fade-in space-y-4">
                             <div className="flex items-center justify-between gap-2">
@@ -2312,7 +2445,7 @@ export function WhatsAppModeWorkspace({
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-1 rounded-xl bg-[#EFE8DA] border border-[#DDD3C2]">
                                 {[
                                     { id: 'series' as const, label: '🎞️ Training Series (WA/TikTok/FB)' },
-                                    { id: 'video' as const, label: '🎬 Upload Videos' },
+                                    { id: 'video' as const, label: '🎬🎵 Videos & Full Music' },
                                     { id: 'photo' as const, label: '🖼️ Upload Pictures' },
                                     { id: 'info' as const, label: '📋 Status Info' },
                                 ].map((tab) => (
@@ -2407,23 +2540,23 @@ export function WhatsAppModeWorkspace({
                                         {/* Mixed Multi-Format Device Upload */}
                                         <div className="rounded-xl border border-dashed border-[#BC9675] bg-[#FBF8F3] p-3.5 text-center space-y-2">
                                             <p className="text-xs text-[#5E3119] font-semibold">
-                                                Upload mixed training videos &amp; pictures directly from WhatsApp/TikTok/Facebook downloads
+                                                Upload mixed training videos, full music/audio tracks &amp; pictures from WhatsApp/TikTok/Facebook
                                             </p>
                                             <label
                                                 style={{ color: '#FBF8F3' }}
                                                 className="inline-flex items-center gap-2 rounded-xl bg-[#7C4225] hover:bg-[#5E3119] px-4 py-2 text-xs font-bold cursor-pointer"
                                             >
-                                                <span>🎞️ Choose Multi-Format Videos &amp; Pictures</span>
+                                                <span>🎞️ Choose Multi-Format Videos, Music &amp; Pictures</span>
                                                 <input
                                                     type="file"
                                                     multiple
-                                                    accept="video/*,image/*,.mp4,.mov,.webm,.mkv,.avi,.m4v,.3gp,.3g2,.mpeg,.mpg,.ogv,.flv,.wmv,.jpg,.jpeg,.png,.webp,.gif,.avif,.heic,.heif,.bmp,.svg,.jfif"
+                                                    accept="video/*,audio/*,image/*,.mp4,.mov,.webm,.mkv,.avi,.m4v,.3gp,.3g2,.mpeg,.mpg,.ogv,.flv,.wmv,.mp3,.wav,.m4a,.aac,.ogg,.flac,.opus,.wma,.jpg,.jpeg,.png,.webp,.gif,.avif,.heic,.heif,.bmp,.svg,.jfif"
                                                     className="hidden"
                                                     onChange={handleSeriesMixedFilesUpload}
                                                 />
                                             </label>
                                             <p className="text-[10px] text-[#6B5A45]">
-                                                Supports MP4, MOV, WEBM, MKV, AVI, M4V, 3GP, JPG, PNG, WEBP, GIF, HEIC, AVIF
+                                                Supports MP4, MOV, WEBM, MKV, MP3, WAV, M4A, FLAC, JPG, PNG, WEBP, GIF, HEIC, AVIF (Music &amp; Videos play 100% of full length)
                                             </p>
                                         </div>
 
@@ -2508,7 +2641,13 @@ export function WhatsAppModeWorkspace({
                                                                 <span className="font-mono text-[10px] font-bold text-[#7C4225]">
                                                                     #{idx + 1}
                                                                 </span>
-                                                                <span>{item.mediaType === 'video' ? '🎬' : '🖼️'}</span>
+                                                                <span>
+                                                                    {item.mediaType === 'audio'
+                                                                        ? '🎵'
+                                                                        : item.mediaType === 'video'
+                                                                        ? '🎬'
+                                                                        : '🖼️'}
+                                                                </span>
                                                                 <span className="rounded bg-[#EFE8DA] border border-[#D0C4AE] px-1.5 py-0.5 text-[10px] font-bold text-[#5E3119] shrink-0">
                                                                     {getPlatformBadgeLabel(item.sourcePlatform)}
                                                                 </span>
@@ -2779,12 +2918,12 @@ export function WhatsAppModeWorkspace({
                                     </div>
                                 )}
 
-                                {/* Mode C: Upload One or Many Videos */}
+                                {/* Mode C: Upload One or Many Videos & Full Music Tracks */}
                                 {statusComposerMode === 'video' && (
                                     <div className="space-y-3">
                                         <div className="rounded-xl border-2 border-dashed border-[#BC9675] bg-[#F8F4EC] p-4 text-center space-y-2">
                                             <p className="text-xs font-bold text-[#5E3119]">
-                                                Upload MP4 / MOV / WEBM / MKV / AVI / M4V / 3GP training videos from your device (WhatsApp/TikTok/Facebook exports supported) into YOUR Status Box
+                                                Upload full videos (MP4/MOV/WEBM/MKV/3GP) or full music tracks (MP3/WAV/M4A/FLAC/OGG) — played 100% end-to-end in YOUR Status Box
                                             </p>
                                             <div className="flex items-center justify-center gap-1.5 flex-wrap pb-1">
                                                 {(['WhatsApp', 'TikTok', 'Facebook', 'ConnectLn'] as const).map((platform) => (
@@ -2807,10 +2946,10 @@ export function WhatsAppModeWorkspace({
                                                 style={{ color: '#FBF8F3' }}
                                                 className="inline-flex items-center gap-2 rounded-xl bg-[#7C4225] hover:bg-[#5E3119] px-4 py-2 text-xs font-bold cursor-pointer"
                                             >
-                                                <span>🎬 Choose Video File(s)</span>
+                                                <span>🎬🎵 Choose Video or Full Music File(s)</span>
                                                 <input
                                                     type="file"
-                                                    accept="video/*,.mp4,.mov,.webm,.mkv,.avi,.m4v,.3gp,.3g2,.mpeg,.mpg,.ogv,.flv,.wmv"
+                                                    accept="video/*,audio/*,.mp4,.mov,.webm,.mkv,.avi,.m4v,.3gp,.3g2,.mpeg,.mpg,.ogv,.flv,.wmv,.mp3,.wav,.m4a,.aac,.ogg,.flac,.opus,.wma"
                                                     multiple
                                                     className="hidden"
                                                     onChange={handleVideoFilesUpload}
@@ -2819,8 +2958,17 @@ export function WhatsAppModeWorkspace({
                                             {queuedVideoUploads.length > 0 && (
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 text-left">
                                                     {queuedVideoUploads.map((v) => (
-                                                        <div key={v.id} className="relative rounded-lg overflow-hidden border border-[#D0C4AE] bg-black p-1.5">
-                                                            <video src={v.url} controls muted className="w-full h-24 object-cover rounded" />
+                                                        <div key={v.id} className="relative rounded-lg overflow-hidden border border-[#D0C4AE] bg-black p-2">
+                                                            {v.mediaType === 'audio' ? (
+                                                                <div className="h-24 flex flex-col items-center justify-center gap-2 bg-zinc-950 rounded px-2">
+                                                                    <span className="text-[11px] font-bold text-amber-300">
+                                                                        🎵 Full Music Track ({v.mediaFormat})
+                                                                    </span>
+                                                                    <audio src={v.url} controls className="w-full h-8" />
+                                                                </div>
+                                                            ) : (
+                                                                <video src={v.url} controls muted className="w-full h-24 object-cover rounded" />
+                                                            )}
                                                             <p className="text-[10px] font-semibold text-white truncate pt-1 px-1">{v.name}</p>
                                                             <button
                                                                 type="button"
@@ -2839,7 +2987,7 @@ export function WhatsAppModeWorkspace({
 
                                         <div className="space-y-1.5">
                                             <label className="block text-xs font-bold text-[#57534E]">
-                                                Or select a video preset / enter an MP4 URL:
+                                                Or select a Video / Full Music preset or enter a media URL:
                                             </label>
                                             <div className="flex flex-wrap gap-1.5">
                                                 {STATUS_VIDEO_PRESETS.map((preset) => (
@@ -2911,29 +3059,78 @@ export function WhatsAppModeWorkspace({
                                             : statusComposerMode === 'photo'
                                             ? `Upload ${queuedPhotoUploads.length > 1 ? `${queuedPhotoUploads.length} Pictures` : 'Picture'} to My Status Box`
                                             : statusComposerMode === 'video'
-                                            ? `Upload ${queuedVideoUploads.length > 1 ? `${queuedVideoUploads.length} Videos` : 'Video'} to My Status Box`
+                                            ? `Upload ${queuedVideoUploads.length > 1 ? `${queuedVideoUploads.length} Track(s)/Video(s)` : 'Video / Full Music'} to My Status Box`
                                             : 'Publish Information to My Status Box'}
                                     </button>
                                 </div>
                             </form>
                         </div>
-                    ) : activeUserBox && activeSlide ? (
+                    ) : activeUserBox && activeSlide ? (() => {
+                        const isAudioSlide = activeSlide.mediaType === 'audio' && Boolean(activeSlide.audioUrl);
+                        const isVideoSlide = activeSlide.mediaType === 'video' && Boolean(activeSlide.videoUrl);
+                        const totalClipPasses = Math.max(1, activeSlide.musicSegmentsCount || 1);
+                        const cumulativeCurrentSec =
+                            totalClipPasses > 1 && activeVideoTiming.durationSec > 0
+                                ? activeClipPassIndex * activeVideoTiming.durationSec + activeVideoTiming.currentSec
+                                : activeVideoTiming.currentSec;
+                        const cumulativeDurationSec =
+                            totalClipPasses > 1 && activeVideoTiming.durationSec > 0
+                                ? totalClipPasses * activeVideoTiming.durationSec
+                                : activeVideoTiming.durationSec;
+
+                        const handleFullMediaEnded = (el: HTMLMediaElement) => {
+                            if (activeClipPassIndex < totalClipPasses - 1) {
+                                setActiveClipPassIndex((p) => p + 1);
+                                setStatusSlideProgress(0);
+                                el.currentTime = 0;
+                                el.play().catch(() => {});
+                                return;
+                            }
+                            if (safeSlideIndex < activeUserBox.slides.length - 1) {
+                                setActiveVideoTiming({ currentSec: 0, durationSec: 0 });
+                                setActiveClipPassIndex(0);
+                                setActiveStatusSlideIndex(safeSlideIndex + 1);
+                                setStatusSlideProgress(0);
+                            } else {
+                                const fullDur =
+                                    el.duration && Number.isFinite(el.duration)
+                                        ? el.duration
+                                        : activeVideoTiming.durationSec;
+                                setActiveVideoTiming({ currentSec: fullDur, durationSec: fullDur });
+                                setStatusSlideProgress(100);
+                                setIsStatusAutoPlaying(false);
+                                setIsStatusCompletedForUser(true);
+                            }
+                        };
+
+                        const showMultiSubSegments =
+                            activeUserBox.slides.length === 1 && totalClipPasses > 1;
+                        const longTrackSegCount =
+                            activeUserBox.slides.length === 1 &&
+                            totalClipPasses === 1 &&
+                            (isAudioSlide || isVideoSlide) &&
+                            activeVideoTiming.durationSec > 35
+                                ? Math.min(10, Math.ceil(activeVideoTiming.durationSec / 30))
+                                : 0;
+
+                        return (
                         <div className="w-full max-w-2xl my-auto space-y-3 animate-in fade-in">
-                            <div className="w-full bg-[#1C1917] rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-[#524B42]">
-                                {/* Dedicated User Identity Strip + Animated Segmented Progress ONLY for THIS User's Slides */}
-                                <div className="px-4 pt-3 space-y-2 bg-[#141210]">
+                            <div className="w-full bg-[#09090B] rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-[#524B42]">
+                                {/* Dedicated User Identity Strip + WhatsApp Multi-Segment Progress ONLY for THIS User */}
+                                <div className="px-4 pt-3 space-y-2 bg-[#0B0B0D]">
                                     <div className="flex items-center justify-between text-[11px] text-[#D0C4AE] gap-2 flex-wrap">
                                         <span className="font-bold text-[#FBF8F3]">
                                             {activeUserBox.authorName}&apos;s Dedicated Status Box
                                         </span>
                                         <span className="font-mono flex items-center gap-2 flex-wrap">
-                                            {activeSlide.mediaType === 'video' && (
+                                            {(isVideoSlide || isAudioSlide) && (
                                                 <>
                                                     <span className="text-[#E8C59B]">
-                                                        🎬 Full Video: {formatSecondsToMmSs(activeVideoTiming.currentSec)} /{' '}
-                                                        {activeVideoTiming.durationSec > 0
-                                                            ? formatSecondsToMmSs(activeVideoTiming.durationSec)
-                                                            : activeSlide.videoDuration || 'Full Clip'}
+                                                        {isAudioSlide ? '🎵 Full Music:' : '🎬 Full Video:'}{' '}
+                                                        {formatSecondsToMmSs(cumulativeCurrentSec)} /{' '}
+                                                        {cumulativeDurationSec > 0
+                                                            ? formatSecondsToMmSs(cumulativeDurationSec)
+                                                            : activeSlide.videoDuration || 'Full Track'}
                                                     </span>
                                                     <span>·</span>
                                                 </>
@@ -2954,42 +3151,97 @@ export function WhatsAppModeWorkspace({
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-1.5">
-                                        {activeUserBox.slides.map((sl, idx) => {
-                                            const fillPct =
-                                                idx < safeSlideIndex
-                                                    ? 100
-                                                    : idx === safeSlideIndex
-                                                    ? isStatusCompletedForUser
-                                                        ? 100
-                                                        : Math.min(100, Math.max(0, statusSlideProgress))
-                                                    : 0;
-                                            return (
-                                                <button
-                                                    key={sl.id}
-                                                    type="button"
-                                                    onClick={() => handleSelectSlideInUserBox(idx)}
-                                                    title={sl.title || sl.videoTitle || `Item ${idx + 1}`}
-                                                    className="h-1.5 flex-1 rounded-full bg-white/20 hover:bg-white/30 overflow-hidden cursor-pointer relative"
-                                                >
-                                                    <span
-                                                        className={`block h-full rounded-full transition-all duration-100 ${
-                                                            idx === safeSlideIndex ? 'bg-[#D69E6B]' : 'bg-[#7C4225]'
-                                                        }`}
-                                                        style={{ width: `${fillPct}%` }}
-                                                    />
-                                                </button>
-                                            );
-                                        })}
+                                        {showMultiSubSegments
+                                            ? Array.from({ length: totalClipPasses }).map((_, segIdx) => {
+                                                  const fillPct =
+                                                      segIdx < activeClipPassIndex
+                                                          ? 100
+                                                          : segIdx === activeClipPassIndex
+                                                          ? isStatusCompletedForUser
+                                                              ? 100
+                                                              : Math.min(100, Math.max(0, statusSlideProgress))
+                                                          : 0;
+                                                  return (
+                                                      <div
+                                                          key={segIdx}
+                                                          className="h-1 flex-1 rounded-full bg-white/25 overflow-hidden relative"
+                                                      >
+                                                          <span
+                                                              className="block h-full rounded-full bg-white transition-all duration-100"
+                                                              style={{ width: `${fillPct}%` }}
+                                                          />
+                                                      </div>
+                                                  );
+                                              })
+                                            : longTrackSegCount > 1
+                                            ? Array.from({ length: longTrackSegCount }).map((_, segIdx) => {
+                                                  const overall =
+                                                      cumulativeDurationSec > 0
+                                                          ? cumulativeCurrentSec / cumulativeDurationSec
+                                                          : 0;
+                                                  const segStart = segIdx / longTrackSegCount;
+                                                  const segEnd = (segIdx + 1) / longTrackSegCount;
+                                                  const fillPct = isStatusCompletedForUser
+                                                      ? 100
+                                                      : overall >= segEnd
+                                                      ? 100
+                                                      : overall <= segStart
+                                                      ? 0
+                                                      : ((overall - segStart) / (segEnd - segStart)) * 100;
+                                                  return (
+                                                      <div
+                                                          key={segIdx}
+                                                          className="h-1 flex-1 rounded-full bg-white/25 overflow-hidden relative"
+                                                      >
+                                                          <span
+                                                              className="block h-full rounded-full bg-white transition-all duration-100"
+                                                              style={{ width: `${Math.min(100, Math.max(0, fillPct))}%` }}
+                                                          />
+                                                      </div>
+                                                  );
+                                              })
+                                            : activeUserBox.slides.map((sl, idx) => {
+                                                  const slideFill =
+                                                      idx === safeSlideIndex && totalClipPasses > 1
+                                                          ? ((activeClipPassIndex + statusSlideProgress / 100) /
+                                                                totalClipPasses) *
+                                                            100
+                                                          : statusSlideProgress;
+                                                  const fillPct =
+                                                      idx < safeSlideIndex
+                                                          ? 100
+                                                          : idx === safeSlideIndex
+                                                          ? isStatusCompletedForUser
+                                                              ? 100
+                                                              : Math.min(100, Math.max(0, slideFill))
+                                                          : 0;
+                                                  return (
+                                                      <button
+                                                          key={sl.id}
+                                                          type="button"
+                                                          onClick={() => handleSelectSlideInUserBox(idx)}
+                                                          title={sl.title || sl.videoTitle || `Item ${idx + 1}`}
+                                                          className="h-1 flex-1 rounded-full bg-white/25 hover:bg-white/40 overflow-hidden cursor-pointer relative"
+                                                      >
+                                                          <span
+                                                              className={`block h-full rounded-full transition-all duration-100 ${
+                                                                  idx <= safeSlideIndex ? 'bg-white' : 'bg-white/30'
+                                                              }`}
+                                                              style={{ width: `${fillPct}%` }}
+                                                          />
+                                                      </button>
+                                                  );
+                                              })}
                                     </div>
                                 </div>
 
-                                {/* Top Author & Navigation Bar (Steps ONLY inside this user's box) */}
-                                <div className="px-4 py-3 bg-[#141210] flex items-center justify-between gap-2 flex-wrap">
+                                {/* Top Author & Navigation Bar (WhatsApp-style Controls: Play/Pause, Speaker Mute, Prev/Next, Close) */}
+                                <div className="px-4 py-3 bg-[#0B0B0D] flex items-center justify-between gap-2 flex-wrap">
                                     <div className="flex items-center gap-3 min-w-0">
                                         <img
                                             src={activeUserBox.authorAvatar}
                                             alt={activeUserBox.authorName}
-                                            className="w-10 h-10 rounded-full object-cover border-2 border-[#BC9675] shrink-0"
+                                            className="w-10 h-10 rounded-full object-cover border-2 border-white/60 shrink-0"
                                         />
                                         <div className="min-w-0">
                                             <div className="flex items-center gap-1.5 flex-wrap">
@@ -3000,7 +3252,7 @@ export function WhatsAppModeWorkspace({
                                                     {activeUserBox.authorName}
                                                 </p>
                                                 {(activeSlide.infoBadge || activeSlide.professionTag || activeUserBox.professionTag) && (
-                                                    <span className="rounded-md bg-[#7C4225]/40 border border-[#BC9675]/40 px-2 py-0.5 text-[10px] font-bold text-[#FBF8F3]">
+                                                    <span className="rounded-md bg-[#7C4225]/50 border border-[#BC9675]/40 px-2 py-0.5 text-[10px] font-bold text-[#FBF8F3]">
                                                         {activeSlide.infoBadge || activeSlide.professionTag || activeUserBox.professionTag}
                                                     </span>
                                                 )}
@@ -3022,6 +3274,9 @@ export function WhatsAppModeWorkspace({
                                             </div>
                                             <p className="text-[11px] text-[#D0C4AE] truncate">
                                                 {activeSlide.timestampLabel}
+                                                {activeSlide.sourcePlatform
+                                                    ? ` • View on ${activeSlide.sourcePlatform} ›`
+                                                    : ''}
                                                 {(activeSlide.title || activeSlide.videoTitle)
                                                     ? ` • ${activeSlide.title || activeSlide.videoTitle}`
                                                     : ''}
@@ -3032,7 +3287,7 @@ export function WhatsAppModeWorkspace({
                                                         rel="noopener noreferrer"
                                                         className="ml-2 text-[#D69E6B] hover:underline font-semibold"
                                                     >
-                                                        Source Link ↗
+                                                        Open ↗
                                                     </a>
                                                 )}
                                             </p>
@@ -3044,7 +3299,7 @@ export function WhatsAppModeWorkspace({
                                             <>
                                                 <button
                                                     type="button"
-                                                    onClick={() => setStatusComposerMode('info')}
+                                                    onClick={() => setStatusComposerMode('series')}
                                                     className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-xs font-bold cursor-pointer"
                                                     style={{ color: '#FFFFFF' }}
                                                 >
@@ -3082,6 +3337,17 @@ export function WhatsAppModeWorkspace({
                                         >
                                             {isStatusCompletedForUser ? '↻ Replay' : isStatusAutoPlaying ? '⏸ Pause' : '▶ Play'}
                                         </button>
+                                        {(isVideoSlide || isAudioSlide) && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsStatusMuted((m) => !m)}
+                                                className="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold cursor-pointer"
+                                                style={{ color: '#FBF8F3' }}
+                                                title={isStatusMuted ? 'Unmute sound' : 'Mute sound'}
+                                            >
+                                                {isStatusMuted ? '🔇' : '🔊'}
+                                            </button>
+                                        )}
                                         <button
                                             type="button"
                                             disabled={safeSlideIndex <= 0}
@@ -3114,18 +3380,20 @@ export function WhatsAppModeWorkspace({
                                     </div>
                                 </div>
 
-                                {/* Slide Media Body: Video, Picture, OR Structured Status Information */}
+                                {/* Slide Media Body: Video, Full-Duration Music Audio, Picture, OR Structured Status Information */}
                                 <div
                                     className="p-4 sm:p-5 flex flex-col items-center justify-center text-center space-y-3 min-h-[300px]"
                                     style={{
                                         background:
-                                            activeSlide.bgColor ||
-                                            'linear-gradient(135deg, #292521 0%, #3d3730 100%)',
+                                            isVideoSlide
+                                                ? '#000000'
+                                                : activeSlide.bgColor ||
+                                                  'linear-gradient(135deg, #292521 0%, #3d3730 100%)',
                                         color: '#FBF8F3',
                                     }}
                                 >
-                                    {activeSlide.mediaType === 'video' && activeSlide.videoUrl ? (
-                                        <div className="w-full rounded-xl overflow-hidden border border-white/15 bg-black shadow-xl">
+                                    {isVideoSlide ? (
+                                        <div className="w-full rounded-xl overflow-hidden border border-white/10 bg-black shadow-xl">
                                             <video
                                                 ref={activeStatusVideoRef}
                                                 key={`${activeSlide.id}_${statusReplayNonce}`}
@@ -3133,6 +3401,7 @@ export function WhatsAppModeWorkspace({
                                                 poster={activeSlide.imageUrl}
                                                 autoPlay
                                                 playsInline
+                                                muted={isStatusMuted}
                                                 controls
                                                 onLoadedMetadata={(e) => {
                                                     const v = e.currentTarget;
@@ -3155,31 +3424,93 @@ export function WhatsAppModeWorkspace({
                                                         );
                                                     }
                                                 }}
-                                                onEnded={(e) => {
-                                                    const v = e.currentTarget;
-                                                    if (safeSlideIndex < activeUserBox.slides.length - 1) {
-                                                        setActiveVideoTiming({ currentSec: 0, durationSec: 0 });
-                                                        setActiveStatusSlideIndex(safeSlideIndex + 1);
-                                                        setStatusSlideProgress(0);
-                                                    } else {
-                                                        const fullDur =
-                                                            v.duration && Number.isFinite(v.duration)
-                                                                ? v.duration
-                                                                : activeVideoTiming.durationSec;
-                                                        setActiveVideoTiming({ currentSec: fullDur, durationSec: fullDur });
-                                                        setStatusSlideProgress(100);
-                                                        setIsStatusAutoPlaying(false);
-                                                        setIsStatusCompletedForUser(true);
-                                                    }
-                                                }}
+                                                onEnded={(e) => handleFullMediaEnded(e.currentTarget)}
                                                 onError={() => {
                                                     setActiveVideoTiming({ currentSec: 0, durationSec: 0 });
+                                                    setActiveClipPassIndex(0);
                                                     if (isStatusAutoPlaying && safeSlideIndex < activeUserBox.slides.length - 1) {
                                                         setActiveStatusSlideIndex(safeSlideIndex + 1);
                                                         setStatusSlideProgress(0);
                                                     }
                                                 }}
-                                                className="w-full h-[260px] sm:h-[310px] object-cover bg-black"
+                                                className="w-full h-[260px] sm:h-[330px] object-contain bg-black"
+                                            />
+                                        </div>
+                                    ) : isAudioSlide ? (
+                                        <div className="w-full max-w-lg rounded-2xl border border-white/15 bg-black/50 p-5 space-y-4 shadow-2xl">
+                                            <div className="flex items-center gap-4 text-left">
+                                                <div className="relative w-16 h-16 rounded-2xl overflow-hidden border-2 border-[#D69E6B] shrink-0 bg-zinc-900 flex items-center justify-center">
+                                                    {activeSlide.imageUrl ? (
+                                                        <img
+                                                            src={activeSlide.imageUrl}
+                                                            alt={activeSlide.title || 'Music Track'}
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <span className="text-3xl">🎵</span>
+                                                    )}
+                                                </div>
+                                                <div className="min-w-0 flex-1 space-y-1">
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        <span className="rounded bg-[#7C4225] px-2 py-0.5 text-[10px] font-bold uppercase text-white">
+                                                            🎵 Full-Length Music Track
+                                                        </span>
+                                                        {activeSlide.mediaFormat && (
+                                                            <span className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-mono text-[#E8C59B]">
+                                                                {activeSlide.mediaFormat}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <h4 className="text-sm sm:text-base font-bold text-white truncate">
+                                                        {activeSlide.title || activeSlide.videoTitle || 'Music Status Upload'}
+                                                    </h4>
+                                                    <p className="text-xs font-mono text-[#E8C59B]">
+                                                        {formatSecondsToMmSs(cumulativeCurrentSec)} /{' '}
+                                                        {cumulativeDurationSec > 0
+                                                            ? formatSecondsToMmSs(cumulativeDurationSec)
+                                                            : activeSlide.videoDuration || 'Full Song'}{' '}
+                                                        · Plays complete track until finished
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <audio
+                                                ref={activeStatusAudioRef}
+                                                key={`${activeSlide.id}_${statusReplayNonce}`}
+                                                src={activeSlide.audioUrl}
+                                                autoPlay
+                                                muted={isStatusMuted}
+                                                controls
+                                                onLoadedMetadata={(e) => {
+                                                    const a = e.currentTarget;
+                                                    if (a.duration && Number.isFinite(a.duration)) {
+                                                        setActiveVideoTiming({
+                                                            currentSec: a.currentTime || 0,
+                                                            durationSec: a.duration,
+                                                        });
+                                                    }
+                                                }}
+                                                onTimeUpdate={(e) => {
+                                                    const a = e.currentTarget;
+                                                    if (a.duration && Number.isFinite(a.duration)) {
+                                                        setActiveVideoTiming({
+                                                            currentSec: a.currentTime,
+                                                            durationSec: a.duration,
+                                                        });
+                                                        setStatusSlideProgress(
+                                                            Math.min(100, (a.currentTime / a.duration) * 100)
+                                                        );
+                                                    }
+                                                }}
+                                                onEnded={(e) => handleFullMediaEnded(e.currentTarget)}
+                                                onError={() => {
+                                                    setActiveVideoTiming({ currentSec: 0, durationSec: 0 });
+                                                    setActiveClipPassIndex(0);
+                                                    if (isStatusAutoPlaying && safeSlideIndex < activeUserBox.slides.length - 1) {
+                                                        setActiveStatusSlideIndex(safeSlideIndex + 1);
+                                                        setStatusSlideProgress(0);
+                                                    }
+                                                }}
+                                                className="w-full"
                                             />
                                         </div>
                                     ) : activeSlide.mediaType === 'photo' && activeSlide.imageUrl ? (
@@ -3232,11 +3563,11 @@ export function WhatsAppModeWorkspace({
                                         </div>
                                     )}
 
-                                    {(activeSlide.mediaType === 'video' || activeSlide.mediaType === 'photo') && (
+                                    {(isVideoSlide || isAudioSlide || activeSlide.mediaType === 'photo') && (
                                         <div className="space-y-1 max-w-xl px-2">
-                                            {activeSlide.title && (
+                                            {(activeSlide.title || activeSlide.videoTitle) && (
                                                 <p className="text-xs font-bold uppercase tracking-wider text-[#D69E6B]">
-                                                    {activeSlide.title}
+                                                    {activeSlide.title || activeSlide.videoTitle}
                                                 </p>
                                             )}
                                             <p className="text-sm sm:text-base font-semibold leading-relaxed">
@@ -3246,7 +3577,7 @@ export function WhatsAppModeWorkspace({
                                     )}
                                 </div>
 
-                                {/* Per-User Uploaded Items Strip (Click any Video / Picture / Info item uploaded by THIS user) */}
+                                {/* Per-User Uploaded Items Strip (Click any Video / Music / Picture / Info item uploaded by THIS user) */}
                                 <div className="px-4 py-2.5 bg-[#1B1815] border-t border-white/10 space-y-1.5">
                                     <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-[#D0C4AE]">
                                         <span>
@@ -3257,7 +3588,7 @@ export function WhatsAppModeWorkspace({
                                             onClick={() => setStatusComposerMode('series')}
                                             className="text-[#D69E6B] hover:underline cursor-pointer"
                                         >
-                                            + Upload Series / Media
+                                            + Upload Series / Music / Media
                                         </button>
                                     </div>
                                     <div className="flex items-center gap-2 overflow-x-auto pb-1">
@@ -3273,7 +3604,13 @@ export function WhatsAppModeWorkspace({
                                                 }`}
                                             >
                                                 <span>
-                                                    {sl.mediaType === 'video' ? '🎬' : sl.mediaType === 'photo' ? '🖼️' : '📋'}
+                                                    {sl.mediaType === 'audio'
+                                                        ? '🎵'
+                                                        : sl.mediaType === 'video'
+                                                        ? '🎬'
+                                                        : sl.mediaType === 'photo'
+                                                        ? '🖼️'
+                                                        : '📋'}
                                                 </span>
                                                 <span className="max-w-[140px] truncate">
                                                     {sl.title || sl.videoTitle || sl.infoBadge || `Item ${idx + 1}`}
@@ -3293,7 +3630,7 @@ export function WhatsAppModeWorkspace({
                                     </div>
                                 </div>
 
-                                {/* Reply to THIS User's Status Bar */}
+                                {/* WhatsApp-Style Reply + Quick Emoji Reactions Bar */}
                                 <form
                                     onSubmit={(e) => {
                                         e.preventDefault();
@@ -3303,7 +3640,7 @@ export function WhatsAppModeWorkspace({
                                         );
                                         setStatusReplyText('');
                                     }}
-                                    className="p-3 bg-[#292521] flex items-center gap-2 border-t border-white/10"
+                                    className="p-3 bg-[#141416] flex items-center gap-2 border-t border-white/10 flex-wrap sm:flex-nowrap"
                                 >
                                     <input
                                         type="text"
@@ -3311,10 +3648,25 @@ export function WhatsAppModeWorkspace({
                                         onFocus={() => setIsStatusReplyFocused(true)}
                                         onBlur={() => setIsStatusReplyFocused(false)}
                                         onChange={(e) => setStatusReplyText(e.target.value)}
-                                        placeholder={`Reply to ${activeUserBox.authorName}...`}
-                                        className="flex-1 bg-[#3D3730] placeholder-[#D0C4AE] text-xs rounded-full px-4 py-2 focus:outline-none"
+                                        placeholder="reply..."
+                                        className="flex-1 min-w-[140px] bg-[#262629] placeholder-[#A1A1AA] text-xs rounded-full px-4 py-2 focus:outline-none"
                                         style={{ color: '#FBF8F3' }}
                                     />
+                                    <div className="flex items-center gap-1 shrink-0">
+                                        {(['😍', '😂', '😮', '❤️'] as const).map((emoji) => (
+                                            <button
+                                                key={emoji}
+                                                type="button"
+                                                onClick={() =>
+                                                    triggerToast(`Reacted ${emoji} to ${activeUserBox.authorName}'s Status Box`)
+                                                }
+                                                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-sm cursor-pointer transition-transform hover:scale-110"
+                                                title={`Send ${emoji} reaction`}
+                                            >
+                                                {emoji}
+                                            </button>
+                                        ))}
+                                    </div>
                                     <button
                                         type="submit"
                                         className="px-4 py-2 rounded-full bg-[#7C4225] hover:bg-[#5E3119] text-xs font-bold cursor-pointer shrink-0"
@@ -3325,7 +3677,8 @@ export function WhatsAppModeWorkspace({
                                 </form>
                             </div>
                         </div>
-                    ) : (
+                        );
+                    })() : (
                         <div className="w-full max-w-xl my-auto">
                             <div className="bg-[#FBF8F3] border border-[#DDD3C2] rounded-2xl p-6 flex flex-col items-center text-center gap-4 shadow-2xs">
                                 <div className="w-14 h-14 rounded-2xl bg-[#EFE8DA] border border-[#D0C4AE] flex items-center justify-center text-[#7C4225] shrink-0">
