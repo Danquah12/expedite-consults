@@ -4,6 +4,7 @@ import {
   getCurrentMinuteSlot,
   getInitialDeterministicHarvestedItems,
   dedupeHarvestedItems,
+  normalizeExclusiveDestinations,
   CONNECTLN_HARVESTER_TEMPLATES,
 } from "./connectin-media-harvester"
 import {
@@ -302,7 +303,7 @@ async function fetchSingleChannelRss(cfg: LiveRssChannelConfig): Promise<Harvest
         enclaveId: cfg.enclaveId,
         category: cfg.category,
         duration: "06:30",
-        destinations: ["home", "jobs", "market", "media", "pulse"],
+        destinations: ["home"],
         pulledAtIso: publishedIso,
         pulledAtLabel: formatRelativePublishedLabel(publishedIso),
         minuteSlot: slot,
@@ -423,9 +424,10 @@ export async function getOrRunAdditive24HourVideoArchive(options?: {
     LAST_MEMORY_HYDRATE_MS = now
   }
 
-  // Always refresh human relative labels ("3h", "1d", "5d") without deleting any item
+  // Always refresh human relative labels ("3h", "1d", "5d") and enforce disjoint tab video partitioning
   const refreshedItems = MEMORY_ARCHIVED_ITEMS.map((item) => ({
     ...item,
+    destinations: normalizeExclusiveDestinations(item),
     pulledAtLabel: formatRelativePublishedLabel(item.pulledAtIso),
   }))
   MEMORY_ARCHIVED_ITEMS = refreshedItems

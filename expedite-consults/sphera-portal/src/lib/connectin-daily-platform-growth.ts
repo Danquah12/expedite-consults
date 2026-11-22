@@ -76,43 +76,83 @@ function getCycleDateMeta(dayNumber: number, nowMs: number = Date.now()): {
   return { isoDate, shortDate, relativeLabel, futureDeadline }
 }
 
-// Verified playable YouTube IDs used across Learning & Media daily drops
-const PLAYABLE_DAILY_YOUTUBE_POOL = [
+// Verified playable YouTube IDs EXCLUSIVE to the Learning Tab (never overlapping Home or Media tabs)
+const LEARNING_DAILY_YOUTUBE_POOL = [
   {
-    youtubeId: "gNhWpuWvtEA",
-    thumb: "https://i.ytimg.com/vi/gNhWpuWvtEA/hqdefault.jpg",
-    creator: "This Old House",
-    role: "Master Carpentry & Layout Lead",
+    youtubeId: "zGVM7myTE6E",
+    thumb: "https://i.ytimg.com/vi/zGVM7myTE6E/hqdefault.jpg",
+    creator: "ConnectLn Academy Faculty",
+    role: "Applied Security & Systems Instructor",
   },
   {
-    youtubeId: "OWThL97tq3k",
-    thumb: "https://i.ytimg.com/vi/OWThL97tq3k/hqdefault.jpg",
-    creator: "Miller Welders · Field Craft",
-    role: "Certified Structural Welding Instructor",
+    youtubeId: "EHjmxujXIaQ",
+    thumb: "https://i.ytimg.com/vi/EHjmxujXIaQ/hqdefault.jpg",
+    creator: "Cloud & Zero-Trust Architecture Lab",
+    role: "Principal Cloud Defense Engineer",
   },
   {
-    youtubeId: "GHiOk_8mlq0",
-    thumb: "https://i.ytimg.com/vi/GHiOk_8mlq0/hqdefault.jpg",
-    creator: "This Old House · Joinery",
-    role: "Finish Carpentry & Clamping Specialist",
+    youtubeId: "alYIYtIxIVE",
+    thumb: "https://i.ytimg.com/vi/alYIYtIxIVE/hqdefault.jpg",
+    creator: "ConnectLn Field Engineering Workshop",
+    role: "Lead Practical Safety & Verification Trainer",
   },
   {
-    youtubeId: "L_Guz73e6fw",
-    thumb: "https://i.ytimg.com/vi/L_Guz73e6fw/hqdefault.jpg",
-    creator: "IBM & Cloud Security Cadre",
-    role: "Principal Zero-Trust & AI Security Architect",
+    youtubeId: "H2MMMFK8G6g",
+    thumb: "https://i.ytimg.com/vi/H2MMMFK8G6g/hqdefault.jpg",
+    creator: "Enterprise Governance & Risk Faculty",
+    role: "Federal Compliance & Security Architect",
   },
   {
-    youtubeId: "zu6p3_df20A",
-    thumb: "https://i.ytimg.com/vi/zu6p3_df20A/hqdefault.jpg",
-    creator: "Essential Infrastructure Desk",
-    role: "500kV Grid, Heavy-Haul & Civil Engineering",
+    youtubeId: "L9DNl1nJFPE",
+    thumb: "https://i.ytimg.com/vi/L9DNl1nJFPE/hqdefault.jpg",
+    creator: "Distributed Infrastructure Guild",
+    role: "Senior Systems & Network Engineer",
   },
   {
     youtubeId: "86V_9l84GL0",
     thumb: "https://i.ytimg.com/vi/86V_9l84GL0/hqdefault.jpg",
     creator: "Clinical Emergency Grand Rounds",
     role: "Critical Care & Resuscitation Faculty",
+  },
+]
+
+// Verified playable YouTube IDs EXCLUSIVE to the Media & Pulse Tabs (never overlapping Home or Learning)
+const MEDIA_DAILY_YOUTUBE_POOL = [
+  {
+    youtubeId: "9vJRopau0g0",
+    thumb: "https://i.ytimg.com/vi/9vJRopau0g0/hqdefault.jpg",
+    creator: "Johns Hopkins Clinical Broadcast",
+    role: "Director of Clinical Pharmacy & Stewardship",
+  },
+  {
+    youtubeId: "iG9CE55wbtY",
+    thumb: "https://i.ytimg.com/vi/iG9CE55wbtY/hqdefault.jpg",
+    creator: "Global Education & Talent Forum",
+    role: "Keynote Leadership & Workforce Innovation",
+  },
+  {
+    youtubeId: "qp0HIF3SfI4",
+    thumb: "https://i.ytimg.com/vi/qp0HIF3SfI4/hqdefault.jpg",
+    creator: "Executive Leadership Briefing Desk",
+    role: "Principal Organizational Strategy Director",
+  },
+  {
+    youtubeId: "arj7oStGLkU",
+    thumb: "https://i.ytimg.com/vi/arj7oStGLkU/hqdefault.jpg",
+    creator: "Clinical Triage & Patient Care Desk",
+    role: "Lead Allied Health & EHR Instructor",
+  },
+  {
+    youtubeId: "UF8uR6Z6KLc",
+    thumb: "https://i.ytimg.com/vi/UF8uR6Z6KLc/hqdefault.jpg",
+    creator: "Hospital Capacity & Operations Broadcast",
+    role: "Chief Hospital Operations Executive",
+  },
+  {
+    youtubeId: "hN2e7_A1kBw",
+    thumb: "https://i.ytimg.com/vi/hN2e7_A1kBw/hqdefault.jpg",
+    creator: "Surgical & Trauma Grand Rounds",
+    role: "Chief of Trauma Surgery & Reconstruction",
   },
 ]
 
@@ -523,7 +563,7 @@ export function getAccumulatedDailyLearningCourses(
   for (let day = days; day >= 1; day--) {
     const meta = getCycleDateMeta(day, nowMs)
     const tmpl = DAILY_LEARNING_ROTATION[(day - 1) % DAILY_LEARNING_ROTATION.length]
-    const vid = PLAYABLE_DAILY_YOUTUBE_POOL[tmpl.vidIdx % PLAYABLE_DAILY_YOUTUBE_POOL.length]
+    const vid = LEARNING_DAILY_YOUTUBE_POOL[tmpl.vidIdx % LEARNING_DAILY_YOUTUBE_POOL.length]
     out.push({
       id: `daily_course_d${day}`,
       title: `${tmpl.titlePrefix} (Daily Drop #${day} · ${meta.shortDate})`,
@@ -595,7 +635,7 @@ export function getAccumulatedDailyMediaVideos(
   const out: MediaVideoItem[] = []
   for (let day = days; day >= 1; day--) {
     const meta = getCycleDateMeta(day, nowMs)
-    const vid = PLAYABLE_DAILY_YOUTUBE_POOL[(day - 1) % PLAYABLE_DAILY_YOUTUBE_POOL.length]
+    const vid = MEDIA_DAILY_YOUTUBE_POOL[(day - 1) % MEDIA_DAILY_YOUTUBE_POOL.length]
     out.push({
       id: `daily_media_vid_d${day}`,
       title: `ConnectLn 24h Broadcast #${day}: ${vid.creator} — Field & Enterprise Operations Briefing (${meta.shortDate})`,
@@ -641,7 +681,7 @@ export function getAccumulatedDailyMediaClips(
   const out: MediaClipItem[] = []
   for (let day = days; day >= 1; day--) {
     const meta = getCycleDateMeta(day, nowMs)
-    const vid = PLAYABLE_DAILY_YOUTUBE_POOL[(day + 1) % PLAYABLE_DAILY_YOUTUBE_POOL.length]
+    const vid = MEDIA_DAILY_YOUTUBE_POOL[(day + 1) % MEDIA_DAILY_YOUTUBE_POOL.length]
     out.push({
       id: `daily_clip_d${day}`,
       title: `60s Field Reel #${day} (${meta.shortDate}): Rapid Pro Tip from ${vid.creator}`,
@@ -709,7 +749,7 @@ export function getAccumulatedDailyPulseArticles(
   for (let day = days; day >= 1; day--) {
     const meta = getCycleDateMeta(day, nowMs)
     const tmpl = DAILY_PULSE_ROTATION[(day - 1) % DAILY_PULSE_ROTATION.length]
-    const vid = PLAYABLE_DAILY_YOUTUBE_POOL[(day + 2) % PLAYABLE_DAILY_YOUTUBE_POOL.length]
+    const vid = MEDIA_DAILY_YOUTUBE_POOL[(day + 2) % MEDIA_DAILY_YOUTUBE_POOL.length]
     out.push({
       id: `daily_pulse_art_d${day}`,
       title: `${tmpl.titlePrefix} (${meta.shortDate} · Daily Dispatch #${day})`,
@@ -927,7 +967,7 @@ export function getAccumulatedDailyLaunchpad(
   const out: ProductLaunchItem[] = []
   for (let day = days; day >= 1; day--) {
     const meta = getCycleDateMeta(day, nowMs)
-    const vid = PLAYABLE_DAILY_YOUTUBE_POOL[(day - 1) % PLAYABLE_DAILY_YOUTUBE_POOL.length]
+    const vid = MEDIA_DAILY_YOUTUBE_POOL[(day - 1) % MEDIA_DAILY_YOUTUBE_POOL.length]
     out.push({
       id: `daily_launch_d${day}`,
       title: `ConnectLn Daily Launch #${day}: ${

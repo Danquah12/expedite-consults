@@ -405,7 +405,6 @@ export function MessagingView({
         }
     });
     const [activeMailboxFolder, setActiveMailboxFolder] = useState<ConnectLnMailboxFolder>('inbox');
-    const [showMoreFolders, setShowMoreFolders] = useState<boolean>(false);
     const [showMailFoldersRail, setShowMailFoldersRail] = useState<boolean>(true);
     const [activeCustomLabel, setActiveCustomLabel] = useState<string | null>(null);
     const [starredIds, setStarredIds] = useState<string[]>(() => {
@@ -3392,36 +3391,6 @@ export function MessagingView({
                         >
                             <span>✒️</span> New Message
                         </button>
-                        {onNavigateVibeComms && (
-                            <button
-                                onClick={() => {
-                                    if (activeCallMode) {
-                                        isHandingOffToStudioRef.current = true;
-                                        stopCurrentCallMedia();
-                                    }
-                                    onNavigateVibeComms(
-                                        activeThread
-                                            ? {
-                                                  callId: activeThread.id,
-                                                  conversationId: activeThread.id,
-                                                  conversationName: activeThread.title,
-                                                  mode: isScreenSharing
-                                                      ? 'screenshare'
-                                                      : activeCallMode === 'audio' && !isCameraOn
-                                                        ? 'audio'
-                                                        : 'video',
-                                              }
-                                            : undefined
-                                    );
-                                    if (activeCallMode) {
-                                        setActiveCallMode(null);
-                                    }
-                                }}
-                                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-                            >
-                                <span>◉</span> Live Studio
-                            </button>
-                        )}
                     </div>
                 </div>
 
@@ -3620,15 +3589,6 @@ export function MessagingView({
                                     ),
                                 },
                                 {
-                                    id: 'important' as ConnectLnMailboxFolder,
-                                    label: 'Important',
-                                    icon: (
-                                        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h11l5 6-5 6H4l4-6-4-6z" />
-                                        </svg>
-                                    ),
-                                },
-                                {
                                     id: 'sent' as ConnectLnMailboxFolder,
                                     label: 'Sent',
                                     icon: (
@@ -3686,176 +3646,7 @@ export function MessagingView({
                                 </button>
                             );
                         })}
-
-                        {/* Expandable "More & Labels" Section */}
-                        <button
-                            type="button"
-                            onClick={() => setShowMoreFolders((prev) => !prev)}
-                            className="shrink-0 md:w-full flex items-center gap-1.5 md:gap-2.5 px-2.5 py-1.5 rounded-xl text-xs font-medium text-slate-600 hover:bg-[#EFE8DA] transition-all cursor-pointer whitespace-nowrap"
-                        >
-                            <svg
-                                className={`w-4 h-4 shrink-0 transition-transform ${
-                                    showMoreFolders ? 'rotate-180' : ''
-                                }`}
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth={2}
-                            >
-                                <polyline points="6 9 12 15 18 9" />
-                            </svg>
-                            <span>{showMoreFolders ? 'Less' : 'More & Labels'}</span>
-                        </button>
-
-                        {showMoreFolders && (
-                            <div className="flex md:flex-col items-center md:items-stretch gap-1 md:gap-0.5 pl-1 animate-in fade-in">
-                                {(
-                                    [
-                                        { id: 'snoozed' as ConnectLnMailboxFolder, label: 'Snoozed', icon: '🕒' },
-                                        { id: 'purchases' as ConnectLnMailboxFolder, label: 'Purchases', icon: '🛍️' },
-                                        { id: 'social' as ConnectLnMailboxFolder, label: 'Social', icon: '👥' },
-                                        { id: 'updates' as ConnectLnMailboxFolder, label: 'Updates', icon: '🔔' },
-                                        { id: 'forums' as ConnectLnMailboxFolder, label: 'Forums', icon: '💬' },
-                                        { id: 'promotions' as ConnectLnMailboxFolder, label: 'Promotions', icon: '🏷️' },
-                                        { id: 'scheduled' as ConnectLnMailboxFolder, label: 'Scheduled', icon: '📅' },
-                                        { id: 'all_mail' as ConnectLnMailboxFolder, label: 'All Mail', icon: '📬' },
-                                    ]
-                                ).map((sub) => {
-                                    const subCount =
-                                        sub.id === 'all_mail' ? threads.length : countByMailboxFolder(sub.id);
-                                    const isSubActive = activeMailboxFolder === sub.id && !activeCustomLabel;
-                                    return (
-                                        <button
-                                            key={sub.id}
-                                            type="button"
-                                            onClick={() => handleSelectMailboxFolder(sub.id)}
-                                            className={`shrink-0 md:w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-xs transition-all cursor-pointer whitespace-nowrap ${
-                                                isSubActive
-                                                    ? 'bg-[#E8D8C8] text-[#3B1E10] font-extrabold'
-                                                    : 'text-slate-700 font-medium hover:bg-[#EFE8DA]'
-                                            }`}
-                                        >
-                                            <span className="flex items-center gap-2">
-                                                <span>{sub.icon}</span>
-                                                <span>{sub.label}</span>
-                                            </span>
-                                            {subCount > 0 && (
-                                                <span className="text-[11px] text-slate-500">
-                                                    {subCount}
-                                                </span>
-                                            )}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        )}
                     </div>
-
-                    {/* ConnectLn Custom Labels Section (Shown when "More & Labels" is expanded or when a label is active) */}
-                    {(showMoreFolders || Boolean(activeCustomLabel)) && (
-                    <div className="mt-2 pt-2 border-t border-[#E0D6C5]">
-                        <div className="flex items-center justify-between px-2.5 mb-1">
-                            <span className="text-[11px] font-bold text-slate-800 tracking-tight">
-                                Labels
-                            </span>
-                            <button
-                                type="button"
-                                onClick={() => setShowNewLabelInput((prev) => !prev)}
-                                className="h-5 w-5 rounded-full hover:bg-[#E8D8C8] flex items-center justify-center text-slate-700 font-bold text-sm leading-none cursor-pointer"
-                                title="Create new ConnectLn label"
-                            >
-                                +
-                            </button>
-                        </div>
-
-                        {showNewLabelInput && (
-                            <form
-                                onSubmit={(e) => {
-                                    e.preventDefault();
-                                    const clean = newLabelName.trim();
-                                    if (!clean) return;
-                                    const id = `lbl_${Date.now()}`;
-                                    setCustomLabels((prev) => {
-                                        const next = [
-                                            ...prev,
-                                            { id, name: clean, color: '#0A66C2' },
-                                        ];
-                                        try {
-                                            localStorage.setItem(
-                                                'connectln_custom_labels_v1',
-                                                JSON.stringify(next)
-                                            );
-                                        } catch {}
-                                        return next;
-                                    });
-                                    if (activeThread) {
-                                        toggleLabelOnThread(activeThread.id, id);
-                                        triggerToast(
-                                            `🏷️ Label "${clean}" created and applied to ${activeThread.title}.`
-                                        );
-                                    }
-                                    setNewLabelName('');
-                                    setShowNewLabelInput(false);
-                                }}
-                                className="px-2 mb-2 flex items-center gap-1"
-                            >
-                                <input
-                                    type="text"
-                                    value={newLabelName}
-                                    onChange={(e) => setNewLabelName(e.target.value)}
-                                    placeholder="New label..."
-                                    className="w-full rounded-lg border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-900 focus:border-[#0A66C2] focus:outline-none"
-                                />
-                                <button
-                                    type="submit"
-                                    className="rounded-lg bg-[#0A66C2] text-white px-2 py-1 text-[10px] font-bold shrink-0"
-                                >
-                                    Add
-                                </button>
-                            </form>
-                        )}
-
-                        <div className="space-y-0.5">
-                            {customLabels.map((lbl) => {
-                                const isSelected = activeCustomLabel === lbl.id;
-                                const lblCount = threads.filter((t) =>
-                                    matchesCustomLabel(t, lbl.id)
-                                ).length;
-                                return (
-                                    <button
-                                        key={lbl.id}
-                                        type="button"
-                                        onClick={() => handleSelectCustomLabel(lbl.id)}
-                                        className={`w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-xs transition-all cursor-pointer ${
-                                            isSelected
-                                                ? 'bg-[#E8D8C8] text-[#3B1E10] font-extrabold shadow-2xs'
-                                                : 'text-slate-700 font-medium hover:bg-[#EFE8DA]'
-                                        }`}
-                                    >
-                                        <span className="flex items-center gap-2 truncate">
-                                            <span
-                                                className="h-2 w-2 rounded-full shrink-0"
-                                                style={{ backgroundColor: lbl.color }}
-                                            />
-                                            <span className="truncate">{lbl.name}</span>
-                                        </span>
-                                        {lblCount > 0 && (
-                                            <span
-                                                className={`text-[10px] shrink-0 ${
-                                                    isSelected
-                                                        ? 'font-extrabold text-[#3B1E10]'
-                                                        : 'font-semibold text-slate-500'
-                                                }`}
-                                            >
-                                                {lblCount}
-                                            </span>
-                                        )}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-                    )}
                 </div>
                 )}
 
@@ -4302,8 +4093,6 @@ export function MessagingView({
                             filteredThreads.map((thread) => {
                                 const isSelected = activeThread?.id === thread.id;
                                 const isStarred = isThreadStarredById(thread.id);
-                                const isImportant = importantIds.includes(thread.id);
-                                const isSnoozed = snoozedIds.includes(thread.id);
                                 const effectiveDraft = getEffectiveDraftForThread(thread);
                                 const showDraftPreview =
                                     activeMailboxFolder === 'drafts'
@@ -4400,32 +4189,6 @@ export function MessagingView({
                                                         }`}
                                                     >
                                                         {isStarred ? '★' : '☆'}
-                                                    </button>
-                                                    {/* Important Toggle */}
-                                                    <button
-                                                        type="button"
-                                                        onClick={(e) => toggleImportantThread(thread.id, e)}
-                                                        title={isImportant ? 'Remove from Important' : 'Mark as Important'}
-                                                        className={`w-5 h-5 rounded flex items-center justify-center text-[11px] transition-all cursor-pointer ${
-                                                            isImportant
-                                                                ? 'text-amber-600 font-black'
-                                                                : 'text-slate-300 opacity-0 group-hover:opacity-100 hover:text-amber-600'
-                                                        }`}
-                                                    >
-                                                        🏷️
-                                                    </button>
-                                                    {/* Snooze Toggle */}
-                                                    <button
-                                                        type="button"
-                                                        onClick={(e) => toggleSnoozeThread(thread.id, e)}
-                                                        title={isSnoozed ? 'Unsnooze conversation' : 'Snooze conversation'}
-                                                        className={`w-5 h-5 rounded flex items-center justify-center text-[11px] transition-all cursor-pointer ${
-                                                            isSnoozed
-                                                                ? 'text-blue-600 font-black'
-                                                                : 'text-slate-300 opacity-0 group-hover:opacity-100 hover:text-blue-600'
-                                                        }`}
-                                                    >
-                                                        🕒
                                                     </button>
                                                     {/* Archive Toggle */}
                                                     <button
@@ -5571,7 +5334,6 @@ export function MessagingView({
                 }}
                 onOpenScheduledFolder={() => {
                     setShowScheduler(false);
-                    setShowMoreFolders(true);
                     handleSelectMailboxFolder('scheduled');
                 }}
                 onSendInvite={async (invitee, text) => {

@@ -1,6 +1,10 @@
 import { Post, UserProfile } from './connectln-data'
 import { ALL_PROFESSIONS, PROFESSION_ENCLAVES } from './connectin-professions'
-import { getStrictProfessionVideosForUser, resolveProfessionForUser } from './connectin-videos'
+import {
+  getHomeFeedAllProfessionsVideoTalks,
+  getStrictProfessionVideosForUser,
+  resolveProfessionForUser
+} from './connectin-videos'
 
 interface ProfessionVisualPack {
   actionPhotos: string[]
@@ -396,7 +400,6 @@ export function buildProfessionTieredFeedPosts(user?: UserProfile | null): Post[
     DEFAULT_VISUAL_PACK
   const specificPhotos = PROFESSION_SPECIFIC_PHOTOS[resolvedProf.id] || pack.actionPhotos
   const photo1 = specificPhotos[0] || pack.actionPhotos[0]
-  const photo2 = specificPhotos[1] || pack.actionPhotos[1] || pack.actionPhotos[0]
 
   const profTitle = resolvedProf.title
   const cleanShortTitle = profTitle.split('(')[0].split('-')[0].trim()
@@ -556,112 +559,7 @@ export function buildProfessionTieredFeedPosts(user?: UserProfile | null): Post[
     comments: []
   }
 
-  // 3. Tier-1 Editorial Podium & Keynote Portrait Card (Matches Wall Street Journal Podium Screenshot)
-  const postPodiumKeynote: Post = {
-    id: `post_prof_podium_keynote_${resolvedProf.id}`,
-    professionId: resolvedProf.id,
-    professionEnclave: enclave.id,
-    targetProfessions: [resolvedProf.id],
-    isProfessionTiered: true,
-    author: {
-      id: `wsj_summit_${resolvedProf.id}`,
-      name: `The ${enclave.shortName} Journal ✓`,
-      headline: `142,800 followers · National Summit & Industry Briefing`,
-      avatar: peer1.avatar,
-      connectionDegree: '1st',
-      isFollowing: true
-    },
-    timestamp: '2h · 🌐',
-    visibility: 'Public',
-    feedCategory: 'for_you',
-    feedSubCategory: enclave.shortName,
-    content: `National ${cleanShortTitle} Council & Industry Leaders convene to announce new 2026 credentialing fast-tracks, compensation benchmarks, and hands-on safety standards across ${skills.slice(0, 3).join(', ')}.`,
-    hashtags,
-    media: {
-      type: 'image',
-      visualStyle: 'editorial_podium',
-      url: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&auto=format&fit=crop&q=85',
-      youtubeId: secondaryVideo.youtubeId,
-      duration: secondaryVideo.duration || '4:48',
-      mastheadText: 'CLN',
-      overlaySubtitle: `SUMMIT KEYNOTE 2026`,
-      overlayTitle: `${cleanShortTitle} Leaders Unveil 2026 National Standards for ${skills[0] || 'Field Excellence'}`,
-      title: `2026 ${profTitle} National Keynote & Regulatory Briefing`,
-      submitsText: 'Live Keynote Coverage · Full Photo & Video Briefing'
-    },
-    stats: {
-      likesCount: 542,
-      commentsCount: 64,
-      repostsCount: 91,
-      reactionsBreakdown: {
-        like: 320,
-        celebrate: 110,
-        support: 42,
-        love: 35,
-        insightful: 35,
-        funny: 0
-      }
-    },
-    userReaction: null,
-    isSaved: false,
-    comments: []
-  }
-
-  // 4. Tier-1 News Portrait Card (Matches Kenya Times / ICJ Judge Phoebe Okowa Screenshot)
-  const postPhotoStory2: Post = {
-    id: `post_prof_story_photo_${resolvedProf.id}`,
-    professionId: resolvedProf.id,
-    professionEnclave: enclave.id,
-    targetProfessions: [resolvedProf.id],
-    isProfessionTiered: true,
-    author: {
-      id: `peer_story_${resolvedProf.id}`,
-      name: `${peer1.name}`,
-      headline: `Senior ${cleanShortTitle} · ${enclave.shortName}`,
-      avatar: peer1.avatar,
-      connectionDegree: '1st',
-      isFollowing: true
-    },
-    timestamp: '3h · 🌐',
-    visibility: 'Public',
-    feedCategory: 'for_you',
-    feedSubCategory: enclave.shortName,
-    content: `${pack.secondStoryLead}\n\nToday our ${cleanShortTitle} team completed full verification on ${skills[0] || 'core protocols'} and ${skills[2] || 'quality inspection'}. Proud of the dedication and skill every person brought today.`,
-    hashtags,
-    media: {
-      type: 'image',
-      visualStyle: 'news_portrait',
-      url: photo2,
-      youtubeId: primaryVideo.youtubeId,
-      duration: primaryVideo.duration || '4:15',
-      aspectRatio: '16/10',
-      brandName: 'ConnectLn',
-      mastheadText: `The ${cleanShortTitle} Times`,
-      sealText: 'CLN',
-      overlaySubtitle: 'NOV 04, 2026',
-      overlayTitle: `${peer1.name} Leads Verified ${cleanShortTitle} Team to 100% Compliance on ${skills[0] || 'Field Standards'}`,
-      title: `${profTitle}: Real-World Execution & Team Standards in 2026`,
-      domain: `https://conectln.com/${resolvedProf.id}`
-    },
-    stats: {
-      likesCount: 312,
-      commentsCount: 41,
-      repostsCount: 27,
-      reactionsBreakdown: {
-        like: 210,
-        celebrate: 54,
-        support: 18,
-        love: 20,
-        insightful: 10,
-        funny: 0
-      }
-    },
-    userReaction: null,
-    isSaved: false,
-    comments: []
-  }
-
-  // 5. Tier-1 Second Video Post: Sibling/Career Video Tied to the User's Claimed Profession
+  // 3. Tier-1 Second Video Post: Sibling/Career Video Tied to the User's Claimed Profession
   const postVideo2: Post = {
     id: `post_prof_video_secondary_${resolvedProf.id}`,
     professionId: resolvedProf.id,
@@ -715,5 +613,88 @@ export function buildProfessionTieredFeedPosts(user?: UserProfile | null): Post[
     comments: []
   }
 
-  return [postPhotoGuide, postPodiumKeynote, postPhotoStory2, postVideo1, postVideo2]
+  const allProfessionTalks = getHomeFeedAllProfessionsVideoTalks({
+    professionId: resolvedProf.id,
+    profession: user?.profession || resolvedProf.title,
+    professionEnclave: enclave.id,
+    headline: user?.headline,
+    name: user?.name
+  })
+
+  const usedVideoIds = new Set<string>([
+    primaryVideo.youtubeId,
+    secondaryVideo.youtubeId
+  ].filter(Boolean))
+
+  const expandedProfessionVideoPosts: Post[] = allProfessionTalks
+    .filter(talk => talk.youtubeId && !usedVideoIds.has(talk.youtubeId))
+    .slice(0, 64)
+    .map((talk, idx) => {
+      usedVideoIds.add(talk.youtubeId)
+      const talkEnclave =
+        PROFESSION_ENCLAVES.find(e => e.id === talk.enclaveId) || enclave
+      const isPrimaryUserProf =
+        talk.professionId === resolvedProf.id ||
+        talk.enclaveId === enclave.id
+      const peerAuthor = idx % 2 === 0 ? peer1 : peer2
+      const talkLabel = talk.categoryLabel || talkEnclave.shortName
+      return {
+        id: `post_prof_video_catalog_${talk.id}`,
+        professionId: talk.professionId || resolvedProf.id,
+        professionEnclave: talk.enclaveId || enclave.id,
+        targetProfessions: talk.professionId
+          ? [resolvedProf.id, talk.professionId]
+          : [resolvedProf.id],
+        isProfessionTiered: true,
+        author: {
+          id: `peer_vid_${talk.id}`,
+          name: talk.speaker || peerAuthor.name,
+          headline: `${talk.speakerTitle || talkLabel} · ${talkLabel}`,
+          avatar: peerAuthor.avatar,
+          connectionDegree: isPrimaryUserProf ? '1st' : '2nd',
+          isFollowing: isPrimaryUserProf
+        },
+        timestamp: `${Math.min(23, idx + 5)}h · 🌐`,
+        visibility: 'Public',
+        feedCategory: 'for_you',
+        feedSubCategory: talkLabel,
+        content: `🎥 ${talk.title}\n\n${talk.summary}`,
+        hashtags: talk.tags?.length ? talk.tags.slice(0, 4) : hashtags,
+        media: {
+          type: 'video',
+          url: `https://www.youtube.com/watch?v=${talk.youtubeId}`,
+          youtubeId: talk.youtubeId,
+          thumbnailUrl:
+            talk.thumbnailUrl ||
+            `https://i.ytimg.com/vi/${talk.youtubeId}/hqdefault.jpg`,
+          aspectRatio: '16/9',
+          title: talk.title,
+          domain: `${talkLabel.toUpperCase()} · PROFESSION VIDEO`,
+          duration: talk.duration || '5:05',
+          serialPlate: talk.serialPlate,
+          brandName: 'ConnectLn',
+          description: talk.summary,
+          takeaways: talk.takeaways
+        },
+        stats: {
+          likesCount: 140 + ((idx * 17) % 240),
+          commentsCount: 14 + ((idx * 5) % 35),
+          repostsCount: 18 + ((idx * 7) % 42),
+          reactionsBreakdown: {
+            like: 95 + ((idx * 11) % 140),
+            celebrate: 24,
+            support: 12,
+            love: 14,
+            insightful: 18,
+            funny: 0
+          }
+        },
+        userReaction: null,
+        isSaved: false,
+        comments: []
+      }
+    })
+
+  // ~99% playable profession videos on the Home feed, keeping only 1 quick reference guide card at the end
+  return [postVideo1, postVideo2, ...expandedProfessionVideoPosts, postPhotoGuide]
 }

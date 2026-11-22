@@ -67,8 +67,8 @@ import {
 import dynamic from "next/dynamic"
 import { UserProfile } from "@/lib/connectln-data"
 import { useLanguage } from "@/context/LanguageContext"
-import { ConnectInVideoWheel } from "@/components/connectln/ConnectInVideoWheel"
 import { ConnectLnStudioPlayer } from "@/components/connectln/ConnectLnStudioPlayer"
+import { HOME_TAB_EXCLUSIVE_YOUTUBE_IDS } from "@/lib/connectin-videos"
 import { SkilledTradesLearnByDoingSection } from "@/components/connectln/SkilledTradesLearnByDoingSection"
 import { SkilledTradesCategory } from "@/lib/skilled-trades-learn-by-doing-data"
 import {
@@ -1176,13 +1176,7 @@ export function LearningView({
         />
       )}
 
-      {/* Expedite Consults Educational Video Talk Wheel */}
-      <ConnectInVideoWheel
-        activeEnclaveId={user?.professionEnclave}
-        user={user}
-        title="The Wheel — Multi-Profession Masterclasses & Briefings"
-        subtitle="Curated trade apprenticeships, software architecture, healthcare, and verified field briefings across all disciplines."
-      />
+      {/* Career Learning Paths & Course Modules */}
 
       {/* ========================================================================= */}
       {/* MODE 1: CAREER LEARNING PATHS (e.g. Become a Cloud Security Engineer) */}
@@ -2301,18 +2295,21 @@ export function LearningView({
               {/* Live Course Video Player with 46-Language Noctis Simultaneous Interpretation */}
               <div className="rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-black aspect-video w-full">
                 <ConnectLnStudioPlayer
-                  youtubeId={
-                    selectedCourse.sourceVideoUrl?.match(
+                  youtubeId={(() => {
+                    const extracted = selectedCourse.sourceVideoUrl?.match(
                       /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([a-zA-Z0-9_-]{11})/
-                    )?.[1] ||
-                    (selectedCourse.category === "Cybersecurity"
+                    )?.[1]
+                    if (extracted && !HOME_TAB_EXCLUSIVE_YOUTUBE_IDS.has(extracted)) {
+                      return extracted
+                    }
+                    return selectedCourse.category === "Cybersecurity"
                       ? "inWWhr5tnEA"
                       : selectedCourse.category === "Cloud"
                       ? "3hLmDS179YE"
                       : selectedCourse.category === "AI"
-                      ? "aircAruvnKk"
-                      : "d3yH858ef7A")
-                  }
+                      ? "zGVM7myTE6E"
+                      : "d3yH858ef7A"
+                  })()}
                   title={selectedCourse.title}
                   serialPlate={`CLN-CRS-${selectedCourse.id.slice(0, 6).toUpperCase()}`}
                   speaker={selectedCourse.instructor.name}

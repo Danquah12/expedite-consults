@@ -11,7 +11,6 @@ import {
 import {
     ConnectLnMyPhoneNumberCard,
     ConnectLnWhatsAppCallModal,
-    COUNTRY_DIAL_CODES,
     buildInternationalPhone,
 } from './ConnectLnWhatsAppCallModal';
 
@@ -466,8 +465,8 @@ export function WhatsAppLeftIconRail({
     }> = [
         {
             id: 'chats',
-            label: 'ConnectLn Desk Notes & Mail',
-            shortLabel: 'Notes',
+            label: 'ConnectLn Inbox & Noctis AI',
+            shortLabel: 'Inbox',
             badge: unreadChatsCount > 0 ? unreadChatsCount : undefined,
             icon: (
                 /* ConnectLn Bespoke Editorial Folio & Sealed Envelope Emblem */
@@ -481,8 +480,8 @@ export function WhatsAppLeftIconRail({
         },
         {
             id: 'calls',
-            label: 'ConnectLn Studio Calls & Huddles',
-            shortLabel: 'Studio',
+            label: 'ConnectLn Voice & Video Calls',
+            shortLabel: 'Calls',
             icon: (
                 /* ConnectLn Bespoke Acoustic Wave & Studio Capsule Emblem (non-WhatsApp) */
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9}>
@@ -508,38 +507,6 @@ export function WhatsAppLeftIconRail({
                         strokeLinejoin="round"
                     />
                     <circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none" />
-                </svg>
-            ),
-        },
-        {
-            id: 'channels',
-            label: 'ConnectLn Pulse Broadcasts',
-            shortLabel: 'Pulse',
-            icon: (
-                /* ConnectLn Bespoke Broadcast Prism & Signal Beacon */
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9}>
-                    <polygon points="12 3 20 19 4 19" strokeLinejoin="round" />
-                    <circle cx="12" cy="13.5" r="1.8" fill="currentColor" stroke="none" />
-                    <path strokeLinecap="round" d="M8.5 7.5a5.5 5.5 0 0 1 7 0" />
-                </svg>
-            ),
-        },
-        {
-            id: 'communities',
-            label: 'ConnectLn Guilds & Communities',
-            shortLabel: 'Guilds',
-            icon: (
-                /* ConnectLn Bespoke Interlocking Hexagonal Guild Crest (replaces WhatsApp 3-person icon) */
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.85}>
-                    <polygon
-                        points="12 2.5 19.5 6.8 19.5 15.2 12 19.5 4.5 15.2 4.5 6.8"
-                        strokeLinejoin="round"
-                    />
-                    <polygon
-                        points="12 7 16 9.3 16 13.7 12 16 8 13.7 8 9.3"
-                        strokeLinejoin="round"
-                    />
-                    <circle cx="12" cy="11.5" r="1.5" fill="currentColor" stroke="none" />
                 </svg>
             ),
         },
@@ -685,9 +652,7 @@ export function WhatsAppModeWorkspace({
         }
     });
     const [callSearch, setCallSearch] = useState('');
-    const [showDialPadModal, setShowDialPadModal] = useState(true);
-    const [dialCountryCode, setDialCountryCode] = useState('+1');
-    const [dialInput, setDialInput] = useState('');
+    const callSearchInputRef = React.useRef<HTMLInputElement | null>(null);
     const [generatedCallLink, setGeneratedCallLink] = useState<string | null>(null);
     const [showAddFavoriteModal, setShowAddFavoriteModal] = useState(false);
     const [activeSoftphoneTarget, setActiveSoftphoneTarget] = useState<{
@@ -734,10 +699,10 @@ export function WhatsAppModeWorkspace({
     const resolveDialTarget = (raw: string): string => {
         const clean = raw.trim();
         if (!clean) return '';
-        if (clean.startsWith('@') || /[a-zA-Z]/.test(clean)) {
+        if (clean.startsWith('@') || clean.startsWith('+') || /[a-zA-Z]/.test(clean)) {
             return clean;
         }
-        return buildInternationalPhone(dialCountryCode, clean) || clean;
+        return buildInternationalPhone('+1', clean) || clean;
     };
 
     const launchWhatsAppDirectCall = (
@@ -1396,79 +1361,39 @@ export function WhatsAppModeWorkspace({
                                     </button>
                                 </form>
                             </div>
-
-                            {/* Quick Switch Strip of All 10 Status Videos */}
-                            <div className="bg-[#FBF8F3] border border-[#DDD3C2] rounded-xl p-2.5 flex items-center justify-between gap-2 overflow-x-auto">
-                                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-                                    {statusList.map((st) => {
-                                        const isCurrent = st.id === activeStatus.id;
-                                        return (
-                                            <button
-                                                key={st.id}
-                                                type="button"
-                                                onClick={() => handleOpenStatus(st)}
-                                                style={isCurrent ? { color: '#FBF8F3' } : undefined}
-                                                className={`rounded-lg px-2.5 py-1 text-[11px] font-bold flex items-center gap-1.5 shrink-0 cursor-pointer transition-all border ${
-                                                    isCurrent
-                                                        ? 'bg-[#7C4225] border-[#5E3119] text-[#FBF8F3]'
-                                                        : 'bg-[#EFE8DA] hover:bg-[#E5DEC9] border-[#DDD3C2] text-[#292521]'
-                                                }`}
-                                            >
-                                                <span>▶</span>
-                                                <span className="max-w-[110px] truncate">
-                                                    {st.authorName}
-                                                </span>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setActiveStatusId(null);
-                                        setStatusComposerMode('photo');
-                                    }}
-                                    style={{ color: '#FBF8F3' }}
-                                    className="rounded-lg bg-[#292521] hover:bg-[#1C1917] text-[#FBF8F3] px-3 py-1 text-[11px] font-bold shrink-0 cursor-pointer"
-                                >
-                                    + Post Video Status
-                                </button>
-                            </div>
                         </div>
                     ) : (
-                        /* Status Video Reels Gallery + Share Statuses Controls */
-                        <div className="w-full max-w-3xl my-auto space-y-5">
-                            <div className="bg-[#FBF8F3] border border-[#DDD3C2] rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xs">
-                                <div className="flex items-center gap-3.5">
-                                    <div className="w-12 h-12 rounded-2xl bg-[#EFE8DA] border border-[#D0C4AE] flex items-center justify-center text-[#7C4225] shrink-0">
-                                        <svg
-                                            className="w-6 h-6"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            strokeWidth={1.8}
-                                        >
-                                            <polygon
-                                                points="12 3.5 14.3 9.7 20.5 12 14.3 14.3 12 20.5 9.7 14.3 3.5 12 9.7 9.7"
-                                                strokeLinejoin="round"
-                                            />
-                                            <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none" />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <h3 className="text-base font-bold text-[#1C1917]">
-                                            24-Hour Status Video Reels
-                                        </h3>
-                                        <p className="text-xs text-[#57534E]">
-                                            Click any status video below to watch or share your own 24-hour video update.
-                                        </p>
-                                    </div>
+                        /* Single Clean Right Canvas for Sharing a 24h Status (no duplicate grid of left column list) */
+                        <div className="w-full max-w-xl my-auto">
+                            <div className="bg-[#FBF8F3] border border-[#DDD3C2] rounded-2xl p-6 flex flex-col items-center text-center gap-4 shadow-2xs">
+                                <div className="w-14 h-14 rounded-2xl bg-[#EFE8DA] border border-[#D0C4AE] flex items-center justify-center text-[#7C4225] shrink-0">
+                                    <svg
+                                        className="w-7 h-7"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth={1.8}
+                                    >
+                                        <polygon
+                                            points="12 3.5 14.3 9.7 20.5 12 14.3 14.3 12 20.5 9.7 14.3 3.5 12 9.7 9.7"
+                                            strokeLinejoin="round"
+                                        />
+                                        <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none" />
+                                    </svg>
                                 </div>
-                                <div className="flex items-center gap-2 shrink-0">
+                                <div className="space-y-1">
+                                    <h3 className="text-lg font-bold text-[#1C1917]">
+                                        24-Hour Member Status Updates
+                                    </h3>
+                                    <p className="text-xs text-[#57534E] max-w-md">
+                                        Select any member status on the left to watch or reply, or publish your own 24-hour text, photo, or video status.
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-2.5 flex-wrap justify-center">
                                     <button
                                         type="button"
                                         onClick={() => setStatusComposerMode('text')}
-                                        className="rounded-xl bg-[#EFE8DA] hover:bg-[#E2D9C8] border border-[#D0C4AE] text-[#5E3119] px-3.5 py-2 text-xs font-bold cursor-pointer transition-colors"
+                                        className="rounded-xl bg-[#EFE8DA] hover:bg-[#E2D9C8] border border-[#D0C4AE] text-[#5E3119] px-4 py-2 text-xs font-bold cursor-pointer transition-colors"
                                     >
                                         Text Status
                                     </button>
@@ -1476,66 +1401,11 @@ export function WhatsAppModeWorkspace({
                                         type="button"
                                         onClick={() => setStatusComposerMode('photo')}
                                         style={{ color: '#FBF8F3' }}
-                                        className="rounded-xl bg-[#7C4225] hover:bg-[#5E3119] text-[#FBF8F3] px-3.5 py-2 text-xs font-bold cursor-pointer transition-colors"
+                                        className="rounded-xl bg-[#7C4225] hover:bg-[#5E3119] text-[#FBF8F3] px-4 py-2 text-xs font-bold cursor-pointer transition-colors"
                                     >
                                         + Share Video Status
                                     </button>
                                 </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                                {statusList.slice(0, 6).map((st) => (
-                                    <div
-                                        key={st.id}
-                                        onClick={() => handleOpenStatus(st)}
-                                        className="rounded-xl border border-[#DDD3C2] bg-[#FBF8F3] overflow-hidden shadow-2xs hover:border-[#7C4225] hover:shadow-md transition-all cursor-pointer group"
-                                    >
-                                        <div className="relative h-32 bg-[#1C1917] overflow-hidden">
-                                            {st.videoUrl ? (
-                                                <video
-                                                    src={st.videoUrl}
-                                                    poster={st.imageUrl}
-                                                    muted
-                                                    loop
-                                                    playsInline
-                                                    onMouseEnter={(e) => e.currentTarget.play().catch(() => {})}
-                                                    onMouseLeave={(e) => {
-                                                        e.currentTarget.pause();
-                                                        e.currentTarget.currentTime = 0;
-                                                    }}
-                                                    className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform"
-                                                />
-                                            ) : (
-                                                <img
-                                                    src={st.imageUrl}
-                                                    alt={st.authorName}
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            )}
-                                            <span
-                                                style={{ color: '#FBF8F3' }}
-                                                className="absolute top-2 right-2 rounded-md bg-[#1C1917]/80 px-2 py-0.5 text-[10px] font-mono font-bold"
-                                            >
-                                                ▶ {st.videoDuration || '0:20'}
-                                            </span>
-                                        </div>
-                                        <div className="p-3 space-y-1">
-                                            <div className="flex items-center gap-2">
-                                                <img
-                                                    src={st.authorAvatar}
-                                                    alt={st.authorName}
-                                                    className="w-6 h-6 rounded-full object-cover border border-[#7C4225]"
-                                                />
-                                                <p className="text-xs font-bold text-[#1C1917] truncate">
-                                                    {st.authorName}
-                                                </p>
-                                            </div>
-                                            <p className="text-[11px] text-[#57534E] line-clamp-1">
-                                                {st.videoTitle || st.text}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
                             </div>
                         </div>
                     )}
@@ -1609,6 +1479,7 @@ export function WhatsAppModeWorkspace({
                         >
                             <div className="relative flex-1">
                                 <input
+                                    ref={callSearchInputRef}
                                     type="text"
                                     value={callSearch}
                                     onChange={(e) => setCallSearch(e.target.value)}
@@ -1803,9 +1674,8 @@ export function WhatsAppModeWorkspace({
                         <button
                             type="button"
                             onClick={() => {
-                                const typedTarget = dialInput.trim() || callSearch.trim();
+                                const typedTarget = callSearch.trim();
                                 if (typedTarget) {
-                                    setDialInput('');
                                     launchWhatsAppDirectCall(typedTarget, 'video');
                                 } else if (callLogs[0]?.name) {
                                     launchWhatsAppDirectCall(callLogs[0].name, 'video', callLogs[0].avatar);
@@ -1846,7 +1716,7 @@ export function WhatsAppModeWorkspace({
 
                         <button
                             type="button"
-                            onClick={() => setShowDialPadModal((prev) => !prev)}
+                            onClick={() => callSearchInputRef.current?.focus()}
                             className="flex flex-col items-center gap-2 group cursor-pointer"
                         >
                             <span className="w-12 h-12 rounded-2xl bg-[#EFE8DA] group-hover:bg-[#E2D9C8] border border-[#D0C4AE] text-[#5E3119] flex items-center justify-center shadow-2xs transition-colors">
@@ -1906,64 +1776,6 @@ export function WhatsAppModeWorkspace({
                                 Join Now
                             </button>
                         </div>
-                    )}
-
-                    {showDialPadModal && (
-                        <form
-                            onSubmit={(e) => {
-                                e.preventDefault();
-                                if (!dialInput.trim()) return;
-                                const rawVal = dialInput.trim();
-                                setDialInput('');
-                                void launchSmartVoiceCall(rawVal);
-                            }}
-                            className="mt-5 bg-[#FBF8F3] border border-[#E0D6C5] rounded-2xl p-3.5 shadow-md flex flex-wrap items-center gap-2 max-w-lg w-full"
-                        >
-                            <select
-                                value={dialCountryCode}
-                                onChange={(e) => setDialCountryCode(e.target.value)}
-                                className="max-w-[175px] border border-[#D0C4AE] bg-[#F8F4EC] rounded-lg px-2 py-1.5 text-xs font-semibold text-[#1C1917] focus:outline-none focus:border-[#7C4225]"
-                                title="International Country Code (215+ Countries)"
-                            >
-                                {COUNTRY_DIAL_CODES.map((c) => (
-                                    <option key={`dial-${c.iso}-${c.code}`} value={c.code}>
-                                        {c.label}
-                                    </option>
-                                ))}
-                            </select>
-                            <input
-                                type="tel"
-                                value={dialInput}
-                                onChange={(e) => setDialInput(e.target.value)}
-                                placeholder="Phone number or @username..."
-                                className="flex-1 min-w-[150px] border border-[#D0C4AE] bg-[#F8F4EC] rounded-lg px-3 py-1.5 text-xs text-[#1C1917] focus:outline-none focus:border-[#7C4225]"
-                            />
-                            <button
-                                type="submit"
-                                className="px-3 py-1.5 rounded-lg bg-[#7C4225] hover:bg-[#5E3119] text-xs font-bold cursor-pointer"
-                                style={{ color: '#FBF8F3' }}
-                                title="Direct ConnectLn Voice Call (auto-bridges carrier SIM if offline)"
-                            >
-                                📞 Call
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    const rawVal = dialInput.trim() || callLogs[0]?.name || '';
-                                    if (!rawVal) {
-                                        onStartLiveCall('video');
-                                        return;
-                                    }
-                                    setDialInput('');
-                                    launchWhatsAppDirectCall(rawVal, 'video');
-                                }}
-                                className="px-3 py-1.5 rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-xs font-bold cursor-pointer"
-                                style={{ color: '#FFFFFF' }}
-                                title="Direct WhatsApp-Style Video Call (Full-Screen Camera + Push Ringing)"
-                            >
-                                🎥 Video
-                            </button>
-                        </form>
                     )}
 
                     {/* WhatsApp-Style Direct WebRTC + Push Ringing Voice & Video Call Modal (fresh callId & state per call) */}

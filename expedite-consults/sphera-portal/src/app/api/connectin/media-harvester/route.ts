@@ -3,6 +3,7 @@ import {
   HarvesterDestination,
   computeHarvesterTelemetry,
   dedupeHarvestedItems,
+  normalizeExclusiveDestinations,
 } from "@/lib/connectin-media-harvester"
 import {
   getOrRunAdditive24HourVideoArchive,
@@ -86,11 +87,17 @@ export async function POST(req: NextRequest) {
         ...unseenFirst.slice(0, pullOffset),
       ]
 
-      const newlyPulled = rotated.slice(0, count).map((item) => ({
-        ...item,
-        destinations: Array.from(new Set([...item.destinations, ...requestedDestinations])),
-        pulledAtLabel: formatRelativePublishedLabel(item.pulledAtIso),
-      }))
+      const newlyPulled = rotated.slice(0, count).map((item) => {
+        const partitionedDests = normalizeExclusiveDestinations(item)
+        return {
+          ...item,
+          destinations:
+            partitionedDests.length > 0
+              ? partitionedDests
+              : requestedDestinations,
+          pulledAtLabel: formatRelativePublishedLabel(item.pulledAtIso),
+        }
+      })
 
       // Strictly additive: all existing archived videos remain intact
       const mergedAll = dedupeHarvestedItems([...newlyPulled, ...archive.items])

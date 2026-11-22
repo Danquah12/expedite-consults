@@ -463,13 +463,15 @@ export default function ConnectLnPage() {
   const [showHomeTradeFolders, setShowHomeTradeFolders] = useState(false)
   const [selectedHomeTradeFolder, setSelectedHomeTradeFolder] = useState<number>(1)
   const [visibleMyPostsCount, setVisibleMyPostsCount] = useState(4)
-  const [visibleStreamCount, setVisibleStreamCount] = useState(6)
+  const [visibleStreamCount, setVisibleStreamCount] = useState(12)
   const feedLoadMoreRef = React.useRef<HTMLDivElement | null>(null)
   const [showMobileCommunityDrawer, setShowMobileCommunityDrawer] = useState(false)
   const [showMobileSubFilters, setShowMobileSubFilters] = useState(true)
   const [hasHydrated, setHasHydrated] = useState(false)
   const [harvestedHomeItems, setHarvestedHomeItems] = useState<HarvestedMediaItem[]>(() =>
-    loadStoredHarvestedItems().filter((i) => Array.isArray(i.destinations) && i.destinations.includes("home"))
+    loadStoredHarvestedItems().filter(
+      (i) => i.kind === "video" && Array.isArray(i.destinations) && i.destinations.includes("home")
+    )
   )
   const [isSyncingFeedVideos, setIsSyncingFeedVideos] = useState(false)
   const [lastFeedVideoSyncNote, setLastFeedVideoSyncNote] = useState<string>("Auto-syncs every 15m")
@@ -562,7 +564,7 @@ export default function ConnectLnPage() {
         body: JSON.stringify({
           action: "pull_now",
           count: 6,
-          destinations: ["home", "jobs", "market", "media", "pulse"],
+          destinations: ["home"],
           excludeYoutubeIds: currentTopYtIds,
         }),
       })
@@ -571,7 +573,9 @@ export default function ConnectLnPage() {
         const pulled: HarvestedMediaItem[] = Array.isArray(data?.pulledItems) ? data.pulledItems : []
         const allServer: HarvestedMediaItem[] = Array.isArray(data?.telemetry?.items) ? data.telemetry.items : []
         const merged = saveStoredHarvestedItems([...pulled, ...allServer])
-        const homeOnly = merged.filter((i) => Array.isArray(i.destinations) && i.destinations.includes("home"))
+        const homeOnly = merged.filter(
+          (i) => i.kind === "video" && Array.isArray(i.destinations) && i.destinations.includes("home")
+        )
         setHarvestedHomeItems(homeOnly)
         lastLiveVideoSyncMsRef.current = Date.now()
         const timeLabel = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
@@ -590,7 +594,9 @@ export default function ConnectLnPage() {
     if (typeof window === "undefined") return
 
     const injectHarvestedHomeItemsIntoFeed = (allItems: HarvestedMediaItem[]) => {
-      const homeItems = allItems.filter((i) => Array.isArray(i.destinations) && i.destinations.includes("home"))
+      const homeItems = allItems.filter(
+        (i) => i.kind === "video" && Array.isArray(i.destinations) && i.destinations.includes("home")
+      )
       setHarvestedHomeItems(homeItems)
       if (homeItems.length === 0) return
 
@@ -2256,6 +2262,7 @@ export default function ConnectLnPage() {
     setUserData(updatedUser)
     saveStoredUser(updatedUser)
     setSelectedEnclaves([prof.enclaveId])
+    setPosts(loadStoredPosts(updatedUser))
   }
 
   const filteredPosts = combinedFeedPosts
@@ -2274,21 +2281,36 @@ export default function ConnectLnPage() {
         return false
       }
 
-      // 0. Strict Profession-First Feed + Followed Members: Show user's own posts, followed members' eligible public posts, and their profession's posts
+      // 0. Home Screen houses ~99% playable profession videos: keep user's own/followed posts + ALL profession video posts
       const isActiveProfTiered = Boolean(
         activeProfId &&
         (post.professionId === activeProfId || post.targetProfessions?.includes(activeProfId))
       )
+      const isPlayableVideoPost = post.media?.type === 'video'
+      const isProfessionCatalogVideo = Boolean(post.isProfessionTiered && isPlayableVideoPost)
       const isAllSelected = selectedEnclaves.includes('all') || selectedEnclaves.length >= PROFESSION_ENCLAVES.length
       if (!isAllSelected && activeFeedCategory === 'for_you' && !searchQuery && !selectedTagFilter) {
-        if (!isUserOwnPost && !isFollowedAuthor && !isActiveProfTiered) {
+        if (!isUserOwnPost && !isFollowedAuthor && !isActiveProfTiered && !isProfessionCatalogVideo) {
           return false
         }
-      } else if (!isAllSelected && !isUserOwnPost && !isFollowedAuthor && !isActiveProfTiered) {
+      } else if (!isAllSelected && !isUserOwnPost && !isFollowedAuthor && !isActiveProfTiered && !isProfessionCatalogVideo) {
         const postEnclave = post.professionEnclave || 'tech_software'
         if (postEnclave !== 'all' && !selectedEnclaves.includes(postEnclave)) {
           return false
         }
+      }
+
+      // On the default Home screen stream, keep ~99% playable videos (retain video posts + at most the single profession guide card; suppress legacy non-video static cards unless viewing Polls/Docs/Saved)
+      if (
+        activeFeedCategory === 'for_you' &&
+        feedTypeFilter === 'all' &&
+        !searchQuery &&
+        !selectedTagFilter &&
+        !isUserOwnPost &&
+        !isPlayableVideoPost &&
+        !post.id?.startsWith('post_prof_photo_guide_')
+      ) {
+        return false
       }
 
       // 1. Feed Stream Category
@@ -2343,11 +2365,12 @@ export default function ConnectLnPage() {
     })
     .sort((a, b) => {
       const score = (p: Post) => {
+        const isVideoBonus = p.media?.type === 'video' ? 15 : -10
         if (p.id?.startsWith('harvest_post_cln_custom_') || p.id?.startsWith('harvest_post_cln_live_')) {
-          return 30
+          return 30 + isVideoBonus
         }
         if (p.id?.startsWith('harvest_post_')) {
-          return 20
+          return 20 + isVideoBonus
         }
         if (
           p.isUserCreated ||
@@ -2359,12 +2382,16 @@ export default function ConnectLnPage() {
             !p.id.startsWith('post_prof_') &&
             p.id !== 'post_poll_1')
         ) {
-          return 10
+          return 12 + isVideoBonus
         }
-        if (activeProfId && (p.professionId === activeProfId || p.targetProfessions?.includes(activeProfId))) return 3
-        if (p.isProfessionTiered) return 2
-        if (userData?.professionEnclave && p.professionEnclave === userData.professionEnclave) return 1
-        return 0
+        if (activeProfId && (p.professionId === activeProfId || p.targetProfessions?.includes(activeProfId))) {
+          return 8 + isVideoBonus
+        }
+        if (userData?.professionEnclave && p.professionEnclave === userData.professionEnclave) {
+          return 6 + isVideoBonus
+        }
+        if (p.isProfessionTiered) return 4 + isVideoBonus
+        return isVideoBonus
       }
       return score(b) - score(a)
     })
@@ -2388,7 +2415,7 @@ export default function ConnectLnPage() {
   const remainingStreamPosts = communityFeedPosts.slice(3)
 
   useEffect(() => {
-    setVisibleStreamCount(6)
+    setVisibleStreamCount(12)
   }, [activeFeedCategory, activeFeedSubCategory, feedTypeFilter, selectedTagFilter, searchQuery, selectedEnclaves])
 
   useEffect(() => {
@@ -2398,7 +2425,7 @@ export default function ConnectLnPage() {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) {
-          setVisibleStreamCount((prev) => Math.min(remainingStreamPosts.length, prev + 8))
+          setVisibleStreamCount((prev) => Math.min(remainingStreamPosts.length, prev + 12))
         }
       },
       { rootMargin: '400px' }

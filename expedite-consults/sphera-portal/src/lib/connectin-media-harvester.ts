@@ -1,3 +1,5 @@
+import { HOME_TAB_EXCLUSIVE_YOUTUBE_IDS } from "./connectin-videos"
+
 export type HarvesterDestination = "home" | "jobs" | "market" | "media" | "pulse"
 
 export interface HarvestedMediaItem {
@@ -69,7 +71,7 @@ export interface HarvesterTelemetrySnapshot {
   items: HarvestedMediaItem[]
 }
 
-export const HARVESTER_STORAGE_KEY = "connectln_harvested_media_items_v4"
+export const HARVESTER_STORAGE_KEY = "connectln_harvested_media_items_v5"
 export const HARVESTER_AUTO_ENABLED_KEY = "connectln_harvester_auto_enabled_v1"
 export const HARVESTER_EVENT_NAME = "connectln-media-harvested"
 
@@ -953,6 +955,85 @@ export function getMinutesElapsedToday(now: Date = new Date()): number {
   return now.getHours() * 60 + now.getMinutes() + 1
 }
 
+/**
+ * Enforces single-destination video partitioning so Home owns ~99% of profession videos
+ * while Jobs, Market, Media, and Pulse each receive their own unique, non-repeated videos.
+ */
+export function normalizeExclusiveDestinations(params: {
+  id?: string
+  kind: "video" | "picture"
+  youtubeId?: string
+  videoUrl?: string
+  imageUrl?: string
+  destinations?: HarvesterDestination[]
+}): HarvesterDestination[] {
+  const { id = "", kind, youtubeId, videoUrl = "", imageUrl = "", destinations } = params
+
+  if (id.startsWith("cln_custom_") && Array.isArray(destinations) && destinations.length > 0) {
+    if (youtubeId && HOME_TAB_EXCLUSIVE_YOUTUBE_IDS.has(youtubeId)) {
+      return ["home"]
+    }
+    return destinations
+  }
+
+  if (kind === "video") {
+    if (id.startsWith("cln_live_") || (youtubeId && HOME_TAB_EXCLUSIVE_YOUTUBE_IDS.has(youtubeId))) {
+      return ["home"]
+    }
+    if (
+      videoUrl.includes("realtor.mp4") ||
+      videoUrl.includes("scenario_drill.mp4") ||
+      videoUrl.includes("run.mp4")
+    ) {
+      return ["jobs"]
+    }
+    if (
+      videoUrl.includes("agentic_flywheel.mp4") ||
+      videoUrl.includes("calc.mp4") ||
+      videoUrl.includes("bounce.mp4")
+    ) {
+      return ["market"]
+    }
+    if (
+      videoUrl.includes("k8s_ebpf.mp4") ||
+      videoUrl.includes("nasa_space.mp4") ||
+      videoUrl.includes("hallelujah_choir.mp4")
+    ) {
+      return ["media"]
+    }
+    if (
+      videoUrl.includes("spot.mp4") ||
+      videoUrl.includes("physician.mp4") ||
+      videoUrl.includes("developer.mp4")
+    ) {
+      return ["pulse"]
+    }
+    if (youtubeId) {
+      return ["home"]
+    }
+  }
+
+  if (
+    imageUrl.includes("semiconductor-cleanroom") ||
+    imageUrl.includes("trades-superintendent")
+  ) {
+    return ["jobs"]
+  }
+  if (imageUrl.includes("grc-governance")) {
+    return ["market"]
+  }
+  if (imageUrl.includes("ai-studies")) {
+    return ["media"]
+  }
+  if (imageUrl.includes("solar-microgrid")) {
+    return ["pulse"]
+  }
+
+  return Array.isArray(destinations) && destinations.length > 0
+    ? [destinations[0]]
+    : ["pulse"]
+}
+
 export function buildHarvestedItemForSlot(
   slot: number,
   offsetIndex: number = 0,
@@ -980,8 +1061,9 @@ export function buildHarvestedItemForSlot(
       ? `Pulled 1 min ago (${timeStr})`
       : `Pulled ${minsAgo} mins ago (${timeStr})`
 
+  const id = `cln_hv_${slot}_${templateIndex}_${tpl.kind}`
   return {
-    id: `cln_hv_${slot}_${templateIndex}_${tpl.kind}`,
+    id,
     serialNumber: `CLN-HV-${String((slot % 90000) + 10000)}`,
     kind: tpl.kind,
     title: tpl.title,
@@ -996,7 +1078,13 @@ export function buildHarvestedItemForSlot(
     enclaveId: tpl.enclaveId,
     category: tpl.category,
     duration: tpl.duration,
-    destinations: ["home", "jobs", "market", "media", "pulse"],
+    destinations: normalizeExclusiveDestinations({
+      id,
+      kind: tpl.kind,
+      youtubeId: tpl.youtubeId,
+      videoUrl: tpl.videoUrl,
+      imageUrl: tpl.imageUrl,
+    }),
     pulledAtIso: itemDate.toISOString(),
     pulledAtLabel,
     minuteSlot: slot,
@@ -1009,15 +1097,14 @@ export function buildHarvestedItemForSlot(
   }
 }
 
-export function getInitialDeterministicHarvestedItems(count: number = 14): HarvestedMediaItem[] {
+export function getInitialDeterministicHarvestedItems(
+  count: number = CONNECTLN_HARVESTER_TEMPLATES.length
+): HarvestedMediaItem[] {
   const currentSlot = getCurrentMinuteSlot()
   const items: HarvestedMediaItem[] = []
-  const newVideoPoolSize = 8 // First 8 templates are brand-new verified YouTube dispatches
-  for (let i = 0; i < count; i++) {
-    const tplIdx =
-      i < newVideoPoolSize
-        ? (currentSlot + i) % newVideoPoolSize
-        : newVideoPoolSize + ((currentSlot + i) % (CONNECTLN_HARVESTER_TEMPLATES.length - newVideoPoolSize))
+  const totalCount = Math.max(count, CONNECTLN_HARVESTER_TEMPLATES.length)
+  for (let i = 0; i < totalCount; i++) {
+    const tplIdx = i % CONNECTLN_HARVESTER_TEMPLATES.length
     items.push(buildHarvestedItemForSlot(currentSlot - i, 0, Date.now() - i * 60000, tplIdx))
   }
   return items
@@ -1064,18 +1151,21 @@ export function dedupeHarvestedItems(items: HarvestedMediaItem[]): HarvestedMedi
 
 export function loadStoredHarvestedItems(): HarvestedMediaItem[] {
   if (typeof window === "undefined") {
-    return dedupeHarvestedItems(getInitialDeterministicHarvestedItems(14))
+    return dedupeHarvestedItems(getInitialDeterministicHarvestedItems(CONNECTLN_HARVESTER_TEMPLATES.length))
   }
   try {
     const raw = window.localStorage.getItem(HARVESTER_STORAGE_KEY)
-    const legacyRaw = window.localStorage.getItem("connectln_harvested_media_items_v3")
     const parsed: HarvestedMediaItem[] = raw ? JSON.parse(raw) : []
-    const legacyParsed: HarvestedMediaItem[] = legacyRaw ? JSON.parse(legacyRaw) : []
-    const cleanedParsed = [...parsed, ...legacyParsed].filter((item) => Boolean(item && item.id))
-    const deterministic = getInitialDeterministicHarvestedItems(14)
-    return dedupeHarvestedItems([...cleanedParsed, ...deterministic]).slice(0, 500)
+    const normalizedParsed = parsed
+      .filter((item) => Boolean(item && item.id))
+      .map((item) => ({
+        ...item,
+        destinations: normalizeExclusiveDestinations(item),
+      }))
+    const deterministic = getInitialDeterministicHarvestedItems(CONNECTLN_HARVESTER_TEMPLATES.length)
+    return dedupeHarvestedItems([...normalizedParsed, ...deterministic]).slice(0, 500)
   } catch {
-    return dedupeHarvestedItems(getInitialDeterministicHarvestedItems(14))
+    return dedupeHarvestedItems(getInitialDeterministicHarvestedItems(CONNECTLN_HARVESTER_TEMPLATES.length))
   }
 }
 
@@ -1092,8 +1182,12 @@ export function saveStoredHarvestedItems(items: HarvestedMediaItem[]): Harvested
       // ignore
     }
   }
+  const normalizedIncoming = items.map((item) => ({
+    ...item,
+    destinations: normalizeExclusiveDestinations(item),
+  }))
   // Strictly additive: merge incoming items with all previously stored items (never deleting old videos)
-  const sorted = dedupeHarvestedItems([...items, ...existing]).slice(0, 500)
+  const sorted = dedupeHarvestedItems([...normalizedIncoming, ...existing]).slice(0, 500)
   if (typeof window !== "undefined") {
     try {
       window.localStorage.setItem(HARVESTER_STORAGE_KEY, JSON.stringify(sorted))
@@ -1112,9 +1206,15 @@ export function saveStoredHarvestedItems(items: HarvestedMediaItem[]): Harvested
 export function getStoredHarvestedItemsForDestination(
   destination: HarvesterDestination
 ): HarvestedMediaItem[] {
-  return loadStoredHarvestedItems().filter(
-    (item) => Array.isArray(item.destinations) && item.destinations.includes(destination)
-  )
+  return loadStoredHarvestedItems().filter((item) => {
+    const dests = normalizeExclusiveDestinations(item)
+    if (!dests.includes(destination)) return false
+    if (destination !== "home") {
+      if (dests.includes("home")) return false
+      if (item.youtubeId && HOME_TAB_EXCLUSIVE_YOUTUBE_IDS.has(item.youtubeId)) return false
+    }
+    return true
+  })
 }
 
 export function computeHarvesterTelemetry(items: HarvestedMediaItem[]): HarvesterTelemetrySnapshot {

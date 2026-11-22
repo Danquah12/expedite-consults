@@ -57,7 +57,7 @@ import {
   VideoTranscriptSegment
 } from "@/lib/connectin-media-data"
 import { UserProfile } from "@/lib/connectln-data"
-import { ConnectInVideoWheel } from "@/components/connectln/ConnectInVideoWheel"
+// Home Tab hosts The Wheel profession videos exclusively
 import { VideoShareBanner } from "@/components/connectln/VideoShareBanner"
 import { ConnectLnStudioPlayer, CONNECTLN_VIDEO_PLAY_EVENT, notifyExclusiveVideoPlay } from "@/components/connectln/ConnectLnStudioPlayer"
 import { registerViewportVideoSlot } from "@/lib/connectln-settings"
@@ -83,7 +83,8 @@ function convertHarvestedToMediaVideo(item: HarvestedMediaItem): MediaVideoItem 
     uploadTimeAgo: item.pulledAtLabel || "Synced just now",
     category: "Technical Walkthrough",
     thumbnail: item.imageUrl,
-    youtubeId: item.youtubeId || "Mw_EdvKBEc0",
+    videoUrl: item.videoUrl,
+    youtubeId: item.youtubeId,
     visibility: "Public",
     description: `${item.summary} (${item.serialNumber} · Synced from ConnectLn Admin Media Backend)`,
     likesCount: item.likesCount || 215,
@@ -443,14 +444,7 @@ export function MediaView({
         ))}
       </div>
 
-      {/* Expedite Consults Educational Video Talk Wheel */}
-      <ConnectInVideoWheel
-        activeEnclaveId={enclaveId}
-        user={currentUser}
-        title="The Wheel — Multi-Profession Masterclasses & Briefings"
-        subtitle="Curated Clinical Pharmacists, Physicians, Surgeons, ICU/ER Nurses, Medical Assistants/CNAs, Hospital Administrators, Trade Apprenticeships & Software Architecture."
-        onShareVideoToFeed={onShareVideoToFeed}
-      />
+      {/* Home Tab hosts The Wheel profession videos exclusively */}
 
       {/* Live Embedded Clinical, Pharmacy, Nursing, Medical Aide & Hospital Admin Reference Portals */}
       <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 p-4 text-white shadow-md">
@@ -525,12 +519,22 @@ export function MediaView({
               <div className="rounded-2xl border border-zinc-200 bg-white overflow-hidden shadow-md dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
                 {/* Video Player Display Container */}
                 <div ref={mediaStageRef} className="relative aspect-video w-full bg-slate-950 overflow-hidden group">
-                  {isPlaying && selectedVideo.youtubeId ? (
+                  {isPlaying && selectedVideo.videoUrl && !selectedVideo.youtubeId ? (
+                    <video
+                      key={`${selectedVideo.id}-${selectedVideo.videoUrl}`}
+                      src={selectedVideo.videoUrl}
+                      poster={selectedVideo.thumbnail}
+                      controls
+                      autoPlay
+                      playsInline
+                      className="h-full w-full object-cover bg-black"
+                    />
+                  ) : isPlaying && selectedVideo.youtubeId ? (
                     <>
                     <ConnectLnStudioPlayer
                       key={`${selectedVideo.id}-${selectedVideo.youtubeId}`}
                       youtubeId={selectedVideo.youtubeId}
-                      title={selectedVideo.title}
+                      title={selectedVideo?.title || ''}
                       serialPlate={`MEDIA-${selectedVideo.id.toUpperCase()}`}
                       speaker={selectedVideo.channelName}
                       durationLabel={selectedVideo.duration}
@@ -541,8 +545,8 @@ export function MediaView({
                       className="h-full w-full"
                     />
                     {false ? <iframe
-                      src={`https://www.youtube.com/embed/${selectedVideo.youtubeId}?autoplay=1&rel=0`}
-                      title={selectedVideo.title}
+                      src={`https://www.youtube.com/embed/${selectedVideo?.youtubeId || ''}?autoplay=1&rel=0`}
+                      title={selectedVideo?.title || ''}
                       className="h-full w-full border-0"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                       allowFullScreen
@@ -683,7 +687,7 @@ export function MediaView({
                                 speakerAvatar: selectedVideo.channelAvatar,
                                 duration: selectedVideo.duration,
                                 views: selectedVideo.views || '12.4K',
-                                youtubeId: 'L_Guz73e6fw',
+                                youtubeId: selectedVideo.youtubeId || '9vJRopau0g0',
                                 thumbnailUrl: selectedVideo.thumbnail,
                                 summary: selectedVideo.description || selectedVideo.title,
                                 takeaways: selectedVideo.chapters?.map((c) => `${c.timestamp} · ${c.title}`) || [selectedVideo.title],

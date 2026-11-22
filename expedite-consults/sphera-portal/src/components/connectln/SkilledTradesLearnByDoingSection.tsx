@@ -108,7 +108,7 @@ export function SkilledTradesLearnByDoingSection({
   const [expandedLessonId, setExpandedLessonId] = useState<string | null>(
     initialLessonId || SKILLED_TRADES_LEARN_BY_DOING_LESSONS[0]?.id || null
   )
-  const [homeVisibleLimit, setHomeVisibleLimit] = useState<number>(3)
+  const [homeVisibleLimit, setHomeVisibleLimit] = useState<number>(6)
   const [homeRotationOffset, setHomeRotationOffset] = useState<number>(0)
 
   // Rotate default Home trade lessons automatically every 15 minutes so the same 3 lessons don't repeat endlessly
@@ -1582,156 +1582,38 @@ export function SkilledTradesLearnByDoingSection({
                       </div>
                     )}
 
-                    {/* Video Player / Source Video Area (ConnectLn Studio Player) */}
-                    <div className="relative bg-slate-950">
-                      {isPlayingInline && displayYoutubeId ? (
-                        <div className="relative aspect-video w-full bg-black">
-                          <ConnectLnStudioPlayer
-                            key={`${lesson.id}-${displayYoutubeId}-${lesson6Variant}`}
-                            youtubeId={displayYoutubeId}
-                            title={displayTitle}
-                            serialPlate={`CLN-LBD${String(lesson.lessonNumber).padStart(2, '0')}`}
-                            speaker={instructorProfile.instructorName}
-                            speakerRole={displayCreator}
-                            speakerAvatarUrl={instructorProfile.avatarUrl}
-                            description={lesson.description}
-                            takeaways={lesson.skillsCovered}
-                            sourceLanguage={lesson.sourceLanguage}
-                            sourceLanguageLabel={lesson.sourceLanguageLabel}
-                            durationLabel={displayDuration || ""}
-                            autoPlay={autoPlayRequested}
-                            initialMuted={false}
-                            playerId={`lbd-player-${lesson.id}`}
-                            onExclusiveStop={() => setActiveVideoLessonId(null)}
-                            className="h-full w-full"
-                          />
+                    {/* Written Study Guide Header Banner (Home Tab exclusively hosts the trade videos so Learning never repeats Home videos) */}
+                    <div className="px-5 py-4 bg-gradient-to-r from-slate-900 via-slate-900 to-amber-950/90 text-white border-b border-zinc-200 dark:border-zinc-800 space-y-2">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <span className="rounded-full bg-amber-400 text-slate-950 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide inline-flex items-center gap-1">
+                          <BookOpen className="h-3 w-3" />
+                          Written Curriculum · Practice &amp; Mastery Quiz
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          {t.inLearningJourney && (
+                            <span className="rounded-full bg-sky-500/90 text-white px-2.5 py-0.5 text-[10px] font-bold">
+                              In Journey
+                            </span>
+                          )}
+                          {t.isCompleted && (
+                            <span className="rounded-full bg-emerald-500 text-slate-950 px-2.5 py-0.5 text-[10px] font-black flex items-center gap-1">
+                              <CheckCircle2 className="h-3 w-3" />
+                              Completed
+                            </span>
+                          )}
                         </div>
-                      ) : (
-                        <div className="relative h-52 sm:h-56 w-full overflow-hidden">
-                          <img
-                            src={displayThumbnailUrl}
-                            alt={displayTitle}
-                            className="h-full w-full object-cover opacity-80"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
-
-                          {/* Top-left Playability / Source Status Pill */}
-                          <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap">
-                            {canEmbed ? (
-                              <span className="rounded-full bg-emerald-500/90 text-slate-950 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide flex items-center gap-1 shadow-xs">
-                                <Play className="h-2.5 w-2.5 fill-slate-950" />
-                                ConnectLn Studio Player Ready
-                              </span>
-                            ) : playability === 'checking' ? (
-                              <span className="rounded-full bg-zinc-800/90 text-zinc-200 px-2.5 py-0.5 text-[10px] font-semibold">
-                                Checking video playback...
-                              </span>
-                            ) : (
-                              <span className="rounded-full bg-amber-500/95 text-slate-950 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide flex items-center gap-1 shadow-xs">
-                                <ExternalLink className="h-2.5 w-2.5" />
-                                Hosted on {displayCreator} ({displayCreatorDomain})
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Top-right User Progress Pill */}
-                          <div className="absolute top-3 right-3 flex items-center gap-1.5">
-                            {t.inLearningJourney && (
-                              <span className="rounded-full bg-sky-500/90 text-white px-2.5 py-0.5 text-[10px] font-bold">
-                                In Journey
-                              </span>
-                            )}
-                            {t.isCompleted && (
-                              <span className="rounded-full bg-emerald-500 text-slate-950 px-2.5 py-0.5 text-[10px] font-black flex items-center gap-1">
-                                <CheckCircle2 className="h-3 w-3" />
-                                Completed
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Center Watch / External Source Controls */}
-                          <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
-                            {canEmbed ? (
-                              <button
-                                type="button"
-                                onClick={() => handleWatchAction(lesson)}
-                                className="group rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 px-5 py-2.5 text-xs font-black shadow-lg flex items-center gap-2 cursor-pointer transition-transform hover:scale-105"
-                              >
-                                <Play className="h-4 w-4 fill-slate-950" />
-                                <span>Play in ConnectLn Player ({displayCreator})</span>
-                              </button>
-                            ) : (
-                              <div className="max-w-md rounded-xl bg-slate-950/90 border border-white/15 p-3.5 text-white space-y-2 backdrop-blur-md">
-                                <div className="flex items-center justify-center gap-1.5 text-amber-300 text-[11px] font-bold">
-                                  <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                                  <span>
-                                    {lesson.embedAvailable && playability === 'unavailable'
-                                      ? 'Source video is currently unavailable for inline playback'
-                                      : `Inline embedding unavailable for ${displayCreator}`}
-                                  </span>
-                                </div>
-                                <p className="text-[11px] text-zinc-300 leading-snug">
-                                  {lesson.embedAvailable && playability === 'unavailable'
-                                    ? 'This source video could not be loaded in the embedded player. Use the link below to watch directly on the original creator’s site.'
-                                    : lesson.embedUnavailableReason ||
-                                      `This video is hosted directly on ${displayCreator} (${displayCreatorDomain}). Open it on the original site below.`}
-                                </p>
-                                <div className="flex items-center justify-center gap-2 pt-0.5 flex-wrap">
-                                  <a
-                                    href={displaySourceUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    onClick={() => handleOutboundVideoClick(lesson, displayCreator)}
-                                    className="rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 px-4 py-1.5 text-xs font-black inline-flex items-center gap-1.5 transition-colors"
-                                  >
-                                    <span>Watch on original site ({displayCreator})</span>
-                                    <ExternalLink className="h-3.5 w-3.5" />
-                                  </a>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Bottom Title Overlay */}
-                          <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between gap-2">
-                            <div>
-                              <p className="text-[11px] font-bold text-amber-300">
-                                {displayVideoLabel} · Creator: {displayCreator}
-                              </p>
-                              <h3 className="text-base sm:text-lg font-black text-white leading-snug">
-                                {displayTitle}
-                              </h3>
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                      </div>
+                      <h3 className="text-base sm:text-lg font-black text-white leading-snug">
+                        {displayTitle}
+                      </h3>
+                      <p className="text-[11px] text-zinc-300 leading-relaxed">
+                        {displayVideoLabel} · Walkthrough video is featured exclusively on the ConnectLn Home Screen. Use the study notes, hands-on deliverable, and mastery quiz below in this Learning workspace.
+                      </p>
                     </div>
 
-                    {/* Primary Action Bar: Watch, Save, Add to Learning Journey, Watch on Original Site */}
+                    {/* Primary Action Bar: Save, Add to Learning Journey, Reference Guide */}
                     <div className="px-5 py-3 bg-zinc-50 dark:bg-zinc-800/60 border-b border-zinc-200/80 dark:border-zinc-800 flex items-center justify-between gap-2 flex-wrap">
                       <div className="flex items-center gap-2 flex-wrap">
-                        {canEmbed ? (
-                          <button
-                            type="button"
-                            onClick={() => handleWatchAction(lesson)}
-                            className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-3.5 py-1.5 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer transition-colors"
-                          >
-                            <Play className="h-3.5 w-3.5 fill-white" />
-                            <span>{isPlayingInline ? 'Playing Inline' : 'Watch'}</span>
-                          </button>
-                        ) : (
-                          <a
-                            href={displaySourceUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={() => handleOutboundVideoClick(lesson, displayCreator)}
-                            className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-3.5 py-1.5 text-xs font-bold inline-flex items-center gap-1.5 transition-colors"
-                          >
-                            <Play className="h-3.5 w-3.5 fill-white" />
-                            <span>Watch on original site</span>
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        )}
 
                         <button
                           type="button"
