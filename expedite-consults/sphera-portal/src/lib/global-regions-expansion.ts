@@ -1514,7 +1514,7 @@ export const EXPANSION_COUNTRIES: CountryConfig[] = [
     ]
   },
   {
-    "code": "AF",
+    "code": "AFG",
     "name": "Afghanistan",
     "flag": "🇦🇫",
     "languages": [
@@ -3117,7 +3117,7 @@ export const EXPANSION_SALARY_MULTIPLIERS: Record<string, number> = {
   "SK": 0.55,
   "SI": 0.78,
   "UA": 14,
-  "AF": 14,
+  "AFG": 14,
   "AM": 137,
   "AZ": 0.6,
   "BH": 0.32,

@@ -359,6 +359,11 @@ function mapAdminFolderJobToGlobalJob(item: HandymanAdminJobRecord, country: Cou
   const realHubs = country.hubs.filter((h) => h !== 'All Hubs')
   const assignedHub = realHubs.length > 0 ? realHubs[item.roleNumber % realHubs.length] : country.name
   const localizedLocation = country.code === 'US' ? item.location : `${assignedHub} (${country.name})`
+  const cleanHubName = assignedHub.split('(')[0].replace(/,/g, '').trim()
+  const localizedCompany =
+    country.code === 'US'
+      ? item.company
+      : `${cleanHubName} ${folderMeta?.folderName || 'Trade & Service'} Guild (${country.name})`
   return {
     id: `folder_sync_${country.code.toLowerCase()}_${item.id}`,
     countryCode: country.code,
@@ -367,7 +372,7 @@ function mapAdminFolderJobToGlobalJob(item: HandymanAdminJobRecord, country: Cou
     professionId: item.professionId,
     domainCategory: `${item.folderNumber}. ${item.folderName}`,
     title: item.title,
-    company: item.company,
+    company: localizedCompany,
     companyLogo: TRADE_ENCLAVE_LOGO[item.enclaveId] || TRADE_ENCLAVE_LOGO.trades_construction,
     location: localizedLocation,
     hub: country.code === 'US' ? 'All Hubs' : assignedHub,

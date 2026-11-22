@@ -536,7 +536,8 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const enclave = searchParams.get("enclave") || "all"
-    const country = searchParams.get("country") || "US"
+    const rawCountry = searchParams.get("country") || "US"
+    const country = rawCountry === "AFR" ? "AF" : rawCountry
     const hub = searchParams.get("hub") || "All Hubs"
     const domain = searchParams.get("domain") || "All"
     const pillar = searchParams.get("pillar") || "all"
@@ -550,9 +551,17 @@ export async function GET(request: Request) {
 
     // Fetch live public feeds + combine with custom posted jobs & country-localized multi-profession catalog
     const externalJobs = await fetchLiveExternalFeeds()
+    const countryExternalJobs =
+      country === "US"
+        ? externalJobs
+        : externalJobs.filter((j) =>
+            country === "AF"
+              ? ["AF", "AFR", "GH", "NG", "KE", "ZA", "EG"].includes(j.countryCode)
+              : j.countryCode === country
+          )
     let list = getLocalizedJobsForCountryAndEnclave(country, enclave, [
       ...customPostedJobs,
-      ...externalJobs
+      ...countryExternalJobs
     ])
 
     // Filter by specific Profession Definition if requested

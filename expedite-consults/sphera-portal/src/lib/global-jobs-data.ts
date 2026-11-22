@@ -110,8 +110,8 @@ const BASE_COUNTRIES_CONFIG: CountryConfig[] = [
     ]
   },
   {
-    code: 'AFR',
-    name: 'Africa (Pan-African Hubs)',
+    code: 'AF',
+    name: 'Africa',
     flag: '🌍',
     languages: ['English (Official)', 'French', 'Swahili', 'Arabic', 'Portuguese', 'Twi', 'Yoruba'],
     primaryLanguage: 'English / Pan-African',
@@ -4338,7 +4338,9 @@ export function getCountryShortLabel(country: CountryConfig): string {
   const map: Record<string, string> = {
     US: 'United States',
     AF: 'Africa',
-    GH: 'Africa',
+    AFR: 'Africa',
+    AFG: 'Afghanistan',
+    GH: 'Ghana',
     DE: 'Germany',
     GB: 'United Kingdom',
     CA: 'Canada',
@@ -4782,7 +4784,7 @@ const REGIONAL_EMPLOYERS_BY_COUNTRY: Record<string, Record<string, RegionalEmplo
       { company: 'Royal Bank of Canada (RBC) & Desjardins Cooperative', applyUrl: 'https://jobs.rbc.com/', source: 'RBC Careers' }
     ]
   },
-  AFR: {
+  AF: {
     trades_construction: [
       { company: 'WBHO Pan-Africa, Julius Berger & Consar Construction (Accra / Lagos / Johannesburg)', applyUrl: 'https://www.wbho.co.za/careers/', source: 'WBHO & Julius Berger Africa' },
       { company: 'Orascom Construction, CPS Africa & Devtraco MEP Engineering', applyUrl: 'https://orascom.com/careers/', source: 'Orascom & Devtraco Africa' }
@@ -4809,6 +4811,53 @@ const REGIONAL_EMPLOYERS_BY_COUNTRY: Record<string, Record<string, RegionalEmplo
     ],
     tech_cybersecurity: [
       { company: 'Flutterwave Security, Paystack (Stripe Africa), MTN Cyber Defense & Standard Bank SOC', applyUrl: 'https://flutterwave.com/careers', source: 'Pan-African Cyber & FinTech SOC' }
+    ],
+    tech_software: [
+      { company: 'Paystack, Flutterwave, Andela Pan-African Engineering & Hubtel Digital Systems', applyUrl: 'https://flutterwave.com/careers', source: 'Pan-African Software Guild' },
+      { company: 'M-KOPA, Cassava Technologies, Moniepoint & Interswitch Cloud Platforms', applyUrl: 'https://www.cassavatechnologies.com/', source: 'Africa Digital Engineering' }
+    ],
+    law_gov_defense: [
+      { company: 'ENSafrica, Bowmans & Bentsi-Enchill, Letsa & Ankomah Chambers (Accra / Johannesburg / Nairobi)', applyUrl: 'https://www.ensafrica.com/', source: 'Pan-African Legal Chambers' },
+      { company: 'Aluko & Oyebode (Lagos), Anjarwalla & Khanna (ALN Kenya) & Superior Commercial Courts', applyUrl: 'https://aln.africa/', source: 'ALN Africa Commercial Law' },
+      { company: 'Judicial Service Commercial High Court, Court of Appeal & Ministry of Justice Chambers', applyUrl: 'https://www.african-court.org/', source: 'African Judicial & Public Service' }
+    ],
+    finance_accounting: [
+      { company: 'Ecobank Transnational, Standard Bank Group, GCB Bank & Zenith Bank PLC', applyUrl: 'https://ecobank.com/', source: 'Pan-African Banking & Finance' },
+      { company: 'Equity Bank Kenya, KPMG Africa & PwC West/East/Southern Africa Advisory', applyUrl: 'https://equitygroupholdings.com/', source: 'Africa Audit & Capital Advisory' }
+    ],
+    education_workforce: [
+      { company: 'University of Ghana, University of Cape Town, Ashesi University & ALX Africa', applyUrl: 'https://www.ug.edu.gh/', source: 'African Universities & STEM Faculty' },
+      { company: 'COTVET / TVET National Vocational Institutes & African Technical Polytechnics', applyUrl: 'https://www.ashesi.edu.gh/', source: 'African Vocational & Polytechnics' }
+    ],
+    community_civic_security: [
+      { company: 'ECOWAS / AU Civic Resilience Directorate, National Fire & Ambulance Service & Africa Bridges Authority', applyUrl: 'https://au.int/', source: 'Africa Civic & Emergency Ops' }
+    ],
+    campus_students: [
+      { company: 'AIMS (African Institute for Mathematical Sciences), Ashesi & University Research Fellowships', applyUrl: 'https://nexteinstein.org/', source: 'Pan-African Graduate & STARs Hub' }
+    ],
+    commerce_small_business: [
+      { company: 'Shoprite Holdings, Jumia Pan-African Logistics, DHL Africa & CBRE Excellerate', applyUrl: 'https://www.shopriteholdings.co.za/', source: 'African Commerce & Supply Chain' }
+    ],
+    agriculture_natural_resources: [
+      { company: 'AGRA (Alliance for a Green Revolution in Africa), IITA, Cocoa Bod & Olam Agri Africa', applyUrl: 'https://agra.org/', source: 'African Agronomy & Forestry' }
+    ],
+    manufacturing_industrial: [
+      { company: 'Dangote Industrial Manufacturing, Sasol Chemical & Mechatronics & East African Breweries', applyUrl: 'https://www.dangote.com/', source: 'Africa Heavy Manufacturing' }
+    ],
+    culinary_hospitality_events: [
+      { company: 'Kempinski Gold Coast City, Radisson Blu Pan-Africa, Serena Hotels & Protea Marriott', applyUrl: 'https://careers.accor.com/', source: 'African Luxury Hospitality' }
+    ],
+    personal_services_wellness: [
+      { company: 'Virgin Active South Africa, Planet Fitness Africa & Nivea / Shear Elegance Wellness Studio', applyUrl: 'https://www.virginactive.co.za/', source: 'Africa Fitness & Personal Care' }
+    ],
+    creative_media_arts: [
+      { company: 'MultiChoice Studios, Canal+ Afrique, Trace TV & Pan-African Film & Set Guild', applyUrl: 'https://www.multichoice.com/', source: 'African Broadcast & Media Studios' }
+    ],
+    veterans_military: [
+      { company: 'Pan-African Veterans Transition Network, ECOWAS/SADC Maritime & Infrastructure Corps', applyUrl: 'https://au.int/', source: 'African Veterans & Security Transition' }
+    ],
+    franchise_networks: [
+      { company: 'Famous Brands (Debonairs / Steers / Fishaways), Chicken Inn / Simbisa & TotalEnergies Station Franchisees', applyUrl: 'https://famousbrands.co.za/', source: 'Pan-African Franchise Networks' }
     ]
   },
   GH: {
@@ -4835,11 +4884,25 @@ const REGIONAL_EMPLOYERS_BY_COUNTRY: Record<string, Record<string, RegionalEmplo
     ],
     automotive_mechanics: [
       { company: 'Toyota Ghana Company Ltd & Rana Motors EV/Fleet', applyUrl: 'https://www.toyotaghana.com/', source: 'Toyota Ghana Careers' }
+    ],
+    law_gov_defense: [
+      { company: 'Bentsi-Enchill, Letsa & Ankomah (BELA) & Judicial Service Commercial Court Accra', applyUrl: 'https://belonline.org/', source: 'Ghana Bar & Judiciary Chambers' },
+      { company: 'ENSafrica Ghana, JLD & MB Legal Consultancy & Office of the Attorney-General', applyUrl: 'https://www.ensafrica.com/', source: 'Accra Commercial Law Chambers' }
+    ],
+    finance_accounting: [
+      { company: 'GCB Bank PLC, Ecobank Ghana, Bank of Ghana & KPMG Ghana', applyUrl: 'https://www.gcbbank.com.gh/', source: 'Ghana Banking & Advisory' }
+    ],
+    tech_software: [
+      { company: 'Hubtel Ghana, ExpressPay, MTN MoMo Digital & Meltwater Entrepreneurial School (MEST)', applyUrl: 'https://hubtel.com/', source: 'Accra Software & FinTech' }
+    ],
+    tech_cybersecurity: [
+      { company: 'Cyber Security Authority (CSA Ghana), Bank of Ghana SOC & Paystack Ghana SecOps', applyUrl: 'https://www.csa.gov.gh/', source: 'CSA & FinTech Security Ghana' }
     ]
   }
 }
 
 const DEFAULT_COUNTRY_CORPORATIONS: Record<string, { prefix: string; url: string }> = {
+  AF: { prefix: 'MTN Group / Dangote / Safaricom / WBHO / Ethiopian Airlines / Ecobank Pan-Africa', url: 'https://www.mtn.com/careers/' },
   AFR: { prefix: 'MTN Group / Dangote / Safaricom / WBHO / Ethiopian Airlines / Ecobank Pan-Africa', url: 'https://www.mtn.com/careers/' },
   GH: { prefix: 'MTN Ghana / VRA / Nyaho Medical / Devtraco / Tema Port Ghana', url: 'https://nyahomedical.com/careers/' },
   JP: { prefix: 'Mitsubishi / Sony / Kajima Corporation Japan', url: 'https://www.sony.com/en/SonyInfo/Careers/' },
@@ -4897,7 +4960,7 @@ function resolveEffectiveCountryForLocation(
   country: CountryConfig,
   hubOrLocation?: string
 ): CountryConfig {
-  if (country.code !== 'AFR') return country
+  if (country.code !== 'AF' && country.code !== 'AFR') return country
   const text = (hubOrLocation || '').toLowerCase()
   const pickCode =
     text.includes('lagos') || text.includes('abuja') || text.includes('nigeria') || text.includes('ibadan')
@@ -4993,6 +5056,69 @@ const ENCLAVE_AVATAR_MAP: Record<string, string> = {
   franchise_networks: 'https://images.unsplash.com/photo-1556740738-b6a63e27c4df?w=100&auto=format&fit=crop&q=80'
 }
 
+const AFRICAN_REGION_CODES = new Set([
+  'AF', 'AFR', 'GH', 'NG', 'KE', 'ZA', 'EG', 'MA', 'RW', 'ET', 'TZ', 'UG', 'CI', 'SN', 'CM'
+])
+
+function getNonUsRegionalEmployer(
+  country: CountryConfig,
+  enclaveId: string,
+  categoryName: string,
+  idx: number
+): RegionalEmployerSpec {
+  const explicitList = REGIONAL_EMPLOYERS_BY_COUNTRY[country.code]?.[enclaveId]
+  if (explicitList && explicitList.length > 0) {
+    return explicitList[idx % explicitList.length]
+  }
+  if (AFRICAN_REGION_CODES.has(country.code)) {
+    const africanList = REGIONAL_EMPLOYERS_BY_COUNTRY.AF?.[enclaveId]
+    if (africanList && africanList.length > 0) {
+      return africanList[idx % africanList.length]
+    }
+  }
+  const fallbackCorp = DEFAULT_COUNTRY_CORPORATIONS[country.code]
+  if (fallbackCorp) {
+    const pieces = fallbackCorp.prefix.split('/').map(s => s.trim()).filter(Boolean)
+    const piece = pieces[idx % Math.max(1, pieces.length)] || country.name
+    return {
+      company: `${piece} — ${categoryName} (${country.name})`,
+      applyUrl: fallbackCorp.url,
+      source: `${country.name} Verified Employer Portal`
+    }
+  }
+  return {
+    company: `${country.name} ${categoryName} & Enterprise Directorate`,
+    applyUrl: 'https://www.connectln.app/connectin',
+    source: `${country.name} Verified Employer Portal`
+  }
+}
+
+function localizeTextForNonUsCountry(text: string, country: CountryConfig): string {
+  if (!text || country.code === 'US') return text
+  return text
+    .replace(/U\.S\. Federal Judiciary\s*\/\s*State Supreme & Superior Courts/gi, `Superior Courts of Judicature & High Court (${country.name})`)
+    .replace(/U\.S\. Federal Judiciary/gi, `${country.name} Superior Court & Commercial Judiciary`)
+    .replace(/U\.S\. Magistrate Judge/gi, 'High Court Magistrate')
+    .replace(/U\.S\. District Courts and Circuit Courts of Appeals/gi, 'High Courts, Commercial Courts, and Courts of Appeal')
+    .replace(/U\.S\. District Courts/gi, 'High Courts & Commercial Courts')
+    .replace(/U\.S\. Department of Justice \(DOJ\)/gi, `${country.name} Ministry of Justice & Attorney-General Chambers`)
+    .replace(/Assistant U\.S\. Attorney \(AUSA\)/gi, `${country.name} State Prosecutor`)
+    .replace(/U\.S\. Supreme Court|US Supreme Court/gi, 'Supreme Court & Court of Appeal')
+    .replace(/State Supreme & Superior Courts/gi, 'Supreme Court & High Court Chambers')
+    .replace(/U\.S\. Courts/gi, `${country.name} Judicial Service`)
+    .replace(/Federal GS & Judiciary Admin/gi, 'Judicial Service & Public Sector Admin')
+    .replace(/USAJOBS Federal/gi, `${country.name} Public Service`)
+    .replace(/USAJOBS/gi, `${country.name} Public Service Portal`)
+    .replace(/DoD SkillBridge/gi, 'Armed Forces Career Transition')
+    .replace(/DoD RMF/gi, 'National Defense Cyber & Compliance RMF')
+    .replace(/Active State Bar Admission \(JD \/ Esq\.\)/gi, `Active Bar & Legal Practice License (${country.name})`)
+    .replace(/42 U\.S\.C\. § 1983/gi, 'Constitutional & Fundamental Human Rights')
+    .replace(/USCIS \/ EOIR/gi, `${country.name} Immigration Directorate`)
+    .replace(/USCIS Visa Priority/gi, 'Work Permit & Visa Priority')
+    .replace(/\bU\.S\. /g, `${country.name} `)
+    .replace(/\bUS Remote\b/g, `${country.name} Remote`)
+}
+
 /**
  * Generates 4 distinct, localized real-world job openings for any ProfessionDefinition in a target CountryConfig
  * so that EVERY SINGLE PROFESSION across all 20 enclaves and 42 categories has multiple active openings at top employers.
@@ -5004,12 +5130,7 @@ function buildJobsForProfessionInCountry(
 ): GlobalJobItem[] {
   const realHubs = country.hubs.filter(h => h !== 'All Hubs')
   const enc = prof.enclaveId
-  const countryEmployerList =
-    country.code === 'US'
-      ? US_EMPLOYERS_BY_ENCLAVE[enc]
-      : REGIONAL_EMPLOYERS_BY_COUNTRY[country.code]?.[enc] || US_EMPLOYERS_BY_ENCLAVE[enc]
-
-  const fallbackCorp = DEFAULT_COUNTRY_CORPORATIONS[country.code]
+  const usEmployerList = country.code === 'US' ? US_EMPLOYERS_BY_ENCLAVE[enc] : null
   const toolNames = (prof.tools || []).map(t => t.name)
   const topSkills = (prof.typicalSkills || []).slice(0, 4)
 
@@ -5099,27 +5220,13 @@ function buildJobsForProfessionInCountry(
       : 'On-site'
 
     const chosenEmployer =
-      countryEmployerList && countryEmployerList.length > 0
-        ? countryEmployerList[(idx + tierIdx * 2) % countryEmployerList.length]
-        : null
+      country.code === 'US' && usEmployerList && usEmployerList.length > 0
+        ? usEmployerList[(idx + tierIdx * 2) % usEmployerList.length]
+        : getNonUsRegionalEmployer(country, enc, prof.categoryName, idx + tierIdx * 2)
 
-    const companyName = chosenEmployer
-      ? country.code === 'US' || (REGIONAL_EMPLOYERS_BY_COUNTRY[country.code]?.[enc]?.length ?? 0) > 0
-        ? chosenEmployer.company
-        : `${chosenEmployer.company} (${country.name} Operations)`
-      : fallbackCorp
-      ? `${fallbackCorp.prefix.split('/')[(idx + tierIdx) % fallbackCorp.prefix.split('/').length].trim()} — ${prof.categoryName}`
-      : `${prof.categoryName} Employers & Training Providers (${country.name})`
-
-    const applyUrl = chosenEmployer
-      ? chosenEmployer.applyUrl
-      : fallbackCorp
-      ? fallbackCorp.url
-      : 'https://www.connectln.app/connectin'
-
-    const source = chosenEmployer
-      ? chosenEmployer.source
-      : `${country.name} Verified Employer Portal`
+    const companyName = chosenEmployer.company
+    const applyUrl = chosenEmployer.applyUrl
+    const source = chosenEmployer.source
 
     return {
       id: `${country.code.toLowerCase()}_prof_${prof.id}_${tier.tierKey}`,
@@ -5128,7 +5235,7 @@ function buildJobsForProfessionInCountry(
       professionEnclave: prof.enclaveId,
       professionId: prof.id,
       domainCategory: prof.categoryName || 'Recommended',
-      title: tier.titleFormat(hubShort),
+      title: localizeTextForNonUsCountry(tier.titleFormat(hubShort), country),
       company: companyName,
       companyLogo: ENCLAVE_AVATAR_MAP[enc] || ENCLAVE_AVATAR_MAP.trades_construction,
       location: `${hub} (${workplace})`,
@@ -5144,9 +5251,12 @@ function buildJobsForProfessionInCountry(
         toolNames[tierIdx % Math.max(1, toolNames.length)] || `${prof.categoryName} Field Equipment`,
         topSkills.slice(0, 2).join(' & ') || 'Verified Practical Competency'
       ],
-      description: `${tier.descPrefix} in ${hub}, ${country.name}. ${prof.defaultHeadline}. Key operational tools include ${toolNames.slice(0, 2).join(', ') || prof.categoryName}. Candidates with verified tickets, peer vouches, clinical/trade licenses, or practical work portfolios are fast-tracked to interview.`,
+      description: localizeTextForNonUsCountry(
+        `${tier.descPrefix} in ${hub}, ${country.name}. ${prof.defaultHeadline}. Key operational tools include ${toolNames.slice(0, 2).join(', ') || prof.categoryName}. Candidates with verified tickets, peer vouches, clinical/trade licenses, or practical work portfolios are fast-tracked to interview.`,
+        country
+      ),
       requirements: [
-        ...topSkills.map(s => `Verified practical competency in ${s}`),
+        ...topSkills.map(s => localizeTextForNonUsCountry(`Verified practical competency in ${s}`, country)),
         `Hands-on portfolio, trade license, or field verification in ${prof.categoryName}`
       ],
       languageRequirement:
@@ -5168,7 +5278,7 @@ function buildJobsForProfessionInCountry(
 }
 
 /**
- * Returns real, country-accurate jobs for ANY of the 26 countries and 20 profession enclaves,
+ * Returns real, country-accurate jobs for ANY of the 197 regions and 22 profession enclaves,
  * AND guarantees that EVERY SINGLE PROFESSION in ALL_PROFESSIONS has multiple real listed jobs in that region!
  */
 export function getLocalizedJobsForCountryAndEnclave(
@@ -5176,7 +5286,8 @@ export function getLocalizedJobsForCountryAndEnclave(
   enclaveId: string = 'all',
   extraJobs: GlobalJobItem[] = []
 ): GlobalJobItem[] {
-  const country = COUNTRIES_CONFIG.find(c => c.code === countryCode) || COUNTRIES_CONFIG[0]
+  const normalizedCode = countryCode === 'AFR' ? 'AF' : countryCode
+  const country = COUNTRIES_CONFIG.find(c => c.code === normalizedCode) || COUNTRIES_CONFIG[0]
   const realHubs = country.hubs.filter(h => h !== 'All Hubs')
 
   const allExplicit = [...extraJobs, ...GLOBAL_JOBS_CATALOG]
@@ -5185,7 +5296,7 @@ export function getLocalizedJobsForCountryAndEnclave(
   const directCountryMatches = allExplicit
     .filter(j => {
       const countryMatch =
-        country.code === 'AFR'
+        country.code === 'AF'
           ? ['AFR', 'AF', 'GH', 'NG', 'KE', 'ZA', 'EG'].includes(j.countryCode)
           : j.countryCode === country.code
       const enclaveMatch = !enclaveId || enclaveId === 'all' || j.professionEnclave === enclaveId
@@ -5207,52 +5318,43 @@ export function getLocalizedJobsForCountryAndEnclave(
 
     localizedFromTemplates = baseTemplates.map((tmpl, idx) => {
       const enc = tmpl.professionEnclave || 'trades_construction'
-      const countryEmployerList = REGIONAL_EMPLOYERS_BY_COUNTRY[country.code]?.[enc]
-      const chosenEmployer =
-        countryEmployerList && countryEmployerList.length > 0
-          ? countryEmployerList[idx % countryEmployerList.length]
-          : null
-
-      const fallbackCorp = DEFAULT_COUNTRY_CORPORATIONS[country.code]
+      const chosenEmployer = getNonUsRegionalEmployer(
+        country,
+        enc,
+        tmpl.domainCategory || 'Operations',
+        idx
+      )
       const hub = realHubs.length > 0 ? realHubs[idx % realHubs.length] : country.name
       const isRemoteHub = hub.toLowerCase().includes('remote')
       const workplace: 'Remote' | 'Hybrid' | 'On-site' = isRemoteHub ? 'Remote' : tmpl.workplaceType
-
-      const companyName = chosenEmployer
-        ? chosenEmployer.company
-        : fallbackCorp
-        ? `${tmpl.company.split('—')[0].trim()} (${country.name} Division)`
-        : `${tmpl.company.split('—')[0].trim()} ${country.name}`
-
-      const applyUrl = chosenEmployer
-        ? chosenEmployer.applyUrl
-        : fallbackCorp
-        ? fallbackCorp.url
-        : tmpl.applyUrl
-
-      const source = chosenEmployer
-        ? chosenEmployer.source
-        : `${country.name} Direct Employer Portal`
 
       return {
         ...tmpl,
         id: `${country.code.toLowerCase()}_${tmpl.id}`,
         countryCode: country.code,
         countryName: country.name,
-        company: companyName,
+        title: localizeTextForNonUsCountry(tmpl.title, country),
+        company: chosenEmployer.company,
         location: `${hub} (${workplace})`,
         hub,
         workplaceType: workplace,
         salaryRange: convertUsdSalaryToCountry(tmpl.salaryRange, country, hub),
+        description: localizeTextForNonUsCountry(tmpl.description, country),
+        requirements: (tmpl.requirements || []).map(r => localizeTextForNonUsCountry(r, country)),
+        requiredProductExperience: (tmpl.requiredProductExperience || []).map(r =>
+          localizeTextForNonUsCountry(r, country)
+        ),
         languageRequirement:
           country.languages.length > 1
             ? `${country.languages[0]} & ${country.languages[1]}`
             : country.primaryLanguage,
-        applyUrl,
-        source,
+        applyUrl: chosenEmployer.applyUrl,
+        source: chosenEmployer.source,
         tags: [
           hub.split(' ')[0].replace(/[,()]/g, ''),
-          ...tmpl.tags.filter(t => !['Austin', 'Seattle', 'Boston', 'New York', 'San Francisco', 'US Remote', 'DC Metro'].includes(t))
+          ...tmpl.tags
+            .filter(t => !['Austin', 'Seattle', 'Boston', 'New York', 'San Francisco', 'US Remote', 'DC Metro'].includes(t))
+            .map(t => localizeTextForNonUsCountry(t, country))
         ]
       }
     })
@@ -5302,18 +5404,29 @@ export function getLocalizedJobsForCountryAndEnclave(
   const dailyScheduledJobs = getAccumulatedDailyJobs()
     .filter(j => !enclaveId || enclaveId === 'all' || j.professionEnclave === enclaveId)
     .map((j, idx) => {
+      if (country.code === 'US') return j
       const assignedHub = realHubs[idx % Math.max(1, realHubs.length)] || country.name
-      return country.code === 'US'
-        ? j
-        : {
-            ...j,
-            id: `${country.code.toLowerCase()}_${j.id}`,
-            countryCode: country.code,
-            countryName: country.name,
-            location: `${assignedHub} (${j.workplaceType})`,
-            hub: assignedHub,
-            salaryRange: convertUsdSalaryToCountry(j.salaryRange, country, assignedHub),
-          }
+      const regionalEmployer = getNonUsRegionalEmployer(
+        country,
+        j.professionEnclave || 'trades_construction',
+        j.domainCategory || 'Verified Operations',
+        idx
+      )
+      return {
+        ...j,
+        id: `${country.code.toLowerCase()}_${j.id}`,
+        countryCode: country.code,
+        countryName: country.name,
+        title: localizeTextForNonUsCountry(j.title, country),
+        company: regionalEmployer.company,
+        location: `${assignedHub} (${j.workplaceType})`,
+        hub: assignedHub,
+        salaryRange: convertUsdSalaryToCountry(j.salaryRange, country, assignedHub),
+        description: localizeTextForNonUsCountry(j.description, country),
+        requirements: (j.requirements || []).map(r => localizeTextForNonUsCountry(r, country)),
+        applyUrl: regionalEmployer.applyUrl,
+        source: regionalEmployer.source,
+      }
     })
 
   const seenIds = new Set<string>()

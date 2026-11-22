@@ -1212,16 +1212,20 @@ export function applyLivePageTranslation(lang: LanguageCode) {
     if (shouldSkipElement(el)) return
     const currentPlaceholder = el.getAttribute("placeholder") || ""
     const canonicalCurrent = toCanonicalEnglish(currentPlaceholder)
+    const isPlaceholderForeign =
+      canonicalCurrent !== currentPlaceholder ||
+      containsForeignScriptOrKnownTranslation(currentPlaceholder)
     const existingOrig = originalPlaceholderMap.get(el)
     const canonicalExisting = existingOrig ? toCanonicalEnglish(existingOrig) : ""
-    const bestEn =
-      canonicalExisting && !containsForeignScriptOrKnownTranslation(canonicalExisting)
-        ? canonicalExisting
-        : canonicalCurrent
+    const bestEn = !isPlaceholderForeign
+      ? currentPlaceholder
+      : canonicalExisting && !containsForeignScriptOrKnownTranslation(canonicalExisting)
+      ? canonicalExisting
+      : canonicalCurrent
     originalPlaceholderMap.set(el, bestEn)
 
     if (lang === "en") {
-      if (currentPlaceholder !== bestEn) {
+      if (isPlaceholderForeign && currentPlaceholder !== bestEn) {
         el.setAttribute("placeholder", bestEn)
       }
       return
@@ -1261,32 +1265,37 @@ export function applyLivePageTranslation(lang: LanguageCode) {
   while (currentNode) {
     const currentVal = currentNode.nodeValue || ""
     const canonicalCurrent = toCanonicalEnglish(currentVal)
+    const isNodeForeign =
+      canonicalCurrent !== currentVal || containsForeignScriptOrKnownTranslation(currentVal)
     const existingOrig = originalTextMap.get(currentNode)
     const canonicalExisting = existingOrig ? toCanonicalEnglish(existingOrig) : ""
 
-    // Pick the cleanest English baseline between canonicalExisting and canonicalCurrent
-    const origVal =
-      canonicalExisting && !containsForeignScriptOrKnownTranslation(canonicalExisting)
-        ? canonicalExisting
-        : canonicalCurrent
+    // Pick fresh English text whenever React updates a DOM node; only recover baseline when foreign text is present
+    const origVal = !isNodeForeign
+      ? currentVal
+      : canonicalExisting && !containsForeignScriptOrKnownTranslation(canonicalExisting)
+      ? canonicalExisting
+      : canonicalCurrent
     originalTextMap.set(currentNode, origVal)
     const origTrimmed = origVal.trim()
 
     if (lang === "en") {
-      if (canonicalCurrent !== currentVal) {
-        // Direct match in reverseTranslatedToEnglishMap (e.g. "首页" -> "Home", "Demander à Noctis" -> "Ask Noctis")
-        currentNode.nodeValue = canonicalCurrent
-        originalTextMap.set(currentNode, canonicalCurrent)
-      } else if (!containsForeignScriptOrKnownTranslation(origVal) && currentNode.nodeValue !== origVal) {
-        currentNode.nodeValue = origVal
-      } else if (containsForeignScriptOrKnownTranslation(currentNode.nodeValue || "")) {
-        // Still foreign — queue for automatic English recovery via /api/connectin/translate (sl=auto&tl=en)
-        const foreignTrimmed = (currentNode.nodeValue || "").trim()
-        if (foreignTrimmed.length >= 2 && foreignTrimmed.length <= 420) {
-          if (!pendingQueue.has(foreignTrimmed)) {
-            pendingQueue.set(foreignTrimmed, new Set())
+      if (isNodeForeign) {
+        if (canonicalCurrent !== currentVal) {
+          // Direct match in reverseTranslatedToEnglishMap (e.g. "首页" -> "Home", "Demander à Noctis" -> "Ask Noctis")
+          currentNode.nodeValue = canonicalCurrent
+          originalTextMap.set(currentNode, canonicalCurrent)
+        } else if (!containsForeignScriptOrKnownTranslation(origVal) && currentNode.nodeValue !== origVal) {
+          currentNode.nodeValue = origVal
+        } else {
+          // Still foreign — queue for automatic English recovery via /api/connectin/translate (sl=auto&tl=en)
+          const foreignTrimmed = currentVal.trim()
+          if (foreignTrimmed.length >= 2 && foreignTrimmed.length <= 420) {
+            if (!pendingQueue.has(foreignTrimmed)) {
+              pendingQueue.set(foreignTrimmed, new Set())
+            }
+            pendingQueue.get(foreignTrimmed)!.add(currentNode)
           }
-          pendingQueue.get(foreignTrimmed)!.add(currentNode)
         }
       }
     } else {
