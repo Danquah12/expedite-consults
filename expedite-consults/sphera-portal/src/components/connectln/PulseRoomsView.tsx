@@ -412,10 +412,10 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
       })
     }, 1000)
 
-    // Rotate live breaking wire ticker every 6 seconds
+    // Rotate live breaking wire ticker every 10 seconds for comfortable reading
     const tickerTimer = setInterval(() => {
       setTickerIndex((prev) => prev + 1)
-    }, 6000)
+    }, 10000)
 
     // Re-sync immediately when user returns to browser tab
     const handleVisibilityOrFocus = () => {

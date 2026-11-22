@@ -312,7 +312,7 @@ export function useLiveCveIntelStream() {
     const syncTimer = setInterval(syncLiveCves, 45000)
     const tickTimer = setInterval(() => {
       setStreamIndex((prev) => prev + 1)
-    }, 4500)
+    }, 9000)
     return () => {
       clearInterval(syncTimer)
       clearInterval(tickTimer)

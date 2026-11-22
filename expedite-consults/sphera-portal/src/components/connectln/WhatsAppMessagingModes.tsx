@@ -1252,7 +1252,7 @@ export function WhatsAppModeWorkspace({
         setActiveVideoTiming({ currentSec: 0, durationSec: 0 });
     }, [topActiveStatusBox?.userId, topActiveSlideId, statusReplayNonce]);
 
-    // Effect 1: Auto-advance Picture & Info status slides (5.5s per item) until end of selected user's box
+    // Effect 1: Auto-advance Picture (10s) & Info (12s) status slides so users can read & enjoy comfortably (videos still play full duration until onEnded)
     useEffect(() => {
         if (
             mode !== 'status' ||
@@ -1269,7 +1269,7 @@ export function WhatsAppModeWorkspace({
             return;
         }
 
-        const DURATION_MS = 5500;
+        const DURATION_MS = topActiveSlideMediaType === 'info' ? 12000 : 10000;
         const TICK_MS = 100;
         const startOffsetPct = statusSlideProgress >= 99 ? 0 : statusSlideProgress;
         const startTime = Date.now() - (startOffsetPct / 100) * DURATION_MS;
