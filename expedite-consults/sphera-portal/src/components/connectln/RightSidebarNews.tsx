@@ -32,6 +32,7 @@ import {
   parseNoctisLanguageCommand,
   dispatchNoctisLanguageCommand
 } from "./NoctisVideoInterpreterPopup"
+import { CveIntelStreamBanner } from "./CveIntelStreamModal"
 
 interface RightSidebarNewsProps {
   news: NewsItem[]
@@ -200,6 +201,9 @@ export function RightSidebarNews({
           ))}
         </div>
       </div>
+
+      {/* LIVE NVD / EXPLOIT-DB / METASPLOIT / SEARCHSPLOIT CVE STREAM */}
+      <CveIntelStreamBanner compact />
 
       {/* 2. CONNECTLN NEWS — Matching LinkedIn News Typography (20px Semibold Title, 14px Semibold Headlines, 12px Regular Readers) */}
       <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">

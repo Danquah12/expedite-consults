@@ -27,8 +27,14 @@ import {
 } from "lucide-react"
 import {
   CategorizedNotificationItem,
-  INITIAL_CATEGORIZED_NOTIFICATIONS
+  INITIAL_CATEGORIZED_NOTIFICATIONS,
+  getLiveCategorizedNotifications
 } from "@/lib/notifications-engine-data"
+import { CveIntelStreamBanner } from "./CveIntelStreamModal"
+import {
+  getAccumulatedDailyFrontierChallenges,
+  getNext24HourAlertCountdown
+} from "@/lib/connectin-daily-platform-growth"
 import { MiniMarkdown } from "./MiniMarkdown"
 import {
   loadUserFollowBundle,
@@ -655,6 +661,10 @@ export interface NoctisLocalChallenge {
   status: string
   expectedKeywords?: string[]
   sampleAnswer?: string
+  shortChipLabel?: string
+  dayNumber?: number
+  shortDate?: string
+  isLatestToday?: boolean
 }
 
 export const LOCAL_CHALLENGE_CATALOG: NoctisLocalChallenge[] = [
@@ -1046,30 +1056,63 @@ export function NotificationsView({
   }
   const [lookupVouchSubFilter, setLookupVouchSubFilter] = useState<'all' | 'lookups' | 'vouches'>('all')
   const [lookupActorTypeFilter, setLookupActorTypeFilter] = useState<'all' | 'search_appearance' | 'profile_click'>('all')
-  const [notifications, setNotifications] = useState<CategorizedNotificationItem[]>(INITIAL_CATEGORIZED_NOTIFICATIONS)
+  const [scheduleClockMs, setScheduleClockMs] = useState<number>(() => Date.now())
+  const [notifications, setNotifications] = useState<CategorizedNotificationItem[]>(() =>
+    getLiveCategorizedNotifications(Date.now())
+  )
   const [unreadOnly, setUnreadOnly] = useState(false)
   const [readDynamicAlertIds, setReadDynamicAlertIds] = useState<string[]>([])
 
-  // Live Sync with Noctis Daily Challenge & Alert Engine via /api/connectin/alerts
+  // Live Sync with Noctis Daily Challenge & Alert Engine via /api/connectin/alerts + 24h clock watcher
   useEffect(() => {
     let isMounted = true
     const fetchIncomingAlerts = async () => {
+      const now = Date.now()
+      if (isMounted) setScheduleClockMs(now)
       try {
-        const res = await fetch("/api/connectin/alerts")
+        const res = await fetch("/api/connectin/alerts", { cache: "no-store" })
         if (res.ok) {
           const data = await res.json()
           if (data.success && Array.isArray(data.alerts) && data.alerts.length > 0 && isMounted) {
             setNotifications(data.alerts)
+            return
           }
         }
       } catch {}
+      if (isMounted) {
+        setNotifications(getLiveCategorizedNotifications(now))
+      }
     }
     fetchIncomingAlerts()
     const timer = setInterval(fetchIncomingAlerts, 15000)
     return () => { isMounted = false; clearInterval(timer) }
   }, [])
 
-  const [activeChallengeIdx, setActiveChallengeIdx] = useState<number>(0)
+  // Merge the 11 foundational challenges with all additive 24-hour daily Frontier Challenges
+  const allChallengesCatalog = React.useMemo<NoctisLocalChallenge[]>(() => {
+    const dailyDrops = getAccumulatedDailyFrontierChallenges(scheduleClockMs)
+    return [...LOCAL_CHALLENGE_CATALOG, ...dailyDrops]
+  }, [scheduleClockMs])
+
+  const next24hCountdown = React.useMemo(
+    () => getNext24HourAlertCountdown(scheduleClockMs),
+    [scheduleClockMs]
+  )
+
+  const [activeChallengeIdx, setActiveChallengeIdx] = useState<number>(() => {
+    const initialDaily = getAccumulatedDailyFrontierChallenges(Date.now())
+    return LOCAL_CHALLENGE_CATALOG.length + Math.max(0, initialDaily.length - 1)
+  })
+  const prevCatalogLenRef = React.useRef<number>(allChallengesCatalog.length)
+
+  // Automatically switch to the newest 24-hour challenge whenever a new 24h cycle rolls over
+  useEffect(() => {
+    if (allChallengesCatalog.length > prevCatalogLenRef.current) {
+      prevCatalogLenRef.current = allChallengesCatalog.length
+      setActiveChallengeIdx(allChallengesCatalog.length - 1)
+    }
+  }, [allChallengesCatalog.length])
+
   const [showChallengeResponse, setShowChallengeResponse] = useState<boolean>(true)
   const [userChallengeInput, setUserChallengeInput] = useState("")
   const [userChallengeEvaluation, setUserChallengeEvaluation] = useState<{
@@ -1083,12 +1126,12 @@ export function NotificationsView({
   const [autonomousCountdown, setAutonomousCountdown] = useState<number>(3)
 
   // Reactive derivation guarantees the active challenge always immediately matches activeChallengeIdx
-  const activeChallenge = LOCAL_CHALLENGE_CATALOG[
-    ((activeChallengeIdx % LOCAL_CHALLENGE_CATALOG.length) + LOCAL_CHALLENGE_CATALOG.length) % LOCAL_CHALLENGE_CATALOG.length
+  const activeChallenge = allChallengesCatalog[
+    ((activeChallengeIdx % allChallengesCatalog.length) + allChallengesCatalog.length) % allChallengesCatalog.length
   ]
 
   const handleSelectChallenge = (targetIdx: number) => {
-    const idx = ((targetIdx % LOCAL_CHALLENGE_CATALOG.length) + LOCAL_CHALLENGE_CATALOG.length) % LOCAL_CHALLENGE_CATALOG.length
+    const idx = ((targetIdx % allChallengesCatalog.length) + allChallengesCatalog.length) % allChallengesCatalog.length
     setActiveChallengeIdx(idx)
     setUserChallengeInput("")
     setUserChallengeEvaluation(null)
@@ -1096,7 +1139,7 @@ export function NotificationsView({
   }
 
   const handleRunNewChallengeTest = () => {
-    const nextIdx = (activeChallengeIdx + 1) % LOCAL_CHALLENGE_CATALOG.length
+    const nextIdx = (activeChallengeIdx + 1) % allChallengesCatalog.length
     handleSelectChallenge(nextIdx)
   }
 
@@ -1166,8 +1209,8 @@ export function NotificationsView({
     const timer = setInterval(() => {
       setAutonomousCountdown((prev) => {
         if (prev <= 1) {
-          const nextIdx = (activeChallengeIdx + 1) % LOCAL_CHALLENGE_CATALOG.length
-          const nextCh = LOCAL_CHALLENGE_CATALOG[nextIdx]
+          const nextIdx = (activeChallengeIdx + 1) % allChallengesCatalog.length
+          const nextCh = allChallengesCatalog[nextIdx]
           setActiveChallengeIdx(nextIdx)
           setUserChallengeInput(nextCh.sampleAnswer || "")
           setShowChallengeResponse(true)
@@ -1179,7 +1222,7 @@ export function NotificationsView({
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [isAutonomousTrainingActive, activeChallengeIdx])
+  }, [isAutonomousTrainingActive, activeChallengeIdx, allChallengesCatalog.length])
 
   const [followBundle, setFollowBundle] = useState<UserFollowBundle>(() =>
     loadUserFollowBundle(currentUserName)
@@ -1446,8 +1489,8 @@ export function NotificationsView({
     }
     const combinedText = `${notif.title} ${notif.description} ${notif.targetPayload || ''} ${notif.category || ''} ${notif.subType || ''}`.toUpperCase()
 
-    // 1. Direct domain match
-    let matched = LOCAL_CHALLENGE_CATALOG.find(item => combinedText.includes(item.domain.toUpperCase()))
+    // 1. Direct domain match across all foundational + 24-hour daily challenges
+    let matched = allChallengesCatalog.find(item => combinedText.includes(item.domain.toUpperCase()))
 
     // 2. Comprehensive multi-domain semantic mapping covering all 11 technical benchmarks
     if (!matched) {
@@ -1567,7 +1610,7 @@ export function NotificationsView({
         const idHash = Math.abs(
           (notif.id || notif.title || '').split('').reduce((acc, ch) => ((acc << 5) - acc) + ch.charCodeAt(0), 0)
         )
-        matched = LOCAL_CHALLENGE_CATALOG[idHash % LOCAL_CHALLENGE_CATALOG.length]
+        matched = allChallengesCatalog[idHash % allChallengesCatalog.length]
       }
     }
 
@@ -1581,7 +1624,7 @@ export function NotificationsView({
   const handleInspectCardTelemetry = (notif: CategorizedNotificationItem) => {
     handleMarkAsRead(notif.id)
     const resolved = resolveNoctisTelemetryForAlert(notif)
-    const catalogIdx = LOCAL_CHALLENGE_CATALOG.findIndex(c => c.domain === resolved.domain)
+    const catalogIdx = allChallengesCatalog.findIndex(c => c.domain === resolved.domain)
     if (catalogIdx >= 0) {
       setActiveChallengeIdx(catalogIdx)
       setShowChallengeResponse(true)
@@ -1895,6 +1938,11 @@ export function NotificationsView({
           </div>
         </div>
 
+        {/* Live NVD / Exploit-DB / Metasploit / SearchSploit CVE Stream & Zero-Day Red Alert Popup */}
+        <div className="mt-4">
+          <CveIntelStreamBanner />
+        </div>
+
         {/* Featured Noctis 6AM Frontier & Benchmark Invariant Alert Banner */}
         <div
           key={`frontier_banner_${activeChallenge.id}_${activeChallengeIdx}`}
@@ -1921,6 +1969,13 @@ export function NotificationsView({
               >
                 ✓ Invariant 100% {activeChallenge.status}
               </span>
+              <span
+                className="rounded-full px-2.5 py-0.5 text-[11px] font-extrabold border"
+                style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', borderColor: '#93c5fd' }}
+                title="A brand-new Frontier Challenge and 2 new Alert cards are automatically added every 24 hours without removing prior alerts"
+              >
+                ⏱️ 24h Auto-Alert Cycle #{next24hCountdown.cycleNumber} · Next New Alert in {next24hCountdown.hoursRemaining}h {next24hCountdown.minutesRemaining}m
+              </span>
               <span className="text-xs font-bold" style={{ color: '#475569' }}>
                 {`${activeChallenge.domain} · ${activeChallenge.durationMs}ms SLA`}
               </span>
@@ -1935,7 +1990,7 @@ export function NotificationsView({
                     : "bg-emerald-700 hover:bg-emerald-800 text-white"
                 }`}
               >
-                {isAutonomousTrainingActive ? `⏸ Pause Auto-Train (${autonomousCountdown}s)` : "🤖 Auto-Train All 11 (Zero-Touch)"}
+                {isAutonomousTrainingActive ? `⏸ Pause Auto-Train (${autonomousCountdown}s)` : `🤖 Auto-Train All ${allChallengesCatalog.length} (Zero-Touch)`}
               </button>
               <button
                 type="button"
@@ -1943,44 +1998,54 @@ export function NotificationsView({
                 className="rounded-xl px-4 py-2 text-xs font-black transition-all cursor-pointer shadow-sm hover:opacity-90 active:scale-95"
                 style={{ backgroundColor: '#0a66c2', color: '#ffffff', border: '1px solid #004182' }}
               >
-                🔄 Next Challenge ({(activeChallengeIdx + 1)}/{LOCAL_CHALLENGE_CATALOG.length})
+                🔄 Next Challenge ({(activeChallengeIdx + 1)}/{allChallengesCatalog.length})
               </button>
             </div>
           </div>
 
-          {/* Quick-Jump Challenge Domain Carousel */}
+          {/* Quick-Jump Challenge Domain Carousel (Latest 24h Drop Pinned First + All Challenges) */}
           <div className="mt-3 flex items-center gap-1.5 overflow-x-auto pb-1.5 text-[11px] scrollbar-thin">
             <span className="text-xs font-bold text-slate-500 shrink-0 mr-1">Select Challenge:</span>
-            {LOCAL_CHALLENGE_CATALOG.map((ch, idx) => {
-              const isSelected = activeChallengeIdx === idx
-              const shortLabel =
-                idx === 0 ? "1. Nuclear SMR" :
-                idx === 1 ? "2. Burns Parkland" :
-                idx === 2 ? "3. Quantum QKD" :
-                idx === 3 ? "4. Raft Quorum" :
-                idx === 4 ? "5. Fusion Tokamak" :
-                idx === 5 ? "6. BGP Flap" :
-                idx === 6 ? "7. RMF FIPS 199" :
-                idx === 7 ? "8. RMF cATO" :
-                idx === 8 ? "9. RMF POA&M" :
-                idx === 9 ? "10. HPC 8k GPU" :
-                "11. SCADA SIL-3"
+            {allChallengesCatalog
+              .map((ch, idx) => ({ ch, idx }))
+              .sort((a, b) => {
+                if (a.ch.isLatestToday && !b.ch.isLatestToday) return -1
+                if (!a.ch.isLatestToday && b.ch.isLatestToday) return 1
+                return a.idx - b.idx
+              })
+              .map(({ ch, idx }) => {
+                const isSelected = activeChallengeIdx === idx
+                const shortLabel = ch.shortChipLabel
+                  ? `${idx + 1}. ${ch.shortChipLabel}${ch.isLatestToday ? " · 🆕 TODAY 24H" : ""}`
+                  : idx === 0 ? "1. Nuclear SMR" :
+                    idx === 1 ? "2. Burns Parkland" :
+                    idx === 2 ? "3. Quantum QKD" :
+                    idx === 3 ? "4. Raft Quorum" :
+                    idx === 4 ? "5. Fusion Tokamak" :
+                    idx === 5 ? "6. BGP Flap" :
+                    idx === 6 ? "7. RMF FIPS 199" :
+                    idx === 7 ? "8. RMF cATO" :
+                    idx === 8 ? "9. RMF POA&M" :
+                    idx === 9 ? "10. HPC 8k GPU" :
+                    "11. SCADA SIL-3"
 
-              return (
-                <button
-                  key={ch.id}
-                  type="button"
-                  onClick={() => handleSelectChallenge(idx)}
-                  className={`px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer border ${
-                    isSelected
-                      ? "bg-slate-900 text-white border-slate-900 shadow-xs"
-                      : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
-                  }`}
-                >
-                  {shortLabel}
-                </button>
-              )
-            })}
+                return (
+                  <button
+                    key={ch.id}
+                    type="button"
+                    onClick={() => handleSelectChallenge(idx)}
+                    className={`px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer border ${
+                      isSelected
+                        ? "bg-slate-900 text-white border-slate-900 shadow-xs"
+                        : ch.isLatestToday
+                        ? "bg-red-50 hover:bg-red-100 text-red-800 border-red-300"
+                        : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
+                    }`}
+                  >
+                    {shortLabel}
+                  </button>
+                )
+              })}
           </div>
 
           <div className="mt-4 space-y-4">
@@ -1991,7 +2056,7 @@ export function NotificationsView({
                   {`Formulated Challenge Question (Domain: ${activeChallenge.domain}):`}
                 </span>
                 <span className="text-[11px] font-bold text-slate-500">
-                  {`Challenge #${activeChallengeIdx + 1} of ${LOCAL_CHALLENGE_CATALOG.length}`}
+                  {`Challenge #${activeChallengeIdx + 1} of ${allChallengesCatalog.length}${activeChallenge.shortDate ? ` · 24h Drop (${activeChallenge.shortDate})` : ''}`}
                 </span>
               </div>
               <div

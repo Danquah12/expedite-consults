@@ -63,6 +63,14 @@ import { resolveUserProfilePicture, generatePersonalSignatureAvatar } from "@/li
 import { buildSharePreviewUrl, useSharePic } from "@/lib/connectin-share"
 import { LiveHarvestedMediaShowcase } from "./LiveHarvestedMediaShowcase"
 import {
+  CveIntelStreamBanner,
+  CveIntelDossierModal,
+  ZeroDayAnnouncementPopup,
+  buildCveIntelRecord,
+  dispatchZeroDayAnnouncementEvent,
+  CveIntelRecord,
+} from "./CveIntelStreamModal"
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -104,6 +112,8 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
   const [zeroDayQuery, setZeroDayQuery] = useState<string>('')
   const [isHuntingZeroDay, setIsHuntingZeroDay] = useState<boolean>(false)
   const [lastHuntedArticle, setLastHuntedArticle] = useState<PulseArticle | null>(null)
+  const [activeCveDossier, setActiveCveDossier] = useState<CveIntelRecord | null>(null)
+  const [popupZeroDayRecord, setPopupZeroDayRecord] = useState<CveIntelRecord | null>(null)
 
   // Publish Live Pulse Report Modal State
   const [showPublishModal, setShowPublishModal] = useState<boolean>(false)
@@ -549,6 +559,24 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
     }
   }
 
+  const openCveFromAdvisory = (adv: CyberThreatAdvisory): CveIntelRecord => {
+    const rec = buildCveIntelRecord(adv.cveId, {
+      title: adv.title,
+      severity: adv.severity,
+      cvssVector: adv.vector,
+      affectedSystems: adv.affectedSystems,
+      whatItIs: adv.summary,
+      remediation: adv.mitigationAction,
+      publishedAt: adv.publishedAt,
+      cisaStatus: adv.cisaEmergencyStatus,
+      isZeroDay: /0-day|zero-day|kev|critical|emergency|ransomware/i.test(
+        `${adv.severity} ${adv.title} ${adv.cisaEmergencyStatus || ""}`
+      ),
+    })
+    setActiveCveDossier(rec)
+    return rec
+  }
+
   const handleHuntZeroDay = async (overrideQuery?: string) => {
     const target = (overrideQuery !== undefined ? overrideQuery : zeroDayQuery).trim()
     setIsHuntingZeroDay(true)
@@ -571,6 +599,19 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
         if (data.advisory) {
           setDomainAdvisories((prev) => [data.advisory, ...prev])
           setZeroDayCount((prev) => prev + 1)
+          const rec = buildCveIntelRecord(data.advisory.cveId, {
+            title: data.advisory.title,
+            severity: data.advisory.severity,
+            cvssVector: data.advisory.vector,
+            affectedSystems: data.advisory.affectedSystems,
+            whatItIs: data.advisory.summary,
+            remediation: data.advisory.mitigationAction,
+            publishedAt: data.advisory.publishedAt,
+            cisaStatus: data.advisory.cisaEmergencyStatus,
+            isZeroDay: true,
+          })
+          dispatchZeroDayAnnouncementEvent(rec)
+          setPopupZeroDayRecord(rec)
         }
       }
     } finally {
@@ -597,6 +638,19 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
         setArticles((prev) => [data.article, ...prev])
         setLastHuntedArticle(data.article)
         setPulseMode('news')
+        const rec = buildCveIntelRecord(adv.cveId, {
+          title: adv.title,
+          severity: adv.severity,
+          cvssVector: adv.vector,
+          affectedSystems: adv.affectedSystems,
+          whatItIs: adv.summary,
+          remediation: adv.mitigationAction,
+          publishedAt: '🚨 Zero-Day Announced on Pulse',
+          cisaStatus: adv.cisaEmergencyStatus,
+          isZeroDay: true,
+        })
+        dispatchZeroDayAnnouncementEvent(rec)
+        setPopupZeroDayRecord(rec)
       }
     }
   }
@@ -798,37 +852,62 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
         )}
       </div>
 
+      {/* LIVE NVD / EXPLOIT-DB / METASPLOIT / SEARCHSPLOIT CVE STREAM (Turns RED on Active Zero-Day + Popup) */}
+      <CveIntelStreamBanner />
+
       {/* ========================================================================= */}
       {/* MODE 1: PROFESSIONAL NEWS & RESEARCH FEED */}
       {/* ========================================================================= */}
       {pulseMode === 'news' && (
         <div className="space-y-5">
-          {/* Continuous Live Breaking Wire Ticker */}
-          {articles.length > 0 && (
-            <div className="rounded-xl border border-emerald-500/30 bg-gradient-to-r from-slate-900 via-zinc-900 to-slate-900 px-4 py-2.5 text-white shadow-xs flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-300 shrink-0">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-                  LIVE WIRE STREAM
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setSelectedArticle(articles[tickerIndex % articles.length])}
-                  className="text-xs sm:text-sm font-bold text-zinc-100 hover:text-sky-300 truncate text-left cursor-pointer transition-colors"
-                >
-                  [{articles[tickerIndex % articles.length]?.category}]{" "}
-                  {articles[tickerIndex % articles.length]?.title}
-                </button>
+          {/* Continuous Live Breaking Wire Ticker (Turns RED when Zero-Day CVEs are announced/active) */}
+          {articles.length > 0 && (() => {
+            const spotlightArt = articles[tickerIndex % articles.length]
+            const isZeroDaySpotlight =
+              zeroDayCount > 0 ||
+              /0-day|zero-day|cve-|breach|kev|critical/i.test(spotlightArt?.title || "")
+            return (
+              <div
+                className={`rounded-xl border px-4 py-2.5 text-white shadow-xs flex flex-wrap items-center justify-between gap-3 transition-colors ${
+                  isZeroDaySpotlight
+                    ? "border-red-500/70 bg-gradient-to-r from-red-950 via-red-900/90 to-slate-950 ring-1 ring-red-500/35"
+                    : "border-emerald-500/30 bg-gradient-to-r from-slate-900 via-zinc-900 to-slate-900"
+                }`}
+              >
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider shrink-0 ${
+                      isZeroDaySpotlight
+                        ? "bg-red-600/80 border-red-300/60 text-white"
+                        : "bg-emerald-500/20 border-emerald-400/40 text-emerald-300"
+                    }`}
+                  >
+                    <span
+                      className={`h-2 w-2 rounded-full animate-ping ${
+                        isZeroDaySpotlight ? "bg-white" : "bg-emerald-400"
+                      }`}
+                    />
+                    {isZeroDaySpotlight ? "🔴 ZERO-DAY LIVE WIRE" : "LIVE WIRE STREAM"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedArticle(spotlightArt)}
+                    className="text-xs sm:text-sm font-bold text-zinc-100 hover:text-sky-300 truncate text-left cursor-pointer transition-colors"
+                  >
+                    [{spotlightArt?.category}]{" "}
+                    {spotlightArt?.title}
+                  </button>
+                </div>
+                <div className="flex items-center gap-2 text-[11px] text-zinc-300 font-mono shrink-0">
+                  <span className={isZeroDaySpotlight ? "text-red-200 font-bold" : "text-emerald-300"}>
+                    {spotlightArt?.publishedAt}
+                  </span>
+                  <span>·</span>
+                  <span>Auto-sync in {nextSyncSeconds}s</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2 text-[11px] text-zinc-300 font-mono shrink-0">
-                <span className="text-emerald-300">
-                  {articles[tickerIndex % articles.length]?.publishedAt}
-                </span>
-                <span>·</span>
-                <span>Auto-sync in {nextSyncSeconds}s</span>
-              </div>
-            </div>
-          )}
+            )
+          })()}
 
           {/* AUTONOMOUS ZERO-DAY, CISA KEV & NIST NVD BREACH HUNTER COMMAND BAR */}
           <div className="rounded-2xl border-2 border-red-500/40 bg-gradient-to-r from-slate-950 via-red-950/90 to-slate-950 p-4 sm:p-5 text-white shadow-lg space-y-3.5">
@@ -1082,16 +1161,41 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
                         </ul>
                       </div>
 
-                      {/* Tags */}
+                      {/* Tags (CVE tags are interactive and open the NVD / Exploit-DB / Metasploit / SearchSploit dossier) */}
                       <div className="flex flex-wrap gap-1 pt-1">
-                        {article.tags.map((tag) => (
-                          <span
-                            key={tag}
-                            className="rounded-md bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
-                          >
-                            #{tag}
-                          </span>
-                        ))}
+                        {article.tags.map((tag) => {
+                          const isCveTag = /^CVE-\d{4}-\d+/i.test(tag)
+                          if (isCveTag) {
+                            return (
+                              <button
+                                key={tag}
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setActiveCveDossier(
+                                    buildCveIntelRecord(tag, {
+                                      title: article.title,
+                                      whatItIs: article.summary,
+                                      publishedAt: article.publishedAt,
+                                    })
+                                  )
+                                }}
+                                className="rounded-md bg-red-600 hover:bg-red-500 px-2 py-0.5 font-mono text-[10px] font-black text-white shadow-2xs cursor-pointer transition-colors"
+                                title={`Click to inspect ${tag} on NVD, Exploit-DB, Metasploit & SearchSploit`}
+                              >
+                                🔍 {tag}
+                              </button>
+                            )
+                          }
+                          return (
+                            <span
+                              key={tag}
+                              className="rounded-md bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
+                            >
+                              #{tag}
+                            </span>
+                          )
+                        })}
                       </div>
                     </div>
                   </div>
@@ -1343,17 +1447,48 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
           </div>
 
           <div className="space-y-4">
-            {domainAdvisories.map((adv) => (
+            {domainAdvisories.map((adv) => {
+              const cveIntel = buildCveIntelRecord(adv.cveId, {
+                title: adv.title,
+                severity: adv.severity,
+                cvssVector: adv.vector,
+                affectedSystems: adv.affectedSystems,
+                whatItIs: adv.summary,
+                remediation: adv.mitigationAction,
+                publishedAt: adv.publishedAt,
+                cisaStatus: adv.cisaEmergencyStatus,
+              })
+              const isCveItem = /^CVE-\d{4}-\d+/i.test(String(adv.cveId || ""))
+              const isZeroDayCard =
+                isCveItem &&
+                /0-day|zero-day|kev|critical|emergency|ransomware/i.test(
+                  `${adv.severity} ${adv.title} ${adv.cisaEmergencyStatus || ""}`
+                )
+
+              return (
               <div
                 key={adv.id}
-                className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-3"
+                className={`rounded-2xl border p-5 shadow-xs space-y-3 transition-colors ${
+                  isZeroDayCard
+                    ? "border-red-500/70 bg-red-50/70 dark:bg-red-950/35 ring-1 ring-red-500/30"
+                    : "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"
+                }`}
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-mono text-xs font-extrabold text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-200 dark:bg-red-950 dark:text-red-400">
-                        {adv.cveId}
-                      </span>
+                      <button
+                        type="button"
+                        onClick={() => openCveFromAdvisory(adv)}
+                        className={`font-mono text-xs font-extrabold px-2.5 py-0.5 rounded border cursor-pointer transition-all hover:scale-105 ${
+                          isZeroDayCard
+                            ? "text-white bg-red-600 hover:bg-red-500 border-red-400 shadow-xs"
+                            : "text-red-600 bg-red-50 hover:bg-red-100 border-red-200 dark:bg-red-950 dark:text-red-400"
+                        }`}
+                        title={`Click to inspect ${adv.cveId} across NVD, Exploit-DB, Metasploit & SearchSploit`}
+                      >
+                        🔍 {adv.cveId}
+                      </button>
                       <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-[10px] font-bold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
                         {adv.severity}
                       </span>
@@ -1424,6 +1559,43 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
                   </div>
                 </div>
 
+                {isCveItem && (
+                  <div className="flex items-center gap-1.5 flex-wrap text-[11px]">
+                    <span className="font-bold text-zinc-600 dark:text-zinc-300">Linked Exploit &amp; CVE Feeds:</span>
+                    <a
+                      href={cveIntel.nvdUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-md bg-sky-100 hover:bg-sky-200 text-sky-900 dark:bg-sky-950/60 dark:text-sky-200 border border-sky-300/70 px-2 py-0.5 font-bold"
+                    >
+                      🔬 NVD ↗
+                    </a>
+                    <a
+                      href={cveIntel.exploitDbUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-md bg-orange-100 hover:bg-orange-200 text-orange-900 dark:bg-orange-950/60 dark:text-orange-200 border border-orange-300/70 px-2 py-0.5 font-bold"
+                    >
+                      💥 Exploit-DB ({cveIntel.edbId}) ↗
+                    </a>
+                    <a
+                      href={cveIntel.metasploitUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-md bg-indigo-100 hover:bg-indigo-200 text-indigo-900 dark:bg-indigo-950/60 dark:text-indigo-200 border border-indigo-300/70 px-2 py-0.5 font-bold"
+                    >
+                      🎯 Metasploit ↗
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => openCveFromAdvisory(adv)}
+                      className="rounded-md bg-emerald-100 hover:bg-emerald-200 text-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-200 border border-emerald-300/70 px-2 py-0.5 font-mono font-bold cursor-pointer"
+                    >
+                      ⌨️ {cveIntel.searchsploitCommand} (Open Dossier)
+                    </button>
+                  </div>
+                )}
+
                 <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
                   {adv.summary}
                 </p>
@@ -1444,7 +1616,8 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
                   </p>
                 </div>
               </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}
@@ -2194,6 +2367,20 @@ export function PulseRoomsView({ currentUser, onNavigateTab }: PulseRoomsViewPro
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Clickable CVE Details Dossier Modal */}
+      <CveIntelDossierModal
+        record={activeCveDossier}
+        onClose={() => setActiveCveDossier(null)}
+      />
+
+      {/* Explicit Zero-Day Announcement Popup on Hunt / First-to-Announce */}
+      <ZeroDayAnnouncementPopup
+        record={popupZeroDayRecord}
+        open={Boolean(popupZeroDayRecord)}
+        onInspectCve={(rec) => setActiveCveDossier(rec)}
+        onDismiss={() => setPopupZeroDayRecord(null)}
+      />
     </div>
   )
 }

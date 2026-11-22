@@ -13,6 +13,7 @@ import {
     ConnectLnWhatsAppCallModal,
     buildInternationalPhone,
 } from './ConnectLnWhatsAppCallModal';
+import { CveIntelStreamBanner } from './CveIntelStreamModal';
 
 export type MessagingWorkspaceMode =
     | 'chats'
@@ -21,6 +22,13 @@ export type MessagingWorkspaceMode =
     | 'channels'
     | 'communities'
     | 'archived';
+
+export type StatusSourcePlatform =
+    | 'WhatsApp'
+    | 'TikTok'
+    | 'Facebook'
+    | 'Instagram'
+    | 'ConnectLn';
 
 export interface StatusUpdateItem {
     id: string;
@@ -41,6 +49,57 @@ export interface StatusUpdateItem {
     videoDuration?: string;
     videoTitle?: string;
     professionTag?: string;
+    sourcePlatform?: StatusSourcePlatform;
+    mediaFormat?: string;
+    externalSourceUrl?: string;
+    seriesLabel?: string;
+}
+
+function formatSecondsToMmSs(sec: number): string {
+    if (!Number.isFinite(sec) || sec < 0) return '0:00';
+    const whole = Math.floor(sec);
+    const mins = Math.floor(whole / 60);
+    const rem = whole % 60;
+    return `${mins}:${rem.toString().padStart(2, '0')}`;
+}
+
+function detectMediaFormatLabel(raw?: string, fallback = 'MP4'): string {
+    const clean = String(raw || '').trim().toLowerCase().split('?')[0];
+    const extMatch = clean.match(/\.([a-z0-9]{2,5})$/);
+    if (extMatch) return extMatch[1].toUpperCase();
+    if (clean.startsWith('data:image/')) {
+        const mime = clean.slice(11).split(';')[0];
+        return mime.toUpperCase().replace('JPEG', 'JPG');
+    }
+    if (clean.startsWith('data:video/')) {
+        const mime = clean.slice(11).split(';')[0];
+        return mime.toUpperCase();
+    }
+    return fallback;
+}
+
+function getPlatformBadgeLabel(platform?: StatusSourcePlatform): string {
+    switch (platform) {
+        case 'WhatsApp':
+            return '💬 WhatsApp';
+        case 'TikTok':
+            return '🎵 TikTok';
+        case 'Facebook':
+            return '📘 Facebook';
+        case 'Instagram':
+            return '📸 Instagram';
+        default:
+            return '✦ ConnectLn';
+    }
+}
+
+function inferPlatformFromHint(hint?: string, fallback: StatusSourcePlatform = 'ConnectLn'): StatusSourcePlatform {
+    const lower = String(hint || '').toLowerCase();
+    if (lower.includes('tiktok') || lower.includes('snaptik')) return 'TikTok';
+    if (lower.includes('facebook') || lower.includes('fb.watch') || lower.includes('fbcdn')) return 'Facebook';
+    if (lower.includes('whatsapp') || lower.includes('wa.me') || /\bwa[-_]/i.test(lower)) return 'WhatsApp';
+    if (lower.includes('instagram') || lower.includes('instagr.am')) return 'Instagram';
+    return fallback;
 }
 
 export interface UserStatusBox {
@@ -156,12 +215,15 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         viewed: false,
         mediaType: 'video',
         videoUrl: '/status-videos/spot.mp4',
-        videoDuration: '0:18',
-        videoTitle: 'Downtown Site & Structural Corridor Walkthrough',
-        text: 'New site delivery & structural blueprint inspection complete — ready for phase 2 commissioning.',
+        videoDuration: '0:27',
+        videoTitle: 'Structural Steel & Field Commissioning Walkthrough Training',
+        text: 'Step-by-step site delivery, structural blueprint verification, and phase 2 OSHA 30 rigging inspection training.',
         imageUrl: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=900',
         bgColor: 'linear-gradient(135deg, #292521 0%, #3d3730 100%)',
-        professionTag: 'Field Operations',
+        professionTag: 'Field Operations Training',
+        sourcePlatform: 'WhatsApp',
+        mediaFormat: 'MP4',
+        seriesLabel: 'Part 1 of 3',
     },
     {
         id: 'st_boat_photo',
@@ -170,11 +232,14 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         timestampLabel: 'Today at 1:15 PM',
         viewed: false,
         mediaType: 'photo',
-        title: 'Steel Truss & Rigging Inspection Shot',
+        title: 'Steel Truss & Rigging Inspection Visual Guide',
         imageUrl: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=900',
-        text: 'North bay structural beams verified and torque-checked ahead of concrete pour.',
+        text: 'North bay structural beams verified and torque-checked ahead of commercial concrete pour.',
         bgColor: 'linear-gradient(135deg, #292521 0%, #3d3730 100%)',
-        professionTag: 'Field Operations',
+        professionTag: 'Field Operations Training',
+        sourcePlatform: 'WhatsApp',
+        mediaFormat: 'JPG',
+        seriesLabel: 'Part 2 of 3',
     },
     {
         id: 'st_boat_info',
@@ -183,13 +248,16 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         timestampLabel: 'Today at 12:40 PM',
         viewed: false,
         mediaType: 'info',
-        infoBadge: 'Site Dispatch Notice',
-        title: 'Phase 2 Commissioning Window & Gate Access Info',
-        text: 'Electrical and rigging subcontractors can clear Gate B starting 6:30 AM tomorrow.',
+        infoBadge: 'Field Safety SOP',
+        title: 'Phase 2 Commissioning Window & Gate Access Training Brief',
+        text: 'Electrical and rigging apprentices clear Gate B starting 6:30 AM for certified lift & load-testing orientation.',
         infoDetails: 'Supervisor on duty: Boat · Radio Channel 4 · PPE Level B & OSHA 30 badge required.',
         attachmentName: 'Phase2_Rigging_Signoff_Checklist.pdf',
         bgColor: 'linear-gradient(135deg, #3b1e10 0%, #5e3119 100%)',
-        professionTag: 'Field Operations',
+        professionTag: 'Field Operations Training',
+        sourcePlatform: 'ConnectLn',
+        mediaFormat: 'PDF',
+        seriesLabel: 'Part 3 of 3',
     },
     {
         id: 'st_it_guru',
@@ -200,11 +268,30 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         mediaType: 'video',
         videoUrl: '/status-videos/k8s_ebpf.mp4',
         videoDuration: '0:24',
-        videoTitle: 'Live Cloud Cluster & Runtime Telemetry Lab',
-        text: 'Live Cloud Security & Zero-Trust runtime lab cohort starts at 4:00 PM EST! Drop a message to join.',
+        videoTitle: 'Live Cloud Cluster & Zero-Trust eBPF Telemetry Lab Training',
+        text: 'Live Cloud Security, Kubernetes runtime defense & Zero-Trust eBPF lab training session.',
         imageUrl: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=900',
         bgColor: 'linear-gradient(135deg, #5e3119 0%, #7c4225 55%, #3d3730 100%)',
         professionTag: 'Cyber & IT Training',
+        sourcePlatform: 'TikTok',
+        mediaFormat: 'MP4',
+        seriesLabel: 'Part 1 of 3',
+    },
+    {
+        id: 'st_it_guru_photo',
+        authorName: 'IT-Guru GURU Trainer',
+        authorAvatar: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=150',
+        timestampLabel: 'Today at 11:50 AM',
+        viewed: false,
+        mediaType: 'photo',
+        title: 'Zero-Trust SOC & Telemetry Ops Architecture',
+        imageUrl: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=900',
+        text: 'Live student lab cluster nodes provisioned across US-East and EU-Central with eBPF runtime policy enforcement.',
+        bgColor: 'linear-gradient(135deg, #5e3119 0%, #7c4225 55%, #3d3730 100%)',
+        professionTag: 'Cyber & IT Training',
+        sourcePlatform: 'TikTok',
+        mediaFormat: 'PNG',
+        seriesLabel: 'Part 2 of 3',
     },
     {
         id: 'st_it_guru_info',
@@ -213,13 +300,16 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         timestampLabel: 'Today at 11:30 AM',
         viewed: false,
         mediaType: 'info',
-        infoBadge: 'Training Cohort Info',
-        title: 'SOC & Kubernetes eBPF Hands-On Lab Syllabus',
-        text: 'Open seats remaining for evening lab covering runtime threat containment, Zero-Trust policies, and incident response drills.',
-        infoDetails: 'Schedule: 4:00 PM – 6:30 PM EST · Lab VMs provisioned automatically for registered members.',
+        infoBadge: 'Training Cohort Syllabus',
+        title: 'SOC & Kubernetes eBPF Hands-On Lab Curriculum',
+        text: 'Hands-on cohort covering runtime container containment, Zero-Trust policies, and autonomous incident response drills.',
+        infoDetails: 'Schedule: 4:00 PM – 6:30 PM EST · Lab VMs provisioned automatically for registered ConnectLn members.',
         attachmentName: 'ZeroTrust_eBPF_Lab_Guide_v4.pdf',
         bgColor: 'linear-gradient(135deg, #292521 0%, #524b42 100%)',
         professionTag: 'Cyber & IT Training',
+        sourcePlatform: 'ConnectLn',
+        mediaFormat: 'PDF',
+        seriesLabel: 'Part 3 of 3',
     },
     {
         id: 'st_ashley',
@@ -230,11 +320,14 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         mediaType: 'video',
         videoUrl: '/status-videos/realtor.mp4',
         videoDuration: '0:22',
-        videoTitle: 'Commercial Interior & Executive Suite Walkthrough',
-        text: 'Commercial interior & executive office collection now in stock for regional contractors and design teams.',
+        videoTitle: 'Commercial Millwork, Interior Fit-Out & Staging Training',
+        text: 'Architectural interior installation, executive suite assembly, and contractor staging standards walkthrough.',
         imageUrl: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=900',
         bgColor: 'linear-gradient(135deg, #3b1e10 0%, #5e3119 100%)',
-        professionTag: 'Commercial Furnishings',
+        professionTag: 'Commercial Fit-Out Training',
+        sourcePlatform: 'Facebook',
+        mediaFormat: 'MOV',
+        seriesLabel: 'Part 1 of 3',
     },
     {
         id: 'st_ashley_photo',
@@ -243,11 +336,32 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         timestampLabel: 'Today at 7:40 AM',
         viewed: false,
         mediaType: 'photo',
-        title: 'Executive Lounge & Conference Inventory',
+        title: 'Commercial Lobby & Executive Suite Spec Reference',
         imageUrl: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=900',
-        text: 'Same-week white-glove staging available for hospitality and corporate suites.',
+        text: 'Finish carpentry tolerances, acoustic paneling placement, and white-glove commercial staging standards.',
         bgColor: 'linear-gradient(135deg, #3b1e10 0%, #5e3119 100%)',
-        professionTag: 'Commercial Furnishings',
+        professionTag: 'Commercial Fit-Out Training',
+        sourcePlatform: 'Facebook',
+        mediaFormat: 'JPG',
+        seriesLabel: 'Part 2 of 3',
+    },
+    {
+        id: 'st_ashley_info',
+        authorName: 'Ashley Furniture Homestore JA',
+        authorAvatar: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=150',
+        timestampLabel: 'Today at 7:15 AM',
+        viewed: false,
+        mediaType: 'info',
+        infoBadge: 'Trade Contractor Standards',
+        title: 'Commercial Fit-Out Delivery & OSHA Staging Manual',
+        text: 'Field installation checklist, elevator protection protocols, and commercial trade partner certification terms.',
+        infoDetails: 'Commercial Support Desk · White-Glove Certification · Multi-Site Dispatch Specs.',
+        attachmentName: 'Trade_Partner_Installation_Manual.pdf',
+        bgColor: 'linear-gradient(135deg, #292521 0%, #524b42 100%)',
+        professionTag: 'Commercial Fit-Out Training',
+        sourcePlatform: 'ConnectLn',
+        mediaFormat: 'PDF',
+        seriesLabel: 'Part 3 of 3',
     },
     {
         id: 'st_sam_k',
@@ -258,11 +372,14 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         mediaType: 'video',
         videoUrl: '/status-videos/developer.mp4',
         videoDuration: '0:16',
-        videoTitle: 'Control Systems & Automation Build Verification',
-        text: 'On-site systems commissioning wrapped ahead of schedule. Grateful for the entire engineering crew!',
+        videoTitle: 'Control Systems, PLC & Automation Commissioning Training',
+        text: 'Hands-on industrial PLC commissioning, SCADA validation, and fail-safe controller testing training module.',
         imageUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=900',
         bgColor: 'linear-gradient(135deg, #3b1e10 0%, #7c4225 100%)',
-        professionTag: 'Systems Engineering',
+        professionTag: 'Systems Engineering Training',
+        sourcePlatform: 'TikTok',
+        mediaFormat: 'MP4',
+        seriesLabel: 'Part 1 of 3',
     },
     {
         id: 'st_sam_k_photo',
@@ -271,11 +388,32 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         timestampLabel: 'Today at 1:45 PM',
         viewed: false,
         mediaType: 'photo',
-        title: 'PLC Telemetry Bench Verification',
+        title: 'PLC Telemetry Bench Verification Schematic',
         imageUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=900',
-        text: 'All Modbus & OPC-UA SCADA endpoints passed 24-hour soak testing with zero packet drop.',
+        text: 'All Modbus & OPC-UA SCADA endpoints passing 24-hour soak testing during technician certification.',
         bgColor: 'linear-gradient(135deg, #3b1e10 0%, #7c4225 100%)',
-        professionTag: 'Systems Engineering',
+        professionTag: 'Systems Engineering Training',
+        sourcePlatform: 'WhatsApp',
+        mediaFormat: 'WEBP',
+        seriesLabel: 'Part 2 of 3',
+    },
+    {
+        id: 'st_sam_k_info',
+        authorName: 'Sam K',
+        authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+        timestampLabel: 'Today at 1:10 PM',
+        viewed: false,
+        mediaType: 'info',
+        infoBadge: 'Commissioning SOP',
+        title: 'Plant Automation Cutover & Failover Sign-Off Training',
+        text: 'Redundant failover steps between Line A and Line B controllers verified under peak load simulation.',
+        infoDetails: 'Inspection Lab: Thursday 8:00 AM · SCADA Credentials & PLC Ladder Logic Pack included.',
+        attachmentName: 'SCADA_Failover_Signoff.pdf',
+        bgColor: 'linear-gradient(135deg, #4d6b53 0%, #2f4534 100%)',
+        professionTag: 'Systems Engineering Training',
+        sourcePlatform: 'ConnectLn',
+        mediaFormat: 'PDF',
+        seriesLabel: 'Part 3 of 3',
     },
     {
         id: 'st_murchisson',
@@ -286,11 +424,30 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         mediaType: 'video',
         videoUrl: '/status-videos/calc.mp4',
         videoDuration: '0:20',
-        videoTitle: 'Q4 Engineering Cost & Tender Modeling',
-        text: 'Reviewing Q4 procurement tenders, structural load calculations, and supplier SLA renewals today.',
+        videoTitle: 'Q4 Engineering Quantity Takeoff & Cost Estimation Training',
+        text: 'Engineering tender modeling, structural load calculations, and bonded commercial estimation training.',
         imageUrl: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=900',
         bgColor: 'linear-gradient(135deg, #3d3730 0%, #524b42 100%)',
-        professionTag: 'Procurement & Estimation',
+        professionTag: 'Cost Estimation Training',
+        sourcePlatform: 'Facebook',
+        mediaFormat: 'MP4',
+        seriesLabel: 'Part 1 of 3',
+    },
+    {
+        id: 'st_murchisson_photo',
+        authorName: 'Murchisson',
+        authorAvatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150',
+        timestampLabel: 'Today at 10:22 AM',
+        viewed: true,
+        mediaType: 'photo',
+        title: 'Q4 Structural Takeoff & MEP Bid Audit Reference',
+        imageUrl: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=900',
+        text: 'Structural takeoffs and subcontractor rate benchmarking across 14 infrastructure work packages.',
+        bgColor: 'linear-gradient(135deg, #3d3730 0%, #524b42 100%)',
+        professionTag: 'Cost Estimation Training',
+        sourcePlatform: 'Facebook',
+        mediaFormat: 'JPG',
+        seriesLabel: 'Part 2 of 3',
     },
     {
         id: 'st_murchisson_info',
@@ -299,13 +456,16 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         timestampLabel: 'Today at 10:12 AM',
         viewed: true,
         mediaType: 'info',
-        infoBadge: 'Procurement Notice',
-        title: 'Q4 Vendor Bid Cut-Off Schedule',
-        text: 'All structural steel, MEP switchgear, and commercial HVAC BOM bids must be submitted by Friday 5:00 PM.',
-        infoDetails: 'Contact Murchisson for addendum drawings and bonded surety requirements.',
+        infoBadge: 'Estimation Manual',
+        title: 'Commercial Bid Takeoff & Surety Compliance Brief',
+        text: 'All structural steel, MEP switchgear, and commercial HVAC BOM bids evaluated on unit-rate accuracy & SLA readiness.',
+        infoDetails: 'Includes CSI MasterFormat breakdown and addendum drawing checklist.',
         attachmentName: 'Q4_Master_Tender_Schedule.xlsx',
         bgColor: 'linear-gradient(135deg, #3d3730 0%, #524b42 100%)',
-        professionTag: 'Procurement & Estimation',
+        professionTag: 'Cost Estimation Training',
+        sourcePlatform: 'ConnectLn',
+        mediaFormat: 'XLSX',
+        seriesLabel: 'Part 3 of 3',
     },
     {
         id: 'st_mike_mukasa',
@@ -316,11 +476,14 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         mediaType: 'video',
         videoUrl: '/status-videos/scenario_drill.mp4',
         videoDuration: '0:25',
-        videoTitle: 'Central Workshop & Operations Readiness Briefing',
-        text: 'Morning team briefing and live scenario readiness check at the central workshop.',
+        videoTitle: 'Security Architecture & Workshop Readiness Scenario Drill',
+        text: 'Live NIST Zero-Trust, OWASP & STRIDE scenario readiness training drill at the central operations workshop.',
         imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=900',
         bgColor: 'linear-gradient(135deg, #292521 0%, #443c34 100%)',
-        professionTag: 'Workshop Operations',
+        professionTag: 'Workshop & Security Training',
+        sourcePlatform: 'WhatsApp',
+        mediaFormat: 'WEBM',
+        seriesLabel: 'Part 1 of 3',
     },
     {
         id: 'st_mike_mukasa_photo',
@@ -329,11 +492,14 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         timestampLabel: 'Today at 9:10 AM',
         viewed: true,
         mediaType: 'photo',
-        title: 'Central Workshop CNC & Fabrication Floor',
+        title: 'Central Workshop CNC & Turbine Metrology Bay',
         imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=900',
-        text: 'Precision calibration bay prepped for incoming turbine housing fabrication run.',
+        text: '5-axis CNC tolerance calibration bay prepped for incoming apprentice fabrication assessment.',
         bgColor: 'linear-gradient(135deg, #292521 0%, #443c34 100%)',
-        professionTag: 'Workshop Operations',
+        professionTag: 'Workshop & Security Training',
+        sourcePlatform: 'WhatsApp',
+        mediaFormat: 'JPG',
+        seriesLabel: 'Part 2 of 3',
     },
     {
         id: 'st_mike_mukasa_info',
@@ -342,13 +508,16 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         timestampLabel: 'Today at 8:55 AM',
         viewed: true,
         mediaType: 'info',
-        infoBadge: 'Workshop Shift Update',
-        title: 'Safety & Tooling Readiness Summary',
-        text: 'All overhead cranes, diagnostic rigs, and torque benches passed morning shift certification.',
-        infoDetails: 'Shift hours: 7:00 AM – 6:00 PM · Visitors check in with Workshop Desk.',
+        infoBadge: 'Workshop Shift SOP',
+        title: 'Safety, Overhead Crane & Tooling Readiness Protocol',
+        text: 'Daily pre-shift verification checklist covering overhead cranes, diagnostic rigs, and calibrated torque benches.',
+        infoDetails: 'Shift hours: 7:00 AM – 6:00 PM · Practical skills sign-off tracked in ConnectLn Passport.',
         attachmentName: 'Workshop_Readiness_Log_Today.pdf',
         bgColor: 'linear-gradient(135deg, #4d6b53 0%, #2f4534 100%)',
-        professionTag: 'Workshop Operations',
+        professionTag: 'Workshop & Security Training',
+        sourcePlatform: 'ConnectLn',
+        mediaFormat: 'PDF',
+        seriesLabel: 'Part 3 of 3',
     },
     {
         id: 'st_suzzan',
@@ -359,11 +528,14 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         mediaType: 'video',
         videoUrl: '/status-videos/nasa_space.mp4',
         videoDuration: '0:30',
-        videoTitle: 'Global Commercial Corridor & Aerial Overview',
-        text: 'New commercial property portfolio & executive campus listings open for private walkthroughs this week.',
+        videoTitle: 'Aerospace Infrastructure & Commercial Corridor GIS Training',
+        text: 'Commercial corridor asset valuation, geospatial telemetry, and institutional property walkthrough training.',
         imageUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=900',
         bgColor: 'linear-gradient(135deg, #292521 0%, #5e3119 100%)',
-        professionTag: 'Commercial Real Estate',
+        professionTag: 'Commercial Real Estate Training',
+        sourcePlatform: 'Facebook',
+        mediaFormat: 'MP4',
+        seriesLabel: 'Part 1 of 3',
     },
     {
         id: 'st_suzzan_photo',
@@ -372,11 +544,32 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         timestampLabel: 'Today at 8:40 AM',
         viewed: true,
         mediaType: 'photo',
-        title: 'Waterfront Mixed-Use Tower Tour',
+        title: 'Waterfront Mixed-Use Tower MEP & Core Inspection',
         imageUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=900',
-        text: '42,000 sq ft turnkey flagship floorplate available for immediate medical or tech fit-out.',
+        text: '42,000 sq ft turnkey flagship floorplate inspection for medical & enterprise infrastructure build-out.',
         bgColor: 'linear-gradient(135deg, #292521 0%, #5e3119 100%)',
-        professionTag: 'Commercial Real Estate',
+        professionTag: 'Commercial Real Estate Training',
+        sourcePlatform: 'WhatsApp',
+        mediaFormat: 'JPG',
+        seriesLabel: 'Part 2 of 3',
+    },
+    {
+        id: 'st_suzzan_info',
+        authorName: 'Suzzan Coldwell Banker',
+        authorAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
+        timestampLabel: 'Today at 8:15 AM',
+        viewed: true,
+        mediaType: 'info',
+        infoBadge: 'Facility Commissioning Brief',
+        title: 'Commercial Underwriting & ARGUS Fit-Out Specs',
+        text: 'TI Allowance up to $65/sq ft with redundant fiber core and hospital-grade HVAC air-exchange compliance.',
+        infoDetails: 'Tour window: 10:00 AM – 4:00 PM · Includes LEED Gold & Class-A underwriting packet.',
+        attachmentName: 'Commercial_Portfolio_Brochure.pdf',
+        bgColor: 'linear-gradient(135deg, #3b1e10 0%, #5e3119 100%)',
+        professionTag: 'Commercial Real Estate Training',
+        sourcePlatform: 'ConnectLn',
+        mediaFormat: 'PDF',
+        seriesLabel: 'Part 3 of 3',
     },
     {
         id: 'st_naana',
@@ -385,13 +578,50 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         timestampLabel: 'Today at 7:03 AM',
         viewed: true,
         mediaType: 'video',
-        videoUrl: '/status-videos/hallelujah_choir.mp4',
+        videoUrl: '/status-videos/physician.mp4',
         videoDuration: '0:28',
-        videoTitle: 'Morning Inspiration & Harmony Session',
-        text: 'Blessed morning! Wishing everyone an uplifting and productive workday.',
-        imageUrl: 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=900',
+        videoTitle: 'Clinical Biomedical Lab & Acute Trauma Triage Training',
+        text: 'Evidence-based clinical diagnostics, sterile laboratory workflow, and emergency trauma protocol training.',
+        imageUrl: 'https://images.unsplash.com/photo-1579154204601-01588f351e67?w=900',
         bgColor: 'linear-gradient(135deg, #63331b 0%, #8a4b29 100%)',
-        professionTag: 'Community & Culture',
+        professionTag: 'Clinical & Healthcare Training',
+        sourcePlatform: 'Facebook',
+        mediaFormat: 'MP4',
+        seriesLabel: 'Part 1 of 3',
+    },
+    {
+        id: 'st_naana_photo',
+        authorName: 'Naana L',
+        authorAvatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150',
+        timestampLabel: 'Today at 6:48 AM',
+        viewed: true,
+        mediaType: 'photo',
+        title: 'Biomedical Diagnostic Bench & Assay Calibration',
+        imageUrl: 'https://images.unsplash.com/photo-1579154204601-01588f351e67?w=900',
+        text: 'Clinical hematology analyzer QC verification and sterile chain-of-custody documentation visual.',
+        bgColor: 'linear-gradient(135deg, #63331b 0%, #8a4b29 100%)',
+        professionTag: 'Clinical & Healthcare Training',
+        sourcePlatform: 'WhatsApp',
+        mediaFormat: 'PNG',
+        seriesLabel: 'Part 2 of 3',
+    },
+    {
+        id: 'st_naana_info',
+        authorName: 'Naana L',
+        authorAvatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150',
+        timestampLabel: 'Today at 6:30 AM',
+        viewed: true,
+        mediaType: 'info',
+        infoBadge: 'Clinical Continuing Ed',
+        title: 'CCRN, ACLS & Lab Sterile Technique Verification Guide',
+        text: 'Full shift clinical competency checklist for acute care RNs, clinical lab scientists, and EMS paramedics.',
+        infoDetails: 'Includes HIPAA-compliant EHR charting protocol & 4.0 CEU credit summary.',
+        attachmentName: 'Clinical_Triage_ACLS_Checklist.pdf',
+        bgColor: 'linear-gradient(135deg, #4d6b53 0%, #2f4534 100%)',
+        professionTag: 'Clinical & Healthcare Training',
+        sourcePlatform: 'ConnectLn',
+        mediaFormat: 'PDF',
+        seriesLabel: 'Part 3 of 3',
     },
     {
         id: 'st_branding',
@@ -400,13 +630,50 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         timestampLabel: 'Today at 4:54 AM',
         viewed: true,
         mediaType: 'video',
-        videoUrl: '/status-videos/bounce.mp4',
+        videoUrl: '/status-videos/agentic_flywheel.mp4',
         videoDuration: '0:21',
-        videoTitle: 'Brand Identity Motion Reel & Visual Campaign',
-        text: 'Updated brand identity motion reel and visual campaign assets uploaded to the shared project folder.',
-        imageUrl: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=900',
+        videoTitle: 'AI Agentic Career Flywheel & Commercial Systems Training',
+        text: 'How autonomous skills verification, credential telemetry, and multi-platform portfolios accelerate placements.',
+        imageUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=900',
         bgColor: 'linear-gradient(135deg, #292521 0%, #524b42 100%)',
-        professionTag: 'Creative Direction',
+        professionTag: 'Workforce AI Training',
+        sourcePlatform: 'TikTok',
+        mediaFormat: 'MOV',
+        seriesLabel: 'Part 1 of 3',
+    },
+    {
+        id: 'st_branding_photo',
+        authorName: 'Branding - Market Project',
+        authorAvatar: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=150',
+        timestampLabel: 'Today at 4:40 AM',
+        viewed: true,
+        mediaType: 'photo',
+        title: 'Workforce Credential Graph & Technical Portfolio Layout',
+        imageUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=900',
+        text: 'Reference showcase format for engineering drawings, trade certifications, and employer video briefings.',
+        bgColor: 'linear-gradient(135deg, #292521 0%, #524b42 100%)',
+        professionTag: 'Workforce AI Training',
+        sourcePlatform: 'Facebook',
+        mediaFormat: 'WEBP',
+        seriesLabel: 'Part 2 of 3',
+    },
+    {
+        id: 'st_branding_info',
+        authorName: 'Branding - Market Project',
+        authorAvatar: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=150',
+        timestampLabel: 'Today at 4:25 AM',
+        viewed: true,
+        mediaType: 'info',
+        infoBadge: 'Technical Portfolio Standard',
+        title: 'Verified Member Skill Ledger & KSA Evidence Guide',
+        text: 'Best practices for publishing trade videos, CAD snapshots, and OSHA/HIPAA/SOC credentials to employers.',
+        infoDetails: 'Covers MP4/MOV/WEBM video clips, WEBP/HEIC/PNG jobsite photos & USAJOBS KSA alignment.',
+        attachmentName: 'Workforce_Portfolio_Standard_v3.pdf',
+        bgColor: 'linear-gradient(135deg, #3b1e10 0%, #5e3119 100%)',
+        professionTag: 'Workforce AI Training',
+        sourcePlatform: 'ConnectLn',
+        mediaFormat: 'PDF',
+        seriesLabel: 'Part 3 of 3',
     },
     {
         id: 'st_ob',
@@ -415,13 +682,49 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
         timestampLabel: 'Today at 4:12 AM',
         viewed: true,
         mediaType: 'video',
-        videoUrl: '/status-videos/run.mp4',
-        videoDuration: '0:19',
-        videoTitle: 'Early Shift Field Run & Diagnostics',
-        text: 'Early shift field run & morning diagnostics complete — all systems green for today.',
-        imageUrl: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=900',
+        videoUrl: '/status-videos/spot.mp4',
+        videoDuration: '0:27',
+        videoTitle: 'NABCEP Solar Microgrid & High-Voltage Diagnostics Training',
+        text: 'Field diagnostics walkthrough: 480V switchgear thermal scan, IV-curve testing & microgrid inverter sync.',
+        imageUrl: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=900',
         bgColor: 'linear-gradient(135deg, #1c1917 0%, #3d3730 100%)',
-        professionTag: 'Field Diagnostics',
+        professionTag: 'Solar & Grid Training',
+        sourcePlatform: 'WhatsApp',
+        mediaFormat: '3GP',
+        seriesLabel: 'Part 1 of 3',
+    },
+    {
+        id: 'st_ob_photo',
+        authorName: 'OB',
+        authorAvatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150',
+        timestampLabel: 'Today at 4:02 AM',
+        viewed: true,
+        mediaType: 'photo',
+        title: 'Solar & Feeder Array Morning IV-Curve Inspection',
+        imageUrl: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=900',
+        text: 'Inverter string voltage balanced across all 6 commercial solar arrays prior to peak load window.',
+        bgColor: 'linear-gradient(135deg, #1c1917 0%, #3d3730 100%)',
+        professionTag: 'Solar & Grid Training',
+        sourcePlatform: 'WhatsApp',
+        mediaFormat: 'HEIC',
+        seriesLabel: 'Part 2 of 3',
+    },
+    {
+        id: 'st_ob_info',
+        authorName: 'OB',
+        authorAvatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150',
+        timestampLabel: 'Today at 3:45 AM',
+        viewed: true,
+        mediaType: 'info',
+        infoBadge: 'NEC 2026 & NFPA 70E SOP',
+        title: 'Field Lockout/Tagout & Battery Telemetry Health Log',
+        text: 'Zero faults across feeder substations; preventative battery thermal management passed at 99.4% efficiency.',
+        infoDetails: 'NFPA 70E Arc-Flash PPE Category 2 · Fluke Solmetric PVA-1500 calibration verified.',
+        bgColor: 'linear-gradient(135deg, #4d6b53 0%, #2f4534 100%)',
+        professionTag: 'Solar & Grid Training',
+        sourcePlatform: 'ConnectLn',
+        mediaFormat: 'PDF',
+        seriesLabel: 'Part 3 of 3',
     },
 ];
 
@@ -881,7 +1184,33 @@ export function WhatsAppModeWorkspace({
 
     const [activeStatusUserId, setActiveStatusUserId] = useState<string | null>('user_box_boat');
     const [activeStatusSlideIndex, setActiveStatusSlideIndex] = useState<number>(0);
-    const [statusComposerMode, setStatusComposerMode] = useState<'video' | 'photo' | 'info' | null>(null);
+    const [statusComposerMode, setStatusComposerMode] = useState<'series' | 'video' | 'photo' | 'info' | null>(null);
+    const [isStatusAutoPlaying, setIsStatusAutoPlaying] = useState<boolean>(true);
+    const [statusSlideProgress, setStatusSlideProgress] = useState<number>(0);
+    const [isStatusCompletedForUser, setIsStatusCompletedForUser] = useState<boolean>(false);
+    const [isStatusReplyFocused, setIsStatusReplyFocused] = useState<boolean>(false);
+    const [statusReplayNonce, setStatusReplayNonce] = useState<number>(0);
+    const [activeVideoTiming, setActiveVideoTiming] = useState<{ currentSec: number; durationSec: number }>({
+        currentSec: 0,
+        durationSec: 0,
+    });
+    const activeStatusVideoRef = React.useRef<HTMLVideoElement | null>(null);
+    const [statusSourcePlatform, setStatusSourcePlatform] = useState<StatusSourcePlatform>('WhatsApp');
+    const [seriesBatchUrlsText, setSeriesBatchUrlsText] = useState('');
+    const [queuedSeriesItems, setQueuedSeriesItems] = useState<
+        Array<{
+            id: string;
+            mediaType: 'video' | 'photo';
+            name: string;
+            title: string;
+            caption?: string;
+            url: string;
+            posterUrl?: string;
+            sourcePlatform: StatusSourcePlatform;
+            mediaFormat: string;
+            externalSourceUrl?: string;
+        }>
+    >([]);
     const [statusDraftTitle, setStatusDraftTitle] = useState('');
     const [statusDraftText, setStatusDraftText] = useState('');
     const [statusDraftInfoBadge, setStatusDraftInfoBadge] = useState('Project Update');
@@ -892,12 +1221,121 @@ export function WhatsAppModeWorkspace({
         'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=900'
     );
     const [statusDraftVideo, setStatusDraftVideo] = useState('/status-videos/physician.mp4');
-    const [queuedPhotoUploads, setQueuedPhotoUploads] = useState<Array<{ id: string; name: string; dataUrl: string }>>([]);
-    const [queuedVideoUploads, setQueuedVideoUploads] = useState<Array<{ id: string; name: string; url: string }>>([]);
+    const [queuedPhotoUploads, setQueuedPhotoUploads] = useState<
+        Array<{ id: string; name: string; dataUrl: string; mediaFormat: string }>
+    >([]);
+    const [queuedVideoUploads, setQueuedVideoUploads] = useState<
+        Array<{ id: string; name: string; url: string; mediaFormat: string }>
+    >([]);
     const [statusBgColor, setStatusBgColor] = useState(
         'linear-gradient(135deg, #5e3119 0%, #7c4225 55%, #3d3730 100%)'
     );
     const [statusReplyText, setStatusReplyText] = useState('');
+
+    // Derived active Status Box & slide for automatic sequential per-user playback
+    const topActiveStatusBox =
+        mode === 'status' && !statusComposerMode
+            ? statusBoxes.find((b) => b.userId === activeStatusUserId) || null
+            : null;
+    const topActiveSlides = topActiveStatusBox?.slides || [];
+    const topSafeSlideIndex =
+        topActiveSlides.length > 0
+            ? Math.min(Math.max(activeStatusSlideIndex, 0), topActiveSlides.length - 1)
+            : 0;
+    const topActiveSlide = topActiveSlides[topSafeSlideIndex] || null;
+    const topActiveSlideId = topActiveSlide?.id || '';
+    const topActiveSlideMediaType = topActiveSlide?.mediaType || '';
+    const topActiveSlideVideoUrl = topActiveSlide?.videoUrl || '';
+    const topActiveSlideCount = topActiveSlides.length;
+
+    useEffect(() => {
+        setActiveVideoTiming({ currentSec: 0, durationSec: 0 });
+    }, [topActiveStatusBox?.userId, topActiveSlideId, statusReplayNonce]);
+
+    // Effect 1: Auto-advance Picture & Info status slides (5.5s per item) until end of selected user's box
+    useEffect(() => {
+        if (
+            mode !== 'status' ||
+            statusComposerMode ||
+            !topActiveStatusBox ||
+            !topActiveSlide ||
+            !isStatusAutoPlaying ||
+            isStatusReplyFocused ||
+            isStatusCompletedForUser
+        ) {
+            return;
+        }
+        if (topActiveSlideMediaType === 'video' && topActiveSlideVideoUrl) {
+            return;
+        }
+
+        const DURATION_MS = 5500;
+        const TICK_MS = 100;
+        const startOffsetPct = statusSlideProgress >= 99 ? 0 : statusSlideProgress;
+        const startTime = Date.now() - (startOffsetPct / 100) * DURATION_MS;
+
+        const timerId = window.setInterval(() => {
+            const elapsed = Date.now() - startTime;
+            const nextPct = Math.min(100, (elapsed / DURATION_MS) * 100);
+            if (nextPct >= 100) {
+                window.clearInterval(timerId);
+                if (topSafeSlideIndex < topActiveSlideCount - 1) {
+                    setActiveStatusSlideIndex(topSafeSlideIndex + 1);
+                    setStatusSlideProgress(0);
+                } else {
+                    setStatusSlideProgress(100);
+                    setIsStatusAutoPlaying(false);
+                    setIsStatusCompletedForUser(true);
+                }
+            } else {
+                setStatusSlideProgress(nextPct);
+            }
+        }, TICK_MS);
+
+        return () => window.clearInterval(timerId);
+    }, [
+        mode,
+        statusComposerMode,
+        topActiveStatusBox?.userId,
+        topActiveSlideId,
+        topActiveSlideMediaType,
+        topActiveSlideVideoUrl,
+        topSafeSlideIndex,
+        topActiveSlideCount,
+        isStatusAutoPlaying,
+        isStatusReplyFocused,
+        isStatusCompletedForUser,
+    ]);
+
+    // Effect 2: Control active <video> play / pause / autoplay-fallback
+    useEffect(() => {
+        if (mode !== 'status' || statusComposerMode) return;
+        const videoEl = activeStatusVideoRef.current;
+        if (!videoEl || topActiveSlideMediaType !== 'video' || !topActiveSlideVideoUrl) return;
+
+        if (isStatusAutoPlaying && !isStatusReplyFocused && !isStatusCompletedForUser) {
+            const playPromise = videoEl.play();
+            if (playPromise && typeof playPromise.catch === 'function') {
+                playPromise.catch(() => {
+                    videoEl.muted = true;
+                    videoEl.play().catch(() => {});
+                });
+            }
+        } else {
+            videoEl.pause();
+        }
+    }, [
+        mode,
+        statusComposerMode,
+        topActiveStatusBox?.userId,
+        topActiveSlideId,
+        topActiveSlideMediaType,
+        topActiveSlideVideoUrl,
+        isStatusAutoPlaying,
+        isStatusReplyFocused,
+        isStatusCompletedForUser,
+        statusReplayNonce,
+    ]);
 
     // ---- CALLS STATE ----
     const [callLogs, setCallLogs] = useState<CallLogEntry[]>(() => {
@@ -1101,6 +1539,10 @@ export function WhatsAppModeWorkspace({
         const handleOpenUserStatusBox = (box: UserStatusBox, startSlideIdx = 0) => {
             setActiveStatusUserId(box.userId);
             setActiveStatusSlideIndex(startSlideIdx);
+            setStatusSlideProgress(0);
+            setIsStatusCompletedForUser(false);
+            setIsStatusAutoPlaying(true);
+            setStatusReplayNonce((n) => n + 1);
             setStatusComposerMode(null);
             setStatusBoxes((prev) =>
                 prev.map((b) =>
@@ -1112,15 +1554,31 @@ export function WhatsAppModeWorkspace({
         };
 
         const handleStepWithinUserBox = (delta: number) => {
-            if (!activeUserBox || activeUserBox.slides.length <= 1) return;
-            const nextIdx =
-                (safeSlideIndex + delta + activeUserBox.slides.length) % activeUserBox.slides.length;
+            if (!activeUserBox || activeUserBox.slides.length === 0) return;
+            const nextIdx = safeSlideIndex + delta;
+            if (nextIdx < 0 || nextIdx >= activeUserBox.slides.length) return;
             setActiveStatusSlideIndex(nextIdx);
+            setStatusSlideProgress(0);
+            setIsStatusCompletedForUser(false);
+            setIsStatusAutoPlaying(true);
         };
 
         const handleSelectSlideInUserBox = (idx: number) => {
             if (!activeUserBox || idx < 0 || idx >= activeUserBox.slides.length) return;
             setActiveStatusSlideIndex(idx);
+            setStatusSlideProgress(0);
+            setIsStatusCompletedForUser(false);
+            setIsStatusAutoPlaying(true);
+            setStatusReplayNonce((n) => n + 1);
+        };
+
+        const handleReplayUserBox = () => {
+            if (!activeUserBox || activeUserBox.slides.length === 0) return;
+            setActiveStatusSlideIndex(0);
+            setStatusSlideProgress(0);
+            setIsStatusCompletedForUser(false);
+            setIsStatusAutoPlaying(true);
+            setStatusReplayNonce((n) => n + 1);
         };
 
         const handleDeleteMySlide = (slideId: string) => {
@@ -1174,6 +1632,7 @@ export function WhatsAppModeWorkspace({
                     id: `q_img_${Date.now()}_${idx}`,
                     name: f.name,
                     dataUrl: await readCompactImageDataUrl(f),
+                    mediaFormat: detectMediaFormatLabel(f.name || f.type, 'JPG'),
                 }))
             );
             setQueuedPhotoUploads((prev) => [...prev, ...converted.filter((x) => Boolean(x.dataUrl))]);
@@ -1187,9 +1646,227 @@ export function WhatsAppModeWorkspace({
                 id: `q_vid_${Date.now()}_${idx}`,
                 name: f.name,
                 url: URL.createObjectURL(f),
+                mediaFormat: detectMediaFormatLabel(f.name || f.type, 'MP4'),
             }));
             setQueuedVideoUploads((prev) => [...prev, ...uploaded]);
             e.target.value = '';
+        };
+
+        const handleSeriesMixedFilesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+            const files = Array.from(e.target.files || []);
+            if (!files.length) return;
+            const nextItems: typeof queuedSeriesItems = [];
+            for (let idx = 0; idx < files.length; idx++) {
+                const f = files[idx];
+                const isVideoFile =
+                    f.type.startsWith('video/') ||
+                    /\.(mp4|mov|webm|mkv|avi|m4v|3gp|3g2|mpeg|mpg|ogv|flv|wmv)$/i.test(f.name);
+                const inferredPlatform = inferPlatformFromHint(f.name, statusSourcePlatform);
+                const formatLabel = detectMediaFormatLabel(
+                    f.name || f.type,
+                    isVideoFile ? 'MP4' : 'JPG'
+                );
+                if (isVideoFile) {
+                    nextItems.push({
+                        id: `q_ser_${Date.now()}_${idx}`,
+                        mediaType: 'video',
+                        name: f.name,
+                        title: f.name.replace(/\.[^/.]+$/, ''),
+                        url: URL.createObjectURL(f),
+                        sourcePlatform: inferredPlatform,
+                        mediaFormat: formatLabel,
+                    });
+                } else {
+                    const dataUrl = await readCompactImageDataUrl(f);
+                    if (dataUrl) {
+                        nextItems.push({
+                            id: `q_ser_${Date.now()}_${idx}`,
+                            mediaType: 'photo',
+                            name: f.name,
+                            title: f.name.replace(/\.[^/.]+$/, ''),
+                            url: dataUrl,
+                            sourcePlatform: inferredPlatform,
+                            mediaFormat: formatLabel,
+                        });
+                    }
+                }
+            }
+            if (nextItems.length > 0) {
+                setQueuedSeriesItems((prev) => [...prev, ...nextItems]);
+                triggerToast(`🎞️ Added ${nextItems.length} file${nextItems.length > 1 ? 's' : ''} to your training series queue.`);
+            }
+            e.target.value = '';
+        };
+
+        const handleAddSocialLinksToSeries = () => {
+            const lines = seriesBatchUrlsText
+                .split(/[\r\n]+/)
+                .map((l) => l.trim())
+                .filter(Boolean);
+            if (!lines.length) return;
+            const imported: typeof queuedSeriesItems = lines.map((rawUrl, idx) => {
+                const detectedPlatform = inferPlatformFromHint(rawUrl, statusSourcePlatform);
+                const isImageExt = /\.(jpg|jpeg|png|webp|gif|avif|heic|heif|bmp|svg|jfif)(\?|$)/i.test(rawUrl);
+                const isExplicitVideoExt = /\.(mp4|mov|webm|mkv|avi|m4v|3gp|mpeg|mpg|ogv|flv|wmv)(\?|$)/i.test(rawUrl);
+                const isPhoto = isImageExt && !isExplicitVideoExt;
+                const fallbackVideoPreset = STATUS_VIDEO_PRESETS[idx % STATUS_VIDEO_PRESETS.length];
+                const fallbackPhotoPreset = STATUS_PHOTO_PRESETS[idx % STATUS_PHOTO_PRESETS.length];
+                const formatLabel = isPhoto
+                    ? detectMediaFormatLabel(rawUrl, 'WEBP')
+                    : detectedPlatform === 'TikTok'
+                    ? detectMediaFormatLabel(rawUrl, 'MP4 (9:16)')
+                    : detectedPlatform === 'Facebook'
+                    ? detectMediaFormatLabel(rawUrl, 'MP4 (HD)')
+                    : detectMediaFormatLabel(rawUrl, 'MP4');
+
+                return {
+                    id: `q_url_${Date.now()}_${idx}`,
+                    mediaType: isPhoto ? 'photo' : 'video',
+                    name: `${detectedPlatform} Training Import #${idx + 1}`,
+                    title: `${detectedPlatform} Professional Training ${isPhoto ? 'Reference' : 'Module'} #${idx + 1}`,
+                    caption: `Imported ${detectedPlatform} training ${isPhoto ? 'visual reference' : 'clip'} (${formatLabel})`,
+                    url: isPhoto
+                        ? isImageExt
+                            ? rawUrl
+                            : fallbackPhotoPreset.imageUrl
+                        : isExplicitVideoExt
+                        ? rawUrl
+                        : fallbackVideoPreset.videoUrl,
+                    posterUrl: !isPhoto ? fallbackVideoPreset.posterUrl : undefined,
+                    sourcePlatform: detectedPlatform,
+                    mediaFormat: formatLabel,
+                    externalSourceUrl: rawUrl,
+                };
+            });
+            setQueuedSeriesItems((prev) => [...prev, ...imported]);
+            setSeriesBatchUrlsText('');
+            triggerToast(`✅ Imported ${imported.length} training link${imported.length > 1 ? 's' : ''} into your series!`);
+        };
+
+        const handleApplyTrainingSeriesPreset = (platform: 'WhatsApp' | 'TikTok' | 'Facebook') => {
+            setStatusSourcePlatform(platform);
+            const now = Date.now();
+            if (platform === 'WhatsApp') {
+                setQueuedSeriesItems((prev) => [
+                    ...prev,
+                    {
+                        id: `pre_wa_1_${now}`,
+                        mediaType: 'video',
+                        name: 'OSHA_30_Structural_Rigging_Training.mp4',
+                        title: 'OSHA 30 Structural Rigging & Field Commissioning',
+                        caption: 'Full-length WhatsApp trade crew safety & rigging inspection training video.',
+                        url: '/status-videos/spot.mp4',
+                        posterUrl: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=900',
+                        sourcePlatform: 'WhatsApp',
+                        mediaFormat: 'MP4',
+                    },
+                    {
+                        id: `pre_wa_2_${now}`,
+                        mediaType: 'photo',
+                        name: 'Solar_Microgrid_IV_Curve_Diagram.webp',
+                        title: 'NABCEP 480V Solar Microgrid Switchgear Layout',
+                        caption: 'High-voltage inverter & feeder array field visual from WhatsApp Trade Desk.',
+                        url: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=900',
+                        sourcePlatform: 'WhatsApp',
+                        mediaFormat: 'WEBP',
+                    },
+                    {
+                        id: `pre_wa_3_${now}`,
+                        mediaType: 'video',
+                        name: 'MEP_Cost_Estimation_Training.3gp',
+                        title: 'Commercial Blueprint Quantity Takeoff & Estimating',
+                        caption: 'Step-by-step MEP tender estimation walkthrough shared via WhatsApp Training Group.',
+                        url: '/status-videos/calc.mp4',
+                        posterUrl: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=900',
+                        sourcePlatform: 'WhatsApp',
+                        mediaFormat: '3GP',
+                    },
+                ]);
+            } else if (platform === 'TikTok') {
+                setQueuedSeriesItems((prev) => [
+                    ...prev,
+                    {
+                        id: `pre_tt_1_${now}`,
+                        mediaType: 'video',
+                        name: 'ZeroTrust_Kubernetes_eBPF_Lab.mp4',
+                        title: 'Zero-Trust Kubernetes & eBPF Threat Containment',
+                        caption: 'Hands-on SOC & DevSecOps runtime training reel from TikTok Tech Academy.',
+                        url: '/status-videos/k8s_ebpf.mp4',
+                        posterUrl: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=900',
+                        sourcePlatform: 'TikTok',
+                        mediaFormat: 'MP4 (9:16)',
+                    },
+                    {
+                        id: `pre_tt_2_${now}`,
+                        mediaType: 'photo',
+                        name: 'Autonomous_SOC_Telemetry_Diagram.png',
+                        title: 'Autonomous SOC & NIST SP 800-207 Topology',
+                        caption: 'Visual reference schematic for runtime workload containment & detection rules.',
+                        url: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=900',
+                        sourcePlatform: 'TikTok',
+                        mediaFormat: 'PNG',
+                    },
+                    {
+                        id: `pre_tt_3_${now}`,
+                        mediaType: 'video',
+                        name: 'Agentic_AI_Workforce_Training.mov',
+                        title: 'AI Agentic Career Flywheel & Technical Architecture',
+                        caption: 'Practical AI systems orchestration training clip imported from TikTok Creator Studio.',
+                        url: '/status-videos/agentic_flywheel.mp4',
+                        posterUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=900',
+                        sourcePlatform: 'TikTok',
+                        mediaFormat: 'MOV',
+                    },
+                ]);
+            } else {
+                setQueuedSeriesItems((prev) => [
+                    ...prev,
+                    {
+                        id: `pre_fb_1_${now}`,
+                        mediaType: 'video',
+                        name: 'Clinical_Biomedical_Triage_Training.mp4',
+                        title: 'Acute Trauma Triage & Biomedical Diagnostics Lab',
+                        caption: 'Continuing medical & clinical lab workflow training shared from Facebook Clinical Guild.',
+                        url: '/status-videos/physician.mp4',
+                        posterUrl: 'https://images.unsplash.com/photo-1579154204601-01588f351e67?w=900',
+                        sourcePlatform: 'Facebook',
+                        mediaFormat: 'MP4 (HD)',
+                    },
+                    {
+                        id: `pre_fb_2_${now}`,
+                        mediaType: 'photo',
+                        name: 'Workshop_CNC_Metrology_Calibration.jpg',
+                        title: '5-Axis CNC Fabrication & Torque Inspection Bench',
+                        caption: 'Precision manufacturing & shop certification visual imported from Facebook Industrial Group.',
+                        url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=900',
+                        sourcePlatform: 'Facebook',
+                        mediaFormat: 'JPG',
+                    },
+                    {
+                        id: `pre_fb_3_${now}`,
+                        mediaType: 'video',
+                        name: 'PLC_Automation_Systems_Drill.webm',
+                        title: 'PLC Automation & SCADA Controller Verification',
+                        caption: 'Industrial SCADA & Modbus commissioning training series from Facebook Engineering Hub.',
+                        url: '/status-videos/developer.mp4',
+                        posterUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=900',
+                        sourcePlatform: 'Facebook',
+                        mediaFormat: 'WEBM',
+                    },
+                ]);
+            }
+            triggerToast(`🎞️ Loaded 3-part ${platform} professional training series into queue!`);
+        };
+
+        const handleMoveQueuedSeriesItem = (index: number, delta: -1 | 1) => {
+            setQueuedSeriesItems((prev) => {
+                const target = index + delta;
+                if (target < 0 || target >= prev.length) return prev;
+                const copy = [...prev];
+                const [item] = copy.splice(index, 1);
+                copy.splice(target, 0, item);
+                return copy;
+            });
         };
 
         const handleAttachmentFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1211,8 +1888,42 @@ export function WhatsAppModeWorkspace({
             const nowStamp = `Today at ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
             const createdSlides: StatusUpdateItem[] = [];
 
-            if (statusComposerMode === 'video') {
+            if (statusComposerMode === 'series') {
+                if (queuedSeriesItems.length === 0) {
+                    if (seriesBatchUrlsText.trim()) {
+                        handleAddSocialLinksToSeries();
+                    }
+                    return;
+                }
+                const total = queuedSeriesItems.length;
+                queuedSeriesItems.forEach((item, idx) => {
+                    createdSlides.push({
+                        id: `st_me_${Date.now()}_${idx}`,
+                        authorName: userName,
+                        authorAvatar: userAvatar,
+                        timestampLabel: nowStamp,
+                        viewed: false,
+                        mediaType: item.mediaType,
+                        title: item.title || statusDraftTitle.trim() || item.name,
+                        videoTitle: item.mediaType === 'video' ? (item.title || item.name) : undefined,
+                        videoUrl: item.mediaType === 'video' ? item.url : undefined,
+                        imageUrl: item.mediaType === 'photo' ? item.url : item.posterUrl,
+                        videoDuration: item.mediaType === 'video' ? 'Full Clip' : undefined,
+                        text:
+                            statusDraftText.trim() ||
+                            item.caption ||
+                            `${item.sourcePlatform} Training ${item.mediaType === 'video' ? 'Video' : 'Picture'} (${item.mediaFormat})`,
+                        bgColor: statusBgColor,
+                        professionTag: `${item.sourcePlatform} Training Series`,
+                        sourcePlatform: item.sourcePlatform,
+                        mediaFormat: item.mediaFormat,
+                        externalSourceUrl: item.externalSourceUrl,
+                        seriesLabel: total > 1 ? `Part ${idx + 1} of ${total}` : undefined,
+                    });
+                });
+            } else if (statusComposerMode === 'video') {
                 if (queuedVideoUploads.length > 0) {
+                    const total = queuedVideoUploads.length;
                     queuedVideoUploads.forEach((v, idx) => {
                         createdSlides.push({
                             id: `st_me_${Date.now()}_${idx}`,
@@ -1224,13 +1935,18 @@ export function WhatsAppModeWorkspace({
                             title: statusDraftTitle.trim() || v.name.replace(/\.[^/.]+$/, ''),
                             videoTitle: statusDraftTitle.trim() || v.name,
                             videoUrl: v.url,
-                            videoDuration: 'Uploaded',
-                            text: statusDraftText.trim() || `Uploaded video status: ${v.name}`,
+                            videoDuration: 'Full Clip',
+                            text: statusDraftText.trim() || `Uploaded training video (${v.mediaFormat}): ${v.name}`,
                             bgColor: statusBgColor,
-                            professionTag: 'My Uploaded Video',
+                            professionTag: `${statusSourcePlatform} Training Video`,
+                            sourcePlatform: inferPlatformFromHint(v.name, statusSourcePlatform),
+                            mediaFormat: v.mediaFormat,
+                            seriesLabel: total > 1 ? `Part ${idx + 1} of ${total}` : undefined,
                         });
                     });
                 } else if (statusDraftVideo.trim()) {
+                    const inferredPlatform = inferPlatformFromHint(statusDraftVideo, statusSourcePlatform);
+                    const formatLabel = detectMediaFormatLabel(statusDraftVideo, 'MP4');
                     createdSlides.push({
                         id: `st_me_${Date.now()}`,
                         authorName: userName,
@@ -1238,18 +1954,21 @@ export function WhatsAppModeWorkspace({
                         timestampLabel: nowStamp,
                         viewed: false,
                         mediaType: 'video',
-                        title: statusDraftTitle.trim() || '24h Video Status Update',
-                        videoTitle: statusDraftTitle.trim() || '24h Video Status Update',
+                        title: statusDraftTitle.trim() || 'Professional Training Video Update',
+                        videoTitle: statusDraftTitle.trim() || 'Professional Training Video Update',
                         videoUrl: statusDraftVideo.trim(),
                         imageUrl: statusDraftImage || undefined,
-                        videoDuration: '0:22',
-                        text: statusDraftText.trim() || 'New 24-hour ConnectLn video status update.',
+                        videoDuration: 'Full Clip',
+                        text: statusDraftText.trim() || 'New 24-hour ConnectLn professional training video update.',
                         bgColor: statusBgColor,
-                        professionTag: 'My Uploaded Video',
+                        professionTag: `${inferredPlatform} Training Video`,
+                        sourcePlatform: inferredPlatform,
+                        mediaFormat: formatLabel,
                     });
                 }
             } else if (statusComposerMode === 'photo') {
                 if (queuedPhotoUploads.length > 0) {
+                    const total = queuedPhotoUploads.length;
                     queuedPhotoUploads.forEach((imgItem, idx) => {
                         createdSlides.push({
                             id: `st_me_${Date.now()}_${idx}`,
@@ -1260,12 +1979,17 @@ export function WhatsAppModeWorkspace({
                             mediaType: 'photo',
                             title: statusDraftTitle.trim() || imgItem.name.replace(/\.[^/.]+$/, ''),
                             imageUrl: imgItem.dataUrl,
-                            text: statusDraftText.trim() || `Uploaded photo update (${imgItem.name})`,
+                            text: statusDraftText.trim() || `Uploaded training picture (${imgItem.mediaFormat}): ${imgItem.name}`,
                             bgColor: statusBgColor,
-                            professionTag: 'My Uploaded Picture',
+                            professionTag: `${statusSourcePlatform} Training Picture`,
+                            sourcePlatform: inferPlatformFromHint(imgItem.name, statusSourcePlatform),
+                            mediaFormat: imgItem.mediaFormat,
+                            seriesLabel: total > 1 ? `Part ${idx + 1} of ${total}` : undefined,
                         });
                     });
                 } else if (statusDraftImage.trim()) {
+                    const inferredPlatform = inferPlatformFromHint(statusDraftImage, statusSourcePlatform);
+                    const formatLabel = detectMediaFormatLabel(statusDraftImage, 'JPG');
                     createdSlides.push({
                         id: `st_me_${Date.now()}`,
                         authorName: userName,
@@ -1273,11 +1997,13 @@ export function WhatsAppModeWorkspace({
                         timestampLabel: nowStamp,
                         viewed: false,
                         mediaType: 'photo',
-                        title: statusDraftTitle.trim() || '24h Picture Update',
+                        title: statusDraftTitle.trim() || 'Professional Training Visual',
                         imageUrl: statusDraftImage.trim(),
-                        text: statusDraftText.trim() || 'New 24-hour ConnectLn picture status update.',
+                        text: statusDraftText.trim() || 'New 24-hour ConnectLn professional training picture update.',
                         bgColor: statusBgColor,
-                        professionTag: 'My Uploaded Picture',
+                        professionTag: `${inferredPlatform} Training Picture`,
+                        sourcePlatform: inferredPlatform,
+                        mediaFormat: formatLabel,
                     });
                 }
             } else if (statusComposerMode === 'info') {
@@ -1291,15 +2017,19 @@ export function WhatsAppModeWorkspace({
                     timestampLabel: nowStamp,
                     viewed: false,
                     mediaType: 'info',
-                    infoBadge: statusDraftInfoBadge || 'Status Information',
-                    title: statusDraftTitle.trim() || 'Member Status Information Update',
+                    infoBadge: statusDraftInfoBadge || 'Training Briefing',
+                    title: statusDraftTitle.trim() || 'Member Training & Status Briefing',
                     text: statusDraftText.trim() || statusDraftInfoDetails.trim(),
                     infoDetails: statusDraftInfoDetails.trim() || undefined,
                     attachmentName: statusDraftAttachmentName || undefined,
                     attachmentUrl: statusDraftAttachmentUrl || undefined,
                     imageUrl: queuedPhotoUploads[0]?.dataUrl || undefined,
                     bgColor: statusBgColor,
-                    professionTag: statusDraftInfoBadge || 'Status Information',
+                    professionTag: statusDraftInfoBadge || 'Training Briefing',
+                    sourcePlatform: 'ConnectLn',
+                    mediaFormat: statusDraftAttachmentName
+                        ? detectMediaFormatLabel(statusDraftAttachmentName, 'PDF')
+                        : 'BRIEF',
                 });
             }
 
@@ -1312,6 +2042,8 @@ export function WhatsAppModeWorkspace({
                         : box
                 )
             );
+            setQueuedSeriesItems([]);
+            setSeriesBatchUrlsText('');
             setQueuedPhotoUploads([]);
             setQueuedVideoUploads([]);
             setStatusDraftTitle('');
@@ -1322,8 +2054,13 @@ export function WhatsAppModeWorkspace({
             setStatusComposerMode(null);
             setActiveStatusUserId('__me__');
             setActiveStatusSlideIndex(0);
+            setStatusSlideProgress(0);
+            setActiveVideoTiming({ currentSec: 0, durationSec: 0 });
+            setIsStatusCompletedForUser(false);
+            setIsStatusAutoPlaying(true);
+            setStatusReplayNonce((n) => n + 1);
             triggerToast(
-                `✅ Uploaded ${createdSlides.length} item${createdSlides.length > 1 ? 's' : ''} into YOUR dedicated Status Box!`
+                `✅ Uploaded ${createdSlides.length} training item${createdSlides.length > 1 ? 's' : ''} into YOUR dedicated Status Box!`
             );
         };
 
@@ -1361,13 +2098,13 @@ export function WhatsAppModeWorkspace({
                         <button
                             type="button"
                             onClick={() => {
-                                setStatusComposerMode('info');
+                                setStatusComposerMode('series');
                             }}
                             style={{ color: '#FBF8F3' }}
-                            title="Upload Video, Pictures, or Status Information to Your Status Box"
+                            title="Upload Multi-Format Training Video & Picture Series (WhatsApp, TikTok, Facebook)"
                             className="px-2.5 py-1.5 rounded-xl bg-[#7C4225] hover:bg-[#5E3119] text-[11px] font-bold cursor-pointer transition-colors shrink-0 shadow-2xs"
                         >
-                            + Upload Status
+                            + Upload Series
                         </button>
                     </div>
 
@@ -1386,7 +2123,7 @@ export function WhatsAppModeWorkspace({
                                         if (myStatusBox.slides.length > 0) {
                                             handleOpenUserStatusBox(myStatusBox, 0);
                                         } else {
-                                            setStatusComposerMode('info');
+                                            setStatusComposerMode('series');
                                         }
                                     }}
                                     className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer"
@@ -1417,18 +2154,18 @@ export function WhatsAppModeWorkspace({
                                         </div>
                                         <p className="text-xs text-[#78716C] truncate">
                                             {myStatusBox.slides.length > 0
-                                                ? `${renderUserSlideSummaryIcons(myStatusBox.slides)} · Click to open your Status Box`
-                                                : 'Upload your own videos, pictures & info'}
+                                                ? `${renderUserSlideSummaryIcons(myStatusBox.slides)} · Click to auto-play`
+                                                : 'Upload training videos, pictures & info'}
                                         </p>
                                     </div>
                                 </div>
                                 <button
                                     type="button"
-                                    onClick={() => setStatusComposerMode('photo')}
+                                    onClick={() => setStatusComposerMode('series')}
                                     className="px-2.5 py-1 rounded-lg bg-[#EFE8DA] hover:bg-[#E2D9C8] border border-[#D0C4AE] text-[10px] font-bold text-[#5E3119] cursor-pointer shrink-0"
-                                    title="Add videos, pictures or status information"
+                                    title="Upload multi-format videos, pictures or training series"
                                 >
-                                    + Add
+                                    + Upload
                                 </button>
                             </div>
                         </div>
@@ -1548,6 +2285,9 @@ export function WhatsAppModeWorkspace({
 
                 {/* Right Column: Upload Status Composer OR Dedicated Single-User Multi-Item Status Box */}
                 <div className="flex-1 bg-[#F3EDE2] flex flex-col items-center justify-between p-4 sm:p-6 relative overflow-y-auto">
+                    <div className="w-full max-w-2xl mb-3 shrink-0">
+                        <CveIntelStreamBanner compact />
+                    </div>
                     {statusComposerMode ? (
                         <div className="w-full max-w-2xl bg-[#FBF8F3] rounded-2xl shadow-lg border border-[#E0D6C5] p-5 sm:p-6 my-auto animate-in fade-in space-y-4">
                             <div className="flex items-center justify-between gap-2">
@@ -1568,12 +2308,13 @@ export function WhatsAppModeWorkspace({
                                 </button>
                             </div>
 
-                            {/* 3-Mode Upload Type Switcher */}
-                            <div className="grid grid-cols-3 gap-2 p-1 rounded-xl bg-[#EFE8DA] border border-[#DDD3C2]">
+                            {/* 4-Mode Upload Type Switcher */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-1 rounded-xl bg-[#EFE8DA] border border-[#DDD3C2]">
                                 {[
-                                    { id: 'info' as const, label: '📋 Status Information' },
-                                    { id: 'photo' as const, label: '🖼️ Upload Pictures' },
+                                    { id: 'series' as const, label: '🎞️ Training Series (WA/TikTok/FB)' },
                                     { id: 'video' as const, label: '🎬 Upload Videos' },
+                                    { id: 'photo' as const, label: '🖼️ Upload Pictures' },
+                                    { id: 'info' as const, label: '📋 Status Info' },
                                 ].map((tab) => (
                                     <button
                                         key={tab.id}
@@ -1592,6 +2333,232 @@ export function WhatsAppModeWorkspace({
                             </div>
 
                             <form onSubmit={handlePublishStatus} className="space-y-4">
+                                {/* Mode S: Multi-Platform & Multi-Format Professional Training Series */}
+                                {statusComposerMode === 'series' && (
+                                    <div className="space-y-4 rounded-xl border border-[#DDD3C2] bg-[#FAF6EE] p-4">
+                                        <div className="flex items-start justify-between gap-3 flex-wrap">
+                                            <div>
+                                                <p className="text-xs font-extrabold uppercase tracking-wider text-[#5E3119]">
+                                                    Professional Training Video &amp; Picture Series
+                                                </p>
+                                                <p className="text-[11px] text-[#6B5A45] mt-0.5">
+                                                    Import mixed videos &amp; pictures from WhatsApp, TikTok, or Facebook in MP4, MOV, WEBM, MKV, AVI, 3GP, M4V, JPG, PNG, WEBP, GIF, HEIC, or AVIF. Videos play their full duration sequentially in your dedicated Status Box.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Source Platform Selector */}
+                                        <div className="space-y-1.5">
+                                            <label className="block text-[11px] font-bold text-[#5E3119]">
+                                                Source Platform Tag
+                                            </label>
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                {(['WhatsApp', 'TikTok', 'Facebook', 'ConnectLn'] as const).map((platform) => (
+                                                    <button
+                                                        key={platform}
+                                                        type="button"
+                                                        onClick={() => setStatusSourcePlatform(platform)}
+                                                        style={statusSourcePlatform === platform ? { color: '#FBF8F3' } : undefined}
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                                                            statusSourcePlatform === platform
+                                                                ? 'bg-[#7C4225] border-[#7C4225] text-[#FBF8F3]'
+                                                                : 'bg-[#FBF8F3] border-[#D0C4AE] text-[#5E3119] hover:bg-[#EFE8DA]'
+                                                        }`}
+                                                    >
+                                                        {platform}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* 1-Click Professional Training Series Presets */}
+                                        <div className="space-y-1.5">
+                                            <label className="block text-[11px] font-bold text-[#5E3119]">
+                                                Quick-Load Objective-Aligned Professional Training Series
+                                            </label>
+                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleApplyTrainingSeriesPreset('WhatsApp')}
+                                                    className="rounded-xl border border-[#25D366]/40 bg-[#FBF8F3] hover:bg-[#EFE8DA] px-3 py-2 text-left transition-colors cursor-pointer"
+                                                >
+                                                    <span className="block text-xs font-bold text-[#5E3119]">💬 WhatsApp Training Series</span>
+                                                    <span className="block text-[10px] text-[#6B5A45]">Field Safety, K8s &amp; Briefing Clips (MP4/3GP/JPG)</span>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleApplyTrainingSeriesPreset('TikTok')}
+                                                    className="rounded-xl border border-[#5E3119]/30 bg-[#FBF8F3] hover:bg-[#EFE8DA] px-3 py-2 text-left transition-colors cursor-pointer"
+                                                >
+                                                    <span className="block text-xs font-bold text-[#5E3119]">🎵 TikTok Micro-Lessons</span>
+                                                    <span className="block text-[10px] text-[#6B5A45]">Clinical, Dev &amp; Grid Shorts (MOV/MP4/PNG)</span>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleApplyTrainingSeriesPreset('Facebook')}
+                                                    className="rounded-xl border border-[#1877F2]/40 bg-[#FBF8F3] hover:bg-[#EFE8DA] px-3 py-2 text-left transition-colors cursor-pointer"
+                                                >
+                                                    <span className="block text-xs font-bold text-[#5E3119]">📘 Facebook Trade Modules</span>
+                                                    <span className="block text-[10px] text-[#6B5A45]">Realtor, Trade &amp; Compliance Series (WEBM/MP4/WEBP)</span>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Mixed Multi-Format Device Upload */}
+                                        <div className="rounded-xl border border-dashed border-[#BC9675] bg-[#FBF8F3] p-3.5 text-center space-y-2">
+                                            <p className="text-xs text-[#5E3119] font-semibold">
+                                                Upload mixed training videos &amp; pictures directly from WhatsApp/TikTok/Facebook downloads
+                                            </p>
+                                            <label
+                                                style={{ color: '#FBF8F3' }}
+                                                className="inline-flex items-center gap-2 rounded-xl bg-[#7C4225] hover:bg-[#5E3119] px-4 py-2 text-xs font-bold cursor-pointer"
+                                            >
+                                                <span>🎞️ Choose Multi-Format Videos &amp; Pictures</span>
+                                                <input
+                                                    type="file"
+                                                    multiple
+                                                    accept="video/*,image/*,.mp4,.mov,.webm,.mkv,.avi,.m4v,.3gp,.3g2,.mpeg,.mpg,.ogv,.flv,.wmv,.jpg,.jpeg,.png,.webp,.gif,.avif,.heic,.heif,.bmp,.svg,.jfif"
+                                                    className="hidden"
+                                                    onChange={handleSeriesMixedFilesUpload}
+                                                />
+                                            </label>
+                                            <p className="text-[10px] text-[#6B5A45]">
+                                                Supports MP4, MOV, WEBM, MKV, AVI, M4V, 3GP, JPG, PNG, WEBP, GIF, HEIC, AVIF
+                                            </p>
+                                        </div>
+
+                                        {/* Multi-Line Social / Direct Media URL Importer */}
+                                        <div className="space-y-1.5">
+                                            <label className="block text-[11px] font-bold text-[#5E3119]">
+                                                Import WhatsApp, TikTok, Facebook or Direct Training Media URLs (one per line)
+                                            </label>
+                                            <textarea
+                                                rows={3}
+                                                value={seriesBatchUrlsText}
+                                                onChange={(e) => setSeriesBatchUrlsText(e.target.value)}
+                                                placeholder={
+                                                    'https://www.tiktok.com/@connectln/video/7401122 | Electrical Diagnostics Training\n' +
+                                                    'https://www.facebook.com/watch/?v=892011 | OSHA Jobsite Briefing.mp4\n' +
+                                                    '/status-videos/k8s_ebpf.mp4 | Kernel eBPF Security Lab'
+                                                }
+                                                className="w-full rounded-xl border border-[#D0C4AE] bg-[#FBF8F3] px-3 py-2 text-xs text-[#2A1E12] focus:outline-none focus:ring-2 focus:ring-[#7C4225]"
+                                            />
+                                            <div className="flex justify-end">
+                                                <button
+                                                    type="button"
+                                                    onClick={handleAddSocialLinksToSeries}
+                                                    disabled={!seriesBatchUrlsText.trim()}
+                                                    className="rounded-lg bg-[#EFE8DA] hover:bg-[#E2D9C8] disabled:opacity-50 border border-[#D0C4AE] text-[#5E3119] px-3 py-1.5 text-xs font-bold cursor-pointer transition-colors"
+                                                >
+                                                    Import Training Links →
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Shared Series Title & Notes */}
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="block text-[11px] font-bold text-[#5E3119] mb-1">
+                                                    Series Label / Training Track
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={statusDraftTitle}
+                                                    onChange={(e) => setStatusDraftTitle(e.target.value)}
+                                                    placeholder="e.g., Field Safety & Certification Module"
+                                                    className="w-full rounded-xl border border-[#D0C4AE] bg-[#FBF8F3] px-3 py-2 text-xs text-[#2A1E12] focus:outline-none focus:ring-2 focus:ring-[#7C4225]"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[11px] font-bold text-[#5E3119] mb-1">
+                                                    Training Objective / Summary Note
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={statusDraftText}
+                                                    onChange={(e) => setStatusDraftText(e.target.value)}
+                                                    placeholder="Key takeaway played across each slide"
+                                                    className="w-full rounded-xl border border-[#D0C4AE] bg-[#FBF8F3] px-3 py-2 text-xs text-[#2A1E12] focus:outline-none focus:ring-2 focus:ring-[#7C4225]"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Reorderable Queued Series Preview */}
+                                        {queuedSeriesItems.length > 0 && (
+                                            <div className="space-y-2 rounded-xl border border-[#DDD3C2] bg-[#FBF8F3] p-3">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#5E3119]">
+                                                        Queued Training Series ({queuedSeriesItems.length} {queuedSeriesItems.length === 1 ? 'item' : 'items'})
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setQueuedSeriesItems([])}
+                                                        className="text-[11px] font-bold text-[#7C4225] hover:underline cursor-pointer"
+                                                    >
+                                                        Clear Queue
+                                                    </button>
+                                                </div>
+                                                <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+                                                    {queuedSeriesItems.map((item, idx) => (
+                                                        <div
+                                                            key={item.id}
+                                                            className="flex items-center justify-between gap-2 rounded-lg border border-[#E5DDD0] bg-[#FAF6EE] px-2.5 py-1.5 text-xs"
+                                                        >
+                                                            <div className="flex items-center gap-2 min-w-0">
+                                                                <span className="font-mono text-[10px] font-bold text-[#7C4225]">
+                                                                    #{idx + 1}
+                                                                </span>
+                                                                <span>{item.mediaType === 'video' ? '🎬' : '🖼️'}</span>
+                                                                <span className="rounded bg-[#EFE8DA] border border-[#D0C4AE] px-1.5 py-0.5 text-[10px] font-bold text-[#5E3119] shrink-0">
+                                                                    {getPlatformBadgeLabel(item.sourcePlatform)}
+                                                                </span>
+                                                                <span className="rounded bg-[#7C4225]/10 px-1.5 py-0.5 text-[10px] font-mono font-bold text-[#7C4225] shrink-0">
+                                                                    {item.mediaFormat}
+                                                                </span>
+                                                                <span className="truncate font-medium text-[#2A1E12]">
+                                                                    {item.title || item.name}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center gap-1 shrink-0">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleMoveQueuedSeriesItem(idx, -1)}
+                                                                    disabled={idx === 0}
+                                                                    title="Move up"
+                                                                    className="px-1.5 py-0.5 rounded border border-[#D0C4AE] text-[11px] font-bold text-[#5E3119] hover:bg-[#EFE8DA] disabled:opacity-40 cursor-pointer"
+                                                                >
+                                                                    ↑
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleMoveQueuedSeriesItem(idx, 1)}
+                                                                    disabled={idx === queuedSeriesItems.length - 1}
+                                                                    title="Move down"
+                                                                    className="px-1.5 py-0.5 rounded border border-[#D0C4AE] text-[11px] font-bold text-[#5E3119] hover:bg-[#EFE8DA] disabled:opacity-40 cursor-pointer"
+                                                                >
+                                                                    ↓
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        setQueuedSeriesItems((prev) =>
+                                                                            prev.filter((q) => q.id !== item.id)
+                                                                        )
+                                                                    }
+                                                                    title="Remove item"
+                                                                    className="px-1.5 py-0.5 rounded border border-[#D0C4AE] text-[11px] font-bold text-[#9E2A2B] hover:bg-[#EFE8DA] cursor-pointer"
+                                                                >
+                                                                    ✕
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
                                 {/* Mode A: Upload Structured Status Information */}
                                 {statusComposerMode === 'info' && (
                                     <div className="space-y-3">
@@ -1711,8 +2678,25 @@ export function WhatsAppModeWorkspace({
                                     <div className="space-y-3">
                                         <div className="rounded-xl border-2 border-dashed border-[#BC9675] bg-[#F8F4EC] p-4 text-center space-y-2">
                                             <p className="text-xs font-bold text-[#5E3119]">
-                                                Select one or multiple pictures from your device (all will be added to YOUR Status Box)
+                                                Select one or multiple pictures from your device (WhatsApp/TikTok/Facebook exports supported — all added to YOUR Status Box)
                                             </p>
+                                            <div className="flex items-center justify-center gap-1.5 flex-wrap pb-1">
+                                                {(['WhatsApp', 'TikTok', 'Facebook', 'ConnectLn'] as const).map((platform) => (
+                                                    <button
+                                                        key={platform}
+                                                        type="button"
+                                                        onClick={() => setStatusSourcePlatform(platform)}
+                                                        style={statusSourcePlatform === platform ? { color: '#FBF8F3' } : undefined}
+                                                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
+                                                            statusSourcePlatform === platform
+                                                                ? 'bg-[#7C4225] border-[#7C4225] text-[#FBF8F3]'
+                                                                : 'bg-[#FBF8F3] border-[#D0C4AE] text-[#5E3119] hover:bg-[#EFE8DA]'
+                                                        }`}
+                                                    >
+                                                        {platform}
+                                                    </button>
+                                                ))}
+                                            </div>
                                             <label
                                                 style={{ color: '#FBF8F3' }}
                                                 className="inline-flex items-center gap-2 rounded-xl bg-[#7C4225] hover:bg-[#5E3119] px-4 py-2 text-xs font-bold cursor-pointer"
@@ -1720,7 +2704,7 @@ export function WhatsAppModeWorkspace({
                                                 <span>🖼️ Choose Pictures (Multi-Select Supported)</span>
                                                 <input
                                                     type="file"
-                                                    accept="image/*"
+                                                    accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.avif,.heic,.heif,.bmp,.svg,.jfif"
                                                     multiple
                                                     className="hidden"
                                                     onChange={handlePhotoFilesUpload}
@@ -1800,8 +2784,25 @@ export function WhatsAppModeWorkspace({
                                     <div className="space-y-3">
                                         <div className="rounded-xl border-2 border-dashed border-[#BC9675] bg-[#F8F4EC] p-4 text-center space-y-2">
                                             <p className="text-xs font-bold text-[#5E3119]">
-                                                Upload MP4 / WebM / MOV videos from your device into YOUR Status Box
+                                                Upload MP4 / MOV / WEBM / MKV / AVI / M4V / 3GP training videos from your device (WhatsApp/TikTok/Facebook exports supported) into YOUR Status Box
                                             </p>
+                                            <div className="flex items-center justify-center gap-1.5 flex-wrap pb-1">
+                                                {(['WhatsApp', 'TikTok', 'Facebook', 'ConnectLn'] as const).map((platform) => (
+                                                    <button
+                                                        key={platform}
+                                                        type="button"
+                                                        onClick={() => setStatusSourcePlatform(platform)}
+                                                        style={statusSourcePlatform === platform ? { color: '#FBF8F3' } : undefined}
+                                                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
+                                                            statusSourcePlatform === platform
+                                                                ? 'bg-[#7C4225] border-[#7C4225] text-[#FBF8F3]'
+                                                                : 'bg-[#FBF8F3] border-[#D0C4AE] text-[#5E3119] hover:bg-[#EFE8DA]'
+                                                        }`}
+                                                    >
+                                                        {platform}
+                                                    </button>
+                                                ))}
+                                            </div>
                                             <label
                                                 style={{ color: '#FBF8F3' }}
                                                 className="inline-flex items-center gap-2 rounded-xl bg-[#7C4225] hover:bg-[#5E3119] px-4 py-2 text-xs font-bold cursor-pointer"
@@ -1809,7 +2810,7 @@ export function WhatsAppModeWorkspace({
                                                 <span>🎬 Choose Video File(s)</span>
                                                 <input
                                                     type="file"
-                                                    accept="video/*"
+                                                    accept="video/*,.mp4,.mov,.webm,.mkv,.avi,.m4v,.3gp,.3g2,.mpeg,.mpg,.ogv,.flv,.wmv"
                                                     multiple
                                                     className="hidden"
                                                     onChange={handleVideoFilesUpload}
@@ -1905,7 +2906,9 @@ export function WhatsAppModeWorkspace({
                                         className="px-5 py-2 rounded-full bg-[#7C4225] hover:bg-[#5E3119] text-xs font-bold shadow-sm cursor-pointer"
                                         style={{ color: '#FBF8F3' }}
                                     >
-                                        {statusComposerMode === 'photo'
+                                        {statusComposerMode === 'series'
+                                            ? `Publish Training Series (${queuedSeriesItems.length} ${queuedSeriesItems.length === 1 ? 'Item' : 'Items'}) to My Status Box`
+                                            : statusComposerMode === 'photo'
                                             ? `Upload ${queuedPhotoUploads.length > 1 ? `${queuedPhotoUploads.length} Pictures` : 'Picture'} to My Status Box`
                                             : statusComposerMode === 'video'
                                             ? `Upload ${queuedVideoUploads.length > 1 ? `${queuedVideoUploads.length} Videos` : 'Video'} to My Status Box`
@@ -1917,32 +2920,66 @@ export function WhatsAppModeWorkspace({
                     ) : activeUserBox && activeSlide ? (
                         <div className="w-full max-w-2xl my-auto space-y-3 animate-in fade-in">
                             <div className="w-full bg-[#1C1917] rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-[#524B42]">
-                                {/* Dedicated User Identity Strip + Segmented Progress ONLY for THIS User's Slides */}
+                                {/* Dedicated User Identity Strip + Animated Segmented Progress ONLY for THIS User's Slides */}
                                 <div className="px-4 pt-3 space-y-2 bg-[#141210]">
-                                    <div className="flex items-center justify-between text-[11px] text-[#D0C4AE]">
+                                    <div className="flex items-center justify-between text-[11px] text-[#D0C4AE] gap-2 flex-wrap">
                                         <span className="font-bold text-[#FBF8F3]">
                                             {activeUserBox.authorName}&apos;s Dedicated Status Box
                                         </span>
-                                        <span className="font-mono">
-                                            Item {safeSlideIndex + 1} of {activeUserBox.slides.length}
+                                        <span className="font-mono flex items-center gap-2 flex-wrap">
+                                            {activeSlide.mediaType === 'video' && (
+                                                <>
+                                                    <span className="text-[#E8C59B]">
+                                                        🎬 Full Video: {formatSecondsToMmSs(activeVideoTiming.currentSec)} /{' '}
+                                                        {activeVideoTiming.durationSec > 0
+                                                            ? formatSecondsToMmSs(activeVideoTiming.durationSec)
+                                                            : activeSlide.videoDuration || 'Full Clip'}
+                                                    </span>
+                                                    <span>·</span>
+                                                </>
+                                            )}
+                                            <span>
+                                                {isStatusCompletedForUser
+                                                    ? `✓ Finished all ${activeUserBox.slides.length} items`
+                                                    : isStatusAutoPlaying
+                                                    ? isStatusReplyFocused
+                                                        ? '⏸ Paused while typing'
+                                                        : '▶ Auto-playing'
+                                                    : '⏸ Paused'}
+                                            </span>
+                                            <span>·</span>
+                                            <span>
+                                                Item {safeSlideIndex + 1} of {activeUserBox.slides.length}
+                                            </span>
                                         </span>
                                     </div>
-                                    <div className="flex items-center gap-1">
-                                        {activeUserBox.slides.map((sl, idx) => (
-                                            <button
-                                                key={sl.id}
-                                                type="button"
-                                                onClick={() => handleSelectSlideInUserBox(idx)}
-                                                title={sl.title || sl.videoTitle || `Item ${idx + 1}`}
-                                                className={`h-1.5 flex-1 rounded-full transition-all cursor-pointer ${
-                                                    idx === safeSlideIndex
-                                                        ? 'bg-[#D69E6B]'
-                                                        : idx < safeSlideIndex
-                                                        ? 'bg-[#7C4225]'
-                                                        : 'bg-white/20 hover:bg-white/40'
-                                                }`}
-                                            />
-                                        ))}
+                                    <div className="flex items-center gap-1.5">
+                                        {activeUserBox.slides.map((sl, idx) => {
+                                            const fillPct =
+                                                idx < safeSlideIndex
+                                                    ? 100
+                                                    : idx === safeSlideIndex
+                                                    ? isStatusCompletedForUser
+                                                        ? 100
+                                                        : Math.min(100, Math.max(0, statusSlideProgress))
+                                                    : 0;
+                                            return (
+                                                <button
+                                                    key={sl.id}
+                                                    type="button"
+                                                    onClick={() => handleSelectSlideInUserBox(idx)}
+                                                    title={sl.title || sl.videoTitle || `Item ${idx + 1}`}
+                                                    className="h-1.5 flex-1 rounded-full bg-white/20 hover:bg-white/30 overflow-hidden cursor-pointer relative"
+                                                >
+                                                    <span
+                                                        className={`block h-full rounded-full transition-all duration-100 ${
+                                                            idx === safeSlideIndex ? 'bg-[#D69E6B]' : 'bg-[#7C4225]'
+                                                        }`}
+                                                        style={{ width: `${fillPct}%` }}
+                                                    />
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
 
@@ -1955,7 +2992,7 @@ export function WhatsAppModeWorkspace({
                                             className="w-10 h-10 rounded-full object-cover border-2 border-[#BC9675] shrink-0"
                                         />
                                         <div className="min-w-0">
-                                            <div className="flex items-center gap-2 flex-wrap">
+                                            <div className="flex items-center gap-1.5 flex-wrap">
                                                 <p
                                                     className="text-sm font-bold truncate"
                                                     style={{ color: '#FBF8F3' }}
@@ -1967,12 +3004,37 @@ export function WhatsAppModeWorkspace({
                                                         {activeSlide.infoBadge || activeSlide.professionTag || activeUserBox.professionTag}
                                                     </span>
                                                 )}
+                                                {activeSlide.sourcePlatform && (
+                                                    <span className="rounded-md bg-white/10 border border-white/15 px-1.5 py-0.5 text-[10px] font-bold text-[#FBF8F3]">
+                                                        {getPlatformBadgeLabel(activeSlide.sourcePlatform)}
+                                                    </span>
+                                                )}
+                                                {activeSlide.mediaFormat && (
+                                                    <span className="rounded-md bg-[#7C4225]/50 border border-[#BC9675]/40 px-1.5 py-0.5 text-[10px] font-mono font-bold text-[#FBF8F3]">
+                                                        {activeSlide.mediaFormat}
+                                                    </span>
+                                                )}
+                                                {activeSlide.seriesLabel && (
+                                                    <span className="rounded-md bg-emerald-900/50 border border-emerald-400/30 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-200">
+                                                        {activeSlide.seriesLabel}
+                                                    </span>
+                                                )}
                                             </div>
                                             <p className="text-[11px] text-[#D0C4AE] truncate">
                                                 {activeSlide.timestampLabel}
                                                 {(activeSlide.title || activeSlide.videoTitle)
                                                     ? ` • ${activeSlide.title || activeSlide.videoTitle}`
                                                     : ''}
+                                                {activeSlide.externalSourceUrl && (
+                                                    <a
+                                                        href={activeSlide.externalSourceUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="ml-2 text-[#D69E6B] hover:underline font-semibold"
+                                                    >
+                                                        Source Link ↗
+                                                    </a>
+                                                )}
                                             </p>
                                         </div>
                                     </div>
@@ -2001,7 +3063,28 @@ export function WhatsAppModeWorkspace({
                                         )}
                                         <button
                                             type="button"
-                                            disabled={activeUserBox.slides.length <= 1}
+                                            onClick={() => {
+                                                if (isStatusCompletedForUser) {
+                                                    handleReplayUserBox();
+                                                } else {
+                                                    setIsStatusAutoPlaying((prev) => !prev);
+                                                }
+                                            }}
+                                            className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold cursor-pointer"
+                                            style={{ color: '#FBF8F3' }}
+                                            title={
+                                                isStatusCompletedForUser
+                                                    ? `Replay ${activeUserBox.authorName}'s Status Box`
+                                                    : isStatusAutoPlaying
+                                                    ? 'Pause automatic playback'
+                                                    : 'Resume automatic playback'
+                                            }
+                                        >
+                                            {isStatusCompletedForUser ? '↻ Replay' : isStatusAutoPlaying ? '⏸ Pause' : '▶ Play'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            disabled={safeSlideIndex <= 0}
                                             onClick={() => handleStepWithinUserBox(-1)}
                                             className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-40 text-xs font-bold cursor-pointer"
                                             style={{ color: '#FBF8F3' }}
@@ -2011,7 +3094,7 @@ export function WhatsAppModeWorkspace({
                                         </button>
                                         <button
                                             type="button"
-                                            disabled={activeUserBox.slides.length <= 1}
+                                            disabled={safeSlideIndex >= activeUserBox.slides.length - 1}
                                             onClick={() => handleStepWithinUserBox(1)}
                                             className="px-2.5 py-1 rounded-lg bg-[#7C4225] hover:bg-[#5E3119] disabled:opacity-40 text-xs font-bold cursor-pointer"
                                             style={{ color: '#FBF8F3' }}
@@ -2044,13 +3127,58 @@ export function WhatsAppModeWorkspace({
                                     {activeSlide.mediaType === 'video' && activeSlide.videoUrl ? (
                                         <div className="w-full rounded-xl overflow-hidden border border-white/15 bg-black shadow-xl">
                                             <video
-                                                key={activeSlide.id}
+                                                ref={activeStatusVideoRef}
+                                                key={`${activeSlide.id}_${statusReplayNonce}`}
                                                 src={activeSlide.videoUrl}
                                                 poster={activeSlide.imageUrl}
                                                 autoPlay
-                                                loop
                                                 playsInline
                                                 controls
+                                                onLoadedMetadata={(e) => {
+                                                    const v = e.currentTarget;
+                                                    if (v.duration && Number.isFinite(v.duration)) {
+                                                        setActiveVideoTiming({
+                                                            currentSec: v.currentTime || 0,
+                                                            durationSec: v.duration,
+                                                        });
+                                                    }
+                                                }}
+                                                onTimeUpdate={(e) => {
+                                                    const v = e.currentTarget;
+                                                    if (v.duration && Number.isFinite(v.duration)) {
+                                                        setActiveVideoTiming({
+                                                            currentSec: v.currentTime,
+                                                            durationSec: v.duration,
+                                                        });
+                                                        setStatusSlideProgress(
+                                                            Math.min(100, (v.currentTime / v.duration) * 100)
+                                                        );
+                                                    }
+                                                }}
+                                                onEnded={(e) => {
+                                                    const v = e.currentTarget;
+                                                    if (safeSlideIndex < activeUserBox.slides.length - 1) {
+                                                        setActiveVideoTiming({ currentSec: 0, durationSec: 0 });
+                                                        setActiveStatusSlideIndex(safeSlideIndex + 1);
+                                                        setStatusSlideProgress(0);
+                                                    } else {
+                                                        const fullDur =
+                                                            v.duration && Number.isFinite(v.duration)
+                                                                ? v.duration
+                                                                : activeVideoTiming.durationSec;
+                                                        setActiveVideoTiming({ currentSec: fullDur, durationSec: fullDur });
+                                                        setStatusSlideProgress(100);
+                                                        setIsStatusAutoPlaying(false);
+                                                        setIsStatusCompletedForUser(true);
+                                                    }
+                                                }}
+                                                onError={() => {
+                                                    setActiveVideoTiming({ currentSec: 0, durationSec: 0 });
+                                                    if (isStatusAutoPlaying && safeSlideIndex < activeUserBox.slides.length - 1) {
+                                                        setActiveStatusSlideIndex(safeSlideIndex + 1);
+                                                        setStatusSlideProgress(0);
+                                                    }
+                                                }}
                                                 className="w-full h-[260px] sm:h-[310px] object-cover bg-black"
                                             />
                                         </div>
@@ -2126,10 +3254,10 @@ export function WhatsAppModeWorkspace({
                                         </span>
                                         <button
                                             type="button"
-                                            onClick={() => setStatusComposerMode('photo')}
+                                            onClick={() => setStatusComposerMode('series')}
                                             className="text-[#D69E6B] hover:underline cursor-pointer"
                                         >
-                                            + Upload to My Status
+                                            + Upload Series / Media
                                         </button>
                                     </div>
                                     <div className="flex items-center gap-2 overflow-x-auto pb-1">
@@ -2150,6 +3278,16 @@ export function WhatsAppModeWorkspace({
                                                 <span className="max-w-[140px] truncate">
                                                     {sl.title || sl.videoTitle || sl.infoBadge || `Item ${idx + 1}`}
                                                 </span>
+                                                {sl.mediaFormat && (
+                                                    <span className="rounded bg-black/40 border border-white/15 px-1 py-0.5 text-[9px] font-mono text-[#E8C59B] shrink-0">
+                                                        {sl.mediaFormat}
+                                                    </span>
+                                                )}
+                                                {sl.sourcePlatform && (
+                                                    <span className="text-[9px] text-[#D0C4AE]/80 shrink-0">
+                                                        · {sl.sourcePlatform}
+                                                    </span>
+                                                )}
                                             </button>
                                         ))}
                                     </div>
@@ -2170,6 +3308,8 @@ export function WhatsAppModeWorkspace({
                                     <input
                                         type="text"
                                         value={statusReplyText}
+                                        onFocus={() => setIsStatusReplyFocused(true)}
+                                        onBlur={() => setIsStatusReplyFocused(false)}
                                         onChange={(e) => setStatusReplyText(e.target.value)}
                                         placeholder={`Reply to ${activeUserBox.authorName}...`}
                                         className="flex-1 bg-[#3D3730] placeholder-[#D0C4AE] text-xs rounded-full px-4 py-2 focus:outline-none"
@@ -2216,6 +3356,14 @@ export function WhatsAppModeWorkspace({
                                 <div className="flex items-center gap-2.5 flex-wrap justify-center">
                                     <button
                                         type="button"
+                                        onClick={() => setStatusComposerMode('series')}
+                                        style={{ color: '#FBF8F3' }}
+                                        className="rounded-xl bg-[#7C4225] hover:bg-[#5E3119] text-[#FBF8F3] px-4 py-2 text-xs font-bold cursor-pointer transition-colors"
+                                    >
+                                        🎞️ + Upload Training Series (WA/TikTok/FB)
+                                    </button>
+                                    <button
+                                        type="button"
                                         onClick={() => setStatusComposerMode('info')}
                                         className="rounded-xl bg-[#EFE8DA] hover:bg-[#E2D9C8] border border-[#D0C4AE] text-[#5E3119] px-4 py-2 text-xs font-bold cursor-pointer transition-colors"
                                     >
@@ -2231,10 +3379,9 @@ export function WhatsAppModeWorkspace({
                                     <button
                                         type="button"
                                         onClick={() => setStatusComposerMode('video')}
-                                        style={{ color: '#FBF8F3' }}
-                                        className="rounded-xl bg-[#7C4225] hover:bg-[#5E3119] text-[#FBF8F3] px-4 py-2 text-xs font-bold cursor-pointer transition-colors"
+                                        className="rounded-xl bg-[#EFE8DA] hover:bg-[#E2D9C8] border border-[#D0C4AE] text-[#5E3119] px-4 py-2 text-xs font-bold cursor-pointer transition-colors"
                                     >
-                                        🎬 + Upload Video Status
+                                        🎬 Upload Video Status
                                     </button>
                                 </div>
                             </div>
