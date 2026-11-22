@@ -82,6 +82,7 @@ import {
 import { createUniqueUserProfile, isSuperAdminUser } from "@/lib/connectin-profile"
 import { saveStoredUser, loadStoredUser, savePersistentAvatar, savePersistentCover, trackUserActivity, resolveUserProfilePicture as resolveSharePhoto } from "@/lib/connectin-storage"
 import { buildSharePreviewUrl, useSharePic } from "@/lib/connectin-share"
+import { recordLocalBilateralDirectMessage } from "@/lib/direct-mailbox-sync"
 import {
   ProfileViewerItem,
   ContentReachData,
@@ -993,11 +994,18 @@ export function ProfileView({
   const [quoteSelectedOffering, setQuoteSelectedOffering] = useState("")
   const [quotePreferredDate, setQuotePreferredDate] = useState("")
   const [quoteNotes, setQuoteNotes] = useState("")
+  const [isSubmittingQuote, setIsSubmittingQuote] = useState(false)
   const [quoteSubmittedReceipt, setQuoteSubmittedReceipt] = useState<{
     id: string
     service: string
     clientName: string
     preferredDate: string
+    contact?: string
+    notes?: string
+    emailDispatched?: boolean
+    emailRecipients?: string[]
+    emailMessageId?: string
+    emailError?: string
   } | null>(null)
 
   const businessWebsite: PersonalBusinessWebsiteData = React.useMemo(
@@ -1569,17 +1577,129 @@ export function ProfileView({
     }
   }
 
-  const handleSubmitBusinessQuote = (e: React.FormEvent) => {
+  const handleSubmitBusinessQuote = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!quoteClientName.trim() || !quoteClientEmail.trim()) return
+    if (!quoteClientName.trim() || !quoteClientEmail.trim() || isSubmittingQuote) return
+    setIsSubmittingQuote(true)
     const refId = `REQ-${Math.floor(10000 + Math.random() * 89999)}`
+    const selectedService = quoteSelectedOffering || allWebsiteOfferings[0]?.title || businessWebsite.professionTitle
+    const cleanName = quoteClientName.trim()
+    const cleanContact = quoteClientEmail.trim()
+    const cleanDate = quotePreferredDate || 'Earliest Available Slot'
+    const cleanScope = quoteNotes.trim() || `Direct booking & upfront estimate request for ${selectedService}`
+    const ownerEmail = (user as any)?.email || 'kwesi.asiedu@expediteconsults.com'
+
+    let emailDispatched = false
+    let emailRecipients: string[] = [
+      'kasiedu@expedite-consults.com',
+      'kasiedu@expediteconsults.com',
+      'kwesi.asiedu@expediteconsults.com',
+    ]
+    let emailMessageId: string | undefined
+    let emailError: string | undefined
+
+    try {
+      const res = await fetch('/api/connectin/business', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'request_quote',
+          referenceId: refId,
+          businessId: businessWebsite.domainSlug || 'biz_expedite_consults',
+          businessName: businessWebsite.businessName,
+          ownerName: user.name,
+          ownerEmail,
+          serviceTitle: selectedService,
+          customerName: cleanName,
+          customerContact: cleanContact,
+          customerEmail: cleanContact,
+          customerLocation: businessWebsite.serviceArea,
+          projectScope: cleanScope,
+          preferredDate: cleanDate,
+          estimatedBudget: 'Requesting Itemized Quote',
+        }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (typeof data?.emailDispatched === 'boolean') emailDispatched = data.emailDispatched
+        if (Array.isArray(data?.emailRecipients) && data.emailRecipients.length > 0) {
+          emailRecipients = data.emailRecipients
+        }
+        if (data?.emailMessageId) emailMessageId = data.emailMessageId
+        if (data?.emailError) emailError = data.emailError
+      }
+    } catch {
+      // Fallback: continue logging locally & to Messaging
+    }
+
+    const deskTitle = `${businessWebsite.businessName} Booking Desk`
+    const bookingText =
+      `📅 Direct Booking & Quote Request (#${refId})\n` +
+      `• Client: ${cleanName} (${cleanContact})\n` +
+      `• Service: ${selectedService}\n` +
+      `• Preferred Date: ${cleanDate}\n` +
+      `• Project Scope: ${cleanScope}`
+    const autoReplyText =
+      `✅ Official Booking Receipt (#${refId}): Thank you, ${cleanName}! ${businessWebsite.businessName} received your request for "${selectedService}" (${cleanDate}) and dispatched email confirmation${emailDispatched ? ` (${emailMessageId || 'Delivered'})` : ''} to ${emailRecipients.join(', ')}. Expected response: ${businessWebsite.responseTime}.`
+
+    recordLocalBilateralDirectMessage({
+      senderName: cleanName,
+      senderEmail: cleanContact.includes('@') ? cleanContact : 'guest@connectin.app',
+      senderAvatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(cleanName)}&backgroundColor=0a66c2`,
+      senderRole: 'Prospective Client',
+      recipientName: deskTitle,
+      recipientAvatar: user.avatar,
+      recipientSubtitle: `${businessWebsite.businessName} · Official Booking & Quote Desk`,
+      subject: `Booking & Quote Request (#${refId}) — ${selectedService}`,
+      text: bookingText,
+      channelType: 'Companies',
+      subType: 'Recruiter',
+      initialPartnerReplyText: autoReplyText,
+    })
+
+    fetch('/api/connectin/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'create_thread',
+        title: deskTitle,
+        recipientName: deskTitle,
+        recipientEmail: emailRecipients.join(','),
+        subtitle: `${businessWebsite.businessName} · Official Booking & Quote Desk`,
+        recipientSubtitle: `${businessWebsite.businessName} · Official Booking & Quote Desk`,
+        avatar: user.avatar,
+        recipientAvatar: user.avatar,
+        channelType: 'Companies',
+        text: `${bookingText}\n\n${autoReplyText}`,
+        senderName: cleanName,
+        senderEmail: cleanContact.includes('@') ? cleanContact : 'guest@connectin.app',
+        senderRole: 'Prospective Client',
+      }),
+    }).catch(() => {})
+
+    trackUserActivity({
+      actionType: 'BUSINESS_QUOTE_REQUESTED' as any,
+      actionLabel: `Sent Booking & Quote Request (#${refId}): ${selectedService}`,
+      category: 'engagement',
+      targetId: refId,
+      targetTitle: `${businessWebsite.businessName} · ${selectedService}`,
+      details: `${cleanName} (${cleanContact}) · Email dispatched=${emailDispatched} to ${emailRecipients.join(', ')}`,
+    })
+
     setQuoteSubmittedReceipt({
       id: refId,
-      service: quoteSelectedOffering || allWebsiteOfferings[0]?.title || businessWebsite.professionTitle,
-      clientName: quoteClientName.trim(),
-      preferredDate: quotePreferredDate || 'Earliest Available Slot'
+      service: selectedService,
+      clientName: cleanName,
+      preferredDate: cleanDate,
+      contact: cleanContact,
+      notes: cleanScope,
+      emailDispatched,
+      emailRecipients,
+      emailMessageId,
+      emailError,
     })
     setQuoteNotes("")
+    setIsSubmittingQuote(false)
   }
 
   return (
@@ -5636,19 +5756,41 @@ export function ProfileView({
 
               <div className="lg:col-span-7 rounded-2xl border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-lg">
                 {quoteSubmittedReceipt ? (
-                  <div className="py-8 text-center space-y-3">
+                  <div className="py-6 text-center space-y-3.5">
                     <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600">
                       <CheckCircle2 className="h-7 w-7" />
                     </div>
                     <h3 className="text-xl font-black text-zinc-950 dark:text-white">
                       Request Sent to {businessWebsite.businessName}!
                     </h3>
-                    <p className="text-sm sm:text-base font-medium text-zinc-800 dark:text-zinc-200 max-w-md mx-auto">
+                    <p className="text-sm sm:text-base font-medium text-zinc-800 dark:text-zinc-200 max-w-lg mx-auto">
                       Confirmation <strong>#{quoteSubmittedReceipt.id}</strong> for{' '}
                       <strong>{quoteSubmittedReceipt.service}</strong> on{' '}
                       <strong>{quoteSubmittedReceipt.preferredDate}</strong> has been logged for{' '}
-                      {quoteSubmittedReceipt.clientName}. Expected response: {businessWebsite.responseTime}.
+                      <strong>{quoteSubmittedReceipt.clientName}</strong>. Expected response: {businessWebsite.responseTime}.
                     </p>
+                    <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/30 p-3.5 text-left text-xs space-y-1 max-w-lg mx-auto">
+                      <p className="font-extrabold text-emerald-900 dark:text-emerald-200">
+                        {quoteSubmittedReceipt.emailDispatched
+                          ? '✅ Email Confirmation Dispatched'
+                          : '📬 Booking Logged to ConnectLn Messaging & Business Inbox'}
+                      </p>
+                      {quoteSubmittedReceipt.emailRecipients && quoteSubmittedReceipt.emailRecipients.length > 0 && (
+                        <p className="text-zinc-700 dark:text-zinc-300 break-all">
+                          <strong>Notified Recipients:</strong> {quoteSubmittedReceipt.emailRecipients.join(', ')}
+                        </p>
+                      )}
+                      {quoteSubmittedReceipt.emailMessageId && (
+                        <p className="font-mono text-[11px] text-zinc-600 dark:text-zinc-400">
+                          <strong>Resend Message ID:</strong> {quoteSubmittedReceipt.emailMessageId}
+                        </p>
+                      )}
+                      {quoteSubmittedReceipt.emailError && !quoteSubmittedReceipt.emailDispatched && (
+                        <p className="text-[11px] text-amber-700 dark:text-amber-300">
+                          <strong>Email Status:</strong> {quoteSubmittedReceipt.emailError}
+                        </p>
+                      )}
+                    </div>
                     <button
                       type="button"
                       onClick={() => setQuoteSubmittedReceipt(null)}
@@ -5726,9 +5868,12 @@ export function ProfileView({
 
                     <button
                       type="submit"
-                      className={`w-full rounded-xl py-3.5 px-5 text-sm sm:text-base font-extrabold shadow-md cursor-pointer transition-transform hover:scale-[1.01] ${activeTheme.btnPrimary}`}
+                      disabled={isSubmittingQuote}
+                      className={`w-full rounded-xl py-3.5 px-5 text-sm sm:text-base font-extrabold shadow-md cursor-pointer transition-transform hover:scale-[1.01] disabled:opacity-60 ${activeTheme.btnPrimary}`}
                     >
-                      Send Booking &amp; Quote Request to {businessWebsite.businessName} →
+                      {isSubmittingQuote
+                        ? `Sending Request & Email Notification to ${businessWebsite.businessName}...`
+                        : `Send Booking & Quote Request to ${businessWebsite.businessName} →`}
                     </button>
                   </form>
                 )}

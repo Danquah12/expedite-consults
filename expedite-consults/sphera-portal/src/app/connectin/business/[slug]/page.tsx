@@ -128,8 +128,11 @@ export default function PublicBusinessStorefrontPage() {
       })
       const data = await res.json()
       if (data?.ok) {
+        const recipientsList = Array.isArray(data.emailRecipients) && data.emailRecipients.length > 0
+          ? ` Email confirmation sent to ${data.emailRecipients.join(", ")}.`
+          : ""
         setSubmittedNotice(
-          `Your quote & appointment request was delivered directly to ${activeBiz.name}'s Business Inbox & CRM!`
+          `Your quote & appointment request (${data.referenceId || "LOGGED"}) was delivered directly to ${activeBiz.name}'s Business Inbox & CRM!${recipientsList}`
         )
         setProjectScope("")
       }

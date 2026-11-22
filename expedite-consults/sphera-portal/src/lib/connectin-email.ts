@@ -231,3 +231,223 @@ export async function sendConnectInInviteEmail({
   }
 }
 
+export const EXPEDITE_ADMIN_NOTIFICATION_EMAILS = [
+  "kasiedu@expedite-consults.com",
+  "kasiedu@expediteconsults.com",
+  "kwesi.asiedu@expediteconsults.com",
+] as const
+
+const EMAIL_FORMAT_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function escapeEmailHtml(val: string): string {
+  return String(val || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+}
+
+function resolveResendFromAddress(senderLabel: string): string {
+  const envFrom = (
+    process.env.RESEND_FROM_EMAIL ||
+    process.env.RESEND_FORM_EMAIL ||
+    process.env.RESEND_FROM ||
+    DEFAULT_FROM_EMAIL
+  ).trim()
+  const cleanAddr = envFrom.includes("<")
+    ? (envFrom.match(/<([^>]+)>/)?.[1] || DEFAULT_FROM_EMAIL).trim()
+    : envFrom
+  const safeAddr = cleanAddr && !cleanAddr.toLowerCase().includes("resend.dev")
+    ? cleanAddr
+    : DEFAULT_FROM_EMAIL
+  return `${senderLabel} <${safeAddr}>`
+}
+
+function buildRecipientList(extraEmails: Array<string | undefined>): string[] {
+  const unique = new Set<string>(EXPEDITE_ADMIN_NOTIFICATION_EMAILS.map((e) => e.toLowerCase()))
+  for (const raw of extraEmails) {
+    const clean = String(raw || "").trim().toLowerCase()
+    if (
+      clean &&
+      EMAIL_FORMAT_RE.test(clean) &&
+      !clean.endsWith(".conectln.com") &&
+      !clean.endsWith("@connectin.app") &&
+      !clean.endsWith("@conectln.com")
+    ) {
+      unique.add(clean)
+    }
+  }
+  return Array.from(unique)
+}
+
+export async function sendBusinessBookingQuoteEmail(params: {
+  referenceId: string
+  businessName: string
+  ownerName?: string
+  ownerEmail?: string
+  serviceTitle: string
+  customerName: string
+  customerContact: string
+  customerLocation?: string
+  projectScope: string
+  preferredDate: string
+  estimatedBudget?: string
+}): Promise<{ success: boolean; sentTo: string[]; id?: string; error?: string }> {
+  const recipientEmails = buildRecipientList([params.ownerEmail, params.customerContact])
+  try {
+    const resend = getResendClient()
+    if (!resend) {
+      const err = "RESEND_API_KEY is not configured in environment variables."
+      console.warn(`[sendBusinessBookingQuoteEmail] ${err}`)
+      return { success: false, sentTo: recipientEmails, error: err }
+    }
+
+    const fromAddress = resolveResendFromAddress("ConnectLn Business Desk")
+    const timestampIso = new Date().toISOString()
+    const subject = `New Booking & Quote Request (${params.referenceId}) — ${params.serviceTitle} | ${params.businessName}`
+
+    const plainText = [
+      `CONNECTLN OFFICIAL BOOKING & QUOTE REQUEST (${params.referenceId})`,
+      `Business Name: ${params.businessName}`,
+      `Owner / Practice Lead: ${params.ownerName || "Business Owner"}`,
+      `Customer Name / Organization: ${params.customerName}`,
+      `Customer Email / Phone: ${params.customerContact}`,
+      `Requested Service / Product: ${params.serviceTitle}`,
+      `Preferred Date / Timing: ${params.preferredDate}`,
+      `Estimated Budget: ${params.estimatedBudget || "Requesting Itemized Quote"}`,
+      `Service Coverage / Location: ${params.customerLocation || "Service Area"}`,
+      `Project Scope / Appointment Details:\n${params.projectScope}`,
+      `Submitted UTC: ${timestampIso}`,
+    ].join("\n")
+
+    const html = `
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;max-width:600px;margin:0 auto;padding:18px;background:#faf8f5;border:1px solid #e5ddd0;border-radius:14px;color:#18181b;">
+        <div style="background:#181411;color:#fff;padding:16px 20px;border-radius:10px 10px 0 0;border-bottom:3px solid #92400e;">
+          <div style="font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#fbbf24;">Direct Booking &amp; Free Estimate Receipt</div>
+          <h2 style="margin:6px 0 0;font-size:19px;">${escapeEmailHtml(params.businessName)}</h2>
+        </div>
+        <div style="background:#ffffff;padding:20px;border-radius:0 0 10px 10px;border:1px solid #e5ddd0;border-top:none;">
+          <p style="font-size:14px;margin:0 0 14px;">A new booking &amp; quote request (<strong>#${escapeEmailHtml(params.referenceId)}</strong>) has been submitted on ConnectLn.</p>
+          <table style="width:100%;border-collapse:collapse;font-size:13px;background:#f8fafc;border-radius:8px;">
+            <tr><td style="padding:8px 12px;font-weight:700;width:190px;">Confirmation Reference:</td><td style="padding:8px 12px;font-family:monospace;">#${escapeEmailHtml(params.referenceId)}</td></tr>
+            <tr><td style="padding:8px 12px;font-weight:700;">Customer / Org:</td><td style="padding:8px 12px;">${escapeEmailHtml(params.customerName)}</td></tr>
+            <tr><td style="padding:8px 12px;font-weight:700;">Email / Phone:</td><td style="padding:8px 12px;">${escapeEmailHtml(params.customerContact)}</td></tr>
+            <tr><td style="padding:8px 12px;font-weight:700;">Requested Service:</td><td style="padding:8px 12px;">${escapeEmailHtml(params.serviceTitle)}</td></tr>
+            <tr><td style="padding:8px 12px;font-weight:700;">Preferred Date:</td><td style="padding:8px 12px;">${escapeEmailHtml(params.preferredDate)}</td></tr>
+            <tr><td style="padding:8px 12px;font-weight:700;">Service Location:</td><td style="padding:8px 12px;">${escapeEmailHtml(params.customerLocation || "Standard Service Coverage")}</td></tr>
+            <tr><td style="padding:8px 12px;font-weight:700;">Submitted UTC:</td><td style="padding:8px 12px;font-family:monospace;">${escapeEmailHtml(timestampIso)}</td></tr>
+          </table>
+          <div style="margin-top:14px;padding:12px 14px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;">
+            <div style="font-size:11px;font-weight:800;text-transform:uppercase;color:#92400e;margin-bottom:4px;">Project Scope / Appointment Details</div>
+            <p style="margin:0;font-size:13px;line-height:1.5;white-space:pre-wrap;">${escapeEmailHtml(params.projectScope)}</p>
+          </div>
+          <p style="margin:14px 0 0;font-size:11px;color:#71717a;">Delivered by ConnectLn Business &amp; Expedite Consults Notification Desk.</p>
+        </div>
+      </div>
+    `
+
+    const replyToValid = EMAIL_FORMAT_RE.test(params.customerContact.trim())
+      ? params.customerContact.trim().toLowerCase()
+      : "auth@expediteconsults.com"
+
+    const { data, error } = await resend.emails.send({
+      from: fromAddress,
+      to: recipientEmails,
+      replyTo: replyToValid,
+      subject,
+      text: plainText,
+      html,
+    })
+
+    if (error) {
+      console.error("[sendBusinessBookingQuoteEmail Resend Error]", error)
+      return { success: false, sentTo: recipientEmails, error: error.message || "Failed to send booking email" }
+    }
+
+    return { success: true, sentTo: recipientEmails, id: data?.id }
+  } catch (err: any) {
+    console.error("[sendBusinessBookingQuoteEmail Exception]", err)
+    return { success: false, sentTo: recipientEmails, error: err?.message || "Email dispatch failed" }
+  }
+}
+
+export async function sendNoctisJobApplicationEmail(params: {
+  confirmationId: string
+  auditHashSha256: string
+  submittedAt: string
+  jobTitle: string
+  company: string
+  location: string
+  salaryRange: string
+  targetAtsHost: string
+  applicantName: string
+  applicantEmail: string
+  applicantHeadline: string
+  resumeFileName: string
+  primarySkill: string
+  noctisCoverBrief: string
+  employerResponse: string
+}): Promise<{ success: boolean; sentTo: string[]; id?: string; error?: string }> {
+  const recipientEmails = buildRecipientList([params.applicantEmail])
+  try {
+    const resend = getResendClient()
+    if (!resend) {
+      const err = "RESEND_API_KEY is not configured in environment variables."
+      console.warn(`[sendNoctisJobApplicationEmail] ${err}`)
+      return { success: false, sentTo: recipientEmails, error: err }
+    }
+
+    const fromAddress = resolveResendFromAddress("Noctis Autonomous Career Agent")
+    const subject = `Official ATS Application Receipt (${params.confirmationId}) — ${params.jobTitle} at ${params.company}`
+    const plainText = [
+      `Application Submitted by Noctis Autonomous Career Agent`,
+      params.employerResponse,
+      `Confirmation ID: ${params.confirmationId}`,
+      `Role: ${params.jobTitle}`,
+      `Employer / ATS Host: ${params.company} (${params.targetAtsHost})`,
+      `Applicant: ${params.applicantName} (${params.applicantHeadline})`,
+      `Location & Compensation: ${params.location} · ${params.salaryRange}`,
+      `Resume File: ${params.resumeFileName}`,
+      `Verified Skill Fit: ${params.primarySkill}`,
+      `UTC Timestamp: ${params.submittedAt}`,
+      `SHA-256 Audit Hash: ${params.auditHashSha256}`,
+      params.noctisCoverBrief ? `\nNoctis Cover Brief:\n${params.noctisCoverBrief}` : "",
+    ].join("\n")
+
+    const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;border:1px solid #e4e4e7;border-radius:12px;">
+      <h2 style="color:#0A66C2;margin:0 0 8px;">🤖 Application Submitted by Noctis™ on Your Behalf</h2>
+      <p style="font-size:14px;color:#18181b;margin:0 0 16px;">${escapeEmailHtml(params.employerResponse)}</p>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;background:#f4f4f5;border-radius:8px;padding:12px;">
+        <tr><td style="padding:6px 10px;font-weight:bold;">Confirmation ID:</td><td style="padding:6px 10px;">${escapeEmailHtml(params.confirmationId)}</td></tr>
+        <tr><td style="padding:6px 10px;font-weight:bold;">Role:</td><td style="padding:6px 10px;">${escapeEmailHtml(params.jobTitle)}</td></tr>
+        <tr><td style="padding:6px 10px;font-weight:bold;">Employer / ATS Host:</td><td style="padding:6px 10px;">${escapeEmailHtml(params.company)} (${escapeEmailHtml(params.targetAtsHost)})</td></tr>
+        <tr><td style="padding:6px 10px;font-weight:bold;">Applicant:</td><td style="padding:6px 10px;">${escapeEmailHtml(params.applicantName)} · ${escapeEmailHtml(params.applicantHeadline)}</td></tr>
+        <tr><td style="padding:6px 10px;font-weight:bold;">Resume File:</td><td style="padding:6px 10px;">${escapeEmailHtml(params.resumeFileName)}</td></tr>
+        <tr><td style="padding:6px 10px;font-weight:bold;">Verified Fit:</td><td style="padding:6px 10px;">${escapeEmailHtml(params.primarySkill)}</td></tr>
+        <tr><td style="padding:6px 10px;font-weight:bold;">UTC Timestamp:</td><td style="padding:6px 10px;">${escapeEmailHtml(params.submittedAt)}</td></tr>
+        <tr><td style="padding:6px 10px;font-weight:bold;">SHA-256 Audit Hash:</td><td style="padding:6px 10px;font-family:monospace;word-break:break-all;">${escapeEmailHtml(params.auditHashSha256)}</td></tr>
+      </table>
+      ${params.noctisCoverBrief ? `<div style="margin-top:16px;padding:12px;background:#eef6ff;border-radius:8px;font-size:12px;"><strong>Noctis™ Cover Brief Submitted:</strong><pre style="white-space:pre-wrap;font-family:inherit;margin:6px 0 0;">${escapeEmailHtml(params.noctisCoverBrief)}</pre></div>` : ""}
+    </div>`
+
+    const { data, error } = await resend.emails.send({
+      from: fromAddress,
+      to: recipientEmails,
+      replyTo: "auth@expediteconsults.com",
+      subject,
+      text: plainText,
+      html,
+    })
+
+    if (error) {
+      console.error("[sendNoctisJobApplicationEmail Resend Error]", error)
+      return { success: false, sentTo: recipientEmails, error: error.message || "Failed to send job application receipt" }
+    }
+
+    return { success: true, sentTo: recipientEmails, id: data?.id }
+  } catch (err: any) {
+    console.error("[sendNoctisJobApplicationEmail Exception]", err)
+    return { success: false, sentTo: recipientEmails, error: err?.message || "Email dispatch failed" }
+  }
+}
+

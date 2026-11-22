@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import crypto from "crypto"
 import { firebaseKvGetItem, firebaseKvSetItem } from "@/lib/connectin-firebase-kv"
+import {
+  sendBusinessBookingQuoteEmail,
+  EXPEDITE_ADMIN_NOTIFICATION_EMAILS
+} from "@/lib/connectin-email"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -691,42 +695,81 @@ export async function POST(req: NextRequest) {
 
     // MKT-02 & BOOK-01: Customer submits a Quote Request / Appointment Request to a business
     if (action === "request_quote") {
-      const businessId = String(body?.businessId || "biz_expedite_consults")
-      const biz = state.businesses.find((b) => b.id === businessId) || state.businesses[0]
+      const businessId = String(body?.businessId || "biz_expedite_consults").trim()
+      const biz =
+        state.businesses.find((b) => b.id === businessId || b.slug === businessId) ||
+        state.businesses[0]
+      const businessName = String(body?.businessName || biz?.name || "ConnectLn Business").trim()
+      const ownerName = String(body?.ownerName || biz?.ownerName || "Business Owner").trim()
+      const ownerEmail = String(body?.ownerEmail || biz?.ownerEmail || "").trim()
       const serviceTitle = String(body?.serviceTitle || "General Service Estimate & Consultation").trim()
-      const projectScope = String(body?.projectScope || "").trim()
-      if (biz && projectScope) {
-        biz.storefrontViews = (biz.storefrontViews || 100) + 1
-        const lead: BusinessLeadAndInquiry = {
-          id: `lead-${Date.now()}`,
-          businessId: biz.id,
-          businessName: biz.name,
-          serviceId: body?.serviceId,
-          serviceTitle,
-          customerName: actorName,
-          customerEmail: actorEmail,
-          customerLocation: String(body?.customerLocation || biz.location).trim(),
-          projectScope,
-          preferredDate: String(body?.preferredDate || "Next Available Slot").trim(),
-          estimatedBudget: String(body?.estimatedBudget || "Requesting Itemized Quote").trim(),
-          assignedStaffName: biz.ownerName,
-          crmStage: "New Lead",
-          appointmentConfirmed: false,
-          invoiceStatus: "Unbilled",
-          createdAtIso: new Date().toISOString(),
-          updatedAtIso: new Date().toISOString(),
-        }
-        state.leads.unshift(lead)
-        appendAuditEvent(state, {
-          businessId: biz.id,
-          actorName,
-          actorRole: "Customer",
-          eventCode: "MKT_QUOTE_REQUESTED",
-          summary: `Customer ${actorName} requested quote for "${serviceTitle}" (${lead.estimatedBudget})`,
-        })
-        await saveBusinessState(state)
+      const customerName = String(body?.customerName || actorName || "Verified Client").trim()
+      const customerContact = String(body?.customerContact || body?.customerEmail || actorEmail || "").trim()
+      const customerLocation = String(body?.customerLocation || biz?.location || "Service Area").trim()
+      const projectScope =
+        String(body?.projectScope || "").trim() ||
+        `Direct Booking & Upfront Estimate Request for ${serviceTitle}`
+      const preferredDate = String(body?.preferredDate || "Next Available Slot").trim()
+      const estimatedBudget = String(body?.estimatedBudget || "Requesting Itemized Quote").trim()
+      const referenceId = String(body?.referenceId || `REQ-${Math.floor(10000 + Math.random() * 89999)}`).trim()
+
+      const lead: BusinessLeadAndInquiry = {
+        id: referenceId,
+        businessId: biz?.id || businessId,
+        businessName,
+        serviceId: body?.serviceId,
+        serviceTitle,
+        customerName,
+        customerEmail: customerContact,
+        customerLocation,
+        projectScope,
+        preferredDate,
+        estimatedBudget,
+        assignedStaffName: ownerName,
+        crmStage: "New Lead",
+        appointmentConfirmed: false,
+        invoiceStatus: "Unbilled",
+        createdAtIso: new Date().toISOString(),
+        updatedAtIso: new Date().toISOString(),
       }
-      return NextResponse.json({ ok: true, state })
+      if (biz) {
+        biz.storefrontViews = (biz.storefrontViews || 100) + 1
+      }
+      state.leads.unshift(lead)
+      appendAuditEvent(state, {
+        businessId: biz?.id || businessId,
+        actorName: customerName,
+        actorRole: "Customer",
+        eventCode: "MKT_QUOTE_REQUESTED",
+        summary: `Customer ${customerName} (${customerContact}) requested quote for "${serviceTitle}" (${referenceId})`,
+      })
+      await saveBusinessState(state)
+
+      const emailResult = await sendBusinessBookingQuoteEmail({
+        referenceId,
+        businessName,
+        ownerName,
+        ownerEmail,
+        serviceTitle,
+        customerName,
+        customerContact,
+        customerLocation,
+        projectScope,
+        preferredDate,
+        estimatedBudget,
+      })
+
+      return NextResponse.json({
+        ok: true,
+        referenceId,
+        emailDispatched: emailResult.success,
+        emailRecipients:
+          emailResult.sentTo.length > 0 ? emailResult.sentTo : [...EXPEDITE_ADMIN_NOTIFICATION_EMAILS],
+        emailMessageId: emailResult.id,
+        emailError: emailResult.error,
+        lead,
+        state,
+      })
     }
 
     // CRM-01, MSG-01, BOOK-01, PAY-01: Staff sends quote, advances CRM lead stage, confirms booking, or updates payment

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import crypto from "crypto"
-import { Resend } from "resend"
+import { sendNoctisJobApplicationEmail } from "@/lib/connectin-email"
 import {
   GLOBAL_JOBS_CATALOG,
   GlobalJobItem,
@@ -736,53 +736,26 @@ export async function POST(request: Request) {
 
       const employerResponse = `✅ Official ATS Receipt (${confirmationId}): ${company} Talent Acquisition & ATS Desk confirms receipt of the application packet submitted by Noctis™ Autonomous Career Agent on behalf of ${applicantName} for ${jobTitle} (${location}). Verified proficiency in ${primarySkill} passed initial ATS screening (96% fit). Your packet is queued for hiring manager review within 24–48 hours.`
 
-      let emailConfirmationSent = false
-      const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      const apiKey = (process.env.RESEND_API_KEY || "").trim()
-      const lowerEmail = applicantEmail.toLowerCase()
-      if (
-        apiKey &&
-        emailRe.test(lowerEmail) &&
-        !lowerEmail.endsWith("@connectin.app") &&
-        !lowerEmail.endsWith("@expediteconsults.com")
-      ) {
-        try {
-          const resend = new Resend(apiKey)
-          const fromEmail = (
-            process.env.RESEND_FROM_EMAIL ||
-            process.env.RESEND_FROM ||
-            "auth@expediteconsults.com"
-          ).trim()
-          const esc = (s: string) =>
-            String(s || "")
-              .replace(/&/g, "&amp;")
-              .replace(/</g, "&lt;")
-              .replace(/>/g, "&gt;")
-              .replace(/"/g, "&quot;")
-          const { error: emailErr } = await resend.emails.send({
-            from: `Noctis Autonomous Career Agent <${fromEmail.includes("<") ? fromEmail.match(/<([^>]+)>/)?.[1] || "auth@expediteconsults.com" : fromEmail}>`,
-            to: [lowerEmail],
-            subject: `Official ATS Application Receipt (${confirmationId}) — ${jobTitle} at ${company}`,
-            html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;border:1px solid #e4e4e7;border-radius:12px;">
-              <h2 style="color:#0A66C2;margin:0 0 8px;">🤖 Application Submitted by Noctis™ on Your Behalf</h2>
-              <p style="font-size:14px;color:#18181b;margin:0 0 16px;">${esc(employerResponse)}</p>
-              <table style="width:100%;border-collapse:collapse;font-size:12px;background:#f4f4f5;border-radius:8px;padding:12px;">
-                <tr><td style="padding:6px 10px;font-weight:bold;">Confirmation ID:</td><td style="padding:6px 10px;">${esc(confirmationId)}</td></tr>
-                <tr><td style="padding:6px 10px;font-weight:bold;">Role:</td><td style="padding:6px 10px;">${esc(jobTitle)}</td></tr>
-                <tr><td style="padding:6px 10px;font-weight:bold;">Employer / ATS Host:</td><td style="padding:6px 10px;">${esc(company)} (${esc(targetAtsHost)})</td></tr>
-                <tr><td style="padding:6px 10px;font-weight:bold;">Applicant:</td><td style="padding:6px 10px;">${esc(applicantName)} · ${esc(applicantHeadline)}</td></tr>
-                <tr><td style="padding:6px 10px;font-weight:bold;">Resume File:</td><td style="padding:6px 10px;">${esc(resumeFileName)}</td></tr>
-                <tr><td style="padding:6px 10px;font-weight:bold;">UTC Timestamp:</td><td style="padding:6px 10px;">${esc(submittedAt)}</td></tr>
-                <tr><td style="padding:6px 10px;font-weight:bold;">SHA-256 Audit Hash:</td><td style="padding:6px 10px;font-family:monospace;word-break:break-all;">${esc(auditHashSha256)}</td></tr>
-              </table>
-              ${noctisCoverBrief ? `<div style="margin-top:16px;padding:12px;background:#eef6ff;border-radius:8px;font-size:12px;"><strong>Noctis™ Cover Brief Submitted:</strong><pre style="white-space:pre-wrap;font-family:inherit;margin:6px 0 0;">${esc(noctisCoverBrief)}</pre></div>` : ""}
-            </div>`
-          })
-          if (!emailErr) emailConfirmationSent = true
-        } catch {
-          emailConfirmationSent = false
-        }
-      }
+      const emailResult = await sendNoctisJobApplicationEmail({
+        confirmationId,
+        auditHashSha256,
+        submittedAt,
+        jobTitle,
+        company,
+        location,
+        salaryRange,
+        targetAtsHost,
+        applicantName,
+        applicantEmail,
+        applicantHeadline,
+        resumeFileName,
+        primarySkill,
+        noctisCoverBrief,
+        employerResponse
+      })
+      const emailConfirmationSent = emailResult.success
+      const emailRecipients = emailResult.sentTo
+      const emailMessageId = emailResult.id
 
       const applicationRecord = {
         id: "app_" + Date.now(),
@@ -807,7 +780,9 @@ export async function POST(request: Request) {
         secondarySkill,
         noctisCoverBrief,
         employerResponse,
-        emailConfirmationSent
+        emailConfirmationSent,
+        emailRecipients,
+        emailMessageId
       }
 
       submittedApplications.unshift(applicationRecord)
@@ -824,6 +799,9 @@ export async function POST(request: Request) {
         portalReachable,
         portalStatus,
         emailConfirmationSent,
+        emailRecipients,
+        emailMessageId,
+        emailError: emailResult.error,
         employerResponse,
         application: applicationRecord
       })
