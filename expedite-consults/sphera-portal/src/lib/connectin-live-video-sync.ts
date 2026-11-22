@@ -5,6 +5,7 @@ import {
   getInitialDeterministicHarvestedItems,
   dedupeHarvestedItems,
   normalizeExclusiveDestinations,
+  isLegacySyntheticOrAiMediaItem,
   CONNECTLN_HARVESTER_TEMPLATES,
 } from "./connectin-media-harvester"
 import {
@@ -386,8 +387,8 @@ export async function getOrRunAdditive24HourVideoArchive(options?: {
     const cloud = await pullCloudVideoArchive()
     const foundational = getFoundationalPreservedSeedItems()
     MEMORY_ARCHIVED_ITEMS = dedupeHarvestedItems([
-      ...cloud.items,
-      ...MEMORY_ARCHIVED_ITEMS,
+      ...cloud.items.filter((item) => !isLegacySyntheticOrAiMediaItem(item)),
+      ...MEMORY_ARCHIVED_ITEMS.filter((item) => !isLegacySyntheticOrAiMediaItem(item)),
       ...foundational,
     ])
     if (cloud.meta) {
@@ -495,10 +496,16 @@ export async function appendCustomAdminItemToArchive(params: {
         imageUrl = `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`
       }
     } else {
-      videoUrl = rawMediaUrl || "/status-videos/agentic_flywheel.mp4"
+      videoUrl = rawMediaUrl || undefined
+      if (!videoUrl) {
+        youtubeId = fallbackTpl.youtubeId
+        imageUrl = fallbackTpl.imageUrl
+      }
     }
   } else {
-    imageUrl = rawMediaUrl || "/images/connectln-studies/agentic-mcp-cover.jpg"
+    imageUrl =
+      rawMediaUrl ||
+      "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=900&auto=format&fit=crop&q=80"
   }
 
   const slot = getCurrentMinuteSlot() + MANUAL_PULL_COUNTER++

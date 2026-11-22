@@ -547,8 +547,21 @@ export function LiveHarvestedMediaShowcase({
                       }`}
                     >
                       <img
-                        src={item.imageUrl}
+                        src={
+                          item.imageUrl ||
+                          (item.youtubeId
+                            ? `https://i.ytimg.com/vi/${item.youtubeId}/hqdefault.jpg`
+                            : "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=900&auto=format&fit=crop&q=80")
+                        }
                         alt={displayHeadline}
+                        onError={(e) => {
+                          const img = e.currentTarget
+                          if (img.dataset.fallbackApplied === "1") return
+                          img.dataset.fallbackApplied = "1"
+                          img.src = item.youtubeId
+                            ? `https://i.ytimg.com/vi/${item.youtubeId}/mqdefault.jpg`
+                            : "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=900&auto=format&fit=crop&q=80"
+                        }}
                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
                       />
                       <div className="absolute inset-x-0 bottom-0 h-[52%] bg-gradient-to-t from-black/85 via-black/35 to-transparent pointer-events-none" />

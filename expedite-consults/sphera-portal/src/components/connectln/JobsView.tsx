@@ -479,7 +479,8 @@ export function JobsView({
     } catch {}
     return "all"
   })
-  const [isTradeFoldersDrawerOpen, setIsTradeFoldersDrawerOpen] = useState<boolean>(true)
+  const [isTradeFoldersDrawerOpen, setIsTradeFoldersDrawerOpen] = useState<boolean>(false)
+  const [isClinicalRolesOpen, setIsClinicalRolesOpen] = useState<boolean>(false)
   const [adminFolderSyncInfo, setAdminFolderSyncInfo] = useState<{ syncedAt?: string; folder?: number | 'all'; totalRoles?: number } | null>(() => {
     if (typeof window === "undefined") return null
     try {
@@ -1310,45 +1311,235 @@ export function JobsView({
           <LiveHarvestedMediaShowcase destination="jobs" />
         </div>
 
-        {/* Dynamic Profession Enclave Switcher + 20 Trade Folders + Worker Pillars + Country Ribbon */}
+        {/* Organized Structured Job Explorer Filter Bar */}
         {masterMode === 'find' && (
-          <div className="mt-4 pt-3.5 border-t border-zinc-100 dark:border-zinc-800 space-y-3">
-            {/* SYNCED 20 TRADE & SERVICE FOLDERS BAR (250 ROLES) */}
+          <div className="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-800 space-y-3">
+            {/* Compact Filter Header & Quick Drawers Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-700 dark:text-zinc-200">
+                  Filter Roles &amp; Locations
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2.5 py-0.5 text-[11px] font-semibold text-zinc-800 dark:text-zinc-200">
+                  <Languages className="h-3 w-3 text-[#0A66C2]" />
+                  <span>{currentCountry.languages[0]} · {currentCountry.currency} ({currentCountry.currencySymbol})</span>
+                </span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setIsTradeFoldersDrawerOpen((prev) => !prev)}
+                  className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border transition-colors cursor-pointer flex items-center gap-1.5 ${
+                    isTradeFoldersDrawerOpen || selectedTradeFolderNumber !== 'all'
+                      ? 'bg-[#0A66C2] text-white border-[#0A66C2]'
+                      : 'bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                  }`}
+                >
+                  <FolderOpen className="h-3.5 w-3.5" />
+                  <span>{isTradeFoldersDrawerOpen ? 'Hide 20 Trade Folders' : 'Browse 20 Trade Folders (250)'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsClinicalRolesOpen((prev) => !prev)}
+                  className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border transition-colors cursor-pointer flex items-center gap-1.5 ${
+                    isClinicalRolesOpen || selectedEnclave === 'healthcare_medicine'
+                      ? 'bg-teal-700 text-white border-teal-700'
+                      : 'bg-white dark:bg-zinc-900 text-teal-800 dark:text-teal-300 border-teal-300 dark:border-teal-800 hover:bg-teal-50 dark:hover:bg-teal-950/40'
+                  }`}
+                >
+                  <span>🏥</span>
+                  <span>{isClinicalRolesOpen ? 'Hide Clinical Roles' : 'Medicine & Clinical Roles (21)'}</span>
+                </button>
+
+                {(selectedEnclave !== 'all' ||
+                  selectedPillar !== 'all' ||
+                  selectedTradeFolderNumber !== 'all' ||
+                  selectedProfessionId !== 'all' ||
+                  selectedDomain !== 'All' ||
+                  selectedCountryCode !== 'US' ||
+                  searchQuery.trim() !== '') && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedCountryCode('US')
+                      setSelectedHub('All Hubs')
+                      setSelectedEnclave('all')
+                      setSelectedPillar('all')
+                      setSelectedTradeFolderNumber('all')
+                      setSelectedProfessionId('all')
+                      setSelectedDomain('All')
+                      setSearchQuery('')
+                    }}
+                    className="rounded-lg px-2.5 py-1 text-[11px] font-bold border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer"
+                  >
+                    Reset All
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Clean 4-Column Structured Filter Grid — Zero Cluttered Scrollbars */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950/50 p-3">
+              {/* 1. Region (196 Global Markets) */}
+              <div className="space-y-1">
+                <label className="block text-[10px] font-extrabold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
+                  Region ({COUNTRIES_CONFIG.length})
+                </label>
+                <select
+                  aria-label="Select country or global region"
+                  value={selectedCountryCode}
+                  onChange={(e) => handleCountryChange(e.target.value)}
+                  className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-2 text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:border-[#0A66C2] focus:outline-none cursor-pointer"
+                >
+                  {COUNTRIES_CONFIG.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.flag} {c.name} ({c.currency})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 2. Industry Enclave (20 Enclaves) */}
+              <div className="space-y-1">
+                <label className="block text-[10px] font-extrabold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
+                  Industry Enclave ({PROFESSION_ENCLAVES.length})
+                </label>
+                <select
+                  aria-label="Select industry enclave"
+                  value={selectedEnclave}
+                  onChange={(e) => handleEnclaveChange(e.target.value)}
+                  className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-2 text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:border-[#0A66C2] focus:outline-none cursor-pointer"
+                >
+                  <option value="all">🌐 All {PROFESSION_ENCLAVES.length} Industry Enclaves</option>
+                  {[
+                    ...PROFESSION_ENCLAVES.filter((e) => e.id === 'healthcare_medicine'),
+                    ...PROFESSION_ENCLAVES.filter((e) => e.id !== 'healthcare_medicine'),
+                  ].map((enc) => (
+                    <option key={enc.id} value={enc.id}>
+                      {enc.icon} {enc.name} ({enc.professions.length})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 3. Synced 20 Trade & Service Folders (250 Everyday Professions) */}
+              <div className="space-y-1">
+                <label className="block text-[10px] font-extrabold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
+                  Trade &amp; Service Folders (250)
+                </label>
+                <select
+                  aria-label="Select trade and service folder"
+                  value={selectedTradeFolderNumber === 'all' ? 'all' : String(selectedTradeFolderNumber)}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    handleSelectTradeFolder(v === 'all' ? 'all' : Number(v))
+                  }}
+                  className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-2 text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:border-[#0A66C2] focus:outline-none cursor-pointer"
+                >
+                  <option value="all">📂 All 20 Folders (250 Trade Roles)</option>
+                  {HANDYMAN_250_FOLDERS.map((folder) => (
+                    <option key={folder.folderId} value={String(folder.folderNumber)}>
+                      {folder.icon} {folder.folderNumber}. {folder.folderName} ({folder.roles.length})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 4. Specialty Role OR Career Pathway */}
+              <div className="space-y-1">
+                <label className="block text-[10px] font-extrabold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
+                  {activeTradeFolderObj
+                    ? `Folder #${activeTradeFolderObj.folderNumber} Role (${activeTradeFolderObj.roles.length})`
+                    : currentEnclaveObj
+                    ? `${currentEnclaveObj.shortName} Profession (${currentEnclaveObj.professions.length})`
+                    : 'Career Pathway'}
+                </label>
+                {activeTradeFolderObj ? (
+                  <select
+                    aria-label="Select role inside trade folder"
+                    value={selectedProfessionId}
+                    onChange={(e) => setSelectedProfessionId(e.target.value)}
+                    className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-2 text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:border-[#0A66C2] focus:outline-none cursor-pointer"
+                  >
+                    <option value="all">All {activeTradeFolderObj.roles.length} Roles in Folder #{activeTradeFolderObj.folderNumber}</option>
+                    {activeTradeFolderObj.roles.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        #{r.num} {r.title}
+                      </option>
+                    ))}
+                  </select>
+                ) : currentEnclaveObj ? (
+                  <select
+                    aria-label="Select profession inside enclave"
+                    value={selectedProfessionId}
+                    onChange={(e) => setSelectedProfessionId(e.target.value)}
+                    className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-2 text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:border-[#0A66C2] focus:outline-none cursor-pointer"
+                  >
+                    <option value="all">All {currentEnclaveObj.professions.length} {currentEnclaveObj.shortName} Roles</option>
+                    {currentEnclaveObj.professions.map((prof) => (
+                      <option key={prof.id} value={prof.id}>
+                        {prof.title}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <select
+                    aria-label="Select career pathway"
+                    value={selectedPillar}
+                    onChange={(e) => handlePillarChange(e.target.value)}
+                    className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-2 text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:border-[#0A66C2] focus:outline-none cursor-pointer"
+                  >
+                    <option value="all">🌍 All Career Pathways</option>
+                    {CONNECTIN_WORKER_PILLARS.map((pillar) => (
+                      <option key={pillar.id} value={pillar.id}>
+                        {pillar.icon} {pillar.title}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            </div>
+
+            {/* CLEAN COLLAPSIBLE 20 TRADE & SERVICE FOLDERS GRID */}
             {isTradeFoldersDrawerOpen && (
-              <div className="rounded-xl border border-sky-200/90 dark:border-sky-800/60 bg-sky-50/50 dark:bg-sky-950/25 p-3 space-y-2">
-                <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="rounded-xl border border-sky-200 dark:border-sky-800/70 bg-sky-50/40 dark:bg-sky-950/20 p-3.5 space-y-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-sky-200/70 dark:border-sky-800/50">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[11px] font-black uppercase tracking-wider text-[#0A66C2] dark:text-sky-300 flex items-center gap-1.5">
+                    <span className="text-xs font-extrabold text-[#0A66C2] dark:text-sky-300 flex items-center gap-1.5">
                       <FolderOpen className="h-3.5 w-3.5" />
                       <span>20 Synced Trade &amp; Service Folders (250 Everyday Professions)</span>
                     </span>
                     {adminFolderSyncInfo && (
-                      <span className="rounded-full bg-emerald-600 text-white px-2 py-0.5 text-[10px] font-extrabold">
+                      <span className="rounded-full bg-emerald-600 text-white px-2 py-0.5 text-[10px] font-bold">
                         ✓ Synced Platform-Wide
                       </span>
                     )}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setIsTradeFoldersDrawerOpen(false)}
-                    className="text-[11px] font-semibold text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 cursor-pointer"
-                  >
-                    Hide Folders ×
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleSelectTradeFolder('all')}
+                      className={`rounded-md px-2 py-0.5 text-[11px] font-bold border cursor-pointer ${
+                        selectedTradeFolderNumber === 'all'
+                          ? 'bg-[#0A66C2] text-white border-[#0A66C2]'
+                          : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 border-zinc-300 dark:border-zinc-700'
+                      }`}
+                    >
+                      All 20 Folders
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsTradeFoldersDrawerOpen(false)}
+                      className="text-[11px] font-semibold text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 cursor-pointer"
+                    >
+                      Close ×
+                    </button>
+                  </div>
                 </div>
 
-                <div className="flex flex-wrap gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => handleSelectTradeFolder('all')}
-                    className={`rounded-lg px-2.5 py-1 text-[11px] font-extrabold border transition-all cursor-pointer ${
-                      selectedTradeFolderNumber === 'all'
-                        ? "bg-[#0A66C2] text-white border-[#0A66C2] shadow-2xs"
-                        : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100"
-                    }`}
-                  >
-                    📂 All 20 Folders (250 Roles)
-                  </button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                   {HANDYMAN_250_FOLDERS.map((folder) => {
                     const active = selectedTradeFolderNumber === folder.folderNumber
                     return (
@@ -1356,13 +1547,25 @@ export function JobsView({
                         key={folder.folderId}
                         type="button"
                         onClick={() => handleSelectTradeFolder(folder.folderNumber)}
-                        className={`rounded-lg px-2.5 py-1 text-[11px] font-bold border transition-all cursor-pointer ${
+                        className={`flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-[11px] font-semibold border transition-colors cursor-pointer ${
                           active
-                            ? "bg-[#0A66C2] text-white border-[#0A66C2] shadow-2xs"
-                            : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700 hover:bg-sky-50 dark:hover:bg-zinc-800"
+                            ? 'bg-[#0A66C2] text-white border-[#0A66C2] shadow-2xs'
+                            : 'bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700 hover:bg-sky-50 dark:hover:bg-zinc-800'
                         }`}
                       >
-                        {folder.icon} {folder.folderNumber}. {folder.folderName} ({folder.roles.length})
+                        <span className="truncate flex items-center gap-1.5">
+                          <span>{folder.icon}</span>
+                          <span className="truncate">{folder.folderNumber}. {folder.folderName}</span>
+                        </span>
+                        <span
+                          className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold shrink-0 ${
+                            active
+                              ? 'bg-white/20 text-white'
+                              : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'
+                          }`}
+                        >
+                          {folder.roles.length}
+                        </span>
                       </button>
                     )
                   })}
@@ -1371,8 +1574,8 @@ export function JobsView({
                 {activeTradeFolderObj && (
                   <div className="pt-2 border-t border-sky-200/70 dark:border-sky-800/50 space-y-1.5">
                     <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <span className="text-[11px] font-bold text-zinc-700 dark:text-zinc-200">
-                        Inside Folder #{activeTradeFolderObj.folderNumber} ({activeTradeFolderObj.folderName} · {activeTradeFolderObj.roles.length} Roles):
+                      <span className="text-[11px] font-bold text-zinc-800 dark:text-zinc-200">
+                        Folder #{activeTradeFolderObj.folderNumber}: {activeTradeFolderObj.folderName} ({activeTradeFolderObj.roles.length} Roles)
                       </span>
                       <button
                         type="button"
@@ -1380,13 +1583,13 @@ export function JobsView({
                         className={`rounded-md px-2 py-0.5 text-[10px] font-bold cursor-pointer ${
                           selectedProfessionId === 'all'
                             ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900'
-                            : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700'
+                            : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-700'
                         }`}
                       >
-                        Show All {activeTradeFolderObj.roles.length} Folder Roles
+                        Show All {activeTradeFolderObj.roles.length} Roles
                       </button>
                     </div>
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1.5">
                       {activeTradeFolderObj.roles.map((r) => {
                         const isRoleActive = selectedProfessionId === r.id
                         return (
@@ -1394,7 +1597,7 @@ export function JobsView({
                             key={r.id}
                             type="button"
                             onClick={() => setSelectedProfessionId(isRoleActive ? 'all' : r.id)}
-                            className={`rounded-md px-2 py-0.5 text-[10.5px] font-semibold transition-colors cursor-pointer ${
+                            className={`rounded-md px-2 py-1 text-[10.5px] font-semibold transition-colors cursor-pointer ${
                               isRoleActive
                                 ? 'bg-amber-600 text-white font-bold shadow-2xs'
                                 : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-amber-50'
@@ -1410,176 +1613,70 @@ export function JobsView({
               </div>
             )}
 
-            {/* 3 CORE WORKER PILLARS BAR */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-              <span className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 shrink-0 mr-1">
-                Pathway:
-              </span>
-              <button
-                type="button"
-                onClick={() => handlePillarChange('all')}
-                className={`rounded-full px-3 py-1 text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
-                  selectedPillar === 'all' && selectedEnclave === 'all'
-                    ? "bg-[#0A66C2] text-white shadow-xs"
-                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700/70"
-                }`}
-              >
-                <span>🌍</span>
-                <span>All Career Pathways</span>
-              </button>
-              {CONNECTIN_WORKER_PILLARS.map((pillar) => {
-                const isSelected = selectedPillar === pillar.id && selectedEnclave === 'all'
-                return (
+            {/* CLEAN COLLAPSIBLE MEDICINE & CLINICAL ROLES PANEL */}
+            {(isClinicalRolesOpen || selectedEnclave === 'healthcare_medicine') && (
+              <div className="rounded-xl border border-teal-200 dark:border-teal-800/70 bg-teal-50/40 dark:bg-teal-950/20 p-3.5 space-y-2.5">
+                <div className="flex items-center justify-between gap-2 pb-2 border-b border-teal-200/70 dark:border-teal-800/50">
+                  <span className="text-xs font-extrabold text-teal-800 dark:text-teal-200 flex items-center gap-1.5">
+                    <span>🏥</span>
+                    <span>Medicine, Pharmacy, Physicians, Nursing &amp; Allied Clinical Roles</span>
+                  </span>
                   <button
-                    key={pillar.id}
                     type="button"
-                    onClick={() => handlePillarChange(pillar.id)}
-                    title={pillar.subtitle}
-                    className={`rounded-full px-3 py-1 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
-                      isSelected
-                        ? "bg-emerald-600 text-white font-semibold shadow-xs"
-                        : "bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 border border-emerald-200/70 dark:border-emerald-800/60"
-                    }`}
+                    onClick={() => setIsClinicalRolesOpen(false)}
+                    className="text-[11px] font-semibold text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 cursor-pointer"
                   >
-                    <span>{pillar.icon}</span>
-                    <span>{pillar.title}</span>
+                    Hide ×
                   </button>
-                )
-              })}
-            </div>
-
-            {/* ALL 20 PROFESSIONS SWITCHER BAR (Healthcare & Medicine First) */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 text-xs">
-              <span className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 shrink-0 mr-1">
-                Enclave:
-              </span>
-              <button
-                type="button"
-                onClick={() => handleEnclaveChange('all')}
-                className={`rounded-full px-3 py-1 text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
-                  selectedEnclave === 'all'
-                    ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xs"
-                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700/70"
-                }`}
-              >
-                <span>🌐</span>
-                <span>All {PROFESSION_ENCLAVES.length} Industry Enclaves</span>
-              </button>
-
-              {[
-                ...PROFESSION_ENCLAVES.filter((e) => e.id === 'healthcare_medicine'),
-                ...PROFESSION_ENCLAVES.filter((e) => e.id !== 'healthcare_medicine')
-              ].map((enc) => {
-                const isSelected = selectedEnclave === enc.id
-                return (
-                  <button
-                    key={enc.id}
-                    type="button"
-                    onClick={() => handleEnclaveChange(enc.id)}
-                    className={`rounded-full px-3 py-1 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
-                      isSelected
-                        ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
-                        : enc.id === 'healthcare_medicine'
-                        ? "bg-teal-50 dark:bg-teal-950/50 text-teal-800 dark:text-teal-200 border border-teal-300 dark:border-teal-700 font-semibold hover:bg-teal-100"
-                        : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700/70"
-                    }`}
-                  >
-                    <span>{enc.icon}</span>
-                    <span>{enc.shortName}</span>
-                  </button>
-                )
-              })}
-            </div>
-
-            {/* DEDICATED MEDICINE, PHARMACY, DOCTORS, NURSES & NURSING TECHNICIANS QUICK-FILTER BAR */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 text-xs pt-1 border-t border-teal-100 dark:border-teal-900/50">
-              <span className="text-[11px] font-bold text-teal-700 dark:text-teal-300 shrink-0 mr-1 flex items-center gap-1">
-                <span>🏥</span>
-                <span>Medicine &amp; Clinical Roles:</span>
-              </span>
-              {[
-                { id: 'all_med', label: '🏥 All Medicine & Healthcare', profId: 'all', domain: 'All' },
-                { id: 'pharmacist', label: '💊 Pharmacists (PharmD)', profId: 'pharmacist', domain: 'All' },
-                { id: 'pharmacy_technician', label: '🧪 Pharmacy Techs (CPhT)', profId: 'pharmacy_technician', domain: 'All' },
-                { id: 'physician', label: '🩺 Doctors & Physicians (MD/DO)', profId: 'physician', domain: 'All' },
-                { id: 'surgeon_specialist_md', label: '🔪 Surgeons (MD, FACS)', profId: 'surgeon_specialist_md', domain: 'All' },
-                { id: 'registered_nurse', label: '❤️‍🩹 Registered Nurses (BSN, RN)', profId: 'registered_nurse', domain: 'All' },
-                { id: 'critical_care_er_nurse', label: '🚨 ICU & Trauma Nurses (CCRN)', profId: 'critical_care_er_nurse', domain: 'All' },
-                { id: 'nurse_practitioner_pa', label: '📋 Nurse Practitioners & PAs (APRN/PA-C)', profId: 'nurse_practitioner_pa', domain: 'All' },
-                { id: 'licensed_practical_nurse', label: '🩹 LPN / LVN Nurses', profId: 'licensed_practical_nurse', domain: 'All' },
-                { id: 'nursing_technician', label: '🩺 Nursing Technicians (PCT / CNA)', profId: 'nursing_technician', domain: 'All' },
-                { id: 'medical_assistant_aide', label: '💉 Medical Assistants & Aides (CCMA/CNA)', profId: 'medical_assistant_aide', domain: 'All' },
-                { id: 'surgical_sterile_tech', label: '🔪 Surgical & Sterile Techs (CST/CRCST)', profId: 'surgical_sterile_tech', domain: 'All' },
-                { id: 'respiratory_therapist', label: '🫁 Respiratory Therapists (RRT)', profId: 'respiratory_therapist', domain: 'All' },
-                { id: 'radiology_imaging_tech', label: '🩻 Radiology, CT/MRI & Ultrasound Techs', profId: 'radiology_imaging_tech', domain: 'All' },
-                { id: 'clinical_lab_phlebotomy_tech', label: '🧬 Clinical Lab & Phlebotomy Techs (MLS/CPT)', profId: 'clinical_lab_phlebotomy_tech', domain: 'All' },
-                { id: 'paramedic_emt', label: '🚑 Paramedics & EMTs (NRP)', profId: 'paramedic_emt', domain: 'All' },
-                { id: 'medical_administrator', label: '🏥 Medical & Hospital Admin (MHA/FACHE)', profId: 'medical_administrator', domain: 'All' },
-                { id: 'medical_billing_him', label: '📊 Medical Coding & Health Info (RHIA/CPC)', profId: 'medical_billing_him', domain: 'All' },
-                { id: 'physical_occupational_therapist', label: '🏃 Physical & Occupational Therapy (DPT/OTR)', profId: 'physical_occupational_therapist', domain: 'All' },
-                { id: 'dentist', label: '🦷 Dentists (DDS/DMD)', profId: 'dentist', domain: 'All' },
-                { id: 'veterinarian', label: '🐾 Veterinarians (DVM)', profId: 'veterinarian', domain: 'All' }
-              ].map((medRole) => {
-                const isActive =
-                  selectedEnclave === 'healthcare_medicine' &&
-                  selectedProfessionId === medRole.profId
-                return (
-                  <button
-                    key={medRole.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedEnclave('healthcare_medicine')
-                      setSelectedProfessionId(medRole.profId)
-                      setSelectedDomain(medRole.domain)
-                      setSearchQuery('')
-                    }}
-                    className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-all shrink-0 cursor-pointer ${
-                      isActive
-                        ? "bg-teal-600 text-white shadow-xs"
-                        : "bg-teal-50/80 dark:bg-teal-950/40 text-teal-900 dark:text-teal-200 hover:bg-teal-100 dark:hover:bg-teal-900/60 border border-teal-200/80 dark:border-teal-800/60"
-                    }`}
-                  >
-                    {medRole.label}
-                  </button>
-                )
-              })}
-            </div>
-
-            {/* INDIVIDUAL PROFESSIONS BAR FOR SELECTED ENCLAVE */}
-            {selectedEnclave !== 'all' && selectedEnclave !== 'healthcare_medicine' && currentEnclaveObj && currentEnclaveObj.professions.length > 0 && (
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 text-xs pt-1 border-t border-zinc-100/80 dark:border-zinc-800/80">
-                <span className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 shrink-0 mr-1">
-                  Profession ({currentEnclaveObj.professions.length}):
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setSelectedProfessionId('all')}
-                  className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-all shrink-0 cursor-pointer ${
-                    selectedProfessionId === 'all'
-                      ? "bg-[#0A66C2] text-white shadow-xs"
-                      : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700"
-                  }`}
-                >
-                  All {currentEnclaveObj.shortName} Professions ({currentEnclaveObj.professions.length})
-                </button>
-                {currentEnclaveObj.professions.map((prof) => {
-                  const isProfSelected = selectedProfessionId === prof.id
-                  return (
-                    <button
-                      key={prof.id}
-                      type="button"
-                      onClick={() => setSelectedProfessionId(prof.id)}
-                      title={`${prof.categoryName} · Skills: ${prof.typicalSkills.join(', ')}`}
-                      className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-all shrink-0 cursor-pointer ${
-                        isProfSelected
-                          ? "bg-amber-600 text-white font-semibold shadow-xs"
-                          : "bg-amber-50/70 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/50 border border-amber-200/70 dark:border-amber-800/60"
-                      }`}
-                    >
-                      {prof.title}
-                    </button>
-                  )
-                })}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { id: 'all_med', label: '🏥 All Medicine & Healthcare', profId: 'all', domain: 'All' },
+                    { id: 'pharmacist', label: '💊 Pharmacists (PharmD)', profId: 'pharmacist', domain: 'All' },
+                    { id: 'pharmacy_technician', label: '🧪 Pharmacy Techs (CPhT)', profId: 'pharmacy_technician', domain: 'All' },
+                    { id: 'physician', label: '🩺 Doctors & Physicians (MD/DO)', profId: 'physician', domain: 'All' },
+                    { id: 'surgeon_specialist_md', label: '🔪 Surgeons (MD, FACS)', profId: 'surgeon_specialist_md', domain: 'All' },
+                    { id: 'registered_nurse', label: '❤️‍🩹 Registered Nurses (BSN, RN)', profId: 'registered_nurse', domain: 'All' },
+                    { id: 'critical_care_er_nurse', label: '🚨 ICU & Trauma Nurses (CCRN)', profId: 'critical_care_er_nurse', domain: 'All' },
+                    { id: 'nurse_practitioner_pa', label: '📋 Nurse Practitioners & PAs (APRN/PA-C)', profId: 'nurse_practitioner_pa', domain: 'All' },
+                    { id: 'licensed_practical_nurse', label: '🩹 LPN / LVN Nurses', profId: 'licensed_practical_nurse', domain: 'All' },
+                    { id: 'nursing_technician', label: '🩺 Nursing Technicians (PCT / CNA)', profId: 'nursing_technician', domain: 'All' },
+                    { id: 'medical_assistant_aide', label: '💉 Medical Assistants & Aides (CCMA/CNA)', profId: 'medical_assistant_aide', domain: 'All' },
+                    { id: 'surgical_sterile_tech', label: '🔪 Surgical & Sterile Techs (CST/CRCST)', profId: 'surgical_sterile_tech', domain: 'All' },
+                    { id: 'respiratory_therapist', label: '🫁 Respiratory Therapists (RRT)', profId: 'respiratory_therapist', domain: 'All' },
+                    { id: 'radiology_imaging_tech', label: '🩻 Radiology, CT/MRI & Ultrasound Techs', profId: 'radiology_imaging_tech', domain: 'All' },
+                    { id: 'clinical_lab_phlebotomy_tech', label: '🧬 Clinical Lab & Phlebotomy Techs (MLS/CPT)', profId: 'clinical_lab_phlebotomy_tech', domain: 'All' },
+                    { id: 'paramedic_emt', label: '🚑 Paramedics & EMTs (NRP)', profId: 'paramedic_emt', domain: 'All' },
+                    { id: 'medical_administrator', label: '🏥 Medical & Hospital Admin (MHA/FACHE)', profId: 'medical_administrator', domain: 'All' },
+                    { id: 'medical_billing_him', label: '📊 Medical Coding & Health Info (RHIA/CPC)', profId: 'medical_billing_him', domain: 'All' },
+                    { id: 'physical_occupational_therapist', label: '🏃 Physical & Occupational Therapy (DPT/OTR)', profId: 'physical_occupational_therapist', domain: 'All' },
+                    { id: 'dentist', label: '🦷 Dentists (DDS/DMD)', profId: 'dentist', domain: 'All' },
+                    { id: 'veterinarian', label: '🐾 Veterinarians (DVM)', profId: 'veterinarian', domain: 'All' },
+                  ].map((medRole) => {
+                    const isActive =
+                      selectedEnclave === 'healthcare_medicine' &&
+                      selectedProfessionId === medRole.profId
+                    return (
+                      <button
+                        key={medRole.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedEnclave('healthcare_medicine')
+                          setSelectedProfessionId(medRole.profId)
+                          setSelectedDomain(medRole.domain)
+                          setSearchQuery('')
+                        }}
+                        className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-all cursor-pointer ${
+                          isActive
+                            ? 'bg-teal-700 text-white shadow-2xs'
+                            : 'bg-white dark:bg-zinc-900 text-teal-900 dark:text-teal-200 hover:bg-teal-100 dark:hover:bg-teal-900/60 border border-teal-200 dark:border-teal-800/60'
+                        }`}
+                      >
+                        {medRole.label}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
             )}
 
@@ -1662,49 +1759,6 @@ export function JobsView({
                 </div>
               </div>
             )}
-
-            {/* Country / Region Ribbon (18 Global Regions) */}
-            <div className="flex items-center justify-between gap-4 flex-wrap pt-1 border-t border-zinc-100/80 dark:border-zinc-800/80">
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-                <span className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 shrink-0">
-                  Region ({COUNTRIES_CONFIG.length}):
-                </span>
-                {COUNTRIES_CONFIG.slice(0, 26).map((c) => {
-                  const isSelected = selectedCountryCode === c.code
-                  return (
-                    <button
-                      key={c.code}
-                      type="button"
-                      onClick={() => handleCountryChange(c.code)}
-                      className={`rounded-full px-3 py-1 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
-                        isSelected
-                          ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
-                          : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700/70"
-                      }`}
-                    >
-                      <span>{c.flag}</span>
-                      <span>{getCountryShortLabel(c)}</span>
-                    </button>
-                  )
-                })}
-                <select
-                  aria-label="All regions of the world"
-                  value={COUNTRIES_CONFIG.findIndex((c) => c.code === selectedCountryCode) >= 26 ? selectedCountryCode : ""}
-                  onChange={(e) => e.target.value && handleCountryChange(e.target.value)}
-                  className="rounded-full px-3 py-1 text-xs font-medium shrink-0 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200/70 dark:border-zinc-700/70 cursor-pointer"
-                >
-                  <option value="">🌍 All regions ({COUNTRIES_CONFIG.length - 26} more)…</option>
-                  {[...COUNTRIES_CONFIG.slice(26)].sort((a, b) => a.name.localeCompare(b.name)).map((c) => (
-                    <option key={c.code} value={c.code}>{c.flag} {c.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <span className="text-xs text-zinc-600 dark:text-zinc-400 font-medium flex items-center gap-1.5 shrink-0">
-                <Languages className="h-3.5 w-3.5 text-[#0A66C2]" />
-                {currentCountry.languages[0]} · {currentCountry.currency} ({currentCountry.currencySymbol})
-              </span>
-            </div>
           </div>
         )}
       </div>
@@ -1818,7 +1872,14 @@ export function JobsView({
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
-                      Job search alert for {searchQuery ? `"${searchQuery}"` : currentEnclaveObj?.name || (currentUser as any)?.profession || currentUser?.headline || 'Your Target Roles'}
+                      Job search alert for{' '}
+                      {searchQuery
+                        ? `"${searchQuery}"`
+                        : activeTradeFolderObj
+                        ? activeTradeFolderObj.folderName
+                        : currentProfessionObj
+                        ? currentProfessionObj.title
+                        : currentEnclaveObj?.name || 'All 20 Industry Enclaves & Verified Roles'}
                     </span>
                     <span
                       className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase ${
