@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server"
 import crypto from "crypto"
-import { sendNoctisJobApplicationEmail } from "@/lib/connectin-email"
+import {
+  sendNoctisJobApplicationEmail,
+  EXPEDITE_ADMIN_NOTIFICATION_EMAILS
+} from "@/lib/connectin-email"
 import {
   GLOBAL_JOBS_CATALOG,
   GlobalJobItem,
@@ -679,6 +682,8 @@ export async function POST(request: Request) {
       const location = String(body.location || "Global / Remote").trim()
       const salaryRange = String(body.salaryRange || "Competitive").trim()
       const applyUrl = String(body.applyUrl || "").trim()
+      const source = String(body.source || "").trim()
+      const recruiterEmailInput = String(body.recruiterEmail || "").trim()
       const applicantName = String(body.applicantName || "Verified Professional").trim()
       const applicantEmail = String(body.applicantEmail || "").trim()
       const applicantHeadline = String(body.applicantHeadline || "Verified ConnectLn Professional").trim()
@@ -686,6 +691,28 @@ export async function POST(request: Request) {
       const primarySkill = String(body.primarySkill || "core role competencies").trim()
       const secondarySkill = String(body.secondarySkill || "").trim()
       const noctisCoverBrief = String(body.noctisCoverBrief || "").trim()
+
+      const emailCheckRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      const matchedPosted = jobId ? customPostedJobs.find((j) => j.id === jobId) : undefined
+      const resolvedRecruiterEmail =
+        (emailCheckRe.test(recruiterEmailInput) && recruiterEmailInput) ||
+        (matchedPosted?.recruiterEmail && emailCheckRe.test(matchedPosted.recruiterEmail)
+          ? matchedPosted.recruiterEmail
+          : "")
+
+      const isDirectConnectlnJob =
+        Boolean(resolvedRecruiterEmail) ||
+        /expedite/i.test(company) ||
+        /ConnectLn Direct ATS/i.test(source) ||
+        Boolean(matchedPosted)
+
+      const deliveryMode: "direct_connectln_ats" | "external_portal_handoff" =
+        isDirectConnectlnJob ? "direct_connectln_ats" : "external_portal_handoff"
+
+      const effectiveRecruiterEmail =
+        deliveryMode === "direct_connectln_ats"
+          ? resolvedRecruiterEmail || "kwesi.asiedu@expediteconsults.com"
+          : ""
 
       const confirmationId = `CLN-ATS-${Date.now().toString(36).toUpperCase()}-${Math.random()
         .toString(36)
@@ -697,11 +724,13 @@ export async function POST(request: Request) {
         .update(
           [
             confirmationId,
+            deliveryMode,
             jobId,
             jobTitle,
             company,
             applicantName,
             applicantEmail,
+            effectiveRecruiterEmail,
             resumeFileName,
             noctisCoverBrief,
             submittedAt
@@ -727,17 +756,23 @@ export async function POST(request: Request) {
         }
       }
 
-      if (jobId) {
-        const matchedCustomJob = customPostedJobs.find((j) => j.id === jobId)
-        if (matchedCustomJob) {
-          matchedCustomJob.applicantsCount = (matchedCustomJob.applicantsCount || 0) + 1
-        }
+      if (matchedPosted) {
+        matchedPosted.applicantsCount = (matchedPosted.applicantsCount || 0) + 1
       }
 
-      const employerResponse = `✅ Official ATS Receipt (${confirmationId}): ${company} Talent Acquisition & ATS Desk confirms receipt of the application packet submitted by Noctis™ Autonomous Career Agent on behalf of ${applicantName} for ${jobTitle} (${location}). Verified proficiency in ${primarySkill} passed initial ATS screening (96% fit). Your packet is queued for hiring manager review within 24–48 hours.`
+      const recruiterEmailList = Array.from(
+        new Set([effectiveRecruiterEmail, ...EXPEDITE_ADMIN_NOTIFICATION_EMAILS].filter(Boolean))
+      ).join(", ")
+
+      const employerResponse =
+        deliveryMode === "direct_connectln_ats"
+          ? `✅ Direct ConnectLn ATS Delivery (${confirmationId}): Your Noctis™ application packet and resume were delivered directly to ${company}'s Recruiting Inbox (${recruiterEmailList}).`
+          : `🚀 Noctis™ Packet Prepared & Handoff Logged (${confirmationId}): Noctis prepared your tailored cover brief, emailed your packet receipt, copied your cover brief to your clipboard, and launched ${company}'s external career portal (${targetAtsHost}) to complete final submission.`
 
       const emailResult = await sendNoctisJobApplicationEmail({
         confirmationId,
+        deliveryMode,
+        recruiterEmail: effectiveRecruiterEmail || undefined,
         auditHashSha256,
         submittedAt,
         jobTitle,
@@ -761,6 +796,8 @@ export async function POST(request: Request) {
         id: "app_" + Date.now(),
         jobId,
         confirmationId,
+        deliveryMode,
+        recruiterEmail: effectiveRecruiterEmail || undefined,
         auditHashSha256,
         submittedAtIso: submittedAt,
         targetAtsHost,
@@ -793,6 +830,8 @@ export async function POST(request: Request) {
       return NextResponse.json({
         success: true,
         confirmationId,
+        deliveryMode,
+        recruiterEmail: effectiveRecruiterEmail || undefined,
         auditHashSha256,
         submittedAt,
         targetAtsHost,
@@ -840,6 +879,10 @@ export async function POST(request: Request) {
         : ["Verified experience in " + (body.requiredProduct || "domain skills")],
       languageRequirement: targetCountry.primaryLanguage || "English",
       applyUrl: body.applyUrl || "",
+      recruiterEmail:
+        typeof body.recruiterEmail === "string" && body.recruiterEmail.includes("@")
+          ? body.recruiterEmail.trim()
+          : "kwesi.asiedu@expediteconsults.com",
       source: "ConnectLn Direct ATS · Live Synced",
       tags: Array.isArray(body.tags)
         ? body.tags

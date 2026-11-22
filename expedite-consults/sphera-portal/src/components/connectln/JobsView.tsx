@@ -589,6 +589,9 @@ export function JobsView({
   const [newJobSalary, setNewJobSalary] = useState("$145,000 - $185,000 / yr")
   const [newJobProductRequired, setNewJobProductRequired] = useState("OSHA 30 / Industry License / Zero Trust")
   const [newJobApplyUrl, setNewJobApplyUrl] = useState("")
+  const [newJobRecruiterEmail, setNewJobRecruiterEmail] = useState(
+    (currentUser as any)?.email || "kwesi.asiedu@expediteconsults.com"
+  )
   const [newJobDescription, setNewJobDescription] = useState("")
   const [newJobCountryCode, setNewJobCountryCode] = useState<string>("US")
   const [newJobEnclave, setNewJobEnclave] = useState<string>("trades_construction")
@@ -1183,6 +1186,14 @@ export function JobsView({
     setIsJobDetailOpen(true)
   }
 
+  const isDirectConnectlnAtsJob = (job: GlobalJobItem): boolean =>
+    Boolean(
+      (job.recruiterEmail && job.recruiterEmail.includes('@')) ||
+        /expedite/i.test(job.company || '') ||
+        /ConnectLn Direct ATS/i.test(job.source || '') ||
+        job.id?.startsWith('job_live_')
+    )
+
   const handleSubmitApplication = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedJob) return
@@ -1200,11 +1211,21 @@ export function JobsView({
     let submittedAtIso = new Date().toISOString()
     let targetAtsHost = 'employer-ats.connectln.app'
     let emailConfirmationSent = false
-    let employerResponse = `✅ Official ATS Receipt (${confirmationId}): ${selectedJob.company} Talent Acquisition & ATS Desk confirms receipt of the application packet submitted by Noctis™ Autonomous Career Agent on behalf of ${applicantName} for ${selectedJob.title} (${selectedJob.location}). Verified proficiency in ${flywheel.primarySkill} passed initial ATS screening (96% fit). Your packet is queued for hiring manager review within 24–48 hours.`
+    let deliveryMode: 'direct_connectln_ats' | 'external_portal_handoff' =
+      isDirectConnectlnAtsJob(selectedJob) ? 'direct_connectln_ats' : 'external_portal_handoff'
+    let recruiterEmail =
+      deliveryMode === 'direct_connectln_ats'
+        ? selectedJob.recruiterEmail || 'kwesi.asiedu@expediteconsults.com'
+        : ''
 
     try {
       targetAtsHost = new URL(resolvedApplyUrl).hostname
     } catch {}
+
+    let employerResponse =
+      deliveryMode === 'direct_connectln_ats'
+        ? `✅ Direct ConnectLn ATS Delivery (${confirmationId}): Your Noctis™ application packet and resume were delivered directly to ${selectedJob.company}'s Recruiting Inbox (${recruiterEmail}).`
+        : `🚀 Noctis™ Packet Prepared & Handoff Logged (${confirmationId}): Noctis prepared your tailored cover brief, emailed your packet receipt, copied your cover brief to your clipboard, and launched ${selectedJob.company}'s external career portal (${targetAtsHost}) to complete final submission.`
 
     try {
       const apiRes = await fetch('/api/connectin/jobs', {
@@ -1218,6 +1239,8 @@ export function JobsView({
           location: selectedJob.location,
           salaryRange: selectedJob.salaryRange,
           applyUrl: resolvedApplyUrl,
+          source: selectedJob.source,
+          recruiterEmail: selectedJob.recruiterEmail,
           applicantName,
           applicantEmail: applicantEmailInput.trim(),
           applicantHeadline,
@@ -1230,6 +1253,10 @@ export function JobsView({
       if (apiRes.ok) {
         const apiData = await apiRes.json()
         if (apiData?.confirmationId) confirmationId = apiData.confirmationId
+        if (apiData?.deliveryMode === 'direct_connectln_ats' || apiData?.deliveryMode === 'external_portal_handoff') {
+          deliveryMode = apiData.deliveryMode
+        }
+        if (apiData?.recruiterEmail) recruiterEmail = apiData.recruiterEmail
         if (apiData?.auditHashSha256) auditHashSha256 = apiData.auditHashSha256
         if (apiData?.submittedAt) submittedAtIso = apiData.submittedAt
         if (apiData?.targetAtsHost) targetAtsHost = apiData.targetAtsHost
@@ -1254,6 +1281,17 @@ export function JobsView({
       } catch {}
     }
 
+    if (typeof window !== 'undefined') {
+      try {
+        navigator.clipboard?.writeText(finalCoverBrief).catch(() => {})
+      } catch {}
+      if (deliveryMode === 'external_portal_handoff' && resolvedApplyUrl) {
+        try {
+          window.open(resolvedApplyUrl, '_blank', 'noopener,noreferrer')
+        } catch {}
+      }
+    }
+
     const nowStamp = new Date(submittedAtIso).toLocaleString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -1266,6 +1304,8 @@ export function JobsView({
       id: 'app_' + Date.now(),
       jobId: selectedJob.id,
       confirmationId,
+      deliveryMode,
+      recruiterEmail: recruiterEmail || undefined,
       auditHashSha256: auditHashSha256 || confirmationId,
       submittedAtIso,
       targetAtsHost,
@@ -1283,7 +1323,10 @@ export function JobsView({
       stage: 'applied',
       appliedDate: `Applied ${nowStamp}`,
       nextStep: employerResponse,
-      recruiterName: `Noctis™ Agent · Receipt #${confirmationId}`,
+      recruiterName:
+        deliveryMode === 'direct_connectln_ats'
+          ? `Direct ConnectLn ATS · #${confirmationId}`
+          : `Noctis™ Handoff · #${confirmationId}`,
       productVerifiedMatch: flywheel.primarySkill
     }
 
@@ -1309,14 +1352,17 @@ export function JobsView({
       return next
     })
 
-    // Deliver confirmation receipt & employer response into ConnectLn Messaging inbox
-    const threadTitle = `${selectedJob.company} Talent Acquisition`
+    // Deliver truthful packet confirmation into ConnectLn Messaging inbox
+    const threadTitle =
+      deliveryMode === 'direct_connectln_ats'
+        ? `${selectedJob.company} Talent Acquisition`
+        : `${selectedJob.company} · Noctis™ Handoff`
     const outboundPacketMsg =
-      `🤖 Noctis™ Autonomous Career Agent submitted an Easy Apply packet on behalf of ${applicantName} for "${selectedJob.title}" (${selectedJob.location}).\n` +
-      `• Receipt ID: ${confirmationId}\n` +
+      `🤖 Noctis™ Autonomous Career Agent processed Easy Apply (${deliveryMode === 'direct_connectln_ats' ? 'Tier 1 Direct ATS' : 'Tier 2 External Portal Handoff'}) for "${selectedJob.title}" (${selectedJob.location}).\n` +
+      `• Confirmation ID: ${confirmationId}\n` +
       `• Attached Resume: ${customResumeFileName}\n` +
       `• Verified Match: ${flywheel.primarySkill}\n` +
-      `• ATS Target Host: ${targetAtsHost}\n\n` +
+      `• Target ATS Host: ${targetAtsHost}\n\n` +
       finalCoverBrief
 
     recordLocalBilateralDirectMessage({
@@ -1326,7 +1372,7 @@ export function JobsView({
       senderRole: applicantHeadline,
       recipientName: threadTitle,
       recipientAvatar: selectedJob.companyLogo,
-      recipientSubtitle: `Employer ATS & Hiring Desk · Receipt #${confirmationId}`,
+      recipientSubtitle: `${deliveryMode === 'direct_connectln_ats' ? 'Direct ConnectLn ATS Desk' : 'Noctis™ Application Handoff'} · #${confirmationId}`,
       subject: `Application Receipt (${confirmationId}) — ${selectedJob.title}`,
       text: outboundPacketMsg,
       channelType: 'Companies',
@@ -1342,8 +1388,8 @@ export function JobsView({
         enclave: selectedJob.professionEnclave || 'trades_construction',
         title: threadTitle,
         recipientName: threadTitle,
-        subtitle: `Employer ATS & Hiring Desk · Receipt #${confirmationId}`,
-        recipientSubtitle: `Employer ATS & Hiring Desk · Receipt #${confirmationId}`,
+        subtitle: `${deliveryMode === 'direct_connectln_ats' ? 'Direct ConnectLn ATS Desk' : 'Noctis™ Application Handoff'} · #${confirmationId}`,
+        recipientSubtitle: `${deliveryMode === 'direct_connectln_ats' ? 'Direct ConnectLn ATS Desk' : 'Noctis™ Application Handoff'} · #${confirmationId}`,
         avatar: selectedJob.companyLogo,
         recipientAvatar: selectedJob.companyLogo,
         channelType: 'Companies',
@@ -1357,11 +1403,11 @@ export function JobsView({
 
     trackUserActivity({
       actionType: 'JOB_APPLIED',
-      actionLabel: `Noctis™ Applied to Job: ${selectedJob.title}`,
+      actionLabel: `Noctis™ Easy Apply (${deliveryMode === 'direct_connectln_ats' ? 'Direct ATS' : 'Portal Handoff'}): ${selectedJob.title}`,
       category: 'content',
       targetId: selectedJob.id,
       targetTitle: `${selectedJob.title} @ ${selectedJob.company}`,
-      details: `Receipt #${confirmationId} · Submitted by Noctis™ Agent (${selectedJob.location} · ${selectedJob.salaryRange})`
+      details: `Receipt #${confirmationId} · ${deliveryMode} (${selectedJob.location} · ${selectedJob.salaryRange})`
     })
 
     setLastSubmittedApplication(newApp)
@@ -1372,6 +1418,7 @@ export function JobsView({
     e.preventDefault()
     const targetCountryObj = COUNTRIES_CONFIG.find(c => c.code === newJobCountryCode) || currentCountry
     const targetEnclave = newJobEnclave || (selectedEnclave === 'all' ? 'trades_construction' : selectedEnclave)
+    const cleanRecruiterEmail = newJobRecruiterEmail.trim() || 'kwesi.asiedu@expediteconsults.com'
 
     // Construct immediate optimistic job so it syncs with 0ms delay
     const optimisticJob: GlobalJobItem = {
@@ -1391,6 +1438,8 @@ export function JobsView({
       postedTime: 'Just published · Synced live',
       applicantsCount: 1,
       isEasyApply: true,
+      recruiterEmail: cleanRecruiterEmail,
+      source: 'ConnectLn Direct ATS · Live Synced',
       applyUrl: resolveExternalJobApplyUrl({
         applyUrl: newJobApplyUrl.trim(),
         title: newJobTitle.trim(),
@@ -1454,6 +1503,7 @@ export function JobsView({
           salaryRange: newJobSalary,
           requiredProduct: newJobProductRequired,
           applyUrl: newJobApplyUrl,
+          recruiterEmail: cleanRecruiterEmail,
           description: newJobDescription
         })
       })
@@ -2697,7 +2747,9 @@ export function JobsView({
                       </span>
                       {app.submittedByNoctis && (
                         <span className="rounded-full bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 px-2 py-0.5 text-[10px] font-bold text-indigo-700 dark:text-indigo-300">
-                          🤖 Applied by Noctis™
+                          {app.deliveryMode === 'direct_connectln_ats'
+                            ? '🤖 Tier 1 · Direct ConnectLn ATS'
+                            : '🚀 Tier 2 · Noctis Packet & Portal Handoff'}
                         </span>
                       )}
                       {app.confirmationId && (
@@ -2732,7 +2784,11 @@ export function JobsView({
                   <div className="rounded-lg bg-zinc-50 p-2.5 text-xs dark:bg-zinc-800/60 space-y-1.5 border border-zinc-200/70 dark:border-zinc-700/70">
                     <p className="font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-1">
                       <Clock className="h-3.5 w-3.5 text-amber-500" />
-                      {app.employerResponse ? 'Official Employer ATS Response:' : 'Next Step:'}
+                      {app.employerResponse
+                        ? app.deliveryMode === 'direct_connectln_ats'
+                          ? 'Direct ConnectLn ATS Confirmation:'
+                          : 'Noctis™ Packet & External Handoff Status:'
+                        : 'Next Step:'}
                     </p>
                     <p className="text-[11px] text-zinc-700 dark:text-zinc-300 leading-relaxed">
                       {app.employerResponse || app.nextStep}
@@ -3310,6 +3366,19 @@ export function JobsView({
 
               <div className="space-y-1">
                 <label className="font-bold text-zinc-700 dark:text-zinc-300">
+                  Recruiter / Hiring Desk Email (Receives Tier 1 Easy Apply Packets)
+                </label>
+                <input
+                  type="email"
+                  placeholder="recruiting@company.com"
+                  value={newJobRecruiterEmail}
+                  onChange={(e) => setNewJobRecruiterEmail(e.target.value)}
+                  className="w-full rounded-lg border border-zinc-300 p-2.5 dark:bg-zinc-800 dark:border-zinc-700"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-zinc-700 dark:text-zinc-300">
                   Required License / Credential / Tool Experience
                 </label>
                 <input
@@ -3356,6 +3425,9 @@ export function JobsView({
         <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
           {selectedJob && (() => {
             const jobFlywheel = getJobFlywheelRecommendation(selectedJob)
+            const previewDirectAts = isDirectConnectlnAtsJob(selectedJob)
+            const resolvedDeliveryMode = lastSubmittedApplication?.deliveryMode || (previewDirectAts ? 'direct_connectln_ats' : 'external_portal_handoff')
+            const isTier1Direct = resolvedDeliveryMode === 'direct_connectln_ats'
             return (
               <>
                 <DialogHeader>
@@ -3365,12 +3437,14 @@ export function JobsView({
                       <span>{selectedJob.company} ({selectedJob.countryName})</span>
                     </div>
                     <span className="rounded-full bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 text-[10px] font-extrabold text-indigo-700 dark:bg-indigo-950/60 dark:border-indigo-800 dark:text-indigo-300">
-                      🤖 Noctis™ Autonomous Agent
+                      {previewDirectAts
+                        ? '🤖 Tier 1 · Direct ConnectLn ATS Delivery'
+                        : '🚀 Tier 2 · Noctis Packet + External Portal Launch'}
                     </span>
                   </div>
                   <DialogTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
                     {applyStep === 'success'
-                      ? `Official Receipt — ${selectedJob.title}`
+                      ? `${isTier1Direct ? 'Direct ATS Receipt' : 'Packet Prepared & Handoff'} — ${selectedJob.title}`
                       : `Noctis™ Easy Apply: ${selectedJob.title}`}
                   </DialogTitle>
                 </DialogHeader>
@@ -3380,7 +3454,9 @@ export function JobsView({
                     <div className="rounded-xl bg-gradient-to-r from-indigo-50 via-sky-50 to-emerald-50 dark:from-indigo-950/50 dark:via-sky-950/40 dark:to-emerald-950/40 border border-sky-200 dark:border-sky-800 p-3 space-y-1.5">
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-extrabold text-zinc-900 dark:text-zinc-100">
-                          🤖 Noctis™ Autonomous Career Agent Will Apply on Your Behalf
+                          {previewDirectAts
+                            ? '🤖 Noctis™ Will Deliver Directly to Hiring Inbox & ConnectLn ATS'
+                            : '🚀 Noctis™ Will Prep Your Packet, Copy Brief, Email Receipt & Open Employer Site'}
                         </span>
                         <label className="flex items-center gap-1.5 cursor-pointer text-[11px] font-bold text-emerald-700 dark:text-emerald-300">
                           <input
@@ -3389,11 +3465,20 @@ export function JobsView({
                             onChange={(e) => setNoctisAutoApplyEnabled(e.target.checked)}
                             className="accent-[#0A66C2]"
                           />
-                          <span>Auto-Submit &amp; Capture Receipt</span>
+                          <span>Save Proof Receipt</span>
                         </label>
                       </div>
                       <p className="text-[11px] text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                        Noctis compiles your verified ConnectLn profile, resume, and credential match, transmits the ATS packet directly to <strong>{selectedJob.company}</strong>, logs a SHA-256 Confirmation Receipt, and delivers the employer response to both <strong>My Applications</strong> and your <strong>Messaging Inbox</strong>.
+                        {previewDirectAts ? (
+                          <>
+                            This role accepts direct ConnectLn ATS delivery. Noctis emails your verified resume packet directly to{' '}
+                            <strong>{selectedJob.recruiterEmail || 'the hiring desk'}</strong> (CC to your receipt email &amp; Expedite Consults), logs a SHA-256 receipt, and opens a company thread in <strong>Messaging</strong>.
+                          </>
+                        ) : (
+                          <>
+                            <strong>{selectedJob.company}</strong> hosts its own external career application portal. Clicking submit emails your tailored packet receipt, copies your Noctis™ cover brief to your clipboard, logs the role in <strong>My Applications</strong>, and <strong>automatically opens the external employer site</strong> so you can finish submitting there.
+                          </>
+                        )}
                       </p>
                     </div>
 
@@ -3525,7 +3610,11 @@ export function JobsView({
                           className="rounded-full bg-[#0A66C2] px-5 py-2 text-xs font-bold text-white hover:bg-[#004182] flex items-center gap-1.5 shadow-xs cursor-pointer"
                         >
                           <Sparkles className="h-3.5 w-3.5" />
-                          <span>🤖 Let Noctis Apply on My Behalf</span>
+                          <span>
+                            {previewDirectAts
+                              ? '🤖 Deliver Directly via Noctis™ ATS'
+                              : '🚀 Prepare Packet, Copy & Launch Employer Site'}
+                          </span>
                         </button>
                       </div>
                     </div>
@@ -3534,7 +3623,11 @@ export function JobsView({
                   <div className="py-6 space-y-4">
                     <div className="flex items-center justify-center gap-2.5 text-[#0A66C2] font-extrabold text-sm">
                       <Loader2 className="h-5 w-5 animate-spin" />
-                      <span>Noctis™ Autonomous Career Agent is submitting your application...</span>
+                      <span>
+                        {previewDirectAts
+                          ? 'Noctis™ is delivering your application directly to the Hiring Desk...'
+                          : 'Noctis™ is preparing your packet & launching the employer portal...'}
+                      </span>
                     </div>
                     <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 p-4 space-y-2 text-xs">
                       <p className="flex items-center gap-2 font-semibold text-emerald-700 dark:text-emerald-300">
@@ -3547,11 +3640,15 @@ export function JobsView({
                       </p>
                       <p className="flex items-center gap-2 font-semibold text-[#0A66C2]">
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        <span>3. Transmitting ATS Packet to {selectedJob.company} &amp; Verifying Target Host</span>
+                        <span>
+                          {previewDirectAts
+                            ? `3. Emailing Verified Packet directly to ${selectedJob.company} Recruiting Inbox`
+                            : `3. Dispatching Receipt Email, Copying Cover Brief & Opening ${selectedJob.company} Portal`}
+                        </span>
                       </p>
                       <p className="flex items-center gap-2 text-zinc-500">
                         <Clock className="h-3.5 w-3.5" />
-                        <span>4. Recording Confirmation Receipt &amp; Capturing Employer Response</span>
+                        <span>4. Recording Cryptographic SHA-256 Receipt &amp; My Applications Entry</span>
                       </p>
                     </div>
                   </div>
@@ -3564,7 +3661,9 @@ export function JobsView({
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <h4 className="font-extrabold text-sm text-emerald-900 dark:text-emerald-200">
-                            Application Submitted by Noctis™ on Your Behalf!
+                            {isTier1Direct
+                              ? 'Direct Application Delivered to Hiring Inbox!'
+                              : 'Noctis™ Packet Prepared, Copied & Employer Site Launched!'}
                           </h4>
                           {lastSubmittedApplication?.confirmationId && (
                             <span className="rounded-full bg-white dark:bg-zinc-900 border border-emerald-400 px-2 py-0.5 text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-300">
@@ -3573,7 +3672,15 @@ export function JobsView({
                           )}
                         </div>
                         <p className="text-[11px] text-emerald-800 dark:text-emerald-300 leading-relaxed">
-                          Submitted for <strong>{selectedJob.title}</strong> at <strong>{selectedJob.company}</strong>. Logged to your <strong>My Applications Pipeline</strong> and delivered to your <strong>ConnectLn Messaging Inbox</strong>.
+                          {isTier1Direct ? (
+                            <>
+                              Delivered directly for <strong>{selectedJob.title}</strong> at <strong>{selectedJob.company}</strong>. Logged to your <strong>My Applications Pipeline</strong> and delivered to <strong>ConnectLn Messaging</strong>.
+                            </>
+                          ) : (
+                            <>
+                              Your tailored Noctis™ cover brief for <strong>{selectedJob.title}</strong> was <strong>copied to your clipboard</strong>, emailed to your receipt inbox, logged to <strong>My Applications</strong>, and opened at <strong>{lastSubmittedApplication?.targetAtsHost || 'the employer portal'}</strong> to submit directly with {selectedJob.company}.
+                            </>
+                          )}
                         </p>
                       </div>
                     </div>
@@ -3585,9 +3692,15 @@ export function JobsView({
                       </p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px]">
                         <p><strong className="text-zinc-700 dark:text-zinc-200">Confirmation ID:</strong> <span className="font-mono">{lastSubmittedApplication?.confirmationId}</span></p>
-                        <p><strong className="text-zinc-700 dark:text-zinc-200">Submitted By:</strong> Noctis™ Autonomous Agent</p>
+                        <p>
+                          <strong className="text-zinc-700 dark:text-zinc-200">Delivery Tier:</strong>{' '}
+                          {isTier1Direct ? 'Tier 1 · Direct ConnectLn ATS' : 'Tier 2 · Packet + External Launch'}
+                        </p>
                         <p><strong className="text-zinc-700 dark:text-zinc-200">Target ATS Host:</strong> <span className="font-mono">{lastSubmittedApplication?.targetAtsHost || 'employer-ats.connectln.app'}</span></p>
                         <p><strong className="text-zinc-700 dark:text-zinc-200">UTC Timestamp:</strong> <span className="font-mono">{lastSubmittedApplication?.submittedAtIso || lastSubmittedApplication?.appliedDate}</span></p>
+                        {lastSubmittedApplication?.recruiterEmail && (
+                          <p className="sm:col-span-2"><strong className="text-zinc-700 dark:text-zinc-200">Delivered To Employer Email:</strong> {lastSubmittedApplication.recruiterEmail}</p>
+                        )}
                         <p className="sm:col-span-2"><strong className="text-zinc-700 dark:text-zinc-200">Resume &amp; Skills Transmitted:</strong> {lastSubmittedApplication?.resumeFileName || customResumeFileName} · {lastSubmittedApplication?.productVerifiedMatch || jobFlywheel.primarySkill}</p>
                         {lastSubmittedApplication?.auditHashSha256 && (
                           <p className="sm:col-span-2 font-mono text-[10px] text-zinc-600 dark:text-zinc-400 break-all">
@@ -3603,11 +3716,13 @@ export function JobsView({
                       </div>
                     </div>
 
-                    {/* Official Employer Response */}
+                    {/* Honest Status Box */}
                     {lastSubmittedApplication?.employerResponse && (
                       <div className="rounded-xl border border-sky-200 dark:border-sky-800 bg-sky-50/80 dark:bg-sky-950/30 p-3 space-y-1">
                         <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#0A66C2] dark:text-sky-300">
-                          Official Response from {selectedJob.company} Talent Acquisition
+                          {isTier1Direct
+                            ? `Direct ConnectLn ATS Confirmation (${selectedJob.company})`
+                            : `Noctis™ Packet & External Handoff Summary (${selectedJob.company})`}
                         </p>
                         <p className="text-[11px] text-zinc-800 dark:text-zinc-200 leading-relaxed">
                           {lastSubmittedApplication.employerResponse}
@@ -3616,6 +3731,17 @@ export function JobsView({
                     )}
 
                     <div className="flex items-center justify-center gap-2 pt-1 flex-wrap">
+                      {lastSubmittedApplication?.noctisCoverBrief && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard?.writeText(lastSubmittedApplication.noctisCoverBrief || '').catch(() => {})
+                          }}
+                          className="rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 px-3.5 py-2 text-xs font-bold text-zinc-800 dark:text-zinc-200 cursor-pointer"
+                        >
+                          📋 Copy Cover Brief
+                        </button>
+                      )}
                       {lastSubmittedApplication && (
                         <button
                           type="button"
@@ -3632,7 +3758,9 @@ export function JobsView({
                             sessionStorage.setItem(
                               'connectln_open_messaging_target_v1',
                               JSON.stringify({
-                                threadTitle: `${selectedJob.company} Talent Acquisition`,
+                                threadTitle: isTier1Direct
+                                  ? `${selectedJob.company} Talent Acquisition`
+                                  : `${selectedJob.company} · Noctis™ Handoff`,
                                 channel: 'Companies'
                               })
                             )

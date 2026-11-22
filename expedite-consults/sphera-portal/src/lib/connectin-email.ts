@@ -373,6 +373,8 @@ export async function sendBusinessBookingQuoteEmail(params: {
 
 export async function sendNoctisJobApplicationEmail(params: {
   confirmationId: string
+  deliveryMode: "direct_connectln_ats" | "external_portal_handoff"
+  recruiterEmail?: string
   auditHashSha256: string
   submittedAt: string
   jobTitle: string
@@ -388,7 +390,10 @@ export async function sendNoctisJobApplicationEmail(params: {
   noctisCoverBrief: string
   employerResponse: string
 }): Promise<{ success: boolean; sentTo: string[]; id?: string; error?: string }> {
-  const recipientEmails = buildRecipientList([params.applicantEmail])
+  const isDirectAts = params.deliveryMode === "direct_connectln_ats"
+  const recipientEmails = buildRecipientList(
+    isDirectAts ? [params.recruiterEmail, params.applicantEmail] : [params.applicantEmail]
+  )
   try {
     const resend = getResendClient()
     if (!resend) {
@@ -398,13 +403,25 @@ export async function sendNoctisJobApplicationEmail(params: {
     }
 
     const fromAddress = resolveResendFromAddress("Noctis Autonomous Career Agent")
-    const subject = `Official ATS Application Receipt (${params.confirmationId}) — ${params.jobTitle} at ${params.company}`
+    const subject = isDirectAts
+      ? `Direct ConnectLn ATS Application (${params.confirmationId}) — ${params.jobTitle} at ${params.company}`
+      : `Noctis™ Packet Prepared & Portal Handoff (${params.confirmationId}) — ${params.jobTitle} at ${params.company}`
+    const heading = isDirectAts
+      ? "🤖 Direct ConnectLn ATS Application Delivered"
+      : "🚀 Noctis™ Application Packet Prepared & External Portal Launched"
+    const cleanApplicantEmail = String(params.applicantEmail || "").trim().toLowerCase()
+    const replyTo = EMAIL_FORMAT_RE.test(cleanApplicantEmail)
+      ? cleanApplicantEmail
+      : "auth@expediteconsults.com"
+
     const plainText = [
-      `Application Submitted by Noctis Autonomous Career Agent`,
+      heading,
       params.employerResponse,
+      `Delivery Tier: ${isDirectAts ? "Tier 1 — Direct ConnectLn & Employer Email ATS" : "Tier 2 — Noctis Packet Prep & External Employer Portal Handoff"}`,
       `Confirmation ID: ${params.confirmationId}`,
       `Role: ${params.jobTitle}`,
       `Employer / ATS Host: ${params.company} (${params.targetAtsHost})`,
+      ...(params.recruiterEmail ? [`Employer Recruiting Inbox: ${params.recruiterEmail}`] : []),
       `Applicant: ${params.applicantName} (${params.applicantHeadline})`,
       `Location & Compensation: ${params.location} · ${params.salaryRange}`,
       `Resume File: ${params.resumeFileName}`,
@@ -415,25 +432,27 @@ export async function sendNoctisJobApplicationEmail(params: {
     ].join("\n")
 
     const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;border:1px solid #e4e4e7;border-radius:12px;">
-      <h2 style="color:#0A66C2;margin:0 0 8px;">🤖 Application Submitted by Noctis™ on Your Behalf</h2>
+      <h2 style="color:#0A66C2;margin:0 0 8px;">${heading}</h2>
       <p style="font-size:14px;color:#18181b;margin:0 0 16px;">${escapeEmailHtml(params.employerResponse)}</p>
       <table style="width:100%;border-collapse:collapse;font-size:12px;background:#f4f4f5;border-radius:8px;padding:12px;">
+        <tr><td style="padding:6px 10px;font-weight:bold;">Delivery Mode:</td><td style="padding:6px 10px;">${isDirectAts ? "Tier 1 · Direct ConnectLn ATS &amp; Recruiter Inbox" : "Tier 2 · Noctis Packet Prepared + External Portal Handoff"}</td></tr>
         <tr><td style="padding:6px 10px;font-weight:bold;">Confirmation ID:</td><td style="padding:6px 10px;">${escapeEmailHtml(params.confirmationId)}</td></tr>
         <tr><td style="padding:6px 10px;font-weight:bold;">Role:</td><td style="padding:6px 10px;">${escapeEmailHtml(params.jobTitle)}</td></tr>
         <tr><td style="padding:6px 10px;font-weight:bold;">Employer / ATS Host:</td><td style="padding:6px 10px;">${escapeEmailHtml(params.company)} (${escapeEmailHtml(params.targetAtsHost)})</td></tr>
+        ${params.recruiterEmail ? `<tr><td style="padding:6px 10px;font-weight:bold;">Employer Inbox:</td><td style="padding:6px 10px;">${escapeEmailHtml(params.recruiterEmail)}</td></tr>` : ""}
         <tr><td style="padding:6px 10px;font-weight:bold;">Applicant:</td><td style="padding:6px 10px;">${escapeEmailHtml(params.applicantName)} · ${escapeEmailHtml(params.applicantHeadline)}</td></tr>
         <tr><td style="padding:6px 10px;font-weight:bold;">Resume File:</td><td style="padding:6px 10px;">${escapeEmailHtml(params.resumeFileName)}</td></tr>
         <tr><td style="padding:6px 10px;font-weight:bold;">Verified Fit:</td><td style="padding:6px 10px;">${escapeEmailHtml(params.primarySkill)}</td></tr>
         <tr><td style="padding:6px 10px;font-weight:bold;">UTC Timestamp:</td><td style="padding:6px 10px;">${escapeEmailHtml(params.submittedAt)}</td></tr>
         <tr><td style="padding:6px 10px;font-weight:bold;">SHA-256 Audit Hash:</td><td style="padding:6px 10px;font-family:monospace;word-break:break-all;">${escapeEmailHtml(params.auditHashSha256)}</td></tr>
       </table>
-      ${params.noctisCoverBrief ? `<div style="margin-top:16px;padding:12px;background:#eef6ff;border-radius:8px;font-size:12px;"><strong>Noctis™ Cover Brief Submitted:</strong><pre style="white-space:pre-wrap;font-family:inherit;margin:6px 0 0;">${escapeEmailHtml(params.noctisCoverBrief)}</pre></div>` : ""}
+      ${params.noctisCoverBrief ? `<div style="margin-top:16px;padding:12px;background:#eef6ff;border-radius:8px;font-size:12px;"><strong>Noctis™ Cover Brief:</strong><pre style="white-space:pre-wrap;font-family:inherit;margin:6px 0 0;">${escapeEmailHtml(params.noctisCoverBrief)}</pre></div>` : ""}
     </div>`
 
     const { data, error } = await resend.emails.send({
       from: fromAddress,
       to: recipientEmails,
-      replyTo: "auth@expediteconsults.com",
+      replyTo,
       subject,
       text: plainText,
       html,

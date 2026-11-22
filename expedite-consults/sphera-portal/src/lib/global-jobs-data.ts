@@ -46,12 +46,15 @@ export interface GlobalJobItem {
   tags: string[]
   clearanceRequired?: string
   isLiveFeed?: boolean
+  recruiterEmail?: string
 }
 
 export interface JobApplicationItem {
   id: string
   jobId?: string
   confirmationId?: string
+  deliveryMode?: 'direct_connectln_ats' | 'external_portal_handoff'
+  recruiterEmail?: string
   auditHashSha256?: string
   submittedAtIso?: string
   targetAtsHost?: string
