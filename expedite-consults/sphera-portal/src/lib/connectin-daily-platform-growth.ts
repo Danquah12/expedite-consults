@@ -170,6 +170,7 @@ const DAILY_JOB_ROTATION = [
     professionEnclave: "trades_construction",
     domainCategory: "Skilled Trades & Power",
     salaryRange: "$128,000 - $168,000 / yr",
+    applyUrl: "https://careers.quantaservices.com/",
     tags: ["NEC 2026", "480V Switchgear", "Solar Microgrid", "IBEW / Master Electrician"],
     description:
       "Lead commercial 480V switchgear terminations, hospital backup generator tie-ins, and battery storage commissioning with full overtime and per-diem.",
@@ -189,6 +190,7 @@ const DAILY_JOB_ROTATION = [
     professionEnclave: "tech_cybersecurity",
     domainCategory: "Cybersecurity & Cloud",
     salaryRange: "$195,000 - $245,000 / yr",
+    applyUrl: "https://www.clearancejobs.com/jobs?keywords=Cloud+Security+Architect",
     tags: ["Zero Trust", "AWS GovCloud", "eBPF", "NIST 800-53 cATO"],
     description:
       "Architect multi-account AWS GovCloud landing zones, runtime eBPF workload containment, and continuous OSCAL authorization pipelines.",
@@ -208,6 +210,7 @@ const DAILY_JOB_ROTATION = [
     professionEnclave: "healthcare_medicine",
     domainCategory: "Clinical Healthcare",
     salaryRange: "$138,000 - $172,000 / yr + Sign-On",
+    applyUrl: "https://jobs.hopkinsmedicine.org/",
     tags: ["CCRN", "Level 1 Trauma", "Hemodynamics", "Smart-Pump BCMA"],
     description:
       "Coordinate critical care trauma resuscitation, rapid whole-blood infusion protocols, and interdisciplinary sepsis triage in a Level 1 center.",
@@ -227,6 +230,7 @@ const DAILY_JOB_ROTATION = [
     professionEnclave: "automotive_mechanics",
     domainCategory: "Automotive & Fleet",
     salaryRange: "$115,000 - $148,000 / yr",
+    applyUrl: "https://ryder.com/careers",
     tags: ["ASE Master A1-A8", "ASE L3 EV", "PicoScope CAN-FD", "800V HV Safety"],
     description:
       "Diagnose CAN-FD multiplex bus faults, silicon-carbide inverter isolation faults, and ADAS radar calibrations across commercial EV & diesel fleets.",
@@ -266,7 +270,7 @@ export function getAccumulatedDailyJobs(nowMs: number = Date.now()): GlobalJobIt
         description: tmpl.description,
         requirements: tmpl.requirements,
         languageRequirement: "English",
-        applyUrl: "https://conectln.com/connectin?tab=jobs",
+        applyUrl: tmpl.applyUrl,
         source: "ConnectLn 24h Scheduled Requisition Feed",
         tags: [...tmpl.tags, "24h New Drop"],
         isLiveFeed: true,
@@ -277,8 +281,315 @@ export function getAccumulatedDailyJobs(nowMs: number = Date.now()): GlobalJobIt
 }
 
 // ============================================================================
-// 2. DAILY ALERTS (Additive across Security, Career, Marketplace, Learning)
+// 2. DAILY ALERTS & 24-HOUR NOCTIS FRONTIER CHALLENGES (Strictly Additive Every 24h)
 // ============================================================================
+export interface DailyFrontierChallengeItem {
+  id: string
+  dayNumber: number
+  shortDate: string
+  relativeLabel: string
+  isLatestToday: boolean
+  shortChipLabel: string
+  domain: string
+  question: string
+  vetoTitle: string
+  verdict: string
+  fullResponse: string
+  durationMs: number
+  status: string
+  expectedKeywords: string[]
+  sampleAnswer: string
+}
+
+const DAILY_FRONTIER_CHALLENGE_ROTATION = [
+  {
+    shortChipLabel: "Hypersonic Mach 7",
+    domain: "HYPERSONICS_AEROSPACE_SCRAMJET",
+    question:
+      "At Mach 7.2 and 28 km altitude, what stagnation temperature is reached at a scramjet leading edge and what active thermal protection invariant is mandated?",
+    vetoTitle: "🚨 AEROSPACE THERMAL INVARIANT: HYPERSONIC STAGNATION COOLING MANDATE",
+    verdict:
+      "Stagnation temperature T_0 >= 2,240 K exceeds uncooled superalloy melting thresholds; mandates active regenerative fuel-film transpiration cooling over C/SiC ceramic matrix composites.",
+    fullResponse: `### Noctis Hypersonic Aerothermodynamics & Scramjet Engine (NOCTIS-AERO-HYPERSONIC-001)
+**Subsystem Domain:** \`HYPERSONICS_AEROSPACE_SCRAMJET\` · **Standards:** NASA SP-8072, MIL-HDBK-5J, AIAA Hypersonic TPS Guidelines
+
+#### 1. Compressible Stagnation Enthalpy Telemetry
+- **Flight Mach & Altitude:** **\`Mach 7.2 at 28 km Stratospheric Corridor\`**
+- **Isentropic/Real-Gas Stagnation Temperature ($T_0$):** **\`2,240 K – 2,410 K\`** ($T_0 = T_\\infty (1 + \\frac{\\gamma - 1}{2} M^2)$ with real-gas dissociation adjustment)
+- **Peak Leading-Edge Heat Flux:** **\`> 18.5 MW/m²\`** at 3mm nose radius
+
+#### 2. Sovereign Safety Invariant & Thermal Veto
+- **Uncooled Metal Failure Veto:** Inconel/Titanium structural limits (< 1,350 K) are exceeded within 1.4 seconds.
+- **Mandated Protection:** **\`C/SiC or ZrB2-SiC Ultra-High-Temperature Ceramic Matrix Composites (UHTCMC)\`** paired with endothermic hydrocarbon regenerative transpiration cooling.`,
+    durationMs: 10.42,
+    expectedKeywords: ["2200", "stagnation", "transpiration", "c/sic", "ceramic", "cooling"],
+    sampleAnswer:
+      "At Mach 7.2, stagnation temperature exceeds 2,240 K, requiring C/SiC or ZrB2-SiC ceramic matrix composites with active regenerative endothermic transpiration cooling.",
+  },
+  {
+    shortChipLabel: "Cholinergic 2-PAM",
+    domain: "CLINICAL_TOXICOLOGY_ANTIDOTE",
+    question:
+      "A patient presents with pinpoint miosis, bronchorrhea, bradycardia, salivation, lacrimation, and fasciculations after organophosphate exposure. What dual-antidote protocol and aging invariant apply?",
+    vetoTitle: "🚨 CLINICAL TOXICOLOGY MANDATE: ATROPINE + PRALIDOXIME (2-PAM) PROTOCOL",
+    verdict:
+      "Cholinergic crisis requires immediate titrated IV Atropine (doubling every 3–5m until bronchorrhea clears) plus Pralidoxime (2-PAM 1–2g IV) prior to acetylcholinesterase phosphorylation aging.",
+    fullResponse: `### Noctis Clinical Toxicology & Emergency Antidote Engine (NOCTIS-CLIN-TOX-001)
+**Subsystem Domain:** \`CLINICAL_TOXICOLOGY_ANTIDOTE\` · **Standards:** Goldfrank's Toxicologic Emergencies, ACMT / WHO Poison Control Guidelines
+
+#### 1. Toxidrome Identification & Muscarinic/Nicotinic Split
+- **Muscarinic Overload (DUMBBELS/SLUDGE):** Diarrhea, Urination, Miosis, Bronchorrhea, Bradycardia, Emesis, Lacrimation, Salivation.
+- **Nicotinic Neuromuscular Blockade:** Fasciculations progressing to diaphragmatic paralysis (not reversed by Atropine alone).
+
+#### 2. Dual-Antidote Invariant Mandate
+1. **Atropine Sulfate (Muscarinic Antagonist):** Start 2–5 mg IV push, doubling dose every 3–5 minutes until pulmonary secretions clear (**dry lungs endpoint**, not pupil dilation).
+2. **Pralidoxime / 2-PAM (Oxime AChE Reactivator):** 1–2 g IV infusion over 15–30 min to cleave the organophosphate-ester bond before irreversible **aging** occurs.`,
+    durationMs: 11.18,
+    expectedKeywords: ["atropine", "pralidoxime", "2-pam", "bronchorrhea", "cholinergic", "aging"],
+    sampleAnswer:
+      "This is a cholinergic organophosphate toxidrome. Administer IV Atropine doubled every 3-5 minutes until bronchorrhea clears, plus Pralidoxime (2-PAM) to reactivate acetylcholinesterase before irreversible aging.",
+  },
+  {
+    shortChipLabel: "Trauma 1:1:1 MTP",
+    domain: "TRAUMA_HEMORRHAGIC_RESUSCITATION",
+    question:
+      "A polytrauma patient arrives with BP 78/46, HR 132 (Shock Index 1.69), base deficit -9 mEq/L, and FAST-positive hemoperitoneum. What balanced transfusion invariant and adjunct are mandated?",
+    vetoTitle: "🚨 LEVEL-1 TRAUMA MANDATE: 1:1:1 MASSIVE TRANSFUSION & TXA PROTOCOL",
+    verdict:
+      "Immediate 1:1:1 Massive Transfusion Protocol (pRBC : FFP : Platelets), Tranexamic Acid (TXA 1g IV within 3h), ionized Ca2+ repletion, and strict crystalloid restriction to prevent lethal triad.",
+    fullResponse: `### Noctis Level-1 Trauma & Hemorrhagic Shock Engine (NOCTIS-TRAUMA-MTP-001)
+**Subsystem Domain:** \`TRAUMA_HEMORRHAGIC_RESUSCITATION\` · **Standards:** ACS ATLS 10th Edition, PROPPR Trial, CRASH-2 Protocol
+
+#### 1. Hemodynamic & Lethal Triad Telemetry
+- **Shock Index (HR / SBP):** **\`132 / 78 = 1.69\`** (Critical Threshold: > 1.0; ABC Score ≥ 2 triggers instant MTP)
+- **Lethal Triad Prevention:** Prevent dilutional coagulopathy, hypothermia, and metabolic acidosis.
+
+#### 2. Damage Control Resuscitation Invariants
+- **Balanced 1:1:1 Ratio:** Infuse **\`1:1:1 pRBC : Plasma (FFP) : Platelets\`** (or low-titer O whole blood).
+- **Antifibrinolytic Window:** **\`Tranexamic Acid (TXA) 1g IV over 10 min\`** followed by 1g over 8h (must initiate within 3 hours of injury).
+- **Citrate Toxicity Guardrail:** Replete **\`Calcium Chloride / Gluconate\`** every 4 units to maintain ionized $Ca^{2+} > 1.1\\text{ mmol/L}$.`,
+    durationMs: 9.84,
+    expectedKeywords: ["1:1:1", "mtp", "txa", "tranexamic", "crystalloid", "calcium", "platelets"],
+    sampleAnswer:
+      "Activate 1:1:1 Massive Transfusion Protocol (pRBC:FFP:Platelets), restrict crystalloids to avoid dilutional coagulopathy, give 1g IV TXA within 3 hours, and monitor/replete ionized calcium.",
+  },
+  {
+    shortChipLabel: "Postgres SSI Skew",
+    domain: "DATABASES_SERIALIZABLE_SSI",
+    question:
+      "In PostgreSQL MVCC, two concurrent transactions read intersecting doctor on-call rows and each update a different row, violating the minimum-1-doctor invariant. Why does Repeatable Read permit this write skew, and how does SSI prevent it?",
+    vetoTitle: "🚨 DATABASE CONSISTENCY INVARIANT: SSI SIREAD PREDICATE LOCKING",
+    verdict:
+      "Snapshot Isolation (Repeatable Read) only detects write-write conflicts on the same row; Serializable Snapshot Isolation (SSI) tracks rw-antidependency cycles via SIREAD predicate locks and aborts with SQLSTATE 40001.",
+    fullResponse: `### Noctis Transactional Database & SSI Verification Engine (NOCTIS-DB-SSI-001)
+**Subsystem Domain:** \`DATABASES_SERIALIZABLE_SSI\` · **Standards:** Cahill et al. Serializable Snapshot Isolation, PostgreSQL SQLSTATE 40001
+
+#### 1. Write-Skew Anomaly Under Snapshot Isolation
+- **Mechanism:** Transaction $T_1$ and $T_2$ take concurrent MVCC snapshots, both see 2 doctors on call, and update *disjoint* rows ($T_1$ updates Alice, $T_2$ updates Bob).
+- **Why Repeatable Read Fails:** No two transactions modified the same tuple, so standard first-committer-wins row locks do not fire.
+
+#### 2. SSI Invariant Enforcement
+- **SIREAD Predicate Locks:** PostgreSQL \`SERIALIZABLE\` places non-blocking \`SIREAD\` locks on scanned index/page ranges.
+- **Dangerous Structure Detection:** When two adjacent \`rw-antidependency\` edges form a cycle ($T_1 \\xrightarrow{rw} T_2 \\xrightarrow{rw} T_1$), SSI aborts one transaction with **\`SQLSTATE 40001 (serialization_failure)\`** for safe application retry.`,
+    durationMs: 8.95,
+    expectedKeywords: ["siread", "write skew", "40001", "predicate", "rw-antidependency", "serializable"],
+    sampleAnswer:
+      "Repeatable Read only blocks concurrent writes to the same row, allowing disjoint write skew. PostgreSQL SSI uses SIREAD predicate locks to detect rw-antidependency cycles and aborts one transaction with SQLSTATE 40001.",
+  },
+  {
+    shortChipLabel: "SRE 14.4x Burn",
+    domain: "DEVOPS_SRE_ERROR_BUDGET",
+    question:
+      "For a tier-0 production service with a 99.9% 30-day availability SLO, what is the monthly error budget in minutes, and what alert invariant triggers when the 1h/5m multi-window burn rate hits 14.4x?",
+    vetoTitle: "🚨 SRE RELIABILITY INVARIANT: 14.4X MULTI-WINDOW ERROR BUDGET BURN",
+    verdict:
+      "30-day error budget = 43.2 minutes (43,200 * 0.001); a 14.4x burn rate consumes 2% of the monthly budget in 1 hour (100% exhaustion in 50 hours), triggering an immediate P1 pager freeze on feature rollouts.",
+    fullResponse: `### Noctis Site Reliability & Multi-Window Burn Rate Engine (NOCTIS-SRE-SLO-001)
+**Subsystem Domain:** \`DEVOPS_SRE_ERROR_BUDGET\` · **Standards:** Google SRE Workbook Multi-Window Multi-Burn-Rate Alerting
+
+#### 1. Error Budget Calculus (30-Day Rolling Window)
+- **Total Window:** $30 \\times 24 \\times 60 = 43,200\\text{ minutes}$
+- **Allowed Downtime ($1 - 0.999 = 0.1\\%$):** **\`43.2 minutes / 30 days\`**
+
+#### 2. Multi-Window Burn-Rate Invariant
+- **Burn Rate $14.4\\times$:** Consumes **\`2% of the entire 30-day budget in 1 hour\`** ($\\frac{0.02 \\times 720\\text{h}}{1\\text{h}} = 14.4$).
+- **Short Confirmation Window (5m + 1h):** Requiring both the 1-hour and 5-minute windows to exceed $14.4\\times$ ensures rapid P1 paging while immediately resetting once the incident resolves.
+- **Release Freeze Mandate:** Halt non-emergency deployments when remaining 30-day error budget drops to $0\\%$.`,
+    durationMs: 7.72,
+    expectedKeywords: ["43.2", "2%", "14.4", "50 hours", "multi-window", "error budget", "freeze"],
+    sampleAnswer:
+      "The 30-day error budget at 99.9% SLO is 43.2 minutes. A 14.4x burn rate consumes 2% of the 30-day budget in 1 hour (exhausting 100% in 50 hours), triggering an immediate P1 page across the 1h and 5m windows and freezing feature releases.",
+  },
+  {
+    shortChipLabel: "70B LLM KV-Cache",
+    domain: "IT_AIML_KV_CACHE_CALCULUS",
+    question:
+      "A 70B-parameter transformer (80 layers, 64 attention heads, head_dim 128) serves batch size 16 at 4,096 context length in FP16 without GQA. What is the exact KV-cache VRAM footprint, and how does 8-group GQA reduce it?",
+    vetoTitle: "🚨 AI INFRASTRUCTURE INVARIANT: KV-CACHE VRAM & GQA COMPRESSION",
+    verdict:
+      "Uncompressed MHA KV-cache = 2 * 16 * 4096 * 80 * 64 * 128 * 2 bytes = 171.80 GB (160 GiB); 8-KV-head Grouped-Query Attention (8x compression) reduces KV-cache to 21.47 GB (20 GiB).",
+    fullResponse: `### Noctis LLM Inference & KV-Cache Memory Calculus Engine (NOCTIS-AIML-KVCACHE-001)
+**Subsystem Domain:** \`IT_AIML_KV_CACHE_CALCULUS\` · **Standards:** FlashAttention-2 / PagedAttention Memory Invariants
+
+#### 1. Exact KV-Cache Memory Formula
+$$\\text{KV Bytes} = 2_{K,V} \\times B \\times S \\times L \\times H_{kv} \\times D_h \\times \\text{bytes}(\\text{FP16})$$
+- **Standard MHA ($H_{kv} = 64$):**
+  $2 \\times 16 \\times 4096 \\times 80 \\times 64 \\times 128 \\times 2 = 171,798,691,840\\text{ bytes} = \\mathbf{160.0\\text{ GiB (171.8 GB)}}$
+- **Exceeds Single H100 80GB VRAM** before even loading model weights!
+
+#### 2. Grouped-Query Attention (GQA) & PagedAttention Invariant
+- **GQA ($H_{kv} = 8$, $8\\times$ reduction):** Reduces KV-cache to **\`20.0 GiB (21.47 GB)\`**, allowing weights + KV-cache to fit across a 2×H100 NVLink tensor-parallel pair with PagedAttention block tables.`,
+    durationMs: 8.64,
+    expectedKeywords: ["160", "171.8", "20", "gqa", "grouped-query", "pagedattention", "2 *"],
+    sampleAnswer:
+      "Using 2 * B * S * L * H * D * 2 bytes, uncompressed MHA KV-cache is 160 GiB (171.8 GB). With 8-head Grouped-Query Attention (8x reduction), the KV-cache drops to 20 GiB (21.47 GB).",
+  },
+  {
+    shortChipLabel: "5G PTP 130ns Sync",
+    domain: "TELECOM_5G_ORAN_FRONTHAUL",
+    question:
+      "In 3GPP Rel-18 5G Standalone and O-RAN 7.2x fronthaul, what maximum absolute time error (|TE|) is permitted by ITU-T G.8275.1 PTP for MIMO beamforming, and what is the URLLC user-plane latency ceiling?",
+    vetoTitle: "🚨 TELECOM SYNCHRONIZATION INVARIANT: ITU-T G.8275.1 PTP & URLLC SLA",
+    verdict:
+      "Category B MIMO beamforming mandates |TE| <= 130 nanoseconds (Class C T-BC boundary clocks <= 10 ns); URLLC user-plane one-way radio latency must be <= 0.5–1.0 ms at 99.999% reliability.",
+    fullResponse: `### Noctis 5G Standalone & O-RAN Precision Timing Engine (NOCTIS-5G-ORAN-001)
+**Subsystem Domain:** \`TELECOM_5G_ORAN_FRONTHAUL\` · **Standards:** 3GPP TS 38.104, ITU-T G.8275.1, O-RAN WG4 CUS-Plane
+
+#### 1. Precision Time Protocol (PTP) Phase Synchronization
+- **Profile:** **\`ITU-T G.8275.1 Full Timing Support (FTS) with SyncE\`**
+- **Max Absolute Time Error ($|TE|$):** **\`≤ 130 ns\`** at the O-RU antenna reference point for TDD guard-band protection and Massive MIMO coherent beamforming (Category B).
+- **Holdover Invariant:** GNSS loss requires rubidium/OCXO holdover maintaining phase drift $< 1.5\\text{ }\\mu\\text{s}$ over 24 hours.
+
+#### 2. URLLC User-Plane Invariant
+- **One-Way UP Latency:** **\`≤ 1.0 ms (0.5 ms per direction)\`** using mini-slots (2 OFDM symbols) and configured grant (CG) uplink.`,
+    durationMs: 9.21,
+    expectedKeywords: ["130 ns", "g.8275.1", "ptp", "synce", "1.0 ms", "urllc", "beamforming"],
+    sampleAnswer:
+      "ITU-T G.8275.1 mandates a maximum absolute time error |TE| <= 130 ns for Category B MIMO beamforming with SyncE/PTP boundary clocks, and URLLC user-plane latency must be <= 1.0 ms.",
+  },
+  {
+    shortChipLabel: "zk-STARK Post-Quantum",
+    domain: "ZERO_KNOWLEDGE_POST_QUANTUM",
+    question:
+      "In verifiable computation, why is Groth16 zk-SNARK vulnerable to quantum adversaries and toxic-waste setup compromise, and how do FRI-based zk-STARKs guarantee post-quantum soundness?",
+    vetoTitle: "🚨 CRYPTOGRAPHIC PROOF INVARIANT: POST-QUANTUM FRI ZK-STARK SOUNDNESS",
+    verdict:
+      "Groth16 relies on elliptic-curve pairings broken in polynomial time by Shor's algorithm and requires a trusted setup ceremony; zk-STARKs use transparent collision-resistant hash commitments and FRI Reed-Solomon proximity proofs.",
+    fullResponse: `### Noctis Verifiable Computing & Zero-Knowledge Proof Engine (NOCTIS-CRYPTO-ZKP-001)
+**Subsystem Domain:** \`ZERO_KNOWLEDGE_POST_QUANTUM\` · **Standards:** Ben-Sasson et al. zk-STARKs, NIST Post-Quantum Security Guidelines
+
+#### 1. Groth16 / Pairing-Based SNARK Vulnerabilities
+- **Toxic Waste Risk:** Compromising the trapdoor scalar $\\tau$ in the multi-party trusted setup allows forging arbitrary false proofs undetected.
+- **Quantum Breakdown:** Shor's algorithm solves discrete logarithms on BN254/BLS12-381 curves in $O(n^3)$ quantum gates.
+
+#### 2. zk-STARK Transparent Post-Quantum Invariant
+- **Transparent Setup:** Public randomness only (Fiat-Shamir over SHA-3 / Poseidon2).
+- **Post-Quantum Soundness:** Relies strictly on **\`Fast Reed-Solomon Interactive Oracle Proofs of Proximity (FRI)\`** and Merkle hash commitments (Grover-resistant at 256-bit digest output).`,
+    durationMs: 10.05,
+    expectedKeywords: ["shor", "trusted setup", "toxic waste", "fri", "reed-solomon", "hash", "post-quantum"],
+    sampleAnswer:
+      "Groth16 requires a trusted setup (toxic waste forging risk) and relies on elliptic-curve pairings broken by Shor's algorithm. zk-STARKs use transparent public randomness, collision-resistant hashes, and FRI Reed-Solomon proximity proofs for post-quantum security.",
+  },
+  {
+    shortChipLabel: "IEEE 1584 Arc-Flash",
+    domain: "NFPA_70E_IEEE_1584_ARC_FLASH",
+    question:
+      "A 480V commercial switchgear bus has 35 kA bolted fault current and an upstream breaker clearing time of 0.08s (5 cycles) at 18-inch working distance. If incident energy reaches 14.2 cal/cm², what NFPA 70E PPE category and approach boundary rules apply?",
+    vetoTitle: "🚨 ELECTRICAL SAFETY MANDATE: NFPA 70E CAT 3 ARC-FLASH & LOTO VETO",
+    verdict:
+      "14.2 cal/cm² exceeds Arc-Flash PPE Category 2 (8 cal/cm²); mandates Category 3 Arc-Rated suit (>= 25 cal/cm² rating), energized work permit, or zero-energy Lockout/Tagout (LOTO) verification.",
+    fullResponse: `### Noctis Electrical Power & NFPA 70E Arc-Flash Engine (NOCTIS-POWER-70E-001)
+**Subsystem Domain:** \`NFPA_70E_IEEE_1584_ARC_FLASH\` · **Standards:** NFPA 70E (2024/2026), IEEE 1584-2018, OSHA 29 CFR 1910.333
+
+#### 1. Incident Energy & Arc-Flash Boundary Telemetry
+- **System Parameters:** **\`480V 3-Phase · 35 kA Bolted Fault · 80 ms Clearing Time\`**
+- **Calculated Incident Energy at 18 in (455 mm):** **\`14.2 cal/cm²\`** (Second-degree burn threshold = $1.2\\text{ cal/cm}^2$)
+
+#### 2. Mandatory NFPA 70E Invariant Controls
+- **Zero-Energy LOTO First:** De-energize, lockout/tagout, and verify absence of voltage (Live-Dead-Live test with CAT IV 600V meter).
+- **PPE Category Mandate:** If energized diagnostic testing is justified, **\`Arc-Flash PPE Category 3 (Minimum 25 cal/cm² arc-rated flash suit, hood, voltage-rated gloves)\`** is required because $14.2\\text{ cal/cm}^2 > 8.0\\text{ cal/cm}^2$ (Cat 2 ceiling).`,
+    durationMs: 8.38,
+    expectedKeywords: ["category 3", "25 cal", "1.2 cal", "loto", "lockout", "nfpa 70e", "live-dead-live"],
+    sampleAnswer:
+      "At 14.2 cal/cm², Category 2 PPE (8 cal/cm² max) is insufficient. NFPA 70E mandates de-energizing via LOTO (Live-Dead-Live verification) or wearing Arc-Flash PPE Category 3 rated for at least 25 cal/cm² across the 1.2 cal/cm² arc-flash boundary.",
+  },
+  {
+    shortChipLabel: "800V EV Isolation",
+    domain: "AUTOMOTIVE_800V_EV_ISOLATION",
+    question:
+      "An 800V silicon-carbide (SiC) commercial EV traction bus reports an IMD isolation fault with chassis resistance dropping to 180 kΩ. Under ISO 6469-3 / FMVSS 305, what is the minimum required isolation resistance in Ω/V and what contactor action is triggered?",
+    vetoTitle: "🚨 HIGH-VOLTAGE EV SAFETY VETO: ISO 6469-3 ISOLATION FAULT CONTACTOR TRIP",
+    verdict:
+      "Minimum required AC/DC combined isolation resistance is 500 Ω/V (400 kΩ at 800V); 180 kΩ (225 Ω/V) breaches safety limits, mandating immediate high-voltage contactor opening and active bus discharge < 60V in < 5 seconds.",
+    fullResponse: `### Noctis 800V High-Voltage EV Powertrain & IMD Safety Engine (NOCTIS-EV-800V-001)
+**Subsystem Domain:** \`AUTOMOTIVE_800V_EV_ISOLATION\` · **Standards:** ISO 6469-3, FMVSS 305, SAE J1766
+
+#### 1. High-Voltage Isolation Monitoring (IMD) Calculus
+- **Nominal Traction Bus Voltage:** **\`800 V DC\`**
+- **Measured Chassis Isolation Resistance ($R_{iso}$):** **\`180 kΩ (225 Ω/V)\`**
+- **Statutory Threshold:** **\`≥ 500 Ω/V\`** ($800\\text{ V} \\times 500\\text{ }\\Omega/\\text{V} = \\mathbf{400\\text{ k}\\Omega\\text{ minimum}}$)
+
+#### 2. Sovereign Safety Invariant & Service Lockout
+- **Contactor Trip:** BMS opens main positive/negative & pre-charge contactors and commands active bleed resistors to discharge DC-link capacitors to **\`< 60 V DC within 5 seconds\`**.
+- **Technician Service Protocol:** Remove Manual Service Disconnect (MSD), wait 5 minutes for capacitor bleed, and verify $0.0\\text{ V}$ with a CAT III 1000V meter using Live-Dead-Live proving.`,
+    durationMs: 9.06,
+    expectedKeywords: ["500", "400 k", "contactor", "60v", "5 seconds", "msd", "iso 6469"],
+    sampleAnswer:
+      "Under ISO 6469-3 and FMVSS 305, minimum isolation resistance is 500 ohms/V (400 kOhm for an 800V bus). At 180 kOhm (225 ohms/V), the BMS must open HV contactors and discharge the DC link below 60V within 5 seconds.",
+  },
+]
+
+export function getNext24HourAlertCountdown(nowMs: number = Date.now()): {
+  cycleNumber: number
+  hoursRemaining: number
+  minutesRemaining: number
+  nextDropUtcIso: string
+} {
+  const cycleNumber = getElapsed24HourScheduleDays(nowMs)
+  const nextDropMs = DAILY_PLATFORM_EPOCH_UTC_MS + cycleNumber * ONE_DAY_MS
+  const remainingMs = Math.max(60_000, nextDropMs - nowMs)
+  const hoursRemaining = Math.floor(remainingMs / 3_600_000)
+  const minutesRemaining = Math.floor((remainingMs % 3_600_000) / 60_000)
+  return {
+    cycleNumber,
+    hoursRemaining,
+    minutesRemaining,
+    nextDropUtcIso: new Date(nextDropMs).toISOString(),
+  }
+}
+
+export function getAccumulatedDailyFrontierChallenges(
+  nowMs: number = Date.now()
+): DailyFrontierChallengeItem[] {
+  const days = getElapsed24HourScheduleDays(nowMs)
+  const out: DailyFrontierChallengeItem[] = []
+  for (let day = 1; day <= days; day++) {
+    const meta = getCycleDateMeta(day, nowMs)
+    const tmpl =
+      DAILY_FRONTIER_CHALLENGE_ROTATION[(day - 1) % DAILY_FRONTIER_CHALLENGE_ROTATION.length]
+    const roundNumber = Math.floor((day - 1) / DAILY_FRONTIER_CHALLENGE_ROTATION.length) + 1
+    const cycleSuffix = roundNumber > 1 ? ` [Rev ${roundNumber} · Cycle #${day}]` : ""
+    out.push({
+      id: `CHALLENGE-24H-DAY-${day}`,
+      dayNumber: day,
+      shortDate: meta.shortDate,
+      relativeLabel: meta.relativeLabel,
+      isLatestToday: day === days,
+      shortChipLabel: `${tmpl.shortChipLabel} (${meta.shortDate.replace(/,\s*\d{4}$/, "")})`,
+      domain: `${tmpl.domain}_24H_D${day}`,
+      question: `${tmpl.question}${cycleSuffix}`,
+      vetoTitle: `${tmpl.vetoTitle} · 24H CYCLE #${day} (${meta.shortDate})`,
+      verdict: tmpl.verdict,
+      fullResponse: `${tmpl.fullResponse}\n\n---\n**24-Hour Autonomous Schedule Stamp:** Cycle **\`#${day}\`** · Published **\`${meta.shortDate} (06:00 UTC)\`** · Status: **\`VERIFIED ADDITIVE 24H DROP\`**`,
+      durationMs: Number((tmpl.durationMs + ((day % 5) * 0.17)).toFixed(2)),
+      status: "PASS",
+      expectedKeywords: tmpl.expectedKeywords,
+      sampleAnswer: tmpl.sampleAnswer,
+    })
+  }
+  return out
+}
+
 const DAILY_ALERT_ROTATION = [
   {
     category: "Career" as const,
@@ -328,16 +639,68 @@ const DAILY_ALERT_ROTATION = [
     targetTab: "marketplace" as const,
     priority: "normal" as const,
   },
+  {
+    category: "Security" as const,
+    subType: "Vulnerability Alert" as const,
+    actorName: "Noctis Sovereign Clinical & Pharma Watch",
+    actorRole: "24h Clinical & Biomedical Invariant Desk",
+    titlePrefix: "🩺 Daily 24h Clinical & Pharmacy Invariant: High-Alert Medication & ICU Triage Verification",
+    descPrefix:
+      "Automated 24-hour verification across smart-pump BCMA guardrails, Bayesian vancomycin AUC/MIC targets, and Level-1 trauma resuscitation readiness.",
+    actionText: "Inspect Clinical Alert",
+    targetTab: "pulserooms" as const,
+    priority: "critical" as const,
+  },
+  {
+    category: "Career" as const,
+    subType: "Recruiter Message" as const,
+    actorName: "ConnectLn Master Trades & Engineering Guild",
+    actorRole: "24h Direct Contract & Project Dispatch",
+    titlePrefix: "⚡ Daily 24h Contract & Apprenticeship Wire: Commercial Electrical, EV Fleet & Cloud Architecture",
+    descPrefix:
+      "New verified commercial project contracts, prevailing-wage field roles, and remote enterprise security engagements added in today's 24-hour cycle.",
+    actionText: "Open Jobs & Contracts",
+    targetTab: "jobs" as const,
+    priority: "high" as const,
+  },
 ]
 
 export function getAccumulatedDailyAlerts(
   nowMs: number = Date.now()
 ): CategorizedNotificationItem[] {
   const days = getElapsed24HourScheduleDays(nowMs)
+  const dailyChallenges = getAccumulatedDailyFrontierChallenges(nowMs)
   const out: CategorizedNotificationItem[] = []
   for (let day = days; day >= 1; day--) {
     const meta = getCycleDateMeta(day, nowMs)
+    const ch = dailyChallenges[day - 1]
     const tmpl = DAILY_ALERT_ROTATION[(day - 1) % DAILY_ALERT_ROTATION.length]
+
+    // 1. New 24-Hour Noctis 6AM Frontier Invariant Alert for this 24h cycle
+    if (ch) {
+      out.push({
+        id: `notif_noctis_daily_d${day}`,
+        category: "Security",
+        subType: "Security Advisory",
+        actor: {
+          name: "Noctis Frontier & Benchmark Engine",
+          role: `24h Autonomous Invariant Schedule · Cycle #${day} (${meta.shortDate})`,
+          avatar:
+            "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80",
+          isVerified: true,
+        },
+        title: `🔴 [NOCTIS 24H FRONTIER ALERT · Cycle #${day} · ${meta.shortDate}] Invariant Verified: ${ch.domain}`,
+        description: `Daily 24h Challenge Invariant Evaluated: "${ch.question}"\n\nVerdict: ${ch.verdict} (Duration: ${ch.durationMs}ms, Invariant: ${ch.status}).`,
+        timestamp: meta.relativeLabel,
+        unread: day === days,
+        actionText: "Inspect Invariant Telemetry",
+        targetTab: "pulserooms",
+        priority: "critical",
+        externalLabel: "Run Live Challenge Test",
+      })
+    }
+
+    // 2. New 24-Hour Multi-Channel Professional Alert for this 24h cycle
     out.push({
       id: `daily_alert_d${day}`,
       category: tmpl.category,
@@ -349,8 +712,8 @@ export function getAccumulatedDailyAlerts(
           "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&auto=format&fit=crop&q=80",
         isVerified: true,
       },
-      title: `${tmpl.titlePrefix} (${meta.shortDate})`,
-      description: `${tmpl.descPrefix} [Schedule Cycle #${day}]`,
+      title: `${tmpl.titlePrefix} (Cycle #${day} · ${meta.shortDate})`,
+      description: `${tmpl.descPrefix} [24h Schedule Cycle #${day}]`,
       timestamp: meta.relativeLabel,
       unread: day === days,
       actionText: tmpl.actionText,

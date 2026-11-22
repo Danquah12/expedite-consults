@@ -37,7 +37,8 @@ import {
   getLocalizedJobsForCountryAndEnclave,
   getCountryShortLabel,
   convertUsdSalaryToCountry,
-  formatJobSalaryForCountry
+  formatJobSalaryForCountry,
+  resolveExternalJobApplyUrl
 } from "@/lib/global-jobs-data"
 import { PROFESSION_ENCLAVES, CONNECTIN_WORKER_PILLARS, ALL_PROFESSIONS } from "@/lib/connectin-professions"
 import {
@@ -386,7 +387,7 @@ function mapAdminFolderJobToGlobalJob(item: HandymanAdminJobRecord, country: Cou
     description: `Synced directly from ConnectLn Admin Folder #${item.folderNumber} (${item.folderName}) · Role #${item.roleNumber}: ${item.title}. ${folderMeta?.toolName ? `Includes workflow support for ${folderMeta.toolName}.` : ''}`,
     requirements: folderMeta ? folderMeta.typicalSkills.map((s) => `Verified practical experience in ${s}`) : [`Verified ${item.title} experience`],
     languageRequirement: country.primaryLanguage || 'English',
-    applyUrl: 'https://conectln.com/connectin',
+    applyUrl: `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(item.title)}&location=${encodeURIComponent(country.code === 'US' ? item.location : country.name)}`,
     source: `Admin Folder ${item.folderNumber}: ${item.folderName}`,
     tags: [
       `Folder ${item.folderNumber}`,
@@ -1141,7 +1142,13 @@ export function JobsView({
       postedTime: 'Just published · Synced live',
       applicantsCount: 1,
       isEasyApply: true,
-      applyUrl: newJobApplyUrl.trim() || 'https://www.connectln.app/connectin',
+      applyUrl: resolveExternalJobApplyUrl({
+        applyUrl: newJobApplyUrl.trim(),
+        title: newJobTitle.trim(),
+        company: newJobCompany.trim(),
+        location: newJobLocation.trim(),
+        countryName: targetCountryObj.name,
+      }),
       tags: [newJobProductRequired || 'Verified Role', 'Hiring Now', 'Immediate Sync', targetEnclave],
       description: newJobDescription.trim() || `Immediate opening for ${newJobTitle} at ${newJobCompany} in ${newJobLocation}.`,
       requirements: [
@@ -2256,7 +2263,7 @@ export function JobsView({
 
                             {job.applyUrl && (
                               <a
-                                href={job.applyUrl}
+                                href={resolveExternalJobApplyUrl(job)}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="rounded-full bg-[#0A66C2] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#004182] transition-colors flex items-center gap-1 shadow-xs"
@@ -2850,7 +2857,7 @@ export function JobsView({
 
                     {selectedJob.applyUrl && (
                       <a
-                        href={selectedJob.applyUrl}
+                        href={resolveExternalJobApplyUrl(selectedJob)}
                         target="_blank"
                         rel="noreferrer"
                         className="rounded-full bg-[#0A66C2] px-5 py-2 text-xs font-bold text-white hover:bg-[#004182] flex items-center gap-1.5 shadow-xs"
@@ -3111,7 +3118,7 @@ export function JobsView({
                   <div className="flex items-center justify-between gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
                     {selectedJob.applyUrl ? (
                       <a
-                        href={selectedJob.applyUrl}
+                        href={resolveExternalJobApplyUrl(selectedJob)}
                         target="_blank"
                         rel="noreferrer"
                         className="text-xs font-semibold text-[#0A66C2] hover:underline flex items-center gap-1"
@@ -3153,7 +3160,7 @@ export function JobsView({
                   <div className="flex items-center justify-center gap-2 pt-2">
                     {selectedJob.applyUrl && (
                       <a
-                        href={selectedJob.applyUrl}
+                        href={resolveExternalJobApplyUrl(selectedJob)}
                         target="_blank"
                         rel="noreferrer"
                         className="rounded-full bg-zinc-100 dark:bg-zinc-800 px-4 py-2 text-xs font-bold text-zinc-800 dark:text-zinc-200 hover:bg-zinc-200 flex items-center gap-1.5"

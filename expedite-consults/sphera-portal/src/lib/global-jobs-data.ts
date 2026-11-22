@@ -4500,7 +4500,7 @@ const US_EMPLOYERS_BY_ENCLAVE: Record<string, RegionalEmployerSpec[]> = {
     { company: 'Palo Alto Networks Unit 42 Incident Response', applyUrl: 'https://jobs.paloaltonetworks.com/', source: 'Palo Alto Unit 42 ATS' },
     { company: 'Mandiant (Google Cloud Security) Red Team & Threat Intel', applyUrl: 'https://careers.google.com/', source: 'Mandiant Threat Defense' },
     { company: 'Wiz Cloud Native Security & CNAPP Engineering', applyUrl: 'https://www.wiz.io/careers', source: 'Wiz Security Careers' },
-    { company: 'Expedite Consults Zero-Trust, RMF & GovCloud Security', applyUrl: 'https://www.connectln.app/connectin', source: 'Expedite Direct ATS' },
+    { company: 'Expedite Consults Zero-Trust, RMF & GovCloud Security', applyUrl: 'https://www.clearancejobs.com/jobs?keywords=Zero+Trust+GovCloud+Security', source: 'Expedite Direct ATS' },
     { company: 'SentinelOne Autonomous SOC & Endpoint Detection', applyUrl: 'https://www.sentinelone.com/jobs/', source: 'SentinelOne Careers' },
     { company: 'Zscaler Zero Trust Exchange & Federal GovCloud', applyUrl: 'https://www.zscaler.com/careers', source: 'Zscaler Security Portal' }
   ],
@@ -5089,7 +5089,7 @@ function getNonUsRegionalEmployer(
   }
   return {
     company: `${country.name} ${localizedCategory} & Enterprise Directorate`,
-    applyUrl: 'https://www.connectln.app/connectin',
+    applyUrl: `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(localizedCategory)}&location=${encodeURIComponent(country.name)}`,
     source: `${country.name} Verified Employer Portal`
   }
 }
@@ -5465,5 +5465,32 @@ export function getLocalizedJobsForCountryAndEnclave(
 
 export function getEnclaveGlobalJobs(enclaveId?: string, countryCode: string = 'US'): GlobalJobItem[] {
   return getLocalizedJobsForCountryAndEnclave(countryCode, enclaveId || 'all')
+}
+
+const SELF_CONNECTIN_APPLY_URL_RE = /^(?:https?:\/\/(?:www\.)?(?:conectln\.com|connectln\.app))?\/connectin(?:\/)?(?:[?#].*)?$/i
+
+export function resolveExternalJobApplyUrl(job: {
+  applyUrl?: string
+  title?: string
+  company?: string
+  location?: string
+  countryName?: string
+}): string {
+  const raw = (job.applyUrl || '').trim()
+  if (raw && !SELF_CONNECTIN_APPLY_URL_RE.test(raw)) {
+    return raw
+  }
+  const cleanTitle = (job.title || job.company || 'Careers')
+    .replace(/\s*\(Cycle\s*#[^)]*\)/gi, '')
+    .replace(/\s*—\s*.*$/, '')
+    .trim()
+  const cleanLocation = (job.location || job.countryName || '')
+    .replace(/\s*\((On-site|Hybrid|Remote)\)\s*$/i, '')
+    .trim()
+  const queryParts = [`keywords=${encodeURIComponent(cleanTitle || 'Careers')}`]
+  if (cleanLocation) {
+    queryParts.push(`location=${encodeURIComponent(cleanLocation)}`)
+  }
+  return `https://www.linkedin.com/jobs/search/?${queryParts.join('&')}`
 }
 
