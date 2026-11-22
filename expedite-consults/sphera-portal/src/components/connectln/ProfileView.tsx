@@ -40,7 +40,16 @@ import {
   Upload,
   Camera,
   Image as ImageIcon,
-  RefreshCw
+  RefreshCw,
+  Phone,
+  Mail,
+  Clock,
+  Calendar,
+  Copy,
+  Building2,
+  ChevronDown,
+  ChevronUp,
+  Lock
 } from "lucide-react"
 import { useLanguage } from "@/context/LanguageContext"
 import { ResumeUploadModal } from "./ResumeUploadModal"
@@ -56,7 +65,11 @@ import {
   WORKSPACE_REVIEWS_DATA,
   MY_PRODUCTS_DATA,
   VendorProductItem,
-  getWorkspaceDataForEnclave
+  getWorkspaceDataForEnclave,
+  getTailoredUserProductsAndBusiness,
+  PersonalBusinessWebsiteData,
+  BusinessWebsiteOffering,
+  BusinessThemeColor
 } from "@/lib/my-workspace-data"
 import { findEnclaveById } from "@/lib/connectin-professions"
 import { TradeEnclaveWidgets } from "./TradeEnclaveWidgets"
@@ -112,9 +125,21 @@ export function ProfileView({
   onNavigateMessaging
 }: ProfileViewProps) {
   const { t } = useLanguage()
-  const effectiveEnclaveId = user.professionEnclave || 'trades_construction'
+  const tailoredWorkspaceProfile = React.useMemo(
+    () => getTailoredUserProductsAndBusiness(user),
+    [user.id, user.name, user.headline, user.profession, user.professionId, user.professionEnclave, user.location, (user as any).company, user.about, user.phone]
+  )
+  const effectiveEnclaveId = tailoredWorkspaceProfile.resolution.enclaveId
   const enclaveInfo = findEnclaveById(effectiveEnclaveId)
   const enclaveWorkspace = getWorkspaceDataForEnclave(effectiveEnclaveId)
+
+  const userWorkspaceStorageKey = React.useMemo(
+    () =>
+      String(user.id || user.email || user.name || 'default')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_'),
+    [user.id, user.email, user.name]
+  )
 
   // Resume & Experience Builder State
   const [isResumeModalOpen, setIsResumeModalOpen] = useState(false)
@@ -315,9 +340,9 @@ export function ProfileView({
     })
   }
 
-  // 9 Workspace Sub-Sections
+  // 10 Workspace Sub-Sections (includes Personal Business Website)
   const [workspaceSection, setWorkspaceSection] = useState<
-    'profile' | 'portfolio' | 'skills' | 'certifications' | 'experience' | 'publications' | 'reviews' | 'products' | 'analytics'
+    'profile' | 'portfolio' | 'skills' | 'certifications' | 'experience' | 'publications' | 'reviews' | 'products' | 'business' | 'analytics'
   >('profile')
   const [isMemberConnected, setIsMemberConnected] = useState<boolean>(false)
 
@@ -860,13 +885,114 @@ export function ProfileView({
     } catch {}
   }
 
-  // Developer / Company Products State
-  const [myProducts, setMyProducts] = useState<VendorProductItem[]>(MY_PRODUCTS_DATA)
+  // Developer / Company Products & Personal Business Website State
+  const [customAddedProducts, setCustomAddedProducts] = useState<VendorProductItem[]>([])
+  const [myProducts, setMyProducts] = useState<VendorProductItem[]>(() => tailoredWorkspaceProfile.products)
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false)
   const [newProductName, setNewProductName] = useState("")
-  const [newProductCategory, setNewProductCategory] = useState<'Software' | 'Training' | 'Services' | 'Enterprise Solutions'>('Software')
+  const [newProductCategory, setNewProductCategory] = useState<VendorProductItem['category']>('Services')
   const [newProductPrice, setNewProductPrice] = useState("")
+  const [newProductDescription, setNewProductDescription] = useState("")
   const [productAddedSuccess, setProductAddedSuccess] = useState(false)
+
+  // Personal Business Website State & Customizations
+  const [businessOverrides, setBusinessOverrides] = useState<Partial<PersonalBusinessWebsiteData>>({})
+  const [businessCategoryFilter, setBusinessCategoryFilter] = useState<string>('All')
+  const [openBusinessFaqIdx, setOpenBusinessFaqIdx] = useState<number | null>(0)
+  const [siteUrlCopied, setSiteUrlCopied] = useState(false)
+  const [isEditWebsiteModalOpen, setIsEditWebsiteModalOpen] = useState(false)
+  const [editWebsiteName, setEditWebsiteName] = useState("")
+  const [editWebsiteSlug, setEditWebsiteSlug] = useState("")
+  const [editWebsiteHeadline, setEditWebsiteHeadline] = useState("")
+  const [editWebsiteTagline, setEditWebsiteTagline] = useState("")
+  const [editWebsiteTheme, setEditWebsiteTheme] = useState<BusinessThemeColor>('blue')
+  const [editWebsiteServiceArea, setEditWebsiteServiceArea] = useState("")
+  const [editWebsiteHours, setEditWebsiteHours] = useState("")
+  const [editWebsitePhone, setEditWebsitePhone] = useState("")
+  const [editWebsiteAbout, setEditWebsiteAbout] = useState("")
+  const [websiteSavedSuccess, setWebsiteSavedSuccess] = useState(false)
+
+  // Business Website Booking / Request Quote State
+  const [quoteClientName, setQuoteClientName] = useState("")
+  const [quoteClientEmail, setQuoteClientEmail] = useState("")
+  const [quoteSelectedOffering, setQuoteSelectedOffering] = useState("")
+  const [quotePreferredDate, setQuotePreferredDate] = useState("")
+  const [quoteNotes, setQuoteNotes] = useState("")
+  const [quoteSubmittedReceipt, setQuoteSubmittedReceipt] = useState<{
+    id: string
+    service: string
+    clientName: string
+    preferredDate: string
+  } | null>(null)
+
+  const businessWebsite: PersonalBusinessWebsiteData = React.useMemo(
+    () => ({
+      ...tailoredWorkspaceProfile.business,
+      ...businessOverrides,
+      domainSlug: businessOverrides.domainSlug || tailoredWorkspaceProfile.business.domainSlug,
+      domainUrl: `https://${businessOverrides.domainSlug || tailoredWorkspaceProfile.business.domainSlug}.conectln.com`
+    }),
+    [tailoredWorkspaceProfile.business, businessOverrides]
+  )
+
+  const allWebsiteOfferings: BusinessWebsiteOffering[] = React.useMemo(() => {
+    const baseIds = new Set(businessWebsite.offerings.map((o) => o.id))
+    const customOfferings: BusinessWebsiteOffering[] = customAddedProducts
+      .filter((p) => !baseIds.has(p.id))
+      .map((p) => ({
+        id: p.id,
+        title: p.name,
+        category: p.category,
+        productCategory: p.category,
+        price: p.price,
+        billingUnit: p.pricingModel || 'Flat Rate / Plan',
+        turnaround: p.turnaround || 'Available Now',
+        popular: true,
+        icon: p.icon || '✨',
+        description:
+          p.description ||
+          `Direct booking and marketplace offering provided by ${businessWebsite.businessName}.`,
+        deliverables: [
+          `Direct fulfillment by ${user.name}`,
+          'Transparent upfront pricing & SLA',
+          'Synced with ConnectLn Marketplace protection'
+        ],
+        ctaLabel: 'Book / Request Quote',
+        rating: p.rating,
+        reviewsCount: p.reviewsCount,
+        activeClientsCount: p.activeLicensesCount,
+        revenueLabel: p.mrrOrRevenue,
+        leadsCount: p.leadsCount
+      }))
+    return [...customOfferings, ...businessWebsite.offerings]
+  }, [customAddedProducts, businessWebsite.offerings, businessWebsite.businessName, user.name])
+
+  useEffect(() => {
+    let loadedCustomProducts: VendorProductItem[] = []
+    let loadedSiteOverrides: Partial<PersonalBusinessWebsiteData> = {}
+    if (typeof window !== 'undefined') {
+      try {
+        const rawProds = localStorage.getItem(`connectin_custom_products_v1_${userWorkspaceStorageKey}`)
+        if (rawProds) {
+          const parsed = JSON.parse(rawProds)
+          if (Array.isArray(parsed)) loadedCustomProducts = parsed
+        }
+      } catch {}
+      try {
+        const rawSite = localStorage.getItem(`connectin_business_website_v1_${userWorkspaceStorageKey}`)
+        if (rawSite) {
+          const parsed = JSON.parse(rawSite)
+          if (parsed && typeof parsed === 'object') loadedSiteOverrides = parsed
+        }
+      } catch {}
+    }
+    setCustomAddedProducts(loadedCustomProducts)
+    setMyProducts([...loadedCustomProducts, ...tailoredWorkspaceProfile.products])
+    setBusinessOverrides(loadedSiteOverrides)
+    setBusinessCategoryFilter('All')
+    setQuoteSubmittedReceipt(null)
+    setQuoteSelectedOffering(tailoredWorkspaceProfile.business.offerings[0]?.title || '')
+  }, [userWorkspaceStorageKey, tailoredWorkspaceProfile])
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault()
@@ -1054,26 +1180,134 @@ export function ProfileView({
       id: 'prod_' + Date.now(),
       name: newProductName.trim(),
       category: newProductCategory,
-      icon: newProductCategory === 'Software' ? '🛡️' : newProductCategory === 'Training' ? '🎓' : '⚡',
-      pricingModel: 'Monthly Subscription',
-      price: newProductPrice.trim() || '$299 / mo',
+      icon:
+        newProductCategory === 'Software'
+          ? '🛡️'
+          : newProductCategory === 'Training'
+          ? '🎓'
+          : newProductCategory === 'Clinical Services'
+          ? '🩺'
+          : newProductCategory === 'Trade Plans' || newProductCategory === 'Maintenance Plans'
+          ? '🛠️'
+          : newProductCategory === 'Diagnostics'
+          ? '📊'
+          : '⚡',
+      pricingModel: newProductPrice.toLowerCase().includes('/ mo') ? 'Monthly Plan' : 'Direct Service / Package',
+      price: newProductPrice.trim() || '$299',
       activeLicensesCount: 1,
       activeTrialsCount: 5,
-      mrrOrRevenue: '$299 / mo MRR',
+      mrrOrRevenue: newProductPrice.trim() || '$299 Listed',
       rating: 5.0,
       reviewsCount: 1,
       status: 'Active Listing',
-      leadsCount: 3
+      leadsCount: 3,
+      description:
+        newProductDescription.trim() ||
+        `Direct service & marketplace offering by ${businessWebsite.businessName}.`,
+      turnaround: 'Available Now'
     }
 
-    setMyProducts(prev => [newProd, ...prev])
+    setCustomAddedProducts((prev) => {
+      const next = [newProd, ...prev]
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(`connectin_custom_products_v1_${userWorkspaceStorageKey}`, JSON.stringify(next))
+        } catch {}
+      }
+      return next
+    })
+    setMyProducts((prev) => [newProd, ...prev])
     setProductAddedSuccess(true)
     setTimeout(() => {
       setIsAddProductModalOpen(false)
       setProductAddedSuccess(false)
       setNewProductName("")
       setNewProductPrice("")
-    }, 1500)
+      setNewProductDescription("")
+    }, 1200)
+  }
+
+  const handleOpenEditWebsiteModal = () => {
+    setEditWebsiteName(businessWebsite.businessName)
+    setEditWebsiteSlug(businessWebsite.domainSlug)
+    setEditWebsiteHeadline(businessWebsite.heroHeadline)
+    setEditWebsiteTagline(businessWebsite.tagline)
+    setEditWebsiteTheme(businessWebsite.themeColor)
+    setEditWebsiteServiceArea(businessWebsite.serviceArea)
+    setEditWebsiteHours(businessWebsite.operatingHours)
+    setEditWebsitePhone(businessWebsite.phoneDisplay)
+    setEditWebsiteAbout(businessWebsite.aboutStory)
+    setWebsiteSavedSuccess(false)
+    setIsEditWebsiteModalOpen(true)
+  }
+
+  const handleSaveWebsiteCustomization = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editWebsiteName.trim()) return
+    const cleanSlug =
+      editWebsiteSlug
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9-]+/g, '-')
+        .replace(/^-+|-+$/g, '') || tailoredWorkspaceProfile.business.domainSlug
+
+    const nextOverrides: Partial<PersonalBusinessWebsiteData> = {
+      businessName: editWebsiteName.trim(),
+      domainSlug: cleanSlug,
+      domainUrl: `https://${cleanSlug}.conectln.com`,
+      heroHeadline: editWebsiteHeadline.trim() || tailoredWorkspaceProfile.business.heroHeadline,
+      tagline: editWebsiteTagline.trim() || tailoredWorkspaceProfile.business.tagline,
+      themeColor: editWebsiteTheme,
+      serviceArea: editWebsiteServiceArea.trim() || tailoredWorkspaceProfile.business.serviceArea,
+      operatingHours: editWebsiteHours.trim() || tailoredWorkspaceProfile.business.operatingHours,
+      phoneDisplay: editWebsitePhone.trim() || tailoredWorkspaceProfile.business.phoneDisplay,
+      aboutStory: editWebsiteAbout.trim() || tailoredWorkspaceProfile.business.aboutStory
+    }
+    setBusinessOverrides(nextOverrides)
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(
+          `connectin_business_website_v1_${userWorkspaceStorageKey}`,
+          JSON.stringify(nextOverrides)
+        )
+      } catch {}
+    }
+    setWebsiteSavedSuccess(true)
+    setTimeout(() => {
+      setWebsiteSavedSuccess(false)
+      setIsEditWebsiteModalOpen(false)
+    }, 900)
+  }
+
+  const handleCopyWebsiteUrl = async () => {
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(businessWebsite.domainUrl)
+      }
+      setSiteUrlCopied(true)
+      setTimeout(() => setSiteUrlCopied(false), 2600)
+    } catch {}
+  }
+
+  const handleSelectWebsiteOffering = (offeringTitle: string) => {
+    setQuoteSelectedOffering(offeringTitle)
+    setQuoteSubmittedReceipt(null)
+    if (typeof document !== 'undefined') {
+      document.getElementById('business-site-booking')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+
+  const handleSubmitBusinessQuote = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!quoteClientName.trim() || !quoteClientEmail.trim()) return
+    const refId = `REQ-${Math.floor(10000 + Math.random() * 89999)}`
+    setQuoteSubmittedReceipt({
+      id: refId,
+      service: quoteSelectedOffering || allWebsiteOfferings[0]?.title || businessWebsite.professionTitle,
+      clientName: quoteClientName.trim(),
+      preferredDate: quotePreferredDate || 'Earliest Available Slot'
+    })
+    setQuoteNotes("")
   }
 
   return (
@@ -1240,7 +1474,8 @@ export function ProfileView({
             ...(!isViewingOtherMember ? [{ id: 'experience', label: '🏛️ Experience' }] : []),
             { id: 'publications', label: '📑 Publications' },
             { id: 'reviews', label: '⭐ Reviews' },
-            { id: 'products', label: isViewingOtherMember ? `🛍️ ${user.name.split(' ')[0]}'s Products` : '🛍️ My Products' }
+            { id: 'products', label: isViewingOtherMember ? `🛍️ ${user.name.split(' ')[0]}'s Products` : '🛍️ My Products' },
+            { id: 'business', label: isViewingOtherMember ? `🌐 ${user.name.split(' ')[0]}'s Business` : '🌐 My Business' }
           ].map((sec) => {
             const isSelected = workspaceSection === sec.id
             return (
@@ -1439,7 +1674,7 @@ export function ProfileView({
                       </span>
                       <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold border flex items-center gap-1.5 ${enclaveInfo?.badgeBg || 'bg-blue-100 text-[#0A66C2] dark:bg-blue-950 dark:text-blue-300'}`}>
                         <span>{enclaveInfo?.icon || '🛡️'}</span>
-                        <span>{user.profession || enclaveInfo?.shortName || 'Verified Member'}</span>
+                        <span>{user.profession || tailoredWorkspaceProfile.resolution.professionTitle || enclaveInfo?.shortName || 'Verified Member'}</span>
                       </span>
                       <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
                         {enclaveInfo?.securityClearanceTier || 'Level 2 Verified'}
@@ -1494,6 +1729,15 @@ export function ProfileView({
                         className="rounded-full bg-[#25D366] hover:bg-[#20ba5a] text-white px-3.5 py-2 text-xs font-bold shadow-md shadow-emerald-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
                       >
                         <span>Share on WhatsApp</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setWorkspaceSection('business')}
+                        className="rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 px-4 py-2 text-xs font-bold text-white shadow-md flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Globe className="h-3.5 w-3.5" />
+                        <span>{user.name.split(' ')[0]}&apos;s Business Site</span>
                       </button>
 
                       <button
@@ -1556,6 +1800,14 @@ export function ProfileView({
                       >
                         <Edit3 className="h-3.5 w-3.5" />
                         <span>Edit Profile</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setWorkspaceSection('business')}
+                        className="rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 px-4 py-2 text-xs font-bold text-white shadow-md flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Globe className="h-3.5 w-3.5" />
+                        <span>My Business Website</span>
                       </button>
                       <button
                         onClick={() => setWorkspaceSection('products')}
@@ -4138,56 +4390,71 @@ export function ProfileView({
       )}
 
       {/* ========================================================================= */}
-      {/* 8. 🛍️ MY PRODUCTS (DEVELOPER & COMPANY COMMERCIAL DESK) */}
+      {/* 8. 🛍️ MY PRODUCTS (PROFESSION-TAILORED MARKETPLACE & COMMERCIAL DESK) */}
       {/* ========================================================================= */}
-      {workspaceSection === 'products' && (
+      {workspaceSection === 'products' && (() => {
+        const totalActiveUnits = myProducts.reduce((sum, p) => sum + (p.activeLicensesCount || 0), 0)
+        const totalTrialsCount = myProducts.reduce((sum, p) => sum + (p.activeTrialsCount || 0), 0)
+        const totalLeadsCount = myProducts.reduce((sum, p) => sum + (p.leadsCount || 0), 0)
+        return (
         <div className="space-y-6">
           {/* Seller Performance Executive Strip */}
           <div className="rounded-2xl border border-purple-500/40 bg-gradient-to-r from-slate-900 via-purple-950 to-indigo-950 p-6 text-white shadow-xl space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1">
                 <span className="rounded-full bg-purple-500/30 px-3 py-0.5 text-xs font-bold text-purple-200 border border-purple-400/40">
-                  Seller &amp; Developer Hub
+                  {businessWebsite.industryLabel} · Marketplace Storefront
                 </span>
                 <h3 className="text-xl sm:text-2xl font-black text-white">
-                  {isViewingOtherMember ? `${user.name}'s Products & Storefront` : 'My Products & Storefront Management'}
+                  {isViewingOtherMember ? `${user.name}'s Products & Services` : 'My Products, Services & Storefront'}
                 </h3>
                 <p className="text-xs sm:text-sm text-purple-200">
                   {isViewingOtherMember
-                    ? `Explore software subscriptions, masterclasses, and consulting retainers offered by ${user.name} on ConnectIn Marketplace.`
-                    : 'Manage everything you sell through ConnectIn Marketplace: software subscriptions, masterclasses, and consulting retainers.'}
+                    ? `Explore verified ${businessWebsite.professionTitle} services, packages, and offerings sold by ${user.name} (${businessWebsite.businessName}) on ConnectLn Marketplace.`
+                    : `Manage everything ${businessWebsite.businessName} sells across ConnectLn Marketplace and your personal Business Website.`}
                 </p>
               </div>
 
-              {!isViewingOtherMember && (
+              <div className="flex items-center gap-2 flex-wrap shrink-0">
                 <button
-                  onClick={() => setIsAddProductModalOpen(true)}
-                  className="rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 px-4 py-2.5 text-xs font-black text-white shadow-md flex items-center gap-1.5 shrink-0"
+                  type="button"
+                  onClick={() => setWorkspaceSection('business')}
+                  className="rounded-xl bg-white/15 hover:bg-white/25 border border-white/25 px-4 py-2.5 text-xs font-bold text-white shadow-sm flex items-center gap-1.5 cursor-pointer transition-all"
                 >
-                  <Plus className="h-4 w-4" />
-                  <span>+ List New Product</span>
+                  <Globe className="h-4 w-4 text-emerald-300" />
+                  <span>🌐 View Live Business Website →</span>
                 </button>
-              )}
+                {!isViewingOtherMember && (
+                  <button
+                    type="button"
+                    onClick={() => setIsAddProductModalOpen(true)}
+                    className="rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 px-4 py-2.5 text-xs font-black text-white shadow-md flex items-center gap-1.5 shrink-0 cursor-pointer"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>+ List New Product / Service</span>
+                  </button>
+                )}
+              </div>
             </div>
 
-            {/* Seller KPIs (Owner only) */}
+            {/* Seller KPIs (Owner only - dynamically computed from user's tailored catalog) */}
             {!isViewingOtherMember && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
               <div className="rounded-xl bg-black/40 border border-white/15 p-3 text-center">
-                <span className="text-[10px] text-zinc-400 uppercase font-mono">Total Monthly MRR</span>
-                <p className="text-lg sm:text-xl font-black text-emerald-400">$122,790</p>
+                <span className="text-[10px] text-zinc-400 uppercase font-mono">Primary Offering</span>
+                <p className="text-sm sm:text-base font-black text-emerald-400 truncate px-1">{myProducts[0]?.mrrOrRevenue || 'Active Storefront'}</p>
               </div>
               <div className="rounded-xl bg-black/40 border border-white/15 p-3 text-center">
-                <span className="text-[10px] text-zinc-400 uppercase font-mono">Active Licenses</span>
-                <p className="text-lg sm:text-xl font-black text-white">634 Units</p>
+                <span className="text-[10px] text-zinc-400 uppercase font-mono">Clients / Units Served</span>
+                <p className="text-lg sm:text-xl font-black text-white">{totalActiveUnits.toLocaleString()} Active</p>
               </div>
               <div className="rounded-xl bg-black/40 border border-white/15 p-3 text-center">
-                <span className="text-[10px] text-zinc-400 uppercase font-mono">Staging Trials</span>
-                <p className="text-lg sm:text-xl font-black text-amber-300">44 Active</p>
+                <span className="text-[10px] text-zinc-400 uppercase font-mono">Active Bookings / Trials</span>
+                <p className="text-lg sm:text-xl font-black text-amber-300">{totalTrialsCount} Active</p>
               </div>
               <div className="rounded-xl bg-black/40 border border-white/15 p-3 text-center">
-                <span className="text-[10px] text-zinc-400 uppercase font-mono">Sales Inquiries</span>
-                <p className="text-lg sm:text-xl font-black text-sky-400">207 Leads</p>
+                <span className="text-[10px] text-zinc-400 uppercase font-mono">Customer Inquiries</span>
+                <p className="text-lg sm:text-xl font-black text-sky-400">{totalLeadsCount} Leads</p>
               </div>
             </div>
             )}
@@ -4195,10 +4462,15 @@ export function ProfileView({
 
           {/* Active Product Listings Table */}
           <div className="space-y-4">
-            <h4 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              <Store className="h-5 w-5 text-purple-600" />
-              <span>{isViewingOtherMember ? `${user.name.split(' ')[0]}'s Active Marketplace Listings (${myProducts.length})` : `Your Active Marketplace Listings (${myProducts.length})`}</span>
-            </h4>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <h4 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                <Store className="h-5 w-5 text-purple-600" />
+                <span>{isViewingOtherMember ? `${user.name.split(' ')[0]}'s Active Marketplace Listings (${myProducts.length})` : `Your Active Marketplace Listings (${myProducts.length})`}</span>
+              </h4>
+              <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800">
+                ✓ Synced live with {businessWebsite.domainSlug}.conectln.com
+              </span>
+            </div>
 
             <div className="space-y-3">
               {myProducts.map((prod) => (
@@ -4216,13 +4488,19 @@ export function ProfileView({
                         <h4 className="font-bold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 truncate">
                           {prod.name}
                         </h4>
-                        <span className="rounded-full bg-purple-100 px-2 py-0.2 text-[10px] font-bold text-purple-800 dark:bg-purple-950 dark:text-purple-300">
+                        <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-800 dark:bg-purple-950 dark:text-purple-300">
                           {prod.category}
                         </span>
-                        <span className="rounded-full bg-emerald-100 px-2 py-0.2 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
                           {prod.status}
                         </span>
                       </div>
+
+                      {prod.description && (
+                        <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-1">
+                          {prod.description}
+                        </p>
+                      )}
 
                       <p className="text-xs text-zinc-500">
                         Pricing: <strong>{prod.price}</strong> ({prod.pricingModel}) · Rating: <strong>{prod.rating} ⭐ ({prod.reviewsCount})</strong>
@@ -4230,28 +4508,953 @@ export function ProfileView({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-6 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-zinc-100 dark:border-zinc-800">
+                  <div className="flex items-center gap-4 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-zinc-100 dark:border-zinc-800">
                     <div className="text-right">
-                      <span className="text-[10px] font-mono text-zinc-400 uppercase">Revenue / MRR</span>
+                      <span className="text-[10px] font-mono text-zinc-400 uppercase">Volume / Revenue</span>
                       <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">{prod.mrrOrRevenue}</p>
-                      <p className="text-[10px] text-zinc-500">{prod.activeLicensesCount} licenses · {prod.leadsCount} leads</p>
+                      <p className="text-[10px] text-zinc-500">{prod.activeLicensesCount} booked · {prod.leadsCount} leads</p>
                     </div>
 
-                    <button
-                      onClick={onNavigateMarketplace}
-                      className="rounded-xl bg-[#0A66C2] hover:bg-[#004182] px-3.5 py-1.5 text-xs font-bold text-white shadow-xs"
-                    >
-                      View Live Page →
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setWorkspaceSection('business')
+                          setTimeout(() => handleSelectWebsiteOffering(prod.name), 80)
+                        }}
+                        className="rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 text-xs font-bold text-white shadow-xs cursor-pointer"
+                      >
+                        Book on Site
+                      </button>
+                      <button
+                        type="button"
+                        onClick={onNavigateMarketplace}
+                        className="rounded-xl bg-[#0A66C2] hover:bg-[#004182] px-3 py-1.5 text-xs font-bold text-white shadow-xs cursor-pointer"
+                      >
+                        Market →
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
         </div>
-      )}
+        )
+      })()}
 
-      {/* MODAL: LIST NEW PRODUCT */}
+      {/* ========================================================================= */}
+      {/* 9. 🌐 PERSONAL BUSINESS WEBSITE (FULL STANDALONE-STYLE BUSINESS PAGE) */}
+      {/* ========================================================================= */}
+      {workspaceSection === 'business' && (() => {
+        const themeMap: Record<
+          BusinessThemeColor,
+          {
+            btnPrimary: string
+            badgeBg: string
+            accentText: string
+            borderHighlight: string
+            softPanel: string
+            heroAccent: string
+          }
+        > = {
+          emerald: {
+            btnPrimary: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20',
+            badgeBg: 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800',
+            accentText: 'text-emerald-600 dark:text-emerald-400',
+            borderHighlight: 'border-emerald-500 ring-2 ring-emerald-500/20',
+            softPanel: 'from-emerald-50 via-white to-teal-50/60 dark:from-emerald-950/30 dark:via-zinc-900 dark:to-teal-950/20',
+            heroAccent: 'from-emerald-600 to-teal-700'
+          },
+          blue: {
+            btnPrimary: 'bg-[#0A66C2] hover:bg-[#004182] text-white shadow-blue-600/20',
+            badgeBg: 'bg-blue-50 text-[#0A66C2] border-blue-200 dark:bg-blue-950/60 dark:text-sky-300 dark:border-blue-800',
+            accentText: 'text-[#0A66C2] dark:text-sky-400',
+            borderHighlight: 'border-[#0A66C2] ring-2 ring-blue-500/20',
+            softPanel: 'from-blue-50 via-white to-sky-50/60 dark:from-blue-950/30 dark:via-zinc-900 dark:to-sky-950/20',
+            heroAccent: 'from-[#0A66C2] to-indigo-700'
+          },
+          amber: {
+            btnPrimary: 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-600/20',
+            badgeBg: 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800',
+            accentText: 'text-amber-600 dark:text-amber-400',
+            borderHighlight: 'border-amber-500 ring-2 ring-amber-500/20',
+            softPanel: 'from-amber-50 via-white to-orange-50/60 dark:from-amber-950/30 dark:via-zinc-900 dark:to-orange-950/20',
+            heroAccent: 'from-amber-600 to-orange-700'
+          },
+          purple: {
+            btnPrimary: 'bg-purple-600 hover:bg-purple-700 text-white shadow-purple-600/20',
+            badgeBg: 'bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800',
+            accentText: 'text-purple-600 dark:text-purple-400',
+            borderHighlight: 'border-purple-500 ring-2 ring-purple-500/20',
+            softPanel: 'from-purple-50 via-white to-indigo-50/60 dark:from-purple-950/30 dark:via-zinc-900 dark:to-indigo-950/20',
+            heroAccent: 'from-purple-600 to-indigo-700'
+          },
+          rose: {
+            btnPrimary: 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-600/20',
+            badgeBg: 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800',
+            accentText: 'text-rose-600 dark:text-rose-400',
+            borderHighlight: 'border-rose-500 ring-2 ring-rose-500/20',
+            softPanel: 'from-rose-50 via-white to-orange-50/60 dark:from-rose-950/30 dark:via-zinc-900 dark:to-orange-950/20',
+            heroAccent: 'from-rose-600 to-pink-700'
+          },
+          teal: {
+            btnPrimary: 'bg-teal-600 hover:bg-teal-700 text-white shadow-teal-600/20',
+            badgeBg: 'bg-teal-50 text-teal-800 border-teal-200 dark:bg-teal-950/60 dark:text-teal-300 dark:border-teal-800',
+            accentText: 'text-teal-600 dark:text-teal-400',
+            borderHighlight: 'border-teal-500 ring-2 ring-teal-500/20',
+            softPanel: 'from-teal-50 via-white to-cyan-50/60 dark:from-teal-950/30 dark:via-zinc-900 dark:to-cyan-950/20',
+            heroAccent: 'from-teal-600 to-emerald-700'
+          }
+        }
+        const activeTheme = themeMap[businessWebsite.themeColor || 'blue']
+        const uniqueCategories = ['All', ...Array.from(new Set(allWebsiteOfferings.map((o) => o.category)))]
+        const visibleOfferings =
+          businessCategoryFilter === 'All'
+            ? allWebsiteOfferings
+            : allWebsiteOfferings.filter((o) => o.category === businessCategoryFilter)
+
+        const scrollToSiteSection = (elementId: string) => {
+          if (typeof document !== 'undefined') {
+            document.getElementById(elementId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }
+        }
+
+        return (
+        <div className="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-2xl overflow-hidden animate-in fade-in">
+          {/* A. WEBSITE BROWSER ADDRESS BAR CHROME */}
+          <div className="bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-4 py-2.5 flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="h-3 w-3 rounded-full bg-rose-400" />
+                <span className="h-3 w-3 rounded-full bg-amber-400" />
+                <span className="h-3 w-3 rounded-full bg-emerald-400" />
+              </div>
+
+              <div className="flex items-center gap-2 flex-1 min-w-0 max-w-xl rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3.5 py-1.5 text-xs shadow-2xs">
+                <Lock className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                <span className="font-mono text-zinc-700 dark:text-zinc-200 truncate">
+                  {businessWebsite.domainUrl}
+                </span>
+                <span className="ml-auto rounded-full bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 shrink-0">
+                  LIVE SITE
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap shrink-0">
+              <button
+                type="button"
+                onClick={handleCopyWebsiteUrl}
+                className="rounded-lg bg-white dark:bg-zinc-800 hover:bg-zinc-50 border border-zinc-200 dark:border-zinc-700 px-2.5 py-1.5 text-[11px] font-bold text-zinc-700 dark:text-zinc-200 flex items-center gap-1.5 cursor-pointer"
+              >
+                {siteUrlCopied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                <span>{siteUrlCopied ? 'Website URL Copied ✓' : 'Copy Site Link'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsShareModalOpen(true)}
+                className="rounded-lg bg-white dark:bg-zinc-800 hover:bg-zinc-50 border border-zinc-200 dark:border-zinc-700 px-2.5 py-1.5 text-[11px] font-bold text-zinc-700 dark:text-zinc-200 flex items-center gap-1.5 cursor-pointer"
+              >
+                <Share2 className="h-3.5 w-3.5" />
+                <span>Share Website</span>
+              </button>
+
+              {!isViewingOtherMember && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleOpenEditWebsiteModal}
+                    className="rounded-lg bg-zinc-900 dark:bg-zinc-100 hover:opacity-90 px-3 py-1.5 text-[11px] font-bold text-white dark:text-zinc-900 flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  >
+                    <Edit3 className="h-3.5 w-3.5" />
+                    <span>Customize Website</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsAddProductModalOpen(true)}
+                    className={`rounded-lg px-3 py-1.5 text-[11px] font-bold flex items-center gap-1.5 cursor-pointer shadow-xs ${activeTheme.btnPrimary}`}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>+ Add Service / Product</span>
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* B. WEBSITE TOP NAVIGATION BAR */}
+          <header
+            id="business-site-top"
+            className="bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border-b border-zinc-200/80 dark:border-zinc-800 px-5 sm:px-8 py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className={`relative h-11 w-11 rounded-xl bg-gradient-to-br ${activeTheme.heroAccent} p-0.5 shadow-sm shrink-0`}>
+                <img
+                  src={user.avatar}
+                  alt={user.name}
+                  className="h-full w-full rounded-[10px] object-cover bg-white"
+                />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-base sm:text-lg font-black tracking-tight text-zinc-900 dark:text-zinc-100 truncate">
+                    {businessWebsite.businessName}
+                  </h2>
+                  <span className="rounded-full bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shrink-0">
+                    ✓ Verified Business
+                  </span>
+                </div>
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                  {businessWebsite.professionTitle} · License #{businessWebsite.licenseNumber}
+                </p>
+              </div>
+            </div>
+
+            <nav className="flex items-center gap-1 sm:gap-2 flex-wrap text-xs font-semibold text-zinc-600 dark:text-zinc-300">
+              <button
+                type="button"
+                onClick={() => scrollToSiteSection('business-site-services')}
+                className="px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors"
+              >
+                Services &amp; Shop
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollToSiteSection('business-site-about')}
+                className="px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors"
+              >
+                About
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollToSiteSection('business-site-gallery')}
+                className="px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors"
+              >
+                Gallery
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollToSiteSection('business-site-reviews')}
+                className="px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors"
+              >
+                Reviews &amp; FAQ
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollToSiteSection('business-site-booking')}
+                className={`ml-1 rounded-xl px-4 py-2 text-xs font-bold shadow-md flex items-center gap-1.5 cursor-pointer transition-transform hover:scale-[1.02] ${activeTheme.btnPrimary}`}
+              >
+                <Calendar className="h-3.5 w-3.5" />
+                <span>Book / Request Quote</span>
+              </button>
+            </nav>
+          </header>
+
+          {/* C. WEBSITE FULL-BLEED HERO LANDING SECTION */}
+          <section className="relative min-h-[340px] sm:min-h-[380px] flex flex-col justify-between overflow-hidden bg-slate-900 text-white">
+            <img
+              src={businessWebsite.heroBannerImage}
+              alt={businessWebsite.businessName}
+              className="absolute inset-0 h-full w-full object-cover opacity-40"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-900/85 to-slate-900/55" />
+
+            <div className="relative z-10 px-6 sm:px-10 pt-10 pb-8 max-w-4xl space-y-5">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/25 px-3 py-1 text-[11px] font-bold text-white">
+                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-300" />
+                  <span>{businessWebsite.insuredStatus}</span>
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/15 px-3 py-1 text-[11px] font-semibold text-zinc-200">
+                  <MapPin className="h-3 w-3 text-sky-300" />
+                  <span>{businessWebsite.location}</span>
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white leading-[1.12]">
+                  {businessWebsite.heroHeadline}
+                </h1>
+                <p className="text-sm sm:text-base text-zinc-200 max-w-2xl leading-relaxed">
+                  {businessWebsite.heroSubheadline}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 flex-wrap pt-1">
+                <button
+                  type="button"
+                  onClick={() => scrollToSiteSection('business-site-booking')}
+                  className={`rounded-xl px-5 py-3 text-xs sm:text-sm font-extrabold shadow-lg flex items-center gap-2 cursor-pointer transition-transform hover:scale-[1.02] ${activeTheme.btnPrimary}`}
+                >
+                  <Calendar className="h-4 w-4" />
+                  <span>Book Appointment / Get Estimate</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => scrollToSiteSection('business-site-services')}
+                  className="rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/30 px-5 py-3 text-xs sm:text-sm font-bold text-white flex items-center gap-2 cursor-pointer transition-colors"
+                >
+                  <ShoppingBag className="h-4 w-4" />
+                  <span>What We Sell &amp; Pricing ({allWebsiteOfferings.length})</span>
+                </button>
+
+                {onNavigateMessaging && (
+                  <button
+                    type="button"
+                    onClick={() => onNavigateMessaging(user)}
+                    className="rounded-xl bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/20 px-4 py-3 text-xs sm:text-sm font-bold text-zinc-100 flex items-center gap-2 cursor-pointer transition-colors"
+                  >
+                    <MessageSquarePlus className="h-4 w-4 text-sky-300" />
+                    <span>Chat With {user.name.split(' ')[0]}</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Bottom Hero Trust & Metrics Bar */}
+            <div className="relative z-10 bg-black/55 backdrop-blur-md border-t border-white/15 px-6 sm:px-10 py-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="space-y-0.5">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">Customer Rating</span>
+                <p className="text-sm sm:text-base font-black text-amber-300">
+                  ★ {businessWebsite.rating} / 5.0 <span className="text-xs font-normal text-zinc-300">({businessWebsite.reviewsCount} reviews)</span>
+                </p>
+              </div>
+              <div className="space-y-0.5">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">Track Record</span>
+                <p className="text-sm sm:text-base font-black text-white">{businessWebsite.completedJobsCount}</p>
+              </div>
+              <div className="space-y-0.5">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">Response SLA</span>
+                <p className="text-sm sm:text-base font-black text-emerald-300">{businessWebsite.responseTime}</p>
+              </div>
+              <div className="space-y-0.5">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">Coverage Area</span>
+                <p className="text-xs sm:text-sm font-bold text-zinc-100 truncate">{businessWebsite.serviceArea}</p>
+              </div>
+            </div>
+          </section>
+
+          {/* D. "WHAT WE SELL & OFFER" — WEBSITE SERVICES & MARKETPLACE STOREFRONT */}
+          <section id="business-site-services" className="px-6 sm:px-10 py-10 space-y-6 bg-zinc-50/70 dark:bg-zinc-900/40 border-b border-zinc-200 dark:border-zinc-800">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+              <div className="space-y-1.5 max-w-2xl">
+                <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-0.5 text-[11px] font-bold ${activeTheme.badgeBg}`}>
+                  <Store className="h-3.5 w-3.5" />
+                  <span>Services, Packages &amp; Marketplace Storefront</span>
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-zinc-100">
+                  What We Sell &amp; Offer
+                </h2>
+                <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
+                  Transparent, upfront offerings tailored to {businessWebsite.businessName}. All packages sync seamlessly with your ConnectLn Marketplace protection.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {uniqueCategories.map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setBusinessCategoryFilter(cat)}
+                    className={`rounded-full px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                      businessCategoryFilter === cat
+                        ? activeTheme.btnPrimary
+                        : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {visibleOfferings.map((off) => (
+                <div
+                  key={off.id}
+                  className={`relative rounded-2xl bg-white dark:bg-zinc-900 border p-6 shadow-sm flex flex-col justify-between transition-all hover:shadow-xl ${
+                    off.popular ? activeTheme.borderHighlight : 'border-zinc-200 dark:border-zinc-800'
+                  }`}
+                >
+                  {off.popular && (
+                    <span className={`absolute -top-3 right-5 rounded-full px-3 py-0.5 text-[10px] font-black uppercase tracking-wider shadow-sm ${activeTheme.btnPrimary}`}>
+                      ⭐ Most Popular
+                    </span>
+                  )}
+
+                  <div className="space-y-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-2xl border border-zinc-200 dark:border-zinc-700 shrink-0">
+                        {off.icon}
+                      </div>
+                      <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${activeTheme.badgeBg}`}>
+                        {off.category}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 leading-snug">
+                        {off.title}
+                      </h3>
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                        {off.description}
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl bg-zinc-50 dark:bg-zinc-800/70 border border-zinc-200/80 dark:border-zinc-700/70 p-3 flex items-baseline justify-between gap-2">
+                      <div>
+                        <span className={`text-2xl font-black ${activeTheme.accentText}`}>{off.price}</span>
+                        <span className="ml-1.5 text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
+                          {off.billingUnit}
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-900 px-2 py-0.5 rounded-md border border-zinc-200 dark:border-zinc-700">
+                        ⏱️ {off.turnaround}
+                      </span>
+                    </div>
+
+                    <ul className="space-y-1.5 pt-1">
+                      {off.deliverables.map((item, idx) => (
+                        <li key={idx} className="flex items-start gap-2 text-xs text-zinc-700 dark:text-zinc-300">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="pt-5 mt-5 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleSelectWebsiteOffering(off.title)}
+                      className={`flex-1 rounded-xl py-2.5 px-3.5 text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer transition-transform hover:scale-[1.01] shadow-sm ${activeTheme.btnPrimary}`}
+                    >
+                      <span>{off.ctaLabel}</span>
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setWorkspaceSection('products')}
+                      className="rounded-xl border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 px-3 py-2.5 text-[11px] font-bold text-zinc-700 dark:text-zinc-300 cursor-pointer"
+                      title="View Marketplace Listing Details"
+                    >
+                      Market ↗
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* E. WHY CHOOSE US + ABOUT OUR BUSINESS + CREDENTIALS */}
+          <section id="business-site-about" className="px-6 sm:px-10 py-10 space-y-8 border-b border-zinc-200 dark:border-zinc-800">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              <div className="lg:col-span-5 space-y-4">
+                <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-0.5 text-[11px] font-bold ${activeTheme.badgeBg}`}>
+                  <Building2 className="h-3.5 w-3.5" />
+                  <span>About {businessWebsite.businessName}</span>
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-zinc-100 leading-tight">
+                  Why Customers &amp; Partners Trust Us
+                </h2>
+                <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                  {businessWebsite.aboutStory}
+                </p>
+                <blockquote className={`rounded-2xl border bg-gradient-to-br p-4 text-xs sm:text-sm font-semibold italic text-zinc-800 dark:text-zinc-200 ${activeTheme.softPanel} border-zinc-200 dark:border-zinc-800`}>
+                  &ldquo;{businessWebsite.missionStatement}&rdquo;
+                  <footer className="mt-2 not-italic flex items-center gap-2 text-[11px] font-bold text-zinc-500">
+                    <img src={user.avatar} alt={user.name} className="h-6 w-6 rounded-full object-cover" />
+                    <span>{user.name} · Founder &amp; {businessWebsite.professionTitle}</span>
+                  </footer>
+                </blockquote>
+              </div>
+
+              <div className="lg:col-span-7 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {businessWebsite.valueProps.map((vp, idx) => (
+                    <div
+                      key={idx}
+                      className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-2 shadow-2xs"
+                    >
+                      <div className="text-2xl">{vp.icon}</div>
+                      <h3 className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100">{vp.title}</h3>
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">{vp.description}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/70 p-4 space-y-2.5">
+                  <p className="text-xs font-extrabold uppercase tracking-wider text-zinc-500">
+                    Verified Licenses, Compliance &amp; Business Guarantees
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {businessWebsite.credentialsBadges.map((badge, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-1 text-xs font-bold text-zinc-800 dark:text-zinc-200 shadow-2xs"
+                      >
+                        <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+                        <span>{badge}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* F. WORK PORTFOLIO & PHOTO GALLERY */}
+          <section id="business-site-gallery" className="px-6 sm:px-10 py-10 space-y-6 bg-zinc-50/70 dark:bg-zinc-900/40 border-b border-zinc-200 dark:border-zinc-800">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+              <div className="space-y-1">
+                <h2 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-zinc-100">
+                  Recent Work &amp; Business Showcase
+                </h2>
+                <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
+                  Verified field work, diagnostics, and client deliveries from {businessWebsite.businessName}.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setWorkspaceSection('portfolio')}
+                className={`text-xs font-bold flex items-center gap-1 cursor-pointer hover:underline ${activeTheme.accentText}`}
+              >
+                <span>See Full Portfolio ({enclaveWorkspace.portfolio.length})</span>
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {businessWebsite.gallery.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="group rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-lg transition-all"
+                >
+                  <div className="relative h-44 overflow-hidden bg-zinc-900">
+                    <img
+                      src={item.imageUrl}
+                      alt={item.title}
+                      className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <span className="absolute top-3 left-3 rounded-full bg-black/75 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-white border border-white/20">
+                      {item.badge}
+                    </span>
+                  </div>
+                  <div className="p-4 space-y-1">
+                    <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{item.title}</h3>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">{item.subtitle}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* G. VERIFIED CLIENT REVIEWS & INTERACTIVE FAQ */}
+          <section id="business-site-reviews" className="px-6 sm:px-10 py-10 border-b border-zinc-200 dark:border-zinc-800">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-black text-zinc-900 dark:text-zinc-100">
+                    Verified Customer Reviews
+                  </h2>
+                  <span className="text-xs font-bold text-amber-500">
+                    ★★★★★ {businessWebsite.rating} ({businessWebsite.reviewsCount})
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  {businessWebsite.testimonials.map((tItem, idx) => (
+                    <div
+                      key={idx}
+                      className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-2.5 shadow-2xs"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{tItem.clientName}</p>
+                          <p className="text-[11px] text-zinc-500">{tItem.clientRole}</p>
+                        </div>
+                        <span className="text-amber-500 text-xs font-bold">★★★★★</span>
+                      </div>
+                      <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 italic leading-relaxed">
+                        &ldquo;{tItem.quote}&rdquo;
+                      </p>
+                      <p className="text-[10px] font-mono text-zinc-400">Verified ConnectLn Client · {tItem.date}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h2 className="text-xl font-black text-zinc-900 dark:text-zinc-100">
+                  Frequently Asked Questions
+                </h2>
+                <div className="space-y-2.5">
+                  {businessWebsite.faqs.map((faq, idx) => {
+                    const isOpen = openBusinessFaqIdx === idx
+                    return (
+                      <div
+                        key={idx}
+                        className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900 overflow-hidden"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setOpenBusinessFaqIdx(isOpen ? null : idx)}
+                          className="w-full px-4 py-3.5 text-left flex items-center justify-between gap-3 font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 cursor-pointer"
+                        >
+                          <span>{faq.question}</span>
+                          {isOpen ? (
+                            <ChevronUp className="h-4 w-4 shrink-0 text-zinc-500" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 shrink-0 text-zinc-500" />
+                          )}
+                        </button>
+                        {isOpen && (
+                          <div className="px-4 pb-4 text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed border-t border-zinc-200/70 dark:border-zinc-800 pt-2.5">
+                            {faq.answer}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* H. INTERACTIVE WEBSITE BOOKING / REQUEST A QUOTE SECTION */}
+          <section
+            id="business-site-booking"
+            className={`px-6 sm:px-10 py-10 bg-gradient-to-br ${activeTheme.softPanel}`}
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              <div className="lg:col-span-5 space-y-4">
+                <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-0.5 text-[11px] font-bold ${activeTheme.badgeBg}`}>
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span>Direct Booking &amp; Free Estimate</span>
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-zinc-100">
+                  Schedule With {businessWebsite.businessName}
+                </h2>
+                <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
+                  Book an appointment, request an exact upfront estimate, or inquire about custom contracts directly from our website.
+                </p>
+
+                <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-3 text-xs shadow-sm">
+                  <div className="flex items-start gap-2.5">
+                    <Clock className={`h-4 w-4 shrink-0 mt-0.5 ${activeTheme.accentText}`} />
+                    <div>
+                      <p className="font-bold text-zinc-900 dark:text-zinc-100">Hours of Operation</p>
+                      <p className="text-zinc-600 dark:text-zinc-400">{businessWebsite.operatingHours}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <MapPin className={`h-4 w-4 shrink-0 mt-0.5 ${activeTheme.accentText}`} />
+                    <div>
+                      <p className="font-bold text-zinc-900 dark:text-zinc-100">Service Coverage</p>
+                      <p className="text-zinc-600 dark:text-zinc-400">{businessWebsite.serviceArea}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <Phone className={`h-4 w-4 shrink-0 mt-0.5 ${activeTheme.accentText}`} />
+                    <div>
+                      <p className="font-bold text-zinc-900 dark:text-zinc-100">Direct Business Line</p>
+                      <p className="text-zinc-600 dark:text-zinc-400">{businessWebsite.phoneDisplay}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <Mail className={`h-4 w-4 shrink-0 mt-0.5 ${activeTheme.accentText}`} />
+                    <div>
+                      <p className="font-bold text-zinc-900 dark:text-zinc-100">Business Email &amp; Web</p>
+                      <p className="text-zinc-600 dark:text-zinc-400 font-mono">{businessWebsite.emailDisplay}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="lg:col-span-7 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-lg">
+                {quoteSubmittedReceipt ? (
+                  <div className="py-8 text-center space-y-3">
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600">
+                      <CheckCircle2 className="h-7 w-7" />
+                    </div>
+                    <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100">
+                      Request Sent to {businessWebsite.businessName}!
+                    </h3>
+                    <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 max-w-md mx-auto">
+                      Confirmation <strong>#{quoteSubmittedReceipt.id}</strong> for{' '}
+                      <strong>{quoteSubmittedReceipt.service}</strong> on{' '}
+                      <strong>{quoteSubmittedReceipt.preferredDate}</strong> has been logged for{' '}
+                      {quoteSubmittedReceipt.clientName}. Expected response: {businessWebsite.responseTime}.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setQuoteSubmittedReceipt(null)}
+                      className="rounded-xl bg-zinc-900 dark:bg-zinc-100 px-4 py-2 text-xs font-bold text-white dark:text-zinc-900 cursor-pointer"
+                    >
+                      Submit Another Inquiry
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmitBusinessQuote} className="space-y-4 text-xs">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="font-bold text-zinc-700 dark:text-zinc-300">Your Name / Organization</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. Jordan Rivera"
+                          value={quoteClientName}
+                          onChange={(e) => setQuoteClientName(e.target.value)}
+                          className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2.5 text-zinc-900 dark:text-zinc-100"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="font-bold text-zinc-700 dark:text-zinc-300">Email or Phone Number</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="you@email.com or (555) 123-4567"
+                          value={quoteClientEmail}
+                          onChange={(e) => setQuoteClientEmail(e.target.value)}
+                          className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2.5 text-zinc-900 dark:text-zinc-100"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="font-bold text-zinc-700 dark:text-zinc-300">Select Service / Product</label>
+                        <select
+                          value={quoteSelectedOffering || allWebsiteOfferings[0]?.title || ''}
+                          onChange={(e) => setQuoteSelectedOffering(e.target.value)}
+                          className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2.5 text-zinc-900 dark:text-zinc-100"
+                        >
+                          {allWebsiteOfferings.map((o) => (
+                            <option key={o.id} value={o.title}>
+                              {o.title} ({o.price})
+                            </option>
+                          ))}
+                          <option value={`Custom ${businessWebsite.professionTitle} Project`}>
+                            Custom {businessWebsite.professionTitle} Request
+                          </option>
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="font-bold text-zinc-700 dark:text-zinc-300">Preferred Date / Timing</label>
+                        <input
+                          type="date"
+                          value={quotePreferredDate}
+                          onChange={(e) => setQuotePreferredDate(e.target.value)}
+                          className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2.5 text-zinc-900 dark:text-zinc-100"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-zinc-700 dark:text-zinc-300">Project Scope / Appointment Details</label>
+                      <textarea
+                        rows={3}
+                        placeholder={`Tell ${user.name.split(' ')[0]} what you need help with, location details, or any urgency...`}
+                        value={quoteNotes}
+                        onChange={(e) => setQuoteNotes(e.target.value)}
+                        className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2.5 text-zinc-900 dark:text-zinc-100"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      className={`w-full rounded-xl py-3 px-5 text-xs sm:text-sm font-extrabold shadow-md cursor-pointer transition-transform hover:scale-[1.01] ${activeTheme.btnPrimary}`}
+                    >
+                      Send Booking &amp; Quote Request to {businessWebsite.businessName} →
+                    </button>
+                  </form>
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* I. AUTHENTIC WEBSITE FOOTER */}
+          <footer className="bg-slate-950 text-zinc-300 px-6 sm:px-10 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
+            <div className="space-y-1">
+              <p className="font-bold text-white">{businessWebsite.businessName}</p>
+              <p className="text-[11px] text-zinc-400">
+                © 2026 {businessWebsite.businessName} · Verified Business Website on ConnectLn ({businessWebsite.domainSlug}.conectln.com)
+              </p>
+            </div>
+            <div className="flex items-center gap-4 flex-wrap text-[11px] font-semibold">
+              <button type="button" onClick={() => scrollToSiteSection('business-site-top')} className="hover:text-white cursor-pointer">
+                Back to Top
+              </button>
+              <button type="button" onClick={() => scrollToSiteSection('business-site-services')} className="hover:text-white cursor-pointer">
+                Services &amp; Products
+              </button>
+              <button type="button" onClick={() => setWorkspaceSection('products')} className="hover:text-white cursor-pointer">
+                Marketplace Storefront
+              </button>
+              <button type="button" onClick={() => setWorkspaceSection('profile')} className="hover:text-white cursor-pointer">
+                Owner Profile
+              </button>
+            </div>
+          </footer>
+        </div>
+        )
+      })()}
+
+      {/* MODAL: CUSTOMIZE PERSONAL BUSINESS WEBSITE (OWNER ONLY) */}
+      <Dialog
+        open={isEditWebsiteModalOpen}
+        onOpenChange={(open) => {
+          if (!open) setIsEditWebsiteModalOpen(false)
+        }}
+      >
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+              <Globe className="h-5 w-5 text-emerald-600" />
+              <span>Customize Your Business Website</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          {websiteSavedSuccess ? (
+            <div className="py-8 text-center space-y-2">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                <Check className="h-6 w-6" />
+              </div>
+              <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
+                Business Website Updated!
+              </h4>
+              <p className="text-xs text-zinc-500">
+                Your live website branding, domain URL, and contact details are now updated.
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={handleSaveWebsiteCustomization} className="space-y-3.5 text-xs pt-1">
+              <div className="space-y-1">
+                <label className="font-bold text-zinc-700 dark:text-zinc-300">Business Name</label>
+                <input
+                  type="text"
+                  required
+                  value={editWebsiteName}
+                  onChange={(e) => setEditWebsiteName(e.target.value)}
+                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 font-semibold"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-zinc-700 dark:text-zinc-300">Website Subdomain</label>
+                  <div className="flex items-center rounded-lg border border-zinc-300 dark:border-zinc-700 overflow-hidden bg-zinc-50 dark:bg-zinc-800">
+                    <input
+                      type="text"
+                      value={editWebsiteSlug}
+                      onChange={(e) => setEditWebsiteSlug(e.target.value)}
+                      className="flex-1 bg-transparent p-2 text-zinc-900 dark:text-zinc-100 font-mono text-[11px] outline-none"
+                    />
+                    <span className="px-2 text-[10px] font-mono text-zinc-500 border-l border-zinc-200 dark:border-zinc-700">.conectln.com</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-zinc-700 dark:text-zinc-300">Website Theme Color</label>
+                  <select
+                    value={editWebsiteTheme}
+                    onChange={(e) => setEditWebsiteTheme(e.target.value as BusinessThemeColor)}
+                    className="w-full rounded-lg border border-zinc-300 p-2 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  >
+                    <option value="emerald">Emerald Green</option>
+                    <option value="blue">ConnectLn Classic Blue</option>
+                    <option value="amber">Master Trades Amber</option>
+                    <option value="teal">Clinical Teal</option>
+                    <option value="purple">Executive Purple</option>
+                    <option value="rose">Studio Rose</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-zinc-700 dark:text-zinc-300">Website Hero Headline</label>
+                <input
+                  type="text"
+                  value={editWebsiteHeadline}
+                  onChange={(e) => setEditWebsiteHeadline(e.target.value)}
+                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-zinc-700 dark:text-zinc-300">Business Tagline</label>
+                <input
+                  type="text"
+                  value={editWebsiteTagline}
+                  onChange={(e) => setEditWebsiteTagline(e.target.value)}
+                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-zinc-700 dark:text-zinc-300">Service Coverage Area</label>
+                  <input
+                    type="text"
+                    value={editWebsiteServiceArea}
+                    onChange={(e) => setEditWebsiteServiceArea(e.target.value)}
+                    className="w-full rounded-lg border border-zinc-300 p-2 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-zinc-700 dark:text-zinc-300">Business Phone Line</label>
+                  <input
+                    type="text"
+                    value={editWebsitePhone}
+                    onChange={(e) => setEditWebsitePhone(e.target.value)}
+                    className="w-full rounded-lg border border-zinc-300 p-2 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-zinc-700 dark:text-zinc-300">Operating Hours</label>
+                <input
+                  type="text"
+                  value={editWebsiteHours}
+                  onChange={(e) => setEditWebsiteHours(e.target.value)}
+                  className="w-full rounded-lg border border-zinc-300 p-2 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-zinc-700 dark:text-zinc-300">About Your Business Story</label>
+                <textarea
+                  rows={3}
+                  value={editWebsiteAbout}
+                  onChange={(e) => setEditWebsiteAbout(e.target.value)}
+                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                />
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditWebsiteModalOpen(false)}
+                  className="rounded-lg bg-zinc-200 px-4 py-2 font-semibold text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-lg bg-emerald-600 hover:bg-emerald-700 px-5 py-2 font-bold text-white shadow-md cursor-pointer"
+                >
+                  Publish Website Updates ✓
+                </button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL: LIST NEW PRODUCT OR SERVICE */}
       <Dialog
         open={isAddProductModalOpen}
         onOpenChange={(open) => {
@@ -4262,7 +5465,7 @@ export function ProfileView({
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
               <Store className="h-5 w-5 text-purple-600" />
-              <span>List New Product on Marketplace</span>
+              <span>Add Product or Service Listing</span>
             </DialogTitle>
           </DialogHeader>
 
@@ -4272,19 +5475,19 @@ export function ProfileView({
                 <Check className="h-6 w-6" />
               </div>
               <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
-                Product Listing Created!
+                Listing Published to Website &amp; Marketplace!
               </h4>
               <p className="text-xs text-zinc-500">
-                Your product is now active in the ConnectIn Marketplace and ready to receive customer orders.
+                Your new offering is now live on your Business Website and active in ConnectLn Marketplace.
               </p>
             </div>
           ) : (
             <form onSubmit={handleCreateProductListing} className="space-y-4 text-xs">
               <div className="space-y-1">
-                <label className="font-bold text-zinc-700 dark:text-zinc-300">Product Name</label>
+                <label className="font-bold text-zinc-700 dark:text-zinc-300">Product or Service Title</label>
                 <input
                   type="text"
-                  placeholder="e.g. AXIOM Cloud Defense Gateway"
+                  placeholder={`e.g. Custom ${businessWebsite.professionTitle} Package`}
                   value={newProductName}
                   onChange={(e) => setNewProductName(e.target.value)}
                   required
@@ -4299,21 +5502,37 @@ export function ProfileView({
                   onChange={(e) => setNewProductCategory(e.target.value as any)}
                   className="w-full rounded-lg border border-zinc-300 p-2.5 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                 >
-                  <option value="Software">Software</option>
-                  <option value="Training">Training</option>
                   <option value="Services">Services</option>
-                  <option value="Enterprise Solutions">Enterprise Solutions</option>
+                  <option value="Trade Plans">Trade &amp; Service Plans</option>
+                  <option value="Clinical Services">Clinical / Veterinary Services</option>
+                  <option value="Maintenance Plans">Maintenance &amp; Retainer Plans</option>
+                  <option value="Diagnostics">Diagnostics &amp; Inspections</option>
+                  <option value="Consultations">Consultations &amp; Advisory</option>
+                  <option value="Training">Training &amp; Workshops</option>
+                  <option value="Software">Software</option>
+                  <option value="Enterprise Solutions">Turnkey / Enterprise Solutions</option>
                 </select>
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-zinc-700 dark:text-zinc-300">Pricing Tier</label>
+                <label className="font-bold text-zinc-700 dark:text-zinc-300">Pricing / Rate</label>
                 <input
                   type="text"
-                  placeholder="e.g. $499 / mo or $199 one-time"
+                  placeholder="e.g. $175 flat rate or $49 / mo"
                   value={newProductPrice}
                   onChange={(e) => setNewProductPrice(e.target.value)}
                   required
+                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-zinc-700 dark:text-zinc-300">What Customers Receive (Short Summary)</label>
+                <textarea
+                  rows={2}
+                  placeholder="Describe deliverables, turnaround time, and what makes your offering stand out..."
+                  value={newProductDescription}
+                  onChange={(e) => setNewProductDescription(e.target.value)}
                   className="w-full rounded-lg border border-zinc-300 p-2.5 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                 />
               </div>
