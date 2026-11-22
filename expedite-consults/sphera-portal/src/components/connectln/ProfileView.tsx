@@ -79,7 +79,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { createUniqueUserProfile } from "@/lib/connectin-profile"
+import { createUniqueUserProfile, isSuperAdminUser } from "@/lib/connectin-profile"
 import { saveStoredUser, loadStoredUser, savePersistentAvatar, savePersistentCover, trackUserActivity, resolveUserProfilePicture as resolveSharePhoto } from "@/lib/connectin-storage"
 import { buildSharePreviewUrl, useSharePic } from "@/lib/connectin-share"
 import {
@@ -101,6 +101,8 @@ import { playHumanVoiceTag, recordRealHumanVoiceTag } from "@/lib/connectin-voic
 
 interface ProfileViewProps {
   user: UserProfile
+  viewerUser?: UserProfile
+  isAdminViewer?: boolean
   isViewingOtherMember?: boolean
   onReturnToOwnWorkspace?: () => void
   onConnectMember?: (memberIdOrName: string) => void
@@ -114,6 +116,8 @@ interface ProfileViewProps {
 
 export function ProfileView({
   user,
+  viewerUser,
+  isAdminViewer = false,
   isViewingOtherMember = false,
   onReturnToOwnWorkspace,
   onConnectMember,
@@ -125,6 +129,33 @@ export function ProfileView({
   onNavigateMessaging
 }: ProfileViewProps) {
   const { t } = useLanguage()
+
+  const activeViewer = React.useMemo(() => viewerUser || loadStoredUser(), [viewerUser])
+  const isAccountOwner = React.useMemo(() => {
+    if (!isViewingOtherMember) return true
+    if (!activeViewer || !user) return false
+    const viewerName = String(activeViewer.name || '').trim().toLowerCase()
+    const targetName = String(user.name || '').trim().toLowerCase()
+    if (viewerName && targetName && viewerName === targetName) return true
+    const viewerEmail = String((activeViewer as any).email || '').trim().toLowerCase()
+    const targetEmail = String((user as any).email || '').trim().toLowerCase()
+    if (viewerEmail && targetEmail && viewerEmail === targetEmail) return true
+    return false
+  }, [isViewingOtherMember, activeViewer, user])
+
+  const hasAdminAccess = React.useMemo(() => {
+    if (isAdminViewer) return true
+    if (!activeViewer) return false
+    return (
+      isSuperAdminUser(activeViewer) ||
+      (activeViewer as any).role === 'admin' ||
+      (Array.isArray((activeViewer as any).roles) &&
+        (activeViewer as any).roles.includes('SUPER_ADMIN'))
+    )
+  }, [isAdminViewer, activeViewer])
+
+  const canManageWorkspace = isAccountOwner || hasAdminAccess
+  const isAdminManagingOtherMember = !isAccountOwner && hasAdminAccess
   const tailoredWorkspaceProfile = React.useMemo(
     () => getTailoredUserProductsAndBusiness(user),
     [user.id, user.name, user.headline, user.profession, user.professionId, user.professionEnclave, user.location, (user as any).company, user.about, user.phone]
@@ -183,7 +214,7 @@ export function ProfileView({
   const [isRecordingProfileVoiceTag, setIsRecordingProfileVoiceTag] = useState(false)
 
   const syncPublicProfileToCloud = (profileToSync: UserProfile) => {
-    if (isViewingOtherMember || typeof window === 'undefined') return
+    if (!canManageWorkspace || typeof window === 'undefined') return
     try {
       fetch('/api/connectin/users', {
         method: 'PUT',
@@ -210,6 +241,15 @@ export function ProfileView({
     }
   }
 
+  const persistWorkspaceUserProfile = (updatedProfile: UserProfile) => {
+    if (isAccountOwner) {
+      saveStoredUser(updatedProfile)
+    }
+    if (canManageWorkspace) {
+      syncPublicProfileToCloud(updatedProfile)
+    }
+  }
+
   const handleApplyResumeExperience = (
     newExperiences: ParsedExperience[],
     options: {
@@ -224,6 +264,7 @@ export function ProfileView({
       candidateName?: string
     }
   ) => {
+    if (!canManageWorkspace) return
     const formattedNewExp = newExperiences.map(e => ({
       id: e.id,
       role: e.role,
@@ -272,10 +313,7 @@ export function ProfileView({
       ...({ uploadedResume: uploadedResumeMeta } as any)
     }
 
-    if (!isViewingOtherMember) {
-      saveStoredUser(updatedUser)
-      syncPublicProfileToCloud(updatedUser)
-    }
+    persistWorkspaceUserProfile(updatedUser)
     trackUserActivity({
       actionType: 'RESUME_UPLOADED',
       actionLabel: 'Uploaded & Applied Resume to Profile',
@@ -311,6 +349,7 @@ export function ProfileView({
   }
 
   const handleSaveManualExperience = (exp: ParsedExperience) => {
+    if (!canManageWorkspace) return
     const formattedExp = {
       id: exp.id,
       role: exp.role,
@@ -335,10 +374,7 @@ export function ProfileView({
       experience: nextExpList
     }
 
-    if (!isViewingOtherMember) {
-      saveStoredUser(updatedUser)
-      syncPublicProfileToCloud(updatedUser)
-    }
+    persistWorkspaceUserProfile(updatedUser)
     if (onUpdateUser) {
       onUpdateUser(updatedUser)
     }
@@ -346,15 +382,13 @@ export function ProfileView({
   }
 
   const handleDeleteExperience = (expId: string) => {
+    if (!canManageWorkspace) return
     const nextExpList = (user.experience || []).filter(e => e.id !== expId)
     const updatedUser: UserProfile = {
       ...user,
       experience: nextExpList
     }
-    if (!isViewingOtherMember) {
-      saveStoredUser(updatedUser)
-      syncPublicProfileToCloud(updatedUser)
-    }
+    persistWorkspaceUserProfile(updatedUser)
     if (onUpdateUser) {
       onUpdateUser(updatedUser)
     }
@@ -552,6 +586,7 @@ export function ProfileView({
   }, [user?.name, user?.profession, user?.location, resolvedDisplayProfession, tailoredWorkspaceProfile.resolution.subArchetype])
 
   const handleSaveJobCard = (nextStatus?: 'Looking for a Job' | 'Looking for Projects' | 'Available for Hire' | 'Booked') => {
+    if (!canManageWorkspace) return
     const statusToSave = nextStatus || jobBadgeStatus
     setJobBadgeStatus(statusToSave)
     try {
@@ -687,15 +722,13 @@ export function ProfileView({
   }
 
   const handleUpdateAvatar = (newAvatarUrl: string) => {
-    savePersistentAvatar(newAvatarUrl, user)
+    if (!canManageWorkspace) return
+    if (isAccountOwner) savePersistentAvatar(newAvatarUrl, user)
     const updated: UserProfile = {
       ...user,
       avatar: newAvatarUrl
     }
-    if (!isViewingOtherMember) {
-      saveStoredUser(updated)
-      syncPublicProfileToCloud(updated)
-    }
+    persistWorkspaceUserProfile(updated)
     trackUserActivity({
       actionType: 'PROFILE_UPDATED',
       actionLabel: 'Updated & Trimmed Profile Picture',
@@ -731,15 +764,13 @@ export function ProfileView({
   }
 
   const handleUpdateCover = (newCoverUrl: string) => {
-    savePersistentCover(newCoverUrl, user)
+    if (!canManageWorkspace) return
+    if (isAccountOwner) savePersistentCover(newCoverUrl, user)
     const updated: UserProfile = {
       ...user,
       coverImage: newCoverUrl
     }
-    if (!isViewingOtherMember) {
-      saveStoredUser(updated)
-      syncPublicProfileToCloud(updated)
-    }
+    persistWorkspaceUserProfile(updated)
     if (onUpdateUser) {
       onUpdateUser(updated)
     }
@@ -777,12 +808,9 @@ export function ProfileView({
       setAvatarOffsetX(0)
       setAvatarOffsetY(0)
       setAvatarRotate(0)
-      savePersistentAvatar(dataUrl, user)
+      if (isAccountOwner) savePersistentAvatar(dataUrl, user)
       const updated: UserProfile = { ...user, avatar: dataUrl }
-      if (!isViewingOtherMember) {
-        saveStoredUser(updated)
-        syncPublicProfileToCloud(updated)
-      }
+      persistWorkspaceUserProfile(updated)
       if (onUpdateUser) {
         onUpdateUser(updated)
       }
@@ -801,12 +829,9 @@ export function ProfileView({
       setCoverZoom(1)
       setCoverOffsetX(0)
       setCoverOffsetY(0)
-      savePersistentCover(dataUrl, user)
+      if (isAccountOwner) savePersistentCover(dataUrl, user)
       const updated: UserProfile = { ...user, coverImage: dataUrl }
-      if (!isViewingOtherMember) {
-        saveStoredUser(updated)
-        syncPublicProfileToCloud(updated)
-      }
+      persistWorkspaceUserProfile(updated)
       if (onUpdateUser) {
         onUpdateUser(updated)
       }
@@ -822,12 +847,9 @@ export function ProfileView({
     const dataUrl = await compressImageFile(file, 360, 360, 0.82)
     if (dataUrl) {
       setEditAvatar(dataUrl)
-      savePersistentAvatar(dataUrl, user)
+      if (isAccountOwner) savePersistentAvatar(dataUrl, user)
       const updated: UserProfile = { ...user, avatar: dataUrl }
-      if (!isViewingOtherMember) {
-        saveStoredUser(updated)
-        syncPublicProfileToCloud(updated)
-      }
+      persistWorkspaceUserProfile(updated)
       if (onUpdateUser) {
         onUpdateUser(updated)
       }
@@ -840,12 +862,9 @@ export function ProfileView({
     const dataUrl = await compressImageFile(file, 1000, 340, 0.80)
     if (dataUrl) {
       setEditCover(dataUrl)
-      savePersistentCover(dataUrl, user)
+      if (isAccountOwner) savePersistentCover(dataUrl, user)
       const updated: UserProfile = { ...user, coverImage: dataUrl }
-      if (!isViewingOtherMember) {
-        saveStoredUser(updated)
-        syncPublicProfileToCloud(updated)
-      }
+      persistWorkspaceUserProfile(updated)
       if (onUpdateUser) {
         onUpdateUser(updated)
       }
@@ -1129,6 +1148,7 @@ export function ProfileView({
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!canManageWorkspace) return
     if (!editName.trim()) return
 
     const resolvedAvatar = editAvatar.trim() || user.avatar
@@ -1145,16 +1165,13 @@ export function ProfileView({
     }
 
     if (resolvedAvatar && !resolvedAvatar.includes("api.dicebear.com")) {
-      savePersistentAvatar(resolvedAvatar, updated)
+      if (isAccountOwner) savePersistentAvatar(resolvedAvatar, updated)
     }
     if (resolvedCover) {
-      savePersistentCover(resolvedCover, updated)
+      if (isAccountOwner) savePersistentCover(resolvedCover, updated)
     }
 
-    if (!isViewingOtherMember) {
-      saveStoredUser(updated)
-      syncPublicProfileToCloud(updated)
-    }
+    persistWorkspaceUserProfile(updated)
     if (onUpdateUser) {
       onUpdateUser(updated)
     }
@@ -1203,24 +1220,24 @@ export function ProfileView({
       ...prev,
       [skillName]: (prev[skillName] || 0) + 1
     }))
-    const activeViewer = loadStoredUser()
+    const endorserViewer = loadStoredUser()
     const voucherName =
-      activeViewer?.name && activeViewer.name.toLowerCase() !== user.name.toLowerCase()
-        ? activeViewer.name
+      endorserViewer?.name && endorserViewer.name.toLowerCase() !== user.name.toLowerCase()
+        ? endorserViewer.name
         : 'Commander Robert Hayes'
     const voucherHeadline =
-      activeViewer?.name && activeViewer.name.toLowerCase() !== user.name.toLowerCase()
-        ? activeViewer.headline
+      endorserViewer?.name && endorserViewer.name.toLowerCase() !== user.name.toLowerCase()
+        ? endorserViewer.headline
         : 'Platform IAM & Guild Verification Director · ConnectLn'
     recordLiveVouch({
       targetName: user.name,
       voucherName,
       voucherHeadline,
       voucherAvatar:
-        activeViewer?.name && activeViewer.name.toLowerCase() !== user.name.toLowerCase()
-          ? activeViewer.avatar
+        endorserViewer?.name && endorserViewer.name.toLowerCase() !== user.name.toLowerCase()
+          ? endorserViewer.avatar
           : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80',
-      voucherCompany: (activeViewer as any)?.company || 'ConnectLn Verified Guild',
+      voucherCompany: (endorserViewer as any)?.company || 'ConnectLn Verified Guild',
       voucherRelation: 'Verified Skill & Craftsmanship Vouch',
       skillOrCredential: skillName,
       note: `${voucherName} vouched for ${user.name}'s verified proficiency in "${skillName}".`
@@ -1239,16 +1256,14 @@ export function ProfileView({
         return s
       })
       const updatedUser: UserProfile = { ...user, skills: updatedSkills }
-      if (!isViewingOtherMember) {
-      saveStoredUser(updatedUser)
-      syncPublicProfileToCloud(updatedUser)
-    }
+      persistWorkspaceUserProfile(updatedUser)
       if (onUpdateUser) onUpdateUser(updatedUser)
     }
   }
 
   const handleAddVerifiedSkill = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!canManageWorkspace) return
     const trimmed = newVerifiedSkillName.trim()
     if (!trimmed) return
     const existingSkills = user.skills && user.skills.length > 0
@@ -1266,10 +1281,7 @@ export function ProfileView({
           { name: trimmed, endorsements: 0, endorsers: [`${enclaveInfo?.name || 'ConnectIn'} Master Board`] }
         ]
       }
-      if (!isViewingOtherMember) {
-      saveStoredUser(updatedUser)
-      syncPublicProfileToCloud(updatedUser)
-    }
+      persistWorkspaceUserProfile(updatedUser)
       if (onUpdateUser) onUpdateUser(updatedUser)
     }
     setNewVerifiedSkillName("")
@@ -1306,6 +1318,7 @@ export function ProfileView({
   }
 
   const handleOpenAddProductModal = () => {
+    if (!canManageWorkspace) return
     setEditingOfferingId(null)
     setNewProductName("")
     setNewProductCategory('Services')
@@ -1321,6 +1334,7 @@ export function ProfileView({
   }
 
   const handleOpenEditProductModal = (offering: BusinessWebsiteOffering) => {
+    if (!canManageWorkspace) return
     setEditingOfferingId(offering.id)
     setNewProductName(offering.title)
     setNewProductCategory(offering.productCategory || 'Services')
@@ -1334,12 +1348,14 @@ export function ProfileView({
   }
 
   const handleDeleteProductOffering = (offeringId: string) => {
+    if (!canManageWorkspace) return
     persistManagedOfferings((prev) => prev.filter((o) => o.id !== offeringId))
     setPhotoSuccessMsg('✓ Listing removed from your Business Page & Marketplace catalog.')
     setTimeout(() => setPhotoSuccessMsg(null), 4000)
   }
 
   const handleResetDefaultCatalog = () => {
+    if (!canManageWorkspace) return
     setBusinessOverrides({})
     persistManagedOfferings(tailoredWorkspaceProfile.business.offerings)
     if (typeof window !== 'undefined') {
@@ -1357,6 +1373,7 @@ export function ProfileView({
 
   const handleCreateProductListing = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!canManageWorkspace) return
     const trimmedTitle = newProductName.trim()
     if (!trimmedTitle) return
 
@@ -1457,6 +1474,7 @@ export function ProfileView({
   }
 
   const handleOpenEditWebsiteModal = () => {
+    if (!canManageWorkspace) return
     setEditWebsiteName(businessWebsite.businessName)
     setEditWebsiteSlug(businessWebsite.domainSlug)
     setEditWebsiteHeadline(businessWebsite.heroHeadline)
@@ -1478,6 +1496,7 @@ export function ProfileView({
 
   const handleSaveWebsiteCustomization = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!canManageWorkspace) return
     if (!editWebsiteName.trim()) return
     const cleanSlug =
       editWebsiteSlug
@@ -1582,6 +1601,15 @@ export function ProfileView({
                 <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100 truncate">
                   {user.name}
                 </span>
+                {isAdminManagingOtherMember ? (
+                  <span className="rounded-full bg-purple-700 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-white">
+                    🛡️ Admin Manage Mode (Edit &amp; Delete Enabled)
+                  </span>
+                ) : !canManageWorkspace ? (
+                  <span className="rounded-full bg-zinc-200 dark:bg-zinc-800 px-2.5 py-0.5 text-[10px] font-extrabold text-zinc-800 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-700">
+                    🔒 Read-Only Visitor View
+                  </span>
+                ) : null}
               </div>
               <p className="text-xs text-zinc-600 dark:text-zinc-300 truncate mt-0.5">
                 {user.headline}
@@ -1590,11 +1618,24 @@ export function ProfileView({
           </div>
 
           <div className="flex items-center gap-2 flex-wrap shrink-0">
+            {isAdminManagingOtherMember && (
+              <button
+                type="button"
+                onClick={() => {
+                  setWorkspaceSection('business')
+                  setTimeout(() => handleOpenEditWebsiteModal(), 60)
+                }}
+                className="rounded-xl bg-purple-700 hover:bg-purple-800 text-white px-3.5 py-2 text-xs font-extrabold shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <Edit3 className="h-3.5 w-3.5" />
+                <span>Edit Member Business &amp; Products</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={() => {
-                const activeViewer = loadStoredUser()
-                const voucherName = activeViewer?.name || 'Kwesi Asiedu'
+                const endorserViewer = loadStoredUser()
+                const voucherName = endorserViewer?.name || 'Kwesi Asiedu'
                 const primarySkill =
                   user.profession ||
                   (Array.isArray((user as any).capabilities) && (user as any).capabilities[0]) ||
@@ -1602,9 +1643,9 @@ export function ProfileView({
                 recordLiveVouch({
                   targetName: user.name,
                   voucherName,
-                  voucherHeadline: activeViewer?.headline || 'Verified ConnectLn Professional',
-                  voucherAvatar: activeViewer?.avatar,
-                  voucherCompany: (activeViewer as any)?.company || 'ConnectLn Network',
+                  voucherHeadline: endorserViewer?.headline || 'Verified ConnectLn Professional',
+                  voucherAvatar: endorserViewer?.avatar,
+                  voucherCompany: (endorserViewer as any)?.company || 'ConnectLn Network',
                   voucherRelation: 'Direct Peer & Dossier Vouch',
                   skillOrCredential: String(primarySkill),
                   note: `${voucherName} directly vouched for ${user.name}'s work quality, credentials, and execution in ${primarySkill}.`
@@ -1667,7 +1708,7 @@ export function ProfileView({
 
           {/* Quick Metrics Reflecting User Profile */}
           <div className="flex items-center gap-2.5 sm:gap-3 shrink-0 flex-wrap">
-            {!isViewingOtherMember && (
+            {canManageWorkspace && (
               <div
                 onClick={() => setWorkspaceSection('analytics')}
                 className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 hover:border-[#0A66C2] p-3.5 text-center min-w-[125px] cursor-pointer transition-all"
@@ -1720,11 +1761,11 @@ export function ProfileView({
         <div className="mt-5 pt-4 border-t border-zinc-200/80 dark:border-zinc-800 flex items-center gap-2 overflow-x-auto pb-1">
           {[
             { id: 'profile', label: '👤 Profile' },
-            ...(!isViewingOtherMember ? [{ id: 'analytics', label: '📊 Analytics' }] : []),
+            ...(canManageWorkspace ? [{ id: 'analytics', label: '📊 Analytics' }] : []),
             { id: 'portfolio', label: '💼 Portfolio' },
             { id: 'skills', label: '🛡️ Skills' },
             { id: 'certifications', label: '📜 Certifications' },
-            ...(!isViewingOtherMember ? [{ id: 'experience', label: '🏛️ Experience' }] : []),
+            ...(canManageWorkspace ? [{ id: 'experience', label: '🏛️ Experience' }] : []),
             { id: 'publications', label: '📑 Publications' },
             { id: 'reviews', label: '⭐ Reviews' },
             { id: 'business', label: isViewingOtherMember ? `🌐 ${user.name.split(' ')[0]}'s Business` : '🌐 My Business' }
@@ -1777,8 +1818,8 @@ export function ProfileView({
                 alt="Banner"
                 className="h-full w-full object-cover opacity-75"
               />
-              {/* Button to attach / change cover picture (Owner only) */}
-              {!isViewingOtherMember && (
+              {/* Button to attach / change cover picture (Owner or Admin only) */}
+              {canManageWorkspace && (
                 <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
                   <button
                     type="button"
@@ -1813,8 +1854,8 @@ export function ProfileView({
                       alt={user.name}
                       className="h-full w-full object-cover"
                     />
-                    {/* Hover Overlay Button to Change Avatar (Owner only) */}
-                    {!isViewingOtherMember && (
+                    {/* Hover Overlay Button to Change Avatar (Owner or Admin only) */}
+                    {canManageWorkspace && (
                       <button
                         type="button"
                         onClick={() => {
@@ -1834,7 +1875,7 @@ export function ProfileView({
                   <button
                     type="button"
                     onClick={() => {
-                      if (!isViewingOtherMember) {
+                      if (canManageWorkspace) {
                         const order: Array<'Looking for a Job' | 'Looking for Projects' | 'Available for Hire' | 'Booked'> = [
                           'Looking for a Job',
                           'Looking for Projects',
@@ -1845,8 +1886,10 @@ export function ProfileView({
                         handleSaveJobCard(next)
                       }
                     }}
-                    title="Click to cycle Looking for a Job badge"
-                    className={`absolute -bottom-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider shadow-md border z-10 cursor-pointer transition-transform hover:scale-105 ${
+                    title={canManageWorkspace ? 'Click to cycle Looking for a Job badge' : undefined}
+                    className={`absolute -bottom-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider shadow-md border z-10 ${
+                      canManageWorkspace ? 'cursor-pointer transition-transform hover:scale-105' : 'cursor-default'
+                    } ${
                       jobBadgeStatus === 'Booked'
                         ? 'bg-amber-600 text-white border-amber-300'
                         : 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 text-white border-emerald-200'
@@ -1861,8 +1904,8 @@ export function ProfileView({
                       : '⏳ Booked'}
                   </button>
 
-                  {/* Camera icon badge at top right of avatar (Owner only) */}
-                  {!isViewingOtherMember && (
+                  {/* Camera icon badge at top right of avatar (Owner or Admin only) */}
+                  {canManageWorkspace && (
                     <button
                       type="button"
                       onClick={() => {
@@ -1933,6 +1976,25 @@ export function ProfileView({
                       >
                         <span>Share on WhatsApp</span>
                       </button>
+
+                      {hasAdminAccess && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditName(user.name)
+                            setEditHeadline(user.headline)
+                            setEditLocation(user.location)
+                            setEditAbout(user.about)
+                            setEditAvatar(user.avatar)
+                            setEditCover(user.coverImage || "")
+                            setIsEditProfileOpen(true)
+                          }}
+                          className="rounded-full bg-purple-50 dark:bg-purple-950/50 border border-purple-400 dark:border-purple-700 hover:bg-purple-100 dark:hover:bg-purple-900/60 px-4 py-2.5 text-sm font-extrabold text-purple-900 dark:text-purple-200 shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                        >
+                          <Edit3 className="h-4 w-4" />
+                          <span>Edit Member Profile</span>
+                        </button>
+                      )}
                     </>
                   ) : (
                     <>
@@ -2024,7 +2086,7 @@ export function ProfileView({
                     <span>Voice Tag</span>
                   </button>
 
-                  {!isViewingOtherMember && (
+                  {canManageWorkspace && (
                     <button
                       type="button"
                       disabled={isRecordingProfileVoiceTag}
@@ -2049,9 +2111,9 @@ export function ProfileView({
                   )}
 
                   <span
-                    onClick={() => !isViewingOtherMember && setIsEditingJobCard(!isEditingJobCard)}
+                    onClick={() => canManageWorkspace && setIsEditingJobCard(!isEditingJobCard)}
                     className={`rounded-full px-3.5 py-1 text-xs sm:text-sm font-extrabold border inline-flex items-center gap-1.5 shadow-2xs ${
-                      !isViewingOtherMember ? 'cursor-pointer' : ''
+                      canManageWorkspace ? 'cursor-pointer' : ''
                     } ${
                       jobBadgeStatus === 'Booked'
                         ? 'bg-amber-100 text-amber-900 border-amber-400 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800'
@@ -2116,7 +2178,7 @@ export function ProfileView({
                 </div>
 
                 <div className="flex items-center gap-2 flex-wrap shrink-0">
-                  {!isViewingOtherMember && (
+                  {canManageWorkspace && (
                     <button
                       type="button"
                       onClick={() => {
@@ -2183,7 +2245,7 @@ export function ProfileView({
                   </div>
 
                   <div className="flex sm:flex-col items-center sm:items-end gap-2 shrink-0">
-                    {!isViewingOtherMember ? (
+                    {canManageWorkspace && (
                       <>
                         <button
                           type="button"
@@ -2193,15 +2255,18 @@ export function ProfileView({
                           <Edit3 className="h-4 w-4" />
                           <span>{isEditingJobCard ? 'Close Editor' : 'Customize Job Card'}</span>
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => onNavigateJobs && onNavigateJobs(resolvedDisplayProfession || '')}
-                          className="rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2.5 text-sm font-extrabold shadow-xs flex items-center gap-1.5 cursor-pointer transition-colors"
-                        >
-                          <span>Browse Matching Jobs →</span>
-                        </button>
+                        {!isViewingOtherMember && (
+                          <button
+                            type="button"
+                            onClick={() => onNavigateJobs && onNavigateJobs(resolvedDisplayProfession || '')}
+                            className="rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2.5 text-sm font-extrabold shadow-xs flex items-center gap-1.5 cursor-pointer transition-colors"
+                          >
+                            <span>Browse Matching Jobs →</span>
+                          </button>
+                        )}
                       </>
-                    ) : (
+                    )}
+                    {isViewingOtherMember && (
                       <button
                         type="button"
                         onClick={() => onNavigateMessaging && onNavigateMessaging(user)}
@@ -2215,7 +2280,7 @@ export function ProfileView({
                 </div>
 
                 {/* Inline Editor for "Looking for a Job" Badge & Card */}
-                {isEditingJobCard && !isViewingOtherMember && (
+                {isEditingJobCard && canManageWorkspace && (
                   <div className="mt-4 pt-4 border-t border-emerald-200 dark:border-emerald-800/80 grid grid-cols-1 sm:grid-cols-2 gap-3 animate-in fade-in">
                     <div>
                       <label className="block text-xs font-extrabold text-zinc-800 dark:text-zinc-200 mb-1">
@@ -2354,8 +2419,8 @@ export function ProfileView({
                   </div>
                 </div>
 
-                {/* ANALYTICS & IDENTITY RADAR STRIP (Owner only — private to your own profile) */}
-                {!isViewingOtherMember && (
+                {/* ANALYTICS & IDENTITY RADAR STRIP (Owner or Admin only) */}
+                {canManageWorkspace && (
                 <div className="rounded-2xl border border-zinc-300/80 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/80 p-5 space-y-3.5">
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <div className="flex items-center gap-2">
@@ -2428,8 +2493,8 @@ export function ProfileView({
             </div>
           </div>
 
-          {/* UPLOADED RESUME & WORK EXPERIENCE SECTION DIRECTLY ON PROFILE (Owner only — hidden when viewing another member's profile) */}
-          {!isViewingOtherMember && (
+          {/* UPLOADED RESUME & WORK EXPERIENCE SECTION DIRECTLY ON PROFILE (Owner or Admin only) */}
+          {canManageWorkspace && (
           <div
             id="profile-uploaded-resume-section"
             className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-5"
@@ -2593,8 +2658,8 @@ export function ProfileView({
           </div>
           )}
 
-          {/* Reconciled Trade Dispatch, Expiration Desk & Hall Invites for Trades Enclave (Owner only) */}
-          {!isViewingOtherMember && effectiveEnclaveId === 'trades_construction' && (
+          {/* Reconciled Trade Dispatch, Expiration Desk & Hall Invites for Trades Enclave (Owner or Admin only) */}
+          {canManageWorkspace && effectiveEnclaveId === 'trades_construction' && (
             <div className="pt-2">
               <TradeEnclaveWidgets
                 user={user}
@@ -2613,7 +2678,7 @@ export function ProfileView({
       {/* ========================================================================= */}
       {/* 📊 ANALYTICS, GRAPHS, TRENDS & USER INTELLIGENCE SUB-SECTION (Owner only) */}
       {/* ========================================================================= */}
-      {workspaceSection === 'analytics' && !isViewingOtherMember && (() => {
+      {workspaceSection === 'analytics' && canManageWorkspace && (() => {
         const tfMultiplier =
           analyticsTimeframe === '7d'
             ? 1
@@ -3825,7 +3890,7 @@ export function ProfileView({
                   </p>
                 </div>
 
-                {!isViewingOtherMember && (
+                {canManageWorkspace && (
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       type="button"
@@ -3839,7 +3904,7 @@ export function ProfileView({
                 )}
               </div>
 
-              {showAddSkillInput && !isViewingOtherMember && (
+              {showAddSkillInput && canManageWorkspace && (
                 <form
                   onSubmit={handleAddVerifiedSkill}
                   className="rounded-xl border border-indigo-200 dark:border-indigo-800/80 bg-indigo-50/40 dark:bg-indigo-950/30 p-3.5 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5"
@@ -3918,8 +3983,8 @@ export function ProfileView({
                         <span className="text-amber-600 dark:text-amber-400">✓ Peer Supervised</span>
                       </div>
 
-                      {/* Direct Skill-to-Jobs Qualification Footer (Owner only) */}
-                      {!isViewingOtherMember && (
+                      {/* Direct Skill-to-Jobs Qualification Footer (Owner or Admin only) */}
+                      {canManageWorkspace && (
                         <div className="flex items-center justify-between pt-0.5">
                           <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
                             <Briefcase className="h-3.5 w-3.5" />
@@ -3953,9 +4018,9 @@ export function ProfileView({
             </div>
 
             {/* ===================================================================== */}
-            {/* 💼 JOBS YOU QUALIFY FOR BASED ON YOUR VERIFIED SKILLS (Owner only)    */}
+            {/* 💼 JOBS YOU QUALIFY FOR BASED ON YOUR VERIFIED SKILLS (Owner or Admin) */}
             {/* ===================================================================== */}
-            {!isViewingOtherMember && (
+            {canManageWorkspace && (
             <div
               id="skill-qualified-jobs-section"
               className="rounded-2xl border border-emerald-500/30 bg-white dark:bg-zinc-900 p-6 shadow-md space-y-5"
@@ -4366,8 +4431,8 @@ export function ProfileView({
       {/* ========================================================================= */}
       {workspaceSection === 'certifications' && (
         <div className="space-y-5">
-          {/* Reconciled Trade Tickets & License Expiration Desk (Owner only) */}
-          {!isViewingOtherMember && effectiveEnclaveId === 'trades_construction' && (
+          {/* Reconciled Trade Tickets & License Expiration Desk (Owner or Admin only) */}
+          {canManageWorkspace && effectiveEnclaveId === 'trades_construction' && (
             <TradeEnclaveWidgets
               user={user}
               onNavigateTab={() => setWorkspaceSection('certifications')}
@@ -4413,9 +4478,9 @@ export function ProfileView({
       )}
 
       {/* ========================================================================= */}
-      {/* 5. EXPERIENCE (Owner only) */}
+      {/* 5. EXPERIENCE (Owner or Admin only) */}
       {/* ========================================================================= */}
-      {workspaceSection === 'experience' && !isViewingOtherMember && (
+      {workspaceSection === 'experience' && canManageWorkspace && (
         <div id="workspace-experience-section" className="space-y-4">
           {/* Header Toolbar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-zinc-200 dark:border-zinc-800">
@@ -4785,25 +4850,35 @@ export function ProfileView({
           }
         }
 
-        const showOwnerControls = !isViewingOtherMember && !isBusinessPreviewMode
+        const showOwnerControls = canManageWorkspace && !isBusinessPreviewMode
 
         return (
         <div className="space-y-4 animate-in fade-in">
-          {/* OWNER SELF-SERVICE MANAGEMENT STUDIO BAR */}
-          {!isViewingOtherMember && (
+          {/* OWNER / ADMIN SELF-SERVICE MANAGEMENT STUDIO BAR */}
+          {canManageWorkspace && (
             <div className="rounded-2xl border-2 border-emerald-400/80 dark:border-emerald-700 bg-gradient-to-r from-emerald-50 via-white to-sky-50 dark:from-emerald-950/40 dark:via-zinc-900 dark:to-sky-950/30 p-4 sm:p-5 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-700 px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-white">
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-white ${
+                      isAdminManagingOtherMember ? 'bg-purple-700' : 'bg-emerald-700'
+                    }`}
+                  >
                     <Sparkles className="h-3.5 w-3.5" />
-                    <span>100% Self-Service Owner Studio</span>
+                    <span>
+                      {isAdminManagingOtherMember
+                        ? `🛡️ Admin Management Studio · Editing ${user.name}'s Business Page`
+                        : '100% Self-Service Owner Studio'}
+                    </span>
                   </span>
                   <span className="text-xs sm:text-sm font-bold text-emerald-900 dark:text-emerald-300">
-                    ✓ Instant Live Publishing — No Expedite Consults approval needed
+                    {isAdminManagingOtherMember
+                      ? 'Admin Edit & Delete Access Enabled'
+                      : '✓ Instant Live Publishing — No Expedite Consults approval needed'}
                   </span>
                 </div>
                 <p className="text-sm font-medium text-zinc-900 dark:text-zinc-200">
-                  Manage your own page anytime: edit your headline, banner photo, domain slug, pricing, and add, update, or remove products directly below.
+                  Manage {isAdminManagingOtherMember ? `${user.name}'s` : 'your own'} page anytime: edit headline, banner photo, domain slug, pricing, and add, update, or delete products directly below.
                 </p>
               </div>
 
@@ -5195,7 +5270,7 @@ export function ProfileView({
                           className="rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 py-1.5 px-3 text-xs font-extrabold text-rose-800 dark:text-rose-300 flex items-center justify-center gap-1 cursor-pointer"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
-                          <span>Remove</span>
+                          <span>Delete</span>
                         </button>
                       </div>
                     )}
@@ -5222,7 +5297,7 @@ export function ProfileView({
                     </p>
                   </div>
 
-                  {!isViewingOtherMember && (
+                  {canManageWorkspace && (
                     <button
                       type="button"
                       onClick={handleOpenAddProductModal}
@@ -5234,7 +5309,7 @@ export function ProfileView({
                   )}
                 </div>
 
-                {!isViewingOtherMember && (
+                {canManageWorkspace && (
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div className="rounded-xl bg-black/45 border border-white/20 p-3.5 text-center">
                       <span className="text-xs text-zinc-300 uppercase font-mono font-bold">Top Revenue Stream</span>
@@ -5306,10 +5381,11 @@ export function ProfileView({
                           <button
                             type="button"
                             onClick={() => handleDeleteProductOffering(off.id)}
-                            className="rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-300 px-2.5 py-2 text-xs sm:text-sm font-extrabold text-rose-800 cursor-pointer"
-                            title="Remove offering"
+                            className="rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-300 px-3 py-2 text-xs sm:text-sm font-extrabold text-rose-800 cursor-pointer flex items-center gap-1"
+                            title="Delete offering"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3.5 w-3.5" />
+                            <span>Delete</span>
                           </button>
                         </>
                       )}
@@ -6608,12 +6684,9 @@ export function ProfileView({
                       if (customAvatarUrl.trim()) {
                         const url = customAvatarUrl.trim()
                         setPendingAvatarSrc(url)
-                        savePersistentAvatar(url, user)
+                        if (isAccountOwner) savePersistentAvatar(url, user)
                         const updated: UserProfile = { ...user, avatar: url }
-                        if (!isViewingOtherMember) {
-                          saveStoredUser(updated)
-                          syncPublicProfileToCloud(updated)
-                        }
+                        persistWorkspaceUserProfile(updated)
                         if (onUpdateUser) {
                           onUpdateUser(updated)
                         }

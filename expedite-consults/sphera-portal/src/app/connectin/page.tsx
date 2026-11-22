@@ -3433,6 +3433,8 @@ export default function ConnectLnPage() {
         {activeTab === 'profile' && (
           <ProfileView
             user={inspectedMember || userData}
+            viewerUser={userData}
+            isAdminViewer={isSuperAdminUser(userData)}
             isViewingOtherMember={Boolean(inspectedMember)}
             onReturnToOwnWorkspace={() => setInspectedMember(null)}
             onConnectMember={(idOrName) => handleToggleConnect(idOrName)}
@@ -3452,6 +3454,23 @@ export default function ConnectLnPage() {
             onUpdateUser={(updated) => {
               if (inspectedMember) {
                 setInspectedMember(updated)
+                const updatedName = String(updated.name || '').trim().toLowerCase()
+                setSuggestedPeople((prev) => {
+                  const next = prev.map((p) => {
+                    const pName = String(p.name || '').trim().toLowerCase()
+                    if (p.id === updated.id || (updatedName && pName === updatedName)) {
+                      return {
+                        ...p,
+                        name: updated.name || p.name,
+                        headline: updated.headline || p.headline,
+                        avatar: updated.avatar || p.avatar,
+                      }
+                    }
+                    return p
+                  })
+                  saveStoredConnections(next)
+                  return next
+                })
               } else {
                 setUserData(updated)
               }
