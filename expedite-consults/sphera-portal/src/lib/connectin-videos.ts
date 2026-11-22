@@ -2039,6 +2039,49 @@ const ENCLAVE_SERIAL_PREFIXES: Record<string, string> = {
 
 const DURATION_OPTIONS = ["4:42", "5:05", "5:18", "4:55", "5:30", "4:48", "5:12", "5:24"]
 
+export function mapHandyman250IdToProfessionVideoKey(profId?: string): string | null {
+  if (!profId) return null
+  const lower = profId.toLowerCase()
+  if (lower.includes("drywall") || lower.includes("plaster")) return "drywall_plasterer_scaffolding_specialist"
+  if (lower.includes("window") || lower.includes("glass") || lower.includes("mirror") || lower.includes("shower_door") || lower.includes("skylight")) return "glazier_glass_installer"
+  if (lower.includes("insulation") || lower.includes("weatherization")) return "insulation_installer"
+  if (lower.includes("chimney")) return "chimney_sweep_fireplace_tech"
+  if (lower.includes("cabinet")) return "cabinetmaker"
+  if (lower.includes("finish_carpenter") || lower.includes("trim") || lower.includes("molding")) return "finish_carpenter"
+  if (lower.includes("framing_carpenter")) return "commercial_framing_carpenter"
+  if (lower.includes("concrete") || lower.includes("paver") || lower.includes("patio") || lower.includes("driveway") || lower.includes("sidewalk")) return "concrete_finisher_mason_laborer"
+  if (lower.includes("stone_mason")) return "stone_carver_monument_mason"
+  if (lower.includes("auto_electrician")) return "auto_electrician_collision_refinish_tech"
+  if (lower.includes("ironworker")) return "ironworker_rebar"
+  if (lower.includes("sheet_metal")) return "sheet_metal_worker"
+  if (lower.includes("pipefitter")) return "pipefitter_welder"
+
+  const match = profId.match(/^h250_(\d+)_/)
+  if (!match) return null
+  const num = Number(match[1])
+  if (num >= 1 && num <= 15) return "carpenter" // Folder 1: General Handyman & Property Maintenance
+  if (num >= 16 && num <= 29) return "plumber" // Folder 2: Plumbing & Water Systems
+  if (num >= 30 && num <= 43) return "electrician" // Folder 3: Electrical & Power Services
+  if (num >= 44 && num <= 56) return "hvac_refrigeration_tech" // Folder 4: HVAC & Refrigeration
+  if (num >= 57 && num <= 70) return "carpenter" // Folder 5: Carpentry & Woodworking
+  if (num >= 71 && num <= 82) return "painter" // Folder 6: Painting & Wall Finishing
+  if (num >= 83 && num <= 94) return "tile_flooring_installer" // Folder 7: Flooring & Tile Installation
+  if (num >= 95 && num <= 106) return "roofer" // Folder 8: Roofing, Gutters & Exterior Repairs
+  if (num >= 107 && num <= 120) return "landscaper" // Folder 9: Landscaping & Outdoor Maintenance
+  if (num >= 121 && num <= 134) return "bricklayer_mason" // Folder 10: Masonry, Concrete & Construction
+  if (num >= 135 && num <= 145) return "appliance_repair_tech" // Folder 11: Appliance Repair & Installation
+  if (num >= 146 && num <= 158) return "cleaner" // Folder 12: Cleaning & Janitorial Services
+  if (num >= 159 && num <= 169) return "locksmith_home_inspector" // Folder 13: Locksmith & Security Installation
+  if (num >= 170 && num <= 180) return "fiber_optic_tower_datacenter_tech" // Folder 14: Smart Home, Tech & Low-Voltage
+  if (num >= 181 && num <= 192) return "delivery_driver" // Folder 15: Moving, Assembly & Installation
+  if (num >= 193 && num <= 204) return "mechanic" // Folder 16: Automotive & Mobile Repair
+  if (num >= 205 && num <= 214) return "welder" // Folder 17: Welding & Metal Fabrication
+  if (num >= 215 && num <= 224) return "locksmith_home_inspector" // Folder 18: Pest Control & Environmental Services
+  if (num >= 225 && num <= 237) return "carpenter" // Folder 19: Specialty Home Improvement
+  if (num >= 238 && num <= 250) return "landscaper" // Folder 20: Outdoor, Pool & Specialty Services
+  return "maintenance_technician"
+}
+
 function buildComprehensiveProfessionWheelTalks(): WheelVideoTalk[] {
   const generatedTalks: WheelVideoTalk[] = []
   const enclaveCounters: Record<string, number> = {}
@@ -2050,10 +2093,18 @@ function buildComprehensiveProfessionWheelTalks(): WheelVideoTalk[] {
     enclaveCounters[enclave.id] = (enclaveCounters[enclave.id] || 10) + 1
     const serialNum = enclaveCounters[enclave.id]
 
-    const verified = PROFESSION_VERIFIED_VIDEOS[prof.id] || EXTRA_VERIFIED_VIDEOS[prof.id]
+    const mappedKey = mapHandyman250IdToProfessionVideoKey(prof.id) || prof.id
+    const verified =
+      PROFESSION_VERIFIED_VIDEOS[prof.id] ||
+      EXTRA_VERIFIED_VIDEOS[prof.id] ||
+      PROFESSION_VERIFIED_VIDEOS[mappedKey] ||
+      EXTRA_VERIFIED_VIDEOS[mappedKey]
+    const matchedCoreTalk = CORE_EDUCATIONAL_WHEEL_TALKS.find(
+      t => t.professionId === prof.id || t.professionId === mappedKey
+    )
     const enclaveCoreTalks = CORE_EDUCATIONAL_WHEEL_TALKS.filter(t => t.enclaveId === enclave.id)
     const fallbackCoreTalk = enclaveCoreTalks[serialNum % Math.max(1, enclaveCoreTalks.length)] || CORE_EDUCATIONAL_WHEEL_TALKS[i % CORE_EDUCATIONAL_WHEEL_TALKS.length]
-    const youtubeId = verified ? verified.id : (fallbackCoreTalk?.youtubeId || "gDozp7t7A0Y")
+    const youtubeId = verified ? verified.id : (matchedCoreTalk?.youtubeId || fallbackCoreTalk?.youtubeId || "gDozp7t7A0Y")
     // The real video length is unknown here, so none is shown (it used to be a made-up value).
     const duration = DURATION_OPTIONS[i % DURATION_OPTIONS.length]
 
@@ -2172,34 +2223,6 @@ const PROFESSION_SIBLING_FAMILIES: Record<string, string[]> = {
   plumber: ["plumber", "pipefitter_steamfitter", "hvac_technician"],
   welder: ["welder", "structural_ironworker", "sheet_metal_worker", "machinist_cnc"],
   mechanic: ["mechanic", "diesel_mechanic", "ev_technician", "auto_body_collision"]
-}
-
-export function mapHandyman250IdToProfessionVideoKey(profId?: string): string | null {
-  if (!profId) return null
-  const match = profId.match(/^h250_(\d+)_/)
-  if (!match) return null
-  const num = Number(match[1])
-  if (num >= 1 && num <= 15) return "carpenter" // Folder 1: General Handyman & Property Maintenance
-  if (num >= 16 && num <= 29) return "plumber" // Folder 2: Plumbing & Water Systems
-  if (num >= 30 && num <= 43) return "electrician" // Folder 3: Electrical & Power Services
-  if (num >= 44 && num <= 56) return "hvac_refrigeration_tech" // Folder 4: HVAC & Refrigeration
-  if (num >= 57 && num <= 70) return "carpenter" // Folder 5: Carpentry & Woodworking
-  if (num >= 71 && num <= 82) return "painter" // Folder 6: Painting & Wall Finishing
-  if (num >= 83 && num <= 94) return "tile_flooring_installer" // Folder 7: Flooring & Tile Installation
-  if (num >= 95 && num <= 106) return "roofer" // Folder 8: Roofing, Gutters & Exterior Repairs
-  if (num >= 107 && num <= 120) return "landscaper" // Folder 9: Landscaping & Outdoor Maintenance
-  if (num >= 121 && num <= 134) return "bricklayer_mason" // Folder 10: Masonry, Concrete & Construction
-  if (num >= 135 && num <= 145) return "appliance_repair_tech" // Folder 11: Appliance Repair & Installation
-  if (num >= 146 && num <= 158) return "cleaner" // Folder 12: Cleaning & Janitorial Services
-  if (num >= 159 && num <= 169) return "locksmith_home_inspector" // Folder 13: Locksmith & Security Installation
-  if (num >= 170 && num <= 180) return "fiber_optic_tower_datacenter_tech" // Folder 14: Smart Home, Tech & Low-Voltage
-  if (num >= 181 && num <= 192) return "delivery_driver" // Folder 15: Moving, Assembly & Installation
-  if (num >= 193 && num <= 204) return "mechanic" // Folder 16: Automotive & Mobile Repair
-  if (num >= 205 && num <= 214) return "welder" // Folder 17: Welding & Metal Fabrication
-  if (num >= 215 && num <= 224) return "locksmith_home_inspector" // Folder 18: Pest Control & Environmental Services
-  if (num >= 225 && num <= 237) return "carpenter" // Folder 19: Specialty Home Improvement
-  if (num >= 238 && num <= 250) return "landscaper" // Folder 20: Outdoor, Pool & Specialty Services
-  return "maintenance_technician"
 }
 
 const HOME_STORY_AND_TRADE_YOUTUBE_IDS = [
@@ -2399,15 +2422,21 @@ export function getStrictProfessionVideosForUser(user?: {
     strictList.push(talk)
   }
 
-  // 1. Exact professionId matches first (Core Masterclasses + Verified Career Videos)
+  // 1. Exact professionId (and mapped 250-trade role key) matches first (Core Masterclasses + Verified Career Videos)
   if (targetProfId) {
-    for (const talk of CORE_EDUCATIONAL_WHEEL_TALKS) {
-      if (talk.professionId === targetProfId) pushUnique(talk)
-    }
     const exactCareer = EDUCATIONAL_WHEEL_TALKS.find(t => t.id === `wheel-prof-${targetProfId}`)
     pushUnique(exactCareer)
+    for (const talk of CORE_EDUCATIONAL_WHEEL_TALKS) {
+      if (talk.professionId === targetProfId || (h250MappedKey && talk.professionId === h250MappedKey)) {
+        pushUnique(talk)
+      }
+    }
     for (const talk of EDUCATIONAL_WHEEL_TALKS) {
       if (talk.professionId === targetProfId) pushUnique(talk)
+    }
+    if (h250MappedKey && h250MappedKey !== targetProfId) {
+      const mappedCareer = EDUCATIONAL_WHEEL_TALKS.find(t => t.id === `wheel-prof-${h250MappedKey}`)
+      pushUnique(mappedCareer)
     }
   }
 

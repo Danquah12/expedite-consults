@@ -3,6 +3,7 @@ import { ALL_PROFESSIONS, PROFESSION_ENCLAVES } from './connectin-professions'
 import {
   getHomeFeedAllProfessionsVideoTalks,
   getStrictProfessionVideosForUser,
+  mapHandyman250IdToProfessionVideoKey,
   resolveProfessionForUser
 } from './connectin-videos'
 
@@ -394,11 +395,16 @@ export function buildProfessionTieredFeedPosts(user?: UserProfile | null): Post[
   const primaryVideo = strictVideos[0]
   const secondaryVideo = strictVideos[1] || strictVideos[0]
 
+  const mappedPackKey = mapHandyman250IdToProfessionVideoKey(resolvedProf.id)
   const pack =
     PROFESSION_SPECIFIC_PACKS[resolvedProf.id] ||
+    (mappedPackKey ? PROFESSION_SPECIFIC_PACKS[mappedPackKey] : undefined) ||
     ENCLAVE_VISUAL_PACKS[enclave.id] ||
     DEFAULT_VISUAL_PACK
-  const specificPhotos = PROFESSION_SPECIFIC_PHOTOS[resolvedProf.id] || pack.actionPhotos
+  const specificPhotos =
+    PROFESSION_SPECIFIC_PHOTOS[resolvedProf.id] ||
+    (mappedPackKey ? PROFESSION_SPECIFIC_PHOTOS[mappedPackKey] : undefined) ||
+    pack.actionPhotos
   const photo1 = specificPhotos[0] || pack.actionPhotos[0]
 
   const profTitle = resolvedProf.title
@@ -642,9 +648,7 @@ export function buildProfessionTieredFeedPosts(user?: UserProfile | null): Post[
         id: `post_prof_video_catalog_${talk.id}`,
         professionId: talk.professionId || resolvedProf.id,
         professionEnclave: talk.enclaveId || enclave.id,
-        targetProfessions: talk.professionId
-          ? [resolvedProf.id, talk.professionId]
-          : [resolvedProf.id],
+        targetProfessions: talk.professionId ? [talk.professionId] : [],
         isProfessionTiered: true,
         author: {
           id: `peer_vid_${talk.id}`,

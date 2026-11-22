@@ -118,7 +118,11 @@ import {
   HANDYMAN_250_FOLDERS,
   HANDYMAN_250_PROFESSIONS
 } from "@/lib/connectin-handyman-250-professions"
-import { getMatchedWheelVideoForUser, resolveProfessionForUser } from "@/lib/connectin-videos"
+import {
+  getMatchedWheelVideoForUser,
+  mapHandyman250IdToProfessionVideoKey,
+  resolveProfessionForUser
+} from "@/lib/connectin-videos"
 import { buildProfessionTieredFeedPosts } from "@/lib/connectin-profession-feed"
 import { LiveHarvestedMediaShowcase } from "@/components/connectln/LiveHarvestedMediaShowcase"
 import {
@@ -500,7 +504,7 @@ export default function ConnectLnPage() {
     const postId = `harvest_post_${item.id}`
     return {
       id: postId,
-      isUserCreated: true,
+      isUserCreated: false,
       author: {
         id: `hv_${item.minuteSlot}`,
         name: item.organization || item.authorName,
@@ -2225,7 +2229,7 @@ export default function ConnectLnPage() {
             p.id !== 'post_dstrike_wheel_masterclass' &&
             !p.id.startsWith('post_prof_')))
     )
-    for (const p of [...liveHarvestedPosts, ...userCreatedPosts, ...followedMemberSyntheticPosts, ...posts]) {
+    for (const p of [...userCreatedPosts, ...posts, ...followedMemberSyntheticPosts, ...liveHarvestedPosts]) {
       if (!p || !p.id || seenIds.has(p.id)) continue
       const mediaSig = getPostMediaDedupeSignature(p)
       if (seenMediaSigs.has(mediaSig)) continue
@@ -2364,33 +2368,39 @@ export default function ConnectLnPage() {
       )
     })
     .sort((a, b) => {
+      const mappedActiveKey = mapHandyman250IdToProfessionVideoKey(activeProfId)
       const score = (p: Post) => {
         const isVideoBonus = p.media?.type === 'video' ? 15 : -10
-        if (p.id?.startsWith('harvest_post_cln_custom_') || p.id?.startsWith('harvest_post_cln_live_')) {
-          return 30 + isVideoBonus
+        if (activeProfId && (p.professionId === activeProfId || p.targetProfessions?.includes(activeProfId))) {
+          const primaryBoost =
+            p.id === 'post_dstrike_wheel_masterclass' || p.id?.startsWith('post_prof_video_') ? 5 : 0
+          return 100 + primaryBoost + isVideoBonus
         }
-        if (p.id?.startsWith('harvest_post_')) {
-          return 20 + isVideoBonus
+        if (mappedActiveKey && (p.professionId === mappedActiveKey || p.targetProfessions?.includes(mappedActiveKey))) {
+          return 65 + isVideoBonus
         }
         if (
-          p.isUserCreated ||
           p.id?.startsWith('user_post_') ||
           p.id?.startsWith('post_story_share_') ||
-          (p.author?.connectionDegree === 'You' &&
-            !p.isProfessionTiered &&
-            p.id !== 'post_dstrike_wheel_masterclass' &&
-            !p.id.startsWith('post_prof_') &&
-            p.id !== 'post_poll_1')
+          (!p.id?.startsWith('harvest_post_') &&
+            (p.isUserCreated ||
+              (p.author?.connectionDegree === 'You' &&
+                !p.isProfessionTiered &&
+                p.id !== 'post_dstrike_wheel_masterclass' &&
+                !p.id.startsWith('post_prof_') &&
+                p.id !== 'post_poll_1')))
         ) {
-          return 12 + isVideoBonus
-        }
-        if (activeProfId && (p.professionId === activeProfId || p.targetProfessions?.includes(activeProfId))) {
-          return 8 + isVideoBonus
+          return 55 + isVideoBonus
         }
         if (userData?.professionEnclave && p.professionEnclave === userData.professionEnclave) {
-          return 6 + isVideoBonus
+          return 30 + isVideoBonus
         }
-        if (p.isProfessionTiered) return 4 + isVideoBonus
+        if (p.id?.startsWith('harvest_post_cln_custom_') || p.id?.startsWith('harvest_post_cln_live_')) {
+          return 20 + isVideoBonus
+        }
+        if (p.id?.startsWith('harvest_post_') || p.isProfessionTiered) {
+          return 15 + isVideoBonus
+        }
         return isVideoBonus
       }
       return score(b) - score(a)
@@ -2399,8 +2409,8 @@ export default function ConnectLnPage() {
   const isUserCreatedFeedPost = (p: Post) =>
     Boolean(
       p &&
+        !p.id?.startsWith('harvest_post_') &&
         (p.isUserCreated ||
-          p.id?.startsWith('harvest_post_') ||
           p.id?.startsWith('user_post_') ||
           p.id?.startsWith('post_story_share_') ||
           (p.author?.connectionDegree === 'You' &&
@@ -2834,6 +2844,37 @@ export default function ConnectLnPage() {
               {/* LinkedIn-Style Top "Start a post" Box */}
               <PostCreator user={userData} onAddPost={handleAddPost} />
 
+              {/* Top Videos Tiered Strictly to the Selected Logged-In Profession */}
+              {communityFeedPosts.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-[#0A66C2]/10 via-sky-50 to-amber-50/70 dark:from-sky-950/50 dark:via-zinc-900 dark:to-amber-950/30 border border-[#0A66C2]/25">
+                    <span className="text-xs font-extrabold text-[#0A66C2] dark:text-sky-300 truncate">
+                      🎥 Videos for Your Selected Profession:{" "}
+                      <span className="text-zinc-900 dark:text-zinc-100">
+                        {resolvedUserProf?.title || userData.profession || "Master Carpenter"}
+                      </span>
+                    </span>
+                    <span className="shrink-0 rounded-full bg-[#0A66C2] px-2.5 py-0.5 text-[10px] font-bold text-white">
+                      Profession Tiered
+                    </span>
+                  </div>
+                  {communityFeedPosts.slice(0, 3).map((post) => (
+                    <FeedPostCard
+                      key={post.id}
+                      post={post}
+                      currentUser={userData}
+                      onToggleReaction={handleToggleReaction}
+                      onAddComment={handleAddComment}
+                      onToggleSave={handleToggleSave}
+                      onVotePoll={handleVotePoll}
+                      onSelectMember={handleInspectMember}
+                      onDeletePost={handleDeletePost}
+                      onRepost={handleRepostPost}
+                    />
+                  ))}
+                </div>
+              )}
+
               {/* ConnectLn Sovereign Operator Suite (TVR, #AFT/#SCO, PVR, WCD, PRT, FTT/TOR, ESH, BDP, EDW, BEX) */}
               <ConnectLnSovereignSuiteHub
                 userName={userData?.name}
@@ -2960,26 +3001,6 @@ export default function ConnectLnPage() {
                   }
                 }}
               />
-
-              {/* Top Featured LinkedIn-Format Visual Posts (Poster Frame, Podium Keynote & News Portrait) Above the Fold */}
-              {communityFeedPosts.length > 0 && (
-                <div className="space-y-3">
-                  {communityFeedPosts.slice(0, 3).map((post) => (
-                    <FeedPostCard
-                      key={post.id}
-                      post={post}
-                      currentUser={userData}
-                      onToggleReaction={handleToggleReaction}
-                      onAddComment={handleAddComment}
-                      onToggleSave={handleToggleSave}
-                      onVotePoll={handleVotePoll}
-                      onSelectMember={handleInspectMember}
-                      onDeletePost={handleDeletePost}
-                      onRepost={handleRepostPost}
-                    />
-                  ))}
-                </div>
-              )}
 
               {/* Unified Single-Instance Educational Masterclass Wheel (Responsive across mobile & desktop; avoids duplicate DOM trees) */}
               <div className="space-y-2">

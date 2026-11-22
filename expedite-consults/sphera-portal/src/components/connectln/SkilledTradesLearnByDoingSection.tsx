@@ -201,6 +201,57 @@ export function SkilledTradesLearnByDoingSection({
     }
   }, [isHomeVideos, autoplayPref, autoPlayMuted])
 
+  // Auto-sync the Skilled Trades video filter to the user's selected Logged-In Profession
+  useEffect(() => {
+    if (initialCategory) return
+    const raw = `${user?.professionId || ''} ${user?.profession || ''} ${user?.headline || ''}`.toLowerCase().trim()
+    if (!raw) return
+    const numMatch = (user?.professionId || '').match(/^h250_(\d+)_/)
+    const folderNum = numMatch ? Number(numMatch[1]) : 0
+
+    let resolvedCat: CategoryFilter = 'All'
+    if (
+      (folderNum >= 16 && folderNum <= 29) ||
+      /plumb|drain|sewer|water_heater|pipefitter|septic|sump|irrigation|backflow/.test(raw)
+    ) {
+      resolvedCat = 'Plumbing'
+    } else if (
+      (folderNum >= 30 && folderNum <= 43) ||
+      /electri|lighting|ceiling_fan|generator|solar|ev_charg|low_voltage|smart_home/.test(raw)
+    ) {
+      resolvedCat = 'Electrical Fundamentals'
+    } else if (
+      (folderNum >= 44 && folderNum <= 56) ||
+      /hvac|air_conditioning|heating|furnace|boiler|heat_pump|refrigeration|duct|thermostat|ventilation/.test(raw)
+    ) {
+      resolvedCat = 'HVAC'
+    } else if (
+      (folderNum >= 71 && folderNum <= 82) ||
+      /paint|wallpaper|drywall|plaster|texture|pressure_wash/.test(raw)
+    ) {
+      resolvedCat = 'Painting & Decorating'
+    } else if (
+      (folderNum >= 193 && folderNum <= 204) ||
+      /auto|mechanic|tire|brake|oil_change|windshield|roadside|small_engine|motorcycle/.test(raw)
+    ) {
+      resolvedCat = 'Auto Mechanics'
+    } else if (
+      (folderNum >= 205 && folderNum <= 214) ||
+      /weld|ironworker|metal_fab|steel|sheet_metal/.test(raw)
+    ) {
+      resolvedCat = 'Welding'
+    } else if (
+      (folderNum >= 1 && folderNum <= 15) ||
+      (folderNum >= 57 && folderNum <= 70) ||
+      /carpent|handyman|cabinet|furniture|deck|fence|door|trim|stair|wood|framing/.test(raw)
+    ) {
+      resolvedCat = 'Carpentry'
+    }
+
+    setSelectedCategory(resolvedCat)
+    setHomeRotationOffset(0)
+  }, [user?.professionId, user?.profession, user?.headline, initialCategory])
+
   // Load persisted telemetry on mount
   useEffect(() => {
     const loaded = loadAllLearnByDoingTelemetry()
