@@ -2382,39 +2382,39 @@ export function ProfileView({
 
               {/* PROFESSIONAL REPUTATION INDEX & 5-LEVEL VERIFICATION HIERARCHY */}
               <div className="mt-6 pt-5 border-t border-zinc-200 dark:border-zinc-800 space-y-4">
-                <div className="rounded-2xl border border-indigo-500/40 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-5 sm:p-6 text-white shadow-md space-y-3.5">
+                <div className="rounded-2xl border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-950 dark:text-white shadow-md space-y-3.5">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="space-y-1">
-                      <span className="text-xs uppercase font-mono text-purple-200 font-bold">
+                      <span className="text-xs uppercase font-mono text-[#004182] dark:text-sky-300 font-extrabold">
                         ⚡ Evidence-Based Credibility Index
                       </span>
-                      <h4 className="text-lg sm:text-xl font-black text-white flex items-center gap-2">
+                      <h4 className="text-lg sm:text-xl font-black text-zinc-950 dark:text-white flex items-center gap-2">
                         <span>Professional Reputation Index</span>
-                        <span className="text-emerald-300 font-mono text-xl sm:text-2xl">94 / 100</span>
+                        <span className="text-emerald-700 dark:text-emerald-300 font-mono text-xl sm:text-2xl font-black">94 / 100</span>
                       </h4>
                     </div>
 
                     <div className="flex items-center gap-2 flex-wrap text-xs sm:text-sm font-mono">
-                      <span className="rounded-lg bg-white/15 px-2.5 py-1 font-bold">Skills: <strong>96</strong></span>
-                      <span className="rounded-lg bg-white/15 px-2.5 py-1 font-bold">Credentials: <strong>98</strong></span>
-                      <span className="rounded-lg bg-white/15 px-2.5 py-1 font-bold">Projects: <strong>95</strong></span>
-                      <span className="rounded-lg bg-white/15 px-2.5 py-1 font-bold">Experience: <strong>92</strong></span>
-                      <span className="rounded-lg bg-white/15 px-2.5 py-1 font-bold">Reviews: <strong>91</strong></span>
-                      <span className="rounded-lg bg-white/15 px-2.5 py-1 font-bold">Community: <strong>89</strong></span>
+                      <span className="rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700 px-2.5 py-1 font-bold">Skills: <strong>96</strong></span>
+                      <span className="rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700 px-2.5 py-1 font-bold">Credentials: <strong>98</strong></span>
+                      <span className="rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700 px-2.5 py-1 font-bold">Projects: <strong>95</strong></span>
+                      <span className="rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700 px-2.5 py-1 font-bold">Experience: <strong>92</strong></span>
+                      <span className="rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700 px-2.5 py-1 font-bold">Reviews: <strong>91</strong></span>
+                      <span className="rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700 px-2.5 py-1 font-bold">Community: <strong>89</strong></span>
                     </div>
                   </div>
 
                   {/* 5-Level Verification Progression */}
-                  <div className="pt-2.5 border-t border-white/15 space-y-2">
-                    <span className="text-xs uppercase font-mono text-zinc-200 font-bold">
+                  <div className="pt-2.5 border-t border-zinc-200 dark:border-zinc-800 space-y-2">
+                    <span className="text-xs uppercase font-mono text-zinc-800 dark:text-zinc-200 font-extrabold">
                       5-Level Verification Progression:
                     </span>
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-xs font-mono font-bold">
-                      <div className="rounded-lg bg-emerald-500/25 text-emerald-200 p-2 border border-emerald-400/50">1. Self-Reported ✓</div>
-                      <div className="rounded-lg bg-emerald-500/25 text-emerald-200 p-2 border border-emerald-400/50">2. Assessment ✓</div>
-                      <div className="rounded-lg bg-emerald-500/25 text-emerald-200 p-2 border border-emerald-400/50">3. Credentialed ✓</div>
-                      <div className="rounded-lg bg-emerald-500/25 text-emerald-200 p-2 border border-emerald-400/50">4. Employer ✓</div>
-                      <div className="rounded-lg bg-purple-500/35 text-purple-100 font-extrabold p-2 border border-purple-400/60">5. Fellow Verified ★</div>
+                      <div className="rounded-lg bg-emerald-100 dark:bg-emerald-950/70 text-emerald-950 dark:text-emerald-200 p-2 border border-emerald-400 dark:border-emerald-700">1. Self-Reported ✓</div>
+                      <div className="rounded-lg bg-emerald-100 dark:bg-emerald-950/70 text-emerald-950 dark:text-emerald-200 p-2 border border-emerald-400 dark:border-emerald-700">2. Assessment ✓</div>
+                      <div className="rounded-lg bg-emerald-100 dark:bg-emerald-950/70 text-emerald-950 dark:text-emerald-200 p-2 border border-emerald-400 dark:border-emerald-700">3. Credentialed ✓</div>
+                      <div className="rounded-lg bg-emerald-100 dark:bg-emerald-950/70 text-emerald-950 dark:text-emerald-200 p-2 border border-emerald-400 dark:border-emerald-700">4. Employer ✓</div>
+                      <div className="rounded-lg bg-purple-100 dark:bg-purple-950/70 text-purple-950 dark:text-purple-200 font-extrabold p-2 border border-purple-400 dark:border-purple-700">5. Fellow Verified ★</div>
                     </div>
                   </div>
                 </div>
@@ -3846,31 +3846,31 @@ export function ProfileView({
         return (
           <div className="space-y-6">
             {/* Top Skill Passport Overview Card */}
-            <div className="rounded-2xl border border-indigo-500/30 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-950 p-6 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="space-y-1.5">
+            <div className="rounded-2xl border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6 text-zinc-950 dark:text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-2">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="rounded-full bg-indigo-500/20 px-3 py-0.5 text-xs font-bold text-indigo-300 border border-indigo-400/40 flex items-center gap-1.5 w-fit">
-                    <ShieldCheck className="h-3.5 w-3.5 text-sky-400" />
+                  <span className="rounded-full bg-blue-100 dark:bg-indigo-950/70 px-3 py-1 text-xs font-extrabold text-zinc-950 dark:text-indigo-200 border border-blue-300 dark:border-indigo-700 flex items-center gap-1.5 w-fit">
+                    <ShieldCheck className="h-3.5 w-3.5 text-[#0A66C2] dark:text-sky-400" />
                     ConnectIn Verified Skill Passport · {enclaveInfo?.shortName || 'Trades'}
                   </span>
-                  <span className="rounded-full bg-emerald-500/20 px-3 py-0.5 text-xs font-bold text-emerald-300 border border-emerald-400/40 flex items-center gap-1.5 w-fit">
-                    <Briefcase className="h-3.5 w-3.5 text-emerald-400" />
+                  <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/70 px-3 py-1 text-xs font-extrabold text-emerald-950 dark:text-emerald-200 border border-emerald-400 dark:border-emerald-700 flex items-center gap-1.5 w-fit">
+                    <Briefcase className="h-3.5 w-3.5 text-emerald-700 dark:text-emerald-400" />
                     {allQualifiedJobs.length} Pre-Qualified Roles Unlocked
                   </span>
                 </div>
-                <h2 className="text-2xl font-black text-white">
+                <h2 className="text-2xl font-black text-zinc-950 dark:text-white">
                   Multi-Factor Verified Competency Graph
                 </h2>
-                <p className="text-xs text-zinc-300 max-w-xl leading-relaxed">
+                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-200 max-w-xl leading-relaxed">
                   Evidence-based verification combining proctored scenario exams, live trade/clinical diagnostic assessments, and peer superintendent attestations. Your verified graph automatically unlocks fast-track roles below.
                 </p>
               </div>
 
               <div className="flex items-center gap-3 shrink-0">
-                <div className="rounded-2xl bg-black/40 p-4 border border-white/15 text-center min-w-[165px] space-y-1">
-                  <span className="text-[10px] uppercase font-mono text-zinc-400">Passport Score</span>
-                  <p className="text-3xl font-black text-sky-400">95.4%</p>
-                  <span className="text-[10px] text-emerald-400 font-bold block">Top 1% Fellow Grade</span>
+                <div className="rounded-2xl bg-zinc-100 dark:bg-zinc-800 p-4 border border-zinc-300 dark:border-zinc-700 text-center min-w-[165px] space-y-1">
+                  <span className="text-xs uppercase font-mono font-bold text-zinc-800 dark:text-zinc-300">Passport Score</span>
+                  <p className="text-3xl font-black text-[#004182] dark:text-sky-400">95.4%</p>
+                  <span className="text-xs text-emerald-800 dark:text-emerald-400 font-extrabold block">Top 1% Fellow Grade</span>
                 </div>
               </div>
             </div>
@@ -5281,18 +5281,18 @@ export function ProfileView({
 
             {/* Integrated Marketplace Products & Storefront Desk inside Business Page */}
             <div id="business-site-marketplace" className="pt-4 space-y-4">
-              <div className="rounded-2xl border border-purple-500/40 bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 p-5 sm:p-6 text-white shadow-lg space-y-4">
+              <div className="rounded-2xl border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-950 dark:text-white shadow-md space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="space-y-1">
-                    <span className="rounded-full bg-purple-500/35 px-3 py-1 text-xs font-bold uppercase tracking-wider text-purple-100 border border-purple-400/50">
+                  <div className="space-y-1.5">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 dark:bg-amber-950/70 px-3.5 py-1 text-xs sm:text-sm font-extrabold uppercase tracking-wider text-zinc-950 dark:text-amber-200 border-2 border-amber-400 dark:border-amber-700">
                       {businessWebsite.industryLabel} · Marketplace Catalog
                     </span>
-                    <h3 className="text-xl sm:text-2xl font-black text-white">
+                    <h3 className="text-xl sm:text-2xl font-black text-zinc-950 dark:text-white">
                       {isViewingOtherMember
                         ? `${user.name.split(' ')[0]}'s Active Marketplace Products (${myProducts.length})`
                         : `Your Marketplace Products & Storefront Inventory (${myProducts.length})`}
                     </h3>
-                    <p className="text-sm font-medium text-purple-100">
+                    <p className="text-sm sm:text-base font-bold text-zinc-900 dark:text-zinc-200">
                       Every product, plan, and service listed here appears on both this Business Website and the ConnectLn Marketplace.
                     </p>
                   </div>
@@ -5311,25 +5311,25 @@ export function ProfileView({
 
                 {canManageWorkspace && (
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div className="rounded-xl bg-black/45 border border-white/20 p-3.5 text-center">
-                      <span className="text-xs text-zinc-300 uppercase font-mono font-bold">Top Revenue Stream</span>
-                      <p className="text-sm sm:text-base font-black text-emerald-300 truncate">{myProducts[0]?.mrrOrRevenue || 'Active'}</p>
+                    <div className="rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 p-3.5 text-center">
+                      <span className="text-xs text-zinc-900 dark:text-zinc-300 uppercase font-mono font-extrabold">Top Revenue Stream</span>
+                      <p className="text-sm sm:text-base font-black text-emerald-800 dark:text-emerald-400 truncate">{myProducts[0]?.mrrOrRevenue || 'Active'}</p>
                     </div>
-                    <div className="rounded-xl bg-black/45 border border-white/20 p-3.5 text-center">
-                      <span className="text-xs text-zinc-300 uppercase font-mono font-bold">Active Units / Clients</span>
-                      <p className="text-lg sm:text-xl font-black text-white">
+                    <div className="rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 p-3.5 text-center">
+                      <span className="text-xs text-zinc-900 dark:text-zinc-300 uppercase font-mono font-extrabold">Active Units / Clients</span>
+                      <p className="text-lg sm:text-xl font-black text-zinc-950 dark:text-white">
                         {myProducts.reduce((s, p) => s + (p.activeLicensesCount || 0), 0).toLocaleString()} Active
                       </p>
                     </div>
-                    <div className="rounded-xl bg-black/45 border border-white/20 p-3.5 text-center">
-                      <span className="text-xs text-zinc-300 uppercase font-mono font-bold">Active Bookings / Trials</span>
-                      <p className="text-lg sm:text-xl font-black text-amber-300">
+                    <div className="rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 p-3.5 text-center">
+                      <span className="text-xs text-zinc-900 dark:text-zinc-300 uppercase font-mono font-extrabold">Active Bookings / Trials</span>
+                      <p className="text-lg sm:text-xl font-black text-amber-800 dark:text-amber-300">
                         {myProducts.reduce((s, p) => s + (p.activeTrialsCount || 0), 0)} Active
                       </p>
                     </div>
-                    <div className="rounded-xl bg-black/45 border border-white/20 p-3.5 text-center">
-                      <span className="text-xs text-zinc-300 uppercase font-mono font-bold">Customer Leads</span>
-                      <p className="text-lg sm:text-xl font-black text-sky-300">
+                    <div className="rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 p-3.5 text-center">
+                      <span className="text-xs text-zinc-900 dark:text-zinc-300 uppercase font-mono font-extrabold">Customer Leads</span>
+                      <p className="text-lg sm:text-xl font-black text-[#004182] dark:text-sky-300">
                         {myProducts.reduce((s, p) => s + (p.leadsCount || 0), 0)} Leads
                       </p>
                     </div>
