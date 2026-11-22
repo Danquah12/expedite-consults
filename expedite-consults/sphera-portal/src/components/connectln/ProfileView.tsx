@@ -467,7 +467,7 @@ export function ProfileView({
   // "Looking for a Job" Badge & Card State (ConnectLn replacement for LinkedIn #OPENTOWORK)
   const [jobBadgeStatus, setJobBadgeStatus] = useState<'Looking for a Job' | 'Looking for Projects' | 'Available for Hire' | 'Booked'>('Looking for a Job')
   const [jobCardRoles, setJobCardRoles] = useState<string>(
-    `${user.profession || 'Senior Specialist'}, Lead Consultant & Project Manager`
+    `${resolvedDisplayProfession}, Lead Consultant & Project Manager`
   )
   const [jobCardWorkTypes, setJobCardWorkTypes] = useState<string>(
     'Full-time Employment · Contract Projects · Advisory'
@@ -497,14 +497,23 @@ export function ProfileView({
           setJobBadgeStatus('Looking for a Job')
         }
         const rawCard = localStorage.getItem(`connectin_looking_for_job_card_v1__${keySuffix}`)
+        const isCarpenterRole = tailoredWorkspaceProfile.resolution.subArchetype === 'carpentry_handyman'
         if (rawCard) {
           const parsed = JSON.parse(rawCard)
-          if (parsed.roles) setJobCardRoles(parsed.roles)
+          if (parsed.roles) {
+            const hasStaleCarpenter =
+              /master carpenter/i.test(String(parsed.roles)) && !isCarpenterRole
+            setJobCardRoles(
+              hasStaleCarpenter
+                ? `${resolvedDisplayProfession}, Lead Consultant & Project Manager`
+                : parsed.roles
+            )
+          }
           if (parsed.workTypes) setJobCardWorkTypes(parsed.workTypes)
           if (parsed.locations) setJobCardLocations(parsed.locations)
           if (parsed.startTiming) setJobCardStartTiming(parsed.startTiming)
         } else {
-          setJobCardRoles(`${user.profession || 'Senior Specialist'}, Lead Consultant & Project Manager`)
+          setJobCardRoles(`${resolvedDisplayProfession}, Lead Consultant & Project Manager`)
           setJobCardLocations(`${user.location || 'Laurel, MD'} · On-site, Hybrid & Remote`)
         }
       } catch {}
@@ -512,7 +521,7 @@ export function ProfileView({
     loadJobCardState()
     window.addEventListener('connectln-job-status-updated', loadJobCardState)
     return () => window.removeEventListener('connectln-job-status-updated', loadJobCardState)
-  }, [user?.name, user?.profession, user?.location])
+  }, [user?.name, user?.profession, user?.location, resolvedDisplayProfession, tailoredWorkspaceProfile.resolution.subArchetype])
 
   const handleSaveJobCard = (nextStatus?: 'Looking for a Job' | 'Looking for Projects' | 'Available for Hire' | 'Booked') => {
     const statusToSave = nextStatus || jobBadgeStatus
@@ -892,13 +901,18 @@ export function ProfileView({
   }
 
   // Developer / Company Products & Personal Business Website State
-  const [customAddedProducts, setCustomAddedProducts] = useState<VendorProductItem[]>([])
-  const [myProducts, setMyProducts] = useState<VendorProductItem[]>(() => tailoredWorkspaceProfile.products)
+  const [managedOfferings, setManagedOfferings] = useState<BusinessWebsiteOffering[]>(
+    () => tailoredWorkspaceProfile.business.offerings
+  )
+  const [editingOfferingId, setEditingOfferingId] = useState<string | null>(null)
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false)
   const [newProductName, setNewProductName] = useState("")
   const [newProductCategory, setNewProductCategory] = useState<VendorProductItem['category']>('Services')
   const [newProductPrice, setNewProductPrice] = useState("")
+  const [newProductBillingUnit, setNewProductBillingUnit] = useState("Flat Rate / Package")
+  const [newProductTurnaround, setNewProductTurnaround] = useState("Same-Week Availability")
   const [newProductDescription, setNewProductDescription] = useState("")
+  const [newProductDeliverables, setNewProductDeliverables] = useState("")
   const [productAddedSuccess, setProductAddedSuccess] = useState(false)
 
   // Personal Business Website State & Customizations
@@ -906,16 +920,22 @@ export function ProfileView({
   const [businessCategoryFilter, setBusinessCategoryFilter] = useState<string>('All')
   const [openBusinessFaqIdx, setOpenBusinessFaqIdx] = useState<number | null>(0)
   const [siteUrlCopied, setSiteUrlCopied] = useState(false)
+  const [isBusinessPreviewMode, setIsBusinessPreviewMode] = useState(false)
   const [isEditWebsiteModalOpen, setIsEditWebsiteModalOpen] = useState(false)
   const [editWebsiteName, setEditWebsiteName] = useState("")
   const [editWebsiteSlug, setEditWebsiteSlug] = useState("")
   const [editWebsiteHeadline, setEditWebsiteHeadline] = useState("")
+  const [editWebsiteSubheadline, setEditWebsiteSubheadline] = useState("")
   const [editWebsiteTagline, setEditWebsiteTagline] = useState("")
+  const [editWebsiteBannerUrl, setEditWebsiteBannerUrl] = useState("")
   const [editWebsiteTheme, setEditWebsiteTheme] = useState<BusinessThemeColor>('blue')
   const [editWebsiteServiceArea, setEditWebsiteServiceArea] = useState("")
   const [editWebsiteHours, setEditWebsiteHours] = useState("")
   const [editWebsitePhone, setEditWebsitePhone] = useState("")
+  const [editWebsiteEmail, setEditWebsiteEmail] = useState("")
+  const [editWebsiteLicense, setEditWebsiteLicense] = useState("")
   const [editWebsiteAbout, setEditWebsiteAbout] = useState("")
+  const [editWebsiteMission, setEditWebsiteMission] = useState("")
   const [websiteSavedSuccess, setWebsiteSavedSuccess] = useState(false)
 
   // Business Website Booking / Request Quote State
@@ -936,16 +956,85 @@ export function ProfileView({
       ...tailoredWorkspaceProfile.business,
       ...businessOverrides,
       domainSlug: businessOverrides.domainSlug || tailoredWorkspaceProfile.business.domainSlug,
-      domainUrl: `https://${businessOverrides.domainSlug || tailoredWorkspaceProfile.business.domainSlug}.conectln.com`
+      domainUrl: `https://${businessOverrides.domainSlug || tailoredWorkspaceProfile.business.domainSlug}.conectln.com`,
+      emailDisplay:
+        businessOverrides.emailDisplay ||
+        tailoredWorkspaceProfile.business.emailDisplay
     }),
     [tailoredWorkspaceProfile.business, businessOverrides]
   )
 
-  const allWebsiteOfferings: BusinessWebsiteOffering[] = React.useMemo(() => {
-    const baseIds = new Set(businessWebsite.offerings.map((o) => o.id))
-    const customOfferings: BusinessWebsiteOffering[] = customAddedProducts
-      .filter((p) => !baseIds.has(p.id))
-      .map((p) => ({
+  const allWebsiteOfferings: BusinessWebsiteOffering[] = managedOfferings
+
+  const myProducts: VendorProductItem[] = React.useMemo(
+    () =>
+      managedOfferings.map((off) => ({
+        id: off.id,
+        name: off.title,
+        category: off.productCategory,
+        icon: off.icon,
+        pricingModel: off.billingUnit,
+        price: off.price,
+        activeLicensesCount: off.activeClientsCount,
+        activeTrialsCount: Math.max(4, Math.round(off.leadsCount * 0.6)),
+        mrrOrRevenue: off.revenueLabel,
+        rating: off.rating,
+        reviewsCount: off.reviewsCount,
+        status: 'Active Listing',
+        leadsCount: off.leadsCount,
+        description: off.description,
+        turnaround: off.turnaround
+      })),
+    [managedOfferings]
+  )
+
+  const persistManagedOfferings = (nextOfferings: BusinessWebsiteOffering[]) => {
+    setManagedOfferings(nextOfferings)
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(
+          `connectin_managed_offerings_v1_${userWorkspaceStorageKey}`,
+          JSON.stringify(nextOfferings)
+        )
+      } catch {}
+    }
+  }
+
+  useEffect(() => {
+    let loadedOfferings: BusinessWebsiteOffering[] | null = null
+    let loadedLegacyCustom: VendorProductItem[] = []
+    let loadedSiteOverrides: Partial<PersonalBusinessWebsiteData> = {}
+    if (typeof window !== 'undefined') {
+      try {
+        const rawManaged = localStorage.getItem(`connectin_managed_offerings_v1_${userWorkspaceStorageKey}`)
+        if (rawManaged) {
+          const parsed = JSON.parse(rawManaged)
+          if (Array.isArray(parsed) && parsed.length > 0) loadedOfferings = parsed
+        }
+      } catch {}
+      if (!loadedOfferings) {
+        try {
+          const rawProds = localStorage.getItem(`connectin_custom_products_v1_${userWorkspaceStorageKey}`)
+          if (rawProds) {
+            const parsed = JSON.parse(rawProds)
+            if (Array.isArray(parsed)) loadedLegacyCustom = parsed
+          }
+        } catch {}
+      }
+      try {
+        const rawSite = localStorage.getItem(`connectin_business_website_v1_${userWorkspaceStorageKey}`)
+        if (rawSite) {
+          const parsed = JSON.parse(rawSite)
+          if (parsed && typeof parsed === 'object') loadedSiteOverrides = parsed
+        }
+      } catch {}
+    }
+
+    if (loadedOfferings) {
+      setManagedOfferings(loadedOfferings)
+      setQuoteSelectedOffering(loadedOfferings[0]?.title || '')
+    } else {
+      const legacyMapped: BusinessWebsiteOffering[] = loadedLegacyCustom.map((p) => ({
         id: p.id,
         title: p.name,
         category: p.category,
@@ -957,7 +1046,7 @@ export function ProfileView({
         icon: p.icon || '✨',
         description:
           p.description ||
-          `Direct booking and marketplace offering provided by ${businessWebsite.businessName}.`,
+          `Direct service & marketplace offering by ${tailoredWorkspaceProfile.business.businessName}.`,
         deliverables: [
           `Direct fulfillment by ${user.name}`,
           'Transparent upfront pricing & SLA',
@@ -970,35 +1059,16 @@ export function ProfileView({
         revenueLabel: p.mrrOrRevenue,
         leadsCount: p.leadsCount
       }))
-    return [...customOfferings, ...businessWebsite.offerings]
-  }, [customAddedProducts, businessWebsite.offerings, businessWebsite.businessName, user.name])
-
-  useEffect(() => {
-    let loadedCustomProducts: VendorProductItem[] = []
-    let loadedSiteOverrides: Partial<PersonalBusinessWebsiteData> = {}
-    if (typeof window !== 'undefined') {
-      try {
-        const rawProds = localStorage.getItem(`connectin_custom_products_v1_${userWorkspaceStorageKey}`)
-        if (rawProds) {
-          const parsed = JSON.parse(rawProds)
-          if (Array.isArray(parsed)) loadedCustomProducts = parsed
-        }
-      } catch {}
-      try {
-        const rawSite = localStorage.getItem(`connectin_business_website_v1_${userWorkspaceStorageKey}`)
-        if (rawSite) {
-          const parsed = JSON.parse(rawSite)
-          if (parsed && typeof parsed === 'object') loadedSiteOverrides = parsed
-        }
-      } catch {}
+      const combined = [...legacyMapped, ...tailoredWorkspaceProfile.business.offerings]
+      setManagedOfferings(combined)
+      setQuoteSelectedOffering(combined[0]?.title || '')
     }
-    setCustomAddedProducts(loadedCustomProducts)
-    setMyProducts([...loadedCustomProducts, ...tailoredWorkspaceProfile.products])
+
     setBusinessOverrides(loadedSiteOverrides)
     setBusinessCategoryFilter('All')
     setQuoteSubmittedReceipt(null)
-    setQuoteSelectedOffering(tailoredWorkspaceProfile.business.offerings[0]?.title || '')
-  }, [userWorkspaceStorageKey, tailoredWorkspaceProfile])
+    setIsBusinessPreviewMode(false)
+  }, [userWorkspaceStorageKey, tailoredWorkspaceProfile, user.name])
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault()
@@ -1178,71 +1248,160 @@ export function ProfileView({
     })
   }
 
+  const handleOpenAddProductModal = () => {
+    setEditingOfferingId(null)
+    setNewProductName("")
+    setNewProductCategory('Services')
+    setNewProductPrice("")
+    setNewProductBillingUnit("Flat Rate / Package")
+    setNewProductTurnaround("Same-Week Availability")
+    setNewProductDescription("")
+    setNewProductDeliverables(
+      `Direct fulfillment by ${user.name}\nTransparent upfront pricing & SLA\nConnectLn Marketplace escrow protection`
+    )
+    setProductAddedSuccess(false)
+    setIsAddProductModalOpen(true)
+  }
+
+  const handleOpenEditProductModal = (offering: BusinessWebsiteOffering) => {
+    setEditingOfferingId(offering.id)
+    setNewProductName(offering.title)
+    setNewProductCategory(offering.productCategory || 'Services')
+    setNewProductPrice(offering.price)
+    setNewProductBillingUnit(offering.billingUnit || 'Flat Rate / Package')
+    setNewProductTurnaround(offering.turnaround || 'Available Now')
+    setNewProductDescription(offering.description || '')
+    setNewProductDeliverables((offering.deliverables || []).join('\n'))
+    setProductAddedSuccess(false)
+    setIsAddProductModalOpen(true)
+  }
+
+  const handleDeleteProductOffering = (offeringId: string) => {
+    const nextOfferings = managedOfferings.filter((o) => o.id !== offeringId)
+    persistManagedOfferings(nextOfferings)
+    setPhotoSuccessMsg('✓ Listing removed from your Business Page & Marketplace catalog.')
+    setTimeout(() => setPhotoSuccessMsg(null), 3500)
+  }
+
+  const handleResetDefaultCatalog = () => {
+    setBusinessOverrides({})
+    persistManagedOfferings(tailoredWorkspaceProfile.business.offerings)
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem(`connectin_business_website_v1_${userWorkspaceStorageKey}`)
+        localStorage.removeItem(`connectin_managed_offerings_v1_${userWorkspaceStorageKey}`)
+        localStorage.removeItem(`connectin_custom_products_v1_${userWorkspaceStorageKey}`)
+      } catch {}
+    }
+    setPhotoSuccessMsg('✓ Business Website and Products restored to your profession defaults.')
+    setTimeout(() => setPhotoSuccessMsg(null), 4000)
+  }
+
   const handleCreateProductListing = (e: React.FormEvent) => {
     e.preventDefault()
     if (!newProductName.trim()) return
 
-    const newProd: VendorProductItem = {
-      id: 'prod_' + Date.now(),
-      name: newProductName.trim(),
-      category: newProductCategory,
-      icon:
-        newProductCategory === 'Software'
-          ? '🛡️'
-          : newProductCategory === 'Training'
-          ? '🎓'
-          : newProductCategory === 'Clinical Services'
-          ? '🩺'
-          : newProductCategory === 'Trade Plans' || newProductCategory === 'Maintenance Plans'
-          ? '🛠️'
-          : newProductCategory === 'Diagnostics'
-          ? '📊'
-          : '⚡',
-      pricingModel: newProductPrice.toLowerCase().includes('/ mo') ? 'Monthly Plan' : 'Direct Service / Package',
-      price: newProductPrice.trim() || '$299',
-      activeLicensesCount: 1,
-      activeTrialsCount: 5,
-      mrrOrRevenue: newProductPrice.trim() || '$299 Listed',
-      rating: 5.0,
-      reviewsCount: 1,
-      status: 'Active Listing',
-      leadsCount: 3,
-      description:
-        newProductDescription.trim() ||
-        `Direct service & marketplace offering by ${businessWebsite.businessName}.`,
-      turnaround: 'Available Now'
+    const parsedDeliverables = newProductDeliverables
+      .split(/\r?\n|,/)
+      .map((s) => s.trim())
+      .filter(Boolean)
+
+    const fallbackDeliverables = [
+      `Direct fulfillment by ${user.name}`,
+      'Transparent upfront pricing & SLA',
+      'Synced with ConnectLn Marketplace protection'
+    ]
+
+    const iconForCategory =
+      newProductCategory === 'Software'
+        ? '🛡️'
+        : newProductCategory === 'Training'
+        ? '🎓'
+        : newProductCategory === 'Clinical Services'
+        ? '🩺'
+        : newProductCategory === 'Trade Plans' || newProductCategory === 'Maintenance Plans'
+        ? '🛠️'
+        : newProductCategory === 'Diagnostics'
+        ? '📊'
+        : '⚡'
+
+    if (editingOfferingId) {
+      const nextOfferings = managedOfferings.map((item) =>
+        item.id === editingOfferingId
+          ? {
+              ...item,
+              title: newProductName.trim(),
+              category: newProductCategory,
+              productCategory: newProductCategory,
+              icon: iconForCategory,
+              price: newProductPrice.trim() || item.price,
+              billingUnit: newProductBillingUnit.trim() || item.billingUnit,
+              turnaround: newProductTurnaround.trim() || item.turnaround,
+              description:
+                newProductDescription.trim() ||
+                `Direct service & marketplace offering by ${businessWebsite.businessName}.`,
+              deliverables: parsedDeliverables.length > 0 ? parsedDeliverables : fallbackDeliverables,
+              revenueLabel: newProductPrice.trim() || item.revenueLabel
+            }
+          : item
+      )
+      persistManagedOfferings(nextOfferings)
+    } else {
+      const priceStr = newProductPrice.trim() || '$299'
+      const newOffering: BusinessWebsiteOffering = {
+        id: 'prod_' + Date.now(),
+        title: newProductName.trim(),
+        category: newProductCategory,
+        productCategory: newProductCategory,
+        price: priceStr,
+        billingUnit:
+          newProductBillingUnit.trim() ||
+          (priceStr.toLowerCase().includes('/ mo') ? 'Monthly Plan' : 'Direct Service / Package'),
+        turnaround: newProductTurnaround.trim() || 'Available Now',
+        popular: true,
+        icon: iconForCategory,
+        description:
+          newProductDescription.trim() ||
+          `Direct service & marketplace offering by ${businessWebsite.businessName}.`,
+        deliverables: parsedDeliverables.length > 0 ? parsedDeliverables : fallbackDeliverables,
+        ctaLabel: 'Book / Order Now',
+        rating: 5.0,
+        reviewsCount: 1,
+        activeClientsCount: 1,
+        revenueLabel: `${priceStr} Listed`,
+        leadsCount: 1
+      }
+      persistManagedOfferings([newOffering, ...managedOfferings])
+      setQuoteSelectedOffering(newOffering.title)
     }
 
-    setCustomAddedProducts((prev) => {
-      const next = [newProd, ...prev]
-      if (typeof window !== 'undefined') {
-        try {
-          localStorage.setItem(`connectin_custom_products_v1_${userWorkspaceStorageKey}`, JSON.stringify(next))
-        } catch {}
-      }
-      return next
-    })
-    setMyProducts((prev) => [newProd, ...prev])
     setProductAddedSuccess(true)
     setTimeout(() => {
       setIsAddProductModalOpen(false)
       setProductAddedSuccess(false)
+      setEditingOfferingId(null)
       setNewProductName("")
       setNewProductPrice("")
       setNewProductDescription("")
-    }, 1200)
+      setNewProductDeliverables("")
+    }, 1000)
   }
 
   const handleOpenEditWebsiteModal = () => {
     setEditWebsiteName(businessWebsite.businessName)
     setEditWebsiteSlug(businessWebsite.domainSlug)
     setEditWebsiteHeadline(businessWebsite.heroHeadline)
+    setEditWebsiteSubheadline(businessWebsite.heroSubheadline)
     setEditWebsiteTagline(businessWebsite.tagline)
+    setEditWebsiteBannerUrl(businessWebsite.heroBannerImage)
     setEditWebsiteTheme(businessWebsite.themeColor)
     setEditWebsiteServiceArea(businessWebsite.serviceArea)
     setEditWebsiteHours(businessWebsite.operatingHours)
     setEditWebsitePhone(businessWebsite.phoneDisplay)
+    setEditWebsiteEmail(businessWebsite.emailDisplay)
+    setEditWebsiteLicense(businessWebsite.licenseNumber)
     setEditWebsiteAbout(businessWebsite.aboutStory)
+    setEditWebsiteMission(businessWebsite.missionStatement)
     setWebsiteSavedSuccess(false)
     setIsEditWebsiteModalOpen(true)
   }
@@ -1262,12 +1421,17 @@ export function ProfileView({
       domainSlug: cleanSlug,
       domainUrl: `https://${cleanSlug}.conectln.com`,
       heroHeadline: editWebsiteHeadline.trim() || tailoredWorkspaceProfile.business.heroHeadline,
+      heroSubheadline: editWebsiteSubheadline.trim() || tailoredWorkspaceProfile.business.heroSubheadline,
       tagline: editWebsiteTagline.trim() || tailoredWorkspaceProfile.business.tagline,
+      heroBannerImage: editWebsiteBannerUrl.trim() || tailoredWorkspaceProfile.business.heroBannerImage,
       themeColor: editWebsiteTheme,
       serviceArea: editWebsiteServiceArea.trim() || tailoredWorkspaceProfile.business.serviceArea,
       operatingHours: editWebsiteHours.trim() || tailoredWorkspaceProfile.business.operatingHours,
       phoneDisplay: editWebsitePhone.trim() || tailoredWorkspaceProfile.business.phoneDisplay,
-      aboutStory: editWebsiteAbout.trim() || tailoredWorkspaceProfile.business.aboutStory
+      emailDisplay: editWebsiteEmail.trim() || `hello@${cleanSlug}.conectln.com`,
+      licenseNumber: editWebsiteLicense.trim() || tailoredWorkspaceProfile.business.licenseNumber,
+      aboutStory: editWebsiteAbout.trim() || tailoredWorkspaceProfile.business.aboutStory,
+      missionStatement: editWebsiteMission.trim() || tailoredWorkspaceProfile.business.missionStatement
     }
     setBusinessOverrides(nextOverrides)
     if (typeof window !== 'undefined') {
@@ -1395,26 +1559,26 @@ export function ProfileView({
       )}
 
       {/* 1. TOP WORKSPACE COMMAND BAR */}
-      <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-900 dark:text-zinc-100 shadow-xs relative overflow-hidden">
+      <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 text-zinc-950 dark:text-zinc-100 shadow-sm relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="rounded-full px-3 py-0.5 text-xs font-semibold border flex items-center gap-1.5 bg-blue-50 dark:bg-blue-950/50 text-[#0A66C2] dark:text-sky-300 border-blue-200/60 dark:border-blue-800/60">
+              <span className="rounded-full px-3.5 py-1 text-xs sm:text-sm font-bold border flex items-center gap-1.5 bg-blue-50 dark:bg-blue-950/60 text-[#0A66C2] dark:text-sky-300 border-blue-200 dark:border-blue-800">
                 <span>{enclaveInfo?.icon || '🛡️'}</span>
                 <span>{enclaveInfo?.name || 'ConnectIn Professional Workspace'}</span>
               </span>
-              <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
-                Verified Professional
+              <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1 text-xs sm:text-sm font-bold text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                ✓ Verified Professional
               </span>
             </div>
 
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-zinc-950 dark:text-white">
               {isViewingOtherMember ? `${user.name}'s Workspace & Identity` : 'My Workspace & Identity'}
             </h1>
-            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-2xl leading-relaxed">
+            <p className="text-sm sm:text-base font-medium text-zinc-800 dark:text-zinc-200 max-w-2xl leading-relaxed">
               {isViewingOtherMember
-                ? `Explore ${user.name}'s verified professional profile, work experience, verified skills, certifications, peer reviews, and workspace portfolio.`
-                : 'Manage your professional profile, work experience, verified skills, certifications, peer reviews, and your seller listings.'}
+                ? `Explore ${user.name}'s verified professional profile, work experience, verified skills, certifications, peer reviews, and Business Website.`
+                : 'Manage your professional profile, work experience, verified skills, certifications, peer reviews, and your Business Website & Products.'}
             </p>
           </div>
 
@@ -1423,46 +1587,46 @@ export function ProfileView({
             {!isViewingOtherMember && (
               <div
                 onClick={() => setWorkspaceSection('analytics')}
-                className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 hover:border-[#0A66C2] p-3 text-center min-w-[115px] cursor-pointer transition-all"
+                className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 hover:border-[#0A66C2] p-3.5 text-center min-w-[125px] cursor-pointer transition-all"
                 title="Open Profile Analytics"
               >
-                <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 dark:text-zinc-400">
+                <span className="text-xs uppercase font-extrabold tracking-wider text-zinc-700 dark:text-zinc-200">
                   Profile Views
                 </span>
-                <p className="text-lg sm:text-xl font-black text-[#0A66C2] dark:text-sky-400">
+                <p className="text-xl sm:text-2xl font-black text-[#0A66C2] dark:text-sky-400">
                   {tailoredAnalytics.effectiveProfileViews.toLocaleString()}
                 </p>
-                <span className="text-[10px] text-zinc-400">
+                <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
                   {viewers.length} Direct Viewers
                 </span>
               </div>
             )}
             <div
               onClick={() => setWorkspaceSection('profile')}
-              className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 hover:border-emerald-500 p-3 text-center min-w-[115px] cursor-pointer transition-all"
+              className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 hover:border-emerald-500 p-3.5 text-center min-w-[125px] cursor-pointer transition-all"
             >
-              <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 dark:text-zinc-400">
+              <span className="text-xs uppercase font-extrabold tracking-wider text-zinc-700 dark:text-zinc-200">
                 Connections
               </span>
-              <p className="text-lg sm:text-xl font-black text-emerald-600 dark:text-emerald-400">
+              <p className="text-xl sm:text-2xl font-black text-emerald-700 dark:text-emerald-400">
                 {(user.connectionsCount ?? 0).toLocaleString()}
               </p>
-              <span className="text-[10px] text-zinc-400">
+              <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
                 Verified Network
               </span>
             </div>
             <div
               onClick={() => setWorkspaceSection('skills')}
-              className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 hover:border-amber-500 p-3 text-center min-w-[115px] cursor-pointer transition-all"
+              className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 hover:border-amber-500 p-3.5 text-center min-w-[125px] cursor-pointer transition-all"
               title="View Verified Skills & Endorsements"
             >
-              <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 dark:text-zinc-400">
+              <span className="text-xs uppercase font-extrabold tracking-wider text-zinc-700 dark:text-zinc-200">
                 Verified Skills
               </span>
-              <p className="text-lg sm:text-xl font-black text-amber-500">
+              <p className="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400">
                 {(user.skills?.length || enclaveWorkspace.verifiedSkills.length || 6)} ⭐
               </p>
-              <span className="text-[10px] text-zinc-400">
+              <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
                 {enclaveInfo?.shortName || 'Domain'} Verified
               </span>
             </div>
@@ -1470,7 +1634,7 @@ export function ProfileView({
         </div>
 
         {/* Workspace Sections Switcher Ribbon */}
-        <div className="mt-5 pt-3.5 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+        <div className="mt-5 pt-4 border-t border-zinc-200/80 dark:border-zinc-800 flex items-center gap-2 overflow-x-auto pb-1">
           {[
             { id: 'profile', label: '👤 Profile' },
             ...(!isViewingOtherMember ? [{ id: 'analytics', label: '📊 Analytics' }] : []),
@@ -1488,10 +1652,10 @@ export function ProfileView({
                 key={sec.id}
                 type="button"
                 onClick={() => setWorkspaceSection(sec.id as any)}
-                className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                className={`rounded-full px-4 py-2 text-sm font-bold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
                   isSelected
-                    ? "bg-[#0A66C2] text-white font-semibold shadow-xs"
-                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700/70"
+                    ? "bg-[#0A66C2] text-white shadow-sm"
+                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-zinc-300/80 dark:border-zinc-700"
                 }`}
               >
                 <span>{sec.label}</span>
@@ -1625,7 +1789,7 @@ export function ProfileView({
                 </div>
 
                 {/* Primary Profile Action Toolbar */}
-                <div className="flex items-center gap-2 flex-wrap sm:justify-end pt-2 sm:pt-0">
+                <div className="flex items-center gap-2.5 flex-wrap sm:justify-end pt-2 sm:pt-0">
                   {isViewingOtherMember ? (
                     <>
                       <button
@@ -1636,47 +1800,47 @@ export function ProfileView({
                           setPhotoSuccessMsg(`✓ Connection request sent to ${user.name}!`)
                           setTimeout(() => setPhotoSuccessMsg(null), 4000)
                         }}
-                        className={`rounded-full px-4 py-2 text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all cursor-pointer ${
+                        className={`rounded-full px-4 py-2.5 text-sm font-extrabold shadow-sm flex items-center gap-1.5 transition-all cursor-pointer ${
                           isMemberConnected
                             ? "bg-emerald-600 text-white"
                             : "bg-[#0A66C2] hover:bg-[#004182] text-white"
                         }`}
                       >
-                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        <CheckCircle2 className="h-4 w-4" />
                         <span>{isMemberConnected ? `Invitation Sent ✓` : `+ Connect with ${user.name.split(' ')[0]}`}</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => onNavigateMessaging && onNavigateMessaging(user)}
-                        className="rounded-full bg-sky-50 dark:bg-sky-950/40 border border-sky-300 dark:border-sky-800 hover:bg-sky-100 px-4 py-2 text-xs font-bold text-[#0A66C2] dark:text-sky-300 shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                        className="rounded-full bg-sky-50 dark:bg-sky-950/40 border border-sky-300 dark:border-sky-800 hover:bg-sky-100 px-4 py-2.5 text-sm font-extrabold text-[#0A66C2] dark:text-sky-300 shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
                       >
-                        <MessageSquarePlus className="h-3.5 w-3.5" />
+                        <MessageSquarePlus className="h-4 w-4" />
                         <span>Message {user.name.split(' ')[0]}</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => setWorkspaceSection('business')}
-                        className="rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 px-4 py-2 text-xs font-bold text-white shadow-md flex items-center gap-1.5 cursor-pointer"
+                        className="rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 px-4 py-2.5 text-sm font-extrabold text-white shadow-md flex items-center gap-1.5 cursor-pointer"
                       >
-                        <Globe className="h-3.5 w-3.5" />
+                        <Globe className="h-4 w-4" />
                         <span>{user.name.split(' ')[0]}&apos;s Business &amp; Shop</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => setWorkspaceSection('portfolio')}
-                        className="rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 px-4 py-2 text-xs font-bold text-white shadow-md flex items-center gap-1.5 cursor-pointer"
+                        className="rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 px-4 py-2.5 text-sm font-extrabold text-white shadow-md flex items-center gap-1.5 cursor-pointer"
                       >
-                        <Briefcase className="h-3.5 w-3.5" />
+                        <Briefcase className="h-4 w-4" />
                         <span>Portfolio</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={handleShareToWhatsApp}
-                        className="rounded-full bg-[#25D366] hover:bg-[#20ba5a] text-white px-3.5 py-2 text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
+                        className="rounded-full bg-[#25D366] hover:bg-[#20ba5a] text-white px-4 py-2.5 text-sm font-extrabold shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
                       >
                         <span>Share on WhatsApp</span>
                       </button>
@@ -1686,9 +1850,9 @@ export function ProfileView({
                       <button
                         type="button"
                         onClick={() => setWorkspaceSection('business')}
-                        className="rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 px-4 py-2 text-xs font-bold text-white shadow-md flex items-center gap-1.5 cursor-pointer"
+                        className="rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 px-4 py-2.5 text-sm font-extrabold text-white shadow-md flex items-center gap-1.5 cursor-pointer"
                       >
-                        <Globe className="h-3.5 w-3.5" />
+                        <Globe className="h-4 w-4" />
                         <span>My Business Website &amp; Shop</span>
                       </button>
 
@@ -1703,25 +1867,25 @@ export function ProfileView({
                           setEditCover(user.coverImage || "")
                           setIsEditProfileOpen(true)
                         }}
-                        className="rounded-full bg-sky-50 dark:bg-sky-950/40 border border-sky-300 dark:border-sky-800 hover:bg-sky-100 dark:hover:bg-sky-900/60 px-4 py-2 text-xs font-bold text-[#0A66C2] dark:text-sky-300 shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                        className="rounded-full bg-sky-50 dark:bg-sky-950/40 border border-sky-400 dark:border-sky-800 hover:bg-sky-100 dark:hover:bg-sky-900/60 px-4 py-2.5 text-sm font-extrabold text-[#004182] dark:text-sky-300 shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
                       >
-                        <Edit3 className="h-3.5 w-3.5" />
+                        <Edit3 className="h-4 w-4" />
                         <span>Edit Profile</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => setIsResumeModalOpen(true)}
-                        className="rounded-full bg-linear-to-r from-sky-600 to-[#0A66C2] hover:from-sky-500 hover:to-[#004182] px-4 py-2 text-xs font-bold text-white shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
+                        className="rounded-full bg-linear-to-r from-sky-600 to-[#0A66C2] hover:from-sky-500 hover:to-[#004182] px-4 py-2.5 text-sm font-extrabold text-white shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
                       >
-                        <FileText className="h-3.5 w-3.5" />
+                        <FileText className="h-4 w-4" />
                         <span>Upload Resume</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={handleShareToWhatsApp}
-                        className="rounded-full bg-[#25D366] hover:bg-[#20ba5a] text-white px-3.5 py-2 text-xs font-bold shadow-md shadow-emerald-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
+                        className="rounded-full bg-[#25D366] hover:bg-[#20ba5a] text-white px-4 py-2.5 text-sm font-extrabold shadow-md shadow-emerald-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
                         title="Share profile directly to WhatsApp friends"
                       >
                         <span>WhatsApp Share</span>
@@ -1730,10 +1894,10 @@ export function ProfileView({
                       <button
                         type="button"
                         onClick={() => setIsShareModalOpen(true)}
-                        className="rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-3.5 py-2 text-xs font-bold border border-zinc-200 dark:border-zinc-700 shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer"
+                        className="rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-100 px-4 py-2.5 text-sm font-extrabold border border-zinc-300 dark:border-zinc-700 shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer"
                         title="Share Profile Link & Channels"
                       >
-                        <Share2 className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400" />
+                        <Share2 className="h-4 w-4 text-zinc-700 dark:text-zinc-300" />
                         <span>Share</span>
                       </button>
                     </>
@@ -1742,17 +1906,17 @@ export function ProfileView({
               </div>
 
               {/* Row 2: Full-Width Executive Profile Identity Typography & Badges */}
-              <div className="mt-5 space-y-2.5">
+              <div className="mt-5 space-y-3">
                 <div className="flex items-center gap-2.5 flex-wrap">
-                  <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-zinc-900 dark:text-zinc-100">
+                  <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-zinc-950 dark:text-white">
                     {user.name}
                   </h2>
 
                   <span
-                    className="inline-flex items-center gap-1 rounded-full bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 text-[11px] font-bold text-[#0A66C2] dark:text-sky-300 border border-blue-200/80 dark:border-blue-800/80"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 dark:bg-blue-950/60 px-3 py-1 text-xs sm:text-sm font-bold text-[#004182] dark:text-sky-300 border border-blue-300 dark:border-blue-800"
                     title="Cryptographically Verified Identity"
                   >
-                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <CheckCircle2 className="h-4 w-4" />
                     <span>Verified</span>
                   </span>
 
@@ -1764,7 +1928,7 @@ export function ProfileView({
                         userHeadline: user.headline,
                       })
                     }}
-                    className="h-7 px-2.5 rounded-full bg-zinc-100 hover:bg-blue-50 dark:bg-zinc-800 dark:hover:bg-blue-950/60 border border-zinc-200 dark:border-zinc-700 inline-flex items-center gap-1 text-[11px] font-semibold text-zinc-700 dark:text-zinc-200 cursor-pointer transition-all hover:scale-105"
+                    className="px-3 py-1 rounded-full bg-zinc-100 hover:bg-blue-50 dark:bg-zinc-800 dark:hover:bg-blue-950/60 border border-zinc-300 dark:border-zinc-700 inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100 cursor-pointer transition-all hover:scale-105"
                     title={`VOICE-TAG (Human Voice) — Hear ${user.name}'s name pronunciation`}
                   >
                     <span>🔊</span>
@@ -1780,10 +1944,10 @@ export function ProfileView({
                         await recordRealHumanVoiceTag(user.name || 'Kwesi Asiedu', 4000)
                         setIsRecordingProfileVoiceTag(false)
                       }}
-                      className={`h-7 px-2.5 rounded-full border flex items-center justify-center text-[11px] font-bold cursor-pointer transition-all ${
+                      className={`px-3 py-1 rounded-full border flex items-center justify-center text-xs sm:text-sm font-bold cursor-pointer transition-all ${
                         isRecordingProfileVoiceTag
                           ? 'bg-rose-600 text-white border-rose-500 animate-pulse'
-                          : 'bg-zinc-100 hover:bg-emerald-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-emerald-700 dark:text-emerald-300'
+                          : 'bg-zinc-100 hover:bg-emerald-50 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-emerald-800 dark:text-emerald-300'
                       }`}
                       title={
                         isRecordingProfileVoiceTag
@@ -1797,11 +1961,11 @@ export function ProfileView({
 
                   <span
                     onClick={() => !isViewingOtherMember && setIsEditingJobCard(!isEditingJobCard)}
-                    className={`rounded-full px-3 py-0.5 text-xs font-extrabold border inline-flex items-center gap-1.5 shadow-2xs ${
+                    className={`rounded-full px-3.5 py-1 text-xs sm:text-sm font-extrabold border inline-flex items-center gap-1.5 shadow-2xs ${
                       !isViewingOtherMember ? 'cursor-pointer' : ''
                     } ${
                       jobBadgeStatus === 'Booked'
-                        ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800'
+                        ? 'bg-amber-100 text-amber-900 border-amber-400 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800'
                         : 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white border-emerald-500'
                     }`}
                     title="ConnectLn Opportunity Status Badge"
@@ -1811,105 +1975,118 @@ export function ProfileView({
                   </span>
                 </div>
 
-                <p className="text-sm sm:text-base font-semibold text-zinc-700 dark:text-zinc-200 max-w-4xl leading-relaxed">
+                <p className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100 max-w-4xl leading-snug">
                   {user.headline}
                 </p>
 
-                <div className="flex items-center gap-2 flex-wrap pt-0.5">
-                  <span className={`rounded-full px-3 py-1 text-xs font-bold border inline-flex items-center gap-1.5 ${enclaveInfo?.badgeBg || 'bg-blue-50 text-[#0A66C2] border-blue-200 dark:bg-blue-950 dark:text-blue-300'}`}>
+                <div className="flex items-center gap-2.5 flex-wrap pt-0.5">
+                  <span className={`rounded-full px-3.5 py-1.5 text-sm font-bold border inline-flex items-center gap-1.5 ${enclaveInfo?.badgeBg || 'bg-blue-50 text-[#004182] border-blue-300 dark:bg-blue-950 dark:text-blue-200'}`}>
                     <span>{enclaveInfo?.icon || '🛡️'}</span>
                     <span>{resolvedDisplayProfession}</span>
                   </span>
-                  <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                  <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/60 px-3.5 py-1.5 text-xs sm:text-sm font-bold text-emerald-900 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-800">
                     {enclaveInfo?.securityClearanceTier || 'Level 2 Verified'}
                   </span>
-                  <span className="rounded-full bg-zinc-100 dark:bg-zinc-800 px-3 py-1 text-xs font-medium text-zinc-600 dark:text-zinc-300 border border-zinc-200/80 dark:border-zinc-700 inline-flex items-center gap-1">
-                    <MapPin className="h-3 w-3 text-rose-500 shrink-0" />
+                  <span className="rounded-full bg-zinc-100 dark:bg-zinc-800 px-3.5 py-1.5 text-sm font-bold text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700 inline-flex items-center gap-1.5">
+                    <MapPin className="h-4 w-4 text-rose-600 shrink-0" />
                     <span>{user.location}</span>
                   </span>
-                  <span className="rounded-full bg-sky-50 dark:bg-sky-950/40 px-3 py-1 text-xs font-bold text-[#0A66C2] dark:text-sky-300 border border-sky-200/80 dark:border-sky-800">
+                  <span className="rounded-full bg-sky-50 dark:bg-sky-950/50 px-3.5 py-1.5 text-sm font-extrabold text-[#004182] dark:text-sky-300 border border-sky-300 dark:border-sky-800">
                     {(user.connectionsCount ?? 0).toLocaleString()} Connections
                   </span>
                 </div>
               </div>
 
               {/* Row 3: Embedded Business Website & Products Storefront Spotlight Card */}
-              <div className="mt-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-gradient-to-r from-slate-50 via-white to-blue-50/40 dark:from-zinc-900 dark:via-zinc-900 dark:to-blue-950/20 p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-1.5 min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                      <Globe className="h-3 w-3" />
+              <div className="mt-5 rounded-2xl border-2 border-zinc-300/80 dark:border-zinc-700 bg-gradient-to-r from-slate-50 via-white to-blue-50/60 dark:from-zinc-900 dark:via-zinc-900 dark:to-blue-950/30 p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xs">
+                <div className="space-y-2 min-w-0 flex-1">
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950/70 px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-emerald-900 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                      <Globe className="h-3.5 w-3.5" />
                       <span>Official Business Website &amp; Shop</span>
                     </span>
-                    <span className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400 truncate">
+                    <span className="text-xs sm:text-sm font-mono font-bold text-zinc-700 dark:text-zinc-300 truncate">
                       {businessWebsite.domainUrl}
                     </span>
                   </div>
-                  <h3 className="text-sm sm:text-base font-extrabold text-zinc-900 dark:text-zinc-100 truncate">
+                  <h3 className="text-lg sm:text-xl font-black text-zinc-950 dark:text-white">
                     {businessWebsite.businessName}
                   </h3>
-                  <div className="flex flex-wrap gap-1.5 pt-0.5">
+                  <div className="flex flex-wrap gap-2 pt-0.5">
                     {allWebsiteOfferings.slice(0, 3).map((off) => (
                       <span
                         key={off.id}
-                        className="inline-flex items-center gap-1 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2.5 py-1 text-[11px] font-semibold text-zinc-700 dark:text-zinc-200 shadow-2xs"
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 px-3.5 py-1.5 text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100 shadow-2xs"
                       >
                         <span>{off.icon}</span>
-                        <span className="truncate max-w-[190px]">{off.title}</span>
-                        <span className="font-black text-emerald-600 dark:text-emerald-400">{off.price}</span>
+                        <span>{off.title}</span>
+                        <span className="font-black text-emerald-700 dark:text-emerald-400">· {off.price}</span>
                       </span>
                     ))}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 flex-wrap shrink-0">
+                  {!isViewingOtherMember && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setWorkspaceSection('business')
+                        setTimeout(() => handleOpenEditWebsiteModal(), 60)
+                      }}
+                      className="rounded-xl bg-white dark:bg-zinc-800 hover:bg-zinc-100 border border-zinc-300 dark:border-zinc-700 px-4 py-2.5 text-sm font-extrabold text-zinc-900 dark:text-zinc-100 shadow-2xs flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Edit3 className="h-4 w-4" />
+                      <span>Edit Page &amp; Products</span>
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => setWorkspaceSection('business')}
-                    className="rounded-xl bg-[#0A66C2] hover:bg-[#004182] px-4 py-2.5 text-xs font-extrabold text-white shadow-sm flex items-center gap-1.5 cursor-pointer transition-all"
+                    className="rounded-xl bg-[#0A66C2] hover:bg-[#004182] px-5 py-2.5 text-sm font-extrabold text-white shadow-sm flex items-center gap-1.5 cursor-pointer transition-all"
                   >
-                    <Globe className="h-3.5 w-3.5" />
+                    <Globe className="h-4 w-4" />
                     <span>Visit Business Website &amp; Products →</span>
                   </button>
                 </div>
               </div>
 
               {/* CONNECTLN "LOOKING FOR A JOB" SHOWCASE CARD (Replaces LinkedIn's generic Open to Work box) */}
-              <div className="mt-5 rounded-2xl border-2 border-emerald-400/70 dark:border-emerald-700/70 bg-gradient-to-r from-emerald-50/90 via-teal-50/50 to-sky-50/60 dark:from-emerald-950/40 dark:via-zinc-900 dark:to-teal-950/30 p-4 sm:p-5 shadow-sm">
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                  <div className="space-y-1.5 flex-1">
+              <div className="mt-5 rounded-2xl border-2 border-emerald-500/70 dark:border-emerald-700/70 bg-gradient-to-r from-emerald-50 via-teal-50/70 to-sky-50/70 dark:from-emerald-950/40 dark:via-zinc-900 dark:to-teal-950/30 p-5 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                  <div className="space-y-2 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-white shadow-xs">
-                        <Briefcase className="h-3.5 w-3.5" />
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-700 px-3.5 py-1 text-xs sm:text-sm font-extrabold uppercase tracking-wider text-white shadow-xs">
+                        <Briefcase className="h-4 w-4" />
                         <span>{jobBadgeStatus}</span>
                       </span>
-                      <span className="rounded-full bg-white/90 dark:bg-zinc-800 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                      <span className="rounded-full bg-white dark:bg-zinc-800 px-3 py-1 text-xs sm:text-sm font-bold text-emerald-900 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
                         ✓ Verified ConnectLn Job &amp; Project Seeker Card
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 pt-1">
-                      <div className="rounded-xl bg-white/90 dark:bg-zinc-900/80 border border-emerald-200/80 dark:border-emerald-800/60 p-2.5">
-                        <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-                          Target Roles &amp; Trades
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+                      <div className="rounded-xl bg-white dark:bg-zinc-900/90 border border-emerald-300 dark:border-emerald-800/70 p-3.5">
+                        <p className="text-xs font-mono font-extrabold uppercase tracking-wider text-emerald-800 dark:text-emerald-400">
+                          Target Roles &amp; Specialties
                         </p>
-                        <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100 mt-0.5">
+                        <p className="text-sm sm:text-base font-bold text-zinc-950 dark:text-white mt-1 leading-snug">
                           {jobCardRoles}
                         </p>
                       </div>
-                      <div className="rounded-xl bg-white/90 dark:bg-zinc-900/80 border border-emerald-200/80 dark:border-emerald-800/60 p-2.5">
-                        <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                      <div className="rounded-xl bg-white dark:bg-zinc-900/90 border border-emerald-300 dark:border-emerald-800/70 p-3.5">
+                        <p className="text-xs font-mono font-extrabold uppercase tracking-wider text-emerald-800 dark:text-emerald-400">
                           Opportunity Types
                         </p>
-                        <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100 mt-0.5">
+                        <p className="text-sm sm:text-base font-bold text-zinc-950 dark:text-white mt-1 leading-snug">
                           {jobCardWorkTypes}
                         </p>
                       </div>
-                      <div className="rounded-xl bg-white/90 dark:bg-zinc-900/80 border border-emerald-200/80 dark:border-emerald-800/60 p-2.5">
-                        <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                      <div className="rounded-xl bg-white dark:bg-zinc-900/90 border border-emerald-300 dark:border-emerald-800/70 p-3.5">
+                        <p className="text-xs font-mono font-extrabold uppercase tracking-wider text-emerald-800 dark:text-emerald-400">
                           Location &amp; Availability
                         </p>
-                        <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100 mt-0.5">
+                        <p className="text-sm sm:text-base font-bold text-zinc-950 dark:text-white mt-1 leading-snug">
                           {jobCardLocations} · {jobCardStartTiming}
                         </p>
                       </div>
@@ -1922,15 +2099,15 @@ export function ProfileView({
                         <button
                           type="button"
                           onClick={() => setIsEditingJobCard(!isEditingJobCard)}
-                          className="rounded-xl bg-white dark:bg-zinc-800 hover:bg-emerald-50 dark:hover:bg-zinc-700 text-emerald-800 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700 px-3.5 py-2 text-xs font-bold shadow-2xs flex items-center gap-1.5 cursor-pointer transition-colors"
+                          className="rounded-xl bg-white dark:bg-zinc-800 hover:bg-emerald-50 dark:hover:bg-zinc-700 text-emerald-900 dark:text-emerald-200 border border-emerald-400 dark:border-emerald-700 px-4 py-2.5 text-sm font-extrabold shadow-2xs flex items-center gap-1.5 cursor-pointer transition-colors"
                         >
-                          <Edit3 className="h-3.5 w-3.5" />
+                          <Edit3 className="h-4 w-4" />
                           <span>{isEditingJobCard ? 'Close Editor' : 'Customize Job Card'}</span>
                         </button>
                         <button
                           type="button"
-                          onClick={() => onNavigateJobs && onNavigateJobs(user.profession || '')}
-                          className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer transition-colors"
+                          onClick={() => onNavigateJobs && onNavigateJobs(resolvedDisplayProfession || '')}
+                          className="rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2.5 text-sm font-extrabold shadow-xs flex items-center gap-1.5 cursor-pointer transition-colors"
                         >
                           <span>Browse Matching Jobs →</span>
                         </button>
@@ -1939,9 +2116,9 @@ export function ProfileView({
                       <button
                         type="button"
                         onClick={() => onNavigateMessaging && onNavigateMessaging(user)}
-                        className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer"
+                        className="rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2.5 text-sm font-extrabold shadow-xs flex items-center gap-1.5 cursor-pointer"
                       >
-                        <MessageSquarePlus className="h-3.5 w-3.5" />
+                        <MessageSquarePlus className="h-4 w-4" />
                         <span>Invite {user.name.split(' ')[0]} to Apply</span>
                       </button>
                     )}
@@ -1952,7 +2129,7 @@ export function ProfileView({
                 {isEditingJobCard && !isViewingOtherMember && (
                   <div className="mt-4 pt-4 border-t border-emerald-200 dark:border-emerald-800/80 grid grid-cols-1 sm:grid-cols-2 gap-3 animate-in fade-in">
                     <div>
-                      <label className="block text-[11px] font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                      <label className="block text-xs font-extrabold text-zinc-800 dark:text-zinc-200 mb-1">
                         Badge Status
                       </label>
                       <div className="flex flex-wrap gap-1.5">
@@ -1961,10 +2138,10 @@ export function ProfileView({
                             key={st}
                             type="button"
                             onClick={() => setJobBadgeStatus(st)}
-                            className={`rounded-lg px-2.5 py-1.5 text-xs font-bold border cursor-pointer transition-all ${
+                            className={`rounded-lg px-3 py-1.5 text-xs font-bold border cursor-pointer transition-all ${
                               jobBadgeStatus === st
-                                ? 'bg-emerald-600 text-white border-emerald-600'
-                                : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-300 dark:border-zinc-700'
+                                ? 'bg-emerald-700 text-white border-emerald-700'
+                                : 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-200 border-zinc-300 dark:border-zinc-700'
                             }`}
                           >
                             {st}
@@ -1974,31 +2151,31 @@ export function ProfileView({
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-bold text-zinc-700 dark:text-zinc-300 mb-1">
-                        Target Roles &amp; Trades
+                      <label className="block text-xs font-extrabold text-zinc-800 dark:text-zinc-200 mb-1">
+                        Target Roles &amp; Specialties
                       </label>
                       <input
                         type="text"
                         value={jobCardRoles}
                         onChange={(e) => setJobCardRoles(e.target.value)}
-                        className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-900 dark:text-zinc-100"
+                        className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-950 dark:text-zinc-100"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-bold text-zinc-700 dark:text-zinc-300 mb-1">
-                        Opportunity Types (Employment / Contract / Apprenticeship)
+                      <label className="block text-xs font-extrabold text-zinc-800 dark:text-zinc-200 mb-1">
+                        Opportunity Types (Employment / Contract / Advisory)
                       </label>
                       <input
                         type="text"
                         value={jobCardWorkTypes}
                         onChange={(e) => setJobCardWorkTypes(e.target.value)}
-                        className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-900 dark:text-zinc-100"
+                        className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-950 dark:text-zinc-100"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                      <label className="block text-xs font-extrabold text-zinc-800 dark:text-zinc-200 mb-1">
                         Preferred Locations &amp; Start Availability
                       </label>
                       <div className="grid grid-cols-2 gap-2">
@@ -2007,14 +2184,14 @@ export function ProfileView({
                           value={jobCardLocations}
                           onChange={(e) => setJobCardLocations(e.target.value)}
                           placeholder="Locations"
-                          className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-900 dark:text-zinc-100"
+                          className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-950 dark:text-zinc-100"
                         />
                         <input
                           type="text"
                           value={jobCardStartTiming}
                           onChange={(e) => setJobCardStartTiming(e.target.value)}
                           placeholder="Start timing"
-                          className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-900 dark:text-zinc-100"
+                          className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-950 dark:text-zinc-100"
                         />
                       </div>
                     </div>
@@ -2023,14 +2200,14 @@ export function ProfileView({
                       <button
                         type="button"
                         onClick={() => setIsEditingJobCard(false)}
-                        className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3.5 py-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-300 cursor-pointer"
+                        className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-2 text-xs font-bold text-zinc-900 dark:text-zinc-200 cursor-pointer"
                       >
                         Cancel
                       </button>
                       <button
                         type="button"
                         onClick={() => handleSaveJobCard()}
-                        className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-1.5 text-xs font-bold shadow-xs cursor-pointer"
+                        className="rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2 text-xs font-bold shadow-xs cursor-pointer"
                       >
                         Save &quot;Looking for a Job&quot; Card
                       </button>
@@ -2040,118 +2217,118 @@ export function ProfileView({
               </div>
 
               {/* Bio & Statement */}
-              <div className="mt-6 pt-5 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
-                <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
-                  About &amp; Architectural Focus
+              <div className="mt-6 pt-5 border-t border-zinc-200 dark:border-zinc-800 space-y-2.5">
+                <h3 className="font-black text-lg sm:text-xl text-zinc-950 dark:text-white">
+                  About &amp; Professional Focus
                 </h3>
-                <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-4xl whitespace-pre-line">
+                <p className="text-base sm:text-[17px] font-medium text-zinc-900 dark:text-zinc-100 leading-relaxed max-w-4xl whitespace-pre-line">
                   {user.about}
                 </p>
               </div>
 
               {/* PROFESSIONAL REPUTATION INDEX & 5-LEVEL VERIFICATION HIERARCHY */}
-              <div className="mt-6 pt-5 border-t border-zinc-100 dark:border-zinc-800 space-y-4">
-                <div className="rounded-2xl border border-indigo-500/30 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-5 text-white shadow-md space-y-3">
+              <div className="mt-6 pt-5 border-t border-zinc-200 dark:border-zinc-800 space-y-4">
+                <div className="rounded-2xl border border-indigo-500/40 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-5 sm:p-6 text-white shadow-md space-y-3.5">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="space-y-0.5">
-                      <span className="text-[10px] uppercase font-mono text-purple-300 font-bold">
+                    <div className="space-y-1">
+                      <span className="text-xs uppercase font-mono text-purple-200 font-bold">
                         ⚡ Evidence-Based Credibility Index
                       </span>
-                      <h4 className="text-base font-black text-white flex items-center gap-2">
+                      <h4 className="text-lg sm:text-xl font-black text-white flex items-center gap-2">
                         <span>Professional Reputation Index</span>
-                        <span className="text-emerald-400 font-mono text-lg">94 / 100</span>
+                        <span className="text-emerald-300 font-mono text-xl sm:text-2xl">94 / 100</span>
                       </h4>
                     </div>
 
-                    <div className="flex items-center gap-1.5 flex-wrap text-[10px] font-mono">
-                      <span className="rounded-md bg-white/10 px-2 py-1">Skills: <strong>96</strong></span>
-                      <span className="rounded-md bg-white/10 px-2 py-1">Credentials: <strong>98</strong></span>
-                      <span className="rounded-md bg-white/10 px-2 py-1">Projects: <strong>95</strong></span>
-                      <span className="rounded-md bg-white/10 px-2 py-1">Experience: <strong>92</strong></span>
-                      <span className="rounded-md bg-white/10 px-2 py-1">Reviews: <strong>91</strong></span>
-                      <span className="rounded-md bg-white/10 px-2 py-1">Community: <strong>89</strong></span>
+                    <div className="flex items-center gap-2 flex-wrap text-xs sm:text-sm font-mono">
+                      <span className="rounded-lg bg-white/15 px-2.5 py-1 font-bold">Skills: <strong>96</strong></span>
+                      <span className="rounded-lg bg-white/15 px-2.5 py-1 font-bold">Credentials: <strong>98</strong></span>
+                      <span className="rounded-lg bg-white/15 px-2.5 py-1 font-bold">Projects: <strong>95</strong></span>
+                      <span className="rounded-lg bg-white/15 px-2.5 py-1 font-bold">Experience: <strong>92</strong></span>
+                      <span className="rounded-lg bg-white/15 px-2.5 py-1 font-bold">Reviews: <strong>91</strong></span>
+                      <span className="rounded-lg bg-white/15 px-2.5 py-1 font-bold">Community: <strong>89</strong></span>
                     </div>
                   </div>
 
                   {/* 5-Level Verification Progression */}
-                  <div className="pt-2 border-t border-white/10 space-y-1.5">
-                    <span className="text-[10px] uppercase font-mono text-zinc-400">
+                  <div className="pt-2.5 border-t border-white/15 space-y-2">
+                    <span className="text-xs uppercase font-mono text-zinc-200 font-bold">
                       5-Level Verification Progression:
                     </span>
-                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 text-center text-[10px] font-mono">
-                      <div className="rounded-lg bg-emerald-500/20 text-emerald-300 p-1.5 border border-emerald-500/40">1. Self-Reported ✓</div>
-                      <div className="rounded-lg bg-emerald-500/20 text-emerald-300 p-1.5 border border-emerald-500/40">2. Assessment ✓</div>
-                      <div className="rounded-lg bg-emerald-500/20 text-emerald-300 p-1.5 border border-emerald-500/40">3. Credentialed ✓</div>
-                      <div className="rounded-lg bg-emerald-500/20 text-emerald-300 p-1.5 border border-emerald-500/40">4. Employer ✓</div>
-                      <div className="rounded-lg bg-purple-500/30 text-purple-200 font-bold p-1.5 border border-purple-400/50">5. Fellow Verified ★</div>
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-xs font-mono font-bold">
+                      <div className="rounded-lg bg-emerald-500/25 text-emerald-200 p-2 border border-emerald-400/50">1. Self-Reported ✓</div>
+                      <div className="rounded-lg bg-emerald-500/25 text-emerald-200 p-2 border border-emerald-400/50">2. Assessment ✓</div>
+                      <div className="rounded-lg bg-emerald-500/25 text-emerald-200 p-2 border border-emerald-400/50">3. Credentialed ✓</div>
+                      <div className="rounded-lg bg-emerald-500/25 text-emerald-200 p-2 border border-emerald-400/50">4. Employer ✓</div>
+                      <div className="rounded-lg bg-purple-500/35 text-purple-100 font-extrabold p-2 border border-purple-400/60">5. Fellow Verified ★</div>
                     </div>
                   </div>
                 </div>
 
                 {/* ANALYTICS & IDENTITY RADAR STRIP (Owner only — private to your own profile) */}
                 {!isViewingOtherMember && (
-                <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/70 p-5 space-y-3">
-                  <div className="flex items-center justify-between">
+                <div className="rounded-2xl border border-zinc-300/80 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/80 p-5 space-y-3.5">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
                     <div className="flex items-center gap-2">
-                      <BarChart3 className="h-4 w-4 text-[#0A66C2]" />
-                      <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
+                      <BarChart3 className="h-5 w-5 text-[#0A66C2]" />
+                      <h4 className="font-extrabold text-base text-zinc-950 dark:text-white">
                         Live Analytics &amp; Identity Radar
                       </h4>
                     </div>
                     <button
                       onClick={() => setWorkspaceSection('analytics')}
-                      className="text-xs font-bold text-[#0A66C2] dark:text-sky-400 hover:underline flex items-center gap-1"
+                      className="text-sm font-extrabold text-[#004182] dark:text-sky-400 hover:underline flex items-center gap-1 cursor-pointer"
                     >
                       <span>Full Analytics Dashboard</span>
-                      <ArrowRight className="h-3 w-3" />
+                      <ArrowRight className="h-4 w-4" />
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                     <div
                       onClick={() => onOpenAnalytics ? onOpenAnalytics('viewers') : (setWorkspaceSection('analytics'), setAnalyticsSubTab('viewers'))}
-                      className="rounded-xl border border-blue-200/80 dark:border-blue-900/50 bg-white dark:bg-zinc-800/80 p-3.5 space-y-1 hover:border-[#0A66C2] hover:shadow-sm transition-all cursor-pointer group"
+                      className="rounded-xl border border-blue-200 dark:border-blue-900/60 bg-white dark:bg-zinc-800/90 p-4 space-y-1.5 hover:border-[#0A66C2] hover:shadow-sm transition-all cursor-pointer group"
                     >
-                      <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
-                        <span className="font-semibold group-hover:text-[#0A66C2]">Profile Viewers</span>
-                        <Eye className="h-3.5 w-3.5 text-[#0A66C2]" />
+                      <div className="flex items-center justify-between text-sm text-zinc-800 dark:text-zinc-200">
+                        <span className="font-bold group-hover:text-[#0A66C2]">Profile Viewers</span>
+                        <Eye className="h-4 w-4 text-[#0A66C2]" />
                       </div>
-                      <p className="text-xl font-black text-zinc-900 dark:text-zinc-100">
+                      <p className="text-2xl font-black text-zinc-950 dark:text-white">
                         {tailoredAnalytics.effectiveProfileViews.toLocaleString()}
                       </p>
-                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
+                      <p className="text-xs text-emerald-700 dark:text-emerald-400 font-bold">
                         {tailoredAnalytics.effectiveProfileViews > 0 ? `✓ ${tailoredAnalytics.effectiveProfileViews} Live Viewer(s)` : "0 Live Viewers"}
                       </p>
                     </div>
 
                     <div
                       onClick={() => onOpenAnalytics ? onOpenAnalytics('reach') : (setWorkspaceSection('analytics'), setAnalyticsSubTab('reach'))}
-                      className="rounded-xl border border-purple-200/80 dark:border-purple-900/50 bg-white dark:bg-zinc-800/80 p-3.5 space-y-1 hover:border-purple-500 hover:shadow-sm transition-all cursor-pointer group"
+                      className="rounded-xl border border-purple-200 dark:border-purple-900/60 bg-white dark:bg-zinc-800/90 p-4 space-y-1.5 hover:border-purple-500 hover:shadow-sm transition-all cursor-pointer group"
                     >
-                      <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
-                        <span className="font-semibold group-hover:text-purple-600">Content Reach</span>
-                        <TrendingUp className="h-3.5 w-3.5 text-purple-600" />
+                      <div className="flex items-center justify-between text-sm text-zinc-800 dark:text-zinc-200">
+                        <span className="font-bold group-hover:text-purple-600">Content Reach</span>
+                        <TrendingUp className="h-4 w-4 text-purple-600" />
                       </div>
-                      <p className="text-xl font-black text-zinc-900 dark:text-zinc-100">
+                      <p className="text-2xl font-black text-zinc-950 dark:text-white">
                         {tailoredAnalytics.effectiveTotalReach.toLocaleString()}
                       </p>
-                      <p className="text-[10px] text-purple-600 dark:text-purple-400 font-bold">
+                      <p className="text-xs text-purple-700 dark:text-purple-400 font-bold">
                         {tailoredAnalytics.effectiveTotalReach > 0 ? `✓ ${tailoredAnalytics.effectiveTotalReach} Live Content & Module Event(s)` : "0 Content & Module Reach"}
                       </p>
                     </div>
 
                     <div
                       onClick={() => onOpenAnalytics ? onOpenAnalytics('discoveries') : (setWorkspaceSection('analytics'), setAnalyticsSubTab('discoveries'))}
-                      className="rounded-xl border border-emerald-200/80 dark:border-emerald-900/50 bg-white dark:bg-zinc-800/80 p-3.5 space-y-1 hover:border-emerald-500 hover:shadow-sm transition-all cursor-pointer group"
+                      className="rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-white dark:bg-zinc-800/90 p-4 space-y-1.5 hover:border-emerald-500 hover:shadow-sm transition-all cursor-pointer group"
                     >
-                      <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
-                        <span className="font-semibold group-hover:text-emerald-600">Directory Discoveries</span>
-                        <Search className="h-3.5 w-3.5 text-emerald-600" />
+                      <div className="flex items-center justify-between text-sm text-zinc-800 dark:text-zinc-200">
+                        <span className="font-bold group-hover:text-emerald-600">Directory Discoveries</span>
+                        <Search className="h-4 w-4 text-emerald-600" />
                       </div>
-                      <p className="text-xl font-black text-zinc-900 dark:text-zinc-100">
+                      <p className="text-2xl font-black text-zinc-950 dark:text-white">
                         {tailoredAnalytics.effectiveDiscoveries.toLocaleString()}
                       </p>
-                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
+                      <p className="text-xs text-emerald-700 dark:text-emerald-400 font-bold">
                         {tailoredAnalytics.effectiveDiscoveries > 0 ? `✓ ${tailoredAnalytics.effectiveDiscoveries} Live Directory Match(es)` : "0 Directory Discoveries"}
                       </p>
                     </div>
@@ -2185,24 +2362,24 @@ export function ProfileView({
             )}
 
             {/* Header & Uploaded Resume Status Badge */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-800">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-200 dark:border-zinc-800">
               <div className="space-y-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <Briefcase className="h-5 w-5 text-[#0A66C2]" />
-                  <h3 className="font-bold text-base sm:text-lg text-zinc-900 dark:text-zinc-100">
+                  <h3 className="font-black text-lg sm:text-xl text-zinc-950 dark:text-white">
                     Uploaded Resume &amp; Work Experience ({user.experience?.length || 0})
                   </h3>
                   {(user as any).uploadedResume?.fileName && (
-                    <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 px-3 py-0.5 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
-                      <FileText className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 px-3 py-1 text-xs font-bold text-emerald-900 dark:text-emerald-300 flex items-center gap-1.5">
+                      <FileText className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                       <span>{(user as any).uploadedResume.fileName}</span>
                       {(user as any).uploadedResume.uploadedAt && (
-                        <span className="text-[10px] font-normal opacity-80">· Synced {(user as any).uploadedResume.uploadedAt}</span>
+                        <span className="text-xs font-medium opacity-80">· Synced {(user as any).uploadedResume.uploadedAt}</span>
                       )}
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                   Your extracted resume positions, accomplishments, and verified skills applied directly to your Profile.
                 </p>
               </div>
@@ -2211,9 +2388,9 @@ export function ProfileView({
                 <button
                   type="button"
                   onClick={() => setIsResumeModalOpen(true)}
-                  className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-4 py-2 text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                  className="rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white px-4 py-2 text-sm font-bold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
                 >
-                  <Upload className="h-3.5 w-3.5" />
+                  <Upload className="h-4 w-4" />
                   <span>{(user as any).uploadedResume?.fileName ? "Update Resume" : "Upload Resume"}</span>
                 </button>
                 <button
@@ -2222,9 +2399,9 @@ export function ProfileView({
                     setEditingExperience(null)
                     setIsExpFormModalOpen(true)
                   }}
-                  className="rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-3.5 py-2 text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
+                  className="rounded-full border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-100 px-4 py-2 text-sm font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
-                  <Plus className="h-3.5 w-3.5" />
+                  <Plus className="h-4 w-4" />
                   <span>Add Position</span>
                 </button>
               </div>
@@ -2235,24 +2412,24 @@ export function ProfileView({
                 {user.experience.map((exp, i) => (
                   <div
                     key={exp.id || i}
-                    className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/40 p-5 space-y-2.5 relative group hover:border-zinc-300 dark:hover:border-zinc-700 transition-all"
+                    className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-800/40 p-5 space-y-2.5 relative group hover:border-zinc-300 dark:hover:border-zinc-700 transition-all"
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div className="space-y-0.5">
+                      <div className="space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className="font-bold text-sm sm:text-base text-zinc-900 dark:text-zinc-100">
+                          <h4 className="font-extrabold text-base sm:text-lg text-zinc-950 dark:text-white">
                             {exp.role}
                           </h4>
                           {exp.duration?.includes('Present') && (
-                            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                            <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-900 dark:bg-emerald-950 dark:text-emerald-300">
                               Current Role
                             </span>
                           )}
                         </div>
-                        <p className="text-xs sm:text-sm font-semibold text-[#0A66C2] dark:text-sky-400">
+                        <p className="text-sm sm:text-base font-bold text-[#004182] dark:text-sky-400">
                           {exp.company}
                         </p>
-                        <p className="text-xs text-zinc-500">
+                        <p className="text-xs sm:text-sm font-medium text-zinc-700 dark:text-zinc-300">
                           {exp.duration} · {exp.location}
                         </p>
                       </div>
@@ -2273,7 +2450,7 @@ export function ProfileView({
                             })
                             setIsExpFormModalOpen(true)
                           }}
-                          className="p-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 text-xs font-medium flex items-center gap-1 cursor-pointer"
+                          className="px-2.5 py-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-800 dark:text-zinc-200 text-xs font-bold flex items-center gap-1 cursor-pointer"
                           title="Edit position"
                         >
                           <Edit3 className="h-3.5 w-3.5" />
@@ -2282,24 +2459,24 @@ export function ProfileView({
                         <button
                           type="button"
                           onClick={() => handleDeleteExperience(exp.id)}
-                          className="p-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-red-50 dark:hover:bg-red-950/50 text-zinc-400 hover:text-red-500 cursor-pointer"
+                          className="p-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-red-50 dark:hover:bg-red-950/50 text-zinc-500 hover:text-red-600 cursor-pointer"
                           title="Delete position"
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                     </div>
 
-                    <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed whitespace-pre-line">
+                    <p className="text-sm sm:text-base font-medium text-zinc-800 dark:text-zinc-200 leading-relaxed whitespace-pre-line">
                       {exp.description}
                     </p>
 
                     {exp.skills && exp.skills.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 pt-1">
+                      <div className="flex flex-wrap gap-2 pt-1">
                         {exp.skills.map((sk: string) => (
                           <span
                             key={sk}
-                            className="rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 px-2 py-0.5 text-[11px] font-medium text-zinc-700 dark:text-zinc-300"
+                            className="rounded-lg bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 px-3 py-1 text-xs font-bold text-zinc-900 dark:text-zinc-200"
                           >
                             {sk}
                           </span>
@@ -4519,10 +4696,69 @@ export function ProfileView({
           }
         }
 
+        const showOwnerControls = !isViewingOtherMember && !isBusinessPreviewMode
+
         return (
-        <div className="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-2xl overflow-hidden animate-in fade-in">
+        <div className="space-y-4 animate-in fade-in">
+          {/* OWNER SELF-SERVICE MANAGEMENT STUDIO BAR */}
+          {!isViewingOtherMember && (
+            <div className="rounded-2xl border-2 border-emerald-400/80 dark:border-emerald-700 bg-gradient-to-r from-emerald-50 via-white to-sky-50 dark:from-emerald-950/40 dark:via-zinc-900 dark:to-sky-950/30 p-4 sm:p-5 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-700 px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-white">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    <span>100% Self-Service Owner Studio</span>
+                  </span>
+                  <span className="text-xs sm:text-sm font-bold text-emerald-900 dark:text-emerald-300">
+                    ✓ Instant Live Publishing — No Expedite Consults approval needed
+                  </span>
+                </div>
+                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-200">
+                  Manage your own page anytime: edit your headline, banner photo, domain slug, pricing, and add, update, or remove products directly below.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap shrink-0">
+                <button
+                  type="button"
+                  onClick={handleOpenEditWebsiteModal}
+                  className="rounded-xl bg-zinc-950 dark:bg-zinc-100 hover:opacity-90 px-4 py-2.5 text-sm font-extrabold text-white dark:text-zinc-900 flex items-center gap-1.5 cursor-pointer shadow-sm"
+                >
+                  <Edit3 className="h-4 w-4" />
+                  <span>Edit Page &amp; Banner</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleOpenAddProductModal}
+                  className={`rounded-xl px-4 py-2.5 text-sm font-extrabold flex items-center gap-1.5 cursor-pointer shadow-sm ${activeTheme.btnPrimary}`}
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Add Product / Service</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsBusinessPreviewMode(!isBusinessPreviewMode)}
+                  className="rounded-xl bg-white dark:bg-zinc-800 hover:bg-zinc-100 border border-zinc-300 dark:border-zinc-700 px-3.5 py-2.5 text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Eye className="h-4 w-4 text-[#0A66C2]" />
+                  <span>{isBusinessPreviewMode ? 'Exit Preview (Show Edit Buttons)' : 'Preview as Visitor'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetDefaultCatalog}
+                  className="rounded-xl bg-white dark:bg-zinc-800 hover:bg-zinc-100 border border-zinc-300 dark:border-zinc-700 px-3 py-2.5 text-xs sm:text-sm font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1 cursor-pointer"
+                  title="Restore profession default template"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  <span>Reset Defaults</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="rounded-3xl border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-2xl overflow-hidden">
           {/* A. WEBSITE BROWSER ADDRESS BAR CHROME */}
-          <div className="bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-4 py-2.5 flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
+          <div className="bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-4 py-3 flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <div className="flex items-center gap-1.5 shrink-0">
                 <span className="h-3 w-3 rounded-full bg-rose-400" />
@@ -4530,12 +4766,12 @@ export function ProfileView({
                 <span className="h-3 w-3 rounded-full bg-emerald-400" />
               </div>
 
-              <div className="flex items-center gap-2 flex-1 min-w-0 max-w-xl rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3.5 py-1.5 text-xs shadow-2xs">
-                <Lock className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                <span className="font-mono text-zinc-700 dark:text-zinc-200 truncate">
+              <div className="flex items-center gap-2 flex-1 min-w-0 max-w-xl rounded-full bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 px-4 py-2 text-xs sm:text-sm shadow-2xs">
+                <Lock className="h-4 w-4 text-emerald-600 shrink-0" />
+                <span className="font-mono font-bold text-zinc-900 dark:text-zinc-100 truncate">
                   {businessWebsite.domainUrl}
                 </span>
-                <span className="ml-auto rounded-full bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 shrink-0">
+                <span className="ml-auto rounded-full bg-emerald-100 dark:bg-emerald-950/60 px-2.5 py-0.5 text-[11px] font-extrabold text-emerald-800 dark:text-emerald-300 shrink-0">
                   LIVE SITE
                 </span>
               </div>
@@ -4545,51 +4781,30 @@ export function ProfileView({
               <button
                 type="button"
                 onClick={handleCopyWebsiteUrl}
-                className="rounded-lg bg-white dark:bg-zinc-800 hover:bg-zinc-50 border border-zinc-200 dark:border-zinc-700 px-2.5 py-1.5 text-[11px] font-bold text-zinc-700 dark:text-zinc-200 flex items-center gap-1.5 cursor-pointer"
+                className="rounded-lg bg-white dark:bg-zinc-800 hover:bg-zinc-50 border border-zinc-300 dark:border-zinc-700 px-3 py-2 text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5 cursor-pointer"
               >
-                {siteUrlCopied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                {siteUrlCopied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
                 <span>{siteUrlCopied ? 'Website URL Copied ✓' : 'Copy Site Link'}</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setIsShareModalOpen(true)}
-                className="rounded-lg bg-white dark:bg-zinc-800 hover:bg-zinc-50 border border-zinc-200 dark:border-zinc-700 px-2.5 py-1.5 text-[11px] font-bold text-zinc-700 dark:text-zinc-200 flex items-center gap-1.5 cursor-pointer"
+                className="rounded-lg bg-white dark:bg-zinc-800 hover:bg-zinc-50 border border-zinc-300 dark:border-zinc-700 px-3 py-2 text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5 cursor-pointer"
               >
-                <Share2 className="h-3.5 w-3.5" />
+                <Share2 className="h-4 w-4" />
                 <span>Share Website</span>
               </button>
-
-              {!isViewingOtherMember && (
-                <>
-                  <button
-                    type="button"
-                    onClick={handleOpenEditWebsiteModal}
-                    className="rounded-lg bg-zinc-900 dark:bg-zinc-100 hover:opacity-90 px-3 py-1.5 text-[11px] font-bold text-white dark:text-zinc-900 flex items-center gap-1.5 cursor-pointer shadow-xs"
-                  >
-                    <Edit3 className="h-3.5 w-3.5" />
-                    <span>Customize Website</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsAddProductModalOpen(true)}
-                    className={`rounded-lg px-3 py-1.5 text-[11px] font-bold flex items-center gap-1.5 cursor-pointer shadow-xs ${activeTheme.btnPrimary}`}
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    <span>+ Add Service / Product</span>
-                  </button>
-                </>
-              )}
             </div>
           </div>
 
           {/* B. WEBSITE TOP NAVIGATION BAR */}
           <header
             id="business-site-top"
-            className="bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border-b border-zinc-200/80 dark:border-zinc-800 px-5 sm:px-8 py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3"
+            className="bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 px-5 sm:px-8 py-4 flex flex-col md:flex-row md:items-center justify-between gap-3"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <div className={`relative h-11 w-11 rounded-xl bg-gradient-to-br ${activeTheme.heroAccent} p-0.5 shadow-sm shrink-0`}>
+              <div className={`relative h-12 w-12 rounded-xl bg-gradient-to-br ${activeTheme.heroAccent} p-0.5 shadow-sm shrink-0`}>
                 <img
                   src={user.avatar}
                   alt={user.name}
@@ -4598,61 +4813,61 @@ export function ProfileView({
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-base sm:text-lg font-black tracking-tight text-zinc-900 dark:text-zinc-100 truncate">
+                  <h2 className="text-lg sm:text-xl font-black tracking-tight text-zinc-950 dark:text-white truncate">
                     {businessWebsite.businessName}
                   </h2>
-                  <span className="rounded-full bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shrink-0">
+                  <span className="rounded-full bg-emerald-100 dark:bg-emerald-950 px-2.5 py-0.5 text-xs font-extrabold text-emerald-900 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 shrink-0">
                     ✓ Verified Business
                   </span>
                 </div>
-                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                <p className="text-xs sm:text-sm font-medium text-zinc-700 dark:text-zinc-300 truncate">
                   {businessWebsite.professionTitle} · License #{businessWebsite.licenseNumber}
                 </p>
               </div>
             </div>
 
-            <nav className="flex items-center gap-1 sm:gap-2 flex-wrap text-xs font-semibold text-zinc-600 dark:text-zinc-300">
+            <nav className="flex items-center gap-1 sm:gap-2 flex-wrap text-sm font-bold text-zinc-800 dark:text-zinc-200">
               <button
                 type="button"
                 onClick={() => scrollToSiteSection('business-site-services')}
-                className="px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors"
+                className="px-3 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors"
               >
                 Services &amp; Shop
               </button>
               <button
                 type="button"
                 onClick={() => scrollToSiteSection('business-site-about')}
-                className="px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors"
+                className="px-3 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors"
               >
                 About
               </button>
               <button
                 type="button"
                 onClick={() => scrollToSiteSection('business-site-gallery')}
-                className="px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors"
+                className="px-3 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors"
               >
                 Gallery
               </button>
               <button
                 type="button"
                 onClick={() => scrollToSiteSection('business-site-reviews')}
-                className="px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors"
+                className="px-3 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors"
               >
                 Reviews &amp; FAQ
               </button>
               <button
                 type="button"
                 onClick={() => scrollToSiteSection('business-site-booking')}
-                className={`ml-1 rounded-xl px-4 py-2 text-xs font-bold shadow-md flex items-center gap-1.5 cursor-pointer transition-transform hover:scale-[1.02] ${activeTheme.btnPrimary}`}
+                className={`ml-1 rounded-xl px-4 py-2 text-sm font-extrabold shadow-md flex items-center gap-1.5 cursor-pointer transition-transform hover:scale-[1.02] ${activeTheme.btnPrimary}`}
               >
-                <Calendar className="h-3.5 w-3.5" />
+                <Calendar className="h-4 w-4" />
                 <span>Book / Request Quote</span>
               </button>
             </nav>
           </header>
 
           {/* C. WEBSITE FULL-BLEED HERO LANDING SECTION */}
-          <section className="relative min-h-[340px] sm:min-h-[380px] flex flex-col justify-between overflow-hidden bg-slate-900 text-white">
+          <section className="relative min-h-[360px] sm:min-h-[400px] flex flex-col justify-between overflow-hidden bg-slate-900 text-white">
             <img
               src={businessWebsite.heroBannerImage}
               alt={businessWebsite.businessName}
@@ -4661,22 +4876,22 @@ export function ProfileView({
             <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-900/85 to-slate-900/55" />
 
             <div className="relative z-10 px-6 sm:px-10 pt-10 pb-8 max-w-4xl space-y-5">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/25 px-3 py-1 text-[11px] font-bold text-white">
-                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-300" />
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 backdrop-blur-md border border-white/30 px-3.5 py-1 text-xs sm:text-sm font-bold text-white">
+                  <ShieldCheck className="h-4 w-4 text-emerald-300" />
                   <span>{businessWebsite.insuredStatus}</span>
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/15 px-3 py-1 text-[11px] font-semibold text-zinc-200">
-                  <MapPin className="h-3 w-3 text-sky-300" />
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-black/50 backdrop-blur-md border border-white/20 px-3.5 py-1 text-xs sm:text-sm font-bold text-zinc-100">
+                  <MapPin className="h-4 w-4 text-sky-300" />
                   <span>{businessWebsite.location}</span>
                 </span>
               </div>
 
               <div className="space-y-3">
-                <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white leading-[1.12]">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-[1.12]">
                   {businessWebsite.heroHeadline}
                 </h1>
-                <p className="text-sm sm:text-base text-zinc-200 max-w-2xl leading-relaxed">
+                <p className="text-base sm:text-lg text-zinc-100 max-w-2xl leading-relaxed font-medium">
                   {businessWebsite.heroSubheadline}
                 </p>
               </div>
@@ -4685,7 +4900,7 @@ export function ProfileView({
                 <button
                   type="button"
                   onClick={() => scrollToSiteSection('business-site-booking')}
-                  className={`rounded-xl px-5 py-3 text-xs sm:text-sm font-extrabold shadow-lg flex items-center gap-2 cursor-pointer transition-transform hover:scale-[1.02] ${activeTheme.btnPrimary}`}
+                  className={`rounded-xl px-5 py-3.5 text-sm sm:text-base font-extrabold shadow-lg flex items-center gap-2 cursor-pointer transition-transform hover:scale-[1.02] ${activeTheme.btnPrimary}`}
                 >
                   <Calendar className="h-4 w-4" />
                   <span>Book Appointment / Get Estimate</span>
@@ -4694,7 +4909,7 @@ export function ProfileView({
                 <button
                   type="button"
                   onClick={() => scrollToSiteSection('business-site-services')}
-                  className="rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/30 px-5 py-3 text-xs sm:text-sm font-bold text-white flex items-center gap-2 cursor-pointer transition-colors"
+                  className="rounded-xl bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/35 px-5 py-3.5 text-sm sm:text-base font-extrabold text-white flex items-center gap-2 cursor-pointer transition-colors"
                 >
                   <ShoppingBag className="h-4 w-4" />
                   <span>What We Sell &amp; Pricing ({allWebsiteOfferings.length})</span>
@@ -4704,7 +4919,7 @@ export function ProfileView({
                   <button
                     type="button"
                     onClick={() => onNavigateMessaging(user)}
-                    className="rounded-xl bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/20 px-4 py-3 text-xs sm:text-sm font-bold text-zinc-100 flex items-center gap-2 cursor-pointer transition-colors"
+                    className="rounded-xl bg-black/50 hover:bg-black/70 backdrop-blur-md border border-white/25 px-5 py-3.5 text-sm sm:text-base font-bold text-white flex items-center gap-2 cursor-pointer transition-colors"
                   >
                     <MessageSquarePlus className="h-4 w-4 text-sky-300" />
                     <span>Chat With {user.name.split(' ')[0]}</span>
@@ -4714,24 +4929,24 @@ export function ProfileView({
             </div>
 
             {/* Bottom Hero Trust & Metrics Bar */}
-            <div className="relative z-10 bg-black/55 backdrop-blur-md border-t border-white/15 px-6 sm:px-10 py-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="relative z-10 bg-black/65 backdrop-blur-md border-t border-white/20 px-6 sm:px-10 py-4 grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="space-y-0.5">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">Customer Rating</span>
-                <p className="text-sm sm:text-base font-black text-amber-300">
-                  ★ {businessWebsite.rating} / 5.0 <span className="text-xs font-normal text-zinc-300">({businessWebsite.reviewsCount} reviews)</span>
+                <span className="text-xs font-mono uppercase tracking-wider text-zinc-300 font-bold">Customer Rating</span>
+                <p className="text-base sm:text-lg font-black text-amber-300">
+                  ★ {businessWebsite.rating} / 5.0 <span className="text-xs sm:text-sm font-semibold text-zinc-200">({businessWebsite.reviewsCount} reviews)</span>
                 </p>
               </div>
               <div className="space-y-0.5">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">Track Record</span>
-                <p className="text-sm sm:text-base font-black text-white">{businessWebsite.completedJobsCount}</p>
+                <span className="text-xs font-mono uppercase tracking-wider text-zinc-300 font-bold">Track Record</span>
+                <p className="text-base sm:text-lg font-black text-white">{businessWebsite.completedJobsCount}</p>
               </div>
               <div className="space-y-0.5">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">Response SLA</span>
-                <p className="text-sm sm:text-base font-black text-emerald-300">{businessWebsite.responseTime}</p>
+                <span className="text-xs font-mono uppercase tracking-wider text-zinc-300 font-bold">Response SLA</span>
+                <p className="text-base sm:text-lg font-black text-emerald-300">{businessWebsite.responseTime}</p>
               </div>
               <div className="space-y-0.5">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">Coverage Area</span>
-                <p className="text-xs sm:text-sm font-bold text-zinc-100 truncate">{businessWebsite.serviceArea}</p>
+                <span className="text-xs font-mono uppercase tracking-wider text-zinc-300 font-bold">Coverage Area</span>
+                <p className="text-sm sm:text-base font-bold text-white truncate">{businessWebsite.serviceArea}</p>
               </div>
             </div>
           </section>
@@ -4739,29 +4954,29 @@ export function ProfileView({
           {/* D. "WHAT WE SELL & OFFER" — WEBSITE SERVICES & MARKETPLACE STOREFRONT */}
           <section id="business-site-services" className="px-6 sm:px-10 py-10 space-y-6 bg-zinc-50/70 dark:bg-zinc-900/40 border-b border-zinc-200 dark:border-zinc-800">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-              <div className="space-y-1.5 max-w-2xl">
-                <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-0.5 text-[11px] font-bold ${activeTheme.badgeBg}`}>
-                  <Store className="h-3.5 w-3.5" />
+              <div className="space-y-2 max-w-2xl">
+                <span className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1 text-xs font-bold ${activeTheme.badgeBg}`}>
+                  <Store className="h-4 w-4" />
                   <span>Services, Packages &amp; Marketplace Storefront</span>
                 </span>
-                <h2 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-zinc-100">
+                <h2 className="text-2xl sm:text-3xl font-black text-zinc-950 dark:text-white">
                   What We Sell &amp; Offer
                 </h2>
-                <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
-                  Transparent, upfront offerings tailored to {businessWebsite.businessName}. All packages sync seamlessly with your ConnectLn Marketplace protection.
+                <p className="text-sm sm:text-base font-medium text-zinc-800 dark:text-zinc-200">
+                  Transparent, upfront offerings tailored to {businessWebsite.businessName}. All packages sync seamlessly with ConnectLn Marketplace protection.
                 </p>
               </div>
 
-              <div className="flex items-center gap-1.5 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap">
                 {uniqueCategories.map((cat) => (
                   <button
                     key={cat}
                     type="button"
                     onClick={() => setBusinessCategoryFilter(cat)}
-                    className={`rounded-full px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                    className={`rounded-full px-3.5 py-1.5 text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                       businessCategoryFilter === cat
                         ? activeTheme.btnPrimary
-                        : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100'
+                        : 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100'
                     }`}
                   >
                     {cat}
@@ -4775,73 +4990,95 @@ export function ProfileView({
                 <div
                   key={off.id}
                   className={`relative rounded-2xl bg-white dark:bg-zinc-900 border p-6 shadow-sm flex flex-col justify-between transition-all hover:shadow-xl ${
-                    off.popular ? activeTheme.borderHighlight : 'border-zinc-200 dark:border-zinc-800'
+                    off.popular ? activeTheme.borderHighlight : 'border-zinc-300/80 dark:border-zinc-800'
                   }`}
                 >
                   {off.popular && (
-                    <span className={`absolute -top-3 right-5 rounded-full px-3 py-0.5 text-[10px] font-black uppercase tracking-wider shadow-sm ${activeTheme.btnPrimary}`}>
+                    <span className={`absolute -top-3 right-5 rounded-full px-3 py-0.5 text-xs font-black uppercase tracking-wider shadow-sm ${activeTheme.btnPrimary}`}>
                       ⭐ Most Popular
                     </span>
                   )}
 
                   <div className="space-y-4">
                     <div className="flex items-start justify-between gap-3">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-2xl border border-zinc-200 dark:border-zinc-700 shrink-0">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-2xl border border-zinc-300 dark:border-zinc-700 shrink-0">
                         {off.icon}
                       </div>
-                      <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${activeTheme.badgeBg}`}>
+                      <span className={`rounded-full border px-3 py-1 text-xs font-bold ${activeTheme.badgeBg}`}>
                         {off.category}
                       </span>
                     </div>
 
-                    <div className="space-y-1.5">
-                      <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-100 leading-snug">
+                    <div className="space-y-2">
+                      <h3 className="text-lg sm:text-xl font-black text-zinc-950 dark:text-white leading-snug">
                         {off.title}
                       </h3>
-                      <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                      <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 leading-relaxed">
                         {off.description}
                       </p>
                     </div>
 
-                    <div className="rounded-xl bg-zinc-50 dark:bg-zinc-800/70 border border-zinc-200/80 dark:border-zinc-700/70 p-3 flex items-baseline justify-between gap-2">
+                    <div className="rounded-xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-300/80 dark:border-zinc-700 p-3.5 flex flex-wrap items-baseline justify-between gap-2">
                       <div>
-                        <span className={`text-2xl font-black ${activeTheme.accentText}`}>{off.price}</span>
-                        <span className="ml-1.5 text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
+                        <span className={`text-2xl sm:text-3xl font-black ${activeTheme.accentText}`}>{off.price}</span>
+                        <span className="ml-1.5 text-xs sm:text-sm font-bold text-zinc-700 dark:text-zinc-300">
                           {off.billingUnit}
                         </span>
                       </div>
-                      <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-900 px-2 py-0.5 rounded-md border border-zinc-200 dark:border-zinc-700">
+                      <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-900 px-2.5 py-1 rounded-md border border-zinc-300 dark:border-zinc-700">
                         ⏱️ {off.turnaround}
                       </span>
                     </div>
 
-                    <ul className="space-y-1.5 pt-1">
+                    <ul className="space-y-2 pt-1">
                       {off.deliverables.map((item, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-xs text-zinc-700 dark:text-zinc-300">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                        <li key={idx} className="flex items-start gap-2 text-sm font-medium text-zinc-900 dark:text-zinc-200">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
                           <span>{item}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
 
-                  <div className="pt-5 mt-5 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleSelectWebsiteOffering(off.title)}
-                      className={`flex-1 rounded-xl py-2.5 px-3.5 text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer transition-transform hover:scale-[1.01] shadow-sm ${activeTheme.btnPrimary}`}
-                    >
-                      <span>{off.ctaLabel}</span>
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={onNavigateMarketplace}
-                      className="rounded-xl border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 px-3 py-2.5 text-[11px] font-bold text-zinc-700 dark:text-zinc-300 cursor-pointer"
-                      title="Open in ConnectLn Marketplace"
-                    >
-                      Market ↗
-                    </button>
+                  <div className="pt-5 mt-5 border-t border-zinc-200 dark:border-zinc-800 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleSelectWebsiteOffering(off.title)}
+                        className={`flex-1 rounded-xl py-2.5 px-4 text-sm font-extrabold flex items-center justify-center gap-1.5 cursor-pointer transition-transform hover:scale-[1.01] shadow-sm ${activeTheme.btnPrimary}`}
+                      >
+                        <span>{off.ctaLabel}</span>
+                        <ArrowRight className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={onNavigateMarketplace}
+                        className="rounded-xl border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 px-3.5 py-2.5 text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100 cursor-pointer"
+                        title="Open in ConnectLn Marketplace"
+                      >
+                        Market ↗
+                      </button>
+                    </div>
+                    {showOwnerControls && (
+                      <div className="flex items-center gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditProductModal(off)}
+                          className="flex-1 rounded-lg bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 border border-zinc-300 dark:border-zinc-700 py-1.5 px-3 text-xs font-extrabold text-zinc-900 dark:text-zinc-100 flex items-center justify-center gap-1 cursor-pointer"
+                        >
+                          <Edit3 className="h-3.5 w-3.5" />
+                          <span>Edit Item</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteProductOffering(off.id)}
+                          className="rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 py-1.5 px-3 text-xs font-extrabold text-rose-800 dark:text-rose-300 flex items-center justify-center gap-1 cursor-pointer"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          <span>Remove</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -4849,18 +5086,18 @@ export function ProfileView({
 
             {/* Integrated Marketplace Products & Storefront Desk inside Business Page */}
             <div id="business-site-marketplace" className="pt-4 space-y-4">
-              <div className="rounded-2xl border border-purple-500/30 bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 p-5 sm:p-6 text-white shadow-lg space-y-4">
+              <div className="rounded-2xl border border-purple-500/40 bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 p-5 sm:p-6 text-white shadow-lg space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="space-y-1">
-                    <span className="rounded-full bg-purple-500/30 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-purple-200 border border-purple-400/40">
+                    <span className="rounded-full bg-purple-500/35 px-3 py-1 text-xs font-bold uppercase tracking-wider text-purple-100 border border-purple-400/50">
                       {businessWebsite.industryLabel} · Marketplace Catalog
                     </span>
-                    <h3 className="text-lg sm:text-xl font-black text-white">
+                    <h3 className="text-xl sm:text-2xl font-black text-white">
                       {isViewingOtherMember
                         ? `${user.name.split(' ')[0]}'s Active Marketplace Products (${myProducts.length})`
                         : `Your Marketplace Products & Storefront Inventory (${myProducts.length})`}
                     </h3>
-                    <p className="text-xs text-purple-200">
+                    <p className="text-sm font-medium text-purple-100">
                       Every product, plan, and service listed here appears on both this Business Website and the ConnectLn Marketplace.
                     </p>
                   </div>
@@ -4868,8 +5105,8 @@ export function ProfileView({
                   {!isViewingOtherMember && (
                     <button
                       type="button"
-                      onClick={() => setIsAddProductModalOpen(true)}
-                      className="rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 px-4 py-2.5 text-xs font-black text-white shadow-md flex items-center gap-1.5 shrink-0 cursor-pointer"
+                      onClick={handleOpenAddProductModal}
+                      className="rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 px-4 py-2.5 text-sm font-black text-white shadow-md flex items-center gap-1.5 shrink-0 cursor-pointer"
                     >
                       <Plus className="h-4 w-4" />
                       <span>+ List New Product / Service</span>
@@ -4879,25 +5116,25 @@ export function ProfileView({
 
                 {!isViewingOtherMember && (
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div className="rounded-xl bg-black/40 border border-white/15 p-3 text-center">
-                      <span className="text-[10px] text-zinc-400 uppercase font-mono">Top Revenue Stream</span>
-                      <p className="text-xs sm:text-sm font-black text-emerald-400 truncate">{myProducts[0]?.mrrOrRevenue || 'Active'}</p>
+                    <div className="rounded-xl bg-black/45 border border-white/20 p-3.5 text-center">
+                      <span className="text-xs text-zinc-300 uppercase font-mono font-bold">Top Revenue Stream</span>
+                      <p className="text-sm sm:text-base font-black text-emerald-300 truncate">{myProducts[0]?.mrrOrRevenue || 'Active'}</p>
                     </div>
-                    <div className="rounded-xl bg-black/40 border border-white/15 p-3 text-center">
-                      <span className="text-[10px] text-zinc-400 uppercase font-mono">Active Units / Clients</span>
-                      <p className="text-base sm:text-lg font-black text-white">
+                    <div className="rounded-xl bg-black/45 border border-white/20 p-3.5 text-center">
+                      <span className="text-xs text-zinc-300 uppercase font-mono font-bold">Active Units / Clients</span>
+                      <p className="text-lg sm:text-xl font-black text-white">
                         {myProducts.reduce((s, p) => s + (p.activeLicensesCount || 0), 0).toLocaleString()} Active
                       </p>
                     </div>
-                    <div className="rounded-xl bg-black/40 border border-white/15 p-3 text-center">
-                      <span className="text-[10px] text-zinc-400 uppercase font-mono">Active Bookings / Trials</span>
-                      <p className="text-base sm:text-lg font-black text-amber-300">
+                    <div className="rounded-xl bg-black/45 border border-white/20 p-3.5 text-center">
+                      <span className="text-xs text-zinc-300 uppercase font-mono font-bold">Active Bookings / Trials</span>
+                      <p className="text-lg sm:text-xl font-black text-amber-300">
                         {myProducts.reduce((s, p) => s + (p.activeTrialsCount || 0), 0)} Active
                       </p>
                     </div>
-                    <div className="rounded-xl bg-black/40 border border-white/15 p-3 text-center">
-                      <span className="text-[10px] text-zinc-400 uppercase font-mono">Customer Leads</span>
-                      <p className="text-base sm:text-lg font-black text-sky-400">
+                    <div className="rounded-xl bg-black/45 border border-white/20 p-3.5 text-center">
+                      <span className="text-xs text-zinc-300 uppercase font-mono font-bold">Customer Leads</span>
+                      <p className="text-lg sm:text-xl font-black text-sky-300">
                         {myProducts.reduce((s, p) => s + (p.leadsCount || 0), 0)} Leads
                       </p>
                     </div>
@@ -4905,48 +5142,68 @@ export function ProfileView({
                 )}
               </div>
 
-              <div className="space-y-2.5">
-                {myProducts.map((prod) => (
+              <div className="space-y-3">
+                {managedOfferings.map((off) => (
                   <div
-                    key={prod.id}
-                    className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-xs hover:border-purple-400 transition-all dark:border-zinc-800 dark:bg-zinc-900 flex flex-col md:flex-row md:items-center justify-between gap-3"
+                    key={off.id}
+                    className="rounded-2xl border border-zinc-300 bg-white p-4 sm:p-5 shadow-xs hover:border-purple-500 transition-all dark:border-zinc-800 dark:bg-zinc-900 flex flex-col md:flex-row md:items-center justify-between gap-4"
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-purple-50 text-xl border border-purple-200 dark:bg-purple-950/40 dark:border-purple-900 shrink-0">
-                        {prod.icon}
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-50 text-2xl border border-purple-200 dark:bg-purple-950/40 dark:border-purple-900 shrink-0">
+                        {off.icon}
                       </div>
-                      <div className="space-y-0.5 min-w-0">
+                      <div className="space-y-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 truncate">{prod.name}</h4>
-                          <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-800 dark:bg-purple-950 dark:text-purple-300">
-                            {prod.category}
+                          <h4 className="font-extrabold text-base text-zinc-950 dark:text-white">{off.title}</h4>
+                          <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-bold text-purple-900 dark:bg-purple-950 dark:text-purple-200">
+                            {off.category}
                           </span>
-                          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                            {prod.status}
+                          <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
+                            Active Listing
                           </span>
                         </div>
-                        <p className="text-xs text-zinc-500">
-                          <strong>{prod.price}</strong> ({prod.pricingModel}) · Rating: <strong>{prod.rating} ⭐ ({prod.reviewsCount})</strong>
+                        <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                          <strong>{off.price}</strong> ({off.billingUnit}) · Rating: <strong>{off.rating} ⭐ ({off.reviewsCount})</strong>
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 shrink-0">
-                      <div className="text-right">
-                        <p className="text-xs font-black text-emerald-600 dark:text-emerald-400">{prod.mrrOrRevenue}</p>
-                        <p className="text-[10px] text-zinc-500">{prod.activeLicensesCount} booked · {prod.leadsCount} leads</p>
+                    <div className="flex items-center gap-2.5 flex-wrap shrink-0">
+                      <div className="text-right mr-2">
+                        <p className="text-sm font-black text-emerald-700 dark:text-emerald-400">{off.revenueLabel}</p>
+                        <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{off.activeClientsCount} booked · {off.leadsCount} leads</p>
                       </div>
+                      {showOwnerControls && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEditProductModal(off)}
+                            className="rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 px-3 py-2 text-xs sm:text-sm font-extrabold text-zinc-900 dark:text-zinc-100 cursor-pointer flex items-center gap-1"
+                          >
+                            <Edit3 className="h-3.5 w-3.5" />
+                            <span>Edit</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteProductOffering(off.id)}
+                            className="rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-300 px-2.5 py-2 text-xs sm:text-sm font-extrabold text-rose-800 cursor-pointer"
+                            title="Remove offering"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </>
+                      )}
                       <button
                         type="button"
-                        onClick={() => handleSelectWebsiteOffering(prod.name)}
-                        className={`rounded-xl px-3 py-1.5 text-xs font-bold shadow-xs cursor-pointer ${activeTheme.btnPrimary}`}
+                        onClick={() => handleSelectWebsiteOffering(off.title)}
+                        className={`rounded-xl px-4 py-2 text-xs sm:text-sm font-extrabold shadow-xs cursor-pointer ${activeTheme.btnPrimary}`}
                       >
                         Order / Book
                       </button>
                       <button
                         type="button"
                         onClick={onNavigateMarketplace}
-                        className="rounded-xl border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 px-3 py-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-200 cursor-pointer"
+                        className="rounded-xl border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 px-3.5 py-2 text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100 cursor-pointer"
                       >
                         Market ↗
                       </button>
@@ -4961,20 +5218,20 @@ export function ProfileView({
           <section id="business-site-about" className="px-6 sm:px-10 py-10 space-y-8 border-b border-zinc-200 dark:border-zinc-800">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               <div className="lg:col-span-5 space-y-4">
-                <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-0.5 text-[11px] font-bold ${activeTheme.badgeBg}`}>
-                  <Building2 className="h-3.5 w-3.5" />
+                <span className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1 text-xs font-bold ${activeTheme.badgeBg}`}>
+                  <Building2 className="h-4 w-4" />
                   <span>About {businessWebsite.businessName}</span>
                 </span>
-                <h2 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-zinc-100 leading-tight">
+                <h2 className="text-2xl sm:text-3xl font-black text-zinc-950 dark:text-white leading-tight">
                   Why Customers &amp; Partners Trust Us
                 </h2>
-                <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                <p className="text-base font-medium text-zinc-900 dark:text-zinc-200 leading-relaxed">
                   {businessWebsite.aboutStory}
                 </p>
-                <blockquote className={`rounded-2xl border bg-gradient-to-br p-4 text-xs sm:text-sm font-semibold italic text-zinc-800 dark:text-zinc-200 ${activeTheme.softPanel} border-zinc-200 dark:border-zinc-800`}>
+                <blockquote className={`rounded-2xl border bg-gradient-to-br p-5 text-sm sm:text-base font-bold italic text-zinc-950 dark:text-zinc-100 ${activeTheme.softPanel} border-zinc-300 dark:border-zinc-700`}>
                   &ldquo;{businessWebsite.missionStatement}&rdquo;
-                  <footer className="mt-2 not-italic flex items-center gap-2 text-[11px] font-bold text-zinc-500">
-                    <img src={user.avatar} alt={user.name} className="h-6 w-6 rounded-full object-cover" />
+                  <footer className="mt-2.5 not-italic flex items-center gap-2 text-xs sm:text-sm font-bold text-zinc-700 dark:text-zinc-300">
+                    <img src={user.avatar} alt={user.name} className="h-7 w-7 rounded-full object-cover" />
                     <span>{user.name} · Founder &amp; {businessWebsite.professionTitle}</span>
                   </footer>
                 </blockquote>
@@ -4985,26 +5242,26 @@ export function ProfileView({
                   {businessWebsite.valueProps.map((vp, idx) => (
                     <div
                       key={idx}
-                      className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-2 shadow-2xs"
+                      className="rounded-2xl border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-2 shadow-2xs"
                     >
                       <div className="text-2xl">{vp.icon}</div>
-                      <h3 className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100">{vp.title}</h3>
-                      <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">{vp.description}</p>
+                      <h3 className="text-base font-extrabold text-zinc-950 dark:text-white">{vp.title}</h3>
+                      <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 leading-relaxed">{vp.description}</p>
                     </div>
                   ))}
                 </div>
 
-                <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/70 p-4 space-y-2.5">
-                  <p className="text-xs font-extrabold uppercase tracking-wider text-zinc-500">
+                <div className="rounded-2xl border border-zinc-300 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/70 p-5 space-y-3">
+                  <p className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
                     Verified Licenses, Compliance &amp; Business Guarantees
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {businessWebsite.credentialsBadges.map((badge, idx) => (
                       <span
                         key={idx}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-1 text-xs font-bold text-zinc-800 dark:text-zinc-200 shadow-2xs"
+                        className="inline-flex items-center gap-1.5 rounded-full bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 px-3.5 py-1.5 text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100 shadow-2xs"
                       >
-                        <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+                        <ShieldCheck className="h-4 w-4 text-emerald-600" />
                         <span>{badge}</span>
                       </span>
                     ))}
@@ -5018,20 +5275,20 @@ export function ProfileView({
           <section id="business-site-gallery" className="px-6 sm:px-10 py-10 space-y-6 bg-zinc-50/70 dark:bg-zinc-900/40 border-b border-zinc-200 dark:border-zinc-800">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
               <div className="space-y-1">
-                <h2 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-zinc-100">
+                <h2 className="text-2xl sm:text-3xl font-black text-zinc-950 dark:text-white">
                   Recent Work &amp; Business Showcase
                 </h2>
-                <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
+                <p className="text-sm sm:text-base font-medium text-zinc-800 dark:text-zinc-200">
                   Verified field work, diagnostics, and client deliveries from {businessWebsite.businessName}.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setWorkspaceSection('portfolio')}
-                className={`text-xs font-bold flex items-center gap-1 cursor-pointer hover:underline ${activeTheme.accentText}`}
+                className={`text-sm font-extrabold flex items-center gap-1 cursor-pointer hover:underline ${activeTheme.accentText}`}
               >
                 <span>See Full Portfolio ({enclaveWorkspace.portfolio.length})</span>
-                <ChevronRight className="h-3.5 w-3.5" />
+                <ChevronRight className="h-4 w-4" />
               </button>
             </div>
 
@@ -5039,21 +5296,21 @@ export function ProfileView({
               {businessWebsite.gallery.map((item, idx) => (
                 <div
                   key={idx}
-                  className="group rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-lg transition-all"
+                  className="group rounded-2xl overflow-hidden border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-lg transition-all"
                 >
-                  <div className="relative h-44 overflow-hidden bg-zinc-900">
+                  <div className="relative h-48 overflow-hidden bg-zinc-900">
                     <img
                       src={item.imageUrl}
                       alt={item.title}
                       className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
-                    <span className="absolute top-3 left-3 rounded-full bg-black/75 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-white border border-white/20">
+                    <span className="absolute top-3 left-3 rounded-full bg-black/80 backdrop-blur-md px-3 py-1 text-xs font-bold text-white border border-white/25">
                       {item.badge}
                     </span>
                   </div>
-                  <div className="p-4 space-y-1">
-                    <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{item.title}</h3>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">{item.subtitle}</p>
+                  <div className="p-4 space-y-1.5">
+                    <h3 className="font-extrabold text-base text-zinc-950 dark:text-white">{item.title}</h3>
+                    <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">{item.subtitle}</p>
                   </div>
                 </div>
               ))}
@@ -5065,10 +5322,10 @@ export function ProfileView({
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-black text-zinc-900 dark:text-zinc-100">
+                  <h2 className="text-2xl font-black text-zinc-950 dark:text-white">
                     Verified Customer Reviews
                   </h2>
-                  <span className="text-xs font-bold text-amber-500">
+                  <span className="text-sm font-extrabold text-amber-600 dark:text-amber-400">
                     ★★★★★ {businessWebsite.rating} ({businessWebsite.reviewsCount})
                   </span>
                 </div>
@@ -5076,26 +5333,26 @@ export function ProfileView({
                   {businessWebsite.testimonials.map((tItem, idx) => (
                     <div
                       key={idx}
-                      className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-2.5 shadow-2xs"
+                      className="rounded-2xl border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-2.5 shadow-2xs"
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{tItem.clientName}</p>
-                          <p className="text-[11px] text-zinc-500">{tItem.clientRole}</p>
+                          <p className="font-extrabold text-base text-zinc-950 dark:text-white">{tItem.clientName}</p>
+                          <p className="text-xs sm:text-sm font-medium text-zinc-700 dark:text-zinc-300">{tItem.clientRole}</p>
                         </div>
-                        <span className="text-amber-500 text-xs font-bold">★★★★★</span>
+                        <span className="text-amber-500 text-sm font-bold">★★★★★</span>
                       </div>
-                      <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 italic leading-relaxed">
+                      <p className="text-sm sm:text-base font-medium text-zinc-900 dark:text-zinc-100 italic leading-relaxed">
                         &ldquo;{tItem.quote}&rdquo;
                       </p>
-                      <p className="text-[10px] font-mono text-zinc-400">Verified ConnectLn Client · {tItem.date}</p>
+                      <p className="text-xs font-mono font-bold text-zinc-600 dark:text-zinc-400">Verified ConnectLn Client · {tItem.date}</p>
                     </div>
                   ))}
                 </div>
               </div>
 
               <div className="space-y-4">
-                <h2 className="text-xl font-black text-zinc-900 dark:text-zinc-100">
+                <h2 className="text-2xl font-black text-zinc-950 dark:text-white">
                   Frequently Asked Questions
                 </h2>
                 <div className="space-y-2.5">
@@ -5104,22 +5361,22 @@ export function ProfileView({
                     return (
                       <div
                         key={idx}
-                        className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900 overflow-hidden"
+                        className="rounded-2xl border border-zinc-300 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 overflow-hidden"
                       >
                         <button
                           type="button"
                           onClick={() => setOpenBusinessFaqIdx(isOpen ? null : idx)}
-                          className="w-full px-4 py-3.5 text-left flex items-center justify-between gap-3 font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 cursor-pointer"
+                          className="w-full px-4 py-4 text-left flex items-center justify-between gap-3 font-extrabold text-sm sm:text-base text-zinc-950 dark:text-white cursor-pointer"
                         >
                           <span>{faq.question}</span>
                           {isOpen ? (
-                            <ChevronUp className="h-4 w-4 shrink-0 text-zinc-500" />
+                            <ChevronUp className="h-5 w-5 shrink-0 text-zinc-700 dark:text-zinc-300" />
                           ) : (
-                            <ChevronDown className="h-4 w-4 shrink-0 text-zinc-500" />
+                            <ChevronDown className="h-5 w-5 shrink-0 text-zinc-700 dark:text-zinc-300" />
                           )}
                         </button>
                         {isOpen && (
-                          <div className="px-4 pb-4 text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed border-t border-zinc-200/70 dark:border-zinc-800 pt-2.5">
+                          <div className="px-4 pb-4 text-sm sm:text-base font-medium text-zinc-800 dark:text-zinc-200 leading-relaxed border-t border-zinc-200 dark:border-zinc-800 pt-3">
                             {faq.answer}
                           </div>
                         )}
@@ -5138,59 +5395,59 @@ export function ProfileView({
           >
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               <div className="lg:col-span-5 space-y-4">
-                <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-0.5 text-[11px] font-bold ${activeTheme.badgeBg}`}>
-                  <Calendar className="h-3.5 w-3.5" />
+                <span className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1 text-xs font-bold ${activeTheme.badgeBg}`}>
+                  <Calendar className="h-4 w-4" />
                   <span>Direct Booking &amp; Free Estimate</span>
                 </span>
-                <h2 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-zinc-100">
+                <h2 className="text-2xl sm:text-3xl font-black text-zinc-950 dark:text-white">
                   Schedule With {businessWebsite.businessName}
                 </h2>
-                <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
+                <p className="text-sm sm:text-base font-medium text-zinc-800 dark:text-zinc-200">
                   Book an appointment, request an exact upfront estimate, or inquire about custom contracts directly from our website.
                 </p>
 
-                <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-3 text-xs shadow-sm">
+                <div className="rounded-2xl border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-3.5 text-sm shadow-sm">
                   <div className="flex items-start gap-2.5">
-                    <Clock className={`h-4 w-4 shrink-0 mt-0.5 ${activeTheme.accentText}`} />
+                    <Clock className={`h-5 w-5 shrink-0 mt-0.5 ${activeTheme.accentText}`} />
                     <div>
-                      <p className="font-bold text-zinc-900 dark:text-zinc-100">Hours of Operation</p>
-                      <p className="text-zinc-600 dark:text-zinc-400">{businessWebsite.operatingHours}</p>
+                      <p className="font-extrabold text-zinc-950 dark:text-white">Hours of Operation</p>
+                      <p className="font-medium text-zinc-800 dark:text-zinc-200">{businessWebsite.operatingHours}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-2.5">
-                    <MapPin className={`h-4 w-4 shrink-0 mt-0.5 ${activeTheme.accentText}`} />
+                    <MapPin className={`h-5 w-5 shrink-0 mt-0.5 ${activeTheme.accentText}`} />
                     <div>
-                      <p className="font-bold text-zinc-900 dark:text-zinc-100">Service Coverage</p>
-                      <p className="text-zinc-600 dark:text-zinc-400">{businessWebsite.serviceArea}</p>
+                      <p className="font-extrabold text-zinc-950 dark:text-white">Service Coverage</p>
+                      <p className="font-medium text-zinc-800 dark:text-zinc-200">{businessWebsite.serviceArea}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-2.5">
-                    <Phone className={`h-4 w-4 shrink-0 mt-0.5 ${activeTheme.accentText}`} />
+                    <Phone className={`h-5 w-5 shrink-0 mt-0.5 ${activeTheme.accentText}`} />
                     <div>
-                      <p className="font-bold text-zinc-900 dark:text-zinc-100">Direct Business Line</p>
-                      <p className="text-zinc-600 dark:text-zinc-400">{businessWebsite.phoneDisplay}</p>
+                      <p className="font-extrabold text-zinc-950 dark:text-white">Direct Business Line</p>
+                      <p className="font-medium text-zinc-800 dark:text-zinc-200">{businessWebsite.phoneDisplay}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-2.5">
-                    <Mail className={`h-4 w-4 shrink-0 mt-0.5 ${activeTheme.accentText}`} />
+                    <Mail className={`h-5 w-5 shrink-0 mt-0.5 ${activeTheme.accentText}`} />
                     <div>
-                      <p className="font-bold text-zinc-900 dark:text-zinc-100">Business Email &amp; Web</p>
-                      <p className="text-zinc-600 dark:text-zinc-400 font-mono">{businessWebsite.emailDisplay}</p>
+                      <p className="font-extrabold text-zinc-950 dark:text-white">Business Email &amp; Web</p>
+                      <p className="font-bold text-zinc-800 dark:text-zinc-200 font-mono text-xs sm:text-sm break-all">{businessWebsite.emailDisplay}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="lg:col-span-7 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-lg">
+              <div className="lg:col-span-7 rounded-2xl border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-lg">
                 {quoteSubmittedReceipt ? (
                   <div className="py-8 text-center space-y-3">
                     <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600">
                       <CheckCircle2 className="h-7 w-7" />
                     </div>
-                    <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100">
+                    <h3 className="text-xl font-black text-zinc-950 dark:text-white">
                       Request Sent to {businessWebsite.businessName}!
                     </h3>
-                    <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 max-w-md mx-auto">
+                    <p className="text-sm sm:text-base font-medium text-zinc-800 dark:text-zinc-200 max-w-md mx-auto">
                       Confirmation <strong>#{quoteSubmittedReceipt.id}</strong> for{' '}
                       <strong>{quoteSubmittedReceipt.service}</strong> on{' '}
                       <strong>{quoteSubmittedReceipt.preferredDate}</strong> has been logged for{' '}
@@ -5199,45 +5456,45 @@ export function ProfileView({
                     <button
                       type="button"
                       onClick={() => setQuoteSubmittedReceipt(null)}
-                      className="rounded-xl bg-zinc-900 dark:bg-zinc-100 px-4 py-2 text-xs font-bold text-white dark:text-zinc-900 cursor-pointer"
+                      className="rounded-xl bg-zinc-900 dark:bg-zinc-100 px-5 py-2.5 text-sm font-bold text-white dark:text-zinc-900 cursor-pointer"
                     >
                       Submit Another Inquiry
                     </button>
                   </div>
                 ) : (
-                  <form onSubmit={handleSubmitBusinessQuote} className="space-y-4 text-xs">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <label className="font-bold text-zinc-700 dark:text-zinc-300">Your Name / Organization</label>
+                  <form onSubmit={handleSubmitBusinessQuote} className="space-y-4 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div className="space-y-1.5">
+                        <label className="font-extrabold text-zinc-900 dark:text-zinc-100">Your Name / Organization</label>
                         <input
                           type="text"
                           required
                           placeholder="e.g. Jordan Rivera"
                           value={quoteClientName}
                           onChange={(e) => setQuoteClientName(e.target.value)}
-                          className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2.5 text-zinc-900 dark:text-zinc-100"
+                          className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3.5 py-2.5 text-sm font-medium text-zinc-950 dark:text-zinc-100"
                         />
                       </div>
-                      <div className="space-y-1">
-                        <label className="font-bold text-zinc-700 dark:text-zinc-300">Email or Phone Number</label>
+                      <div className="space-y-1.5">
+                        <label className="font-extrabold text-zinc-900 dark:text-zinc-100">Email or Phone Number</label>
                         <input
                           type="text"
                           required
                           placeholder="you@email.com or (555) 123-4567"
                           value={quoteClientEmail}
                           onChange={(e) => setQuoteClientEmail(e.target.value)}
-                          className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2.5 text-zinc-900 dark:text-zinc-100"
+                          className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3.5 py-2.5 text-sm font-medium text-zinc-950 dark:text-zinc-100"
                         />
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <label className="font-bold text-zinc-700 dark:text-zinc-300">Select Service / Product</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div className="space-y-1.5">
+                        <label className="font-extrabold text-zinc-900 dark:text-zinc-100">Select Service / Product</label>
                         <select
                           value={quoteSelectedOffering || allWebsiteOfferings[0]?.title || ''}
                           onChange={(e) => setQuoteSelectedOffering(e.target.value)}
-                          className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2.5 text-zinc-900 dark:text-zinc-100"
+                          className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3.5 py-2.5 text-sm font-medium text-zinc-950 dark:text-zinc-100"
                         >
                           {allWebsiteOfferings.map((o) => (
                             <option key={o.id} value={o.title}>
@@ -5249,31 +5506,31 @@ export function ProfileView({
                           </option>
                         </select>
                       </div>
-                      <div className="space-y-1">
-                        <label className="font-bold text-zinc-700 dark:text-zinc-300">Preferred Date / Timing</label>
+                      <div className="space-y-1.5">
+                        <label className="font-extrabold text-zinc-900 dark:text-zinc-100">Preferred Date / Timing</label>
                         <input
                           type="date"
                           value={quotePreferredDate}
                           onChange={(e) => setQuotePreferredDate(e.target.value)}
-                          className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2.5 text-zinc-900 dark:text-zinc-100"
+                          className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3.5 py-2.5 text-sm font-medium text-zinc-950 dark:text-zinc-100"
                         />
                       </div>
                     </div>
 
-                    <div className="space-y-1">
-                      <label className="font-bold text-zinc-700 dark:text-zinc-300">Project Scope / Appointment Details</label>
+                    <div className="space-y-1.5">
+                      <label className="font-extrabold text-zinc-900 dark:text-zinc-100">Project Scope / Appointment Details</label>
                       <textarea
                         rows={3}
                         placeholder={`Tell ${user.name.split(' ')[0]} what you need help with, location details, or any urgency...`}
                         value={quoteNotes}
                         onChange={(e) => setQuoteNotes(e.target.value)}
-                        className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2.5 text-zinc-900 dark:text-zinc-100"
+                        className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3.5 py-2.5 text-sm font-medium text-zinc-950 dark:text-zinc-100"
                       />
                     </div>
 
                     <button
                       type="submit"
-                      className={`w-full rounded-xl py-3 px-5 text-xs sm:text-sm font-extrabold shadow-md cursor-pointer transition-transform hover:scale-[1.01] ${activeTheme.btnPrimary}`}
+                      className={`w-full rounded-xl py-3.5 px-5 text-sm sm:text-base font-extrabold shadow-md cursor-pointer transition-transform hover:scale-[1.01] ${activeTheme.btnPrimary}`}
                     >
                       Send Booking &amp; Quote Request to {businessWebsite.businessName} →
                     </button>
@@ -5284,14 +5541,14 @@ export function ProfileView({
           </section>
 
           {/* I. AUTHENTIC WEBSITE FOOTER */}
-          <footer className="bg-slate-950 text-zinc-300 px-6 sm:px-10 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
+          <footer className="bg-slate-950 text-zinc-200 px-6 sm:px-10 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-sm">
             <div className="space-y-1">
-              <p className="font-bold text-white">{businessWebsite.businessName}</p>
-              <p className="text-[11px] text-zinc-400">
-                © 2026 {businessWebsite.businessName} · Verified Business Website on ConnectLn ({businessWebsite.domainSlug}.conectln.com)
+              <p className="font-extrabold text-white text-base">{businessWebsite.businessName}</p>
+              <p className="text-xs sm:text-sm text-zinc-300">
+                © 2026 {businessWebsite.businessName} · Self-Managed Official Business Website on ConnectLn ({businessWebsite.domainSlug}.conectln.com)
               </p>
             </div>
-            <div className="flex items-center gap-4 flex-wrap text-[11px] font-semibold">
+            <div className="flex items-center gap-4 flex-wrap text-xs sm:text-sm font-bold">
               <button type="button" onClick={() => scrollToSiteSection('business-site-top')} className="hover:text-white cursor-pointer">
                 Back to Top
               </button>
@@ -5306,22 +5563,23 @@ export function ProfileView({
               </button>
             </div>
           </footer>
+          </div>
         </div>
         )
       })()}
 
-      {/* MODAL: CUSTOMIZE PERSONAL BUSINESS WEBSITE (OWNER ONLY) */}
+      {/* MODAL: CUSTOMIZE PERSONAL BUSINESS WEBSITE (OWNER SELF-SERVICE) */}
       <Dialog
         open={isEditWebsiteModalOpen}
         onOpenChange={(open) => {
           if (!open) setIsEditWebsiteModalOpen(false)
         }}
       >
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl">
+        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+            <DialogTitle className="text-xl font-black text-zinc-950 dark:text-white flex items-center gap-2">
               <Globe className="h-5 w-5 text-emerald-600" />
-              <span>Customize Your Business Website</span>
+              <span>Edit Your Business Website (Instant Live Publish)</span>
             </DialogTitle>
           </DialogHeader>
 
@@ -5330,46 +5588,50 @@ export function ProfileView({
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
                 <Check className="h-6 w-6" />
               </div>
-              <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
-                Business Website Updated!
+              <h4 className="font-extrabold text-base text-zinc-950 dark:text-white">
+                Business Website Updated &amp; Published Live!
               </h4>
-              <p className="text-xs text-zinc-500">
-                Your live website branding, domain URL, and contact details are now updated.
+              <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                All branding, banner, domain URL, and business details updated immediately — no admin request required.
               </p>
             </div>
           ) : (
-            <form onSubmit={handleSaveWebsiteCustomization} className="space-y-3.5 text-xs pt-1">
+            <form onSubmit={handleSaveWebsiteCustomization} className="space-y-3.5 text-sm pt-1">
+              <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 px-3.5 py-2.5 text-xs font-bold text-emerald-900 dark:text-emerald-200">
+                ✓ 100% Self-Service: Changes you save below publish directly to your live Business Website immediately.
+              </div>
+
               <div className="space-y-1">
-                <label className="font-bold text-zinc-700 dark:text-zinc-300">Business Name</label>
+                <label className="font-extrabold text-zinc-900 dark:text-zinc-100">Business Name</label>
                 <input
                   type="text"
                   required
                   value={editWebsiteName}
                   onChange={(e) => setEditWebsiteName(e.target.value)}
-                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 font-semibold"
+                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-sm font-bold text-zinc-950 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="font-bold text-zinc-700 dark:text-zinc-300">Website Subdomain</label>
+                  <label className="font-extrabold text-zinc-900 dark:text-zinc-100">Website Subdomain</label>
                   <div className="flex items-center rounded-lg border border-zinc-300 dark:border-zinc-700 overflow-hidden bg-zinc-50 dark:bg-zinc-800">
                     <input
                       type="text"
                       value={editWebsiteSlug}
                       onChange={(e) => setEditWebsiteSlug(e.target.value)}
-                      className="flex-1 bg-transparent p-2 text-zinc-900 dark:text-zinc-100 font-mono text-[11px] outline-none"
+                      className="flex-1 bg-transparent p-2.5 text-zinc-950 dark:text-zinc-100 font-mono text-xs font-bold outline-none"
                     />
-                    <span className="px-2 text-[10px] font-mono text-zinc-500 border-l border-zinc-200 dark:border-zinc-700">.conectln.com</span>
+                    <span className="px-2.5 text-xs font-mono font-bold text-zinc-700 dark:text-zinc-300 border-l border-zinc-300 dark:border-zinc-700">.conectln.com</span>
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-bold text-zinc-700 dark:text-zinc-300">Website Theme Color</label>
+                  <label className="font-extrabold text-zinc-900 dark:text-zinc-100">Website Theme Color</label>
                   <select
                     value={editWebsiteTheme}
                     onChange={(e) => setEditWebsiteTheme(e.target.value as BusinessThemeColor)}
-                    className="w-full rounded-lg border border-zinc-300 p-2 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                    className="w-full rounded-lg border border-zinc-300 p-2.5 text-sm font-semibold text-zinc-950 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                   >
                     <option value="emerald">Emerald Green</option>
                     <option value="blue">ConnectLn Classic Blue</option>
@@ -5382,63 +5644,123 @@ export function ProfileView({
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-zinc-700 dark:text-zinc-300">Website Hero Headline</label>
+                <label className="font-extrabold text-zinc-900 dark:text-zinc-100">Website Hero Headline</label>
                 <input
                   type="text"
                   value={editWebsiteHeadline}
                   onChange={(e) => setEditWebsiteHeadline(e.target.value)}
-                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-sm font-medium text-zinc-950 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-zinc-700 dark:text-zinc-300">Business Tagline</label>
-                <input
-                  type="text"
-                  value={editWebsiteTagline}
-                  onChange={(e) => setEditWebsiteTagline(e.target.value)}
-                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                <label className="font-extrabold text-zinc-900 dark:text-zinc-100">Hero Subheadline / Welcome Message</label>
+                <textarea
+                  rows={2}
+                  value={editWebsiteSubheadline}
+                  onChange={(e) => setEditWebsiteSubheadline(e.target.value)}
+                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-sm font-medium text-zinc-950 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                 />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="font-extrabold text-zinc-900 dark:text-zinc-100">Hero Background Banner Image URL</label>
+                <input
+                  type="url"
+                  value={editWebsiteBannerUrl}
+                  onChange={(e) => setEditWebsiteBannerUrl(e.target.value)}
+                  placeholder="https://images.unsplash.com/..."
+                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-xs font-mono text-zinc-950 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                />
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { label: 'Veterinary', url: 'https://images.unsplash.com/photo-1628009368231-7bb7cfcb0def?w=1200&auto=format&fit=crop&q=80' },
+                    { label: 'Cyber / Tech', url: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&auto=format&fit=crop&q=80' },
+                    { label: 'Craft / Trades', url: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1200&auto=format&fit=crop&q=80' },
+                    { label: 'Automotive / EV', url: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=1200&auto=format&fit=crop&q=80' },
+                    { label: 'Healthcare', url: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1200&auto=format&fit=crop&q=80' }
+                  ].map((preset) => (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => setEditWebsiteBannerUrl(preset.url)}
+                      className="rounded-md bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 px-2.5 py-1 text-xs font-bold text-zinc-800 dark:text-zinc-200 cursor-pointer"
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="font-bold text-zinc-700 dark:text-zinc-300">Service Coverage Area</label>
+                  <label className="font-extrabold text-zinc-900 dark:text-zinc-100">Service Coverage Area</label>
                   <input
                     type="text"
                     value={editWebsiteServiceArea}
                     onChange={(e) => setEditWebsiteServiceArea(e.target.value)}
-                    className="w-full rounded-lg border border-zinc-300 p-2 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                    className="w-full rounded-lg border border-zinc-300 p-2.5 text-sm font-medium text-zinc-950 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="font-bold text-zinc-700 dark:text-zinc-300">Business Phone Line</label>
+                  <label className="font-extrabold text-zinc-900 dark:text-zinc-100">Business Phone Line</label>
                   <input
                     type="text"
                     value={editWebsitePhone}
                     onChange={(e) => setEditWebsitePhone(e.target.value)}
-                    className="w-full rounded-lg border border-zinc-300 p-2 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                    className="w-full rounded-lg border border-zinc-300 p-2.5 text-sm font-medium text-zinc-950 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-extrabold text-zinc-900 dark:text-zinc-100">Business Email</label>
+                  <input
+                    type="text"
+                    value={editWebsiteEmail}
+                    onChange={(e) => setEditWebsiteEmail(e.target.value)}
+                    className="w-full rounded-lg border border-zinc-300 p-2.5 text-sm font-medium text-zinc-950 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-extrabold text-zinc-900 dark:text-zinc-100">License / Reg #</label>
+                  <input
+                    type="text"
+                    value={editWebsiteLicense}
+                    onChange={(e) => setEditWebsiteLicense(e.target.value)}
+                    className="w-full rounded-lg border border-zinc-300 p-2.5 text-sm font-mono font-bold text-zinc-950 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-zinc-700 dark:text-zinc-300">Operating Hours</label>
+                <label className="font-extrabold text-zinc-900 dark:text-zinc-100">Operating Hours</label>
                 <input
                   type="text"
                   value={editWebsiteHours}
                   onChange={(e) => setEditWebsiteHours(e.target.value)}
-                  className="w-full rounded-lg border border-zinc-300 p-2 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-sm font-medium text-zinc-950 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-zinc-700 dark:text-zinc-300">About Your Business Story</label>
+                <label className="font-extrabold text-zinc-900 dark:text-zinc-100">About Your Business Story</label>
                 <textarea
                   rows={3}
                   value={editWebsiteAbout}
                   onChange={(e) => setEditWebsiteAbout(e.target.value)}
-                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-sm font-medium text-zinc-950 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-extrabold text-zinc-900 dark:text-zinc-100">Mission Quote</label>
+                <input
+                  type="text"
+                  value={editWebsiteMission}
+                  onChange={(e) => setEditWebsiteMission(e.target.value)}
+                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-sm font-medium text-zinc-950 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                 />
               </div>
 
@@ -5446,15 +5768,15 @@ export function ProfileView({
                 <button
                   type="button"
                   onClick={() => setIsEditWebsiteModalOpen(false)}
-                  className="rounded-lg bg-zinc-200 px-4 py-2 font-semibold text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200 cursor-pointer"
+                  className="rounded-lg bg-zinc-200 px-4 py-2.5 text-sm font-bold text-zinc-900 dark:bg-zinc-800 dark:text-zinc-200 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="rounded-lg bg-emerald-600 hover:bg-emerald-700 px-5 py-2 font-bold text-white shadow-md cursor-pointer"
+                  className="rounded-lg bg-emerald-600 hover:bg-emerald-700 px-5 py-2.5 text-sm font-extrabold text-white shadow-md cursor-pointer"
                 >
-                  Publish Website Updates ✓
+                  Save &amp; Publish Live ✓
                 </button>
               </div>
             </form>
@@ -5462,18 +5784,21 @@ export function ProfileView({
         </DialogContent>
       </Dialog>
 
-      {/* MODAL: LIST NEW PRODUCT OR SERVICE */}
+      {/* MODAL: ADD OR EDIT PRODUCT / SERVICE ON BUSINESS PAGE & MARKETPLACE */}
       <Dialog
         open={isAddProductModalOpen}
         onOpenChange={(open) => {
-          if (!open) setIsAddProductModalOpen(false)
+          if (!open) {
+            setIsAddProductModalOpen(false)
+            setEditingOfferingId(null)
+          }
         }}
       >
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+            <DialogTitle className="text-xl font-black text-zinc-950 dark:text-white flex items-center gap-2">
               <Store className="h-5 w-5 text-purple-600" />
-              <span>Add Product or Service Listing</span>
+              <span>{editingOfferingId ? 'Update Product / Service Listing' : 'Add Product or Service Listing'}</span>
             </DialogTitle>
           </DialogHeader>
 
@@ -5482,82 +5807,122 @@ export function ProfileView({
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
                 <Check className="h-6 w-6" />
               </div>
-              <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
-                Listing Published to Website &amp; Marketplace!
+              <h4 className="font-extrabold text-base text-zinc-950 dark:text-white">
+                {editingOfferingId ? 'Listing Updated Live!' : 'Listing Published to Business Page & Marketplace!'}
               </h4>
-              <p className="text-xs text-zinc-500">
-                Your new offering is now live on your Business Website and active in ConnectLn Marketplace.
+              <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                Your offering is synced live across your Profile, Business Website, and ConnectLn Marketplace.
               </p>
             </div>
           ) : (
-            <form onSubmit={handleCreateProductListing} className="space-y-4 text-xs">
+            <form onSubmit={handleCreateProductListing} className="space-y-3.5 text-sm pt-1">
               <div className="space-y-1">
-                <label className="font-bold text-zinc-700 dark:text-zinc-300">Product or Service Title</label>
+                <label className="font-extrabold text-zinc-900 dark:text-zinc-100">Product or Service Title</label>
                 <input
                   type="text"
                   placeholder={`e.g. Custom ${businessWebsite.professionTitle} Package`}
                   value={newProductName}
                   onChange={(e) => setNewProductName(e.target.value)}
                   required
-                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-sm font-bold text-zinc-950 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="font-bold text-zinc-700 dark:text-zinc-300">Category</label>
-                <select
-                  value={newProductCategory}
-                  onChange={(e) => setNewProductCategory(e.target.value as any)}
-                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-                >
-                  <option value="Services">Services</option>
-                  <option value="Trade Plans">Trade &amp; Service Plans</option>
-                  <option value="Clinical Services">Clinical / Veterinary Services</option>
-                  <option value="Maintenance Plans">Maintenance &amp; Retainer Plans</option>
-                  <option value="Diagnostics">Diagnostics &amp; Inspections</option>
-                  <option value="Consultations">Consultations &amp; Advisory</option>
-                  <option value="Training">Training &amp; Workshops</option>
-                  <option value="Software">Software</option>
-                  <option value="Enterprise Solutions">Turnkey / Enterprise Solutions</option>
-                </select>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-extrabold text-zinc-900 dark:text-zinc-100">Category</label>
+                  <select
+                    value={newProductCategory}
+                    onChange={(e) => setNewProductCategory(e.target.value as any)}
+                    className="w-full rounded-lg border border-zinc-300 p-2.5 text-sm font-semibold text-zinc-950 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  >
+                    <option value="Services">Services</option>
+                    <option value="Trade Plans">Trade &amp; Service Plans</option>
+                    <option value="Clinical Services">Clinical / Veterinary Services</option>
+                    <option value="Maintenance Plans">Maintenance &amp; Retainer Plans</option>
+                    <option value="Diagnostics">Diagnostics &amp; Inspections</option>
+                    <option value="Consultations">Consultations &amp; Advisory</option>
+                    <option value="Training">Training &amp; Workshops</option>
+                    <option value="Software">Software</option>
+                    <option value="Enterprise Solutions">Turnkey / Enterprise Solutions</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-extrabold text-zinc-900 dark:text-zinc-100">Pricing / Rate</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. $175 or $49 / mo"
+                    value={newProductPrice}
+                    onChange={(e) => setNewProductPrice(e.target.value)}
+                    required
+                    className="w-full rounded-lg border border-zinc-300 p-2.5 text-sm font-bold text-zinc-950 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-extrabold text-zinc-900 dark:text-zinc-100">Billing Unit</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Per Visit, Monthly Plan, Flat Rate"
+                    value={newProductBillingUnit}
+                    onChange={(e) => setNewProductBillingUnit(e.target.value)}
+                    className="w-full rounded-lg border border-zinc-300 p-2.5 text-sm font-medium text-zinc-950 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-extrabold text-zinc-900 dark:text-zinc-100">Turnaround / Timing</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Same-Day / 2–3 Days"
+                    value={newProductTurnaround}
+                    onChange={(e) => setNewProductTurnaround(e.target.value)}
+                    className="w-full rounded-lg border border-zinc-300 p-2.5 text-sm font-medium text-zinc-950 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  />
+                </div>
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-zinc-700 dark:text-zinc-300">Pricing / Rate</label>
-                <input
-                  type="text"
-                  placeholder="e.g. $175 flat rate or $49 / mo"
-                  value={newProductPrice}
-                  onChange={(e) => setNewProductPrice(e.target.value)}
-                  required
-                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-bold text-zinc-700 dark:text-zinc-300">What Customers Receive (Short Summary)</label>
+                <label className="font-extrabold text-zinc-900 dark:text-zinc-100">Description</label>
                 <textarea
                   rows={2}
-                  placeholder="Describe deliverables, turnaround time, and what makes your offering stand out..."
+                  placeholder="Describe what you deliver, warranty/SLA, and how customers benefit..."
                   value={newProductDescription}
                   onChange={(e) => setNewProductDescription(e.target.value)}
-                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-sm font-medium text-zinc-950 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-extrabold text-zinc-900 dark:text-zinc-100">Key Deliverables (One per line)</label>
+                <textarea
+                  rows={3}
+                  placeholder={"Full on-site / diagnostic inspection\nUpfront written guarantee\nFollow-up review included"}
+                  value={newProductDeliverables}
+                  onChange={(e) => setNewProductDeliverables(e.target.value)}
+                  className="w-full rounded-lg border border-zinc-300 p-2.5 text-sm font-medium text-zinc-950 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                 />
               </div>
 
               <div className="pt-2 flex justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setIsAddProductModalOpen(false)}
-                  className="rounded-lg bg-zinc-200 px-4 py-2 font-semibold text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200"
+                  onClick={() => {
+                    setIsAddProductModalOpen(false)
+                    setEditingOfferingId(null)
+                  }}
+                  className="rounded-lg bg-zinc-200 px-4 py-2.5 text-sm font-bold text-zinc-900 dark:bg-zinc-800 dark:text-zinc-200 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2 font-bold text-white shadow-md hover:from-purple-500 hover:to-indigo-500"
+                  className="rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-5 py-2.5 text-sm font-extrabold text-white shadow-md hover:from-purple-500 hover:to-indigo-500 cursor-pointer"
                 >
-                  Publish Listing ✓
+                  {editingOfferingId ? 'Save Changes Live ✓' : 'Publish Listing Live ✓'}
                 </button>
               </div>
             </form>

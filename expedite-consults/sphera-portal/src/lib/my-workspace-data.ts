@@ -1006,12 +1006,24 @@ export function resolveUserProfessionAndEnclave(user?: UserProfileLike | null): 
   const combined = `${user?.profession || ''} ${profDef?.title || ''} ${user?.headline || ''} ${user?.about || ''} ${user?.professionId || ''}`.toLowerCase()
 
   const pickProfessionTitle = (fallback: string): string => {
-    if (user?.profession && user.profession.trim() && user.profession.toLowerCase() !== 'verified connectln professional') {
-      return user.profession.trim()
+    const headlineLower = (user?.headline || '').toLowerCase()
+    const rawProf = user?.profession?.trim() || ''
+    const looksLikeStaleCarpenter =
+      /^master carpenter/i.test(rawProf) && !/carpenter|timber|woodwork|millwork|cabinet/i.test(headlineLower)
+    const looksLikeStaleElectrician =
+      /^licensed master electrician/i.test(rawProf) && !/electrician|electrical|\bnec\b/i.test(headlineLower)
+
+    if (
+      rawProf &&
+      rawProf.toLowerCase() !== 'verified connectln professional' &&
+      !looksLikeStaleCarpenter &&
+      !looksLikeStaleElectrician
+    ) {
+      return rawProf
     }
-    if (profDef?.title) return profDef.title
-    const head = (user?.headline || '').split(/[·\-|]/)[0]?.trim()
-    if (head && head.length >= 3 && head.length <= 68) return head
+    const head = (user?.headline || '').split(/[·|]/)[0]?.split('@')[0]?.trim()
+    if (head && head.length >= 4 && head.length <= 68) return head
+    if (profDef?.title && !looksLikeStaleCarpenter && !looksLikeStaleElectrician) return profDef.title
     return fallback
   }
 
@@ -1253,7 +1265,8 @@ function slugifyBusinessUrl(raw: string): string {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
-      .slice(0, 38) || 'connectln-pro'
+      .slice(0, 38)
+      .replace(/-+$/g, '') || 'connectln-pro'
   )
 }
 
