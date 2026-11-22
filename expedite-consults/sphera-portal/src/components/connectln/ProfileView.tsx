@@ -132,6 +132,12 @@ export function ProfileView({
   const effectiveEnclaveId = tailoredWorkspaceProfile.resolution.enclaveId
   const enclaveInfo = findEnclaveById(effectiveEnclaveId)
   const enclaveWorkspace = getWorkspaceDataForEnclave(effectiveEnclaveId)
+  const resolvedDisplayProfession =
+    !user.profession ||
+    (user.profession === 'Licensed Master Electrician' &&
+      tailoredWorkspaceProfile.resolution.subArchetype !== 'electrical')
+      ? tailoredWorkspaceProfile.resolution.professionTitle
+      : user.profession
 
   const userWorkspaceStorageKey = React.useMemo(
     () =>
@@ -340,9 +346,9 @@ export function ProfileView({
     })
   }
 
-  // 10 Workspace Sub-Sections (includes Personal Business Website)
+  // 9 Workspace Sub-Sections (Products integrated directly into Personal Business Website)
   const [workspaceSection, setWorkspaceSection] = useState<
-    'profile' | 'portfolio' | 'skills' | 'certifications' | 'experience' | 'publications' | 'reviews' | 'products' | 'business' | 'analytics'
+    'profile' | 'portfolio' | 'skills' | 'certifications' | 'experience' | 'publications' | 'reviews' | 'business' | 'analytics'
   >('profile')
   const [isMemberConnected, setIsMemberConnected] = useState<boolean>(false)
 
@@ -1474,7 +1480,6 @@ export function ProfileView({
             ...(!isViewingOtherMember ? [{ id: 'experience', label: '🏛️ Experience' }] : []),
             { id: 'publications', label: '📑 Publications' },
             { id: 'reviews', label: '⭐ Reviews' },
-            { id: 'products', label: isViewingOtherMember ? `🛍️ ${user.name.split(' ')[0]}'s Products` : '🛍️ My Products' },
             { id: 'business', label: isViewingOtherMember ? `🌐 ${user.name.split(' ')[0]}'s Business` : '🌐 My Business' }
           ].map((sec) => {
             const isSelected = workspaceSection === sec.id
@@ -1538,72 +1543,24 @@ export function ProfileView({
               )}
             </div>
 
-            {/* Profile Avatar & Primary Details */}
+            {/* Profile Avatar, Action Bar & Full-Width Executive Identity Block */}
             <div className="relative px-6 pb-6 pt-3">
-              <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
-                <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-                  <div className="relative group shrink-0 -mt-16">
-                    <div
-                      className={`relative h-28 w-28 rounded-2xl bg-white shadow-xl overflow-hidden ${
-                        jobBadgeStatus !== 'Booked'
-                          ? 'border-4 border-emerald-500 ring-2 ring-white dark:ring-zinc-900'
-                          : 'border-4 border-white dark:border-zinc-900'
-                      }`}
-                    >
-                      <img
-                        src={user.avatar}
-                        alt={user.name}
-                        className="h-full w-full object-cover"
-                      />
-                      {/* Hover Overlay Button to Change Avatar (Owner only) */}
-                      {!isViewingOtherMember && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPhotoModalTab('avatar')
-                            setIsPhotoModalOpen(true)
-                          }}
-                          className="absolute inset-0 bg-black/55 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-opacity cursor-pointer backdrop-blur-2xs"
-                          title="Attach or change profile photo"
-                        >
-                          <Camera className="h-6 w-6 mb-1 text-white" />
-                          <span className="text-[10px] font-bold">Change Photo</span>
-                        </button>
-                      )}
-                    </div>
-
-                    {/* ConnectLn "Looking for a Job" Avatar Badge Ribbon */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!isViewingOtherMember) {
-                          const order: Array<'Looking for a Job' | 'Looking for Projects' | 'Available for Hire' | 'Booked'> = [
-                            'Looking for a Job',
-                            'Looking for Projects',
-                            'Available for Hire',
-                            'Booked'
-                          ]
-                          const next = order[(order.indexOf(jobBadgeStatus) + 1) % order.length]
-                          handleSaveJobCard(next)
-                        }
-                      }}
-                      title="Click to cycle Looking for a Job badge"
-                      className={`absolute -bottom-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider shadow-md border z-10 cursor-pointer transition-transform hover:scale-105 ${
-                        jobBadgeStatus === 'Booked'
-                          ? 'bg-amber-600 text-white border-amber-300'
-                          : 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 text-white border-emerald-200'
-                      }`}
-                    >
-                      {jobBadgeStatus === 'Looking for a Job'
-                        ? '💼 Looking for a Job'
-                        : jobBadgeStatus === 'Looking for Projects'
-                        ? '🔨 Looking for Projects'
-                        : jobBadgeStatus === 'Available for Hire'
-                        ? '✅ Available for Hire'
-                        : '⏳ Booked'}
-                    </button>
-
-                    {/* Camera icon badge at top right of avatar (Owner only) */}
+              {/* Row 1: Overlapping Avatar on Left + Action Toolbar on Right (never squeezes identity text!) */}
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                <div className="relative group shrink-0 -mt-16 w-fit">
+                  <div
+                    className={`relative h-28 w-28 sm:h-32 sm:w-32 rounded-2xl bg-white shadow-xl overflow-hidden ${
+                      jobBadgeStatus !== 'Booked'
+                        ? 'border-4 border-emerald-500 ring-2 ring-white dark:ring-zinc-900'
+                        : 'border-4 border-white dark:border-zinc-900'
+                    }`}
+                  >
+                    <img
+                      src={user.avatar}
+                      alt={user.name}
+                      className="h-full w-full object-cover"
+                    />
+                    {/* Hover Overlay Button to Change Avatar (Owner only) */}
                     {!isViewingOtherMember && (
                       <button
                         type="button"
@@ -1611,89 +1568,64 @@ export function ProfileView({
                           setPhotoModalTab('avatar')
                           setIsPhotoModalOpen(true)
                         }}
-                        className="absolute -top-1.5 -right-1.5 h-7 w-7 rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white flex items-center justify-center shadow-md border-2 border-white dark:border-zinc-900 cursor-pointer transition-transform hover:scale-110 z-10"
-                        title="Upload or Change Profile Photo"
+                        className="absolute inset-0 bg-black/55 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-opacity cursor-pointer backdrop-blur-2xs"
+                        title="Attach or change profile photo"
                       >
-                        <Camera className="h-3.5 w-3.5" />
+                        <Camera className="h-6 w-6 mb-1 text-white" />
+                        <span className="text-[10px] font-bold">Change Photo</span>
                       </button>
                     )}
                   </div>
 
-                  <div className="space-y-1 pt-2 sm:pt-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h2 className="text-2xl font-black text-zinc-900 dark:text-zinc-100">
-                        {user.name}
-                      </h2>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          void playHumanVoiceTag({
-                            userName: user.name || 'Kwesi Asiedu',
-                            userHeadline: user.headline,
-                          })
-                        }}
-                        className="h-7 w-7 rounded-full bg-zinc-100 hover:bg-blue-50 dark:bg-zinc-800 dark:hover:bg-blue-950/60 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-xs cursor-pointer transition-transform hover:scale-105"
-                        title={`VOICE-TAG (Human Voice) — Hear ${user.name}'s name pronunciation`}
-                      >
-                        🔊
-                      </button>
-                      {!isViewingOtherMember && (
-                        <button
-                          type="button"
-                          disabled={isRecordingProfileVoiceTag}
-                          onClick={async () => {
-                            setIsRecordingProfileVoiceTag(true)
-                            await recordRealHumanVoiceTag(user.name || 'Kwesi Asiedu', 4000)
-                            setIsRecordingProfileVoiceTag(false)
-                          }}
-                          className={`h-7 px-2 rounded-full border flex items-center justify-center text-[11px] font-bold cursor-pointer transition-all ${
-                            isRecordingProfileVoiceTag
-                              ? 'bg-rose-600 text-white border-rose-500 animate-pulse'
-                              : 'bg-zinc-100 hover:bg-emerald-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-emerald-700 dark:text-emerald-300'
-                          }`}
-                          title={
-                            isRecordingProfileVoiceTag
-                              ? 'Recording your real human voice (4s)...'
-                              : 'Record your own real human voice (4s)'
-                          }
-                        >
-                          {isRecordingProfileVoiceTag ? '⏺️ Rec...' : '🎙️'}
-                        </button>
-                      )}
-                      <span
-                        onClick={() => !isViewingOtherMember && setIsEditingJobCard(!isEditingJobCard)}
-                        className={`rounded-full px-3 py-0.5 text-xs font-extrabold border flex items-center gap-1.5 shadow-2xs cursor-pointer ${
-                          jobBadgeStatus === 'Booked'
-                            ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800'
-                            : 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white border-emerald-500'
-                        }`}
-                        title="ConnectLn Looking for a Job Badge"
-                      >
-                        <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
-                        <span>{jobBadgeStatus}</span>
-                      </span>
-                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold border flex items-center gap-1.5 ${enclaveInfo?.badgeBg || 'bg-blue-100 text-[#0A66C2] dark:bg-blue-950 dark:text-blue-300'}`}>
-                        <span>{enclaveInfo?.icon || '🛡️'}</span>
-                        <span>{user.profession || tailoredWorkspaceProfile.resolution.professionTitle || enclaveInfo?.shortName || 'Verified Member'}</span>
-                      </span>
-                      <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
-                        {enclaveInfo?.securityClearanceTier || 'Level 2 Verified'}
-                      </span>
-                    </div>
-                    <p className="text-xs sm:text-sm font-semibold text-zinc-600 dark:text-zinc-300">
-                      {user.headline}
-                    </p>
-                    <p className="text-xs text-zinc-500 flex items-center gap-2 flex-wrap">
-                      <span>📍 {user.location}</span>
-                      <span>·</span>
-                      <span className="text-[#0A66C2] font-semibold">{(user.connectionsCount ?? 0)} connections</span>
-                      <span>·</span>
-                      <span className="text-emerald-600 font-bold">{(user as any).clearanceLevel || "Cryptographically Verified"}</span>
-                    </p>
-                  </div>
+                  {/* ConnectLn "Looking for a Job" Avatar Badge Ribbon */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!isViewingOtherMember) {
+                        const order: Array<'Looking for a Job' | 'Looking for Projects' | 'Available for Hire' | 'Booked'> = [
+                          'Looking for a Job',
+                          'Looking for Projects',
+                          'Available for Hire',
+                          'Booked'
+                        ]
+                        const next = order[(order.indexOf(jobBadgeStatus) + 1) % order.length]
+                        handleSaveJobCard(next)
+                      }
+                    }}
+                    title="Click to cycle Looking for a Job badge"
+                    className={`absolute -bottom-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider shadow-md border z-10 cursor-pointer transition-transform hover:scale-105 ${
+                      jobBadgeStatus === 'Booked'
+                        ? 'bg-amber-600 text-white border-amber-300'
+                        : 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 text-white border-emerald-200'
+                    }`}
+                  >
+                    {jobBadgeStatus === 'Looking for a Job'
+                      ? '💼 Looking for a Job'
+                      : jobBadgeStatus === 'Looking for Projects'
+                      ? '🔨 Looking for Projects'
+                      : jobBadgeStatus === 'Available for Hire'
+                      ? '✅ Available for Hire'
+                      : '⏳ Booked'}
+                  </button>
+
+                  {/* Camera icon badge at top right of avatar (Owner only) */}
+                  {!isViewingOtherMember && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPhotoModalTab('avatar')
+                        setIsPhotoModalOpen(true)
+                      }}
+                      className="absolute -top-1.5 -right-1.5 h-7 w-7 rounded-full bg-[#0A66C2] hover:bg-[#004182] text-white flex items-center justify-center shadow-md border-2 border-white dark:border-zinc-900 cursor-pointer transition-transform hover:scale-110 z-10"
+                      title="Upload or Change Profile Photo"
+                    >
+                      <Camera className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                {/* Primary Profile Action Toolbar */}
+                <div className="flex items-center gap-2 flex-wrap sm:justify-end pt-2 sm:pt-0">
                   {isViewingOtherMember ? (
                     <>
                       <button
@@ -1725,19 +1657,11 @@ export function ProfileView({
 
                       <button
                         type="button"
-                        onClick={handleShareToWhatsApp}
-                        className="rounded-full bg-[#25D366] hover:bg-[#20ba5a] text-white px-3.5 py-2 text-xs font-bold shadow-md shadow-emerald-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
-                      >
-                        <span>Share on WhatsApp</span>
-                      </button>
-
-                      <button
-                        type="button"
                         onClick={() => setWorkspaceSection('business')}
                         className="rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 px-4 py-2 text-xs font-bold text-white shadow-md flex items-center gap-1.5 cursor-pointer"
                       >
                         <Globe className="h-3.5 w-3.5" />
-                        <span>{user.name.split(' ')[0]}&apos;s Business Site</span>
+                        <span>{user.name.split(' ')[0]}&apos;s Business &amp; Shop</span>
                       </button>
 
                       <button
@@ -1746,43 +1670,26 @@ export function ProfileView({
                         className="rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 px-4 py-2 text-xs font-bold text-white shadow-md flex items-center gap-1.5 cursor-pointer"
                       >
                         <Briefcase className="h-3.5 w-3.5" />
-                        <span>View {user.name.split(' ')[0]}&apos;s Portfolio</span>
+                        <span>Portfolio</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleShareToWhatsApp}
+                        className="rounded-full bg-[#25D366] hover:bg-[#20ba5a] text-white px-3.5 py-2 text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
+                      >
+                        <span>Share on WhatsApp</span>
                       </button>
                     </>
                   ) : (
                     <>
-                      {/* Direct 1-Click WhatsApp Share Button */}
                       <button
                         type="button"
-                        onClick={handleShareToWhatsApp}
-                        className="rounded-full bg-[#25D366] hover:bg-[#20ba5a] text-white px-3.5 py-2 text-xs font-bold shadow-md shadow-emerald-500/20 flex items-center gap-1.5 transition-all cursor-pointer hover:scale-105 active:scale-95"
-                        title="Share profile directly to WhatsApp friends"
+                        onClick={() => setWorkspaceSection('business')}
+                        className="rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 px-4 py-2 text-xs font-bold text-white shadow-md flex items-center gap-1.5 cursor-pointer"
                       >
-                        <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
-                          <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.303-.058.116-.087.188-.173.289l-.26.303c-.087.087-.177.181-.076.354.101.173.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.072.376-.043.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.043.072.043.419-.101.824z" />
-                          <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2.348 21.652l4.636-1.04A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.25c-1.63 0-3.14-.492-4.404-1.336l-.315-.21-2.753.618.63-2.683-.231-.328A8.212 8.212 0 013.75 12c0-4.549 3.701-8.25 8.25-8.25s8.25 3.701 8.25 8.25-3.701 8.25-8.25 8.25z" />
-                        </svg>
-                        <span>Share on WhatsApp</span>
-                      </button>
-
-                      {/* Share Menu Trigger */}
-                      <button
-                        type="button"
-                        onClick={() => setIsShareModalOpen(true)}
-                        className="rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-3.5 py-2 text-xs font-bold border border-zinc-200 dark:border-zinc-700 shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer"
-                        title="Share Profile Link & Channels"
-                      >
-                        <Share2 className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400" />
-                        <span>Share</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setIsResumeModalOpen(true)}
-                        className="rounded-full bg-linear-to-r from-sky-600 to-[#0A66C2] hover:from-sky-500 hover:to-[#004182] px-4 py-2 text-xs font-bold text-white shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
-                      >
-                        <FileText className="h-3.5 w-3.5" />
-                        <span>Upload Resume</span>
+                        <Globe className="h-3.5 w-3.5" />
+                        <span>My Business Website &amp; Shop</span>
                       </button>
 
                       <button
@@ -1801,23 +1708,169 @@ export function ProfileView({
                         <Edit3 className="h-3.5 w-3.5" />
                         <span>Edit Profile</span>
                       </button>
+
                       <button
                         type="button"
-                        onClick={() => setWorkspaceSection('business')}
-                        className="rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 px-4 py-2 text-xs font-bold text-white shadow-md flex items-center gap-1.5 cursor-pointer"
+                        onClick={() => setIsResumeModalOpen(true)}
+                        className="rounded-full bg-linear-to-r from-sky-600 to-[#0A66C2] hover:from-sky-500 hover:to-[#004182] px-4 py-2 text-xs font-bold text-white shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
                       >
-                        <Globe className="h-3.5 w-3.5" />
-                        <span>My Business Website</span>
+                        <FileText className="h-3.5 w-3.5" />
+                        <span>Upload Resume</span>
                       </button>
+
                       <button
-                        onClick={() => setWorkspaceSection('products')}
-                        className="rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 px-4 py-2 text-xs font-bold text-white shadow-md flex items-center gap-1.5 cursor-pointer"
+                        type="button"
+                        onClick={handleShareToWhatsApp}
+                        className="rounded-full bg-[#25D366] hover:bg-[#20ba5a] text-white px-3.5 py-2 text-xs font-bold shadow-md shadow-emerald-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
+                        title="Share profile directly to WhatsApp friends"
                       >
-                        <Store className="h-3.5 w-3.5" />
-                        <span>Manage My Products</span>
+                        <span>WhatsApp Share</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setIsShareModalOpen(true)}
+                        className="rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-3.5 py-2 text-xs font-bold border border-zinc-200 dark:border-zinc-700 shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer"
+                        title="Share Profile Link & Channels"
+                      >
+                        <Share2 className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400" />
+                        <span>Share</span>
                       </button>
                     </>
                   )}
+                </div>
+              </div>
+
+              {/* Row 2: Full-Width Executive Profile Identity Typography & Badges */}
+              <div className="mt-5 space-y-2.5">
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-zinc-900 dark:text-zinc-100">
+                    {user.name}
+                  </h2>
+
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 text-[11px] font-bold text-[#0A66C2] dark:text-sky-300 border border-blue-200/80 dark:border-blue-800/80"
+                    title="Cryptographically Verified Identity"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <span>Verified</span>
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void playHumanVoiceTag({
+                        userName: user.name || 'Kwesi Asiedu',
+                        userHeadline: user.headline,
+                      })
+                    }}
+                    className="h-7 px-2.5 rounded-full bg-zinc-100 hover:bg-blue-50 dark:bg-zinc-800 dark:hover:bg-blue-950/60 border border-zinc-200 dark:border-zinc-700 inline-flex items-center gap-1 text-[11px] font-semibold text-zinc-700 dark:text-zinc-200 cursor-pointer transition-all hover:scale-105"
+                    title={`VOICE-TAG (Human Voice) — Hear ${user.name}'s name pronunciation`}
+                  >
+                    <span>🔊</span>
+                    <span>Voice Tag</span>
+                  </button>
+
+                  {!isViewingOtherMember && (
+                    <button
+                      type="button"
+                      disabled={isRecordingProfileVoiceTag}
+                      onClick={async () => {
+                        setIsRecordingProfileVoiceTag(true)
+                        await recordRealHumanVoiceTag(user.name || 'Kwesi Asiedu', 4000)
+                        setIsRecordingProfileVoiceTag(false)
+                      }}
+                      className={`h-7 px-2.5 rounded-full border flex items-center justify-center text-[11px] font-bold cursor-pointer transition-all ${
+                        isRecordingProfileVoiceTag
+                          ? 'bg-rose-600 text-white border-rose-500 animate-pulse'
+                          : 'bg-zinc-100 hover:bg-emerald-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-emerald-700 dark:text-emerald-300'
+                      }`}
+                      title={
+                        isRecordingProfileVoiceTag
+                          ? 'Recording your real human voice (4s)...'
+                          : 'Record your own real human voice (4s)'
+                      }
+                    >
+                      {isRecordingProfileVoiceTag ? '⏺️ Rec...' : '🎙️ Record'}
+                    </button>
+                  )}
+
+                  <span
+                    onClick={() => !isViewingOtherMember && setIsEditingJobCard(!isEditingJobCard)}
+                    className={`rounded-full px-3 py-0.5 text-xs font-extrabold border inline-flex items-center gap-1.5 shadow-2xs ${
+                      !isViewingOtherMember ? 'cursor-pointer' : ''
+                    } ${
+                      jobBadgeStatus === 'Booked'
+                        ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800'
+                        : 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white border-emerald-500'
+                    }`}
+                    title="ConnectLn Opportunity Status Badge"
+                  >
+                    <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
+                    <span>{jobBadgeStatus}</span>
+                  </span>
+                </div>
+
+                <p className="text-sm sm:text-base font-semibold text-zinc-700 dark:text-zinc-200 max-w-4xl leading-relaxed">
+                  {user.headline}
+                </p>
+
+                <div className="flex items-center gap-2 flex-wrap pt-0.5">
+                  <span className={`rounded-full px-3 py-1 text-xs font-bold border inline-flex items-center gap-1.5 ${enclaveInfo?.badgeBg || 'bg-blue-50 text-[#0A66C2] border-blue-200 dark:bg-blue-950 dark:text-blue-300'}`}>
+                    <span>{enclaveInfo?.icon || '🛡️'}</span>
+                    <span>{resolvedDisplayProfession}</span>
+                  </span>
+                  <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                    {enclaveInfo?.securityClearanceTier || 'Level 2 Verified'}
+                  </span>
+                  <span className="rounded-full bg-zinc-100 dark:bg-zinc-800 px-3 py-1 text-xs font-medium text-zinc-600 dark:text-zinc-300 border border-zinc-200/80 dark:border-zinc-700 inline-flex items-center gap-1">
+                    <MapPin className="h-3 w-3 text-rose-500 shrink-0" />
+                    <span>{user.location}</span>
+                  </span>
+                  <span className="rounded-full bg-sky-50 dark:bg-sky-950/40 px-3 py-1 text-xs font-bold text-[#0A66C2] dark:text-sky-300 border border-sky-200/80 dark:border-sky-800">
+                    {(user.connectionsCount ?? 0).toLocaleString()} Connections
+                  </span>
+                </div>
+              </div>
+
+              {/* Row 3: Embedded Business Website & Products Storefront Spotlight Card */}
+              <div className="mt-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-gradient-to-r from-slate-50 via-white to-blue-50/40 dark:from-zinc-900 dark:via-zinc-900 dark:to-blue-950/20 p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="space-y-1.5 min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                      <Globe className="h-3 w-3" />
+                      <span>Official Business Website &amp; Shop</span>
+                    </span>
+                    <span className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400 truncate">
+                      {businessWebsite.domainUrl}
+                    </span>
+                  </div>
+                  <h3 className="text-sm sm:text-base font-extrabold text-zinc-900 dark:text-zinc-100 truncate">
+                    {businessWebsite.businessName}
+                  </h3>
+                  <div className="flex flex-wrap gap-1.5 pt-0.5">
+                    {allWebsiteOfferings.slice(0, 3).map((off) => (
+                      <span
+                        key={off.id}
+                        className="inline-flex items-center gap-1 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2.5 py-1 text-[11px] font-semibold text-zinc-700 dark:text-zinc-200 shadow-2xs"
+                      >
+                        <span>{off.icon}</span>
+                        <span className="truncate max-w-[190px]">{off.title}</span>
+                        <span className="font-black text-emerald-600 dark:text-emerald-400">{off.price}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setWorkspaceSection('business')}
+                    className="rounded-xl bg-[#0A66C2] hover:bg-[#004182] px-4 py-2.5 text-xs font-extrabold text-white shadow-sm flex items-center gap-1.5 cursor-pointer transition-all"
+                  >
+                    <Globe className="h-3.5 w-3.5" />
+                    <span>Visit Business Website &amp; Products →</span>
+                  </button>
                 </div>
               </div>
 
@@ -4390,161 +4443,7 @@ export function ProfileView({
       )}
 
       {/* ========================================================================= */}
-      {/* 8. 🛍️ MY PRODUCTS (PROFESSION-TAILORED MARKETPLACE & COMMERCIAL DESK) */}
-      {/* ========================================================================= */}
-      {workspaceSection === 'products' && (() => {
-        const totalActiveUnits = myProducts.reduce((sum, p) => sum + (p.activeLicensesCount || 0), 0)
-        const totalTrialsCount = myProducts.reduce((sum, p) => sum + (p.activeTrialsCount || 0), 0)
-        const totalLeadsCount = myProducts.reduce((sum, p) => sum + (p.leadsCount || 0), 0)
-        return (
-        <div className="space-y-6">
-          {/* Seller Performance Executive Strip */}
-          <div className="rounded-2xl border border-purple-500/40 bg-gradient-to-r from-slate-900 via-purple-950 to-indigo-950 p-6 text-white shadow-xl space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="space-y-1">
-                <span className="rounded-full bg-purple-500/30 px-3 py-0.5 text-xs font-bold text-purple-200 border border-purple-400/40">
-                  {businessWebsite.industryLabel} · Marketplace Storefront
-                </span>
-                <h3 className="text-xl sm:text-2xl font-black text-white">
-                  {isViewingOtherMember ? `${user.name}'s Products & Services` : 'My Products, Services & Storefront'}
-                </h3>
-                <p className="text-xs sm:text-sm text-purple-200">
-                  {isViewingOtherMember
-                    ? `Explore verified ${businessWebsite.professionTitle} services, packages, and offerings sold by ${user.name} (${businessWebsite.businessName}) on ConnectLn Marketplace.`
-                    : `Manage everything ${businessWebsite.businessName} sells across ConnectLn Marketplace and your personal Business Website.`}
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2 flex-wrap shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setWorkspaceSection('business')}
-                  className="rounded-xl bg-white/15 hover:bg-white/25 border border-white/25 px-4 py-2.5 text-xs font-bold text-white shadow-sm flex items-center gap-1.5 cursor-pointer transition-all"
-                >
-                  <Globe className="h-4 w-4 text-emerald-300" />
-                  <span>🌐 View Live Business Website →</span>
-                </button>
-                {!isViewingOtherMember && (
-                  <button
-                    type="button"
-                    onClick={() => setIsAddProductModalOpen(true)}
-                    className="rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 px-4 py-2.5 text-xs font-black text-white shadow-md flex items-center gap-1.5 shrink-0 cursor-pointer"
-                  >
-                    <Plus className="h-4 w-4" />
-                    <span>+ List New Product / Service</span>
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Seller KPIs (Owner only - dynamically computed from user's tailored catalog) */}
-            {!isViewingOtherMember && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-              <div className="rounded-xl bg-black/40 border border-white/15 p-3 text-center">
-                <span className="text-[10px] text-zinc-400 uppercase font-mono">Primary Offering</span>
-                <p className="text-sm sm:text-base font-black text-emerald-400 truncate px-1">{myProducts[0]?.mrrOrRevenue || 'Active Storefront'}</p>
-              </div>
-              <div className="rounded-xl bg-black/40 border border-white/15 p-3 text-center">
-                <span className="text-[10px] text-zinc-400 uppercase font-mono">Clients / Units Served</span>
-                <p className="text-lg sm:text-xl font-black text-white">{totalActiveUnits.toLocaleString()} Active</p>
-              </div>
-              <div className="rounded-xl bg-black/40 border border-white/15 p-3 text-center">
-                <span className="text-[10px] text-zinc-400 uppercase font-mono">Active Bookings / Trials</span>
-                <p className="text-lg sm:text-xl font-black text-amber-300">{totalTrialsCount} Active</p>
-              </div>
-              <div className="rounded-xl bg-black/40 border border-white/15 p-3 text-center">
-                <span className="text-[10px] text-zinc-400 uppercase font-mono">Customer Inquiries</span>
-                <p className="text-lg sm:text-xl font-black text-sky-400">{totalLeadsCount} Leads</p>
-              </div>
-            </div>
-            )}
-          </div>
-
-          {/* Active Product Listings Table */}
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <h4 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                <Store className="h-5 w-5 text-purple-600" />
-                <span>{isViewingOtherMember ? `${user.name.split(' ')[0]}'s Active Marketplace Listings (${myProducts.length})` : `Your Active Marketplace Listings (${myProducts.length})`}</span>
-              </h4>
-              <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800">
-                ✓ Synced live with {businessWebsite.domainSlug}.conectln.com
-              </span>
-            </div>
-
-            <div className="space-y-3">
-              {myProducts.map((prod) => (
-                <div
-                  key={prod.id}
-                  className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs hover:border-purple-400 hover:shadow-md transition-all dark:border-zinc-800 dark:bg-zinc-900 flex flex-col md:flex-row md:items-center justify-between gap-4"
-                >
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-50 text-2xl border border-purple-200 dark:bg-purple-950/40 dark:border-purple-900 shrink-0">
-                      {prod.icon}
-                    </div>
-
-                    <div className="space-y-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="font-bold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 truncate">
-                          {prod.name}
-                        </h4>
-                        <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-800 dark:bg-purple-950 dark:text-purple-300">
-                          {prod.category}
-                        </span>
-                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                          {prod.status}
-                        </span>
-                      </div>
-
-                      {prod.description && (
-                        <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-1">
-                          {prod.description}
-                        </p>
-                      )}
-
-                      <p className="text-xs text-zinc-500">
-                        Pricing: <strong>{prod.price}</strong> ({prod.pricingModel}) · Rating: <strong>{prod.rating} ⭐ ({prod.reviewsCount})</strong>
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-zinc-100 dark:border-zinc-800">
-                    <div className="text-right">
-                      <span className="text-[10px] font-mono text-zinc-400 uppercase">Volume / Revenue</span>
-                      <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">{prod.mrrOrRevenue}</p>
-                      <p className="text-[10px] text-zinc-500">{prod.activeLicensesCount} booked · {prod.leadsCount} leads</p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setWorkspaceSection('business')
-                          setTimeout(() => handleSelectWebsiteOffering(prod.name), 80)
-                        }}
-                        className="rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 text-xs font-bold text-white shadow-xs cursor-pointer"
-                      >
-                        Book on Site
-                      </button>
-                      <button
-                        type="button"
-                        onClick={onNavigateMarketplace}
-                        className="rounded-xl bg-[#0A66C2] hover:bg-[#004182] px-3 py-1.5 text-xs font-bold text-white shadow-xs cursor-pointer"
-                      >
-                        Market →
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-        )
-      })()}
-
-      {/* ========================================================================= */}
-      {/* 9. 🌐 PERSONAL BUSINESS WEBSITE (FULL STANDALONE-STYLE BUSINESS PAGE) */}
+      {/* 8. 🌐 PERSONAL BUSINESS WEBSITE & INTEGRATED PRODUCTS STOREFRONT */}
       {/* ========================================================================= */}
       {workspaceSection === 'business' && (() => {
         const themeMap: Record<
@@ -4937,15 +4836,124 @@ export function ProfileView({
                     </button>
                     <button
                       type="button"
-                      onClick={() => setWorkspaceSection('products')}
+                      onClick={onNavigateMarketplace}
                       className="rounded-xl border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 px-3 py-2.5 text-[11px] font-bold text-zinc-700 dark:text-zinc-300 cursor-pointer"
-                      title="View Marketplace Listing Details"
+                      title="Open in ConnectLn Marketplace"
                     >
                       Market ↗
                     </button>
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Integrated Marketplace Products & Storefront Desk inside Business Page */}
+            <div id="business-site-marketplace" className="pt-4 space-y-4">
+              <div className="rounded-2xl border border-purple-500/30 bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 p-5 sm:p-6 text-white shadow-lg space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="space-y-1">
+                    <span className="rounded-full bg-purple-500/30 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-purple-200 border border-purple-400/40">
+                      {businessWebsite.industryLabel} · Marketplace Catalog
+                    </span>
+                    <h3 className="text-lg sm:text-xl font-black text-white">
+                      {isViewingOtherMember
+                        ? `${user.name.split(' ')[0]}'s Active Marketplace Products (${myProducts.length})`
+                        : `Your Marketplace Products & Storefront Inventory (${myProducts.length})`}
+                    </h3>
+                    <p className="text-xs text-purple-200">
+                      Every product, plan, and service listed here appears on both this Business Website and the ConnectLn Marketplace.
+                    </p>
+                  </div>
+
+                  {!isViewingOtherMember && (
+                    <button
+                      type="button"
+                      onClick={() => setIsAddProductModalOpen(true)}
+                      className="rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 px-4 py-2.5 text-xs font-black text-white shadow-md flex items-center gap-1.5 shrink-0 cursor-pointer"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span>+ List New Product / Service</span>
+                    </button>
+                  )}
+                </div>
+
+                {!isViewingOtherMember && (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="rounded-xl bg-black/40 border border-white/15 p-3 text-center">
+                      <span className="text-[10px] text-zinc-400 uppercase font-mono">Top Revenue Stream</span>
+                      <p className="text-xs sm:text-sm font-black text-emerald-400 truncate">{myProducts[0]?.mrrOrRevenue || 'Active'}</p>
+                    </div>
+                    <div className="rounded-xl bg-black/40 border border-white/15 p-3 text-center">
+                      <span className="text-[10px] text-zinc-400 uppercase font-mono">Active Units / Clients</span>
+                      <p className="text-base sm:text-lg font-black text-white">
+                        {myProducts.reduce((s, p) => s + (p.activeLicensesCount || 0), 0).toLocaleString()} Active
+                      </p>
+                    </div>
+                    <div className="rounded-xl bg-black/40 border border-white/15 p-3 text-center">
+                      <span className="text-[10px] text-zinc-400 uppercase font-mono">Active Bookings / Trials</span>
+                      <p className="text-base sm:text-lg font-black text-amber-300">
+                        {myProducts.reduce((s, p) => s + (p.activeTrialsCount || 0), 0)} Active
+                      </p>
+                    </div>
+                    <div className="rounded-xl bg-black/40 border border-white/15 p-3 text-center">
+                      <span className="text-[10px] text-zinc-400 uppercase font-mono">Customer Leads</span>
+                      <p className="text-base sm:text-lg font-black text-sky-400">
+                        {myProducts.reduce((s, p) => s + (p.leadsCount || 0), 0)} Leads
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2.5">
+                {myProducts.map((prod) => (
+                  <div
+                    key={prod.id}
+                    className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-xs hover:border-purple-400 transition-all dark:border-zinc-800 dark:bg-zinc-900 flex flex-col md:flex-row md:items-center justify-between gap-3"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-purple-50 text-xl border border-purple-200 dark:bg-purple-950/40 dark:border-purple-900 shrink-0">
+                        {prod.icon}
+                      </div>
+                      <div className="space-y-0.5 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100 truncate">{prod.name}</h4>
+                          <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-800 dark:bg-purple-950 dark:text-purple-300">
+                            {prod.category}
+                          </span>
+                          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                            {prod.status}
+                          </span>
+                        </div>
+                        <p className="text-xs text-zinc-500">
+                          <strong>{prod.price}</strong> ({prod.pricingModel}) · Rating: <strong>{prod.rating} ⭐ ({prod.reviewsCount})</strong>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 shrink-0">
+                      <div className="text-right">
+                        <p className="text-xs font-black text-emerald-600 dark:text-emerald-400">{prod.mrrOrRevenue}</p>
+                        <p className="text-[10px] text-zinc-500">{prod.activeLicensesCount} booked · {prod.leadsCount} leads</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleSelectWebsiteOffering(prod.name)}
+                        className={`rounded-xl px-3 py-1.5 text-xs font-bold shadow-xs cursor-pointer ${activeTheme.btnPrimary}`}
+                      >
+                        Order / Book
+                      </button>
+                      <button
+                        type="button"
+                        onClick={onNavigateMarketplace}
+                        className="rounded-xl border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 px-3 py-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-200 cursor-pointer"
+                      >
+                        Market ↗
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </section>
 
@@ -5290,7 +5298,7 @@ export function ProfileView({
               <button type="button" onClick={() => scrollToSiteSection('business-site-services')} className="hover:text-white cursor-pointer">
                 Services &amp; Products
               </button>
-              <button type="button" onClick={() => setWorkspaceSection('products')} className="hover:text-white cursor-pointer">
+              <button type="button" onClick={() => scrollToSiteSection('business-site-marketplace')} className="hover:text-white cursor-pointer">
                 Marketplace Storefront
               </button>
               <button type="button" onClick={() => setWorkspaceSection('profile')} className="hover:text-white cursor-pointer">

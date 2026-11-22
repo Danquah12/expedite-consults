@@ -366,11 +366,13 @@ export function createUniqueUserProfile(params: UserInitParams): UserProfile {
   if (!professionId) {
     if (searchTarget.includes("realtor") || searchTarget.includes("real estate") || searchTarget.includes("broker")) {
       professionId = "realtor"
+    } else if (searchTarget.includes("veterinar") || /\bdvm\b/i.test(searchTarget) || searchTarget.includes("small animal") || /\bvet\b/i.test(searchTarget)) {
+      professionId = "veterinarian"
     } else if (searchTarget.includes("veteran") || searchTarget.includes("veterance") || searchTarget.includes("military") || searchTarget.includes("army") || searchTarget.includes("navy")) {
       professionId = "military_veteran"
-    } else if (searchTarget.includes("dentist") || searchTarget.includes("dental") || searchTarget.includes("dds") || searchTarget.includes("dmd")) {
+    } else if (searchTarget.includes("dentist") || searchTarget.includes("dental") || /\b(dds|dmd)\b/i.test(searchTarget)) {
       professionId = "dentist"
-    } else if (searchTarget.includes("electrician") || searchTarget.includes("electrical") || searchTarget.includes("nec")) {
+    } else if (searchTarget.includes("electrician") || searchTarget.includes("electrical") || /\bnec\b/i.test(searchTarget)) {
       professionId = "electrician"
     } else if (searchTarget.includes("plumber") || searchTarget.includes("plumbing") || searchTarget.includes("pipefitter")) {
       professionId = "plumber"
@@ -392,7 +394,7 @@ export function createUniqueUserProfile(params: UserInitParams): UserProfile {
       professionId = "personal_trainer"
     } else if (searchTarget.includes("caterer") || searchTarget.includes("catering")) {
       professionId = "caterer"
-    } else if (searchTarget.includes("farmer") || searchTarget.includes("farming") || searchTarget.includes("agri")) {
+    } else if (searchTarget.includes("farmer") || searchTarget.includes("farming") || searchTarget.includes("agricult")) {
       professionId = "farmer"
     } else if (searchTarget.includes("livestock") || searchTarget.includes("ranch")) {
       professionId = "livestock_breeder"
@@ -400,7 +402,7 @@ export function createUniqueUserProfile(params: UserInitParams): UserProfile {
       professionId = "fish_farmer"
     } else if (searchTarget.includes("beekeeper") || searchTarget.includes("apiary")) {
       professionId = "beekeeper"
-    } else if (searchTarget.includes("truck driver") || searchTarget.includes("trucking") || searchTarget.includes("cdl")) {
+    } else if (searchTarget.includes("truck driver") || searchTarget.includes("trucking") || /\bcdl\b/i.test(searchTarget)) {
       professionId = "truck_driver"
     } else if (searchTarget.includes("delivery") || searchTarget.includes("courier")) {
       professionId = "delivery_driver"
@@ -408,9 +410,9 @@ export function createUniqueUserProfile(params: UserInitParams): UserProfile {
       professionId = "rideshare_driver"
     } else if (searchTarget.includes("warehouse") || searchTarget.includes("forklift")) {
       professionId = "warehouse_worker"
-    } else if (searchTarget.includes("musician") || searchTarget.includes("music") || searchTarget.includes("song")) {
+    } else if (searchTarget.includes("musician") || searchTarget.includes("music") || searchTarget.includes("songwriter")) {
       professionId = "musician"
-    } else if (searchTarget.includes("photographer") || searchTarget.includes("photo")) {
+    } else if (searchTarget.includes("photographer") || searchTarget.includes("photography")) {
       professionId = "photographer"
     } else if (searchTarget.includes("actor") || searchTarget.includes("acting")) {
       professionId = "actor"
@@ -420,7 +422,7 @@ export function createUniqueUserProfile(params: UserInitParams): UserProfile {
       professionId = "independent_writer"
     } else if (searchTarget.includes("graphic designer") || searchTarget.includes("designer")) {
       professionId = "graphic_designer"
-    } else if (searchTarget.includes("home health") || searchTarget.includes("chha")) {
+    } else if (searchTarget.includes("home health") || /\bchha\b/i.test(searchTarget)) {
       professionId = "home_health_aide"
     } else if (searchTarget.includes("caregiver")) {
       professionId = "caregiver"
@@ -440,25 +442,23 @@ export function createUniqueUserProfile(params: UserInitParams): UserProfile {
       professionId = "cleaner"
     } else if (searchTarget.includes("landscaper") || searchTarget.includes("landscaping")) {
       professionId = "landscaper"
-    } else if (searchTarget.includes("veterinarian") || searchTarget.includes("vet") || searchTarget.includes("dvm")) {
-      professionId = "veterinarian"
     } else if (searchTarget.includes("translator") || searchTarget.includes("interpreter")) {
       professionId = "translator_interpreter"
-    } else if (searchTarget.includes("sign language") || searchTarget.includes("asl")) {
+    } else if (searchTarget.includes("sign language") || /\basl\b/i.test(searchTarget)) {
       professionId = "sign_language_interpreter"
-    } else if (searchTarget.includes("trauma nurse") || searchTarget.includes("er nurse") || searchTarget.includes("ccrn") || searchTarget.includes("elena.nurse")) {
+    } else if (searchTarget.includes("trauma nurse") || searchTarget.includes("er nurse") || /\bccrn\b/i.test(searchTarget) || searchTarget.includes("elena.nurse")) {
       professionId = "er_trauma_nurse"
-    } else if (searchTarget.includes("nurse") || searchTarget.includes("rn") || searchTarget.includes("fnp") || searchTarget.includes("crna")) {
+    } else if (searchTarget.includes("nurse") || /\b(rn|fnp|crna|lpn)\b/i.test(searchTarget)) {
       professionId = "registered_nurse"
-    } else if (searchTarget.includes("orthopedic") || searchTarget.includes("surgeon") || searchTarget.includes("angela.vance") || searchTarget.includes("dr.")) {
+    } else if (searchTarget.includes("orthopedic") || searchTarget.includes("surgeon") || searchTarget.includes("angela.vance")) {
       professionId = "orthopedic_trauma_surgeon"
     } else if (searchTarget.includes("cardiologist") || searchTarget.includes("thorne") || searchTarget.includes("physician") || searchTarget.includes("doctor")) {
       professionId = "physician"
     } else if (searchTarget.includes("diesel") || searchTarget.includes("cummins") || searchTarget.includes("carlos.diesel")) {
       professionId = "diesel_fleet_mechanic"
-    } else if (searchTarget.includes("mechanic") || searchTarget.includes("auto tech") || searchTarget.includes("ase") || searchTarget.includes("marcus.mechanic")) {
+    } else if (searchTarget.includes("mechanic") || searchTarget.includes("auto tech") || /\base\b/i.test(searchTarget) || searchTarget.includes("marcus.mechanic")) {
       professionId = "mechanic"
-    } else if (searchTarget.includes("ev tech") || searchTarget.includes("powertrain")) {
+    } else if (searchTarget.includes("ev tech") || searchTarget.includes("powertrain") || searchTarget.includes("can-fd")) {
       professionId = "ev_powertrain_technician"
     } else if (searchTarget.includes("finish carpenter") || searchTarget.includes("joiner") || searchTarget.includes("lindqvist")) {
       professionId = "finish_carpenter"
@@ -468,17 +468,17 @@ export function createUniqueUserProfile(params: UserInitParams): UserProfile {
       professionId = "cabinetmaker"
     } else if (searchTarget.includes("carpenter") || searchTarget.includes("timber") || searchTarget.includes("david.miller")) {
       professionId = "carpenter"
-    } else if (searchTarget.includes("scada") || searchTarget.includes("ics") || searchTarget.includes("kowalski") || searchTarget.includes("ot security")) {
+    } else if (searchTarget.includes("scada") || /\bics\b/i.test(searchTarget) || searchTarget.includes("kowalski") || searchTarget.includes("ot security")) {
       professionId = "scada_ics_security"
-    } else if (searchTarget.includes("red team") || searchTarget.includes("oscp") || searchTarget.includes("crto") || searchTarget.includes("tariq.cyber") || searchTarget.includes("exploit")) {
+    } else if (searchTarget.includes("red team") || /\b(oscp|crto)\b/i.test(searchTarget) || searchTarget.includes("tariq.cyber") || searchTarget.includes("exploit")) {
       professionId = "red_team_operator"
     } else if (searchTarget.includes("malware") || searchTarget.includes("reverse engineer") || searchTarget.includes("ghidra")) {
       professionId = "malware_reverse_engineer"
-    } else if (searchTarget.includes("cpa") || searchTarget.includes("controller") || searchTarget.includes("accountant")) {
+    } else if (/\bcpa\b/i.test(searchTarget) || searchTarget.includes("controller") || searchTarget.includes("accountant")) {
       professionId = "cpa_accountant"
-    } else if (searchTarget.includes("counsel") || searchTarget.includes("attorney") || searchTarget.includes("cmmc")) {
+    } else if (searchTarget.includes("counsel") || searchTarget.includes("attorney") || /\bcmmc\b/i.test(searchTarget)) {
       professionId = "corporate_attorney"
-    } else if (role === "developer" || searchTarget.includes("developer") || searchTarget.includes("software") || searchTarget.includes("code")) {
+    } else if (role === "developer" || searchTarget.includes("developer") || searchTarget.includes("software")) {
       professionId = "software_engineer"
     } else {
       // Generic fallback: match any ConnectLn profession by its id or primary title words before defaulting
