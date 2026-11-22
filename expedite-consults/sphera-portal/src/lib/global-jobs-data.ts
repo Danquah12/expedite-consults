@@ -5076,18 +5076,19 @@ function getNonUsRegionalEmployer(
       return africanList[idx % africanList.length]
     }
   }
+  const localizedCategory = localizeTextForNonUsCountry(categoryName, country)
   const fallbackCorp = DEFAULT_COUNTRY_CORPORATIONS[country.code]
   if (fallbackCorp) {
     const pieces = fallbackCorp.prefix.split('/').map(s => s.trim()).filter(Boolean)
     const piece = pieces[idx % Math.max(1, pieces.length)] || country.name
     return {
-      company: `${piece} — ${categoryName} (${country.name})`,
+      company: `${piece} — ${localizedCategory} (${country.name})`,
       applyUrl: fallbackCorp.url,
       source: `${country.name} Verified Employer Portal`
     }
   }
   return {
-    company: `${country.name} ${categoryName} & Enterprise Directorate`,
+    company: `${country.name} ${localizedCategory} & Enterprise Directorate`,
     applyUrl: 'https://www.connectln.app/connectin',
     source: `${country.name} Verified Employer Portal`
   }
@@ -5110,11 +5111,22 @@ function localizeTextForNonUsCountry(text: string, country: CountryConfig): stri
     .replace(/USAJOBS Federal/gi, `${country.name} Public Service`)
     .replace(/USAJOBS/gi, `${country.name} Public Service Portal`)
     .replace(/DoD SkillBridge/gi, 'Armed Forces Career Transition')
+    .replace(/Hiring Our Heroes Corporate Fellowship/gi, `${country.name} Veterans Corporate Fellowship`)
+    .replace(/Hiring Our Heroes/gi, `${country.name} Veterans Career Network`)
     .replace(/DoD RMF/gi, 'National Defense Cyber & Compliance RMF')
     .replace(/Active State Bar Admission \(JD \/ Esq\.\)/gi, `Active Bar & Legal Practice License (${country.name})`)
+    .replace(/\bactive State Bar\b/gi, `active ${country.name} Bar`)
+    .replace(/PACER \/ CM-ECF/gi, `${country.name} E-Filing / Court Docket`)
+    .replace(/\bCM\/ECF\b/gi, 'Electronic Court Filing')
+    .replace(/\bPACER\b/gi, `${country.name} Court E-Docket`)
     .replace(/42 U\.S\.C\. § 1983/gi, 'Constitutional & Fundamental Human Rights')
+    .replace(/§\s*1983/gi, 'Constitutional Rights Law')
+    .replace(/\(EB-1\/O-1\/H-1B\)/gi, '(Executive / Skilled Work Visas)')
+    .replace(/EB-1\/O-1\/H-1B/gi, 'Executive / Skilled Work Visas')
     .replace(/USCIS \/ EOIR/gi, `${country.name} Immigration Directorate`)
     .replace(/USCIS Visa Priority/gi, 'Work Permit & Visa Priority')
+    .replace(/\bUSCIS\b/gi, `${country.name} Immigration Directorate`)
+    .replace(/\bEOIR\b/gi, 'Immigration Appellate Tribunal')
     .replace(/\bU\.S\. /g, `${country.name} `)
     .replace(/\bUS Remote\b/g, `${country.name} Remote`)
 }
@@ -5248,8 +5260,14 @@ function buildJobsForProfessionInCountry(
       easyApply: true,
       isLiveFeed: tierIdx === 0 || tierIdx === 2,
       requiredProductExperience: [
-        toolNames[tierIdx % Math.max(1, toolNames.length)] || `${prof.categoryName} Field Equipment`,
-        topSkills.slice(0, 2).join(' & ') || 'Verified Practical Competency'
+        localizeTextForNonUsCountry(
+          toolNames[tierIdx % Math.max(1, toolNames.length)] || `${prof.categoryName} Field Equipment`,
+          country
+        ),
+        localizeTextForNonUsCountry(
+          topSkills.slice(0, 2).join(' & ') || 'Verified Practical Competency',
+          country
+        )
       ],
       description: localizeTextForNonUsCountry(
         `${tier.descPrefix} in ${hub}, ${country.name}. ${prof.defaultHeadline}. Key operational tools include ${toolNames.slice(0, 2).join(', ') || prof.categoryName}. Candidates with verified tickets, peer vouches, clinical/trade licenses, or practical work portfolios are fast-tracked to interview.`,
@@ -5257,7 +5275,7 @@ function buildJobsForProfessionInCountry(
       ),
       requirements: [
         ...topSkills.map(s => localizeTextForNonUsCountry(`Verified practical competency in ${s}`, country)),
-        `Hands-on portfolio, trade license, or field verification in ${prof.categoryName}`
+        localizeTextForNonUsCountry(`Hands-on portfolio, trade license, or field verification in ${prof.categoryName}`, country)
       ],
       languageRequirement:
         country.languages.length > 1
@@ -5272,7 +5290,7 @@ function buildJobsForProfessionInCountry(
         ...topSkills.slice(0, 3),
         hub.split(' ')[0].replace(/[,()]/g, ''),
         'Recommended'
-      ]
+      ].map(t => localizeTextForNonUsCountry(t, country))
     }
   })
 }
@@ -5422,8 +5440,12 @@ export function getLocalizedJobsForCountryAndEnclave(
         location: `${assignedHub} (${j.workplaceType})`,
         hub: assignedHub,
         salaryRange: convertUsdSalaryToCountry(j.salaryRange, country, assignedHub),
+        requiredProductExperience: (j.requiredProductExperience || []).map(r =>
+          localizeTextForNonUsCountry(r, country)
+        ),
         description: localizeTextForNonUsCountry(j.description, country),
         requirements: (j.requirements || []).map(r => localizeTextForNonUsCountry(r, country)),
+        tags: (j.tags || []).map(t => localizeTextForNonUsCountry(t, country)),
         applyUrl: regionalEmployer.applyUrl,
         source: regionalEmployer.source,
       }
