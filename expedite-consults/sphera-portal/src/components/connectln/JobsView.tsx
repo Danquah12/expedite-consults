@@ -356,6 +356,19 @@ const TRADE_ENCLAVE_LOGO: Record<string, string> = {
   community_civic_security: 'https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=100&auto=format&fit=crop&q=80'
 }
 
+function resolveJobLogoUrl(logo?: string, enclaveId?: string): string {
+  const clean = (logo || '').trim()
+  if (
+    clean.startsWith('https://') ||
+    clean.startsWith('http://') ||
+    clean.startsWith('/') ||
+    clean.startsWith('data:image/')
+  ) {
+    return clean
+  }
+  return TRADE_ENCLAVE_LOGO[enclaveId || 'trades_construction'] || TRADE_ENCLAVE_LOGO.trades_construction
+}
+
 function mapAdminFolderJobToGlobalJob(item: HandymanAdminJobRecord, country: CountryConfig): GlobalJobItem {
   const folderMeta = HANDYMAN_250_FOLDERS.find((f) => f.folderNumber === item.folderNumber)
   const realHubs = country.hubs.filter((h) => h !== 'All Hubs')
@@ -1429,7 +1442,7 @@ export function JobsView({
       hub: targetCountryObj.hubs[1] || 'All Hubs',
       title: newJobTitle.trim(),
       company: newJobCompany.trim() || 'Expedite Partner Employer',
-      companyLogo: (newJobCompany.trim() || 'EX').substring(0, 2).toUpperCase(),
+      companyLogo: resolveJobLogoUrl('', targetEnclave),
       location: newJobLocation.trim() || `${targetCountryObj.name}`,
       workplaceType: newJobWorkplaceType,
       employmentType: newJobEmploymentType,
@@ -2402,8 +2415,12 @@ export function JobsView({
                       >
                         <div className="flex items-start gap-3 flex-1 min-w-0">
                           <img
-                            src={job.companyLogo}
+                            src={resolveJobLogoUrl(job.companyLogo, job.professionEnclave)}
                             alt={job.company}
+                            onError={(e) => {
+                              e.currentTarget.onerror = null
+                              e.currentTarget.src = TRADE_ENCLAVE_LOGO.trades_construction
+                            }}
                             className="h-12 w-12 rounded-lg object-cover border border-zinc-200 shrink-0 dark:border-zinc-800"
                           />
 
@@ -2764,8 +2781,12 @@ export function JobsView({
                   {/* Company & Role */}
                   <div className="flex items-start gap-3">
                     <img
-                      src={app.companyLogo}
+                      src={resolveJobLogoUrl(app.companyLogo)}
                       alt={app.company}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null
+                        e.currentTarget.src = TRADE_ENCLAVE_LOGO.trades_construction
+                      }}
                       className="h-10 w-10 rounded-lg object-cover border border-zinc-200 shrink-0"
                     />
                     <div>

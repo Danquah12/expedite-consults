@@ -163,7 +163,7 @@ const DAILY_JOB_ROTATION = [
   {
     titlePrefix: "Lead Commercial Electrical & Microgrid Foreman",
     company: "Quanta & Rosendin Grid Services",
-    companyLogo: "⚡",
+    companyLogo: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=100&auto=format&fit=crop&q=80",
     hub: "Washington, DC Metro",
     workplaceType: "On-site" as const,
     employmentType: "Full-time" as const,
@@ -183,7 +183,7 @@ const DAILY_JOB_ROTATION = [
   {
     titlePrefix: "Principal Cloud & Autonomous SOC Architect",
     company: "Expedite Defense & GovCloud",
-    companyLogo: "🛡️",
+    companyLogo: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=100&auto=format&fit=crop&q=80",
     hub: "US Remote",
     workplaceType: "Remote" as const,
     employmentType: "Full-time" as const,
@@ -203,7 +203,7 @@ const DAILY_JOB_ROTATION = [
   {
     titlePrefix: "ICU & Emergency Trauma Nurse Specialist (CCRN)",
     company: "Johns Hopkins & MedStar Clinical",
-    companyLogo: "🩺",
+    companyLogo: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=100&auto=format&fit=crop&q=80",
     hub: "Baltimore / DC Corridor",
     workplaceType: "On-site" as const,
     employmentType: "Full-time" as const,
@@ -223,7 +223,7 @@ const DAILY_JOB_ROTATION = [
   {
     titlePrefix: "Master 800V EV & Fleet Oscilloscope Diagnostic Lead",
     company: "Capitol Commercial EV & Diesel Fleet",
-    companyLogo: "🔧",
+    companyLogo: "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=100&auto=format&fit=crop&q=80",
     hub: "Austin / Dallas, TX",
     workplaceType: "On-site" as const,
     employmentType: "Full-time" as const,
