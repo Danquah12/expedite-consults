@@ -22,6 +22,12 @@ import {
     getCustomDeviceRingtoneName,
     previewConnectLnRingtone,
 } from '@/lib/connectin-background-ring';
+import {
+    parseSocialVideoUrl,
+    buildStatusEmbedIframeSrc,
+    splitLinkAndCustomTitle,
+    SocialEmbedProvider,
+} from '@/lib/connectin-social-video';
 
 export type MessagingWorkspaceMode =
     | 'chats'
@@ -32,6 +38,7 @@ export type MessagingWorkspaceMode =
     | 'archived';
 
 export type StatusSourcePlatform =
+    | 'YouTube'
     | 'WhatsApp'
     | 'TikTok'
     | 'Facebook'
@@ -41,8 +48,10 @@ export type StatusSourcePlatform =
 export interface StatusUpdateItem {
     id: string;
     authorName: string;
+    authorEmail?: string;
     authorAvatar: string;
     timestampLabel: string;
+    createdAtMs?: number;
     viewed: boolean;
     mediaType: 'text' | 'photo' | 'video' | 'audio' | 'info';
     title?: string;
@@ -55,6 +64,9 @@ export interface StatusUpdateItem {
     imageUrl?: string;
     videoUrl?: string;
     audioUrl?: string;
+    embedUrl?: string;
+    embedProvider?: SocialEmbedProvider;
+    isVerticalEmbed?: boolean;
     musicSegmentsCount?: number;
     videoDuration?: string;
     videoTitle?: string;
@@ -96,6 +108,8 @@ function detectMediaFormatLabel(raw?: string, fallback = 'MP4'): string {
 
 function getPlatformBadgeLabel(platform?: StatusSourcePlatform): string {
     switch (platform) {
+        case 'YouTube':
+            return '▶️ YouTube';
         case 'WhatsApp':
             return '💬 WhatsApp';
         case 'TikTok':
@@ -111,6 +125,7 @@ function getPlatformBadgeLabel(platform?: StatusSourcePlatform): string {
 
 function inferPlatformFromHint(hint?: string, fallback: StatusSourcePlatform = 'ConnectLn'): StatusSourcePlatform {
     const lower = String(hint || '').toLowerCase();
+    if (lower.includes('youtube') || lower.includes('youtu.be')) return 'YouTube';
     if (lower.includes('tiktok') || lower.includes('snaptik')) return 'TikTok';
     if (lower.includes('facebook') || lower.includes('fb.watch') || lower.includes('fbcdn')) return 'Facebook';
     if (lower.includes('whatsapp') || lower.includes('wa.me') || /\bwa[-_]/i.test(lower)) return 'WhatsApp';
@@ -800,9 +815,15 @@ const INITIAL_STATUS_UPDATES: StatusUpdateItem[] = [
     },
 ];
 
-function groupSlidesToUserBoxes(slides: StatusUpdateItem[], ownerName: string, ownerAvatar: string): UserStatusBox[] {
+function groupSlidesToUserBoxes(
+    slides: StatusUpdateItem[],
+    ownerName: string,
+    ownerAvatar: string,
+    ownerEmail?: string
+): UserStatusBox[] {
     const map = new Map<string, UserStatusBox>();
     const ownerSlug = ownerName.toLowerCase().trim();
+    const ownerEmailClean = String(ownerEmail || '').trim().toLowerCase();
 
     // Ensure "My Status" always has its own dedicated Status Box
     map.set('__me__', {
@@ -816,7 +837,11 @@ function groupSlidesToUserBoxes(slides: StatusUpdateItem[], ownerName: string, o
 
     for (const s of slides) {
         const cleanAuthor = s.authorName.replace(/\s*\(My Status\)\s*$/i, '').trim();
-        const isOwner = s.id.startsWith('st_me_') || cleanAuthor.toLowerCase() === ownerSlug;
+        const slideEmailClean = String(s.authorEmail || '').trim().toLowerCase();
+        const isOwner = Boolean(
+            (ownerEmailClean && slideEmailClean && slideEmailClean === ownerEmailClean) ||
+            (!slideEmailClean && cleanAuthor.toLowerCase() === ownerSlug)
+        );
         const boxKey = isOwner ? '__me__' : cleanAuthor.toLowerCase();
         const existing = map.get(boxKey);
         if (existing) {
@@ -1194,11 +1219,12 @@ export function WhatsAppModeWorkspace({
 }) {
     const userAvatar = currentUser?.avatar || '/brand/kwesi-avatar.png';
     const userName = currentUser?.name || 'Kwesi Asiedu';
+    const userEmail = String(currentUser?.email || '').trim().toLowerCase();
 
     // ---- STATUS STATE (Per-User Multi-Item Status Boxes) ----
     const statusStorageKey = `connectln_user_status_boxes_v4__${userName.toLowerCase().trim()}`;
     const [statusBoxes, setStatusBoxes] = useState<UserStatusBox[]>(() => {
-        const seeded = groupSlidesToUserBoxes(INITIAL_STATUS_UPDATES, userName, userAvatar);
+        const seeded = groupSlidesToUserBoxes(INITIAL_STATUS_UPDATES, userName, userAvatar, userEmail);
         if (typeof window === 'undefined') return seeded;
         try {
             const raw = window.localStorage.getItem(statusStorageKey);
@@ -1235,6 +1261,108 @@ export function WhatsAppModeWorkspace({
         }
     });
 
+    // Hydrate shared cloud status items so all users see uploaded YouTube, Facebook & TikTok statuses
+    useEffect(() => {
+        if (mode !== 'status') return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await fetch('/api/connectin/status', { cache: 'no-store' });
+                if (!res.ok || cancelled) return;
+                const data = await res.json();
+                const cloudItems: StatusUpdateItem[] = Array.isArray(data?.items) ? data.items : [];
+                if (cloudItems.length === 0 || cancelled) return;
+
+                const ownerSlug = userName.toLowerCase().trim();
+                const ownerBoxes = new Map<string, { box: UserStatusBox; slides: StatusUpdateItem[] }>();
+                const myCloudSlides: StatusUpdateItem[] = [];
+
+                for (const raw of cloudItems) {
+                    if (!raw || typeof raw.id !== 'string' || typeof raw.authorName !== 'string') continue;
+                    const cleanAuthor = raw.authorName.replace(/\s*\(My Status\)\s*$/i, '').trim();
+                    const slideEmail = String(raw.authorEmail || '').trim().toLowerCase();
+                    const isMine = Boolean(
+                        (userEmail && slideEmail && slideEmail === userEmail) ||
+                        (!slideEmail && cleanAuthor.toLowerCase() === ownerSlug) ||
+                        (userEmail && slideEmail === userEmail)
+                    );
+                    if (isMine) {
+                        myCloudSlides.push({ ...raw, authorName: userName });
+                    } else {
+                        const targetUserId = `user_box_${cleanAuthor.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`;
+                        const existing = ownerBoxes.get(targetUserId);
+                        const normalizedSlide = { ...raw, authorName: cleanAuthor };
+                        if (existing) {
+                            existing.slides.push(normalizedSlide);
+                        } else {
+                            ownerBoxes.set(targetUserId, {
+                                box: {
+                                    userId: targetUserId,
+                                    authorName: cleanAuthor,
+                                    authorAvatar: raw.authorAvatar || '/brand/kwesi-avatar.png',
+                                    professionTag: raw.professionTag,
+                                    isCurrentUser: false,
+                                    slides: [],
+                                },
+                                slides: [normalizedSlide],
+                            });
+                        }
+                    }
+                }
+
+                setStatusBoxes((prev) => {
+                    const existingOtherIds = new Set<string>();
+                    const updated = prev.map((box) => {
+                        if (box.isCurrentUser) {
+                            const existingMap = new Map(box.slides.map((s) => [s.id, s]));
+                            for (const c of myCloudSlides) {
+                                if (!existingMap.has(c.id)) {
+                                    existingMap.set(c.id, c);
+                                }
+                            }
+                            const mergedSlides = Array.from(existingMap.values()).sort(
+                                (a, b) => Number(b.createdAtMs || 0) - Number(a.createdAtMs || 0)
+                            );
+                            return { ...box, slides: mergedSlides };
+                        }
+                        existingOtherIds.add(box.userId);
+                        const cloudMatch = ownerBoxes.get(box.userId);
+                        if (!cloudMatch) return box;
+                        const existingMap = new Map(box.slides.map((s) => [s.id, s]));
+                        const nextSlides: StatusUpdateItem[] = [];
+                        for (const c of cloudMatch.slides) {
+                            const prevCopy = existingMap.get(c.id);
+                            nextSlides.push(prevCopy ? { ...c, viewed: prevCopy.viewed } : c);
+                        }
+                        for (const s of box.slides) {
+                            if (!cloudMatch.slides.some((c) => c.id === s.id)) {
+                                nextSlides.push(s);
+                            }
+                        }
+                        return { ...box, slides: nextSlides };
+                    });
+
+                    const newBoxes: UserStatusBox[] = [];
+                    for (const [uid, entry] of ownerBoxes.entries()) {
+                        if (!existingOtherIds.has(uid) && entry.slides.length > 0) {
+                            newBoxes.push({ ...entry.box, slides: entry.slides });
+                        }
+                    }
+
+                    if (newBoxes.length === 0) return updated;
+                    const meIdx = updated.findIndex((b) => b.isCurrentUser);
+                    if (meIdx >= 0) {
+                        return [updated[meIdx], ...newBoxes, ...updated.filter((_, idx) => idx !== meIdx)];
+                    }
+                    return [...newBoxes, ...updated];
+                });
+            } catch {}
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [mode, userName, userEmail]);
+
     useEffect(() => {
         if (typeof window === 'undefined') return;
         try {
@@ -1269,13 +1397,14 @@ export function WhatsAppModeWorkspace({
     const [isStatusCompletedForUser, setIsStatusCompletedForUser] = useState<boolean>(false);
     const [isStatusReplyFocused, setIsStatusReplyFocused] = useState<boolean>(false);
     const [statusReplayNonce, setStatusReplayNonce] = useState<number>(0);
+    const [isResolvingLinks, setIsResolvingLinks] = useState<boolean>(false);
     const [activeVideoTiming, setActiveVideoTiming] = useState<{ currentSec: number; durationSec: number }>({
         currentSec: 0,
         durationSec: 0,
     });
     const activeStatusVideoRef = React.useRef<HTMLVideoElement | null>(null);
     const activeStatusAudioRef = React.useRef<HTMLAudioElement | null>(null);
-    const [statusSourcePlatform, setStatusSourcePlatform] = useState<StatusSourcePlatform>('WhatsApp');
+    const [statusSourcePlatform, setStatusSourcePlatform] = useState<StatusSourcePlatform>('YouTube');
     const [seriesBatchUrlsText, setSeriesBatchUrlsText] = useState('');
     const [queuedSeriesItems, setQueuedSeriesItems] = useState<
         Array<{
@@ -1285,6 +1414,9 @@ export function WhatsAppModeWorkspace({
             title: string;
             caption?: string;
             url: string;
+            embedUrl?: string;
+            embedProvider?: SocialEmbedProvider;
+            isVerticalEmbed?: boolean;
             posterUrl?: string;
             sourcePlatform: StatusSourcePlatform;
             mediaFormat: string;
@@ -1327,6 +1459,10 @@ export function WhatsAppModeWorkspace({
     const topActiveSlideMediaType = topActiveSlide?.mediaType || '';
     const topActiveSlideVideoUrl = topActiveSlide?.videoUrl || '';
     const topActiveSlideAudioUrl = topActiveSlide?.audioUrl || '';
+    const topActiveSlideEmbedUrl =
+        topActiveSlide?.embedUrl ||
+        parseSocialVideoUrl(topActiveSlide?.externalSourceUrl || topActiveSlide?.videoUrl || '')?.embedUrl ||
+        '';
     const topActiveSlideCount = topActiveSlides.length;
 
     useEffect(() => {
@@ -1334,7 +1470,7 @@ export function WhatsAppModeWorkspace({
         setActiveClipPassIndex(0);
     }, [topActiveStatusBox?.userId, topActiveSlideId, statusReplayNonce]);
 
-    // Effect 1: Auto-advance Picture (10s) & Info (12s) status slides so users can read & enjoy comfortably (videos & music ALWAYS play full duration until onEnded)
+    // Effect 1: Auto-advance Picture (10s) & Info (12s) status slides so users can read & enjoy comfortably (videos, embeds & music NEVER cut off early)
     useEffect(() => {
         if (
             mode !== 'status' ||
@@ -1348,6 +1484,7 @@ export function WhatsAppModeWorkspace({
             return;
         }
         if (
+            topActiveSlideEmbedUrl ||
             (topActiveSlideMediaType === 'video' && topActiveSlideVideoUrl) ||
             (topActiveSlideMediaType === 'audio' && topActiveSlideAudioUrl)
         ) {
@@ -1386,6 +1523,7 @@ export function WhatsAppModeWorkspace({
         topActiveSlideMediaType,
         topActiveSlideVideoUrl,
         topActiveSlideAudioUrl,
+        topActiveSlideEmbedUrl,
         topSafeSlideIndex,
         topActiveSlideCount,
         isStatusAutoPlaying,
@@ -1396,6 +1534,7 @@ export function WhatsAppModeWorkspace({
     // Effect 2: Control active <video> and <audio> play / pause / mute / autoplay-fallback
     useEffect(() => {
         if (mode !== 'status' || statusComposerMode) return;
+        if (topActiveSlideEmbedUrl) return;
         const mediaEl: HTMLMediaElement | null =
             topActiveSlideMediaType === 'audio'
                 ? activeStatusAudioRef.current
@@ -1696,6 +1835,9 @@ export function WhatsAppModeWorkspace({
                 )
             );
             setActiveStatusSlideIndex(0);
+            fetch(`/api/connectin/status?id=${encodeURIComponent(slideId)}`, {
+                method: 'DELETE',
+            }).catch(() => {});
             triggerToast('🗑️ Removed status item from My Status Box.');
         };
 
@@ -1822,54 +1964,120 @@ export function WhatsAppModeWorkspace({
             e.target.value = '';
         };
 
-        const handleAddSocialLinksToSeries = () => {
-            const lines = seriesBatchUrlsText
-                .split(/[\r\n]+/)
-                .map((l) => l.trim())
-                .filter(Boolean);
-            if (!lines.length) return;
-            const imported: typeof queuedSeriesItems = lines.map((rawUrl, idx) => {
-                const detectedPlatform = inferPlatformFromHint(rawUrl, statusSourcePlatform);
-                const isAudio = isAudioFileOrUrl(rawUrl);
-                const isImageExt = /\.(jpg|jpeg|png|webp|gif|avif|heic|heif|bmp|svg|jfif)(\?|$)/i.test(rawUrl);
-                const isExplicitVideoExt = /\.(mp4|mov|webm|mkv|avi|m4v|3gp|mpeg|mpg|ogv|flv|wmv)(\?|$)/i.test(rawUrl);
+        const resolveLinksBatch = async (rawLines: string[]): Promise<typeof queuedSeriesItems> => {
+            if (!rawLines.length) return [];
+            let serverResolved: any[] = [];
+            try {
+                const res = await fetch('/api/connectin/status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'resolve', urls: rawLines }),
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (Array.isArray(data?.resolved)) {
+                        serverResolved = data.resolved;
+                    }
+                }
+            } catch {}
+
+            const results: typeof queuedSeriesItems = [];
+            rawLines.forEach((rawLine, idx) => {
+                const { url: cleanUrl, customTitle } = splitLinkAndCustomTitle(rawLine);
+                if (!cleanUrl) return;
+                const srv = serverResolved[idx];
+                const parsed =
+                    srv?.ok && srv?.provider
+                        ? srv
+                        : parseSocialVideoUrl(cleanUrl);
+
+                if (parsed) {
+                    const platform: StatusSourcePlatform = parsed.platform || inferPlatformFromHint(cleanUrl, statusSourcePlatform);
+                    const finalTitle =
+                        customTitle ||
+                        (typeof parsed.title === 'string' && parsed.title.trim()) ||
+                        `${platform} ${parsed.isVertical ? 'Video Reel' : 'Video'}`;
+                    const authorNote =
+                        typeof parsed.authorName === 'string' && parsed.authorName.trim()
+                            ? ` · by ${parsed.authorName.trim()}`
+                            : '';
+                    results.push({
+                        id: `q_url_${Date.now()}_${idx}`,
+                        mediaType: 'video',
+                        name: finalTitle,
+                        title: finalTitle,
+                        caption: `Shared ${platform} video (${parsed.formatLabel})${authorNote}`,
+                        url: parsed.canonicalUrl || parsed.originalUrl || cleanUrl,
+                        embedUrl: parsed.embedUrl || undefined,
+                        embedProvider: parsed.provider,
+                        isVerticalEmbed: Boolean(parsed.isVertical),
+                        posterUrl: parsed.thumbnailUrl || undefined,
+                        sourcePlatform: platform,
+                        mediaFormat: parsed.formatLabel || platform.toUpperCase(),
+                        externalSourceUrl: parsed.originalUrl || cleanUrl,
+                    });
+                    return;
+                }
+
+                const detectedPlatform = inferPlatformFromHint(cleanUrl, statusSourcePlatform);
+                const isAudio = isAudioFileOrUrl(cleanUrl);
+                const isImageExt = /\.(jpg|jpeg|png|webp|gif|avif|heic|heif|bmp|svg|jfif)(\?|$)/i.test(cleanUrl);
+                const isExplicitVideoExt = /\.(mp4|mov|webm|mkv|avi|m4v|3gp|mpeg|mpg|ogv|flv|wmv)(\?|$)/i.test(cleanUrl);
                 const isPhoto = !isAudio && isImageExt && !isExplicitVideoExt;
                 const fallbackVideoPreset = STATUS_VIDEO_PRESETS[idx % STATUS_VIDEO_PRESETS.length];
                 const fallbackPhotoPreset = STATUS_PHOTO_PRESETS[idx % STATUS_PHOTO_PRESETS.length];
                 const formatLabel = isAudio
-                    ? detectMediaFormatLabel(rawUrl, 'MP3')
+                    ? detectMediaFormatLabel(cleanUrl, 'MP3')
                     : isPhoto
-                    ? detectMediaFormatLabel(rawUrl, 'WEBP')
-                    : detectedPlatform === 'TikTok'
-                    ? detectMediaFormatLabel(rawUrl, 'MP4 (9:16)')
-                    : detectedPlatform === 'Facebook'
-                    ? detectMediaFormatLabel(rawUrl, 'MP4 (HD)')
-                    : detectMediaFormatLabel(rawUrl, 'MP4');
+                    ? detectMediaFormatLabel(cleanUrl, 'WEBP')
+                    : detectMediaFormatLabel(cleanUrl, 'MP4');
 
-                return {
+                results.push({
                     id: `q_url_${Date.now()}_${idx}`,
                     mediaType: isAudio ? 'audio' : isPhoto ? 'photo' : 'video',
-                    name: `${detectedPlatform} ${isAudio ? 'Music' : 'Training'} Import #${idx + 1}`,
-                    title: `${detectedPlatform} ${isAudio ? 'Full Music Track' : `Professional Training ${isPhoto ? 'Reference' : 'Module'}`} #${idx + 1}`,
-                    caption: `Imported ${detectedPlatform} ${isAudio ? 'full-length music track' : `training ${isPhoto ? 'visual reference' : 'clip'}`} (${formatLabel})`,
+                    name: customTitle || `${detectedPlatform} ${isAudio ? 'Music' : 'Media'} #${idx + 1}`,
+                    title:
+                        customTitle ||
+                        `${detectedPlatform} ${isAudio ? 'Full Music Track' : `Status ${isPhoto ? 'Picture' : 'Clip'}`} #${idx + 1}`,
+                    caption: `Imported ${detectedPlatform} ${isAudio ? 'full-length music track' : isPhoto ? 'visual' : 'clip'} (${formatLabel})`,
                     url: isAudio
-                        ? rawUrl
+                        ? cleanUrl
                         : isPhoto
                         ? isImageExt
-                            ? rawUrl
+                            ? cleanUrl
                             : fallbackPhotoPreset.imageUrl
                         : isExplicitVideoExt
-                        ? rawUrl
+                        ? cleanUrl
                         : fallbackVideoPreset.videoUrl,
                     posterUrl: !isPhoto ? fallbackVideoPreset.posterUrl : undefined,
                     sourcePlatform: detectedPlatform,
                     mediaFormat: formatLabel,
-                    externalSourceUrl: rawUrl,
-                };
+                    externalSourceUrl: cleanUrl,
+                });
             });
-            setQueuedSeriesItems((prev) => [...prev, ...imported]);
-            setSeriesBatchUrlsText('');
-            triggerToast(`✅ Imported ${imported.length} training link${imported.length > 1 ? 's' : ''} into your series!`);
+
+            return results;
+        };
+
+        const handleAddSocialLinksToSeries = async () => {
+            const lines = seriesBatchUrlsText
+                .split(/[\r\n]+/)
+                .map((l) => l.trim())
+                .filter(Boolean);
+            if (!lines.length || isResolvingLinks) return;
+            setIsResolvingLinks(true);
+            try {
+                const imported = await resolveLinksBatch(lines);
+                if (imported.length > 0) {
+                    setQueuedSeriesItems((prev) => [...prev, ...imported]);
+                    setSeriesBatchUrlsText('');
+                    triggerToast(
+                        `✅ Added ${imported.length} playable video link${imported.length > 1 ? 's' : ''} to your queue!`
+                    );
+                }
+            } finally {
+                setIsResolvingLinks(false);
+            }
         };
 
         const handleApplyTrainingSeriesPreset = (platform: 'WhatsApp' | 'TikTok' | 'Facebook') => {
@@ -2012,34 +2220,52 @@ export function WhatsAppModeWorkspace({
             e.target.value = '';
         };
 
-        const handlePublishStatus = (e: React.FormEvent) => {
+        const handlePublishStatus = async (e: React.FormEvent) => {
             e.preventDefault();
             const nowStamp = `Today at ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
             const createdSlides: StatusUpdateItem[] = [];
+            const nowMs = Date.now();
+            const randTag = () => Math.random().toString(36).slice(2, 6);
 
             if (statusComposerMode === 'series') {
-                if (queuedSeriesItems.length === 0) {
-                    if (seriesBatchUrlsText.trim()) {
-                        handleAddSocialLinksToSeries();
+                let effectiveItems = [...queuedSeriesItems];
+                if (seriesBatchUrlsText.trim()) {
+                    setIsResolvingLinks(true);
+                    try {
+                        const lines = seriesBatchUrlsText
+                            .split(/[\r\n]+/)
+                            .map((l) => l.trim())
+                            .filter(Boolean);
+                        const resolved = await resolveLinksBatch(lines);
+                        effectiveItems = [...effectiveItems, ...resolved];
+                    } finally {
+                        setIsResolvingLinks(false);
                     }
-                    return;
                 }
-                const total = queuedSeriesItems.length;
-                queuedSeriesItems.forEach((item, idx) => {
+                if (effectiveItems.length === 0) return;
+                const total = effectiveItems.length;
+                effectiveItems.forEach((item, idx) => {
                     createdSlides.push({
-                        id: `st_me_${Date.now()}_${idx}`,
+                        id: `st_pub_${nowMs}_${idx}_${randTag()}`,
                         authorName: userName,
+                        authorEmail: userEmail || undefined,
                         authorAvatar: userAvatar,
                         timestampLabel: nowStamp,
+                        createdAtMs: nowMs - idx,
                         viewed: false,
                         mediaType: item.mediaType,
-                        title: item.title || statusDraftTitle.trim() || item.name,
-                        videoTitle: item.mediaType !== 'photo' ? (item.title || item.name) : undefined,
+                        title: statusDraftTitle.trim() || item.title || item.name,
+                        videoTitle: item.mediaType !== 'photo' ? (statusDraftTitle.trim() || item.title || item.name) : undefined,
                         videoUrl: item.mediaType === 'video' ? item.url : undefined,
                         audioUrl: item.mediaType === 'audio' ? item.url : undefined,
+                        embedUrl: item.embedUrl,
+                        embedProvider: item.embedProvider,
+                        isVerticalEmbed: item.isVerticalEmbed,
                         imageUrl: item.mediaType === 'photo' ? item.url : item.posterUrl,
                         videoDuration:
-                            item.mediaType === 'video'
+                            item.embedUrl
+                                ? item.sourcePlatform
+                                : item.mediaType === 'video'
                                 ? 'Full Clip'
                                 : item.mediaType === 'audio'
                                 ? 'Full Song'
@@ -2047,9 +2273,9 @@ export function WhatsAppModeWorkspace({
                         text:
                             statusDraftText.trim() ||
                             item.caption ||
-                            `${item.sourcePlatform} ${item.mediaType === 'audio' ? 'Full Music Track' : item.mediaType === 'video' ? 'Training Video' : 'Training Picture'} (${item.mediaFormat})`,
+                            `${item.sourcePlatform} ${item.mediaType === 'audio' ? 'Full Music Track' : item.mediaType === 'video' ? 'Video' : 'Picture'} (${item.mediaFormat})`,
                         bgColor: statusBgColor,
-                        professionTag: `${item.sourcePlatform} ${item.mediaType === 'audio' ? 'Music' : 'Training Series'}`,
+                        professionTag: `${item.sourcePlatform} ${item.embedUrl ? 'Video Status' : item.mediaType === 'audio' ? 'Music' : 'Series'}`,
                         sourcePlatform: item.sourcePlatform,
                         mediaFormat: item.mediaFormat,
                         externalSourceUrl: item.externalSourceUrl,
@@ -2062,10 +2288,12 @@ export function WhatsAppModeWorkspace({
                     queuedVideoUploads.forEach((v, idx) => {
                         const isAudio = v.mediaType === 'audio' || isAudioFileOrUrl(v.name);
                         createdSlides.push({
-                            id: `st_me_${Date.now()}_${idx}`,
+                            id: `st_pub_${nowMs}_${idx}_${randTag()}`,
                             authorName: userName,
+                            authorEmail: userEmail || undefined,
                             authorAvatar: userAvatar,
                             timestampLabel: nowStamp,
+                            createdAtMs: nowMs - idx,
                             viewed: false,
                             mediaType: isAudio ? 'audio' : 'video',
                             title: statusDraftTitle.trim() || v.name.replace(/\.[^/.]+$/, ''),
@@ -2085,46 +2313,91 @@ export function WhatsAppModeWorkspace({
                     });
                 } else if (statusDraftVideo.trim()) {
                     const urlTrimmed = statusDraftVideo.trim();
-                    const isAudio = isAudioFileOrUrl(urlTrimmed);
-                    const inferredPlatform = inferPlatformFromHint(urlTrimmed, statusSourcePlatform);
-                    const formatLabel = detectMediaFormatLabel(urlTrimmed, isAudio ? 'MP3' : 'MP4');
-                    createdSlides.push({
-                        id: `st_me_${Date.now()}`,
-                        authorName: userName,
-                        authorAvatar: userAvatar,
-                        timestampLabel: nowStamp,
-                        viewed: false,
-                        mediaType: isAudio ? 'audio' : 'video',
-                        title:
-                            statusDraftTitle.trim() ||
-                            (isAudio ? 'Full Music Track Status' : 'Professional Training Video Update'),
-                        videoTitle:
-                            statusDraftTitle.trim() ||
-                            (isAudio ? 'Full Music Track Status' : 'Professional Training Video Update'),
-                        videoUrl: !isAudio ? urlTrimmed : undefined,
-                        audioUrl: isAudio ? urlTrimmed : undefined,
-                        imageUrl: statusDraftImage || undefined,
-                        videoDuration: isAudio ? 'Full Song' : 'Full Clip',
-                        text:
-                            statusDraftText.trim() ||
-                            (isAudio
-                                ? 'Full-length music status — plays continuously until finished.'
-                                : 'New 24-hour ConnectLn professional training video update.'),
-                        bgColor: statusBgColor,
-                        professionTag: `${inferredPlatform} ${isAudio ? 'Music Track' : 'Training Video'}`,
-                        sourcePlatform: inferredPlatform,
-                        mediaFormat: formatLabel,
-                    });
+                    const socialParsed = parseSocialVideoUrl(urlTrimmed);
+                    if (socialParsed) {
+                        setIsResolvingLinks(true);
+                        let resolvedOne = socialParsed as any;
+                        try {
+                            const batch = await resolveLinksBatch([
+                                statusDraftTitle.trim() ? `${urlTrimmed} | ${statusDraftTitle.trim()}` : urlTrimmed,
+                            ]);
+                            if (batch[0]) resolvedOne = batch[0];
+                        } finally {
+                            setIsResolvingLinks(false);
+                        }
+                        const platform: StatusSourcePlatform = resolvedOne.sourcePlatform || resolvedOne.platform || 'YouTube';
+                        const resolvedTitle =
+                            statusDraftTitle.trim() || resolvedOne.title || `${platform} Video Status`;
+                        createdSlides.push({
+                            id: `st_pub_${nowMs}_${randTag()}`,
+                            authorName: userName,
+                            authorEmail: userEmail || undefined,
+                            authorAvatar: userAvatar,
+                            timestampLabel: nowStamp,
+                            createdAtMs: nowMs,
+                            viewed: false,
+                            mediaType: 'video',
+                            title: resolvedTitle,
+                            videoTitle: resolvedTitle,
+                            videoUrl: resolvedOne.url || resolvedOne.canonicalUrl || urlTrimmed,
+                            embedUrl: resolvedOne.embedUrl,
+                            embedProvider: resolvedOne.embedProvider || resolvedOne.provider,
+                            isVerticalEmbed: Boolean(resolvedOne.isVerticalEmbed ?? resolvedOne.isVertical),
+                            imageUrl: resolvedOne.posterUrl || resolvedOne.thumbnailUrl || undefined,
+                            videoDuration: platform,
+                            text: statusDraftText.trim() || resolvedOne.caption || `Shared ${platform} video status`,
+                            bgColor: statusBgColor,
+                            professionTag: `${platform} Video Status`,
+                            sourcePlatform: platform,
+                            mediaFormat: resolvedOne.mediaFormat || resolvedOne.formatLabel || platform.toUpperCase(),
+                            externalSourceUrl: resolvedOne.externalSourceUrl || urlTrimmed,
+                        });
+                    } else {
+                        const isAudio = isAudioFileOrUrl(urlTrimmed);
+                        const inferredPlatform = inferPlatformFromHint(urlTrimmed, statusSourcePlatform);
+                        const formatLabel = detectMediaFormatLabel(urlTrimmed, isAudio ? 'MP3' : 'MP4');
+                        createdSlides.push({
+                            id: `st_pub_${nowMs}_${randTag()}`,
+                            authorName: userName,
+                            authorEmail: userEmail || undefined,
+                            authorAvatar: userAvatar,
+                            timestampLabel: nowStamp,
+                            createdAtMs: nowMs,
+                            viewed: false,
+                            mediaType: isAudio ? 'audio' : 'video',
+                            title:
+                                statusDraftTitle.trim() ||
+                                (isAudio ? 'Full Music Track Status' : 'Professional Training Video Update'),
+                            videoTitle:
+                                statusDraftTitle.trim() ||
+                                (isAudio ? 'Full Music Track Status' : 'Professional Training Video Update'),
+                            videoUrl: !isAudio ? urlTrimmed : undefined,
+                            audioUrl: isAudio ? urlTrimmed : undefined,
+                            imageUrl: statusDraftImage || undefined,
+                            videoDuration: isAudio ? 'Full Song' : 'Full Clip',
+                            text:
+                                statusDraftText.trim() ||
+                                (isAudio
+                                    ? 'Full-length music status — plays continuously until finished.'
+                                    : 'New 24-hour ConnectLn professional training video update.'),
+                            bgColor: statusBgColor,
+                            professionTag: `${inferredPlatform} ${isAudio ? 'Music Track' : 'Training Video'}`,
+                            sourcePlatform: inferredPlatform,
+                            mediaFormat: formatLabel,
+                        });
+                    }
                 }
             } else if (statusComposerMode === 'photo') {
                 if (queuedPhotoUploads.length > 0) {
                     const total = queuedPhotoUploads.length;
                     queuedPhotoUploads.forEach((imgItem, idx) => {
                         createdSlides.push({
-                            id: `st_me_${Date.now()}_${idx}`,
+                            id: `st_pub_${nowMs}_${idx}_${randTag()}`,
                             authorName: userName,
+                            authorEmail: userEmail || undefined,
                             authorAvatar: userAvatar,
                             timestampLabel: nowStamp,
+                            createdAtMs: nowMs - idx,
                             viewed: false,
                             mediaType: 'photo',
                             title: statusDraftTitle.trim() || imgItem.name.replace(/\.[^/.]+$/, ''),
@@ -2141,10 +2414,12 @@ export function WhatsAppModeWorkspace({
                     const inferredPlatform = inferPlatformFromHint(statusDraftImage, statusSourcePlatform);
                     const formatLabel = detectMediaFormatLabel(statusDraftImage, 'JPG');
                     createdSlides.push({
-                        id: `st_me_${Date.now()}`,
+                        id: `st_pub_${nowMs}_${randTag()}`,
                         authorName: userName,
+                        authorEmail: userEmail || undefined,
                         authorAvatar: userAvatar,
                         timestampLabel: nowStamp,
+                        createdAtMs: nowMs,
                         viewed: false,
                         mediaType: 'photo',
                         title: statusDraftTitle.trim() || 'Professional Training Visual',
@@ -2161,10 +2436,12 @@ export function WhatsAppModeWorkspace({
                     return;
                 }
                 createdSlides.push({
-                    id: `st_me_${Date.now()}`,
+                    id: `st_pub_${nowMs}_${randTag()}`,
                     authorName: userName,
+                    authorEmail: userEmail || undefined,
                     authorAvatar: userAvatar,
                     timestampLabel: nowStamp,
+                    createdAtMs: nowMs,
                     viewed: false,
                     mediaType: 'info',
                     infoBadge: statusDraftInfoBadge || 'Training Briefing',
@@ -2209,8 +2486,22 @@ export function WhatsAppModeWorkspace({
             setIsStatusCompletedForUser(false);
             setIsStatusAutoPlaying(true);
             setStatusReplayNonce((n) => n + 1);
+
+            const cloudPublishable = createdSlides.filter(
+                (sl) =>
+                    !String(sl.videoUrl || '').startsWith('blob:') &&
+                    !String(sl.audioUrl || '').startsWith('blob:')
+            );
+            if (cloudPublishable.length > 0) {
+                fetch('/api/connectin/status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'publish', items: cloudPublishable }),
+                }).catch(() => {});
+            }
+
             triggerToast(
-                `✅ Uploaded ${createdSlides.length} training item${createdSlides.length > 1 ? 's' : ''} into YOUR dedicated Status Box!`
+                `✅ Published ${createdSlides.length} status item${createdSlides.length > 1 ? 's' : ''} — ready for users to watch!`
             );
         };
 
@@ -2253,10 +2544,10 @@ export function WhatsAppModeWorkspace({
                                 setStatusComposerMode('series');
                             }}
                             style={{ color: '#FBF8F3' }}
-                            title="Upload Multi-Format Training Video & Picture Series (WhatsApp, TikTok, Facebook)"
+                            title="Upload YouTube, Facebook, TikTok video links & multi-format Status media"
                             className="px-2.5 py-1.5 rounded-xl bg-[#7C4225] hover:bg-[#5E3119] text-[11px] font-bold cursor-pointer transition-colors shrink-0 shadow-2xs"
                         >
-                            + Upload Series
+                            + Upload Status
                         </button>
                     </div>
 
@@ -2460,8 +2751,8 @@ export function WhatsAppModeWorkspace({
                             {/* 4-Mode Upload Type Switcher */}
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-1 rounded-xl bg-[#EFE8DA] border border-[#DDD3C2]">
                                 {[
-                                    { id: 'series' as const, label: '🎞️ Training Series (WA/TikTok/FB)' },
-                                    { id: 'video' as const, label: '🎬🎵 Videos & Full Music' },
+                                    { id: 'series' as const, label: '📺 YouTube / FB / TikTok & Series' },
+                                    { id: 'video' as const, label: '🎬🎵 Videos, Links & Music' },
                                     { id: 'photo' as const, label: '🖼️ Upload Pictures' },
                                     { id: 'info' as const, label: '📋 Status Info' },
                                 ].map((tab) => (
@@ -2482,27 +2773,59 @@ export function WhatsAppModeWorkspace({
                             </div>
 
                             <form onSubmit={handlePublishStatus} className="space-y-4">
-                                {/* Mode S: Multi-Platform & Multi-Format Professional Training Series */}
+                                {/* Mode S: YouTube, Facebook & TikTok Links + Multi-Format Series */}
                                 {statusComposerMode === 'series' && (
                                     <div className="space-y-4 rounded-xl border border-[#DDD3C2] bg-[#FAF6EE] p-4">
                                         <div className="flex items-start justify-between gap-3 flex-wrap">
                                             <div>
                                                 <p className="text-xs font-extrabold uppercase tracking-wider text-[#5E3119]">
-                                                    Professional Training Video &amp; Picture Series
+                                                    Playable YouTube, Facebook &amp; TikTok Status Series
                                                 </p>
                                                 <p className="text-[11px] text-[#6B5A45] mt-0.5">
-                                                    Import mixed videos &amp; pictures from WhatsApp, TikTok, or Facebook in MP4, MOV, WEBM, MKV, AVI, 3GP, M4V, JPG, PNG, WEBP, GIF, HEIC, or AVIF. Videos play their full duration sequentially in your dedicated Status Box.
+                                                    Paste any <strong>YouTube</strong> (watch, Shorts, youtu.be), <strong>Facebook</strong> (video, watch, reel, fb.watch), or <strong>TikTok</strong> link—or upload local videos, music &amp; pictures—to play directly inside Status for all users.
                                                 </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Prominent Social Video Link Importer */}
+                                        <div className="space-y-2 rounded-xl border-2 border-[#BC9675] bg-[#FBF8F3] p-3.5">
+                                            <label className="block text-xs font-extrabold text-[#5E3119]">
+                                                Paste YouTube, Facebook, or TikTok Video Links (one per line)
+                                            </label>
+                                            <textarea
+                                                rows={3}
+                                                value={seriesBatchUrlsText}
+                                                onChange={(e) => setSeriesBatchUrlsText(e.target.value)}
+                                                placeholder={
+                                                    'https://www.youtube.com/watch?v=dQw4w9WgXcQ | Optional Custom Title\n' +
+                                                    'https://www.facebook.com/watch/?v=10153231379946729\n' +
+                                                    'https://www.tiktok.com/@username/video/7401122 | Short Walkthrough'
+                                                }
+                                                className="w-full rounded-xl border border-[#D0C4AE] bg-white px-3 py-2 text-xs text-[#2A1E12] focus:outline-none focus:ring-2 focus:ring-[#7C4225]"
+                                            />
+                                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                <span className="text-[10px] text-[#6B5A45]">
+                                                    Tip: Add <code className="px-1 bg-[#EFE8DA] rounded">| Title</code> after any link to customize its Status headline.
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleAddSocialLinksToSeries}
+                                                    disabled={!seriesBatchUrlsText.trim() || isResolvingLinks}
+                                                    style={{ color: '#FBF8F3' }}
+                                                    className="rounded-lg bg-[#7C4225] hover:bg-[#5E3119] disabled:opacity-50 px-3.5 py-1.5 text-xs font-bold cursor-pointer transition-colors"
+                                                >
+                                                    {isResolvingLinks ? 'Resolving Video Links...' : '+ Add Links to Status Queue'}
+                                                </button>
                                             </div>
                                         </div>
 
                                         {/* Source Platform Selector */}
                                         <div className="space-y-1.5">
                                             <label className="block text-[11px] font-bold text-[#5E3119]">
-                                                Source Platform Tag
+                                                Default Source Platform Tag (for uploaded local files)
                                             </label>
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                {(['WhatsApp', 'TikTok', 'Facebook', 'ConnectLn'] as const).map((platform) => (
+                                                {(['YouTube', 'TikTok', 'Facebook', 'WhatsApp', 'ConnectLn'] as const).map((platform) => (
                                                     <button
                                                         key={platform}
                                                         type="button"
@@ -2520,43 +2843,10 @@ export function WhatsAppModeWorkspace({
                                             </div>
                                         </div>
 
-                                        {/* 1-Click Professional Training Series Presets */}
-                                        <div className="space-y-1.5">
-                                            <label className="block text-[11px] font-bold text-[#5E3119]">
-                                                Quick-Load Objective-Aligned Professional Training Series
-                                            </label>
-                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleApplyTrainingSeriesPreset('WhatsApp')}
-                                                    className="rounded-xl border border-[#25D366]/40 bg-[#FBF8F3] hover:bg-[#EFE8DA] px-3 py-2 text-left transition-colors cursor-pointer"
-                                                >
-                                                    <span className="block text-xs font-bold text-[#5E3119]">💬 WhatsApp Training Series</span>
-                                                    <span className="block text-[10px] text-[#6B5A45]">Field Safety, K8s &amp; Briefing Clips (MP4/3GP/JPG)</span>
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleApplyTrainingSeriesPreset('TikTok')}
-                                                    className="rounded-xl border border-[#5E3119]/30 bg-[#FBF8F3] hover:bg-[#EFE8DA] px-3 py-2 text-left transition-colors cursor-pointer"
-                                                >
-                                                    <span className="block text-xs font-bold text-[#5E3119]">🎵 TikTok Micro-Lessons</span>
-                                                    <span className="block text-[10px] text-[#6B5A45]">Clinical, Dev &amp; Grid Shorts (MOV/MP4/PNG)</span>
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleApplyTrainingSeriesPreset('Facebook')}
-                                                    className="rounded-xl border border-[#1877F2]/40 bg-[#FBF8F3] hover:bg-[#EFE8DA] px-3 py-2 text-left transition-colors cursor-pointer"
-                                                >
-                                                    <span className="block text-xs font-bold text-[#5E3119]">📘 Facebook Trade Modules</span>
-                                                    <span className="block text-[10px] text-[#6B5A45]">Realtor, Trade &amp; Compliance Series (WEBM/MP4/WEBP)</span>
-                                                </button>
-                                            </div>
-                                        </div>
-
                                         {/* Mixed Multi-Format Device Upload */}
                                         <div className="rounded-xl border border-dashed border-[#BC9675] bg-[#FBF8F3] p-3.5 text-center space-y-2">
                                             <p className="text-xs text-[#5E3119] font-semibold">
-                                                Upload mixed training videos, full music/audio tracks &amp; pictures from WhatsApp/TikTok/Facebook
+                                                Or upload videos, music &amp; pictures from your device
                                             </p>
                                             <label
                                                 style={{ color: '#FBF8F3' }}
@@ -2572,34 +2862,39 @@ export function WhatsAppModeWorkspace({
                                                 />
                                             </label>
                                             <p className="text-[10px] text-[#6B5A45]">
-                                                Supports MP4, MOV, WEBM, MKV, MP3, WAV, M4A, FLAC, JPG, PNG, WEBP, GIF, HEIC, AVIF (Music &amp; Videos play 100% of full length)
+                                                Supports MP4, MOV, WEBM, MKV, MP3, WAV, M4A, FLAC, JPG, PNG, WEBP, GIF, HEIC, AVIF
                                             </p>
                                         </div>
 
-                                        {/* Multi-Line Social / Direct Media URL Importer */}
+                                        {/* 1-Click Professional Training Series Presets */}
                                         <div className="space-y-1.5">
                                             <label className="block text-[11px] font-bold text-[#5E3119]">
-                                                Import WhatsApp, TikTok, Facebook or Direct Training Media URLs (one per line)
+                                                Quick-Load Sample Training Series
                                             </label>
-                                            <textarea
-                                                rows={3}
-                                                value={seriesBatchUrlsText}
-                                                onChange={(e) => setSeriesBatchUrlsText(e.target.value)}
-                                                placeholder={
-                                                    'https://www.tiktok.com/@connectln/video/7401122 | Electrical Diagnostics Training\n' +
-                                                    'https://www.facebook.com/watch/?v=892011 | OSHA Jobsite Briefing.mp4\n' +
-                                                    '/status-videos/k8s_ebpf.mp4 | Kernel eBPF Security Lab'
-                                                }
-                                                className="w-full rounded-xl border border-[#D0C4AE] bg-[#FBF8F3] px-3 py-2 text-xs text-[#2A1E12] focus:outline-none focus:ring-2 focus:ring-[#7C4225]"
-                                            />
-                                            <div className="flex justify-end">
+                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                                 <button
                                                     type="button"
-                                                    onClick={handleAddSocialLinksToSeries}
-                                                    disabled={!seriesBatchUrlsText.trim()}
-                                                    className="rounded-lg bg-[#EFE8DA] hover:bg-[#E2D9C8] disabled:opacity-50 border border-[#D0C4AE] text-[#5E3119] px-3 py-1.5 text-xs font-bold cursor-pointer transition-colors"
+                                                    onClick={() => handleApplyTrainingSeriesPreset('WhatsApp')}
+                                                    className="rounded-xl border border-[#25D366]/40 bg-[#FBF8F3] hover:bg-[#EFE8DA] px-3 py-2 text-left transition-colors cursor-pointer"
                                                 >
-                                                    Import Training Links →
+                                                    <span className="block text-xs font-bold text-[#5E3119]">💬 WhatsApp Training Series</span>
+                                                    <span className="block text-[10px] text-[#6B5A45]">Field Safety, K8s &amp; Briefing Clips</span>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleApplyTrainingSeriesPreset('TikTok')}
+                                                    className="rounded-xl border border-[#5E3119]/30 bg-[#FBF8F3] hover:bg-[#EFE8DA] px-3 py-2 text-left transition-colors cursor-pointer"
+                                                >
+                                                    <span className="block text-xs font-bold text-[#5E3119]">🎵 TikTok Micro-Lessons</span>
+                                                    <span className="block text-[10px] text-[#6B5A45]">Clinical, Dev &amp; Grid Shorts</span>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleApplyTrainingSeriesPreset('Facebook')}
+                                                    className="rounded-xl border border-[#1877F2]/40 bg-[#FBF8F3] hover:bg-[#EFE8DA] px-3 py-2 text-left transition-colors cursor-pointer"
+                                                >
+                                                    <span className="block text-xs font-bold text-[#5E3119]">📘 Facebook Trade Modules</span>
+                                                    <span className="block text-[10px] text-[#6B5A45]">Trade &amp; Compliance Series</span>
                                                 </button>
                                             </div>
                                         </div>
@@ -2657,13 +2952,21 @@ export function WhatsAppModeWorkspace({
                                                                 <span className="font-mono text-[10px] font-bold text-[#7C4225]">
                                                                     #{idx + 1}
                                                                 </span>
-                                                                <span>
-                                                                    {item.mediaType === 'audio'
-                                                                        ? '🎵'
-                                                                        : item.mediaType === 'video'
-                                                                        ? '🎬'
-                                                                        : '🖼️'}
-                                                                </span>
+                                                                {item.posterUrl ? (
+                                                                    <img
+                                                                        src={item.posterUrl}
+                                                                        alt={item.title || item.name}
+                                                                        className="w-8 h-6 rounded object-cover border border-[#D0C4AE] shrink-0"
+                                                                    />
+                                                                ) : (
+                                                                    <span>
+                                                                        {item.mediaType === 'audio'
+                                                                            ? '🎵'
+                                                                            : item.mediaType === 'video'
+                                                                            ? '🎬'
+                                                                            : '🖼️'}
+                                                                    </span>
+                                                                )}
                                                                 <span className="rounded bg-[#EFE8DA] border border-[#D0C4AE] px-1.5 py-0.5 text-[10px] font-bold text-[#5E3119] shrink-0">
                                                                     {getPlatformBadgeLabel(item.sourcePlatform)}
                                                                 </span>
@@ -2836,7 +3139,7 @@ export function WhatsAppModeWorkspace({
                                                 Select one or multiple pictures from your device (WhatsApp/TikTok/Facebook exports supported — all added to YOUR Status Box)
                                             </p>
                                             <div className="flex items-center justify-center gap-1.5 flex-wrap pb-1">
-                                                {(['WhatsApp', 'TikTok', 'Facebook', 'ConnectLn'] as const).map((platform) => (
+                                                {(['YouTube', 'WhatsApp', 'TikTok', 'Facebook', 'ConnectLn'] as const).map((platform) => (
                                                     <button
                                                         key={platform}
                                                         type="button"
@@ -2942,7 +3245,7 @@ export function WhatsAppModeWorkspace({
                                                 Upload full videos (MP4/MOV/WEBM/MKV/3GP) or full music tracks (MP3/WAV/M4A/FLAC/OGG) — played 100% end-to-end in YOUR Status Box
                                             </p>
                                             <div className="flex items-center justify-center gap-1.5 flex-wrap pb-1">
-                                                {(['WhatsApp', 'TikTok', 'Facebook', 'ConnectLn'] as const).map((platform) => (
+                                                {(['YouTube', 'TikTok', 'Facebook', 'WhatsApp', 'ConnectLn'] as const).map((platform) => (
                                                     <button
                                                         key={platform}
                                                         type="button"
@@ -3003,7 +3306,7 @@ export function WhatsAppModeWorkspace({
 
                                         <div className="space-y-1.5">
                                             <label className="block text-xs font-bold text-[#57534E]">
-                                                Or select a Video / Full Music preset or enter a media URL:
+                                                Paste a YouTube, Facebook, TikTok, MP4/MP3 link — or pick a preset below:
                                             </label>
                                             <div className="flex flex-wrap gap-1.5">
                                                 {STATUS_VIDEO_PRESETS.map((preset) => (
@@ -3033,8 +3336,8 @@ export function WhatsAppModeWorkspace({
                                                 type="text"
                                                 value={statusDraftVideo}
                                                 onChange={(e) => setStatusDraftVideo(e.target.value)}
-                                                placeholder="/status-videos/physician.mp4"
-                                                className="w-full border border-[#D0C4AE] bg-[#F8F4EC] rounded-lg px-3 py-1.5 text-xs text-[#1C1917]"
+                                                placeholder="https://www.youtube.com/watch?v=... | https://www.facebook.com/reel/... | https://www.tiktok.com/@.../video/..."
+                                                className="w-full border border-[#D0C4AE] bg-white rounded-lg px-3 py-2 text-xs text-[#1C1917]"
                                             />
                                         </div>
 
@@ -3067,23 +3370,48 @@ export function WhatsAppModeWorkspace({
                                     </button>
                                     <button
                                         type="submit"
-                                        className="px-5 py-2 rounded-full bg-[#7C4225] hover:bg-[#5E3119] text-xs font-bold shadow-sm cursor-pointer"
+                                        disabled={isResolvingLinks}
+                                        className="px-5 py-2 rounded-full bg-[#7C4225] hover:bg-[#5E3119] disabled:opacity-60 text-xs font-bold shadow-sm cursor-pointer"
                                         style={{ color: '#FBF8F3' }}
                                     >
-                                        {statusComposerMode === 'series'
-                                            ? `Publish Training Series (${queuedSeriesItems.length} ${queuedSeriesItems.length === 1 ? 'Item' : 'Items'}) to My Status Box`
+                                        {isResolvingLinks
+                                            ? 'Resolving & Publishing...'
+                                            : statusComposerMode === 'series'
+                                            ? `Publish Video Links / Series (${
+                                                  queuedSeriesItems.length +
+                                                  (seriesBatchUrlsText.trim()
+                                                      ? seriesBatchUrlsText
+                                                            .split(/[\r\n]+/)
+                                                            .filter((l) => l.trim()).length
+                                                      : 0)
+                                              } Items) to My Status Box`
                                             : statusComposerMode === 'photo'
                                             ? `Upload ${queuedPhotoUploads.length > 1 ? `${queuedPhotoUploads.length} Pictures` : 'Picture'} to My Status Box`
                                             : statusComposerMode === 'video'
-                                            ? `Upload ${queuedVideoUploads.length > 1 ? `${queuedVideoUploads.length} Track(s)/Video(s)` : 'Video / Full Music'} to My Status Box`
+                                            ? `Upload ${queuedVideoUploads.length > 1 ? `${queuedVideoUploads.length} Track(s)/Video(s)` : 'Video / Link / Music'} to My Status Box`
                                             : 'Publish Information to My Status Box'}
                                     </button>
                                 </div>
                             </form>
                         </div>
                     ) : activeUserBox && activeSlide ? (() => {
-                        const isAudioSlide = activeSlide.mediaType === 'audio' && Boolean(activeSlide.audioUrl);
-                        const isVideoSlide = activeSlide.mediaType === 'video' && Boolean(activeSlide.videoUrl);
+                        const parsedEmbed = activeSlide.embedUrl
+                            ? {
+                                  embedUrl: activeSlide.embedUrl,
+                                  provider:
+                                      activeSlide.embedProvider ||
+                                      (activeSlide.sourcePlatform === 'TikTok'
+                                          ? ('tiktok' as const)
+                                          : activeSlide.sourcePlatform === 'Facebook'
+                                          ? ('facebook' as const)
+                                          : ('youtube' as const)),
+                                  isVertical: Boolean(activeSlide.isVerticalEmbed),
+                                  originalUrl: activeSlide.externalSourceUrl || activeSlide.videoUrl || '',
+                              }
+                            : parseSocialVideoUrl(activeSlide.externalSourceUrl || activeSlide.videoUrl || '');
+                        const isEmbeddedSocialVideo = Boolean(parsedEmbed?.embedUrl);
+                        const isAudioSlide = !isEmbeddedSocialVideo && activeSlide.mediaType === 'audio' && Boolean(activeSlide.audioUrl);
+                        const isVideoSlide = !isEmbeddedSocialVideo && activeSlide.mediaType === 'video' && Boolean(activeSlide.videoUrl);
                         const totalClipPasses = Math.max(1, activeSlide.musicSegmentsCount || 1);
                         const cumulativeCurrentSec =
                             totalClipPasses > 1 && activeVideoTiming.durationSec > 0
@@ -3139,7 +3467,14 @@ export function WhatsAppModeWorkspace({
                                             {activeUserBox.authorName}&apos;s Dedicated Status Box
                                         </span>
                                         <span className="font-mono flex items-center gap-2 flex-wrap">
-                                            {(isVideoSlide || isAudioSlide) && (
+                                            {isEmbeddedSocialVideo ? (
+                                                <>
+                                                    <span className="text-[#E8C59B]">
+                                                        {getPlatformBadgeLabel(activeSlide.sourcePlatform)} · Embedded Player
+                                                    </span>
+                                                    <span>·</span>
+                                                </>
+                                            ) : (isVideoSlide || isAudioSlide) && (
                                                 <>
                                                     <span className="text-[#E8C59B]">
                                                         {isAudioSlide ? '🎵 Full Music:' : '🎬 Full Video:'}{' '}
@@ -3353,7 +3688,7 @@ export function WhatsAppModeWorkspace({
                                         >
                                             {isStatusCompletedForUser ? '↻ Replay' : isStatusAutoPlaying ? '⏸ Pause' : '▶ Play'}
                                         </button>
-                                        {(isVideoSlide || isAudioSlide) && (
+                                        {(isEmbeddedSocialVideo || isVideoSlide || isAudioSlide) && (
                                             <button
                                                 type="button"
                                                 onClick={() => setIsStatusMuted((m) => !m)}
@@ -3396,19 +3731,58 @@ export function WhatsAppModeWorkspace({
                                     </div>
                                 </div>
 
-                                {/* Slide Media Body: Video, Full-Duration Music Audio, Picture, OR Structured Status Information */}
+                                {/* Slide Media Body: Embedded Social Video (YouTube / Facebook / TikTok), Video, Full-Duration Music Audio, Picture, OR Structured Status Information */}
                                 <div
                                     className="p-4 sm:p-5 flex flex-col items-center justify-center text-center space-y-3 min-h-[300px]"
                                     style={{
                                         background:
-                                            isVideoSlide
+                                            isEmbeddedSocialVideo || isVideoSlide
                                                 ? '#000000'
                                                 : activeSlide.bgColor ||
                                                   'linear-gradient(135deg, #292521 0%, #3d3730 100%)',
                                         color: '#FBF8F3',
                                     }}
                                 >
-                                    {isVideoSlide ? (
+                                    {isEmbeddedSocialVideo && parsedEmbed ? (
+                                        <div
+                                            className={`${
+                                                parsedEmbed.isVertical ? 'w-full max-w-[330px] mx-auto' : 'w-full'
+                                            } rounded-xl overflow-hidden border border-white/15 bg-black shadow-2xl flex flex-col`}
+                                        >
+                                            <iframe
+                                                key={`${activeSlide.id}_${statusReplayNonce}`}
+                                                src={buildStatusEmbedIframeSrc(
+                                                    parsedEmbed.embedUrl,
+                                                    parsedEmbed.provider,
+                                                    isStatusMuted
+                                                )}
+                                                title={activeSlide.title || activeSlide.videoTitle || 'Embedded Status Video'}
+                                                className={`w-full border-0 bg-black ${
+                                                    parsedEmbed.isVertical
+                                                        ? 'h-[450px] sm:h-[500px]'
+                                                        : 'h-[260px] sm:h-[340px]'
+                                                }`}
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                                                allowFullScreen
+                                                referrerPolicy="strict-origin-when-cross-origin"
+                                            />
+                                            <div className="px-3 py-2 bg-[#141416] border-t border-white/10 flex items-center justify-between gap-2 text-[11px] text-[#D0C4AE] flex-wrap">
+                                                <span>
+                                                    Playing {getPlatformBadgeLabel(activeSlide.sourcePlatform)} inside Status
+                                                </span>
+                                                {(parsedEmbed.originalUrl || activeSlide.externalSourceUrl) && (
+                                                    <a
+                                                        href={parsedEmbed.originalUrl || activeSlide.externalSourceUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-[#E8C59B] hover:underline font-bold"
+                                                    >
+                                                        Open Original ↗
+                                                    </a>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ) : isVideoSlide ? (
                                         <div className="w-full rounded-xl overflow-hidden border border-white/10 bg-black shadow-xl">
                                             <video
                                                 ref={activeStatusVideoRef}
@@ -3579,7 +3953,7 @@ export function WhatsAppModeWorkspace({
                                         </div>
                                     )}
 
-                                    {(isVideoSlide || isAudioSlide || activeSlide.mediaType === 'photo') && (
+                                    {(isEmbeddedSocialVideo || isVideoSlide || isAudioSlide || activeSlide.mediaType === 'photo') && (
                                         <div className="space-y-1 max-w-xl px-2">
                                             {(activeSlide.title || activeSlide.videoTitle) && (
                                                 <p className="text-xs font-bold uppercase tracking-wider text-[#D69E6B]">
@@ -3729,7 +4103,7 @@ export function WhatsAppModeWorkspace({
                                         style={{ color: '#FBF8F3' }}
                                         className="rounded-xl bg-[#7C4225] hover:bg-[#5E3119] text-[#FBF8F3] px-4 py-2 text-xs font-bold cursor-pointer transition-colors"
                                     >
-                                        🎞️ + Upload Training Series (WA/TikTok/FB)
+                                        📺 + Upload YouTube / FB / TikTok &amp; Series
                                     </button>
                                     <button
                                         type="button"

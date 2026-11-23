@@ -23,7 +23,7 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     const frameCsp =
-      "frame-src 'self' blob: data: https://connectln-devhub.vercel.app https://*.vercel.app https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://tuhousing.vercel.app https://dstrike.app https://*.dstrike.app; object-src 'self' blob: data:;"
+      "frame-src 'self' blob: data: https://connectln-devhub.vercel.app https://*.vercel.app https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://www.facebook.com https://web.facebook.com https://m.facebook.com https://*.facebook.com https://fb.watch https://www.tiktok.com https://*.tiktok.com https://player.vimeo.com https://tuhousing.vercel.app https://dstrike.app https://*.dstrike.app; object-src 'self' blob: data:;"
     return [
       {
         source: "/(.*)",
