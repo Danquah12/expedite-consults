@@ -253,7 +253,9 @@ export function setSelectedConnectLnRingtoneId(id: ConnectLnRingtoneId): void {
   cachedRingtoneUriMap.clear()
   if (fallbackWavRingAudio) {
     try {
+      fallbackWavRingAudio.dataset.ringtonePresetId = ""
       fallbackWavRingAudio.src = getRingtoneAudioSourceUri(id)
+      fallbackWavRingAudio.dataset.ringtonePresetId = id
     } catch {}
   }
 }
@@ -648,8 +650,10 @@ function ensureLiveAudioPipelineStarted(): void {
     }
 
     if (!fallbackWavRingAudio) {
-      fallbackWavRingAudio = new Audio(getPhoneRingtoneWavUri())
+      const initialPreset = getSelectedConnectLnRingtoneId()
+      fallbackWavRingAudio = new Audio(getRingtoneAudioSourceUri(initialPreset))
       fallbackWavRingAudio.dataset.connectlnCallAudio = "true"
+      fallbackWavRingAudio.dataset.ringtonePresetId = initialPreset
       fallbackWavRingAudio.loop = true
       fallbackWavRingAudio.volume = 1.0
       fallbackWavRingAudio.preload = "auto"
@@ -731,6 +735,8 @@ export function unlockBackgroundRingingSession(): void {
   events.forEach((ev) => window.addEventListener(ev, handler, { capture: true, passive: true }))
 }
 
+let ringInteractionListenersBound = false
+
 export function startLoudPhoneRingtone(): void {
   if (typeof window === "undefined") return
   isIncomingRingtoneActive = true
@@ -738,68 +744,31 @@ export function startLoudPhoneRingtone(): void {
   ensureLiveAudioPipelineStarted()
 
   const selectedId = getSelectedConnectLnRingtoneId()
-  const useExternalAudioFile =
-    selectedId === "studio-acoustic" ||
-    (selectedId === "device-custom" && Boolean(getCustomDeviceRingtoneDataUrl()))
-  const ua = typeof navigator !== "undefined" ? navigator.userAgent || "" : ""
-  const isMobileUa = /iPhone|iPad|iPod|Android|Mobile/i.test(ua)
-  const useHtmlMediaAudio =
-    useExternalAudioFile ||
-    isMobileUa ||
-    (typeof document !== "undefined" && document.hidden) ||
-    !liveAudioCtx ||
-    liveAudioCtx.state !== "running"
 
-  if (useHtmlMediaAudio) {
-    // Strictly single audio source: stop Web Audio synth if switching to HTML5 lock-screen audio
-    if (activeRingSource) {
-      try {
-        activeRingSource.stop()
-        activeRingSource.disconnect()
-      } catch {}
-      activeRingSource = null
+  // Strictly single unified audio source (`fallbackWavRingAudio`) so two ringtones can never layer
+  if (activeRingSource) {
+    try {
+      activeRingSource.stop()
+      activeRingSource.disconnect()
+    } catch {}
+    activeRingSource = null
+  }
+  if (activeRingGain) {
+    try {
+      activeRingGain.disconnect()
+    } catch {}
+    activeRingGain = null
+  }
+
+  if (fallbackWavRingAudio) {
+    if (fallbackWavRingAudio.dataset.ringtonePresetId !== selectedId) {
+      fallbackWavRingAudio.src = getRingtoneAudioSourceUri(selectedId)
+      fallbackWavRingAudio.dataset.ringtonePresetId = selectedId
     }
-    if (activeRingGain) {
-      try {
-        activeRingGain.disconnect()
-      } catch {}
-      activeRingGain = null
-    }
-    if (fallbackWavRingAudio) {
-      const desiredSrc = getRingtoneAudioSourceUri(selectedId)
-      if (fallbackWavRingAudio.src !== desiredSrc) {
-        fallbackWavRingAudio.src = desiredSrc
-      }
-      fallbackWavRingAudio.muted = false
-      fallbackWavRingAudio.volume = 0.95
-      if (fallbackWavRingAudio.paused) {
-        fallbackWavRingAudio.play().catch(() => {})
-      }
-    }
-  } else {
-    // Foreground desktop: use hardware-thread C++ looping AudioBufferSourceNode and keep HTML audio paused
-    if (fallbackWavRingAudio && !fallbackWavRingAudio.paused) {
-      try {
-        fallbackWavRingAudio.pause()
-        fallbackWavRingAudio.currentTime = 0
-      } catch {}
-    }
-    if (liveAudioCtx && ringtoneBuffer && !activeRingSource) {
-      try {
-        if (liveAudioCtx.state === "suspended") {
-          liveAudioCtx.resume().catch(() => {})
-        }
-        const gain = liveAudioCtx.createGain()
-        gain.gain.value = 0.9
-        const src = liveAudioCtx.createBufferSource()
-        src.buffer = ringtoneBuffer
-        src.loop = true
-        src.connect(gain)
-        gain.connect(liveAudioCtx.destination)
-        src.start(0)
-        activeRingSource = src
-        activeRingGain = gain
-      } catch {}
+    fallbackWavRingAudio.muted = false
+    fallbackWavRingAudio.volume = 0.95
+    if (fallbackWavRingAudio.paused) {
+      fallbackWavRingAudio.play().catch(() => {})
     }
   }
 
@@ -818,22 +787,22 @@ export function startLoudPhoneRingtone(): void {
     }
   } catch {}
 
-  // 3. If browser initially deferred audio before a user interaction, auto-resume ringtone on any pointer/touch/focus event!
-  const resumeRingOnInteraction = () => {
-    if (!isIncomingRingtoneActive) return
-    if (liveAudioCtx && liveAudioCtx.state === "suspended") {
-      liveAudioCtx.resume().catch(() => {})
+  // If browser initially deferred audio before a user interaction, resume cleanly once on gesture
+  if (!ringInteractionListenersBound) {
+    ringInteractionListenersBound = true
+    const resumeRingOnInteraction = () => {
+      if (!isIncomingRingtoneActive) return
+      if (fallbackWavRingAudio && fallbackWavRingAudio.paused) {
+        fallbackWavRingAudio.muted = false
+        fallbackWavRingAudio.volume = 0.95
+        fallbackWavRingAudio.play().catch(() => {})
+      }
     }
-    if (fallbackWavRingAudio && fallbackWavRingAudio.paused) {
-      fallbackWavRingAudio.muted = false
-      fallbackWavRingAudio.volume = 1.0
-      fallbackWavRingAudio.play().catch(() => {})
-    }
+    window.addEventListener("pointerdown", resumeRingOnInteraction, { passive: true })
+    window.addEventListener("touchstart", resumeRingOnInteraction, { passive: true })
+    window.addEventListener("keydown", resumeRingOnInteraction, { passive: true })
+    window.addEventListener("focus", resumeRingOnInteraction, { passive: true })
   }
-  window.addEventListener("pointerdown", resumeRingOnInteraction, { passive: true })
-  window.addEventListener("touchstart", resumeRingOnInteraction, { passive: true })
-  window.addEventListener("mousemove", resumeRingOnInteraction, { passive: true, once: true })
-  window.addEventListener("focus", resumeRingOnInteraction, { passive: true })
 
   if (!ringVibrateTimer) {
     try {
@@ -1286,7 +1255,7 @@ export async function triggerSystemIncomingCallAlert(
           tag: `connectln-call-${spec.callId}`,
           renotify: false,
           requireInteraction: true,
-          silent: false,
+          silent: Boolean(fallbackWavRingAudio && !fallbackWavRingAudio.paused),
           vibrate: [600, 220, 600, 220, 800, 250, 800],
           data: {
             callId: spec.callId,
