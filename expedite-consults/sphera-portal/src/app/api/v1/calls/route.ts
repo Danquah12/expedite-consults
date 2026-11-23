@@ -460,7 +460,7 @@ async function pushCloudSharedMessages(
   const compactMsgs = messages.slice(-25).map((m) => ({
     ...m,
     attachment_data_url:
-      m.attachment_data_url && m.attachment_data_url.length < 96000
+      m.attachment_data_url && m.attachment_data_url.length < 260000
         ? m.attachment_data_url
         : undefined,
   }))
@@ -483,7 +483,7 @@ async function pushCloudSharedStage(callId: string, stage: SharedStageRecord | n
   lastCloudStagePushMap.set(stageKey, nowMs)
 
   const compactFrame =
-    stage?.frame_or_data_url && stage.frame_or_data_url.length < 96000
+    stage?.frame_or_data_url && stage.frame_or_data_url.length < 480000
       ? stage.frame_or_data_url
       : null
   const payload = JSON.stringify({
@@ -504,7 +504,7 @@ async function pushCloudSharedStage(callId: string, stage: SharedStageRecord | n
     frame_or_data_url: compactFrame,
     updated_at_ms: stage?.updated_at_ms || nowMs,
   })
-  await upsertTwilioSyncItem(auth, stageKey, payload)
+  await upsertTwilioSyncItem(auth, stageKey, payload, "180")
 }
 
 async function upsertTwilioSyncItem(_auth: string, key: string, serialized: string, ttlSec = "60"): Promise<void> {
@@ -1029,6 +1029,89 @@ export async function GET(req: NextRequest) {
   })
 }
 
+async function removeSingleParticipantFromGroupCall(params: {
+  callId: string
+  existing: CommCallRecord
+  userId?: string
+  participantPhone?: string
+  displayName?: string
+  now: string
+  nowMs: number
+}): Promise<void> {
+  const { callId, existing, userId, participantPhone, displayName, now, nowMs } = params
+  const leavingKeys = new Set(
+    buildModerationIdentityKeys({
+      userId,
+      phone: participantPhone,
+      name: displayName,
+    })
+  )
+
+  const matchedParticipant = userId
+    ? (existing.participants || []).find((p) => p.user_id === userId)
+    : undefined
+  if (matchedParticipant?.phone) {
+    buildModerationIdentityKeys({
+      phone: matchedParticipant.phone,
+      name: matchedParticipant.display_name,
+    }).forEach((k) => leavingKeys.add(k))
+  }
+
+  if (userId) {
+    existing.participants = (existing.participants || []).filter((p) => p.user_id !== userId)
+    await pushCloudCallParticipant(
+      callId,
+      {
+        call_id: callId,
+        user_id: userId,
+        device_id: "left",
+        display_name: "Left",
+        role: "Left",
+        device_label: "Left",
+        joined_at: now,
+        last_seen_ms: 0,
+        left_at: now,
+        is_muted: true,
+        is_video_on: false,
+        is_speaking: false,
+        is_screen_sharing: false,
+        participant_state: "LEFT",
+        e2ee_media_fingerprint: "",
+      },
+      true
+    ).catch(() => {})
+  }
+
+  let rosterUpdated = false
+  if (leavingKeys.size > 0 && Array.isArray(existing.invited_roster)) {
+    for (const inv of existing.invited_roster) {
+      if (inv && inv.status !== "removed" && participantMatchesModKey(inv, leavingKeys)) {
+        inv.status = "removed"
+        inv.updated_at_ms = nowMs
+        rosterUpdated = true
+      }
+    }
+  }
+  if (rosterUpdated) {
+    await pushCloudInvitedRoster(
+      callId,
+      existing.invited_roster,
+      true,
+      existing.cohost_keys,
+      existing.muted_keys
+    ).catch(() => {})
+  }
+
+  if (existing.shared_stage && userId && existing.shared_stage.sharer_user_id === userId) {
+    existing.shared_stage = null
+    await pushCloudSharedStage(callId, null, true).catch(() => {})
+  }
+
+  existing.state_version += 1
+  ACTIVE_CALLS_STORE.set(callId, existing)
+  savePersistedCalls(true)
+}
+
 export async function POST(req: NextRequest) {
   try {
     loadPersistedCalls()
@@ -1038,39 +1121,20 @@ export async function POST(req: NextRequest) {
     const nowMs = Date.now()
 
     if (action === "leave" && body.call_id) {
-      const existing = ACTIVE_CALLS_STORE.get(body.call_id)
+      const leaveCallId = String(body.call_id).trim()
+      await pullCloudCallParticipants().catch(() => {})
+      const existing = ACTIVE_CALLS_STORE.get(leaveCallId)
       if (existing) {
-        if (body.user_id) {
-          existing.participants = (existing.participants || []).filter((p) => p.user_id !== body.user_id)
-          pushCloudCallParticipant(
-            body.call_id,
-            {
-              call_id: body.call_id,
-              user_id: body.user_id,
-              device_id: "left",
-              display_name: "Left",
-              role: "Left",
-              device_label: "Left",
-              joined_at: now,
-              last_seen_ms: 0,
-              left_at: now,
-              is_muted: true,
-              is_video_on: false,
-              is_speaking: false,
-              is_screen_sharing: false,
-              participant_state: "LEFT",
-              e2ee_media_fingerprint: "",
-            },
-            true
-          ).catch(() => {})
-        }
-        if (existing.shared_stage && existing.shared_stage.sharer_user_id === body.user_id) {
-          existing.shared_stage = null
-          pushCloudSharedStage(body.call_id, null, true).catch(() => {})
-        }
-        existing.state_version += 1
-        ACTIVE_CALLS_STORE.set(body.call_id, existing)
-        savePersistedCalls(true)
+        await removeSingleParticipantFromGroupCall({
+          callId: leaveCallId,
+          existing,
+          userId: body.user_id,
+          participantPhone:
+            typeof body.participant_phone === "string" ? body.participant_phone : undefined,
+          displayName: typeof body.display_name === "string" ? body.display_name : undefined,
+          now,
+          nowMs,
+        })
       }
       return NextResponse.json({
         protocol_version: 1,
@@ -1082,12 +1146,39 @@ export async function POST(req: NextRequest) {
 
     if (action === "end" && body.call_id) {
       const endCallId = String(body.call_id).trim()
-      ENDED_CALL_TOMBSTONES.set(endCallId, nowMs)
       await pullCloudCallParticipants().catch(() => {})
       let existing = ACTIVE_CALLS_STORE.get(endCallId)
       if (!existing) {
         existing = ensureCallRoom(endCallId, body.user_id || "host", body.display_name || "Host", endCallId)
       }
+
+      const otherActive = (existing.participants || []).filter(
+        (p) =>
+          p.user_id !== body.user_id &&
+          p.participant_state !== "LEFT" &&
+          p.last_seen_ms &&
+          nowMs - p.last_seen_ms < PARTICIPANT_TTL_MS
+      )
+      if (otherActive.length >= 2 && !body.end_for_all) {
+        await removeSingleParticipantFromGroupCall({
+          callId: endCallId,
+          existing,
+          userId: body.user_id,
+          participantPhone:
+            typeof body.participant_phone === "string" ? body.participant_phone : undefined,
+          displayName: typeof body.display_name === "string" ? body.display_name : undefined,
+          now,
+          nowMs,
+        })
+        return NextResponse.json({
+          protocol_version: 1,
+          event_type: "call.participant_left",
+          occurred_at: now,
+          call: existing,
+        })
+      }
+
+      ENDED_CALL_TOMBSTONES.set(endCallId, nowMs)
 
       const phonesToSilence: Array<string | undefined> = [
         existing.target_recipient_phone,
@@ -1360,7 +1451,7 @@ export async function POST(req: NextRequest) {
             title: "",
             use_webrtc_stream: false,
             frame_or_data_url: null,
-            updated_at_ms: nowMs,
+            updated_at_ms: Number(body.shared_stage?.updated_at_ms) || nowMs,
           }
         } else {
           record.shared_stage = {
@@ -1377,7 +1468,7 @@ export async function POST(req: NextRequest) {
             recipient_names: Array.isArray(body.shared_stage.recipient_names) ? body.shared_stage.recipient_names : undefined,
             use_webrtc_stream: Boolean(body.shared_stage.use_webrtc_stream),
             frame_or_data_url: body.shared_stage.frame_or_data_url || null,
-            updated_at_ms: nowMs,
+            updated_at_ms: Number(body.shared_stage.updated_at_ms) || nowMs,
           }
         }
       }

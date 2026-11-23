@@ -754,13 +754,18 @@ const CALL_BACKGROUND_THEMES: Array<{
   badge: string
   stageClass: string
   previewGradient: string
+  sceneColors: [string, string, string]
+  accentColor: string
+  blurPx?: number
 }> = [
   {
     id: "none",
-    label: "Classic Emerald Studio",
-    badge: "Default",
+    label: "No Virtual Background",
+    badge: "Camera",
     stageClass: "bg-gradient-to-b from-[#071E1A] via-[#0B141A] to-[#060B0E]",
     previewGradient: "linear-gradient(135deg, #071E1A 0%, #0B141A 60%, #059669 100%)",
+    sceneColors: ["#071E1A", "#0B141A", "#060B0E"],
+    accentColor: "#10B981",
   },
   {
     id: "espresso",
@@ -768,6 +773,8 @@ const CALL_BACKGROUND_THEMES: Array<{
     badge: "Desk Note",
     stageClass: "bg-gradient-to-br from-[#2B1810] via-[#1C120E] to-[#4A2717]",
     previewGradient: "linear-gradient(135deg, #2B1810 0%, #5E3119 55%, #8D5535 100%)",
+    sceneColors: ["#2B1810", "#3E2216", "#5E3119"],
+    accentColor: "#D97706",
   },
   {
     id: "executive-boardroom",
@@ -775,6 +782,8 @@ const CALL_BACKGROUND_THEMES: Array<{
     badge: "Executive",
     stageClass: "bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#312E81]",
     previewGradient: "linear-gradient(135deg, #0F172A 0%, #1E293B 60%, #4338CA 100%)",
+    sceneColors: ["#0F172A", "#1E293B", "#312E81"],
+    accentColor: "#6366F1",
   },
   {
     id: "cyber-soc",
@@ -782,6 +791,8 @@ const CALL_BACKGROUND_THEMES: Array<{
     badge: "Security",
     stageClass: "bg-gradient-to-br from-[#020617] via-[#06283D] to-[#0E7490]",
     previewGradient: "linear-gradient(135deg, #020617 0%, #0F4C75 65%, #06B6D4 100%)",
+    sceneColors: ["#020617", "#06283D", "#0E7490"],
+    accentColor: "#06B6D4",
   },
   {
     id: "blueprint",
@@ -789,6 +800,8 @@ const CALL_BACKGROUND_THEMES: Array<{
     badge: "Studio",
     stageClass: "bg-gradient-to-br from-[#0B192C] via-[#1E3E62] to-[#0C2D57]",
     previewGradient: "linear-gradient(135deg, #0B192C 0%, #1D4ED8 100%)",
+    sceneColors: ["#0B192C", "#1E3E62", "#0C2D57"],
+    accentColor: "#3B82F6",
   },
   {
     id: "clinical-hub",
@@ -796,13 +809,18 @@ const CALL_BACKGROUND_THEMES: Array<{
     badge: "Healthcare",
     stageClass: "bg-gradient-to-br from-[#042F2E] via-[#0F4C4A] to-[#065F46]",
     previewGradient: "linear-gradient(135deg, #042F2E 0%, #0D9488 100%)",
+    sceneColors: ["#042F2E", "#0F4C4A", "#065F46"],
+    accentColor: "#14B8A6",
   },
   {
     id: "bokeh-blur",
-    label: "Soft Amber Bokeh Studio",
+    label: "Studio Portrait Blur",
     badge: "Blur",
     stageClass: "bg-gradient-to-br from-[#1F122B] via-[#3B185F] to-[#7C4225]",
     previewGradient: "linear-gradient(135deg, #240B36 0%, #C31432 100%)",
+    sceneColors: ["#1F122B", "#3B185F", "#7C4225"],
+    accentColor: "#F59E0B",
+    blurPx: 14,
   },
 ]
 
@@ -948,10 +966,14 @@ export function ConnectLnWhatsAppCallModal({
   const [showMaterialDrawer, setShowMaterialDrawer] = useState<boolean>(false)
   const [activeSharedStage, setActiveSharedStage] = useState<InCallSharedStageItem | null>(null)
   const [isStageMinimized, setIsStageMinimized] = useState<boolean>(false)
+  const [isStageExpanded, setIsStageExpanded] = useState<boolean>(false)
+  const [stageBlobUrl, setStageBlobUrl] = useState<string>("")
+  const [stageTextPreview, setStageTextPreview] = useState<string>("")
   const [materialRecipientScope, setMaterialRecipientScope] = useState<"everyone" | "selected">("everyone")
   const [selectedMaterialRecipientKeys, setSelectedMaterialRecipientKeys] = useState<string[]>([])
   const [isLocalScreenSharing, setIsLocalScreenSharing] = useState<boolean>(false)
   const [materialStatusNote, setMaterialStatusNote] = useState<string>("")
+  const [virtualBgStreamState, setVirtualBgStreamState] = useState<MediaStream | null>(null)
 
   // Host Mute & Co-Host Permissions Drawer
   const [showHostMembersDrawer, setShowHostMembersDrawer] = useState<boolean>(false)
@@ -981,12 +1003,20 @@ export function ConnectLnWhatsAppCallModal({
   const localVideoRef = useRef<HTMLVideoElement | null>(null)
   const gridLocalVideoRef = useRef<HTMLVideoElement | null>(null)
   const offscreenVideoRef = useRef<HTMLVideoElement | null>(null)
+  const virtualBgCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const smoothMaskCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const selfieSegmenterRef = useRef<any>(null)
+  const latestSegMaskRef = useRef<any>(null)
+  const isSegmentingFrameRef = useRef<boolean>(false)
+  const customBgImgRef = useRef<HTMLImageElement | null>(null)
+  const virtualBgStreamRef = useRef<MediaStream | null>(null)
   const localStreamRef = useRef<MediaStream | null>(null)
   const [localStreamState, setLocalStreamState] = useState<MediaStream | null>(null)
   const [hasLocalVideoTrack, setHasLocalVideoTrack] = useState<boolean>(false)
   const peerRef = useRef<any>(null)
   const myPeerIdRef = useRef<string>("")
   const activeMediaCallsRef = useRef<Map<string, any>>(new Map())
+  const activeDataConnsRef = useRef<Map<string, any>>(new Map())
   const knownRemotePeerIdsRef = useRef<Set<string>>(new Set())
   const dialPeerNowRef = useRef<((pid: string, force?: boolean) => void) | null>(null)
   const hasLiveRemoteVideoRef = useRef<boolean>(false)
@@ -1004,6 +1034,19 @@ export function ConnectLnWhatsAppCallModal({
   const showChatDrawerRef = useRef<boolean>(false)
   const lastSeenChatMsgIdsRef = useRef<Set<string>>(new Set())
   const selectedBgIdRef = useRef<string>("none")
+  const activeSharedStageRef = useRef<InCallSharedStageItem | null>(null)
+  const isLocalScreenSharingRef = useRef<boolean>(false)
+  const isVideoOnRef = useRef<boolean>(initialMode === "video")
+  const hasLocalVideoTrackRef = useRef<boolean>(false)
+  const isMicMutedRef = useRef<boolean>(false)
+  const remoteStreamsMapRef = useRef<Record<string, MediaStream>>({})
+  const hasAnyWebRtcStreamRef = useRef<boolean>(false)
+  const recipientNameRef = useRef<string>(targetLabel || "ConnectLn Call")
+  const recipientPhoneRef = useRef<string>(targetPhone || "")
+  const targetEmailRef = useRef<string | undefined>(targetEmail)
+  const onCloseRef = useRef<() => void>(onClose)
+  const maxRemoteCountSeenRef = useRef<number>(0)
+  const hasSentInitialReopenRef = useRef<boolean>(false)
 
   // Twilio Browser Conference Host Connection (`ConferenceRoom = conf_<callId>`)
   const pstnDeviceRef = useRef<any>(null)
@@ -1029,6 +1072,134 @@ export function ConnectLnWhatsAppCallModal({
   useEffect(() => {
     selectedBgIdRef.current = selectedBgId
   }, [selectedBgId])
+
+  useEffect(() => {
+    activeSharedStageRef.current = activeSharedStage
+  }, [activeSharedStage])
+
+  useEffect(() => {
+    isLocalScreenSharingRef.current = isLocalScreenSharing
+  }, [isLocalScreenSharing])
+
+  useEffect(() => {
+    isVideoOnRef.current = isVideoOn
+  }, [isVideoOn])
+
+  useEffect(() => {
+    hasLocalVideoTrackRef.current = hasLocalVideoTrack
+  }, [hasLocalVideoTrack])
+
+  useEffect(() => {
+    isMicMutedRef.current = isMicMuted
+  }, [isMicMuted])
+
+  useEffect(() => {
+    remoteStreamsMapRef.current = remoteStreamsMap
+    hasAnyWebRtcStreamRef.current = Object.keys(remoteStreamsMap).length > 0
+  }, [remoteStreamsMap])
+
+  useEffect(() => {
+    recipientNameRef.current = recipientName
+    recipientPhoneRef.current = recipientPhone
+    targetEmailRef.current = targetEmail
+  }, [recipientName, recipientPhone, targetEmail])
+
+  useEffect(() => {
+    onCloseRef.current = onClose
+  }, [onClose])
+
+  useEffect(() => {
+    if (!customBgDataUrl || typeof window === "undefined") {
+      customBgImgRef.current = null
+      return
+    }
+    const img = new Image()
+    img.onload = () => {
+      customBgImgRef.current = img
+    }
+    img.src = customBgDataUrl
+  }, [customBgDataUrl])
+
+  // Convert shared device file `data:` URLs (especially PDFs) into `blob:` URLs so browser PDF/doc previews never get blocked
+  useEffect(() => {
+    if (!activeSharedStage?.active || !activeSharedStage.frame_or_data_url) {
+      setStageBlobUrl("")
+      setStageTextPreview("")
+      return
+    }
+    const raw = activeSharedStage.frame_or_data_url
+    const fileName = activeSharedStage.file_name || activeSharedStage.title || ""
+    const mimeRaw = (activeSharedStage.mime_type || "").toLowerCase()
+    const isPdf = mimeRaw.includes("pdf") || /\.pdf$/i.test(fileName) || raw.startsWith("data:application/pdf")
+    const isTextLike =
+      mimeRaw.startsWith("text/") ||
+      mimeRaw.includes("json") ||
+      /\.(txt|md|csv|json|log|xml|yaml|yml)$/i.test(fileName)
+
+    if (!raw.startsWith("data:")) {
+      setStageBlobUrl(raw)
+      setStageTextPreview("")
+      return
+    }
+
+    let createdUrl = ""
+    let cancelled = false
+
+    const decodeDataUrl = async () => {
+      try {
+        const commaIdx = raw.indexOf(",")
+        if (commaIdx < 0) return
+        const header = raw.slice(5, commaIdx)
+        const payload = raw.slice(commaIdx + 1)
+        const detectedMime = header.split(";")[0] || activeSharedStage.mime_type || "application/octet-stream"
+        const finalMime = isPdf ? "application/pdf" : detectedMime
+        let blob: Blob
+        if (header.includes(";base64")) {
+          const bin = atob(payload.replace(/\s/g, ""))
+          const bytes = new Uint8Array(bin.length)
+          for (let i = 0; i < bin.length; i++) {
+            bytes[i] = bin.charCodeAt(i)
+          }
+          blob = new Blob([bytes], { type: finalMime })
+        } else {
+          const fetched = await fetch(raw)
+          const buf = await fetched.arrayBuffer()
+          blob = new Blob([buf], { type: finalMime })
+        }
+        if (cancelled) return
+        createdUrl = URL.createObjectURL(blob)
+        setStageBlobUrl(createdUrl)
+        if (isTextLike) {
+          const txt = await blob.text()
+          if (!cancelled) setStageTextPreview(txt.slice(0, 24000))
+        } else {
+          setStageTextPreview("")
+        }
+      } catch {
+        if (!cancelled) {
+          setStageBlobUrl(raw)
+          setStageTextPreview("")
+        }
+      }
+    }
+
+    void decodeDataUrl()
+
+    return () => {
+      cancelled = true
+      if (createdUrl) {
+        try {
+          URL.revokeObjectURL(createdUrl)
+        } catch {}
+      }
+    }
+  }, [
+    activeSharedStage?.active,
+    activeSharedStage?.frame_or_data_url,
+    activeSharedStage?.mime_type,
+    activeSharedStage?.file_name,
+    activeSharedStage?.title,
+  ])
 
   // Register open call modal on `window` so `<ConnectLnIncomingCallBanner />` never overlaps an active call on this tab,
   // and pause/mute all background page media (videos, YouTube embeds, Noctis TTS, music) until the call is completed!
@@ -1066,8 +1237,58 @@ export function ConnectLnWhatsAppCallModal({
     setIsVideoOn(initialMode === "video")
   }, [initialMode, open])
 
+  const syncWebRtcOutgoingVideoTrack = useCallback((useCanvasStream: boolean) => {
+    try {
+      if (
+        isLocalScreenSharingRef.current &&
+        screenStreamRef.current?.getVideoTracks().some((t) => t.readyState === "live")
+      ) {
+        return
+      }
+      const canvasVid = virtualBgStreamRef.current
+        ?.getVideoTracks()
+        .find((t) => t.readyState === "live")
+      const camVid = localStreamRef.current
+        ?.getVideoTracks()
+        .find((t) => t.readyState === "live")
+      const targetVideoTrack = useCanvasStream && canvasVid ? canvasVid : camVid
+      if (!targetVideoTrack) return
+
+      activeMediaCallsRef.current.forEach((mc) => {
+        const pc: RTCPeerConnection | undefined = mc?.peerConnection
+        if (!pc || typeof pc.getSenders !== "function") return
+        const vSender = pc.getSenders().find((s) => s.track && s.track.kind === "video")
+        if (vSender && vSender.track !== targetVideoTrack) {
+          vSender.replaceTrack(targetVideoTrack).catch(() => {})
+        }
+      })
+    } catch {}
+  }, [])
+
+  const buildOutgoingCallStream = useCallback((): MediaStream | null => {
+    const screenVid = isLocalScreenSharingRef.current
+      ? screenStreamRef.current?.getVideoTracks().find((t) => t.readyState === "live")
+      : undefined
+    const bgVid =
+      selectedBgIdRef.current !== "none"
+        ? virtualBgStreamRef.current?.getVideoTracks().find((t) => t.readyState === "live")
+        : undefined
+    const camVid = localStreamRef.current
+      ?.getVideoTracks()
+      .find((t) => t.readyState === "live")
+    const vTrack = screenVid || bgVid || camVid
+    const aTrack = localStreamRef.current?.getAudioTracks()[0]
+    const tracks = [vTrack, aTrack].filter(Boolean) as MediaStreamTrack[]
+    return tracks.length > 0 ? new MediaStream(tracks) : localStreamRef.current
+  }, [])
+
   const stopAllMedia = useCallback(() => {
     stopPreviewConnectLnRingtone()
+    if (virtualBgStreamRef.current) {
+      virtualBgStreamRef.current.getTracks().forEach((t) => t.stop())
+      virtualBgStreamRef.current = null
+    }
+    setVirtualBgStreamState(null)
     if (screenStreamRef.current) {
       screenStreamRef.current.getTracks().forEach((t) => t.stop())
       screenStreamRef.current = null
@@ -1085,6 +1306,12 @@ export function ConnectLnWhatsAppCallModal({
       } catch {}
     })
     activeMediaCallsRef.current.clear()
+    activeDataConnsRef.current.forEach((conn) => {
+      try {
+        conn.close?.()
+      } catch {}
+    })
+    activeDataConnsRef.current.clear()
     if (peerRef.current) {
       try {
         peerRef.current.destroy?.()
@@ -1312,9 +1539,13 @@ export function ConnectLnWhatsAppCallModal({
       localStreamRef.current = stream
       setLocalStreamState(stream)
 
+      const previewStream =
+        selectedBgIdRef.current !== "none" && virtualBgStreamRef.current
+          ? virtualBgStreamRef.current
+          : stream
       for (const el of [localVideoRef.current, gridLocalVideoRef.current]) {
         if (el) {
-          el.srcObject = stream
+          el.srcObject = previewStream
           el.muted = true
           el.play().catch(() => {})
         }
@@ -1332,7 +1563,14 @@ export function ConnectLnWhatsAppCallModal({
         offscreenVideoRef.current.play().catch(() => {})
       }
 
-      const vTrack = stream.getVideoTracks()[0]
+      const vTrack =
+        (isLocalScreenSharingRef.current
+          ? screenStreamRef.current?.getVideoTracks().find((t) => t.readyState === "live")
+          : undefined) ||
+        (selectedBgIdRef.current !== "none"
+          ? virtualBgStreamRef.current?.getVideoTracks().find((t) => t.readyState === "live")
+          : undefined) ||
+        stream.getVideoTracks()[0]
       const aTrack = stream.getAudioTracks()[0]
       activeMediaCallsRef.current.forEach((mc, pid) => {
         const pc: RTCPeerConnection | undefined = mc?.peerConnection
@@ -1355,6 +1593,305 @@ export function ConnectLnWhatsAppCallModal({
     [isMicMuted]
   )
 
+  // Per-User Real-Time AI Background Segmentation: replaces ONLY YOUR camera background and streams it to everyone else
+  useEffect(() => {
+    if (
+      !open ||
+      selectedBgId === "none" ||
+      !isVideoOn ||
+      !hasLocalVideoTrack ||
+      !localStreamState
+    ) {
+      if (virtualBgStreamRef.current) {
+        virtualBgStreamRef.current.getTracks().forEach((t) => t.stop())
+        virtualBgStreamRef.current = null
+      }
+      setVirtualBgStreamState(null)
+      syncWebRtcOutgoingVideoTrack(false)
+      return
+    }
+
+    if (typeof window === "undefined" || typeof document === "undefined") return
+
+    if (!offscreenVideoRef.current) {
+      const v = document.createElement("video")
+      v.muted = true
+      v.autoplay = true
+      v.playsInline = true
+      v.setAttribute("playsinline", "true")
+      offscreenVideoRef.current = v
+    }
+    if (offscreenVideoRef.current.srcObject !== localStreamState) {
+      offscreenVideoRef.current.srcObject = localStreamState
+    }
+    offscreenVideoRef.current.play().catch(() => {})
+
+    let isRunning = true
+    let animId: number | null = null
+    let switchedTrack = false
+
+    const bgTheme =
+      CALL_BACKGROUND_THEMES.find((b) => b.id === selectedBgId) || CALL_BACKGROUND_THEMES[1]
+
+    if (!document.getElementById("connectln-wa-matte-svg")) {
+      const svgNS = "http://www.w3.org/2000/svg"
+      const svg = document.createElementNS(svgNS, "svg")
+      svg.setAttribute("id", "connectln-wa-matte-svg")
+      svg.setAttribute("width", "0")
+      svg.setAttribute("height", "0")
+      svg.setAttribute("aria-hidden", "true")
+      svg.style.position = "fixed"
+      svg.style.pointerEvents = "none"
+      svg.style.opacity = "0"
+      svg.innerHTML = `
+        <defs>
+          <filter id="connectln-wa-matte" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="2.0" result="smoothed" />
+            <feComponentTransfer in="smoothed" result="matte">
+              <feFuncA type="linear" slope="14.0" intercept="-8.2" />
+            </feComponentTransfer>
+            <feGaussianBlur in="matte" stdDeviation="0.6" />
+          </filter>
+        </defs>
+      `
+      document.body.appendChild(svg)
+    }
+
+    const drawCoverImage = (
+      ctx: CanvasRenderingContext2D,
+      img: HTMLImageElement,
+      w: number,
+      h: number
+    ) => {
+      const imgW = img.naturalWidth || w
+      const imgH = img.naturalHeight || h
+      const scale = Math.max(w / imgW, h / imgH)
+      const drawW = imgW * scale
+      const drawH = imgH * scale
+      ctx.drawImage(img, (w - drawW) / 2, (h - drawH) / 2, drawW, drawH)
+    }
+
+    const drawThemeBackdrop = (ctx: CanvasRenderingContext2D, w: number, h: number) => {
+      const grad = ctx.createLinearGradient(0, 0, w, h)
+      grad.addColorStop(0, bgTheme.sceneColors[0])
+      grad.addColorStop(0.55, bgTheme.sceneColors[1])
+      grad.addColorStop(1, bgTheme.sceneColors[2])
+      ctx.fillStyle = grad
+      ctx.fillRect(0, 0, w, h)
+
+      const radial = ctx.createRadialGradient(w * 0.5, h * 0.25, 10, w * 0.5, h * 0.4, w * 0.72)
+      radial.addColorStop(0, `${bgTheme.accentColor}44`)
+      radial.addColorStop(1, "transparent")
+      ctx.fillStyle = radial
+      ctx.fillRect(0, 0, w, h)
+    }
+
+    let hasMaskHistory = false
+
+    const ensureStreamBound = (canvas: HTMLCanvasElement) => {
+      if (
+        !virtualBgStreamRef.current ||
+        !virtualBgStreamRef.current.getVideoTracks().some((t) => t.readyState === "live")
+      ) {
+        if (typeof canvas.captureStream === "function") {
+          const cs = canvas.captureStream(24)
+          virtualBgStreamRef.current = cs
+          setVirtualBgStreamState(cs)
+        }
+      }
+      if (!switchedTrack) {
+        switchedTrack = true
+        syncWebRtcOutgoingVideoTrack(true)
+      }
+    }
+
+    const renderSynchronizedComposite = (
+      personImage: CanvasImageSource,
+      rawMask: CanvasImageSource | null
+    ) => {
+      const canvas = virtualBgCanvasRef.current
+      if (!canvas) return
+      const w = 640
+      const h = 480
+      if (canvas.width !== w) canvas.width = w
+      if (canvas.height !== h) canvas.height = h
+      const ctx = canvas.getContext("2d")
+      if (!ctx) return
+      ctx.imageSmoothingEnabled = true
+      ctx.imageSmoothingQuality = "high"
+
+      let maskCanvas = smoothMaskCanvasRef.current
+      if (!maskCanvas) {
+        maskCanvas = document.createElement("canvas")
+        maskCanvas.width = w
+        maskCanvas.height = h
+        smoothMaskCanvasRef.current = maskCanvas
+        hasMaskHistory = false
+      } else if (maskCanvas.width !== w || maskCanvas.height !== h) {
+        maskCanvas.width = w
+        maskCanvas.height = h
+        hasMaskHistory = false
+      }
+
+      const mCtx = maskCanvas.getContext("2d")
+      if (mCtx && rawMask) {
+        mCtx.imageSmoothingEnabled = true
+        mCtx.imageSmoothingQuality = "high"
+        mCtx.save()
+        if (!hasMaskHistory) {
+          mCtx.clearRect(0, 0, w, h)
+          mCtx.globalCompositeOperation = "source-over"
+          mCtx.globalAlpha = 1
+          mCtx.drawImage(rawMask, 0, 0, w, h)
+          hasMaskHistory = true
+        } else {
+          mCtx.globalCompositeOperation = "destination-in"
+          mCtx.fillStyle = "rgba(0, 0, 0, 0.24)"
+          mCtx.fillRect(0, 0, w, h)
+          mCtx.globalCompositeOperation = "lighter"
+          mCtx.globalAlpha = 0.76
+          mCtx.drawImage(rawMask, 0, 0, w, h)
+        }
+        mCtx.restore()
+      }
+
+      ctx.save()
+      ctx.clearRect(0, 0, w, h)
+      if (rawMask && maskCanvas) {
+        ctx.save()
+        ctx.filter = "url(#connectln-wa-matte)"
+        ctx.drawImage(maskCanvas, 0, 0, w, h)
+        ctx.restore()
+
+        ctx.globalCompositeOperation = "source-in"
+        ctx.drawImage(personImage, 0, 0, w, h)
+
+        ctx.globalCompositeOperation = "destination-over"
+        if (selectedBgId === "custom-image" && customBgImgRef.current?.complete) {
+          drawCoverImage(ctx, customBgImgRef.current, w, h)
+        } else if (bgTheme.blurPx) {
+          ctx.save()
+          ctx.filter = `blur(${bgTheme.blurPx}px) brightness(0.92)`
+          ctx.drawImage(personImage, -14, -14, w + 28, h + 28)
+          ctx.restore()
+        } else {
+          drawThemeBackdrop(ctx, w, h)
+        }
+      } else {
+        ctx.drawImage(personImage, 0, 0, w, h)
+      }
+      ctx.restore()
+
+      ensureStreamBound(canvas)
+    }
+
+    const handleSegmentationResults = (results: any) => {
+      if (!isRunning) return
+      if (results?.segmentationMask) {
+        latestSegMaskRef.current = results.segmentationMask
+        const syncedImg = results.image || offscreenVideoRef.current
+        if (syncedImg) {
+          renderSynchronizedComposite(syncedImg, results.segmentationMask)
+        }
+      }
+    }
+
+    const loadSelfieSegmentationScript = (): Promise<any> => {
+      if ((window as any).SelfieSegmentation) {
+        return Promise.resolve((window as any).SelfieSegmentation)
+      }
+      return new Promise((resolve) => {
+        const existing = document.querySelector(
+          'script[data-mediapipe-selfie="true"]'
+        ) as HTMLScriptElement | null
+        if (existing) {
+          existing.addEventListener("load", () => resolve((window as any).SelfieSegmentation || null), {
+            once: true,
+          })
+          existing.addEventListener("error", () => resolve(null), { once: true })
+          return
+        }
+        const script = document.createElement("script")
+        script.src = "/mediapipe/selfie_segmentation/selfie_segmentation.js"
+        script.async = true
+        script.setAttribute("data-mediapipe-selfie", "true")
+        script.onload = () => resolve((window as any).SelfieSegmentation || null)
+        script.onerror = () => resolve(null)
+        document.head.appendChild(script)
+      })
+    }
+
+    const ensureSegmenter = async () => {
+      if (selfieSegmenterRef.current) {
+        selfieSegmenterRef.current.onResults(handleSegmentationResults)
+        return
+      }
+      try {
+        let SegClass = (window as any).SelfieSegmentation
+        if (!SegClass) {
+          SegClass = await loadSelfieSegmentationScript()
+        }
+        if (!SegClass || !isRunning) return
+        const segmenter = new SegClass({
+          locateFile: (file: string) => `/mediapipe/selfie_segmentation/${file}`,
+        })
+        segmenter.setOptions({
+          modelSelection: 0,
+          selfieMode: false,
+        })
+        segmenter.onResults(handleSegmentationResults)
+        if (typeof segmenter.initialize === "function") {
+          await segmenter.initialize()
+        }
+        if (isRunning) {
+          selfieSegmenterRef.current = segmenter
+        }
+      } catch {}
+    }
+
+    void ensureSegmenter()
+
+    let lastSegAtMs = 0
+    const renderLoop = (nowTs: number) => {
+      if (!isRunning) return
+      if (nowTs - lastSegAtMs >= 42) {
+        const vEl = offscreenVideoRef.current
+        if (vEl && vEl.readyState >= 2 && vEl.videoWidth > 0) {
+          lastSegAtMs = nowTs
+          if (selfieSegmenterRef.current) {
+            if (!isSegmentingFrameRef.current) {
+              isSegmentingFrameRef.current = true
+              selfieSegmenterRef.current
+                .send({ image: vEl })
+                .catch(() => {})
+                .finally(() => {
+                  isSegmentingFrameRef.current = false
+                })
+            }
+          } else {
+            renderSynchronizedComposite(vEl, latestSegMaskRef.current)
+          }
+        }
+      }
+      animId = requestAnimationFrame(renderLoop)
+    }
+
+    animId = requestAnimationFrame(renderLoop)
+
+    return () => {
+      isRunning = false
+      if (animId) cancelAnimationFrame(animId)
+    }
+  }, [
+    open,
+    selectedBgId,
+    customBgDataUrl,
+    isVideoOn,
+    hasLocalVideoTrack,
+    localStreamState,
+    syncWebRtcOutgoingVideoTrack,
+  ])
+
   // Load ConnectLn directory contacts when `Add People` drawer opens
   useEffect(() => {
     if (!open || !showAddPeopleDrawer) return
@@ -1372,6 +1909,8 @@ export function ConnectLnWhatsAppCallModal({
   useEffect(() => {
     if (!open) {
       stopAllMedia()
+      maxRemoteCountSeenRef.current = 0
+      hasSentInitialReopenRef.current = false
       setRemoteStreamsMap({})
       setRemoteWebRtcPeers([])
       setCellLegs([])
@@ -1383,6 +1922,9 @@ export function ConnectLnWhatsAppCallModal({
       setChatMessages([])
       setUnreadChatCount(0)
       setActiveSharedStage(null)
+      setIsStageExpanded(false)
+      setStageBlobUrl("")
+      setStageTextPreview("")
       setCohostKeys([])
       setHostMutedKeys([])
       setWasMutedByHostBanner(false)
@@ -1507,6 +2049,50 @@ export function ConnectLnWhatsAppCallModal({
       })
     }
 
+    const bindDataConn = (conn: any) => {
+      if (!conn?.peer) return
+      activeDataConnsRef.current.set(conn.peer, conn)
+      conn.on("open", () => {
+        const curStage = activeSharedStageRef.current
+        if (curStage?.active && curStage.mode === "file" && curStage.sharer_user_id === localPeerUid) {
+          try {
+            conn.send({ type: "stage_share", stage: curStage })
+          } catch {}
+        }
+      })
+      conn.on("data", (msg: any) => {
+        if (msg?.type === "stage_share" && msg.stage) {
+          const incoming: InCallSharedStageItem = msg.stage
+          if (incoming.active === false) {
+            setActiveSharedStage(null)
+            return
+          }
+          const selfEntry = {
+            userId: localPeerUid,
+            phone: getMyLinkedConnectLnPhone(),
+            email: callerEmail,
+            name: callerName,
+          }
+          const allowed =
+            !incoming.recipient_scope ||
+            incoming.recipient_scope === "everyone" ||
+            incoming.sharer_user_id === localPeerUid ||
+            (Array.isArray(incoming.recipient_ids) &&
+              (incoming.recipient_ids.includes(localPeerUid) ||
+                doesIdentityMatchAnyKey(selfEntry, incoming.recipient_ids)))
+          if (allowed) {
+            setActiveSharedStage(incoming)
+            setIsStageMinimized(false)
+          }
+        }
+      })
+      conn.on("close", () => {
+        if (activeDataConnsRef.current.get(conn.peer) === conn) {
+          activeDataConnsRef.current.delete(conn.peer)
+        }
+      })
+    }
+
     const dialPeerNow = (targetPid: string, force = false) => {
       if (
         cancelled ||
@@ -1520,7 +2106,7 @@ export function ConnectLnWhatsAppCallModal({
       // Once RTP stream is live with this peer, do not re-dial or reset the connection!
       if (streamingPeersSet.has(targetPid) && !force) return
 
-      const stream = localStreamRef.current
+      const stream = buildOutgoingCallStream()
       if (!stream) return
       const now = Date.now()
       if (!firstSeenMap.has(targetPid)) firstSeenMap.set(targetPid, now)
@@ -1550,6 +2136,13 @@ export function ConnectLnWhatsAppCallModal({
             metadata: { participantId: localPeerUid, name: callerName },
           })
           if (out) bindMediaCall(out)
+        } catch {}
+      }
+
+      if (!activeDataConnsRef.current.has(targetPid)) {
+        try {
+          const conn = peerInstance.connect(targetPid, { reliable: true })
+          if (conn) bindDataConn(conn)
         } catch {}
       }
     }
@@ -1619,6 +2212,10 @@ export function ConnectLnWhatsAppCallModal({
           }, 1600)
         })
 
+        peer.on("connection", (conn: any) => {
+          bindDataConn(conn)
+        })
+
         peer.on("call", async (inc: any) => {
           // Wait briefly if local camera/mic is still opening so our 30fps video track is included in the initial answer!
           let waitCount = 0
@@ -1627,7 +2224,7 @@ export function ConnectLnWhatsAppCallModal({
             waitCount++
           }
           try {
-            inc.answer(localStreamRef.current || undefined)
+            inc.answer(buildOutgoingCallStream() || undefined)
           } catch {}
           bindMediaCall(inc)
         })
@@ -1678,22 +2275,36 @@ export function ConnectLnWhatsAppCallModal({
     let timer: ReturnType<typeof setTimeout> | null = null
     let isFirst = true
     let lastCapMs = 0
+    let emptyRemotesStreak = 0
 
     const syncBeat = async () => {
       if (!mounted) return
       const now = Date.now()
-      const webrtcActiveNow = hasLiveRemoteVideoRef.current || Object.keys(remoteStreamsMap).length > 0
+      const vidOnNow = isVideoOnRef.current
+      const hasVidTrackNow = hasLocalVideoTrackRef.current
+      const micMutedNow = isMicMutedRef.current
+      const screenSharingNow = isLocalScreenSharingRef.current
+      const webrtcActiveNow =
+        hasLiveRemoteVideoRef.current || Object.keys(remoteStreamsMapRef.current).length > 0
 
       if (webrtcActiveNow) {
         // Zero CPU/network contention: native 30fps WebRTC video is live, so skip canvas encoding completely!
         lastCapturedFrameRef.current = null
       } else {
+        const bgCanvasEl =
+          selectedBgIdRef.current !== "none" &&
+          virtualBgCanvasRef.current &&
+          virtualBgCanvasRef.current.width > 0
+            ? virtualBgCanvasRef.current
+            : null
         const vidEl =
+          bgCanvasEl ||
           [localVideoRef.current, gridLocalVideoRef.current, offscreenVideoRef.current].find(
             (v) => v && v.readyState >= 2 && v.videoWidth > 0
-          ) || null
+          ) ||
+          null
 
-        if (isVideoOn && vidEl && (now - lastCapMs >= 280 || !lastCapturedFrameRef.current)) {
+        if (vidOnNow && vidEl && (now - lastCapMs >= 280 || !lastCapturedFrameRef.current)) {
           try {
             if (!captureCanvasRef.current) {
               const c = document.createElement("canvas")
@@ -1714,12 +2325,17 @@ export function ConnectLnWhatsAppCallModal({
         }
       }
 
-      const reopenFlag = isFirst
+      const reopenFlag = !hasSentInitialReopenRef.current
+      hasSentInitialReopenRef.current = true
       isFirst = false
       try {
         const myLinkedPhone = getMyLinkedConnectLnPhone()
         const shouldClearHostMute = clearHostMuteFlagRef.current
         clearHostMuteFlagRef.current = false
+        const activeBgBadge =
+          selectedBgIdRef.current === "custom-image"
+            ? "Custom BG"
+            : CALL_BACKGROUND_THEMES.find((b) => b.id === selectedBgIdRef.current)?.badge
         const res = await fetch("/api/v1/calls", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1730,25 +2346,26 @@ export function ConnectLnWhatsAppCallModal({
             user_id: localPeerUid,
             peer_id: myPeerIdRef.current || undefined,
             conversation_id: callId,
-            call_type: isVideoOn ? "video" : "audio",
-            target_recipient_name: !isIncomingAnswer ? recipientName : undefined,
-            target_recipient_email: !isIncomingAnswer ? targetEmail : undefined,
-            target_recipient_phone: !isIncomingAnswer ? recipientPhone : undefined,
+            call_type: vidOnNow ? "video" : "audio",
+            target_recipient_name: !isIncomingAnswer ? recipientNameRef.current : undefined,
+            target_recipient_email: !isIncomingAnswer ? targetEmailRef.current : undefined,
+            target_recipient_phone: !isIncomingAnswer ? recipientPhoneRef.current : undefined,
             initiator_phone: !isIncomingAnswer ? myLinkedPhone || undefined : undefined,
             participant_phone: myLinkedPhone || undefined,
             display_name: callerName,
-            is_muted: isMicMuted,
+            is_muted: micMutedNow,
             clear_host_mute: shouldClearHostMute || undefined,
-            is_video_on: isVideoOn && hasLocalVideoTrack,
-            is_screen_sharing: isLocalScreenSharing,
+            is_video_on: vidOnNow && hasVidTrackNow,
+            is_screen_sharing: screenSharingNow,
             virtual_bg_id: selectedBgIdRef.current,
+            virtual_bg_badge: activeBgBadge,
             webrtc_connected: webrtcActiveNow,
             live_frame:
-              !webrtcActiveNow && isVideoOn && hasLocalVideoTrack
+              !webrtcActiveNow && vidOnNow && hasVidTrackNow
                 ? lastCapturedFrameRef.current
                 : null,
-            live_audio_chunk: !webrtcActiveNow && !isMicMuted ? latestAudioChunkRef.current : undefined,
-            recent_audio_chunks: !webrtcActiveNow && !isMicMuted ? recentAudioChunksRef.current : undefined,
+            live_audio_chunk: !webrtcActiveNow && !micMutedNow ? latestAudioChunkRef.current : undefined,
+            recent_audio_chunks: !webrtcActiveNow && !micMutedNow ? recentAudioChunksRef.current : undefined,
           }),
         })
         const data = await res.json()
@@ -1757,7 +2374,7 @@ export function ConnectLnWhatsAppCallModal({
         if ((data?.call?.state === "ENDED" || data?.event_type === "call.ended") && !reopenFlag) {
           setCallStatus("ended")
           stopAllMedia()
-          setTimeout(() => onClose(), 500)
+          setTimeout(() => onCloseRef.current(), 500)
           return
         }
 
@@ -1783,7 +2400,7 @@ export function ConnectLnWhatsAppCallModal({
         const localIsHostMuted =
           !shouldClearHostMute &&
           (Boolean(meSrv?.host_muted) || doesIdentityMatchAnyKey(mySelfEntry, srvMutedKeys))
-        if (localIsHostMuted && !isMicMuted) {
+        if (localIsHostMuted && !micMutedNow) {
           setIsMicMuted(true)
           setWasMutedByHostBanner(true)
           localStreamRef.current?.getAudioTracks().forEach((t) => {
@@ -1803,9 +2420,19 @@ export function ConnectLnWhatsAppCallModal({
             (Array.isArray(srvStage.recipient_ids) &&
               srvStage.recipient_ids.includes(localPeerUid))
           if (isStageVisibleToSelf) {
-            setActiveSharedStage((prev) =>
-              prev && prev.updated_at_ms === srvStage.updated_at_ms ? prev : srvStage
-            )
+            setActiveSharedStage((prev) => {
+              if (prev && prev.updated_at_ms === srvStage.updated_at_ms) {
+                return !prev.frame_or_data_url && srvStage.frame_or_data_url ? srvStage : prev
+              }
+              const sameFileData =
+                prev?.active &&
+                prev.frame_or_data_url &&
+                !srvStage.frame_or_data_url &&
+                (prev.file_name || prev.title) === (srvStage.file_name || srvStage.title)
+              return sameFileData
+                ? { ...srvStage, frame_or_data_url: prev.frame_or_data_url }
+                : srvStage
+            })
           }
         } else if (srvStage && srvStage.active === false) {
           setActiveSharedStage((prev) =>
@@ -2053,6 +2680,7 @@ export function ConnectLnWhatsAppCallModal({
         }
 
         if (remotes.length > 0) {
+          emptyRemotesStreak = 0
           setCallStatus("connected")
           setPushBannerNote("")
           setRemoteWebRtcPeers(mappedPeers)
@@ -2076,7 +2704,7 @@ export function ConnectLnWhatsAppCallModal({
               knownRemotePeerIdsRef.current.add(rp.peer_id)
               dialPeerNowRef.current?.(rp.peer_id, false)
             }
-            const peerStream = rp.peer_id ? remoteStreamsMap[rp.peer_id] : undefined
+            const peerStream = rp.peer_id ? remoteStreamsMapRef.current[rp.peer_id] : undefined
             const peerSilencedByHost = Boolean(
               rp.host_muted ||
                 doesIdentityMatchAnyKey(
@@ -2096,12 +2724,19 @@ export function ConnectLnWhatsAppCallModal({
             }
           }
         } else {
-          setRemoteWebRtcPeers([])
+          emptyRemotesStreak += 1
+          if (
+            emptyRemotesStreak >= 3 &&
+            Object.keys(remoteStreamsMapRef.current).length === 0
+          ) {
+            setRemoteWebRtcPeers([])
+          }
         }
       } catch {}
 
       if (mounted) {
-        const fastWebRtc = hasLiveRemoteVideoRef.current || Object.keys(remoteStreamsMap).length > 0
+        const fastWebRtc =
+          hasLiveRemoteVideoRef.current || Object.keys(remoteStreamsMapRef.current).length > 0
         timer = setTimeout(syncBeat, fastWebRtc ? 2400 : 320)
       }
     }
@@ -2115,34 +2750,33 @@ export function ConnectLnWhatsAppCallModal({
     open,
     callId,
     localPeerUid,
-    isVideoOn,
-    hasLocalVideoTrack,
-    isMicMuted,
     callerName,
-    recipientName,
-    recipientPhone,
-    targetEmail,
+    targetLabel,
+    targetPhone,
+    callerEmail,
     isIncomingAnswer,
-    hasAnyWebRtcStream,
-    remoteStreamsMap,
     removeCellLegParticipant,
-    onClose,
     stopAllMedia,
   ])
 
   const totalRemoteCount = remoteWebRtcPeers.length + cellLegs.length
+  if (totalRemoteCount > maxRemoteCountSeenRef.current) {
+    maxRemoteCountSeenRef.current = totalRemoteCount
+  }
   const isGroupGridMode = totalRemoteCount >= 2
+  const localPreviewStream =
+    selectedBgId !== "none" && virtualBgStreamState ? virtualBgStreamState : localStreamState
 
-  // Bind local video refs whenever stream or layout changes
+  // Bind local video refs whenever preview stream, background, or layout changes
   useEffect(() => {
     for (const el of [localVideoRef.current, gridLocalVideoRef.current]) {
-      if (el && localStreamState) {
-        if (el.srcObject !== localStreamState) el.srcObject = localStreamState
+      if (el && localPreviewStream) {
+        if (el.srcObject !== localPreviewStream) el.srcObject = localPreviewStream
         el.muted = true
         el.play().catch(() => {})
       }
     }
-  }, [localStreamState, isVideoOn, hasLocalVideoTrack, isGroupGridMode])
+  }, [localPreviewStream, selectedBgId, isVideoOn, hasLocalVideoTrack, isGroupGridMode])
 
   const handleFlipCamera = async () => {
     const nextFacing = cameraFacing === "user" ? "environment" : "user"
@@ -2179,37 +2813,20 @@ export function ConnectLnWhatsAppCallModal({
     })
   }
 
-  // WhatsApp-style: outgoing call that nobody answers ends automatically after 60s
-  // (prevents a forgotten tab from ringing the recipient for hours).
+  // Never auto-end or auto-exit an active meeting: only quiet outgoing ringback tone after 45s while room stays open
   const remotePeerCountRef = useRef(0)
   remotePeerCountRef.current = remoteWebRtcPeers.length
   useEffect(() => {
     if (!open || isIncomingAnswer) return
     const t = window.setTimeout(() => {
-      if (remotePeerCountRef.current > 0) return
-      fetch("/api/v1/calls", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        keepalive: true,
-        body: JSON.stringify({
-          action: "end",
-          call_id: callId,
-          user_id: localPeerUid,
-          target_recipient_phone: recipientPhone || undefined,
-          invited_phones: cellLegsRef.current.map((l) => l.phone).filter(Boolean),
-        }),
-      }).catch(() => {})
-      setCallStatus("ended")
-      setPushBannerNote("No answer. Call ended after 60 seconds.")
-      stopAllMedia()
-      window.setTimeout(() => onClose(), 2500)
-    }, 60000)
+      if (remotePeerCountRef.current > 0 || hasAnyWebRtcStreamRef.current) return
+      stopOutgoingCallerRingbackTone()
+    }, 45000)
     return () => window.clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, isIncomingAnswer, callId])
 
-  // Play audible telephone ringtone on BOTH sides (caller waiting for answer & recipient connecting)
-  // until the remote WebRTC peer stream connects (`remoteWebRtcPeers.length > 0`) or the call ends.
+  // Play audible telephone ringtone while dialing until remote peer connects or 45s standby limit
   const isWaitingForAnswer =
     open &&
     callStatus !== "ended" &&
@@ -2226,20 +2843,39 @@ export function ConnectLnWhatsAppCallModal({
     }
   }, [isWaitingForAnswer])
 
-  const handleHangup = () => {
+  const handleHangup = (forceEndForAll = false) => {
     stopOutgoingCallerRingbackTone()
+    const myPhone = getMyLinkedConnectLnPhone()
+    const isMultiPartyGroupCall =
+      !forceEndForAll &&
+      (remoteWebRtcPeersRef.current.length >= 2 ||
+        remoteWebRtcPeersRef.current.length + cellLegsRef.current.length >= 2 ||
+        maxRemoteCountSeenRef.current >= 2)
+
     fetch("/api/v1/calls", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       keepalive: true,
-      body: JSON.stringify({
-        action: "end",
-        call_id: callId,
-        user_id: localPeerUid,
-        display_name: callerName,
-        target_recipient_phone: recipientPhone || undefined,
-        invited_phones: cellLegs.map((l) => l.phone).filter(Boolean),
-      }),
+      body: JSON.stringify(
+        isMultiPartyGroupCall
+          ? {
+              action: "leave",
+              call_id: callId,
+              user_id: localPeerUid,
+              display_name: callerName,
+              participant_phone: myPhone || undefined,
+            }
+          : {
+              action: "end",
+              call_id: callId,
+              user_id: localPeerUid,
+              display_name: callerName,
+              participant_phone: myPhone || undefined,
+              end_for_all: forceEndForAll || undefined,
+              target_recipient_phone: recipientPhone || undefined,
+              invited_phones: cellLegs.map((l) => l.phone).filter(Boolean),
+            }
+      ),
     }).catch(() => {})
     stopAllMedia()
     onClose()
@@ -2513,6 +3149,8 @@ export function ConnectLnWhatsAppCallModal({
       }
       setActiveSharedStage(stagePayload)
       setIsStageMinimized(false)
+      setIsStageExpanded(false)
+      setShowMaterialDrawer(false)
       setMaterialStatusNote(
         `✓ Shared "${file.name}" (${sizeKb}) with ${
           materialRecipientScope === "everyone"
@@ -2520,6 +3158,34 @@ export function ConnectLnWhatsAppCallModal({
             : recipientNames?.join(", ") || "Selected Members"
         }!`
       )
+
+      // Broadcast full file stage over PeerJS DataChannels so PDFs & large materials appear instantaneously P2P
+      activeDataConnsRef.current.forEach((conn) => {
+        if (conn?.open) {
+          try {
+            conn.send({ type: "stage_share", stage: stagePayload })
+          } catch {}
+        }
+      })
+      if (peerRef.current && !peerRef.current.destroyed) {
+        knownRemotePeerIdsRef.current.forEach((pid) => {
+          const existingConn = activeDataConnsRef.current.get(pid)
+          if (!existingConn) {
+            try {
+              const dc = peerRef.current.connect(pid, { reliable: true })
+              if (dc) {
+                activeDataConnsRef.current.set(pid, dc)
+                dc.on("open", () => {
+                  try {
+                    dc.send({ type: "stage_share", stage: stagePayload })
+                  } catch {}
+                })
+              }
+            } catch {}
+          }
+        })
+      }
+
       await fetch("/api/v1/calls", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -2539,12 +3205,16 @@ export function ConnectLnWhatsAppCallModal({
     if (isLocalScreenSharing && screenStreamRef.current) {
       screenStreamRef.current.getTracks().forEach((t) => t.stop())
       screenStreamRef.current = null
+      isLocalScreenSharingRef.current = false
       setIsLocalScreenSharing(false)
-      const vidTrack = localStreamRef.current?.getVideoTracks()[0]
-      if (vidTrack) {
+      const restoreTrack =
+        (selectedBgIdRef.current !== "none"
+          ? virtualBgStreamRef.current?.getVideoTracks().find((t) => t.readyState === "live")
+          : undefined) || localStreamRef.current?.getVideoTracks()[0]
+      if (restoreTrack) {
         activeMediaCallsRef.current.forEach((mc) => {
           const vs = mc?.peerConnection?.getSenders?.()?.find((s: any) => s.track?.kind === "video")
-          if (vs) vs.replaceTrack(vidTrack).catch(() => {})
+          if (vs) vs.replaceTrack(restoreTrack).catch(() => {})
         })
       }
       await fetch("/api/v1/calls", {
@@ -2569,6 +3239,7 @@ export function ConnectLnWhatsAppCallModal({
       const scrTrack = scr.getVideoTracks()[0]
       if (!scrTrack) return
       screenStreamRef.current = scr
+      isLocalScreenSharingRef.current = true
       setIsLocalScreenSharing(true)
       activeMediaCallsRef.current.forEach((mc) => {
         const vs = mc?.peerConnection?.getSenders?.()?.find((s: any) => s.track?.kind === "video")
@@ -2576,12 +3247,16 @@ export function ConnectLnWhatsAppCallModal({
       })
       scrTrack.onended = () => {
         screenStreamRef.current = null
+        isLocalScreenSharingRef.current = false
         setIsLocalScreenSharing(false)
-        const camTrack = localStreamRef.current?.getVideoTracks()[0]
-        if (camTrack) {
+        const restoreTrack =
+          (selectedBgIdRef.current !== "none"
+            ? virtualBgStreamRef.current?.getVideoTracks().find((t) => t.readyState === "live")
+            : undefined) || localStreamRef.current?.getVideoTracks()[0]
+        if (restoreTrack) {
           activeMediaCallsRef.current.forEach((mc) => {
             const vs = mc?.peerConnection?.getSenders?.()?.find((s: any) => s.track?.kind === "video")
-            if (vs) vs.replaceTrack(camTrack).catch(() => {})
+            if (vs) vs.replaceTrack(restoreTrack).catch(() => {})
           })
         }
         setActiveSharedStage(null)
@@ -2632,6 +3307,17 @@ export function ConnectLnWhatsAppCallModal({
       return
     }
     setActiveSharedStage(null)
+    setIsStageExpanded(false)
+    activeDataConnsRef.current.forEach((conn) => {
+      if (conn?.open) {
+        try {
+          conn.send({
+            type: "stage_share",
+            stage: { active: false, updated_at_ms: Date.now() },
+          })
+        } catch {}
+      }
+    })
     await fetch("/api/v1/calls", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -2654,6 +3340,7 @@ export function ConnectLnWhatsAppCallModal({
       const url = String(reader.result || "")
       if (url.startsWith("data:image/")) {
         setCustomBgDataUrl(url)
+        selectedBgIdRef.current = "custom-image"
         setSelectedBgId("custom-image")
       }
     }
@@ -2720,12 +3407,22 @@ export function ConnectLnWhatsAppCallModal({
       : {}
 
   return (
-    <div
-      className={`fixed inset-0 z-[90] text-white flex flex-col justify-between overflow-hidden select-none ${
-        selectedBgId === "custom-image" ? "bg-[#0B141A]" : activeBgTheme.stageClass
-      }`}
-      style={activeBgBackgroundStyle}
-    >
+    <div className="fixed inset-0 z-[90] text-white flex flex-col justify-between overflow-hidden select-none bg-[#0B141A]">
+      {/* Persistent offscreen canvas keeping captureStream(24) ticked cleanly for per-user virtual background replacement */}
+      <canvas
+        ref={virtualBgCanvasRef}
+        width={640}
+        height={480}
+        aria-hidden="true"
+        style={{
+          position: "fixed",
+          width: 2,
+          height: 2,
+          opacity: 0.01,
+          pointerEvents: "none",
+          zIndex: -1,
+        }}
+      />
       {/* Hidden device pickers for Background, Ringtone, Device Materials & Chat Attachments */}
       <input
         ref={bgFileInputRef}
@@ -2820,102 +3517,162 @@ export function ConnectLnWhatsAppCallModal({
       )}
 
       {/* SHARED DEVICE MATERIAL LIVE STAGE OVERLAY */}
-      {activeSharedStage?.active && !isStageMinimized && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-30 w-[94vw] max-w-2xl rounded-2xl bg-[#0D171D]/95 border-2 border-emerald-400/60 shadow-2xl overflow-hidden">
-          <div className="px-3.5 py-2 bg-[#13222A] border-b border-white/10 flex items-center justify-between gap-2">
-            <div className="min-w-0 flex items-center gap-2">
-              <FileText className="h-4 w-4 text-emerald-400 shrink-0" />
-              <div className="min-w-0">
-                <p className="text-xs font-extrabold text-white truncate">
-                  {activeSharedStage.file_name || activeSharedStage.title}
-                </p>
-                <p className="text-[10px] text-emerald-300 truncate">
-                  Shared by {activeSharedStage.sharer_name}
-                  {activeSharedStage.file_size_label ? ` · ${activeSharedStage.file_size_label}` : ""}
-                  {activeSharedStage.recipient_scope === "selected" &&
-                  activeSharedStage.recipient_names?.length
-                    ? ` · To: ${activeSharedStage.recipient_names.join(", ")}`
-                    : " · Shared with Everyone"}
-                </p>
+      {activeSharedStage?.active && !isStageMinimized && (() => {
+        const stageFileName = activeSharedStage.file_name || activeSharedStage.title || "material"
+        const stageMime = (activeSharedStage.mime_type || "").toLowerCase()
+        const rawStageUrl = activeSharedStage.frame_or_data_url || ""
+        const resolvedUrl = stageBlobUrl || rawStageUrl
+        const isStagePdf =
+          stageMime.includes("pdf") ||
+          /\.pdf$/i.test(stageFileName) ||
+          rawStageUrl.startsWith("data:application/pdf")
+        const isStageImage =
+          stageMime.startsWith("image/") ||
+          /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(stageFileName)
+        const isStageVideo =
+          stageMime.startsWith("video/") || /\.(mp4|webm|mov|m4v|ogv)$/i.test(stageFileName)
+        const isStageAudio =
+          stageMime.startsWith("audio/") || /\.(mp3|wav|m4a|ogg|aac)$/i.test(stageFileName)
+
+        return (
+          <div
+            className={`fixed top-16 left-1/2 -translate-x-1/2 z-30 rounded-2xl bg-[#0D171D]/98 border-2 border-emerald-400/60 shadow-2xl overflow-hidden transition-all ${
+              isStageExpanded ? "w-[96vw] max-w-5xl" : "w-[94vw] max-w-2xl"
+            }`}
+          >
+            <div className="px-3.5 py-2 bg-[#13222A] border-b border-white/10 flex items-center justify-between gap-2">
+              <div className="min-w-0 flex items-center gap-2">
+                <FileText className="h-4 w-4 text-emerald-400 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs font-extrabold text-white truncate">{stageFileName}</p>
+                  <p className="text-[10px] text-emerald-300 truncate">
+                    Shared by {activeSharedStage.sharer_name}
+                    {activeSharedStage.file_size_label
+                      ? ` · ${activeSharedStage.file_size_label}`
+                      : ""}
+                    {activeSharedStage.recipient_scope === "selected" &&
+                    activeSharedStage.recipient_names?.length
+                      ? ` · To: ${activeSharedStage.recipient_names.join(", ")}`
+                      : " · Shared with Everyone"}
+                  </p>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-1.5 shrink-0">
-              {activeSharedStage.frame_or_data_url && (
-                <a
-                  href={activeSharedStage.frame_or_data_url}
-                  download={activeSharedStage.file_name || activeSharedStage.title || "material"}
-                  className="rounded-lg bg-emerald-600 hover:bg-emerald-500 px-2.5 py-1 text-[11px] font-extrabold text-white no-underline flex items-center gap-1"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  <span>Download</span>
-                </a>
-              )}
-              <button
-                type="button"
-                onClick={() => setIsStageMinimized(true)}
-                className="rounded-lg bg-white/10 hover:bg-white/20 px-2 py-1 text-[11px] font-bold text-white cursor-pointer"
-              >
-                Hide
-              </button>
-              {(activeSharedStage.sharer_user_id === localPeerUid || canModerateCall) && (
+              <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                {resolvedUrl && (
+                  <a
+                    href={resolvedUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-lg bg-sky-700 hover:bg-sky-600 px-2 py-1 text-[11px] font-bold text-white no-underline"
+                    title="Open in full browser viewer"
+                  >
+                    ↗ Open
+                  </a>
+                )}
+                {(rawStageUrl || resolvedUrl) && (
+                  <a
+                    href={rawStageUrl || resolvedUrl}
+                    download={stageFileName}
+                    className="rounded-lg bg-emerald-600 hover:bg-emerald-500 px-2.5 py-1 text-[11px] font-extrabold text-white no-underline flex items-center gap-1"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    <span>Download</span>
+                  </a>
+                )}
                 <button
                   type="button"
-                  onClick={handleStopSharedStage}
-                  className="rounded-lg bg-rose-600/80 hover:bg-rose-600 px-2 py-1 text-[11px] font-bold text-white cursor-pointer"
+                  onClick={() => setIsStageExpanded((v) => !v)}
+                  className="rounded-lg bg-white/10 hover:bg-white/20 px-2 py-1 text-[11px] font-bold text-white cursor-pointer"
                 >
-                  Stop
+                  {isStageExpanded ? "Compact" : "Expand"}
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setIsStageMinimized(true)}
+                  className="rounded-lg bg-white/10 hover:bg-white/20 px-2 py-1 text-[11px] font-bold text-white cursor-pointer"
+                >
+                  Hide
+                </button>
+                {(activeSharedStage.sharer_user_id === localPeerUid || canModerateCall) && (
+                  <button
+                    type="button"
+                    onClick={handleStopSharedStage}
+                    className="rounded-lg bg-rose-600/80 hover:bg-rose-600 px-2 py-1 text-[11px] font-bold text-white cursor-pointer"
+                  >
+                    Stop
+                  </button>
+                )}
+              </div>
+            </div>
+            <div
+              className={`p-3 overflow-auto flex items-center justify-center bg-black/50 ${
+                isStageExpanded ? "max-h-[68vh]" : "max-h-[44vh]"
+              }`}
+            >
+              {activeSharedStage.mode === "screen" ? (
+                <p className="text-xs text-emerald-200 py-4 font-semibold">
+                  🖥️ Live screen share active from {activeSharedStage.sharer_name}
+                </p>
+              ) : resolvedUrl && isStageImage ? (
+                <img
+                  src={resolvedUrl}
+                  alt={stageFileName}
+                  className={`${
+                    isStageExpanded ? "max-h-[62vh]" : "max-h-[38vh]"
+                  } rounded-xl object-contain`}
+                />
+              ) : resolvedUrl && isStageVideo ? (
+                <video
+                  src={resolvedUrl}
+                  controls
+                  className={`${isStageExpanded ? "max-h-[62vh]" : "max-h-[38vh]"} rounded-xl`}
+                />
+              ) : resolvedUrl && isStageAudio ? (
+                <audio
+                  src={resolvedUrl}
+                  controls
+                  data-connectln-call-audio="true"
+                  className="w-full max-w-md"
+                />
+              ) : resolvedUrl && isStagePdf ? (
+                <object
+                  data={`${resolvedUrl}#toolbar=1&navpanes=0&view=FitH`}
+                  type="application/pdf"
+                  className={`w-full rounded-xl bg-white ${
+                    isStageExpanded ? "h-[60vh]" : "h-[38vh]"
+                  }`}
+                >
+                  <iframe
+                    src={`${resolvedUrl}#toolbar=1&navpanes=0&view=FitH`}
+                    title={stageFileName}
+                    className={`w-full rounded-xl bg-white border-0 ${
+                      isStageExpanded ? "h-[60vh]" : "h-[38vh]"
+                    }`}
+                  />
+                </object>
+              ) : stageTextPreview ? (
+                <pre
+                  className={`w-full rounded-xl bg-[#071014] border border-white/10 p-3 text-xs text-emerald-100 font-mono overflow-auto whitespace-pre-wrap ${
+                    isStageExpanded ? "max-h-[60vh]" : "max-h-[36vh]"
+                  }`}
+                >
+                  {stageTextPreview}
+                </pre>
+              ) : (
+                <div className="py-5 px-6 text-center space-y-2.5">
+                  <FileText className="h-10 w-10 text-emerald-400 mx-auto" />
+                  <p className="text-xs font-bold text-white">{stageFileName}</p>
+                  <p className="text-[11px] text-slate-300">
+                    {resolvedUrl
+                      ? "Ready to view — click Open or Download above to view this document on your device."
+                      : "File metadata synced — large file preview transfers over WebRTC P2P when connected."}
+                  </p>
+                </div>
               )}
             </div>
           </div>
-          <div className="p-3 max-h-[38vh] overflow-auto flex items-center justify-center bg-black/40">
-            {activeSharedStage.mode === "screen" ? (
-              <p className="text-xs text-emerald-200 py-4 font-semibold">
-                🖥️ Live screen share active from {activeSharedStage.sharer_name}
-              </p>
-            ) : activeSharedStage.frame_or_data_url &&
-              activeSharedStage.mime_type?.startsWith("image/") ? (
-              <img
-                src={activeSharedStage.frame_or_data_url}
-                alt={activeSharedStage.file_name || "Shared material"}
-                className="max-h-[34vh] rounded-xl object-contain"
-              />
-            ) : activeSharedStage.frame_or_data_url &&
-              activeSharedStage.mime_type?.startsWith("video/") ? (
-              <video
-                src={activeSharedStage.frame_or_data_url}
-                controls
-                className="max-h-[34vh] rounded-xl"
-              />
-            ) : activeSharedStage.frame_or_data_url &&
-              activeSharedStage.mime_type?.startsWith("audio/") ? (
-              <audio
-                src={activeSharedStage.frame_or_data_url}
-                controls
-                data-connectln-call-audio="true"
-                className="w-full max-w-md"
-              />
-            ) : activeSharedStage.frame_or_data_url &&
-              activeSharedStage.mime_type?.includes("pdf") ? (
-              <iframe
-                src={activeSharedStage.frame_or_data_url}
-                title={activeSharedStage.file_name || "PDF Preview"}
-                className="w-full h-[32vh] rounded-xl bg-white"
-              />
-            ) : (
-              <div className="py-4 px-6 text-center space-y-2">
-                <FileText className="h-10 w-10 text-emerald-400 mx-auto" />
-                <p className="text-xs font-bold text-white">
-                  {activeSharedStage.file_name || activeSharedStage.title}
-                </p>
-                <p className="text-[11px] text-slate-300">
-                  Ready on device stage — click Download above to open or save this material.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+        )
+      })()}
 
       {activeSharedStage?.active && isStageMinimized && (
         <button
@@ -3253,14 +4010,13 @@ export function ConnectLnWhatsAppCallModal({
             })}
           </div>
         </div>
-      ) : (
+      ) : (() => {
+        const remoteBgTheme =
+          CALL_BACKGROUND_THEMES.find((b) => b.id === primaryPeer?.virtualBgId) ||
+          CALL_BACKGROUND_THEMES[0]
+        return (
         /* STAGE B: CLASSIC 1-ON-1 FULL-SCREEN WHATSAPP INTERNET CALL VIEW */
-        <div
-          className={`absolute inset-0 ${
-            selectedBgId === "custom-image" ? "" : activeBgTheme.stageClass
-          }`}
-          style={activeBgBackgroundStyle}
-        >
+        <div className={`absolute inset-0 ${remoteBgTheme.stageClass}`}>
           {!primaryStream && callStatus === "connected" && primaryPeer?.isVideoOn && primaryPeer.liveFrame && (
             <img
               src={primaryPeer.liveFrame}
@@ -3353,7 +4109,8 @@ export function ConnectLnWhatsAppCallModal({
             </div>
           )}
         </div>
-      )}
+        )
+      })()}
 
       {/* TOP WHATSAPP E2EE HEADER WITH `👑 HOST / MEMBERS` & `➕ ADD PERSON` BUTTONS */}
       <div className="fixed top-0 left-0 right-0 z-30 pt-3.5 px-4 sm:px-6 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent pb-5">
@@ -3414,37 +4171,55 @@ export function ConnectLnWhatsAppCallModal({
 
           <button
             type="button"
-            onClick={handleHangup}
+            onClick={() => handleHangup(false)}
             className="h-9 w-9 rounded-full bg-black/50 hover:bg-black/75 border border-white/15 flex items-center justify-center text-white cursor-pointer"
-            title="Close Call"
+            title={totalRemoteCount >= 2 ? "Leave Group Call" : "Close Call"}
           >
             <X className="h-4 w-4" />
           </button>
         </div>
       </div>
 
-      {/* FLOATING PICTURE-IN-PICTURE LOCAL SELF-VIEW (1-on-1 Mode Only) */}
-      {!isGroupGridMode && isVideoOn && hasLocalVideoTrack && (
+      {/* FLOATING PICTURE-IN-PICTURE LOCAL SELF-VIEW (1-on-1 Mode Only — YOUR background shows ONLY behind YOU) */}
+      {!isGroupGridMode && ((isVideoOn && hasLocalVideoTrack) || selectedBgId !== "none") && (
         <div
-          className="fixed top-16 right-4 sm:right-6 z-30 w-28 h-40 sm:w-36 sm:h-48 rounded-2xl overflow-hidden border-2 border-white/30 bg-black shadow-2xl"
-          style={{ zIndex: 35 }}
+          className={`fixed top-16 right-4 sm:right-6 z-30 w-28 h-40 sm:w-36 sm:h-48 rounded-2xl overflow-hidden border-2 border-white/30 shadow-2xl flex items-center justify-center ${
+            selectedBgId === "custom-image" ? "bg-[#111B21]" : activeBgTheme.stageClass
+          }`}
+          style={{ zIndex: 35, ...activeBgBackgroundStyle }}
         >
-          <video
-            ref={localVideoRef}
-            autoPlay
-            playsInline
-            muted
-            className="w-full h-full object-cover"
-            style={{ transform: cameraFacing === "user" ? "scaleX(-1)" : "none" }}
-          />
-          <button
-            type="button"
-            onClick={handleFlipCamera}
-            className="absolute bottom-2 right-2 h-7 w-7 rounded-full bg-black/65 hover:bg-black/85 text-white flex items-center justify-center cursor-pointer border border-white/20"
-            title="Flip Front / Back Camera"
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-          </button>
+          {isVideoOn && hasLocalVideoTrack ? (
+            <video
+              ref={localVideoRef}
+              autoPlay
+              playsInline
+              muted
+              className="w-full h-full object-cover"
+              style={{ transform: cameraFacing === "user" ? "scaleX(-1)" : "none" }}
+            />
+          ) : (
+            <div className="flex flex-col items-center gap-1.5 p-2 text-center">
+              <div className="w-12 h-12 rounded-full bg-emerald-700/90 flex items-center justify-center text-sm font-extrabold border-2 border-emerald-300/60 shadow">
+                {callerName.slice(0, 2).toUpperCase()}
+              </div>
+              <span className="text-[10px] font-bold text-white/90 truncate max-w-full">You</span>
+            </div>
+          )}
+          {selectedBgId !== "none" && (
+            <span className="absolute top-1.5 left-1.5 rounded-full bg-black/65 px-2 py-0.5 text-[9.5px] font-bold text-emerald-200 border border-white/15">
+              🎨 {selectedBgId === "custom-image" ? "My BG" : activeBgTheme.badge}
+            </span>
+          )}
+          {isVideoOn && hasLocalVideoTrack && (
+            <button
+              type="button"
+              onClick={handleFlipCamera}
+              className="absolute bottom-2 right-2 h-7 w-7 rounded-full bg-black/65 hover:bg-black/85 text-white flex items-center justify-center cursor-pointer border border-white/20"
+              title="Flip Front / Back Camera"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
       )}
 
@@ -3490,7 +4265,10 @@ export function ConnectLnWhatsAppCallModal({
                   <button
                     key={bg.id}
                     type="button"
-                    onClick={() => setSelectedBgId(bg.id)}
+                    onClick={() => {
+                      selectedBgIdRef.current = bg.id
+                      setSelectedBgId(bg.id)
+                    }}
                     className={`rounded-xl p-2 text-left border transition-all cursor-pointer ${
                       active
                         ? "border-emerald-400 ring-2 ring-emerald-400/50 bg-white/10"
@@ -3508,7 +4286,10 @@ export function ConnectLnWhatsAppCallModal({
               {customBgDataUrl && (
                 <button
                   type="button"
-                  onClick={() => setSelectedBgId("custom-image")}
+                  onClick={() => {
+                    selectedBgIdRef.current = "custom-image"
+                    setSelectedBgId("custom-image")
+                  }}
                   className={`rounded-xl p-2 text-left border transition-all cursor-pointer ${
                     selectedBgId === "custom-image"
                       ? "border-emerald-400 ring-2 ring-emerald-400/50 bg-white/10"
@@ -3936,16 +4717,29 @@ export function ConnectLnWhatsAppCallModal({
               </p>
             </div>
             {canModerateCall && (
-              <button
-                type="button"
-                disabled={isModerating}
-                onClick={() => handleModerateMember({ subAction: "mute_all" })}
-                style={{ color: "#FFFFFF" }}
-                className="rounded-xl bg-rose-600 hover:bg-rose-500 px-3 py-1.5 text-xs font-extrabold cursor-pointer shrink-0 flex items-center gap-1 disabled:opacity-50"
-              >
-                <VolumeX className="h-3.5 w-3.5" />
-                <span>Mute All Members</span>
-              </button>
+              <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  disabled={isModerating}
+                  onClick={() => handleModerateMember({ subAction: "mute_all" })}
+                  style={{ color: "#FFFFFF" }}
+                  className="rounded-xl bg-amber-600 hover:bg-amber-500 px-3 py-1.5 text-xs font-extrabold cursor-pointer shrink-0 flex items-center gap-1 disabled:opacity-50"
+                >
+                  <VolumeX className="h-3.5 w-3.5" />
+                  <span>Mute All Members</span>
+                </button>
+                {isLocalHost && totalRemoteCount >= 2 && (
+                  <button
+                    type="button"
+                    onClick={() => handleHangup(true)}
+                    style={{ color: "#FFFFFF" }}
+                    className="rounded-xl bg-rose-700 hover:bg-rose-600 px-3 py-1.5 text-xs font-extrabold cursor-pointer shrink-0 flex items-center gap-1"
+                  >
+                    <PhoneOff className="h-3.5 w-3.5" />
+                    <span>End Meeting for All</span>
+                  </button>
+                )}
+              </div>
             )}
           </div>
 
@@ -4420,10 +5214,14 @@ export function ConnectLnWhatsAppCallModal({
 
           <button
             type="button"
-            onClick={handleHangup}
+            onClick={() => handleHangup(false)}
             style={{ color: "#FFFFFF" }}
             className="h-10 w-12 shrink-0 rounded-full bg-rose-600 hover:bg-rose-500 flex items-center justify-center shadow-lg cursor-pointer transition-transform active:scale-95"
-            title="End Call for All"
+            title={
+              totalRemoteCount >= 2
+                ? "Leave Group Call (others stay in meeting)"
+                : "End Call"
+            }
           >
             <PhoneOff className="h-4 w-4" />
           </button>
