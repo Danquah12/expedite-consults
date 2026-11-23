@@ -77,6 +77,24 @@ export interface StatusUpdateItem {
     seriesLabel?: string;
 }
 
+export interface StatusCommentItem {
+    id: string;
+    slideId: string;
+    authorName: string;
+    authorEmail?: string;
+    authorAvatar?: string;
+    text: string;
+    timestampLabel: string;
+    createdAtMs: number;
+}
+
+export interface StatusSlideInteractions {
+    slideId: string;
+    reactions: Record<string, string[]>;
+    comments: StatusCommentItem[];
+    updatedAtMs: number;
+}
+
 function formatSecondsToMmSs(sec: number): string {
     if (!Number.isFinite(sec) || sec < 0) return '0:00';
     const whole = Math.floor(sec);
@@ -1220,6 +1238,28 @@ export function WhatsAppModeWorkspace({
     const userAvatar = currentUser?.avatar || '/brand/kwesi-avatar.png';
     const userName = currentUser?.name || 'Kwesi Asiedu';
     const userEmail = String(currentUser?.email || '').trim().toLowerCase();
+    const reactorKey = (userEmail || userName).toLowerCase().trim();
+    const interactionsStorageKey = 'connectln_status_interactions_v1';
+
+    const [statusInteractions, setStatusInteractions] = useState<Record<string, StatusSlideInteractions>>(() => {
+        if (typeof window === 'undefined') return {};
+        try {
+            const raw = window.localStorage.getItem(interactionsStorageKey);
+            const parsed = raw ? JSON.parse(raw) : null;
+            return parsed && typeof parsed === 'object' ? parsed : {};
+        } catch {
+            return {};
+        }
+    });
+    const [showStatusComments, setShowStatusComments] = useState<boolean>(true);
+    const [isSubmittingComment, setIsSubmittingComment] = useState<boolean>(false);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        try {
+            window.localStorage.setItem(interactionsStorageKey, JSON.stringify(statusInteractions));
+        } catch {}
+    }, [statusInteractions]);
 
     // ---- STATUS STATE (Per-User Multi-Item Status Boxes) ----
     const statusStorageKey = `connectln_user_status_boxes_v4__${userName.toLowerCase().trim()}`;
@@ -1261,15 +1301,37 @@ export function WhatsAppModeWorkspace({
         }
     });
 
-    // Hydrate shared cloud status items so all users see uploaded YouTube, Facebook & TikTok statuses
+    // Hydrate shared cloud status items & interactions (comments + reactions) with live 15s polling
     useEffect(() => {
         if (mode !== 'status') return;
         let cancelled = false;
-        (async () => {
+        const loadStatusFromCloud = async () => {
             try {
                 const res = await fetch('/api/connectin/status', { cache: 'no-store' });
                 if (!res.ok || cancelled) return;
                 const data = await res.json();
+                const cloudInteractions = data?.interactions;
+                if (cloudInteractions && typeof cloudInteractions === 'object') {
+                    setStatusInteractions((prev) => {
+                        const next = { ...prev };
+                        for (const [sid, srv] of Object.entries<any>(cloudInteractions)) {
+                            if (!sid || !srv || typeof srv !== 'object') continue;
+                            const prevTs = Number(next[sid]?.updatedAtMs || 0);
+                            const srvTs = Number(srv.updatedAtMs || 0);
+                            if (!next[sid] || srvTs >= prevTs) {
+                                next[sid] = {
+                                    slideId: sid,
+                                    reactions:
+                                        srv.reactions && typeof srv.reactions === 'object' ? srv.reactions : {},
+                                    comments: Array.isArray(srv.comments) ? srv.comments : [],
+                                    updatedAtMs: srvTs,
+                                };
+                            }
+                        }
+                        return next;
+                    });
+                }
+
                 const cloudItems: StatusUpdateItem[] = Array.isArray(data?.items) ? data.items : [];
                 if (cloudItems.length === 0 || cancelled) return;
 
@@ -1283,8 +1345,7 @@ export function WhatsAppModeWorkspace({
                     const slideEmail = String(raw.authorEmail || '').trim().toLowerCase();
                     const isMine = Boolean(
                         (userEmail && slideEmail && slideEmail === userEmail) ||
-                        (!slideEmail && cleanAuthor.toLowerCase() === ownerSlug) ||
-                        (userEmail && slideEmail === userEmail)
+                        (!slideEmail && cleanAuthor.toLowerCase() === ownerSlug)
                     );
                     if (isMine) {
                         myCloudSlides.push({ ...raw, authorName: userName });
@@ -1362,9 +1423,18 @@ export function WhatsAppModeWorkspace({
                     return [...newBoxes, ...updated];
                 });
             } catch {}
-        })();
+        };
+
+        void loadStatusFromCloud();
+        const intervalId = window.setInterval(() => {
+            if (typeof document === 'undefined' || document.visibilityState === 'visible') {
+                void loadStatusFromCloud();
+            }
+        }, 15000);
+
         return () => {
             cancelled = true;
+            window.clearInterval(intervalId);
         };
     }, [mode, userName, userEmail]);
 
@@ -1844,6 +1914,174 @@ export function WhatsAppModeWorkspace({
                 method: 'DELETE',
             }).catch(() => {});
             triggerToast('🗑️ Removed status item from My Status Box.');
+        };
+
+        const handleToggleStatusReaction = async (slideId: string, emoji: string, boxAuthorName: string) => {
+            if (!slideId || !emoji) return;
+            let wasAdded = false;
+            setStatusInteractions((prev) => {
+                const current = prev[slideId] || {
+                    slideId,
+                    reactions: {},
+                    comments: [],
+                    updatedAtMs: 0,
+                };
+                const nextReactions = { ...current.reactions };
+                const list = Array.isArray(nextReactions[emoji]) ? [...nextReactions[emoji]] : [];
+                const idx = list.indexOf(reactorKey);
+                if (idx >= 0) {
+                    list.splice(idx, 1);
+                } else {
+                    list.push(reactorKey);
+                    wasAdded = true;
+                }
+                if (list.length > 0) {
+                    nextReactions[emoji] = list;
+                } else {
+                    delete nextReactions[emoji];
+                }
+                return {
+                    ...prev,
+                    [slideId]: {
+                        ...current,
+                        reactions: nextReactions,
+                        updatedAtMs: Date.now(),
+                    },
+                };
+            });
+
+            triggerToast(
+                wasAdded
+                    ? `${emoji} Reacted to ${boxAuthorName}'s status`
+                    : `Removed ${emoji} reaction`
+            );
+
+            try {
+                const res = await fetch('/api/connectin/status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'react',
+                        slideId,
+                        emoji,
+                        userName,
+                        userEmail: userEmail || undefined,
+                    }),
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data?.interactions) {
+                        setStatusInteractions((prev) => ({
+                            ...prev,
+                            [slideId]: data.interactions,
+                        }));
+                    }
+                }
+            } catch {}
+        };
+
+        const handleSubmitStatusComment = async (slideId: string, boxAuthorName: string) => {
+            const cleanText = statusReplyText.trim();
+            if (!slideId || !cleanText || isSubmittingComment) return;
+            const nowStamp = `Today at ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+            const optimisticComment: StatusCommentItem = {
+                id: `sc_local_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+                slideId,
+                authorName: userName,
+                authorEmail: userEmail || undefined,
+                authorAvatar: userAvatar,
+                text: cleanText,
+                timestampLabel: nowStamp,
+                createdAtMs: Date.now(),
+            };
+
+            setStatusReplyText('');
+            setShowStatusComments(true);
+            setStatusInteractions((prev) => {
+                const current = prev[slideId] || {
+                    slideId,
+                    reactions: {},
+                    comments: [],
+                    updatedAtMs: 0,
+                };
+                return {
+                    ...prev,
+                    [slideId]: {
+                        ...current,
+                        comments: [...current.comments, optimisticComment],
+                        updatedAtMs: Date.now(),
+                    },
+                };
+            });
+
+            setIsSubmittingComment(true);
+            try {
+                const res = await fetch('/api/connectin/status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'comment',
+                        slideId,
+                        text: cleanText,
+                        authorName: userName,
+                        authorEmail: userEmail || undefined,
+                        authorAvatar: userAvatar,
+                        timestampLabel: nowStamp,
+                    }),
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data?.interactions) {
+                        setStatusInteractions((prev) => ({
+                            ...prev,
+                            [slideId]: data.interactions,
+                        }));
+                    }
+                    triggerToast(`💬 Comment posted on ${boxAuthorName}'s Status`);
+                } else {
+                    triggerToast('⚠️ Comment saved locally (cloud sync retry needed).');
+                }
+            } catch {
+                triggerToast('⚠️ Comment saved locally (offline).');
+            } finally {
+                setIsSubmittingComment(false);
+            }
+        };
+
+        const handleDeleteStatusComment = async (slideId: string, commentId: string) => {
+            setStatusInteractions((prev) => {
+                const current = prev[slideId];
+                if (!current) return prev;
+                return {
+                    ...prev,
+                    [slideId]: {
+                        ...current,
+                        comments: current.comments.filter((c) => c.id !== commentId),
+                        updatedAtMs: Date.now(),
+                    },
+                };
+            });
+
+            try {
+                const res = await fetch('/api/connectin/status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'delete_comment',
+                        slideId,
+                        commentId,
+                    }),
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data?.interactions) {
+                        setStatusInteractions((prev) => ({
+                            ...prev,
+                            [slideId]: data.interactions,
+                        }));
+                    }
+                }
+            } catch {}
         };
 
         const readCompactImageDataUrl = (file: File): Promise<string> =>
@@ -3428,6 +3666,19 @@ export function WhatsAppModeWorkspace({
                         const isEmbeddedSocialVideo = Boolean(parsedEmbed?.embedUrl);
                         const isAudioSlide = !isEmbeddedSocialVideo && activeSlide.mediaType === 'audio' && Boolean(activeSlide.audioUrl);
                         const isVideoSlide = !isEmbeddedSocialVideo && activeSlide.mediaType === 'video' && Boolean(activeSlide.videoUrl);
+                        const activeInteractions: StatusSlideInteractions = statusInteractions[activeSlide.id] || {
+                            slideId: activeSlide.id,
+                            reactions: {},
+                            comments: [],
+                            updatedAtMs: 0,
+                        };
+                        const reactionEntries = Object.entries(activeInteractions.reactions || {})
+                            .filter(([, users]) => Array.isArray(users) && users.length > 0)
+                            .sort((a, b) => b[1].length - a[1].length);
+                        const totalReactionsCount = reactionEntries.reduce((acc, [, users]) => acc + users.length, 0);
+                        const activeComments = Array.isArray(activeInteractions.comments)
+                            ? activeInteractions.comments
+                            : [];
                         const totalClipPasses = Math.max(1, activeSlide.musicSegmentsCount || 1);
                         const cumulativeCurrentSec =
                             totalClipPasses > 1 && activeVideoTiming.durationSec > 0
@@ -3998,53 +4249,184 @@ export function WhatsAppModeWorkspace({
                                         </button>
                                     </div>
                                     <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                                        {activeUserBox.slides.map((sl, idx) => (
-                                            <button
-                                                key={sl.id}
-                                                type="button"
-                                                onClick={() => handleSelectSlideInUserBox(idx)}
-                                                className={`px-2.5 py-1.5 rounded-lg border text-left text-[11px] flex items-center gap-1.5 shrink-0 cursor-pointer transition-all ${
-                                                    idx === safeSlideIndex
-                                                        ? 'bg-[#7C4225] border-[#D69E6B] text-[#FBF8F3] font-bold'
-                                                        : 'bg-white/5 border-white/10 text-[#D0C4AE] hover:bg-white/15'
-                                                }`}
-                                            >
-                                                <span>
-                                                    {sl.mediaType === 'audio'
-                                                        ? '🎵'
-                                                        : sl.mediaType === 'video'
-                                                        ? '🎬'
-                                                        : sl.mediaType === 'photo'
-                                                        ? '🖼️'
-                                                        : '📋'}
-                                                </span>
-                                                <span className="max-w-[140px] truncate">
-                                                    {sl.title || sl.videoTitle || sl.infoBadge || `Item ${idx + 1}`}
-                                                </span>
-                                                {sl.mediaFormat && (
-                                                    <span className="rounded bg-black/40 border border-white/15 px-1 py-0.5 text-[9px] font-mono text-[#E8C59B] shrink-0">
-                                                        {sl.mediaFormat}
+                                        {activeUserBox.slides.map((sl, idx) => {
+                                            const slInt = statusInteractions[sl.id];
+                                            const slRxCount = slInt
+                                                ? Object.values(slInt.reactions || {}).reduce(
+                                                      (a, arr) => a + (Array.isArray(arr) ? arr.length : 0),
+                                                      0
+                                                  )
+                                                : 0;
+                                            const slCmtCount = slInt?.comments?.length || 0;
+                                            return (
+                                                <button
+                                                    key={sl.id}
+                                                    type="button"
+                                                    onClick={() => handleSelectSlideInUserBox(idx)}
+                                                    className={`px-2.5 py-1.5 rounded-lg border text-left text-[11px] flex items-center gap-1.5 shrink-0 cursor-pointer transition-all ${
+                                                        idx === safeSlideIndex
+                                                            ? 'bg-[#7C4225] border-[#D69E6B] text-[#FBF8F3] font-bold'
+                                                            : 'bg-white/5 border-white/10 text-[#D0C4AE] hover:bg-white/15'
+                                                    }`}
+                                                >
+                                                    <span>
+                                                        {sl.mediaType === 'audio'
+                                                            ? '🎵'
+                                                            : sl.mediaType === 'video'
+                                                            ? '🎬'
+                                                            : sl.mediaType === 'photo'
+                                                            ? '🖼️'
+                                                            : '📋'}
                                                     </span>
-                                                )}
-                                                {sl.sourcePlatform && (
-                                                    <span className="text-[9px] text-[#D0C4AE]/80 shrink-0">
-                                                        · {sl.sourcePlatform}
+                                                    <span className="max-w-[140px] truncate">
+                                                        {sl.title || sl.videoTitle || sl.infoBadge || `Item ${idx + 1}`}
                                                     </span>
-                                                )}
-                                            </button>
-                                        ))}
+                                                    {sl.mediaFormat && (
+                                                        <span className="rounded bg-black/40 border border-white/15 px-1 py-0.5 text-[9px] font-mono text-[#E8C59B] shrink-0">
+                                                            {sl.mediaFormat}
+                                                        </span>
+                                                    )}
+                                                    {sl.sourcePlatform && (
+                                                        <span className="text-[9px] text-[#D0C4AE]/80 shrink-0">
+                                                            · {sl.sourcePlatform}
+                                                        </span>
+                                                    )}
+                                                    {(slRxCount > 0 || slCmtCount > 0) && (
+                                                        <span className="text-[9px] text-[#E8C59B] font-semibold shrink-0">
+                                                            {slRxCount > 0 ? ` · ❤️${slRxCount}` : ''}
+                                                            {slCmtCount > 0 ? ` · 💬${slCmtCount}` : ''}
+                                                        </span>
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
 
-                                {/* WhatsApp-Style Reply + Quick Emoji Reactions Bar */}
+                                {/* Live Reactions Summary & Comments Thread */}
+                                <div className="px-4 py-2.5 bg-[#121110] border-t border-white/10 space-y-2">
+                                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                            {reactionEntries.length > 0 ? (
+                                                reactionEntries.map(([emoji, users]) => {
+                                                    const hasReacted = users.includes(reactorKey);
+                                                    return (
+                                                        <button
+                                                            key={emoji}
+                                                            type="button"
+                                                            onClick={() =>
+                                                                void handleToggleStatusReaction(
+                                                                    activeSlide.id,
+                                                                    emoji,
+                                                                    activeUserBox.authorName
+                                                                )
+                                                            }
+                                                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold border transition-colors cursor-pointer ${
+                                                                hasReacted
+                                                                    ? 'bg-[#7C4225] border-[#D69E6B] text-[#FBF8F3]'
+                                                                    : 'bg-white/10 border-white/15 text-[#E5DDD0] hover:bg-white/20'
+                                                            }`}
+                                                            title="Tap to toggle reaction"
+                                                        >
+                                                            <span>{emoji}</span>
+                                                            <span>{users.length}</span>
+                                                        </button>
+                                                    );
+                                                })
+                                            ) : (
+                                                <span className="text-[11px] text-[#A1A1AA]">
+                                                    Tap an emoji below to react ({totalReactionsCount})
+                                                </span>
+                                            )}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowStatusComments((prev) => !prev)}
+                                            className="text-[11px] font-bold text-[#E8C59B] hover:underline cursor-pointer shrink-0"
+                                        >
+                                            💬 {activeComments.length}{' '}
+                                            {activeComments.length === 1 ? 'Comment' : 'Comments'}{' '}
+                                            {showStatusComments ? '▾' : '▸'}
+                                        </button>
+                                    </div>
+
+                                    {showStatusComments && (
+                                        <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                                            {activeComments.length === 0 ? (
+                                                <p className="text-[11px] text-[#A1A1AA] py-1">
+                                                    No comments yet — write a comment or tap a reaction below.
+                                                </p>
+                                            ) : (
+                                                activeComments.map((cmt) => {
+                                                    const canDelete =
+                                                        activeUserBox.isCurrentUser ||
+                                                        (cmt.authorEmail &&
+                                                            userEmail &&
+                                                            cmt.authorEmail.toLowerCase() === userEmail) ||
+                                                        cmt.authorName.toLowerCase().trim() ===
+                                                            userName.toLowerCase().trim();
+                                                    return (
+                                                        <div
+                                                            key={cmt.id}
+                                                            className="flex items-start justify-between gap-2 rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-left"
+                                                        >
+                                                            <div className="flex items-start gap-2 min-w-0">
+                                                                {cmt.authorAvatar ? (
+                                                                    <img
+                                                                        src={cmt.authorAvatar}
+                                                                        alt={cmt.authorName}
+                                                                        className="w-6 h-6 rounded-full object-cover shrink-0 mt-0.5 border border-white/20"
+                                                                    />
+                                                                ) : (
+                                                                    <span className="w-6 h-6 rounded-full bg-[#7C4225] text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                                                                        {cmt.authorName.slice(0, 1).toUpperCase()}
+                                                                    </span>
+                                                                )}
+                                                                <div className="min-w-0">
+                                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                                        <span className="text-[11px] font-bold text-[#FBF8F3]">
+                                                                            {cmt.authorName}
+                                                                        </span>
+                                                                        <span className="text-[10px] text-[#A1A1AA]">
+                                                                            {cmt.timestampLabel}
+                                                                        </span>
+                                                                    </div>
+                                                                    <p className="text-xs text-[#E5DDD0] break-words">
+                                                                        {cmt.text}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            {canDelete && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        void handleDeleteStatusComment(
+                                                                            activeSlide.id,
+                                                                            cmt.id
+                                                                        )
+                                                                    }
+                                                                    className="text-[10px] text-[#A1A1AA] hover:text-rose-400 cursor-pointer shrink-0 px-1"
+                                                                    title="Delete comment"
+                                                                >
+                                                                    ✕
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Live Comment + Quick Emoji Reactions Bar */}
                                 <form
                                     onSubmit={(e) => {
                                         e.preventDefault();
-                                        if (!statusReplyText.trim()) return;
-                                        triggerToast(
-                                            `💬 Replied to ${activeUserBox.authorName}'s Status Box: "${statusReplyText}"`
+                                        void handleSubmitStatusComment(
+                                            activeSlide.id,
+                                            activeUserBox.authorName
                                         );
-                                        setStatusReplyText('');
                                     }}
                                     className="p-3 bg-[#141416] flex items-center gap-2 border-t border-white/10 flex-wrap sm:flex-nowrap"
                                 >
@@ -4054,31 +4436,49 @@ export function WhatsAppModeWorkspace({
                                         onFocus={() => setIsStatusReplyFocused(true)}
                                         onBlur={() => setIsStatusReplyFocused(false)}
                                         onChange={(e) => setStatusReplyText(e.target.value)}
-                                        placeholder="reply..."
-                                        className="flex-1 min-w-[140px] bg-[#262629] placeholder-[#A1A1AA] text-xs rounded-full px-4 py-2 focus:outline-none"
+                                        placeholder="Write a comment or reply..."
+                                        className="flex-1 min-w-[140px] bg-[#262629] placeholder-[#A1A1AA] text-xs rounded-full px-4 py-2 focus:outline-none focus:ring-1 focus:ring-[#D69E6B]"
                                         style={{ color: '#FBF8F3' }}
                                     />
-                                    <div className="flex items-center gap-1 shrink-0">
-                                        {(['😍', '😂', '😮', '❤️'] as const).map((emoji) => (
-                                            <button
-                                                key={emoji}
-                                                type="button"
-                                                onClick={() =>
-                                                    triggerToast(`Reacted ${emoji} to ${activeUserBox.authorName}'s Status Box`)
-                                                }
-                                                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-sm cursor-pointer transition-transform hover:scale-110"
-                                                title={`Send ${emoji} reaction`}
-                                            >
-                                                {emoji}
-                                            </button>
-                                        ))}
+                                    <div className="flex items-center gap-1 shrink-0 flex-wrap">
+                                        {(['❤️', '😍', '🙏', '🔥', '😂', '😮'] as const).map((emoji) => {
+                                            const reactors = activeInteractions.reactions?.[emoji] || [];
+                                            const hasReacted = reactors.includes(reactorKey);
+                                            return (
+                                                <button
+                                                    key={emoji}
+                                                    type="button"
+                                                    onClick={() =>
+                                                        void handleToggleStatusReaction(
+                                                            activeSlide.id,
+                                                            emoji,
+                                                            activeUserBox.authorName
+                                                        )
+                                                    }
+                                                    className={`relative w-8 h-8 rounded-full flex items-center justify-center text-sm cursor-pointer transition-all hover:scale-110 ${
+                                                        hasReacted
+                                                            ? 'bg-[#7C4225] ring-2 ring-[#D69E6B]'
+                                                            : 'bg-white/10 hover:bg-white/20'
+                                                    }`}
+                                                    title={`React with ${emoji}`}
+                                                >
+                                                    <span>{emoji}</span>
+                                                    {reactors.length > 0 && (
+                                                        <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-1 rounded-full bg-[#D69E6B] text-[#1C1917] text-[9px] font-black flex items-center justify-center leading-none">
+                                                            {reactors.length}
+                                                        </span>
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                     <button
                                         type="submit"
-                                        className="px-4 py-2 rounded-full bg-[#7C4225] hover:bg-[#5E3119] text-xs font-bold cursor-pointer shrink-0"
+                                        disabled={isSubmittingComment || !statusReplyText.trim()}
+                                        className="px-4 py-2 rounded-full bg-[#7C4225] hover:bg-[#5E3119] disabled:opacity-50 text-xs font-bold cursor-pointer shrink-0"
                                         style={{ color: '#FBF8F3' }}
                                     >
-                                        Send
+                                        {isSubmittingComment ? 'Posting...' : 'Comment'}
                                     </button>
                                 </form>
                             </div>

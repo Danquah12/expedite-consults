@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import {
   firebaseKvDeleteItem,
+  firebaseKvGetItem,
   firebaseKvListItems,
   firebaseKvSetItem,
 } from "@/lib/connectin-firebase-kv"
@@ -13,10 +14,31 @@ import {
 } from "@/lib/connectin-social-video"
 
 const STATUS_KV_MAP = "connectln_status_updates_v1"
+const STATUS_INTERACTIONS_KV_MAP = "connectln_status_interactions_v1"
 const STATUS_TTL_SECONDS = 7 * 24 * 60 * 60 // 7 days
+const INTERACTIONS_TTL_SECONDS = 14 * 24 * 60 * 60 // 14 days
 const MAX_RESOLVE_BATCH = 15
 const MAX_PUBLISH_BATCH = 20
 const MAX_INLINE_DATA_CHARS = 700_000
+const MAX_AVATAR_DATA_CHARS = 250_000
+
+export interface StatusCommentItem {
+  id: string
+  slideId: string
+  authorName: string
+  authorEmail?: string
+  authorAvatar?: string
+  text: string
+  timestampLabel: string
+  createdAtMs: number
+}
+
+export interface StatusSlideInteractions {
+  slideId: string
+  reactions: Record<string, string[]>
+  comments: StatusCommentItem[]
+  updatedAtMs: number
+}
 
 const BROWSER_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
@@ -247,7 +269,10 @@ async function enrichSocialMetadata(item: ParsedSocialVideo, customTitle: string
 
 export async function GET() {
   try {
-    const entries = await firebaseKvListItems<any>(STATUS_KV_MAP, false)
+    const [entries, interactionEntries] = await Promise.all([
+      firebaseKvListItems<any>(STATUS_KV_MAP, false),
+      firebaseKvListItems<StatusSlideInteractions>(STATUS_INTERACTIONS_KV_MAP, false),
+    ])
     const rawItems = entries
       .map((entry) => entry?.data)
       .filter((item) => item && typeof item.id === "string" && typeof item.authorName === "string")
@@ -288,8 +313,23 @@ export async function GET() {
       })
     )
 
+    const interactions: Record<string, StatusSlideInteractions> = {}
+    for (const entry of interactionEntries) {
+      const slideId = String(entry?.data?.slideId || entry?.key || "").trim()
+      if (!slideId || !entry?.data) continue
+      interactions[slideId] = {
+        slideId,
+        reactions:
+          entry.data.reactions && typeof entry.data.reactions === "object"
+            ? entry.data.reactions
+            : {},
+        comments: Array.isArray(entry.data.comments) ? entry.data.comments : [],
+        updatedAtMs: Number(entry.data.updatedAtMs || entry.updatedAtMs || 0),
+      }
+    }
+
     return NextResponse.json(
-      { ok: true, count: items.length, items },
+      { ok: true, count: items.length, items, interactions },
       { headers: { "Cache-Control": "no-store" } }
     )
   } catch (err: any) {
@@ -302,6 +342,137 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const action = String(body?.action || "publish")
+
+    if (action === "react") {
+      const slideId = String(body?.slideId || "").trim()
+      const emoji = String(body?.emoji || "").trim()
+      const reactorKey = String(body?.userEmail || body?.userName || "member")
+        .trim()
+        .toLowerCase()
+        .slice(0, 120)
+
+      if (!slideId || !emoji || emoji.length > 12) {
+        return NextResponse.json({ ok: false, error: "Valid slideId and emoji are required." }, { status: 400 })
+      }
+
+      const existing = await firebaseKvGetItem<StatusSlideInteractions>(
+        STATUS_INTERACTIONS_KV_MAP,
+        slideId
+      )
+      const base: StatusSlideInteractions = existing
+        ? {
+            slideId,
+            reactions: { ...(existing.reactions || {}) },
+            comments: Array.isArray(existing.comments) ? existing.comments : [],
+            updatedAtMs: Number(existing.updatedAtMs || 0),
+          }
+        : { slideId, reactions: {}, comments: [], updatedAtMs: 0 }
+
+      const currentReactors = Array.isArray(base.reactions[emoji]) ? [...base.reactions[emoji]] : []
+      const existingIdx = currentReactors.indexOf(reactorKey)
+      let added = false
+      if (existingIdx >= 0) {
+        currentReactors.splice(existingIdx, 1)
+      } else {
+        currentReactors.push(reactorKey)
+        added = true
+      }
+      if (currentReactors.length > 0) {
+        base.reactions[emoji] = currentReactors
+      } else {
+        delete base.reactions[emoji]
+      }
+      base.updatedAtMs = Date.now()
+
+      await firebaseKvSetItem(STATUS_INTERACTIONS_KV_MAP, slideId, base, INTERACTIONS_TTL_SECONDS)
+      return NextResponse.json({
+        ok: true,
+        slideId,
+        emoji,
+        toggled: added ? "added" : "removed",
+        interactions: base,
+      })
+    }
+
+    if (action === "comment") {
+      const slideId = String(body?.slideId || "").trim()
+      const text = String(body?.text || "").trim().slice(0, 500)
+      const authorName = String(body?.authorName || "ConnectLn Member").trim().slice(0, 120)
+      const authorEmail = body?.authorEmail ? String(body.authorEmail).trim().toLowerCase().slice(0, 160) : undefined
+      const rawAvatar = typeof body?.authorAvatar === "string" ? body.authorAvatar : ""
+      const authorAvatar =
+        rawAvatar && rawAvatar.length <= MAX_AVATAR_DATA_CHARS ? rawAvatar : undefined
+      const timestampLabel = String(
+        body?.timestampLabel ||
+          `Today at ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
+      ).slice(0, 64)
+
+      if (!slideId || !text) {
+        return NextResponse.json({ ok: false, error: "Valid slideId and comment text are required." }, { status: 400 })
+      }
+
+      const existing = await firebaseKvGetItem<StatusSlideInteractions>(
+        STATUS_INTERACTIONS_KV_MAP,
+        slideId
+      )
+      const base: StatusSlideInteractions = existing
+        ? {
+            slideId,
+            reactions: existing.reactions && typeof existing.reactions === "object" ? existing.reactions : {},
+            comments: Array.isArray(existing.comments) ? [...existing.comments] : [],
+            updatedAtMs: Number(existing.updatedAtMs || 0),
+          }
+        : { slideId, reactions: {}, comments: [], updatedAtMs: 0 }
+
+      const newComment: StatusCommentItem = {
+        id: `sc_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        slideId,
+        authorName,
+        authorEmail,
+        authorAvatar,
+        text,
+        timestampLabel,
+        createdAtMs: Date.now(),
+      }
+
+      base.comments = [...base.comments, newComment].slice(-100)
+      base.updatedAtMs = Date.now()
+
+      await firebaseKvSetItem(STATUS_INTERACTIONS_KV_MAP, slideId, base, INTERACTIONS_TTL_SECONDS)
+      return NextResponse.json({
+        ok: true,
+        slideId,
+        comment: newComment,
+        interactions: base,
+      })
+    }
+
+    if (action === "delete_comment") {
+      const slideId = String(body?.slideId || "").trim()
+      const commentId = String(body?.commentId || "").trim()
+      if (!slideId || !commentId) {
+        return NextResponse.json({ ok: false, error: "slideId and commentId are required." }, { status: 400 })
+      }
+
+      const existing = await firebaseKvGetItem<StatusSlideInteractions>(
+        STATUS_INTERACTIONS_KV_MAP,
+        slideId
+      )
+      if (!existing) {
+        return NextResponse.json({ ok: true, slideId, deletedCommentId: commentId, interactions: null })
+      }
+
+      const updated: StatusSlideInteractions = {
+        slideId,
+        reactions: existing.reactions && typeof existing.reactions === "object" ? existing.reactions : {},
+        comments: Array.isArray(existing.comments)
+          ? existing.comments.filter((c) => c.id !== commentId)
+          : [],
+        updatedAtMs: Date.now(),
+      }
+      await firebaseKvSetItem(STATUS_INTERACTIONS_KV_MAP, slideId, updated, INTERACTIONS_TTL_SECONDS)
+      return NextResponse.json({ ok: true, slideId, deletedCommentId: commentId, interactions: updated })
+    }
 
     if (action === "resolve") {
       const rawUrls = Array.isArray(body?.urls)
@@ -398,7 +569,10 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ ok: false, error: "Status id is required." }, { status: 400 })
     }
 
-    await firebaseKvDeleteItem(STATUS_KV_MAP, id)
+    await Promise.all([
+      firebaseKvDeleteItem(STATUS_KV_MAP, id),
+      firebaseKvDeleteItem(STATUS_INTERACTIONS_KV_MAP, id),
+    ])
     return NextResponse.json({ ok: true, deletedId: id })
   } catch (err: any) {
     console.error("[DELETE /api/connectin/status]", err)
