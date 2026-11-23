@@ -488,7 +488,7 @@ export async function lookupWhatsAppRecipient(params: {
   member: WhatsAppDirectoryMember | null
   dialablePhone: string
 }> {
-  const cache = await refreshWhatsAppDirectoryCache()
+  let cache = await refreshWhatsAppDirectoryCache()
   const rawPhone = (params.targetPhone || "").trim()
   const rawName = (params.targetName || "").replace(/^@+/, "").trim()
   const normName = rawName.toLowerCase()
@@ -500,31 +500,39 @@ export async function lookupWhatsAppRecipient(params: {
     ? normalizeDialablePhone(rawName)
     : ""
 
-  if (candidatePhone && cache.has(candidatePhone)) {
-    const found = cache.get(candidatePhone)!
-    return {
-      isRegisteredOnConnectLn: true,
-      member: found,
-      dialablePhone: found.phone,
+  const findInCache = (dirCache: Map<string, WhatsAppDirectoryMember>) => {
+    if (candidatePhone && dirCache.has(candidatePhone)) {
+      return dirCache.get(candidatePhone)!
     }
+    for (const member of dirCache.values()) {
+      const mEmail = (member.email || "").toLowerCase()
+      const mName = (member.name || "").toLowerCase()
+      if (
+        (normEmail && mEmail && mEmail === normEmail) ||
+        (normName &&
+          mName &&
+          !looksLikePhoneNumber(rawName) &&
+          (mName === normName || mName.includes(normName) || normName.includes(mName)))
+      ) {
+        return member
+      }
+    }
+    return null
   }
 
-  // Search directory by email or name
-  for (const member of cache.values()) {
-    const mEmail = (member.email || "").toLowerCase()
-    const mName = (member.name || "").toLowerCase()
-    if (
-      (normEmail && mEmail && mEmail === normEmail) ||
-      (normName &&
-        mName &&
-        !looksLikePhoneNumber(rawName) &&
-        (mName === normName || mName.includes(normName) || normName.includes(mName)))
-    ) {
-      return {
-        isRegisteredOnConnectLn: true,
-        member,
-        dialablePhone: member.phone,
-      }
+  let matchedMember = findInCache(cache)
+  // Force one fresh Firebase KV refresh if member isn't cached yet OR has zero cached pushSubscriptions
+  if (!matchedMember || (matchedMember.pushSubscriptions?.length || 0) === 0) {
+    cache = await refreshWhatsAppDirectoryCache(true)
+    const freshMatch = findInCache(cache)
+    if (freshMatch) matchedMember = freshMatch
+  }
+
+  if (matchedMember) {
+    return {
+      isRegisteredOnConnectLn: true,
+      member: matchedMember,
+      dialablePhone: matchedMember.phone,
     }
   }
 

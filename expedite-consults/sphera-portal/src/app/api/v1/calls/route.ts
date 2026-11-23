@@ -965,7 +965,10 @@ export async function GET(req: NextRequest) {
       (p) => p.last_seen_ms && nowMs - p.last_seen_ms < PARTICIPANT_TTL_MS
     )
     c.participants = liveParts
-    return liveParts.length > 0
+    const hasFreshInvite = (c.invited_roster || []).some(
+      (m) => m.status !== "removed" && m.updated_at_ms && nowMs - m.updated_at_ms < 45000
+    )
+    return liveParts.length > 0 || hasFreshInvite
   })
 
   if (incomingForName || incomingEmail || incomingPhoneDigits) {
@@ -1463,23 +1466,64 @@ export async function POST(req: NextRequest) {
       if (body.invited_member) updates.push(body.invited_member)
       if (Array.isArray(body.invited_roster_updates)) updates.push(...body.invited_roster_updates)
       const changed = mergeInvitedEntriesIntoRecord(record, updates, nowMs)
-      if (changed) {
+
+      // Ensure initiator/host is immediately recorded as a live participant so minimized
+      // recipients polling GET /api/v1/calls on another serverless instance see the active call before getUserMedia resolves.
+      let hostParticipantToPush: CommCallParticipant | null = null
+      const hostIdx = (record.participants || []).findIndex((p) => p.user_id === userId)
+      if (hostIdx < 0) {
+        hostParticipantToPush = {
+          call_id: callId,
+          user_id: userId,
+          device_id: "host-signaling",
+          display_name: displayName,
+          role: "Host · Calling",
+          device_label: "ConnectLn WebRTC",
+          phone: record.initiator_phone,
+          target_recipient_name: record.target_recipient_name,
+          target_recipient_email: record.target_recipient_email,
+          target_recipient_phone: record.target_recipient_phone,
+          initiator_phone: record.initiator_phone,
+          call_type: record.call_type,
+          joined_at: now,
+          last_seen_ms: nowMs,
+          left_at: null,
+          is_muted: false,
+          is_video_on: record.call_type !== "audio",
+          is_speaking: false,
+          is_screen_sharing: false,
+          participant_state: "CONNECTED",
+          e2ee_media_fingerprint: "7749 2210 8841 3390",
+        }
+        record.participants.push(hostParticipantToPush)
+      }
+
+      if (changed || hostParticipantToPush) {
         record.state_version += 1
-        await pushCloudInvitedRoster(
-          callId,
-          record.invited_roster,
-          true,
-          record.cohost_keys,
-          record.muted_keys,
-          record.moderation_updated_at_ms
-        ).catch(() => {})
-        await dispatchMinimizedWakeupPushForTargets({
-          callId,
-          callMode: record.call_type === "audio" ? "audio" : "video",
-          callerName: record.initiator_name || displayName,
-          callerPhone: record.initiator_phone,
-          targets: updates.map((u) => ({ phone: u?.phone, email: u?.email, name: u?.name })),
-        }).catch(() => {})
+        await Promise.all([
+          changed
+            ? pushCloudInvitedRoster(
+                callId,
+                record.invited_roster,
+                true,
+                record.cohost_keys,
+                record.muted_keys,
+                record.moderation_updated_at_ms
+              ).catch(() => {})
+            : Promise.resolve(),
+          hostParticipantToPush
+            ? pushCloudCallParticipant(callId, hostParticipantToPush, true).catch(() => {})
+            : Promise.resolve(),
+          changed
+            ? dispatchMinimizedWakeupPushForTargets({
+                callId,
+                callMode: record.call_type === "audio" ? "audio" : "video",
+                callerName: record.initiator_name || displayName,
+                callerPhone: record.initiator_phone,
+                targets: updates.map((u) => ({ phone: u?.phone, email: u?.email, name: u?.name })),
+              }).catch(() => {})
+            : Promise.resolve(),
+        ])
       }
       ACTIVE_CALLS_STORE.set(callId, record)
       savePersistedCalls(true)

@@ -155,3 +155,107 @@ self.addEventListener("notificationclick", (event) => {
     })()
   );
 });
+
+let swWatchPollUrl = "";
+let swWatchTimer = null;
+let swPollInFlight = false;
+const swNotifiedCallAtMap = new Map();
+
+async function runSwMinimizedCallCheck() {
+  if (!swWatchPollUrl || swPollInFlight) return;
+  swPollInFlight = true;
+  try {
+    const windowClients = await self.clients.matchAll({
+      type: "window",
+      includeUncontrolled: true,
+    });
+    if (!windowClients || windowClients.length === 0) {
+      if (swWatchTimer) {
+        clearInterval(swWatchTimer);
+        swWatchTimer = null;
+      }
+      swWatchPollUrl = "";
+      return;
+    }
+
+    // Only poll from the SW when at least one client is minimized/hidden or unfocused
+    const hasHiddenClient = windowClients.some(
+      (c) => c.visibilityState !== "visible" || !c.focused
+    );
+    if (!hasHiddenClient) return;
+
+    const res = await fetch(swWatchPollUrl, { cache: "no-store" });
+    if (!res.ok) return;
+    const data = await res.json();
+    const list = Array.isArray(data && data.incoming_calls) ? data.incoming_calls : [];
+    const nowMs = Date.now();
+
+    for (const c of list) {
+      if (!c || !c.id) continue;
+      const callId = String(c.id);
+      const callerName =
+        (c.participants && c.participants[0] && c.participants[0].display_name) ||
+        c.initiator_name ||
+        "ConnectLn Caller";
+      const callerPhone = c.initiator_phone || "";
+      const callMode = c.call_type === "audio" ? "audio" : "video";
+
+      for (const client of windowClients) {
+        try {
+          client.postMessage({
+            type: "CONNECTLN_PUSH_INCOMING_CALL",
+            payload: {
+              callId,
+              callMode,
+              callerName,
+              callerPhone,
+            },
+          });
+        } catch {}
+      }
+
+      const prevNotified = swNotifiedCallAtMap.get(callId) || 0;
+      if (nowMs - prevNotified >= 10000) {
+        swNotifiedCallAtMap.set(callId, nowMs);
+        const spec = buildCallNotificationSpec({
+          callId,
+          callMode,
+          callerName,
+          callerPhone,
+        });
+        await self.registration.showNotification(spec.title, spec.options).catch(() => {});
+      }
+    }
+
+    if (swNotifiedCallAtMap.size > 100) {
+      for (const [k, ts] of swNotifiedCallAtMap.entries()) {
+        if (nowMs - ts > 120000) swNotifiedCallAtMap.delete(k);
+      }
+    }
+  } catch {
+  } finally {
+    swPollInFlight = false;
+  }
+}
+
+self.addEventListener("message", (event) => {
+  const msg = event && event.data;
+  if (!msg || msg.type !== "CONNECTLN_SW_WATCH_CALLS") return;
+
+  if (!msg.active || !msg.pollUrl) {
+    swWatchPollUrl = "";
+    if (swWatchTimer) {
+      clearInterval(swWatchTimer);
+      swWatchTimer = null;
+    }
+    return;
+  }
+
+  swWatchPollUrl = String(msg.pollUrl);
+  if (!swWatchTimer) {
+    swWatchTimer = setInterval(() => {
+      void runSwMinimizedCallCheck();
+    }, 1500);
+  }
+  void runSwMinimizedCallCheck();
+});

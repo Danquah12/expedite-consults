@@ -39,7 +39,10 @@ import {
 import { registerConnectLnPushSubscription } from "@/lib/connectin-native-callkit-bridge"
 import {
   unlockBackgroundRingingSession,
+  isBackgroundAudioUnlocked,
+  onBackgroundUnlockChange,
   isDocumentPipSupported,
+  isAlwaysOnTopReceiverOpen,
   openAlwaysOnTopCallStandbyPiP,
   setCallMediaSilenceActive,
   startOutgoingCallerRingbackTone,
@@ -144,10 +147,26 @@ export function ConnectLnMyPhoneNumberCard({
       : ""
   )
   const [pushEnabled, setPushEnabled] = useState<boolean>(false)
+  const [isAudioReady, setIsAudioReady] = useState<boolean>(false)
+  const [isPipOpen, setIsPipOpen] = useState<boolean>(false)
+  const [canDocPip, setCanDocPip] = useState<boolean>(false)
   const [isSaving, setIsSaving] = useState<boolean>(false)
   const [statusMsg, setStatusMsg] = useState<string>("")
   const [errorMsg, setErrorMsg] = useState<string>("")
   const [deferredInstallPrompt, setDeferredInstallPrompt] = useState<any>(null)
+
+  useEffect(() => {
+    const mob =
+      typeof navigator !== "undefined" &&
+      /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent || "")
+    setCanDocPip(isDocumentPipSupported() && !mob)
+    setIsAudioReady(isBackgroundAudioUnlocked())
+    setIsPipOpen(isAlwaysOnTopReceiverOpen())
+    return onBackgroundUnlockChange(() => {
+      setIsAudioReady(isBackgroundAudioUnlocked())
+      setIsPipOpen(isAlwaysOnTopReceiverOpen())
+    })
+  }, [])
 
   // Strict 2FA verification flow if legacy/SSO user has no verified phone yet or switches personal SIM
   const [show2FAVerifyPanel, setShow2FAVerifyPanel] = useState<boolean>(false)
@@ -301,7 +320,9 @@ export function ConnectLnMyPhoneNumberCard({
         : Promise.resolve(false)
 
     try {
-      await Promise.all([permPromise, pipPromise])
+      const [, pipOpened] = await Promise.all([permPromise, pipPromise])
+      setIsPipOpen(Boolean(pipOpened) || isAlwaysOnTopReceiverOpen())
+      setIsAudioReady(isBackgroundAudioUnlocked())
       const cfgRes = await fetch("/api/connectin/calls/whatsapp", { cache: "no-store" })
       const cfgData = await cfgRes.json()
       const vapidPublicKey = cfgData?.vapidPublicKey || ""
@@ -482,15 +503,17 @@ export function ConnectLnMyPhoneNumberCard({
             </div>
             <p className="text-[11px] text-[#57534E] truncate mt-0.5">
               {linkedPhone
-                ? pushEnabled
-                  ? "🟢 Defaulted from your 2FA login · Incoming call ringing is ACTIVE"
-                  : "Defaulted from your 2FA login · Click 'Link & Enable Ringing' to activate ringing"
+                ? pushEnabled && (!canDocPip || isPipOpen) && isAudioReady
+                  ? "🟢 Minimized Pop-Up & Background Ringing ACTIVE on this device"
+                  : pushEnabled
+                  ? "🟡 Push enabled · Click 'Enable Minimized Call Pop-Up' to ring while browser is minimized"
+                  : "Defaulted from your 2FA login · Click 'Enable Ringing on This Device' to activate ringing"
                 : "Anti-impersonation security: verify your own number via 2FA to enable calling"}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-1.5 flex-wrap shrink-0">
           {linkedPhone && (
             <button
               type="button"
@@ -507,6 +530,29 @@ export function ConnectLnMyPhoneNumberCard({
               <span>
                 {pushEnabled ? "Ringing Active on This Device ✓" : "Enable Ringing on This Device"}
               </span>
+            </button>
+          )}
+          {linkedPhone && canDocPip && (
+            <button
+              type="button"
+              onClick={async () => {
+                unlockBackgroundRingingSession()
+                const opened = await openAlwaysOnTopCallStandbyPiP(true).catch(() => false)
+                setIsPipOpen(Boolean(opened) || isAlwaysOnTopReceiverOpen())
+                setIsAudioReady(isBackgroundAudioUnlocked())
+                if (opened) {
+                  setStatusMsg("✓ Always-On-Top Minimized Call Receiver is active! You can minimize your browser now.")
+                }
+              }}
+              style={{ color: "#FFFFFF" }}
+              className={`rounded-lg px-3 py-1.5 text-[11px] font-extrabold flex items-center gap-1.5 cursor-pointer ${
+                isPipOpen
+                  ? "bg-emerald-800 hover:bg-emerald-700"
+                  : "bg-amber-600 hover:bg-amber-500"
+              }`}
+              title="Keep a tiny always-on-top receiver ready so incoming calls ring & pop up while your browser is minimized"
+            >
+              <span>{isPipOpen ? "🪟 Minimized Pop-Up Active ✓" : "🪟 Enable Minimized Call Pop-Up"}</span>
             </button>
           )}
           {deferredInstallPrompt && (

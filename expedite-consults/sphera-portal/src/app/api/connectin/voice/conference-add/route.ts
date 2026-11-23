@@ -130,8 +130,13 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           action: "upsert_invitee",
           call_id: callId,
+          call_type: callMode,
           user_id: hostUserId,
           display_name: callerName,
+          initiator_phone: callerPhone || undefined,
+          target_recipient_name: recipientName,
+          target_recipient_phone: recipientPhone || undefined,
+          target_recipient_email: recipientEmail || undefined,
           invited_member: {
             id: inviteeId,
             name: recipientName,

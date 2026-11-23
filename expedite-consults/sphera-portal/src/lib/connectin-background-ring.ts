@@ -46,12 +46,14 @@ let ringVibrateTimer: ReturnType<typeof setInterval> | null = null
 let titleFlashTimer: ReturnType<typeof setInterval> | null = null
 let savedOriginalTitle = ""
 
+let keepAliveClockNode: ScriptProcessorNode | null = null
+let lastAudioPollTickMs = 0
 let activePopupWin: Window | null = null
 let activePipWin: Window | null = null
 let pipForegroundPollTimer: any = null
 let activeForegroundPollFn: (() => void) | null = null
 let programmaticPipClose = false
-const notifiedCallIds = new Set<string>()
+const notifiedCallAtMsMap = new Map<string, number>()
 const unlockListeners = new Set<() => void>()
 
 export function setForegroundCallPollCallback(fn: (() => void) | null): void {
@@ -110,15 +112,17 @@ function encodeMonoPcm16WavDataUri(samples: Int16Array, sampleRate: number): str
 let cachedSubSonicWavUri: string | null = null
 function getSubSonicKeepAliveWavUri(): string {
   if (cachedSubSonicWavUri) return cachedSubSonicWavUri
-  const sampleRate = 8000
-  const totalSamples = sampleRate // exact 1.0s seamless 20 Hz cycle
+  const sampleRate = 44100
+  const totalSamples = sampleRate // exact 1.0s seamless cycle (20 Hz + 18500 Hz pilot)
   const samples = new Int16Array(totalSamples)
   for (let i = 0; i < totalSamples; i++) {
     const t = i / sampleRate
-    // Amplitude 480 / 32767 = -36.7 dBFS at 20 Hz:
-    // Completely inaudible to humans & below laptop/phone speaker rolloff,
-    // yet > -70 dBFS so Chromium AudioPowerMonitor & iOS/Android keep audio session awake!
-    samples[i] = Math.round(Math.sin(2 * Math.PI * 20 * t) * 480)
+    // Combine 20 Hz (0.022) + 18.5 kHz pilot (0.0025): inaudible on speakers/ears,
+    // yet prevents Chromium AudioPowerMonitor from treating a minimized tab as silent!
+    const val =
+      Math.sin(2 * Math.PI * 20 * t) * 0.022 +
+      Math.sin(2 * Math.PI * 18500 * t) * 0.0025
+    samples[i] = Math.round(val * 32767)
   }
   cachedSubSonicWavUri = encodeMonoPcm16WavDataUri(samples, sampleRate)
   return cachedSubSonicWavUri
@@ -419,11 +423,14 @@ function getOutgoingRingbackWavUri(): string {
 function buildAudioBuffers(ctx: AudioContext): void {
   if (!keepAliveBuffer) {
     const sr = ctx.sampleRate
-    const len = sr // 1.0s exact cycle for 20 Hz
+    const len = sr // 1.0s exact cycle for 20 Hz + 18500 Hz pilot
     const buf = ctx.createBuffer(1, len, sr)
     const ch = buf.getChannelData(0)
     for (let i = 0; i < len; i++) {
-      ch[i] = Math.sin((2 * Math.PI * 20 * i) / sr) * 0.014
+      const t = i / sr
+      ch[i] =
+        Math.sin(2 * Math.PI * 20 * t) * 0.022 +
+        Math.sin(2 * Math.PI * 18500 * t) * 0.0025
     }
     keepAliveBuffer = buf
   }
@@ -555,13 +562,29 @@ function ensureLiveAudioPipelineStarted(): void {
           .then(() => notifyUnlockSubscribers())
           .catch(() => {})
       }
-      // Connect looping 20 Hz keep-alive DIRECTLY to `liveAudioCtx.destination` (hardware speaker clock!)
+      // Connect looping 20 Hz + 18.5 kHz keep-alive DIRECTLY to `liveAudioCtx.destination` (hardware speaker clock!)
       if (!keepAliveSource && keepAliveBuffer) {
         keepAliveSource = liveAudioCtx.createBufferSource()
         keepAliveSource.buffer = keepAliveBuffer
         keepAliveSource.loop = true
         keepAliveSource.connect(liveAudioCtx.destination)
         keepAliveSource.start(0)
+      }
+      // Hardware audio-thread clock tick: immune to minimized browser timer throttling
+      if (!keepAliveClockNode && typeof liveAudioCtx.createScriptProcessor === "function") {
+        try {
+          keepAliveClockNode = liveAudioCtx.createScriptProcessor(4096, 1, 1)
+          keepAliveClockNode.onaudioprocess = () => {
+            if (typeof document !== "undefined" && document.hidden) {
+              const now = Date.now()
+              if (now - lastAudioPollTickMs >= 1100) {
+                lastAudioPollTickMs = now
+                activeForegroundPollFn?.()
+              }
+            }
+          }
+          keepAliveClockNode.connect(liveAudioCtx.destination)
+        } catch {}
       }
     }
 
@@ -577,6 +600,13 @@ function ensureLiveAudioPipelineStarted(): void {
       keepAliveHtmlAudio.setAttribute("aria-hidden", "true")
       keepAliveHtmlAudio.style.cssText =
         "position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0.01;pointer-events:none;"
+      keepAliveHtmlAudio.addEventListener("timeupdate", () => {
+        const now = Date.now()
+        if (now - lastAudioPollTickMs >= 1100) {
+          lastAudioPollTickMs = now
+          activeForegroundPollFn?.()
+        }
+      })
       if (document.body) {
         document.body.appendChild(keepAliveHtmlAudio)
       }
@@ -1137,8 +1167,15 @@ export async function triggerSystemIncomingCallAlert(
     } catch {}
   }
 
-  if (notifiedCallIds.has(spec.callId)) return
-  notifiedCallIds.add(spec.callId)
+  const nowMs = Date.now()
+  const prevNotifiedAt = notifiedCallAtMsMap.get(spec.callId) || 0
+  if (nowMs - prevNotifiedAt < 8000) return
+  notifiedCallAtMsMap.set(spec.callId, nowMs)
+  if (notifiedCallAtMsMap.size > 100) {
+    for (const [cid, ts] of notifiedCallAtMsMap.entries()) {
+      if (nowMs - ts > 120000) notifiedCallAtMsMap.delete(cid)
+    }
+  }
 
   const isVideo = spec.callMode === "video"
   const title = isVideo
