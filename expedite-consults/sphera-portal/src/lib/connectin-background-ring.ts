@@ -706,6 +706,8 @@ export function onBackgroundUnlockChange(cb: () => void): () => void {
   }
 }
 
+let fallbackAudioGestureUnlocked = false
+
 /**
  * Unlocks the continuous hardware background audio pipeline on the user's first interaction.
  */
@@ -727,7 +729,26 @@ export function unlockBackgroundRingingSession(): void {
   const handler = () => {
     ensureLiveAudioPipelineStarted()
     void requestScreenWakeLock()
-    if (liveAudioCtx?.state === "running" && keepAliveHtmlAudio && !keepAliveHtmlAudio.paused) {
+    if (fallbackWavRingAudio && !fallbackAudioGestureUnlocked && !isIncomingRingtoneActive) {
+      fallbackWavRingAudio.muted = true
+      fallbackWavRingAudio
+        .play()
+        .then(() => {
+          fallbackAudioGestureUnlocked = true
+          if (!isIncomingRingtoneActive && fallbackWavRingAudio) {
+            fallbackWavRingAudio.pause()
+            fallbackWavRingAudio.currentTime = 0
+            fallbackWavRingAudio.muted = false
+          }
+        })
+        .catch(() => {})
+    }
+    if (
+      liveAudioCtx?.state === "running" &&
+      keepAliveHtmlAudio &&
+      !keepAliveHtmlAudio.paused &&
+      (!fallbackWavRingAudio || fallbackAudioGestureUnlocked)
+    ) {
       events.forEach((ev) => window.removeEventListener(ev, handler, true))
       notifyUnlockSubscribers()
     }
@@ -737,15 +758,7 @@ export function unlockBackgroundRingingSession(): void {
 
 let ringInteractionListenersBound = false
 
-export function startLoudPhoneRingtone(): void {
-  if (typeof window === "undefined") return
-  isIncomingRingtoneActive = true
-  setCallMediaSilenceActive(true, "incoming-call-ringtone")
-  ensureLiveAudioPipelineStarted()
-
-  const selectedId = getSelectedConnectLnRingtoneId()
-
-  // Strictly single unified audio source (`fallbackWavRingAudio`) so two ringtones can never layer
+function stopWebAudioRingSource(): void {
   if (activeRingSource) {
     try {
       activeRingSource.stop()
@@ -759,16 +772,76 @@ export function startLoudPhoneRingtone(): void {
     } catch {}
     activeRingGain = null
   }
+}
 
-  if (fallbackWavRingAudio) {
-    if (fallbackWavRingAudio.dataset.ringtonePresetId !== selectedId) {
-      fallbackWavRingAudio.src = getRingtoneAudioSourceUri(selectedId)
-      fallbackWavRingAudio.dataset.ringtonePresetId = selectedId
+export function startLoudPhoneRingtone(): void {
+  if (typeof window === "undefined") return
+  isIncomingRingtoneActive = true
+  setCallMediaSilenceActive(true, "incoming-call-ringtone")
+  ensureLiveAudioPipelineStarted()
+
+  if (liveAudioCtx && !ringtoneBuffer) {
+    buildAudioBuffers(liveAudioCtx)
+  }
+
+  const selectedId = getSelectedConnectLnRingtoneId()
+  const useExternalAudioFile =
+    selectedId === "studio-acoustic" ||
+    (selectedId === "device-custom" && Boolean(getCustomDeviceRingtoneDataUrl()))
+
+  // Strict Single-Player Guard: never start or layer a second ringtone while one is playing
+  if (!useExternalAudioFile && activeRingSource && liveAudioCtx?.state === "running") {
+    if (fallbackWavRingAudio && !fallbackWavRingAudio.paused) {
+      try {
+        fallbackWavRingAudio.pause()
+        fallbackWavRingAudio.currentTime = 0
+      } catch {}
     }
-    fallbackWavRingAudio.muted = false
-    fallbackWavRingAudio.volume = 0.95
-    if (fallbackWavRingAudio.paused) {
-      fallbackWavRingAudio.play().catch(() => {})
+    return
+  }
+  if (fallbackWavRingAudio && !fallbackWavRingAudio.paused) {
+    stopWebAudioRingSource()
+    return
+  }
+
+  let startedWebAudio = false
+  if (!useExternalAudioFile && liveAudioCtx && ringtoneBuffer) {
+    if (liveAudioCtx.state === "suspended") {
+      liveAudioCtx.resume().catch(() => {})
+    }
+    if (liveAudioCtx.state === "running") {
+      try {
+        if (fallbackWavRingAudio && !fallbackWavRingAudio.paused) {
+          fallbackWavRingAudio.pause()
+          fallbackWavRingAudio.currentTime = 0
+        }
+        const gain = liveAudioCtx.createGain()
+        gain.gain.value = 0.9
+        const src = liveAudioCtx.createBufferSource()
+        src.buffer = ringtoneBuffer
+        src.loop = true
+        src.connect(gain)
+        gain.connect(liveAudioCtx.destination)
+        src.start(0)
+        activeRingSource = src
+        activeRingGain = gain
+        startedWebAudio = true
+      } catch {}
+    }
+  }
+
+  if (useExternalAudioFile || !startedWebAudio) {
+    stopWebAudioRingSource()
+    if (fallbackWavRingAudio) {
+      if (fallbackWavRingAudio.dataset.ringtonePresetId !== selectedId) {
+        fallbackWavRingAudio.src = getRingtoneAudioSourceUri(selectedId)
+        fallbackWavRingAudio.dataset.ringtonePresetId = selectedId
+      }
+      fallbackWavRingAudio.muted = false
+      fallbackWavRingAudio.volume = 0.95
+      if (fallbackWavRingAudio.paused) {
+        fallbackWavRingAudio.play().catch(() => {})
+      }
     }
   }
 
@@ -787,16 +860,17 @@ export function startLoudPhoneRingtone(): void {
     }
   } catch {}
 
-  // If browser initially deferred audio before a user interaction, resume cleanly once on gesture
+  // If browser initially deferred audio before a user interaction, resume cleanly without ever layering two players
   if (!ringInteractionListenersBound) {
     ringInteractionListenersBound = true
     const resumeRingOnInteraction = () => {
       if (!isIncomingRingtoneActive) return
-      if (fallbackWavRingAudio && fallbackWavRingAudio.paused) {
-        fallbackWavRingAudio.muted = false
-        fallbackWavRingAudio.volume = 0.95
-        fallbackWavRingAudio.play().catch(() => {})
+      if (activeRingSource && liveAudioCtx?.state === "running") return
+      if (fallbackWavRingAudio && !fallbackWavRingAudio.paused) return
+      if (liveAudioCtx && liveAudioCtx.state === "suspended") {
+        liveAudioCtx.resume().catch(() => {})
       }
+      startLoudPhoneRingtone()
     }
     window.addEventListener("pointerdown", resumeRingOnInteraction, { passive: true })
     window.addEventListener("touchstart", resumeRingOnInteraction, { passive: true })
@@ -1248,6 +1322,10 @@ export async function triggerSystemIncomingCallAlert(
         const joinUrl = `${origin}/connectin?waCall=${encodeURIComponent(
           spec.callId
         )}&mode=${spec.callMode}&callerName=${encodeURIComponent(spec.callerName)}&autoAnswer=1`
+        const isTabHidden = typeof document !== "undefined" && document.hidden
+        const isAnyAudioActivelyPlaying =
+          (Boolean(activeRingSource) && liveAudioCtx?.state === "running") ||
+          Boolean(fallbackWavRingAudio && !fallbackWavRingAudio.paused)
         await reg.showNotification(title, {
           body,
           icon: "/brand/connectln-icon-256.png",
@@ -1255,7 +1333,7 @@ export async function triggerSystemIncomingCallAlert(
           tag: `connectln-call-${spec.callId}`,
           renotify: false,
           requireInteraction: true,
-          silent: Boolean(fallbackWavRingAudio && !fallbackWavRingAudio.paused),
+          silent: isTabHidden ? false : isAnyAudioActivelyPlaying,
           vibrate: [600, 220, 600, 220, 800, 250, 800],
           data: {
             callId: spec.callId,

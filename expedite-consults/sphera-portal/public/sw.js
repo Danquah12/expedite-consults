@@ -80,12 +80,6 @@ async function ringNotificationUntilAnsweredOrEnded(spec, payload) {
 
   await self.registration.showNotification(spec.title, spec.options).catch(() => {});
 
-  // If a minimized tab is already open in background and ringing via HTML5 audio,
-  // don't replay the OS notification chime every 4.5s on top of it.
-  if (initialClients.length > 0) {
-    return;
-  }
-
   for (let burst = 0; burst < 5; burst++) {
     await new Promise((resolve) => setTimeout(resolve, 4500));
     if (swHandledCallIds.has(callId)) {
@@ -121,6 +115,7 @@ async function ringNotificationUntilAnsweredOrEnded(spec, payload) {
       .matchAll({ type: "window", includeUncontrolled: true })
       .catch(() => []);
     if (windowClients.some((c) => c.visibilityState === "visible")) {
+      await closeCallNotificationsByTag(callId);
       return;
     }
     for (const client of windowClients) {
