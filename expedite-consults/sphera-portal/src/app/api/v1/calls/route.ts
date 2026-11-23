@@ -502,7 +502,7 @@ async function pushCloudSharedStage(callId: string, stage: SharedStageRecord | n
   lastCloudStagePushMap.set(stageKey, nowMs)
 
   const compactFrame =
-    stage?.frame_or_data_url && stage.frame_or_data_url.length < 480000
+    stage?.frame_or_data_url && stage.frame_or_data_url.length < 6500000
       ? stage.frame_or_data_url
       : null
   const payload = JSON.stringify({
@@ -523,7 +523,7 @@ async function pushCloudSharedStage(callId: string, stage: SharedStageRecord | n
     frame_or_data_url: compactFrame,
     updated_at_ms: stage?.updated_at_ms || nowMs,
   })
-  await upsertTwilioSyncItem(auth, stageKey, payload, "180")
+  await upsertTwilioSyncItem(auth, stageKey, payload, "3600")
 }
 
 async function upsertTwilioSyncItem(_auth: string, key: string, serialized: string, ttlSec = "60"): Promise<void> {
@@ -589,6 +589,7 @@ async function pullCloudCallParticipants(excludeUserId?: string, forceRefresh = 
     // First pass: merge participant records (`p__`) and collect shared stage (`s__`), roster (`r__`), chat (`c__`), and audio (`a__`)
     const audioItems: any[] = []
     const rosterItems: any[] = []
+    const stageItems: any[] = []
     const chatItems: any[] = []
     for (const item of items) {
       const data = item?.data
@@ -604,29 +605,7 @@ async function pullCloudCallParticipants(excludeUserId?: string, forceRefresh = 
         continue
       }
       if (data.kind === "stage" || String(item?.key || "").startsWith("s__")) {
-        const record = ACTIVE_CALLS_STORE.get(data.call_id)
-        if (record && record.state !== "ENDED") {
-          const remoteTs = Number(data.updated_at_ms) || 0
-          const localTs = record.shared_stage?.updated_at_ms || 0
-          if (remoteTs > localTs && nowMs - remoteTs < 60000) {
-            record.shared_stage = {
-              active: Boolean(data.active),
-              sharer_user_id: data.sharer_user_id || "",
-              sharer_name: data.sharer_name || "",
-              mode: data.mode || "screen",
-              title: data.title || "",
-              mime_type: data.mime_type,
-              file_name: data.file_name,
-              file_size_label: data.file_size_label,
-              recipient_scope: data.recipient_scope || "everyone",
-              recipient_ids: Array.isArray(data.recipient_ids) ? data.recipient_ids : undefined,
-              recipient_names: Array.isArray(data.recipient_names) ? data.recipient_names : undefined,
-              use_webrtc_stream: Boolean(data.use_webrtc_stream),
-              frame_or_data_url: data.frame_or_data_url || record.shared_stage?.frame_or_data_url || null,
-              updated_at_ms: remoteTs,
-            }
-          }
-        }
+        stageItems.push(data)
         continue
       }
       if (!data.user_id) continue
@@ -766,6 +745,42 @@ async function pullCloudCallParticipants(excludeUserId?: string, forceRefresh = 
               record.muted_keys = [...rData.muted_keys]
             }
             record.moderation_updated_at_ms = incomingModTs
+          }
+        }
+      }
+
+      // Pass 3.5: merge shared stage (`s__`) AFTER participants (`p__`) & roster (`r__`) ensure rooms exist
+      for (const sData of stageItems) {
+        const remoteTs = Number(sData.updated_at_ms) || 0
+        if (nowMs - remoteTs >= 3600000) continue
+        const record = ACTIVE_CALLS_STORE.get(sData.call_id)
+        if (!record || record.state === "ENDED") continue
+        const localTs = record.shared_stage?.updated_at_ms || 0
+        if (remoteTs >= localTs) {
+          const keepExistingFrame =
+            sData.active &&
+            remoteTs === localTs &&
+            !sData.frame_or_data_url &&
+            Boolean(record.shared_stage?.frame_or_data_url)
+          record.shared_stage = {
+            active: Boolean(sData.active),
+            sharer_user_id: sData.sharer_user_id || "",
+            sharer_name: sData.sharer_name || "",
+            mode: sData.mode || "screen",
+            title: sData.title || "",
+            mime_type: sData.mime_type,
+            file_name: sData.file_name,
+            file_size_label: sData.file_size_label,
+            recipient_scope: sData.recipient_scope || "everyone",
+            recipient_ids: Array.isArray(sData.recipient_ids) ? sData.recipient_ids : undefined,
+            recipient_names: Array.isArray(sData.recipient_names) ? sData.recipient_names : undefined,
+            use_webrtc_stream: Boolean(sData.use_webrtc_stream),
+            frame_or_data_url: !sData.active
+              ? null
+              : keepExistingFrame
+              ? record.shared_stage?.frame_or_data_url || null
+              : sData.frame_or_data_url || null,
+            updated_at_ms: remoteTs,
           }
         }
       }
@@ -1075,7 +1090,18 @@ export async function GET(req: NextRequest) {
             c.target_recipient_name &&
             c.target_recipient_name.trim().toLowerCase() === incomingForName)
       )
-      if (viewerIsInitiatorPhone && !isIntentionalSelfCall) {
+      const rosterMatch = (c.invited_roster || []).some((inv) => {
+        if (inv.status === "removed") return false
+        const invDigits = String(inv.phone || "").replace(/[^\d]/g, "")
+        if (invDigits.length >= 7 && incomingPhoneDigits.length >= 7) {
+          if (invDigits === incomingPhoneDigits || invDigits.slice(-10) === incomingPhoneDigits.slice(-10)) {
+            return true
+          }
+        }
+        return matchesTarget(inv.name, inv.email, inv.phone)
+      })
+
+      if (viewerIsInitiatorPhone && !isIntentionalSelfCall && !rosterMatch) {
         if (
           callAlreadyAnsweredByPeer ||
           !targetsSameAccountOwner ||
@@ -1098,17 +1124,6 @@ export async function GET(req: NextRequest) {
         ? phoneMatchesTarget ||
           matchesTarget(c.target_recipient_name, c.target_recipient_email, c.target_recipient_phone)
         : matchesTarget(c.target_recipient_name, c.target_recipient_email, c.target_recipient_phone)
-
-      const rosterMatch = (c.invited_roster || []).some((inv) => {
-        if (inv.status === "removed") return false
-        const invDigits = String(inv.phone || "").replace(/[^\d]/g, "")
-        if (invDigits.length >= 7 && incomingPhoneDigits.length >= 7) {
-          if (invDigits === incomingPhoneDigits || invDigits.slice(-10) === incomingPhoneDigits.slice(-10)) {
-            return true
-          }
-        }
-        return matchesTarget(inv.name, inv.email, inv.phone)
-      })
 
       // For DM calls without an explicit target_recipient_name/phone (where callId contains both caller & callee names),
       // don't match the caller's own name via `cidLower.includes(nameSlug)`.
@@ -1259,7 +1274,7 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    if (action === "end" && body.call_id) {
+    if ((action === "end" || action === "decline") && body.call_id) {
       const endCallId = String(body.call_id).trim()
       await pullCloudCallParticipants(undefined, true).catch(() => {})
       let existing = ACTIVE_CALLS_STORE.get(endCallId)
@@ -1274,7 +1289,49 @@ export async function POST(req: NextRequest) {
           p.last_seen_ms &&
           nowMs - p.last_seen_ms < PARTICIPANT_TTL_MS
       )
-      if (otherActive.length >= 2 && !body.end_for_all) {
+      const activeRoster = (existing.invited_roster || []).filter((m) => m && m.status !== "removed")
+
+      if (action === "decline" && !body.end_for_all) {
+        const decliningKeys = new Set(
+          buildModerationIdentityKeys({
+            userId: body.user_id,
+            phone: typeof body.participant_phone === "string" ? body.participant_phone : undefined,
+            name: typeof body.display_name === "string" ? body.display_name : undefined,
+          })
+        )
+        const otherActiveRoster = activeRoster.filter((m) => !participantMatchesModKey(m, decliningKeys))
+        const matchedDecliningRoster = otherActiveRoster.length < activeRoster.length
+        const keepGroupRoomAlive =
+          otherActive.length >= 2 ||
+          (matchedDecliningRoster ? otherActiveRoster.length >= 1 : activeRoster.length >= 2)
+        if (keepGroupRoomAlive) {
+          await removeSingleParticipantFromGroupCall({
+            callId: endCallId,
+            existing,
+            userId: body.user_id,
+            participantPhone:
+              typeof body.participant_phone === "string" ? body.participant_phone : undefined,
+            displayName: typeof body.display_name === "string" ? body.display_name : undefined,
+            now,
+            nowMs,
+          })
+          return NextResponse.json({
+            protocol_version: 1,
+            event_type: "call.participant_declined",
+            occurred_at: now,
+            call: existing,
+          })
+        }
+      }
+
+      if (
+        action === "end" &&
+        !body.end_for_all &&
+        (otherActive.length >= 2 ||
+          (body.user_id !== existing.initiator_user_id &&
+            otherActive.length >= 1 &&
+            activeRoster.length >= 2))
+      ) {
         await removeSingleParticipantFromGroupCall({
           callId: endCallId,
           existing,
@@ -1530,16 +1587,32 @@ export async function POST(req: NextRequest) {
       if (body.call_type === "audio" || body.call_type === "video") {
         record.call_type = body.call_type
       }
-      if (typeof body.target_recipient_name === "string" && body.target_recipient_name.trim()) {
+      if (
+        !record.target_recipient_name &&
+        typeof body.target_recipient_name === "string" &&
+        body.target_recipient_name.trim()
+      ) {
         record.target_recipient_name = body.target_recipient_name.trim()
       }
-      if (typeof body.target_recipient_email === "string" && body.target_recipient_email.trim()) {
+      if (
+        !record.target_recipient_email &&
+        typeof body.target_recipient_email === "string" &&
+        body.target_recipient_email.trim()
+      ) {
         record.target_recipient_email = body.target_recipient_email.trim().toLowerCase()
       }
-      if (typeof body.target_recipient_phone === "string" && body.target_recipient_phone.trim()) {
+      if (
+        !record.target_recipient_phone &&
+        typeof body.target_recipient_phone === "string" &&
+        body.target_recipient_phone.trim()
+      ) {
         record.target_recipient_phone = body.target_recipient_phone.trim()
       }
-      if (typeof body.initiator_phone === "string" && body.initiator_phone.trim()) {
+      if (
+        !record.initiator_phone &&
+        typeof body.initiator_phone === "string" &&
+        body.initiator_phone.trim()
+      ) {
         record.initiator_phone = body.initiator_phone.trim()
       }
       if (!record.initiator_name && displayName) {
@@ -1742,16 +1815,32 @@ export async function POST(req: NextRequest) {
       if (body.call_type === "audio" || body.call_type === "video" || body.call_type === "screenshare") {
         record.call_type = body.call_type
       }
-      if (typeof body.target_recipient_name === "string" && body.target_recipient_name.trim()) {
+      if (
+        !record.target_recipient_name &&
+        typeof body.target_recipient_name === "string" &&
+        body.target_recipient_name.trim()
+      ) {
         record.target_recipient_name = body.target_recipient_name.trim()
       }
-      if (typeof body.target_recipient_email === "string" && body.target_recipient_email.trim()) {
+      if (
+        !record.target_recipient_email &&
+        typeof body.target_recipient_email === "string" &&
+        body.target_recipient_email.trim()
+      ) {
         record.target_recipient_email = body.target_recipient_email.trim().toLowerCase()
       }
-      if (typeof body.target_recipient_phone === "string" && body.target_recipient_phone.trim()) {
+      if (
+        !record.target_recipient_phone &&
+        typeof body.target_recipient_phone === "string" &&
+        body.target_recipient_phone.trim()
+      ) {
         record.target_recipient_phone = body.target_recipient_phone.trim()
       }
-      if (typeof body.initiator_phone === "string" && body.initiator_phone.trim()) {
+      if (
+        !record.initiator_phone &&
+        typeof body.initiator_phone === "string" &&
+        body.initiator_phone.trim()
+      ) {
         record.initiator_phone = body.initiator_phone.trim()
       }
       if (!record.initiator_name && displayName) {
@@ -1891,6 +1980,11 @@ export async function POST(req: NextRequest) {
             : "7749 2210 8841 3390",
       }
 
+      const peerIdChanged = Boolean(
+        body.peer_id &&
+          existingIdx >= 0 &&
+          record.participants[existingIdx].peer_id !== body.peer_id
+      )
       if (existingIdx >= 0) {
         record.participants[existingIdx] = updatedParticipant
       } else {
@@ -1916,7 +2010,7 @@ export async function POST(req: NextRequest) {
         pushCloudCallParticipant(
           callId,
           updatedParticipant,
-          existingIdx < 0 || action === "join" || action === "create" || rosterChanged
+          existingIdx < 0 || action === "join" || action === "create" || rosterChanged || peerIdChanged
         ).catch(() => {}),
         stageChanged
           ? pushCloudSharedStage(callId, record.shared_stage || null, action === "share_stage").catch(() => {})
@@ -1970,11 +2064,29 @@ export async function POST(req: NextRequest) {
         }
       }
 
+      const knownStageTs = Number(body.known_stage_ts) || 0
+      const omitHeavyStageFrame = Boolean(
+        action === "heartbeat" &&
+          knownStageTs > 0 &&
+          record.shared_stage?.active &&
+          record.shared_stage.updated_at_ms === knownStageTs &&
+          record.shared_stage.frame_or_data_url
+      )
+      const responseCall = omitHeavyStageFrame
+        ? {
+            ...record,
+            shared_stage: {
+              ...record.shared_stage!,
+              frame_or_data_url: null,
+            },
+          }
+        : record
+
       return NextResponse.json({
         protocol_version: 1,
         event_type: action === "heartbeat" ? "call.heartbeat" : "call.accepted",
         occurred_at: now,
-        call: record,
+        call: responseCall,
       })
     }
 

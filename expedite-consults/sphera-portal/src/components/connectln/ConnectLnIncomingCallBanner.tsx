@@ -132,9 +132,11 @@ export function ConnectLnIncomingCallBanner({
         headers: { "Content-Type": "application/json" },
         keepalive: true,
         body: JSON.stringify({
-          action: "end",
+          action: "decline",
           call_id: cleanId,
           user_id: localPeerId,
+          participant_phone: myPhoneRef.current || undefined,
+          display_name: viewerNameRef.current || undefined,
         }),
       }).catch(() => {})
     }

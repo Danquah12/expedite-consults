@@ -1009,6 +1009,41 @@ export interface ConnectLnWhatsAppCallModalProps {
   onBridgeCarrierFallback?: (phoneOrName: string) => void
 }
 
+let pdfJsLoadPromise: Promise<any> | null = null
+
+async function loadPdfJsLibrary(): Promise<any> {
+  if (typeof window === "undefined") return null
+  const existing = (window as any).pdfjsLib
+  if (existing && typeof existing.getDocument === "function") {
+    if (existing.GlobalWorkerOptions) {
+      existing.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"
+    }
+    return existing
+  }
+  if (!pdfJsLoadPromise) {
+    pdfJsLoadPromise = new Promise<any>((resolve) => {
+      const script = document.createElement("script")
+      script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"
+      script.async = true
+      script.onload = () => {
+        const lib = (window as any).pdfjsLib
+        if (lib?.GlobalWorkerOptions) {
+          lib.GlobalWorkerOptions.workerSrc =
+            "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"
+        }
+        resolve(lib || null)
+      }
+      script.onerror = () => {
+        pdfJsLoadPromise = null
+        resolve(null)
+      }
+      document.head.appendChild(script)
+    })
+  }
+  return pdfJsLoadPromise
+}
+
 /**
  * Full-Screen Multi-Person WhatsApp-Style Direct & Group Voice/Video Call Experience:
  * - Supports 1-on-1 AND Multi-Person Group Calls (`➕ Add Person` mid-call!)
@@ -1089,6 +1124,9 @@ export function ConnectLnWhatsAppCallModal({
   const [isStageExpanded, setIsStageExpanded] = useState<boolean>(false)
   const [stageBlobUrl, setStageBlobUrl] = useState<string>("")
   const [stageTextPreview, setStageTextPreview] = useState<string>("")
+  const [stagePdfPages, setStagePdfPages] = useState<string[]>([])
+  const [stagePdfTotalPages, setStagePdfTotalPages] = useState<number>(0)
+  const [stagePdfRendering, setStagePdfRendering] = useState<boolean>(false)
   const [materialRecipientScope, setMaterialRecipientScope] = useState<"everyone" | "selected">("everyone")
   const [selectedMaterialRecipientKeys, setSelectedMaterialRecipientKeys] = useState<string[]>([])
   const [isLocalScreenSharing, setIsLocalScreenSharing] = useState<boolean>(false)
@@ -1243,65 +1281,142 @@ export function ConnectLnWhatsAppCallModal({
     img.src = customBgDataUrl
   }, [customBgDataUrl])
 
-  // Convert shared device file `data:` URLs (especially PDFs) into `blob:` URLs so browser PDF/doc previews never get blocked
+  // Convert shared device file `data:` URLs into cross-device renderable assets (PDF page images, `.docx` text, `blob:` URLs)
   useEffect(() => {
     if (!activeSharedStage?.active || !activeSharedStage.frame_or_data_url) {
       setStageBlobUrl("")
       setStageTextPreview("")
+      setStagePdfPages([])
+      setStagePdfTotalPages(0)
+      setStagePdfRendering(false)
       return
     }
     const raw = activeSharedStage.frame_or_data_url
     const fileName = activeSharedStage.file_name || activeSharedStage.title || ""
     const mimeRaw = (activeSharedStage.mime_type || "").toLowerCase()
     const isPdf = mimeRaw.includes("pdf") || /\.pdf$/i.test(fileName) || raw.startsWith("data:application/pdf")
+    const isDocx = mimeRaw.includes("wordprocessingml") || /\.docx$/i.test(fileName)
     const isTextLike =
       mimeRaw.startsWith("text/") ||
       mimeRaw.includes("json") ||
       /\.(txt|md|csv|json|log|xml|yaml|yml)$/i.test(fileName)
 
-    if (!raw.startsWith("data:")) {
+    if (!raw.startsWith("data:") && !isPdf && !isDocx && !isTextLike) {
       setStageBlobUrl(raw)
       setStageTextPreview("")
+      setStagePdfPages([])
+      setStagePdfTotalPages(0)
+      setStagePdfRendering(false)
       return
     }
 
     let createdUrl = ""
     let cancelled = false
+    setStagePdfPages([])
+    setStagePdfTotalPages(0)
+    setStageTextPreview("")
+    if (isPdf) setStagePdfRendering(true)
 
     const decodeDataUrl = async () => {
       try {
-        const commaIdx = raw.indexOf(",")
-        if (commaIdx < 0) return
-        const header = raw.slice(5, commaIdx)
-        const payload = raw.slice(commaIdx + 1)
-        const detectedMime = header.split(";")[0] || activeSharedStage.mime_type || "application/octet-stream"
-        const finalMime = isPdf ? "application/pdf" : detectedMime
         let blob: Blob
-        if (header.includes(";base64")) {
-          const bin = atob(payload.replace(/\s/g, ""))
-          const bytes = new Uint8Array(bin.length)
-          for (let i = 0; i < bin.length; i++) {
-            bytes[i] = bin.charCodeAt(i)
+        let rawBytes: Uint8Array | null = null
+
+        if (raw.startsWith("data:")) {
+          const commaIdx = raw.indexOf(",")
+          if (commaIdx < 0) return
+          const header = raw.slice(5, commaIdx)
+          const payload = raw.slice(commaIdx + 1)
+          const detectedMime = header.split(";")[0] || activeSharedStage.mime_type || "application/octet-stream"
+          const finalMime = isPdf ? "application/pdf" : detectedMime
+          if (header.includes(";base64")) {
+            const bin = atob(payload.replace(/\s/g, ""))
+            const bytes = new Uint8Array(bin.length)
+            for (let i = 0; i < bin.length; i++) {
+              bytes[i] = bin.charCodeAt(i)
+            }
+            rawBytes = bytes
+            blob = new Blob([bytes.buffer], { type: finalMime })
+          } else {
+            const fetched = await fetch(raw)
+            const buf = await fetched.arrayBuffer()
+            rawBytes = new Uint8Array(buf)
+            blob = new Blob([buf], { type: finalMime })
           }
-          blob = new Blob([bytes], { type: finalMime })
+          if (cancelled) return
+          createdUrl = URL.createObjectURL(blob)
+          setStageBlobUrl(createdUrl)
         } else {
+          setStageBlobUrl(raw)
           const fetched = await fetch(raw)
           const buf = await fetched.arrayBuffer()
-          blob = new Blob([buf], { type: finalMime })
+          rawBytes = new Uint8Array(buf)
+          blob = new Blob([buf], { type: isPdf ? "application/pdf" : activeSharedStage.mime_type || "application/octet-stream" })
+          if (cancelled) return
         }
-        if (cancelled) return
-        createdUrl = URL.createObjectURL(blob)
-        setStageBlobUrl(createdUrl)
-        if (isTextLike) {
+
+        if (isPdf && rawBytes) {
+          try {
+            const pdfjsLib = await loadPdfJsLibrary()
+            if (pdfjsLib && !cancelled) {
+              let pdfDoc: any = null
+              try {
+                pdfDoc = await pdfjsLib.getDocument({ data: rawBytes.slice() }).promise
+              } catch {
+                pdfDoc = await pdfjsLib.getDocument({ data: rawBytes.slice(), disableWorker: true }).promise
+              }
+              if (cancelled || !pdfDoc) return
+              const total = Number(pdfDoc.numPages) || 0
+              setStagePdfTotalPages(total)
+              const limit = Math.min(total, 15)
+              const isMobileUa =
+                typeof navigator !== "undefined" &&
+                /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent || "")
+              const renderScale = isMobileUa ? 1.4 : 1.6
+              const renderedPages: string[] = []
+              for (let pageNo = 1; pageNo <= limit; pageNo++) {
+                if (cancelled) return
+                const page = await pdfDoc.getPage(pageNo)
+                const viewport = page.getViewport({ scale: renderScale })
+                const canvas = document.createElement("canvas")
+                canvas.width = Math.max(1, Math.floor(viewport.width))
+                canvas.height = Math.max(1, Math.floor(viewport.height))
+                const ctx = canvas.getContext("2d")
+                if (ctx) {
+                  ctx.fillStyle = "#FFFFFF"
+                  ctx.fillRect(0, 0, canvas.width, canvas.height)
+                  await page.render({ canvasContext: ctx, viewport }).promise
+                  if (!cancelled) {
+                    renderedPages.push(canvas.toDataURL("image/jpeg", 0.88))
+                    setStagePdfPages([...renderedPages])
+                  }
+                }
+              }
+            }
+          } finally {
+            if (!cancelled) setStagePdfRendering(false)
+          }
+        } else if (isDocx) {
+          try {
+            const buf = rawBytes ? rawBytes.slice().buffer : await blob.arrayBuffer()
+            const mammothMod: any = await import("mammoth")
+            const extractor = mammothMod.default || mammothMod
+            const result = await extractor.extractRawText({ arrayBuffer: buf })
+            if (!cancelled) {
+              setStageTextPreview(String(result?.value || "").trim().slice(0, 24000))
+            }
+          } catch {
+            if (!cancelled) setStageTextPreview("")
+          }
+        } else if (isTextLike) {
           const txt = await blob.text()
           if (!cancelled) setStageTextPreview(txt.slice(0, 24000))
-        } else {
-          setStageTextPreview("")
         }
       } catch {
         if (!cancelled) {
           setStageBlobUrl(raw)
           setStageTextPreview("")
+          setStagePdfRendering(false)
         }
       }
     }
@@ -1598,13 +1713,16 @@ export function ConnectLnWhatsAppCallModal({
 
       let stream: MediaStream | null = null
       if (wantVideo) {
+        const isMobileCap =
+          typeof navigator !== "undefined" &&
+          /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent || "")
         try {
           stream = await navigator.mediaDevices.getUserMedia({
             video: {
               facingMode: { ideal: facing },
-              width: { ideal: 640, max: 960 },
-              height: { ideal: 480, max: 540 },
-              frameRate: { ideal: 30, max: 30 },
+              width: isMobileCap ? { ideal: 480, max: 640 } : { ideal: 640, max: 960 },
+              height: isMobileCap ? { ideal: 360, max: 480 } : { ideal: 480, max: 540 },
+              frameRate: isMobileCap ? { ideal: 24, max: 24 } : { ideal: 30, max: 30 },
             },
             audio: {
               echoCancellation: true,
@@ -2051,6 +2169,9 @@ export function ConnectLnWhatsAppCallModal({
       setIsStageExpanded(false)
       setStageBlobUrl("")
       setStageTextPreview("")
+      setStagePdfPages([])
+      setStagePdfTotalPages(0)
+      setStagePdfRendering(false)
       setCohostKeys([])
       setHostMutedKeys([])
       setWasMutedByHostBanner(false)
@@ -2129,18 +2250,51 @@ export function ConnectLnWhatsAppCallModal({
     const tunePeerConnectionForSmooth30Fps = (pc?: RTCPeerConnection) => {
       if (!pc || typeof pc.getSenders !== "function") return
       try {
+        const peerCount = Math.max(1, activeMediaCallsRef.current.size)
+        const isMobileUa =
+          typeof navigator !== "undefined" &&
+          /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent || "")
+        const targetBitrate = isMobileUa
+          ? peerCount >= 3
+            ? 240_000
+            : peerCount === 2
+            ? 360_000
+            : 650_000
+          : peerCount >= 3
+          ? 320_000
+          : peerCount === 2
+          ? 480_000
+          : 900_000
+        const targetFps = isMobileUa
+          ? peerCount >= 3
+            ? 15
+            : peerCount === 2
+            ? 18
+            : 24
+          : peerCount >= 3
+          ? 18
+          : peerCount === 2
+          ? 22
+          : 30
+
         for (const sender of pc.getSenders()) {
           if (sender.track?.kind === "video" && typeof sender.getParameters === "function") {
             const params = sender.getParameters()
             ;(params as any).degradationPreference = "maintain-framerate"
             if (Array.isArray(params.encodings) && params.encodings.length > 0) {
-              params.encodings[0].maxBitrate = 950_000
-              params.encodings[0].maxFramerate = 30
+              params.encodings[0].maxBitrate = targetBitrate
+              params.encodings[0].maxFramerate = targetFps
             }
             sender.setParameters(params).catch(() => {})
           }
         }
       } catch {}
+    }
+
+    const retuneAllActivePeerConnections = () => {
+      activeMediaCallsRef.current.forEach((existingCall) => {
+        tunePeerConnectionForSmooth30Fps(existingCall?.peerConnection)
+      })
     }
 
     const bindMediaCall = (mc: any) => {
@@ -2150,13 +2304,13 @@ export function ConnectLnWhatsAppCallModal({
       if (!streamingPeersSet.has(mc.peer) || !activeMediaCallsRef.current.has(mc.peer)) {
         activeMediaCallsRef.current.set(mc.peer, mc)
       }
-      tunePeerConnectionForSmooth30Fps(mc.peerConnection)
+      retuneAllActivePeerConnections()
 
       mc.on("stream", (rStream: MediaStream) => {
         if (cancelled) return
         streamingPeersSet.add(mc.peer)
         activeMediaCallsRef.current.set(mc.peer, mc)
-        tunePeerConnectionForSmooth30Fps(mc.peerConnection)
+        retuneAllActivePeerConnections()
         const hasVid = rStream.getVideoTracks().length > 0
         if (hasVid) hasLiveRemoteVideoRef.current = true
         setRemoteStreamsMap((prev) => {
@@ -2173,6 +2327,7 @@ export function ConnectLnWhatsAppCallModal({
         if (activeMediaCallsRef.current.get(mc.peer) !== mc) return
         streamingPeersSet.delete(mc.peer)
         activeMediaCallsRef.current.delete(mc.peer)
+        retuneAllActivePeerConnections()
         setRemoteStreamsMap((prev) => {
           const next = { ...prev }
           delete next[mc.peer]
@@ -2191,12 +2346,22 @@ export function ConnectLnWhatsAppCallModal({
         const curStage = activeSharedStageRef.current
         if (curStage?.active && curStage.mode === "file" && curStage.sharer_user_id === localPeerUid) {
           try {
-            conn.send({ type: "stage_share", stage: curStage })
+            if (JSON.stringify(curStage).length < 180_000) {
+              conn.send({ type: "stage_share", stage: curStage })
+            }
           } catch {}
         }
       })
       conn.on("data", (msg: any) => {
         if (msg?.type === "call_ended") {
+          if (
+            !msg.forceEndForAll &&
+            (remoteWebRtcPeersRef.current.length >= 2 ||
+              cellLegsRef.current.length >= 1 ||
+              maxRemoteCountSeenRef.current >= 2)
+          ) {
+            return
+          }
           markConnectLnCallHandled(callId)
           setCallStatus("ended")
           stopAllMedia()
@@ -2542,6 +2707,11 @@ export function ConnectLnWhatsAppCallModal({
             virtual_bg_id: selectedBgIdRef.current,
             virtual_bg_badge: activeBgBadge,
             webrtc_connected: webrtcActiveNow,
+            known_stage_ts:
+              activeSharedStageRef.current?.active &&
+              activeSharedStageRef.current?.frame_or_data_url
+                ? activeSharedStageRef.current.updated_at_ms
+                : 0,
             live_frame:
               !webrtcActiveNow && vidOnNow && hasVidTrackNow
                 ? lastCapturedFrameRef.current
@@ -3063,7 +3233,7 @@ export function ConnectLnWhatsAppCallModal({
       activeDataConnsRef.current.forEach((conn) => {
         if (conn?.open) {
           try {
-            conn.send({ type: "call_ended", callId })
+            conn.send({ type: "call_ended", callId, forceEndForAll })
           } catch {}
         }
       })
@@ -3477,31 +3647,37 @@ export function ConnectLnWhatsAppCallModal({
         }!`
       )
 
-      // Broadcast full file stage over PeerJS DataChannels so PDFs & large materials appear instantaneously P2P
-      activeDataConnsRef.current.forEach((conn) => {
-        if (conn?.open) {
-          try {
-            conn.send({ type: "stage_share", stage: stagePayload })
-          } catch {}
-        }
-      })
-      if (peerRef.current && !peerRef.current.destroyed) {
-        knownRemotePeerIdsRef.current.forEach((pid) => {
-          const existingConn = activeDataConnsRef.current.get(pid)
-          if (!existingConn) {
+      // Broadcast small file stages (<180KB) over PeerJS DataChannels; larger docs sync via cloud KV without tripping WebRTC SCTP limits
+      let canSendStageViaP2P = false
+      try {
+        canSendStageViaP2P = JSON.stringify(stagePayload).length < 180_000
+      } catch {}
+      if (canSendStageViaP2P) {
+        activeDataConnsRef.current.forEach((conn) => {
+          if (conn?.open) {
             try {
-              const dc = peerRef.current.connect(pid, { reliable: true })
-              if (dc) {
-                activeDataConnsRef.current.set(pid, dc)
-                dc.on("open", () => {
-                  try {
-                    dc.send({ type: "stage_share", stage: stagePayload })
-                  } catch {}
-                })
-              }
+              conn.send({ type: "stage_share", stage: stagePayload })
             } catch {}
           }
         })
+        if (peerRef.current && !peerRef.current.destroyed) {
+          knownRemotePeerIdsRef.current.forEach((pid) => {
+            const existingConn = activeDataConnsRef.current.get(pid)
+            if (!existingConn) {
+              try {
+                const dc = peerRef.current.connect(pid, { reliable: true })
+                if (dc) {
+                  activeDataConnsRef.current.set(pid, dc)
+                  dc.on("open", () => {
+                    try {
+                      dc.send({ type: "stage_share", stage: stagePayload })
+                    } catch {}
+                  })
+                }
+              } catch {}
+            }
+          })
+        }
       }
 
       await fetch("/api/v1/calls", {
@@ -3923,9 +4099,9 @@ export function ConnectLnWhatsAppCallModal({
               </div>
             </div>
             <div
-              className={`p-3 overflow-auto flex items-center justify-center bg-black/50 ${
-                isStageExpanded ? "max-h-[68vh]" : "max-h-[44vh]"
-              }`}
+              className={`p-3 overflow-auto flex justify-center bg-[#091116] ${
+                stagePdfPages.length > 0 || stageTextPreview ? "items-start" : "items-center"
+              } ${isStageExpanded ? "max-h-[68vh]" : "max-h-[44vh]"}`}
             >
               {activeSharedStage.mode === "screen" ? (
                 <p className="text-xs text-emerald-200 py-4 font-semibold">
@@ -3952,38 +4128,62 @@ export function ConnectLnWhatsAppCallModal({
                   data-connectln-call-audio="true"
                   className="w-full max-w-md"
                 />
-              ) : resolvedUrl && isStagePdf ? (
-                <object
-                  data={`${resolvedUrl}#toolbar=1&navpanes=0&view=FitH`}
-                  type="application/pdf"
-                  className={`w-full rounded-xl bg-white ${
+              ) : isStagePdf && stagePdfPages.length > 0 ? (
+                <div className="w-full flex flex-col items-center gap-3 pb-2">
+                  {stagePdfPages.map((pageUrl, pageIdx) => (
+                    <div key={`pdf-page-${pageIdx}`} className="w-full flex flex-col items-center gap-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300/90">
+                        Page {pageIdx + 1} of {stagePdfTotalPages || stagePdfPages.length}
+                      </span>
+                      <img
+                        src={pageUrl}
+                        alt={`${stageFileName} page ${pageIdx + 1}`}
+                        className="w-full max-w-3xl rounded-lg shadow-lg bg-white"
+                      />
+                    </div>
+                  ))}
+                  {stagePdfTotalPages > stagePdfPages.length && (
+                    <p className="text-[11px] font-semibold text-emerald-200 bg-emerald-950/60 border border-emerald-500/30 rounded-xl px-3 py-2 text-center">
+                      Showing first {stagePdfPages.length} of {stagePdfTotalPages} pages. Tap{" "}
+                      <strong>↗ Open</strong> or <strong>Download</strong> above to view all pages.
+                    </p>
+                  )}
+                </div>
+              ) : isStagePdf && stagePdfRendering ? (
+                <div className="py-6 px-6 text-center space-y-2">
+                  <div className="h-7 w-7 mx-auto rounded-full border-2 border-emerald-400 border-t-transparent animate-spin" />
+                  <p className="text-xs font-bold text-emerald-200">Rendering PDF pages for all devices...</p>
+                </div>
+              ) : isStagePdf &&
+                stageBlobUrl.startsWith("blob:") &&
+                !(
+                  typeof navigator !== "undefined" &&
+                  /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent || "")
+                ) ? (
+                <iframe
+                  key={stageBlobUrl}
+                  src={`${stageBlobUrl}#toolbar=1&navpanes=0&view=FitH`}
+                  title={stageFileName}
+                  className={`w-full rounded-xl bg-white border-0 ${
                     isStageExpanded ? "h-[60vh]" : "h-[38vh]"
                   }`}
-                >
-                  <iframe
-                    src={`${resolvedUrl}#toolbar=1&navpanes=0&view=FitH`}
-                    title={stageFileName}
-                    className={`w-full rounded-xl bg-white border-0 ${
-                      isStageExpanded ? "h-[60vh]" : "h-[38vh]"
-                    }`}
-                  />
-                </object>
+                />
               ) : stageTextPreview ? (
-                <pre
-                  className={`w-full rounded-xl bg-[#071014] border border-white/10 p-3 text-xs text-emerald-100 font-mono overflow-auto whitespace-pre-wrap ${
-                    isStageExpanded ? "max-h-[60vh]" : "max-h-[36vh]"
+                <div
+                  className={`w-full rounded-xl bg-[#0B171E] border border-emerald-400/25 p-4 text-xs sm:text-sm text-slate-100 leading-relaxed overflow-auto whitespace-pre-wrap select-text ${
+                    isStageExpanded ? "max-h-[60vh]" : "max-h-[38vh]"
                   }`}
                 >
                   {stageTextPreview}
-                </pre>
+                </div>
               ) : (
                 <div className="py-5 px-6 text-center space-y-2.5">
                   <FileText className="h-10 w-10 text-emerald-400 mx-auto" />
                   <p className="text-xs font-bold text-white">{stageFileName}</p>
                   <p className="text-[11px] text-slate-300">
                     {resolvedUrl
-                      ? "Ready to view — click Open or Download above to view this document on your device."
-                      : "File metadata synced — large file preview transfers over WebRTC P2P when connected."}
+                      ? "Ready to view — click ↗ Open or Download above to view this document on your device."
+                      : "Syncing shared document content to participants..."}
                   </p>
                 </div>
               )}

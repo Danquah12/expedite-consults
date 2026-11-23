@@ -115,21 +115,6 @@ async function ringNotificationUntilAnsweredOrEnded(spec, payload) {
           await closeCallNotificationsByTag(callId);
           return;
         }
-        const isAnsweredByRecipient = Boolean(
-          callObj &&
-            Array.isArray(callObj.participants) &&
-            callObj.participants.some(
-              (p) =>
-                p &&
-                p.user_id &&
-                callObj.initiator_user_id &&
-                p.user_id !== callObj.initiator_user_id
-            )
-        );
-        if (isAnsweredByRecipient) {
-          await closeCallNotificationsByTag(callId);
-          return;
-        }
       }
     } catch {}
 
@@ -260,7 +245,7 @@ self.addEventListener("notificationclick", (event) => {
           await fetch("/api/v1/calls", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "end", call_id: callId, user_id: "declined_push" }),
+            body: JSON.stringify({ action: "decline", call_id: callId, user_id: "declined_push" }),
           }).catch(() => {});
         })()
       );
