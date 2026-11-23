@@ -2479,6 +2479,7 @@ export default function ConnectLnPage() {
       <ConnectLnIncomingCallBanner
         viewerName={userData?.name}
         viewerEmail={userData?.email}
+        viewerPhone={userData?.phone}
         isAlreadyInCallStudio={Boolean(activeGlobalWhatsAppCall)}
         onAcceptIncomingCall={(callId, callerName, mode, callerPhone) => {
           setActiveGlobalWhatsAppCall({

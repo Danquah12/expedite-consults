@@ -86,6 +86,14 @@ export function markConnectLnCallHandled(callId: string): void {
       const next = [...arr.slice(-39), clean]
       window.sessionStorage.setItem(HANDLED_CALL_IDS_STORAGE_KEY, JSON.stringify(next))
     }
+    try {
+      const localRaw = window.localStorage.getItem(HANDLED_CALL_IDS_STORAGE_KEY)
+      const localArr: string[] = localRaw ? JSON.parse(localRaw) : []
+      if (!localArr.includes(clean)) {
+        const nextLocal = [...localArr.slice(-39), clean]
+        window.localStorage.setItem(HANDLED_CALL_IDS_STORAGE_KEY, JSON.stringify(nextLocal))
+      }
+    } catch {}
     if ("serviceWorker" in navigator) {
       const msg = { type: "CONNECTLN_SW_CALL_HANDLED", callId: clean }
       if (navigator.serviceWorker.controller) {
@@ -123,9 +131,14 @@ export function isConnectLnCallHandled(callId: string): boolean {
       return true
     }
     const raw = window.sessionStorage.getItem(HANDLED_CALL_IDS_STORAGE_KEY)
-    if (!raw) return false
-    const arr: string[] = JSON.parse(raw)
-    return Array.isArray(arr) && arr.includes(clean)
+    const arr: string[] = raw ? JSON.parse(raw) : []
+    if (Array.isArray(arr) && arr.includes(clean)) {
+      return true
+    }
+    const localRaw = window.localStorage.getItem(HANDLED_CALL_IDS_STORAGE_KEY)
+    if (!localRaw) return false
+    const localArr: string[] = JSON.parse(localRaw)
+    return Array.isArray(localArr) && localArr.includes(clean)
   } catch {
     return false
   }

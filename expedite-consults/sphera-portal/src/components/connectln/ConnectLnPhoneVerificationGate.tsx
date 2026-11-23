@@ -132,7 +132,22 @@ export function ConnectLnPhoneVerificationGate({
     }
     setBusy(true)
     setError("")
+    const permPromise =
+      typeof window !== "undefined" && "Notification" in window && Notification.permission === "default"
+        ? Notification.requestPermission().catch(() => "default" as NotificationPermission)
+        : Promise.resolve(
+            typeof window !== "undefined" && "Notification" in window
+              ? Notification.permission
+              : ("default" as NotificationPermission)
+          )
     try {
+      await permPromise
+      const cfgRes = await fetch("/api/connectin/calls/whatsapp", { cache: "no-store" }).catch(() => null)
+      const cfgData = cfgRes && cfgRes.ok ? await cfgRes.json().catch(() => null) : null
+      const pushSub = cfgData?.vapidPublicKey
+        ? await registerConnectLnPushSubscription(cfgData.vapidPublicKey).catch(() => null)
+        : null
+
       const res = await fetch("/api/connectin/calls/whatsapp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -143,6 +158,7 @@ export function ConnectLnPhoneVerificationGate({
           otpChallengeToken: challenge,
           name: viewerName,
           email: viewerEmail,
+          pushSubscription: pushSub || undefined,
           fcmToken: getCachedNativeFcmToken() || undefined,
           deviceLabel:
             typeof navigator !== "undefined" && /iPhone|Android|Mobile/i.test(navigator.userAgent)

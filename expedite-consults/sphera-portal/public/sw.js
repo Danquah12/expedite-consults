@@ -26,10 +26,10 @@ function buildCallNotificationSpec(payload) {
     icon: payload.callerAvatar || "/brand/connectln-icon-256.png",
     badge: "/brand/connectln-icon.png",
     tag: `connectln-call-${callId}`,
-    renotify: false,
+    renotify: true,
     requireInteraction: true,
     silent: false,
-    vibrate: [600, 220, 600, 220, 800, 250, 800],
+    vibrate: [800, 250, 800, 250, 1000, 300, 800],
     data: {
       callId,
       callMode: isVideo ? "video" : "audio",
@@ -50,6 +50,80 @@ function buildCallNotificationSpec(payload) {
   };
 
   return { title, options, callId, isVideo, callerName, joinUrl };
+}
+
+async function closeCallNotificationsByTag(callId) {
+  if (!callId || !self.registration || typeof self.registration.getNotifications !== "function") return;
+  try {
+    const notifs = await self.registration.getNotifications({ tag: `connectln-call-${callId}` });
+    for (const n of notifs) {
+      try {
+        n.close();
+      } catch {}
+    }
+  } catch {}
+}
+
+async function ringNotificationUntilAnsweredOrEnded(spec, payload) {
+  const callId = spec.callId;
+  if (swHandledCallIds.has(callId)) {
+    await closeCallNotificationsByTag(callId);
+    return;
+  }
+
+  await self.registration.showNotification(spec.title, spec.options).catch(() => {});
+
+  for (let burst = 0; burst < 5; burst++) {
+    await new Promise((resolve) => setTimeout(resolve, 4500));
+    if (swHandledCallIds.has(callId)) {
+      await closeCallNotificationsByTag(callId);
+      return;
+    }
+
+    try {
+      const checkRes = await fetch(`/api/v1/calls?call_id=${encodeURIComponent(callId)}`, {
+        cache: "no-store",
+      });
+      if (checkRes.ok) {
+        const data = await checkRes.json();
+        const callObj = data && data.call;
+        if (
+          callObj &&
+          (callObj.state === "ENDED" ||
+            (Array.isArray(callObj.participants) && callObj.participants.length >= 2))
+        ) {
+          rememberSwCallId(swHandledCallIds, callId);
+          await closeCallNotificationsByTag(callId);
+          return;
+        }
+      }
+    } catch {}
+
+    if (swHandledCallIds.has(callId)) {
+      await closeCallNotificationsByTag(callId);
+      return;
+    }
+
+    const windowClients = await self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .catch(() => []);
+    for (const client of windowClients) {
+      try {
+        client.postMessage({
+          type: "CONNECTLN_PUSH_INCOMING_CALL",
+          payload: {
+            callId,
+            callMode: spec.isVideo ? "video" : "audio",
+            callerName: spec.callerName,
+            callerPhone: (payload && payload.callerPhone) || "",
+            callerAvatar: (payload && payload.callerAvatar) || "",
+            joinUrl: spec.joinUrl,
+          },
+        });
+      } catch {}
+    }
+    await self.registration.showNotification(spec.title, spec.options).catch(() => {});
+  }
 }
 
 self.addEventListener("push", (event) => {
@@ -82,9 +156,9 @@ self.addEventListener("push", (event) => {
           });
         } catch {}
       }
-      if (!swNotifiedCallIds.has(spec.callId)) {
+      if (!swHandledCallIds.has(spec.callId) && !swNotifiedCallIds.has(spec.callId)) {
         rememberSwCallId(swNotifiedCallIds, spec.callId);
-        await self.registration.showNotification(spec.title, spec.options);
+        await ringNotificationUntilAnsweredOrEnded(spec, payload);
       }
     })()
   );
@@ -242,7 +316,12 @@ async function runSwMinimizedCallCheck() {
         callerName,
         callerPhone,
       });
-      await self.registration.showNotification(spec.title, spec.options).catch(() => {});
+      void ringNotificationUntilAnsweredOrEnded(spec, {
+        callId,
+        callMode,
+        callerName,
+        callerPhone,
+      });
     }
   } catch {
   } finally {

@@ -206,10 +206,11 @@ export async function refreshWhatsAppDirectoryCache(force = false): Promise<Map<
     // non-fatal
   }
 
-  // 1b. Ensure known verified numbers (+12402607898 and +12403608139) are always seeded as verified (unless admin deleted them for testing)
+  // 1b. Ensure known verified numbers (+12402607898, +12403608139, and +12402608139) are always seeded as verified (unless admin deleted them for testing)
   const baselineSeeds: Array<{ phone: string; name: string; email: string }> = [
     { phone: "+12402607898", name: "Kwesi Asiedu", email: "kasiedu@expedite-consults.com" },
     { phone: "+12403608139", name: "Kwesi Asiedu", email: "kasiedu@expedite-consults.com" },
+    { phone: "+12402608139", name: "Kwesi Asiedu", email: "kasiedu@expedite-consults.com" },
     { phone: "+14108418358", name: "Esther Boa Asiedu", email: "esther.asiedu@connectin.com" },
     { phone: "+12405550821", name: "Patience Addo", email: "patience.addo@connectin.com" },
     { phone: "+233205550412", name: "Isaac Boye", email: "isaac.boye@connectin.com" },
@@ -396,6 +397,54 @@ export async function registerWhatsAppMemberNumber(params: {
   const auth = getTwilioAuthHeader()
   if (auth) {
     await writeDirItem(auth, makePhoneItemKey(normPhone), record)
+  }
+
+  // Mirror newly registered Web Push / FCM tokens to all other phone numbers owned by the same user email
+  const newSubAdded =
+    params.pushSubscription?.endpoint &&
+    params.pushSubscription?.keys?.p256dh &&
+    params.pushSubscription?.keys?.auth
+      ? subs.find((s) => s.endpoint === params.pushSubscription!.endpoint) || null
+      : null
+  if (record.email && (newSubAdded || (newFcm && newFcm.length > 20))) {
+    const syncSiblingOps: Promise<any>[] = []
+    for (const [mPhone, sibling] of cache.entries()) {
+      if (mPhone === normPhone) continue
+      if (!sibling.email || !isSamePhoneOwnerEmail(sibling.email, record.email)) continue
+      let siblingSubs = Array.isArray(sibling.pushSubscriptions)
+        ? [...sibling.pushSubscriptions]
+        : []
+      let siblingChanged = false
+      if (newSubAdded) {
+        const sIdx = siblingSubs.findIndex((s) => s.endpoint === newSubAdded.endpoint)
+        if (sIdx >= 0) {
+          siblingSubs[sIdx] = newSubAdded
+        } else {
+          siblingSubs = [newSubAdded, ...siblingSubs].slice(0, 6)
+        }
+        siblingChanged = true
+      }
+      let siblingFcm = Array.isArray(sibling.fcmTokens) ? [...sibling.fcmTokens] : []
+      if (newFcm && newFcm.length > 20 && !siblingFcm.includes(newFcm)) {
+        siblingFcm = [newFcm, ...siblingFcm].slice(0, 6)
+        siblingChanged = true
+      }
+      if (siblingChanged) {
+        const updatedSibling: WhatsAppDirectoryMember = {
+          ...sibling,
+          pushSubscriptions: siblingSubs,
+          fcmTokens: siblingFcm,
+          updatedAtIso: nowIso,
+        }
+        cache.set(mPhone, updatedSibling)
+        if (auth) {
+          syncSiblingOps.push(writeDirItem(auth, makePhoneItemKey(mPhone), updatedSibling).catch(() => {}))
+        }
+      }
+    }
+    if (syncSiblingOps.length > 0) {
+      await Promise.all(syncSiblingOps)
+    }
   }
 
   return record
@@ -619,16 +668,57 @@ export async function sendIncomingCallWebPush(params: {
   callerAvatar?: string
   joinUrl: string
 }): Promise<{ deliveredCount: number; mobileDeliveredCount: number; attemptedCount: number }> {
-  // Instant real-time ring to any open ConnectLn tab/app of this member (no polling delay)
-  await publishToPhones([params.member.phone], "incoming-call", {
+  const cache = await refreshWhatsAppDirectoryCache()
+  const matchedMembersMap = new Map<string, WhatsAppDirectoryMember>()
+  matchedMembersMap.set(params.member.phone, params.member)
+
+  const targetEmail = (params.member.email || "").trim().toLowerCase()
+  const targetNameLower = (params.member.name || "").trim().toLowerCase()
+  for (const m of cache.values()) {
+    if (m.phone === params.member.phone) {
+      matchedMembersMap.set(m.phone, m)
+      continue
+    }
+    const emailMatches = Boolean(targetEmail && m.email && isSamePhoneOwnerEmail(m.email, targetEmail))
+    const nameMatches = Boolean(
+      targetNameLower &&
+        m.name &&
+        !looksLikePhoneNumber(m.name) &&
+        m.name.trim().toLowerCase() === targetNameLower
+    )
+    if (emailMatches || nameMatches) {
+      matchedMembersMap.set(m.phone, m)
+    }
+  }
+
+  const matchedMembers = Array.from(matchedMembersMap.values())
+  const allTargetPhones = Array.from(
+    new Set(matchedMembers.map((m) => m.phone).filter(Boolean))
+  )
+
+  // Instant real-time ring to any open ConnectLn tab/app of this member across all owned numbers
+  await publishToPhones(allTargetPhones, "incoming-call", {
     callId: params.callId,
     callMode: params.callMode,
     callerName: params.callerName,
     callerPhone: params.callerPhone || "",
   }).catch(() => {})
 
-  const subs = params.member.pushSubscriptions || []
-  const fcmCount = (params.member.fcmTokens || []).length
+  const subByEndpoint = new Map<string, StoredPushSubscription>()
+  const fcmSet = new Set<string>()
+  for (const m of matchedMembers) {
+    for (const s of m.pushSubscriptions || []) {
+      if (s?.endpoint && s?.keys?.p256dh && s?.keys?.auth && !subByEndpoint.has(s.endpoint)) {
+        subByEndpoint.set(s.endpoint, s)
+      }
+    }
+    for (const t of m.fcmTokens || []) {
+      if (t) fcmSet.add(t)
+    }
+  }
+  const subs = Array.from(subByEndpoint.values())
+  const mergedFcmTokens = Array.from(fcmSet)
+  const fcmCount = mergedFcmTokens.length
   if (subs.length === 0 && fcmCount === 0) {
     return { deliveredCount: 0, mobileDeliveredCount: 0, attemptedCount: 0 }
   }
@@ -651,7 +741,11 @@ export async function sendIncomingCallWebPush(params: {
     }
   }
 
-  const fcmPromise = sendIncomingCallFcm(params.member, {
+  const fcmMember: WhatsAppDirectoryMember = {
+    ...params.member,
+    fcmTokens: mergedFcmTokens,
+  }
+  const fcmPromise = sendIncomingCallFcm(fcmMember, {
     type: "INCOMING_CALL",
     callId: params.callId,
     callMode: params.callMode,
@@ -680,7 +774,7 @@ export async function sendIncomingCallWebPush(params: {
 
   let deliveredCount = 0
   let mobileDeliveredCount = 0
-  const validSubs: StoredPushSubscription[] = []
+  const deadEndpoints = new Set<string>()
   let prunedAny = false
 
   await Promise.all(
@@ -694,13 +788,11 @@ export async function sendIncomingCallWebPush(params: {
         if (/mobile|phone|iphone|android/i.test(sub.deviceLabel || "")) {
           mobileDeliveredCount += 1
         }
-        validSubs.push(sub)
       } catch (err: any) {
         const code = Number(err?.statusCode || 0)
         if (code === 404 || code === 410) {
           prunedAny = true
-        } else {
-          validSubs.push(sub)
+          deadEndpoints.add(sub.endpoint)
         }
       }
     })
@@ -709,19 +801,27 @@ export async function sendIncomingCallWebPush(params: {
   const fcmResult = await fcmPromise
   deliveredCount += fcmResult.sent
   mobileDeliveredCount += fcmResult.sent
-  const liveFcm = (params.member.fcmTokens || []).filter((t) => !fcmResult.deadTokens.includes(t))
 
   if (prunedAny || fcmResult.deadTokens.length > 0) {
     const auth = getTwilioAuthHeader()
-    const updated: WhatsAppDirectoryMember = {
-      ...params.member,
-      pushSubscriptions: validSubs,
-      fcmTokens: liveFcm,
-      updatedAtIso: new Date().toISOString(),
+    const pruneWrites: Promise<any>[] = []
+    for (const m of matchedMembers) {
+      const hasDeadSub = (m.pushSubscriptions || []).some((s) => deadEndpoints.has(s.endpoint))
+      const hasDeadFcm = (m.fcmTokens || []).some((t) => fcmResult.deadTokens.includes(t))
+      if (!hasDeadSub && !hasDeadFcm) continue
+      const updated: WhatsAppDirectoryMember = {
+        ...m,
+        pushSubscriptions: (m.pushSubscriptions || []).filter((s) => !deadEndpoints.has(s.endpoint)),
+        fcmTokens: (m.fcmTokens || []).filter((t) => !fcmResult.deadTokens.includes(t)),
+        updatedAtIso: new Date().toISOString(),
+      }
+      globalForWhatsAppDir.__connectlnWhatsAppPhoneCache?.set(m.phone, updated)
+      if (auth) {
+        pruneWrites.push(writeDirItem(auth, makePhoneItemKey(m.phone), updated).catch(() => {}))
+      }
     }
-    globalForWhatsAppDir.__connectlnWhatsAppPhoneCache?.set(params.member.phone, updated)
-    if (auth) {
-      await writeDirItem(auth, makePhoneItemKey(params.member.phone), updated).catch(() => {})
+    if (pruneWrites.length > 0) {
+      await Promise.all(pruneWrites)
     }
   }
 

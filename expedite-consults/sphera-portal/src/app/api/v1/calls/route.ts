@@ -9,6 +9,7 @@ import { firebaseKvSetItem, firebaseKvListItems } from "@/lib/connectin-firebase
 import {
   lookupWhatsAppRecipient,
   sendIncomingCallWebPush,
+  isSamePhoneOwnerEmail,
 } from "@/lib/connectin-whatsapp-directory"
 
 async function dispatchMinimizedWakeupPushForTargets(params: {
@@ -436,11 +437,20 @@ async function pushCloudInvitedRoster(
     host_muted: Boolean(m.host_muted),
     updated_at_ms: m.updated_at_ms || nowMs,
   }))
+  const liveRec = ACTIVE_CALLS_STORE.get(callId)
   const payloadObj: Record<string, any> = {
     kind: "roster",
     call_id: callId,
     invited_roster: compactRoster,
     updated_at_ms: nowMs,
+  }
+  if (liveRec) {
+    if (liveRec.initiator_user_id) payloadObj.initiator_user_id = liveRec.initiator_user_id
+    if (liveRec.initiator_name) payloadObj.initiator_name = liveRec.initiator_name
+    if (liveRec.initiator_phone) payloadObj.initiator_phone = liveRec.initiator_phone
+    if (liveRec.target_recipient_name) payloadObj.target_recipient_name = liveRec.target_recipient_name
+    if (liveRec.target_recipient_email) payloadObj.target_recipient_email = liveRec.target_recipient_email
+    if (liveRec.target_recipient_phone) payloadObj.target_recipient_phone = liveRec.target_recipient_phone
   }
   if (cohostKeys !== undefined || mutedKeys !== undefined) {
     payloadObj.cohost_keys = cohostKeys || []
@@ -547,13 +557,13 @@ async function pushCloudCallParticipant(callId: string, participant: CommCallPar
   }
 }
 
-async function pullCloudCallParticipants(excludeUserId?: string): Promise<void> {
+async function pullCloudCallParticipants(excludeUserId?: string, forceRefresh = false): Promise<void> {
   const nowMs = Date.now()
-  if (nowMs - lastCloudPullMs < 450) return
+  if (!forceRefresh && nowMs - lastCloudPullMs < 450) return
   lastCloudPullMs = nowMs
 
   try {
-    const items = await firebaseKvListItems<any>(CALLS_SYNC_MAP_NAME)
+    const items = await firebaseKvListItems<any>(CALLS_SYNC_MAP_NAME, forceRefresh)
 
     // Pass 0: record ended-call tombstones (`e__`) so no ended call can ever be resurrected by another lambda instance
     for (const item of items) {
@@ -721,6 +731,18 @@ async function pullCloudCallParticipants(excludeUserId?: string): Promise<void> 
           record = ensureCallRoom(rData.call_id, "host", "ConnectLn Call", rData.call_id)
         }
         if (record && record.state !== "ENDED") {
+          if (rData.initiator_user_id) record.initiator_user_id = rData.initiator_user_id
+          if (rData.initiator_name && !record.initiator_name) record.initiator_name = rData.initiator_name
+          if (rData.initiator_phone && !record.initiator_phone) record.initiator_phone = rData.initiator_phone
+          if (rData.target_recipient_name && !record.target_recipient_name) {
+            record.target_recipient_name = rData.target_recipient_name
+          }
+          if (rData.target_recipient_email && !record.target_recipient_email) {
+            record.target_recipient_email = rData.target_recipient_email
+          }
+          if (rData.target_recipient_phone && !record.target_recipient_phone) {
+            record.target_recipient_phone = rData.target_recipient_phone
+          }
           if (Array.isArray(rData.invited_roster)) {
             mergeInvitedEntriesIntoRecord(record, rData.invited_roster, remoteTs || nowMs)
           }
@@ -966,7 +988,7 @@ export async function GET(req: NextRequest) {
     )
     c.participants = liveParts
     const hasFreshInvite = (c.invited_roster || []).some(
-      (m) => m.status !== "removed" && m.updated_at_ms && nowMs - m.updated_at_ms < 45000
+      (m) => m.status !== "removed" && m.updated_at_ms && nowMs - m.updated_at_ms < 120000
     )
     return liveParts.length > 0 || hasFreshInvite
   })
@@ -985,7 +1007,9 @@ export async function GET(req: NextRequest) {
       )
       return Boolean(
         phoneTailMatch ||
-          (incomingEmail && targetEmail && targetEmail === incomingEmail) ||
+          (incomingEmail &&
+            targetEmail &&
+            (targetEmail === incomingEmail || isSamePhoneOwnerEmail(incomingEmail, targetEmail))) ||
           (incomingForName &&
             targetName &&
             (targetName === incomingForName ||
@@ -996,7 +1020,7 @@ export async function GET(req: NextRequest) {
 
     const incomingCalls = calls.filter((c) => {
       // Skip ONLY if this exact browser/mobile tab (`viewerPeerId`) is already a participant in the call,
-      // OR if this request comes from the call's initiator (`initiator_user_id` or `initiator_phone`).
+      // OR if this request comes from the call's initiator tab (`initiator_user_id === viewerPeerId`).
       if (viewerPeerId && c.participants.some((p) => p.user_id === viewerPeerId)) {
         return false
       }
@@ -1009,7 +1033,7 @@ export async function GET(req: NextRequest) {
       const hasExplicitTargetPhone = targetDigits.length >= 7
 
       // Never ring the initiator's own phone when the recipient answers and their heartbeat runs,
-      // unless the user intentionally dialed their exact own phone number to self-test.
+      // unless dialing another number on the same account owner whose call hasn't been answered yet.
       const viewerIsInitiatorPhone = Boolean(
         incomingPhoneDigits.length >= 7 &&
           initiatorDigits.length >= 7 &&
@@ -1021,8 +1045,25 @@ export async function GET(req: NextRequest) {
           targetDigits.length >= 7 &&
           (targetDigits === initiatorDigits || targetDigits.slice(-10) === initiatorDigits.slice(-10))
       )
+      const callAlreadyAnsweredByPeer = (c.participants || []).some(
+        (p) => p.user_id && c.initiator_user_id && p.user_id !== c.initiator_user_id
+      )
+      const targetsSameAccountOwner = Boolean(
+        (incomingEmail &&
+          c.target_recipient_email &&
+          isSamePhoneOwnerEmail(incomingEmail, c.target_recipient_email)) ||
+          (incomingForName &&
+            c.target_recipient_name &&
+            c.target_recipient_name.trim().toLowerCase() === incomingForName)
+      )
       if (viewerIsInitiatorPhone && !isIntentionalSelfCall) {
-        return false
+        if (
+          callAlreadyAnsweredByPeer ||
+          !targetsSameAccountOwner ||
+          (c.initiator_user_id && viewerPeerId && c.initiator_user_id === viewerPeerId)
+        ) {
+          return false
+        }
       }
 
       const phoneMatchesTarget = Boolean(
@@ -1033,10 +1074,15 @@ export async function GET(req: NextRequest) {
       )
 
       // When a call dials a specific phone number (`target_recipient_phone`), match primarily by phone number
-      // so two devices sharing a default profile name (e.g. "Kwesi Asiedu" on two different numbers) don't collide.
+      // or shared owner email so secondary devices signed in with the same owner email also ring.
       const primaryMatch = hasExplicitTargetPhone
         ? phoneMatchesTarget ||
-          Boolean(incomingEmail && c.target_recipient_email && c.target_recipient_email.toLowerCase() === incomingEmail)
+          Boolean(
+            incomingEmail &&
+              c.target_recipient_email &&
+              (c.target_recipient_email.toLowerCase() === incomingEmail ||
+                isSamePhoneOwnerEmail(incomingEmail, c.target_recipient_email))
+          )
         : matchesTarget(c.target_recipient_name, c.target_recipient_email, c.target_recipient_phone)
 
       const rosterMatch = (c.invited_roster || []).some((inv) => {
@@ -1175,7 +1221,7 @@ export async function POST(req: NextRequest) {
 
     if (action === "leave" && body.call_id) {
       const leaveCallId = String(body.call_id).trim()
-      await pullCloudCallParticipants().catch(() => {})
+      await pullCloudCallParticipants(undefined, true).catch(() => {})
       const existing = ACTIVE_CALLS_STORE.get(leaveCallId)
       if (existing) {
         await removeSingleParticipantFromGroupCall({
@@ -1199,7 +1245,7 @@ export async function POST(req: NextRequest) {
 
     if (action === "end" && body.call_id) {
       const endCallId = String(body.call_id).trim()
-      await pullCloudCallParticipants().catch(() => {})
+      await pullCloudCallParticipants(undefined, true).catch(() => {})
       let existing = ACTIVE_CALLS_STORE.get(endCallId)
       if (!existing) {
         existing = ensureCallRoom(endCallId, body.user_id || "host", body.display_name || "Host", endCallId)
@@ -1268,6 +1314,7 @@ export async function POST(req: NextRequest) {
         )
       }
       await Promise.all(cloudOps)
+      lastCloudPullMs = 0
 
       existing.state = "ENDED"
       existing.ended_at = now

@@ -62,11 +62,13 @@ function isLocalTabHostingOpenCall(): boolean {
 export function ConnectLnIncomingCallBanner({
   viewerName,
   viewerEmail,
+  viewerPhone,
   isAlreadyInCallStudio,
   onAcceptIncomingCall,
 }: {
   viewerName?: string
   viewerEmail?: string
+  viewerPhone?: string
   isAlreadyInCallStudio?: boolean
   onAcceptIncomingCall: (
     callId: string,
@@ -76,7 +78,11 @@ export function ConnectLnIncomingCallBanner({
   ) => void
 }) {
   const [incomingCall, setIncomingCall] = useState<IncomingCallSummary | null>(null)
-  const [myPhone, setMyPhone] = useState<string>("")
+  const [myPhone, setMyPhone] = useState<string>(() =>
+    viewerPhone && looksLikeClientPhone(viewerPhone)
+      ? normalizeClientPhone(viewerPhone)
+      : getMyLinkedConnectLnPhone()
+  )
   const [hasOpenModal, setHasOpenModal] = useState<boolean>(false)
   const [hideSetupBanner, setHideSetupBanner] = useState<boolean>(false)
   const [audioUnlocked, setAudioUnlocked] = useState<boolean>(false)
@@ -163,6 +169,13 @@ export function ConnectLnIncomingCallBanner({
     viewerEmailRef.current = viewerEmail || ""
   }, [viewerName, viewerEmail])
 
+  useEffect(() => {
+    if (viewerPhone && looksLikeClientPhone(viewerPhone)) {
+      const norm = normalizeClientPhone(viewerPhone)
+      setMyPhone((prev) => prev || norm)
+    }
+  }, [viewerPhone])
+
   const syncPushSubscriptionToServer = async () => {
     try {
       let key = vapidKeyRef.current
@@ -228,8 +241,8 @@ export function ConnectLnIncomingCallBanner({
       setPipReceiverActive(isAlwaysOnTopReceiverOpen())
     })
 
-    const onFirstUserClick = (ev: MouseEvent) => {
-      // 1) Synchronously unlock 20 Hz hardware audio keep-alive!
+    const onFirstUserClick = (ev: Event) => {
+      // 1) Synchronously unlock 20 Hz hardware audio keep-alive & screen wake lock!
       unlockBackgroundRingingSession()
       setAudioUnlocked(isBackgroundAudioUnlocked())
 
@@ -257,33 +270,42 @@ export function ConnectLnIncomingCallBanner({
           .catch(() => {})
       }
 
-      // 3) Synchronously request Notification permission (before any `await`!) and sync push subscription!
-      if (
-        !autoPushAttemptedRef.current &&
-        typeof Notification !== "undefined" &&
-        Notification.permission === "default"
-      ) {
-        autoPushAttemptedRef.current = true
-        Notification.requestPermission()
-          .then((perm) => {
-            setNotifGranted(perm === "granted")
-            if (perm === "granted") {
-              void syncPushSubscriptionToServer()
-            }
-          })
-          .catch(() => {})
+      // 3) Synchronously request Notification permission (before any `await`!) or sync existing granted subscription!
+      if (!autoPushAttemptedRef.current && typeof Notification !== "undefined") {
+        if (Notification.permission === "default") {
+          autoPushAttemptedRef.current = true
+          Notification.requestPermission()
+            .then((perm) => {
+              setNotifGranted(perm === "granted")
+              if (perm === "granted") {
+                void syncPushSubscriptionToServer()
+              }
+            })
+            .catch(() => {})
+        } else if (Notification.permission === "granted") {
+          autoPushAttemptedRef.current = true
+          void syncPushSubscriptionToServer()
+        }
       }
     }
 
     window.addEventListener("click", onFirstUserClick, { capture: true })
+    window.addEventListener("touchstart", onFirstUserClick, { capture: true, passive: true })
+    window.addEventListener("pointerdown", onFirstUserClick, { capture: true, passive: true })
     return () => {
       unsubUnlock()
       window.removeEventListener("click", onFirstUserClick, { capture: true })
+      window.removeEventListener("touchstart", onFirstUserClick, { capture: true })
+      window.removeEventListener("pointerdown", onFirstUserClick, { capture: true })
     }
   }, [])
 
   useEffect(() => {
-    const syncPhone = () => setMyPhone(getMyLinkedConnectLnPhone())
+    const syncPhone = () =>
+      setMyPhone(
+        getMyLinkedConnectLnPhone() ||
+          (viewerPhone && looksLikeClientPhone(viewerPhone) ? normalizeClientPhone(viewerPhone) : "")
+      )
     const syncModalOpen = () => {
       const openNow = isLocalTabHostingOpenCall()
       setHasOpenModal(openNow)
@@ -731,69 +753,77 @@ export function ConnectLnIncomingCallBanner({
   ).length
 
   return (
-    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[95] w-[94vw] max-w-md rounded-3xl bg-[#111B21] border-2 border-emerald-400 shadow-2xl px-4 py-4 text-[#FBF8F3]">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="relative shrink-0">
-            <span className="absolute inset-0 rounded-full bg-emerald-400/50 animate-ping" />
-            <div className="relative h-12 w-12 rounded-full bg-emerald-600 flex items-center justify-center text-white font-extrabold text-sm border-2 border-emerald-300">
-              {isVideo ? <Video className="h-5 w-5" /> : <Phone className="h-5 w-5" />}
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Incoming ${isVideo ? "Video" : "Voice"} Call from ${callerName}`}
+      className="fixed inset-0 sm:inset-auto sm:top-4 sm:left-1/2 sm:-translate-x-1/2 z-[120] flex sm:block items-center justify-center bg-black/65 sm:bg-transparent backdrop-blur-sm sm:backdrop-blur-none p-4 sm:p-0"
+    >
+      <div className="w-full max-w-sm sm:w-[94vw] sm:max-w-md rounded-3xl bg-[#0B141A] border-2 border-emerald-400 shadow-[0_24px_60px_rgba(0,0,0,0.65)] px-5 py-5 sm:px-4 sm:py-4 text-[#FBF8F3]">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-3">
+          <div className="flex flex-col sm:flex-row items-center text-center sm:text-left gap-3 min-w-0">
+            <div className="relative shrink-0">
+              <span className="absolute -inset-1 rounded-full bg-emerald-400/50 animate-ping" />
+              <div className="relative h-16 w-16 sm:h-12 sm:w-12 rounded-full bg-emerald-600 flex items-center justify-center text-white font-extrabold text-sm border-2 border-emerald-300 shadow-lg">
+                {isVideo ? <Video className="h-7 w-7 sm:h-5 sm:w-5" /> : <Phone className="h-7 w-7 sm:h-5 sm:w-5" />}
+              </div>
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] sm:text-[10px] font-extrabold uppercase tracking-wider text-emerald-300">
+                ● ConnectLn Incoming {isVideo ? "Video" : "Voice"} Call
+                {activeInvitesCount >= 2 ? ` · Group (${activeInvitesCount + 1})` : ""}
+              </p>
+              <p className="text-xl sm:text-base font-extrabold text-white truncate mt-0.5">{callerName}</p>
+              <p className="text-xs sm:text-[11px] text-emerald-200/90 font-mono truncate mt-0.5">
+                {callerPhone || (isVideo ? "Tap Answer Video to turn on camera" : "Ringing over ConnectLn Internet")}
+              </p>
             </div>
           </div>
-          <div className="min-w-0">
-            <p className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-300">
-              ● ConnectLn {isVideo ? "Video" : "Voice"} Call
-              {activeInvitesCount >= 2 ? ` · Group (${activeInvitesCount + 1})` : ""}
-            </p>
-            <p className="text-base font-extrabold text-white truncate">{callerName}</p>
-            <p className="text-[11px] text-emerald-200/90 font-mono truncate">
-              {callerPhone || (isVideo ? "Tap Answer Video to turn on camera" : "Incoming voice call")}
-            </p>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={() => {
-              declinedIdsRef.current.add(incomingCall.id)
-              markConnectLnCallHandled(incomingCall.id)
-              setCallMediaSilenceActive(false, "incoming-call-banner")
-              stopLoudPhoneRingtone()
-              stopTitleCallFlash()
-              dismissFloatingCallPopups()
-              setIncomingCall(null)
-            }}
-            style={{ color: "#FFFFFF" }}
-            className="h-11 w-11 rounded-full bg-rose-600 hover:bg-rose-500 flex items-center justify-center shadow-md cursor-pointer"
-            title="Decline Call"
-          >
-            <PhoneOff className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              const targetId = incomingCall.id
-              markConnectLnCallHandled(targetId)
-              setCallMediaSilenceActive(true, "whatsapp-call-modal")
-              setCallMediaSilenceActive(false, "incoming-call-banner")
-              stopLoudPhoneRingtone()
-              stopTitleCallFlash()
-              closeStandbyPipForLocalCall()
-              setIncomingCall(null)
-              onAcceptIncomingCall(
-                targetId,
-                callerName,
-                isVideo ? "video" : "audio",
-                incomingCall.initiator_phone
-              )
-            }}
-            style={{ color: "#FFFFFF" }}
-            className="rounded-full bg-emerald-600 hover:bg-emerald-500 px-4 py-2.5 text-xs font-extrabold flex items-center gap-1.5 shadow-lg cursor-pointer"
-          >
-            {isVideo ? <Video className="h-4 w-4" /> : <Phone className="h-4 w-4" />}
-            <span>{isVideo ? "Answer Video" : "Answer"}</span>
-          </button>
+          <div className="flex items-center justify-center gap-3 sm:gap-2 shrink-0 w-full sm:w-auto pt-1 sm:pt-0">
+            <button
+              type="button"
+              onClick={() => {
+                declinedIdsRef.current.add(incomingCall.id)
+                markConnectLnCallHandled(incomingCall.id)
+                setCallMediaSilenceActive(false, "incoming-call-banner")
+                stopLoudPhoneRingtone()
+                stopTitleCallFlash()
+                dismissFloatingCallPopups()
+                setIncomingCall(null)
+              }}
+              style={{ color: "#FFFFFF" }}
+              className="flex-1 sm:flex-none h-12 sm:h-11 sm:w-11 rounded-full bg-rose-600 hover:bg-rose-500 px-4 sm:px-0 flex items-center justify-center gap-1.5 text-sm sm:text-xs font-extrabold shadow-md cursor-pointer"
+              title="Decline Call"
+            >
+              <PhoneOff className="h-4 w-4" />
+              <span className="sm:hidden">Decline</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const targetId = incomingCall.id
+                markConnectLnCallHandled(targetId)
+                setCallMediaSilenceActive(true, "whatsapp-call-modal")
+                setCallMediaSilenceActive(false, "incoming-call-banner")
+                stopLoudPhoneRingtone()
+                stopTitleCallFlash()
+                closeStandbyPipForLocalCall()
+                setIncomingCall(null)
+                onAcceptIncomingCall(
+                  targetId,
+                  callerName,
+                  isVideo ? "video" : "audio",
+                  incomingCall.initiator_phone
+                )
+              }}
+              style={{ color: "#FFFFFF" }}
+              className="flex-[1.6] sm:flex-none h-12 sm:h-auto rounded-full bg-emerald-600 hover:bg-emerald-500 px-5 py-2.5 text-sm sm:text-xs font-extrabold flex items-center justify-center gap-2 shadow-lg cursor-pointer"
+            >
+              {isVideo ? <Video className="h-4 w-4" /> : <Phone className="h-4 w-4" />}
+              <span>{isVideo ? "Answer Video" : "Answer Call"}</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

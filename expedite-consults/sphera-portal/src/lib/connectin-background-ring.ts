@@ -55,6 +55,26 @@ let activeForegroundPollFn: (() => void) | null = null
 let programmaticPipClose = false
 const notifiedCallAtMsMap = new Map<string, number>()
 const unlockListeners = new Set<() => void>()
+let activeWakeLock: any = null
+let wakeLockVisibilityBound = false
+
+async function requestScreenWakeLock(): Promise<void> {
+  if (typeof window === "undefined" || typeof document === "undefined") return
+  if (document.visibilityState !== "visible") return
+  if (activeWakeLock) return
+  try {
+    const wl = (navigator as any).wakeLock
+    if (wl && typeof wl.request === "function") {
+      const sentinel = await wl.request("screen")
+      activeWakeLock = sentinel
+      sentinel?.addEventListener?.("release", () => {
+        if (activeWakeLock === sentinel) {
+          activeWakeLock = null
+        }
+      })
+    }
+  } catch {}
+}
 
 export function setForegroundCallPollCallback(fn: (() => void) | null): void {
   activeForegroundPollFn = fn
@@ -688,10 +708,21 @@ export function onBackgroundUnlockChange(cb: () => void): () => void {
 export function unlockBackgroundRingingSession(): void {
   if (typeof window === "undefined") return
   ensureLiveAudioPipelineStarted()
+  void requestScreenWakeLock()
+
+  if (!wakeLockVisibilityBound && typeof document !== "undefined") {
+    wakeLockVisibilityBound = true
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        void requestScreenWakeLock()
+      }
+    })
+  }
 
   const events = ["click", "pointerdown", "touchstart", "keydown"] as const
   const handler = () => {
     ensureLiveAudioPipelineStarted()
+    void requestScreenWakeLock()
     if (liveAudioCtx?.state === "running" && keepAliveHtmlAudio && !keepAliveHtmlAudio.paused) {
       events.forEach((ev) => window.removeEventListener(ev, handler, true))
       notifyUnlockSubscribers()
@@ -710,42 +741,82 @@ export function startLoudPhoneRingtone(): void {
   const useExternalAudioFile =
     selectedId === "studio-acoustic" ||
     (selectedId === "device-custom" && Boolean(getCustomDeviceRingtoneDataUrl()))
+  const ua = typeof navigator !== "undefined" ? navigator.userAgent || "" : ""
+  const isMobileUa = /iPhone|iPad|iPod|Android|Mobile/i.test(ua)
+  const useHtmlMediaAudio =
+    useExternalAudioFile ||
+    isMobileUa ||
+    (typeof document !== "undefined" && document.hidden) ||
+    !liveAudioCtx ||
+    liveAudioCtx.state !== "running"
 
-  // 1. Hardware-thread C++ looping `AudioBufferSourceNode` for synthesized musical ringtones
-  if (!useExternalAudioFile && liveAudioCtx && ringtoneBuffer && !activeRingSource) {
-    try {
-      if (liveAudioCtx.state === "suspended") {
-        liveAudioCtx.resume().catch(() => {})
-      }
-      const gain = liveAudioCtx.createGain()
-      gain.gain.value = 0.9
-      const src = liveAudioCtx.createBufferSource()
-      src.buffer = ringtoneBuffer
-      src.loop = true
-      src.connect(gain)
-      gain.connect(liveAudioCtx.destination)
-      src.start(0)
-      activeRingSource = src
-      activeRingGain = gain
-    } catch {}
-  }
-
-  // 2. HTML5 `<audio loop>` element (required for custom uploaded device ringtone / real music track / mobile fallback)
-  if (fallbackWavRingAudio) {
-    const desiredSrc = getRingtoneAudioSourceUri(selectedId)
-    if (fallbackWavRingAudio.src !== desiredSrc) {
-      fallbackWavRingAudio.src = desiredSrc
+  if (useHtmlMediaAudio) {
+    // Strictly single audio source: stop Web Audio synth if switching to HTML5 lock-screen audio
+    if (activeRingSource) {
+      try {
+        activeRingSource.stop()
+        activeRingSource.disconnect()
+      } catch {}
+      activeRingSource = null
     }
-    const shouldPlayHtmlAudio =
-      useExternalAudioFile || !liveAudioCtx || liveAudioCtx.state !== "running"
-    if (shouldPlayHtmlAudio) {
+    if (activeRingGain) {
+      try {
+        activeRingGain.disconnect()
+      } catch {}
+      activeRingGain = null
+    }
+    if (fallbackWavRingAudio) {
+      const desiredSrc = getRingtoneAudioSourceUri(selectedId)
+      if (fallbackWavRingAudio.src !== desiredSrc) {
+        fallbackWavRingAudio.src = desiredSrc
+      }
       fallbackWavRingAudio.muted = false
       fallbackWavRingAudio.volume = 0.95
       if (fallbackWavRingAudio.paused) {
         fallbackWavRingAudio.play().catch(() => {})
       }
     }
+  } else {
+    // Foreground desktop: use hardware-thread C++ looping AudioBufferSourceNode and keep HTML audio paused
+    if (fallbackWavRingAudio && !fallbackWavRingAudio.paused) {
+      try {
+        fallbackWavRingAudio.pause()
+        fallbackWavRingAudio.currentTime = 0
+      } catch {}
+    }
+    if (liveAudioCtx && ringtoneBuffer && !activeRingSource) {
+      try {
+        if (liveAudioCtx.state === "suspended") {
+          liveAudioCtx.resume().catch(() => {})
+        }
+        const gain = liveAudioCtx.createGain()
+        gain.gain.value = 0.9
+        const src = liveAudioCtx.createBufferSource()
+        src.buffer = ringtoneBuffer
+        src.loop = true
+        src.connect(gain)
+        gain.connect(liveAudioCtx.destination)
+        src.start(0)
+        activeRingSource = src
+        activeRingGain = gain
+      } catch {}
+    }
   }
+
+  try {
+    if ("mediaSession" in navigator) {
+      const ms = (navigator as any).mediaSession
+      if (currentRingingSpec && typeof (window as any).MediaMetadata === "function" && !ms.metadata) {
+        ms.metadata = new (window as any).MediaMetadata({
+          title: "Incoming ConnectLn Call",
+          artist: currentRingingSpec.callerName || "ConnectLn Caller",
+          album: "Tap Answer to pick up",
+          artwork: [{ src: "/brand/connectln-icon-256.png", sizes: "256x256", type: "image/png" }],
+        })
+      }
+      ms.playbackState = "playing"
+    }
+  } catch {}
 
   // 3. If browser initially deferred audio before a user interaction, auto-resume ringtone on any pointer/touch/focus event!
   const resumeRingOnInteraction = () => {
@@ -803,6 +874,15 @@ export function stopLoudPhoneRingtone(): void {
   }
   try {
     navigator.vibrate?.(0)
+  } catch {}
+  try {
+    if ("mediaSession" in navigator) {
+      const ms = (navigator as any).mediaSession
+      ms.playbackState = "none"
+      ms.setActionHandler?.("play", null)
+      ms.setActionHandler?.("pause", null)
+      ms.setActionHandler?.("stop", null)
+    }
   } catch {}
   setCallMediaSilenceActive(false, "incoming-call-ringtone")
 }
@@ -1123,6 +1203,24 @@ export async function triggerSystemIncomingCallAlert(
   if (typeof window === "undefined") return
   currentRingingSpec = spec
 
+  try {
+    if ("mediaSession" in navigator) {
+      const ms = (navigator as any).mediaSession
+      if (typeof (window as any).MediaMetadata === "function") {
+        ms.metadata = new (window as any).MediaMetadata({
+          title: "Incoming ConnectLn Call",
+          artist: spec.callerName || "ConnectLn Caller",
+          album: "Tap Answer to pick up",
+          artwork: [{ src: "/brand/connectln-icon-256.png", sizes: "256x256", type: "image/png" }],
+        })
+      }
+      ms.playbackState = "playing"
+      ms.setActionHandler?.("play", () => currentRingingSpec?.onAnswer?.())
+      ms.setActionHandler?.("pause", () => currentRingingSpec?.onDecline?.())
+      ms.setActionHandler?.("stop", () => currentRingingSpec?.onDecline?.())
+    }
+  } catch {}
+
   // 1. If Always-On-Top Document PiP Receiver is open, transform it immediately into the Incoming Call Pop-Up Screen!
   if (activePipWin && !activePipWin.closed) {
     renderIncomingCallDomIntoWindow(activePipWin, spec, true)
@@ -1161,7 +1259,7 @@ export async function triggerSystemIncomingCallAlert(
     spec.callerPhone ? ` (${spec.callerPhone})` : ""
   } on ConnectLn — Click Answer to open call screen`
 
-  // 3. Direct ServiceWorkerRegistration.showNotification (`requireInteraction: true`)
+  // 3. Direct ServiceWorkerRegistration.showNotification (`requireInteraction: true`) — skip if SW already holds a notification for this tag
   try {
     if (
       "serviceWorker" in navigator &&
@@ -1170,6 +1268,13 @@ export async function triggerSystemIncomingCallAlert(
     ) {
       const reg = await navigator.serviceWorker.getRegistration("/")
       if (reg && typeof reg.showNotification === "function") {
+        const existing =
+          typeof reg.getNotifications === "function"
+            ? await reg.getNotifications({ tag: `connectln-call-${spec.callId}` }).catch(() => [])
+            : []
+        if (existing && existing.length > 0) {
+          return
+        }
         const origin = window.location.origin || "https://conectln.com"
         const joinUrl = `${origin}/connectin?waCall=${encodeURIComponent(
           spec.callId
