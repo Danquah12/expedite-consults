@@ -3,6 +3,11 @@
 import React, { useRef, useState } from 'react'
 import type { B2BConversationThread } from '@/lib/connectin-b2b-comms'
 import { MiniMarkdown } from './MiniMarkdown'
+import {
+  useLiveCveIntelStream,
+  CveIntelDossierModal,
+  type CveIntelRecord,
+} from './CveIntelStreamModal'
 
 export interface NoctisTodoItem {
   thread: B2BConversationThread
@@ -83,6 +88,13 @@ export function NoctisAIInboxView({
   onOpenThread,
 }: NoctisAIInboxViewProps) {
   const scrollContainerRef = useRef<HTMLDivElement | null>(null)
+  const {
+    activeZeroDays,
+    records: cveRecords,
+    lastSyncedAt: cveSyncedAt,
+    announceNewZeroDay,
+  } = useLiveCveIntelStream()
+  const [selectedZeroDayCve, setSelectedZeroDayCve] = useState<CveIntelRecord | null>(null)
   const [showAllTodos, setShowAllTodos] = useState(false)
   const [showFilterTray, setShowFilterTray] = useState(false)
   const [showDateBreakdown, setShowDateBreakdown] = useState(false)
@@ -264,6 +276,7 @@ export function NoctisAIInboxView({
 
               <div className="flex flex-wrap gap-1.5">
                 {[
+                  'Report active Zero-Day CVEs, CISA KEV advisories, and remediation steps',
                   'Explain all ConnectLn tabs from Home to Pulse',
                   'How do Calls, Virtual Backgrounds, Ringtones & Screen Share work?',
                   'How do Pulse Rooms & Live Zero-Day CVE Threat Streams work?',
@@ -286,13 +299,14 @@ export function NoctisAIInboxView({
             </div>
           )}
 
-          {/* Always-visible 1-click Quick Platform & Inbox Pills under Ask Noctis */}
+          {/* Always-visible 1-click Quick Platform, Zero-Day & Inbox Pills under Ask Noctis */}
           <div className="mt-2.5 flex flex-wrap items-center gap-1.5 px-1">
             {[
-              { label: '✨ Explain all tabs (Home → Pulse)', prompt: 'Explain all ConnectLn tabs from Home to Pulse' },
-              { label: '📞 Calls, Backgrounds & Ringtones', prompt: 'How do Calls, Virtual Backgrounds, Ringtones and Stage Share work?' },
-              { label: '📡 Pulse & Zero-Day CVEs', prompt: 'How do Pulse Rooms and the Live Zero-Day CVE Threat Stream work?' },
-              { label: '📬 Summarize unread by date', prompt: 'Summarize my unread emails grouped by the dates they came in' },
+              { label: '🚨 Report Active Zero-Days', prompt: 'Report active Zero-Day CVEs, CISA KEV advisories, Exploit-DB/Metasploit details, and remediation steps', urgent: true },
+              { label: '✨ Explain all tabs (Home → Pulse)', prompt: 'Explain all ConnectLn tabs from Home to Pulse', urgent: false },
+              { label: '📞 Calls, Backgrounds & Ringtones', prompt: 'How do Calls, Virtual Backgrounds, Ringtones and Stage Share work?', urgent: false },
+              { label: '📡 Pulse & Zero-Day CVEs', prompt: 'How do Pulse Rooms and the Live Zero-Day CVE Threat Stream work?', urgent: false },
+              { label: '📬 Summarize unread by date', prompt: 'Summarize my unread emails grouped by the dates they came in', urgent: false },
             ].map((pill) => (
               <button
                 key={pill.label}
@@ -302,7 +316,11 @@ export function NoctisAIInboxView({
                   setNoctisQuestionInput(pill.prompt)
                   fetchNoctisInboxBriefing(pill.prompt)
                 }}
-                className="rounded-full bg-[#F0F4F9] hover:bg-[#D3E3FD] text-[#041E49] border border-[#D3E3FD]/80 px-3 py-1 text-[11px] font-semibold transition-colors cursor-pointer disabled:opacity-60"
+                className={
+                  pill.urgent
+                    ? 'rounded-full bg-red-600 hover:bg-red-700 text-white border border-red-700 px-3 py-1 text-[11px] font-bold transition-colors cursor-pointer disabled:opacity-60 shadow-2xs'
+                    : 'rounded-full bg-[#F0F4F9] hover:bg-[#D3E3FD] text-[#041E49] border border-[#D3E3FD]/80 px-3 py-1 text-[11px] font-semibold transition-colors cursor-pointer disabled:opacity-60'
+                }
               >
                 {pill.label}
               </button>
@@ -393,6 +411,134 @@ export function NoctisAIInboxView({
             </div>
           </div>
         )}
+
+        {/* 2B. NOCTIS AI LIVE ZERO-DAY & CISA KEV THREAT REPORTING */}
+        <div className="mb-5 rounded-2xl border-2 border-red-200 bg-gradient-to-br from-red-50 via-rose-50/70 to-white p-4 shadow-2xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-white">
+                <span className="h-1.5 w-1.5 rounded-full bg-white animate-ping" />
+                {activeZeroDays.length} Active Zero-Days
+              </span>
+              <h3 className="text-xs sm:text-sm font-extrabold text-red-950">
+                🚨 Noctis AI — Zero-Day &amp; CISA KEV Threat Reporting
+              </h3>
+              <span className="text-[10px] font-semibold text-red-700/80">
+                CISA KEV · NVD · Exploit-DB · Metasploit · SearchSploit (Synced {cveSyncedAt})
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <button
+                type="button"
+                onClick={() => {
+                  const q = 'Report all active Zero-Day CVEs, CISA KEV advisories, Exploit-DB/Metasploit modules, and remediation steps'
+                  setNoctisQuestionInput(q)
+                  fetchNoctisInboxBriefing(q)
+                }}
+                className="rounded-full bg-red-600 hover:bg-red-700 text-white px-3 py-1 text-[11px] font-bold transition-colors cursor-pointer"
+              >
+                ✨ Ask Noctis 0-Day Briefing
+              </button>
+              <button
+                type="button"
+                onClick={() => announceNewZeroDay()}
+                className="rounded-full bg-white hover:bg-red-100 text-red-800 border border-red-300 px-2.5 py-1 text-[11px] font-bold transition-colors cursor-pointer"
+                title="Announce live Zero-Day CVE event across ConnectLn"
+              >
+                ⚡ Announce 0-Day
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            {(activeZeroDays.length > 0 ? activeZeroDays : cveRecords).slice(0, 3).map((zd) => (
+              <div
+                key={zd.cveId}
+                className="rounded-xl bg-white/95 border border-red-200/80 px-3.5 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedZeroDayCve(zd)}
+                      className="rounded-md bg-red-600 hover:bg-red-700 text-white px-2 py-0.5 font-mono text-[11px] font-black cursor-pointer"
+                    >
+                      {zd.cveId}
+                    </button>
+                    <span className="text-[11px] font-bold text-red-800">
+                      {zd.severity}
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-medium">
+                      · {zd.publishedAt}
+                    </span>
+                  </div>
+                  <p className="text-xs font-bold text-slate-900 leading-snug mb-0.5">
+                    {zd.title}
+                  </p>
+                  <p className="text-[11px] text-slate-600 line-clamp-2 leading-relaxed">
+                    {zd.whatItIs}
+                  </p>
+                  <div className="mt-1.5 flex items-center gap-1.5 flex-wrap text-[10px]">
+                    <a
+                      href={zd.nvdUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded bg-slate-100 hover:bg-slate-200 text-slate-800 px-1.5 py-0.5 font-semibold"
+                    >
+                      NVD ↗
+                    </a>
+                    <a
+                      href={zd.exploitDbUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded bg-slate-100 hover:bg-slate-200 text-slate-800 px-1.5 py-0.5 font-semibold"
+                    >
+                      Exploit-DB ({zd.edbId}) ↗
+                    </a>
+                    <a
+                      href={zd.metasploitUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded bg-slate-100 hover:bg-slate-200 text-slate-800 px-1.5 py-0.5 font-semibold"
+                    >
+                      Metasploit ↗
+                    </a>
+                    <a
+                      href={zd.searchsploitUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded bg-slate-100 hover:bg-slate-200 text-slate-800 px-1.5 py-0.5 font-semibold"
+                    >
+                      SearchSploit ↗
+                    </a>
+                  </div>
+                </div>
+
+                <div className="flex sm:flex-col items-center sm:items-end gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedZeroDayCve(zd)}
+                    className="rounded-full bg-red-600 hover:bg-red-700 text-white px-3 py-1 text-[11px] font-bold transition-colors cursor-pointer"
+                  >
+                    Inspect Dossier →
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const q = `Report full Zero-Day analysis and remediation for ${zd.cveId}`
+                      setNoctisQuestionInput(q)
+                      fetchNoctisInboxBriefing(q)
+                    }}
+                    className="rounded-full bg-[#D3E3FD] hover:bg-[#C2E7FF] text-[#041E49] px-3 py-1 text-[11px] font-bold transition-colors cursor-pointer"
+                  >
+                    ✨ Ask Noctis →
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* 3. SUGGESTED TO-DOS SECTION (MATCHING MIDDLE RED BOX IN SCREENSHOT) */}
         <div className="mb-2">
@@ -831,6 +977,12 @@ export function NoctisAIInboxView({
           </div>
         </div>
       </div>
+
+      {/* Zero-Day / CVE Dossier Inspector Modal */}
+      <CveIntelDossierModal
+        record={selectedZeroDayCve}
+        onClose={() => setSelectedZeroDayCve(null)}
+      />
     </div>
   )
 }

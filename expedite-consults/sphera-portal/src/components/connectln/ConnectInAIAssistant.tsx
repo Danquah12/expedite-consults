@@ -44,8 +44,10 @@ import {
 import { getLocalizedInitialMessage, getLocalizedAIAnswer } from "@/lib/translations/ai-responses"
 import {
   buildConnectLnPlatformAnswer,
+  buildNoctisZeroDayReport,
   connectLnOverview,
   findConnectLnTopic,
+  isZeroDayOrCveQuery,
 } from "@/lib/connectln-knowledge"
 import { PROFESSION_ENCLAVES } from "@/lib/connectin-professions"
 import { MiniMarkdown } from "./MiniMarkdown"
@@ -218,8 +220,15 @@ function getInitialAIMessage(currentUser: UserProfile): ChatMessage {
   return {
     id: 'msg_welcome',
     sender: 'assistant',
-    text: `Hello ${firstName}! I am **ConnectIn AI**, your platform-wide intelligence assistant. I can search across jobs, compare enterprise software, match verified experts, or configure customized solution blueprints for your organization.`,
+    text: `Hello ${firstName}! I am **ConnectIn AI**, your platform-wide intelligence assistant. I monitor **Active Zero-Day CVEs & CISA KEV advisories**, search across jobs, compare enterprise software, match verified experts, and know every tab from Home to Pulse.`,
     suggestedCards: [
+      {
+        title: "🚨 Inspect Live Zero-Day CVE Threat Stream (NVD + Exploit-DB + Metasploit)",
+        category: "Active Zero-Day Alert",
+        actionText: "Open Pulse Stream",
+        targetTab: "pulserooms",
+        matchPercent: "CRITICAL 0-DAY"
+      },
       {
         title: "💼 Find Cybersecurity Jobs Paying >$180K",
         category: "Career Intelligence",
@@ -262,10 +271,11 @@ function getEnclaveAIPlaceholder(enclaveId?: string): string {
   if (enclaveId === 'automotive_mechanics') {
     return "Ask anything: 'Find master EV tech roles', 'Compare Snap-on vs Autel', 'CAN bus scope setup'..."
   }
-  return "Ask anything: 'Find jobs >$180k', 'Compare AXIOM vs Snyk', 'Recommend pentesting tools'..."
+  return "Ask anything: 'Report active Zero-Days', 'Find jobs >$180k', 'Compare AXIOM vs Snyk'..."
 }
 
 const VIBE_QUICK_CHIPS = [
+  { emoji: "🚨", label: "Active Zero-Days", prompt: "Report all active Zero-Day CVEs, CISA KEV advisories, Exploit-DB/Metasploit modules, and remediation steps." },
   { emoji: "🧭", label: "Home to Pulse Guide", prompt: "Explain all ConnectLn tabs from Home to Pulse." },
   { emoji: "🛡️", label: "DoD Zero Trust", prompt: "Explain the core pillars of DoD Zero Trust Architecture and how to implement them." },
   { emoji: "📄", label: "Resume Strategy", prompt: "How do I optimize my cybersecurity resume for senior federal contracts?" },
@@ -433,6 +443,34 @@ export function ConnectInAIAssistant({
       let reply: ChatMessage
       const lower = promptText.toLowerCase()
       const enclaveId = currentUser.professionEnclave || 'tech_cybersecurity'
+
+      // Active Zero-Day & CVE Threat Intelligence check first so Zero-Days are always reported authoritatively
+      if (isZeroDayOrCveQuery(promptText)) {
+        const zeroDayReply: ChatMessage = {
+          id: `ai_${Date.now()}`,
+          sender: 'assistant',
+          text: buildNoctisZeroDayReport(promptText),
+          suggestedCards: [
+            {
+              title: 'Inspect Live Zero-Day CVE Threat Stream (NVD + Exploit-DB + Metasploit)',
+              category: 'Pulse Zero-Day Radar',
+              actionText: 'Open Pulse Stream',
+              targetTab: 'pulserooms',
+              matchPercent: 'CRITICAL 0-DAY',
+            },
+            {
+              title: 'View Security & CISA KEV Advisories in Alerts',
+              category: 'Alerts Engine',
+              actionText: 'Open Alerts',
+              targetTab: 'notifications',
+              matchPercent: 'Active Telemetry',
+            },
+          ],
+        }
+        setMessages(prev => [...prev, zeroDayReply])
+        setIsTyping(false)
+        return
+      }
 
       // ConnectLn platform Q&A: answer from the comprehensive knowledge base (Home to Pulse tabs + features)
       const platformAnswer = buildConnectLnPlatformAnswer(promptText)

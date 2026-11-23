@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server'
 import {
   buildConnectLnPlatformAnswer,
+  buildNoctisZeroDayReport,
   connectLnGrounding,
   connectLnOverview,
+  isZeroDayOrCveQuery,
+  NOCTIS_ZERO_DAY_CATALOG,
 } from '@/lib/connectln-knowledge'
 import { MASTER_MARKETPLACE_PRODUCTS, MarketplaceProduct } from '@/lib/marketplace-engine-data'
 import { ENTERPRISE_SOLUTIONS_DATA } from '@/lib/solutions-layer-data'
@@ -586,10 +589,18 @@ function buildDateGroupedUnreadSummary(
 
   if (customQuestion && customQuestion.trim()) {
     const trimmedQ = customQuestion.trim()
+    if (isZeroDayOrCveQuery(trimmedQ)) {
+      return {
+        fullText: buildNoctisZeroDayReport(trimmedQ),
+        dateSummaries,
+      }
+    }
+
     const platformKnowledge = buildConnectLnPlatformAnswer(trimmedQ)
-    const mentionsInboxSpecifically = /\b(unread|email|emails|inbox|sender|from|reply|replies|pending|to-?do|todos|date|dates|attachment|attachments)\b/i.test(
-      trimmedQ
-    )
+    const mentionsInboxSpecifically =
+      /\b(unread|email|emails|inbox|sender|reply|replies|pending|to-?do|todos|attachment|attachments|who\s+sent)\b/i.test(
+        trimmedQ
+      ) || /\b(?:messages?|emails?|threads?)\s+from\b/i.test(trimmedQ)
 
     if (platformKnowledge && !mentionsInboxSpecifically) {
       return {
@@ -603,7 +614,8 @@ function buildDateGroupedUnreadSummary(
         fullText:
           `### 📘 ${platformKnowledge.title}\n\n${platformKnowledge.answer}\n\n---\n\n` +
           `### 📬 Related Unread Inbox Summary (${targetList.length} across ${byDate.size} Dates)\n\n` +
-          dateBlocks.join('\n\n'),
+          dateBlocks.join('\n\n') +
+          `\n\n---\n\n${buildNoctisZeroDayReport()}`,
         dateSummaries,
       }
     }
@@ -612,7 +624,8 @@ function buildDateGroupedUnreadSummary(
       fullText:
         `### Noctis Inbox & Unread Comms Engine (NOCTIS-INBOX-001)\n` +
         `**Member:** \`${firstName}\` · **Search Query:** \`${trimmedQ}\` · **Matched:** **\`${targetList.length} Unread across ${byDate.size} Dates\`**\n\n` +
-        dateBlocks.join('\n\n'),
+        dateBlocks.join('\n\n') +
+        `\n\n---\n\n${buildNoctisZeroDayReport()}`,
       dateSummaries,
     }
   }
@@ -621,7 +634,8 @@ function buildDateGroupedUnreadSummary(
     fullText:
       `### Noctis Inbox & Unread Comms Engine (NOCTIS-INBOX-001)\n` +
       `**Subsystem Domain:** \`CONNECTLN_B2B_INBOX\` · **Telemetry:** **\`${targetList.length} Unread Emails across ${byDate.size} Dates\`**\n\n` +
-      dateBlocks.join('\n\n'),
+      dateBlocks.join('\n\n') +
+      `\n\n---\n\n${buildNoctisZeroDayReport()}`,
     dateSummaries,
   }
 }
@@ -809,12 +823,13 @@ export async function POST(req: Request) {
       ? [body.selectedAlert]
       : alertsList
 
-    const { fullText: fallbackAlertSummary, alertExplanations } = buildAlertsExecutiveBriefing(
+    const { fullText: rawAlertSummary, alertExplanations } = buildAlertsExecutiveBriefing(
       memberName,
       targetAlerts,
       body?.categoryFilter,
       customQ
     )
+    const fallbackAlertSummary = `${buildNoctisZeroDayReport(customQ)}\n\n---\n\n${rawAlertSummary}`
 
     const singleExp = body?.selectedAlert
       ? alertExplanations[body.selectedAlert.id] || buildDetailedExplanationForAlert(body.selectedAlert)
@@ -834,10 +849,14 @@ export async function POST(req: Request) {
         (customQ ? `\nMember's specific question about this alert: "${customQ}"` : '')
       : `You are Noctis, the AI Alert & Signal Intelligence engine inside ConnectLn (https://www.conectln.com).\n` +
         `The signed-in member is ${memberName}${body?.profile?.profession ? ` (${body.profile.profession})` : ''}.\n` +
-        `Below are the active alerts in ${memberName}'s ConnectLn Alerts feed:\n${alertsDigestText}\n\n` +
+        `Active Zero-Day CVEs tracked across CISA KEV, NVD, Exploit-DB, Metasploit & SearchSploit:\n` +
+        NOCTIS_ZERO_DAY_CATALOG.filter((z) => z.isZeroDay)
+          .map((z) => `- ${z.cveId} (${z.severity}): ${z.title} — ${z.remediation}`)
+          .join('\n') +
+        `\n\nBelow are the active alerts in ${memberName}'s ConnectLn Alerts feed:\n${alertsDigestText}\n\n` +
         (customQ
-          ? `Answer the member's question about their alerts based on the signals above: "${customQ}"`
-          : `Provide a structured executive explanation of what these alerts represent across Security/Clinical Safety, Career Signals, Solutions/Marketplace, Learning, and Network, highlighting unread and critical advisories first and what actions to take.`)
+          ? `Answer the member's question about their alerts and active Zero-Days based on the signals above: "${customQ}"`
+          : `Provide a structured executive explanation leading with active Zero-Day CVEs followed by alerts across Security/Clinical Safety, Career Signals, Solutions/Marketplace, Learning, and Network.`)
 
     const ctrl = new AbortController()
     const timer = setTimeout(() => ctrl.abort(), 12000)
@@ -866,10 +885,11 @@ export async function POST(req: Request) {
           }
           return NextResponse.json(
             {
-              text: validatedAlertText,
+              text: `${buildNoctisZeroDayReport(customQ)}\n\n---\n\n${validatedAlertText}`,
               fallbackSummary: fallbackAlertSummary,
               alertExplanations,
               singleExplanation: singleExp,
+              zeroDays: NOCTIS_ZERO_DAY_CATALOG,
               source: 'noctis-live-api',
               analyzedCount: targetAlerts.length,
               timestampIso: new Date().toISOString()
@@ -890,6 +910,7 @@ export async function POST(req: Request) {
         fallbackSummary: fallbackAlertSummary,
         alertExplanations,
         singleExplanation: singleExp,
+        zeroDays: NOCTIS_ZERO_DAY_CATALOG,
         source: 'noctis-alert-engine',
         analyzedCount: targetAlerts.length,
         timestampIso: new Date().toISOString()
@@ -903,11 +924,12 @@ export async function POST(req: Request) {
 
   if (isInboxBriefing) {
     const customQ = (body?.question || '').trim()
+    const isZeroDayAsk = Boolean(customQ && isZeroDayOrCveQuery(customQ))
     const platformKnowledge = customQ ? buildConnectLnPlatformAnswer(customQ) : null
     const mentionsInboxSpecifically =
-      /\b(unread|email|emails|inbox|sender|from|reply|replies|pending|to-?do|todos|date|dates|attachment|attachments)\b/i.test(
+      /\b(unread|email|emails|inbox|sender|reply|replies|pending|to-?do|todos|attachment|attachments|who\s+sent)\b/i.test(
         customQ
-      )
+      ) || /\b(?:messages?|emails?|threads?)\s+from\b/i.test(customQ)
 
     const unreadOrPending = inboxThreads.filter((t) => t.isUnreadOrPending || (t.unreadCount || 0) > 0)
     const targetThreads = unreadOrPending.length > 0 ? unreadOrPending : inboxThreads
@@ -926,6 +948,22 @@ export async function POST(req: Request) {
       customQ
     )
 
+    if (isZeroDayAsk) {
+      const zeroDayText = buildNoctisZeroDayReport(customQ)
+      return NextResponse.json(
+        {
+          text: zeroDayText,
+          fallbackSummary: zeroDayText,
+          dateSummaries,
+          zeroDays: NOCTIS_ZERO_DAY_CATALOG,
+          source: 'noctis-zeroday-intelligence',
+          analyzedCount: targetThreads.length,
+          timestampIso: new Date().toISOString()
+        },
+        { headers: { 'cache-control': 'no-store' } }
+      )
+    }
+
     // For ConnectLn platform & tab-navigation queries inside Noctis AI Inbox (e.g., Home through Pulse),
     // return the authoritative complete tab breakdown immediately so zero tabs or recent features are omitted.
     if (platformKnowledge && !mentionsInboxSpecifically) {
@@ -934,6 +972,7 @@ export async function POST(req: Request) {
           text: fallbackSummary,
           fallbackSummary,
           dateSummaries,
+          zeroDays: NOCTIS_ZERO_DAY_CATALOG,
           source: 'connectln-platform-knowledge',
           analyzedCount: targetThreads.length,
           timestampIso: new Date().toISOString()
@@ -942,17 +981,21 @@ export async function POST(req: Request) {
       )
     }
 
+    const activeZeroDaysBrief = NOCTIS_ZERO_DAY_CATALOG.filter((z) => z.isZeroDay)
+      .map((z) => `- ${z.cveId} (${z.severity}): ${z.title} — Mitigation: ${z.remediation}`)
+      .join('\n')
+
     const platformContext = platformKnowledge
       ? `\n\nConnectLn Verified Platform Knowledge:\n${connectLnGrounding(customQ)}\n`
-      : ''
+      : `\n\nActive Zero-Day CVEs Reported by Noctis AI:\n${activeZeroDaysBrief}\n`
 
     const noctisPrompt =
-      `You are Noctis, the AI Platform & Inbox Intelligence assistant inside ConnectLn (https://www.conectln.com).\n` +
+      `You are Noctis, the AI Platform, Threat & Inbox Intelligence assistant inside ConnectLn (https://www.conectln.com).\n` +
       `The signed-in member is ${memberName}${body?.profile?.profession ? ` (${body.profile.profession})` : ''}.\n` +
       `Below are the unread/pending emails found in ${memberName}'s ConnectLn Inbox, along with the exact dates they arrived:\n${digestLines}${platformContext}\n\n` +
       (customQ
-        ? `Answer the member's question using both the verified ConnectLn platform facts above and their inbox contents grouped by arrival date: "${customQ}"`
-        : `Search and summarize these unread emails grouped chronologically by the exact calendar dates they arrived (e.g., Nov 2, 2026, Oct 26, 2026, Oct 23, 2026). For each date, clearly state who sent the email/message, what they wrote or attached, and the recommended next step.`)
+        ? `Answer the member's question using both the verified ConnectLn platform/Zero-Day facts above and their inbox contents grouped by arrival date: "${customQ}"`
+        : `Search and summarize these unread emails grouped chronologically by the exact calendar dates they arrived (e.g., Nov 2, 2026, Oct 26, 2026, Oct 23, 2026), and also summarize the active Zero-Day advisories above.`)
 
     const ctrl = new AbortController()
     const timer = setTimeout(() => ctrl.abort(), 12000)
@@ -978,13 +1021,15 @@ export async function POST(req: Request) {
           : targetThreads.slice(0, 4).map((t) => t.title.split(' ')[0])
         const validatedInboxText = isNoctisResponseRelevantAndClean(data?.text || '', relevanceKeywords)
         if (validatedInboxText) {
+          const defaultZeroDaySuffix = !customQ ? `\n\n---\n\n${buildNoctisZeroDayReport()}` : ''
           return NextResponse.json(
             {
               text: platformKnowledge
                 ? `### 📘 ${platformKnowledge.title}\n\n${platformKnowledge.answer}\n\n---\n\n${validatedInboxText}`
-                : validatedInboxText,
+                : `${validatedInboxText}${defaultZeroDaySuffix}`,
               fallbackSummary,
               dateSummaries,
+              zeroDays: NOCTIS_ZERO_DAY_CATALOG,
               source: 'noctis-live-api',
               analyzedCount: targetThreads.length,
               timestampIso: new Date().toISOString()
@@ -1004,6 +1049,7 @@ export async function POST(req: Request) {
         text: fallbackSummary,
         fallbackSummary,
         dateSummaries,
+        zeroDays: NOCTIS_ZERO_DAY_CATALOG,
         source: 'noctis-engine',
         analyzedCount: targetThreads.length,
         timestampIso: new Date().toISOString()
@@ -1014,6 +1060,17 @@ export async function POST(req: Request) {
 
   const question = (body?.question || '').trim().slice(0, 2000)
   if (!question) return NextResponse.json({ error: 'Write a question first.' }, { status: 400 })
+
+  if (isZeroDayOrCveQuery(question)) {
+    return NextResponse.json(
+      {
+        text: buildNoctisZeroDayReport(question),
+        zeroDays: NOCTIS_ZERO_DAY_CATALOG,
+        source: 'noctis-zeroday-intelligence'
+      },
+      { headers: { 'cache-control': 'no-store' } }
+    )
+  }
 
   const platformKnowledge = buildConnectLnPlatformAnswer(question)
   const facts = connectLnGrounding(question)
