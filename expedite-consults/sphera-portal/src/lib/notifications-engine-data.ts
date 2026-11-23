@@ -42,8 +42,8 @@ export interface CategorizedNotificationItem {
   externalLabel?: string
 }
 
-export const INITIAL_CATEGORIZED_NOTIFICATIONS: CategorizedNotificationItem[] = [
-  // 0. NOCTIS 6AM FRONTIER & BENCHMARK INVARIANT ALERT (PINNED TOP)
+export const FOUNDATIONAL_CATEGORIZED_NOTIFICATIONS: CategorizedNotificationItem[] = [
+  // 0. NOCTIS 6AM FRONTIER & BENCHMARK INVARIANT ALERT (FOUNDATIONAL SMR BASELINE)
   {
     id: 'notif_noctis_daily_frontier',
     category: 'Security',
@@ -56,16 +56,13 @@ export const INITIAL_CATEGORIZED_NOTIFICATIONS: CategorizedNotificationItem[] = 
     },
     title: '🔴 [NOCTIS 6AM FRONTIER ALERT] Invariant Verified: NUCLEAR_FISSION_SMR_GEN4',
     description: 'Daily Challenge Invariant Evaluated: "A lead-cooled fast reactor small modular reactor operates at 300 MWth. If the Doppler temperature coefficient is -3.2 pcm/C and keff reaches 1.0025 with period 3.2s, what passive safety mechanism and SCRAM timing are required?"\n\nVerdict: Gravity-driven B4C rod insertion SCRAM < 1.8s and passive RVACS natural circulation loop engagement (Duration: 42.32ms, Invariant: PASS).',
-    timestamp: 'Just now',
+    timestamp: 'Foundational Baseline',
     unread: true,
     actionText: 'Inspect Invariant Telemetry',
     targetTab: 'pulserooms',
     priority: 'critical',
     externalLabel: 'Run Live Challenge Test'
   },
-
-  // 0.5. 24-HOUR SCHEDULED ADDITIVE ALERTS (PRESERVES ALL EXISTING ALERTS)
-  ...getAccumulatedDailyAlerts(),
 
   // 1. SECURITY & CLINICAL SAFETY ALERTS
   {
@@ -398,4 +395,19 @@ export const INITIAL_CATEGORIZED_NOTIFICATIONS: CategorizedNotificationItem[] = 
     targetTab: 'home'
   }
 ]
+
+/**
+ * Dynamically evaluates the 24-hour additive alerts schedule against `nowMs` on every request
+ * so each new 24-hour window automatically adds fresh Frontier & Operational alerts at the top
+ * while keeping all prior alerts intact.
+ */
+export function getLiveCategorizedNotifications(
+  nowMs: number = Date.now()
+): CategorizedNotificationItem[] {
+  const dailyAlerts = getAccumulatedDailyAlerts(nowMs)
+  return [...dailyAlerts, ...FOUNDATIONAL_CATEGORIZED_NOTIFICATIONS]
+}
+
+export const INITIAL_CATEGORIZED_NOTIFICATIONS: CategorizedNotificationItem[] =
+  getLiveCategorizedNotifications()
 

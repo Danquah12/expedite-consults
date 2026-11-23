@@ -32,6 +32,10 @@ import {
   FOUR_EYES_APPROVALS_DATA,
   AdminUserRecord
 } from "@/lib/connectin-iam-data"
+import {
+  syncAndLoadConnectLnAdminFromMongo,
+  insertConnectLnAdminAuditToMongo,
+} from "@/lib/connectln-mongodb"
 
 export async function GET(req: NextRequest) {
   try {
@@ -219,21 +223,33 @@ export async function GET(req: NextRequest) {
       ...SOC_SECURITY_EVENTS
     ]
 
+    const mongoAdmin = await syncAndLoadConnectLnAdminFromMongo({
+      users: combinedUsers,
+      registeredPhones,
+      verifications: mergedVerifications,
+      auditLogs: mergedAuditLogs,
+      activityLogs: allActivityLogs,
+    })
+
     return NextResponse.json({
       success: true,
       timestamp: new Date().toISOString(),
+      database: mongoAdmin.mongoConnected
+        ? `connected (MongoDB Atlas: ${mongoAdmin.databaseName})`
+        : "connectinDb + Firebase KV (connectln-2ab9b)",
+      mongoConnected: mongoAdmin.mongoConnected,
       analytics: EXECUTIVE_ANALYTICS_DATA,
-      users: combinedUsers,
-      registeredPhones,
+      users: mongoAdmin.users,
+      registeredPhones: mongoAdmin.registeredPhones,
       content: ADMIN_CONTENT_DIRECTORY,
       cases: MODERATION_CASES_DATA,
       companies: ADMIN_COMPANIES_DIRECTORY,
       jobs: ADMIN_JOBS_DIRECTORY,
-      verifications: mergedVerifications,
+      verifications: mongoAdmin.verifications,
       config: INITIAL_PLATFORM_CONFIG,
       roles: PLATFORM_RBAC_ROLES,
-      auditLogs: mergedAuditLogs,
-      activityLogs: allActivityLogs,
+      auditLogs: mongoAdmin.auditLogs,
+      activityLogs: mongoAdmin.activityLogs,
       socEvents: mergedSocEvents,
       broadcasts: BROADCAST_NOTIFICATIONS_DATA,
       approvals: FOUR_EYES_APPROVALS_DATA
@@ -275,9 +291,13 @@ export async function POST(req: NextRequest) {
         email: payload?.email,
         name: payload?.name,
       })
-      await appendCloudTelemetry({ auditLog: auditEntry }).catch(() => {})
+      const [, mongoSaved] = await Promise.all([
+        appendCloudTelemetry({ auditLog: auditEntry }).catch(() => {}),
+        insertConnectLnAdminAuditToMongo(auditEntry).catch(() => false),
+      ])
       return NextResponse.json({
         success: true,
+        mongoSaved,
         deletedPhones: delRes.deletedPhones,
         message: `Unlinked and deleted phone number(s) ${delRes.deletedPhones.join(", ") || payload?.phone || ""} from calling directory.`,
         auditLogged: auditEntry,
@@ -285,9 +305,12 @@ export async function POST(req: NextRequest) {
       })
     }
 
+    const mongoSaved = await insertConnectLnAdminAuditToMongo(auditEntry).catch(() => false)
+
     // In-memory response with simulated mutation confirmation
     return NextResponse.json({
       success: true,
+      mongoSaved,
       message: `Action '${action}' executed successfully.`,
       auditLogged: auditEntry,
       payload

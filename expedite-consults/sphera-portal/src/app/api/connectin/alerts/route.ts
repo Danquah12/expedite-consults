@@ -2,8 +2,14 @@ import { NextRequest, NextResponse } from "next/server"
 import { connectinDb } from "@/lib/connectin-db"
 import {
   CategorizedNotificationItem,
-  INITIAL_CATEGORIZED_NOTIFICATIONS
+  getLiveCategorizedNotifications
 } from "@/lib/notifications-engine-data"
+import {
+  insertConnectLnAlertToMongo,
+  syncAndLoadConnectLnAlertsFromMongo
+} from "@/lib/connectln-mongodb"
+
+export const dynamic = "force-dynamic"
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -18,15 +24,18 @@ export async function OPTIONS() {
 export async function GET(req: NextRequest) {
   try {
     const dbAlerts = connectinDb.getAlerts()
-    const allAlerts: CategorizedNotificationItem[] = [
-      ...dbAlerts,
-      ...INITIAL_CATEGORIZED_NOTIFICATIONS.filter(i => !dbAlerts.some((d: any) => d.id === i.id))
-    ]
+    const liveScheduledAlerts = getLiveCategorizedNotifications(Date.now())
+    const mongoSync = await syncAndLoadConnectLnAlertsFromMongo(liveScheduledAlerts, dbAlerts)
+    const allAlerts: CategorizedNotificationItem[] = mongoSync.alerts
     const unreadCount = allAlerts.filter(a => a.unread).length
 
     return NextResponse.json(
       {
         success: true,
+        database: mongoSync.mongoConnected
+          ? `connected (MongoDB Atlas: ${mongoSync.databaseName})`
+          : "in-memory + firestore fallback",
+        mongoConnected: mongoSync.mongoConnected,
         count: allAlerts.length,
         unreadCount,
         alerts: allAlerts
@@ -83,20 +92,23 @@ export async function POST(req: NextRequest) {
       targetPayload: metadata ? JSON.stringify(metadata) : undefined
     }
 
-    // Persist via connectinDb
+    // Persist via connectinDb + MongoDB Atlas
     connectinDb.addAlert(newAlert)
+    const mongoSaved = await insertConnectLnAlertToMongo(newAlert)
 
     // Recompute total alerts and unread count
     const dbAlerts = connectinDb.getAlerts()
+    const liveScheduledAlerts = getLiveCategorizedNotifications(Date.now())
     const allAlerts = [
       ...dbAlerts,
-      ...INITIAL_CATEGORIZED_NOTIFICATIONS.filter(i => !dbAlerts.some((d: any) => d.id === i.id))
+      ...liveScheduledAlerts.filter(i => !dbAlerts.some((d: any) => d.id === i.id))
     ]
 
     return NextResponse.json(
       {
         success: true,
-        message: "Alert delivered to ConnectIn Alert menu successfully.",
+        mongoSaved,
+        message: "Alert delivered to ConnectIn Alert menu and persisted to MongoDB Atlas.",
         unreadCount: allAlerts.filter(a => a.unread).length,
         alert: newAlert
       },

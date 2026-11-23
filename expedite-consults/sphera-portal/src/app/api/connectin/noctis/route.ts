@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server'
-import { connectLnGrounding } from '@/lib/connectln-knowledge'
+import {
+  buildConnectLnPlatformAnswer,
+  connectLnGrounding,
+  connectLnOverview,
+} from '@/lib/connectln-knowledge'
 import { MASTER_MARKETPLACE_PRODUCTS, MarketplaceProduct } from '@/lib/marketplace-engine-data'
 import { ENTERPRISE_SOLUTIONS_DATA } from '@/lib/solutions-layer-data'
 import { spheraAppsData } from '@/lib/nextgen-data'
@@ -581,10 +585,33 @@ function buildDateGroupedUnreadSummary(
   }
 
   if (customQuestion && customQuestion.trim()) {
+    const trimmedQ = customQuestion.trim()
+    const platformKnowledge = buildConnectLnPlatformAnswer(trimmedQ)
+    const mentionsInboxSpecifically = /\b(unread|email|emails|inbox|sender|from|reply|replies|pending|to-?do|todos|date|dates|attachment|attachments)\b/i.test(
+      trimmedQ
+    )
+
+    if (platformKnowledge && !mentionsInboxSpecifically) {
+      return {
+        fullText: `### 📘 ${platformKnowledge.title}\n\n${platformKnowledge.answer}`,
+        dateSummaries,
+      }
+    }
+
+    if (platformKnowledge && mentionsInboxSpecifically) {
+      return {
+        fullText:
+          `### 📘 ${platformKnowledge.title}\n\n${platformKnowledge.answer}\n\n---\n\n` +
+          `### 📬 Related Unread Inbox Summary (${targetList.length} across ${byDate.size} Dates)\n\n` +
+          dateBlocks.join('\n\n'),
+        dateSummaries,
+      }
+    }
+
     return {
       fullText:
         `### Noctis Inbox & Unread Comms Engine (NOCTIS-INBOX-001)\n` +
-        `**Member:** \`${firstName}\` · **Search Query:** \`${customQuestion.trim()}\` · **Matched:** **\`${targetList.length} Unread across ${byDate.size} Dates\`**\n\n` +
+        `**Member:** \`${firstName}\` · **Search Query:** \`${trimmedQ}\` · **Matched:** **\`${targetList.length} Unread across ${byDate.size} Dates\`**\n\n` +
         dateBlocks.join('\n\n'),
       dateSummaries,
     }
@@ -876,6 +903,12 @@ export async function POST(req: Request) {
 
   if (isInboxBriefing) {
     const customQ = (body?.question || '').trim()
+    const platformKnowledge = customQ ? buildConnectLnPlatformAnswer(customQ) : null
+    const mentionsInboxSpecifically =
+      /\b(unread|email|emails|inbox|sender|from|reply|replies|pending|to-?do|todos|date|dates|attachment|attachments)\b/i.test(
+        customQ
+      )
+
     const unreadOrPending = inboxThreads.filter((t) => t.isUnreadOrPending || (t.unreadCount || 0) > 0)
     const targetThreads = unreadOrPending.length > 0 ? unreadOrPending : inboxThreads
 
@@ -893,12 +926,32 @@ export async function POST(req: Request) {
       customQ
     )
 
+    // For ConnectLn platform & tab-navigation queries inside Noctis AI Inbox (e.g., Home through Pulse),
+    // return the authoritative complete tab breakdown immediately so zero tabs or recent features are omitted.
+    if (platformKnowledge && !mentionsInboxSpecifically) {
+      return NextResponse.json(
+        {
+          text: fallbackSummary,
+          fallbackSummary,
+          dateSummaries,
+          source: 'connectln-platform-knowledge',
+          analyzedCount: targetThreads.length,
+          timestampIso: new Date().toISOString()
+        },
+        { headers: { 'cache-control': 'no-store' } }
+      )
+    }
+
+    const platformContext = platformKnowledge
+      ? `\n\nConnectLn Verified Platform Knowledge:\n${connectLnGrounding(customQ)}\n`
+      : ''
+
     const noctisPrompt =
-      `You are Noctis, the AI Unread Email & Inbox Intelligence assistant inside ConnectLn (https://www.conectln.com).\n` +
+      `You are Noctis, the AI Platform & Inbox Intelligence assistant inside ConnectLn (https://www.conectln.com).\n` +
       `The signed-in member is ${memberName}${body?.profile?.profession ? ` (${body.profile.profession})` : ''}.\n` +
-      `Below are the unread/pending emails found in ${memberName}'s ConnectLn Inbox, along with the exact dates they arrived:\n${digestLines}\n\n` +
+      `Below are the unread/pending emails found in ${memberName}'s ConnectLn Inbox, along with the exact dates they arrived:\n${digestLines}${platformContext}\n\n` +
       (customQ
-        ? `Answer the member's question about their unread emails grouped by the dates they arrived based ONLY on the inbox contents above: "${customQ}"`
+        ? `Answer the member's question using both the verified ConnectLn platform facts above and their inbox contents grouped by arrival date: "${customQ}"`
         : `Search and summarize these unread emails grouped chronologically by the exact calendar dates they arrived (e.g., Nov 2, 2026, Oct 26, 2026, Oct 23, 2026). For each date, clearly state who sent the email/message, what they wrote or attached, and the recommended next step.`)
 
     const ctrl = new AbortController()
@@ -920,12 +973,16 @@ export async function POST(req: Request) {
       })
       if (res.ok) {
         const data = (await res.json()) as { text?: string }
-        const senderKeywords = targetThreads.slice(0, 4).map((t) => t.title.split(' ')[0])
-        const validatedInboxText = isNoctisResponseRelevantAndClean(data?.text || '', senderKeywords)
+        const relevanceKeywords = platformKnowledge
+          ? ['ConnectLn', 'Home', 'Pulse', 'Messaging', 'Jobs', 'Network', 'Alerts', 'Market', 'Learning', 'Media']
+          : targetThreads.slice(0, 4).map((t) => t.title.split(' ')[0])
+        const validatedInboxText = isNoctisResponseRelevantAndClean(data?.text || '', relevanceKeywords)
         if (validatedInboxText) {
           return NextResponse.json(
             {
-              text: validatedInboxText,
+              text: platformKnowledge
+                ? `### 📘 ${platformKnowledge.title}\n\n${platformKnowledge.answer}\n\n---\n\n${validatedInboxText}`
+                : validatedInboxText,
               fallbackSummary,
               dateSummaries,
               source: 'noctis-live-api',
@@ -958,15 +1015,36 @@ export async function POST(req: Request) {
   const question = (body?.question || '').trim().slice(0, 2000)
   if (!question) return NextResponse.json({ error: 'Write a question first.' }, { status: 400 })
 
+  const platformKnowledge = buildConnectLnPlatformAnswer(question)
   const facts = connectLnGrounding(question)
   const who = [body?.profile?.name, body?.profile?.profession].filter(Boolean).join(', ')
+  const mentionsConnectLnSpecifically =
+    /\b(connectln|connectin|this\s+(app|platform|site)|home\s+to\s+pulse|all\s+tabs|every\s+tab|pulserooms)\b/i.test(
+      question
+    )
   // Noctis weights the user turn, so the facts travel inside it.
-  const isCareerAsk = /\b(become|becoming|career\s+(path|pathway|as|in)|path(way)?\s+to|what\s+does\s+it\s+take\s+to\s+be|how\s+much\s+(does|do|can)\s+.*(make|earn|cost)|salary|how\s+long\s+(does|to|will)|requirements?\s+(to|for)|interview\s+questions|resume\s+tips|skills\s+(does|do|needed)|what\s+does\s+an?\s+.*\s+do|careers?\s+(similar|like|good\s+for)|what\s+(careers|jobs)|jobs?\s+(in|for)\s+|switch\s+(to|from)|difference\s+between|good\s+career|where\s+(can|do)\s+i\s+(train|study)|steps?\s+to\s+(be|become)|how\s+to\s+start\s+(as|a\s+career))\b/i.test(question)
+  const isCareerAsk =
+    !mentionsConnectLnSpecifically &&
+    /\b(become|becoming|career\s+(path|pathway|as|in)|path(way)?\s+to|what\s+does\s+it\s+take\s+to\s+be|how\s+much\s+(does|do|can)\s+.*(make|earn|cost)|salary|how\s+long\s+(does|to|will)|requirements?\s+(to|for)|interview\s+questions|resume\s+tips|skills\s+(does|do|needed)|what\s+does\s+an?\s+.*\s+do|careers?\s+(similar|like|good\s+for)|what\s+(careers|jobs)|jobs?\s+(in|for)\s+|switch\s+(to|from)|difference\s+between|good\s+career|where\s+(can|do)\s+i\s+(train|study)|steps?\s+to\s+(be|become)|how\s+to\s+start\s+(as|a\s+career))\b/i.test(
+      question
+    )
+
+  // If the user explicitly asks about all ConnectLn tabs from Home to Pulse, return complete verified platform docs immediately
+  if (platformKnowledge && platformKnowledge.title.includes('Home to Pulse')) {
+    return NextResponse.json(
+      {
+        text: `### 📘 ${platformKnowledge.title}\n\n${platformKnowledge.answer}`,
+        source: 'connectln-platform-knowledge'
+      },
+      { headers: { 'cache-control': 'no-store' } }
+    )
+  }
+
   // Career-pathway questions are answered from Noctis's repository, so send them unwrapped.
   const grounded = isCareerAsk
     ? question
-    : `You are Noctis, answering inside ConnectLn (https://www.connectln.app), a professional network.\n` +
-      `If the question is about ConnectLn, answer ONLY from these facts and do not invent features:\n${facts}\n\n` +
+    : `You are Noctis, answering inside ConnectLn (https://www.conectln.com), a professional network.\n` +
+      `If the question is about ConnectLn or any tab from Home to Pulse, answer accurately from these verified facts and do not invent features:\n${facts}\n\n` +
       (who ? `The member asking: ${who}.\n` : '') +
       `If the question is not about ConnectLn, answer it normally.\n\nQuestion: ${question}`
 
@@ -974,6 +1052,19 @@ export async function POST(req: Request) {
     .filter((t) => (t?.role === 'user' || t?.role === 'assistant') && typeof t.content === 'string')
     .slice(-6)
     .map((t) => ({ role: t.role, content: t.content.slice(0, 1500) }))
+
+  const buildPlatformFallbackResponse = () => {
+    const fallbackText = platformKnowledge
+      ? `### 📘 ${platformKnowledge.title}\n\n${platformKnowledge.answer}`
+      : mentionsConnectLnSpecifically
+      ? connectLnOverview()
+      : null
+    if (!fallbackText) return null
+    return NextResponse.json(
+      { text: fallbackText, source: 'connectln-platform-fallback' },
+      { headers: { 'cache-control': 'no-store' } }
+    )
+  }
 
   const ctrl = new AbortController()
   const timer = setTimeout(() => ctrl.abort(), 25000)
@@ -992,13 +1083,23 @@ export async function POST(req: Request) {
       signal: ctrl.signal,
       cache: 'no-store'
     })
-    if (!res.ok) return NextResponse.json({ error: `Noctis returned ${res.status}` }, { status: 502 })
+    if (!res.ok) {
+      return buildPlatformFallbackResponse() || NextResponse.json({ error: `Noctis returned ${res.status}` }, { status: 502 })
+    }
     const data = (await res.json()) as { text?: string; error?: string }
-    if (!data?.text) return NextResponse.json({ error: data?.error || 'Noctis gave no answer.' }, { status: 502 })
-    const formattedText = normalizeNoctisMarkdownOutput(data.text)
-    return NextResponse.json({ text: formattedText || data.text, source: 'noctis' }, { headers: { 'cache-control': 'no-store' } })
+    const relevanceKw = platformKnowledge
+      ? ['ConnectLn', 'Home', 'Network', 'Jobs', 'Messaging', 'Alerts', 'Market', 'Learning', 'Media', 'Pulse', 'Calls', 'Status', 'Vault', 'Noctis']
+      : []
+    const cleaned = isNoctisResponseRelevantAndClean(data?.text || '', relevanceKw)
+    if (!cleaned) {
+      return (
+        buildPlatformFallbackResponse() ||
+        NextResponse.json({ error: data?.error || 'Noctis gave no answer.' }, { status: 502 })
+      )
+    }
+    return NextResponse.json({ text: cleaned, source: 'noctis' }, { headers: { 'cache-control': 'no-store' } })
   } catch {
-    return NextResponse.json({ error: 'Noctis is unreachable right now.' }, { status: 504 })
+    return buildPlatformFallbackResponse() || NextResponse.json({ error: 'Noctis is unreachable right now.' }, { status: 504 })
   } finally {
     clearTimeout(timer)
   }

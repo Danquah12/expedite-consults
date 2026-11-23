@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import type { B2BConversationThread } from '@/lib/connectin-b2b-comms'
 import { MiniMarkdown } from './MiniMarkdown'
 
@@ -82,11 +82,18 @@ export function NoctisAIInboxView({
   toggleSnoozeThread,
   onOpenThread,
 }: NoctisAIInboxViewProps) {
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null)
   const [showAllTodos, setShowAllTodos] = useState(false)
   const [showFilterTray, setShowFilterTray] = useState(false)
   const [showDateBreakdown, setShowDateBreakdown] = useState(false)
   const [dismissedTopicIds, setDismissedTopicIds] = useState<string[]>([])
   const [openMenuThreadId, setOpenMenuThreadId] = useState<string | null>(null)
+
+  const askFromTopicsCard = (promptText: string) => {
+    setNoctisQuestionInput(promptText)
+    fetchNoctisInboxBriefing(promptText)
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   // Transform activeNoctisTodos into action-oriented "Suggested to-dos" matching the screenshot
   const formattedTodos = activeNoctisTodos.map((item, idx) => {
@@ -148,7 +155,7 @@ export function NoctisAIInboxView({
   const hiddenTodoCount = Math.max(0, formattedTodos.length - 3)
 
   return (
-    <div className="flex-1 bg-white overflow-y-auto h-full flex flex-col justify-between">
+    <div ref={scrollContainerRef} className="flex-1 bg-white overflow-y-auto h-full flex flex-col justify-between">
       {/* TOP WORKSPACE: ASK NOCTIS SEARCH BAR + HI KWESI + SUGGESTED TO-DOS */}
       <div className="px-6 sm:px-10 pt-5 pb-6 max-w-4xl w-full mx-auto">
         {/* 1. TOP "ASK NOCTIS" SEARCH BAR (MATCHING TOP RED BOX IN SCREENSHOT) */}
@@ -174,7 +181,7 @@ export function NoctisAIInboxView({
               type="text"
               value={noctisQuestionInput}
               onChange={(e) => setNoctisQuestionInput(e.target.value)}
-              placeholder="Ask Noctis"
+              placeholder="Ask Noctis anything about your inbox or any ConnectLn tab (Home to Pulse)..."
               className="flex-1 bg-transparent text-sm font-medium text-slate-900 placeholder:text-slate-600 focus:outline-none"
             />
 
@@ -257,9 +264,11 @@ export function NoctisAIInboxView({
 
               <div className="flex flex-wrap gap-1.5">
                 {[
+                  'Explain all ConnectLn tabs from Home to Pulse',
+                  'How do Calls, Virtual Backgrounds, Ringtones & Screen Share work?',
+                  'How do Pulse Rooms & Live Zero-Day CVE Threat Streams work?',
                   'Summarize my unread emails grouped by the dates they came in',
                   'Which messages need urgent replies today?',
-                  'Explain all attached files & arrival dates',
                 ].map((chip) => (
                   <button
                     key={chip}
@@ -276,6 +285,29 @@ export function NoctisAIInboxView({
               </div>
             </div>
           )}
+
+          {/* Always-visible 1-click Quick Platform & Inbox Pills under Ask Noctis */}
+          <div className="mt-2.5 flex flex-wrap items-center gap-1.5 px-1">
+            {[
+              { label: '✨ Explain all tabs (Home → Pulse)', prompt: 'Explain all ConnectLn tabs from Home to Pulse' },
+              { label: '📞 Calls, Backgrounds & Ringtones', prompt: 'How do Calls, Virtual Backgrounds, Ringtones and Stage Share work?' },
+              { label: '📡 Pulse & Zero-Day CVEs', prompt: 'How do Pulse Rooms and the Live Zero-Day CVE Threat Stream work?' },
+              { label: '📬 Summarize unread by date', prompt: 'Summarize my unread emails grouped by the dates they came in' },
+            ].map((pill) => (
+              <button
+                key={pill.label}
+                type="button"
+                disabled={isNoctisLoading}
+                onClick={() => {
+                  setNoctisQuestionInput(pill.prompt)
+                  fetchNoctisInboxBriefing(pill.prompt)
+                }}
+                className="rounded-full bg-[#F0F4F9] hover:bg-[#D3E3FD] text-[#041E49] border border-[#D3E3FD]/80 px-3 py-1 text-[11px] font-semibold transition-colors cursor-pointer disabled:opacity-60"
+              >
+                {pill.label}
+              </button>
+            ))}
+          </div>
         </form>
 
         {/* Live Noctis Answer Callout if the user asked a custom question */}
@@ -598,6 +630,68 @@ export function NoctisAIInboxView({
             <h3 className="text-xs font-semibold text-slate-600 mb-3">Topics to catch up on</h3>
 
             <div className="space-y-4">
+              {/* TOPIC CARD 0: CONNECTLN PLATFORM GUIDE — ALL TABS FROM HOME TO PULSE */}
+              {!dismissedTopicIds.includes('topic_platform_tabs') && (
+                <div className="rounded-2xl bg-white border border-blue-200/90 p-5 shadow-2xs">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-6 h-6 rounded-md bg-[#E8F0FE] flex items-center justify-center text-sm">
+                        🧭
+                      </span>
+                      <h4 className="text-xs sm:text-sm font-bold text-slate-900">
+                        ConnectLn Platform Guide — Home to Pulse Tabs
+                      </h4>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-slate-500">
+                      <button
+                        type="button"
+                        onClick={() => askFromTopicsCard('Explain all ConnectLn tabs from Home to Pulse')}
+                        className="rounded-full bg-[#D3E3FD] hover:bg-[#C2E7FF] text-[#041E49] px-3 py-1 text-[11px] font-bold transition-colors cursor-pointer"
+                      >
+                        ✨ Ask Noctis Full Tab Guide
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDismissedTopicIds((p) => [...p, 'topic_platform_tabs'])}
+                        title="Mark topic caught up"
+                        className="w-7 h-7 rounded-full hover:bg-slate-100 flex items-center justify-center cursor-pointer"
+                      >
+                        ✓
+                      </button>
+                    </div>
+                  </div>
+
+                  <p className="text-xs sm:text-[13px] text-slate-700 leading-relaxed mb-3">
+                    Noctis AI is indexed across every ConnectLn workspace tab from <strong className="text-slate-900">Home</strong> to <strong className="text-slate-900">Pulse</strong> plus <strong className="text-slate-900">For Business, Backend, Gate, Theme &amp; EN</strong>. Click any tab below to ask Noctis how it works:
+                  </p>
+
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { label: '🏠 Home', prompt: 'What can I do on the Home tab in ConnectLn?' },
+                      { label: '👥 My Network', prompt: 'How does the My Network tab work on ConnectLn?' },
+                      { label: '💼 Jobs & CareerTwin', prompt: 'How do Jobs, CareerTwin 25-question interview prep, and Resume Prep work?' },
+                      { label: '💬 Messaging & Noctis AI', prompt: 'How do Messaging, Inbox, and Noctis AI work?' },
+                      { label: '📞 Calls (Backgrounds & Ringtones)', prompt: 'How do Calls, AI Virtual Backgrounds, Ringtones, Screen Share, and Host controls work?' },
+                      { label: '⭕ Status & Vault', prompt: 'How do Status story boxes with full music playback and Vault work?' },
+                      { label: '🔔 Alerts', prompt: 'How does the Alerts tab and Noctis Signal Intelligence work?' },
+                      { label: '🛍️ Market', prompt: 'What is in the Market tab and how does the Noctis Sales Agent work?' },
+                      { label: '🎓 Learning & Labs', prompt: 'What courses, interactive labs, and CEU/CME credits are in the Learning tab?' },
+                      { label: '📺 Media & Video Translator', prompt: 'How do Media, Creator Studio, and Noctis Multilingual Video Audio Interpreter work?' },
+                      { label: '📡 Pulse & Zero-Day CVEs', prompt: 'How do Pulse Audio Rooms and the Live Zero-Day CVE Threat Stream work?' },
+                    ].map((tabItem) => (
+                      <button
+                        key={tabItem.label}
+                        type="button"
+                        onClick={() => askFromTopicsCard(tabItem.prompt)}
+                        className="rounded-lg bg-[#F8FAFD] hover:bg-[#E8F0FE] text-slate-800 hover:text-[#0B57D0] border border-slate-200 hover:border-blue-300 px-2.5 py-1 text-[11px] font-semibold transition-colors cursor-pointer"
+                      >
+                        {tabItem.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* TOPIC CARD 1: SOFTWARE DEVELOPMENT & PLATFORM ENGINEERING (MATCHES SCREENSHOT) */}
               {!dismissedTopicIds.includes('topic_software_dev') && (
                 <div className="rounded-2xl bg-white border border-slate-200/80 p-5 shadow-2xs">

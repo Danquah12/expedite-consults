@@ -42,7 +42,11 @@ import {
   dispatchNoctisLanguageCommand
 } from "./NoctisVideoInterpreterPopup"
 import { getLocalizedInitialMessage, getLocalizedAIAnswer } from "@/lib/translations/ai-responses"
-import { findConnectLnTopic, connectLnOverview } from "@/lib/connectln-knowledge"
+import {
+  buildConnectLnPlatformAnswer,
+  connectLnOverview,
+  findConnectLnTopic,
+} from "@/lib/connectln-knowledge"
 import { PROFESSION_ENCLAVES } from "@/lib/connectin-professions"
 import { MiniMarkdown } from "./MiniMarkdown"
 import { CareerPlanner } from "./CareerPlanner"
@@ -262,6 +266,7 @@ function getEnclaveAIPlaceholder(enclaveId?: string): string {
 }
 
 const VIBE_QUICK_CHIPS = [
+  { emoji: "🧭", label: "Home to Pulse Guide", prompt: "Explain all ConnectLn tabs from Home to Pulse." },
   { emoji: "🛡️", label: "DoD Zero Trust", prompt: "Explain the core pillars of DoD Zero Trust Architecture and how to implement them." },
   { emoji: "📄", label: "Resume Strategy", prompt: "How do I optimize my cybersecurity resume for senior federal contracts?" },
   { emoji: "🔒", label: "NIST 800-53", prompt: "Summarize key NIST 800-53 Rev. 5 controls required for RMF ATO authorization." },
@@ -429,16 +434,21 @@ export function ConnectInAIAssistant({
       const lower = promptText.toLowerCase()
       const enclaveId = currentUser.professionEnclave || 'tech_cybersecurity'
 
-      // ConnectLn platform Q&A: answer from the knowledge base for platform/how-to questions
+      // ConnectLn platform Q&A: answer from the comprehensive knowledge base (Home to Pulse tabs + features)
+      const platformAnswer = buildConnectLnPlatformAnswer(promptText)
       const kbTopic = findConnectLnTopic(promptText)
-      const asksPlatform = /connect\s?l[ni]|this (app|platform|site)|how (do|does|can|to)|where (is|can|do)|what (is|are|does)|tell me (about|everything)|everything about|features?/.test(lower)
-      if (kbTopic && asksPlatform) {
-        const wantsAll = /everything|all features|overview|full tour|tour/.test(lower)
+      const asksPlatform = /connect\s?l[ni]|this (app|platform|site)|home\s+to\s+pulse|all\s+tabs?|every\s+tab|how (do|does|can|to)|where (is|can|do)|what (is|are|does)|tell me (about|everything)|everything about|features?/.test(lower)
+      if (platformAnswer && (asksPlatform || platformAnswer.title.includes('Home to Pulse') || kbTopic)) {
+        const wantsAll = /everything|all features|overview|full tour|tour|home\s+to\s+pulse|all\s+tabs|every\s+tab/.test(lower)
         const topicReply: ChatMessage = {
           id: `ai_${Date.now()}`,
           sender: 'assistant',
-          text: `📘 **${wantsAll ? 'ConnectLn — Full Overview' : kbTopic.title}**\n\n${wantsAll ? connectLnOverview() : kbTopic.answer()}`,
-          suggestedCards: kbTopic.tab
+          text: wantsAll
+            ? `📘 **ConnectLn — Complete Platform Overview (Home to Pulse Tabs)**\n\n${connectLnOverview()}`
+            : `📘 **${platformAnswer.title}**\n\n${platformAnswer.answer}`,
+          suggestedCards: platformAnswer.tab
+            ? [{ title: platformAnswer.title, category: 'ConnectLn Guide', actionText: platformAnswer.tabLabel || 'Open', targetTab: platformAnswer.tab, matchPercent: 'Platform Help' }]
+            : kbTopic?.tab
             ? [{ title: kbTopic.title, category: 'ConnectLn Guide', actionText: kbTopic.tabLabel || 'Open', targetTab: kbTopic.tab, matchPercent: 'Platform Help' }]
             : undefined
         }
@@ -1240,9 +1250,11 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
           reply = {
             id: `ai_${Date.now()}`,
             sender: 'assistant',
-            text: kbTopic
+            text: platformAnswer
+              ? `📘 **${platformAnswer.title}**\n\n${platformAnswer.answer}`
+              : kbTopic
               ? `📘 **${kbTopic.title}**\n\n${kbTopic.answer()}`
-              : `I processed your request for "${promptText}". ConnectIn AI has indexed relevant verified experts, technical courses, and enterprise solutions across our ${PROFESSION_ENCLAVES.length}-enclave ecosystem.\n\nTip: ask me anything about ConnectLn — for example *"What can I do on ConnectLn?"*, *"How do I get verified?"* or *"Which professions are supported?"*`,
+              : `I processed your request for "${promptText}". ConnectIn AI has indexed relevant verified experts, technical courses, and enterprise solutions across our ${PROFESSION_ENCLAVES.length}-enclave ecosystem.\n\nTip: ask me anything about ConnectLn — for example *"Explain all tabs from Home to Pulse"*, *"How do Calls or Pulse work?"*, or *"How do I get verified?"*`,
             suggestedCards: [
               {
                 title: "Explore Solutions Hub",
@@ -1279,7 +1291,7 @@ To solve your business problem, ConnectIn recommends combining **Software + Serv
       .filter(m => (m.sender === 'user' || m.sender === 'assistant') && typeof m.text === 'string' && m.text)
       .slice(-6)
       .map(m => ({ role: m.sender as 'user' | 'assistant', content: m.text }))
-    const kbForCard = findConnectLnTopic(promptText)
+    const kbForCard = buildConnectLnPlatformAnswer(promptText) || findConnectLnTopic(promptText)
     const ctrl = new AbortController()
     const timer = setTimeout(() => ctrl.abort(), 28000)
     fetch('/api/connectin/noctis', {
