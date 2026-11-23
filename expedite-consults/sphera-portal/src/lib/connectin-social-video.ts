@@ -14,6 +14,7 @@ export interface ParsedSocialVideo {
   canonicalUrl: string
   embedUrl: string
   videoId?: string
+  playlistId?: string
   isVertical: boolean
   thumbnailUrl?: string
   formatLabel: string
@@ -65,22 +66,43 @@ export function isAllowedSocialResolveHost(hostname: string): boolean {
 export function splitLinkAndCustomTitle(rawLine: string): { url: string; customTitle: string } {
   const trimmed = String(rawLine || "").trim()
   const pipeIdx = trimmed.indexOf("|")
-  if (pipeIdx === -1) {
-    return { url: trimmed, customTitle: "" }
+  if (pipeIdx !== -1) {
+    return {
+      url: trimmed.slice(0, pipeIdx).trim(),
+      customTitle: trimmed.slice(pipeIdx + 1).trim(),
+    }
   }
-  return {
-    url: trimmed.slice(0, pipeIdx).trim(),
-    customTitle: trimmed.slice(pipeIdx + 1).trim(),
+  const urlMatch = trimmed.match(/https?:\/\/[^\s<>"{}|\\^`[\]]+/i)
+  if (urlMatch) {
+    const matchedUrl = urlMatch[0]
+    const remainingTitle = trimmed
+      .replace(matchedUrl, " ")
+      .replace(/[-–—:|]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+    return {
+      url: matchedUrl,
+      customTitle: remainingTitle,
+    }
   }
+  return { url: trimmed, customTitle: "" }
 }
 
 function normalizeInputUrl(raw: string): URL | null {
   let clean = String(raw || "").trim()
-  if (!clean || clean.includes(" ") || clean.startsWith("/") || clean.startsWith("data:") || clean.startsWith("blob:")) {
+  if (!clean || clean.startsWith("/") || clean.startsWith("data:") || clean.startsWith("blob:")) {
     return null
   }
+  if (/\s/.test(clean)) {
+    const extracted = clean.match(/https?:\/\/[^\s<>"{}|\\^`[\]]+/i)?.[0]
+    if (extracted) {
+      clean = extracted
+    } else {
+      return null
+    }
+  }
   if (!/^https?:\/\//i.test(clean)) {
-    if (/^(www\.|m\.|vm\.|vt\.)?(youtube\.com|youtu\.be|tiktok\.com|facebook\.com|fb\.watch)/i.test(clean)) {
+    if (/^(www\.|m\.|music\.|vm\.|vt\.)?(youtube\.com|youtu\.be|tiktok\.com|facebook\.com|fb\.watch)/i.test(clean)) {
       clean = `https://${clean}`
     } else {
       return null
@@ -94,6 +116,13 @@ function normalizeInputUrl(raw: string): URL | null {
   } catch {
     return null
   }
+}
+
+function extractYouTubePlaylistId(parsedUrl: URL): string | null {
+  const rawList = parsedUrl.searchParams.get("list")
+  if (!rawList) return null
+  const match = rawList.trim().match(/^([a-zA-Z0-9_-]{10,120})$/)
+  return match ? match[1] : null
 }
 
 function extractYouTubeId(parsedUrl: URL): { id: string; isVertical: boolean } | null {
@@ -146,25 +175,58 @@ export function parseSocialVideoUrl(rawInput: string): ParsedSocialVideo | null 
   const host = u.hostname.toLowerCase()
   const originalUrl = u.toString()
 
-  // 1. YouTube
+  // 1. YouTube (Videos, Shorts, Live, YouTube Music, and Playlists / Dynamic Mixes)
   if (YOUTUBE_HOSTS.has(host) || host.endsWith(".youtube.com")) {
+    const isMusicHost = host === "music.youtube.com"
     const yt = extractYouTubeId(u)
-    if (!yt) return null
-    const canonicalUrl = yt.isVertical
-      ? `https://www.youtube.com/shorts/${yt.id}`
-      : `https://www.youtube.com/watch?v=${yt.id}`
-    return {
-      provider: "youtube",
-      platform: "YouTube",
-      originalUrl,
-      canonicalUrl,
-      embedUrl: `https://www.youtube.com/embed/${yt.id}?autoplay=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1`,
-      videoId: yt.id,
-      isVertical: yt.isVertical,
-      thumbnailUrl: `https://i.ytimg.com/vi/${yt.id}/hqdefault.jpg`,
-      formatLabel: yt.isVertical ? "YT SHORTS" : "YOUTUBE",
-      needsServerResolve: false,
+    const playlistId = extractYouTubePlaylistId(u)
+
+    if (yt) {
+      const canonicalUrl = yt.isVertical
+        ? `https://www.youtube.com/shorts/${yt.id}`
+        : playlistId
+          ? `https://www.youtube.com/watch?v=${yt.id}&list=${encodeURIComponent(playlistId)}`
+          : `https://www.youtube.com/watch?v=${yt.id}`
+      const embedUrl = playlistId
+        ? `https://www.youtube.com/embed/${yt.id}?list=${encodeURIComponent(playlistId)}&autoplay=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1`
+        : `https://www.youtube.com/embed/${yt.id}?autoplay=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1`
+      return {
+        provider: "youtube",
+        platform: "YouTube",
+        originalUrl,
+        canonicalUrl,
+        embedUrl,
+        videoId: yt.id,
+        playlistId: playlistId || undefined,
+        isVertical: yt.isVertical,
+        thumbnailUrl: `https://i.ytimg.com/vi/${yt.id}/hqdefault.jpg`,
+        formatLabel: yt.isVertical
+          ? "YT SHORTS"
+          : isMusicHost
+            ? "YT MUSIC"
+            : playlistId
+              ? "YT PLAYLIST"
+              : "YOUTUBE",
+        needsServerResolve: false,
+      }
     }
+
+    if (playlistId) {
+      const isDynamicMix = /^RD/i.test(playlistId)
+      return {
+        provider: "youtube",
+        platform: "YouTube",
+        originalUrl,
+        canonicalUrl: `https://www.youtube.com/playlist?list=${encodeURIComponent(playlistId)}`,
+        embedUrl: `https://www.youtube.com/embed/videoseries?list=${encodeURIComponent(playlistId)}&autoplay=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1`,
+        playlistId,
+        isVertical: false,
+        formatLabel: isMusicHost ? "YT MUSIC PLAYLIST" : "YT PLAYLIST",
+        needsServerResolve: isDynamicMix,
+      }
+    }
+
+    return null
   }
 
   // 2. TikTok

@@ -1316,8 +1316,13 @@ export function WhatsAppModeWorkspace({
                         if (box.isCurrentUser) {
                             const existingMap = new Map(box.slides.map((s) => [s.id, s]));
                             for (const c of myCloudSlides) {
-                                if (!existingMap.has(c.id)) {
-                                    existingMap.set(c.id, c);
+                                const prevCopy = existingMap.get(c.id);
+                                if (
+                                    !prevCopy ||
+                                    (!prevCopy.embedUrl && c.embedUrl) ||
+                                    (prevCopy.videoUrl === '/status-videos/spot.mp4' && Boolean(c.embedUrl))
+                                ) {
+                                    existingMap.set(c.id, prevCopy ? { ...c, viewed: prevCopy.viewed } : c);
                                 }
                             }
                             const mergedSlides = Array.from(existingMap.values()).sort(
@@ -2023,6 +2028,17 @@ export function WhatsAppModeWorkspace({
                 const isAudio = isAudioFileOrUrl(cleanUrl);
                 const isImageExt = /\.(jpg|jpeg|png|webp|gif|avif|heic|heif|bmp|svg|jfif)(\?|$)/i.test(cleanUrl);
                 const isExplicitVideoExt = /\.(mp4|mov|webm|mkv|avi|m4v|3gp|mpeg|mpg|ogv|flv|wmv)(\?|$)/i.test(cleanUrl);
+                const isUnsupportedSocialLink =
+                    !isAudio &&
+                    !isImageExt &&
+                    !isExplicitVideoExt &&
+                    /https?:\/\/([^/]+\.)?(youtube\.com|youtu\.be|facebook\.com|fb\.watch|tiktok\.com)/i.test(cleanUrl);
+                if (isUnsupportedSocialLink) {
+                    triggerToast(
+                        '⚠️ Please paste a valid YouTube video/Shorts/Music Playlist, Facebook Video/Reel, or TikTok Video URL.'
+                    );
+                    return;
+                }
                 const isPhoto = !isAudio && isImageExt && !isExplicitVideoExt;
                 const fallbackVideoPreset = STATUS_VIDEO_PRESETS[idx % STATUS_VIDEO_PRESETS.length];
                 const fallbackPhotoPreset = STATUS_PHOTO_PRESETS[idx % STATUS_PHOTO_PRESETS.length];
@@ -2782,7 +2798,7 @@ export function WhatsAppModeWorkspace({
                                                     Playable YouTube, Facebook &amp; TikTok Status Series
                                                 </p>
                                                 <p className="text-[11px] text-[#6B5A45] mt-0.5">
-                                                    Paste any <strong>YouTube</strong> (watch, Shorts, youtu.be), <strong>Facebook</strong> (video, watch, reel, fb.watch), or <strong>TikTok</strong> link—or upload local videos, music &amp; pictures—to play directly inside Status for all users.
+                                                    Paste any <strong>YouTube</strong> (watch, Shorts, youtu.be), <strong>YouTube Music &amp; Playlists</strong> (<code className="px-1 bg-[#EFE8DA] rounded">music.youtube.com/playlist?list=...</code>), <strong>Facebook</strong> (video, watch, reel, fb.watch), or <strong>TikTok</strong> link—or upload local videos, music &amp; pictures—to play directly inside Status for all users.
                                                 </p>
                                             </div>
                                         </div>
@@ -2790,16 +2806,16 @@ export function WhatsAppModeWorkspace({
                                         {/* Prominent Social Video Link Importer */}
                                         <div className="space-y-2 rounded-xl border-2 border-[#BC9675] bg-[#FBF8F3] p-3.5">
                                             <label className="block text-xs font-extrabold text-[#5E3119]">
-                                                Paste YouTube, Facebook, or TikTok Video Links (one per line)
+                                                Paste YouTube, YouTube Music Playlist, Facebook, or TikTok Links (one per line)
                                             </label>
                                             <textarea
                                                 rows={3}
                                                 value={seriesBatchUrlsText}
                                                 onChange={(e) => setSeriesBatchUrlsText(e.target.value)}
                                                 placeholder={
-                                                    'https://www.youtube.com/watch?v=dQw4w9WgXcQ | Optional Custom Title\n' +
-                                                    'https://www.facebook.com/watch/?v=10153231379946729\n' +
-                                                    'https://www.tiktok.com/@username/video/7401122 | Short Walkthrough'
+                                                    'https://music.youtube.com/playlist?list=... | Worship Playlist\n' +
+                                                    'https://www.youtube.com/watch?v=... | Optional Custom Title\n' +
+                                                    'https://www.facebook.com/watch/?v=... or https://www.tiktok.com/@username/video/...'
                                                 }
                                                 className="w-full rounded-xl border border-[#D0C4AE] bg-white px-3 py-2 text-xs text-[#2A1E12] focus:outline-none focus:ring-2 focus:ring-[#7C4225]"
                                             />
@@ -3306,7 +3322,7 @@ export function WhatsAppModeWorkspace({
 
                                         <div className="space-y-1.5">
                                             <label className="block text-xs font-bold text-[#57534E]">
-                                                Paste a YouTube, Facebook, TikTok, MP4/MP3 link — or pick a preset below:
+                                                Paste a YouTube, YouTube Music Playlist, Facebook, TikTok, or MP4/MP3 link — or pick a preset below:
                                             </label>
                                             <div className="flex flex-wrap gap-1.5">
                                                 {STATUS_VIDEO_PRESETS.map((preset) => (

@@ -90,26 +90,107 @@ async function resolveShortSocialUrl(parsed: ParsedSocialVideo): Promise<ParsedS
   return parsed
 }
 
+function decodeBasicHtmlEntities(raw: string): string {
+  return String(raw || "")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+}
+
+async function resolveYouTubePlaylistFromPage(playlistId: string): Promise<{
+  title?: string
+  thumbnailUrl?: string
+  videoIds: string[]
+}> {
+  try {
+    const res = await fetch(
+      `https://www.youtube.com/playlist?list=${encodeURIComponent(playlistId)}`,
+      {
+        headers: {
+          "User-Agent": BROWSER_USER_AGENT,
+          Accept: "text/html,application/xhtml+xml",
+        },
+        signal: AbortSignal.timeout(6000),
+        cache: "no-store",
+      }
+    )
+    if (!res.ok) return { videoIds: [] }
+    const html = await res.text()
+    const rawOgTitle = html.match(/<meta\s+property="og:title"\s+content="([^"]+)"/i)?.[1]
+    const rawOgImg = html.match(/<meta\s+property="og:image"\s+content="([^"]+)"/i)?.[1]
+    const seen = new Set<string>()
+    const videoIds: string[] = []
+    for (const m of html.matchAll(/"videoId"\s*:\s*"([a-zA-Z0-9_-]{11})"/g)) {
+      const vid = m[1]
+      if (!seen.has(vid)) {
+        seen.add(vid)
+        videoIds.push(vid)
+        if (videoIds.length >= 25) break
+      }
+    }
+    return {
+      title: rawOgTitle ? decodeBasicHtmlEntities(rawOgTitle).trim() : undefined,
+      thumbnailUrl: rawOgImg ? decodeBasicHtmlEntities(rawOgImg).trim() : undefined,
+      videoIds,
+    }
+  } catch (err) {
+    console.warn("[/api/connectin/status] YouTube playlist page fetch notice:", (err as any)?.message || err)
+    return { videoIds: [] }
+  }
+}
+
 async function enrichSocialMetadata(item: ParsedSocialVideo, customTitle: string): Promise<ResolvedStatusLink> {
-  let active = item.needsServerResolve ? await resolveShortSocialUrl(item) : item
+  let active =
+    item.needsServerResolve && item.provider !== "youtube"
+      ? await resolveShortSocialUrl(item)
+      : item
 
   let title = customTitle
   let authorName: string | undefined
   let thumbnailUrl = active.thumbnailUrl
 
   if (active.provider === "youtube") {
+    let oembedOk = false
     try {
       const oembedRes = await fetch(
         `https://www.youtube.com/oembed?url=${encodeURIComponent(active.canonicalUrl)}&format=json`,
         { signal: AbortSignal.timeout(4000), cache: "no-store" }
       )
       if (oembedRes.ok) {
+        oembedOk = true
         const data: any = await oembedRes.json()
         if (!title && typeof data?.title === "string") title = data.title.trim()
         if (typeof data?.author_name === "string") authorName = data.author_name.trim()
         if (!thumbnailUrl && typeof data?.thumbnail_url === "string") thumbnailUrl = data.thumbnail_url.trim()
       }
     } catch {}
+
+    const isDynamicMix = Boolean(active.playlistId && /^RD/i.test(active.playlistId))
+    if (active.playlistId && (isDynamicMix || !oembedOk || !thumbnailUrl)) {
+      const pageMeta = await resolveYouTubePlaylistFromPage(active.playlistId)
+      if (!title && pageMeta.title) title = pageMeta.title
+      if (!thumbnailUrl) {
+        thumbnailUrl =
+          pageMeta.thumbnailUrl ||
+          (pageMeta.videoIds[0] ? `https://i.ytimg.com/vi/${pageMeta.videoIds[0]}/hqdefault.jpg` : undefined)
+      }
+      if (pageMeta.videoIds.length > 0 && (isDynamicMix || !oembedOk)) {
+        const firstId = pageMeta.videoIds[0]
+        const extraTracks = pageMeta.videoIds.slice(1, 25)
+        const embedUrl =
+          extraTracks.length > 0
+            ? `https://www.youtube.com/embed/${firstId}?playlist=${extraTracks.join(",")}&autoplay=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1`
+            : `https://www.youtube.com/embed/${firstId}?autoplay=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1`
+        active = {
+          ...active,
+          videoId: firstId,
+          embedUrl,
+          needsServerResolve: false,
+        }
+      }
+    }
   } else if (active.provider === "tiktok") {
     try {
       const targetForOembed = active.canonicalUrl || active.originalUrl
@@ -141,9 +222,13 @@ async function enrichSocialMetadata(item: ParsedSocialVideo, customTitle: string
   if (!title) {
     title =
       active.provider === "youtube"
-        ? active.isVertical
-          ? "YouTube Shorts Status"
-          : "YouTube Video Status"
+        ? active.playlistId && !active.videoId
+          ? active.formatLabel.includes("MUSIC")
+            ? "YouTube Music Playlist"
+            : "YouTube Playlist"
+          : active.isVertical
+            ? "YouTube Shorts Status"
+            : "YouTube Video Status"
         : active.provider === "tiktok"
           ? "TikTok Video Status"
           : active.isVertical
@@ -163,11 +248,45 @@ async function enrichSocialMetadata(item: ParsedSocialVideo, customTitle: string
 export async function GET() {
   try {
     const entries = await firebaseKvListItems<any>(STATUS_KV_MAP, false)
-    const items = entries
+    const rawItems = entries
       .map((entry) => entry?.data)
       .filter((item) => item && typeof item.id === "string" && typeof item.authorName === "string")
       .sort((a, b) => Number(b.createdAtMs || 0) - Number(a.createdAtMs || 0))
       .slice(0, 120)
+
+    const items = await Promise.all(
+      rawItems.map(async (item) => {
+        if (item.embedUrl) return item
+        const sourceCandidate = String(item.externalSourceUrl || item.videoUrl || "").trim()
+        const parsed = parseSocialVideoUrl(sourceCandidate)
+        if (!parsed) return item
+
+        const resolved = await enrichSocialMetadata(parsed, "")
+        if (!resolved.embedUrl) return item
+        const isGenericTitle =
+          !item.title ||
+          /^YouTube Status Clip #\d+$/i.test(String(item.title).trim()) ||
+          /^Uploaded /i.test(String(item.text || ""))
+        return {
+          ...item,
+          title: isGenericTitle && resolved.title ? resolved.title : item.title,
+          videoTitle: isGenericTitle && resolved.title ? resolved.title : item.videoTitle,
+          videoUrl: resolved.canonicalUrl || item.videoUrl,
+          imageUrl:
+            resolved.thumbnailUrl ||
+            (String(item.imageUrl || "").includes("images.unsplash.com") ? undefined : item.imageUrl),
+          embedUrl: resolved.embedUrl,
+          embedProvider: resolved.provider,
+          isVerticalEmbed: Boolean(resolved.isVertical),
+          sourcePlatform: resolved.platform,
+          mediaFormat: resolved.formatLabel,
+          videoDuration: resolved.platform,
+          text: /^Imported YouTube clip \(MP4\)$/i.test(String(item.text || "").trim())
+            ? `Shared ${resolved.platform} (${resolved.formatLabel})`
+            : item.text,
+        }
+      })
+    )
 
     return NextResponse.json(
       { ok: true, count: items.length, items },
