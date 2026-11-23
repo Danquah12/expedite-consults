@@ -3901,7 +3901,7 @@ export function ConnectLnWhatsAppCallModal({
       : {}
 
   return (
-    <div className="fixed inset-0 z-[90] text-white flex flex-col justify-between overflow-hidden select-none bg-[#0B141A]">
+    <div className="fixed inset-0 z-[250] text-white flex flex-col justify-between overflow-hidden select-none bg-[#0B141A]">
       {/* Persistent offscreen canvas keeping captureStream(24) ticked cleanly for per-user virtual background replacement */}
       <canvas
         ref={virtualBgCanvasRef}

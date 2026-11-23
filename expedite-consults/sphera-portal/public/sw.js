@@ -259,31 +259,51 @@ self.addEventListener("notificationclick", (event) => {
       data.callMode || "video"
     )}&callerName=${encodeURIComponent(data.callerName || "ConnectLn Caller")}&autoAnswer=1`;
 
+  const answerPayload = {
+    callId,
+    callMode: data.callMode || "video",
+    callerName: data.callerName || "ConnectLn Caller",
+    callerPhone: data.callerPhone || "",
+    joinUrl: targetUrl,
+  };
+  swPendingAnswerPayload = Object.assign({}, answerPayload, { ts: Date.now() });
+
   event.waitUntil(
     (async () => {
       const windowClients = await self.clients.matchAll({
         type: "window",
         includeUncontrolled: true,
       });
-      for (const client of windowClients) {
-        if ("focus" in client && String(client.url || "").includes("/connectin")) {
-          try {
-            await client.focus();
-            client.postMessage({
+      const targetClient = windowClients.find((c) => isExactConnectInClientUrl(c.url));
+      if (targetClient) {
+        try {
+          if ("focus" in targetClient) {
+            await targetClient.focus().catch(() => {});
+          }
+          targetClient.postMessage({
+            type: "CONNECTLN_ANSWER_CALL_FROM_NOTIFICATION",
+            payload: answerPayload,
+          });
+          await new Promise((r) => setTimeout(r, 250));
+          if (!swAckedAnswerCallIds.has(callId)) {
+            targetClient.postMessage({
               type: "CONNECTLN_ANSWER_CALL_FROM_NOTIFICATION",
-              payload: {
-                callId,
-                callMode: data.callMode || "video",
-                callerName: data.callerName || "ConnectLn Caller",
-                callerPhone: data.callerPhone || "",
-                joinUrl: targetUrl,
-              },
+              payload: answerPayload,
             });
+          }
+          await new Promise((r) => setTimeout(r, 450));
+          if (swAckedAnswerCallIds.has(callId)) {
             return;
-          } catch {}
-        }
+          }
+          if ("navigate" in targetClient && typeof targetClient.navigate === "function") {
+            try {
+              await targetClient.navigate(targetUrl);
+              return;
+            } catch {}
+          }
+        } catch {}
       }
-      // If minimized window could not be focused by OS, open a brand-new foreground Call Window!
+      // If no /connectin client or minimized client didn't ack, open foreground Call Window!
       if (self.clients.openWindow) {
         await self.clients.openWindow(targetUrl);
       }
@@ -294,9 +314,20 @@ self.addEventListener("notificationclick", (event) => {
 let swWatchPollUrl = "";
 let swWatchTimer = null;
 let swPollInFlight = false;
+let swPendingAnswerPayload = null;
 const swNotifiedCallIds = new Set();
 const swHandledCallIds = new Set();
 const swPageAudioRingingCallIds = new Set();
+const swAckedAnswerCallIds = new Set();
+
+function isExactConnectInClientUrl(urlStr) {
+  try {
+    const parsed = new URL(String(urlStr || ""));
+    return parsed.pathname === "/connectin";
+  } catch {
+    return false;
+  }
+}
 
 function rememberSwCallId(setRef, callId) {
   const clean = String(callId || "").trim();
@@ -386,6 +417,52 @@ async function runSwMinimizedCallCheck() {
 self.addEventListener("message", (event) => {
   const msg = event && event.data;
   if (!msg) return;
+
+  if (msg.type === "CONNECTLN_ANSWER_ACK" && msg.callId) {
+    const ackCid = String(msg.callId).trim();
+    rememberSwCallId(swAckedAnswerCallIds, ackCid);
+    if (swPendingAnswerPayload && swPendingAnswerPayload.callId === ackCid) {
+      swPendingAnswerPayload = null;
+    }
+    return;
+  }
+
+  if (msg.type === "CONNECTLN_CHECK_PENDING_ANSWER") {
+    if (
+      swPendingAnswerPayload &&
+      Date.now() - swPendingAnswerPayload.ts < 25000 &&
+      !swAckedAnswerCallIds.has(swPendingAnswerPayload.callId)
+    ) {
+      const replyPayload = swPendingAnswerPayload;
+      if (event.source && typeof event.source.postMessage === "function") {
+        try {
+          event.source.postMessage({
+            type: "CONNECTLN_ANSWER_CALL_FROM_NOTIFICATION",
+            payload: replyPayload,
+          });
+        } catch {}
+      } else {
+        event.waitUntil(
+          self.clients
+            .matchAll({ type: "window", includeUncontrolled: true })
+            .then((clients) => {
+              for (const client of clients) {
+                if (isExactConnectInClientUrl(client.url)) {
+                  try {
+                    client.postMessage({
+                      type: "CONNECTLN_ANSWER_CALL_FROM_NOTIFICATION",
+                      payload: replyPayload,
+                    });
+                  } catch {}
+                }
+              }
+            })
+            .catch(() => {})
+        );
+      }
+    }
+    return;
+  }
 
   if (msg.type === "CONNECTLN_PAGE_AUDIO_RINGING" && msg.callId) {
     rememberSwCallId(swPageAudioRingingCallIds, String(msg.callId));

@@ -104,10 +104,48 @@ export function ConnectLnIncomingCallBanner({
   const viewerEmailRef = useRef<string>(viewerEmail || "")
   const autoPushAttemptedRef = useRef<boolean>(false)
   const onAcceptIncomingCallRef = useRef(onAcceptIncomingCall)
+  const lastAcceptedCallRef = useRef<{ id: string; ts: number } | null>(null)
 
   useEffect(() => {
     onAcceptIncomingCallRef.current = onAcceptIncomingCall
   }, [onAcceptIncomingCall])
+
+  const acceptIncomingCallNow = (
+    targetCallId: string,
+    callerNameLabel: string,
+    mode: "audio" | "video",
+    callerPhoneVal?: string
+  ) => {
+    const cleanId = String(targetCallId || "").trim()
+    if (!cleanId) return
+    const now = Date.now()
+    if (lastAcceptedCallRef.current?.id === cleanId && now - lastAcceptedCallRef.current.ts < 10000) {
+      return
+    }
+    lastAcceptedCallRef.current = { id: cleanId, ts: now }
+    if (realtimeRingRef.current?.call.id === cleanId) {
+      realtimeRingRef.current = null
+    }
+    markConnectLnCallHandled(cleanId)
+    if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
+      const ackMsg = { type: "CONNECTLN_ANSWER_ACK", callId: cleanId }
+      try {
+        navigator.serviceWorker.controller?.postMessage(ackMsg)
+      } catch {}
+      navigator.serviceWorker.ready
+        .then((reg) => {
+          reg?.active?.postMessage(ackMsg)
+        })
+        .catch(() => {})
+    }
+    setCallMediaSilenceActive(true, "whatsapp-call-modal")
+    setCallMediaSilenceActive(false, "incoming-call-banner")
+    stopLoudPhoneRingtone()
+    stopTitleCallFlash()
+    closeStandbyPipForLocalCall()
+    setIncomingCall(null)
+    onAcceptIncomingCallRef.current(cleanId, callerNameLabel, mode, callerPhoneVal)
+  }
 
   const declineAndEndIncomingCall = (targetCallId: string, notifyServer = true) => {
     const cleanId = String(targetCallId || "").trim()
@@ -183,17 +221,7 @@ export function ConnectLnIncomingCallBanner({
         callerPhone: cPhone,
         callMode: mode,
         onAnswer: () => {
-          if (realtimeRingRef.current?.call.id === call.id) {
-            realtimeRingRef.current = null
-          }
-          markConnectLnCallHandled(call.id)
-          setCallMediaSilenceActive(true, "whatsapp-call-modal")
-          setCallMediaSilenceActive(false, "incoming-call-banner")
-          stopLoudPhoneRingtone()
-          stopTitleCallFlash()
-          closeStandbyPipForLocalCall()
-          setIncomingCall(null)
-          onAcceptIncomingCallRef.current(call.id, cName, mode, call.initiator_phone)
+          acceptIncomingCallNow(call.id, cName, mode, call.initiator_phone)
         },
         onDecline: () => {
           declineAndEndIncomingCall(call.id, true)
@@ -288,6 +316,9 @@ export function ConnectLnIncomingCallBanner({
     })
 
     const onFirstUserClick = (ev: Event) => {
+      const targetEl = ev.target as HTMLElement | null
+      if (targetEl?.closest("[data-connectln-call-action]")) return
+
       // 1) Synchronously unlock 20 Hz hardware audio keep-alive & screen wake lock!
       unlockBackgroundRingingSession()
       setAudioUnlocked(isBackgroundAudioUnlocked())
@@ -295,7 +326,6 @@ export function ConnectLnIncomingCallBanner({
       // 2) On Desktop Edge/Chrome, auto-open the compact Always-On-Top Call Standby Receiver
       //    so minimizing the browser IMMEDIATELY keeps the Pop-Up Call Screen ready on top of desktop!
       //    (Skip only if user clicked an outgoing call button or manually dismissed the PiP window.)
-      const targetEl = ev.target as HTMLElement | null
       const btnText = (targetEl?.closest("button")?.textContent || "").trim()
       const isStartingOutgoingCallClick =
         isLocalTabHostingOpenCall() ||
@@ -395,17 +425,7 @@ export function ConnectLnIncomingCallBanner({
         }
       } else if (msg.type === "CONNECTLN_ANSWER_CALL_FROM_NOTIFICATION" && msg.payload?.callId) {
         const p = msg.payload
-        if (realtimeRingRef.current?.call.id === p.callId) {
-          realtimeRingRef.current = null
-        }
-        markConnectLnCallHandled(p.callId)
-        setCallMediaSilenceActive(true, "whatsapp-call-modal")
-        setCallMediaSilenceActive(false, "incoming-call-banner")
-        stopLoudPhoneRingtone()
-        stopTitleCallFlash()
-        closeStandbyPipForLocalCall()
-        setIncomingCall(null)
-        onAcceptIncomingCall(
+        acceptIncomingCallNow(
           p.callId,
           p.callerName || "ConnectLn Caller",
           p.callMode === "audio" ? "audio" : "video",
@@ -416,9 +436,23 @@ export function ConnectLnIncomingCallBanner({
       }
     }
 
+    const requestPendingSwAnswerCheck = () => {
+      if (!("serviceWorker" in navigator)) return
+      const checkMsg = { type: "CONNECTLN_CHECK_PENDING_ANSWER" }
+      try {
+        navigator.serviceWorker.controller?.postMessage(checkMsg)
+      } catch {}
+      navigator.serviceWorker.ready
+        .then((reg) => {
+          reg?.active?.postMessage(checkMsg)
+        })
+        .catch(() => {})
+    }
+
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {})
       navigator.serviceWorker.addEventListener("message", onSwMessage)
+      requestPendingSwAnswerCheck()
     }
 
     return () => {
@@ -429,7 +463,7 @@ export function ConnectLnIncomingCallBanner({
         navigator.serviceWorker.removeEventListener("message", onSwMessage)
       }
     }
-  }, [onAcceptIncomingCall])
+  }, [])
 
   // Hydrate verified phone & sync existing push subscription on mount
   useEffect(() => {
@@ -631,7 +665,20 @@ export function ConnectLnIncomingCallBanner({
           stopTitleCallFlash()
           dismissFloatingCallPopups()
         }
-        setIncomingCall(active)
+        setIncomingCall((prev) => {
+          if (!active) return null
+          if (
+            prev &&
+            prev.id === active.id &&
+            prev.call_type === active.call_type &&
+            (prev.invited_roster?.length || 0) === (active.invited_roster?.length || 0) &&
+            (prev.participants?.[0]?.display_name || "") ===
+              (active.participants?.[0]?.display_name || "")
+          ) {
+            return prev
+          }
+          return active
+        })
       } catch {
         // ignore transient network errors
       } finally {
@@ -697,6 +744,16 @@ export function ConnectLnIncomingCallBanner({
       setPipReceiverActive(isAlwaysOnTopReceiverOpen())
       if (typeof document !== "undefined" && document.hidden) {
         postSwWatchState(true)
+      } else if ("serviceWorker" in navigator) {
+        const checkMsg = { type: "CONNECTLN_CHECK_PENDING_ANSWER" }
+        try {
+          navigator.serviceWorker.controller?.postMessage(checkMsg)
+        } catch {}
+        navigator.serviceWorker.ready
+          .then((reg) => {
+            reg?.active?.postMessage(checkMsg)
+          })
+          .catch(() => {})
       }
       void checkIncoming()
     }
@@ -804,7 +861,7 @@ export function ConnectLnIncomingCallBanner({
       role="dialog"
       aria-modal="true"
       aria-label={`Incoming ${isVideo ? "Video" : "Voice"} Call from ${callerName}`}
-      className="fixed inset-0 sm:inset-auto sm:top-4 sm:left-1/2 sm:-translate-x-1/2 z-[120] flex sm:block items-center justify-center bg-black/65 sm:bg-transparent backdrop-blur-sm sm:backdrop-blur-none p-4 sm:p-0"
+      className="fixed inset-0 sm:inset-auto sm:top-4 sm:left-1/2 sm:-translate-x-1/2 z-[260] flex sm:block items-center justify-center bg-black/65 sm:bg-transparent backdrop-blur-sm sm:backdrop-blur-none p-4 sm:p-0"
     >
       <div className="w-full max-w-sm sm:w-[94vw] sm:max-w-md rounded-3xl bg-[#0B141A] border-2 border-emerald-400 shadow-[0_24px_60px_rgba(0,0,0,0.65)] px-5 py-5 sm:px-4 sm:py-4 text-[#FBF8F3]">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-3">
@@ -830,11 +887,13 @@ export function ConnectLnIncomingCallBanner({
           <div className="flex items-center justify-center gap-3 sm:gap-2 shrink-0 w-full sm:w-auto pt-1 sm:pt-0">
             <button
               type="button"
-              onClick={() => {
+              data-connectln-call-action="decline"
+              onClick={(e) => {
+                e.stopPropagation()
                 declineAndEndIncomingCall(incomingCall.id, true)
               }}
               style={{ color: "#FFFFFF" }}
-              className="flex-1 sm:flex-none h-12 sm:h-11 sm:w-11 rounded-full bg-rose-600 hover:bg-rose-500 px-4 sm:px-0 flex items-center justify-center gap-1.5 text-sm sm:text-xs font-extrabold shadow-md cursor-pointer"
+              className="flex-1 sm:flex-none h-12 sm:h-11 sm:w-11 rounded-full bg-rose-600 hover:bg-rose-500 px-4 sm:px-0 flex items-center justify-center gap-1.5 text-sm sm:text-xs font-extrabold shadow-md cursor-pointer touch-manipulation"
               title="Decline Call"
             >
               <PhoneOff className="h-4 w-4" />
@@ -842,27 +901,18 @@ export function ConnectLnIncomingCallBanner({
             </button>
             <button
               type="button"
-              onClick={() => {
-                const targetId = incomingCall.id
-                if (realtimeRingRef.current?.call.id === targetId) {
-                  realtimeRingRef.current = null
-                }
-                markConnectLnCallHandled(targetId)
-                setCallMediaSilenceActive(true, "whatsapp-call-modal")
-                setCallMediaSilenceActive(false, "incoming-call-banner")
-                stopLoudPhoneRingtone()
-                stopTitleCallFlash()
-                closeStandbyPipForLocalCall()
-                setIncomingCall(null)
-                onAcceptIncomingCall(
-                  targetId,
+              data-connectln-call-action="answer"
+              onClick={(e) => {
+                e.stopPropagation()
+                acceptIncomingCallNow(
+                  incomingCall.id,
                   callerName,
                   isVideo ? "video" : "audio",
                   incomingCall.initiator_phone
                 )
               }}
               style={{ color: "#FFFFFF" }}
-              className="flex-[1.6] sm:flex-none h-12 sm:h-auto rounded-full bg-emerald-600 hover:bg-emerald-500 px-5 py-2.5 text-sm sm:text-xs font-extrabold flex items-center justify-center gap-2 shadow-lg cursor-pointer"
+              className="flex-[1.6] sm:flex-none h-12 sm:h-auto rounded-full bg-emerald-600 hover:bg-emerald-500 px-5 py-2.5 text-sm sm:text-xs font-extrabold flex items-center justify-center gap-2 shadow-lg cursor-pointer touch-manipulation"
             >
               {isVideo ? <Video className="h-4 w-4" /> : <Phone className="h-4 w-4" />}
               <span>{isVideo ? "Answer Video" : "Answer Call"}</span>

@@ -1086,11 +1086,16 @@ function renderIncomingCallDomIntoWindow(
 ) {
   try {
     const doc = win.document
-    if (!doc) return
+    if (!doc || !doc.body) return
+
+    if (spec && doc.body.dataset.renderedCallId === spec.callId && doc.getElementById("btn-answer")) {
+      return
+    }
 
     stopPipWindowRingAudio(win)
 
     if (!spec) {
+      doc.body.dataset.renderedCallId = ""
       if (!isStandbyPiP) {
         win.close()
         return
@@ -1111,6 +1116,8 @@ function renderIncomingCallDomIntoWindow(
       doc.body.style.background = "#111B21"
       return
     }
+
+    doc.body.dataset.renderedCallId = spec.callId
 
     try {
       win.focus?.()
@@ -1180,21 +1187,25 @@ function renderIncomingCallDomIntoWindow(
 
     const ansBtn = doc.getElementById("btn-answer")
     const decBtn = doc.getElementById("btn-decline")
+    let handled = false
     if (ansBtn) {
       ansBtn.onclick = () => {
+        if (handled) return
+        handled = true
+        const liveSpec = currentRingingSpec || spec
+        liveSpec?.onAnswer?.()
         try {
-          if (window.name) {
-            win.open("", window.name)
-          }
           ;(win.opener || window).focus()
           window.focus()
         } catch {}
-        spec.onAnswer()
       }
     }
     if (decBtn) {
       decBtn.onclick = () => {
-        spec.onDecline()
+        if (handled) return
+        handled = true
+        const liveSpec = currentRingingSpec || spec
+        liveSpec?.onDecline?.()
       }
     }
   } catch {}
