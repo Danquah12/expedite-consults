@@ -1349,8 +1349,8 @@ export function ConnectLnWhatsAppCallModal({
   useEffect(() => {
     if (initialCallId) {
       setCallId(initialCallId)
-    } else if (open && !wasOpenRef.current) {
-      // Guarantee every new outbound call gets its own fresh room ID (never pulling old tiles from previous calls!)
+    } else if (!open && wasOpenRef.current) {
+      // Guarantee every new outbound call gets its own fresh room ID on close so it's ready before `open` turns true
       setCallId(`wa_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`)
     }
     wasOpenRef.current = open
@@ -2060,6 +2060,10 @@ export function ConnectLnWhatsAppCallModal({
       setPushBannerNote("")
       setAddFeedbackMsg("")
       setMaterialStatusNote("")
+      return
+    }
+
+    if (initialCallId && callId !== initialCallId) {
       return
     }
 

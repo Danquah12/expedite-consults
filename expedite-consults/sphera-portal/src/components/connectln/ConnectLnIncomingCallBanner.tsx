@@ -35,6 +35,7 @@ import {
   setForegroundCallPollCallback,
   createUnthrottledCallPollWorker,
   setCallMediaSilenceActive,
+  isIncomingRingtoneAudiblyPlaying,
 } from "@/lib/connectin-background-ring"
 
 interface IncomingCallSummary {
@@ -153,6 +154,21 @@ export function ConnectLnIncomingCallBanner({
     const mode: "audio" | "video" = call.call_type === "audio" ? "audio" : "video"
 
     startLoudPhoneRingtone()
+    if (
+      isIncomingRingtoneAudiblyPlaying() &&
+      typeof navigator !== "undefined" &&
+      "serviceWorker" in navigator
+    ) {
+      const swMsg = { type: "CONNECTLN_PAGE_AUDIO_RINGING", callId: call.id }
+      try {
+        navigator.serviceWorker.controller?.postMessage(swMsg)
+      } catch {}
+      navigator.serviceWorker.ready
+        .then((reg) => {
+          reg?.active?.postMessage(swMsg)
+        })
+        .catch(() => {})
+    }
     startTitleCallFlash(cName)
 
     if (
@@ -285,6 +301,7 @@ export function ConnectLnIncomingCallBanner({
           !/Activate|Enable Ringing|Enable Minimized/i.test(btnText))
 
       if (
+        ev.type === "click" &&
         !mob &&
         isDocumentPipSupported() &&
         !isAlwaysOnTopReceiverOpen() &&
@@ -364,7 +381,7 @@ export function ConnectLnIncomingCallBanner({
             initiator_name: p.callerName,
             initiator_phone: p.callerPhone,
           }
-          realtimeRingRef.current = { call: callObj, untilMs: Date.now() + 4500 }
+          realtimeRingRef.current = { call: callObj, untilMs: Date.now() + 8000 }
           triggerImmediateIncomingCallRinging(callObj)
           setIncomingCall(callObj)
           void reportIncomingCallToNativeOS({
@@ -588,8 +605,8 @@ export function ConnectLnIncomingCallBanner({
             (c) =>
               c?.id && !declinedIdsRef.current.has(c.id) && !isConnectLnCallHandled(c.id)
           ) || null
-        // A pushed/real-time pre-ring covers the brief startup window (<4.5s) before server poll sees the call.
-        // Once seen in server poll OR ended/declined/handled, immediately stop ringing if server poll no longer lists it!
+        // A pushed/real-time pre-ring covers the startup window (<8s) before server poll sees the call.
+        // Clear when ended, declined, handled, or startup window expires.
         const rt = realtimeRingRef.current
         if (!active && rt) {
           const rtId = rt.call.id
@@ -597,7 +614,6 @@ export function ConnectLnIncomingCallBanner({
             declinedIdsRef.current.has(rtId) ||
             isConnectLnCallHandled(rtId) ||
             endedIds.includes(rtId) ||
-            seenInServerPollRef.current.has(rtId) ||
             rt.untilMs <= Date.now()
           ) {
             realtimeRingRef.current = null
@@ -649,7 +665,7 @@ export function ConnectLnIncomingCallBanner({
               initiator_name: d.callerName || "ConnectLn Caller",
               initiator_phone: d.callerPhone || "",
             }
-            realtimeRingRef.current = { call, untilMs: Date.now() + 4500 }
+            realtimeRingRef.current = { call, untilMs: Date.now() + 8000 }
             triggerImmediateIncomingCallRinging(call)
             setIncomingCall((prev) => prev || call)
             void checkIncoming()

@@ -74,13 +74,13 @@ async function ringNotificationUntilAnsweredOrEnded(spec, payload) {
   const initialClients = await self.clients
     .matchAll({ type: "window", includeUncontrolled: true })
     .catch(() => []);
-  if (initialClients.some((c) => c.visibilityState === "visible")) {
+  if (initialClients.some((c) => c.visibilityState === "visible" && c.focused)) {
     return;
   }
 
   await self.registration.showNotification(spec.title, spec.options).catch(() => {});
 
-  for (let step = 0; step < 15; step++) {
+  for (let step = 0; step < 16; step++) {
     await new Promise((resolve) => setTimeout(resolve, 1500));
     if (swHandledCallIds.has(callId)) {
       await closeCallNotificationsByTag(callId);
@@ -98,11 +98,11 @@ async function ringNotificationUntilAnsweredOrEnded(spec, payload) {
       if (checkRes.ok) {
         const data = await checkRes.json();
         const callObj = data && data.call;
-        if (
-          !callObj ||
-          callObj.state === "ENDED" ||
-          (Array.isArray(callObj.participants) && callObj.participants.length >= 2)
-        ) {
+        const isExplicitEnded = Boolean(
+          (callObj && callObj.state === "ENDED") ||
+            (Array.isArray(data && data.ended_call_ids) && data.ended_call_ids.includes(callId))
+        );
+        if (isExplicitEnded) {
           rememberSwCallId(swHandledCallIds, callId);
           for (const client of windowClients) {
             try {
@@ -115,6 +115,21 @@ async function ringNotificationUntilAnsweredOrEnded(spec, payload) {
           await closeCallNotificationsByTag(callId);
           return;
         }
+        const isAnsweredByRecipient = Boolean(
+          callObj &&
+            Array.isArray(callObj.participants) &&
+            callObj.participants.some(
+              (p) =>
+                p &&
+                p.user_id &&
+                callObj.initiator_user_id &&
+                p.user_id !== callObj.initiator_user_id
+            )
+        );
+        if (isAnsweredByRecipient) {
+          await closeCallNotificationsByTag(callId);
+          return;
+        }
       }
     } catch {}
 
@@ -123,12 +138,12 @@ async function ringNotificationUntilAnsweredOrEnded(spec, payload) {
       return;
     }
 
-    if (windowClients.some((c) => c.visibilityState === "visible")) {
+    if (windowClients.some((c) => c.visibilityState === "visible" && c.focused)) {
       await closeCallNotificationsByTag(callId);
       return;
     }
 
-    if (step % 3 === 2) {
+    if (step % 2 === 1) {
       for (const client of windowClients) {
         try {
           client.postMessage({
@@ -144,7 +159,14 @@ async function ringNotificationUntilAnsweredOrEnded(spec, payload) {
           });
         } catch {}
       }
-      await self.registration.showNotification(spec.title, spec.options).catch(() => {});
+      if (!swPageAudioRingingCallIds.has(callId)) {
+        await self.registration
+          .showNotification(
+            spec.title,
+            Object.assign({}, spec.options, { renotify: true, silent: false })
+          )
+          .catch(() => {});
+      }
     }
   }
 }
@@ -289,6 +311,7 @@ let swWatchTimer = null;
 let swPollInFlight = false;
 const swNotifiedCallIds = new Set();
 const swHandledCallIds = new Set();
+const swPageAudioRingingCallIds = new Set();
 
 function rememberSwCallId(setRef, callId) {
   const clean = String(callId || "").trim();
@@ -378,6 +401,11 @@ async function runSwMinimizedCallCheck() {
 self.addEventListener("message", (event) => {
   const msg = event && event.data;
   if (!msg) return;
+
+  if (msg.type === "CONNECTLN_PAGE_AUDIO_RINGING" && msg.callId) {
+    rememberSwCallId(swPageAudioRingingCallIds, String(msg.callId));
+    return;
+  }
 
   if (msg.type === "CONNECTLN_SW_CALL_HANDLED" && msg.callId) {
     const cid = String(msg.callId).trim();

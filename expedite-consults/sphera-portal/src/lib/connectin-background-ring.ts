@@ -584,14 +584,6 @@ function ensureLiveAudioPipelineStarted(): void {
           .then(() => notifyUnlockSubscribers())
           .catch(() => {})
       }
-      // Connect looping 20 Hz + 18.5 kHz keep-alive DIRECTLY to `liveAudioCtx.destination` (hardware speaker clock!)
-      if (!keepAliveSource && keepAliveBuffer) {
-        keepAliveSource = liveAudioCtx.createBufferSource()
-        keepAliveSource.buffer = keepAliveBuffer
-        keepAliveSource.loop = true
-        keepAliveSource.connect(liveAudioCtx.destination)
-        keepAliveSource.start(0)
-      }
       // Hardware audio-thread clock tick: immune to minimized browser timer throttling
       if (!keepAliveClockNode && typeof liveAudioCtx.createScriptProcessor === "function") {
         try {
@@ -607,6 +599,19 @@ function ensureLiveAudioPipelineStarted(): void {
           }
           keepAliveClockNode.connect(liveAudioCtx.destination)
         } catch {}
+      }
+      // Connect looping 20 Hz + 18.5 kHz keep-alive to `liveAudioCtx.destination` AND `keepAliveClockNode`
+      if (!keepAliveSource && keepAliveBuffer) {
+        keepAliveSource = liveAudioCtx.createBufferSource()
+        keepAliveSource.buffer = keepAliveBuffer
+        keepAliveSource.loop = true
+        keepAliveSource.connect(liveAudioCtx.destination)
+        if (keepAliveClockNode) {
+          try {
+            keepAliveSource.connect(keepAliveClockNode)
+          } catch {}
+        }
+        keepAliveSource.start(0)
       }
     }
 
@@ -774,6 +779,49 @@ function stopWebAudioRingSource(): void {
   }
 }
 
+function stopPipWindowRingAudio(win: Window | null | undefined): void {
+  if (!win || win.closed) return
+  try {
+    const audioEl = win.document?.getElementById("pip-ring-audio") as HTMLAudioElement | null
+    if (audioEl) {
+      audioEl.pause()
+      audioEl.removeAttribute("src")
+      audioEl.remove()
+    }
+  } catch {}
+}
+
+export function isIncomingRingtoneAudiblyPlaying(): boolean {
+  return Boolean(
+    (activeRingSource && liveAudioCtx?.state === "running") ||
+      (fallbackWavRingAudio && !fallbackWavRingAudio.paused && !fallbackWavRingAudio.muted)
+  )
+}
+
+function startWebAudioRingBuffer(): boolean {
+  if (!liveAudioCtx || !ringtoneBuffer || liveAudioCtx.state !== "running") return false
+  if (activeRingSource) return true
+  try {
+    if (fallbackWavRingAudio && !fallbackWavRingAudio.paused) {
+      fallbackWavRingAudio.pause()
+      fallbackWavRingAudio.currentTime = 0
+    }
+    const gain = liveAudioCtx.createGain()
+    gain.gain.value = 0.95
+    const src = liveAudioCtx.createBufferSource()
+    src.buffer = ringtoneBuffer
+    src.loop = true
+    src.connect(gain)
+    gain.connect(liveAudioCtx.destination)
+    src.start(0)
+    activeRingSource = src
+    activeRingGain = gain
+    return true
+  } catch {
+    return false
+  }
+}
+
 export function startLoudPhoneRingtone(): void {
   if (typeof window === "undefined") return
   isIncomingRingtoneActive = true
@@ -788,26 +836,9 @@ export function startLoudPhoneRingtone(): void {
   const useExternalAudioFile =
     selectedId === "studio-acoustic" ||
     (selectedId === "device-custom" && Boolean(getCustomDeviceRingtoneDataUrl()))
-  const ua = typeof navigator !== "undefined" ? navigator.userAgent || "" : ""
-  const isMobileUa = /iPhone|iPad|iPod|Android|Mobile/i.test(ua)
-  const isHiddenNow = typeof document !== "undefined" && document.hidden
-  const preferKeepAliveHtmlStream =
-    Boolean(keepAliveHtmlAudio) && (useExternalAudioFile || isMobileUa || isHiddenNow)
 
   // Strict Single-Player Guard: never start or layer a second ringtone while one is playing
-  if (keepAliveHtmlAudio?.dataset.activeRingPreset) {
-    stopWebAudioRingSource()
-    if (fallbackWavRingAudio && !fallbackWavRingAudio.paused) {
-      try {
-        fallbackWavRingAudio.pause()
-        fallbackWavRingAudio.currentTime = 0
-      } catch {}
-    }
-    if (!keepAliveHtmlAudio.paused) {
-      return
-    }
-  }
-  if (!preferKeepAliveHtmlStream && activeRingSource && liveAudioCtx?.state === "running") {
+  if (!useExternalAudioFile && activeRingSource && liveAudioCtx?.state === "running") {
     if (fallbackWavRingAudio && !fallbackWavRingAudio.paused) {
       try {
         fallbackWavRingAudio.pause()
@@ -816,66 +847,52 @@ export function startLoudPhoneRingtone(): void {
     }
     return
   }
-  if (fallbackWavRingAudio && !fallbackWavRingAudio.paused) {
+  if (fallbackWavRingAudio && !fallbackWavRingAudio.paused && !fallbackWavRingAudio.muted) {
     stopWebAudioRingSource()
     return
   }
 
   let startedWebAudio = false
-  if (!preferKeepAliveHtmlStream && liveAudioCtx && ringtoneBuffer) {
+  if (!useExternalAudioFile && liveAudioCtx && ringtoneBuffer) {
     if (liveAudioCtx.state === "suspended") {
-      liveAudioCtx.resume().catch(() => {})
+      liveAudioCtx
+        .resume()
+        .then(() => {
+          if (
+            isIncomingRingtoneActive &&
+            !activeRingSource &&
+            (!fallbackWavRingAudio || fallbackWavRingAudio.paused || fallbackWavRingAudio.muted)
+          ) {
+            startWebAudioRingBuffer()
+          }
+        })
+        .catch(() => {})
     }
     if (liveAudioCtx.state === "running") {
-      try {
-        if (fallbackWavRingAudio && !fallbackWavRingAudio.paused) {
-          fallbackWavRingAudio.pause()
-          fallbackWavRingAudio.currentTime = 0
-        }
-        const gain = liveAudioCtx.createGain()
-        gain.gain.value = 0.9
-        const src = liveAudioCtx.createBufferSource()
-        src.buffer = ringtoneBuffer
-        src.loop = true
-        src.connect(gain)
-        gain.connect(liveAudioCtx.destination)
-        src.start(0)
-        activeRingSource = src
-        activeRingGain = gain
-        startedWebAudio = true
-      } catch {}
+      startedWebAudio = startWebAudioRingBuffer()
     }
   }
 
-  if (preferKeepAliveHtmlStream || !startedWebAudio) {
+  if (useExternalAudioFile || !startedWebAudio) {
     stopWebAudioRingSource()
-    if (keepAliveHtmlAudio) {
-      if (fallbackWavRingAudio && !fallbackWavRingAudio.paused) {
-        try {
-          fallbackWavRingAudio.pause()
-          fallbackWavRingAudio.currentTime = 0
-        } catch {}
-      }
-      const desiredSrc = getRingtoneAudioSourceUri(selectedId)
-      if (keepAliveHtmlAudio.dataset.activeRingPreset !== selectedId) {
-        keepAliveHtmlAudio.dataset.activeRingPreset = selectedId
-        keepAliveHtmlAudio.src = desiredSrc
-      }
-      keepAliveHtmlAudio.loop = true
-      keepAliveHtmlAudio.muted = false
-      keepAliveHtmlAudio.volume = 0.98
-      if (keepAliveHtmlAudio.paused) {
-        keepAliveHtmlAudio.play().catch(() => {})
-      }
-    } else if (fallbackWavRingAudio) {
+    if (fallbackWavRingAudio) {
       if (fallbackWavRingAudio.dataset.ringtonePresetId !== selectedId) {
         fallbackWavRingAudio.src = getRingtoneAudioSourceUri(selectedId)
         fallbackWavRingAudio.dataset.ringtonePresetId = selectedId
       }
       fallbackWavRingAudio.muted = false
-      fallbackWavRingAudio.volume = 0.95
+      fallbackWavRingAudio.volume = 0.98
       if (fallbackWavRingAudio.paused) {
-        fallbackWavRingAudio.play().catch(() => {})
+        fallbackWavRingAudio.play().catch(() => {
+          if (
+            isIncomingRingtoneActive &&
+            liveAudioCtx &&
+            ringtoneBuffer &&
+            liveAudioCtx.state === "running"
+          ) {
+            startWebAudioRingBuffer()
+          }
+        })
       }
     }
   }
@@ -900,11 +917,15 @@ export function startLoudPhoneRingtone(): void {
     ringInteractionListenersBound = true
     const resumeRingOnInteraction = () => {
       if (!isIncomingRingtoneActive) return
-      if (keepAliveHtmlAudio?.dataset.activeRingPreset && !keepAliveHtmlAudio.paused) return
       if (activeRingSource && liveAudioCtx?.state === "running") return
-      if (fallbackWavRingAudio && !fallbackWavRingAudio.paused) return
+      if (fallbackWavRingAudio && !fallbackWavRingAudio.paused && !fallbackWavRingAudio.muted) return
       if (liveAudioCtx && liveAudioCtx.state === "suspended") {
-        liveAudioCtx.resume().catch(() => {})
+        liveAudioCtx
+          .resume()
+          .then(() => {
+            if (isIncomingRingtoneActive) startLoudPhoneRingtone()
+          })
+          .catch(() => {})
       }
       startLoudPhoneRingtone()
     }
@@ -928,34 +949,15 @@ export function startLoudPhoneRingtone(): void {
 
 export function stopLoudPhoneRingtone(): void {
   isIncomingRingtoneActive = false
-  if (activeRingSource) {
-    try {
-      activeRingSource.stop()
-      activeRingSource.disconnect()
-    } catch {}
-    activeRingSource = null
-  }
-  if (activeRingGain) {
-    try {
-      activeRingGain.disconnect()
-    } catch {}
-    activeRingGain = null
-  }
+  stopWebAudioRingSource()
   if (fallbackWavRingAudio) {
     try {
       fallbackWavRingAudio.pause()
       fallbackWavRingAudio.currentTime = 0
     } catch {}
   }
-  if (keepAliveHtmlAudio && keepAliveHtmlAudio.dataset.activeRingPreset) {
-    try {
-      keepAliveHtmlAudio.dataset.activeRingPreset = ""
-      keepAliveHtmlAudio.src = getSubSonicKeepAliveWavUri()
-      keepAliveHtmlAudio.loop = true
-      keepAliveHtmlAudio.volume = 1.0
-      keepAliveHtmlAudio.play().catch(() => {})
-    } catch {}
-  }
+  stopPipWindowRingAudio(activePipWin)
+  stopPipWindowRingAudio(activePopupWin)
   if (ringVibrateTimer) {
     clearInterval(ringVibrateTimer)
     ringVibrateTimer = null
@@ -1086,6 +1088,8 @@ function renderIncomingCallDomIntoWindow(
     const doc = win.document
     if (!doc) return
 
+    stopPipWindowRingAudio(win)
+
     if (!spec) {
       if (!isStandbyPiP) {
         win.close()
@@ -1157,6 +1161,22 @@ function renderIncomingCallDomIntoWindow(
         </div>
       </div>
     `
+
+    if (!isIncomingRingtoneAudiblyPlaying()) {
+      try {
+        const pipAudio = doc.createElement("audio")
+        pipAudio.id = "pip-ring-audio"
+        pipAudio.dataset.connectlnCallAudio = "true"
+        pipAudio.src = getRingtoneAudioSourceUri(getSelectedConnectLnRingtoneId())
+        pipAudio.loop = true
+        pipAudio.autoplay = true
+        pipAudio.volume = 0.98
+        pipAudio.setAttribute("playsinline", "true")
+        pipAudio.style.cssText = "position:fixed;left:-9999px;width:1px;height:1px;opacity:0.01;"
+        doc.body.appendChild(pipAudio)
+        pipAudio.play().catch(() => {})
+      } catch {}
+    }
 
     const ansBtn = doc.getElementById("btn-answer")
     const decBtn = doc.getElementById("btn-decline")
@@ -1249,8 +1269,9 @@ export async function openAlwaysOnTopCallStandbyPiP(manualUserAction = false): P
 }
 
 /**
- * Closes any standby PiP or popup cleanly when the user opens an active call modal on this tab
- * so ZERO extra boxes overlap their active call!
+ * Returns any open standby PiP window to clean standby mode when the user opens an active
+ * call modal on this tab so ZERO extra incoming call boxes overlap their active call,
+ * while keeping the Always-On-Top receiver alive across calls without needing a fresh click gesture!
  */
 export function closeStandbyPipForLocalCall(): void {
   currentRingingSpec = null
@@ -1262,11 +1283,7 @@ export function closeStandbyPipForLocalCall(): void {
   activePopupWin = null
 
   if (activePipWin && !activePipWin.closed) {
-    programmaticPipClose = true
-    try {
-      activePipWin.close()
-    } catch {}
-    activePipWin = null
+    renderIncomingCallDomIntoWindow(activePipWin, null, true)
   }
   notifyUnlockSubscribers()
 }
@@ -1368,10 +1385,7 @@ export async function triggerSystemIncomingCallAlert(
           spec.callId
         )}&mode=${spec.callMode}&callerName=${encodeURIComponent(spec.callerName)}&autoAnswer=1`
         const isTabHidden = typeof document !== "undefined" && document.hidden
-        const isAnyAudioActivelyPlaying =
-          (Boolean(activeRingSource) && liveAudioCtx?.state === "running") ||
-          Boolean(fallbackWavRingAudio && !fallbackWavRingAudio.paused) ||
-          Boolean(keepAliveHtmlAudio?.dataset.activeRingPreset && !keepAliveHtmlAudio.paused)
+        const isAnyAudioActivelyPlaying = isIncomingRingtoneAudiblyPlaying()
         await reg.showNotification(title, {
           body,
           icon: "/brand/connectln-icon-256.png",

@@ -966,11 +966,18 @@ export async function GET(req: NextRequest) {
   const nowMs = Date.now()
   if (callId) {
     const call = ACTIVE_CALLS_STORE.get(callId)
-    if (isCallTombstoned(callId, nowMs) || !call || call.state === "ENDED") {
+    if (isCallTombstoned(callId, nowMs) || call?.state === "ENDED") {
       return NextResponse.json({
         protocol_version: 1,
         call: { id: callId, state: "ENDED", participants: [] },
         ended_call_ids: [callId],
+      })
+    }
+    if (!call) {
+      return NextResponse.json({
+        protocol_version: 1,
+        call: null,
+        ended_call_ids: [],
       })
     }
     return NextResponse.json({
