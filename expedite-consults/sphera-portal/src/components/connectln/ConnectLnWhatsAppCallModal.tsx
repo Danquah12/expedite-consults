@@ -64,8 +64,44 @@ import {
 } from "@/lib/vibe-voice-codec"
 
 export const MY_LINKED_PHONE_STORAGE_KEY = "connectln_my_whatsapp_phone_v1"
+const HANDLED_CALL_IDS_STORAGE_KEY = "connectln_handled_call_ids_v1"
 
 export const COUNTRY_DIAL_CODES = GLOBAL_COUNTRY_DIAL_CODES
+
+export function markConnectLnCallHandled(callId: string): void {
+  const clean = String(callId || "").trim()
+  if (!clean || typeof window === "undefined") return
+  try {
+    const win = window as any
+    if (!(win.__connectlnHandledCallIdsSet instanceof Set)) {
+      win.__connectlnHandledCallIdsSet = new Set<string>()
+    }
+    win.__connectlnHandledCallIdsSet.add(clean)
+    const raw = window.sessionStorage.getItem(HANDLED_CALL_IDS_STORAGE_KEY)
+    const arr: string[] = raw ? JSON.parse(raw) : []
+    if (!arr.includes(clean)) {
+      const next = [...arr.slice(-39), clean]
+      window.sessionStorage.setItem(HANDLED_CALL_IDS_STORAGE_KEY, JSON.stringify(next))
+    }
+  } catch {}
+}
+
+export function isConnectLnCallHandled(callId: string): boolean {
+  const clean = String(callId || "").trim()
+  if (!clean || typeof window === "undefined") return false
+  try {
+    const win = window as any
+    if (win.__connectlnHandledCallIdsSet instanceof Set && win.__connectlnHandledCallIdsSet.has(clean)) {
+      return true
+    }
+    const raw = window.sessionStorage.getItem(HANDLED_CALL_IDS_STORAGE_KEY)
+    if (!raw) return false
+    const arr: string[] = JSON.parse(raw)
+    return Array.isArray(arr) && arr.includes(clean)
+  } catch {
+    return false
+  }
+}
 
 export function getMyLinkedConnectLnPhone(): string {
   if (typeof window === "undefined") return ""
@@ -1031,6 +1067,8 @@ export function ConnectLnWhatsAppCallModal({
   const bgFileInputRef = useRef<HTMLInputElement | null>(null)
   const ringtoneFileInputRef = useRef<HTMLInputElement | null>(null)
   const clearHostMuteFlagRef = useRef<boolean>(false)
+  const wasMutedByHostRef = useRef<boolean>(false)
+  const lastProcessedHostUnmuteMsRef = useRef<number>(0)
   const showChatDrawerRef = useRef<boolean>(false)
   const lastSeenChatMsgIdsRef = useRef<Set<string>>(new Set())
   const selectedBgIdRef = useRef<string>("none")
@@ -1911,6 +1949,8 @@ export function ConnectLnWhatsAppCallModal({
       stopAllMedia()
       maxRemoteCountSeenRef.current = 0
       hasSentInitialReopenRef.current = false
+      wasMutedByHostRef.current = false
+      lastProcessedHostUnmuteMsRef.current = 0
       setRemoteStreamsMap({})
       setRemoteWebRtcPeers([])
       setCellLegs([])
@@ -1938,6 +1978,7 @@ export function ConnectLnWhatsAppCallModal({
     }
 
     let cancelled = false
+    markConnectLnCallHandled(callId)
     setRecipientName(
       looksLikeClientPhone(targetLabel) ? prettyClientPhone(targetLabel) : targetLabel || "ConnectLn Call"
     )
@@ -2061,6 +2102,52 @@ export function ConnectLnWhatsAppCallModal({
         }
       })
       conn.on("data", (msg: any) => {
+        if (msg?.type === "call_ended") {
+          markConnectLnCallHandled(callId)
+          setCallStatus("ended")
+          stopAllMedia()
+          setTimeout(() => onCloseRef.current(), 250)
+          return
+        }
+        if (msg?.type === "host_moderation") {
+          const subAction = String(msg.subAction || "")
+          const selfEntry = {
+            userId: localPeerUid,
+            phone: getMyLinkedConnectLnPhone(),
+            email: callerEmail,
+            name: callerName,
+          }
+          const selfTokens = new Set(buildMemberIdentityTokens(selfEntry))
+          const targetsSelf =
+            subAction === "mute_all" ||
+            (msg.targetUserId && msg.targetUserId === localPeerUid) ||
+            buildMemberIdentityTokens({
+              userId: msg.targetUserId,
+              phone: msg.targetPhone,
+              email: msg.targetEmail,
+              name: msg.targetName,
+            }).some((k) => selfTokens.has(k))
+          if (targetsSelf) {
+            if (subAction === "mute_all" || subAction === "mute_member") {
+              wasMutedByHostRef.current = true
+              isMicMutedRef.current = true
+              setIsMicMuted(true)
+              setWasMutedByHostBanner(true)
+              localStreamRef.current?.getAudioTracks().forEach((t) => {
+                t.enabled = false
+              })
+            } else if (subAction === "unmute_member") {
+              wasMutedByHostRef.current = false
+              isMicMutedRef.current = false
+              setIsMicMuted(false)
+              setWasMutedByHostBanner(false)
+              localStreamRef.current?.getAudioTracks().forEach((t) => {
+                t.enabled = true
+              })
+            }
+          }
+          return
+        }
         if (msg?.type === "stage_share" && msg.stage) {
           const incoming: InCallSharedStageItem = msg.stage
           if (incoming.active === false) {
@@ -2341,7 +2428,8 @@ export function ConnectLnWhatsAppCallModal({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             action: "heartbeat",
-            reopen: reopenFlag,
+            reopen: !isIncomingAnswer && reopenFlag,
+            is_answering_recipient: isIncomingAnswer || undefined,
             call_id: callId,
             user_id: localPeerUid,
             peer_id: myPeerIdRef.current || undefined,
@@ -2371,14 +2459,15 @@ export function ConnectLnWhatsAppCallModal({
         const data = await res.json()
         if (!mounted) return
 
-        if ((data?.call?.state === "ENDED" || data?.event_type === "call.ended") && !reopenFlag) {
+        if ((data?.call?.state === "ENDED" || data?.event_type === "call.ended") && (isIncomingAnswer || !reopenFlag)) {
+          markConnectLnCallHandled(callId)
           setCallStatus("ended")
           stopAllMedia()
-          setTimeout(() => onCloseRef.current(), 500)
+          setTimeout(() => onCloseRef.current(), 350)
           return
         }
 
-        // Sync Host/Co-Host moderation keys & enforce host_muted on local mic
+        // Sync Host/Co-Host moderation keys & enforce host_muted / host-unmute on local mic
         const srvCohostKeys: string[] = Array.isArray(data?.call?.cohost_keys)
           ? data.call.cohost_keys
           : []
@@ -2397,14 +2486,33 @@ export function ConnectLnWhatsAppCallModal({
           email: callerEmail,
           name: callerName,
         }
+        const srvUnmuteTs = Number(meSrv?.host_unmuted_at_ms) || 0
         const localIsHostMuted =
           !shouldClearHostMute &&
           (Boolean(meSrv?.host_muted) || doesIdentityMatchAnyKey(mySelfEntry, srvMutedKeys))
-        if (localIsHostMuted && !micMutedNow) {
-          setIsMicMuted(true)
-          setWasMutedByHostBanner(true)
+        if (localIsHostMuted) {
+          wasMutedByHostRef.current = true
+          if (!micMutedNow) {
+            isMicMutedRef.current = true
+            setIsMicMuted(true)
+            setWasMutedByHostBanner(true)
+            localStreamRef.current?.getAudioTracks().forEach((t) => {
+              t.enabled = false
+            })
+          }
+        } else if (
+          wasMutedByHostRef.current ||
+          (srvUnmuteTs > 0 && srvUnmuteTs > lastProcessedHostUnmuteMsRef.current)
+        ) {
+          if (srvUnmuteTs > lastProcessedHostUnmuteMsRef.current) {
+            lastProcessedHostUnmuteMsRef.current = srvUnmuteTs
+          }
+          wasMutedByHostRef.current = false
+          isMicMutedRef.current = false
+          setIsMicMuted(false)
+          setWasMutedByHostBanner(false)
           localStreamRef.current?.getAudioTracks().forEach((t) => {
-            t.enabled = false
+            t.enabled = true
           })
         }
 
@@ -2802,8 +2910,10 @@ export function ConnectLnWhatsAppCallModal({
   const handleToggleMute = () => {
     setIsMicMuted((prev) => {
       const next = !prev
+      isMicMutedRef.current = next
       if (!next) {
         clearHostMuteFlagRef.current = true
+        wasMutedByHostRef.current = false
         setWasMutedByHostBanner(false)
       }
       localStreamRef.current?.getAudioTracks().forEach((t) => {
@@ -2845,12 +2955,23 @@ export function ConnectLnWhatsAppCallModal({
 
   const handleHangup = (forceEndForAll = false) => {
     stopOutgoingCallerRingbackTone()
+    markConnectLnCallHandled(callId)
     const myPhone = getMyLinkedConnectLnPhone()
     const isMultiPartyGroupCall =
       !forceEndForAll &&
       (remoteWebRtcPeersRef.current.length >= 2 ||
         remoteWebRtcPeersRef.current.length + cellLegsRef.current.length >= 2 ||
         maxRemoteCountSeenRef.current >= 2)
+
+    if (!isMultiPartyGroupCall || forceEndForAll) {
+      activeDataConnsRef.current.forEach((conn) => {
+        if (conn?.open) {
+          try {
+            conn.send({ type: "call_ended", callId })
+          } catch {}
+        }
+      })
+    }
 
     fetch("/api/v1/calls", {
       method: "POST",
@@ -2996,6 +3117,105 @@ export function ConnectLnWhatsAppCallModal({
     isCohost?: boolean
   }) => {
     setIsModerating(true)
+
+    const targetKeysSet = new Set(
+      buildMemberIdentityTokens({
+        userId: params.targetUserId,
+        phone: params.targetPhone,
+        email: params.targetEmail,
+        name: params.targetName,
+      })
+    )
+    const matchesTargetEntry = (entry: {
+      userId?: string
+      phone?: string
+      email?: string
+      name?: string
+    }) =>
+      Boolean(
+        (params.targetUserId && entry.userId && params.targetUserId === entry.userId) ||
+          buildMemberIdentityTokens(entry).some((k) => targetKeysSet.has(k))
+      )
+
+    if (params.subAction === "mute_all") {
+      setRemoteWebRtcPeers((prev) =>
+        prev.map((p) => ({ ...p, isMuted: true, hostMuted: true }))
+      )
+      setCellLegs((prev) => prev.map((l) => ({ ...l, hostMuted: true })))
+    } else if (
+      params.subAction === "mute_member" ||
+      params.subAction === "unmute_member"
+    ) {
+      const shouldMute = params.subAction === "mute_member"
+      setRemoteWebRtcPeers((prev) =>
+        prev.map((p) =>
+          matchesTargetEntry({
+            userId: p.userId,
+            phone: p.phone,
+            email: p.email,
+            name: p.name,
+          })
+            ? { ...p, isMuted: shouldMute, hostMuted: shouldMute }
+            : p
+        )
+      )
+      setCellLegs((prev) =>
+        prev.map((l) =>
+          matchesTargetEntry({
+            userId: l.id,
+            phone: l.phone,
+            email: l.email,
+            name: l.name,
+          })
+            ? { ...l, hostMuted: shouldMute }
+            : l
+        )
+      )
+    } else if (params.subAction === "toggle_cohost") {
+      const grant = params.isCohost !== false
+      setRemoteWebRtcPeers((prev) =>
+        prev.map((p) =>
+          matchesTargetEntry({
+            userId: p.userId,
+            phone: p.phone,
+            email: p.email,
+            name: p.name,
+          })
+            ? { ...p, isCoHost: grant }
+            : p
+        )
+      )
+      setCellLegs((prev) =>
+        prev.map((l) =>
+          matchesTargetEntry({
+            userId: l.id,
+            phone: l.phone,
+            email: l.email,
+            name: l.name,
+          })
+            ? { ...l, isCoHost: grant }
+            : l
+        )
+      )
+    }
+
+    // Push instant moderation signal over P2P DataChannel in addition to server sync
+    activeDataConnsRef.current.forEach((conn) => {
+      if (conn?.open) {
+        try {
+          conn.send({
+            type: "host_moderation",
+            subAction: params.subAction,
+            targetUserId: params.targetUserId,
+            targetPhone: params.targetPhone,
+            targetEmail: params.targetEmail,
+            targetName: params.targetName,
+            isCohost: params.isCohost,
+          })
+        } catch {}
+      }
+    })
+
     try {
       const res = await fetch("/api/v1/calls", {
         method: "POST",

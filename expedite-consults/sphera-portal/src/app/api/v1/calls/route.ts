@@ -71,6 +71,7 @@ export interface CommCallParticipant {
   webrtc_connected?: boolean
   is_cohost?: boolean
   host_muted?: boolean
+  host_unmuted_at_ms?: number
   virtual_bg_id?: string
   virtual_bg_badge?: string
   live_frame?: string | null
@@ -160,6 +161,7 @@ export interface CommCallRecord {
   invited_roster?: CommInvitedMember[]
   cohost_keys?: string[]
   muted_keys?: string[]
+  moderation_updated_at_ms?: number
   shared_stage?: SharedStageRecord | null
   shared_messages?: SharedCallChatMessage[]
 }
@@ -411,7 +413,8 @@ async function pushCloudInvitedRoster(
   roster: CommInvitedMember[] | undefined,
   force = false,
   cohostKeys?: string[],
-  mutedKeys?: string[]
+  mutedKeys?: string[],
+  moderationUpdatedAtMs?: number
 ): Promise<void> {
   const auth = getTwilioCallsAuthHeader()
   if (!auth) return
@@ -433,15 +436,20 @@ async function pushCloudInvitedRoster(
     host_muted: Boolean(m.host_muted),
     updated_at_ms: m.updated_at_ms || nowMs,
   }))
-  const payload = JSON.stringify({
+  const payloadObj: Record<string, any> = {
     kind: "roster",
     call_id: callId,
     invited_roster: compactRoster,
-    cohost_keys: cohostKeys || [],
-    muted_keys: mutedKeys || [],
     updated_at_ms: nowMs,
-  })
-  await upsertTwilioSyncItem(auth, rosterKey, payload, "300")
+  }
+  if (cohostKeys !== undefined || mutedKeys !== undefined) {
+    payloadObj.cohost_keys = cohostKeys || []
+    payloadObj.muted_keys = mutedKeys || []
+    if (moderationUpdatedAtMs && moderationUpdatedAtMs > 0) {
+      payloadObj.moderation_updated_at_ms = moderationUpdatedAtMs
+    }
+  }
+  await upsertTwilioSyncItem(auth, rosterKey, JSON.stringify(payloadObj), "300")
 }
 
 async function pushCloudSharedMessages(
@@ -704,7 +712,7 @@ async function pullCloudCallParticipants(excludeUserId?: string): Promise<void> 
         }
       }
 
-      // Third pass: merge invited_roster + moderation keys (`r__`) so every caller and answering phone stays in sync!
+      // Third pass: merge invited_roster + timestamp-versioned moderation keys (`r__`)
       for (const rData of rosterItems) {
         const remoteTs = Number(rData.updated_at_ms) || 0
         if (nowMs - remoteTs > 300000) continue
@@ -716,11 +724,21 @@ async function pullCloudCallParticipants(excludeUserId?: string): Promise<void> 
           if (Array.isArray(rData.invited_roster)) {
             mergeInvitedEntriesIntoRecord(record, rData.invited_roster, remoteTs || nowMs)
           }
-          if (Array.isArray(rData.cohost_keys)) {
-            record.cohost_keys = Array.from(new Set([...(record.cohost_keys || []), ...rData.cohost_keys]))
-          }
-          if (Array.isArray(rData.muted_keys)) {
-            record.muted_keys = Array.from(new Set([...(record.muted_keys || []), ...rData.muted_keys]))
+          const incomingModTs =
+            typeof rData.moderation_updated_at_ms === "number"
+              ? rData.moderation_updated_at_ms
+              : 0
+          if (
+            incomingModTs > 0 &&
+            incomingModTs >= (record.moderation_updated_at_ms || 0)
+          ) {
+            if (Array.isArray(rData.cohost_keys)) {
+              record.cohost_keys = [...rData.cohost_keys]
+            }
+            if (Array.isArray(rData.muted_keys)) {
+              record.muted_keys = [...rData.muted_keys]
+            }
+            record.moderation_updated_at_ms = incomingModTs
           }
         }
       }
@@ -784,11 +802,17 @@ async function pullCloudCallParticipants(excludeUserId?: string): Promise<void> 
               if (Array.isArray(v.invited_roster) && v.invited_roster.length > 0) {
                 mergeInvitedEntriesIntoRecord(mem, v.invited_roster, nowMs)
               }
-              if (Array.isArray(v.cohost_keys)) {
-                mem.cohost_keys = Array.from(new Set([...(mem.cohost_keys || []), ...v.cohost_keys]))
-              }
-              if (Array.isArray(v.muted_keys)) {
-                mem.muted_keys = Array.from(new Set([...(mem.muted_keys || []), ...v.muted_keys]))
+              if (
+                typeof v.moderation_updated_at_ms === "number" &&
+                v.moderation_updated_at_ms > (mem.moderation_updated_at_ms || 0)
+              ) {
+                if (Array.isArray(v.cohost_keys)) {
+                  mem.cohost_keys = [...v.cohost_keys]
+                }
+                if (Array.isArray(v.muted_keys)) {
+                  mem.muted_keys = [...v.muted_keys]
+                }
+                mem.moderation_updated_at_ms = v.moderation_updated_at_ms
               }
             }
 
@@ -968,14 +992,36 @@ export async function GET(req: NextRequest) {
     }
 
     const incomingCalls = calls.filter((c) => {
-      // Skip ONLY if this exact browser/mobile tab (`viewerPeerId`) is already a participant in the call.
-      // Never skip on `display_name === incomingForName` so calling your own phone from desktop still rings on your phone!
+      // Skip ONLY if this exact browser/mobile tab (`viewerPeerId`) is already a participant in the call,
+      // OR if this request comes from the call's initiator (`initiator_user_id` or `initiator_phone`).
       if (viewerPeerId && c.participants.some((p) => p.user_id === viewerPeerId)) {
+        return false
+      }
+      if (c.initiator_user_id && viewerPeerId && c.initiator_user_id === viewerPeerId) {
         return false
       }
       const cidLower = c.id.toLowerCase()
       const targetDigits = String(c.target_recipient_phone || "").replace(/[^\d]/g, "")
+      const initiatorDigits = String(c.initiator_phone || "").replace(/[^\d]/g, "")
       const hasExplicitTargetPhone = targetDigits.length >= 7
+
+      // Never ring the initiator's own phone when the recipient answers and their heartbeat runs,
+      // unless the user intentionally dialed their exact own phone number to self-test.
+      const viewerIsInitiatorPhone = Boolean(
+        incomingPhoneDigits.length >= 7 &&
+          initiatorDigits.length >= 7 &&
+          (incomingPhoneDigits === initiatorDigits ||
+            incomingPhoneDigits.slice(-10) === initiatorDigits.slice(-10))
+      )
+      const isIntentionalSelfCall = Boolean(
+        viewerIsInitiatorPhone &&
+          targetDigits.length >= 7 &&
+          (targetDigits === initiatorDigits || targetDigits.slice(-10) === initiatorDigits.slice(-10))
+      )
+      if (viewerIsInitiatorPhone && !isIntentionalSelfCall) {
+        return false
+      }
+
       const phoneMatchesTarget = Boolean(
         hasExplicitTargetPhone &&
           incomingPhoneDigits.length >= 7 &&
@@ -1007,6 +1053,9 @@ export async function GET(req: NextRequest) {
       const hasAnyExplicitTarget = Boolean(
         c.target_recipient_name || c.target_recipient_email || c.target_recipient_phone
       )
+      if (!hasAnyExplicitTarget && (!c.invited_roster || c.invited_roster.length === 0)) {
+        return Boolean(rosterMatch)
+      }
 
       return Boolean(
         primaryMatch ||
@@ -1098,7 +1147,8 @@ async function removeSingleParticipantFromGroupCall(params: {
       existing.invited_roster,
       true,
       existing.cohost_keys,
-      existing.muted_keys
+      existing.muted_keys,
+      existing.moderation_updated_at_ms
     ).catch(() => {})
   }
 
@@ -1203,7 +1253,7 @@ export async function POST(req: NextRequest) {
         ).catch(() => {}),
         publishToPhones(phonesToSilence, "call-ended", { callId: endCallId }).catch(() => {}),
         pushCloudSharedStage(endCallId, null, true).catch(() => {}),
-        pushCloudInvitedRoster(endCallId, [], true, [], []).catch(() => {}),
+        pushCloudInvitedRoster(endCallId, [], true, [], [], nowMs).catch(() => {}),
       ]
       for (const p of existing.participants || []) {
         cloudOps.push(
@@ -1247,6 +1297,7 @@ export async function POST(req: NextRequest) {
         email: body.target_email,
         name: body.target_name,
       })
+      const touchedParticipants: CommCallParticipant[] = []
 
       if (subAction === "mute_all") {
         const nextMuted = new Set<string>(record.muted_keys)
@@ -1261,6 +1312,7 @@ export async function POST(req: NextRequest) {
           }
           p.host_muted = true
           p.is_muted = true
+          touchedParticipants.push(p)
         }
         for (const inv of record.invited_roster || []) {
           for (const k of buildModerationIdentityKeys({
@@ -1281,18 +1333,36 @@ export async function POST(req: NextRequest) {
           if (shouldMute) mutedSet.add(k)
           else mutedSet.delete(k)
         }
-        record.muted_keys = Array.from(mutedSet)
         for (const p of record.participants || []) {
           if (participantMatchesModKey(p, targetSet)) {
+            for (const pk of buildModerationIdentityKeys({
+              userId: p.user_id,
+              phone: p.phone,
+              name: p.display_name,
+            })) {
+              if (shouldMute) mutedSet.add(pk)
+              else mutedSet.delete(pk)
+            }
             p.host_muted = shouldMute
-            if (shouldMute) p.is_muted = true
+            p.is_muted = shouldMute
+            if (!shouldMute) p.host_unmuted_at_ms = nowMs
+            touchedParticipants.push(p)
           }
         }
         for (const inv of record.invited_roster || []) {
           if (participantMatchesModKey(inv, targetSet)) {
+            for (const ik of buildModerationIdentityKeys({
+              phone: inv.phone,
+              email: inv.email,
+              name: inv.name,
+            })) {
+              if (shouldMute) mutedSet.add(ik)
+              else mutedSet.delete(ik)
+            }
             inv.host_muted = shouldMute
           }
         }
+        record.muted_keys = Array.from(mutedSet)
       } else if (subAction === "toggle_cohost") {
         const grant = body.is_cohost !== false
         const cohostSet = new Set<string>(record.cohost_keys)
@@ -1301,28 +1371,52 @@ export async function POST(req: NextRequest) {
           if (grant) cohostSet.add(k)
           else cohostSet.delete(k)
         }
-        record.cohost_keys = Array.from(cohostSet)
         for (const p of record.participants || []) {
           if (participantMatchesModKey(p, targetSet)) {
+            for (const pk of buildModerationIdentityKeys({
+              userId: p.user_id,
+              phone: p.phone,
+              name: p.display_name,
+            })) {
+              if (grant) cohostSet.add(pk)
+              else cohostSet.delete(pk)
+            }
             p.is_cohost = grant
+            touchedParticipants.push(p)
           }
         }
         for (const inv of record.invited_roster || []) {
           if (participantMatchesModKey(inv, targetSet)) {
+            for (const ik of buildModerationIdentityKeys({
+              phone: inv.phone,
+              email: inv.email,
+              name: inv.name,
+            })) {
+              if (grant) cohostSet.add(ik)
+              else cohostSet.delete(ik)
+            }
             inv.is_cohost = grant
           }
         }
+        record.cohost_keys = Array.from(cohostSet)
       }
 
+      record.moderation_updated_at_ms = nowMs
       record.state_version += 1
       ACTIVE_CALLS_STORE.set(modCallId, record)
-      await pushCloudInvitedRoster(
-        modCallId,
-        record.invited_roster,
-        true,
-        record.cohost_keys,
-        record.muted_keys
-      ).catch(() => {})
+      await Promise.all([
+        pushCloudInvitedRoster(
+          modCallId,
+          record.invited_roster,
+          true,
+          record.cohost_keys,
+          record.muted_keys,
+          record.moderation_updated_at_ms
+        ).catch(() => {}),
+        ...touchedParticipants.map((p) =>
+          pushCloudCallParticipant(modCallId, p, true).catch(() => {})
+        ),
+      ])
       savePersistedCalls(true)
       return NextResponse.json({
         protocol_version: 1,
@@ -1371,7 +1465,14 @@ export async function POST(req: NextRequest) {
       const changed = mergeInvitedEntriesIntoRecord(record, updates, nowMs)
       if (changed) {
         record.state_version += 1
-        await pushCloudInvitedRoster(callId, record.invited_roster, true).catch(() => {})
+        await pushCloudInvitedRoster(
+          callId,
+          record.invited_roster,
+          true,
+          record.cohost_keys,
+          record.muted_keys,
+          record.moderation_updated_at_ms
+        ).catch(() => {})
         await dispatchMinimizedWakeupPushForTargets({
           callId,
           callMode: record.call_type === "audio" ? "audio" : "video",
@@ -1397,7 +1498,17 @@ export async function POST(req: NextRequest) {
       const displayName = body.display_name || "Meeting Participant"
       const conversationId = body.conversation_id || "9b0bbf68-20c8-4416-b82c-0f0e81b8df80"
 
-      if (action === "heartbeat" && !body.reopen && isCallTombstoned(callId, nowMs)) {
+      // Always pull cloud state first so cross-lambda call-end tombstones (`e__`) are known immediately
+      await pullCloudCallParticipants(userId).catch(() => {})
+
+      if (action === "create" || (action === "join" && body.reopen && !body.is_answering_recipient)) {
+        ENDED_CALL_TOMBSTONES.delete(callId)
+      }
+
+      if (
+        action === "heartbeat" &&
+        (isCallTombstoned(callId, nowMs) || ACTIVE_CALLS_STORE.get(callId)?.state === "ENDED")
+      ) {
         const endedRec = ACTIVE_CALLS_STORE.get(callId)
         if (endedRec) {
           endedRec.state = "ENDED"
@@ -1411,17 +1522,20 @@ export async function POST(req: NextRequest) {
         })
       }
 
-      if (action === "create" || (action === "join" && body.reopen)) {
-        ENDED_CALL_TOMBSTONES.delete(callId)
+      if (body.is_answering_recipient === true && !ACTIVE_CALLS_STORE.has(callId)) {
+        return NextResponse.json({
+          protocol_version: 1,
+          event_type: "call.ended",
+          occurred_at: now,
+          call: { id: callId, state: "ENDED", participants: [] },
+        })
       }
 
       const record = ensureCallRoom(callId, userId, displayName, conversationId)
 
-      // If this call room was recently ended (< 15s ago) and a client is only sending a periodic heartbeat (not explicitly creating/joining/reopening a call),
-      // return the ENDED state immediately so all remaining screens close/clear frozen participants!
+      // Never reopen an ENDED room from any heartbeat or answering-recipient beat
       if (record.state === "ENDED") {
-        const endedMs = record.ended_at ? new Date(record.ended_at).getTime() : 0
-        if (action === "heartbeat" && !body.reopen && nowMs - endedMs < 45000) {
+        if (action === "heartbeat" || body.is_answering_recipient === true) {
           record.participants = []
           return NextResponse.json({
             protocol_version: 1,
@@ -1430,7 +1544,7 @@ export async function POST(req: NextRequest) {
             call: record,
           })
         }
-        // Otherwise, a call is being started or handed off into this room — reopen cleanly
+        // Only explicit `create` / host `join` reopens a previously ended room
         record.state = "CONNECTED"
         record.ended_at = null
         record.participants = []
@@ -1552,6 +1666,7 @@ export async function POST(req: NextRequest) {
         const beforeLen = record.muted_keys.length
         record.muted_keys = record.muted_keys.filter((k) => !selfKeys.has(k))
         if (record.muted_keys.length !== beforeLen) {
+          record.moderation_updated_at_ms = nowMs
           rosterChanged = true
         }
       }
@@ -1588,6 +1703,8 @@ export async function POST(req: NextRequest) {
         is_muted: isHostMuted ? true : isMuted,
         is_cohost: isCohost,
         host_muted: isHostMuted,
+        host_unmuted_at_ms:
+          existingIdx >= 0 ? record.participants[existingIdx].host_unmuted_at_ms : undefined,
         is_video_on: isVideoOn,
         is_speaking: typeof body.is_speaking === "boolean" ? body.is_speaking : true,
         is_screen_sharing: typeof body.is_screen_sharing === "boolean" ? body.is_screen_sharing : false,
@@ -1694,7 +1811,8 @@ export async function POST(req: NextRequest) {
               record.invited_roster,
               true,
               record.cohost_keys,
-              record.muted_keys
+              record.muted_keys,
+              record.moderation_updated_at_ms
             ).catch(() => {})
           : Promise.resolve(),
         pullCloudCallParticipants(userId).catch(() => {}),

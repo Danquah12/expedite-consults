@@ -61,7 +61,7 @@ async function pullAllMapsFromFirebase(force = false): Promise<Record<string, Kv
   if (
     !force &&
     globalForFbKv.__connectlnFbLastFetchMs &&
-    now - globalForFbKv.__connectlnFbLastFetchMs < 2400 &&
+    now - globalForFbKv.__connectlnFbLastFetchMs < 800 &&
     globalForFbKv.__connectlnFbMapsCache
   ) {
     return globalForFbKv.__connectlnFbMapsCache
